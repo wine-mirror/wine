@@ -185,7 +185,7 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
                                          IEnumFORMATETC** enumFormatEtc)
 {
     DragDropDataObject *This = impl_from_IDataObject(iface);
-    CFArrayRef formats;
+    UINT *formats, count;
     HRESULT hr;
 
     TRACE("This %p direction %u enumFormatEtc %p\n", This, direction, enumFormatEtc);
@@ -196,10 +196,9 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
         return E_NOTIMPL;
     }
 
-    formats = macdrv_copy_pasteboard_formats(This->pasteboard);
+    formats = macdrv_get_pasteboard_formats(This->pasteboard, &count);
     if (formats)
     {
-        INT count = CFArrayGetCount(formats);
         FORMATETC *formatEtcs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(FORMATETC));
         if (formatEtcs)
         {
@@ -207,7 +206,7 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
 
             for (i = 0; i < count; i++)
             {
-                formatEtcs[i].cfFormat = (UINT)CFArrayGetValueAtIndex(formats, i);
+                formatEtcs[i].cfFormat = formats[i];
                 formatEtcs[i].ptd = NULL;
                 formatEtcs[i].dwAspect = DVASPECT_CONTENT;
                 formatEtcs[i].lindex = -1;
@@ -220,7 +219,7 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
         else
             hr = E_OUTOFMEMORY;
 
-        CFRelease(formats);
+        HeapFree(GetProcessHeap(), 0, formats);
     }
     else
         hr = SHCreateStdEnumFmtEtc(0, NULL, enumFormatEtc);

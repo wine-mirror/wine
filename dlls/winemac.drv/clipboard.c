@@ -1303,17 +1303,17 @@ BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format)
 
 
 /**************************************************************************
- *              macdrv_copy_pasteboard_formats
+ *              get_formats_for_pasteboard
  */
-CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
+static WINE_CLIPFORMAT** get_formats_for_pasteboard(CFTypeRef pasteboard, UINT *num_formats)
 {
     CFArrayRef types;
-    CFIndex count;
-    CFMutableArrayRef formats;
-    CFIndex i;
-    WINE_CLIPFORMAT* format;
+    CFIndex count, i;
+    CFMutableSetRef seen_formats;
+    WINE_CLIPFORMAT** formats;
+    UINT pos;
 
-    TRACE("pasteboard %p\n", pasteboard);
+    TRACE("pasteboard %s\n", debugstr_cf(pasteboard));
 
     types = macdrv_copy_pasteboard_types(pasteboard);
     if (!types)
@@ -1331,19 +1331,29 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
         return NULL;
     }
 
-    formats = CFArrayCreateMutable(NULL, 0, NULL);
-    if (!formats)
+    seen_formats = CFSetCreateMutable(NULL, count, NULL);
+    if (!seen_formats)
     {
-        WARN("Failed to allocate formats array\n");
+        WARN("Failed to allocate seen formats set\n");
         CFRelease(types);
         return NULL;
     }
 
+    formats = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*formats));
+    if (!formats)
+    {
+        WARN("Failed to allocate formats array\n");
+        CFRelease(types);
+        CFRelease(seen_formats);
+        return NULL;
+    }
+
+    pos = 0;
     for (i = 0; i < count; i++)
     {
         CFStringRef type = CFArrayGetValueAtIndex(types, i);
+        WINE_CLIPFORMAT* format = format_for_type(type);
 
-        format = format_for_type(type);
         if (!format)
         {
             TRACE("ignoring type %s\n", debugstr_cf(type));
@@ -1353,7 +1363,8 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
         if (!format->synthesized)
         {
             TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-            CFArrayAppendValue(formats, (void*)format->format_id);
+            CFSetAddValue(seen_formats, (void*)format->format_id);
+            formats[pos++] = format;
         }
         else if (format->natural_format &&
                  CFArrayContainsValue(types, CFRangeMake(0, count), format->natural_format->type))
@@ -1361,7 +1372,7 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
             TRACE("for type %s deferring synthesized formats because type %s is also present\n",
                   debugstr_cf(type), debugstr_cf(format->natural_format->type));
         }
-        else if (CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
+        else if (CFSetContainsValue(seen_formats, (void*)format->format_id))
         {
             TRACE("for type %s got duplicate synthesized format %p/%s; skipping\n", debugstr_cf(type), format,
                   debugstr_format(format->format_id));
@@ -1369,7 +1380,8 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
         else
         {
             TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-            CFArrayAppendValue(formats, (void*)format->format_id);
+            CFSetAddValue(seen_formats, (void*)format->format_id);
+            formats[pos++] = format;
         }
     }
 
@@ -1377,22 +1389,61 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
     for (i = 0; i < count; i++)
     {
         CFStringRef type = CFArrayGetValueAtIndex(types, i);
+        WINE_CLIPFORMAT* format = format_for_type(type);
 
-        format = format_for_type(type);
         if (!format) continue;
         if (!format->synthesized) continue;
 
         /* Don't duplicate a real value with a synthesized value. */
-        if (CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id)) continue;
+        if (CFSetContainsValue(seen_formats, (void*)format->format_id)) continue;
 
         TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-        CFArrayAppendValue(formats, (void*)format->format_id);
+        CFSetAddValue(seen_formats, (void*)format->format_id);
+        formats[pos++] = format;
     }
 
     CFRelease(types);
+    CFRelease(seen_formats);
 
-    TRACE(" -> %s\n", debugstr_cf(formats));
+    if (!pos)
+    {
+        HeapFree(GetProcessHeap(), 0, formats);
+        formats = NULL;
+    }
+
+    *num_formats = pos;
     return formats;
+}
+
+
+/**************************************************************************
+ *              macdrv_get_pasteboard_formats
+ */
+UINT* macdrv_get_pasteboard_formats(CFTypeRef pasteboard, UINT* num_formats)
+{
+    WINE_CLIPFORMAT** formats;
+    UINT count, i;
+    UINT* format_ids;
+
+    formats = get_formats_for_pasteboard(pasteboard, &count);
+    if (!formats)
+        return NULL;
+
+    format_ids = HeapAlloc(GetProcessHeap(), 0, count);
+    if (!format_ids)
+    {
+        WARN("Failed to allocate formats IDs array\n");
+        HeapFree(GetProcessHeap(), 0, formats);
+        return NULL;
+    }
+
+    for (i = 0; i < count; i++)
+        format_ids[i] = formats[i]->format_id;
+
+    HeapFree(GetProcessHeap(), 0, formats);
+
+    *num_formats = count;
+    return format_ids;
 }
 
 
