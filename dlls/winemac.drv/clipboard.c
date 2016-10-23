@@ -1176,6 +1176,8 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data)
     {
         if (src[i] == '\n')
             new_lines++;
+        else if (src[i] == '\r' && (i + 1 >= src_len || src[i + 1] != '\n'))
+            new_lines++;
     }
 
     if ((unicode_handle = GlobalAlloc(GMEM_FIXED, (src_len + new_lines + 1) * sizeof(WCHAR))))
@@ -1188,6 +1190,9 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data)
                 dst[j++] = '\r';
 
             dst[j++] = src[i];
+
+            if (src[i] == '\r' && (i + 1 >= src_len || src[i + 1] != '\n'))
+                dst[j++] = '\n';
         }
         dst[j] = 0;
 
