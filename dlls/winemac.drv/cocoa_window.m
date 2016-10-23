@@ -2824,6 +2824,13 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         macdrv_release_query(query);
     }
 
+    - (void) pasteboardChangedOwner:(NSPasteboard*)sender
+    {
+        macdrv_event* event = macdrv_create_event(LOST_PASTEBOARD_OWNERSHIP, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
+    }
+
 
     /*
      * ---------- NSDraggingDestination methods ----------

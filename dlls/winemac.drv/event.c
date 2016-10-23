@@ -40,6 +40,7 @@ static const char *dbgstr_event(int type)
         "KEY_PRESS",
         "KEY_RELEASE",
         "KEYBOARD_CHANGED",
+        "LOST_PASTEBOARD_OWNERSHIP",
         "MOUSE_BUTTON",
         "MOUSE_MOVED",
         "MOUSE_MOVED_ABSOLUTE",
@@ -107,6 +108,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(APP_QUIT_REQUESTED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
         event_mask |= event_mask_for_type(IM_SET_TEXT);
+        event_mask |= event_mask_for_type(LOST_PASTEBOARD_OWNERSHIP);
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_BUTTON);
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_MOVE);
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
@@ -229,6 +231,9 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case KEYBOARD_CHANGED:
         macdrv_keyboard_changed(event);
+        break;
+    case LOST_PASTEBOARD_OWNERSHIP:
+        macdrv_lost_pasteboard_ownership(hwnd);
         break;
     case MOUSE_BUTTON:
         macdrv_mouse_button(hwnd, event);

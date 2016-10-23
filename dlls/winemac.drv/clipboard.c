@@ -1551,7 +1551,7 @@ static void set_mac_pasteboard_types_from_win32_clipboard(void)
 
     if (!(formats = get_clipboard_formats(&count))) return;
 
-    macdrv_clear_pasteboard();
+    macdrv_clear_pasteboard(clipboard_cocoa_window);
 
     for (i = 0; i < count; i++)
     {
@@ -1657,7 +1657,7 @@ static BOOL update_clipboard(void)
         if (GetTickCount64() - last_clipboard_update > CLIPBOARD_UPDATE_DELAY)
             ret = grab_win32_clipboard();
     }
-    else if (!macdrv_is_pasteboard_owner())
+    else if (!macdrv_is_pasteboard_owner(clipboard_cocoa_window))
         ret = grab_win32_clipboard();
 
     updating = FALSE;
@@ -2076,6 +2076,19 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
     CloseClipboard();
 
     return ret;
+}
+
+
+/**************************************************************************
+ *              macdrv_lost_pasteboard_ownership
+ *
+ * Handler for the LOST_PASTEBOARD_OWNERSHIP event.
+ */
+void macdrv_lost_pasteboard_ownership(HWND hwnd)
+{
+    TRACE("win %p\n", hwnd);
+    if (!macdrv_is_pasteboard_owner(clipboard_cocoa_window))
+        grab_win32_clipboard();
 }
 
 

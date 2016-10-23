@@ -21,6 +21,7 @@
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
 #import "cocoa_event.h"
+#import "cocoa_window.h"
 
 
 static int owned_change_count = -1;
@@ -29,17 +30,23 @@ static NSArray* BitmapOutputTypes;
 static NSDictionary* BitmapOutputTypeMap;
 static dispatch_once_t BitmapOutputTypesInitOnce;
 
+static NSString* const OwnershipSentinel = @"org.winehq.wine.winemac.pasteboard-ownership-sentinel";
+
 
 /***********************************************************************
  *              macdrv_is_pasteboard_owner
  */
-int macdrv_is_pasteboard_owner(void)
+int macdrv_is_pasteboard_owner(macdrv_window w)
 {
     __block int ret;
+    WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
         NSPasteboard* pb = [NSPasteboard generalPasteboard];
         ret = ([pb changeCount] == owned_change_count);
+
+        [window.queue discardEventsMatchingMask:event_mask_for_type(LOST_PASTEBOARD_OWNERSHIP)
+                                      forWindow:window];
     });
 
     return ret;
@@ -157,13 +164,18 @@ CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type)
  *
  * Takes ownership of the Mac pasteboard and clears it of all data types.
  */
-void macdrv_clear_pasteboard(void)
+void macdrv_clear_pasteboard(macdrv_window w)
 {
-    OnMainThreadAsync(^{
+    WineWindow* window = (WineWindow*)w;
+
+    OnMainThread(^{
         @try
         {
             NSPasteboard* pb = [NSPasteboard generalPasteboard];
-            owned_change_count = [pb declareTypes:[NSArray array] owner:nil];
+            owned_change_count = [pb declareTypes:[NSArray arrayWithObject:OwnershipSentinel]
+                                            owner:window];
+            [window.queue discardEventsMatchingMask:event_mask_for_type(LOST_PASTEBOARD_OWNERSHIP)
+                                          forWindow:window];
         }
         @catch (id e)
         {

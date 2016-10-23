@@ -196,6 +196,7 @@ extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern void macdrv_init_clipboard(void) DECLSPEC_HIDDEN;
 extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type) DECLSPEC_HIDDEN;
+extern void macdrv_lost_pasteboard_ownership(HWND hwnd) DECLSPEC_HIDDEN;
 extern const char *debugstr_format(UINT id) DECLSPEC_HIDDEN;
 extern HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format) DECLSPEC_HIDDEN;
 extern BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format) DECLSPEC_HIDDEN;
