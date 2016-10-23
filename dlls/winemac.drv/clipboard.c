@@ -76,11 +76,8 @@ static HANDLE import_bmp_to_dib(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
 static HANDLE import_metafilepict(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
-static HANDLE import_utf8_to_oemtext(CFDataRef data);
 static HANDLE import_utf8_to_text(CFDataRef data);
 static HANDLE import_utf8_to_unicodetext(CFDataRef data);
-static HANDLE import_utf16_to_oemtext(CFDataRef data);
-static HANDLE import_utf16_to_text(CFDataRef data);
 static HANDLE import_utf16_to_unicodetext(CFDataRef data);
 
 static CFDataRef export_clipboard_data(HANDLE data);
@@ -89,10 +86,7 @@ static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
 static CFDataRef export_metafilepict(HANDLE data);
-static CFDataRef export_oemtext_to_utf8(HANDLE data);
-static CFDataRef export_oemtext_to_utf16(HANDLE data);
 static CFDataRef export_text_to_utf8(HANDLE data);
-static CFDataRef export_text_to_utf16(HANDLE data);
 static CFDataRef export_unicodetext_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf16(HANDLE data);
 
@@ -156,10 +150,12 @@ static const struct
     { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
     { CF_LOCALE,            CFSTR("org.winehq.builtin.locale"),             import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,            export_metafilepict,        FALSE },
+    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PALETTE,           CFSTR("org.winehq.builtin.palette"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PENDATA,           CFSTR("org.winehq.builtin.pendata"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_RIFF,              CFSTR("org.winehq.builtin.riff"),               import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_SYLK,              CFSTR("org.winehq.builtin.sylk"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_TIFF,              CFSTR("public.tiff"),                           import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_WAVE,              CFSTR("com.microsoft.waveform-audio"),          import_clipboard_data,          export_clipboard_data,      FALSE },
 
@@ -168,14 +164,6 @@ static const struct
 
     { CF_HDROP,             CFSTR("org.winehq.builtin.hdrop"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
-
-    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_OEMTEXT,           CFSTR("public.utf16-plain-text"),               import_utf16_to_oemtext,        export_oemtext_to_utf16,    TRUE },
-    { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         export_oemtext_to_utf8,     TRUE },
-
-    { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_TEXT,              CFSTR("public.utf16-plain-text"),               import_utf16_to_text,           export_text_to_utf16,       TRUE },
-    { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            export_text_to_utf8,        TRUE },
 
     { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.unicodetext"),        import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_UNICODETEXT,       CFSTR("public.utf16-plain-text"),               import_utf16_to_unicodetext,    export_unicodetext_to_utf16,TRUE },
@@ -386,87 +374,6 @@ static WINE_CLIPFORMAT* natural_format_for_format(UINT format_id)
 
     TRACE("%s -> %p/%s\n", debugstr_format(format_id), format, debugstr_cf(format ? format->type : NULL));
     return format;
-}
-
-
-/**************************************************************************
- *              convert_text
- *
- *  Convert string data between code pages or to/from wide characters.  The
- *  special value of (UINT)-1 for a code page indicates to use wide
- *  characters.
- */
-static HANDLE convert_text(const void *src, int src_len, UINT src_cp, UINT dest_cp)
-{
-    HANDLE ret = NULL;
-    const WCHAR *wstr;
-    int wstr_len;
-    HANDLE handle;
-    char *p;
-
-    if (src_cp == (UINT)-1)
-    {
-        wstr = src;
-        wstr_len = src_len / sizeof(WCHAR);
-    }
-    else
-    {
-        WCHAR *temp;
-
-        wstr_len = MultiByteToWideChar(src_cp, 0, src, src_len, NULL, 0);
-        if (!src_len || ((const char*)src)[src_len - 1]) wstr_len += 1;
-        temp = HeapAlloc(GetProcessHeap(), 0, wstr_len * sizeof(WCHAR));
-        MultiByteToWideChar(src_cp, 0, src, src_len, temp, wstr_len);
-        temp[wstr_len - 1] = 0;
-        wstr = temp;
-    }
-
-    if (dest_cp == (UINT)-1)
-    {
-        handle = GlobalAlloc(GMEM_FIXED, wstr_len * sizeof(WCHAR));
-        if (handle && (p = GlobalLock(handle)))
-        {
-            memcpy(p, wstr, wstr_len * sizeof(WCHAR));
-            GlobalUnlock(handle);
-            ret = handle;
-        }
-    }
-    else
-    {
-        INT len;
-
-        len = WideCharToMultiByte(dest_cp, 0, wstr, wstr_len, NULL, 0, NULL, NULL);
-        if (!wstr_len || wstr[wstr_len - 1]) len += 1;
-        handle = GlobalAlloc(GMEM_FIXED, len);
-
-        if (handle && (p = GlobalLock(handle)))
-        {
-            WideCharToMultiByte(dest_cp, 0, wstr, wstr_len, p, len, NULL, NULL);
-            p[len - 1] = 0;
-            GlobalUnlock(handle);
-            ret = handle;
-        }
-    }
-
-    return ret;
-}
-
-
-/**************************************************************************
- *              convert_unicodetext_to_codepage
- */
-static HANDLE convert_unicodetext_to_codepage(HANDLE unicode_handle, UINT cp)
-{
-    LPWSTR unicode_string = GlobalLock(unicode_handle);
-    HANDLE ret = NULL;
-
-    if (unicode_string)
-    {
-        ret = convert_text(unicode_string, GlobalSize(unicode_handle), -1, cp);
-        GlobalUnlock(unicode_handle);
-    }
-
-    return ret;
 }
 
 
@@ -858,29 +765,38 @@ done:
 
 
 /**************************************************************************
- *              import_utf8_to_oemtext
- *
- *  Import a UTF-8 string, converting the string to CF_OEMTEXT.
- */
-static HANDLE import_utf8_to_oemtext(CFDataRef data)
-{
-    HANDLE unicode_handle = import_utf8_to_unicodetext(data);
-    HANDLE ret = convert_unicodetext_to_codepage(unicode_handle, CP_OEMCP);
-
-    GlobalFree(unicode_handle);
-    return ret;
-}
-
-
-/**************************************************************************
  *              import_utf8_to_text
  *
  *  Import a UTF-8 string, converting the string to CF_TEXT.
  */
 static HANDLE import_utf8_to_text(CFDataRef data)
 {
+    HANDLE ret = NULL;
     HANDLE unicode_handle = import_utf8_to_unicodetext(data);
-    HANDLE ret = convert_unicodetext_to_codepage(unicode_handle, CP_ACP);
+    LPWSTR unicode_string = GlobalLock(unicode_handle);
+
+    if (unicode_string)
+    {
+        int unicode_len;
+        HANDLE handle;
+        char *p;
+        INT len;
+
+        unicode_len = GlobalSize(unicode_handle) / sizeof(WCHAR);
+
+        len = WideCharToMultiByte(CP_ACP, 0, unicode_string, unicode_len, NULL, 0, NULL, NULL);
+        if (!unicode_len || unicode_string[unicode_len - 1]) len += 1;
+        handle = GlobalAlloc(GMEM_FIXED, len);
+
+        if (handle && (p = GlobalLock(handle)))
+        {
+            WideCharToMultiByte(CP_ACP, 0, unicode_string, unicode_len, p, len, NULL, NULL);
+            p[len - 1] = 0;
+            GlobalUnlock(handle);
+            ret = handle;
+        }
+        GlobalUnlock(unicode_handle);
+    }
 
     GlobalFree(unicode_handle);
     return ret;
@@ -936,36 +852,6 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data)
     }
 
     return unicode_handle;
-}
-
-
-/**************************************************************************
- *              import_utf16_to_oemtext
- *
- *  Import a UTF-16 string, converting the string to CF_OEMTEXT.
- */
-static HANDLE import_utf16_to_oemtext(CFDataRef data)
-{
-    HANDLE unicode_handle = import_utf16_to_unicodetext(data);
-    HANDLE ret = convert_unicodetext_to_codepage(unicode_handle, CP_OEMCP);
-
-    GlobalFree(unicode_handle);
-    return ret;
-}
-
-
-/**************************************************************************
- *              import_utf16_to_text
- *
- *  Import a UTF-16 string, converting the string to CF_TEXT.
- */
-static HANDLE import_utf16_to_text(CFDataRef data)
-{
-    HANDLE unicode_handle = import_utf16_to_unicodetext(data);
-    HANDLE ret = convert_unicodetext_to_codepage(unicode_handle, CP_ACP);
-
-    GlobalFree(unicode_handle);
-    return ret;
 }
 
 
@@ -1053,54 +939,6 @@ static CFDataRef export_bitmap_to_bmp(HANDLE data)
     {
         ret = export_dib_to_bmp(dib);
         GlobalFree(dib);
-    }
-
-    return ret;
-}
-
-
-/**************************************************************************
- *              export_codepage_to_utf8
- *
- *  Export string data in a specified codepage to UTF-8.
- */
-static CFDataRef export_codepage_to_utf8(HANDLE data, UINT cp)
-{
-    CFDataRef ret = NULL;
-    const char* str;
-
-    if ((str = GlobalLock(data)))
-    {
-        HANDLE unicode = convert_text(str, GlobalSize(data), cp, -1);
-
-        ret = export_unicodetext_to_utf8(unicode);
-
-        GlobalFree(unicode);
-        GlobalUnlock(data);
-    }
-
-    return ret;
-}
-
-
-/**************************************************************************
- *              export_codepage_to_utf16
- *
- *  Export string data in a specified codepage to UTF-16.
- */
-static CFDataRef export_codepage_to_utf16(HANDLE data, UINT cp)
-{
-    CFDataRef ret = NULL;
-    const char* str;
-
-    if ((str = GlobalLock(data)))
-    {
-        HANDLE unicode = convert_text(str, GlobalSize(data), cp, -1);
-
-        ret = export_unicodetext_to_utf16(unicode);
-
-        GlobalFree(unicode);
-        GlobalUnlock(data);
     }
 
     return ret;
@@ -1290,46 +1128,43 @@ static CFDataRef export_metafilepict(HANDLE data)
 
 
 /**************************************************************************
- *              export_oemtext_to_utf8
- *
- *  Export CF_OEMTEXT to UTF-8.
- */
-static CFDataRef export_oemtext_to_utf8(HANDLE data)
-{
-    return export_codepage_to_utf8(data, CP_OEMCP);
-}
-
-
-/**************************************************************************
- *              export_oemtext_to_utf16
- *
- *  Export CF_OEMTEXT to UTF-16.
- */
-static CFDataRef export_oemtext_to_utf16(HANDLE data)
-{
-    return export_codepage_to_utf16(data, CP_OEMCP);
-}
-
-
-/**************************************************************************
  *              export_text_to_utf8
  *
  *  Export CF_TEXT to UTF-8.
  */
 static CFDataRef export_text_to_utf8(HANDLE data)
 {
-    return export_codepage_to_utf8(data, CP_ACP);
-}
+    CFDataRef ret = NULL;
+    const char* str;
 
+    if ((str = GlobalLock(data)))
+    {
+        int str_len = GlobalSize(data);
+        int wstr_len;
+        WCHAR *wstr;
+        HANDLE unicode;
+        char *p;
 
-/**************************************************************************
- *              export_text_to_utf16
- *
- *  Export CF_TEXT to UTF-16.
- */
-static CFDataRef export_text_to_utf16(HANDLE data)
-{
-    return export_codepage_to_utf16(data, CP_ACP);
+        wstr_len = MultiByteToWideChar(CP_ACP, 0, str, str_len, NULL, 0);
+        if (!str_len || str[str_len - 1]) wstr_len += 1;
+        wstr = HeapAlloc(GetProcessHeap(), 0, wstr_len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, str, str_len, wstr, wstr_len);
+        wstr[wstr_len - 1] = 0;
+
+        unicode = GlobalAlloc(GMEM_FIXED, wstr_len * sizeof(WCHAR));
+        if (unicode && (p = GlobalLock(unicode)))
+        {
+            memcpy(p, wstr, wstr_len * sizeof(WCHAR));
+            GlobalUnlock(unicode);
+        }
+
+        ret = export_unicodetext_to_utf8(unicode);
+
+        GlobalFree(unicode);
+        GlobalUnlock(data);
+    }
+
+    return ret;
 }
 
 
