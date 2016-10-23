@@ -40,12 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
  *              Types
  **************************************************************************/
 
-typedef struct
-{
-    HWND hwnd_owner;
-    UINT flags;
-} CLIPBOARDINFO, *LPCLIPBOARDINFO;
-
 typedef HANDLE (*DRVIMPORTFUNC)(CFDataRef data);
 typedef CFDataRef (*DRVEXPORTFUNC)(HANDLE data);
 
@@ -1198,35 +1192,6 @@ static CFDataRef export_unicodetext_to_utf16(HANDLE data)
 
 
 /**************************************************************************
- *              get_clipboard_info
- */
-static BOOL get_clipboard_info(LPCLIPBOARDINFO cbinfo)
-{
-    BOOL ret = FALSE;
-
-    SERVER_START_REQ(set_clipboard_info)
-    {
-        req->flags = 0;
-
-        if (wine_server_call_err(req))
-        {
-            ERR("Failed to get clipboard owner.\n");
-        }
-        else
-        {
-            cbinfo->hwnd_owner = wine_server_ptr_handle(reply->old_owner);
-            cbinfo->flags = reply->flags;
-
-            ret = TRUE;
-        }
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
-
-/**************************************************************************
  *              macdrv_get_pasteboard_data
  */
 HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
@@ -1488,47 +1453,35 @@ void macdrv_clipboard_process_attach(void)
  */
 BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
 {
+    WINE_CLIPFORMAT *format;
     BOOL ret = FALSE;
-    CLIPBOARDINFO cbinfo;
-    WINE_CLIPFORMAT* format;
-    CFArrayRef types = NULL;
+    HANDLE handle;
 
-    TRACE("hwnd %p type %s\n", hwnd, debugstr_cf(type));
-
-    if (get_clipboard_info(&cbinfo))
-        hwnd = cbinfo.hwnd_owner;
+    TRACE("win %p type %s\n", hwnd, debugstr_cf(type));
 
     format = format_for_type(type);
-    if (!format) goto done;
+    if (!format) return FALSE;
 
-    TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-
-    if (!format->synthesized)
+    if (!OpenClipboard(NULL))
     {
-        TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
-        SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
-        ret = TRUE;
-        goto done;
+        ERR("failed to open clipboard for %s\n", debugstr_cf(type));
+        return FALSE;
     }
 
-    types = macdrv_copy_pasteboard_types(NULL);
-    if (!types)
+    if ((handle = GetClipboardData(format->format_id)))
     {
-        WARN("Failed to copy pasteboard types\n");
-        goto done;
+        CFDataRef data;
+
+        TRACE("exporting %s %p\n", debugstr_format(format->format_id), handle);
+
+        if ((data = format->export_func(handle)))
+        {
+            ret = macdrv_set_pasteboard_data(format->type, data, macdrv_get_cocoa_window(hwnd, FALSE));
+            CFRelease(data);
+        }
     }
 
-    if (format->natural_format &&
-        CFArrayContainsValue(types, CFRangeMake(0, CFArrayGetCount(types)), format->natural_format->type))
-    {
-        TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
-        SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
-        ret = TRUE;
-        goto done;
-    }
-
-done:
-    if (types) CFRelease(types);
+    CloseClipboard();
 
     return ret;
 }
