@@ -38,6 +38,7 @@
 @ cdecl ThreadDetach() macdrv_ThreadDetach
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) macdrv_ToUnicodeEx
 @ cdecl UnregisterHotKey(long long long) macdrv_UnregisterHotKey
+@ cdecl UpdateClipboard() macdrv_UpdateClipboard
 @ cdecl UpdateLayeredWindow(long ptr ptr) macdrv_UpdateLayeredWindow
 @ cdecl VkKeyScanEx(long long) macdrv_VkKeyScanEx
 @ cdecl WindowMessage(long long long long) macdrv_WindowMessage

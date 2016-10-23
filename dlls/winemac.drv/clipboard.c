@@ -59,6 +59,8 @@ typedef struct _WINE_CLIPFORMAT
  *              Constants
  **************************************************************************/
 
+#define CLIPBOARD_UPDATE_DELAY 2000   /* delay between checks of the Mac pasteboard */
+
 
 /**************************************************************************
  *              Forward Function Declarations
@@ -195,6 +197,7 @@ static macdrv_window clipboard_cocoa_window;
 static ULONG64 last_clipboard_update;
 static WINE_CLIPFORMAT **current_mac_formats;
 static unsigned int nb_current_mac_formats;
+static WCHAR clipboard_pipe_name[256];
 
 
 /**************************************************************************
@@ -1633,6 +1636,36 @@ static BOOL grab_win32_clipboard(void)
 
 
 /**************************************************************************
+ *              update_clipboard
+ *
+ * Periodically update the clipboard while the clipboard is owned by a
+ * Mac app.
+ */
+static BOOL update_clipboard(void)
+{
+    static BOOL updating;
+    BOOL ret = TRUE;
+
+    TRACE("is_clipboard_owner %d last_clipboard_update %llu now %llu\n",
+          is_clipboard_owner, last_clipboard_update, GetTickCount64());
+
+    if (updating) return TRUE;
+    updating = TRUE;
+
+    if (is_clipboard_owner)
+    {
+        if (GetTickCount64() - last_clipboard_update > CLIPBOARD_UPDATE_DELAY)
+            ret = grab_win32_clipboard();
+    }
+    else if (!macdrv_is_pasteboard_owner())
+        ret = grab_win32_clipboard();
+
+    updating = FALSE;
+    return ret;
+}
+
+
+/**************************************************************************
  *              clipboard_wndproc
  *
  * Window procedure for the clipboard manager.
@@ -1689,6 +1722,42 @@ static BOOL wait_clipboard_mutex(void)
 
 
 /**************************************************************************
+ *              init_pipe_name
+ *
+ * Init-once helper for get_pipe_name.
+ */
+static BOOL CALLBACK init_pipe_name(INIT_ONCE* once, void* param, void** context)
+{
+    static const WCHAR prefix[] = {'\\','\\','.','\\','p','i','p','e','\\','_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
+
+    memcpy(clipboard_pipe_name, prefix, sizeof(prefix));
+    if (!GetUserObjectInformationW(GetProcessWindowStation(), UOI_NAME,
+                                   clipboard_pipe_name + sizeof(prefix) / sizeof(WCHAR),
+                                   sizeof(clipboard_pipe_name) - sizeof(prefix), NULL))
+    {
+        ERR("failed to get winstation name\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *              get_pipe_name
+ *
+ * Get the name of the pipe used to communicate with the per-window-station
+ * clipboard manager thread.
+ */
+static const WCHAR* get_pipe_name(void)
+{
+    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&once, init_pipe_name, NULL, NULL);
+    return clipboard_pipe_name[0] ? clipboard_pipe_name : NULL;
+}
+
+
+/**************************************************************************
  *              clipboard_thread
  *
  * Thread running inside the desktop process to manage the clipboard
@@ -1698,6 +1767,11 @@ static DWORD WINAPI clipboard_thread(void *arg)
     static const WCHAR clipboard_classname[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_','m','a','n','a','g','e','r',0};
     WNDCLASSW class;
     struct macdrv_window_features wf;
+    const WCHAR* pipe_name;
+    HANDLE pipe = NULL;
+    HANDLE event = NULL;
+    OVERLAPPED overlapped;
+    BOOL need_connect = TRUE, pending = FALSE;
     MSG msg;
 
     if (!wait_clipboard_mutex()) return 0;
@@ -1727,16 +1801,103 @@ static DWORD WINAPI clipboard_thread(void *arg)
         goto done;
     }
 
+    pipe_name = get_pipe_name();
+    if (!pipe_name)
+    {
+        ERR("failed to get pipe name\n");
+        goto done;
+    }
+
+    pipe = CreateNamedPipeW(pipe_name, PIPE_ACCESS_OUTBOUND | FILE_FLAG_OVERLAPPED,
+                            PIPE_TYPE_BYTE, PIPE_UNLIMITED_INSTANCES, 1, 1, 0, NULL);
+    if (!pipe)
+    {
+        ERR("failed to create named pipe: %u\n", GetLastError());
+        goto done;
+    }
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    if (!event)
+    {
+        ERR("failed to create event: %d\n", GetLastError());
+        goto done;
+    }
+
     clipboard_thread_id = GetCurrentThreadId();
     AddClipboardFormatListener(clipboard_hwnd);
     register_builtin_formats();
     grab_win32_clipboard();
 
     TRACE("clipboard thread %04x running\n", GetCurrentThreadId());
-    while (GetMessageW(&msg, NULL, 0, 0))
-        DispatchMessageW(&msg);
+    while (1)
+    {
+        DWORD result;
+
+        if (need_connect)
+        {
+            pending = FALSE;
+            memset(&overlapped, 0, sizeof(overlapped));
+            overlapped.hEvent = event;
+            if (ConnectNamedPipe(pipe, &overlapped))
+            {
+                ERR("asynchronous ConnectNamedPipe unexpectedly returned true: %d\n", GetLastError());
+                ResetEvent(event);
+            }
+            else
+            {
+                result = GetLastError();
+                switch (result)
+                {
+                    case ERROR_PIPE_CONNECTED:
+                    case ERROR_NO_DATA:
+                        SetEvent(event);
+                        need_connect = FALSE;
+                        break;
+                    case ERROR_IO_PENDING:
+                        need_connect = FALSE;
+                        pending = TRUE;
+                        break;
+                    default:
+                        ERR("failed to initiate pipe connection: %d\n", result);
+                        break;
+                }
+            }
+        }
+
+        result = MsgWaitForMultipleObjectsEx(1, &event, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
+        switch (result)
+        {
+            case WAIT_OBJECT_0:
+            {
+                DWORD written;
+
+                if (pending && !GetOverlappedResult(pipe, &overlapped, &written, FALSE))
+                    ERR("failed to connect pipe: %d\n", GetLastError());
+
+                update_clipboard();
+                DisconnectNamedPipe(pipe);
+                need_connect = TRUE;
+                break;
+            }
+            case WAIT_OBJECT_0 + 1:
+                while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+                {
+                    if (msg.message == WM_QUIT)
+                        goto done;
+                    DispatchMessageW(&msg);
+                }
+                break;
+            case WAIT_IO_COMPLETION:
+                break;
+            default:
+                ERR("failed to wait for connection or input: %d\n", GetLastError());
+                break;
+        }
+    }
 
 done:
+    if (event) CloseHandle(event);
+    if (pipe) CloseHandle(pipe);
     macdrv_destroy_cocoa_window(clipboard_cocoa_window);
     DestroyWindow(clipboard_hwnd);
     return 0;
@@ -1746,6 +1907,132 @@ done:
 /**************************************************************************
  *              Mac User Driver Clipboard Exports
  **************************************************************************/
+
+
+/**************************************************************************
+ *              macdrv_UpdateClipboard
+ */
+void CDECL macdrv_UpdateClipboard(void)
+{
+    static ULONG last_update;
+    ULONG now, end;
+    const WCHAR* pipe_name;
+    HANDLE pipe;
+    BYTE dummy;
+    DWORD count;
+    OVERLAPPED overlapped = { 0 };
+    BOOL canceled = FALSE;
+
+    if (GetCurrentThreadId() == clipboard_thread_id) return;
+
+    TRACE("\n");
+
+    now = GetTickCount();
+    if ((int)(now - last_update) <= CLIPBOARD_UPDATE_DELAY) return;
+    last_update = now;
+
+    if (!(pipe_name = get_pipe_name())) return;
+    pipe = CreateFileW(pipe_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+    if (!pipe)
+    {
+        WARN("failed to open pipe to clipboard manager: %d\n", GetLastError());
+        return;
+    }
+
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    if (!overlapped.hEvent)
+    {
+        ERR("failed to create event: %d\n", GetLastError());
+        goto done;
+    }
+
+    /* We expect the read to fail because the server just closes our connection.  This
+       is just waiting for that close to happen. */
+    if (ReadFile(pipe, &dummy, sizeof(dummy), NULL, &overlapped))
+    {
+        WARN("asynchronous ReadFile unexpectedly returned true: %d\n", GetLastError());
+        goto done;
+    }
+    else
+    {
+        DWORD error = GetLastError();
+        if (error == ERROR_PIPE_NOT_CONNECTED || error == ERROR_BROKEN_PIPE)
+        {
+            /* The server accepted, handled, and closed our connection before we
+               attempted the read, which is fine. */
+            goto done;
+        }
+        else if (error != ERROR_IO_PENDING)
+        {
+            ERR("failed to initiate read from pipe: %d\n", error);
+            goto done;
+        }
+    }
+
+    end = now + 500;
+    while (1)
+    {
+        DWORD result, timeout;
+
+        if (canceled)
+            timeout = INFINITE;
+        else
+        {
+            now = GetTickCount();
+            timeout = end - now;
+            if ((int)timeout < 0)
+                timeout = 0;
+        }
+
+        result = MsgWaitForMultipleObjectsEx(1, &overlapped.hEvent, timeout, QS_SENDMESSAGE, MWMO_ALERTABLE);
+        switch (result)
+        {
+            case WAIT_OBJECT_0:
+            {
+                if (GetOverlappedResult(pipe, &overlapped, &count, FALSE))
+                    WARN("unexpectedly succeeded in reading from pipe\n");
+                else
+                {
+                    result = GetLastError();
+                    if (result != ERROR_BROKEN_PIPE && result != ERROR_OPERATION_ABORTED)
+                        WARN("failed to read from pipe: %d\n", result);
+                }
+
+                goto done;
+            }
+            case WAIT_OBJECT_0 + 1:
+            {
+                MSG msg;
+                while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE))
+                    DispatchMessageW(&msg);
+                break;
+            }
+            case WAIT_IO_COMPLETION:
+                break;
+            case WAIT_TIMEOUT:
+                WARN("timed out waiting for read\n");
+                CancelIoEx(pipe, &overlapped);
+                canceled = TRUE;
+                break;
+            default:
+                if (canceled)
+                {
+                    ERR("failed to wait for cancel: %d\n", GetLastError());
+                    goto done;
+                }
+
+                ERR("failed to wait for read: %d\n", GetLastError());
+                CancelIoEx(pipe, &overlapped);
+                canceled = TRUE;
+                break;
+        }
+    }
+
+done:
+    if (overlapped.hEvent) CloseHandle(overlapped.hEvent);
+    CloseHandle(pipe);
+}
 
 
 /**************************************************************************
