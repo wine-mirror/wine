@@ -1480,6 +1480,8 @@ BOOL CDECL macdrv_CreateDesktopWindow(HWND hwnd)
  */
 BOOL CDECL macdrv_CreateWindow(HWND hwnd)
 {
+    if (hwnd == GetDesktopWindow())
+        macdrv_init_clipboard();
     return TRUE;
 }
 

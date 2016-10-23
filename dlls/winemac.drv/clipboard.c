@@ -188,6 +188,14 @@ static const struct
 /* The prefix prepended to a Win32 clipboard format name to make a Mac pasteboard type. */
 static const CFStringRef registered_name_type_prefix = CFSTR("org.winehq.registered.");
 
+static DWORD clipboard_thread_id;
+static HWND clipboard_hwnd;
+static BOOL is_clipboard_owner;
+static macdrv_window clipboard_cocoa_window;
+static ULONG64 last_clipboard_update;
+static WINE_CLIPFORMAT **current_mac_formats;
+static unsigned int nb_current_mac_formats;
+
 
 /**************************************************************************
  *              Internal Clipboard implementation methods
@@ -302,6 +310,69 @@ static WINE_CLIPFORMAT* register_format(UINT id, CFStringRef type)
 
 
 /**************************************************************************
+ *              natural_format_for_format
+ *
+ * Find the "natural" format for this format_id (the one which isn't
+ * synthesized from another type).
+ */
+static WINE_CLIPFORMAT* natural_format_for_format(UINT format_id)
+{
+    WINE_CLIPFORMAT *format;
+
+    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
+        if (format->format_id == format_id && !format->synthesized) break;
+
+    if (&format->entry == &format_list)
+        format = NULL;
+
+    TRACE("%s -> %p/%s\n", debugstr_format(format_id), format, debugstr_cf(format ? format->type : NULL));
+    return format;
+}
+
+
+/**************************************************************************
+ *              register_builtin_formats
+ */
+static void register_builtin_formats(void)
+{
+    UINT i;
+    WINE_CLIPFORMAT *format;
+
+    /* Register built-in formats */
+    for (i = 0; i < sizeof(builtin_format_ids)/sizeof(builtin_format_ids[0]); i++)
+    {
+        if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
+        format->format_id       = builtin_format_ids[i].id;
+        format->type            = CFRetain(builtin_format_ids[i].type);
+        format->import_func     = builtin_format_ids[i].import;
+        format->export_func     = builtin_format_ids[i].export;
+        format->synthesized     = builtin_format_ids[i].synthesized;
+        format->natural_format  = NULL;
+        list_add_tail(&format_list, &format->entry);
+    }
+
+    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
+    {
+        if (format->synthesized)
+            format->natural_format = natural_format_for_format(format->format_id);
+    }
+
+    /* Register known mappings between Windows formats and Mac types */
+    for (i = 0; i < sizeof(builtin_format_names)/sizeof(builtin_format_names[0]); i++)
+    {
+        if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
+        format->format_id       = RegisterClipboardFormatW(builtin_format_names[i].name);
+        format->type            = CFRetain(builtin_format_names[i].type);
+        format->import_func     = builtin_format_names[i].import;
+        format->export_func     = builtin_format_names[i].export;
+        format->synthesized     = FALSE;
+        format->natural_format  = NULL;
+        list_add_tail(&format_list, &format->entry);
+    }
+}
+
+
+/**************************************************************************
  *              format_for_type
  */
 static WINE_CLIPFORMAT* format_for_type(CFStringRef type)
@@ -309,6 +380,8 @@ static WINE_CLIPFORMAT* format_for_type(CFStringRef type)
     WINE_CLIPFORMAT *format;
 
     TRACE("type %s\n", debugstr_cf(type));
+
+    if (list_empty(&format_list)) register_builtin_formats();
 
     LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
     {
@@ -341,27 +414,6 @@ static WINE_CLIPFORMAT* format_for_type(CFStringRef type)
 
 done:
     TRACE(" -> %p/%s\n", format, debugstr_format(format ? format->format_id : 0));
-    return format;
-}
-
-
-/**************************************************************************
- *              natural_format_for_format
- *
- * Find the "natural" format for this format_id (the one which isn't
- * synthesized from another type).
- */
-static WINE_CLIPFORMAT* natural_format_for_format(UINT format_id)
-{
-    WINE_CLIPFORMAT *format;
-
-    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
-        if (format->format_id == format_id && !format->synthesized) break;
-
-    if (&format->entry == &format_list)
-        format = NULL;
-
-    TRACE("%s -> %p/%s\n", debugstr_format(format_id), format, debugstr_cf(format ? format->type : NULL));
     return format;
 }
 
@@ -1448,6 +1500,250 @@ UINT* macdrv_get_pasteboard_formats(CFTypeRef pasteboard, UINT* num_formats)
 
 
 /**************************************************************************
+ *              register_win32_formats
+ *
+ * Register Win32 clipboard formats the first time we encounter them.
+ */
+static void register_win32_formats(const UINT *ids, UINT size)
+{
+    unsigned int i;
+
+    if (list_empty(&format_list)) register_builtin_formats();
+
+    for (i = 0; i < size; i++)
+        register_format(ids[i], NULL);
+}
+
+
+/***********************************************************************
+ *              get_clipboard_formats
+ *
+ * Return a list of all formats currently available on the Win32 clipboard.
+ * Helper for set_mac_pasteboard_types_from_win32_clipboard.
+ */
+static UINT *get_clipboard_formats(UINT *size)
+{
+    UINT *ids;
+
+    *size = 256;
+    for (;;)
+    {
+        if (!(ids = HeapAlloc(GetProcessHeap(), 0, *size * sizeof(*ids)))) return NULL;
+        if (GetUpdatedClipboardFormats(ids, *size, size)) break;
+        HeapFree(GetProcessHeap(), 0, ids);
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
+    }
+    register_win32_formats(ids, *size);
+    return ids;
+}
+
+
+/**************************************************************************
+ *              set_mac_pasteboard_types_from_win32_clipboard
+ */
+static void set_mac_pasteboard_types_from_win32_clipboard(void)
+{
+    WINE_CLIPFORMAT *format;
+    UINT count, i, *formats;
+
+    if (!(formats = get_clipboard_formats(&count))) return;
+
+    macdrv_clear_pasteboard();
+
+    for (i = 0; i < count; i++)
+    {
+        LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
+        {
+            if (format->format_id != formats[i]) continue;
+            TRACE("%s -> %s\n", debugstr_format(format->format_id), debugstr_cf(format->type));
+            macdrv_set_pasteboard_data(format->type, NULL, clipboard_cocoa_window);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, formats);
+    return;
+}
+
+
+/**************************************************************************
+ *              set_win32_clipboard_formats_from_mac_pasteboard
+ */
+static void set_win32_clipboard_formats_from_mac_pasteboard(void)
+{
+    WINE_CLIPFORMAT** formats;
+    UINT count, i;
+
+    formats = get_formats_for_pasteboard(NULL, &count);
+    if (!formats)
+        return;
+
+    for (i = 0; i < count; i++)
+    {
+        TRACE("adding format %s\n", debugstr_format(formats[i]->format_id));
+        SetClipboardData(formats[i]->format_id, 0);
+    }
+
+    HeapFree(GetProcessHeap(), 0, current_mac_formats);
+    current_mac_formats = formats;
+    nb_current_mac_formats = count;
+}
+
+
+/**************************************************************************
+ *              render_format
+ */
+static void render_format(UINT id)
+{
+    unsigned int i;
+
+    for (i = 0; i < nb_current_mac_formats; i++)
+    {
+        CFDataRef pasteboard_data;
+
+        if (current_mac_formats[i]->format_id != id) continue;
+
+        pasteboard_data = macdrv_copy_pasteboard_data(NULL, current_mac_formats[i]->type);
+        if (pasteboard_data)
+        {
+            HANDLE handle = current_mac_formats[i]->import_func(pasteboard_data);
+            CFRelease(pasteboard_data);
+            if (handle) SetClipboardData(id, handle);
+            break;
+        }
+    }
+}
+
+
+/**************************************************************************
+ *              grab_win32_clipboard
+ *
+ * Grab the Win32 clipboard when a Mac app has taken ownership of the
+ * pasteboard, and fill it with the pasteboard data types.
+ */
+static BOOL grab_win32_clipboard(void)
+{
+    if (!OpenClipboard(clipboard_hwnd)) return FALSE;
+    EmptyClipboard();
+    is_clipboard_owner = TRUE;
+    last_clipboard_update = GetTickCount64();
+    set_win32_clipboard_formats_from_mac_pasteboard();
+    CloseClipboard();
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *              clipboard_wndproc
+ *
+ * Window procedure for the clipboard manager.
+ */
+static LRESULT CALLBACK clipboard_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    switch (msg)
+    {
+        case WM_NCCREATE:
+            return TRUE;
+        case WM_CLIPBOARDUPDATE:
+            if (is_clipboard_owner) break;  /* ignore our own changes */
+            set_mac_pasteboard_types_from_win32_clipboard();
+            break;
+        case WM_RENDERFORMAT:
+            render_format(wp);
+            break;
+        case WM_DESTROYCLIPBOARD:
+            TRACE("WM_DESTROYCLIPBOARD: lost ownership\n");
+            is_clipboard_owner = FALSE;
+            break;
+    }
+    return DefWindowProcW(hwnd, msg, wp, lp);
+}
+
+
+/**************************************************************************
+ *              wait_clipboard_mutex
+ *
+ * Make sure that there's only one clipboard thread per window station.
+ */
+static BOOL wait_clipboard_mutex(void)
+{
+    static const WCHAR prefix[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
+    WCHAR buffer[MAX_PATH + sizeof(prefix) / sizeof(WCHAR)];
+    HANDLE mutex;
+
+    memcpy(buffer, prefix, sizeof(prefix));
+    if (!GetUserObjectInformationW(GetProcessWindowStation(), UOI_NAME,
+                                   buffer + sizeof(prefix) / sizeof(WCHAR),
+                                   sizeof(buffer) - sizeof(prefix), NULL))
+    {
+        ERR("failed to get winstation name\n");
+        return FALSE;
+    }
+    mutex = CreateMutexW(NULL, TRUE, buffer);
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        TRACE("waiting for mutex %s\n", debugstr_w(buffer));
+        WaitForSingleObject(mutex, INFINITE);
+    }
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *              clipboard_thread
+ *
+ * Thread running inside the desktop process to manage the clipboard
+ */
+static DWORD WINAPI clipboard_thread(void *arg)
+{
+    static const WCHAR clipboard_classname[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_','m','a','n','a','g','e','r',0};
+    WNDCLASSW class;
+    struct macdrv_window_features wf;
+    MSG msg;
+
+    if (!wait_clipboard_mutex()) return 0;
+
+    memset(&class, 0, sizeof(class));
+    class.lpfnWndProc   = clipboard_wndproc;
+    class.lpszClassName = clipboard_classname;
+
+    if (!RegisterClassW(&class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+    {
+        ERR("could not register clipboard window class err %u\n", GetLastError());
+        return 0;
+    }
+    if (!(clipboard_hwnd = CreateWindowW(clipboard_classname, NULL, 0, 0, 0, 0, 0,
+                                         HWND_MESSAGE, 0, 0, NULL)))
+    {
+        ERR("failed to create clipboard window err %u\n", GetLastError());
+        return 0;
+    }
+
+    memset(&wf, 0, sizeof(wf));
+    clipboard_cocoa_window = macdrv_create_cocoa_window(&wf, CGRectMake(100, 100, 100, 100), clipboard_hwnd,
+                                                        macdrv_init_thread_data()->queue);
+    if (!clipboard_cocoa_window)
+    {
+        ERR("failed to create clipboard Cocoa window\n");
+        goto done;
+    }
+
+    clipboard_thread_id = GetCurrentThreadId();
+    AddClipboardFormatListener(clipboard_hwnd);
+    register_builtin_formats();
+    grab_win32_clipboard();
+
+    TRACE("clipboard thread %04x running\n", GetCurrentThreadId());
+    while (GetMessageW(&msg, NULL, 0, 0))
+        DispatchMessageW(&msg);
+
+done:
+    macdrv_destroy_cocoa_window(clipboard_cocoa_window);
+    DestroyWindow(clipboard_hwnd);
+    return 0;
+}
+
+
+/**************************************************************************
  *              Mac User Driver Clipboard Exports
  **************************************************************************/
 
@@ -1455,48 +1751,6 @@ UINT* macdrv_get_pasteboard_formats(CFTypeRef pasteboard, UINT* num_formats)
 /**************************************************************************
  *              MACDRV Private Clipboard Exports
  **************************************************************************/
-
-
-/**************************************************************************
- *              macdrv_clipboard_process_attach
- */
-void macdrv_clipboard_process_attach(void)
-{
-    UINT i;
-    WINE_CLIPFORMAT *format;
-
-    /* Register built-in formats */
-    for (i = 0; i < sizeof(builtin_format_ids)/sizeof(builtin_format_ids[0]); i++)
-    {
-        if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
-        format->format_id       = builtin_format_ids[i].id;
-        format->type            = CFRetain(builtin_format_ids[i].type);
-        format->import_func     = builtin_format_ids[i].import;
-        format->export_func     = builtin_format_ids[i].export;
-        format->synthesized     = builtin_format_ids[i].synthesized;
-        format->natural_format  = NULL;
-        list_add_tail(&format_list, &format->entry);
-    }
-
-    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
-    {
-        if (format->synthesized)
-            format->natural_format = natural_format_for_format(format->format_id);
-    }
-
-    /* Register known mappings between Windows formats and Mac types */
-    for (i = 0; i < sizeof(builtin_format_names)/sizeof(builtin_format_names[0]); i++)
-    {
-        if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
-        format->format_id       = RegisterClipboardFormatW(builtin_format_names[i].name);
-        format->type            = CFRetain(builtin_format_names[i].type);
-        format->import_func     = builtin_format_names[i].import;
-        format->export_func     = builtin_format_names[i].export;
-        format->synthesized     = FALSE;
-        format->natural_format  = NULL;
-        list_add_tail(&format_list, &format->entry);
-    }
-}
 
 
 /**************************************************************************
@@ -1508,12 +1762,12 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
     BOOL ret = FALSE;
     HANDLE handle;
 
-    TRACE("win %p type %s\n", hwnd, debugstr_cf(type));
+    TRACE("win %p/%p type %s\n", hwnd, clipboard_cocoa_window, debugstr_cf(type));
 
     format = format_for_type(type);
     if (!format) return FALSE;
 
-    if (!OpenClipboard(NULL))
+    if (!OpenClipboard(clipboard_hwnd))
     {
         ERR("failed to open clipboard for %s\n", debugstr_cf(type));
         return FALSE;
@@ -1527,7 +1781,7 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
 
         if ((data = format->export_func(handle)))
         {
-            ret = macdrv_set_pasteboard_data(format->type, data, macdrv_get_cocoa_window(hwnd, FALSE));
+            ret = macdrv_set_pasteboard_data(format->type, data, clipboard_cocoa_window);
             CFRelease(data);
         }
     }
@@ -1535,4 +1789,17 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
     CloseClipboard();
 
     return ret;
+}
+
+
+/**************************************************************************
+ *              macdrv_init_clipboard
+ */
+void macdrv_init_clipboard(void)
+{
+    DWORD id;
+    HANDLE handle = CreateThread(NULL, 0, clipboard_thread, NULL, 0, &id);
+
+    if (handle) CloseHandle(handle);
+    else ERR("failed to create clipboard thread\n");
 }
