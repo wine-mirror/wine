@@ -410,77 +410,28 @@ static int bitmap_info_size(const BITMAPINFO *info, WORD coloruse)
  *
  * Allocates a packed DIB and copies the bitmap data into it.
  */
-static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
+static HGLOBAL create_dib_from_bitmap(HBITMAP bitmap)
 {
-    BITMAP bmp;
-    HDC hdc;
-    HGLOBAL hPackedDIB;
-    LPBYTE pPackedDIB;
-    LPBITMAPINFOHEADER pbmiHeader;
-    unsigned int cDataSize, cPackedSize, OffsetBits;
-    int nLinesCopied;
+    HANDLE ret = 0;
+    BITMAPINFOHEADER header;
+    HDC hdc = GetDC(0);
+    DWORD header_size;
+    BITMAPINFO *bmi;
 
-    if (!GetObjectW(hBmp, sizeof(bmp), &bmp)) return 0;
+    memset(&header, 0, sizeof(header));
+    header.biSize = sizeof(header);
+    if (!GetDIBits(hdc, bitmap, 0, 0, NULL, (BITMAPINFO *)&header, DIB_RGB_COLORS)) goto done;
 
-    /*
-     * A packed DIB contains a BITMAPINFO structure followed immediately by
-     * an optional color palette and the pixel data.
-     */
+    header_size = bitmap_info_size((BITMAPINFO *)&header, DIB_RGB_COLORS);
+    if (!(ret = GlobalAlloc(GMEM_FIXED, header_size + header.biSizeImage))) goto done;
+    bmi = (BITMAPINFO *)ret;
+    memset(bmi, 0, header_size);
+    memcpy(bmi, &header, header.biSize);
+    GetDIBits(hdc, bitmap, 0, abs(header.biHeight), (char *)bmi + header_size, bmi, DIB_RGB_COLORS);
 
-    /* Calculate the size of the packed DIB */
-    cDataSize = abs(bmp.bmHeight) * (((bmp.bmWidth * bmp.bmBitsPixel + 31) / 8) & ~3);
-    cPackedSize = sizeof(BITMAPINFOHEADER)
-                  + ((bmp.bmBitsPixel <= 8) ? (sizeof(RGBQUAD) * (1 << bmp.bmBitsPixel)) : 0)
-                  + cDataSize;
-    /* Get the offset to the bits */
-    OffsetBits = cPackedSize - cDataSize;
-
-    /* Allocate the packed DIB */
-    TRACE("\tAllocating packed DIB of size %d\n", cPackedSize);
-    hPackedDIB = GlobalAlloc(GMEM_FIXED, cPackedSize);
-    if (!hPackedDIB)
-    {
-        WARN("Could not allocate packed DIB!\n");
-        return 0;
-    }
-
-    /* A packed DIB starts with a BITMAPINFOHEADER */
-    pPackedDIB = GlobalLock(hPackedDIB);
-    pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
-
-    /* Init the BITMAPINFOHEADER */
-    pbmiHeader->biSize = sizeof(BITMAPINFOHEADER);
-    pbmiHeader->biWidth = bmp.bmWidth;
-    pbmiHeader->biHeight = bmp.bmHeight;
-    pbmiHeader->biPlanes = 1;
-    pbmiHeader->biBitCount = bmp.bmBitsPixel;
-    pbmiHeader->biCompression = BI_RGB;
-    pbmiHeader->biSizeImage = 0;
-    pbmiHeader->biXPelsPerMeter = pbmiHeader->biYPelsPerMeter = 0;
-    pbmiHeader->biClrUsed = 0;
-    pbmiHeader->biClrImportant = 0;
-
-    /* Retrieve the DIB bits from the bitmap and fill in the
-     * DIB color table if present */
-    hdc = GetDC(0);
-    nLinesCopied = GetDIBits(hdc,                       /* Handle to device context */
-                             hBmp,                      /* Handle to bitmap */
-                             0,                         /* First scan line to set in dest bitmap */
-                             bmp.bmHeight,              /* Number of scan lines to copy */
-                             pPackedDIB + OffsetBits,   /* [out] Address of array for bitmap bits */
-                             (LPBITMAPINFO) pbmiHeader, /* [out] Address of BITMAPINFO structure */
-                             0);                        /* RGB or palette index */
-    GlobalUnlock(hPackedDIB);
+done:
     ReleaseDC(0, hdc);
-
-    /* Cleanup if GetDIBits failed */
-    if (nLinesCopied != bmp.bmHeight)
-    {
-        TRACE("\tGetDIBits returned %d. Actual lines=%d\n", nLinesCopied, bmp.bmHeight);
-        GlobalFree(hPackedDIB);
-        hPackedDIB = 0;
-    }
-    return hPackedDIB;
+    return ret;
 }
 
 
