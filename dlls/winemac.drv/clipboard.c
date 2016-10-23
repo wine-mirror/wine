@@ -73,18 +73,9 @@ typedef struct _WINE_CLIPFORMAT
 static HANDLE import_clipboard_data(CFDataRef data);
 static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
-static HANDLE import_dib_to_bitmap(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
-static HANDLE import_enhmetafile_to_metafilepict(CFDataRef data);
 static HANDLE import_metafilepict(CFDataRef data);
-static HANDLE import_metafilepict_to_enhmetafile(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
-static HANDLE import_oemtext_to_text(CFDataRef data);
-static HANDLE import_oemtext_to_unicodetext(CFDataRef data);
-static HANDLE import_text_to_oemtext(CFDataRef data);
-static HANDLE import_text_to_unicodetext(CFDataRef data);
-static HANDLE import_unicodetext_to_oemtext(CFDataRef data);
-static HANDLE import_unicodetext_to_text(CFDataRef data);
 static HANDLE import_utf8_to_oemtext(CFDataRef data);
 static HANDLE import_utf8_to_text(CFDataRef data);
 static HANDLE import_utf8_to_unicodetext(CFDataRef data);
@@ -94,7 +85,6 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data);
 
 static CFDataRef export_clipboard_data(HANDLE data);
 static CFDataRef export_bitmap_to_bmp(HANDLE data);
-static CFDataRef export_bitmap_to_dib(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
@@ -161,7 +151,9 @@ static const struct
 } builtin_format_ids[] =
 {
     { CF_DIF,               CFSTR("org.winehq.builtin.dif"),                import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
     { CF_LOCALE,            CFSTR("org.winehq.builtin.locale"),             import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,            export_metafilepict,        FALSE },
     { CF_PALETTE,           CFSTR("org.winehq.builtin.palette"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PENDATA,           CFSTR("org.winehq.builtin.pendata"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_RIFF,              CFSTR("org.winehq.builtin.riff"),               import_clipboard_data,          export_clipboard_data,      FALSE },
@@ -169,50 +161,29 @@ static const struct
     { CF_TIFF,              CFSTR("public.tiff"),                           import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_WAVE,              CFSTR("com.microsoft.waveform-audio"),          import_clipboard_data,          export_clipboard_data,      FALSE },
 
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.unicodetext"),        import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_TEXT,              CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_text,     NULL,                       TRUE },
-    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_oemtext,  NULL,                       TRUE },
-
-    { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.text"),               import_text_to_oemtext,         NULL,                       TRUE },
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.text"),               import_text_to_unicodetext,     NULL,                       TRUE },
-
-    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_TEXT,              CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_text,         NULL,                       TRUE },
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_unicodetext,  NULL,                       TRUE },
-
-    { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            export_text_to_utf8,        TRUE },
-    { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         export_oemtext_to_utf8,     TRUE },
-    { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     export_unicodetext_to_utf8, TRUE },
-
-    { CF_TEXT,              CFSTR("public.utf16-plain-text"),                import_utf16_to_text,          export_text_to_utf16,       TRUE },
-    { CF_OEMTEXT,           CFSTR("public.utf16-plain-text"),                import_utf16_to_oemtext,       export_oemtext_to_utf16,    TRUE },
-    { CF_UNICODETEXT,       CFSTR("public.utf16-plain-text"),                import_utf16_to_unicodetext,   export_unicodetext_to_utf16,TRUE },
-
     { CF_BITMAP,            CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_bitmap,           export_bitmap_to_bmp,       FALSE },
-    { CF_DIB,               CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
-    { CF_DIBV5,             CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
+    { CF_BITMAP,            CFSTR("com.microsoft.bmp"),                     import_bmp_to_bitmap,           export_bitmap_to_bmp,       TRUE },
 
     { CF_DIB,               CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_BITMAP,            CFSTR("org.winehq.builtin.dib"),                import_dib_to_bitmap,           export_bitmap_to_dib,       TRUE },
-    { CF_DIBV5,             CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      TRUE },
+    { CF_DIB,               CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
 
     { CF_DIBV5,             CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_BITMAP,            CFSTR("org.winehq.builtin.dibv5"),              import_dib_to_bitmap,           export_bitmap_to_dib,       TRUE },
-    { CF_DIB,               CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      TRUE },
-
-    { CF_BITMAP,            CFSTR("com.microsoft.bmp"),                     import_bmp_to_bitmap,           export_bitmap_to_bmp,       TRUE },
-    { CF_DIB,               CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
     { CF_DIBV5,             CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
 
     { CF_HDROP,             CFSTR("org.winehq.builtin.hdrop"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
 
-    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,                 export_enhmetafile,     FALSE },
-    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile_to_metafilepict, NULL,                   TRUE },
+    { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_OEMTEXT,           CFSTR("public.utf16-plain-text"),               import_utf16_to_oemtext,        export_oemtext_to_utf16,    TRUE },
+    { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         export_oemtext_to_utf8,     TRUE },
 
-    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,                export_metafilepict,    FALSE },
-    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict_to_enhmetafile, NULL,                   TRUE },
+    { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_TEXT,              CFSTR("public.utf16-plain-text"),               import_utf16_to_text,           export_text_to_utf16,       TRUE },
+    { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            export_text_to_utf8,        TRUE },
+
+    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.unicodetext"),        import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_UNICODETEXT,       CFSTR("public.utf16-plain-text"),               import_utf16_to_unicodetext,    export_unicodetext_to_utf16,TRUE },
+    { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     export_unicodetext_to_utf8, TRUE },
 };
 
 static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
@@ -727,24 +698,6 @@ static HANDLE import_bmp_to_dib(CFDataRef data)
 
 
 /**************************************************************************
- *              import_dib_to_bitmap
- *
- *  Import device-independent bitmap data, converting to CF_BITMAP format.
- */
-static HANDLE import_dib_to_bitmap(CFDataRef data)
-{
-    HANDLE ret;
-    HANDLE dib = import_clipboard_data(data);
-
-    ret = create_bitmap_from_dib(dib);
-
-    GlobalFree(dib);
-
-    return ret;
-}
-
-
-/**************************************************************************
  *              import_enhmetafile
  *
  *  Import enhanced metafile data, converting it to CF_ENHMETAFILE.
@@ -759,48 +712,6 @@ static HANDLE import_enhmetafile(CFDataRef data)
     if (len)
         ret = SetEnhMetaFileBits(len, (const BYTE*)CFDataGetBytePtr(data));
 
-    return ret;
-}
-
-
-/**************************************************************************
- *              import_enhmetafile_to_metafilepict
- *
- *  Import enhanced metafile data, converting it to CF_METAFILEPICT.
- */
-static HANDLE import_enhmetafile_to_metafilepict(CFDataRef data)
-{
-    HANDLE ret = 0, hmf;
-    HANDLE hemf;
-    METAFILEPICT *mfp;
-
-    if ((hmf = GlobalAlloc(GMEM_FIXED, sizeof(*mfp))) && (hemf = import_enhmetafile(data)))
-    {
-        ENHMETAHEADER header;
-        HDC hdc = CreateCompatibleDC(0);
-        unsigned int size = GetWinMetaFileBits(hemf, 0, NULL, MM_ISOTROPIC, hdc);
-        BYTE *bytes;
-
-        bytes = HeapAlloc(GetProcessHeap(), 0, size);
-        if (bytes && GetEnhMetaFileHeader(hemf, sizeof(header), &header) &&
-            GetWinMetaFileBits(hemf, size, bytes, MM_ISOTROPIC, hdc))
-        {
-            mfp = GlobalLock(hmf);
-            mfp->mm = MM_ISOTROPIC;
-            mfp->xExt = header.rclFrame.right - header.rclFrame.left;
-            mfp->yExt = header.rclFrame.bottom - header.rclFrame.top;
-            mfp->hMF = SetMetaFileBitsEx(size, bytes);
-            GlobalUnlock(hmf);
-
-            ret = hmf;
-        }
-
-        if (hdc) DeleteDC(hdc);
-        HeapFree(GetProcessHeap(), 0, bytes);
-        DeleteEnhMetaFile(hemf);
-    }
-
-    if (!ret) GlobalFree(hmf);
     return ret;
 }
 
@@ -826,29 +737,6 @@ static HANDLE import_metafilepict(CFDataRef data)
         memcpy(mfp, bytes, sizeof(*mfp));
         mfp->hMF = SetMetaFileBitsEx(len - sizeof(*mfp), bytes + sizeof(*mfp));
         GlobalUnlock(ret);
-    }
-
-    return ret;
-}
-
-
-/**************************************************************************
- *              import_metafilepict_to_enhmetafile
- *
- *  Import metafile picture data, converting it to CF_ENHMETAFILE.
- */
-static HANDLE import_metafilepict_to_enhmetafile(CFDataRef data)
-{
-    HANDLE ret = 0;
-    CFIndex len = CFDataGetLength(data);
-    const METAFILEPICT *mfp;
-
-    TRACE("data %s\n", debugstr_cf(data));
-
-    if (len >= sizeof(*mfp))
-    {
-        mfp = (const METAFILEPICT*)CFDataGetBytePtr(data);
-        ret = SetWinMetaFileBits(len - sizeof(*mfp), (const BYTE*)(mfp + 1), NULL, mfp);
     }
 
     return ret;
@@ -970,72 +858,6 @@ done:
     HeapFree(GetProcessHeap(), 0, buffer);
     if (names) CFRelease(names);
     return hdrop;
-}
-
-
-/**************************************************************************
- *              import_oemtext_to_text
- *
- *  Import CF_OEMTEXT data, converting the string to CF_TEXT.
- */
-static HANDLE import_oemtext_to_text(CFDataRef data)
-{
-    return convert_text(CFDataGetBytePtr(data), CFDataGetLength(data), CP_OEMCP, CP_ACP);
-}
-
-
-/**************************************************************************
- *              import_oemtext_to_unicodetext
- *
- *  Import CF_OEMTEXT data, converting the string to CF_UNICODETEXT.
- */
-static HANDLE import_oemtext_to_unicodetext(CFDataRef data)
-{
-    return convert_text(CFDataGetBytePtr(data), CFDataGetLength(data), CP_OEMCP, -1);
-}
-
-
-/**************************************************************************
- *              import_text_to_oemtext
- *
- *  Import CF_TEXT data, converting the string to CF_OEMTEXT.
- */
-static HANDLE import_text_to_oemtext(CFDataRef data)
-{
-    return convert_text(CFDataGetBytePtr(data), CFDataGetLength(data), CP_ACP, CP_OEMCP);
-}
-
-
-/**************************************************************************
- *              import_text_to_unicodetext
- *
- *  Import CF_TEXT data, converting the string to CF_UNICODETEXT.
- */
-static HANDLE import_text_to_unicodetext(CFDataRef data)
-{
-    return convert_text(CFDataGetBytePtr(data), CFDataGetLength(data), CP_ACP, -1);
-}
-
-
-/**************************************************************************
- *              import_unicodetext_to_oemtext
- *
- *  Import a CF_UNICODETEXT string, converting the string to CF_OEMTEXT.
- */
-static HANDLE import_unicodetext_to_oemtext(CFDataRef data)
-{
-    return convert_text(CFDataGetBytePtr(data), CFDataGetLength(data), -1, CP_OEMCP);
-}
-
-
-/**************************************************************************
- *              import_unicodetext_to_text
- *
- *  Import a CF_UNICODETEXT string, converting the string to CF_TEXT.
- */
-static HANDLE import_unicodetext_to_text(CFDataRef data)
-{
-    return convert_text(CFDataGetBytePtr(data), CFDataGetLength(data), -1, CP_ACP);
 }
 
 
@@ -1234,27 +1056,6 @@ static CFDataRef export_bitmap_to_bmp(HANDLE data)
     if (dib)
     {
         ret = export_dib_to_bmp(dib);
-        GlobalFree(dib);
-    }
-
-    return ret;
-}
-
-
-/**************************************************************************
- *              export_bitmap_to_dib
- *
- *  Export CF_BITMAP to a raw packed device-independent bitmap.
- */
-static CFDataRef export_bitmap_to_dib(HANDLE data)
-{
-    CFDataRef ret = NULL;
-    HGLOBAL dib;
-
-    dib = create_dib_from_bitmap(data);
-    if (dib)
-    {
-        ret = export_clipboard_data(dib);
         GlobalFree(dib);
     }
 
