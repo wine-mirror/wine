@@ -161,12 +161,7 @@ static const struct
 } builtin_format_ids[] =
 {
     { CF_DIF,               CFSTR("org.winehq.builtin.dif"),                import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_DSPBITMAP,         CFSTR("org.winehq.builtin.dspbitmap"),          import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_DSPENHMETAFILE,    CFSTR("org.winehq.builtin.dspenhmetafile"),     import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_DSPMETAFILEPICT,   CFSTR("org.winehq.builtin.dspmetafilepict"),    import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_DSPTEXT,           CFSTR("org.winehq.builtin.dsptext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_LOCALE,            CFSTR("org.winehq.builtin.locale"),             import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_OWNERDISPLAY,      CFSTR("org.winehq.builtin.ownerdisplay"),       import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PALETTE,           CFSTR("org.winehq.builtin.palette"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PENDATA,           CFSTR("org.winehq.builtin.pendata"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_RIFF,              CFSTR("org.winehq.builtin.riff"),               import_clipboard_data,          export_clipboard_data,      FALSE },
