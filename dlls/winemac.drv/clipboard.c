@@ -461,7 +461,7 @@ static HANDLE convert_text(const void *src, int src_len, UINT src_cp, UINT dest_
 
     if (dest_cp == (UINT)-1)
     {
-        handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, wstr_len * sizeof(WCHAR));
+        handle = GlobalAlloc(GMEM_FIXED, wstr_len * sizeof(WCHAR));
         if (handle && (p = GlobalLock(handle)))
         {
             memcpy(p, wstr, wstr_len * sizeof(WCHAR));
@@ -475,7 +475,7 @@ static HANDLE convert_text(const void *src, int src_len, UINT src_cp, UINT dest_
 
         len = WideCharToMultiByte(dest_cp, 0, wstr, wstr_len, NULL, 0, NULL, NULL);
         if (!wstr_len || wstr[wstr_len - 1]) len += 1;
-        handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, len);
+        handle = GlobalAlloc(GMEM_FIXED, len);
 
         if (handle && (p = GlobalLock(handle)))
         {
@@ -568,7 +568,7 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
 
     /* Allocate the packed DIB */
     TRACE("\tAllocating packed DIB of size %d\n", cPackedSize);
-    hPackedDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cPackedSize);
+    hPackedDIB = GlobalAlloc(GMEM_FIXED, cPackedSize);
     if (!hPackedDIB)
     {
         WARN("Could not allocate packed DIB!\n");
@@ -660,7 +660,7 @@ static HANDLE import_clipboard_data(CFDataRef data)
         LPVOID p;
 
         /* Turn on the DDESHARE flag to enable shared 32 bit memory */
-        data_handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, len);
+        data_handle = GlobalAlloc(GMEM_FIXED, len);
         if (!data_handle)
             return NULL;
 
@@ -716,7 +716,7 @@ static HANDLE import_bmp_to_dib(CFDataRef data)
         BYTE* p;
 
         len -= sizeof(*bfh);
-        ret = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, len);
+        ret = GlobalAlloc(GMEM_FIXED, len);
         if (!ret || !(p = GlobalLock(ret)))
         {
             GlobalFree(ret);
@@ -779,7 +779,7 @@ static HANDLE import_enhmetafile_to_metafilepict(CFDataRef data)
     HANDLE hemf;
     METAFILEPICT *mfp;
 
-    if ((hmf = GlobalAlloc(0, sizeof(*mfp))) && (hemf = import_enhmetafile(data)))
+    if ((hmf = GlobalAlloc(GMEM_FIXED, sizeof(*mfp))) && (hemf = import_enhmetafile(data)))
     {
         ENHMETAHEADER header;
         HDC hdc = CreateCompatibleDC(0);
@@ -823,7 +823,7 @@ static HANDLE import_metafilepict(CFDataRef data)
 
     TRACE("data %s\n", debugstr_cf(data));
 
-    if (len >= sizeof(*mfp) && (ret = GlobalAlloc(0, sizeof(*mfp))))
+    if (len >= sizeof(*mfp) && (ret = GlobalAlloc(GMEM_FIXED, sizeof(*mfp))))
     {
         const BYTE *bytes = (const BYTE*)CFDataGetBytePtr(data);
 
@@ -940,7 +940,7 @@ static HANDLE import_nsfilenames_to_hdrop(CFDataRef data)
     for (i = 0; i < count; i++)
         len += strlenW(paths[i]) + 1;
 
-    hdrop = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(*dropfiles) + len * sizeof(WCHAR));
+    hdrop = GlobalAlloc(GMEM_FIXED, sizeof(*dropfiles) + len * sizeof(WCHAR));
     if (!hdrop || !(dropfiles = GlobalLock(hdrop)))
     {
         WARN("failed to allocate HDROP\n");
@@ -1110,7 +1110,7 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data)
         dst[j] = 0;
 
         count = MultiByteToWideChar(CP_UTF8, 0, dst, -1, NULL, 0);
-        unicode_handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, count * sizeof(WCHAR));
+        unicode_handle = GlobalAlloc(GMEM_FIXED, count * sizeof(WCHAR));
 
         if (unicode_handle)
         {
@@ -1178,7 +1178,7 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data)
             new_lines++;
     }
 
-    if ((unicode_handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (src_len + new_lines + 1) * sizeof(WCHAR))))
+    if ((unicode_handle = GlobalAlloc(GMEM_FIXED, (src_len + new_lines + 1) * sizeof(WCHAR))))
     {
         dst = GlobalLock(unicode_handle);
 
