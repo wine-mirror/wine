@@ -310,44 +310,39 @@ static WINE_CLIPFORMAT* register_format(UINT id, CFStringRef type)
 /**************************************************************************
  *              format_for_type
  */
-static WINE_CLIPFORMAT* format_for_type(WINE_CLIPFORMAT *current, CFStringRef type)
+static WINE_CLIPFORMAT* format_for_type(CFStringRef type)
 {
-    struct list *ptr = current ? &current->entry : &format_list;
-    WINE_CLIPFORMAT *format = NULL;
+    WINE_CLIPFORMAT *format;
 
-    TRACE("current %p/%s type %s\n", current, debugstr_format(current ? current->format_id : 0), debugstr_cf(type));
+    TRACE("type %s\n", debugstr_cf(type));
 
-    while ((ptr = list_next(&format_list, ptr)))
+    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
     {
-        format = LIST_ENTRY(ptr, WINE_CLIPFORMAT, entry);
         if (CFEqual(format->type, type))
             goto done;
     }
 
     format = NULL;
-    if (!current)
+    if (CFStringHasPrefix(type, CFSTR("org.winehq.builtin.")))
     {
-        if (CFStringHasPrefix(type, CFSTR("org.winehq.builtin.")))
-        {
-            ERR("Shouldn't happen. Built-in type %s should have matched something in format list.\n",
-                debugstr_cf(type));
-        }
-        else if (CFStringHasPrefix(type, registered_name_type_prefix))
-        {
-            LPWSTR name;
-            int len = CFStringGetLength(type) - CFStringGetLength(registered_name_type_prefix);
+        ERR("Shouldn't happen. Built-in type %s should have matched something in format list.\n",
+            debugstr_cf(type));
+    }
+    else if (CFStringHasPrefix(type, registered_name_type_prefix))
+    {
+        LPWSTR name;
+        int len = CFStringGetLength(type) - CFStringGetLength(registered_name_type_prefix);
 
-            name = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-            CFStringGetCharacters(type, CFRangeMake(CFStringGetLength(registered_name_type_prefix), len),
-                                  (UniChar*)name);
-            name[len] = 0;
+        name = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+        CFStringGetCharacters(type, CFRangeMake(CFStringGetLength(registered_name_type_prefix), len),
+                              (UniChar*)name);
+        name[len] = 0;
 
-            format = register_format(RegisterClipboardFormatW(name), type);
-            if (!format)
-                ERR("Failed to register format for type %s name %s\n", debugstr_cf(type), debugstr_w(name));
+        format = register_format(RegisterClipboardFormatW(name), type);
+        if (!format)
+            ERR("Failed to register format for type %s name %s\n", debugstr_cf(type), debugstr_w(name));
 
-            HeapFree(GetProcessHeap(), 0, name);
-        }
+        HeapFree(GetProcessHeap(), 0, name);
     }
 
 done:
@@ -1261,10 +1256,9 @@ HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
 
         type = CFArrayGetValueAtIndex(types, i);
 
-        format = NULL;
-        while ((!best_format || best_format->synthesized) && (format = format_for_type(format, type)))
+        if ((format = format_for_type(type)))
         {
-            TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format ? format->format_id : 0));
+            TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
 
             if (format->format_id == desired_format)
             {
@@ -1320,18 +1314,20 @@ BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format)
     count = CFArrayGetCount(types);
     TRACE("got %d types\n", count);
 
-    for (i = 0; !found && i < count; i++)
+    for (i = 0; i < count; i++)
     {
         CFStringRef type = CFArrayGetValueAtIndex(types, i);
-        WINE_CLIPFORMAT* format;
+        WINE_CLIPFORMAT* format = format_for_type(type);
 
-        format = NULL;
-        while (!found && (format = format_for_type(format, type)))
+        if (format)
         {
             TRACE("for type %s got format %s\n", debugstr_cf(type), debugstr_format(format->format_id));
 
             if (format->format_id == desired_format)
+            {
                 found = TRUE;
+                break;
+            }
         }
     }
 
@@ -1381,62 +1377,34 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
     for (i = 0; i < count; i++)
     {
         CFStringRef type = CFArrayGetValueAtIndex(types, i);
-        BOOL found = FALSE;
 
-        format = NULL;
-        while ((format = format_for_type(format, type)))
+        format = format_for_type(type);
+        if (!format)
         {
-            /* Suppose type is "public.utf8-plain-text".  format->format_id will be each of
-               CF_TEXT, CF_OEMTEXT, and CF_UNICODETEXT in turn.  We want to look up the natural
-               type for each of those IDs (e.g. CF_TEXT -> "org.winehq.builtin.text") and then see
-               if that type is present in the pasteboard.  If it is, then we don't want to add the
-               format to the list yet because it would be out of order.
-
-               For example, if a Mac app put "public.utf8-plain-text" and "public.tiff" on the
-               pasteboard, then we want the Win32 clipboard formats to be CF_TEXT, CF_OEMTEXT, and
-               CF_UNICODETEXT, and CF_TIFF, in that order.  All of the text formats belong before
-               CF_TIFF because the Mac app expressed that text was "better" than the TIFF.  In
-               this case, as soon as we encounter "public.utf8-plain-text" we should add all of
-               the associated text format IDs.
-
-               But if a Wine process put "org.winehq.builtin.unicodetext",
-               "public.utf8-plain-text", "public.utf16-plain-text", and "public.tiff", then we
-               want the clipboard formats to be CF_UNICODETEXT, CF_TIFF, CF_TEXT, and CF_OEMTEXT,
-               in that order.  The Windows program presumably added CF_UNICODETEXT and CF_TIFF.
-               We're synthesizing CF_TEXT and CF_OEMTEXT from CF_UNICODETEXT but we want them to
-               come after the non-synthesized CF_TIFF.  In this case, we don't want to add the
-               text formats upon encountering "public.utf8-plain-text",
-
-               We tell the two cases apart by seeing that one of the natural types for the text
-               formats (i.e. "org.winehq.builtin.unicodetext") is present on the pasteboard.
-               "found" indicates that. */
-
-            if (!format->synthesized)
-            {
-                TRACE("for type %s got primary format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-                CFArrayAppendValue(formats, (void*)format->format_id);
-                found = TRUE;
-            }
-            else if (!found && format->natural_format &&
-                     CFArrayContainsValue(types, CFRangeMake(0, count), format->natural_format->type))
-            {
-                TRACE("for type %s deferring synthesized formats because type %s is also present\n",
-                      debugstr_cf(type), debugstr_cf(format->natural_format->type));
-                found = TRUE;
-            }
+            TRACE("ignoring type %s\n", debugstr_cf(type));
+            continue;
         }
 
-        if (!found)
+        if (!format->synthesized)
         {
-            while ((format = format_for_type(format, type)))
-            {
-                /* Don't override a real value with a synthesized value. */
-                if (!CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
-                {
-                    TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-                    CFArrayAppendValue(formats, (void*)format->format_id);
-                }
-            }
+            TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+            CFArrayAppendValue(formats, (void*)format->format_id);
+        }
+        else if (format->natural_format &&
+                 CFArrayContainsValue(types, CFRangeMake(0, count), format->natural_format->type))
+        {
+            TRACE("for type %s deferring synthesized formats because type %s is also present\n",
+                  debugstr_cf(type), debugstr_cf(format->natural_format->type));
+        }
+        else if (CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
+        {
+            TRACE("for type %s got duplicate synthesized format %p/%s; skipping\n", debugstr_cf(type), format,
+                  debugstr_format(format->format_id));
+        }
+        else
+        {
+            TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+            CFArrayAppendValue(formats, (void*)format->format_id);
         }
     }
 
@@ -1445,19 +1413,15 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
     {
         CFStringRef type = CFArrayGetValueAtIndex(types, i);
 
-        format = NULL;
-        while ((format = format_for_type(format, type)))
-        {
-            if (format->synthesized)
-            {
-                /* Don't override a real value with a synthesized value. */
-                if (!CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
-                {
-                    TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-                    CFArrayAppendValue(formats, (void*)format->format_id);
-                }
-            }
-        }
+        format = format_for_type(type);
+        if (!format) continue;
+        if (!format->synthesized) continue;
+
+        /* Don't duplicate a real value with a synthesized value. */
+        if (CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id)) continue;
+
+        TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+        CFArrayAppendValue(formats, (void*)format->format_id);
     }
 
     CFRelease(types);
@@ -1528,53 +1492,39 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
     CLIPBOARDINFO cbinfo;
     WINE_CLIPFORMAT* format;
     CFArrayRef types = NULL;
-    CFRange range;
 
     TRACE("hwnd %p type %s\n", hwnd, debugstr_cf(type));
 
     if (get_clipboard_info(&cbinfo))
         hwnd = cbinfo.hwnd_owner;
 
-    format = NULL;
-    while ((format = format_for_type(format, type)))
+    format = format_for_type(type);
+    if (!format) goto done;
+
+    TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+
+    if (!format->synthesized)
     {
-        TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+        TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
+        SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
+        ret = TRUE;
+        goto done;
+    }
 
-        if (!format->synthesized)
-        {
-            TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
-            SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
-            ret = TRUE;
-            goto done;
-        }
+    types = macdrv_copy_pasteboard_types(NULL);
+    if (!types)
+    {
+        WARN("Failed to copy pasteboard types\n");
+        goto done;
+    }
 
-        if (!types)
-        {
-            types = macdrv_copy_pasteboard_types(NULL);
-            if (!types)
-            {
-                WARN("Failed to copy pasteboard types\n");
-                break;
-            }
-
-            range = CFRangeMake(0, CFArrayGetCount(types));
-        }
-
-        /* The type maps to a synthesized format.  Now look up what type that format maps to natively
-           (not synthesized).  For example, if type is "public.utf8-plain-text", then this format may
-           have an ID of CF_TEXT.  From CF_TEXT, we want to find "org.winehq.builtin.text" to see if
-           that type is present in the pasteboard.  If it is, then the app must have promised it and
-           we can ask it to render it.  (If it had put it on the clipboard immediately, then the
-           pasteboard would also have data for "public.utf8-plain-text" and we wouldn't be here.)  If
-           "org.winehq.builtin.text" is not on the pasteboard, then one of the other text formats is
-           presumably responsible for the promise that we're trying to satisfy, so we keep looking. */
-        if (format->natural_format && CFArrayContainsValue(types, range, format->natural_format->type))
-        {
-            TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
-            SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
-            ret = TRUE;
-            goto done;
-        }
+    if (format->natural_format &&
+        CFArrayContainsValue(types, CFRangeMake(0, CFArrayGetCount(types)), format->natural_format->type))
+    {
+        TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
+        SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
+        ret = TRUE;
+        goto done;
     }
 
 done:
