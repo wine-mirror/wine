@@ -196,12 +196,10 @@ static void draw_primitive_immediate_mode(struct wined3d_context *context, const
     if (instance_count)
         FIXME("Instancing not implemented.\n");
 
-    /* Immediate mode drawing can't make use of indices in a vbo - get the
-     * data from the index buffer. If the index buffer has no vbo (not
-     * supported or other reason), or with user pointer drawing idx_data
-     * will be non-NULL. */
-    if (idx_size && !idx_data)
-        idx_data = wined3d_buffer_load_sysmem(state->index_buffer, context);
+    /* Immediate mode drawing can't make use of indices in a VBO - get the
+     * data from the index buffer. */
+    if (idx_size)
+        idx_data = wined3d_buffer_load_sysmem(state->index_buffer, context) + state->index_offset;
 
     ops = &d3d_info->ffp_attrib_ops;
 
