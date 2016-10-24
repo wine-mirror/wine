@@ -383,6 +383,8 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
         return NULL;
     }
 
+    allow_fd_caching( file->fd );
+
     if (device->manager)
     {
         struct irp_call *irp;

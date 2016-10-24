@@ -2441,10 +2441,10 @@ DECL_HANDLER(get_handle_fd)
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
         int unix_fd = get_unix_fd( fd );
+        reply->cacheable = fd->cacheable;
         if (unix_fd != -1)
         {
             reply->type = fd->fd_ops->get_fd_type( fd );
-            reply->cacheable = fd->cacheable;
             reply->options = fd->options;
             reply->access = get_handle_access( current->process, req->handle );
             send_client_fd( current->process, unix_fd, req->handle );
