@@ -391,18 +391,19 @@ static void remove_vbos(struct wined3d_context *context,
 {
     unsigned int i;
 
-    for (i = 0; i < (sizeof(s->elements) / sizeof(*s->elements)); ++i)
+    for (i = 0; i < ARRAY_SIZE(s->elements); ++i)
     {
         struct wined3d_stream_info_element *e;
 
-        if (!(s->use_map & (1u << i))) continue;
+        if (!(s->use_map & (1u << i)))
+            continue;
 
         e = &s->elements[i];
         if (e->data.buffer_object)
         {
             struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
             e->data.buffer_object = 0;
-            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)wined3d_buffer_load_sysmem(vb, context));
+            e->data.addr += (ULONG_PTR)wined3d_buffer_load_sysmem(vb, context);
         }
     }
 }
