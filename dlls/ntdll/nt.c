@@ -2062,7 +2062,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     int i;
                     cpus = min(cpus,out_cpus);
                     len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * cpus;
-                    sppi = RtlAllocateHeap(GetProcessHeap(), 0,len);
+                    sppi = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
                     for (i = 0; i < cpus; i++)
                     {
                         sppi[i].IdleTime.QuadPart = pinfo[i].cpu_ticks[CPU_STATE_IDLE];
@@ -2118,7 +2118,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 unsigned int n;
                 cpus = min(NtCurrentTeb()->Peb->NumberOfProcessors, out_cpus);
                 len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * cpus;
-                sppi = RtlAllocateHeap(GetProcessHeap(), 0, len);
+                sppi = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
                 FIXME("stub info_class SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION\n");
                 /* many programs expect these values to change so fake change */
                 for (n = 0; n < cpus; n++)
