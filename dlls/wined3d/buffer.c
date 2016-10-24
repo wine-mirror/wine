@@ -858,10 +858,6 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
     unsigned int i, j, start, end, len, vertex_count;
     BYTE *data;
 
-    /* This would potentially invalidate the element array buffer binding. */
-    if (buffer->buffer_type_hint != GL_ARRAY_BUFFER)
-        ERR("Converting data in non-vertex buffer.\n");
-
     wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
 
     /* Now for each vertex in the buffer that needs conversion. */
@@ -873,6 +869,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
         return;
     }
 
+    buffer_bind(buffer, context);
     while (buffer->modified_areas)
     {
         buffer->modified_areas--;
@@ -904,8 +901,6 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
             }
         }
 
-        GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
-        checkGLcall("glBindBuffer");
         GL_EXTCALL(glBufferSubData(buffer->buffer_type_hint, start, len, data + start));
         checkGLcall("glBufferSubData");
     }
