@@ -241,6 +241,8 @@ static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *subkey,
             value_name);
 }
 
+#define KEY_BASE "Software\\Wine\\regedit_test"
+
 static void test_basic_import(void)
 {
     char exp_binary[] = {0xAA,0xBB,0xCC,0x11};
@@ -263,58 +265,51 @@ static void test_basic_import(void)
     WCHAR wide_exp[] = {0x3041,'V','a','l','u','e',0};
     LONG lr;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test");
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
             "RegDeleteKeyA failed: %d\n", lr);
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestValue\"=\"AValue\"\n");
-    verify_reg_sz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "TestValue", "AValue");
+    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "TestValue", "AValue");
 
     exec_import_str("REGEDIT4\r\n\r\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\r\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
                 "\"TestValue2\"=\"BValue\"\r\n");
-    verify_reg_sz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "TestValue2", "BValue");
+    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "TestValue2", "BValue");
 
     if(supports_wchar){
         exec_import_wstr(wide_test);
-        verify_reg_wsz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-                "TestValue3", wide_exp);
+        verify_reg_wsz(HKEY_CURRENT_USER, KEY_BASE, "TestValue3", wide_exp);
 
         exec_import_wstr(wide_test_r);
-        verify_reg_wsz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-                "TestValue5", wide_exp);
+        verify_reg_wsz(HKEY_CURRENT_USER, KEY_BASE, "TestValue5", wide_exp);
     }else
         win_skip("Some WCHAR tests skipped\n");
 
     exec_import_str("REGEDIT4\r\r"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\r"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\r"
                 "\"TestValue4\"=\"DValue\"\r");
-    verify_reg_sz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "TestValue4", "DValue");
+    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "TestValue4", "DValue");
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestDword\"=dword:00000017\n");
-    verify_reg_dword(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "TestDword", 0x17);
+    verify_reg_dword(HKEY_CURRENT_USER, KEY_BASE, "TestDword", 0x17);
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestBinary\"=hex:aa,bb,cc,11\n");
-    verify_reg_binary(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+    verify_reg_binary(HKEY_CURRENT_USER, KEY_BASE,
             "TestBinary", exp_binary, sizeof(exp_binary));
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"With=Equals\"=\"asdf\"\n");
-    verify_reg_sz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "With=Equals", "asdf");
+    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "With=Equals", "asdf");
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test");
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
 }
 
@@ -322,55 +317,46 @@ static void test_invalid_import(void)
 {
     LONG lr;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test");
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
-            "RegDeleteKeyA failed: %d\n", lr);
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestNoEndQuote\"=\"Asdffdsa\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "TestNoEndQuote");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "TestNoEndQuote");
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestNoBeginQuote\"=Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "TestNoBeginQuote");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "TestNoBeginQuote");
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestNoQuotes\"=Asdffdsa\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "TestNoQuotes");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "TestNoQuotes");
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"NameNoEndQuote=\"Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "NameNoEndQuote");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "NameNoEndQuote");
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "NameNoBeginQuote\"=\"Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "NameNoBeginQuote");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "NameNoBeginQuote");
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "NameNoQuotes=\"Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "NameNoQuotes");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "NameNoQuotes");
 
     exec_import_str("REGEDIT4\n\n"
-                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"MixedQuotes=Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "MixedQuotes");
-    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
-            "MixedQuotes=Asdffdsa");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "MixedQuotes");
+    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "MixedQuotes=Asdffdsa");
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test");
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
 }
 
