@@ -852,6 +852,69 @@ static void buffer_direct_upload(struct wined3d_buffer *This, struct wined3d_con
     wined3d_buffer_validate_location(This, WINED3D_LOCATION_BUFFER);
 }
 
+static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int i, j, start, end, len, vertex_count;
+    BYTE *data;
+
+    /* This would potentially invalidate the element array buffer binding. */
+    if (buffer->buffer_type_hint != GL_ARRAY_BUFFER)
+        ERR("Converting data in non-vertex buffer.\n");
+
+    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+
+    /* Now for each vertex in the buffer that needs conversion. */
+    vertex_count = buffer->resource.size / buffer->stride;
+
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, buffer->resource.size)))
+    {
+        ERR("Out of memory.\n");
+        return;
+    }
+
+    while (buffer->modified_areas)
+    {
+        buffer->modified_areas--;
+        start = buffer->maps[buffer->modified_areas].offset;
+        len = buffer->maps[buffer->modified_areas].size;
+        end = start + len;
+
+        memcpy(data + start, (BYTE *)buffer->resource.heap_memory + start, end - start);
+        for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertex_count); ++i)
+        {
+            for (j = 0; j < buffer->stride;)
+            {
+                switch (buffer->conversion_map[j])
+                {
+                    case CONV_NONE:
+                        /* Done already */
+                        j += sizeof(DWORD);
+                        break;
+                    case CONV_D3DCOLOR:
+                        j += fixup_d3dcolor((DWORD *) (data + i * buffer->stride + j));
+                        break;
+                    case CONV_POSITIONT:
+                        j += fixup_transformed_pos((float *) (data + i * buffer->stride + j));
+                        break;
+                    default:
+                        FIXME("Unimplemented conversion %d in shifted conversion.\n", buffer->conversion_map[j]);
+                        ++j;
+                }
+            }
+        }
+
+        GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
+        checkGLcall("glBindBuffer");
+        GL_EXTCALL(glBufferSubData(buffer->buffer_type_hint, start, len, data + start));
+        checkGLcall("glBufferSubData");
+    }
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
+}
+
 void buffer_mark_used(struct wined3d_buffer *buffer)
 {
     buffer->flags &= ~(WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
@@ -863,9 +926,7 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int i, j, start, end, len, vertex_count;
     BOOL decl_changed = FALSE;
-    BYTE *data;
 
     TRACE("buffer %p.\n", buffer);
 
@@ -980,64 +1041,11 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
             return;
 
         buffer_direct_upload(buffer, context, flags);
-        return;
     }
-
-    /* This would potentially invalidate the element array buffer binding. */
-    if (buffer->buffer_type_hint != GL_ARRAY_BUFFER)
-        ERR("Converting data in non-vertex buffer.\n");
-
-    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
-
-    /* Now for each vertex in the buffer that needs conversion */
-    vertex_count = buffer->resource.size / buffer->stride;
-
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, buffer->resource.size)))
+    else
     {
-        ERR("Out of memory.\n");
-        return;
+        buffer_conversion_upload(buffer, context);
     }
-
-    while (buffer->modified_areas)
-    {
-        buffer->modified_areas--;
-        start = buffer->maps[buffer->modified_areas].offset;
-        len = buffer->maps[buffer->modified_areas].size;
-        end = start + len;
-
-        memcpy(data + start, (BYTE *)buffer->resource.heap_memory + start, end - start);
-        for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertex_count); ++i)
-        {
-            for (j = 0; j < buffer->stride;)
-            {
-                switch (buffer->conversion_map[j])
-                {
-                    case CONV_NONE:
-                        /* Done already */
-                        j += sizeof(DWORD);
-                        break;
-                    case CONV_D3DCOLOR:
-                        j += fixup_d3dcolor((DWORD *) (data + i * buffer->stride + j));
-                        break;
-                    case CONV_POSITIONT:
-                        j += fixup_transformed_pos((float *) (data + i * buffer->stride + j));
-                        break;
-                    default:
-                        FIXME("Unimplemented conversion %d in shifted conversion.\n", buffer->conversion_map[j]);
-                        ++j;
-                }
-            }
-        }
-
-        GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
-        checkGLcall("glBindBuffer");
-        GL_EXTCALL(glBufferSubData(buffer->buffer_type_hint, start, len, data + start));
-        checkGLcall("glBufferSubData");
-    }
-
-    HeapFree(GetProcessHeap(), 0, data);
-
-    wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
 }
 
 struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)
