@@ -248,16 +248,14 @@ typedef struct _EVENT_TRACE_PROPERTIES
     ULONG LoggerNameOffset;
 } EVENT_TRACE_PROPERTIES, *PEVENT_TRACE_PROPERTIES;
 
-typedef struct _EVENT_FILTER_DESCRIPTOR *PEVENT_FILTER_DESCRIPTOR;
-
 typedef struct _ENABLE_TRACE_PARAMETERS
 {
-    ULONG                    Version;
-    ULONG                    EnableProperty;
-    ULONG                    ControlFlags;
-    GUID                     SourceId;
-    PEVENT_FILTER_DESCRIPTOR EnableFilterDesc;
-    ULONG                    FilterDescCount;
+    ULONG                            Version;
+    ULONG                            EnableProperty;
+    ULONG                            ControlFlags;
+    GUID                             SourceId;
+    struct _EVENT_FILTER_DESCRIPTOR *EnableFilterDesc;
+    ULONG                            FilterDescCount;
 } ENABLE_TRACE_PARAMETERS, *PENABLE_TRACE_PARAMETERS;
 
 #define INVALID_PROCESSTRACE_HANDLE ((TRACEHANDLE)~(ULONG_PTR)0)
