@@ -2058,11 +2058,11 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     int physical;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
+    ret = GetAdaptersAddresses( WS_AF_UNSPEC, 0, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
 
     if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
-    if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buffer, &size ))
+    if (GetAdaptersAddresses( WS_AF_UNSPEC, 0, NULL, buffer, &size ))
     {
         heap_free( buffer );
         return FILL_STATUS_FAILED;
@@ -2111,11 +2111,11 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
 static WCHAR *get_dnshostname( IP_ADAPTER_UNICAST_ADDRESS *addr )
 {
     const SOCKET_ADDRESS *sa = &addr->Address;
-    WCHAR buf[NI_MAXHOST];
+    WCHAR buf[WS_NI_MAXHOST];
 
     if (!addr) return NULL;
     if (GetNameInfoW( sa->lpSockaddr, sa->iSockaddrLength, buf, sizeof(buf)/sizeof(buf[0]), NULL,
-                      0, NI_NAMEREQD )) return NULL;
+                      0, WS_NI_NAMEREQD )) return NULL;
     return heap_strdupW( buf );
 }
 static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
@@ -2203,11 +2203,11 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     DWORD size = 0, ret;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    ret = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, NULL, &size );
+    ret = GetAdaptersAddresses( WS_AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
 
     if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
-    if (GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, buffer, &size ))
+    if (GetAdaptersAddresses( WS_AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, buffer, &size ))
     {
         heap_free( buffer );
         return FILL_STATUS_FAILED;
