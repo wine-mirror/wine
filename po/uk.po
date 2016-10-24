@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-07-16 20:50+0200\n"
+"PO-Revision-Date: 2016-10-24 22:55+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -4562,11 +4562,11 @@ msgstr ""
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys.\n"
-msgstr "Ключ реєстру має підключі.\n"
+msgstr "Ключ реєстру має підрозділи.\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile.\n"
-msgstr ""
+msgstr "Підрозділ має бути непостійним.\n"
 
 #: winerror.mc:1126
 msgid "Notify change request in progress.\n"
@@ -14668,36 +14668,32 @@ msgid "F&ormat"
 msgstr "Фор&мат"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Список"
+msgstr "&Списки"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "&Маркери"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "Номер CRL"
+msgstr "Числа"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Літери - малі"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Літери - великі"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Римські цифри - малі"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Римські цифри - великі"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
