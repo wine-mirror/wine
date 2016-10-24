@@ -50,7 +50,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 OPAQUE_HANDLE WINAPI DavRegisterAuthCallback(PFNDAVAUTHCALLBACK cb, ULONG version)
 {
     FIXME("%p, %u\n", cb, version);
-    return 0;
+    return 0xdeadbeef;
 }
 
 /***********************************************************************
@@ -58,5 +58,5 @@ OPAQUE_HANDLE WINAPI DavRegisterAuthCallback(PFNDAVAUTHCALLBACK cb, ULONG versio
  */
 VOID WINAPI DavUnregisterAuthCallback(OPAQUE_HANDLE handle)
 {
-    FIXME("%u\n", handle);
+    FIXME("%08x\n", handle);
 }
