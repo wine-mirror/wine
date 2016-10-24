@@ -1,4 +1,5 @@
 @ stdcall DavGetHTTPFromUNCPath(wstr ptr ptr)
+@ stdcall DavGetUNCFromHTTPPath(wstr ptr ptr)
 @ stub DsAddressToSiteNames
 @ stub DsAddressToSiteNamesEx
 @ stub DsDeregisterDnsHostRecords

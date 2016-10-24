@@ -3442,3 +3442,88 @@ DWORD WINAPI DavGetHTTPFromUNCPath(const WCHAR *unc_path, WCHAR *buf, DWORD *buf
 
     return ERROR_SUCCESS;
 }
+
+/************************************************************
+ *                DavGetUNCFromHTTPPath (NETAPI32.@)
+ */
+DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *buflen)
+{
+    static const WCHAR httpW[] = {'h','t','t','p'};
+    static const WCHAR httpsW[] = {'h','t','t','p','s'};
+    static const WCHAR davrootW[] = {'\\','D','a','v','W','W','W','R','o','o','t'};
+    static const WCHAR sslW[] = {'@','S','S','L'};
+    static const WCHAR port80W[] = {'8','0'};
+    static const WCHAR port443W[] = {'4','4','3'};
+    const WCHAR *p = http_path, *server, *port = NULL, *path = NULL;
+    DWORD i, len = 0, len_server = 0, len_port = 0, len_path = 0;
+    BOOL ssl;
+
+    TRACE("(%s %p %p)\n", debugstr_w(http_path), buf, buflen);
+
+    while (*p && *p != ':') { p++; len++; };
+    if (len == sizeof(httpW)/sizeof(httpW[0]) && !memicmpW( http_path, httpW, len )) ssl = FALSE;
+    else if (len == sizeof(httpsW)/sizeof(httpsW[0]) && !memicmpW( http_path, httpsW, len )) ssl = TRUE;
+    else return ERROR_INVALID_PARAMETER;
+
+    if (p[0] != ':' || p[1] != '/' || p[2] != '/') return ERROR_INVALID_PARAMETER;
+    server = p += 3;
+
+    while (*p && *p != ':' && *p != '/') { p++; len_server++; };
+    if (!len_server) return ERROR_BAD_NET_NAME;
+    if (*p == ':')
+    {
+        port = ++p;
+        while (*p && isdigitW(*p)) { p++; len_port++; };
+        if (len_port == 2 && !ssl && !memcmp( port, port80W, sizeof(port80W) )) port = NULL;
+        else if (len_port == 3 && ssl && !memcmp( port, port443W, sizeof(port443W) )) port = NULL;
+        path = p;
+    }
+    else if (*p == '/') path = p;
+
+    while (*p)
+    {
+        if (p[0] == '/' && p[1] == '/') return ERROR_BAD_NET_NAME;
+        p++; len_path++;
+    }
+    if (len_path && path[len_path - 1] == '/') len_path--;
+
+    len = len_server + 2; /* \\ */
+    if (ssl) len += 4; /* @SSL */
+    if (port) len += len_port + 1 /* @ */;
+    len += sizeof(davrootW)/sizeof(davrootW[0]);
+    len += len_path + 1; /* nul */
+
+    if (*buflen < len)
+    {
+        *buflen = len;
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    buf[0] = buf[1] = '\\';
+    buf += 2;
+    memcpy( buf, server, len_server * sizeof(WCHAR) );
+    buf += len_server;
+    if (ssl)
+    {
+        memcpy( buf, sslW, sizeof(sslW) );
+        buf += 4;
+    }
+    if (port)
+    {
+        *buf++ = '@';
+        memcpy( buf, port, len_port * sizeof(WCHAR) );
+        buf += len_port;
+    }
+    memcpy( buf, davrootW, sizeof(davrootW) );
+    buf += sizeof(davrootW)/sizeof(davrootW[0]);
+    for (i = 0; i < len_path; i++)
+    {
+        if (path[i] == '/') *buf++ = '\\';
+        else *buf++ = path[i];
+    }
+
+    *buf = 0;
+    *buflen = len;
+
+    return ERROR_SUCCESS;
+}
