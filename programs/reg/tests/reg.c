@@ -908,6 +908,42 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Test6", REG_SZ, "Value6", 7, 0);
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Line1\"=\"Value1\"\n\n"
+                    "\"Line2\"=\"Value2\"\n\n\n"
+                    "\"Line3\"=\"Value3\"\n\n\n\n"
+                    "\"Line4\"=\"Value4\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Line1", REG_SZ, "Value1", 7, TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    todo_wine verify_reg(hkey, "Line2", REG_SZ, "Value2", 7, TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    todo_wine verify_reg(hkey, "Line3", REG_SZ, "Value3", 7, TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    todo_wine verify_reg(hkey, "Line4", REG_SZ, "Value4", 7, TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine1\"=dword:00000782\n\n"
+                    "\"Wine2\"=\"Test Value\"\n"
+                    "\"Wine3\"=hex(7):4c,69,6e,65,20,\
+                     63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "#comment\n"
+                    "@=\"Test\"\n"
+                    ";comment\n\n"
+                    "\"Wine4\"=dword:12345678\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    dword = 0x782;
+    todo_wine verify_reg(hkey, "Wine1", REG_DWORD, &dword, sizeof(dword),
+                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    todo_wine verify_reg(hkey, "Wine2", REG_SZ, "Test Value", 11,
+                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    todo_wine verify_reg(hkey, "Wine3", REG_MULTI_SZ, "Line concatenation\0", 20,
+                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    todo_wine verify_reg(hkey, "", REG_SZ, "Test", 5,
+                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    dword = 0x12345678;
+    todo_wine verify_reg(hkey, "Wine4", REG_DWORD, &dword, sizeof(dword),
+                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
