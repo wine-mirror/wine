@@ -631,6 +631,7 @@ void wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
 static void buffer_unload(struct wined3d_resource *resource)
 {
     struct wined3d_buffer *buffer = buffer_from_resource(resource);
+    DWORD flags = buffer->flags;
 
     TRACE("buffer %p.\n", buffer);
 
@@ -641,12 +642,10 @@ static void buffer_unload(struct wined3d_resource *resource)
 
         context = context_acquire(device, NULL);
 
-        /* Download the buffer, but don't permanently enable double buffering */
-        if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
-        {
-            wined3d_buffer_load_sysmem(buffer, context);
+        /* Download the buffer, but don't permanently enable double buffering. */
+        wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+        if (!(flags & WINED3D_BUFFER_DOUBLEBUFFER))
             buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
-        }
 
         wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
         delete_gl_buffer(buffer, context->gl_info);
@@ -988,8 +987,7 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
     if (buffer->buffer_type_hint != GL_ARRAY_BUFFER)
         ERR("Converting data in non-vertex buffer.\n");
 
-    if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
-        wined3d_buffer_load_sysmem(buffer, context);
+    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
 
     /* Now for each vertex in the buffer that needs conversion */
     vertex_count = buffer->resource.size / buffer->stride;
@@ -1144,7 +1142,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
                     else
                     {
                         TRACE("Falling back to doublebuffered operation.\n");
-                        wined3d_buffer_load_sysmem(buffer, context);
+                        wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
                     }
                     TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
                     buffer->map_ptr = NULL;
