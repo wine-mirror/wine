@@ -98,24 +98,32 @@ static BOOL r_exec_import_wstr(unsigned line, const WCHAR *file_contents)
     return (dr != WAIT_TIMEOUT);
 }
 
-#define verify_reg_sz(k,n,e) r_verify_reg_sz(__LINE__,k,n,e)
-static void r_verify_reg_sz(unsigned line, HKEY key, const char *value_name, const char *exp_value)
+#define TODO_REG_TYPE    (0x0001u)
+#define TODO_REG_SIZE    (0x0002u)
+#define TODO_REG_DATA    (0x0004u)
+
+/* verify_reg() adapted from programs/reg/tests/reg.c */
+#define verify_reg(k,v,t,d,s,todo) verify_reg_(__LINE__,k,v,t,d,s,todo)
+static void verify_reg_(unsigned line, HKEY hkey, const char *value,
+                        DWORD exp_type, const void *exp_data, DWORD exp_size, DWORD todo)
 {
-    LONG lr;
-    DWORD fnd_type, fnd_len;
-    char fnd_value[1024];
+    DWORD type, size;
+    BYTE data[256];
+    LONG err;
 
-    fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
-    lok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
+    size = sizeof(data);
+    memset(data, 0xdd, size);
+    err = RegQueryValueExA(hkey, value, NULL, &type, data, &size);
+    lok(err == ERROR_SUCCESS, "RegQueryValueEx failed: got %d\n", err);
+    if (err != ERROR_SUCCESS)
         return;
 
-    lok(fnd_type == REG_SZ, "Got wrong type: %d\n", fnd_type);
-    if(fnd_type != REG_SZ)
-        return;
-    lok(!strcmp(exp_value, fnd_value),
-            "Strings differ: expected %s, got %s\n", exp_value, fnd_value);
+    todo_wine_if (todo & TODO_REG_TYPE)
+        lok(type == exp_type, "got wrong type %d, expected %d\n", type, exp_type);
+    todo_wine_if (todo & TODO_REG_SIZE)
+        lok(size == exp_size, "got wrong size %d, expected %d\n", size, exp_size);
+    todo_wine_if (todo & TODO_REG_DATA)
+        lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
 }
 
 #define verify_reg_wsz(k,n,e) r_verify_reg_wsz(__LINE__,k,n,e)
@@ -142,48 +150,6 @@ static void r_verify_reg_wsz(unsigned line, HKEY key, const char *value_name, co
             wine_dbgstr_w(exp_value), wine_dbgstr_w(fnd_value));
 }
 
-#define verify_reg_dword(k,n,e) r_verify_reg_dword(__LINE__,k,n,e)
-static void r_verify_reg_dword(unsigned line, HKEY key, const char *value_name, DWORD exp_value)
-{
-    LONG lr;
-    DWORD fnd_type, fnd_len, fnd_value;
-
-    fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE *)&fnd_value, &fnd_len);
-    lok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
-
-    lok(fnd_type == REG_DWORD, "Got wrong type: %d\n", fnd_type);
-    if(fnd_type != REG_DWORD)
-        return;
-    lok(fnd_value == exp_value, "Values differ: expected: 0x%x, got: 0x%x\n",
-            exp_value, fnd_value);
-}
-
-#define verify_reg_binary(k,n,e,z) r_verify_reg_binary(__LINE__,k,n,e,z)
-static void r_verify_reg_binary(unsigned line, HKEY key,
-        const char *value_name, const char *exp_value, int exp_len)
-{
-    LONG lr;
-    DWORD fnd_type, fnd_len;
-    char fnd_value[1024];
-
-    fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
-    lok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
-
-    lok(fnd_type == REG_BINARY, "Got wrong type: %d\n", fnd_type);
-    if(fnd_type != REG_BINARY)
-        return;
-    lok(fnd_len == exp_len,
-            "Lengths differ: expected %d, got %d\n", exp_len, fnd_len);
-    lok(!memcmp(exp_value, fnd_value, exp_len),
-            "Data differs\n");
-}
-
 #define verify_reg_nonexist(k,n) r_verify_reg_nonexist(__LINE__,k,n)
 static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *value_name)
 {
@@ -202,6 +168,7 @@ static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *value_nam
 static void test_basic_import(void)
 {
     HKEY hkey;
+    DWORD dword = 0x17;
     char exp_binary[] = {0xAA,0xBB,0xCC,0x11};
     WCHAR wide_test[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
         'i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s',
@@ -231,12 +198,12 @@ static void test_basic_import(void)
                 "\"TestValue\"=\"AValue\"\n");
     lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    verify_reg_sz(hkey, "TestValue", "AValue");
+    verify_reg(hkey, "TestValue", REG_SZ, "AValue", 7, 0);
 
     exec_import_str("REGEDIT4\r\n\r\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
                 "\"TestValue2\"=\"BValue\"\r\n");
-    verify_reg_sz(hkey, "TestValue2", "BValue");
+    verify_reg(hkey, "TestValue2", REG_SZ, "BValue", 7, 0);
 
     if (supports_wchar)
     {
@@ -252,22 +219,22 @@ static void test_basic_import(void)
     exec_import_str("REGEDIT4\r\r"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\r"
                 "\"TestValue4\"=\"DValue\"\r");
-    verify_reg_sz(hkey, "TestValue4", "DValue");
+    verify_reg(hkey, "TestValue4", REG_SZ, "DValue", 7, 0);
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestDword\"=dword:00000017\n");
-    verify_reg_dword(hkey, "TestDword", 0x17);
+    verify_reg(hkey, "TestDword", REG_DWORD, &dword, sizeof(dword), 0);
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestBinary\"=hex:aa,bb,cc,11\n");
-    verify_reg_binary(hkey, "TestBinary", exp_binary, sizeof(exp_binary));
+    verify_reg(hkey, "TestBinary", REG_BINARY, exp_binary, sizeof(exp_binary), 0);
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"With=Equals\"=\"asdf\"\n");
-    verify_reg_sz(hkey, "With=Equals", "asdf");
+    verify_reg(hkey, "With=Equals", REG_SZ, "asdf", 5, 0);
 
     RegCloseKey(hkey);
 
