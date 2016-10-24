@@ -98,24 +98,15 @@ static BOOL r_exec_import_wstr(unsigned line, const WCHAR *file_contents)
     return (dr != WAIT_TIMEOUT);
 }
 
-#define verify_reg_sz(k,s,n,e) r_verify_reg_sz(__LINE__,k,s,n,e)
-static void r_verify_reg_sz(unsigned line, HKEY key, const char *subkey,
-        const char *value_name, const char *exp_value)
+#define verify_reg_sz(k,n,e) r_verify_reg_sz(__LINE__,k,n,e)
+static void r_verify_reg_sz(unsigned line, HKEY key, const char *value_name, const char *exp_value)
 {
     LONG lr;
     DWORD fnd_type, fnd_len;
     char fnd_value[1024];
-    HKEY fnd_key;
-
-    lr = RegOpenKeyExA(key, subkey, 0, KEY_READ, &fnd_key);
-    lok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
 
     fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(fnd_key, value_name, NULL, &fnd_type,
-            (BYTE*)fnd_value, &fnd_len);
-    RegCloseKey(fnd_key);
+    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
     lok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     if(lr != ERROR_SUCCESS)
         return;
@@ -127,27 +118,18 @@ static void r_verify_reg_sz(unsigned line, HKEY key, const char *subkey,
             "Strings differ: expected %s, got %s\n", exp_value, fnd_value);
 }
 
-#define verify_reg_wsz(k,s,n,e) r_verify_reg_wsz(__LINE__,k,s,n,e)
-static void r_verify_reg_wsz(unsigned line, HKEY key, const char *subkey,
-        const char *value_name, const WCHAR *exp_value)
+#define verify_reg_wsz(k,n,e) r_verify_reg_wsz(__LINE__,k,n,e)
+static void r_verify_reg_wsz(unsigned line, HKEY key, const char *value_name, const WCHAR *exp_value)
 {
     LONG lr;
     DWORD fnd_type, fnd_len;
     WCHAR fnd_value[1024], value_nameW[1024];
-    HKEY fnd_key;
-
-    lr = RegOpenKeyExA(key, subkey, 0, KEY_READ, &fnd_key);
-    lok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
 
     MultiByteToWideChar(CP_ACP, 0, value_name, -1, value_nameW,
             sizeof(value_nameW)/sizeof(value_nameW[0]));
 
     fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExW(fnd_key, value_nameW, NULL, &fnd_type,
-            (BYTE*)fnd_value, &fnd_len);
-    RegCloseKey(fnd_key);
+    lr = RegQueryValueExW(key, value_nameW, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
     lok(lr == ERROR_SUCCESS, "RegQueryValueExW failed: %d\n", lr);
     if(lr != ERROR_SUCCESS)
         return;
@@ -160,23 +142,14 @@ static void r_verify_reg_wsz(unsigned line, HKEY key, const char *subkey,
             wine_dbgstr_w(exp_value), wine_dbgstr_w(fnd_value));
 }
 
-#define verify_reg_dword(k,s,n,e) r_verify_reg_dword(__LINE__,k,s,n,e)
-static void r_verify_reg_dword(unsigned line, HKEY key, const char *subkey,
-        const char *value_name, DWORD exp_value)
+#define verify_reg_dword(k,n,e) r_verify_reg_dword(__LINE__,k,n,e)
+static void r_verify_reg_dword(unsigned line, HKEY key, const char *value_name, DWORD exp_value)
 {
     LONG lr;
     DWORD fnd_type, fnd_len, fnd_value;
-    HKEY fnd_key;
-
-    lr = RegOpenKeyExA(key, subkey, 0, KEY_READ, &fnd_key);
-    lok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
 
     fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(fnd_key, value_name, NULL, &fnd_type,
-            (BYTE *)&fnd_value, &fnd_len);
-    RegCloseKey(fnd_key);
+    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE *)&fnd_value, &fnd_len);
     lok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     if(lr != ERROR_SUCCESS)
         return;
@@ -188,24 +161,16 @@ static void r_verify_reg_dword(unsigned line, HKEY key, const char *subkey,
             exp_value, fnd_value);
 }
 
-#define verify_reg_binary(k,s,n,e,z) r_verify_reg_binary(__LINE__,k,s,n,e,z)
-static void r_verify_reg_binary(unsigned line, HKEY key, const char *subkey,
+#define verify_reg_binary(k,n,e,z) r_verify_reg_binary(__LINE__,k,n,e,z)
+static void r_verify_reg_binary(unsigned line, HKEY key,
         const char *value_name, const char *exp_value, int exp_len)
 {
     LONG lr;
     DWORD fnd_type, fnd_len;
     char fnd_value[1024];
-    HKEY fnd_key;
-
-    lr = RegOpenKeyExA(key, subkey, 0, KEY_READ, &fnd_key);
-    lok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
 
     fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(fnd_key, value_name, NULL, &fnd_type,
-            (BYTE*)fnd_value, &fnd_len);
-    RegCloseKey(fnd_key);
+    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
     lok(lr == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", lr);
     if(lr != ERROR_SUCCESS)
         return;
@@ -219,24 +184,15 @@ static void r_verify_reg_binary(unsigned line, HKEY key, const char *subkey,
             "Data differs\n");
 }
 
-#define verify_reg_nonexist(k,s,n) r_verify_reg_nonexist(__LINE__,k,s,n)
-static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *subkey,
-        const char *value_name)
+#define verify_reg_nonexist(k,n) r_verify_reg_nonexist(__LINE__,k,n)
+static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *value_name)
 {
     LONG lr;
     DWORD fnd_type, fnd_len;
     char fnd_value[32];
-    HKEY fnd_key;
-
-    lr = RegOpenKeyExA(key, subkey, 0, KEY_READ, &fnd_key);
-    lok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    if(lr != ERROR_SUCCESS)
-        return;
 
     fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(fnd_key, value_name, NULL, &fnd_type,
-            (BYTE*)fnd_value, &fnd_len);
-    RegCloseKey(fnd_key);
+    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
     lok(lr == ERROR_FILE_NOT_FOUND, "Reg value shouldn't exist: %s\n",
             value_name);
 }
@@ -245,6 +201,7 @@ static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *subkey,
 
 static void test_basic_import(void)
 {
+    HKEY hkey;
     char exp_binary[] = {0xAA,0xBB,0xCC,0x11};
     WCHAR wide_test[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
         'i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s',
@@ -272,42 +229,47 @@ static void test_basic_import(void)
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestValue\"=\"AValue\"\n");
-    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "TestValue", "AValue");
+    lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
+    verify_reg_sz(hkey, "TestValue", "AValue");
 
     exec_import_str("REGEDIT4\r\n\r\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
                 "\"TestValue2\"=\"BValue\"\r\n");
-    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "TestValue2", "BValue");
+    verify_reg_sz(hkey, "TestValue2", "BValue");
 
-    if(supports_wchar){
+    if (supports_wchar)
+    {
         exec_import_wstr(wide_test);
-        verify_reg_wsz(HKEY_CURRENT_USER, KEY_BASE, "TestValue3", wide_exp);
+        verify_reg_wsz(hkey, "TestValue3", wide_exp);
 
         exec_import_wstr(wide_test_r);
-        verify_reg_wsz(HKEY_CURRENT_USER, KEY_BASE, "TestValue5", wide_exp);
-    }else
+        verify_reg_wsz(hkey, "TestValue5", wide_exp);
+    }
+    else
         win_skip("Some WCHAR tests skipped\n");
 
     exec_import_str("REGEDIT4\r\r"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\r"
                 "\"TestValue4\"=\"DValue\"\r");
-    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "TestValue4", "DValue");
+    verify_reg_sz(hkey, "TestValue4", "DValue");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestDword\"=dword:00000017\n");
-    verify_reg_dword(HKEY_CURRENT_USER, KEY_BASE, "TestDword", 0x17);
+    verify_reg_dword(hkey, "TestDword", 0x17);
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestBinary\"=hex:aa,bb,cc,11\n");
-    verify_reg_binary(HKEY_CURRENT_USER, KEY_BASE,
-            "TestBinary", exp_binary, sizeof(exp_binary));
+    verify_reg_binary(hkey, "TestBinary", exp_binary, sizeof(exp_binary));
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"With=Equals\"=\"asdf\"\n");
-    verify_reg_sz(HKEY_CURRENT_USER, KEY_BASE, "With=Equals", "asdf");
+    verify_reg_sz(hkey, "With=Equals", "asdf");
+
+    RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
@@ -316,6 +278,7 @@ static void test_basic_import(void)
 static void test_invalid_import(void)
 {
     LONG lr;
+    HKEY hkey;
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -323,38 +286,42 @@ static void test_invalid_import(void)
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestNoEndQuote\"=\"Asdffdsa\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "TestNoEndQuote");
+    lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
+    verify_reg_nonexist(hkey, "TestNoEndQuote");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestNoBeginQuote\"=Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "TestNoBeginQuote");
+    verify_reg_nonexist(hkey, "TestNoBeginQuote");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"TestNoQuotes\"=Asdffdsa\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "TestNoQuotes");
+    verify_reg_nonexist(hkey, "TestNoQuotes");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"NameNoEndQuote=\"Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "NameNoEndQuote");
+    verify_reg_nonexist(hkey, "NameNoEndQuote");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "NameNoBeginQuote\"=\"Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "NameNoBeginQuote");
+    verify_reg_nonexist(hkey, "NameNoBeginQuote");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "NameNoQuotes=\"Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "NameNoQuotes");
+    verify_reg_nonexist(hkey, "NameNoQuotes");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                 "\"MixedQuotes=Asdffdsa\"\n");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "MixedQuotes");
-    verify_reg_nonexist(HKEY_CURRENT_USER, KEY_BASE, "MixedQuotes=Asdffdsa");
+    verify_reg_nonexist(hkey, "MixedQuotes");
+    verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
+
+    RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
