@@ -22,6 +22,9 @@
 
 #include "config.h"
 #include <stdarg.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -414,7 +417,7 @@ static const struct column col_compsys[] =
 static const struct column col_compsysproduct[] =
 {
     { prop_identifyingnumberW,  CIM_STRING|COL_FLAG_KEY },
-    { prop_uuidW,               CIM_STRING }
+    { prop_uuidW,               CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_datafile[] =
 {
@@ -1055,10 +1058,6 @@ static const struct record_bios data_bios[] =
     { bios_descriptionW, NULL, bios_manufacturerW, bios_nameW, bios_releasedateW, bios_serialnumberW,
       bios_smbiosbiosversionW, bios_versionW }
 };
-static const struct record_computersystemproduct data_compsysproduct[] =
-{
-    { compsysproduct_identifyingnumberW, compsysproduct_uuidW }
-};
 static const struct record_param data_param[] =
 {
     { class_processW, method_getownerW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
@@ -1313,6 +1312,46 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     rec->num_processors         = get_processor_count();
     rec->total_physical_memory  = get_total_physical_memory();
     rec->username               = get_username();
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
+static WCHAR *get_compsysproduct_uuid(void)
+{
+#ifdef __APPLE__
+    unsigned char uuid[16];
+    const struct timespec timeout = {1, 0};
+    if (!gethostuuid( uuid, &timeout ))
+    {
+        static const WCHAR fmtW[] =
+            {'%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','-',
+             '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X',
+             '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',0};
+        WCHAR *ret = heap_alloc( 37 * sizeof(WCHAR) );
+        if (!ret) return NULL;
+        sprintfW( ret, fmtW, uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
+                  uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15] );
+        return ret;
+    }
+#endif
+    return heap_strdupW( compsysproduct_uuidW );
+}
+
+static enum fill_status fill_compsysproduct( struct table *table, const struct expr *cond )
+{
+    struct record_computersystemproduct *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT row = 0;
+
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    rec = (struct record_computersystemproduct *)table->data;
+    rec->identifyingnumber = compsysproduct_identifyingnumberW;
+    rec->uuid              = get_compsysproduct_uuid();
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
@@ -3077,7 +3116,7 @@ static struct table builtin_classes[] =
     { class_biosW, SIZEOF(col_bios), col_bios, SIZEOF(data_bios), 0, (BYTE *)data_bios },
     { class_cdromdriveW, SIZEOF(col_cdromdrive), col_cdromdrive, 0, 0, NULL, fill_cdromdrive },
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, 0, NULL, fill_compsys },
-    { class_compsysproductW, SIZEOF(col_compsysproduct), col_compsysproduct, SIZEOF(data_compsysproduct), 0, (BYTE *)data_compsysproduct },
+    { class_compsysproductW, SIZEOF(col_compsysproduct), col_compsysproduct, 0, 0, NULL, fill_compsysproduct },
     { class_datafileW, SIZEOF(col_datafile), col_datafile, 0, 0, NULL, fill_datafile },
     { class_desktopmonitorW, SIZEOF(col_desktopmonitor), col_desktopmonitor, 0, 0, NULL, fill_desktopmonitor },
     { class_directoryW, SIZEOF(col_directory), col_directory, 0, 0, NULL, fill_directory },

@@ -1176,6 +1176,45 @@ static void test_OperatingSystem( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_ComputerSystemProduct( IWbemServices *services )
+{
+    static const WCHAR uuidW[] = {'U','U','I','D',0};
+    static const WCHAR queryW[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
+         'C','o','m','p','u','t','e','r','S','y','s','t','e','m','P','r','o','d','u','c','t',0};
+    BSTR wql = SysAllocString( wqlW ), query = SysAllocString( queryW );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *service;
+    VARIANT value;
+    CIMTYPE type;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    if (hr != S_OK)
+    {
+        win_skip( "Win32_ComputerSystemProduct not available\n" );
+        return;
+    }
+
+    hr = IEnumWbemClassObject_Next( result, 10000, 1, &service, &count );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    type = 0xdeadbeef;
+    VariantInit( &value );
+    hr = IWbemClassObject_Get( service, uuidW, 0, &value, &type, NULL );
+    ok( hr == S_OK, "failed to get computer name %08x\n", hr );
+    ok( V_VT( &value ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &value ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "uuid %s\n", wine_dbgstr_w(V_BSTR(&value)) );
+    VariantClear( &value );
+
+    IWbemClassObject_Release( service );
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 START_TEST(query)
 {
     static const WCHAR cimv2W[] = {'R','O','O','T','\\','C','I','M','V','2',0};
@@ -1214,6 +1253,7 @@ START_TEST(query)
     test_GetNames( services );
     test_SystemSecurity( services );
     test_OperatingSystem( services );
+    test_ComputerSystemProduct( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );
