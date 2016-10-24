@@ -2426,7 +2426,8 @@ void macdrv_get_input_source_info(CFDataRef* uchr, CGEventSourceKeyboardType* ke
 
             *keyboard_type = [WineApplicationController sharedController].keyboardType;
             *is_iso = (KBGetLayoutType(*keyboard_type) == kKeyboardISO);
-            *input_source = TISCopyCurrentKeyboardInputSource();
+            if (input_source)
+                *input_source = TISCopyCurrentKeyboardInputSource();
         }
     });
 }

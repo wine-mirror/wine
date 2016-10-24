@@ -1186,7 +1186,15 @@ HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
             if (macdrv_select_input_source(layout->input_source))
             {
                 oldHkl = thread_data->active_keyboard_layout;
+                if (thread_data->keyboard_layout_uchr)
+                    CFRelease(thread_data->keyboard_layout_uchr);
+
+                macdrv_get_input_source_info(&thread_data->keyboard_layout_uchr, &thread_data->keyboard_type,
+                                             &thread_data->iso_keyboard, NULL);
                 thread_data->active_keyboard_layout = hkl;
+                thread_data->dead_key_state = 0;
+
+                macdrv_compute_keyboard_layout(thread_data);
             }
             break;
         }
