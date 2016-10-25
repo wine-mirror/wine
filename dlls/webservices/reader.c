@@ -3921,7 +3921,7 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
 }
 
 static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DESCRIPTION *desc,
-                                       WS_HEAP *heap, char *buf )
+                                       WS_HEAP *heap, char *buf, ULONG offset )
 {
     char *ptr;
     WS_READ_OPTION option;
@@ -3941,7 +3941,7 @@ static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DES
     else
         size = sizeof(void *);
 
-    ptr = buf + desc->offset;
+    ptr = buf + offset;
     switch (desc->mapping)
     {
     case WS_TYPE_ATTRIBUTE_FIELD_MAPPING:
@@ -4005,7 +4005,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
                                  const WS_STRUCT_DESCRIPTION *desc, WS_READ_OPTION option,
                                  WS_HEAP *heap, void *ret, ULONG size )
 {
-    ULONG i;
+    ULONG i, offset;
     HRESULT hr;
     char *buf;
 
@@ -4038,7 +4038,8 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
 
     for (i = 0; i < desc->fieldCount; i++)
     {
-        if ((hr = read_type_struct_field( reader, desc->fields[i], heap, buf )) != S_OK)
+        offset = desc->fields[i]->offset;
+        if ((hr = read_type_struct_field( reader, desc->fields[i], heap, buf, offset )) != S_OK)
             break;
     }
 
