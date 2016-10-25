@@ -4582,3 +4582,32 @@ HRESULT WINAPI WsReadBytes( WS_XML_READER *handle, void *bytes, ULONG max_count,
 
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsReadCharsUtf8		[webservices.@]
+ */
+HRESULT WINAPI WsReadCharsUtf8( WS_XML_READER *handle, BYTE *bytes, ULONG max_count, ULONG *count, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p %u %p %p\n", handle, bytes, max_count, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    if (!reader->input_type) return WS_E_INVALID_OPERATION;
+    if (!count) return E_INVALIDARG;
+
+    *count = 0;
+    if (node_type( reader->current ) == WS_XML_NODE_TYPE_TEXT && bytes)
+    {
+        const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)reader->current;
+        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text->text;
+
+        if (reader->text_conv_offset == utf8->value.length) return read_node( reader );
+        *count = min( utf8->value.length - reader->text_conv_offset, max_count );
+        memcpy( bytes, utf8->value.bytes + reader->text_conv_offset, *count );
+        reader->text_conv_offset += *count;
+    }
+
+    return S_OK;
+}
