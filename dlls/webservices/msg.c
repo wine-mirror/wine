@@ -64,24 +64,26 @@ struct header
 
 struct msg
 {
-    WS_MESSAGE_INITIALIZATION init;
-    WS_MESSAGE_STATE          state;
-    GUID                      id;
-    WS_ENVELOPE_VERSION       version_env;
-    WS_ADDRESSING_VERSION     version_addr;
-    BOOL                      is_addressed;
-    WS_STRING                 addr;
-    WS_STRING                 action;
-    WS_HEAP                  *heap;
-    WS_XML_BUFFER            *buf;
-    WS_XML_WRITER            *writer;
-    WS_XML_WRITER            *writer_body;
-    WS_XML_READER            *reader_body;
-    ULONG                     header_count;
-    ULONG                     header_size;
-    struct header           **header;
-    ULONG                     prop_count;
-    struct prop               prop[sizeof(msg_props)/sizeof(msg_props[0])];
+    WS_MESSAGE_INITIALIZATION           init;
+    WS_MESSAGE_STATE                    state;
+    GUID                                id;
+    WS_ENVELOPE_VERSION                 version_env;
+    WS_ADDRESSING_VERSION               version_addr;
+    BOOL                                is_addressed;
+    WS_STRING                           addr;
+    WS_STRING                           action;
+    WS_HEAP                            *heap;
+    WS_XML_BUFFER                      *buf;
+    WS_XML_WRITER                      *writer;
+    WS_XML_WRITER                      *writer_body;
+    WS_XML_READER                      *reader_body;
+    ULONG                               header_count;
+    ULONG                               header_size;
+    struct header                     **header;
+    WS_PROXY_MESSAGE_CALLBACK_CONTEXT   ctx_send;
+    WS_PROXY_MESSAGE_CALLBACK_CONTEXT   ctx_receive;
+    ULONG                               prop_count;
+    struct prop                         prop[sizeof(msg_props)/sizeof(msg_props[0])];
 };
 
 #define HEADER_ARRAY_SIZE 2
@@ -953,7 +955,7 @@ static HRESULT build_mapped_header( const WS_XML_STRING *name, WS_TYPE type, WS_
  *          WsAddMappedHeader		[webservices.@]
  */
 HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name, WS_TYPE type,
-                                  WS_WRITE_OPTION option, const void *value, ULONG size , WS_ERROR *error )
+                                  WS_WRITE_OPTION option, const void *value, ULONG size, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
     struct header *header;
@@ -1207,6 +1209,44 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     }
 
     return S_OK;
+}
+
+void message_set_send_context( WS_MESSAGE *handle, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT *ctx )
+{
+    struct msg *msg = (struct msg *)handle;
+    msg->ctx_send.callback = ctx->callback;
+    msg->ctx_send.state    = ctx->state;
+}
+
+void message_set_receive_context( WS_MESSAGE *handle, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT *ctx )
+{
+    struct msg *msg = (struct msg *)handle;
+    msg->ctx_receive.callback = ctx->callback;
+    msg->ctx_receive.state    = ctx->state;
+}
+
+void message_do_send_callback( WS_MESSAGE *handle )
+{
+    struct msg *msg = (struct msg *)handle;
+    if (msg->ctx_send.callback)
+    {
+        HRESULT hr;
+        TRACE( "executing callback %p\n", msg->ctx_send.callback );
+        hr = msg->ctx_send.callback( handle, msg->heap, msg->ctx_send.state, NULL );
+        TRACE( "callback %p returned %08x\n", msg->ctx_send.callback, hr );
+    }
+}
+
+void message_do_receive_callback( WS_MESSAGE *handle )
+{
+    struct msg *msg = (struct msg *)handle;
+    if (msg->ctx_receive.callback)
+    {
+        HRESULT hr;
+        TRACE( "executing callback %p\n", msg->ctx_receive.callback );
+        hr = msg->ctx_receive.callback( handle, msg->heap, msg->ctx_receive.state, NULL );
+        TRACE( "callback %p returned %08x\n", msg->ctx_receive.callback, hr );
+    }
 }
 
 HRESULT message_set_action( WS_MESSAGE *handle, const WS_XML_STRING *action )

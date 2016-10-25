@@ -2107,7 +2107,7 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     if (!desc) return E_INVALIDARG;
     if (desc->structOptions) FIXME( "struct options 0x%x not supported\n", desc->structOptions );
 
-    if ((hr = get_value_ptr( option, value, size, desc->size, (const void **)&ptr )) != S_OK) return hr;
+    if ((hr = get_value_ptr( option, value, size, desc->size, &ptr )) != S_OK) return hr;
 
     for (i = 0; i < desc->fieldCount; i++)
     {
@@ -2791,4 +2791,44 @@ HRESULT WINAPI WsCopyNode( WS_XML_WRITER *handle, WS_XML_READER *reader, WS_ERRO
 
     writer->current = current;
     return S_OK;
+}
+
+static HRESULT write_param( struct writer *writer, const WS_FIELD_DESCRIPTION *desc, const void *value )
+{
+    return write_type_struct_field( writer, desc, value, get_field_size(desc) );
+}
+
+HRESULT write_input_params( WS_XML_WRITER *handle, const WS_ELEMENT_DESCRIPTION *desc,
+                            const WS_PARAMETER_DESCRIPTION *params, ULONG count, const void **args )
+{
+    struct writer *writer = (struct writer *)handle;
+    const WS_STRUCT_DESCRIPTION *desc_struct;
+    const WS_FIELD_DESCRIPTION *desc_field;
+    HRESULT hr;
+    ULONG i;
+
+    if (desc->type != WS_STRUCT_TYPE || !(desc_struct = desc->typeDescription)) return E_INVALIDARG;
+
+    if ((hr = write_element_node( writer, NULL, desc->elementLocalName, desc->elementNs )) != S_OK) return hr;
+
+    for (i = 0; i < count; i++)
+    {
+        if (params[i].inputMessageIndex == INVALID_PARAMETER_INDEX) continue;
+        if (params[i].parameterType == WS_PARAMETER_TYPE_MESSAGES)
+        {
+            FIXME( "messages type not supported\n" );
+            return E_NOTIMPL;
+        }
+        if ((hr = get_param_desc( desc_struct, params[i].inputMessageIndex, &desc_field )) != S_OK) return hr;
+        if (params[i].parameterType == WS_PARAMETER_TYPE_NORMAL)
+        {
+            if ((hr = write_param( writer, desc_field, args[i] )) != S_OK) return hr;
+        }
+        else if (params[i].parameterType == WS_PARAMETER_TYPE_ARRAY)
+        {
+            FIXME( "no support for writing array parameters\n" );
+        }
+    }
+
+    return write_endelement_node( writer );
 }

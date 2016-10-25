@@ -245,6 +245,127 @@ HRESULT WINAPI WsAbortServiceProxy( WS_SERVICE_PROXY *handle, WS_ERROR *error )
     return E_NOTIMPL;
 }
 
+static HRESULT set_send_context( WS_MESSAGE *msg, const WS_CALL_PROPERTY *props, ULONG count )
+{
+    ULONG i;
+    for (i = 0; i < count; i++)
+    {
+        if (props[i].id == WS_CALL_PROPERTY_SEND_MESSAGE_CONTEXT)
+        {
+            if (props[i].valueSize != sizeof(WS_PROXY_MESSAGE_CALLBACK_CONTEXT)) return E_INVALIDARG;
+            message_set_send_context( msg, props[i].value );
+            break;
+        }
+    }
+    return S_OK;
+}
+
+static HRESULT set_receive_context( WS_MESSAGE *msg, const WS_CALL_PROPERTY *props, ULONG count )
+{
+    ULONG i;
+    for (i = 0; i < count; i++)
+    {
+        if (props[i].id == WS_CALL_PROPERTY_RECEIVE_MESSAGE_CONTEXT)
+        {
+            if (props[i].valueSize != sizeof(WS_PROXY_MESSAGE_CALLBACK_CONTEXT)) return E_INVALIDARG;
+            message_set_receive_context( msg, props[i].value );
+            break;
+        }
+    }
+    return S_OK;
+}
+
+static HRESULT write_message( WS_MESSAGE *msg, WS_XML_WRITER *writer, const WS_ELEMENT_DESCRIPTION *desc,
+                              const WS_PARAMETER_DESCRIPTION *params, ULONG count, const void **args )
+{
+    HRESULT hr;
+    message_do_send_callback( msg );
+    if ((hr = WsWriteEnvelopeStart( msg, writer, NULL, NULL, NULL )) != S_OK) return hr;
+    if ((hr = write_input_params( writer, desc, params, count, args )) != S_OK) return hr;
+    return WsWriteEnvelopeEnd( msg, NULL );
+}
+
+static HRESULT send_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE_DESCRIPTION *desc,
+                             WS_PARAMETER_DESCRIPTION *params, ULONG count, const void **args )
+{
+    WS_XML_WRITER *writer;
+    HRESULT hr;
+
+    if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
+    if ((hr = WsCreateWriter( NULL, 0, &writer, NULL )) != S_OK) return hr;
+    if ((hr = set_output( writer )) != S_OK) goto done;
+    if ((hr = write_message( msg, writer, desc->bodyElementDescription, params, count, args )) != S_OK) goto done;
+    hr = channel_send_message( channel, msg );
+
+done:
+    WsFreeWriter( writer );
+    return hr;
+}
+
+static HRESULT read_message( WS_MESSAGE *msg, WS_XML_READER *reader, WS_HEAP *heap,
+                             const WS_ELEMENT_DESCRIPTION *desc, const WS_PARAMETER_DESCRIPTION *params,
+                             ULONG count, const void **args )
+{
+    HRESULT hr;
+    if ((hr = WsReadEnvelopeStart( msg, reader, NULL, NULL, NULL )) != S_OK) return hr;
+    message_do_receive_callback( msg );
+    if ((hr = read_output_params( reader, heap, desc, params, count, args )) != S_OK) return hr;
+    return WsReadEnvelopeEnd( msg, NULL );
+}
+
+static HRESULT receive_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE_DESCRIPTION *desc,
+                                WS_PARAMETER_DESCRIPTION *params, ULONG count, WS_HEAP *heap, const void **args )
+{
+    WS_XML_READER *reader;
+    char *buf;
+    ULONG len;
+    HRESULT hr;
+
+    if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
+    if ((hr = channel_receive_message( channel, &buf, &len )) != S_OK) return hr;
+    if ((hr = WsCreateReader( NULL, 0, &reader, NULL )) != S_OK) goto done;
+    if ((hr = set_input( reader, buf, len )) != S_OK) goto done;
+    hr = read_message( msg, reader, heap, desc->bodyElementDescription, params, count, args );
+
+done:
+    WsFreeReader( reader );
+    heap_free( buf);
+    return hr;
+}
+
+static HRESULT create_input_message( WS_CHANNEL *channel, const WS_CALL_PROPERTY *properties,
+                                     ULONG count, WS_MESSAGE **ret )
+{
+    WS_MESSAGE *msg;
+    HRESULT hr;
+
+    if ((hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL )) != S_OK) return hr;
+    if ((hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL )) != S_OK ||
+        (hr = set_send_context( msg, properties, count )) != S_OK)
+    {
+        WsFreeMessage( msg );
+        return hr;
+    }
+    *ret = msg;
+    return S_OK;
+}
+
+static HRESULT create_output_message( WS_CHANNEL *channel, const WS_CALL_PROPERTY *properties,
+                                      ULONG count, WS_MESSAGE **ret )
+{
+    WS_MESSAGE *msg;
+    HRESULT hr;
+
+    if ((hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL )) != S_OK) return hr;
+    if ((hr = set_receive_context( msg, properties, count )) != S_OK)
+    {
+        WsFreeMessage( msg );
+        return hr;
+    }
+    *ret = msg;
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsCall		[webservices.@]
  */
@@ -252,6 +373,35 @@ HRESULT WINAPI WsCall( WS_SERVICE_PROXY *handle, const WS_OPERATION_DESCRIPTION 
                        WS_HEAP *heap, const WS_CALL_PROPERTY *properties, const ULONG count,
                        const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
-    FIXME( "%p %p %p %p %p %u %p %p\n", handle, desc, args, heap, properties, count, ctx, error );
-    return E_NOTIMPL;
+    struct proxy *proxy = (struct proxy *)handle;
+    WS_MESSAGE *msg;
+    HRESULT hr;
+    ULONG i;
+
+    TRACE( "%p %p %p %p %p %u %p %p\n", handle, desc, args, heap, properties, count, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+    for (i = 0; i < count; i++)
+    {
+        if (properties[i].id != WS_CALL_PROPERTY_SEND_MESSAGE_CONTEXT &&
+            properties[i].id != WS_CALL_PROPERTY_RECEIVE_MESSAGE_CONTEXT)
+        {
+            FIXME( "unimplemented call property %u\n", properties[i].id );
+            return E_NOTIMPL;
+        }
+    }
+
+    if (!handle || !desc || (desc->parameterCount && !args)) return E_INVALIDARG;
+
+    if ((hr = create_input_message( proxy->channel, properties, count, &msg )) != S_OK) return hr;
+    hr = send_message( proxy->channel, msg, desc->inputMessageDescription, desc->parameterDescription,
+                       desc->parameterCount, args );
+    WsFreeMessage( msg );
+    if (hr != S_OK) return hr;
+
+    if ((hr = create_output_message( proxy->channel, properties, count, &msg )) != S_OK) return hr;
+    hr = receive_message( proxy->channel, msg, desc->outputMessageDescription, desc->parameterDescription,
+                          desc->parameterCount, heap, args );
+    WsFreeMessage( msg );
+    return hr;
 }

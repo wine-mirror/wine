@@ -4665,3 +4665,107 @@ HRESULT WINAPI WsReadCharsUtf8( WS_XML_READER *handle, BYTE *bytes, ULONG max_co
 
     return S_OK;
 }
+
+HRESULT get_param_desc( const WS_STRUCT_DESCRIPTION *desc, USHORT index, const WS_FIELD_DESCRIPTION **ret )
+{
+    if (index >= desc->fieldCount) return E_INVALIDARG;
+    *ret = desc->fields[index];
+    return S_OK;
+}
+
+static ULONG get_field_size( const WS_FIELD_DESCRIPTION *desc )
+{
+    WS_READ_OPTION option;
+    ULONG size;
+
+    switch ((option = get_field_read_option( desc->type, desc->options )))
+    {
+    case WS_READ_REQUIRED_POINTER:
+    case WS_READ_OPTIONAL_POINTER:
+    case WS_READ_NILLABLE_POINTER:
+        size = sizeof(void *);
+        break;
+
+    case WS_READ_REQUIRED_VALUE:
+    case WS_READ_NILLABLE_VALUE:
+        size = get_type_size( desc->type, desc->typeDescription );
+        break;
+
+    default:
+        WARN( "unhandled option %u\n", option );
+        return 0;
+    }
+
+    return size;
+}
+
+static HRESULT read_param( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, void *ret )
+{
+    if (!ret && !(ret = ws_alloc_zero( heap, get_field_size(desc) ))) return WS_E_QUOTA_EXCEEDED;
+    return read_type_struct_field( reader, desc, heap, ret, 0 );
+}
+
+static HRESULT read_param_array( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap,
+                                 void **ret, ULONG *count )
+{
+    if (!ret && !(ret = ws_alloc_zero( heap, sizeof(void **) ))) return WS_E_QUOTA_EXCEEDED;
+    return read_type_repeating_element( reader, desc, heap, ret, count );
+}
+
+static void set_array_len( const WS_PARAMETER_DESCRIPTION *params, ULONG count, ULONG index, ULONG len,
+                           const void **args )
+{
+    ULONG i, *ptr;
+    for (i = 0; i < count; i++)
+    {
+        if (params[i].outputMessageIndex != index || params[i].parameterType != WS_PARAMETER_TYPE_ARRAY_COUNT)
+            continue;
+        if ((ptr = *(ULONG **)args[i])) *ptr = len;
+        break;
+    }
+}
+
+HRESULT read_output_params( WS_XML_READER *handle, WS_HEAP *heap, const WS_ELEMENT_DESCRIPTION *desc,
+                            const WS_PARAMETER_DESCRIPTION *params, ULONG count, const void **args )
+{
+    struct reader *reader = (struct reader *)handle;
+    const WS_STRUCT_DESCRIPTION *desc_struct;
+    const WS_FIELD_DESCRIPTION *desc_field;
+    ULONG i, len;
+    HRESULT hr;
+
+    if (desc->type != WS_STRUCT_TYPE || !(desc_struct = desc->typeDescription)) return E_INVALIDARG;
+
+    if ((hr = start_mapping( reader, WS_ELEMENT_TYPE_MAPPING, desc->elementLocalName, desc->elementNs )) != S_OK)
+        return hr;
+
+    for (i = 0; i < count; i++)
+    {
+        if (params[i].outputMessageIndex == INVALID_PARAMETER_INDEX) continue;
+        if (params[i].parameterType == WS_PARAMETER_TYPE_MESSAGES)
+        {
+            FIXME( "messages type not supported\n" );
+            return E_NOTIMPL;
+        }
+        if ((hr = get_param_desc( desc_struct, params[i].outputMessageIndex, &desc_field )) != S_OK) return hr;
+        if (params[i].parameterType == WS_PARAMETER_TYPE_NORMAL)
+        {
+            void *ptr = *(void **)args[i];
+            if ((hr = read_param( reader, desc_field, heap, ptr )) != S_OK) return hr;
+        }
+        else if (params[i].parameterType == WS_PARAMETER_TYPE_ARRAY)
+        {
+            void **ptr = *(void ***)args[i];
+            if ((hr = read_param_array( reader, desc_field, heap, ptr, &len )) != S_OK) return hr;
+            set_array_len( params, count, params[i].outputMessageIndex, len, args );
+        }
+    }
+
+    if (desc_struct->structOptions & WS_STRUCT_IGNORE_TRAILING_ELEMENT_CONTENT)
+    {
+        struct node *parent = find_parent( reader );
+        parent->flags |= NODE_FLAG_IGNORE_TRAILING_ELEMENT_CONTENT;
+    }
+
+    return end_mapping( reader, WS_ELEMENT_TYPE_MAPPING );
+}

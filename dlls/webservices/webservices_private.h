@@ -41,6 +41,13 @@ HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
 HRESULT set_input( WS_XML_READER *, char *, ULONG ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;
 
+#define INVALID_PARAMETER_INDEX 0xffff
+HRESULT get_param_desc( const WS_STRUCT_DESCRIPTION *, USHORT, const WS_FIELD_DESCRIPTION ** ) DECLSPEC_HIDDEN;
+HRESULT write_input_params( WS_XML_WRITER *, const WS_ELEMENT_DESCRIPTION *,
+                            const WS_PARAMETER_DESCRIPTION *, ULONG, const void ** ) DECLSPEC_HIDDEN;
+HRESULT read_output_params( WS_XML_READER *, WS_HEAP *, const WS_ELEMENT_DESCRIPTION *,
+                            const WS_PARAMETER_DESCRIPTION *, ULONG, const void ** ) DECLSPEC_HIDDEN;
+
 enum node_flag
 {
     NODE_FLAG_IGNORE_TRAILING_ELEMENT_CONTENT   = 0x1,
@@ -100,6 +107,10 @@ HRESULT prop_set( const struct prop *, ULONG, ULONG, const void *, ULONG ) DECLS
 HRESULT prop_get( const struct prop *, ULONG, ULONG, void *, ULONG ) DECLSPEC_HIDDEN;
 
 HRESULT message_set_action( WS_MESSAGE *, const WS_XML_STRING * ) DECLSPEC_HIDDEN;
+void message_set_send_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * ) DECLSPEC_HIDDEN;
+void message_set_receive_context( WS_MESSAGE *, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT * ) DECLSPEC_HIDDEN;
+void message_do_send_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
+void message_do_receive_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
 
 HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
