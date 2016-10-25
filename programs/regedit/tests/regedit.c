@@ -243,9 +243,9 @@ static void test_basic_import(void)
                     "\"Line3\"=\"Value3\"\n\n\n\n"
                     "\"Line4\"=\"Value4\"\n\n");
     verify_reg(hkey, "Line1", REG_SZ, "Value1", 7, 0);
-    todo_wine verify_reg(hkey, "Line2", REG_SZ, "Value2", 7, TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
-    todo_wine verify_reg(hkey, "Line3", REG_SZ, "Value3", 7, TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
-    todo_wine verify_reg(hkey, "Line4", REG_SZ, "Value4", 7, TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg(hkey, "Line2", REG_SZ, "Value2", 7, 0);
+    verify_reg(hkey, "Line3", REG_SZ, "Value3", 7, 0);
+    verify_reg(hkey, "Line4", REG_SZ, "Value4", 7, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -259,15 +259,11 @@ static void test_basic_import(void)
                     "\"Wine4\"=dword:12345678\n\n");
     dword = 0x782;
     verify_reg(hkey, "Wine1", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg(hkey, "Wine2", REG_SZ, "Test Value", 11,
-                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
-    todo_wine verify_reg(hkey, "Wine3", REG_MULTI_SZ, "Line concatenation\0", 20,
-                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
-    todo_wine verify_reg(hkey, "", REG_SZ, "Test", 5,
-                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg(hkey, "Wine2", REG_SZ, "Test Value", 11, 0);
+    verify_reg(hkey, "Wine3", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "", REG_SZ, "Test", 5, 0);
     dword = 0x12345678;
-    todo_wine verify_reg(hkey, "Wine4", REG_DWORD, &dword, sizeof(dword),
-                         TODO_REG_TYPE|TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg(hkey, "Wine4", REG_DWORD, &dword, sizeof(dword), 0);
 
     RegCloseKey(hkey);
 

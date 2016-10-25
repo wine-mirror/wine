@@ -614,12 +614,6 @@ static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
                 ( stdInput[0] == '\"'))) /* reading a new value=data pair */
     {
         processSetValue(stdInput, isUnicode);
-    } else
-    {
-        /* Since we are assuming that the file format is valid we must be
-         * reading a blank line which indicates the end of this key processing
-         */
-        closeKey();
     }
 }
 
