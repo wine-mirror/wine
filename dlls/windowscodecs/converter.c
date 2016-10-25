@@ -1287,7 +1287,7 @@ static HRESULT WINAPI FormatConverter_GetPixelFormat(IWICFormatConverter *iface,
 {
     FormatConverter *This = impl_from_IWICFormatConverter(iface);
 
-    TRACE("(%p,%p): stub\n", iface, pPixelFormat);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
 
     if (This->source)
         memcpy(pPixelFormat, This->dst_format->guid, sizeof(GUID));
@@ -1302,7 +1302,7 @@ static HRESULT WINAPI FormatConverter_GetResolution(IWICFormatConverter *iface,
 {
     FormatConverter *This = impl_from_IWICFormatConverter(iface);
 
-    TRACE("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
+    TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
 
     if (This->source)
         return IWICBitmapSource_GetResolution(This->source, pDpiX, pDpiY);

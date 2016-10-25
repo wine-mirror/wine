@@ -626,7 +626,7 @@ static HRESULT WINAPI TiffDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
     TIFF *tiff;
     HRESULT hr=S_OK;
 
-    TRACE("(%p,%p,%x): stub\n", iface, pIStream, cacheOptions);
+    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
 
     EnterCriticalSection(&This->lock);
 
