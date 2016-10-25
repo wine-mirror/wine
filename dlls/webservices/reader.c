@@ -3791,6 +3791,9 @@ ULONG get_type_size( WS_TYPE type, const WS_STRUCT_DESCRIPTION *desc )
     case WS_STRUCT_TYPE:
         return desc->size;
 
+    case WS_DESCRIPTION_TYPE:
+        return sizeof(WS_STRUCT_DESCRIPTION *);
+
     default:
         ERR( "unhandled type %u\n", type );
         return 0;
@@ -3829,6 +3832,7 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
         return WS_READ_REQUIRED_VALUE;
 
     case WS_WSZ_TYPE:
+    case WS_DESCRIPTION_TYPE:
         if (options & WS_FIELD_NILLABLE) return WS_READ_NILLABLE_POINTER;
         if (options & WS_FIELD_OPTIONAL) return WS_READ_OPTIONAL_POINTER;
         return WS_READ_REQUIRED_POINTER;
@@ -3940,6 +3944,10 @@ static HRESULT read_type_struct_field( struct reader *reader, const WS_FIELD_DES
     ptr = buf + desc->offset;
     switch (desc->mapping)
     {
+    case WS_TYPE_ATTRIBUTE_FIELD_MAPPING:
+        FIXME( "WS_TYPE_ATTRIBUTE_FIELD_MAPPING not supported\n" );
+        return S_OK;
+
     case WS_ATTRIBUTE_FIELD_MAPPING:
         hr = read_type( reader, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->localName, desc->ns,
                         desc->typeDescription, option, heap, ptr, size );
