@@ -584,15 +584,6 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
  */
 static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
 {
-    /*
-     * We encountered the end of the file, make sure we
-     * close the opened key and exit
-     */
-    if (stdInput == NULL) {
-        closeKey();
-        return;
-    }
-
     if      ( stdInput[0] == '[')      /* We are reading a new key */
     {
         WCHAR* keyEnd;
@@ -735,7 +726,7 @@ static void processRegLinesA(FILE *in, char* first_chars)
             line = s_eol + 1;
         }
     }
-    processRegEntry(NULL, FALSE);
+    closeKey();
 
     HeapFree(GetProcessHeap(), 0, buf);
 }
@@ -851,7 +842,7 @@ static void processRegLinesW(FILE *in)
         }
     }
 
-    processRegEntry(NULL, TRUE);
+    closeKey();
 
     HeapFree(GetProcessHeap(), 0, buf);
 }
