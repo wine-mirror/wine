@@ -791,7 +791,7 @@ BOOL WINAPI
 SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
 		     LPVOID tokeninfo, DWORD tokeninfolength )
 {
-    TRACE("(%p, %s, %p, %d): stub\n",
+    TRACE("(%p, %s, %p, %d)\n",
           token,
           (tokeninfoclass == TokenUser) ? "TokenUser" :
           (tokeninfoclass == TokenGroups) ? "TokenGroups" :
