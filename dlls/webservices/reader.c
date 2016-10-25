@@ -4583,6 +4583,51 @@ HRESULT WINAPI WsReadBytes( WS_XML_READER *handle, void *bytes, ULONG max_count,
     return S_OK;
 }
 
+static HRESULT utf8_to_utf16( const WS_XML_UTF8_TEXT *utf8, WS_XML_UTF16_TEXT *utf16 )
+{
+    int len = MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, NULL, 0 );
+    if (!(utf16->bytes = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, (WCHAR *)utf16->bytes, len );
+    utf16->byteCount = len * sizeof(WCHAR);
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsReadChars		[webservices.@]
+ */
+HRESULT WINAPI WsReadChars( WS_XML_READER *handle, WCHAR *chars, ULONG max_count, ULONG *count, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p %u %p %p\n", handle, chars, max_count, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    if (!reader->input_type) return WS_E_INVALID_OPERATION;
+    if (!count) return E_INVALIDARG;
+
+    *count = 0;
+    if (node_type( reader->current ) == WS_XML_NODE_TYPE_TEXT && chars)
+    {
+        const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)reader->current;
+        WS_XML_UTF16_TEXT utf16;
+        HRESULT hr;
+
+        if ((hr = utf8_to_utf16( (const WS_XML_UTF8_TEXT *)text->text, &utf16 )) != S_OK) return hr;
+        if (reader->text_conv_offset == utf16.byteCount / sizeof(WCHAR))
+        {
+            heap_free( utf16.bytes );
+            return read_node( reader );
+        }
+        *count = min( utf16.byteCount / sizeof(WCHAR) - reader->text_conv_offset, max_count );
+        memcpy( chars, utf16.bytes + reader->text_conv_offset * sizeof(WCHAR), *count * sizeof(WCHAR) );
+        reader->text_conv_offset += *count;
+        heap_free( utf16.bytes );
+    }
+
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsReadCharsUtf8		[webservices.@]
  */

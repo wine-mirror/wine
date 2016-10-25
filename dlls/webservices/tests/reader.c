@@ -3978,6 +3978,126 @@ static void test_WsReadBytes(void)
     WsFreeReader( reader );
 }
 
+static void test_WsReadChars(void)
+{
+    static const WCHAR textW[] = {'t','e','x','t'};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    const WS_XML_NODE *node;
+    const WS_XML_TEXT_NODE *text;
+    const WS_XML_UTF8_TEXT *utf8;
+    unsigned char buf[4];
+    WCHAR bufW[4];
+    ULONG count;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadChars( NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsReadChars( reader, NULL, 0, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t>text</t>", sizeof("<t>text</t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadChars( reader, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t>text</t>", sizeof("<t>text</t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadChars( reader, bufW, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t>text</t>", sizeof("<t>text</t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 0xdeadbeef;
+    hr = WsReadChars( reader, NULL, 0, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+
+    count = 0xdeadbeef;
+    hr = WsReadChars( reader, NULL, 1, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+
+    buf[0] = 0;
+    count = 0xdeadbeef;
+    hr = WsReadChars( reader, bufW, 0, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+    ok( !buf[0], "wrong data\n" );
+
+    buf[0] = 0;
+    count = 0xdeadbeef;
+    hr = WsReadChars( reader, bufW, 2, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+    ok( !buf[0], "wrong data\n" );
+
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    buf[0] = 0;
+    count = 0xdeadbeef;
+    hr = WsReadChars( reader, bufW, 2, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+    ok( !buf[0], "wrong data\n" );
+
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = 0xdeadbeef;
+    hr = WsReadChars( reader, NULL, 0, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+
+    buf[0] = 0;
+    count = 0xdeadbeef;
+    hr = WsReadChars( reader, bufW, 2, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 2, "got %u\n", count );
+    ok( !memcmp( bufW, textW, 2 * sizeof(WCHAR) ), "wrong data\n" );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text = (const WS_XML_TEXT_NODE *)node;
+    ok( text->node.nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", text->node.nodeType );
+    utf8 = (const WS_XML_UTF8_TEXT *)text->text;
+    ok( text->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text->text->textType );
+    ok( utf8->value.length == 4, "got %u\n", utf8->value.length );
+    ok( !memcmp( utf8->value.bytes, "text", 4 ), "wrong data\n" );
+
+    /* continue reading in a different encoding */
+    buf[0] = 0;
+    count = 0xdeadbeef;
+    hr = WsReadCharsUtf8( reader, buf, 2, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 2, "got %u\n", count );
+    ok( !memcmp( buf, "xt", 2 ), "wrong data\n" );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text = (const WS_XML_TEXT_NODE *)node;
+    ok( text->node.nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", text->node.nodeType );
+
+    count = 0xdeadbeef;
+    hr = WsReadCharsUtf8( reader, buf, 1, &count, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %u\n", count );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    text = (const WS_XML_TEXT_NODE *)node;
+    ok( text->node.nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", text->node.nodeType );
+
+    WsFreeReader( reader );
+}
+
 static void test_WsReadCharsUtf8(void)
 {
     HRESULT hr;
@@ -4132,5 +4252,6 @@ START_TEST(reader)
     test_entities();
     test_field_options();
     test_WsReadBytes();
+    test_WsReadChars();
     test_WsReadCharsUtf8();
 }
