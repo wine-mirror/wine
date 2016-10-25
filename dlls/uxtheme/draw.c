@@ -2016,7 +2016,7 @@ HRESULT WINAPI GetThemeTextExtent(HTHEME hTheme, HDC hdc, int iPartId,
     LOGFONTW logfont;
     RECT rt = {0,0,0xFFFF,0xFFFF};
     
-    TRACE("%d %d: stub\n", iPartId, iStateId);
+    TRACE("%d %d\n", iPartId, iStateId);
     if(!hTheme)
         return E_HANDLE;
 
