@@ -1256,7 +1256,7 @@ static HRESULT WINAPI VMR7FilterConfig_GetRenderingMode(IVMRFilterConfig *iface,
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig(iface);
 
-    TRACE("(%p/%p)->(%p) stub\n", iface, This, mode);
+    TRACE("(%p/%p)->(%p)\n", iface, This, mode);
     if (!mode) return E_POINTER;
 
     if (This->mode)
@@ -1679,7 +1679,7 @@ static HRESULT WINAPI VMR9FilterConfig_GetRenderingMode(IVMRFilterConfig9 *iface
 {
     struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
 
-    TRACE("(%p/%p)->(%p) stub\n", iface, This, mode);
+    TRACE("(%p/%p)->(%p)\n", iface, This, mode);
     if (!mode)
         return E_POINTER;
 
