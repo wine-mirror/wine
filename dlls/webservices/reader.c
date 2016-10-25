@@ -590,6 +590,7 @@ struct reader
     struct xmlbuf           *input_buf;
     const unsigned char     *input_data;
     ULONG                    input_size;
+    ULONG                    text_conv_offset;
     ULONG                    prop_count;
     struct prop              prop[sizeof(reader_props)/sizeof(reader_props[0])];
 };
@@ -1540,6 +1541,7 @@ static HRESULT read_text( struct reader *reader )
 
     read_insert_node( reader, parent, node );
     reader->state = READER_STATE_TEXT;
+    reader->text_conv_offset = 0;
     return S_OK;
 }
 
@@ -4534,5 +4536,49 @@ HRESULT WINAPI WsSetReaderPosition( WS_XML_READER *handle, const WS_XML_NODE_POS
     if (!reader->input_buf) return WS_E_INVALID_OPERATION;
 
     reader->current = pos->node;
+    return S_OK;
+}
+
+static HRESULT utf8_to_base64( const WS_XML_UTF8_TEXT *utf8, WS_XML_BASE64_TEXT *base64 )
+{
+    if (utf8->value.length % 4) return WS_E_INVALID_FORMAT;
+    if (!(base64->bytes = heap_alloc( utf8->value.length * 3 / 4 ))) return E_OUTOFMEMORY;
+    base64->length = decode_base64( utf8->value.bytes, utf8->value.length, base64->bytes );
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsReadBytes		[webservices.@]
+ */
+HRESULT WINAPI WsReadBytes( WS_XML_READER *handle, void *bytes, ULONG max_count, ULONG *count, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %u %p %p\n", handle, bytes, max_count, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    if (!reader->input_type) return WS_E_INVALID_OPERATION;
+    if (!count) return E_INVALIDARG;
+
+    *count = 0;
+    if (node_type( reader->current ) == WS_XML_NODE_TYPE_TEXT && bytes)
+    {
+        const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)reader->current;
+        WS_XML_BASE64_TEXT base64;
+
+        if ((hr = utf8_to_base64( (const WS_XML_UTF8_TEXT *)text->text, &base64 )) != S_OK) return hr;
+        if (reader->text_conv_offset == base64.length)
+        {
+            heap_free( base64.bytes );
+            return read_node( reader );
+        }
+        *count = min( base64.length - reader->text_conv_offset, max_count );
+        memcpy( bytes, base64.bytes + reader->text_conv_offset, *count );
+        reader->text_conv_offset += *count;
+        heap_free( base64.bytes );
+    }
+
     return S_OK;
 }

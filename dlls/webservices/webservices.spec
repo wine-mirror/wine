@@ -104,7 +104,7 @@
 @ stub WsReadArray
 @ stub WsReadAttribute
 @ stdcall WsReadBody(ptr ptr long ptr ptr long ptr)
-@ stub WsReadBytes
+@ stdcall WsReadBytes(ptr ptr long ptr ptr)
 @ stub WsReadChars
 @ stub WsReadCharsUtf8
 @ stdcall WsReadElement(ptr ptr long ptr ptr long ptr)
