@@ -1024,7 +1024,8 @@ UINT MSIREG_DeleteClassesUpgradeCodesKey(LPCWSTR szUpgradeCode)
  *
  * Decomposes an MSI descriptor into product, feature and component parts.
  * An MSI descriptor is a string of the form:
- *   [base 85 guid] [feature code] '>' [base 85 guid]
+ *   [base 85 guid] [feature code] '>' [base 85 guid] or
+ *   [base 85 guid] [feature code] '<'
  *
  * PARAMS
  *   szDescriptor  [I]  the descriptor to decompose
@@ -1041,21 +1042,21 @@ UINT MSIREG_DeleteClassesUpgradeCodesKey(LPCWSTR szUpgradeCode)
 UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR szDescriptor, LPWSTR szProduct,
                 LPWSTR szFeature, LPWSTR szComponent, LPDWORD pUsed )
 {
-    UINT r, len;
-    LPWSTR p;
+    UINT len;
+    const WCHAR *p;
     GUID product, component;
 
     TRACE("%s %p %p %p %p\n", debugstr_w(szDescriptor), szProduct,
           szFeature, szComponent, pUsed);
 
-    r = decode_base85_guid( szDescriptor, &product );
-    if( !r )
+    if (!decode_base85_guid( szDescriptor, &product ))
         return ERROR_INVALID_PARAMETER;
 
     TRACE("product %s\n", debugstr_guid( &product ));
 
-    p = strchrW(&szDescriptor[20],'>');
-    if( !p )
+    if (!(p = strchrW( &szDescriptor[20], '>' )))
+        p = strchrW( &szDescriptor[20], '<' );
+    if (!p)
         return ERROR_INVALID_PARAMETER;
 
     len = (p - &szDescriptor[20]);
@@ -1064,22 +1065,30 @@ UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR szDescriptor, LPWSTR szProduct,
 
     TRACE("feature %s\n", debugstr_wn( &szDescriptor[20], len ));
 
-    r = decode_base85_guid( p+1, &component );
-    if( !r )
-        return ERROR_INVALID_PARAMETER;
-
-    TRACE("component %s\n", debugstr_guid( &component ));
+    if (*p == '>')
+    {
+        if (!decode_base85_guid( p+1, &component ))
+            return ERROR_INVALID_PARAMETER;
+        TRACE( "component %s\n", debugstr_guid(&component) );
+    }
 
     if (szProduct)
         StringFromGUID2( &product, szProduct, MAX_FEATURE_CHARS+1 );
     if (szComponent)
-        StringFromGUID2( &component, szComponent, MAX_FEATURE_CHARS+1 );
+    {
+        if (*p == '>')
+            StringFromGUID2( &component, szComponent, MAX_FEATURE_CHARS+1 );
+        else
+            szComponent[0] = 0;
+    }
     if (szFeature)
     {
         memcpy( szFeature, &szDescriptor[20], len*sizeof(WCHAR) );
         szFeature[len] = 0;
     }
-    len = ( &p[21] - szDescriptor );
+
+    len = p - szDescriptor + 1;
+    if (*p == '>') len += 20;
 
     TRACE("length = %d\n", len);
     if (pUsed) *pUsed = len;
