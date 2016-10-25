@@ -2211,7 +2211,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_GetNormals(IDirect3DRMMeshBuilder3 *if
     struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
     DWORD count = mesh_builder->nb_normals - start_idx;
 
-    TRACE("iface %p, start_idx %u, normal_count %p, normals %p stub!\n",
+    TRACE("iface %p, start_idx %u, normal_count %p, normals %p.\n",
             iface, start_idx, normal_count, normals);
 
     if (normal_count)

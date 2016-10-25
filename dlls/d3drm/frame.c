@@ -2002,7 +2002,7 @@ static HRESULT WINAPI d3drm_frame3_SetSceneBackgroundRGB(IDirect3DRMFrame3 *ifac
 {
     struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    TRACE("iface %p, red %.8e, green %.8e, blue %.8e stub!\n", iface, red, green, blue);
+    TRACE("iface %p, red %.8e, green %.8e, blue %.8e.\n", iface, red, green, blue);
 
     frame->scenebackground = RGBA_MAKE((BYTE)(red * 255.0f),
             (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);

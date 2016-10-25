@@ -1146,7 +1146,7 @@ static D3DCOLORMODEL WINAPI d3drm_device1_GetColorModel(IDirect3DRMDevice *iface
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
 
-    TRACE("iface %p stub!\n", iface);
+    TRACE("iface %p.\n", iface);
 
     return d3drm_device3_GetColorModel(&device->IDirect3DRMDevice3_iface);
 }
@@ -1580,7 +1580,7 @@ static HRESULT WINAPI d3drm_device_win_GetName(IDirect3DRMWinDevice *iface, DWOR
 {
     struct d3drm_device *device = impl_from_IDirect3DRMWinDevice(iface);
 
-    TRACE("iface %p, size %p, name %p stub!\n", iface, size, name);
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
     return d3drm_device3_GetName(&device->IDirect3DRMDevice3_iface, size, name);
 }
