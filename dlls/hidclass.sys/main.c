@@ -98,18 +98,10 @@ NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG
     IRP *irp;
     IO_STATUS_BLOCK irp_status;
     NTSTATUS status;
-    void *buffer = NULL;
-
     HANDLE event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
-    if (out_size)
-    {
-        buffer = HeapAlloc(GetProcessHeap(), 0, out_size);
-        memcpy(buffer, out_buff, out_size);
-    }
-
     irp = IoBuildDeviceIoControlRequest(code, device, in_buff, in_size,
-        buffer, out_size, TRUE, NULL, &irp_status);
+        out_buff, out_size, TRUE, NULL, &irp_status);
 
     IoSetCompletionRoutine(irp, internalComplete, event, TRUE, TRUE, TRUE);
     status = IoCallDriver(device, irp);
@@ -117,7 +109,6 @@ NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG
     if (status == STATUS_PENDING)
         WaitForSingleObject(event, INFINITE);
 
-    memcpy(out_buff, buffer, out_size);
     status = irp->IoStatus.u.Status;
 
     IoCompleteRequest(irp, IO_NO_INCREMENT );
