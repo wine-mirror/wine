@@ -3401,13 +3401,14 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 
     if (lpszObjectName && *lpszObjectName) {
         HRESULT rc;
+        WCHAR dummy;
 
-        len = 0;
-        rc = UrlEscapeW(lpszObjectName, NULL, &len, URL_ESCAPE_SPACES_ONLY);
+        len = 1;
+        rc = UrlCanonicalizeW(lpszObjectName, &dummy, &len, URL_ESCAPE_SPACES_ONLY);
         if (rc != E_POINTER)
             len = strlenW(lpszObjectName)+1;
         request->path = heap_alloc(len*sizeof(WCHAR));
-        rc = UrlEscapeW(lpszObjectName, request->path, &len,
+        rc = UrlCanonicalizeW(lpszObjectName, request->path, &len,
                    URL_ESCAPE_SPACES_ONLY);
         if (rc != S_OK)
         {
