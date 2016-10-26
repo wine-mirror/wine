@@ -133,3 +133,9 @@ BOOLEAN WINAPI HidD_GetPreparsedData(HANDLE HidDeviceObject, PHIDP_PREPARSED_DAT
     *PreparsedData = data;
     return TRUE;
 }
+
+BOOLEAN WINAPI HidD_SetOutputReport(HANDLE HidDeviceObject, void *ReportBuffer, ULONG ReportBufferLength)
+{
+    TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
+    return DeviceIoControl(HidDeviceObject, IOCTL_HID_SET_OUTPUT_REPORT, ReportBuffer, ReportBufferLength, NULL, 0, NULL, NULL);
+}

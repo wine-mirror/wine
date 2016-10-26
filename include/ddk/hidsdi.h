@@ -45,5 +45,6 @@ BOOLEAN WINAPI HidD_SetNumInputBuffers(HANDLE HidDeviceObject, ULONG NumberBuffe
 BOOLEAN WINAPI HidD_GetPreparsedData( HANDLE HidDeviceObject, PHIDP_PREPARSED_DATA *PreparsedData);
 BOOLEAN WINAPI HidD_FreePreparsedData(PHIDP_PREPARSED_DATA PreparsedData);
 BOOLEAN WINAPI HidD_GetAttributes(HANDLE HidDeviceObject, PHIDD_ATTRIBUTES Attr);
+BOOLEAN WINAPI HidD_SetOutputReport(HANDLE HidDeviceObject, void *ReportBuffer, ULONG ReportBufferLength);
 
 #endif  /* __WINE_HIDSDI_H */

@@ -17,7 +17,7 @@
 @ stub HidD_SetConfiguration
 @ stdcall HidD_SetFeature(long ptr long)
 @ stdcall HidD_SetNumInputBuffers(long long)
-@ stub HidD_SetOutputReport
+@ stdcall HidD_SetOutputReport(long ptr long)
 @ stdcall HidP_GetButtonCaps(long ptr ptr ptr)
 @ stdcall HidP_GetCaps(ptr ptr)
 @ stub HidP_GetData
