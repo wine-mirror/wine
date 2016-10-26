@@ -267,6 +267,7 @@ my @dll_groups =
   "api-ms-win-downlevel-user32-l1-1-0",
   "api-ms-win-ntuser-dc-access-l1-1-0",
   "ext-ms-win-ntuser-message-l1-1-1",
+  "ext-ms-win-rtcore-ntuser-dpi-l1-1-0",
  ],
  [
   "version",

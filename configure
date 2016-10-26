@@ -1166,6 +1166,7 @@ enable_ext_ms_win_gdi_dc_create_l1_1_1
 enable_ext_ms_win_gdi_devcaps_l1_1_0
 enable_ext_ms_win_kernel32_package_current_l1_1_0
 enable_ext_ms_win_ntuser_message_l1_1_1
+enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
 enable_faultrep
 enable_fltlib
 enable_fltmgr_sys
@@ -17924,6 +17925,7 @@ wine_fn_config_dll ext-ms-win-gdi-dc-create-l1-1-1 enable_ext_ms_win_gdi_dc_crea
 wine_fn_config_dll ext-ms-win-gdi-devcaps-l1-1-0 enable_ext_ms_win_gdi_devcaps_l1_1_0
 wine_fn_config_dll ext-ms-win-kernel32-package-current-l1-1-0 enable_ext_ms_win_kernel32_package_current_l1_1_0
 wine_fn_config_dll ext-ms-win-ntuser-message-l1-1-1 enable_ext_ms_win_ntuser_message_l1_1_1
+wine_fn_config_dll ext-ms-win-rtcore-ntuser-dpi-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
 wine_fn_config_dll faultrep enable_faultrep implib
 wine_fn_config_test dlls/faultrep/tests faultrep_test
 wine_fn_config_dll fltlib enable_fltlib
