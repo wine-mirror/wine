@@ -256,6 +256,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
     IRP *irp;
     IO_STATUS_BLOCK irp_status;
+    HID_XFER_PACKET *packet;
     DWORD rc;
     HANDLE events[2];
     NTSTATUS ntrc;
@@ -264,16 +265,16 @@ static DWORD CALLBACK hid_device_thread(void *args)
     events[0] = CreateEventA(NULL, TRUE, FALSE, NULL);
     events[1] = ext->halt_event;
 
+    packet = HeapAlloc(GetProcessHeap(), 0, sizeof(*packet) + ext->preparseData->caps.InputReportByteLength);
+    packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
+
     if (ext->information.Polled)
     {
         while(1)
         {
-            HID_XFER_PACKET *packet;
             ResetEvent(events[0]);
 
-            packet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*packet) + ext->preparseData->caps.InputReportByteLength);
             packet->reportBufferLen = ext->preparseData->caps.InputReportByteLength;
-            packet->reportBuffer = ((BYTE*)packet) + sizeof(*packet);
             packet->reportId = 0;
 
             irp = IoBuildDeviceIoControlRequest(IOCTL_HID_GET_INPUT_REPORT,
@@ -306,22 +307,12 @@ static DWORD CALLBACK hid_device_thread(void *args)
     {
         INT exit_now = FALSE;
 
-        HID_XFER_PACKET *packet;
-        packet = HeapAlloc(GetProcessHeap(), 0, sizeof(*packet) + ext->preparseData->caps.InputReportByteLength);
-        packet->reportBufferLen = ext->preparseData->caps.InputReportByteLength;
-        packet->reportBuffer = ((BYTE*)packet) + sizeof(*packet);
-        packet->reportId = 0;
-
         while(1)
         {
-            BYTE *buffer;
-
-            buffer = HeapAlloc(GetProcessHeap(), 0, ext->preparseData->caps.InputReportByteLength);
-
             ResetEvent(events[0]);
 
             irp = IoBuildDeviceIoControlRequest(IOCTL_HID_READ_REPORT,
-                device, NULL, 0, buffer,
+                device, NULL, 0, packet->reportBuffer,
                 ext->preparseData->caps.InputReportByteLength, TRUE, NULL,
                 &irp_status);
 
@@ -339,8 +330,8 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
             if (!exit_now && irp->IoStatus.u.Status == STATUS_SUCCESS)
             {
-                packet->reportId = buffer[0];
-                memcpy(packet->reportBuffer, buffer, ext->preparseData->caps.InputReportByteLength);
+                packet->reportBufferLen = irp->IoStatus.Information;
+                packet->reportId = packet->reportBuffer[0];
                 RingBuffer_Write(ext->ring_buffer, packet);
                 HID_Device_processQueue(device);
             }
@@ -350,10 +341,9 @@ static DWORD CALLBACK hid_device_thread(void *args)
             if (exit_now)
                 break;
         }
-
-        HeapFree(GetProcessHeap(), 0, packet);
     }
 
+    /* FIXME: releasing packet requires IRP cancellation support */
     CloseHandle(events[0]);
 
     TRACE("Device thread exiting\n");
