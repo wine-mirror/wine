@@ -439,7 +439,7 @@ static int bitmap_info_size(const BITMAPINFO *info, WORD coloruse)
     }
     else  /* assume BITMAPINFOHEADER */
     {
-        colors = MIN(info->bmiHeader.biClrUsed, 256);
+        colors = min(info->bmiHeader.biClrUsed, 256);
         if (!colors && (info->bmiHeader.biBitCount <= 8))
             colors = 1 << info->bmiHeader.biBitCount;
         if (info->bmiHeader.biCompression == BI_BITFIELDS) masks = 3;
