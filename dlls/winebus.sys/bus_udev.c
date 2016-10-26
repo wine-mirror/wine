@@ -61,6 +61,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
 #ifdef HAVE_UDEV
 
+WINE_DECLARE_DEBUG_CHANNEL(hid_report);
+
 static struct udev *udev_context = NULL;
 static DRIVER_OBJECT *udev_driver_obj = NULL;
 
@@ -73,6 +75,9 @@ struct platform_private
 {
     struct udev_device *udev_device;
     int device_fd;
+
+    HANDLE report_thread;
+    int control_pipe[2];
 };
 
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -222,11 +227,69 @@ static NTSTATUS hidraw_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buf
     return STATUS_SUCCESS;
 }
 
+static DWORD CALLBACK device_report_thread(void *args)
+{
+    DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    struct pollfd plfds[2];
+
+    plfds[0].fd = private->device_fd;
+    plfds[0].events = POLLIN;
+    plfds[0].revents = 0;
+    plfds[1].fd = private->control_pipe[0];
+    plfds[1].events = POLLIN;
+    plfds[1].revents = 0;
+
+    while (1)
+    {
+        int size;
+        BYTE report_buffer[1024];
+
+        if (poll(plfds, 2, -1) <= 0) continue;
+        if (plfds[1].revents)
+            break;
+        size = read(plfds[0].fd, report_buffer, sizeof(report_buffer));
+        if (size == -1)
+            TRACE_(hid_report)("Read failed. Likely an unplugged device\n");
+        else if (size == 0)
+            TRACE_(hid_report)("Failed to read report\n");
+        else
+            process_hid_report(device, report_buffer, size);
+    }
+    return 0;
+}
+
+static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
+{
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+
+    if (private->report_thread)
+        return STATUS_SUCCESS;
+
+    if (pipe(private->control_pipe) != 0)
+    {
+        ERR("Control pipe creation failed\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    private->report_thread = CreateThread(NULL, 0, device_report_thread, device, 0, NULL);
+    if (!private->report_thread)
+    {
+        ERR("Unable to create device report thread\n");
+        close(private->control_pipe[0]);
+        close(private->control_pipe[1]);
+        return STATUS_UNSUCCESSFUL;
+    }
+    else
+        return STATUS_SUCCESS;
+}
+
 static const platform_vtbl hidraw_vtbl =
 {
     compare_platform_device,
     hidraw_get_reportdescriptor,
     hidraw_get_string,
+    begin_report_processing,
 };
 
 static void try_add_device(struct udev_device *dev)
@@ -289,7 +352,19 @@ static void try_remove_device(struct udev_device *dev)
     struct platform_private *private;
     if (!device) return;
 
+    IoInvalidateDeviceRelations(device, RemovalRelations);
+
     private = impl_from_DEVICE_OBJECT(device);
+
+    if (private->report_thread)
+    {
+        write(private->control_pipe[1], "q", 1);
+        WaitForSingleObject(private->report_thread, INFINITE);
+        close(private->control_pipe[0]);
+        close(private->control_pipe[1]);
+        CloseHandle(private->report_thread);
+    }
+
     dev = private->udev_device;
     close(private->device_fd);
     bus_remove_hid_device(device);

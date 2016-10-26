@@ -40,6 +40,7 @@
 #include "bus.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
+WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 struct pnp_device
 {
@@ -58,6 +59,14 @@ struct device_extension
     const WCHAR *busid;  /* Expected to be a static constant */
 
     const platform_vtbl *vtbl;
+
+    BYTE *last_report;
+    DWORD last_report_size;
+    BOOL last_report_read;
+    DWORD buffer_size;
+    LIST_ENTRY irp_queue;
+    CRITICAL_SECTION report_cs;
+
     BYTE platform_private[1];
 };
 
@@ -203,16 +212,26 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
 
     /* fill out device_extension struct */
     ext = (struct device_extension *)device->DeviceExtension;
-    ext->pnp_device = pnp_dev;
-    ext->vid        = vid;
-    ext->pid        = pid;
-    ext->uid        = uid;
-    ext->version    = version;
-    ext->index      = get_vidpid_index(vid, pid);
-    ext->is_gamepad = is_gamepad;
-    ext->serial     = strdupW(serialW);
-    ext->busid      = busidW;
-    ext->vtbl       = vtbl;
+    ext->pnp_device         = pnp_dev;
+    ext->vid                = vid;
+    ext->pid                = pid;
+    ext->uid                = uid;
+    ext->version            = version;
+    ext->index              = get_vidpid_index(vid, pid);
+    ext->is_gamepad         = is_gamepad;
+    ext->serial             = strdupW(serialW);
+    ext->busid              = busidW;
+    ext->vtbl               = vtbl;
+    ext->last_report        = NULL;
+    ext->last_report_size   = 0;
+    ext->last_report_read   = TRUE;
+    ext->buffer_size        = 0;
+
+    memset(ext->platform_private, 0, platform_data_size);
+
+    InitializeListHead(&ext->irp_queue);
+    InitializeCriticalSection(&ext->report_cs);
+    ext->report_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": report_cs");
 
     /* add to list of pnp devices */
     pnp_dev->device = device;
@@ -271,6 +290,8 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     struct pnp_device *pnp_device = ext->pnp_device;
+    LIST_ENTRY *entry;
+    IRP *irp;
 
     TRACE("(%p)\n", device);
 
@@ -278,8 +299,22 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
     list_remove(&pnp_device->entry);
     LeaveCriticalSection(&device_list_cs);
 
-    IoInvalidateDeviceRelations(device, RemovalRelations);
+    /* Cancel pending IRPs */
+    EnterCriticalSection(&ext->report_cs);
+    while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
+    {
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irp->IoStatus.u.Status = STATUS_CANCELLED;
+        irp->IoStatus.Information = 0;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+    LeaveCriticalSection(&ext->report_cs);
+
+    ext->report_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&ext->report_cs);
+
     HeapFree(GetProcessHeap(), 0, ext->serial);
+    HeapFree(GetProcessHeap(), 0, ext->last_report);
     IoDeleteDevice(device);
 
     /* pnp_device must be released after the device is gone */
@@ -346,6 +381,22 @@ NTSTATUS WINAPI common_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
+}
+
+static NTSTATUS deliver_last_report(struct device_extension *ext, DWORD buffer_length, BYTE* buffer, ULONG_PTR *out_length)
+{
+    if (buffer_length < ext->last_report_size)
+    {
+        *out_length = 0;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    else
+    {
+        if (ext->last_report)
+            memcpy(buffer, ext->last_report, ext->last_report_size);
+        *out_length = ext->last_report_size;
+        return STATUS_SUCCESS;
+    }
 }
 
 NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
@@ -432,6 +483,54 @@ NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
                 irp->IoStatus.Information = (strlenW((WCHAR *)irp->UserBuffer) + 1) * sizeof(WCHAR);
             break;
         }
+        case IOCTL_HID_GET_INPUT_REPORT:
+        {
+            HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
+            TRACE_(hid_report)("IOCTL_HID_GET_INPUT_REPORT\n");
+            EnterCriticalSection(&ext->report_cs);
+            status = ext->vtbl->begin_report_processing(device);
+            if (status != STATUS_SUCCESS)
+            {
+                irp->IoStatus.u.Status = status;
+                LeaveCriticalSection(&ext->report_cs);
+                break;
+            }
+
+            irp->IoStatus.u.Status = status = deliver_last_report(ext,
+                packet->reportBufferLen, packet->reportBuffer,
+                &irp->IoStatus.Information);
+
+            if (status == STATUS_SUCCESS)
+                packet->reportBufferLen = irp->IoStatus.Information;
+            LeaveCriticalSection(&ext->report_cs);
+            break;
+        }
+        case IOCTL_HID_READ_REPORT:
+        {
+            TRACE_(hid_report)("IOCTL_HID_READ_REPORT\n");
+            EnterCriticalSection(&ext->report_cs);
+            status = ext->vtbl->begin_report_processing(device);
+            if (status != STATUS_SUCCESS)
+            {
+                irp->IoStatus.u.Status = status;
+                LeaveCriticalSection(&ext->report_cs);
+                break;
+            }
+            if (!ext->last_report_read)
+            {
+                irp->IoStatus.u.Status = status = deliver_last_report(ext,
+                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                    irp->UserBuffer, &irp->IoStatus.Information);
+                ext->last_report_read = TRUE;
+            }
+            else
+            {
+                InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.ListEntry);
+                status = STATUS_PENDING;
+            }
+            LeaveCriticalSection(&ext->report_cs);
+            break;
+        }
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
@@ -441,9 +540,59 @@ NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         }
     }
 
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    if (status != STATUS_PENDING)
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
 
     return status;
+}
+
+void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
+{
+    struct device_extension *ext = (struct device_extension*)device->DeviceExtension;
+    IRP *irp;
+    LIST_ENTRY *entry;
+
+    if (!length || !report)
+        return;
+
+    EnterCriticalSection(&ext->report_cs);
+    if (length > ext->buffer_size)
+    {
+        HeapFree(GetProcessHeap(), 0, ext->last_report);
+        ext->last_report = HeapAlloc(GetProcessHeap(), 0, length);
+        if (!ext->last_report)
+        {
+            ERR_(hid_report)("Failed to alloc last report\n");
+            ext->buffer_size = 0;
+            ext->last_report_size = 0;
+            ext->last_report_read = TRUE;
+            LeaveCriticalSection(&ext->report_cs);
+            return;
+        }
+        else
+            ext->buffer_size = length;
+    }
+
+    if (!ext->last_report_read)
+        ERR_(hid_report)("Device reports coming in too fast, last report not read yet!\n");
+
+    memcpy(ext->last_report, report, length);
+    ext->last_report_size = length;
+    ext->last_report_read = FALSE;
+
+    while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
+    {
+        IO_STACK_LOCATION *irpsp;
+        TRACE_(hid_report)("Processing Request\n");
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irpsp = IoGetCurrentIrpStackLocation(irp);
+        irp->IoStatus.u.Status = deliver_last_report(ext,
+            irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+            irp->UserBuffer, &irp->IoStatus.Information);
+        ext->last_report_read = TRUE;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+    LeaveCriticalSection(&ext->report_cs);
 }
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )

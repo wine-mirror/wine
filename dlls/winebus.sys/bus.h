@@ -25,6 +25,7 @@ typedef struct
     int (*compare_platform_device)(DEVICE_OBJECT *device, void *platform_dev);
     NTSTATUS (*get_reportdescriptor)(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length);
     NTSTATUS (*get_string)(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length);
+    NTSTATUS (*begin_report_processing)(DEVICE_OBJECT *device);
 } platform_vtbl;
 
 void *get_platform_private(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
@@ -37,3 +38,4 @@ DEVICE_OBJECT *bus_create_hid_device(DRIVER_OBJECT *driver, const WCHAR *busidW,
 DEVICE_OBJECT *bus_find_hid_device(const platform_vtbl *vtbl, void *platform_dev) DECLSPEC_HIDDEN;
 void bus_remove_hid_device(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length) DECLSPEC_HIDDEN;
