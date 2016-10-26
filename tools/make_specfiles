@@ -284,6 +284,7 @@ my @dll_groups =
  ],
  [
   "gdi32",
+  "ext-ms-win-gdi-dc-create-l1-1-1",
   "ext-ms-win-gdi-devcaps-l1-1-0",
  ],
  [
