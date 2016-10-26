@@ -1313,12 +1313,12 @@ static void test_path_geometry(void)
     ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
+    BOOL match, contains;
     D2D1_COLOR_F color;
     ULONG refcount;
     UINT32 count;
     HWND window;
     HRESULT hr;
-    BOOL match;
 
     if (!(device = create_device()))
     {
@@ -1537,6 +1537,29 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     match = compare_surface(surface, "3aace1b22aae111cb577614fed16e4eb1650dba5");
     ok(match, "Surface does not match.\n");
+
+    /* Edge test. */
+    set_point(&point, 94.0f, 620.0f);
+    contains = TRUE;
+    hr = ID2D1TransformedGeometry_FillContainsPoint(transformed_geometry, point, NULL, 0.0f, &contains);
+    ok(hr == S_OK, "FillContainsPoint failed, hr %#x.\n", hr);
+    ok(!contains, "Got unexpected contains %#x.\n", contains);
+
+    set_point(&point, 95.0f, 620.0f);
+    contains = FALSE;
+    hr = ID2D1TransformedGeometry_FillContainsPoint(transformed_geometry, point, NULL, 0.0f, &contains);
+    ok(hr == S_OK, "FillContainsPoint failed, hr %#x.\n", hr);
+    ok(contains == TRUE, "Got unexpected contains %#x.\n", contains);
+
+    /* With transformation matrix. */
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, -10.0f, 0.0f);
+    set_point(&point, 85.0f, 620.0f);
+    contains = FALSE;
+    hr = ID2D1TransformedGeometry_FillContainsPoint(transformed_geometry, point, &matrix, 0.0f, &contains);
+    ok(hr == S_OK, "FillContainsPoint failed, hr %#x.\n", hr);
+    ok(contains == TRUE, "Got unexpected contains %#x.\n", contains);
+
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1PathGeometry_Release(geometry);
 
