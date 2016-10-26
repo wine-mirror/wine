@@ -1924,9 +1924,11 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
     }
 
 done:
-    d2d_path_geometry_free_figures(geometry);
     if (FAILED(hr))
+    {
+        d2d_path_geometry_free_figures(geometry);
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+    }
     return hr;
 }
 
@@ -2112,10 +2114,24 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_FillContainsPoint(ID2D1PathGeometry *iface,
         D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F *transform, float tolerance, BOOL *contains)
 {
-    FIXME("iface %p, point {%.8e, %.8e}, transform %p, tolerance %.8e, contains %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    D2D1_MATRIX_3X2_F g_i;
+
+    TRACE("iface %p, point {%.8e, %.8e}, transform %p, tolerance %.8e, contains %p.\n",
             iface, point.x, point.y, transform, tolerance, contains);
 
-    return E_NOTIMPL;
+    if (transform)
+    {
+        if (!d2d_matrix_invert(&g_i, transform))
+            return D2DERR_UNSUPPORTED_OPERATION;
+        d2d_point_transform(&point, &g_i, point.x, point.y);
+    }
+
+    *contains = !!d2d_path_geometry_point_inside(geometry, &point);
+
+    TRACE("-> %#x.\n", *contains);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CompareWithGeometry(ID2D1PathGeometry *iface,

@@ -48,12 +48,6 @@ static void d2d_point_set(D2D1_POINT_2F *dst, float x, float y)
     dst->y = y;
 }
 
-static void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2_F *matrix, float x, float y)
-{
-    dst->x = x * matrix->_11 + y * matrix->_21 + matrix->_31;
-    dst->y = x * matrix->_12 + y * matrix->_22 + matrix->_32;
-}
-
 static void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
 {
     if (point->x < dst->left)

@@ -357,4 +357,27 @@ static inline void d2d_matrix_multiply(D2D_MATRIX_3X2_F *a, const D2D_MATRIX_3X2
     a->_32 = tmp._31 * b->_12 + tmp._32 * b->_22 + b->_32;
 }
 
+/* Dst must be different from src. */
+static inline BOOL d2d_matrix_invert(D2D_MATRIX_3X2_F *dst, const D2D_MATRIX_3X2_F *src)
+{
+    float d = src->_11 * src->_22 - src->_21 * src->_12;
+
+    if (d == 0.0f)
+        return FALSE;
+    dst->_11 = src->_22 / d;
+    dst->_21 = -src->_21 / d;
+    dst->_31 = (src->_21 * src->_32 - src->_31 * src->_22) / d;
+    dst->_12 = -src->_12 / d;
+    dst->_22 = src->_11 / d;
+    dst->_32 = -(src->_11 * src->_32 - src->_31 * src->_12) / d;
+
+    return TRUE;
+}
+
+static inline void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2_F *matrix, float x, float y)
+{
+    dst->x = x * matrix->_11 + y * matrix->_21 + matrix->_31;
+    dst->y = x * matrix->_12 + y * matrix->_22 + matrix->_32;
+}
+
 #endif /* __WINE_D2D1_PRIVATE_H */
