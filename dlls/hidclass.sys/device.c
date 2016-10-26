@@ -218,6 +218,7 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
         if (buffer_size)
         {
             IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+            packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
             TRACE_(hid_report)("Processing Request (%i)\n",ptr);
             if (irpsp->Parameters.Read.Length >= packet->reportBufferLen)
             {
@@ -645,6 +646,7 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
     if (buffer_size)
     {
         IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+        packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
         TRACE_(hid_report)("Got Packet %p %i\n", packet->reportBuffer, packet->reportBufferLen);
         if (irpsp->Parameters.Read.Length >= packet->reportBufferLen)
         {
