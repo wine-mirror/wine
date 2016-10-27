@@ -102,8 +102,10 @@ NTSTATUS RingBuffer_SetSize(struct ReportRingBuffer *ring, UINT size)
     BYTE* new_buffer;
     int i;
 
-    if (size < MIN_BUFFER_SIZE || size > MAX_BUFFER_SIZE || size == ring->size)
+    if (size < MIN_BUFFER_SIZE || size > MAX_BUFFER_SIZE)
         return STATUS_INVALID_PARAMETER;
+    if (size == ring->size)
+        return STATUS_SUCCESS;
 
     EnterCriticalSection(&ring->lock);
     ring->start = ring->end = 0;
