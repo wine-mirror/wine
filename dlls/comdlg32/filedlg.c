@@ -1565,10 +1565,16 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
          result = GetFullPathNameW(fodInfos->filename, MAX_PATH, tmpBuf, &nameBit);
          if (result) {
 
-            /* nameBit is always shorter than the original filename */
-            lstrcpyW(fodInfos->filename,nameBit);
+            /* nameBit is always shorter than the original filename. It may be NULL
+             * when the filename contains only a drive name instead of file name */
+            if (nameBit)
+            {
+                lstrcpyW(fodInfos->filename,nameBit);
+                *nameBit = 0x00;
+            }
+            else
+                *fodInfos->filename = '\0';
 
-            *nameBit = 0x00;
             MemFree(fodInfos->initdir);
             fodInfos->initdir = MemAlloc((lstrlenW(tmpBuf) + 1)*sizeof(WCHAR));
             lstrcpyW(fodInfos->initdir, tmpBuf);
