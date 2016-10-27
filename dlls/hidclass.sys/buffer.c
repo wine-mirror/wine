@@ -26,6 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
+#define POINTER_UNUSED 0xffffffff
 #define BASE_BUFFER_SIZE 32
 #define MIN_BUFFER_SIZE 2
 #define MAX_BUFFER_SIZE 512
@@ -34,7 +35,7 @@ struct ReportRingBuffer
 {
     UINT start, end, size;
 
-    int *pointers;
+    UINT *pointers;
     UINT pointer_alloc;
     UINT buffer_size;
 
@@ -46,7 +47,10 @@ struct ReportRingBuffer
 struct ReportRingBuffer* RingBuffer_Create(UINT buffer_size)
 {
     struct ReportRingBuffer *ring;
+    int i;
+
     TRACE("Create Ring Buffer with buffer size %i\n",buffer_size);
+
     ring = HeapAlloc(GetProcessHeap(), 0, sizeof(*ring));
     if (!ring)
         return NULL;
@@ -54,13 +58,14 @@ struct ReportRingBuffer* RingBuffer_Create(UINT buffer_size)
     ring->size = BASE_BUFFER_SIZE;
     ring->buffer_size = buffer_size;
     ring->pointer_alloc = 2;
-    ring->pointers = HeapAlloc(GetProcessHeap(), 0, sizeof(int) * ring->pointer_alloc);
+    ring->pointers = HeapAlloc(GetProcessHeap(), 0, sizeof(UINT) * ring->pointer_alloc);
     if (!ring->pointers)
     {
         HeapFree(GetProcessHeap(), 0, ring);
         return NULL;
     }
-    memset(ring->pointers, 0xff, sizeof(int) * ring->pointer_alloc);
+    for (i = 0; i < ring->pointer_alloc; i++)
+        ring->pointers[i] = POINTER_UNUSED;
     ring->buffer = HeapAlloc(GetProcessHeap(), 0, buffer_size * ring->size);
     if (!ring->buffer)
     {
@@ -104,7 +109,7 @@ NTSTATUS RingBuffer_SetSize(struct ReportRingBuffer *ring, UINT size)
     ring->start = ring->end = 0;
     for (i = 0; i < ring->pointer_alloc; i++)
     {
-        if (ring->pointers[i] != 0xffffffff)
+        if (ring->pointers[i] != POINTER_UNUSED)
             ring->pointers[i] = 0;
     }
     new_buffer = HeapAlloc(GetProcessHeap(), 0, ring->buffer_size * size);
@@ -125,7 +130,7 @@ void RingBuffer_Read(struct ReportRingBuffer *ring, UINT index, void *output, UI
     void *ret = NULL;
 
     EnterCriticalSection(&ring->lock);
-    if (index >= ring->pointer_alloc || ring->pointers[index] == 0xffffffff)
+    if (index >= ring->pointer_alloc || ring->pointers[index] == POINTER_UNUSED)
     {
         LeaveCriticalSection(&ring->lock);
         *size = 0;
@@ -153,15 +158,15 @@ UINT RingBuffer_AddPointer(struct ReportRingBuffer *ring)
     UINT idx;
     EnterCriticalSection(&ring->lock);
     for (idx = 0; idx < ring->pointer_alloc; idx++)
-        if (ring->pointers[idx] == -1)
+        if (ring->pointers[idx] == POINTER_UNUSED)
             break;
     if (idx >= ring->pointer_alloc)
     {
         int count = idx = ring->pointer_alloc;
         ring->pointer_alloc *= 2;
-        ring->pointers = HeapReAlloc(GetProcessHeap(), 0, ring->pointers, sizeof(int) * ring->pointer_alloc);
+        ring->pointers = HeapReAlloc(GetProcessHeap(), 0, ring->pointers, sizeof(UINT) * ring->pointer_alloc);
         for( ;count < ring->pointer_alloc; count++)
-            ring->pointers[count] = -1;
+            ring->pointers[count] = POINTER_UNUSED;
     }
     ring->pointers[idx] = ring->start;
     LeaveCriticalSection(&ring->lock);
@@ -172,7 +177,7 @@ void RingBuffer_RemovePointer(struct ReportRingBuffer *ring, UINT index)
 {
     EnterCriticalSection(&ring->lock);
     if (index < ring->pointer_alloc)
-        ring->pointers[index] = 0xffffffff;
+        ring->pointers[index] = POINTER_UNUSED;
     LeaveCriticalSection(&ring->lock);
 }
 
