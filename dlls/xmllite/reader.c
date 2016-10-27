@@ -2585,6 +2585,10 @@ static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LO
 
     switch (property)
     {
+        case XmlReaderProperty_MultiLanguage:
+            if (value)
+                FIXME("Ignoring MultiLanguage %lx\n", value);
+            break;
         case XmlReaderProperty_XmlResolver:
             if (This->resolver)
                 IXmlResolver_Release(This->resolver);

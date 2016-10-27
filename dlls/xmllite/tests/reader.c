@@ -1785,6 +1785,20 @@ static void test_read_attribute(void)
     IXmlReader_Release(reader);
 }
 
+static void test_reader_properties(void)
+{
+    IXmlReader *reader;
+    HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MultiLanguage, 0);
+    ok(hr == S_OK, "SetProperty failed: %08x\n", hr);
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     test_reader_create();
@@ -1802,4 +1816,5 @@ START_TEST(reader)
     test_read_pending();
     test_readvaluechunk();
     test_read_xmldeclaration();
+    test_reader_properties();
 }
