@@ -829,26 +829,6 @@ ULONG WINAPI UnregisterTraceGuids( TRACEHANDLE RegistrationHandle )
 }
 
 /******************************************************************************
- * EventRegister [ADVAPI32.@]
- */
-ULONG WINAPI EventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID context, PREGHANDLE handle )
-{
-    FIXME("%s, %p, %p, %p\n", debugstr_guid(provider), callback, context, handle);
-
-    *handle = 0xdeadbeef;
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
- * EventUnregister [ADVAPI32.@]
- */
-ULONG WINAPI EventUnregister( REGHANDLE handle )
-{
-    FIXME("%s: stub\n", wine_dbgstr_longlong(handle));
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
  * EventEnabled [ADVAPI32.@]
  *
  */

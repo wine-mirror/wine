@@ -34,6 +34,7 @@
 #include "ntdll_misc.h"
 #include "wmistr.h"
 #include "evntrace.h"
+#include "evntprov.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -356,6 +357,27 @@ HANDLE WINAPI WinSqmStartSession(GUID *sessionguid, DWORD sessionid, DWORD unkno
 {
     FIXME("(%p, 0x%x, 0x%x): stub\n", sessionguid, sessionid, unknown1);
     return INVALID_HANDLE_VALUE;
+}
+
+/******************************************************************************
+ *                  EtwEventRegister (NTDLL.@)
+ */
+ULONG WINAPI EtwEventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID context,
+                PREGHANDLE handle )
+{
+    FIXME("(%s, %p, %p, %p) stub.\n", debugstr_guid(provider), callback, context, handle);
+
+    *handle = 0xdeadbeef;
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *                  EtwEventUnregister (NTDLL.@)
+ */
+ULONG WINAPI EtwEventUnregister( REGHANDLE handle )
+{
+    FIXME("(%s) stub.\n", wine_dbgstr_longlong(handle));
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
