@@ -1796,6 +1796,9 @@ static void test_reader_properties(void)
     hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MultiLanguage, 0);
     ok(hr == S_OK, "SetProperty failed: %08x\n", hr);
 
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MaxElementDepth, 0);
+    ok(hr == S_OK, "SetProperty failed: %08x\n", hr);
+
     IXmlReader_Release(reader);
 }
 

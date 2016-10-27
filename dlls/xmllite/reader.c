@@ -2600,6 +2600,9 @@ static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LO
             if (value < 0 || value > _DtdProcessing_Last) return E_INVALIDARG;
             This->dtdmode = value;
             break;
+        case XmlReaderProperty_MaxElementDepth:
+            FIXME("Ignoring MaxElementDepth %ld\n", value);
+            break;
         default:
             FIXME("Unimplemented property (%u)\n", property);
             return E_NOTIMPL;
