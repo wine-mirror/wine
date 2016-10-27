@@ -284,12 +284,30 @@ static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
         return STATUS_SUCCESS;
 }
 
+static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+{
+    struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    ssize_t rc;
+    rc = write(ext->device_fd, report, length);
+    if (rc > 0)
+    {
+        *written = rc;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        *written = 0;
+        return STATUS_UNSUCCESSFUL;
+    }
+}
+
 static const platform_vtbl hidraw_vtbl =
 {
     compare_platform_device,
     hidraw_get_reportdescriptor,
     hidraw_get_string,
     begin_report_processing,
+    hidraw_set_output_report,
 };
 
 static void try_add_device(struct udev_device *dev)
