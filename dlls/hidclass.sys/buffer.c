@@ -170,7 +170,7 @@ UINT RingBuffer_AddPointer(struct ReportRingBuffer *ring)
         for( ;count < ring->pointer_alloc; count++)
             ring->pointers[count] = POINTER_UNUSED;
     }
-    ring->pointers[idx] = ring->start;
+    ring->pointers[idx] = ring->end;
     LeaveCriticalSection(&ring->lock);
     return idx;
 }
