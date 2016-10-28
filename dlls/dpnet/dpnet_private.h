@@ -26,6 +26,7 @@
 #endif
 
 #include <wine/list.h>
+#include "wine/unicode.h"
 
 #include "dplay8.h"
 #include "dplobby8.h"
@@ -146,6 +147,27 @@ typedef struct {
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
 
+static inline void *heap_alloc( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), 0, len );
+}
 
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc( GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL heap_free( void *mem )
+{
+    return HeapFree( GetProcessHeap(), 0, mem );
+}
+
+static inline WCHAR *heap_strdupW( const WCHAR *src )
+{
+    WCHAR *dst;
+    if (!src) return NULL;
+    if ((dst = heap_alloc( (strlenW( src ) + 1) * sizeof(WCHAR) ))) strcpyW( dst, src );
+    return dst;
+}
 
 #endif
