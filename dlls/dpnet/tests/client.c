@@ -220,8 +220,11 @@ static void test_lobbyclient(void)
     ok(hr == S_OK, "Failed to create object\n");
     if(SUCCEEDED(hr))
     {
+        hr = IDirectPlay8LobbyClient_Initialize(client, NULL, NULL, 0);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
         hr = IDirectPlay8LobbyClient_Initialize(client, NULL, DirectPlayLobbyClientMessageHandler, 0);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8LobbyClient_Close(client, 0);
         todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);

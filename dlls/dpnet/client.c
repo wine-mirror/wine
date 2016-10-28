@@ -40,6 +40,10 @@ typedef struct IDirectPlay8LobbyClientImpl
 {
     IDirectPlay8LobbyClient IDirectPlay8LobbyClient_iface;
     LONG ref;
+
+    PFNDPNMESSAGEHANDLER msghandler;
+    DWORD flags;
+    void *usercontext;
 } IDirectPlay8LobbyClientImpl;
 
 static inline IDirectPlay8LobbyClientImpl *impl_from_IDirectPlay8LobbyClient(IDirectPlay8LobbyClient *iface)
@@ -427,9 +431,16 @@ static HRESULT WINAPI lobbyclient_Initialize(IDirectPlay8LobbyClient *iface, voi
 {
     IDirectPlay8LobbyClientImpl *This = impl_from_IDirectPlay8LobbyClient(iface);
 
-    FIXME("(%p)->(%p %p 0x%08x)\n", This, context, msghandler, flags);
+    TRACE("(%p):(%p,%p,%x)\n", This, context, msghandler, flags);
 
-    return E_NOTIMPL;
+    if(!msghandler)
+        return E_POINTER;
+
+    This->usercontext = context;
+    This->msghandler = msghandler;
+    This->flags = flags;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI lobbyclient_EnumLocalPrograms(IDirectPlay8LobbyClient *iface, GUID* guidapplication,
