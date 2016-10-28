@@ -373,7 +373,10 @@ static ULONG STDMETHODCALLTYPE d2d_linear_gradient_brush_Release(ID2D1LinearGrad
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        ID2D1GradientStopCollection_Release(brush->u.linear.gradient);
         d2d_brush_destroy(brush);
+    }
 
     return refcount;
 }
@@ -465,9 +468,11 @@ static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetEndPoint(I
 static void STDMETHODCALLTYPE d2d_linear_gradient_brush_GetGradientStopCollection(ID2D1LinearGradientBrush *iface,
         ID2D1GradientStopCollection **gradient)
 {
-    FIXME("iface %p, gradient %p stub!\n", iface, gradient);
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
 
-    *gradient = NULL;
+    TRACE("iface %p, gradient %p.\n", iface, gradient);
+
+    ID2D1GradientStopCollection_AddRef(*gradient = brush->u.linear.gradient);
 }
 
 static const struct ID2D1LinearGradientBrushVtbl d2d_linear_gradient_brush_vtbl =
@@ -496,6 +501,7 @@ HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory, const D2D1_LINEA
     d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_LINEAR, brush_desc,
             (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
     (*brush)->u.linear.desc = *gradient_brush_desc;
+    ID2D1GradientStopCollection_AddRef((*brush)->u.linear.gradient = gradient);
 
     TRACE("Created brush %p.\n", *brush);
     return S_OK;

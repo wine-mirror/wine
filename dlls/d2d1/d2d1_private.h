@@ -199,6 +199,7 @@ struct d2d_brush
         struct
         {
             D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES desc;
+            ID2D1GradientStopCollection *gradient;
         } linear;
     } u;
 };
