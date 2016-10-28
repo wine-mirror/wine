@@ -56,6 +56,9 @@ struct IDirectPlay8ClientImpl
     PFNDPNMESSAGEHANDLER msghandler;
     DWORD flags;
     void *usercontext;
+    WCHAR *username;
+    void  *data;
+    DWORD datasize;
 
     DPN_SP_CAPS spcaps;
 };

@@ -86,8 +86,11 @@ static ULONG WINAPI IDirectPlay8ClientImpl_Release(IDirectPlay8Client *iface)
 
     TRACE("(%p) ref=%u\n", This, ref);
 
-    if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
+    if (!ref)
+    {
+        heap_free(This->username);
+        heap_free(This->data);
+        heap_free(This);
     }
     return ref;
 }
@@ -182,9 +185,50 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_SetClientInfo(IDirectPlay8Client *i
         const DPN_PLAYER_INFO * const pdpnPlayerInfo, void * const pvAsyncContext,
         DPNHANDLE * const phAsyncHandle, const DWORD dwFlags)
 {
-  IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-  FIXME("(%p):(%p,%p,%x): Stub\n", This, pvAsyncContext, phAsyncHandle, dwFlags);
-  return DPN_OK; 
+    IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
+    FIXME("(%p):(%p,%p,%x): Semi-stub.\n", This, pvAsyncContext, phAsyncHandle, dwFlags);
+
+    if(!pdpnPlayerInfo)
+       return E_POINTER;
+
+    if(phAsyncHandle)
+        FIXME("Async handle currently not supported.\n");
+
+    if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_NAME)
+    {
+        heap_free(This->username);
+        This->username = NULL;
+
+        if(pdpnPlayerInfo->pwszName)
+        {
+            This->username = heap_strdupW(pdpnPlayerInfo->pwszName);
+            if (!This->username)
+                return E_OUTOFMEMORY;
+        }
+    }
+
+    if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_DATA)
+    {
+        heap_free(This->data);
+        This->data = NULL;
+        This->datasize = 0;
+
+        if(!pdpnPlayerInfo->pvData && pdpnPlayerInfo->dwDataSize)
+            return E_POINTER;
+
+        if(pdpnPlayerInfo->dwDataSize && pdpnPlayerInfo->pvData)
+        {
+            This->data = heap_alloc(pdpnPlayerInfo->dwDataSize);
+            if (!This->data)
+                return E_OUTOFMEMORY;
+
+            This->datasize = pdpnPlayerInfo->dwDataSize;
+
+            memcpy(This->data, pdpnPlayerInfo->pvData, pdpnPlayerInfo->dwDataSize);
+        }
+    }
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_GetServerInfo(IDirectPlay8Client *iface,
