@@ -43,6 +43,10 @@ typedef struct IDirectPlay8ServerImpl
     PFNDPNMESSAGEHANDLER msghandler;
     DWORD flags;
     void *usercontext;
+
+    WCHAR *servername;
+    void  *data;
+    DWORD datasize;
 } IDirectPlay8ServerImpl;
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
@@ -91,8 +95,11 @@ static ULONG WINAPI IDirectPlay8ServerImpl_Release(IDirectPlay8Server *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if (!ref) {
-        HeapFree(GetProcessHeap(), 0, This);
+    if (!ref)
+    {
+        heap_free(This->servername);
+        heap_free(This->data);
+        heap_free(This);
     }
 
     return ref;
@@ -151,8 +158,54 @@ static HRESULT WINAPI IDirectPlay8ServerImpl_SetServerInfo(IDirectPlay8Server *i
                                             PVOID pvAsyncContext, DPNHANDLE *phAsyncHandle, DWORD dwFlags)
 {
     IDirectPlay8ServerImpl *This = impl_from_IDirectPlay8Server(iface);
-    FIXME("(%p)->(%p %p %p %d)\n", This, pdpnPlayerInfo, pvAsyncContext, phAsyncHandle, dwFlags);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%p %p %p %x)  Semi-stub\n", This, pdpnPlayerInfo, pvAsyncContext, phAsyncHandle, dwFlags);
+
+    if(!pdpnPlayerInfo)
+       return E_POINTER;
+
+    if(!This->msghandler)
+       return DPNERR_UNINITIALIZED;
+
+    if(phAsyncHandle)
+        FIXME("Async handle currently not supported.\n");
+
+    if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_NAME)
+    {
+        heap_free(This->servername);
+        This->servername = NULL;
+
+        if(pdpnPlayerInfo->pwszName)
+        {
+            This->servername = heap_strdupW(pdpnPlayerInfo->pwszName);
+            if (!This->servername)
+                return E_OUTOFMEMORY;
+        }
+    }
+
+    if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_DATA)
+    {
+        heap_free(This->data);
+        This->data = NULL;
+        This->datasize = 0;
+
+        if(!pdpnPlayerInfo->pvData && pdpnPlayerInfo->dwDataSize)
+            return E_POINTER;
+
+        if(pdpnPlayerInfo->dwDataSize && pdpnPlayerInfo->pvData)
+        {
+            This->data = heap_alloc(pdpnPlayerInfo->dwDataSize);
+            if (!This->data)
+                return E_OUTOFMEMORY;
+
+            This->datasize = pdpnPlayerInfo->dwDataSize;
+
+            memcpy(This->data, pdpnPlayerInfo->pvData, pdpnPlayerInfo->dwDataSize);
+        }
+    }
+
+    /* TODO: Send DPN_MSGID_SERVER_INFO message to all players. */
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8ServerImpl_GetClientInfo(IDirectPlay8Server *iface, DPNID dpnid, DPN_PLAYER_INFO *pdpnPlayerInfo,

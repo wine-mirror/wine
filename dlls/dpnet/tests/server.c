@@ -98,6 +98,88 @@ static void create_server(void)
     }
 }
 
+static void test_server_info(void)
+{
+    HRESULT hr;
+    DPN_PLAYER_INFO info;
+    WCHAR name[] = {'w','i','n','e',0};
+    WCHAR name2[] = {'w','i','n','e','2',0};
+    WCHAR data[] = {'X','X','X','X',0};
+    IDirectPlay8Server *server = NULL;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Server, NULL, CLSCTX_ALL, &IID_IDirectPlay8Server, (LPVOID*)&server);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Server object\n");
+    if( SUCCEEDED(hr)  )
+    {
+        ZeroMemory( &info, sizeof(DPN_PLAYER_INFO) );
+        info.dwSize = sizeof(DPN_PLAYER_INFO);
+        info.dwInfoFlags = DPNINFO_NAME;
+
+        hr = IDirectPlay8Server_SetServerInfo(server, NULL, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == E_POINTER, "got %x\n", hr);
+
+        info.pwszName = name;
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == DPNERR_UNINITIALIZED, "got %x\n", hr);
+
+        hr = IDirectPlay8Server_Initialize(server, NULL, DirectPlayMessageHandler, 0);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Server_SetServerInfo(server, NULL, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == E_POINTER, "got %x\n", hr);
+
+        info.pwszName = NULL;
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == S_OK, "got %x\n", hr);
+
+        info.pwszName = name;
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == S_OK, "got %x\n", hr);
+
+        info.dwInfoFlags = DPNINFO_NAME;
+        info.pwszName = name2;
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == S_OK, "got %x\n", hr);
+
+        info.dwInfoFlags = DPNINFO_DATA;
+        info.pwszName = NULL;
+        info.pvData = NULL;
+        info.dwDataSize = sizeof(data);
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == E_POINTER, "got %x\n", hr);
+
+        info.dwInfoFlags = DPNINFO_DATA;
+        info.pwszName = NULL;
+        info.pvData = data;
+        info.dwDataSize = 0;
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == S_OK, "got %x\n", hr);
+
+        info.dwInfoFlags = DPNINFO_DATA;
+        info.pwszName = NULL;
+        info.pvData = data;
+        info.dwDataSize = sizeof(data);
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == S_OK, "got %x\n", hr);
+
+        info.dwInfoFlags = DPNINFO_DATA | DPNINFO_NAME;
+        info.pwszName = name;
+        info.pvData = data;
+        info.dwDataSize = sizeof(data);
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == S_OK, "got %x\n", hr);
+
+        info.dwInfoFlags = DPNINFO_DATA | DPNINFO_NAME;
+        info.pwszName = name;
+        info.pvData = NULL;
+        info.dwDataSize = 0;
+        hr = IDirectPlay8Server_SetServerInfo(server, &info, NULL, NULL, DPNSETSERVERINFO_SYNC);
+        ok(hr == S_OK, "got %x\n", hr);
+
+        IDirectPlay8Server_Release(server);
+    }
+}
+
 START_TEST(server)
 {
     HRESULT hr;
@@ -108,6 +190,7 @@ START_TEST(server)
         return;
 
     create_server();
+    test_server_info();
 
     CoUninitialize();
 }
