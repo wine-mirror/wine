@@ -196,6 +196,10 @@ struct d2d_brush
             D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
             ID3D10SamplerState *sampler_state;
         } bitmap;
+        struct
+        {
+            D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES desc;
+        } linear;
     } u;
 };
 

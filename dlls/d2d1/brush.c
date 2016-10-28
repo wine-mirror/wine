@@ -423,32 +423,42 @@ static void STDMETHODCALLTYPE d2d_linear_gradient_brush_GetTransform(ID2D1Linear
 static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetStartPoint(ID2D1LinearGradientBrush *iface,
         D2D1_POINT_2F start_point)
 {
-    FIXME("iface %p, start_point {%.8e, %.8e} stub!\n", iface, start_point.x, start_point.y);
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
+
+    TRACE("iface %p, start_point {%.8e, %.8e}.\n", iface, start_point.x, start_point.y);
+
+    brush->u.linear.desc.startPoint = start_point;
 }
 
 static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetEndPoint(ID2D1LinearGradientBrush *iface,
         D2D1_POINT_2F end_point)
 {
-    FIXME("iface %p, end_point {%.8e, %.8e} stub!\n", iface, end_point.x, end_point.y);
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
+
+    TRACE("iface %p, end_point {%.8e, %.8e}.\n", iface, end_point.x, end_point.y);
+
+    brush->u.linear.desc.endPoint = end_point;
 }
 
 static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetStartPoint(ID2D1LinearGradientBrush *iface,
         D2D1_POINT_2F *point)
 {
-    FIXME("iface %p, point %p stub!\n", iface, point);
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
 
-    point->x = 0.0f;
-    point->y = 0.0f;
+    TRACE("iface %p, point %p.\n", iface, point);
+
+    *point = brush->u.linear.desc.startPoint;
     return point;
 }
 
 static D2D1_POINT_2F * STDMETHODCALLTYPE d2d_linear_gradient_brush_GetEndPoint(ID2D1LinearGradientBrush *iface,
         D2D1_POINT_2F *point)
 {
-    FIXME("iface %p, point %p stub!\n", iface, point);
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
 
-    point->x = 0.0f;
-    point->y = 0.0f;
+    TRACE("iface %p, point %p.\n", iface, point);
+
+    *point = brush->u.linear.desc.endPoint;
     return point;
 }
 
@@ -483,10 +493,9 @@ HRESULT d2d_linear_gradient_brush_create(ID2D1Factory *factory, const D2D1_LINEA
     if (!(*brush = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**brush))))
         return E_OUTOFMEMORY;
 
-    FIXME("Ignoring brush properties.\n");
-
     d2d_brush_init(*brush, factory, D2D_BRUSH_TYPE_LINEAR, brush_desc,
             (ID2D1BrushVtbl *)&d2d_linear_gradient_brush_vtbl);
+    (*brush)->u.linear.desc = *gradient_brush_desc;
 
     TRACE("Created brush %p.\n", *brush);
     return S_OK;
