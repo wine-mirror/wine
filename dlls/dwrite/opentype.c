@@ -1932,7 +1932,7 @@ HRESULT opentype_get_font_signature(struct file_stream_desc *stream_desc, FONTSI
     return hr;
 }
 
-BOOL opentype_has_vertical_variants(IDWriteFontFace3 *fontface)
+BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
 {
     const OT_FeatureList *featurelist;
     const OT_LookupList *lookup_list;
@@ -1944,7 +1944,7 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace3 *fontface)
     HRESULT hr;
     UINT16 i;
 
-    hr = IDWriteFontFace3_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
+    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
     if (FAILED(hr) || !exists)
         return FALSE;
 
@@ -2002,7 +2002,7 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace3 *fontface)
         }
     }
 
-    IDWriteFontFace3_ReleaseFontTable(fontface, context);
+    IDWriteFontFace4_ReleaseFontTable(fontface, context);
 
     return ret;
 }

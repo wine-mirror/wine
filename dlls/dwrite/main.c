@@ -508,7 +508,7 @@ struct collectionloader
 struct fontfacecached
 {
     struct list entry;
-    IDWriteFontFace3 *fontface;
+    IDWriteFontFace4 *fontface;
 };
 
 struct fileloader
@@ -544,7 +544,7 @@ static void release_fontface_cache(struct list *fontfaces)
     struct fontfacecached *fontface, *fontface2;
     LIST_FOR_EACH_ENTRY_SAFE(fontface, fontface2, fontfaces, struct fontfacecached, entry) {
         list_remove(&fontface->entry);
-        IDWriteFontFace3_Release(fontface->fontface);
+        IDWriteFontFace4_Release(fontface->fontface);
         heap_free(fontface);
     }
 }
@@ -835,14 +835,14 @@ HRESULT factory_get_cached_fontface(IDWriteFactory4 *iface, IDWriteFontFile * co
         const void *cached_key;
         IDWriteFontFile *file;
 
-        cached_face_index = IDWriteFontFace3_GetIndex(cached->fontface);
-        cached_simulations = IDWriteFontFace3_GetSimulations(cached->fontface);
+        cached_face_index = IDWriteFontFace4_GetIndex(cached->fontface);
+        cached_simulations = IDWriteFontFace4_GetSimulations(cached->fontface);
 
         /* skip earlier */
         if (cached_face_index != index || cached_simulations != simulations)
             continue;
 
-        hr = IDWriteFontFace3_GetFiles(cached->fontface, &count, &file);
+        hr = IDWriteFontFace4_GetFiles(cached->fontface, &count, &file);
         if (FAILED(hr))
             return hr;
 
@@ -861,7 +861,7 @@ HRESULT factory_get_cached_fontface(IDWriteFactory4 *iface, IDWriteFontFile * co
     return S_FALSE;
 }
 
-void factory_cache_fontface(struct list *fontfaces, IDWriteFontFace3 *fontface)
+void factory_cache_fontface(struct list *fontfaces, IDWriteFontFace4 *fontface)
 {
     struct fontfacecached *cached;
 
@@ -883,7 +883,7 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory4 *iface,
     DWRITE_FONT_FACE_TYPE face_type;
     struct fontface_desc desc;
     struct list *fontfaces;
-    IDWriteFontFace3 *face;
+    IDWriteFontFace4 *face;
     BOOL is_supported;
     UINT32 count;
     HRESULT hr;
