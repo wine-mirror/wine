@@ -273,6 +273,7 @@ my @dll_groups =
   "ext-ms-win-ntuser-uicontext-ext-l1-1-0",
   "ext-ms-win-ntuser-window-l1-1-1",
   "ext-ms-win-rtcore-ntuser-dpi-l1-1-0",
+  "ext-ms-win-rtcore-ntuser-sysparams-l1-1-0",
  ],
  [
   "version",
