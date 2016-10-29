@@ -87,7 +87,7 @@
 @ cdecl _setmaxstdio(long) ucrtbase._setmaxstdio
 @ cdecl _setmode(long long) ucrtbase._setmode
 @ varargs _sopen(str long long) ucrtbase._sopen
-@ stub _sopen_dispatch
+@ cdecl _sopen_dispatch(str long long long ptr long) ucrtbase._sopen_dispatch
 @ cdecl _sopen_s(ptr str long long long) ucrtbase._sopen_s
 @ cdecl _tell(long) ucrtbase._tell
 @ cdecl -ret64 _telli64(long) ucrtbase._telli64
@@ -107,7 +107,7 @@
 @ cdecl _wpopen(wstr wstr) ucrtbase._wpopen
 @ cdecl _write(long ptr long) ucrtbase._write
 @ varargs _wsopen(wstr long long) ucrtbase._wsopen
-@ stub _wsopen_dispatch
+@ cdecl _wsopen_dispatch(wstr long long long ptr long) ucrtbase._wsopen_dispatch
 @ cdecl _wsopen_s(ptr wstr long long long) ucrtbase._wsopen_s
 @ cdecl _wtempnam(wstr wstr) ucrtbase._wtempnam
 @ cdecl _wtmpnam(ptr) ucrtbase._wtmpnam

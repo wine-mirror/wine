@@ -22,6 +22,10 @@
 #include <wchar.h>
 #include <stdio.h>
 #include <float.h>
+#include <io.h>
+#include <sys/stat.h>
+#include <share.h>
+#include <fcntl.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -74,6 +78,8 @@ static _invalid_parameter_handler (CDECL *p__set_thread_local_invalid_parameter_
 static _invalid_parameter_handler (CDECL *p__get_thread_local_invalid_parameter_handler)(void);
 static int (CDECL *p__ltoa_s)(LONG, char*, size_t, int);
 static char* (CDECL *p__get_narrow_winmain_command_line)(void);
+static int (CDECL *p_sopen_dispatch)(const char *, int, int, int, int *, int);
+static int (CDECL *p_sopen_s)(int *, const char *, int, int, int);
 
 static void test__initialize_onexit_table(void)
 {
@@ -365,8 +371,81 @@ static BOOL init(void)
     p__get_thread_local_invalid_parameter_handler = (void*)GetProcAddress(module, "_get_thread_local_invalid_parameter_handler");
     p__ltoa_s = (void*)GetProcAddress(module, "_ltoa_s");
     p__get_narrow_winmain_command_line = (void*)GetProcAddress(GetModuleHandleA("ucrtbase.dll"), "_get_narrow_winmain_command_line");
+    p_sopen_dispatch = (void*)GetProcAddress(module, "_sopen_dispatch");
+    p_sopen_s = (void*)GetProcAddress(module, "_sopen_s");
 
     return TRUE;
+}
+
+static void test__sopen_dispatch(void)
+{
+    int ret, fd;
+    char *tempf;
+
+    tempf = _tempnam(".", "wne");
+
+    fd = 0;
+    ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(fd > 0, "got fd %d\n", fd);
+    _close(fd);
+    unlink(tempf);
+
+    p__set_invalid_parameter_handler(global_invalid_parameter_handler);
+
+    SET_EXPECT(global_invalid_parameter_handler);
+    fd = 0;
+    ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 1);
+todo_wine {
+    ok(ret == EINVAL, "got %d\n", ret);
+    ok(fd == -1, "got fd %d\n", fd);
+    CHECK_CALLED(global_invalid_parameter_handler);
+}
+    if (fd > 0)
+    {
+        _close(fd);
+        unlink(tempf);
+    }
+
+    p__set_invalid_parameter_handler(NULL);
+
+    free(tempf);
+}
+
+static void test__sopen_s(void)
+{
+    int ret, fd;
+    char *tempf;
+
+    tempf = _tempnam(".", "wne");
+
+    fd = 0;
+    ret = p_sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(fd > 0, "got fd %d\n", fd);
+    _close(fd);
+    unlink(tempf);
+
+    /* _open() does not validate pmode */
+    fd = _open(tempf, _O_CREAT, 0xff);
+    ok(fd > 0, "got fd %d\n", fd);
+    _close(fd);
+    unlink(tempf);
+
+    p__set_invalid_parameter_handler(global_invalid_parameter_handler);
+
+    /* _sopen_s() invokes invalid parameter handler on invalid pmode */
+    SET_EXPECT(global_invalid_parameter_handler);
+    fd = 0;
+    ret = p_sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0xff);
+todo_wine {
+    ok(ret == EINVAL, "got %d\n", ret);
+    ok(fd == -1, "got fd %d\n", fd);
+    CHECK_CALLED(global_invalid_parameter_handler);
+}
+    p__set_invalid_parameter_handler(NULL);
+
+    free(tempf);
 }
 
 START_TEST(misc)
@@ -389,4 +468,6 @@ START_TEST(misc)
     test__execute_onexit_table();
     test___fpe_flt_rounds();
     test__get_narrow_winmain_command_line(arg_v[0]);
+    test__sopen_dispatch();
+    test__sopen_s();
 }

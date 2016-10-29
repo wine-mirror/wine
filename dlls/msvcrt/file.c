@@ -2144,9 +2144,10 @@ static int check_bom(HANDLE h, int oflags, BOOL seek)
 }
 
 /*********************************************************************
- *              _wsopen_s (MSVCRT.@)
+ *              _wsopen_dispatch (UCRTBASE.@)
  */
-int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int shflags, int pmode )
+int CDECL MSVCRT__wsopen_dispatch( const MSVCRT_wchar_t* path, int oflags, int shflags, int pmode,
+    int *fd, int secure )
 {
   DWORD access = 0, creation = 0, attrib;
   SECURITY_ATTRIBUTES sa;
@@ -2154,8 +2155,8 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
   int wxflag;
   HANDLE hand;
 
-  TRACE("fd*: %p :file (%s) oflags: 0x%04x shflags: 0x%04x pmode: 0x%04x\n",
-        fd, debugstr_w(path), oflags, shflags, pmode);
+  TRACE("path: (%s) oflags: 0x%04x shflags: 0x%04x pmode: 0x%04x fd*: %p secure: %d\n",
+        debugstr_w(path), oflags, shflags, pmode, fd, secure);
 
   if (!MSVCRT_CHECK_PMT( fd != NULL )) return MSVCRT_EINVAL;
 
@@ -2306,6 +2307,15 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
   return 0;
 }
 
+
+/*********************************************************************
+ *              _wsopen_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int shflags, int pmode )
+{
+    return MSVCRT__wsopen_dispatch( path, oflags, shflags, pmode, fd, 1 );
+}
+
 /*********************************************************************
  *              _wsopen (MSVCRT.@)
  */
@@ -2325,14 +2335,15 @@ int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t *path, int oflags, int shflags, .
   else
     pmode = 0;
 
-  MSVCRT__wsopen_s(&fd, path, oflags, shflags, pmode);
-  return fd;
+  return MSVCRT__wsopen_dispatch(path, oflags, shflags, pmode, &fd, 0) ? -1 : fd;
 }
 
+
 /*********************************************************************
- *              _sopen_s (MSVCRT.@)
+ *              _sopen_dispatch (UCRTBASE.@)
  */
-int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, int pmode )
+int CDECL MSVCRT__sopen_dispatch( const char *path, int oflags, int shflags,
+    int pmode, int *fd, int secure)
 {
     MSVCRT_wchar_t *pathW;
     int ret;
@@ -2343,9 +2354,17 @@ int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, i
     if(!MSVCRT_CHECK_PMT(path && (pathW = msvcrt_wstrdupa(path))))
         return MSVCRT_EINVAL;
 
-    ret = MSVCRT__wsopen_s(fd, pathW, oflags, shflags, pmode);
+    ret = MSVCRT__wsopen_dispatch(pathW, oflags, shflags, pmode, fd, secure);
     MSVCRT_free(pathW);
     return ret;
+}
+
+/*********************************************************************
+ *              _sopen_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, int pmode )
+{
+    return MSVCRT__sopen_dispatch(path, oflags, shflags, pmode, fd, 1);
 }
 
 /*********************************************************************
@@ -2367,8 +2386,7 @@ int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
   else
     pmode = 0;
 
-  MSVCRT__sopen_s(&fd, path, oflags, shflags, pmode);
-  return fd;
+  return MSVCRT__sopen_dispatch(path, oflags, shflags, pmode, &fd, 0) ? -1 : fd;
 }
 
 /*********************************************************************
