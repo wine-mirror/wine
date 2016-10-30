@@ -3001,6 +3001,7 @@ static void test_bitmap_target(void)
     ID2D1HwndRenderTarget *hwnd_rt;
     ID2D1Bitmap *bitmap, *bitmap2;
     ID2D1BitmapRenderTarget *rt;
+    ID2D1DCRenderTarget *dc_rt;
     D2D1_SIZE_F size, size2;
     ID2D1Factory *factory;
     ID3D10Device1 *device;
@@ -3132,6 +3133,36 @@ static void test_bitmap_target(void)
     ok(!refcount, "Target should be released, got %u.\n", refcount);
 
     DestroyWindow(hwnd_rt_desc.hwnd);
+
+    /* Compatible target created from a DC target without associated HDC */
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 96.0f;
+    desc.dpiY = 96.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+    hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &dc_rt);
+    ok(SUCCEEDED(hr), "Failed to create target, hr %#x.\n", hr);
+
+    hr = ID2D1DCRenderTarget_CreateCompatibleRenderTarget(dc_rt, NULL, NULL, NULL,
+            D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    pixel_size = ID2D1BitmapRenderTarget_GetPixelSize(rt);
+todo_wine
+    ok(pixel_size.width == 0 && pixel_size.height == 0, "Got wrong size\n");
+
+    hr = ID2D1BitmapRenderTarget_GetBitmap(rt, &bitmap);
+    ok(SUCCEEDED(hr), "GetBitmap() failed, hr %#x.\n", hr);
+    pixel_size = ID2D1Bitmap_GetPixelSize(bitmap);
+todo_wine
+    ok(pixel_size.width == 0 && pixel_size.height == 0, "Got wrong size\n");
+    ID2D1Bitmap_Release(bitmap);
+
+    ID2D1BitmapRenderTarget_Release(rt);
+    ID2D1DCRenderTarget_Release(dc_rt);
+
     ID2D1Factory_Release(factory);
 }
 
