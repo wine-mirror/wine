@@ -2637,6 +2637,8 @@ static void test_draw_text_layout(void)
     DWRITE_TEXT_RANGE range;
     D2D1_COLOR_F color;
     ID2D1SolidColorBrush *brush, *brush2;
+    ID2D1RectangleGeometry *geometry;
+    D2D1_RECT_F rect;
 
     if (!(device = create_device()))
     {
@@ -2701,6 +2703,26 @@ static void test_draw_text_layout(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
 todo_wine
     ok(hr == D2DERR_WRONG_FACTORY, "EndDraw failure expected, hr %#x.\n", hr);
+
+    /* Effect is d2d resource, but not a brush. */
+    rect.left = rect.top = 0.0f;
+    rect.right = rect.bottom = 10.0f;
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    ok(SUCCEEDED(hr), "Failed to geometry, hr %#x.\n", hr);
+
+    range.startPosition = 0;
+    range.length = 4;
+    hr = IDWriteTextLayout_SetDrawingEffect(text_layout, (IUnknown*)geometry, range);
+    ok(SUCCEEDED(hr), "Failed to set drawing effect, hr %#x.\n", hr);
+    ID2D1RectangleGeometry_Release(geometry);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    origin.x = origin.y = 0.0f;
+    ID2D1RenderTarget_DrawTextLayout(rt, origin, text_layout, (ID2D1Brush*)brush, D2D1_DRAW_TEXT_OPTIONS_NONE);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "EndDraw failure expected, hr %#x.\n", hr);
 
     IDWriteTextFormat_Release(text_format);
     IDWriteTextLayout_Release(text_layout);
