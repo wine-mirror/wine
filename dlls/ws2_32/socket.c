@@ -3240,20 +3240,6 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
             }
             else
             {
-#ifdef IPV6_V6ONLY
-                const struct sockaddr_in6 *in6 = (const struct sockaddr_in6*) &uaddr;
-                if (name->sa_family == WS_AF_INET6 &&
-                    !memcmp(&in6->sin6_addr, &in6addr_any, sizeof(struct in6_addr)))
-                {
-                    int enable = 1;
-                    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &enable, sizeof(enable)) == -1)
-                    {
-                        release_sock_fd( s, fd );
-                        SetLastError(WSAEAFNOSUPPORT);
-                        return SOCKET_ERROR;
-                    }
-                }
-#endif
                 if (name->sa_family == WS_AF_INET)
                 {
                     struct sockaddr_in *in4 = (struct sockaddr_in*) &uaddr;
@@ -7241,6 +7227,21 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         TRACE("\tcreated %04lx\n", ret );
         if (ipxptype > 0)
             set_ipx_packettype(ret, ipxptype);
+
+#ifdef IPV6_V6ONLY
+        if (unixaf == AF_INET6)
+        {
+            int fd = get_sock_fd(ret, 0, NULL);
+            if (fd != -1)
+            {
+                /* IPV6_V6ONLY is set by default on Windows */
+                int enable = 1;
+                if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &enable, sizeof(enable)))
+                    WARN("\tsetting IPV6_V6ONLY failed - errno = %i\n", errno);
+                release_sock_fd(ret, fd);
+            }
+        }
+#endif
        return ret;
     }
 

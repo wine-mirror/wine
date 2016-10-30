@@ -1732,7 +1732,7 @@ static void test_so_reuseaddr(void)
     DWORD err;
 
     saddr.sin_family      = AF_INET;
-    saddr.sin_port        = htons(9375);
+    saddr.sin_port        = htons(SERVERPORT+1);
     saddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     s1=socket(AF_INET, SOCK_STREAM, 0);
@@ -6105,11 +6105,10 @@ end:
 
 static void test_ipv6only(void)
 {
-    SOCKET v4 = INVALID_SOCKET,
-           v6 = INVALID_SOCKET;
+    SOCKET v4 = INVALID_SOCKET, v6;
     struct sockaddr_in sin4;
     struct sockaddr_in6 sin6;
-    int ret;
+    int ret, enabled, len = sizeof(enabled);
 
     memset(&sin4, 0, sizeof(sin4));
     sin4.sin_family = AF_INET;
@@ -6120,27 +6119,83 @@ static void test_ipv6only(void)
     sin6.sin6_port = htons(SERVERPORT);
 
     v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-    if (v6 == INVALID_SOCKET) {
-        skip("Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
-            WSAGetLastError(), WSAEAFNOSUPPORT);
+    if (v6 == INVALID_SOCKET)
+    {
+        skip("Could not create IPv6 socket (LastError: %d)\n", WSAGetLastError());
         goto end;
     }
+
+    enabled = 2;
+    ret = getsockopt(v6, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, &len);
+    ok(!ret, "getsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+    ok(enabled == 1, "expected 1, got %d\n", enabled);
+
     ret = bind(v6, (struct sockaddr*)&sin6, sizeof(sin6));
-    if (ret) {
-        skip("Could not bind IPv6 address (LastError: %d).\n",
-            WSAGetLastError());
+    if (ret)
+    {
+        skip("Could not bind IPv6 address (LastError: %d)\n", WSAGetLastError());
         goto end;
     }
 
     v4 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (v4 == INVALID_SOCKET) {
-        skip("Could not create IPv4 socket (LastError: %d).\n",
-            WSAGetLastError());
-        goto end;
-    }
+    ok(v4 != INVALID_SOCKET, "Could not create IPv6 socket (LastError: %d)\n", WSAGetLastError());
+
+    /* bind on IPv4 socket should succeed - IPV6_V6ONLY is enabled by default */
     ret = bind(v4, (struct sockaddr*)&sin4, sizeof(sin4));
-    ok(!ret, "Could not bind IPv4 address (LastError: %d; %d expected if IPv6 binds to IPv4 as well).\n",
-        WSAGetLastError(), WSAEADDRINUSE);
+    ok(!ret, "Could not bind IPv4 address (LastError: %d)\n", WSAGetLastError());
+
+    closesocket(v4);
+    closesocket(v6);
+
+    /* Test again, this time disabling IPV6_V6ONLY. */
+    sin4.sin_port = htons(SERVERPORT+2);
+    sin6.sin6_port = htons(SERVERPORT+2);
+
+    v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+    ok(v6 != INVALID_SOCKET, "Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
+        WSAGetLastError(), WSAEAFNOSUPPORT);
+
+    enabled = 0;
+    ret = setsockopt(v6, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, len);
+    ok(!ret, "Could not disable IPV6_V6ONLY (LastError: %d).\n", WSAGetLastError());
+
+    enabled = 2;
+    ret = getsockopt(v6, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, &len);
+    ok(!ret, "getsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+    ok(!enabled, "expected 0, got %d\n", enabled);
+
+    /*
+        Observaition:
+        On Windows, bind on both IPv4 and IPv6 with IPV6_V6ONLY disabled succeeds by default.
+        Application must set SO_EXCLUSIVEADDRUSE on first socket to disallow another successful bind.
+        In general, a standard application should not use SO_REUSEADDR.
+        Setting both SO_EXCLUSIVEADDRUSE and SO_REUSEADDR on the same socket is not possible in
+        either order, the later setsockopt call always fails.
+    */
+    enabled = 1;
+    ret = setsockopt(v6, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*)&enabled, len);
+    ok(!ret, "Could not set SO_EXCLUSIVEADDRUSE on IPv6 socket (LastError: %d)\n", WSAGetLastError());
+
+    ret = bind(v6, (struct sockaddr*)&sin6, sizeof(sin6));
+    ok(!ret, "Could not bind IPv6 address (LastError: %d)\n", WSAGetLastError());
+
+    enabled = 2;
+    len = sizeof(enabled);
+    getsockopt(v6, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, &len);
+    ok(!ret, "getsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+    ok(!enabled, "IPV6_V6ONLY is enabled after bind\n");
+
+    v4 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(v4 != INVALID_SOCKET, "Could not create IPv4 socket (LastError: %d)\n", WSAGetLastError());
+
+    enabled = 1;
+    ret = setsockopt(v4, SOL_SOCKET, SO_REUSEADDR, (char*)&enabled, len);
+    ok(!ret, "Could not set SO_REUSEADDR on IPv4 socket (LastError: %d)\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(v4, (struct sockaddr*)&sin4, sizeof(sin4));
+    ok(ret, "bind succeeded unexpectedly for the IPv4 socket\n");
+    ok(WSAGetLastError() == WSAEACCES, "Expected 10013, got %d\n", WSAGetLastError());
 
 end:
     if (v4 != INVALID_SOCKET)
@@ -8024,7 +8079,7 @@ static void test_TransmitFile(void)
     /* Setup a properly connected socket for transfers */
     memset(&bindAddress, 0, sizeof(bindAddress));
     bindAddress.sin_family = AF_INET;
-    bindAddress.sin_port = htons(9375);
+    bindAddress.sin_port = htons(SERVERPORT+1);
     bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
     iret = bind(server, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     if (iret != 0)
