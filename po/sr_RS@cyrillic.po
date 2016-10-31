@@ -61,7 +61,7 @@ msgstr "Подршка"
 #: cryptui.rc:263 cryptui.rc:275 cryptui.rc:365 dinput.rc:46 ieframe.rc:96
 #: localui.rc:44 localui.rc:57 mpr.rc:49 msacm32.rc:53 mshtml.rc:47
 #: mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62 oledlg.rc:94 serialui.rc:41
-#: setupapi.rc:59 shell32.rc:276 shell32.rc:300 shell32.rc:322 shell32.rc:340
+#: setupapi.rc:59 shell32.rc:276 shell32.rc:300 shell32.rc:322 shell32.rc:341
 #: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
 #: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162 oleview.rc:175
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
@@ -143,7 +143,7 @@ msgstr "&Инсталирај"
 #: cryptui.rc:366 dinput.rc:47 ieframe.rc:97 inetcpl.rc:81 localui.rc:45
 #: localui.rc:58 mpr.rc:50 msacm32.rc:54 mshtml.rc:48 mshtml.rc:58
 #: msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95 serialui.rc:42 setupapi.rc:42
-#: setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312 shell32.rc:341
+#: setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312 shell32.rc:342
 #: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:163 oleview.rc:176 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
@@ -8387,7 +8387,11 @@ msgstr "Ради на %s"
 msgid "Wine was brought to you by:"
 msgstr "Wine су Вам омогућили:"
 
-#: shell32.rc:337
+#: shell32.rc:334
+msgid "Run"
+msgstr ""
+
+#: shell32.rc:338
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
@@ -8395,11 +8399,11 @@ msgstr ""
 "Унесите назив програма, фасцикле, документа или интернет ресурса, а Wine ће "
 "га отворити."
 
-#: shell32.rc:338
+#: shell32.rc:339
 msgid "&Open:"
 msgstr "&Отвори:"
 
-#: shell32.rc:342 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
 #: winefile.rc:130
 msgid "&Browse..."
 msgstr "&Разгледај..."
