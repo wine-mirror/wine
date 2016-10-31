@@ -645,6 +645,19 @@ foo
 foo
 '1' GEQ "10"
 "10" GEQ "10"
+--- unconditional ampersand after if one line
+1@space@
+2@space@
+3 else echo 4
+---
+x@space@
+---
+x@space@
+---
+x@space@
+---
+x@space@
+---
 ------------ Testing for ------------
 --- plain FOR
 A
