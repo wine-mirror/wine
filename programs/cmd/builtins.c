@@ -1574,6 +1574,9 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
             }
           }
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+        } else if (!processThese) {
+          if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+          WINE_TRACE("Ignore the next command as well (next = %p)\n", *cmdList);
         } else {
           WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
           break;
