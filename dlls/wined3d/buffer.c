@@ -665,7 +665,12 @@ static void buffer_unload(struct wined3d_resource *resource)
          * happens only once per changed vertexbuffer and should occur rather
          * rarely. */
         if (resource->bind_count)
+        {
             device_invalidate_state(device, STATE_STREAMSRC);
+
+            if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER)
+                device_invalidate_state(device, STATE_INDEXBUFFER);
+        }
     }
 
     resource_unload(resource);
