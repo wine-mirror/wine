@@ -3315,7 +3315,6 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 {
     UINT_PTR i = (UINT_PTR)hPrinter;
     opened_printer_t *printer = NULL;
-    BOOL ret = FALSE;
 
     TRACE("(%p)\n", hPrinter);
 
@@ -3331,10 +3330,6 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 
         TRACE("closing %s (doc: %p)\n", debugstr_w(printer->name), printer->doc);
 
-        if (printer->backend_printer) {
-            backend->fpClosePrinter(printer->backend_printer);
-        }
-
         if(printer->doc)
             EndDocPrinter(hPrinter);
 
@@ -3348,12 +3343,19 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
             HeapFree(GetProcessHeap(), 0, printer->queue);
         }
 
+        if (printer->backend_printer) {
+            backend->fpClosePrinter(printer->backend_printer);
+        }
+
         free_printer_entry( printer );
         printer_handles[i - 1] = NULL;
-        ret = TRUE;
+        LeaveCriticalSection(&printer_handles_cs);
+        return TRUE;
     }
+
     LeaveCriticalSection(&printer_handles_cs);
-    return ret;
+    SetLastError(ERROR_INVALID_HANDLE);
+    return FALSE;
 }
 
 /*****************************************************************************
