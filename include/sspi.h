@@ -130,6 +130,18 @@ typedef struct _SecPkgInfoW
     SEC_WCHAR *Comment;
 } SecPkgInfoW, *PSecPkgInfoW;
 
+typedef struct _SECURITY_PACKAGE_OPTIONS {
+  ULONG Size;
+  ULONG Type;
+  ULONG Flags;
+  ULONG SignatureSize;
+  void *Signature;
+} SECURITY_PACKAGE_OPTIONS, *PSECURITY_PACKAGE_OPTIONS;
+
+SECURITY_STATUS WINAPI AddSecurityPackageA(LPSTR,SECURITY_PACKAGE_OPTIONS*);
+SECURITY_STATUS WINAPI AddSecurityPackageW(LPWSTR,SECURITY_PACKAGE_OPTIONS*);
+#define AddSecurityPackage WINELIB_NAME_AW(AddSecurityPackage)
+
 #define SecPkgInfo WINELIB_NAME_AW(SecPkgInfo)
 #define PSecPkgInfo WINELIB_NAME_AW(PSecPkgInfo)
 

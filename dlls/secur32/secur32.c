@@ -1057,6 +1057,18 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     return status;
 }
 
+SECURITY_STATUS WINAPI AddSecurityPackageA(LPSTR name, SECURITY_PACKAGE_OPTIONS *options)
+{
+    FIXME("(%s %p)\n", debugstr_a(name), options);
+    return E_NOTIMPL;
+}
+
+SECURITY_STATUS WINAPI AddSecurityPackageW(LPWSTR name, SECURITY_PACKAGE_OPTIONS *options)
+{
+    FIXME("(%s %p)\n", debugstr_w(name), options);
+    return E_NOTIMPL;
+}
+
 /***********************************************************************
  *		GetUserNameExA (SECUR32.@)
  */
