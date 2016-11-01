@@ -392,6 +392,7 @@ HEADER_SRCS = \
 	ifdef.h \
 	ifmib.h \
 	imagehlp.h \
+	ime.h \
 	imm.h \
 	in6addr.h \
 	inaddr.h \
