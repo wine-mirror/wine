@@ -881,7 +881,7 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     {
         if (opacity_brush->type >= sizeof(brush_sizes) / sizeof(*brush_sizes))
         {
-            ERR("Unhandled opacity brush type %#x.\n", brush->type);
+            ERR("Unhandled opacity brush type %#x.\n", opacity_brush->type);
             return E_NOTIMPL;
         }
         buffer_desc.ByteWidth += brush_sizes[opacity_brush->type];
