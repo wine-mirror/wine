@@ -46,6 +46,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "ime.h"
 #include "x11drv.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -980,11 +981,14 @@ static const WORD nonchar_key_vkey[256] =
     VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
     0, 0, 0, VK_PAUSE, VK_SCROLL, 0, 0, 0,                      /* FF10 */
     0, 0, 0, VK_ESCAPE, 0, 0, 0, 0,                             /* FF18 */
-    /* unused */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF20 */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF28 */
-    0, VK_HANGUL, 0, 0, VK_HANJA, 0, 0, 0,                      /* FF30 */
+    /* Japanese special keys */
+    0, VK_KANJI, VK_NONCONVERT, VK_CONVERT,                     /* FF20 */
+    VK_DBE_ROMAN, 0, 0, VK_DBE_HIRAGANA,
+    0, 0, VK_DBE_SBCSCHAR, 0, 0, 0, 0, 0,                       /* FF28 */
+    /* Korean special keys (FF31-) */
+    VK_DBE_ALPHANUMERIC, VK_HANGUL, 0, 0, VK_HANJA, 0, 0, 0,    /* FF30 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF38 */
+    /* unused */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF40 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF48 */
     /* cursor keys */
@@ -1034,11 +1038,13 @@ static const WORD nonchar_key_scan[256] =
     0x0E, 0x0F, 0x00, /*?*/ 0, 0x00, 0x1C, 0x00, 0x00,           /* FF08 */
     0x00, 0x00, 0x00, 0x45, 0x46, 0x00, 0x00, 0x00,              /* FF10 */
     0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,              /* FF18 */
-    /* unused */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF20 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF28 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF30 */
+    /* Japanese special keys */
+    0x00, 0x29, 0x7B, 0x79, 0x70, 0x00, 0x00, 0x70,              /* FF20 */
+    0x00, 0x00, 0x29, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF28 */
+    /* Korean special keys (FF31-) */
+    0x3A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF30 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF38 */
+    /* unused */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF40 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,              /* FF48 */
     /* cursor keys */
