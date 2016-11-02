@@ -319,6 +319,33 @@ static void test_cleanup_dp(void)
     CoUninitialize();
 }
 
+static void test_close(void)
+{
+    HRESULT hr;
+    static IDirectPlay8Client* client2;
+    DPN_SP_CAPS caps;
+
+    hr = CoCreateInstance(&CLSID_DirectPlay8Client, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Client, (void **)&client2);
+    ok(hr == S_OK, "got 0x%x\n", hr);
+
+    memset(&caps, 0, sizeof(DPN_SP_CAPS));
+    caps.dwSize = sizeof(DPN_SP_CAPS);
+
+    hr = IDirectPlay8Client_Initialize(client2, NULL, DirectPlayMessageHandler, 0);
+    ok(hr == S_OK, "got %x\n", hr);
+
+    hr = IDirectPlay8Client_GetSPCaps(client2, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "got %x\n", hr);
+
+    hr = IDirectPlay8Client_Close(client2, 0);
+    ok(hr == DPN_OK, "got %x\n", hr);
+
+    hr = IDirectPlay8Client_GetSPCaps(client2, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPNERR_UNINITIALIZED, "got %x\n", hr);
+
+    IDirectPlay8Client_Release(client2);
+}
+
 START_TEST(client)
 {
     if(!test_init_dp())
@@ -329,5 +356,6 @@ START_TEST(client)
     test_get_sp_caps();
     test_player_info();
     test_lobbyclient();
+    test_close();
     test_cleanup_dp();
 }

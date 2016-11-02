@@ -253,9 +253,12 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_GetServerAddress(IDirectPlay8Client
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_Close(IDirectPlay8Client *iface, const DWORD dwFlags)
 {
-  IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-  FIXME("(%p):(%x): Stub\n", This, dwFlags);
-  return DPN_OK; 
+    IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
+    FIXME("(%p):(%x): Stub\n", This, dwFlags);
+
+    This->msghandler = NULL;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_ReturnBuffer(IDirectPlay8Client *iface,
