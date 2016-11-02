@@ -26,6 +26,7 @@
 #endif
 
 #include <wine/list.h>
+#include "winsock2.h"
 #include "wine/unicode.h"
 
 #include "dplay8.h"
@@ -135,6 +136,7 @@ extern HRESULT DPNET_CreateDirectPlay8ThreadPool(LPCLASSFACTORY iface, LPUNKNOWN
 extern HRESULT DPNET_CreateDirectPlay8LobbyClient(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 
 extern void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps) DECLSPEC_HIDDEN;
+extern void init_winsock(void) DECLSPEC_HIDDEN;
 
 /* used for generic dumping (copied from ddraw) */
 typedef struct {

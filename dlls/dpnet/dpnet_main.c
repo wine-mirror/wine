@@ -40,15 +40,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
 
 static HINSTANCE instance;
 
+static BOOL winsock_loaded = FALSE;
+
+static BOOL WINAPI winsock_startup(INIT_ONCE *once, void *param, void **context)
+{
+    WSADATA wsa_data;
+    DWORD res;
+
+    res = WSAStartup(MAKEWORD(1,1), &wsa_data);
+    if(res == ERROR_SUCCESS)
+        winsock_loaded = TRUE;
+    else
+        ERR("WSAStartup failed: %u\n", res);
+    return TRUE;
+}
+
+void init_winsock(void)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&init_once, winsock_startup, NULL, NULL);
+}
+
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-  TRACE("%p,%x,%p\n", hInstDLL, fdwReason, lpvReserved);
-  if (fdwReason == DLL_PROCESS_ATTACH) {
-      instance = hInstDLL;
-      DisableThreadLibraryCalls(hInstDLL);
-  }
-  return TRUE;
+    TRACE("%p,%x,%p\n", hInstDLL, fdwReason, lpvReserved);
+
+    switch(fdwReason)
+    {
+        case DLL_PROCESS_ATTACH:
+            instance = hInstDLL;
+            DisableThreadLibraryCalls(hInstDLL);
+            break;
+
+        case DLL_PROCESS_DETACH:
+            if (lpvReserved) break;
+            if(winsock_loaded)
+                WSACleanup();
+            break;
+    }
+    return TRUE;
 }
 
 /***********************************************************************

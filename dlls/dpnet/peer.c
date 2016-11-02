@@ -122,6 +122,8 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_Initialize(IDirectPlay8Peer *iface,
     This->msghandler = pfn;
     This->flags = dwFlags;
 
+    init_winsock();
+
     return DPN_OK;
 }
 

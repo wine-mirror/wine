@@ -115,6 +115,8 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_Initialize(IDirectPlay8Client *ifac
     This->msghandler = pfn;
     This->flags = dwFlags;
 
+    init_winsock();
+
     return DPN_OK;
 }
 
@@ -442,6 +444,8 @@ static HRESULT WINAPI lobbyclient_Initialize(IDirectPlay8LobbyClient *iface, voi
     This->usercontext = context;
     This->msghandler = msghandler;
     This->flags = flags;
+
+    init_winsock();
 
     return DPN_OK;
 }

@@ -118,6 +118,8 @@ static HRESULT WINAPI IDirectPlay8ServerImpl_Initialize(IDirectPlay8Server *ifac
     This->msghandler = pfn;
     This->flags = dwFlags;
 
+    init_winsock();
+
     return DPN_OK;
 }
 

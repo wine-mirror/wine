@@ -1,6 +1,6 @@
 MODULE    = dpnet.dll
 IMPORTLIB = dpnet
-IMPORTS   = dxguid uuid ole32 advapi32
+IMPORTS   = dxguid uuid ole32 advapi32 ws2_32
 
 C_SRCS = \
 	address.c \
