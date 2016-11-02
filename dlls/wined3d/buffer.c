@@ -162,6 +162,15 @@ static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, const st
             device_invalidate_state(resource->device, STATE_STREAMSRC);
         if (buffer->bind_flags & WINED3D_BIND_INDEX_BUFFER)
             device_invalidate_state(resource->device, STATE_INDEXBUFFER);
+        if (buffer->bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
+        {
+            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX));
+            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_HULL));
+            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_DOMAIN));
+            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY));
+            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL));
+            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE));
+        }
     }
 
     if (buffer->query)
