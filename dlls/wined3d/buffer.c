@@ -1410,14 +1410,28 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_resource_sub_resource_unmap,
 };
 
+static GLenum buffer_type_hint_from_bind_flags(unsigned int bind_flags)
+{
+    if (bind_flags == WINED3D_BIND_INDEX_BUFFER)
+        return GL_ELEMENT_ARRAY_BUFFER;
+
+    if (bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
+        return GL_UNIFORM_BUFFER;
+
+    if (bind_flags & ~(WINED3D_BIND_VERTEX_BUFFER | WINED3D_BIND_INDEX_BUFFER))
+        FIXME("Unhandled bind flags %#x.\n", bind_flags);
+
+    return GL_ARRAY_BUFFER;
+}
+
 static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device *device,
-        UINT size, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, GLenum bind_hint,
+        UINT size, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool, unsigned int bind_flags,
         const struct wined3d_sub_resource_data *data, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
-    HRESULT hr;
     BOOL dynamic_buffer_ok;
+    HRESULT hr;
 
     if (!size)
     {
@@ -1438,11 +1452,12 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         WARN("Failed to initialize resource, hr %#x.\n", hr);
         return hr;
     }
-    buffer->buffer_type_hint = bind_hint;
+    buffer->buffer_type_hint = buffer_type_hint_from_bind_flags(bind_flags);
     buffer->locations = WINED3D_LOCATION_SYSMEM;
 
-    TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
-            debug_d3dformat(buffer->resource.format->id), buffer->resource.heap_memory, buffer);
+    TRACE("buffer %p, size %#x, usage %#x, format %s, memory @ %p.\n",
+            buffer, buffer->resource.size, buffer->resource.usage,
+            debug_d3dformat(buffer->resource.format->id), buffer->resource.heap_memory);
 
     if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING || pool == WINED3D_POOL_MANAGED)
     {
@@ -1509,7 +1524,7 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, const struct 
     FIXME("Ignoring access flags (pool).\n");
 
     hr = buffer_init(object, device, desc->byte_width, desc->usage, WINED3DFMT_UNKNOWN,
-            WINED3D_POOL_MANAGED, GL_ARRAY_BUFFER_ARB, data, parent, parent_ops);
+            WINED3D_POOL_MANAGED, desc->bind_flags, data, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);
@@ -1551,7 +1566,7 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
     }
 
     hr = buffer_init(object, device, size, usage, WINED3DFMT_VERTEXDATA,
-            pool, GL_ARRAY_BUFFER_ARB, NULL, parent, parent_ops);
+            pool, WINED3D_BIND_VERTEX_BUFFER, NULL, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);
@@ -1582,7 +1597,7 @@ HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size,
     }
 
     hr = buffer_init(object, device, size, usage | WINED3DUSAGE_STATICDECL,
-            WINED3DFMT_UNKNOWN, pool, GL_ELEMENT_ARRAY_BUFFER_ARB, NULL,
+            WINED3DFMT_UNKNOWN, pool, WINED3D_BIND_INDEX_BUFFER, NULL,
             parent, parent_ops);
     if (FAILED(hr))
     {
