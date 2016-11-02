@@ -5386,3 +5386,17 @@ GpStatus WINGDIPAPI GdipBitmapConvertFormat(GpBitmap *bitmap, PixelFormat format
     FIXME("(%p, 0x%08x, %d, %d, %p, %f): stub\n", bitmap, format, dithertype, palettetype, palette, alphathreshold);
     return NotImplemented;
 }
+
+/*****************************************************************************
+ * GdipBitmapGetHistogramSize [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipBitmapGetHistogramSize(HistogramFormat format, UINT *num_of_entries)
+{
+    TRACE("(%d, %p)\n", format, num_of_entries);
+
+    if (!num_of_entries)
+        return InvalidParameter;
+
+    *num_of_entries = 256;
+    return Ok;
+}

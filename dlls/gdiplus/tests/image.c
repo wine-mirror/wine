@@ -30,6 +30,8 @@
 #include "gdiplus.h"
 #include "wine/test.h"
 
+static GpStatus (WINAPI *pGdipBitmapGetHistogramSize)(HistogramFormat,UINT*);
+
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (UINT)(expected), (UINT)(got))
 #define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
 
@@ -4785,8 +4787,51 @@ static void test_getadjustedpalette(void)
     GdipDisposeImageAttributes(imageattributes);
 }
 
+static void test_histogramsize(void)
+{
+    HistogramFormat test_formats[] =
+    {
+        HistogramFormatARGB,
+        HistogramFormatPARGB,
+        HistogramFormatRGB,
+        HistogramFormatGray,
+        HistogramFormatB,
+        HistogramFormatG,
+        HistogramFormatR,
+        HistogramFormatA,
+    };
+    GpStatus stat;
+    UINT num, i;
+
+    if (!pGdipBitmapGetHistogramSize)
+    {
+        win_skip("GdipBitmapGetHistogramSize is not supported\n");
+        return;
+    }
+
+    stat = pGdipBitmapGetHistogramSize(HistogramFormatARGB, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogramSize(0xff, NULL);
+    expect(InvalidParameter, stat);
+
+    num = 123;
+    stat = pGdipBitmapGetHistogramSize(10, &num);
+    expect(Ok, stat);
+    expect(256, num);
+
+    for (i = 0; i < sizeof(test_formats)/sizeof(test_formats[0]); i++)
+    {
+        num = 0;
+        stat = pGdipBitmapGetHistogramSize(test_formats[i], &num);
+        expect(Ok, stat);
+        expect(256, num);
+    }
+}
+
 START_TEST(image)
 {
+    HMODULE mod = GetModuleHandleA("gdiplus.dll");
     struct GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
 
@@ -4796,6 +4841,8 @@ START_TEST(image)
     gdiplusStartupInput.SuppressExternalCodecs      = 0;
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    pGdipBitmapGetHistogramSize = (void*)GetProcAddress(mod, "GdipBitmapGetHistogramSize");
 
     test_supported_encoders();
     test_CloneBitmapArea();
@@ -4843,6 +4890,7 @@ START_TEST(image)
     test_dispose();
     test_createeffect();
     test_getadjustedpalette();
+    test_histogramsize();
 
     GdiplusShutdown(gdiplusToken);
 }
