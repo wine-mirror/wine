@@ -2390,10 +2390,30 @@ static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_StrokeContainsPoint(ID2D
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_FillContainsPoint(ID2D1RectangleGeometry *iface,
         D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F *transform, float tolerance, BOOL *contains)
 {
-    FIXME("iface %p, point {%.8e, %.8e}, transform %p, tolerance %.8e, contains %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1RectangleGeometry(iface);
+    D2D1_RECT_F *rect = &geometry->u.rectangle.rect;
+    float dx, dy;
+
+    TRACE("iface %p, point {%.8e, %.8e}, transform %p, tolerance %.8e, contains %p.\n",
             iface, point.x, point.y, transform, tolerance, contains);
 
-    return E_NOTIMPL;
+    if (transform)
+    {
+        D2D1_MATRIX_3X2_F g_i;
+
+        if (!d2d_matrix_invert(&g_i, transform))
+            return D2DERR_UNSUPPORTED_OPERATION;
+        d2d_point_transform(&point, &g_i, point.x, point.y);
+    }
+
+    if (tolerance == 0.0f)
+        tolerance = D2D1_DEFAULT_FLATTENING_TOLERANCE;
+
+    dx = max(fabsf((rect->right  + rect->left) / 2.0f - point.x) - (rect->right  - rect->left) / 2.0f, 0.0f);
+    dy = max(fabsf((rect->bottom + rect->top)  / 2.0f - point.y) - (rect->bottom - rect->top)  / 2.0f, 0.0f);
+
+    *contains = tolerance * tolerance > (dx * dx + dy * dy);
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_CompareWithGeometry(ID2D1RectangleGeometry *iface,

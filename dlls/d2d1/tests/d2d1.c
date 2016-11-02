@@ -1749,6 +1749,66 @@ static void test_path_geometry(void)
     DestroyWindow(window);
 }
 
+static void test_rectangle_geometry(void)
+{
+    ID2D1RectangleGeometry *geometry;
+    ID2D1Factory *factory;
+    D2D1_POINT_2F point;
+    D2D1_RECT_F rect;
+    BOOL contains;
+    HRESULT hr;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 10.0f, 20.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    /* Edge. */
+    contains = FALSE;
+    set_point(&point, 0.0f, 0.0f);
+    hr = ID2D1RectangleGeometry_FillContainsPoint(geometry, point, NULL, 0.0f, &contains);
+    ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
+    ok(!!contains, "Got wrong hit test result %d.\n", contains);
+
+    /* Within tolerance limit around corner. */
+    contains = TRUE;
+    set_point(&point, -D2D1_DEFAULT_FLATTENING_TOLERANCE, 0.0f);
+    hr = ID2D1RectangleGeometry_FillContainsPoint(geometry, point, NULL, 0.0f, &contains);
+    ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
+    ok(!contains, "Got wrong hit test result %d.\n", contains);
+
+    contains = FALSE;
+    set_point(&point, -D2D1_DEFAULT_FLATTENING_TOLERANCE + 0.01f, 0.0f);
+    hr = ID2D1RectangleGeometry_FillContainsPoint(geometry, point, NULL, 0.0f, &contains);
+    ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
+    ok(!!contains, "Got wrong hit test result %d.\n", contains);
+
+    contains = TRUE;
+    set_point(&point, -D2D1_DEFAULT_FLATTENING_TOLERANCE - 0.01f, 0.0f);
+    hr = ID2D1RectangleGeometry_FillContainsPoint(geometry, point, NULL, 0.0f, &contains);
+    ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
+    ok(!contains, "Got wrong hit test result %d.\n", contains);
+
+    contains = TRUE;
+    set_point(&point, -D2D1_DEFAULT_FLATTENING_TOLERANCE, -D2D1_DEFAULT_FLATTENING_TOLERANCE);
+    hr = ID2D1RectangleGeometry_FillContainsPoint(geometry, point, NULL, 0.0f, &contains);
+    ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
+    ok(!contains, "Got wrong hit test result %d.\n", contains);
+
+    /* Inside. */
+    contains = FALSE;
+    set_point(&point, 5.0f, 5.0f);
+    hr = ID2D1RectangleGeometry_FillContainsPoint(geometry, point, NULL, 0.0f, &contains);
+    ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
+    ok(!!contains, "Got wrong hit test result %d.\n", contains);
+
+    ID2D1RectangleGeometry_Release(geometry);
+
+    ID2D1Factory_Release(factory);
+}
+
 static void test_bitmap_formats(void)
 {
     D2D1_BITMAP_PROPERTIES bitmap_desc;
@@ -2705,8 +2765,7 @@ todo_wine
     ok(hr == D2DERR_WRONG_FACTORY, "EndDraw failure expected, hr %#x.\n", hr);
 
     /* Effect is d2d resource, but not a brush. */
-    rect.left = rect.top = 0.0f;
-    rect.right = rect.bottom = 10.0f;
+    set_rect(&rect, 0.0f, 0.0f, 10.0f, 10.0f);
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
     ok(SUCCEEDED(hr), "Failed to geometry, hr %#x.\n", hr);
 
@@ -3189,6 +3248,7 @@ START_TEST(d2d1)
     test_color_brush();
     test_bitmap_brush();
     test_path_geometry();
+    test_rectangle_geometry();
     test_bitmap_formats();
     test_alpha_mode();
     test_shared_bitmap();
