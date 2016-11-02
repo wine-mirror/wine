@@ -3158,6 +3158,7 @@ struct wined3d_buffer
     GLuint buffer_object;
     GLenum buffer_object_usage;
     GLenum buffer_type_hint;
+    unsigned int bind_flags;
     DWORD flags;
     void *map_ptr;
 

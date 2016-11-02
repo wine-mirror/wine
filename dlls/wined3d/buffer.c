@@ -141,11 +141,26 @@ static void buffer_bind(struct wined3d_buffer *buffer, struct wined3d_context *c
 /* Context activation is done by the caller */
 static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info)
 {
+    struct wined3d_resource *resource = &This->resource;
+
     if(!This->buffer_object) return;
 
     GL_EXTCALL(glDeleteBuffers(1, &This->buffer_object));
     checkGLcall("glDeleteBuffers");
     This->buffer_object = 0;
+
+    /* The stream source state handler might have read the memory of the
+     * vertex buffer already and got the memory in the vbo which is not
+     * valid any longer. Dirtify the stream source to force a reload. This
+     * happens only once per changed vertexbuffer and should occur rather
+     * rarely. */
+    if (resource->bind_count)
+    {
+        if (This->bind_flags & WINED3D_BIND_VERTEX_BUFFER)
+            device_invalidate_state(resource->device, STATE_STREAMSRC);
+        if (This->bind_flags & WINED3D_BIND_INDEX_BUFFER)
+            device_invalidate_state(resource->device, STATE_INDEXBUFFER);
+    }
 
     if(This->query)
     {
@@ -637,10 +652,9 @@ static void buffer_unload(struct wined3d_resource *resource)
 
     if (buffer->buffer_object)
     {
-        struct wined3d_device *device = resource->device;
         struct wined3d_context *context;
 
-        context = context_acquire(device, NULL);
+        context = context_acquire(resource->device, NULL);
 
         /* Download the buffer, but don't permanently enable double buffering. */
         wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
@@ -658,19 +672,6 @@ static void buffer_unload(struct wined3d_resource *resource)
         buffer->stride = 0;
         buffer->conversion_stride = 0;
         buffer->flags &= ~WINED3D_BUFFER_HASDESC;
-
-        /* The stream source state handler might have read the memory of the
-         * vertex buffer already and got the memory in the vbo which is not
-         * valid any longer. Dirtify the stream source to force a reload. This
-         * happens only once per changed vertexbuffer and should occur rather
-         * rarely. */
-        if (resource->bind_count)
-        {
-            device_invalidate_state(device, STATE_STREAMSRC);
-
-            if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER)
-                device_invalidate_state(device, STATE_INDEXBUFFER);
-        }
     }
 
     resource_unload(resource);
@@ -1453,6 +1454,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         return hr;
     }
     buffer->buffer_type_hint = buffer_type_hint_from_bind_flags(bind_flags);
+    buffer->bind_flags = bind_flags;
     buffer->locations = WINED3D_LOCATION_SYSMEM;
 
     TRACE("buffer %p, size %#x, usage %#x, format %s, memory @ %p.\n",
