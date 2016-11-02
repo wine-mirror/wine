@@ -3754,21 +3754,6 @@ static void dump_close_clipboard_reply( const struct close_clipboard_reply *req 
     fprintf( stderr, ", owner=%08x", req->owner );
 }
 
-static void dump_set_clipboard_info_request( const struct set_clipboard_info_request *req )
-{
-    fprintf( stderr, " flags=%08x", req->flags );
-    fprintf( stderr, ", owner=%08x", req->owner );
-}
-
-static void dump_set_clipboard_info_reply( const struct set_clipboard_info_reply *req )
-{
-    fprintf( stderr, " flags=%08x", req->flags );
-    fprintf( stderr, ", old_clipboard=%08x", req->old_clipboard );
-    fprintf( stderr, ", old_owner=%08x", req->old_owner );
-    fprintf( stderr, ", old_viewer=%08x", req->old_viewer );
-    fprintf( stderr, ", seqno=%08x", req->seqno );
-}
-
 static void dump_empty_clipboard_request( const struct empty_clipboard_request *req )
 {
 }
@@ -4692,7 +4677,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_class_info_request,
     (dump_func)dump_open_clipboard_request,
     (dump_func)dump_close_clipboard_request,
-    (dump_func)dump_set_clipboard_info_request,
     (dump_func)dump_empty_clipboard_request,
     (dump_func)dump_set_clipboard_data_request,
     (dump_func)dump_get_clipboard_data_request,
@@ -4979,7 +4963,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_class_info_reply,
     (dump_func)dump_open_clipboard_reply,
     (dump_func)dump_close_clipboard_reply,
-    (dump_func)dump_set_clipboard_info_reply,
     NULL,
     (dump_func)dump_set_clipboard_data_reply,
     (dump_func)dump_get_clipboard_data_reply,
@@ -5266,7 +5249,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_class_info",
     "open_clipboard",
     "close_clipboard",
-    "set_clipboard_info",
     "empty_clipboard",
     "set_clipboard_data",
     "get_clipboard_data",
@@ -5432,7 +5414,6 @@ static const struct
     { "OBJECT_PATH_SYNTAX_BAD",      STATUS_OBJECT_PATH_SYNTAX_BAD },
     { "OBJECT_TYPE_MISMATCH",        STATUS_OBJECT_TYPE_MISMATCH },
     { "PENDING",                     STATUS_PENDING },
-    { "PIPE_BUSY",                   STATUS_PIPE_BUSY },
     { "PIPE_CONNECTED",              STATUS_PIPE_CONNECTED },
     { "PIPE_DISCONNECTED",           STATUS_PIPE_DISCONNECTED },
     { "PIPE_LISTENING",              STATUS_PIPE_LISTENING },

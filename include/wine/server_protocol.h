@@ -4488,33 +4488,6 @@ struct close_clipboard_reply
 
 
 
-struct set_clipboard_info_request
-{
-    struct request_header __header;
-    unsigned int   flags;
-    user_handle_t  owner;
-    char __pad_20[4];
-};
-struct set_clipboard_info_reply
-{
-    struct reply_header __header;
-    unsigned int   flags;
-    user_handle_t  old_clipboard;
-    user_handle_t  old_owner;
-    user_handle_t  old_viewer;
-    unsigned int   seqno;
-    char __pad_28[4];
-};
-
-#define SET_CB_SEQNO     0x008
-#define SET_CB_RELOWNER  0x010
-#define CB_OPEN_ANY      0x020
-#define CB_OPEN          0x040
-#define CB_OWNER         0x080
-#define CB_PROCESS       0x100
-
-
-
 struct empty_clipboard_request
 {
     struct request_header __header;
@@ -5792,7 +5765,6 @@ enum request
     REQ_set_class_info,
     REQ_open_clipboard,
     REQ_close_clipboard,
-    REQ_set_clipboard_info,
     REQ_empty_clipboard,
     REQ_set_clipboard_data,
     REQ_get_clipboard_data,
@@ -6083,7 +6055,6 @@ union generic_request
     struct set_class_info_request set_class_info_request;
     struct open_clipboard_request open_clipboard_request;
     struct close_clipboard_request close_clipboard_request;
-    struct set_clipboard_info_request set_clipboard_info_request;
     struct empty_clipboard_request empty_clipboard_request;
     struct set_clipboard_data_request set_clipboard_data_request;
     struct get_clipboard_data_request get_clipboard_data_request;
@@ -6372,7 +6343,6 @@ union generic_reply
     struct set_class_info_reply set_class_info_reply;
     struct open_clipboard_reply open_clipboard_reply;
     struct close_clipboard_reply close_clipboard_reply;
-    struct set_clipboard_info_reply set_clipboard_info_reply;
     struct empty_clipboard_reply empty_clipboard_reply;
     struct set_clipboard_data_reply set_clipboard_data_reply;
     struct get_clipboard_data_reply get_clipboard_data_reply;
@@ -6442,6 +6412,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 522
+#define SERVER_PROTOCOL_VERSION 523
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

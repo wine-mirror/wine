@@ -3174,26 +3174,6 @@ enum caret_state
 @END
 
 
-/* Set/get clipboard information */
-@REQ(set_clipboard_info)
-    unsigned int   flags;       /* flags for fields to set (see below) */
-    user_handle_t  owner;       /* clipboard owner */
-@REPLY
-    unsigned int   flags;           /* status flags (see below) */
-    user_handle_t  old_clipboard;   /* old clipboard window */
-    user_handle_t  old_owner;       /* old clipboard owner */
-    user_handle_t  old_viewer;      /* old clipboard viewer */
-    unsigned int   seqno;           /* current sequence number */
-@END
-
-#define SET_CB_SEQNO     0x008
-#define SET_CB_RELOWNER  0x010
-#define CB_OPEN_ANY      0x020
-#define CB_OPEN          0x040
-#define CB_OWNER         0x080
-#define CB_PROCESS       0x100
-
-
 /* Empty the clipboard and grab ownership */
 @REQ(empty_clipboard)
 @END
