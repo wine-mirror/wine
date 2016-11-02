@@ -544,6 +544,7 @@ static const IDirectPlay8PeerVtbl DirectPlay8Peer_Vtbl =
 
 void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps)
 {
+    dpnspcaps->dwSize = sizeof(DPN_SP_CAPS);
     dpnspcaps->dwFlags = DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST |
                          DPNSPCAPS_SUPPORTSALLADAPTERS | DPNSPCAPS_SUPPORTSTHREADPOOL;
     dpnspcaps->dwNumThreads = 3;

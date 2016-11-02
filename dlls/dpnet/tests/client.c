@@ -197,6 +197,7 @@ static void test_get_sp_caps(void)
     hr = IDirectPlay8Client_GetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
     ok(hr == DPN_OK, "GetSPCaps failed with %x\n", hr);
 
+    ok(caps.dwSize == sizeof(DPN_SP_CAPS), "got %d\n", caps.dwSize);
     ok((caps.dwFlags &
         (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS)) ==
        (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS),
