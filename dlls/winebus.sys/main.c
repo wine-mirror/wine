@@ -541,6 +541,25 @@ NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
                 packet->reportBufferLen, &irp->IoStatus.Information);
             break;
         }
+        case IOCTL_HID_GET_FEATURE:
+        {
+            HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
+            TRACE_(hid_report)("IOCTL_HID_GET_FEATURE\n");
+            irp->IoStatus.u.Status = status = ext->vtbl->get_feature_report(
+                device, packet->reportId, packet->reportBuffer,
+                packet->reportBufferLen, &irp->IoStatus.Information);
+            packet->reportBufferLen = irp->IoStatus.Information;
+            break;
+        }
+        case IOCTL_HID_SET_FEATURE:
+        {
+            HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
+            TRACE_(hid_report)("IOCTL_HID_SET_FEATURE\n");
+            irp->IoStatus.u.Status = status = ext->vtbl->set_feature_report(
+                device, packet->reportId, packet->reportBuffer,
+                packet->reportBufferLen, &irp->IoStatus.Information);
+            break;
+        }
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;

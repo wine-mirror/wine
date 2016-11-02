@@ -301,6 +301,52 @@ static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
     }
 }
 
+static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
+{
+#ifdef HAVE_LINUX_HIDRAW_H
+    int rc;
+    struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    length = min(length, 0x1fff);
+    rc = ioctl(ext->device_fd, HIDIOCGFEATURE(length), report);
+    if (rc >= 0)
+    {
+        *read = rc;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        *read = 0;
+        return STATUS_UNSUCCESSFUL;
+    }
+#else
+    *read = 0;
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
+static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
+{
+#ifdef HAVE_LINUX_HIDRAW_H
+    int rc;
+    struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    length = min(length, 0x1fff);
+    rc = ioctl(ext->device_fd, HIDIOCSFEATURE(length), report);
+    if (rc >= 0)
+    {
+        *written = rc;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        *written = 0;
+        return STATUS_UNSUCCESSFUL;
+    }
+#else
+    *written = 0;
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+}
+
 static const platform_vtbl hidraw_vtbl =
 {
     compare_platform_device,
@@ -308,6 +354,8 @@ static const platform_vtbl hidraw_vtbl =
     hidraw_get_string,
     begin_report_processing,
     hidraw_set_output_report,
+    hidraw_get_feature_report,
+    hidraw_set_feature_report,
 };
 
 static void try_add_device(struct udev_device *dev)
