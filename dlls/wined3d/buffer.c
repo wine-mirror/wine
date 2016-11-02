@@ -138,9 +138,10 @@ static void buffer_bind(struct wined3d_buffer *buffer, struct wined3d_context *c
     GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
 }
 
-/* Context activation is done by the caller */
-static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info)
+/* Context activation is done by the caller. */
+static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_context *context)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_resource *resource = &This->resource;
 
     if(!This->buffer_object) return;
@@ -256,7 +257,7 @@ fail:
     /* Clean up all BO init, but continue because we can work without a BO :-) */
     ERR("Failed to create a buffer object. Continuing, but performance issues may occur.\n");
     buffer->flags &= ~WINED3D_BUFFER_USE_BO;
-    delete_gl_buffer(buffer, gl_info);
+    delete_gl_buffer(buffer, context);
     buffer_clear_dirty_areas(buffer);
     return FALSE;
 }
@@ -662,7 +663,7 @@ static void buffer_unload(struct wined3d_resource *resource)
             buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
 
         wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
-        delete_gl_buffer(buffer, context->gl_info);
+        delete_gl_buffer(buffer, context);
         buffer_clear_dirty_areas(buffer);
 
         context_release(context);
@@ -691,7 +692,7 @@ static void wined3d_buffer_destroy_object(void *object)
     if (buffer->buffer_object)
     {
         context = context_acquire(buffer->resource.device, NULL);
-        delete_gl_buffer(buffer, context->gl_info);
+        delete_gl_buffer(buffer, context);
         context_release(context);
 
         HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
