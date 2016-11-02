@@ -52,8 +52,7 @@ struct clipboard
     struct object  obj;              /* object header */
     struct thread *open_thread;      /* thread id that has clipboard open */
     user_handle_t  open_win;         /* window that has clipboard open */
-    struct thread *owner_thread;     /* thread id that owns the clipboard */
-    user_handle_t  owner_win;        /* window that owns the clipboard data */
+    user_handle_t  owner;            /* window that owns the clipboard */
     user_handle_t  viewer;           /* first window in clipboard viewer list */
     unsigned int   lcid;             /* locale id to use for synthesizing text formats */
     unsigned int   seqno;            /* clipboard change sequence number */
@@ -141,9 +140,9 @@ static void clipboard_dump( struct object *obj, int verbose )
 {
     struct clipboard *clipboard = (struct clipboard *)obj;
 
-    fprintf( stderr, "Clipboard open_thread=%p open_win=%08x owner_thread=%p owner_win=%08x viewer=%08x seq=%u\n",
-             clipboard->open_thread, clipboard->open_win, clipboard->owner_thread,
-             clipboard->owner_win, clipboard->viewer, clipboard->seqno );
+    fprintf( stderr, "Clipboard open_thread=%p open_win=%08x owner=%08x viewer=%08x seq=%u\n",
+             clipboard->open_thread, clipboard->open_win,
+             clipboard->owner, clipboard->viewer, clipboard->seqno );
 }
 
 static void clipboard_destroy( struct object *obj )
@@ -168,8 +167,7 @@ static struct clipboard *get_process_clipboard(void)
         {
             clipboard->open_thread = NULL;
             clipboard->open_win = 0;
-            clipboard->owner_thread = NULL;
-            clipboard->owner_win = 0;
+            clipboard->owner = 0;
             clipboard->viewer = 0;
             clipboard->seqno = 0;
             clipboard->format_count = 0;
@@ -297,8 +295,7 @@ static user_handle_t release_clipboard( struct clipboard *clipboard )
     struct clip_format *format, *next;
     int changed = 0;
 
-    clipboard->owner_win = 0;
-    clipboard->owner_thread = NULL;
+    clipboard->owner = 0;
 
     /* free the delayed-rendered formats, since we no longer have an owner to render them */
     LIST_FOR_EACH_ENTRY_SAFE( format, next, &clipboard->formats, struct clip_format, entry )
@@ -325,11 +322,11 @@ void cleanup_clipboard_window( struct desktop *desktop, user_handle_t window )
 
     remove_listener( clipboard, window );
     if (clipboard->viewer == window) clipboard->viewer = 0;
-    if (clipboard->owner_win == window) release_clipboard( clipboard );
+    if (clipboard->owner == window) release_clipboard( clipboard );
     if (clipboard->open_win == window)
     {
         user_handle_t viewer = close_clipboard( clipboard );
-        if (viewer) send_notify_message( viewer, WM_DRAWCLIPBOARD, clipboard->owner_win, 0 );
+        if (viewer) send_notify_message( viewer, WM_DRAWCLIPBOARD, clipboard->owner, 0 );
     }
 }
 
@@ -344,11 +341,10 @@ void cleanup_clipboard_thread(struct thread *thread)
 
     if ((clipboard = winstation->clipboard))
     {
-        if (thread == clipboard->owner_thread) clipboard->owner_thread = NULL;
         if (thread == clipboard->open_thread)
         {
             user_handle_t viewer = close_clipboard( clipboard );
-            if (viewer) send_notify_message( viewer, WM_DRAWCLIPBOARD, clipboard->owner_win, 0 );
+            if (viewer) send_notify_message( viewer, WM_DRAWCLIPBOARD, clipboard->owner, 0 );
         }
     }
     release_object( winstation );
@@ -373,7 +369,7 @@ DECL_HANDLER(open_clipboard)
     clipboard->open_win = win;
     clipboard->open_thread = current;
 
-    reply->owner = clipboard->owner_win;
+    reply->owner = clipboard->owner;
 }
 
 
@@ -390,7 +386,7 @@ DECL_HANDLER(close_clipboard)
         return;
     }
     reply->viewer = close_clipboard( clipboard );
-    reply->owner  = clipboard->owner_win;
+    reply->owner  = clipboard->owner;
 }
 
 
@@ -454,7 +450,7 @@ DECL_HANDLER(get_clipboard_data)
     reply->from   = format->from;
     reply->total  = format->size;
     reply->seqno  = format->seqno;
-    if (!format->data && !format->from) reply->owner = clipboard->owner_win;
+    if (!format->data && !format->from) reply->owner = clipboard->owner;
     if (req->cached && req->seqno == format->seqno) return;  /* client-side cache still valid */
     if (format->size <= get_reply_max_size()) set_reply_data( format->data, format->size );
     else set_error( STATUS_BUFFER_OVERFLOW );
@@ -530,8 +526,7 @@ DECL_HANDLER(empty_clipboard)
     }
 
     free_clipboard_formats( clipboard );
-    clipboard->owner_win = clipboard->open_win;
-    clipboard->owner_thread = clipboard->open_thread;
+    clipboard->owner = clipboard->open_win;
     clipboard->seqno++;
 }
 
@@ -546,10 +541,10 @@ DECL_HANDLER(release_clipboard)
 
     if (!(owner = get_valid_window_handle( req->owner ))) return;
 
-    if (clipboard->owner_win == owner)
+    if (clipboard->owner == owner)
     {
         reply->viewer = release_clipboard( clipboard );
-        reply->owner = clipboard->owner_win;
+        reply->owner = clipboard->owner;
     }
     else set_error( STATUS_INVALID_OWNER );
 }
@@ -563,7 +558,7 @@ DECL_HANDLER(get_clipboard_info)
     if (!clipboard) return;
 
     reply->window = clipboard->open_win;
-    reply->owner  = clipboard->owner_win;
+    reply->owner  = clipboard->owner;
     reply->viewer = clipboard->viewer;
     reply->seqno  = clipboard->seqno;
 }
@@ -580,7 +575,7 @@ DECL_HANDLER(set_clipboard_viewer)
     if (req->previous && !(previous = get_valid_window_handle( req->previous ))) return;
 
     reply->old_viewer = clipboard->viewer;
-    reply->owner      = clipboard->owner_win;
+    reply->owner      = clipboard->owner;
 
     if (!previous || clipboard->viewer == previous)
         clipboard->viewer = viewer;
