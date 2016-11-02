@@ -5387,6 +5387,129 @@ GpStatus WINGDIPAPI GdipBitmapConvertFormat(GpBitmap *bitmap, PixelFormat format
     return NotImplemented;
 }
 
+static void set_histogram_point_argb(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    ch0[ color >> 24        ]++;
+    ch1[(color >> 16) & 0xff]++;
+    ch2[(color >>  8) & 0xff]++;
+    ch3[ color        & 0xff]++;
+}
+
+static void set_histogram_point_pargb(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    BYTE alpha = color >> 24;
+
+    ch0[alpha]++;
+    ch1[(((color >> 16) & 0xff) * alpha) / 0xff]++;
+    ch2[(((color >>  8) & 0xff) * alpha) / 0xff]++;
+    ch3[(( color        & 0xff) * alpha) / 0xff]++;
+}
+
+static void set_histogram_point_rgb(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    ch0[(color >> 16) & 0xff]++;
+    ch1[(color >>  8) & 0xff]++;
+    ch2[ color        & 0xff]++;
+}
+
+static void set_histogram_point_gray(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    ch0[(76 * ((color >> 16) & 0xff) + 150 * ((color >> 8) & 0xff) + 29 * (color & 0xff)) / 0xff]++;
+}
+
+static void set_histogram_point_b(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    ch0[color & 0xff]++;
+}
+
+static void set_histogram_point_g(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    ch0[(color >> 8) & 0xff]++;
+}
+
+static void set_histogram_point_r(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    ch0[(color >> 16) & 0xff]++;
+}
+
+static void set_histogram_point_a(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    ch0[(color >> 24) & 0xff]++;
+}
+
+/*****************************************************************************
+ * GdipBitmapGetHistogram [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipBitmapGetHistogram(GpBitmap *bitmap, HistogramFormat format, UINT num_of_entries,
+    UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3)
+{
+    static void (* const set_histogram_point[])(ARGB color, UINT *ch0, UINT *ch1, UINT *ch2, UINT *ch3) =
+    {
+        set_histogram_point_argb,
+        set_histogram_point_pargb,
+        set_histogram_point_rgb,
+        set_histogram_point_gray,
+        set_histogram_point_b,
+        set_histogram_point_g,
+        set_histogram_point_r,
+        set_histogram_point_a,
+    };
+    UINT width, height, x, y;
+
+    TRACE("(%p, %d, %u, %p, %p, %p, %p)\n", bitmap, format, num_of_entries,
+        ch0, ch1, ch2, ch3);
+
+    if (!bitmap || num_of_entries != 256)
+        return InvalidParameter;
+
+    /* Make sure passed channel pointers match requested format */
+    switch (format)
+    {
+    case HistogramFormatARGB:
+    case HistogramFormatPARGB:
+        if (!ch0 || !ch1 || !ch2 || !ch3)
+            return InvalidParameter;
+        memset(ch0, 0, num_of_entries * sizeof(UINT));
+        memset(ch1, 0, num_of_entries * sizeof(UINT));
+        memset(ch2, 0, num_of_entries * sizeof(UINT));
+        memset(ch3, 0, num_of_entries * sizeof(UINT));
+        break;
+    case HistogramFormatRGB:
+        if (!ch0 || !ch1 || !ch2 || ch3)
+            return InvalidParameter;
+        memset(ch0, 0, num_of_entries * sizeof(UINT));
+        memset(ch1, 0, num_of_entries * sizeof(UINT));
+        memset(ch2, 0, num_of_entries * sizeof(UINT));
+        break;
+    case HistogramFormatGray:
+    case HistogramFormatB:
+    case HistogramFormatG:
+    case HistogramFormatR:
+    case HistogramFormatA:
+        if (!ch0 || ch1 || ch2 || ch3)
+            return InvalidParameter;
+        memset(ch0, 0, num_of_entries * sizeof(UINT));
+        break;
+    default:
+        WARN("Invalid histogram format requested, %d\n", format);
+        return InvalidParameter;
+    }
+
+    GdipGetImageWidth(&bitmap->image, &width);
+    GdipGetImageHeight(&bitmap->image, &height);
+
+    for (y = 0; y < height; y++)
+        for (x = 0; x < width; x++)
+        {
+            ARGB color;
+
+            GdipBitmapGetPixel(bitmap, x, y, &color);
+            set_histogram_point[format](color, ch0, ch1, ch2, ch3);
+        }
+
+    return Ok;
+}
+
 /*****************************************************************************
  * GdipBitmapGetHistogramSize [GDIPLUS.@]
  */

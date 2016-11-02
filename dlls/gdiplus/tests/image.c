@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 static GpStatus (WINAPI *pGdipBitmapGetHistogramSize)(HistogramFormat,UINT*);
+static GpStatus (WINAPI *pGdipBitmapGetHistogram)(GpBitmap*,HistogramFormat,UINT,UINT*,UINT*,UINT*,UINT*);
 
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (UINT)(expected), (UINT)(got))
 #define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
@@ -4787,8 +4788,9 @@ static void test_getadjustedpalette(void)
     GdipDisposeImageAttributes(imageattributes);
 }
 
-static void test_histogramsize(void)
+static void test_histogram(void)
 {
+    UINT ch0[256], ch1[256], ch2[256], ch3[256];
     HistogramFormat test_formats[] =
     {
         HistogramFormatARGB,
@@ -4800,8 +4802,10 @@ static void test_histogramsize(void)
         HistogramFormatR,
         HistogramFormatA,
     };
+    const UINT WIDTH = 8, HEIGHT = 16;
+    UINT num, i, x;
     GpStatus stat;
-    UINT num, i;
+    GpBitmap *bm;
 
     if (!pGdipBitmapGetHistogramSize)
     {
@@ -4827,6 +4831,89 @@ static void test_histogramsize(void)
         expect(Ok, stat);
         expect(256, num);
     }
+
+    bm = NULL;
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+
+    /* Three solid rgb rows, next three rows are rgb shades. */
+    for (x = 0; x < WIDTH; x++)
+    {
+        GdipBitmapSetPixel(bm, x, 0, 0xffff0000);
+        GdipBitmapSetPixel(bm, x, 1, 0xff00ff00);
+        GdipBitmapSetPixel(bm, x, 2, 0xff0000ff);
+
+        GdipBitmapSetPixel(bm, x, 3, 0xff010000);
+        GdipBitmapSetPixel(bm, x, 4, 0xff003f00);
+        GdipBitmapSetPixel(bm, x, 5, 0xff000020);
+    }
+
+    stat = pGdipBitmapGetHistogram(NULL, HistogramFormatRGB, 256, ch0, ch1, ch2, ch3);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, 123, 256, ch0, ch1, ch2, ch3);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, 123, 256, ch0, ch1, ch2, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, 123, 256, ch0, ch1, NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, 123, 256, ch0, NULL, NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    /* Requested format matches bitmap format */
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatRGB, 256, ch0, ch1, ch2, ch3);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatRGB, 100, ch0, ch1, ch2, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatRGB, 257, ch0, ch1, ch2, NULL);
+    expect(InvalidParameter, stat);
+
+    /* Channel 3 is not used, must be NULL */
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatRGB, 256, ch0, ch1, ch2, NULL);
+    expect(Ok, stat);
+
+    ok(ch0[0xff] == WIDTH, "Got red (0xff) %u\n", ch0[0xff]);
+    ok(ch1[0xff] == WIDTH, "Got green (0xff) %u\n", ch1[0xff]);
+    ok(ch2[0xff] == WIDTH, "Got blue (0xff) %u\n", ch1[0xff]);
+    ok(ch0[0x01] == WIDTH, "Got red (0x01) %u\n", ch0[0x01]);
+    ok(ch1[0x3f] == WIDTH, "Got green (0x3f) %u\n", ch1[0x3f]);
+    ok(ch2[0x20] == WIDTH, "Got blue (0x20) %u\n", ch1[0x20]);
+
+    /* ARGB histogram from RGB data. */
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatARGB, 256, ch0, ch1, ch2, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatARGB, 256, ch0, ch1, ch2, ch3);
+    expect(Ok, stat);
+
+    ok(ch1[0xff] == WIDTH, "Got red (0xff) %u\n", ch1[0xff]);
+    ok(ch2[0xff] == WIDTH, "Got green (0xff) %u\n", ch2[0xff]);
+    ok(ch3[0xff] == WIDTH, "Got blue (0xff) %u\n", ch3[0xff]);
+    ok(ch1[0x01] == WIDTH, "Got red (0x01) %u\n", ch1[0x01]);
+    ok(ch2[0x3f] == WIDTH, "Got green (0x3f) %u\n", ch2[0x3f]);
+    ok(ch3[0x20] == WIDTH, "Got blue (0x20) %u\n", ch3[0x20]);
+
+    ok(ch0[0xff] == WIDTH * HEIGHT, "Got alpha (0xff) %u\n", ch0[0xff]);
+
+    /* Request grayscale histogram from RGB bitmap. */
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatGray, 256, ch0, ch1, ch2, ch3);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatGray, 256, ch0, ch1, ch2, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatGray, 256, ch0, ch1, NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipBitmapGetHistogram(bm, HistogramFormatGray, 256, ch0, NULL, NULL, NULL);
+    expect(Ok, stat);
+
+    GdipDisposeImage((GpImage*)bm);
 }
 
 START_TEST(image)
@@ -4843,6 +4930,7 @@ START_TEST(image)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     pGdipBitmapGetHistogramSize = (void*)GetProcAddress(mod, "GdipBitmapGetHistogramSize");
+    pGdipBitmapGetHistogram = (void*)GetProcAddress(mod, "GdipBitmapGetHistogram");
 
     test_supported_encoders();
     test_CloneBitmapArea();
@@ -4890,7 +4978,7 @@ START_TEST(image)
     test_dispose();
     test_createeffect();
     test_getadjustedpalette();
-    test_histogramsize();
+    test_histogram();
 
     GdiplusShutdown(gdiplusToken);
 }

@@ -618,7 +618,7 @@
 618 stub GdipInitializePalette
 619 stdcall GdipBitmapCreateApplyEffect(ptr long ptr ptr ptr ptr long ptr ptr)
 620 stdcall GdipBitmapApplyEffect(ptr ptr ptr long ptr ptr)
-621 stub GdipBitmapGetHistogram
+621 stdcall GdipBitmapGetHistogram(ptr long long ptr ptr ptr ptr)
 622 stdcall GdipBitmapGetHistogramSize(long ptr)
 623 stdcall GdipBitmapConvertFormat(ptr long long long ptr float)
 624 stdcall GdipImageSetAbort(ptr ptr)
