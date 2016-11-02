@@ -139,16 +139,17 @@ static void buffer_bind(struct wined3d_buffer *buffer, struct wined3d_context *c
 }
 
 /* Context activation is done by the caller. */
-static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_context *context)
+static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, const struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_resource *resource = &This->resource;
+    struct wined3d_resource *resource = &buffer->resource;
 
-    if(!This->buffer_object) return;
+    if (!buffer->buffer_object)
+        return;
 
-    GL_EXTCALL(glDeleteBuffers(1, &This->buffer_object));
+    GL_EXTCALL(glDeleteBuffers(1, &buffer->buffer_object));
     checkGLcall("glDeleteBuffers");
-    This->buffer_object = 0;
+    buffer->buffer_object = 0;
 
     /* The stream source state handler might have read the memory of the
      * vertex buffer already and got the memory in the vbo which is not
@@ -157,18 +158,18 @@ static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_c
      * rarely. */
     if (resource->bind_count)
     {
-        if (This->bind_flags & WINED3D_BIND_VERTEX_BUFFER)
+        if (buffer->bind_flags & WINED3D_BIND_VERTEX_BUFFER)
             device_invalidate_state(resource->device, STATE_STREAMSRC);
-        if (This->bind_flags & WINED3D_BIND_INDEX_BUFFER)
+        if (buffer->bind_flags & WINED3D_BIND_INDEX_BUFFER)
             device_invalidate_state(resource->device, STATE_INDEXBUFFER);
     }
 
-    if(This->query)
+    if (buffer->query)
     {
-        wined3d_event_query_destroy(This->query);
-        This->query = NULL;
+        wined3d_event_query_destroy(buffer->query);
+        buffer->query = NULL;
     }
-    This->flags &= ~WINED3D_BUFFER_APPLESYNC;
+    buffer->flags &= ~WINED3D_BUFFER_APPLESYNC;
 }
 
 /* Context activation is done by the caller. */
@@ -257,7 +258,7 @@ fail:
     /* Clean up all BO init, but continue because we can work without a BO :-) */
     ERR("Failed to create a buffer object. Continuing, but performance issues may occur.\n");
     buffer->flags &= ~WINED3D_BUFFER_USE_BO;
-    delete_gl_buffer(buffer, context);
+    buffer_destroy_buffer_object(buffer, context);
     buffer_clear_dirty_areas(buffer);
     return FALSE;
 }
@@ -663,7 +664,7 @@ static void buffer_unload(struct wined3d_resource *resource)
             buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
 
         wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
-        delete_gl_buffer(buffer, context);
+        buffer_destroy_buffer_object(buffer, context);
         buffer_clear_dirty_areas(buffer);
 
         context_release(context);
@@ -692,7 +693,7 @@ static void wined3d_buffer_destroy_object(void *object)
     if (buffer->buffer_object)
     {
         context = context_acquire(buffer->resource.device, NULL);
-        delete_gl_buffer(buffer, context);
+        buffer_destroy_buffer_object(buffer, context);
         context_release(context);
 
         HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
