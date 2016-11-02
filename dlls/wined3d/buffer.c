@@ -509,19 +509,19 @@ static inline unsigned int fixup_d3dcolor(DWORD *dst_color)
     return sizeof(*dst_color);
 }
 
-static inline unsigned int fixup_transformed_pos(float *p)
+static inline unsigned int fixup_transformed_pos(struct wined3d_vec4 *p)
 {
     /* rhw conversion like in position_float4(). */
-    if (p[3] != 1.0f && p[3] != 0.0f)
+    if (p->w != 1.0f && p->w != 0.0f)
     {
-        float w = 1.0f / p[3];
-        p[0] *= w;
-        p[1] *= w;
-        p[2] *= w;
-        p[3] = w;
+        float w = 1.0f / p->w;
+        p->x *= w;
+        p->y *= w;
+        p->z *= w;
+        p->w = w;
     }
 
-    return 4 * sizeof(*p);
+    return sizeof(*p);
 }
 
 ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
@@ -909,7 +909,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
                         j += fixup_d3dcolor((DWORD *) (data + i * buffer->stride + j));
                         break;
                     case CONV_POSITIONT:
-                        j += fixup_transformed_pos((float *) (data + i * buffer->stride + j));
+                        j += fixup_transformed_pos((struct wined3d_vec4 *) (data + i * buffer->stride + j));
                         break;
                     default:
                         FIXME("Unimplemented conversion %d in shifted conversion.\n", buffer->conversion_map[j]);
