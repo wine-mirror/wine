@@ -83,7 +83,6 @@ D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format)
         case WINED3DFMT_X8D24_UNORM: return D3DFMT_D24X8;
         case WINED3DFMT_S4X4_UINT_D24_UNORM: return D3DFMT_D24X4S4;
         case WINED3DFMT_D16_UNORM: return D3DFMT_D16;
-        case WINED3DFMT_VERTEXDATA: return D3DFMT_VERTEXDATA;
         case WINED3DFMT_R16_UINT: return D3DFMT_INDEX16;
         case WINED3DFMT_R32_UINT: return D3DFMT_INDEX32;
         default:
@@ -134,11 +133,10 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format)
         case D3DFMT_D24X8: return WINED3DFMT_X8D24_UNORM;
         case D3DFMT_D24X4S4: return WINED3DFMT_S4X4_UINT_D24_UNORM;
         case D3DFMT_D16: return WINED3DFMT_D16_UNORM;
-        case D3DFMT_VERTEXDATA: return WINED3DFMT_VERTEXDATA;
         case D3DFMT_INDEX16: return WINED3DFMT_R16_UINT;
         case D3DFMT_INDEX32: return WINED3DFMT_R32_UINT;
         default:
-            FIXME("Unhandled D3DFORMAT %#x\n", format);
+            FIXME("Unhandled D3DFORMAT %#x.\n", format);
             return WINED3DFMT_UNKNOWN;
     }
 }

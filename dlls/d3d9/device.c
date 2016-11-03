@@ -80,7 +80,6 @@ D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format)
         case WINED3DFMT_L16_UNORM: return D3DFMT_L16;
         case WINED3DFMT_D32_FLOAT: return D3DFMT_D32F_LOCKABLE;
         case WINED3DFMT_S8_UINT_D24_FLOAT: return D3DFMT_D24FS8;
-        case WINED3DFMT_VERTEXDATA: return D3DFMT_VERTEXDATA;
         case WINED3DFMT_R16_UINT: return D3DFMT_INDEX16;
         case WINED3DFMT_R32_UINT: return D3DFMT_INDEX32;
         case WINED3DFMT_R16G16B16A16_SNORM: return D3DFMT_Q16W16V16U16;
@@ -145,7 +144,6 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format)
         case D3DFMT_L16: return WINED3DFMT_L16_UNORM;
         case D3DFMT_D32F_LOCKABLE: return WINED3DFMT_D32_FLOAT;
         case D3DFMT_D24FS8: return WINED3DFMT_S8_UINT_D24_FLOAT;
-        case D3DFMT_VERTEXDATA: return WINED3DFMT_VERTEXDATA;
         case D3DFMT_INDEX16: return WINED3DFMT_R16_UINT;
         case D3DFMT_INDEX32: return WINED3DFMT_R32_UINT;
         case D3DFMT_Q16W16V16U16: return WINED3DFMT_R16G16B16A16_SNORM;
@@ -157,7 +155,7 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format)
         case D3DFMT_A32B32G32R32F: return WINED3DFMT_R32G32B32A32_FLOAT;
         case D3DFMT_CxV8U8: return WINED3DFMT_R8G8_SNORM_Cx;
         default:
-            FIXME("Unhandled D3DFORMAT %#x\n", format);
+            FIXME("Unhandled D3DFORMAT %#x.\n", format);
             return WINED3DFMT_UNKNOWN;
     }
 }

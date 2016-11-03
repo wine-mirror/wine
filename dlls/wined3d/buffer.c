@@ -1578,7 +1578,7 @@ HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size,
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = buffer_init(object, device, size, usage, WINED3DFMT_VERTEXDATA,
+    hr = buffer_init(object, device, size, usage, WINED3DFMT_UNKNOWN,
             pool, WINED3D_BIND_VERTEX_BUFFER, NULL, parent, parent_ops);
     if (FAILED(hr))
     {
