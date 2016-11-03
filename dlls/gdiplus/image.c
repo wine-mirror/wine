@@ -5373,8 +5373,15 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
  */
 GpStatus WINGDIPAPI GdipImageSetAbort(GpImage *image, GdiplusAbort *pabort)
 {
-    FIXME("(%p, %p): stub\n", image, pabort);
-    return NotImplemented;
+    TRACE("(%p, %p)\n", image, pabort);
+
+    if (!image)
+        return InvalidParameter;
+
+    if (pabort)
+        FIXME("Abort callback is not supported.\n");
+
+    return Ok;
 }
 
 /*****************************************************************************

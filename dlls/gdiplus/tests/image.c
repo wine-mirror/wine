@@ -32,6 +32,7 @@
 
 static GpStatus (WINAPI *pGdipBitmapGetHistogramSize)(HistogramFormat,UINT*);
 static GpStatus (WINAPI *pGdipBitmapGetHistogram)(GpBitmap*,HistogramFormat,UINT,UINT*,UINT*,UINT*,UINT*);
+static GpStatus (WINAPI *pGdipImageSetAbort)(GpImage*,GdiplusAbort*);
 
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (UINT)(expected), (UINT)(got))
 #define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
@@ -4916,6 +4917,30 @@ static void test_histogram(void)
     GdipDisposeImage((GpImage*)bm);
 }
 
+static void test_imageabort(void)
+{
+    GpStatus stat;
+    GpBitmap *bm;
+
+    if (!pGdipImageSetAbort)
+    {
+        win_skip("GdipImageSetAbort() is not supported.\n");
+        return;
+    }
+
+    bm = NULL;
+    stat = GdipCreateBitmapFromScan0(8, 8, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+
+    stat = pGdipImageSetAbort(NULL, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipImageSetAbort((GpImage*)bm, NULL);
+    expect(Ok, stat);
+
+    GdipDisposeImage((GpImage*)bm);
+}
+
 START_TEST(image)
 {
     HMODULE mod = GetModuleHandleA("gdiplus.dll");
@@ -4931,6 +4956,7 @@ START_TEST(image)
 
     pGdipBitmapGetHistogramSize = (void*)GetProcAddress(mod, "GdipBitmapGetHistogramSize");
     pGdipBitmapGetHistogram = (void*)GetProcAddress(mod, "GdipBitmapGetHistogram");
+    pGdipImageSetAbort = (void*)GetProcAddress(mod, "GdipImageSetAbort");
 
     test_supported_encoders();
     test_CloneBitmapArea();
@@ -4979,6 +5005,7 @@ START_TEST(image)
     test_createeffect();
     test_getadjustedpalette();
     test_histogram();
+    test_imageabort();
 
     GdiplusShutdown(gdiplusToken);
 }
