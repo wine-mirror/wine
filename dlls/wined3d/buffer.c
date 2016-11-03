@@ -1264,6 +1264,9 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     DWORD dst_location;
     HRESULT hr;
 
+    buffer_mark_used(dst_buffer);
+    buffer_mark_used(src_buffer);
+
     device = dst_buffer->resource.device;
 
     context = context_acquire(device, NULL);
