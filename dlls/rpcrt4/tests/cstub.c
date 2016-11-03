@@ -627,6 +627,19 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
     ok(r == S_OK, "ret %08x\n", r);
     ok(ppsf != NULL, "ppsf == NULL\n");
 
+    /* Because this PS factory is not loaded as a dll in the normal way, Windows 8 / 10
+       get confused and will crash when one of the proxies for the delegated ifaces is created.
+       Registering the ifaces fixes this (in fact calling CoRegisterPSClsid() with any IID / CLSID is enough). */
+
+    r = CoRegisterPSClsid(&IID_if1, &CLSID_psfact);
+    ok(r == S_OK, "ret %08x\n", r);
+    r = CoRegisterPSClsid(&IID_if2, &CLSID_psfact);
+    ok(r == S_OK, "ret %08x\n", r);
+    r = CoRegisterPSClsid(&IID_if3, &CLSID_psfact);
+    ok(r == S_OK, "ret %08x\n", r);
+    r = CoRegisterPSClsid(&IID_if4, &CLSID_psfact);
+    ok(r == S_OK, "ret %08x\n", r);
+
     return ppsf;
 }
 
