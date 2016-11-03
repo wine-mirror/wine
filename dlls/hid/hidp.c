@@ -510,7 +510,8 @@ ULONG WINAPI HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, USAGE UsagePag
         int j;
         for (j = 0; j < report->elementCount; j++)
         {
-            if (report->Elements[j].caps.button.UsagePage == UsagePage)
+            if (report->Elements[j].ElementType == ButtonElement &&
+               (UsagePage == 0 || report->Elements[j].caps.button.UsagePage == UsagePage))
             {
                 if (report->Elements[j].caps.button.IsRange)
                     count += (report->Elements[j].caps.button.u.Range.UsageMax -
