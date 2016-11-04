@@ -559,6 +559,18 @@ static const char property_dat[] =
     "UpgradeCode\t{9574448F-9B86-4E07-B6F6-8D199DA12127}\n"
     "MSIFASTINSTALL\t1\n";
 
+static const char ci2_property_dat[] =
+    "Property\tValue\n"
+    "s72\tl0\n"
+    "Property\tProperty\n"
+    "INSTALLLEVEL\t3\n"
+    "Manufacturer\tWine\n"
+    "ProductCode\t{FF4AFE9C-6AC2-44F9-A060-9EA6BD16C75E}\n"
+    "ProductName\tMSITEST2\n"
+    "ProductVersion\t1.1.1\n"
+    "UpgradeCode\t{6B60C3CA-B8CA-4FB7-A395-092D98FF5D2A}\n"
+    "MSIFASTINSTALL\t1\n";
+
 static const char mcp_component_dat[] =
     "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
     "s72\tS38\ts72\ti2\tS255\tS72\n"
@@ -830,22 +842,26 @@ static const char ci_install_exec_seq_dat[] =
     "Action\tCondition\tSequence\n"
     "s72\tS255\tI2\n"
     "InstallExecuteSequence\tAction\n"
-    "CostFinalize\t\t1000\n"
     "CostInitialize\t\t800\n"
     "FileCost\t\t900\n"
-    "InstallFiles\t\t4000\n"
-    "InstallServices\t\t5000\n"
-    "InstallFinalize\t\t6600\n"
-    "InstallInitialize\t\t1500\n"
-    "RunInstall\t\t1600\n"
+    "CostFinalize\t\t1000\n"
     "InstallValidate\t\t1400\n"
-    "LaunchConditions\t\t100";
+    "InstallInitialize\t\t1500\n"
+    "RunInstall\tnot Installed\t1550\n"
+    "ProcessComponents\t\t1600\n"
+    "UnpublishFeatures\t\t1800\n"
+    "RemoveFiles\t\t3500\n"
+    "InstallFiles\t\t4000\n"
+    "RegisterProduct\t\t6100\n"
+    "PublishFeatures\t\t6300\n"
+    "PublishProduct\t\t6400\n"
+    "InstallFinalize\t\t6600\n";
 
 static const char ci_custom_action_dat[] =
     "Action\tType\tSource\tTarget\tISComments\n"
     "s72\ti2\tS64\tS0\tS255\n"
     "CustomAction\tAction\n"
-    "RunInstall\t87\tmsitest\\concurrent.msi\tMYPROP=[UILevel]\t\n";
+    "RunInstall\t23\tmsitest\\concurrent.msi\tMYPROP=[UILevel]\t\n";
 
 static const char ci_component_dat[] =
     "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
@@ -1011,7 +1027,7 @@ static const msi_table ci2_tables[] =
     ADD_TABLE(ci2_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(lus0_media),
-    ADD_TABLE(property),
+    ADD_TABLE(ci2_property),
 };
 
 static const msi_table cl_tables[] =
@@ -14183,22 +14199,23 @@ static void test_concurrentinstall(void)
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
         skip("Not enough rights to perform tests\n");
-        DeleteFileA(path);
         goto error;
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    if (!delete_pf("msitest\\augustus", TRUE))
-        trace("concurrent installs not supported\n");
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     r = MsiConfigureProductA("{38847338-1BBC-4104-81AC-2FAAC7ECDDCD}", INSTALLLEVEL_DEFAULT,
                              INSTALLSTATE_ABSENT);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
 
-    DeleteFileA(path);
+    r = MsiConfigureProductA("{FF4AFE9C-6AC2-44F9-A060-9EA6BD16C75E}", INSTALLLEVEL_DEFAULT,
+                             INSTALLSTATE_ABSENT);
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
 
 error:
+    DeleteFileA(path);
     DeleteFileA(msifile);
     DeleteFileA("msitest\\msitest\\augustus");
     DeleteFileA("msitest\\maximus");
