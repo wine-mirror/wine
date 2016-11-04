@@ -86,10 +86,13 @@ static void test_acquire_context(void)
 
     result = CryptAcquireContextA(
         &hProv, NULL, MS_DEF_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_NEWKEYSET);
-    ok(result, "Expected no errors.\n");
+    ok(result || GetLastError() == NTE_EXISTS, "Expected no errors or NTE_EXISTS\n");
 
-    result = CryptReleaseContext(hProv, 0);
-    ok(result, "Expected release of the provider.\n");
+    if (result)
+    {
+        result = CryptReleaseContext(hProv, 0);
+        ok(result, "Expected release of the provider.\n");
+    }
 
     result = CryptAcquireContextA(&hProv, NULL, NULL, PROV_DSS, 0);
     ok(result, "Expected no errors.\n");
