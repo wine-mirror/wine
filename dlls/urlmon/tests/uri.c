@@ -7405,6 +7405,11 @@ static inline LPWSTR a2w(LPCSTR str) {
     return ret;
 }
 
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
 static inline BOOL heap_free(void* mem) {
     return HeapFree(GetProcessHeap(), 0, mem);
 }
@@ -10403,7 +10408,9 @@ static void test_CoInternetParseIUri_InvalidArgs(void) {
     HRESULT hr;
     IUri *uri = NULL;
     WCHAR tmp[3];
+    WCHAR *longurl, *copy;
     DWORD result = -1;
+    DWORD i, len;
 
     hr = pCoInternetParseIUri(NULL, PARSE_CANONICALIZE, 0, tmp, 3, &result, 0);
     ok(hr == E_INVALIDARG, "Error: CoInternetParseIUri returned 0x%08x, expected 0x%08x.\n",
@@ -10458,6 +10465,33 @@ static void test_CoInternetParseIUri_InvalidArgs(void) {
         ok(result == expected_len, "Error: Expected 'result' to be %d, but was %d instead.\n",
             expected_len, result);
     }
+    if(uri) IUri_Release(uri);
+
+    /* a long url that causes a crash on Wine */
+    len = INTERNET_MAX_URL_LENGTH*2;
+    longurl = heap_alloc((len+1)*sizeof(WCHAR));
+    memcpy(longurl, http_urlW, sizeof(http_urlW));
+    for(i = sizeof(http_urlW)/sizeof(WCHAR)-1; i < len; i++)
+        longurl[i] = 'x';
+    longurl[len] = 0;
+
+    copy = heap_alloc((len+1)*sizeof(WCHAR));
+    memcpy(copy, longurl, (len+1)*sizeof(WCHAR));
+
+    hr = pCreateUri(longurl, 0, 0, &uri);
+    ok(SUCCEEDED(hr), "Error: CreateUri returned 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        result = -1;
+        memset(longurl, 0xcc, len*sizeof(WCHAR));
+        hr = pCoInternetParseIUri(uri, PARSE_CANONICALIZE, 0, longurl, len+1, &result, 0);
+        ok(SUCCEEDED(hr), "Error: CoInternetParseIUri returned 0x%08x.\n", hr);
+        ok(!lstrcmpW(longurl, copy), "Error: expected long url '%s' but was '%s'.\n",
+            wine_dbgstr_w(copy), wine_dbgstr_w(longurl));
+        ok(result == len, "Error: Expected 'result' to be %d, but was %d instead.\n",
+            len, result);
+    }
+    heap_free(longurl);
+    heap_free(copy);
     if(uri) IUri_Release(uri);
 }
 
