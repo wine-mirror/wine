@@ -2908,8 +2908,6 @@ HRESULT surface_color_fill(struct wined3d_surface *s,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void wined3d_surface_destroy_dc(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
-void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
-        unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 HRESULT surface_load_location(struct wined3d_surface *surface,
@@ -3225,6 +3223,9 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
 
     return texture->sub_resources[view->sub_resource_idx].u.surface;
 }
+
+void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarget_view *view,
+        const struct wined3d_context *context, unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
 
 struct wined3d_shader_resource_view
 {

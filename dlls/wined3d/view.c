@@ -94,10 +94,21 @@ struct wined3d_resource * CDECL wined3d_rendertarget_view_get_resource(const str
     return view->resource;
 }
 
-void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
-        unsigned int *width, unsigned int *height)
+void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarget_view *view,
+        const struct wined3d_context *context, unsigned int *width, unsigned int *height)
 {
-    if (surface->container->swapchain)
+    const struct wined3d_texture *texture;
+
+    if (view->resource->type != WINED3D_RTYPE_TEXTURE_2D)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(view->resource->type));
+        *width = 0;
+        *height = 0;
+        return;
+    }
+
+    texture = texture_from_resource(view->resource);
+    if (texture->swapchain)
     {
         /* The drawable size of an onscreen drawable is the surface size.
          * (Actually: The window size, but the surface is created in window

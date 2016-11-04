@@ -291,7 +291,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         UINT rect_count, const RECT *clear_rect, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
         float depth, DWORD stencil)
 {
-    struct wined3d_surface *target = rt_count ? wined3d_rendertarget_view_get_surface(fb->render_targets[0]) : NULL;
+    struct wined3d_rendertarget_view *rtv = rt_count ? fb->render_targets[0] : NULL;
+    struct wined3d_surface *target = rtv ? wined3d_rendertarget_view_get_surface(rtv) : NULL;
     struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
     struct wined3d_surface *depth_stencil = dsv ? wined3d_rendertarget_view_get_surface(dsv) : NULL;
     const struct wined3d_state *state = &device->state;
@@ -339,7 +340,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     if (target)
     {
         render_offscreen = context->render_offscreen;
-        surface_get_drawable_size(target, context, &drawable_width, &drawable_height);
+        wined3d_rendertarget_view_get_drawable_size(rtv, context, &drawable_width, &drawable_height);
     }
     else
     {
