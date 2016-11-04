@@ -1613,7 +1613,7 @@
 @ stub _wfindfirst32i64
 @ cdecl _wfindfirst64(wstr ptr) msvcr120._wfindfirst64
 @ cdecl _wfindfirst64i32(wstr ptr) msvcr120._wfindfirst64i32
-@ stub _wfindnext32
+@ cdecl _wfindnext32(long ptr) msvcr120._wfindnext32
 @ stub _wfindnext32i64
 @ cdecl _wfindnext64(long ptr) msvcr120._wfindnext64
 @ cdecl _wfindnext64i32(long ptr) msvcr120._wfindnext64i32
