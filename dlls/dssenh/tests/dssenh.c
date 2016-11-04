@@ -639,7 +639,8 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
         ok(result, "Expected data decryption.\n");
 
         /* Verify we have received expected decrypted data */
-        ok(!memcmp(pbData, tests[i].decrypted, dataLen), "Incorrect decrypted data.\n");
+        ok(!memcmp(pbData, tests[i].decrypted, dataLen) ||
+           broken(tests[i].algid == CALG_RC4), "Incorrect decrypted data.\n");
 
         result = CryptDestroyKey(pKey);
         ok(result, "Expected no DestroyKey errors.\n");
