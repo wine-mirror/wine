@@ -713,7 +713,7 @@ typedef struct tagMSISCRIPT
 #define MSI_BUILDNUMBER 6001
 
 #define GUID_SIZE 39
-#define SQUISH_GUID_SIZE 33
+#define SQUASHED_GUID_SIZE 33
 
 #define MSIHANDLE_MAGIC 0x4d434923
 

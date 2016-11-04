@@ -3506,14 +3506,14 @@ static WCHAR *build_full_keypath( MSIPACKAGE *package, MSICOMPONENT *comp )
 
 static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 {
-    WCHAR squished_pc[GUID_SIZE], squished_cc[GUID_SIZE];
+    WCHAR squashed_pc[SQUASHED_GUID_SIZE], squashed_cc[SQUASHED_GUID_SIZE];
     UINT rc;
     MSICOMPONENT *comp;
     HKEY hkey;
 
     TRACE("\n");
 
-    squash_guid(package->ProductCode,squished_pc);
+    squash_guid( package->ProductCode, squashed_pc );
     msi_set_sourcedir_props(package, FALSE);
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
@@ -3525,7 +3525,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         if (!comp->ComponentId)
             continue;
 
-        squash_guid( comp->ComponentId, squished_cc );
+        squash_guid( comp->ComponentId, squashed_cc );
         msi_free( comp->FullKeypath );
         comp->FullKeypath = build_full_keypath( package, comp );
 
@@ -3535,7 +3535,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         else action = comp->ActionRequest;
 
         TRACE("Component %s (%s) Keypath=%s RefCount=%u Clients=%u Action=%u\n",
-                            debugstr_w(comp->Component), debugstr_w(squished_cc),
+                            debugstr_w(comp->Component), debugstr_w(squashed_cc),
                             debugstr_w(comp->FullKeypath), comp->RefCount, comp->num_clients, action);
 
         if (action == INSTALLSTATE_LOCAL || action == INSTALLSTATE_SOURCE)
@@ -3558,7 +3558,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 msi_reg_set_val_str(hkey, szPermKey, comp->FullKeypath);
             }
             if (action == INSTALLSTATE_LOCAL)
-                msi_reg_set_val_str(hkey, squished_pc, comp->FullKeypath);
+                msi_reg_set_val_str( hkey, squashed_pc, comp->FullKeypath );
             else
             {
                 MSIFILE *file;
@@ -3595,7 +3595,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 lstrcpyW(ptr2, ptr);
                 msi_free(sourcepath);
 
-                msi_reg_set_val_str(hkey, squished_pc, source);
+                msi_reg_set_val_str( hkey, squashed_pc, source );
             }
             RegCloseKey(hkey);
         }
@@ -3624,7 +3624,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                     WARN( "failed to open component key %u\n", rc );
                     continue;
                 }
-                res = RegDeleteValueW( hkey, squished_pc );
+                res = RegDeleteValueW( hkey, squashed_pc );
                 RegCloseKey(hkey);
                 if (res) WARN( "failed to delete component value %d\n", res );
             }
@@ -4222,15 +4222,6 @@ static UINT msi_publish_sourcelist(MSIPACKAGE *package, HKEY hkey)
 
 static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
 {
-    MSIHANDLE hdb, suminfo;
-    WCHAR guids[MAX_PATH];
-    WCHAR packcode[SQUISH_GUID_SIZE];
-    LPWSTR buffer;
-    LPWSTR ptr;
-    DWORD langid;
-    DWORD size;
-    UINT r;
-
     static const WCHAR szARPProductIcon[] =
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
     static const WCHAR szAssignment[] =
@@ -4240,6 +4231,10 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
     static const WCHAR szClients[] =
         {'C','l','i','e','n','t','s',0};
     static const WCHAR szColon[] = {':',0};
+    MSIHANDLE hdb, suminfo;
+    WCHAR *buffer, *ptr, guids[MAX_PATH], packcode[SQUASHED_GUID_SIZE];
+    DWORD langid, size;
+    UINT r;
 
     buffer = msi_dup_property(package->db, INSTALLPROPERTY_PRODUCTNAMEW);
     msi_reg_set_val_str(hkey, INSTALLPROPERTY_PRODUCTNAMEW, buffer);
@@ -4302,8 +4297,7 @@ static UINT msi_publish_upgrade_code(MSIPACKAGE *package)
 {
     UINT r;
     HKEY hkey;
-    LPWSTR upgrade;
-    WCHAR squashed_pc[SQUISH_GUID_SIZE];
+    WCHAR *upgrade, squashed_pc[SQUASHED_GUID_SIZE];
 
     upgrade = msi_dup_property(package->db, szUpgradeCode);
     if (!upgrade)
@@ -5195,9 +5189,8 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
 
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
-    WCHAR squashed_pc[SQUISH_GUID_SIZE];
+    WCHAR *upgrade_code, squashed_pc[SQUASHED_GUID_SIZE];
     MSIRECORD *uirow;
-    LPWSTR upgrade_code;
     HKEY hkey, props, upgrade_key;
     UINT rc;
 
@@ -5392,26 +5385,24 @@ UINT ACTION_ForceReboot(MSIPACKAGE *package)
     '/','I',' ','\"','%','s','\"',' ',
     'A','F','T','E','R','R','E','B','O','O','T','=','1',' ',
     'R','U','N','O','N','C','E','E','N','T','R','Y','=','\"','%','s','\"',0};
-    WCHAR buffer[256], sysdir[MAX_PATH];
+    WCHAR buffer[256], sysdir[MAX_PATH], squashed_pc[SQUASHED_GUID_SIZE];
     HKEY hkey;
-    WCHAR squished_pc[100];
 
-    squash_guid(package->ProductCode,squished_pc);
+    squash_guid( package->ProductCode, squashed_pc );
 
     GetSystemDirectoryW(sysdir, sizeof(sysdir)/sizeof(sysdir[0]));
     RegCreateKeyW(HKEY_LOCAL_MACHINE,RunOnce,&hkey);
-    snprintfW(buffer,sizeof(buffer)/sizeof(buffer[0]),msiexec_fmt,sysdir,
-     squished_pc);
+    snprintfW( buffer, sizeof(buffer)/sizeof(buffer[0]), msiexec_fmt, sysdir, squashed_pc );
 
-    msi_reg_set_val_str( hkey, squished_pc, buffer );
+    msi_reg_set_val_str( hkey, squashed_pc, buffer );
     RegCloseKey(hkey);
 
     TRACE("Reboot command %s\n",debugstr_w(buffer));
 
     RegCreateKeyW(HKEY_LOCAL_MACHINE,InstallRunOnce,&hkey);
-    sprintfW(buffer,install_fmt,package->ProductCode,squished_pc);
+    sprintfW( buffer, install_fmt, package->ProductCode, squashed_pc );
 
-    msi_reg_set_val_str( hkey, squished_pc, buffer );
+    msi_reg_set_val_str( hkey, squashed_pc, buffer );
     RegCloseKey(hkey);
 
     return ERROR_INSTALL_SUSPEND;

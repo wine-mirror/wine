@@ -147,10 +147,10 @@ done:
 UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
 {
     MSIPACKAGE *package = NULL;
-    WCHAR squished_pc[GUID_SIZE];
+    WCHAR squashed_pc[SQUASHED_GUID_SIZE];
     UINT r;
 
-    if (!szProduct || !squash_guid(szProduct, squished_pc))
+    if (!szProduct || !squash_guid( szProduct, squashed_pc ))
         return ERROR_INVALID_PARAMETER;
 
     if (!phProduct)
@@ -1011,16 +1011,15 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
 {
     UINT rc, index;
     HKEY compkey, prodkey;
-    WCHAR squished_comp[GUID_SIZE];
-    WCHAR squished_prod[GUID_SIZE];
-    DWORD sz = GUID_SIZE;
+    WCHAR squashed_comp[SQUASHED_GUID_SIZE], squashed_prod[SQUASHED_GUID_SIZE];
+    DWORD sz = sizeof(squashed_prod)/sizeof(squashed_prod[0]);
 
     TRACE("%s %p\n", debugstr_w(szComponent), szBuffer);
 
     if (!szComponent || !*szComponent)
         return ERROR_INVALID_PARAMETER;
 
-    if (!squash_guid(szComponent, squished_comp))
+    if (!squash_guid( szComponent, squashed_comp ))
         return ERROR_INVALID_PARAMETER;
 
     if (MSIREG_OpenUserDataComponentKey(szComponent, NULL, &compkey, FALSE) != ERROR_SUCCESS &&
@@ -1029,7 +1028,7 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
         return ERROR_UNKNOWN_COMPONENT;
     }
 
-    rc = RegEnumValueW(compkey, 0, squished_prod, &sz, NULL, NULL, NULL, NULL);
+    rc = RegEnumValueW( compkey, 0, squashed_prod, &sz, NULL, NULL, NULL, NULL );
     if (rc != ERROR_SUCCESS)
     {
         RegCloseKey(compkey);
@@ -1037,7 +1036,7 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
     }
 
     /* check simple case, only one product */
-    rc = RegEnumValueW(compkey, 1, squished_prod, &sz, NULL, NULL, NULL, NULL);
+    rc = RegEnumValueW( compkey, 1, squashed_prod, &sz, NULL, NULL, NULL, NULL );
     if (rc == ERROR_NO_MORE_ITEMS)
     {
         rc = ERROR_SUCCESS;
@@ -1045,12 +1044,12 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
     }
 
     index = 0;
-    while ((rc = RegEnumValueW(compkey, index, squished_prod, &sz,
-           NULL, NULL, NULL, NULL)) != ERROR_NO_MORE_ITEMS)
+    while ((rc = RegEnumValueW( compkey, index, squashed_prod, &sz, NULL, NULL, NULL, NULL )) !=
+           ERROR_NO_MORE_ITEMS)
     {
         index++;
         sz = GUID_SIZE;
-        unsquash_guid(squished_prod, szBuffer);
+        unsquash_guid( squashed_prod, szBuffer );
 
         if (MSIREG_OpenProductKey(szBuffer, NULL,
                                   MSIINSTALLCONTEXT_USERMANAGED,
@@ -1072,7 +1071,7 @@ UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
 
 done:
     RegCloseKey(compkey);
-    unsquash_guid(squished_prod, szBuffer);
+    unsquash_guid( squashed_prod, szBuffer );
     return rc;
 }
 
@@ -1109,9 +1108,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     MSIINSTALLCONTEXT context = MSIINSTALLCONTEXT_USERUNMANAGED;
     UINT r = ERROR_UNKNOWN_PROPERTY;
     HKEY prodkey, userdata, source;
-    LPWSTR val = NULL;
-    WCHAR squished_pc[GUID_SIZE];
-    WCHAR packagecode[GUID_SIZE];
+    WCHAR *val = NULL, squashed_pc[SQUASHED_GUID_SIZE], packagecode[SQUASHED_GUID_SIZE];
     BOOL badconfig = FALSE;
     LONG res;
     DWORD type = REG_NONE;
@@ -1122,7 +1119,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
     if ((szValue->str.w && !pcchValueBuf) || !szProduct || !szAttribute)
         return ERROR_INVALID_PARAMETER;
 
-    if (!squash_guid(szProduct, squished_pc))
+    if (!squash_guid( szProduct, squashed_pc ))
         return ERROR_INVALID_PARAMETER;
 
     if ((r = MSIREG_OpenProductKey(szProduct, NULL,
@@ -1221,7 +1218,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         if (val != empty && type != REG_DWORD &&
             !strcmpW( szAttribute, INSTALLPROPERTY_PACKAGECODEW ))
         {
-            if (lstrlenW(val) != SQUISH_GUID_SIZE - 1)
+            if (lstrlenW( val ) != SQUASHED_GUID_SIZE - 1)
                 badconfig = TRUE;
             else
             {
@@ -1411,15 +1408,6 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
                                  MSIINSTALLCONTEXT dwContext, LPCWSTR szProperty,
                                  LPWSTR szValue, LPDWORD pcchValue)
 {
-    WCHAR squished_pc[GUID_SIZE];
-    LPWSTR val = NULL;
-    LPCWSTR package = NULL;
-    HKEY props = NULL, prod;
-    HKEY classes = NULL, managed;
-    HKEY hkey = NULL;
-    DWORD type;
-    UINT r = ERROR_UNKNOWN_PRODUCT;
-
     static const WCHAR five[] = {'5',0};
     static const WCHAR displayname[] = {
         'D','i','s','p','l','a','y','N','a','m','e',0};
@@ -1428,12 +1416,17 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     static const WCHAR managed_local_package[] = {
         'M','a','n','a','g','e','d','L','o','c','a','l',
         'P','a','c','k','a','g','e',0};
+    WCHAR *val = NULL, squashed_pc[SQUASHED_GUID_SIZE];
+    LPCWSTR package = NULL;
+    HKEY props = NULL, prod, classes = NULL, managed, hkey = NULL;
+    DWORD type;
+    UINT r = ERROR_UNKNOWN_PRODUCT;
 
     TRACE("(%s, %s, %d, %s, %p, %p)\n", debugstr_w(szProductCode),
           debugstr_w(szUserSid), dwContext, debugstr_w(szProperty),
            szValue, pcchValue);
 
-    if (!szProductCode || !squash_guid(szProductCode, squished_pc))
+    if (!szProductCode || !squash_guid( szProductCode, squashed_pc ))
         return ERROR_INVALID_PARAMETER;
 
     if (szValue && !pcchValue)
@@ -1673,28 +1666,25 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
                                LPCWSTR szUserSid, MSIINSTALLCONTEXT dwContext,
                                LPCWSTR szProperty, LPWSTR lpValue, DWORD *pcchValue)
 {
-    WCHAR squished_pc[GUID_SIZE];
-    WCHAR squished_patch[GUID_SIZE];
+    static const WCHAR szManagedPackage[] =
+        {'M','a','n','a','g','e','d','L','o','c','a','l','P','a','c','k','a','g','e',0};
+    WCHAR *val = NULL, squashed_pc[SQUASHED_GUID_SIZE], squashed_patch[SQUASHED_GUID_SIZE];
     HKEY udprod = 0, prod = 0, props = 0;
     HKEY patch = 0, patches = 0;
     HKEY udpatch = 0, datakey = 0;
     HKEY prodpatches = 0;
-    LPWSTR val = NULL;
     UINT r = ERROR_UNKNOWN_PRODUCT;
     DWORD len;
     LONG res;
-
-    static const WCHAR szManagedPackage[] = {'M','a','n','a','g','e','d',
-        'L','o','c','a','l','P','a','c','k','a','g','e',0};
 
     TRACE("(%s, %s, %s, %d, %s, %p, %p)\n", debugstr_w(szPatchCode),
           debugstr_w(szProductCode), debugstr_w(szUserSid), dwContext,
           debugstr_w(szProperty), lpValue, pcchValue);
 
-    if (!szProductCode || !squash_guid(szProductCode, squished_pc))
+    if (!szProductCode || !squash_guid( szProductCode, squashed_pc ))
         return ERROR_INVALID_PARAMETER;
 
-    if (!szPatchCode || !squash_guid(szPatchCode, squished_patch))
+    if (!szPatchCode || !squash_guid( szPatchCode, squashed_patch ))
         return ERROR_INVALID_PARAMETER;
 
     if (!szProperty)
@@ -1728,7 +1718,7 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
     if (res != ERROR_SUCCESS)
         goto done;
 
-    res = RegOpenKeyExW(patches, squished_patch, 0, KEY_WOW64_64KEY|KEY_READ, &patch);
+    res = RegOpenKeyExW( patches, squashed_patch, 0, KEY_WOW64_64KEY|KEY_READ, &patch );
     if (res != ERROR_SUCCESS)
         goto done;
 
@@ -1743,7 +1733,7 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
             goto done;
 
         datakey = prodpatches;
-        szProperty = squished_patch;
+        szProperty = squashed_patch;
     }
     else
     {
@@ -2139,7 +2129,7 @@ static BOOL msi_comp_find_package(LPCWSTR prodcode, MSIINSTALLCONTEXT context)
     return (res == ERROR_SUCCESS);
 }
 
-static UINT msi_comp_find_prodcode(LPWSTR squished_pc,
+static UINT msi_comp_find_prodcode(WCHAR *squashed_pc,
                                    MSIINSTALLCONTEXT context,
                                    LPCWSTR comp, LPWSTR val, DWORD *sz)
 {
@@ -2155,7 +2145,7 @@ static UINT msi_comp_find_prodcode(LPWSTR squished_pc,
     if (r != ERROR_SUCCESS)
         return r;
 
-    res = RegQueryValueExW(hkey, squished_pc, NULL, NULL, (BYTE *)val, sz);
+    res = RegQueryValueExW( hkey, squashed_pc, NULL, NULL, (BYTE *)val, sz );
     if (res != ERROR_SUCCESS)
         return res;
 
@@ -2167,7 +2157,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
                                     LPCWSTR szUserSid, MSIINSTALLCONTEXT dwContext,
                                     LPCWSTR szComponent, INSTALLSTATE *pdwState)
 {
-    WCHAR squished_pc[GUID_SIZE];
+    WCHAR squashed_pc[SQUASHED_GUID_SIZE];
     BOOL found;
     DWORD sz;
 
@@ -2180,7 +2170,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
     if (!szProductCode || !*szProductCode || lstrlenW(szProductCode) != GUID_SIZE - 1)
         return ERROR_INVALID_PARAMETER;
 
-    if (!squash_guid(szProductCode, squished_pc))
+    if (!squash_guid( szProductCode, squashed_pc ))
         return ERROR_INVALID_PARAMETER;
 
     found = msi_comp_find_prod_key(szProductCode, dwContext);
@@ -2199,7 +2189,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
     *pdwState = INSTALLSTATE_UNKNOWN;
 
     sz = 0;
-    if (msi_comp_find_prodcode(squished_pc, dwContext, szComponent, NULL, &sz))
+    if (msi_comp_find_prodcode( squashed_pc, dwContext, szComponent, NULL, &sz ))
         return ERROR_UNKNOWN_COMPONENT;
 
     if (sz == 0)
@@ -2210,7 +2200,7 @@ UINT WINAPI MsiQueryComponentStateW(LPCWSTR szProductCode,
         UINT r;
 
         if (!(val = msi_alloc( sz ))) return ERROR_OUTOFMEMORY;
-        if ((r = msi_comp_find_prodcode(squished_pc, dwContext, szComponent, val, &sz)))
+        if ((r = msi_comp_find_prodcode( squashed_pc, dwContext, szComponent, val, &sz )))
         {
             msi_free(val);
             return r;
@@ -2793,10 +2783,8 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
 {
     static const WCHAR wininstaller[] =
         {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
-    WCHAR squished_pc[GUID_SIZE];
-    WCHAR squished_comp[GUID_SIZE];
+    WCHAR *path = NULL, squashed_pc[SQUASHED_GUID_SIZE], squashed_comp[SQUASHED_GUID_SIZE];
     HKEY hkey;
-    LPWSTR path = NULL;
     INSTALLSTATE state;
     DWORD version;
 
@@ -2806,8 +2794,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     if (lpPathBuf->str.w && !pcchBuf)
         return INSTALLSTATE_INVALIDARG;
 
-    if (!squash_guid(szProduct, squished_pc) ||
-        !squash_guid(szComponent, squished_comp))
+    if (!squash_guid( szProduct, squashed_pc ) || !squash_guid( szComponent, squashed_comp ))
         return INSTALLSTATE_INVALIDARG;
 
     state = INSTALLSTATE_UNKNOWN;
@@ -2815,7 +2802,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     if (MSIREG_OpenUserDataComponentKey(szComponent, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
         MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
     {
-        path = msi_reg_get_val_str(hkey, squished_pc);
+        path = msi_reg_get_val_str( hkey, squashed_pc );
         RegCloseKey(hkey);
 
         state = INSTALLSTATE_ABSENT;
@@ -2845,7 +2832,7 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
             MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
         {
             msi_free(path);
-            path = msi_reg_get_val_str(hkey, squished_pc);
+            path = msi_reg_get_val_str( hkey, squashed_pc );
             RegCloseKey(hkey);
 
             state = INSTALLSTATE_ABSENT;
@@ -3535,8 +3522,7 @@ static USERINFOSTATE MSI_GetUserInfo(LPCWSTR szProduct,
                 awstring *lpOrgNameBuf, LPDWORD pcchOrgNameBuf,
                 awstring *lpSerialBuf, LPDWORD pcchSerialBuf)
 {
-    WCHAR squished_pc[SQUISH_GUID_SIZE];
-    LPWSTR user, org, serial;
+    WCHAR *user, *org, *serial, squashed_pc[SQUASHED_GUID_SIZE];
     USERINFOSTATE state;
     HKEY hkey, props;
     LPCWSTR orgptr;
@@ -3546,7 +3532,7 @@ static USERINFOSTATE MSI_GetUserInfo(LPCWSTR szProduct,
           pcchUserNameBuf, lpOrgNameBuf, pcchOrgNameBuf, lpSerialBuf,
           pcchSerialBuf);
 
-    if (!szProduct || !squash_guid(szProduct, squished_pc))
+    if (!szProduct || !squash_guid( szProduct, squashed_pc ))
         return USERINFOSTATE_INVALIDARG;
 
     if (MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
