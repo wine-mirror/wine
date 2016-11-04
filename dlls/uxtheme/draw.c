@@ -686,7 +686,7 @@ static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     }
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
-    CopyRect(&rcDst, pRect);
+    rcDst = *pRect;
     
     get_transparency (hTheme, iPartId, iStateId, hasAlpha, &transparent,
         &transparentcolor, FALSE);
@@ -863,7 +863,7 @@ draw_error:
     DeleteDC(hdcSrc);
     if (bmpSrcResized) DeleteObject(bmpSrcResized);
     if (hdcOrigSrc) DeleteDC(hdcOrigSrc);
-    CopyRect(pRect, &rcDst);
+    *pRect = rcDst;
     return hr;
 }
 
@@ -1001,7 +1001,7 @@ static HRESULT UXTHEME_DrawBorderBackground(HTHEME hTheme, HDC hdc, int iPartId,
     HRESULT hr;
     RECT rt;
 
-    CopyRect(&rt, pRect);
+    rt = *pRect;
 
     hr = UXTHEME_DrawBorderRectangle(hTheme, hdc, iPartId, iStateId, &rt, pOptions);
     if(FAILED(hr))
@@ -1043,7 +1043,7 @@ HRESULT WINAPI DrawThemeBackgroundEx(HTHEME hTheme, HDC hdc, int iPartId,
         else
             IntersectClipRect(hdc, opts->rcClip.left, opts->rcClip.top, opts->rcClip.right, opts->rcClip.bottom);
     }
-    CopyRect(&rt, pRect);
+    rt = *pRect;
 
     if(bgtype == BT_IMAGEFILE)
         hr = UXTHEME_DrawImageBackground(hTheme, hdc, iPartId, iStateId, &rt, opts);
@@ -1641,7 +1641,7 @@ HRESULT WINAPI DrawThemeText(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
 
     TRACE("%d %d\n", iPartId, iStateId);
 
-    CopyRect(&rt, pRect);
+    rt = *pRect;
 
     opts.dwSize = sizeof(opts);
     if (flags2 & DTT_GRAYED) {
@@ -2033,7 +2033,7 @@ HRESULT WINAPI GetThemeTextExtent(HTHEME hTheme, HDC hdc, int iPartId,
         oldFont = SelectObject(hdc, hFont);
         
     DrawTextW(hdc, pszText, iCharCount, &rt, dwTextFlags|DT_CALCRECT);
-    CopyRect(pExtentRect, &rt);
+    *pExtentRect = rt;
 
     if(hFont) {
         SelectObject(hdc, oldFont);
