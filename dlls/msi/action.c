@@ -5307,7 +5307,7 @@ static UINT msi_unpublish_product( MSIPACKAGE *package, const WCHAR *remove )
         return ERROR_SUCCESS;
 
     MSIREG_DeleteProductKey(package->ProductCode);
-    MSIREG_DeleteUserDataProductKey(package->ProductCode);
+    MSIREG_DeleteUserDataProductKey(package->ProductCode, package->Context);
     MSIREG_DeleteUninstallKey(package->ProductCode, package->platform);
 
     MSIREG_DeleteLocalClassesProductKey(package->ProductCode);
@@ -5524,7 +5524,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
 
     if (msi_check_unpublish(package))
     {
-        MSIREG_DeleteUserDataProductKey(package->ProductCode);
+        MSIREG_DeleteUserDataProductKey(package->ProductCode, package->Context);
         goto end;
     }
 

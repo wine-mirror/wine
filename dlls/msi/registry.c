@@ -852,7 +852,7 @@ UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContext, LPC
     return RegOpenKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, access, key);
 }
 
-UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
+UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context)
 {
     REGSAM access = KEY_WOW64_64KEY | KEY_ALL_ACCESS;
     WCHAR *usersid, squashed_pc[SQUASHED_GUID_SIZE], keypath[0x200];
@@ -862,13 +862,18 @@ UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
     if (!squash_guid( szProduct, squashed_pc )) return ERROR_FUNCTION_FAILED;
     TRACE("%s squashed %s\n", debugstr_w(szProduct), debugstr_w(squashed_pc));
 
-    if (!(usersid = get_user_sid()))
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+        sprintfW(keypath, szUserDataProducts_fmt, szLocalSid);
+    else
     {
-        ERR("Failed to retrieve user SID\n");
-        return ERROR_FUNCTION_FAILED;
+        if (!(usersid = get_user_sid()))
+        {
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
+        }
+        sprintfW(keypath, szUserDataProducts_fmt, usersid);
+        LocalFree(usersid);
     }
-    sprintfW(keypath, szUserDataProducts_fmt, usersid);
-    LocalFree(usersid);
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, access, &hkey)) return ERROR_SUCCESS;
     r = RegDeleteTreeW( hkey, squashed_pc );
