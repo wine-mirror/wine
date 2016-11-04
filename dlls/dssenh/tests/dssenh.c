@@ -1317,11 +1317,11 @@ static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_te
         ok(result, "Failed to import key for user 2, got %x\n", GetLastError());
 
         /* Set the shared key parameters to matching cipher type */
-        algid = CALG_RC4;
+        algid = CALG_3DES;
         result = CryptSetKeyParam(sessionKey1, KP_ALGID, (BYTE *)&algid, 0);
         ok(result, "Failed to set session key for user 1, got %x\n", GetLastError());
 
-        algid = CALG_RC4;
+        algid = CALG_3DES;
         result = CryptSetKeyParam(sessionKey2, KP_ALGID, (BYTE *)&algid, 0);
         ok(result, "Failed to set session key for user 2, got %x\n", GetLastError());
 
