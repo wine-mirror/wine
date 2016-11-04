@@ -1564,8 +1564,12 @@ BOOL     WINAPI SetupDiGetDeviceInterfaceDetailA(HDEVINFO, PSP_DEVICE_INTERFACE_
 BOOL     WINAPI SetupDiGetDeviceInterfaceDetailW(HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA_W,
                                                  DWORD, PDWORD, PSP_DEVINFO_DATA);
 #define         SetupDiGetDeviceInterfaceDetail WINELIB_NAME_AW(SetupDiGetDeviceInterfaceDetail)
+BOOL     WINAPI SetupDiGetDevicePropertyW(HDEVINFO, PSP_DEVINFO_DATA, const DEVPROPKEY *, DEVPROPTYPE *, BYTE *, DWORD,
+                                          DWORD *, DWORD);
+#define         SetupDiGetDeviceProperty WINELIB_NAME_AW(SetupDiGetDeviceProperty)  /* note: A function doesn't exist */
 BOOL     WINAPI SetupDiGetDeviceRegistryPropertyA(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
 BOOL     WINAPI SetupDiGetDeviceRegistryPropertyW(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
+#define         SetupDiGetDeviceRegistryProperty WINELIB_NAME_AW(SetupDiGetDeviceRegistryProperty)
 BOOL     WINAPI SetupDiGetDriverInfoDetailA(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_A, PSP_DRVINFO_DETAIL_DATA_A, DWORD, PDWORD);
 BOOL     WINAPI SetupDiGetDriverInfoDetailW(HDEVINFO, PSP_DEVINFO_DATA, PSP_DRVINFO_DATA_W, PSP_DRVINFO_DETAIL_DATA_W, DWORD, PDWORD);
 #define         SetupDiGetDriverInfoDetail WINELIB_NAME_AW(SetupDiGetDriverInfoDetail)
