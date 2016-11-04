@@ -940,6 +940,18 @@ UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL creat
     return RegOpenKeyW(HKEY_CURRENT_USER, keypath, key);
 }
 
+UINT MSIREG_DeleteUpgradeCodesKey( const WCHAR *code )
+{
+    WCHAR squashed_code[SQUASHED_GUID_SIZE], keypath[0x200];
+
+    if (!squash_guid( code, squashed_code )) return ERROR_FUNCTION_FAILED;
+    TRACE( "%s squashed %s\n", debugstr_w(code), debugstr_w(squashed_code) );
+
+    strcpyW( keypath, szInstaller_UpgradeCodes );
+    strcatW( keypath, squashed_code );
+    return RegDeleteTreeW( HKEY_LOCAL_MACHINE, keypath );
+}
+
 UINT MSIREG_DeleteUserUpgradeCodesKey(LPCWSTR szUpgradeCode)
 {
     WCHAR squashed_uc[SQUASHED_GUID_SIZE], keypath[0x200];

@@ -5285,9 +5285,46 @@ static UINT msi_unpublish_icons( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
+static void remove_product_upgrade_code( MSIPACKAGE *package )
+{
+    WCHAR *code, product[SQUASHED_GUID_SIZE];
+    HKEY hkey;
+    LONG res;
+    DWORD count;
+
+    squash_guid( package->ProductCode, product );
+    if (!(code = msi_dup_property( package->db, szUpgradeCode )))
+    {
+        WARN( "upgrade code not found\n" );
+        return;
+    }
+    if (!MSIREG_OpenUpgradeCodesKey( code, &hkey, FALSE ))
+    {
+        RegDeleteValueW( hkey, product );
+        res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL, NULL );
+        RegCloseKey( hkey );
+        if (!res && !count) MSIREG_DeleteUpgradeCodesKey( code );
+    }
+    if (!MSIREG_OpenUserUpgradeCodesKey( code, &hkey, FALSE ))
+    {
+        RegDeleteValueW( hkey, product );
+        res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL, NULL );
+        RegCloseKey( hkey );
+        if (!res && !count) MSIREG_DeleteUserUpgradeCodesKey( code );
+    }
+    if (!MSIREG_OpenClassesUpgradeCodesKey( code, &hkey, FALSE ))
+    {
+        RegDeleteValueW( hkey, product );
+        res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, NULL, NULL, &count, NULL, NULL, NULL, NULL, NULL );
+        RegCloseKey( hkey );
+        if (!res && !count) MSIREG_DeleteClassesUpgradeCodesKey( code );
+    }
+
+    msi_free( code );
+}
+
 static UINT ACTION_UnpublishProduct(MSIPACKAGE *package)
 {
-    WCHAR *upgrade;
     MSIPATCHINFO *patch;
 
     MSIREG_DeleteProductKey(package->ProductCode);
@@ -5299,13 +5336,7 @@ static UINT ACTION_UnpublishProduct(MSIPACKAGE *package)
     MSIREG_DeleteUserProductKey(package->ProductCode);
     MSIREG_DeleteUserFeaturesKey(package->ProductCode);
 
-    upgrade = msi_dup_property(package->db, szUpgradeCode);
-    if (upgrade)
-    {
-        MSIREG_DeleteUserUpgradeCodesKey(upgrade);
-        MSIREG_DeleteClassesUpgradeCodesKey(upgrade);
-        msi_free(upgrade);
-    }
+    remove_product_upgrade_code( package );
 
     LIST_FOR_EACH_ENTRY(patch, &package->patches, MSIPATCHINFO, entry)
     {

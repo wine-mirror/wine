@@ -919,6 +919,7 @@ extern UINT MSIREG_DeleteUserDataProductKey(LPCWSTR, MSIINSTALLCONTEXT) DECLSPEC
 extern UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct) DECLSPEC_HIDDEN;
 extern UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid) DECLSPEC_HIDDEN;
 extern UINT MSIREG_DeleteUserUpgradeCodesKey(LPCWSTR szUpgradeCode) DECLSPEC_HIDDEN;
+extern UINT MSIREG_DeleteUpgradeCodesKey(const WCHAR *) DECLSPEC_HIDDEN;
 extern UINT MSIREG_DeleteClassesUpgradeCodesKey(LPCWSTR szUpgradeCode) DECLSPEC_HIDDEN;
 extern UINT MSIREG_OpenClassesUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL create) DECLSPEC_HIDDEN;
 extern UINT MSIREG_DeleteLocalClassesProductKey(LPCWSTR szProductCode) DECLSPEC_HIDDEN;
