@@ -92,6 +92,9 @@ HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *s
 HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX11ThreadPump *pump,
         D3DX11_IMAGE_INFO *img_info, HRESULT *hresult);
 
+HRESULT WINAPI D3DX11SaveTextureToMemory(ID3D11DeviceContext *context, ID3D11Resource *texture,
+        D3DX11_IMAGE_FILE_FORMAT format, ID3D10Blob **buffer, UINT flags);
+
 #ifdef __cplusplus
 }
 #endif

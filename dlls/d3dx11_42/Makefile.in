@@ -4,6 +4,7 @@ PARENTSRC = ../d3dx11_43
 
 C_SRCS = \
 	async.c \
-	d3dx11_42.c
+	d3dx11_42.c \
+	texture.c
 
 RC_SRCS = version.rc

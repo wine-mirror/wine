@@ -41,4 +41,4 @@
 @ stub D3DX11SHProjectCubeMap
 @ stub D3DX11SaveTextureToFileA
 @ stub D3DX11SaveTextureToFileW
-@ stub D3DX11SaveTextureToMemory
+@ stdcall D3DX11SaveTextureToMemory(ptr ptr long ptr long)
