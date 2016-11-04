@@ -36,39 +36,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM
         | WINED3D_LOCATION_USER_MEMORY | WINED3D_LOCATION_BUFFER;
 
-void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
-        unsigned int *width, unsigned int *height)
-{
-    if (surface->container->swapchain)
-    {
-        /* The drawable size of an onscreen drawable is the surface size.
-         * (Actually: The window size, but the surface is created in window
-         * size.) */
-        *width = context->current_rt.texture->resource.width;
-        *height = context->current_rt.texture->resource.height;
-    }
-    else if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
-    {
-        const struct wined3d_swapchain *swapchain = context->swapchain;
-
-        /* The drawable size of a backbuffer / aux buffer offscreen target is
-         * the size of the current context's drawable, which is the size of
-         * the back buffer of the swapchain the active context belongs to. */
-        *width = swapchain->desc.backbuffer_width;
-        *height = swapchain->desc.backbuffer_height;
-    }
-    else
-    {
-        struct wined3d_surface *rt;
-
-        /* The drawable size of an FBO target is the OpenGL texture size,
-         * which is the power of two size. */
-        rt = context->current_rt.texture->sub_resources[context->current_rt.sub_resource_idx].u.surface;
-        *width = wined3d_texture_get_level_pow2_width(rt->container, rt->texture_level);
-        *height = wined3d_texture_get_level_pow2_height(rt->container, rt->texture_level);
-    }
-}
-
 struct blt_info
 {
     GLenum binding;
