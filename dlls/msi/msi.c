@@ -3363,6 +3363,26 @@ INSTALLSTATE WINAPI MsiUseFeatureA( LPCSTR szProduct, LPCSTR szFeature )
     return MsiUseFeatureExA(szProduct, szFeature, 0, 0);
 }
 
+WCHAR *reg_get_multisz( HKEY hkey, const WCHAR *name )
+{
+    WCHAR *ret;
+    DWORD len, type;
+    if (RegQueryValueExW( hkey, name, NULL, &type, NULL, &len ) || type != REG_MULTI_SZ) return NULL;
+    if ((ret = msi_alloc( len ))) RegQueryValueExW( hkey, name, NULL, NULL, (BYTE *)ret, &len );
+    return ret;
+}
+
+WCHAR *reg_get_sz( HKEY hkey, const WCHAR *name )
+{
+    WCHAR *ret;
+    DWORD len, type;
+    if (RegQueryValueExW( hkey, name, NULL, &type, NULL, &len ) || type != REG_SZ) return NULL;
+    if ((ret = msi_alloc( len ))) RegQueryValueExW( hkey, name, NULL, NULL, (BYTE *)ret, &len );
+    return ret;
+}
+
+#define BASE85_SIZE 20
+
 /***********************************************************************
  * MSI_ProvideQualifiedComponentEx [internal]
  */
@@ -3371,39 +3391,54 @@ static UINT MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
                 DWORD Unused1, DWORD Unused2, awstring *lpPathBuf,
                 LPDWORD pcchPathBuf)
 {
-    WCHAR product[MAX_FEATURE_CHARS+1], component[MAX_FEATURE_CHARS+1],
-          feature[MAX_FEATURE_CHARS+1];
-    LPWSTR info;
+    WCHAR product[MAX_FEATURE_CHARS+1], comp[MAX_FEATURE_CHARS+1], feature[MAX_FEATURE_CHARS+1];
+    WCHAR *desc;
     HKEY hkey;
-    DWORD sz;
-    UINT rc;
+    DWORD size;
+    UINT ret;
     INSTALLSTATE state;
 
-    rc = MSIREG_OpenUserComponentsKey(szComponent, &hkey, FALSE);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_INDEX_ABSENT;
+    if (MSIREG_OpenUserComponentsKey( szComponent, &hkey, FALSE )) return ERROR_UNKNOWN_COMPONENT;
 
-    info = msi_reg_get_val_str( hkey, szQualifier );
+    desc = reg_get_multisz( hkey, szQualifier );
     RegCloseKey(hkey);
+    if (!desc) return ERROR_INDEX_ABSENT;
 
-    if (!info)
-        return ERROR_INDEX_ABSENT;
+    /* FIXME: handle multiple descriptors */
+    ret = MsiDecomposeDescriptorW( desc, product, feature, comp, &size );
+    msi_free( desc );
+    if (ret != ERROR_SUCCESS) return ret;
 
-    MsiDecomposeDescriptorW(info, product, feature, component, &sz);
+    if (!szProduct) szProduct = product;
+    if (!comp[0])
+    {
+        MSIINSTALLCONTEXT ctx;
+        WCHAR *components;
+        GUID guid;
 
-    if (!szProduct)
-        state = MSI_GetComponentPath(product, component, lpPathBuf, pcchPathBuf);
-    else
-        state = MSI_GetComponentPath(szProduct, component, lpPathBuf, pcchPathBuf);
+        /* use the first component of the feature if the descriptor component is empty */
+        if ((ret = msi_locate_product( szProduct, &ctx ))) return ret;
+        if ((ret = MSIREG_OpenUserDataFeaturesKey( szProduct, NULL, ctx, &hkey, FALSE )))
+        {
+            return ERROR_FILE_NOT_FOUND;
+        }
+        components = reg_get_sz( hkey, feature );
+        RegCloseKey( hkey );
+        if (!components) return ERROR_FILE_NOT_FOUND;
 
-    msi_free( info );
+        if (strlenW( components ) < BASE85_SIZE || !decode_base85_guid( components, &guid ))
+        {
+            msi_free( components );
+            return ERROR_FILE_NOT_FOUND;
+        }
+        msi_free( components );
+        StringFromGUID2( &guid, comp, sizeof(comp)/sizeof(comp[0]) );
+    }
 
-    if (state == INSTALLSTATE_MOREDATA)
-        return ERROR_MORE_DATA;
+    state = MSI_GetComponentPath( szProduct, comp, lpPathBuf, pcchPathBuf );
 
-    if (state != INSTALLSTATE_LOCAL)
-        return ERROR_FILE_NOT_FOUND;
-
+    if (state == INSTALLSTATE_MOREDATA) return ERROR_MORE_DATA;
+    if (state != INSTALLSTATE_LOCAL) return ERROR_FILE_NOT_FOUND;
     return ERROR_SUCCESS;
 }
 
