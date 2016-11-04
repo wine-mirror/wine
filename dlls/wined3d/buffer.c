@@ -1009,9 +1009,9 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         buffer_invalidate_bo_range(buffer, 0, 0);
 
         /* Avoid unfenced updates, we might overwrite more areas of the buffer than the application
-         * cleared for unsynchronized updates
+         * cleared for unsynchronized updates.
          */
-        flags = 0;
+        flags = WINED3D_BUFFER_SYNC;
     }
     else
     {
