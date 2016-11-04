@@ -558,7 +558,7 @@ static void test_DavGetUNCFromHTTPPath(void)
     static const WCHAR path2[] =
         {'h','t','t','p',':','/','/','s','e','r','v','e','r','/','p','a','t','h',0};
     static const WCHAR path3[] =
-        {'h','t','t','p','s',':','/','/','s','e','r','v','e','r','/','p','a','t','h',0};
+        {'h','t','t','p','s',':','/','/','h','o','s','t','/','p','a','t','h',0};
     static const WCHAR path4[] =
         {'\\','\\','s','e','r','v','e','r',0};
     static const WCHAR path5[] =
@@ -598,7 +598,7 @@ static void test_DavGetUNCFromHTTPPath(void)
     static const WCHAR result[] =
         {'\\','\\','s','e','r','v','e','r','\\','D','a','v','W','W','W','R','o','o','t','\\','p','a','t','h',0};
     static const WCHAR result2[] =
-        {'\\','\\','s','e','r','v','e','r','@','S','S','L','\\','D','a','v','W','W','W','R','o','o','t','\\',
+        {'\\','\\','h','o','s','t','@','S','S','L','\\','D','a','v','W','W','W','R','o','o','t','\\',
          'p','a','t','h',0};
     static const WCHAR result3[] =
         {'\\','\\','s','e','r','v','e','r','\\','D','a','v','W','W','W','R','o','o','t',0};
@@ -626,7 +626,7 @@ static void test_DavGetUNCFromHTTPPath(void)
     {
         { path, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
         { path2, MAX_PATH, ERROR_SUCCESS, result, 25 },
-        { path3, MAX_PATH, ERROR_SUCCESS, result2, 29 },
+        { path3, MAX_PATH, ERROR_SUCCESS, result2, 27 },
         { path4, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
         { path5, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
         { path6, MAX_PATH, ERROR_INVALID_PARAMETER, NULL, MAX_PATH },
