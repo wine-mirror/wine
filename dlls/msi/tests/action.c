@@ -227,7 +227,7 @@ static const char service_install_dat[] =
     "s72\ts255\tL255\ti4\ti4\ti4\tS255\tS255\tS255\tS255\tS255\ts72\tL255\n"
     "ServiceInstall\tServiceInstall\n"
     "TestService\t[SERVNAME]\t[SERVDISP]\t2\t3\t0\t\tservice1[~]+group1[~]service2[~]+group2[~][~]\tTestService\t\t-a arg\tservice_comp\tdescription\n"
-    "TestService2\tSERVNAME2]\t[SERVDISP2]\t2\t3\t0\t\tservice1[~]+group1[~]service2[~]+group2[~][~]\tTestService2\t\t-a arg\tservice_comp2\tdescription";
+    "TestService2\t[SERVNAME2]\t[SERVDISP2]\t2\t3\t0\t\tservice1[~]+group1[~]service2[~]+group2[~][~]\tTestService2\t\t-a arg\tservice_comp2\tdescription\n";
 
 static const char service_install2_dat[] =
     "ServiceInstall\tName\tDisplayName\tServiceType\tStartType\tErrorControl\t"
