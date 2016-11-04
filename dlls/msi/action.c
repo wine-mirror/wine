@@ -7391,7 +7391,8 @@ static UINT ACTION_SetODBCFolders( MSIPACKAGE *package )
 static UINT ITERATE_RemoveExistingProducts( MSIRECORD *rec, LPVOID param )
 {
     static const WCHAR fmtW[] =
-        {'m','s','i','e','x','e','c',' ','/','i',' ','%','s',' ','R','E','M','O','V','E','=','%','s',0};
+        {'m','s','i','e','x','e','c',' ','/','q','n',' ','/','i',' ','%','s',' ',
+         'R','E','M','O','V','E','=','%','s',0};
     MSIPACKAGE *package = param;
     const WCHAR *property = MSI_RecordGetString( rec, 7 );
     int attrs = MSI_RecordGetInteger( rec, 5 );
