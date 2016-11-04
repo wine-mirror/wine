@@ -165,3 +165,6 @@
 #define __RPC_ref_pointer
 #define __RPC_string
 #define __RPC_unique_pointer
+
+#define __RPC__range(min,max)
+#define __RPC__in_range(min,max)
