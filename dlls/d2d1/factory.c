@@ -163,10 +163,10 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateEllipseGeometry(ID2D1Factory 
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGeometryGroup(ID2D1Factory *iface,
-        D2D1_FILL_MODE fill_mode, ID2D1Geometry *geometry, UINT32 geometry_count, ID2D1GeometryGroup **group)
+        D2D1_FILL_MODE fill_mode, ID2D1Geometry **geometries, UINT32 geometry_count, ID2D1GeometryGroup **group)
 {
-    FIXME("iface %p, fill_mode %#x, geometry %p, geometry_count %u, group %p stub!\n",
-            iface, fill_mode, geometry, geometry_count, group);
+    FIXME("iface %p, fill_mode %#x, geometries %p, geometry_count %u, group %p stub!\n",
+            iface, fill_mode, geometries, geometry_count, group);
 
     return E_NOTIMPL;
 }

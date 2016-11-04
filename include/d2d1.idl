@@ -1206,7 +1206,7 @@ interface ID2D1Factory : IUnknown
     );
     HRESULT CreateGeometryGroup(
         [in] D2D1_FILL_MODE fill_mode,
-        [in, size_is(geometry_count)] ID2D1Geometry *geometry,
+        [in, size_is(geometry_count)] ID2D1Geometry **geometries,
         [in] UINT32 geometry_count,
         [out] ID2D1GeometryGroup **group
     );
