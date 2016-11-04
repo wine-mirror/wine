@@ -631,7 +631,7 @@ BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_c
     return buffer->resource.heap_memory;
 }
 
-void wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
+DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
         struct wined3d_bo_address *data, DWORD locations)
 {
     TRACE("buffer %p, data %p, locations %s.\n",
@@ -641,18 +641,19 @@ void wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
     {
         data->buffer_object = buffer->buffer_object;
         data->addr = NULL;
-        return;
+        return WINED3D_LOCATION_BUFFER;
     }
     if (locations & WINED3D_LOCATION_SYSMEM)
     {
         data->buffer_object = 0;
         data->addr = buffer->resource.heap_memory;
-        return;
+        return WINED3D_LOCATION_SYSMEM;
     }
 
     ERR("Unexpected locations %s.\n", wined3d_debug_location(locations));
     data->buffer_object = 0;
     data->addr = NULL;
+    return 0;
 }
 
 static void buffer_unload(struct wined3d_resource *resource)
@@ -1274,7 +1275,7 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    wined3d_buffer_get_memory(dst_buffer, &dst, dst_buffer->locations);
+    dst_location = wined3d_buffer_get_memory(dst_buffer, &dst, dst_buffer->locations);
     wined3d_buffer_get_memory(src_buffer, &src, src_buffer->locations);
 
     if (dst.buffer_object && src.buffer_object)
@@ -1326,7 +1327,6 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
         memcpy(dst.addr + dst_offset, src.addr + src_offset, size);
     }
 
-    dst_location = dst.buffer_object ? WINED3D_LOCATION_BUFFER : WINED3D_LOCATION_SYSMEM;
     wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
 
     context_release(context);
