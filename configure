@@ -1166,6 +1166,7 @@ enable_explorerframe
 enable_ext_ms_win_gdi_dc_create_l1_1_1
 enable_ext_ms_win_gdi_dc_l1_2_0
 enable_ext_ms_win_gdi_devcaps_l1_1_0
+enable_ext_ms_win_gdi_draw_l1_1_1
 enable_ext_ms_win_kernel32_package_current_l1_1_0
 enable_ext_ms_win_ntuser_message_l1_1_1
 enable_ext_ms_win_ntuser_private_l1_1_1
@@ -17932,6 +17933,7 @@ wine_fn_config_test dlls/explorerframe/tests explorerframe_test
 wine_fn_config_dll ext-ms-win-gdi-dc-create-l1-1-1 enable_ext_ms_win_gdi_dc_create_l1_1_1
 wine_fn_config_dll ext-ms-win-gdi-dc-l1-2-0 enable_ext_ms_win_gdi_dc_l1_2_0
 wine_fn_config_dll ext-ms-win-gdi-devcaps-l1-1-0 enable_ext_ms_win_gdi_devcaps_l1_1_0
+wine_fn_config_dll ext-ms-win-gdi-draw-l1-1-1 enable_ext_ms_win_gdi_draw_l1_1_1
 wine_fn_config_dll ext-ms-win-kernel32-package-current-l1-1-0 enable_ext_ms_win_kernel32_package_current_l1_1_0
 wine_fn_config_dll ext-ms-win-ntuser-message-l1-1-1 enable_ext_ms_win_ntuser_message_l1_1_1
 wine_fn_config_dll ext-ms-win-ntuser-private-l1-1-1 enable_ext_ms_win_ntuser_private_l1_1_1

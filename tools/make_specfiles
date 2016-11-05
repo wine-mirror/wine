@@ -295,6 +295,7 @@ my @dll_groups =
   "ext-ms-win-gdi-dc-create-l1-1-1",
   "ext-ms-win-gdi-dc-l1-2-0",
   "ext-ms-win-gdi-devcaps-l1-1-0",
+  "ext-ms-win-gdi-draw-l1-1-1",
  ],
  [
   "combase",
