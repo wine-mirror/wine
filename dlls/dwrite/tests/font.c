@@ -1603,7 +1603,7 @@ static void test_CreateFontFace(void)
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
     ok(hr == DWRITE_E_FILEFORMAT, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION, 1, &file, 0,
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION, 1, &file, 0,
         DWRITE_FONT_SIMULATIONS_NONE, &fontface);
     ok(hr == DWRITE_E_FILEFORMAT || broken(hr == E_FAIL) /* < win10 */, "got 0x%08x\n", hr);
 

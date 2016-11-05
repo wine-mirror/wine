@@ -810,7 +810,7 @@ BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
 {
     return (type == DWRITE_FONT_FACE_TYPE_CFF) ||
            (type == DWRITE_FONT_FACE_TYPE_TRUETYPE) ||
-           (type == DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION) ||
+           (type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION) ||
            (type == DWRITE_FONT_FACE_TYPE_RAW_CFF);
 }
 
@@ -831,8 +831,8 @@ static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font
 
     if (!memcmp(header->TTCTag, &ttctag, sizeof(ttctag))) {
         *font_count = GET_BE_DWORD(header->numFonts);
-        *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE_COLLECTION;
-        *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION;
+        *file_type = DWRITE_FONT_FILE_TYPE_OPENTYPE_COLLECTION;
+        *face_type = DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION;
     }
 
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
@@ -1013,7 +1013,7 @@ HRESULT opentype_get_font_table(struct file_stream_desc *stream_desc, UINT32 tag
     *table_data = NULL;
     *table_context = NULL;
 
-    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION) {
+    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION) {
         const TTC_Header_V1 *ttc_header;
         void * ttc_context;
         hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&ttc_header, 0, sizeof(*ttc_header), &ttc_context);
