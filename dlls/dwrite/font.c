@@ -5418,19 +5418,19 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
 {
     struct dwrite_colorglyphenum *colorglyphenum;
     BOOL colorfont, has_colored_glyph;
-    IDWriteFontFace4 *fontface3;
+    IDWriteFontFace4 *fontface;
     HRESULT hr;
     UINT32 i;
 
     *ret = NULL;
 
-    hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace4, (void**)&fontface3);
+    hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace4, (void**)&fontface);
     if (FAILED(hr)) {
         WARN("failed to get IDWriteFontFace4, 0x%08x\n", hr);
         return hr;
     }
 
-    colorfont = IDWriteFontFace4_IsColorFont(fontface3) && IDWriteFontFace4_GetColorPaletteCount(fontface3) > palette;
+    colorfont = IDWriteFontFace4_IsColorFont(fontface) && IDWriteFontFace4_GetColorPaletteCount(fontface) > palette;
     if (!colorfont) {
         hr = DWRITE_E_NOCOLOR;
         goto failed;
@@ -5446,7 +5446,7 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
     colorglyphenum->ref = 1;
     colorglyphenum->origin_x = originX;
     colorglyphenum->origin_y = originY;
-    colorglyphenum->fontface = fontface3;
+    colorglyphenum->fontface = fontface;
     colorglyphenum->glyphs = NULL;
     colorglyphenum->run = *run;
     colorglyphenum->run.glyphIndices = NULL;
@@ -5455,7 +5455,7 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
     colorglyphenum->palette = palette;
     memset(&colorglyphenum->colr, 0, sizeof(colorglyphenum->colr));
     colorglyphenum->colr.exists = TRUE;
-    get_fontface_table(fontface3, MS_COLR_TAG, &colorglyphenum->colr);
+    get_fontface_table(fontface, MS_COLR_TAG, &colorglyphenum->colr);
     colorglyphenum->current_layer = 0;
     colorglyphenum->max_layer_num = 0;
 
@@ -5488,6 +5488,8 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
         memcpy(colorglyphenum->offsets, run->glyphOffsets, run->glyphCount * sizeof(*run->glyphOffsets));
     }
 
+    colorglyphenum->colorrun.glyphRun.fontFace = (IDWriteFontFace*)fontface;
+    colorglyphenum->colorrun.glyphRun.fontEmSize = run->fontEmSize;
     colorglyphenum->colorrun.glyphRun.glyphIndices = colorglyphenum->glyphindices;
     colorglyphenum->colorrun.glyphRun.glyphAdvances = colorglyphenum->color_advances;
     colorglyphenum->colorrun.glyphRun.glyphOffsets = colorglyphenum->color_offsets;
@@ -5506,14 +5508,14 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
             switch (measuring_mode)
             {
             case DWRITE_MEASURING_MODE_NATURAL:
-                hr = IDWriteFontFace4_GetDesignGlyphAdvances(fontface3, 1, run->glyphIndices + i, &a, run->isSideways);
+                hr = IDWriteFontFace4_GetDesignGlyphAdvances(fontface, 1, run->glyphIndices + i, &a, run->isSideways);
                 if (FAILED(hr))
                     a = 0;
                 colorglyphenum->advances[i] = get_scaled_advance_width(a, run->fontEmSize, &metrics);
                 break;
             case DWRITE_MEASURING_MODE_GDI_CLASSIC:
             case DWRITE_MEASURING_MODE_GDI_NATURAL:
-                hr = IDWriteFontFace4_GetGdiCompatibleGlyphAdvances(fontface3, run->fontEmSize, 1.0f, transform,
+                hr = IDWriteFontFace4_GetGdiCompatibleGlyphAdvances(fontface, run->fontEmSize, 1.0f, transform,
                     measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->isSideways, 1, run->glyphIndices + i, &a);
                 if (FAILED(hr))
                     colorglyphenum->advances[i] = 0.0f;
@@ -5530,7 +5532,7 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
     return S_OK;
 
 failed:
-    IDWriteFontFace4_Release(fontface3);
+    IDWriteFontFace4_Release(fontface);
     return hr;
 }
 

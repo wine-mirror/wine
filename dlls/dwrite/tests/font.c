@@ -5977,6 +5977,14 @@ static void test_TranslateColorGlyphRun(void)
 
         if (!hasrun)
             break;
+
+        hr = IDWriteColorGlyphRunEnumerator_GetCurrentRun(layers, &colorrun);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(colorrun->glyphRun.fontFace != NULL, "got fontface %p\n", colorrun->glyphRun.fontFace);
+        ok(colorrun->glyphRun.fontEmSize == 20.0f, "got wrong font size %f\n", colorrun->glyphRun.fontEmSize);
+        ok(colorrun->glyphRun.glyphCount > 0, "got wrong glyph count %u\n", colorrun->glyphRun.glyphCount);
+        ok(colorrun->glyphRun.glyphIndices != NULL, "got null glyph indices %p\n", colorrun->glyphRun.glyphIndices);
+        ok(colorrun->glyphRun.glyphAdvances != NULL, "got null glyph advances %p\n", colorrun->glyphRun.glyphAdvances);
     }
 
     /* iterated all way through */
