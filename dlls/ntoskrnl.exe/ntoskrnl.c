@@ -2435,3 +2435,12 @@ NTSTATUS WINAPI IoAttachDevice(DEVICE_OBJECT *source, UNICODE_STRING *target, DE
     FIXME("(%p, %s, %p): stub\n", source, debugstr_us(target), attached);
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *           KeSetTimerEx (NTOSKRNL.EXE.@)
+ */
+BOOL WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, KDPC *dpc )
+{
+    FIXME("stub: %p %s %u %p\n", timer, wine_dbgstr_longlong(duetime.QuadPart), period, dpc);
+    return TRUE;
+}

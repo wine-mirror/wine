@@ -618,7 +618,7 @@
 @ stub KeSetTargetProcessorDpc
 @ stub KeSetTimeIncrement
 @ stub KeSetTimer
-@ stub KeSetTimerEx
+@ stdcall KeSetTimerEx(ptr int64 long ptr)
 @ stub KeStackAttachProcess
 @ stub KeSynchronizeExecution
 @ stub KeTerminateThread
