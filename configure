@@ -1174,6 +1174,7 @@ enable_ext_ms_win_ntuser_private_l1_1_1
 enable_ext_ms_win_ntuser_rectangle_ext_l1_1_0
 enable_ext_ms_win_ntuser_uicontext_ext_l1_1_0
 enable_ext_ms_win_ntuser_window_l1_1_1
+enable_ext_ms_win_rtcore_gdi_object_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
 enable_ext_ms_win_rtcore_ntuser_sysparams_l1_1_0
 enable_faultrep
@@ -17942,6 +17943,7 @@ wine_fn_config_dll ext-ms-win-ntuser-private-l1-1-1 enable_ext_ms_win_ntuser_pri
 wine_fn_config_dll ext-ms-win-ntuser-rectangle-ext-l1-1-0 enable_ext_ms_win_ntuser_rectangle_ext_l1_1_0
 wine_fn_config_dll ext-ms-win-ntuser-uicontext-ext-l1-1-0 enable_ext_ms_win_ntuser_uicontext_ext_l1_1_0
 wine_fn_config_dll ext-ms-win-ntuser-window-l1-1-1 enable_ext_ms_win_ntuser_window_l1_1_1
+wine_fn_config_dll ext-ms-win-rtcore-gdi-object-l1-1-0 enable_ext_ms_win_rtcore_gdi_object_l1_1_0
 wine_fn_config_dll ext-ms-win-rtcore-ntuser-dpi-l1-1-0 enable_ext_ms_win_rtcore_ntuser_dpi_l1_1_0
 wine_fn_config_dll ext-ms-win-rtcore-ntuser-sysparams-l1-1-0 enable_ext_ms_win_rtcore_ntuser_sysparams_l1_1_0
 wine_fn_config_dll faultrep enable_faultrep implib
