@@ -129,5 +129,17 @@ enum unicode_script_id {
     Script_Siddham = 123,
     Script_Tirhuta = 124,
     Script_Warang_Citi = 125,
-    Script_LastId = 125
+    Script_Adlam = 126,
+    Script_Ahom = 127,
+    Script_Anatolian_Hieroglyphs = 128,
+    Script_Bhaiksuki = 129,
+    Script_Hatran = 130,
+    Script_Marchen = 131,
+    Script_Multani = 132,
+    Script_Newa = 133,
+    Script_Old_Hungarian = 134,
+    Script_Osage = 135,
+    Script_SignWriting = 136,
+    Script_Tangut = 137,
+    Script_LastId = 137
 };

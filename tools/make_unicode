@@ -1450,6 +1450,19 @@ my %scripts =
     "Siddham"                => 123,
     "Tirhuta"                => 124,
     "Warang_Citi"            => 125,
+    # Win10 RS1
+    "Adlam"                  => 126,
+    "Ahom"                   => 127,
+    "Anatolian_Hieroglyphs"  => 128,
+    "Bhaiksuki"              => 129,
+    "Hatran"                 => 130,
+    "Marchen"                => 131,
+    "Multani"                => 132,
+    "Newa"                   => 133,
+    "Old_Hungarian"          => 134,
+    "Osage"                  => 135,
+    "SignWriting"            => 136,
+    "Tangut"                 => 137
 );
 
 ################################################################
