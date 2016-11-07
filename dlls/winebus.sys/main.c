@@ -628,10 +628,13 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     static const WCHAR udevW[] = {'\\','D','r','i','v','e','r','\\','U','D','E','V',0};
     static UNICODE_STRING udev = {sizeof(udevW) - sizeof(WCHAR), sizeof(udevW), (WCHAR *)udevW};
+    static const WCHAR iohidW[] = {'\\','D','r','i','v','e','r','\\','I','O','H','I','D',0};
+    static UNICODE_STRING iohid = {sizeof(iohidW) - sizeof(WCHAR), sizeof(iohidW), (WCHAR *)iohidW};
 
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
 
     IoCreateDriver(&udev, udev_driver_init);
+    IoCreateDriver(&iohid, iohid_driver_init);
 
     return STATUS_SUCCESS;
 }
