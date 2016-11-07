@@ -140,7 +140,18 @@ static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 
 static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    CFDataRef data = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDReportDescriptorKey));
+    int data_length = CFDataGetLength(data);
+    const UInt8 *ptr;
+
+    *out_length = data_length;
+    if (length < data_length)
+        return STATUS_BUFFER_TOO_SMALL;
+
+    ptr = CFDataGetBytePtr(data);
+    memcpy(buffer, ptr, data_length);
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
