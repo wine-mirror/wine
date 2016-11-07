@@ -235,14 +235,39 @@ static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report,
 
 static NTSTATUS get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
 {
-    *read = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    IOReturn ret;
+    CFIndex report_length = length;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+
+    ret = IOHIDDeviceGetReport(private->device, kIOHIDReportTypeFeature, id, report, &report_length);
+    if (ret == kIOReturnSuccess)
+    {
+        *read = report_length;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        *read = 0;
+        return STATUS_UNSUCCESSFUL;
+    }
 }
 
 static NTSTATUS set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
-    *written = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    IOReturn result;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+
+    result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeFeature, id, report, length);
+    if (result == kIOReturnSuccess)
+    {
+        *written = length;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        *written = 0;
+        return STATUS_UNSUCCESSFUL;
+    }
 }
 
 static const platform_vtbl iohid_vtbl =
