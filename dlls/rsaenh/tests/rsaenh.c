@@ -2801,8 +2801,18 @@ static void test_schannel_provider(void)
     if (!result) return;
 
     result = CryptCreateHash(hProv, CALG_SCHANNEL_MASTER_HASH, hMasterSecret, 0, &hMasterHash);
-    ok (result, "%08x\n", GetLastError());
-    if (!result) return;
+    ok (result ||
+        broken(!result), /* Windows 8 and greater */
+        "%08x\n", GetLastError());
+    if (!result)
+    {
+        win_skip("Broken TLS1 hash creation\n");
+        CryptDestroyKey(hRSAKey);
+        CryptDestroyKey(hMasterSecret);
+        CryptReleaseContext(hProv, 0);
+        CryptAcquireContextA(&hProv, NULL, NULL, PROV_RSA_SCHANNEL, CRYPT_DELETEKEYSET);
+        return;
+    }
 
     /* Deriving the server write encryption key from the master hash can't
      * succeed before the encryption key algorithm is set.
