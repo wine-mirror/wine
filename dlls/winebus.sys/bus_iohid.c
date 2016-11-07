@@ -218,8 +218,19 @@ static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
 
 static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
-    *written = 0;
-    return STATUS_NOT_IMPLEMENTED;
+    IOReturn result;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    result = IOHIDDeviceSetReport(private->device, kIOHIDReportTypeOutput, id, report, length);
+    if (result == kIOReturnSuccess)
+    {
+        *written = length;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        *written = 0;
+        return STATUS_UNSUCCESSFUL;
+    }
 }
 
 static NTSTATUS get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
