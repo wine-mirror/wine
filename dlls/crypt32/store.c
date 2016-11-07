@@ -424,21 +424,15 @@ static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
         SetLastError(E_INVALIDARG);
         return NULL;
     }
-    /* FIXME:  In Windows, the root store (even the current user location) is
-     * protected:  adding to it or removing from it present a user interface,
-     * and the keys are owned by the system process, not the current user.
-     * Wine's registry doesn't implement access controls, so a similar
-     * mechanism isn't possible yet.
-     */
-    if ((dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK) ==
-     CERT_SYSTEM_STORE_LOCAL_MACHINE && !lstrcmpiW(storeName, rootW))
-        return CRYPT_RootOpenStore(hCryptProv, dwFlags);
 
     switch (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK)
     {
     case CERT_SYSTEM_STORE_LOCAL_MACHINE:
         root = HKEY_LOCAL_MACHINE;
         base = CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH;
+        /* If the HKLM\Root certs are requested, expressing system certs into the registry */
+        if (!lstrcmpiW(storeName, rootW))
+            CRYPT_ImportSystemRootCertsToReg();
         break;
     case CERT_SYSTEM_STORE_CURRENT_USER:
         root = HKEY_CURRENT_USER;

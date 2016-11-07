@@ -179,7 +179,7 @@ static void CRYPT_RegReadFromReg(HKEY key, HCERTSTORE store)
 }
 
 /* Hash is assumed to be 20 bytes in length (a SHA-1 hash) */
-static BOOL CRYPT_WriteSerializedToReg(HKEY key, const BYTE *hash, const BYTE *buf,
+static BOOL CRYPT_WriteSerializedToReg(HKEY key, DWORD flags, const BYTE *hash, const BYTE *buf,
  DWORD len)
 {
     WCHAR asciiHash[20 * 2 + 1];
@@ -188,7 +188,7 @@ static BOOL CRYPT_WriteSerializedToReg(HKEY key, const BYTE *hash, const BYTE *b
     BOOL ret;
 
     CRYPT_HashToStr(hash, asciiHash);
-    rc = RegCreateKeyExW(key, asciiHash, 0, NULL, 0, KEY_ALL_ACCESS, NULL,
+    rc = RegCreateKeyExW(key, asciiHash, 0, NULL, flags, KEY_ALL_ACCESS, NULL,
      &subKey, NULL);
     if (!rc)
     {
@@ -205,7 +205,7 @@ static BOOL CRYPT_WriteSerializedToReg(HKEY key, const BYTE *hash, const BYTE *b
     return ret;
 }
 
-static BOOL CRYPT_SerializeContextsToReg(HKEY key,
+BOOL CRYPT_SerializeContextsToReg(HKEY key, DWORD flags,
  const WINE_CONTEXT_INTERFACE *contextInterface, HCERTSTORE memStore)
 {
     const void *context = NULL;
@@ -232,7 +232,7 @@ static BOOL CRYPT_SerializeContextsToReg(HKEY key,
                 {
                     ret = contextInterface->serialize(context, 0, buf, &size);
                     if (ret)
-                        ret = CRYPT_WriteSerializedToReg(key, hash, buf, size);
+                        ret = CRYPT_WriteSerializedToReg(key, flags, hash, buf, size);
                 }
                 CryptMemFree(buf);
             }
@@ -287,8 +287,7 @@ static BOOL CRYPT_RegWriteToReg(WINE_REGSTOREINFO *store)
                 }
                 LeaveCriticalSection(&store->cs);
             }
-            ret = CRYPT_SerializeContextsToReg(key, interfaces[i],
-             store->memStore);
+            ret = CRYPT_SerializeContextsToReg(key, 0, interfaces[i], store->memStore);
             RegCloseKey(key);
         }
         else
