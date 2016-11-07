@@ -3836,7 +3836,7 @@ START_TEST(rsaenh)
         if(!BASE_PROV) test_key_derivation(STRONG_PROV ? "STRONG" : "ENH");
         clean_up_base_environment();
     }
-    if (!init_base_environment(MS_ENHANCED_PROV_A, 0))
+
     test_key_permissions();
     test_key_initialization();
     test_schannel_provider();
