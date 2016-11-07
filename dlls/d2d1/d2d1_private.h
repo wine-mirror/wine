@@ -28,7 +28,7 @@
 #ifdef D2D1_INIT_GUID
 #include "initguid.h"
 #endif
-#include "dwrite.h"
+#include "dwrite_2.h"
 
 enum d2d_brush_type
 {

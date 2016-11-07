@@ -1565,6 +1565,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
     struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
     D2D1_POINT_2F baseline_origin = {baseline_origin_x, baseline_origin_y};
     struct d2d_draw_text_layout_ctx *context = ctx;
+    BOOL color_font = FALSE;
     ID2D1Brush *brush;
 
     TRACE("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, "
@@ -1574,14 +1575,97 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
 
     if (desc)
         WARN("Ignoring glyph run description %p.\n", desc);
-    if (context->options & ~D2D1_DRAW_TEXT_OPTIONS_NO_SNAP)
+    if (context->options & ~(D2D1_DRAW_TEXT_OPTIONS_NO_SNAP | D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT))
         FIXME("Ignoring options %#x.\n", context->options);
 
     brush = d2d_draw_get_text_brush(context, effect);
 
     TRACE("%s\n", debugstr_wn(desc->string, desc->stringLength));
-    ID2D1RenderTarget_DrawGlyphRun(&render_target->ID2D1RenderTarget_iface,
-            baseline_origin, glyph_run, brush, measuring_mode);
+
+    if (context->options & D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT)
+    {
+        IDWriteFontFace2 *fontface;
+
+        if (SUCCEEDED(IDWriteFontFace_QueryInterface(glyph_run->fontFace,
+                &IID_IDWriteFontFace2, (void **)&fontface)))
+        {
+            color_font = IDWriteFontFace2_IsColorFont(fontface);
+            IDWriteFontFace2_Release(fontface);
+        }
+    }
+
+    if (color_font)
+    {
+        IDWriteColorGlyphRunEnumerator *layers;
+        IDWriteFactory2 *dwrite_factory;
+        HRESULT hr;
+
+        if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory2,
+                (IUnknown **)&dwrite_factory)))
+        {
+            ERR("Failed to create dwrite factory, hr %#x.\n", hr);
+            ID2D1Brush_Release(brush);
+            return hr;
+        }
+
+        hr = IDWriteFactory2_TranslateColorGlyphRun(dwrite_factory, baseline_origin_x, baseline_origin_y,
+                glyph_run, desc, measuring_mode, (DWRITE_MATRIX *)&render_target->drawing_state.transform, 0, &layers);
+        IDWriteFactory2_Release(dwrite_factory);
+        if (FAILED(hr))
+        {
+            ERR("Failed to create color glyph run enumerator, hr %#x.\n", hr);
+            ID2D1Brush_Release(brush);
+            return hr;
+        }
+
+        for (;;)
+        {
+            const DWRITE_COLOR_GLYPH_RUN *color_run;
+            ID2D1Brush *color_brush;
+            D2D1_POINT_2F origin;
+            BOOL has_run = FALSE;
+
+            if (FAILED(hr = IDWriteColorGlyphRunEnumerator_MoveNext(layers, &has_run)))
+            {
+                ERR("Failed to switch color glyph layer, hr %#x.\n", hr);
+                break;
+            }
+
+            if (!has_run)
+                break;
+
+            if (FAILED(hr = IDWriteColorGlyphRunEnumerator_GetCurrentRun(layers, &color_run)))
+            {
+                ERR("Failed to get current color run, hr %#x.\n", hr);
+                break;
+            }
+
+            if (color_run->paletteIndex == 0xffff)
+                color_brush = brush;
+            else
+            {
+                if (FAILED(hr = ID2D1RenderTarget_CreateSolidColorBrush(&render_target->ID2D1RenderTarget_iface,
+                        &color_run->runColor, NULL, (ID2D1SolidColorBrush **)&color_brush)))
+                {
+                    ERR("Failed to create solid color brush, hr %#x.\n", hr);
+                    break;
+                }
+            }
+
+            origin.x = color_run->baselineOriginX;
+            origin.y = color_run->baselineOriginY;
+            ID2D1RenderTarget_DrawGlyphRun(&render_target->ID2D1RenderTarget_iface,
+                    origin, &color_run->glyphRun, color_brush, measuring_mode);
+
+            if (color_brush != brush)
+                ID2D1Brush_Release(color_brush);
+        }
+
+        IDWriteColorGlyphRunEnumerator_Release(layers);
+    }
+    else
+        ID2D1RenderTarget_DrawGlyphRun(&render_target->ID2D1RenderTarget_iface,
+                baseline_origin, glyph_run, brush, measuring_mode);
 
     ID2D1Brush_Release(brush);
 
