@@ -53,23 +53,26 @@ static NTSTATUS get_report_data(BYTE *report, INT reportLength, INT startBit, IN
     }
     else
     {
-        ULONG byte_index = (startBit + valueSize - 1) / 8;
+        ULONG byte_index = startBit / 8;
         ULONG data = 0;
         ULONG remainingBits = valueSize;
+        ULONG shift = 0;
+        ULONG begin_offset = startBit % 8;
         while (remainingBits)
         {
-            data <<= 8;
-
             if (remainingBits >= 8)
             {
-                data |= report[byte_index];
-                byte_index --;
-                remainingBits -= 8;
+                BYTE mask = 0xff << begin_offset;
+                data |= (report[byte_index] & mask) << shift;
+                byte_index ++;
+                remainingBits -= (8-begin_offset);
+                shift += (8-begin_offset);
+                begin_offset = 0;
             }
             else if (remainingBits > 0)
             {
-                BYTE mask = ~(0xff << (8-remainingBits));
-                data |= report[byte_index] & mask;
+                BYTE mask = (0xff >> (8-remainingBits)) << begin_offset;
+                data |= (report[byte_index] & mask) << shift;
                 remainingBits = 0;
             }
         }
