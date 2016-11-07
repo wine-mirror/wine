@@ -107,6 +107,7 @@ DEFINE_GUID(GUID_DEVCLASS_IOHID, 0x989D309D,0x0470,0x4E1A,0x89,0x38,0x50,0x1F,0x
 struct platform_private
 {
     IOHIDDeviceRef device;
+    uint8_t *buffer;
 };
 
 static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
@@ -127,6 +128,14 @@ static DWORD CFNumberToDWORD(CFNumberRef num)
     if (num)
         CFNumberGetValue(num, kCFNumberIntType, &dwNum);
     return dwNum;
+}
+
+static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
+        IOReturn result, void *sender, IOHIDReportType type,
+        uint32_t reportID, uint8_t *report, CFIndex report_length)
+{
+    DEVICE_OBJECT *device = (DEVICE_OBJECT*)context;
+    process_hid_report(device, report, report_length);
 }
 
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
@@ -192,7 +201,19 @@ static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DW
 
 static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    DWORD length;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    CFNumberRef num;
+
+    if (private->buffer)
+        return STATUS_SUCCESS;
+
+    num = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDMaxInputReportSizeKey));
+    length = CFNumberToDWORD(num);
+    private->buffer = HeapAlloc(GetProcessHeap(), 0, length);
+
+    IOHIDDeviceRegisterInputReportCallback(private->device, private->buffer, length, handle_IOHIDDeviceIOHIDReportCallback, device);
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
@@ -250,6 +271,7 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     {
         struct platform_private *private = impl_from_DEVICE_OBJECT(device);
         private->device = IOHIDDevice;
+        private->buffer = NULL;
         IoInvalidateDeviceRelations(device, BusRelations);
     }
 }
@@ -258,6 +280,9 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
 {
     DEVICE_OBJECT *device;
     TRACE("OS/X IOHID Device Removed %p\n", IOHIDDevice);
+    IOHIDDeviceRegisterInputReportCallback(IOHIDDevice, NULL, 0, NULL, NULL);
+    /* Note: Yes, we leak the buffer. But according to research there is no
+             safe way to deallocate that buffer. */
     device = bus_find_hid_device(&iohid_vtbl, IOHIDDevice);
     if (device)
     {
