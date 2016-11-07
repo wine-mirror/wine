@@ -130,7 +130,12 @@ static DWORD CFNumberToDWORD(CFNumberRef num)
 
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 {
-    return 0;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    IOHIDDeviceRef dev2 = (IOHIDDeviceRef)platform_dev;
+    if (private->device != dev2)
+        return 1;
+    else
+        return 0;
 }
 
 static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
@@ -207,6 +212,18 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     }
 }
 
+static void handle_RemovalCallback(void *context, IOReturn result, void *sender, IOHIDDeviceRef IOHIDDevice)
+{
+    DEVICE_OBJECT *device;
+    TRACE("OS/X IOHID Device Removed %p\n", IOHIDDevice);
+    device = bus_find_hid_device(&iohid_vtbl, IOHIDDevice);
+    if (device)
+    {
+        IoInvalidateDeviceRelations(device, RemovalRelations);
+        bus_remove_hid_device(device);
+    }
+}
+
 /* This puts the relevant run loop for event handling into a WINE thread */
 static DWORD CALLBACK runloop_thread(void *args)
 {
@@ -214,6 +231,7 @@ static DWORD CALLBACK runloop_thread(void *args)
 
     IOHIDManagerSetDeviceMatching(hid_manager, NULL);
     IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, handle_DeviceMatchingCallback, NULL);
+    IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, handle_RemovalCallback, NULL);
     IOHIDManagerScheduleWithRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
     if (IOHIDManagerOpen( hid_manager, 0 ) != kIOReturnSuccess)
     {
@@ -227,6 +245,7 @@ static DWORD CALLBACK runloop_thread(void *args)
     TRACE("Run Loop exiting\n");
 
     IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, NULL, NULL);
+    IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, NULL, NULL);
     IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
     CFRelease(hid_manager);
     return 1;
