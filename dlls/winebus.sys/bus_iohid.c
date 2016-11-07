@@ -88,6 +88,7 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "ddk/wdm.h"
+#include "ddk/hidtypes.h"
 #include "wine/debug.h"
 
 #include "bus.h"
@@ -156,7 +157,37 @@ static NTSTATUS get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD 
 
 static NTSTATUS get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
 {
-    return STATUS_NOT_IMPLEMENTED;
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+    CFStringRef str;
+    switch (index)
+    {
+        case HID_STRING_ID_IPRODUCT:
+            str = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDProductKey));
+            break;
+        case HID_STRING_ID_IMANUFACTURER:
+            str = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDManufacturerKey));
+            break;
+        case HID_STRING_ID_ISERIALNUMBER:
+            str = IOHIDDeviceGetProperty(private->device, CFSTR(kIOHIDSerialNumberKey));
+            break;
+        default:
+            ERR("Unknown string index\n");
+            return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (str)
+    {
+        if (length < CFStringGetLength(str) + 1)
+            return STATUS_BUFFER_TOO_SMALL;
+        CFStringToWSTR(str, buffer, length);
+    }
+    else
+    {
+        if (!length) return STATUS_BUFFER_TOO_SMALL;
+        buffer[0] = 0;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS begin_report_processing(DEVICE_OBJECT *device)
