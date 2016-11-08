@@ -55,6 +55,14 @@ static void set_rect(D2D1_RECT_F *rect, float left, float top, float right, floa
     rect->bottom = bottom;
 }
 
+static void set_rounded_rect(D2D1_ROUNDED_RECT *rect, float left, float top, float right, float bottom,
+        float radius_x, float radius_y)
+{
+    set_rect(&rect->rect, left, top, right, bottom);
+    rect->radiusX = radius_x;
+    rect->radiusY = radius_y;
+}
+
 static void set_rect_u(D2D1_RECT_U *rect, UINT32 left, UINT32 top, UINT32 right, UINT32 bottom)
 {
     rect->left = left;
@@ -1752,14 +1760,46 @@ static void test_path_geometry(void)
 static void test_rectangle_geometry(void)
 {
     ID2D1RectangleGeometry *geometry;
+    D2D1_RECT_F rect, rect2;
     ID2D1Factory *factory;
     D2D1_POINT_2F point;
-    D2D1_RECT_F rect;
     BOOL contains;
     HRESULT hr;
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+    ID2D1RectangleGeometry_GetRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ID2D1RectangleGeometry_Release(geometry);
+
+    set_rect(&rect, 50.0f, 0.0f, 40.0f, 100.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+    ID2D1RectangleGeometry_GetRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ID2D1RectangleGeometry_Release(geometry);
+
+    set_rect(&rect, 0.0f, 100.0f, 40.0f, 50.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+    ID2D1RectangleGeometry_GetRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ID2D1RectangleGeometry_Release(geometry);
+
+    set_rect(&rect, 50.0f, 100.0f, 40.0f, 50.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+    ID2D1RectangleGeometry_GetRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.left, rect2.top, rect2.right, rect2.bottom);
+    ID2D1RectangleGeometry_Release(geometry);
 
     set_rect(&rect, 0.0f, 0.0f, 10.0f, 20.0f);
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
@@ -1805,6 +1845,58 @@ static void test_rectangle_geometry(void)
     ok(!!contains, "Got wrong hit test result %d.\n", contains);
 
     ID2D1RectangleGeometry_Release(geometry);
+
+    ID2D1Factory_Release(factory);
+}
+
+static void test_rounded_rectangle_geometry(void)
+{
+    ID2D1RoundedRectangleGeometry *geometry;
+    D2D1_ROUNDED_RECT rect, rect2;
+    ID2D1Factory *factory;
+    HRESULT hr;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    set_rounded_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        ID2D1Factory_Release(factory);
+        return;
+    }
+
+    ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.rect.left, rect2.rect.top, rect2.rect.right, rect2.rect.bottom, rect2.radiusX, rect2.radiusY);
+    ID2D1RoundedRectangleGeometry_Release(geometry);
+
+    /* X radius larger than half width. */
+    set_rounded_rect(&rect, 0.0f, 0.0f, 50.0f, 40.0f, 30.0f, 5.0f);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+    ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.rect.left, rect2.rect.top, rect2.rect.right, rect2.rect.bottom, rect2.radiusX, rect2.radiusY);
+    ID2D1RoundedRectangleGeometry_Release(geometry);
+
+    /* Y radius larger than half height. */
+    set_rounded_rect(&rect, 0.0f, 0.0f, 50.0f, 40.0f, 5.0f, 30.0f);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+    ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.rect.left, rect2.rect.top, rect2.rect.right, rect2.rect.bottom, rect2.radiusX, rect2.radiusY);
+    ID2D1RoundedRectangleGeometry_Release(geometry);
+
+    /* Both exceed rectangle size. */
+    set_rounded_rect(&rect, 0.0f, 0.0f, 50.0f, 40.0f, 30.0f, 25.0f);
+    hr = ID2D1Factory_CreateRoundedRectangleGeometry(factory, &rect, &geometry);
+    ID2D1RoundedRectangleGeometry_GetRoundedRect(geometry, &rect2);
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            rect2.rect.left, rect2.rect.top, rect2.rect.right, rect2.rect.bottom, rect2.radiusX, rect2.radiusY);
+    ID2D1RoundedRectangleGeometry_Release(geometry);
 
     ID2D1Factory_Release(factory);
 }
@@ -3249,6 +3341,7 @@ START_TEST(d2d1)
     test_bitmap_brush();
     test_path_geometry();
     test_rectangle_geometry();
+    test_rounded_rectangle_geometry();
     test_bitmap_formats();
     test_alpha_mode();
     test_shared_bitmap();
