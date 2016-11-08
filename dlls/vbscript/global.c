@@ -1038,11 +1038,6 @@ static HRESULT Global_StrComp(vbdisp_t *This, VARIANT *args, unsigned args_cnt, 
 
     assert(args_cnt == 2 || args_cnt == 3);
 
-    if(V_VT(args) != VT_BSTR || V_VT(args+1) != VT_BSTR) {
-        FIXME("args[0] = %s, args[1] = %s\n", debugstr_variant(args), debugstr_variant(args+1));
-        return E_NOTIMPL;
-    }
-
     if (args_cnt == 3) {
         hres = to_int(args+2, &mode);
         if(FAILED(hres))
@@ -1056,11 +1051,22 @@ static HRESULT Global_StrComp(vbdisp_t *This, VARIANT *args, unsigned args_cnt, 
     else
         mode = 0;
 
-    left = V_BSTR(args);
-    right = V_BSTR(args+1);
+    hres = to_string(args, &left);
+    if(FAILED(hres))
+        return hres;
+
+    hres = to_string(args+1, &right);
+    if(FAILED(hres))
+    {
+        SysFreeString(left);
+        return hres;
+    }
 
     ret = mode ? strcmpiW(left, right) : strcmpW(left, right);
     val = ret < 0 ? -1 : (ret > 0 ? 1 : 0);
+
+    SysFreeString(left);
+    SysFreeString(right);
     return return_short(res, val);
 }
 

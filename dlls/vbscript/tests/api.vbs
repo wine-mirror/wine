@@ -459,6 +459,15 @@ TestStrComp "ABCD", "ABC",  1,  1
 TestStrComp "ABC",  "ABCD", 1, -1
 TestStrComp "ABC",  "ABCD", "0", -1
 TestStrComp "ABC",  "ABCD", "1", -1
+TestStrComp 1,      1,      1,  0
+TestStrComp "1",    1,      1,  0
+TestStrComp "1",    1.0,    1,  0
+TestStrComp Empty,  Empty,  1,  0
+TestStrComp Empty,  "",     1,  0
+TestStrComp Empty,  "ABC",  1,  -1
+TestStrComp "ABC",  Empty,  1,  1
+TestStrComp vbNull, vbNull, 1,  0
+TestStrComp "",     vbNull, 1,  -1
 
 Call ok(Len("abc") = 3, "Len(abc) = " & Len("abc"))
 Call ok(Len("") = 0, "Len() = " & Len(""))
