@@ -6312,7 +6312,8 @@ static void test_render_target_views(void)
     ID3D11RenderTargetView *rtv;
     ID3D11Texture2D *texture;
     ID3D11Device *device;
-    unsigned int i, j;
+    unsigned int i, j, k;
+    void *data;
     HRESULT hr;
 
     if (!init_test_context(&test_context, NULL))
@@ -6331,6 +6332,9 @@ static void test_render_target_views(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
+    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, texture_desc.Width * texture_desc.Height * 4);
+    ok(!!data, "Failed to allocate memory.\n");
+
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         const struct test *test = &tests[i];
@@ -6346,6 +6350,17 @@ static void test_render_target_views(void)
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
         ok(SUCCEEDED(hr), "Test %u: Failed to create render target view, hr %#x.\n", i, hr);
 
+        for (j = 0; j < texture_desc.ArraySize; ++j)
+        {
+            for (k = 0; k < texture_desc.MipLevels; ++k)
+            {
+                unsigned int sub_resource_idx = j * texture_desc.MipLevels + k;
+                ID3D11DeviceContext_UpdateSubresource(context,
+                        (ID3D11Resource *)texture, sub_resource_idx, NULL, data, texture_desc.Width * 4, 0);
+            }
+        }
+        check_texture_color(texture, 0, 0);
+
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
         draw_color_quad(&test_context, &red);
 
@@ -6358,6 +6373,7 @@ static void test_render_target_views(void)
         ID3D11Texture2D_Release(texture);
     }
 
+    HeapFree(GetProcessHeap(), 0, data);
     release_test_context(&test_context);
 }
 
