@@ -293,6 +293,7 @@ my @dll_groups =
  ],
  [
   "gdi32",
+  "api-ms-win-dx-d3dkmt-l1-1-0",
   "ext-ms-win-gdi-dc-create-l1-1-1",
   "ext-ms-win-gdi-dc-l1-2-0",
   "ext-ms-win-gdi-devcaps-l1-1-0",

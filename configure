@@ -1004,6 +1004,7 @@ enable_api_ms_win_downlevel_shlwapi_l1_1_0
 enable_api_ms_win_downlevel_shlwapi_l2_1_0
 enable_api_ms_win_downlevel_user32_l1_1_0
 enable_api_ms_win_downlevel_version_l1_1_0
+enable_api_ms_win_dx_d3dkmt_l1_1_0
 enable_api_ms_win_eventing_classicprovider_l1_1_0
 enable_api_ms_win_eventing_consumer_l1_1_0
 enable_api_ms_win_eventing_controller_l1_1_0
@@ -17710,6 +17711,7 @@ wine_fn_config_dll api-ms-win-downlevel-shlwapi-l1-1-0 enable_api_ms_win_downlev
 wine_fn_config_dll api-ms-win-downlevel-shlwapi-l2-1-0 enable_api_ms_win_downlevel_shlwapi_l2_1_0
 wine_fn_config_dll api-ms-win-downlevel-user32-l1-1-0 enable_api_ms_win_downlevel_user32_l1_1_0
 wine_fn_config_dll api-ms-win-downlevel-version-l1-1-0 enable_api_ms_win_downlevel_version_l1_1_0
+wine_fn_config_dll api-ms-win-dx-d3dkmt-l1-1-0 enable_api_ms_win_dx_d3dkmt_l1_1_0
 wine_fn_config_dll api-ms-win-eventing-classicprovider-l1-1-0 enable_api_ms_win_eventing_classicprovider_l1_1_0
 wine_fn_config_dll api-ms-win-eventing-consumer-l1-1-0 enable_api_ms_win_eventing_consumer_l1_1_0
 wine_fn_config_dll api-ms-win-eventing-controller-l1-1-0 enable_api_ms_win_eventing_controller_l1_1_0
