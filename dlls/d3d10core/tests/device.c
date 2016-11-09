@@ -6487,6 +6487,7 @@ static void test_fragment_coords(void)
 static void test_update_subresource(void)
 {
     struct d3d10core_test_context test_context;
+    D3D10_SUBRESOURCE_DATA resource_data;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10SamplerState *sampler_state;
     ID3D10ShaderResourceView *ps_srv;
@@ -6527,6 +6528,7 @@ static void test_update_subresource(void)
         0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
     };
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+    static const DWORD initial_data[16] = {0};
     static const DWORD bitmap_data[] =
     {
         0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
@@ -6559,7 +6561,11 @@ static void test_update_subresource(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    resource_data.pSysMem = initial_data;
+    resource_data.SysMemPitch = texture_desc.Width * sizeof(*initial_data);
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
     ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
 
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &ps_srv);
