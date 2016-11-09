@@ -7157,7 +7157,8 @@ static void test_copy_subresource_region(void)
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    dst_buffer = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(float_colors), NULL);
+    memset(float_colors, 0, sizeof(float_colors));
+    dst_buffer = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(float_colors), float_colors);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &dst_buffer);
 
     src_buffer = create_buffer(device, 0, 256 * sizeof(*float_colors), NULL);
