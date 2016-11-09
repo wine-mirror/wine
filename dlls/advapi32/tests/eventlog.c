@@ -909,6 +909,7 @@ static void test_readwrite(void)
 
     /* Read all events from our created eventlog, one by one */
     handle = OpenEventLogA(NULL, eventlogname);
+    ok(handle != NULL, "Failed to open Event Log, got %d\n", GetLastError());
     i = 0;
     for (;;)
     {
@@ -924,14 +925,13 @@ static void test_readwrite(void)
         SetLastError(0xdeadbeef);
         ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
                             0, buf, sizeof(EVENTLOGRECORD), &read, &needed);
-        if (!ret && GetLastError() == ERROR_HANDLE_EOF)
+        ok(!ret, "Expected failure\n");
+        if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         {
             HeapFree(GetProcessHeap(), 0, buf);
+            ok(GetLastError() == ERROR_HANDLE_EOF, "record %d, got %d\n", i, GetLastError());
             break;
         }
-        ok(!ret, "Expected failure\n");
-        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-           "Expected ERROR_INVALID_PARAMETER, got %d\n",GetLastError());
 
         buf = HeapReAlloc(GetProcessHeap(), 0, buf, needed);
         ret = ReadEventLogA(handle, EVENTLOG_SEQUENTIAL_READ | EVENTLOG_FORWARDS_READ,
@@ -1010,6 +1010,7 @@ static void test_readwrite(void)
 
     /* Test clearing a real eventlog */
     handle = OpenEventLogA(NULL, eventlogname);
+    ok(handle != NULL, "Failed to open Event Log, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ClearEventLogA(handle, NULL);
