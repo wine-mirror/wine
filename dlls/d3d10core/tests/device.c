@@ -6931,99 +6931,6 @@ static void test_copy_subresource_region(void)
     release_test_context(&test_context);
 }
 
-static void test_texture_data_init(void)
-{
-    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    struct d3d10core_test_context test_context;
-    D3D10_TEXTURE2D_DESC desc;
-    ID3D10Texture2D *texture;
-    ID3D10Device *device;
-    UINT count = 0;
-    HRESULT hr;
-
-    if (!init_test_context(&test_context))
-        return;
-
-    device = test_context.device;
-
-    desc.Width = 640;
-    desc.Height = 480;
-    desc.MipLevels = 1;
-    desc.ArraySize = 1;
-    desc.SampleDesc.Count = 1;
-    desc.SampleDesc.Quality = 0;
-    desc.Usage = D3D10_USAGE_DEFAULT;
-    desc.BindFlags = 0;
-    desc.CPUAccessFlags = 0;
-    desc.MiscFlags = 0;
-
-    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    check_texture_color(texture, 0x00000000, 0);
-    ID3D10Texture2D_Release(texture);
-
-    desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    check_texture_color(texture, 0x00000000, 0);
-    ID3D10Texture2D_Release(texture);
-
-    desc.Format = DXGI_FORMAT_D32_FLOAT;
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    check_texture_float(texture, 0.0f, 0);
-    ID3D10Texture2D_Release(texture);
-
-    desc.ArraySize = 4;
-
-    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    check_texture_float(texture, 0.0f, 0);
-    ID3D10Texture2D_Release(texture);
-
-    desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    check_texture_color(texture, 0x00000000, 0);
-    ID3D10Texture2D_Release(texture);
-
-    desc.Format = DXGI_FORMAT_D32_FLOAT;
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    check_texture_float(texture, 0.0f, 0);
-    ID3D10Texture2D_Release(texture);
-
-    hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &count);
-    ok(SUCCEEDED(hr), "Failed to get quality levels, hr %#x.\n", hr);
-    if (!count)
-    {
-        skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM, skipping tests.\n");
-        release_test_context(&test_context);
-        return;
-    }
-
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
-
-    desc.ArraySize = 1;
-    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    desc.SampleDesc.Count = 2;
-    desc.SampleDesc.Quality = 0;
-    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
-    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-
-    ID3D10Device_ResolveSubresource(device, (ID3D10Resource *)test_context.backbuffer, 0,
-            (ID3D10Resource *)texture, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
-
-    todo_wine check_texture_color(test_context.backbuffer, 0x00000000, 0);
-
-    ID3D10Texture2D_Release(texture);
-
-    release_test_context(&test_context);
-}
-
 static void test_check_multisample_quality_levels(void)
 {
     ID3D10Device *device;
@@ -9726,7 +9633,6 @@ START_TEST(device)
     test_fragment_coords();
     test_update_subresource();
     test_copy_subresource_region();
-    test_texture_data_init();
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
     test_swapchain_formats();
