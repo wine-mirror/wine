@@ -38,6 +38,8 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(dummy_guid, 0xdeadbeef, 0xdead, 0xbeef, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe);
 DEFINE_GUID(expect_guid, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
 
+#define GUID_MEMBERS(g) {(g).Data1, (g).Data2, (g).Data3, {(g).Data4[0], (g).Data4[1], (g).Data4[2], (g).Data4[3], (g).Data4[4], (g).Data4[5], (g).Data4[6], (g).Data4[7]}}
+
 static const char topic[] = "wine topic";
 static const WCHAR topicW[] = {'w','i','n','e',' ','t','o','p','i','c',0};
 static const WCHAR emptyW[] = {0};
@@ -90,9 +92,9 @@ static void test_PSStringFromPropertyKey(void)
     static const WCHAR expected3W[] = {'{','0','0','0','0','0','0','0','0','-','0','0','0','0','-','0','0','0',
                                        '0','-','0','0','0','0','-','0','0','0','0','0','0','0','0','0','0','0',
                                        '0','}',' ','0','\0','X','X','X','X','X','X','X','X','X'};
-    PROPERTYKEY prop = {GUID_NULL, ~0U};
-    PROPERTYKEY prop2 = {GUID_NULL, 13579};
-    PROPERTYKEY prop3 = {GUID_NULL, 0};
+    PROPERTYKEY prop = {GUID_MEMBERS(GUID_NULL), ~0U};
+    PROPERTYKEY prop2 = {GUID_MEMBERS(GUID_NULL), 13579};
+    PROPERTYKEY prop3 = {GUID_MEMBERS(GUID_NULL), 0};
     WCHAR out[PKEYSTR_MAX];
     HRESULT ret;
 
@@ -331,7 +333,7 @@ static void test_PSPropertyKeyFromString(void)
     static const WCHAR fmtid_normalpidW[] = {'{','1','2','3','4','5','6','7','8','-','1','2','3','4','-',
                                              '1','2','3','4','-','1','2','3','4','-',
                                              '1','2','3','4','5','6','7','8','9','0','1','2','}',' ','1','3','5','7','9',0};
-    PROPERTYKEY out_init = {dummy_guid, 0xdeadbeef};
+    PROPERTYKEY out_init = {GUID_MEMBERS(dummy_guid), 0xdeadbeef};
     PROPERTYKEY out;
     HRESULT ret;
 
@@ -344,15 +346,15 @@ static void test_PSPropertyKeyFromString(void)
     } testcases[] =
     {
         {NULL, NULL, E_POINTER},
-        {NULL, &out, E_POINTER, out_init},
+        {NULL, &out, E_POINTER, {GUID_MEMBERS(out_init.fmtid), out_init.pid}},
         {emptyW, NULL, E_POINTER},
-        {emptyW, &out, E_INVALIDARG, {GUID_NULL, 0}},
-        {fmtid_clsidW, &out, E_INVALIDARG, {GUID_NULL, 0}},
+        {emptyW, &out, E_INVALIDARG, {GUID_MEMBERS(GUID_NULL), 0}},
+        {fmtid_clsidW, &out, E_INVALIDARG, {GUID_MEMBERS(GUID_NULL), 0}},
         {fmtid_truncatedW, &out, E_INVALIDARG, { {0x12345678,0x1234,0x1234,{0,0,0,0,0,0,0,0}}, 0}},
-        {fmtid_nobracketsW, &out, E_INVALIDARG, {GUID_NULL, 0}},
-        {fmtid_badbracketW, &out, E_INVALIDARG, {GUID_NULL, 0}},
-        {fmtid_badcharW, &out, E_INVALIDARG, {GUID_NULL, 0}},
-        {fmtid_badchar2W, &out, E_INVALIDARG, {GUID_NULL, 0}},
+        {fmtid_nobracketsW, &out, E_INVALIDARG, {GUID_MEMBERS(GUID_NULL), 0}},
+        {fmtid_badbracketW, &out, E_INVALIDARG, {GUID_MEMBERS(GUID_NULL), 0}},
+        {fmtid_badcharW, &out, E_INVALIDARG, {GUID_MEMBERS(GUID_NULL), 0}},
+        {fmtid_badchar2W, &out, E_INVALIDARG, {GUID_MEMBERS(GUID_NULL), 0}},
         {fmtid_baddashW, &out, E_INVALIDARG, { {0x12345678,0,0,{0,0,0,0,0,0,0,0}}, 0}},
         {fmtid_badchar3W, &out, E_INVALIDARG, { {0x12345678,0,0,{0,0,0,0,0,0,0,0}}, 0}},
         {fmtid_badchar4W, &out, E_INVALIDARG, { {0x12345678,0,0,{0,0,0,0,0,0,0,0}}, 0}},
@@ -371,42 +373,42 @@ static void test_PSPropertyKeyFromString(void)
         {fmtid_badchar13W, &out, E_INVALIDARG, { {0x12345678,0x1234,0x1234,{0x12,0x34,0x12,0x34,0x56,0x78,0,0}}, 0}},
         {fmtid_badchar14W, &out, E_INVALIDARG, { {0x12345678,0x1234,0x1234,{0x12,0x34,0x12,0x34,0x56,0x78,0x90,0}}, 0}},
         {fmtid_badbracket2W, &out, E_INVALIDARG, { {0x12345678,0x1234,0x1234,{0x12,0x34,0x12,0x34,0x56,0x78,0x90,0x00}}, 0 }},
-        {fmtid_spaceW, &out, E_INVALIDARG, {GUID_NULL, 0 }},
-        {fmtid_spaceendW, &out, E_INVALIDARG, {expect_guid, 0}},
-        {fmtid_spacesendW, &out, E_INVALIDARG, {expect_guid, 0}},
-        {fmtid_nopidW, &out, E_INVALIDARG, {expect_guid, 0}},
-        {fmtid_badpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_adjpidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_spacespidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_negpidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_negnegpidW, &out, S_OK, {expect_guid, 4294953717U}},
-        {fmtid_negnegnegpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_negspacepidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_negspacenegpidW, &out, S_OK, {expect_guid, 4294953717U}},
-        {fmtid_negspacespidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_pospidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_posnegpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_symbolpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_letterpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_spacepadpidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_spacemixpidW, &out, S_OK, {expect_guid, 1}},
-        {fmtid_tabpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_hexpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_mixedpidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_overflowpidW, &out, S_OK, {expect_guid, 3755744309U}},
-        {fmtid_commapidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_commaspidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_commaspacepidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_spacecommapidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_spccommaspcpidW, &out, S_OK, {expect_guid, 13579}},
-        {fmtid_spacescommaspidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_commanegpidW, &out, S_OK, {expect_guid, 4294953717U}},
-        {fmtid_spccommanegpidW, &out, S_OK, {expect_guid, 4294953717U}},
-        {fmtid_commaspcnegpidW, &out, S_OK, {expect_guid, 4294953717U}},
-        {fmtid_spccommaspcnegpidW, &out, S_OK, {expect_guid, 4294953717U}},
-        {fmtid_commanegspcpidW, &out, S_OK, {expect_guid, 0U}},
-        {fmtid_negcommapidW, &out, S_OK, {expect_guid, 0}},
-        {fmtid_normalpidW, &out, S_OK, {expect_guid, 13579}},
+        {fmtid_spaceW, &out, E_INVALIDARG, {GUID_MEMBERS(GUID_NULL), 0 }},
+        {fmtid_spaceendW, &out, E_INVALIDARG, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_spacesendW, &out, E_INVALIDARG, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_nopidW, &out, E_INVALIDARG, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_badpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_adjpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_spacespidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_negpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_negnegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 4294953717U}},
+        {fmtid_negnegnegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_negspacepidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_negspacenegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 4294953717U}},
+        {fmtid_negspacespidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_pospidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_posnegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_symbolpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_letterpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_spacepadpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_spacemixpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 1}},
+        {fmtid_tabpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_hexpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_mixedpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_overflowpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 3755744309U}},
+        {fmtid_commapidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_commaspidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_commaspacepidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_spacecommapidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_spccommaspcpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
+        {fmtid_spacescommaspidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_commanegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 4294953717U}},
+        {fmtid_spccommanegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 4294953717U}},
+        {fmtid_commaspcnegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 4294953717U}},
+        {fmtid_spccommaspcnegpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 4294953717U}},
+        {fmtid_commanegspcpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0U}},
+        {fmtid_negcommapidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 0}},
+        {fmtid_normalpidW, &out, S_OK, {GUID_MEMBERS(expect_guid), 13579}},
     };
 
     int i;
