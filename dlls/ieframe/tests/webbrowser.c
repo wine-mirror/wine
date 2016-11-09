@@ -3393,6 +3393,7 @@ static void test_external(IWebBrowser2 *unk)
         hres = IDispatch_QueryInterface(disp, &IID_IShellUIHelper, (void**)&uihelper);
         ok(hres == S_OK, "Could not get IShellUIHelper iface: %08x\n", hres);
         IShellUIHelper_Release(uihelper);
+        IDispatch_Release(disp);
     }
 
     IDocHostUIHandler2_Release(dochost);
