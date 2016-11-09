@@ -6727,6 +6727,7 @@ static void test_copy_subresource_region(void)
         0x0010000a, 0x00000000, 0x0100003e,
     };
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+    static const DWORD initial_data[16] = {0};
     static const DWORD bitmap_data[] =
     {
         0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
@@ -6759,13 +6760,17 @@ static void test_copy_subresource_region(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &dst_texture);
+    resource_data.pSysMem = initial_data;
+    resource_data.SysMemPitch = texture_desc.Width * sizeof(*initial_data);
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &resource_data, &dst_texture);
     ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
 
     texture_desc.Usage = D3D10_USAGE_IMMUTABLE;
 
     resource_data.pSysMem = bitmap_data;
-    resource_data.SysMemPitch = 4 * sizeof(*bitmap_data);
+    resource_data.SysMemPitch = texture_desc.Width * sizeof(*bitmap_data);
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &resource_data, &src_texture);
