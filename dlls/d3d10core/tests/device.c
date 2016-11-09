@@ -6931,33 +6931,6 @@ static void test_copy_subresource_region(void)
     release_test_context(&test_context);
 }
 
-static void test_buffer_data_init(void)
-{
-    struct resource_readback rb;
-    ID3D10Buffer *buffer;
-    ID3D10Device *device;
-    unsigned int i;
-
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    buffer = create_buffer(device, D3D10_BIND_SHADER_RESOURCE, 1024, NULL);
-
-    get_buffer_readback(buffer, &rb);
-    for (i = 0; i < rb.width; ++i)
-    {
-        DWORD r = get_readback_color(&rb, i / sizeof(DWORD), 0);
-        ok(!r, "Got unexpected result %#x at offset %u.\n", r, i);
-    }
-    release_resource_readback(&rb);
-
-    ID3D10Buffer_Release(buffer);
-    ID3D10Device_Release(device);
-}
-
 static void test_texture_data_init(void)
 {
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -9753,7 +9726,6 @@ START_TEST(device)
     test_fragment_coords();
     test_update_subresource();
     test_copy_subresource_region();
-    test_buffer_data_init();
     test_texture_data_init();
     test_check_multisample_quality_levels();
     test_cb_relative_addressing();
