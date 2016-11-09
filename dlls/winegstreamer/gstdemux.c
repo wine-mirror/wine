@@ -1963,6 +1963,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
     EnterCriticalSection(This->pin.pCritSec);
     if (!This->pin.pConnectedTo) {
         ALLOCATOR_PROPERTIES props;
+        IMemAllocator *pAlloc = NULL;
 
         props.cBuffers = 8;
         props.cbBuffer = 16384;
@@ -1986,8 +1987,19 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
             hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
         if (SUCCEEDED(hr))
             hr = GST_Connect(This, pReceivePin, &props);
+
+        /* A certain IAsyncReader::RequestAllocator expects to be passed
+           non-NULL preferred allocator */
         if (SUCCEEDED(hr))
-            hr = IAsyncReader_RequestAllocator(This->pReader, NULL, &props, &This->pAlloc);
+            hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC,
+                                  &IID_IMemAllocator, (LPVOID *)&pAlloc);
+        if (SUCCEEDED(hr)) {
+            hr = IAsyncReader_RequestAllocator(This->pReader, pAlloc, &props, &This->pAlloc);
+            if (FAILED(hr))
+                WARN("Can't get an allocator, got %08x\n", hr);
+        }
+        if (pAlloc)
+            IMemAllocator_Release(pAlloc);
         if (SUCCEEDED(hr)) {
             CopyMediaType(&This->pin.mtCurrent, pmt);
             This->pin.pConnectedTo = pReceivePin;
