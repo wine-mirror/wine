@@ -7370,33 +7370,6 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_buffer_data_init(void)
-{
-    struct resource_readback rb;
-    ID3D11Buffer *buffer;
-    ID3D11Device *device;
-    unsigned int i;
-
-    if (!(device = create_device(NULL)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    buffer = create_buffer(device, D3D11_BIND_SHADER_RESOURCE, 1024, NULL);
-
-    get_buffer_readback(buffer, &rb);
-    for (i = 0; i < rb.width; ++i)
-    {
-        DWORD r = get_readback_color(&rb, i / sizeof(DWORD), 0);
-        ok(!r, "Got unexpected result %#x at offset %u.\n", r, i);
-    }
-    release_resource_readback(&rb);
-
-    ID3D11Buffer_Release(buffer);
-    ID3D11Device_Release(device);
-}
-
 static void test_texture_data_init(void)
 {
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -11061,7 +11034,6 @@ START_TEST(d3d11)
     test_update_subresource();
     test_copy_subresource_region();
     test_resource_map();
-    test_buffer_data_init();
     test_texture_data_init();
     test_check_multisample_quality_levels();
     run_for_each_feature_level(test_swapchain_formats);
