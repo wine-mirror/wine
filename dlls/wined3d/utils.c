@@ -250,6 +250,7 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_D16_UNORM,              WINED3DFMT_R16_TYPELESS,          "D"},
     {WINED3DFMT_R8_UNORM,               WINED3DFMT_R8_TYPELESS,           "u"},
     {WINED3DFMT_R8_UINT,                WINED3DFMT_R8_TYPELESS,           "U"},
+    {WINED3DFMT_R8_SINT,                WINED3DFMT_R8_TYPELESS,           "I"},
     {WINED3DFMT_BC1_UNORM_SRGB,         WINED3DFMT_BC1_TYPELESS,          ""},
     {WINED3DFMT_BC1_UNORM,              WINED3DFMT_BC1_TYPELESS,          ""},
     {WINED3DFMT_BC2_UNORM_SRGB,         WINED3DFMT_BC2_TYPELESS,          ""},
@@ -1330,6 +1331,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             ARB_TEXTURE_RG,             NULL},
     {WINED3DFMT_R8_UINT,                GL_R8UI,                          GL_R8UI,                                0,
             GL_RED_INTEGER,             GL_UNSIGNED_BYTE,                 0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET,
+            ARB_TEXTURE_RG,             NULL},
+    {WINED3DFMT_R8_SINT,                GL_R8I,                           GL_R8I,                                 0,
+            GL_RED_INTEGER,             GL_BYTE,                          0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_RG,             NULL},
     /* Luminance */
