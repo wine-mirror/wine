@@ -21,6 +21,7 @@
 #ifndef __D3DRM_PRIVATE_INCLUDED__
 #define __D3DRM_PRIVATE_INCLUDED__
 
+#define COBJMACROS
 #include <math.h>
 #include "d3drm.h"
 #include "dxfile.h"

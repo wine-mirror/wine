@@ -22,11 +22,8 @@
 
 #include "wine/debug.h"
 
-#define COBJMACROS
-
 #include "winbase.h"
 #include "wingdi.h"
-#include "dxfile.h"
 #include "rmxfguid.h"
 
 #include "d3drm_private.h"

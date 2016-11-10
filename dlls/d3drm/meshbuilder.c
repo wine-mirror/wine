@@ -21,13 +21,10 @@
 
 #define NONAMELESSUNION
 
-#define COBJMACROS
-
 #include "wine/debug.h"
 
 #include "winbase.h"
 #include "wingdi.h"
-#include "dxfile.h"
 #include "rmxfguid.h"
 
 #include "d3drm_private.h"

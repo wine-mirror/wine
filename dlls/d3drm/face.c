@@ -20,8 +20,6 @@
 
 #include "wine/debug.h"
 
-#define COBJMACROS
-
 #include "winbase.h"
 #include "wingdi.h"
 
