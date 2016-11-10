@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-10-24 22:55+0200\n"
+"PO-Revision-Date: 2016-11-10 15:09+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -8121,10 +8121,8 @@ msgid "Wine was brought to you by:"
 msgstr "Розробники Wine:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "&Запустити..."
+msgstr "Запустити"
 
 #: shell32.rc:338
 msgid ""
