@@ -243,6 +243,7 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_D24_UNORM_S8_UINT,      WINED3DFMT_R24G8_TYPELESS,        "DS"},
     {WINED3DFMT_R8G8_SNORM,             WINED3DFMT_R8G8_TYPELESS,         "ii"},
     {WINED3DFMT_R8G8_UNORM,             WINED3DFMT_R8G8_TYPELESS,         "uu"},
+    {WINED3DFMT_R8G8_UINT,              WINED3DFMT_R8G8_TYPELESS,         "UU"},
     {WINED3DFMT_R16_UNORM,              WINED3DFMT_R16_TYPELESS,          "u"},
     {WINED3DFMT_R16_UINT,               WINED3DFMT_R16_TYPELESS,          "U"},
     {WINED3DFMT_R16_SINT,               WINED3DFMT_R16_TYPELESS,          "I"},
@@ -1307,6 +1308,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_RG,                      GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_RENDERTARGET,
+            ARB_TEXTURE_RG,             NULL},
+    {WINED3DFMT_R8G8_UINT,              GL_RG8UI,                         GL_RG8UI,                               0,
+            GL_RG_INTEGER,              GL_UNSIGNED_BYTE,                 0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_RG,             NULL},
     {WINED3DFMT_R32_UINT,               GL_R32UI,                         GL_R32UI,                               0,
             GL_RED_INTEGER,             GL_UNSIGNED_INT,                  0,
