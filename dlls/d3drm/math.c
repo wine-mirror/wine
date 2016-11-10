@@ -27,7 +27,7 @@
 /* Create a RGB color from its components */
 D3DCOLOR WINAPI D3DRMCreateColorRGB(D3DVALUE red, D3DVALUE green, D3DVALUE blue)
 {
-    return (D3DRMCreateColorRGBA(red, green, blue, 255.0));
+    return D3DRMCreateColorRGBA(red, green, blue, 1.0f);
 }
 /* Create a RGBA color from its components */
 D3DCOLOR WINAPI D3DRMCreateColorRGBA(D3DVALUE red, D3DVALUE green, D3DVALUE blue, D3DVALUE alpha)
