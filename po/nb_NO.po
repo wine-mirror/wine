@@ -8041,10 +8041,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine er laget av:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "Kjø&r..."
+msgstr "Kjør"
 
 #: shell32.rc:338
 msgid ""
@@ -14510,10 +14508,8 @@ msgid "Error: Invalid query\n"
 msgstr "Feil: Ugyldig spørring\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "reg: Ugyldig syntaks. "
+msgstr "Feil: Ugyldig syntaks for PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
