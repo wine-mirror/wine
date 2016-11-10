@@ -17,15 +17,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-#include "d3d.h"
+#include "config.h"
+#include "wine/port.h"
 
-#include "dxfile.h"
 #include "initguid.h"
-#include "d3drm.h"
-
 #include "d3drm_private.h"
-#include "wine/list.h"
 
 /***********************************************************************
  *		DllMain  (D3DRM.@)

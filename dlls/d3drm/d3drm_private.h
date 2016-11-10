@@ -29,6 +29,7 @@
 #include "d3drm.h"
 #include "dxfile.h"
 #include "d3drmwin.h"
+#include "rmxfguid.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 

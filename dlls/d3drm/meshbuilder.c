@@ -23,7 +23,6 @@
 #include "wine/port.h"
 
 #include "d3drm_private.h"
-#include "rmxfguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
