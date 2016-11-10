@@ -1234,8 +1234,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
 
                 values = (float*)ptr;
 
-                This->materials[i].color = RGBA_MAKE((BYTE)(values[0] * 255.0f), (BYTE)(values[1] * 255.0f),
-                        (BYTE)(values[2] * 255.0f), (BYTE)(values[3] * 255.0f));
+                d3drm_set_color(&This->materials[i].color, values[0], values[1], values[2], values[3]);
 
                 IDirect3DRMMaterial2_SetAmbient(This->materials[i].material, values[0], values [1], values[2]); /* Alpha ignored */
                 IDirect3DRMMaterial2_SetPower(This->materials[i].material, values[4]);
@@ -1694,7 +1693,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_SetColorRGB(IDirect3DRMMeshBuilder3 *i
 
     TRACE("iface %p, red %.8e, green %.8e, blue %.8e.\n", iface, red, green, blue);
 
-    mesh_builder->color = RGBA_MAKE((BYTE)(red * 255.0f), (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
+    d3drm_set_color(&mesh_builder->color, red, green, blue, 1.0f);
 
     return D3DRM_OK;
 }
@@ -2595,7 +2594,7 @@ static HRESULT WINAPI d3drm_mesh_SetGroupColorRGB(IDirect3DRMMesh *iface,
     if (id >= mesh->nb_groups)
         return D3DRMERR_BADVALUE;
 
-    mesh->groups[id].color = RGBA_MAKE((BYTE)(red * 255.0f), (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
+    d3drm_set_color(&mesh->groups[id].color, red, green, blue, 1.0f);
 
     return D3DRM_OK;
 }
