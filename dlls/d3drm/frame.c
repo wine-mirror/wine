@@ -2004,8 +2004,7 @@ static HRESULT WINAPI d3drm_frame3_SetSceneBackgroundRGB(IDirect3DRMFrame3 *ifac
 
     TRACE("iface %p, red %.8e, green %.8e, blue %.8e.\n", iface, red, green, blue);
 
-    frame->scenebackground = RGBA_MAKE((BYTE)(red * 255.0f),
-            (BYTE)(green * 255.0f), (BYTE)(blue * 255.0f), 0xff);
+    d3drm_set_color(&frame->scenebackground, red, green, blue, 1.0f);
 
     return D3DRM_OK;
 }
@@ -2949,7 +2948,7 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
     object->IDirect3DRMFrame3_iface.lpVtbl = &d3drm_frame3_vtbl;
     object->d3drm = d3drm;
     object->ref = 1;
-    object->scenebackground = RGBA_MAKE(0, 0, 0, 0xff);
+    d3drm_set_color(&object->scenebackground, 0.0f, 0.0f, 0.0f, 1.0f);
 
     memcpy(object->transform, identity, sizeof(D3DRMMATRIX4D));
 
