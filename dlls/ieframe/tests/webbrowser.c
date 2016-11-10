@@ -260,7 +260,7 @@ static void _test_LocationURL(unsigned line, IWebBrowser2 *wb, const char *exurl
 
     hres = IWebBrowser2_get_LocationURL(wb, &url);
     ok_(__FILE__,line) (hres == (*exurl ? S_OK : S_FALSE), "get_LocationURL failed: %08x\n", hres);
-    if (hres == S_OK)
+    if (SUCCEEDED(hres))
     {
         ok_(__FILE__,line) (!strcmp_wa(url, exurl), "unexpected URL: %s\n", wine_dbgstr_w(url));
         SysFreeString(url);
