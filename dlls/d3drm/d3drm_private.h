@@ -26,7 +26,6 @@
 #define COBJMACROS
 #include <assert.h>
 #include <math.h>
-#include "d3drm.h"
 #include "dxfile.h"
 #include "d3drmwin.h"
 #include "rmxfguid.h"
