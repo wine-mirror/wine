@@ -21,12 +21,15 @@
 #ifndef __D3DRM_PRIVATE_INCLUDED__
 #define __D3DRM_PRIVATE_INCLUDED__
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #define COBJMACROS
+#include <assert.h>
 #include <math.h>
 #include "d3drm.h"
 #include "dxfile.h"
 #include "d3drmwin.h"
-
+#include "wine/debug.h"
 #include "wine/list.h"
 
 #ifndef ARRAY_SIZE

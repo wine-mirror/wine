@@ -18,14 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
-#include "wine/debug.h"
-
-#include "winbase.h"
-#include "wingdi.h"
+#include "config.h"
+#include "wine/port.h"
 
 #include "d3drm_private.h"
-#include "initguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
@@ -163,7 +159,7 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
         surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-        surface_desc.dwZBufferBitDepth = 16;
+        surface_desc.u2.dwZBufferBitDepth = 16;
         surface_desc.dwWidth = desc.dwWidth;
         surface_desc.dwHeight = desc.dwHeight;
         hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);
