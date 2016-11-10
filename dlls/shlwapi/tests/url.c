@@ -1435,6 +1435,7 @@ static const struct parse_url_test_t {
     {"htt?p://www.winehq.org/",URL_E_INVALID_SYNTAX},
     {"ab-://www.winehq.org/",S_OK,3,URL_SCHEME_UNKNOWN},
     {" http://www.winehq.org/",URL_E_INVALID_SYNTAX},
+    {"HTTP://www.winehq.org/",S_OK,4,URL_SCHEME_HTTP},
 };
 
 static void test_ParseURL(void)
