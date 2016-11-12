@@ -107,20 +107,16 @@ static void DoLoadStrings(void)
 
     HINSTANCE hInstance = GetModuleHandleW(0);
 
-    LoadStringW(hInstance, STRING_RICHTEXT_FILES_RTF, p, MAX_STRING_LEN);
-    p += lstrlenW(p) + 1;
+    p += 1 + LoadStringW(hInstance, STRING_RICHTEXT_FILES_RTF, p, MAX_STRING_LEN);
     lstrcpyW(p, files_rtf);
     p += lstrlenW(p) + 1;
-    LoadStringW(hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
-    p += lstrlenW(p) + 1;
+    p += 1 + LoadStringW(hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
     lstrcpyW(p, files_txt);
     p += lstrlenW(p) + 1;
-    LoadStringW(hInstance, STRING_TEXT_FILES_UNICODE_TXT, p, MAX_STRING_LEN);
-    p += lstrlenW(p) + 1;
+    p += 1 + LoadStringW(hInstance, STRING_TEXT_FILES_UNICODE_TXT, p, MAX_STRING_LEN);
     lstrcpyW(p, files_txt);
     p += lstrlenW(p) + 1;
-    LoadStringW(hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
-    p += lstrlenW(p) + 1;
+    p += 1 + LoadStringW(hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
     lstrcpyW(p, files_all);
     p += lstrlenW(p) + 1;
     *p = '\0';
