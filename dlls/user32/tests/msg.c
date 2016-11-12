@@ -14054,6 +14054,7 @@ static void test_clipboard_viewers(void)
     trace("clipbd viewers: hWnd1=%p, hWnd2=%p, hWnd3=%p\n", hWnd1, hWnd2, hWnd3);
     assert(hWnd1 && hWnd2 && hWnd3);
 
+    CountClipboardFormats(); /* Ensure that we do not have an X11 update to the clipboard */
     flush_sequence();
 
     /* Test getting the clipboard viewer and setting the viewer to NULL. */
