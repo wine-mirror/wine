@@ -285,7 +285,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                         case D3DPROCESSVERTICES_TRANSFORMLIGHT:
                         case D3DPROCESSVERTICES_TRANSFORM:
                             wined3d_device_set_stream_source(device->wined3d_device, 0,
-                                    buffer->src_vertex_buffer, 0, sizeof(D3DVERTEX));
+                                    buffer->src_vertex_buffer, buffer->src_vertex_pos, sizeof(D3DVERTEX));
                             if (op == D3DPROCESSVERTICES_TRANSFORMLIGHT)
                             {
                                 wined3d_device_set_vertex_declaration(device->wined3d_device,
@@ -306,8 +306,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                             break;
 
                         case D3DPROCESSVERTICES_COPY:
-                            box.left = ci->wStart * sizeof(D3DTLVERTEX);
-                            box.right = (ci->wStart + ci->dwCount) * sizeof(D3DTLVERTEX);
+                            box.left = (buffer->src_vertex_pos + ci->wStart) * sizeof(D3DTLVERTEX);
+                            box.right = box.left + ci->dwCount * sizeof(D3DTLVERTEX);
                             box.top = box.front = 0;
                             box.bottom = box.back = 1;
                             wined3d_device_copy_sub_resource_region(device->wined3d_device,
@@ -559,6 +559,9 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
 
     TRACE("iface %p, data %p.\n", iface, data);
 
+    /* Skip past previous vertex data. */
+    buffer->src_vertex_pos += buffer->data.dwVertexCount;
+
     if (buffer->vertex_size < data->dwVertexCount)
     {
         unsigned int new_size = max(data->dwVertexCount, buffer->vertex_size * 2);
@@ -587,18 +590,24 @@ static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *
         buffer->src_vertex_buffer = src_buffer;
         buffer->dst_vertex_buffer = dst_buffer;
         buffer->vertex_size = new_size;
+        buffer->src_vertex_pos = 0;
+    }
+    else if (buffer->vertex_size - data->dwVertexCount < buffer->src_vertex_pos)
+    {
+        buffer->src_vertex_pos = 0;
     }
 
     if (data->dwVertexCount)
     {
-        box.left = 0;
-        box.right = data->dwVertexCount * sizeof(D3DVERTEX);
+        box.left = buffer->src_vertex_pos * sizeof(D3DVERTEX);
+        box.right = box.left + data->dwVertexCount * sizeof(D3DVERTEX);
         hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0,
-                &map_desc, &box, WINED3D_MAP_DISCARD);
+                &map_desc, &box, buffer->src_vertex_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
         if (FAILED(hr))
             return hr;
 
-        memcpy(map_desc.data, ((BYTE *)buffer->desc.lpData) + data->dwVertexOffset, box.right);
+        memcpy(map_desc.data, ((BYTE *)buffer->desc.lpData) + data->dwVertexOffset,
+                data->dwVertexCount * sizeof(D3DVERTEX));
 
         wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0);
     }
