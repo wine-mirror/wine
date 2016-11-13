@@ -53,7 +53,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 {
     DWORD is = buffer->data.dwInstructionOffset;
     char *instr = (char *)buffer->desc.lpData + is;
-    unsigned int i;
+    unsigned int i, primitive_size;
     struct wined3d_map_desc map_desc;
     struct wined3d_box box = {0};
     HRESULT hr;
@@ -81,31 +81,51 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	count = current->wCount;
 	size = current->bSize;
 	instr += sizeof(D3DINSTRUCTION);
-	
-	switch (current->bOpcode) {
-	    case D3DOP_POINT: {
-	        WARN("POINT-s          (%d)\n", count);
-		instr += count * size;
-	    } break;
+        primitive_size = 0;
 
-	    case D3DOP_LINE: {
-	        WARN("LINE-s           (%d)\n", count);
-		instr += count * size;
-	    } break;
+        switch (current->bOpcode)
+        {
+            case D3DOP_POINT:
+            {
+                const D3DPOINT *p = (D3DPOINT *)instr;
+                wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_POINTLIST);
+                wined3d_device_set_stream_source(device->wined3d_device, 0,
+                        buffer->dst_vertex_buffer, 0, sizeof(D3DTLVERTEX));
+                wined3d_device_set_vertex_declaration(device->wined3d_device,
+                        ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
 
+                for (i = 0; i < count; ++i)
+                    wined3d_device_draw_primitive(device->wined3d_device, p[i].wFirst, p[i].wCount);
+
+                instr += sizeof(*p) * count;
+                break;
+            }
+
+            case D3DOP_LINE:
+                primitive_size = 2;
+                wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_LINELIST);
+                /* Drop through. */
             case D3DOP_TRIANGLE:
             {
                 WORD *indices;
-                unsigned int index_pos = buffer->index_pos;
+                unsigned int index_pos = buffer->index_pos, index_count;
                 TRACE("TRIANGLE         (%d)\n", count);
 
                 if (!count)
                     break;
 
-                if (buffer->index_size < count * 3)
+                if (!primitive_size)
+                {
+                    wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_TRIANGLELIST);
+                    primitive_size = 3;
+                }
+
+                index_count = count * primitive_size;
+
+                if (buffer->index_size < index_count)
                 {
                     struct wined3d_buffer *new_buffer;
-                    unsigned int new_size = max(buffer->index_size * 2, count * 3);
+                    unsigned int new_size = max(buffer->index_size * 2, index_count);
 
                     hr = wined3d_buffer_create_ib(device->wined3d_device, new_size * sizeof(*indices),
                             WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY, WINED3D_POOL_DEFAULT,
@@ -119,13 +139,13 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     buffer->index_buffer = new_buffer;
                     index_pos = 0;
                 }
-                else if (buffer->index_size - count * 3 < index_pos)
+                else if (buffer->index_size - index_count < index_pos)
                 {
                     index_pos = 0;
                 }
 
                 box.left = index_pos * sizeof(*indices);
-                box.right = (index_pos + count * 3) * sizeof(*indices);
+                box.right = (index_pos + index_count) * sizeof(*indices);
                 hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->index_buffer), 0,
                         &map_desc, &box, index_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
                 if (FAILED(hr))
@@ -157,9 +177,16 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                             TRACE("STARTFLAT(%u) ", ci->wFlags);
                         TRACE("\n");
                     }
-                    indices[(i * 3)    ] = ci->u1.v1;
-                    indices[(i * 3) + 1] = ci->u2.v2;
-                    indices[(i * 3) + 2] = ci->u3.v3;
+
+                    switch (primitive_size)
+                    {
+                        case 3:
+                            indices[(i * primitive_size) + 2] = ci->u3.v3;
+                            /* Drop through. */
+                        case 2:
+                            indices[(i * primitive_size) + 1] = ci->u2.v2;
+                            indices[(i * primitive_size)    ] = ci->u1.v1;
+                    }
                     instr += size;
                 }
 
@@ -170,10 +197,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 wined3d_device_set_vertex_declaration(device->wined3d_device,
                         ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
                 wined3d_device_set_index_buffer(device->wined3d_device, buffer->index_buffer, WINED3DFMT_R16_UINT, 0);
-                wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_TRIANGLELIST);
-                wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, count * 3);
+                wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, index_count);
 
-                buffer->index_pos = index_pos + count * 3;
+                buffer->index_pos = index_pos + index_count;
                 break;
             }
 
