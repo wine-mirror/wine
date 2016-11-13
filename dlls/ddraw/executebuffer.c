@@ -48,25 +48,9 @@ static void _dump_D3DEXECUTEBUFFERDESC(const D3DEXECUTEBUFFERDESC *lpDesc) {
     TRACE("lpData       : %p\n", lpDesc->lpData);
 }
 
-static void transform_vertex(D3DTLVERTEX *dst, const D3DMATRIX *mat,
-        const D3DVIEWPORT *vp, float x, float y, float z)
-{
-    dst->u1.sx = (x * mat->_11) + (y * mat->_21) + (z * mat->_31) + mat->_41;
-    dst->u2.sy = (x * mat->_12) + (y * mat->_22) + (z * mat->_32) + mat->_42;
-    dst->u3.sz = (x * mat->_13) + (y * mat->_23) + (z * mat->_33) + mat->_43;
-    dst->u4.rhw = (x * mat->_14) + (y * mat->_24) + (z * mat->_34) + mat->_44;
-
-    dst->u4.rhw = 1.0f / dst->u4.rhw;
-
-    dst->u1.sx = (dst->u1.sx * dst->u4.rhw + 1.0f) * vp->dwWidth * 0.5 + vp->dwX;
-    dst->u2.sy = (-dst->u2.sy * dst->u4.rhw + 1.0f) * vp->dwHeight * 0.5 + vp->dwY;
-    dst->u3.sz *= dst->u4.rhw;
-}
-
 HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
         struct d3d_device *device, struct d3d_viewport *viewport)
 {
-    DWORD vs = buffer->data.dwVertexOffset;
     DWORD is = buffer->data.dwInstructionOffset;
     char *instr = (char *)buffer->desc.lpData + is;
     unsigned int i;
@@ -272,40 +256,12 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 break;
 
             case D3DOP_PROCESSVERTICES:
-            {
-                /* TODO: Share code with d3d_vertex_buffer7_ProcessVertices()
-                 * and / or wined3d_device_process_vertices(). */
-                D3DMATRIX view_mat, world_mat, proj_mat, mat;
-
                 TRACE("PROCESSVERTICES  (%d)\n", count);
-
-                /* Note that the projection set in wined3d has the legacy clip space
-                 * adjustment built in. */
-                wined3d_device_get_transform(device->wined3d_device,
-                        D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
-                wined3d_device_get_transform(device->wined3d_device,
-                        D3DTRANSFORMSTATE_PROJECTION, (struct wined3d_matrix *)&proj_mat);
-                wined3d_device_get_transform(device->wined3d_device,
-                        WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
-
-                if (TRACE_ON(ddraw))
-                {
-                    TRACE("  Projection Matrix:\n");
-                    dump_D3DMATRIX(&proj_mat);
-                    TRACE("  View Matrix:\n");
-                    dump_D3DMATRIX(&view_mat);
-                    TRACE("  World Matrix:\n");
-                    dump_D3DMATRIX(&world_mat);
-                }
-
-                multiply_matrix(&mat, &view_mat, &world_mat);
-                multiply_matrix(&mat, &proj_mat, &mat);
 
                 for (i = 0; i < count; ++i)
                 {
                     D3DPROCESSVERTICES *ci = (D3DPROCESSVERTICES *)instr;
                     DWORD op = ci->dwFlags & D3DPROCESSVERTICES_OPMASK;
-                    D3DTLVERTEX *src, *dst;
 
                     TRACE("  start %u, dest %u, count %u, flags %#x.\n",
                             ci->wStart, ci->wDest, ci->dwCount, ci->dwFlags);
@@ -318,78 +274,37 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     switch (op)
                     {
                         case D3DPROCESSVERTICES_TRANSFORMLIGHT:
-                        {
-                            const D3DVERTEX *src = (D3DVERTEX *)((char *)buffer->desc.lpData + vs) + ci->wStart;
-                            unsigned int vtx_idx;
-                            static unsigned int once;
-
-                            if (!once++)
-                                FIXME("Lighting not implemented.\n");
-
-                            box.left = ci->wDest * sizeof(*dst);
-                            box.right = (ci->wDest + ci->dwCount) * sizeof(*dst);
-                            hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0,
-                                    &map_desc, &box, 0);
-                            if (FAILED(hr))
-                                return hr;
-                            dst = map_desc.data;
-
-                            for (vtx_idx = 0; vtx_idx < ci->dwCount; ++vtx_idx)
-                            {
-                                transform_vertex(&dst[vtx_idx], &mat, &viewport->viewports.vp1,
-                                        src[vtx_idx].u1.x, src[vtx_idx].u2.y, src[vtx_idx].u3.z);
-                                /* No lighting yet */
-                                dst[vtx_idx].u5.color = 0xffffffff; /* Opaque white */
-                                dst[vtx_idx].u6.specular = 0xff000000; /* No specular and no fog factor */
-                                dst[vtx_idx].u7.tu = src[vtx_idx].u7.tu;
-                                dst[vtx_idx].u8.tv = src[vtx_idx].u8.tv;
-                            }
-
-                            wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0);
-
-                            break;
-                        }
-
                         case D3DPROCESSVERTICES_TRANSFORM:
-                        {
-                            const D3DLVERTEX *src = (D3DLVERTEX *)((char *)buffer->desc.lpData + vs) + ci->wStart;
-                            unsigned int vtx_idx;
-
-                            box.left = ci->wDest * sizeof(*dst);
-                            box.right = (ci->wDest + ci->dwCount) * sizeof(*dst);
-                            hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0,
-                                    &map_desc, &box, 0);
-                            if (FAILED(hr))
-                                return hr;
-                            dst = map_desc.data;
-
-                            for (vtx_idx = 0; vtx_idx < ci->dwCount; ++vtx_idx)
+                            wined3d_device_set_stream_source(device->wined3d_device, 0,
+                                    buffer->src_vertex_buffer, 0, sizeof(D3DVERTEX));
+                            if (op == D3DPROCESSVERTICES_TRANSFORMLIGHT)
                             {
-                                transform_vertex(&dst[vtx_idx], &mat, &viewport->viewports.vp1,
-                                        src[vtx_idx].u1.x, src[vtx_idx].u2.y, src[vtx_idx].u3.z);
-                                dst[vtx_idx].u5.color = src[vtx_idx].u4.color;
-                                dst[vtx_idx].u6.specular = src[vtx_idx].u5.specular;
-                                dst[vtx_idx].u7.tu = src[vtx_idx].u6.tu;
-                                dst[vtx_idx].u8.tv = src[vtx_idx].u7.tv;
+                                wined3d_device_set_vertex_declaration(device->wined3d_device,
+                                        ddraw_find_decl(device->ddraw, D3DFVF_VERTEX));
+                                wined3d_device_set_render_state(device->wined3d_device,
+                                        WINED3D_RS_LIGHTING, TRUE);
+                            }
+                            else
+                            {
+                                wined3d_device_set_vertex_declaration(device->wined3d_device,
+                                        ddraw_find_decl(device->ddraw, D3DFVF_LVERTEX));
+                                wined3d_device_set_render_state(device->wined3d_device,
+                                        WINED3D_RS_LIGHTING, FALSE);
                             }
 
-                            wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0);
-
+                            wined3d_device_process_vertices(device->wined3d_device, ci->wStart, ci->wDest,
+                                    ci->dwCount, buffer->dst_vertex_buffer, NULL, 0, D3DFVF_TLVERTEX);
                             break;
-                        }
 
                         case D3DPROCESSVERTICES_COPY:
-                            box.left = ci->wDest * sizeof(*src);
-                            box.right = (ci->wDest + ci->dwCount) * sizeof(*src);
-                            hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0,
-                                    &map_desc, &box, 0);
-                            if (FAILED(hr))
-                                return hr;
-
-                            src = (D3DTLVERTEX *)((char *)buffer->desc.lpData + vs) + ci->wStart;
-                            memcpy(map_desc.data, src, ci->dwCount * sizeof(*src));
-
-                            wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0);
+                            box.left = ci->wStart * sizeof(D3DTLVERTEX);
+                            box.right = (ci->wStart + ci->dwCount) * sizeof(D3DTLVERTEX);
+                            box.top = box.front = 0;
+                            box.bottom = box.back = 1;
+                            wined3d_device_copy_sub_resource_region(device->wined3d_device,
+                                    wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0,
+                                    ci->wDest * sizeof(D3DTLVERTEX), 0, 0,
+                                    wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0, &box);
                             break;
 
                         default:
@@ -400,7 +315,6 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     instr += size;
                 }
                 break;
-            }
 
 	    case D3DOP_TEXTURELOAD: {
 	        WARN("TEXTURELOAD-s    (%d)\n", count);
@@ -538,7 +452,10 @@ static ULONG WINAPI d3d_execute_buffer_Release(IDirect3DExecuteBuffer *iface)
         if (buffer->index_buffer)
             wined3d_buffer_decref(buffer->index_buffer);
         if (buffer->dst_vertex_buffer)
+        {
+            wined3d_buffer_decref(buffer->src_vertex_buffer);
             wined3d_buffer_decref(buffer->dst_vertex_buffer);
+        }
         HeapFree(GetProcessHeap(), 0, buffer);
     }
 
@@ -627,28 +544,57 @@ static HRESULT WINAPI d3d_execute_buffer_Unlock(IDirect3DExecuteBuffer *iface)
 static HRESULT WINAPI d3d_execute_buffer_SetExecuteData(IDirect3DExecuteBuffer *iface, D3DEXECUTEDATA *data)
 {
     struct d3d_execute_buffer *buffer = impl_from_IDirect3DExecuteBuffer(iface);
+    struct wined3d_map_desc map_desc;
+    struct wined3d_box box = {0};
+    HRESULT hr;
 
     TRACE("iface %p, data %p.\n", iface, data);
 
-    memcpy(&buffer->data, data, data->dwSize);
-
     if (buffer->vertex_size < data->dwVertexCount)
     {
-        HRESULT hr;
         unsigned int new_size = max(data->dwVertexCount, buffer->vertex_size * 2);
-        struct wined3d_buffer *dst_buffer;
+        struct wined3d_buffer *src_buffer, *dst_buffer;
+
+        hr = wined3d_buffer_create_vb(buffer->d3ddev->wined3d_device, new_size * sizeof(D3DVERTEX),
+                WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY, WINED3D_POOL_SYSTEM_MEM,
+                NULL, &ddraw_null_wined3d_parent_ops, &src_buffer);
+        if (FAILED(hr))
+            return hr;
 
         hr = wined3d_buffer_create_vb(buffer->d3ddev->wined3d_device, new_size * sizeof(D3DTLVERTEX),
                 WINED3DUSAGE_STATICDECL, WINED3D_POOL_DEFAULT,
                 NULL, &ddraw_null_wined3d_parent_ops, &dst_buffer);
         if (FAILED(hr))
+        {
+            wined3d_buffer_decref(src_buffer);
             return hr;
+        }
 
         if (buffer->dst_vertex_buffer)
+        {
+            wined3d_buffer_decref(buffer->src_vertex_buffer);
             wined3d_buffer_decref(buffer->dst_vertex_buffer);
+        }
+        buffer->src_vertex_buffer = src_buffer;
         buffer->dst_vertex_buffer = dst_buffer;
         buffer->vertex_size = new_size;
     }
+
+    if (data->dwVertexCount)
+    {
+        box.left = 0;
+        box.right = data->dwVertexCount * sizeof(D3DVERTEX);
+        hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0,
+                &map_desc, &box, WINED3D_MAP_DISCARD);
+        if (FAILED(hr))
+            return hr;
+
+        memcpy(map_desc.data, ((BYTE *)buffer->desc.lpData) + data->dwVertexOffset, box.right);
+
+        wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0);
+    }
+
+    memcpy(&buffer->data, data, data->dwSize);
 
     if (TRACE_ON(ddraw))
         _dump_executedata(data);
