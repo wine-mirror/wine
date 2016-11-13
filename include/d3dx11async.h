@@ -25,6 +25,12 @@
 extern "C" {
 #endif
 
+HRESULT WINAPI D3DX11CreateAsyncFileLoaderA(const char *file_name, ID3DX11DataLoader **loader);
+HRESULT WINAPI D3DX11CreateAsyncFileLoaderW(const WCHAR *file_name, ID3DX11DataLoader **loader);
+HRESULT WINAPI D3DX11CreateAsyncResourceLoaderA(HMODULE module, const char *resource, ID3DX11DataLoader **loader);
+HRESULT WINAPI D3DX11CreateAsyncResourceLoaderW(HMODULE module, const WCHAR *resource, ID3DX11DataLoader **loader);
+HRESULT WINAPI D3DX11CreateAsyncMemoryLoader(const void *data, SIZE_T data_size, ID3DX11DataLoader **loader);
+
 HRESULT WINAPI D3DX11CompileFromMemory(const char *data, SIZE_T data_size, const char *filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *entry_point,
         const char *target, UINT sflags, UINT eflags, ID3DX11ThreadPump *pump, ID3D10Blob **shader,

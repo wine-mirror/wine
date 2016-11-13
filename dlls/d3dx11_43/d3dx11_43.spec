@@ -6,11 +6,11 @@
 @ stub D3DX11CompileFromResourceW
 @ stub D3DX11ComputeNormalMap
 @ stub D3DX11CreateAsyncCompilerProcessor
-@ stub D3DX11CreateAsyncFileLoaderA
-@ stub D3DX11CreateAsyncFileLoaderW
-@ stub D3DX11CreateAsyncMemoryLoader
-@ stub D3DX11CreateAsyncResourceLoaderA
-@ stub D3DX11CreateAsyncResourceLoaderW
+@ stdcall D3DX11CreateAsyncFileLoaderA(str ptr)
+@ stdcall D3DX11CreateAsyncFileLoaderW(wstr ptr)
+@ stdcall D3DX11CreateAsyncMemoryLoader(ptr long ptr)
+@ stdcall D3DX11CreateAsyncResourceLoaderA(long str ptr)
+@ stdcall D3DX11CreateAsyncResourceLoaderW(long wstr ptr)
 @ stub D3DX11CreateAsyncShaderPreprocessProcessor
 @ stub D3DX11CreateAsyncShaderResourceViewProcessor
 @ stub D3DX11CreateAsyncTextureInfoProcessor
