@@ -1648,6 +1648,8 @@ static void test_ToUnicode(void)
     const BYTE SC_RETURN = 0x1c, SC_TAB = 0x0f, SC_A = 0x1e;
     const BYTE HIGHEST_BIT = 0x80;
     int i, ret;
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
+
     for(i=0; i<256; i++)
         state[i]=0;
 
@@ -1674,7 +1676,10 @@ static void test_ToUnicode(void)
 
         if(!vk)
         {
-            short vk_ret = VkKeyScanW(utests[i].chr);
+            short vk_ret;
+
+            if (!us_kbd) continue;
+            vk_ret = VkKeyScanW(utests[i].chr);
             if (vk_ret == -1) continue;
             vk = vk_ret & 0xff;
             if (vk_ret & 0x100) mod |= shift;
