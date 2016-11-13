@@ -96,6 +96,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
             case D3DOP_TRIANGLE:
             {
                 WORD *indices;
+                unsigned int index_pos = buffer->index_pos;
                 TRACE("TRIANGLE         (%d)\n", count);
 
                 if (!count)
@@ -116,12 +117,17 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     if (buffer->index_buffer)
                         wined3d_buffer_decref(buffer->index_buffer);
                     buffer->index_buffer = new_buffer;
+                    index_pos = 0;
+                }
+                else if (buffer->index_size - count * 3 < index_pos)
+                {
+                    index_pos = 0;
                 }
 
-                box.left = 0;
-                box.right = count * 3 * sizeof(*indices);
+                box.left = index_pos * sizeof(*indices);
+                box.right = (index_pos + count * 3) * sizeof(*indices);
                 hr = wined3d_resource_map(wined3d_buffer_get_resource(buffer->index_buffer), 0,
-                        &map_desc, &box, WINED3D_MAP_DISCARD);
+                        &map_desc, &box, index_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD);
                 if (FAILED(hr))
                     return hr;
                 indices = map_desc.data;
@@ -165,8 +171,11 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                         ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
                 wined3d_device_set_index_buffer(device->wined3d_device, buffer->index_buffer, WINED3DFMT_R16_UINT, 0);
                 wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_TRIANGLELIST);
-                wined3d_device_draw_indexed_primitive(device->wined3d_device, 0, count * 3);
-	    } break;
+                wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, count * 3);
+
+                buffer->index_pos = index_pos + count * 3;
+                break;
+            }
 
 	    case D3DOP_MATRIXLOAD:
 	        WARN("MATRIXLOAD-s     (%d)\n", count);
