@@ -60,6 +60,7 @@
 #define FACILITY_FVE                         49
 #define FACILITY_WINDOWS_DEFENDER            80
 #define FACILITY_DIRECT3D11                  0x87c
+#define FACILITY_AUDCLNT                     0x889
 
 #define SEVERITY_SUCCESS    0
 #define SEVERITY_ERROR      1
