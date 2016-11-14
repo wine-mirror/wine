@@ -411,7 +411,7 @@ static void testRegStoreSavedCerts(void)
             skip("Insufficient privileges for the test %d\n", i);
             continue;
         }
-        ok (store!=NULL, "Failed to open the store at %d, %x", i, GetLastError());
+        ok (store!=NULL, "Failed to open the store at %d, %x\n", i, GetLastError());
         cert1 = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
         ok (cert1 != NULL, "Create cert context failed at %d, %x\n", i, GetLastError());
         ret = CertAddCertificateContextToStore(store, cert1, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
@@ -458,7 +458,7 @@ static void testRegStoreSavedCerts(void)
         /* deleting cert from store */
         store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,0,0,
             reg_store_saved_certs[i].cert_store, reg_store_saved_certs[i].store_name);
-        ok (store!=NULL, "Failed to open the store at %d, %x", i, GetLastError());
+        ok (store!=NULL, "Failed to open the store at %d, %x\n", i, GetLastError());
 
         cert1 = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
         ok (cert1 != NULL, "Create cert context failed at %d, %x\n", i, GetLastError());
@@ -556,7 +556,7 @@ static void testStoresInCollection(void)
     ok (ret, "Failed to add rw_store_2 to collection %x\n",GetLastError());
 
     cert2 = CertCreateCertificateContext(X509_ASN_ENCODING, signedBigCert, sizeof(signedBigCert));
-    ok (cert2 != NULL, "Failed to create cert context %x \n", GetLastError());
+    ok (cert2 != NULL, "Failed to create cert context %x\n", GetLastError());
     ret = CertAddCertificateContextToStore(collection, cert2, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
     ok (ret, "Failed to add cert3 to the store %x\n",GetLastError());
 
@@ -2231,7 +2231,7 @@ static void testCertRegisterSystemStore(void)
         }
 
         ret = CertCloseStore(hstore, 0);
-        ok (ret, "CertCloseStore failed at %08x, last error %x", cur_flag, GetLastError());
+        ok (ret, "CertCloseStore failed at %08x, last error %x\n", cur_flag, GetLastError());
 
         ret = pCertUnregisterSystemStore(WineTestW, cur_flag );
         todo_wine_if (reg_system_store_test_data[i].todo)
