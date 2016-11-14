@@ -1436,24 +1436,37 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
 }
 
 void wined3d_texture_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
-        unsigned int row_pitch, unsigned int slice_pitch)
+        const struct wined3d_context *context, const struct wined3d_box *box,
+        const struct wined3d_const_bo_address *data, unsigned int row_pitch, unsigned int slice_pitch)
 {
     texture->texture_ops->texture_upload_data(texture, sub_resource_idx,
-            context, data, row_pitch, slice_pitch);
+            context, box, data, row_pitch, slice_pitch);
 }
 
 static void texture2d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
-        unsigned int row_pitch, unsigned int slice_pitch)
+        const struct wined3d_context *context, const struct wined3d_box *box,
+        const struct wined3d_const_bo_address *data, unsigned int row_pitch, unsigned int slice_pitch)
 {
-    static const POINT dst_point = {0, 0};
     unsigned int texture_level;
+    POINT dst_point;
     RECT src_rect;
 
-    texture_level = sub_resource_idx % texture->level_count;
-    SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(texture, texture_level),
-            wined3d_texture_get_level_height(texture, texture_level));
+    src_rect.left = 0;
+    src_rect.top = 0;
+    if (box)
+    {
+        dst_point.x = box->left;
+        dst_point.y = box->top;
+        src_rect.right = box->right - box->left;
+        src_rect.bottom = box->bottom - box->top;
+    }
+    else
+    {
+        dst_point.x = dst_point.y = 0;
+        texture_level = sub_resource_idx % texture->level_count;
+        src_rect.right = wined3d_texture_get_level_width(texture, texture_level);
+        src_rect.bottom = wined3d_texture_get_level_height(texture, texture_level);
+    }
 
     wined3d_surface_upload_data(texture->sub_resources[sub_resource_idx].u.surface, context->gl_info,
             texture->resource.format, &src_rect, row_pitch, &dst_point, FALSE, data);
@@ -2093,8 +2106,8 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
  * correct texture. */
 /* Context activation is done by the caller. */
 static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        const struct wined3d_context *context, const struct wined3d_const_bo_address *data,
-        unsigned int row_pitch, unsigned int slice_pitch)
+        const struct wined3d_context *context, const struct wined3d_box *box,
+        const struct wined3d_const_bo_address *data, unsigned int row_pitch, unsigned int slice_pitch)
 {
     const struct wined3d_format *format = texture->resource.format;
     unsigned int level = sub_resource_idx % texture->level_count;
@@ -2104,8 +2117,12 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
     const void *mem = data->addr;
     void *converted_mem = NULL;
 
-    TRACE("texture %p, sub_resource_idx %u, context %p, data {%#x:%p}, row_pitch %#x, slice_pitch %#x.\n",
-            texture, sub_resource_idx, context, data->buffer_object, data->addr, row_pitch, slice_pitch);
+    TRACE("texture %p, sub_resource_idx %u, context %p, box %s, data {%#x:%p}, row_pitch %#x, slice_pitch %#x.\n",
+            texture, sub_resource_idx, context, debug_box(box),
+            data->buffer_object, data->addr, row_pitch, slice_pitch);
+
+    if (box)
+        FIXME("Partial upload not supported yet.\n");
 
     width = wined3d_texture_get_level_width(texture, level);
     height = wined3d_texture_get_level_height(texture, level);
@@ -2208,7 +2225,7 @@ static void texture3d_srgb_transfer(struct wined3d_texture *texture, unsigned in
     texture3d_download_data(texture, sub_resource_idx, context, &data);
     wined3d_texture_bind_and_dirtify(texture, context, dest_is_srgb);
     texture3d_upload_data(texture, sub_resource_idx, context,
-            wined3d_const_bo_address(&data), row_pitch, slice_pitch);
+            NULL, wined3d_const_bo_address(&data), row_pitch, slice_pitch);
 
     HeapFree(GetProcessHeap(), 0, data.addr);
 }
@@ -2261,7 +2278,7 @@ static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned in
                 wined3d_texture_bind_and_dirtify(texture, context,
                         location == WINED3D_LOCATION_TEXTURE_SRGB);
                 wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
-                texture3d_upload_data(texture, sub_resource_idx, context, &data, row_pitch, slice_pitch);
+                texture3d_upload_data(texture, sub_resource_idx, context, NULL, &data, row_pitch, slice_pitch);
             }
             else if (sub_resource->locations & WINED3D_LOCATION_BUFFER)
             {
@@ -2269,7 +2286,7 @@ static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned in
                 wined3d_texture_bind_and_dirtify(texture, context,
                         location == WINED3D_LOCATION_TEXTURE_SRGB);
                 wined3d_texture_get_pitch(texture, sub_resource_idx, &row_pitch, &slice_pitch);
-                texture3d_upload_data(texture, sub_resource_idx, context, &data, row_pitch, slice_pitch);
+                texture3d_upload_data(texture, sub_resource_idx, context, NULL, &data, row_pitch, slice_pitch);
             }
             else if (sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB)
             {
