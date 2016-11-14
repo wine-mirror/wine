@@ -172,6 +172,11 @@ struct collection {
     struct list collections;
 };
 
+struct caps_stack {
+    struct list entry;
+    struct caps caps;
+};
+
 static const char* debugstr_usages(struct caps *caps)
 {
     if (!caps->IsRange)
@@ -458,7 +463,10 @@ static void new_caps(struct caps *caps)
     caps->usage_count = 0;
 }
 
-static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int length, unsigned int *feature_index, unsigned int *collection_index, struct collection *collection, struct caps *caps, struct list *features)
+static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int length,
+                            unsigned int *feature_index, unsigned int *collection_index,
+                            struct collection *collection, struct caps *caps,
+                            struct list *features, struct list *stack)
 {
     unsigned int i;
     for (i = index; i < length;)
@@ -544,7 +552,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
 
                         parse_collection(bSize, itemVal, subcollection);
 
-                        i = parse_descriptor(descriptor, i+1, length, feature_index, collection_index, subcollection, caps, features);
+                        i = parse_descriptor(descriptor, i+1, length, feature_index, collection_index, subcollection, caps, features, stack);
                         continue;
                     }
                     case TAG_MAIN_END_COLLECTION:
@@ -588,11 +596,30 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         caps->ReportCount = getValue(bSize, itemVal);
                         break;
                     case TAG_GLOBAL_PUSH:
-                        FIXME("Unhandled Push\n");
+                    {
+                        struct caps_stack *saved = HeapAlloc(GetProcessHeap(), 0, sizeof(*saved));
+                        saved->caps = *caps;
+                        TRACE("Push\n");
+                        list_add_tail(stack, &saved->entry);
                         break;
+                    }
                     case TAG_GLOBAL_POP:
-                        FIXME("Unhandled Pop\n");
+                    {
+                        struct list *tail;
+                        struct caps_stack *saved;
+                        TRACE("Pop\n");
+                        tail = list_tail(stack);
+                        if (tail)
+                        {
+                            saved = LIST_ENTRY(tail, struct caps_stack, entry);
+                            *caps = saved->caps;
+                            list_remove(tail);
+                            HeapFree(GetProcessHeap(), 0, saved);
+                        }
+                        else
+                            ERR("Pop but no stack!\n");
                         break;
+                    }
                     default:
                         ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
                 }
@@ -1020,6 +1047,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     struct caps caps;
 
     struct list features;
+    struct list caps_stack;
 
     unsigned int feature_count = 0;
     unsigned int cidx;
@@ -1037,6 +1065,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     }
 
     list_init(&features);
+    list_init(&caps_stack);
 
     base = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*base));
     base->index = 1;
@@ -1045,9 +1074,20 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     memset(&caps, 0, sizeof(caps));
 
     cidx = 0;
-    parse_descriptor(descriptor, 0, length, &feature_count, &cidx, base, &caps, &features);
+    parse_descriptor(descriptor, 0, length, &feature_count, &cidx, base, &caps, &features, &caps_stack);
 
     debug_collection(base);
+
+    if (!list_empty(&caps_stack))
+    {
+        struct caps_stack *entry, *cursor;
+        ERR("%i unpopped device caps on the stack\n", list_count(&caps_stack));
+        LIST_FOR_EACH_ENTRY_SAFE(entry, cursor, &caps_stack, struct caps_stack, entry)
+        {
+            list_remove(&entry->entry);
+            HeapFree(GetProcessHeap(), 0, entry);
+        }
+    }
 
     cidx = 2;
     if (feature_count)
