@@ -252,6 +252,7 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R16_FLOAT,              WINED3DFMT_R16_TYPELESS,          "F"},
     {WINED3DFMT_D16_UNORM,              WINED3DFMT_R16_TYPELESS,          "D"},
     {WINED3DFMT_R8_UNORM,               WINED3DFMT_R8_TYPELESS,           "u"},
+    {WINED3DFMT_R8_SNORM,               WINED3DFMT_R8_TYPELESS,           "i"},
     {WINED3DFMT_R8_UINT,                WINED3DFMT_R8_TYPELESS,           "U"},
     {WINED3DFMT_R8_SINT,                WINED3DFMT_R8_TYPELESS,           "I"},
     {WINED3DFMT_BC1_UNORM_SRGB,         WINED3DFMT_BC1_TYPELESS,          ""},
@@ -1481,6 +1482,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             EXT_TEXTURE_SNORM,          NULL},
     {WINED3DFMT_R16_SNORM,              GL_R16_SNORM,                     GL_R16_SNORM,                           0,
             GL_RED,                     GL_SHORT,                         0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_RENDERTARGET,
+            EXT_TEXTURE_SNORM,          NULL},
+    {WINED3DFMT_R8_SNORM,               GL_R8_SNORM,                      GL_R8_SNORM,                           0,
+            GL_RED,                     GL_BYTE,                          0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_RENDERTARGET,
             EXT_TEXTURE_SNORM,          NULL},
