@@ -246,6 +246,7 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R8G8_UINT,              WINED3DFMT_R8G8_TYPELESS,         "UU"},
     {WINED3DFMT_R8G8_SINT,              WINED3DFMT_R8G8_TYPELESS,         "II"},
     {WINED3DFMT_R16_UNORM,              WINED3DFMT_R16_TYPELESS,          "u"},
+    {WINED3DFMT_R16_SNORM,              WINED3DFMT_R16_TYPELESS,          "i"},
     {WINED3DFMT_R16_UINT,               WINED3DFMT_R16_TYPELESS,          "U"},
     {WINED3DFMT_R16_SINT,               WINED3DFMT_R16_TYPELESS,          "I"},
     {WINED3DFMT_R16_FLOAT,              WINED3DFMT_R16_TYPELESS,          "F"},
@@ -1477,6 +1478,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_RG,                      GL_SHORT,                         0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_BUMPMAP,
+            EXT_TEXTURE_SNORM,          NULL},
+    {WINED3DFMT_R16_SNORM,              GL_R16_SNORM,                     GL_R16_SNORM,                           0,
+            GL_RED,                     GL_SHORT,                         0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_RENDERTARGET,
             EXT_TEXTURE_SNORM,          NULL},
     /* Depth stencil formats */
     {WINED3DFMT_D16_LOCKABLE,           GL_DEPTH_COMPONENT,               GL_DEPTH_COMPONENT,                     0,
