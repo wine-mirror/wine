@@ -2780,8 +2780,11 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *
                 return E_INVALIDARG;
             }
 
-            threading_data->DriverConcurrentCreates = FALSE;
-            threading_data->DriverCommandLists = FALSE;
+            /* We lie about the threading support to make Tomb Raider 2013 and
+             * Deus Ex: Human Revolution happy. */
+            FIXME("Returning fake threading support data.\n");
+            threading_data->DriverConcurrentCreates = TRUE;
+            threading_data->DriverCommandLists = TRUE;
             return S_OK;
         }
         case D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS:
