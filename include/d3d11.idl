@@ -3239,6 +3239,9 @@ cpp_quote("#include <d3d10shader.h>")
 cpp_quote("#include <d3d10effect.h>")
 cpp_quote("#include <d3d10_1shader.h>")
 
+const UINT _FACD3D11 = 0x87c;
+cpp_quote("#define MAKE_D3D11_HRESULT(code) MAKE_HRESULT(SEVERITY_ERROR, _FACD3D11, code)")
+
 cpp_quote("typedef HRESULT (WINAPI* PFN_D3D11_CREATE_DEVICE)(IDXGIAdapter*,D3D_DRIVER_TYPE,HMODULE,UINT,")
 cpp_quote("    const D3D_FEATURE_LEVEL*,UINT,UINT,ID3D11Device**,D3D_FEATURE_LEVEL*,ID3D11DeviceContext**);")
 
