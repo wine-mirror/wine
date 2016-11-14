@@ -2112,6 +2112,7 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
     const struct wined3d_format *format = texture->resource.format;
     unsigned int level = sub_resource_idx % texture->level_count;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int x, y, z, update_w, update_h, update_d;
     unsigned int dst_row_pitch, dst_slice_pitch;
     unsigned int width, height, depth;
     const void *mem = data->addr;
@@ -2121,12 +2122,26 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
             texture, sub_resource_idx, context, debug_box(box),
             data->buffer_object, data->addr, row_pitch, slice_pitch);
 
-    if (box)
-        FIXME("Partial upload not supported yet.\n");
-
     width = wined3d_texture_get_level_width(texture, level);
     height = wined3d_texture_get_level_height(texture, level);
     depth = wined3d_texture_get_level_depth(texture, level);
+
+    if (!box)
+    {
+        x = y = z = 0;
+        update_w = width;
+        update_h = height;
+        update_d = depth;
+    }
+    else
+    {
+        x = box->left;
+        y = box->top;
+        z = box->front;
+        update_w = box->right - box->left;
+        update_h = box->bottom - box->top;
+        update_d = box->back - box->front;
+    }
 
     if (format->convert)
     {
@@ -2135,12 +2150,12 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
         if (texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
             ERR("Converting a block-based format.\n");
 
-        dst_row_pitch = width * format->conv_byte_count;
-        dst_slice_pitch = dst_row_pitch * height;
+        dst_row_pitch = update_w * format->conv_byte_count;
+        dst_slice_pitch = dst_row_pitch * update_h;
 
-        converted_mem = wined3d_calloc(depth, dst_slice_pitch);
+        converted_mem = wined3d_calloc(update_d, dst_slice_pitch);
         format->convert(data->addr, converted_mem, row_pitch, slice_pitch,
-                dst_row_pitch, dst_slice_pitch, width, height, depth);
+                dst_row_pitch, dst_slice_pitch, update_w, update_h, update_d);
         mem = converted_mem;
     }
     else
@@ -2156,8 +2171,8 @@ static void texture3d_upload_data(struct wined3d_texture *texture, unsigned int 
         checkGLcall("glBindBuffer");
     }
 
-    GL_EXTCALL(glTexSubImage3D(GL_TEXTURE_3D, level, 0, 0, 0,
-            width, height, depth, format->glFormat, format->glType, mem));
+    GL_EXTCALL(glTexSubImage3D(GL_TEXTURE_3D, level, x, y, z,
+            update_w, update_h, update_d, format->glFormat, format->glType, mem));
     checkGLcall("glTexSubImage3D");
 
     if (data->buffer_object)

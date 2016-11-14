@@ -4063,8 +4063,8 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
         unsigned int sub_resource_idx, const struct wined3d_box *box, const void *data, unsigned int row_pitch,
         unsigned int depth_pitch)
 {
+    unsigned int width, height, depth, level;
     struct wined3d_const_bo_address addr;
-    unsigned int width, height, level;
     struct wined3d_context *context;
     struct wined3d_texture *texture;
 
@@ -4088,7 +4088,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
         return;
     }
 
-    if (resource->type != WINED3D_RTYPE_TEXTURE_2D)
+    if (resource->type != WINED3D_RTYPE_TEXTURE_2D && resource->type != WINED3D_RTYPE_TEXTURE_3D)
     {
         FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
         return;
@@ -4104,10 +4104,11 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     level = sub_resource_idx % texture->level_count;
     width = wined3d_texture_get_level_width(texture, level);
     height = wined3d_texture_get_level_height(texture, level);
+    depth = wined3d_texture_get_level_depth(texture, level);
 
     if (box && (box->left >= box->right || box->right > width
             || box->top >= box->bottom || box->bottom > height
-            || box->front >= box->back))
+            || box->front >= box->back || box->back > depth))
     {
         WARN("Invalid box %s specified.\n", debug_box(box));
         return;
@@ -4118,8 +4119,9 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
 
     context = context_acquire(resource->device, NULL);
 
-    /* Only load the surface for partial updates. */
-    if (!box || (!box->left && !box->top && box->right == width && box->bottom == height))
+    /* Only load the sub-resource for partial updates. */
+    if (!box || (!box->left && !box->top && !box->front
+            && box->right == width && box->bottom == height && box->back == depth))
         wined3d_texture_prepare_texture(texture, context, FALSE);
     else
         wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
