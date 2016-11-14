@@ -752,7 +752,12 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
             wine_element->caps.value.HasNull = feature->HasNull;
             wine_element->caps.value.BitSize = feature->caps.BitSize;
             if (feature->caps.usage_count > 1)
-                wine_element->caps.value.ReportCount = 1;
+            {
+                if (feature->caps.ReportCount > feature->caps.usage_count)
+                    wine_element->caps.value.ReportCount = feature->caps.ReportCount / feature->caps.usage_count;
+                else
+                    wine_element->caps.value.ReportCount = 1;
+            }
             else
                 wine_element->caps.value.ReportCount = feature->caps.ReportCount;
             wine_element->bitCount = (feature->caps.BitSize * wine_element->caps.value.ReportCount);
