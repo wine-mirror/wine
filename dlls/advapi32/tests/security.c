@@ -1912,6 +1912,31 @@ static void test_token_attr(void)
     CloseHandle(Token);
 }
 
+static void test_GetTokenInformation(void)
+{
+    DWORD is_app_container, size;
+    HANDLE token;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &token);
+    ok(ret, "OpenProcessToken failed: %u\n", GetLastError());
+
+    size = 0;
+    is_app_container = 0xdeadbeef;
+    ret = GetTokenInformation(token, TokenIsAppContainer, &is_app_container,
+                              sizeof(is_app_container), &size);
+    todo_wine
+    ok(ret || broken(GetLastError() == ERROR_INVALID_PARAMETER ||
+                     GetLastError() == ERROR_INVALID_FUNCTION), /* pre-win8 */
+       "GetTokenInformation failed: %u\n", GetLastError());
+    if(ret) {
+        ok(size == sizeof(is_app_container), "size = %u\n", size);
+        ok(!is_app_container, "is_app_container = %x\n", is_app_container);
+    }
+
+    CloseHandle(token);
+}
+
 typedef union _MAX_SID
 {
     SID sid;
@@ -6396,6 +6421,7 @@ START_TEST(security)
     test_FileSecurity();
     test_AccessCheck();
     test_token_attr();
+    test_GetTokenInformation();
     test_LookupAccountSid();
     test_LookupAccountName();
     test_security_descriptor();
