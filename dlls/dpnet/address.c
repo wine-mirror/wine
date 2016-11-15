@@ -33,7 +33,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#include "dplay8.h"
 #include "dpnet_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
