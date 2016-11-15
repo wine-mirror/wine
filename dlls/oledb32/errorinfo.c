@@ -40,7 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
 struct ErrorEntry
 {
-    struct list entry;
     ERRORINFO       info;
     DISPPARAMS      dispparams;
     IUnknown        *unknown;
@@ -53,7 +52,9 @@ typedef struct ErrorInfoImpl
     IErrorRecords  IErrorRecords_iface;
     LONG ref;
 
-    struct list errors;
+    struct ErrorEntry *records;
+    unsigned int allocated;
+    unsigned int count;
 } ErrorInfoImpl;
 
 static inline ErrorInfoImpl *impl_from_IErrorInfo( IErrorInfo *iface )
@@ -103,20 +104,19 @@ static ULONG WINAPI IErrorInfoImpl_Release(IErrorInfo* iface)
 {
     ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    struct ErrorEntry *cursor, *cursor2;
 
     TRACE("(%p)->%u\n",This,ref+1);
 
     if (!ref)
     {
-        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->errors, struct ErrorEntry, entry)
-        {
-            list_remove(&cursor->entry);
-            if(cursor->unknown)
-                IUnknown_Release(cursor->unknown);
+        unsigned int i;
 
-            heap_free(cursor);
+        for (i = 0; i < This->count; i++)
+        {
+            if (This->records[i].unknown)
+                IUnknown_Release(This->records[i].unknown);
         }
+        heap_free(This->records);
         heap_free(This);
     }
     return ref;
@@ -233,10 +233,27 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     if(!pErrorInfo)
         return E_INVALIDARG;
 
-    entry = heap_alloc(sizeof(*entry));
-    if(!entry)
-        return E_OUTOFMEMORY;
+    if (!This->records)
+    {
+        const unsigned int initial_size = 16;
+        if (!(This->records = heap_alloc(initial_size * sizeof(*This->records))))
+            return E_OUTOFMEMORY;
 
+        This->allocated = initial_size;
+    }
+    else if (This->count == This->allocated)
+    {
+        struct ErrorEntry *new_ptr;
+
+        new_ptr = heap_realloc(This->records, 2 * This->allocated * sizeof(*This->records));
+        if (!new_ptr)
+            return E_OUTOFMEMORY;
+
+        This->records = new_ptr;
+        This->allocated *= 2;
+    }
+
+    entry = This->records + This->count;
     entry->info = *pErrorInfo;
     if(pdispparams)
         entry->dispparams = *pdispparams;
@@ -245,7 +262,7 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
         IUnknown_AddRef(entry->unknown);
     entry->lookupID = dwDynamicErrorID;
 
-    list_add_head(&This->errors, &entry->entry);
+    This->count++;
 
     return S_OK;
 }
@@ -260,7 +277,7 @@ static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG ulR
     if(!pErrorInfo)
         return E_INVALIDARG;
 
-    if(ulRecordNum > list_count(&This->errors))
+    if(ulRecordNum > This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;
@@ -278,7 +295,7 @@ static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG 
 
     *ppObject = NULL;
 
-    if(ulRecordNum > list_count(&This->errors))
+    if(ulRecordNum > This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;
@@ -294,7 +311,7 @@ static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG ulRecord
     if (!ppErrorInfo)
         return E_INVALIDARG;
 
-    if(ulRecordNum > list_count(&This->errors))
+    if(ulRecordNum > This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;
@@ -310,24 +327,24 @@ static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG ul
     if (!pdispparams)
         return E_INVALIDARG;
 
-    if(ulRecordNum > list_count(&This->errors))
+    if(ulRecordNum > This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI errorrec_GetRecordCount(IErrorRecords *iface, ULONG *records)
+static HRESULT WINAPI errorrec_GetRecordCount(IErrorRecords *iface, ULONG *count)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
 
-    TRACE("(%p)->(%p)\n", This, records);
+    TRACE("(%p)->(%p)\n", This, count);
 
-    if(!records)
+    if(!count)
         return E_INVALIDARG;
 
-    *records = list_count(&This->errors);
+    *count = This->count;
 
-    TRACE("<--(%d)\n", *records);
+    TRACE("<--(%u)\n", *count);
 
     return S_OK;
 }
@@ -362,7 +379,9 @@ HRESULT create_error_info(IUnknown *outer, void **obj)
     This->IErrorRecords_iface.lpVtbl = &ErrorRecordsVtbl;
     This->ref = 1;
 
-    list_init(&This->errors);
+    This->records = NULL;
+    This->allocated = 0;
+    This->count = 0;
 
     *obj = &This->IErrorInfo_iface;
 
