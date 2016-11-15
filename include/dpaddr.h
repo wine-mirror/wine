@@ -27,7 +27,9 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 typedef REFIID	        DPNAREFIID;
+#ifndef _WINSOCK2API_
 typedef struct sockaddr SOCKADDR;
+#endif
 
 /*****************************************************************************
  * DirectPlay8Addr defines

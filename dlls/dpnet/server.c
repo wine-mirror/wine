@@ -32,7 +32,6 @@
 #include "ocidl.h"
 #include "wine/debug.h"
 
-#include "dplay8.h"
 #include "dpnet_private.h"
 
 typedef struct IDirectPlay8ServerImpl
