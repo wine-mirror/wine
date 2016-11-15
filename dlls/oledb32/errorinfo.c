@@ -267,67 +267,65 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     return S_OK;
 }
 
-static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG ulRecordNum,
-        ERRORINFO *pErrorInfo)
+static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG index, ERRORINFO *pErrorInfo)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, ulRecordNum, pErrorInfo);
+    FIXME("(%p)->(%u %p)\n", This, index, pErrorInfo);
 
     if(!pErrorInfo)
         return E_INVALIDARG;
 
-    if(ulRecordNum > This->count)
+    if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG ulRecordNum,
+static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG index,
         REFIID riid, IUnknown **ppObject)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%d %s, %p)\n", This, ulRecordNum, debugstr_guid(riid), ppObject);
+    FIXME("(%p)->(%u %s, %p)\n", This, index, debugstr_guid(riid), ppObject);
 
     if (!ppObject)
         return E_INVALIDARG;
 
     *ppObject = NULL;
 
-    if(ulRecordNum > This->count)
+    if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG ulRecordNum,
+static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,
         LCID lcid, IErrorInfo **ppErrorInfo)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%d %d, %p)\n", This, ulRecordNum, lcid, ppErrorInfo);
+    FIXME("(%p)->(%u %d, %p)\n", This, index, lcid, ppErrorInfo);
 
     if (!ppErrorInfo)
         return E_INVALIDARG;
 
-    if(ulRecordNum > This->count)
+    if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG ulRecordNum,
-        DISPPARAMS *pdispparams)
+static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG index, DISPPARAMS *pdispparams)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%d %p)\n", This, ulRecordNum, pdispparams);
+    FIXME("(%p)->(%u %p)\n", This, index, pdispparams);
 
     if (!pdispparams)
         return E_INVALIDARG;
 
-    if(ulRecordNum > This->count)
+    if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
     return E_NOTIMPL;

@@ -318,9 +318,10 @@ static void test_errorinfo(void)
 {
     ICreateErrorInfo *createerror;
     ERRORINFO info, info2, info3;
-    IErrorInfo *errorinfo;
+    IErrorInfo *errorinfo, *errorinfo2;
     IErrorRecords *errrecs;
-    IUnknown *unk = NULL;
+    IUnknown *unk = NULL, *unk2;
+    DISPPARAMS dispparams;
     DWORD context;
     ULONG cnt = 0;
     HRESULT hr;
@@ -380,6 +381,22 @@ static void test_errorinfo(void)
 
     hr = IUnknown_QueryInterface(unk, &IID_IErrorRecords, (void**)&errrecs);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IErrorRecords_GetRecordCount(errrecs, &cnt);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(cnt == 0, "Got unexpected record count %u\n", cnt);
+
+    hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, &info3);
+    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+
+    hr = IErrorRecords_GetCustomErrorObject(errrecs, 0, &IID_IUnknown, &unk2);
+    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+
+    hr = IErrorRecords_GetErrorInfo(errrecs, 0, 0, &errorinfo2);
+    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
+
+    hr = IErrorRecords_GetErrorParameters(errrecs, 0, &dispparams);
+    ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
 
     memset(&info, 0, sizeof(ERRORINFO));
     info.dwMinor = 1;
