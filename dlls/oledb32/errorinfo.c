@@ -42,7 +42,7 @@ struct ErrorEntry
 {
     ERRORINFO       info;
     DISPPARAMS      dispparams;
-    IUnknown        *unknown;
+    IUnknown        *custom_error;
     DWORD           lookupID;
 };
 
@@ -113,8 +113,8 @@ static ULONG WINAPI IErrorInfoImpl_Release(IErrorInfo* iface)
 
         for (i = 0; i < This->count; i++)
         {
-            if (This->records[i].unknown)
-                IUnknown_Release(This->records[i].unknown);
+            if (This->records[i].custom_error)
+                IUnknown_Release(This->records[i].custom_error);
         }
         heap_free(This->records);
         heap_free(This);
@@ -257,9 +257,9 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     entry->info = *pErrorInfo;
     if(pdispparams)
         entry->dispparams = *pdispparams;
-    entry->unknown = punkCustomError;
-    if(entry->unknown)
-        IUnknown_AddRef(entry->unknown);
+    entry->custom_error = punkCustomError;
+    if (entry->custom_error)
+        IUnknown_AddRef(entry->custom_error);
     entry->lookupID = dwDynamicErrorID;
 
     This->count++;
@@ -283,21 +283,25 @@ static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG ind
 }
 
 static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG index,
-        REFIID riid, IUnknown **ppObject)
+        REFIID riid, IUnknown **object)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%u %s, %p)\n", This, index, debugstr_guid(riid), ppObject);
+    TRACE("(%p)->(%u %s %p)\n", This, index, debugstr_guid(riid), object);
 
-    if (!ppObject)
+    if (!object)
         return E_INVALIDARG;
 
-    *ppObject = NULL;
+    *object = NULL;
 
     if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
-    return E_NOTIMPL;
+    index = This->count - index - 1;
+    if (This->records[index].custom_error)
+        return IUnknown_QueryInterface(This->records[index].custom_error, riid, (void **)object);
+    else
+        return S_OK;
 }
 
 static HRESULT WINAPI errorrec_GetErrorInfo(IErrorRecords *iface, ULONG index,

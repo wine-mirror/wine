@@ -414,6 +414,12 @@ static void test_errorinfo(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(cnt == 1, "expected 1 got %d\n", cnt);
 
+    /* Record does not contain custom error object. */
+    unk2 = (void*)0xdeadbeef;
+    hr = IErrorRecords_GetCustomErrorObject(errrecs, 0, &IID_IUnknown, &unk2);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(unk2 == NULL, "Got custom object %p.\n", unk2);
+
     hr = IErrorRecords_AddErrorRecord(errrecs, &info2, 2, NULL, NULL, 0);
     ok(hr == S_OK, "got %08x\n", hr);
 
