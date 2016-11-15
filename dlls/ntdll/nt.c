@@ -280,7 +280,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
         0,    /* TokenUIAccess */
         0,    /* TokenMandatoryPolicy */
         0,    /* TokenLogonSid */
-        0,    /* TokenIsAppContainer */
+        sizeof(DWORD), /* TokenIsAppContainer */
         0,    /* TokenCapabilities */
         sizeof(TOKEN_APPCONTAINER_INFORMATION) + sizeof(SID), /* TokenAppContainerSid */
         0,    /* TokenAppContainerNumber */
@@ -541,6 +541,12 @@ NTSTATUS WINAPI NtQueryInformationToken(
             container->TokenAppContainer = NULL;
         }
         break;
+    case TokenIsAppContainer:
+        {
+            TRACE("TokenIsAppContainer semi-stub\n");
+            *(DWORD*)tokeninfo = 0;
+            break;
+        }
     default:
         {
             ERR("Unhandled Token Information class %d!\n", tokeninfoclass);

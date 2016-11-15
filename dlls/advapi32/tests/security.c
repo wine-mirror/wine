@@ -1925,7 +1925,6 @@ static void test_GetTokenInformation(void)
     is_app_container = 0xdeadbeef;
     ret = GetTokenInformation(token, TokenIsAppContainer, &is_app_container,
                               sizeof(is_app_container), &size);
-    todo_wine
     ok(ret || broken(GetLastError() == ERROR_INVALID_PARAMETER ||
                      GetLastError() == ERROR_INVALID_FUNCTION), /* pre-win8 */
        "GetTokenInformation failed: %u\n", GetLastError());
