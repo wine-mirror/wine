@@ -267,19 +267,21 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
     return S_OK;
 }
 
-static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG index, ERRORINFO *pErrorInfo)
+static HRESULT WINAPI errorrec_GetBasicErrorInfo(IErrorRecords *iface, ULONG index, ERRORINFO *info)
 {
     ErrorInfoImpl *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%u %p)\n", This, index, pErrorInfo);
+    TRACE("(%p)->(%u %p)\n", This, index, info);
 
-    if(!pErrorInfo)
+    if (!info)
         return E_INVALIDARG;
 
     if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
-    return E_NOTIMPL;
+    index = This->count - index - 1;
+    *info = This->records[index].info;
+    return S_OK;
 }
 
 static HRESULT WINAPI errorrec_GetCustomErrorObject(IErrorRecords *iface, ULONG index,

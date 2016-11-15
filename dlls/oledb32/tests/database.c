@@ -434,11 +434,8 @@ static void test_errorinfo(void)
     ok(hr == DB_E_BADRECORDNUM, "got %08x\n", hr);
 
     hr = IErrorRecords_GetBasicErrorInfo(errrecs, 0, &info3);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
-    if(hr == S_OK)
-    {
-        ok(info3.dwMinor == 2, "expected 2 got %d\n", info3.dwMinor);
-    }
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(info3.dwMinor == 2, "expected 2 got %d\n", info3.dwMinor);
 
     IErrorRecords_Release(errrecs);
     IUnknown_Release(unk);
