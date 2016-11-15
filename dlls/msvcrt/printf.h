@@ -122,13 +122,18 @@ static inline int FUNC_NAME(pf_output_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *
     return pf_puts(puts_ctx, len, str);
 #else
     LPSTR out;
-    int len_a = WideCharToMultiByte(locinfo->lc_codepage, 0, str, len, NULL, 0, NULL, NULL);
+    BOOL def_char;
+    int len_a = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
+            str, len, NULL, 0, NULL, &def_char);
+    if(def_char)
+        return 0;
 
     out = HeapAlloc(GetProcessHeap(), 0, len_a);
     if(!out)
         return -1;
 
-    WideCharToMultiByte(locinfo->lc_codepage, 0, str, len, out, len_a, NULL, NULL);
+    WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
+            str, len, out, len_a, NULL, NULL);
     len = pf_puts(puts_ctx, len_a, out);
     HeapFree(GetProcessHeap(), 0, out);
     return len;
@@ -494,9 +499,6 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     -1,  &flags, locinfo, legacy_wide);
         } else if(flags.Format == 'c' || flags.Format == 'C') {
             int ch = pf_args(args_ctx, pos, VT_INT, valist).get_int;
-
-            if((ch&0xff) != ch)
-                FIXME("multibyte characters printing not supported\n");
 
             i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, &ch, 1, &flags, locinfo, legacy_wide);
         } else if(flags.Format == 'p') {
