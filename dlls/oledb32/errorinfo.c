@@ -113,8 +113,16 @@ static ULONG WINAPI errorrecords_Release(IErrorInfo* iface)
 
         for (i = 0; i < This->count; i++)
         {
+            DISPPARAMS *dispparams = &This->records[i].dispparams;
+            unsigned int j;
+
             if (This->records[i].custom_error)
                 IUnknown_Release(This->records[i].custom_error);
+
+            for (j = 0; j < dispparams->cArgs && dispparams->rgvarg; j++)
+                VariantClear(&dispparams->rgvarg[i]);
+            CoTaskMemFree(dispparams->rgvarg);
+            CoTaskMemFree(dispparams->rgdispidNamedArgs);
         }
         heap_free(This->records);
         heap_free(This);
@@ -222,11 +230,43 @@ static ULONG WINAPI WINAPI errorrec_Release(IErrorRecords *iface)
     return IErrorInfo_Release(&This->IErrorInfo_iface);
 }
 
+static HRESULT dup_dispparams(DISPPARAMS *src, DISPPARAMS *dest)
+{
+    unsigned int i;
+
+    if (!src)
+    {
+        memset(dest, 0, sizeof(*dest));
+        return S_OK;
+    }
+
+    *dest = *src;
+
+    if (src->cArgs)
+    {
+        dest->rgvarg = CoTaskMemAlloc(dest->cArgs * sizeof(*dest->rgvarg));
+        for (i = 0; i < src->cArgs; i++)
+        {
+            VariantInit(&dest->rgvarg[i]);
+            VariantCopy(&dest->rgvarg[i], &src->rgvarg[i]);
+        }
+    }
+
+    if (src->cNamedArgs)
+    {
+        dest->rgdispidNamedArgs = CoTaskMemAlloc(dest->cNamedArgs * sizeof(*dest->rgdispidNamedArgs));
+        memcpy(dest->rgdispidNamedArgs, src->rgdispidNamedArgs, dest->cNamedArgs * sizeof(*dest->rgdispidNamedArgs));
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *pErrorInfo,
         DWORD dwLookupID, DISPPARAMS *pdispparams, IUnknown *punkCustomError, DWORD dwDynamicErrorID)
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
     struct ErrorEntry *entry;
+    HRESULT hr;
 
     TRACE("(%p)->(%p %d %p %p %d)\n", This, pErrorInfo, dwLookupID, pdispparams, punkCustomError, dwDynamicErrorID);
 
@@ -255,8 +295,10 @@ static HRESULT WINAPI errorrec_AddErrorRecord(IErrorRecords *iface, ERRORINFO *p
 
     entry = This->records + This->count;
     entry->info = *pErrorInfo;
-    if(pdispparams)
-        entry->dispparams = *pdispparams;
+
+    if (FAILED(hr = dup_dispparams(pdispparams, &entry->dispparams)))
+        return hr;
+
     entry->custom_error = punkCustomError;
     if (entry->custom_error)
         IUnknown_AddRef(entry->custom_error);
@@ -326,7 +368,7 @@ static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG in
 {
     errorrecords *This = impl_from_IErrorRecords(iface);
 
-    FIXME("(%p)->(%u %p)\n", This, index, pdispparams);
+    TRACE("(%p)->(%u %p)\n", This, index, pdispparams);
 
     if (!pdispparams)
         return E_INVALIDARG;
@@ -334,7 +376,8 @@ static HRESULT WINAPI errorrec_GetErrorParameters(IErrorRecords *iface, ULONG in
     if (index >= This->count)
         return DB_E_BADRECORDNUM;
 
-    return E_NOTIMPL;
+    index = This->count - index - 1;
+    return dup_dispparams(&This->records[index].dispparams, pdispparams);
 }
 
 static HRESULT WINAPI errorrec_GetRecordCount(IErrorRecords *iface, ULONG *count)
