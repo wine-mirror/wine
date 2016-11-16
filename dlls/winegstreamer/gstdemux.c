@@ -179,8 +179,8 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
 
 static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
 {
-    VIDEOINFOHEADER *vih = CoTaskMemAlloc(sizeof(*vih));
-    BITMAPINFOHEADER *bih = &vih->bmiHeader;
+    VIDEOINFOHEADER *vih;
+    BITMAPINFOHEADER *bih;
     gint32 width = 0, height = 0, nom = 0, denom = 0;
     GstVideoInfo vinfo;
 
@@ -190,6 +190,9 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
     height = vinfo.height;
     nom = vinfo.fps_n;
     denom = vinfo.fps_d;
+
+    vih = CoTaskMemAlloc(sizeof(*vih));
+    bih = &vih->bmiHeader;
 
     amt->formattype = FORMAT_VideoInfo;
     amt->pbFormat = (BYTE*)vih;
@@ -207,13 +210,16 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
             case 32: amt->subtype = MEDIASUBTYPE_RGB32; break;
             default:
                 FIXME("Unknown bpp %u\n", bih->biBitCount);
+                CoTaskMemFree(vih);
                 return FALSE;
         }
         bih->biCompression = BI_RGB;
     } else {
         amt->subtype = MEDIATYPE_Video;
-        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(vinfo.finfo->format)))
+        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(vinfo.finfo->format))) {
+            CoTaskMemFree(vih);
             return FALSE;
+        }
         switch (amt->subtype.Data1) {
             case mmioFOURCC('I','4','2','0'):
             case mmioFOURCC('Y','V','1','2'):
@@ -269,7 +275,8 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
             return FALSE;
         }
         ret = amt_from_gst_caps_video(caps, &amt);
-        FreeMediaType(&amt);
+        if (ret)
+            FreeMediaType(&amt);
         TRACE("-%i\n", ret);
         return ret;
     } else {
