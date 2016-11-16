@@ -4373,11 +4373,12 @@ static ULONG WINAPI localfontfilestream_Release(IDWriteFontFileStream *iface)
     return ref;
 }
 
-static HRESULT WINAPI localfontfilestream_ReadFileFragment(IDWriteFontFileStream *iface, void const **fragment_start, UINT64 offset, UINT64 fragment_size, void **fragment_context)
+static HRESULT WINAPI localfontfilestream_ReadFileFragment(IDWriteFontFileStream *iface, void const **fragment_start,
+    UINT64 offset, UINT64 fragment_size, void **fragment_context)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
 
-    TRACE_(dwrite_file)("(%p)->(%p, %s, %s, %p)\n",This, fragment_start,
+    TRACE_(dwrite_file)("(%p)->(%p, 0x%s, 0x%s, %p)\n", This, fragment_start,
           wine_dbgstr_longlong(offset), wine_dbgstr_longlong(fragment_size), fragment_context);
 
     *fragment_context = NULL;
@@ -5744,7 +5745,7 @@ static HRESULT WINAPI fontfacereference_EnqueueFileFragmentDownloadRequest(IDWri
 {
     struct dwrite_fontfacereference *This = impl_from_IDWriteFontFaceReference(iface);
 
-    FIXME("(%p)->(%s %s): stub\n", This, wine_dbgstr_longlong(offset), wine_dbgstr_longlong(size));
+    FIXME("(%p)->(0x%s 0x%s): stub\n", This, wine_dbgstr_longlong(offset), wine_dbgstr_longlong(size));
 
     return E_NOTIMPL;
 }
