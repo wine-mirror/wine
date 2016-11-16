@@ -266,7 +266,8 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
             return FALSE;
         }
         ret = amt_from_gst_caps_audio(caps, &amt);
-        FreeMediaType(&amt);
+        if (ret)
+            FreeMediaType(&amt);
         TRACE("+%i\n", ret);
         return ret;
     } else if (!strcmp(typename, "video/x-raw")) {
