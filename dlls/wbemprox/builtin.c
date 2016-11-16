@@ -252,6 +252,8 @@ static const WCHAR prop_mediatypeW[] =
     {'M','e','d','i','a','T','y','p','e',0};
 static const WCHAR prop_memberW[] =
     {'M','e','m','b','e','r',0};
+static const WCHAR prop_memorytypeW[] =
+    {'M','e','m','o','r','y','T','y','p','e',0};
 static const WCHAR prop_methodW[] =
     {'M','e','t','h','o','d',0};
 static const WCHAR prop_modelW[] =
@@ -540,7 +542,8 @@ static const struct column col_physicalmedia[] =
 };
 static const struct column col_physicalmemory[] =
 {
-    { prop_capacityW,   CIM_UINT64 }
+    { prop_capacityW,   CIM_UINT64 },
+    { prop_memorytypeW, CIM_UINT16, VT_I4 }
 };
 static const struct column col_printer[] =
 {
@@ -924,6 +927,7 @@ struct record_physicalmedia
 struct record_physicalmemory
 {
     UINT64 capacity;
+    UINT16 memorytype;
 };
 struct record_printer
 {
@@ -2303,7 +2307,8 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_physicalmemory *)table->data;
-    rec->capacity = get_total_physical_memory();
+    rec->capacity   = get_total_physical_memory();
+    rec->memorytype = 9; /* RAM */
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
