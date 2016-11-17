@@ -1325,6 +1325,8 @@ static void test_WsReadType(void)
     static const WCHAR testW[] = {'t','e','s','t',0};
     static const GUID guid1 = {0,0,0,{0,0,0,0,0,0,0,0}};
     static const GUID guid2 = {0,0,0,{0,0,0,0,0,0,0,0xa1}};
+    static const char utf8[] = {'<','t','>',0xe2,0x80,0x99,'<','/','t','>'};
+    static const WCHAR utf8W[] = {0x2019,0};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_HEAP *heap;
@@ -1635,6 +1637,14 @@ static void test_WsReadType(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_BYTES_TYPE, NULL,
                      WS_READ_REQUIRED_VALUE, heap, &val_bytes, sizeof(val_bytes), NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    val_str = NULL;
+    prepare_type_test( reader, utf8, sizeof(utf8) );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_WSZ_TYPE, NULL,
+                     WS_READ_REQUIRED_POINTER, heap, &val_str, sizeof(val_str), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val_str != NULL, "pointer not set\n" );
+    if (val_str) ok( !lstrcmpW( val_str, utf8W ), "wrong data %s\n", wine_dbgstr_w(val_str) );
 
     WsFreeReader( reader );
     WsFreeHeap( heap );

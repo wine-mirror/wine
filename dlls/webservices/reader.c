@@ -1035,7 +1035,7 @@ static inline unsigned int read_utf8_char( struct reader *reader, unsigned int *
     }
     len = utf8_length[ch - 0x80];
     if (reader->read_pos + len >= reader->read_size) return 0;
-    end = reader->read_bufptr + reader->read_pos + len;
+    end = reader->read_bufptr + reader->read_pos + len + 1;
     res = ch & utf8_mask[len];
 
     switch (len)
