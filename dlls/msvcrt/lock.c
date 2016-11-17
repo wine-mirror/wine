@@ -559,8 +559,14 @@ unsigned int __cdecl _GetConcurrency(void)
 #endif
 
 #if _MSVCR_VER >= 110
+typedef struct cv_queue {
+    struct cv_queue *next;
+    BOOL expired;
+} cv_queue;
+
 typedef struct {
-    void *chain;
+    /* cv_queue structure is not binary compatible */
+    cv_queue *queue;
     critical_section lock;
 } _Condition_variable;
 
@@ -569,8 +575,11 @@ typedef struct {
 DEFINE_THISCALL_WRAPPER(_Condition_variable_ctor, 4)
 _Condition_variable* __thiscall _Condition_variable_ctor(_Condition_variable *this)
 {
-    FIXME("(%p)\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+
+    this->queue = NULL;
+    critical_section_ctor(&this->lock);
+    return this;
 }
 
 /* ??1_Condition_variable@details@Concurrency@@QAE@XZ */
@@ -578,7 +587,16 @@ _Condition_variable* __thiscall _Condition_variable_ctor(_Condition_variable *th
 DEFINE_THISCALL_WRAPPER(_Condition_variable_dtor, 4)
 void __thiscall _Condition_variable_dtor(_Condition_variable *this)
 {
-    FIXME("(%p)\n", this);
+    TRACE("(%p)\n", this);
+
+    while(this->queue) {
+        cv_queue *next = this->queue->next;
+        if(!this->queue->expired)
+            ERR("there's an active wait\n");
+        HeapFree(GetProcessHeap(), 0, this->queue);
+        this->queue = next;
+    }
+    critical_section_dtor(&this->lock);
 }
 
 /* ?wait@_Condition_variable@details@Concurrency@@QAEXAAVcritical_section@3@@Z */
@@ -586,7 +604,19 @@ void __thiscall _Condition_variable_dtor(_Condition_variable *this)
 DEFINE_THISCALL_WRAPPER(_Condition_variable_wait, 8)
 void __thiscall _Condition_variable_wait(_Condition_variable *this, critical_section *cs)
 {
-    FIXME("(%p, %p)\n", this, cs);
+    cv_queue q;
+
+    TRACE("(%p, %p)\n", this, cs);
+
+    critical_section_lock(&this->lock);
+    q.next = this->queue;
+    q.expired = FALSE;
+    this->queue = &q;
+    critical_section_unlock(&this->lock);
+
+    critical_section_unlock(cs);
+    NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
+    critical_section_lock(cs);
 }
 
 /* ?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z */
@@ -595,8 +625,41 @@ DEFINE_THISCALL_WRAPPER(_Condition_variable_wait_for, 12)
 MSVCRT_bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
         critical_section *cs, unsigned int timeout)
 {
-    FIXME("(%p %p %d)\n", this, cs, timeout);
-    return FALSE;
+    LARGE_INTEGER to;
+    NTSTATUS status;
+    FILETIME ft;
+    cv_queue *q;
+
+    TRACE("(%p %p %d)\n", this, cs, timeout);
+
+    if(!(q = HeapAlloc(GetProcessHeap(), 0, sizeof(cv_queue)))) {
+        throw_bad_alloc("bad allocation");
+    }
+
+    critical_section_lock(&this->lock);
+    q->next = this->queue;
+    q->expired = FALSE;
+    this->queue = q;
+    critical_section_unlock(&this->lock);
+
+    critical_section_unlock(cs);
+
+    GetSystemTimeAsFileTime(&ft);
+    to.QuadPart = ((LONGLONG)ft.dwHighDateTime << 32) +
+        ft.dwLowDateTime + (LONGLONG)timeout * 10000;
+    status = NtWaitForKeyedEvent(keyed_event, q, 0, &to);
+    if(status == STATUS_TIMEOUT) {
+        if(!InterlockedExchange(&q->expired, TRUE)) {
+            critical_section_lock(cs);
+            return FALSE;
+        }
+        else
+            NtWaitForKeyedEvent(keyed_event, q, 0, 0);
+    }
+
+    HeapFree(GetProcessHeap(), 0, q);
+    critical_section_lock(cs);
+    return TRUE;
 }
 
 /* ?notify_one@_Condition_variable@details@Concurrency@@QAEXXZ */
@@ -604,7 +667,30 @@ MSVCRT_bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
 DEFINE_THISCALL_WRAPPER(_Condition_variable_notify_one, 4)
 void __thiscall _Condition_variable_notify_one(_Condition_variable *this)
 {
-    FIXME("(%p)\n", this);
+    cv_queue *node;
+
+    TRACE("(%p)\n", this);
+
+    if(!this->queue)
+        return;
+
+    while(1) {
+        critical_section_lock(&this->lock);
+        node = this->queue;
+        if(!node) {
+            critical_section_unlock(&this->lock);
+            return;
+        }
+        this->queue = node->next;
+        critical_section_unlock(&this->lock);
+
+        if(!InterlockedExchange(&node->expired, TRUE)) {
+            NtReleaseKeyedEvent(keyed_event, node, 0, NULL);
+            return;
+        } else {
+            HeapFree(GetProcessHeap(), 0, node);
+        }
+    }
 }
 
 /* ?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ */
@@ -612,7 +698,27 @@ void __thiscall _Condition_variable_notify_one(_Condition_variable *this)
 DEFINE_THISCALL_WRAPPER(_Condition_variable_notify_all, 4)
 void __thiscall _Condition_variable_notify_all(_Condition_variable *this)
 {
-    FIXME("(%p)\n", this);
+    cv_queue *ptr;
+
+    TRACE("(%p)\n", this);
+
+    if(!this->queue)
+        return;
+
+    critical_section_lock(&this->lock);
+    ptr = this->queue;
+    this->queue = NULL;
+    critical_section_unlock(&this->lock);
+
+    while(ptr) {
+        cv_queue *next = ptr->next;
+
+        if(!InterlockedExchange(&ptr->expired, TRUE))
+            NtReleaseKeyedEvent(keyed_event, ptr, 0, NULL);
+        else
+            HeapFree(GetProcessHeap(), 0, ptr);
+        ptr = next;
+    }
 }
 #endif
 
