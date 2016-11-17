@@ -1937,99 +1937,6 @@ static HRESULT write_type_xml_string( struct writer *writer, WS_TYPE_MAPPING map
     return write_type_text( writer, mapping, &utf8.text );
 }
 
-static HRESULT write_type( struct writer *, WS_TYPE_MAPPING, WS_TYPE, const void *, WS_WRITE_OPTION,
-                           const void *, ULONG );
-
-static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DESCRIPTION *desc,
-                                        const void *value, ULONG size )
-{
-    HRESULT hr;
-    WS_TYPE_MAPPING mapping;
-    WS_WRITE_OPTION option;
-    ULONG field_options = desc->options;
-
-    if (field_options & ~(WS_FIELD_POINTER|WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE))
-    {
-        FIXME( "options 0x%x not supported\n", desc->options );
-        return E_NOTIMPL;
-    }
-
-    /*  zero-terminated strings are always pointers */
-    if (desc->type == WS_WSZ_TYPE) field_options |= WS_FIELD_POINTER;
-
-    if (is_nil_value( value, size ))
-    {
-        if (field_options & WS_FIELD_OPTIONAL) return S_OK;
-        if (field_options & WS_FIELD_NILLABLE)
-        {
-            if (field_options & WS_FIELD_POINTER) option = WS_WRITE_NILLABLE_POINTER;
-            else option = WS_WRITE_NILLABLE_VALUE;
-        }
-        else return E_INVALIDARG;
-    }
-    else
-    {
-        if (field_options & WS_FIELD_POINTER) option = WS_WRITE_REQUIRED_POINTER;
-        else option = WS_WRITE_REQUIRED_VALUE;
-    }
-
-    switch (desc->mapping)
-    {
-    case WS_ATTRIBUTE_FIELD_MAPPING:
-        if (!desc->localName || !desc->ns) return E_INVALIDARG;
-        if ((hr = write_add_attribute( writer, NULL, desc->localName, desc->ns, FALSE )) != S_OK)
-            return hr;
-        writer->state = WRITER_STATE_STARTATTRIBUTE;
-
-        mapping = WS_ATTRIBUTE_TYPE_MAPPING;
-        break;
-
-    case WS_ELEMENT_FIELD_MAPPING:
-        if ((hr = write_element_node( writer, NULL, desc->localName, desc->ns )) != S_OK) return hr;
-        mapping = WS_ELEMENT_TYPE_MAPPING;
-        break;
-
-    case WS_TEXT_FIELD_MAPPING:
-        switch (writer->state)
-        {
-        case WRITER_STATE_STARTELEMENT:
-            mapping = WS_ELEMENT_CONTENT_TYPE_MAPPING;
-            break;
-
-        case WRITER_STATE_STARTATTRIBUTE:
-            mapping = WS_ATTRIBUTE_TYPE_MAPPING;
-            break;
-
-        default:
-            FIXME( "unhandled writer state %u\n", writer->state );
-            return E_NOTIMPL;
-        }
-        break;
-
-    default:
-        FIXME( "field mapping %u not supported\n", desc->mapping );
-        return E_NOTIMPL;
-    }
-
-    if ((hr = write_type( writer, mapping, desc->type, desc->typeDescription, option, value, size )) != S_OK)
-        return hr;
-
-    switch (mapping)
-    {
-    case WS_ATTRIBUTE_TYPE_MAPPING:
-        writer->state = WRITER_STATE_STARTELEMENT;
-        break;
-
-    case WS_ELEMENT_TYPE_MAPPING:
-        if ((hr = write_endelement_node( writer )) != S_OK) return hr;
-        break;
-
-    default: break;
-    }
-
-    return S_OK;
-}
-
 static WS_WRITE_OPTION get_field_write_option( WS_TYPE type, ULONG options )
 {
     if (options & WS_FIELD_POINTER)
@@ -2071,37 +1978,146 @@ static WS_WRITE_OPTION get_field_write_option( WS_TYPE type, ULONG options )
     }
 }
 
-static ULONG get_field_size( const WS_FIELD_DESCRIPTION *desc )
-{
-    WS_WRITE_OPTION option;
-    ULONG size;
+static HRESULT write_type( struct writer *, WS_TYPE_MAPPING, WS_TYPE, const void *, WS_WRITE_OPTION,
+                           const void *, ULONG );
 
-    switch ((option = get_field_write_option( desc->type, desc->options )))
-    {
-    case WS_WRITE_REQUIRED_POINTER:
-    case WS_WRITE_NILLABLE_POINTER:
+static HRESULT write_type_repeating_element( struct writer *writer, const WS_FIELD_DESCRIPTION *desc,
+                                             const char *buf, ULONG count )
+{
+    HRESULT hr = S_OK;
+    ULONG i, size, offset = 0;
+    WS_WRITE_OPTION option;
+
+    if (!(option = get_field_write_option( desc->type, desc->options ))) return E_INVALIDARG;
+
+    /* wrapper element */
+    if (desc->localName && ((hr = write_element_node( writer, NULL, desc->localName, desc->ns )) != S_OK))
+        return hr;
+
+    if (option == WS_WRITE_REQUIRED_VALUE || option == WS_WRITE_NILLABLE_VALUE)
+        size = get_type_size( desc->type, desc->typeDescription );
+    else
         size = sizeof(const void *);
+
+    for (i = 0; i < count; i++)
+    {
+        if ((hr = write_element_node( writer, NULL, desc->itemLocalName, desc->itemNs )) != S_OK) return hr;
+        if ((hr = write_type( writer, WS_ELEMENT_TYPE_MAPPING, desc->type, desc->typeDescription, option,
+                              buf + offset, size )) != S_OK) return hr;
+        if ((hr = write_endelement_node( writer )) != S_OK) return hr;
+        offset += size;
+    }
+
+    if (desc->localName) hr = write_endelement_node( writer );
+    return hr;
+}
+
+static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DESCRIPTION *desc,
+                                        const char *buf, ULONG offset )
+{
+    HRESULT hr;
+    WS_TYPE_MAPPING mapping;
+    WS_WRITE_OPTION option;
+    ULONG count, size, field_options = desc->options;
+    const char *ptr = buf + offset;
+
+    if (field_options & ~(WS_FIELD_POINTER|WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE))
+    {
+        FIXME( "options 0x%x not supported\n", desc->options );
+        return E_NOTIMPL;
+    }
+
+    /*  zero-terminated strings are always pointers */
+    if (desc->type == WS_WSZ_TYPE) field_options |= WS_FIELD_POINTER;
+
+    if (field_options & WS_FIELD_POINTER)
+        size = sizeof(const void *);
+    else
+        size = get_type_size( desc->type, desc->typeDescription );
+
+    if (is_nil_value( ptr, size ))
+    {
+        if (field_options & WS_FIELD_OPTIONAL) return S_OK;
+        if (field_options & WS_FIELD_NILLABLE)
+        {
+            if (field_options & WS_FIELD_POINTER) option = WS_WRITE_NILLABLE_POINTER;
+            else option = WS_WRITE_NILLABLE_VALUE;
+        }
+        else return E_INVALIDARG;
+    }
+    else
+    {
+        if (field_options & WS_FIELD_POINTER) option = WS_WRITE_REQUIRED_POINTER;
+        else option = WS_WRITE_REQUIRED_VALUE;
+    }
+
+    switch (desc->mapping)
+    {
+    case WS_ATTRIBUTE_FIELD_MAPPING:
+        if (!desc->localName || !desc->ns) return E_INVALIDARG;
+        if ((hr = write_add_attribute( writer, NULL, desc->localName, desc->ns, FALSE )) != S_OK)
+            return hr;
+        writer->state = WRITER_STATE_STARTATTRIBUTE;
+
+        mapping = WS_ATTRIBUTE_TYPE_MAPPING;
         break;
 
-    case WS_WRITE_REQUIRED_VALUE:
-    case WS_WRITE_NILLABLE_VALUE:
-        size = get_type_size( desc->type, desc->typeDescription );
+    case WS_ELEMENT_FIELD_MAPPING:
+        if ((hr = write_element_node( writer, NULL, desc->localName, desc->ns )) != S_OK) return hr;
+        mapping = WS_ELEMENT_TYPE_MAPPING;
+        break;
+
+    case WS_REPEATING_ELEMENT_FIELD_MAPPING:
+        count = *(const ULONG *)(buf + desc->countOffset);
+        return write_type_repeating_element( writer, desc, *(const char **)ptr, count );
+
+    case WS_TEXT_FIELD_MAPPING:
+        switch (writer->state)
+        {
+        case WRITER_STATE_STARTELEMENT:
+            mapping = WS_ELEMENT_CONTENT_TYPE_MAPPING;
+            break;
+
+        case WRITER_STATE_STARTATTRIBUTE:
+            mapping = WS_ATTRIBUTE_TYPE_MAPPING;
+            break;
+
+        default:
+            FIXME( "unhandled writer state %u\n", writer->state );
+            return E_NOTIMPL;
+        }
         break;
 
     default:
-        WARN( "unhandled option %u\n", option );
-        return 0;
+        FIXME( "field mapping %u not supported\n", desc->mapping );
+        return E_NOTIMPL;
     }
 
-    return size;
+    if ((hr = write_type( writer, mapping, desc->type, desc->typeDescription, option, ptr, size )) != S_OK)
+        return hr;
+
+    switch (mapping)
+    {
+    case WS_ATTRIBUTE_TYPE_MAPPING:
+        writer->state = WRITER_STATE_STARTELEMENT;
+        break;
+
+    case WS_ELEMENT_TYPE_MAPPING:
+        if ((hr = write_endelement_node( writer )) != S_OK) return hr;
+        break;
+
+    default: break;
+    }
+
+    return S_OK;
 }
 
 static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping,
                                   const WS_STRUCT_DESCRIPTION *desc, WS_WRITE_OPTION option,
                                   const void *value, ULONG size )
 {
-    ULONG i, field_size;
-    const void *ptr, *field_ptr;
+    ULONG i, offset;
+    const void *ptr;
     HRESULT hr;
 
     if (!desc) return E_INVALIDARG;
@@ -2111,9 +2127,8 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
 
     for (i = 0; i < desc->fieldCount; i++)
     {
-        field_ptr = (const char *)ptr + desc->fields[i]->offset;
-        field_size = get_field_size( desc->fields[i] );
-        if ((hr = write_type_struct_field( writer, desc->fields[i], field_ptr, field_size )) != S_OK)
+        offset = desc->fields[i]->offset;
+        if ((hr = write_type_struct_field( writer, desc->fields[i], ptr, offset )) != S_OK)
             return hr;
     }
 
@@ -2795,7 +2810,7 @@ HRESULT WINAPI WsCopyNode( WS_XML_WRITER *handle, WS_XML_READER *reader, WS_ERRO
 
 static HRESULT write_param( struct writer *writer, const WS_FIELD_DESCRIPTION *desc, const void *value )
 {
-    return write_type_struct_field( writer, desc, value, get_field_size(desc) );
+    return write_type_struct_field( writer, desc, value, 0 );
 }
 
 HRESULT write_input_params( WS_XML_WRITER *handle, const WS_ELEMENT_DESCRIPTION *desc,

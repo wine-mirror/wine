@@ -2665,6 +2665,115 @@ static void test_datetime(void)
     WsFreeWriter( writer );
 }
 
+static void test_repeating_element(void)
+{
+    static const WCHAR oneW[] = {'1',0}, twoW[] = {'2',0};
+    WS_XML_STRING localname = {4, (BYTE *)"test"}, ns = {0, NULL};
+    WS_XML_STRING val = {3, (BYTE *)"val"}, wrapper = {7, (BYTE *)"wrapper"};
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_ITEM_RANGE range;
+    struct test
+    {
+        const WCHAR **val;
+        ULONG         count;
+    } *test;
+    struct test2
+    {
+        INT32 *val;
+        ULONG  count;
+    } *test2;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* array of strings, wrapper */
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping       = WS_REPEATING_ELEMENT_FIELD_MAPPING;
+    f.localName     = &wrapper;
+    f.ns            = &ns;
+    f.type          = WS_WSZ_TYPE;
+    f.countOffset   = FIELD_OFFSET(struct test, count);
+    f.itemLocalName = &val;
+    f.itemNs        = &ns;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.typeLocalName = &localname;
+    s.typeNs        = &ns;
+    s.fields        = fields;
+    s.fieldCount    = 1;
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) + 2 * sizeof(const WCHAR *) );
+    test->val = (const WCHAR **)(test + 1);
+    test->val[0] = oneW;
+    test->val[1] = twoW;
+    test->count  = 2;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<test><wrapper><val>1</val><val>2</val></wrapper></test>", __LINE__ );
+    HeapFree( GetProcessHeap(), 0, test );
+
+    /* array of integers, no wrapper */
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    f.type      = WS_INT32_TYPE;
+    f.localName = NULL;
+    f.ns        = NULL;
+
+    test2 = HeapAlloc( GetProcessHeap(), 0, sizeof(*test2) + 2 * sizeof(INT32) );
+    test2->val = (INT32 *)(test2 + 1);
+    test2->val[0] = 1;
+    test2->val[1] = 2;
+    test2->count  = 2;
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_POINTER, &test2, sizeof(test2), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<test><val>1</val><val>2</val></test>", __LINE__ );
+
+    /* item range has no effect */
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    range.minItemCount = 0;
+    range.maxItemCount = 0;
+    f.itemRange = &range;
+
+    hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_POINTER, &test2, sizeof(test2), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<test><val>1</val><val>2</val></test>", __LINE__ );
+    HeapFree( GetProcessHeap(), 0, test2 );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -2697,4 +2806,5 @@ START_TEST(writer)
     test_escapes();
     test_write_option();
     test_datetime();
+    test_repeating_element();
 }
