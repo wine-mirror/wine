@@ -2595,6 +2595,7 @@ static void test_datetime(void)
         HRESULT            hr;
         const char        *result;
         const char        *result2;
+        HRESULT            hr_broken;
     }
     tests[] =
     {
@@ -2617,7 +2618,7 @@ static void test_datetime(void)
         { 0x11ed178c6c000, WS_DATETIME_FORMAT_NONE, S_OK, "<t>0002-01-01T00:00:00</t>" },
         { 0x2bca2875f4373fff, WS_DATETIME_FORMAT_UTC, S_OK, "<t>9999-12-31T23:59:59.9999999Z</t>" },
         { 0x2bca2875f4373fff, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>9999-12-31T15:59:59.9999999-08:00</t>",
-          "<t>9999-12-31T17:59:59.9999999-06:00</t>" /* win7 */ },
+          "<t>9999-12-31T17:59:59.9999999-06:00</t>" /* win7 */, WS_E_INVALID_FORMAT },
         { 0x2bca2875f4373fff, WS_DATETIME_FORMAT_NONE, S_OK, "<t>9999-12-31T23:59:59.9999999</t>" },
         { 0x2bca2875f4374000, WS_DATETIME_FORMAT_UTC, WS_E_INVALID_FORMAT },
         { 0x2bca2875f4374000, WS_DATETIME_FORMAT_LOCAL, WS_E_INVALID_FORMAT },
@@ -2651,7 +2652,8 @@ static void test_datetime(void)
         hr = WsWriteType( writer, WS_ELEMENT_TYPE_MAPPING, WS_DATETIME_TYPE, NULL, WS_WRITE_REQUIRED_VALUE,
                           &date, sizeof(date), NULL );
         WsWriteEndElement( writer, NULL );
-        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        ok( hr == tests[i].hr || broken(hr == tests[i].hr_broken), "%u: got %08x\n", i, hr );
+        if (hr != tests[i].hr && hr == tests[i].hr_broken) break;
         if (hr == S_OK)
         {
             ok( check_result( writer, tests[i].result ) ||
