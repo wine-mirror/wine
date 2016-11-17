@@ -1083,8 +1083,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
         WARN("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
         WARN("%s\n", dbg_info);
     }
-    if (err)
-        g_error_free(err);
+    g_error_free(err);
     g_free(dbg_info);
     return GST_BUS_DROP;
 }
