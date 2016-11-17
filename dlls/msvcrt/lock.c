@@ -558,6 +558,64 @@ unsigned int __cdecl _GetConcurrency(void)
 
 #endif
 
+#if _MSVCR_VER >= 110
+typedef struct {
+    void *chain;
+    critical_section lock;
+} _Condition_variable;
+
+/* ??0_Condition_variable@details@Concurrency@@QAE@XZ */
+/* ??0_Condition_variable@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Condition_variable_ctor, 4)
+_Condition_variable* __thiscall _Condition_variable_ctor(_Condition_variable *this)
+{
+    FIXME("(%p)\n", this);
+    return NULL;
+}
+
+/* ??1_Condition_variable@details@Concurrency@@QAE@XZ */
+/* ??1_Condition_variable@details@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Condition_variable_dtor, 4)
+void __thiscall _Condition_variable_dtor(_Condition_variable *this)
+{
+    FIXME("(%p)\n", this);
+}
+
+/* ?wait@_Condition_variable@details@Concurrency@@QAEXAAVcritical_section@3@@Z */
+/* ?wait@_Condition_variable@details@Concurrency@@QEAAXAEAVcritical_section@3@@Z */
+DEFINE_THISCALL_WRAPPER(_Condition_variable_wait, 8)
+void __thiscall _Condition_variable_wait(_Condition_variable *this, critical_section *cs)
+{
+    FIXME("(%p, %p)\n", this, cs);
+}
+
+/* ?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z */
+/* ?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z */
+DEFINE_THISCALL_WRAPPER(_Condition_variable_wait_for, 12)
+MSVCRT_bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
+        critical_section *cs, unsigned int timeout)
+{
+    FIXME("(%p %p %d)\n", this, cs, timeout);
+    return FALSE;
+}
+
+/* ?notify_one@_Condition_variable@details@Concurrency@@QAEXXZ */
+/* ?notify_one@_Condition_variable@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Condition_variable_notify_one, 4)
+void __thiscall _Condition_variable_notify_one(_Condition_variable *this)
+{
+    FIXME("(%p)\n", this);
+}
+
+/* ?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ */
+/* ?notify_all@_Condition_variable@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Condition_variable_notify_all, 4)
+void __thiscall _Condition_variable_notify_all(_Condition_variable *this)
+{
+    FIXME("(%p)\n", this);
+}
+#endif
+
 /**********************************************************************
  *     msvcrt_free_locks (internal)
  *
