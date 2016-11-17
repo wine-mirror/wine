@@ -289,7 +289,7 @@ static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
 
 static const char req_test2[] =
     "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
-    "<req_test2 xmlns=\"ns\"><val>1</val></req_test2>"
+    "<req_test2 xmlns=\"ns\"><val>1</val><str>test</str><str>test2</str></req_test2>"
     "</s:Body></s:Envelope>";
 
 static const char resp_test2[] =
@@ -299,7 +299,7 @@ static const char resp_test2[] =
 
 static void test_WsCall( int port )
 {
-    static WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR testW[] = {'t','e','s','t',0}, test2W[] = {'t','e','s','t','2',0};
     WS_XML_STRING str = {3, (BYTE *)"str"};
     WS_XML_STRING req = {3, (BYTE *)"req"};
     WS_XML_STRING resp = {4, (BYTE *)"resp"};
@@ -315,16 +315,19 @@ static void test_WsCall( int port )
     WS_MESSAGE_DESCRIPTION input_msg, output_msg;
     WS_ELEMENT_DESCRIPTION input_elem, output_elem;
     WS_STRUCT_DESCRIPTION input_struct, output_struct;
-    WS_FIELD_DESCRIPTION f, f2, f3, *fields[2], *fields2[2];
-    WS_PARAMETER_DESCRIPTION param[4];
-    const void *args[4];
+    WS_FIELD_DESCRIPTION f, f2, f3, f4, *fields[2], *fields2[2];
+    WS_PARAMETER_DESCRIPTION param[6];
+    const void *args[6];
     WS_HEAP *heap;
     INT32 **val_ptr;
     WCHAR **str_ptr;
     ULONG *count_ptr;
+    const WCHAR *str_array[2];
     struct input
     {
-        INT32   val;
+        INT32         val;
+        ULONG         count;
+        const WCHAR **str;
     } in;
     struct output
     {
@@ -352,11 +355,20 @@ static void test_WsCall( int port )
     f.type      = WS_INT32_TYPE;
     fields[0] = &f;
 
+    memset( &f4, 0, sizeof(f4) );
+    f4.mapping       = WS_REPEATING_ELEMENT_FIELD_MAPPING;
+    f4.type          = WS_WSZ_TYPE;
+    f4.offset        = FIELD_OFFSET(struct input, str);
+    f4.countOffset   = FIELD_OFFSET(struct input, count);
+    f4.itemLocalName = &str;
+    f4.itemNs        = &ns;
+    fields[1] = &f4;
+
     memset( &input_struct, 0, sizeof(input_struct) );
     input_struct.size          = sizeof(struct input);
     input_struct.alignment     = TYPE_ALIGNMENT(struct input);
     input_struct.fields        = fields;
-    input_struct.fieldCount    = 1;
+    input_struct.fieldCount    = 2;
     input_struct.typeLocalName = &req;
     input_struct.typeNs        = &ns;
 
@@ -403,24 +415,32 @@ static void test_WsCall( int port )
     param[0].inputMessageIndex  = 0;
     param[0].outputMessageIndex = 0xffff;
 
-    param[1].parameterType      = WS_PARAMETER_TYPE_NORMAL;
-    param[1].inputMessageIndex  = 0xffff;
-    param[1].outputMessageIndex = 0;
+    param[1].parameterType      = WS_PARAMETER_TYPE_ARRAY;
+    param[1].inputMessageIndex  = 1;
+    param[1].outputMessageIndex = 0xffff;
 
-    param[2].parameterType      = WS_PARAMETER_TYPE_ARRAY;
-    param[2].inputMessageIndex  = 0xffff;
-    param[2].outputMessageIndex = 1;
+    param[2].parameterType      = WS_PARAMETER_TYPE_ARRAY_COUNT;
+    param[2].inputMessageIndex  = 1;
+    param[2].outputMessageIndex = 0xffff;
 
-    param[3].parameterType      = WS_PARAMETER_TYPE_ARRAY_COUNT;
+    param[3].parameterType      = WS_PARAMETER_TYPE_NORMAL;
     param[3].inputMessageIndex  = 0xffff;
-    param[3].outputMessageIndex = 1;
+    param[3].outputMessageIndex = 0;
+
+    param[4].parameterType      = WS_PARAMETER_TYPE_ARRAY;
+    param[4].inputMessageIndex  = 0xffff;
+    param[4].outputMessageIndex = 1;
+
+    param[5].parameterType      = WS_PARAMETER_TYPE_ARRAY_COUNT;
+    param[5].inputMessageIndex  = 0xffff;
+    param[5].outputMessageIndex = 1;
 
     op.versionInfo              = 1;
     op.inputMessageDescription  = &input_msg;
     op.outputMessageDescription = &output_msg;
     op.inputMessageOptions      = 0;
     op.outputMessageOptions     = 0;
-    op.parameterCount           = 4;
+    op.parameterCount           = 6;
     op.parameterDescription     = param;
     op.stubCallback             = NULL;
     op.style                    = 0;
@@ -428,17 +448,25 @@ static void test_WsCall( int port )
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     in.val   = 1;
+    str_array[0] = testW;
+    str_array[1] = test2W;
+    in.str   = str_array;
+    in.count = 2;
+
     args[0] = &in.val;
+    args[1] = &in.str;
+    args[2] = &in.count;
 
     out.str   = NULL;
     out.count = 0;
-    out.val   = 0;
+    out.val   = NULL;
     str_ptr   = &out.str;
     val_ptr   = &out.val;
     count_ptr = &out.count;
-    args[1] = &str_ptr;
-    args[2] = &val_ptr;
-    args[3] = &count_ptr;
+
+    args[3] = &str_ptr;
+    args[4] = &val_ptr;
+    args[5] = &count_ptr;
 
     hr = WsCall( proxy, &op, args, heap, NULL, 0, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );

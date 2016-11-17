@@ -2813,6 +2813,25 @@ static HRESULT write_param( struct writer *writer, const WS_FIELD_DESCRIPTION *d
     return write_type_struct_field( writer, desc, value, 0 );
 }
 
+static ULONG get_array_len( const WS_PARAMETER_DESCRIPTION *params, ULONG count, ULONG index, const void **args )
+{
+    ULONG i, ret = 0;
+    for (i = 0; i < count; i++)
+    {
+        if (params[i].inputMessageIndex != index || params[i].parameterType != WS_PARAMETER_TYPE_ARRAY_COUNT)
+            continue;
+        if (args[i]) ret = *(const ULONG *)args[i];
+        break;
+    }
+    return ret;
+}
+
+static HRESULT write_param_array( struct writer *writer, const WS_FIELD_DESCRIPTION *desc, const void *value,
+                                  ULONG len )
+{
+    return write_type_repeating_element( writer, desc, value, len );
+}
+
 HRESULT write_input_params( WS_XML_WRITER *handle, const WS_ELEMENT_DESCRIPTION *desc,
                             const WS_PARAMETER_DESCRIPTION *params, ULONG count, const void **args )
 {
@@ -2841,7 +2860,9 @@ HRESULT write_input_params( WS_XML_WRITER *handle, const WS_ELEMENT_DESCRIPTION 
         }
         else if (params[i].parameterType == WS_PARAMETER_TYPE_ARRAY)
         {
-            FIXME( "no support for writing array parameters\n" );
+            const void *ptr = *(const void **)args[i];
+            ULONG len = get_array_len( params, count, params[i].inputMessageIndex, args );
+            if ((hr = write_param_array( writer, desc_field, ptr, len )) != S_OK) return hr;
         }
     }
 
