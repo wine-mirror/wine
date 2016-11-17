@@ -17,9 +17,9 @@
 @ stub -arch=arm ??0_Cancellation_beacon@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??0_Cancellation_beacon@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0_Cancellation_beacon@details@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0_Condition_variable@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??0_Condition_variable@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0_Condition_variable@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??0_Condition_variable@details@Concurrency@@QAA@XZ(ptr) _Condition_variable_ctor
+@ thiscall -arch=i386 ??0_Condition_variable@details@Concurrency@@QAE@XZ(ptr) _Condition_variable_ctor
+@ cdecl -arch=win64 ??0_Condition_variable@details@Concurrency@@QEAA@XZ(ptr) _Condition_variable_ctor
 @ stub -arch=arm ??0_Context@details@Concurrency@@QAA@PAVContext@2@@Z
 @ stub -arch=i386 ??0_Context@details@Concurrency@@QAE@PAVContext@2@@Z
 @ stub -arch=win64 ??0_Context@details@Concurrency@@QEAA@PEAVContext@2@@Z
@@ -272,9 +272,9 @@
 @ stub -arch=arm ??1_Cancellation_beacon@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_Cancellation_beacon@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_Cancellation_beacon@details@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??1_Condition_variable@details@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1_Condition_variable@details@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1_Condition_variable@details@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1_Condition_variable@details@Concurrency@@QAA@XZ(ptr) _Condition_variable_dtor
+@ thiscall -arch=i386 ??1_Condition_variable@details@Concurrency@@QAE@XZ(ptr) _Condition_variable_dtor
+@ cdecl -arch=win64 ??1_Condition_variable@details@Concurrency@@QEAA@XZ(ptr) _Condition_variable_dtor
 @ stub -arch=arm ??1_NonReentrantBlockingLock@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_NonReentrantBlockingLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_NonReentrantBlockingLock@details@Concurrency@@QEAA@XZ
@@ -743,12 +743,12 @@
 @ cdecl -arch=arm ?native_handle@critical_section@Concurrency@@QAAAAV12@XZ(ptr) critical_section_native_handle
 @ thiscall -arch=i386 ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ(ptr) critical_section_native_handle
 @ cdecl -arch=win64 ?native_handle@critical_section@Concurrency@@QEAAAEAV12@XZ(ptr) critical_section_native_handle
-@ stub -arch=arm ?notify_all@_Condition_variable@details@Concurrency@@QAAXXZ
-@ stub -arch=i386 ?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?notify_all@_Condition_variable@details@Concurrency@@QEAAXXZ
-@ stub -arch=arm ?notify_one@_Condition_variable@details@Concurrency@@QAAXXZ
-@ stub -arch=i386 ?notify_one@_Condition_variable@details@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?notify_one@_Condition_variable@details@Concurrency@@QEAAXXZ
+@ cdecl -arch=arm ?notify_all@_Condition_variable@details@Concurrency@@QAAXXZ(ptr) _Condition_variable_notify_all
+@ thiscall -arch=i386 ?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ(ptr) _Condition_variable_notify_all
+@ cdecl -arch=win64 ?notify_all@_Condition_variable@details@Concurrency@@QEAAXXZ(ptr) _Condition_variable_notify_all
+@ cdecl -arch=arm ?notify_one@_Condition_variable@details@Concurrency@@QAAXXZ(ptr) _Condition_variable_notify_one
+@ thiscall -arch=i386 ?notify_one@_Condition_variable@details@Concurrency@@QAEXXZ(ptr) _Condition_variable_notify_one
+@ cdecl -arch=win64 ?notify_one@_Condition_variable@details@Concurrency@@QEAAXXZ(ptr) _Condition_variable_notify_one
 @ cdecl -arch=arm ?raw_name@type_info@@QBAPBDXZ(ptr) MSVCRT_type_info_raw_name
 @ thiscall -arch=i386 ?raw_name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_raw_name
 @ cdecl -arch=win64 ?raw_name@type_info@@QEBAPEBDXZ(ptr) MSVCRT_type_info_raw_name
@@ -791,15 +791,15 @@
 @ stub -arch=win64 ?unlock@reader_writer_lock@Concurrency@@QEAAXXZ
 @ cdecl ?vswprintf@@YAHPA_WIPB_WPAD@Z(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ stub ?wait@Concurrency@@YAXI@Z
-@ stub -arch=arm ?wait@_Condition_variable@details@Concurrency@@QAAXAAVcritical_section@3@@Z
-@ stub -arch=i386 ?wait@_Condition_variable@details@Concurrency@@QAEXAAVcritical_section@3@@Z
-@ stub -arch=win64 ?wait@_Condition_variable@details@Concurrency@@QEAAXAEAVcritical_section@3@@Z
+@ cdecl -arch=arm ?wait@_Condition_variable@details@Concurrency@@QAAXAAVcritical_section@3@@Z(ptr ptr) _Condition_variable_wait
+@ thiscall -arch=i386 ?wait@_Condition_variable@details@Concurrency@@QAEXAAVcritical_section@3@@Z(ptr ptr) _Condition_variable_wait
+@ cdecl -arch=win64 ?wait@_Condition_variable@details@Concurrency@@QEAAXAEAVcritical_section@3@@Z(ptr ptr) _Condition_variable_wait
 @ stub -arch=arm ?wait@event@Concurrency@@QAAII@Z
 @ stub -arch=i386 ?wait@event@Concurrency@@QAEII@Z
 @ stub -arch=win64 ?wait@event@Concurrency@@QEAA_KI@Z
-@ stub -arch=arm ?wait_for@_Condition_variable@details@Concurrency@@QAA_NAAVcritical_section@3@I@Z
-@ stub -arch=i386 ?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z
-@ stub -arch=win64 ?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z
+@ cdecl -arch=arm ?wait_for@_Condition_variable@details@Concurrency@@QAA_NAAVcritical_section@3@I@Z(ptr ptr long) _Condition_variable_wait_for
+@ thiscall -arch=i386 ?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z(ptr ptr long) _Condition_variable_wait_for
+@ cdecl -arch=win64 ?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z(ptr ptr long) _Condition_variable_wait_for
 @ stub -arch=win32 ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z
 @ stub -arch=win64 ?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z
 @ cdecl -arch=arm ?what@exception@std@@UBAPBDXZ(ptr) MSVCRT_what_exception
