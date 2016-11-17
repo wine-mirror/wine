@@ -564,7 +564,7 @@ static void test_WsSetHeader(void)
     hr = WsSetHeader( NULL, 0, 0, 0, NULL, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -628,7 +628,7 @@ static void test_WsRemoveHeader(void)
     hr = WsSetHeader( NULL, 0, 0, 0, NULL, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg,
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg,
                           NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -678,7 +678,7 @@ static void test_WsAddMappedHeader(void)
     hr = WsAddMappedHeader( NULL, NULL, 0, 0, NULL, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsAddMappedHeader( msg, NULL, 0, 0, NULL, 0, NULL );
@@ -712,7 +712,7 @@ static void test_WsRemoveMappedHeader(void)
     hr = WsRemoveMappedHeader( NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsRemoveMappedHeader( msg, NULL, NULL );
@@ -778,7 +778,7 @@ static void test_WsAddCustomHeader(void)
     hr = WsAddCustomHeader( NULL, NULL, 0, NULL, 0, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsAddCustomHeader( msg, NULL, 0, NULL, 0, 0, NULL );
@@ -855,7 +855,7 @@ static void test_WsRemoveCustomHeader(void)
     hr = WsRemoveCustomHeader( NULL, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_1_0, WS_ENVELOPE_VERSION_SOAP_1_2, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_1_0, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsRemoveCustomHeader( msg, &localname, &ns, NULL );
@@ -917,7 +917,7 @@ static void test_WsReadEnvelopeStart(void)
     hr = WsReadEnvelopeStart( NULL, NULL, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsReadEnvelopeStart( msg, NULL, NULL, NULL, NULL );
@@ -932,7 +932,7 @@ static void test_WsReadEnvelopeStart(void)
     hr = WsReadEnvelopeStart( msg, reader, NULL, NULL, NULL );
     ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg2, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg2, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_input( reader, xml, strlen(xml) );
@@ -963,7 +963,7 @@ static void test_WsReadEnvelopeEnd(void)
     hr = WsReadEnvelopeEnd( NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
@@ -972,7 +972,7 @@ static void test_WsReadEnvelopeEnd(void)
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg2, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg2, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = set_input( reader, xml, strlen(xml) );
@@ -1023,7 +1023,7 @@ static void test_WsReadBody(void)
     hr = WsReadBody( NULL, NULL, 0, NULL, NULL, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
@@ -1032,7 +1032,7 @@ static void test_WsReadBody(void)
     hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = WsCreateMessage( WS_ADDRESSING_VERSION_0_9, WS_ENVELOPE_VERSION_SOAP_1_1, NULL, 0, &msg2, NULL );
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg2, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsReadBody( msg2, NULL, 0, NULL, NULL, 0, NULL );
