@@ -46,6 +46,8 @@ struct thiscall_thunk
 
 static ULONG_PTR (WINAPI *call_thiscall_func1)( void *func, void *this );
 static ULONG_PTR (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+static ULONG_PTR (WINAPI *call_thiscall_func3)( void *func,
+        void *this, const void *a, const void *b );
 
 static void init_thiscall_thunk(void)
 {
@@ -58,16 +60,19 @@ static void init_thiscall_thunk(void)
     thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
     call_thiscall_func1 = (void *)thunk;
     call_thiscall_func2 = (void *)thunk;
+    call_thiscall_func3 = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
 #define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),(const void*)(b))
 
 #else
 
 #define init_thiscall_thunk()
 #define call_func1(func,_this) func(_this)
 #define call_func2(func,_this,a) func(_this,a)
+#define call_func3(func,_this,a,b) func(_this,a,b)
 
 #endif /* __i386__ */
 
@@ -102,6 +107,11 @@ typedef struct
     void *unknown[4];
     int unknown2[2];
 } critical_section_scoped_lock;
+
+typedef struct {
+    void *chain;
+    critical_section lock;
+} _Condition_variable;
 
 static inline float __port_infinity(void)
 {
@@ -188,6 +198,13 @@ static critical_section_scoped_lock* (__thiscall *p_critical_section_scoped_lock
     (critical_section_scoped_lock*, critical_section *);
 static void (__thiscall *p_critical_section_scoped_lock_dtor)(critical_section_scoped_lock*);
 
+static _Condition_variable* (__thiscall *p__Condition_variable_ctor)(_Condition_variable*);
+static void (__thiscall *p__Condition_variable_dtor)(_Condition_variable*);
+static void (__thiscall *p__Condition_variable_wait)(_Condition_variable*, critical_section*);
+static MSVCRT_bool (__thiscall *p__Condition_variable_wait_for)(_Condition_variable*, critical_section*, unsigned int);
+static void (__thiscall *p__Condition_variable_notify_one)(_Condition_variable*);
+static void (__thiscall *p__Condition_variable_notify_all)(_Condition_variable*);
+
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 
@@ -240,6 +257,18 @@ static BOOL init(void)
                 "??0scoped_lock@critical_section@Concurrency@@QEAA@AEAV12@@Z");
         SET(p_critical_section_scoped_lock_dtor,
                 "??1scoped_lock@critical_section@Concurrency@@QEAA@XZ");
+        SET(p__Condition_variable_ctor,
+                "??0_Condition_variable@details@Concurrency@@QEAA@XZ");
+        SET(p__Condition_variable_dtor,
+                "??1_Condition_variable@details@Concurrency@@QEAA@XZ");
+        SET(p__Condition_variable_wait,
+                "?wait@_Condition_variable@details@Concurrency@@QEAAXAEAVcritical_section@3@@Z");
+        SET(p__Condition_variable_wait_for,
+                "?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z");
+        SET(p__Condition_variable_notify_one,
+                "?notify_one@_Condition_variable@details@Concurrency@@QEAAXXZ");
+        SET(p__Condition_variable_notify_all,
+                "?notify_all@_Condition_variable@details@Concurrency@@QEAAXXZ");
     } else {
 #ifdef __arm__
         SET(p_critical_section_ctor,
@@ -260,6 +289,18 @@ static BOOL init(void)
                 "??0scoped_lock@critical_section@Concurrency@@QAA@AAV12@@Z");
         SET(p_critical_section_scoped_lock_dtor,
                 "??1scoped_lock@critical_section@Concurrency@@QAA@XZ");
+        SET(p__Condition_variable_ctor,
+                "??0_Condition_variable@details@Concurrency@@QAA@XZ");
+        SET(p__Condition_variable_dtor,
+                "??1_Condition_variable@details@Concurrency@@QAA@XZ");
+        SET(p__Condition_variable_wait,
+                "?wait@_Condition_variable@details@Concurrency@@QAAXAAVcritical_section@3@@Z");
+        SET(p__Condition_variable_wait_for,
+                "?wait_for@_Condition_variable@details@Concurrency@@QAA_NAAVcritical_section@3@I@Z");
+        SET(p__Condition_variable_notify_one,
+                "?notify_one@_Condition_variable@details@Concurrency@@QAAXXZ");
+        SET(p__Condition_variable_notify_all,
+                "?notify_all@_Condition_variable@details@Concurrency@@QAAXXZ");
 #else
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QAE@XZ");
@@ -279,6 +320,18 @@ static BOOL init(void)
                 "??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z");
         SET(p_critical_section_scoped_lock_dtor,
                 "??1scoped_lock@critical_section@Concurrency@@QAE@XZ");
+        SET(p__Condition_variable_ctor,
+                "??0_Condition_variable@details@Concurrency@@QAE@XZ");
+        SET(p__Condition_variable_dtor,
+                "??1_Condition_variable@details@Concurrency@@QAE@XZ");
+        SET(p__Condition_variable_wait,
+                "?wait@_Condition_variable@details@Concurrency@@QAEXAAVcritical_section@3@@Z");
+        SET(p__Condition_variable_wait_for,
+                "?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z");
+        SET(p__Condition_variable_notify_one,
+                "?notify_one@_Condition_variable@details@Concurrency@@QAEXXZ");
+        SET(p__Condition_variable_notify_all,
+                "?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ");
 #endif
     }
 
@@ -758,6 +811,77 @@ static void test__wcreate_locale(void)
     ok(errno == -1, "expected errno -1, but got %i\n", e);
 }
 
+struct wait_thread_arg
+{
+    critical_section *cs;
+    _Condition_variable *cv;
+    HANDLE thread_initialized;
+};
+
+static DWORD WINAPI condition_variable_wait_thread(void *varg)
+{
+    struct wait_thread_arg *arg = varg;
+
+    call_func1(p_critical_section_lock, arg->cs);
+    SetEvent(arg->thread_initialized);
+    call_func2(p__Condition_variable_wait, arg->cv, arg->cs);
+    call_func1(p_critical_section_unlock, arg->cs);
+    return 0;
+}
+
+static void test__Condition_variable(void)
+{
+    critical_section cs;
+    _Condition_variable cv;
+    HANDLE thread_initialized = CreateEventW(NULL, FALSE, FALSE, NULL);
+    struct wait_thread_arg wait_thread_arg = { &cs, &cv, thread_initialized };
+    HANDLE threads[2];
+    DWORD ret;
+    MSVCRT_bool b;
+
+    ok(thread_initialized != NULL, "CreateEvent failed\n");
+
+    call_func1(p_critical_section_ctor, &cs);
+    call_func1(p__Condition_variable_ctor, &cv);
+
+    call_func1(p__Condition_variable_notify_one, &cv);
+    call_func1(p__Condition_variable_notify_all, &cv);
+
+    threads[0] = CreateThread(0, 0, condition_variable_wait_thread,
+            &wait_thread_arg, 0, 0);
+    ok(threads[0] != NULL, "CreateThread failed\n");
+    WaitForSingleObject(thread_initialized, INFINITE);
+    call_func1(p_critical_section_lock, &cs);
+    call_func1(p_critical_section_unlock, &cs);
+
+    threads[1] = CreateThread(0, 0, condition_variable_wait_thread,
+            &wait_thread_arg, 0, 0);
+    ok(threads[1] != NULL, "CreateThread failed\n");
+    WaitForSingleObject(thread_initialized, INFINITE);
+    call_func1(p_critical_section_lock, &cs);
+    call_func1(p_critical_section_unlock, &cs);
+
+    call_func1(p__Condition_variable_notify_one, &cv);
+    ret = WaitForSingleObject(threads[1], 500);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+    call_func1(p__Condition_variable_notify_one, &cv);
+    ret = WaitForSingleObject(threads[0], 500);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", ret);
+
+    CloseHandle(threads[0]);
+    CloseHandle(threads[1]);
+
+    call_func1(p_critical_section_lock, &cs);
+    b = call_func3(p__Condition_variable_wait_for, &cv, &cs, 1);
+    ok(!b, "_Condition_variable_wait_for returned TRUE\n");
+    call_func1(p_critical_section_unlock, &cs);
+
+    call_func1(p_critical_section_dtor, &cs);
+    call_func1(p__Condition_variable_dtor, &cv);
+
+    CloseHandle(thread_initialized);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -773,4 +897,5 @@ START_TEST(msvcr120)
     test_critical_section();
     test_fegetenv();
     test__wcreate_locale();
+    test__Condition_variable();
 }
