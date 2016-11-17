@@ -714,8 +714,8 @@ static const WCHAR compsys_modelW[] =
 static const WCHAR compsysproduct_identifyingnumberW[] =
     {'0',0};
 static const WCHAR compsysproduct_uuidW[] =
-    {'0','0','0','0','0','0','0','0','-','0','0','0','0','-','0','0','0','0','-','0','0','0','0','-',
-     '0','0','0','0','0','0','0','0','0','0','0','0',0};
+    {'d','e','a','d','d','e','a','d','-','d','e','a','d','-','d','e','a','d','-','d','e','a','d','-',
+     'd','e','a','d','d','e','a','d','d','e','a','d',0};
 static const WCHAR diskdrive_interfacetypeW[] =
     {'I','D','E',0};
 static const WCHAR diskdrive_manufacturerW[] =
