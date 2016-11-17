@@ -31,6 +31,12 @@ echo @tab@word
 echo  @tab@word
 echo@tab@@tab@word
 echo @tab@ on @space@
+@echo --- @ with chains and brackets
+(echo the @ character chains until&&@echo we leave the current depth||(
+echo hidden
+@echo hidden
+))&&echo and can hide brackets||(@echo command hidden)||@(echo brackets hidden)
+@echo ---
 
 @echo off
 echo off@tab@@space@
