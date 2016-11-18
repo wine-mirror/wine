@@ -132,6 +132,7 @@ static Cursor create_cursor( HANDLE handle );
 static BOOL xinput2_available;
 static BOOL broken_rawevents;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(XIGetClientPointer);
 MAKE_FUNCPTR(XIFreeDeviceInfo);
 MAKE_FUNCPTR(XIQueryDevice);
 MAKE_FUNCPTR(XIQueryVersion);
@@ -255,7 +256,7 @@ static void enable_xinput2(void)
     XIEventMask mask;
     XIDeviceInfo *devices;
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
-    int i, j, count;
+    int i;
 
     if (!xinput2_available) return;
 
@@ -272,29 +273,8 @@ static void enable_xinput2(void)
     if (data->xi2_state == xi_unavailable) return;
 
     if (data->xi2_devices) pXIFreeDeviceInfo( data->xi2_devices );
+    if (!pXIGetClientPointer( data->display, None, &data->xi2_core_pointer )) return;
     data->xi2_devices = devices = pXIQueryDevice( data->display, XIAllDevices, &data->xi2_device_count );
-    for (i = 0; i < data->xi2_device_count; ++i)
-    {
-        if (devices[i].use != XIMasterPointer) continue;
-        for (j = count = 0; j < devices[i].num_classes; j++)
-        {
-            XIValuatorClassInfo *class = (XIValuatorClassInfo *)devices[i].classes[j];
-
-            if (devices[i].classes[j]->type != XIValuatorClass) continue;
-            TRACE( "Device %u (%s) num %u %f,%f res %u mode %u label %s\n",
-                   devices[i].deviceid, debugstr_a(devices[i].name),
-                   class->number, class->min, class->max, class->resolution, class->mode,
-                   XGetAtomName( data->display, class->label ));
-            if (class->label == x11drv_atom( Rel_X ) || class->label == x11drv_atom( Rel_Y )) count++;
-            /* workaround for drivers that don't provide labels */
-            if (!class->label && class->number <= 1 && class->mode == XIModeRelative) count++;
-        }
-        if (count < 2) continue;
-        TRACE( "Using %u (%s) as core pointer\n",
-               devices[i].deviceid, debugstr_a(devices[i].name) );
-        data->xi2_core_pointer = devices[i].deviceid;
-        break;
-    }
 
     mask.mask     = mask_bits;
     mask.mask_len = sizeof(mask_bits);
@@ -1729,6 +1709,7 @@ void X11DRV_XInput2_Init(void)
         return; \
     }
 
+    LOAD_FUNCPTR(XIGetClientPointer);
     LOAD_FUNCPTR(XIFreeDeviceInfo);
     LOAD_FUNCPTR(XIQueryDevice);
     LOAD_FUNCPTR(XIQueryVersion);
