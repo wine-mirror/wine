@@ -98,6 +98,7 @@ my @dll_groups =
   "setupapi",
   "cfgmgr32",
   "api-ms-win-devices-config-l1-1-1",
+  "api-ms-win-devices-query-l1-1-1",
  ],
  [
   "vcomp",

@@ -1,0 +1,15 @@
+@ stub DevCloseObjectQuery
+@ stub DevCreateObjectQuery
+@ stub DevCreateObjectQueryEx
+@ stub DevCreateObjectQueryFromId
+@ stub DevCreateObjectQueryFromIdEx
+@ stub DevCreateObjectQueryFromIds
+@ stub DevCreateObjectQueryFromIdsEx
+@ stub DevFindProperty
+@ stub DevFreeObjectProperties
+@ stub DevFreeObjects
+@ stub DevGetObjectProperties
+@ stub DevGetObjectPropertiesEx
+@ stub DevGetObjects
+@ stub DevGetObjectsEx
+@ stub DevSetObjectProperties
