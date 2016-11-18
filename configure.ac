@@ -1524,7 +1524,7 @@ WINE_NOTICE_WITH(oss,[test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes]
 dnl **** Check for libudev ****
 if test "x$with_udev" != "xno"
 then
-    WINE_PACKAGE_FLAGS(UDEV,[libudev],,,,
+    WINE_PACKAGE_FLAGS(UDEV,[libudev],[-ludev],,,
         [AC_CHECK_HEADERS(libudev.h,
             [AC_CHECK_LIB(udev,udev_new,
                 AC_DEFINE(HAVE_UDEV,1,[Define to 1 if you have the `udev' library (-ludev).]),

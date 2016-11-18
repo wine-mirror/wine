@@ -12989,7 +12989,7 @@ if ${UDEV_LIBS:+false} :; then :
 fi
 fi
 
-
+UDEV_LIBS=${UDEV_LIBS:-"-ludev"}
 $as_echo "$as_me:${as_lineno-$LINENO}: libudev cflags: $UDEV_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libudev libs: $UDEV_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
