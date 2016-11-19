@@ -251,6 +251,85 @@ echo %WINE_FOO%
 echo %ErrorLevel%
 set WINE_FOO=
 
+echo ------------ Testing chains ------------
+rem brackets precede '&&', '||' and '&'
+rem '&&' precedes '||' and '&'
+rem '||' precedes '&'
+rem 'a && b || c & d' is equivalent to '(((a && b) || c) & d)'
+goto :cfailend
+:cfail
+echo %1
+call :setError 1
+goto :eof
+:cfailend
+echo --- chain success
+echo a1&echo a2
+echo b1&&echo b2
+echo c1||echo c2
+echo ---
+echo d1&echo d2&echo d3
+echo e1&echo e2&&echo e3
+echo f1&echo f2||echo f3
+echo ---
+echo g1&&echo g2&echo g3
+echo h1&&echo h2&&echo h3
+echo i1&&echo i2||echo i3
+echo ---
+echo j1||echo j2&echo j3
+echo ---
+echo k1||echo k2&&echo k3
+echo ---
+echo l1||echo l2||echo l3
+echo ---
+echo --- chain failure
+call :cfail a1&call :cfail a2
+call :cfail b1&&call :cfail b2
+echo ---
+call :cfail c1||call :cfail c2
+call :cfail d1&call :cfail d2&call :cfail d3
+call :cfail e1&call :cfail e2&&call :cfail e3
+echo ---
+call :cfail f1&call :cfail f2||call :cfail f3
+call :cfail g1&&call :cfail g2&call :cfail g3
+echo ---
+call :cfail h1&&call :cfail h2&&call :cfail h3
+echo ---
+call :cfail i1&&call :cfail i2||call :cfail i3
+echo ---
+call :cfail j1||call :cfail j2&call :cfail j3
+call :cfail k1||call :cfail k2&&call :cfail k3
+echo ---
+call :cfail l1||call :cfail l2||call :cfail l3
+echo --- chain brackets
+echo a1&(echo a2&echo a3)
+echo b1&(echo b2&&echo b3)
+echo c1&(echo c2||echo c3)
+echo ---
+echo d1&&(echo d2&echo d3)
+echo e1&&(echo e2&&echo e3)
+echo f1&&(echo f2||echo f3)
+echo ---
+echo g1||(echo g2&echo g3)
+echo ---
+echo h1||(echo h2&&echo h3)
+echo ---
+echo i1||(echo i2||echo i3)
+echo ---
+call :cfail j1&(call :cfail j2&call :cfail j3)
+call :cfail k1&(call :cfail k2&&call :cfail k3)
+echo ---
+call :cfail l1&(call :cfail l2||call :cfail l3)
+call :cfail m1&&(call :cfail m2&call :cfail m3)
+echo ---
+call :cfail n1&&(call :cfail n2&&call :cfail n3)
+echo ---
+call :cfail o1&&(call :cfail o2||call :cfail o3)
+echo ---
+call :cfail p1||(call :cfail p2&call :cfail p3)
+call :cfail q1||(call :cfail q2&&call :cfail q3)
+echo ---
+call :cfail r1||(call :cfail r2||call :cfail r3)
+
 echo ------------ Testing 'set' ------------
 call :setError 0
 rem Remove any WINE_FOO* WINE_BA* environment variables from shell before proceeding
