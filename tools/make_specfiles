@@ -145,6 +145,11 @@ my @dll_groups =
   "api-ms-win-core-xstate-l1-1-0",
  ],
  [
+  "ntdll",
+  "powrprof",
+  "api-ms-win-power-base-l1-1-0",
+ ],
+ [
   "kernel32",
   "api-ms-win-appmodel-runtime-l1-1-1",
   "api-ms-win-downlevel-normaliz-l1-1-0",
