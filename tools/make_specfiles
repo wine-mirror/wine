@@ -137,6 +137,10 @@ my @dll_groups =
   "api-ms-win-service-winsvc-l1-2-0",
  ],
  [
+  "netapi32",
+  "ext-ms-win-domainjoin-netjoin-l1-1-0",
+ ],
+ [
   "ntdll",
   "api-ms-win-core-xstate-l1-1-0",
  ],

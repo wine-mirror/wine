@@ -1169,6 +1169,7 @@ enable_dxva2
 enable_esent
 enable_evr
 enable_explorerframe
+enable_ext_ms_win_domainjoin_netjoin_l1_1_0
 enable_ext_ms_win_gdi_dc_create_l1_1_1
 enable_ext_ms_win_gdi_dc_l1_2_0
 enable_ext_ms_win_gdi_devcaps_l1_1_0
@@ -17947,6 +17948,7 @@ wine_fn_config_dll esent enable_esent
 wine_fn_config_dll evr enable_evr
 wine_fn_config_dll explorerframe enable_explorerframe clean
 wine_fn_config_test dlls/explorerframe/tests explorerframe_test
+wine_fn_config_dll ext-ms-win-domainjoin-netjoin-l1-1-0 enable_ext_ms_win_domainjoin_netjoin_l1_1_0
 wine_fn_config_dll ext-ms-win-gdi-dc-create-l1-1-1 enable_ext_ms_win_gdi_dc_create_l1_1_1
 wine_fn_config_dll ext-ms-win-gdi-dc-l1-2-0 enable_ext_ms_win_gdi_dc_l1_2_0
 wine_fn_config_dll ext-ms-win-gdi-devcaps-l1-1-0 enable_ext_ms_win_gdi_devcaps_l1_1_0
