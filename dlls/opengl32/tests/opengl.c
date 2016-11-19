@@ -898,12 +898,13 @@ static void test_opengl3(HDC hdc)
     {
         HGLRC gl3Ctx;
         DWORD error;
+        SetLastError(0xdeadbeef);
         gl3Ctx = pwglCreateContextAttribsARB(hdc, (HGLRC)0xdeadbeef, 0);
         ok(gl3Ctx == 0, "pwglCreateContextAttribsARB using an invalid shareList passed\n");
         error = GetLastError();
         /* The Nvidia implementation seems to return hresults instead of win32 error codes */
-        todo_wine ok(error == ERROR_INVALID_OPERATION ||
-                     error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
+        ok(error == ERROR_INVALID_OPERATION ||
+           error == NVIDIA_HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION), "Expected ERROR_INVALID_OPERATION, got error=%x\n", error);
         wglDeleteContext(gl3Ctx);
     }
 

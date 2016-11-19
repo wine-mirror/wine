@@ -280,7 +280,11 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
         return 0;
     }
     if (!funcs->ext.p_wglCreateContextAttribsARB) return 0;
-    if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT ))) return 0;
+    if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT )))
+    {
+        SetLastError( ERROR_INVALID_OPERATION );
+        return 0;
+    }
     if ((drv_ctx = funcs->ext.p_wglCreateContextAttribsARB( hdc,
                                               share_ptr ? share_ptr->u.context->drv_ctx : NULL, attribs )))
     {
