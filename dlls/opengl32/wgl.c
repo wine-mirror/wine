@@ -274,7 +274,12 @@ HGLRC WINAPI wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attrib
     struct opengl_context *context;
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
-    if (!funcs || !funcs->ext.p_wglCreateContextAttribsARB) return 0;
+    if (!funcs)
+    {
+        SetLastError( ERROR_DC_NOT_FOUND );
+        return 0;
+    }
+    if (!funcs->ext.p_wglCreateContextAttribsARB) return 0;
     if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT ))) return 0;
     if ((drv_ctx = funcs->ext.p_wglCreateContextAttribsARB( hdc,
                                               share_ptr ? share_ptr->u.context->drv_ctx : NULL, attribs )))
