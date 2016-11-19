@@ -148,6 +148,7 @@ my @dll_groups =
   "ntdll",
   "powrprof",
   "api-ms-win-power-base-l1-1-0",
+  "api-ms-win-power-setting-l1-1-0",
  ],
  [
   "kernel32",
