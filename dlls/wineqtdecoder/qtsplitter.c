@@ -1101,6 +1101,7 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
     HRESULT hr = S_OK;
     ALLOCATOR_PROPERTIES props;
     QTInPin *This = impl_from_IPin(iface);
+    IMemAllocator *pAlloc;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
 
@@ -1150,8 +1151,18 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
     props.cbAlign = 1;
     props.cbBuffer = impl_from_IBaseFilter(This->pin.pinInfo.pFilter)->outputSize + props.cbAlign;
     props.cbPrefix = 0;
+    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC,
+                          &IID_IMemAllocator, (LPVOID *)&pAlloc);
+    if (SUCCEEDED(hr))
+    {
+        /* A certain IAsyncReader::RequestAllocator expects to be passed
+           non-NULL preferred allocator */
+        hr = IAsyncReader_RequestAllocator(This->pReader, pAlloc, &props, &This->pAlloc);
+        if (FAILED(hr))
+            WARN("Can't get an allocator, got %08x\n", hr);
+        IMemAllocator_Release(pAlloc);
+    }
 
-    hr = IAsyncReader_RequestAllocator(This->pReader, NULL, &props, &This->pAlloc);
     if (SUCCEEDED(hr))
     {
         CopyMediaType(&This->pin.mtCurrent, pmt);
