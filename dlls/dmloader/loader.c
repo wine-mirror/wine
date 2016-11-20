@@ -422,7 +422,7 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 		/* attach stream */
 		hr = IDirectMusicLoaderFileStream_Attach (pStream, wszFileName, iface);
 		if (FAILED(hr)) {
-			ERR(": could not attach stream to file\n");
+			ERR(": could not attach stream to file %s, make sure it exists\n", debugstr_w(wszFileName));
 			IStream_Release (pStream);
 			return DMUS_E_LOADER_FAILEDOPEN;
 		}
