@@ -95,6 +95,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_AvgTimePerFrame(IBasicVideo *iface, REFT
     VIDEOINFOHEADER *vih;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
+    if (!pAvgTimePerFrame)
+        return E_POINTER;
     if (!This->pPin->pConnectedTo)
         return VFW_E_NOT_CONNECTED;
 
@@ -112,6 +114,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_BitRate(IBasicVideo *iface, LONG *pBitRa
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pBitRate);
 
+    if (!pBitRate)
+        return E_POINTER;
     if (!This->pPin->pConnectedTo)
         return VFW_E_NOT_CONNECTED;
 
@@ -127,6 +131,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_BitErrorRate(IBasicVideo *iface, LONG *p
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pBitErrorRate);
 
+    if (!pBitErrorRate)
+        return E_POINTER;
     if (!This->pPin->pConnectedTo)
         return VFW_E_NOT_CONNECTED;
 
@@ -141,6 +147,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_VideoWidth(IBasicVideo *iface, LONG *pVi
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pVideoWidth);
+    if (!pVideoWidth)
+        return E_POINTER;
 
     vih = This->pFuncsTable->pfnGetVideoFormat(This);
     *pVideoWidth = vih->bmiHeader.biWidth;
@@ -154,6 +162,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_VideoHeight(IBasicVideo *iface, LONG *pV
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pVideoHeight);
+    if (!pVideoHeight)
+        return E_POINTER;
 
     vih = This->pFuncsTable->pfnGetVideoFormat(This);
     *pVideoHeight = abs(vih->bmiHeader.biHeight);
@@ -180,6 +190,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_SourceLeft(IBasicVideo *iface, LONG *pSo
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pSourceLeft);
+    if (!pSourceLeft)
+        return E_POINTER;
     This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
     *pSourceLeft = SourceRect.left;
 
@@ -205,6 +217,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_SourceWidth(IBasicVideo *iface, LONG *pS
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pSourceWidth);
+    if (!pSourceWidth)
+        return E_POINTER;
     This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
     *pSourceWidth = SourceRect.right - SourceRect.left;
 
@@ -230,6 +244,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_SourceTop(IBasicVideo *iface, LONG *pSou
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pSourceTop);
+    if (!pSourceTop)
+        return E_POINTER;
     This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
     *pSourceTop = SourceRect.top;
 
@@ -255,6 +271,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_SourceHeight(IBasicVideo *iface, LONG *p
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pSourceHeight);
+    if (!pSourceHeight)
+        return E_POINTER;
     This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
 
     *pSourceHeight = SourceRect.bottom - SourceRect.top;
@@ -281,6 +299,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_DestinationLeft(IBasicVideo *iface, LONG
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pDestinationLeft);
+    if (!pDestinationLeft)
+        return E_POINTER;
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
     *pDestinationLeft = DestRect.left;
 
@@ -306,6 +326,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_DestinationWidth(IBasicVideo *iface, LON
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pDestinationWidth);
+    if (!pDestinationWidth)
+        return E_POINTER;
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
     *pDestinationWidth = DestRect.right - DestRect.left;
 
@@ -331,6 +353,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_DestinationTop(IBasicVideo *iface, LONG 
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pDestinationTop);
+    if (!pDestinationTop)
+        return E_POINTER;
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
     *pDestinationTop = DestRect.top;
 
@@ -356,6 +380,8 @@ HRESULT WINAPI BaseControlVideoImpl_get_DestinationHeight(IBasicVideo *iface, LO
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pDestinationHeight);
+    if (!pDestinationHeight)
+        return E_POINTER;
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
     *pDestinationHeight = DestRect.right - DestRect.left;
 
@@ -381,6 +407,8 @@ HRESULT WINAPI BaseControlVideoImpl_GetSourcePosition(IBasicVideo *iface, LONG *
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p, %p, %p, %p)\n", This, iface, pLeft, pTop, pWidth, pHeight);
+    if (!pLeft || !pTop || !pWidth || !pHeight)
+        return E_POINTER;
     This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
 
     *pLeft = SourceRect.left;
@@ -418,6 +446,8 @@ HRESULT WINAPI BaseControlVideoImpl_GetDestinationPosition(IBasicVideo *iface, L
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p, %p, %p, %p)\n", This, iface, pLeft, pTop, pWidth, pHeight);
+    if (!pLeft || !pTop || !pWidth || !pHeight)
+        return E_POINTER;
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
 
     *pLeft = DestRect.left;
@@ -442,6 +472,8 @@ HRESULT WINAPI BaseControlVideoImpl_GetVideoSize(IBasicVideo *iface, LONG *pWidt
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pWidth, pHeight);
+    if (!pWidth || !pHeight)
+        return E_POINTER;
 
     vih = This->pFuncsTable->pfnGetVideoFormat(This);
     *pHeight = vih->bmiHeader.biHeight;
@@ -455,6 +487,8 @@ HRESULT WINAPI BaseControlVideoImpl_GetVideoPaletteEntries(IBasicVideo *iface, L
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%d, %d, %p, %p)\n", This, iface, StartIndex, Entries, pRetrieved, pPalette);
+    if (!pRetrieved || !pPalette)
+        return E_POINTER;
 
     if (pRetrieved)
         *pRetrieved = 0;
@@ -464,6 +498,8 @@ HRESULT WINAPI BaseControlVideoImpl_GetVideoPaletteEntries(IBasicVideo *iface, L
 HRESULT WINAPI BaseControlVideoImpl_GetCurrentImage(IBasicVideo *iface, LONG *pBufferSize, LONG *pDIBImage)
 {
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    if (!pBufferSize || !pDIBImage)
+        return E_POINTER;
 
     return This->pFuncsTable->pfnGetStaticImage(This, pBufferSize, pDIBImage);
 }
