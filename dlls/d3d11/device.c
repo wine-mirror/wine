@@ -527,6 +527,9 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_GetData(ID3D11DeviceCon
     TRACE("iface %p, asynchronous %p, data %p, data_size %u, data_flags %#x.\n",
             iface, asynchronous, data, data_size, data_flags);
 
+    if (!data && data_size)
+        return E_INVALIDARG;
+
     wined3d_flags = wined3d_getdata_flags_from_d3d11_async_getdata_flags(data_flags);
 
     wined3d_mutex_lock();

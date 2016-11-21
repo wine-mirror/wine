@@ -4710,7 +4710,7 @@ static void test_occlusion_query(void)
     hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(DWORD), 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(data), 0);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     ID3D11DeviceContext_Begin(context, query);
     ID3D11DeviceContext_End(context, query);

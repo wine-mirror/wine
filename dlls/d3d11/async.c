@@ -298,6 +298,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *d
 
     TRACE("iface %p, data %p, data_size %u, flags %#x.\n", iface, data, data_size, flags);
 
+    if (!data && data_size)
+        return E_INVALIDARG;
+
     wined3d_flags = wined3d_getdata_flags_from_d3d11_async_getdata_flags(flags);
 
     wined3d_mutex_lock();
