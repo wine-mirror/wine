@@ -3333,6 +3333,63 @@ static void test_desktop_dpi(void)
     ID2D1Factory_Release(factory);
 }
 
+static void test_stroke_style(void)
+{
+    D2D1_STROKE_STYLE_PROPERTIES desc;
+    ID2D1StrokeStyle *style;
+    ID2D1Factory *factory;
+    UINT32 count;
+    HRESULT hr;
+    D2D1_CAP_STYLE cap_style;
+    D2D1_LINE_JOIN line_join;
+    float miter_limit, dash_offset;
+    D2D1_DASH_STYLE dash_style;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    desc.startCap = D2D1_CAP_STYLE_SQUARE;
+    desc.endCap = D2D1_CAP_STYLE_ROUND;
+    desc.dashCap = D2D1_CAP_STYLE_TRIANGLE;
+    desc.lineJoin = D2D1_LINE_JOIN_BEVEL;
+    desc.miterLimit = 1.5f;
+    desc.dashStyle = D2D1_DASH_STYLE_DOT;
+    desc.dashOffset = -1.0f;
+
+    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+    ok(SUCCEEDED(hr), "Failed to create stroke style, %#x.\n", hr);
+
+    cap_style = ID2D1StrokeStyle_GetStartCap(style);
+    ok(cap_style == D2D1_CAP_STYLE_SQUARE, "Unexpected cap style %d.\n", cap_style);
+    cap_style = ID2D1StrokeStyle_GetEndCap(style);
+    ok(cap_style == D2D1_CAP_STYLE_ROUND, "Unexpected cap style %d.\n", cap_style);
+    cap_style = ID2D1StrokeStyle_GetDashCap(style);
+    ok(cap_style == D2D1_CAP_STYLE_TRIANGLE, "Unexpected cap style %d.\n", cap_style);
+    line_join = ID2D1StrokeStyle_GetLineJoin(style);
+    ok(line_join == D2D1_LINE_JOIN_BEVEL, "Unexpected line joind %d.\n", line_join);
+    miter_limit = ID2D1StrokeStyle_GetMiterLimit(style);
+    ok(miter_limit == 1.5f, "Unexpected miter limit %f.\n", miter_limit);
+    dash_style = ID2D1StrokeStyle_GetDashStyle(style);
+    ok(dash_style == D2D1_DASH_STYLE_DOT, "Unexpected dash style %d.\n", dash_style);
+    dash_offset = ID2D1StrokeStyle_GetDashOffset(style);
+    ok(dash_offset == -1.0f, "Unexpected dash offset %f.\n", dash_offset);
+
+
+    ID2D1StrokeStyle_Release(style);
+
+    /* NULL dashes array, non-zero length. */
+    memset(&desc, 0, sizeof(desc));
+    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 1, &style);
+    ok(SUCCEEDED(hr), "Failed to create stroke style, %#x.\n", hr);
+
+    count = ID2D1StrokeStyle_GetDashesCount(style);
+    ok(count == 0, "Unexpected dashes count %u.\n", count);
+
+    ID2D1StrokeStyle_Release(style);
+
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -3353,4 +3410,5 @@ START_TEST(d2d1)
     test_hwnd_target();
     test_bitmap_target();
     test_desktop_dpi();
+    test_stroke_style();
 }

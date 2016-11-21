@@ -223,6 +223,7 @@ struct d2d_stroke_style
     LONG refcount;
 
     ID2D1Factory *factory;
+    D2D1_STROKE_STYLE_PROPERTIES desc;
 };
 
 void d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
