@@ -4623,6 +4623,119 @@ static void test_create_query(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_occlusion_query(void)
+{
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    struct d3d11_test_context test_context;
+    ID3D11DeviceContext *context;
+    D3D11_QUERY_DESC query_desc;
+    ID3D11Asynchronous *query;
+    unsigned int data_size, i;
+    ID3D11Device *device;
+    union
+    {
+        UINT64 uint;
+        DWORD dword[2];
+    } data;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+
+    query_desc.Query = D3D11_QUERY_OCCLUSION;
+    query_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    data_size = ID3D11Asynchronous_GetDataSize(query);
+    todo_wine ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
+
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_End(context, query);
+    ID3D11DeviceContext_Begin(context, query);
+    ID3D11DeviceContext_Begin(context, query);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
+            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    draw_color_quad(&test_context, &red);
+
+    ID3D11DeviceContext_End(context, query);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(DWORD), 0);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(WORD), 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data) - 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data) + 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
+            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D11DeviceContext_GetData(context, query, &data, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
+            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(DWORD), 0);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(data), 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_Begin(context, query);
+    ID3D11DeviceContext_End(context, query);
+    ID3D11DeviceContext_End(context, query);
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    data.dword[0] = 0x12345678;
+    data.dword[1] = 0x12345678;
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    ID3D11Asynchronous_Release(query);
+    release_test_context(&test_context);
+}
+
 static void test_timestamp_query(void)
 {
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -10926,6 +11039,7 @@ START_TEST(d3d11)
     test_create_depthstencil_state();
     test_create_rasterizer_state();
     test_create_query();
+    test_occlusion_query();
     test_timestamp_query();
     test_device_removed_reason();
     test_private_data();
