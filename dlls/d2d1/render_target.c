@@ -471,8 +471,36 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateMesh(ID2D1RenderTar
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawLine(ID2D1RenderTarget *iface,
         D2D1_POINT_2F p0, D2D1_POINT_2F p1, ID2D1Brush *brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
 {
-    FIXME("iface %p, p0 {%.8e, %.8e}, p1 {%.8e, %.8e}, brush %p, stroke_width %.8e, stroke_style %p stub!\n",
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    ID2D1PathGeometry *geometry;
+    ID2D1GeometrySink *sink;
+    HRESULT hr;
+
+    TRACE("iface %p, p0 {%.8e, %.8e}, p1 {%.8e, %.8e}, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, p0.x, p0.y, p1.x, p1.y, brush, stroke_width, stroke_style);
+
+    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(render_target->factory, &geometry)))
+    {
+        WARN("Failed to create path geometry, %#x.\n", hr);
+        return;
+    }
+
+    if (FAILED(hr = ID2D1PathGeometry_Open(geometry, &sink)))
+    {
+        WARN("Open() failed, %#x.\n", hr);
+        ID2D1PathGeometry_Release(geometry);
+        return;
+    }
+
+    ID2D1GeometrySink_BeginFigure(sink, p0, D2D1_FIGURE_BEGIN_FILLED);
+    ID2D1GeometrySink_AddLine(sink, p1);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    if (FAILED(hr = ID2D1GeometrySink_Close(sink)))
+        WARN("Close() failed, %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    ID2D1RenderTarget_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
+    ID2D1PathGeometry_Release(geometry);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawRectangle(ID2D1RenderTarget *iface,
