@@ -4629,11 +4629,15 @@ static void test_occlusion_query(void)
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
     D3D11_QUERY_DESC query_desc;
     ID3D11Asynchronous *query;
     unsigned int data_size, i;
+    ID3D11Texture2D *texture;
     ID3D11Device *device;
+    D3D11_VIEWPORT vp;
     union
     {
         UINT64 uint;
@@ -4732,7 +4736,57 @@ static void test_occlusion_query(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
+    texture_desc.Width = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+    texture_desc.Height = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    vp.Width = texture_desc.Width;
+    vp.Height = texture_desc.Height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+
+    ID3D11DeviceContext_Begin(context, query);
+    for (i = 0; i < 100; i++)
+        draw_color_quad(&test_context, &red);
+    ID3D11DeviceContext_End(context, query);
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok((data.dword[0] == 0x90000000 && data.dword[1] == 0x1)
+            || (data.dword[0] == 0xffffffff && !data.dword[1])
+            || broken(!data.uint),
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
     ID3D11Asynchronous_Release(query);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture2D_Release(texture);
     release_test_context(&test_context);
 }
 
