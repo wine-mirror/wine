@@ -386,9 +386,11 @@ static BOOL wined3d_occlusion_query_ops_poll(struct wined3d_query *query)
 
     if (available)
     {
-        GL_EXTCALL(glGetQueryObjectuiv(oq->id, GL_QUERY_RESULT, &oq->samples));
+        GLuint result;
+        GL_EXTCALL(glGetQueryObjectuiv(oq->id, GL_QUERY_RESULT, &result));
         checkGLcall("glGetQueryObjectuiv(GL_QUERY_RESULT)");
-        TRACE("Returning %u samples.\n", oq->samples);
+        oq->samples = result;
+        TRACE("Returning 0x%s samples.\n", wine_dbgstr_longlong(oq->samples));
     }
 
     context_release(context);

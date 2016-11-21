@@ -1431,7 +1431,7 @@ struct wined3d_occlusion_query
     struct list entry;
     GLuint id;
     struct wined3d_context *context;
-    DWORD samples;
+    UINT64 samples;
 };
 
 struct wined3d_timestamp_query

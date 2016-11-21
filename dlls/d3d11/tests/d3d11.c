@@ -4654,7 +4654,7 @@ static void test_occlusion_query(void)
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     data_size = ID3D11Asynchronous_GetDataSize(query);
-    todo_wine ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
+    ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
 
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
@@ -4686,19 +4686,19 @@ static void test_occlusion_query(void)
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(DWORD), 0);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(WORD), 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data) - 1, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data) + 1, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
+    ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
             "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     memset(&data, 0xff, sizeof(data));
@@ -4708,9 +4708,9 @@ static void test_occlusion_query(void)
             "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(DWORD), 0);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(data), 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(data), 0);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     ID3D11DeviceContext_Begin(context, query);
     ID3D11DeviceContext_End(context, query);
@@ -4729,8 +4729,8 @@ static void test_occlusion_query(void)
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     ID3D11Asynchronous_Release(query);
     release_test_context(&test_context);

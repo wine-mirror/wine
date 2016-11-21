@@ -115,7 +115,9 @@ static DWORD WINAPI d3d9_query_GetDataSize(IDirect3DQuery9 *iface)
 
     wined3d_mutex_lock();
     type = wined3d_query_get_type(query->wined3d_query);
-    if (type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT)
+    if (type == WINED3D_QUERY_TYPE_OCCLUSION)
+        ret = sizeof(DWORD);
+    else if (type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT)
         ret = sizeof(BOOL);
     else
         ret = wined3d_query_get_data_size(query->wined3d_query);
