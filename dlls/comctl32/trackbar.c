@@ -450,7 +450,7 @@ TRACKBAR_AutoPage (TRACKBAR_INFO *infoPtr, POINT clickPoint)
     LONG dir = TRACKBAR_GetAutoPageDirection(infoPtr, clickPoint);
     LONG prevPos = infoPtr->lPos;
 
-    TRACE("x=%d, y=%d, dir=%d\n", clickPoint.x, clickPoint.y, dir);
+    TRACE("clickPoint=%s, dir=%d\n", wine_dbgstr_point(&clickPoint), dir);
 
     if (dir > 0 && (infoPtr->flags & TB_AUTO_PAGE_RIGHT))
 	TRACKBAR_PageDown(infoPtr);
