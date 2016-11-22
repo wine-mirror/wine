@@ -306,14 +306,12 @@ static void test_ICInfo(void)
         if (fcc[0] & 0x20)
         {
             fcc[0] &= ~0x20;
-todo_wine
             ok(ICInfo(info.fccType, info.fccHandler, &info2),
                "ICInfo failed on fcc 0x%08x using lowercase fccHandler\n", info.fccHandler);
         }
         else
         {
             fcc[0] |= 0x20;
-todo_wine
             ok(ICInfo(info.fccType, info.fccHandler, &info2),
                "ICInfo failed on fcc 0x%08x using uppercase fccHandler\n", info.fccHandler);
         }
