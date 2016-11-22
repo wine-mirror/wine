@@ -2616,27 +2616,35 @@ static void test_ReadConsole(void)
     SetLastError(0xdeadbeef);
     ret = GetFileSize(std_input, NULL);
     ok(ret == INVALID_FILE_SIZE, "expected INVALID_FILE_SIZE, got %#x\n", ret);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE ||
+       GetLastError() == ERROR_INVALID_FUNCTION, /* Win 8, 10 */
+       "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(std_input, buf, -128, &bytes, NULL);
     ok(!ret, "expected 0, got %u\n", ret);
-    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
+       GetLastError() == ERROR_NOACCESS, /* Win 8, 10 */
+       "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
     ok(!bytes, "expected 0, got %u\n", bytes);
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadConsoleA(std_input, buf, -128, &bytes, NULL);
     ok(!ret, "expected 0, got %u\n", ret);
-    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
+       GetLastError() == ERROR_NOACCESS, /* Win 8, 10 */
+       "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
     ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
 
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadConsoleW(std_input, buf, -128, &bytes, NULL);
     ok(!ret, "expected 0, got %u\n", ret);
-    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY ||
+       GetLastError() == ERROR_NOACCESS, /* Win 8, 10 */
+       "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
     ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
 }
 
