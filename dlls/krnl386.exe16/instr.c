@@ -645,14 +645,17 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                           (long_addr ? context->Ecx : LOWORD(context->Ecx)) : 1;
 	      int opsize = (typ & 1) ? (long_op ? 4 : 2) : 1;
 	      int step = (context->EFlags & 0x400) ? -opsize : +opsize;
-	      int seg = outp ? context->SegDs : context->SegEs;  /* FIXME: is this right? */
+	      int seg;
 
 	      if (outp)
               {
+		/* Check if there is a segment prefix override and honour it */
+		seg = segprefix == -1 ? context->SegDs : segprefix;
 		/* FIXME: Check segment is readable.  */
               }
 	      else
               {
+		seg = context->SegEs;
 		/* FIXME: Check segment is writable.  */
               }
 
