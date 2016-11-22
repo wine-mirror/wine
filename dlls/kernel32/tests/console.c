@@ -1319,7 +1319,9 @@ static void test_VerifyConsoleIoHandle( HANDLE handle )
     SetLastError(0xdeadbeef);
     ret = pVerifyConsoleIoHandle(handle);
     error = GetLastError();
-    ok(ret, "expected VerifyConsoleIoHandle to succeed\n");
+    ok(ret ||
+       broken(!ret), /* Windows 8 and 10 */
+       "expected VerifyConsoleIoHandle to succeed\n");
     ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
 }
 
