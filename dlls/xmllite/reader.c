@@ -1601,8 +1601,9 @@ static HRESULT reader_parse_pub_literal(xmlreader *reader, strval *literal)
         reader_skipn(reader, 1);
         cur = reader_get_ptr(reader);
     }
-
     reader_init_strvalue(start, reader_get_cur(reader)-start, literal);
+    if (*cur == quote) reader_skipn(reader, 1);
+
     TRACE("%s\n", debug_strval(reader, literal));
     return S_OK;
 }
@@ -1612,34 +1613,38 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
 {
     static WCHAR systemW[] = {'S','Y','S','T','E','M',0};
     static WCHAR publicW[] = {'P','U','B','L','I','C',0};
-    strval name;
+    strval name, sys;
     HRESULT hr;
     int cnt;
 
-    if (reader_cmp(reader, systemW))
-    {
-        if (reader_cmp(reader, publicW))
-            return S_FALSE;
-        else
-        {
-            strval pub;
+    if (!reader_cmp(reader, publicW)) {
+        strval pub;
 
-            /* public id */
-            reader_skipn(reader, 6);
-            cnt = reader_skipspaces(reader);
-            if (!cnt) return WC_E_WHITESPACE;
+        /* public id */
+        reader_skipn(reader, 6);
+        cnt = reader_skipspaces(reader);
+        if (!cnt) return WC_E_WHITESPACE;
 
-            hr = reader_parse_pub_literal(reader, &pub);
-            if (FAILED(hr)) return hr;
+        hr = reader_parse_pub_literal(reader, &pub);
+        if (FAILED(hr)) return hr;
 
-            reader_init_cstrvalue(publicW, strlenW(publicW), &name);
-            return reader_add_attr(reader, &name, &pub);
-        }
-    }
-    else
-    {
-        strval sys;
+        reader_init_cstrvalue(publicW, strlenW(publicW), &name);
+        hr = reader_add_attr(reader, &name, &pub);
+        if (FAILED(hr)) return hr;
 
+        cnt = reader_skipspaces(reader);
+        if (!cnt) return S_OK;
+
+        /* optional system id */
+        hr = reader_parse_sys_literal(reader, &sys);
+        if (FAILED(hr)) return S_OK;
+
+        reader_init_cstrvalue(systemW, strlenW(systemW), &name);
+        hr = reader_add_attr(reader, &name, &sys);
+        if (FAILED(hr)) return hr;
+
+        return S_OK;
+    } else if (!reader_cmp(reader, systemW)) {
         /* system id */
         reader_skipn(reader, 6);
         cnt = reader_skipspaces(reader);
@@ -1652,7 +1657,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         return reader_add_attr(reader, &name, &sys);
     }
 
-    return hr;
+    return S_FALSE;
 }
 
 /* [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>' */
