@@ -1354,6 +1354,30 @@ double CDECL MSVCRT__yn(int order, double num)
 }
 
 /*********************************************************************
+ *		_nearbyint (MSVCRT.@)
+ */
+double CDECL MSVCRT_nearbyint(double num)
+{
+#ifdef HAVE_NEARBYINT
+    return nearbyint(num);
+#else
+    return num >= 0 ? floor(num + 0.5) : ceil(num - 0.5);
+#endif
+}
+
+/*********************************************************************
+ *		_nearbyintf (MSVCRT.@)
+ */
+float CDECL MSVCRT_nearbyintf(float num)
+{
+#ifdef HAVE_NEARBYINTF
+    return nearbyintf(num);
+#else
+    return MSVCRT_nearbyint(num);
+#endif
+}
+
+/*********************************************************************
  *		_nextafter (MSVCRT.@)
  */
 double CDECL MSVCRT__nextafter(double num, double next)

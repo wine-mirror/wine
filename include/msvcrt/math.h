@@ -148,6 +148,9 @@ float __cdecl fmodf(float, float);
 
 #define ldexpf(x,y) ((float)ldexp((double)(x),(y)))
 
+double __cdecl nearbyint(double);
+float __cdecl nearbyintf(float);
+
 float __cdecl _hypotf(float, float);
 
 int __cdecl _matherr(struct _exception*);

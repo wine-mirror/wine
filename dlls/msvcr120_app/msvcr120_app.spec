@@ -1959,9 +1959,9 @@
 @ stub nan
 @ stub nanf
 @ stub nanl
-@ stub nearbyint
-@ stub nearbyintf
-@ stub nearbyintl
+@ cdecl nearbyint(double) msvcr120.nearbyint
+@ cdecl nearbyintf(float) msvcr120.nearbyintf
+@ cdecl nearbyintl(double) msvcr120.nearbyintl
 @ cdecl nextafter(double double) msvcr120.nextafter
 @ cdecl nextafterf(float float) msvcr120.nextafterf
 @ cdecl nextafterl(double double) msvcr120.nextafterl

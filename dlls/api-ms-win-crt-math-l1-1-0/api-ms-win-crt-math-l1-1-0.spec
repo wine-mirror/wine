@@ -291,9 +291,9 @@
 @ stub nan
 @ stub nanf
 @ stub nanl
-@ stub nearbyint
-@ stub nearbyintf
-@ stub nearbyintl
+@ cdecl nearbyint(double) ucrtbase.nearbyint
+@ cdecl nearbyintf(float) ucrtbase.nearbyintf
+@ cdecl nearbyintl(double) ucrtbase.nearbyintl
 @ cdecl nextafter(double double) ucrtbase.nextafter
 @ cdecl nextafterf(float float) ucrtbase.nextafterf
 @ cdecl nextafterl(double double) ucrtbase.nextafterl

@@ -2432,9 +2432,9 @@
 @ stub nan
 @ stub nanf
 @ stub nanl
-@ stub nearbyint
-@ stub nearbyintf
-@ stub nearbyintl
+@ cdecl nearbyint(double) MSVCRT_nearbyint
+@ cdecl nearbyintf(float) MSVCRT_nearbyintf
+@ cdecl nearbyintl(double) MSVCRT_nearbyint
 @ cdecl nextafter(double double) MSVCRT__nextafter
 @ cdecl nextafterf(float float) MSVCRT__nextafterf
 @ cdecl nextafterl(double double) MSVCRT__nextafter

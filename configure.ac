@@ -2554,6 +2554,8 @@ AC_CHECK_FUNCS(\
 	lrintf \
 	lround \
 	lroundf \
+	nearbyint \
+	nearbyintf \
 	powl \
 	remainder \
 	remainderf \

@@ -17130,6 +17130,8 @@ for ac_func in \
 	lrintf \
 	lround \
 	lroundf \
+	nearbyint \
+	nearbyintf \
 	powl \
 	remainder \
 	remainderf \
