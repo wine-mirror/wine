@@ -1525,6 +1525,15 @@ void __cdecl s_authinfo_test(unsigned int protseq, int secure)
         }
         ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "level unchanged\n");
         ok(authnsvc == RPC_C_AUTHN_WINNT, "authnsvc unchanged\n");
+        RpcStringFreeA(&principal);
+
+        status = RpcBindingInqAuthClientA(NULL, &privs, &principal, &level, &authnsvc, NULL);
+        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+        RpcStringFreeA(&principal);
+
+        status = RpcBindingInqAuthClientExA(NULL, &privs, &principal, &level, &authnsvc, NULL, 0);
+        ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
+        RpcStringFreeA(&principal);
 
         status = RpcImpersonateClient(NULL);
         ok(status == RPC_S_OK, "expected RPC_S_OK got %u\n", status);
