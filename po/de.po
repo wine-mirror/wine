@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-07-21 10:58+0200\n"
+"PO-Revision-Date: 2016-11-22 12:35+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -8049,10 +8049,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine wurde für Sie gekeltert von:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "&Ausführen..."
+msgstr "Ausführen"
 
 #: shell32.rc:338
 msgid ""
@@ -10590,10 +10588,8 @@ msgid "IPv6 address"
 msgstr "IPv6-Adresse"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Systemkonfiguration"
+msgstr "Systeminformationen"
 
 #: net.rc:30
 msgid ""
@@ -12009,6 +12005,33 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"Aufruf:\n"
+"  regedit [Optionen] [Dateiname] [Schlüssel]\n"
+"\n"
+"Optionen:\n"
+"  [keine Option] Die grafische Variante des Programms starten.\n"
+"  /L:system.dat  Speicherort der zu modifizierenden system.dat.\n"
+"                 Kompatibel mit jeder anderen Option. Wird ignoriert.\n"
+"  /R:user.dat    Speicherort der zu modifizierenden user.dat.\n"
+"                 Kompatibel mit jeder anderen Option. Wird ignoriert.\n"
+"  /C             Inhalte einer Registrierungsdatei importieren.\n"
+"  /D             Den spezifizierten Schlüssel löschen.\n"
+"  /E             Inhalte des spezifizierten Schlüssels in Datei "
+"exportieren.\n"
+"                 Falls kein Schlüssel angegeben wurde, wird die gesamte\n"
+"                 Registrierung exportiert.\n"
+"  /S             Stiller Modus. Es werden keine Meldungen angezeigt.\n"
+"  /V             Die GUI im erweiterten Modus starten. Wird ignoriert.\n"
+"  /?             Diese Hilfe anzeigen und beenden.\n"
+"  [Dateiname]    Speicherort der Datei mit Registrierungsinformationen,\n"
+"                 die importiert, bzw. in welche (wenn [/E] angegeben wurde)\n"
+"                 exportiert werden soll.\n"
+"  [Schlüssel]    Der zu modifizierende Registrierungsschlüssel.\n"
+"\n"
+"Beispielaufrufe:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
@@ -14582,10 +14605,8 @@ msgid "Error: Invalid query\n"
 msgstr "Fehler: Ungültige Anfrage\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "reg: Ungültige Syntax. "
+msgstr "Fehler: Ungültige Syntax für PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -14660,36 +14681,32 @@ msgid "F&ormat"
 msgstr "Forma&t"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Liste"
+msgstr "&Listen"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "Auf&zählungszeichen"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "CRL-Nummer"
+msgstr "Zahlen"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Kleinbuchstaben"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Großbuchstaben"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Römische Ziffern - Kleinbuchstaben"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Römische Ziffern - Großbuchstaben"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
