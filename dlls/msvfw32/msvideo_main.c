@@ -248,7 +248,7 @@ static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
 	    lRet = RegEnumValueA(hKey, i++, buf, &name, 0, &type, (LPBYTE)(buf+name), &data);
 	    if (lRet == ERROR_NO_MORE_ITEMS) break;
 	    if (lRet != ERROR_SUCCESS) continue;
-	    if (name != 9 || strncasecmp(buf, fccTypeStr, 5)) continue;
+	    if (fccType && (name != 9 || strncasecmp(buf, fccTypeStr, 5))) continue;
 	    buf[name] = '=';
 	    if ((result = handler(buf, cnt++, param))) break;
 	}
@@ -262,7 +262,7 @@ static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
 	for (s = buf; *s; s += strlen(s) + 1)
 	{
             TRACE("got %s\n", s);
-	    if (strncasecmp(s, fccTypeStr, 5) || s[9] != '=') continue;
+	    if (fccType && (strncasecmp(s, fccTypeStr, 5) || s[9] != '=')) continue;
 	    if ((result = handler(s, cnt++, param))) break;
 	}
     }
