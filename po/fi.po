@@ -8031,10 +8031,8 @@ msgid "Wine was brought to you by:"
 msgstr "Winen ovat tehneet:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "&Suorita..."
+msgstr "Suorita"
 
 #: shell32.rc:338
 msgid ""
