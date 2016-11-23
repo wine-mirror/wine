@@ -2504,18 +2504,12 @@ static const struct wined3d_shader_backend_ops *select_shader_backend(const stru
 {
     BOOL glsl = wined3d_settings.glslRequested && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 20);
 
-    if (glsl && gl_info->supported[ARB_FRAGMENT_SHADER])
+    if (glsl && gl_info->supported[ARB_VERTEX_SHADER] && gl_info->supported[ARB_FRAGMENT_SHADER])
         return &glsl_shader_backend;
-    if (glsl && gl_info->supported[ARB_VERTEX_SHADER])
-    {
-        /* Geforce4 cards support GLSL but for vertex shaders only. Further
-         * its reported GLSL caps are wrong. This combined with the fact that
-         * GLSL won't offer more features or performance, use ARB shaders only
-         * on this card. */
-        if (gl_info->supported[NV_VERTEX_PROGRAM] && !gl_info->supported[NV_VERTEX_PROGRAM2])
-            return &arb_program_shader_backend;
+    if (gl_info->supported[ARB_VERTEX_PROGRAM] && gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        return &arb_program_shader_backend;
+    if (glsl && (gl_info->supported[ARB_VERTEX_SHADER] || gl_info->supported[ARB_FRAGMENT_SHADER]))
         return &glsl_shader_backend;
-    }
     if (gl_info->supported[ARB_VERTEX_PROGRAM] || gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return &arb_program_shader_backend;
     return &none_shader_backend;
