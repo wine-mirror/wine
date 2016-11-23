@@ -2479,7 +2479,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct shader_caps *shad
 static const struct wined3d_vertex_pipe_ops *select_vertex_implementation(const struct wined3d_gl_info *gl_info,
         const struct wined3d_shader_backend_ops *shader_backend_ops)
 {
-    if (shader_backend_ops == &glsl_shader_backend)
+    if (shader_backend_ops == &glsl_shader_backend && gl_info->supported[ARB_VERTEX_SHADER])
         return &glsl_vertex_pipe;
     return &ffp_vertex_pipe;
 }
@@ -2487,7 +2487,7 @@ static const struct wined3d_vertex_pipe_ops *select_vertex_implementation(const 
 static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info,
         const struct wined3d_shader_backend_ops *shader_backend_ops)
 {
-    if (shader_backend_ops == &glsl_shader_backend)
+    if (shader_backend_ops == &glsl_shader_backend && gl_info->supported[ARB_FRAGMENT_SHADER])
         return &glsl_fragment_pipe;
     if (shader_backend_ops == &arb_program_shader_backend && gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return &arbfp_fragment_pipeline;
