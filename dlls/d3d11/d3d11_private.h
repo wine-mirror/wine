@@ -237,6 +237,8 @@ struct d3d11_unordered_access_view
 
 HRESULT d3d11_unordered_access_view_create(struct d3d_device *device, ID3D11Resource *resource,
         const D3D11_UNORDERED_ACCESS_VIEW_DESC *desc, struct d3d11_unordered_access_view **view) DECLSPEC_HIDDEN;
+struct d3d11_unordered_access_view *unsafe_impl_from_ID3D11UnorderedAccessView(
+        ID3D11UnorderedAccessView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11InputLayout, ID3D10InputLayout */
 struct d3d_input_layout

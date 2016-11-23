@@ -2526,3 +2526,12 @@ HRESULT d3d11_unordered_access_view_create(struct d3d_device *device, ID3D11Reso
 
     return S_OK;
 }
+
+struct d3d11_unordered_access_view *unsafe_impl_from_ID3D11UnorderedAccessView(ID3D11UnorderedAccessView *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_unordered_access_view_vtbl);
+
+    return impl_from_ID3D11UnorderedAccessView(iface);
+}
