@@ -372,6 +372,9 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
             dwFlags |= URL_ESCAPE_UNSAFE;
         state = 5;
         is_file_url = TRUE;
+    } else if(url[0] == '/') {
+        state = 5;
+        is_file_url = TRUE;
     }
 
     while (*wk1) {
