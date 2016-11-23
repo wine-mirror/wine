@@ -2489,7 +2489,7 @@ static const struct fragment_pipeline *select_fragment_implementation(const stru
 {
     if (shader_backend_ops == &glsl_shader_backend && gl_info->supported[ARB_FRAGMENT_SHADER])
         return &glsl_fragment_pipe;
-    if (shader_backend_ops == &arb_program_shader_backend && gl_info->supported[ARB_FRAGMENT_PROGRAM])
+    if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return &arbfp_fragment_pipeline;
     if (gl_info->supported[ATI_FRAGMENT_SHADER])
         return &atifs_fragment_pipeline;
