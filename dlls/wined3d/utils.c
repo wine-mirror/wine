@@ -3021,6 +3021,7 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
     gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &buffer);
+    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
 
     if (gl_info->gl_ops.gl.p_glGetError())
     {
