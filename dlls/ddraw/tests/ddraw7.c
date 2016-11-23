@@ -8423,7 +8423,7 @@ static void test_palette_alpha(void)
                     rgbquad.rgbGreen, test_data[i].name);
             ok(rgbquad.rgbBlue == 0, "Expected rgbBlue = 0, got %#x, %s surface.\n",
                     rgbquad.rgbBlue, test_data[i].name);
-            todo_wine ok(rgbquad.rgbReserved == 0, "Expected rgbReserved = 0, got %u, %s surface.\n",
+            ok(rgbquad.rgbReserved == 0, "Expected rgbReserved = 0, got %u, %s surface.\n",
                     rgbquad.rgbReserved, test_data[i].name);
             hr = IDirectDrawSurface7_ReleaseDC(surface, dc);
             ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);

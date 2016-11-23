@@ -880,12 +880,13 @@ static void test_dibsections(void)
     ok( ret == 1, "SetDIBColorTable returned unexpected result %u\n", ret );
     ok( rgb[0].rgbReserved == 123, "Expected rgbReserved = 123, got %u\n", rgb[0].rgbReserved );
 
+    rgb[0].rgbRed = rgb[0].rgbGreen = rgb[0].rgbBlue = rgb[0].rgbReserved = -1;
     ret = GetDIBColorTable( hdcmem, 0, 1, rgb );
     ok( ret == 1, "GetDIBColorTable returned unexpected result %u\n", ret );
     ok( rgb[0].rgbRed == 1, "Expected rgbRed = 1, got %u\n", rgb[0].rgbRed );
     ok( rgb[0].rgbGreen == 2, "Expected rgbGreen = 2, got %u\n", rgb[0].rgbGreen );
     ok( rgb[0].rgbBlue == 3, "Expected rgbBlue = 3, got %u\n", rgb[0].rgbBlue );
-    todo_wine ok( rgb[0].rgbReserved == 0, "Expected rgbReserved = 0, got %u\n", rgb[0].rgbReserved );
+    ok( rgb[0].rgbReserved == 0, "Expected rgbReserved = 0, got %u\n", rgb[0].rgbReserved );
 
     SelectObject(hdcmem, oldbm);
     DeleteObject(hdib);

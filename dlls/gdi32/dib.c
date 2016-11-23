@@ -922,7 +922,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, const RGBQUAD *colors )
 {
     DC * dc;
-    UINT result = 0;
+    UINT i, result = 0;
     BITMAPOBJ * bitmap;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
@@ -932,7 +932,13 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, const RGBQUA
         if (startpos < bitmap->dib.dsBmih.biClrUsed)
         {
             result = min( entries, bitmap->dib.dsBmih.biClrUsed - startpos );
-            memcpy(bitmap->color_table + startpos, colors, result * sizeof(RGBQUAD));
+            for (i = 0; i < result; i++)
+            {
+                bitmap->color_table[startpos + i].rgbBlue     = colors[i].rgbBlue;
+                bitmap->color_table[startpos + i].rgbGreen    = colors[i].rgbGreen;
+                bitmap->color_table[startpos + i].rgbRed      = colors[i].rgbRed;
+                bitmap->color_table[startpos + i].rgbReserved = 0;
+            }
         }
         GDI_ReleaseObj( dc->hBitmap );
 
