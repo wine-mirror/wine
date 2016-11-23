@@ -981,7 +981,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     for (i = 0; i < PA_CHANNELS_MAX; ++i)
         This->vol[i] = 1.f;
 
-    hr = CoCreateFreeThreadedMarshaler((IUnknown*)This, &This->marshal);
+    hr = CoCreateFreeThreadedMarshaler((IUnknown*)&This->IAudioClient_iface, &This->marshal);
     if (hr) {
         HeapFree(GetProcessHeap(), 0, This);
         return hr;
