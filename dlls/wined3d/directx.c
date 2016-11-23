@@ -145,6 +145,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX          },
     {"GL_ARB_sampler_objects",              ARB_SAMPLER_OBJECTS           },
     {"GL_ARB_shader_bit_encoding",          ARB_SHADER_BIT_ENCODING       },
+    {"GL_ARB_shader_image_load_store",      ARB_SHADER_IMAGE_LOAD_STORE   },
     {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD        },
     {"GL_ARB_shading_language_100",         ARB_SHADING_LANGUAGE_100      },
     {"GL_ARB_shadow",                       ARB_SHADOW                    },
@@ -2707,6 +2708,9 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetSamplerParameterfv)
     USE_GL_FUNC(glGetSamplerParameterIiv)
     USE_GL_FUNC(glGetSamplerParameterIuiv)
+    /* GL_ARB_shader_image_load_store */
+    USE_GL_FUNC(glBindImageTexture)
+    USE_GL_FUNC(glMemoryBarrier)
     /* GL_ARB_shader_objects */
     USE_GL_FUNC(glAttachObjectARB)
     USE_GL_FUNC(glBindAttribLocationARB)
@@ -3622,6 +3626,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
 
         {ARB_INTERNALFORMAT_QUERY,         MAKEDWORD_VERSION(4, 2)},
         {ARB_MAP_BUFFER_ALIGNMENT,         MAKEDWORD_VERSION(4, 2)},
+        {ARB_SHADER_IMAGE_LOAD_STORE,      MAKEDWORD_VERSION(4, 2)},
         {ARB_TEXTURE_COMPRESSION_BPTC,     MAKEDWORD_VERSION(4, 2)},
         {ARB_TEXTURE_STORAGE,              MAKEDWORD_VERSION(4, 2)},
 
