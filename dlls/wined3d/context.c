@@ -3418,6 +3418,8 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
 
         texture = texture_from_resource(view->resource);
         wined3d_texture_load(texture, context, FALSE);
+        wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_TEXTURE_RGB);
+
         gl_texture = wined3d_texture_get_gl_texture(texture, FALSE);
         GL_EXTCALL(glBindImageTexture(i, gl_texture->name, view->level_idx, GL_TRUE, 0, GL_READ_WRITE,
                 view->format->glInternal));

@@ -504,6 +504,27 @@ void * CDECL wined3d_unordered_access_view_get_parent(const struct wined3d_unord
     return view->parent;
 }
 
+void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_access_view *view,
+        DWORD location)
+{
+    struct wined3d_resource *resource = view->resource;
+    struct wined3d_texture *texture;
+    unsigned int sub_resource_idx;
+    unsigned int i;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER || resource->type == WINED3D_RTYPE_TEXTURE_3D)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
+        return;
+    }
+
+    texture = texture_from_resource(resource);
+
+    sub_resource_idx = view->layer_idx * texture->level_count + view->level_idx;
+    for (i = 0; i < view->layer_count; ++i, sub_resource_idx += texture->level_count)
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, location);
+}
+
 static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_access_view *view,
         const struct wined3d_unordered_access_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -544,6 +565,8 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
                     desc->u.texture.layer_idx, desc->u.texture.layer_count);
         }
 
+        view->layer_idx = desc->u.texture.layer_idx;
+        view->layer_count = desc->u.texture.layer_count;
         view->level_idx = desc->u.texture.level_idx;
     }
     wined3d_resource_incref(view->resource = resource);

@@ -3263,8 +3263,13 @@ struct wined3d_unordered_access_view
 
     const struct wined3d_format *format;
 
+    unsigned int layer_idx;
+    unsigned int layer_count;
     unsigned int level_idx;
 };
+
+void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_access_view *view,
+        DWORD location) DECLSPEC_HIDDEN;
 
 struct wined3d_swapchain_ops
 {
