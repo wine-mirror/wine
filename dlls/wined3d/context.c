@@ -3396,6 +3396,8 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
     struct gl_texture *gl_texture;
     unsigned int i;
 
+    context->uses_uavs = 0;
+
     if (!(shader = state->shader[WINED3D_SHADER_TYPE_PIXEL]))
         return;
 
@@ -3415,6 +3417,8 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
             FIXME("Buffer unordered access views not implemented.\n");
             continue;
         }
+
+        context->uses_uavs = 1;
 
         texture = texture_from_resource(view->resource);
         wined3d_texture_load(texture, context, FALSE);

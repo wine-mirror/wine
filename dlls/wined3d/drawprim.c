@@ -578,6 +578,12 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         draw_primitive_arrays(context, state, idx_data, idx_size, base_vertex_idx,
                 start_idx, index_count, start_instance, instance_count);
 
+    if (context->uses_uavs)
+    {
+        GL_EXTCALL(glMemoryBarrier(GL_ALL_BARRIER_BITS));
+        checkGLcall("glMemoryBarrier");
+    }
+
     if (ib_query)
         wined3d_event_query_issue(ib_query, device);
     for (i = 0; i < context->num_buffer_queries; ++i)

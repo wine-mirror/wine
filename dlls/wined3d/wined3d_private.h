@@ -1505,8 +1505,9 @@ struct wined3d_context
     DWORD hdc_has_format : 1;           /* only meaningful if hdc_is_private */
     DWORD update_shader_resource_bindings : 1;
     DWORD update_unordered_access_view_bindings : 1;
+    DWORD uses_uavs : 1;
     DWORD destroy_delayed : 1;
-    DWORD padding : 12;
+    DWORD padding : 11;
     DWORD last_swizzle_map; /* MAX_ATTRIBS, 16 */
     DWORD shader_update_mask;
     DWORD constant_update_mask;
