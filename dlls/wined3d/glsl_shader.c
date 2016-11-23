@@ -2040,6 +2040,56 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 sampler_type_prefix, sampler_type, prefix, entry->bind_idx);
     }
 
+    /* Declare images */
+    for (i = 0; i < ARRAY_SIZE(reg_maps->uav_resource_info); ++i)
+    {
+        const char *image_type_prefix, *image_type;
+
+        if (!reg_maps->uav_resource_info[i].type)
+            continue;
+
+        switch (reg_maps->uav_resource_info[i].data_type)
+        {
+            case WINED3D_DATA_FLOAT:
+            case WINED3D_DATA_UNORM:
+            case WINED3D_DATA_SNORM:
+                image_type_prefix = "";
+                break;
+
+            case WINED3D_DATA_INT:
+                image_type_prefix = "i";
+                break;
+
+            case WINED3D_DATA_UINT:
+                image_type_prefix = "u";
+                break;
+
+            default:
+                image_type_prefix = "";
+                ERR("Unhandled resource data type %#x.\n", reg_maps->uav_resource_info[i].data_type);
+                break;
+        }
+
+        switch (reg_maps->uav_resource_info[i].type)
+        {
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
+                image_type = "image2D";
+                break;
+
+            case WINED3D_SHADER_RESOURCE_TEXTURE_3D:
+                image_type = "image3D";
+                break;
+
+            default:
+                image_type = "unsupported_image";
+                FIXME("Unhandled resource type %#x.\n", reg_maps->uav_resource_info[i].type);
+                break;
+        }
+
+        shader_addline(buffer, "writeonly uniform %s%s %s_image%u;\n",
+                image_type_prefix, image_type, prefix, i);
+    }
+
     /* Declare uniforms for NP2 texcoord fixup:
      * This is NOT done inside the loop that declares the texture samplers
      * since the NP2 fixup code is currently only used for the GeforceFX
@@ -5879,6 +5929,8 @@ static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
 {
     if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
         shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
+    if (gl_info->supported[ARB_SHADER_IMAGE_LOAD_STORE])
+        shader_addline(buffer, "#extension GL_ARB_shader_image_load_store : enable\n");
     if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
         shader_addline(buffer, "#extension GL_ARB_texture_query_levels : enable\n");
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
@@ -8732,7 +8784,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_TGSM_RAW                     */ NULL,
     /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ NULL,
     /* WINED3DSIH_DCL_THREAD_GROUP                 */ NULL,
-    /* WINED3DSIH_DCL_UAV_TYPED                    */ NULL,
+    /* WINED3DSIH_DCL_UAV_TYPED                    */ shader_glsl_nop,
     /* WINED3DSIH_DCL_VERTICES_OUT                 */ shader_glsl_nop,
     /* WINED3DSIH_DEF                              */ shader_glsl_nop,
     /* WINED3DSIH_DEFAULT                          */ shader_glsl_default,
