@@ -537,6 +537,14 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
                 || !desc->u.texture.layer_count
                 || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
             return E_INVALIDARG;
+
+        if (desc->u.texture.layer_idx || desc->u.texture.layer_count != depth_or_layer_count)
+        {
+            FIXME("Unordered access view unsupported yet (layers %u-%u).\n",
+                    desc->u.texture.layer_idx, desc->u.texture.layer_count);
+        }
+
+        view->level_idx = desc->u.texture.level_idx;
     }
     wined3d_resource_incref(view->resource = resource);
 

@@ -2857,6 +2857,32 @@ struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3
     return device->state.sampler[WINED3D_SHADER_TYPE_GEOMETRY][idx];
 }
 
+void CDECL wined3d_device_set_unordered_access_view(struct wined3d_device *device,
+        unsigned int idx, struct wined3d_unordered_access_view *uav)
+{
+    struct wined3d_unordered_access_view *prev;
+
+    TRACE("device %p, idx %u, uav %p.\n", device, idx, uav);
+
+    if (idx >= MAX_UNORDERED_ACCESS_VIEWS)
+    {
+        WARN("Invalid UAV index %u.\n", idx);
+        return;
+    }
+
+    prev = device->update_state->unordered_access_view[idx];
+    if (uav == prev)
+        return;
+
+    if (uav)
+        wined3d_unordered_access_view_incref(uav);
+    device->update_state->unordered_access_view[idx] = uav;
+    if (!device->recording)
+        wined3d_cs_emit_set_unordered_access_view(device->cs, idx, uav);
+    if (prev)
+        wined3d_unordered_access_view_decref(prev);
+}
+
 /* Context activation is done by the caller. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,

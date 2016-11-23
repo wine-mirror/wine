@@ -574,7 +574,7 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
             GL_EXTCALL(glUniform1i(name_loc, mapped_unit));
         }
     }
-    checkGLcall("glUniform1i");
+    checkGLcall("Load sampler bindings");
     string_buffer_release(&priv->string_buffers, sampler_name);
 }
 
@@ -596,6 +596,31 @@ static void shader_glsl_load_icb(const struct wined3d_gl_info *gl_info, struct s
 
         string_buffer_release(&priv->string_buffers, icb_name);
     }
+}
+
+/* Context activation is done by the caller. */
+static void shader_glsl_load_images(const struct wined3d_gl_info *gl_info, struct shader_glsl_priv *priv,
+        GLuint program_id, const struct wined3d_shader_reg_maps *reg_maps)
+{
+    struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
+    GLint location;
+    unsigned int i;
+
+    for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
+    {
+        if (!reg_maps->uav_resource_info[i].type)
+            continue;
+
+        string_buffer_sprintf(name, "ps_image%u", i);
+        location = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
+        if (location == -1)
+            continue;
+
+        TRACE("Loading image %s on unit %u.\n", name->buffer, i);
+        GL_EXTCALL(glUniform1i(location, i));
+    }
+    checkGLcall("Load image bindings");
+    string_buffer_release(&priv->string_buffers, name);
 }
 
 /* Context activation is done by the caller. */
@@ -8077,6 +8102,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
             shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &pshader->reg_maps);
             shader_glsl_load_icb(gl_info, priv, program_id, &pshader->reg_maps);
+            shader_glsl_load_images(gl_info, priv, program_id, &pshader->reg_maps);
         }
         else
         {

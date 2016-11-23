@@ -3386,6 +3386,45 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
     }
 }
 
+static void context_bind_unordered_access_views(struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_unordered_access_view *view;
+    struct wined3d_texture *texture;
+    struct wined3d_shader *shader;
+    struct gl_texture *gl_texture;
+    unsigned int i;
+
+    if (!(shader = state->shader[WINED3D_SHADER_TYPE_PIXEL]))
+        return;
+
+    for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
+    {
+        if (!shader->reg_maps.uav_resource_info[i].type)
+            continue;
+
+        if (!(view = state->unordered_access_view[i]))
+        {
+            WARN("No unordered access view bound at index %u.\n", i);
+            continue;
+        }
+
+        if (view->resource->type == WINED3D_RTYPE_BUFFER)
+        {
+            FIXME("Buffer unordered access views not implemented.\n");
+            continue;
+        }
+
+        texture = texture_from_resource(view->resource);
+        wined3d_texture_load(texture, context, FALSE);
+        gl_texture = wined3d_texture_get_gl_texture(texture, FALSE);
+        GL_EXTCALL(glBindImageTexture(i, gl_texture->name, view->level_idx, GL_TRUE, 0, GL_READ_WRITE,
+                view->format->glInternal));
+    }
+    checkGLcall("Bind unordered access views");
+}
+
 /* Context activation is done by the caller. */
 BOOL context_apply_draw_state(struct wined3d_context *context,
         const struct wined3d_device *device, const struct wined3d_state *state)
@@ -3460,6 +3499,12 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
     {
         context_bind_shader_resources(context, state);
         context->update_shader_resource_bindings = 0;
+    }
+
+    if (context->update_unordered_access_view_bindings)
+    {
+        context_bind_unordered_access_views(context, state);
+        context->update_unordered_access_view_bindings = 0;
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)

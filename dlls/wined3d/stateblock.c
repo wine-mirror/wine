@@ -424,6 +424,7 @@ ULONG CDECL wined3d_stateblock_incref(struct wined3d_stateblock *stateblock)
 
 void state_unbind_resources(struct wined3d_state *state)
 {
+    struct wined3d_unordered_access_view *uav;
     struct wined3d_shader_resource_view *srv;
     struct wined3d_vertex_declaration *decl;
     struct wined3d_sampler *sampler;
@@ -504,6 +505,15 @@ void state_unbind_resources(struct wined3d_state *state)
                 state->shader_resource_view[i][j] = NULL;
                 wined3d_shader_resource_view_decref(srv);
             }
+        }
+    }
+
+    for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
+    {
+        if ((uav = state->unordered_access_view[i]))
+        {
+            state->unordered_access_view[i] = NULL;
+            wined3d_unordered_access_view_decref(uav);
         }
     }
 }
