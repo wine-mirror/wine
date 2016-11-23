@@ -201,47 +201,52 @@ typedef void (CALLBACK *PFNSHGETSETTINGSPROC)(LPSHELLFLAGSTATE lpsfs, DWORD dwMa
  * ##### helperfunctions for communication with ICommDlgBrowser #####
  */
 static BOOL IsInCommDlg(IShellViewImpl * This)
-{	return(This->pCommDlgBrowser != NULL);
+{
+    return This->pCommDlgBrowser != NULL;
 }
 
 static HRESULT IncludeObject(IShellViewImpl * This, LPCITEMIDLIST pidl)
 {
-	HRESULT ret = S_OK;
+    HRESULT ret = S_OK;
 
-	if ( IsInCommDlg(This) )
-	{
-	  TRACE("ICommDlgBrowser::IncludeObject pidl=%p\n", pidl);
-	  ret = ICommDlgBrowser_IncludeObject(This->pCommDlgBrowser, (IShellView*)This, pidl);
-	  TRACE("--0x%08x\n", ret);
-	}
-	return ret;
+    if (IsInCommDlg(This))
+    {
+        TRACE("ICommDlgBrowser::IncludeObject pidl=%p\n", pidl);
+        ret = ICommDlgBrowser_IncludeObject(This->pCommDlgBrowser, (IShellView *)&This->IShellView3_iface, pidl);
+        TRACE("-- returns 0x%08x\n", ret);
+    }
+
+    return ret;
 }
 
 static HRESULT OnDefaultCommand(IShellViewImpl * This)
 {
-	HRESULT ret = S_FALSE;
+    HRESULT ret = S_FALSE;
 
-	if (IsInCommDlg(This))
-	{
-	  TRACE("ICommDlgBrowser::OnDefaultCommand\n");
-	  ret = ICommDlgBrowser_OnDefaultCommand(This->pCommDlgBrowser, (IShellView*)This);
-	  TRACE("-- returns %08x\n", ret);
-	}
-	return ret;
+    if (IsInCommDlg(This))
+    {
+        TRACE("ICommDlgBrowser::OnDefaultCommand\n");
+        ret = ICommDlgBrowser_OnDefaultCommand(This->pCommDlgBrowser, (IShellView *)&This->IShellView3_iface);
+        TRACE("-- returns 0x%08x\n", ret);
+    }
+
+    return ret;
 }
 
-static HRESULT OnStateChange(IShellViewImpl * This, UINT uFlags)
+static HRESULT OnStateChange(IShellViewImpl * This, UINT change)
 {
-	HRESULT ret = S_FALSE;
+    HRESULT ret = S_FALSE;
 
-	if (IsInCommDlg(This))
-	{
-	  TRACE("ICommDlgBrowser::OnStateChange flags=%x\n", uFlags);
-	  ret = ICommDlgBrowser_OnStateChange(This->pCommDlgBrowser, (IShellView*)This, uFlags);
-	  TRACE("--\n");
-	}
-	return ret;
+    if (IsInCommDlg(This))
+    {
+        TRACE("ICommDlgBrowser::OnStateChange change=%d\n", change);
+        ret = ICommDlgBrowser_OnStateChange(This->pCommDlgBrowser, (IShellView *)&This->IShellView3_iface, change);
+        TRACE("-- returns 0x%08x\n", ret);
+    }
+
+    return ret;
 }
+
 /**********************************************************
  *	set the toolbar of the filedialog buttons
  *
