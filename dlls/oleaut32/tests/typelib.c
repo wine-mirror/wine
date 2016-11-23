@@ -5196,6 +5196,7 @@ static void test_SetFuncAndParamNames(void)
     ok(infos[0] && !infos[1] && !infos[2], "got wrong typeinfo\n");
     ok(memids[0] == 0, "got wrong memid[0]\n");
     ok(memids[1] == 0xdeadbeef && memids[2] == 0xdeadbeef, "got wrong memids\n");
+    ITypeInfo_Release(infos[0]);
 
     found = 3;
     memset(infos, 0, sizeof(infos));
@@ -5208,6 +5209,8 @@ static void test_SetFuncAndParamNames(void)
     ok(infos[0] && infos[1] && infos[0] != infos[1], "got same typeinfo\n");
     ok(memids[0] == 0, "got wrong memid[0]\n");
     ok(memids[1] == 0, "got wrong memid[1]\n");
+    ITypeInfo_Release(infos[0]);
+    ITypeInfo_Release(infos[1]);
 
     ITypeLib_Release(tl);
     ICreateTypeLib2_Release(ctl);
