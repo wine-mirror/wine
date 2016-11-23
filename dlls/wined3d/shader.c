@@ -1228,7 +1228,20 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 }
             }
 
-            if (ins.handler_idx == WINED3DSIH_NRM) reg_maps->usesnrm = 1;
+            if (ins.handler_idx == WINED3DSIH_ATOMIC_IADD)
+            {
+                unsigned int reg_idx = ins.dst[0].reg.idx[0].offset;
+                if (reg_idx >= MAX_UNORDERED_ACCESS_VIEWS)
+                {
+                    ERR("Invalid UAV index %u.\n", reg_idx);
+                    break;
+                }
+                reg_maps->uav_read_mask |= (1u << reg_idx);
+            }
+            else if (ins.handler_idx == WINED3DSIH_NRM)
+            {
+                reg_maps->usesnrm = 1;
+            }
             else if (ins.handler_idx == WINED3DSIH_DSY
                     || ins.handler_idx == WINED3DSIH_DSY_COARSE
                     || ins.handler_idx == WINED3DSIH_DSY_FINE)

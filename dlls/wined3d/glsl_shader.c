@@ -2068,7 +2068,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     /* Declare images */
     for (i = 0; i < ARRAY_SIZE(reg_maps->uav_resource_info); ++i)
     {
-        const char *image_type_prefix, *image_type;
+        const char *image_type_prefix, *image_type, *read_format;
 
         if (!reg_maps->uav_resource_info[i].type)
             continue;
@@ -2079,18 +2079,22 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             case WINED3D_DATA_UNORM:
             case WINED3D_DATA_SNORM:
                 image_type_prefix = "";
+                read_format = "r32f";
                 break;
 
             case WINED3D_DATA_INT:
                 image_type_prefix = "i";
+                read_format = "r32i";
                 break;
 
             case WINED3D_DATA_UINT:
                 image_type_prefix = "u";
+                read_format = "r32ui";
                 break;
 
             default:
                 image_type_prefix = "";
+                read_format = "";
                 ERR("Unhandled resource data type %#x.\n", reg_maps->uav_resource_info[i].data_type);
                 break;
         }
@@ -2111,8 +2115,12 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 break;
         }
 
-        shader_addline(buffer, "writeonly uniform %s%s %s_image%u;\n",
-                image_type_prefix, image_type, prefix, i);
+        if (reg_maps->uav_read_mask & (1u << i))
+            shader_addline(buffer, "layout(%s) uniform %s%s %s_image%u;\n",
+                    read_format, image_type_prefix, image_type, prefix, i);
+        else
+            shader_addline(buffer, "writeonly uniform %s%s %s_image%u;\n",
+                    image_type_prefix, image_type, prefix, i);
     }
 
     /* Declare uniforms for NP2 texcoord fixup:
