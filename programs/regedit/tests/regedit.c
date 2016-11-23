@@ -265,6 +265,19 @@ static void test_basic_import(void)
     dword = 0x12345678;
     verify_reg(hkey, "Wine4", REG_DWORD, &dword, sizeof(dword), 0);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine5\"=\"No newline\"");
+    todo_wine verify_reg(hkey, "Wine5", REG_SZ, "No newline", 11, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine6\"=dword:00000050\n\n"
+                    "\"Wine7\"=\"No newline\"");
+    dword = 0x50;
+    verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
+    todo_wine verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
