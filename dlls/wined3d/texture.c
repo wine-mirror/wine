@@ -1364,7 +1364,7 @@ BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture, unsigned 
             return TRUE;
 
         case WINED3D_LOCATION_DRAWABLE:
-            if (!texture->swapchain)
+            if (!texture->swapchain && wined3d_settings.always_offscreen)
                 ERR("Texture %p does not have a drawable.\n", texture);
             return TRUE;
 
