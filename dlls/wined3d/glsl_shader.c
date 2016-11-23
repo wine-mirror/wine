@@ -2821,8 +2821,9 @@ static void shader_glsl_get_swizzle(const struct wined3d_shader_src_param *param
 /* From a given parameter token, generate the corresponding GLSL string.
  * Also, return the actual register name and swizzle in case the
  * caller needs this information as well. */
-static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *ins,
-        const struct wined3d_shader_src_param *wined3d_src, DWORD mask, struct glsl_src_param *glsl_src)
+static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instruction *ins,
+        const struct wined3d_shader_src_param *wined3d_src, DWORD mask, struct glsl_src_param *glsl_src,
+        enum wined3d_data_type data_type)
 {
     BOOL is_color = FALSE;
     char swizzle_str[6];
@@ -2842,7 +2843,7 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
     {
         char reg_name[200];
 
-        switch (wined3d_src->reg.data_type)
+        switch (data_type)
         {
             case WINED3D_DATA_FLOAT:
                 sprintf(reg_name, "%s", glsl_src->reg_name);
@@ -2856,13 +2857,19 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
                 sprintf(reg_name, "floatBitsToUint(%s)", glsl_src->reg_name);
                 break;
             default:
-                FIXME("Unhandled data type %#x.\n", wined3d_src->reg.data_type);
+                FIXME("Unhandled data type %#x.\n", data_type);
                 sprintf(reg_name, "%s", glsl_src->reg_name);
                 break;
         }
 
         shader_glsl_gen_modifier(wined3d_src->modifiers, reg_name, swizzle_str, glsl_src->param_str);
     }
+}
+
+static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *ins,
+        const struct wined3d_shader_src_param *wined3d_src, DWORD mask, struct glsl_src_param *glsl_src)
+{
+    shader_glsl_add_src_param_ext(ins, wined3d_src, mask, glsl_src, wined3d_src->reg.data_type);
 }
 
 /* From a given parameter token, generate the corresponding GLSL string.
@@ -4718,6 +4725,56 @@ static unsigned int shader_glsl_find_sampler(const struct wined3d_shader_sampler
     ERR("No GLSL sampler found for resource %u / sampler %u.\n", resource_idx, sampler_idx);
 
     return ~0u;
+}
+
+static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
+{
+    static const unsigned int image_coord_size[] =
+    {
+        0, /* WINED3D_SHADER_RESOURCE_NONE */
+        0, /* WINED3D_SHADER_RESOURCE_BUFFER */
+        1, /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
+        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
+        0, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
+        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
+        0, /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
+        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
+        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
+        0, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
+    };
+
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_version *version = &reg_maps->shader_version;
+    struct glsl_src_param image_coord_param, image_data_param;
+    enum wined3d_shader_resource_type resource_type;
+    enum wined3d_data_type data_type;
+    unsigned int uav_idx;
+    DWORD coord_mask;
+    const char *op;
+
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_ATOMIC_IADD: op = "imageAtomicAdd"; break;
+        default:
+            ERR("Unhandled opcode %#x.\n", ins->handler_idx);
+            return;
+    }
+
+    uav_idx = ins->dst[0].reg.idx[0].offset;
+    resource_type = reg_maps->uav_resource_info[uav_idx].type;
+    if (resource_type >= ARRAY_SIZE(image_coord_size))
+    {
+        ERR("Unexpected resource type %#x.\n", resource_type);
+        resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
+    }
+    data_type = reg_maps->uav_resource_info[uav_idx].data_type;
+    coord_mask = (1u << image_coord_size[resource_type]) - 1;
+
+    shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &image_coord_param);
+    shader_glsl_add_src_param_ext(ins, &ins->src[1], WINED3DSP_WRITEMASK_ALL, &image_data_param, data_type);
+    shader_addline(ins->ctx->buffer, "%s(%s_image%u, %s, %s);\n",
+            op, shader_glsl_get_prefix(version->type), uav_idx,
+            image_coord_param.param_str, image_data_param.param_str);
 }
 
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
@@ -8765,6 +8822,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ABS                              */ shader_glsl_map2gl,
     /* WINED3DSIH_ADD                              */ shader_glsl_binop,
     /* WINED3DSIH_AND                              */ shader_glsl_binop,
+    /* WINED3DSIH_ATOMIC_IADD                      */ shader_glsl_atomic,
     /* WINED3DSIH_BEM                              */ shader_glsl_bem,
     /* WINED3DSIH_BFI                              */ NULL,
     /* WINED3DSIH_BFREV                            */ NULL,
