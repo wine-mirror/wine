@@ -135,6 +135,21 @@ static NTSTATUS create_pipe(PHANDLE handle, ULONG sharing, ULONG options)
     return res;
 }
 
+static BOOL ioapc_called;
+static void CALLBACK ioapc(void *arg, PIO_STATUS_BLOCK io, ULONG reserved)
+{
+    ioapc_called = TRUE;
+}
+
+static NTSTATUS listen_pipe(HANDLE hPipe, HANDLE hEvent, PIO_STATUS_BLOCK iosb, BOOL use_apc)
+{
+    int dummy;
+
+    ioapc_called = FALSE;
+
+    return pNtFsControlFile(hPipe, hEvent, use_apc ? &ioapc: NULL, use_apc ? &dummy: NULL, iosb, FSCTL_PIPE_LISTEN, 0, 0, 0, 0);
+}
+
 static void test_create_invalid(void)
 {
     IO_STATUS_BLOCK iosb;
@@ -202,6 +217,7 @@ static void test_create(void)
     int j, k;
     FILE_PIPE_LOCAL_INFORMATION info;
     IO_STATUS_BLOCK iosb;
+    HANDLE hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     static const DWORD access[] = { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ | GENERIC_WRITE};
     static const DWORD sharing[] =    { FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE };
@@ -212,11 +228,14 @@ static void test_create(void)
             HANDLE hclient;
             BOOL should_succeed = TRUE;
 
-            res  = create_pipe(&hserver, sharing[j], FILE_SYNCHRONOUS_IO_NONALERT);
+            res  = create_pipe(&hserver, sharing[j], 0);
             if (res) {
                 ok(0, "NtCreateNamedPipeFile returned %x, sharing: %x\n", res, sharing[j]);
                 continue;
             }
+
+            res = listen_pipe(hserver, hEvent, &iosb, FALSE);
+            ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
 
             res = pNtQueryInformationFile(hserver, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
             ok(!res, "NtQueryInformationFile for server returned %x, sharing: %x\n", res, sharing[j]);
@@ -247,21 +266,7 @@ static void test_create(void)
             CloseHandle(hserver);
         }
     }
-}
-
-static BOOL ioapc_called;
-static void CALLBACK ioapc(void *arg, PIO_STATUS_BLOCK io, ULONG reserved)
-{
-    ioapc_called = TRUE;
-}
-
-static NTSTATUS listen_pipe(HANDLE hPipe, HANDLE hEvent, PIO_STATUS_BLOCK iosb, BOOL use_apc)
-{
-    int dummy;
-
-    ioapc_called = FALSE;
-
-    return pNtFsControlFile(hPipe, hEvent, use_apc ? &ioapc: NULL, use_apc ? &dummy: NULL, iosb, FSCTL_PIPE_LISTEN, 0, 0, 0, 0);
+    CloseHandle(hEvent);
 }
 
 static void test_overlapped(void)
