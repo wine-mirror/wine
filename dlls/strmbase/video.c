@@ -53,6 +53,25 @@ HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo)
     return BaseDispatch_Destroy(&pControlVideo->baseDispatch);
 }
 
+static HRESULT BaseControlVideoImpl_CheckSourceRect(BaseControlVideo *This, RECT *pSourceRect)
+{
+    LONG VideoWidth, VideoHeight;
+    HRESULT hr;
+
+    if (IsRectEmpty(pSourceRect))
+        return E_INVALIDARG;
+
+    hr = BaseControlVideoImpl_GetVideoSize((IBasicVideo *)This, &VideoWidth, &VideoHeight);
+    if (FAILED(hr))
+        return hr;
+
+    if (pSourceRect->top < 0 || pSourceRect->left < 0 ||
+        pSourceRect->bottom > VideoHeight || pSourceRect->right > VideoWidth)
+        return E_INVALIDARG;
+
+    return S_OK;
+}
+
 HRESULT WINAPI BaseControlVideoImpl_GetTypeInfoCount(IBasicVideo *iface, UINT *pctinfo)
 {
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
@@ -175,14 +194,20 @@ HRESULT WINAPI BaseControlVideoImpl_put_SourceLeft(IBasicVideo *iface, LONG Sour
 {
     RECT SourceRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, SourceLeft);
-    This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
-    SourceRect.right = (SourceRect.right - SourceRect.left) + SourceLeft;
-    SourceRect.left = SourceLeft;
-    This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
+    hr = This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
+    if (SUCCEEDED(hr))
+    {
+        SourceRect.right = (SourceRect.right - SourceRect.left) + SourceLeft;
+        SourceRect.left = SourceLeft;
+        hr = BaseControlVideoImpl_CheckSourceRect(This, &SourceRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_SourceLeft(IBasicVideo *iface, LONG *pSourceLeft)
@@ -203,13 +228,19 @@ HRESULT WINAPI BaseControlVideoImpl_put_SourceWidth(IBasicVideo *iface, LONG Sou
 {
     RECT SourceRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, SourceWidth);
-    This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
-    SourceRect.right = SourceRect.left + SourceWidth;
-    This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
+    hr = This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
+    if (SUCCEEDED(hr))
+    {
+        SourceRect.right = SourceRect.left + SourceWidth;
+        hr = BaseControlVideoImpl_CheckSourceRect(This, &SourceRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_SourceWidth(IBasicVideo *iface, LONG *pSourceWidth)
@@ -230,14 +261,20 @@ HRESULT WINAPI BaseControlVideoImpl_put_SourceTop(IBasicVideo *iface, LONG Sourc
 {
     RECT SourceRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, SourceTop);
-    This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
-    SourceRect.bottom = (SourceRect.bottom - SourceRect.top) + SourceTop;
-    SourceRect.top = SourceTop;
-    This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
+    hr = This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
+    if (SUCCEEDED(hr))
+    {
+        SourceRect.bottom = (SourceRect.bottom - SourceRect.top) + SourceTop;
+        SourceRect.top = SourceTop;
+        hr = BaseControlVideoImpl_CheckSourceRect(This, &SourceRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_SourceTop(IBasicVideo *iface, LONG *pSourceTop)
@@ -258,13 +295,19 @@ HRESULT WINAPI BaseControlVideoImpl_put_SourceHeight(IBasicVideo *iface, LONG So
 {
     RECT SourceRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, SourceHeight);
-    This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
-    SourceRect.bottom = SourceRect.top + SourceHeight;
-    This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
+    hr = This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
+    if (SUCCEEDED(hr))
+    {
+        SourceRect.bottom = SourceRect.top + SourceHeight;
+        hr = BaseControlVideoImpl_CheckSourceRect(This, &SourceRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_SourceHeight(IBasicVideo *iface, LONG *pSourceHeight)
@@ -400,9 +443,9 @@ HRESULT WINAPI BaseControlVideoImpl_SetSourcePosition(IBasicVideo *iface, LONG L
     TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
     SetRect(&SourceRect, Left, Top, Left + Width, Top + Height);
-    This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
-
-    return S_OK;
+    if (FAILED(BaseControlVideoImpl_CheckSourceRect(This, &SourceRect)))
+        return E_INVALIDARG;
+    return This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 }
 
 HRESULT WINAPI BaseControlVideoImpl_GetSourcePosition(IBasicVideo *iface, LONG *pLeft, LONG *pTop, LONG *pWidth, LONG *pHeight)

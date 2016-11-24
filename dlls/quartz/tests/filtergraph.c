@@ -85,33 +85,33 @@ static void test_basic_video(void)
     ok(height == video_height, "expected %d, got %d\n", video_height, height);
 
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, 0, 0);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, video_width*2, video_height*2);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_put_SourceTop(pbv, -1);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_put_SourceTop returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_put_SourceTop returned: %x\n", hr);
     hr = IBasicVideo_put_SourceTop(pbv, 0);
     ok(hr==S_OK, "Cannot put source top returned: %x\n", hr);
     hr = IBasicVideo_put_SourceTop(pbv, 1);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_put_SourceTop returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_put_SourceTop returned: %x\n", hr);
 
     hr = IBasicVideo_SetSourcePosition(pbv, video_width, 0, video_width, video_height);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, video_height, video_width, video_height);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, -1, 0, video_width, video_height);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, -1, video_width, video_height);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, video_width/2, video_height/2, video_width, video_height);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, video_width/2, video_height/2, video_width, video_height);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
 
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, video_width, video_height+1);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, video_width+1, video_height);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
 
     hr = IBasicVideo_SetSourcePosition(pbv, video_width/2, video_height/2, video_width/3+1, video_height/3+1);
     ok(hr==S_OK, "Cannot set source position returned: %x\n", hr);
