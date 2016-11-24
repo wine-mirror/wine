@@ -215,7 +215,7 @@ static void test_basic_video(void)
     ok(width==video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
     hr = IBasicVideo_get_DestinationHeight(pbv, &height);
     ok(hr==S_OK, "Cannot get destination height returned: %x\n", hr);
-    todo_wine ok(height==video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
+    ok(height==video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
 
     hr = IBasicVideo_put_DestinationLeft(pbv, video_width/3);
     ok(hr==S_OK, "Cannot put destination left returned: %x\n", hr);
@@ -243,7 +243,7 @@ static void test_basic_video(void)
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
     ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
     ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
-    todo_wine ok(height == video_height/4+1, "expected %d, got %d\n", video_height/4+1, height);
+    ok(height == video_height/4+1, "expected %d, got %d\n", video_height/4+1, height);
 
     /* reset source rectangle */
     hr = IBasicVideo_SetDefaultSourcePosition(pbv);

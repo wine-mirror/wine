@@ -368,7 +368,7 @@ HRESULT WINAPI BaseControlVideoImpl_put_DestinationHeight(IBasicVideo *iface, LO
 
     TRACE("(%p/%p)->(%d)\n", This, iface, DestinationHeight);
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
-    DestRect.right = DestRect.left + DestinationHeight;
+    DestRect.bottom = DestRect.top + DestinationHeight;
     This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 
     return S_OK;
@@ -383,7 +383,7 @@ HRESULT WINAPI BaseControlVideoImpl_get_DestinationHeight(IBasicVideo *iface, LO
     if (!pDestinationHeight)
         return E_POINTER;
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
-    *pDestinationHeight = DestRect.right - DestRect.left;
+    *pDestinationHeight = DestRect.bottom - DestRect.top;
 
     return S_OK;
 }
