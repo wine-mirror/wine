@@ -178,6 +178,7 @@ HRESULT WINAPI BaseControlVideoImpl_put_SourceLeft(IBasicVideo *iface, LONG Sour
 
     TRACE("(%p/%p)->(%d)\n", This, iface, SourceLeft);
     This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
+    SourceRect.right = (SourceRect.right - SourceRect.left) + SourceLeft;
     SourceRect.left = SourceLeft;
     This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 
@@ -232,6 +233,7 @@ HRESULT WINAPI BaseControlVideoImpl_put_SourceTop(IBasicVideo *iface, LONG Sourc
 
     TRACE("(%p/%p)->(%d)\n", This, iface, SourceTop);
     This->pFuncsTable->pfnGetSourceRect(This, &SourceRect);
+    SourceRect.bottom = (SourceRect.bottom - SourceRect.top) + SourceTop;
     SourceRect.top = SourceTop;
     This->pFuncsTable->pfnSetSourceRect(This, &SourceRect);
 
@@ -287,6 +289,7 @@ HRESULT WINAPI BaseControlVideoImpl_put_DestinationLeft(IBasicVideo *iface, LONG
 
     TRACE("(%p/%p)->(%d)\n", This, iface, DestinationLeft);
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
+    DestRect.right = (DestRect.right - DestRect.left) + DestinationLeft;
     DestRect.left = DestinationLeft;
     This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 
@@ -341,6 +344,7 @@ HRESULT WINAPI BaseControlVideoImpl_put_DestinationTop(IBasicVideo *iface, LONG 
 
     TRACE("(%p/%p)->(%d)\n", This, iface, DestinationTop);
     This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
+    DestRect.bottom = (DestRect.bottom - DestRect.top) + DestinationTop;
     DestRect.top = DestinationTop;
     This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 

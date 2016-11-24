@@ -134,14 +134,14 @@ static void test_basic_video(void)
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, &width, &height);
     ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
     ok(left == video_width/3, "expected %d, got %d\n", video_width/3, left);
-    todo_wine ok(width == video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
+    ok(width == video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
 
     hr = IBasicVideo_put_SourceTop(pbv, video_height/3);
     ok(hr==S_OK, "Cannot put source top returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, &width, &height);
     ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
     ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
-    todo_wine ok(height == video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
+    ok(height == video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
 
     hr = IBasicVideo_put_SourceWidth(pbv, video_width/4+1);
     ok(hr==S_OK, "Cannot put source width returned: %x\n", hr);
@@ -222,14 +222,14 @@ static void test_basic_video(void)
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
     ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
     ok(left == video_width/3, "expected %d, got %d\n", video_width/3, left);
-    todo_wine ok(width == video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
+    ok(width == video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
 
     hr = IBasicVideo_put_DestinationTop(pbv, video_height/3);
     ok(hr==S_OK, "Cannot put destination top returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
     ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
     ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
-    todo_wine ok(height == video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
+    ok(height == video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
 
     hr = IBasicVideo_put_DestinationWidth(pbv, video_width/4+1);
     ok(hr==S_OK, "Cannot put destination width returned: %x\n", hr);
