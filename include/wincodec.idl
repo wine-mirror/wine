@@ -168,6 +168,17 @@ typedef enum WICTiffCompressionOption {
     WICTIFFCOMPRESSIONOPTION_FORCE_DWORD = CODEC_FORCE_DWORD
 } WICTiffCompressionOption;
 
+typedef enum WICPngFilterOption {
+    WICPngFilterUnspecified = 0,
+    WICPngFilterNone = 1,
+    WICPngFilterSub = 2,
+    WICPngFilterUp = 3,
+    WICPngFilterAverage = 4,
+    WICPngFilterPaeth = 5,
+    WICPngFilterAdaptive = 6,
+    WICPNFFILTEROPTION_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICPngFilterOption;
+
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 

@@ -418,15 +418,23 @@ typedef struct property_opt_test_data
     VARTYPE initial_var_type;
     int i_init_val;
     float f_init_val;
+    BOOL skippable;
 } property_opt_test_data;
 
 static const WCHAR wszTiffCompressionMethod[] = {'T','i','f','f','C','o','m','p','r','e','s','s','i','o','n','M','e','t','h','o','d',0};
 static const WCHAR wszCompressionQuality[] = {'C','o','m','p','r','e','s','s','i','o','n','Q','u','a','l','i','t','y',0};
 static const WCHAR wszInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
+static const WCHAR wszFilterOption[] = {'F','i','l','t','e','r','O','p','t','i','o','n',0};
 
 static const struct property_opt_test_data testdata_tiff_props[] = {
     { wszTiffCompressionMethod, VT_UI1,         VT_UI1,  WICTiffCompressionDontCare },
     { wszCompressionQuality,    VT_R4,          VT_EMPTY },
+    { NULL }
+};
+
+static const struct property_opt_test_data testdata_png_props[] = {
+    { wszInterlaceOption, VT_BOOL, VT_BOOL, 0 },
+    { wszFilterOption,    VT_UI1,  VT_UI1, WICPngFilterUnspecified, 0.0f, TRUE /* not supported on XP/2k3 */},
     { NULL }
 };
 
@@ -455,6 +463,13 @@ static void test_specific_encoder_properties(IPropertyBag2 *options, const prope
         pb.pstrName = (LPOLESTR)data[i].name;
 
         hr = IPropertyBag2_Read(options, 1, &pb, NULL, &pvarValue, &phrError);
+
+        if (data[i].skippable && idx == -1)
+        {
+            win_skip("Property %s is not supported on this machine.\n", wine_dbgstr_w(data[i].name));
+            i++;
+            continue;
+        }
 
         ok(idx >= 0, "Property %s not in output of GetPropertyInfo\n",
            wine_dbgstr_w(data[i].name));
@@ -543,8 +558,10 @@ static void test_encoder_properties(const CLSID* clsid_encoder, IPropertyBag2 *o
            (int)cProperties, (int)cProperties2);
     }
 
-    if (clsid_encoder == &CLSID_WICTiffEncoder)
+    if (IsEqualCLSID(clsid_encoder, &CLSID_WICTiffEncoder))
         test_specific_encoder_properties(options, testdata_tiff_props, all_props, cProperties2);
+    else if (IsEqualCLSID(clsid_encoder, &CLSID_WICPngEncoder))
+        test_specific_encoder_properties(options, testdata_png_props, all_props, cProperties2);
 
     for (i=0; i < cProperties2; i++)
     {
