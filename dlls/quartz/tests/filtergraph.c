@@ -172,7 +172,7 @@ static void test_basic_video(void)
     todo_wine ok(height == video_height, "expected %d, got %d\n", video_height, height);
 
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, 0, 0);
-    todo_wine ok(hr==E_INVALIDARG, "IBasicVideo_SetDestinationPosition returned: %x\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetDestinationPosition returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, video_width*2, video_height*2);
     ok(hr==S_OK, "Cannot put destination position returned: %x\n", hr);
 

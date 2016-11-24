@@ -72,6 +72,14 @@ static HRESULT BaseControlVideoImpl_CheckSourceRect(BaseControlVideo *This, RECT
     return S_OK;
 }
 
+static HRESULT BaseControlVideoImpl_CheckTargetRect(BaseControlVideo *This, RECT *pTargetRect)
+{
+    if (IsRectEmpty(pTargetRect))
+        return E_INVALIDARG;
+
+    return S_OK;
+}
+
 HRESULT WINAPI BaseControlVideoImpl_GetTypeInfoCount(IBasicVideo *iface, UINT *pctinfo)
 {
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
@@ -329,14 +337,20 @@ HRESULT WINAPI BaseControlVideoImpl_put_DestinationLeft(IBasicVideo *iface, LONG
 {
     RECT DestRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, DestinationLeft);
-    This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
-    DestRect.right = (DestRect.right - DestRect.left) + DestinationLeft;
-    DestRect.left = DestinationLeft;
-    This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
+    hr = This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
+    if (SUCCEEDED(hr))
+    {
+        DestRect.right = (DestRect.right - DestRect.left) + DestinationLeft;
+        DestRect.left = DestinationLeft;
+        hr = BaseControlVideoImpl_CheckTargetRect(This, &DestRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_DestinationLeft(IBasicVideo *iface, LONG *pDestinationLeft)
@@ -357,13 +371,19 @@ HRESULT WINAPI BaseControlVideoImpl_put_DestinationWidth(IBasicVideo *iface, LON
 {
     RECT DestRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, DestinationWidth);
-    This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
-    DestRect.right = DestRect.left + DestinationWidth;
-    This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
+    hr = This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
+    if (SUCCEEDED(hr))
+    {
+        DestRect.right = DestRect.left + DestinationWidth;
+        hr = BaseControlVideoImpl_CheckTargetRect(This, &DestRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_DestinationWidth(IBasicVideo *iface, LONG *pDestinationWidth)
@@ -384,14 +404,20 @@ HRESULT WINAPI BaseControlVideoImpl_put_DestinationTop(IBasicVideo *iface, LONG 
 {
     RECT DestRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, DestinationTop);
-    This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
-    DestRect.bottom = (DestRect.bottom - DestRect.top) + DestinationTop;
-    DestRect.top = DestinationTop;
-    This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
+    hr = This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
+    if (SUCCEEDED(hr))
+    {
+        DestRect.bottom = (DestRect.bottom - DestRect.top) + DestinationTop;
+        DestRect.top = DestinationTop;
+        hr = BaseControlVideoImpl_CheckTargetRect(This, &DestRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_DestinationTop(IBasicVideo *iface, LONG *pDestinationTop)
@@ -412,13 +438,19 @@ HRESULT WINAPI BaseControlVideoImpl_put_DestinationHeight(IBasicVideo *iface, LO
 {
     RECT DestRect;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    HRESULT hr;
 
     TRACE("(%p/%p)->(%d)\n", This, iface, DestinationHeight);
-    This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
-    DestRect.bottom = DestRect.top + DestinationHeight;
-    This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
+    hr = This->pFuncsTable->pfnGetTargetRect(This, &DestRect);
+    if (SUCCEEDED(hr))
+    {
+        DestRect.bottom = DestRect.top + DestinationHeight;
+        hr = BaseControlVideoImpl_CheckTargetRect(This, &DestRect);
+    }
+    if (SUCCEEDED(hr))
+        hr = This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI BaseControlVideoImpl_get_DestinationHeight(IBasicVideo *iface, LONG *pDestinationHeight)
@@ -482,9 +514,9 @@ HRESULT WINAPI BaseControlVideoImpl_SetDestinationPosition(IBasicVideo *iface, L
     TRACE("(%p/%p)->(%d, %d, %d, %d)\n", This, iface, Left, Top, Width, Height);
 
     SetRect(&DestRect, Left, Top, Left + Width, Top + Height);
-    This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
-
-    return S_OK;
+    if (FAILED(BaseControlVideoImpl_CheckTargetRect(This, &DestRect)))
+        return E_INVALIDARG;
+    return This->pFuncsTable->pfnSetTargetRect(This, &DestRect);
 }
 
 HRESULT WINAPI BaseControlVideoImpl_GetDestinationPosition(IBasicVideo *iface, LONG *pLeft, LONG *pTop, LONG *pWidth, LONG *pHeight)
