@@ -213,6 +213,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory *ifa
         ID2D1StrokeStyle **stroke_style)
 {
     struct d2d_stroke_style *object;
+    HRESULT hr;
 
     TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
             iface, desc, dashes, dash_count, stroke_style);
@@ -220,7 +221,12 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory *ifa
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_stroke_style_init(object, iface, desc, dashes, dash_count);
+    if (FAILED(hr = d2d_stroke_style_init(object, iface, desc, dashes, dash_count)))
+    {
+        WARN("Failed to initialize stroke style, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     TRACE("Created stroke style %p.\n", object);
     *stroke_style = &object->ID2D1StrokeStyle_iface;

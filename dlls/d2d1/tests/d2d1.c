@@ -3335,6 +3335,20 @@ static void test_desktop_dpi(void)
 
 static void test_stroke_style(void)
 {
+    static const struct
+    {
+        D2D1_DASH_STYLE dash_style;
+        UINT32 dash_count;
+        float dashes[6];
+    }
+    dash_style_tests[] =
+    {
+        {D2D1_DASH_STYLE_SOLID,        0},
+        {D2D1_DASH_STYLE_DASH,         2, {2.0f, 2.0f}},
+        {D2D1_DASH_STYLE_DOT,          2, {0.0f, 2.0f}},
+        {D2D1_DASH_STYLE_DASH_DOT,     4, {2.0f, 2.0f, 0.0f, 2.0f}},
+        {D2D1_DASH_STYLE_DASH_DOT_DOT, 6, {2.0f, 2.0f, 0.0f, 2.0f, 0.0f, 2.0f}},
+    };
     D2D1_STROKE_STYLE_PROPERTIES desc;
     ID2D1StrokeStyle *style;
     ID2D1Factory *factory;
@@ -3344,6 +3358,8 @@ static void test_stroke_style(void)
     D2D1_LINE_JOIN line_join;
     float miter_limit, dash_offset;
     D2D1_DASH_STYLE dash_style;
+    unsigned int i;
+    float dashes[2];
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -3374,8 +3390,77 @@ static void test_stroke_style(void)
     dash_offset = ID2D1StrokeStyle_GetDashOffset(style);
     ok(dash_offset == -1.0f, "Unexpected dash offset %f.\n", dash_offset);
 
+    /* Custom dash pattern, no dashes data specified. */
+    desc.startCap = D2D1_CAP_STYLE_SQUARE;
+    desc.endCap = D2D1_CAP_STYLE_ROUND;
+    desc.dashCap = D2D1_CAP_STYLE_TRIANGLE;
+    desc.lineJoin = D2D1_LINE_JOIN_BEVEL;
+    desc.miterLimit = 1.5f;
+    desc.dashStyle = D2D1_DASH_STYLE_CUSTOM;
+    desc.dashOffset = 0.0f;
 
+    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+    ok(hr == E_INVALIDARG, "Unexpected return value, %#x.\n", hr);
+
+    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, dashes, 0, &style);
+    ok(hr == E_INVALIDARG, "Unexpected return value, %#x.\n", hr);
+
+    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, dashes, 1, &style);
+    ok(hr == S_OK, "Unexpected return value, %#x.\n", hr);
     ID2D1StrokeStyle_Release(style);
+
+    /* Builtin style, dashes are specified. */
+    desc.dashStyle = D2D1_DASH_STYLE_DOT;
+    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, dashes, 1, &style);
+    ok(hr == E_INVALIDARG, "Unexpected return value, %#x.\n", hr);
+
+    /* Invalid style. */
+    desc.dashStyle = 100;
+    hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+    ok(hr == E_INVALIDARG, "Unexpected return value, %#x.\n", hr);
+
+    /* Test returned dash pattern for builtin styles. */
+    desc.startCap = D2D1_CAP_STYLE_SQUARE;
+    desc.endCap = D2D1_CAP_STYLE_ROUND;
+    desc.dashCap = D2D1_CAP_STYLE_TRIANGLE;
+    desc.lineJoin = D2D1_LINE_JOIN_BEVEL;
+    desc.miterLimit = 1.5f;
+    desc.dashOffset = 0.0f;
+
+    for (i = 0; i < sizeof(dash_style_tests)/sizeof(dash_style_tests[0]); i++)
+    {
+        float dashes[10];
+        UINT dash_count;
+
+        desc.dashStyle = dash_style_tests[i].dash_style;
+
+        hr = ID2D1Factory_CreateStrokeStyle(factory, &desc, NULL, 0, &style);
+        ok(SUCCEEDED(hr), "Failed to create stroke style, %#x.\n", hr);
+
+        dash_count = ID2D1StrokeStyle_GetDashesCount(style);
+        ok(dash_count == dash_style_tests[i].dash_count, "%u: unexpected dash count %u, expected %u.\n",
+                i, dash_count, dash_style_tests[i].dash_count);
+        ok(dash_count < sizeof(dashes)/sizeof(dashes[0]), "%u: unexpectedly large dash count %u.\n", i, dash_count);
+        if (dash_count == dash_style_tests[i].dash_count)
+        {
+            unsigned int j;
+
+            ID2D1StrokeStyle_GetDashes(style, dashes, dash_count);
+            ok(!memcmp(dashes, dash_style_tests[i].dashes, sizeof(*dashes) * dash_count),
+                    "%u: unexpected dash array.\n", i);
+
+            /* Ask for more dashes than style actually has. */
+            memset(dashes, 0xcc, sizeof(dashes));
+            ID2D1StrokeStyle_GetDashes(style, dashes, sizeof(dashes)/sizeof(dashes[0]));
+            ok(!memcmp(dashes, dash_style_tests[i].dashes, sizeof(*dashes) * dash_count),
+                    "%u: unexpected dash array.\n", i);
+
+            for (j = dash_count; j < sizeof(dashes)/sizeof(dashes[0]); j++)
+                ok(dashes[j] == 0.0f, "%u: unexpected dash value at %u.\n", i, j);
+        }
+
+        ID2D1StrokeStyle_Release(style);
+    }
 
     /* NULL dashes array, non-zero length. */
     memset(&desc, 0, sizeof(desc));

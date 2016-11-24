@@ -224,9 +224,11 @@ struct d2d_stroke_style
 
     ID2D1Factory *factory;
     D2D1_STROKE_STYLE_PROPERTIES desc;
+    float *dashes;
+    UINT32 dash_count;
 };
 
-void d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
+HRESULT d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
         const D2D1_STROKE_STYLE_PROPERTIES *desc, const float *dashes, UINT32 dash_count) DECLSPEC_HIDDEN;
 
 struct d2d_mesh
