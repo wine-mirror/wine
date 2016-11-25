@@ -5299,8 +5299,7 @@ static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME tStart
     IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
 
     if (tStart)
-        FIXME("Run called with non-null tStart: %x%08x\n",
-              (int)(tStart>>32), (int)tStart);
+        FIXME("Run called with non-null tStart: %s\n", wine_dbgstr_longlong(tStart));
 
     return MediaControl_Run(&This->IMediaControl_iface);
 }
