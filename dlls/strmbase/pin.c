@@ -339,7 +339,7 @@ HRESULT WINAPI BasePinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFER
 {
     BasePin *This = impl_from_IPin(iface);
 
-    TRACE("(%x%08x, %x%08x, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
+    TRACE("(%s, %s, %e)\n", wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
 
     This->tStart = tStart;
     This->tStop = tStop;
@@ -1017,7 +1017,7 @@ HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, 
     BaseInputPin *This = impl_BaseInputPin_from_IPin(iface);
     newsegmentargs args;
 
-    TRACE("(%x%08x, %x%08x, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
+    TRACE("(%s, %s, %e)\n", wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
 
     args.tStart = This->pin.tStart = tStart;
     args.tStop = This->pin.tStop = tStop;

@@ -545,7 +545,7 @@ static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENC
     TransformFilter* pTransform;
     HRESULT hr = S_OK;
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("(%p)->(%s %s %e)\n", iface, wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
 
     pTransform = impl_from_IBaseFilter(This->pin.pinInfo.pFilter);
     EnterCriticalSection(&pTransform->filter.csFilter);
