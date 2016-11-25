@@ -5489,7 +5489,7 @@ static void test_query_support(void)
     DestroyWindow(window);
 }
 
-static void test_occlusion_query_states(void)
+static void test_occlusion_query(void)
 {
     static const float quad[] =
     {
@@ -5498,21 +5498,25 @@ static void test_occlusion_query_states(void)
          1.0f,  1.0f, 0.0f,
          1.0f, -1.0f, 0.0f,
     };
+    unsigned int data_size, i, count;
     struct device_desc device_desc;
     IDirect3DQuery9 *query = NULL;
-    unsigned int data_size, i;
     IDirect3DDevice9 *device;
+    IDirect3DSurface9 *rt;
     IDirect3D9 *d3d9;
+    D3DVIEWPORT9 vp;
     ULONG refcount;
+    D3DCAPS9 caps;
     HWND window;
     HRESULT hr;
     union
     {
         WORD word[4];
         DWORD dword[2];
-    } data;
+        UINT64 uint;
+    } data, expected;
     BOOL broken_occlusion = FALSE;
-    DWORD expected = registry_mode.dmPelsWidth * registry_mode.dmPelsHeight;
+    expected.uint = registry_mode.dmPelsWidth * registry_mode.dmPelsHeight;
 
     window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -5591,7 +5595,7 @@ static void test_occlusion_query_states(void)
     memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(data.dword[0] == expected || broken(!data.dword[0]),
+    ok(data.dword[0] == expected.dword[0] || broken(!data.dword[0]),
             "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
     if (!data.dword[0])
     {
@@ -5603,7 +5607,7 @@ static void test_occlusion_query_states(void)
     hr = IDirect3DQuery9_GetData(query, &data, sizeof(WORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     if (!broken_occlusion)
-        ok(data.word[0] == (WORD)expected,
+        ok(data.word[0] == expected.word[0],
                 "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
     ok(data.word[1] == 0xffff,
             "data was modified outside of the expected size (0x%.8x).\n", data.dword[0]);
@@ -5612,7 +5616,7 @@ static void test_occlusion_query_states(void)
     hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     if (!broken_occlusion)
-        ok(data.dword[0] == expected,
+        ok(data.dword[0] == expected.dword[0],
                 "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
     /* Different drivers seem to return different data in those high bytes on Windows, but they all
        write something there and the extra data is consistent (I've seen 0x00000000 and 0xdddddddd
@@ -5642,8 +5646,73 @@ static void test_occlusion_query_states(void)
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    if (broken_occlusion)
+        goto done;
 
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    vp.X = 0;
+    vp.Y = 0;
+    vp.Width = min(caps.MaxTextureWidth, 8192);
+    vp.Height = min(caps.MaxTextureHeight, 8192);
+    vp.MinZ = 0.0f;
+    vp.MaxZ = 1.0f;
+    hr = IDirect3DDevice9_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, vp.Width, vp.Height,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create render target (width %u, height %u), hr %#x.\n", vp.Width, vp.Height, hr);
+        goto done;
+    }
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+
+    expected.uint = vp.Width * vp.Height;
+    count = ((((UINT64)~0u) + 1) / expected.uint) + 1;
+    expected.uint *= count;
+
+    trace("Expects 0x%08x%08x samples.\n", expected.dword[1], expected.dword[0]);
+
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    for (i = 0; i < count; i++)
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLEFAN, 2, quad, 3 * sizeof(float));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    }
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok((data.dword[0] == expected.dword[0] && data.dword[1] == expected.dword[1])
+            || (data.dword[0] == 0xffffffff && !data.dword[1])
+            || broken(data.dword[0] < 0xffffffff && !data.dword[1]),
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    IDirect3DSurface9_Release(rt);
+
+done:
     IDirect3DQuery9_Release(query);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -11310,7 +11379,7 @@ START_TEST(device)
     test_vb_lock_flags();
     test_vertex_buffer_alignment();
     test_query_support();
-    test_occlusion_query_states();
+    test_occlusion_query();
     test_timestamp_query();
     test_get_set_vertex_shader();
     test_vertex_shader_constant();
