@@ -241,7 +241,8 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
     {
         ISeekingPassThru *passthru;
         pTransformFilter->seekthru_unk = NULL;
-        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)pTransformFilter, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pTransformFilter->seekthru_unk);
+        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown *)&pTransformFilter->filter.IBaseFilter_iface, CLSCTX_INPROC_SERVER,
+                &IID_IUnknown, (void **)&pTransformFilter->seekthru_unk);
         if (SUCCEEDED(hr))
         {
             IUnknown_QueryInterface(pTransformFilter->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);

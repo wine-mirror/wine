@@ -1210,7 +1210,7 @@ HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size
 
     if (SUCCEEDED(InputPin_Init(InputPin_Vtbl, pPinInfo, vtbl, pCritSec, allocator, pPinImpl)))
     {
-        *ppPin = (IPin *)pPinImpl;
+        *ppPin = &pPinImpl->pin.IPin_iface;
         return S_OK;
     }
 

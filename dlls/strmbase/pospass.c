@@ -152,9 +152,9 @@ static HRESULT SeekOuter_QueryInterface(PassThruImpl *This, REFIID riid, LPVOID 
         {
             HRESULT hr;
 
-            IUnknown_AddRef((IUnknown *)&(This->IUnknown_inner));
-            hr = IUnknown_QueryInterface((IUnknown *)&(This->IUnknown_inner), riid, ppv);
-            IUnknown_Release((IUnknown *)&(This->IUnknown_inner));
+            IUnknown_AddRef(&This->IUnknown_inner);
+            hr = IUnknown_QueryInterface(&This->IUnknown_inner, riid, ppv);
+            IUnknown_Release(&This->IUnknown_inner);
             This->bAggregatable = TRUE;
             return hr;
         }
@@ -163,21 +163,21 @@ static HRESULT SeekOuter_QueryInterface(PassThruImpl *This, REFIID riid, LPVOID 
         return E_NOINTERFACE;
     }
 
-    return IUnknown_QueryInterface((IUnknown *)&(This->IUnknown_inner), riid, ppv);
+    return IUnknown_QueryInterface(&This->IUnknown_inner, riid, ppv);
 }
 
 static ULONG SeekOuter_AddRef(PassThruImpl *This)
 {
     if (This->outer_unk && This->bUnkOuterValid)
         return IUnknown_AddRef(This->outer_unk);
-    return IUnknown_AddRef((IUnknown *)&(This->IUnknown_inner));
+    return IUnknown_AddRef(&This->IUnknown_inner);
 }
 
 static ULONG SeekOuter_Release(PassThruImpl *This)
 {
     if (This->outer_unk && This->bUnkOuterValid)
         return IUnknown_Release(This->outer_unk);
-    return IUnknown_Release((IUnknown *)&(This->IUnknown_inner));
+    return IUnknown_Release(&This->IUnknown_inner);
 }
 
 static HRESULT WINAPI SeekingPassThru_QueryInterface(ISeekingPassThru *iface, REFIID riid, LPVOID *ppvObj)
