@@ -3656,6 +3656,168 @@ static void test_create_query(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_occlusion_query(void)
+{
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    struct d3d10core_test_context test_context;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10RenderTargetView *rtv;
+    D3D10_QUERY_DESC query_desc;
+    ID3D10Asynchronous *query;
+    unsigned int data_size, i;
+    ID3D10Texture2D *texture;
+    ID3D10Device *device;
+    D3D10_VIEWPORT vp;
+    union
+    {
+        UINT64 uint;
+        DWORD dword[2];
+    } data;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+
+    query_desc.Query = D3D10_QUERY_OCCLUSION;
+    query_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateQuery(device, &query_desc, (ID3D10Query **)&query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    data_size = ID3D10Asynchronous_GetDataSize(query);
+    ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
+
+    hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Asynchronous_End(query);
+    ID3D10Asynchronous_Begin(query);
+    ID3D10Asynchronous_Begin(query);
+
+    hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    draw_color_quad(&test_context, &red);
+
+    ID3D10Asynchronous_End(query);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(DWORD), 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(WORD), 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data) - 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data) + 1, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
+            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D10Asynchronous_GetData(query, &data, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
+            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    hr = ID3D10Asynchronous_GetData(query, NULL, sizeof(DWORD), 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, NULL, sizeof(data), 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Asynchronous_Begin(query);
+    ID3D10Asynchronous_End(query);
+    ID3D10Asynchronous_End(query);
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    data.dword[0] = 0x12345678;
+    data.dword[1] = 0x12345678;
+    hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    texture_desc.Width = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+    texture_desc.Height = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = texture_desc.Width;
+    vp.Height = texture_desc.Height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D10Device_RSSetViewports(device, 1, &vp);
+
+    ID3D10Asynchronous_Begin(query);
+    for (i = 0; i < 100; i++)
+        draw_color_quad(&test_context, &red);
+    ID3D10Asynchronous_End(query);
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok((data.dword[0] == 0x90000000 && data.dword[1] == 0x1)
+            || (data.dword[0] == 0xffffffff && !data.dword[1])
+            || broken(!data.uint),
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    ID3D10Asynchronous_Release(query);
+    ID3D10RenderTargetView_Release(rtv);
+    ID3D10Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 static void test_timestamp_query(void)
 {
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -9621,6 +9783,7 @@ START_TEST(device)
     test_create_depthstencil_state();
     test_create_rasterizer_state();
     test_create_query();
+    test_occlusion_query();
     test_timestamp_query();
     test_device_removed_reason();
     test_scissor();
