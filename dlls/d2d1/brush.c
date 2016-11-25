@@ -108,8 +108,6 @@ static void STDMETHODCALLTYPE d2d_gradient_GetGradientStops(ID2D1GradientStopCol
     TRACE("iface %p, stops %p, stop_count %u.\n", iface, stops, stop_count);
 
     memcpy(stops, gradient->stops, min(gradient->stop_count, stop_count) * sizeof(*stops));
-    if (stop_count > gradient->stop_count)
-        memset(stops, 0, (stop_count - gradient->stop_count) * sizeof(*stops));
 }
 
 static D2D1_GAMMA STDMETHODCALLTYPE d2d_gradient_GetColorInterpolationGamma(ID2D1GradientStopCollection *iface)

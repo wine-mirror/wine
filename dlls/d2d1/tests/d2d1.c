@@ -3475,6 +3475,65 @@ static void test_stroke_style(void)
     ID2D1Factory_Release(factory);
 }
 
+static void test_gradient(void)
+{
+    ID2D1GradientStopCollection *gradient;
+    D2D1_GRADIENT_STOP stops[3], stops2[3];
+    IDXGISwapChain *swapchain;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    D2D1_COLOR_F color;
+    unsigned int i;
+    UINT32 count;
+    HWND window;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+
+    stops2[0].position = 0.5f;
+    set_color(&stops2[0].color, 1.0f, 1.0f, 0.0f, 1.0f);
+    stops2[1] = stops2[0];
+    hr = ID2D1RenderTarget_CreateGradientStopCollection(rt, stops2, 2, D2D1_GAMMA_2_2,
+            D2D1_EXTEND_MODE_CLAMP, &gradient);
+    ok(SUCCEEDED(hr), "Failed to create stop collection, hr %#x.\n", hr);
+
+    count = ID2D1GradientStopCollection_GetGradientStopCount(gradient);
+    ok(count == 2, "Unexpected stop count %u.\n", count);
+
+    /* Request more stops than collection has. */
+    stops[0].position = 123.4f;
+    set_color(&stops[0].color, 1.0f, 0.5f, 0.4f, 1.0f);
+    color = stops[0].color;
+    stops[2] = stops[1] = stops[0];
+    ID2D1GradientStopCollection_GetGradientStops(gradient, stops, sizeof(stops)/sizeof(stops[0]));
+    ok(!memcmp(stops, stops2, sizeof(*stops) * count), "Unexpected gradient stops array.\n");
+    for (i = count; i < sizeof(stops)/sizeof(stops[0]); i++)
+    {
+        ok(stops[i].position == 123.4f, "%u: unexpected stop position %f.\n", i, stops[i].position);
+        ok(!memcmp(&stops[i].color, &color, sizeof(color)), "%u: unexpected stop color.\n", i);
+    }
+
+    ID2D1GradientStopCollection_Release(gradient);
+    ID2D1RenderTarget_Release(rt);
+
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -3496,4 +3555,5 @@ START_TEST(d2d1)
     test_bitmap_target();
     test_desktop_dpi();
     test_stroke_style();
+    test_gradient();
 }
