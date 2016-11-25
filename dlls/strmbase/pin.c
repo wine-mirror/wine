@@ -397,10 +397,8 @@ ULONG WINAPI BaseOutputPinImpl_Release(IPin * iface)
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
 
     if (!refCount)
-    {
         BaseOutputPin_Destroy(This);
-        return 0;
-    }
+
     return refCount;
 }
 

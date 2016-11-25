@@ -344,11 +344,8 @@ ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
         IUnknown_Release(This->seekthru_unk);
         BaseFilter_Destroy(&This->filter);
         CoTaskMemFree(This);
-
-        return 0;
     }
-    else
-        return refCount;
+    return refCount;
 }
 
 /** IMediaFilter methods **/
