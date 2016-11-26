@@ -6948,6 +6948,12 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
         MultiByteToWideChar(CP_ACP, 0, diA->pConfigFile, -1, diW.pConfigFile, len);
     }
 
+    if ((Level > 2) && diA->pHelpFile) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pHelpFile, -1, NULL, 0);
+        diW.pHelpFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pHelpFile, -1, diW.pHelpFile, len);
+    }
+
     if ((Level > 2) && diA->pDependentFiles) {
         lenA = multi_sz_lenA(diA->pDependentFiles);
         len = MultiByteToWideChar(CP_ACP, 0, diA->pDependentFiles, lenA, NULL, 0);
@@ -6961,7 +6967,7 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
         MultiByteToWideChar(CP_ACP, 0, diA->pMonitorName, -1, diW.pMonitorName, len);
     }
 
-    if ((Level > 3) && diA->pDefaultDataType) {
+    if ((Level > 2) && diA->pDefaultDataType) {
         len = MultiByteToWideChar(CP_ACP, 0, diA->pDefaultDataType, -1, NULL, 0);
         diW.pDefaultDataType = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pDefaultDataType, -1, diW.pDefaultDataType, len);
@@ -6972,6 +6978,11 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
         len = MultiByteToWideChar(CP_ACP, 0, diA->pszzPreviousNames, lenA, NULL, 0);
         diW.pszzPreviousNames = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, diA->pszzPreviousNames, lenA, diW.pszzPreviousNames, len);
+    }
+
+    if (Level > 5) {
+        diW.ftDriverDate = diA->ftDriverDate;
+        diW.dwlDriverVersion = diA->dwlDriverVersion;
     }
 
     if ((Level > 5) && diA->pszMfgName) {
@@ -6998,8 +7009,42 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
         MultiByteToWideChar(CP_ACP, 0, diA->pszProvider, -1, diW.pszProvider, len);
     }
 
+    if ((Level > 7) && diA->pszPrintProcessor) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszPrintProcessor, -1, NULL, 0);
+        diW.pszPrintProcessor = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszPrintProcessor, -1, diW.pszPrintProcessor, len);
+    }
+
+    if ((Level > 7) && diA->pszVendorSetup) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszVendorSetup, -1, NULL, 0);
+        diW.pszVendorSetup = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszVendorSetup, -1, diW.pszVendorSetup, len);
+    }
+
+    if ((Level > 7) && diA->pszzColorProfiles) {
+        lenA = multi_sz_lenA(diA->pszzColorProfiles);
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszzColorProfiles, lenA, NULL, 0);
+        diW.pszzColorProfiles = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszzColorProfiles, lenA, diW.pszzColorProfiles, len);
+    }
+
+    if ((Level > 7) && diA->pszInfPath) {
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszInfPath, -1, NULL, 0);
+        diW.pszInfPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszInfPath, -1, diW.pszInfPath, len);
+    }
+
+    if ((Level > 7) && diA->pszzCoreDriverDependencies) {
+        lenA = multi_sz_lenA(diA->pszzCoreDriverDependencies);
+        len = MultiByteToWideChar(CP_ACP, 0, diA->pszzCoreDriverDependencies, lenA, NULL, 0);
+        diW.pszzCoreDriverDependencies = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, diA->pszzCoreDriverDependencies, lenA, diW.pszzCoreDriverDependencies, len);
+    }
+
     if (Level > 7) {
-        FIXME("level %u is incomplete\n", Level);
+        diW.dwPrinterDriverAttributes = diA->dwPrinterDriverAttributes;
+        diW.ftMinInboxDriverVerDate = diA->ftMinInboxDriverVerDate;
+        diW.dwlMinInboxDriverVerVersion = diA->dwlMinInboxDriverVerVersion;
     }
 
     res = AddPrinterDriverExW(nameW, Level, (LPBYTE) &diW, dwFileCopyFlags);
@@ -7010,6 +7055,7 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
     HeapFree(GetProcessHeap(), 0, diW.pDriverPath);
     HeapFree(GetProcessHeap(), 0, diW.pDataFile);
     HeapFree(GetProcessHeap(), 0, diW.pConfigFile);
+    HeapFree(GetProcessHeap(), 0, diW.pHelpFile);
     HeapFree(GetProcessHeap(), 0, diW.pDependentFiles);
     HeapFree(GetProcessHeap(), 0, diW.pMonitorName);
     HeapFree(GetProcessHeap(), 0, diW.pDefaultDataType);
@@ -7018,6 +7064,11 @@ BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo, DW
     HeapFree(GetProcessHeap(), 0, diW.pszOEMUrl);
     HeapFree(GetProcessHeap(), 0, diW.pszHardwareID);
     HeapFree(GetProcessHeap(), 0, diW.pszProvider);
+    HeapFree(GetProcessHeap(), 0, diW.pszPrintProcessor);
+    HeapFree(GetProcessHeap(), 0, diW.pszVendorSetup);
+    HeapFree(GetProcessHeap(), 0, diW.pszzColorProfiles);
+    HeapFree(GetProcessHeap(), 0, diW.pszInfPath);
+    HeapFree(GetProcessHeap(), 0, diW.pszzCoreDriverDependencies);
 
     TRACE("=> %u with %u\n", res, GetLastError());
     return res;
