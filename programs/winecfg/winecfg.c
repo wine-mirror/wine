@@ -221,7 +221,7 @@ struct setting
     DWORD type;   /* type of registry value. REG_SZ or REG_DWORD for now */
 };
 
-struct list *settings;
+static struct list settings = LIST_INIT(settings);
 
 static void free_setting(struct setting *setting)
 {
@@ -258,7 +258,7 @@ WCHAR *get_reg_keyW(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR
                wine_dbgstr_w(name), wine_dbgstr_w(def));
 
     /* check if it's in the list */
-    LIST_FOR_EACH( cursor, settings )
+    LIST_FOR_EACH( cursor, &settings )
     {
         s = LIST_ENTRY(cursor, struct setting, entry);
 
@@ -344,7 +344,7 @@ static void set_reg_key_ex(HKEY root, const WCHAR *path, const WCHAR *name, cons
                wine_dbgstr_w(name), wine_dbgstr_w(value));
 
     /* firstly, see if we already set this setting  */
-    LIST_FOR_EACH( cursor, settings )
+    LIST_FOR_EACH( cursor, &settings )
     {
         struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
 
@@ -402,7 +402,7 @@ static void set_reg_key_ex(HKEY root, const WCHAR *path, const WCHAR *name, cons
             break;
     }
 
-    list_add_tail(settings, &s->entry);
+    list_add_tail(&settings, &s->entry);
 }
 
 void set_reg_key(HKEY root, const char *path, const char *name, const char *value)
@@ -487,7 +487,7 @@ static WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
             WINE_TRACE("name=%s\n", wine_dbgstr_w(name));
 
             /* check if this value name has been removed in the settings list  */
-            LIST_FOR_EACH( cursor, settings )
+            LIST_FOR_EACH( cursor, &settings )
             {
                 struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
                 if (lstrcmpiW(s->path, path) != 0) continue;
@@ -525,7 +525,7 @@ static WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
     WINE_TRACE("adding settings in list but not registry\n");
 
     /* now we have to add the values that aren't in the registry but are in the settings list */
-    LIST_FOR_EACH( cursor, settings )
+    LIST_FOR_EACH( cursor, &settings )
     {
         struct setting *setting = LIST_ENTRY(cursor, struct setting, entry);
         BOOL found = FALSE;
@@ -670,13 +670,13 @@ static void process_setting(struct setting *s)
 
 void apply(void)
 {
-    if (list_empty(settings)) return; /* we will be called for each page when the user clicks OK */
+    if (list_empty(&settings)) return; /* we will be called for each page when the user clicks OK */
 
     WINE_TRACE("()\n");
 
-    while (!list_empty(settings))
+    while (!list_empty(&settings))
     {
-        struct setting *s = (struct setting *) list_head(settings);
+        struct setting *s = (struct setting *) list_head(&settings);
         process_setting(s);
         free_setting(s);
     }
@@ -757,10 +757,6 @@ BOOL initialize(HINSTANCE hInstance)
 	WINE_ERR("RegOpenKey failed on wine config key (%d)\n", res);
         return TRUE;
     }
-
-    /* we could probably just have the list as static data  */
-    settings = HeapAlloc(GetProcessHeap(), 0, sizeof(struct list));
-    list_init(settings);
 
     return FALSE;
 }
