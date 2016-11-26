@@ -837,65 +837,41 @@ static HWND fix_caret(HWND hWnd, const RECT *scroll_rect, INT dx, INT dy,
 {
     GUITHREADINFO info;
     RECT rect, mapped_rcCaret;
-    BOOL hide_caret = FALSE;
 
     info.cbSize = sizeof(info);
     if (!GetGUIThreadInfo( GetCurrentThreadId(), &info )) return 0;
     if (!info.hwndCaret) return 0;
     
+    mapped_rcCaret = info.rcCaret;
     if (info.hwndCaret == hWnd)
     {
-        /* Move the caret if it's (partially) in the source rectangle */
-        if (IntersectRect(&rect, scroll_rect, &info.rcCaret))
-        {
-            *move_caret = TRUE;
-            hide_caret = TRUE;
-            new_caret_pos->x = info.rcCaret.left + dx;
-            new_caret_pos->y = info.rcCaret.top + dy;
-        }
-        else
-        {
-            *move_caret = FALSE;
-            
-            /* Hide the caret if it's in the destination rectangle */
-            rect = *scroll_rect;
-            OffsetRect(&rect, dx, dy);
-            hide_caret = IntersectRect(&rect, &rect, &info.rcCaret);
-        }
+        /* The caret needs to be moved along with scrolling even if it's
+         * outside the visible area. Otherwise, when the caret is scrolled
+         * out from the view, the position won't get updated anymore and
+         * the caret will never scroll back again. */
+        *move_caret = TRUE;
+        new_caret_pos->x = info.rcCaret.left + dx;
+        new_caret_pos->y = info.rcCaret.top + dy;
     }
     else
     {
-        if ((flags & SW_SCROLLCHILDREN) && IsChild(hWnd, info.hwndCaret))
-        {
-            *move_caret = FALSE;
-            
-            /* Hide the caret if it's in the source or in the destination
-               rectangle */
-            mapped_rcCaret = info.rcCaret;
-            MapWindowPoints(info.hwndCaret, hWnd, (LPPOINT)&mapped_rcCaret, 2);
-            
-            if (IntersectRect(&rect, scroll_rect, &mapped_rcCaret))
-            {
-                hide_caret = TRUE;
-            }
-            else
-            {
-                rect = *scroll_rect;
-                OffsetRect(&rect, dx, dy);
-                hide_caret = IntersectRect(&rect, &rect, &mapped_rcCaret);
-            }
-        }
-        else
+        *move_caret = FALSE;
+        if (!(flags & SW_SCROLLCHILDREN) || !IsChild(hWnd, info.hwndCaret))
+            return 0;
+        MapWindowPoints(info.hwndCaret, hWnd, (LPPOINT)&mapped_rcCaret, 2);
+    }
+
+    /* If the caret is not in the src/dest rects, all is fine done. */
+    if (!IntersectRect(&rect, scroll_rect, &mapped_rcCaret))
+    {
+        rect = *scroll_rect;
+        OffsetRect(&rect, dx, dy);
+        if (!IntersectRect(&rect, &rect, &mapped_rcCaret))
             return 0;
     }
 
-    if (hide_caret)
-    {    
-        HideCaret(info.hwndCaret);
-        return info.hwndCaret;
-    }
-    else
-        return 0;
+    /* Indicate that the caret needs to be updated during the scrolling. */
+    return info.hwndCaret;
 }
 
 
@@ -1456,6 +1432,8 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
         hwndCaret = fix_caret(hwnd, &rc, dx, dy, flags, &moveCaret, &newCaretPos);
+        if (hwndCaret)
+            HideCaret(hwndCaret);
 
         if (is_ex) dcxflags |= DCX_CACHE;
         if( style & WS_CLIPSIBLINGS) dcxflags |= DCX_CLIPSIBLINGS;
@@ -1555,10 +1533,10 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
         DeleteObject( hrgnWinupd);
     }
 
-    if( hwndCaret ) {
-        if ( moveCaret ) SetCaretPos( newCaretPos.x, newCaretPos.y );
-        ShowCaret(hwndCaret);
-    }
+    if( moveCaret )
+        SetCaretPos( newCaretPos.x, newCaretPos.y );
+    if( hwndCaret )
+        ShowCaret( hwndCaret );
 
     if( bOwnRgn && hrgnUpdate ) DeleteObject( hrgnUpdate );
 
