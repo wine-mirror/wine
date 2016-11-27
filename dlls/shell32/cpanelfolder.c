@@ -561,7 +561,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 *iface, U
 
     while(cidl > 0 && *apidl) {
 	pdump(*apidl);
-        SHELL32_GetItemAttributes((IShellFolder *)&This->IShellFolder2_iface, *apidl, rgfInOut);
+        SHELL32_GetItemAttributes(&This->IShellFolder2_iface, *apidl, rgfInOut);
 	apidl++;
 	cidl--;
     }

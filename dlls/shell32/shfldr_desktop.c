@@ -155,7 +155,6 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
                 DWORD * pchEaten, LPITEMIDLIST * ppidl, DWORD * pdwAttributes)
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
-    IShellFolder *shell_folder = (IShellFolder*)iface;
     WCHAR szElement[MAX_PATH];
     LPCWSTR szNext = NULL;
     LPITEMIDLIST pidlTemp = NULL;
@@ -268,7 +267,7 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
         else
         {
             if (pdwAttributes && *pdwAttributes)
-                hr = SHELL32_GetItemAttributes(shell_folder, pidlTemp, pdwAttributes);
+                hr = SHELL32_GetItemAttributes(iface, pidlTemp, pdwAttributes);
         }
     }
 
@@ -454,7 +453,6 @@ static HRESULT WINAPI ISF_Desktop_fnGetAttributesOf (IShellFolder2 * iface,
                 UINT cidl, LPCITEMIDLIST * apidl, DWORD * rgfInOut)
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
-    IShellFolder *shell_folder = (IShellFolder*)iface;
 
     static const DWORD dwDesktopAttributes = 
         SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGEANCESTOR |
@@ -484,7 +482,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetAttributesOf (IShellFolder2 * iface,
             } else if (_ILIsMyComputer(*apidl)) {
                 *rgfInOut &= dwMyComputerAttributes;
             } else {
-                SHELL32_GetItemAttributes ( shell_folder, *apidl, rgfInOut);
+                SHELL32_GetItemAttributes(iface, *apidl, rgfInOut);
             }
             apidl++;
             cidl--;

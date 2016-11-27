@@ -389,7 +389,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
  * According to the MSDN documentation this function should not set flags. It claims only to reset flags when necessary.
  * However it turns out the native shell32.dll _sets_ flags in several cases - so do we.
  */
-HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWORD pdwAttributes)
+HRESULT SHELL32_GetItemAttributes (IShellFolder2 *psf, LPCITEMIDLIST pidl, LPDWORD pdwAttributes)
 {
     DWORD dwAttributes;
     BOOL has_guid;
@@ -435,8 +435,7 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
 
 	    /* File attributes are not present in the internal PIDL structure, so get them from the file system. */
 
-	    HRESULT hr = IShellFolder_GetDisplayNameOf(psf, pidl, SHGDN_FORPARSING, &strret);
-
+            HRESULT hr = IShellFolder2_GetDisplayNameOf(psf, pidl, SHGDN_FORPARSING, &strret);
 	    if (SUCCEEDED(hr)) {
 		hr = StrRetToBufW(&strret, pidl, path, MAX_PATH);
 
