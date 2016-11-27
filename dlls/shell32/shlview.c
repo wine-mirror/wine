@@ -1218,7 +1218,7 @@ static LRESULT ShellView_OnSetFocus(IShellViewImpl * This)
 	should always be done before merging menus (OnActivate merges the
 	menus) if one of our windows has the focus.*/
 
-	IShellBrowser_OnViewWindowActive(This->pShellBrowser,(IShellView*) This);
+	IShellBrowser_OnViewWindowActive(This->pShellBrowser, (IShellView *)&This->IShellView3_iface);
 	ShellView_OnActivate(This, SVUIA_ACTIVATE_FOCUS);
 
 	/* Set the focus to the listview */
@@ -1594,7 +1594,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 	      case VK_F5:
                 /* Initiate a refresh */
-		IShellView_Refresh((IShellView*)This);
+		IShellView3_Refresh(&This->IShellView3_iface);
 		break;
 
 	      case VK_BACK:
