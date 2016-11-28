@@ -2186,6 +2186,9 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateShaderResourceView(ID3D11Dev
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
 
+    if (!resource)
+        return E_INVALIDARG;
+
     if (FAILED(hr = d3d_shader_resource_view_create(device, resource, desc, &object)))
         return hr;
 
