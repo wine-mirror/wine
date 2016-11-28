@@ -776,15 +776,6 @@ static void test_sip_create_indirect_data(void)
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    count = 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    ret = CryptSIPCreateIndirectData_p(&subjinfo, &count, NULL);
-    todo_wine
-    ok(!ret && (GetLastError() == NTE_BAD_ALGID ||
-                GetLastError() == ERROR_INVALID_PARAMETER /* Win7 */),
-       "expected NTE_BAD_ALGID or ERROR_INVALID_PARAMETER, got %08x\n",
-       GetLastError());
-    ok(count == 0xdeadbeef, "expected count to be unmodified, got %d\n", count);
     subjinfo.DigestAlgorithm.pszObjId = oid_sha1;
     count = 0xdeadbeef;
     ret = CryptSIPCreateIndirectData_p(&subjinfo, &count, NULL);
