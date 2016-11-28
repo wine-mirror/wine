@@ -2979,6 +2979,9 @@ static void test_create_rendertarget_view(void)
     U(rtv_desc).Buffer.ElementOffset = 0;
     U(rtv_desc).Buffer.ElementWidth = 64;
 
+    hr = ID3D11Device_CreateRenderTargetView(device, NULL, &rtv_desc, &rtview);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
     expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)buffer, &rtv_desc, &rtview);
     ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
