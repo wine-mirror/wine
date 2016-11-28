@@ -371,6 +371,9 @@ static void test_create_shader_resource_view(void)
     U(srv_desc).Buffer.ElementOffset = 0;
     U(srv_desc).Buffer.ElementWidth = 64;
 
+    hr = ID3D10Device1_CreateShaderResourceView1(device, NULL, &srv_desc, &srview);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
     expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device1_CreateShaderResourceView1(device, (ID3D10Resource *)buffer, &srv_desc, &srview);
     ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x\n", hr);
