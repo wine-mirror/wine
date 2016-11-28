@@ -695,15 +695,12 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
             /* long view "lw_name (C:)" */
             if (!(dwFlags & SHGDN_FORPARSING))
             {
-                DWORD dwVolumeSerialNumber, dwMaximumComponetLength, dwFileSystemFlags;
-                WCHAR wszDrive[18] = {0};
                 static const WCHAR wszOpenBracket[] = {' ','(',0};
                 static const WCHAR wszCloseBracket[] = {')',0};
+                WCHAR wszDrive[32 /* label */ + 6 /* ' (C:)'\0 */] = {0};
 
-                GetVolumeInformationW (pszPath, wszDrive,
-                           sizeof(wszDrive)/sizeof(wszDrive[0]) - 6,
-                           &dwVolumeSerialNumber,
-                           &dwMaximumComponetLength, &dwFileSystemFlags, NULL, 0);
+                GetVolumeInformationW (pszPath, wszDrive, sizeof(wszDrive)/sizeof(wszDrive[0]) - 5,
+                        NULL, NULL, NULL, NULL, 0);
                 strcatW (wszDrive, wszOpenBracket);
                 lstrcpynW (wszDrive + strlenW(wszDrive), pszPath, 3);
                 strcatW (wszDrive, wszCloseBracket);
