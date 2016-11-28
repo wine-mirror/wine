@@ -3869,6 +3869,28 @@ typedef struct _CMSG_CTRL_KEY_TRANS_DECRYPT_PARA {
     DWORD                          dwRecipientIndex;
 } CMSG_CTRL_KEY_TRANS_DECRYPT_PARA, *PCMSG_CTRL_KEY_TRANS_DECRYPT_PARA;
 
+typedef struct _CERT_STRONG_SIGN_SERIALIZED_INFO {
+    DWORD    dwFlags;
+    WCHAR    *pwszCNGSignHashAlgids;
+    WCHAR    *pwszCNGPubKeyMinBitLengths;
+} CERT_STRONG_SIGN_SERIALIZED_INFO, *PCERT_STRONG_SIGN_SERIALIZED_INFO;
+
+typedef struct _CERT_STRONG_SIGN_PARA {
+    DWORD    cbSize;
+    DWORD    dwInfoChoice;
+    union {
+        void                               *pvInfo;
+        CERT_STRONG_SIGN_SERIALIZED_INFO   *pSerializedInfo;
+        char                               *pszOID;
+    } DUMMYUNIONNAME;
+} CERT_STRONG_SIGN_PARA, *PCERT_STRONG_SIGN_PARA;
+
+#define CERT_STRONG_SIGN_SERIALIZED_INFO_CHOICE  1
+#define CERT_STRONG_SIGN_OID_INFO_CHOICE         2
+
+#define CERT_STRONG_SIGN_ENABLE_CRL_CHECK       0x1
+#define CERT_STRONG_SIGN_ENABLE_OCSP_CHECK      0x2
+
 typedef BOOL (WINAPI *PFN_CMSG_GEN_CONTENT_ENCRYPT_KEY)(
  PCMSG_CONTENT_ENCRYPT_INFO pContentEncryptInfo, DWORD dwFlags,
  void *pvReserved);
