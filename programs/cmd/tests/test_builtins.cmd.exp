@@ -363,6 +363,84 @@ q2
 r1
 r2
 r3
+--- chain pipe
+@todo_wine@a@space@
+@todo_wine@a@space@
+---
+b2
+c1
+c3
+d1
+@todo_wine@---
+e1
+e3
+f2
+f3
+g2
+@todo_wine@---
+h2
+h3
+i3
+--- chain pipe input
+a2:[a1,a2]
+b3:[b2:[b1,b2],b3]@or_broken@b3:[b2:,b3]
+c4:[c3:[c2:[c1,c2],c3],c4]@or_broken@c4:[c3:[c2:,c3],c4]@or_broken@c4:[c3:,c4]
+d2:[d1,d2]
+e3:[e2:[e1,e2],e3]@or_broken@e3:[e2:,e3]
+f4:[f3:[f2:[f1,f2],f3],f4]@or_broken@f4:[f3:[f2:,f3],f4]@or_broken@f4:[f3:,f4]
+--- chain else
+a1
+b2
+@todo_wine@---
+@todo_wine@c3
+@todo_wine@---
+@todo_wine@d3
+@todo_wine@---
+@todo_wine@---
+@todo_wine@---
+@todo_wine@---
+@todo_wine@---
+--- chain else (if true)
+a1 else echo a2
+b2 else echo b3
+c1
+c2 else echo c3
+d1
+@todo_wine@---
+e1
+e2 else echo e3
+f3
+g1 else echo g2
+g3
+h1 else echo h2
+@todo_wine@---
+i1 else echo i2
+i3
+@todo_wine@j2@space@
+@todo_wine@---
+k1
+k2
+l1
+@todo_wine@---
+m1
+m2
+n1
+o1
+p1
+q1
+--- chain else (if false)
+@todo_wine@j3
+---
+k3
+l3
+m3
+n3
+o2
+o3
+p2
+@todo_wine@---
+q2
+q3
 ------------ Testing 'set' ------------
 1
 0
