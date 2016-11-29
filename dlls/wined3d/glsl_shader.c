@@ -4773,6 +4773,40 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             image_coord_param.param_str, image_data_param.param_str);
 }
 
+static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
+{
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_version *version = &reg_maps->shader_version;
+    enum wined3d_shader_resource_type resource_type;
+    struct glsl_src_param image_coord_param;
+    enum wined3d_data_type data_type;
+    DWORD coord_mask, write_mask;
+    unsigned int uav_idx;
+    char dst_swizzle[6];
+
+    uav_idx = ins->src[1].reg.idx[0].offset;
+    if (uav_idx >= ARRAY_SIZE(reg_maps->uav_resource_info))
+    {
+        ERR("Invalid UAV index %u.\n", uav_idx);
+        return;
+    }
+    resource_type = reg_maps->uav_resource_info[uav_idx].type;
+    if (resource_type >= ARRAY_SIZE(resource_type_info))
+    {
+        ERR("Unexpected resource type %#x.\n", resource_type);
+        resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
+    }
+    data_type = reg_maps->uav_resource_info[uav_idx].data_type;
+    coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
+
+    write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], data_type);
+    shader_glsl_get_swizzle(&ins->src[1], FALSE, write_mask, dst_swizzle);
+
+    shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &image_coord_param);
+    shader_addline(ins->ctx->buffer, "imageLoad(%s_image%u, %s)%s);\n",
+            shader_glsl_get_prefix(version->type), uav_idx, image_coord_param.param_str, dst_swizzle);
+}
+
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
@@ -8937,7 +8971,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_LD2DMS                           */ NULL,
     /* WINED3DSIH_LD_RAW                           */ NULL,
     /* WINED3DSIH_LD_STRUCTURED                    */ NULL,
-    /* WINED3DSIH_LD_UAV_TYPED                     */ NULL,
+    /* WINED3DSIH_LD_UAV_TYPED                     */ shader_glsl_ld_uav,
     /* WINED3DSIH_LIT                              */ shader_glsl_lit,
     /* WINED3DSIH_LOD                              */ NULL,
     /* WINED3DSIH_LOG                              */ shader_glsl_scalar_op,
