@@ -120,7 +120,7 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
 {
     WAVEFORMATEXTENSIBLE *wfe;
     WAVEFORMATEX *wfx;
-    gint32 depth = 0, bpp = 0;
+    gint32 depth, bpp;
     GstAudioInfo ainfo;
 
     if (!gst_audio_info_from_caps (&ainfo, caps))
@@ -181,7 +181,7 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
 {
     VIDEOINFOHEADER *vih;
     BITMAPINFOHEADER *bih;
-    gint32 width = 0, height = 0, nom = 0, denom = 0;
+    gint32 width, height, nom, denom;
     GstVideoInfo vinfo;
 
     if (!gst_video_info_from_caps (&vinfo, caps))
