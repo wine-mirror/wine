@@ -319,7 +319,7 @@ HDC WINAPI CreateEnhMetaFileW(
     DWORD size = 0, length = 0;
     DWORD bytes_written;
 
-    TRACE("%s\n", debugstr_w(filename) );
+    TRACE("(%p %s %s %s)\n", hdc, debugstr_w(filename), wine_dbgstr_rect(rect), debugstr_w(description) );
 
     if (!(dc = alloc_dc_ptr( OBJ_ENHMETADC ))) return 0;
 
