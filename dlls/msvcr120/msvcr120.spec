@@ -1396,7 +1396,7 @@
 @ cdecl _ldsign(double) MSVCR120__dsign
 @ cdecl _ldtest(ptr) MSVCR120__ldtest
 @ cdecl _lfind(ptr ptr ptr long ptr)
-@ stub _lfind_s
+@ cdecl _lfind_s(ptr ptr ptr long ptr ptr)
 @ cdecl -arch=i386  _libm_sse2_acos_precise() MSVCRT___libm_sse2_acos
 @ cdecl -arch=i386  _libm_sse2_asin_precise() MSVCRT___libm_sse2_asin
 @ cdecl -arch=i386  _libm_sse2_atan_precise() MSVCRT___libm_sse2_atan

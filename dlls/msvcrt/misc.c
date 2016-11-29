@@ -103,6 +103,32 @@ void* CDECL _lfind(const void* match, const void* start,
 }
 
 /*********************************************************************
+ *		_lfind_s (MSVCRT.@)
+ */
+void* CDECL _lfind_s(const void* match, const void* start,
+                   unsigned int* array_size, unsigned int elem_size,
+                   int (CDECL *cf)(void*,const void*,const void*),
+                   void* context)
+{
+  unsigned int size;
+  if (!MSVCRT_CHECK_PMT(match != NULL)) return NULL;
+  if (!MSVCRT_CHECK_PMT(array_size != NULL)) return NULL;
+  if (!MSVCRT_CHECK_PMT(start != NULL || *array_size == 0)) return NULL;
+  if (!MSVCRT_CHECK_PMT(cf != NULL)) return NULL;
+  if (!MSVCRT_CHECK_PMT(elem_size != 0)) return NULL;
+
+  size = *array_size;
+  if (size)
+    do
+    {
+      if (cf(context, match, start) == 0)
+        return (void *)start; /* found */
+      start = (const char *)start + elem_size;
+    } while (--size);
+  return NULL;
+}
+
+/*********************************************************************
  *		_lsearch (MSVCRT.@)
  */
 void* CDECL _lsearch(const void* match, void* start,

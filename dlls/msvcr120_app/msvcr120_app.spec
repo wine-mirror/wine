@@ -1260,7 +1260,7 @@
 @ cdecl _ldsign(double) msvcr120._ldsign
 @ cdecl _ldtest(ptr) msvcr120._ldtest
 @ cdecl _lfind(ptr ptr ptr long ptr) msvcr120._lfind
-@ stub _lfind_s
+@ cdecl _lfind_s(ptr ptr ptr long ptr ptr) msvcr120._lfind_s
 @ cdecl -arch=i386  _libm_sse2_acos_precise() msvcr120._libm_sse2_acos_precise
 @ cdecl -arch=i386  _libm_sse2_asin_precise() msvcr120._libm_sse2_asin_precise
 @ cdecl -arch=i386  _libm_sse2_atan_precise() msvcr120._libm_sse2_atan_precise

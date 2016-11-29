@@ -3,7 +3,7 @@
 @ cdecl _byteswap_ulong(long) ucrtbase._byteswap_ulong
 @ cdecl _byteswap_ushort(long) ucrtbase._byteswap_ushort
 @ cdecl _lfind(ptr ptr ptr long ptr) ucrtbase._lfind
-@ stub _lfind_s
+@ cdecl _lfind_s(ptr ptr ptr long ptr ptr) ucrtbase._lfind_s
 @ cdecl _lrotl(long long) ucrtbase._lrotl
 @ cdecl _lrotr(long long) ucrtbase._lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr) ucrtbase._lsearch
