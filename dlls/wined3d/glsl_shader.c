@@ -4778,7 +4778,8 @@ static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     enum wined3d_shader_resource_type resource_type;
-    unsigned int resource_idx, sampler_bind_idx, i;
+    enum wined3d_shader_register_type reg_type;
+    unsigned int resource_idx, bind_idx, i;
     enum wined3d_data_type dst_data_type;
     struct glsl_src_param lod_param;
     char dst_swizzle[6];
@@ -4793,11 +4794,20 @@ static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
     write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], dst_data_type);
     shader_glsl_get_swizzle(&ins->src[1], FALSE, write_mask, dst_swizzle);
 
+    reg_type = ins->src[1].reg.type;
     resource_idx = ins->src[1].reg.idx[0].offset;
-    resource_type = ins->ctx->reg_maps->resource_info[resource_idx].type;
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &lod_param);
-    sampler_bind_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
-            resource_idx, WINED3D_SAMPLER_DEFAULT);
+    if (reg_type == WINED3DSPR_RESOURCE)
+    {
+        resource_type = ins->ctx->reg_maps->resource_info[resource_idx].type;
+        bind_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
+                resource_idx, WINED3D_SAMPLER_DEFAULT);
+    }
+    else
+    {
+        resource_type = ins->ctx->reg_maps->uav_resource_info[resource_idx].type;
+        bind_idx = resource_idx;
+    }
 
     if (resource_type >= ARRAY_SIZE(resource_type_info))
     {
@@ -4810,20 +4820,34 @@ static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
     else
         shader_addline(ins->ctx->buffer, "vec4(");
 
-    shader_addline(ins->ctx->buffer, "textureSize(%s_sampler%u, %s), ",
-            shader_glsl_get_prefix(version->type), sampler_bind_idx, lod_param.param_str);
-
-    for (i = 0; i < 3 - resource_type_info[resource_type].resinfo_size; ++i)
-        shader_addline(ins->ctx->buffer, "0, ");
-
-    if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
+    if (reg_type == WINED3DSPR_RESOURCE)
     {
-        shader_addline(ins->ctx->buffer, "textureQueryLevels(%s_sampler%u)",
-                shader_glsl_get_prefix(version->type), sampler_bind_idx);
+        shader_addline(ins->ctx->buffer, "textureSize(%s_sampler%u, %s), ",
+                shader_glsl_get_prefix(version->type), bind_idx, lod_param.param_str);
+
+        for (i = 0; i < 3 - resource_type_info[resource_type].resinfo_size; ++i)
+            shader_addline(ins->ctx->buffer, "0, ");
+
+        if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
+        {
+            shader_addline(ins->ctx->buffer, "textureQueryLevels(%s_sampler%u)",
+                    shader_glsl_get_prefix(version->type), bind_idx);
+        }
+        else
+        {
+            FIXME("textureQueryLevels is not supported, returning 1 mipmap level.\n");
+            shader_addline(ins->ctx->buffer, "1");
+        }
     }
     else
     {
-        FIXME("textureQueryLevels is not supported, returning 1 mipmap level.\n");
+        shader_addline(ins->ctx->buffer, "imageSize(%s_image%u), ",
+                shader_glsl_get_prefix(version->type), bind_idx);
+
+        for (i = 0; i < 3 - resource_type_info[resource_type].resinfo_size; ++i)
+            shader_addline(ins->ctx->buffer, "0, ");
+
+        /* For UAVs the returned miplevel count is always 1. */
         shader_addline(ins->ctx->buffer, "1");
     }
 
