@@ -9767,6 +9767,103 @@ float4 main(struct ps_data ps_input) : SV_Target
     release_test_context(&test_context);
 }
 
+static void test_shader_input_registers_limits(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_SUBRESOURCE_DATA resource_data;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    D3D10_SAMPLER_DESC sampler_desc;
+    ID3D10ShaderResourceView *srv;
+    ID3D10SamplerState *sampler;
+    ID3D10Texture2D *texture;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    static const DWORD ps_last_register_code[] =
+    {
+#if 0
+        Texture2D t : register(t127);
+        SamplerState s : register(s15);
+
+        void main(out float4 target : SV_Target)
+        {
+            target = t.Sample(s, float2(0, 0));
+        }
+#endif
+        0x43425844, 0xd81ff2f8, 0x8c704b9c, 0x8c6f4857, 0xd02949ac, 0x00000001, 0x000000dc, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000064, 0x00000040, 0x00000019,
+        0x0300005a, 0x00106000, 0x0000000f, 0x04001858, 0x00107000, 0x0000007f, 0x00005555, 0x03000065,
+        0x001020f2, 0x00000000, 0x0c000045, 0x001020f2, 0x00000000, 0x00004002, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00107e46, 0x0000007f, 0x00106000, 0x0000000f, 0x0100003e,
+    };
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const DWORD texture_data[] = {0xff00ff00};
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    texture_desc.Width = 1;
+    texture_desc.Height = 1;
+    texture_desc.MipLevels = 0;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    resource_data.pSysMem = texture_data;
+    resource_data.SysMemPitch = sizeof(texture_data);
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+
+    sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.AddressU = D3D10_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressV = D3D10_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 0;
+    sampler_desc.ComparisonFunc = D3D10_COMPARISON_NEVER;
+    sampler_desc.BorderColor[0] = 0.0f;
+    sampler_desc.BorderColor[1] = 0.0f;
+    sampler_desc.BorderColor[2] = 0.0f;
+    sampler_desc.BorderColor[3] = 0.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = 0.0f;
+
+    hr = ID3D10Device_CreateSamplerState(device, &sampler_desc, &sampler);
+    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_last_register_code, sizeof(ps_last_register_code), &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D10Device_PSSetShader(device, ps);
+
+    ID3D10Device_PSSetShaderResources(device,
+            D3D10_COMMONSHADER_INPUT_RESOURCE_REGISTER_COUNT - 1, 1, &srv);
+    ID3D10Device_PSSetSamplers(device, D3D10_COMMONSHADER_SAMPLER_REGISTER_COUNT - 1, 1, &sampler);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
+    draw_quad(&test_context);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+
+    ID3D10PixelShader_Release(ps);
+    ID3D10SamplerState_Release(sampler);
+    ID3D10ShaderResourceView_Release(srv);
+    ID3D10Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -9821,4 +9918,5 @@ START_TEST(device)
     test_line_antialiasing_blending();
     test_required_format_support();
     test_ddy();
+    test_shader_input_registers_limits();
 }
