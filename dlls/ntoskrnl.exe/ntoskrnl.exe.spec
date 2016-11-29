@@ -945,7 +945,7 @@
 @ stdcall RtlAreAnyAccessesGranted(long long) ntdll.RtlAreAnyAccessesGranted
 @ stdcall RtlAreBitsClear(ptr long long) ntdll.RtlAreBitsClear
 @ stdcall RtlAreBitsSet(ptr long long) ntdll.RtlAreBitsSet
-@ stdcall RtlAssert(ptr ptr long long) ntdll.RtlAssert
+@ stdcall RtlAssert(ptr ptr long str) ntdll.RtlAssert
 @ stdcall -norelay RtlCaptureContext(ptr) ntdll.RtlCaptureContext
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr) ntdll.RtlCaptureStackBackTrace
 @ stdcall RtlCharToInteger(ptr long ptr) ntdll.RtlCharToInteger

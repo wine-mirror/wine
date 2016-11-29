@@ -564,9 +564,10 @@ void WINAPI RtlCopyMemory(void *dest, const void *src, SIZE_T len)
  * NOTES
  * Not implemented in non-debug versions.
  */
-void WINAPI RtlAssert(LPVOID x1,LPVOID x2,DWORD x3, DWORD x4)
+void WINAPI RtlAssert(void *assertion, void *filename, ULONG linenumber, char *message)
 {
-	FIXME("(%p,%p,0x%08x,0x%08x),stub\n",x1,x2,x3,x4);
+    FIXME("(%s, %s, %u, %s): stub\n", debugstr_a((char*)assertion), debugstr_a((char*)filename),
+        linenumber, debugstr_a(message));
 }
 
 /*************************************************************************

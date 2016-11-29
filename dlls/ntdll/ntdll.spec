@@ -448,7 +448,7 @@
 @ stdcall RtlAreBitsClear(ptr long long)
 @ stdcall RtlAreBitsSet(ptr long long)
 # @ stub RtlAssert2
-@ stdcall RtlAssert(ptr ptr long long)
+@ stdcall RtlAssert(ptr ptr long str)
 # @ stub RtlCancelTimer
 @ stdcall -norelay RtlCaptureContext(ptr)
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr)
