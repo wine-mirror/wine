@@ -44,17 +44,25 @@ typedef struct _ShellItem {
     IPersistIDList          IPersistIDList_iface;
 } ShellItem;
 
+typedef struct _CustomDestinationList {
+    ICustomDestinationList ICustomDestinationList_iface;
+    LONG ref;
+} CustomDestinationList;
+
 static inline ShellItem *impl_from_IShellItem2(IShellItem2 *iface)
 {
     return CONTAINING_RECORD(iface, ShellItem, IShellItem2_iface);
 }
-
 
 static inline ShellItem *impl_from_IPersistIDList( IPersistIDList *iface )
 {
     return CONTAINING_RECORD(iface, ShellItem, IPersistIDList_iface);
 }
 
+static inline CustomDestinationList *impl_from_ICustomDestinationList( ICustomDestinationList *iface )
+{
+    return CONTAINING_RECORD(iface, CustomDestinationList, ICustomDestinationList_iface);
+}
 
 static HRESULT WINAPI ShellItem_QueryInterface(IShellItem2 *iface, REFIID riid,
     void **ppv)
@@ -1321,4 +1329,165 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
     HeapFree(GetProcessHeap(), 0, array);
     *psia = NULL;
     return ret;
+}
+
+static HRESULT WINAPI CustomDestinationList_QueryInterface(ICustomDestinationList *iface, REFIID riid, void **obj)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(&IID_ICustomDestinationList, riid) || IsEqualIID(&IID_IUnknown, riid))
+    {
+        *obj = &This->ICustomDestinationList_iface;
+    }
+    else {
+        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI CustomDestinationList_AddRef(ICustomDestinationList *iface)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI CustomDestinationList_Release(ICustomDestinationList *iface)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", This, ref);
+
+    if (ref == 0)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI CustomDestinationList_SetAppID(ICustomDestinationList *iface, const WCHAR *appid)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p (%s): stub\n", This, debugstr_w(appid));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_BeginList(ICustomDestinationList *iface, UINT *min_slots, REFIID riid, void **obj)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p (%p %s %p): stub\n", This, min_slots, debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_AppendCategory(ICustomDestinationList *iface, const WCHAR *category, IObjectArray *array)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p (%s %p): stub\n", This, debugstr_w(category), array);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_AppendKnownCategory(ICustomDestinationList *iface, KNOWNDESTCATEGORY category)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p (%d): stub\n", This, category);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_AddUserTasks(ICustomDestinationList *iface, IObjectArray *tasks)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p (%p): stub\n", This, tasks);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_CommitList(ICustomDestinationList *iface)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_GetRemovedDestinations(ICustomDestinationList *iface, REFIID riid, void **obj)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p (%s %p): stub\n", This, debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_DeleteList(ICustomDestinationList *iface, const WCHAR *appid)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p (%s): stub\n", This, debugstr_w(appid));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CustomDestinationList_AbortList(ICustomDestinationList *iface)
+{
+    CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static const ICustomDestinationListVtbl CustomDestinationListVtbl =
+{
+    CustomDestinationList_QueryInterface,
+    CustomDestinationList_AddRef,
+    CustomDestinationList_Release,
+    CustomDestinationList_SetAppID,
+    CustomDestinationList_BeginList,
+    CustomDestinationList_AppendCategory,
+    CustomDestinationList_AppendKnownCategory,
+    CustomDestinationList_AddUserTasks,
+    CustomDestinationList_CommitList,
+    CustomDestinationList_GetRemovedDestinations,
+    CustomDestinationList_DeleteList,
+    CustomDestinationList_AbortList
+};
+
+HRESULT WINAPI CustomDestinationList_Constructor(IUnknown *outer, REFIID riid, void **obj)
+{
+    CustomDestinationList *list;
+    HRESULT hr;
+
+    TRACE("%p %s %p\n", outer, debugstr_guid(riid), obj);
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if(!(list = HeapAlloc(GetProcessHeap(), 0, sizeof(*list))))
+        return E_OUTOFMEMORY;
+
+    list->ICustomDestinationList_iface.lpVtbl = &CustomDestinationListVtbl;
+    list->ref = 1;
+
+    hr = ICustomDestinationList_QueryInterface(&list->ICustomDestinationList_iface, riid, obj);
+    ICustomDestinationList_Release(&list->ICustomDestinationList_iface);
+    return hr;
 }

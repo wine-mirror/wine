@@ -148,3 +148,9 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
     threading(apartment),
     uuid(53bd6b4e-3780-4693-afc3-7161c2f3ee9c)
 ] coclass MruLongList { }
+
+[
+    helpstring("Custom Destination List"),
+    threading(apartment),
+    uuid(77f10cf0-3db5-4966-b520-b7c54fd35ed6)
+] coclass DestinationList { interface ICustomDestinationList; }

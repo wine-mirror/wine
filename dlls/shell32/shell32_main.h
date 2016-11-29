@@ -110,6 +110,8 @@ HRESULT IShellLink_ConstructFromFile(IUnknown * pUnkOuter, REFIID riid, LPCITEMI
 LPEXTRACTICONA	IExtractIconA_Constructor(LPCITEMIDLIST) DECLSPEC_HIDDEN;
 LPEXTRACTICONW	IExtractIconW_Constructor(LPCITEMIDLIST) DECLSPEC_HIDDEN;
 
+HRESULT WINAPI CustomDestinationList_Constructor(IUnknown *outer, REFIID riid, void **obj) DECLSPEC_HIDDEN;
+
 /* initialisation for FORMATETC */
 #define InitFormatEtc(fe, cf, med) \
 	{\
