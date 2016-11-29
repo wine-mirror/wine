@@ -508,11 +508,10 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
         DWORD location)
 {
     struct wined3d_resource *resource = view->resource;
+    unsigned int i, sub_resource_idx, layer_count;
     struct wined3d_texture *texture;
-    unsigned int sub_resource_idx;
-    unsigned int i;
 
-    if (resource->type == WINED3D_RTYPE_BUFFER || resource->type == WINED3D_RTYPE_TEXTURE_3D)
+    if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
         return;
@@ -521,7 +520,8 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
     texture = texture_from_resource(resource);
 
     sub_resource_idx = view->layer_idx * texture->level_count + view->level_idx;
-    for (i = 0; i < view->layer_count; ++i, sub_resource_idx += texture->level_count)
+    layer_count = (resource->type != WINED3D_RTYPE_TEXTURE_3D) ? view->layer_count : 1;
+    for (i = 0; i < layer_count; ++i, sub_resource_idx += texture->level_count)
         wined3d_texture_invalidate_location(texture, sub_resource_idx, location);
 }
 
