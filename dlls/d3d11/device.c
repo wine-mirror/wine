@@ -671,7 +671,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetRenderTargetsAndUnord
         }
         for (; unordered_access_view_start_slot + i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
         {
-            wined3d_device_set_unordered_access_view(device->wined3d_device, i, NULL);
+            wined3d_device_set_unordered_access_view(device->wined3d_device,
+                    unordered_access_view_start_slot + i, NULL);
         }
         wined3d_mutex_unlock();
     }
