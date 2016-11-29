@@ -155,7 +155,7 @@ static HRESULT WINAPI object_QueryInterface(
         IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
-        *ppvObject = object;
+        *ppvObject = iface;
     }
     else
     {
@@ -399,7 +399,7 @@ static HRESULT WINAPI objectset_QueryInterface(
         IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
-        *ppvObject = objectset;
+        *ppvObject = iface;
     }
     else
     {
@@ -630,7 +630,7 @@ static HRESULT WINAPI enumvar_QueryInterface(
     if (IsEqualGUID( riid, &IID_IEnumVARIANT ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
-        *ppvObject = enumvar;
+        *ppvObject = iface;
     }
     else
     {
@@ -763,7 +763,7 @@ static HRESULT WINAPI services_QueryInterface(
         IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
-        *ppvObject = services;
+        *ppvObject = iface;
     }
     else
     {
