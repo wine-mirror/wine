@@ -3409,6 +3409,7 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
         if (!(view = state->unordered_access_view[i]))
         {
             WARN("No unordered access view bound at index %u.\n", i);
+            GL_EXTCALL(glBindImageTexture(i, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R8));
             continue;
         }
 
