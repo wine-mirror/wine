@@ -6811,6 +6811,11 @@ static void test_GetAddrInfoW(void)
     ADDRINFOW *result, *result2, *p, hint;
     WCHAR name[256];
     DWORD size = sizeof(name)/sizeof(WCHAR);
+    /* te su to.winehq.org written in katakana */
+    static const WCHAR idn_domain[] =
+        {0x30C6,0x30B9,0x30C8,'.','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR idn_punycode[] =
+        {'x','n','-','-','z','c','k','z','a','h','.','w','i','n','e','h','q','.','o','r','g',0};
 
     if (!pGetAddrInfoW || !pFreeAddrInfoW)
     {
@@ -6993,6 +6998,78 @@ static void test_GetAddrInfoW(void)
                 ok(0, "test %d: GetAddrInfoW failed with %d (err %d)\n", i, ret, err);
         }
     }
+
+    /* Test IDN resolution (Internationalized Domain Names) present since Windows 8 */
+    trace("Testing punycode IDN %s\n", wine_dbgstr_w(idn_punycode));
+    result = NULL;
+    ret = pGetAddrInfoW(idn_punycode, NULL, NULL, &result);
+    ok(!ret, "got %d expected success\n", ret);
+    ok(result != NULL, "got %p\n", result);
+    pFreeAddrInfoW(result);
+
+    hint.ai_family = AF_INET;
+    hint.ai_socktype = 0;
+    hint.ai_protocol = 0;
+    hint.ai_flags = 0;
+
+    result = NULL;
+    ret = pGetAddrInfoW(idn_punycode, NULL, &hint, &result);
+    ok(!ret, "got %d expected success\n", ret);
+    ok(result != NULL, "got %p\n", result);
+
+    trace("Testing unicode IDN %s\n", wine_dbgstr_w(idn_domain));
+    result2 = NULL;
+    ret = pGetAddrInfoW(idn_domain, NULL, NULL, &result2);
+    if (ret == WSAHOST_NOT_FOUND && broken(1))
+    {
+        pFreeAddrInfoW(result);
+        win_skip("IDN resolution not supported in Win <= 7\n");
+        return;
+    }
+todo_wine {
+    ok(!ret, "got %d expected success\n", ret);
+    ok(result2 != NULL, "got %p\n", result2);
+    pFreeAddrInfoW(result2);
+
+    hint.ai_family = AF_INET;
+    hint.ai_socktype = 0;
+    hint.ai_protocol = 0;
+    hint.ai_flags = 0;
+
+    result2 = NULL;
+    ret = pGetAddrInfoW(idn_domain, NULL, &hint, &result2);
+    ok(!ret, "got %d expected success\n", ret);
+    ok(result2 != NULL, "got %p\n", result2);
+
+    /* ensure manually resolved punycode and unicode hosts result in same data */
+    compare_addrinfow(result, result2);
+
+    pFreeAddrInfoW(result);
+    pFreeAddrInfoW(result2);
+
+    hint.ai_family = AF_INET;
+    hint.ai_socktype = 0;
+    hint.ai_protocol = 0;
+    hint.ai_flags = 0;
+
+    result2 = NULL;
+    ret = pGetAddrInfoW(idn_domain, NULL, &hint, &result2);
+    ok(!ret, "got %d expected success\n", ret);
+    ok(result2 != NULL, "got %p\n", result2);
+    pFreeAddrInfoW(result2);
+}
+    /* Disable IDN resolution and test again*/
+    hint.ai_family = AF_INET;
+    hint.ai_socktype = 0;
+    hint.ai_protocol = 0;
+    hint.ai_flags = AI_DISABLE_IDN_ENCODING;
+
+    SetLastError(0xdeadbeef);
+    result2 = NULL;
+    ret = pGetAddrInfoW(idn_domain, NULL, &hint, &result2);
+    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+    ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
+    ok(result2 == NULL, "got %p\n", result2);
 }
 
 static void test_getaddrinfo(void)
