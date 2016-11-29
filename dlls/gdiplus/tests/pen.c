@@ -364,6 +364,8 @@ todo_wine {
     expect(Ok, status);
     ok(count == 0, "Unexpected compound count %d\n", count);
 }
+    status = GdipSetPenCompoundArray(pen, NULL, 0);
+    expect(InvalidParameter, status);
     status = GdipSetPenCompoundArray(pen, NULL, 4);
     expect(InvalidParameter, status);
     status = GdipSetPenCompoundArray(pen, testvalues, 3);
@@ -375,6 +377,8 @@ todo_wine {
 
     status = GdipSetPenCompoundArray(pen, testvalues, 4);
     todo_wine expect(Ok, status);
+    status = GdipSetPenCompoundArray(pen, NULL, 0);
+    expect(InvalidParameter, status);
 
     count = 0;
     status = GdipGetPenCompoundCount(pen, &count);
