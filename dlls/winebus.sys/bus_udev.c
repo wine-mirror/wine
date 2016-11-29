@@ -288,7 +288,23 @@ static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
 {
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
     ssize_t rc;
-    rc = write(ext->device_fd, report, length);
+
+    if (id != 0)
+        rc = write(ext->device_fd, report, length);
+    else
+    {
+        BYTE report_buffer[1024];
+
+        if (length + 1 > sizeof(report_buffer))
+        {
+            ERR("Output report buffer too small\n");
+            return STATUS_UNSUCCESSFUL;
+        }
+
+        report_buffer[0] = 0;
+        memcpy(&report_buffer[1], report, length);
+        rc = write(ext->device_fd, report_buffer, length + 1);
+    }
     if (rc > 0)
     {
         *written = rc;
@@ -306,6 +322,7 @@ static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
 #ifdef HAVE_LINUX_HIDRAW_H
     int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    report[0] = id;
     length = min(length, 0x1fff);
     rc = ioctl(ext->device_fd, HIDIOCGFEATURE(length), report);
     if (rc >= 0)
@@ -329,8 +346,25 @@ static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
 #ifdef HAVE_LINUX_HIDRAW_H
     int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
+    BYTE *feature_buffer;
+    BYTE buffer[1024];
+
+    if (id == 0)
+    {
+        if (length + 1 > sizeof(feature_buffer))
+        {
+            ERR("Output feature buffer too small\n");
+            return STATUS_UNSUCCESSFUL;
+        }
+        buffer[0] = 0;
+        memcpy(&buffer[1], report, length);
+        feature_buffer = buffer;
+        length = length + 1;
+    }
+    else
+        feature_buffer = report;
     length = min(length, 0x1fff);
-    rc = ioctl(ext->device_fd, HIDIOCSFEATURE(length), report);
+    rc = ioctl(ext->device_fd, HIDIOCSFEATURE(length), feature_buffer);
     if (rc >= 0)
     {
         *written = rc;

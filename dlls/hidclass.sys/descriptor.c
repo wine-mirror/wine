@@ -919,10 +919,8 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
         new_report(wine_report, input_features[0]);
         data->dwInputReportCount++;
 
-        if (input_features[0]->caps.ReportID != 0)
-            bitOffset = 8;
-        else
-            bitOffset = 0;
+        /* Room for the reportID */
+        bitOffset = 8;
 
         for (i = 0; i < i_count; i++)
         {
@@ -933,10 +931,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
                 new_report(wine_report, input_features[i]);
                 data->dwInputReportCount++;
                 bitLength = max(bitOffset, bitLength);
-                if (input_features[i]->caps.ReportID != 0)
-                    bitOffset = 8;
-                else
-                    bitOffset = 0;
+                bitOffset = 8;
             }
             build_elements(wine_report, input_features[i], &bitOffset);
             count_elements(input_features[i], &data->caps.NumberInputButtonCaps,
@@ -954,10 +949,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
         data->dwOutputReportOffset = (BYTE*)wine_report - (BYTE*)data->InputReports;
         new_report(wine_report, output_features[0]);
         data->dwOutputReportCount++;
-        if (output_features[0]->caps.ReportID != 0)
-            bitOffset = 8;
-        else
-            bitOffset = 0;
+        bitOffset = 8;
 
         for (i = 0; i < o_count; i++)
         {
@@ -968,10 +960,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
                 new_report(wine_report, output_features[i]);
                 data->dwOutputReportCount++;
                 bitLength = max(bitOffset, bitLength);
-                if (output_features[0]->caps.ReportID != 0)
-                    bitOffset = 8;
-                else
-                    bitOffset = 0;
+                bitOffset = 8;
             }
             build_elements(wine_report, output_features[i], &bitOffset);
             count_elements(output_features[i], &data->caps.NumberOutputButtonCaps,
@@ -989,10 +978,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
         data->dwFeatureReportOffset = (BYTE*)wine_report - (BYTE*)data->InputReports;
         new_report(wine_report, feature_features[0]);
         data->dwFeatureReportCount++;
-        if (feature_features[0]->caps.ReportID != 0)
-            bitOffset = 8;
-        else
-            bitOffset = 0;
+        bitOffset = 8;
 
         for (i = 0; i < f_count; i++)
         {
@@ -1003,10 +989,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
                 new_report(wine_report, feature_features[i]);
                 data->dwFeatureReportCount++;
                 bitLength = max(bitOffset, bitLength);
-                if (feature_features[0]->caps.ReportID != 0)
-                    bitOffset = 8;
-                else
-                    bitOffset = 0;
+                bitOffset = 8;
             }
             build_elements(wine_report, feature_features[i], &bitOffset);
             count_elements(feature_features[i], &data->caps.NumberFeatureButtonCaps,
