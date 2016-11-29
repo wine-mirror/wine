@@ -344,6 +344,7 @@ static void test_compoundarray(void)
     GpStatus status;
     GpPen *pen;
     static const REAL testvalues[] = {0.2, 0.4, 0.6, 0.8};
+    INT count;
 
     status = GdipSetPenCompoundArray(NULL, testvalues, 4);
     expect(InvalidParameter, status);
@@ -351,6 +352,18 @@ static void test_compoundarray(void)
     status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
     expect(Ok, status);
 
+    status = GdipGetPenCompoundCount(NULL, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetPenCompoundCount(pen, NULL);
+    expect(InvalidParameter, status);
+
+    count = 10;
+    status = GdipGetPenCompoundCount(pen, &count);
+todo_wine {
+    expect(Ok, status);
+    ok(count == 0, "Unexpected compound count %d\n", count);
+}
     status = GdipSetPenCompoundArray(pen, NULL, 4);
     expect(InvalidParameter, status);
     status = GdipSetPenCompoundArray(pen, testvalues, 3);
@@ -363,6 +376,12 @@ static void test_compoundarray(void)
     status = GdipSetPenCompoundArray(pen, testvalues, 4);
     todo_wine expect(Ok, status);
 
+    count = 0;
+    status = GdipGetPenCompoundCount(pen, &count);
+todo_wine {
+    expect(Ok, status);
+    ok(count == 4, "Unexpected compound count %d\n", count);
+}
     GdipDeletePen(pen);
 }
 
