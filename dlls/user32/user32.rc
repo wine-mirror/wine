@@ -263,6 +263,9 @@ OCR_HELP CURSOR resources/ocr_help.cur
 /* @makedep: resources/ocr_dragobject.cur */
 OCR_DRAGOBJECT CURSOR resources/ocr_dragobject.cur
 
+/* @makedep: resources/ocr_pen.cur */
+OCR_PEN CURSOR resources/ocr_pen.cur
+
 
 /****************************************************************/
 /* Icons */
