@@ -28,6 +28,8 @@
 #include "winsvc.h"
 #include "wine/test.h"
 
+#include "initguid.h"
+
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
@@ -37,6 +39,9 @@ static HRESULT (WINAPI *pSHGetFolderPathW)(HWND, int, HANDLE, DWORD, LPWSTR);
 static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 static HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
 static DWORD (WINAPI *pGetLongPathNameW)(LPCWSTR, LPWSTR, DWORD);
+
+/* Updated Windows 7 has a new IShellDispatch6 in its typelib */
+DEFINE_GUID(IID_IWin7ShellDispatch6, 0x34936ba1, 0x67ad, 0x4c41, 0x99,0xb8, 0x8c,0x12,0xdf,0xf1,0xe9,0x74);
 
 static void init_function_pointers(void)
 {
@@ -530,6 +535,7 @@ static void test_ShellFolderViewDual(void)
         &IID_IShellDispatch5,
         &IID_IShellDispatch4,
         &IID_IShellDispatch2,
+        &IID_IWin7ShellDispatch6,
         &IID_NULL
     };
     IShellFolderViewDual *viewdual;
