@@ -843,9 +843,6 @@ static	LRESULT	G711_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
         adfs->pwfxDst->nBlockAlign = adfs->pwfxDst->nChannels;
         adfs->pwfxDst->nAvgBytesPerSec = adfs->pwfxDst->nSamplesPerSec * adfs->pwfxSrc->nChannels;
         break;
-    default:
-        FIXME("\n");
-        break;
     }
 
     return MMSYSERR_NOERROR;
