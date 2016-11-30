@@ -1217,21 +1217,28 @@ static DWORD get_default_proxy_reg_value( BYTE *buf, DWORD len, DWORD *type )
     return ret;
 }
 
+static void set_proxy( REGSAM access, BYTE *buf, DWORD len, DWORD type )
+{
+    HKEY hkey;
+    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, NULL, 0, access, NULL, &hkey, NULL ))
+    {
+        if (len) RegSetValueExW( hkey, WinHttpSettings, 0, type, buf, len );
+        else RegDeleteValueW( hkey, WinHttpSettings );
+        RegCloseKey( hkey );
+    }
+}
+
 static void set_default_proxy_reg_value( BYTE *buf, DWORD len, DWORD type )
 {
-    LONG l;
-    HKEY key;
-
-    l = RegCreateKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, NULL, 0,
-        KEY_WRITE, NULL, &key, NULL );
-    if (!l)
+    BOOL wow64;
+    IsWow64Process( GetCurrentProcess(), &wow64 );
+    if (sizeof(void *) > sizeof(int) || wow64)
     {
-        if (len)
-            RegSetValueExW( key, WinHttpSettings, 0, type, buf, len );
-        else
-            RegDeleteValueW( key, WinHttpSettings );
-        RegCloseKey( key );
+        set_proxy( KEY_WRITE|KEY_WOW64_64KEY, buf, len, type );
+        set_proxy( KEY_WRITE|KEY_WOW64_32KEY, buf, len, type );
     }
+    else
+        set_proxy( KEY_WRITE, buf, len, type );
 }
 
 static void test_set_default_proxy_config(void)
