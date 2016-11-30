@@ -1040,7 +1040,6 @@ static	LRESULT G711_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMSI
 	WARN("Unsupported query %08x\n", adss->fdwSize);
 	return MMSYSERR_NOTSUPPORTED;
     }
-    FIXME("\n");
     return MMSYSERR_NOERROR;
 }
 
