@@ -586,6 +586,8 @@ struct per_thread_data
     struct WS_hostent *he_buffer;
     struct WS_servent *se_buffer;
     struct WS_protoent *pe_buffer;
+    struct pollfd *fd_cache;
+    unsigned int fd_count;
     int he_len;
     int se_len;
     int pe_len;
@@ -1170,9 +1172,7 @@ static void free_per_thread_data(void)
     HeapFree( GetProcessHeap(), 0, ptb->he_buffer );
     HeapFree( GetProcessHeap(), 0, ptb->se_buffer );
     HeapFree( GetProcessHeap(), 0, ptb->pe_buffer );
-    ptb->he_buffer = NULL;
-    ptb->se_buffer = NULL;
-    ptb->pe_buffer = NULL;
+    HeapFree( GetProcessHeap(), 0, ptb->fd_cache );
 
     HeapFree( GetProcessHeap(), 0, ptb );
     NtCurrentTeb()->WinSockData = NULL;
@@ -5109,6 +5109,7 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
 {
     unsigned int i, j = 0, count = 0;
     struct pollfd *fds;
+    struct per_thread_data *ptb = get_per_thread_data();
 
     if (readfds) count += readfds->fd_count;
     if (writefds) count += writefds->fd_count;
@@ -5119,11 +5120,22 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
         SetLastError(WSAEINVAL);
         return NULL;
     }
-    if (!(fds = HeapAlloc( GetProcessHeap(), 0, count * sizeof(fds[0]))))
+
+    /* check if the cache can hold all descriptors, if not do the resizing */
+    if (ptb->fd_count < count)
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
+        if (!(fds = HeapAlloc(GetProcessHeap(), 0, count * sizeof(fds[0]))))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return NULL;
+        }
+        HeapFree(GetProcessHeap(), 0, ptb->fd_cache);
+        ptb->fd_cache = fds;
+        ptb->fd_count = count;
     }
+    else
+        fds = ptb->fd_cache;
+
     if (readfds)
         for (i = 0; i < readfds->fd_count; i++, j++)
         {
@@ -5198,7 +5210,6 @@ failed:
     if (exceptfds)
         for (i = 0; i < exceptfds->fd_count && j < count; i++, j++)
             if (fds[j].fd != -1) release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
-    HeapFree( GetProcessHeap(), 0, fds );
     return NULL;
 }
 
@@ -5331,7 +5342,6 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
 
     if (ret == -1) SetLastError(wsaErrno());
     else ret = get_poll_results( ws_readfds, ws_writefds, ws_exceptfds, pollfds );
-    HeapFree( GetProcessHeap(), 0, pollfds );
     return ret;
 }
 
