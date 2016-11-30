@@ -6743,25 +6743,56 @@ int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namesp
  */
 int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
 {
-    int ret, len;
+    int ret = EAI_MEMORY, len, i;
     char *nodenameA = NULL, *servnameA = NULL;
     struct WS_addrinfo *resA, *hintsA = NULL;
+    WCHAR *local_nodenameW = (WCHAR *)nodename;
+
+    TRACE("nodename %s, servname %s, hints %p, result %p\n",
+          debugstr_w(nodename), debugstr_w(servname), hints, res);
 
     *res = NULL;
     if (nodename)
     {
-        len = WideCharToMultiByte(CP_ACP, 0, nodename, -1, NULL, 0, NULL, NULL);
-        if (!(nodenameA = HeapAlloc(GetProcessHeap(), 0, len))) return EAI_MEMORY;
-        WideCharToMultiByte(CP_ACP, 0, nodename, -1, nodenameA, len, NULL, NULL);
+        /* Is this an IDN? Most likely if any char is above the Ascii table, this
+         * is the simplest validation possible, further validation will be done by
+         * the native getaddrinfo() */
+        for (i = 0; nodename[i]; i++)
+        {
+            if (nodename[i] > 'z')
+                break;
+        }
+        if (nodename[i])
+        {
+            if (hints && (hints->ai_flags & WS_AI_DISABLE_IDN_ENCODING))
+            {
+                /* Name requires conversion but it was disabled */
+                ret = WSAHOST_NOT_FOUND;
+                WSASetLastError(ret);
+                goto end;
+            }
+
+            len = IdnToAscii(0, nodename, -1, NULL, 0);
+            if (!len)
+            {
+                ERR("Failed to convert %s to punycode\n", debugstr_w(nodename));
+                ret = EAI_FAIL;
+                goto end;
+            }
+            if (!(local_nodenameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)))) goto end;
+            IdnToAscii(0, nodename, -1, local_nodenameW, len);
+        }
+    }
+    if (local_nodenameW)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, local_nodenameW, -1, NULL, 0, NULL, NULL);
+        if (!(nodenameA = HeapAlloc(GetProcessHeap(), 0, len))) goto end;
+        WideCharToMultiByte(CP_ACP, 0, local_nodenameW, -1, nodenameA, len, NULL, NULL);
     }
     if (servname)
     {
         len = WideCharToMultiByte(CP_ACP, 0, servname, -1, NULL, 0, NULL, NULL);
-        if (!(servnameA = HeapAlloc(GetProcessHeap(), 0, len)))
-        {
-            HeapFree(GetProcessHeap(), 0, nodenameA);
-            return EAI_MEMORY;
-        }
+        if (!(servnameA = HeapAlloc(GetProcessHeap(), 0, len))) goto end;
         WideCharToMultiByte(CP_ACP, 0, servname, -1, servnameA, len, NULL, NULL);
     }
 
@@ -6775,6 +6806,9 @@ int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hin
         WS_freeaddrinfo(resA);
     }
 
+end:
+    if (local_nodenameW != nodename)
+        HeapFree(GetProcessHeap(), 0, local_nodenameW);
     HeapFree(GetProcessHeap(), 0, nodenameA);
     HeapFree(GetProcessHeap(), 0, servnameA);
     return ret;

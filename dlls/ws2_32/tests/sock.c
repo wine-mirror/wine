@@ -7026,7 +7026,7 @@ static void test_GetAddrInfoW(void)
         win_skip("IDN resolution not supported in Win <= 7\n");
         return;
     }
-todo_wine {
+
     ok(!ret, "got %d expected success\n", ret);
     ok(result2 != NULL, "got %p\n", result2);
     pFreeAddrInfoW(result2);
@@ -7057,7 +7057,7 @@ todo_wine {
     ok(!ret, "got %d expected success\n", ret);
     ok(result2 != NULL, "got %p\n", result2);
     pFreeAddrInfoW(result2);
-}
+
     /* Disable IDN resolution and test again*/
     hint.ai_family = AF_INET;
     hint.ai_socktype = 0;
