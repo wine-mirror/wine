@@ -90,6 +90,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ "dcl_tgsm_structured",
     /* WINED3DSIH_DCL_THREAD_GROUP                 */ "dcl_thread_group",
     /* WINED3DSIH_DCL_UAV_RAW                      */ "dcl_uav_raw",
+    /* WINED3DSIH_DCL_UAV_STRUCTURED               */ "dcl_uav_structured",
     /* WINED3DSIH_DCL_UAV_TYPED                    */ "dcl_uav_typed",
     /* WINED3DSIH_DCL_VERTICES_OUT                 */ "dcl_maxOutputVertexCount",
     /* WINED3DSIH_DEF                              */ "def",
@@ -1465,6 +1466,11 @@ static void shader_dump_uav_flags(struct wined3d_string_buffer *buffer, DWORD ua
         shader_addline(buffer, "_glc");
         uav_flags &= ~WINED3DSUF_GLOBALLY_COHERENT;
     }
+    if (uav_flags & WINED3DSUF_ORDER_PRESERVING_COUNTER)
+    {
+        shader_addline(buffer, "_opc");
+        uav_flags &= ~WINED3DSUF_ORDER_PRESERVING_COUNTER;
+    }
 
     if (uav_flags)
         shader_addline(buffer, "_unknown_flags(%#x)", uav_flags);
@@ -2436,6 +2442,14 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             shader_dump_uav_flags(&buffer, ins.flags);
             shader_addline(&buffer, " ");
             shader_dump_dst_param(&buffer, &ins.declaration.dst, &shader_version);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_UAV_STRUCTURED)
+        {
+            shader_addline(&buffer, "%s", shader_opcode_names[ins.handler_idx]);
+            shader_dump_uav_flags(&buffer, ins.flags);
+            shader_addline(&buffer, " ");
+            shader_dump_dst_param(&buffer, &ins.declaration.structured_resource.reg, &shader_version);
+            shader_addline(&buffer, ", %u", ins.declaration.structured_resource.byte_stride);
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {

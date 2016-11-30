@@ -65,7 +65,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM5_CONTROL_POINT_COUNT_MASK    (0xffu << WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT)
 
 #define WINED3D_SM5_UAV_FLAGS_SHIFT             11
-#define WINED3D_SM5_UAV_FLAGS_MASK              (0xffu << WINED3D_SM5_UAV_FLAGS_SHIFT)
+#define WINED3D_SM5_UAV_FLAGS_MASK              (0x8fffu << WINED3D_SM5_UAV_FLAGS_SHIFT)
 
 #define WINED3D_SM5_SYNC_FLAGS_SHIFT            11
 #define WINED3D_SM5_SYNC_FLAGS_MASK             (0xffu << WINED3D_SM5_SYNC_FLAGS_SHIFT)
@@ -241,6 +241,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_DCL_THREAD_GROUP                 = 0x9b,
     WINED3D_SM5_OP_DCL_UAV_TYPED                    = 0x9c,
     WINED3D_SM5_OP_DCL_UAV_RAW                      = 0x9d,
+    WINED3D_SM5_OP_DCL_UAV_STRUCTURED               = 0x9e,
     WINED3D_SM5_OP_DCL_TGSM_RAW                     = 0x9f,
     WINED3D_SM5_OP_DCL_TGSM_STRUCTURED              = 0xa0,
     WINED3D_SM5_OP_DCL_RESOURCE_STRUCTURED          = 0xa2,
@@ -672,6 +673,15 @@ static void shader_sm5_read_dcl_uav_raw(struct wined3d_shader_instruction *ins,
     ins->flags = (opcode_token & WINED3D_SM5_UAV_FLAGS_MASK) >> WINED3D_SM5_UAV_FLAGS_SHIFT;
 }
 
+static void shader_sm5_read_dcl_uav_structured(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_UAV, &ins->declaration.structured_resource.reg);
+    ins->flags = (opcode_token & WINED3D_SM5_UAV_FLAGS_MASK) >> WINED3D_SM5_UAV_FLAGS_SHIFT;
+    ins->declaration.structured_resource.byte_stride = *tokens;
+}
+
 static void shader_sm5_read_dcl_tgsm_raw(struct wined3d_shader_instruction *ins,
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
@@ -872,6 +882,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
             shader_sm4_read_dcl_resource},
     {WINED3D_SM5_OP_DCL_UAV_RAW,                      WINED3DSIH_DCL_UAV_RAW,                      "",     "",
             shader_sm5_read_dcl_uav_raw},
+    {WINED3D_SM5_OP_DCL_UAV_STRUCTURED,               WINED3DSIH_DCL_UAV_STRUCTURED,               "",     "",
+            shader_sm5_read_dcl_uav_structured},
     {WINED3D_SM5_OP_DCL_TGSM_RAW,                     WINED3DSIH_DCL_TGSM_RAW,                     "",     "",
             shader_sm5_read_dcl_tgsm_raw},
     {WINED3D_SM5_OP_DCL_TGSM_STRUCTURED,              WINED3DSIH_DCL_TGSM_STRUCTURED,              "",     "",
