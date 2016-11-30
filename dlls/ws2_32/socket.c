@@ -4368,13 +4368,14 @@ WS_u_short WINAPI WS_ntohs(WS_u_short netshort)
  */
 char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 {
+    unsigned int long_ip = ntohl(in.WS_s_addr);
     struct per_thread_data *data = get_per_thread_data();
 
     sprintf( data->ntoa_buffer, "%u.%u.%u.%u",
-            (unsigned int)(ntohl( in.WS_s_addr ) >> 24 & 0xff),
-            (unsigned int)(ntohl( in.WS_s_addr ) >> 16 & 0xff),
-            (unsigned int)(ntohl( in.WS_s_addr ) >> 8 & 0xff),
-            (unsigned int)(ntohl( in.WS_s_addr ) & 0xff) );
+            (long_ip >> 24) & 0xff,
+            (long_ip >> 16) & 0xff,
+            (long_ip >> 8) & 0xff,
+            long_ip & 0xff);
 
     return data->ntoa_buffer;
 }
@@ -8289,18 +8290,20 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     switch(sockaddr->sa_family)
     {
     case WS_AF_INET:
+    {
+        unsigned int long_ip = ntohl(((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr);
         if (len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
         sprintf( buffer, "%u.%u.%u.%u:%u",
-               (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff),
-               (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff),
-               (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 8 & 0xff),
-               (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) & 0xff),
+               (long_ip >> 24) & 0xff,
+               (long_ip >> 16) & 0xff,
+               (long_ip >> 8) & 0xff,
+               long_ip & 0xff,
                ntohs( ((SOCKADDR_IN *)sockaddr)->sin_port ) );
 
         p = strchr( buffer, ':' );
         if (!((SOCKADDR_IN *)sockaddr)->sin_port) *p = 0;
         break;
-
+    }
     case WS_AF_INET6:
     {
         struct WS_sockaddr_in6 *sockaddr6 = (LPSOCKADDR_IN6) sockaddr;
