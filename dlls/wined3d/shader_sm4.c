@@ -894,7 +894,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_STORE_UAV_TYPED,                  WINED3DSIH_STORE_UAV_TYPED,                  "U",    "iu"},
     {WINED3D_SM5_OP_LD_RAW,                           WINED3DSIH_LD_RAW,                           "u",    "iU"},
     {WINED3D_SM5_OP_STORE_RAW,                        WINED3DSIH_STORE_RAW,                        "U",    "iu"},
-    {WINED3D_SM5_OP_LD_STRUCTURED,                    WINED3DSIH_LD_STRUCTURED,                    "u",    "uuR"},
+    {WINED3D_SM5_OP_LD_STRUCTURED,                    WINED3DSIH_LD_STRUCTURED,                    "u",    "iiR"},
     {WINED3D_SM5_OP_STORE_STRUCTURED,                 WINED3DSIH_STORE_STRUCTURED,                 "U",    "iiu"},
     {WINED3D_SM5_OP_ATOMIC_IADD,                      WINED3DSIH_ATOMIC_IADD,                      "U",    "ii"},
     {WINED3D_SM5_OP_IMM_ATOMIC_ALLOC,                 WINED3DSIH_IMM_ATOMIC_ALLOC,                 "u",    "U"},
