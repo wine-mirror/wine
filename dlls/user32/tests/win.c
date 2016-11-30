@@ -7825,14 +7825,16 @@ static void test_FlashWindow(void)
 
     SetLastError( 0xdeadbeef );
     ret = pFlashWindow( NULL, TRUE );
-    ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
+    ok( !ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
+                 GetLastError() == ERROR_INVALID_WINDOW_HANDLE),
         "FlashWindow returned with %d\n", GetLastError() );
 
     DestroyWindow( hwnd );
 
     SetLastError( 0xdeadbeef );
     ret = pFlashWindow( hwnd, TRUE );
-    ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER,
+    ok( !ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
+                 GetLastError() == ERROR_INVALID_WINDOW_HANDLE),
         "FlashWindow returned with %d\n", GetLastError() );
 }
 
@@ -7859,7 +7861,8 @@ static void test_FlashWindowEx(void)
     finfo.hwnd = NULL;
     SetLastError(0xdeadbeef);
     ret = pFlashWindowEx(&finfo);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
+                GetLastError() == ERROR_INVALID_WINDOW_HANDLE),
        "FlashWindowEx returned with %d\n", GetLastError());
 
     finfo.hwnd = hwnd;
@@ -7889,7 +7892,8 @@ static void test_FlashWindowEx(void)
 
     SetLastError(0xdeadbeef);
     ret = pFlashWindowEx(&finfo);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
+                GetLastError() == ERROR_INVALID_WINDOW_HANDLE),
        "FlashWindowEx returned with %d\n", GetLastError());
 
     ok(finfo.cbSize == sizeof(FLASHWINFO), "FlashWindowEx modified cdSize to %x\n", finfo.cbSize);
