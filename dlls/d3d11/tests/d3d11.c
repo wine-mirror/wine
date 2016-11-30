@@ -11262,6 +11262,114 @@ static void test_shader_input_registers_limits(void)
     release_test_context(&test_context);
 }
 
+static void test_stencil_separate(void)
+{
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    D3D11_DEPTH_STENCIL_DESC ds_desc;
+    ID3D11DepthStencilState *ds_state;
+    ID3D11DepthStencilView *ds_view;
+    D3D11_RASTERIZER_DESC rs_desc;
+    ID3D11DeviceContext *context;
+    ID3D11RasterizerState *rs;
+    ID3D11Texture2D *texture;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec2 ccw_quad[] =
+    {
+        {-1.0f, -1.0f},
+        { 1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f,  1.0f},
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &ds_view);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    ds_desc.DepthEnable = TRUE;
+    ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    ds_desc.DepthFunc = D3D11_COMPARISON_LESS;
+    ds_desc.StencilEnable = TRUE;
+    ds_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+    ds_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+    ds_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilFunc = D3D11_COMPARISON_NEVER;
+    ds_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_ZERO;
+    ds_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_ZERO;
+    ds_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_ZERO;
+    ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil state, hr %#x.\n", hr);
+
+    rs_desc.FillMode = D3D11_FILL_SOLID;
+    rs_desc.CullMode = D3D11_CULL_NONE;
+    rs_desc.FrontCounterClockwise = FALSE;
+    rs_desc.DepthBias = 0;
+    rs_desc.DepthBiasClamp = 0.0f;
+    rs_desc.SlopeScaledDepthBias = 0.0f;
+    rs_desc.DepthClipEnable = TRUE;
+    rs_desc.ScissorEnable = FALSE;
+    rs_desc.MultisampleEnable = FALSE;
+    rs_desc.AntialiasedLineEnable = FALSE;
+    ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+    ID3D11DeviceContext_ClearDepthStencilView(context, ds_view, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, ds_view);
+    ID3D11DeviceContext_OMSetDepthStencilState(context, ds_state, 0);
+    ID3D11DeviceContext_RSSetState(context, rs);
+
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 1);
+
+    ID3D11Buffer_Release(test_context.vb);
+    test_context.vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(ccw_quad), ccw_quad);
+
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+
+    ID3D11RasterizerState_Release(rs);
+    rs_desc.FrontCounterClockwise = TRUE;
+    ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ID3D11DeviceContext_RSSetState(context, rs);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 1);
+
+    ID3D11DepthStencilState_Release(ds_state);
+    ID3D11DepthStencilView_Release(ds_view);
+    ID3D11RasterizerState_Release(rs);
+    ID3D11Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 static void test_uav_load(void)
 {
     struct shader
@@ -11631,5 +11739,6 @@ START_TEST(d3d11)
     run_for_each_9_x_feature_level(test_fl9_draw);
     test_ddy();
     test_shader_input_registers_limits();
+    test_stencil_separate();
     test_uav_load();
 }
