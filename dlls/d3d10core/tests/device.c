@@ -9864,6 +9864,112 @@ static void test_shader_input_registers_limits(void)
     release_test_context(&test_context);
 }
 
+static void test_stencil_separate(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    D3D10_DEPTH_STENCIL_DESC ds_desc;
+    ID3D10DepthStencilState *ds_state;
+    ID3D10DepthStencilView *ds_view;
+    D3D10_RASTERIZER_DESC rs_desc;
+    ID3D10RasterizerState *rs;
+    ID3D10Texture2D *texture;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec2 ccw_quad[] =
+    {
+        {-1.0f, -1.0f},
+        { 1.0f, -1.0f},
+        {-1.0f,  1.0f},
+        { 1.0f,  1.0f},
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    texture_desc.Width = 640;
+    texture_desc.Height = 480;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)texture, NULL, &ds_view);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+
+    ds_desc.DepthEnable = TRUE;
+    ds_desc.DepthWriteMask = D3D10_DEPTH_WRITE_MASK_ALL;
+    ds_desc.DepthFunc = D3D10_COMPARISON_LESS;
+    ds_desc.StencilEnable = TRUE;
+    ds_desc.StencilReadMask = D3D10_DEFAULT_STENCIL_READ_MASK;
+    ds_desc.StencilWriteMask = D3D10_DEFAULT_STENCIL_WRITE_MASK;
+    ds_desc.FrontFace.StencilFailOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilDepthFailOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilPassOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.FrontFace.StencilFunc = D3D10_COMPARISON_NEVER;
+    ds_desc.BackFace.StencilFailOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.BackFace.StencilDepthFailOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.BackFace.StencilPassOp = D3D10_STENCIL_OP_ZERO;
+    ds_desc.BackFace.StencilFunc = D3D10_COMPARISON_ALWAYS;
+    hr = ID3D10Device_CreateDepthStencilState(device, &ds_desc, &ds_state);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil state, hr %#x.\n", hr);
+
+    rs_desc.FillMode = D3D10_FILL_SOLID;
+    rs_desc.CullMode = D3D10_CULL_NONE;
+    rs_desc.FrontCounterClockwise = FALSE;
+    rs_desc.DepthBias = 0;
+    rs_desc.DepthBiasClamp = 0.0f;
+    rs_desc.SlopeScaledDepthBias = 0.0f;
+    rs_desc.DepthClipEnable = TRUE;
+    rs_desc.ScissorEnable = FALSE;
+    rs_desc.MultisampleEnable = FALSE;
+    rs_desc.AntialiasedLineEnable = FALSE;
+    ID3D10Device_CreateRasterizerState(device, &rs_desc, &rs);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, red);
+    ID3D10Device_ClearDepthStencilView(device, ds_view, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0);
+    ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, ds_view);
+    ID3D10Device_OMSetDepthStencilState(device, ds_state, 0);
+    ID3D10Device_RSSetState(device, rs);
+
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 1);
+
+    ID3D10Buffer_Release(test_context.vb);
+    test_context.vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(ccw_quad), ccw_quad);
+
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 1);
+
+    ID3D10RasterizerState_Release(rs);
+    rs_desc.FrontCounterClockwise = TRUE;
+    ID3D10Device_CreateRasterizerState(device, &rs_desc, &rs);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ID3D10Device_RSSetState(device, rs);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, red);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 1);
+
+    ID3D10DepthStencilState_Release(ds_state);
+    ID3D10DepthStencilView_Release(ds_view);
+    ID3D10RasterizerState_Release(rs);
+    ID3D10Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -9919,4 +10025,5 @@ START_TEST(device)
     test_required_format_support();
     test_ddy();
     test_shader_input_registers_limits();
+    test_stencil_separate();
 }
