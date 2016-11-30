@@ -205,6 +205,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_SUB                              */ "sub",
     /* WINED3DSIH_SWAPC                            */ "swapc",
     /* WINED3DSIH_SWITCH                           */ "switch",
+    /* WINED3DSIH_SYNC                             */ "sync",
     /* WINED3DSIH_TEX                              */ "texld",
     /* WINED3DSIH_TEXBEM                           */ "texbem",
     /* WINED3DSIH_TEXBEML                          */ "texbeml",
@@ -1439,6 +1440,23 @@ static void shader_dump_global_flags(struct wined3d_string_buffer *buffer, DWORD
         shader_addline(buffer, "unknown_flags(%#x)", global_flags);
 }
 
+static void shader_dump_sync_flags(struct wined3d_string_buffer *buffer, DWORD sync_flags)
+{
+    if (sync_flags & WINED3DSSF_GROUP_SHARED_MEMORY)
+    {
+        shader_addline(buffer, "_g");
+        sync_flags &= ~WINED3DSSF_GROUP_SHARED_MEMORY;
+    }
+    if (sync_flags & WINED3DSSF_THREAD_GROUP)
+    {
+        shader_addline(buffer, "_t");
+        sync_flags &= ~WINED3DSSF_THREAD_GROUP;
+    }
+
+    if (sync_flags)
+        shader_addline(buffer, "_unknown_flags(%#x)", sync_flags);
+}
+
 static void shader_dump_tessellator_domain(struct wined3d_string_buffer *buffer,
         enum wined3d_tessellator_domain domain)
 {
@@ -2482,6 +2500,10 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                     case WINED3DSI_SAMPLE_INFO_UINT: shader_addline(&buffer, "_uint"); break;
                     default: shader_addline(&buffer, "_unrecognized(%#x)", ins.flags);
                 }
+            }
+            else if (ins.handler_idx == WINED3DSIH_SYNC)
+            {
+                shader_dump_sync_flags(&buffer, ins.flags);
             }
 
             if (wined3d_shader_instruction_has_texel_offset(&ins))

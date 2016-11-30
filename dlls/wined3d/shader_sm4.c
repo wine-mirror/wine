@@ -64,6 +64,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT   11
 #define WINED3D_SM5_CONTROL_POINT_COUNT_MASK    (0xffu << WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT)
 
+#define WINED3D_SM5_SYNC_FLAGS_SHIFT            11
+#define WINED3D_SM5_SYNC_FLAGS_MASK             (0xffu << WINED3D_SM5_SYNC_FLAGS_SHIFT)
+
 #define WINED3D_SM5_TESSELLATOR_SHIFT           11
 #define WINED3D_SM5_TESSELLATOR_MASK            (0xfu << WINED3D_SM5_TESSELLATOR_SHIFT)
 
@@ -246,6 +249,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_ATOMIC_IADD                      = 0xad,
     WINED3D_SM5_OP_IMM_ATOMIC_ALLOC                 = 0xb2,
     WINED3D_SM5_OP_IMM_ATOMIC_CONSUME               = 0xb3,
+    WINED3D_SM5_OP_SYNC                             = 0xbe,
 };
 
 enum wined3d_sm4_register_type
@@ -681,6 +685,13 @@ static void shader_sm5_read_dcl_resource_structured(struct wined3d_shader_instru
     ins->declaration.structured_resource.byte_stride = *tokens;
 }
 
+static void shader_sm5_read_sync(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    ins->flags = (opcode_token & WINED3D_SM5_SYNC_FLAGS_MASK) >> WINED3D_SM5_SYNC_FLAGS_SHIFT;
+}
+
 /*
  * f -> WINED3D_DATA_FLOAT
  * i -> WINED3D_DATA_INT
@@ -862,6 +873,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_ATOMIC_IADD,                      WINED3DSIH_ATOMIC_IADD,                      "U",    "ii"},
     {WINED3D_SM5_OP_IMM_ATOMIC_ALLOC,                 WINED3DSIH_IMM_ATOMIC_ALLOC,                 "u",    "U"},
     {WINED3D_SM5_OP_IMM_ATOMIC_CONSUME,               WINED3DSIH_IMM_ATOMIC_CONSUME,               "u",    "U"},
+    {WINED3D_SM5_OP_SYNC,                             WINED3DSIH_SYNC,                             "",     "",
+            shader_sm5_read_sync},
 };
 
 static const enum wined3d_shader_register_type register_type_table[] =
