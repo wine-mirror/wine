@@ -166,13 +166,19 @@ interface IShellFolder : IUnknown
 
     enum tagSHCONTF
     {
-        SHCONTF_FOLDERS = 32,
-        SHCONTF_NONFOLDERS = 64,
-        SHCONTF_INCLUDEHIDDEN = 128,
-        SHCONTF_INIT_ON_FIRST_NEXT = 256,
-        SHCONTF_NETPRINTERSRCH = 512,
-        SHCONTF_SHAREABLE = 1024,
-        SHCONTF_STORAGE = 2048
+        SHCONTF_CHECKING_FOR_CHILDREN = 0x00000010,
+        SHCONTF_FOLDERS               = 0x00000020,
+        SHCONTF_NONFOLDERS            = 0x00000040,
+        SHCONTF_INCLUDEHIDDEN         = 0x00000080,
+        SHCONTF_INIT_ON_FIRST_NEXT    = 0x00000100,
+        SHCONTF_NETPRINTERSRCH        = 0x00000200,
+        SHCONTF_SHAREABLE             = 0x00000400,
+        SHCONTF_STORAGE               = 0x00000800,
+        SHCONTF_NAVIGATION_ENUM       = 0x00001000,
+        SHCONTF_FASTITEMS             = 0x00002000,
+        SHCONTF_FLATLIST              = 0x00004000,
+        SHCONTF_ENABLE_ASYNC          = 0x00008000,
+        SHCONTF_INCLUDESUPERHIDDEN    = 0x00010000
     };
 
     typedef DWORD SHCONTF;
@@ -186,6 +192,7 @@ interface IShellFolder : IUnknown
     cpp_quote("#define SFGAO_HASPROPSHEET      0x00000040L")
     cpp_quote("#define SFGAO_DROPTARGET        0x00000100L")
     cpp_quote("#define SFGAO_CAPABILITYMASK    0x00000177L")
+    cpp_quote("#define SFGAO_SYSTEM            0x00001000L")
     cpp_quote("#define SFGAO_ENCRYPTED         0x00002000L")
     cpp_quote("#define SFGAO_ISSLOW            0x00004000L")
     cpp_quote("#define SFGAO_GHOSTED           0x00008000L")
@@ -205,8 +212,12 @@ interface IShellFolder : IUnknown
     cpp_quote("#define SFGAO_BROWSABLE         0x08000000L")
     cpp_quote("#define SFGAO_NONENUMERATED     0x00100000L")
     cpp_quote("#define SFGAO_NEWCONTENT        0x00200000L")
+    cpp_quote("#define SFGAO_CANMONIKER        0x00400000L")
+    cpp_quote("#define SFGAO_HASSTORAGE        0x00400000L")
     cpp_quote("#define SFGAO_STREAM            0x00400000L")
     cpp_quote("#define SFGAO_STORAGEANCESTOR   0x00800000L")
+    cpp_quote("#define SFGAO_STORAGEGAPMASK    0x70C50008L")
+    cpp_quote("#define SFGAO_PKEYSFGAOMASK     0x81044000L")
 
     typedef ULONG SFGAOF;
 
@@ -356,7 +367,8 @@ interface IShellItem : IUnknown
         SIGDN_FILESYSPATH                  = 0x80058000,
         SIGDN_URL                          = 0x80068000,
         SIGDN_PARENTRELATIVEFORADDRESSBAR  = 0x8007c001,
-        SIGDN_PARENTRELATIVE               = 0x80080001
+        SIGDN_PARENTRELATIVE               = 0x80080001,
+        SIGDN_PARENTRELATIVEFORUI          = 0x80094001,
     } SIGDN; /* & 0xFFFF => SHGDN */
 
     [v1_enum] enum _SICHINTF
@@ -459,16 +471,21 @@ interface IShellItem2 : IShellItem
         [out] BOOL *pf);
 }
 
-typedef enum tagNWMF {
-    NWMF_UNLOADING        = 0x0001,
-    NWMF_USERINITED       = 0x0002,
-    NWMF_FIRST            = 0x0004,
-    NWMF_OVERRIDEKEY      = 0x0008,
-    NWMF_SHOWHELP         = 0x0010,
-    NWMF_HTMLDIALOG       = 0x0020,
-    NWMF_FROMDIALOGCHILD  = 0x0040,
-    NWMF_USERREQUESTED    = 0x0080,
-    NWMF_USERALLOWED      = 0x0100
+typedef [v1_enum] enum tagNWMF {
+    NWMF_UNLOADING        = 0x00000001,
+    NWMF_USERINITED       = 0x00000002,
+    NWMF_FIRST            = 0x00000004,
+    NWMF_OVERRIDEKEY      = 0x00000008,
+    NWMF_SHOWHELP         = 0x00000010,
+    NWMF_HTMLDIALOG       = 0x00000020,
+    NWMF_FROMDIALOGCHILD  = 0x00000040,
+    NWMF_USERREQUESTED    = 0x00000080,
+    NWMF_USERALLOWED      = 0x00000100,
+    NWMF_FORCEWINDOW      = 0x00010000,
+    NWMF_FORCETAB         = 0x00020000,
+    NWMF_SUGGESTWINDOW    = 0x00040000,
+    NWMF_SUGGESTTAB       = 0x00080000,
+    NWMF_INACTIVETAB      = 0x00100000,
 } NWMF;
 
 [
@@ -615,7 +632,7 @@ interface IShellItemFilter : IUnknown
  */
 typedef char *LPVIEWSETTINGS;
 
-typedef enum
+typedef [v1_enum] enum FOLDERFLAGS
 {
     FWF_AUTOARRANGE         = 0x00000001,
     FWF_ABBREVIATEDNAMES    = 0x00000002,
@@ -651,7 +668,7 @@ typedef enum
     FWF_ALLOWRTLREADING     = 0x80000000
 } FOLDERFLAGS;
 
-typedef enum
+typedef [v1_enum] enum FOLDERVIEWMODE
 {
     FVM_AUTO       =-1,
     FVM_ICON       = 1,
@@ -702,21 +719,28 @@ interface IShellView : IOleWindow
 {
     typedef IShellView *LPSHELLVIEW;
 
-    cpp_quote("#define SVSI_DESELECT       0x00000000")
-    cpp_quote("#define SVSI_SELECT         0x00000001")
-    cpp_quote("#define SVSI_EDIT           0x00000003")
-    cpp_quote("#define SVSI_DESELECTOTHERS 0x00000004")
-    cpp_quote("#define SVSI_ENSUREVISIBLE  0x00000008")
-    cpp_quote("#define SVSI_FOCUSED        0x00000010")
-    cpp_quote("#define SVSI_TRANSLATEPT    0x00000020")
-    cpp_quote("#define SVSI_SELECTIONMARK  0x00000040")
-    cpp_quote("#define SVSI_POSITIONITEM   0x00000080")
-    cpp_quote("#define SVSI_CHECK          0x00000100")
+    typedef [v1_enum] enum _SVSIF
+    {
+        SVSI_DESELECT       = 0x00000000,
+        SVSI_SELECT         = 0x00000001,
+        SVSI_EDIT           = 0x00000003,
+        SVSI_DESELECTOTHERS = 0x00000004,
+        SVSI_ENSUREVISIBLE  = 0x00000008,
+        SVSI_FOCUSED        = 0x00000010,
+        SVSI_TRANSLATEPT    = 0x00000020,
+        SVSI_SELECTIONMARK  = 0x00000040,
+        SVSI_POSITIONITEM   = 0x00000080,
+        SVSI_CHECK          = 0x00000100,
+        SVSI_CHECK2         = 0x00000200,
+        SVSI_KEYBOARDSELECT = 0x00000401,
+        SVSI_NOTAKEFOCUS    = 0x40000000,
+    } _SVSIF;
+
     cpp_quote("#define SVSI_NOSTATECHANGE  0x80000000")
 
     typedef UINT SVSIF;
 
-    typedef enum
+    typedef [v1_enum] enum _SVGIO
     {
         SVGIO_BACKGROUND     = 0x00000000,
         SVGIO_SELECTION      = 0x00000001,
@@ -724,9 +748,11 @@ interface IShellView : IOleWindow
         SVGIO_CHECKED        = 0x00000003,
         SVGIO_TYPE_MASK      = 0x0000000f,
         SVGIO_FLAG_VIEWORDER = 0x80000000,
-    } SVGIO;
+    } _SVGIO;
 
-    typedef enum
+    typedef INT SVGIO;
+
+    typedef [v1_enum] enum SVUIA_STATUS
     {
         SVUIA_DEACTIVATE       = 0,
         SVUIA_ACTIVATE_NOFOCUS = 1,
@@ -1109,24 +1135,30 @@ cpp_quote("#endif")
 ]
 interface IShellLinkA : IUnknown
 {
-    typedef enum
+    typedef [v1_enum] enum SLR_FLAGS
     {
-        SLR_NO_UI               = 0x0001,
-        SLR_ANY_MATCH           = 0x0002,
-        SLR_UPDATE              = 0x0004,
-        SLR_NOUPDATE            = 0x0008,
-        SLR_NOSEARCH            = 0x0010,
-        SLR_NOTRACK             = 0x0020,
-        SLR_NOLINKINFO          = 0x0040,
-        SLR_INVOKE_MSI          = 0x0080,
-        SLR_NO_UI_WITH_MSG_PUMP = 0x0101,
+        SLR_NO_UI                     = 0x0001,
+        SLR_ANY_MATCH                 = 0x0002,
+        SLR_UPDATE                    = 0x0004,
+        SLR_NOUPDATE                  = 0x0008,
+        SLR_NOSEARCH                  = 0x0010,
+        SLR_NOTRACK                   = 0x0020,
+        SLR_NOLINKINFO                = 0x0040,
+        SLR_INVOKE_MSI                = 0x0080,
+        SLR_NO_UI_WITH_MSG_PUMP       = 0x0101,
+        SLR_OFFER_DELETE_WITHOUT_FILE = 0x0200,
+        SLR_KNOWNFOLDER               = 0x0400,
+        SLR_MACHINE_IN_LOCAL_TARGET   = 0x0800,
+        SLR_UPDATE_MACHINE_AND_SID    = 0x1000,
+        SLR_NO_OBJECT_ID              = 0x2000
     } SLR_FLAGS;
 
-    typedef enum
+    typedef [v1_enum] enum SLGP_FLAGS
     {
-        SLGP_SHORTPATH   = 0x0001,
-        SLGP_UNCPRIORITY = 0x0002,
-        SLGP_RAWPATH     = 0x0004,
+        SLGP_SHORTPATH        = 0x0001,
+        SLGP_UNCPRIORITY      = 0x0002,
+        SLGP_RAWPATH          = 0x0004,
+        SLGP_RELATIVEPRIORITY = 0x0008
     } SLGP_FLAGS;
 
     HRESULT GetPath(
@@ -1585,16 +1617,22 @@ interface IDropTargetHelper : IUnknown
 ]
 interface IContextMenu : IUnknown
 {
-cpp_quote("#define CMF_NORMAL        0x00000000")
-cpp_quote("#define CMF_DEFAULTONLY   0x00000001")
-cpp_quote("#define CMF_VERBSONLY     0x00000002")
-cpp_quote("#define CMF_EXPLORE       0x00000004")
-cpp_quote("#define CMF_NOVERBS       0x00000008")
-cpp_quote("#define CMF_CANRENAME     0x00000010")
-cpp_quote("#define CMF_NODEFAULT     0x00000020")
-cpp_quote("#define CMF_INCLUDESTATIC 0x00000040")
-cpp_quote("#define CMF_EXTENDEDVERBS 0x00000100")
-cpp_quote("#define CMF_RESERVED      0xffff0000")
+cpp_quote("#define CMF_NORMAL            0x00000000")
+cpp_quote("#define CMF_DEFAULTONLY       0x00000001")
+cpp_quote("#define CMF_VERBSONLY         0x00000002")
+cpp_quote("#define CMF_EXPLORE           0x00000004")
+cpp_quote("#define CMF_NOVERBS           0x00000008")
+cpp_quote("#define CMF_CANRENAME         0x00000010")
+cpp_quote("#define CMF_NODEFAULT         0x00000020")
+cpp_quote("#define CMF_INCLUDESTATIC     0x00000040")
+cpp_quote("#define CMF_ITEMMENU          0x00000080")
+cpp_quote("#define CMF_EXTENDEDVERBS     0x00000100")
+cpp_quote("#define CMF_DISABLEDVERBS     0x00000200")
+cpp_quote("#define CMF_ASYNCVERBSTATE    0x00000400")
+cpp_quote("#define CMF_OPTIMIZEFORINVOKE 0x00000800")
+cpp_quote("#define CMF_SYNCCASCADEMENU   0x00001000")
+cpp_quote("#define CMF_DONOTPICKDEFAULT  0x00002000")
+cpp_quote("#define CMF_RESERVED          0xffff0000")
 
 cpp_quote("#define GCS_VERBA         0x00000000")
 cpp_quote("#define GCS_HELPTEXTA     0x00000001")
@@ -2231,14 +2269,15 @@ cpp_quote("#define SID_ExplorerPaneVisibility IID_IExplorerPaneVisibility")
 ]
 interface IExplorerPaneVisibility : IUnknown
 {
-    typedef enum tagEXPLORERPANESTATE {
+    [v1_enum] enum _EXPLORERPANESTATE {
         EPS_DONTCARE     = 0x0,
         EPS_DEFAULT_ON   = 0x1,
         EPS_DEFAULT_OFF  = 0x2,
         EPS_STATE_MASK   = 0xffff,
         EPS_INITIALSTATE = 0x10000,
         EPS_FORCE        = 0x20000
-    } EXPLORERPANESTATE;
+    };
+    typedef DWORD EXPLORERPANESTATE;
 
     HRESULT GetPaneState(
         [in] REFEXPLORERPANE ep,
@@ -2801,27 +2840,28 @@ interface IFileDialog : IModalWindow
 {
     [v1_enum] enum _FILEOPENDIALOGOPTIONS
     {
-        FOS_OVERWRITEPROMPT     = 0x00000002,
-        FOS_STRICTFILETYPES     = 0x00000004,
-        FOS_NOCHANGEDIR         = 0x00000008,
-        FOS_PICKFOLDERS         = 0x00000020,
-        FOS_FORCEFILESYSTEM     = 0x00000040,
-        FOS_ALLNONSTORAGEITEMS  = 0x00000080,
-        FOS_NOVALIDATE          = 0x00000100,
-        FOS_ALLOWMULTISELECT    = 0x00000200,
-        FOS_PATHMUSTEXIST       = 0x00000800,
-        FOS_FILEMUSTEXIST       = 0x00001000,
-        FOS_CREATEPROMPT        = 0x00002000,
-        FOS_SHAREAWARE          = 0x00004000,
-        FOS_NOREADONLYRETURN    = 0x00008000,
-        FOS_NOTESTFILECREATE    = 0x00010000,
-        FOS_HIDEMRUPLACES       = 0x00020000,
-        FOS_HIDEPINNEDPLACES    = 0x00040000,
-        FOS_NODEREFERENCELINKS  = 0x00100000,
-        FOS_DONTADDTORECENT     = 0x02000000,
-        FOS_FORCESHOWHIDDEN     = 0x10000000,
-        FOS_DEFAULTNOMINIMODE   = 0x20000000,
-        FOS_FORCEPREVIEWPANEON  = 0x40000000
+        FOS_OVERWRITEPROMPT        = 0x00000002,
+        FOS_STRICTFILETYPES        = 0x00000004,
+        FOS_NOCHANGEDIR            = 0x00000008,
+        FOS_PICKFOLDERS            = 0x00000020,
+        FOS_FORCEFILESYSTEM        = 0x00000040,
+        FOS_ALLNONSTORAGEITEMS     = 0x00000080,
+        FOS_NOVALIDATE             = 0x00000100,
+        FOS_ALLOWMULTISELECT       = 0x00000200,
+        FOS_PATHMUSTEXIST          = 0x00000800,
+        FOS_FILEMUSTEXIST          = 0x00001000,
+        FOS_CREATEPROMPT           = 0x00002000,
+        FOS_SHAREAWARE             = 0x00004000,
+        FOS_NOREADONLYRETURN       = 0x00008000,
+        FOS_NOTESTFILECREATE       = 0x00010000,
+        FOS_HIDEMRUPLACES          = 0x00020000,
+        FOS_HIDEPINNEDPLACES       = 0x00040000,
+        FOS_NODEREFERENCELINKS     = 0x00100000,
+        FOS_DONTADDTORECENT        = 0x02000000,
+        FOS_FORCESHOWHIDDEN        = 0x10000000,
+        FOS_DEFAULTNOMINIMODE      = 0x20000000,
+        FOS_FORCEPREVIEWPANEON     = 0x40000000,
+        FOS_SUPPORTSTREAMABLEITEMS = 0x80000000
     };
     typedef DWORD FILEOPENDIALOGOPTIONS;
 
@@ -3229,7 +3269,8 @@ typedef [v1_enum] enum tagKF_DEFINITION_FLAGS
     KFDF_ROAMABLE               = 0x00000004,
     KFDF_PRECREATE              = 0x00000008,
     KFDF_STREAM                 = 0x00000010,
-    KFDF_PUBLISHEXPANDEDPATH    = 0x00000020
+    KFDF_PUBLISHEXPANDEDPATH    = 0x00000020,
+    KFDF_NO_REDIRECT_UI         = 0x00000040
 } KF_DEFINITION_FLAGS;
 
 typedef struct tagKNOWNFOLDER_DEFINITION
