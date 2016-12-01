@@ -134,17 +134,27 @@ DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
 }
 
 
-static int IpAddrTableSorter(const void *a, const void *b)
+static int IpAddrTableNumericSorter(const void *a, const void *b)
 {
-  int ret;
+  int ret = 0;
 
   if (a && b)
     ret = ((const MIB_IPADDRROW*)a)->dwAddr - ((const MIB_IPADDRROW*)b)->dwAddr;
-  else
-    ret = 0;
   return ret;
 }
 
+static int IpAddrTableLoopbackSorter(const void *a, const void *b)
+{
+  const MIB_IPADDRROW *left = a, *right = b;
+  int ret = 0;
+
+  if (isIfIndexLoopback(left->dwIndex))
+    ret = 1;
+  else if (isIfIndexLoopback(right->dwIndex))
+    ret = -1;
+
+  return ret;
+}
 
 /******************************************************************
  *    AllocateAndGetIpAddrTableFromStack (IPHLPAPI.@)
@@ -173,7 +183,7 @@ DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
   ret = getIPAddrTable(ppIpAddrTable, heap, flags);
   if (!ret && bOrder)
     qsort((*ppIpAddrTable)->table, (*ppIpAddrTable)->dwNumEntries,
-     sizeof(MIB_IPADDRROW), IpAddrTableSorter);
+     sizeof(MIB_IPADDRROW), IpAddrTableNumericSorter);
   TRACE("returning %d\n", ret);
   return ret;
 }
@@ -1988,9 +1998,14 @@ DWORD WINAPI GetIpAddrTable(PMIB_IPADDRTABLE pIpAddrTable, PULONG pdwSize, BOOL 
       else {
         *pdwSize = size;
         memcpy(pIpAddrTable, table, size);
+        /* sort by numeric IP value */
         if (bOrder)
           qsort(pIpAddrTable->table, pIpAddrTable->dwNumEntries,
-           sizeof(MIB_IPADDRROW), IpAddrTableSorter);
+           sizeof(MIB_IPADDRROW), IpAddrTableNumericSorter);
+        /* sort ensuring loopback interfaces are in the end */
+        else
+          qsort(pIpAddrTable->table, pIpAddrTable->dwNumEntries,
+           sizeof(MIB_IPADDRROW), IpAddrTableLoopbackSorter);
         ret = NO_ERROR;
       }
       HeapFree(GetProcessHeap(), 0, table);
