@@ -78,6 +78,7 @@ struct process
     unsigned int         is_terminating:1;/* is process terminating? */
     struct job          *job;             /* job object ascoicated with this process */
     struct list          job_entry;       /* list entry for job object */
+    struct list          asyncs;          /* list of async object owned by the process */
     struct list          locks;           /* list of file locks owned by the process */
     struct list          classes;         /* window classes owned by the process */
     struct console_input*console;         /* console input */

@@ -132,7 +132,6 @@ static enum server_fd_type sock_get_fd_type( struct fd *fd );
 static obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
 static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
-static int sock_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb );
 
 static int sock_get_ntstatus( int err );
 static int sock_get_error( int err );
@@ -171,7 +170,7 @@ static const struct fd_ops sock_fd_ops =
     sock_ioctl,                   /* ioctl */
     sock_queue_async,             /* queue_async */
     sock_reselect_async,          /* reselect_async */
-    sock_cancel_async             /* cancel_async */
+    default_fd_cancel_async       /* cancel_async */
 };
 
 
@@ -609,19 +608,6 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
     /* ignore reselect on ifchange queue */
     if (sock->ifchange_q != queue)
         sock_reselect( sock );
-}
-
-static int sock_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb )
-{
-    struct sock *sock = get_fd_user( fd );
-    int n = 0;
-
-    assert( sock->obj.ops == &sock_ops );
-
-    n += async_wake_up_by( sock->read_q, process, thread, iosb, STATUS_CANCELLED );
-    n += async_wake_up_by( sock->write_q, process, thread, iosb, STATUS_CANCELLED );
-    n += async_wake_up_by( sock->ifchange_q, process, thread, iosb, STATUS_CANCELLED );
-    return n;
 }
 
 static struct fd *sock_get_fd( struct object *obj )

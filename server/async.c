@@ -31,12 +31,15 @@
 #include "object.h"
 #include "file.h"
 #include "request.h"
+#include "process.h"
+#include "handle.h"
 
 struct async
 {
     struct object        obj;             /* object header */
     struct thread       *thread;          /* owning thread */
     struct list          queue_entry;     /* entry in async queue list */
+    struct list          process_entry;   /* entry in process list */
     struct async_queue  *queue;           /* queue containing this async */
     unsigned int         status;          /* current status */
     struct timeout_user *timeout;
@@ -132,6 +135,7 @@ static void async_destroy( struct object *obj )
     struct async *async = (struct async *)obj;
     assert( obj->ops == &async_ops );
 
+    list_remove( &async->process_entry );
     list_remove( &async->queue_entry );
     async_reselect( async );
 
@@ -244,6 +248,7 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->signaled = 0;
 
     list_add_tail( &queue->queue, &async->queue_entry );
+    list_add_tail( &thread->process->asyncs, &async->process_entry );
     grab_object( async );
 
     if (queue->fd) set_fd_signaled( queue->fd, 0 );
@@ -343,23 +348,22 @@ int async_waiting( struct async_queue *queue )
     return async->status == STATUS_PENDING;
 }
 
-int async_wake_up_by( struct async_queue *queue, struct process *process,
-                      struct thread *thread, client_ptr_t iosb, unsigned int status )
+static int cancel_async( struct process *process, struct object *obj, struct thread *thread, client_ptr_t iosb )
 {
-    struct list *ptr, *next;
+    struct async *async;
     int woken = 0;
 
-    if (!queue || (!process && !thread && !iosb)) return 0;
-
-    LIST_FOR_EACH_SAFE( ptr, next, &queue->queue )
+restart:
+    LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
-        struct async *async = LIST_ENTRY( ptr, struct async, queue_entry );
-        if ( (!process || async->thread->process == process) &&
-             (!thread || async->thread == thread) &&
-             (!iosb || async->data.iosb == iosb) )
+        if (async->status == STATUS_CANCELLED) continue;
+        if ((!obj || (async->queue->fd && get_fd_user( async->queue->fd ) == obj)) &&
+            (!thread || async->thread == thread) &&
+            (!iosb || async->data.iosb == iosb))
         {
-            async_terminate( async, status );
+            async_terminate( async, STATUS_CANCELLED );
             woken++;
+            goto restart;
         }
     }
     return woken;
@@ -377,5 +381,19 @@ void async_wake_up( struct async_queue *queue, unsigned int status )
         struct async *async = LIST_ENTRY( ptr, struct async, queue_entry );
         async_terminate( async, status );
         if (status == STATUS_ALERTED) break;  /* only wake up the first one */
+    }
+}
+
+/* cancels all async I/O */
+DECL_HANDLER(cancel_async)
+{
+    struct object *obj = get_handle_obj( current->process, req->handle, 0, NULL );
+    struct thread *thread = req->only_thread ? current : NULL;
+
+    if (obj)
+    {
+        int count = cancel_async( current->process, obj, thread, req->iosb );
+        if (!count && req->iosb) set_error( STATUS_NOT_FOUND );
+        release_object( obj );
     }
 }

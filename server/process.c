@@ -535,6 +535,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->rawinput_kbd    = NULL;
     list_init( &process->thread_list );
     list_init( &process->locks );
+    list_init( &process->asyncs );
     list_init( &process->classes );
     list_init( &process->dlls );
     list_init( &process->rawinput_devices );
@@ -614,6 +615,7 @@ static void process_destroy( struct object *obj )
 
     /* we can't have a thread remaining */
     assert( list_empty( &process->thread_list ));
+    assert( list_empty( &process->asyncs ));
 
     assert( !process->sigkill_timeout );  /* timeout should hold a reference to the process */
 
