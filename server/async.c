@@ -369,6 +369,11 @@ restart:
     return woken;
 }
 
+void cancel_process_asyncs( struct process *process )
+{
+    cancel_async( process, NULL, NULL, 0 );
+}
+
 /* wake up async operations on the queue */
 void async_wake_up( struct async_queue *queue, unsigned int status )
 {

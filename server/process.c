@@ -840,6 +840,7 @@ static void process_killed( struct process *process )
     process->winstation = 0;
     process->desktop = 0;
     close_process_handles( process );
+    cancel_process_asyncs( process );
     if (process->idle_event)
     {
         release_object( process->idle_event );
