@@ -24,6 +24,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+static BOOL is_stencil_view_format(const struct wined3d_format *format)
+{
+    return format->id == WINED3DFMT_X24_TYPELESS_G8_UINT
+            || format->id == WINED3DFMT_X32_TYPELESS_G8X24_UINT;
+}
+
 ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);
@@ -320,6 +326,25 @@ static void wined3d_shader_resource_view_create_texture_view(struct wined3d_shad
             desc->u.texture.layer_idx, desc->u.texture.layer_count));
     checkGLcall("Create texture view");
 
+    if (is_stencil_view_format(view_format))
+    {
+        static const GLint swizzle[] = {GL_ZERO, GL_RED, GL_ZERO, GL_ZERO};
+
+        if (!gl_info->supported[ARB_STENCIL_TEXTURING])
+        {
+            context_release(context);
+            FIXME("OpenGL implementation does not support stencil texturing.\n");
+            return;
+        }
+
+        context_bind_texture(context, view->target, view->object);
+        gl_info->gl_ops.gl.p_glTexParameteriv(view->target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+        gl_info->gl_ops.gl.p_glTexParameteri(view->target, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+        checkGLcall("Initialize stencil view");
+
+        context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
+    }
+
     context_release(context);
 }
 
@@ -391,7 +416,8 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
 
         if (resource->format->id == view_format->id && texture->target == view->target
                 && !desc->u.texture.level_idx && desc->u.texture.level_count == texture->level_count
-                && !desc->u.texture.layer_idx && desc->u.texture.layer_count == texture->layer_count)
+                && !desc->u.texture.layer_idx && desc->u.texture.layer_count == texture->layer_count
+                && !is_stencil_view_format(view_format))
         {
             TRACE("Creating identity shader resource view.\n");
         }

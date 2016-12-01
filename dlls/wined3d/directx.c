@@ -3904,6 +3904,12 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         TRACE("Disabling ARB_clip_control because ARB_viewport_array is not supported.\n");
         gl_info->supported[ARB_CLIP_CONTROL] = FALSE;
     }
+    if (gl_info->supported[ARB_STENCIL_TEXTURING] && !gl_info->supported[ARB_TEXTURE_SWIZZLE])
+    {
+        /* The stencil value needs to be placed in the green channel.  */
+        TRACE("Disabling ARB_stencil_texturing because ARB_texture_swizzle is not supported.\n");
+        gl_info->supported[ARB_STENCIL_TEXTURING] = FALSE;
+    }
     if (!gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] && gl_info->supported[EXT_TEXTURE_MIRROR_CLAMP])
     {
         TRACE(" IMPLIED: ATI_texture_mirror_once support (by EXT_texture_mirror_clamp).\n");
