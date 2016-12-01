@@ -276,6 +276,19 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_B8G8R8X8_UNORM,           WINED3DFMT_B8G8R8X8_TYPELESS,     "uuuX"},
 };
 
+struct wined3d_format_typeless_depth_stencil_info
+{
+    enum wined3d_format_id depth_stencil_id;
+    enum wined3d_format_id depth_view_id;
+    enum wined3d_format_id stencil_view_id;
+};
+
+static const struct wined3d_format_typeless_depth_stencil_info typeless_depth_stencil_formats[] =
+{
+    {WINED3DFMT_D32_FLOAT_S8X24_UINT, WINED3DFMT_R32_FLOAT_X8X24_TYPELESS, WINED3DFMT_X32_TYPELESS_G8X24_UINT},
+    {WINED3DFMT_D24_UNORM_S8_UINT,    WINED3DFMT_R24_UNORM_X8_TYPELESS,    WINED3DFMT_X24_TYPELESS_G8_UINT},
+};
+
 struct wined3d_format_ddi_info
 {
     enum wined3d_format_id id;
@@ -1665,6 +1678,13 @@ static inline int get_format_idx(enum wined3d_format_id format_id)
     return -1;
 }
 
+static void copy_format(struct wined3d_format *dst_format, const struct wined3d_format *src_format)
+{
+    enum wined3d_format_id id = dst_format->id;
+    *dst_format = *src_format;
+    dst_format->id = id;
+}
+
 static void format_set_flag(struct wined3d_format *format, unsigned int flag)
 {
     unsigned int i;
@@ -2912,8 +2932,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
 
         srgb_format = &gl_info->formats[srgb_fmt_idx];
 
-        *srgb_format = *format;
-        srgb_format->id = format_srgb_info[j].srgb_format_id;
+        copy_format(srgb_format, format);
 
         if (gl_info->supported[EXT_TEXTURE_SRGB]
                 && !(adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL))
@@ -3460,10 +3479,49 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
         typeless_format = &gl_info->formats[typeless_fmt_idx];
 
         memcpy(flags, typeless_format->flags, sizeof(flags));
-        *typeless_format = *format;
-        typeless_format->id = typed_formats[i].typeless_id;
+        copy_format(typeless_format, format);
         for (j = 0; j < ARRAY_SIZE(typeless_format->flags); ++j)
             typeless_format->flags[j] |= flags[j];
+    }
+
+    for (i = 0; i < ARRAY_SIZE(typeless_depth_stencil_formats); ++i)
+    {
+        struct wined3d_format *ds_format, *depth_view_format, *stencil_view_format;
+        int ds_fmt_idx, depth_view_fmt_idx, stencil_view_fmt_idx;
+
+        ds_fmt_idx = get_format_idx(typeless_depth_stencil_formats[i].depth_stencil_id);
+        if (ds_fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(typeless_depth_stencil_formats[i].depth_stencil_id),
+                    typeless_depth_stencil_formats[i].depth_stencil_id);
+            return FALSE;
+        }
+
+        depth_view_fmt_idx = get_format_idx(typeless_depth_stencil_formats[i].depth_view_id);
+        if (depth_view_fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(typeless_depth_stencil_formats[i].depth_view_id),
+                    typeless_depth_stencil_formats[i].depth_view_id);
+            return FALSE;
+        }
+
+        stencil_view_fmt_idx = get_format_idx(typeless_depth_stencil_formats[i].stencil_view_id);
+        if (stencil_view_fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(typeless_depth_stencil_formats[i].stencil_view_id),
+                    typeless_depth_stencil_formats[i].stencil_view_id);
+            return FALSE;
+        }
+
+        ds_format = &gl_info->formats[ds_fmt_idx];
+        depth_view_format = &gl_info->formats[depth_view_fmt_idx];
+        stencil_view_format = &gl_info->formats[stencil_view_fmt_idx];
+
+        copy_format(depth_view_format, ds_format);
+        copy_format(stencil_view_format, ds_format);
     }
 
     return TRUE;
