@@ -1282,6 +1282,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             }
             else if (ins.handler_idx == WINED3DSIH_SAMPLE
                     || ins.handler_idx == WINED3DSIH_SAMPLE_B
+                    || ins.handler_idx == WINED3DSIH_SAMPLE_C
                     || ins.handler_idx == WINED3DSIH_SAMPLE_C_LZ
                     || ins.handler_idx == WINED3DSIH_SAMPLE_GRAD
                     || ins.handler_idx == WINED3DSIH_SAMPLE_LOD)
