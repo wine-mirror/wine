@@ -79,7 +79,7 @@ static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 {
     hWinMM32Instance = hInstDLL;
     psLastEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    return TRUE;
+    return psLastEvent != NULL;
 }
 
 /******************************************************************
@@ -137,9 +137,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
 
-	if (!WINMM_CreateIData(hInstDLL))
-	    return FALSE;
-	break;
+        if (!WINMM_CreateIData(hInstDLL))
+            return FALSE;
+
+        break;
     case DLL_PROCESS_DETACH:
         if(fImpLoad)
             break;
