@@ -1604,6 +1604,10 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
     if (type == RASTER_FONTTYPE)
         return 1;
 
+    /* skip rotated fonts */
+    if (lfw->lfFaceName[0] == '@')
+        return 1;
+
     /* skip duplicates */
     for (i=0; i<fonts->count; i++)
         if (strcmpiW(lfw->lfFaceName, fonts->FontFamilies[i]->FamilyName) == 0)
