@@ -36,6 +36,7 @@
 #include "shlobj.h"
 #include "shellapi.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 /*******************************************
 *  global SHELL32.DLL variables
@@ -183,19 +184,18 @@ BOOL SHELL_IsShortcut(LPCITEMIDLIST) DECLSPEC_HIDDEN;
 
 
 /* IEnumIDList stuff */
-struct enumlist
+struct pidl_enum_entry
 {
-        struct enumlist *pNext;
-        LPITEMIDLIST    pidl;
+    struct list entry;
+    LPITEMIDLIST pidl;
 };
 
 typedef struct
 {
-        IEnumIDList     IEnumIDList_iface;
-        LONG            ref;
-        struct enumlist *mpFirst;
-        struct enumlist *mpLast;
-        struct enumlist *mpCurrent;
+    IEnumIDList  IEnumIDList_iface;
+    LONG         ref;
+    struct list  pidls;
+    struct list *current;
 } IEnumIDListImpl;
 
 /* Creates an IEnumIDList; add LPITEMIDLISTs to it with AddToEnumList. */
