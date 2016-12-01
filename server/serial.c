@@ -120,8 +120,7 @@ static const struct fd_ops serial_fd_ops =
     no_fd_flush,                  /* flush */
     default_fd_ioctl,             /* ioctl */
     serial_queue_async,           /* queue_async */
-    serial_reselect_async,        /* reselect_async */
-    default_fd_cancel_async       /* cancel_async */
+    serial_reselect_async         /* reselect_async */
 };
 
 /* check if the given fd is a serial port */

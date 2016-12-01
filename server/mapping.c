@@ -108,8 +108,7 @@ static const struct fd_ops mapping_fd_ops =
     no_fd_flush,                  /* flush */
     no_fd_ioctl,                  /* ioctl */
     no_fd_queue_async,            /* queue_async */
-    default_fd_reselect_async,    /* reselect_async */
-    default_fd_cancel_async       /* cancel_async */
+    default_fd_reselect_async     /* reselect_async */
 };
 
 static struct list shared_list = LIST_INIT(shared_list);

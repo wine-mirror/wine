@@ -163,8 +163,7 @@ static const struct fd_ops thread_fd_ops =
     NULL,                       /* get_fd_type */
     NULL,                       /* ioctl */
     NULL,                       /* queue_async */
-    NULL,                       /* reselect_async */
-    NULL                        /* cancel_async */
+    NULL                        /* reselect_async */
 };
 
 static struct list thread_list = LIST_INIT(thread_list);

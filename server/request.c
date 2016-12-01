@@ -119,8 +119,7 @@ static const struct fd_ops master_socket_fd_ops =
     NULL,                          /* get_fd_type */
     NULL,                          /* ioctl */
     NULL,                          /* queue_async */
-    NULL,                          /* reselect_async */
-    NULL                           /* cancel_async */
+    NULL                           /* reselect_async */
 };
 
 

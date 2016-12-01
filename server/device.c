@@ -220,8 +220,7 @@ static const struct fd_ops device_file_fd_ops =
     device_file_flush,                /* flush */
     device_file_ioctl,                /* ioctl */
     default_fd_queue_async,           /* queue_async */
-    default_fd_reselect_async,        /* reselect_async */
-    default_fd_cancel_async           /* cancel_async */
+    default_fd_reselect_async         /* reselect_async */
 };
 
 

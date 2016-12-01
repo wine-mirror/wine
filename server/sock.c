@@ -169,8 +169,7 @@ static const struct fd_ops sock_fd_ops =
     no_fd_flush,                  /* flush */
     sock_ioctl,                   /* ioctl */
     sock_queue_async,             /* queue_async */
-    sock_reselect_async,          /* reselect_async */
-    default_fd_cancel_async       /* cancel_async */
+    sock_reselect_async           /* reselect_async */
 };
 
 
@@ -1002,8 +1001,7 @@ static const struct fd_ops ifchange_fd_ops =
     no_fd_flush,              /* flush */
     no_fd_ioctl,              /* ioctl */
     NULL,                     /* queue_async */
-    NULL,                     /* reselect_async */
-    NULL                      /* cancel_async */
+    NULL                      /* reselect_async */
 };
 
 static void ifchange_dump( struct object *obj, int verbose )

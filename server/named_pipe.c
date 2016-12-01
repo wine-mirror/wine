@@ -179,8 +179,7 @@ static const struct fd_ops pipe_server_fd_ops =
     pipe_server_flush,            /* flush */
     pipe_server_ioctl,            /* ioctl */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async,    /* reselect_async */
-    default_fd_cancel_async,      /* cancel_async */
+    default_fd_reselect_async    /* reselect_async */
 };
 
 /* client end functions */
@@ -223,8 +222,7 @@ static const struct fd_ops pipe_client_fd_ops =
     pipe_client_flush,            /* flush */
     default_fd_ioctl,             /* ioctl */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async,    /* reselect_async */
-    default_fd_cancel_async       /* cancel_async */
+    default_fd_reselect_async     /* reselect_async */
 };
 
 static void named_pipe_device_dump( struct object *obj, int verbose );
@@ -271,8 +269,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
     no_fd_flush,                      /* flush */
     named_pipe_device_ioctl,          /* ioctl */
     default_fd_queue_async,           /* queue_async */
-    default_fd_reselect_async,        /* reselect_async */
-    default_fd_cancel_async           /* cancel_async */
+    default_fd_reselect_async         /* reselect_async */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )

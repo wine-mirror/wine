@@ -2115,12 +2115,6 @@ void default_fd_reselect_async( struct fd *fd, struct async_queue *queue )
     }
 }
 
-/* default cancel_async() fd routine */
-int default_fd_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb )
-{
-    return 0;
-}
-
 static inline int is_valid_mounted_device( struct stat *st )
 {
 #if defined(linux) || defined(__sun__)

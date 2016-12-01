@@ -51,8 +51,6 @@ struct fd_ops
     void (*queue_async)(struct fd *, const async_data_t *data, int type, int count);
     /* selected events for async i/o need an update */
     void (*reselect_async)( struct fd *, struct async_queue *queue );
-    /* cancel an async operation */
-    int (*cancel_async)(struct fd *, struct process *process, struct thread *thread, client_ptr_t iosb);
 };
 
 /* file descriptor functions */
@@ -99,7 +97,6 @@ extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const as
 extern void no_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern int default_fd_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb );
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
 

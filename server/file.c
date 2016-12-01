@@ -109,8 +109,7 @@ static const struct fd_ops file_fd_ops =
     file_flush,                   /* flush */
     default_fd_ioctl,             /* ioctl */
     default_fd_queue_async,       /* queue_async */
-    default_fd_reselect_async,    /* reselect_async */
-    default_fd_cancel_async       /* cancel_async */
+    default_fd_reselect_async     /* reselect_async */
 };
 
 static inline int is_overlapped( const struct file *file )
