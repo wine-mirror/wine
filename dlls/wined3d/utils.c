@@ -1678,6 +1678,20 @@ static inline int get_format_idx(enum wined3d_format_id format_id)
     return -1;
 }
 
+static struct wined3d_format *get_format_internal(struct wined3d_gl_info *gl_info,
+        enum wined3d_format_id format_id)
+{
+    int fmt_idx;
+
+    if ((fmt_idx = get_format_idx(format_id)) == -1)
+    {
+        ERR("Format %s (%#x) not found.\n", debug_d3dformat(format_id), format_id);
+        return NULL;
+    }
+
+    return &gl_info->formats[fmt_idx];
+}
+
 static void copy_format(struct wined3d_format *dst_format, const struct wined3d_format *src_format)
 {
     enum wined3d_format_id id = dst_format->id;
@@ -1729,6 +1743,7 @@ static enum wined3d_channel_type map_channel_type(char t)
 
 static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 {
+    struct wined3d_format *format;
     unsigned int i, j;
 
     gl_info->format_count = WINED3D_FORMAT_COUNT;
@@ -1740,17 +1755,8 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
-        struct wined3d_format *format;
-        int fmt_idx;
-
-        fmt_idx = get_format_idx(formats[i].id);
-        if (fmt_idx == -1)
-        {
-            ERR("Could not allocate index for format %s %#x.\n",
-                    debug_d3dformat(formats[i].id), formats[i].id);
+        if (!(format = get_format_internal(gl_info, formats[i].id)))
             goto fail;
-        }
-        format = &gl_info->formats[fmt_idx];
 
         format->id = formats[i].id;
         format->red_size = formats[i].red_size;
@@ -1772,26 +1778,13 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < ARRAY_SIZE(typed_formats); ++i)
     {
         const struct wined3d_format *typeless_format;
-        struct wined3d_format *format;
         DWORD flags = 0;
-        int fmt_idx;
 
-        fmt_idx = get_format_idx(typed_formats[i].id);
-        if (fmt_idx == -1)
-        {
-            ERR("Could not allocate index for format %s %#x.\n",
-                    debug_d3dformat(typed_formats[i].id), typed_formats[i].id);
+        if (!(format = get_format_internal(gl_info, typed_formats[i].id)))
             goto fail;
-        }
-        format = &gl_info->formats[fmt_idx];
 
-        typeless_format = wined3d_get_format(gl_info, typed_formats[i].typeless_id);
-        if (typeless_format->id == WINED3DFMT_UNKNOWN)
-        {
-            ERR("Typeless format %s (%#x) not found.\n",
-                    debug_d3dformat(typed_formats[i].typeless_id), typed_formats[i].typeless_id);
+        if (!(typeless_format = get_format_internal(gl_info, typed_formats[i].typeless_id)))
             goto fail;
-        }
 
         format->id = typed_formats[i].id;
         format->red_size = typeless_format->red_size;
@@ -1830,29 +1823,18 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < ARRAY_SIZE(ddi_formats); ++i)
     {
-        int fmt_idx = get_format_idx(ddi_formats[i].id);
-
-        if (fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n", debug_d3dformat(ddi_formats[i].id), ddi_formats[i].id);
+        if (!(format = get_format_internal(gl_info, ddi_formats[i].id)))
             goto fail;
-        }
 
-        gl_info->formats[fmt_idx].ddi_format = ddi_formats[i].ddi_format;
+        format->ddi_format = ddi_formats[i].ddi_format;
     }
 
     for (i = 0; i < ARRAY_SIZE(format_base_flags); ++i)
     {
-        int fmt_idx = get_format_idx(format_base_flags[i].id);
-
-        if (fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_base_flags[i].id), format_base_flags[i].id);
+        if (!(format = get_format_internal(gl_info, format_base_flags[i].id)))
             goto fail;
-        }
 
-        format_set_flag(&gl_info->formats[fmt_idx], format_base_flags[i].flags);
+        format_set_flag(format, format_base_flags[i].flags);
     }
 
     return TRUE;
@@ -1864,27 +1846,20 @@ fail:
 
 static BOOL init_format_block_info(struct wined3d_gl_info *gl_info)
 {
+    struct wined3d_format *format;
     unsigned int i;
 
-    for (i = 0; i < (sizeof(format_block_info) / sizeof(*format_block_info)); ++i)
+    for (i = 0; i < ARRAY_SIZE(format_block_info); ++i)
     {
-        struct wined3d_format *format;
-        int fmt_idx = get_format_idx(format_block_info[i].id);
-
-        if (fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_block_info[i].id), format_block_info[i].id);
+        if (!(format = get_format_internal(gl_info, format_block_info[i].id)))
             return FALSE;
-        }
 
-        format = &gl_info->formats[fmt_idx];
         format->block_width = format_block_info[i].block_width;
         format->block_height = format_block_info[i].block_height;
         format->block_byte_count = format_block_info[i].block_byte_count;
-        format_set_flag(&gl_info->formats[fmt_idx], WINED3DFMT_FLAG_BLOCKS);
+        format_set_flag(format, WINED3DFMT_FLAG_BLOCKS);
         if (!format_block_info[i].verify)
-            format_set_flag(&gl_info->formats[fmt_idx], WINED3DFMT_FLAG_BLOCKS_NO_VERIFY);
+            format_set_flag(format, WINED3DFMT_FLAG_BLOCKS_NO_VERIFY);
     }
 
     return TRUE;
@@ -2833,6 +2808,7 @@ static void query_internal_format(struct wined3d_adapter *adapter,
 
 static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct wined3d_gl_info *gl_info)
 {
+    struct wined3d_format *format, *srgb_format;
     struct fragment_caps fragment_caps;
     struct shader_caps shader_caps;
     unsigned int i, j;
@@ -2843,21 +2819,13 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
     srgb_write = (fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_SRGB_WRITE)
             && (shader_caps.wined3d_caps & WINED3D_SHADER_CAP_SRGB_WRITE);
 
-    for (i = 0; i < sizeof(format_texture_info) / sizeof(*format_texture_info); ++i)
+    for (i = 0; i < ARRAY_SIZE(format_texture_info); ++i)
     {
-        int srgb_fmt_idx = -1, fmt_idx = get_format_idx(format_texture_info[i].id);
-        struct wined3d_format *format, *srgb_format;
-
-        if (fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_texture_info[i].id), format_texture_info[i].id);
+        if (!(format = get_format_internal(gl_info, format_texture_info[i].id)))
             return FALSE;
-        }
 
-        if (!gl_info->supported[format_texture_info[i].extension]) continue;
-
-        format = &gl_info->formats[fmt_idx];
+        if (!gl_info->supported[format_texture_info[i].extension])
+            continue;
 
         /* ARB_texture_rg defines floating point formats, but only if
          * ARB_texture_float is also supported. */
@@ -2911,26 +2879,18 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
         format->convert = format_texture_info[i].convert;
         format->conv_byte_count = format_texture_info[i].conv_byte_count;
 
-        for (j = 0; j < sizeof(format_srgb_info) / sizeof(*format_srgb_info); ++j)
+        srgb_format = NULL;
+        for (j = 0; j < ARRAY_SIZE(format_srgb_info); ++j)
         {
             if (format_srgb_info[j].base_format_id == format->id)
             {
-                srgb_fmt_idx = get_format_idx(format_srgb_info[j].srgb_format_id);
-                if (srgb_fmt_idx == -1)
-                {
-                    ERR("Format %s (%#x) not found.\n",
-                            debug_d3dformat(format_srgb_info[j].srgb_format_id),
-                            format_srgb_info[j].srgb_format_id);
+                if (!(srgb_format = get_format_internal(gl_info, format_srgb_info[j].srgb_format_id)))
                     return FALSE;
-                }
                 break;
             }
         }
-
-        if (srgb_fmt_idx == -1)
+        if (!srgb_format)
             continue;
-
-        srgb_format = &gl_info->formats[srgb_fmt_idx];
 
         copy_format(srgb_format, format);
 
@@ -3414,24 +3374,17 @@ static unsigned int calculate_vertex_attribute_size(GLenum type, unsigned int co
 
 static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
 {
+    struct wined3d_format *format;
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(format_vertex_info); ++i)
     {
-        struct wined3d_format *format;
-        int fmt_idx = get_format_idx(format_vertex_info[i].id);
-
-        if (fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_vertex_info[i].id), format_vertex_info[i].id);
+        if (!(format = get_format_internal(gl_info, format_vertex_info[i].id)))
             return FALSE;
-        }
 
         if (!gl_info->supported[format_vertex_info[i].extension])
             continue;
 
-        format = &gl_info->formats[fmt_idx];
         format->emit_idx = format_vertex_info[i].emit_idx;
         format->component_count = format_vertex_info[i].component_count;
         format->gl_vtx_type = format_vertex_info[i].gl_vtx_type;
@@ -3457,26 +3410,11 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
     for (i = 0; i < ARRAY_SIZE(typed_formats); ++i)
     {
         struct wined3d_format *format, *typeless_format;
-        int fmt_idx = get_format_idx(typed_formats[i].id);
-        int typeless_fmt_idx = get_format_idx(typed_formats[i].typeless_id);
 
-        if (fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(typed_formats[i].id),
-                    typed_formats[i].id);
+        if (!(format = get_format_internal(gl_info, typed_formats[i].id)))
             return FALSE;
-        }
-        if (typeless_fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(typed_formats[i].typeless_id),
-                    typed_formats[i].typeless_id);
+        if (!(typeless_format = get_format_internal(gl_info, typed_formats[i].typeless_id)))
             return FALSE;
-        }
-
-        format = &gl_info->formats[fmt_idx];
-        typeless_format = &gl_info->formats[typeless_fmt_idx];
 
         memcpy(flags, typeless_format->flags, sizeof(flags));
         copy_format(typeless_format, format);
@@ -3487,38 +3425,13 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
     for (i = 0; i < ARRAY_SIZE(typeless_depth_stencil_formats); ++i)
     {
         struct wined3d_format *ds_format, *depth_view_format, *stencil_view_format;
-        int ds_fmt_idx, depth_view_fmt_idx, stencil_view_fmt_idx;
 
-        ds_fmt_idx = get_format_idx(typeless_depth_stencil_formats[i].depth_stencil_id);
-        if (ds_fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(typeless_depth_stencil_formats[i].depth_stencil_id),
-                    typeless_depth_stencil_formats[i].depth_stencil_id);
+        if (!(ds_format = get_format_internal(gl_info, typeless_depth_stencil_formats[i].depth_stencil_id)))
             return FALSE;
-        }
-
-        depth_view_fmt_idx = get_format_idx(typeless_depth_stencil_formats[i].depth_view_id);
-        if (depth_view_fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(typeless_depth_stencil_formats[i].depth_view_id),
-                    typeless_depth_stencil_formats[i].depth_view_id);
+        if (!(depth_view_format = get_format_internal(gl_info, typeless_depth_stencil_formats[i].depth_view_id)))
             return FALSE;
-        }
-
-        stencil_view_fmt_idx = get_format_idx(typeless_depth_stencil_formats[i].stencil_view_id);
-        if (stencil_view_fmt_idx == -1)
-        {
-            ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(typeless_depth_stencil_formats[i].stencil_view_id),
-                    typeless_depth_stencil_formats[i].stencil_view_id);
+        if (!(stencil_view_format = get_format_internal(gl_info, typeless_depth_stencil_formats[i].stencil_view_id)))
             return FALSE;
-        }
-
-        ds_format = &gl_info->formats[ds_fmt_idx];
-        depth_view_format = &gl_info->formats[depth_view_fmt_idx];
-        stencil_view_format = &gl_info->formats[stencil_view_fmt_idx];
 
         copy_format(depth_view_format, ds_format);
         copy_format(stencil_view_format, ds_format);
