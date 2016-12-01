@@ -52,40 +52,9 @@ typedef struct {
     LONG ref;
 } IDropTargetHelperImpl;
 
-static const IDropTargetHelperVtbl vt_IDropTargetHelper;
-
 static inline IDropTargetHelperImpl *impl_from_IDropTargetHelper(IDropTargetHelper *iface)
 {
     return CONTAINING_RECORD(iface, IDropTargetHelperImpl, IDropTargetHelper_iface);
-}
-
-/**************************************************************************
-*	IDropTargetHelper_Constructor
-*/
-HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
-{
-    IDropTargetHelperImpl *dth;
-
-    TRACE ("unkOut=%p %s\n", pUnkOuter, shdebugstr_guid (riid));
-
-    if (!ppv)
-	return E_POINTER;
-    if (pUnkOuter)
-	return CLASS_E_NOAGGREGATION;
-
-    dth = LocalAlloc (LMEM_ZEROINIT, sizeof (IDropTargetHelperImpl));
-    if (!dth) return E_OUTOFMEMORY;
-
-    dth->ref = 0;
-    dth->IDropTargetHelper_iface.lpVtbl = &vt_IDropTargetHelper;
-
-    if (FAILED (IDropTargetHelper_QueryInterface (&dth->IDropTargetHelper_iface, riid, ppv))) {
-        LocalFree(dth);
-	return E_NOINTERFACE;
-    }
-
-    TRACE ("--(%p)\n", dth);
-    return S_OK;
 }
 
 /**************************************************************************
@@ -179,12 +148,39 @@ static HRESULT WINAPI IDropTargetHelper_fnShow (IDropTargetHelper * iface, BOOL 
 
 static const IDropTargetHelperVtbl vt_IDropTargetHelper =
 {
-	IDropTargetHelper_fnQueryInterface,
-	IDropTargetHelper_fnAddRef,
-	IDropTargetHelper_fnRelease,
-	IDropTargetHelper_fnDragEnter,
-	IDropTargetHelper_fnDragLeave,
-        IDropTargetHelper_fnDragOver,
-	IDropTargetHelper_fnDrop,
-	IDropTargetHelper_fnShow
+    IDropTargetHelper_fnQueryInterface,
+    IDropTargetHelper_fnAddRef,
+    IDropTargetHelper_fnRelease,
+    IDropTargetHelper_fnDragEnter,
+    IDropTargetHelper_fnDragLeave,
+    IDropTargetHelper_fnDragOver,
+    IDropTargetHelper_fnDrop,
+    IDropTargetHelper_fnShow
 };
+
+/**************************************************************************
+*	IDropTargetHelper_Constructor
+*/
+HRESULT WINAPI IDropTargetHelper_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
+{
+    IDropTargetHelperImpl *dth;
+    HRESULT hr;
+
+    TRACE ("outer=%p %s %p\n", pUnkOuter, shdebugstr_guid (riid), ppv);
+
+    if (!ppv)
+	return E_POINTER;
+    if (pUnkOuter)
+	return CLASS_E_NOAGGREGATION;
+
+    dth = LocalAlloc (LMEM_ZEROINIT, sizeof (IDropTargetHelperImpl));
+    if (!dth) return E_OUTOFMEMORY;
+
+    dth->IDropTargetHelper_iface.lpVtbl = &vt_IDropTargetHelper;
+    dth->ref = 1;
+
+    hr = IDropTargetHelper_QueryInterface (&dth->IDropTargetHelper_iface, riid, ppv);
+    IDropTargetHelper_Release (&dth->IDropTargetHelper_iface);
+
+    return hr;
+}
