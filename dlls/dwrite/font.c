@@ -3808,10 +3808,12 @@ static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerato
     /* iterate until we find next string value */
     while (1) {
         DWORD type = 0, count, val_count;
+
         val_count = max_val_count;
+        value[0] = 0;
         if (RegEnumValueW(enumerator->hkey, enumerator->index, value, &val_count, NULL, &type, NULL, &count))
             break;
-        if (type == REG_SZ) {
+        if (type == REG_SZ && *value && *value != '@') {
             *current = TRUE;
             break;
         }
