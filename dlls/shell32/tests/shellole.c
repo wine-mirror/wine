@@ -892,11 +892,16 @@ static void test_SHCreateSessionKey(void)
 
 static void test_dragdrophelper(void)
 {
+    IDragSourceHelper *dragsource;
     IDropTargetHelper *target;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, &IID_IDropTargetHelper, (void **)&target);
     ok(hr == S_OK, "Failed to create IDropTargetHelper, %#x\n", hr);
+
+    hr = IDropTargetHelper_QueryInterface(target, &IID_IDragSourceHelper, (void **)&dragsource);
+    ok(hr == S_OK, "QI failed, %#x\n", hr);
+    IDragSourceHelper_Release(dragsource);
 
     IDropTargetHelper_Release(target);
 }
