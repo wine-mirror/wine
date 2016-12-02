@@ -927,8 +927,8 @@ static void test_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine1\"=dword:00000782\n\n"
                     "\"Wine2\"=\"Test Value\"\n"
-                    "\"Wine3\"=hex(7):4c,69,6e,65,20,\
-                     63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine3\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
                     "#comment\n"
                     "@=\"Test\"\n"
                     ";comment\n\n"
@@ -1099,8 +1099,8 @@ static void test_import(void)
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine1\"=dword:00000782\n\n"
                      "\"Wine2\"=\"Test Value\"\n"
-                     "\"Wine3\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,63,00,6f,00,6e,00,63,00,\
-                      61,00,74,00,65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine3\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,63,00,6f,00,6e,00,63,00,\\\n"
+                     "  61,00,74,00,65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
                      "#comment\n"
                      "@=\"Test\"\n"
                      ";comment\n\n"
