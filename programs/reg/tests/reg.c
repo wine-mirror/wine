@@ -971,6 +971,16 @@ static void test_import(void)
     if (err == ERROR_SUCCESS)
         verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
 
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "#comment\\\n"
+                    "\"Wine8\"=\"Line 1\"\n"
+                    ";comment\\\n"
+                    "\"Wine9\"=\"Line 2\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine8", REG_SZ, "Line 1", 7, 0);
+    todo_wine verify_reg(hkey, "Wine9", REG_SZ, "Line 2", 7, 0);
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -1142,6 +1152,16 @@ static void test_import(void)
        "got %d, expected 0\n", err);
     if (err == ERROR_SUCCESS)
         verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "#comment\\\n"
+                     "\"Wine8\"=\"Line 1\"\n"
+                     ";comment\\\n"
+                     "\"Wine9\"=\"Line 2\"\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine8", REG_SZ, "Line 1", 7, 0);
+    todo_wine verify_reg(hkey, "Wine9", REG_SZ, "Line 2", 7, 0);
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
