@@ -278,6 +278,14 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
     todo_wine verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "#comment\\\n"
+                    "\"Wine8\"=\"Line 1\"\n"
+                    ";comment \\\n"
+                    "\"Wine9\"=\"Line 2\"\n\n");
+    verify_reg(hkey, "Wine8", REG_SZ, "Line 1", 7, 0);
+    verify_reg(hkey, "Wine9", REG_SZ, "Line 2", 7, 0);
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
