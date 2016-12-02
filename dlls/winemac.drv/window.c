@@ -786,6 +786,25 @@ static void destroy_cocoa_view(struct macdrv_win_data *data)
 
 
 /***********************************************************************
+ *              set_cocoa_view_parent
+ */
+static void set_cocoa_view_parent(struct macdrv_win_data *data, HWND parent)
+{
+    struct macdrv_win_data *parent_data = get_win_data(parent);
+    macdrv_window cocoa_window = parent_data ? parent_data->cocoa_window : NULL;
+    macdrv_view superview = parent_data ? parent_data->client_cocoa_view : NULL;
+
+    TRACE("win %p/%p parent %p/%p\n", data->hwnd, data->cocoa_view, parent, cocoa_window ? (void*)cocoa_window : (void*)superview);
+
+    if (!cocoa_window && !superview)
+        WARN("hwnd %p new parent %p has no Cocoa window or view in this process\n", data->hwnd, parent);
+
+    macdrv_set_view_superview(data->cocoa_view, superview, cocoa_window, NULL, NULL);
+    release_win_data(parent_data);
+}
+
+
+/***********************************************************************
  *              macdrv_create_win_data
  *
  * Create a Mac data window structure for an existing window.
@@ -825,6 +844,8 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const RECT *win
         TRACE("win %p/%p window %s whole %s client %s\n",
                hwnd, data->cocoa_view, wine_dbgstr_rect(&data->window_rect),
                wine_dbgstr_rect(&data->whole_rect), wine_dbgstr_rect(&data->client_rect));
+
+        set_cocoa_view_parent(data, parent);
     }
 
     return data;
@@ -1574,18 +1595,8 @@ void CDECL macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent)
             destroy_cocoa_window(data);
             create_cocoa_view(data);
         }
-        else
-        {
-            struct macdrv_win_data *parent_data = get_win_data(parent);
-            macdrv_window cocoa_window = parent_data ? parent_data->cocoa_window : NULL;
-            macdrv_view superview = parent_data ? parent_data->client_cocoa_view : NULL;
 
-            if (!cocoa_window && !superview)
-                WARN("hwnd %p new parent %p has no Cocoa window or view in this process\n", hwnd, parent);
-
-            macdrv_set_view_superview(data->cocoa_view, superview, cocoa_window, NULL, NULL);
-            release_win_data(parent_data);
-        }
+        set_cocoa_view_parent(data, parent);
     }
     else  /* new top level window */
     {
