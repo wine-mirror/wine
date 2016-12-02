@@ -380,6 +380,16 @@ ULONG WINAPI EtwEventUnregister( REGHANDLE handle )
     return ERROR_SUCCESS;
 }
 
+/*********************************************************************
+ *                  EtwEventSetInformation   (NTDLL.@)
+ */
+ULONG WINAPI EtwEventSetInformation( REGHANDLE handle, EVENT_INFO_CLASS class, void *info,
+                                     ULONG length )
+{
+    FIXME("(%s, %u, %p, %u) stub\n", wine_dbgstr_longlong(handle), class, info, length);
+    return ERROR_SUCCESS;
+}
+
 /******************************************************************************
  *                  EtwRegisterTraceGuidsW (NTDLL.@)
  *
