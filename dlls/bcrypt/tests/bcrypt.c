@@ -75,18 +75,19 @@ static void test_BCryptGetFipsAlgorithmMode(void)
         'L','s','a',0};
     static const WCHAR policyValueXPW[] = {
         'F','I','P','S','A','l','g','o','r','i','t','h','m','P','o','l','i','c','y',0};
+    HKEY hkey = NULL;
     BOOLEAN expected;
     BOOLEAN enabled;
     DWORD value, count[2] = {sizeof(value), sizeof(value)};
     NTSTATUS ret;
 
-    if (!RegGetValueW(HKEY_LOCAL_MACHINE, policyKeyVistaW, policyValueVistaW,
-        RRF_RT_REG_DWORD, NULL, &value, &count[0]))
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, policyKeyVistaW, &hkey) == ERROR_SUCCESS &&
+        RegQueryValueExW(hkey, policyValueVistaW, NULL, NULL, (void *)&value, &count[0]) == ERROR_SUCCESS)
     {
         expected = !!value;
     }
-    else if (!RegGetValueW(HKEY_LOCAL_MACHINE, policyKeyXPW, policyValueXPW,
-             RRF_RT_REG_DWORD, NULL, &value, &count[1]))
+      else if (RegOpenKeyW(HKEY_LOCAL_MACHINE, policyKeyXPW, &hkey) == ERROR_SUCCESS &&
+               RegQueryValueExW(hkey, policyValueXPW, NULL, NULL, (void *)&value, &count[0]) == ERROR_SUCCESS)
     {
         expected = !!value;
     }
@@ -96,6 +97,7 @@ static void test_BCryptGetFipsAlgorithmMode(void)
 todo_wine
         ok(0, "Neither XP or Vista key is present\n");
     }
+    RegCloseKey(hkey);
 
     ret = BCryptGetFipsAlgorithmMode(&enabled);
     ok(ret == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got 0x%x\n", ret);
