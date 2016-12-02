@@ -690,6 +690,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
         release_object( server );
         return NULL;
     }
+    set_fd_signaled( server->ioctl_fd, 1 );
     set_server_state( server, ps_idle_server );
     return server;
 }

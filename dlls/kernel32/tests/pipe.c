@@ -110,6 +110,13 @@ static BOOL RpcReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD 
     return (BOOL)rpcargs.returnValue;
 }
 
+#define test_signaled(h) _test_signaled(__LINE__,h)
+static void _test_signaled(unsigned line, HANDLE handle)
+{
+    DWORD res = WaitForSingleObject(handle, 0);
+    ok_(__FILE__,line)(res == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", res);
+}
+
 static void test_CreateNamedPipe(int pipemode)
 {
     HANDLE hnp;
@@ -176,6 +183,7 @@ static void test_CreateNamedPipe(int pipemode)
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    test_signaled(hnp);
 
     ret = WaitNamedPipeA(PIPENAME, 2000);
     ok(ret, "WaitNamedPipe failed (%d)\n", GetLastError());
