@@ -765,6 +765,62 @@ static void test_rng(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static void test_aes(void)
+{
+    BCRYPT_ALG_HANDLE alg;
+    ULONG size, len;
+    UCHAR mode[64];
+    NTSTATUS ret;
+todo_wine {
+    alg = NULL;
+    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_AES_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    len = size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    if (sizeof(void *) == 4)
+    {
+        ok(len == 618 /* >= Win 8 */
+        || broken(len == 610) /* Win 7 */
+        || broken(len == 582) /* < Win 7 */,
+        "got %u\n", len);
+        ok(size == sizeof(len), "got %u\n", size);
+    }
+    else
+    {
+        ok(len == 654 /* >= Win 8 */
+        || broken(len == 622) /* Win 7 */
+        || broken(len == 598) /* < Win 7 */,
+        "got %u\n", len);
+        ok(size == sizeof(len), "got %u\n", size);
+    }
+
+    len = size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len == 16, "got %u\n", len);
+    ok(size == sizeof(len), "got %u\n", size);
+
+    size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size == 64, "got %u\n", size);
+
+    size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "got %s\n", mode);
+    ok(size == 64, "got %u\n", size);
+
+    test_alg_name(alg, "AES");
+
+    ret = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+}
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -795,6 +851,7 @@ START_TEST(bcrypt)
     test_sha512();
     test_md5();
     test_rng();
+    test_aes();
 
     if (pBCryptHash) /* >= Win 10 */
         test_BcryptHash();

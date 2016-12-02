@@ -63,12 +63,17 @@ typedef LONG NTSTATUS;
 #define MS_PLATFORM_CRYPTO_PROVIDER (const WCHAR [])\
     {'M','i','c','r','o','s','o','f','t',' ','P','l','a','t','f','o','r','m',' ','C','r','y','p','t','o',' ','P','r','o','v','i','d','e','r',0}
 
+#define BCRYPT_AES_ALGORITHM        (const WCHAR []){'A','E','S',0}
 #define BCRYPT_MD5_ALGORITHM        (const WCHAR []){'M','D','5',0}
 #define BCRYPT_RNG_ALGORITHM        (const WCHAR []){'R','N','G',0}
 #define BCRYPT_SHA1_ALGORITHM       (const WCHAR []){'S','H','A','1',0}
 #define BCRYPT_SHA256_ALGORITHM     (const WCHAR []){'S','H','A','2','5','6',0}
 #define BCRYPT_SHA384_ALGORITHM     (const WCHAR []){'S','H','A','3','8','4',0}
 #define BCRYPT_SHA512_ALGORITHM     (const WCHAR []){'S','H','A','5','1','2',0}
+
+#define BCRYPT_CHAIN_MODE_NA        (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','N','/','A',0}
+#define BCRYPT_CHAIN_MODE_CBC       (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','C','B','C',0}
+#define BCRYPT_CHAIN_MODE_ECB       (const WCHAR []){'C','h','a','i','n','i','n','g','M','o','d','e','E','C','B',0}
 
 typedef struct _BCRYPT_ALGORITHM_IDENTIFIER
 {
