@@ -1465,6 +1465,7 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
  */
 static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
 {
+    const printenv_t * env;
     monitor_t * pm = NULL;
     LPMONITOR_INFO_2W mi2w;
     HKEY    hroot = NULL;
@@ -1489,12 +1490,10 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (!mi2w->pEnvironment || lstrcmpW(mi2w->pEnvironment, x86_envnameW)) {
-        WARN("Environment %s requested (we support only %s)\n",
-                debugstr_w(mi2w->pEnvironment), debugstr_w(x86_envnameW));
-        SetLastError(ERROR_INVALID_ENVIRONMENT);
-        return FALSE;
-    }
+
+    env = validate_envW(mi2w->pEnvironment);
+    if (!env)
+        return FALSE;   /* ERROR_INVALID_ENVIRONMENT */
 
     if (!mi2w->pDLLName || (! mi2w->pDLLName[0])) {
         WARN("pDLLName not valid : %s\n", debugstr_w(mi2w->pDLLName));
