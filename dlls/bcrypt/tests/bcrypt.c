@@ -916,6 +916,177 @@ static void test_BCryptGenerateSymmetricKey(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static void test_BCryptEncrypt(void)
+{
+    static UCHAR secret[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+    static UCHAR iv[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+    static UCHAR data[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10};
+    static UCHAR expected[] =
+        {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79};
+    static UCHAR expected2[] =
+        {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79,
+         0x28,0x73,0x3d,0xef,0x84,0x8f,0xb0,0xa6,0x5d,0x1a,0x51,0xb7,0xec,0x8f,0xea,0xe9};
+    BCRYPT_ALG_HANDLE aes;
+    BCRYPT_KEY_HANDLE key;
+    UCHAR *buf, ciphertext[32], ivbuf[16];
+    ULONG size, len, i;
+    NTSTATUS ret;
+
+    ret = pBCryptOpenAlgorithmProvider(&aes, BCRYPT_AES_ALGORITHM, NULL, 0);
+    if (ret != STATUS_SUCCESS) /* remove whole IF when Wine is fixed */
+    {
+        todo_wine ok(0, "AES provider not available\n");
+        return;
+    }
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    len = 0xdeadbeef;
+    size = sizeof(len);
+    ret = pBCryptGetProperty(aes, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+    ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    /* input size is a multiple of block size */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptEncrypt(key, data, 16, NULL, ivbuf, 16, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 16, "got %u\n", size);
+
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(ciphertext, 0, sizeof(ciphertext));
+    ret = pBCryptEncrypt(key, data, 16, NULL, ivbuf, 16, ciphertext, 16, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 16, "got %u\n", size);
+    ok(!memcmp(ciphertext, expected, sizeof(expected)), "wrong data\n");
+    for (i = 0; i < 16; i++)
+        ok(ciphertext[i] == expected[i], "%u: %02x != %02x\n", i, ciphertext[i], expected[i]);
+
+    /* input size is not a multiple of block size */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptEncrypt(key, data, 17, NULL, ivbuf, 16, NULL, 0, &size, 0);
+    ok(ret == STATUS_INVALID_BUFFER_SIZE, "got %08x\n", ret);
+    ok(size == 17, "got %u\n", size);
+
+    /* input size is not a multiple of block size, block padding set */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptEncrypt(key, data, 17, NULL, ivbuf, 16, NULL, 0, &size, BCRYPT_BLOCK_PADDING);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(ciphertext, 0, sizeof(ciphertext));
+    ret = pBCryptEncrypt(key, data, 17, NULL, ivbuf, 16, ciphertext, 32, &size, BCRYPT_BLOCK_PADDING);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+    ok(!memcmp(ciphertext, expected2, sizeof(expected2)), "wrong data\n");
+    for (i = 0; i < 32; i++)
+        ok(ciphertext[i] == expected2[i], "%u: %02x != %02x\n", i, ciphertext[i], expected2[i]);
+
+    /* output size too small */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(ciphertext, 0, sizeof(ciphertext));
+    ret = pBCryptEncrypt(key, data, 17, NULL, ivbuf, 16, ciphertext, 31, &size, BCRYPT_BLOCK_PADDING);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+
+    ret = pBCryptDestroyKey(key);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    ret = pBCryptCloseAlgorithmProvider(aes, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+}
+
+static void test_BCryptDecrypt(void)
+{
+    static UCHAR secret[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+    static UCHAR iv[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+    static UCHAR expected[] =
+        {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+    static UCHAR ciphertext[32] =
+        {0xc6,0xa1,0x3b,0x37,0x87,0x8f,0x5b,0x82,0x6f,0x4f,0x81,0x62,0xa1,0xc8,0xd8,0x79,
+         0x28,0x73,0x3d,0xef,0x84,0x8f,0xb0,0xa6,0x5d,0x1a,0x51,0xb7,0xec,0x8f,0xea,0xe9};
+    BCRYPT_ALG_HANDLE aes;
+    BCRYPT_KEY_HANDLE key;
+    UCHAR *buf, plaintext[32], ivbuf[16];
+    ULONG size, len;
+    NTSTATUS ret;
+
+    ret = pBCryptOpenAlgorithmProvider(&aes, BCRYPT_AES_ALGORITHM, NULL, 0);
+    if (ret != STATUS_SUCCESS) /* remove whole IF when Wine is fixed */
+    {
+        todo_wine ok(0, "AES provider not available\n");
+        return;
+    }
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    len = 0xdeadbeef;
+    size = sizeof(len);
+    ret = pBCryptGetProperty(aes, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+    ret = pBCryptGenerateSymmetricKey(aes, &key, buf, len, secret, sizeof(secret), 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+
+    /* input size is a multiple of block size */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptDecrypt(key, ciphertext, 32, NULL, ivbuf, 16, NULL, 0, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    memset(plaintext, 0, sizeof(plaintext));
+    ret = pBCryptDecrypt(key, ciphertext, 32, NULL, ivbuf, 16, plaintext, 32, &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+    ok(!memcmp(plaintext, expected, sizeof(expected)), "wrong data\n");
+
+    /* output size too small */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptDecrypt(key, ciphertext, 32, NULL, ivbuf, 16, plaintext, 31, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size == 32, "got %u\n", size);
+
+    /* input size is not a multiple of block size */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptDecrypt(key, ciphertext, 17, NULL, ivbuf, 16, NULL, 0, &size, 0);
+    ok(ret == STATUS_INVALID_BUFFER_SIZE, "got %08x\n", ret);
+    ok(size == 17 || broken(size == 0 /* Win < 7 */), "got %u\n", size);
+
+    /* input size is not a multiple of block size, block padding set */
+    size = 0;
+    memcpy(ivbuf, iv, sizeof(iv));
+    ret = pBCryptDecrypt(key, ciphertext, 17, NULL, ivbuf, 16, NULL, 0, &size, BCRYPT_BLOCK_PADDING);
+    ok(ret == STATUS_INVALID_BUFFER_SIZE, "got %08x\n", ret);
+    ok(size == 17 || broken(size == 0 /* Win < 7 */), "got %u\n", size);
+
+    ret = pBCryptDestroyKey(key);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    ret = pBCryptCloseAlgorithmProvider(aes, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -953,6 +1124,8 @@ START_TEST(bcrypt)
     test_rng();
     test_aes();
     test_BCryptGenerateSymmetricKey();
+    test_BCryptEncrypt();
+    test_BCryptDecrypt();
 
     if (pBCryptHash) /* >= Win 10 */
         test_BcryptHash();
