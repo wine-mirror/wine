@@ -3247,7 +3247,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalized
     stream_desc.face_index = desc->index;
     opentype_get_font_properties(&stream_desc, &props);
     opentype_get_font_metrics(&stream_desc, &data->metrics, NULL);
-    opentype_get_font_facename(&stream_desc, &data->names);
+    opentype_get_font_facename(&stream_desc, props.lf.lfFaceName, &data->names);
 
     /* get family name from font file */
     hr = opentype_get_font_familyname(&stream_desc, family_name);

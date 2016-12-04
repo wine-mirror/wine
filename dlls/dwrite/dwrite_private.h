@@ -224,7 +224,7 @@ extern void opentype_get_font_properties(struct file_stream_desc*,struct dwrite_
 extern void opentype_get_font_metrics(struct file_stream_desc*,DWRITE_FONT_METRICS1*,DWRITE_CARET_METRICS*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_info_strings(const void*,DWRITE_INFORMATIONAL_STRING_ID,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_familyname(struct file_stream_desc*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
-extern HRESULT opentype_get_font_facename(struct file_stream_desc*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
+extern HRESULT opentype_get_font_facename(struct file_stream_desc*,WCHAR*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_typographic_features(IDWriteFontFace*,UINT32,UINT32,UINT32,UINT32*,DWRITE_FONT_FEATURE_TAG*) DECLSPEC_HIDDEN;
 extern BOOL opentype_get_vdmx_size(const void*,INT,UINT16*,UINT16*) DECLSPEC_HIDDEN;
 extern UINT32 opentype_get_cpal_palettecount(const void*) DECLSPEC_HIDDEN;

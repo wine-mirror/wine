@@ -623,12 +623,8 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
     IDWriteFont *font, LOGFONTW *logfont, BOOL *is_systemfont)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-    static const WCHAR enusW[] = {'e','n','-','u','s',0};
     IDWriteFontCollection *collection;
-    IDWriteLocalizedStrings *name;
     IDWriteFontFamily *family;
-    UINT32 index;
-    BOOL exists;
     HRESULT hr;
 
     TRACE("(%p)->(%p %p %p)\n", This, font, logfont, is_systemfont);
@@ -655,17 +651,7 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
     get_logfont_from_font(font, logfont);
     logfont->lfCharSet = DEFAULT_CHARSET;
     logfont->lfOutPrecision = OUT_OUTLINE_PRECIS;
-    logfont->lfFaceName[0] = 0;
 
-    exists = FALSE;
-    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &name, &exists);
-    if (FAILED(hr) || !exists)
-        return hr;
-
-    hr = IDWriteLocalizedStrings_FindLocaleName(name, enusW, &index, &exists);
-    if (hr == S_OK)
-        hr = IDWriteLocalizedStrings_GetString(name, index, logfont->lfFaceName, sizeof(logfont->lfFaceName)/sizeof(WCHAR));
-    IDWriteLocalizedStrings_Release(name);
     return hr;
 }
 

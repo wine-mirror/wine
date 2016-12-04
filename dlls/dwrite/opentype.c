@@ -1612,10 +1612,11 @@ HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWri
 
 /* FaceName locating order is WWS Face Name -> Preferred Face Name -> Face Name. If font claims to
    have 'Preferred Face Name' in WWS format, then WWS name is not used. */
-HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, IDWriteLocalizedStrings **names)
+HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *lfname, IDWriteLocalizedStrings **names)
 {
-    const TT_OS2_V2 *tt_os2;
+    IDWriteLocalizedStrings *lfnames;
     void *os2_context, *name_context;
+    const TT_OS2_V2 *tt_os2;
     const void *name_table;
     HRESULT hr;
 
@@ -1634,6 +1635,27 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, IDWrite
         hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_PREFERRED_SUBFAMILY_NAME, names);
     if (FAILED(hr))
         hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_SUBFAMILY_NAME, names);
+
+    /* User locale is preferred, with fallback to en-us. */
+    *lfname = 0;
+    if (SUCCEEDED(opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_FAMILY_NAME, &lfnames))) {
+        static const WCHAR enusW[] = {'e','n','-','u','s',0};
+        WCHAR localeW[LOCALE_NAME_MAX_LENGTH];
+        UINT32 index;
+        BOOL exists;
+
+        exists = FALSE;
+        if (GetUserDefaultLocaleName(localeW, sizeof(localeW)/sizeof(WCHAR)))
+            IDWriteLocalizedStrings_FindLocaleName(lfnames, localeW, &index, &exists);
+
+        if (!exists)
+            IDWriteLocalizedStrings_FindLocaleName(lfnames, enusW, &index, &exists);
+
+        if (exists)
+            IDWriteLocalizedStrings_GetString(lfnames, index, lfname, LF_FACESIZE);
+
+        IDWriteLocalizedStrings_Release(lfnames);
+    }
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2_context);

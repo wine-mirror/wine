@@ -3459,6 +3459,7 @@ static void test_TryGetFontTable(void)
 static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
 {
     void *os2_context, *head_context;
+    IDWriteLocalizedStrings *names;
     DWRITE_FONT_SIMULATIONS sim;
     IDWriteFontFace *fontface;
     const TT_OS2_V2 *tt_os2;
@@ -3529,6 +3530,31 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
             USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
             logfont->lfItalic = !!(macStyle & TT_HEAD_MACSTYLE_ITALIC);
         }
+    }
+
+    /* lfFaceName */
+    exists = FALSE;
+    logfont->lfFaceName[0] = 0;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &names, &exists);
+    if (SUCCEEDED(hr)) {
+        if (exists) {
+            static const WCHAR enusW[] = {'e','n','-','u','s',0};
+            WCHAR localeW[LOCALE_NAME_MAX_LENGTH];
+            UINT32 index;
+
+            /* Fallback to en-us if there's no string for user locale. */
+            exists = FALSE;
+            if (GetUserDefaultLocaleName(localeW, sizeof(localeW)/sizeof(WCHAR)))
+                IDWriteLocalizedStrings_FindLocaleName(names, localeW, &index, &exists);
+
+            if (!exists)
+                IDWriteLocalizedStrings_FindLocaleName(names, enusW, &index, &exists);
+
+            if (exists)
+                IDWriteLocalizedStrings_GetString(names, index, logfont->lfFaceName, sizeof(logfont->lfFaceName)/sizeof(WCHAR));
+        }
+
+        IDWriteLocalizedStrings_Release(names);
     }
 
     if (tt_os2)
@@ -3631,6 +3657,8 @@ if (0) { /* crashes on native */
                 sim & DWRITE_FONT_SIMULATIONS_BOLD ? "yes" : "no");
             ok(logfont.lfItalic == lf.lfItalic, "%s: unexpected italic flag %d, oblique simulation %s\n",
                 wine_dbgstr_w(nameW), logfont.lfItalic, sim & DWRITE_FONT_SIMULATIONS_OBLIQUE ? "yes" : "no");
+            ok(!lstrcmpW(logfont.lfFaceName, lf.lfFaceName), "%s: unexpected facename %s, expected %s\n",
+                wine_dbgstr_w(nameW), wine_dbgstr_w(logfont.lfFaceName), wine_dbgstr_w(lf.lfFaceName));
 
             ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "%s: unexpected output precision %d\n", wine_dbgstr_w(nameW),
                 logfont.lfOutPrecision);
@@ -3639,7 +3667,6 @@ if (0) { /* crashes on native */
             ok(logfont.lfQuality == DEFAULT_QUALITY, "%s: unexpected quality %d\n", wine_dbgstr_w(nameW), logfont.lfQuality);
             ok(logfont.lfPitchAndFamily == DEFAULT_PITCH, "%s: unexpected pitch %d\n", wine_dbgstr_w(nameW),
                 logfont.lfPitchAndFamily);
-            ok(logfont.lfFaceName[0] != 0, "got face name %s\n", wine_dbgstr_w(logfont.lfFaceName));
 
             IDWriteFont_Release(font);
         }
