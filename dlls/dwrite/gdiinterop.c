@@ -654,7 +654,6 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
 
     get_logfont_from_font(font, logfont);
     logfont->lfCharSet = DEFAULT_CHARSET;
-    logfont->lfWeight = IDWriteFont_GetWeight(font);
     logfont->lfOutPrecision = OUT_OUTLINE_PRECIS;
     logfont->lfFaceName[0] = 0;
 

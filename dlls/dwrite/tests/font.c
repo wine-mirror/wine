@@ -3458,7 +3458,16 @@ static void test_TryGetFontTable(void)
 
 static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
 {
+    void *os2_context, *head_context;
+    DWRITE_FONT_SIMULATIONS sim;
+    IDWriteFontFace *fontface;
+    const TT_OS2_V2 *tt_os2;
     DWRITE_FONT_STYLE style;
+    const TT_HEAD *tt_head;
+    LONG weight;
+    UINT32 size;
+    BOOL exists;
+    HRESULT hr;
 
     /* These are rendering time properties. */
     logfont->lfHeight = 0;
@@ -3468,32 +3477,50 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
     logfont->lfUnderline = 0;
     logfont->lfStrikeOut = 0;
 
+    logfont->lfWeight = 0;
     logfont->lfItalic = 0;
 
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "Failed to create font face, %#x\n", hr);
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void **)&tt_os2, &size,
+        &os2_context, &exists);
+    ok(hr == S_OK, "Failed to get OS/2 table, %#x\n", hr);
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_HEAD_TAG, (const void **)&tt_head, &size,
+        &head_context, &exists);
+    ok(hr == S_OK, "Failed to get head table, %#x\n", hr);
+
+    sim = IDWriteFont_GetSimulations(font);
+
+    /* lfWeight */
+    weight = FW_REGULAR;
+    if (tt_os2) {
+        USHORT usWeightClass = GET_BE_WORD(tt_os2->usWeightClass);
+
+        if (usWeightClass >= 1 && usWeightClass <= 9)
+            usWeightClass *= 100;
+
+        if (usWeightClass > DWRITE_FONT_WEIGHT_ULTRA_BLACK)
+            weight = DWRITE_FONT_WEIGHT_ULTRA_BLACK;
+        else if (usWeightClass > 0)
+            weight = usWeightClass;
+    }
+    else if (tt_head) {
+        USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
+        if (macStyle & TT_HEAD_MACSTYLE_BOLD)
+            weight = DWRITE_FONT_WEIGHT_BOLD;
+    }
+    if (sim & DWRITE_FONT_SIMULATIONS_BOLD)
+        weight += (FW_BOLD - FW_REGULAR) / 2 + 1;
+    logfont->lfWeight = weight;
+
+    /* lfItalic */
     if (IDWriteFont_GetSimulations(font) & DWRITE_FONT_SIMULATIONS_OBLIQUE)
         logfont->lfItalic = 1;
 
     style = IDWriteFont_GetStyle(font);
     if (!logfont->lfItalic && ((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE))) {
-        void *os2_context, *head_context;
-        IDWriteFontFace *fontface;
-        const TT_OS2_V2 *tt_os2;
-        const TT_HEAD *tt_head;
-        UINT32 size;
-        BOOL exists;
-        HRESULT hr;
-
-        hr = IDWriteFont_CreateFontFace(font, &fontface);
-        ok(hr == S_OK, "Failed to create font face, %#x\n", hr);
-
-        hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void **)&tt_os2, &size,
-            &os2_context, &exists);
-        ok(hr == S_OK, "Failed to get OS/2 table, %#x\n", hr);
-
-        hr = IDWriteFontFace_TryGetFontTable(fontface, MS_HEAD_TAG, (const void **)&tt_head, &size,
-            &head_context, &exists);
-        ok(hr == S_OK, "Failed to get head table, %#x\n", hr);
-
         if (tt_os2) {
             USHORT fsSelection = GET_BE_WORD(tt_os2->fsSelection);
             logfont->lfItalic = !!(fsSelection & OS2_FSSELECTION_ITALIC);
@@ -3502,13 +3529,13 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
             USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
             logfont->lfItalic = !!(macStyle & TT_HEAD_MACSTYLE_ITALIC);
         }
-
-        if (tt_os2)
-            IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
-        if (tt_head)
-            IDWriteFontFace_ReleaseFontTable(fontface, head_context);
-        IDWriteFontFace_Release(fontface);
     }
+
+    if (tt_os2)
+        IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
+    if (tt_head)
+        IDWriteFontFace_ReleaseFontTable(fontface, head_context);
+    IDWriteFontFace_Release(fontface);
 }
 
 static void test_ConvertFontToLOGFONT(void)
@@ -3599,10 +3626,12 @@ if (0) { /* crashes on native */
             sim = IDWriteFont_GetSimulations(font);
 
             get_logfont_from_font(font, &lf);
+            ok(logfont.lfWeight == lf.lfWeight, "%s: unexpected lfWeight %d, expected lfWeight %d, font weight %d, "
+                "bold simulation %s\n", wine_dbgstr_w(nameW), logfont.lfWeight, lf.lfWeight, IDWriteFont_GetWeight(font),
+                sim & DWRITE_FONT_SIMULATIONS_BOLD ? "yes" : "no");
             ok(logfont.lfItalic == lf.lfItalic, "%s: unexpected italic flag %d, oblique simulation %s\n",
                 wine_dbgstr_w(nameW), logfont.lfItalic, sim & DWRITE_FONT_SIMULATIONS_OBLIQUE ? "yes" : "no");
 
-            ok(logfont.lfWeight > 0, "got %d\n", logfont.lfWeight);
             ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "got %d\n", logfont.lfOutPrecision);
             ok(logfont.lfClipPrecision == 0, "got %d\n", logfont.lfClipPrecision);
             ok(logfont.lfQuality == 0, "got %d\n", logfont.lfQuality);

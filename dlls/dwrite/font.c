@@ -3401,6 +3401,7 @@ static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *fa
 
             if (init_font_data_from_font(family->fonts[heaviest], DWRITE_FONT_SIMULATIONS_BOLD, facenameW, &boldface) == S_OK) {
                 boldface->bold_sim_tested = 1;
+                boldface->lf.lfWeight += (FW_BOLD - FW_REGULAR) / 2 + 1;
                 fontfamily_add_font(family, boldface);
             }
         }
