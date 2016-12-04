@@ -624,11 +624,9 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
     static const WCHAR enusW[] = {'e','n','-','u','s',0};
-    DWRITE_FONT_SIMULATIONS simulations;
     IDWriteFontCollection *collection;
     IDWriteLocalizedStrings *name;
     IDWriteFontFamily *family;
-    DWRITE_FONT_STYLE style;
     UINT32 index;
     BOOL exists;
     HRESULT hr;
@@ -654,12 +652,9 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
     *is_systemfont = is_system_collection(collection);
     IDWriteFontCollection_Release(collection);
 
-    simulations = IDWriteFont_GetSimulations(font);
-    style = IDWriteFont_GetStyle(font);
-
+    get_logfont_from_font(font, logfont);
     logfont->lfCharSet = DEFAULT_CHARSET;
     logfont->lfWeight = IDWriteFont_GetWeight(font);
-    logfont->lfItalic = style == DWRITE_FONT_STYLE_ITALIC || (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE);
     logfont->lfOutPrecision = OUT_OUTLINE_PRECIS;
     logfont->lfFaceName[0] = 0;
 

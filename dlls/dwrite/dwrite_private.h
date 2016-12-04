@@ -200,6 +200,7 @@ extern HRESULT create_fontfacereference(IDWriteFactory4*,IDWriteFontFile*,UINT32
 extern HRESULT factory_get_cached_fontface(IDWriteFactory4*,IDWriteFontFile*const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace**,
     struct list**) DECLSPEC_HIDDEN;
 extern void    factory_cache_fontface(struct list*,IDWriteFontFace4*) DECLSPEC_HIDDEN;
+extern void    get_logfont_from_font(IDWriteFont*,LOGFONTW*) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
 struct dwrite_font_props {
@@ -207,6 +208,7 @@ struct dwrite_font_props {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
+    LOGFONTW lf;
 };
 
 struct file_stream_desc {

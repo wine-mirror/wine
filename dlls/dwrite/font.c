@@ -19,6 +19,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#include <assert.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -89,6 +91,8 @@ struct dwrite_font_data {
     WCHAR *facename;
 
     USHORT simulations;
+
+    LOGFONTW lf;
 
     /* used to mark font as tested when scanning for simulation candidate */
     BOOL bold_sim_tested : 1;
@@ -1673,6 +1677,20 @@ static const IDWriteFont3Vtbl dwritefontvtbl = {
     dwritefont3_GetLocality
 };
 
+static struct dwrite_font *unsafe_impl_from_IDWriteFont(IDWriteFont *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (IDWriteFontVtbl*)&dwritefontvtbl);
+    return CONTAINING_RECORD(iface, struct dwrite_font, IDWriteFont3_iface);
+}
+
+void get_logfont_from_font(IDWriteFont *iface, LOGFONTW *lf)
+{
+    struct dwrite_font *font = unsafe_impl_from_IDWriteFont(iface);
+    *lf = font->data->lf;
+}
+
 static HRESULT create_font(struct dwrite_font_data *data, IDWriteFontFamily1 *family, IDWriteFont3 **font)
 {
     struct dwrite_font *This;
@@ -3244,6 +3262,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, IDWriteLocalized
     data->stretch = props.stretch;
     data->weight = props.weight;
     data->panose = props.panose;
+    data->lf = props.lf;
 
     fontstrings_get_en_string(*family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
     fontstrings_get_en_string(data->names, faceW, sizeof(faceW)/sizeof(WCHAR));
@@ -3446,6 +3465,7 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
 
         if (init_font_data_from_font(family->fonts[regular], DWRITE_FONT_SIMULATIONS_OBLIQUE, facenameW, &obliqueface) == S_OK) {
             obliqueface->oblique_sim_tested = 1;
+            obliqueface->lf.lfItalic = 1;
             fontfamily_add_font(family, obliqueface);
         }
     }
