@@ -2350,6 +2350,15 @@ enum message_type
 @END
 
 
+/* Retrieve results of an async */
+@REQ(get_async_result)
+    client_ptr_t   user_arg;      /* user arg used to identify async */
+@REPLY
+    data_size_t    size;          /* result size (input or output depending on the operation) */
+    VARARG(out_data,bytes);       /* iosb output data */
+@END
+
+
 /* Perform a read on a file object */
 @REQ(read)
     int            blocking;      /* whether it's a blocking read */
@@ -2395,16 +2404,6 @@ enum message_type
     data_size_t  size;            /* result size (input or output depending on the operation) */
     client_ptr_t file_ptr;        /* opaque pointer to the file object */
     VARARG(data,bytes);           /* output data of the irp */
-@END
-
-
-/* Retrieve results of an async irp */
-@REQ(get_irp_result)
-    obj_handle_t   handle;        /* handle to the device */
-    client_ptr_t   user_arg;      /* user arg used to identify the request */
-@REPLY
-    data_size_t    size;          /* result size (input or output depending on the operation) */
-    VARARG(out_data,bytes);       /* irp output data */
 @END
 
 

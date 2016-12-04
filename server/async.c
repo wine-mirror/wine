@@ -471,3 +471,35 @@ DECL_HANDLER(cancel_async)
         release_object( obj );
     }
 }
+
+/* get async result from associated iosb */
+DECL_HANDLER(get_async_result)
+{
+    struct iosb *iosb = NULL;
+    struct async *async;
+
+    LIST_FOR_EACH_ENTRY( async, &current->process->asyncs, struct async, process_entry )
+        if (async->data.arg == req->user_arg)
+        {
+            iosb = async->iosb;
+            break;
+        }
+
+    if (!iosb)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (iosb->out_data)
+    {
+        data_size_t size = min( iosb->out_size, get_reply_max_size() );
+        if (size)
+        {
+            set_reply_data_ptr( iosb->out_data, size );
+            iosb->out_data = NULL;
+        }
+    }
+    reply->size = iosb->result;
+    set_error( iosb->status );
+}

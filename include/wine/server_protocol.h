@@ -3223,6 +3223,22 @@ struct cancel_async_reply
 
 
 
+struct get_async_result_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+    client_ptr_t   user_arg;
+};
+struct get_async_result_reply
+{
+    struct reply_header __header;
+    data_size_t    size;
+    /* VARARG(out_data,bytes); */
+    char __pad_12[4];
+};
+
+
+
 struct read_request
 {
     struct request_header __header;
@@ -3290,22 +3306,6 @@ struct set_irp_result_request
 struct set_irp_result_reply
 {
     struct reply_header __header;
-};
-
-
-
-struct get_irp_result_request
-{
-    struct request_header __header;
-    obj_handle_t   handle;
-    client_ptr_t   user_arg;
-};
-struct get_irp_result_reply
-{
-    struct reply_header __header;
-    data_size_t    size;
-    /* VARARG(out_data,bytes); */
-    char __pad_12[4];
 };
 
 
@@ -5693,11 +5693,11 @@ enum request
     REQ_set_serial_info,
     REQ_register_async,
     REQ_cancel_async,
+    REQ_get_async_result,
     REQ_read,
     REQ_write,
     REQ_ioctl,
     REQ_set_irp_result,
-    REQ_get_irp_result,
     REQ_create_named_pipe,
     REQ_get_named_pipe_info,
     REQ_set_named_pipe_info,
@@ -5983,11 +5983,11 @@ union generic_request
     struct set_serial_info_request set_serial_info_request;
     struct register_async_request register_async_request;
     struct cancel_async_request cancel_async_request;
+    struct get_async_result_request get_async_result_request;
     struct read_request read_request;
     struct write_request write_request;
     struct ioctl_request ioctl_request;
     struct set_irp_result_request set_irp_result_request;
-    struct get_irp_result_request get_irp_result_request;
     struct create_named_pipe_request create_named_pipe_request;
     struct get_named_pipe_info_request get_named_pipe_info_request;
     struct set_named_pipe_info_request set_named_pipe_info_request;
@@ -6271,11 +6271,11 @@ union generic_reply
     struct set_serial_info_reply set_serial_info_reply;
     struct register_async_reply register_async_reply;
     struct cancel_async_reply cancel_async_reply;
+    struct get_async_result_reply get_async_result_reply;
     struct read_reply read_reply;
     struct write_reply write_reply;
     struct ioctl_reply ioctl_reply;
     struct set_irp_result_reply set_irp_result_reply;
-    struct get_irp_result_reply get_irp_result_reply;
     struct create_named_pipe_reply create_named_pipe_reply;
     struct get_named_pipe_info_reply get_named_pipe_info_reply;
     struct set_named_pipe_info_reply set_named_pipe_info_reply;
@@ -6412,6 +6412,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 523
+#define SERVER_PROTOCOL_VERSION 524
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

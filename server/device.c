@@ -297,13 +297,9 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
     }
     wake_up( &irp->obj, 0 );
 
-    if (status != STATUS_ALERTED)
-    {
-        /* remove it from the device queue */
-        /* (for STATUS_ALERTED this will be done in get_irp_result) */
-        list_remove( &irp->dev_entry );
-        release_object( irp );  /* no longer on the device queue */
-    }
+    /* remove it from the device queue */
+    list_remove( &irp->dev_entry );
+    release_object( irp );  /* no longer on the device queue */
     release_object( file );
 }
 
@@ -443,18 +439,6 @@ static void device_file_destroy( struct object *obj )
     if (file->fd) release_object( file->fd );
     list_remove( &file->entry );
     release_object( file->device );
-}
-
-static struct irp_call *find_irp_call( struct device_file *file, struct thread *thread,
-                                       client_ptr_t user_arg )
-{
-    struct irp_call *irp;
-
-    LIST_FOR_EACH_ENTRY( irp, &file->requests, struct irp_call, dev_entry )
-        if (irp->thread == thread && irp->user_arg == user_arg) return irp;
-
-    set_error( STATUS_INVALID_PARAMETER );
-    return NULL;
 }
 
 static void set_file_user_ptr( struct device_file *file, client_ptr_t ptr )
@@ -809,35 +793,4 @@ DECL_HANDLER(set_irp_result)
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
         release_object( irp );
     }
-}
-
-
-/* retrieve results of an async irp */
-DECL_HANDLER(get_irp_result)
-{
-    struct device_file *file;
-    struct irp_call *irp;
-
-    if (!(file = (struct device_file *)get_handle_obj( current->process, req->handle,
-                                                       0, &device_file_ops )))
-        return;
-
-    if ((irp = find_irp_call( file, current, req->user_arg )))
-    {
-        struct iosb *iosb = irp->iosb;
-        if (iosb->out_data)
-        {
-            data_size_t size = min( iosb->out_size, get_reply_max_size() );
-            if (size)
-            {
-                set_reply_data_ptr( iosb->out_data, size );
-                iosb->out_data = NULL;
-            }
-        }
-        reply->size = iosb->result;
-        set_error( iosb->status );
-        list_remove( &irp->dev_entry );
-        release_object( irp );  /* no longer on the device queue */
-    }
-    release_object( file );
 }

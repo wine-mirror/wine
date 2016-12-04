@@ -2870,6 +2870,17 @@ static void dump_cancel_async_request( const struct cancel_async_request *req )
     fprintf( stderr, ", only_thread=%d", req->only_thread );
 }
 
+static void dump_get_async_result_request( const struct get_async_result_request *req )
+{
+    dump_uint64( " user_arg=", &req->user_arg );
+}
+
+static void dump_get_async_result_reply( const struct get_async_result_reply *req )
+{
+    fprintf( stderr, " size=%u", req->size );
+    dump_varargs_bytes( ", out_data=", cur_size );
+}
+
 static void dump_read_request( const struct read_request *req )
 {
     fprintf( stderr, " blocking=%d", req->blocking );
@@ -2921,18 +2932,6 @@ static void dump_set_irp_result_request( const struct set_irp_result_request *re
     fprintf( stderr, ", size=%u", req->size );
     dump_uint64( ", file_ptr=", &req->file_ptr );
     dump_varargs_bytes( ", data=", cur_size );
-}
-
-static void dump_get_irp_result_request( const struct get_irp_result_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    dump_uint64( ", user_arg=", &req->user_arg );
-}
-
-static void dump_get_irp_result_reply( const struct get_irp_result_reply *req )
-{
-    fprintf( stderr, " size=%u", req->size );
-    dump_varargs_bytes( ", out_data=", cur_size );
 }
 
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
@@ -4605,11 +4604,11 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_serial_info_request,
     (dump_func)dump_register_async_request,
     (dump_func)dump_cancel_async_request,
+    (dump_func)dump_get_async_result_request,
     (dump_func)dump_read_request,
     (dump_func)dump_write_request,
     (dump_func)dump_ioctl_request,
     (dump_func)dump_set_irp_result_request,
-    (dump_func)dump_get_irp_result_request,
     (dump_func)dump_create_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
     (dump_func)dump_set_named_pipe_info_request,
@@ -4891,11 +4890,11 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     NULL,
+    (dump_func)dump_get_async_result_reply,
     (dump_func)dump_read_reply,
     (dump_func)dump_write_reply,
     (dump_func)dump_ioctl_reply,
     NULL,
-    (dump_func)dump_get_irp_result_reply,
     (dump_func)dump_create_named_pipe_reply,
     (dump_func)dump_get_named_pipe_info_reply,
     NULL,
@@ -5177,11 +5176,11 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_serial_info",
     "register_async",
     "cancel_async",
+    "get_async_result",
     "read",
     "write",
     "ioctl",
     "set_irp_result",
-    "get_irp_result",
     "create_named_pipe",
     "get_named_pipe_info",
     "set_named_pipe_info",
