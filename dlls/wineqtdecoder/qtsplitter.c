@@ -864,6 +864,9 @@ static ULONG WINAPI QTInPin_Release(IPin *iface)
         if (This->pAlloc)
             IMemAllocator_Release(This->pAlloc);
         This->pAlloc = NULL;
+        if (This->pReader)
+            IAsyncReader_Release(This->pReader);
+        This->pReader = NULL;
         This->pin.IPin_iface.lpVtbl = NULL;
         return 0;
     }
@@ -1203,6 +1206,7 @@ static HRESULT WINAPI QTInPin_Disconnect(IPin *iface)
         {
             IMemAllocator_Decommit(This->pAlloc);
             IPin_Disconnect(This->pin.pConnectedTo);
+            IPin_Release(This->pin.pConnectedTo);
             This->pin.pConnectedTo = NULL;
             hr = QT_RemoveOutputPins(Parser);
         }
