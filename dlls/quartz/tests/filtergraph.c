@@ -366,6 +366,13 @@ static void test_render_run(const WCHAR *file)
     }
 
     releasefiltergraph();
+
+    if (h != INVALID_HANDLE_VALUE) {
+        /* check reference leaks */
+        h = CreateFileW(file, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+        ok(h != INVALID_HANDLE_VALUE, "CreateFile failed: err=%d\n", GetLastError());
+        CloseHandle(h);
+    }
 }
 
 static void test_graph_builder(void)
