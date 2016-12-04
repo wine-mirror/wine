@@ -1246,7 +1246,7 @@ DECL_HANDLER(read_directory_changes)
         return;
 
     /* requests don't timeout */
-    if (!(async = fd_queue_async( dir->fd, &req->async, ASYNC_TYPE_WAIT ))) goto end;
+    if (!(async = fd_queue_async( dir->fd, &req->async, NULL, ASYNC_TYPE_WAIT ))) goto end;
 
     /* assign it once */
     if (!dir->filter)

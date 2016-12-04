@@ -2030,7 +2030,7 @@ void default_poll_event( struct fd *fd, int event )
     else if (!fd->inode) set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
-struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type )
+struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct iosb *iosb, int type )
 {
     struct async_queue *queue;
     struct async *async;
@@ -2054,7 +2054,7 @@ struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type 
         assert(0);
     }
 
-    if ((async = create_async( current, queue, data )) && type != ASYNC_TYPE_WAIT)
+    if ((async = create_async( current, queue, data, iosb )) && type != ASYNC_TYPE_WAIT)
     {
         if (!fd->inode)
             set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
@@ -2096,7 +2096,7 @@ void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, 
 {
     struct async *async;
 
-    if ((async = fd_queue_async( fd, data, type )))
+    if ((async = fd_queue_async( fd, data, NULL, type )))
     {
         release_object( async );
         set_error( STATUS_PENDING );

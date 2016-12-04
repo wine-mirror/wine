@@ -97,7 +97,7 @@ extern int default_fd_signaled( struct object *obj, struct wait_queue_entry *ent
 extern unsigned int default_fd_map_access( struct object *obj, unsigned int access );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
-extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, int type );
+extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct iosb *iosb, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos );
@@ -177,7 +177,7 @@ extern struct object *create_serial( struct fd *fd );
 extern struct async_queue *create_async_queue( struct fd *fd );
 extern void free_async_queue( struct async_queue *queue );
 extern struct async *create_async( struct thread *thread, struct async_queue *queue,
-                                   const async_data_t *data );
+                                   const async_data_t *data, struct iosb *iosb );
 extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status );
 extern void async_set_result( struct object *obj, unsigned int status,
                               apc_param_t total, client_ptr_t apc, client_ptr_t apc_arg );

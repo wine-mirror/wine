@@ -47,6 +47,7 @@ struct async
     int                  signaled;
     struct event        *event;
     async_data_t         data;            /* data for async I/O call */
+    struct iosb         *iosb;            /* I/O status block */
 };
 
 static void async_dump( struct object *obj, int verbose );
@@ -141,6 +142,7 @@ static void async_destroy( struct object *obj )
 
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
+    if (async->iosb) release_object( async->iosb );
     release_object( async->queue );
     release_object( async->thread );
 }
@@ -172,6 +174,7 @@ void async_terminate( struct async *async, unsigned int status )
     }
 
     async->status = status;
+    if (async->iosb && async->iosb->status == STATUS_PENDING) async->iosb->status = status;
 
     if (async->data.callback)
     {
@@ -225,7 +228,8 @@ void free_async_queue( struct async_queue *queue )
 }
 
 /* create an async on a given queue of a fd */
-struct async *create_async( struct thread *thread, struct async_queue *queue, const async_data_t *data )
+struct async *create_async( struct thread *thread, struct async_queue *queue, const async_data_t *data,
+                            struct iosb *iosb )
 {
     struct event *event = NULL;
     struct async *async;
@@ -246,6 +250,9 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->timeout = NULL;
     async->queue   = (struct async_queue *)grab_object( queue );
     async->signaled = 0;
+
+    if (iosb) async->iosb = (struct iosb *)grab_object( iosb );
+    else async->iosb = NULL;
 
     list_add_tail( &queue->queue, &async->queue_entry );
     list_add_tail( &thread->process->asyncs, &async->process_entry );
