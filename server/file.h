@@ -53,6 +53,18 @@ struct fd_ops
     void (*reselect_async)( struct fd *, struct async_queue *queue );
 };
 
+/* server-side representation of I/O status block */
+struct iosb
+{
+    struct object obj;          /* object header */
+    unsigned int  status;       /* resulting status (or STATUS_PENDING) */
+    data_size_t   result;       /* size of result (input or output depending on the type) */
+    data_size_t   in_size;      /* size of input data */
+    void         *in_data;      /* input data */
+    data_size_t   out_size;     /* size of output data */
+    void         *out_data;     /* output data */
+};
+
 /* file descriptor functions */
 
 extern struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user,
@@ -175,6 +187,7 @@ extern void async_terminate( struct async *async, unsigned int status );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );
 extern struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key );
 extern void fd_copy_completion( struct fd *src, struct fd *dst );
+extern struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_size_t out_size );
 extern void cancel_process_asyncs( struct process *process );
 
 /* access rights that require Unix read permission */

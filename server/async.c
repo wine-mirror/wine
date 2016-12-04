@@ -389,6 +389,68 @@ void async_wake_up( struct async_queue *queue, unsigned int status )
     }
 }
 
+static void iosb_dump( struct object *obj, int verbose );
+static void iosb_destroy( struct object *obj );
+
+static const struct object_ops iosb_ops =
+{
+    sizeof(struct iosb),      /* size */
+    iosb_dump,                /* dump */
+    no_get_type,              /* get_type */
+    no_add_queue,             /* add_queue */
+    NULL,                     /* remove_queue */
+    NULL,                     /* signaled */
+    NULL,                     /* satisfied */
+    no_signal,                /* signal */
+    no_get_fd,                /* get_fd */
+    no_map_access,            /* map_access */
+    default_get_sd,           /* get_sd */
+    default_set_sd,           /* set_sd */
+    no_lookup_name,           /* lookup_name */
+    no_link_name,             /* link_name */
+    NULL,                     /* unlink_name */
+    no_open_file,             /* open_file */
+    no_close_handle,          /* close_handle */
+    iosb_destroy              /* destroy */
+};
+
+static void iosb_dump( struct object *obj, int verbose )
+{
+    assert( obj->ops == &iosb_ops );
+    fprintf( stderr, "I/O status block\n" );
+}
+
+static void iosb_destroy( struct object *obj )
+{
+    struct iosb *iosb = (struct iosb *)obj;
+
+    free( iosb->in_data );
+    free( iosb->out_data );
+}
+
+/* allocate iosb struct */
+struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_size_t out_size )
+{
+    struct iosb *iosb;
+
+    if (!(iosb = alloc_object( &iosb_ops ))) return NULL;
+
+    iosb->status = STATUS_PENDING;
+    iosb->result = 0;
+    iosb->in_size = in_size;
+    iosb->in_data = NULL;
+    iosb->out_size = out_size;
+    iosb->out_data = NULL;
+
+    if (in_size && !(iosb->in_data = memdup( in_data, in_size )))
+    {
+        release_object( iosb );
+        iosb = NULL;
+    }
+
+    return iosb;
+}
+
 /* cancels all async I/O */
 DECL_HANDLER(cancel_async)
 {

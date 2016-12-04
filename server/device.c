@@ -50,13 +50,8 @@ struct irp_call
     struct thread         *thread;        /* thread that queued the irp */
     client_ptr_t           user_arg;      /* user arg used to identify the request */
     struct async          *async;         /* pending async op */
-    unsigned int           status;        /* resulting status (or STATUS_PENDING) */
     irp_params_t           params;        /* irp parameters */
-    data_size_t            result;        /* size of result (input or output depending on the type) */
-    data_size_t            in_size;       /* size of input data */
-    void                  *in_data;       /* input data */
-    data_size_t            out_size;      /* size of output data */
-    void                  *out_data;      /* output data */
+    struct iosb           *iosb;          /* I/O status block */
 };
 
 static void irp_call_dump( struct object *obj, int verbose );
@@ -241,13 +236,12 @@ static void irp_call_destroy( struct object *obj )
 {
     struct irp_call *irp = (struct irp_call *)obj;
 
-    free( irp->in_data );
-    free( irp->out_data );
     if (irp->async)
     {
         async_terminate( irp->async, STATUS_CANCELLED );
         release_object( irp->async );
     }
+    if (irp->iosb) release_object( irp->iosb );
     if (irp->file) release_object( irp->file );
     if (irp->thread) release_object( irp->thread );
 }
@@ -269,14 +263,8 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
         irp->thread   = NULL;
         irp->async    = NULL;
         irp->params   = *params;
-        irp->status   = STATUS_PENDING;
-        irp->result   = 0;
-        irp->in_size  = in_size;
-        irp->in_data  = NULL;
-        irp->out_size = out_size;
-        irp->out_data = NULL;
 
-        if (irp->in_size && !(irp->in_data = memdup( in_data, in_size )))
+        if (!(irp->iosb = create_iosb( in_data, in_size, out_size )))
         {
             release_object( irp );
             irp = NULL;
@@ -289,15 +277,16 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
                             const void *out_data, data_size_t out_size, data_size_t result )
 {
     struct device_file *file = irp->file;
+    struct iosb *iosb = irp->iosb;
 
     if (!file) return;  /* already finished */
 
     /* FIXME: handle the STATUS_PENDING case */
-    irp->status = status;
-    irp->result = result;
-    irp->out_size = min( irp->out_size, out_size );
-    if (irp->out_size && !(irp->out_data = memdup( out_data, irp->out_size )))
-        irp->out_size = 0;
+    iosb->status = status;
+    iosb->result = result;
+    iosb->out_size = min( iosb->out_size, out_size );
+    if (iosb->out_size && !(iosb->out_data = memdup( out_data, iosb->out_size )))
+        iosb->out_size = 0;
     irp->file = NULL;
     if (irp->async)
     {
@@ -761,6 +750,7 @@ DECL_HANDLER(get_next_device_request)
     struct irp_call *irp;
     struct device_manager *manager;
     struct list *ptr;
+    struct iosb *iosb;
 
     reply->params.major = IRP_MJ_MAXIMUM_FUNCTION + 1;
 
@@ -788,14 +778,15 @@ DECL_HANDLER(get_next_device_request)
             reply->client_tid = get_thread_id( irp->thread );
         }
         reply->params = irp->params;
-        reply->in_size = irp->in_size;
-        reply->out_size = irp->out_size;
-        if (irp->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
+        iosb = irp->iosb;
+        reply->in_size = iosb->in_size;
+        reply->out_size = iosb->out_size;
+        if (iosb->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
         else if ((reply->next = alloc_handle( current->process, irp, 0, 0 )))
         {
-            set_reply_data_ptr( irp->in_data, irp->in_size );
-            irp->in_data = NULL;
-            irp->in_size = 0;
+            set_reply_data_ptr( iosb->in_data, iosb->in_size );
+            iosb->in_data = NULL;
+            iosb->in_size = 0;
             list_remove( &irp->mgr_entry );
             list_init( &irp->mgr_entry );
         }
@@ -833,17 +824,18 @@ DECL_HANDLER(get_irp_result)
 
     if ((irp = find_irp_call( file, current, req->user_arg )))
     {
-        if (irp->out_data)
+        struct iosb *iosb = irp->iosb;
+        if (iosb->out_data)
         {
-            data_size_t size = min( irp->out_size, get_reply_max_size() );
+            data_size_t size = min( iosb->out_size, get_reply_max_size() );
             if (size)
             {
-                set_reply_data_ptr( irp->out_data, size );
-                irp->out_data = NULL;
+                set_reply_data_ptr( iosb->out_data, size );
+                iosb->out_data = NULL;
             }
         }
-        reply->size = irp->result;
-        set_error( irp->status );
+        reply->size = iosb->result;
+        set_error( iosb->status );
         list_remove( &irp->dev_entry );
         release_object( irp );  /* no longer on the device queue */
     }
