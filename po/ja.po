@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-08-20 14:33+0900\n"
+"PO-Revision-Date: 2016-12-04 21:37+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -8028,10 +8028,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine の提供:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "実行(&R)..."
+msgstr "実行"
 
 #: shell32.rc:338
 msgid ""
@@ -10502,10 +10500,8 @@ msgid "IPv6 address"
 msgstr "IPv6 アドレス"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "システム設定"
+msgstr "システム情報"
 
 #: net.rc:30
 msgid ""
@@ -14497,10 +14493,8 @@ msgid "Error: Invalid query\n"
 msgstr "エラー: クエリが無効です\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "reg: 無効な構文です。"
+msgstr "エラー: PATH の構文が無効です\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -14575,36 +14569,32 @@ msgid "F&ormat"
 msgstr "書式(&O)"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "一覧(&L)"
+msgstr "箇条書きと段落番号(&L)"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "箇条書き(&B)"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "CRL ナンバー"
+msgstr "段落番号"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "アルファベット - 小文字"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "アルファベット - 大文字"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "ローマ数字 - 小文字"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "ローマ数字 - 大文字"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
