@@ -3632,10 +3632,13 @@ if (0) { /* crashes on native */
             ok(logfont.lfItalic == lf.lfItalic, "%s: unexpected italic flag %d, oblique simulation %s\n",
                 wine_dbgstr_w(nameW), logfont.lfItalic, sim & DWRITE_FONT_SIMULATIONS_OBLIQUE ? "yes" : "no");
 
-            ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "got %d\n", logfont.lfOutPrecision);
-            ok(logfont.lfClipPrecision == 0, "got %d\n", logfont.lfClipPrecision);
-            ok(logfont.lfQuality == 0, "got %d\n", logfont.lfQuality);
-            ok(logfont.lfPitchAndFamily == 0, "got %d\n", logfont.lfPitchAndFamily);
+            ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "%s: unexpected output precision %d\n", wine_dbgstr_w(nameW),
+                logfont.lfOutPrecision);
+            ok(logfont.lfClipPrecision == CLIP_DEFAULT_PRECIS, "%s: unexpected clipping precision %d\n", wine_dbgstr_w(nameW),
+                logfont.lfClipPrecision);
+            ok(logfont.lfQuality == DEFAULT_QUALITY, "%s: unexpected quality %d\n", wine_dbgstr_w(nameW), logfont.lfQuality);
+            ok(logfont.lfPitchAndFamily == DEFAULT_PITCH, "%s: unexpected pitch %d\n", wine_dbgstr_w(nameW),
+                logfont.lfPitchAndFamily);
             ok(logfont.lfFaceName[0] != 0, "got face name %s\n", wine_dbgstr_w(logfont.lfFaceName));
 
             IDWriteFont_Release(font);
