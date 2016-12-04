@@ -1923,8 +1923,14 @@ HRESULT opentype_get_font_signature(struct file_stream_desc *stream_desc, FONTSI
         fontsig->fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
         fontsig->fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
 
-        fontsig->fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
-        fontsig->fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
+        if (GET_BE_WORD(tt_os2->version) == 0) {
+            fontsig->fsCsb[0] = 0;
+            fontsig->fsCsb[1] = 0;
+        }
+        else {
+            fontsig->fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
+            fontsig->fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
+        }
 
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2_context);
     }
