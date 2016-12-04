@@ -766,7 +766,7 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
     HRESULT hr = S_OK;
     int i;
 
-    TRACE("(%p/%p)->() live sources not handled properly!\n", iface, This);
+    TRACE("(%p/%p)->() live sources not handled properly!\n", This, iface);
 
     EnterCriticalSection(&This->cs);
 
@@ -5318,7 +5318,7 @@ static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceC
     HRESULT hr = S_OK;
     int i;
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, pClock);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pClock);
 
     EnterCriticalSection(&This->cs);
     {
@@ -5366,7 +5366,7 @@ static HRESULT WINAPI MediaFilter_GetSyncSource(IMediaFilter *iface, IReferenceC
 {
     IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, ppClock);
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppClock);
 
     if (!ppClock)
         return E_POINTER;
