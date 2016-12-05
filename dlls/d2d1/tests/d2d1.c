@@ -463,6 +463,16 @@ static ID3D10Device1 *create_device(void)
     return NULL;
 }
 
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
 static IDXGISwapChain *create_swapchain(ID3D10Device1 *device, HWND window, BOOL windowed)
 {
     IDXGISwapChain *swapchain;
@@ -562,8 +572,7 @@ static void test_clip(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -714,8 +723,7 @@ static void test_state_block(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -910,8 +918,7 @@ static void test_color_brush(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -1045,8 +1052,7 @@ static void test_bitmap_brush(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -1333,8 +1339,7 @@ static void test_path_geometry(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -1942,8 +1947,7 @@ static void test_bitmap_formats(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -2012,8 +2016,7 @@ static void test_alpha_mode(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -2234,10 +2237,8 @@ static void test_shared_bitmap(void)
         return;
     }
 
-    window1 = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
-    window2 = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window1 = create_window();
+    window2 = create_window();
     swapchain1 = create_swapchain(device1, window1, TRUE);
     swapchain2 = create_swapchain(device1, window2, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain1, 0, &IID_IDXGISurface, (void **)&surface1);
@@ -2436,8 +2437,7 @@ static void test_bitmap_updates(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -2545,8 +2545,7 @@ static void test_opacity_brush(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -2724,8 +2723,7 @@ static void test_create_target(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -2797,8 +2795,7 @@ static void test_draw_text_layout(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -3494,8 +3491,7 @@ static void test_gradient(void)
         skip("Failed to create device, skipping tests.\n");
         return;
     }
-    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     swapchain = create_swapchain(device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
