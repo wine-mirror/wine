@@ -48,6 +48,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ATOMIC_IADD                      */ "atomic_iadd",
     /* WINED3DSIH_ATOMIC_OR                        */ "atomic_or",
     /* WINED3DSIH_ATOMIC_UMAX                      */ "atomic_umax",
+    /* WINED3DSIH_ATOMIC_UMIN                      */ "atomic_umin",
     /* WINED3DSIH_ATOMIC_XOR                       */ "atomic_xor",
     /* WINED3DSIH_BEM                              */ "bem",
     /* WINED3DSIH_BFI                              */ "bfi",
