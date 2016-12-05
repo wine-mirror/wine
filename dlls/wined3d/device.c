@@ -811,7 +811,7 @@ static void create_default_samplers(struct wined3d_device *device, struct wined3
          */
         GL_EXTCALL(glGenSamplers(1, &device->default_sampler));
         GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-        GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST));
+        GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
         checkGLcall("Create default sampler");
 
         /* In D3D10+, a NULL sampler maps to the default sampler state. */
