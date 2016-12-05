@@ -130,6 +130,14 @@ static void translate_matrix(D2D1_MATRIX_3X2_F *matrix, float x, float y)
     matrix->_32 += x * matrix->_12 + y * matrix->_22;
 }
 
+static void line_to(ID2D1GeometrySink *sink, float x, float y)
+{
+    D2D1_POINT_2F point;
+
+    set_point(&point, x,  y);
+    ID2D1GeometrySink_AddLine(sink, point);
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -1187,99 +1195,61 @@ static void fill_geometry_sink(ID2D1GeometrySink *sink)
 
     set_point(&point, 15.0f,  20.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 55.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 55.0f, 220.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 25.0f, 220.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 25.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 75.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 75.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  5.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  5.0f,  60.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 45.0f,  60.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 45.0f, 180.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 35.0f, 180.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 35.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 65.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 65.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 15.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 55.0f,  20.0f);
+    line_to(sink, 55.0f, 220.0f);
+    line_to(sink, 25.0f, 220.0f);
+    line_to(sink, 25.0f, 100.0f);
+    line_to(sink, 75.0f, 100.0f);
+    line_to(sink, 75.0f, 300.0f);
+    line_to(sink,  5.0f, 300.0f);
+    line_to(sink,  5.0f,  60.0f);
+    line_to(sink, 45.0f,  60.0f);
+    line_to(sink, 45.0f, 180.0f);
+    line_to(sink, 35.0f, 180.0f);
+    line_to(sink, 35.0f, 140.0f);
+    line_to(sink, 65.0f, 140.0f);
+    line_to(sink, 65.0f, 260.0f);
+    line_to(sink, 15.0f, 260.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 155.0f, 300.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 155.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 155.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 155.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 155.0f, 160.0f);
+    line_to(sink,  85.0f, 160.0f);
+    line_to(sink,  85.0f, 300.0f);
+    line_to(sink, 120.0f, 300.0f);
+    line_to(sink, 120.0f,  20.0f);
+    line_to(sink, 155.0f,  20.0f);
+    line_to(sink, 155.0f, 160.0f);
+    line_to(sink,  85.0f, 160.0f);
+    line_to(sink,  85.0f,  20.0f);
+    line_to(sink, 120.0f,  20.0f);
+    line_to(sink, 120.0f, 300.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 165.0f,  20.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 165.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 235.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 235.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 165.0f, 300.0f);
+    line_to(sink, 235.0f, 300.0f);
+    line_to(sink, 235.0f,  20.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
     set_point(&point, 225.0f,  60.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 225.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 175.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 175.0f,  60.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 225.0f, 260.0f);
+    line_to(sink, 175.0f, 260.0f);
+    line_to(sink, 175.0f,  60.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
     set_point(&point, 215.0f, 220.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 185.0f, 220.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 185.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 215.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 185.0f, 220.0f);
+    line_to(sink, 185.0f, 100.0f);
+    line_to(sink, 215.0f, 100.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
     set_point(&point, 195.0f, 180.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 205.0f, 180.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 205.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 195.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 205.0f, 180.0f);
+    line_to(sink, 205.0f, 140.0f);
+    line_to(sink, 195.0f, 140.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }
 
@@ -1719,18 +1689,14 @@ static void test_path_geometry(void)
 
     set_point(&point, 40.0f,   20.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 75.0f,  300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  5.0f,  300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 75.0f,  300.0f);
+    line_to(sink,  5.0f,  300.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 40.0f,  290.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 55.0f,  160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 25.0f,  160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
+    line_to(sink, 55.0f,  160.0f);
+    line_to(sink, 25.0f,  160.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     hr = ID2D1GeometrySink_Close(sink);
