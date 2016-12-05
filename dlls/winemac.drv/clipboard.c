@@ -1934,7 +1934,7 @@ void CDECL macdrv_UpdateClipboard(void)
     if (!(pipe_name = get_pipe_name())) return;
     pipe = CreateFileW(pipe_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
-    if (!pipe)
+    if (pipe == INVALID_HANDLE_VALUE)
     {
         WARN("failed to open pipe to clipboard manager: %d\n", GetLastError());
         return;
