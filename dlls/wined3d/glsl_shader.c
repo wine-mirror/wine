@@ -8963,6 +8963,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMIN                             */ shader_glsl_map2gl,
     /* WINED3DSIH_IMM_ATOMIC_ALLOC                 */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_XOR                   */ NULL,
     /* WINED3DSIH_IMUL                             */ shader_glsl_imul,
     /* WINED3DSIH_INE                              */ shader_glsl_relop,
     /* WINED3DSIH_INEG                             */ shader_glsl_unary_op,
