@@ -88,6 +88,9 @@ static BOOL   (WINAPI *pThread32First)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pThread32Next)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
 static SIZE_T (WINAPI *pGetLargePageMinimum)(void);
+static BOOL   (WINAPI *pInitializeProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD, SIZE_T*);
+static BOOL   (WINAPI *pUpdateProcThreadAttribute)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD_PTR, void *,SIZE_T,void*,SIZE_T*);
+static void   (WINAPI *pDeleteProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -252,6 +255,9 @@ static BOOL init(void)
     pThread32Next = (void *)GetProcAddress(hkernel32, "Thread32Next");
     pGetLogicalProcessorInformationEx = (void *)GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
     pGetLargePageMinimum = (void *)GetProcAddress(hkernel32, "GetLargePageMinimum");
+    pInitializeProcThreadAttributeList = (void *)GetProcAddress(hkernel32, "InitializeProcThreadAttributeList");
+    pUpdateProcThreadAttribute = (void *)GetProcAddress(hkernel32, "UpdateProcThreadAttribute");
+    pDeleteProcThreadAttributeList = (void *)GetProcAddress(hkernel32, "DeleteProcThreadAttributeList");
 
     return TRUE;
 }
@@ -3137,6 +3143,122 @@ static void test_largepages(void)
     ok((size == 0) || (size == 2*1024*1024) || (size == 4*1024*1024), "GetLargePageMinimum reports %ld size\n", size);
 }
 
+struct proc_thread_attr
+{
+    DWORD_PTR attr;
+    SIZE_T size;
+    void *value;
+};
+
+struct _PROC_THREAD_ATTRIBUTE_LIST
+{
+    DWORD mask;  /* bitmask of items in list */
+    DWORD size;  /* max number of items in list */
+    DWORD count; /* number of items in list */
+    DWORD pad;
+    DWORD_PTR unk;
+    struct proc_thread_attr attrs[10];
+};
+
+static void test_ProcThreadAttributeList(void)
+{
+    BOOL ret;
+    SIZE_T size, needed;
+    int i;
+    struct _PROC_THREAD_ATTRIBUTE_LIST list, expect_list;
+    HANDLE handles[4];
+
+    if (!pInitializeProcThreadAttributeList)
+    {
+        win_skip("No support for ProcThreadAttributeList\n");
+        return;
+    }
+
+    for (i = 0; i <= 10; i++)
+    {
+        needed = FIELD_OFFSET(struct _PROC_THREAD_ATTRIBUTE_LIST, attrs[i]);
+        ret = pInitializeProcThreadAttributeList(NULL, i, 0, &size);
+        ok(!ret, "got %d\n", ret);
+        if(i >= 4 && GetLastError() == ERROR_INVALID_PARAMETER) /* Vista only allows a maximium of 3 slots */
+            break;
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d\n", GetLastError());
+        ok(size == needed, "%d: got %ld expect %ld\n", i, size, needed);
+
+        memset(&list, 0xcc, sizeof(list));
+        ret = pInitializeProcThreadAttributeList(&list, i, 0, &size);
+        ok(ret, "got %d\n", ret);
+        ok(list.mask == 0, "%d: got %08x\n", i, list.mask);
+        ok(list.size == i, "%d: got %08x\n", i, list.size);
+        ok(list.count == 0, "%d: got %08x\n", i, list.count);
+        ok(list.unk == 0, "%d: got %08lx\n", i, list.unk);
+    }
+
+    memset(handles, 0, sizeof(handles));
+    memset(&expect_list, 0xcc, sizeof(expect_list));
+    expect_list.mask = 0;
+    expect_list.size = i - 1;
+    expect_list.count = 0;
+    expect_list.unk = 0;
+
+    ret = pUpdateProcThreadAttribute(&list, 0, 0xcafe, handles, sizeof(PROCESSOR_NUMBER), NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_NOT_SUPPORTED, "got %d\n", GetLastError());
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]) / 2, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_BAD_LENGTH, "got %d\n", GetLastError());
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]) * 2, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_BAD_LENGTH, "got %d\n", GetLastError());
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]), NULL, NULL);
+    ok(ret, "got %d\n", ret);
+
+    expect_list.mask |= 1 << ProcThreadAttributeParentProcess;
+    expect_list.attrs[0].attr = PROC_THREAD_ATTRIBUTE_PARENT_PROCESS;
+    expect_list.attrs[0].size = sizeof(handles[0]);
+    expect_list.attrs[0].value = handles;
+    expect_list.count++;
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, handles, sizeof(handles[0]), NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_OBJECT_NAME_EXISTS, "got %d\n", GetLastError());
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles, sizeof(handles) - 1, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_BAD_LENGTH, "got %d\n", GetLastError());
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles, sizeof(handles), NULL, NULL);
+    ok(ret, "got %d\n", ret);
+
+    expect_list.mask |= 1 << ProcThreadAttributeHandleList;
+    expect_list.attrs[1].attr = PROC_THREAD_ATTRIBUTE_HANDLE_LIST;
+    expect_list.attrs[1].size = sizeof(handles);
+    expect_list.attrs[1].value = handles;
+    expect_list.count++;
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles, sizeof(handles), NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_OBJECT_NAME_EXISTS, "got %d\n", GetLastError());
+
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_IDEAL_PROCESSOR, handles, sizeof(PROCESSOR_NUMBER), NULL, NULL);
+    ok(ret || (!ret && GetLastError() == ERROR_NOT_SUPPORTED), "got %d gle %d\n", ret, GetLastError());
+
+    if (ret)
+    {
+        expect_list.mask |= 1 << ProcThreadAttributeIdealProcessor;
+        expect_list.attrs[2].attr = PROC_THREAD_ATTRIBUTE_IDEAL_PROCESSOR;
+        expect_list.attrs[2].size = sizeof(PROCESSOR_NUMBER);
+        expect_list.attrs[2].value = handles;
+        expect_list.count++;
+    }
+
+    ok(!memcmp(&list, &expect_list, size), "mismatch\n");
+
+    pDeleteProcThreadAttributeList(&list);
+}
+
 START_TEST(process)
 {
     HANDLE job;
@@ -3210,6 +3332,7 @@ START_TEST(process)
     test_session_info();
     test_GetLogicalProcessorInformationEx();
     test_largepages();
+    test_ProcThreadAttributeList();
 
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched

@@ -4,7 +4,7 @@
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr) kernel32.CreateRemoteThread
 @ stub CreateRemoteThreadEx
 @ stdcall CreateThread(ptr long ptr long long ptr) kernel32.CreateThread
-@ stub DeleteProcThreadAttributeList
+@ stdcall DeleteProcThreadAttributeList(ptr) kernel32.DeleteProcThreadAttributeList
 @ stdcall ExitProcess(long) kernel32.ExitProcess
 @ stdcall ExitThread(long) kernel32.ExitThread
 @ stdcall FlushProcessWriteBuffers() kernel32.FlushProcessWriteBuffers
@@ -23,7 +23,7 @@
 @ stdcall GetThreadId(ptr) kernel32.GetThreadId
 @ stdcall GetThreadPriority(long) kernel32.GetThreadPriority
 @ stdcall GetThreadPriorityBoost(long ptr) kernel32.GetThreadPriorityBoost
-@ stub InitializeProcThreadAttributeList
+@ stdcall InitializeProcThreadAttributeList(ptr long long ptr) kernel32.InitializeProcThreadAttributeList
 @ stub OpenProcessToken
 @ stdcall OpenThread(long long long) kernel32.OpenThread
 @ stub OpenThreadToken
@@ -46,4 +46,4 @@
 @ stdcall TlsFree(long) kernel32.TlsFree
 @ stdcall TlsGetValue(long) kernel32.TlsGetValue
 @ stdcall TlsSetValue(long ptr) kernel32.TlsSetValue
-@ stub UpdateProcThreadAttribute
+@ stdcall UpdateProcThreadAttribute(ptr long long ptr long ptr ptr) kernel32.UpdateProcThreadAttribute

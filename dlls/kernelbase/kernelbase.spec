@@ -107,7 +107,7 @@
 @ stdcall DeleteCriticalSection(ptr) kernel32.DeleteCriticalSection
 @ stdcall DeleteFileA(str) kernel32.DeleteFileA
 @ stdcall DeleteFileW(wstr) kernel32.DeleteFileW
-@ stub DeleteProcThreadAttributeList
+@ stdcall DeleteProcThreadAttributeList(ptr) kernel32.DeleteProcThreadAttributeList
 @ stdcall DeleteTimerQueueEx(long long) kernel32.DeleteTimerQueueEx
 @ stdcall DeleteTimerQueueTimer(long long long) kernel32.DeleteTimerQueueTimer
 @ stdcall DeleteVolumeMountPointW(wstr) kernel32.DeleteVolumeMountPointW
@@ -368,7 +368,7 @@
 @ stdcall InitializeCriticalSection(ptr) kernel32.InitializeCriticalSection
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long) kernel32.InitializeCriticalSectionAndSpinCount
 @ stdcall InitializeCriticalSectionEx(ptr long long) kernel32.InitializeCriticalSectionEx
-@ stub InitializeProcThreadAttributeList
+@ stdcall InitializeProcThreadAttributeList(ptr long long ptr) kernel32.InitializeProcThreadAttributeList
 @ stdcall InitializeSListHead(ptr) kernel32.InitializeSListHead
 @ stdcall InitializeSRWLock(ptr) kernel32.InitializeSRWLock
 @ stdcall InitializeSecurityDescriptor(ptr long) advapi32.InitializeSecurityDescriptor
@@ -586,7 +586,7 @@
 @ stdcall UnlockFileEx(long long long long ptr) kernel32.UnlockFileEx
 @ stdcall UnmapViewOfFile(ptr) kernel32.UnmapViewOfFile
 @ stdcall UnregisterWaitEx(long long) kernel32.UnregisterWaitEx
-@ stub UpdateProcThreadAttribute
+@ stdcall UpdateProcThreadAttribute(ptr long long ptr long ptr ptr) kernel32.UpdateProcThreadAttribute
 @ stdcall VerLanguageNameA(long str long) kernel32.VerLanguageNameA
 @ stdcall VerLanguageNameW(long wstr long) kernel32.VerLanguageNameW
 @ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
