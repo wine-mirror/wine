@@ -1035,10 +1035,12 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     if (swapchain_desc->backbuffer_count)
     {
         struct wined3d_resource *back_buffer = &swapchain->back_buffers[0]->resource;
-        struct wined3d_rendertarget_view_desc view_desc;
+        struct wined3d_view_desc view_desc;
 
         view_desc.format_id = back_buffer->format->id;
+        view_desc.flags = 0;
         view_desc.u.texture.level_idx = 0;
+        view_desc.u.texture.level_count = 1;
         view_desc.u.texture.layer_idx = 0;
         view_desc.u.texture.layer_count = 1;
         if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,
@@ -4636,9 +4638,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,
         wined3d_device_reset_cb callback, BOOL reset_state)
 {
-    struct wined3d_rendertarget_view_desc view_desc;
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
+    struct wined3d_view_desc view_desc;
     BOOL backbuffer_resized;
     HRESULT hr = WINED3D_OK;
     unsigned int i;
@@ -4792,7 +4794,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
 
         view_desc.format_id = texture->resource.format->id;
+        view_desc.flags = 0;
         view_desc.u.texture.level_idx = 0;
+        view_desc.u.texture.level_count = 1;
         view_desc.u.texture.layer_idx = 0;
         view_desc.u.texture.layer_count = 1;
         hr = wined3d_rendertarget_view_create(&view_desc, &texture->resource,
@@ -4817,7 +4821,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         struct wined3d_resource *back_buffer = &swapchain->back_buffers[0]->resource;
 
         view_desc.format_id = back_buffer->format->id;
+        view_desc.flags = 0;
         view_desc.u.texture.level_idx = 0;
+        view_desc.u.texture.level_count = 1;
         view_desc.u.texture.layer_idx = 0;
         view_desc.u.texture.layer_count = 1;
         if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,

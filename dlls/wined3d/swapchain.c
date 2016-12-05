@@ -1016,8 +1016,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         TRACE("Creating depth/stencil buffer.\n");
         if (!device->auto_depth_stencil_view)
         {
+            struct wined3d_view_desc desc;
             struct wined3d_texture *ds;
-            struct wined3d_rendertarget_view_desc desc;
 
             texture_desc.format = swapchain->desc.auto_depth_stencil_format;
             texture_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
@@ -1030,7 +1030,9 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
             }
 
             desc.format_id = ds->resource.format->id;
+            desc.flags = 0;
             desc.u.texture.level_idx = 0;
+            desc.u.texture.level_count = 1;
             desc.u.texture.layer_idx = 0;
             desc.u.texture.layer_count = 1;
             hr = wined3d_rendertarget_view_create(&desc, &ds->resource, NULL, &wined3d_null_parent_ops,

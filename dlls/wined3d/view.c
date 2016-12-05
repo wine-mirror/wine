@@ -145,7 +145,7 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
 }
 
 static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
-        const struct wined3d_rendertarget_view_desc *desc, struct wined3d_resource *resource,
+        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
@@ -182,6 +182,7 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
             depth_or_layer_count = texture->layer_count;
 
         if (desc->u.texture.level_idx >= texture->level_count
+                || desc->u.texture.level_count != 1
                 || desc->u.texture.layer_idx >= depth_or_layer_count
                 || !desc->u.texture.layer_count
                 || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
@@ -200,7 +201,7 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_rendertarget_view_desc *desc,
+HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_rendertarget_view **view)
 {
@@ -230,13 +231,15 @@ HRESULT CDECL wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_
         unsigned int sub_resource_idx, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_rendertarget_view **view)
 {
-    struct wined3d_rendertarget_view_desc desc;
+    struct wined3d_view_desc desc;
 
     TRACE("texture %p, sub_resource_idx %u, parent %p, parent_ops %p, view %p.\n",
             texture, sub_resource_idx, parent, parent_ops, view);
 
     desc.format_id = texture->resource.format->id;
+    desc.flags = 0;
     desc.u.texture.level_idx = sub_resource_idx % texture->level_count;
+    desc.u.texture.level_count = 1;
     desc.u.texture.layer_idx = sub_resource_idx / texture->level_count;
     desc.u.texture.layer_count = 1;
 
@@ -300,7 +303,7 @@ void * CDECL wined3d_shader_resource_view_get_parent(const struct wined3d_shader
 }
 
 static void wined3d_shader_resource_view_create_texture_view(struct wined3d_shader_resource_view *view,
-        const struct wined3d_shader_resource_view_desc *desc, struct wined3d_texture *texture,
+        const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
         const struct wined3d_format *view_format)
 {
     const struct wined3d_gl_info *gl_info;
@@ -349,7 +352,7 @@ static void wined3d_shader_resource_view_create_texture_view(struct wined3d_shad
 }
 
 static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_view *view,
-        const struct wined3d_shader_resource_view_desc *desc, struct wined3d_resource *resource,
+        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     static const struct
@@ -441,7 +444,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_shader_resource_view_create(const struct wined3d_shader_resource_view_desc *desc,
+HRESULT CDECL wined3d_shader_resource_view_create(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_shader_resource_view **view)
 {
@@ -552,7 +555,7 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
 }
 
 static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_access_view *view,
-        const struct wined3d_unordered_access_view_desc *desc, struct wined3d_resource *resource,
+        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
@@ -580,6 +583,7 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
             depth_or_layer_count = texture->layer_count;
 
         if (desc->u.texture.level_idx >= texture->level_count
+                || desc->u.texture.level_count != 1
                 || desc->u.texture.layer_idx >= depth_or_layer_count
                 || !desc->u.texture.layer_count
                 || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
@@ -600,7 +604,7 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_unordered_access_view_create(const struct wined3d_unordered_access_view_desc *desc,
+HRESULT CDECL wined3d_unordered_access_view_create(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_unordered_access_view **view)
 {

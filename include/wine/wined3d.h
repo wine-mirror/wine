@@ -1914,25 +1914,6 @@ struct wined3d_rasterizer_state_desc
     BOOL front_ccw;
 };
 
-struct wined3d_rendertarget_view_desc
-{
-    enum wined3d_format_id format_id;
-    union
-    {
-        struct
-        {
-            unsigned int start_idx;
-            unsigned int count;
-        } buffer;
-        struct
-        {
-            unsigned int level_idx;
-            unsigned int layer_idx;
-            unsigned int layer_count;
-        } texture;
-    } u;
-};
-
 struct wined3d_sampler_desc
 {
     enum wined3d_texture_address address_u;
@@ -1975,7 +1956,7 @@ struct wined3d_shader_desc
     unsigned int max_version;
 };
 
-struct wined3d_shader_resource_view_desc
+struct wined3d_view_desc
 {
     enum wined3d_format_id format_id;
     unsigned int flags;
@@ -1990,26 +1971,6 @@ struct wined3d_shader_resource_view_desc
         {
             unsigned int level_idx;
             unsigned int level_count;
-            unsigned int layer_idx;
-            unsigned int layer_count;
-        } texture;
-    } u;
-};
-
-struct wined3d_unordered_access_view_desc
-{
-    enum wined3d_format_id format_id;
-    unsigned int flags;
-    union
-    {
-        struct
-        {
-            unsigned int start_idx;
-            unsigned int count;
-        } buffer;
-        struct
-        {
-            unsigned int level_idx;
             unsigned int layer_idx;
             unsigned int layer_count;
         } texture;
@@ -2467,7 +2428,7 @@ void __cdecl wined3d_resource_set_parent(struct wined3d_resource *resource, void
 DWORD __cdecl wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority);
 HRESULT __cdecl wined3d_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx);
 
-HRESULT __cdecl wined3d_rendertarget_view_create(const struct wined3d_rendertarget_view_desc *desc,
+HRESULT __cdecl wined3d_rendertarget_view_create(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_rendertarget_view **view);
 HRESULT __cdecl wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_texture *texture,
@@ -2506,7 +2467,7 @@ ULONG __cdecl wined3d_shader_incref(struct wined3d_shader *shader);
 HRESULT __cdecl wined3d_shader_set_local_constants_float(struct wined3d_shader *shader,
         UINT start_idx, const float *src_data, UINT vector4f_count);
 
-HRESULT __cdecl wined3d_shader_resource_view_create(const struct wined3d_shader_resource_view_desc *desc,
+HRESULT __cdecl wined3d_shader_resource_view_create(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_shader_resource_view **view);
 ULONG __cdecl wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view);
@@ -2595,7 +2556,7 @@ HRESULT __cdecl wined3d_texture_update_overlay(struct wined3d_texture *texture, 
         const RECT *src_rect, struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const RECT *dst_rect, DWORD flags);
 
-HRESULT __cdecl wined3d_unordered_access_view_create(const struct wined3d_unordered_access_view_desc *desc,
+HRESULT __cdecl wined3d_unordered_access_view_create(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_unordered_access_view **view);
 ULONG __cdecl wined3d_unordered_access_view_decref(struct wined3d_unordered_access_view *view);
