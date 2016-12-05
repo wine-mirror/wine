@@ -257,6 +257,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_ATOMIC_IADD                      = 0xad,
     WINED3D_SM5_OP_IMM_ATOMIC_ALLOC                 = 0xb2,
     WINED3D_SM5_OP_IMM_ATOMIC_CONSUME               = 0xb3,
+    WINED3D_SM5_OP_IMM_ATOMIC_OR                    = 0xb6,
     WINED3D_SM5_OP_IMM_ATOMIC_XOR                   = 0xb7,
     WINED3D_SM5_OP_SYNC                             = 0xbe,
 };
@@ -906,6 +907,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_ATOMIC_IADD,                      WINED3DSIH_ATOMIC_IADD,                      "U",    "ii"},
     {WINED3D_SM5_OP_IMM_ATOMIC_ALLOC,                 WINED3DSIH_IMM_ATOMIC_ALLOC,                 "u",    "U"},
     {WINED3D_SM5_OP_IMM_ATOMIC_CONSUME,               WINED3DSIH_IMM_ATOMIC_CONSUME,               "u",    "U"},
+    {WINED3D_SM5_OP_IMM_ATOMIC_OR,                    WINED3DSIH_IMM_ATOMIC_OR,                    "uU",   "iu"},
     {WINED3D_SM5_OP_IMM_ATOMIC_XOR,                   WINED3DSIH_IMM_ATOMIC_XOR,                   "uU",   "iu"},
     {WINED3D_SM5_OP_SYNC,                             WINED3DSIH_SYNC,                             "",     "",
             shader_sm5_read_sync},
