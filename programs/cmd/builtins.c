@@ -460,6 +460,36 @@ static BOOL WCMD_AppendEOF(WCHAR *filename)
 }
 
 /****************************************************************************
+ * WCMD_IsSameFile
+ *
+ * Checks if the two paths reference to the same file
+ */
+static BOOL WCMD_IsSameFile(const WCHAR *name1, const WCHAR *name2)
+{
+  BOOL ret = FALSE;
+  HANDLE file1 = INVALID_HANDLE_VALUE, file2 = INVALID_HANDLE_VALUE;
+  BY_HANDLE_FILE_INFORMATION info1, info2;
+
+  file1 = CreateFileW(name1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+  if (file1 == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(file1, &info1))
+    goto end;
+
+  file2 = CreateFileW(name2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+  if (file2 == INVALID_HANDLE_VALUE || !GetFileInformationByHandle(file2, &info2))
+    goto end;
+
+  ret = info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
+    && info1.nFileIndexHigh == info2.nFileIndexHigh
+    && info1.nFileIndexLow == info2.nFileIndexLow;
+end:
+  if (file1 != INVALID_HANDLE_VALUE)
+    CloseHandle(file1);
+  if (file2 != INVALID_HANDLE_VALUE)
+    CloseHandle(file2);
+  return ret;
+}
+
+/****************************************************************************
  * WCMD_ManualCopy
  *
  * Copies from a file
@@ -922,6 +952,7 @@ void WCMD_copy(WCHAR * args) {
       do {
         WCHAR outname[MAX_PATH];
         BOOL  overwrite;
+        BOOL  appendtofirstfile = FALSE;
 
         /* Skip . and .., and directories */
         if (!srcisdevice && fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -946,8 +977,14 @@ void WCMD_copy(WCHAR * args) {
           WINE_TRACE("Flags: srcbinary(%d), dstbinary(%d), over(%d), prompt(%d)\n",
                      thiscopy->binarycopy, destination->binarycopy, overwrite, prompt);
 
+          if (!writtenoneconcat) {
+            appendtofirstfile = anyconcats && WCMD_IsSameFile(srcpath, outname);
+          }
+
           /* Prompt before overwriting */
-          if (!overwrite) {
+          if (appendtofirstfile) {
+            overwrite = TRUE;
+          } else if (!overwrite) {
             DWORD attributes = GetFileAttributesW(outname);
             if (attributes != INVALID_FILE_ATTRIBUTES) {
               WCHAR* question;
@@ -969,7 +1006,10 @@ void WCMD_copy(WCHAR * args) {
 
           /* Do the copy as appropriate */
           if (overwrite) {
-            if (anyconcats && writtenoneconcat) {
+            if (anyconcats && WCMD_IsSameFile(srcpath, outname)) {
+              /* Silently skip if the destination file is also a source file */
+              status = TRUE;
+            } else if (anyconcats && writtenoneconcat) {
               if (thiscopy->binarycopy) {
                 status = WCMD_ManualCopy(srcpath, outname, FALSE, TRUE);
               } else {

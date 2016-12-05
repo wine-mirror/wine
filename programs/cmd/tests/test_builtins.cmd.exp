@@ -1462,6 +1462,9 @@ Passed: file size check on file3_plus_eof [12]@or_broken@Skipping file size chec
 Passed: file size check on file12_plus_eof [14]@or_broken@Skipping file size check on NT4
 Passed: file size check on file12_no_eof [13]@or_broken@Skipping file size check on NT4
 Passed: file size check on file12_eof2 [14]@or_broken@Skipping file size check on NT4
+Passed: file size check on file1 [24]@or_broken@Skipping file size check on NT4
+Passed: file size check on file2 [16]@or_broken@Skipping file size check on NT4
+Passed: file size check on file3 [13]@or_broken@Skipping file size check on NT4
 Passed: file size check on file1_binary_srccopy [6]@or_broken@Skipping file size check on NT4
 Passed: file size check on file1_ascii_srccopy [5]@or_broken@Skipping file size check on NT4
 Passed: file size check on file123_default_copy [25]@or_broken@Skipping file size check on NT4

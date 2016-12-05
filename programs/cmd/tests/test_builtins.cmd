@@ -2584,6 +2584,22 @@ rem Concat 2 files, default mode - (one EOF on the end 5+8+1)
 copy ..\file1+..\file2 file12_eof2 >nul 2>&1
 call :CheckFileSize file12_eof2 14
 
+rem Test copying when destination is one of the sources.
+rem Concat file1+file2+file3 into file1, should produce file1+file2+file3 = 24
+copy /y ..\file? .\ >nul 2>&1
+copy /y /b file1+file2+file3 file1 >nul 2>&1
+call :CheckFileSize file1 24
+
+rem Concat file1+file2+file3 into file2, should produce file1+file3 = 16
+copy /y ..\file? .\ >nul 2>&1
+copy /y /b file1+file2+file3 file2 >nul 2>&1
+call :CheckFileSize file2 16
+
+rem Concat file1+file2+file3 into file3, should produce file1+file2 = 13
+copy /y ..\file? .\ >nul 2>&1
+copy /y /b file1+file2+file3 file3 >nul 2>&1
+call :CheckFileSize file3 13
+
 rem --------------------------------------------------------------
 rem Show ascii source copy stops at first EOF, binary does the lot
 rem --------------------------------------------------------------
