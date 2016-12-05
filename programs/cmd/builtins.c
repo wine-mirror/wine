@@ -444,7 +444,7 @@ static BOOL WCMD_AppendEOF(WCHAR *filename)
     h = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    if (h == NULL) {
+    if (h == INVALID_HANDLE_VALUE) {
       WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(filename), GetLastError());
       return FALSE;
     } else {
@@ -478,7 +478,7 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
 
     in  = CreateFileW(srcname, GENERIC_READ, 0, NULL,
                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (in == NULL) {
+    if (in == INVALID_HANDLE_VALUE) {
       WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(srcname), GetLastError());
       return FALSE;
     }
@@ -486,7 +486,7 @@ static BOOL WCMD_ManualCopy(WCHAR *srcname, WCHAR *dstname, BOOL ascii, BOOL app
     /* Open the output file, overwriting if not appending */
     out = CreateFileW(dstname, GENERIC_WRITE, 0, NULL,
                       append?OPEN_EXISTING:CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (out == NULL) {
+    if (out == INVALID_HANDLE_VALUE) {
       WINE_ERR("Failed to open %s (%d)\n", wine_dbgstr_w(dstname), GetLastError());
       CloseHandle(in);
       return FALSE;
