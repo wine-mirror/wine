@@ -357,6 +357,7 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
             case kSecCreationDateItemAttr:
                 TRACE("kSecCreationDateItemAttr: %.*s\n", (int)attr_list->attr[i].length,
                       (char *)attr_list->attr[i].data);
+                if (!attr_list->attr[i].data) continue;
                 if (buffer)
                 {
                     LARGE_INTEGER win_time;
