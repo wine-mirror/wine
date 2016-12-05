@@ -5303,6 +5303,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_IMM_ATOMIC_ALLOC                 */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_AND                   */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_EXCH                  */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_OR                    */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_XOR                   */ NULL,
     /* WINED3DSIH_IMUL                             */ NULL,
