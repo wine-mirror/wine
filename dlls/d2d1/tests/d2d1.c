@@ -138,6 +138,14 @@ static void line_to(ID2D1GeometrySink *sink, float x, float y)
     ID2D1GeometrySink_AddLine(sink, point);
 }
 
+static void quadratic_to(ID2D1GeometrySink *sink, float x1, float y1, float x2, float y2)
+{
+    D2D1_QUADRATIC_BEZIER_SEGMENT quadratic;
+
+    set_quadratic(&quadratic, x1, y1, x2, y2);
+    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -1255,31 +1263,22 @@ static void fill_geometry_sink(ID2D1GeometrySink *sink)
 
 static void fill_geometry_sink_bezier(ID2D1GeometrySink *sink)
 {
-    D2D1_QUADRATIC_BEZIER_SEGMENT quadratic;
     D2D1_POINT_2F point;
 
     set_point(&point, 5.0f, 160.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_quadratic(&quadratic, 40.0f, 160.0f, 40.0f,  20.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
-    set_quadratic(&quadratic, 40.0f, 160.0f, 75.0f, 160.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
-    set_quadratic(&quadratic, 40.0f, 160.0f, 40.0f, 300.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
-    set_quadratic(&quadratic, 40.0f, 160.0f,  5.0f, 160.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
+    quadratic_to(sink, 40.0f, 160.0f, 40.0f,  20.0f);
+    quadratic_to(sink, 40.0f, 160.0f, 75.0f, 160.0f);
+    quadratic_to(sink, 40.0f, 160.0f, 40.0f, 300.0f);
+    quadratic_to(sink, 40.0f, 160.0f,  5.0f, 160.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 
     set_point(&point, 20.0f, 160.0f);
     ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_quadratic(&quadratic, 20.0f,  80.0f, 40.0f,  80.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
-    set_quadratic(&quadratic, 60.0f,  80.0f, 60.0f, 160.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
-    set_quadratic(&quadratic, 60.0f, 240.0f, 40.0f, 240.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
-    set_quadratic(&quadratic, 20.0f, 240.0f, 20.0f, 160.0f);
-    ID2D1GeometrySink_AddQuadraticBezier(sink, &quadratic);
+    quadratic_to(sink, 20.0f,  80.0f, 40.0f,  80.0f);
+    quadratic_to(sink, 60.0f,  80.0f, 60.0f, 160.0f);
+    quadratic_to(sink, 60.0f, 240.0f, 40.0f, 240.0f);
+    quadratic_to(sink, 20.0f, 240.0f, 20.0f, 160.0f);
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }
 
