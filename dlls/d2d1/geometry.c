@@ -1777,7 +1777,11 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
     }
 
     if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], start_point))
+    {
         ERR("Failed to add vertex.\n");
+        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        return;
+    }
 
     geometry->u.path.state = D2D_GEOMETRY_STATE_FIGURE;
     ++geometry->u.path.segment_count;
