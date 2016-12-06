@@ -2552,6 +2552,8 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
     }
 
     hOldFont = SelectObject(hdc, TREEVIEW_FontForItem(infoPtr, item));
+    oldTextColor = SetTextColor(hdc, nmcdhdr.clrText);
+    oldTextBkColor = SetBkColor(hdc, nmcdhdr.clrTextBk);
 
     /* The custom draw handler can query the text rectangle,
      * so get ready. */
@@ -2586,9 +2588,9 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 
     TREEVIEW_DrawItemLines(infoPtr, hdc, item);
 
-    /* Set colors. Custom draw handler can change these so we do this after it. */
-    oldTextColor = SetTextColor(hdc, nmcdhdr.clrText);
-    oldTextBkColor = SetBkColor(hdc, nmcdhdr.clrTextBk);
+    /* reset colors. Custom draw handler can change them */
+    SetTextColor(hdc, nmcdhdr.clrText);
+    SetBkColor(hdc, nmcdhdr.clrTextBk);
 
     centery = (item->rect.top + item->rect.bottom) / 2;
 
