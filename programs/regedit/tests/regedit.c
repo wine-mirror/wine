@@ -340,6 +340,7 @@ static void test_comments(void)
 {
     LONG lr;
     HKEY hkey;
+    DWORD dword;
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -353,6 +354,78 @@ static void test_comments(void)
     lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
     verify_reg(hkey, "Wine1", REG_SZ, "Line 1", 7, 0);
     verify_reg(hkey, "Wine2", REG_SZ, "Line 2", 7, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine3\"=\"Value 1\"#comment\n"
+                    "\"Wine4\"=\"Value 2\";comment\n"
+                    "\"Wine5\"=dword:01020304 #comment\n"
+                    "\"Wine6\"=dword:02040608 ;comment\n\n");
+    verify_reg_nonexist(hkey, "Wine3");
+    todo_wine verify_reg(hkey, "Wine4", REG_SZ, "Value 2", 8, 0);
+    verify_reg_nonexist(hkey, "Wine5");
+    dword = 0x2040608;
+    todo_wine verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine7\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  #comment\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine8\"=\"A valid line\"\n"
+                    "\"Wine9\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  ;comment\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine10\"=\"Another valid line\"\n\n");
+    verify_reg_nonexist(hkey, "Wine7");
+    verify_reg(hkey, "Wine8", REG_SZ, "A valid line", 13, 0);
+    todo_wine verify_reg(hkey, "Wine9", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine10", REG_SZ, "Another valid line", 19, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "#\"Comment1\"=\"Value 1\"\n"
+                    ";\"Comment2\"=\"Value 2\"\n"
+                    "    #\"Comment3\"=\"Value 3\"\n"
+                    "    ;\"Comment4\"=\"Value 4\"\n"
+                    "\"Wine11\"=\"Value 6\"#\"Comment5\"=\"Value 5\"\n"
+                    "\"Wine12\"=\"Value 7\";\"Comment6\"=\"Value 6\"\n\n");
+    verify_reg_nonexist(hkey, "Comment1");
+    verify_reg_nonexist(hkey, "Comment2");
+    verify_reg_nonexist(hkey, "Comment3");
+    verify_reg_nonexist(hkey, "Comment4");
+    todo_wine verify_reg_nonexist(hkey, "Wine11");
+    verify_reg_nonexist(hkey, "Comment5");
+    verify_reg(hkey, "Wine12", REG_SZ, "Value 7", 8, TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg_nonexist(hkey, "Comment6");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine13\"=#\"Value 8\"\n"
+                    "\"Wine14\"=;\"Value 9\"\n"
+                    "\"Wine15\"=\"#comment1\"\n"
+                    "\"Wine16\"=\";comment2\"\n"
+                    "\"Wine17\"=\"Value#comment3\"\n"
+                    "\"Wine18\"=\"Value;comment4\"\n"
+                    "\"Wine19\"=\"Value #comment5\"\n"
+                    "\"Wine20\"=\"Value ;comment6\"\n"
+                    "\"Wine21\"=#dword:00000001\n"
+                    "\"Wine22\"=;dword:00000002\n"
+                    "\"Wine23\"=dword:00000003#comment\n"
+                    "\"Wine24\"=dword:00000004;comment\n\n");
+    verify_reg_nonexist(hkey, "Wine13");
+    verify_reg_nonexist(hkey, "Wine14");
+    verify_reg(hkey, "Wine15", REG_SZ, "#comment1", 10, 0);
+    verify_reg(hkey, "Wine16", REG_SZ, ";comment2", 10, 0);
+    verify_reg(hkey, "Wine17", REG_SZ, "Value#comment3", 15, 0);
+    verify_reg(hkey, "Wine18", REG_SZ, "Value;comment4", 15, 0);
+    verify_reg(hkey, "Wine19", REG_SZ, "Value #comment5", 16, 0);
+    verify_reg(hkey, "Wine20", REG_SZ, "Value ;comment6", 16, 0);
+    verify_reg_nonexist(hkey, "Wine21");
+    verify_reg_nonexist(hkey, "Wine22");
+    verify_reg_nonexist(hkey, "Wine23");
+    dword = 0x00000004;
+    todo_wine verify_reg(hkey, "Wine24", REG_DWORD, &dword, sizeof(dword), 0);
 
     RegCloseKey(hkey);
 
