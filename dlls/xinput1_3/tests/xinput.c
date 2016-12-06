@@ -32,6 +32,18 @@ static DWORD (WINAPI *pXInputGetKeystroke)(DWORD, DWORD, PXINPUT_KEYSTROKE);
 static DWORD (WINAPI *pXInputGetDSoundAudioDeviceGuids)(DWORD, GUID*, GUID*);
 static DWORD (WINAPI *pXInputGetBatteryInformation)(DWORD, BYTE, XINPUT_BATTERY_INFORMATION*);
 
+static void dump_gamepad(XINPUT_GAMEPAD *data)
+{
+    trace("-- Gamepad Variables --\n");
+    trace("Gamepad.wButtons: %#x\n", data->wButtons);
+    trace("Gamepad.bLeftTrigger: %d\n", data->bLeftTrigger);
+    trace("Gamepad.bRightTrigger: %d\n", data->bRightTrigger);
+    trace("Gamepad.sThumbLX: %d\n", data->sThumbLX);
+    trace("Gamepad.sThumbLY: %d\n", data->sThumbLY);
+    trace("Gamepad.sThumbRX: %d\n", data->sThumbRX);
+    trace("Gamepad.sThumbRY: %d\n\n", data->sThumbRY);
+}
+
 static void test_set_state(void)
 {
     XINPUT_VIBRATION vibrator;
@@ -96,14 +108,7 @@ static void test_get_state(void)
             else
                 trace("XInputGetStateEx: %d\n", result);
             trace("State->dwPacketNumber: %d\n", xinput.state.dwPacketNumber);
-            trace("Gamepad Variables --\n");
-            trace("Gamepad.wButtons: %#x\n", xinput.state.Gamepad.wButtons);
-            trace("Gamepad.bLeftTrigger: 0x%08x\n", xinput.state.Gamepad.bLeftTrigger);
-            trace("Gamepad.bRightTrigger: 0x%08x\n", xinput.state.Gamepad.bRightTrigger);
-            trace("Gamepad.sThumbLX: %d\n", xinput.state.Gamepad.sThumbLX);
-            trace("Gamepad.sThumbLY: %d\n", xinput.state.Gamepad.sThumbLY);
-            trace("Gamepad.sThumbRX: %d\n", xinput.state.Gamepad.sThumbRX);
-            trace("Gamepad.sThumbRY: %d\n", xinput.state.Gamepad.sThumbRY);
+            dump_gamepad(&xinput.state.Gamepad);
         }
     }
 
@@ -163,7 +168,11 @@ static void test_get_capabilities(void)
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
             skip("Controller %d is not connected\n", controllerNum);
+            continue;
         }
+
+        /* Important to show that the results changed between 1.3 and 1.4 XInput version */
+        dump_gamepad(&capabilities.Gamepad);
     }
 
     ZeroMemory(&capabilities, sizeof(XINPUT_CAPABILITIES));
