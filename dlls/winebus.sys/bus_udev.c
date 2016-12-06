@@ -319,7 +319,7 @@ static NTSTATUS hidraw_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
 
 static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *read)
 {
-#ifdef HAVE_LINUX_HIDRAW_H
+#if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCGFEATURE)
     int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
     report[0] = id;
@@ -343,7 +343,7 @@ static NTSTATUS hidraw_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
 
 static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *written)
 {
-#ifdef HAVE_LINUX_HIDRAW_H
+#if defined(HAVE_LINUX_HIDRAW_H) && defined(HIDIOCSFEATURE)
     int rc;
     struct platform_private* ext = impl_from_DEVICE_OBJECT(device);
     BYTE *feature_buffer;
