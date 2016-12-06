@@ -328,6 +328,8 @@ static const struct message parent_cd_seq[] = {
     { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
     { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_ITEMPREPAINT },
     { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_ITEMPOSTPAINT },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_ITEMPREPAINT },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_ITEMPOSTPAINT },
     { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTPAINT },
     { 0 }
 };
@@ -2317,20 +2319,12 @@ static void test_WM_GETDLGCODE(void)
 
 static void test_customdraw(void)
 {
-    static const char *rootA = "root";
-    TVINSERTSTRUCTA ins;
-    HTREEITEM hRoot;
     LOGFONTA lf;
     HWND hwnd;
 
     hwnd = create_treeview_control(0);
-
-    ins.hParent = TVI_ROOT;
-    ins.hInsertAfter = TVI_ROOT;
-    U(ins).item.mask = TVIF_TEXT;
-    U(ins).item.pszText = (char*)rootA;
-    hRoot = TreeView_InsertItemA(hwnd, &ins);
-    ok(hRoot != NULL, "got %p\n", hRoot);
+    fill_tree(hwnd);
+    SendMessageA(hwnd, TVM_EXPAND, TVE_EXPAND, (WPARAM)hRoot);
 
     /* create additional font, custom draw handler will select it */
     SystemParametersInfoA(SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0);
