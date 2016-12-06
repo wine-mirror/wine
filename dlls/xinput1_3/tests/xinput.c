@@ -175,18 +175,31 @@ static void test_get_dsoundaudiodevice(void)
 {
     DWORD controllerNum;
     DWORD result;
-    GUID soundRender;
-    GUID soundCapture;
+    GUID soundRender, soundCapture;
+    GUID testGuid = {0xFFFFFFFF, 0xFFFF, 0xFFFF, {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}};
+    GUID emptyGuid = {0x0, 0x0, 0x0, {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};
 
     for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
     {
+        soundRender = soundCapture = testGuid;
         result = pXInputGetDSoundAudioDeviceGuids(controllerNum, &soundRender, &soundCapture);
         ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputGetDSoundAudioDeviceGuids failed with (%d)\n", result);
 
         if (ERROR_DEVICE_NOT_CONNECTED == result)
         {
             skip("Controller %d is not connected\n", controllerNum);
+            continue;
         }
+
+        if (!IsEqualGUID(&soundRender, &emptyGuid))
+            ok(!IsEqualGUID(&soundRender, &testGuid), "Broken GUID returned for sound render device\n");
+        else
+            trace("Headset phone not attached\n");
+
+        if (!IsEqualGUID(&soundCapture, &emptyGuid))
+            ok(!IsEqualGUID(&soundCapture, &testGuid), "Broken GUID returned for sound capture device\n");
+        else
+            trace("Headset microphone not attached\n");
     }
 
     result = pXInputGetDSoundAudioDeviceGuids(XUSER_MAX_COUNT+1, &soundRender, &soundCapture);
