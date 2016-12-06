@@ -3703,6 +3703,9 @@ TREEVIEW_HitTest(const TREEVIEW_INFO *infoPtr, LPTVHITTESTINFO lpht)
         return NULL;
     }
 
+    if (!item->textWidth)
+        TREEVIEW_ComputeTextWidth(infoPtr, item, 0);
+
     if (x >= item->textOffset + item->textWidth)
     {
 	lpht->flags = TVHT_ONITEMRIGHT;
