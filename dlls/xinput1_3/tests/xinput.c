@@ -50,7 +50,7 @@ static void test_set_state(void)
     DWORD controllerNum;
     DWORD result;
 
-    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    for(controllerNum = 0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
     {
         ZeroMemory(&vibrator, sizeof(XINPUT_VIBRATION));
 
@@ -59,6 +59,9 @@ static void test_set_state(void)
         result = pXInputSetState(controllerNum, &vibrator);
         ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputSetState failed with (%d)\n", result);
 
+        /* Disabling XInput here, queueing a vibration and then re-enabling XInput
+         * is used to prove that vibrations are auto enabled when resuming XInput.
+         * If XInputEnable is removed the vibration will never play. */
         if (pXInputEnable) pXInputEnable(0);
 
         vibrator.wLeftMotorSpeed = 65535;
@@ -133,7 +136,7 @@ static void test_get_keystroke(void)
     DWORD controllerNum;
     DWORD result;
 
-    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    for(controllerNum = 0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
     {
         ZeroMemory(&keystroke, sizeof(XINPUT_KEYSTROKE));
 
@@ -158,7 +161,7 @@ static void test_get_capabilities(void)
     DWORD controllerNum;
     DWORD result;
 
-    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    for(controllerNum = 0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
     {
         ZeroMemory(&capabilities, sizeof(XINPUT_CAPABILITIES));
 
@@ -188,7 +191,7 @@ static void test_get_dsoundaudiodevice(void)
     GUID testGuid = {0xFFFFFFFF, 0xFFFF, 0xFFFF, {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}};
     GUID emptyGuid = {0x0, 0x0, 0x0, {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};
 
-    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    for(controllerNum = 0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
     {
         soundRender = soundCapture = testGuid;
         result = pXInputGetDSoundAudioDeviceGuids(controllerNum, &soundRender, &soundCapture);
@@ -221,7 +224,7 @@ static void test_get_batteryinformation(void)
     DWORD result;
     XINPUT_BATTERY_INFORMATION batteryInfo;
 
-    for(controllerNum=0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
+    for(controllerNum = 0; controllerNum < XUSER_MAX_COUNT; controllerNum++)
     {
         ZeroMemory(&batteryInfo, sizeof(XINPUT_BATTERY_INFORMATION));
 
