@@ -383,7 +383,7 @@ static void debug_print_preparsed(WINE_HIDP_PREPARSED_DATA *data)
     }
 }
 
-static int getValue(int bsize, int source)
+static int getValue(int bsize, int source, BOOL allow_negative)
 {
     int mask = 0xff;
     int negative = 0x80;
@@ -401,7 +401,7 @@ static int getValue(int bsize, int source)
         outofrange = (outofrange<<8);
     }
     value = (source&mask);
-    if (value&negative)
+    if (allow_negative && value&negative)
         value = -1 * (outofrange - value);
     return value;
 }
@@ -566,34 +566,34 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                 switch(bTag)
                 {
                     case TAG_GLOBAL_USAGE_PAGE:
-                        caps->UsagePage = getValue(bSize, itemVal);
+                        caps->UsagePage = getValue(bSize, itemVal, FALSE);
                         break;
                     case TAG_GLOBAL_LOGICAL_MINIMUM:
-                        caps->LogicalMin = getValue(bSize, itemVal);
+                        caps->LogicalMin = getValue(bSize, itemVal, TRUE);
                         break;
                     case TAG_GLOBAL_LOGICAL_MAXIMUM:
-                        caps->LogicalMax = getValue(bSize, itemVal);
+                        caps->LogicalMax = getValue(bSize, itemVal, TRUE);
                         break;
                     case TAG_GLOBAL_PHYSICAL_MINIMUM:
-                        caps->PhysicalMin = getValue(bSize, itemVal);
+                        caps->PhysicalMin = getValue(bSize, itemVal, TRUE);
                         break;
                     case TAG_GLOBAL_PHYSICAL_MAXIMUM:
-                        caps->PhysicalMax = getValue(bSize, itemVal);
+                        caps->PhysicalMax = getValue(bSize, itemVal, TRUE);
                         break;
                     case TAG_GLOBAL_UNIT_EXPONENT:
-                        caps->UnitsExp = getValue(bSize, itemVal);
+                        caps->UnitsExp = getValue(bSize, itemVal, TRUE);
                         break;
                     case TAG_GLOBAL_UNIT:
-                        caps->Units = getValue(bSize, itemVal);
+                        caps->Units = getValue(bSize, itemVal, TRUE);
                         break;
                     case TAG_GLOBAL_REPORT_SIZE:
-                        caps->BitSize = getValue(bSize, itemVal);
+                        caps->BitSize = getValue(bSize, itemVal, FALSE);
                         break;
                     case TAG_GLOBAL_REPORT_ID:
-                        caps->ReportID = getValue(bSize, itemVal);
+                        caps->ReportID = getValue(bSize, itemVal, FALSE);
                         break;
                     case TAG_GLOBAL_REPORT_COUNT:
-                        caps->ReportCount = getValue(bSize, itemVal);
+                        caps->ReportCount = getValue(bSize, itemVal, FALSE);
                         break;
                     case TAG_GLOBAL_PUSH:
                     {
@@ -633,46 +633,46 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                             FIXME("More than %i individual usages defined\n",USAGE_MAX);
                         else
                         {
-                            caps->u.NotRange.Usage[caps->usage_count++] = getValue(bSize, itemVal);
+                            caps->u.NotRange.Usage[caps->usage_count++] = getValue(bSize, itemVal, FALSE);
                             caps->IsRange = FALSE;
                         }
                         break;
                     case TAG_LOCAL_USAGE_MINIMUM:
                         caps->usage_count = 1;
-                        caps->u.Range.UsageMin = getValue(bSize, itemVal);
+                        caps->u.Range.UsageMin = getValue(bSize, itemVal, FALSE);
                         caps->IsRange = TRUE;
                         break;
                     case TAG_LOCAL_USAGE_MAXIMUM:
                         caps->usage_count = 1;
-                        caps->u.Range.UsageMax = getValue(bSize, itemVal);
+                        caps->u.Range.UsageMax = getValue(bSize, itemVal, FALSE);
                         caps->IsRange = TRUE;
                         break;
                     case TAG_LOCAL_DESIGNATOR_INDEX:
-                        caps->u.NotRange.DesignatorIndex = getValue(bSize, itemVal);
+                        caps->u.NotRange.DesignatorIndex = getValue(bSize, itemVal, FALSE);
                         caps->IsDesignatorRange = FALSE;
                         break;
                     case TAG_LOCAL_DESIGNATOR_MINIMUM:
-                        caps->u.Range.DesignatorMin = getValue(bSize, itemVal);
+                        caps->u.Range.DesignatorMin = getValue(bSize, itemVal, FALSE);
                         caps->IsDesignatorRange = TRUE;
                         break;
                     case TAG_LOCAL_DESIGNATOR_MAXIMUM:
-                        caps->u.Range.DesignatorMax = getValue(bSize, itemVal);
+                        caps->u.Range.DesignatorMax = getValue(bSize, itemVal, FALSE);
                         caps->IsDesignatorRange = TRUE;
                         break;
                     case TAG_LOCAL_STRING_INDEX:
-                        caps->u.NotRange.StringIndex = getValue(bSize, itemVal);
+                        caps->u.NotRange.StringIndex = getValue(bSize, itemVal, FALSE);
                         caps->IsStringRange = FALSE;
                         break;
                     case TAG_LOCAL_STRING_MINIMUM:
-                        caps->u.Range.StringMin = getValue(bSize, itemVal);
+                        caps->u.Range.StringMin = getValue(bSize, itemVal, FALSE);
                         caps->IsStringRange = TRUE;
                         break;
                     case TAG_LOCAL_STRING_MAXIMUM:
-                        caps->u.Range.StringMax = getValue(bSize, itemVal);
+                        caps->u.Range.StringMax = getValue(bSize, itemVal, FALSE);
                         caps->IsStringRange = TRUE;
                         break;
                     case TAG_LOCAL_DELIMITER:
-                        caps->Delim = getValue(bSize, itemVal);
+                        caps->Delim = getValue(bSize, itemVal, FALSE);
                         break;
                     default:
                         ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
