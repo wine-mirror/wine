@@ -2806,7 +2806,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk, UINT wFlags )
  * The idea is not to show the popup if the next input message is
  * going to hide it anyway.
  */
-static BOOL MENU_SuspendPopup( MTRACKER* pmt, UINT16 uMsg )
+static BOOL MENU_SuspendPopup( MTRACKER* pmt, UINT uMsg )
 {
     MSG msg;
 
@@ -2878,7 +2878,7 @@ static BOOL MENU_KeyEscape(MTRACKER* pmt, UINT wFlags)
  *
  * Handle a VK_LEFT key event in a menu.
  */
-static void MENU_KeyLeft( MTRACKER* pmt, UINT wFlags )
+static void MENU_KeyLeft( MTRACKER* pmt, UINT wFlags, UINT msg )
 {
     POPUPMENU *menu;
     HMENU hmenutmp, hmenuprev;
@@ -2918,7 +2918,7 @@ static void MENU_KeyLeft( MTRACKER* pmt, UINT wFlags )
 	   /* A sublevel menu was displayed - display the next one
 	    * unless there is another displacement coming up */
 
-	    if( !MENU_SuspendPopup( pmt, WM_KEYDOWN ) )
+	    if( !MENU_SuspendPopup( pmt, msg ) )
 		pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd,
 						pmt->hTopMenu, TRUE, wFlags);
 	}
@@ -2931,7 +2931,7 @@ static void MENU_KeyLeft( MTRACKER* pmt, UINT wFlags )
  *
  * Handle a VK_RIGHT key event in a menu.
  */
-static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
+static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags, UINT msg )
 {
     HMENU hmenutmp;
     POPUPMENU *menu = MENU_GetMenu( pmt->hTopMenu );
@@ -2975,7 +2975,7 @@ static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
 	     MENU_MoveSelection( pmt->hOwnerWnd, pmt->hTopMenu, ITEM_NEXT );
 
 	if( hmenutmp || pmt->trackFlags & TF_SUSPENDPOPUP )
-	    if( !MENU_SuspendPopup(pmt, WM_KEYDOWN) )
+	    if( !MENU_SuspendPopup( pmt, msg ) )
 		pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd,
 						       pmt->hTopMenu, TRUE, wFlags);
     }
@@ -3178,11 +3178,11 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    break;
 
 		case VK_LEFT:
-		    MENU_KeyLeft( &mt, wFlags );
+		    MENU_KeyLeft( &mt, wFlags, msg.message );
 		    break;
 
 		case VK_RIGHT:
-		    MENU_KeyRight( &mt, wFlags );
+		    MENU_KeyRight( &mt, wFlags, msg.message );
 		    break;
 
 		case VK_ESCAPE:
