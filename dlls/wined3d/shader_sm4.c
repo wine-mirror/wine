@@ -922,7 +922,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_BFI,                              WINED3DSIH_BFI,                              "u",    "iiuu"},
     {WINED3D_SM5_OP_BFREV,                            WINED3DSIH_BFREV,                            "u",    "u"},
     {WINED3D_SM5_OP_SWAPC,                            WINED3DSIH_SWAPC,                            "ff",   "uff"},
-    {WINED3D_SM5_OP_DCL_STREAM,                       WINED3DSIH_DCL_STREAM,                       "",     "f"},
+    {WINED3D_SM5_OP_DCL_STREAM,                       WINED3DSIH_DCL_STREAM,                       "",     "O"},
     {WINED3D_SM5_OP_DCL_FUNCTION_BODY,                WINED3DSIH_DCL_FUNCTION_BODY,                "",     "",
             shader_sm5_read_dcl_function_body},
     {WINED3D_SM5_OP_DCL_FUNCTION_TABLE,               WINED3DSIH_DCL_FUNCTION_TABLE,               "",     "",
