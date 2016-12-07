@@ -657,7 +657,7 @@ static void shader_sm1_read_immconst(const DWORD **ptr, struct wined3d_shader_sr
     src_param->reg.idx[1].offset = ~0U;
     src_param->reg.idx[1].rel_addr = NULL;
     src_param->reg.immconst_type = type;
-    memcpy(src_param->reg.immconst_data, *ptr, count * sizeof(DWORD));
+    memcpy(src_param->reg.u.immconst_data, *ptr, count * sizeof(DWORD));
     src_param->swizzle = WINED3DSP_NOSWIZZLE;
     src_param->modifiers = 0;
 

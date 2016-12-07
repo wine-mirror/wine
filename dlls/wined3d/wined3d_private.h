@@ -392,6 +392,8 @@ enum wined3d_shader_register_type
     WINED3DSPR_LOCALTHREADINDEX,
     WINED3DSPR_IDXTEMP,
     WINED3DSPR_STREAM,
+    WINED3DSPR_FUNCTIONBODY,
+    WINED3DSPR_FUNCTIONPOINTER,
 };
 
 enum wined3d_data_type
@@ -404,6 +406,7 @@ enum wined3d_data_type
     WINED3D_DATA_UINT,
     WINED3D_DATA_UNORM,
     WINED3D_DATA_SNORM,
+    WINED3D_DATA_OPAQUE,
 };
 
 enum wined3d_immconst_type
@@ -594,6 +597,8 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_CUT_STREAM,
     WINED3DSIH_DCL,
     WINED3DSIH_DCL_CONSTANT_BUFFER,
+    WINED3DSIH_DCL_FUNCTION_BODY,
+    WINED3DSIH_DCL_FUNCTION_TABLE,
     WINED3DSIH_DCL_GLOBAL_FLAGS,
     WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT,
     WINED3DSIH_DCL_HS_MAX_TESSFACTOR,
@@ -607,6 +612,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_INPUT_PS_SIV,
     WINED3DSIH_DCL_INPUT_SGV,
     WINED3DSIH_DCL_INPUT_SIV,
+    WINED3DSIH_DCL_INTERFACE,
     WINED3DSIH_DCL_OUTPUT,
     WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT,
     WINED3DSIH_DCL_OUTPUT_SIV,
@@ -651,6 +657,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_EQ,
     WINED3DSIH_EXP,
     WINED3DSIH_EXPP,
+    WINED3DSIH_FCALL,
     WINED3DSIH_FRC,
     WINED3DSIH_FTOI,
     WINED3DSIH_FTOU,
@@ -930,7 +937,11 @@ struct wined3d_shader_register
     enum wined3d_data_type data_type;
     struct wined3d_shader_register_index idx[2];
     enum wined3d_immconst_type immconst_type;
-    DWORD immconst_data[4];
+    union
+    {
+        DWORD immconst_data[4];
+        unsigned fp_body_idx;
+    } u;
 };
 
 struct wined3d_shader_dst_param
@@ -987,6 +998,14 @@ struct wined3d_shader_thread_group_size
     unsigned int x, y, z;
 };
 
+struct wined3d_shader_function_table_pointer
+{
+    unsigned int index;
+    unsigned int array_size;
+    unsigned int body_count;
+    unsigned int table_count;
+};
+
 struct wined3d_shader_texel_offset
 {
     signed char u, v, w;
@@ -1011,7 +1030,8 @@ struct wined3d_shader_instruction
         enum wined3d_primitive_type primitive_type;
         struct wined3d_shader_dst_param dst;
         struct wined3d_shader_src_param src;
-        UINT count;
+        unsigned int count;
+        unsigned int index;
         const struct wined3d_shader_immediate_constant_buffer *icb;
         struct wined3d_shader_structured_resource structured_resource;
         struct wined3d_shader_tgsm_raw tgsm_raw;
@@ -1022,6 +1042,7 @@ struct wined3d_shader_instruction
         enum wined3d_tessellator_partitioning tessellator_partitioning;
         float max_tessellation_factor;
         struct wined3d_shader_indexable_temp indexable_temp;
+        struct wined3d_shader_function_table_pointer fp;
     } declaration;
 };
 

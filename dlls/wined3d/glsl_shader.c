@@ -2689,17 +2689,17 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     {
                         case WINED3D_DATA_FLOAT:
                             if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
-                                sprintf(register_name, "uintBitsToFloat(%#xu)", reg->immconst_data[0]);
+                                sprintf(register_name, "uintBitsToFloat(%#xu)", reg->u.immconst_data[0]);
                             else
-                                wined3d_ftoa(*(const float *)reg->immconst_data, register_name);
+                                wined3d_ftoa(*(const float *)reg->u.immconst_data, register_name);
                             break;
                         case WINED3D_DATA_INT:
-                            sprintf(register_name, "%#x", reg->immconst_data[0]);
+                            sprintf(register_name, "%#x", reg->u.immconst_data[0]);
                             break;
                         case WINED3D_DATA_RESOURCE:
                         case WINED3D_DATA_SAMPLER:
                         case WINED3D_DATA_UINT:
-                            sprintf(register_name, "%#xu", reg->immconst_data[0]);
+                            sprintf(register_name, "%#xu", reg->u.immconst_data[0]);
                             break;
                         default:
                             sprintf(register_name, "<unhandled data type %#x>", reg->data_type);
@@ -2714,30 +2714,30 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                             if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
                             {
                                 sprintf(register_name, "uintBitsToFloat(uvec4(%#xu, %#xu, %#xu, %#xu))",
-                                        reg->immconst_data[0], reg->immconst_data[1],
-                                        reg->immconst_data[2], reg->immconst_data[3]);
+                                        reg->u.immconst_data[0], reg->u.immconst_data[1],
+                                        reg->u.immconst_data[2], reg->u.immconst_data[3]);
                             }
                             else
                             {
-                                wined3d_ftoa(*(const float *)&reg->immconst_data[0], imm_str[0]);
-                                wined3d_ftoa(*(const float *)&reg->immconst_data[1], imm_str[1]);
-                                wined3d_ftoa(*(const float *)&reg->immconst_data[2], imm_str[2]);
-                                wined3d_ftoa(*(const float *)&reg->immconst_data[3], imm_str[3]);
+                                wined3d_ftoa(*(const float *)&reg->u.immconst_data[0], imm_str[0]);
+                                wined3d_ftoa(*(const float *)&reg->u.immconst_data[1], imm_str[1]);
+                                wined3d_ftoa(*(const float *)&reg->u.immconst_data[2], imm_str[2]);
+                                wined3d_ftoa(*(const float *)&reg->u.immconst_data[3], imm_str[3]);
                                 sprintf(register_name, "vec4(%s, %s, %s, %s)",
                                         imm_str[0], imm_str[1], imm_str[2], imm_str[3]);
                             }
                             break;
                         case WINED3D_DATA_INT:
                             sprintf(register_name, "ivec4(%#x, %#x, %#x, %#x)",
-                                    reg->immconst_data[0], reg->immconst_data[1],
-                                    reg->immconst_data[2], reg->immconst_data[3]);
+                                    reg->u.immconst_data[0], reg->u.immconst_data[1],
+                                    reg->u.immconst_data[2], reg->u.immconst_data[3]);
                             break;
                         case WINED3D_DATA_RESOURCE:
                         case WINED3D_DATA_SAMPLER:
                         case WINED3D_DATA_UINT:
                             sprintf(register_name, "uvec4(%#xu, %#xu, %#xu, %#xu)",
-                                    reg->immconst_data[0], reg->immconst_data[1],
-                                    reg->immconst_data[2], reg->immconst_data[3]);
+                                    reg->u.immconst_data[0], reg->u.immconst_data[1],
+                                    reg->u.immconst_data[2], reg->u.immconst_data[3]);
                             break;
                         default:
                             sprintf(register_name, "<unhandled data type %#x>", reg->data_type);
@@ -8943,6 +8943,8 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_CUT_STREAM                       */ shader_glsl_cut,
     /* WINED3DSIH_DCL                              */ shader_glsl_nop,
     /* WINED3DSIH_DCL_CONSTANT_BUFFER              */ shader_glsl_nop,
+    /* WINED3DSIH_DCL_FUNCTION_BODY                */ NULL,
+    /* WINED3DSIH_DCL_FUNCTION_TABLE               */ NULL,
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ NULL,
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ NULL,
@@ -8956,6 +8958,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_INPUT_PS_SIV                 */ NULL,
     /* WINED3DSIH_DCL_INPUT_SGV                    */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INPUT_SIV                    */ shader_glsl_nop,
+    /* WINED3DSIH_DCL_INTERFACE                    */ NULL,
     /* WINED3DSIH_DCL_OUTPUT                       */ shader_glsl_nop,
     /* WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT   */ NULL,
     /* WINED3DSIH_DCL_OUTPUT_SIV                   */ shader_glsl_nop,
@@ -9000,6 +9003,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_EQ                               */ shader_glsl_relop,
     /* WINED3DSIH_EXP                              */ shader_glsl_scalar_op,
     /* WINED3DSIH_EXPP                             */ shader_glsl_expp,
+    /* WINED3DSIH_FCALL                            */ NULL,
     /* WINED3DSIH_FRC                              */ shader_glsl_map2gl,
     /* WINED3DSIH_FTOI                             */ shader_glsl_to_int,
     /* WINED3DSIH_FTOU                             */ shader_glsl_to_uint,

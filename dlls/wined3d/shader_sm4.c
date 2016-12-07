@@ -64,6 +64,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT   11
 #define WINED3D_SM5_CONTROL_POINT_COUNT_MASK    (0xffu << WINED3D_SM5_CONTROL_POINT_COUNT_SHIFT)
 
+#define WINED3D_SM5_FP_ARRAY_SIZE_SHIFT         16
+#define WINED3D_SM5_FP_TABLE_COUNT_MASK         0xffffu
+
 #define WINED3D_SM5_UAV_FLAGS_SHIFT             11
 #define WINED3D_SM5_UAV_FLAGS_MASK              (0x8fffu << WINED3D_SM5_UAV_FLAGS_SHIFT)
 
@@ -153,6 +156,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_ISHL                             = 0x29,
     WINED3D_SM4_OP_ISHR                             = 0x2a,
     WINED3D_SM4_OP_ITOF                             = 0x2b,
+    WINED3D_SM4_OP_LABEL                            = 0x2c,
     WINED3D_SM4_OP_LD                               = 0x2d,
     WINED3D_SM4_OP_LD2DMS                           = 0x2e,
     WINED3D_SM4_OP_LOG                              = 0x2f,
@@ -219,6 +223,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_HS_JOIN_PHASE                    = 0x74,
     WINED3D_SM5_OP_EMIT_STREAM                      = 0x75,
     WINED3D_SM5_OP_CUT_STREAM                       = 0x76,
+    WINED3D_SM5_OP_FCALL                            = 0x78,
     WINED3D_SM5_OP_BUFINFO                          = 0x79,
     WINED3D_SM5_OP_DERIV_RTX_COARSE                 = 0x7a,
     WINED3D_SM5_OP_DERIV_RTX_FINE                   = 0x7b,
@@ -231,6 +236,9 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_BFREV                            = 0x8d,
     WINED3D_SM5_OP_SWAPC                            = 0x8e,
     WINED3D_SM5_OP_DCL_STREAM                       = 0x8f,
+    WINED3D_SM5_OP_DCL_FUNCTION_BODY                = 0x90,
+    WINED3D_SM5_OP_DCL_FUNCTION_TABLE               = 0x91,
+    WINED3D_SM5_OP_DCL_INTERFACE                    = 0x92,
     WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT    = 0x93,
     WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT   = 0x94,
     WINED3D_SM5_OP_DCL_TESSELLATOR_DOMAIN           = 0x95,
@@ -285,6 +293,8 @@ enum wined3d_sm4_register_type
     WINED3D_SM4_RT_DEPTHOUT                = 0x0c,
     WINED3D_SM4_RT_NULL                    = 0x0d,
     WINED3D_SM5_RT_STREAM                  = 0x10,
+    WINED3D_SM5_RT_FUNCTION_BODY           = 0x11,
+    WINED3D_SM5_RT_FUNCTION_POINTER        = 0x13,
     WINED3D_SM5_RT_OUTPUT_CONTROL_POINT_ID = 0x16,
     WINED3D_SM5_RT_FORK_INSTANCE_ID        = 0x17,
     WINED3D_SM5_RT_INPUT_CONTROL_POINT     = 0x19,
@@ -630,6 +640,40 @@ static void shader_sm4_read_dcl_global_flags(struct wined3d_shader_instruction *
     ins->flags = (opcode_token & WINED3D_SM4_GLOBAL_FLAGS_MASK) >> WINED3D_SM4_GLOBAL_FLAGS_SHIFT;
 }
 
+static void shader_sm5_read_fcall(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    priv->src_param[0].reg.u.fp_body_idx = *tokens++;
+    shader_sm4_read_src_param(priv, &tokens, WINED3D_DATA_OPAQUE, &priv->src_param[0]);
+}
+
+static void shader_sm5_read_dcl_function_body(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    ins->declaration.index = *tokens;
+}
+
+static void shader_sm5_read_dcl_function_table(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    ins->declaration.index = *tokens++;
+    FIXME("Ignoring set of function bodies (count %u).\n", *tokens);
+}
+
+static void shader_sm5_read_dcl_interface(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    ins->declaration.fp.index = *tokens++;
+    ins->declaration.fp.body_count = *tokens++;
+    ins->declaration.fp.array_size = *tokens >> WINED3D_SM5_FP_ARRAY_SIZE_SHIFT;
+    ins->declaration.fp.table_count = *tokens++ & WINED3D_SM5_FP_TABLE_COUNT_MASK;
+    FIXME("Ignoring set of function tables (count %u).\n", ins->declaration.fp.table_count);
+}
+
 static void shader_sm5_read_control_point_count(struct wined3d_shader_instruction *ins,
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
@@ -731,6 +775,7 @@ static void shader_sm5_read_sync(struct wined3d_shader_instruction *ins,
  * f -> WINED3D_DATA_FLOAT
  * i -> WINED3D_DATA_INT
  * u -> WINED3D_DATA_UINT
+ * O -> WINED3D_DATA_OPAQUE
  * R -> WINED3D_DATA_RESOURCE
  * S -> WINED3D_DATA_SAMPLER
  * U -> WINED3D_DATA_UAV
@@ -779,6 +824,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_ISHL,                             WINED3DSIH_ISHL,                             "i",    "ii"},
     {WINED3D_SM4_OP_ISHR,                             WINED3DSIH_ISHR,                             "i",    "ii"},
     {WINED3D_SM4_OP_ITOF,                             WINED3DSIH_ITOF,                             "f",    "i"},
+    {WINED3D_SM4_OP_LABEL,                            WINED3DSIH_LABEL,                            "",     "O"},
     {WINED3D_SM4_OP_LD,                               WINED3DSIH_LD,                               "u",    "iR"},
     {WINED3D_SM4_OP_LD2DMS,                           WINED3DSIH_LD2DMS,                           "u",    "iRi"},
     {WINED3D_SM4_OP_LOG,                              WINED3DSIH_LOG,                              "f",    "f"},
@@ -863,6 +909,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_HS_JOIN_PHASE,                    WINED3DSIH_HS_JOIN_PHASE,                    "",     ""},
     {WINED3D_SM5_OP_EMIT_STREAM,                      WINED3DSIH_EMIT_STREAM,                      "",     "f"},
     {WINED3D_SM5_OP_CUT_STREAM,                       WINED3DSIH_CUT_STREAM,                       "",     "f"},
+    {WINED3D_SM5_OP_FCALL,                            WINED3DSIH_FCALL,                            "",     "O",
+            shader_sm5_read_fcall},
     {WINED3D_SM5_OP_BUFINFO,                          WINED3DSIH_BUFINFO,                          "i",    "U"},
     {WINED3D_SM5_OP_DERIV_RTX_COARSE,                 WINED3DSIH_DSX_COARSE,                       "f",    "f"},
     {WINED3D_SM5_OP_DERIV_RTX_FINE,                   WINED3DSIH_DSX_FINE,                         "f",    "f"},
@@ -875,6 +923,12 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_BFREV,                            WINED3DSIH_BFREV,                            "u",    "u"},
     {WINED3D_SM5_OP_SWAPC,                            WINED3DSIH_SWAPC,                            "ff",   "uff"},
     {WINED3D_SM5_OP_DCL_STREAM,                       WINED3DSIH_DCL_STREAM,                       "",     "f"},
+    {WINED3D_SM5_OP_DCL_FUNCTION_BODY,                WINED3DSIH_DCL_FUNCTION_BODY,                "",     "",
+            shader_sm5_read_dcl_function_body},
+    {WINED3D_SM5_OP_DCL_FUNCTION_TABLE,               WINED3DSIH_DCL_FUNCTION_TABLE,               "",     "",
+            shader_sm5_read_dcl_function_table},
+    {WINED3D_SM5_OP_DCL_INTERFACE,                    WINED3DSIH_DCL_INTERFACE,                    "",     "",
+            shader_sm5_read_dcl_interface},
     {WINED3D_SM5_OP_DCL_INPUT_CONTROL_POINT_COUNT,    WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT,    "",     "",
             shader_sm5_read_control_point_count},
     {WINED3D_SM5_OP_DCL_OUTPUT_CONTROL_POINT_COUNT,   WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT,   "",     "",
@@ -948,9 +1002,9 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* UNKNOWN */                                ~0u,
     /* UNKNOWN */                                ~0u,
     /* WINED3D_SM5_RT_STREAM */                  WINED3DSPR_STREAM,
+    /* WINED3D_SM5_RT_FUNCTION_BODY */           WINED3DSPR_FUNCTIONBODY,
     /* UNKNOWN */                                ~0u,
-    /* UNKNOWN */                                ~0u,
-    /* UNKNOWN */                                ~0u,
+    /* WINED3D_SM5_RT_FUNCTION_POINTER */        WINED3DSPR_FUNCTIONPOINTER,
     /* UNKNOWN */                                ~0u,
     /* UNKNOWN */                                ~0u,
     /* WINED3D_SM5_RT_OUTPUT_CONTROL_POINT_ID */ WINED3DSPR_OUTPOINTID,
@@ -1017,6 +1071,8 @@ static enum wined3d_data_type map_data_type(char t)
             return WINED3D_DATA_INT;
         case 'u':
             return WINED3D_DATA_UINT;
+        case 'O':
+            return WINED3D_DATA_OPAQUE;
         case 'R':
             return WINED3D_DATA_RESOURCE;
         case 'S':
@@ -1259,13 +1315,13 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
         {
             case WINED3D_SM4_IMMCONST_SCALAR:
                 param->immconst_type = WINED3D_IMMCONST_SCALAR;
-                memcpy(param->immconst_data, *ptr, 1 * sizeof(DWORD));
+                memcpy(param->u.immconst_data, *ptr, 1 * sizeof(DWORD));
                 *ptr += 1;
                 break;
 
             case WINED3D_SM4_IMMCONST_VEC4:
                 param->immconst_type = WINED3D_IMMCONST_VEC4;
-                memcpy(param->immconst_data, *ptr, 4 * sizeof(DWORD));
+                memcpy(param->u.immconst_data, *ptr, 4 * sizeof(DWORD));
                 *ptr += 4;
                 break;
 
