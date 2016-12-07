@@ -3544,7 +3544,7 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
 
             /* Fallback to en-us if there's no string for user locale. */
             exists = FALSE;
-            if (GetUserDefaultLocaleName(localeW, sizeof(localeW)/sizeof(WCHAR)))
+            if (GetSystemDefaultLocaleName(localeW, sizeof(localeW)/sizeof(WCHAR)))
                 IDWriteLocalizedStrings_FindLocaleName(names, localeW, &index, &exists);
 
             if (!exists)

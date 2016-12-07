@@ -1645,7 +1645,7 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
         BOOL exists;
 
         exists = FALSE;
-        if (GetUserDefaultLocaleName(localeW, sizeof(localeW)/sizeof(WCHAR)))
+        if (GetSystemDefaultLocaleName(localeW, sizeof(localeW)/sizeof(WCHAR)))
             IDWriteLocalizedStrings_FindLocaleName(lfnames, localeW, &index, &exists);
 
         if (!exists)

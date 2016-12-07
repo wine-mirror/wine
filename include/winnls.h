@@ -915,6 +915,7 @@ WINBASEAPI BOOL        WINAPI GetStringTypeExA(LCID,DWORD,LPCSTR,INT,LPWORD);
 WINBASEAPI BOOL        WINAPI GetStringTypeExW(LCID,DWORD,LPCWSTR,INT,LPWORD);
 #define                       GetStringTypeEx WINELIB_NAME_AW(GetStringTypeEx)
 WINBASEAPI LANGID      WINAPI GetSystemDefaultLangID(void);
+WINBASEAPI INT         WINAPI GetSystemDefaultLocaleName(LPWSTR,int);
 WINBASEAPI LCID        WINAPI GetSystemDefaultLCID(void);
 WINBASEAPI LANGID      WINAPI GetSystemDefaultUILanguage(void);
 WINBASEAPI BOOL        WINAPI GetSystemPreferredUILanguages(DWORD,ULONG*,WCHAR*,ULONG*);
