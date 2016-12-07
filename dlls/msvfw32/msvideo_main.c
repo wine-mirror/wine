@@ -621,7 +621,6 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
         lstrcpyW(picinfo->szDriver, ii.szDriver);
     }
 
-    TRACE("	-> %s\n", wine_dbgstr_icerr(ret));
     return ret;
 }
 
@@ -817,8 +816,6 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	icd.lpOutput	= lpBits;
 	icd.ckid	= 0;
 	ret = ICSendMessage(hic,ICM_DECOMPRESS,(DWORD_PTR)&icd,sizeof(ICDECOMPRESS));
-
-	TRACE("-> %s\n",wine_dbgstr_icerr(ret));
 
 	return ret;
 }
