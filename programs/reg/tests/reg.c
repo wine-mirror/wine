@@ -124,19 +124,19 @@ static void test_add(void)
     run_reg_exe("reg add \\HKCU\\" KEY_BASE "\\keytest0 /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest0");
-    ok(err == ERROR_FILE_NOT_FOUND, "got exit code %d\n", r);
+    ok(err == ERROR_FILE_NOT_FOUND, "got exit code %d\n", err);
 
     run_reg_exe("reg add \\\\HKCU\\" KEY_BASE "\\keytest1 /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest1");
-    ok(err == ERROR_FILE_NOT_FOUND, "got exit code %d\n", r);
+    ok(err == ERROR_FILE_NOT_FOUND, "got exit code %d\n", err);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest2\\\\ /f", &r);
     ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS /* WinXP */),
         "got exit code %u\n", r);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest2");
     ok(err == ERROR_FILE_NOT_FOUND || broken(err == ERROR_SUCCESS /* WinXP */),
-        "got exit code %d\n", r);
+        "got exit code %d\n", err);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest3\\ /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
@@ -144,7 +144,7 @@ static void test_add(void)
     ok(err == ERROR_SUCCESS, "key creation failed, got %d\n", err);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest3");
-    ok(err == ERROR_SUCCESS, "got exit code %d\n", r);
+    ok(err == ERROR_SUCCESS, "got exit code %d\n", err);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE "\\keytest4 /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
@@ -152,7 +152,7 @@ static void test_add(void)
     ok(err == ERROR_SUCCESS, "key creation failed, got %d\n", err);
     RegCloseKey(subkey);
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\keytest4");
-    ok(err == ERROR_SUCCESS, "got exit code %d\n", r);
+    ok(err == ERROR_SUCCESS, "got exit code %d\n", err);
 
     /* REG_NONE */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v none0 /d deadbeef /t REG_NONE /f", &r);
