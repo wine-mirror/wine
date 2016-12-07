@@ -38,6 +38,14 @@ typedef enum tid_t
 
 HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 
+struct provideclassinfo {
+    IProvideClassInfo IProvideClassInfo_iface;
+    IUnknown *outer;
+    const GUID *guid;
+};
+
+extern void init_classinfo(const GUID *guid, IUnknown *outer, struct provideclassinfo *classinfo) DECLSPEC_HIDDEN;
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);

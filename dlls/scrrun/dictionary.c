@@ -65,6 +65,7 @@ struct keyitem_pair {
 
 typedef struct
 {
+    struct provideclassinfo classinfo;
     IDictionary IDictionary_iface;
     LONG ref;
 
@@ -386,6 +387,10 @@ static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid,
     {
         *obj = &This->IDictionary_iface;
     }
+    else if (IsEqualIID(riid, &IID_IProvideClassInfo))
+    {
+        *obj = &This->classinfo.IProvideClassInfo_iface;
+    }
     else if ( IsEqualGUID( riid, &IID_IDispatchEx ))
     {
         TRACE("Interface IDispatchEx not supported - returning NULL\n");
@@ -404,7 +409,7 @@ static HRESULT WINAPI dictionary_QueryInterface(IDictionary *iface, REFIID riid,
         return E_NOINTERFACE;
     }
 
-    IDictionary_AddRef(iface);
+    IUnknown_AddRef((IUnknown*)*obj);
     return S_OK;
 }
 
@@ -901,6 +906,7 @@ HRESULT WINAPI Dictionary_CreateInstance(IClassFactory *factory,IUnknown *outer,
     list_init(&This->notifier);
     memset(This->buckets, 0, sizeof(This->buckets));
 
+    init_classinfo(&CLSID_Dictionary, (IUnknown *)&This->IDictionary_iface, &This->classinfo);
     *obj = &This->IDictionary_iface;
 
     return S_OK;

@@ -30,6 +30,31 @@
 
 #include "scrrun.h"
 
+#define test_provideclassinfo(a, b) _test_provideclassinfo((IDispatch*)a, b, __LINE__)
+static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
+{
+    IProvideClassInfo *classinfo;
+    TYPEATTR *attr;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    hr = IDispatch_QueryInterface(disp, &IID_IProvideClassInfo, (void **)&classinfo);
+    ok_(__FILE__,line) (hr == S_OK, "Failed to get IProvideClassInfo, %#x.\n", hr);
+
+    hr = IProvideClassInfo_GetClassInfo(classinfo, &ti);
+    ok_(__FILE__,line) (hr == S_OK, "GetClassInfo() failed, %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &attr);
+    ok_(__FILE__,line) (hr == S_OK, "GetTypeAttr() failed, %#x.\n", hr);
+
+    ok_(__FILE__,line) (IsEqualGUID(&attr->guid, guid), "Unexpected typeinfo %s, expected %s\n", wine_dbgstr_guid(&attr->guid),
+        wine_dbgstr_guid(guid));
+
+    IProvideClassInfo_Release(classinfo);
+    ITypeInfo_ReleaseTypeAttr(ti, attr);
+    ITypeInfo_Release(ti);
+}
+
 static void test_interfaces(void)
 {
     static const WCHAR key_add[] = {'a', 0};
@@ -59,6 +84,8 @@ static void test_interfaces(void)
 
     hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     ok(hr == E_NOINTERFACE, "got 0x%08x, expected 0x%08x\n", hr, E_NOINTERFACE);
+
+    test_provideclassinfo(disp, &CLSID_Dictionary);
 
     V_VT(&key) = VT_BSTR;
     V_BSTR(&key) = SysAllocString(key_add);
