@@ -643,8 +643,8 @@ static void check_texture_sub_resource_color_(unsigned int line, ID3D10Texture2D
     }
     release_resource_readback(&rb);
     ok_(__FILE__, line)(all_match,
-            "Got unexpected color 0x%08x at (%u, %u), sub-resource %u.\n",
-            color, x, y, sub_resource_idx);
+            "Got 0x%08x, expected 0x%08x at (%u, %u), sub-resource %u.\n",
+            color, expected_color, x, y, sub_resource_idx);
 }
 
 #define check_texture_color(t, c, d) check_texture_color_(__LINE__, t, c, d)
@@ -686,8 +686,8 @@ static void check_texture_sub_resource_float_(unsigned int line, ID3D10Texture2D
     }
     release_resource_readback(&rb);
     ok_(__FILE__, line)(all_match,
-            "Got unexpected value %.8e at (%u, %u), sub-resource %u.\n",
-            value, x, y, sub_resource_idx);
+            "Got %.8e, expected %.8e at (%u, %u), sub-resource %u.\n",
+            value, expected_value, x, y, sub_resource_idx);
 }
 
 #define check_texture_float(r, f, d) check_texture_float_(__LINE__, r, f, d)
@@ -729,8 +729,10 @@ static void check_texture_sub_resource_vec4_(unsigned int line, ID3D10Texture2D 
     }
     release_resource_readback(&rb);
     ok_(__FILE__, line)(all_match,
-            "Got unexpected value {%.8e, %.8e, %.8e, %.8e} at (%u, %u), sub-resource %u.\n",
-            value.x, value.y, value.z, value.w, x, y, sub_resource_idx);
+            "Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e} at (%u, %u), sub-resource %u.\n",
+            value.x, value.y, value.z, value.w,
+            expected_value->x, expected_value->y, expected_value->z, expected_value->w,
+            x, y, sub_resource_idx);
 }
 
 #define check_texture_vec4(a, b, c) check_texture_vec4_(__LINE__, a, b, c)
