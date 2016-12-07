@@ -2104,7 +2104,7 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_st
     const struct wined3d_shader_frontend *fe = shader->frontend;
     void *fe_data = shader->frontend_data;
     struct wined3d_shader_version shader_version;
-    struct wined3d_shader_loop_state loop_state;
+    struct wined3d_shader_parser_state state;
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_tex_mx tex_mx;
     struct wined3d_shader_context ctx;
@@ -2112,15 +2112,16 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_st
 
     /* Initialize current parsing state. */
     tex_mx.current_row = 0;
-    loop_state.current_depth = 0;
-    loop_state.current_reg = 0;
+    state.current_loop_depth = 0;
+    state.current_loop_reg = 0;
+    state.in_subroutine = FALSE;
 
     ctx.shader = shader;
     ctx.gl_info = &device->adapter->gl_info;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;
     ctx.tex_mx = &tex_mx;
-    ctx.loop_state = &loop_state;
+    ctx.state = &state;
     ctx.backend_data = backend_ctx;
     ins.ctx = &ctx;
 

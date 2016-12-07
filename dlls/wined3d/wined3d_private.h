@@ -900,10 +900,11 @@ struct wined3d_shader_tex_mx
     DWORD texcoord_w[2];
 };
 
-struct wined3d_shader_loop_state
+struct wined3d_shader_parser_state
 {
-    UINT current_depth;
-    UINT current_reg;
+    unsigned int current_loop_depth;
+    unsigned int current_loop_reg;
+    BOOL in_subroutine;
 };
 
 struct wined3d_shader_context
@@ -913,7 +914,7 @@ struct wined3d_shader_context
     const struct wined3d_shader_reg_maps *reg_maps;
     struct wined3d_string_buffer *buffer;
     struct wined3d_shader_tex_mx *tex_mx;
-    struct wined3d_shader_loop_state *loop_state;
+    struct wined3d_shader_parser_state *state;
     void *backend_data;
 };
 

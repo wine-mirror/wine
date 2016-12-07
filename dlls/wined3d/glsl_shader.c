@@ -2625,7 +2625,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_LOOP:
-            sprintf(register_name, "aL%u", ins->ctx->loop_state->current_reg - 1);
+            sprintf(register_name, "aL%u", ins->ctx->state->current_loop_reg - 1);
             break;
 
         case WINED3DSPR_SAMPLER:
@@ -4309,7 +4309,7 @@ static void shader_glsl_sgn(const struct wined3d_shader_instruction *ins)
 /* FIXME: I don't think nested loops will work correctly this way. */
 static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
 {
-    struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
+    struct wined3d_shader_parser_state *state = ins->ctx->state;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_lconst *constant;
@@ -4347,65 +4347,65 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
             if (loop_control.step > 0)
             {
                 shader_addline(buffer, "for (aL%u = %u; aL%u < (%u * %d + %u); aL%u += %d)\n{\n",
-                        loop_state->current_depth, loop_control.start,
-                        loop_state->current_depth, loop_control.count, loop_control.step, loop_control.start,
-                        loop_state->current_depth, loop_control.step);
+                        state->current_loop_depth, loop_control.start,
+                        state->current_loop_depth, loop_control.count, loop_control.step, loop_control.start,
+                        state->current_loop_depth, loop_control.step);
             }
             else if (loop_control.step < 0)
             {
                 shader_addline(buffer, "for (aL%u = %u; aL%u > (%u * %d + %u); aL%u += %d)\n{\n",
-                        loop_state->current_depth, loop_control.start,
-                        loop_state->current_depth, loop_control.count, loop_control.step, loop_control.start,
-                        loop_state->current_depth, loop_control.step);
+                        state->current_loop_depth, loop_control.start,
+                        state->current_loop_depth, loop_control.count, loop_control.step, loop_control.start,
+                        state->current_loop_depth, loop_control.step);
             }
             else
             {
                 shader_addline(buffer, "for (aL%u = %u, tmpInt%u = 0; tmpInt%u < %u; tmpInt%u++)\n{\n",
-                        loop_state->current_depth, loop_control.start, loop_state->current_depth,
-                        loop_state->current_depth, loop_control.count,
-                        loop_state->current_depth);
+                        state->current_loop_depth, loop_control.start, state->current_loop_depth,
+                        state->current_loop_depth, loop_control.count,
+                        state->current_loop_depth);
             }
         }
         else
         {
             shader_addline(buffer, "for (tmpInt%u = 0, aL%u = %s.y; tmpInt%u < %s.x; tmpInt%u++, aL%u += %s.z)\n{\n",
-                    loop_state->current_depth, loop_state->current_reg,
-                    src1_param.reg_name, loop_state->current_depth, src1_param.reg_name,
-                    loop_state->current_depth, loop_state->current_reg, src1_param.reg_name);
+                    state->current_loop_depth, state->current_loop_reg,
+                    src1_param.reg_name, state->current_loop_depth, src1_param.reg_name,
+                    state->current_loop_depth, state->current_loop_reg, src1_param.reg_name);
         }
 
-        ++loop_state->current_reg;
+        ++state->current_loop_reg;
     }
     else
     {
         shader_addline(buffer, "for (;;)\n{\n");
     }
 
-    ++loop_state->current_depth;
+    ++state->current_loop_depth;
 }
 
 static void shader_glsl_end(const struct wined3d_shader_instruction *ins)
 {
-    struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
+    struct wined3d_shader_parser_state *state = ins->ctx->state;
 
     shader_addline(ins->ctx->buffer, "}\n");
 
     if (ins->handler_idx == WINED3DSIH_ENDLOOP)
     {
-        --loop_state->current_depth;
-        --loop_state->current_reg;
+        --state->current_loop_depth;
+        --state->current_loop_reg;
     }
 
     if (ins->handler_idx == WINED3DSIH_ENDREP)
     {
-        --loop_state->current_depth;
+        --state->current_loop_depth;
     }
 }
 
 static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
 {
+    struct wined3d_shader_parser_state *state = ins->ctx->state;
     const struct wined3d_shader *shader = ins->ctx->shader;
-    struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
     const struct wined3d_shader_lconst *constant;
     struct glsl_src_param src0_param;
     const DWORD *control_values = NULL;
@@ -4426,18 +4426,18 @@ static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
     if (control_values)
     {
         shader_addline(ins->ctx->buffer, "for (tmpInt%d = 0; tmpInt%d < %d; tmpInt%d++) {\n",
-                loop_state->current_depth, loop_state->current_depth,
-                control_values[0], loop_state->current_depth);
+                state->current_loop_depth, state->current_loop_depth,
+                control_values[0], state->current_loop_depth);
     }
     else
     {
         shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
         shader_addline(ins->ctx->buffer, "for (tmpInt%d = 0; tmpInt%d < %s; tmpInt%d++) {\n",
-                loop_state->current_depth, loop_state->current_depth,
-                src0_param.param_str, loop_state->current_depth);
+                state->current_loop_depth, state->current_loop_depth,
+                src0_param.param_str, state->current_loop_depth);
     }
 
-    ++loop_state->current_depth;
+    ++state->current_loop_depth;
 }
 
 static void shader_glsl_switch(const struct wined3d_shader_instruction *ins)
@@ -4537,6 +4537,9 @@ static void shader_glsl_label(const struct wined3d_shader_instruction *ins)
 {
     shader_addline(ins->ctx->buffer, "}\n");
     shader_addline(ins->ctx->buffer, "void subroutine%u()\n{\n", ins->src[0].reg.idx[0].offset);
+
+    /* Subroutines appear at the end of the shader. */
+    ins->ctx->state->in_subroutine = TRUE;
 }
 
 static void shader_glsl_call(const struct wined3d_shader_instruction *ins)
@@ -4557,7 +4560,7 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_version *version = &ins->ctx->shader->reg_maps.shader_version;
 
-    if (version->major >= 4)
+    if (version->major >= 4 && !ins->ctx->state->in_subroutine)
     {
         shader_glsl_generate_shader_epilogue(ins->ctx);
         shader_addline(ins->ctx->buffer, "return;\n");
