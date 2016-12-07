@@ -1721,6 +1721,57 @@ todo_wine
 
     closesocket(s);
     closesocket(s2);
+
+    for (i = 0; i < 2; i++)
+    {
+        int family, level;
+
+        if (i)
+        {
+            family = AF_INET6;
+            level = IPPROTO_IPV6;
+        }
+        else
+        {
+            family = AF_INET;
+            level = IPPROTO_IP;
+        }
+
+        s = socket(family, SOCK_DGRAM, 0);
+        if (s == INVALID_SOCKET && i)
+        {
+            skip("IPv6 is not supported\n");
+            break;
+        }
+        ok(s != INVALID_SOCKET, "socket failed with error %d\n", GetLastError());
+
+        size = sizeof(value);
+        value = 0xdead;
+        err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
+        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+        ok(value == 0, "Expected 0, got %d\n", value);
+
+        size = sizeof(value);
+        value = 1;
+        err = setsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, size);
+        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+
+        value = 0xdead;
+        err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
+        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+        ok(value == 1, "Expected 1, got %d\n", value);
+
+        size = sizeof(value);
+        value = 0xdead;
+        err = setsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, size);
+        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+
+        err = getsockopt(s, level, IP_DONTFRAGMENT, (char *) &value, &size);
+        ok(!err, "Expected 0, got %d with error %d\n", err, GetLastError());
+        ok(value == 1, "Expected 1, got %d\n", value);
+
+        closesocket(s);
+    }
 }
 
 static void test_so_reuseaddr(void)

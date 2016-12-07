@@ -1150,6 +1150,108 @@ static int _get_fd_type(int fd)
     return sock_type;
 }
 
+static BOOL set_dont_fragment(SOCKET s, int level, BOOL value)
+{
+    int fd, optname;
+
+    if (level == IPPROTO_IP)
+    {
+#ifdef IP_DONTFRAG
+        optname = IP_DONTFRAG;
+#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO) && defined(IP_PMTUDISC_DONT)
+        optname = IP_MTU_DISCOVER;
+        value = value ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
+#else
+        static int once;
+        if (!once++)
+            FIXME("IP_DONTFRAGMENT for IPv4 not supported in this platform\n");
+        return TRUE; /* fake success */
+#endif
+    }
+    else
+    {
+#ifdef IPV6_DONTFRAG
+        optname = IPV6_DONTFRAG;
+#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO) && defined(IPV6_PMTUDISC_DONT)
+        optname = IPV6_MTU_DISCOVER;
+        value = value ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
+#else
+        static int once;
+        if (!once++)
+            FIXME("IP_DONTFRAGMENT for IPv6 not supported in this platform\n");
+        return TRUE; /* fake success */
+#endif
+    }
+
+    fd = get_sock_fd(s, 0, NULL);
+    if (fd == -1) return FALSE;
+
+    if (!setsockopt(fd, level, optname, &value, sizeof(value)))
+        value = TRUE;
+    else
+    {
+        WSASetLastError(wsaErrno());
+        value = FALSE;
+    }
+
+    release_sock_fd(s, fd);
+    return value;
+}
+
+static BOOL get_dont_fragment(SOCKET s, int level, BOOL *out)
+{
+    int fd, optname, value, not_expected;
+    socklen_t optlen = sizeof(value);
+
+    if (level == IPPROTO_IP)
+    {
+#ifdef IP_DONTFRAG
+        optname = IP_DONTFRAG;
+        not_expected = 0;
+#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
+        optname = IP_MTU_DISCOVER;
+        not_expected = IP_PMTUDISC_DONT;
+#else
+        static int once;
+        if (!once++)
+            FIXME("IP_DONTFRAGMENT for IPv4 not supported in this platform\n");
+        return TRUE; /* fake success */
+#endif
+    }
+    else
+    {
+#ifdef IPV6_DONTFRAG
+        optname = IPV6_DONTFRAG;
+        not_expected = 0;
+#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
+        optname = IPV6_MTU_DISCOVER;
+        not_expected = IPV6_PMTUDISC_DONT;
+#else
+        static int once;
+        if (!once++)
+            FIXME("IP_DONTFRAGMENT for IPv6 not supported in this platform\n");
+        return TRUE /* fake success */
+#endif
+    }
+
+    fd = get_sock_fd(s, 0, NULL);
+    if (fd == -1) return FALSE;
+
+    if (!getsockopt(fd, level, optname, &value, &optlen))
+    {
+        *out = value != not_expected;
+        value = TRUE;
+    }
+    else
+    {
+        WSASetLastError(wsaErrno());
+        value = FALSE;
+    }
+
+    release_sock_fd(s, fd);
+    return value;
+}
+
 static struct per_thread_data *get_per_thread_data(void)
 {
     struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
@@ -4231,9 +4333,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             release_sock_fd( s, fd );
             return ret;
         case WS_IP_DONTFRAGMENT:
-            FIXME("WS_IP_DONTFRAGMENT is always false!\n");
-            *(BOOL*)optval = FALSE;
-            return 0;
+            return get_dont_fragment(s, IPPROTO_IP, (BOOL *)optval) ? 0 : SOCKET_ERROR;
         }
         FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
         return SOCKET_ERROR;
@@ -4266,9 +4366,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             release_sock_fd( s, fd );
             return ret;
         case WS_IPV6_DONTFRAG:
-            FIXME("WS_IPV6_DONTFRAG is always false!\n");
-            *(BOOL*)optval = FALSE;
-            return 0;
+            return get_dont_fragment(s, IPPROTO_IPV6, (BOOL *)optval) ? 0 : SOCKET_ERROR;
         }
         FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
         return SOCKET_ERROR;
@@ -5898,8 +5996,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             convert_sockopt(&level, &optname);
             break;
         case WS_IP_DONTFRAGMENT:
-            FIXME("IP_DONTFRAGMENT is silently ignored!\n");
-            return 0;
+            return set_dont_fragment(s, IPPROTO_IP, *(BOOL *)optval) ? 0 : SOCKET_ERROR;
         default:
             FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
             return SOCKET_ERROR;
@@ -5926,8 +6023,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             convert_sockopt(&level, &optname);
             break;
         case WS_IPV6_DONTFRAG:
-            FIXME("IPV6_DONTFRAG is silently ignored!\n");
-            return 0;
+            return set_dont_fragment(s, IPPROTO_IPV6, *(BOOL *)optval) ? 0 : SOCKET_ERROR;
         case WS_IPV6_PROTECTION_LEVEL:
             FIXME("IPV6_PROTECTION_LEVEL is ignored!\n");
             return 0;
@@ -7272,6 +7368,10 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         TRACE("\tcreated %04lx\n", ret );
         if (ipxptype > 0)
             set_ipx_packettype(ret, ipxptype);
+
+        /* ensure IP_DONTFRAGMENT is disabled, in Linux the global default can be enabled */
+        if (unixaf == AF_INET || unixaf == AF_INET6)
+            set_dont_fragment(ret, unixaf == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, FALSE);
 
 #ifdef IPV6_V6ONLY
         if (unixaf == AF_INET6)
