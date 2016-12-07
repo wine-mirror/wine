@@ -278,6 +278,8 @@ NTSTATUS WINAPI HidP_GetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USH
     TRACE("(%i, %x, %i, %p, %p, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, UsageList,
           UsageLength, PreparsedData, Report, ReportLength);
 
+    *UsageLength = 0;
+
     if (data->magic != HID_MAGIC)
         return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
