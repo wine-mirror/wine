@@ -799,11 +799,11 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetDepthStencilState(ID3
                 || front->StencilFunc != back->StencilFunc)
         {
             wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_TWOSIDEDSTENCILMODE, TRUE);
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CCW_STENCILFAIL, back->StencilFailOp);
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CCW_STENCILZFAIL,
+            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BACK_STENCILFAIL, back->StencilFailOp);
+            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BACK_STENCILZFAIL,
                     back->StencilDepthFailOp);
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CCW_STENCILPASS, back->StencilPassOp);
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CCW_STENCILFUNC, back->StencilFunc);
+            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BACK_STENCILPASS, back->StencilPassOp);
+            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BACK_STENCILFUNC, back->StencilFunc);
         }
         else
         {

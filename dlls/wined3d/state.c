@@ -838,15 +838,15 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
     DWORD onesided_enable;
     DWORD twosided_enable;
     GLint func;
-    GLint func_ccw;
+    GLint func_back;
     GLint ref;
     GLuint mask;
     GLint stencilFail;
-    GLint stencilFail_ccw;
+    GLint stencilFail_back;
     GLint stencilPass;
-    GLint stencilPass_ccw;
+    GLint stencilPass_back;
     GLint depthFail;
-    GLint depthFail_ccw;
+    GLint depthFail_back;
 
     /* No stencil test without a stencil buffer. */
     if (!state->fb->depth_stencil)
@@ -860,23 +860,23 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
     twosided_enable = state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE];
     if (!(func = wined3d_gl_compare_func(state->render_states[WINED3D_RS_STENCILFUNC])))
         func = GL_ALWAYS;
-    if (!(func_ccw = wined3d_gl_compare_func(state->render_states[WINED3D_RS_CCW_STENCILFUNC])))
-        func_ccw = GL_ALWAYS;
+    if (!(func_back = wined3d_gl_compare_func(state->render_states[WINED3D_RS_BACK_STENCILFUNC])))
+        func_back = GL_ALWAYS;
     ref = state->render_states[WINED3D_RS_STENCILREF];
     mask = state->render_states[WINED3D_RS_STENCILMASK];
     stencilFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILFAIL]);
     depthFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILZFAIL]);
     stencilPass = gl_stencil_op(state->render_states[WINED3D_RS_STENCILPASS]);
-    stencilFail_ccw = gl_stencil_op(state->render_states[WINED3D_RS_CCW_STENCILFAIL]);
-    depthFail_ccw = gl_stencil_op(state->render_states[WINED3D_RS_CCW_STENCILZFAIL]);
-    stencilPass_ccw = gl_stencil_op(state->render_states[WINED3D_RS_CCW_STENCILPASS]);
+    stencilFail_back = gl_stencil_op(state->render_states[WINED3D_RS_BACK_STENCILFAIL]);
+    depthFail_back = gl_stencil_op(state->render_states[WINED3D_RS_BACK_STENCILZFAIL]);
+    stencilPass_back = gl_stencil_op(state->render_states[WINED3D_RS_BACK_STENCILPASS]);
 
     TRACE("(onesided %d, twosided %d, ref %x, mask %x, "
-          "GL_FRONT: func: %x, fail %x, zfail %x, zpass %x "
-          "GL_BACK: func: %x, fail %x, zfail %x, zpass %x )\n",
-    onesided_enable, twosided_enable, ref, mask,
-    func, stencilFail, depthFail, stencilPass,
-    func_ccw, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
+            "GL_FRONT: func: %x, fail %x, zfail %x, zpass %x "
+            "GL_BACK: func: %x, fail %x, zfail %x, zpass %x)\n",
+            onesided_enable, twosided_enable, ref, mask,
+            func, stencilFail, depthFail, stencilPass,
+            func_back, stencilFail_back, depthFail_back, stencilPass_back);
 
     if (twosided_enable && onesided_enable)
     {
@@ -887,8 +887,8 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
         {
             GL_EXTCALL(glStencilFuncSeparate(GL_FRONT, func, ref, mask));
             GL_EXTCALL(glStencilOpSeparate(GL_FRONT, stencilFail, depthFail, stencilPass));
-            GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func_ccw, ref, mask));
-            GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail_ccw, depthFail_ccw, stencilPass_ccw));
+            GL_EXTCALL(glStencilFuncSeparate(GL_BACK, func_back, ref, mask));
+            GL_EXTCALL(glStencilOpSeparate(GL_BACK, stencilFail_back, depthFail_back, stencilPass_back));
             checkGLcall("setting two sided stencil state");
         }
         else if (gl_info->supported[EXT_STENCIL_TWO_SIDE])
@@ -900,22 +900,22 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
              * to set it back
              */
             renderstate_stencil_twosided(context, GL_BACK,
-                    func_ccw, ref, mask, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);
+                    func_back, ref, mask, stencilFail_back, depthFail_back, stencilPass_back);
             renderstate_stencil_twosided(context, GL_FRONT,
                     func, ref, mask, stencilFail, depthFail, stencilPass);
         }
         else if (gl_info->supported[ATI_SEPARATE_STENCIL])
         {
-            GL_EXTCALL(glStencilFuncSeparateATI(func, func_ccw, ref, mask));
+            GL_EXTCALL(glStencilFuncSeparateATI(func, func_back, ref, mask));
             checkGLcall("glStencilFuncSeparateATI(...)");
             GL_EXTCALL(glStencilOpSeparateATI(GL_FRONT, stencilFail, depthFail, stencilPass));
             checkGLcall("glStencilOpSeparateATI(GL_FRONT, ...)");
-            GL_EXTCALL(glStencilOpSeparateATI(GL_BACK, stencilFail_ccw, depthFail_ccw, stencilPass_ccw));
+            GL_EXTCALL(glStencilOpSeparateATI(GL_BACK, stencilFail_back, depthFail_back, stencilPass_back));
             checkGLcall("glStencilOpSeparateATI(GL_BACK, ...)");
         }
         else
         {
-            ERR("Separate (two sided) stencil not supported on this version of opengl. Caps weren't honored?\n");
+            FIXME("Separate (two sided) stencil not supported on this version of OpenGL. Caps weren't honored?\n");
         }
     }
     else if(onesided_enable)
@@ -5096,10 +5096,10 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          state_stencilwrite2s}, EXT_STENCIL_TWO_SIDE            },
     { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          state_stencilwrite  }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE),       { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_CCW_STENCILFAIL),           { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_CCW_STENCILZFAIL),          { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_CCW_STENCILPASS),           { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_CCW_STENCILFUNC),           { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BACK_STENCILFAIL),          { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BACK_STENCILZFAIL),         { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BACK_STENCILPASS),          { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BACK_STENCILFUNC),          { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP0),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     state_wrap          }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP1),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP2),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
