@@ -243,6 +243,8 @@ struct dwrite_fontface {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
+
+    LOGFONTW lf;
 };
 
 struct dwrite_fontfile {
@@ -1685,10 +1687,24 @@ static struct dwrite_font *unsafe_impl_from_IDWriteFont(IDWriteFont *iface)
     return CONTAINING_RECORD(iface, struct dwrite_font, IDWriteFont3_iface);
 }
 
+static struct dwrite_fontface *unsafe_impl_from_IDWriteFontFace(IDWriteFontFace *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl = (IDWriteFontFaceVtbl*)&dwritefontfacevtbl);
+    return CONTAINING_RECORD(iface, struct dwrite_fontface, IDWriteFontFace4_iface);
+}
+
 void get_logfont_from_font(IDWriteFont *iface, LOGFONTW *lf)
 {
     struct dwrite_font *font = unsafe_impl_from_IDWriteFont(iface);
     *lf = font->data->lf;
+}
+
+void get_logfont_from_fontface(IDWriteFontFace *iface, LOGFONTW *lf)
+{
+    struct dwrite_fontface *fontface = unsafe_impl_from_IDWriteFontFace(iface);
+    *lf = fontface->lf;
 }
 
 static HRESULT create_font(struct dwrite_font_data *data, IDWriteFontFamily1 *family, IDWriteFont3 **font)
@@ -4284,6 +4300,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, IDWriteFontFace4 **ret
         fontface->style = desc->font_data->style;
         fontface->stretch = desc->font_data->stretch;
         fontface->panose = desc->font_data->panose;
+        fontface->lf = desc->font_data->lf;
     }
     else {
         IDWriteLocalizedStrings *names;
@@ -4299,6 +4316,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, IDWriteFontFace4 **ret
         fontface->style = data->style;
         fontface->stretch = data->stretch;
         fontface->panose = data->panose;
+        fontface->lf = data->lf;
 
         IDWriteLocalizedStrings_Release(names);
         release_font_data(data);

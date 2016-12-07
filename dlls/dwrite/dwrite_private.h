@@ -163,7 +163,6 @@ struct fontface_desc
     struct dwrite_font_data *font_data; /* could be NULL when face is created directly with IDWriteFactory::CreateFontFace() */
 };
 
-extern HRESULT convert_fontface_to_logfont(IDWriteFontFace*, LOGFONTW*) DECLSPEC_HIDDEN;
 extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const WCHAR *locale,BOOL,IDWriteNumberSubstitution**) DECLSPEC_HIDDEN;
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
@@ -201,6 +200,7 @@ extern HRESULT factory_get_cached_fontface(IDWriteFactory4*,IDWriteFontFile*cons
     struct list**) DECLSPEC_HIDDEN;
 extern void    factory_cache_fontface(struct list*,IDWriteFontFace4*) DECLSPEC_HIDDEN;
 extern void    get_logfont_from_font(IDWriteFont*,LOGFONTW*) DECLSPEC_HIDDEN;
+extern void    get_logfont_from_fontface(IDWriteFontFace*,LOGFONTW*) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
 struct dwrite_font_props {
