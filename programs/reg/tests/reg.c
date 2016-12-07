@@ -81,6 +81,16 @@ static void verify_reg_(unsigned line, HKEY hkey, const char* value,
         lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
 }
 
+#define verify_reg_nonexist(k,v) verify_reg_nonexist_(__LINE__,k,v)
+static void verify_reg_nonexist_(unsigned line, HKEY hkey, const char *value)
+{
+    LONG err;
+
+    err = RegQueryValueExA(hkey, value, NULL, NULL, NULL, NULL);
+    lok(err == ERROR_FILE_NOT_FOUND, "registry value '%s' shouldn't exist; got %d, expected 2\n",
+        value, err);
+}
+
 static void test_add(void)
 {
     HKEY hkey, subkey;
@@ -499,18 +509,15 @@ static void test_delete(void)
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /v bar /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    err = RegQueryValueExA(hkey, "bar", NULL, NULL, NULL, NULL);
-    ok(err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+    verify_reg_nonexist(hkey, "bar");
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /ve /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    err = RegQueryValueExA(hkey, "", NULL, NULL, NULL, NULL);
-    ok(err == ERROR_FILE_NOT_FOUND, "got %d, expected 2\n", err);
+    verify_reg_nonexist(hkey, "");
 
     run_reg_exe("reg delete HKCU\\" KEY_BASE " /va /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
-    err = RegQueryValueExA(hkey, "foo", NULL, NULL, NULL, NULL);
-    ok(err == ERROR_FILE_NOT_FOUND, "got %d\n", err);
+    verify_reg_nonexist(hkey, "foo");
     err = RegOpenKeyExA(hkey, "subkey", 0, KEY_READ, &hsubkey);
     ok(err == ERROR_SUCCESS, "got %d\n", err);
     RegCloseKey(hsubkey);
