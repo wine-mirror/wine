@@ -7643,7 +7643,7 @@ static void test_swapchain_flip(void)
 
     ID3D10Device_Draw(device, 4, 0);
     color = get_texture_color(offscreen, 120, 240);
-    todo_wine ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
 
     /* DXGI moves buffers in the same direction as earlier versions. Buffer 2 becomes buffer 1,
      * buffer 1 becomes the new buffer 0, and buffer 0 becomes buffer n - 1. However, only buffer
@@ -7660,7 +7660,7 @@ static void test_swapchain_flip(void)
 
     ID3D10Device_Draw(device, 4, 0);
     color = get_texture_color(offscreen, 120, 240); /* green, buf 0 */
-    todo_wine ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
     /* Buffer 1 is still untouched. */
 
     color = get_texture_color(backbuffer_0, 320, 240); /* green */
@@ -7674,7 +7674,7 @@ static void test_swapchain_flip(void)
 
     ID3D10Device_Draw(device, 4, 0);
     color = get_texture_color(offscreen, 120, 240); /* blue, buf 0 */
-    todo_wine ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);
     color = get_texture_color(offscreen, 360, 240); /* red, buf 1 */
     ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
 
