@@ -9325,6 +9325,76 @@ todo_wine
     ok(ret, "got %d\n", ret);
 }
 
+static void test_LockWindowUpdate(HWND parent)
+{
+    typedef struct
+    {
+        HWND hwnd_lock, hwnd_draw;
+        BOOL allow_drawing;
+        BOOL expect_valid;
+    } TEST;
+
+    int i;
+    HWND child = CreateWindowA("static", 0, WS_CHILD | WS_VISIBLE, 0, 0, 20, 20, parent, 0, 0, 0);
+
+    TEST tests[] = {
+        {child, child, 0, 0},
+        {child, child, 1, 1},
+        {child, parent, 0, 1},
+        {child, parent, 1, 1},
+        {parent, child, 0, 0},
+        {parent, child, 1, 1},
+        {parent, parent, 0, 0},
+        {parent, parent, 1, 1}
+    };
+
+    if (!child)
+    {
+        skip("CreateWindow failed, skipping LockWindowUpdate tests\n");
+        return;
+    }
+
+    ShowWindow(parent, SW_SHOW);
+    UpdateWindow(parent);
+    flush_events(TRUE);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        HDC hdc;
+        POINT p = {10, 10};
+        BOOL ret;
+        const DWORD dc_flags = DCX_USESTYLE | (tests[i].allow_drawing ? DCX_LOCKWINDOWUPDATE : 0);
+        const COLORREF c1 = 0x111100, c2 = 0x222200;
+
+        trace("hwnd_lock = %s, hwnd_draw = %s, allow_drawing = %d\n",
+            tests[i].hwnd_lock == parent ? "parent" : "child",
+            tests[i].hwnd_draw == parent ? "parent" : "child",
+            tests[i].allow_drawing);
+
+        hdc = GetDCEx(tests[i].hwnd_draw, 0, dc_flags);
+
+#define TEST_PIXEL(c_valid, c_invalid) \
+            do { \
+                COLORREF c = GetPixel(hdc, p.x, p.y); \
+                COLORREF e = tests[i].expect_valid ? (c_valid) : (c_invalid); \
+                todo_wine_if(!tests[i].expect_valid) \
+                ok(c == e, "GetPixel: got %08x, expected %08x\n", c, e); \
+            } while (0)
+
+        SetPixel(hdc, p.x, p.y, c1);
+        ret = LockWindowUpdate(tests[i].hwnd_lock);
+        ok(ret, "LockWindowUpdate failed\n");
+        TEST_PIXEL(c1, CLR_INVALID);
+        SetPixel(hdc, p.x, p.y, c2);
+        TEST_PIXEL(c2, CLR_INVALID);
+        LockWindowUpdate(0);
+        TEST_PIXEL(c2, c1);
+        ReleaseDC(tests[i].hwnd_draw, hdc);
+#undef TEST_PIXEL
+    }
+    DestroyWindow(child);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -9470,6 +9540,7 @@ START_TEST(win)
     test_activateapp(hwndMain);
     test_winproc_handles(argv[0]);
     test_deferwindowpos();
+    test_LockWindowUpdate(hwndMain);
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
