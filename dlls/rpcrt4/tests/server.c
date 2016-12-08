@@ -24,7 +24,6 @@
 #include <oleauto.h>
 #include <secext.h>
 #include <rpcdce.h>
-#include <initguid.h>
 #include <netfw.h>
 #include "wine/test.h"
 #include "server.h"
