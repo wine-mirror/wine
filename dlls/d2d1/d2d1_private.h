@@ -285,16 +285,13 @@ enum d2d_geometry_state
     D2D_GEOMETRY_STATE_FIGURE,
 };
 
-struct d2d_bezier
+struct d2d_bezier_vertex
 {
+    D2D1_POINT_2F position;
     struct
     {
-        D2D1_POINT_2F position;
-        struct
-        {
-            float u, v, sign;
-        } texcoord;
-    } v[3];
+        float u, v, sign;
+    } texcoord;
 };
 
 struct d2d_face
@@ -320,8 +317,8 @@ struct d2d_geometry
         size_t faces_size;
         size_t face_count;
 
-        struct d2d_bezier *beziers;
-        size_t bezier_count;
+        struct d2d_bezier_vertex *bezier_vertices;
+        size_t bezier_vertex_count;
     } fill;
 
     union
