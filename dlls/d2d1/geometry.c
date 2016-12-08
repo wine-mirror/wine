@@ -2600,6 +2600,9 @@ static const struct ID2D1RectangleGeometryVtbl d2d_rectangle_geometry_vtbl =
 
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory, const D2D1_RECT_F *rect)
 {
+    D2D1_POINT_2F *fv;
+    float l, r, t, b;
+
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
     geometry->u.rectangle.rect = *rect;
 
@@ -2617,14 +2620,16 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     }
     geometry->fill.face_count = 2;
 
-    geometry->fill.vertices[0].x = min(rect->left, rect->right);
-    geometry->fill.vertices[0].y = min(rect->top, rect->bottom);
-    geometry->fill.vertices[1].x = min(rect->left, rect->right);
-    geometry->fill.vertices[1].y = max(rect->top, rect->bottom);
-    geometry->fill.vertices[2].x = max(rect->left, rect->right);
-    geometry->fill.vertices[2].y = min(rect->top, rect->bottom);
-    geometry->fill.vertices[3].x = max(rect->left, rect->right);
-    geometry->fill.vertices[3].y = max(rect->top, rect->bottom);
+    l = min(rect->left, rect->right);
+    r = max(rect->left, rect->right);
+    t = min(rect->top, rect->bottom);
+    b = max(rect->top, rect->bottom);
+
+    fv = geometry->fill.vertices;
+    d2d_point_set(&fv[0], l, t);
+    d2d_point_set(&fv[1], l, b);
+    d2d_point_set(&fv[2], r, t);
+    d2d_point_set(&fv[3], r, b);
 
     geometry->fill.faces[0].v[0] = 0;
     geometry->fill.faces[0].v[1] = 2;

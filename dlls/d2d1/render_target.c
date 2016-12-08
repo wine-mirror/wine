@@ -42,12 +42,6 @@ static ID2D1Brush *d2d_draw_get_text_brush(struct d2d_draw_text_layout_ctx *cont
     return context->brush;
 }
 
-static void d2d_point_set(D2D1_POINT_2F *dst, float x, float y)
-{
-    dst->x = x;
-    dst->y = y;
-}
-
 static void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
 {
     if (point->x < dst->left)
