@@ -311,15 +311,18 @@ struct d2d_geometry
 
     D2D_MATRIX_3X2_F transform;
 
-    D2D1_POINT_2F *vertices;
-    size_t vertex_count;
+    struct
+    {
+        D2D1_POINT_2F *vertices;
+        size_t vertex_count;
 
-    struct d2d_face *faces;
-    size_t faces_size;
-    size_t face_count;
+        struct d2d_face *faces;
+        size_t faces_size;
+        size_t face_count;
 
-    struct d2d_bezier *beziers;
-    size_t bezier_count;
+        struct d2d_bezier *beziers;
+        size_t bezier_count;
+    } fill;
 
     union
     {
