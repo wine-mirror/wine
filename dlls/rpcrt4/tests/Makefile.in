@@ -8,7 +8,6 @@ C_SRCS = \
 	ndr_marshall.c \
 	rpc.c \
 	rpc_async.c \
-	rpc_protseq.c \
 	server.c
 
 IDL_SRCS = server.idl
