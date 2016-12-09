@@ -2813,6 +2813,97 @@ cleanup:
     RemoveDirectoryA("test-dir");
 }
 
+static void test_FindFirstFile_wildcards(void)
+{
+    WIN32_FIND_DATAA find_data;
+    HANDLE handle;
+    int i;
+    static const char* files[] = {
+        "..a", "..a.a", ".a", ".a..a", ".a.a", ".aaa",
+        "a", "a..a", "a.a", "a.a.a", "aa", "aaa", "aaaa"
+    };
+    static const struct {
+        int todo;
+        const char *pattern, *result;
+    } tests[] = {
+        {0, "*.*.*", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {0, "*.*.", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {0, ".*.*", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa'"},
+        {0, "*.*", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {0, ".*", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa'"},
+        {1, "*.", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
+        {0, "*", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {1, "*..*", ", '.', '..', '..a', '..a.a', '.a..a', 'a..a'"},
+        {1, "*..", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
+        {1, ".*.", ", '.', '..', '.a', '.aaa'"},
+        {0, "..*", ", '.', '..', '..a', '..a.a'"},
+        {0, "**", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {0, "**.", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {0, "*. ", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {1, "* .", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
+        {0, "* . ", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {0, "*.. ", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {1, "*. .", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
+        {1, "* ..", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
+        {1, " *..", ", '.aaa'"},
+        {0, "..* ", ", '.', '..', '..a', '..a.a'"},
+        {1, "?", ", '.', '..', 'a'"},
+        {1, "?.", ", '.', '..', 'a'"},
+        {1, "?. ", ", '.', '..', 'a'"},
+        {1, "??.", ", '.', '..', 'a', 'aa'"},
+        {1, "??. ", ", '.', '..', 'a', 'aa'"},
+        {1, "???.", ", '.', '..', 'a', 'aa', 'aaa'"},
+        {1, "?.??.", ", '.', '..', '.a', 'a', 'a.a'"}
+    };
+
+    CreateDirectoryA("test-dir", NULL);
+    SetCurrentDirectoryA("test-dir");
+    for (i = 0; i < sizeof(files) / sizeof(files[0]); ++i)
+        _lclose(_lcreat(files[i], 0));
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        char correct[512];
+        char incorrect[512];
+        char missing[512];
+
+        strcpy(missing, tests[i].result);
+        correct[0] = incorrect[0] = 0;
+
+        handle = FindFirstFileA(tests[i].pattern, &find_data);
+        if (handle) do {
+            char* ptr;
+            char quoted[16];
+
+            sprintf( quoted, ", '%.10s'", find_data.cFileName );
+
+            if ((ptr = strstr(missing, quoted)))
+            {
+                int len = strlen(quoted);
+                while ((ptr[0] = ptr[len]) != 0)
+                    ++ptr;
+                strcat(correct, quoted);
+            }
+            else
+                strcat(incorrect, quoted);
+        } while (FindNextFileA(handle, &find_data));
+        FindClose(handle);
+
+        todo_wine_if (tests[i].todo)
+        ok(missing[0] == 0 && incorrect[0] == 0,
+           "FindFirstFile with '%s' found correctly %s, found incorrectly %s, and missed %s\n",
+           tests[i].pattern,
+           correct[0] ? correct+2 : "none",
+           incorrect[0] ? incorrect+2 : "none",
+           missing[0] ? missing+2 : "none");
+    }
+
+    for (i = 0; i < sizeof(files) / sizeof(files[0]); ++i)
+        DeleteFileA(files[i]);
+    SetCurrentDirectoryA("..");
+    RemoveDirectoryA("test-dir");
+}
+
 static int test_Mapfile_createtemp(HANDLE *handle)
 {
     SetFileAttributesA(filename,FILE_ATTRIBUTE_NORMAL);
@@ -4741,6 +4832,7 @@ START_TEST(file)
     test_MoveFileW();
     test_FindFirstFileA();
     test_FindNextFileA();
+    test_FindFirstFile_wildcards();
     test_FindFirstFileExA(FindExInfoStandard, 0, 0);
     test_FindFirstFileExA(FindExInfoStandard, 0, FIND_FIRST_EX_CASE_SENSITIVE);
     test_FindFirstFileExA(FindExInfoStandard, 0, FIND_FIRST_EX_LARGE_FETCH);
