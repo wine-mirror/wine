@@ -456,6 +456,8 @@ static void reader_clear_elements(xmlreader *reader)
     struct element *elem, *elem2;
     LIST_FOR_EACH_ENTRY_SAFE(elem, elem2, &reader->elements, struct element, entry)
     {
+        reader_free_strvalued(reader, &elem->prefix);
+        reader_free_strvalued(reader, &elem->localname);
         reader_free_strvalued(reader, &elem->qname);
         reader_free(reader, elem);
     }
