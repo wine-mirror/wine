@@ -610,8 +610,8 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
 
         if (desc->u.texture.layer_idx || desc->u.texture.layer_count != depth_or_layer_count)
         {
-            FIXME("Unordered access view unsupported yet (layers %u-%u).\n",
-                    desc->u.texture.layer_idx, desc->u.texture.layer_count);
+            create_texture_view(&view->gl_view, get_texture_view_target(desc, texture),
+                    desc, texture, view->format);
         }
 
         view->layer_idx = desc->u.texture.layer_idx;

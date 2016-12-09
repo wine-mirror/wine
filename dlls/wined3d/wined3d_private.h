@@ -3321,7 +3321,7 @@ struct wined3d_unordered_access_view
     const struct wined3d_parent_ops *parent_ops;
 
     const struct wined3d_format *format;
-
+    struct wined3d_gl_view gl_view;
     unsigned int layer_idx;
     unsigned int layer_count;
     unsigned int level_idx;

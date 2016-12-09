@@ -3406,8 +3406,9 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
     struct wined3d_unordered_access_view *view;
     struct wined3d_texture *texture;
     struct wined3d_shader *shader;
-    struct gl_texture *gl_texture;
+    GLuint texture_name;
     unsigned int i;
+    GLint level;
 
     context->uses_uavs = 0;
 
@@ -3438,8 +3439,18 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
         wined3d_texture_load(texture, context, FALSE);
         wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_TEXTURE_RGB);
 
-        gl_texture = wined3d_texture_get_gl_texture(texture, FALSE);
-        GL_EXTCALL(glBindImageTexture(i, gl_texture->name, view->level_idx, GL_TRUE, 0, GL_READ_WRITE,
+        if (view->gl_view.name)
+        {
+            texture_name = view->gl_view.name;
+            level = 0;
+        }
+        else
+        {
+            texture_name = wined3d_texture_get_gl_texture(texture, FALSE)->name;
+            level = view->level_idx;
+        }
+
+        GL_EXTCALL(glBindImageTexture(i, texture_name, level, GL_TRUE, 0, GL_READ_WRITE,
                 view->format->glInternal));
     }
     checkGLcall("Bind unordered access views");
