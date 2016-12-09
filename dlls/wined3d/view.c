@@ -566,13 +566,18 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
 
     view->format = wined3d_get_format(gl_info, desc->format_id);
 
-    if (wined3d_format_is_typeless(view->format))
+    if (wined3d_format_is_typeless(view->format)
+            && !(view->format->id == WINED3DFMT_R32_TYPELESS && (desc->flags & WINED3D_VIEW_BUFFER_RAW)))
     {
         WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view->format->id));
         return E_INVALIDARG;
     }
 
-    if (resource->type != WINED3D_RTYPE_BUFFER)
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Buffer unordered access views not supported.\n");
+    }
+    else
     {
         struct wined3d_texture *texture = texture_from_resource(resource);
         unsigned int depth_or_layer_count;
