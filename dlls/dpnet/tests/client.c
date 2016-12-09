@@ -606,8 +606,42 @@ static void test_cleanup_dp_peer(void)
     CoUninitialize();
 }
 
+/* taken from programs/winetest/main.c */
+static BOOL is_stub_dll(const char *filename)
+{
+    DWORD size, ver;
+    BOOL isstub = FALSE;
+    char *p, *data;
+
+    size = GetFileVersionInfoSizeA(filename, &ver);
+    if (!size) return FALSE;
+
+    data = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!data) return FALSE;
+
+    if (GetFileVersionInfoA(filename, ver, size, data))
+    {
+        char buf[256];
+
+        sprintf(buf, "\\StringFileInfo\\%04x%04x\\OriginalFilename", MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), 1200);
+        if (VerQueryValueA(data, buf, (void**)&p, &size))
+            isstub = !lstrcmpiA("wcodstub.dll", p);
+    }
+    HeapFree(GetProcessHeap(), 0, data);
+
+    return isstub;
+}
+
 START_TEST(client)
 {
+    if (!winetest_interactive &&
+        (is_stub_dll("c:\\windows\\system32\\dpnet.dll") ||
+         is_stub_dll("c:\\windows\\syswow64\\dpnet.dll")))
+    {
+        win_skip("dpnet is a stub dll, skipping tests\n");
+        return;
+    }
+
     if(!test_init_dp())
         return;
 
