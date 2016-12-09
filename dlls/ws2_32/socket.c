@@ -1230,7 +1230,7 @@ static BOOL get_dont_fragment(SOCKET s, int level, BOOL *out)
         static int once;
         if (!once++)
             FIXME("IP_DONTFRAGMENT for IPv6 not supported in this platform\n");
-        return TRUE /* fake success */
+        return TRUE; /* fake success */
 #endif
     }
 
