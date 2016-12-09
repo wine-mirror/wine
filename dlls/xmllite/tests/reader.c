@@ -1362,7 +1362,8 @@ static void test_read_element(void)
         if (test->hr_broken)
             ok(hr == test->hr || broken(hr == test->hr_broken), "got %08x for %s\n", hr, test->xml);
         else
-            ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
+            todo_wine_if(test->hr == NC_E_UNDECLAREDPREFIX)
+                ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
         if (hr == S_OK)
         {
             const WCHAR *str;

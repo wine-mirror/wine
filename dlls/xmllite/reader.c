@@ -2233,9 +2233,7 @@ static HRESULT reader_parse_element(xmlreader *reader)
         hr = reader_parse_stag(reader, &prefix, &local, &qname, &empty);
         if (FAILED(hr)) return hr;
 
-        /* FIXME: need to check for defined namespace to reject invalid prefix,
-           currently reject all prefixes */
-        if (prefix.len) return NC_E_UNDECLAREDPREFIX;
+        /* FIXME: need to check for defined namespace to reject invalid prefix */
 
         /* if we got empty element and stack is empty go straight to Misc */
         if (empty && list_empty(&reader->elements))
