@@ -2337,21 +2337,24 @@ static BOOL is_sharing_map_compatible( DWORD map_access, DWORD access2, DWORD sh
 
 static void test_file_sharing(void)
 {
-    static const DWORD access_modes[] =
-        { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ|GENERIC_WRITE,
-          DELETE, GENERIC_READ|DELETE, GENERIC_WRITE|DELETE, GENERIC_READ|GENERIC_WRITE|DELETE,
-          GENERIC_EXECUTE, GENERIC_EXECUTE | DELETE,
-          FILE_READ_DATA, FILE_WRITE_DATA, FILE_APPEND_DATA, FILE_READ_EA, FILE_WRITE_EA,
-          FILE_READ_DATA | FILE_EXECUTE, FILE_WRITE_DATA | FILE_EXECUTE, FILE_APPEND_DATA | FILE_EXECUTE,
-          FILE_READ_EA | FILE_EXECUTE, FILE_WRITE_EA | FILE_EXECUTE, FILE_EXECUTE,
-          FILE_DELETE_CHILD, FILE_READ_ATTRIBUTES, FILE_WRITE_ATTRIBUTES };
-    static const DWORD sharing_modes[] =
-        { 0, FILE_SHARE_READ,
-          FILE_SHARE_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-          FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_DELETE,
-          FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE };
-    static const DWORD mapping_modes[] =
-        { PAGE_READONLY, PAGE_WRITECOPY, PAGE_READWRITE, SEC_IMAGE | PAGE_WRITECOPY };
+    struct mode { DWORD dw; const char* str; };
+#define M(x) {x, # x}
+    static const struct mode access_modes[] =
+        { M(0), M(GENERIC_READ), M(GENERIC_WRITE), M(GENERIC_READ|GENERIC_WRITE),
+          M(DELETE), M(GENERIC_READ|DELETE), M(GENERIC_WRITE|DELETE), M(GENERIC_READ|GENERIC_WRITE|DELETE),
+          M(GENERIC_EXECUTE), M(GENERIC_EXECUTE | DELETE),
+          M(FILE_READ_DATA), M(FILE_WRITE_DATA), M(FILE_APPEND_DATA), M(FILE_READ_EA), M(FILE_WRITE_EA),
+          M(FILE_READ_DATA | FILE_EXECUTE), M(FILE_WRITE_DATA | FILE_EXECUTE), M(FILE_APPEND_DATA | FILE_EXECUTE),
+          M(FILE_READ_EA | FILE_EXECUTE), M(FILE_WRITE_EA | FILE_EXECUTE), M(FILE_EXECUTE),
+          M(FILE_DELETE_CHILD), M(FILE_READ_ATTRIBUTES), M(FILE_WRITE_ATTRIBUTES) };
+    static const struct mode sharing_modes[] =
+        { M(0), M(FILE_SHARE_READ),
+          M(FILE_SHARE_WRITE), M(FILE_SHARE_READ|FILE_SHARE_WRITE),
+          M(FILE_SHARE_DELETE), M(FILE_SHARE_READ|FILE_SHARE_DELETE),
+          M(FILE_SHARE_WRITE|FILE_SHARE_DELETE), M(FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE) };
+    static const struct mode mapping_modes[] =
+        { M(PAGE_READONLY), M(PAGE_WRITECOPY), M(PAGE_READWRITE), M(SEC_IMAGE | PAGE_WRITECOPY) };
+#undef M
     int a1, s1, a2, s2;
     int ret;
     HANDLE h, h2;
@@ -2368,7 +2371,7 @@ static void test_file_sharing(void)
         for (s1 = 0; s1 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s1++)
         {
             SetLastError(0xdeadbeef);
-            h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
+            h = CreateFileA( filename, access_modes[a1].dw, sharing_modes[s1].dw,
                              NULL, OPEN_EXISTING, 0, 0 );
             if (h == INVALID_HANDLE_VALUE)
             {
@@ -2380,24 +2383,24 @@ static void test_file_sharing(void)
                 for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
                 {
                     SetLastError(0xdeadbeef);
-                    h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
+                    h2 = CreateFileA( filename, access_modes[a2].dw, sharing_modes[s2].dw,
                                       NULL, OPEN_EXISTING, 0, 0 );
                     ret = GetLastError();
-                    if (is_sharing_compatible( access_modes[a1], sharing_modes[s1],
-                                               access_modes[a2], sharing_modes[s2] ))
+                    if (is_sharing_compatible( access_modes[a1].dw, sharing_modes[s1].dw,
+                                               access_modes[a2].dw, sharing_modes[s2].dw ))
                     {
                         ok( h2 != INVALID_HANDLE_VALUE,
-                            "open failed for modes %x/%x/%x/%x\n",
-                            access_modes[a1], sharing_modes[s1],
-                            access_modes[a2], sharing_modes[s2] );
+                            "open failed for modes %s / %s / %s / %s\n",
+                            access_modes[a1].str, sharing_modes[s1].str,
+                            access_modes[a2].str, sharing_modes[s2].str );
                         ok( ret == 0, "wrong error code %d\n", ret );
                     }
                     else
                     {
                         ok( h2 == INVALID_HANDLE_VALUE,
-                            "open succeeded for modes %x/%x/%x/%x\n",
-                            access_modes[a1], sharing_modes[s1],
-                            access_modes[a2], sharing_modes[s2] );
+                            "open succeeded for modes %s / %s / %s / %s\n",
+                            access_modes[a1].str, sharing_modes[s1].str,
+                            access_modes[a2].str, sharing_modes[s2].str );
                          ok( ret == ERROR_SHARING_VIOLATION,
                              "wrong error code %d\n", ret );
                     }
@@ -2420,8 +2423,8 @@ static void test_file_sharing(void)
             ok(0,"couldn't create file \"%s\" (err=%d)\n",filename,GetLastError());
             return;
         }
-        m = CreateFileMappingA( h, NULL, mapping_modes[a1], 0, 0, NULL );
-        ok( m != 0, "failed to create mapping %x err %u\n", mapping_modes[a1], GetLastError() );
+        m = CreateFileMappingA( h, NULL, mapping_modes[a1].dw, 0, 0, NULL );
+        ok( m != 0, "failed to create mapping %s err %u\n", mapping_modes[a1].str, GetLastError() );
         CloseHandle( h );
         if (!m) continue;
 
@@ -2430,24 +2433,24 @@ static void test_file_sharing(void)
             for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
             {
                 SetLastError(0xdeadbeef);
-                h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
+                h2 = CreateFileA( filename, access_modes[a2].dw, sharing_modes[s2].dw,
                                   NULL, OPEN_EXISTING, 0, 0 );
 
                 ret = GetLastError();
                 if (h2 == INVALID_HANDLE_VALUE)
                 {
-                    ok( !is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]),
-                        "open failed for modes map %x/%x/%x\n",
-                        mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
+                    ok( !is_sharing_map_compatible(mapping_modes[a1].dw, access_modes[a2].dw, sharing_modes[s2].dw),
+                        "open failed for modes map %s / %s / %s\n",
+                        mapping_modes[a1].str, access_modes[a2].str, sharing_modes[s2].str );
                     ok( ret == ERROR_SHARING_VIOLATION,
                         "wrong error code %d\n", ret );
                 }
                 else
                 {
-                    if (!is_sharing_map_compatible(mapping_modes[a1], access_modes[a2], sharing_modes[s2]))
+                    if (!is_sharing_map_compatible(mapping_modes[a1].dw, access_modes[a2].dw, sharing_modes[s2].dw))
                         ok( broken(1),  /* no checking on nt4 */
-                            "open succeeded for modes map %x/%x/%x\n",
-                            mapping_modes[a1], access_modes[a2], sharing_modes[s2] );
+                            "open succeeded for modes map %s / %s / %s\n",
+                            mapping_modes[a1].str, access_modes[a2].str, sharing_modes[s2].str );
                     ok( ret == 0xdeadbeef /* Win9x */ ||
                         ret == 0, /* XP */
                         "wrong error code %d\n", ret );
@@ -2461,15 +2464,15 @@ static void test_file_sharing(void)
         h2 = CreateFileA( filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, CREATE_ALWAYS, 0, 0 );
         ret = GetLastError();
-        if (mapping_modes[a1] & SEC_IMAGE)
+        if (mapping_modes[a1].dw & SEC_IMAGE)
         {
-            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
-            ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %s\n", mapping_modes[a1].str );
+            ok( ret == ERROR_SHARING_VIOLATION, "wrong error code %d for %s\n", ret, mapping_modes[a1].str );
         }
         else
         {
-            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
-            ok( ret == ERROR_USER_MAPPED_FILE, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %s\n", mapping_modes[a1].str );
+            ok( ret == ERROR_USER_MAPPED_FILE, "wrong error code %d for %s\n", ret, mapping_modes[a1].str );
         }
         if (h2 != INVALID_HANDLE_VALUE) CloseHandle( h2 );
 
@@ -2478,14 +2481,14 @@ static void test_file_sharing(void)
         h2 = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, OPEN_EXISTING, FILE_FLAG_DELETE_ON_CLOSE, 0 );
         ret = GetLastError();
-        if (mapping_modes[a1] & SEC_IMAGE)
+        if (mapping_modes[a1].dw & SEC_IMAGE)
         {
-            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %x\n", mapping_modes[a1] );
-            ok( ret == ERROR_ACCESS_DENIED, "wrong error code %d for %x\n", ret, mapping_modes[a1] );
+            ok( h2 == INVALID_HANDLE_VALUE, "create succeeded for map %s\n", mapping_modes[a1].str );
+            ok( ret == ERROR_ACCESS_DENIED, "wrong error code %d for %s\n", ret, mapping_modes[a1].str );
         }
         else
         {
-            ok( h2 != INVALID_HANDLE_VALUE, "open failed for map %x err %u\n", mapping_modes[a1], ret );
+            ok( h2 != INVALID_HANDLE_VALUE, "open failed for map %s err %u\n", mapping_modes[a1].str, ret );
         }
         if (h2 != INVALID_HANDLE_VALUE) CloseHandle( h2 );
 
