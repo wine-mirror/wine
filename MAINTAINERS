@@ -265,6 +265,7 @@ F:	dlls/winex11.drv/
 XML parsing
 M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/msxml*/
+F:	dlls/xmllite/
 
 THE REST
 M:	Alexandre Julliard <julliard@winehq.org>
