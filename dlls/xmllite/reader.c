@@ -228,8 +228,9 @@ struct attribute
 struct element
 {
     struct list entry;
-    strval qname;
+    strval prefix;
     strval localname;
+    strval qname;
 };
 
 typedef struct
@@ -280,6 +281,14 @@ static inline xmlreaderinput *impl_from_IXmlReaderInput(IXmlReaderInput *iface)
 static inline void *reader_alloc(xmlreader *reader, size_t len)
 {
     return m_alloc(reader->imalloc, len);
+}
+
+static inline void *reader_alloc_zero(xmlreader *reader, size_t len)
+{
+    void *ret = reader_alloc(reader, len);
+    if (ret)
+        memset(ret, 0, len);
+    return ret;
 }
 
 static inline void reader_free(xmlreader *reader, void *mem)
@@ -448,39 +457,44 @@ static void reader_dec_depth(xmlreader *reader)
     if (reader->depth > 1) reader->depth--;
 }
 
-static HRESULT reader_push_element(xmlreader *reader, strval *qname, strval *localname)
+static void reader_free_element(xmlreader *reader, struct element *element)
 {
-    struct element *elem;
+    reader_free_strvalued(reader, &element->prefix);
+    reader_free_strvalued(reader, &element->localname);
+    reader_free_strvalued(reader, &element->qname);
+    reader_free(reader, element);
+}
+
+static HRESULT reader_push_element(xmlreader *reader, strval *prefix, strval *localname,
+    strval *qname)
+{
+    struct element *element;
     HRESULT hr;
-
-    elem = reader_alloc(reader, sizeof(*elem));
-    if (!elem) return E_OUTOFMEMORY;
-
-    hr = reader_strvaldup(reader, qname, &elem->qname);
-    if (FAILED(hr)) {
-        reader_free(reader, elem);
-        return hr;
-    }
-
-    hr = reader_strvaldup(reader, localname, &elem->localname);
-    if (FAILED(hr))
-    {
-        reader_free_strvalued(reader, &elem->qname);
-        reader_free(reader, elem);
-        return hr;
-    }
 
     if (!list_empty(&reader->elements))
     {
         hr = reader_inc_depth(reader);
-        if (FAILED(hr)) {
-             reader_free(reader, elem);
+        if (FAILED(hr))
              return hr;
-        }
     }
 
-    list_add_head(&reader->elements, &elem->entry);
+    element = reader_alloc_zero(reader, sizeof(*element));
+    if (!element)
+        goto failed;
+
+    if ((hr = reader_strvaldup(reader, prefix, &element->prefix)) != S_OK ||
+            (hr = reader_strvaldup(reader, localname, &element->localname)) != S_OK ||
+            (hr = reader_strvaldup(reader, qname, &element->qname)) != S_OK)
+    {
+        reader_free_element(reader, element);
+        goto failed;
+    }
+
+    list_add_head(&reader->elements, &element->entry);
     reader->is_empty_element = FALSE;
+
+failed:
+    reader_dec_depth(reader);
     return hr;
 }
 
@@ -2077,6 +2091,7 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
             /* skip '/>' */
             reader_skipn(reader, 2);
             reader->is_empty_element = TRUE;
+            reader->empty_element.prefix = *prefix;
             reader->empty_element.localname = *local;
             reader->empty_element.qname = *qname;
             return S_OK;
@@ -2087,7 +2102,7 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
         {
             /* skip '>' */
             reader_skipn(reader, 1);
-            return reader_push_element(reader, qname, local);
+            return reader_push_element(reader, prefix, local, qname);
         }
 
         hr = reader_parse_attribute(reader);
@@ -2134,8 +2149,8 @@ static HRESULT reader_parse_element(xmlreader *reader)
 
         reader->nodetype = XmlNodeType_Element;
         reader->resumestate = XmlReadResumeState_Initial;
-        reader_set_strvalue(reader, StringValue_LocalName, &local);
         reader_set_strvalue(reader, StringValue_Prefix, &prefix);
+        reader_set_strvalue(reader, StringValue_LocalName, &local);
         reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
         break;
     }
@@ -2178,6 +2193,7 @@ static HRESULT reader_parse_endtag(xmlreader *reader)
         reader->instate = XmlReadInState_MiscEnd;
 
     reader->nodetype = XmlNodeType_EndElement;
+    reader_set_strvalue(reader, StringValue_Prefix, &prefix);
     reader_set_strvalue(reader, StringValue_LocalName, &local);
     reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
 
