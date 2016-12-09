@@ -54,22 +54,35 @@ static void test_set_state(void)
     {
         ZeroMemory(&vibrator, sizeof(XINPUT_VIBRATION));
 
+        vibrator.wLeftMotorSpeed = 32767;
+        vibrator.wRightMotorSpeed = 32767;
+        result = pXInputSetState(controllerNum, &vibrator);
+        if (result == ERROR_DEVICE_NOT_CONNECTED) continue;
+
+        Sleep(250);
         vibrator.wLeftMotorSpeed = 0;
         vibrator.wRightMotorSpeed = 0;
         result = pXInputSetState(controllerNum, &vibrator);
-        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputSetState failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS, "XInputSetState failed with (%d)\n", result);
 
         /* Disabling XInput here, queueing a vibration and then re-enabling XInput
          * is used to prove that vibrations are auto enabled when resuming XInput.
-         * If XInputEnable is removed the vibration will never play. */
+         * If XInputEnable(1) is removed below the vibration will never play. */
         if (pXInputEnable) pXInputEnable(0);
 
+        Sleep(250);
         vibrator.wLeftMotorSpeed = 65535;
         vibrator.wRightMotorSpeed = 65535;
         result = pXInputSetState(controllerNum, &vibrator);
-        ok(result == ERROR_SUCCESS || result == ERROR_DEVICE_NOT_CONNECTED, "XInputSetState failed with (%d)\n", result);
+        ok(result == ERROR_SUCCESS, "XInputSetState failed with (%d)\n", result);
 
         if (pXInputEnable) pXInputEnable(1);
+        Sleep(250);
+
+        vibrator.wLeftMotorSpeed = 0;
+        vibrator.wRightMotorSpeed = 0;
+        result = pXInputSetState(controllerNum, &vibrator);
+        ok(result == ERROR_SUCCESS, "XInputSetState failed with (%d)\n", result);
     }
 
     result = pXInputSetState(XUSER_MAX_COUNT+1, &vibrator);
