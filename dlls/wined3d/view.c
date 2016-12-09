@@ -375,7 +375,8 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     const struct wined3d_format *view_format;
 
     view_format = wined3d_get_format(gl_info, desc->format_id);
-    if (wined3d_format_is_typeless(view_format))
+    if (wined3d_format_is_typeless(view_format)
+            && !(view_format->id == WINED3DFMT_R32_TYPELESS && (desc->flags & WINED3D_VIEW_BUFFER_RAW)))
     {
         WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view_format->id));
         return E_INVALIDARG;
