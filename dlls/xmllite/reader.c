@@ -253,7 +253,8 @@ typedef struct
     strval strvalues[StringValue_Last];
     UINT depth;
     UINT max_depth;
-    BOOL empty_element;
+    BOOL is_empty_element;
+    struct element empty_element;
     UINT resume[XmlReadResume_Last]; /* offsets used to resume reader */
 } xmlreader;
 
@@ -433,7 +434,7 @@ static void reader_clear_elements(xmlreader *reader)
         reader_free(reader, elem);
     }
     list_init(&reader->elements);
-    reader->empty_element = FALSE;
+    reader->is_empty_element = FALSE;
 }
 
 static HRESULT reader_inc_depth(xmlreader *reader)
@@ -479,7 +480,7 @@ static HRESULT reader_push_element(xmlreader *reader, strval *qname, strval *loc
     }
 
     list_add_head(&reader->elements, &elem->entry);
-    reader->empty_element = FALSE;
+    reader->is_empty_element = FALSE;
     return hr;
 }
 
@@ -2075,7 +2076,9 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
         {
             /* skip '/>' */
             reader_skipn(reader, 2);
-            reader->empty_element = TRUE;
+            reader->is_empty_element = TRUE;
+            reader->empty_element.localname = *local;
+            reader->empty_element.qname = *qname;
             return S_OK;
         }
 
@@ -2707,7 +2710,6 @@ static HRESULT WINAPI xmlreader_MoveToAttributeByName(IXmlReader* iface,
 static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
-    struct element *elem;
 
     TRACE("(%p)\n", This);
 
@@ -2715,11 +2717,16 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
     This->attr = NULL;
 
     /* FIXME: support other node types with 'attributes' like DTD */
-    elem = LIST_ENTRY(list_head(&This->elements), struct element, entry);
-    if (elem)
-    {
-        reader_set_strvalue(This, StringValue_QualifiedName, &elem->qname);
-        reader_set_strvalue(This, StringValue_LocalName, &elem->localname);
+    if (This->is_empty_element) {
+        reader_set_strvalue(This, StringValue_LocalName, &This->empty_element.localname);
+        reader_set_strvalue(This, StringValue_QualifiedName, &This->empty_element.qname);
+    }
+    else {
+        struct element *element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
+        if (element) {
+            reader_set_strvalue(This, StringValue_LocalName, &element->localname);
+            reader_set_strvalue(This, StringValue_QualifiedName, &element->qname);
+        }
     }
 
     return S_OK;
@@ -2841,7 +2848,7 @@ static BOOL WINAPI xmlreader_IsEmptyElement(IXmlReader* iface)
     TRACE("(%p)\n", This);
     /* Empty elements are not placed in stack, it's stored as a global reader flag that makes sense
        when current node is start tag of an element */
-    return (reader_get_nodetype(This) == XmlNodeType_Element) ? This->empty_element : FALSE;
+    return (reader_get_nodetype(This) == XmlNodeType_Element) ? This->is_empty_element : FALSE;
 }
 
 static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *lineNumber)
@@ -3024,7 +3031,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     list_init(&reader->elements);
     reader->depth = 0;
     reader->max_depth = 256;
-    reader->empty_element = FALSE;
+    reader->is_empty_element = FALSE;
     memset(reader->resume, 0, sizeof(reader->resume));
 
     for (i = 0; i < StringValue_Last; i++)
