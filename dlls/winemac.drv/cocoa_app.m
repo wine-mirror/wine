@@ -2314,6 +2314,19 @@ static NSString* WineLocalizedString(unsigned int stringID)
         return ret;
     }
 
+    - (void)applicationWillBecomeActive:(NSNotification *)notification
+    {
+        macdrv_event* event = macdrv_create_event(APP_ACTIVATED, nil);
+        event->deliver = 1;
+
+        [eventQueuesLock lock];
+        for (WineEventQueue* queue in eventQueues)
+            [queue postEvent:event];
+        [eventQueuesLock unlock];
+
+        macdrv_release_event(event);
+    }
+
     - (void)applicationWillResignActive:(NSNotification *)notification
     {
         [self adjustWindowLevels:NO];

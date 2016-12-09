@@ -2279,6 +2279,18 @@ void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event)
 
 
 /***********************************************************************
+ *              macdrv_app_activated
+ *
+ * Handler for APP_ACTIVATED events.
+ */
+void macdrv_app_activated(void)
+{
+    TRACE("\n");
+    macdrv_UpdateClipboard();
+}
+
+
+/***********************************************************************
  *              macdrv_app_deactivated
  *
  * Handler for APP_DEACTIVATED events.

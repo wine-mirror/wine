@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(event);
 static const char *dbgstr_event(int type)
 {
     static const char * const event_names[] = {
+        "APP_ACTIVATED",
         "APP_DEACTIVATED",
         "APP_QUIT_REQUESTED",
         "DISPLAYS_CHANGED",
@@ -104,6 +105,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
     if (mask & QS_POSTMESSAGE)
     {
+        event_mask |= event_mask_for_type(APP_ACTIVATED);
         event_mask |= event_mask_for_type(APP_DEACTIVATED);
         event_mask |= event_mask_for_type(APP_QUIT_REQUESTED);
         event_mask |= event_mask_for_type(DISPLAYS_CHANGED);
@@ -210,6 +212,9 @@ void macdrv_handle_event(const macdrv_event *event)
 
     switch (event->type)
     {
+    case APP_ACTIVATED:
+        macdrv_app_activated();
+        break;
     case APP_DEACTIVATED:
         macdrv_app_deactivated();
         break;

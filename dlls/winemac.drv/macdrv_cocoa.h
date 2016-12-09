@@ -259,6 +259,7 @@ extern int macdrv_set_display_mode(const struct macdrv_display* display,
 
 /* event */
 enum {
+    APP_ACTIVATED,
     APP_DEACTIVATED,
     APP_QUIT_REQUESTED,
     DISPLAYS_CHANGED,
@@ -301,7 +302,7 @@ enum {
     QUIT_REASON_SHUTDOWN,
 };
 
-typedef uint32_t macdrv_event_mask;
+typedef uint64_t macdrv_event_mask;
 
 typedef struct macdrv_event {
     int                 refs;

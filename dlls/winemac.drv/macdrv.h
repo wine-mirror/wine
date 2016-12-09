@@ -165,6 +165,7 @@ extern void macdrv_window_close_requested(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_window_lost_focus(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void macdrv_app_activated(void) DECLSPEC_HIDDEN;
 extern void macdrv_app_deactivated(void) DECLSPEC_HIDDEN;
 extern void macdrv_app_quit_requested(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_window_maximize_requested(HWND hwnd) DECLSPEC_HIDDEN;
@@ -194,6 +195,7 @@ extern HKL macdrv_get_hkl_from_source(TISInputSourceRef input_source) DECLSPEC_H
 
 extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 
+extern void CDECL macdrv_UpdateClipboard(void) DECLSPEC_HIDDEN;
 extern void macdrv_init_clipboard(void) DECLSPEC_HIDDEN;
 extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type) DECLSPEC_HIDDEN;
 extern void macdrv_lost_pasteboard_ownership(HWND hwnd) DECLSPEC_HIDDEN;
