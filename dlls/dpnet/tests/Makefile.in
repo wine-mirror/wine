@@ -1,5 +1,5 @@
 TESTDLL   = dpnet.dll
-IMPORTS   = dxguid uuid dpnet ole32 version
+IMPORTS   = dxguid uuid dpnet ole32 oleaut32 version advapi32
 
 C_SRCS = \
 	address.c \
