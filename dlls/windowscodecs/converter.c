@@ -257,7 +257,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                         *dstpixel++ = colors[srcval>>6];
                         if (x+1 < prc->Width) *dstpixel++ = colors[srcval>>4&0x3];
                         if (x+2 < prc->Width) *dstpixel++ = colors[srcval>>2&0x3];
-                        if (x+1 < prc->Width) *dstpixel++ = colors[srcval&0x3];
+                        if (x+3 < prc->Width) *dstpixel++ = colors[srcval&0x3];
                     }
                     srcrow += srcstride;
                     dstrow += cbStride;
