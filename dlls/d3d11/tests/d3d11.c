@@ -11403,7 +11403,7 @@ static void test_uav_load(void)
         UINT miplevel_count;
         UINT array_size;
         DXGI_FORMAT format;
-        D3D11_SUBRESOURCE_DATA data[1];
+        D3D11_SUBRESOURCE_DATA data[3];
     };
 
     /* FIXME: Use a single R32_TYPELESS RT with multiple RTVs. */
@@ -11421,6 +11421,7 @@ static void test_uav_load(void)
     ID3D11PixelShader *ps;
     ID3D11Device *device;
     unsigned int i, x, y;
+    ID3D11Buffer *cb;
     HRESULT hr;
 
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -11506,6 +11507,37 @@ static void test_uav_load(void)
         0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0100003e,
     };
     static const struct shader ps_ld_2d_int = {ps_ld_2d_int_code, sizeof(ps_ld_2d_int_code)};
+    static const DWORD ps_ld_2d_uint_arr_code[] =
+    {
+#if 0
+        RWTexture2DArray<uint> u;
+
+        uint layer;
+
+        uint main(float4 position : SV_Position) : SV_Target
+        {
+            float3 s;
+            u.GetDimensions(s.x, s.y, s.z);
+            s.z = layer;
+            return u[s * float3(position.x / 640.0f, position.y / 480.0f, 1.0f)];
+        }
+#endif
+        0x43425844, 0xa7630358, 0xd7e7228f, 0xa9f1be03, 0x838554f1, 0x00000001, 0x000001bc, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001,
+        0x00000000, 0x00000e01, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000120, 0x00000050,
+        0x00000048, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400409c, 0x0011e000,
+        0x00000001, 0x00004444, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x00102012,
+        0x00000000, 0x02000068, 0x00000001, 0x8900003d, 0x80000202, 0x00111103, 0x00100032, 0x00000000,
+        0x00004001, 0x00000000, 0x0011ee46, 0x00000001, 0x07000038, 0x00100032, 0x00000000, 0x00100046,
+        0x00000000, 0x00101046, 0x00000000, 0x06000056, 0x001000c2, 0x00000000, 0x00208006, 0x00000000,
+        0x00000000, 0x0a000038, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x3acccccd,
+        0x3b088889, 0x3f800000, 0x3f800000, 0x0500001c, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
+        0x890000a3, 0x80000202, 0x00111103, 0x00100012, 0x00000000, 0x00100e46, 0x00000000, 0x0011ee46,
+        0x00000001, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0100003e,
+    };
+    static const struct shader ps_ld_2d_uint_arr = {ps_ld_2d_uint_arr_code, sizeof(ps_ld_2d_uint_arr_code)};
     static const float float_data[] =
     {
          0.50f,  0.25f,  1.00f,  0.00f,
@@ -11520,6 +11552,20 @@ static void test_uav_load(void)
         0x80, 0x90, 0xa0, 0xb0,
         0xc0, 0xd0, 0xe0, 0xf0,
     };
+    static const unsigned int uint_data2[] =
+    {
+        0xffff, 0xffff, 0xffff, 0xffff,
+        0xffff, 0xc000, 0xc000, 0xffff,
+        0xffff, 0xc000, 0xc000, 0xffff,
+        0xffff, 0xffff, 0xffff, 0xffff,
+    };
+    static const unsigned int uint_data3[] =
+    {
+        0xaa, 0xaa, 0xcc, 0xcc,
+        0xaa, 0xaa, 0xdd, 0xdd,
+        0xbb, 0xbb, 0xee, 0xee,
+        0xbb, 0xbb, 0xff, 0xff,
+    };
     static const int int_data[] =
     {
           -1, 0x10, 0x20, 0x30,
@@ -11531,6 +11577,10 @@ static void test_uav_load(void)
             {{float_data, 4 * sizeof(*float_data), 0}}};
     static const struct texture uint_2d = {4, 4, 1, 1, DXGI_FORMAT_R32_UINT,
             {{uint_data, 4 * sizeof(*uint_data), 0}}};
+    static const struct texture uint2d_arr = {4, 4, 1, 3, DXGI_FORMAT_R32_UINT,
+            {{uint_data, 4 * sizeof(*uint_data), 0},
+            {uint_data2, 4 * sizeof(*uint_data2), 0},
+            {uint_data3, 4 * sizeof(*uint_data3), 0}}};
     static const struct texture int_2d = {4, 4, 1, 1, DXGI_FORMAT_R32_SINT,
             {{int_data, 4 * sizeof(*int_data), 0}}};
 
@@ -11539,18 +11589,27 @@ static void test_uav_load(void)
         const struct shader *ps;
         const struct texture *texture;
         struct uav_desc uav_desc;
+        struct uvec4 constant;
         const DWORD *expected_colors;
     }
     tests[] =
     {
-#define TEX_2D    D3D11_UAV_DIMENSION_TEXTURE2D
-#define R32_FLOAT DXGI_FORMAT_R32_FLOAT
-#define R32_UINT  DXGI_FORMAT_R32_UINT
-#define R32_SINT  DXGI_FORMAT_R32_SINT
-        {&ps_ld_2d_float, &float_2d, {R32_FLOAT, TEX_2D, 0}, (const DWORD *)float_data},
-        {&ps_ld_2d_uint,  &uint_2d,  {R32_UINT,  TEX_2D, 0}, (const DWORD *)uint_data},
-        {&ps_ld_2d_int,   &int_2d,   {R32_SINT,  TEX_2D, 0}, (const DWORD *)int_data},
+#define TEX_2D       D3D11_UAV_DIMENSION_TEXTURE2D
+#define TEX_2D_ARRAY D3D11_UAV_DIMENSION_TEXTURE2DARRAY
+#define R32_FLOAT    DXGI_FORMAT_R32_FLOAT
+#define R32_UINT     DXGI_FORMAT_R32_UINT
+#define R32_SINT     DXGI_FORMAT_R32_SINT
+        {&ps_ld_2d_float,    &float_2d,   {R32_FLOAT, TEX_2D,       0},          {}, (const DWORD *)float_data},
+        {&ps_ld_2d_uint,     &uint_2d,    {R32_UINT,  TEX_2D,       0},          {}, (const DWORD *)uint_data},
+        {&ps_ld_2d_int,      &int_2d,     {R32_SINT,  TEX_2D,       0},          {}, (const DWORD *)int_data},
+        {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 0, ~0u}, {0}, (const DWORD *)uint_data},
+        {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 0, ~0u}, {1}, (const DWORD *)uint_data2},
+        {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 0, ~0u}, {2}, (const DWORD *)uint_data3},
+        {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 1, ~0u}, {0}, (const DWORD *)uint_data2},
+        {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 1, ~0u}, {1}, (const DWORD *)uint_data3},
+        {&ps_ld_2d_uint_arr, &uint2d_arr, {R32_UINT,  TEX_2D_ARRAY, 0, 2, ~0u}, {0}, (const DWORD *)uint_data3},
 #undef TEX_2D
+#undef TEX_2D_ARRAY
 #undef R32_FLOAT
 #undef R32_UINT
 #undef R32_SINT
@@ -11593,6 +11652,9 @@ static void test_uav_load(void)
 
     texture_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(struct uvec4), NULL);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+
     ps = NULL;
     uav = NULL;
     texture = NULL;
@@ -11603,6 +11665,9 @@ static void test_uav_load(void)
         const struct test *test = &tests[i];
         ID3D11RenderTargetView *current_rtv;
         ID3D11Texture2D *current_rt;
+
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+                NULL, &test->constant, 0, 0);
 
         if (current_ps != test->ps)
         {
@@ -11687,6 +11752,7 @@ static void test_uav_load(void)
     ID3D11Texture2D_Release(texture);
     ID3D11UnorderedAccessView_Release(uav);
 
+    ID3D11Buffer_Release(cb);
     ID3D11RenderTargetView_Release(rtv_float);
     ID3D11RenderTargetView_Release(rtv_sint);
     ID3D11RenderTargetView_Release(rtv_uint);
