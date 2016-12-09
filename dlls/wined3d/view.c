@@ -65,6 +65,7 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
         const struct wined3d_format *view_format)
 {
     const struct wined3d_gl_info *gl_info;
+    unsigned int layer_idx, layer_count;
     struct wined3d_context *context;
     struct gl_texture *gl_texture;
 
@@ -83,10 +84,19 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
     wined3d_texture_prepare_texture(texture, context, FALSE);
     gl_texture = wined3d_texture_get_gl_texture(texture, FALSE);
 
+    layer_idx = desc->u.texture.layer_idx;
+    layer_count = desc->u.texture.layer_count;
+    if (view_target == GL_TEXTURE_3D && (layer_idx || layer_count != 1))
+    {
+        FIXME("Depth slice (%u-%u) not supported.\n", layer_idx, layer_count);
+        layer_idx = 0;
+        layer_count = 1;
+    }
+
     gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
     GL_EXTCALL(glTextureView(view->name, view->target, gl_texture->name, view_format->glInternal,
             desc->u.texture.level_idx, desc->u.texture.level_count,
-            desc->u.texture.layer_idx, desc->u.texture.layer_count));
+            layer_idx, layer_count));
     checkGLcall("Create texture view");
 
     if (is_stencil_view_format(view_format))
