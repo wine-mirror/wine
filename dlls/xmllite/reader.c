@@ -2828,6 +2828,7 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
     if (next)
     {
         This->attr = LIST_ENTRY(next, struct attribute, entry);
+        reader_set_strvalue(This, StringValue_Prefix, &This->attr->prefix);
         reader_set_strvalue(This, StringValue_LocalName, &This->attr->localname);
         reader_set_strvalue(This, StringValue_Value, &This->attr->value);
     }
