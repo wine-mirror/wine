@@ -2790,18 +2790,26 @@ static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node
     return This->state == XmlReadState_Closed ? S_FALSE : S_OK;
 }
 
+static HRESULT reader_move_to_first_attribute(xmlreader *reader)
+{
+    if (!reader->attr_count)
+        return S_FALSE;
+
+    reader->attr = LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry);
+    reader_set_strvalue(reader, StringValue_Prefix, &reader->attr->prefix);
+    reader_set_strvalue(reader, StringValue_LocalName, &reader->attr->localname);
+    reader_set_strvalue(reader, StringValue_Value, &reader->attr->value);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI xmlreader_MoveToFirstAttribute(IXmlReader* iface)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
 
     TRACE("(%p)\n", This);
 
-    if (!This->attr_count) return S_FALSE;
-    This->attr = LIST_ENTRY(list_head(&This->attrs), struct attribute, entry);
-    reader_set_strvalue(This, StringValue_LocalName, &This->attr->localname);
-    reader_set_strvalue(This, StringValue_Value, &This->attr->value);
-
-    return S_OK;
+    return reader_move_to_first_attribute(This);
 }
 
 static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
@@ -2814,7 +2822,7 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
     if (!This->attr_count) return S_FALSE;
 
     if (!This->attr)
-        return IXmlReader_MoveToFirstAttribute(iface);
+        return reader_move_to_first_attribute(This);
 
     next = list_next(&This->attrs, &This->attr->entry);
     if (next)
