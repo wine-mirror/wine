@@ -1236,7 +1236,12 @@ static void test_create_texture2d(void)
         {DXGI_FORMAT_R32_TYPELESS,           0, D3D10_BIND_SHADER_RESOURCE, 0, FALSE, FALSE},
         {DXGI_FORMAT_R32_TYPELESS,           1, D3D10_BIND_SHADER_RESOURCE, 0, TRUE,  FALSE},
         {DXGI_FORMAT_R32_TYPELESS,           9, D3D10_BIND_SHADER_RESOURCE, 0, TRUE,  FALSE},
+        {DXGI_FORMAT_R32_TYPELESS,           9, D3D10_BIND_SHADER_RESOURCE | D3D10_BIND_DEPTH_STENCIL, 0,
+                TRUE,  FALSE},
         {DXGI_FORMAT_R32_TYPELESS,           9, D3D10_BIND_SHADER_RESOURCE, D3D10_RESOURCE_MISC_TEXTURECUBE,
+                FALSE, TRUE},
+        {DXGI_FORMAT_R32_TYPELESS,           1, D3D10_BIND_RENDER_TARGET,   0, TRUE,  FALSE},
+        {DXGI_FORMAT_R32_TYPELESS,           1, D3D10_BIND_RENDER_TARGET | D3D10_BIND_DEPTH_STENCIL, 0,
                 FALSE, TRUE},
         {DXGI_FORMAT_R32_TYPELESS,           1, D3D10_BIND_DEPTH_STENCIL,   0, TRUE,  FALSE},
         {DXGI_FORMAT_R24G8_TYPELESS,         1, D3D10_BIND_VERTEX_BUFFER,   0, FALSE, TRUE},
@@ -1259,8 +1264,13 @@ static void test_create_texture2d(void)
         {DXGI_FORMAT_R8G8B8A8_UINT,          1, D3D10_BIND_RENDER_TARGET,   0, TRUE,  FALSE},
         {DXGI_FORMAT_R8G8B8A8_SNORM,         1, D3D10_BIND_RENDER_TARGET,   0, TRUE,  FALSE},
         {DXGI_FORMAT_R8G8B8A8_SINT,          1, D3D10_BIND_RENDER_TARGET,   0, TRUE,  FALSE},
+        {DXGI_FORMAT_D24_UNORM_S8_UINT,      1, D3D10_BIND_SHADER_RESOURCE, 0, FALSE, TRUE},
         {DXGI_FORMAT_D24_UNORM_S8_UINT,      1, D3D10_BIND_RENDER_TARGET,   0, FALSE, FALSE},
+        {DXGI_FORMAT_D32_FLOAT,              1, D3D10_BIND_SHADER_RESOURCE, 0, FALSE, TRUE},
+        {DXGI_FORMAT_D32_FLOAT,              1, D3D10_BIND_SHADER_RESOURCE | D3D10_BIND_DEPTH_STENCIL, 0,
+                FALSE, TRUE},
         {DXGI_FORMAT_D32_FLOAT,              1, D3D10_BIND_RENDER_TARGET,   0, FALSE, FALSE},
+        {DXGI_FORMAT_D32_FLOAT,              1, D3D10_BIND_DEPTH_STENCIL,   0, TRUE,  FALSE},
     };
 
     if (!(device = create_device()))
@@ -1373,7 +1383,8 @@ static void test_create_texture2d(void)
         hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, (ID3D10Texture2D **)&texture);
 
         todo_wine_if(tests[i].todo)
-        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG),
+                "Test %u: Got unexpected hr %#x (format %#x).\n", i, hr, desc.Format);
 
         if (SUCCEEDED(hr))
             ID3D10Texture2D_Release(texture);
