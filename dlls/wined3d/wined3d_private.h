@@ -3292,6 +3292,12 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
 void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarget_view *view,
         const struct wined3d_context *context, unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
 
+struct wined3d_gl_view
+{
+    GLenum target;
+    GLuint name;
+};
+
 struct wined3d_shader_resource_view
 {
     LONG refcount;
@@ -3300,8 +3306,7 @@ struct wined3d_shader_resource_view
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
 
-    GLenum target;
-    GLuint object;
+    struct wined3d_gl_view gl_view;
 };
 
 void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view,

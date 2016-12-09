@@ -30,6 +30,57 @@ static BOOL is_stencil_view_format(const struct wined3d_format *format)
             || format->id == WINED3DFMT_X32_TYPELESS_G8X24_UINT;
 }
 
+static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target,
+        const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
+        const struct wined3d_format *view_format)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    struct gl_texture *gl_texture;
+
+    view->target = view_target;
+
+    context = context_acquire(texture->resource.device, NULL);
+    gl_info = context->gl_info;
+
+    if (!gl_info->supported[ARB_TEXTURE_VIEW])
+    {
+        context_release(context);
+        FIXME("OpenGL implementation does not support texture views.\n");
+        return;
+    }
+
+    wined3d_texture_prepare_texture(texture, context, FALSE);
+    gl_texture = wined3d_texture_get_gl_texture(texture, FALSE);
+
+    gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
+    GL_EXTCALL(glTextureView(view->name, view->target, gl_texture->name, view_format->glInternal,
+            desc->u.texture.level_idx, desc->u.texture.level_count,
+            desc->u.texture.layer_idx, desc->u.texture.layer_count));
+    checkGLcall("Create texture view");
+
+    if (is_stencil_view_format(view_format))
+    {
+        static const GLint swizzle[] = {GL_ZERO, GL_RED, GL_ZERO, GL_ZERO};
+
+        if (!gl_info->supported[ARB_STENCIL_TEXTURING])
+        {
+            context_release(context);
+            FIXME("OpenGL implementation does not support stencil texturing.\n");
+            return;
+        }
+
+        context_bind_texture(context, view->target, view->name);
+        gl_info->gl_ops.gl.p_glTexParameteriv(view->target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+        gl_info->gl_ops.gl.p_glTexParameteri(view->target, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+        checkGLcall("Initialize stencil view");
+
+        context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
+    }
+
+    context_release(context);
+}
+
 ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);
@@ -259,14 +310,14 @@ static void wined3d_shader_resource_view_destroy_object(void *object)
 {
     struct wined3d_shader_resource_view *view = object;
 
-    if (view->object)
+    if (view->gl_view.name)
     {
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
         context = context_acquire(view->resource->device, NULL);
         gl_info = context->gl_info;
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->object);
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->gl_view.name);
         checkGLcall("glDeleteTextures");
         context_release(context);
     }
@@ -302,55 +353,6 @@ void * CDECL wined3d_shader_resource_view_get_parent(const struct wined3d_shader
     return view->parent;
 }
 
-static void wined3d_shader_resource_view_create_texture_view(struct wined3d_shader_resource_view *view,
-        const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
-        const struct wined3d_format *view_format)
-{
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-    struct gl_texture *gl_texture;
-
-    context = context_acquire(texture->resource.device, NULL);
-    gl_info = context->gl_info;
-
-    if (!gl_info->supported[ARB_TEXTURE_VIEW])
-    {
-        context_release(context);
-        FIXME("OpenGL implementation does not support texture views.\n");
-        return;
-    }
-
-    wined3d_texture_prepare_texture(texture, context, FALSE);
-    gl_texture = wined3d_texture_get_gl_texture(texture, FALSE);
-
-    gl_info->gl_ops.gl.p_glGenTextures(1, &view->object);
-    GL_EXTCALL(glTextureView(view->object, view->target, gl_texture->name, view_format->glInternal,
-            desc->u.texture.level_idx, desc->u.texture.level_count,
-            desc->u.texture.layer_idx, desc->u.texture.layer_count));
-    checkGLcall("Create texture view");
-
-    if (is_stencil_view_format(view_format))
-    {
-        static const GLint swizzle[] = {GL_ZERO, GL_RED, GL_ZERO, GL_ZERO};
-
-        if (!gl_info->supported[ARB_STENCIL_TEXTURING])
-        {
-            context_release(context);
-            FIXME("OpenGL implementation does not support stencil texturing.\n");
-            return;
-        }
-
-        context_bind_texture(context, view->target, view->object);
-        gl_info->gl_ops.gl.p_glTexParameteriv(view->target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
-        gl_info->gl_ops.gl.p_glTexParameteri(view->target, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
-        checkGLcall("Initialize stencil view");
-
-        context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
-    }
-
-    context_release(context);
-}
-
 static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_view *view,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -373,6 +375,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
 
     const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
     const struct wined3d_format *view_format;
+    GLenum view_target;
 
     view_format = wined3d_get_format(gl_info, desc->format_id);
     if (wined3d_format_is_typeless(view_format)
@@ -385,9 +388,6 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     view->refcount = 1;
     view->parent = parent;
     view->parent_ops = parent_ops;
-
-    view->target = GL_NONE;
-    view->object = 0;
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
@@ -406,19 +406,19 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
                 || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
             return E_INVALIDARG;
 
-        view->target = texture->target;
+        view_target = texture->target;
         for (i = 0; i < ARRAY_SIZE(view_types); ++i)
         {
             if (view_types[i].texture_target == texture->target && view_types[i].view_flags == desc->flags)
             {
-                view->target = view_types[i].view_target;
+                view_target = view_types[i].view_target;
                 break;
             }
         }
         if (i == ARRAY_SIZE(view_types))
             FIXME("Unhandled view flags %#x for texture target %#x.\n", desc->flags, texture->target);
 
-        if (resource->format->id == view_format->id && texture->target == view->target
+        if (resource->format->id == view_format->id && texture->target == view_target
                 && !desc->u.texture.level_idx && desc->u.texture.level_count == texture->level_count
                 && !desc->u.texture.layer_idx && desc->u.texture.layer_count == texture->layer_count
                 && !is_stencil_view_format(view_format))
@@ -432,7 +432,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
         else if (resource->format->typeless_id == view_format->typeless_id
                 && resource->format->gl_view_class == view_format->gl_view_class)
         {
-            wined3d_shader_resource_view_create_texture_view(view, desc, texture, view_format);
+            create_texture_view(&view->gl_view, view_target, desc, texture, view_format);
         }
         else
         {
@@ -476,9 +476,9 @@ void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view
 {
     struct wined3d_texture *texture;
 
-    if (view->object)
+    if (view->gl_view.name)
     {
-        context_bind_texture(context, view->target, view->object);
+        context_bind_texture(context, view->gl_view.target, view->gl_view.name);
         return;
     }
 
