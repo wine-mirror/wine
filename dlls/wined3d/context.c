@@ -1641,6 +1641,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     BOOL hdc_is_private = FALSE;
     BOOL auxBuffers = FALSE;
     HGLRC ctx, share_ctx;
+    DWORD target_usage;
     int pixel_format;
     unsigned int s;
     DWORD state;
@@ -1725,6 +1726,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     }
 
     color_format = target->resource.format;
+    target_usage = target->resource.usage;
 
     /* In case of ORM_BACKBUFFER, make sure to request an alpha component for
      * X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
@@ -1733,9 +1735,9 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         auxBuffers = TRUE;
 
         if (color_format->id == WINED3DFMT_B4G4R4X4_UNORM)
-            color_format = wined3d_get_format(gl_info, WINED3DFMT_B4G4R4A4_UNORM);
+            color_format = wined3d_get_format(gl_info, WINED3DFMT_B4G4R4A4_UNORM, target_usage);
         else if (color_format->id == WINED3DFMT_B8G8R8X8_UNORM)
-            color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
+            color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM, target_usage);
     }
 
     /* DirectDraw supports 8bit paletted render targets and these are used by
@@ -1745,7 +1747,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
      * For this reason we require a format with 8bit alpha, so request
      * A8R8G8B8. */
     if (color_format->id == WINED3DFMT_P8_UINT)
-        color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
+        color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM, target_usage);
 
     /* When "always_offscreen" is enabled, we only use the drawable for
      * presentation blits, and don't do any rendering to it. That means we
@@ -1758,8 +1760,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (wined3d_settings.offscreen_rendering_mode != ORM_BACKBUFFER
             && wined3d_settings.always_offscreen)
     {
-        color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
-        ds_format = wined3d_get_format(gl_info, WINED3DFMT_UNKNOWN);
+        color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM, target_usage);
+        ds_format = wined3d_get_format(gl_info, WINED3DFMT_UNKNOWN, WINED3DUSAGE_DEPTHSTENCIL);
     }
 
     /* Try to find a pixel format which matches our requirements. */

@@ -795,7 +795,7 @@ static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_s
         return;
 
     gl_info = &swapchain->device->adapter->gl_info;
-    if (!(format = wined3d_get_format(gl_info, format_id)))
+    if (!(format = wined3d_get_format(gl_info, format_id, WINED3DUSAGE_RENDERTARGET)))
         return;
 
     if ((t = min(wined3d_settings.sample_count, gl_info->limits.samples)))
@@ -961,7 +961,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
          * issue needs to be fixed. */
         for (i = 0; i < (sizeof(formats) / sizeof(*formats)); i++)
         {
-            swapchain->ds_format = wined3d_get_format(gl_info, formats[i]);
+            swapchain->ds_format = wined3d_get_format(gl_info, formats[i], WINED3DUSAGE_DEPTHSTENCIL);
             swapchain->context[0] = context_create(swapchain, swapchain->front_buffer, swapchain->ds_format);
             if (swapchain->context[0]) break;
             TRACE("Depth stencil format %s is not supported, trying next format\n",

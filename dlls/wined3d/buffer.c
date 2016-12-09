@@ -1446,7 +1446,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         const struct wined3d_sub_resource_data *data, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id, usage);
     BOOL dynamic_buffer_ok;
     HRESULT hr;
 

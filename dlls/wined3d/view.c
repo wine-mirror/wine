@@ -245,7 +245,7 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    view->format = wined3d_get_format(gl_info, desc->format_id);
+    view->format = wined3d_get_format(gl_info, desc->format_id, resource->usage);
     view->format_flags = view->format->flags[resource->gl_type];
 
     if (wined3d_format_is_typeless(view->format))
@@ -401,7 +401,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     const struct wined3d_format *view_format;
     GLenum view_target;
 
-    view_format = wined3d_get_format(gl_info, desc->format_id);
+    view_format = wined3d_get_format(gl_info, desc->format_id, resource->usage);
     if (wined3d_format_is_typeless(view_format)
             && !(view_format->id == WINED3DFMT_R32_TYPELESS && (desc->flags & WINED3D_VIEW_BUFFER_RAW)))
     {
@@ -578,7 +578,7 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    view->format = wined3d_get_format(gl_info, desc->format_id);
+    view->format = wined3d_get_format(gl_info, desc->format_id, resource->usage);
 
     if (wined3d_format_is_typeless(view->format)
             && !(view->format->id == WINED3DFMT_R32_TYPELESS && (desc->flags & WINED3D_VIEW_BUFFER_RAW)))

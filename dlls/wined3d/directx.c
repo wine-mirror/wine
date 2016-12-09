@@ -4180,7 +4180,7 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
         return 0;
 
     adapter = &wined3d->adapters[adapter_idx];
-    format = wined3d_get_format(&adapter->gl_info, format_id);
+    format = wined3d_get_format(&adapter->gl_info, format_id, WINED3DUSAGE_RENDERTARGET);
     format_bits = format->byte_count * CHAR_BIT;
 
     memset(&mode, 0, sizeof(mode));
@@ -4234,7 +4234,7 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
         return WINED3DERR_INVALIDCALL;
 
     adapter = &wined3d->adapters[adapter_idx];
-    format = wined3d_get_format(&adapter->gl_info, format_id);
+    format = wined3d_get_format(&adapter->gl_info, format_id, WINED3DUSAGE_RENDERTARGET);
     format_bits = format->byte_count * CHAR_BIT;
 
     memset(&m, 0, sizeof(m));
@@ -4493,7 +4493,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
         TRACE("mode %ux%u@%u %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
                 debug_d3dformat(mode->format_id), mode->scanline_ordering);
 
-        format = wined3d_get_format(&adapter->gl_info, mode->format_id);
+        format = wined3d_get_format(&adapter->gl_info, mode->format_id, WINED3DUSAGE_RENDERTARGET);
 
         new_mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
         new_mode.dmBitsPerPel = format->byte_count * CHAR_BIT;
@@ -4734,8 +4734,8 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
         return WINED3DERR_INVALIDCALL;
 
     adapter = &wined3d->adapters[adapter_idx];
-    rt_format = wined3d_get_format(&adapter->gl_info, render_target_format_id);
-    ds_format = wined3d_get_format(&adapter->gl_info, depth_stencil_format_id);
+    rt_format = wined3d_get_format(&adapter->gl_info, render_target_format_id, WINED3DUSAGE_RENDERTARGET);
+    ds_format = wined3d_get_format(&adapter->gl_info, depth_stencil_format_id, WINED3DUSAGE_DEPTHSTENCIL);
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if ((rt_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_RENDERTARGET)
@@ -4776,7 +4776,7 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
         enum wined3d_multisample_type multisample_type, DWORD *quality_levels)
 {
     const struct wined3d_gl_info *gl_info = &wined3d->adapters[adapter_idx].gl_info;
-    const struct wined3d_format *format = wined3d_get_format(gl_info, surface_format_id);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, surface_format_id, 0);
     HRESULT hr = WINED3D_OK;
 
     TRACE("wined3d %p, adapter_idx %u, device_type %s, surface_format %s, "
@@ -4979,8 +4979,9 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 {
     const struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    const struct wined3d_format *adapter_format = wined3d_get_format(gl_info, adapter_format_id);
-    const struct wined3d_format *format = wined3d_get_format(gl_info, check_format_id);
+    const struct wined3d_format *adapter_format = wined3d_get_format(gl_info, adapter_format_id,
+            WINED3DUSAGE_RENDERTARGET);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, check_format_id, usage);
     DWORD format_flags = 0;
     DWORD allowed_usage;
     enum wined3d_gl_resource_type gl_type;
@@ -5130,7 +5131,7 @@ UINT CDECL wined3d_calculate_format_pitch(const struct wined3d *wined3d, UINT ad
         return ~0u;
 
     gl_info = &wined3d->adapters[adapter_idx].gl_info;
-    wined3d_format_calculate_pitch(wined3d_get_format(gl_info, format_id),
+    wined3d_format_calculate_pitch(wined3d_get_format(gl_info, format_id, 0),
             1, width, 1, &row_pitch, &slice_pitch);
 
     return row_pitch;

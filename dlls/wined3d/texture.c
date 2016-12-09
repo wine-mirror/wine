@@ -262,8 +262,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)
 {
-    const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info, desc->format);
     unsigned int i, j, size, offset = 0;
+    const struct wined3d_format *format;
     HRESULT hr;
 
     TRACE("texture %p, texture_ops %p, layer_count %u, level_count %u, resource_type %s, format %s, "
@@ -276,6 +276,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
 
     if (!desc->width || !desc->height || !desc->depth)
         return WINED3DERR_INVALIDCALL;
+
+    format = wined3d_get_format(&device->adapter->gl_info, desc->format, desc->usage);
 
     for (i = 0; i < layer_count; ++i)
     {
@@ -1090,7 +1092,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 {
     struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id, texture->resource.usage);
     UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_surface *surface;
@@ -1495,7 +1497,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
     else if ((conversion = wined3d_format_get_color_key_conversion(texture, TRUE)))
     {
         texture->flags |= WINED3D_TEXTURE_CONVERTED;
-        format = wined3d_get_format(gl_info, conversion->dst_format);
+        format = wined3d_get_format(gl_info, conversion->dst_format, texture->resource.usage);
         TRACE("Using format %s for color key conversion.\n", debug_d3dformat(format->id));
     }
 
@@ -1931,7 +1933,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 
         if (!gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
         {
-            const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
+            const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format, desc->usage);
 
             /* TODO: Add support for non-power-of-two compressed textures. */
             if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D]
@@ -2809,7 +2811,8 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
 
     if (desc->multisample_type != WINED3D_MULTISAMPLE_NONE)
     {
-        const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info, desc->format);
+        const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info,
+                desc->format, desc->usage);
 
         if (desc->multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE
                 && desc->multisample_quality >= wined3d_popcount(format->multisample_types))

@@ -201,7 +201,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
     {
         struct wined3d_vertex_declaration_element *e = &declaration->elements[i];
 
-        e->format = wined3d_get_format(gl_info, elements[i].format);
+        e->format = wined3d_get_format(gl_info, elements[i].format, 0);
         e->ffp_valid = declaration_element_valid_ffp(&elements[i]);
         e->input_slot = elements[i].input_slot;
         e->offset = elements[i].offset;
@@ -314,7 +314,7 @@ static void append_decl_element(struct wined3d_fvf_convert_state *state,
     elements[idx].usage = usage;
     elements[idx].usage_idx = usage_idx;
 
-    format = wined3d_get_format(state->gl_info, format_id);
+    format = wined3d_get_format(state->gl_info, format_id, 0);
     state->offset += format->attribute_size;
     ++state->idx;
 }

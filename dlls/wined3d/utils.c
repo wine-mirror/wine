@@ -237,10 +237,10 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R16G16_UINT,              WINED3DFMT_R16G16_TYPELESS,       "UU"},
     {WINED3DFMT_R16G16_SINT,              WINED3DFMT_R16G16_TYPELESS,       "II"},
     {WINED3DFMT_R16G16_FLOAT,             WINED3DFMT_R16G16_TYPELESS,       "FF"},
+    {WINED3DFMT_D32_FLOAT,                WINED3DFMT_R32_TYPELESS,          "D"},
     {WINED3DFMT_R32_UINT,                 WINED3DFMT_R32_TYPELESS,          "U"},
     {WINED3DFMT_R32_SINT,                 WINED3DFMT_R32_TYPELESS,          "I"},
     {WINED3DFMT_R32_FLOAT,                WINED3DFMT_R32_TYPELESS,          "F"},
-    {WINED3DFMT_D32_FLOAT,                WINED3DFMT_R32_TYPELESS,          "D"},
     {WINED3DFMT_R24_UNORM_X8_TYPELESS,    WINED3DFMT_R24G8_TYPELESS,        "DX"},
     {WINED3DFMT_X24_TYPELESS_G8_UINT,     WINED3DFMT_R24G8_TYPELESS,        "XS"},
     {WINED3DFMT_D24_UNORM_S8_UINT,        WINED3DFMT_R24G8_TYPELESS,        "DS"},
@@ -248,12 +248,12 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_R8G8_UNORM,               WINED3DFMT_R8G8_TYPELESS,         "uu"},
     {WINED3DFMT_R8G8_UINT,                WINED3DFMT_R8G8_TYPELESS,         "UU"},
     {WINED3DFMT_R8G8_SINT,                WINED3DFMT_R8G8_TYPELESS,         "II"},
+    {WINED3DFMT_D16_UNORM,                WINED3DFMT_R16_TYPELESS,          "D"},
     {WINED3DFMT_R16_UNORM,                WINED3DFMT_R16_TYPELESS,          "u"},
     {WINED3DFMT_R16_SNORM,                WINED3DFMT_R16_TYPELESS,          "i"},
     {WINED3DFMT_R16_UINT,                 WINED3DFMT_R16_TYPELESS,          "U"},
     {WINED3DFMT_R16_SINT,                 WINED3DFMT_R16_TYPELESS,          "I"},
     {WINED3DFMT_R16_FLOAT,                WINED3DFMT_R16_TYPELESS,          "F"},
-    {WINED3DFMT_D16_UNORM,                WINED3DFMT_R16_TYPELESS,          "D"},
     {WINED3DFMT_R8_UNORM,                 WINED3DFMT_R8_TYPELESS,           "u"},
     {WINED3DFMT_R8_SNORM,                 WINED3DFMT_R8_TYPELESS,           "i"},
     {WINED3DFMT_R8_UINT,                  WINED3DFMT_R8_TYPELESS,           "U"},
@@ -276,17 +276,22 @@ static const struct wined3d_typed_format_info typed_formats[] =
     {WINED3DFMT_B8G8R8X8_UNORM,           WINED3DFMT_B8G8R8X8_TYPELESS,     "uuuX"},
 };
 
-struct wined3d_format_typeless_depth_stencil_info
+struct wined3d_typeless_format_depth_stencil_info
 {
+    enum wined3d_format_id typeless_id;
     enum wined3d_format_id depth_stencil_id;
     enum wined3d_format_id depth_view_id;
     enum wined3d_format_id stencil_view_id;
 };
 
-static const struct wined3d_format_typeless_depth_stencil_info typeless_depth_stencil_formats[] =
+static const struct wined3d_typeless_format_depth_stencil_info typeless_depth_stencil_formats[] =
 {
-    {WINED3DFMT_D32_FLOAT_S8X24_UINT, WINED3DFMT_R32_FLOAT_X8X24_TYPELESS, WINED3DFMT_X32_TYPELESS_G8X24_UINT},
-    {WINED3DFMT_D24_UNORM_S8_UINT,    WINED3DFMT_R24_UNORM_X8_TYPELESS,    WINED3DFMT_X24_TYPELESS_G8_UINT},
+    {WINED3DFMT_R32G8X24_TYPELESS, WINED3DFMT_D32_FLOAT_S8X24_UINT,
+            WINED3DFMT_R32_FLOAT_X8X24_TYPELESS, WINED3DFMT_X32_TYPELESS_G8X24_UINT},
+    {WINED3DFMT_R24G8_TYPELESS,    WINED3DFMT_D24_UNORM_S8_UINT,
+            WINED3DFMT_R24_UNORM_X8_TYPELESS,    WINED3DFMT_X24_TYPELESS_G8_UINT},
+    {WINED3DFMT_R32_TYPELESS,      WINED3DFMT_D32_FLOAT},
+    {WINED3DFMT_R16_TYPELESS,      WINED3DFMT_D16_UNORM},
 };
 
 struct wined3d_format_ddi_info
@@ -1747,7 +1752,8 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
     unsigned int i, j;
 
     gl_info->format_count = WINED3D_FORMAT_COUNT;
-    if (!(gl_info->formats = wined3d_calloc(gl_info->format_count, sizeof(*gl_info->formats))))
+    if (!(gl_info->formats = wined3d_calloc(gl_info->format_count
+            + ARRAY_SIZE(typeless_depth_stencil_formats), sizeof(*gl_info->formats))))
     {
         ERR("Failed to allocate memory.\n");
         return FALSE;
@@ -3424,17 +3430,33 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < ARRAY_SIZE(typeless_depth_stencil_formats); ++i)
     {
-        struct wined3d_format *ds_format, *depth_view_format, *stencil_view_format;
+        struct wined3d_format *typeless_format, *typeless_ds_format, *ds_format;
+        struct wined3d_format *depth_view_format, *stencil_view_format;
+        enum wined3d_format_id format_id;
 
+        if (!(typeless_format = get_format_internal(gl_info, typeless_depth_stencil_formats[i].typeless_id)))
+            return FALSE;
         if (!(ds_format = get_format_internal(gl_info, typeless_depth_stencil_formats[i].depth_stencil_id)))
             return FALSE;
-        if (!(depth_view_format = get_format_internal(gl_info, typeless_depth_stencil_formats[i].depth_view_id)))
-            return FALSE;
-        if (!(stencil_view_format = get_format_internal(gl_info, typeless_depth_stencil_formats[i].stencil_view_id)))
-            return FALSE;
 
-        copy_format(depth_view_format, ds_format);
-        copy_format(stencil_view_format, ds_format);
+        typeless_ds_format = &gl_info->formats[WINED3D_FORMAT_COUNT + i];
+        typeless_ds_format->id = typeless_depth_stencil_formats[i].typeless_id;
+        copy_format(typeless_ds_format, ds_format);
+        for (j = 0; j < ARRAY_SIZE(typeless_ds_format->flags); ++j)
+            typeless_ds_format->flags[j] = typeless_format->flags[j];
+
+        if ((format_id = typeless_depth_stencil_formats[i].depth_view_id))
+        {
+            if (!(depth_view_format = get_format_internal(gl_info, format_id)))
+                return FALSE;
+            copy_format(depth_view_format, ds_format);
+        }
+        if ((format_id = typeless_depth_stencil_formats[i].stencil_view_id))
+        {
+            if (!(stencil_view_format = get_format_internal(gl_info, format_id)))
+                return FALSE;
+            copy_format(stencil_view_format, ds_format);
+        }
     }
 
     return TRUE;
@@ -3573,19 +3595,35 @@ float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLe
 }
 
 const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl_info,
-        enum wined3d_format_id format_id)
+        enum wined3d_format_id format_id, unsigned int resource_usage)
 {
+    const struct wined3d_format *format;
     int idx = get_format_idx(format_id);
+    unsigned int i;
 
     if (idx == -1)
     {
-        FIXME("Can't find format %s (%#x) in the format lookup table\n",
+        FIXME("Can't find format %s (%#x) in the format lookup table.\n",
                 debug_d3dformat(format_id), format_id);
-        /* Get the caller a valid pointer */
-        idx = get_format_idx(WINED3DFMT_UNKNOWN);
+        return &gl_info->formats[get_format_idx(WINED3DFMT_UNKNOWN)];
     }
 
-    return &gl_info->formats[idx];
+    format = &gl_info->formats[idx];
+
+    if (resource_usage & WINED3DUSAGE_DEPTHSTENCIL && wined3d_format_is_typeless(format))
+    {
+        for (i = 0; i < ARRAY_SIZE(typeless_depth_stencil_formats); ++i)
+        {
+            if (typeless_depth_stencil_formats[i].typeless_id == format_id)
+                return &gl_info->formats[WINED3D_FORMAT_COUNT + i];
+        }
+
+        FIXME("Cannot find depth/stencil typeless format %s (%#x).\n",
+                debug_d3dformat(format_id), format_id);
+        return &gl_info->formats[get_format_idx(WINED3DFMT_UNKNOWN)];
+    }
+
+    return format;
 }
 
 void wined3d_format_calculate_pitch(const struct wined3d_format *format, unsigned int alignment,
