@@ -30,6 +30,36 @@ static BOOL is_stencil_view_format(const struct wined3d_format *format)
             || format->id == WINED3DFMT_X32_TYPELESS_G8X24_UINT;
 }
 
+static GLenum get_texture_view_target(const struct wined3d_view_desc *desc,
+        const struct wined3d_texture *texture)
+{
+    static const struct
+    {
+        GLenum texture_target;
+        unsigned int view_flags;
+        GLenum view_target;
+    }
+    view_types[] =
+    {
+        {GL_TEXTURE_2D,       0,                          GL_TEXTURE_2D},
+        {GL_TEXTURE_2D,       WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_2D_ARRAY},
+        {GL_TEXTURE_2D_ARRAY, 0,                          GL_TEXTURE_2D},
+        {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_2D_ARRAY},
+        {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_CUBE,  GL_TEXTURE_CUBE_MAP},
+        {GL_TEXTURE_3D,       0,                          GL_TEXTURE_3D},
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(view_types); ++i)
+    {
+        if (view_types[i].texture_target == texture->target && view_types[i].view_flags == desc->flags)
+            return view_types[i].view_target;
+    }
+
+    FIXME("Unhandled view flags %#x for texture target %#x.\n", desc->flags, texture->target);
+    return texture->target;
+}
+
 static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target,
         const struct wined3d_view_desc *desc, struct wined3d_texture *texture,
         const struct wined3d_format *view_format)
@@ -357,22 +387,6 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    static const struct
-    {
-        GLenum texture_target;
-        unsigned int view_flags;
-        GLenum view_target;
-    }
-    view_types[] =
-    {
-        {GL_TEXTURE_2D,       0,                          GL_TEXTURE_2D},
-        {GL_TEXTURE_2D,       WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_2D_ARRAY},
-        {GL_TEXTURE_2D_ARRAY, 0,                          GL_TEXTURE_2D},
-        {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_2D_ARRAY},
-        {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_CUBE,  GL_TEXTURE_CUBE_MAP},
-        {GL_TEXTURE_3D,       0,                          GL_TEXTURE_3D},
-    };
-
     const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
     const struct wined3d_format *view_format;
     GLenum view_target;
@@ -396,7 +410,6 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     else
     {
         struct wined3d_texture *texture = texture_from_resource(resource);
-        unsigned int i;
 
         if (!desc->u.texture.level_count
                 || desc->u.texture.level_idx >= texture->level_count
@@ -406,17 +419,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
                 || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
             return E_INVALIDARG;
 
-        view_target = texture->target;
-        for (i = 0; i < ARRAY_SIZE(view_types); ++i)
-        {
-            if (view_types[i].texture_target == texture->target && view_types[i].view_flags == desc->flags)
-            {
-                view_target = view_types[i].view_target;
-                break;
-            }
-        }
-        if (i == ARRAY_SIZE(view_types))
-            FIXME("Unhandled view flags %#x for texture target %#x.\n", desc->flags, texture->target);
+        view_target = get_texture_view_target(desc, texture);
 
         if (resource->format->id == view_format->id && texture->target == view_target
                 && !desc->u.texture.level_idx && desc->u.texture.level_count == texture->level_count
