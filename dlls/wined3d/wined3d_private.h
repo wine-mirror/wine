@@ -394,6 +394,7 @@ enum wined3d_shader_register_type
     WINED3DSPR_STREAM,
     WINED3DSPR_FUNCTIONBODY,
     WINED3DSPR_FUNCTIONPOINTER,
+    WINED3DSPR_COVERAGE,
 };
 
 enum wined3d_data_type

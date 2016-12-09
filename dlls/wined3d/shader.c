@@ -1931,6 +1931,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "fp");
             break;
 
+        case WINED3DSPR_COVERAGE:
+            shader_addline(buffer, "vCoverage");
+            break;
+
         default:
             shader_addline(buffer, "<unhandled_rtype(%#x)>", reg->type);
             break;
