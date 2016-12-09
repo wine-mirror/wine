@@ -1187,7 +1187,7 @@ static HRESULT WINAPI UIElementMgr_QueryInterface(ITfUIElementMgr *iface, REFIID
 {
     ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
 
-    return ITfThreadMgrEx_QueryInterface(&This->ITfThreadMgrEx_iface, iid, *ppvOut);
+    return ITfThreadMgrEx_QueryInterface(&This->ITfThreadMgrEx_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI UIElementMgr_AddRef(ITfUIElementMgr *iface)
