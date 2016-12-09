@@ -47,6 +47,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ATOMIC_CMP_STORE                 */ "atomic_cmp_store",
     /* WINED3DSIH_ATOMIC_IADD                      */ "atomic_iadd",
     /* WINED3DSIH_ATOMIC_IMAX                      */ "atomic_imax",
+    /* WINED3DSIH_ATOMIC_IMIN                      */ "atomic_imin",
     /* WINED3DSIH_ATOMIC_OR                        */ "atomic_or",
     /* WINED3DSIH_ATOMIC_UMAX                      */ "atomic_umax",
     /* WINED3DSIH_ATOMIC_UMIN                      */ "atomic_umin",
