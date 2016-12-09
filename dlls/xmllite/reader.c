@@ -512,6 +512,23 @@ static void reader_free_element(xmlreader *reader, struct element *element)
     reader_free(reader, element);
 }
 
+static void reader_mark_ns_nodes(xmlreader *reader, struct element *element)
+{
+    struct ns *ns;
+
+    LIST_FOR_EACH_ENTRY(ns, &reader->ns, struct ns, entry) {
+        if (ns->element)
+            break;
+        ns->element = element;
+    }
+
+    LIST_FOR_EACH_ENTRY(ns, &reader->nsdef, struct ns, entry) {
+        if (ns->element)
+            break;
+        ns->element = element;
+    }
+}
+
 static HRESULT reader_push_element(xmlreader *reader, strval *prefix, strval *localname,
     strval *qname)
 {
@@ -538,6 +555,7 @@ static HRESULT reader_push_element(xmlreader *reader, strval *prefix, strval *lo
     }
 
     list_add_head(&reader->elements, &element->entry);
+    reader_mark_ns_nodes(reader, element);
     reader->is_empty_element = FALSE;
 
 failed:
@@ -545,18 +563,48 @@ failed:
     return hr;
 }
 
+static void reader_pop_ns_nodes(xmlreader *reader, struct element *element)
+{
+    struct ns *ns, *ns2;
+
+    LIST_FOR_EACH_ENTRY_SAFE_REV(ns, ns2, &reader->ns, struct ns, entry) {
+        if (ns->element != element)
+            break;
+
+        list_remove(&ns->entry);
+        reader_free_strvalued(reader, &ns->prefix);
+        reader_free_strvalued(reader, &ns->uri);
+        reader_free(reader, ns);
+    }
+
+    if (!list_empty(&reader->nsdef)) {
+        ns = LIST_ENTRY(list_head(&reader->nsdef), struct ns, entry);
+        if (ns->element == element) {
+            list_remove(&ns->entry);
+            reader_free_strvalued(reader, &ns->prefix);
+            reader_free_strvalued(reader, &ns->uri);
+            reader_free(reader, ns);
+        }
+    }
+}
+
 static void reader_pop_element(xmlreader *reader)
 {
-    struct element *elem = LIST_ENTRY(list_head(&reader->elements), struct element, entry);
+    struct element *element;
 
-    if (elem)
-    {
-        list_remove(&elem->entry);
-        reader_free_strvalued(reader, &elem->qname);
-        reader_free_strvalued(reader, &elem->localname);
-        reader_free(reader, elem);
-        reader_dec_depth(reader);
-    }
+    if (list_empty(&reader->elements))
+        return;
+
+    element = LIST_ENTRY(list_head(&reader->elements), struct element, entry);
+    list_remove(&element->entry);
+
+    reader_pop_ns_nodes(reader, element);
+    reader_free_element(reader, element);
+    reader_dec_depth(reader);
+
+    /* It was a root element, the rest is expected as Misc */
+    if (list_empty(&reader->elements))
+        reader->instate = XmlReadInState_MiscEnd;
 }
 
 /* Always make a copy, cause strings are supposed to be null terminated. Null pointer for 'value'
@@ -2139,6 +2187,7 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
             reader->empty_element.prefix = *prefix;
             reader->empty_element.localname = *local;
             reader->empty_element.qname = *qname;
+            reader_mark_ns_nodes(reader, &reader->empty_element);
             return S_OK;
         }
 
@@ -2230,12 +2279,6 @@ static HRESULT reader_parse_endtag(xmlreader *reader)
        content parsing if it's empty. */
     elem = LIST_ENTRY(list_head(&reader->elements), struct element, entry);
     if (!strval_eq(reader, &elem->qname, &qname)) return WC_E_ELEMENTMATCH;
-
-    reader_pop_element(reader);
-
-    /* It was a root element, the rest is expected as Misc */
-    if (list_empty(&reader->elements))
-        reader->instate = XmlReadInState_MiscEnd;
 
     reader->nodetype = XmlNodeType_EndElement;
     reader_set_strvalue(reader, StringValue_Prefix, &prefix);
@@ -2415,10 +2458,17 @@ static HRESULT reader_parse_content(xmlreader *reader)
 
 static HRESULT reader_parse_nextnode(xmlreader *reader)
 {
+    XmlNodeType nodetype = reader_get_nodetype(reader);
     HRESULT hr;
 
     if (!is_reader_pending(reader))
         reader_clear_attrs(reader);
+
+    /* When moving from EndElement or empty element, pop its own namespace defitions */
+    if (nodetype == XmlNodeType_Element && reader->is_empty_element)
+        reader_pop_ns_nodes(reader, &reader->empty_element);
+    else if (nodetype == XmlNodeType_EndElement)
+        reader_pop_element(reader);
 
     while (1)
     {
