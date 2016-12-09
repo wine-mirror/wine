@@ -1916,8 +1916,6 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
         }
     }
 
-    reader_init_strvalue(start, reader_get_cur(reader)-start, local);
-
     if (prefix->len)
         TRACE("qname %s:%s\n", debug_strval(reader, prefix), debug_strval(reader, local));
     else
