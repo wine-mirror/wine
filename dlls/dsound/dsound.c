@@ -452,8 +452,8 @@ static HRESULT DirectSoundDevice_CreateSoundBuffer(
 
         if (device->primary) {
             WARN("Primary Buffer already created\n");
-            IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)(device->primary));
-            *ppdsb = (LPDIRECTSOUNDBUFFER)(device->primary);
+            IDirectSoundBuffer8_AddRef(&device->primary->IDirectSoundBuffer8_iface);
+            *ppdsb = (IDirectSoundBuffer *)&device->primary->IDirectSoundBuffer8_iface;
         } else {
             hres = primarybuffer_create(device, &device->primary, dsbd);
             if (device->primary) {
