@@ -2135,6 +2135,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 image_type = "image3D";
                 break;
 
+            case WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY:
+                image_type = "image2DArray";
+                break;
+
             default:
                 image_type = "unsupported_image";
                 FIXME("Unhandled resource type %#x.\n", reg_maps->uav_resource_info[i].type);
