@@ -1200,7 +1200,7 @@ msgstr "大写锁定已打开"
 
 #: crypt32.rc:30
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "机构密钥标识"
 
 #: crypt32.rc:31
 msgid "Key Attributes"
@@ -1212,11 +1212,11 @@ msgstr "密钥使用限制"
 
 #: crypt32.rc:33
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "主题别名"
 
 #: crypt32.rc:34
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "签发者别名"
 
 #: crypt32.rc:35
 msgid "Basic Constraints"
@@ -1232,7 +1232,7 @@ msgstr "证书策略"
 
 #: crypt32.rc:38
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "主题密钥标识"
 
 #: crypt32.rc:39
 msgid "CRL Reason Code"
@@ -1248,7 +1248,7 @@ msgstr "增强密钥用法"
 
 #: crypt32.rc:42
 msgid "Authority Information Access"
-msgstr ""
+msgstr "机构信息访问"
 
 #: crypt32.rc:43
 msgid "Certificate Extensions"
@@ -1260,7 +1260,7 @@ msgstr "下一更新位置"
 
 #: crypt32.rc:45
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "是或否信任"
 
 #: crypt32.rc:46
 msgid "Email Address"
@@ -1284,7 +1284,7 @@ msgstr "签名时间"
 
 #: crypt32.rc:51
 msgid "Counter Sign"
-msgstr ""
+msgstr "副署"
 
 #: crypt32.rc:52
 msgid "Challenge Password"
@@ -1317,7 +1317,7 @@ msgstr "在线证书状态协议"
 
 #: crypt32.rc:59
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "证书颁发机构签发者"
 
 #: crypt32.rc:60
 msgid "Certification Template Name"
@@ -1457,7 +1457,7 @@ msgstr "增量 CRL 指示器"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "正在签发分发点"
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
@@ -1525,11 +1525,11 @@ msgstr "已签名的 PKCS 7"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "已封装的 PKCS 7"
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "已封装和签名的 PKCS 7"
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
@@ -1545,7 +1545,7 @@ msgstr "上一个 CA 证书哈希值"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "虚拟基础 CRL 序号"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
@@ -1589,11 +1589,11 @@ msgstr "交易 Id"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr ""
+msgstr "发送者的一次性随机数"
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "接受者的一次性随机数"
 
 #: crypt32.rc:129
 msgid "Reg Info"
@@ -1741,7 +1741,7 @@ msgstr "目录服务电子邮件复制"
 
 #: crypt32.rc:165 cryptui.rc:145
 msgid "Certificate Request Agent"
-msgstr ""
+msgstr "证书请求助手"
 
 #: crypt32.rc:166 cryptui.rc:141
 msgid "Lifetime Signing"
@@ -1825,7 +1825,7 @@ msgstr "未知密钥用法"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr ""
+msgstr "标题类型="
 
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
@@ -1834,7 +1834,7 @@ msgstr "CA"
 
 #: crypt32.rc:196
 msgid "End Entity"
-msgstr ""
+msgstr "最终实体"
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
@@ -4837,7 +4837,7 @@ msgstr "元素地址无效。\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present.\n"
-msgstr ""
+msgstr "缺少盘匣。\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization.\n"
@@ -4941,7 +4941,7 @@ msgstr "不是容器。\n"
 
 #: winerror.mc:1671
 msgid "Extended error.\n"
-msgstr ""
+msgstr "详尽的错误。\n"
 
 #: winerror.mc:1676
 msgid "Invalid group name.\n"
@@ -5001,7 +5001,7 @@ msgstr "操作被用户取消。\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
-msgstr ""
+msgstr "文件包含用户映射的区块。\n"
 
 #: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
@@ -5121,7 +5121,7 @@ msgstr "无效用户档案。\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
-msgstr ""
+msgstr "在 Small Business Server 上不被支持。\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned.\n"
@@ -5157,15 +5157,15 @@ msgstr "所有者无效。\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group.\n"
-msgstr ""
+msgstr "无效的首要组。\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
-msgstr ""
+msgstr "无模拟令牌。\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group.\n"
-msgstr ""
+msgstr "不能禁用必要组。\n"
 
 #: winerror.mc:1961
 msgid "No logon servers available.\n"
@@ -5293,7 +5293,7 @@ msgstr "服务器未停用。\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
-msgstr ""
+msgstr "无效的 ID 机构。\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded.\n"
@@ -5305,7 +5305,7 @@ msgstr "无效的组属性。\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level.\n"
-msgstr ""
+msgstr "无效的模拟级别。\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token.\n"
@@ -5321,7 +5321,7 @@ msgstr "无效令牌类型。\n"
 
 #: winerror.mc:2151
 msgid "No security on object.\n"
-msgstr ""
+msgstr "对象上无安全性。\n"
 
 #: winerror.mc:2156
 msgid "Can't access domain information.\n"
@@ -5385,16 +5385,15 @@ msgstr "无效的登录会话状态。\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision.\n"
-msgstr ""
+msgstr "登录会话 ID 对撞。\n"
 
 #: winerror.mc:2236
 msgid "Invalid logon type.\n"
 msgstr "无效的登录类型。\n"
 
 #: winerror.mc:2241
-#, fuzzy
 msgid "Cannot impersonate.\n"
-msgstr "找不到打印机。"
+msgstr "无法模拟。\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state.\n"
@@ -5618,7 +5617,7 @@ msgstr "找不到 DC。\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
-msgstr ""
+msgstr "无效的钩过滤。\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
@@ -5630,7 +5629,7 @@ msgstr "钩过程需要模块句柄。\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure.\n"
-msgstr ""
+msgstr "仅全局的钩过程。\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set.\n"
@@ -5650,7 +5649,7 @@ msgstr "发送了无效 LB_SETCOUNT。\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box.\n"
-msgstr ""
+msgstr "此列表框中无制表位。\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread.\n"
@@ -5870,7 +5869,7 @@ msgstr "不被支持的安装语言。\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply.\n"
-msgstr ""
+msgstr "无法应用安装转换。\n"
 
 #: winerror.mc:2846
 msgid "Installation package rejected.\n"
@@ -5938,7 +5937,7 @@ msgstr "不允许远程安装。\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install.\n"
-msgstr ""
+msgstr "已在成功安装后启动重启进程。\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
@@ -5965,18 +5964,16 @@ msgid "Invalid string UUID.\n"
 msgstr "UUID 字符串无效。\n"
 
 #: winerror.mc:2961
-#, fuzzy
 msgid "Invalid endpoint format.\n"
-msgstr "数字格式无效。\n"
+msgstr "端点格式无效。\n"
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
 msgstr "无效的网络地址。\n"
 
 #: winerror.mc:2971
-#, fuzzy
 msgid "No endpoint found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到端点。\n"
 
 #: winerror.mc:2976
 msgid "Invalid timeout value.\n"
@@ -6000,7 +5997,7 @@ msgstr "服务器已在监听。\n"
 
 #: winerror.mc:3001
 msgid "No protocol sequences registered.\n"
-msgstr ""
+msgstr "无已注册的 RPC 协议序列。\n"
 
 #: winerror.mc:3006
 msgid "RPC server not listening.\n"
@@ -6088,7 +6085,7 @@ msgstr "没有网络地址。\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
-msgstr ""
+msgstr "重复的端点。\n"
 
 #: winerror.mc:3121
 msgid "Unknown authentication type.\n"
@@ -6104,11 +6101,11 @@ msgstr "字符串过长。\n"
 
 #: winerror.mc:3136
 msgid "Protocol sequence not found.\n"
-msgstr ""
+msgstr "找不到协议序列。\n"
 
 #: winerror.mc:3141
 msgid "Procedure number out of range.\n"
-msgstr ""
+msgstr "过程序号超出范围。\n"
 
 #: winerror.mc:3146
 msgid "Binding has no authentication data.\n"
@@ -6144,7 +6141,7 @@ msgstr "终点尚未注册。\n"
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
-msgstr ""
+msgstr "没有要导出的项目。\n"
 
 #: winerror.mc:3191
 msgid "Incomplete name.\n"
@@ -6160,22 +6157,19 @@ msgstr "无更多成员。\n"
 
 #: winerror.mc:3206
 msgid "Not all objects unexported.\n"
-msgstr ""
+msgstr "仅导出了部分对象。\n"
 
 #: winerror.mc:3211
-#, fuzzy
 msgid "Interface not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到接口。\n"
 
 #: winerror.mc:3216
-#, fuzzy
 msgid "Entry already exists.\n"
-msgstr "端口 %s 已经存在。\n"
+msgstr "条目已存在。\n"
 
 #: winerror.mc:3221
-#, fuzzy
 msgid "Entry not found.\n"
-msgstr "找不到文件。\n"
+msgstr "找不到条目。\n"
 
 #: winerror.mc:3226
 msgid "Name service unavailable.\n"
@@ -6183,7 +6177,7 @@ msgstr "名字服务不可用。\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
-msgstr ""
+msgstr "无效的网络地址系列。\n"
 
 #: winerror.mc:3236
 msgid "Operation not supported.\n"
@@ -6211,7 +6205,7 @@ msgstr "浮点除零。\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
-msgstr ""
+msgstr "浮点下溢。\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow.\n"
@@ -6231,7 +6225,7 @@ msgstr "字符翻译表太小。\n"
 
 #: winerror.mc:3291
 msgid "Null context handle.\n"
-msgstr ""
+msgstr "空上下文句柄。\n"
 
 #: winerror.mc:3296
 msgid "Context handle damaged.\n"
@@ -6247,7 +6241,7 @@ msgstr "无法获取调用句柄。\n"
 
 #: winerror.mc:3311
 msgid "Null reference pointer.\n"
-msgstr ""
+msgstr "空引用指针。\n"
 
 #: winerror.mc:3316
 msgid "Enumeration value out of range.\n"
@@ -6259,7 +6253,7 @@ msgstr "字节数太小。\n"
 
 #: winerror.mc:3326
 msgid "Bad stub data.\n"
-msgstr ""
+msgstr "无效存根数据。\n"
 
 #: winerror.mc:3331
 msgid "Invalid user buffer.\n"
@@ -6303,7 +6297,7 @@ msgstr "帐户已过期。\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles.\n"
-msgstr ""
+msgstr "重定向器仍有打开的句柄。\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed.\n"
@@ -6318,13 +6312,12 @@ msgid "Unknown printer driver.\n"
 msgstr "未知打印机驱动。\n"
 
 #: winerror.mc:3401
-#, fuzzy
 msgid "Unknown print processor.\n"
-msgstr "找不到打印机驱动程序。"
+msgstr "未知打印处理器。\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
-msgstr ""
+msgstr "无效的分隔文件。\n"
 
 #: winerror.mc:3411
 msgid "Invalid priority.\n"
@@ -6356,23 +6349,23 @@ msgstr "无更多绑定。\n"
 
 #: winerror.mc:3446
 msgid "Can't log on with inter-domain trust account.\n"
-msgstr ""
+msgstr "无法使用跨域可信帐号登录。\n"
 
 #: winerror.mc:3451
 msgid "Can't log on with workstation trust account.\n"
-msgstr ""
+msgstr "无法使用工作站可信帐号登录。\n"
 
 #: winerror.mc:3456
 msgid "Can't log on with server trust account.\n"
-msgstr ""
+msgstr "无法使用服务器可信帐号登录。\n"
 
 #: winerror.mc:3461
 msgid "Domain trust information inconsistent.\n"
-msgstr ""
+msgstr "域信任信息不匹配。\n"
 
 #: winerror.mc:3466
 msgid "Server has open handles.\n"
-msgstr ""
+msgstr "服务器有打开的句柄。\n"
 
 #: winerror.mc:3471
 msgid "Resource data not found.\n"
@@ -6395,18 +6388,16 @@ msgid "Not enough quota.\n"
 msgstr "配额不足。\n"
 
 #: winerror.mc:3496
-#, fuzzy
 msgid "No interfaces.\n"
-msgstr "没有界面。\n"
+msgstr "没有接口。\n"
 
 #: winerror.mc:3501
 msgid "RPC call canceled.\n"
 msgstr "已取消 RPC 调用。\n"
 
 #: winerror.mc:3506
-#, fuzzy
 msgid "Binding incomplete.\n"
-msgstr "打印功能尚未实现。\n"
+msgstr "绑定不完整。\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
@@ -6430,12 +6421,11 @@ msgstr "UUID 仅用于本地。\n"
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
-msgstr ""
+msgstr "安全包错误。\n"
 
 #: winerror.mc:3541
-#, fuzzy
 msgid "Thread not canceled.\n"
-msgstr "找不到文件。\n"
+msgstr "未取消线程。\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
@@ -6443,7 +6433,7 @@ msgstr "句柄操作无效。\n"
 
 #: winerror.mc:3551
 msgid "Wrong serializing package version.\n"
-msgstr ""
+msgstr "序列化包版本错误。\n"
 
 #: winerror.mc:3556
 msgid "Wrong stub version.\n"
@@ -6467,7 +6457,7 @@ msgstr "无法找到该群组成员。\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
-msgstr ""
+msgstr "无法创建端点映射数据库。\n"
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
@@ -6507,21 +6497,19 @@ msgstr "找不到域控制器。\n"
 
 #: winerror.mc:3631
 msgid "Account locked out.\n"
-msgstr ""
+msgstr "帐号已禁用。\n"
 
 #: winerror.mc:3636
-#, fuzzy
 msgid "Invalid pixel format.\n"
-msgstr "数字格式无效。\n"
+msgstr "像素格式无效。\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
 msgstr "驱动无效。\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set.\n"
-msgstr "数字格式无效。\n"
+msgstr "对象解析器集无效。\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send.\n"
@@ -6541,7 +6529,7 @@ msgstr "RPC 管道已关闭。\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
-msgstr ""
+msgstr "RPC 管道中出现规则性错误。\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe.\n"
@@ -6769,6 +6757,35 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows Installer %s\n"
+"\n"
+"用法：\n"
+"msiexec 命令 {必要参数} [可选参数]\n"
+"\n"
+"安装产品：\n"
+"\t/i {安装包|产品序列号} [属性]\n"
+"\t/package {安装包|产品序列号} [属性]\n"
+"\t/a package [属性]\n"
+"修复安装：\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {产品|序列号}\n"
+"卸载产品：\n"
+"\t/uninstall {产品|序列号} [属性]\n"
+"\t/x {产品|序列号} [属性]\n"
+"宣传产品：\n"
+"\t/j[u|m] package [/t 变形] [/g 语言代号]\n"
+"应用补丁\n"
+"\t/p 补丁包 [属性]\n"
+"\t/p 补丁包 /a 安装包 [属性]\n"
+"以上命令的日志和用户界面修饰：\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] 日志文件\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"注册 MSI 服务：\n"
+"\t/y\n"
+"取消注册 MSI 服务：\n"
+"\t/z\n"
+"显示此帮助信息：\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:60
 msgid "enter which folder contains %s"
@@ -6860,7 +6877,7 @@ msgstr "滚动条"
 
 #: oleacc.rc:35
 msgid "grip"
-msgstr ""
+msgstr "滚动滑块"
 
 #: oleacc.rc:36
 msgid "sound"
@@ -6992,7 +7009,7 @@ msgstr "大纲项"
 
 #: oleacc.rc:68
 msgid "page tab"
-msgstr ""
+msgstr "标签页"
 
 #: oleacc.rc:69
 msgid "property page"
@@ -7052,7 +7069,7 @@ msgstr "滚动滑块"
 
 #: oleacc.rc:83
 msgid "spin box"
-msgstr ""
+msgstr "数字选框"
 
 #: oleacc.rc:84
 msgid "diagram"
@@ -7076,7 +7093,7 @@ msgstr "菜单按钮"
 
 #: oleacc.rc:89
 msgid "grid drop down button"
-msgstr ""
+msgstr "格下拉按钮"
 
 #: oleacc.rc:90
 msgid "white space"
@@ -7084,7 +7101,7 @@ msgstr "空白"
 
 #: oleacc.rc:91
 msgid "page tab list"
-msgstr ""
+msgstr "标签页列表"
 
 #: oleacc.rc:92
 msgid "clock"
@@ -7092,7 +7109,7 @@ msgstr "时钟"
 
 #: oleacc.rc:93
 msgid "split button"
-msgstr ""
+msgstr "分割按钮"
 
 #: oleacc.rc:94
 msgid "IP address"
@@ -7100,13 +7117,12 @@ msgstr "IP 地址"
 
 #: oleacc.rc:95
 msgid "outline button"
-msgstr ""
+msgstr "边框按钮"
 
 #: oleacc.rc:97
-#, fuzzy
 msgctxt "object state"
 msgid "normal"
-msgstr "中号"
+msgstr "普通"
 
 #: oleacc.rc:98
 msgctxt "object state"
@@ -7176,7 +7192,7 @@ msgstr "浮动"
 #: oleacc.rc:111
 msgctxt "object state"
 msgid "marqueed"
-msgstr ""
+msgstr "走马灯"
 
 #: oleacc.rc:112
 msgctxt "object state"
@@ -7206,13 +7222,12 @@ msgstr "可移动"
 #: oleacc.rc:117
 msgctxt "object state"
 msgid "self voicing"
-msgstr ""
+msgstr "自发声"
 
 #: oleacc.rc:118
-#, fuzzy
 msgctxt "object state"
 msgid "focusable"
-msgstr "已暂停"
+msgstr "可聚焦"
 
 #: oleacc.rc:119
 msgctxt "object state"
@@ -7227,7 +7242,7 @@ msgstr "已链接"
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "横向"
 
 #: oleacc.rc:122
 msgctxt "object state"
@@ -7237,25 +7252,24 @@ msgstr "可多选"
 #: oleacc.rc:123
 msgctxt "object state"
 msgid "extended selectable"
-msgstr ""
+msgstr "扩展可选项"
 
 #: oleacc.rc:124
 msgctxt "object state"
 msgid "alert low"
-msgstr ""
+msgstr "低警告"
 
 #: oleacc.rc:125
 msgctxt "object state"
 msgid "alert medium"
-msgstr ""
+msgstr "中警告"
 
 #: oleacc.rc:126
 msgctxt "object state"
 msgid "alert high"
-msgstr ""
+msgstr "高警告"
 
 #: oleacc.rc:127
-#, fuzzy
 msgctxt "object state"
 msgid "protected"
 msgstr "受保护"
@@ -7380,7 +7394,6 @@ msgid "&Convert..."
 msgstr "转换(&C)..."
 
 #: oledlg.rc:36
-#, fuzzy
 msgid "%1 %2 &Object"
 msgstr "%1 %2 对象(&O)"
 
@@ -7809,7 +7822,7 @@ msgstr "Wine Internet Explorer"
 
 #: shdoclc.rc:33
 msgid "&w&bPage &p"
-msgstr ""
+msgstr "&w&b第 &p 页"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:122 shell32.rc:162 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
@@ -7957,10 +7970,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine 开发人员："
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "运行(&R)…"
+msgstr "运行"
 
 #: shell32.rc:338
 msgid ""
@@ -8093,7 +8104,7 @@ msgstr "模板"
 
 #: shell32.rc:213
 msgid "PrintHood"
-msgstr ""
+msgstr "所有打印机"
 
 #: shell32.rc:214 winhlp32.rc:49
 msgid "History"
@@ -8658,19 +8669,19 @@ msgstr "无法在媒体数据仍在播放时进行此操作。重置设备或等
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
-msgstr ""
+msgstr "波形头未准备好。使用 Prepare 函数以准备头，然后重试。"
 
 #: winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
-msgstr ""
+msgstr "不使用 WAVE_ALLOWSYNC 旗标时无法打开设备。请使用此旗标，然后重试。"
 
 #: winmm.rc:52
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
-msgstr ""
+msgstr "MIDI 头未准备好。使用 Prepare 函数以准备头，然后重试。"
 
 #: winmm.rc:54
 msgid ""
@@ -8731,7 +8742,7 @@ msgstr "设备名已被此应用程序用作别名。需使用唯一别名。"
 #: winmm.rc:67
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
-msgstr ""
+msgstr "载入指定设备驱动时发生无法探测的问题。"
 
 #: winmm.rc:68
 msgid "No command was specified."
@@ -8747,7 +8758,7 @@ msgstr "输出字符串太大，无法放入返回缓冲区。需增大缓冲区
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
-msgstr ""
+msgstr "指定的命令需要字符串参数。请提供一个参数。"
 
 #: winmm.rc:71
 msgid "The specified integer is invalid for this command."
@@ -8800,7 +8811,7 @@ msgstr "指定的命令无法使用“all”作为设备名称。"
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
-msgstr ""
+msgstr "在多个设备中出现错误。单独为每个设备指定命令以确定造成错误的设备。"
 
 #: winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
@@ -8808,7 +8819,7 @@ msgstr "无法根据文件名扩展名确定设备类型。"
 
 #: winmm.rc:83
 msgid "The specified parameter is out of range for the specified command."
-msgstr ""
+msgstr "指定的参数超出指定命令的范围。"
 
 #: winmm.rc:84
 msgid "The specified parameters cannot be used together."
@@ -8818,13 +8829,13 @@ msgstr "不能同时使用指定的参数。"
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
-msgstr ""
+msgstr "无法保存指定的文件。请确定您有足够的磁盘空间或仍连接在网络上。"
 
 #: winmm.rc:86
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
-msgstr ""
+msgstr "找不到指定的设备。请确定设备已安装且设备名拼写正确。"
 
 #: winmm.rc:87
 msgid ""
@@ -8879,7 +8890,7 @@ msgstr "指定的文件无法使用指定的 MCI 设备播放。文件可能已�
 
 #: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
-msgstr ""
+msgstr "为 MCI 传递了无效的参数块。"
 
 #: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -8895,7 +8906,7 @@ msgstr "无法在自动打开的设备上使用“notify”旗标。"
 
 #: winmm.rc:100
 msgid "Cannot use a filename with the specified device."
-msgstr ""
+msgstr "指定的设备不能使用文件名。"
 
 #: winmm.rc:101
 msgid ""
@@ -8963,24 +8974,30 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
+"所有可以播放当前格式文件的波形设备均正被占用。请等其中一个波形设备可用后重"
+"试。"
 
 #: winmm.rc:113
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
+"无法将当前波形设备设定为回放设备，因为设备正被占用。请等待设备可用后重试。"
 
 #: winmm.rc:114
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
+"所有可以读取当前格式文件的波形设备均正被占用。请等其中一个波形设备可用后重"
+"试。"
 
 #: winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
+"无法将当前波形设备设定为录音设备，因为设备正被占用。请等待设备可用后重试。"
 
 #: winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
@@ -9046,7 +9063,7 @@ msgstr "所有多媒体计时器均正被其他应用程序占用。退出其中
 
 #: winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
-msgstr ""
+msgstr "系统未指定当前 MIDI 端口。"
 
 #: winmm.rc:127
 msgid ""
@@ -9056,7 +9073,7 @@ msgstr "此系统未安装任何 MIDI 设备。请使用控制面板上的驱动
 
 #: winmm.rc:122
 msgid "There is no display window."
-msgstr ""
+msgstr "没有显示窗口。"
 
 #: winmm.rc:123
 msgid "Could not create or use window."
@@ -9128,11 +9145,11 @@ msgstr "超出大小限制"
 
 #: wldap32.rc:35
 msgid "Compare False"
-msgstr ""
+msgstr "比较假值"
 
 #: wldap32.rc:36
 msgid "Compare True"
-msgstr ""
+msgstr "比较真值"
 
 #: wldap32.rc:37
 msgid "Authentication Method Not Supported"
@@ -9144,7 +9161,7 @@ msgstr "需要强认证"
 
 #: wldap32.rc:39
 msgid "Referral (v2)"
-msgstr ""
+msgstr "推举 (v2)"
 
 #: wldap32.rc:40
 msgid "Referral"
@@ -9156,11 +9173,11 @@ msgstr "超出管理限制。"
 
 #: wldap32.rc:42
 msgid "Unavailable Critical Extension"
-msgstr ""
+msgstr "不可用的关键扩展"
 
 #: wldap32.rc:43
 msgid "Confidentiality Required"
-msgstr ""
+msgstr "需要保密性"
 
 #: wldap32.rc:46
 msgid "No Such Attribute"
@@ -9200,11 +9217,11 @@ msgstr "DN 语法无效"
 
 #: wldap32.rc:65
 msgid "Is Leaf"
-msgstr ""
+msgstr "为叶节点"
 
 #: wldap32.rc:66
 msgid "Alias Dereference Problem"
-msgstr ""
+msgstr "别名差别问题"
 
 #: wldap32.rc:78
 msgid "Inappropriate Authentication"
@@ -9240,7 +9257,7 @@ msgstr "缺少排序控制"
 
 #: wldap32.rc:91
 msgid "Index range error"
-msgstr ""
+msgstr "索引范围错误"
 
 #: wldap32.rc:94
 msgid "Naming Violation"
@@ -9252,11 +9269,11 @@ msgstr "对象类冲突"
 
 #: wldap32.rc:96
 msgid "Not allowed on Non-leaf"
-msgstr ""
+msgstr "不允许用于非叶节点"
 
 #: wldap32.rc:97
 msgid "Not allowed on RDN"
-msgstr ""
+msgstr "不允许用于 RDN"
 
 #: wldap32.rc:98
 msgid "Already Exists"
@@ -9264,7 +9281,7 @@ msgstr "已经存在"
 
 #: wldap32.rc:99
 msgid "No Object Class Mods"
-msgstr ""
+msgstr "无对象类模块"
 
 #: wldap32.rc:100
 msgid "Results Too Large"
@@ -9296,7 +9313,7 @@ msgstr "超时"
 
 #: wldap32.rc:116
 msgid "Auth Unknown"
-msgstr ""
+msgstr "未知认证"
 
 #: wldap32.rc:117
 msgid "Filter Error"
@@ -9312,7 +9329,7 @@ msgstr "参数错误"
 
 #: wldap32.rc:120
 msgid "No Memory"
-msgstr ""
+msgstr "内存不足"
 
 #: wldap32.rc:121
 msgid "Can't connect to the LDAP server"
@@ -9324,23 +9341,23 @@ msgstr "该版本的 LDAP 协议不支持该操作"
 
 #: wldap32.rc:123
 msgid "Specified control was not found in message"
-msgstr ""
+msgstr "消息中找不到指定的控制"
 
 #: wldap32.rc:124
 msgid "No result present in message"
-msgstr ""
+msgstr "消息中无结果"
 
 #: wldap32.rc:125
 msgid "More results returned"
-msgstr ""
+msgstr "返回了更多结果"
 
 #: wldap32.rc:126
 msgid "Loop while handling referrals"
-msgstr ""
+msgstr "处理推举时发现循环"
 
 #: wldap32.rc:127
 msgid "Referral hop limit exceeded"
-msgstr ""
+msgstr "超出推举跳跃限制"
 
 #: attrib.rc:30 cmd.rc:361
 msgid ""
@@ -9528,6 +9545,13 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
+"GOTO 命令可将批处理文件中的指令执行转移到另一个声明。\n"
+"\n"
+"GOTO 目标标签不可长于 255 字符，且不可包含空格（和其他操作系统不同）。\n"
+"如果批处理文件中包含多个标签则执行第一个。将 GOTO 指向不存在的标签则会\n"
+"终止批处理文件执行。\n"
+"\n"
+"GOTO 在交互模式下使用时没有效果。\n"
 
 #: cmd.rc:101
 msgid ""
@@ -9621,6 +9645,10 @@ msgid ""
 "It is mainly useful in batch files to allow the user to read the output of\n"
 "a previous command before it scrolls off the screen.\n"
 msgstr ""
+"PAUSE 可在屏幕上显示一条消息并提示用户按某个按键。\n"
+"\n"
+"该命令主要用于在批处理文件中让用户读取上一个命令的输出，\n"
+"以免其输出上滚到屏幕外。\n"
 
 #: cmd.rc:169
 msgid ""
@@ -9644,6 +9672,24 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
+"PROMPT 可设置命令行提示符。\n"
+"\n"
+"PROMPT 命令后跟随的字符串（包括紧随其后的空格）将在 cmd 等待输入时\n"
+"在行头显示。\n"
+"\n"
+"如下字符串带有特殊含义，如下：\n"
+"\n"
+"$$    美金符号           $_    换行                $b    管道符号 (|)\n"
+"$d    当前日期           $e    转义                $g    > 符号\n"
+"$l    < 符号             $n    当前盘符            $p    当前路径\n"
+"$q    等号               $t    当前时间            $v    cmd 版本\n"
+"\n"
+"注意，输入 PROMPT 命令而不附带提示符字串将重置提示符为默认值，也就是\n"
+"当前目录（包含当前盘符）后带一个大于号（>）。\n"
+"（等效于 PROMPT $p$g）。\n"
+"\n"
+"您也可以使用 PROMPT 环境变量更改提示符，因而命令“SET PROMPT=text”和\n"
+"“PROMPT text”等效。\n"
 
 #: cmd.rc:173
 msgid ""
@@ -9812,7 +9858,7 @@ msgstr "VOL 显示磁盘设备的卷标\n"
 msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file which\n"
 "were introduced by a preceding SETLOCAL.\n"
-msgstr ""
+msgstr "ENDLOCAL 结束批处理文件中从 SETLOCAL 开始的对环境更改的本地化。\n"
 
 #: cmd.rc:271
 msgid ""
@@ -9823,6 +9869,10 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL 开始批处理文件中对环境更改的本地化。\n"
+"\n"
+"在 SETLOCAL 后进行的环境更改将仅限于批处理文件内，并将在遇到 ENDLOCAL\n"
+"指令后（或文件结尾）取消这些更改，并恢复所有的环境更改。\n"
 
 #: cmd.rc:275
 msgid ""
@@ -9832,7 +9882,7 @@ msgstr "PUSHD <目录> 将当前目录保存到栈，然后切换到所提供的
 
 #: cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr ""
+msgstr "POPD 将当前目录更改为 PUSHD 保存的最后一个目录。\n"
 
 #: cmd.rc:288
 msgid ""
@@ -9845,6 +9895,13 @@ msgid ""
 "Specifying no file type after the equal sign removes the current\n"
 "association, if any.\n"
 msgstr ""
+"ASSOC 显示或更改文件扩展名所关联的文件类型。\n"
+"\n"
+"语法：ASSOC [.扩展名[=[文件类型]]]\n"
+"\n"
+"不带参数运行 ASSOC 将显示当前的文件类型关联。\n"
+"如使用文件扩展名作为参数，将显示当前扩展名的关联信息。\n"
+"如指定扩展名而不在等号后追加文件类型，将移除目前的关联（如果存在）。\n"
 
 #: cmd.rc:300
 msgid ""
@@ -9859,10 +9916,18 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE 显示或更改与文件类型关联的打开命令。\n"
+"\n"
+"语法：FTYPE [文件类型[=[打开命令]]]\n"
+"\n"
+"如不带任何参数运行，该命令将显示已定义启动命令字符串的文件类型。\n"
+"如使用文件类型作为参数，该命令将显示关联于此文件类型的启动命令（如果存"
+"在）。\n"
+"如指定文件类型而不在等号后追加打开命令将移除此文件类型所关联的启动命令。\n"
 
 #: cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr ""
+msgstr "MORE 分页显示文件输出或管道输入。\n"
 
 #: cmd.rc:308
 msgid ""
@@ -9870,6 +9935,8 @@ msgid ""
 "from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE 显示文本并等待用户输入选单中对应某个选项的键。\n"
+"CHOICE 常用于在批处理文件中创建选项菜单。\n"
 
 #: cmd.rc:312
 msgid ""
@@ -9918,6 +9985,44 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
+"CMD 的内建命令如下：\n"
+"ASSOC\t\t显示或更改文件扩展名关联\n"
+"ATTRIB\t\t显示或更改 DOS 文件属性\n"
+"CALL\t\t在批处理文件中调用另一个批处理文件\n"
+"CD (CHDIR)\t更改当前的默认目录\n"
+"CHOICE\t\t在选单中等待按键输入\n"
+"CLS\t\t清空控制台\n"
+"COPY\t\t复制文件\n"
+"CTTY\t\t更换输入输出设备\n"
+"DATE\t\t显示或更改系统日期\n"
+"DEL (ERASE)\t删除一个或一组文件\n"
+"DIR\t\t列出目录中的内容\n"
+"ECHO\t\t将文本直接复制到控制台输出\n"
+"ENDLOCAL\t终止批处理文件中对环境更改的本地化\n"
+"FTYPE\t\t显示或更改文件类型关联的打开命令\n"
+"HELP\t\t显示某个主题的帮助信息概览\n"
+"MD (MKDIR)\t创建子目录\n"
+"MORE\t\t分页显示输出\n"
+"MOVE\t\t移动一个或多个文件，或整个目录树\n"
+"PATH\t\t设置或显示命令搜索路径\n"
+"PAUSE\t\t暂停批处理文件的执行\n"
+"POPD\t\t恢复到 PUSHD 保存的最后一个目录\n"
+"PROMPT\t\t更改命令提示符\n"
+"PUSHD\t\t切换到新目录并保存当前的目录\n"
+"REN (RENAME)\t重命名文件\n"
+"RD (RMDIR)\t删除子目录\n"
+"SET\t\t设置或显示环境变量\n"
+"SETLOCAL\t开始批处理文件中对环境更改的本地化\n"
+"START\t\t启动程序或使用关联的程序打开文档\n"
+"TIME\t\t设置或显示当前的系统时间\n"
+"TITLE\t\t设置 CMD 会话的窗口标题\n"
+"TYPE\t\t输出文本文件的内容\n"
+"VER\t\t显示 CMD 版本号\n"
+"VOL\t\t显示磁盘设备的卷标\n"
+"XCOPY\t\t将源文件或目录树复制到目标位置\n"
+"EXIT\t\t退出 CMD\n"
+"\n"
+"输入 HELP <命令> 以获取更详细的，关于上述命令的信息。\n"
 
 #: cmd.rc:353
 msgid "Are you sure?"
@@ -9935,7 +10040,7 @@ msgstr "N"
 
 #: cmd.rc:356
 msgid "File association missing for extension %1\n"
-msgstr ""
+msgstr "缺少扩展名 %1 的文件关联\n"
 
 #: cmd.rc:357
 msgid "No open command associated with file type '%1'\n"
@@ -9951,7 +10056,7 @@ msgstr "更多…"
 
 #: cmd.rc:360
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr ""
+msgstr "批处理中的行可能被截断。正在使用：\n"
 
 #: cmd.rc:362
 msgid "Argument missing\n"
@@ -9967,7 +10072,7 @@ msgstr "%1 的帮助不可用\n"
 
 #: cmd.rc:366
 msgid "Target to GOTO not found\n"
-msgstr ""
+msgstr "未找到目标 GOTO\n"
 
 #: cmd.rc:367
 msgid "Current Date is %1\n"
@@ -10000,7 +10105,7 @@ msgstr "无法调用批处理脚本外的批处理标签\n"
 #: cmd.rc:374 xcopy.rc:45
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: cmd.rc:375
 msgid "Delete %1?"
@@ -10149,7 +10254,7 @@ msgstr "错误: 指定的命令行选项未知或无效。\n"
 
 #: ipconfig.rc:32
 msgid "%1 adapter %2\n"
-msgstr ""
+msgstr "%1 适配器 %2\n"
 
 #: ipconfig.rc:33
 msgid "Ethernet"
@@ -10157,7 +10262,7 @@ msgstr "以太网"
 
 #: ipconfig.rc:35
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "链接专用的 DNS 后缀"
 
 #: ipconfig.rc:36
 msgid "IPv4 address"
@@ -10177,7 +10282,7 @@ msgstr "广播"
 
 #: ipconfig.rc:40
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "点对点"
 
 #: ipconfig.rc:41
 msgid "Mixed"
@@ -10208,10 +10313,8 @@ msgid "IPv6 address"
 msgstr "IPv6 地址"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "系统配置"
+msgstr "系统信息"
 
 #: net.rc:30
 msgid ""
@@ -11250,6 +11353,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"用法：\n"
+"  REG [操作] [参数]\n"
+"\n"
+"支持的操作：\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"要获取指定操作的帮助，请输入：\n"
+"  REG [操作] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11270,62 +11382,41 @@ msgid "The operation completed successfully\n"
 msgstr "操作完成\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "错误：键名无效\n"
+msgstr "reg: 无效的键名\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "错误：命令行参数无效\n"
+msgstr "reg: 无效的命令行参数\n"
 
 #: reg.rc:42
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "错误：无法访问远程机器\n"
+msgstr "reg: 无法访问远程设备\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
-msgstr "错误：系统无法找到指定的注册表键或值\n"
+msgstr "reg：系统无法找到指定的注册表键或值。\n"
 
 #: reg.rc:44
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "错误：不支持的格式\n"
+msgstr "reg: 不受支持的数据类型 [%1]\n"
 
 #: reg.rc:45
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "uninstaller: 选项 '--remove' 必须后接一个应用程序 GUID\n"
+msgstr "reg：选项 [/d] 后必须紧跟一个有效的整数。\n"
 
 #: reg.rc:46
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "uninstaller: 选项 '--remove' 必须后接一个应用程序 GUID\n"
+msgstr "reg：选项 [/d] 后必须紧跟一个有效的十六进制值。\n"
 
 #: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr "reg: 未能处理的注册表数据类型 [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:48
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "指定文件已经存在。是否替换？"
+msgstr "注册表值 '%1' 已经存在。您想要覆盖它吗?"
 
 #: reg.rc:52
 msgid "The registry operation was cancelled\n"
@@ -11336,66 +11427,52 @@ msgid "(Default)"
 msgstr "(默认)"
 
 #: reg.rc:54
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "您确认要删除这些值吗?"
+msgstr "您真的要删除注册表键值 '%1' 吗?"
 
 #: reg.rc:55
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "您确认要删除值 '%s' 吗?"
+msgstr "您真的要删除 '%1' 下的所有注册表键值吗?"
 
 #: reg.rc:56
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "真的删除 '%1'?"
+msgstr "您真的要删除注册表键 '%1' 吗?"
 
 #: reg.rc:57
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "uninstaller: 选项 '--remove' 必须后接一个应用程序 GUID\n"
+msgstr "reg：选项 [/d] 后必须紧跟一个有效的字符串。\n"
 
 #: reg.rc:58
 msgid ""
 "reg: Unable to delete all registry values in '%1'. An unexpected error "
 "occurred.\n"
-msgstr ""
+msgstr "reg：无法删除“%1”中的所有注册表值。发生了未预期的错误。\n"
 
 #: reg.rc:59
 msgid ""
 "reg: Unable to complete the specified operation. An unexpected error "
 "occurred.\n"
-msgstr ""
+msgstr "reg：无法完成指定的操作。发生了未预期的错误。\n"
 
 #: reg.rc:60
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "搜索完成。找到的匹配项数量: %1!d!\n"
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "错误：键名无效\n"
+msgstr "reg: 语法无效。"
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "uninstaller: Invalid option [%1]\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "uninstaller: 无效的选项 [%1]\n"
+msgstr "reg: 无效的选项 [%1]。"
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "输入“REG /?”以获取帮助。\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "输入“REG %1 /?”以获取帮助。\n"
 
 #: reg.rc:65 regedit.rc:205
 msgid "(value not set)"
@@ -11640,52 +11717,66 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"用法：\n"
+"    regedit [选项] [文件名] [注册表键]\n"
+"\n"
+"选项：\n"
+"    [无选项]\t\t启动该程序的图形界面。\n"
+"    /L:system.dat\t要修改的 system.dat 文件的位置。\n"
+"\t\t\t与其他任意开关兼容。该选项将被忽略。\n"
+"    /R:user.dat\t\t要修改的 user.dat 文件的位置。\n"
+"\t\t\t与其他任意开关兼容。该选项将被忽略。\n"
+"    /C\t\t\t导入注册表文件的内容。\n"
+"    /D\t\t\t删除指定的注册表键。\n"
+"    /E\t\t\t将指定注册表键的内容导出到文件。\n"
+"\t\t\t如未指定任何键，将导出整份注册表。\n"
+"    /S\t\t\t静默模式。不显示任何消息。\n"
+"    /V\t\t\t使用高级模式启动图形界面。该选项将被忽略。\n"
+"    /?\t\t\t显示此信息并退出。\n"
+"    [文件名]\t\t要导入的注册表信息文件的位置。和 [/E] 一同使用时，\n"
+"\t\t\t该选项将转而指定用于导出注册表信息的文件的位置。\n"
+"    [注册表键]\t\t要更改的注册表键。\n"
+"\n"
+"用例：\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
+msgstr "regedit：无效或无法识别的开关 [%1]\n"
 
 #: regedit.rc:361
 msgid "Type \"regedit /?\" for help.\n"
 msgstr "输入 \"regedit /?\" 来获得帮助\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "未指定命令。"
+msgstr "regedit: 没有指定文件名。\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit：未指定任何要移除的注册表键。\n"
 
 #: regedit.rc:364
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The file '%1' was not found.\n"
-msgstr "uninstaller: 未找到 GUID 为 '%1' 的应用程序\n"
+msgstr "regedit: 找不到文件 '%1'。\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "错误：无法访问远程机器\n"
+msgstr "regedit: 无法打开文件 '%1'。\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "句柄操作无效。\n"
+msgstr "regedit: 无法处理的操作。\n"
 
 #: regedit.rc:367
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr "regedit: 内存不足! (%1!S!, 行 %2!u!)\n"
 
 #: regedit.rc:368
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "错误：键名无效\n"
+msgstr "regedit: 无效的十六进制值。\n"
 
 #: regedit.rc:369
 msgid ""
@@ -11698,40 +11789,28 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: 无法识别的转义序列 [\\%1!c!]\n"
 
 #: regedit.rc:371
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
-msgstr "错误：不支持的格式\n"
+msgstr "regedit: 不受支持的注册表数据类型 [%1]\n"
 
 #: regedit.rc:372
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "错误：无法访问远程机器\n"
+msgstr "regedit: '%1' 中存在未预期的行尾。\n"
 
 #: regedit.rc:373
-#, fuzzy
-#| msgid "uninstaller: The application with GUID '%1' was not found\n"
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "uninstaller: 未找到 GUID 为 '%1' 的应用程序\n"
+msgstr "regedit: 行 '%1' 无法被识别。\n"
 
 #: regedit.rc:374
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "错误：无法访问远程机器\n"
+msgstr "regedit: 无法向 '%2' 添加注册表值 '%1'。\n"
 
 #: regedit.rc:375
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "错误：无法访问远程机器\n"
+msgstr "regedit: 无法打开注册表键 '%1'。\n"
 
 #: regedit.rc:376
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
-msgstr "错误：不支持的格式\n"
+msgstr "regedit: 在 '%2' 遇到不受支持的注册表数据类型 [%1]。\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
@@ -11739,21 +11818,16 @@ msgstr "regedit: 注册表值 \"%1\" 将会被导出为二进制数据。\n"
 
 #: regedit.rc:378
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+msgstr "regedit：“%1”中包含无效的注册表类规范。\n"
 
 #: regedit.rc:379
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr "regedit: 无法导出 '%1'。未找到指定的注册表键。\n"
 
 #: regedit.rc:380
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr "错误：无法访问远程机器\n"
+msgstr "regedit：无法删除注册表类“%1”。\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
@@ -13649,12 +13723,10 @@ msgid "Configuration error"
 msgstr "配置错误"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "屏幕缓冲区大小必须不小于窗口"
+msgstr "屏幕缓冲器大小必须大于或等于窗口的大小。"
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -14190,10 +14262,8 @@ msgid "Error: Invalid query\n"
 msgstr "错误：无效查询\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "错误：键名无效\n"
+msgstr "错误：PATH 语法无效\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -14268,8 +14338,6 @@ msgid "F&ormat"
 msgstr "格式(&O)"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
 msgstr "列表(&L)"
 
@@ -14278,26 +14346,24 @@ msgid "&Bullet points"
 msgstr "项目符号(&B)"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "CRL 号码"
+msgstr "数字"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "字母 - 小写"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "字母 - 大写"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "罗马数字 - 小写"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "罗马数字 - 大写"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
@@ -14627,7 +14693,7 @@ msgstr "是否覆盖 %1？(是(Y)|否(N)|全部(A))\n"
 
 #: xcopy.rc:40
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr ""
+msgstr "无法将“%1”复制为“%2”，错误为 r/c %3!d!\n"
 
 #: xcopy.rc:42
 msgid "Failed during reading of '%1'\n"
