@@ -1691,7 +1691,7 @@ static struct dwrite_fontface *unsafe_impl_from_IDWriteFontFace(IDWriteFontFace 
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl = (IDWriteFontFaceVtbl*)&dwritefontfacevtbl);
+    assert(iface->lpVtbl == (IDWriteFontFaceVtbl*)&dwritefontfacevtbl);
     return CONTAINING_RECORD(iface, struct dwrite_fontface, IDWriteFontFace4_iface);
 }
 
