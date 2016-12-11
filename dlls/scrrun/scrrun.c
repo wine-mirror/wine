@@ -200,10 +200,6 @@ static HRESULT WINAPI provideclassinfo_QueryInterface(IProvideClassInfo *iface, 
     }
     else
         return IUnknown_QueryInterface(This->outer, riid, obj);
-
-    *obj = NULL;
-    WARN("interface %s not supported\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI provideclassinfo_AddRef(IProvideClassInfo *iface)
