@@ -2714,16 +2714,16 @@ UINT WINAPI MsiGetProductPropertyW(MSIHANDLE hProduct, LPCWSTR szProperty,
 
     if (lstrlenW(val) >= *pccbValue)
     {
-        lstrcpynW(szValue, val, *pccbValue);
-        *pccbValue = lstrlenW(val);
+        if (szValue) lstrcpynW(szValue, val, *pccbValue);
         r = ERROR_MORE_DATA;
     }
     else
     {
-        lstrcpyW(szValue, val);
-        *pccbValue = lstrlenW(val);
+        if (szValue) lstrcpyW(szValue, val);
         r = ERROR_SUCCESS;
     }
+
+    *pccbValue = lstrlenW(val);
 
 done:
     if (view)
