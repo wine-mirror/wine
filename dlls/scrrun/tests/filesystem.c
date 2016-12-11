@@ -106,6 +106,7 @@ static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
     IProvideClassInfo *classinfo;
     TYPEATTR *attr;
     ITypeInfo *ti;
+    IUnknown *unk;
     HRESULT hr;
 
     hr = IDispatch_QueryInterface(disp, &IID_IProvideClassInfo, (void **)&classinfo);
@@ -119,6 +120,11 @@ static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
 
     ok_(__FILE__,line) (IsEqualGUID(&attr->guid, guid), "Unexpected typeinfo %s, expected %s\n", wine_dbgstr_guid(&attr->guid),
         wine_dbgstr_guid(guid));
+
+    hr = IProvideClassInfo_QueryInterface(classinfo, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Failed to QI for IUnknown.\n");
+    ok(unk == (IUnknown *)disp, "Got unk %p, original %p.\n", unk, disp);
+    IUnknown_Release(unk);
 
     IProvideClassInfo_Release(classinfo);
     ITypeInfo_ReleaseTypeAttr(ti, attr);
