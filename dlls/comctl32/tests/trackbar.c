@@ -992,7 +992,6 @@ static void test_tic_settings(void)
         SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect);
         SendMessageA(hWndTrackbar, TBM_SETTICFREQ, 1, 0);
         SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect1);
-    todo_wine
         ok(!EqualRect(&rect, &rect1), "Unexpected thumb rectangle %s, previous %s\n",
             wine_dbgstr_rect(&rect1), wine_dbgstr_rect(&rect));
 

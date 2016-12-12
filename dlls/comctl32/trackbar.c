@@ -1433,6 +1433,7 @@ TRACKBAR_SetTicFreq (TRACKBAR_INFO *infoPtr, WORD wFreq)
 	TRACKBAR_InvalidateAll(infoPtr);
     }
 
+    TRACKBAR_UpdateThumb (infoPtr);
     return 0;
 }
 
