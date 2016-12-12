@@ -1154,7 +1154,7 @@ static	LRESULT	PCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
         idx += 4;
         break;
     case 24:
-        if (adsi->pwfxDst->nBlockAlign != 3 * adsi->pwfxSrc->nChannels) {
+        if (adsi->pwfxDst->nBlockAlign != 3 * adsi->pwfxDst->nChannels) {
             FIXME("Destination: 24-bit samples must be packed\n");
             return MMSYSERR_NOTSUPPORTED;
         }
