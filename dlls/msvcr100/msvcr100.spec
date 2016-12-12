@@ -64,8 +64,8 @@
 @ stub -arch=win64 ??0default_scheduler_exists@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0default_scheduler_exists@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0default_scheduler_exists@Concurrency@@QEAA@XZ
-@ stub -arch=win32 ??0event@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0event@Concurrency@@QEAA@XZ
+@ thiscall -arch=win32 ??0event@Concurrency@@QAE@XZ(ptr) event_ctor
+@ cdecl -arch=win64 ??0event@Concurrency@@QEAA@XZ(ptr) event_ctor
 @ thiscall -arch=i386 ??0exception@std@@QAE@ABQBD@Z(ptr ptr) MSVCRT_exception_ctor
 @ cdecl -arch=win64 ??0exception@std@@QEAA@AEBQEBD@Z(ptr ptr) MSVCRT_exception_ctor
 @ thiscall -arch=i386 ??0exception@std@@QAE@ABQBDH@Z(ptr ptr long) MSVCRT_exception_ctor_noalloc
@@ -182,8 +182,8 @@
 @ cdecl -arch=win64 ??1bad_typeid@std@@UEAA@XZ(ptr) MSVCRT_bad_typeid_dtor
 @ thiscall -arch=win32 ??1critical_section@Concurrency@@QAE@XZ(ptr) critical_section_dtor
 @ cdecl -arch=win64 ??1critical_section@Concurrency@@QEAA@XZ(ptr) critical_section_dtor
-@ stub -arch=win32 ??1event@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1event@Concurrency@@QEAA@XZ
+@ thiscall -arch=win32 ??1event@Concurrency@@QAE@XZ(ptr) event_dtor
+@ cdecl -arch=win64 ??1event@Concurrency@@QEAA@XZ(ptr) event_dtor
 @ thiscall -arch=i386 ??1exception@std@@UAE@XZ(ptr) MSVCRT_exception_dtor
 @ cdecl -arch=win64 ??1exception@std@@UEAA@XZ(ptr) MSVCRT_exception_dtor
 @ thiscall -arch=win32 ??1reader_writer_lock@Concurrency@@QAE@XZ(ptr) reader_writer_lock_dtor
@@ -472,10 +472,10 @@
 @ cdecl -arch=arm ?raw_name@type_info@@QBAPBDXZ(ptr) MSVCRT_type_info_raw_name
 @ thiscall -arch=i386 ?raw_name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_raw_name
 @ cdecl -arch=win64 ?raw_name@type_info@@QEBAPEBDXZ(ptr) MSVCRT_type_info_raw_name
-@ stub -arch=win32 ?reset@event@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?reset@event@Concurrency@@QEAAXXZ
-@ stub -arch=win32 ?set@event@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?set@event@Concurrency@@QEAAXXZ
+@ thiscall -arch=win32 ?reset@event@Concurrency@@QAEXXZ(ptr) event_reset
+@ cdecl -arch=win64 ?reset@event@Concurrency@@QEAAXXZ(ptr) event_reset
+@ thiscall -arch=win32 ?set@event@Concurrency@@QAEXXZ(ptr) event_set
+@ cdecl -arch=win64 ?set@event@Concurrency@@QEAAXXZ(ptr) event_set
 @ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_new_handler
 @ stub ?set_terminate@@YAP6AXXZH@Z
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_terminate
@@ -497,10 +497,10 @@
 @ cdecl -arch=win64 ?unlock@reader_writer_lock@Concurrency@@QEAAXXZ(ptr) reader_writer_lock_unlock
 @ cdecl ?vswprintf@@YAHPA_WIPB_WPAD@Z(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ stub ?wait@Concurrency@@YAXI@Z
-@ stub -arch=win32 ?wait@event@Concurrency@@QAEII@Z
-@ stub -arch=win64 ?wait@event@Concurrency@@QEAA_KI@Z
-@ stub -arch=win32 ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z
-@ stub -arch=win64 ?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z
+@ thiscall -arch=win32 ?wait@event@Concurrency@@QAEII@Z(ptr) event_wait
+@ cdecl -arch=win64 ?wait@event@Concurrency@@QEAA_KI@Z(ptr) event_wait
+@ cdecl -arch=win32 ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z(ptr long long long) event_wait_for_multiple
+@ cdecl -arch=win64 ?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z(ptr long long long) event_wait_for_multiple
 @ thiscall -arch=i386 ?what@exception@std@@UBEPBDXZ(ptr) MSVCRT_what_exception
 @ cdecl -arch=win64 ?what@exception@std@@UEBAPEBDXZ(ptr) MSVCRT_what_exception
 @ cdecl -norelay $I10_OUTPUT(double long long long ptr) MSVCRT_I10_OUTPUT

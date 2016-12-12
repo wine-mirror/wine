@@ -550,6 +550,63 @@ unsigned int __cdecl _GetConcurrency(void)
     return val;
 }
 
+typedef struct
+{
+    volatile void *wait;
+    void *reset;
+    critical_section cs;
+} event;
+
+/* ??0event@Concurrency@@QAE@XZ */
+/* ??0event@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(event_ctor, 4)
+event* __thiscall event_ctor(event *this)
+{
+    FIXME("(%p) stub\n", this);
+    return this;
+}
+
+/* ??1event@Concurrency@@QAE@XZ */
+/* ??1event@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(event_dtor, 4)
+void __thiscall event_dtor(event *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?reset@event@Concurrency@@QAEXXZ */
+/* ?reset@event@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(event_reset, 4)
+void __thiscall event_reset(event *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?set@event@Concurrency@@QAEXXZ */
+/* ?set@event@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(event_set, 4)
+void __thiscall event_set(event *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?wait@event@Concurrency@@QAEII@Z */
+/* ?wait@event@Concurrency@@QEAA_KI@Z */
+DEFINE_THISCALL_WRAPPER(event_wait, 8)
+size_t __thiscall event_wait(event *this, unsigned int timeout)
+{
+    FIXME("(%p %u) stub\n", this, timeout);
+    return COOPERATIVE_WAIT_TIMEOUT;
+}
+
+/* ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z */
+/* ?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z */
+int __cdecl event_wait_for_multiple(event **events, MSVCRT_size_t count, MSVCRT_bool wait_all, unsigned int timeout)
+{
+    FIXME("(%p %ld %d %u) stub\n", events, count, wait_all, timeout);
+    return COOPERATIVE_WAIT_TIMEOUT;
+}
+
 #endif
 
 #if _MSVCR_VER >= 110

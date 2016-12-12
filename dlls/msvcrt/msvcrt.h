@@ -1181,6 +1181,8 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 
 #define UCRTBASE_SCANF_MASK                              (0x0007)
 
+#define COOPERATIVE_WAIT_TIMEOUT     ~0
+
 typedef enum {
     _FpCodeUnspecified,
     _FpCodeAdd,
