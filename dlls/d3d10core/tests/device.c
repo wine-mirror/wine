@@ -10065,6 +10065,164 @@ static void test_sm4_ret_instruction(void)
     release_test_context(&test_context);
 }
 
+static void test_primitive_restart(void)
+{
+    struct d3d10core_test_context test_context;
+    unsigned int stride, offset, x, y;
+    ID3D10Buffer *ib32, *ib16, *vb;
+    struct resource_readback rb;
+    ID3D10InputLayout *layout;
+    ID3D10VertexShader *vs;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        struct vs_out
+        {
+            float4 position : SV_Position;
+            float4 color : color;
+        };
+
+        float4 main(vs_out input) : SV_TARGET
+        {
+            return input.color;
+        }
+#endif
+        0x43425844, 0x119e48d1, 0x468aecb3, 0x0a405be5, 0x4e203b82, 0x00000001, 0x000000f4, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x6f6c6f63, 0xabab0072,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000038, 0x00000040,
+        0x0000000e, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+    static const DWORD vs_code[] =
+    {
+#if 0
+        struct vs_out
+        {
+            float4 position : SV_Position;
+            float4 color : color;
+        };
+
+        void main(float4 position : POSITION, uint vertex_id : SV_VertexID, out vs_out output)
+        {
+            output.position = position;
+            output.color = vertex_id < 4 ? float4(0.0, 1.0, 1.0, 1.0) : float4(1.0, 0.0, 0.0, 1.0);
+        }
+#endif
+        0x43425844, 0x2fa57573, 0xdb71c15f, 0x2641b028, 0xa8f87ccc, 0x00000001, 0x00000198, 0x00000003,
+        0x0000002c, 0x00000084, 0x000000d8, 0x4e475349, 0x00000050, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041, 0x00000000, 0x00000006,
+        0x00000001, 0x00000001, 0x00000101, 0x49534f50, 0x4e4f4954, 0x5f565300, 0x74726556, 0x44497865,
+        0xababab00, 0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001,
+        0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001,
+        0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x6f6c6f63, 0xabab0072, 0x52444853, 0x000000b8,
+        0x00010040, 0x0000002e, 0x0300005f, 0x001010f2, 0x00000000, 0x04000060, 0x00101012, 0x00000001,
+        0x00000006, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000001,
+        0x02000068, 0x00000001, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0700004f,
+        0x00100012, 0x00000000, 0x0010100a, 0x00000001, 0x00004001, 0x00000004, 0x0f000037, 0x001020f2,
+        0x00000001, 0x00100006, 0x00000000, 0x00004002, 0x00000000, 0x3f800000, 0x3f800000, 0x3f800000,
+        0x00004002, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e,
+    };
+    static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const struct vec2 vertices[] =
+    {
+        {-1.00f, -1.0f},
+        {-1.00f,  1.0f},
+        {-0.25f, -1.0f},
+        {-0.25f,  1.0f},
+        { 0.25f, -1.0f},
+        { 0.25f,  1.0f},
+        { 1.00f, -1.0f},
+        { 1.00f,  1.0f},
+    };
+    static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    static const unsigned short indices16[] =
+    {
+        0, 1, 2, 3, 0xffff, 4, 5, 6, 7
+    };
+    static const unsigned int indices32[] =
+    {
+        0, 1, 2, 3, 0xffffffff, 4, 5, 6, 7
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(SUCCEEDED(hr), "Failed to create return pixel shader, hr %#x.\n", hr);
+
+    ib16 = create_buffer(device, D3D10_BIND_INDEX_BUFFER, sizeof(indices16), indices16);
+    ib32 = create_buffer(device, D3D10_BIND_INDEX_BUFFER, sizeof(indices32), indices32);
+
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc,
+            sizeof(layout_desc) / sizeof(*layout_desc),
+            vs_code, sizeof(vs_code), &layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
+
+    ID3D10Device_VSSetShader(device, vs);
+    ID3D10Device_PSSetShader(device, ps);
+
+    ID3D10Device_IASetInputLayout(device, layout);
+    ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*vertices);
+    offset = 0;
+    ID3D10Device_IASetVertexBuffers(device, 0, 1, &vb, &stride, &offset);
+
+    for (i = 0; i < 2; ++i)
+    {
+        if (!i)
+            ID3D10Device_IASetIndexBuffer(device, ib32, DXGI_FORMAT_R32_UINT, 0);
+        else
+            ID3D10Device_IASetIndexBuffer(device, ib16, DXGI_FORMAT_R16_UINT, 0);
+
+        ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, black);
+        ID3D10Device_DrawIndexed(device, 9, 0, 0);
+        get_texture_readback(test_context.backbuffer, 0, &rb);
+        for (y = 0; y < 480; ++y)
+        {
+            for (x = 0; x < 640; ++x)
+            {
+                DWORD color = get_readback_color(&rb, x, y);
+                DWORD expected_color;
+                if (x < 240)
+                    expected_color = 0xffffff00;
+                else if (x >= 640 - 240)
+                    expected_color = 0xff0000ff;
+                else
+                    expected_color = 0x00000000;
+                ok(compare_color(color, expected_color, 1),
+                        "Test %u: Got 0x%08x, expected 0x%08x at (%u, %u).\n",
+                        i, color, expected_color, x, y);
+            }
+        }
+        release_resource_readback(&rb);
+    }
+
+    ID3D10Buffer_Release(ib16);
+    ID3D10Buffer_Release(ib32);
+    ID3D10Buffer_Release(vb);
+    ID3D10InputLayout_Release(layout);
+    ID3D10PixelShader_Release(ps);
+    ID3D10VertexShader_Release(vs);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -10122,4 +10280,5 @@ START_TEST(device)
     test_shader_input_registers_limits();
     test_stencil_separate();
     test_sm4_ret_instruction();
+    test_primitive_restart();
 }
