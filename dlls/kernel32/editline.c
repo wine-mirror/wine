@@ -636,7 +636,8 @@ static void WCEL_CapitalizeWord(WCEL_Context* ctx)
 
 static void WCEL_Yank(WCEL_Context* ctx)
 {
-    WCEL_InsertString(ctx, ctx->yanked);
+    if (ctx->yanked)
+        WCEL_InsertString(ctx, ctx->yanked);
 }
 
 static void WCEL_KillToEndOfLine(WCEL_Context* ctx)
