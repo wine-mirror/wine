@@ -353,7 +353,7 @@ BOOL netconn_close( netconn_t *conn )
 BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned int addr_len, int timeout )
 {
     BOOL ret = FALSE;
-    int res = 0;
+    int res;
     ULONG state;
 
     if (timeout > 0)
@@ -361,23 +361,42 @@ BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned
         state = 1;
         ioctlsocket( conn->socket, FIONBIO, &state );
     }
-    if (connect( conn->socket, sockaddr, addr_len ) < 0)
-    {
-        res = sock_get_error( errno );
-        if (res == WSAEWOULDBLOCK || res == WSAEINPROGRESS)
-        {
-            struct pollfd pfd;
 
-            pfd.fd = conn->socket;
-            pfd.events = POLLOUT;
-            if (poll( &pfd, 1, timeout ) > 0)
-                ret = TRUE;
-            else
-                res = sock_get_error( errno );
+    for (;;)
+    {
+        res = 0;
+        if (connect( conn->socket, sockaddr, addr_len ) < 0)
+        {
+            res = sock_get_error( errno );
+            if (res == WSAEWOULDBLOCK || res == WSAEINPROGRESS)
+            {
+                struct pollfd pfd;
+
+                pfd.fd = conn->socket;
+                pfd.events = POLLOUT;
+                for (;;)
+                {
+                    res = 0;
+                    if (poll( &pfd, 1, timeout ) > 0)
+                    {
+                        ret = TRUE;
+                        break;
+                    }
+                    else
+                    {
+                        res = sock_get_error( errno );
+                        if (res != WSAEINTR) break;
+                    }
+                }
+            }
+            if (res != WSAEINTR) break;
+        }
+        else
+        {
+            ret = TRUE;
+            break;
         }
     }
-    else
-        ret = TRUE;
     if (timeout > 0)
     {
         state = 0;
