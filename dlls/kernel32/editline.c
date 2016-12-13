@@ -984,6 +984,8 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 	    }
 	}
 
+        CONSOLE_GetEditionMode(hConsoleIn, &use_emacs);
+
         GetConsoleMode(hConsoleIn, &mode);
         if (input_mode != mode)
         {
