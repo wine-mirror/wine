@@ -3187,7 +3187,7 @@ struct message
 
 static const struct message *expect_messages;
 static HWND device_window, focus_window;
-static LONG windowposchanged_received, syscommand_received;
+static LONG windowposchanged_received, syscommand_received, wm_size_received;
 
 struct wndproc_thread_param
 {
@@ -3243,6 +3243,8 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
         InterlockedIncrement(&windowposchanged_received);
     else if (message == WM_SYSCOMMAND)
         InterlockedIncrement(&syscommand_received);
+    else if (message == WM_SIZE)
+        InterlockedIncrement(&wm_size_received);
 
     return DefWindowProcA(hwnd, message, wparam, lparam);
 }
@@ -4046,11 +4048,14 @@ done:
 
 static void test_reset_fullscreen(void)
 {
-    WNDCLASSEXA wc = {0};
-    IDirect3DDevice9 *device = NULL;
-    IDirect3D9 *d3d;
-    ATOM atom;
     struct device_desc device_desc;
+    D3DDISPLAYMODE d3ddm, d3ddm2;
+    unsigned int mode_count, i;
+    IDirect3DDevice9 *device;
+    WNDCLASSEXA wc = {0};
+    IDirect3D9 *d3d;
+    HRESULT hr;
+    ATOM atom;
     static const struct message messages[] =
     {
         /* Windows usually sends wparam = TRUE, except on the testbot,
@@ -4100,6 +4105,34 @@ static void test_reset_fullscreen(void)
     flush_events();
     ok(expect_messages->message == 0, "Expected to receive message %#x.\n", expect_messages->message);
     expect_messages = NULL;
+
+    IDirect3D9_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &d3ddm);
+    mode_count = IDirect3D9_GetAdapterModeCount(d3d, D3DADAPTER_DEFAULT, d3ddm.Format);
+    for (i = 0; i < mode_count; ++i)
+    {
+        hr = IDirect3D9_EnumAdapterModes(d3d, D3DADAPTER_DEFAULT, d3ddm.Format, i, &d3ddm2);
+        ok(SUCCEEDED(hr), "Failed to enumerate display mode, hr %#x.\n", hr);
+
+        if (d3ddm2.Width != d3ddm.Width || d3ddm2.Height != d3ddm.Height)
+            break;
+    }
+    if (i == mode_count)
+    {
+        skip("Could not find a suitable display mode.\n");
+        goto cleanup;
+    }
+
+    wm_size_received = 0;
+
+    /* Fullscreen mode change. */
+    device_desc.width = d3ddm2.Width;
+    device_desc.height = d3ddm2.Height;
+    device_desc.device_window = device_window;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+    ok(SUCCEEDED(reset_device(device, &device_desc)), "Failed to reset device.\n");
+
+    flush_events();
+    todo_wine ok(!wm_size_received, "Received unexpected WM_SIZE message.\n");
 
 cleanup:
     if (device) IDirect3DDevice9_Release(device);
