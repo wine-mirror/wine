@@ -4648,6 +4648,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         {
             if (swapchain->desc.windowed)
             {
+                /* Switch from windowed to fullscreen */
                 HWND focus_window = device->create_parms.focus_window;
                 if (!focus_window)
                     focus_window = swapchain_desc->device_window;
@@ -4657,7 +4658,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
                     return hr;
                 }
 
-                /* switch from windowed to fs */
                 wined3d_device_setup_fullscreen_window(device, swapchain->device_window,
                         swapchain_desc->backbuffer_width,
                         swapchain_desc->backbuffer_height);
@@ -4665,10 +4665,15 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             else
             {
                 /* Fullscreen -> fullscreen mode change */
+                BOOL filter_messages = device->filter_messages;
+                device->filter_messages = TRUE;
+
                 MoveWindow(swapchain->device_window, 0, 0,
                         swapchain_desc->backbuffer_width,
                         swapchain_desc->backbuffer_height,
                         TRUE);
+
+                device->filter_messages = filter_messages;
             }
             swapchain->d3d_mode = m;
         }

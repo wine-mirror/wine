@@ -4132,7 +4132,7 @@ static void test_reset_fullscreen(void)
     ok(SUCCEEDED(reset_device(device, &device_desc)), "Failed to reset device.\n");
 
     flush_events();
-    todo_wine ok(!wm_size_received, "Received unexpected WM_SIZE message.\n");
+    ok(!wm_size_received, "Received unexpected WM_SIZE message.\n");
 
 cleanup:
     if (device) IDirect3DDevice9_Release(device);
