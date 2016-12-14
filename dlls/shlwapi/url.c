@@ -1089,7 +1089,7 @@ HRESULT WINAPI UrlEscapeW(
     TRACE("(%p(%s) %p %p 0x%08x)\n", pszUrl, debugstr_w(pszUrl),
             pszEscaped, pcchEscaped, dwFlags);
 
-    if(!pszUrl || !pcchEscaped)
+    if(!pszUrl || !pcchEscaped || !pszEscaped || *pcchEscaped == 0)
         return E_INVALIDARG;
 
     if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |

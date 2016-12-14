@@ -930,12 +930,14 @@ static void test_UrlEscapeA(void)
 
 static void test_UrlEscapeW(void)
 {
+    static const WCHAR path_test[] = {'/','t','e','s','t',0};
     static const WCHAR naW[] = {'f','t','p',31,255,250,0x2122,'e','n','d','/',0};
     static const WCHAR naescapedW[] = {'f','t','p','%','1','F','%','F','F','%','F','A',0x2122,'e','n','d','/',0};
     static const WCHAR out[] = {'f','o','o','%','2','0','b','a','r',0};
     WCHAR overwrite[] = {'f','o','o',' ','b','a','r',0,0,0};
     WCHAR ret_urlW[INTERNET_MAX_URL_LENGTH];
-    DWORD size = 0;
+    WCHAR empty_string[] = {0};
+    DWORD size;
     HRESULT ret;
     WCHAR wc;
     int i;
@@ -944,6 +946,42 @@ static void test_UrlEscapeW(void)
         win_skip("UrlEscapeW not found\n");
         return;
     }
+
+    /* Check error paths */
+
+    ret = UrlEscapeW(path_test, NULL, NULL, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
+
+    size = 0;
+    ret = UrlEscapeW(path_test, NULL, &size, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
+    ok(size == 0, "got %d, expected %d\n", size, 0);
+
+    ret = UrlEscapeW(path_test, empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
+
+    size = 0;
+    ret = UrlEscapeW(path_test, empty_string, &size, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
+    ok(size == 0, "got %d, expected %d\n", size, 0);
+
+    ret = UrlEscapeW(path_test, NULL, NULL, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
+
+    size = 1;
+    ret = UrlEscapeW(path_test, NULL, &size, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
+    ok(size == 1, "got %d, expected %d\n", size, 1);
+
+    ret = UrlEscapeW(path_test, empty_string, NULL, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
+
+    size = 1;
+    ret = UrlEscapeW(path_test, empty_string, &size, URL_ESCAPE_SPACES_ONLY);
+    ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
+    ok(size == 6, "got %d, expected %d\n", size, 6);
+
+    /* Check actual escaping */
 
     size = sizeof(overwrite)/sizeof(WCHAR);
     ret = pUrlEscapeW(overwrite, overwrite, &size, URL_ESCAPE_SPACES_ONLY);
