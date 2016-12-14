@@ -4735,6 +4735,7 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
             hr = E_INVALIDARG;
             break;
         case CSIDL_Type_NonExistent:
+            *tempW = 0;
             hr = S_FALSE;
             break;
         case CSIDL_Type_WindowsPath:
@@ -4785,14 +4786,18 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
             break;
     }
 
-    /* Expand environment strings if necessary */
-    if (*tempW == '%')
-        hr = _SHExpandEnvironmentStrings(tempW, pathW);
-    else
-        strcpyW(pathW, tempW);
-
     if (FAILED(hr))
         goto failed;
+
+    /* Expand environment strings if necessary */
+    if (*tempW == '%')
+    {
+        hr = _SHExpandEnvironmentStrings(tempW, pathW);
+        if (FAILED(hr))
+            goto failed;
+    }
+    else
+        strcpyW(pathW, tempW);
 
     /* if we don't care about existing directories we are ready */
     if (flags & KF_FLAG_DONT_VERIFY) goto done;
