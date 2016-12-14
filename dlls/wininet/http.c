@@ -4189,12 +4189,13 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
     request->path = NULL;
     if (*path)
     {
-        DWORD needed = 0;
+        DWORD needed = 1;
         HRESULT rc;
+        WCHAR dummy = 0;
 
-        rc = UrlEscapeW(path, NULL, &needed, URL_ESCAPE_SPACES_ONLY);
-        if (rc == E_POINTER)
-            needed = strlenW(path)+1;
+        rc = UrlEscapeW(path, &dummy, &needed, URL_ESCAPE_SPACES_ONLY);
+        if (rc != E_POINTER)
+            ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(path),rc);
         request->path = heap_alloc(needed*sizeof(WCHAR));
         rc = UrlEscapeW(path, request->path, &needed,
                         URL_ESCAPE_SPACES_ONLY);
