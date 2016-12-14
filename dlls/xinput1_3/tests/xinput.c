@@ -96,8 +96,7 @@ static void test_get_state(void)
         XINPUT_STATE state;
         XINPUT_STATE_EX state_ex;
     } xinput;
-    DWORD controllerNum, i;
-    DWORD result;
+    DWORD controllerNum, i, result, good = XUSER_MAX_COUNT;
 
     for (i = 0; i < (pXInputGetStateEx ? 2 : 1); i++)
     {
@@ -120,7 +119,10 @@ static void test_get_state(void)
 
             trace("-- Results for controller %d --\n", controllerNum);
             if (i == 0)
+            {
+                good = controllerNum;
                 trace("XInputGetState: %d\n", result);
+            }
             else
                 trace("XInputGetStateEx: %d\n", result);
             trace("State->dwPacketNumber: %d\n", xinput.state.dwPacketNumber);
@@ -140,6 +142,28 @@ static void test_get_state(void)
 
         result = pXInputGetStateEx(XUSER_MAX_COUNT+1, &xinput.state_ex);
         ok(result == ERROR_BAD_ARGUMENTS, "XInputGetState returned (%d)\n", result);
+    }
+
+    if (winetest_interactive && good < XUSER_MAX_COUNT)
+    {
+        DWORD now = GetTickCount(), packet = 0;
+        XINPUT_GAMEPAD *game = &xinput.state.Gamepad;
+
+        trace("You have 20 seconds to test the joystick freely\n");
+        do
+        {
+            Sleep(100);
+            pXInputGetState(good, &xinput.state);
+            if (xinput.state.dwPacketNumber == packet)
+                continue;
+
+            packet = xinput.state.dwPacketNumber;
+            trace("Buttons 0x%04X Triggers %3d/%3d LT %6d/%6d RT %6d/%6d\n",
+                  game->wButtons, game->bLeftTrigger, game->bRightTrigger,
+                  game->sThumbLX, game->sThumbLY, game->sThumbRX, game->sThumbRY);
+        }
+        while(GetTickCount() - now < 20000);
+        trace("Test over...\n");
     }
 }
 
