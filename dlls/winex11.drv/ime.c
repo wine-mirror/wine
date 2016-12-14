@@ -763,6 +763,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                         cpstr = (LPWSTR)&(cdata[cs->dwCompStrOffset]);
                         ImmUnlockIMCC(lpIMC->hCompStr);
                     }
+                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                     if (cplen > 0)
                     {
                         WCHAR param = cpstr[0];
@@ -779,11 +780,12 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                         GenerateIMEMessage(hIMC, WM_IME_COMPOSITION, param,
                                             GCS_RESULTSTR|GCS_RESULTCLAUSE);
+
+                        GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
                     }
+                    else if (myPrivate->bInComposition)
+                        GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
 
-                    GenerateIMEMessage(hIMC,WM_IME_ENDCOMPOSITION, 0, 0);
-
-                    myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                     myPrivate->bInComposition = FALSE;
                     ImmUnlockIMCC(lpIMC->hPrivate);
 
