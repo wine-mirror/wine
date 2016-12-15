@@ -11754,18 +11754,17 @@ static void test_uav_load(void)
         D3D11_SUBRESOURCE_DATA data[3];
     };
 
-    /* FIXME: Use a single R32_TYPELESS RT with multiple RTVs. */
     ID3D11RenderTargetView *rtv_float, *rtv_uint, *rtv_sint;
-    ID3D11Texture2D *rt_float, *rt_uint, *rt_sint;
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
     struct d3d11_test_context test_context;
     const struct texture *current_texture;
+    ID3D11Texture2D *texture, *rt_texture;
     D3D11_TEXTURE2D_DESC texture_desc;
     const struct shader *current_ps;
     ID3D11UnorderedAccessView *uav;
     ID3D11DeviceContext *context;
     struct resource_readback rb;
-    ID3D11Texture2D *texture;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
     unsigned int i, x, y;
@@ -11973,29 +11972,29 @@ static void test_uav_load(void)
     texture_desc.Height = 480;
     texture_desc.MipLevels = 1;
     texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
-
-    texture_desc.Format = DXGI_FORMAT_R32_FLOAT;
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_float);
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_texture);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_float, NULL, &rtv_float);
+
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    U(rtv_desc).Texture2D.MipSlice = 0;
+
+    rtv_desc.Format = DXGI_FORMAT_R32_FLOAT;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, &rtv_desc, &rtv_float);
     ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
 
-    texture_desc.Format = DXGI_FORMAT_R32_UINT;
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_uint);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_uint, NULL, &rtv_uint);
+    rtv_desc.Format = DXGI_FORMAT_R32_UINT;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, &rtv_desc, &rtv_uint);
     ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
 
-    texture_desc.Format = DXGI_FORMAT_R32_SINT;
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_sint);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_sint, NULL, &rtv_sint);
+    rtv_desc.Format = DXGI_FORMAT_R32_SINT;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, &rtv_desc, &rtv_sint);
     ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
 
     texture_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
@@ -12012,7 +12011,6 @@ static void test_uav_load(void)
     {
         const struct test *test = &tests[i];
         ID3D11RenderTargetView *current_rtv;
-        ID3D11Texture2D *current_rt;
 
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
                 NULL, &test->constant, 0, 0);
@@ -12058,20 +12056,16 @@ static void test_uav_load(void)
         {
             case DXGI_FORMAT_R32_FLOAT:
                 current_rtv = rtv_float;
-                current_rt = rt_float;
                 break;
             case DXGI_FORMAT_R32_UINT:
                 current_rtv = rtv_uint;
-                current_rt = rt_uint;
                 break;
             case DXGI_FORMAT_R32_SINT:
                 current_rtv = rtv_sint;
-                current_rt = rt_sint;
                 break;
             default:
                 trace("Unhandled format %#x.\n", uav_desc.Format);
                 current_rtv = NULL;
-                current_rt = NULL;
                 break;
         }
 
@@ -12082,7 +12076,7 @@ static void test_uav_load(void)
 
         draw_quad(&test_context);
 
-        get_texture_readback(current_rt, 0, &rb);
+        get_texture_readback(rt_texture, 0, &rb);
         for (y = 0; y < 4; ++y)
         {
             for (x = 0; x < 4; ++x)
@@ -12104,9 +12098,7 @@ static void test_uav_load(void)
     ID3D11RenderTargetView_Release(rtv_float);
     ID3D11RenderTargetView_Release(rtv_sint);
     ID3D11RenderTargetView_Release(rtv_uint);
-    ID3D11Texture2D_Release(rt_float);
-    ID3D11Texture2D_Release(rt_sint);
-    ID3D11Texture2D_Release(rt_uint);
+    ID3D11Texture2D_Release(rt_texture);
     release_test_context(&test_context);
 }
 
