@@ -5078,11 +5078,38 @@ static void test_GetGdiCompatibleMetrics(void)
     IDWriteFactory_Release(factory);
 }
 
+static void get_expected_panose(IDWriteFont1 *font, DWRITE_PANOSE *panose)
+{
+    IDWriteFontFace *fontface;
+    const TT_OS2_V2 *tt_os2;
+    void *os2_context;
+    UINT32 size;
+    BOOL exists;
+    HRESULT hr;
+
+    memset(panose, 0, sizeof(*panose));
+
+    hr = IDWriteFont1_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_0S2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (tt_os2) {
+        memcpy(panose, &tt_os2->panose, sizeof(*panose));
+        IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
+    }
+
+    IDWriteFontFace_Release(fontface);
+}
+
 static void test_GetPanose(void)
 {
+    IDWriteFontCollection *syscollection;
     IDWriteFactory *factory;
     IDWriteFont1 *font1;
     IDWriteFont *font;
+    UINT count, i;
     HRESULT hr;
 
     factory = create_factory();
@@ -5090,56 +5117,83 @@ static void test_GetPanose(void)
 
     hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void**)&font1);
     IDWriteFont_Release(font);
-    if (hr == S_OK) {
+
+    if (FAILED(hr)) {
+        IDWriteFactory_Release(factory);
+        win_skip("GetPanose() is not supported.\n");
+        return;
+    }
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
+
+    for (i = 0; i < count; i++) {
+        DWRITE_PANOSE panose, expected_panose;
+        IDWriteLocalizedStrings *names;
         IDWriteFontFace3 *fontface3;
         IDWriteFontFace *fontface;
-        DWRITE_PANOSE panose;
+        IDWriteFontFamily *family;
+        IDWriteFont1 *font1;
+        IDWriteFont *font;
+        WCHAR nameW[256];
 
-        if (0) /* crashes on native */
-            IDWriteFont1_GetPanose(font1, NULL);
-
-        memset(&panose, 0, sizeof(panose));
-        IDWriteFont1_GetPanose(font1, &panose);
-        ok(panose.familyKind == DWRITE_PANOSE_FAMILY_TEXT_DISPLAY,
-            "got %u\n", panose.familyKind);
-        ok(panose.text.serifStyle == DWRITE_PANOSE_SERIF_STYLE_NORMAL_SANS,
-            "got %u\n", panose.text.serifStyle);
-        ok(panose.text.weight == DWRITE_PANOSE_WEIGHT_MEDIUM,
-            "got %u\n", panose.text.weight);
-        ok(panose.text.proportion == DWRITE_PANOSE_PROPORTION_EVEN_WIDTH,
-            "got %u\n", panose.text.proportion);
-        ok(panose.text.contrast == DWRITE_PANOSE_CONTRAST_VERY_LOW,
-            "got %u\n", panose.text.contrast);
-        ok(panose.text.strokeVariation == DWRITE_PANOSE_STROKE_VARIATION_GRADUAL_VERTICAL,
-            "got %u\n", panose.text.strokeVariation);
-        ok(panose.text.armStyle == DWRITE_PANOSE_ARM_STYLE_STRAIGHT_ARMS_VERTICAL,
-            "got %u\n", panose.text.armStyle);
-        ok(panose.text.letterform == DWRITE_PANOSE_LETTERFORM_NORMAL_BOXED,
-            "got %u\n", panose.text.letterform);
-        ok(panose.text.midline == DWRITE_PANOSE_MIDLINE_STANDARD_TRIMMED,
-            "got %u\n", panose.text.midline);
-        ok(panose.text.xHeight == DWRITE_PANOSE_XHEIGHT_CONSTANT_LARGE,
-            "got %u\n", panose.text.xHeight);
-
-        hr = IDWriteFont1_CreateFontFace(font1, &fontface);
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, i, &family);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void**)&fontface3);
-        IDWriteFontFace_Release(fontface);
-        if (hr == S_OK) {
-            DWRITE_PANOSE panose2;
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            IDWriteFontFace3_GetPanose(fontface3, &panose2);
-            ok(!memcmp(&panose, &panose2, sizeof(panose)), "wrong panose data\n");
+        hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void **)&font1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteFont_Release(font);
 
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+
+        IDWriteLocalizedStrings_Release(names);
+
+        IDWriteFont1_GetPanose(font1, &panose);
+        get_expected_panose(font1, &expected_panose);
+
+        ok(panose.values[0] == expected_panose.values[0], "%s: values[0] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[0], expected_panose.values[0]);
+        ok(panose.values[1] == expected_panose.values[1], "%s: values[1] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[1], expected_panose.values[1]);
+        ok(panose.values[2] == expected_panose.values[2], "%s: values[2] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[2], expected_panose.values[2]);
+        ok(panose.values[3] == expected_panose.values[3], "%s: values[3] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[3], expected_panose.values[3]);
+        ok(panose.values[4] == expected_panose.values[4], "%s: values[4] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[4], expected_panose.values[4]);
+        ok(panose.values[5] == expected_panose.values[5], "%s: values[5] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[5], expected_panose.values[5]);
+        ok(panose.values[6] == expected_panose.values[6], "%s: values[6] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[6], expected_panose.values[6]);
+        ok(panose.values[7] == expected_panose.values[7], "%s: values[7] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[7], expected_panose.values[7]);
+        ok(panose.values[8] == expected_panose.values[8], "%s: values[8] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[8], expected_panose.values[8]);
+        ok(panose.values[9] == expected_panose.values[9], "%s: values[9] %#x, expected %#x.\n", wine_dbgstr_w(nameW),
+            panose.values[9], expected_panose.values[9]);
+
+        hr = IDWriteFont1_CreateFontFace(font1, &fontface);
+        ok(hr == S_OK, "Failed to create a font face, %#x.\n", hr);
+        if (IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace3, (void **)&fontface3) == S_OK) {
+            ok(!memcmp(&panose, &expected_panose, sizeof(panose)), "%s: Unexpected panose from font face.\n",
+                wine_dbgstr_w(nameW));
             IDWriteFontFace3_Release(fontface3);
         }
+        IDWriteFontFace_Release(fontface);
 
         IDWriteFont1_Release(font1);
+        IDWriteFontFamily_Release(family);
     }
-    else
-        win_skip("GetPanose() is not supported.\n");
 
+    IDWriteFontCollection_Release(syscollection);
     IDWriteFactory_Release(factory);
 }
 
