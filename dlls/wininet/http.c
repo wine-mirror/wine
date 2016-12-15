@@ -3359,7 +3359,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 {
     appinfo_t *hIC = session->appInfo;
     http_request_t *request;
-    DWORD len;
+    DWORD port, len;
 
     TRACE("-->\n");
 
@@ -3388,7 +3388,12 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->session = session;
     list_add_head( &session->hdr.children, &request->hdr.entry );
 
-    request->server = get_server(substrz(session->hostName), session->hostPort, (dwFlags & INTERNET_FLAG_SECURE) != 0, TRUE);
+    port = session->hostPort;
+    if (port == INTERNET_INVALID_PORT_NUMBER)
+        port = (session->hdr.dwFlags & INTERNET_FLAG_SECURE) ?
+                INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+
+    request->server = get_server(substrz(session->hostName), port, (dwFlags & INTERNET_FLAG_SECURE) != 0, TRUE);
     if(!request->server) {
         WININET_Release(&request->hdr);
         return ERROR_OUTOFMEMORY;
