@@ -3443,7 +3443,10 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
         typeless_ds_format->id = typeless_depth_stencil_formats[i].typeless_id;
         copy_format(typeless_ds_format, ds_format);
         for (j = 0; j < ARRAY_SIZE(typeless_ds_format->flags); ++j)
+        {
             typeless_ds_format->flags[j] = typeless_format->flags[j];
+            typeless_format->flags[j] &= ~(WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+        }
 
         if ((format_id = typeless_depth_stencil_formats[i].depth_view_id))
         {
