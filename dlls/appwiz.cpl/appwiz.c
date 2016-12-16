@@ -298,7 +298,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
             }
 
             /* registry key */
-            info->regroot = root;
+            RegOpenKeyExW(root, NULL, 0, KEY_READ, &info->regroot);
             lstrcpyW(info->regkey, subKeyName);
             info->path = command;
 
@@ -497,7 +497,6 @@ static void UninstallProgram(int id, DWORD button)
     PROCESS_INFORMATION info;
     WCHAR errormsg[MAX_STRING_LEN];
     WCHAR sUninstallFailed[MAX_STRING_LEN];
-    HKEY hkey;
     BOOL res;
 
     LoadStringW(hInst, IDS_UNINSTALL_FAILED, sUninstallFailed,
@@ -533,9 +532,8 @@ static void UninstallProgram(int id, DWORD button)
                     MB_ICONQUESTION) == IDYES)
                 {
                     /* delete the application's uninstall entry */
-                    RegOpenKeyExW(iter->regroot, PathUninstallW, 0, KEY_READ, &hkey);
-                    RegDeleteKeyW(hkey, iter->regkey);
-                    RegCloseKey(hkey);
+                    RegDeleteKeyW(iter->regroot, iter->regkey);
+                    RegCloseKey(iter->regroot);
                 }
             }
 
