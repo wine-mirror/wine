@@ -1,20 +1,12 @@
-The Wine development release 2.0-rc1 is now available.
-
-This is the first release candidate for the upcoming Wine 2.0. It
-marks the beginning of the code freeze period. Please give this
-release a good testing to help us make 2.0 as good as possible.
+The Wine development release 2.0-rc2 is now available.
 
 What's new in this release (see below for details):
-  - Bug fix update of the Mono engine.
-  - Support for IDN name resolution.
-  - Many more Shader Model 5 operations.
-  - Still more fixes in the regression tests.
-  - Various bug fixes.
+  - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc1.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc1.tar.bz2
+  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc2.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc2.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -30,331 +22,102 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.0-rc1 (total 25):
+Bugs fixed in 2.0-rc2 (total 20):
 
-  13319  In dlls/user32/edit.c EDIT_EM_ReplaceSel Clobbers Important Var When Buffer Overflows
-  17196  Text Editor Cursor can be scrolled outside editor
-  24699  Explorer++ 1.2: crash when closing a tab
-  29878  Rayman 3 Demo: beeping sound
-  30385  Multiple applications need support for shell32.SHGetKnownFolderPath KF_FLAG_DEFAULT_PATH option (Windows Live Essentials 2011 web installer, MediaMonkey 4.1.x in Vista+ mode)
-  32171  Netflix doesn't work in 64-bit WINEPREFIX
-  32795  Easy Video Cutter 2.3 crashes on video loading
-  33021  TurboTax 2012 wants ntdll.dll.EtwEventRegister (win7 mode)
-  37138  Excel 2007 under wine crashes opening this file
-  39886  Fallout 4 - GFSDK_GodraysLib.x64.dll failed to initialize
-  39887  Fallout 4 - Fallout4Launcher.exe crashes
-  40247  Wine returns the loopback IP as first item in GetIpAddrTable causing some licensed programs to fail due to invalid MAC address
-  40359  Galactic Civilization III fails to start
-  40804  Touhou 6, 7, 8, 10, 11 have severe fps drop.
-  41055  "Texture ... does not have a drawable" on i915 with D3D8
-  41059  Necropolis requires OMSetDepthStencilState Two-sided stencil testing when using DirectX 11
-  41402  DDBST unusable due to "fixme:systray:wine_notify_icon unhandled tray message: 4"
-  41454  Outlast 2 Demo requires R32G32_UINT and R32_UINT formats
-  41493  Sniper Elite V2 stuck at "Completing Installation 1%"
-  41508  Menu infinitely loops, the application hangs.
-  41696  Multiple apps (Trials Fusion Demo, Outlast 2 Demo) require DXGI_FORMAT_R32G8X24_TYPELESS support
-  41870  RPG Tkool (RPG Maker) 2k/2k3: winegstreamer doesn't play already played MP3 files
-  41898  ToCA Race Driver 3 needs ntoskrnl.exe.RtlCopyMemory
-  41924  Shadow Warrior 2 crashes on startup
-  41950  ALDI Bestellsoftware 5.2.1.2111: crashes when trying to change the font
+  31222  Hitman: Blood Money crashes when changing screen resolution
+  31309  TIE Fighter: Collector's Edition Crash - 'Escape Menu' Freezes Application.
+  32632  Dragon Naturally Speaking 12 does not load with timeout error
+  34829  wintrust:softpub crashes on Windows 8
+  35495  sharing violation and prompt for copy /B file1+file2 file1
+  38357  Cannot install download-audiograbber.exe
+  39430  Ride : The motorcycle game does not start
+  40256  user32:input fails on non-qwerty keyboards
+  40344  shell32:assoc regression (privilege issue)
+  40386  wininet:url regression caused by new cross-compiler
+  40978  Wrong colors on i915 and similar GPUs in GTA Vice City
+  41083  Red Faction: Guerrilla fails to start with DX11 renderer
+  41133  R32/R16 typeless formats generate incomplete FBO errors when used as a render target (Gauntlet, WoW with D3D11 renderer)
+  41141  gcc6: d3drm build warnings
+  41252  Helldivers gives this error when trying to run on MacOS
+  41630  Rollercoaster Tycoon 3 Platinum crashes on exit
+  41715  winhttp:winhttp test regression (test_secure_connection)
+  41717  webservices:writer test regression in test_datetime
+  41949  Pasting into IDA Pro stops working on macOS
+  41956  Regression in wininet crashes skype
 
 ----------------------------------------------------------------
 
-Changes since 1.9.24:
+Changes since 2.0-rc1:
 
-Akihiro Sagawa (9):
-      quartz: Add tests for IBasicVideo.
-      strmbase: Fix copy-paste error where calculating video destination height.
-      strmbase: Shift source/destination rectangle when updating top or left property.
-      strmbase: Add validation checks when updating source rectangle.
-      strmbase: Add validation checks when updating destination rectangle.
-      po: Update Japanese translation.
-      winegstreamer: Fix reference leaks.
-      wineqtdecoder: Fix reference leaks.
-      quartz: Keep This/iface order in TRACEs for consistency.
+Alexandre Julliard (1):
+      ntdll: Check for invalid WINEARCH values.
 
-Alex Henrie (3):
-      winegstreamer: Avoid double initialization.
-      Revert "winegstreamer: Remove redundant null check before g_error_free.".
-      user32: Tell MENU_SuspendPopup which message to remove.
+Andrew Eikum (1):
+      msacm32: Fix copy-paste error.
 
-Alistair Leslie-Hughes (4):
-      d3d11: Check parameter in ID3D11Device CreateShaderResourceView.
-      d3d11: Check parameter in ID3D11Device CreateRenderTargetView.
-      d3d10_1: Check parameter in ID3D10Device1 CreateShaderResourceView1.
-      d3d10core: Check parameter in ID3D10Device CreateRenderTargetView.
+Andrey Gusev (1):
+      hlink: Add missing parameter to TRACE() message.
 
-Andrew Eikum (3):
-      user32: Support IDC_PEN.
-      imaadpcm32: Fix source offsets when converting stereo PCM to IMAADPCM.
-      msacm32: Support conversion from 24-bit PCM.
+Aric Stewart (1):
+      ime: Do not send WM_IME_ENDCOMPOSITION on CPS_COMPLETE if there is no composition.
 
-Andrew Wesie (6):
-      d3d11: Implement two-sided stencil testing.
-      d3d10core/tests: Add test for two sided stencil.
-      d3d11/tests: Add test for two sided stencil.
-      d3d11/tests: Add test for return in a conditional.
-      d3d10core/tests: Add test for return in a conditional.
-      d3d11/tests: Add test for primitive restart.
+Bruno Jesus (1):
+      xinput1_3/tests: Add interactive tests.
 
-Aric Stewart (6):
-      hidclass: All reports read or written to user space lead with a reportId.
-      winebus.sys: Handle older kernel headers lacking feature ioctls.
-      hidclass.sys: Some descriptor values should be unsigned.
-      hid: Initialize outgoing usages in HidP_GetUsages.
-      hid: Refine initialization of UsageLength in HidP_GetUsages.
-      loader: Add IOHID to critical device database.
+Fabian Maurer (2):
+      wininet: Changed usage of UrlEscapeW to fit winapi behavior.
+      shlwapi: Changed UrlEscapeW error paths and add tests.
 
-Brock York (1):
-      msctf: Remove incorrect dereference of double pointer.
+Hans Leidekker (1):
+      winhttp: Handle EINTR from connect and poll.
 
-Bruno Jesus (22):
-      msacm32/tests: Beginnings of a custom driver test.
-      ws2_32/tests: Add IDN resolution tests for GetAddrInfoW.
-      ws2_32: Add IDN resolution support to GetAddrInfoW.
-      ws2_32: Simplify IPv4 sprintf.
-      ws2_32: Cache the memory used for poll() calls.
-      msg711.acm: Remove dead code in G711_FormatSuggest.
-      msg711.acm: Remove an empty fixme.
-      winmm: Return meaningful value in WINMM_CreateIData.
-      iphlpapi: Ensure GetIpAddrTable returns loopback addresses in the end.
-      bcrypt/tests: Workaround RegGetValueW not being present in XP.
-      bcrypt/tests: Normalize all tests to use function pointers.
-      explorer: Ensure launchers_per_row is at least 1 as it is used in divisions.
-      xinput1_3/tests: Test the GUIDs returned from XInputGetDSoundAudioDeviceGuids.
-      xinput1_3/tests: Dump the gamepad values from XInputGetCapabilities.
-      xinput1_3/tests: Explain an important test and fix remaining style issues.
-      msvfw32: Remove duplicated debug.
-      ws2_32: Implement IP_DONTFRAGMENT in [set|get]sockopt.
-      xinput1_3/tests: Improve vibration tests.
-      xinput1_1: Prefer builtin DLL.
-      xinput1_2: Prefer builtin DLL.
-      xinput1_4: Prefer builtin DLL.
-      xinput9_1_0: Prefer builtin DLL.
+Hugh McMaster (3):
+      kernel32: Use Emacs keymap mode immediately after wineconsole configuration change.
+      kernel32: Check for a valid pointer before yanking the line.
+      appwiz.cpl: Remove list entries left over from an earlier uninstall.
 
-Carlos Rodriguez (1):
-      wined3d: Recognize Geforce GTX 1050.
+Jacek Caban (1):
+      wininet: Get rid of no longer needed INTERNET_INVALID_PORT_NUMBER in get_server.
 
-Daniel Lehman (4):
-      msvcrt: Add _lfind_s.
-      shlwapi: Remove dot segments for URLs starting with /.
-      wininet: Canonicalize URL in HttpOpenRequest.
-      gdi32: Trace more in CreateEnhMetaFileW.
+Józef Kucia (14):
+      wined3d: Add suport for 2D array texture UAVs.
+      d3d11/tests: Add test for 2D array texture UAVs.
+      wined3d: Use depth/stencil formats for typeless resources only when WINED3DUSAGE_DEPTHSTENCIL is set.
+      d3d11/tests: Add test for depth/stencil shader resource views.
+      wined3d: Recognize SM5 vCoverage input registers.
+      wined3d: Recognize SM4.1 oMask output register.
+      wined3d: Recognize SM5 atomic_imax opcode.
+      wined3d: Recognize SM5 atomic_imin opcode.
+      d3d10core/tests: Port test_primitive_restart() from d3d11.
+      d3d9/tests: Add test showing WM_SIZE is not sent during fullscreen mode change.
+      wined3d: Filter messages for fullscreen mode changes.
+      wined3d: Remove depth/stencil format flags from typeless formats.
+      d3d11/tests: Use single typeless RT with multiple RTVs in test_uav_load().
+      d3d11/tests: Improve trace() message about compute shader support via SM4.
 
-Detlef Riekenberg (2):
-      winspool: Use all Fields from DRIVER_INFO_8A when we add a Printer Driver.
-      localspl: Accept valid environments in AddMonitor.
+Ken Thomases (1):
+      winemac: Update the clipboard when the process activates.
 
-Donat Enikeev (1):
-      crypt32/tests: Certificates update to fix chain failures on Fedora 25.
+Lauri Kenttä (2):
+      kernel32/tests: Test FindFirstFile with wildcards.
+      kernel32/tests: Show flags as text in test results.
 
-Flávio J. Saraiva (1):
-      cmd/tests: Add tests for chaining rules of pipe and else.
+Michael Müller (1):
+      wininet: Handle INTERNET_INVALID_PORT_NUMBER in HttpOpenRequest.
 
-Hans Leidekker (14):
-      msi: Fix MSIREG_OpenUserComponentsKey and MSIREG_DeleteUpgradeCodesKey for Wow64.
-      winhttp/tests: Properly restore proxy settings on 64-bit.
-      rpcrt4/tests: Register an exception with the firewall to avoid a dialog.
-      bcrypt/tests: Add AES provider tests.
-      bcrypt/tests: Add BCryptGenerateSymmetricKey tests.
-      bcrypt/tests: Add BcryptEncrypt/Decrypt tests.
-      setupapi: Add a stub implementation of SetupDiRemoveDeviceInterface.
-      setupapi/tests: Clean up properly after each device test.
-      rpcrt4/tests: Merge rpc_protseq.c into rpc.c.
-      rpcrt4/tests: Also register a firewall exception for the rpc test.
-      dpnet/tests: Merge peer.c into client.c.
-      dpnet/tests: Skip tests if dpnet is a stub dll.
-      dpnet/tests: Register a firewall exception for the client test.
-      dpnet/tests: Register firewall exceptions for the server test.
+Mingcong Bai (1):
+      po: Update Simplified Chinese translation.
 
-Henri Verbeet (8):
-      d2d1: Properly set an error state when adding the vertex fails in d2d_geometry_sink_BeginFigure().
-      d2d1/tests: Make the window client rect match the DXGI swapchain dimensions.
-      d2d1/tests: Introduce a helper function to add lines to a geometry sink.
-      d2d1/tests: Introduce a helper function to add quadratic bezier curves to a geometry sink.
-      d2d1: Properly test which side of a bezier curve is the inside.
-      d2d1: Introduce a separate structure for fill specific geometry fields.
-      d2d1: Store separate bezier vertices.
-      d2d1: Use d2d_point_set() in d2d_rectangle_geometry_init().
-
-Hugh McMaster (10):
-      regedit/tests: Fix line concatenation test.
-      regedit/tests: Test whether comments ending in a backslash affect the next line.
-      reg/tests: Fix line concatenation tests.
-      reg/tests: Test whether comment lines ending in a backslash affect the next line.
-      regedit/tests: Move existing comment tests to a separate function.
-      regedit/tests: Add more tests for parsing comments.
-      reg/tests: Add verify_reg_nonexist helper function.
-      reg/tests: Add tests for parsing comments.
-      reg/tests: Add Unicode tests for comment parsing.
-      reg/tests: Fix copy/paste errors in some tests.
-
-Huw D. M. Davies (14):
-      include: Add new members to WINTRUST_DATA and CRYPT_PROVIDER_DATA.
-      wintrust/tests: Remove a test that crashes on Windows 8 amd 10.
-      wintrust/tests: Initialize the pSigState member to prevent Windows 8 and 10 from crashing.
-      msi: Correctly size packagecode as it's an unsquashed guid.
-      shell32/tests: Add some uuids present on Windows 10.
-      shell32/tests: Updated Windows 7 has a new IShellDispatch6 in its typelib.
-      user32/tests: FlashWindow(Ex) sets ERROR_INVALID_WINDOW_HANDLE on updated Windows 7.
-      include: Add the lineInitializeEx() option constants.
-      comctl32/tests: Use more than one item for the custom draw tests.
-      comctl32: Set the text and bkgnd colours to the default before the item pre-paint notification.
-      comctl32: Recompute the text width if necessary.
-      kernel32: Implement Process thread attribute lists.
-      user32/tests: Add a test to show that released cache DCs are disabled.
-      windowscodecs: Fix typo in 2 bpp conversion.
-
-Jacek Caban (11):
-      rpcrt4: Store security package name in rpc_server_registered_auth_info.
-      rpcrt4: Acquire new credential handle for each connection.
-      server: Store async list in process object and use that to find async in cansel_async request.
-      server: Get rid of no loner used cancel_async from fd_ops.
-      server: Cancel process asyncs on process termination.
-      mshtml: Silence a noisy FIXME.
-      server: Signal pipe server fd in create_pipe_server.
-      server: Introduced iosb struct for server-side IO_STATUS_BLOCK representation and use it in irp_call.
-      server: Store iosb in async object.
-      server: Use async object to transfer IRP result to client.
-      wscript/tests: Use case insensitive comparition for paths.
-
-Józef Kucia (56):
-      d3d11/tests: Add test for shader input register limits.
-      d3d10core/tests: Add test for shader input register limits.
-      d3d11: Fix d3d11_immediate_context_OMSetRenderTargetsAndUnorderedAccessViews().
-      wined3d: Unbind image textures in context_bind_unordered_access_views().
-      wined3d: Implement wined3d_unordered_access_view_invalidate_location() for 3D textures.
-      wined3d: Add ARB_shader_image_size extension.
-      wined3d: Extend resinfo instruction to support UAVs.
-      wined3d: Implement SM5 ld_uav_typed instruction.
-      d3d11/tests: Add test for typed UAV loads.
-      wined3d: Recognize SM5 sync opcode.
-      wined3d: Recognize SM5 dcl_uav_raw opcode.
-      wined3d: Recognize SM5 dcl_uav_structured opcode.
-      wined3d: Use signed integers for addressing in ld_structured opcode.
-      include: Add missing D3D11_BUFFER_UAV_FLAG declaration.
-      wined3d: Record sampler usage for sample_c instruction.
-      wined3d: Add ARB_stencil_texturing extension.
-      wined3d: Implement stencil shader resource views.
-      wined3d: Add support for WINED3DFMT_D32_FLOAT_S8X24_UINT format.
-      wined3d: Fix depth/stencil shader resource views.
-      wined3d: Introduce get_format_internal() helper function.
-      d3d11/tests: Add more tests for bind flags.
-      wined3d: Set default sampler minification filter to GL_NEAREST.
-      wined3d: Recognize SM5 atomic_xor opcode.
-      wined3d: Recognize SM5 imm_atomic_xor opcode.
-      wined3d: Recognize SM5 atomic_or opcode.
-      wined3d: Recognize SM5 atomic_and opcode.
-      wined3d: Recognize SM5 imm_atomic_or opcode.
-      wined3d: Recognize SM5 imm_atomic_and opcode.
-      wined3d: Recognize SM5 imm_atomic_exch opcode.
-      wined3d: Recognize SM5 imm_atomic_cmp_exch opcode.
-      wined3d: Recognize SM5 atomic_cmp_store opcode.
-      wined3d: Recognize SM5 atomic_umax opcode.
-      wined3d: Recognize SM5 atomic_umin opcode.
-      wined3d: Recognize SM5 imm_atomic_umax opcode.
-      wined3d: Recognize SM5 imm_atomic_umin opcode.
-      wined3d: Use single structure for view description.
-      wined3d: Implement return instruction.
-      wined3d: Do not generate shader epilogue in subroutines.
-      d3d8/tests: Add test showing that primitive restart must be disabled.
-      d3d9/tests: Add test showing that primitive restart must be disabled.
-      wined3d: Implement primitive restart.
-      wined3d: Recognize dynamic linking shader instructions.
-      wined3d: Use opaque data type for stream output registers.
-      wined3d: Rename WINED3D_RS_CCW_STENCIL* render states to WINED3D_RS_BACK_STENCIL*.
-      d3d11/tests: Print expected result in case of failures in check_texture_sub_resource_*() functions.
-      d3d10core/tests: Print expected result in case of failures in check_texture_sub_resource_*() functions.
-      wined3d: Allow creating raw unordered access views.
-      wined3d: Allow creating raw shader resource views.
-      wined3d: Generate declaration for typed buffer UAVs.
-      d3d11/tests: Add test for SM5 bufinfo instruction.
-      d3d10core/tests: Add more tests for bind flags.
-      wined3d: Extract create_texture_view() function from shader resource views.
-      d3d11/tests: Add test showing that depth/stencil UAVs are not allowed.
-      wined3d: Extract get_texture_view_target() from wined3d_shader_resource_view_init().
-      wined3d: Do not try to create texture views for depth slices.
-      wined3d: Create texture views for unordered access views.
-
-Ken Thomases (3):
-      gdi32: Get the font URL directly from the descriptor on macOS 10.6 and later.
-      winemac: Set the parent of Cocoa views for child windows when they are created.
-      winemac: Keep floating windows in a higher window level than non-floating full-screen windows.
-
-Lauri Kenttä (8):
-      shell32: Cosmetic changes to file type names.
-      user32: Fix caret disappearing after scrolling.
-      cmd/tests: Treat compressed file as broken in %~ai test.
-      winemac.drv: Compare handle to INVALID_HANDLE_VALUE, not NULL.
-      cmd: Compare handles to INVALID_HANDLE_VALUE, not NULL.
-      cmd: Fix copying when the dest is one of the sources.
-      kernel32/tests: Mask out FILE_ATTRIBUTE_COMPRESSED to prevent failures.
-      user32/tests: Add tests for LockWindowUpdate.
-
-Michael Müller (2):
-      shell32: Add IDragSourceHelper stub.
-      ntdll: Move EventSetInformation from advapi32 to ntdll.
-
-Michael Stefaniuc (2):
-      comdlg32: Avoid some superfluous pointer casts.
-      dsound: Avoid casts from COM object to interface.
-
-Nikolay Sivov (47):
-      winecfg: Keep pending settings in static list.
-      msctf: Use interface pointer instead of object pointer.
-      shell32: Remove a couple more casts of object pointers.
-      shell32: Get rid of some casts by using IShellFolder2 internally.
-      shell32: Limit displayed volume label length to 32.
-      wincodecs: Trigger conversion to target format in WriteSource().
-      wincodecs: Implement FilterOption property for PNG encoder.
-      wincodecs: Simplify property name allocation.
-      ntoskrnl: Added RtlCopyMemory() export.
-      shell32: Added stub implementation of ICustomDestinationList.
-      ntdll: Fix RtlAssert() prototype.
-      wbemdisp: Return interface pointers from QI, not object pointers.
-      gdiplus/tests: Some tests for GdipGetPenCompoundCount().
-      gdiplus/tests: A couple more GdipSetPenCompoundArray() tests.
-      shell32: Respect SFGAO_NONENUMERATED attribute for registered shell extensions.
-      include: Update various shell enums and flags.
-      shell32: Use standard list for IEnumIDList implementation.
-      shell32: Simplify drag drop helper object creation.
-      dwrite: Skip entries prefixed with '@' in system font file enumerator.
-      dwrite: Return zeroed fsCsb for OS/2 table of version 0.
-      dwrite: Fix lfItalic flag as returned by ConvertFontToLOGFONT().
-      dwrite: Improve lfWeight values returned by ConvertFontToLOGFONT().
-      dwrite/tests: Use defined symbols when testing LOGFONT fields values.
-      dwrite: Improve face name returned by ConvertFontToLOGFONT().
-      advapi32: Handle empty kSecCreationDateItemAttr attribute.
-      shell32: Move retrieving folder path logic to SHGetKnownFolderPath().
-      scrrun: Improved tracing of IDictionary methods.
-      scrrun: Added IProvideClassInfo support for dictionary.
-      scrrun: Added IProvideClassInfo support for filesystem objects.
-      dwrite: Use system default locale when filling LOGFONT.lfFaceName.
-      dwrite: Improve ConvertFontFaceToLOGFONT using same logic IDWriteFont uses.
-      comctl32/tests: Increase fixed buffer size to make test string fit.
-      ws2_32: Fix build failure on Mac.
-      xmllite: Improve writer methods tracing.
-      xmllite: Store empty element fields separately.
-      xmllite: Store prefix for elements.
-      xmllite: Keep a list of namespace definitions.
-      xmllite: Keep namespace list updated when going through document tree.
-      xmllite: Use a helper to move to first attribute to avoid extra traces.
-      xmllite: Update prefix when moving to first attribute.
-      xmllite: Free prefix and local name too when clearing element list.
-      xmllite: Implement GetNamespaceUri().
-      xmllite: Improve GetValue() for namespace definition nodes.
-      xmllite: Fix setting local name when parsing QName.
-      xmllite: Allow prefixed element names.
-      xmllite/tests: Some tests for returned namespace prefixes and uris.
-      xmllite: Add maintainer entry.
-
-VRan Liu (1):
-      shell32/tests: Simple test for KF_FLAG_DEFAULT_PATH.
-
-Vincent Povirk (3):
-      mscoree: Update Wine Mono to 4.6.4.
-      gdiplus: Don't include rotated fonts in the installed font collection.
-      gdiplus: Create the FontFamily before checking for duplicates.
+Nikolay Sivov (9):
+      scrrun/tests: Test to query for IUnknown from IProvideClassInfo.
+      dwrite: Fix a typo in assertion condition (Coverity).
+      msi: Fix handling of NULL buffer in MsiGetProductPropertyW() (Coverity).
+      comctl32/tests: Trackbar test to show that thumb is updated on TBM_SETTICFREQ.
+      comctl32/trackbar: Update thumb unconditionally on TBM_SETTICFREQ.
+      shell32: Don't access uninitialized buffer (Coverity).
+      dwrite/tests: Run GetPanose() tests on all system fonts.
+      secur32: Trace flags in hex in InitializeSecurityContextW().
+      scrrun: Remove unreachable code (Coverity).
 
 --
 Alexandre Julliard
