@@ -217,6 +217,56 @@ static void test_scale(void)
     GdipDeletePath(path);
 }
 
+static void test_create_adjustable_cap(void)
+{
+    GpAdjustableArrowCap *cap;
+    REAL inset, scale;
+    GpLineJoin join;
+    GpStatus stat;
+    GpLineCap base;
+
+    stat = GdipCreateAdjustableArrowCap(10.0, 10.0, TRUE, NULL);
+todo_wine
+    ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
+
+    stat = GdipCreateAdjustableArrowCap(17.0, 15.0, TRUE, &cap);
+todo_wine
+    ok(stat == Ok, "Failed to create adjustable cap, %d\n", stat);
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetAdjustableArrowCapMiddleInset(cap, NULL);
+    ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
+
+    stat = GdipGetAdjustableArrowCapMiddleInset(cap, &inset);
+    ok(stat == Ok, "Unexpected return code, %d\n", stat);
+    ok(inset == 0.0f, "Unexpected middle inset %f\n", inset);
+
+    stat = GdipGetCustomLineCapBaseCap((GpCustomLineCap*)cap, &base);
+    ok(stat == Ok, "Unexpected return code, %d\n", stat);
+    ok(base == LineCapTriangle, "Unexpected base cap %d\n", base);
+
+    stat = GdipSetCustomLineCapBaseCap((GpCustomLineCap*)cap, LineCapSquare);
+    ok(stat == Ok, "Unexpected return code, %d\n", stat);
+
+    stat = GdipGetCustomLineCapBaseCap((GpCustomLineCap*)cap, &base);
+    ok(stat == Ok, "Unexpected return code, %d\n", stat);
+    ok(base == LineCapSquare, "Unexpected base cap %d\n", base);
+
+    stat = GdipGetCustomLineCapBaseInset((GpCustomLineCap*)cap, &inset);
+    ok(stat == Ok, "Unexpected return code, %d\n", stat);
+
+    stat = GdipGetCustomLineCapWidthScale((GpCustomLineCap*)cap, &scale);
+    ok(stat == Ok, "Unexpected return code, %d\n", stat);
+    ok(scale == 1.0f, "Unexpected width scale %f\n", scale);
+
+    stat = GdipGetCustomLineCapStrokeJoin((GpCustomLineCap*)cap, &join);
+    ok(stat == Ok, "Unexpected return code, %d\n", stat);
+    ok(join == LineJoinMiter, "Unexpected stroke join %d\n", join);
+
+    GdipDeleteCustomLineCap((GpCustomLineCap*)cap);
+}
+
 START_TEST(customlinecap)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -233,6 +283,7 @@ START_TEST(customlinecap)
     test_linejoin();
     test_inset();
     test_scale();
+    test_create_adjustable_cap();
 
     GdiplusShutdown(gdiplusToken);
 }
