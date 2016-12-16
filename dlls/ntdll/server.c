@@ -1375,7 +1375,15 @@ void server_init_process(void)
             fatal_perror( "Bad server socket %d", fd_socket );
         unsetenv( "WINESERVERSOCKET" );
     }
-    else fd_socket = server_connect();
+    else
+    {
+        const char *arch = getenv( "WINEARCH" );
+
+        if (arch && strcmp( arch, "win32" ) && strcmp( arch, "win64" ))
+            fatal_error( "WINEARCH set to invalid value '%s', it must be either win32 or win64.\n", arch );
+
+        fd_socket = server_connect();
+    }
 
     /* setup the signal mask */
     sigemptyset( &server_block_set );
