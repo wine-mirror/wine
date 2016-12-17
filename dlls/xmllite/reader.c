@@ -547,8 +547,10 @@ static HRESULT reader_push_element(xmlreader *reader, strval *prefix, strval *lo
     }
 
     element = reader_alloc_zero(reader, sizeof(*element));
-    if (!element)
+    if (!element) {
+        hr = E_OUTOFMEMORY;
         goto failed;
+    }
 
     if ((hr = reader_strvaldup(reader, prefix, &element->prefix)) != S_OK ||
             (hr = reader_strvaldup(reader, localname, &element->localname)) != S_OK ||
