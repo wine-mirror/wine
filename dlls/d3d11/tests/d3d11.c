@@ -962,9 +962,8 @@ static ID3D11Device *create_device(const struct device_desc *desc)
     return NULL;
 }
 
-static BOOL is_warp_device(ID3D11Device *device)
+static void get_device_adapter_desc(ID3D11Device *device, DXGI_ADAPTER_DESC *adapter_desc)
 {
-    DXGI_ADAPTER_DESC adapter_desc;
     IDXGIDevice *dxgi_device;
     IDXGIAdapter *adapter;
     HRESULT hr;
@@ -974,13 +973,29 @@ static BOOL is_warp_device(ID3D11Device *device)
     hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
     ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
     IDXGIDevice_Release(dxgi_device);
-    hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+    hr = IDXGIAdapter_GetDesc(adapter, adapter_desc);
     ok(SUCCEEDED(hr), "Failed to get adapter desc, hr %#x.\n", hr);
     IDXGIAdapter_Release(adapter);
+}
 
+static BOOL is_warp_device(ID3D11Device *device)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+    get_device_adapter_desc(device, &adapter_desc);
     return !adapter_desc.SubSysId && !adapter_desc.Revision
             && ((!adapter_desc.VendorId && !adapter_desc.DeviceId)
             || (adapter_desc.VendorId == 0x1414 && adapter_desc.DeviceId == 0x008c));
+}
+
+static BOOL is_amd_device(ID3D11Device *device)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    get_device_adapter_desc(device, &adapter_desc);
+    return adapter_desc.VendorId == 0x1002;
 }
 
 static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, const struct swapchain_desc *swapchain_desc)
@@ -6441,6 +6456,14 @@ static void test_depth_stencil_sampling(void)
 
     device = test_context.device;
     context = test_context.immediate_context;
+
+    if (is_amd_device(device))
+    {
+        /* Reads from depth/stencil shader resource views return stale values on some AMD drivers. */
+        win_skip("Some AMD drivers have a bug affecting the test.\n");
+        release_test_context(&test_context);
+        return;
+    }
 
     sampler_desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
