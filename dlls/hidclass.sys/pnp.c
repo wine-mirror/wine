@@ -255,8 +255,9 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
         }
         case IRP_MN_REMOVE_DEVICE:
         {
+            rc = minidriver->PNPDispatch(device, irp);
             HID_DeleteDevice(&minidriver->minidriver, device);
-            return minidriver->PNPDispatch(device, irp);
+            return rc;
         }
         default:
         {
