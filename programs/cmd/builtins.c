@@ -3689,7 +3689,7 @@ static WCHAR WCMD_popoperator(OPSTACK **opstack) {
  * Returns non-zero on error.
  */
 static int WCMD_reduce(OPSTACK **opstack, VARSTACK **varstack) {
-  OPSTACK *thisop;
+  WCHAR thisop;
   int var1,var2;
   int rc = 0;
 
@@ -3699,13 +3699,12 @@ static int WCMD_reduce(OPSTACK **opstack, VARSTACK **varstack) {
   }
 
   /* Remove the top operator */
-  thisop = *opstack;
-  *opstack = (*opstack)->next;
-  WINE_TRACE("Reducing the stacks - processing operator %c\n", thisop->op);
+  thisop = WCMD_popoperator(opstack);
+  WINE_TRACE("Reducing the stacks - processing operator %c\n", thisop);
 
   /* One variable operators */
   var1 = WCMD_popnumber(varstack);
-  switch (thisop->op) {
+  switch (thisop) {
   case '!': WCMD_pushnumber(NULL, !var1, varstack);
             break;
   case '~': WCMD_pushnumber(NULL, ~var1, varstack);
@@ -3721,7 +3720,7 @@ static int WCMD_reduce(OPSTACK **opstack, VARSTACK **varstack) {
     WINE_TRACE("No operands left for the reduce?\n");
     return WCMD_NOOPERAND;
   }
-  switch (thisop->op) {
+  switch (thisop) {
   case '!':
   case '~':
   case OP_POSITIVE:
@@ -3792,11 +3791,11 @@ static int WCMD_reduce(OPSTACK **opstack, VARSTACK **varstack) {
           /* Make the operand stack grow by pushing the assign operator plus the
              operator to perform                                                 */
           while (calcassignments[i].op != ' ' &&
-                 calcassignments[i].calculatedop != thisop->op) {
+                 calcassignments[i].calculatedop != thisop) {
             i++;
           }
           if (calcassignments[i].calculatedop == ' ') {
-            WINE_ERR("Unexpected operator %c\n", thisop->op);
+            WINE_ERR("Unexpected operator %c\n", thisop);
             return WCMD_NOOPERATOR;
           }
           WCMD_pushoperator('=', WCMD_getprecedence('='), opstack);
@@ -3820,10 +3819,9 @@ static int WCMD_reduce(OPSTACK **opstack, VARSTACK **varstack) {
           break;
         }
 
-  default:  WINE_ERR("Unrecognized operator %c\n", thisop->op);
+  default:  WINE_ERR("Unrecognized operator %c\n", thisop);
   }
 
-  heap_free(thisop);
   return rc;
 }
 
