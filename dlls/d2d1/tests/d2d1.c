@@ -1145,7 +1145,7 @@ static void test_bitmap_brush(void)
     ID2D1RenderTarget_SetTransform(rt, &matrix);
     set_matrix_identity(&matrix);
     translate_matrix(&matrix, -80.0f, -60.0f);
-    scale_matrix(&matrix, 40.0f, 30.0f);
+    scale_matrix(&matrix, 64.0f, 32.0f);
     ID2D1BitmapBrush_SetTransform(brush, &matrix);
     ID2D1BitmapBrush_SetOpacity(brush, 0.75f);
     set_rect(&dst_rect, -80.0f, -60.0f, 80.0f, 60.0f);
@@ -1167,7 +1167,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "393636185359a550d459e1e5f0e25411814f724c");
+    match = compare_surface(surface, "9437f4447d98feaad41a1c4202ee90aadc718ee6");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
