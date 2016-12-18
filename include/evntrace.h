@@ -236,6 +236,7 @@ typedef struct _EVENT_TRACE_PROPERTIES
     ULONG MaximumFileSize;
     ULONG LogFileMode;
     ULONG FlushTimer;
+    ULONG EnableFlags;
     LONG AgeLimit;
     ULONG NumberOfBuffers;
     ULONG FreeBuffers;
