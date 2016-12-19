@@ -758,7 +758,7 @@ static const zone_domain_mapping zone_domain_mappings[] = {
     {"wine.testing",NULL,"*",URLZONE_CUSTOM2}
 };
 
-static void register_zone_domains(void)
+static BOOL register_zone_domains(void)
 {
     HKEY domains;
     DWORD res, i;
@@ -771,6 +771,12 @@ static void register_zone_domains(void)
         DWORD zone = URLZONE_CUSTOM;
 
         res = RegCreateKeyA(domains, "local.machine", &domain);
+        if (res == ERROR_ACCESS_DENIED)
+        {
+            skip("need admin rights\n");
+            RegCloseKey(domains);
+            return FALSE;
+        }
         ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
 
         res = RegSetValueExA(domain, "http", 0, REG_DWORD, (BYTE*)&zone, sizeof(DWORD));
@@ -810,6 +816,7 @@ static void register_zone_domains(void)
     }
 
     RegCloseKey(domains);
+    return TRUE;
 }
 
 static void unregister_zone_domains(void)
@@ -964,7 +971,7 @@ static void test_zone_domains(void)
 
     test_zone_domain_cache();
 
-    register_zone_domains();
+    if (!register_zone_domains()) return;
     run_child_process();
     unregister_zone_domains();
 }
