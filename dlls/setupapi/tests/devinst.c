@@ -1349,7 +1349,16 @@ static void testSetupDiGetINFClassA(void)
 
 START_TEST(devinst)
 {
+    HKEY hkey;
+
     init_function_pointers();
+
+    if ((hkey = SetupDiOpenClassRegKey(NULL, KEY_ALL_ACCESS)) == INVALID_HANDLE_VALUE)
+    {
+        skip("needs admin rights\n");
+        return;
+    }
+    RegCloseKey(hkey);
 
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);
