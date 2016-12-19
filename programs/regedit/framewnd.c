@@ -730,6 +730,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case ID_EDIT_MODIFY:
+    case ID_EDIT_MODIFY_BIN:
     {
         LPCWSTR valueName = GetValueName(g_pChildWnd->hListWnd);
         WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
