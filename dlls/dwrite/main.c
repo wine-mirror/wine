@@ -1536,7 +1536,10 @@ static const struct IDWriteFactory4Vtbl shareddwritefactoryvtbl = {
     dwritefactory3_CreateFontSetBuilder,
     dwritefactory3_CreateFontCollectionFromFontSet,
     dwritefactory3_GetSystemFontCollection,
-    dwritefactory3_GetFontDownloadQueue
+    dwritefactory3_GetFontDownloadQueue,
+    dwritefactory4_TranslateColorGlyphRun,
+    dwritefactory4_ComputeGlyphOrigins_,
+    dwritefactory4_ComputeGlyphOrigins
 };
 
 static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYPE type)
