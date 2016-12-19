@@ -1020,8 +1020,11 @@ static void test_cdf_parsing(void)
     catmember = NULL;
     catmembertag = NULL;
     while ((catmembertag = pCryptCATCDFEnumMembersByCDFTagEx(catcdf, catmembertag, cdf_callback, &catmember, FALSE, NULL))) ;
-    todo_wine
-    CHECK_EXPECT(CRYPTCAT_E_AREA_MEMBER, CRYPTCAT_E_CDF_MEMBER_FILE_PATH);
+    ok(error_area == 0xffffffff || broken(error_area == CRYPTCAT_E_AREA_MEMBER) /* < win81 */,
+       "Expected area 0xffffffff, got %08x\n", error_area);
+    ok(local_error == 0xffffffff || broken(local_error == CRYPTCAT_E_CDF_MEMBER_FILE_PATH) /* < win81 */,
+       "Expected error 0xffffffff, got %08x\n", local_error);
+
     pCryptCATCDFClose(catcdf);
     DeleteFileA(cdffileA);
     todo_wine
