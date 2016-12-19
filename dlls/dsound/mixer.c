@@ -428,6 +428,8 @@ static void DSOUND_MixToTemporary(IDirectSoundBufferImpl *dsb, DWORD frames)
 		else
 			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, size_bytes);
 	}
+	if(dsb->put_aux == putieee32_sum)
+		memset(dsb->device->tmp_buffer, 0, dsb->device->tmp_buffer_len);
 
 	cp_fields(dsb, frames, &dsb->freqAccNum);
 
@@ -506,9 +508,6 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, 
 
 	/* Resample buffer to temporary buffer specifically allocated for this purpose, if needed */
 	oldpos = dsb->sec_mixpos;
-
-	if(dsb->put_aux == putieee32_sum)
-		memset(dsb->device->tmp_buffer, 0, dsb->device->tmp_buffer_len);
 	DSOUND_MixToTemporary(dsb, frames);
 	ibuf = dsb->device->tmp_buffer;
 
