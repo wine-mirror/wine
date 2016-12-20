@@ -32,6 +32,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 
 #include "wine/test.h"
 
@@ -1239,10 +1240,42 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(hhook, nCode, wParam, lParam);
 }
 
+static const WCHAR winlogonW[] =
+    {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+     'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+     'W','i','n','l','o','g','o','n',0};
+static const WCHAR autorestartshellW[] =
+    {'A','u','t','o','R','e','s','t','a','r','t','S','h','e','l','l',0};
+
+static DWORD get_autorestart(void)
+{
+    DWORD type, val, len = sizeof(val);
+    REGSAM access = KEY_ALL_ACCESS|KEY_WOW64_64KEY;
+    HKEY hkey;
+    LONG res;
+
+    if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, winlogonW, 0, 0, 0, access, NULL, &hkey, 0 )) return 0;
+    res = RegQueryValueExW( hkey, autorestartshellW, NULL, &type, (BYTE *)&val, &len );
+    RegCloseKey( hkey );
+    return (!res && type == REG_DWORD) ? val : 0;
+}
+
+static BOOL set_autorestart( DWORD val )
+{
+    REGSAM access = KEY_ALL_ACCESS|KEY_WOW64_64KEY;
+    HKEY hkey;
+    LONG res;
+
+    if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, winlogonW, 0, 0, 0, access, NULL, &hkey, 0 )) return FALSE;
+    res = RegSetValueExW( hkey, autorestartshellW, 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+    RegCloseKey( hkey );
+    return !res;
+}
+
 static void test_shell_window(void)
 {
     BOOL ret;
-    DWORD error;
+    DWORD error, restart = get_autorestart();
     HMODULE hinst, hUser32;
     BOOL (WINAPI*SetShellWindow)(HWND);
     HWND hwnd1, hwnd2, hwnd3, hwnd4, hwnd5;
@@ -1251,6 +1284,12 @@ static void test_shell_window(void)
     if (is_win9x)
     {
         win_skip("Skipping shell window test on Win9x\n");
+        return;
+    }
+
+    if (restart && !set_autorestart(0))
+    {
+        skip("cannot disable automatic shell restart (needs admin rights\n");
         return;
     }
 
@@ -1271,6 +1310,7 @@ static void test_shell_window(void)
         if (!hProcess)
         {
             skip( "cannot get access to shell process\n" );
+            set_autorestart(restart);
             return;
         }
 
@@ -1367,6 +1407,7 @@ static void test_shell_window(void)
     DestroyWindow(hwnd3);
     DestroyWindow(hwnd4);
     DestroyWindow(hwnd5);
+    set_autorestart(restart);
 }
 
 /************** MDI test ****************/
