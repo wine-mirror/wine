@@ -400,6 +400,11 @@ static void test_persist_save_data(const char *testname, IHlink *lnk,
         same = TRUE;
         for (i = 0; i < min(data_size, expected_data_alt_size); i++)
         {
+            if ((expected_data_alt == expected_hlink_data_ie7  && i == 89)  /* Win10 */ ||
+                (expected_data_alt == expected_hlink_data2_ie7 && i == 109) /* Win10 */ ||
+                (expected_data_alt == expected_hlink_data3_ie7 && i == 109) /* Win10 */ ||
+                (expected_data_alt == expected_hlink_data5_ie7 && i == 107) /* Win10 */)
+                continue;
             if ((expected_data_alt[i] != data[i]) &&
                 (((expected_data_alt != expected_hlink_data2) &&
                   (expected_data_alt != expected_hlink_data3)) ||
