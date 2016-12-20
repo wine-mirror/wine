@@ -427,6 +427,22 @@ static void test_comments(void)
     dword = 0x00000004;
     todo_wine verify_reg(hkey, "Wine24", REG_DWORD, &dword, sizeof(dword), 0);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line1\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,\\;comment\n"
+                    "  63,61,74,\\;comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg(hkey, "Multi-Line1", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line2\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,\\;comment\n"
+                    "  63,61,74,;comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg(hkey, "Multi-Line2", REG_MULTI_SZ, "Line concat", 12, 0);
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
