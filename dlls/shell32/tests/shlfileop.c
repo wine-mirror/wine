@@ -820,7 +820,7 @@ static void test_rename(void)
        retval == DE_FILEDESTISFLD || /* Vista, running from c: */
        broken(retval == DE_OPCANCELLED) || /* Win9x */
        broken(retval == 65652), /* NT4 */
-       "Expected ERROR_CANCELLED or DE_DIFFDIR\n");
+       "Expected ERROR_CANCELLED or DE_DIFFDIR, got %u\n", retval);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* pFrom is empty */
@@ -2517,6 +2517,11 @@ static void test_unicode(void)
         skip("Unicode tests skipped on non-unicode system\n");
         return;
     }
+    if (GetLastError()==ERROR_ACCESS_DENIED)
+    {
+        skip("test needs admin rights\n");
+        return;
+    }
     CloseHandle(file);
 
     /* Try to delete a file with unicode filename */
@@ -2575,6 +2580,7 @@ static void test_unicode(void)
     ok(GetLastError() == ERROR_SUCCESS ||
        broken(GetLastError() == ERROR_INVALID_HANDLE), /* WinXp, win2k3 */
        "Expected ERROR_SUCCESS, got %d\n", GetLastError());
+    DeleteFileW(UNICODE_PATH_TO);
 
     /* Check last error after a failed file operation. */
     DeleteFileW(UNICODE_PATH);
