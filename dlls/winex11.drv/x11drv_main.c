@@ -196,8 +196,11 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
  */
 static inline BOOL ignore_error( Display *display, XErrorEvent *event )
 {
-    if ((event->request_code == X_SetInputFocus || event->request_code == X_ChangeWindowAttributes) &&
-        (event->error_code == BadMatch || event->error_code == BadWindow)) return TRUE;
+    if ((event->request_code == X_SetInputFocus ||
+         event->request_code == X_ChangeWindowAttributes ||
+         event->request_code == X_SendEvent) &&
+        (event->error_code == BadMatch ||
+         event->error_code == BadWindow)) return TRUE;
 
     /* the clipboard display interacts with external windows, ignore all errors */
     if (display == clipboard_display) return TRUE;
