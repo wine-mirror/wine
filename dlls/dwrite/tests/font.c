@@ -1725,16 +1725,10 @@ static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_MET
         metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
     }
 
-    if (metrics->strikethroughThickness || metrics->underlineThickness) {
-        if (!metrics->strikethroughThickness)
-            metrics->strikethroughThickness = metrics->underlineThickness;
-        if (!metrics->underlineThickness)
-            metrics->underlineThickness = metrics->strikethroughThickness;
-    }
-    else {
-        metrics->strikethroughThickness = metrics->designUnitsPerEm / 14;
+    if (metrics->underlineThickness == 0)
         metrics->underlineThickness = metrics->designUnitsPerEm / 14;
-    }
+    if (metrics->strikethroughThickness == 0)
+        metrics->strikethroughThickness = metrics->underlineThickness;
 
     if (tt_os2)
         IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
