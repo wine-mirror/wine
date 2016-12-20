@@ -817,6 +817,7 @@ static void test_rename(void)
     retval = SHFileOperationA(&shfo);
     ok(retval == ERROR_CANCELLED ||
        retval == DE_DIFFDIR || /* Vista */
+       retval == DE_FILEDESTISFLD || /* Vista, running from c: */
        broken(retval == DE_OPCANCELLED) || /* Win9x */
        broken(retval == 65652), /* NT4 */
        "Expected ERROR_CANCELLED or DE_DIFFDIR\n");
