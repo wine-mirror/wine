@@ -198,7 +198,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
 	GUID const * riid;
 	LPITEMIDLIST	pSimplePidl = ILFindLastID(This->pidl);
 
-	TRACE("(%p) (flags=%u, %s, %u, %p, %p)\n", This, uFlags, debugstr_w(szIconFile),
+	TRACE("(%p) (flags=%u, %p, %u, %p, %p)\n", This, uFlags, szIconFile,
                 cchMax, piIndex, pwFlags);
 
 	if (pwFlags)
