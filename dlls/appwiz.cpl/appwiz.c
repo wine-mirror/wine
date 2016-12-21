@@ -152,7 +152,8 @@ static void FreeAppInfo(APPINFO *info)
 static BOOL ReadApplicationsFromRegistry(HKEY root)
 {
     HKEY hkeyApp;
-    int i, id = 0;
+    int i;
+    static int id = 0;
     DWORD sizeOfSubKeyName, displen, uninstlen;
     DWORD dwNoModify, dwType, value, size;
     WCHAR subKeyName[256];
