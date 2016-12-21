@@ -323,7 +323,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(IExtractIconW * iface, UIN
 
 		if (SUCCEEDED(hr))
 		{
-		  hr = IShellLinkW_GetIconLocation(psl, szIconFile, MAX_PATH, piIndex);
+		  hr = IShellLinkW_GetIconLocation(psl, szIconFile, cchMax, piIndex);
 
 		  if (SUCCEEDED(hr) && *szIconFile)
 		    found = TRUE;
