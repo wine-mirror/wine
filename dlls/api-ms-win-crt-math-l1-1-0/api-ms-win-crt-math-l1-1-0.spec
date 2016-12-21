@@ -23,27 +23,27 @@
 @ stub _LCbuild
 @ stub _LCmulcc
 @ stub _LCmulcr
-@ cdecl -arch=i386 __libm_sse2_acos() ucrtbase.__libm_sse2_acos
-@ cdecl -arch=i386 __libm_sse2_acosf() ucrtbase.__libm_sse2_acosf
-@ cdecl -arch=i386 __libm_sse2_asin() ucrtbase.__libm_sse2_asin
-@ cdecl -arch=i386 __libm_sse2_asinf() ucrtbase.__libm_sse2_asinf
-@ cdecl -arch=i386 __libm_sse2_atan() ucrtbase.__libm_sse2_atan
-@ cdecl -arch=i386 __libm_sse2_atan2() ucrtbase.__libm_sse2_atan2
-@ cdecl -arch=i386 __libm_sse2_atanf() ucrtbase.__libm_sse2_atanf
-@ cdecl -arch=i386 __libm_sse2_cos() ucrtbase.__libm_sse2_cos
-@ cdecl -arch=i386 __libm_sse2_cosf() ucrtbase.__libm_sse2_cosf
-@ cdecl -arch=i386 __libm_sse2_exp() ucrtbase.__libm_sse2_exp
-@ cdecl -arch=i386 __libm_sse2_expf() ucrtbase.__libm_sse2_expf
-@ cdecl -arch=i386 __libm_sse2_log() ucrtbase.__libm_sse2_log
-@ cdecl -arch=i386 __libm_sse2_log10() ucrtbase.__libm_sse2_log10
-@ cdecl -arch=i386 __libm_sse2_log10f() ucrtbase.__libm_sse2_log10f
-@ cdecl -arch=i386 __libm_sse2_logf() ucrtbase.__libm_sse2_logf
-@ cdecl -arch=i386 __libm_sse2_pow() ucrtbase.__libm_sse2_pow
-@ cdecl -arch=i386 __libm_sse2_powf() ucrtbase.__libm_sse2_powf
-@ cdecl -arch=i386 __libm_sse2_sin() ucrtbase.__libm_sse2_sin
-@ cdecl -arch=i386 __libm_sse2_sinf() ucrtbase.__libm_sse2_sinf
-@ cdecl -arch=i386 __libm_sse2_tan() ucrtbase.__libm_sse2_tan
-@ cdecl -arch=i386 __libm_sse2_tanf() ucrtbase.__libm_sse2_tanf
+@ cdecl -arch=i386 -norelay __libm_sse2_acos() ucrtbase.__libm_sse2_acos
+@ cdecl -arch=i386 -norelay __libm_sse2_acosf() ucrtbase.__libm_sse2_acosf
+@ cdecl -arch=i386 -norelay __libm_sse2_asin() ucrtbase.__libm_sse2_asin
+@ cdecl -arch=i386 -norelay __libm_sse2_asinf() ucrtbase.__libm_sse2_asinf
+@ cdecl -arch=i386 -norelay __libm_sse2_atan() ucrtbase.__libm_sse2_atan
+@ cdecl -arch=i386 -norelay __libm_sse2_atan2() ucrtbase.__libm_sse2_atan2
+@ cdecl -arch=i386 -norelay __libm_sse2_atanf() ucrtbase.__libm_sse2_atanf
+@ cdecl -arch=i386 -norelay __libm_sse2_cos() ucrtbase.__libm_sse2_cos
+@ cdecl -arch=i386 -norelay __libm_sse2_cosf() ucrtbase.__libm_sse2_cosf
+@ cdecl -arch=i386 -norelay __libm_sse2_exp() ucrtbase.__libm_sse2_exp
+@ cdecl -arch=i386 -norelay __libm_sse2_expf() ucrtbase.__libm_sse2_expf
+@ cdecl -arch=i386 -norelay __libm_sse2_log() ucrtbase.__libm_sse2_log
+@ cdecl -arch=i386 -norelay __libm_sse2_log10() ucrtbase.__libm_sse2_log10
+@ cdecl -arch=i386 -norelay __libm_sse2_log10f() ucrtbase.__libm_sse2_log10f
+@ cdecl -arch=i386 -norelay __libm_sse2_logf() ucrtbase.__libm_sse2_logf
+@ cdecl -arch=i386 -norelay __libm_sse2_pow() ucrtbase.__libm_sse2_pow
+@ cdecl -arch=i386 -norelay __libm_sse2_powf() ucrtbase.__libm_sse2_powf
+@ cdecl -arch=i386 -norelay __libm_sse2_sin() ucrtbase.__libm_sse2_sin
+@ cdecl -arch=i386 -norelay __libm_sse2_sinf() ucrtbase.__libm_sse2_sinf
+@ cdecl -arch=i386 -norelay __libm_sse2_tan() ucrtbase.__libm_sse2_tan
+@ cdecl -arch=i386 -norelay __libm_sse2_tanf() ucrtbase.__libm_sse2_tanf
 @ cdecl __setusermatherr(ptr) ucrtbase.__setusermatherr
 @ cdecl _cabs(long) ucrtbase._cabs
 @ cdecl _chgsign(double) ucrtbase._chgsign
@@ -100,17 +100,17 @@
 @ stub _ldsin
 @ cdecl _ldtest(ptr) ucrtbase._ldtest
 @ stub _ldunscale
-@ cdecl -arch=i386  _libm_sse2_acos_precise() ucrtbase._libm_sse2_acos_precise
-@ cdecl -arch=i386  _libm_sse2_asin_precise() ucrtbase._libm_sse2_asin_precise
-@ cdecl -arch=i386  _libm_sse2_atan_precise() ucrtbase._libm_sse2_atan_precise
-@ cdecl -arch=i386  _libm_sse2_cos_precise() ucrtbase._libm_sse2_cos_precise
-@ cdecl -arch=i386  _libm_sse2_exp_precise() ucrtbase._libm_sse2_exp_precise
-@ cdecl -arch=i386  _libm_sse2_log10_precise() ucrtbase._libm_sse2_log10_precise
-@ cdecl -arch=i386  _libm_sse2_log_precise() ucrtbase._libm_sse2_log_precise
-@ cdecl -arch=i386  _libm_sse2_pow_precise() ucrtbase._libm_sse2_pow_precise
-@ cdecl -arch=i386  _libm_sse2_sin_precise() ucrtbase._libm_sse2_sin_precise
-@ cdecl -arch=i386  _libm_sse2_sqrt_precise() ucrtbase._libm_sse2_sqrt_precise
-@ cdecl -arch=i386  _libm_sse2_tan_precise() ucrtbase._libm_sse2_tan_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_acos_precise() ucrtbase._libm_sse2_acos_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_asin_precise() ucrtbase._libm_sse2_asin_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_atan_precise() ucrtbase._libm_sse2_atan_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_cos_precise() ucrtbase._libm_sse2_cos_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_exp_precise() ucrtbase._libm_sse2_exp_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_log10_precise() ucrtbase._libm_sse2_log10_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_log_precise() ucrtbase._libm_sse2_log_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_pow_precise() ucrtbase._libm_sse2_pow_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_sin_precise() ucrtbase._libm_sse2_sin_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_sqrt_precise() ucrtbase._libm_sse2_sqrt_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_tan_precise() ucrtbase._libm_sse2_tan_precise
 @ cdecl _logb(double) ucrtbase._logb
 @ cdecl -arch=arm,x86_64 _logbf(float) ucrtbase._logbf
 @ cdecl _nextafter(double double) ucrtbase._nextafter

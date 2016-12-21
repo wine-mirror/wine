@@ -917,27 +917,27 @@
 @ stub -arch=arm __jump_unwind
 # extern __lconv
 @ cdecl __lconv_init() msvcr120.__lconv_init
-@ cdecl -arch=i386 __libm_sse2_acos() msvcr120.__libm_sse2_acos
-@ cdecl -arch=i386 __libm_sse2_acosf() msvcr120.__libm_sse2_acosf
-@ cdecl -arch=i386 __libm_sse2_asin() msvcr120.__libm_sse2_asin
-@ cdecl -arch=i386 __libm_sse2_asinf() msvcr120.__libm_sse2_asinf
-@ cdecl -arch=i386 __libm_sse2_atan() msvcr120.__libm_sse2_atan
-@ cdecl -arch=i386 __libm_sse2_atan2() msvcr120.__libm_sse2_atan2
-@ cdecl -arch=i386 __libm_sse2_atanf() msvcr120.__libm_sse2_atanf
-@ cdecl -arch=i386 __libm_sse2_cos() msvcr120.__libm_sse2_cos
-@ cdecl -arch=i386 __libm_sse2_cosf() msvcr120.__libm_sse2_cosf
-@ cdecl -arch=i386 __libm_sse2_exp() msvcr120.__libm_sse2_exp
-@ cdecl -arch=i386 __libm_sse2_expf() msvcr120.__libm_sse2_expf
-@ cdecl -arch=i386 __libm_sse2_log() msvcr120.__libm_sse2_log
-@ cdecl -arch=i386 __libm_sse2_log10() msvcr120.__libm_sse2_log10
-@ cdecl -arch=i386 __libm_sse2_log10f() msvcr120.__libm_sse2_log10f
-@ cdecl -arch=i386 __libm_sse2_logf() msvcr120.__libm_sse2_logf
-@ cdecl -arch=i386 __libm_sse2_pow() msvcr120.__libm_sse2_pow
-@ cdecl -arch=i386 __libm_sse2_powf() msvcr120.__libm_sse2_powf
-@ cdecl -arch=i386 __libm_sse2_sin() msvcr120.__libm_sse2_sin
-@ cdecl -arch=i386 __libm_sse2_sinf() msvcr120.__libm_sse2_sinf
-@ cdecl -arch=i386 __libm_sse2_tan() msvcr120.__libm_sse2_tan
-@ cdecl -arch=i386 __libm_sse2_tanf() msvcr120.__libm_sse2_tanf
+@ cdecl -arch=i386 -norelay __libm_sse2_acos() msvcr120.__libm_sse2_acos
+@ cdecl -arch=i386 -norelay __libm_sse2_acosf() msvcr120.__libm_sse2_acosf
+@ cdecl -arch=i386 -norelay __libm_sse2_asin() msvcr120.__libm_sse2_asin
+@ cdecl -arch=i386 -norelay __libm_sse2_asinf() msvcr120.__libm_sse2_asinf
+@ cdecl -arch=i386 -norelay __libm_sse2_atan() msvcr120.__libm_sse2_atan
+@ cdecl -arch=i386 -norelay __libm_sse2_atan2() msvcr120.__libm_sse2_atan2
+@ cdecl -arch=i386 -norelay __libm_sse2_atanf() msvcr120.__libm_sse2_atanf
+@ cdecl -arch=i386 -norelay __libm_sse2_cos() msvcr120.__libm_sse2_cos
+@ cdecl -arch=i386 -norelay __libm_sse2_cosf() msvcr120.__libm_sse2_cosf
+@ cdecl -arch=i386 -norelay __libm_sse2_exp() msvcr120.__libm_sse2_exp
+@ cdecl -arch=i386 -norelay __libm_sse2_expf() msvcr120.__libm_sse2_expf
+@ cdecl -arch=i386 -norelay __libm_sse2_log() msvcr120.__libm_sse2_log
+@ cdecl -arch=i386 -norelay __libm_sse2_log10() msvcr120.__libm_sse2_log10
+@ cdecl -arch=i386 -norelay __libm_sse2_log10f() msvcr120.__libm_sse2_log10f
+@ cdecl -arch=i386 -norelay __libm_sse2_logf() msvcr120.__libm_sse2_logf
+@ cdecl -arch=i386 -norelay __libm_sse2_pow() msvcr120.__libm_sse2_pow
+@ cdecl -arch=i386 -norelay __libm_sse2_powf() msvcr120.__libm_sse2_powf
+@ cdecl -arch=i386 -norelay __libm_sse2_sin() msvcr120.__libm_sse2_sin
+@ cdecl -arch=i386 -norelay __libm_sse2_sinf() msvcr120.__libm_sse2_sinf
+@ cdecl -arch=i386 -norelay __libm_sse2_tan() msvcr120.__libm_sse2_tan
+@ cdecl -arch=i386 -norelay __libm_sse2_tanf() msvcr120.__libm_sse2_tanf
 @ extern __mb_cur_max msvcr120.__mb_cur_max
 @ cdecl __p___argc() msvcr120.__p___argc
 @ cdecl __p___argv() msvcr120.__p___argv
@@ -1261,17 +1261,17 @@
 @ cdecl _ldtest(ptr) msvcr120._ldtest
 @ cdecl _lfind(ptr ptr ptr long ptr) msvcr120._lfind
 @ cdecl _lfind_s(ptr ptr ptr long ptr ptr) msvcr120._lfind_s
-@ cdecl -arch=i386  _libm_sse2_acos_precise() msvcr120._libm_sse2_acos_precise
-@ cdecl -arch=i386  _libm_sse2_asin_precise() msvcr120._libm_sse2_asin_precise
-@ cdecl -arch=i386  _libm_sse2_atan_precise() msvcr120._libm_sse2_atan_precise
-@ cdecl -arch=i386  _libm_sse2_cos_precise() msvcr120._libm_sse2_cos_precise
-@ cdecl -arch=i386  _libm_sse2_exp_precise() msvcr120._libm_sse2_exp_precise
-@ cdecl -arch=i386  _libm_sse2_log10_precise() msvcr120._libm_sse2_log10_precise
-@ cdecl -arch=i386  _libm_sse2_log_precise() msvcr120._libm_sse2_log_precise
-@ cdecl -arch=i386  _libm_sse2_pow_precise() msvcr120._libm_sse2_pow_precise
-@ cdecl -arch=i386  _libm_sse2_sin_precise() msvcr120._libm_sse2_sin_precise
-@ cdecl -arch=i386  _libm_sse2_sqrt_precise() msvcr120._libm_sse2_sqrt_precise
-@ cdecl -arch=i386  _libm_sse2_tan_precise() msvcr120._libm_sse2_tan_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_acos_precise() msvcr120._libm_sse2_acos_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_asin_precise() msvcr120._libm_sse2_asin_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_atan_precise() msvcr120._libm_sse2_atan_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_cos_precise() msvcr120._libm_sse2_cos_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_exp_precise() msvcr120._libm_sse2_exp_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_log10_precise() msvcr120._libm_sse2_log10_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_log_precise() msvcr120._libm_sse2_log_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_pow_precise() msvcr120._libm_sse2_pow_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_sin_precise() msvcr120._libm_sse2_sin_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_sqrt_precise() msvcr120._libm_sse2_sqrt_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_tan_precise() msvcr120._libm_sse2_tan_precise
 @ cdecl -arch=x86_64 _local_unwind(ptr ptr) msvcr120._local_unwind
 @ cdecl -arch=i386 _local_unwind2(ptr long) msvcr120._local_unwind2
 @ cdecl -arch=i386 _local_unwind4(ptr ptr long) msvcr120._local_unwind4
