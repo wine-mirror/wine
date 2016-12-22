@@ -8565,17 +8565,17 @@ LPSTR WINAPI StartDocDlgA( HANDLE hPrinter, DOCINFOA *doc )
     if (doc->lpszDocName)
     {
         docnameW = asciitounicode(&usBuffer, doc->lpszDocName);
-        if (!(docW.lpszDocName = docnameW)) return NULL;
+        if (!(docW.lpszDocName = docnameW)) goto failed;
     }
     if (doc->lpszOutput)
     {
         outputW = asciitounicode(&usBuffer, doc->lpszOutput);
-        if (!(docW.lpszOutput = outputW)) return NULL;
+        if (!(docW.lpszOutput = outputW)) goto failed;
     }
     if (doc->lpszDatatype)
     {
         datatypeW = asciitounicode(&usBuffer, doc->lpszDatatype);
-        if (!(docW.lpszDatatype = datatypeW)) return NULL;
+        if (!(docW.lpszDatatype = datatypeW)) goto failed;
     }
     docW.fwType = doc->fwType;
 
@@ -8589,6 +8589,7 @@ LPSTR WINAPI StartDocDlgA( HANDLE hPrinter, DOCINFOA *doc )
         HeapFree(GetProcessHeap(), 0, retW);
     }
 
+failed:
     HeapFree(GetProcessHeap(), 0, datatypeW);
     HeapFree(GetProcessHeap(), 0, outputW);
     HeapFree(GetProcessHeap(), 0, docnameW);
