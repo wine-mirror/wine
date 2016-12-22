@@ -449,6 +449,7 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONTW* lf,
     TEXTMETRICW tm;
     HDC         hDC;
     HFONT       hFont, hOldFont;
+    CPINFO cpinfo;
 
     if (!(hDC = GetDC(hWnd))) return NULL;
     if (!(hFont = CreateFontIndirectW(lf)))
@@ -461,11 +462,15 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONTW* lf,
     SelectObject(hDC, hOldFont);
     ReleaseDC(hWnd, hDC);
 
-    config->cell_width  = tm.tmMaxCharWidth;
+    config->cell_width  = tm.tmAveCharWidth;
     config->cell_height = tm.tmHeight + tm.tmExternalLeading;
     config->font_weight = tm.tmWeight;
     lstrcpyW(config->face_name, lf->lfFaceName);
     if (el) *el = tm.tmExternalLeading;
+
+    /* FIXME: use maximum width for DBCS codepages since some chars take two cells */
+    if (GetCPInfo( GetConsoleOutputCP(), &cpinfo ) && cpinfo.MaxCharSize > 1)
+        config->cell_width  = tm.tmMaxCharWidth;
 
     return hFont;
 }
