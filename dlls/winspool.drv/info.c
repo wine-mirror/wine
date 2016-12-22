@@ -8556,7 +8556,7 @@ end:
 LPSTR WINAPI StartDocDlgA( HANDLE hPrinter, DOCINFOA *doc )
 {
     UNICODE_STRING usBuffer;
-    DOCINFOW docW;
+    DOCINFOW docW = { 0 };
     LPWSTR retW;
     LPWSTR docnameW = NULL, outputW = NULL, datatypeW = NULL;
     LPSTR ret = NULL;
