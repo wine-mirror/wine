@@ -2122,14 +2122,14 @@ static void test_strstreambuf(void)
     ok(ssb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", ssb1.base.allocated);
     ok(ssb1.base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", ssb1.base.unbuffered);
     ok(ssb1.base.base == buffer, "wrong buffer, expected %p got %p\n", buffer, ssb1.base.base);
-    ok(ssb1.base.ebuf == buffer + 0x7fffffff || ssb1.base.ebuf == (char*)-1,
+    ok(ssb1.base.ebuf == (char *)((ULONG_PTR)buffer + 0x7fffffff) || ssb1.base.ebuf == (char*)-1,
         "wrong buffer end, expected %p + 0x7fffffff or -1, got %p\n", buffer, ssb1.base.ebuf);
     ok(ssb1.base.eback == buffer, "wrong get base, expected %p got %p\n", buffer, ssb1.base.eback);
     ok(ssb1.base.gptr == buffer, "wrong get pointer, expected %p got %p\n", buffer, ssb1.base.gptr);
     ok(ssb1.base.egptr == buffer + 20, "wrong get end, expected %p got %p\n", buffer + 20, ssb1.base.egptr);
     ok(ssb1.base.pbase == buffer + 20, "wrong put base, expected %p got %p\n", buffer + 20, ssb1.base.pbase);
     ok(ssb1.base.pptr == buffer + 20, "wrong put pointer, expected %p got %p\n", buffer + 20, ssb1.base.pptr);
-    ok(ssb1.base.epptr == buffer + 0x7fffffff || ssb1.base.epptr == (char*)-1,
+    ok(ssb1.base.epptr == (char *)((ULONG_PTR)buffer + 0x7fffffff) || ssb1.base.epptr == (char*)-1,
         "wrong put end, expected %p + 0x7fffffff or -1, got %p\n", buffer, ssb1.base.epptr);
     ok(ssb1.dynamic == 0, "expected 0, got %d\n", ssb1.dynamic);
     ok(ssb1.constant == 1, "expected 1, got %d\n", ssb1.constant);
@@ -4208,14 +4208,14 @@ static void test_ostrstream(void)
     ok(pssb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pssb->base.allocated);
     ok(pssb->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pssb->base.unbuffered);
     ok(pssb->base.base == buffer, "wrong buffer, expected %p got %p\n", buffer, pssb->base.base);
-    ok(pssb->base.ebuf == buffer + 0x7fffffff || pssb->base.ebuf == (char*) -1,
+    ok(pssb->base.ebuf == (char *)((ULONG_PTR)buffer + 0x7fffffff) || pssb->base.ebuf == (char*) -1,
         "wrong buffer end, expected %p + 0x7fffffff or -1, got %p\n", buffer, pssb->base.ebuf);
     ok(pssb->base.eback == buffer, "wrong get base, expected %p got %p\n", buffer, pssb->base.eback);
     ok(pssb->base.gptr == buffer, "wrong get pointer, expected %p got %p\n", buffer, pssb->base.gptr);
     ok(pssb->base.egptr == buffer, "wrong get end, expected %p got %p\n", buffer, pssb->base.egptr);
     ok(pssb->base.pbase == buffer, "wrong put base, expected %p got %p\n", buffer, pssb->base.pbase);
     ok(pssb->base.pptr == buffer + 4, "wrong put pointer, expected %p got %p\n", buffer + 4, pssb->base.pptr);
-    ok(pssb->base.epptr == buffer + 0x7fffffff || pssb->base.epptr == (char*) -1,
+    ok(pssb->base.epptr == (char *)((ULONG_PTR)buffer + 0x7fffffff) || pssb->base.epptr == (char*) -1,
         "wrong buffer end, expected %p + 0x7fffffff or -1, got %p\n", buffer, pssb->base.epptr);
     ok(pssb->base.do_lock == -1, "expected -1 got %d\n", pssb->base.do_lock);
     call_func1(p_ostrstream_dtor, &os1.base_ios);
@@ -6858,14 +6858,14 @@ static void test_strstream(void)
     ok(pssb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pssb->base.allocated);
     ok(pssb->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pssb->base.unbuffered);
     ok(pssb->base.base == buffer, "wrong buffer, expected %p got %p\n", buffer, pssb->base.base);
-    ok(pssb->base.ebuf == buffer + 0x7fffffff || pssb->base.ebuf == (char*) -1,
+    ok(pssb->base.ebuf == (char *)((ULONG_PTR)buffer + 0x7fffffff) || pssb->base.ebuf == (char*) -1,
         "wrong buffer end, expected %p + 0x7fffffff or -1, got %p\n", buffer, pssb->base.ebuf);
     ok(pssb->base.eback == buffer, "wrong get base, expected %p got %p\n", buffer, pssb->base.eback);
     ok(pssb->base.gptr == buffer, "wrong get pointer, expected %p got %p\n", buffer, pssb->base.gptr);
     ok(pssb->base.egptr == buffer, "wrong get end, expected %p got %p\n", buffer, pssb->base.egptr);
     ok(pssb->base.pbase == buffer, "wrong put base, expected %p got %p\n", buffer, pssb->base.pbase);
     ok(pssb->base.pptr == buffer, "wrong put pointer, expected %p got %p\n", buffer, pssb->base.pptr);
-    ok(pssb->base.epptr == buffer + 0x7fffffff || pssb->base.epptr == (char*) -1,
+    ok(pssb->base.epptr == (char *)((ULONG_PTR)buffer + 0x7fffffff) || pssb->base.epptr == (char*) -1,
         "wrong buffer end, expected %p + 0x7fffffff or -1, got %p\n", buffer, pssb->base.epptr);
     ok(pssb->base.do_lock == -1, "expected -1 got %d\n", pssb->base.do_lock);
     call_func1(p_strstream_vbase_dtor, &ios1);
