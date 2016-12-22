@@ -1423,7 +1423,10 @@ __int32 WINAPI _CorExeMain(void)
 
     filenameA = WtoA(filename);
     if (!filenameA)
+    {
+        HeapFree(GetProcessHeap(), 0, argv);
         return -1;
+    }
 
     FixupVTable(GetModuleHandleW(NULL));
 
