@@ -339,6 +339,41 @@ static void test_WsSetOutputToBuffer(void)
     WsFreeHeap( heap );
 }
 
+static char strbuf[512];
+static const char *debugstr_bytes( const BYTE *bytes, ULONG len )
+{
+    const BYTE *src = bytes;
+    char *dst = strbuf;
+
+    while (len)
+    {
+        BYTE c = *src++;
+        if (dst - strbuf > sizeof(strbuf) - 7) break;
+        switch (c)
+        {
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        default:
+            if (c >= ' ' && c < 127) *dst++ = c;
+            else
+            {
+                sprintf( dst, "\\%02x", c );
+                dst += 3;
+            }
+        }
+        len--;
+    }
+    if (len)
+    {
+        *dst++ = '.';
+        *dst++ = '.';
+        *dst++ = '.';
+    }
+    *dst = 0;
+    return strbuf;
+}
+
 static void check_output( WS_XML_WRITER *writer, const char *expected, unsigned int line )
 {
     WS_BYTES bytes;
@@ -351,7 +386,8 @@ static void check_output( WS_XML_WRITER *writer, const char *expected, unsigned 
     ok( hr == S_OK, "%u: got %08x\n", line, hr );
     ok( bytes.length == len, "%u: got %u expected %u\n", line, bytes.length, len );
     if (bytes.length != len) return;
-    ok( !memcmp( bytes.bytes, expected, len ), "%u: got %s expected %s\n", line, bytes.bytes, expected );
+    ok( !memcmp( bytes.bytes, expected, len ),
+        "%u: got %s expected %s\n", line, debugstr_bytes(bytes.bytes, bytes.length), expected );
 }
 
 static void test_WsWriteStartElement(void)
