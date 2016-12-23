@@ -1,12 +1,12 @@
-The Wine development release 2.0-rc2 is now available.
+The Wine development release 2.0-rc3 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc2.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc2.tar.bz2
+  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc3.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc3.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,102 +22,100 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.0-rc2 (total 20):
+Bugs fixed in 2.0-rc3 (total 15):
 
-  31222  Hitman: Blood Money crashes when changing screen resolution
-  31309  TIE Fighter: Collector's Edition Crash - 'Escape Menu' Freezes Application.
-  32632  Dragon Naturally Speaking 12 does not load with timeout error
-  34829  wintrust:softpub crashes on Windows 8
-  35495  sharing violation and prompt for copy /B file1+file2 file1
-  38357  Cannot install download-audiograbber.exe
-  39430  Ride : The motorcycle game does not start
-  40256  user32:input fails on non-qwerty keyboards
-  40344  shell32:assoc regression (privilege issue)
-  40386  wininet:url regression caused by new cross-compiler
-  40978  Wrong colors on i915 and similar GPUs in GTA Vice City
-  41083  Red Faction: Guerrilla fails to start with DX11 renderer
-  41133  R32/R16 typeless formats generate incomplete FBO errors when used as a render target (Gauntlet, WoW with D3D11 renderer)
-  41141  gcc6: d3drm build warnings
-  41252  Helldivers gives this error when trying to run on MacOS
-  41630  Rollercoaster Tycoon 3 Platinum crashes on exit
-  41715  winhttp:winhttp test regression (test_secure_connection)
-  41717  webservices:writer test regression in test_datetime
-  41949  Pasting into IDA Pro stops working on macOS
-  41956  Regression in wininet crashes skype
+  18081  warhammer dawn of war ii crashes
+  38207  Unreal Tournament 3 uninstaller fails when invoking from 'wine uninstaller' (removes wrong entries)
+  38555  The Magic School Bus Explores the Solar System hangs  during installation
+  39661  Font width incorrect in wineconsole
+  40429  regression: "mscoree set config path for default app domain" makes .NET app not working
+  40845  Uninstaller does not remove missing applications from the list
+  41378  wineboot silently ignores unknown WINEARCH
+  41476  Cannot paste in WinAuth 3.5.1 (32-bit)
+  41609  Uninstaller entries are not removed from the registry when the uninstaller says they will be
+  41732  wineconsole: changing to emacs mode requires restart
+  41733  wineconsole: crashes in emacs mode when pasting (Ctrl+Y) empty buffer
+  41744  Streamline crashes on launch
+  41869  Wine is not compiling: undefined reference to 'HIDIOCSFEATURE'
+  41909  Calling TBM_SETPOS after TBM_SETRANGEMIN/TBM_SETRANGEMAX does not draw slider control properly
+  41993  Chuckie Egg: The Next Batch v1.2 no longer works
 
 ----------------------------------------------------------------
 
-Changes since 2.0-rc1:
+Changes since 2.0-rc2:
 
-Alexandre Julliard (1):
-      ntdll: Check for invalid WINEARCH values.
+Alex Henrie (2):
+      po: Update Catalan translation.
+      msvcrt: Pass wide char caption string to MessageBoxIndirectW.
+
+Alexandre Julliard (4):
+      winex11: Also ignore BadWindow errors caused by XSendEvent.
+      msvcrt: Disable relay for the __libm_sse2 functions.
+      wineconsole: Leave room for wide characters only when using a DBCS codepage.
+      msvcirt/tests: Silence a compiler warning.
 
 Andrew Eikum (1):
-      msacm32: Fix copy-paste error.
+      mscoree: Leave the last backslash on application base path.
 
-Andrey Gusev (1):
-      hlink: Add missing parameter to TRACE() message.
+André Hentschel (1):
+      hlink/tests: Ignore single character fails on Win10.
 
 Aric Stewart (1):
-      ime: Do not send WM_IME_ENDCOMPOSITION on CPS_COMPLETE if there is no composition.
+      hidclass.sys: Do not use device after free.
 
-Bruno Jesus (1):
-      xinput1_3/tests: Add interactive tests.
+Austin English (1):
+      webservices: Allocate enough memory for WS_XML_TEXT_TYPE_DOUBLE on Valgrind.
 
-Fabian Maurer (2):
-      wininet: Changed usage of UrlEscapeW to fit winapi behavior.
-      shlwapi: Changed UrlEscapeW error paths and add tests.
+Can Taşan (1):
+      po: Update Turkish translation.
 
-Hans Leidekker (1):
-      winhttp: Handle EINTR from connect and poll.
+Hans Leidekker (12):
+      advpack/tests: Skip inf install tests if the user doesn't have admin rights.
+      mstask/tests: Skip ITaskScheduler::SetTargetComputer tests if the user doesn't have admin rights.
+      setupapi/tests: Skip SetupCopyOEMInfA tests if the user doesn't have admin rights.
+      setupapi/tests: Skip devinst tests if the user doesn't have admin rights.
+      urlmon/tests: Skip domain tests if the user doesn't have admin rights.
+      wintrust/tests: Fix test failures on Windows 8.1 and 10.
+      shell32/tests: Accept another error from SHFileOperationA.
+      shell32/tests: Skip SHFileOperation tests if the user doesn't have admin rights.
+      setupapi/tests: Skip SetupGetInfInformation tests if the user doesn't have admin rights.
+      setupapi/tests: Skip InstallHinfSection tests if the user doesn't have admin rights.
+      user32/tests: Disable automatic shell restart during SetShellWindow tests.
+      webservices/tests: Add a helper to print the contents of the output buffer.
 
-Hugh McMaster (3):
-      kernel32: Use Emacs keymap mode immediately after wineconsole configuration change.
-      kernel32: Check for a valid pointer before yanking the line.
-      appwiz.cpl: Remove list entries left over from an earlier uninstall.
+Hugh McMaster (5):
+      regedit: Load Binary editor from context menu.
+      regedit/tests: Add tests for line concatenation when importing.
+      reg/tests: Add tests for line concatenation when importing.
+      appwiz.cpl: Do not overwrite application IDs when changing registry keys.
+      msvcrt: Fix typo in message_format array.
 
-Jacek Caban (1):
-      wininet: Get rid of no longer needed INTERNET_INVALID_PORT_NUMBER in get_server.
+Józef Kucia (3):
+      wined3d: Always check if context window needs to be updated.
+      d2d1/tests: Change scale factors in test_bitmap_brush().
+      d3d11/tests: Skip test_depth_stencil_sampling() on AMD Windows drivers.
 
-Józef Kucia (14):
-      wined3d: Add suport for 2D array texture UAVs.
-      d3d11/tests: Add test for 2D array texture UAVs.
-      wined3d: Use depth/stencil formats for typeless resources only when WINED3DUSAGE_DEPTHSTENCIL is set.
-      d3d11/tests: Add test for depth/stencil shader resource views.
-      wined3d: Recognize SM5 vCoverage input registers.
-      wined3d: Recognize SM4.1 oMask output register.
-      wined3d: Recognize SM5 atomic_imax opcode.
-      wined3d: Recognize SM5 atomic_imin opcode.
-      d3d10core/tests: Port test_primitive_restart() from d3d11.
-      d3d9/tests: Add test showing WM_SIZE is not sent during fullscreen mode change.
-      wined3d: Filter messages for fullscreen mode changes.
-      wined3d: Remove depth/stencil format flags from typeless formats.
-      d3d11/tests: Use single typeless RT with multiple RTVs in test_uav_load().
-      d3d11/tests: Improve trace() message about compute shader support via SM4.
+Lauri Kenttä (1):
+      cmd: Fix memory leak in WCMD_reduce.
 
-Ken Thomases (1):
-      winemac: Update the clipboard when the process activates.
+Marcus Meissner (1):
+      xmllite: Hr was uninitialized in error path (Coverity).
 
-Lauri Kenttä (2):
-      kernel32/tests: Test FindFirstFile with wildcards.
-      kernel32/tests: Show flags as text in test results.
+Nikolay Sivov (8):
+      gdiplus/tests: Test for initial properties of adjustable arrow caps.
+      dwrite: Fully initialize shared factory vtable.
+      dwrite: Improve strikethrough and underline thickness extraction logic.
+      shell32: Don't trace output string buffer contents.
+      shell32: Fix potential destination buffer overrun.
+      winspool: Initialize string pointers passed to StartDocDlgW() (Coverity).
+      winspool: Fix potential string buffer leaks (Coverity).
+      mscoree: Free argument buffer on error (Coverity).
 
-Michael Müller (1):
-      wininet: Handle INTERNET_INVALID_PORT_NUMBER in HttpOpenRequest.
+Piotr Caban (1):
+      msvcrt/tests: Correctly declare base class to avoid a compiler warning.
 
-Mingcong Bai (1):
-      po: Update Simplified Chinese translation.
-
-Nikolay Sivov (9):
-      scrrun/tests: Test to query for IUnknown from IProvideClassInfo.
-      dwrite: Fix a typo in assertion condition (Coverity).
-      msi: Fix handling of NULL buffer in MsiGetProductPropertyW() (Coverity).
-      comctl32/tests: Trackbar test to show that thumb is updated on TBM_SETTICFREQ.
-      comctl32/trackbar: Update thumb unconditionally on TBM_SETTICFREQ.
-      shell32: Don't access uninitialized buffer (Coverity).
-      dwrite/tests: Run GetPanose() tests on all system fonts.
-      secur32: Trace flags in hex in InitializeSecurityContextW().
-      scrrun: Remove unreachable code (Coverity).
+Zebediah Figura (1):
+      advapi32: Add tests for StartTrace().
 
 --
 Alexandre Julliard
