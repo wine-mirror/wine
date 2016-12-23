@@ -113,7 +113,7 @@ static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *mess
   static const MSVCRT_wchar_t message_format[] = {'%','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','s','\n',
     '%','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
     'p','r','o','g','r','a','m',',',' ','o','r',' ','C','a','n','c','e','l',' ','t','o',' ','s','t','a','r','t',' ',
-    't','h','e',' ','W','i','n','e',' ','d','e','b','b','u','g','e','r','.','\n',0};
+    't','h','e',' ','W','i','n','e',' ','d','e','b','u','g','g','e','r','.','\n',0};
   static const WCHAR title[] =
     {'W','i','n','e',' ','C','+','+',' ','R','u','n','t','i','m','e',' ','L','i','b','r','a','r','y',0};
 
