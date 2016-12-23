@@ -1369,7 +1369,7 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret
     case WS_XML_TEXT_TYPE_DOUBLE:
     {
         const WS_XML_DOUBLE_TEXT *double_text = (const WS_XML_DOUBLE_TEXT *)text;
-        unsigned char buf[24]; /* "-1.1111111111111111E-308" */
+        unsigned char buf[32]; /* "-1.1111111111111111E-308", oversized to address Valgrind limitations */
         unsigned short fpword;
         ULONG len;
 
