@@ -1949,6 +1949,7 @@ cards_nvidia_binary[] =
  * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
 cards_amd_binary[] =
 {
+    {"RX 480",                      CARD_AMD_RADEON_RX_480},
     /* Southern Islands */
     {"HD 7900",                     CARD_AMD_RADEON_HD7900},
     {"HD 7800",                     CARD_AMD_RADEON_HD7800},
