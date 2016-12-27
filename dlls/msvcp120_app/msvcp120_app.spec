@@ -949,7 +949,7 @@
 @ extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ msvcp120.??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
 @ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ msvcp120.??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 @ extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ msvcp120.??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@
-# extern ??_7_Facet_base@std@@6B@
+@ extern ??_7_Facet_base@std@@6B@ msvcp120.??_7_Facet_base@std@@6B@
 @ extern ??_7_Locimp@locale@std@@6B@ msvcp120.??_7_Locimp@locale@std@@6B@
 @ extern ??_7_Pad@std@@6B@ msvcp120.??_7_Pad@std@@6B@
 @ extern ??_7codecvt_base@std@@6B@ msvcp120.??_7codecvt_base@std@@6B@

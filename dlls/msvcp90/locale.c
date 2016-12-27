@@ -11224,7 +11224,7 @@ size_t __cdecl wcsrtombs(char *dst, const wchar_t **pstr, size_t n, mbstate_t *s
 }
 #endif
 
-
+DEFINE_RTTI_DATA0(_Facet_base, 0, ".?AV_Facet_base@std@@")
 DEFINE_RTTI_DATA0(locale_facet, 0, ".?AVfacet@locale@std@@")
 DEFINE_RTTI_DATA1(locale__Locimp, 0, &locale_facet_rtti_base_descriptor, ".?AV_Locimp@locale@std@@")
 DEFINE_RTTI_DATA1(collate_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@D@std@@")
@@ -11262,6 +11262,11 @@ DEFINE_RTTI_DATA2(time_get_char, 0, &time_base_rtti_base_descriptor, &locale_fac
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
+    __ASM_VTABLE(_Facet_base,
+            VTABLE_ADD_FUNC(locale_facet_vector_dtor)
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            );
     __ASM_VTABLE(locale_facet,
             VTABLE_ADD_FUNC(locale_facet_vector_dtor)
 #if _MSVCP_VER >= 110
@@ -11608,6 +11613,7 @@ void __asm_dummy_vtables(void) {
 void init_locale(void *base)
 {
 #ifdef __x86_64__
+    init__Facet_base_rtti(base);
     init_locale_facet_rtti(base);
     init_locale__Locimp_rtti(base);
     init_collate_char_rtti(base);
