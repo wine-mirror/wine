@@ -121,7 +121,8 @@ static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *mess
   MSVCRT_wchar_t text[2048];
   INT ret;
 
-  MSVCRT__snwprintf(text,sizeof(text),message_format, lead, MSVCRT__wpgmptr, message);
+  MSVCRT__snwprintf(text, sizeof(text)/sizeof(text[0]), message_format,
+          lead, MSVCRT__wpgmptr, message);
 
   msgbox.cbSize = sizeof(msgbox);
   msgbox.hwndOwner = GetActiveWindow();
