@@ -221,25 +221,38 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
     return blend_bitmapinfo( src_info, src_bits->ptr, src, dst_info, dst_bits->ptr, dst, blend );
 }
 
+static RGBQUAD get_dc_rgb_color( DC *dc, COLORREF color )
+{
+    RGBQUAD ret = { 0, 0, 0, 0 };
+
+    if (color & (1 << 24))  /* PALETTEINDEX */
+    {
+        PALETTEENTRY pal;
+
+        if (!GetPaletteEntries( dc->hPalette, LOWORD(color), 1, &pal ))
+            GetPaletteEntries( dc->hPalette, 0, 1, &pal );
+        ret.rgbRed   = pal.peRed;
+        ret.rgbGreen = pal.peGreen;
+        ret.rgbBlue  = pal.peBlue;
+        return ret;
+    }
+    if (color >> 16 == 0x10ff)  /* DIBINDEX */
+    {
+        /* FIXME: need to propagate the index into the conversion functions */
+        WARN( "monochrome blit uses DIBINDEX %x\n", color );
+        return ret;
+    }
+    ret.rgbRed   = GetRValue( color );
+    ret.rgbGreen = GetGValue( color );
+    ret.rgbBlue  = GetBValue( color );
+    return ret;
+}
+
 /* helper to retrieve either both colors or only the background color for monochrome blits */
 void get_mono_dc_colors( DC *dc, BITMAPINFO *info, int count )
 {
-    RGBQUAD *colors = info->bmiColors;
-    COLORREF color = dc->backgroundColor;
-
-    colors[count - 1].rgbRed      = GetRValue( color );
-    colors[count - 1].rgbGreen    = GetGValue( color );
-    colors[count - 1].rgbBlue     = GetBValue( color );
-    colors[count - 1].rgbReserved = 0;
-
-    if (count > 1)
-    {
-        color = dc->textColor;
-        colors[0].rgbRed      = GetRValue( color );
-        colors[0].rgbGreen    = GetGValue( color );
-        colors[0].rgbBlue     = GetBValue( color );
-        colors[0].rgbReserved = 0;
-    }
+    info->bmiColors[count - 1] = get_dc_rgb_color( dc, dc->backgroundColor );
+    if (count > 1) info->bmiColors[0] = get_dc_rgb_color( dc, dc->textColor );
     info->bmiHeader.biClrUsed = count;
 }
 
