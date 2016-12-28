@@ -185,6 +185,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		default:
 			TRACE("3D processing disabled\n");
 			/* this one is here only to eliminate annoying warning message */
+			dsb->volpan.lVolume = dsb->ds3db_lVolume;
 			DSOUND_RecalcVolPan (&dsb->volpan);
 			return;
 	}
