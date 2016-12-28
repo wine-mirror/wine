@@ -8,5 +8,5 @@
 @ stub RmRemoveFilter
 @ stub RmReserveHeap
 @ stdcall RmRestart(long long ptr)
-@ stub RmShutdown
+@ stdcall RmShutdown(long long ptr)
 @ stdcall RmStartSession(ptr long ptr)

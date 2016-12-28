@@ -64,6 +64,8 @@ typedef struct {
     BOOL bRestartable;
 } RM_PROCESS_INFO, *PRM_PROCESS_INFO;
 
+typedef void (CDECL *RM_WRITE_STATUS_CALLBACK)(UINT);
+
 #ifdef __cplusplus
 }
 #endif
