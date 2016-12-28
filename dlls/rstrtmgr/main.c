@@ -100,3 +100,12 @@ DWORD WINAPI RmEndSession(DWORD handle)
     FIXME("%u stub!\n", handle);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ * RmShutdown (rstrtmgr.@)
+ */
+DWORD WINAPI RmShutdown(DWORD handle, ULONG flags, RM_WRITE_STATUS_CALLBACK status)
+{
+    FIXME("%u, 0x%08x, %p stub!\n", handle, flags, status);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
