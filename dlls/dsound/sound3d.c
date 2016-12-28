@@ -206,9 +206,11 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 
 	if (flDistance < dsb->ds3db_ds3db.flMinDistance)
 		flDistance = dsb->ds3db_ds3db.flMinDistance;
+
+	flDistance = dsb->ds3db_ds3db.flMinDistance + (flDistance - dsb->ds3db_ds3db.flMinDistance) * dsb->device->ds3dl.flRolloffFactor;
 	
 	/* attenuation proportional to the distance squared, converted to millibels as in lVolume*/
-	lVolume -= log10(flDistance/dsb->ds3db_ds3db.flMinDistance * flDistance/dsb->ds3db_ds3db.flMinDistance)*1000 * dsb->device->ds3dl.flRolloffFactor;
+	lVolume -= log10(flDistance/dsb->ds3db_ds3db.flMinDistance * flDistance/dsb->ds3db_ds3db.flMinDistance)*1000;
 	TRACE("dist. att: Distance = %f, MinDistance = %f => adjusting volume %d to %f\n", flDistance, dsb->ds3db_ds3db.flMinDistance, dsb->ds3db_lVolume, lVolume);
 
 	/* conning */
