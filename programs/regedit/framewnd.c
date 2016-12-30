@@ -334,10 +334,10 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
 
 static BOOL import_registry_filename(LPWSTR filename)
 {
-    static const WCHAR mode_r[] = {'r',0};
+    static const WCHAR rb_mode[] = {'r','b',0};
 
     BOOL Success;
-    FILE* reg_file = _wfopen(filename, mode_r);
+    FILE* reg_file = _wfopen(filename, rb_mode);
 
     if(!reg_file)
         return FALSE;
