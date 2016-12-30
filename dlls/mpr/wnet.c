@@ -178,6 +178,7 @@ static void _tryLoadProvider(PCWSTR provider)
                     TRACE("loaded lib %p\n", hLib);
                     if (getCaps)
                     {
+                        DWORD connectCap;
                         PWNetProvider provider =
                          &providerTable->table[providerTable->numProviders];
 
@@ -211,9 +212,13 @@ static void _tryLoadProvider(PCWSTR provider)
                                 WARN("Couldn't load enumeration functions\n");
                             }
                         }
-                        provider->addConnection = MPR_GETPROC(NPAddConnection);
-                        provider->addConnection3 = MPR_GETPROC(NPAddConnection3);
-                        provider->cancelConnection = MPR_GETPROC(NPCancelConnection);
+                        connectCap = getCaps(WNNC_CONNECTION);
+                        if (connectCap & WNNC_CON_ADDCONNECTION)
+                            provider->addConnection = MPR_GETPROC(NPAddConnection);
+                        if (connectCap & WNNC_CON_ADDCONNECTION3)
+                            provider->addConnection3 = MPR_GETPROC(NPAddConnection3);
+                        if (connectCap & WNNC_CON_CANCELCONNECTION)
+                            provider->cancelConnection = MPR_GETPROC(NPCancelConnection);
                         TRACE("NPAddConnection %p\n", provider->addConnection);
                         TRACE("NPAddConnection3 %p\n", provider->addConnection3);
                         TRACE("NPCancelConnection %p\n", provider->cancelConnection);
