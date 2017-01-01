@@ -490,6 +490,7 @@ HKLM,%CurrentVersionNT%,"RegisteredOrganization",2,""
 HKLM,%CurrentVersionNT%,"RegisteredOwner",2,""
 HKLM,%CurrentVersionNT%,"SystemRoot",,"%10%"
 HKLM,%CurrentVersionNT%\Console,,16
+HKLM,%CurrentVersionNT%\Drivers32,,16
 HKLM,%CurrentVersionNT%\FontDpi,,16
 HKLM,%CurrentVersionNT%\FontLink,,16
 HKLM,%CurrentVersionNT%\FontMapper,,16
