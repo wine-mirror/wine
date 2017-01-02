@@ -1895,7 +1895,9 @@ static HRESULT WINAPI ddraw1_GetVerticalBlankStatus(IDirectDraw *iface, BOOL *st
 static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *Caps, DWORD *total,
         DWORD *free)
 {
+    unsigned int framebuffer_size, total_vidmem, free_vidmem;
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+    struct wined3d_display_mode mode;
     HRESULT hr = DD_OK;
 
     TRACE("iface %p, caps %p, total %p, free %p.\n", iface, Caps, total, free);
@@ -1918,14 +1920,34 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
         return DDERR_INVALIDPARAMS;
     }
 
+    /* Some applications (e.g. 3DMark 2000) assume that the reported amount of
+     * video memory doesn't include the memory used by the default framebuffer.
+     */
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
+    {
+        WARN("Failed to get display mode, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+    framebuffer_size = wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+            mode.format_id, mode.width);
+    framebuffer_size *= mode.height;
+
     if (free)
-        *free = wined3d_device_get_available_texture_mem(ddraw->wined3d_device);
+    {
+        free_vidmem = wined3d_device_get_available_texture_mem(ddraw->wined3d_device);
+        *free = framebuffer_size > free_vidmem ? 0 : free_vidmem - framebuffer_size;
+        TRACE("Free video memory %#x.\n", *free);
+    }
+
     if (total)
     {
         struct wined3d_adapter_identifier desc = {0};
 
         hr = wined3d_get_adapter_identifier(ddraw->wined3d, WINED3DADAPTER_DEFAULT, 0, &desc);
-        *total = min(UINT_MAX, desc.video_memory);
+        total_vidmem = min(UINT_MAX, desc.video_memory);
+        *total = framebuffer_size > total_vidmem ? 0 : total_vidmem - framebuffer_size;
+        TRACE("Total video memory %#x.\n", *total);
     }
 
     wined3d_mutex_unlock();
