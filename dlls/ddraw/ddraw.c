@@ -1886,7 +1886,7 @@ static HRESULT WINAPI ddraw1_GetVerticalBlankStatus(IDirectDraw *iface, BOOL *st
  * Returns the total and free video memory
  *
  * Params:
- *  Caps: Specifies the memory type asked for
+ *  caps: Specifies the memory type asked for
  *  total: Pointer to a DWORD to be filled with the total memory
  *  free: Pointer to a DWORD to be filled with the free memory
  *
@@ -1895,7 +1895,7 @@ static HRESULT WINAPI ddraw1_GetVerticalBlankStatus(IDirectDraw *iface, BOOL *st
  *  DDERR_INVALIDPARAMS if free and total are NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *Caps, DWORD *total,
+static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *caps, DWORD *total,
         DWORD *free)
 {
     unsigned int framebuffer_size, total_vidmem, free_vidmem;
@@ -1903,12 +1903,15 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
     struct wined3d_display_mode mode;
     HRESULT hr = DD_OK;
 
-    TRACE("iface %p, caps %p, total %p, free %p.\n", iface, Caps, total, free);
+    TRACE("iface %p, caps %p, total %p, free %p.\n", iface, caps, total, free);
+
+    if (!total && !free)
+        return DDERR_INVALIDPARAMS;
 
     if (TRACE_ON(ddraw))
     {
         TRACE("Asked for memory with description: ");
-        DDRAW_dump_DDSCAPS2(Caps);
+        DDRAW_dump_DDSCAPS2(caps);
     }
     wined3d_mutex_lock();
 
@@ -1916,12 +1919,6 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
      * The MSDN also mentions differences between texture memory and other
      * resources, but that's not important
      */
-
-    if( (!total) && (!free) )
-    {
-        wined3d_mutex_unlock();
-        return DDERR_INVALIDPARAMS;
-    }
 
     /* Some applications (e.g. 3DMark 2000) assume that the reported amount of
      * video memory doesn't include the memory used by the default framebuffer.
