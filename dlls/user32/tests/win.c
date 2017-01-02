@@ -7978,6 +7978,16 @@ static void test_FindWindowEx(void)
     ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
 
     num_gettext_msgs = 0;
+    found = FindWindowExA( 0, 0, "ClassThatDoesntExist", "" );
+    ok( found == NULL, "expected a NULL hwnd\n" );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    found = FindWindowExA( 0, 0, "ClassThatDoesntExist", NULL );
+    ok( found == NULL, "expected a NULL hwnd\n" );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
     found = FindWindowExA( 0, 0, "MainWindowClass", "" );
     ok( found == NULL, "expected a NULL hwnd\n" );
     ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
@@ -8013,6 +8023,62 @@ static void test_FindWindowEx(void)
     found = FindWindowExA( 0, 0, "Shell_TrayWnd", "" );
     ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
     found = FindWindowExA( 0, 0, "Shell_TrayWnd", NULL );
+    ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
+}
+
+static void test_FindWindow(void)
+{
+    HWND hwnd, found;
+
+    hwnd = CreateWindowExA( 0, "MainWindowClass", "caption", WS_POPUP, 0,0,0,0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
+
+    num_gettext_msgs = 0;
+    found = FindWindowA( "ClassThatDoesntExist", "" );
+    ok( found == NULL, "expected a NULL hwnd\n" );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    found = FindWindowA( "ClassThatDoesntExist", NULL );
+    ok( found == NULL, "expected a NULL hwnd\n" );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    found = FindWindowA( "MainWindowClass", "" );
+    ok( found == NULL, "expected a NULL hwnd\n" );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    found = FindWindowA( "MainWindowClass", NULL );
+    ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    found = FindWindowA( "MainWindowClass", "caption" );
+    ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    DestroyWindow( hwnd );
+
+    hwnd = CreateWindowExA( 0, "MainWindowClass", NULL, WS_POPUP, 0,0,0,0, 0, 0, 0, NULL );
+    ok( hwnd != 0, "CreateWindowExA error %d\n", GetLastError() );
+
+    num_gettext_msgs = 0;
+    found = FindWindowA( "MainWindowClass", "" );
+    ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    found = FindWindowA( "MainWindowClass", NULL );
+    ok( found == hwnd, "found is %p, expected a valid hwnd\n", found );
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    DestroyWindow( hwnd );
+
+    /* test behaviour with a window title that is an empty character */
+    found = FindWindowA( "Shell_TrayWnd", "" );
+    ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
+    found = FindWindowA( "Shell_TrayWnd", NULL );
     ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
 }
 
@@ -9500,6 +9566,7 @@ START_TEST(win)
 
     /* make sure that these tests are executed first */
     test_FindWindowEx();
+    test_FindWindow();
     test_SetParent();
 
     hwndMain2 = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window 2",
