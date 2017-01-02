@@ -945,6 +945,104 @@ static void test_set_clipboard(void)
     OleUninitialize();
 }
 
+static LPDATAOBJECT clip_data;
+static HWND next_wnd;
+static UINT wm_drawclipboard;
+
+static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    LRESULT ret;
+
+    switch (msg)
+    {
+    case WM_DRAWCLIPBOARD:
+        wm_drawclipboard++;
+        if (clip_data)
+        {
+            /* if this is the WM_DRAWCLIPBOARD of a previous change, the data isn't current yet */
+            /* this demonstrates an issue in Qt where it will free the data while it's being set */
+            HRESULT hr = OleIsCurrentClipboard( clip_data );
+            ok( hr == (wm_drawclipboard > 1) ? S_OK : S_FALSE,
+                "OleIsCurrentClipboard returned %x\n", hr );
+        }
+        break;
+    case WM_CHANGECBCHAIN:
+        if (next_wnd == (HWND)wp) next_wnd = (HWND)lp;
+        else if (next_wnd) SendMessageA( next_wnd, msg, wp, lp );
+        break;
+    case WM_USER:
+        ret = wm_drawclipboard;
+        wm_drawclipboard = 0;
+        return ret;
+    }
+
+    return DefWindowProcA(hwnd, msg, wp, lp);
+}
+
+static DWORD CALLBACK set_clipboard_thread(void *arg)
+{
+    OpenClipboard( GetDesktopWindow() );
+    EmptyClipboard();
+    SetClipboardData( CF_WAVE, 0 );
+    CloseClipboard();
+    return 0;
+}
+
+/* test that WM_DRAWCLIPBOARD can be delivered for a previous change during OleSetClipboard */
+static void test_set_clipboard_DRAWCLIPBOARD(void)
+{
+    LPDATAOBJECT data;
+    HRESULT hr;
+    WNDCLASSA cls;
+    HWND viewer;
+    int ret;
+    HANDLE thread;
+
+    hr = DataObjectImpl_CreateText("data", &data);
+    ok(hr == S_OK, "Failed to create data object: 0x%08x\n", hr);
+
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = clipboard_wnd_proc;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.lpszClassName = "clipboard_test";
+    RegisterClassA(&cls);
+
+    viewer = CreateWindowA("clipboard_test", NULL, 0, 0, 0, 0, 0, NULL, 0, NULL, 0);
+    ok(viewer != NULL, "CreateWindow failed: %d\n", GetLastError());
+    next_wnd = SetClipboardViewer( viewer );
+
+    ret = SendMessageA( viewer, WM_USER, 0, 0 );
+    ok( ret == 1, "%u WM_DRAWCLIPBOARD received\n", ret );
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_OK, "OleInitialize failed with error 0x%08x\n", hr);
+
+    ret = SendMessageA( viewer, WM_USER, 0, 0 );
+    ok( !ret, "%u WM_DRAWCLIPBOARD received\n", ret );
+
+    thread = CreateThread(NULL, 0, set_clipboard_thread, NULL, 0, NULL);
+    ok(thread != NULL, "CreateThread failed (%d)\n", GetLastError());
+    ret = WaitForSingleObject(thread, 5000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", ret);
+
+    clip_data = data;
+    hr = OleSetClipboard(data);
+    ok(hr == S_OK, "failed to set clipboard to data, hr = 0x%08x\n", hr);
+
+    ret = SendMessageA( viewer, WM_USER, 0, 0 );
+    ok( ret == 2, "%u WM_DRAWCLIPBOARD received\n", ret );
+
+    clip_data = NULL;
+    hr = OleFlushClipboard();
+    ok(hr == S_OK, "failed to flush clipboard, hr = 0x%08x\n", hr);
+    ret = IDataObject_Release(data);
+    ok(ret == 0, "got %d\n", ret);
+
+    OleUninitialize();
+    ChangeClipboardChain( viewer, next_wnd );
+    DestroyWindow( viewer );
+}
+
 static inline ULONG count_refs(IDataObject *d)
 {
     IDataObject_AddRef(d);
@@ -1594,6 +1692,7 @@ START_TEST(clipboard)
 {
     test_get_clipboard_uninitialized();
     test_set_clipboard();
+    test_set_clipboard_DRAWCLIPBOARD();
     test_consumer_refs();
     test_flushed_getdata();
     test_nonole_clipboard();
