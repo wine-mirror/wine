@@ -11343,6 +11343,64 @@ static void test_get_render_target_data(void)
     DestroyWindow(window);
 }
 
+static void test_render_target_device_mismatch(void)
+{
+    IDirect3DDevice9 *device, *device2;
+    IDirect3DSurface9 *surface, *rt;
+    IDirect3D9 *d3d;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    device2 = create_device(d3d, window, NULL);
+    ok(!!device2, "Failed to create a D3D device.\n");
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device2, 640, 480,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device2, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    todo_wine ok(surface == rt, "Got unexpected render target %p, expected %p.\n", surface, rt);
+    IDirect3DSurface9_Release(surface);
+    IDirect3DSurface9_Release(rt);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDirect3DDevice9_Release(device2);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -11459,6 +11517,7 @@ START_TEST(device)
     test_check_device_format();
     test_miptree_layout();
     test_get_render_target_data();
+    test_render_target_device_mismatch();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
