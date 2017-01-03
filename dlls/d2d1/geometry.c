@@ -1942,6 +1942,8 @@ static HRESULT d2d_geometry_resolve_beziers(struct d2d_geometry *geometry)
                 {
                     sign = 1.0f;
                     d2d_figure_insert_vertex(figure, j + 1, *p1);
+                    /* Inserting a vertex potentially invalidates p0. */
+                    p0 = &figure->vertices[j];
                     ++j;
                 }
 
