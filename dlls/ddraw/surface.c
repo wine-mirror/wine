@@ -543,6 +543,8 @@ ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
 
     if (iface_count == 0)
     {
+        struct ddraw_texture *texture = wined3d_texture_get_parent(This->wined3d_texture);
+        struct wined3d_device *wined3d_device = texture->wined3d_device;
         IUnknown *release_iface = This->ifaceToRelease;
 
         /* Complex attached surfaces are destroyed implicitly when the root is released */
@@ -558,6 +560,9 @@ ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
 
         if (release_iface)
             IUnknown_Release(release_iface);
+        /* Release the device only after anything that may reference it (the
+         * wined3d texture and rendertarget view in particular) is released. */
+        wined3d_device_decref(wined3d_device);
     }
 
     return iface_count;
@@ -6142,6 +6147,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     wined3d_texture_decref(wined3d_texture);
     root->is_complex_root = TRUE;
     texture->root = root;
+    wined3d_device_incref(texture->wined3d_device = ddraw->wined3d_device);
 
     if (desc->dwFlags & DDSD_CKDESTOVERLAY)
         wined3d_texture_set_color_key(wined3d_texture, DDCKEY_DESTOVERLAY,
@@ -6260,6 +6266,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             last = wined3d_texture_get_sub_resource_parent(wined3d_texture, 0);
             wined3d_texture_decref(wined3d_texture);
             texture->root = last;
+            wined3d_device_incref(texture->wined3d_device = ddraw->wined3d_device);
 
             if (desc->dwFlags & DDSD_CKDESTOVERLAY)
                 wined3d_texture_set_color_key(wined3d_texture, DDCKEY_DESTOVERLAY,

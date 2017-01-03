@@ -206,6 +206,7 @@ struct ddraw_texture
     DDSURFACEDESC2 surface_desc;
 
     struct ddraw_surface *root;
+    struct wined3d_device *wined3d_device;
 };
 
 HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
