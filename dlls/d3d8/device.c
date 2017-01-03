@@ -1161,6 +1161,12 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
 
     TRACE("iface %p, render_target %p, depth_stencil %p.\n", iface, render_target, depth_stencil);
 
+    if (rt_impl && d3d8_surface_get_device(rt_impl) != device)
+    {
+        WARN("Render target surface does not match device.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     wined3d_mutex_lock();
 
     if (ds_impl)
@@ -1200,7 +1206,6 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
             WARN("Multisample settings do not match, returning D3DERR_INVALIDCALL\n");
             wined3d_mutex_unlock();
             return D3DERR_INVALIDCALL;
-
         }
     }
 

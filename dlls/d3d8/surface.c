@@ -353,6 +353,13 @@ static const struct wined3d_parent_ops d3d8_view_wined3d_parent_ops =
     view_wined3d_object_destroyed,
 };
 
+struct d3d8_device *d3d8_surface_get_device(const struct d3d8_surface *surface)
+{
+    IDirect3DDevice8 *device;
+    device = surface->texture ? surface->texture->parent_device : surface->parent_device;
+    return impl_from_IDirect3DDevice8(device);
+}
+
 struct wined3d_rendertarget_view *d3d8_surface_get_rendertarget_view(struct d3d8_surface *surface)
 {
     HRESULT hr;
