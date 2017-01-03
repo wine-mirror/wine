@@ -296,12 +296,12 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 {
     HRESULT hres;
     REFERENCE_TIME period;
-    UINT32 frames;
+    UINT32 acbuf_frames, aclen_frames;
     DWORD period_ms;
     IAudioClient *client = NULL;
     IAudioRenderClient *render = NULL;
     IAudioStreamVolume *volume = NULL;
-    DWORD fraglen;
+    DWORD frag_frames;
     WAVEFORMATEX *wfx = NULL;
     DWORD oldspeakerconfig = device->speaker_config;
 
@@ -350,17 +350,20 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
         WARN("GetStreamLatency failed with %08x\n", hres);
         goto err;
     }
-    hres = IAudioClient_GetBufferSize(client, &frames);
+    hres = IAudioClient_GetBufferSize(client, &acbuf_frames);
     if (FAILED(hres)) {
         WARN("GetBufferSize failed with %08x\n", hres);
         goto err;
     }
 
     period_ms = (period + 9999) / 10000;
-    fraglen = MulDiv(wfx->nSamplesPerSec, period, 10000000) * wfx->nBlockAlign;
-    TRACE("period %u ms fraglen %u buflen %u\n", period_ms, fraglen, frames * wfx->nBlockAlign);
+    frag_frames = MulDiv(wfx->nSamplesPerSec, period, 10000000);
 
-    hres = DSOUND_PrimaryOpen(device, wfx, frames, forcewave);
+    aclen_frames = min(acbuf_frames, 3 * frag_frames);
+
+    TRACE("period %u ms fraglen %u buflen %u\n", period_ms, frag_frames * wfx->nBlockAlign, aclen_frames * wfx->nBlockAlign);
+
+    hres = DSOUND_PrimaryOpen(device, wfx, aclen_frames, forcewave);
     if(FAILED(hres))
         goto err;
 
@@ -368,8 +371,8 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
     device->client = client;
     device->render = render;
     device->volume = volume;
-    device->fraglen = fraglen;
-    device->aclen = frames * wfx->nBlockAlign;
+    device->fraglen = frag_frames * wfx->nBlockAlign;
+    device->aclen = aclen_frames * wfx->nBlockAlign;
 
     if (period_ms < 3)
         device->sleeptime = 5;
