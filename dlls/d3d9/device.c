@@ -1523,8 +1523,14 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
 
     if (!idx && !surface_impl)
     {
-         WARN("Trying to set render target 0 to NULL.\n");
-         return D3DERR_INVALIDCALL;
+        WARN("Trying to set render target 0 to NULL.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (surface_impl && d3d9_surface_get_device(surface_impl) != device)
+    {
+        WARN("Render target surface does not match device.\n");
+        return D3DERR_INVALIDCALL;
     }
 
     wined3d_mutex_lock();

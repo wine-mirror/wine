@@ -230,6 +230,7 @@ struct d3d9_surface
     struct d3d9_texture *texture;
 };
 
+struct d3d9_device *d3d9_surface_get_device(const struct d3d9_surface *surface) DECLSPEC_HIDDEN;
 struct wined3d_rendertarget_view *d3d9_surface_get_rendertarget_view(struct d3d9_surface *surface) DECLSPEC_HIDDEN;
 void surface_init(struct d3d9_surface *surface, struct wined3d_texture *wined3d_texture,
         unsigned int sub_resource_idx, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;

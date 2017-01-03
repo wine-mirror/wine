@@ -11375,7 +11375,7 @@ static void test_render_target_device_mismatch(void)
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     IDirect3DSurface9_Release(surface);
 
@@ -11383,13 +11383,13 @@ static void test_render_target_device_mismatch(void)
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     IDirect3DSurface9_Release(surface);
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &surface);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
-    todo_wine ok(surface == rt, "Got unexpected render target %p, expected %p.\n", surface, rt);
+    ok(surface == rt, "Got unexpected render target %p, expected %p.\n", surface, rt);
     IDirect3DSurface9_Release(surface);
     IDirect3DSurface9_Release(rt);
 
