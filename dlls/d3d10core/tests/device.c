@@ -10223,6 +10223,35 @@ static void test_primitive_restart(void)
     release_test_context(&test_context);
 }
 
+static void test_render_target_device_mismatch(void)
+{
+    struct d3d10core_test_context test_context;
+    ID3D10RenderTargetView *rtv;
+    ID3D10Device *device;
+    ULONG refcount;
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = create_device();
+    ok(!!device, "Failed to create device.\n");
+
+    rtv = (ID3D10RenderTargetView *)0xdeadbeef;
+    ID3D10Device_OMGetRenderTargets(device, 1, &rtv, NULL);
+    ok(!rtv, "Got unexpected render target view %p.\n", rtv);
+    ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, NULL);
+    ID3D10Device_OMGetRenderTargets(device, 1, &rtv, NULL);
+    ok(rtv == test_context.backbuffer_rtv, "Got unexpected render target view %p.\n", rtv);
+    ID3D10RenderTargetView_Release(rtv);
+
+    rtv = NULL;
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -10281,4 +10310,5 @@ START_TEST(device)
     test_stencil_separate();
     test_sm4_ret_instruction();
     test_primitive_restart();
+    test_render_target_device_mismatch();
 }
