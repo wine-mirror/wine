@@ -12664,6 +12664,40 @@ static void test_sm5_bufinfo_instruction(void)
     release_test_context(&test_context);
 }
 
+static void test_render_target_device_mismatch(void)
+{
+    struct d3d11_test_context test_context;
+    struct device_desc device_desc = {0};
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Device *device;
+    ULONG refcount;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = create_device(&device_desc);
+    ok(!!device, "Failed to create device.\n");
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    rtv = (ID3D11RenderTargetView *)0xdeadbeef;
+    ID3D11DeviceContext_OMGetRenderTargets(context, 1, &rtv, NULL);
+    ok(!rtv, "Got unexpected render target view %p.\n", rtv);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
+    ID3D11DeviceContext_OMGetRenderTargets(context, 1, &rtv, NULL);
+    ok(rtv == test_context.backbuffer_rtv, "Got unexpected render target view %p.\n", rtv);
+    ID3D11RenderTargetView_Release(rtv);
+
+    rtv = NULL;
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    ID3D11DeviceContext_Release(context);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -12732,4 +12766,5 @@ START_TEST(d3d11)
     test_sm4_ret_instruction();
     test_primitive_restart();
     test_sm5_bufinfo_instruction();
+    test_render_target_device_mismatch();
 }
