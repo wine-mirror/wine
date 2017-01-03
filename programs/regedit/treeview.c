@@ -529,6 +529,7 @@ HWND StartKeyRename(HWND hwndTV)
     HTREEITEM hItem;
 
     if(!(hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0))) return 0;
+    SetWindowLongPtrW(hwndTV, GWLP_USERDATA, 1);
     return (HWND)SendMessageW(hwndTV, TVM_EDITLABELW, 0, (LPARAM)hItem);
 }
 

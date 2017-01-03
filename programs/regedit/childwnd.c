@@ -419,7 +419,12 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             }
             case TVN_BEGINLABELEDITW: {
                 HKEY hRootKey;
-                LPWSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
+                LPWSTR path;
+
+                if (!GetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA))
+                    return 1;
+
+                path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
                 if (!path || !*path) return 1;
                 return 0;
             }
@@ -440,6 +445,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                     HeapFree(GetProcessHeap(), 0, fullPath);
 		}
                 HeapFree(GetProcessHeap(), 0, path);
+                SetWindowLongPtrW(g_pChildWnd->hTreeWnd, GWLP_USERDATA, 0);
 		return res;
 	    }
             default:
