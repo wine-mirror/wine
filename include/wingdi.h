@@ -1415,7 +1415,7 @@ typedef struct
 #define GCPCLASS_LATINNUMERICSEPARATOR     8
 #define GCPCLASS_NUMERICSEPARATOR          9
 #define GCPCLASS_PREBOUNDLTR               0x80
-#define GCPCLASS_PREBOUNDRLT               0x40
+#define GCPCLASS_PREBOUNDRTL               0x40
 #define GCPCLASS_POSTBOUNDLTR              0x20
 #define GCPCLASS_POSTBOUNDRTL              0x10
 
