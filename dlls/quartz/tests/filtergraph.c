@@ -354,25 +354,26 @@ static void test_render_run(const WCHAR *file)
     HANDLE h;
     HRESULT hr;
 
+    h = CreateFileW(file, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (h == INVALID_HANDLE_VALUE) {
+        skip("Could not read test file %s, skipping test\n", wine_dbgstr_w(file));
+        return;
+    }
+    CloseHandle(h);
+
     if (!createfiltergraph())
         return;
 
-    h = CreateFileW(file, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (h != INVALID_HANDLE_VALUE) {
-        CloseHandle(h);
-        hr = IGraphBuilder_RenderFile(pgraph, file, NULL);
-        ok(hr==S_OK, "RenderFile returned: %x\n", hr);
-        rungraph();
-    }
+    hr = IGraphBuilder_RenderFile(pgraph, file, NULL);
+    ok(hr == S_OK, "RenderFile returned: %x\n", hr);
+    rungraph();
 
     releasefiltergraph();
 
-    if (h != INVALID_HANDLE_VALUE) {
-        /* check reference leaks */
-        h = CreateFileW(file, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-        ok(h != INVALID_HANDLE_VALUE, "CreateFile failed: err=%d\n", GetLastError());
-        CloseHandle(h);
-    }
+    /* check reference leaks */
+    h = CreateFileW(file, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(h != INVALID_HANDLE_VALUE, "CreateFile failed: err=%d\n", GetLastError());
+    CloseHandle(h);
 }
 
 static void test_graph_builder(void)
