@@ -65,13 +65,17 @@ struct surface_readback
 
 static void get_rt_readback(IDirect3DSurface8 *surface, struct surface_readback *rb)
 {
-    IDirect3DDevice8 *device;
     IDirect3DTexture8 *tex = NULL;
+    IDirect3DDevice8 *device;
+    D3DSURFACE_DESC desc;
     HRESULT hr;
 
     memset(rb, 0, sizeof(*rb));
-    IDirect3DSurface8_GetDevice(surface, &device);
-    hr = IDirect3DDevice8_CreateTexture(device, 640, 480, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &tex);
+    hr = IDirect3DSurface8_GetDevice(surface, &device);
+    ok(SUCCEEDED(hr), "Failed to get device, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_GetDesc(surface, &desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateTexture(device, desc.Width, desc.Height, 1, 0, desc.Format, D3DPOOL_SYSTEMMEM, &tex);
     if (FAILED(hr) || !tex)
     {
         trace("Can't create an offscreen plain surface to read the render target data, hr %#x.\n", hr);
