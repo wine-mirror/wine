@@ -167,7 +167,7 @@ static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *value_nam
 
 static void test_basic_import(void)
 {
-    HKEY hkey;
+    HKEY hkey, subkey;
     DWORD dword = 0x17;
     char exp_binary[] = {0xAA,0xBB,0xCC,0x11};
     WCHAR wide_test[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
@@ -277,6 +277,36 @@ static void test_basic_import(void)
     dword = 0x50;
     verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
     todo_wine verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"double\\\"quote\"=\"valid \\\"or\\\" not\"\n"
+                    "\"single'quote\"=dword:00000008\n\n");
+    verify_reg(hkey, "double\"quote", REG_SZ, "valid \"or\" not", 15, 0);
+    dword = 0x00000008;
+    verify_reg(hkey, "single'quote", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey\"1]\n"
+                    "\"Wine\\\\31\"=\"Test value\"\n\n");
+    lr = RegOpenKeyExA(hkey, "Subkey\"1", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
+    lr = RegCloseKey(subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
+                    "\"123/\\\"4;'5\"=\"Random value name\"\n\n");
+    lr = RegOpenKeyExA(hkey, "Subkey/2", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
+    lr = RegCloseKey(subkey);
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
+    ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
 
     RegCloseKey(hkey);
 
