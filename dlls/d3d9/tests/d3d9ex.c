@@ -63,25 +63,28 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 
 static DWORD get_pixel_color(IDirect3DDevice9Ex *device, unsigned int x, unsigned int y)
 {
-    DWORD ret;
     IDirect3DSurface9 *surf = NULL, *target = NULL;
-    HRESULT hr;
-    D3DLOCKED_RECT locked_rect;
     RECT rect = {x, y, x + 1, y + 1};
-
-    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 640, 480,
-            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
-    if (FAILED(hr) || !surf)
-    {
-        trace("Can't create an offscreen plain surface to read the render target data, hr %#x.\n", hr);
-        return 0xdeadbeef;
-    }
+    D3DLOCKED_RECT locked_rect;
+    D3DSURFACE_DESC desc;
+    HRESULT hr;
+    DWORD ret;
 
     hr = IDirect3DDevice9Ex_GetRenderTarget(device, 0, &target);
     if (FAILED(hr))
     {
         trace("Can't get the render target, hr %#x.\n", hr);
-        ret = 0xdeadbeed;
+        return 0xdeadbeed;
+    }
+
+    hr = IDirect3DSurface9_GetDesc(target, &desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, desc.Width, desc.Height,
+            desc.Format, D3DPOOL_SYSTEMMEM, &surf, NULL);
+    if (FAILED(hr) || !surf)
+    {
+        trace("Can't create an offscreen plain surface to read the render target data, hr %#x.\n", hr);
+        ret = 0xdeadbeef;
         goto out;
     }
 
