@@ -1156,7 +1156,7 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct d3d8_surface *rt_impl = unsafe_impl_from_IDirect3DSurface8(render_target);
     struct d3d8_surface *ds_impl = unsafe_impl_from_IDirect3DSurface8(depth_stencil);
-    struct wined3d_rendertarget_view *original_dsv;
+    struct wined3d_rendertarget_view *original_dsv, *rtv;
     HRESULT hr = D3D_OK;
 
     TRACE("iface %p, render_target %p, depth_stencil %p.\n", iface, render_target, depth_stencil);
@@ -1178,7 +1178,6 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         /* If no render target is passed in check the size against the current RT */
         if (!render_target)
         {
-
             if (!(original_rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0)))
             {
                 wined3d_mutex_unlock();
@@ -1210,11 +1209,13 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
     }
 
     original_dsv = wined3d_device_get_depth_stencil_view(device->wined3d_device);
-    wined3d_device_set_depth_stencil_view(device->wined3d_device,
-            ds_impl ? d3d8_surface_get_rendertarget_view(ds_impl) : NULL);
-    if (render_target && FAILED(hr = wined3d_device_set_rendertarget_view(device->wined3d_device, 0,
-            d3d8_surface_get_rendertarget_view(rt_impl), TRUE)))
+    rtv = ds_impl ? d3d8_surface_acquire_rendertarget_view(ds_impl) : NULL;
+    wined3d_device_set_depth_stencil_view(device->wined3d_device, rtv);
+    d3d8_surface_release_rendertarget_view(ds_impl, rtv);
+    rtv = render_target ? d3d8_surface_acquire_rendertarget_view(rt_impl) : NULL;
+    if (render_target && FAILED(hr = wined3d_device_set_rendertarget_view(device->wined3d_device, 0, rtv, TRUE)))
         wined3d_device_set_depth_stencil_view(device->wined3d_device, original_dsv);
+    d3d8_surface_release_rendertarget_view(rt_impl, rtv);
 
     wined3d_mutex_unlock();
 

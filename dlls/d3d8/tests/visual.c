@@ -9684,7 +9684,6 @@ static void test_max_index16(void)
     DestroyWindow(window);
 }
 
-/* This test exercises a regression in Wine d3d8 implementation. */
 static void test_backbuffer_resize(void)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -9719,8 +9718,8 @@ static void test_backbuffer_resize(void)
         goto done;
     }
 
-    /* In order to exercise the regression the backbuffer surface has to be
-     * unreferenced when SetRenderTarget() is called. */
+    /* Wine d3d8 implementation had a bug which was triggered by a
+     * SetRenderTarget() call with an unreferenced surface. */
     hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
     refcount = IDirect3DSurface8_Release(backbuffer);
@@ -9766,7 +9765,7 @@ static void test_backbuffer_resize(void)
     color = getPixelColor(device, 1, 1);
     ok(color == 0x00ffff00, "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 700, 500);
-    todo_wine ok(color == 0x00ffff00, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0x00ffff00, "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice8_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
@@ -9777,7 +9776,7 @@ static void test_backbuffer_resize(void)
     color = getPixelColor(device, 1, 1);
     ok(color == 0x0000ff00, "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 700, 500);
-    todo_wine ok(color == 0x0000ff00, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0x0000ff00, "Got unexpected color 0x%08x.\n", color);
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);

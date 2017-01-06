@@ -242,8 +242,10 @@ struct d3d8_surface
     struct d3d8_texture *texture;
 };
 
+struct wined3d_rendertarget_view *d3d8_surface_acquire_rendertarget_view(struct d3d8_surface *surface) DECLSPEC_HIDDEN;
 struct d3d8_device *d3d8_surface_get_device(const struct d3d8_surface *surface) DECLSPEC_HIDDEN;
-struct wined3d_rendertarget_view *d3d8_surface_get_rendertarget_view(struct d3d8_surface *surface) DECLSPEC_HIDDEN;
+void d3d8_surface_release_rendertarget_view(struct d3d8_surface *surface,
+        struct wined3d_rendertarget_view *rtv) DECLSPEC_HIDDEN;
 void surface_init(struct d3d8_surface *surface, struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
         const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
 struct d3d8_surface *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
