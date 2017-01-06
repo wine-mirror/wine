@@ -396,9 +396,14 @@ struct d3d9_device *d3d9_surface_get_device(const struct d3d9_surface *surface)
     return impl_from_IDirect3DDevice9Ex(device);
 }
 
-struct wined3d_rendertarget_view *d3d9_surface_get_rendertarget_view(struct d3d9_surface *surface)
+struct wined3d_rendertarget_view *d3d9_surface_acquire_rendertarget_view(struct d3d9_surface *surface)
 {
     HRESULT hr;
+
+    /* The surface reference count can be equal to 0 when this function is
+     * called. In order to properly manage the render target view reference
+     * count, we temporarily increment the surface reference count. */
+    d3d9_surface_AddRef(&surface->IDirect3DSurface9_iface);
 
     if (surface->wined3d_rtv)
         return surface->wined3d_rtv;
@@ -407,6 +412,7 @@ struct wined3d_rendertarget_view *d3d9_surface_get_rendertarget_view(struct d3d9
             surface->sub_resource_idx, surface, &d3d9_view_wined3d_parent_ops, &surface->wined3d_rtv)))
     {
         ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        d3d9_surface_Release(&surface->IDirect3DSurface9_iface);
         return NULL;
     }
 
@@ -414,6 +420,13 @@ struct wined3d_rendertarget_view *d3d9_surface_get_rendertarget_view(struct d3d9
         list_add_head(&surface->texture->rtv_list, &surface->rtv_entry);
 
     return surface->wined3d_rtv;
+}
+
+void d3d9_surface_release_rendertarget_view(struct d3d9_surface *surface,
+        struct wined3d_rendertarget_view *rtv)
+{
+    if (rtv)
+        d3d9_surface_Release(&surface->IDirect3DSurface9_iface);
 }
 
 struct d3d9_surface *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface)

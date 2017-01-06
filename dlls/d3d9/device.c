@@ -1421,6 +1421,7 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_surface *surface_impl = unsafe_impl_from_IDirect3DSurface9(surface);
     struct wined3d_sub_resource_desc desc;
+    struct wined3d_rendertarget_view *rtv;
     HRESULT hr;
 
     TRACE("iface %p, surface %p, rect %p, color 0x%08x.\n", iface, surface, rect, color);
@@ -1453,9 +1454,10 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
         return D3DERR_INVALIDCALL;
     }
 
+    rtv = d3d9_surface_acquire_rendertarget_view(surface_impl);
     hr = wined3d_device_clear_rendertarget_view(device->wined3d_device,
-            d3d9_surface_get_rendertarget_view(surface_impl), rect,
-            WINED3DCLEAR_TARGET, &c, 0.0f, 0);
+            rtv, rect, WINED3DCLEAR_TARGET, &c, 0.0f, 0);
+    d3d9_surface_release_rendertarget_view(surface_impl, rtv);
 
     wined3d_mutex_unlock();
 
@@ -1511,6 +1513,7 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_surface *surface_impl = unsafe_impl_from_IDirect3DSurface9(surface);
+    struct wined3d_rendertarget_view *rtv;
     HRESULT hr;
 
     TRACE("iface %p, idx %u, surface %p.\n", iface, idx, surface);
@@ -1534,8 +1537,9 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_rendertarget_view(device->wined3d_device, idx,
-            surface_impl ? d3d9_surface_get_rendertarget_view(surface_impl) : NULL, TRUE);
+    rtv = surface_impl ? d3d9_surface_acquire_rendertarget_view(surface_impl) : NULL;
+    hr = wined3d_device_set_rendertarget_view(device->wined3d_device, idx, rtv, TRUE);
+    d3d9_surface_release_rendertarget_view(surface_impl, rtv);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1582,12 +1586,14 @@ static HRESULT WINAPI d3d9_device_SetDepthStencilSurface(IDirect3DDevice9Ex *ifa
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_surface *ds_impl = unsafe_impl_from_IDirect3DSurface9(depth_stencil);
+    struct wined3d_rendertarget_view *rtv;
 
     TRACE("iface %p, depth_stencil %p.\n", iface, depth_stencil);
 
     wined3d_mutex_lock();
-    wined3d_device_set_depth_stencil_view(device->wined3d_device,
-            ds_impl ? d3d9_surface_get_rendertarget_view(ds_impl) : NULL);
+    rtv = ds_impl ? d3d9_surface_acquire_rendertarget_view(ds_impl) : NULL;
+    wined3d_device_set_depth_stencil_view(device->wined3d_device, rtv);
+    d3d9_surface_release_rendertarget_view(ds_impl, rtv);
     wined3d_mutex_unlock();
 
     return D3D_OK;
