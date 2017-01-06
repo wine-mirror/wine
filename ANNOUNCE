@@ -1,12 +1,12 @@
-The Wine development release 2.0-rc3 is now available.
+The Wine development release 2.0-rc4 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc3.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc3.tar.bz2
+  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc4.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc4.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,100 +22,111 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.0-rc3 (total 15):
+Bugs fixed in 2.0-rc4 (total 28):
 
-  18081  warhammer dawn of war ii crashes
-  38207  Unreal Tournament 3 uninstaller fails when invoking from 'wine uninstaller' (removes wrong entries)
-  38555  The Magic School Bus Explores the Solar System hangs  during installation
-  39661  Font width incorrect in wineconsole
-  40429  regression: "mscoree set config path for default app domain" makes .NET app not working
-  40845  Uninstaller does not remove missing applications from the list
-  41378  wineboot silently ignores unknown WINEARCH
-  41476  Cannot paste in WinAuth 3.5.1 (32-bit)
-  41609  Uninstaller entries are not removed from the registry when the uninstaller says they will be
-  41732  wineconsole: changing to emacs mode requires restart
-  41733  wineconsole: crashes in emacs mode when pasting (Ctrl+Y) empty buffer
-  41744  Streamline crashes on launch
-  41869  Wine is not compiling: undefined reference to 'HIDIOCSFEATURE'
-  41909  Calling TBM_SETPOS after TBM_SETRANGEMIN/TBM_SETRANGEMAX does not draw slider control properly
-  41993  Chuckie Egg: The Next Batch v1.2 no longer works
+   7592  Window problems when running Citrix ICA client ICA16  v6.20.985 (Win16)
+  11808  winefile: broken horizontal scrolling
+  24718  Condes renders every line or point 100x thicker than it should be
+  29287  Heroes of Might and Magic IV: performance issues with Opengl renderer
+  32682  Multiple .NET 4.0 applications fail to load the pen cursor (IDC_PEN, 32631, 0x7F77 missing)
+  33570  SWAT 4:  Mouse Escapes Wine environment in full screen or windowed mode
+  34030  Altium Designer 10 hangs on startup accessing a driver
+  34807  Gruntz crashes on startup in d3d
+  35293  Halo: Combat Evolved has graphical glitches
+  35700  Arabic Shaping Is Broken After Rechedit News.
+  36959  Whirlwind of Vietnam crashes after starting
+  37416  The Sims 3: Display locks when running in window, uses 100% cpu
+  38766  RpcBindingServerFromClient is unimplemented, needed to determine client Computer Name/IP Address
+  39268  x11drv: Can't store handle for display fd
+  39714  Halo some sounds in cut scenes don't play
+  40169  Recognize INTERNET_FLAG_SECURE with INTERNET_INVALID_PORT_NUMBER in GetHttpConnection
+  40243  Korg Nano editor USB MIDI driver won't install, requires Administrator Privileges
+  40477  Motocross Madness and 3DMark2000 do not start (VRAM, video memory size)
+  41347  TMIDI Player: Some characters and logos in LCD are rendered as black rectangles
+  41599  Battle.net and Hearthstone play loud static when receiving messages
+  41708  Duo 0.10 crashes on startup
+  41998  Regression in wined3d crashes visual novel "A drug that makes you dream"
+  42031  Heroes Of Might & Magic VI: no more started
+  42057  Pressing Ctrl+C to close iTunes results in error dialog with gibberish title
+  42071  LINE (Powered by Naver): LINE does not work on wine 1.9.16 and later versions
+  42074  osu! - Audio latency regression (ALSA)
+  42090  Highway Pursuit constantly emits loud noise when sound effects enabled
+  42101  Strania - The Stella Machina (Steam) black screen on launch
 
 ----------------------------------------------------------------
 
-Changes since 2.0-rc2:
+Changes since 2.0-rc3:
 
-Alex Henrie (2):
-      po: Update Catalan translation.
-      msvcrt: Pass wide char caption string to MessageBoxIndirectW.
+Alex Henrie (1):
+      gdiplus: Fix memory leak in format_string_callback error path.
 
-Alexandre Julliard (4):
-      winex11: Also ignore BadWindow errors caused by XSendEvent.
-      msvcrt: Disable relay for the __libm_sse2 functions.
-      wineconsole: Leave room for wide characters only when using a DBCS codepage.
-      msvcirt/tests: Silence a compiler warning.
+Alexandre Julliard (3):
+      gdi32: Support PALETTEINDEX colors for 1-bpp DIB blits.
+      ole32/tests: Add a test for WM_DRAWCLIPBOARD during OleSetClipboard.
+      Update copyright info for 2017.
 
-Andrew Eikum (1):
-      mscoree: Leave the last backslash on application base path.
+Alistair Leslie-Hughes (2):
+      include: Correct misspelt GCPCLASS_PREBOUNDRTL define.
+      include: Add LLONG_MIN, LLONG_MAX, ULLONG_MAX defines.
+
+Andrew Eikum (3):
+      dsound: Fix rolloff factor calculation.
+      dsound: Use the value from SetVolume when 3D processing is disabled.
+      dsound: Don't write more than three periods to IAudioClient.
 
 André Hentschel (1):
-      hlink/tests: Ignore single character fails on Win10.
+      hlink/tests: Test skipped data.
 
-Aric Stewart (1):
-      hidclass.sys: Do not use device after free.
+Henri Verbeet (4):
+      ddraw: Keep an explicit reference to the wined3d device in surfaces.
+      wined3d: Only check rtv and dsv bindings in device_resource_released() when D3D is initialised.
+      wined3d: Pass GL_SYNC_FLUSH_COMMANDS_BIT to glClientWaitSync() if WINED3DGETDATA_FLUSH was specified.
+      d2d1: Update "p0" after inserting a vertex in d2d_geometry_resolve_beziers().
 
-Austin English (1):
-      webservices: Allocate enough memory for WS_XML_TEXT_TYPE_DOUBLE on Valgrind.
+Hugh McMaster (3):
+      regedit: Import files using 'rb' mode.
+      regedit/tests: Add tests for quotes and slashes in keys, values and data.
+      reg/tests: Add tests for quotes and slashes in keys, values and data.
 
-Can Taşan (1):
-      po: Update Turkish translation.
+Jactry Zeng (1):
+      quartz/tests: Skip test_render_run() if test file doesn't exist.
 
-Hans Leidekker (12):
-      advpack/tests: Skip inf install tests if the user doesn't have admin rights.
-      mstask/tests: Skip ITaskScheduler::SetTargetComputer tests if the user doesn't have admin rights.
-      setupapi/tests: Skip SetupCopyOEMInfA tests if the user doesn't have admin rights.
-      setupapi/tests: Skip devinst tests if the user doesn't have admin rights.
-      urlmon/tests: Skip domain tests if the user doesn't have admin rights.
-      wintrust/tests: Fix test failures on Windows 8.1 and 10.
-      shell32/tests: Accept another error from SHFileOperationA.
-      shell32/tests: Skip SHFileOperation tests if the user doesn't have admin rights.
-      setupapi/tests: Skip SetupGetInfInformation tests if the user doesn't have admin rights.
-      setupapi/tests: Skip InstallHinfSection tests if the user doesn't have admin rights.
-      user32/tests: Disable automatic shell restart during SetShellWindow tests.
-      webservices/tests: Add a helper to print the contents of the output buffer.
+Jarkko Korpi (1):
+      wined3d: Add Amd Rx 480 binary driver.
 
-Hugh McMaster (5):
-      regedit: Load Binary editor from context menu.
-      regedit/tests: Add tests for line concatenation when importing.
-      reg/tests: Add tests for line concatenation when importing.
-      appwiz.cpl: Do not overwrite application IDs when changing registry keys.
-      msvcrt: Fix typo in message_format array.
+Józef Kucia (15):
+      ddraw: Subtract framebuffer size from reported available video memory.
+      d3d11/tests: Add test for render target device mismatch.
+      d3d10core/tests: Add test for render target device mismatch.
+      d3d9/tests: Add test for render target device mismatch.
+      d3d8/tests: Add test for render target device mismatch.
+      d3d9: Reject render target surfaces created for other devices.
+      d3d8: Reject render target surfaces created for other devices.
+      d3d9/tests: Do not assume surface size and format in get_rt_readback().
+      d3d9/tests: Add test for stale render target views regression.
+      d3d8/tests: Do not assume surface size and format in get_rt_readback().
+      d3d8/tests: Add test for stale render target views regression.
+      d3d9/tests: Do not assume surface size and format in get_pixel_color().
+      d3d9/tests: Add d3d9ex test for backbuffer resize.
+      d3d9: Do not create render target view while surface refcount is equal to 0.
+      d3d8: Do not create render target view while surface refcount is equal to 0.
 
-Józef Kucia (3):
-      wined3d: Always check if context window needs to be updated.
-      d2d1/tests: Change scale factors in test_bitmap_brush().
-      d3d11/tests: Skip test_depth_stencil_sampling() on AMD Windows drivers.
+Louis Lenders (1):
+      wine.inf: Add Drivers32 registry key.
 
-Lauri Kenttä (1):
-      cmd: Fix memory leak in WCMD_reduce.
+Nikolay Sivov (2):
+      ole32/tests: Some tests for returned apartment type in implicit MTA case.
+      user32/tests: Added some tests for FindWindow().
 
-Marcus Meissner (1):
-      xmllite: Hr was uninitialized in error path (Coverity).
+Olivier F. R. Dierick (1):
+      xinput1_3: Add DECLSPEC_HOTPATCH to XInputEnable() definition.
 
-Nikolay Sivov (8):
-      gdiplus/tests: Test for initial properties of adjustable arrow caps.
-      dwrite: Fully initialize shared factory vtable.
-      dwrite: Improve strikethrough and underline thickness extraction logic.
-      shell32: Don't trace output string buffer contents.
-      shell32: Fix potential destination buffer overrun.
-      winspool: Initialize string pointers passed to StartDocDlgW() (Coverity).
-      winspool: Fix potential string buffer leaks (Coverity).
-      mscoree: Free argument buffer on error (Coverity).
+Pierre Schweitzer (1):
+      mpr: Enumerate connections capability before looking for functions entry points.
 
-Piotr Caban (1):
-      msvcrt/tests: Correctly declare base class to avoid a compiler warning.
-
-Zebediah Figura (1):
-      advapi32: Add tests for StartTrace().
+Piotr Caban (2):
+      msvcrt: Pass correct buffer size to snwprintf in DoMessageBoxW helper.
+      msvcp110: Add _Facet_base_vtable export.
 
 --
 Alexandre Julliard
