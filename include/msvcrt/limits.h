@@ -30,6 +30,10 @@
 #define LONG_MAX    0x7fffffffL
 #define ULONG_MAX   0xffffffffUL
 
+#define LLONG_MAX   (((__int64)0x7fffffff << 32) | 0xffffffff)
+#define LLONG_MIN   (-LLONG_MAX-1)
+#define ULLONG_MAX  (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
+
 #define _I64_MAX    (((__int64)0x7fffffff << 32) | 0xffffffff)
 #define _I64_MIN    (-_I64_MAX-1)
 #define _UI64_MAX   (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
