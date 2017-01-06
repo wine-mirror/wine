@@ -900,7 +900,7 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
         }
         break; /* FIXME don't know how to free allocated memory (handle) !! */
     case WM_DDE_EXECUTE:
-        lParam = convert_handle_16_to_32( lParam, GMEM_DDESHARE );
+        lParam = convert_handle_16_to_32( HIWORD(lParam), GMEM_DDESHARE );
         ret = callback( hwnd32, msg, wParam, lParam, result, arg );
         break; /* FIXME don't know how to free allocated memory (handle) !! */
     case WM_PAINTCLIPBOARD:
@@ -1280,7 +1280,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
         }
         break; /* FIXME don't know how to free allocated memory (handle) !! */
     case WM_DDE_EXECUTE:
-        lParam = convert_handle_32_to_16(lParam, GMEM_DDESHARE);
+        lParam = MAKELPARAM( 0, convert_handle_32_to_16( lParam, GMEM_DDESHARE ));
         ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
         break; /* FIXME don't know how to free allocated memory (handle) !! */
     case SBM_SETRANGE:
