@@ -24,7 +24,6 @@
 #define REG_FORMAT_5 1
 #define REG_FORMAT_4 2
 
-void output_writeconsole(const WCHAR *str, DWORD wlen);
 void __cdecl output_message(unsigned int id, ...);
 
 BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format);
