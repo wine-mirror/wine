@@ -1262,7 +1262,7 @@ static void test_depth_blit(void)
     SetRect(&dst_rect, 320, 240, 640, 480);
     hr = IDirectDrawSurface4_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
-    /* Streched. */
+    /* Stretched. */
     SetRect(&src_rect, 0, 0, 320, 240);
     SetRect(&dst_rect, 0, 0, 640, 480);
     hr = IDirectDrawSurface4_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
@@ -4810,7 +4810,7 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
     ok(activateapp_testdata.received, "Expected WM_ACTIVATEAPP, but did not receive it.\n");
 
-    /* DDraw is in exlusive mode now. */
+    /* DDraw is in exclusive mode now. */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
@@ -12174,7 +12174,7 @@ static void test_transform_vertices(void)
 
     /* Test the effect of Matrices.
      *
-     * Basically the x coodinate ends up as ((x + 1) * 2 + 0) * 5 and
+     * Basically the x coordinate ends up as ((x + 1) * 2 + 0) * 5 and
      * y as ((y + 0) * 2 + 1) * 5. The 5 comes from dvScaleX/Y, 2 from
      * the view matrix and the +1's from the world and projection matrix. */
     vp_data.dwX = 0;

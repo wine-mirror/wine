@@ -1148,7 +1148,7 @@ static void test_depth_blit(void)
     SetRect(&dst_rect, 320, 240, 640, 480);
     hr = IDirectDrawSurface7_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
     ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
-    /* Streched. */
+    /* Stretched. */
     SetRect(&src_rect, 0, 0, 320, 240);
     SetRect(&dst_rect, 0, 0, 640, 480);
     hr = IDirectDrawSurface7_Blt(ds2, &dst_rect, ds1, &src_rect, DDBLT_WAIT, NULL);
@@ -4598,7 +4598,7 @@ static void test_coop_level_activateapp(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
     ok(activateapp_testdata.received, "Expected WM_ACTIVATEAPP, but did not receive it.\n");
 
-    /* DDraw is in exlusive mode now. */
+    /* DDraw is in exclusive mode now. */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
