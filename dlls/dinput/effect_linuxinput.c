@@ -633,9 +633,9 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 
             This->effect.u.periodic.magnitude = (tsp->dwMagnitude / 10) * 32;
             This->effect.u.periodic.offset = (tsp->lOffset / 10) * 32;
-            /* phase ranges from 0 - 35999 in dinput and 0 - 65535 on linux */
+            /* phase ranges from 0 - 35999 in dinput and 0 - 65535 on Linux */
             This->effect.u.periodic.phase = (tsp->dwPhase / 36) * 65;
-            /* dinput uses microseconds, linux uses miliseconds */
+            /* dinput uses microseconds, Linux uses milliseconds */
             if (tsp->dwPeriod <= 1000)
                 This->effect.u.periodic.period = 1;
             else
