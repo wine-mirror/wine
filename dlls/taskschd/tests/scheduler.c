@@ -1459,7 +1459,7 @@ if (hr == S_OK)
 
     hr = ITaskDefinition_get_Triggers(taskdef, &trigger_col);
     ok(hr == S_OK, "get_Triggers failed: %08x\n", hr);
-    ok(trigger_col != NULL, "Trigers = NULL\n");
+    ok(trigger_col != NULL, "Triggers = NULL\n");
 
     hr = ITriggerCollection_Create(trigger_col, TASK_TRIGGER_DAILY, &trigger);
     ok(hr == S_OK, "Create failed: %08x\n", hr);
@@ -1470,7 +1470,7 @@ if (hr == S_OK)
 
     hr = ITaskDefinition_get_Triggers(taskdef, &trigger_col2);
     ok(hr == S_OK, "get_Triggers failed: %08x\n", hr);
-    ok(trigger_col == trigger_col2, "Trigers = NULL\n");
+    ok(trigger_col == trigger_col2, "Mismatched triggers\n");
     ITriggerCollection_Release(trigger_col2);
 
     IRegistrationInfo_Release(reginfo);
