@@ -1260,7 +1260,7 @@ static void test_get_containing_output(void)
     output_count = 0;
     while (IDXGIAdapter_EnumOutputs(adapter, output_count, &output) != DXGI_ERROR_NOT_FOUND)
     {
-        ok(SUCCEEDED(hr), "Failed to enumarate output %u, hr %#x.\n", output_count, hr);
+        ok(SUCCEEDED(hr), "Failed to enumerate output %u, hr %#x.\n", output_count, hr);
         IDXGIOutput_Release(output);
         ++output_count;
     }
@@ -1309,7 +1309,7 @@ static void test_get_containing_output(void)
     output_idx = 0;
     while ((hr = IDXGIAdapter_EnumOutputs(adapter, output_idx, &output)) != DXGI_ERROR_NOT_FOUND)
     {
-        ok(SUCCEEDED(hr), "Failed to enumarate output %u, hr %#x.\n", output_idx, hr);
+        ok(SUCCEEDED(hr), "Failed to enumerate output %u, hr %#x.\n", output_idx, hr);
 
         hr = IDXGIOutput_GetDesc(output, &output_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
@@ -1708,7 +1708,7 @@ static void test_default_fullscreen_target_output(void)
     output_idx = 0;
     while ((hr = IDXGIAdapter_EnumOutputs(adapter, output_idx, &output)) != DXGI_ERROR_NOT_FOUND)
     {
-        ok(SUCCEEDED(hr), "Failed to enumarate output %u, hr %#x.\n", output_idx, hr);
+        ok(SUCCEEDED(hr), "Failed to enumerate output %u, hr %#x.\n", output_idx, hr);
 
         hr = IDXGIOutput_GetDesc(output, &output_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
