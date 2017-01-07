@@ -498,7 +498,7 @@ static LRESULT create_namespacetree(HWND hWnd, CREATESTRUCTW *crs)
 
     INameSpaceTreeControl2_AddRef(&This->INameSpaceTreeControl2_iface);
 
-    /* Subclass the treeview to get the keybord events. */
+    /* Subclass the treeview to get the keyboard events. */
     This->tv_oldwndproc = (WNDPROC)SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC,
                                                      (ULONG_PTR)tv_wndproc);
     if(This->tv_oldwndproc)
