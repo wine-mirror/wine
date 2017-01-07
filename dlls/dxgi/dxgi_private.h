@@ -85,8 +85,6 @@ void dump_feature_levels(const D3D_FEATURE_LEVEL *feature_levels, unsigned int l
 DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational) DECLSPEC_HIDDEN;
-enum wined3d_scanline_ordering wined3d_scanline_ordering_from_dxgi(
-        DXGI_MODE_SCANLINE_ORDER scanline_order) DECLSPEC_HIDDEN;
 void dxgi_sample_desc_from_wined3d(DXGI_SAMPLE_DESC *desc,
         enum wined3d_multisample_type wined3d_type, unsigned int wined3d_quality) DECLSPEC_HIDDEN;
 void wined3d_sample_desc_from_dxgi(enum wined3d_multisample_type *wined3d_type,

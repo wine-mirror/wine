@@ -407,7 +407,7 @@ UINT dxgi_rational_to_uint(const DXGI_RATIONAL *rational)
         return rational->Numerator;
 }
 
-enum wined3d_scanline_ordering wined3d_scanline_ordering_from_dxgi(DXGI_MODE_SCANLINE_ORDER scanline_order)
+static enum wined3d_scanline_ordering wined3d_scanline_ordering_from_dxgi(DXGI_MODE_SCANLINE_ORDER scanline_order)
 {
     switch (scanline_order)
     {
