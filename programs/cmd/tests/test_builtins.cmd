@@ -353,7 +353,7 @@ echo ---
 echo h1|echo h2&echo h3
 echo i1|echo i2|echo i3
 echo --- chain pipe input
-rem The output data of the left side of a pipe can dissapear, probably
+rem The output data of the left side of a pipe can disappear, probably
 rem because it finished too fast and closed the pipe before it could be read,
 rem which means we can get broken results for the tests of this section.
 echo @echo off> tmp.cmd
