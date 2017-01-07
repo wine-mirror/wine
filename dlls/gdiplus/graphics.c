@@ -3375,7 +3375,7 @@ GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
     return retval;
 }
 
-GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
+static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     INT save_state;
     GpStatus retval;
@@ -3401,7 +3401,7 @@ end:
     return retval;
 }
 
-GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
+static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     GpStatus stat;
     GpPath* flat_path;
@@ -3699,7 +3699,7 @@ GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPath *pat
     return stat;
 }
 
-GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
+static GpStatus SOFTWARE_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     GpStatus stat;
     GpPath *wide_path;
