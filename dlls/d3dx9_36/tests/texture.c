@@ -2007,7 +2007,7 @@ static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_Release(volume_texture);
 }
 
-void test_texture_shader(void)
+static void test_texture_shader(void)
 {
     static const DWORD shader_zero[] = {0x0};
     static const DWORD shader_invalid[] = {0xeeee0100};
