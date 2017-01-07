@@ -3350,7 +3350,7 @@ INSTALLSTATE WINAPI MsiUseFeatureA( LPCSTR szProduct, LPCSTR szFeature )
     return MsiUseFeatureExA(szProduct, szFeature, 0, 0);
 }
 
-WCHAR *reg_get_multisz( HKEY hkey, const WCHAR *name )
+static WCHAR *reg_get_multisz( HKEY hkey, const WCHAR *name )
 {
     WCHAR *ret;
     DWORD len, type;
@@ -3359,7 +3359,7 @@ WCHAR *reg_get_multisz( HKEY hkey, const WCHAR *name )
     return ret;
 }
 
-WCHAR *reg_get_sz( HKEY hkey, const WCHAR *name )
+static WCHAR *reg_get_sz( HKEY hkey, const WCHAR *name )
 {
     WCHAR *ret;
     DWORD len, type;
