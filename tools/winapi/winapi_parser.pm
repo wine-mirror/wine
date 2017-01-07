@@ -28,7 +28,7 @@ my $CALL_CONVENTION="__cdecl|__stdcall|" .
                     "__RPC_API|__RPC_STUB|__RPC_USER|RPC_ENTRY|" .
 		    "RPC_VAR_ENTRY|STDMETHODCALLTYPE|NET_API_FUNCTION|" .
                     "CALLBACK|CDECL|NTAPI|PASCAL|APIENTRY|" .
-		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|";
+		    "SEC_ENTRY|VFWAPI|VFWAPIV|WINGDIPAPI|WMIAPI|WINAPI|WINAPIV|";
 
 sub parse_c_file($$) {
     my $file = shift;

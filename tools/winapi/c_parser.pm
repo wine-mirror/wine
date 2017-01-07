@@ -37,7 +37,7 @@ use c_type;
 my $CALL_CONVENTION="__cdecl|__stdcall|" .
                     "__RPC_API|__RPC_STUB|__RPC_USER|" .
 		    "CALLBACK|CDECL|NTAPI|PASCAL|RPC_ENTRY|RPC_VAR_ENTRY|" .
-		    "VFWAPI|VFWAPIV|WINAPI|WINAPIV|APIENTRY|";
+		    "SEC_ENTRY|VFWAPI|VFWAPIV|WINGDIPAPI|WMIAPI|WINAPI|WINAPIV|APIENTRY|";
 
 
 sub parse_c_function($$$$$);
@@ -1735,7 +1735,7 @@ sub parse_c_variable($$$$$$$)
             $type = $self->_format_c_type($type);
 
             last finished;
-        } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\(\s*(?:$CALL_CONVENTION)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
+        } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\(\s*(?:$CALL_CONVENTION)?(?:\s+DECLSPEC_[A-Z]+)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
             $type = $self->_format_c_type("$sign$1$3");
             $name = $2;
 

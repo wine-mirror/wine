@@ -85,7 +85,7 @@ sub _check_function($$$$$$) {
 	    $implemented_calling_convention = "cdecl";
 	} elsif($calling_convention =~ /^(?:VFWAPIV|WINAPIV)$/) {
 	    $implemented_calling_convention = "varargs";
-	} elsif($calling_convention =~ /^(?:__stdcall|__RPC_STUB|__RPC_USER|NET_API_FUNCTION|RPC_ENTRY|VFWAPI|WINAPI|CALLBACK)$/) {
+	} elsif($calling_convention =~ /^(?:__stdcall|__RPC_STUB|__RPC_USER|NET_API_FUNCTION|RPC_ENTRY|SEC_ENTRY|VFWAPI|WINGDIPAPI|WMIAPI|WINAPI|CALLBACK)$/) {
 	    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^(?:s_word|word|void)$/) {
 		$implemented_calling_convention = "pascal16";
 	    } else {
@@ -101,7 +101,7 @@ sub _check_function($$$$$$) {
 	    $implemented_calling_convention = "cdecl";
 	} elsif($calling_convention =~ /^(?:VFWAPIV|WINAPIV)$/) {
 	    $implemented_calling_convention = "varargs";
-	} elsif($calling_convention =~ /^(?:__stdcall|__RPC_STUB|__RPC_USER|APIENTRY|NET_API_FUNCTION|RPC_ENTRY|VFWAPI|WINAPI|CALLBACK)$/) {
+	} elsif($calling_convention =~ /^(?:__stdcall|__RPC_STUB|__RPC_USER|APIENTRY|NET_API_FUNCTION|RPC_ENTRY|SEC_ENTRY|VFWAPI|WINGDIPAPI|WMIAPI|WINAPI|CALLBACK)$/) {
 	    if(defined($implemented_return_kind) && $implemented_return_kind eq "longlong") {
 		$implemented_calling_convention = "stdcall"; # FIXME: Check entry flags
 	    } else {
