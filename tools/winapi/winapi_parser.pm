@@ -381,6 +381,7 @@ sub parse_c_file($$) {
 	    next;
 	} elsif(/(extern\s+|static\s+)?((interface\s+|struct\s+|union\s+|enum\s+|signed\s+|unsigned\s+)?\w+((\s*\*)+\s*|\s+))
             (($CALL_CONVENTION)\s+)?
+            (?:DECLSPEC_HOTPATCH\s+)?
 	    (\w+(\(\w+\))?)\s*\((.*?)\)\s*(\{|\;)/sx)
         {
 	    my @lines = split(/\n/, $&);
