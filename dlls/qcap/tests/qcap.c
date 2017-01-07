@@ -1556,7 +1556,7 @@ static void test_AviMux(char *arg)
     props.cbAlign = 0xdeadbee3;
     props.cbPrefix = 0xdeadbee4;
     hr = IMemInputPin_GetAllocatorRequirements(memin, &props);
-    ok(hr==S_OK || broken(hr==E_INVALIDARG), "GetAllocatorRequirments returned %x\n", hr);
+    ok(hr==S_OK || broken(hr==E_INVALIDARG), "GetAllocatorRequirements returned %x\n", hr);
     if(hr == S_OK) {
         ok(props.cBuffers == 0xdeadbee1, "cBuffers = %d\n", props.cBuffers);
         ok(props.cbBuffer == 0xdeadbee2, "cbBuffer = %d\n", props.cbBuffer);
