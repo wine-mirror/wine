@@ -2466,7 +2466,7 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
     if (!is_reader_pending(reader))
         reader_clear_attrs(reader);
 
-    /* When moving from EndElement or empty element, pop its own namespace defitions */
+    /* When moving from EndElement or empty element, pop its own namespace definitions */
     if (nodetype == XmlNodeType_Element && reader->is_empty_element)
         reader_pop_ns_nodes(reader, &reader->empty_element);
     else if (nodetype == XmlNodeType_EndElement)
