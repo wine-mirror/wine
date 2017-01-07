@@ -3028,7 +3028,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_AdviseNotify(IVMRSurfaceAllocatorEx9
 
     TRACE("(%p/%p)->(...)\n", iface, This);
 
-    /* No AddRef taken here or the base VMR9 filter would never be destroied */
+    /* No AddRef taken here or the base VMR9 filter would never be destroyed */
     This->SurfaceAllocatorNotify = allocnotify;
     return S_OK;
 }

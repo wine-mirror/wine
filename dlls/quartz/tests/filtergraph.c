@@ -157,7 +157,7 @@ static void test_basic_video(void)
     ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
     ok(height == video_height/4+1, "expected %d, got %d\n", video_height/4+1, height);
 
-    /* test desination rectangle */
+    /* test destination rectangle */
     hr = IBasicVideo_GetDestinationPosition(pbv, NULL, NULL, NULL, NULL);
     ok(hr == E_POINTER, "IBasicVideo_GetDestinationPosition returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, NULL, NULL);
