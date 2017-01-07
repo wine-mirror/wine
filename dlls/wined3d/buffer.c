@@ -94,7 +94,7 @@ static BOOL buffer_is_fully_dirty(const struct wined3d_buffer *buffer)
             && !buffer->maps->offset && buffer->maps->size == buffer->resource.size;
 }
 
-void wined3d_buffer_validate_location(struct wined3d_buffer *buffer, DWORD location)
+static void wined3d_buffer_validate_location(struct wined3d_buffer *buffer, DWORD location)
 {
     TRACE("buffer %p, location %s.\n", buffer, wined3d_debug_location(location));
 
@@ -567,7 +567,7 @@ static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
     }
 }
 
-BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
+static BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
