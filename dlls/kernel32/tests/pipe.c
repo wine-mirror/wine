@@ -1364,8 +1364,8 @@ static void test_CreatePipe(void)
     ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %d bytes\n", written);
     /* and close the write end, read should still succeed*/
     ok(CloseHandle(pipewrite), "CloseHandle for the Write Pipe failed\n");
-    ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from broken pipe withe with pending data failed\n");
-    ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %d bytes\n", read);
+    ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from broken pipe with pending data failed\n");
+    ok(read == sizeof(PIPENAME), "Read from anonymous pipe got %d bytes\n", read);
     /* But now we need to get informed that the pipe is closed */
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
     ok(CloseHandle(piperead), "CloseHandle for the read pipe failed\n");
@@ -1380,8 +1380,8 @@ static void test_CreatePipe(void)
     /* and close the write end, read should still succeed*/
     ok(CloseHandle(pipewrite), "CloseHandle for the Write Pipe failed\n");
     memset( buffer, 0, size );
-    ok(ReadFile(piperead, buffer, size, &read, NULL), "Read from broken pipe withe with pending data failed\n");
-    ok(read == size, "Read from  anonymous pipe got %d bytes\n", read);
+    ok(ReadFile(piperead, buffer, size, &read, NULL), "Read from broken pipe with pending data failed\n");
+    ok(read == size, "Read from anonymous pipe got %d bytes\n", read);
     for (i = 0; i < size; i++) ok( buffer[i] == (BYTE)i, "invalid data %x at %x\n", buffer[i], i );
     /* But now we need to get informed that the pipe is closed */
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
