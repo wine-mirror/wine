@@ -8294,7 +8294,7 @@ static void test_emptypackage(void)
 static void test_MsiGetProductProperty(void)
 {
     static const WCHAR prodcode_propW[] = {'P','r','o','d','u','c','t','C','o','d','e',0};
-    static const WCHAR nonexistantW[] = {'I','D','o','n','t','E','x','i','s','t',0};
+    static const WCHAR nonexistentW[] = {'I','D','o','n','t','E','x','i','s','t',0};
     static const WCHAR newpropW[] = {'N','e','w','P','r','o','p','e','r','t','y',0};
     static const WCHAR appleW[] = {'a','p','p','l','e',0};
     static const WCHAR emptyW[] = {0};
@@ -8571,7 +8571,7 @@ static void test_MsiGetProductProperty(void)
 
     size = MAX_PATH;
     lstrcpyW(valW, appleW);
-    r = MsiGetProductPropertyW(hprod, nonexistantW, valW, &size);
+    r = MsiGetProductPropertyW(hprod, nonexistentW, valW, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpW(valW, emptyW), "Expected \"\", got %s\n", wine_dbgstr_w(valW));
     ok(size == 0, "Expected 0, got %d\n", size);
