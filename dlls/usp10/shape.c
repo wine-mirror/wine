@@ -2155,7 +2155,7 @@ static inline int unicode_lex(WCHAR c)
     switch( type )
     {
         case 0x0d07: /* Unknown */
-        case 0x0e07: /* Unknwon */
+        case 0x0e07: /* Unknown */
         default: return lex_Generic;
         case 0x0001:
         case 0x0002:
