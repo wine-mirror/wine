@@ -848,7 +848,7 @@ static struct
     int other;
 } driver_calls;
 
-LRESULT CALLBACK acm_driver_func(DWORD_PTR id, HDRVR handle, UINT msg, LPARAM param1, LPARAM param2)
+static LRESULT CALLBACK acm_driver_func(DWORD_PTR id, HDRVR handle, UINT msg, LPARAM param1, LPARAM param2)
 {
     switch (msg)
     {
