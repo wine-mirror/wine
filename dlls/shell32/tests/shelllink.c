@@ -1246,6 +1246,57 @@ todo_wine
     ok(r, "failed to delete file %s (%d)\n", path, GetLastError());
 }
 
+static void test_ExtractAssociatedIcon(void)
+{
+    char pathA[MAX_PATH];
+    HICON hicon;
+    WORD index;
+
+    /* empty path */
+    index = 0;
+    *pathA = 0;
+    hicon = ExtractAssociatedIconA(NULL, pathA, &index);
+todo_wine {
+    ok(hicon != NULL, "Got icon %p\n", hicon);
+    ok(!*pathA, "Unexpected path %s\n", pathA);
+    ok(index == 0, "Unexpected index %u\n", index);
+}
+    DestroyIcon(hicon);
+
+    /* by index */
+    index = 0;
+    strcpy(pathA, "shell32.dll");
+    hicon = ExtractAssociatedIconA(NULL, pathA, &index);
+    ok(hicon != NULL, "Got icon %p\n", hicon);
+    ok(!strcmp(pathA, "shell32.dll"), "Unexpected path %s\n", pathA);
+    ok(index == 0, "Unexpected index %u\n", index);
+    DestroyIcon(hicon);
+
+    /* valid dll name, invalid index */
+    index = 5000;
+    strcpy(pathA, "user32.dll");
+    hicon = ExtractAssociatedIconA(NULL, pathA, &index);
+    CharLowerBuffA(pathA, -1);
+todo_wine {
+    ok(hicon != NULL, "Got icon %p\n", hicon);
+    ok(!!strstr(pathA, "shell32.dll"), "Unexpected path %s\n", pathA);
+}
+    ok(index != 5000, "Unexpected index %u\n", index);
+    DestroyIcon(hicon);
+
+    /* associated icon */
+    index = 0xcaca;
+    strcpy(pathA, "dummy.exe");
+    hicon = ExtractAssociatedIconA(NULL, pathA, &index);
+    CharLowerBuffA(pathA, -1);
+todo_wine {
+    ok(hicon != NULL, "Got icon %p\n", hicon);
+    ok(!!strstr(pathA, "shell32.dll"), "Unexpected path %s\n", pathA);
+}
+    ok(index != 0xcaca, "Unexpected index %u\n", index);
+    DestroyIcon(hicon);
+}
+
 START_TEST(shelllink)
 {
     HRESULT r;
@@ -1275,6 +1326,7 @@ START_TEST(shelllink)
     test_SHExtractIcons();
     test_propertystore();
     test_ExtractIcon();
+    test_ExtractAssociatedIcon();
 
     CoUninitialize();
 }
