@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-28 01:08+0200\n"
+"PO-Revision-Date: 2017-01-08 22:45+0100\n"
 "Last-Translator: Michael Stefaniuc <mstefani@redhat.de>\n"
 "Language-Team: Romanian\n"
 "Language: ro\n"
@@ -830,7 +830,7 @@ msgstr "Fișierul nu există"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "Selecția conține un object ce nu este un dosar"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1022,14 +1022,12 @@ msgid "Open File"
 msgstr "Deschide fișier"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Dosar nou"
+msgstr "Alegeți dosarul"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "Mărimea fontului trebuie să fie un număr."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -2029,19 +2027,19 @@ msgstr "Identificatorul politicii: "
 
 #: cryptdlg.rc:32
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Informație calificator de politică"
 
 #: cryptdlg.rc:33
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Id calificator de politică="
 
 #: cryptdlg.rc:36
 msgid "Qualifier"
-msgstr ""
+msgstr "Calificator"
 
 #: cryptdlg.rc:37
 msgid "Notice Reference"
-msgstr ""
+msgstr "Referinţă de notiță"
 
 #: cryptdlg.rc:38
 msgid "Organization="
@@ -2959,9 +2957,8 @@ msgid "Mapping"
 msgstr "Mapare"
 
 #: dinput.rc:56
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Există deja"
+msgstr "Afișează întâi cele asociate"
 
 #: dinput.rc:37
 msgid "Action"
@@ -2977,19 +2974,19 @@ msgstr "Setări regionale"
 
 #: dxdiagn.rc:29
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr ""
+msgstr "%1!u!MB utilizat, %2!u!MB disponibil"
 
 #: gdi32.rc:28
 msgid "Western"
-msgstr ""
+msgstr "Vestic"
 
 #: gdi32.rc:29
 msgid "Central European"
-msgstr ""
+msgstr "European central"
 
 #: gdi32.rc:30
 msgid "Cyrillic"
-msgstr ""
+msgstr "Chirilic"
 
 #: gdi32.rc:31
 msgid "Greek"
@@ -2997,27 +2994,27 @@ msgstr "Grec"
 
 #: gdi32.rc:32
 msgid "Turkish"
-msgstr ""
+msgstr "Turc"
 
 #: gdi32.rc:33
 msgid "Hebrew"
-msgstr ""
+msgstr "Ebraic"
 
 #: gdi32.rc:34
 msgid "Arabic"
-msgstr ""
+msgstr "Arabic"
 
 #: gdi32.rc:35
 msgid "Baltic"
-msgstr ""
+msgstr "Baltic"
 
 #: gdi32.rc:36
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamez"
 
 #: gdi32.rc:37
 msgid "Thai"
-msgstr ""
+msgstr "Tailandez"
 
 #: gdi32.rc:38
 msgid "Japanese"
@@ -3025,23 +3022,23 @@ msgstr "Japonez"
 
 #: gdi32.rc:39
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINEZ_GB2312"
 
 #: gdi32.rc:40
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:41
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINEZ_BIG5"
 
 #: gdi32.rc:42
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:43
 msgid "Symbol"
-msgstr ""
+msgstr "Simbol"
 
 #: gdi32.rc:44
 msgid "OEM/DOS"
@@ -3130,10 +3127,8 @@ msgid "&View Source"
 msgstr "&Vizualizează sursa"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "Proprietăți"
+msgstr "Proprie&tăți"
 
 #: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:60 wordpad.rc:112
@@ -3309,7 +3304,7 @@ msgstr "Se caută %s"
 
 #: ieframe.rc:82
 msgid "Start downloading %s"
-msgstr ""
+msgstr "Pornește descărcărea %s"
 
 #: ieframe.rc:83
 msgid "Downloading %s"
@@ -3430,7 +3425,7 @@ msgstr "Personalizat"
 
 #: inetcpl.rc:35
 msgid "Very Low"
-msgstr ""
+msgstr "Foarte scăzut"
 
 #: inetcpl.rc:36
 msgid "Low"
@@ -3442,12 +3437,11 @@ msgstr "Mediu"
 
 #: inetcpl.rc:38
 msgid "Increased"
-msgstr ""
+msgstr "Mărit"
 
 #: inetcpl.rc:39
-#, fuzzy
 msgid "High"
-msgstr "Înal&tă"
+msgstr "Înalt"
 
 #: joy.rc:36
 msgid "Joysticks"
@@ -3552,16 +3546,12 @@ msgid "Expected ')'"
 msgstr "Se așteaptă „)”"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Subject Key Identifier"
 msgid "Expected identifier"
-msgstr "Identificatorul subiectului cheii"
+msgstr "Se așteaptă un indentificator"
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "Se așteaptă „;”"
+msgstr "Se așteaptă „=”"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3592,20 +3582,16 @@ msgid "Label not found"
 msgstr "Eticheta nu a fost găsită"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "Se așteaptă „;”"
+msgstr "Se așteaptă „@end”"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr ""
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "Se așteaptă „;”"
+msgstr "Se așteaptă „@”"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -3636,9 +3622,8 @@ msgid "Boolean object expected"
 msgstr "Se așteaptă un obiect boolean"
 
 #: jscript.rc:59
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Data ștergerii"
+msgstr "Nu se poate șterge „|”"
 
 #: jscript.rc:60
 msgid "VBArray object expected"
@@ -3657,9 +3642,8 @@ msgid "URI to be encoded contains invalid characters"
 msgstr "URI care trebuie codificat conține caractere nevalide"
 
 #: jscript.rc:63
-#, fuzzy
 msgid "URI to be decoded is incorrect"
-msgstr "URI care trebuie codificat conține caractere nevalide"
+msgstr "URI care trebuie decodat este incorect"
 
 #: jscript.rc:65
 msgid "Number of fraction digits is out of range"
@@ -3697,7 +3681,7 @@ msgstr "Calea nu a fost găsită.\n"
 
 #: winerror.mc:46
 msgid "Too many open files.\n"
-msgstr ""
+msgstr "Prea multe fișiere deschise.\n"
 
 #: winerror.mc:51
 msgid "Access denied.\n"
@@ -3722,7 +3706,7 @@ msgstr "Bloc nevalid.\n"
 
 #: winerror.mc:76
 msgid "Bad environment.\n"
-msgstr ""
+msgstr "Mediu greșit.\n"
 
 #: winerror.mc:81
 msgid "Bad format.\n"
@@ -4006,7 +3990,7 @@ msgstr "inserați discul %s.\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
-msgstr ""
+msgstr "Unitate blockată.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
@@ -4190,7 +4174,7 @@ msgstr ""
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
-msgstr ""
+msgstr "Semnal refuzat.\n"
 
 #: winerror.mc:651
 msgid "Segment discarded.\n"
@@ -4222,12 +4206,11 @@ msgstr ""
 
 #: winerror.mc:686
 msgid "Lock failed.\n"
-msgstr ""
+msgstr "Blocare eșuată.\n"
 
 #: winerror.mc:691
-#, fuzzy
 msgid "Resource in use.\n"
-msgstr "Erori în resursă.\n"
+msgstr "Resursă în folosire.\n"
 
 #: winerror.mc:696
 #, fuzzy
@@ -4301,11 +4284,11 @@ msgstr ""
 
 #: winerror.mc:776
 msgid "IOPL not enabled.\n"
-msgstr ""
+msgstr "IOPL nu este activat.\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
-msgstr ""
+msgstr "SEGDPL nevalid în %1.\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
@@ -4356,7 +4339,7 @@ msgstr ""
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
-msgstr ""
+msgstr "Segment blockat.\n"
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
@@ -4372,20 +4355,19 @@ msgstr ""
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr ""
+msgstr "Conector pipă greșit.\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
-msgstr ""
+msgstr "Conector pipă ocupat.\n"
 
 #: winerror.mc:871
 msgid "Pipe closed.\n"
-msgstr ""
+msgstr "Conector pipă închis.\n"
 
 #: winerror.mc:876
-#, fuzzy
 msgid "Pipe not connected.\n"
-msgstr "Fișierul nu a fost găsit.\n"
+msgstr "Conector pipă neconectat.\n"
 
 #: winerror.mc:881
 #, fuzzy
@@ -4463,7 +4445,7 @@ msgstr "Eroare: Nume de cheie nevalid.\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2.\n"
-msgstr ""
+msgstr "Mesajul 0x%1 n-a fost găsit în fișierul %2.\n"
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
@@ -4475,11 +4457,11 @@ msgstr ""
 
 #: winerror.mc:981
 msgid "Pipe connected.\n"
-msgstr ""
+msgstr "Conector pipă conectat.\n"
 
 #: winerror.mc:986
 msgid "Pipe listening.\n"
-msgstr ""
+msgstr "Conector pipă ascultă.\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied.\n"
@@ -4628,7 +4610,7 @@ msgstr ""
 
 #: winerror.mc:1156
 msgid "Service already running.\n"
-msgstr ""
+msgstr "Serviciu rulează deja.\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account.\n"
@@ -4660,7 +4642,7 @@ msgstr ""
 
 #: winerror.mc:1196
 msgid "Exception in service.\n"
-msgstr ""
+msgstr "Excepție în serviciu.\n"
 
 #: winerror.mc:1201
 #, fuzzy
@@ -4816,7 +4798,7 @@ msgstr ""
 
 #: winerror.mc:1381
 msgid "I/O device error.\n"
-msgstr ""
+msgstr "Eroare de dispozitiv de intrare/ieșire.\n"
 
 #: winerror.mc:1386
 msgid "No serial devices found.\n"
@@ -4918,7 +4900,7 @@ msgstr ""
 
 #: winerror.mc:1506
 msgid "DDE failure.\n"
-msgstr ""
+msgstr "Eșec DDE.\n"
 
 #: winerror.mc:1511
 #, fuzzy
@@ -5061,55 +5043,47 @@ msgstr ""
 
 #: winerror.mc:1666
 msgid "Not a container.\n"
-msgstr ""
+msgstr "Nu este un container.\n"
 
 #: winerror.mc:1671
 msgid "Extended error.\n"
-msgstr ""
+msgstr "Eroare extinsă.\n"
 
 #: winerror.mc:1676
-#, fuzzy
 msgid "Invalid group name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de grup nevalid.\n"
 
 #: winerror.mc:1681
-#, fuzzy
 msgid "Invalid computer name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de calculator nevalid.\n"
 
 #: winerror.mc:1686
-#, fuzzy
 msgid "Invalid event name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de eveniment nevalid.\n"
 
 #: winerror.mc:1691
-#, fuzzy
 msgid "Invalid domain name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de domeniu nevalid.\n"
 
 #: winerror.mc:1696
-#, fuzzy
 msgid "Invalid service name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de serviciu nevalid.\n"
 
 #: winerror.mc:1701
-#, fuzzy
 msgid "Invalid network name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de rețea nevalid.\n"
 
 #: winerror.mc:1706
-#, fuzzy
 msgid "Invalid share name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de partajare nevalid.\n"
 
 #: winerror.mc:1716
-#, fuzzy
 msgid "Invalid message name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de mesaj nevalid.\n"
 
 #: winerror.mc:1721
 msgid "Invalid message destination.\n"
-msgstr ""
+msgstr "Destinație de mesaj nevalidă.\n"
 
 #: winerror.mc:1726
 msgid "Session credential conflict.\n"
@@ -5122,7 +5096,7 @@ msgstr "Limită număr referenți depășită.\n"
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name.\n"
-msgstr ""
+msgstr "Domeniu sau grup de lucru duplicat.\n"
 
 #: winerror.mc:1741
 msgid "No network.\n"
@@ -5174,7 +5148,7 @@ msgstr "Protocol inaccesibil.\n"
 
 #: winerror.mc:1801
 msgid "Port unreachable.\n"
-msgstr ""
+msgstr "Port inaccesibil.\n"
 
 #: winerror.mc:1806
 msgid "Request aborted.\n"
@@ -5195,7 +5169,7 @@ msgstr ""
 
 #: winerror.mc:1821
 msgid "Connection count limit reached.\n"
-msgstr ""
+msgstr "Limita de conexiuni atinsă.\n"
 
 #: winerror.mc:1826
 msgid "Login time restriction.\n"
@@ -6046,7 +6020,7 @@ msgstr "Opțiune nevalidă.\n"
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
-msgstr ""
+msgstr "Dispozitiv detașat.\n"
 
 #: winerror.mc:2811
 #, fuzzy
@@ -6100,11 +6074,11 @@ msgstr "Sintaxă nevalidă.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
-msgstr ""
+msgstr "Tip de date nepotrivit.\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type.\n"
-msgstr ""
+msgstr "Tip fără suport.\n"
 
 #: winerror.mc:2876
 #, fuzzy
@@ -6326,7 +6300,7 @@ msgstr ""
 
 #: winerror.mc:3131
 msgid "String too long.\n"
-msgstr ""
+msgstr "Șir prea lung.\n"
 
 #: winerror.mc:3136
 msgid "Protocol sequence not found.\n"
@@ -6357,7 +6331,7 @@ msgstr "Autentificare client.\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorization service.\n"
-msgstr ""
+msgstr "Serviciu de autorizare necunoscut.\n"
 
 #: winerror.mc:3171
 #, fuzzy
@@ -6376,11 +6350,11 @@ msgstr "Închide editorul de registru.\n"
 
 #: winerror.mc:3186
 msgid "Nothing to export.\n"
-msgstr ""
+msgstr "Nimic de exportat.\n"
 
 #: winerror.mc:3191
 msgid "Incomplete name.\n"
-msgstr ""
+msgstr "Nume incomplet.\n"
 
 #: winerror.mc:3196
 #, fuzzy
@@ -6506,7 +6480,7 @@ msgstr "Formatul de număr nu este valid."
 
 #: winerror.mc:3336
 msgid "Unrecognized media.\n"
-msgstr ""
+msgstr "Mediu nerecunoscut.\n"
 
 #: winerror.mc:3341
 msgid "No trust secret.\n"
@@ -6538,7 +6512,7 @@ msgstr ""
 
 #: winerror.mc:3376
 msgid "Account expired.\n"
-msgstr ""
+msgstr "Cont expirat.\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles.\n"
@@ -6797,7 +6771,7 @@ msgstr "Opțiune nevalidă.\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
-msgstr ""
+msgstr "Conector pipă RPC închis.\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe.\n"
@@ -6996,7 +6970,7 @@ msgstr "Descarc de la %s..."
 
 #: mshtml.rc:28
 msgid "Done"
-msgstr ""
+msgstr "Gata"
 
 #: msi.rc:30
 msgid ""
@@ -7380,56 +7354,44 @@ msgid "outline button"
 msgstr "buton contur"
 
 #: oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "Normal"
+msgstr "normal"
 
 #: oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
-msgstr "Indisponibil"
+msgstr "indisponibil"
 
 #: oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "Selectează"
+msgstr "selectat"
 
 #: oleacc.rc:100
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focused"
-msgstr "Pauzat"
+msgstr "focalizat"
 
 #: oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "&Comprimat"
+msgstr "presat"
 
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "bifat"
 
 #: oleacc.rc:103
 msgctxt "object state"
 msgid "mixed"
-msgstr ""
+msgstr "mixt"
 
 #: oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "Doar citi&re"
+msgstr "numai-citire"
 
 #: oleacc.rc:105
 #, fuzzy
@@ -7439,31 +7401,29 @@ msgid "hot tracked"
 msgstr "Element cu urmărire fierbinte"
 
 #: oleacc.rc:106
-#, fuzzy
-#| msgid "(Default)"
 msgctxt "object state"
 msgid "default"
-msgstr "(Implicit)"
+msgstr "implicit"
 
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "extins"
 
 #: oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr ""
+msgstr "pliat"
 
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "ocupat"
 
 #: oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr ""
+msgstr "flotant"
 
 #: oleacc.rc:111
 msgctxt "object state"
@@ -7471,16 +7431,14 @@ msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
-msgstr "animație"
+msgstr "animat"
 
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "invizibil"
 
 #: oleacc.rc:114
 msgctxt "object state"
@@ -7495,11 +7453,9 @@ msgid "sizeable"
 msgstr "activ&ează"
 
 #: oleacc.rc:116
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "moveable"
-msgstr "activ&ează"
+msgstr "mutabil"
 
 #: oleacc.rc:117
 msgctxt "object state"
@@ -7507,18 +7463,14 @@ msgid "self voicing"
 msgstr ""
 
 #: oleacc.rc:118
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focusable"
-msgstr "Pauzat"
+msgstr "focalizabil"
 
 #: oleacc.rc:119
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "selectable"
-msgstr "tabel"
+msgstr "selectabil"
 
 #: oleacc.rc:120
 #, fuzzy
@@ -7547,32 +7499,24 @@ msgid "extended selectable"
 msgstr "Selectați un fișier."
 
 #: oleacc.rc:124
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert low"
-msgstr "atenționare"
+msgstr "atenționare redusă"
 
 #: oleacc.rc:125
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert medium"
-msgstr "atenționare"
+msgstr "atenționare medie"
 
 #: oleacc.rc:126
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert high"
-msgstr "atenționare"
+msgstr "atenționare mărită"
 
 #: oleacc.rc:127
-#, fuzzy
-#| msgid "Write protected.\n"
 msgctxt "object state"
 msgid "protected"
-msgstr "Scris protejat.\n"
+msgstr "protejat"
 
 #: oleacc.rc:128
 msgctxt "object state"
@@ -7696,19 +7640,15 @@ msgstr "Adaugă un control"
 #, fuzzy
 #| msgid "&Font..."
 msgid "&Convert..."
-msgstr "&Font..."
+msgstr "&Convertește..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Obiect"
+msgstr "&Obiect %1 %2"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Obiect"
+msgstr "&Obiect %1"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8215,7 +8155,7 @@ msgstr "&Restaurează"
 
 #: shell32.rc:86
 msgid "&Erase"
-msgstr ""
+msgstr "Șt&erge"
 
 #: shell32.rc:98
 msgid "E&xplore"
@@ -8240,7 +8180,7 @@ msgstr "Înc&hide"
 
 #: shell32.rc:130
 msgid "&About Control Panel"
-msgstr ""
+msgstr "Despre p&anou de control"
 
 #: shell32.rc:273 shell32.rc:288
 msgid "Browse for Folder"
@@ -8287,10 +8227,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine a fost vinificat de:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "E&xecutare..."
+msgstr "Execută"
 
 #: shell32.rc:338
 msgid ""
@@ -8350,14 +8288,9 @@ msgid "Date deleted"
 msgstr "Data ștergerii"
 
 #: shell32.rc:156 winecfg.rc:101 winefile.rc:100
-#, fuzzy
 msgctxt "display name"
 msgid "Desktop"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Desktop\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Birou"
+msgstr "Birou"
 
 #: shell32.rc:157 regedit.rc:203
 #, fuzzy
@@ -9097,7 +9030,7 @@ msgid ""
 "Windows SYSTEM directory, and then try again."
 msgstr ""
 "Configurația curentă MIDI este deteriorată. Copiați fișierul MIDIMAP.CFG "
-"original în directorul Windows SYSTEM și apoi încercați din nou."
+"original în dosarul Windows SYSTEM și apoi încercați din nou."
 
 #: winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -9584,18 +9517,16 @@ msgid "Wine Sound Mapper"
 msgstr "Instalator Wine Mono"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "coloană"
+msgstr "Volum"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Volum principal"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Mut"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -9934,25 +9865,20 @@ msgstr ""
 "controlul revine la fișierul care l-a apelat. Comanda CALL poate furniza\n"
 "parametri pentru procedura apelată.\n"
 "\n"
-"Modificările la directorul curent, variabilele de mediu etc. efectuate\n"
+"Modificările la dosarul curent, variabilele de mediu etc. efectuate\n"
 "într-o procedură apelată se reflectă asupra apelantului.\n"
 
 #: cmd.rc:44
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <dir> este versiunea scurtă pentru CHDIR. CD schimbă directorul curent.\n"
+"CD <dosar> este versiunea scurtă pentru CHDIR. CD schimbă dosarul\n"
+"implict curent.\n"
 
 #: cmd.rc:47
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <dir> schimbă directorul curent.\n"
+msgstr "CHDIR <dosar> schimbă dosarul implicit curent.\n"
 
 #: cmd.rc:50
 msgid "CLS clears the console screen.\n"
@@ -9976,7 +9902,7 @@ msgstr "DEL <fișier> șterge un fișier sau un set de fișiere.\n"
 
 #: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR afișează conținutul unui director.\n"
+msgstr "DIR afișează conținutul unui dosar.\n"
 
 #: cmd.rc:75
 msgid ""
@@ -10003,11 +9929,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <fișier> șterge un fișier sau un set de fișiere.\n"
 
 #: cmd.rc:85
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -10019,6 +9940,8 @@ msgstr ""
 "fișiere.\n"
 "\n"
 "Sintaxă: FOR %variabilă IN (set) DO comandă\n"
+"\n"
+"Simbolul % trebuie dublat când se folosește FOR intr-un fișier batch.\n"
 
 #: cmd.rc:97
 msgid ""
@@ -10181,7 +10104,7 @@ msgstr ""
 "$q  Semnul egal         $t   Ora curentă        $v  Versiunea de cmd\n"
 "\n"
 "Rețineți că, dacă introduceți comanda PROMPT fără un șir, se va restabili\n"
-"la valoarea implicită, care este directorul curent (care include litera\n"
+"la valoarea implicită, care este dosarul curent (care include litera\n"
 "unității curente) urmat de semnul mai mare ca (>).\n"
 "(ca o comandă PROMPT $p$g).\n"
 "\n"
@@ -10208,16 +10131,13 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <fișier> redenumește fișierul.\n"
 
 #: cmd.rc:181
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD <dir> este versiunea scurtă pentru RMDIR. RD șterge subdosarul.\n"
+msgstr ""
+"RD <dosar> este versiunea scurtă pentru RMDIR. RMDIR șterge dosarul .\n"
 
 #: cmd.rc:183
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <dir> șterge subdosarul.\n"
+msgstr "RMDIR <dosar> șterge dosarul.\n"
 
 #: cmd.rc:229
 msgid ""
@@ -10354,20 +10274,16 @@ msgid ""
 msgstr ""
 
 #: cmd.rc:275
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a stack, and then\n"
 "changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <numedirector> salvează directorul curent într-o stivă și apoi\n"
-"înlocuiește directorul curent cu cel specificat.\n"
+"PUSHD <dosar> salvează dosarul curent într-o stivă și apoi înlocuiește\n"
+"dosarul curent cu cel specificat.\n"
 
 #: cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr "POPD schimbă directorul curent cu ultimul salvat cu PUSHD.\n"
+msgstr "POPD schimbă dosarul curent cu ultimul salvat cu PUSHD.\n"
 
 #: cmd.rc:288
 msgid ""
@@ -10415,7 +10331,6 @@ msgstr ""
 "operare sau shell-ul din care ați invocat cmd.\n"
 
 #: cmd.rc:351
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10457,32 +10372,39 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "Comenzile integrate în CMD sunt:\n"
+"ASSOC\t\tAfișează sau schimbă asocierile extensiilor de fișiere\n"
 "ATTRIB\t\tAfișează sau schimbă atributele fișierelor DOS\n"
 "CALL\t\tInvocă un fișier batch din interiorul altuia\n"
-"CD (CHDIR)\tSchimbă directorul implicit curent\n"
+"CD (CHDIR)\tSchimbă dosarul implicit curent\n"
+"CHOICE\t\tAșteaptă pentru o tastare dintr-o listă la alegere\n"
 "CLS\t\tGolește ecranul consolei\n"
 "COPY\t\tCopiază fișierul\n"
 "CTTY\t\tSchimbă dispozitivul de intrare/ieșire\n"
 "DATE\t\tAfișează sau schimbă data sistemului\n"
 "DEL (ERASE)\tȘterge un fișier sau un set de fișiere\n"
-"DIR\t\tListează conținutul unui director\n"
+"DIR\t\tListează conținutul unui dosar\n"
 "ECHO\t\tCopiază textul direct în consolă\n"
+"ENDLOCAL\tTermină restricționarea locală a variabilelor de mediu\n"
+"FTYPE\t\tAfișează sau schimbă comenzile de deschidere pentru extensii de "
+"fișier\n"
 "HELP\t\tAfișează pe scurt detalii de ajutor pentru un subiect\n"
-"MD (MKDIR)\tCreează un subdirector\n"
+"MD (MKDIR)\tCreează un subdosar\n"
 "MORE\t\tAfișează textul în pagini\n"
 "MOVE\t\tMută un fișier, un set de fișiere sau un arbore de directoare\n"
 "PATH\t\tStabilește sau afișează calea de căutare\n"
-"POPD\t\tRestabilește directorul în ultima sa formă salvată cu PUSHD\n"
+"POPD\t\tRestabilește dosarul în ultima sa formă salvată cu PUSHD\n"
 "PROMPT\t\tSchimbă prompterul de comandă\n"
-"PUSHD\t\tTrece la un nou director, salvându-l pe cel curent\n"
+"PUSHD\t\tTrece la un nou dosar, salvându-l pe cel curent\n"
 "REN (RENAME)\tRedenumește un fișier\n"
-"RD (RMDIR)\tȘterge un subdirector\n"
+"RD (RMDIR)\tȘterge un subdosar\n"
 "SET\t\tStabilește sau afișează variabilele de mediu\n"
+"SETLOCAL\tÎncepe restricționarea locală a variabilelor de mediu\n"
 "TIME\t\tStabilește sau afișează ora curentă a sistemului\n"
 "TITLE\t\tStabilește titlul ferestrei pentru sesiunea CMD\n"
 "TYPE\t\tAfișează conținutul unui fișier text\n"
 "VER\t\tAfișează versiunea curentă de CMD\n"
 "VOL\t\tAfișează eticheta de volum a unui disc\n"
+"XCOPY\t\tCopiază fișierele sau dosarele la o destinație\n"
 "EXIT\t\tÎnchide CMD\n"
 "\n"
 "Introduceți HELP <comandă> pentru informații suplimentare despre\n"
@@ -10619,7 +10541,7 @@ msgstr "Linia de comandă Wine"
 
 #: cmd.rc:385
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: cmd.rc:386
 msgid "More? "
@@ -10631,11 +10553,11 @@ msgstr "Șirul introdus este prea lung.\n"
 
 #: cmd.rc:388
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volumul în unitatea %1!c! este %2\n"
 
 #: cmd.rc:389
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volumul în unitatea %1!c! nu are etichetă\n"
 
 #: cmd.rc:390 reg.rc:49
 msgid " (Yes|No)"
@@ -10652,16 +10574,15 @@ msgstr ""
 
 #: cmd.rc:393
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Eroare de împărțire la zero.\n"
 
 #: cmd.rc:394
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Se așteaptă un operand.\n"
 
 #: cmd.rc:395
-#, fuzzy
 msgid "Expected an operator.\n"
-msgstr "Eroare externă nedeterminată."
+msgstr "Se așteaptă un operator.\n"
 
 #: cmd.rc:396
 msgid "Mismatch in parentheses.\n"
@@ -10697,7 +10618,7 @@ msgstr "E&xecutare..."
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
-msgstr ""
+msgstr "Sintaxă: hostname\n"
 
 #: hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
@@ -10711,7 +10632,7 @@ msgstr ""
 
 #: ipconfig.rc:30
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "Sintaxă: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
@@ -10719,11 +10640,11 @@ msgstr ""
 
 #: ipconfig.rc:32
 msgid "%1 adapter %2\n"
-msgstr ""
+msgstr "%1 adaptor %2\n"
 
 #: ipconfig.rc:33
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:35
 msgid "Connection-specific DNS suffix"
@@ -10735,15 +10656,15 @@ msgstr "adresă IPv4"
 
 #: ipconfig.rc:37
 msgid "Hostname"
-msgstr ""
+msgstr "Nume gazdă"
 
 #: ipconfig.rc:38
 msgid "Node type"
-msgstr ""
+msgstr "Tip nod"
 
 #: ipconfig.rc:39
 msgid "Broadcast"
-msgstr ""
+msgstr "Difuzare"
 
 #: ipconfig.rc:40
 msgid "Peer-to-peer"
@@ -10751,40 +10672,37 @@ msgstr ""
 
 #: ipconfig.rc:41
 msgid "Mixed"
-msgstr ""
+msgstr "Mixt"
 
 #: ipconfig.rc:42
 msgid "Hybrid"
-msgstr ""
+msgstr "Hibrid"
 
 #: ipconfig.rc:43
 msgid "IP routing enabled"
-msgstr ""
+msgstr "Rutare IP activată"
 
 #: ipconfig.rc:45
 msgid "Physical address"
-msgstr ""
+msgstr "Adresă fizică"
 
 #: ipconfig.rc:46
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP activat"
 
 #: ipconfig.rc:49
 msgid "Default gateway"
-msgstr ""
+msgstr "Gateway implicit"
 
 #: ipconfig.rc:50
 msgid "IPv6 address"
 msgstr "adresă IPv6"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Configurare sistem"
+msgstr "Informații despre sistem"
 
 #: net.rc:30
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -10796,12 +10714,11 @@ msgid ""
 msgstr ""
 "Sintaxa acestei comenzi este:\n"
 "\n"
-"comandă NET HELP\n"
+"NET comandă [argumente]\n"
 "    -sau-\n"
-"comandă NET /HELP\n"
+"NET comandă /HELP\n"
 "\n"
-"   Comenzile disponibile sunt:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"Comenzile disponibile sunt HELP, START, STOP, USE.\n"
 
 #: net.rc:31
 msgid ""
@@ -10812,6 +10729,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"Sintaxa acestei comenzi este:\n"
+"\n"
+"NET START [serviciu]\n"
+"\n"
+"Fără 'serviciu' afișează lista serviciilor care rulează. Altfel 'serviciu' "
+"este numele serviciului de pornit.\n"
 
 #: net.rc:32
 msgid ""
@@ -10821,6 +10744,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"Sintaxa acestei comenzi este:\n"
+"\n"
+"NET STOP serviciu\n"
+"\n"
+"'serviciu' este numele serviciului de oprit.\n"
 
 #: net.rc:33
 msgid "Stopping dependent service: %1\n"
@@ -10910,37 +10838,31 @@ msgstr "Conexiuni active"
 
 #: netstat.rc:31
 msgid "Proto"
-msgstr ""
+msgstr "Protocol"
 
 #: netstat.rc:32
 msgid "Local Address"
 msgstr "Adresă locală"
 
 #: netstat.rc:33
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Adresa"
+msgstr "Adresă distantă"
 
 #: netstat.rc:34
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "Stare"
 
 #: netstat.rc:35
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Interfețe"
+msgstr "Statistici interfeță"
 
 #: netstat.rc:36
 msgid "Sent"
-msgstr ""
+msgstr "Trimis"
 
 #: netstat.rc:37
 msgid "Received"
-msgstr ""
+msgstr "Primit"
 
 #: netstat.rc:38
 msgid "Bytes"
@@ -10948,30 +10870,27 @@ msgstr "Octeți"
 
 #: netstat.rc:39
 msgid "Unicast packets"
-msgstr ""
+msgstr "Pachete unicast"
 
 #: netstat.rc:40
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Pachete ne-unicast"
 
 #: netstat.rc:41
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Declinare a responsabilității"
+msgstr "Ignorate"
 
 #: netstat.rc:42
 msgid "Errors"
 msgstr "Erori"
 
 #: netstat.rc:43
-#, fuzzy
 msgid "Unknown protocols"
-msgstr "Eroare necunoscută.\n"
+msgstr "Protocoale necunoscute"
 
 #: netstat.rc:44
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "Statistici TCP pentru IPv4"
 
 #: netstat.rc:45
 #, fuzzy
@@ -10990,52 +10909,44 @@ msgid "Failed Connection Attempts"
 msgstr "Conexiune LAN"
 
 #: netstat.rc:48
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Reset Connections"
-msgstr "Conexiune LAN"
+msgstr "Conexiuni întrerupte"
 
 #: netstat.rc:49
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "Conexiune LAN"
+msgstr "Conexiuni curente"
 
 #: netstat.rc:50
 msgid "Segments Received"
-msgstr ""
+msgstr "Segmente primite"
 
 #: netstat.rc:51
 msgid "Segments Sent"
-msgstr ""
+msgstr "Segmente trimise"
 
 #: netstat.rc:52
 msgid "Segments Retransmitted"
-msgstr ""
+msgstr "Segmente retrimise"
 
 #: netstat.rc:53
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "Statistici UDP pentru IPv4"
 
 #: netstat.rc:54
 msgid "Datagrams Received"
-msgstr ""
+msgstr "Datagrame primite"
 
 #: netstat.rc:55
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Port local"
+msgstr "Fără port"
 
 #: netstat.rc:56
-#, fuzzy
-#| msgid "Decoding Error"
 msgid "Receive Errors"
-msgstr "Eroare de decodificare"
+msgstr "Eroare la primire "
 
 #: netstat.rc:57
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Datagrame trimise"
 
 #: notepad.rc:30
 msgid "&New\tCtrl+N"
@@ -11164,7 +11075,7 @@ msgstr "F"
 #: notepad.rc:135 wordpad.rc:288
 msgctxt "accelerator Replace"
 msgid "H"
-msgstr ""
+msgstr "H"
 
 #: notepad.rc:136 wordpad.rc:297
 msgctxt "accelerator New"
@@ -11179,27 +11090,27 @@ msgstr "O"
 #: notepad.rc:138 regedit.rc:324 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
-msgstr ""
+msgstr "P"
 
 #: notepad.rc:139 wordpad.rc:299
 msgctxt "accelerator Save"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: notepad.rc:140
 msgctxt "accelerator Paste"
 msgid "V"
-msgstr ""
+msgstr "V"
 
 #: notepad.rc:141 wordpad.rc:290
 msgctxt "accelerator Cut"
 msgid "X"
-msgstr ""
+msgstr "X"
 
 #: notepad.rc:142 wordpad.rc:292
 msgctxt "accelerator Undo"
 msgid "Z"
-msgstr ""
+msgstr "Z"
 
 #: notepad.rc:69
 msgid "Page &p"
@@ -11727,7 +11638,7 @@ msgstr "Linie de &comandă:"
 
 #: progman.rc:174
 msgid "&Working directory:"
-msgstr "Director de &lucru:"
+msgstr "Dosar de &lucru:"
 
 #: progman.rc:176
 msgid "&Key combination:"
@@ -11860,16 +11771,12 @@ msgid "The operation completed successfully\n"
 msgstr "Operațiunea a fost finalizată cu succes\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Eroare: Nume de cheie nevalid\n"
+msgstr "reg: Nume de cheie nevalid\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Eroare: Parametri nevalizi pentru linia de comandă\n"
+msgstr "reg: Parametri nevalizi pentru linia de comandă\n"
 
 #: reg.rc:42
 #, fuzzy
@@ -11878,13 +11785,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Eroare: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"
+"reg: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"
 
 #: reg.rc:44
 #, fuzzy
@@ -11905,36 +11809,28 @@ msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr ""
 
 #: reg.rc:48
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Fișierul specificat există deja. Doriți să îl înlocuiți?"
+msgstr "Valoare de registru „%1” există deja. Doriți să o înlocuiți?"
 
 #: reg.rc:52
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "Operația pe registru a fost anulată\n"
 
 #: reg.rc:53 regedit.rc:204
 msgid "(Default)"
 msgstr "(Implicit)"
 
 #: reg.rc:54
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Sigur doriți să ștergeți aceste valori?"
+msgstr "Sigur doriți să ștergeți valoarea de registru „%1”?"
 
 #: reg.rc:55
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Sigur doriți să ștergeți valoarea „%s”?"
+msgstr "Sigur doriți să ștergeți toate valorile de registru în „%1”?"
 
 #: reg.rc:56
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Sunteți sigur că vreți să ștergeți '%1'?"
+msgstr "Sigur doriți să ștergeți cheia de registru „%1”?"
 
 #: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
@@ -11957,24 +11853,20 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
 #: reg.rc:61
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "Eroare: Nume de cheie nevalid\n"
+msgstr "reg: Sintaxă nevalidă."
 
 #: reg.rc:62
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "Eroare: Opțiune nevalidă „%c”.\n"
+msgstr "reg: Opțiune nevalidă [%1]."
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr ""
+msgstr "Tastați \"REG /?\" pentru ajutor.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr ""
+msgstr "Tastați \"REG %1 /?\" pentru ajutor.\n"
 
 #: reg.rc:65 regedit.rc:205
 msgid "(value not set)"
@@ -12228,13 +12120,11 @@ msgstr ""
 
 #: regedit.rc:361
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "Tastați \"regedit /?\" pentru ajutor.\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Nu a fost specificată nici o comandă."
+msgstr "regedit Nu a fost specificată nici un fișier.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
@@ -12242,28 +12132,23 @@ msgstr ""
 
 #: regedit.rc:364
 msgid "regedit: The file '%1' was not found.\n"
-msgstr ""
+msgstr "regedit: Fișierul „%1” nu a fost găsit.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
+msgstr "regedit: Nu s-a putut deschide fișierul „%1”.\n"
 
 #: regedit.rc:366
-#, fuzzy
 msgid "regedit: Unhandled action.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "regedit: Acțiune negestionată.\n"
 
 #: regedit.rc:367
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: Memorie insuficientă! (%1!S!, linia %2!u!)\n"
 
 #: regedit.rc:368
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "Eroare: Nume de cheie nevalid\n"
+msgstr "regedit: Valoare hexazecimală nevalidă\n"
 
 #: regedit.rc:369
 msgid ""
@@ -12282,28 +12167,20 @@ msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
 #: regedit.rc:372
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
+msgstr "regedit: Sfârșit de linie neașteptat în „%1”.\n"
 
 #: regedit.rc:373
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "Nu a fost specificată nici o comandă."
+msgstr "regedit: Linia „%1” nu a fost recunoscută.\n"
 
 #: regedit.rc:374
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
+msgstr "regedit: Nu s-a putut adăuga valoarea de registru „%1” la „%2”.\n"
 
 #: regedit.rc:375
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
+msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”\n"
 
 #: regedit.rc:376
 #, fuzzy
@@ -13425,7 +13302,7 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "uninstaller: Aplicația cu GUID „%1” nu a fost gasită\n"
 
 #: uninstaller.rc:32
 msgid ""
@@ -13433,10 +13310,8 @@ msgid ""
 msgstr ""
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Eroare: Opțiune nevalidă „%c”.\n"
+msgstr "uninstaller: Opțiune nevalidă [%1].\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13510,6 +13385,10 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
+"Acest program este un software liber; îl puteți redistribui și/sau modifica "
+"respectând termenii GNU Lesser Public License așa cum este publicată de "
+"către Free Software Foundation; fie versiunea 2.1 a Licenței, fie (la "
+"alegere) orice versiune mai recentă."
 
 #: winecfg.rc:143
 msgid "Windows registration information"
@@ -13604,7 +13483,7 @@ msgstr "Suprascriere nouă pentru librăria:"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "A&daugă"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13708,37 +13587,35 @@ msgstr ""
 
 #: winecfg.rc:267
 msgid "Defaults"
-msgstr ""
+msgstr "Implicite"
 
 #: winecfg.rc:268
 msgid "Output device:"
-msgstr ""
+msgstr "Dispozitiv de ieșire:"
 
 #: winecfg.rc:269
 msgid "Voice output device:"
-msgstr ""
+msgstr "Dispozitiv de ieșire voce:"
 
 #: winecfg.rc:270
 msgid "Input device:"
-msgstr ""
+msgstr "Dispozitiv de intrare:"
 
 #: winecfg.rc:271
 msgid "Voice input device:"
-msgstr ""
+msgstr "Dispozitiv de intrare voce:"
 
 #: winecfg.rc:276
 msgid "&Test Sound"
 msgstr "&Testează sunetul"
 
 #: winecfg.rc:277 winecfg.rc:90
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Setări Wine"
+msgstr "Configurare difuzor"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "Difuzoare:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -13848,21 +13725,19 @@ msgstr "(Setare implicită)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 surround"
 
 #: winecfg.rc:92
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "grafică"
+msgstr "Quadrafonic"
 
 #: winecfg.rc:93
 msgid "Stereo"
-msgstr ""
+msgstr "Stereo"
 
 #: winecfg.rc:94
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
@@ -13878,19 +13753,19 @@ msgstr "Avertizare: librărie de sistem"
 
 #: winecfg.rc:56
 msgid "native"
-msgstr ""
+msgstr "nativ"
 
 #: winecfg.rc:57
 msgid "builtin"
-msgstr ""
+msgstr "integrat"
 
 #: winecfg.rc:58
 msgid "native, builtin"
-msgstr ""
+msgstr "nativ, integrat"
 
 #: winecfg.rc:59
 msgid "builtin, native"
-msgstr ""
+msgstr "integrat, nativ"
 
 #: winecfg.rc:60
 msgid "disabled"
@@ -13966,10 +13841,8 @@ msgid "Letter"
 msgstr "Litera"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Dosar nou"
+msgstr "Dosarul destinație"
 
 #: winecfg.rc:79
 msgid ""
@@ -14260,14 +14133,12 @@ msgid "Configuration error"
 msgstr "Eroare de configurare"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr ""
 "Mărimea memoriei tampon a ecranului trebuie să fie egală sau mai mare decât "
-"cea a ferestrei"
+"cea a ferestrei."
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -14416,7 +14287,7 @@ msgstr "Propr&ietăți\tAlt+Enter"
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."
-msgstr "Cr&eare director..."
+msgstr "Cr&eare dosar..."
 
 #: winefile.rc:43
 msgid "&Disk"
@@ -14557,7 +14428,7 @@ msgstr "Informații despre versiune"
 #: winefile.rc:194
 msgctxt "accelerator Fullscreen"
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: winefile.rc:90
 msgid "Applying font settings"
@@ -14573,11 +14444,11 @@ msgstr "Administrator Wine File"
 
 #: winefile.rc:98
 msgid "root fs"
-msgstr "director rădăcină"
+msgstr "dosar rădăcină"
 
 #: winefile.rc:99
 msgid "unixfs"
-msgstr "director unix"
+msgstr "dosar unix"
 
 #: winefile.rc:101
 msgid "Shell"
@@ -14617,7 +14488,7 @@ msgstr "&Nou\tF2"
 
 #: winemine.rc:40
 msgid "Question &Marks"
-msgstr ""
+msgstr "Se&mne de întrebare"
 
 #: winemine.rc:42
 msgid "&Beginner"
@@ -14741,7 +14612,7 @@ msgstr "&Ajutor la ajutor\tF1"
 
 #: winhlp32.rc:59
 msgid "&About Wine Help"
-msgstr ""
+msgstr "&Despre Wine Help"
 
 #: winhlp32.rc:67
 msgid "Annotation..."
@@ -14796,21 +14667,16 @@ msgid "Error: Command line not supported\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
 #: wmic.rc:29
-#, fuzzy
 msgid "Error: Alias not found\n"
-msgstr "PATH negăsită.\n"
+msgstr "Eroare: Alias n-a fost găsit.\n"
 
 #: wmic.rc:30
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid query\n"
-msgstr "Eroare: Nume de cheie nevalid\n"
+msgstr "Eroare: Interogare nevalidă\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "Eroare: Nume de cheie nevalid\n"
+msgstr "Eroare: Sintaxă nevalidă pentru PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -14885,36 +14751,32 @@ msgid "F&ormat"
 msgstr "F&ormat"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Listă"
+msgstr "&Liste"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "Punct &bulină"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "Numărul CRL"
+msgstr "Numere"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Litere - minuscule"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Litere - majuscule"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Numerale romane - minuscule"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Numerale romane - majuscule"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
@@ -15232,9 +15094,9 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"„%1” este un nume de fișier sau un director\n"
+"„%1” este un nume de fișier sau un dosar\n"
 "din destinație?\n"
-"(F - Fișier, D - Director)\n"
+"(F - Fișier, D - Dosar)\n"
 
 #: xcopy.rc:38
 msgid "%1? (Yes|No)\n"
@@ -15305,7 +15167,7 @@ msgstr ""
 "\n"
 "Cu:\n"
 "\n"
-"[/I]  Creează director dacă destinația nu există și se copiază două sau\n"
+"[/I]  Creează dosar dacă destinația nu există și se copiază două sau\n"
 "\tmai multe fișiere.\n"
 "[/S]  Copiază directoarele și subdirectoarele.\n"
 "[/E]  Copiază directoarele și subdirectoarele, inclusiv pe cele goale.\n"
