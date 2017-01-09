@@ -260,9 +260,9 @@ static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *
         lock.pBits = (char *)lock.pBits + (height * lock.Pitch);
         while (height--)
         {
+            lock.pBits = (char *)lock.pBits - lock.Pitch;
             memcpy(lock.pBits, data, width * bmiHeader->biBitCount / 8);
             data = data + width * bmiHeader->biBitCount / 8;
-            lock.pBits = (char *)lock.pBits - lock.Pitch;
         }
     }
     else if (lock.Pitch != width * bmiHeader->biBitCount / 8)
