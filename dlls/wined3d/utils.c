@@ -5634,10 +5634,10 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     unsigned int coord_idx, i;
 
+    memset(settings, 0, sizeof(*settings));
+
     if (si->position_transformed)
     {
-        memset(settings, 0, sizeof(*settings));
-
         settings->transformed = 1;
         settings->point_size = state->gl_primitive_type == GL_POINTS;
         settings->per_vertex_point_size = !!(si->use_map & 1u << WINED3D_FFP_PSIZE);
@@ -5681,7 +5681,6 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
             break;
     }
 
-    settings->transformed = 0;
     settings->clipping = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     settings->normal = !!(si->use_map & (1u << WINED3D_FFP_NORMAL));
@@ -5706,7 +5705,6 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         settings->specular_source = WINED3D_MCS_MATERIAL;
     }
 
-    settings->texcoords = 0;
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
         coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
@@ -5717,7 +5715,6 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     if (d3d_info->limits.varying_count >= wined3d_max_compat_varyings(gl_info))
         settings->texcoords = (1u << MAX_TEXTURES) - 1;
 
-    settings->light_type = 0;
     for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
     {
         if (state->lights[i])
@@ -5725,7 +5722,6 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
                     & WINED3D_FFP_LIGHT_TYPE_MASK) << WINED3D_FFP_LIGHT_TYPE_SHIFT(i);
     }
 
-    settings->ortho_fog = 0;
     if (!state->render_states[WINED3D_RS_FOGENABLE])
         settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
     else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
@@ -5751,8 +5747,6 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         settings->flatshading = FALSE;
 
     settings->swizzle_map = si->swizzle_map;
-
-    settings->padding = 0;
 }
 
 int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb_entry *entry)
