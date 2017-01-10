@@ -1852,6 +1852,7 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
     last_size = size;
     last_clipboard_update = GetTickCount64();
     CloseClipboard();
+    SetTimer( clipboard_hwnd, 1, SELECTION_UPDATE_DELAY, NULL );
     return TRUE;
 }
 
@@ -1888,9 +1889,14 @@ static LRESULT CALLBACK clipboard_wndproc( HWND hwnd, UINT msg, WPARAM wp, LPARA
     case WM_RENDERFORMAT:
         if (render_format( wp )) rendered_formats++;
         break;
+    case WM_TIMER:
+        if (!is_clipboard_owner) break;
+        request_selection_contents( thread_display(), FALSE );
+        break;
     case WM_DESTROYCLIPBOARD:
         TRACE( "WM_DESTROYCLIPBOARD: lost ownership\n" );
         is_clipboard_owner = FALSE;
+        KillTimer( hwnd, 1 );
         break;
     }
     return DefWindowProcW( hwnd, msg, wp, lp );
