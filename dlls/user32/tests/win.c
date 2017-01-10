@@ -754,6 +754,7 @@ static void test_enum_thread_windows(void)
 static struct wm_gettext_override_data
 {
     BOOL   enabled; /* when 1 bypasses default procedure */
+    BOOL   dont_terminate; /* don't null terminate returned string in WM_GETTEXT handler */
     char  *buff;    /* expected text buffer pointer */
     WCHAR *buffW;   /* same, for W test */
 } g_wm_gettext_override;
@@ -846,6 +847,16 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                 ok(*text == 0, "expected empty string buffer %x\n", *text);
                 return 0;
             }
+            else if (g_wm_gettext_override.dont_terminate)
+            {
+                char *text = (char *)lparam;
+                if (text)
+                {
+                    memcpy(text, "text", 4);
+                    return 4;
+                }
+                return 0;
+            }
             break;
         case WM_SETTEXT:
             num_settext_msgs++;
@@ -870,6 +881,17 @@ static LRESULT WINAPI main_window_procW(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                 WCHAR *text = (WCHAR*)lparam;
                 ok(g_wm_gettext_override.buffW == text, "expected buffer %p, got %p\n", g_wm_gettext_override.buffW, text);
                 ok(*text == 0, "expected empty string buffer %x\n", *text);
+                return 0;
+            }
+            else if (g_wm_gettext_override.dont_terminate)
+            {
+                static const WCHAR textW[] = {'t','e','x','t'};
+                WCHAR *text = (WCHAR *)lparam;
+                if (text)
+                {
+                    memcpy(text, textW, sizeof(textW));
+                    return 4;
+                }
                 return 0;
             }
             break;
@@ -6567,6 +6589,7 @@ static DWORD CALLBACK settext_msg_thread( LPVOID arg )
 
 static void test_gettext(void)
 {
+    static const WCHAR textW[] = {'t','e','x','t'};
     DWORD tid, num_msgs;
     WCHAR bufW[32];
     HANDLE thread;
@@ -6719,6 +6742,48 @@ static void test_gettext(void)
     ok( buf_len != 0, "expected a nonempty window text\n" );
     ok( !strcmp(buf, "thread_caption"), "got wrong window text '%s'\n", buf );
     ok( num_gettext_msgs == 1, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    /* WM_GETTEXT does not terminate returned string */
+    memset( buf, 0x1c, sizeof(buf) );
+    g_wm_gettext_override.dont_terminate = TRUE;
+    buf_len = GetWindowTextA( hwnd, buf, sizeof(buf) );
+    ok( buf_len == 4, "Unexpected text length, %d\n", buf_len );
+    ok( !memcmp(buf, "text", 4), "Unexpected window text, '%s'\n", buf );
+    ok( buf[4] == 0x1c, "Unexpected buffer contents\n" );
+    g_wm_gettext_override.dont_terminate = FALSE;
+
+    memset( bufW, 0x1c, sizeof(bufW) );
+    g_wm_gettext_override.dont_terminate = TRUE;
+    buf_len = GetWindowTextW( hwnd, bufW, sizeof(bufW)/sizeof(bufW[0]) );
+todo_wine
+    ok( buf_len == 4, "Unexpected text length, %d\n", buf_len );
+    ok( !memcmp(bufW, textW, 4 * sizeof(WCHAR)), "Unexpected window text, %s\n", wine_dbgstr_w(bufW) );
+todo_wine
+    ok( bufW[4] == 0, "Unexpected buffer contents, %#x\n", bufW[4] );
+    g_wm_gettext_override.dont_terminate = FALSE;
+
+    hwnd2 = CreateWindowExW( 0, mainclassW, NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL );
+    ok( hwnd2 != 0, "CreateWindowExA error %d\n", GetLastError() );
+
+    memset( buf, 0x1c, sizeof(buf) );
+    g_wm_gettext_override.dont_terminate = TRUE;
+    buf_len = GetWindowTextA( hwnd2, buf, sizeof(buf) );
+todo_wine
+    ok( buf_len == 4, "Unexpected text length, %d\n", buf_len );
+    ok( !memcmp(buf, "text", 4), "Unexpected window text, '%s'\n", buf );
+todo_wine
+    ok( buf[4] == 0, "Unexpected buffer contents, %#x\n", buf[4] );
+    g_wm_gettext_override.dont_terminate = FALSE;
+
+    memset( bufW, 0x1c, sizeof(bufW) );
+    g_wm_gettext_override.dont_terminate = TRUE;
+    buf_len = GetWindowTextW( hwnd2, bufW, sizeof(bufW)/sizeof(bufW[0]) );
+    ok( buf_len == 4, "Unexpected text length, %d\n", buf_len );
+    ok( !memcmp(bufW, textW, 4 * sizeof(WCHAR)), "Unexpected window text, %s\n", wine_dbgstr_w(bufW) );
+    ok( bufW[4] == 0x1c1c, "Unexpected buffer contents, %#x\n", bufW[4] );
+    g_wm_gettext_override.dont_terminate = FALSE;
+
+    DestroyWindow(hwnd2);
 
     /* seems to crash on every modern Windows version */
     if (0)
