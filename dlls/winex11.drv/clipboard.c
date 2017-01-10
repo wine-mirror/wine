@@ -133,8 +133,8 @@ static BOOL export_targets( Display *display, Window win, Atom prop, Atom target
 static BOOL export_multiple( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 static BOOL export_timestamp( Display *display, Window win, Atom prop, Atom target, HANDLE handle );
 
-static BOOL X11DRV_CLIPBOARD_ReadProperty( Display *display, Window w, Atom prop,
-                                           Atom *type, unsigned char **data, unsigned long *datasize );
+static BOOL read_property( Display *display, Window w, Atom prop,
+                           Atom *type, unsigned char **data, unsigned long *datasize );
 
 /* Clipboard formats */
 
@@ -435,22 +435,28 @@ static void put_property( Display *display, Window win, Atom prop, Atom type, in
 /**************************************************************************
  *		convert_selection
  */
-static Atom convert_selection( Display *display, Window win, Atom selection, Atom target )
+static BOOL convert_selection( Display *display, Window win, Atom selection,
+                               struct clipboard_format *format, Atom *type,
+                               unsigned char **data, unsigned long *size )
 {
     int i;
     XEvent event;
 
-    XConvertSelection( display, selection, target, x11drv_atom(SELECTION_DATA), win, CurrentTime );
+    TRACE( "import %s from %s win %lx to format %s\n",
+           debugstr_xatom( format->atom ), debugstr_xatom( selection ),
+           win, debugstr_format( format->id ) );
+
+    XConvertSelection( display, selection, format->atom, x11drv_atom(SELECTION_DATA), win, CurrentTime );
 
     for (i = 0; i < SELECTION_RETRIES; i++)
     {
         Bool res = XCheckTypedWindowEvent( display, win, SelectionNotify, &event );
-        if (res && event.xselection.selection == selection && event.xselection.target == target)
-            return event.xselection.property;
+        if (res && event.xselection.selection == selection && event.xselection.target == format->atom)
+            return read_property( display, win, event.xselection.property, type, data, size );
         usleep( SELECTION_WAIT );
     }
     ERR( "Timed out waiting for SelectionNotify event\n" );
-    return None;
+    return FALSE;
 }
 
 
@@ -975,23 +981,14 @@ static HANDLE import_selection( Display *display, Window win, Atom selection,
 {
     unsigned char *data;
     unsigned long size;
-    Atom prop, type;
+    Atom type;
     HANDLE ret;
 
     if (!format->import) return 0;
 
-    TRACE( "import %s from %s win %lx to format %s\n",
-           debugstr_xatom( format->atom ), debugstr_xatom( selection ),
-           win, debugstr_format( format->id ) );
-
-    if ((prop = convert_selection( display, win, selection, format->atom )) == None)
+    if (!convert_selection( display, win, selection, format, &type, &data, &size ))
     {
         TRACE( "failed to convert selection\n" );
-        return 0;
-    }
-    if (!X11DRV_CLIPBOARD_ReadProperty( display, win, prop, &type, &data, &size ))
-    {
-        TRACE( "failed to read property\n" );
         return 0;
     }
     ret = format->import( type, data, size );
@@ -1627,11 +1624,12 @@ struct clipboard_data_packet {
 };
 
 /**************************************************************************
- *		X11DRV_CLIPBOARD_ReadProperty
+ *		read_property
+ *
  *  Reads the contents of the X selection property.
  */
-static BOOL X11DRV_CLIPBOARD_ReadProperty( Display *display, Window w, Atom prop,
-                                           Atom *type, unsigned char** data, unsigned long* datasize )
+static BOOL read_property( Display *display, Window w, Atom prop,
+                           Atom *type, unsigned char **data, unsigned long *datasize )
 {
     XEvent xe;
 
