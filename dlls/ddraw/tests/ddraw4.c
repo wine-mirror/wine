@@ -92,6 +92,48 @@ static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     return TRUE;
 }
 
+static BOOL ddraw_is_warp(IDirectDraw4 *ddraw)
+{
+    DDDEVICEIDENTIFIER identifier;
+    HRESULT hr;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    hr = IDirectDraw4_GetDeviceIdentifier(ddraw, &identifier, 0);
+    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
+
+    return !!strstr(identifier.szDriver, "warp");
+}
+
+static BOOL ddraw_is_nvidia(IDirectDraw4 *ddraw)
+{
+    DDDEVICEIDENTIFIER identifier;
+    HRESULT hr;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    hr = IDirectDraw4_GetDeviceIdentifier(ddraw, &identifier, 0);
+    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
+
+    return identifier.dwVendorId == 0x10de;
+}
+
+static BOOL ddraw_is_intel(IDirectDraw4 *ddraw)
+{
+    DDDEVICEIDENTIFIER identifier;
+    HRESULT hr;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    hr = IDirectDraw4_GetDeviceIdentifier(ddraw, &identifier, 0);
+    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
+
+    return identifier.dwVendorId == 0x8086;
+}
+
 static IDirectDrawSurface4 *create_overlay(IDirectDraw4 *ddraw,
         unsigned int width, unsigned int height, DWORD format)
 {
@@ -6128,6 +6170,15 @@ static void test_flip(void)
 
     for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
     {
+        /* Creating a flippable texture induces a BSoD on some versions of the
+         * Intel graphics driver. At least Intel GMA 950 with driver version
+         * 6.14.10.4926 on Windows XP SP3 is affected. */
+        if ((test_data[i].caps & DDSCAPS_TEXTURE) && ddraw_is_intel(ddraw))
+        {
+            win_skip("Skipping flippable texture test.\n");
+            continue;
+        }
+
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS;
@@ -7881,19 +7932,6 @@ static void test_palette_complex(void)
     refcount = IDirectDraw4_Release(ddraw);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
     DestroyWindow(window);
-}
-
-static BOOL ddraw_is_warp(IDirectDraw4 *ddraw)
-{
-    DDDEVICEIDENTIFIER identifier;
-    HRESULT hr;
-
-    if (!strcmp(winetest_platform, "wine"))
-        return FALSE;
-
-    hr = IDirectDraw4_GetDeviceIdentifier(ddraw, &identifier, 0);
-    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
-    return !!strstr(identifier.szDriver, "warp");
 }
 
 static void test_p8_blit(void)
@@ -9888,19 +9926,6 @@ static void test_texcoordindex(void)
     refcount = IDirect3DDevice3_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);
-}
-
-static BOOL ddraw_is_nvidia(IDirectDraw4 *ddraw)
-{
-    DDDEVICEIDENTIFIER identifier;
-    HRESULT hr;
-
-    if (!strcmp(winetest_platform, "wine"))
-        return FALSE;
-
-    hr = IDirectDraw4_GetDeviceIdentifier(ddraw, &identifier, 0);
-    ok(SUCCEEDED(hr), "Failed to get device identifier, hr %#x.\n", hr);
-    return identifier.dwVendorId == 0x10de;
 }
 
 static void test_colorkey_precision(void)
