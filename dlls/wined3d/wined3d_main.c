@@ -227,7 +227,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         {
             if (!strcmp(buffer,"backbuffer"))
             {
-                TRACE("Using the backbuffer for offscreen rendering\n");
+                ERR_(winediag)("Using the backbuffer for offscreen rendering.\n");
                 wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
             }
             else if (!strcmp(buffer,"fbo"))
