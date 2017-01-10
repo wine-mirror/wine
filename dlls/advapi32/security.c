@@ -2688,7 +2688,7 @@ BOOL WINAPI AddAuditAccessAce(
 }
 
 /******************************************************************************
- *  AddAuditAccessAce [ADVAPI32.@]
+ *  AddAuditAccessAceEx [ADVAPI32.@]
  */
 BOOL WINAPI AddAuditAccessAceEx(
     IN OUT PACL pAcl,
