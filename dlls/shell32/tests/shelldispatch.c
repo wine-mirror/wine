@@ -58,6 +58,48 @@ static void init_function_pointers(void)
 
 static void test_namespace(void)
 {
+    static const ShellSpecialFolderConstants special_folders[] =
+    {
+        ssfDESKTOP,
+        ssfPROGRAMS,
+        ssfCONTROLS,
+        ssfPRINTERS,
+        ssfPERSONAL,
+        ssfFAVORITES,
+        ssfSTARTUP,
+        ssfRECENT,
+        ssfSENDTO,
+        ssfBITBUCKET,
+        ssfSTARTMENU,
+        ssfDESKTOPDIRECTORY,
+        ssfDRIVES,
+        ssfNETWORK,
+        ssfNETHOOD,
+        ssfFONTS,
+        ssfTEMPLATES,
+        ssfCOMMONSTARTMENU,
+        ssfCOMMONPROGRAMS,
+        ssfCOMMONSTARTUP,
+        ssfCOMMONDESKTOPDIR,
+        ssfAPPDATA,
+        ssfPRINTHOOD,
+        ssfLOCALAPPDATA,
+        ssfALTSTARTUP,
+        ssfCOMMONALTSTARTUP,
+        ssfCOMMONFAVORITES,
+        ssfINTERNETCACHE,
+        ssfCOOKIES,
+        ssfHISTORY,
+        ssfCOMMONAPPDATA,
+        ssfWINDOWS,
+        ssfSYSTEM,
+        ssfPROGRAMFILES,
+        ssfMYPICTURES,
+        ssfPROFILE,
+        ssfSYSTEMx86,
+        ssfPROGRAMFILESx86,
+    };
+
     static const WCHAR backslashW[] = {'\\',0};
     static const WCHAR clsidW[] = {
         ':',':','{','6','4','5','F','F','0','4','0','-','5','0','8','1','-',
@@ -73,7 +115,7 @@ static void test_namespace(void)
     FolderItem *item;
     VARIANT var;
     BSTR title, item_path;
-    int len;
+    int len, i;
 
     r = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
      &IID_IShellDispatch, (LPVOID*)&sd);
@@ -92,6 +134,21 @@ static void test_namespace(void)
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(folder == NULL, "expected NULL, got %p\n", folder);
 
+    /* test valid folder ids */
+    for (i = 0; i < sizeof(special_folders)/sizeof(special_folders[0]); i++)
+    {
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = special_folders[i];
+        folder = (void*)0xdeadbeef;
+        r = IShellDispatch_NameSpace(sd, var, &folder);
+        if (special_folders[i] == ssfALTSTARTUP || special_folders[i] == ssfCOMMONALTSTARTUP)
+            ok(r == S_OK || broken(r == S_FALSE) /* winxp */, "Failed to get folder for index %#x, got %08x\n", special_folders[i], r);
+        else
+            ok(r == S_OK, "Failed to get folder for index %#x, got %08x\n", special_folders[i], r);
+        if (folder)
+            Folder_Release(folder);
+    }
+
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
     folder = (void*)0xdeadbeef;
@@ -99,6 +156,8 @@ static void test_namespace(void)
     todo_wine {
     ok(r == S_FALSE, "expected S_FALSE, got %08x\n", r);
     ok(folder == NULL, "got %p\n", folder);
+    if (r == S_OK)
+        Folder_Release(folder);
 }
     V_VT(&var) = VT_I4;
     V_I4(&var) = ssfPROGRAMFILES;
