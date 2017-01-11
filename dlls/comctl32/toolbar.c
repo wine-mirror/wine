@@ -3397,7 +3397,7 @@ TOOLBAR_GetButtonInfoT(const TOOLBAR_INFO *infoPtr, INT Id, LPTBBUTTONINFOW lpTb
                 Str_GetPtrW(lpText, lpTbInfo->pszText, lpTbInfo->cchText);
             else
                 Str_GetPtrWtoA(lpText, (LPSTR)lpTbInfo->pszText, lpTbInfo->cchText);
-        } else
+        } else if (!bUnicode || lpTbInfo->pszText)
             lpTbInfo->pszText[0] = '\0';
     }
     return nIndex;
