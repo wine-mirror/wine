@@ -1664,6 +1664,7 @@ static void grab_win32_clipboard(BOOL changed)
     last_clipboard_update = GetTickCount64();
     set_win32_clipboard_formats_from_mac_pasteboard(types);
     CloseClipboard();
+    SetTimer(clipboard_hwnd, 1, CLIPBOARD_UPDATE_DELAY, NULL);
 }
 
 
@@ -1713,9 +1714,14 @@ static LRESULT CALLBACK clipboard_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
         case WM_RENDERFORMAT:
             render_format(wp);
             break;
+        case WM_TIMER:
+            if (!is_clipboard_owner) break;
+            grab_win32_clipboard(FALSE);
+            break;
         case WM_DESTROYCLIPBOARD:
             TRACE("WM_DESTROYCLIPBOARD: lost ownership\n");
             is_clipboard_owner = FALSE;
+            KillTimer(hwnd, 1);
             break;
     }
     return DefWindowProcW(hwnd, msg, wp, lp);
