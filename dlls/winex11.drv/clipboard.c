@@ -116,6 +116,7 @@ static HANDLE import_string( Atom type, const void *data, size_t size );
 static HANDLE import_utf8_string( Atom type, const void *data, size_t size );
 static HANDLE import_compound_text( Atom type, const void *data, size_t size );
 static HANDLE import_text( Atom type, const void *data, size_t size );
+static HANDLE import_text_html( Atom type, const void *data, size_t size );
 static HANDLE import_text_uri_list( Atom type, const void *data, size_t size );
 static HANDLE import_targets( Atom type, const void *data, size_t size );
 
@@ -174,7 +175,7 @@ static const struct
     { JFIFW, 0,              XATOM_image_jpeg,          import_data,          export_data },
     { PNGW, 0,               XATOM_image_png,           import_data,          export_data },
     { HTMLFormatW, 0,        XATOM_HTML_Format,         import_data,          export_data },
-    { HTMLFormatW, 0,        XATOM_text_html,           import_data,          export_text_html },
+    { HTMLFormatW, 0,        XATOM_text_html,           import_text_html,     export_text_html },
     { 0, 0,                  XATOM_TARGETS,             import_targets,       export_targets },
     { 0, 0,                  XATOM_MULTIPLE,            NULL,                 export_multiple },
     { 0, 0,                  XATOM_TIMESTAMP,           NULL,                 export_timestamp },
@@ -838,6 +839,50 @@ static HANDLE import_image_bmp( Atom type, const void *data, size_t size )
 static HANDLE import_enhmetafile( Atom type, const void *data, size_t size )
 {
     return SetEnhMetaFileBits( size, data );
+}
+
+
+/**************************************************************************
+ *              import_text_html
+ */
+static HANDLE import_text_html( Atom type, const void *data, size_t size )
+{
+    static const char header[] =
+        "Version:0.9\n"
+        "StartHTML:0000000100\n"
+        "EndHTML:%010lu\n"
+        "StartFragment:%010lu\n"
+        "EndFragment:%010lu\n"
+        "<!--StartFragment-->";
+    static const char trailer[] = "\n<!--EndFragment-->";
+    char *text = NULL;
+    HANDLE ret;
+    SIZE_T len, total;
+
+    /* Firefox uses UTF-16LE with byte order mark. Convert to UTF-8 without the BOM. */
+    if (size >= sizeof(WCHAR) && ((const WCHAR *)data)[0] == 0xfeff)
+    {
+        len = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data + 1, size / sizeof(WCHAR) - 1,
+                                   NULL, 0, NULL, NULL );
+        if (!(text = HeapAlloc( GetProcessHeap(), 0, len ))) return 0;
+        WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data + 1, size / sizeof(WCHAR) - 1,
+                             text, len, NULL, NULL );
+        size = len;
+        data = text;
+    }
+
+    len = strlen( header ) + 12;  /* 3 * 4 extra chars for %010lu */
+    total = len + size + sizeof(trailer);
+    if ((ret = GlobalAlloc( GMEM_FIXED, total )))
+    {
+        char *p = ret;
+        p += sprintf( p, header, total - 1, len, len + size + 1 /* include the final \n in the data */ );
+        memcpy( p, data, size );
+        strcpy( p + size, trailer );
+        TRACE( "returning %s\n", debugstr_a( ret ));
+    }
+    HeapFree( GetProcessHeap(), 0, text );
+    return ret;
 }
 
 
