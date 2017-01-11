@@ -1623,15 +1623,14 @@ static void render_format(UINT id)
  * Grab the Win32 clipboard when a Mac app has taken ownership of the
  * pasteboard, and fill it with the pasteboard data types.
  */
-static BOOL grab_win32_clipboard(void)
+static void grab_win32_clipboard(void)
 {
-    if (!OpenClipboard(clipboard_hwnd)) return FALSE;
+    if (!OpenClipboard(clipboard_hwnd)) return;
     EmptyClipboard();
     is_clipboard_owner = TRUE;
     last_clipboard_update = GetTickCount64();
     set_win32_clipboard_formats_from_mac_pasteboard();
     CloseClipboard();
-    return TRUE;
 }
 
 
@@ -1641,27 +1640,25 @@ static BOOL grab_win32_clipboard(void)
  * Periodically update the clipboard while the clipboard is owned by a
  * Mac app.
  */
-static BOOL update_clipboard(void)
+static void update_clipboard(void)
 {
     static BOOL updating;
-    BOOL ret = TRUE;
 
     TRACE("is_clipboard_owner %d last_clipboard_update %llu now %llu\n",
           is_clipboard_owner, last_clipboard_update, GetTickCount64());
 
-    if (updating) return TRUE;
+    if (updating) return;
     updating = TRUE;
 
     if (is_clipboard_owner)
     {
         if (GetTickCount64() - last_clipboard_update > CLIPBOARD_UPDATE_DELAY)
-            ret = grab_win32_clipboard();
+            grab_win32_clipboard();
     }
     else if (!macdrv_is_pasteboard_owner(clipboard_cocoa_window))
-        ret = grab_win32_clipboard();
+        grab_win32_clipboard();
 
     updating = FALSE;
-    return ret;
 }
 
 
