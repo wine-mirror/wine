@@ -1713,12 +1713,13 @@ static void test_recalc(void)
 static void test_getbuttoninfo(void)
 {
     HWND hToolbar = NULL;
+    TBBUTTONINFOW tbiW;
+    TBBUTTONINFOA tbi;
     int i;
 
     rebuild_toolbar_with_buttons(&hToolbar);
     for (i = 0; i < 128; i++)
     {
-        TBBUTTONINFOA tbi;
         int ret;
 
         tbi.cbSize = i;
@@ -1730,6 +1731,14 @@ static void test_getbuttoninfo(void)
             compare(ret, -1, "%d");
         }
     }
+
+    /* TBIF_TEXT with NULL pszText */
+    memset(&tbiW, 0, sizeof(tbiW));
+    tbiW.cbSize = sizeof(tbiW);
+    tbiW.dwMask = TBIF_BYINDEX | TBIF_STYLE | TBIF_COMMAND | TBIF_TEXT;
+    i = SendMessageA(hToolbar, TB_GETBUTTONINFOW, 1, (LPARAM)&tbiW);
+    ok(i == 1, "Got index %d\n", i);
+
     DestroyWindow(hToolbar);
 }
 
