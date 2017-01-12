@@ -1275,10 +1275,11 @@ static inline LRESULT
 TRACKBAR_SetRangeMax (TRACKBAR_INFO *infoPtr, BOOL redraw, LONG lMax)
 {
     BOOL changed = infoPtr->lRangeMax != lMax;
+    LONG rightmost = max(lMax, infoPtr->lRangeMin);
 
     infoPtr->lRangeMax = lMax;
-    if (infoPtr->lPos > infoPtr->lRangeMax) {
-        infoPtr->lPos = infoPtr->lRangeMax;
+    if (infoPtr->lPos > rightmost) {
+        infoPtr->lPos = rightmost;
         infoPtr->flags |= TB_THUMBPOSCHANGED;
     }
 

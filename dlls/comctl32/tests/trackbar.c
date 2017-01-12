@@ -775,6 +775,32 @@ static void test_range(void)
     SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect1);
     ok(EqualRect(&rect1, &rect2), "thumb rectangle not updated\n");
 
+    /* test position update on range change */
+
+    /* set to [20, 50], position at 30, reduce range to [20,25] */
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMIN, FALSE, 20);
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, FALSE, 50);
+    SendMessageA(hWndTrackbar, TBM_SETPOS, FALSE, 30);
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, FALSE, 25);
+    r = SendMessageA(hWndTrackbar, TBM_GETPOS, 0, 0);
+    ok(r == 25, "Unexpected position %d\n", r);
+
+    /* set to [20, 50], position at 30, flip max to 10 */
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMIN, FALSE, 20);
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, FALSE, 50);
+    SendMessageA(hWndTrackbar, TBM_SETPOS, FALSE, 30);
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, FALSE, 10);
+    r = SendMessageA(hWndTrackbar, TBM_GETPOS, 0, 0);
+    ok(r == 20, "Unexpected position %d\n", r);
+
+    /* set to [20, 50], position at 30, flip min to 70 */
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMIN, FALSE, 20);
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMAX, FALSE, 50);
+    SendMessageA(hWndTrackbar, TBM_SETPOS, FALSE, 30);
+    SendMessageA(hWndTrackbar, TBM_SETRANGEMIN, FALSE, 70);
+    r = SendMessageA(hWndTrackbar, TBM_GETPOS, 0, 0);
+    ok(r == 70, "Unexpected position %d\n", r);
+
     DestroyWindow(hWndTrackbar);
 }
 
