@@ -1616,8 +1616,10 @@ static void test_set_fullscreen(void)
     ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
     check_swapchain_fullscreen_state(swapchain, &initial_state);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
-    ok(SUCCEEDED(hr) || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "SetFullscreenState failed, hr %#x.\n", hr);
-    if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+    ok(SUCCEEDED(hr) || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE ||
+       broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
+       "SetFullscreenState failed, hr %#x.\n", hr);
+    if (FAILED(hr))
     {
         skip("Could not change fullscreen state.\n");
         goto done;
