@@ -6016,7 +6016,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IPV6_MULTICAST_HOPS:
         case WS_IPV6_MULTICAST_LOOP:
         case WS_IPV6_UNICAST_HOPS:
-        case WS_IPV6_V6ONLY:
 #ifdef IPV6_UNICAST_IF
         case WS_IPV6_UNICAST_IF:
 #endif
@@ -6027,6 +6026,30 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IPV6_PROTECTION_LEVEL:
             FIXME("IPV6_PROTECTION_LEVEL is ignored!\n");
             return 0;
+        case WS_IPV6_V6ONLY:
+        {
+            union generic_unix_sockaddr uaddr;
+            socklen_t uaddrlen;
+            int bound;
+
+            fd = get_sock_fd( s, 0, NULL );
+            if (fd == -1) return SOCKET_ERROR;
+
+            bound = is_fd_bound(fd, &uaddr, &uaddrlen);
+            release_sock_fd( s, fd );
+            if (bound == 0 && uaddr.addr.sa_family == AF_INET)
+            {
+                /* Changing IPV6_V6ONLY succeeds on AF_INET (IPv4) socket
+                 * on Windows (with IPv6 support) if the socket is unbound.
+                 * It is essentially a noop, though Windows does store the value
+                 */
+                WARN("Silently ignoring IPPROTO_IPV6+IPV6_V6ONLY on AF_INET socket\n");
+                return 0;
+            }
+            level = IPPROTO_IPV6;
+            optname = IPV6_V6ONLY;
+            break;
+        }
         default:
             FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
             return SOCKET_ERROR;

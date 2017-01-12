@@ -6189,11 +6189,59 @@ static void test_ipv6only(void)
     }
 
     v4 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    ok(v4 != INVALID_SOCKET, "Could not create IPv6 socket (LastError: %d)\n", WSAGetLastError());
+    ok(v4 != INVALID_SOCKET, "Could not create IPv4 socket (LastError: %d)\n", WSAGetLastError());
+
+todo_wine {
+    enabled = 2;
+    ret = getsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, &len);
+    ok(!ret, "getsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+    ok(enabled == 1, "expected 1, got %d\n", enabled);
+}
+
+    enabled = 0;
+    len = sizeof(enabled);
+    ret = setsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, len);
+    ok(!ret, "setsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+
+todo_wine {
+    enabled = 2;
+    ret = getsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, &len);
+    ok(!ret, "getsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+    ok(!enabled, "expected 0, got %d\n", enabled);
+}
+
+    enabled = 1;
+    len = sizeof(enabled);
+    ret = setsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, len);
+    ok(!ret, "setsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
 
     /* bind on IPv4 socket should succeed - IPV6_V6ONLY is enabled by default */
     ret = bind(v4, (struct sockaddr*)&sin4, sizeof(sin4));
     ok(!ret, "Could not bind IPv4 address (LastError: %d)\n", WSAGetLastError());
+
+todo_wine {
+    enabled = 2;
+    ret = getsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, &len);
+    ok(!ret, "getsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+    ok(enabled == 1, "expected 1, got %d\n", enabled);
+}
+
+    enabled = 0;
+    len = sizeof(enabled);
+    ret = setsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, len);
+    ok(ret, "setsockopt(IPV6_ONLY) succeeded (LastError: %d)\n", WSAGetLastError());
+
+todo_wine {
+    enabled = 0;
+    ret = getsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, &len);
+    ok(!ret, "getsockopt(IPV6_ONLY) failed (LastError: %d)\n", WSAGetLastError());
+    ok(enabled == 1, "expected 1, got %d\n", enabled);
+}
+
+    enabled = 1;
+    len = sizeof(enabled);
+    ret = setsockopt(v4, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&enabled, len);
+    ok(ret, "setsockopt(IPV6_ONLY) succeeded (LastError: %d)\n", WSAGetLastError());
 
     closesocket(v4);
     closesocket(v6);
