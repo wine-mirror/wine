@@ -4288,6 +4288,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             || !(new_mode.dmFields & DM_DISPLAYFLAGS)))
     {
         TRACE("Skipping redundant mode setting call.\n");
+        adapter->screen_format = new_format_id;
         return WINED3D_OK;
     }
 
