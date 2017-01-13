@@ -639,7 +639,7 @@ static INT_PTR PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
    */
   resSize = SizeofResource(COMCTL32_hModule, hRes);
 
-  temp = Alloc(resSize);
+  temp = Alloc(2 * resSize);
 
   if (!temp)
     return -1;
