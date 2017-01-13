@@ -6202,12 +6202,12 @@ static void test_palette_gdi(void)
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    fx.dwFillColor = 3;
+    U5(fx).dwFillColor = 3;
     SetRect(&r, 0, 0, 319, 479);
     hr = IDirectDrawSurface_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
     SetRect(&r, 320, 0, 639, 479);
-    fx.dwFillColor = 4;
+    U5(fx).dwFillColor = 4;
     hr = IDirectDrawSurface_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
 
@@ -6596,7 +6596,7 @@ static void test_lost_device(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
@@ -7808,7 +7808,7 @@ static void test_colorkey_precision(void)
         hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &dst, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
-        fx.dwFillColor = tests[t].clear;
+        U5(fx).dwFillColor = tests[t].clear;
         /* On the w8 testbot (WARP driver) the blit result has different values in the
          * X channel. */
         color_mask = U2(tests[t].fmt).dwRBitMask
@@ -8870,7 +8870,7 @@ static void test_getdc(void)
         surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
         surface_desc.dwWidth = 64;
         surface_desc.dwHeight = 64;
-        U4(surface_desc).ddpfPixelFormat = test_data[i].format;
+        surface_desc.ddpfPixelFormat = test_data[i].format;
         surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
         if (FAILED(IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL)))
@@ -8936,7 +8936,7 @@ static void test_getdc(void)
                     "Got unexpected bit count %u for format %s.\n",
                     dib.dsBmih.biBitCount, test_data[i].name);
             ok(dib.dsBmih.biCompression == (U1(test_data[i].format).dwRGBBitCount == 16 ? BI_BITFIELDS : BI_RGB)
-                    || broken(U2(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
+                    || broken(U1(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
                     "Got unexpected compression %#x for format %s.\n",
                     dib.dsBmih.biCompression, test_data[i].name);
             ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
@@ -9344,8 +9344,8 @@ static void test_transform_vertices(void)
             {D3DCLIP_FRONT, {-0.5f}, {-0.5f}, {-0.5f}}, {0, {-0.5f}, {-0.5f}, {0.0f}}
         };
         ok(compare_float(U1(cmp_h[i]).hx, U1(out_h[i]).hx, 4096)
-                && compare_float(U1(cmp_h[i]).hy, U1(out_h[i]).hy, 4096)
-                && compare_float(U1(cmp_h[i]).hz, U1(out_h[i]).hz, 4096)
+                && compare_float(U2(cmp_h[i]).hy, U2(out_h[i]).hy, 4096)
+                && compare_float(U3(cmp_h[i]).hz, U3(out_h[i]).hz, 4096)
                 && cmp_h[i].dwFlags == out_h[i].dwFlags,
                 "HVertex %u differs. Got %#x %f %f %f.\n", i,
                 out_h[i].dwFlags, U1(out_h[i]).hx, U2(out_h[i]).hy, U3(out_h[i]).hz);
@@ -9758,7 +9758,7 @@ static void test_display_mode_surface_pixel_format(void)
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-    U5(surface_desc).dwBackBufferCount = 1;
+    surface_desc.dwBackBufferCount = 1;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(hr == D3D_OK, "Failed to create surface, hr %#x.\n", hr);

@@ -8408,12 +8408,12 @@ static void test_palette_gdi(void)
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    fx.dwFillColor = 3;
+    U5(fx).dwFillColor = 3;
     SetRect(&r, 0, 0, 319, 479);
     hr = IDirectDrawSurface4_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
     SetRect(&r, 320, 0, 639, 479);
-    fx.dwFillColor = 4;
+    U5(fx).dwFillColor = 4;
     hr = IDirectDrawSurface4_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
 
@@ -9817,7 +9817,7 @@ static void test_texcoordindex(void)
     ptr = surface_desc.lpSurface;
     ptr[0] = 0xff000000;
     ptr[1] = 0xff00ff00;
-    ptr += surface_desc.lPitch / sizeof(*ptr);
+    ptr += U1(surface_desc).lPitch / sizeof(*ptr);
     ptr[0] = 0xff0000ff;
     ptr[1] = 0xff00ffff;
     hr = IDirectDrawSurface4_Unlock(surface1, NULL);
@@ -9830,7 +9830,7 @@ static void test_texcoordindex(void)
     ptr = surface_desc.lpSurface;
     ptr[0] = 0xff000000;
     ptr[1] = 0xff0000ff;
-    ptr += surface_desc.lPitch / sizeof(*ptr);
+    ptr += U1(surface_desc).lPitch / sizeof(*ptr);
     ptr[0] = 0xffff0000;
     ptr[1] = 0xffff00ff;
     hr = IDirectDrawSurface4_Unlock(surface2, 0);
@@ -10078,7 +10078,7 @@ static void test_colorkey_precision(void)
         hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &dst, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
-        fx.dwFillColor = tests[t].clear;
+        U5(fx).dwFillColor = tests[t].clear;
         /* On the w8 testbot (WARP driver) the blit result has different values in the
          * X channel. */
         color_mask = U2(tests[t].fmt).dwRBitMask
@@ -11283,7 +11283,7 @@ static void test_getdc(void)
                     "Got unexpected bit count %u for format %s.\n",
                     dib.dsBmih.biBitCount, test_data[i].name);
             ok(dib.dsBmih.biCompression == (U1(test_data[i].format).dwRGBBitCount == 16 ? BI_BITFIELDS : BI_RGB)
-                    || broken(U2(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
+                    || broken(U1(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
                     "Got unexpected compression %#x for format %s.\n",
                     dib.dsBmih.biCompression, test_data[i].name);
             ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
@@ -12032,8 +12032,8 @@ static void test_transform_vertices(void)
             {D3DCLIP_FRONT, {-0.5f}, {-0.5f}, {-0.5f}}, {0, {-0.5f}, {-0.5f}, {0.0f}}
         };
         ok(compare_float(U1(cmp_h[i]).hx, U1(out_h[i]).hx, 4096)
-                && compare_float(U1(cmp_h[i]).hy, U1(out_h[i]).hy, 4096)
-                && compare_float(U1(cmp_h[i]).hz, U1(out_h[i]).hz, 4096)
+                && compare_float(U2(cmp_h[i]).hy, U2(out_h[i]).hy, 4096)
+                && compare_float(U3(cmp_h[i]).hz, U3(out_h[i]).hz, 4096)
                 && cmp_h[i].dwFlags == out_h[i].dwFlags,
                 "HVertex %u differs. Got %#x %f %f %f.\n", i,
                 out_h[i].dwFlags, U1(out_h[i]).hx, U2(out_h[i]).hy, U3(out_h[i]).hz);
@@ -12436,8 +12436,8 @@ static void test_transform_vertices(void)
             {D3DCLIP_LEFT | D3DCLIP_BOTTOM | D3DCLIP_FRONT,{-25.61f}, {-6.41f }, {-0.01f}},
         };
         ok(compare_float(U1(cmp_h[i]).hx, U1(out_h[i]).hx, 4096)
-                && compare_float(U1(cmp_h[i]).hy, U1(out_h[i]).hy, 4096)
-                && compare_float(U1(cmp_h[i]).hz, U1(out_h[i]).hz, 4096)
+                && compare_float(U2(cmp_h[i]).hy, U2(out_h[i]).hy, 4096)
+                && compare_float(U3(cmp_h[i]).hz, U3(out_h[i]).hz, 4096)
                 && cmp_h[i].dwFlags == out_h[i].dwFlags,
                 "HVertex %u differs. Got %#x %f %f %f.\n", i,
                 out_h[i].dwFlags, U1(out_h[i]).hx, U2(out_h[i]).hy, U3(out_h[i]).hz);

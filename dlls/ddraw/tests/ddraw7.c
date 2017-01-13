@@ -6270,7 +6270,7 @@ static void test_flip(void)
     surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
     surface_desc.dwWidth = 128;
     surface_desc.dwHeight = 128;
-    surface_desc.dwBackBufferCount = 3;
+    U5(surface_desc).dwBackBufferCount = 3;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#x.\n", hr);
 
@@ -6288,11 +6288,11 @@ static void test_flip(void)
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
-    surface_desc.dwBackBufferCount = 1;
+    U5(surface_desc).dwBackBufferCount = 1;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
-    surface_desc.dwBackBufferCount = 0;
+    U5(surface_desc).dwBackBufferCount = 0;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &frontbuffer, NULL);
     ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#x.\n", hr);
 
@@ -8208,12 +8208,12 @@ static void test_palette_gdi(void)
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
-    fx.dwFillColor = 3;
+    U5(fx).dwFillColor = 3;
     SetRect(&r, 0, 0, 319, 479);
     hr = IDirectDrawSurface7_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
     SetRect(&r, 320, 0, 639, 479);
-    fx.dwFillColor = 4;
+    U5(fx).dwFillColor = 4;
     hr = IDirectDrawSurface7_Blt(primary, &r, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to clear surface, hr %#x.\n", hr);
 
@@ -10136,7 +10136,7 @@ static void test_texcoordindex(void)
     ptr = surface_desc.lpSurface;
     ptr[0] = 0xff000000;
     ptr[1] = 0xff00ff00;
-    ptr += surface_desc.lPitch / sizeof(*ptr);
+    ptr += U1(surface_desc).lPitch / sizeof(*ptr);
     ptr[0] = 0xff0000ff;
     ptr[1] = 0xff00ffff;
     hr = IDirectDrawSurface7_Unlock(texture1, NULL);
@@ -10149,7 +10149,7 @@ static void test_texcoordindex(void)
     ptr = surface_desc.lpSurface;
     ptr[0] = 0xff000000;
     ptr[1] = 0xff0000ff;
-    ptr += surface_desc.lPitch / sizeof(*ptr);
+    ptr += U1(surface_desc).lPitch / sizeof(*ptr);
     ptr[0] = 0xffff0000;
     ptr[1] = 0xffff00ff;
     hr = IDirectDrawSurface7_Unlock(texture2, 0);
@@ -10402,7 +10402,7 @@ static void test_colorkey_precision(void)
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
-        fx.dwFillColor = tests[t].clear;
+        U5(fx).dwFillColor = tests[t].clear;
         /* On the w8 testbot (WARP driver) the blit result has different values in the
          * X channel. */
         color_mask = U2(tests[t].fmt).dwRBitMask
@@ -11601,7 +11601,7 @@ static void test_getdc(void)
                     "Got unexpected bit count %u for format %s.\n",
                     dib.dsBmih.biBitCount, test_data[i].name);
             ok(dib.dsBmih.biCompression == (U1(test_data[i].format).dwRGBBitCount == 16 ? BI_BITFIELDS : BI_RGB)
-                    || broken(U2(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
+                    || broken(U1(test_data[i].format).dwRGBBitCount == 32 && dib.dsBmih.biCompression == BI_BITFIELDS),
                     "Got unexpected compression %#x for format %s.\n",
                     dib.dsBmih.biCompression, test_data[i].name);
             ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
