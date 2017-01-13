@@ -636,6 +636,36 @@ static int receive_data(SOCKET sock, SecBuffer *buf)
     return received;
 }
 
+static void test_InitializeSecurityContext(void)
+{
+    SCHANNEL_CRED cred;
+    CredHandle cred_handle;
+    CtxtHandle context;
+    SECURITY_STATUS status;
+    SecBuffer out_buffer = {1000, SECBUFFER_TOKEN, NULL};
+    SecBuffer in_buffer = {0, SECBUFFER_EMPTY, NULL};
+    SecBufferDesc out_buffers = {SECBUFFER_VERSION, 1, &out_buffer};
+    SecBufferDesc in_buffers  = {SECBUFFER_VERSION, 1, &in_buffer};
+    ULONG attrs;
+
+    init_cred(&cred);
+    cred.grbitEnabledProtocols = SP_PROT_TLS1_CLIENT;
+    cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS|SCH_CRED_MANUAL_CRED_VALIDATION;
+    status = AcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_OUTBOUND, NULL,
+        &cred, NULL, NULL, &cred_handle, NULL);
+    ok(status == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", status);
+    if (status != SEC_E_OK) return;
+
+    status = InitializeSecurityContextA(&cred_handle, NULL, (SEC_CHAR *)"localhost",
+        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_ALLOCATE_MEMORY,
+        0, 0, &in_buffers, 0, &context, &out_buffers, &attrs, NULL);
+    ok(status == SEC_I_CONTINUE_NEEDED, "Expected SEC_I_CONTINUE_NEEDED, got %08x\n", status);
+
+    FreeContextBuffer(out_buffer.pvBuffer);
+    DeleteSecurityContext(&context);
+    FreeCredentialsHandle(&cred_handle);
+}
+
 static void test_communication(void)
 {
     int ret;
@@ -940,5 +970,6 @@ START_TEST(schannel)
 
     test_cread_attrs();
     testAcquireSecurityContext();
+    test_InitializeSecurityContext();
     test_communication();
 }
