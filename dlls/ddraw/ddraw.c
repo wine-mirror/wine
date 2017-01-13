@@ -653,6 +653,9 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
     wined3d_swapchain_incref(ddraw->wined3d_swapchain);
     ddraw_set_swapchain_window(ddraw, window);
 
+    if (ddraw->primary && ddraw->primary->palette)
+        wined3d_swapchain_set_palette(ddraw->wined3d_swapchain, ddraw->primary->palette->wined3d_palette);
+
     return DD_OK;
 }
 
