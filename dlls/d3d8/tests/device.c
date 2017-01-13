@@ -4637,12 +4637,12 @@ static void test_lockrect_invalid(void)
     IDirect3DCubeTexture8 *cube_texture;
     D3DLOCKED_RECT locked_rect;
     IDirect3DDevice8 *device;
+    HRESULT hr, expected_hr;
     IDirect3D8 *d3d8;
     unsigned int i, r;
     ULONG refcount;
     HWND window;
     BYTE *base;
-    HRESULT hr;
     unsigned int offset, expected_offset;
     static const struct
     {
@@ -4704,11 +4704,16 @@ static void test_lockrect_invalid(void)
             default:
                 break;
         }
+
         hr = IDirect3DSurface8_LockRect(surface, &locked_rect, NULL, 0);
         ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, type %s.\n", hr, resources[r].name);
         base = locked_rect.pBits;
         hr = IDirect3DSurface8_UnlockRect(surface);
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
+        expected_hr = resources[r].type == D3DRTYPE_TEXTURE ? D3D_OK : D3DERR_INVALIDCALL;
+        hr = IDirect3DSurface8_UnlockRect(surface);
+        todo_wine_if(resources[r].type == D3DRTYPE_TEXTURE)
+        ok(hr == expected_hr, "Got hr %#x, expected %#x, type %s.\n", hr, expected_hr, resources[r].name);
 
         for (i = 0; i < (sizeof(valid) / sizeof(*valid)); ++i)
         {
@@ -4852,6 +4857,8 @@ static void test_lockrect_invalid(void)
             ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
             hr = IDirect3DTexture8_UnlockRect(texture, 0);
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
+            hr = IDirect3DTexture8_UnlockRect(texture, 0);
+            todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
 
             hr = IDirect3DTexture8_LockRect(texture, 0, &locked_rect, &valid[0], 0);
             ok(hr == D3D_OK, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",
@@ -4887,6 +4894,8 @@ static void test_lockrect_invalid(void)
             ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
             hr = IDirect3DCubeTexture8_UnlockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0);
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
+            hr = IDirect3DCubeTexture8_UnlockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
 
             hr = IDirect3DCubeTexture8_LockRect(cube_texture, D3DCUBEMAP_FACE_NEGATIVE_X, 0,
                     &locked_rect, &valid[0], 0);
