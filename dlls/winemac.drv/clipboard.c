@@ -82,6 +82,7 @@ static CFDataRef export_bitmap_to_bmp(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
+static CFDataRef export_html(HANDLE data);
 static CFDataRef export_metafilepict(HANDLE data);
 static CFDataRef export_text_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf8(HANDLE data);
@@ -186,7 +187,7 @@ static const struct
     { wszJFIF,              CFSTR("public.jpeg"),                           import_clipboard_data,          export_clipboard_data },
     { wszPNG,               CFSTR("public.png"),                            import_clipboard_data,          export_clipboard_data },
     { wszHTMLFormat,        NULL,                                           import_clipboard_data,          export_clipboard_data },
-    { wszHTMLFormat,        CFSTR("public.html"),                           import_html,                    NULL,                   TRUE },
+    { wszHTMLFormat,        CFSTR("public.html"),                           import_html,                    export_html,            TRUE },
     { CFSTR_SHELLURLW,      CFSTR("public.url"),                            import_utf8_to_text,            export_text_to_utf8 },
 };
 
@@ -518,6 +519,28 @@ static HANDLE create_bitmap_from_dib(HANDLE dib)
     }
 
     return ret;
+}
+
+
+/**************************************************************************
+ *		get_html_description_field
+ *
+ *  Find the value of a field in an HTML Format description.
+ */
+static const char* get_html_description_field(const char* data, const char* keyword)
+{
+    const char* pos = data;
+
+    while (pos && *pos && *pos != '<')
+    {
+        if (memcmp(pos, keyword, strlen(keyword)) == 0)
+            return pos + strlen(keyword);
+
+        pos = strchr(pos, '\n');
+        if (pos) pos++;
+    }
+
+    return NULL;
 }
 
 
@@ -1137,6 +1160,49 @@ done:
     if (filenames) CFRelease(filenames);
     TRACE(" -> %s\n", debugstr_cf(ret));
     return ret;
+}
+
+
+/**************************************************************************
+ *              export_html
+ *
+ *  Export HTML Format to public.html data.
+ *
+ * FIXME: We should attempt to add an <a base> tag and convert windows paths.
+ */
+static CFDataRef export_html(HANDLE handle)
+{
+    CFDataRef ret;
+    const char *data, *field_value;
+    int fragmentstart, fragmentend;
+
+    data = GlobalLock(handle);
+
+    /* read the important fields */
+    field_value = get_html_description_field(data, "StartFragment:");
+    if (!field_value)
+    {
+        ERR("Couldn't find StartFragment value\n");
+        goto failed;
+    }
+    fragmentstart = atoi(field_value);
+
+    field_value = get_html_description_field(data, "EndFragment:");
+    if (!field_value)
+    {
+        ERR("Couldn't find EndFragment value\n");
+        goto failed;
+    }
+    fragmentend = atoi(field_value);
+
+    /* export only the fragment */
+    ret = CFDataCreate(NULL, (const UInt8*)&data[fragmentstart], fragmentend - fragmentstart);
+    GlobalUnlock(handle);
+    return ret;
+
+failed:
+    GlobalUnlock(handle);
+    return NULL;
 }
 
 
