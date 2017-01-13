@@ -1402,6 +1402,15 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_IVBS,                "Intel(R) HD Graphics Family",                               DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_HWD,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_HWM,                 "Intel(R) HD Graphics 4600",                                 DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_I5100_1,             "Intel(R) Iris(TM) Graphics 5100",                           DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_I5100_2,             "Intel(R) Iris(TM) Graphics 5100",                           DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_I5100_3,             "Intel(R) Iris(TM) Graphics 5100",                           DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_I5100_4,             "Intel(R) Iris(TM) Graphics 5100",                           DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_1,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_2,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_3,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_4,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IP5200_5,            "Intel(R) Iris(TM) Pro Graphics 5200",                       DRIVER_INTEL_HD4000,  1536},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD5300,              "Intel(R) HD Graphics 5300",                                 DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD5500,              "Intel(R) HD Graphics 5500",                                 DRIVER_INTEL_HD4000,  2048},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD5600,              "Intel(R) HD Graphics 5600",                                 DRIVER_INTEL_HD4000,  2048},
@@ -2050,6 +2059,8 @@ cards_intel[] =
     {"Iris 6100",                   CARD_INTEL_I6100},
     {"Iris(TM) Graphics 6100",      CARD_INTEL_I6100},  /* MacOS */
     /* Haswell */
+    {"Iris Pro 5200",               CARD_INTEL_IP5200_1},
+    {"Iris 5100",                   CARD_INTEL_I5100_1},
     {"Haswell Mobile",              CARD_INTEL_HWM},
     {"Iris OpenGL Engine",          CARD_INTEL_HWM},    /* MacOS */
     /* Ivybridge */
