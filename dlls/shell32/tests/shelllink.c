@@ -1276,7 +1276,7 @@ todo_wine {
     index = 5000;
     strcpy(pathA, "user32.dll");
     hicon = ExtractAssociatedIconA(NULL, pathA, &index);
-    CharLowerBuffA(pathA, -1);
+    CharLowerBuffA(pathA, strlen(pathA));
 todo_wine {
     ok(hicon != NULL, "Got icon %p\n", hicon);
     ok(!!strstr(pathA, "shell32.dll"), "Unexpected path %s\n", pathA);
@@ -1288,7 +1288,7 @@ todo_wine {
     index = 0xcaca;
     strcpy(pathA, "dummy.exe");
     hicon = ExtractAssociatedIconA(NULL, pathA, &index);
-    CharLowerBuffA(pathA, -1);
+    CharLowerBuffA(pathA, strlen(pathA));
 todo_wine {
     ok(hicon != NULL, "Got icon %p\n", hicon);
     ok(!!strstr(pathA, "shell32.dll"), "Unexpected path %s\n", pathA);
