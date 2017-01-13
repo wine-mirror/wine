@@ -4033,10 +4033,14 @@ static void test_GetNamedSecurityInfoA(void)
         ok(bret, "Failed to get Builtin Users ACE.\n");
         flags = ((ACE_HEADER *)ace)->AceFlags;
         ok(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE)
-           || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* w2k8 */,
+           || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* w2k8 */
+           || broken(flags == (CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* win 10 wow64 */
+           || broken(flags == CONTAINER_INHERIT_ACE), /* win 10 */
            "Builtin Users ACE has unexpected flags (0x%x != 0x%x)\n", flags,
            INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE);
-        ok(ace->Mask == GENERIC_READ, "Builtin Users ACE has unexpected mask (0x%x != 0x%x)\n",
+        ok(ace->Mask == GENERIC_READ
+           || broken(ace->Mask == KEY_READ), /* win 10 */
+           "Builtin Users ACE has unexpected mask (0x%x != 0x%x)\n",
                                       ace->Mask, GENERIC_READ);
     }
     ok(admins_ace_id != -1, "Bultin Admins ACE not found.\n");
@@ -4048,7 +4052,9 @@ static void test_GetNamedSecurityInfoA(void)
         ok(flags == 0x0
            || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* w2k8 */
            || broken(flags == (OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE)) /* win7 */
-           || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE)), /* win8+ */
+           || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE)) /* win8+ */
+           || broken(flags == (CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* win 10 wow64 */
+           || broken(flags == CONTAINER_INHERIT_ACE), /* win 10 */
            "Builtin Admins ACE has unexpected flags (0x%x != 0x0)\n", flags);
         ok(ace->Mask == KEY_ALL_ACCESS || broken(ace->Mask == GENERIC_ALL) /* w2k8 */,
            "Builtin Admins ACE has unexpected mask (0x%x != 0x%x)\n", ace->Mask, KEY_ALL_ACCESS);
