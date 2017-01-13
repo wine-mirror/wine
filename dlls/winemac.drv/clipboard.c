@@ -2141,7 +2141,8 @@ void CDECL macdrv_UpdateClipboard(void)
                 else
                 {
                     result = GetLastError();
-                    if (result != ERROR_BROKEN_PIPE && result != ERROR_OPERATION_ABORTED)
+                    if (result != ERROR_BROKEN_PIPE && result != ERROR_OPERATION_ABORTED &&
+                        result != ERROR_HANDLES_CLOSED)
                         WARN("failed to read from pipe: %d\n", result);
                 }
 
