@@ -4390,14 +4390,15 @@ static const GUID d3d9_private_data_test_guid =
 static void test_fpu_setup(void)
 {
 #if defined(D3D9_TEST_SET_FPU_CW) && defined(D3D9_TEST_GET_FPU_CW)
+    static const BOOL is_64bit = sizeof(void *) > sizeof(int);
+    IUnknown dummy_object = {&dummy_object_vtbl};
     struct device_desc device_desc;
+    IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
+    WORD cw, expected_cw;
     HWND window = NULL;
     IDirect3D9 *d3d9;
-    WORD cw;
-    IDirect3DSurface9 *surface;
     HRESULT hr;
-    IUnknown dummy_object = {&dummy_object_vtbl};
 
     window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_CAPTION, 0, 0,
             registry_mode.dmPelsWidth, registry_mode.dmPelsHeight, 0, 0, 0, 0);
@@ -4421,8 +4422,11 @@ static void test_fpu_setup(void)
         goto done;
     }
 
+    expected_cw = is_64bit ? 0xf60 : 0x7f;
+
     cw = get_fpu_cw();
-    ok(cw == 0x7f, "cw is %#x, expected 0x7f.\n", cw);
+    todo_wine_if(is_64bit)
+    ok(cw == expected_cw, "cw is %#x, expected %#x.\n", cw, expected_cw);
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &surface);
     ok(SUCCEEDED(hr), "Failed to get render target surface, hr %#x.\n", hr);
@@ -4431,7 +4435,8 @@ static void test_fpu_setup(void)
     hr = IDirect3DSurface9_SetPrivateData(surface, &d3d9_private_data_test_guid,
             &dummy_object, sizeof(IUnknown *), D3DSPD_IUNKNOWN);
     ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
-    ok(callback_cw == 0x7f, "Callback cw is %#x, expected 0x7f.\n", callback_cw);
+    todo_wine_if(is_64bit)
+    ok(callback_cw == expected_cw, "Callback cw is %#x, expected %#x.\n", callback_cw, expected_cw);
     ok(callback_tid == GetCurrentThreadId(), "Got unexpected thread id.\n");
     cw = get_fpu_cw();
     ok(cw == 0xf60, "cw is %#x, expected 0xf60.\n", cw);
