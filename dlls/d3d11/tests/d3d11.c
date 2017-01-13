@@ -3010,8 +3010,8 @@ static void test_create_rendertarget_view(void)
 
     rtv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_BUFFER;
-    U(rtv_desc).Buffer.ElementOffset = 0;
-    U(rtv_desc).Buffer.ElementWidth = 64;
+    U1(U(rtv_desc).Buffer).ElementOffset = 0;
+    U2(U(rtv_desc).Buffer).ElementWidth = 64;
 
     hr = ID3D11Device_CreateRenderTargetView(device, NULL, &rtv_desc, &rtview);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
@@ -3317,8 +3317,8 @@ static void test_create_shader_resource_view(void)
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-    U(srv_desc).Buffer.ElementOffset = 0;
-    U(srv_desc).Buffer.ElementWidth = 64;
+    U1(U(srv_desc).Buffer).ElementOffset = 0;
+    U2(U(srv_desc).Buffer).ElementWidth = 64;
 
     hr = ID3D11Device_CreateShaderResourceView(device, NULL, &srv_desc, &srview);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
@@ -3369,10 +3369,10 @@ static void test_create_shader_resource_view(void)
         ok(srv_desc.Format == DXGI_FORMAT_UNKNOWN, "Got unexpected format %#x.\n", srv_desc.Format);
         ok(srv_desc.ViewDimension == D3D11_SRV_DIMENSION_BUFFER, "Got unexpected view dimension %#x.\n",
                 srv_desc.ViewDimension);
-        ok(!U(srv_desc).Buffer.FirstElement, "Got unexpected first element %u.\n",
-                U(srv_desc).Buffer.FirstElement);
-        ok(U(srv_desc).Buffer.NumElements == 256, "Got unexpected num elements %u.\n",
-                U(srv_desc).Buffer.NumElements);
+        ok(!U1(U(srv_desc).Buffer).FirstElement, "Got unexpected first element %u.\n",
+                U1(U(srv_desc).Buffer).FirstElement);
+        ok(U2(U(srv_desc).Buffer).NumElements == 256, "Got unexpected num elements %u.\n",
+                U2(U(srv_desc).Buffer).NumElements);
 
         ID3D11ShaderResourceView_Release(srview);
         ID3D11Buffer_Release(buffer);
