@@ -4712,7 +4712,6 @@ static void test_lockrect_invalid(void)
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
         expected_hr = resources[r].type == D3DRTYPE_TEXTURE ? D3D_OK : D3DERR_INVALIDCALL;
         hr = IDirect3DSurface8_UnlockRect(surface);
-        todo_wine_if(resources[r].type == D3DRTYPE_TEXTURE)
         ok(hr == expected_hr, "Got hr %#x, expected %#x, type %s.\n", hr, expected_hr, resources[r].name);
 
         for (i = 0; i < (sizeof(valid) / sizeof(*valid)); ++i)
@@ -4858,7 +4857,7 @@ static void test_lockrect_invalid(void)
             hr = IDirect3DTexture8_UnlockRect(texture, 0);
             ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x, type %s.\n", hr, resources[r].name);
             hr = IDirect3DTexture8_UnlockRect(texture, 0);
-            todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
+            ok(hr == D3D_OK, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
 
             hr = IDirect3DTexture8_LockRect(texture, 0, &locked_rect, &valid[0], 0);
             ok(hr == D3D_OK, "Got unexpected hr %#x for rect [%d, %d]->[%d, %d], type %s.\n",

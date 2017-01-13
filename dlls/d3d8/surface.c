@@ -273,11 +273,16 @@ static HRESULT WINAPI d3d8_surface_UnlockRect(IDirect3DSurface8 *iface)
     hr = wined3d_resource_unmap(wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx);
     wined3d_mutex_unlock();
 
-    switch(hr)
+    if (hr == WINEDDERR_NOTLOCKED)
     {
-        case WINEDDERR_NOTLOCKED:       return D3DERR_INVALIDCALL;
-        default:                        return hr;
+        D3DRESOURCETYPE type;
+        if (surface->texture)
+            type = IDirect3DBaseTexture8_GetType(&surface->texture->IDirect3DBaseTexture8_iface);
+        else
+            type = D3DRTYPE_SURFACE;
+        hr = type == D3DRTYPE_TEXTURE ? D3D_OK : D3DERR_INVALIDCALL;
     }
+    return hr;
 }
 
 static const IDirect3DSurface8Vtbl d3d8_surface_vtbl =
