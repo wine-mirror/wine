@@ -22,6 +22,7 @@
 #include <windef.h>
 #include <wine/test.h>
 #include <dmusici.h>
+#include <audioclient.h>
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
@@ -57,11 +58,13 @@ static void test_COM_audiopath(void)
     }
     hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL,
             DMUS_APATH_SHARED_STEREOPLUSREVERB, 64, DMUS_AUDIOF_ALL, NULL);
-    if (hr == DSERR_NODRIVER) {
-        skip("No audio driver\n");
+    ok(hr == S_OK || hr == DSERR_NODRIVER ||
+       broken(hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED), /* Win 10 testbot */
+       "DirectMusicPerformance_InitAudio failed: %08x\n", hr);
+    if (FAILED(hr)) {
+        skip("Audio failed to initialize\n");
         return;
     }
-    ok(hr == S_OK, "DirectMusicPerformance_InitAudio failed: %08x\n", hr);
     hr = IDirectMusicPerformance8_GetDefaultAudioPath(performance, &dmap);
     ok(hr == S_OK, "DirectMusicPerformance_GetDefaultAudioPath failed: %08x\n", hr);
 
