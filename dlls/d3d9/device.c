@@ -922,9 +922,9 @@ static HRESULT WINAPI d3d9_device_CreateVolumeTexture(IDirect3DDevice9Ex *iface,
     struct d3d9_texture *object;
     HRESULT hr;
 
-    TRACE("iface %p, width %u, height %u, depth %u, levels %u\n",
-            iface, width, height, depth, levels);
-    TRACE("usage %#x, format %#x, pool %#x, texture %p, shared_handle %p.\n",
+    TRACE("iface %p, width %u, height %u, depth %u, levels %u, "
+            "usage %#x, format %#x, pool %#x, texture %p, shared_handle %p.\n",
+            iface, width, height, depth, levels,
             usage, format, pool, texture, shared_handle);
 
     *texture = NULL;
