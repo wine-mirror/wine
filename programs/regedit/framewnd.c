@@ -475,7 +475,7 @@ static BOOL CopyKeyName(HWND hWnd, LPCWSTR keyName)
             LPVOID pLoc = GlobalLock(hClipData);
             lstrcpyW(pLoc, keyName);
             GlobalUnlock(hClipData);
-            hClipData = SetClipboardData(CF_UNICODETEXT, hClipData);
+            SetClipboardData(CF_UNICODETEXT, hClipData);
 
         } else {
             /* error emptying clipboard*/
