@@ -159,7 +159,7 @@ static void CopyClsid(HTREEITEM item)
 
         lstrcpyW(pLoc, ((ITEM_INFO *)tvi.lParam)->clsid);
         GlobalUnlock(hClipData);
-        hClipData = SetClipboardData(CF_UNICODETEXT, hClipData);
+        SetClipboardData(CF_UNICODETEXT, hClipData);
         CloseClipboard();
     }
 }
@@ -184,7 +184,7 @@ static void CopyHTMLTag(HTREEITEM item)
         ((ITEM_INFO *)tvi.lParam)->clsid[clsidLen] = '}';
 
         GlobalUnlock(hClipData);
-        hClipData = SetClipboardData(CF_UNICODETEXT, hClipData);
+        SetClipboardData(CF_UNICODETEXT, hClipData);
         CloseClipboard();
     }
 }
