@@ -82,7 +82,7 @@ static int launch_app( const WCHAR *candidates, const WCHAR *argv1 )
     {
         WCHAR **args = CommandLineToArgvW( candidates, &count );
 
-        if (!(argv_new = HeapAlloc( GetProcessHeap(), 0, (count + 1) * sizeof(*argv_new) ))) break;
+        if (!(argv_new = HeapAlloc( GetProcessHeap(), 0, (count + 2) * sizeof(*argv_new) ))) break;
         for (i = 0; i < count; i++) argv_new[i] = strdup_unixcp( args[i] );
         argv_new[count] = cmdline;
         argv_new[count + 1] = NULL;
