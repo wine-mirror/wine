@@ -5806,8 +5806,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDCAPS_CANCLIP                  |
                                         WINEDDCAPS_CANCLIPSTRETCHED         |
                                         WINEDDCAPS_COLORKEY                 |
-                                        WINEDDCAPS_COLORKEYHWASSIST         |
-                                        WINEDDCAPS_ALIGNBOUNDARYSRC;
+                                        WINEDDCAPS_COLORKEYHWASSIST;
 
     /* Fill the ddraw caps structure */
     caps->ddraw_caps.caps =             WINEDDCAPS_GDI                      |
