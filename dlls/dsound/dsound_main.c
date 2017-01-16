@@ -510,7 +510,7 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         }
 
         if(device != defdev){
-            send_device(device, &guids[n], cb, user);
+            keep_going = send_device(device, &guids[n], cb, user);
             ++n;
         }
 
