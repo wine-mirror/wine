@@ -30,7 +30,10 @@ typedef LONG PCENT;
 typedef LONG PERCENT;
 typedef LONG TCENT;
 
+#ifndef REFERENCE_TIME_DEFINED
+#define REFERENCE_TIME_DEFINED
 typedef LONGLONG REFERENCE_TIME, *LPREFERENCE_TIME;
+#endif
 
 /*****************************************************************************
  * FOURCC definition
