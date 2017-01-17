@@ -2211,12 +2211,14 @@ static void test_AssociateFocus(void)
     test_CurrentFocus = FOCUS_SAVE;
     test_PrevFocus = FOCUS_SAVE;
     test_OnSetFocus = SINK_SAVE;
+    test_ShouldDeactivate = TRUE; /* win 8/10 */
     ShowWindow(wnd2,SW_SHOWNORMAL);
     SetFocus(wnd2);
     sink_check_saved(&test_OnSetFocus,dm1,dm2,"OnSetFocus");
     test_CurrentFocus = FOCUS_IGNORE; /* occasional wine race */
     test_PrevFocus = FOCUS_IGNORE; /* occasional wine race */
     test_OnSetFocus = SINK_IGNORE; /* occasional wine race */
+    test_ShouldDeactivate = FALSE;
     processPendingMessages();
 
     ShowWindow(wnd3,SW_SHOWNORMAL);
