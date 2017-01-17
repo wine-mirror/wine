@@ -1550,11 +1550,11 @@ static void test_startSession(void)
     ITfDocumentMgr_Release(dmtest);
 
     hr = TextStoreACP_Constructor((IUnknown**)&ts);
-    if (SUCCEEDED(hr))
-    {
-        hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, (IUnknown*)ts, &cxt, &editCookie);
-        ok(SUCCEEDED(hr),"CreateContext Failed\n");
-    }
+    ok(SUCCEEDED(hr),"Constructor Failed\n");
+    if (FAILED(hr)) return;
+
+    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, (IUnknown*)ts, &cxt, &editCookie);
+    ok(SUCCEEDED(hr),"CreateContext Failed\n");
 
     hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt2, &editCookie);
     ok(SUCCEEDED(hr),"CreateContext Failed\n");
