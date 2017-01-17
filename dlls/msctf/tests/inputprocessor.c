@@ -2175,11 +2175,11 @@ static void test_AssociateFocus(void)
     test_CurrentFocus = dm1;
     test_PrevFocus = FOCUS_IGNORE;
     test_OnSetFocus  = SINK_OPTIONAL;
-    test_ShouldDeactivate = SINK_OPTIONAL;
+    test_ShouldDeactivate = TRUE;
     hr = ITfThreadMgr_AssociateFocus(g_tm,wnd1,dm1,&olddm);
     ok(SUCCEEDED(hr),"AssociateFocus failed\n");
     sink_check_ok(&test_OnSetFocus,"OnSetFocus");
-    test_ShouldDeactivate = SINK_UNEXPECTED;
+    test_ShouldDeactivate = FALSE;
 
     processPendingMessages();
 
