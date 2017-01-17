@@ -821,7 +821,7 @@ static void test_PSM_ADDPAGE(void)
     psp.pfnDlgProc = page_dlg_proc_messages;
     psp.lParam = 0;
 
-    /* two page with the same data */
+    /* multiple pages with the same data */
     hpsp[0] = CreatePropertySheetPageA(&psp);
     hpsp[1] = CreatePropertySheetPageA(&psp);
     hpsp[2] = CreatePropertySheetPageA(&psp);
@@ -893,6 +893,100 @@ if (0)
     DestroyWindow(hdlg);
 }
 
+static void test_PSM_INSERTPAGE(void)
+{
+    HPROPSHEETPAGE hpsp[5];
+    PROPSHEETPAGEA psp;
+    PROPSHEETHEADERA psh;
+    HWND hdlg, tab;
+    BOOL ret;
+    DWORD r;
+
+    memset(&psp, 0, sizeof(psp));
+    psp.dwSize = sizeof(psp);
+    psp.dwFlags = 0;
+    psp.hInstance = GetModuleHandleA(NULL);
+    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_MESSAGE_TEST);
+    U2(psp).pszIcon = NULL;
+    psp.pfnDlgProc = page_dlg_proc_messages;
+    psp.lParam = 0;
+
+    /* multiple pages with the same data */
+    hpsp[0] = CreatePropertySheetPageA(&psp);
+    hpsp[1] = CreatePropertySheetPageA(&psp);
+    hpsp[2] = CreatePropertySheetPageA(&psp);
+
+    U(psp).pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_ERROR);
+    hpsp[3] = CreatePropertySheetPageA(&psp);
+
+    psp.dwFlags = PSP_PREMATURE;
+    hpsp[4] = CreatePropertySheetPageA(&psp);
+
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
+    psh.dwFlags = PSH_MODELESS;
+    psh.pszCaption = "test caption";
+    psh.nPages = 1;
+    psh.hwndParent = GetDesktopWindow();
+    U3(psh).phpage = hpsp;
+
+    hdlg = (HWND)PropertySheetA(&psh);
+    ok(hdlg != INVALID_HANDLE_VALUE, "got invalid handle %p\n", hdlg);
+
+    /* add pages one by one */
+    ret = SendMessageA(hdlg, PSM_INSERTPAGE, 5, (LPARAM)hpsp[1]);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+
+    /* try with invalid values */
+    ret = SendMessageA(hdlg, PSM_INSERTPAGE, 0, 0);
+    ok(ret == FALSE, "got %d\n", ret);
+
+if (0)
+{
+    /* crashes on native */
+    ret = SendMessageA(hdlg, PSM_INSERTPAGE, 0, (LPARAM)INVALID_HANDLE_VALUE);
+}
+
+    ret = SendMessageA(hdlg, PSM_INSERTPAGE, (WPARAM)INVALID_HANDLE_VALUE, (LPARAM)hpsp[2]);
+    ok(ret == FALSE, "got %d\n", ret);
+
+    /* check item count */
+    tab = (HWND)SendMessageA(hdlg, PSM_GETTABCONTROL, 0, 0);
+
+    r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
+    todo_wine ok(r == 2, "got %d\n", r);
+
+    ret = SendMessageA(hdlg, PSM_INSERTPAGE, (WPARAM)hpsp[1], (LPARAM)hpsp[2]);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+
+    r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
+    todo_wine ok(r == 3, "got %d\n", r);
+
+    /* add property sheet page that can't be created */
+    ret = SendMessageA(hdlg, PSM_INSERTPAGE, 1, (LPARAM)hpsp[3]);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+
+    r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
+    todo_wine ok(r == 4, "got %d\n", r);
+
+    /* select page that can't be created */
+    ret = SendMessageA(hdlg, PSM_SETCURSEL, 1, 0);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+
+    r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
+    todo_wine ok(r == 3, "got %d\n", r);
+
+    /* test PSP_PREMATURE flag with incorrect property sheet page */
+    ret = SendMessageA(hdlg, PSM_INSERTPAGE, 0, (LPARAM)hpsp[4]);
+    ok(ret == FALSE, "got %d\n", ret);
+
+    r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
+    todo_wine ok(r == 3, "got %d\n", r);
+
+    DestroyPropertySheetPage(hpsp[4]);
+    DestroyWindow(hdlg);
+}
+
 START_TEST(propsheet)
 {
     test_title();
@@ -903,4 +997,5 @@ START_TEST(propsheet)
     test_custom_default_button();
     test_messages();
     test_PSM_ADDPAGE();
+    test_PSM_INSERTPAGE();
 }
