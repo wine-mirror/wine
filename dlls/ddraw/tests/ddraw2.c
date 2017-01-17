@@ -4751,6 +4751,10 @@ static void test_surface_lock(void)
             ok(SUCCEEDED(hr), "Failed to unlock surface, type %s, hr %#x.\n", tests[i].name, hr);
         }
 
+        memset(&ddsd, 0, sizeof(ddsd));
+        hr = IDirectDrawSurface_Lock(surface, NULL, &ddsd, DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x, type %s.\n", hr, tests[i].name);
+
         IDirectDrawSurface_Release(surface);
     }
 
@@ -11247,6 +11251,199 @@ static void test_display_mode_surface_pixel_format(void)
     DestroyWindow(window);
 }
 
+static void test_surface_desc_size(void)
+{
+    union
+    {
+        DWORD dwSize;
+        DDSURFACEDESC desc1;
+        DDSURFACEDESC2 desc2;
+        BYTE blob[1024];
+    } desc;
+    IDirectDrawSurface7 *surface7;
+    IDirectDrawSurface2 *surface2;
+    IDirectDrawSurface *surface;
+    DDSURFACEDESC surface_desc;
+    HRESULT expected_hr, hr;
+    IDirectDraw2 *ddraw;
+    unsigned int i, j;
+    ULONG refcount;
+
+    static const struct
+    {
+        unsigned int caps;
+        const char *name;
+    }
+    surface_caps[] =
+    {
+        {DDSCAPS_OFFSCREENPLAIN, "offscreenplain"},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, "systemmemory texture"},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, "videomemory texture"},
+    };
+    static const unsigned int desc_sizes[] =
+    {
+        sizeof(DDSURFACEDESC),
+        sizeof(DDSURFACEDESC2),
+        sizeof(DDSURFACEDESC) + 1,
+        sizeof(DDSURFACEDESC2) + 1,
+        2 * sizeof(DDSURFACEDESC),
+        2 * sizeof(DDSURFACEDESC2),
+        sizeof(DDSURFACEDESC) - 1,
+        sizeof(DDSURFACEDESC2) - 1,
+        sizeof(DDSURFACEDESC) / 2,
+        sizeof(DDSURFACEDESC2) / 2,
+        0,
+        1,
+        12,
+        sizeof(desc) / 2,
+        sizeof(desc) - 100,
+    };
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create ddraw.\n");
+        return;
+    }
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(surface_caps) / sizeof(*surface_caps); ++i)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+        surface_desc.ddsCaps.dwCaps = surface_caps[i].caps;
+        surface_desc.dwHeight = 128;
+        surface_desc.dwWidth = 128;
+        if (FAILED(IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL)))
+        {
+            skip("Failed to create surface, type %s.\n", surface_caps[i].name);
+            continue;
+        }
+        hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface2, (void **)&surface2);
+        ok(hr == DD_OK, "Failed to query IDirectDrawSurface2, hr %#x, type %s.\n", hr, surface_caps[i].name);
+        hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface7, (void **)&surface7);
+        ok(hr == DD_OK, "Failed to query IDirectDrawSurface7, hr %#x, type %s.\n", hr, surface_caps[i].name);
+
+        /* GetSurfaceDesc() */
+        for (j = 0; j < sizeof(desc_sizes) / sizeof(*desc_sizes); ++j)
+        {
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = desc_sizes[j];
+            expected_hr = desc.dwSize == sizeof(DDSURFACEDESC) ? DD_OK : DDERR_INVALIDPARAMS;
+            hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc.desc1);
+            ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
+                    hr, expected_hr, desc_sizes[j], surface_caps[i].name);
+
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = desc_sizes[j];
+            expected_hr = desc.dwSize == sizeof(DDSURFACEDESC) ? DD_OK : DDERR_INVALIDPARAMS;
+            hr = IDirectDrawSurface2_GetSurfaceDesc(surface2, &desc.desc1);
+            ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
+                    hr, expected_hr, desc_sizes[j], surface_caps[i].name);
+
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = desc_sizes[j];
+            expected_hr = desc.dwSize == sizeof(DDSURFACEDESC2) ? DD_OK : DDERR_INVALIDPARAMS;
+            hr = IDirectDrawSurface7_GetSurfaceDesc(surface7, &desc.desc2);
+            ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
+                    hr, expected_hr, desc_sizes[j], surface_caps[i].name);
+        }
+
+        /* Lock() */
+        for (j = 0; j < sizeof(desc_sizes) / sizeof(*desc_sizes); ++j)
+        {
+            const BOOL valid_size = desc_sizes[j] == sizeof(DDSURFACEDESC)
+                    || desc_sizes[j] == sizeof(DDSURFACEDESC2);
+            DWORD expected_texture_stage;
+
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = desc_sizes[j];
+            desc.desc2.dwTextureStage = 0xdeadbeef;
+            desc.blob[sizeof(DDSURFACEDESC2)] = 0xef;
+            hr = IDirectDrawSurface_Lock(surface, NULL, &desc.desc1, 0, 0);
+            expected_hr = valid_size ? DD_OK : DDERR_INVALIDPARAMS;
+            ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
+                    hr, expected_hr, desc_sizes[j], surface_caps[i].name);
+            ok(desc.dwSize == desc_sizes[j], "dwSize was changed from %u to %u, type %s.\n",
+                    desc_sizes[j], desc.dwSize, surface_caps[i].name);
+            ok(desc.blob[sizeof(DDSURFACEDESC2)] == 0xef, "Got unexpected byte %02x, dwSize %u, type %s.\n",
+                    desc.blob[sizeof(DDSURFACEDESC2)], desc_sizes[j], surface_caps[i].name);
+            if (SUCCEEDED(hr))
+            {
+                ok(desc.desc1.dwWidth == 128, "Got unexpected width %u, dwSize %u, type %s.\n",
+                        desc.desc1.dwWidth, desc_sizes[j], surface_caps[i].name);
+                ok(desc.desc1.dwHeight == 128, "Got unexpected height %u, dwSize %u, type %s.\n",
+                        desc.desc1.dwHeight, desc_sizes[j], surface_caps[i].name);
+                expected_texture_stage = desc_sizes[j] >= sizeof(DDSURFACEDESC2) ? 0 : 0xdeadbeef;
+                todo_wine_if(!expected_texture_stage)
+                ok(desc.desc2.dwTextureStage == expected_texture_stage,
+                        "Got unexpected texture stage %#x, dwSize %u, type %s.\n",
+                        desc.desc2.dwTextureStage, desc_sizes[j], surface_caps[i].name);
+                IDirectDrawSurface_Unlock(surface, NULL);
+            }
+
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = desc_sizes[j];
+            desc.desc2.dwTextureStage = 0xdeadbeef;
+            desc.blob[sizeof(DDSURFACEDESC2)] = 0xef;
+            hr = IDirectDrawSurface2_Lock(surface2, NULL, &desc.desc1, 0, 0);
+            expected_hr = valid_size ? DD_OK : DDERR_INVALIDPARAMS;
+            ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
+                    hr, expected_hr, desc_sizes[j], surface_caps[i].name);
+            ok(desc.dwSize == desc_sizes[j], "dwSize was changed from %u to %u, type %s.\n",
+                    desc_sizes[j], desc.dwSize, surface_caps[i].name);
+            ok(desc.blob[sizeof(DDSURFACEDESC2)] == 0xef, "Got unexpected byte %02x, dwSize %u, type %s.\n",
+                    desc.blob[sizeof(DDSURFACEDESC2)], desc_sizes[j], surface_caps[i].name);
+            if (SUCCEEDED(hr))
+            {
+                ok(desc.desc2.dwWidth == 128, "Got unexpected width %u, dwSize %u, type %s.\n",
+                        desc.desc2.dwWidth, desc_sizes[j], surface_caps[i].name);
+                ok(desc.desc2.dwHeight == 128, "Got unexpected height %u, dwSize %u, type %s.\n",
+                        desc.desc2.dwHeight, desc_sizes[j], surface_caps[i].name);
+                expected_texture_stage = desc_sizes[j] >= sizeof(DDSURFACEDESC2) ? 0 : 0xdeadbeef;
+                todo_wine_if(!expected_texture_stage)
+                ok(desc.desc2.dwTextureStage == expected_texture_stage,
+                        "Got unexpected texture stage %#x, dwSize %u, type %s.\n",
+                        desc.desc2.dwTextureStage, desc_sizes[j], surface_caps[i].name);
+                IDirectDrawSurface2_Unlock(surface2, NULL);
+            }
+
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = desc_sizes[j];
+            desc.desc2.dwTextureStage = 0xdeadbeef;
+            desc.blob[sizeof(DDSURFACEDESC2)] = 0xef;
+            hr = IDirectDrawSurface7_Lock(surface7, NULL, &desc.desc2, 0, 0);
+            expected_hr = valid_size ? DD_OK : DDERR_INVALIDPARAMS;
+            ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
+                    hr, expected_hr, desc_sizes[j], surface_caps[i].name);
+            ok(desc.dwSize == desc_sizes[j], "dwSize was changed from %u to %u, type %s.\n",
+                    desc_sizes[j], desc.dwSize, surface_caps[i].name);
+            ok(desc.blob[sizeof(DDSURFACEDESC2)] == 0xef, "Got unexpected byte %02x, dwSize %u, type %s.\n",
+                    desc.blob[sizeof(DDSURFACEDESC2)], desc_sizes[j], surface_caps[i].name);
+            if (SUCCEEDED(hr))
+            {
+                ok(desc.desc2.dwWidth == 128, "Got unexpected width %u, dwSize %u, type %s.\n",
+                        desc.desc2.dwWidth, desc_sizes[j], surface_caps[i].name);
+                ok(desc.desc2.dwHeight == 128, "Got unexpected height %u, dwSize %u, type %s.\n",
+                        desc.desc2.dwHeight, desc_sizes[j], surface_caps[i].name);
+                expected_texture_stage = desc_sizes[j] >= sizeof(DDSURFACEDESC2) ? 0 : 0xdeadbeef;
+                ok(desc.desc2.dwTextureStage == expected_texture_stage,
+                        "Got unexpected texture stage %#x, dwSize %u, type %s.\n",
+                        desc.desc2.dwTextureStage, desc_sizes[j], surface_caps[i].name);
+                IDirectDrawSurface7_Unlock(surface7, NULL);
+            }
+        }
+
+        IDirectDrawSurface7_Release(surface7);
+        IDirectDrawSurface2_Release(surface2);
+        IDirectDrawSurface_Release(surface);
+    }
+
+    refcount = IDirectDraw2_Release(ddraw);
+    ok(!refcount, "DirectDraw has %u references left.\n", refcount);
+}
+
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
@@ -11340,4 +11537,5 @@ START_TEST(ddraw2)
     test_edge_antialiasing_blending();
     test_transform_vertices();
     test_display_mode_surface_pixel_format();
+    test_surface_desc_size();
 }
