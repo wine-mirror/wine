@@ -4726,7 +4726,7 @@ static void test_EnumSystemGeoID(void)
 struct invariant_entry {
   const char *name;
   int id;
-  const char *expect;
+  const char *expect, *expect2;
 };
 
 #define X(x)  #x, x
@@ -4737,7 +4737,7 @@ static const struct invariant_entry invariant_list[] = {
     { X(LOCALE_SNATIVELANGNAME),          "Invariant Language" },
     { X(LOCALE_ICOUNTRY),                 "1" },
     { X(LOCALE_SENGCOUNTRY),              "Invariant Country" },
-    { X(LOCALE_SABBREVCTRYNAME),          "IVC" },
+    { X(LOCALE_SABBREVCTRYNAME),          "IVC", "" },
     { X(LOCALE_SNATIVECTRYNAME),          "Invariant Country" },
     { X(LOCALE_IDEFAULTLANGUAGE),         "0409" },
     { X(LOCALE_IDEFAULTCOUNTRY),          "1" },
@@ -4864,9 +4864,11 @@ static void test_invariant(void)
     else
     {
         len = strlen(ptr->expect)+1; /* include \0 */
-        ok(ret == len, "For id %d, expected ret == %d, got %d, error %d\n",
+        ok(ret == len || (ptr->expect2 && ret == strlen(ptr->expect2)+1),
+           "For id %d, expected ret == %d, got %d, error %d\n",
             ptr->id, len, ret, GetLastError());
-        ok(!strcmp(buffer, ptr->expect), "For id %d, Expected %s, got '%s'\n",
+        ok(!strcmp(buffer, ptr->expect) || (ptr->expect2 && !strcmp(buffer, ptr->expect2)),
+           "For id %d, Expected %s, got '%s'\n",
             ptr->id, ptr->expect, buffer);
     }
 
