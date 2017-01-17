@@ -626,10 +626,10 @@ struct member_info
 /* Structure copy */
 #define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
 
-#define DD_STRUCT_COPY_BYSIZE_(to,from,from_size)                 \
+#define DD_STRUCT_COPY_BYSIZE_(to,from,to_size,from_size)         \
     do {                                                          \
         DWORD __size = (to)->dwSize;                              \
-        DWORD __resetsize = min(__size, sizeof(*to));             \
+        DWORD __resetsize = min(to_size, sizeof(*to));            \
         DWORD __copysize = min(__resetsize, from_size);           \
         assert(to != from);                                       \
         memcpy(to, from, __copysize);                             \
@@ -637,7 +637,7 @@ struct member_info
         (to)->dwSize = __size; /* restore size */                 \
     } while (0)
 
-#define DD_STRUCT_COPY_BYSIZE(to,from) DD_STRUCT_COPY_BYSIZE_(to,from,(from)->dwSize)
+#define DD_STRUCT_COPY_BYSIZE(to,from) DD_STRUCT_COPY_BYSIZE_(to,from,(to)->dwSize,(from)->dwSize)
 
 HRESULT hr_ddraw_from_wined3d(HRESULT hr) DECLSPEC_HIDDEN;
 

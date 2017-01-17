@@ -5891,7 +5891,6 @@ static void test_surface_lock(void)
         expected_hr = tests[i].caps & DDSCAPS_TEXTURE && !(tests[i].caps & DDSCAPS_VIDEOMEMORY)
                 ? DD_OK : DDERR_INVALIDPARAMS;
         hr = IDirectDrawSurface7_Lock(surface, NULL, &ddsd, DDLOCK_WAIT, NULL);
-        todo_wine_if(expected_hr == D3D_OK)
         ok(hr == expected_hr, "Got hr %#x, expected %#x, type %s.\n", hr, expected_hr, tests[i].name);
         if (SUCCEEDED(hr))
         {
@@ -12321,7 +12320,6 @@ static void test_surface_desc_size(void)
             desc.blob[sizeof(DDSURFACEDESC2)] = 0xef;
             hr = IDirectDrawSurface_Lock(surface, NULL, &desc.desc1, 0, 0);
             expected_hr = ignore_size || valid_size ? DD_OK : DDERR_INVALIDPARAMS;
-            todo_wine_if(ignore_size && !valid_size)
             ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
                     hr, expected_hr, desc_sizes[j], surface_caps[i].name);
             ok(desc.dwSize == desc_sizes[j], "dwSize was changed from %u to %u, type %s.\n",
@@ -12348,7 +12346,6 @@ static void test_surface_desc_size(void)
             desc.blob[sizeof(DDSURFACEDESC2)] = 0xef;
             hr = IDirectDrawSurface3_Lock(surface3, NULL, &desc.desc1, 0, 0);
             expected_hr = ignore_size || valid_size ? DD_OK : DDERR_INVALIDPARAMS;
-            todo_wine_if(ignore_size && !valid_size)
             ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
                     hr, expected_hr, desc_sizes[j], surface_caps[i].name);
             ok(desc.dwSize == desc_sizes[j], "dwSize was changed from %u to %u, type %s.\n",
@@ -12375,7 +12372,6 @@ static void test_surface_desc_size(void)
             desc.blob[sizeof(DDSURFACEDESC2)] = 0xef;
             hr = IDirectDrawSurface7_Lock(surface7, NULL, &desc.desc2, 0, 0);
             expected_hr = ignore_size || valid_size ? DD_OK : DDERR_INVALIDPARAMS;
-            todo_wine_if(ignore_size && !valid_size)
             ok(hr == expected_hr, "Got hr %#x, expected %#x, dwSize %u, type %s.\n",
                     hr, expected_hr, desc_sizes[j], surface_caps[i].name);
             ok(desc.dwSize == desc_sizes[j], "dwSize was changed from %u to %u, type %s.\n",
