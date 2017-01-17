@@ -351,7 +351,7 @@ static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
 
     if (id == 0)
     {
-        if (length + 1 > sizeof(feature_buffer))
+        if (length + 1 > sizeof(buffer))
         {
             ERR("Output feature buffer too small\n");
             return STATUS_UNSUCCESSFUL;
