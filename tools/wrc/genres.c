@@ -876,7 +876,7 @@ static void menuexitem2res(res_t *res, menu_item_t *menitem, const language_t *l
 	{
 		put_dword(res, itm->gottype ? itm->type : 0);
 		put_dword(res, itm->gotstate ? itm->state : 0);
-		put_dword(res, itm->gotid ? itm->id : 0);	/* FIXME: Docu. says word */
+		put_dword(res, itm->gotid ? itm->id : 0);
 		put_word(res, (itm->popup ? 0x01 : 0) | (!itm->next ? MF_END : 0));
 		if(itm->name)
 			put_string(res, itm->name, str_unicode, TRUE, lang);
