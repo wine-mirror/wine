@@ -789,22 +789,8 @@ todo_wine {
     len = size = 0;
     ret = pBCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    if (sizeof(void *) == 4)
-    {
-        ok(len == 618 /* >= Win 8 */
-        || broken(len == 610) /* Win 7 */
-        || broken(len == 582) /* < Win 7 */,
-        "got %u\n", len);
-        ok(size == sizeof(len), "got %u\n", size);
-    }
-    else
-    {
-        ok(len == 654 /* >= Win 8 */
-        || broken(len == 622) /* Win 7 */
-        || broken(len == 598) /* < Win 7 */,
-        "got %u\n", len);
-        ok(size == sizeof(len), "got %u\n", size);
-    }
+    ok(len, "expected non-zero len\n");
+    ok(size == sizeof(len), "got %u\n", size);
 
     len = size = 0;
     ret = pBCryptGetProperty(alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
