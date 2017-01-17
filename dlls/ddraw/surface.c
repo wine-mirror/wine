@@ -954,14 +954,15 @@ static HRESULT WINAPI ddraw_surface1_GetAttachedSurface(IDirectDrawSurface *ifac
  *
  *****************************************************************************/
 static HRESULT surface_lock(struct ddraw_surface *surface,
-        RECT *rect, DDSURFACEDESC2 *surface_desc, DWORD flags, HANDLE h)
+        RECT *rect, DDSURFACEDESC2 *surface_desc, unsigned int surface_desc_size,
+        DWORD flags, HANDLE h)
 {
-    struct wined3d_box box;
     struct wined3d_map_desc map_desc;
+    struct wined3d_box box;
     HRESULT hr = DD_OK;
 
-    TRACE("surface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
-            surface, wine_dbgstr_rect(rect), surface_desc, flags, h);
+    TRACE("surface %p, rect %s, surface_desc %p, surface_desc_size %u, flags %#x, h %p.\n",
+            surface, wine_dbgstr_rect(rect), surface_desc, surface_desc_size, flags, h);
 
     /* surface->surface_desc.dwWidth and dwHeight are changeable, thus lock */
     wined3d_mutex_lock();
@@ -1025,7 +1026,7 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
     }
 
     /* Windows does not set DDSD_LPSURFACE on locked surfaces. */
-    DD_STRUCT_COPY_BYSIZE(surface_desc, &surface->surface_desc);
+    DD_STRUCT_COPY_BYSIZE_(surface_desc, &surface->surface_desc, surface_desc_size, surface->surface_desc.dwSize);
     surface_desc->lpSurface = map_desc.data;
 
     TRACE("locked surface returning description :\n");
@@ -1037,63 +1038,80 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
     return DD_OK;
 }
 
+static BOOL surface_validate_lock_desc(struct ddraw_surface *surface,
+        const DDSURFACEDESC *desc, unsigned int *size)
+{
+    if (!desc)
+        return FALSE;
+
+    if (desc->dwSize == sizeof(DDSURFACEDESC) || desc->dwSize == sizeof(DDSURFACEDESC2))
+    {
+        *size = desc->dwSize;
+        return TRUE;
+    }
+
+    if (surface->version == 7
+            && surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE
+            && !(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
+    {
+        if (desc->dwSize >= sizeof(DDSURFACEDESC2))
+            *size = sizeof(DDSURFACEDESC2);
+        else
+            *size = sizeof(DDSURFACEDESC);
+        return TRUE;
+    }
+
+    WARN("Invalid structure size %u.\n", desc->dwSize);
+    return FALSE;
+}
+
 static HRESULT WINAPI ddraw_surface7_Lock(IDirectDrawSurface7 *iface,
         RECT *rect, DDSURFACEDESC2 *surface_desc, DWORD flags, HANDLE h)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    unsigned int surface_desc_size;
 
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
-    if (!surface_desc) return DDERR_INVALIDPARAMS;
-    if (surface_desc->dwSize != sizeof(DDSURFACEDESC) &&
-            surface_desc->dwSize != sizeof(DDSURFACEDESC2))
-    {
-        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", surface_desc->dwSize);
+    if (!surface_validate_lock_desc(surface, (DDSURFACEDESC *)surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
-    }
-    return surface_lock(surface, rect, surface_desc, flags, h);
+
+    return surface_lock(surface, rect, surface_desc, surface_desc_size, flags, h);
 }
 
 static HRESULT WINAPI ddraw_surface4_Lock(IDirectDrawSurface4 *iface, RECT *rect,
         DDSURFACEDESC2 *surface_desc, DWORD flags, HANDLE h)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface4(iface);
+    unsigned int surface_desc_size;
 
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
-    if (!surface_desc) return DDERR_INVALIDPARAMS;
-    if (surface_desc->dwSize != sizeof(DDSURFACEDESC) &&
-            surface_desc->dwSize != sizeof(DDSURFACEDESC2))
-    {
-        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", surface_desc->dwSize);
+    if (!surface_validate_lock_desc(surface, (DDSURFACEDESC *)surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
-    }
-    return surface_lock(surface, rect, surface_desc, flags, h);
+
+    return surface_lock(surface, rect, surface_desc, surface_desc_size, flags, h);
 }
 
 static HRESULT WINAPI ddraw_surface3_Lock(IDirectDrawSurface3 *iface, RECT *rect,
         DDSURFACEDESC *surface_desc, DWORD flags, HANDLE h)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface3(iface);
+    unsigned int surface_desc_size;
     DDSURFACEDESC2 surface_desc2;
     HRESULT hr;
 
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
-    if (!surface_desc) return DDERR_INVALIDPARAMS;
-    if (surface_desc->dwSize != sizeof(DDSURFACEDESC) &&
-            surface_desc->dwSize != sizeof(DDSURFACEDESC2))
-    {
-        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", surface_desc->dwSize);
+    if (!surface_validate_lock_desc(surface, surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
-    }
 
     surface_desc2.dwSize = surface_desc->dwSize;
     surface_desc2.dwFlags = 0;
-    hr = surface_lock(surface, rect, &surface_desc2, flags, h);
+    hr = surface_lock(surface, rect, &surface_desc2, surface_desc_size, flags, h);
     DDSD2_to_DDSD(&surface_desc2, surface_desc);
     surface_desc->dwSize = surface_desc2.dwSize;
     return hr;
@@ -1103,23 +1121,19 @@ static HRESULT WINAPI ddraw_surface2_Lock(IDirectDrawSurface2 *iface, RECT *rect
         DDSURFACEDESC *surface_desc, DWORD flags, HANDLE h)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface2(iface);
+    unsigned int surface_desc_size;
     DDSURFACEDESC2 surface_desc2;
     HRESULT hr;
 
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
-    if (!surface_desc) return DDERR_INVALIDPARAMS;
-    if (surface_desc->dwSize != sizeof(DDSURFACEDESC) &&
-            surface_desc->dwSize != sizeof(DDSURFACEDESC2))
-    {
-        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", surface_desc->dwSize);
+    if (!surface_validate_lock_desc(surface, surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
-    }
 
     surface_desc2.dwSize = surface_desc->dwSize;
     surface_desc2.dwFlags = 0;
-    hr = surface_lock(surface, rect, &surface_desc2, flags, h);
+    hr = surface_lock(surface, rect, &surface_desc2, surface_desc_size, flags, h);
     DDSD2_to_DDSD(&surface_desc2, surface_desc);
     surface_desc->dwSize = surface_desc2.dwSize;
     return hr;
@@ -1129,22 +1143,19 @@ static HRESULT WINAPI ddraw_surface1_Lock(IDirectDrawSurface *iface, RECT *rect,
         DDSURFACEDESC *surface_desc, DWORD flags, HANDLE h)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface(iface);
+    unsigned int surface_desc_size;
     DDSURFACEDESC2 surface_desc2;
     HRESULT hr;
+
     TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
-    if (!surface_desc) return DDERR_INVALIDPARAMS;
-    if (surface_desc->dwSize != sizeof(DDSURFACEDESC) &&
-            surface_desc->dwSize != sizeof(DDSURFACEDESC2))
-    {
-        WARN("Invalid structure size %d, returning DDERR_INVALIDPARAMS\n", surface_desc->dwSize);
+    if (!surface_validate_lock_desc(surface, surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
-    }
 
     surface_desc2.dwSize = surface_desc->dwSize;
     surface_desc2.dwFlags = 0;
-    hr = surface_lock(surface, rect, &surface_desc2, flags, h);
+    hr = surface_lock(surface, rect, &surface_desc2, surface_desc_size, flags, h);
     DDSD2_to_DDSD(&surface_desc2, surface_desc);
     surface_desc->dwSize = surface_desc2.dwSize;
     return hr;
