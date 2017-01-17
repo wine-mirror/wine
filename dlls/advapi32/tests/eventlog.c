@@ -1218,6 +1218,11 @@ static void test_start_trace(void)
     properties->LogFileNameOffset = sizeof(EVENT_TRACE_PROPERTIES) + sizeof(sessionname);
 
     ret = StartTraceA(&handle, sessionname, properties);
+    if (ret == ERROR_ACCESS_DENIED)
+    {
+        skip("need admin rights\n");
+        goto done;
+    }
     ok(ret == ERROR_SUCCESS, "Expected success, got %d\n", ret);
 
     ret = StartTraceA(&handle, sessionname, properties);
@@ -1228,6 +1233,7 @@ static void test_start_trace(void)
 
     /* clean up */
     ControlTraceA(handle, sessionname, properties, EVENT_TRACE_CONTROL_STOP);
+done:
     HeapFree(GetProcessHeap(), 0, properties);
     DeleteFileA(filepath);
 }
