@@ -1625,7 +1625,7 @@ static void test_tr2_sys__Symlink(void)
         errno = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         ret = p_tr2_sys__Symlink(tests[i].existing_path, tests[i].new_path);
-        if(!i && (ret==ERROR_PRIVILEGE_NOT_HELD || ret==ERROR_INVALID_FUNCTION)) {
+        if(!i && (ret==ERROR_PRIVILEGE_NOT_HELD || ret==ERROR_INVALID_FUNCTION || ret==ERROR_CALL_NOT_IMPLEMENTED)) {
             win_skip("Privilege not held or symbolic link not supported, skipping symbolic link tests.\n");
             ok(DeleteFileA("f1"), "expect f1 to exist\n");
             ret = p_tr2_sys__Remove_dir("tr2_test_dir");
@@ -1684,7 +1684,7 @@ static void test_tr2_sys__Unlink(void)
     CloseHandle(file);
 
     ret = p_tr2_sys__Symlink("tr2_test_dir/f1", "tr2_test_dir/f1_symlink");
-    if(ret==ERROR_PRIVILEGE_NOT_HELD || ret==ERROR_INVALID_FUNCTION) {
+    if(ret==ERROR_PRIVILEGE_NOT_HELD || ret==ERROR_INVALID_FUNCTION || ret==ERROR_CALL_NOT_IMPLEMENTED) {
         tests[0].last_error = ERROR_FILE_NOT_FOUND;
         win_skip("Privilege not held or symbolic link not supported, skipping symbolic link tests.\n");
     }else {
