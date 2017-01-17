@@ -43,6 +43,7 @@ static const WCHAR symbols_stripped[] = {'j','u','s','t','a','t','e','s','t','s'
 static const WCHAR localeW[] = {'e','n','-','U','S',0};
 static const WCHAR fooW[] = {'f','o','o',0};
 static const WCHAR emptyW[] = {0};
+static const WCHAR invalidW[] = {'i','n','v','a','l','i','d',0};
 
 static inline unsigned int strlenW( const WCHAR *str )
 {
@@ -2644,7 +2645,7 @@ static void test_LCMapStringEx(void)
     trace("testing LCMapStringEx\n");
 
     SetLastError(0xdeadbeef);
-    ret = pLCMapStringEx(fooW, LCMAP_LOWERCASE,
+    ret = pLCMapStringEx(invalidW, LCMAP_LOWERCASE,
                          upper_case, -1, buf, sizeof(buf)/sizeof(WCHAR), NULL, NULL, 0);
     todo_wine {
     ok(!ret, "LCMapStringEx should fail with bad locale name\n");
@@ -2738,7 +2739,7 @@ static void test_LocaleNameToLCID(void)
 
     /* bad name */
     SetLastError(0xdeadbeef);
-    lcid = pLocaleNameToLCID(fooW, 0);
+    lcid = pLocaleNameToLCID(invalidW, 0);
     ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected lcid == 0, got %08x, error %d\n", lcid, GetLastError());
 
@@ -4463,7 +4464,8 @@ static void test_IsValidLocaleName(void)
 {
     static const WCHAR enusW[] = {'e','n','-','U','S',0};
     static const WCHAR zzW[] = {'z','z',0};
-    static const WCHAR zzzzW[] = {'z','z','-','Z','Z',0};
+    static const WCHAR zz_zzW[] = {'z','z','-','Z','Z',0};
+    static const WCHAR zzzzW[] = {'z','z','z','z',0};
     BOOL ret;
 
     if (!pIsValidLocaleName)
@@ -4475,7 +4477,9 @@ static void test_IsValidLocaleName(void)
     ret = pIsValidLocaleName(enusW);
     ok(ret, "IsValidLocaleName failed\n");
     ret = pIsValidLocaleName(zzW);
-    ok(!ret, "IsValidLocaleName should have failed\n");
+    ok(!ret || broken(ret), "IsValidLocaleName should have failed\n");
+    ret = pIsValidLocaleName(zz_zzW);
+    ok(!ret || broken(ret), "IsValidLocaleName should have failed\n");
     ret = pIsValidLocaleName(zzzzW);
     ok(!ret, "IsValidLocaleName should have failed\n");
     ret = pIsValidLocaleName(LOCALE_NAME_INVARIANT);
