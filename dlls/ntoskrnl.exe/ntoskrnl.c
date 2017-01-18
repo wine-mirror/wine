@@ -3171,3 +3171,11 @@ NTSTATUS WINAPI IoCreateFile(HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUT
     FIXME(": stub\n");
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *           KeClearEvent (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI KeClearEvent(PRKEVENT event)
+{
+    FIXME("stub: %p\n", event);
+}
