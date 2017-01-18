@@ -1356,7 +1356,8 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD8770,         "AMD Radeon HD 8770",               DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_R3,             "AMD Radeon HD 8400 / R3 Series",   DRIVER_AMD_R600,         2048},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_R7,             "AMD Radeon(TM) R7 Graphics",       DRIVER_AMD_R600,         2048},
-    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9,             "AMD Radeon R9 290",                DRIVER_AMD_RX,           4096},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_285,         "AMD Radeon R9 285",                DRIVER_AMD_RX,           2048},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_R9_290,         "AMD Radeon R9 290",                DRIVER_AMD_RX,           4096},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_460,         "Radeon(TM) RX 460 Graphics",       DRIVER_AMD_RX,           4096},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_RX_480,         "Radeon (TM) RX 480 Graphics",      DRIVER_AMD_RX,           4096},
 
@@ -2104,8 +2105,10 @@ cards_amd_mesa[] =
     /* Polaris 10/11 */
     {"POLARIS10",                   CARD_AMD_RADEON_RX_480},
     {"POLARIS11",                   CARD_AMD_RADEON_RX_460},
+    /* Volcanic Islands */
+    {"TONGA",                       CARD_AMD_RADEON_R9_285},
     /* Sea Islands */
-    {"HAWAII",                      CARD_AMD_RADEON_R9    },
+    {"HAWAII",                      CARD_AMD_RADEON_R9_290},
     {"KAVERI",                      CARD_AMD_RADEON_R7    },
     {"KABINI",                      CARD_AMD_RADEON_R3    },
     {"BONAIRE",                     CARD_AMD_RADEON_HD8770},
