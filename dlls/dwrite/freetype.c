@@ -93,6 +93,22 @@ MAKE_FUNCPTR(FTC_Manager_LookupSize);
 MAKE_FUNCPTR(FTC_Manager_RemoveFaceID);
 #undef MAKE_FUNCPTR
 
+struct face_finalizer_data
+{
+    IDWriteFontFileStream *stream;
+    void *context;
+};
+
+static void face_finalizer(void *object)
+{
+    FT_Face face = object;
+    struct face_finalizer_data *data = (struct face_finalizer_data *)face->generic.data;
+
+    IDWriteFontFileStream_ReleaseFileFragment(data->stream, data->context);
+    IDWriteFontFileStream_Release(data->stream);
+    heap_free(data);
+}
+
 static FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *face)
 {
     IDWriteFontFace *fontface = (IDWriteFontFace*)face_id;
@@ -136,7 +152,19 @@ static FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointe
 
     index = IDWriteFontFace_GetIndex(fontface);
     fterror = pFT_New_Memory_Face(library, data_ptr, data_size, index, face);
-    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+    if (fterror == FT_Err_Ok) {
+        struct face_finalizer_data *data;
+
+        data = heap_alloc(sizeof(*data));
+        data->stream = stream;
+        data->context = context;
+
+        (*face)->generic.data = data;
+        (*face)->generic.finalizer = face_finalizer;
+        return fterror;
+    }
+    else
+        IDWriteFontFileStream_ReleaseFileFragment(stream, context);
 
 fail:
     IDWriteFontFileStream_Release(stream);
