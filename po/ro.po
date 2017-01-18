@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-01-08 22:45+0100\n"
+"PO-Revision-Date: 2017-01-18 00:31+0100\n"
 "Last-Translator: Michael Stefaniuc <mstefani@redhat.de>\n"
 "Language-Team: Romanian\n"
 "Language: ro\n"
@@ -233,6 +233,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"Nu se așteaptă acestă suma de control a fișierului descărcat. Renunț la "
+"instalarea fișierului alterat."
 
 #: avifil32.rc:42
 msgid "Compress options"
@@ -830,7 +832,7 @@ msgstr "Fișierul nu există"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr "Selecția conține un object ce nu este un dosar"
+msgstr "Selecția conține un obiect ce nu este un dosar"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -2039,7 +2041,7 @@ msgstr "Calificator"
 
 #: cryptdlg.rc:37
 msgid "Notice Reference"
-msgstr "Referinţă de notiță"
+msgstr "Referință de notiță"
 
 #: cryptdlg.rc:38
 msgid "Organization="
@@ -3304,7 +3306,7 @@ msgstr "Se caută %s"
 
 #: ieframe.rc:82
 msgid "Start downloading %s"
-msgstr "Pornește descărcărea %s"
+msgstr "Pornește descărcarea %s"
 
 #: ieframe.rc:83
 msgid "Downloading %s"
@@ -3352,7 +3354,7 @@ msgstr "&Configurare..."
 
 #: inetcpl.rc:68
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Șterge istoricul de navigare"
 
 #: inetcpl.rc:71
 msgid ""
@@ -3547,7 +3549,7 @@ msgstr "Se așteaptă „)”"
 
 #: jscript.rc:40
 msgid "Expected identifier"
-msgstr "Se așteaptă un indentificator"
+msgstr "Se așteaptă un identificator"
 
 #: jscript.rc:41
 msgid "Expected '='"
@@ -3563,19 +3565,19 @@ msgstr "Șir constant neterminat"
 
 #: jscript.rc:44
 msgid "'return' statement outside of function"
-msgstr ""
+msgstr "Instrucțiunea „return” nu poate apărea în afara unei funcții"
 
 #: jscript.rc:45
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "„break” nu poate apărea în afara unei bucle"
 
 #: jscript.rc:46
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "„continue” nu poate apărea în afara unei bucle"
 
 #: jscript.rc:47
 msgid "Label redefined"
-msgstr ""
+msgstr "Etichetă redefinită"
 
 #: jscript.rc:48
 msgid "Label not found"
@@ -3587,7 +3589,7 @@ msgstr "Se așteaptă „@end”"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "Compilarea condițională este dezactivată"
 
 #: jscript.rc:51
 msgid "Expected '@'"
@@ -3710,7 +3712,7 @@ msgstr "Mediu greșit.\n"
 
 #: winerror.mc:81
 msgid "Bad format.\n"
-msgstr ""
+msgstr "Format greșit.\n"
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
@@ -3729,9 +3731,8 @@ msgid "Invalid drive.\n"
 msgstr "Unitate nevalidă.\n"
 
 #: winerror.mc:106
-#, fuzzy
 msgid "Can't delete current directory.\n"
-msgstr "CHDIR <dir> schimbă directorul curent.\n"
+msgstr "Nu se poate șterge dosarul curent.\n"
 
 #: winerror.mc:111
 msgid "Not same device.\n"
@@ -3755,7 +3756,7 @@ msgstr "Nu este gata.\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr ""
+msgstr "Comandă greșită.\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
@@ -3763,7 +3764,7 @@ msgstr "Eroare CRC.\n"
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr ""
+msgstr "Lungime greșită.\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
@@ -3794,14 +3795,12 @@ msgid "General failure.\n"
 msgstr "Eroare generală.\n"
 
 #: winerror.mc:186
-#, fuzzy
 msgid "Sharing violation.\n"
-msgstr "Violare de denumire.\n"
+msgstr "Violare de partajare.\n"
 
 #: winerror.mc:191
-#, fuzzy
 msgid "Lock violation.\n"
-msgstr "Locație.\n"
+msgstr "Violare de blocare.\n"
 
 #: winerror.mc:196
 msgid "Wrong disk.\n"
@@ -3821,7 +3820,7 @@ msgstr "Disc plin.\n"
 
 #: winerror.mc:216
 msgid "Request not supported.\n"
-msgstr ""
+msgstr "Cerere nesusținută.\n"
 
 #: winerror.mc:221
 msgid "Remote machine not listening.\n"
@@ -3829,16 +3828,15 @@ msgstr ""
 
 #: winerror.mc:226
 msgid "Duplicate network name.\n"
-msgstr ""
+msgstr "Nume de rețea duplicat.\n"
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
 msgstr ""
 
 #: winerror.mc:236
-#, fuzzy
 msgid "Network busy.\n"
-msgstr "Resursă din rețea.\n"
+msgstr "Rețea ocupată.\n"
 
 #: winerror.mc:241
 msgid "Device does not exist.\n"
@@ -3857,9 +3855,8 @@ msgid "Bad network response.\n"
 msgstr ""
 
 #: winerror.mc:261
-#, fuzzy
 msgid "Unexpected network error.\n"
-msgstr "Eroare externă nedeterminată."
+msgstr "Eroare de rețea neașteptată.\n"
 
 #: winerror.mc:266
 msgid "Bad remote adapter.\n"
@@ -3867,29 +3864,27 @@ msgstr ""
 
 #: winerror.mc:271
 msgid "Print queue full.\n"
-msgstr ""
+msgstr "Coadă de tipărire plină.\n"
 
 #: winerror.mc:276
 msgid "No spool space.\n"
 msgstr ""
 
 #: winerror.mc:281
-#, fuzzy
 msgid "Print canceled.\n"
-msgstr "Anulat de utilizator.\n"
+msgstr "Tipărire anulată.\n"
 
 #: winerror.mc:286
-#, fuzzy
 msgid "Network name deleted.\n"
-msgstr "Data ștergerii.\n"
+msgstr "Nume de rețea șters.\n"
 
 #: winerror.mc:291
 msgid "Network access denied.\n"
-msgstr ""
+msgstr "Acces refuzat la rețea.\n"
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
-msgstr ""
+msgstr "Tip de dispozitiv greșit.\n"
 
 #: winerror.mc:301
 #, fuzzy
@@ -3905,9 +3900,8 @@ msgid "Too many network sessions.\n"
 msgstr ""
 
 #: winerror.mc:316
-#, fuzzy
 msgid "Sharing paused.\n"
-msgstr "&Valoare șir.\n"
+msgstr "Partajare pauzată.\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
@@ -3923,20 +3917,19 @@ msgstr "Fișierul există deja.\n"
 
 #: winerror.mc:336
 msgid "Cannot create.\n"
-msgstr ""
+msgstr "Nu se poate crea.\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
-msgstr ""
+msgstr "Eșec Int24.\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
 msgstr ""
 
 #: winerror.mc:351
-#, fuzzy
 msgid "Already assigned.\n"
-msgstr "Există deja.\n"
+msgstr "Atribuit deja.\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
@@ -3947,9 +3940,8 @@ msgid "Invalid parameter.\n"
 msgstr "Parametru nevalid.\n"
 
 #: winerror.mc:366
-#, fuzzy
 msgid "Net write fault.\n"
-msgstr "Setări &implicite.\n"
+msgstr "Eroare la scriere pe rețea.\n"
 
 #: winerror.mc:371
 msgid "No process slots.\n"
@@ -3984,22 +3976,20 @@ msgid "Semaphore user limit.\n"
 msgstr ""
 
 #: winerror.mc:411
-#, fuzzy
 msgid "Insert disk for drive %1.\n"
-msgstr "inserați discul %s.\n"
+msgstr "Inserați discul în unitatea %1.\n"
 
 #: winerror.mc:416
 msgid "Drive locked.\n"
-msgstr "Unitate blockată.\n"
+msgstr "Unitate blocată.\n"
 
 #: winerror.mc:421
 msgid "Broken pipe.\n"
-msgstr ""
+msgstr "Pipă deteriorată.\n"
 
 #: winerror.mc:426
-#, fuzzy
 msgid "Open failed.\n"
-msgstr "Deschide fișier.\n"
+msgstr "Deschidere eșuată.\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow.\n"
@@ -4026,9 +4016,8 @@ msgid "Bad driver level.\n"
 msgstr ""
 
 #: winerror.mc:466
-#, fuzzy
 msgid "Call not implemented.\n"
-msgstr "Neimplementat.\n"
+msgstr "Apel neimplementat.\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout.\n"
@@ -4049,17 +4038,15 @@ msgstr "Nivel nevalid.\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
-msgstr ""
+msgstr "Nicio etichetă de volum.\n"
 
 #: winerror.mc:496
-#, fuzzy
 msgid "Module not found.\n"
-msgstr "Fișierul nu a fost găsit.\n"
+msgstr "Modul negăsit.\n"
 
 #: winerror.mc:501
-#, fuzzy
 msgid "Procedure not found.\n"
-msgstr "PATH negăsită.\n"
+msgstr "Procedură negăsită\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
@@ -4114,23 +4101,20 @@ msgid "Attempt to SUBST to a JOINed drive.\n"
 msgstr ""
 
 #: winerror.mc:576
-#, fuzzy
 msgid "Drive is busy.\n"
-msgstr "Dispozitive.\n"
+msgstr "Unitatea este ocupată.\n"
 
 #: winerror.mc:581
-#, fuzzy
 msgid "Same drive.\n"
-msgstr "Unitate de sistem.\n"
+msgstr "Aceeași unitate.\n"
 
 #: winerror.mc:586
 msgid "Not top-level directory.\n"
-msgstr ""
+msgstr "Nu este dosar de prim-nivel.\n"
 
 #: winerror.mc:591
-#, fuzzy
 msgid "Directory is not empty.\n"
-msgstr "Numai direct&orul.\n"
+msgstr "Dosarul nu este gol.\n"
 
 #: winerror.mc:596
 msgid "Path is in use as a SUBST.\n"
@@ -4142,7 +4126,7 @@ msgstr ""
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
-msgstr ""
+msgstr "Calea este ocupată.\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
@@ -4178,11 +4162,11 @@ msgstr "Semnal refuzat.\n"
 
 #: winerror.mc:651
 msgid "Segment discarded.\n"
-msgstr ""
+msgstr "Segment anulat.\n"
 
 #: winerror.mc:656
 msgid "Segment not locked.\n"
-msgstr ""
+msgstr "Segment neblocat.\n"
 
 #: winerror.mc:661
 msgid "Bad thread ID address.\n"
@@ -4198,7 +4182,7 @@ msgstr "Calea nu este validă.\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
-msgstr ""
+msgstr "Semnal în așteptare.\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached.\n"
@@ -4213,9 +4197,8 @@ msgid "Resource in use.\n"
 msgstr "Resursă în folosire.\n"
 
 #: winerror.mc:696
-#, fuzzy
 msgid "Cancel violation.\n"
-msgstr "Violare de denumire.\n"
+msgstr "Violare de renunțare.\n"
 
 #: winerror.mc:701
 #, fuzzy
@@ -4227,19 +4210,16 @@ msgid "Invalid segment number.\n"
 msgstr "Număr de segment nevalid.\n"
 
 #: winerror.mc:711
-#, fuzzy
 msgid "Invalid ordinal for %1.\n"
-msgstr "Autorizații nevalide.\n"
+msgstr "Ordinal nevalid pentru %1.\n"
 
 #: winerror.mc:716
-#, fuzzy
 msgid "File already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Fișierul există deja.\n"
 
 #: winerror.mc:721
-#, fuzzy
 msgid "Invalid flag number.\n"
-msgstr "Formatul de număr nu este valid."
+msgstr "Număr de fanion nevalid.\n"
 
 #: winerror.mc:726
 #, fuzzy
@@ -4307,18 +4287,16 @@ msgid "Infinite loop in relocation chain in %1.\n"
 msgstr ""
 
 #: winerror.mc:806
-#, fuzzy
 msgid "Environment variable not found.\n"
-msgstr "Variabila de mediu %s nu este definită.\n"
+msgstr "Variabilă de mediu negăsită.\n"
 
 #: winerror.mc:811
 msgid "No signal sent.\n"
-msgstr ""
+msgstr "Niciun semnal trimis.\n"
 
 #: winerror.mc:816
-#, fuzzy
 msgid "File name is too long.\n"
-msgstr "Șirul introdus este prea lung.\n"
+msgstr "Numele de fișier este prea lung.\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use.\n"
@@ -4329,9 +4307,8 @@ msgid "Error in use of filename wildcards.\n"
 msgstr ""
 
 #: winerror.mc:831
-#, fuzzy
 msgid "Invalid signal number.\n"
-msgstr "Formatul de număr nu este valid."
+msgstr "Număr de semnal nevalid.\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
@@ -4339,7 +4316,7 @@ msgstr ""
 
 #: winerror.mc:841
 msgid "Segment locked.\n"
-msgstr "Segment blockat.\n"
+msgstr "Segment blocat.\n"
 
 #: winerror.mc:846
 msgid "Too many modules.\n"
@@ -4370,14 +4347,12 @@ msgid "Pipe not connected.\n"
 msgstr "Conector pipă neconectat.\n"
 
 #: winerror.mc:881
-#, fuzzy
 msgid "More data available.\n"
-msgstr "Indisponibil; .\n"
+msgstr "Mai sunt date disponibile.\n"
 
 #: winerror.mc:886
-#, fuzzy
 msgid "Session canceled.\n"
-msgstr "Anulat de utilizator.\n"
+msgstr "Sesiune anulată.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
@@ -4388,18 +4363,16 @@ msgid "Extended attribute list inconsistent.\n"
 msgstr ""
 
 #: winerror.mc:901
-#, fuzzy
 msgid "No more data available.\n"
-msgstr "Indisponibil; .\n"
+msgstr "Nu mai sunt date disponibile.\n"
 
 #: winerror.mc:906
 msgid "Cannot use Copy API.\n"
 msgstr ""
 
 #: winerror.mc:911
-#, fuzzy
 msgid "Directory name invalid.\n"
-msgstr "Numai direct&orul.\n"
+msgstr "Nume de dosar nevalid.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
@@ -4468,9 +4441,8 @@ msgid "Extended attribute access denied.\n"
 msgstr ""
 
 #: winerror.mc:996
-#, fuzzy
 msgid "I/O operation aborted.\n"
-msgstr "Încetarea operațiunilor.\n"
+msgstr "Operație de intrare/ieșire abandonată.\n"
 
 #: winerror.mc:1001
 msgid "Overlapped I/O incomplete.\n"
@@ -4526,23 +4498,20 @@ msgid "Registry corrupt.\n"
 msgstr "Registru corupt.\n"
 
 #: winerror.mc:1066
-#, fuzzy
 msgid "Invalid key.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Cheie nevalidă.\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key.\n"
-msgstr "Execută editorul de registru Wine.\n"
+msgstr "Nu s-a putut deschide cheia de registru.\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key.\n"
-msgstr ""
+msgstr "Nu se poate citii cheia de registru.\n"
 
 #: winerror.mc:1081
-#, fuzzy
 msgid "Can't write registry key.\n"
-msgstr "Execută editorul de registru Wine.\n"
+msgstr "Nu se poate scrie cheia de registru.\n"
 
 #: winerror.mc:1086
 msgid "Registry has been recovered.\n"
@@ -4553,18 +4522,16 @@ msgid "Registry is corrupt.\n"
 msgstr "Registrul este corupt.\n"
 
 #: winerror.mc:1096
-#, fuzzy
 msgid "I/O to registry failed.\n"
-msgstr "Importă fișierul registru.\n"
+msgstr "Intrare/ieșire la registru a eșuat.\n"
 
 #: winerror.mc:1101
 msgid "Not registry file.\n"
 msgstr "Nu este un fișier de registru.\n"
 
 #: winerror.mc:1106
-#, fuzzy
 msgid "Key deleted.\n"
-msgstr "Data ștergerii.\n"
+msgstr "Cheie ștearsă.\n"
 
 #: winerror.mc:1111
 msgid "No registry log space.\n"
@@ -4587,18 +4554,12 @@ msgid "Dependent services are running.\n"
 msgstr ""
 
 #: winerror.mc:1136
-#, fuzzy
 msgid "Invalid service control.\n"
-msgstr "Autorizații nevalide.\n"
+msgstr "Control de serviciu nevalid.\n"
 
 #: winerror.mc:1141
-#, fuzzy
 msgid "Service request timeout.\n"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Agent de cerere de certificate\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Agent solicitare certificat.\n"
+msgstr "Timp alocat expirat la cererea de serviciu.\n"
 
 #: winerror.mc:1146
 msgid "Cannot create service thread.\n"
@@ -4645,18 +4606,16 @@ msgid "Exception in service.\n"
 msgstr "Excepție în serviciu.\n"
 
 #: winerror.mc:1201
-#, fuzzy
 msgid "Database does not exist.\n"
-msgstr "Calea nu există.\n"
+msgstr "Bază de date nu există.\n"
 
 #: winerror.mc:1206
 msgid "Service-specific error.\n"
 msgstr ""
 
 #: winerror.mc:1211
-#, fuzzy
 msgid "Process aborted.\n"
-msgstr "Procese.\n"
+msgstr "Proces abandonat.\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
@@ -4667,9 +4626,8 @@ msgid "Service login failed.\n"
 msgstr ""
 
 #: winerror.mc:1226
-#, fuzzy
 msgid "Service start-hang.\n"
-msgstr "Serviciul %s pornește.\n"
+msgstr "Serviciu atârnat la pornire.\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock.\n"
@@ -4700,9 +4658,8 @@ msgid "Service not started since last boot.\n"
 msgstr ""
 
 #: winerror.mc:1266
-#, fuzzy
 msgid "Duplicate service name.\n"
-msgstr "Specificați numele serviciului de oprit.\n"
+msgstr "Nume de serviciu duplicat.\n"
 
 #: winerror.mc:1271
 msgid "Different service account.\n"
@@ -4722,13 +4679,12 @@ msgid "No recovery program for service.\n"
 msgstr ""
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe.\n"
-msgstr "Imprimarea nu este implementată."
+msgstr "Serviciu nu este implementat de fișierul exe.\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
-msgstr ""
+msgstr "Sfârșitul mediului.\n"
 
 #: winerror.mc:1301
 msgid "Filemark detected.\n"
@@ -4736,7 +4692,7 @@ msgstr ""
 
 #: winerror.mc:1306
 msgid "Beginning of media.\n"
-msgstr ""
+msgstr "Începutul mediului.\n"
 
 #: winerror.mc:1311
 msgid "Setmark detected.\n"
@@ -4753,7 +4709,7 @@ msgstr ""
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
-msgstr ""
+msgstr "Lungime de bloc nevalidă.\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned.\n"
@@ -4769,7 +4725,7 @@ msgstr ""
 
 #: winerror.mc:1346
 msgid "Media changed.\n"
-msgstr ""
+msgstr "Mediu schimbat.\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
@@ -4784,9 +4740,8 @@ msgid "No Unicode translation.\n"
 msgstr ""
 
 #: winerror.mc:1366
-#, fuzzy
 msgid "DLL initialization failed.\n"
-msgstr "Programe de instalare.\n"
+msgstr "Inițializare DLL a eșuat.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"
@@ -4825,9 +4780,8 @@ msgid "Floppy reports wrong cylinder.\n"
 msgstr ""
 
 #: winerror.mc:1416
-#, fuzzy
 msgid "Unknown floppy error.\n"
-msgstr "Eroare necunoscută.\n"
+msgstr "Eroare necunoscută de dischetă.\n"
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent.\n"
@@ -4903,9 +4857,8 @@ msgid "DDE failure.\n"
 msgstr "Eșec DDE.\n"
 
 #: winerror.mc:1511
-#, fuzzy
 msgid "DLL not found.\n"
-msgstr "PATH negăsită.\n"
+msgstr "DLL negăsit.\n"
 
 #: winerror.mc:1516
 #, fuzzy
@@ -4944,24 +4897,20 @@ msgid "The device requires cleaning.\n"
 msgstr "Serviciul %s pornește.\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open.\n"
-msgstr "Carcasa imprimantei este deschisă; .\n"
+msgstr "Ușă dispozitivului este deschisă; .\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected.\n"
-msgstr "Fișierul nu a fost găsit.\n"
+msgstr "Dispozitivul nu este conectat.\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found.\n"
-msgstr "PATH negăsită.\n"
+msgstr "Element negăsit.\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found.\n"
-msgstr "calea %s nu a fost găsită.\n"
+msgstr "Nicio potrivire găsită.\n"
 
 #: winerror.mc:1576
 #, fuzzy
@@ -5012,14 +4961,12 @@ msgid "The journal entry was deleted.\n"
 msgstr ""
 
 #: winerror.mc:1631
-#, fuzzy
 msgid "Invalid device name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de dispozitiv nevalid.\n"
 
 #: winerror.mc:1636
-#, fuzzy
 msgid "Connection unavailable.\n"
-msgstr "Indisponibil; .\n"
+msgstr "Conexiune indisponibilă.\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered.\n"
@@ -5027,7 +4974,7 @@ msgstr ""
 
 #: winerror.mc:1646
 msgid "No network or bad path.\n"
-msgstr ""
+msgstr "Nicio rețea sau cale greșită.\n"
 
 #: winerror.mc:1651
 msgid "Invalid network provider name.\n"
@@ -5159,13 +5106,8 @@ msgid "Connection aborted.\n"
 msgstr "Conexiune anulată.\n"
 
 #: winerror.mc:1816
-#, fuzzy
 msgid "Please retry operation.\n"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Verificarea serverului de licență\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Verificare a serverului de licențe.\n"
+msgstr "Reîncercați operația.\n"
 
 #: winerror.mc:1821
 msgid "Connection count limit reached.\n"
@@ -5180,9 +5122,8 @@ msgid "Login workstation restriction.\n"
 msgstr ""
 
 #: winerror.mc:1836
-#, fuzzy
 msgid "Incorrect network address.\n"
-msgstr "Adresa de repertoar.\n"
+msgstr "Adresă de rețea incorectă.\n"
 
 #: winerror.mc:1841
 msgid "Service already registered.\n"
@@ -5193,9 +5134,8 @@ msgid "Service not found.\n"
 msgstr "Serviciul nu a fost găsit.\n"
 
 #: winerror.mc:1851
-#, fuzzy
 msgid "User not authenticated.\n"
-msgstr "Autentificare client.\n"
+msgstr "Utilizator neautentificat.\n"
 
 #: winerror.mc:1856
 msgid "User not logged on.\n"
@@ -5206,18 +5146,16 @@ msgid "Continue work in progress.\n"
 msgstr ""
 
 #: winerror.mc:1866
-#, fuzzy
 msgid "Already initialized.\n"
-msgstr "Există deja.\n"
+msgstr "Deja inițializat.\n"
 
 #: winerror.mc:1871
 msgid "No more local devices.\n"
 msgstr ""
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist.\n"
-msgstr "Fișierul nu există.\n"
+msgstr "Situl nu există.\n"
 
 #: winerror.mc:1881
 #, fuzzy
@@ -5234,9 +5172,8 @@ msgid "Perform operation even when nothing changed.\n"
 msgstr ""
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid.\n"
-msgstr "Handle specificat pentru dispozitiv nu este valid."
+msgstr "Profilul utilizatorului nu este valid.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
@@ -5252,7 +5189,7 @@ msgstr ""
 
 #: winerror.mc:1916
 msgid "No quotas for account.\n"
-msgstr ""
+msgstr "Nicio cotă pentru cont.\n"
 
 #: winerror.mc:1921
 msgid "Local user session key.\n"
@@ -5263,23 +5200,20 @@ msgid "Password too complex for LM.\n"
 msgstr ""
 
 #: winerror.mc:1931
-#, fuzzy
 msgid "Unknown revision.\n"
-msgstr "Eroare necunoscută.\n"
+msgstr "Revizie necunoscută.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
 msgstr ""
 
 #: winerror.mc:1941
-#, fuzzy
 msgid "Invalid owner.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "Proprietar nevalid.\n"
 
 #: winerror.mc:1946
-#, fuzzy
 msgid "Invalid primary group.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "Grup primar nevalid.\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
@@ -5306,36 +5240,32 @@ msgid "Privilege not held.\n"
 msgstr ""
 
 #: winerror.mc:1981
-#, fuzzy
 msgid "Invalid account name.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Nume de cont nevalid .\n"
 
 #: winerror.mc:1986
-#, fuzzy
 msgid "User already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Utilizatorul existsă deja.\n"
 
 #: winerror.mc:1991
-#, fuzzy
 msgid "No such user.\n"
-msgstr "Atribut necunoscut.\n"
+msgstr "Utilizator necunoscut.\n"
 
 #: winerror.mc:1996
-#, fuzzy
 msgid "Group already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Grupul existsă deja.\n"
 
 #: winerror.mc:2001
 msgid "No such group.\n"
-msgstr ""
+msgstr "Grup necunoscut\n"
 
 #: winerror.mc:2006
 msgid "User already in group.\n"
-msgstr ""
+msgstr "Utilizatorul este deja în grup.\n"
 
 #: winerror.mc:2011
 msgid "User not in group.\n"
-msgstr ""
+msgstr "Utilizatorul nu este în grup.\n"
 
 #: winerror.mc:2016
 msgid "Can't delete last admin user.\n"
@@ -5458,14 +5388,12 @@ msgid "Can't access domain information.\n"
 msgstr ""
 
 #: winerror.mc:2161
-#, fuzzy
 msgid "Invalid server state.\n"
-msgstr "Formatul de număr nu este valid."
+msgstr "Stare de server nevalidă.\n"
 
 #: winerror.mc:2166
-#, fuzzy
 msgid "Invalid domain state.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Stare de domeniu nevalidă.\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
@@ -5476,14 +5404,12 @@ msgid "No such domain.\n"
 msgstr ""
 
 #: winerror.mc:2181
-#, fuzzy
 msgid "Domain already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Domeniul existsă deja.\n"
 
 #: winerror.mc:2186
-#, fuzzy
 msgid "Domain limit exceeded.\n"
-msgstr "Limită de timp depășită.\n"
+msgstr "Limită de domeniu depășită.\n"
 
 #: winerror.mc:2191
 msgid "Internal database corruption.\n"
@@ -5532,9 +5458,8 @@ msgid "Cannot impersonate.\n"
 msgstr "Nu pot găsi imprimanta."
 
 #: winerror.mc:2246
-#, fuzzy
 msgid "Invalid transaction state.\n"
-msgstr "Caracter(e) invalid(e) în cale.\n"
+msgstr "Stare de tranzacție nevalidă.\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
@@ -5573,9 +5498,8 @@ msgid "User already in local group.\n"
 msgstr ""
 
 #: winerror.mc:2296
-#, fuzzy
 msgid "Local group already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Grupul local existsă deja.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted.\n"
@@ -5693,24 +5617,20 @@ msgid "Window owned by another thread.\n"
 msgstr ""
 
 #: winerror.mc:2441
-#, fuzzy
 msgid "Hotkey already registered.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Tastă rapidă deja înregistrată.\n"
 
 #: winerror.mc:2446
-#, fuzzy
 msgid "Class already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Clasa existsă deja.\n"
 
 #: winerror.mc:2451
-#, fuzzy
 msgid "Class does not exist.\n"
-msgstr "Calea nu există.\n"
+msgstr "Clasa nu există.\n"
 
 #: winerror.mc:2456
-#, fuzzy
 msgid "Class has open windows.\n"
-msgstr "Închide fereastra.\n"
+msgstr "Clasa are ferestre deschise.\n"
 
 #: winerror.mc:2461
 msgid "Invalid index.\n"
@@ -5735,9 +5655,8 @@ msgid "No wildcard characters.\n"
 msgstr ""
 
 #: winerror.mc:2486
-#, fuzzy
 msgid "Clipboard not open.\n"
-msgstr "Nu s-a putut deschide .\n"
+msgstr "Clipboard nu este deschis.\n"
 
 #: winerror.mc:2491
 msgid "Hotkey not registered.\n"
@@ -5766,9 +5685,8 @@ msgid "Invalid edit height.\n"
 msgstr "Autorizații nevalide.\n"
 
 #: winerror.mc:2521
-#, fuzzy
 msgid "DC not found.\n"
-msgstr "PATH negăsită.\n"
+msgstr "DC nu a fost găsit.\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
@@ -5859,9 +5777,8 @@ msgid "Popup menu already active.\n"
 msgstr ""
 
 #: winerror.mc:2631
-#, fuzzy
 msgid "No scrollbars.\n"
-msgstr "bară de defilare.\n"
+msgstr "Nicio bară de defilare.\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
@@ -5896,9 +5813,8 @@ msgid "Exceeded commitment limit.\n"
 msgstr ""
 
 #: winerror.mc:2676
-#, fuzzy
 msgid "Menu item not found.\n"
-msgstr "Fișierul nu a fost găsit.\n"
+msgstr "Elementul de meniu nu a fost găsit.\n"
 
 #: winerror.mc:2681
 #, fuzzy
@@ -5915,7 +5831,6 @@ msgid "Interactive window station required.\n"
 msgstr ""
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout.\n"
 msgstr "Timp alocat expirat.\n"
 
@@ -5946,39 +5861,32 @@ msgid "Installer service failed.\n"
 msgstr "Eroare: Nume de cheie nevalid.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user.\n"
-msgstr "Programe de instalare.\n"
+msgstr "Instalare anulată de către utilizator.\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure.\n"
-msgstr "Programe de instalare.\n"
+msgstr "Eșec la instalare.\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended.\n"
-msgstr "Programe de instalare.\n"
+msgstr "Instalare suspendată.\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product.\n"
-msgstr "Eroare necunoscută.\n"
+msgstr "Produs necunoscut.\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature.\n"
-msgstr "Caracteristică necunoscută în %s.\n"
+msgstr "Caracteristică necunoscută.\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component.\n"
-msgstr "Eroare necunoscută.\n"
+msgstr "Componentă necunoscută.\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property.\n"
-msgstr "Eroare necunoscută.\n"
+msgstr "Proprietate necunoscută.\n"
 
 #: winerror.mc:2766
 #, fuzzy
@@ -5986,55 +5894,48 @@ msgid "Invalid handle state.\n"
 msgstr "Sintaxă nevalidă.\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration.\n"
-msgstr "Setări Wine.\n"
+msgstr "Configurație greșită.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
-msgstr ""
+msgstr "Indicele lipsește.\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing.\n"
-msgstr "lipsește sursa de instalare pentru această caracteristică.\n"
+msgstr "Lipsește sursa de instalare.\n"
 
 #: winerror.mc:2786
 msgid "Wrong installation package version.\n"
-msgstr ""
+msgstr "Versiune incorectă a pachetului de instalare.\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled.\n"
-msgstr "Anulat de utilizator.\n"
+msgstr "Produs dezinstalat.\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Sintaxă de interogare nevalidă.\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "Câmp nevalid.\n"
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
 msgstr "Dispozitiv detașat.\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running.\n"
-msgstr "Programe de instalare.\n"
+msgstr "Instalarea rulează deja.\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open.\n"
-msgstr ""
+msgstr "Deschidere eșuată a pachetului de instalare.\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid.\n"
-msgstr "Programe de instalare.\n"
+msgstr "Pachet de instalare nevalid.\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed.\n"
@@ -6054,23 +5955,20 @@ msgid "Installation transform failed to apply.\n"
 msgstr ""
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected.\n"
-msgstr "Programe de instalare.\n"
+msgstr "Pachetul de instalare a fost respins.\n"
 
 #: winerror.mc:2851
 msgid "Function could not be called.\n"
 msgstr ""
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed.\n"
-msgstr "Se așteaptă o funcție.\n"
+msgstr "Funcție eșuată.\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Tabel nevalid.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
@@ -6081,9 +5979,8 @@ msgid "Unsupported type.\n"
 msgstr "Tip fără suport.\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed.\n"
-msgstr "Deschide fișier.\n"
+msgstr "Creare eșuată.\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable.\n"
@@ -6095,9 +5992,8 @@ msgid "Installation platform not supported.\n"
 msgstr "Încetarea operațiunilor.\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used.\n"
-msgstr "Fișierul nu a fost găsit.\n"
+msgstr "Program de instalare nefolosit.\n"
 
 #: winerror.mc:2896
 #, fuzzy
@@ -6203,9 +6099,8 @@ msgid "Unknown manager type.\n"
 msgstr "Tip necunoscut.\n"
 
 #: winerror.mc:3016
-#, fuzzy
 msgid "Unknown interface.\n"
-msgstr "Sursă necunoscută.\n"
+msgstr "Interfață necunoscută.\n"
 
 #: winerror.mc:3021
 #, fuzzy
@@ -6234,13 +6129,12 @@ msgid "RPC server too busy.\n"
 msgstr ""
 
 #: winerror.mc:3051
-#, fuzzy
 msgid "Invalid network options.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "Opțiuni de rețea nevalide.\n"
 
 #: winerror.mc:3056
 msgid "No RPC call active.\n"
-msgstr ""
+msgstr "Niciun apel RPC activ.\n"
 
 #: winerror.mc:3061
 msgid "RPC call failed.\n"
@@ -6251,9 +6145,8 @@ msgid "RPC call failed and didn't execute.\n"
 msgstr ""
 
 #: winerror.mc:3071
-#, fuzzy
 msgid "RPC protocol error.\n"
-msgstr "Eroare de protocol.\n"
+msgstr "Eroare de protocol RPC.\n"
 
 #: winerror.mc:3076
 msgid "Unsupported transfer syntax.\n"
@@ -6272,27 +6165,24 @@ msgid "No entry name.\n"
 msgstr ""
 
 #: winerror.mc:3101
-#, fuzzy
 msgid "Invalid name syntax.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Sintaxă de nume nevalidă.\n"
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax.\n"
 msgstr ""
 
 #: winerror.mc:3111
-#, fuzzy
 msgid "No network address.\n"
-msgstr "Resursă din rețea.\n"
+msgstr "Nicio adresă rețea.\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint.\n"
 msgstr ""
 
 #: winerror.mc:3121
-#, fuzzy
 msgid "Unknown authentication type.\n"
-msgstr "Autentificare puternică necesară.\n"
+msgstr "Tip de autentificare necunoscut.\n"
 
 #: winerror.mc:3126
 msgid "Maximum calls too low.\n"
@@ -6315,33 +6205,28 @@ msgid "Binding has no authentication data.\n"
 msgstr ""
 
 #: winerror.mc:3151
-#, fuzzy
 msgid "Unknown authentication service.\n"
-msgstr "Autentificare puternică necesară.\n"
+msgstr "Serviciu de autentificare necunoscut.\n"
 
 #: winerror.mc:3156
-#, fuzzy
 msgid "Unknown authentication level.\n"
-msgstr "Autentificare puternică necesară.\n"
+msgstr "Nivel de autentificare necunoscut.\n"
 
 #: winerror.mc:3161
-#, fuzzy
 msgid "Invalid authentication identity.\n"
-msgstr "Autentificare client.\n"
+msgstr "Identitate de autentificare nevalidă.\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorization service.\n"
 msgstr "Serviciu de autorizare necunoscut.\n"
 
 #: winerror.mc:3171
-#, fuzzy
 msgid "Invalid entry.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Intrare nevalidă.\n"
 
 #: winerror.mc:3176
-#, fuzzy
 msgid "Can't perform operation.\n"
-msgstr "Informații client.\n"
+msgstr "Nu se poate executa operația.\n"
 
 #: winerror.mc:3181
 #, fuzzy
@@ -6357,9 +6242,8 @@ msgid "Incomplete name.\n"
 msgstr "Nume incomplet.\n"
 
 #: winerror.mc:3196
-#, fuzzy
 msgid "Invalid version option.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "Opțiune de versiune nevalidă.\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
@@ -6371,19 +6255,16 @@ msgid "Not all objects unexported.\n"
 msgstr "Se așteaptă un obiect boolean.\n"
 
 #: winerror.mc:3211
-#, fuzzy
 msgid "Interface not found.\n"
-msgstr "Fișierul nu a fost găsit.\n"
+msgstr "Interfață nu a fost găsită.\n"
 
 #: winerror.mc:3216
-#, fuzzy
 msgid "Entry already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Intrarea existsă deja.\n"
 
 #: winerror.mc:3221
-#, fuzzy
 msgid "Entry not found.\n"
-msgstr "PATH negăsită.\n"
+msgstr "Intrarea nu a fost găsită.\n"
 
 #: winerror.mc:3226
 #, fuzzy
@@ -6395,9 +6276,8 @@ msgid "Invalid network address family.\n"
 msgstr ""
 
 #: winerror.mc:3236
-#, fuzzy
 msgid "Operation not supported.\n"
-msgstr "Încetarea operațiunilor.\n"
+msgstr "Operația nu este suportată.\n"
 
 #: winerror.mc:3241
 msgid "No security context available.\n"
@@ -6523,19 +6403,16 @@ msgid "Printer driver already installed.\n"
 msgstr ""
 
 #: winerror.mc:3391
-#, fuzzy
 msgid "Unknown port.\n"
-msgstr "Eroare necunoscută.\n"
+msgstr "Port necunoscut.\n"
 
 #: winerror.mc:3396
-#, fuzzy
 msgid "Unknown printer driver.\n"
-msgstr "Driver de imprimantă necunoscut."
+msgstr "Driver de imprimantă necunoscut.\n"
 
 #: winerror.mc:3401
-#, fuzzy
 msgid "Unknown print processor.\n"
-msgstr "Driver de imprimantă necunoscut."
+msgstr "Procesor de imprimare necunoscut.\n"
 
 #: winerror.mc:3406
 msgid "Invalid separator file.\n"
@@ -6546,29 +6423,24 @@ msgid "Invalid priority.\n"
 msgstr "Prioritate nevalidă.\n"
 
 #: winerror.mc:3416
-#, fuzzy
 msgid "Invalid printer name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de imprimantă nevalid.\n"
 
 #: winerror.mc:3421
-#, fuzzy
 msgid "Printer already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Imprimanta existsă deja.\n"
 
 #: winerror.mc:3426
-#, fuzzy
 msgid "Invalid printer command.\n"
-msgstr "Formatul de număr nu este valid."
+msgstr "Comandă de imprimantă nevalidă.\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type.\n"
-msgstr "Sintaxă nevalidă.\n"
+msgstr "Tip de date nevalide.\n"
 
 #: winerror.mc:3436
-#, fuzzy
 msgid "Invalid environment.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "Mediu nevalid.\n"
 
 #: winerror.mc:3441
 msgid "No more bindings.\n"
@@ -6600,36 +6472,32 @@ msgid "Resource data not found.\n"
 msgstr "Destinația pentru GOTO nu a fost găsită.\n"
 
 #: winerror.mc:3476
-#, fuzzy
 msgid "Resource type not found.\n"
-msgstr "Destinația pentru GOTO nu a fost găsită.\n"
+msgstr "Tipul de resursă nu a fost găsit.\n"
 
 #: winerror.mc:3481
 msgid "Resource name not found.\n"
-msgstr ""
+msgstr "Numele de resursă nu a fost găsit.\n"
 
 #: winerror.mc:3486
 msgid "Resource language not found.\n"
-msgstr ""
+msgstr "Limbajul de resursă nu a fost găsit.\n"
 
 #: winerror.mc:3491
 msgid "Not enough quota.\n"
-msgstr ""
+msgstr "Cotă insuficientă.\n"
 
 #: winerror.mc:3496
-#, fuzzy
 msgid "No interfaces.\n"
-msgstr "Interfețe.\n"
+msgstr "Nicio interfață.\n"
 
 #: winerror.mc:3501
-#, fuzzy
 msgid "RPC call canceled.\n"
-msgstr "Anulat de utilizator.\n"
+msgstr "Apel RPC anulat.\n"
 
 #: winerror.mc:3506
-#, fuzzy
 msgid "Binding incomplete.\n"
-msgstr "Imprimarea nu este implementată."
+msgstr "Legătură incompletă.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
@@ -6675,9 +6543,8 @@ msgid "Wrong stub version.\n"
 msgstr ""
 
 #: winerror.mc:3561
-#, fuzzy
 msgid "Invalid pipe object.\n"
-msgstr "Opțiune nevalidă.\n"
+msgstr "Obiect pipă nevalid.\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
@@ -6688,9 +6555,8 @@ msgid "Wrong pipe version.\n"
 msgstr ""
 
 #: winerror.mc:3576
-#, fuzzy
 msgid "Group member not found.\n"
-msgstr "calea %s nu a fost găsită.\n"
+msgstr "Membrul de grup nu a fost găsit.\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB.\n"
@@ -6705,28 +6571,24 @@ msgid "Invalid time.\n"
 msgstr "Timp nevalid.\n"
 
 #: winerror.mc:3596
-#, fuzzy
 msgid "Invalid form name.\n"
-msgstr "Eroare: Nume de cheie nevalid.\n"
+msgstr "Nume de formular nevalid.\n"
 
 #: winerror.mc:3601
-#, fuzzy
 msgid "Invalid form size.\n"
-msgstr "Valid de la .\n"
+msgstr "Dimensiune de formular nevalidă.\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
 msgstr ""
 
 #: winerror.mc:3611
-#, fuzzy
 msgid "Printer deleted.\n"
-msgstr "Data ștergerii.\n"
+msgstr "Imprimantă ștearsă.\n"
 
 #: winerror.mc:3616
-#, fuzzy
 msgid "Invalid printer state.\n"
-msgstr "Formatul de număr nu este valid."
+msgstr "Stare de imprimantă nevalidă.\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
@@ -6841,9 +6703,8 @@ msgid "The username could not be found.\n"
 msgstr "'%s' nu a fost găsit."
 
 #: winerror.mc:3741
-#, fuzzy
 msgid "This network connection does not exist.\n"
-msgstr "Fișierul nu există.\n"
+msgstr "Această conexiune de rețea nu există.\n"
 
 #: winerror.mc:3746
 #, fuzzy
@@ -7473,30 +7334,24 @@ msgid "selectable"
 msgstr "selectabil"
 
 #: oleacc.rc:120
-#, fuzzy
-#| msgid "link"
 msgctxt "object state"
 msgid "linked"
-msgstr "legătură"
+msgstr "legat"
 
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "parcurs"
 
 #: oleacc.rc:122
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "multi selectable"
-msgstr "tabel"
+msgstr "multi selectabil"
 
 #: oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "Selectați un fișier."
+msgstr "extins selectabil"
 
 #: oleacc.rc:124
 msgctxt "object state"
@@ -7521,7 +7376,7 @@ msgstr "protejat"
 #: oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "are popup"
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"
@@ -7637,8 +7492,6 @@ msgid "Add Control"
 msgstr "Adaugă un control"
 
 #: oledlg.rc:35
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
 msgstr "&Convertește..."
 
@@ -8680,20 +8533,16 @@ msgid "Security Warning"
 msgstr "Avertizare de securitate"
 
 #: urlmon.rc:35
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "Doriți să continuați în aceste condiții?"
+msgstr "Doriți să instalați acest program?"
 
 #: urlmon.rc:37 explorer.rc:32
 msgid "Location:"
 msgstr "Locația:"
 
 #: urlmon.rc:39
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Instalare/dezinstalare"
+msgstr "Nu instalează"
 
 #: urlmon.rc:43
 msgid ""
@@ -8702,9 +8551,8 @@ msgid ""
 msgstr ""
 
 #: urlmon.rc:51
-#, fuzzy
 msgid "Installation of component failed: %08x"
-msgstr "Programe de instalare.\n"
+msgstr "Instalarea componentei a eșuat: %08x"
 
 #: urlmon.rc:52
 msgid "Install (%d)"
@@ -8784,42 +8632,32 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Ascunde"
+msgstr "Ascunde %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Altul"
+msgstr "Ascunde altele"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Afișează"
+msgstr "Arată toate"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Termină %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Termină"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Fereastră"
+msgstr "Fereastră"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Minimizează"
+msgstr "Minimizează"
 
 #: winemac.rc:42
 #, fuzzy
@@ -9012,17 +8850,12 @@ msgstr ""
 "și apoi încercați din nou."
 
 #: winmm.rc:56 winmm.rc:129
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "Configurația curentă pentru MIDI Mapper se referă la un dispozitiv MIDI care "
-"nu este instalat în sistem. Utilizați MIDI Mapper pentru a edita "
-"configurația."
+"nu este instalat în sistem."
 
 #: winmm.rc:57
 msgid ""
@@ -9182,15 +9015,11 @@ msgstr ""
 "spațiu pe disc sau că mai sunteți conectat la rețea."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
-"Dispozitivul specificat nu poate fi găsit. Asigurați-vă că este instalat sau "
+"Dispozitivul specificat nu poate fi găsit. Asigurați-vă că este instalat și "
 "că numele său este scris corect."
 
 #: winmm.rc:87
@@ -9941,7 +9770,7 @@ msgstr ""
 "\n"
 "Sintaxă: FOR %variabilă IN (set) DO comandă\n"
 "\n"
-"Simbolul % trebuie dublat când se folosește FOR intr-un fișier batch.\n"
+"Simbolul % trebuie dublat când se folosește FOR într-un fișier batch.\n"
 
 #: cmd.rc:97
 msgid ""
@@ -10408,7 +10237,7 @@ msgstr ""
 "EXIT\t\tÎnchide CMD\n"
 "\n"
 "Introduceți HELP <comandă> pentru informații suplimentare despre\n"
-"comenzile de mai sus\n"
+"comenzile de mai sus.\n"
 
 #: cmd.rc:353
 msgid "Are you sure?"
@@ -10557,7 +10386,7 @@ msgstr "Volumul în unitatea %1!c! este %2\n"
 
 #: cmd.rc:389
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr "Volumul în unitatea %1!c! nu are etichetă\n"
+msgstr "Volumul în unitatea %1!c! nu are etichetă.\n"
 
 #: cmd.rc:390 reg.rc:49
 msgid " (Yes|No)"
@@ -10854,7 +10683,7 @@ msgstr "Stare"
 
 #: netstat.rc:35
 msgid "Interface Statistics"
-msgstr "Statistici interfeță"
+msgstr "Statistici interfață"
 
 #: netstat.rc:36
 msgid "Sent"
@@ -10942,7 +10771,7 @@ msgstr "Fără port"
 
 #: netstat.rc:56
 msgid "Receive Errors"
-msgstr "Eroare la primire "
+msgstr "Eroare la primire"
 
 #: netstat.rc:57
 msgid "Datagrams Sent"
@@ -11854,11 +11683,11 @@ msgstr ""
 
 #: reg.rc:61
 msgid "reg: Invalid syntax. "
-msgstr "reg: Sintaxă nevalidă."
+msgstr "reg: Sintaxă nevalidă. "
 
 #: reg.rc:62
 msgid "reg: Invalid option [%1]. "
-msgstr "reg: Opțiune nevalidă [%1]."
+msgstr "reg: Opțiune nevalidă [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
@@ -12148,7 +11977,7 @@ msgstr "regedit: Memorie insuficientă! (%1!S!, linia %2!u!)\n"
 
 #: regedit.rc:368
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "regedit: Valoare hexazecimală nevalidă\n"
+msgstr "regedit: Valoare hexazecimală nevalidă.\n"
 
 #: regedit.rc:369
 msgid ""
@@ -12180,7 +12009,7 @@ msgstr "regedit: Nu s-a putut adăuga valoarea de registru „%1” la „%2”.
 
 #: regedit.rc:375
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”\n"
+msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
 #: regedit.rc:376
 #, fuzzy
@@ -12197,19 +12026,15 @@ msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
 #: regedit.rc:379
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
-"Eroare: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"
+"regedit: Nu sa putut exporta „%1”. Cheia de registru specificată nu a fost "
+"găsită.\n"
 
 #: regedit.rc:380
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
+msgstr "regedit: Nu s-a putut șterge clasa de registru „%1”.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
@@ -12368,10 +12193,8 @@ msgid ""
 msgstr ""
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Deschiderea „%1” a eșuat\n"
+msgstr "regsvr32: Eșec la încărcarea DLL-ului „%1”\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
@@ -12603,12 +12426,10 @@ msgid "&Realtime"
 msgstr "Timp &real"
 
 #: taskmgr.rc:160
-#, fuzzy
 msgid "&Above Normal"
 msgstr "Peste norm&al"
 
 #: taskmgr.rc:164
-#, fuzzy
 msgid "&Below Normal"
 msgstr "Su&b normal"
 
@@ -13302,7 +13123,7 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr "uninstaller: Aplicația cu GUID „%1” nu a fost gasită\n"
+msgstr "uninstaller: Aplicația cu GUID „%1” nu a fost găsită\n"
 
 #: uninstaller.rc:32
 msgid ""
@@ -13311,7 +13132,7 @@ msgstr ""
 
 #: uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: Opțiune nevalidă [%1].\n"
+msgstr "uninstaller: Opțiune nevalidă [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13407,22 +13228,19 @@ msgid "Application settings"
 msgstr "Setări pentru aplicații"
 
 #: winecfg.rc:155
-#, fuzzy
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine poate imita diferite versiuni de Windows pentru fiecare aplicație.  "
+"Wine poate imita diferite versiuni de Windows pentru fiecare aplicație. "
 "Această subfereastră stă în legătură cu subferestrele „Suprascrieri DLL” și "
 "„Setări de fereastră” și permite schimbarea setărilor globale sau pe "
 "aplicație în această subfereastră."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
-msgstr "&Adaugă o aplicație..."
+msgstr "Adaugă o apli&cație..."
 
 #: winecfg.rc:160
 msgid "&Remove application"
@@ -13438,7 +13256,7 @@ msgstr "Setări de fereastră"
 
 #: winecfg.rc:170
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr ""
+msgstr "Captează automat &mausul în regim de afișare pe tot ecranul"
 
 #: winecfg.rc:171
 msgid "Allow the window manager to &decorate the windows"
@@ -13462,7 +13280,7 @@ msgstr "Rezoluție ecran"
 
 #: winecfg.rc:184
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "Acesta este un text exemplificativ folosind Tahoma 10 puncte"
 
 #: winecfg.rc:191
 msgid "DLL overrides"
@@ -13503,31 +13321,27 @@ msgstr "Ordinea de încărcare"
 
 #: winecfg.rc:209
 msgid "&Builtin (Wine)"
-msgstr "&Builtin (Wine)"
+msgstr "&Integrat (Wine)"
 
 #: winecfg.rc:210
 msgid "&Native (Windows)"
-msgstr "&Native (Windows)"
+msgstr "&Nativ (Windows)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
-msgstr "Bui&ltin apoi Native"
+msgstr "In&tegrat apoi Nativ"
 
 #: winecfg.rc:212
 msgid "Nati&ve then Builtin"
-msgstr "Nati&ve apoi Builtin"
+msgstr "Nati&v apoi Integrat"
 
 #: winecfg.rc:220
 msgid "Select Drive Letter"
 msgstr "Selecția literei de disc"
 
 #: winecfg.rc:232
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Setări Wine"
+msgstr "Configurare unități"
 
 #: winecfg.rc:233
 msgid ""
@@ -13538,26 +13352,20 @@ msgstr ""
 "fi schimbată."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
-msgstr "&Adaugă..."
+msgstr "A&daugă..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Detectează automat"
+msgstr "Detectează aut&omat"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Calea:"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
-msgstr "Afișează opțiunile a&vansate"
+msgstr "Arată a&vansate"
 
 #: winecfg.rc:249
 msgid "De&vice:"
@@ -13583,7 +13391,7 @@ msgstr "Afișează &fișierele ascunse"
 
 #: winecfg.rc:265
 msgid "Driver diagnostics"
-msgstr ""
+msgstr "Diagnostic driver"
 
 #: winecfg.rc:267
 msgid "Defaults"
@@ -13658,10 +13466,8 @@ msgid "Select the Unix target directory, please."
 msgstr "Selectați dosarul destinație unix."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
-msgstr "Ascunde opțiunile a&vansate"
+msgstr "Ascunde a&vansate"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
@@ -13717,7 +13523,7 @@ msgstr "(Niciunul)"
 
 #: winecfg.rc:86
 msgid "Audio test failed!"
-msgstr ""
+msgstr "Testul audio a eșuat!"
 
 #: winecfg.rc:88
 msgid "(System default)"
@@ -13729,7 +13535,7 @@ msgstr "5.1 surround"
 
 #: winecfg.rc:92
 msgid "Quadraphonic"
-msgstr "Quadrafonic"
+msgstr "Cuadrafonic"
 
 #: winecfg.rc:93
 msgid "Stereo"
@@ -13999,16 +13805,12 @@ msgid "Command history"
 msgstr "Istoric comenzi"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Zonă tampon"
+msgstr "&Dimensiune tampon:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "Elimină dublu&rile"
+msgstr "&Elimină duplicatele"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -14023,22 +13825,16 @@ msgid "S&hift"
 msgstr "S&hift"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "În&chide consola"
+msgstr "Consolă"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Editare rapidă"
+msgstr "&Regim de editare rapidă"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "Mod &expert"
+msgstr "Regim de &inserare"
 
 #: wineconsole.rc:88
 msgid "&Font"
@@ -14271,7 +14067,7 @@ msgstr "Salvarea a eșuat"
 
 #: winedbg.rc:44
 msgid "Loading detailed information, please wait..."
-msgstr ""
+msgstr "Încarc informații detaliate, așteptați..."
 
 #: winefile.rc:29
 msgid "&Open\tEnter"
@@ -14668,7 +14464,7 @@ msgstr "Eroare: Linie de comandă nesuportată\n"
 
 #: wmic.rc:29
 msgid "Error: Alias not found\n"
-msgstr "Eroare: Alias n-a fost găsit.\n"
+msgstr "Eroare: Alias n-a fost găsit\n"
 
 #: wmic.rc:30
 msgid "Error: Invalid query\n"
