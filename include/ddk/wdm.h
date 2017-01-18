@@ -737,6 +737,12 @@ typedef enum _BUS_QUERY_ID_TYPE {
   BusQueryDeviceSerialNumber
 } BUS_QUERY_ID_TYPE, *PBUS_QUERY_ID_TYPE;
 
+typedef enum _CREATE_FILE_TYPE {
+  CreateFileTypeNone,
+  CreateFileTypeNamedPipe,
+  CreateFileTypeMailslot
+} CREATE_FILE_TYPE;
+
 typedef enum {
   DevicePropertyDeviceDescription,
   DevicePropertyHardwareID,

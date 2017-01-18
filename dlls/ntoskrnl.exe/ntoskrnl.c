@@ -3159,3 +3159,15 @@ BOOL WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, KDP
     FIXME("stub: %p %s %u %p\n", timer, wine_dbgstr_longlong(duetime.QuadPart), period, dpc);
     return TRUE;
 }
+
+/***********************************************************************
+ *           IoCreateFile (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoCreateFile(HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                              IO_STATUS_BLOCK *io, LARGE_INTEGER *alloc_size, ULONG attributes, ULONG sharing,
+                              ULONG disposition, ULONG create_options, VOID *ea_buffer, ULONG ea_length,
+                              CREATE_FILE_TYPE file_type, VOID *parameters, ULONG options )
+{
+    FIXME(": stub\n");
+    return STATUS_NOT_IMPLEMENTED;
+}
