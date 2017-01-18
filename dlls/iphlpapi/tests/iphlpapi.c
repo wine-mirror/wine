@@ -1587,7 +1587,7 @@ static void test_AllocateAndGetTcpExTableFromStack(void)
     }
 
     ret = pAllocateAndGetTcpExTableFromStack( (void **)&table_ex, FALSE, GetProcessHeap(), 0, 0 );
-    ok( ret == ERROR_INVALID_PARAMETER || broken(ERROR_NOT_SUPPORTED) /* win2k */, "got %u\n", ret );
+    ok( ret == ERROR_INVALID_PARAMETER || broken(ret == ERROR_NOT_SUPPORTED) /* win2k */, "got %u\n", ret );
 
     ret = pAllocateAndGetTcpExTableFromStack( (void **)&table_ex, FALSE, GetProcessHeap(), 0, AF_INET );
     ok( ret == ERROR_SUCCESS, "got %u\n", ret );
