@@ -2,7 +2,7 @@
 @ stub BaseCheckAppcompatCacheEx
 @ stub BaseCleanupAppcompatCacheSupport
 @ stub BaseDumpAppcompatCache
-@ stub BaseFlushAppcompatCache
+@ stdcall BaseFlushAppcompatCache() kernel32.BaseFlushAppcompatCache
 @ stub BaseFreeAppCompatDataForProcess
 @ stub BaseInitAppcompatCacheSupport
 @ stub BaseIsAppcompatInfrastructureDisabled

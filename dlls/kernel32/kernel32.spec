@@ -167,11 +167,11 @@
 @ stub BaseCheckAppcompatCache
 # @ stub BaseCheckAppcompatCacheEx
 # @ stub BaseCheckRunApp
-@ stub BaseCleanupAppcompatCache 
+@ stub BaseCleanupAppcompatCache
 @ stub BaseCleanupAppcompatCacheSupport
 # @ stub BaseDllReadWriteIniFile
 @ stub BaseDumpAppcompatCache
-@ stub BaseFlushAppcompatCache
+@ stdcall BaseFlushAppcompatCache()
 # @ stub BaseFormatObjectAttributes
 # @ stub BaseFormatTimeOut
 # @ stub BaseGenerateAppCompatData
