@@ -131,9 +131,9 @@ struct vid_mode
 };
 
 static const struct vid_mode vid_modes_test[] = {
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, 1},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, 0},
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, 1},
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , 1},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , 0},
     {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT                                      , 1},
     {640, 480, 0, 0,                                DM_BITSPERPEL                      , 0},
     {640, 480, 0, 0,                                                DM_DISPLAYFREQUENCY, 0},
