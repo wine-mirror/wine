@@ -515,7 +515,7 @@
 @ stub KeBugCheckEx
 @ stub KeCancelTimer
 @ stub KeCapturePersistentThreadState
-@ stub KeClearEvent
+@ stdcall KeClearEvent(ptr)
 @ stub KeConnectInterrupt
 @ stub KeDcacheFlushCount
 @ stdcall KeDelayExecutionThread(long long ptr)
