@@ -2124,18 +2124,16 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
         UINT primitive_count, const void *index_data, D3DFORMAT index_format,
         const void *vertex_data, UINT vertex_stride)
 {
-    struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
     UINT idx_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
+    struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     UINT idx_fmt_size = index_format == D3DFMT_INDEX16 ? 2 : 4;
+    UINT vtx_size = vertex_count * vertex_stride;
     UINT idx_size = idx_count * idx_fmt_size;
     struct wined3d_map_desc wined3d_map_desc;
     struct wined3d_box wined3d_box = {0};
     struct wined3d_resource *ib, *vb;
-    UINT ib_pos;
-
-    UINT vtx_size = vertex_count * vertex_stride;
-    UINT vb_pos, align;
+    UINT vb_pos, ib_pos, align;
+    HRESULT hr;
 
     TRACE("iface %p, primitive_type %#x, min_vertex_idx %u, vertex_count %u, primitive_count %u, "
             "index_data %p, index_format %#x, vertex_data %p, vertex_stride %u.\n",
@@ -2168,7 +2166,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
     if (FAILED(hr = wined3d_resource_map(vb, 0, &wined3d_map_desc, &wined3d_box,
             vb_pos ? WINED3D_MAP_NOOVERWRITE : WINED3D_MAP_DISCARD)))
         goto done;
-    memcpy(wined3d_map_desc.data, vertex_data, vtx_size);
+    memcpy(wined3d_map_desc.data, (char *)vertex_data + min_vertex_idx * vertex_stride, vtx_size);
     wined3d_resource_unmap(vb, 0);
     device->vertex_buffer_pos = vb_pos + vtx_size;
 
@@ -2200,7 +2198,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
 
     wined3d_device_set_index_buffer(device->wined3d_device, device->index_buffer,
             wined3dformat_from_d3dformat(index_format), 0);
-    wined3d_device_set_base_vertex_index(device->wined3d_device, vb_pos / vertex_stride);
+    wined3d_device_set_base_vertex_index(device->wined3d_device, vb_pos / vertex_stride - min_vertex_idx);
 
     wined3d_device_set_primitive_type(device->wined3d_device, primitive_type);
     hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / idx_fmt_size, idx_count);
