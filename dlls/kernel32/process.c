@@ -4207,3 +4207,13 @@ void WINAPI DeleteProcThreadAttributeList(struct _PROC_THREAD_ATTRIBUTE_LIST *li
 {
     return;
 }
+
+/**********************************************************************
+ *           BaseFlushAppcompatCache     (KERNEL32.@)
+ */
+BOOL WINAPI BaseFlushAppcompatCache(void)
+{
+    FIXME(": stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
