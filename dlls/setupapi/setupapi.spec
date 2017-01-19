@@ -53,7 +53,7 @@
 @ stub CM_Free_Res_Des
 @ stub CM_Free_Res_Des_Ex
 @ stub CM_Free_Res_Des_Handle
-@ stub CM_Get_Child
+@ stdcall CM_Get_Child(ptr long long)
 @ stub CM_Get_Child_Ex
 @ stub CM_Get_Class_Key_NameA
 @ stub CM_Get_Class_Key_NameW
@@ -144,7 +144,7 @@
 @ stub CM_Open_Class_KeyW
 @ stub CM_Open_Class_Key_ExA
 @ stub CM_Open_Class_Key_ExW
-@ stub CM_Open_DevNode_Key
+@ stdcall CM_Open_DevNode_Key(long long long long ptr long)
 @ stub CM_Open_DevNode_Key_Ex
 @ stub CM_Query_And_Remove_SubTreeA
 @ stub CM_Query_And_Remove_SubTreeW
