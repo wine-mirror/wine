@@ -3,7 +3,7 @@
 @ stub CM_Delete_DevNode_Key
 @ stub CM_Disable_DevNode
 @ stub CM_Enable_DevNode
-@ stub CM_Get_Child
+@ stdcall CM_Get_Child(ptr long long) setupapi.CM_Get_Child
 @ stub CM_Get_Class_Property_Keys
 @ stub CM_Get_Class_PropertyW
 @ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr) setupapi.CM_Get_Class_Registry_PropertyW
@@ -26,7 +26,7 @@
 @ stub CM_MapCrToWin32Err
 @ stub CM_Open_Class_KeyW
 @ stub CM_Open_Device_Interface_KeyW
-@ stub CM_Open_DevNode_Key
+@ stdcall CM_Open_DevNode_Key(long long long long ptr long) setupapi.CM_Open_DevNode_Key
 @ stub CM_Query_And_Remove_SubTreeW
 @ stub CM_Register_Notification
 @ stub CM_Set_Class_PropertyW
