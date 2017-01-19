@@ -8432,8 +8432,7 @@ static void test_palette_gdi(void)
     ok(color == 0x00252423, "Clear index 4: Got unexpected color 0x%08x.\n", color);
 
     ddraw_palette_handle = SelectPalette(dc, GetStockObject(DEFAULT_PALETTE), FALSE);
-    /* Windows 2000 on the testbot assigns a different palette to the primary. Refrast? */
-    ok(ddraw_palette_handle == GetStockObject(DEFAULT_PALETTE) || broken(TRUE),
+    ok(ddraw_palette_handle == GetStockObject(DEFAULT_PALETTE),
             "Got unexpected palette %p, expected %p.\n",
             ddraw_palette_handle, GetStockObject(DEFAULT_PALETTE));
     SelectPalette(dc, ddraw_palette_handle, FALSE);
