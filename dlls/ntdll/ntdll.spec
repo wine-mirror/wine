@@ -130,7 +130,7 @@
 @ stdcall NtCreateDirectoryObject(long long long)
 @ stdcall NtCreateEvent(long long long long long)
 @ stub NtCreateEventPair
-@ stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr)
+@ stdcall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
 @ stdcall NtCreateIoCompletion(ptr long ptr long)
 @ stdcall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
@@ -162,7 +162,7 @@
 @ stdcall NtDeleteKey(long)
 # @ stub NtDeleteObjectAuditAlarm
 @ stdcall NtDeleteValueKey(long ptr)
-@ stdcall NtDeviceIoControlFile(long long long long long long long long long long)
+@ stdcall NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long)
 @ stdcall NtDisplayString(ptr)
 @ stdcall NtDuplicateObject(long long long ptr long long long)
 @ stdcall NtDuplicateToken(long long long long long long)
@@ -1056,7 +1056,7 @@
 @ stdcall -private ZwCreateDirectoryObject(long long long) NtCreateDirectoryObject
 @ stdcall -private ZwCreateEvent(long long long long long) NtCreateEvent
 @ stub ZwCreateEventPair
-@ stdcall -private ZwCreateFile(ptr long ptr ptr long long long ptr long long ptr) NtCreateFile
+@ stdcall -private ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
 @ stdcall -private ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
 @ stdcall -private ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
@@ -1087,7 +1087,7 @@
 @ stdcall -private ZwDeleteKey(long) NtDeleteKey
 # @ stub ZwDeleteObjectAuditAlarm
 @ stdcall -private ZwDeleteValueKey(long ptr) NtDeleteValueKey
-@ stdcall -private ZwDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
+@ stdcall -private ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) NtDeviceIoControlFile
 @ stdcall -private ZwDisplayString(ptr) NtDisplayString
 @ stdcall -private ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall -private ZwDuplicateToken(long long long long long long) NtDuplicateToken

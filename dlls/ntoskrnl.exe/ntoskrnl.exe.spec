@@ -742,11 +742,11 @@
 @ stdcall NtClose(long) ntdll.NtClose
 @ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) ntdll.NtConnectPort
 @ stdcall NtCreateEvent(long long long long long) ntdll.NtCreateEvent
-@ stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr) ntdll.NtCreateFile
+@ stdcall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long) ntdll.NtCreateFile
 @ stdcall NtCreateSection(ptr long ptr ptr long long long) ntdll.NtCreateSection
 @ stdcall NtDeleteAtom(long) ntdll.NtDeleteAtom
 @ stdcall NtDeleteFile(ptr) ntdll.NtDeleteFile
-@ stdcall NtDeviceIoControlFile(long long long long long long long long long long) ntdll.NtDeviceIoControlFile
+@ stdcall NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) ntdll.NtDeviceIoControlFile
 @ stdcall NtDuplicateObject(long long long ptr long long long) ntdll.NtDuplicateObject
 @ stdcall NtDuplicateToken(long long long long long long) ntdll.NtDuplicateToken
 @ stdcall NtFindAtom(ptr long ptr) ntdll.NtFindAtom
@@ -1292,7 +1292,7 @@
 @ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) ntdll.ZwConnectPort
 @ stdcall -private ZwCreateDirectoryObject(long long long) ntdll.ZwCreateDirectoryObject
 @ stdcall -private ZwCreateEvent(long long long long long) ntdll.ZwCreateEvent
-@ stdcall -private ZwCreateFile(ptr long ptr ptr long long long ptr long long ptr) ntdll.ZwCreateFile
+@ stdcall -private ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) ntdll.ZwCreateFile
 @ stdcall -private ZwCreateJobObject(ptr long ptr) ntdll.ZwCreateJobObject
 @ stdcall -private ZwCreateKey(ptr long ptr long ptr long long) ntdll.ZwCreateKey
 @ stdcall -private ZwCreateSection(ptr long ptr ptr long long long) ntdll.ZwCreateSection
@@ -1302,7 +1302,7 @@
 @ stdcall -private ZwDeleteFile(ptr) ntdll.ZwDeleteFile
 @ stdcall -private ZwDeleteKey(long) ntdll.ZwDeleteKey
 @ stdcall -private ZwDeleteValueKey(long ptr) ntdll.ZwDeleteValueKey
-@ stdcall -private ZwDeviceIoControlFile(long long long long long long long long long long) ntdll.ZwDeviceIoControlFile
+@ stdcall -private ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) ntdll.ZwDeviceIoControlFile
 @ stdcall -private ZwDisplayString(ptr) ntdll.ZwDisplayString
 @ stdcall -private ZwDuplicateObject(long long long ptr long long long) ntdll.ZwDuplicateObject
 @ stdcall -private ZwDuplicateToken(long long long long long long) ntdll.ZwDuplicateToken
