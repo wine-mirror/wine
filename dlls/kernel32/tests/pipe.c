@@ -1473,6 +1473,11 @@ static void test_CloseHandle(void)
     todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
+    ok(!ret, "ReadFile unexpectedly succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
+
     ret = GetNamedPipeHandleStateA(hfile, &state, NULL, NULL, NULL, NULL, 0);
     ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
     state = PIPE_READMODE_MESSAGE | PIPE_WAIT;
@@ -1566,6 +1571,11 @@ static void test_CloseHandle(void)
     ret = ReadFile(hpipe, buffer, sizeof(buffer), &numbytes, NULL);
     todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
+
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
+    ok(!ret, "ReadFile unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
 
     ret = GetNamedPipeHandleStateA(hpipe, &state, NULL, NULL, NULL, NULL, 0);
     ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
