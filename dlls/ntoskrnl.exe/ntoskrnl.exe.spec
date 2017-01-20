@@ -734,24 +734,24 @@
 @ stub NlsOemCodePage
 @ stub NlsOemLeadByteInfo
 @ stdcall NtAddAtom(ptr long ptr) ntdll.NtAddAtom
-@ stdcall NtAdjustPrivilegesToken(long long long long long long) ntdll.NtAdjustPrivilegesToken
+@ stdcall NtAdjustPrivilegesToken(long long ptr long ptr ptr) ntdll.NtAdjustPrivilegesToken
 @ stdcall NtAllocateLocallyUniqueId(ptr) ntdll.NtAllocateLocallyUniqueId
 @ stdcall NtAllocateUuids(ptr ptr ptr) ntdll.NtAllocateUuids
 @ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long) ntdll.NtAllocateVirtualMemory
 @ stub NtBuildNumber
 @ stdcall NtClose(long) ntdll.NtClose
 @ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) ntdll.NtConnectPort
-@ stdcall NtCreateEvent(long long long long long) ntdll.NtCreateEvent
+@ stdcall NtCreateEvent(ptr long ptr long long) ntdll.NtCreateEvent
 @ stdcall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long) ntdll.NtCreateFile
 @ stdcall NtCreateSection(ptr long ptr ptr long long long) ntdll.NtCreateSection
 @ stdcall NtDeleteAtom(long) ntdll.NtDeleteAtom
 @ stdcall NtDeleteFile(ptr) ntdll.NtDeleteFile
 @ stdcall NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) ntdll.NtDeviceIoControlFile
 @ stdcall NtDuplicateObject(long long long ptr long long long) ntdll.NtDuplicateObject
-@ stdcall NtDuplicateToken(long long long long long long) ntdll.NtDuplicateToken
+@ stdcall NtDuplicateToken(long long ptr long long ptr) ntdll.NtDuplicateToken
 @ stdcall NtFindAtom(ptr long ptr) ntdll.NtFindAtom
 @ stdcall NtFreeVirtualMemory(long ptr ptr long) ntdll.NtFreeVirtualMemory
-@ stdcall NtFsControlFile(long long long long long long long long long long) ntdll.NtFsControlFile
+@ stdcall NtFsControlFile(long long ptr ptr ptr long ptr long ptr long) ntdll.NtFsControlFile
 @ stub NtGlobalFlag
 @ stdcall NtLockFile(long long ptr ptr ptr ptr ptr ptr long long) ntdll.NtLockFile
 @ stub NtMakePermanentObject
@@ -772,16 +772,16 @@
 @ stdcall NtQueryInformationThread(long long ptr long ptr) ntdll.NtQueryInformationThread
 @ stdcall NtQueryInformationToken(long long ptr long ptr) ntdll.NtQueryInformationToken
 @ stub NtQueryQuotaInformationFile
-@ stdcall NtQuerySecurityObject(long long long long long) ntdll.NtQuerySecurityObject
-@ stdcall NtQuerySystemInformation(long long long long) ntdll.NtQuerySystemInformation
+@ stdcall NtQuerySecurityObject(long long ptr long ptr) ntdll.NtQuerySecurityObject
+@ stdcall NtQuerySystemInformation(long ptr long ptr) ntdll.NtQuerySystemInformation
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long) ntdll.NtQueryVolumeInformationFile
 @ stdcall NtReadFile(long long ptr ptr ptr ptr long ptr ptr) ntdll.NtReadFile
 @ stub NtRequestPort
 @ stdcall NtRequestWaitReplyPort(ptr ptr ptr) ntdll.NtRequestWaitReplyPort
 @ stdcall NtSetEaFile(long ptr ptr long) ntdll.NtSetEaFile
-@ stdcall NtSetEvent(long long) ntdll.NtSetEvent
-@ stdcall NtSetInformationFile(long long long long long) ntdll.NtSetInformationFile
-@ stdcall NtSetInformationProcess(long long long long) ntdll.NtSetInformationProcess
+@ stdcall NtSetEvent(long ptr) ntdll.NtSetEvent
+@ stdcall NtSetInformationFile(long ptr ptr long long) ntdll.NtSetInformationFile
+@ stdcall NtSetInformationProcess(long long ptr long) ntdll.NtSetInformationProcess
 @ stdcall NtSetInformationThread(long long ptr long) ntdll.NtSetInformationThread
 @ stub NtSetQuotaInformationFile
 @ stdcall NtSetSecurityObject(long long ptr) ntdll.NtSetSecurityObject
@@ -790,7 +790,7 @@
 @ stub NtTraceEvent
 @ stdcall NtUnlockFile(long ptr ptr ptr ptr) ntdll.NtUnlockFile
 @ stub NtVdmControl
-@ stdcall NtWaitForSingleObject(long long long) ntdll.NtWaitForSingleObject
+@ stdcall NtWaitForSingleObject(long long ptr) ntdll.NtWaitForSingleObject
 @ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr) ntdll.NtWriteFile
 @ stub ObAssignSecurity
 @ stub ObCheckCreateObjectAccess
@@ -1002,7 +1002,7 @@
 @ stdcall RtlEnumerateGenericTableWithoutSplaying(ptr ptr) ntdll.RtlEnumerateGenericTableWithoutSplaying
 @ stub RtlEnumerateGenericTableWithoutSplayingAvl
 @ stdcall RtlEqualLuid(ptr ptr) ntdll.RtlEqualLuid
-@ stdcall RtlEqualSid(long long) ntdll.RtlEqualSid
+@ stdcall RtlEqualSid(ptr ptr) ntdll.RtlEqualSid
 @ stdcall RtlEqualString(ptr ptr long) ntdll.RtlEqualString
 @ stdcall RtlEqualUnicodeString(ptr ptr long) ntdll.RtlEqualUnicodeString
 @ stdcall -arch=win32 -ret64 RtlExtendedIntegerMultiply(int64 long) ntdll.RtlExtendedIntegerMultiply
@@ -1158,10 +1158,10 @@
 @ stub RtlSubtreeSuccessor
 @ stub RtlTestBit
 @ stdcall RtlTimeFieldsToTime(ptr ptr) ntdll.RtlTimeFieldsToTime
-@ stdcall RtlTimeToElapsedTimeFields(long long) ntdll.RtlTimeToElapsedTimeFields
+@ stdcall RtlTimeToElapsedTimeFields(ptr ptr) ntdll.RtlTimeToElapsedTimeFields
 @ stdcall RtlTimeToSecondsSince1970(ptr ptr) ntdll.RtlTimeToSecondsSince1970
 @ stdcall RtlTimeToSecondsSince1980(ptr ptr) ntdll.RtlTimeToSecondsSince1980
-@ stdcall RtlTimeToTimeFields(long long) ntdll.RtlTimeToTimeFields
+@ stdcall RtlTimeToTimeFields(ptr ptr) ntdll.RtlTimeToTimeFields
 @ stub RtlTraceDatabaseAdd
 @ stub RtlTraceDatabaseCreate
 @ stub RtlTraceDatabaseDestroy
@@ -1280,7 +1280,7 @@
 @ stub XIPDispatch
 @ stdcall -private ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) ntdll.ZwAccessCheckAndAuditAlarm
 @ stub ZwAddBootEntry
-@ stdcall -private ZwAdjustPrivilegesToken(long long long long long long) ntdll.ZwAdjustPrivilegesToken
+@ stdcall -private ZwAdjustPrivilegesToken(long long ptr long ptr ptr) ntdll.ZwAdjustPrivilegesToken
 @ stdcall -private ZwAlertThread(long) ntdll.ZwAlertThread
 @ stdcall -private ZwAllocateVirtualMemory(long ptr ptr ptr long long) ntdll.ZwAllocateVirtualMemory
 @ stdcall -private ZwAssignProcessToJobObject(long long) ntdll.ZwAssignProcessToJobObject
@@ -1290,8 +1290,8 @@
 @ stdcall -private ZwClose(long) ntdll.ZwClose
 @ stub ZwCloseObjectAuditAlarm
 @ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) ntdll.ZwConnectPort
-@ stdcall -private ZwCreateDirectoryObject(long long long) ntdll.ZwCreateDirectoryObject
-@ stdcall -private ZwCreateEvent(long long long long long) ntdll.ZwCreateEvent
+@ stdcall -private ZwCreateDirectoryObject(ptr long ptr) ntdll.ZwCreateDirectoryObject
+@ stdcall -private ZwCreateEvent(ptr long ptr long long) ntdll.ZwCreateEvent
 @ stdcall -private ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) ntdll.ZwCreateFile
 @ stdcall -private ZwCreateJobObject(ptr long ptr) ntdll.ZwCreateJobObject
 @ stdcall -private ZwCreateKey(ptr long ptr long ptr long long) ntdll.ZwCreateKey
@@ -1305,7 +1305,7 @@
 @ stdcall -private ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) ntdll.ZwDeviceIoControlFile
 @ stdcall -private ZwDisplayString(ptr) ntdll.ZwDisplayString
 @ stdcall -private ZwDuplicateObject(long long long ptr long long long) ntdll.ZwDuplicateObject
-@ stdcall -private ZwDuplicateToken(long long long long long long) ntdll.ZwDuplicateToken
+@ stdcall -private ZwDuplicateToken(long long ptr long long ptr) ntdll.ZwDuplicateToken
 @ stub ZwEnumerateBootEntries
 @ stdcall -private ZwEnumerateKey(long long long ptr long ptr) ntdll.ZwEnumerateKey
 @ stdcall -private ZwEnumerateValueKey(long long long ptr long ptr) ntdll.ZwEnumerateValueKey
@@ -1313,7 +1313,7 @@
 @ stdcall -private ZwFlushKey(long) ntdll.ZwFlushKey
 @ stdcall -private ZwFlushVirtualMemory(long ptr ptr long) ntdll.ZwFlushVirtualMemory
 @ stdcall -private ZwFreeVirtualMemory(long ptr ptr long) ntdll.ZwFreeVirtualMemory
-@ stdcall -private ZwFsControlFile(long long long long long long long long long long) ntdll.ZwFsControlFile
+@ stdcall -private ZwFsControlFile(long long ptr ptr ptr long ptr long ptr long) ntdll.ZwFsControlFile
 @ stdcall -private ZwInitiatePowerAction(long long long long) ntdll.ZwInitiatePowerAction
 @ stdcall -private ZwIsProcessInJob(long long) ntdll.ZwIsProcessInJob
 @ stdcall ZwLoadDriver(ptr)
@@ -1321,8 +1321,8 @@
 @ stdcall -private ZwMakeTemporaryObject(long) ntdll.ZwMakeTemporaryObject
 @ stdcall -private ZwMapViewOfSection(long long ptr long long ptr ptr long long long) ntdll.ZwMapViewOfSection
 @ stdcall -private ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) ntdll.ZwNotifyChangeKey
-@ stdcall -private ZwOpenDirectoryObject(long long long) ntdll.ZwOpenDirectoryObject
-@ stdcall -private ZwOpenEvent(long long long) ntdll.ZwOpenEvent
+@ stdcall -private ZwOpenDirectoryObject(ptr long ptr) ntdll.ZwOpenDirectoryObject
+@ stdcall -private ZwOpenEvent(ptr long ptr) ntdll.ZwOpenEvent
 @ stdcall -private ZwOpenFile(ptr long ptr ptr long long) ntdll.ZwOpenFile
 @ stdcall -private ZwOpenJobObject(ptr long ptr) ntdll.ZwOpenJobObject
 @ stdcall -private ZwOpenKey(ptr long ptr) ntdll.ZwOpenKey
@@ -1352,11 +1352,11 @@
 @ stdcall -private ZwQueryInformationToken(long long ptr long ptr) ntdll.ZwQueryInformationToken
 @ stdcall -private ZwQueryInstallUILanguage(ptr) ntdll.ZwQueryInstallUILanguage
 @ stdcall -private ZwQueryKey(long long ptr long ptr) ntdll.ZwQueryKey
-@ stdcall -private ZwQueryObject(long long long long long) ntdll.ZwQueryObject
+@ stdcall -private ZwQueryObject(long long ptr long ptr) ntdll.ZwQueryObject
 @ stdcall -private ZwQuerySection(long long ptr long ptr) ntdll.ZwQuerySection
-@ stdcall -private ZwQuerySecurityObject(long long long long long) ntdll.ZwQuerySecurityObject
+@ stdcall -private ZwQuerySecurityObject(long long ptr long ptr) ntdll.ZwQuerySecurityObject
 @ stdcall -private ZwQuerySymbolicLinkObject(long ptr ptr) ntdll.ZwQuerySymbolicLinkObject
-@ stdcall -private ZwQuerySystemInformation(long long long long) ntdll.ZwQuerySystemInformation
+@ stdcall -private ZwQuerySystemInformation(long ptr long ptr) ntdll.ZwQuerySystemInformation
 @ stdcall -private ZwQueryValueKey(long ptr long ptr long ptr) ntdll.ZwQueryValueKey
 @ stdcall -private ZwQueryVolumeInformationFile(long ptr ptr long long) ntdll.ZwQueryVolumeInformationFile
 @ stdcall -private ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) ntdll.ZwReadFile
@@ -1371,17 +1371,17 @@
 @ stdcall -private ZwSetDefaultLocale(long long) ntdll.ZwSetDefaultLocale
 @ stdcall -private ZwSetDefaultUILanguage(long) ntdll.ZwSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) ntdll.ZwSetEaFile
-@ stdcall -private ZwSetEvent(long long) ntdll.ZwSetEvent
-@ stdcall -private ZwSetInformationFile(long long long long long) ntdll.ZwSetInformationFile
+@ stdcall -private ZwSetEvent(long ptr) ntdll.ZwSetEvent
+@ stdcall -private ZwSetInformationFile(long ptr ptr long long) ntdll.ZwSetInformationFile
 @ stdcall -private ZwSetInformationJobObject(long long ptr long) ntdll.ZwSetInformationJobObject
 @ stdcall -private ZwSetInformationObject(long long ptr long) ntdll.ZwSetInformationObject
-@ stdcall -private ZwSetInformationProcess(long long long long) ntdll.ZwSetInformationProcess
+@ stdcall -private ZwSetInformationProcess(long long ptr long) ntdll.ZwSetInformationProcess
 @ stdcall -private ZwSetInformationThread(long long ptr long) ntdll.ZwSetInformationThread
 @ stdcall -private ZwSetSecurityObject(long long ptr) ntdll.ZwSetSecurityObject
 @ stdcall -private ZwSetSystemInformation(long ptr long) ntdll.ZwSetSystemInformation
 @ stdcall -private ZwSetSystemTime(ptr ptr) ntdll.ZwSetSystemTime
 @ stdcall -private ZwSetTimer(long ptr ptr ptr long long ptr) ntdll.ZwSetTimer
-@ stdcall -private ZwSetValueKey(long long long long long long) ntdll.ZwSetValueKey
+@ stdcall -private ZwSetValueKey(long ptr long long ptr long) ntdll.ZwSetValueKey
 @ stdcall -private ZwSetVolumeInformationFile(long ptr ptr long long) ntdll.ZwSetVolumeInformationFile
 @ stdcall -private ZwTerminateJobObject(long long) ntdll.ZwTerminateJobObject
 @ stdcall -private ZwTerminateProcess(long long) ntdll.ZwTerminateProcess
@@ -1390,7 +1390,7 @@
 @ stdcall -private ZwUnloadKey(long) ntdll.ZwUnloadKey
 @ stdcall -private ZwUnmapViewOfSection(long ptr) ntdll.ZwUnmapViewOfSection
 @ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) ntdll.ZwWaitForMultipleObjects
-@ stdcall -private ZwWaitForSingleObject(long long long) ntdll.ZwWaitForSingleObject
+@ stdcall -private ZwWaitForSingleObject(long long ptr) ntdll.ZwWaitForSingleObject
 @ stdcall -private ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) ntdll.ZwWriteFile
 @ stdcall -private ZwYieldExecution() ntdll.ZwYieldExecution
 @ cdecl -private -arch=i386 _CIcos() msvcrt._CIcos
