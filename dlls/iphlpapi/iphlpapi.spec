@@ -76,7 +76,7 @@
 @ stdcall GetBestInterface( long ptr )
 @ stdcall GetBestInterfaceEx( ptr ptr )
 @ stub GetBestInterfaceFromStack
-@ stdcall GetBestRoute( long long long )
+@ stdcall GetBestRoute( long long ptr )
 #@ stub GetBestRoute2
 @ stub GetBestRouteFromStack
 #@ stub GetCurrentThreadCompartmentId
