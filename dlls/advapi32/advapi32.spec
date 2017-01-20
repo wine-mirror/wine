@@ -452,7 +452,7 @@
 # @ stub LsaManageSidNameMapping
 @ stdcall LsaNtStatusToWinError(long)
 @ stub LsaOpenAccount
-@ stdcall LsaOpenPolicy(long long long long)
+@ stdcall LsaOpenPolicy(long ptr long long)
 # @ stub LsaOpenPolicySce
 @ stub LsaOpenSecret
 @ stub LsaOpenTrustedDomain
@@ -698,10 +698,10 @@
 # @ stub SetInformationCodeAuthzLevelW
 # @ stub SetInformationCodeAuthzPolicyW
 @ stdcall SetKernelObjectSecurity(long long ptr)
-@ stdcall SetNamedSecurityInfoA(str long ptr ptr ptr ptr ptr)
+@ stdcall SetNamedSecurityInfoA(str long long ptr ptr ptr ptr)
 # @ stub SetNamedSecurityInfoExA
 # @ stub SetNamedSecurityInfoExW
-@ stdcall SetNamedSecurityInfoW(wstr long ptr ptr ptr ptr ptr)
+@ stdcall SetNamedSecurityInfoW(wstr long long ptr ptr ptr ptr)
 @ stdcall SetPrivateObjectSecurity(long ptr ptr ptr long)
 # @ stub SetPrivateObjectSecurityEx
 # @ stub SetSecurityAccessMask

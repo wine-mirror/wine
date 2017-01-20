@@ -11,7 +11,7 @@
 @ stdcall LsaLookupNames2(ptr long long ptr ptr ptr) advapi32.LsaLookupNames2
 @ stdcall LsaLookupSids(ptr long ptr ptr ptr) advapi32.LsaLookupSids
 @ stub LsaLookupSids2
-@ stdcall LsaOpenPolicy(long long long long) advapi32.LsaOpenPolicy
+@ stdcall LsaOpenPolicy(long ptr long long) advapi32.LsaOpenPolicy
 @ stub LsaOpenSecret
 @ stdcall LsaQueryInformationPolicy(ptr long ptr) advapi32.LsaQueryInformationPolicy
 @ stub LsaQuerySecret
