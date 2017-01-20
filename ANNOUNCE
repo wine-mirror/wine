@@ -1,12 +1,15 @@
-The Wine development release 2.0-rc5 is now available.
+The Wine development release 2.0-rc6 is now available.
+
+Barring last minute regressions, this is expected to be the last
+release candidate for 2.0.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc5.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc5.tar.bz2
+  http://dl.winehq.org/wine/source/2.0/wine-2.0-rc6.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/2.0/wine-2.0-rc6.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,148 +25,101 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.0-rc5 (total 28):
+Bugs fixed in 2.0-rc6 (total 21):
 
-   7372  Can't copy and paste between native apps (e.g., Open Office, Firefox, Gimp) and some Wine apps (affects Dreamweaver, Photoshop, Powerpoint, Excel)
-   9875  moving dialogs shows artifacts on window behind it
-  11835  Adobe Acrobat Pro 6 / Acrobat Reader 6.01 -- Comments don't work
-  11847  Adobe Acrobat Pro 6 / Acrobat Reader 6.01 -- How To window does not work
-  15845  Silverlight configuration tab "Application storage" causes freeze (while iterating isolated storage)
-  16528  RAdmin Send Message Feature Doesn't Work
-  29832  Mario Forever crashes
-  30355  DVDSubEdit 1.52 crashes on startup, broken TBM_SETRANGEMAX handling
-  33066  resident evil 6 pc benchmark Black screen
-  33860  Visual Web Developer Express 2008 displays only "file system" in Browse window
-  34465  process hacker 2.31 crashes in toolbar code
-  36187  valgrind shows lots of warnings for comctl32/tests/listview.c when running in a virtual desktop
-  36554  valgrind shows a definite leak in ieframe/tests/intshcut.c
-  37458  Regedit: Left click on a selected key activates renaming mode
-  37576  Google Sketchup 7 and 8: 2D Drawing File Export Broken
-  37762  Runaway & Runaway 2: wrong colors
-  38030  Adobe Lightroom 5.7 - Classic window dialog size increase at each opening
-  38216  Wrong screen in Civilization V
-  38449  valgrind shows a couple leaks in shell32/tests/shelldispatch.c test_namespace()
-  38847  valgrind shows a definite leak in winmm/tests/wave.c
-  39905  Ogar Server crashes while starting
-  40537  ddraw:ddraw1 causes Windows XP to crash
-  41058  Absent model in 3d scene in SexyBeach3 game
-  41188  Trove game wants msvcp140.dll._Cnd_init_in_situ
-  42009  Mentor Graphics DK Design Suite crashes on clipboard copy
-  42067  Disney Universe doesn't scale gamescreen properly
-  42110  regression: commit "xinput1_3 prefer builtin dll" aliens versus predator classic 2000 (steam) fails to launch
-  42194  Magic: The Gathering Online 4.0 fails to connect to login server
+  11179  NO$GBA 2.6a debugger GUI buttons are not stacked
+  19862  CodeCreatures crashes.
+  28672  VirtualDub: crash when using directx for display panes
+  33859  Visual Web Developer Express 2008 crashes when clicking "Browse" (bug in PropertySheet common control)
+  34127  FIFA 2000 demo crashes after 'Press Any Key'
+  35669  Space Giraffe: text between levels (and on level selection screen) is corrupted / unreadable
+  36525  Ctrl+C does not copy in the Battle.net chat scrollback
+  38305  SMARegisTry Backup installer: corrupted window title
+  38845  Battle.net launcher shows white screen with WINEPREFIX Windows version > 'Windows XP' (builtin 'd3dcompiler_46.dll' is not mature enough)
+  38850  crypt32/tests: chain test fails on Debian Jessie
+  39642  Battle.net crashes when you try to resize the window when "allow the window manager to decorate the windows" is unchecked.
+  40096  Pendulumania: Black screen
+  40781  KSP Trajectory Optimization Tool (using MATLAB Runtime (MCR)) "Could not successfully parse URI string"
+  41001  64-bit Core Temp 1.x kernel driver 'ALSysIO.sys' crashes on unimplemented function ntoskrnl.exe.RtlUnwindEx
+  41218  curl 7.50: HTTPS fails with InitializeSecurityContext failed: SEC_E_INVALID_TOKEN
+  41290  DirectShow applications: MP3 playback is broken if winegstreamer is disabled
+  42020  Tompi Jones fails creating user profile
+  42211  redefinition of typedef 'REFERENCE_TIME'
+  42228  bcrypt:bcrypt test regression (test_aes)
+  42229  advapi32:eventlog test regression (privilege issue in test_start_trace)
+  42243  3DMark11 installer crashes with access violation in Freetype because font data is released too early
 
 ----------------------------------------------------------------
 
-Changes since 2.0-rc4:
+Changes since 2.0-rc5:
 
-Alexandre Julliard (4):
-      winex11: Merge reading the selection data into the conversion function.
-      winex11: Don't update the clipboard if the X11 selection hasn't changed.
-      winex11: Periodically check for selection changes using a timer.
-      winex11: Add basic support for importing text/html clipboard format.
+André Hentschel (6):
+      oleview: Remove dead assignments (clang).
+      winebrowser: Fix allocation count (Coverity).
+      regedit: Remove dead assignment (clang).
+      iphlpapi/tests: Add test for AllocateAndGetTcpExTableFromStack.
+      iphlpapi/tests: Fix usage of broken().
+      ntdll: Fix some spec file entries.
 
-Andrew Eikum (1):
-      quartz: Don't write past end of d3d9 buffer.
+Austin English (1):
+      ntoskrnl.exe: Forward RtlUnwindEx to ntdll.
 
-Anton Romanov (1):
-      ws2_32: Ignore IPV6_V6ONLY setsockopt for AF_INET sockets.
+Bruno Jesus (1):
+      msacm32: Reduce block align condition scope to test covered drivers.
 
-Fabian Maurer (1):
-      riched20: Check for NULL in fnTextSrv_TxSetText and add test.
+Hans Leidekker (3):
+      advapi32/tests: Skip StartTrace tests if the user doesn't have admin rights.
+      bcrypt/tests: Relax the AES object length test.
+      msvcp120/tests: Fix test failures on Windows XP.
 
-François Gouget (27):
-      winapi: Add support for DECLSPEC_HOTPATCH function declarations.
-      winapi: Add some more __stdcall synonyms.
-      kernel32/tests: A couple of spelling fixes in ok() messages.
-      taskschd/tests: Fix a couple of ITriggerCollection ok() messages.
-      cmd/tests: A spelling fix in a comment.
-      hlink/tests: Add a trailing '\n' to an ok() call.
-      user32/tests: A spelling fix in a comment.
-      wined3d: Make some functions static.
-      dxgi/tests: Some spelling fixes in ok() messages.
-      ddraw/tests: Spelling fixes in a few comments.
-      dxgi: Make wined3d_scanline_ordering_from_dxgi() static.
-      qcap/tests: A spelling fix in an ok() message.
-      d3dx9_36/tests: Make test_texture_shader() static.
-      gdiplus: Make some GdipDraw*Path() functions static.
-      xmllite: A spelling fix in a comment.
-      msi: Make reg_get_{multi}sz() static.
-      msi/tests: A spelling fix in a variable name.
-      quartz: A couple of spelling fixes in comments.
-      explorerframe: A spelling fix in a comment.
-      dinput: Spelling and case fixes in comments.
-      regedit: Make output_writeconsole() static.
-      riched20: A spelling fix in a comment.
-      mshtml/tests: Some spelling fixes in comments.
-      jscript: Make scope_push() static.
-      usp10: A spelling fix in a comment.
-      imm32/tests: A spelling fix in an ok() message.
-      msacm32/tests: Make acm_driver_func() static.
+Henri Verbeet (1):
+      wined3d: Add GPU information for AMD TONGA.
 
-Henri Verbeet (5):
-      wined3d: Fully initialise "settings" in wined3d_ffp_get_vs_settings().
-      ddraw/tests: Try to avoid killing the Intel (kernel) driver.
-      wined3d: Use winediag for the backbuffer offscreen rendering message.
-      wine.inf: Add Dynamic DST data for Asia/Tehran.
-      ddraw: Set the swapchain palette in ddraw_create_swapchain().
-
-Hugh McMaster (1):
-      regedit: Only allow key renaming via the Edit or Popup menus.
-
-Huw D. M. Davies (3):
-      dxgi/tests: Fix test failure on Windows 7.
-      dmime/tests: Skip the tests if InitAudio fails for any reason.
-      advapi32/tests: Update ACE registry tests with Windows 10 values.
+Huw D. M. Davies (10):
+      secur32/tests: Fix test failures on Windows 10.
+      kernel32/tests: Windows 10 accepts locale names like "zz-ZZ" and "foo".
+      kernel32/tests: Fix the invariant locale's country abbreviation on Windows 10.
+      kernel32/tests: Skip testing the translated invariant names on non US-English locales.
+      msctf/tests: Fix usage of test_ShouldDeactivate which is a BOOL.
+      msctf/tests: Fix tests on Windows 8 and 10.
+      msctf/tests: Return if the constructor fails. This avoids several clang warnings.
+      user32/tests: Windows 10 no longer supports setting bpp to zero.
+      msxml3/tests: Windows 10 no longer supports variants by reference, so pass it directly.
+      wintrust/tests: Zero-init error array to prevent failures on 64-bit.
 
 Jacek Caban (2):
-      secur32/tests: Use importlib for functions available since Windows XP.
-      secur32: Don't change input buffer in InitializeSecurityContext.
+      urlmon: Correctly handle INTERNET_STATUS_REQUEST_COMPLETE notification with no data available.
+      kernel32/tests: Improved pipe CloseHandle tests.
 
-Józef Kucia (13):
-      wined3d: Update "screen_format" when ChangeDisplaySettingsEx() call is redundant.
-      ddraw/tests: Add test for display mode surface pixel format.
-      d3d8/tests: Add more tests for UnlockRect().
-      d3d9/tests: Add more tests for UnlockRect().
-      d3d8: Return D3D_OK from UnlockRect() for not locked textures.
-      d3d9: Return D3D_OK from UnlockRect() for not locked textures.
-      ddraw/tests: Fix compilation on systems that don't support nameless unions.
-      d3d11/tests: Fix compilation on systems that don't support nameless unions.
-      d3d8/tests: Make the window client rect match the d3d swapchain size.
-      d3d10core/tests: Port test_depth_stencil_sampling() from d3d11.
-      d3d8/tests: Remove redundant state setting calls.
-      d3d9/tests: Accept 64-bit Windows FPU setup behavior.
-      d3d9: Avoid '\n' in middle of TRACE() message.
+Jarkko Korpi (1):
+      winex11.drv: Add 640x400 mode to virtual desktop.
 
-Ken Thomases (6):
-      winemac: Change some clipboard functions to void return.
-      winemac: Don't update the clipboard if the Mac pasteboard hasn't changed.
-      winemac: Periodically check for pasteboard changes using a timer.
-      winemac: Add basic support for importing the public.html pasteboard format.
-      winemac: Export HTML Format clipboard data to the public.html pasteboard type.
-      winemac: Ignore an additional expected error in the clipboard pipe communication code.
+Józef Kucia (2):
+      ddraw/tests: Rewrite StructSizeTest().
+      d3d9/tests: Remove redundant state setting calls.
 
-Louis Lenders (1):
-      advapi32: Spelling fix in comment.
+Marcus Meissner (1):
+      shell32/tests: Fixed CharLowerBuffA size.
 
-Michael Cronenworth (1):
-      wined3d: Add Iris Haswell PCI ids and descriptions.
+Michael Müller (2):
+      dsound: Respect return value of callback in DirectSoundEnumerateA/W.
+      wined3d: Do not set DDCAPS_ALIGNBOUNDARYSRC caps for ddraw.
 
-Michael Stefaniuc (1):
-      po: Update the Romanian translation.
+Michael Stefaniuc (3):
+      wrc: Remove a wrong comment.
+      po: Fixes and more updates for the Romanian translation.
+      ddraw/tests: Remove some no longer needed broken(TRUE).
 
-Nikolay Sivov (8):
-      shell32/tests: Some tests for ExtractIcon().
-      shell32/tests: Some tests for ExtractAssociatedIcon().
-      comctl32/tests: Call appropriate default procedure for parent window (Valgrind).
-      shell32/tests: Test valid special folder IDs with NameSpace() method.
-      user32/tests: Some tests for GetWindowText() when non terminated string is returned.
-      comctl32/toolbar: Protect from NULL pointer access in TB_GETBUTTONINFOW handler.
-      comctl32/trackbar: Fix TBM_SETRANGEMAX handling when new limit is less than current min boundary.
-      comctl32/propsheet: Double size of a template buffer passed to PSCB_PRECREATE.
+Nikolay Sivov (2):
+      dwrite: Let freetype face cache manage lifetime of requested file fragments.
+      uxtheme/tests: Some tests for buffered painting API.
 
-Zebediah Figura (1):
-      user.exe16: Fix LPARAM conversions in WM_DDE_EXECUTE.
+Samuele Guerrini (1):
+      winebus.sys: Buffer length check fix.
+
+Sebastian Lackner (2):
+      include: Avoid duplicate definition of REFERENCE_TIME.
+      comctl32/tests: Add tests for PROPSHEET_InsertPage.
 
 --
 Alexandre Julliard
