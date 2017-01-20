@@ -250,6 +250,8 @@ static void testInitialize(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
     if (data.padwTrustStepErrors)
     {
         /* Apparently, cdwTrustStepErrors does not need to be set. */
+        memset(data.padwTrustStepErrors, 0,
+         TRUSTERROR_MAX_STEPS * sizeof(DWORD));
         ret = funcs->pfnInitialize(&data);
         ok(ret == S_OK, "Expected S_OK, got %08x\n", ret);
         data.cdwTrustStepErrors = 1;
