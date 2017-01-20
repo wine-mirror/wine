@@ -88,7 +88,7 @@
 @ stdcall midiOutOpen(ptr long long long long)
 @ stdcall midiOutPrepareHeader(long ptr long)
 @ stdcall midiOutReset(long)
-@ stdcall midiOutSetVolume(long ptr)
+@ stdcall midiOutSetVolume(long long)
 @ stdcall midiOutShortMsg(long long)
 @ stdcall midiOutUnprepareHeader(long ptr long)
 @ stdcall midiStreamClose(long)
