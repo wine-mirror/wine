@@ -1537,6 +1537,7 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_R7              = 0x130f,
     CARD_AMD_RADEON_R9_285          = 0x6939,
     CARD_AMD_RADEON_R9_290          = 0x67b1,
+    CARD_AMD_RADEON_R9_FURY         = 0x7300,
     CARD_AMD_RADEON_RX_460          = 0x67ef,
     CARD_AMD_RADEON_RX_480          = 0x67df,
 
