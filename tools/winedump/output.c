@@ -62,13 +62,13 @@ void  output_spec_preamble (void)
  */
 void  output_spec_symbol (const parsed_symbol *sym)
 {
-  char ord_spec[16];
+  char ord_spec[20];
 
   assert (specfile);
   assert (sym && sym->symbol);
 
   if (sym->ordinal >= 0)
-    snprintf(ord_spec, 8, "%d", sym->ordinal);
+    snprintf(ord_spec, 12, "%d", sym->ordinal);
   else
   {
     ord_spec[0] = '@';
