@@ -951,14 +951,21 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
 
     RtlTimeToSecondsSince1970( NewTime, &sec );
 
+    /* fake success if time didn't change */
+    if (oldsec == sec)
+        return STATUS_SUCCESS;
+
     /* set the new time */
     tv.tv_sec = sec;
     tv.tv_usec = 0;
 
 #ifdef HAVE_SETTIMEOFDAY
-    if (!settimeofday(&tv, NULL)) /* 0 is OK, -1 is error */
-        return STATUS_SUCCESS;
     tm_t = sec;
+    if (!settimeofday(&tv, NULL)) /* 0 is OK, -1 is error */
+    {
+        TRACE("OS time changed to %s\n", ctime(&tm_t));
+        return STATUS_SUCCESS;
+    }
     ERR("Cannot set time to %s, time adjustment %ld: %s\n",
         ctime(&tm_t), (long)(sec-oldsec), strerror(errno));
     if (errno == EPERM)
