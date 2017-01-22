@@ -57,6 +57,7 @@ Informações para o NetBSD:
 
 Informações para Mac OS X:
   Será necessário o Xcode 2.4 ou superior para compilar corretamente no x86.
+  O driver gráfico Mac requer OS X 10.6 ou superior e não será usado no 10.5.
 
 
 Sistemas de arquivo suportados:
@@ -122,13 +123,14 @@ Ao invocar o Wine, você pode especificar o caminho completo do executável,
 ou somente um nome de arquivo.
 
 Por exemplo, para executar o bloco de notas:
+
 	wine notepad                    (usando o caminho de pesquisa como
 	wine notepad.exe                 especificado no registro para
 	                                 encontrar o arquivo)
 
 	wine c:\\windows\\notepad.exe   (usando um nome de arquivo DOS)
 
-	wine /usr/windows/notepad.exe   (usando um nome de arquivo Unix)
+	wine ~/.wine/drive_c/windows/notepad.exe   (usando um nome de arquivo Unix)
 
 	wine notepad.exe leiame.txt     (chamando o programa com parâmetros)
 
