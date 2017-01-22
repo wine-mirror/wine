@@ -8296,17 +8296,17 @@ static void test_TransmitFile(void)
 
     /* Test TransmitFile with only buffer data */
     buffers.Head = &header_msg[0];
-    buffers.HeadLength = sizeof(header_msg)+1;
+    buffers.HeadLength = sizeof(header_msg);
     buffers.Tail = &footer_msg[0];
-    buffers.TailLength = sizeof(footer_msg)+1;
+    buffers.TailLength = sizeof(footer_msg);
     bret = pTransmitFile(client, NULL, 0, 0, NULL, &buffers, 0);
     ok(bret, "TransmitFile failed unexpectedly.\n");
     iret = recv(dest, buf, sizeof(buf), 0);
-    ok(iret == sizeof(header_msg)+sizeof(footer_msg)+2,
+    ok(iret == sizeof(header_msg)+sizeof(footer_msg),
        "Returned an unexpected buffer from TransmitFile: %d\n", iret );
-    ok(memcmp(&buf[0], &header_msg[0], sizeof(header_msg)+1) == 0,
+    ok(memcmp(&buf[0], &header_msg[0], sizeof(header_msg)) == 0,
        "TransmitFile header buffer did not match!\n");
-    ok(memcmp(&buf[sizeof(header_msg)+1], &footer_msg[0], sizeof(footer_msg)+1) == 0,
+    ok(memcmp(&buf[sizeof(header_msg)], &footer_msg[0], sizeof(footer_msg)) == 0,
        "TransmitFile footer buffer did not match!\n");
 
     /* Test TransmitFile with only file data */
@@ -8316,18 +8316,18 @@ static void test_TransmitFile(void)
 
     /* Test TransmitFile with both file and buffer data */
     buffers.Head = &header_msg[0];
-    buffers.HeadLength = sizeof(header_msg)+1;
+    buffers.HeadLength = sizeof(header_msg);
     buffers.Tail = &footer_msg[0];
-    buffers.TailLength = sizeof(footer_msg)+1;
+    buffers.TailLength = sizeof(footer_msg);
     SetFilePointer(file, 0, NULL, FILE_BEGIN);
     bret = pTransmitFile(client, file, 0, 0, NULL, &buffers, 0);
     ok(bret, "TransmitFile failed unexpectedly.\n");
-    iret = recv(dest, buf, sizeof(header_msg)+1, 0);
-    ok(memcmp(buf, &header_msg[0], sizeof(header_msg)+1) == 0,
+    iret = recv(dest, buf, sizeof(header_msg), 0);
+    ok(memcmp(buf, &header_msg[0], sizeof(header_msg)) == 0,
        "TransmitFile header buffer did not match!\n");
     compare_file(file, dest, 0);
-    iret = recv(dest, buf, sizeof(footer_msg)+1, 0);
-    ok(memcmp(buf, &footer_msg[0], sizeof(footer_msg)+1) == 0,
+    iret = recv(dest, buf, sizeof(footer_msg), 0);
+    ok(memcmp(buf, &footer_msg[0], sizeof(footer_msg)) == 0,
        "TransmitFile footer buffer did not match!\n");
 
     /* Test overlapped TransmitFile */
@@ -8381,9 +8381,9 @@ static void test_TransmitFile(void)
         goto cleanup;
     }
     buffers.Head = &header_msg[0];
-    buffers.HeadLength = sizeof(header_msg)+1;
+    buffers.HeadLength = sizeof(header_msg);
     buffers.Tail = &footer_msg[0];
-    buffers.TailLength = sizeof(footer_msg)+1;
+    buffers.TailLength = sizeof(footer_msg);
     SetFilePointer(file, 0, NULL, FILE_BEGIN);
     ov.Offset = 0;
     bret = pTransmitFile(client, file, 0, 0, &ov, &buffers, 0);
@@ -8396,12 +8396,12 @@ static void test_TransmitFile(void)
     ok(total_sent == (file_size + buffers.HeadLength + buffers.TailLength),
        "Overlapped TransmitFile sent an unexpected number of bytes (%d != %d).\n",
        total_sent, file_size  + buffers.HeadLength + buffers.TailLength);
-    iret = recv(dest, buf, sizeof(header_msg)+1, 0);
-    ok(memcmp(buf, &header_msg[0], sizeof(header_msg)+1) == 0,
+    iret = recv(dest, buf, sizeof(header_msg), 0);
+    ok(memcmp(buf, &header_msg[0], sizeof(header_msg)) == 0,
        "TransmitFile header buffer did not match!\n");
     compare_file(file, dest, 0);
-    iret = recv(dest, buf, sizeof(footer_msg)+1, 0);
-    ok(memcmp(buf, &footer_msg[0], sizeof(footer_msg)+1) == 0,
+    iret = recv(dest, buf, sizeof(footer_msg), 0);
+    ok(memcmp(buf, &footer_msg[0], sizeof(footer_msg)) == 0,
        "TransmitFile footer buffer did not match!\n");
 
     /* Test TransmitFile with a UDP datagram socket */
