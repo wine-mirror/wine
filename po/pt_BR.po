@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-12-05 01:21-0200\n"
+"PO-Revision-Date: 2017-01-22 17:27-0200\n"
 "Last-Translator: Bruno Jesus <00cpxxx@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -1043,7 +1043,7 @@ msgstr "Selecionar pasta"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "Tamanho da fonte precisa ser um número."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -8053,10 +8053,8 @@ msgid "Wine was brought to you by:"
 msgstr "Wine foi disponibilizado por:"
 
 #: shell32.rc:334
-#, fuzzy
-#| msgid "&Run..."
 msgid "Run"
-msgstr "E&xecutar..."
+msgstr "Executar"
 
 #: shell32.rc:338
 msgid ""
@@ -9312,11 +9310,11 @@ msgstr "Volume"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Volume principal"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Mudo"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -9859,7 +9857,7 @@ msgstr ""
 "PATH mostra ou permite mudar o caminho de busca de programas do cmd.\n"
 "\n"
 "Digitando PATH mostrará a atual configuração do comando PATH (inicialmente\n"
-"lido do registro). Para mudar as configurações digite novos valores no "
+"lido do registro). Para mudar as configurações digite novos valores no\n"
 "comando PATH.\n"
 "\n"
 "Também é possível modificar o comando PATH usando a variável de ambiente\n"
@@ -10029,7 +10027,7 @@ msgstr ""
 "\n"
 "Opções:\n"
 "\"title\"        Especifica o título da janela da janela filha.\n"
-"/d directory   Inicia o programa no diretório especificado.\n"
+"/d diretório   Inicia o programa no diretório especificado.\n"
 "/b             Não criar um console novo para o programa.\n"
 "/i             Inicia o programa com variáveis de ambiente novas.\n"
 "/min           Inicia o programa minimizado.\n"
@@ -10076,7 +10074,7 @@ msgid ""
 "The verify flag has no function in Wine.\n"
 msgstr ""
 "VERIFY é usado para configurar, limpar e testar a flag de verificação. As\n"
-"formas válidas são>\n"
+"formas válidas são\n"
 "\n"
 "VERIFY ON\tAciona a flag.\n"
 "VERIFY OFF\tLimpa a flag.\n"
@@ -10573,10 +10571,8 @@ msgid "IPv6 address"
 msgstr "Endereço IPv6"
 
 #: msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Configuração do Sistema"
+msgstr "Informação do Sistema"
 
 #: net.rc:30
 msgid ""
@@ -11618,6 +11614,15 @@ msgid ""
 "  REG [operation] /?\n"
 "\n"
 msgstr ""
+"Uso:\n"
+"  REG [operação] [parâmetros]\n"
+"\n"
+"Operações suportadas:\n"
+"  ADD | DELETE | QUERY\n"
+"\n"
+"Para ajuda com alguma operação específica digite:\n"
+"  REG [operação] /?\n"
+"\n"
 
 #: reg.rc:36
 msgid ""
@@ -11660,7 +11665,7 @@ msgstr ""
 
 #: reg.rc:44
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "reg: Tipo de dado de registro não suportado [%1].\n"
+msgstr "reg: Tipo de dado de registro não suportado [%1]\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
@@ -11983,132 +11988,126 @@ msgid ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
+"Uso:\n"
+"  regedit [opções] [arquivo] [chave]\n"
+"\n"
+"Options:\n"
+"  [sem opção]    Executa a versão gráfica desse programa..\n"
+"  /L:system.dat  O local do arquivo system.dat a ser modificado.\n"
+"                 Compatível com qualquer outra opção. Ignorado.\n"
+"  /R:user.dat    O local do arquivo user.dat a ser modificado.\n"
+"                 Compatível com qualquer outra opção. Ignorado.\n"
+"  /C             Importa o conteúdo do arquivo de registro.\n"
+"  /D             Remove a chave de registro especificada.\n"
+"  /E             Exporta o conteúdo de uma chave de registro para arquivo.\n"
+"                 Se nenhuma chave é especificada exporta o registro "
+"inteiro.\n"
+"  /S             Modo silencioso. Nenhuma mensagem será exibida.\n"
+"  /V             Executa a versão gráfica em modo avançado. Ignorado.\n"
+"  /?             Exibe essas informações e encerra.\n"
+"  [arquivo]      O local do arquivo contendo informações para importar.\n"
+"                 Quando usado com [/E] essa opção muda para o local onde "
+"serão\n"
+"                 exportados os dados do registro.\n"
+"  [chave]        A chave do registro a ser modificada.\n"
+"\n"
+"Exemplos de uso:\n"
+"  regedit \"importar.reg\"\n"
+"  regedit /E \"exportar.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
 #: regedit.rc:360
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
-msgstr ""
-"regsvr32: Parâmetro inválido ou não reconhecido [%1]\n"
-"\n"
+msgstr "regedit: Opção inválida ou não reconhecida [%1]\n"
 
 #: regedit.rc:361
 msgid "Type \"regedit /?\" for help.\n"
-msgstr ""
+msgstr "Digite \"regedit /?\" para ajuda.\n"
 
 #: regedit.rc:362
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "Nenhum comando foi especificado."
+msgstr "regedit: Nenhum nome de arquivo especificado.\n"
 
 #: regedit.rc:363
 msgid "regedit: No registry key was specified for removal.\n"
-msgstr ""
+msgstr "regedit: Nenhuma chave de registro especificada para remoção.\n"
 
 #: regedit.rc:364
 msgid "regedit: The file '%1' was not found.\n"
-msgstr ""
+msgstr "regedit: O arquivo '%1' não foi encontrado.\n"
 
 #: regedit.rc:365
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "Erro: Não foi possível acessar a máquina remota\n"
+msgstr "regedit: Falha ao abrir o arquivo '%1'.\n"
 
 #: regedit.rc:366
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Operação em manipulador inválida.\n"
+msgstr "regedit: Ação sem tratamento.\n"
 
 #: regedit.rc:367
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
-msgstr ""
+msgstr "regedit: Sem memória disponível! (%1!S!, line %2!u!)\n"
 
 #: regedit.rc:368
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "Erro: Nome de chave inválido\n"
+msgstr "regedit: Valor hexadecimal inválido.\n"
 
 #: regedit.rc:369
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
+"regedit: Não foi possível converter os dados hexadecimais. Um valor inválido "
+"foi encontrado em '%1'.\n"
 
 #: regedit.rc:370
-#, fuzzy
-#| msgid ""
-#| "regsvr32: Invalid or unrecognized switch [%1]\n"
-#| "\n"
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr ""
-"regsvr32: Parâmetro inválido ou não reconhecido [%1]\n"
-"\n"
+msgstr "regedit: Sequência de escape não reconhecida [\\%1!c!]\n"
 
 #: regedit.rc:371
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
-msgstr "Erro: Tipo não suportado.\n"
+msgstr "regedit: Tipo de dado de registro não suportado [%1]\n"
 
 #: regedit.rc:372
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "Erro: Não foi possível acessar a máquina remota\n"
+msgstr "regedit: Fim de linha inesperado em '%1'.\n"
 
 #: regedit.rc:373
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "Nenhum comando foi especificado."
+msgstr "regedit: A linha '%1' não foi reconhecida.\n"
 
 #: regedit.rc:374
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "Erro: Não foi possível acessar a máquina remota\n"
+msgstr ""
+"regedit: Não foi possível adicionar o registro de valor '%1' em '%2'.\n"
 
 #: regedit.rc:375
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "Erro: Não foi possível acessar a máquina remota\n"
+msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
 
 #: regedit.rc:376
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
-msgstr "Erro: Tipo não suportado.\n"
+msgstr ""
+"regedit: Tipo de dado de registro [%1] não suportado encontrado em '%2'.\n"
 
 #: regedit.rc:377
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
-msgstr ""
+msgstr "regedit: O valor de registro '%1' será exportado como dado binário.\n"
 
 #: regedit.rc:378
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
-msgstr ""
+msgstr "regedit: Especificação de classe de registros incorreta em '%1'.\n"
 
 #: regedit.rc:379
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
-"Erro: O sistema foi incapaz de encontrar a chave de registo ou valor "
-"especificado\n"
+"regedit: Não foi possível exportar '%1'. A chave do registro não foi "
+"encontrada.\n"
 
 #: regedit.rc:380
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
-msgstr "Erro: Não foi possível acessar a máquina remota\n"
+msgstr "regedit: Não foi possível remover a classe de registro '%1'.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
@@ -13216,16 +13215,17 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "uninstaller: A aplicação com GUID '%1' não foi encontrada\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"uninstaller: A opção '--remove' deve ser seguida por um GUID de aplicação\n"
 
 #: uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: Opção inválida [%1].\n"
+msgstr "uninstaller: Opção inválida [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13234,6 +13234,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Desinstalador de Aplicativos do Wine\n"
+"\n"
+"Desinstala programas do prefixo do Wine atual.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -13248,10 +13252,20 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"Uso:\n"
+"  uninstaller [opções]\n"
+"\n"
+"Opções:\n"
+"  --help\t    Mostra essa informação.\n"
+"  --list\t    Lista todos os programas instalados nesse prefixo do Wine.\n"
+"  --remove {GUID}   Desinstala a aplicação especificada.\n"
+"\t\t    Use '--list' para descobrir o GUID do aplicação.\n"
+"  [sem opção]       Executa a versão gráfica desse programa.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
-msgstr "&Pan"
+msgstr "&Panorama"
 
 #: view.rc:38
 msgid "&Scale to Window"
@@ -13396,7 +13410,7 @@ msgstr "&Nova substituição para a biblioteca:"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "&Adicionar"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13423,8 +13437,6 @@ msgid "&Native (Windows)"
 msgstr "&Nativa (Windows)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
 msgstr "E&mbutida depois Nativa"
 
@@ -13449,26 +13461,20 @@ msgstr ""
 "não pôde ser alterada."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
 msgstr "&Adicionar..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Auto detectar"
+msgstr "Auto &detectar"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Caminho:"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
-msgstr "&Avançado"
+msgstr "M&ostrar Avançado"
 
 #: winecfg.rc:249
 msgid "De&vice:"
@@ -13487,10 +13493,8 @@ msgid "S&erial:"
 msgstr "&Serial:"
 
 #: winecfg.rc:258
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
-msgstr "&Mostrar arquivos com ponto"
+msgstr "Mostrar arquivos com &ponto"
 
 #: winecfg.rc:265
 msgid "Driver diagnostics"
@@ -13526,7 +13530,7 @@ msgstr "Configuração dos alto-falantes"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "Auto-falantes:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -14031,12 +14035,10 @@ msgid "Configuration error"
 msgstr "Erro de configuração"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "Tamanho do buffer de tela deve ser maior ou igual ao da janela"
+msgstr "O tamanho do buffer de tela deve ser maior ou igual ao da janela."
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -14470,7 +14472,7 @@ msgstr "Ninguém"
 
 #: winemine.rc:32
 msgid "Copyright 2000 Joshua Thielen"
-msgstr "Copyright 2000 Joshua Thielen"
+msgstr "Direitos autorais 2000 Joshua Thielen"
 
 #: winhlp32.rc:35
 msgid "Printer &setup..."
@@ -14578,10 +14580,8 @@ msgid "Error: Invalid query\n"
 msgstr "Erro: Consulta inválida\n"
 
 #: wmic.rc:31
-#, fuzzy
-#| msgid "reg: Invalid syntax. "
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "reg: Sintaxe inválida. "
+msgstr "Erro: Sintaxe inválida para PATH\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -14656,36 +14656,32 @@ msgid "F&ormat"
 msgstr "&Formatar"
 
 #: wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
-msgstr "&Lista"
+msgstr "&Listas"
 
 #: wordpad.rc:87 wordpad.rc:116
 msgid "&Bullet points"
 msgstr "&Marcadores"
 
 #: wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "Número CRL"
+msgstr "Números"
 
 #: wordpad.rc:89
 msgid "Letters - lower case"
-msgstr ""
+msgstr "Letras - minúsculas"
 
 #: wordpad.rc:90
 msgid "Letters - upper case"
-msgstr ""
+msgstr "Letras - maiúsculas"
 
 #: wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr ""
+msgstr "Números romanos - minúsculas"
 
 #: wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr ""
+msgstr "Números romanos - maiúsculas"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
