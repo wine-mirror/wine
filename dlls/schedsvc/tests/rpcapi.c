@@ -148,7 +148,9 @@ START_TEST(rpcapi)
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
 
     hr = SchRpcDelete(Wine, 0);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
+       broken(hr == S_OK), /* Early versions of Win 10 */
+       "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
     hr = SchRpcDelete(empty, 0);
     ok(hr == E_ACCESSDENIED /* win7 */ || hr == E_INVALIDARG /* vista */, "expected E_ACCESSDENIED, got %#x\n", hr);
