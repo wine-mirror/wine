@@ -4046,7 +4046,7 @@ msgstr "Modul negăsit.\n"
 
 #: winerror.mc:501
 msgid "Procedure not found.\n"
-msgstr "Procedură negăsită\n"
+msgstr "Procedură negăsită.\n"
 
 #: winerror.mc:506
 msgid "No children to wait for.\n"
@@ -5158,9 +5158,8 @@ msgid "The site does not exist.\n"
 msgstr "Situl nu există.\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists.\n"
-msgstr "Portul %s existsă deja.\n"
+msgstr "Controlorul de domeniu există deja.\n"
 
 #: winerror.mc:1886
 #, fuzzy
@@ -5245,7 +5244,7 @@ msgstr "Nume de cont nevalid .\n"
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
-msgstr "Utilizatorul existsă deja.\n"
+msgstr "Utilizatorul există deja.\n"
 
 #: winerror.mc:1991
 msgid "No such user.\n"
@@ -5253,11 +5252,11 @@ msgstr "Utilizator necunoscut.\n"
 
 #: winerror.mc:1996
 msgid "Group already exists.\n"
-msgstr "Grupul existsă deja.\n"
+msgstr "Grupul există deja.\n"
 
 #: winerror.mc:2001
 msgid "No such group.\n"
-msgstr "Grup necunoscut\n"
+msgstr "Grup necunoscut.\n"
 
 #: winerror.mc:2006
 msgid "User already in group.\n"
@@ -5405,7 +5404,7 @@ msgstr ""
 
 #: winerror.mc:2181
 msgid "Domain already exists.\n"
-msgstr "Domeniul existsă deja.\n"
+msgstr "Domeniul există deja.\n"
 
 #: winerror.mc:2186
 msgid "Domain limit exceeded.\n"
@@ -5499,7 +5498,7 @@ msgstr ""
 
 #: winerror.mc:2296
 msgid "Local group already exists.\n"
-msgstr "Grupul local existsă deja.\n"
+msgstr "Grupul local există deja.\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted.\n"
@@ -5622,7 +5621,7 @@ msgstr "Tastă rapidă deja înregistrată.\n"
 
 #: winerror.mc:2446
 msgid "Class already exists.\n"
-msgstr "Clasa existsă deja.\n"
+msgstr "Clasa există deja.\n"
 
 #: winerror.mc:2451
 msgid "Class does not exist.\n"
@@ -6260,7 +6259,7 @@ msgstr "Interfață nu a fost găsită.\n"
 
 #: winerror.mc:3216
 msgid "Entry already exists.\n"
-msgstr "Intrarea existsă deja.\n"
+msgstr "Intrarea există deja.\n"
 
 #: winerror.mc:3221
 msgid "Entry not found.\n"
@@ -6428,7 +6427,7 @@ msgstr "Nume de imprimantă nevalid.\n"
 
 #: winerror.mc:3421
 msgid "Printer already exists.\n"
-msgstr "Imprimanta existsă deja.\n"
+msgstr "Imprimanta există deja.\n"
 
 #: winerror.mc:3426
 msgid "Invalid printer command.\n"
@@ -9090,7 +9089,7 @@ msgstr ""
 
 #: winmm.rc:96
 msgid "A null parameter block was passed to MCI."
-msgstr "Un parametru de block nul a fost pasat la MCI."
+msgstr "Un parametru de bloc nul a fost pasat la MCI."
 
 #: winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
@@ -13292,7 +13291,7 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"DLL-urile (Dynamic Link Libraries) pot fi setate individual ca builtin "
+"DLL-urile (Dynamic Link Libraries) pot fi setate individual ca integrate "
 "(furnizate de Wine) sau native (din Windows sau furnizate de aplicație)."
 
 #: winecfg.rc:194
@@ -13535,7 +13534,7 @@ msgstr "5.1 surround"
 
 #: winecfg.rc:92
 msgid "Quadraphonic"
-msgstr "Cuadrafonic"
+msgstr "Cuadrofonic"
 
 #: winecfg.rc:93
 msgid "Stereo"
