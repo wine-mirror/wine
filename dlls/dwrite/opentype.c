@@ -113,7 +113,8 @@ enum OPENTYPE_CMAP_TABLE_FORMAT
 #include "pshpack2.h"
 typedef struct
 {
-    ULONG version;
+    USHORT majorVersion;
+    USHORT minorVersion;
     ULONG revision;
     ULONG checksumadj;
     ULONG magic;
