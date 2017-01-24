@@ -1,56 +1,50 @@
 1. GİRİŞ
 
-Wine Microsoft Windows programlarını (DOS, Windows 3.x ve Win32
-uygulamaları dahil) Unix üzerinde çalıştırmanıza izin veren bir
-programdır. Microsoft Windows ikili dosyalarını yükleyip çalıştıran
-bir program yükleyici ve Windows API çağrılarını Unix ve X11
-eş değerlerini kullanarak gerçekleyen (Winelib isimli) bir kitaplıktan
-oluşur. Kitaplık ayrıca Win32 kodlarını doğal Unix çalışabilir
-dosyalarına çevirmek için kullanılabilir.
+Wine Microsoft Windows uygulamalarını (DOS, Windows 3.x ve Win32
+uygulamaları dahil) Unix uyumlu sistemler üzerinde çalıştırmanıza izin
+veren bir programdır. Microsoft Windows çalıştırılabilir dosyalarını
+yükleyip çalıştıran bir program yükleyici ve Windows API çağrılarını Unix
+ve X11 eşdeğer çağrılarını kullanarak gerçekleyen Winelib isimli bir
+kitaplıktan oluşur. Kitaplık ayrıca Win32 kodlarını doğal Unix
+çalıştırılabilir dosyalarına çevirmek için kullanılabilir.
 
 Wine, GNU LGPL altında dağıtılan özgür bir yazılımdır; ayrıntılar için
 LICENSE dosyasına bakabilirsiniz.
 
 2. HIZLI BAŞLANGIÇ
 
-Eğer kaynaktan derlemek istiyorsanız, Wine'ı derlemek ve kurmak için
-Wine Kur'u kullanmanız önerilir. Wine kaynak kodu içerisinde (README
-dosyasını içeren) en üst dizine geçin ve aşağıdaki komutu verin:
+Eğer kaynaktan derlemek istiyorsanız, Wine'yi derlemek ve kurmak için Wine
+Kur'u kullanmanız önerilir. Wine kaynak kodu içerisinde en üst dizine
+(README dosyasını içerir) geçiniz ve şu komutu veriniz:
 
 ./tools/wineinstall
 
 Programları "wine [seçenekler] program" şeklinde çalıştırabilirsiniz.
 Daha ayrıntılı bilgi ve sorun çözümü için, bu dosyanın geri kalanını,
-Wine kılavuz sayfalarını ve özellikle http://www.winehq.org sitesindeki
-zengin bilgi arşivini okuyabilirsiniz.
+Wine kullanım kılavuzunu ve özellikle http://www.winehq.org sitesindeki
+zengin bilgi arşivini tarayabilirsiniz.
 
 3. GEREKSİNİMLER
 
 Wine'ı derlemek ve çalıştırmak için, aşağıdakilerden en az birine sahip
 olmanız gerekir:
 
-  Linux sürüm 2.0.36 veya üzeri
-  FreeBSD 5.3 veya sonrası
-  Solaris x86 2.5 veya sonrası
+  Linux 2.0.36 veya sonrası
+  FreeBSD 8.0 veya sonrası
+  Solaris x86 9 veya sonrası
   NetBSD-current
+  macOS 10.6 veya sonrası
 
-Wine çalışmak için çekirdek düzeyinde evre desteğine ihtiyaç duyduğundan
-sadece yukarıda söz edilen işletim sistemleri desteklenmektedir.
-Çekirdek düzeyi evrelerini destekleyen diğer işletim sistemleri de
-gelecekte desteklenebilir.
-
-Linux hakkında bilgi:
-  Linux 2.2.x hala çalışması gerekirken Linux 2.0.x de hala çalışabilir
-  (çok eski 2.0.x sürümlerinde evre ile ilgili çökmeler yaşanmaktadır),
-  2.4.x gibi yeni bir çekirdek kullanmak en iyisidir.
+Wine çalışmak için çekirdek düzeyinde iş parçacığı desteğine ihtiyaç
+duyduğundan sadece yukarıda söz edilen işletim sistemleri
+desteklenmektedir.
+Çekirdek düzeyinde iş parçacıklarını destekleyen diğer işletim sistemleri
+de gelecekte desteklenebilir.
 
 FreeBSD hakkında bilgi:
-  Wine FreeBSD 4.x ve FreeBSD 5.x üzerinde derlenmesi gerekirken
-  FreeBSD 5.3 öncesi sürümler büyük olasılıkla düzgün çalışmayacaktır.
-
-  Ayrıntılı bilgi aşağıdaki adreste yer alan FreeBSD uyarlama ağacında
-  bulunabilir:
-  <ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/>.
+  Wine, FreeBSD 8.0'dan önceki sürümlerde genellikle düzgün çalışmaz.
+  Ayrıntılı bilgi için http://wiki.freebsd.org/Wine adresini ziyaret
+  ediniz.
 
 Solaris hakkında bilgi:
   Wine'ı derlemek için muhtemelen GNU araçlarına (gcc, gas, vb.) ihtiyaç
@@ -62,142 +56,106 @@ NetBSD hakkında bilgi:
   USER_LDT, SYSVSHM, SYSVSEM ve SYSVMSG seçeneklerinin çekirdeğinizde etkin
   olduğundan emin olunuz.
 
-
+macOS hakkında bilgi:
+  x86 üzerinde düzgün bir derleme yapabilmeniz için Xcode 2.4 veya daha yeni
+  bir sürüm gereklidir.
+  Mac sürücüsü için 10.6 veya daha üzeri gereklidir, sürücü 10.5'te derlenmez.
 
 Desteklenen dosya sistemleri:
-  Wine birçok dosya sisteminde çalışabilir. Bununla beraber, Wine /tmp
-  dizini için umsdos kullanıldığında hata verecektir. Samba üzerinden
-  yapılan dosya erişimlerinde de birkaç uyumluluk sorunu raporlanmıştır.
-  Ayrıca, NTFS şu an sadece okuma kipinde güvenli bir şekilde kullanılabildiği
-  için NTFS kullanmamanızı öneririz. Windows programları, çalışmak için
-  neredeyse her zaman yazma erişimine gereksinim duyarlar. NTFS dosyaları
-  ile çalışmak zorunda kaldığınızda, dosyaları yazılabilir bir konuma
-  kopyalayabilirsiniz.
+  Wine birçok dosya sisteminde çalışabilir. Bununla beraber, Samba üzerinden
+  yapılan dosya erişimlerinde de birkaç uyumluluk sorunu bildirilmiştir.
+  Ayrıca, NTFS bazı uygulamalar için gereken bütün dosya sistemi özelliklerini
+  sağlamamaktadır. Unix için geliştirilen dosya sistemlerini kullanmanız önerilir.
 
 Temel gereksinimler:
-  X11 geliştirme dosyalarının kurulu olması gerekir
+  X11 geliştirme dosyalarının kurulu olması gereklidir.
   (Debian'da xlib6g-dev, Red Hat'da XFree86-devel adlı paketler).
 
-Derleme aracı gereksinimleri:
-  x86 sistemlerinde gcc >= 2.7.2 gereklidir.
-  2.7.2.3 öncesi sürümlerde bazı dosyaların en iyilemeli derlenmesinde,
-  daha çok başlık dosyası yönetimi ile ilgili sorunlardan dolayı hata
-  oluşmaktadır. pgcc şu an Wine ile çalışmamaktadır. Bu sorunun nedeni
-  bilinmemektedir.
+  "make" komutuna kesinlikle ihtiyacınız vardır. (çoğunlukla GNU make)
 
-  Elbette "make" aracına da (genellikle GNU make) gereksinim duyacaksınız.
-
-  Ayrıca flex 2.5 sürümü ve sonrası ile birlikte bison gereklidir.
+  Ayrıca, flex 2.5.33 ve bison araçları da gereklidir.
 
 Seçeneğe bağlı destek kitaplıkları:
-  Eğer CUPS yazdırma desteği isterseniz, hem cups hem de cups-devel paketlerini
-  kurmalısınız.
-  Tam işlevsel bir msxml gerçeklemesi elde etmek için libxml2 paketini kurunuz.
+  Yapılandırılırken, eğer seçeneğe bağlı paketler bulunamadıysa, bildirim
+  alacaksınız. Yüklemeniz gereken paketler hakkında ipuçları için,
+  http://wiki.winehq.org/Recommended_Packages adresini ziyaret ediniz.
+
+  64 bit üzerinde, eğer Wine'yi 32 bit (varsayılan) olarak derleyecekseniz,
+  bazı kitaplıklarin 32 bit sürümlerinin yüklü olduğundan emin olunuz;
+  ayrıntılar için http://wiki.winehq.org/WineOn64bit adresini ziyaret
+  ediniz. Eğer gerçek bir 64 bit Wine kurulumu (veya 32-64 bit karışık)
+  isterseniz, bilgi için http://wiki.winehq.org/Wine64 adresini ziyaret
+  ediniz.
 
 4. DERLEME
 
-Eğer wineinstall kullanmamayı seçtiyseniz, Wine'ı derlemek için aşağıdaki
+Eğer wineinstall kullanmamayı seçtiyseniz, Wine'yi derlemek için aşağıdaki
 komutları çalıştırınız:
 
 ./configure
-make depend
 make
 
-Bu "wine" programını ve destek kitaplıklarını/ikili dosyalarını derleyecektir.
-"wine" programı Windows uygulamalarını yükleyecek ve çalıştıracaktır.
-"libwine" ("Winelib") kitaplığı Windows kaynak kodunu Unix altında derlemek
-ve bağlamak için kullanılabilir.
+Bu, "wine" programını ve destek kitaplıklarını/ikili dosyalarını
+derleyecektir.  "wine" programı Windows uygulamalarını yükleyecek ve
+çalıştıracaktır.  "libwine" ("Winelib") kitaplığı Windows programlarının
+kaynak kodunu Unix altında derlemek ve bağlamak için kullanılabilir.
 
-Derleme yapılandırma seçeneklerini görmek için ./configure --help giriniz.
-
-Yama dosyası kullanarak yeni bir sürüme yükseltmek için önce en üst dizine
-(README dosyasının bulunduğu dizin) geçin. Ardından bir "make clean" yapın
-ve şu komutla sürümü yamalayın:
-
-    gunzip -c yama-dosyası | patch -p1
-
-"yama-dosyası" yama dosyasının adıdır (Wine-yymmdd.diff.gz benzeri). Ardından
-yine "./configure" komutunu verin ve "make depend && make" komutunu
-çalıştırın.
+Derleme yapılandırma seçeneklerini görmek için ./configure --help komutunu giriniz.
 
 5. KURULUM
 
-Wine düzgün bir şekilde inşa edildiğinde, "make install" komutunu
-verebilirsiniz; bu komut wine çalışabilir dosyalarını, kılavuz sayfalarını
-ve gerekli birkaç dosyayı kuracaktır.
+Wine düzgün bir şekilde derlendiğinde, "make install" komutunu
+verebilirsiniz; bu komut Wine çalıştırılabilir dosyalarını, kullanım
+kılavuzunu ve gerekli birkaç dosyayı kuracaktır.
 
-Önce, çakışan eski bir wine kurulumunu kaldırmayı unutmayın. Kurmadan
-önce "dpkg -r wine" veya "rpm -e wine" veya "pisi rm wine" ya da
-"make uninstall" komutlarından birini deneyin.
+Önce, çakışan eski bir Wine kurulumunu kaldırmayı unutmayınız. Kurmadan
+önce "dpkg -r wine" veya "rpm -e wine" veya "pisi rm wine" ya da "make
+uninstall" komutlarından birini deneyiniz.
 
-Yapılandırma ipuçları için http://www.winehq.org/ adresinde Destek
-bölümüne bakınız.
+Yüklemeden sonra, "winecfg" yapılandıma aracını
+çalıştırabilirsiniz. Yapılandırma ipuçları için http://www.winehq.org/
+adresinde Destek bölümüne bakınız.
 
-Eğer paylaşımlı kitaplık hataları alıyorsanız
-(ör. "Error while loading shared libraries: libntdll.so"), root olarak
-kitaplık yolunu /etc/ld.so.conf dosyasına eklediğinizden ve ldconfig
-komutunu verdiğinizden emin olun.
+6. UYGULAMALARIN ÇALIŞTIRILMASI
 
-6. PROGRAMLARIN ÇALIŞTIRILMASI
-
-Wine'ı çağırırken çalışabilir dosyanın tam yolunu verebilir veya sadece
+Wine'yi çağırırken çalışabilir dosyanın tam yolunu verebilir veya sadece
 bir dosya adı belirtebilirsiniz.
 
-Örneğin: Solitaire çalıştırmak için:
+Örneğin: Not Defteri'ni çalıştırmak için:
 
-	wine sol		   (dosyaları konumlandırmak için config
-	wine sol.exe		    dosyasındaki Path arama yolunu kullanarak)
+	wine notepad		   (dosyaları konumlandırmak için config
+	wine notepad.exe	   (dosyasındaki Path arama yolunu kullanarak)
 
-	wine c:\\windows\\sol.exe  (DOS dosya adı sözdizimi ile)
+	wine c:\\windows\\notepad.exe  (DOS dosya adı sözdizimi ile)
 
-	wine /usr/windows/sol.exe  (Unix dosya adı sözdizimi ile)
+	wine ~/.wine/drive_c/windows/notepad.exe (Unix dosya adı sözdizimi ile)
 
-        wine sol.exe /parametre1 -parametre2 parametre3
+        wine notepad.exe readme.txt
 				   (programı parametre vererek çağırma)
 
-Not: komut satırında tam bir dosya adı verildiğinde dosyanın yolu
-     ayrıca path bilgisine eklenecektir.
-
-Wine henüz tamamlanmış değildir; bu nedenle bazı programlar çökebilir. Eğer
-winedbg'yi documentation/debugger.sgml'de belirtildiği gibi düzgün bir şekilde
-kurarsanız, bir hata ayıklayıcı satırına düşeceksiniz. Böylece hatayı keşfedip
-sorunu çözebilirsiniz. Bunun yapılışı hakkında daha fazla bilgi için lütfen
-documentation/debugger.sgml dosyasını okuyunuz.
-
-Wine'ın erişimine açtığınız tüm önemli dosyalarınızı yedeklemelisiniz veya
-bu dosyaların özel bir Wine kopyalarını tutmalısınız. Çünkü, bazı dosya
-bozulmalarını raporlayan kullanıcılar görülmüştür. Explorer'ı çalıştırmayın,
-örneğin, eğer düzgün bir yedeğiniz yoksa bazı dizin adlarının değiştirilmesine
-veya bozulmasına yol açabilir. Messenger gibi diğer MS uygulamaları da bir
-şekilde Explorer'ı çalıştırdıklarından dolayı güvenli değildir. Birtakım
-bozulmalar (!$!$!$!$.pfr) kısmen bu adresteki bilgiler kullanılarak
-düzeltilebilir:
-http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
+Wine tamamen bitmiş değildir; bu nedenle bazı programlar çökebilir. Bir
+sorun oluştuğunda, bir çökme günlük dosyası alacaksınız, bu dosyayı hata
+bildirirken eklemelisiniz.
 
 7. DAHA FAZLA BİLGİYE ERİŞİM
 
 WWW:	Wine hakkında geniş bilgiyi WineHQ sitesine http://www.winehq.org/
-	adresinden ulaşarak edinebilirsiniz : çeşitli Wine kılavuzları,
+	adresinden ulaşarak edinebilirsiniz: çeşitli Wine kılavuzları,
 	uygulama veritabanı, hata izleme gibi. Burası muhtemelen en iyi
 	başlangıç noktasıdır.
 
 SSS:	Wine hakkında sıkça sorulan sorulara buradan ulaşabilirsiniz:
-	http://www.winehq.org/FAQ
-
-Usenet:	comp.emulators.ms-windows.wine üzerinde wine ile ilgili konularda
-	tartışabilir ve yardım alabilirsiniz.
 
 Hatalar:
 	Hatalarınızı http://bugs.winehq.org adresinden Wine Bugzilla
-	ile raporlayabilirsiniz. Lütfen bir hata raporlamadan önce
+	ile bildirebilirsiniz. Lütfen bir hata bildirmeden önce
 	hatanın önceden girilip girilmediğini öğrenmek için bugzilla'da
-	arama yapınız. Hata raporlarını ayrıca comp.emulators.ms-windows.wine
-	haber grubuna gönderebilirsiniz.
+	arama yapınız.
 
 IRC:	irc.freenode.net sunucusundan #WineHQ kanalı ile çevrimiçi yardım
 	alabilirsiniz.
 
-Git:	Geçerli Wine geliştirme ağacı Git üzerinden erişilebilir.
+Git:	Geçerli Wine geliştirme ağacına Git üzerinden erişilebilir.
 	Daha fazla bilgi için http://www.winehq.org/git adresine gidiniz.
 
 E-posta listeleri:
@@ -214,5 +172,5 @@ julliard@winehq.org
 
 --
 Türkçe çeviri:
-Fatih Aşıcı
-fasici@linux-sevenler.org
+Can Taşan
+betax34@hotmail.com
