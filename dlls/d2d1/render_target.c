@@ -2375,7 +2375,8 @@ HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *iface, IDXGISurface1
 
     render_target->pixel_size.width = surface_desc.Width;
     render_target->pixel_size.height = surface_desc.Height;
-    ID3D10RenderTargetView_Release(render_target->view);
+    if (render_target->view)
+        ID3D10RenderTargetView_Release(render_target->view);
     render_target->view = view;
 
     return S_OK;

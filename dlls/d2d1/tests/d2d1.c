@@ -3129,6 +3129,7 @@ static void test_hwnd_target(void)
     ID2D1HwndRenderTarget *rt;
     ID2D1Factory *factory;
     ID3D10Device1 *device;
+    D2D1_SIZE_U size;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -3165,6 +3166,11 @@ static void test_hwnd_target(void)
     ok(!!hwnd_rt_desc.hwnd, "Failed to create target window.\n");
     hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    size.width = 128;
+    size.height = 64;
+    hr = ID2D1HwndRenderTarget_Resize(rt, &size);
+    ok(SUCCEEDED(hr), "Failed to resize render target, hr %#x.\n", hr);
 
     ID2D1HwndRenderTarget_Release(rt);
 
