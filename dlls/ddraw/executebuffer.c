@@ -75,12 +75,12 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
     for (;;)
     {
         D3DINSTRUCTION *current = (D3DINSTRUCTION *)instr;
-	BYTE size;
-	WORD count;
-	
-	count = current->wCount;
-	size = current->bSize;
-	instr += sizeof(D3DINSTRUCTION);
+        BYTE size;
+        WORD count;
+
+        count = current->wCount;
+        size = current->bSize;
+        instr += sizeof(*current);
         primitive_size = 0;
 
         switch (current->bOpcode)
@@ -203,10 +203,10 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 break;
             }
 
-	    case D3DOP_MATRIXLOAD:
-	        WARN("MATRIXLOAD-s     (%d)\n", count);
-	        instr += count * size;
-	        break;
+            case D3DOP_MATRIXLOAD:
+                WARN("MATRIXLOAD-s     (%u)\n", count);
+                instr += count * size;
+                break;
 
             case D3DOP_MATRIXMULTIPLY:
                 TRACE("MATRIXMULTIPLY   (%d)\n", count);
@@ -351,19 +351,15 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 }
                 break;
 
-	    case D3DOP_TEXTURELOAD: {
-	        WARN("TEXTURELOAD-s    (%d)\n", count);
+            case D3DOP_TEXTURELOAD:
+                WARN("TEXTURELOAD-s    (%u)\n", count);
+                instr += count * size;
+                break;
 
-		instr += count * size;
-	    } break;
-
-	    case D3DOP_EXIT: {
-	        TRACE("EXIT             (%d)\n", count);
-		/* We did this instruction */
-		instr += size;
-		/* Exit this loop */
-		goto end_of_buffer;
-	    } break;
+            case D3DOP_EXIT:
+                TRACE("EXIT             (%u)\n", count);
+                instr += size;
+                goto end_of_buffer;
 
             case D3DOP_BRANCHFORWARD:
                 TRACE("BRANCHFORWARD    (%d)\n", count);
@@ -380,26 +376,28 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                                 instr = (char*)current + ci->dwOffset;
                                 break;
                             }
-			}
-		    } else {
-		        if (ci->bNegate) {
+                        }
+                    }
+                    else
+                    {
+                        if (ci->bNegate)
+                        {
                             TRACE(" Branch to %d\n", ci->dwOffset);
                             if (ci->dwOffset) {
                                 instr = (char*)current + ci->dwOffset;
                                 break;
                             }
-			}
-		    }
+                        }
+                    }
 
-		    instr += size;
+                    instr += size;
                 }
                 break;
 
-	    case D3DOP_SPAN: {
-	        WARN("SPAN-s           (%d)\n", count);
-
-		instr += count * size;
-	    } break;
+            case D3DOP_SPAN:
+                WARN("SPAN-s           (%u)\n", count);
+                instr += count * size;
+                break;
 
             case D3DOP_SETSTATUS:
                 TRACE("SETSTATUS        (%d)\n", count);
@@ -410,12 +408,11 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 }
                 break;
 
-	    default:
-	        ERR("Unhandled OpCode %d !!!\n",current->bOpcode);
-	        /* Try to save ... */
-	        instr += count * size;
-	        break;
-	}
+            default:
+                ERR("Unhandled OpCode %#x.\n",current->bOpcode);
+                instr += count * size;
+                break;
+        }
     }
 
 end_of_buffer:
