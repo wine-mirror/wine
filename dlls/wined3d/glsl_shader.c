@@ -5450,7 +5450,7 @@ static void shader_glsl_texkill(const struct wined3d_shader_instruction *ins)
         struct glsl_src_param src_param;
 
         shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
-        shader_addline(ins->ctx->buffer, "if (bool(floatBitsToUint(%s))) discard;\n", src_param.param_str);
+        shader_addline(ins->ctx->buffer, "if (bool(%s)) discard;\n", src_param.param_str);
     }
     else
     {
