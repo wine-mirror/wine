@@ -1582,7 +1582,7 @@ static void test_AllocateAndGetTcpExTableFromStack(void)
         ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
         ret = pAllocateAndGetTcpExTableFromStack( (void **)&table_ex, FALSE, INVALID_HANDLE_VALUE, 0, AF_INET );
         ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
-        ret = pAllocateAndGetTcpExTableFromStack( (void **)NULL, FALSE, GetProcessHeap(), 0, AF_INET );
+        ret = pAllocateAndGetTcpExTableFromStack( NULL, FALSE, GetProcessHeap(), 0, AF_INET );
         ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
     }
 
