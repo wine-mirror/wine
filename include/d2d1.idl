@@ -1148,7 +1148,7 @@ interface ID2D1HwndRenderTarget : ID2D1RenderTarget
 {
     D2D1_WINDOW_STATE CheckWindowState();
     HRESULT Resize(
-        [in] const D2D1_SIZE_U size
+        [in] const D2D1_SIZE_U *size
     );
     HWND GetHwnd();
 }

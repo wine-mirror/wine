@@ -672,17 +672,17 @@ static D2D1_WINDOW_STATE STDMETHODCALLTYPE d2d_hwnd_render_target_CheckWindowSta
             DXGI_STATUS_OCCLUDED ? D2D1_WINDOW_STATE_OCCLUDED : D2D1_WINDOW_STATE_NONE;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_Resize(ID2D1HwndRenderTarget *iface, const D2D1_SIZE_U size)
+static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_Resize(ID2D1HwndRenderTarget *iface, const D2D1_SIZE_U *size)
 {
     struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
     IDXGISurface1 *dxgi_surface;
     HRESULT hr;
 
-    TRACE("iface %p, width %u, height %u.\n", iface, size.width, size.height);
+    TRACE("iface %p, width %u, height %u.\n", iface, size->width, size->height);
 
     d2d_d3d_render_target_create_rtv(render_target->dxgi_target, NULL);
 
-    if (SUCCEEDED(hr = IDXGISwapChain_ResizeBuffers(render_target->swapchain, 1, size.width, size.height,
+    if (SUCCEEDED(hr = IDXGISwapChain_ResizeBuffers(render_target->swapchain, 1, size->width, size->height,
         DXGI_FORMAT_UNKNOWN, 0)))
     {
         if (FAILED(hr = IDXGISwapChain_GetBuffer(render_target->swapchain, 0, &IID_IDXGISurface1,
