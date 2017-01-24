@@ -2207,6 +2207,7 @@ static HRESULT WINAPI HTMLDocument3_get_dir(IHTMLDocument3 *iface, BSTR *p)
         return E_UNEXPECTED;
     }
 
+    nsAString_Init(&dir_str, NULL);
     nsres = nsIDOMHTMLDocument_GetDir(This->doc_node->nsdoc, &dir_str);
     return return_nsstr(nsres, &dir_str, p);
 }
