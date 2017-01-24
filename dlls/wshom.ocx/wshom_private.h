@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
+#include "olectl.h"
 
 /* typelibs */
 typedef enum tid_t {
@@ -36,5 +37,13 @@ typedef enum tid_t {
 } tid_t;
 
 HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+
+struct provideclassinfo {
+    IProvideClassInfo IProvideClassInfo_iface;
+    IUnknown *outer;
+    const GUID *guid;
+};
+
+extern void init_classinfo(const GUID *guid, IUnknown *outer, struct provideclassinfo *classinfo) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI WshShellFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;

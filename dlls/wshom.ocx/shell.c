@@ -28,16 +28,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
-static IWshShell3 WshShell3;
+typedef struct
+{
+    struct provideclassinfo classinfo;
+    IWshShell3 IWshShell3_iface;
+} WshShellImpl;
+static WshShellImpl WshShell3;
 
 typedef struct
 {
+    struct provideclassinfo classinfo;
     IWshCollection IWshCollection_iface;
     LONG ref;
 } WshCollection;
 
 typedef struct
 {
+    struct provideclassinfo classinfo;
     IWshShortcut IWshShortcut_iface;
     LONG ref;
 
@@ -47,16 +54,18 @@ typedef struct
 
 typedef struct
 {
+    struct provideclassinfo classinfo;
     IWshEnvironment IWshEnvironment_iface;
     LONG ref;
 } WshEnvironment;
 
 typedef struct
 {
+    struct provideclassinfo classinfo;
     IWshExec IWshExec_iface;
     LONG ref;
     PROCESS_INFORMATION info;
-} WshExec;
+} WshExecImpl;
 
 static inline WshCollection *impl_from_IWshCollection( IWshCollection *iface )
 {
@@ -73,14 +82,14 @@ static inline WshEnvironment *impl_from_IWshEnvironment( IWshEnvironment *iface 
     return CONTAINING_RECORD(iface, WshEnvironment, IWshEnvironment_iface);
 }
 
-static inline WshExec *impl_from_IWshExec( IWshExec *iface )
+static inline WshExecImpl *impl_from_IWshExec( IWshExec *iface )
 {
-    return CONTAINING_RECORD(iface, WshExec, IWshExec_iface);
+    return CONTAINING_RECORD(iface, WshExecImpl, IWshExec_iface);
 }
 
 static HRESULT WINAPI WshExec_QueryInterface(IWshExec *iface, REFIID riid, void **obj)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), obj);
 
@@ -89,19 +98,24 @@ static HRESULT WINAPI WshExec_QueryInterface(IWshExec *iface, REFIID riid, void 
         IsEqualGUID(riid, &IID_IUnknown))
     {
         *obj = iface;
-    }else {
+    }
+    else if (IsEqualIID(riid, &IID_IProvideClassInfo))
+    {
+        *obj = &This->classinfo.IProvideClassInfo_iface;
+    }
+    else {
         FIXME("Unknown iface %s\n", debugstr_guid(riid));
         *obj = NULL;
         return E_NOINTERFACE;
     }
 
-    IWshExec_AddRef(iface);
+    IUnknown_AddRef((IUnknown *)*obj);
     return S_OK;
 }
 
 static ULONG WINAPI WshExec_AddRef(IWshExec *iface)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     LONG ref = InterlockedIncrement(&This->ref);
     TRACE("(%p) ref = %d\n", This, ref);
     return ref;
@@ -109,7 +123,7 @@ static ULONG WINAPI WshExec_AddRef(IWshExec *iface)
 
 static ULONG WINAPI WshExec_Release(IWshExec *iface)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     LONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) ref = %d\n", This, ref);
 
@@ -124,7 +138,7 @@ static ULONG WINAPI WshExec_Release(IWshExec *iface)
 
 static HRESULT WINAPI WshExec_GetTypeInfoCount(IWshExec *iface, UINT *pctinfo)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     TRACE("(%p)->(%p)\n", This, pctinfo);
     *pctinfo = 1;
     return S_OK;
@@ -132,7 +146,7 @@ static HRESULT WINAPI WshExec_GetTypeInfoCount(IWshExec *iface, UINT *pctinfo)
 
 static HRESULT WINAPI WshExec_GetTypeInfo(IWshExec *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
     return get_typeinfo(IWshExec_tid, ppTInfo);
 }
@@ -140,7 +154,7 @@ static HRESULT WINAPI WshExec_GetTypeInfo(IWshExec *iface, UINT iTInfo, LCID lci
 static HRESULT WINAPI WshExec_GetIDsOfNames(IWshExec *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
@@ -159,7 +173,7 @@ static HRESULT WINAPI WshExec_GetIDsOfNames(IWshExec *iface, REFIID riid, LPOLES
 static HRESULT WINAPI WshExec_Invoke(IWshExec *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
         WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     ITypeInfo *typeinfo;
     HRESULT hr;
 
@@ -179,7 +193,7 @@ static HRESULT WINAPI WshExec_Invoke(IWshExec *iface, DISPID dispIdMember, REFII
 
 static HRESULT WINAPI WshExec_get_Status(IWshExec *iface, WshExecStatus *status)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     DWORD code;
 
     TRACE("(%p)->(%p)\n", This, status);
@@ -207,7 +221,7 @@ static HRESULT WINAPI WshExec_get_Status(IWshExec *iface, WshExecStatus *status)
 
 static HRESULT WINAPI WshExec_get_StdIn(IWshExec *iface, ITextStream **stream)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
 
     FIXME("(%p)->(%p): stub\n", This, stream);
 
@@ -216,7 +230,7 @@ static HRESULT WINAPI WshExec_get_StdIn(IWshExec *iface, ITextStream **stream)
 
 static HRESULT WINAPI WshExec_get_StdOut(IWshExec *iface, ITextStream **stream)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
 
     FIXME("(%p)->(%p): stub\n", This, stream);
 
@@ -225,7 +239,7 @@ static HRESULT WINAPI WshExec_get_StdOut(IWshExec *iface, ITextStream **stream)
 
 static HRESULT WINAPI WshExec_get_StdErr(IWshExec *iface, ITextStream **stream)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
 
     FIXME("(%p)->(%p): stub\n", This, stream);
 
@@ -234,7 +248,7 @@ static HRESULT WINAPI WshExec_get_StdErr(IWshExec *iface, ITextStream **stream)
 
 static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, DWORD *pid)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
 
     TRACE("(%p)->(%p)\n", This, pid);
 
@@ -247,7 +261,7 @@ static HRESULT WINAPI WshExec_get_ProcessID(IWshExec *iface, DWORD *pid)
 
 static HRESULT WINAPI WshExec_get_ExitCode(IWshExec *iface, DWORD *code)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
 
     FIXME("(%p)->(%p): stub\n", This, code);
 
@@ -266,7 +280,7 @@ static BOOL CALLBACK enum_thread_wnd_proc(HWND hwnd, LPARAM lParam)
 
 static HRESULT WINAPI WshExec_Terminate(IWshExec *iface)
 {
-    WshExec *This = impl_from_IWshExec(iface);
+    WshExecImpl *This = impl_from_IWshExec(iface);
     BOOL ret, kill = FALSE;
     INT count = 0;
 
@@ -307,7 +321,7 @@ static const IWshExecVtbl WshExecVtbl = {
 static HRESULT WshExec_create(BSTR command, IWshExec **ret)
 {
     STARTUPINFOW si = {0};
-    WshExec *This;
+    WshExecImpl *This;
 
     *ret = NULL;
 
@@ -323,6 +337,7 @@ static HRESULT WshExec_create(BSTR command, IWshExec **ret)
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
+    init_classinfo(&CLSID_WshExec, (IUnknown *)&This->IWshExec_iface, &This->classinfo);
     *ret = &This->IWshExec_iface;
     return S_OK;
 }
@@ -338,7 +353,12 @@ static HRESULT WINAPI WshEnvironment_QueryInterface(IWshEnvironment *iface, REFI
         IsEqualGUID(riid, &IID_IWshEnvironment))
     {
         *obj = iface;
-    }else {
+    }
+    else if (IsEqualIID(riid, &IID_IProvideClassInfo))
+    {
+        *obj = &This->classinfo.IProvideClassInfo_iface;
+    }
+    else {
         FIXME("Unknown iface %s\n", debugstr_guid(riid));
         *obj = NULL;
         return E_NOINTERFACE;
@@ -505,6 +525,7 @@ static HRESULT WshEnvironment_Create(IWshEnvironment **env)
     This->IWshEnvironment_iface.lpVtbl = &WshEnvironmentVtbl;
     This->ref = 1;
 
+    init_classinfo(&IID_IWshEnvironment, (IUnknown *)&This->IWshEnvironment_iface, &This->classinfo);
     *env = &This->IWshEnvironment_iface;
 
     return S_OK;
@@ -521,7 +542,12 @@ static HRESULT WINAPI WshCollection_QueryInterface(IWshCollection *iface, REFIID
         IsEqualGUID(riid, &IID_IWshCollection))
     {
         *ppv = iface;
-    }else {
+    }
+    else if (IsEqualIID(riid, &IID_IProvideClassInfo))
+    {
+        *ppv = &This->classinfo.IProvideClassInfo_iface;
+    }
+    else {
         FIXME("Unknown iface %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -701,6 +727,7 @@ static HRESULT WshCollection_Create(IWshCollection **collection)
     This->IWshCollection_iface.lpVtbl = &WshCollectionVtbl;
     This->ref = 1;
 
+    init_classinfo(&IID_IWshCollection, (IUnknown *)&This->IWshCollection_iface, &This->classinfo);
     *collection = &This->IWshCollection_iface;
 
     return S_OK;
@@ -718,7 +745,12 @@ static HRESULT WINAPI WshShortcut_QueryInterface(IWshShortcut *iface, REFIID rii
         IsEqualGUID(riid, &IID_IWshShortcut))
     {
         *ppv = iface;
-    }else {
+    }
+    else if (IsEqualIID(riid, &IID_IProvideClassInfo))
+    {
+        *ppv = &This->classinfo.IProvideClassInfo_iface;
+    }
+    else {
         FIXME("Unknown iface %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -1067,6 +1099,7 @@ static HRESULT WshShortcut_Create(const WCHAR *path, IDispatch **shortcut)
         return E_OUTOFMEMORY;
     }
 
+    init_classinfo(&IID_IWshShortcut, (IUnknown *)&This->IWshShortcut_iface, &This->classinfo);
     *shortcut = (IDispatch*)&This->IWshShortcut_iface;
 
     return S_OK;
@@ -1090,13 +1123,17 @@ static HRESULT WINAPI WshShell3_QueryInterface(IWshShell3 *iface, REFIID riid, v
     {
         return E_NOINTERFACE;
     }
+    else if (IsEqualIID(riid, &IID_IProvideClassInfo))
+    {
+        *ppv = &WshShell3.classinfo.IProvideClassInfo_iface;
+    }
     else
     {
         WARN("unknown iface %s\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
-    IWshShell3_AddRef(iface);
+    IUnknown_AddRef((IUnknown *)*ppv);
     return S_OK;
 }
 
@@ -1657,11 +1694,11 @@ static const IWshShell3Vtbl WshShell3Vtbl = {
     WshShell3_put_CurrentDirectory
 };
 
-static IWshShell3 WshShell3 = { &WshShell3Vtbl };
-
 HRESULT WINAPI WshShellFactory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
 
-    return IWshShell3_QueryInterface(&WshShell3, riid, ppv);
+    WshShell3.IWshShell3_iface.lpVtbl = &WshShell3Vtbl;
+    init_classinfo(&IID_IWshShell3, (IUnknown *)&WshShell3.IWshShell3_iface, &WshShell3.classinfo);
+    return IWshShell3_QueryInterface(&WshShell3.IWshShell3_iface, riid, ppv);
 }
