@@ -453,11 +453,10 @@ static void test____lc_locale_name_func(void)
         const char *locale;
         const WCHAR name[10];
         const WCHAR broken_name[10];
-        BOOL todo;
     } tests[] = {
         { "American",  {'e','n',0}, {'e','n','-','U','S',0} },
         { "Belgian",   {'n','l','-','B','E',0} },
-        { "Chinese",   {'z','h',0}, {'z','h','-','C','N',0}, TRUE },
+        { "Chinese",   {'z','h',0}, {'z','h','-','C','N',0} },
         { "Dutch",     {'n','l',0}, {'n','l','-','N','L',0} },
         { "English",   {'e','n',0}, {'e','n','-','U','S',0} },
         { "French",    {'f','r',0}, {'f','r','-','F','R',0} },
@@ -476,9 +475,8 @@ static void test____lc_locale_name_func(void)
 
         lc_names = p____lc_locale_name_func();
         ok(lc_names[0] == NULL, "%d - lc_names[0] = %s\n", i, wine_dbgstr_w(lc_names[0]));
-        todo_wine_if(tests[i].todo)
-            ok(!lstrcmpW(lc_names[1], tests[i].name) || broken(!lstrcmpW(lc_names[1], tests[i].broken_name)),
-                    "%d - lc_names[1] = %s\n", i, wine_dbgstr_w(lc_names[1]));
+        ok(!lstrcmpW(lc_names[1], tests[i].name) || broken(!lstrcmpW(lc_names[1], tests[i].broken_name)),
+           "%d - lc_names[1] = %s\n", i, wine_dbgstr_w(lc_names[1]));
 
         for(j=LC_MIN+2; j<=LC_MAX; j++) {
             ok(!lstrcmpW(lc_names[1], lc_names[j]), "%d - lc_names[%d] = %s, expected %s\n",

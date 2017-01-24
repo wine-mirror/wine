@@ -359,6 +359,18 @@ static UINT find_charset( const WCHAR *name )
     return 0;
 }
 
+static WORD get_default_sublang(LCID lang)
+{
+    switch (PRIMARYLANGID(lang))
+    {
+    case LANG_SPANISH:
+        return SUBLANG_SPANISH_MODERN;
+    case LANG_CHINESE:
+        return SUBLANG_CHINESE_SIMPLIFIED;
+    default:
+        return SUBLANG_DEFAULT;
+    }
+}
 
 /***********************************************************************
  *           find_locale_id_callback
@@ -402,7 +414,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     }
     else  /* match default language */
     {
-        if (SUBLANGID(LangID) == SUBLANG_DEFAULT) matches++;
+        if (SUBLANGID(LangID) == get_default_sublang( LangID )) matches++;
     }
 
     if (data->codepage)
@@ -1671,7 +1683,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
     /* replace SUBLANG_NEUTRAL by SUBLANG_DEFAULT */
     if (SUBLANGID(lang_id) == SUBLANG_NEUTRAL)
-        lang_id = MAKELANGID(PRIMARYLANGID(lang_id), SUBLANG_DEFAULT);
+        lang_id = MAKELANGID(PRIMARYLANGID(lang_id), get_default_sublang( lang_id ));
 
     if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
                                    ULongToPtr((lctype >> 4) + 1), lang_id )))
@@ -2776,7 +2788,7 @@ LCID WINAPI ConvertDefaultLocale( LCID lcid )
         langid = LANGIDFROMLCID(lcid);
         if (SUBLANGID(langid) == SUBLANG_NEUTRAL)
         {
-          langid = MAKELANGID(PRIMARYLANGID(langid), SUBLANG_DEFAULT);
+          langid = MAKELANGID(PRIMARYLANGID(langid), get_default_sublang( langid ));
           lcid = MAKELCID(langid, SORTIDFROMLCID(lcid));
         }
     }
@@ -4212,7 +4224,7 @@ static BOOL NLS_GetLanguageGroupName(LGRPID lgrpid, LPWSTR szName, ULONG nameSiz
     langId = GetSystemDefaultLangID();
 
     if (SUBLANGID(langId) == SUBLANG_NEUTRAL)
-        langId = MAKELANGID( PRIMARYLANGID(langId), SUBLANG_DEFAULT );
+        langId = MAKELANGID(PRIMARYLANGID(langId), get_default_sublang( langId ));
 
     hResource = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING, szResourceName, langId );
 
