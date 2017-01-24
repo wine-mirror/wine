@@ -298,7 +298,6 @@ struct wined3d_settings
     int allow_multisampling;
     unsigned int sample_count;
     BOOL strict_draw_ordering;
-    BOOL always_offscreen;
     BOOL check_float_constants;
     unsigned int max_sm_vs;
     unsigned int max_sm_hs;

@@ -82,7 +82,6 @@ struct wined3d_settings wined3d_settings =
     TRUE,           /* Multisampling enabled by default. */
     ~0u,            /* Don't force a specific sample count by default. */
     FALSE,          /* No strict draw ordering. */
-    TRUE,           /* Don't try to render onscreen by default. */
     FALSE,          /* Don't range check relative addressing indices in float constants. */
     ~0U,            /* No VS shader model limit by default. */
     ~0U,            /* No HS shader model limit by default. */
@@ -303,12 +302,6 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         {
             TRACE("Enforcing strict draw ordering.\n");
             wined3d_settings.strict_draw_ordering = TRUE;
-        }
-        if (!get_config_key(hkey, appkey, "AlwaysOffscreen", buffer, size)
-                && !strcmp(buffer,"disabled"))
-        {
-            TRACE("Not always rendering backbuffers offscreen.\n");
-            wined3d_settings.always_offscreen = FALSE;
         }
         if (!get_config_key(hkey, appkey, "CheckFloatConstants", buffer, size)
                 && !strcmp(buffer, "enabled"))

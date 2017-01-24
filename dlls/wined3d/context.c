@@ -1752,7 +1752,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (color_format->id == WINED3DFMT_P8_UINT)
         color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM, target_usage);
 
-    /* When "always_offscreen" is enabled, we only use the drawable for
+    /* When using FBOs for off-screen rendering, we only use the drawable for
      * presentation blits, and don't do any rendering to it. That means we
      * don't need depth or stencil buffers, and can mostly ignore the render
      * target format. This wouldn't necessarily be quite correct for 10bpc
@@ -1760,8 +1760,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
      * Using the same format regardless of the color/depth/stencil targets
      * makes it much less likely that different wined3d instances will set
      * conflicting pixel formats. */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_BACKBUFFER
-            && wined3d_settings.always_offscreen)
+    if (wined3d_settings.offscreen_rendering_mode != ORM_BACKBUFFER)
     {
         color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM, target_usage);
         ds_format = wined3d_get_format(gl_info, WINED3DFMT_UNKNOWN, WINED3DUSAGE_DEPTHSTENCIL);
