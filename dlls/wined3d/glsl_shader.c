@@ -121,8 +121,6 @@ struct shader_glsl_priv {
     struct constant_heap vconst_heap;
     struct constant_heap pconst_heap;
     unsigned char *stack;
-    GLuint depth_blt_program_full[WINED3D_GL_RES_TYPE_COUNT];
-    GLuint depth_blt_program_masked[WINED3D_GL_RES_TYPE_COUNT];
     UINT next_constant_version;
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
@@ -8290,125 +8288,6 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 }
 
 /* Context activation is done by the caller. */
-static GLuint create_glsl_blt_shader(const struct wined3d_gl_info *gl_info, enum wined3d_gl_resource_type tex_type,
-        BOOL masked)
-{
-    GLuint program_id;
-    GLuint vshader_id, pshader_id;
-    const char *blt_pshader;
-
-    static const char blt_vshader[] =
-        "#version 120\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = gl_Vertex;\n"
-        "    gl_FrontColor = vec4(1.0);\n"
-        "    gl_TexCoord[0] = gl_MultiTexCoord0;\n"
-        "}\n";
-
-    static const char * const blt_pshaders_full[WINED3D_GL_RES_TYPE_COUNT] =
-    {
-        /* WINED3D_GL_RES_TYPE_TEX_1D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_2D */
-        "#version 120\n"
-        "uniform sampler2D sampler;\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_FragDepth = texture2D(sampler, gl_TexCoord[0].xy).x;\n"
-        "}\n",
-        /* WINED3D_GL_RES_TYPE_TEX_3D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
-        "#version 120\n"
-        "uniform samplerCube sampler;\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_FragDepth = textureCube(sampler, gl_TexCoord[0].xyz).x;\n"
-        "}\n",
-        /* WINED3D_GL_RES_TYPE_TEX_RECT */
-        "#version 120\n"
-        "#extension GL_ARB_texture_rectangle : enable\n"
-        "uniform sampler2DRect sampler;\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_FragDepth = texture2DRect(sampler, gl_TexCoord[0].xy).x;\n"
-        "}\n",
-        /* WINED3D_GL_RES_TYPE_BUFFER */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_RB */
-        NULL,
-    };
-
-    static const char * const blt_pshaders_masked[WINED3D_GL_RES_TYPE_COUNT] =
-    {
-        /* WINED3D_GL_RES_TYPE_TEX_1D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_2D */
-        "#version 120\n"
-        "uniform sampler2D sampler;\n"
-        "uniform vec4 mask;\n"
-        "void main(void)\n"
-        "{\n"
-        "    if (all(lessThan(gl_FragCoord.xy, mask.zw))) discard;\n"
-        "    gl_FragDepth = texture2D(sampler, gl_TexCoord[0].xy).x;\n"
-        "}\n",
-        /* WINED3D_GL_RES_TYPE_TEX_3D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
-        "#version 120\n"
-        "uniform samplerCube sampler;\n"
-        "uniform vec4 mask;\n"
-        "void main(void)\n"
-        "{\n"
-        "    if (all(lessThan(gl_FragCoord.xy, mask.zw))) discard;\n"
-        "    gl_FragDepth = textureCube(sampler, gl_TexCoord[0].xyz).x;\n"
-        "}\n",
-        /* WINED3D_GL_RES_TYPE_TEX_RECT */
-        "#version 120\n"
-        "#extension GL_ARB_texture_rectangle : enable\n"
-        "uniform sampler2DRect sampler;\n"
-        "uniform vec4 mask;\n"
-        "void main(void)\n"
-        "{\n"
-        "    if (all(lessThan(gl_FragCoord.xy, mask.zw))) discard;\n"
-        "    gl_FragDepth = texture2DRect(sampler, gl_TexCoord[0].xy).x;\n"
-        "}\n",
-        /* WINED3D_GL_RES_TYPE_BUFFER */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_RB */
-        NULL,
-    };
-
-    blt_pshader = masked ? blt_pshaders_masked[tex_type] : blt_pshaders_full[tex_type];
-    if (!blt_pshader)
-    {
-        FIXME("tex_type %#x not supported\n", tex_type);
-        return 0;
-    }
-
-    vshader_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
-    shader_glsl_compile(gl_info, vshader_id, blt_vshader);
-
-    pshader_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
-    shader_glsl_compile(gl_info, pshader_id, blt_pshader);
-
-    program_id = GL_EXTCALL(glCreateProgram());
-    GL_EXTCALL(glAttachShader(program_id, vshader_id));
-    GL_EXTCALL(glAttachShader(program_id, pshader_id));
-    GL_EXTCALL(glLinkProgram(program_id));
-
-    shader_glsl_validate_link(gl_info, program_id);
-
-    /* Once linked we can mark the shaders for deletion. They will be deleted once the program
-     * is destroyed
-     */
-    GL_EXTCALL(glDeleteShader(vshader_id));
-    GL_EXTCALL(glDeleteShader(pshader_id));
-    return program_id;
-}
-
-/* Context activation is done by the caller. */
 static void shader_glsl_select(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
@@ -8502,48 +8381,6 @@ static void shader_glsl_disable(void *shader_priv, struct wined3d_context *conte
         GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FIXED_ONLY_ARB));
         checkGLcall("glClampColorARB");
     }
-}
-
-/* Context activation is done by the caller. */
-static void shader_glsl_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
-        enum wined3d_gl_resource_type tex_type, const SIZE *ds_mask_size)
-{
-    BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
-    struct shader_glsl_priv *priv = shader_priv;
-    GLuint *blt_program;
-    GLint loc;
-
-    blt_program = masked ? &priv->depth_blt_program_masked[tex_type] : &priv->depth_blt_program_full[tex_type];
-    if (!*blt_program)
-    {
-        *blt_program = create_glsl_blt_shader(gl_info, tex_type, masked);
-        loc = GL_EXTCALL(glGetUniformLocation(*blt_program, "sampler"));
-        GL_EXTCALL(glUseProgram(*blt_program));
-        GL_EXTCALL(glUniform1i(loc, 0));
-    }
-    else
-    {
-        GL_EXTCALL(glUseProgram(*blt_program));
-    }
-
-    if (masked)
-    {
-        loc = GL_EXTCALL(glGetUniformLocation(*blt_program, "mask"));
-        GL_EXTCALL(glUniform4f(loc, 0.0f, 0.0f, (float)ds_mask_size->cx, (float)ds_mask_size->cy));
-    }
-}
-
-/* Context activation is done by the caller. */
-static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info)
-{
-    const struct glsl_context_data *ctx_data = context_get_current()->shader_backend_data;
-    GLuint program_id;
-
-    program_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
-    if (program_id) TRACE("Using GLSL program %u\n", program_id);
-
-    GL_EXTCALL(glUseProgram(program_id));
-    checkGLcall("glUseProgram");
 }
 
 static void shader_glsl_invalidate_contexts_program(struct wined3d_device *device,
@@ -8794,21 +8631,7 @@ fail:
 /* Context activation is done by the caller. */
 static void shader_glsl_free(struct wined3d_device *device)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = device->shader_priv;
-    int i;
-
-    for (i = 0; i < WINED3D_GL_RES_TYPE_COUNT; ++i)
-    {
-        if (priv->depth_blt_program_full[i])
-        {
-            GL_EXTCALL(glDeleteProgram(priv->depth_blt_program_full[i]));
-        }
-        if (priv->depth_blt_program_masked[i])
-        {
-            GL_EXTCALL(glDeleteProgram(priv->depth_blt_program_masked[i]));
-        }
-    }
 
     wine_rb_destroy(&priv->program_lookup, NULL, NULL);
     constant_heap_free(&priv->pconst_heap);
@@ -9172,8 +8995,6 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_handle_instruction,
     shader_glsl_select,
     shader_glsl_disable,
-    shader_glsl_select_depth_blt,
-    shader_glsl_deselect_depth_blt,
     shader_glsl_update_float_vertex_constants,
     shader_glsl_update_float_pixel_constants,
     shader_glsl_load_constants,

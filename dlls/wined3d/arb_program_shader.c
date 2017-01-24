@@ -291,9 +291,6 @@ struct shader_arb_priv
     GLuint                  current_fprogram_id;
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
-    GLuint                  depth_blt_vprogram_id;
-    GLuint                  depth_blt_fprogram_id_full[WINED3D_GL_RES_TYPE_COUNT];
-    GLuint                  depth_blt_fprogram_id_masked[WINED3D_GL_RES_TYPE_COUNT];
     BOOL                    use_arbfp_fixed_func;
     struct wine_rb_tree     fragment_shaders;
     BOOL                    last_ps_const_clamped;
@@ -3358,120 +3355,6 @@ static BOOL shader_arb_compile(const struct wined3d_gl_info *gl_info, GLenum tar
     return TRUE;
 }
 
-/* Context activation is done by the caller. */
-static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_info)
-{
-    GLuint program_id = 0;
-
-    static const char blt_vprogram[] =
-        "!!ARBvp1.0\n"
-        "PARAM c[1] = { { 1, 0.5 } };\n"
-        "MOV result.position, vertex.position;\n"
-        "MOV result.color, c[0].x;\n"
-        "MOV result.texcoord[0], vertex.texcoord[0];\n"
-        "END\n";
-
-    GL_EXTCALL(glGenProgramsARB(1, &program_id));
-    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, program_id));
-    shader_arb_compile(gl_info, GL_VERTEX_PROGRAM_ARB, blt_vprogram);
-
-    return program_id;
-}
-
-/* Context activation is done by the caller. */
-static GLuint create_arb_blt_fragment_program(const struct wined3d_gl_info *gl_info,
-        enum wined3d_gl_resource_type tex_type, BOOL masked)
-{
-    GLuint program_id = 0;
-    const char *fprogram;
-
-    static const char * const blt_fprograms_full[WINED3D_GL_RES_TYPE_COUNT] =
-    {
-        /* WINED3D_GL_RES_TYPE_TEX_1D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_2D */
-        "!!ARBfp1.0\n"
-        "TEMP R0;\n"
-        "TEX R0.x, fragment.texcoord[0], texture[0], 2D;\n"
-        "MOV result.depth.z, R0.x;\n"
-        "END\n",
-        /* WINED3D_GL_RES_TYPE_TEX_3D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
-        "!!ARBfp1.0\n"
-        "TEMP R0;\n"
-        "TEX R0.x, fragment.texcoord[0], texture[0], CUBE;\n"
-        "MOV result.depth.z, R0.x;\n"
-        "END\n",
-        /* WINED3D_GL_RES_TYPE_TEX_RECT */
-        "!!ARBfp1.0\n"
-        "TEMP R0;\n"
-        "TEX R0.x, fragment.texcoord[0], texture[0], RECT;\n"
-        "MOV result.depth.z, R0.x;\n"
-        "END\n",
-        /* WINED3D_GL_RES_TYPE_BUFFER */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_RB */
-        NULL,
-    };
-
-    static const char * const blt_fprograms_masked[WINED3D_GL_RES_TYPE_COUNT] =
-    {
-        /* WINED3D_GL_RES_TYPE_TEX_1D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_2D */
-        "!!ARBfp1.0\n"
-        "PARAM mask = program.local[0];\n"
-        "TEMP R0;\n"
-        "SLT R0.xy, fragment.position, mask.zwzw;\n"
-        "MUL R0.x, R0.x, R0.y;\n"
-        "KIL -R0.x;\n"
-        "TEX R0.x, fragment.texcoord[0], texture[0], 2D;\n"
-        "MOV result.depth.z, R0.x;\n"
-        "END\n",
-        /* WINED3D_GL_RES_TYPE_TEX_3D */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_TEX_CUBE */
-        "!!ARBfp1.0\n"
-        "PARAM mask = program.local[0];\n"
-        "TEMP R0;\n"
-        "SLT R0.xy, fragment.position, mask.zwzw;\n"
-        "MUL R0.x, R0.x, R0.y;\n"
-        "KIL -R0.x;\n"
-        "TEX R0.x, fragment.texcoord[0], texture[0], CUBE;\n"
-        "MOV result.depth.z, R0.x;\n"
-        "END\n",
-        /* WINED3D_GL_RES_TYPE_TEX_RECT */
-        "!!ARBfp1.0\n"
-        "PARAM mask = program.local[0];\n"
-        "TEMP R0;\n"
-        "SLT R0.xy, fragment.position, mask.zwzw;\n"
-        "MUL R0.x, R0.x, R0.y;\n"
-        "KIL -R0.x;\n"
-        "TEX R0.x, fragment.texcoord[0], texture[0], RECT;\n"
-        "MOV result.depth.z, R0.x;\n"
-        "END\n",
-        /* WINED3D_GL_RES_TYPE_BUFFER */
-        NULL,
-        /* WINED3D_GL_RES_TYPE_RB */
-        NULL,
-    };
-
-    fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];
-    if (!fprogram)
-    {
-        FIXME("tex_type %#x not supported, falling back to 2D\n", tex_type);
-        tex_type = WINED3D_GL_RES_TYPE_TEX_2D;
-        fprogram = masked ? blt_fprograms_masked[tex_type] : blt_fprograms_full[tex_type];
-    }
-
-    GL_EXTCALL(glGenProgramsARB(1, &program_id));
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, program_id));
-    shader_arb_compile(gl_info, GL_FRAGMENT_PROGRAM_ARB, fprogram);
-
-    return program_id;
-}
-
 static void arbfp_add_sRGB_correction(struct wined3d_string_buffer *buffer, const char *fragcolor,
         const char *tmp1, const char *tmp2, const char *tmp3, const char *tmp4, BOOL condcode)
 {
@@ -4853,56 +4736,6 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
             | (1u << WINED3D_SHADER_TYPE_COMPUTE);
 }
 
-/* Context activation is done by the caller. */
-static void shader_arb_select_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info,
-        enum wined3d_gl_resource_type tex_type, const SIZE *ds_mask_size)
-{
-    const float mask[] = {0.0f, 0.0f, (float)ds_mask_size->cx, (float)ds_mask_size->cy};
-    BOOL masked = ds_mask_size->cx && ds_mask_size->cy;
-    struct shader_arb_priv *priv = shader_priv;
-    GLuint *blt_fprogram;
-
-    if (!priv->depth_blt_vprogram_id) priv->depth_blt_vprogram_id = create_arb_blt_vertex_program(gl_info);
-    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->depth_blt_vprogram_id));
-    gl_info->gl_ops.gl.p_glEnable(GL_VERTEX_PROGRAM_ARB);
-
-    blt_fprogram = masked ? &priv->depth_blt_fprogram_id_masked[tex_type] : &priv->depth_blt_fprogram_id_full[tex_type];
-    if (!*blt_fprogram) *blt_fprogram = create_arb_blt_fragment_program(gl_info, tex_type, masked);
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, *blt_fprogram));
-    if (masked) GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, mask));
-    gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
-}
-
-/* Context activation is done by the caller. */
-static void shader_arb_deselect_depth_blt(void *shader_priv, const struct wined3d_gl_info *gl_info)
-{
-    struct shader_arb_priv *priv = shader_priv;
-
-    if (priv->current_vprogram_id) {
-        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
-        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
-
-        TRACE("Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB.\n", priv->current_vprogram_id);
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
-    }
-
-    if (priv->current_fprogram_id) {
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
-
-        TRACE("Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB.\n", priv->current_fprogram_id);
-    }
-    else if(!priv->use_arbfp_fixed_func)
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-    }
-}
-
 static void shader_arb_destroy(struct wined3d_shader *shader)
 {
     struct wined3d_device *device = shader->device;
@@ -5022,24 +4855,7 @@ static void release_signature(struct wine_rb_entry *entry, void *context)
 /* Context activation is done by the caller. */
 static void shader_arb_free(struct wined3d_device *device)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_arb_priv *priv = device->shader_priv;
-    int i;
-
-    if (priv->depth_blt_vprogram_id)
-        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
-
-    for (i = 0; i < WINED3D_GL_RES_TYPE_COUNT; ++i)
-    {
-        if (priv->depth_blt_fprogram_id_full[i])
-        {
-            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id_full[i]));
-        }
-        if (priv->depth_blt_fprogram_id_masked[i])
-        {
-            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id_masked[i]));
-        }
-    }
 
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
     priv->fragment_pipe->free_private(device);
@@ -5837,8 +5653,6 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_handle_instruction,
     shader_arb_select,
     shader_arb_disable,
-    shader_arb_select_depth_blt,
-    shader_arb_deselect_depth_blt,
     shader_arb_update_float_vertex_constants,
     shader_arb_update_float_pixel_constants,
     shader_arb_load_constants,

@@ -2489,68 +2489,6 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     return WINED3DERR_INVALIDCALL;
 }
 
-/* Context activation is done by the caller. */
-static void surface_depth_blt(const struct wined3d_surface *surface, struct wined3d_context *context,
-        GLuint texture, GLint x, GLint y, GLsizei w, GLsizei h, GLenum target)
-{
-    struct wined3d_device *device = surface->container->resource.device;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    GLint compare_mode = GL_NONE;
-    struct blt_info info;
-    GLint old_binding = 0;
-    RECT rect;
-
-    gl_info->gl_ops.gl.p_glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT);
-
-    gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
-    gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
-    gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-    gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
-    gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
-    gl_info->gl_ops.gl.p_glEnable(GL_DEPTH_TEST);
-    gl_info->gl_ops.gl.p_glDepthFunc(GL_ALWAYS);
-    gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
-    gl_info->gl_ops.gl.p_glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    gl_info->gl_ops.gl.p_glViewport(x, y, w, h);
-    gl_info->gl_ops.gl.p_glDepthRange(0.0, 1.0);
-
-    SetRect(&rect, 0, h, w, 0);
-    surface_get_blt_info(target, &rect,
-            wined3d_texture_get_level_pow2_width(surface->container, surface->texture_level),
-            wined3d_texture_get_level_pow2_height(surface->container, surface->texture_level), &info);
-    context_active_texture(context, context->gl_info, 0);
-    gl_info->gl_ops.gl.p_glGetIntegerv(info.binding, &old_binding);
-    gl_info->gl_ops.gl.p_glBindTexture(info.bind_target, texture);
-    if (gl_info->supported[ARB_SHADOW])
-    {
-        gl_info->gl_ops.gl.p_glGetTexParameteriv(info.bind_target, GL_TEXTURE_COMPARE_MODE_ARB, &compare_mode);
-        if (compare_mode != GL_NONE)
-            gl_info->gl_ops.gl.p_glTexParameteri(info.bind_target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-    }
-
-    device->shader_backend->shader_select_depth_blt(device->shader_priv,
-            gl_info, info.tex_type, &surface->ds_current_size);
-
-    gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
-    gl_info->gl_ops.gl.p_glTexCoord3fv(&info.texcoords[0].x);
-    gl_info->gl_ops.gl.p_glVertex2f(-1.0f, -1.0f);
-    gl_info->gl_ops.gl.p_glTexCoord3fv(&info.texcoords[1].x);
-    gl_info->gl_ops.gl.p_glVertex2f(1.0f, -1.0f);
-    gl_info->gl_ops.gl.p_glTexCoord3fv(&info.texcoords[2].x);
-    gl_info->gl_ops.gl.p_glVertex2f(-1.0f, 1.0f);
-    gl_info->gl_ops.gl.p_glTexCoord3fv(&info.texcoords[3].x);
-    gl_info->gl_ops.gl.p_glVertex2f(1.0f, 1.0f);
-    gl_info->gl_ops.gl.p_glEnd();
-
-    if (compare_mode != GL_NONE)
-        gl_info->gl_ops.gl.p_glTexParameteri(info.bind_target, GL_TEXTURE_COMPARE_MODE_ARB, compare_mode);
-    gl_info->gl_ops.gl.p_glBindTexture(info.bind_target, old_binding);
-
-    gl_info->gl_ops.gl.p_glPopAttrib();
-
-    device->shader_backend->shader_deselect_depth_blt(device->shader_priv, gl_info);
-}
-
 void surface_modify_ds_location(struct wined3d_surface *surface,
         DWORD location, UINT w, UINT h)
 {
@@ -2564,125 +2502,6 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
     surface->ds_current_size.cy = h;
     wined3d_texture_validate_location(texture, sub_resource_idx, location);
     wined3d_texture_invalidate_location(texture, sub_resource_idx, ~location);
-}
-
-/* Context activation is done by the caller. */
-static void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
-{
-    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
-    struct wined3d_texture *texture = surface->container;
-    struct wined3d_device *device = texture->resource.device;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    GLsizei w, h;
-
-    TRACE("surface %p, context %p, new location %#x.\n", surface, context, location);
-
-    /* TODO: Make this work for modes other than FBO */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return;
-
-    if (!(texture->sub_resources[sub_resource_idx].locations & location))
-    {
-        w = surface->ds_current_size.cx;
-        h = surface->ds_current_size.cy;
-        surface->ds_current_size.cx = 0;
-        surface->ds_current_size.cy = 0;
-    }
-    else
-    {
-        w = wined3d_texture_get_level_width(texture, surface->texture_level);
-        h = wined3d_texture_get_level_height(texture, surface->texture_level);
-    }
-
-    if (surface->current_renderbuffer)
-    {
-        FIXME("Not supported with fixed up depth stencil.\n");
-        return;
-    }
-
-    wined3d_texture_prepare_location(texture, sub_resource_idx, context, location);
-
-    if (location == WINED3D_LOCATION_TEXTURE_RGB)
-    {
-        GLint old_binding = 0;
-        GLenum bind_target;
-
-        /* The render target is allowed to be smaller than the depth/stencil
-         * buffer, so the onscreen depth/stencil buffer is potentially smaller
-         * than the offscreen surface. Don't overwrite the offscreen surface
-         * with undefined data. */
-        w = min(w, context->swapchain->desc.backbuffer_width);
-        h = min(h, context->swapchain->desc.backbuffer_height);
-
-        TRACE("Copying onscreen depth buffer to depth texture.\n");
-
-        if (!device->depth_blt_texture)
-            gl_info->gl_ops.gl.p_glGenTextures(1, &device->depth_blt_texture);
-
-        /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
-         * directly on the FBO texture. That's because we need to flip. */
-        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
-                context->swapchain->front_buffer->sub_resources[0].u.surface,
-                NULL, WINED3D_LOCATION_DRAWABLE);
-        if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
-        {
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
-            bind_target = GL_TEXTURE_RECTANGLE_ARB;
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
-            bind_target = GL_TEXTURE_2D;
-        }
-        gl_info->gl_ops.gl.p_glBindTexture(bind_target, device->depth_blt_texture);
-        /* We use GL_DEPTH_COMPONENT instead of the surface's specific
-         * internal format, because the internal format might include stencil
-         * data. In principle we should copy stencil data as well, but unless
-         * the driver supports stencil export it's hard to do, and doesn't
-         * seem to be needed in practice. If the hardware doesn't support
-         * writing stencil data, the glCopyTexImage2D() call might trigger
-         * software fallbacks. */
-        gl_info->gl_ops.gl.p_glCopyTexImage2D(bind_target, 0, GL_DEPTH_COMPONENT, 0, 0, w, h, 0);
-        gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        gl_info->gl_ops.gl.p_glBindTexture(bind_target, old_binding);
-
-        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
-                NULL, surface, WINED3D_LOCATION_TEXTURE_RGB);
-        context_set_draw_buffer(context, GL_NONE);
-
-        /* Do the actual blit */
-        surface_depth_blt(surface, context, device->depth_blt_texture, 0, 0, w, h, bind_target);
-        checkGLcall("depth_blt");
-
-        context_invalidate_state(context, STATE_FRAMEBUFFER);
-
-        if (wined3d_settings.strict_draw_ordering)
-            gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
-    }
-    else if (location == WINED3D_LOCATION_DRAWABLE)
-    {
-        TRACE("Copying depth texture to onscreen depth buffer.\n");
-
-        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,
-                context->swapchain->front_buffer->sub_resources[0].u.surface,
-                NULL, WINED3D_LOCATION_DRAWABLE);
-        surface_depth_blt(surface, context, texture->texture_rgb.name, 0,
-                wined3d_texture_get_level_pow2_height(texture, surface->texture_level) - h,
-                w, h, surface->texture_target);
-        checkGLcall("depth_blt");
-
-        context_invalidate_state(context, STATE_FRAMEBUFFER);
-
-        if (wined3d_settings.strict_draw_ordering)
-            gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
-    }
-    else
-    {
-        ERR("Invalid location (%#x) specified.\n", location);
-    }
 }
 
 static DWORD resource_access_from_location(DWORD location)
@@ -3050,13 +2869,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
 
     if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
-        if ((location == WINED3D_LOCATION_TEXTURE_RGB && sub_resource->locations & WINED3D_LOCATION_DRAWABLE)
-                || (location == WINED3D_LOCATION_DRAWABLE && sub_resource->locations & WINED3D_LOCATION_TEXTURE_RGB))
-        {
-            surface_load_ds_location(surface, context, location);
-            goto done;
-        }
-
         FIXME("Unimplemented copy from %s to %s for depth/stencil buffers.\n",
                 wined3d_debug_location(sub_resource->locations), wined3d_debug_location(location));
         return WINED3DERR_INVALIDCALL;

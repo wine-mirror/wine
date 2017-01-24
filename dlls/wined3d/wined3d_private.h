@@ -1202,9 +1202,6 @@ struct wined3d_shader_backend_ops
     void (*shader_select)(void *shader_priv, struct wined3d_context *context,
             const struct wined3d_state *state);
     void (*shader_disable)(void *shader_priv, struct wined3d_context *context);
-    void (*shader_select_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info,
-            enum wined3d_gl_resource_type tex_type, const SIZE *ds_mask_size);
-    void (*shader_deselect_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info);
     void (*shader_update_float_vertex_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_load_constants)(void *shader_priv, struct wined3d_context *context,
