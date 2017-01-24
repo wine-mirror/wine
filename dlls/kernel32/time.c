@@ -1042,8 +1042,11 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 int WINAPI GetCalendarInfoEx(LPCWSTR locale, CALID calendar, LPCWSTR lpReserved, CALTYPE caltype,
     LPWSTR data, int len, DWORD *value)
 {
+    static int once;
+
     LCID lcid = LocaleNameToLCID(locale, 0);
-    FIXME("(%s, %d, %p, 0x%08x, %p, %d, %p): semi-stub\n", debugstr_w(locale), calendar, lpReserved, caltype,
+    if (!once++)
+        FIXME("(%s, %d, %p, 0x%08x, %p, %d, %p): semi-stub\n", debugstr_w(locale), calendar, lpReserved, caltype,
         data, len, value);
     return GetCalendarInfoW(lcid, calendar, caltype, data, len, value);
 }
