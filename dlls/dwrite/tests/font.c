@@ -217,7 +217,8 @@ typedef struct {
 } TT_POST;
 
 typedef struct {
-    ULONG  version;
+    USHORT majorVersion;
+    USHORT minorVersion;
     SHORT  ascender;
     SHORT  descender;
     SHORT  linegap;
