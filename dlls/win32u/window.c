@@ -2481,7 +2481,11 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     apply_window_pos( hwnd, 0, swp_flags, surface, &new_rects, NULL );
     if (!surface) return FALSE;
 
-    if (!hdc_src || surface == &dummy_surface) ret = TRUE;
+    if (!hdc_src || surface == &dummy_surface)
+    {
+        user_driver->pUpdateLayeredWindow( hwnd, blend->SourceConstantAlpha, flags );
+        ret = TRUE;
+    }
     else
     {
         BLENDFUNCTION src_blend = { AC_SRC_OVER, 0, 255, 0 };
@@ -2502,7 +2506,6 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
         if (pts_src) OffsetRect( &src_rect, pts_src->x, pts_src->y );
         NtGdiTransformPoints( hdc_src, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP );
 
-        if (flags & ULW_ALPHA) src_blend = *blend;
         ret = NtGdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
                                hdc_src, src_rect.left, src_rect.top, src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
                                *(DWORD *)&src_blend, 0 );
@@ -2514,7 +2517,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
         if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
         window_surface_set_layered( surface, key, -1, 0xff000000 );
 
-        user_driver->pUpdateLayeredWindow( hwnd, flags );
+        user_driver->pUpdateLayeredWindow( hwnd, blend->SourceConstantAlpha, flags );
         window_surface_flush( surface );
     }
 

@@ -862,7 +862,7 @@ static LRESULT nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam, cons
     return -1;
 }
 
-static void nulldrv_UpdateLayeredWindow( HWND hwnd, UINT flags )
+static void nulldrv_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
 {
 }
 
@@ -1221,9 +1221,9 @@ static void loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
 }
 
-static void loaderdrv_UpdateLayeredWindow( HWND hwnd, UINT flags )
+static void loaderdrv_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
 {
-    load_driver()->pUpdateLayeredWindow( hwnd, flags );
+    load_driver()->pUpdateLayeredWindow( hwnd, alpha, flags );
 }
 
 static UINT loaderdrv_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )

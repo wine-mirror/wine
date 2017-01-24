@@ -239,7 +239,7 @@ extern UINT X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp );
 extern LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT *pos );
 extern LRESULT X11DRV_ClipboardWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern void X11DRV_UpdateClipboard(void);
-extern void X11DRV_UpdateLayeredWindow( HWND hwnd, UINT flags );
+extern void X11DRV_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags );
 extern LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects );
 extern BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask );

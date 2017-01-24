@@ -3204,12 +3204,16 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 /***********************************************************************
  *              UpdateLayeredWindow   (X11DRV.@)
  */
-void X11DRV_UpdateLayeredWindow( HWND hwnd, UINT flags )
+void X11DRV_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
 {
     struct x11drv_win_data *data;
     BOOL mapped;
 
     if (!(data = get_win_data( hwnd ))) return;
+
+    if (data->whole_window)
+        sync_window_opacity( data->display, data->whole_window, alpha, flags );
+
     mapped = data->desired_state.wm_state != WithdrawnState;
     release_win_data( data );
 
