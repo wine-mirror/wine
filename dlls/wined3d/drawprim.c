@@ -414,8 +414,8 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     const struct wined3d_fb_state *fb = state->fb;
     const struct wined3d_stream_info *stream_info;
     struct wined3d_event_query *ib_query = NULL;
+    struct wined3d_rendertarget_view *dsv, *rtv;
     struct wined3d_stream_info si_emulated;
-    struct wined3d_rendertarget_view *dsv;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     unsigned int i, idx_size = 0;
@@ -425,7 +425,9 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     if (!index_count)
         return;
 
-    context = context_acquire(device, wined3d_rendertarget_view_get_surface(fb->render_targets[0]));
+    if (!(rtv = fb->render_targets[0]))
+        rtv = fb->depth_stencil;
+    context = context_acquire(device, wined3d_rendertarget_view_get_surface(rtv));
     if (!context->valid)
     {
         context_release(context);
@@ -436,10 +438,9 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
         struct wined3d_texture *rt;
 
-        if (!rtv || rtv->format->id == WINED3DFMT_NULL)
+        if (!(rtv = fb->render_targets[i]) || rtv->format->id == WINED3DFMT_NULL)
             continue;
 
         rt = wined3d_texture_from_resource(rtv->resource);
