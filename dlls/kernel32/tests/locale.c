@@ -2704,6 +2704,7 @@ static void test_LocaleNameToLCID(void)
     INT ret;
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
     static const WCHAR enW[] = {'e','n',0};
+    static const WCHAR esesW[] = {'e','s','-','e','s',0};
 
     if (!pLocaleNameToLCID)
     {
@@ -2743,6 +2744,10 @@ static void test_LocaleNameToLCID(void)
     lcid = pLocaleNameToLCID(invalidW, 0);
     ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected lcid == 0, got %08x, error %d\n", lcid, GetLastError());
+
+    /* lower-case */
+    lcid = pLocaleNameToLCID(esesW, 0);
+    ok(lcid == MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), SORT_DEFAULT), "Got wrong lcid for es-es: 0x%x\n", lcid);
 
     /* english neutral name */
     lcid = pLocaleNameToLCID(enW, 0);

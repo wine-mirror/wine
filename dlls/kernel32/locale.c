@@ -390,7 +390,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
         GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE,
                         buffer, sizeof(buffer)/sizeof(WCHAR) ))
     {
-        if (!strcmpW( data->win_name, buffer ))
+        if (!strcmpiW( data->win_name, buffer ))
         {
             matches = 4;  /* everything matches */
             goto done;
@@ -400,7 +400,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
     if (!GetLocaleInfoW( lcid, LOCALE_SISO639LANGNAME | LOCALE_NOUSEROVERRIDE,
                          buffer, sizeof(buffer)/sizeof(WCHAR) ))
         return TRUE;
-    if (strcmpW( buffer, data->lang )) return TRUE;
+    if (strcmpiW( buffer, data->lang )) return TRUE;
     matches++;  /* language name matched */
 
     if (data->country)
@@ -408,7 +408,7 @@ static BOOL CALLBACK find_locale_id_callback( HMODULE hModule, LPCWSTR type,
         if (GetLocaleInfoW( lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
                             buffer, sizeof(buffer)/sizeof(WCHAR) ))
         {
-            if (strcmpW( buffer, data->country )) goto done;
+            if (strcmpiW( buffer, data->country )) goto done;
             matches++;  /* country name matched */
         }
     }
