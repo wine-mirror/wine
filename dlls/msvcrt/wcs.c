@@ -2027,6 +2027,21 @@ static int wctoint(WCHAR c, int base)
         v = c - 'A' + 10;
     else if ('a' <= c && c <= 'z')
         v = c - 'a' + 10;
+    else {
+        /* NOTE: wine_fold_string(MAP_FOLDDIGITS) supports too many things. */
+        /* Unicode points that contain digits 0-9; keep this sorted! */
+        static const WCHAR zeros[] = {
+            0x660, 0x6f0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xc66, 0xce6,
+            0xd66, 0xe50, 0xed0, 0xf20, 0x1040, 0x17e0, 0x1810, 0xff10
+        };
+        int i;
+        for (i = 0; i < sizeof(zeros)/sizeof(zeros[0]) && c >= zeros[i]; ++i) {
+            if (zeros[i] <= c && c <= zeros[i] + 9) {
+                v = c - zeros[i];
+                break;
+            }
+        }
+    }
     return v < base ? v : -1;
 }
 
