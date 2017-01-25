@@ -8412,7 +8412,7 @@ msgid "Wine Control Panel"
 msgstr "Panneau de configuration de Wine"
 
 #: shell32.rc:195
-msgid "Unable to display Run File dialog box (internal error)"
+msgid "Unable to display Run dialog box (internal error)"
 msgstr ""
 "Impossible d'afficher la boîte de dialogue « Exécuter » (erreur interne)"
 

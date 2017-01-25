@@ -8363,7 +8363,9 @@ msgid "Wine Control Panel"
 msgstr "Wine Kontrollpanel"
 
 #: shell32.rc:195
-msgid "Unable to display Run File dialog box (internal error)"
+#, fuzzy
+#| msgid "Unable to display Run File dialog box (internal error)"
+msgid "Unable to display Run dialog box (internal error)"
 msgstr "Klarte ikke vise Kjør-vinduet (intern feil)"
 
 #: shell32.rc:196

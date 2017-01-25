@@ -8502,7 +8502,9 @@ msgid "Wine Control Panel"
 msgstr "Nadzorna plošča Wine"
 
 #: shell32.rc:195
-msgid "Unable to display Run File dialog box (internal error)"
+#, fuzzy
+#| msgid "Unable to display Run File dialog box (internal error)"
+msgid "Unable to display Run dialog box (internal error)"
 msgstr "Pogovornega okna Zagon datoteke ni mogoče prikazati (notranja napaka)"
 
 #: shell32.rc:196

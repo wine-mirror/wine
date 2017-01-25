@@ -190,8 +190,8 @@ the folder?"
         IDS_SHUTDOWN_TITLE      "Shutdown"
         IDS_SHUTDOWN_PROMPT     "Do you want to shutdown your Wine session?"
 
-        /* Run File dialog */
-        IDS_RUNDLG_ERROR           "Unable to display Run File dialog box (internal error)"
+        /* Run dialog */
+        IDS_RUNDLG_ERROR           "Unable to display Run dialog box (internal error)"
         IDS_RUNDLG_BROWSE_ERROR    "Unable to display Browse dialog box (internal error)"
         IDS_RUNDLG_BROWSE_CAPTION  "Browse"
         IDS_RUNDLG_BROWSE_FILTER_EXE "Executable files (*.exe)"

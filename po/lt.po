@@ -8364,7 +8364,9 @@ msgid "Wine Control Panel"
 msgstr "„Wine“ valdymo skydelis"
 
 #: shell32.rc:195
-msgid "Unable to display Run File dialog box (internal error)"
+#, fuzzy
+#| msgid "Unable to display Run File dialog box (internal error)"
+msgid "Unable to display Run dialog box (internal error)"
 msgstr "Nepavyko parodyti failo paleidimo dialogo lango (vidinė klaida)"
 
 #: shell32.rc:196
