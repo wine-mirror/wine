@@ -1522,7 +1522,7 @@ static void test_CloseHandle(void)
     numbytes = 0xdeadbeef;
     memset(buffer, 0, sizeof(buffer));
     ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
-    todo_wine ok(ret || broken(GetLastError() == ERROR_MORE_DATA) /* >= Win 8 */,
+    todo_wine ok(ret || GetLastError() == ERROR_MORE_DATA /* >= Win 8 */,
                  "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
