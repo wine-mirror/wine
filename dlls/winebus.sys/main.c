@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -303,7 +304,7 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
     EnterCriticalSection(&ext->report_cs);
     while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
     {
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         irp->IoStatus.u.Status = STATUS_CANCELLED;
         irp->IoStatus.Information = 0;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -525,7 +526,7 @@ NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             }
             else
             {
-                InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.ListEntry);
+                InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
                 status = STATUS_PENDING;
             }
             LeaveCriticalSection(&ext->report_cs);
@@ -613,7 +614,7 @@ void process_hid_report(DEVICE_OBJECT *device, BYTE *report, DWORD length)
     {
         IO_STACK_LOCATION *irpsp;
         TRACE_(hid_report)("Processing Request\n");
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         irpsp = IoGetCurrentIrpStackLocation(irp);
         irp->IoStatus.u.Status = deliver_last_report(ext,
             irpsp->Parameters.DeviceIoControl.OutputBufferLength,
