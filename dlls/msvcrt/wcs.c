@@ -2016,6 +2016,21 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
 }
 
 /*********************************************************************
+ * wctoint (INTERNAL)
+ */
+static int wctoint(WCHAR c, int base)
+{
+    int v = -1;
+    if ('0' <= c && c <= '9')
+        v = c - '0';
+    else if ('A' <= c && c <= 'Z')
+        v = c - 'A' + 10;
+    else if ('a' <= c && c <= 'z')
+        v = c - 'a' + 10;
+    return v < base ? v : -1;
+}
+
+/*********************************************************************
  *  _wcstoi64_l (MSVCRT.@)
  *
  * FIXME: locale parameter is ignored
@@ -2040,31 +2055,22 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && tolowerW(*(nptr+1))=='x') {
+    if((base==0 || base==16) && wctoint(*nptr, 1)==0 && tolowerW(*(nptr+1))=='x') {
         base = 16;
         nptr += 2;
     }
 
     if(base == 0) {
-        if(*nptr=='0')
+        if(wctoint(*nptr, 1)==0)
             base = 8;
         else
             base = 10;
     }
 
     while(*nptr) {
-        MSVCRT_wchar_t cur = tolowerW(*nptr);
-        int v;
-
-        if(cur>='0' && cur<='9') {
-            if(cur >= '0'+base)
-                break;
-            v = cur-'0';
-        } else {
-            if(cur<'a' || cur>='a'+base-10)
-                break;
-            v = cur-'a'+10;
-        }
+        int v = wctoint(*nptr, base);
+        if(v<0)
+            break;
 
         if(negative)
             v = -v;
@@ -2205,31 +2211,22 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && tolowerW(*(nptr+1))=='x') {
+    if((base==0 || base==16) && wctoint(*nptr, 1)==0 && tolowerW(*(nptr+1))=='x') {
         base = 16;
         nptr += 2;
     }
 
     if(base == 0) {
-        if(*nptr=='0')
+        if(wctoint(*nptr, 1)==0)
             base = 8;
         else
             base = 10;
     }
 
     while(*nptr) {
-        MSVCRT_wchar_t cur = tolowerW(*nptr);
-        int v;
-
-        if(cur>='0' && cur<='9') {
-            if(cur >= '0'+base)
-                break;
-            v = *nptr-'0';
-        } else {
-            if(cur<'a' || cur>='a'+base-10)
-                break;
-            v = cur-'a'+10;
-        }
+        int v = wctoint(*nptr, base);
+        if(v<0)
+            break;
 
         nptr++;
 
