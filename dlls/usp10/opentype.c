@@ -511,6 +511,29 @@ typedef struct {
 
 typedef struct {
     WORD PosFormat;
+    WORD Coverage;
+    WORD ClassDef;
+    WORD PosClassSetCnt;
+    WORD PosClassSet[1];
+} GPOS_ContextPosFormat2;
+
+typedef struct {
+    WORD PosClassRuleCnt;
+    WORD PosClassRule[1];
+} GPOS_PosClassSet;
+
+typedef struct {
+    WORD GlyphCount;
+    WORD PosCount;
+    WORD Class[1];
+} GPOS_PosClassRule_1;
+
+typedef struct {
+    GPOS_PosLookupRecord PosLookupRecord[1];
+} GPOS_PosClassRule_2;
+
+typedef struct {
+    WORD PosFormat;
     WORD BacktrackGlyphCount;
     WORD Coverage[1];
 } GPOS_ChainContextPosFormat3_1;
@@ -1869,6 +1892,109 @@ static BOOL GPOS_apply_MarkToMark(const OT_LookupTable *look, const SCRIPT_ANALY
     return rc;
 }
 
+static INT GPOS_apply_ContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
+                                      const OT_LookupList *lookup, const OT_LookupTable *look, const WORD *glyphs, INT glyph_index,
+                                      INT glyph_count, INT ppem, GOFFSET *pGoffset)
+{
+    int j;
+    int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
+
+    TRACE("Contextual Positioning Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        const GPOS_ContextPosFormat2 *cpf2 = (GPOS_ContextPosFormat2*)GPOS_get_subtable(look, j);
+
+        if (GET_BE_WORD(cpf2->PosFormat) == 1)
+        {
+            static int once;
+            if (!once++)
+                FIXME("  TODO: subtype 1\n");
+            continue;
+        }
+        else if (GET_BE_WORD(cpf2->PosFormat) == 2)
+        {
+            WORD offset = GET_BE_WORD(cpf2->Coverage);
+            int index;
+
+            TRACE("Contextual Positioning Subtable: Format 2\n");
+
+            index = GSUB_is_glyph_covered((const BYTE*)cpf2+offset, glyphs[glyph_index]);
+            TRACE("Coverage index %i\n",index);
+            if (index != -1)
+            {
+                int k, count, class;
+                const GPOS_PosClassSet *pcs;
+                const void *glyph_class_table = NULL;
+
+                offset = GET_BE_WORD(cpf2->ClassDef);
+                glyph_class_table = (const BYTE *)cpf2 + offset;
+
+                class = OT_get_glyph_class(glyph_class_table,glyphs[glyph_index]);
+
+                offset = GET_BE_WORD(cpf2->PosClassSet[class]);
+                if (offset == 0)
+                {
+                    TRACE("No class rule table for class %i\n",class);
+                    continue;
+                }
+                pcs = (const GPOS_PosClassSet*)((const BYTE*)cpf2+offset);
+                count = GET_BE_WORD(pcs->PosClassRuleCnt);
+                TRACE("PosClassSet has %i members\n",count);
+                for (k = 0; k < count; k++)
+                {
+                    const GPOS_PosClassRule_1 *pr;
+                    const GPOS_PosClassRule_2 *pr_2;
+                    int g_count, l;
+
+                    offset = GET_BE_WORD(pcs->PosClassRule[k]);
+                    pr = (const GPOS_PosClassRule_1*)((const BYTE*)pcs+offset);
+                    g_count = GET_BE_WORD(pr->GlyphCount);
+                    TRACE("PosClassRule has %i glyphs classes\n",g_count);
+                    for (l = 0; l < g_count-1; l++)
+                    {
+                        int g_class = OT_get_glyph_class(glyph_class_table, glyphs[glyph_index + (write_dir * (l+1))]);
+                        if (g_class != GET_BE_WORD(pr->Class[l])) break;
+                    }
+
+                    if (l < g_count-1)
+                    {
+                        TRACE("Rule does not match\n");
+                        continue;
+                    }
+
+                    TRACE("Rule matches\n");
+                    pr_2 = (const GPOS_PosClassRule_2*)((const BYTE*)pr+
+                        FIELD_OFFSET(GPOS_PosClassRule_1, Class[g_count-1]));
+
+                    for (l = 0; l < GET_BE_WORD(pr->PosCount); l++)
+                    {
+                        int lookupIndex = GET_BE_WORD(pr_2->PosLookupRecord[l].LookupListIndex);
+                        int SequenceIndex = GET_BE_WORD(pr_2->PosLookupRecord[l].SequenceIndex) * write_dir;
+
+                        TRACE("Position: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
+                        GPOS_apply_lookup(psc, lpotm, lplogfont, analysis, piAdvance, lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, glyph_count, pGoffset);
+                    }
+                    return glyph_index + 1;
+                }
+            }
+
+            TRACE("Not covered\n");
+            continue;
+        }
+        else if (GET_BE_WORD(cpf2->PosFormat) == 3)
+        {
+            static int once;
+            if (!once++)
+                FIXME("  TODO: subtype 3\n");
+            continue;
+        }
+        else
+            FIXME("Unhandled Contextual Positioning Format %i\n",GET_BE_WORD(cpf2->PosFormat));
+    }
+    return glyph_index + 1;
+}
+
 static INT GPOS_apply_ChainContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
                                       const OT_LookupList *lookup, const OT_LookupTable *look, const WORD *glyphs, INT glyph_index,
                                       INT glyph_count, INT ppem, GOFFSET *pGoffset)
@@ -2117,6 +2243,8 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             }
             break;
         }
+        case 7:
+            return GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance, lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
         case 8:
         {
             return GPOS_apply_ChainContextPos(psc, lpotm, lplogfont, analysis, piAdvance, lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
