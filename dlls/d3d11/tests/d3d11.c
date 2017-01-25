@@ -749,19 +749,25 @@ static DWORD get_texture_color(ID3D11Texture2D *texture, unsigned int x, unsigne
     return color;
 }
 
-#define check_texture_sub_resource_color(t, s, c, d) check_texture_sub_resource_color_(__LINE__, t, s, c, d)
+#define check_texture_sub_resource_color(a, b, c, d, e) check_texture_sub_resource_color_(__LINE__, a, b, c, d, e)
 static void check_texture_sub_resource_color_(unsigned int line, ID3D11Texture2D *texture,
-        unsigned int sub_resource_idx, DWORD expected_color, BYTE max_diff)
+        unsigned int sub_resource_idx, const RECT *rect, DWORD expected_color, BYTE max_diff)
 {
     struct resource_readback rb;
     unsigned int x = 0, y = 0;
     BOOL all_match = TRUE;
+    RECT default_rect;
     DWORD color = 0;
 
     get_texture_readback(texture, sub_resource_idx, &rb);
-    for (y = 0; y < rb.height; ++y)
+    if (!rect)
     {
-        for (x = 0; x < rb.width; ++x)
+        SetRect(&default_rect, 0, 0, rb.width, rb.height);
+        rect = &default_rect;
+    }
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
         {
             color = get_readback_color(&rb, x, y);
             if (!compare_color(color, expected_color, max_diff))
@@ -789,22 +795,28 @@ static void check_texture_color_(unsigned int line, ID3D11Texture2D *texture,
     ID3D11Texture2D_GetDesc(texture, &texture_desc);
     sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
     for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
-        check_texture_sub_resource_color_(line, texture, sub_resource_idx, expected_color, max_diff);
+        check_texture_sub_resource_color_(line, texture, sub_resource_idx, NULL, expected_color, max_diff);
 }
 
-#define check_texture_sub_resource_float(t, s, c, d) check_texture_sub_resource_float_(__LINE__, t, s, c, d)
+#define check_texture_sub_resource_float(a, b, c, d, e) check_texture_sub_resource_float_(__LINE__, a, b, c, d, e)
 static void check_texture_sub_resource_float_(unsigned int line, ID3D11Texture2D *texture,
-        unsigned int sub_resource_idx, float expected_value, BYTE max_diff)
+        unsigned int sub_resource_idx, const RECT *rect, float expected_value, BYTE max_diff)
 {
     struct resource_readback rb;
     unsigned int x = 0, y = 0;
     BOOL all_match = TRUE;
     float value = 0.0f;
+    RECT default_rect;
 
     get_texture_readback(texture, sub_resource_idx, &rb);
-    for (y = 0; y < rb.height; ++y)
+    if (!rect)
     {
-        for (x = 0; x < rb.width; ++x)
+        SetRect(&default_rect, 0, 0, rb.width, rb.height);
+        rect = &default_rect;
+    }
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
         {
             value = get_readback_float(&rb, x, y);
             if (!compare_float(value, expected_value, max_diff))
@@ -832,22 +844,28 @@ static void check_texture_float_(unsigned int line, ID3D11Texture2D *texture,
     ID3D11Texture2D_GetDesc(texture, &texture_desc);
     sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
     for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
-        check_texture_sub_resource_float_(line, texture, sub_resource_idx, expected_value, max_diff);
+        check_texture_sub_resource_float_(line, texture, sub_resource_idx, NULL, expected_value, max_diff);
 }
 
-#define check_texture_sub_resource_vec4(a, b, c, d) check_texture_sub_resource_vec4_(__LINE__, a, b, c, d)
+#define check_texture_sub_resource_vec4(a, b, c, d, e) check_texture_sub_resource_vec4_(__LINE__, a, b, c, d, e)
 static void check_texture_sub_resource_vec4_(unsigned int line, ID3D11Texture2D *texture,
-        unsigned int sub_resource_idx, const struct vec4 *expected_value, BYTE max_diff)
+        unsigned int sub_resource_idx, const RECT *rect, const struct vec4 *expected_value, BYTE max_diff)
 {
     struct resource_readback rb;
     unsigned int x = 0, y = 0;
     struct vec4 value = {0};
     BOOL all_match = TRUE;
+    RECT default_rect;
 
     get_texture_readback(texture, sub_resource_idx, &rb);
-    for (y = 0; y < rb.height; ++y)
+    if (!rect)
     {
-        for (x = 0; x < rb.width; ++x)
+        SetRect(&default_rect, 0, 0, rb.width, rb.height);
+        rect = &default_rect;
+    }
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
         {
             value = *get_readback_vec4(&rb, x, y);
             if (!compare_vec4(&value, expected_value, max_diff))
@@ -877,22 +895,28 @@ static void check_texture_vec4_(unsigned int line, ID3D11Texture2D *texture,
     ID3D11Texture2D_GetDesc(texture, &texture_desc);
     sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
     for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
-        check_texture_sub_resource_vec4_(line, texture, sub_resource_idx, expected_value, max_diff);
+        check_texture_sub_resource_vec4_(line, texture, sub_resource_idx, NULL, expected_value, max_diff);
 }
 
-#define check_texture_sub_resource_uvec4(a, b, c) check_texture_sub_resource_uvec4_(__LINE__, a, b, c)
+#define check_texture_sub_resource_uvec4(a, b, c, d) check_texture_sub_resource_uvec4_(__LINE__, a, b, c, d)
 static void check_texture_sub_resource_uvec4_(unsigned int line, ID3D11Texture2D *texture,
-        unsigned int sub_resource_idx, const struct uvec4 *expected_value)
+        unsigned int sub_resource_idx, const RECT *rect, const struct uvec4 *expected_value)
 {
     struct resource_readback rb;
     unsigned int x = 0, y = 0;
     struct uvec4 value = {0};
     BOOL all_match = TRUE;
+    RECT default_rect;
 
     get_texture_readback(texture, sub_resource_idx, &rb);
-    for (y = 0; y < rb.height; ++y)
+    if (!rect)
     {
-        for (x = 0; x < rb.width; ++x)
+        SetRect(&default_rect, 0, 0, rb.width, rb.height);
+        rect = &default_rect;
+    }
+    for (y = rect->top; y < rect->bottom; ++y)
+    {
+        for (x = rect->left; x < rect->right; ++x)
         {
             value = *get_readback_uvec4(&rb, x, y);
             if (!compare_uvec4(&value, expected_value))
@@ -923,7 +947,7 @@ static void check_texture_uvec4_(unsigned int line, ID3D11Texture2D *texture,
     ID3D11Texture2D_GetDesc(texture, &texture_desc);
     sub_resource_count = texture_desc.ArraySize * texture_desc.MipLevels;
     for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
-        check_texture_sub_resource_uvec4_(line, texture, sub_resource_idx, expected_value);
+        check_texture_sub_resource_uvec4_(line, texture, sub_resource_idx, NULL, expected_value);
 }
 
 static ID3D11Device *create_device(const struct device_desc *desc)
@@ -6930,7 +6954,7 @@ static void test_render_target_views(void)
         sub_resource_count = texture_desc.MipLevels * texture_desc.ArraySize;
         assert(sub_resource_count <= sizeof(test->expected_colors) / sizeof(*test->expected_colors));
         for (j = 0; j < sub_resource_count; ++j)
-            check_texture_sub_resource_color(texture, j, test->expected_colors[j], 1);
+            check_texture_sub_resource_color(texture, j, NULL, test->expected_colors[j], 1);
 
         ID3D11RenderTargetView_Release(rtv);
         ID3D11Texture2D_Release(texture);
@@ -12134,15 +12158,14 @@ static void test_cs_uav_store(void)
     ID3D11UnorderedAccessView *uav;
     struct device_desc device_desc;
     ID3D11DeviceContext *context;
-    struct resource_readback rb;
     struct vec4 input = {1.0f};
     ID3D11Texture2D *texture;
     ID3D11ComputeShader *cs;
     ID3D11Device *device;
-    unsigned int x, y;
     ID3D11Buffer *cb;
     ULONG refcount;
     HRESULT hr;
+    RECT rect;
 
     static const DWORD cs_1_thread_code[] =
     {
@@ -12377,18 +12400,12 @@ static void test_cs_uav_store(void)
     input.x = 0.5f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 16, 32, 1);
-    get_texture_readback(texture, 0, &rb);
-    for (y = 0; y < texture_desc.Height; ++y)
-    {
-        for (x = 0; x < texture_desc.Width; ++x)
-        {
-            float value = get_readback_float(&rb, x, y);
-            float expected_value = (x < 16 && y < 32) ? 0.5f : 1.0f;
-            todo_wine ok(compare_float(value, expected_value, 2), "Got %.8e at (%u, %u), expected %f.\n",
-                    value, x, y, expected_value);
-        }
-    }
-    release_resource_readback(&rb);
+    SetRect(&rect, 0, 0, 16, 32);
+    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 0.5f, 2);
+    SetRect(&rect, 0, 32, texture_desc.Width, texture_desc.Height);
+    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
+    SetRect(&rect, 16, 0, texture_desc.Width, texture_desc.Height);
+    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
 
     ID3D11ComputeShader_Release(cs);
 
@@ -12399,18 +12416,12 @@ static void test_cs_uav_store(void)
     input.x = 0.6f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 15, 15, 1);
-    get_texture_readback(texture, 0, &rb);
-    for (y = 0; y < texture_desc.Height; ++y)
-    {
-        for (x = 0; x < texture_desc.Width; ++x)
-        {
-            float value = get_readback_float(&rb, x, y);
-            float expected_value = (x < 60 && y < 60) ? 0.6f : 1.0f;
-            todo_wine ok(compare_float(value, expected_value, 2), "Got %.8e at (%u, %u), expected %f.\n",
-                    value, x, y, expected_value);
-        }
-    }
-    release_resource_readback(&rb);
+    SetRect(&rect, 0, 0, 60, 60);
+    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 0.6f, 2);
+    SetRect(&rect, 0, 60, texture_desc.Width, texture_desc.Height);
+    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
+    SetRect(&rect, 60, 0, texture_desc.Width, texture_desc.Height);
+    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
 
     input.x = 0.7f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
@@ -12530,16 +12541,16 @@ static void test_sm4_ret_instruction(void)
 static void test_primitive_restart(void)
 {
     struct d3d11_test_context test_context;
-    unsigned int stride, offset, x, y;
     ID3D11Buffer *ib32, *ib16, *vb;
     ID3D11DeviceContext *context;
-    struct resource_readback rb;
+    unsigned int stride, offset;
     ID3D11InputLayout *layout;
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
     unsigned int i;
     HRESULT hr;
+    RECT rect;
 
     static const DWORD ps_code[] =
     {
@@ -12657,25 +12668,12 @@ static void test_primitive_restart(void)
 
         ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
         ID3D11DeviceContext_DrawIndexed(context, 9, 0, 0);
-        get_texture_readback(test_context.backbuffer, 0, &rb);
-        for (y = 0; y < 480; ++y)
-        {
-            for (x = 0; x < 640; ++x)
-            {
-                DWORD color = get_readback_color(&rb, x, y);
-                DWORD expected_color;
-                if (x < 240)
-                    expected_color = 0xffffff00;
-                else if (x >= 640 - 240)
-                    expected_color = 0xff0000ff;
-                else
-                    expected_color = 0x00000000;
-                ok(compare_color(color, expected_color, 1),
-                        "Test %u: Got 0x%08x, expected 0x%08x at (%u, %u).\n",
-                        i, color, expected_color, x, y);
-            }
-        }
-        release_resource_readback(&rb);
+        SetRect(&rect, 0, 0, 240, 480);
+        check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xffffff00, 1);
+        SetRect(&rect, 240, 0, 400, 480);
+        check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0x00000000, 1);
+        SetRect(&rect, 400, 0, 640, 480);
+        check_texture_sub_resource_color(test_context.backbuffer, 0, &rect, 0xff0000ff, 1);
     }
 
     ID3D11Buffer_Release(ib16);
