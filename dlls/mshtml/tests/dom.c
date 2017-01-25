@@ -5381,6 +5381,7 @@ static void test_create_img_elem(IHTMLDocument2 *doc)
 #define test_doc_selection_type(a,b) _test_doc_selection_type(__LINE__,a,b)
 static void _test_doc_selection_type(unsigned line, IHTMLDocument2 *doc, const char *type)
 {
+    IHTMLSelectionObject2 *selection2;
     IHTMLSelectionObject *selection;
     BSTR str;
     HRESULT hres;
@@ -5393,7 +5394,17 @@ static void _test_doc_selection_type(unsigned line, IHTMLDocument2 *doc, const c
     ok_(__FILE__,line)(!strcmp_wa(str, type), "type = %s, expected %s\n", wine_dbgstr_w(str), type);
     SysFreeString(str);
 
+    hres = IHTMLSelectionObject_QueryInterface(selection, &IID_IHTMLSelectionObject2, (void**)&selection2);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IHTMLSelectionObject2 iface: %08x\n", hres);
+
     IHTMLSelectionObject_Release(selection);
+
+    hres = IHTMLSelectionObject2_get_typeDetail(selection2, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_typeDetail failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(str, "undefined"), "typeDetail = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IHTMLSelectionObject2_Release(selection2);
 }
 
 #define insert_adjacent_elem(a,b,c) _insert_adjacent_elem(__LINE__,a,b,c)
