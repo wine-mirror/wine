@@ -233,9 +233,8 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
         bih->biCompression = amt->subtype.Data1;
     }
     bih->biSizeImage = width * height * bih->biBitCount / 8;
-    vih->AvgTimePerFrame = 10000000;
-    vih->AvgTimePerFrame *= denom;
-    vih->AvgTimePerFrame /= nom;
+    if ((vih->AvgTimePerFrame = (REFERENCE_TIME)MulDiv(10000000, denom, nom)) == -1)
+        vih->AvgTimePerFrame = 0; /* zero division or integer overflow */
     vih->rcSource.left = 0;
     vih->rcSource.right = width;
     vih->rcSource.top = height;
