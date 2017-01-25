@@ -902,7 +902,7 @@ static void joy_polldev(LPDIRECTINPUTDEVICE8A iface)
             break;
 #endif
 	default:
-	    FIXME("joystick cannot handle type %d event (code %d)\n",ie.type,ie.code);
+	    TRACE("skipping event\n");
 	    break;
 	}
         if (inst_id >= 0)
