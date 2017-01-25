@@ -1,0 +1,5 @@
+TESTDLL   = hid.dll
+IMPORTS   = hid setupapi
+
+C_SRCS = \
+	device.c
