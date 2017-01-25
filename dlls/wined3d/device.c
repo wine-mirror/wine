@@ -2859,6 +2859,23 @@ struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3
     return device->state.sampler[WINED3D_SHADER_TYPE_GEOMETRY][idx];
 }
 
+void CDECL wined3d_device_set_compute_shader(struct wined3d_device *device, struct wined3d_shader *shader)
+{
+    struct wined3d_shader *prev;
+
+    TRACE("device %p, shader %p.\n", device, shader);
+
+    prev = device->update_state->shader[WINED3D_SHADER_TYPE_COMPUTE];
+    if (device->recording || shader == prev)
+        return;
+    if (shader)
+        wined3d_shader_incref(shader);
+    device->update_state->shader[WINED3D_SHADER_TYPE_COMPUTE] = shader;
+    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_COMPUTE, shader);
+    if (prev)
+        wined3d_shader_decref(prev);
+}
+
 void CDECL wined3d_device_set_unordered_access_view(struct wined3d_device *device,
         unsigned int idx, struct wined3d_unordered_access_view *uav)
 {

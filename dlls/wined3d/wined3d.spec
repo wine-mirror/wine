@@ -109,6 +109,7 @@
 @ cdecl wined3d_device_set_base_vertex_index(ptr long)
 @ cdecl wined3d_device_set_clip_plane(ptr long ptr)
 @ cdecl wined3d_device_set_clip_status(ptr ptr)
+@ cdecl wined3d_device_set_compute_shader(ptr ptr)
 @ cdecl wined3d_device_set_cursor_position(ptr long long long)
 @ cdecl wined3d_device_set_cursor_properties(ptr long long ptr long)
 @ cdecl wined3d_device_set_depth_stencil_view(ptr ptr)

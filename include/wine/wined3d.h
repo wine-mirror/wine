@@ -2235,6 +2235,7 @@ HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device,
         UINT plane_idx, const struct wined3d_vec4 *plane);
 HRESULT __cdecl wined3d_device_set_clip_status(struct wined3d_device *device,
         const struct wined3d_clip_status *clip_status);
+void __cdecl wined3d_device_set_compute_shader(struct wined3d_device *device, struct wined3d_shader *shader);
 void __cdecl wined3d_device_set_cursor_position(struct wined3d_device *device,
         int x_screen_space, int y_screen_space, DWORD flags);
 HRESULT __cdecl wined3d_device_set_cursor_properties(struct wined3d_device *device,
