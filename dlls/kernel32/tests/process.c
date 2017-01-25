@@ -2895,6 +2895,46 @@ static void test_StartupNoConsole(void)
 #endif
 }
 
+static void test_DetachConsoleHandles(void)
+{
+#ifndef _WIN64
+    char                buffer[MAX_PATH];
+    STARTUPINFOA        startup;
+    PROCESS_INFORMATION info;
+    UINT                result;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW|STARTF_USESTDHANDLES;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    startup.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    startup.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+    get_file_name(resfile);
+    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
+                      &info), "CreateProcess\n");
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+
+    result = GetPrivateProfileIntA("StartupInfoA", "hStdInput", 0, resfile);
+    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
+    result = GetPrivateProfileIntA("StartupInfoA", "hStdOutput", 0, resfile);
+    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
+    result = GetPrivateProfileIntA("StartupInfoA", "hStdError", 0, resfile);
+    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
+    result = GetPrivateProfileIntA("TEB", "hStdInput", 0, resfile);
+    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
+    result = GetPrivateProfileIntA("TEB", "hStdOutput", 0, resfile);
+    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
+    result = GetPrivateProfileIntA("TEB", "hStdError", 0, resfile);
+    ok(result != 0 && result != (UINT)INVALID_HANDLE_VALUE, "bad handle %x\n", result);
+
+    release_memory();
+    DeleteFileA(resfile);
+#endif
+}
+
 static void test_DetachStdHandles(void)
 {
 #ifndef _WIN64
@@ -3380,6 +3420,7 @@ START_TEST(process)
     test_RegistryQuota();
     test_DuplicateHandle();
     test_StartupNoConsole();
+    test_DetachConsoleHandles();
     test_DetachStdHandles();
     test_GetNumaProcessorNode();
     test_session_info();

@@ -1711,7 +1711,7 @@ static startup_info_t *create_startup_info( LPCWSTR filename, LPCWSTR cmdline,
     info->hstdin  = wine_server_obj_handle( hstdin );
     info->hstdout = wine_server_obj_handle( hstdout );
     info->hstderr = wine_server_obj_handle( hstderr );
-    if ((flags & (CREATE_NEW_CONSOLE | DETACHED_PROCESS)) != 0)
+    if ((flags & CREATE_NEW_CONSOLE) != 0)
     {
         /* this is temporary (for console handles). We have no way to control that the handle is invalid in child process otherwise */
         if (is_console_handle(hstdin))  info->hstdin  = wine_server_obj_handle( INVALID_HANDLE_VALUE );
