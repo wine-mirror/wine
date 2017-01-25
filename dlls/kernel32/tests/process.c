@@ -2895,6 +2895,58 @@ static void test_StartupNoConsole(void)
 #endif
 }
 
+static void test_DetachStdHandles(void)
+{
+#ifndef _WIN64
+    char                buffer[MAX_PATH], tempfile[MAX_PATH];
+    STARTUPINFOA        startup;
+    PROCESS_INFORMATION info;
+    HANDLE              hstdin, hstdout, hstderr, htemp;
+    BOOL                res;
+
+    hstdin = GetStdHandle(STD_INPUT_HANDLE);
+    hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+    hstderr = GetStdHandle(STD_ERROR_HANDLE);
+
+    get_file_name(tempfile);
+    htemp = CreateFileA(tempfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(htemp != INVALID_HANDLE_VALUE, "failed opening temporary file\n");
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    get_file_name(resfile);
+    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+
+    SetStdHandle(STD_INPUT_HANDLE, htemp);
+    SetStdHandle(STD_OUTPUT_HANDLE, htemp);
+    SetStdHandle(STD_ERROR_HANDLE, htemp);
+
+    res = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
+                      &info);
+
+    SetStdHandle(STD_INPUT_HANDLE, hstdin);
+    SetStdHandle(STD_OUTPUT_HANDLE, hstdout);
+    SetStdHandle(STD_ERROR_HANDLE, hstderr);
+
+    ok(res, "CreateProcess failed\n");
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    okChildInt("StartupInfoA", "hStdInput", (UINT)INVALID_HANDLE_VALUE);
+    okChildInt("StartupInfoA", "hStdOutput", (UINT)INVALID_HANDLE_VALUE);
+    okChildInt("StartupInfoA", "hStdError", (UINT)INVALID_HANDLE_VALUE);
+    okChildInt("TEB", "hStdInput", 0);
+    okChildInt("TEB", "hStdOutput", 0);
+    okChildInt("TEB", "hStdError", 0);
+    release_memory();
+    DeleteFileA(resfile);
+
+    CloseHandle(htemp);
+    DeleteFileA(tempfile);
+#endif
+}
+
 static void test_GetNumaProcessorNode(void)
 {
     SYSTEM_INFO si;
@@ -3328,6 +3380,7 @@ START_TEST(process)
     test_RegistryQuota();
     test_DuplicateHandle();
     test_StartupNoConsole();
+    test_DetachStdHandles();
     test_GetNumaProcessorNode();
     test_session_info();
     test_GetLogicalProcessorInformationEx();

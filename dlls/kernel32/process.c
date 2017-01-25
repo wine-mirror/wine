@@ -1696,6 +1696,12 @@ static startup_info_t *create_startup_info( LPCWSTR filename, LPCWSTR cmdline,
         hstdout = startup->hStdOutput;
         hstderr = startup->hStdError;
     }
+    else if (flags & DETACHED_PROCESS)
+    {
+        hstdin  = INVALID_HANDLE_VALUE;
+        hstdout = INVALID_HANDLE_VALUE;
+        hstderr = INVALID_HANDLE_VALUE;
+    }
     else
     {
         hstdin  = GetStdHandle( STD_INPUT_HANDLE );
