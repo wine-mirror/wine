@@ -783,7 +783,7 @@
 # @ stub UninstallApplication
 @ stdcall UnlockServiceDatabase (ptr)
 # @ stub UnregisterIdleTask
-@ stdcall UnregisterTraceGuids(int64)
+@ stdcall UnregisterTraceGuids(int64) ntdll.EtwUnregisterTraceGuids
 @ stub UpdateTraceA
 @ stub UpdateTraceW
 # @ stub UsePinForEncryptedFilesA

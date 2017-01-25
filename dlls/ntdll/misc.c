@@ -445,3 +445,15 @@ ULONG WINAPI EtwRegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
           debugstr_a(MofResourceName), RegistrationHandle);
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ *                  EtwUnregisterTraceGuids (NTDLL.@)
+ */
+ULONG WINAPI EtwUnregisterTraceGuids( TRACEHANDLE RegistrationHandle )
+{
+    if (!RegistrationHandle)
+         return ERROR_INVALID_PARAMETER;
+
+    FIXME("%s: stub\n", wine_dbgstr_longlong(RegistrationHandle));
+    return ERROR_SUCCESS;
+}

@@ -815,20 +815,6 @@ ULONG WINAPI TraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER EventTra
 }
 
 /******************************************************************************
- * UnregisterTraceGuids [ADVAPI32.@]
- *
- * See RegisterTraceGuids
- *
- * FIXME
- *  Stub.
- */
-ULONG WINAPI UnregisterTraceGuids( TRACEHANDLE RegistrationHandle )
-{
-    FIXME("%s: stub\n", wine_dbgstr_longlong(RegistrationHandle));
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
  * EventEnabled [ADVAPI32.@]
  *
  */
