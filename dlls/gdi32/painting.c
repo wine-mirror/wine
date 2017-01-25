@@ -237,6 +237,8 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
     PHYSDEV physdev;
     BOOL ret;
 
+    TRACE( "%p, (%d, %d)\n", hdc, x, y );
+
     if(!dc) return FALSE;
 
     update_dc( dc );
@@ -261,6 +263,8 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
     BOOL ret;
     PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
+
+    TRACE( "%p, (%d, %d), %p\n", hdc, x, y, pt );
 
     if(!dc) return FALSE;
 
@@ -287,6 +291,8 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
     PHYSDEV physdev;
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
+
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top, right, bottom, xstart, ystart, xend, yend );
 
     if (!dc) return FALSE;
     update_dc( dc );
@@ -315,8 +321,10 @@ BOOL WINAPI ArcTo( HDC hdc,
     PHYSDEV physdev;
     BOOL result;
     DC * dc = get_dc_ptr( hdc );
-    if(!dc) return FALSE;
 
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top, right, bottom, xstart, ystart, xend, yend );
+
+    if(!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pArcTo );
     result = physdev->funcs->pArcTo( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
@@ -343,8 +351,10 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
     BOOL ret;
     PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
 
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top, right, bottom, xstart, ystart, xend, yend );
+
+    if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPie );
     ret = physdev->funcs->pPie( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
@@ -363,8 +373,10 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top,
     BOOL ret;
     PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
 
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top, right, bottom, xstart, ystart, xend, yend );
+
+    if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pChord );
     ret = physdev->funcs->pChord( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
@@ -382,8 +394,10 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
     BOOL ret;
     PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
 
+    TRACE( "%p, (%d, %d)-(%d, %d)\n", hdc, left, top, right, bottom );
+
+    if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pEllipse );
     ret = physdev->funcs->pEllipse( physdev, left, top, right, bottom );
@@ -401,6 +415,8 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
     PHYSDEV physdev;
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
+
+    TRACE( "%p, (%d, %d)-(%d, %d)\n", hdc, left, top, right, bottom );
 
     if (!dc) return FALSE;
     update_dc( dc );
@@ -420,6 +436,8 @@ BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
     PHYSDEV physdev;
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
+
+    TRACE( "%p, (%d, %d)-(%d, %d), %dx%d\n", hdc, left, top, right, bottom, ell_width, ell_height );
 
     if (!dc) return FALSE;
     update_dc( dc );
@@ -534,6 +552,8 @@ BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
+    TRACE( "%p, %p\n", hdc, hrgn );
+
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPaintRgn );
@@ -551,6 +571,8 @@ BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
     PHYSDEV physdev;
     BOOL retval;
     DC * dc = get_dc_ptr( hdc );
+
+    TRACE( "%p, %p, %p\n", hdc, hrgn, hbrush );
 
     if (!dc) return FALSE;
     update_dc( dc );
@@ -571,6 +593,8 @@ BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
 
+    TRACE( "%p, %p, %p, %dx%d\n", hdc, hrgn, hbrush, nWidth, nHeight );
+
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pFrameRgn );
@@ -588,6 +612,8 @@ BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
     PHYSDEV physdev;
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
+
+    TRACE( "%p, %p\n", hdc, hrgn );
 
     if (!dc) return FALSE;
     update_dc( dc );
@@ -607,6 +633,8 @@ BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
+    TRACE( "%p, %p, %d\n", hdc, pt, count );
+
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPolyline );
@@ -623,6 +651,8 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
     DC * dc = get_dc_ptr( hdc );
     PHYSDEV physdev;
     BOOL ret;
+
+    TRACE( "%p, %p, %u\n", hdc, pt, cCount );
 
     if(!dc) return FALSE;
 
@@ -647,6 +677,8 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
+    TRACE( "%p, %p, %d\n", hdc, pt, count );
+
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPolygon );
@@ -666,6 +698,8 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
+    TRACE( "%p, %p, %p, %u\n", hdc, pt, counts, polygons );
+
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
@@ -684,6 +718,8 @@ BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
+    TRACE( "%p, %p, %p, %u\n", hdc, pt, counts, polylines );
+
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
@@ -701,6 +737,8 @@ BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
     PHYSDEV physdev;
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
+
+    TRACE( "%p, (%d, %d), %08x, %x\n", hdc, x, y, color, fillType );
 
     if (!dc) return FALSE;
     update_dc( dc );
@@ -739,6 +777,8 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
     BOOL ret;
     DC * dc;
 
+    TRACE( "%p, %p, %u\n", hdc, lppt, cPoints );
+
     /* cPoints must be 3 * n + 1 (where n>=1) */
     if (cPoints == 1 || (cPoints % 3) != 1) return FALSE;
 
@@ -771,6 +811,8 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
     BOOL ret;
     PHYSDEV physdev;
 
+    TRACE( "%p, %p, %u\n", hdc, lppt, cPoints );
+
     /* cbPoints must be 3 * n (where n>=1) */
     if (!cPoints || (cPoints % 3) != 0) return FALSE;
 
@@ -796,6 +838,8 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
     PHYSDEV physdev;
     BOOL result;
     DC *dc;
+
+    TRACE( "%p, (%d, %d), %u, %f, %f\n", hdc, x, y, dwRadius, eStartAngle, eSweepAngle );
 
     if( (signed int)dwRadius < 0 )
 	return FALSE;
@@ -826,6 +870,8 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     PHYSDEV physdev;
     BOOL result;
 
+    TRACE( "%p, %p, %p, %u\n", hdc, lppt, lpbTypes, cCount );
+
     if(!dc) return FALSE;
 
     update_dc( dc );
@@ -850,6 +896,8 @@ BOOL WINAPI LineDDA(INT nXStart, INT nYStart, INT nXEnd, INT nYEnd,
     INT cnt;
     INT dx = nXEnd - nXStart;
     INT dy = nYEnd - nYStart;
+
+    TRACE( "(%d, %d), (%d, %d), %p, %lx\n", nXStart, nYStart, nXEnd, nYEnd, callback, lParam );
 
     if (dx < 0)
     {
