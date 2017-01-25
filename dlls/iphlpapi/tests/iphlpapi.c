@@ -1598,9 +1598,12 @@ static void test_AllocateAndGetTcpExTableFromStack(void)
         trace( "AllocateAndGetTcpExTableFromStack table: %u entries\n", table_ex->dwNumEntries );
         for (i = 0; i < table_ex->dwNumEntries; i++)
         {
+          char remote_ip[16];
+
+          strcpy(remote_ip, ntoa(table_ex->table[i].dwRemoteAddr));
           trace( "%u: local %s:%u remote %s:%u state %u pid %u\n", i,
                  ntoa(table_ex->table[i].dwLocalAddr), ntohs(table_ex->table[i].dwLocalPort),
-                 ntoa( table_ex->table[i].dwRemoteAddr ), ntohs(table_ex->table[i].dwRemotePort),
+                 remote_ip, ntohs(table_ex->table[i].dwRemotePort),
                  U(table_ex->table[i]).dwState, table_ex->table[i].dwOwningPid );
         }
     }
