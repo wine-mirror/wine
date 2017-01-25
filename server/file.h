@@ -30,29 +30,6 @@ struct mapping;
 struct async_queue;
 struct completion;
 
-/* operations valid on file descriptor objects */
-struct fd_ops
-{
-    /* get the events we want to poll() for on this object */
-    int  (*get_poll_events)(struct fd *);
-    /* a poll() event occurred */
-    void (*poll_event)(struct fd *,int event);
-    /* get file information */
-    enum server_fd_type (*get_fd_type)(struct fd *fd);
-    /* perform a read on the file */
-    obj_handle_t (*read)(struct fd *, const async_data_t *, int, file_pos_t );
-    /* perform a write on the file */
-    obj_handle_t (*write)(struct fd *, const async_data_t *, int, file_pos_t, data_size_t * );
-    /* flush the object buffers */
-    obj_handle_t (*flush)(struct fd *, const async_data_t *, int);
-    /* perform an ioctl on the file */
-    obj_handle_t (*ioctl)(struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
-    /* queue an async operation */
-    void (*queue_async)(struct fd *, const async_data_t *data, int type, int count);
-    /* selected events for async i/o need an update */
-    void (*reselect_async)( struct fd *, struct async_queue *queue );
-};
-
 /* server-side representation of I/O status block */
 struct iosb
 {
@@ -63,6 +40,29 @@ struct iosb
     void         *in_data;      /* input data */
     data_size_t   out_size;     /* size of output data */
     void         *out_data;     /* output data */
+};
+
+/* operations valid on file descriptor objects */
+struct fd_ops
+{
+    /* get the events we want to poll() for on this object */
+    int  (*get_poll_events)(struct fd *);
+    /* a poll() event occurred */
+    void (*poll_event)(struct fd *,int event);
+    /* get file information */
+    enum server_fd_type (*get_fd_type)(struct fd *fd);
+    /* perform a read on the file */
+    obj_handle_t (*read)(struct fd *, const async_data_t *, int, file_pos_t, struct iosb * );
+    /* perform a write on the file */
+    obj_handle_t (*write)(struct fd *, const async_data_t *, int, file_pos_t, struct iosb * );
+    /* flush the object buffers */
+    obj_handle_t (*flush)(struct fd *, const async_data_t *, int);
+    /* perform an ioctl on the file */
+    obj_handle_t (*ioctl)(struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
+    /* queue an async operation */
+    void (*queue_async)(struct fd *, const async_data_t *data, int type, int count);
+    /* selected events for async i/o need an update */
+    void (*reselect_async)( struct fd *, struct async_queue *queue );
 };
 
 /* file descriptor functions */
@@ -100,9 +100,10 @@ extern void default_poll_event( struct fd *fd, int event );
 extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct iosb *iosb, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos );
+extern obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos,
+                                struct iosb *iosb );
 extern obj_handle_t no_fd_write( struct fd *fd, const async_data_t *async, int blocking,
-                                 file_pos_t pos, data_size_t *written );
+                                 file_pos_t pos, struct iosb *iosb );
 extern obj_handle_t no_fd_flush( struct fd *fd, const async_data_t *async, int blocking );
 extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
 extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );

@@ -176,9 +176,9 @@ static int device_file_close_handle( struct object *obj, struct process *process
 static void device_file_destroy( struct object *obj );
 static enum server_fd_type device_file_get_fd_type( struct fd *fd );
 static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_data, int blocking,
-                                      file_pos_t pos );
+                                      file_pos_t pos, struct iosb *iosb );
 static obj_handle_t device_file_write( struct fd *fd, const async_data_t *async_data, int blocking,
-                                       file_pos_t pos, data_size_t *written );
+                                       file_pos_t pos, struct iosb *iosb );
 static obj_handle_t device_file_flush( struct fd *fd, const async_data_t *async_data, int blocking );
 static obj_handle_t device_file_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                        int blocking );
@@ -246,8 +246,7 @@ static void irp_call_destroy( struct object *obj )
     if (irp->thread) release_object( irp->thread );
 }
 
-static struct irp_call *create_irp( struct device_file *file, const irp_params_t *params,
-                                    const void *in_data, data_size_t in_size, data_size_t out_size )
+static struct irp_call *create_irp( struct device_file *file, const irp_params_t *params, struct iosb *iosb )
 {
     struct irp_call *irp;
 
@@ -264,7 +263,11 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
         irp->async    = NULL;
         irp->params   = *params;
 
-        if (!(irp->iosb = create_iosb( in_data, in_size, out_size )))
+        if (iosb)
+        {
+            irp->iosb = (struct iosb *)grab_object( iosb );
+        }
+        else if (!(irp->iosb = create_iosb( NULL, 0, 0 )))
         {
             release_object( irp );
             irp = NULL;
@@ -381,7 +384,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
         params.create.options = options;
         params.create.device  = file->device->user_ptr;
 
-        if ((irp = create_irp( file, &params, NULL, 0, 0 )))
+        if ((irp = create_irp( file, &params, NULL )))
         {
             add_irp_to_queue( file, irp, NULL );
             release_object( irp );
@@ -417,7 +420,7 @@ static int device_file_close_handle( struct object *obj, struct process *process
         params.close.major = IRP_MJ_CLOSE;
         params.close.file  = file->user_ptr;
 
-        if ((irp = create_irp( file, &params, NULL, 0, 0 )))
+        if ((irp = create_irp( file, &params, NULL )))
         {
             add_irp_to_queue( file, irp, NULL );
             release_object( irp );
@@ -489,7 +492,7 @@ static enum server_fd_type device_file_get_fd_type( struct fd *fd )
 }
 
 static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_data, int blocking,
-                                      file_pos_t pos )
+                                      file_pos_t pos, struct iosb *iosb )
 {
     struct device_file *file = get_fd_user( fd );
     struct irp_call *irp;
@@ -502,7 +505,7 @@ static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_d
     params.read.pos   = pos;
     params.read.file  = file->user_ptr;
 
-    irp = create_irp( file, &params, NULL, 0, get_reply_max_size() );
+    irp = create_irp( file, &params, iosb );
     if (!irp) return 0;
 
     handle = queue_irp( file, irp, async_data, blocking );
@@ -511,7 +514,7 @@ static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_d
 }
 
 static obj_handle_t device_file_write( struct fd *fd, const async_data_t *async_data, int blocking,
-                                       file_pos_t pos, data_size_t *written )
+                                       file_pos_t pos, struct iosb *iosb )
 {
     struct device_file *file = get_fd_user( fd );
     struct irp_call *irp;
@@ -524,7 +527,7 @@ static obj_handle_t device_file_write( struct fd *fd, const async_data_t *async_
     params.write.pos   = pos;
     params.write.file  = file->user_ptr;
 
-    irp = create_irp( file, &params, get_req_data(), get_req_data_size(), 0 );
+    irp = create_irp( file, &params, iosb );
     if (!irp) return 0;
 
     handle = queue_irp( file, irp, async_data, blocking );
@@ -543,7 +546,7 @@ static obj_handle_t device_file_flush( struct fd *fd, const async_data_t *async_
     params.flush.major = IRP_MJ_FLUSH_BUFFERS;
     params.flush.file  = file->user_ptr;
 
-    irp = create_irp( file, &params, NULL, 0, 0 );
+    irp = create_irp( file, &params, NULL );
     if (!irp) return 0;
 
     handle = queue_irp( file, irp, async_data, blocking );
@@ -558,14 +561,17 @@ static obj_handle_t device_file_ioctl( struct fd *fd, ioctl_code_t code, const a
     struct irp_call *irp;
     obj_handle_t handle;
     irp_params_t params;
+    struct iosb *iosb;
 
     memset( &params, 0, sizeof(params) );
     params.ioctl.major = IRP_MJ_DEVICE_CONTROL;
     params.ioctl.code  = code;
     params.ioctl.file = file->user_ptr;
 
-    irp = create_irp( file, &params, get_req_data(), get_req_data_size(),
-                      get_reply_max_size() );
+    iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() );
+    if (!iosb) return 0;
+    irp = create_irp( file, &params, iosb );
+    release_object(iosb);
     if (!irp) return 0;
 
     handle = queue_irp( file, irp, async_data, blocking );

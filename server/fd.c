@@ -2163,7 +2163,7 @@ static void unmount_device( struct fd *device_fd )
 }
 
 /* default read() routine */
-obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos )
+obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos, struct iosb *iosb )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
@@ -2171,7 +2171,7 @@ obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking,
 
 /* default write() routine */
 obj_handle_t no_fd_write( struct fd *fd, const async_data_t *async, int blocking,
-                          file_pos_t pos, data_size_t *written )
+                          file_pos_t pos, struct iosb *iosb )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
@@ -2446,26 +2446,34 @@ DECL_HANDLER(get_handle_fd)
 DECL_HANDLER(read)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_READ_DATA );
+    struct iosb *iosb;
 
-    if (fd)
+    if (!fd) return;
+
+    if ((iosb = create_iosb( NULL, 0, get_reply_max_size() )))
     {
-        reply->wait    = fd->fd_ops->read( fd, &req->async, req->blocking, req->pos );
+        reply->wait    = fd->fd_ops->read( fd, &req->async, req->blocking, req->pos, iosb );
         reply->options = fd->options;
-        release_object( fd );
+        release_object( iosb );
     }
+    release_object( fd );
 }
 
 /* perform a write on a file object */
 DECL_HANDLER(write)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_WRITE_DATA );
+    struct iosb *iosb;
 
-    if (fd)
+    if (!fd) return;
+
+    if ((iosb = create_iosb( get_req_data(), get_req_data_size(), 0 )))
     {
-        reply->wait    = fd->fd_ops->write( fd, &req->async, req->blocking, req->pos, &reply->size );
+        reply->wait    = fd->fd_ops->write( fd, &req->async, req->blocking, req->pos, iosb );
         reply->options = fd->options;
-        release_object( fd );
+        release_object( iosb );
     }
+    release_object( fd );
 }
 
 /* perform an ioctl on a file */
