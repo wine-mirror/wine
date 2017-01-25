@@ -4546,17 +4546,16 @@ TOOLBAR_SetDisabledImageList (TOOLBAR_INFO *infoPtr, WPARAM wParam, HIMAGELIST h
 
 
 static LRESULT
-TOOLBAR_SetDrawTextFlags (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+TOOLBAR_SetDrawTextFlags (TOOLBAR_INFO *infoPtr, DWORD mask, DWORD flags)
 {
-    DWORD dwTemp;
+    DWORD old_flags;
 
-    TRACE("hwnd = %p, dwMask = 0x%08x, dwDTFlags = 0x%08x\n", infoPtr->hwndSelf, (DWORD)wParam, (DWORD)lParam);
+    TRACE("hwnd = %p, mask = 0x%08x, flags = 0x%08x\n", infoPtr->hwndSelf, mask, flags);
 
-    dwTemp = infoPtr->dwDTFlags;
-    infoPtr->dwDTFlags =
-	(infoPtr->dwDTFlags & (DWORD)wParam) | (DWORD)lParam;
+    old_flags = infoPtr->dwDTFlags;
+    infoPtr->dwDTFlags = (old_flags & ~mask) | (flags & mask);
 
-    return (LRESULT)dwTemp;
+    return (LRESULT)old_flags;
 }
 
 /* This function differs a bit from what MSDN says it does:
