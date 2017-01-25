@@ -730,6 +730,9 @@ static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface, IPin *ppin)
 
     IPin_QueryDirection(ppin, &pindir);
     hr = IPin_ConnectedTo(ppin, &pConnectedTo);
+
+    TRACE("(%p/%p)->(%p) -- %p\n", This, iface, ppin, pConnectedTo);
+
     if (FAILED(hr)) {
         TRACE("Querying connected to failed: %x\n", hr);
         return hr; 
@@ -743,7 +746,7 @@ static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface, IPin *ppin)
     IPin_Release(pConnectedTo);
     if (FAILED(hr))
         WARN("Reconnecting pins failed, pins are not connected now..\n");
-    TRACE("(%p->%p) -- %p %p -> %x\n", iface, This, ppin, pConnectedTo, hr);
+    TRACE("-> %08x\n", hr);
     return hr;
 }
 
