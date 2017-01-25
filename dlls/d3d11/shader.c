@@ -1749,6 +1749,15 @@ HRESULT d3d11_compute_shader_create(struct d3d_device *device, const void *byte_
     return S_OK;
 }
 
+struct d3d11_compute_shader *unsafe_impl_from_ID3D11ComputeShader(ID3D11ComputeShader *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_compute_shader_vtbl);
+
+    return impl_from_ID3D11ComputeShader(iface);
+}
+
 /* ID3D11ClassLinkage methods */
 
 static inline struct d3d11_class_linkage *impl_from_ID3D11ClassLinkage(ID3D11ClassLinkage *iface)
