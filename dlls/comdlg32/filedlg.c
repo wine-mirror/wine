@@ -248,11 +248,8 @@ static BOOL BrowseSelectedFolder(HWND hwnd);
  */
 static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
 {
-
     LRESULT lRes;
-    LPCVOID origTemplate;
-    DWORD dwSize;
-    LPDLGTEMPLATEW template;
+    void *template;
     HRSRC hRes;
     HANDLE hDlgTmpl = 0;
     HRESULT hr;
@@ -271,36 +268,25 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
     }
-    if (!(dwSize = SizeofResource(COMDLG32_hInstance, hRes)) ||
-        !(hDlgTmpl = LoadResource(COMDLG32_hInstance, hRes)) ||
-        !(origTemplate = LockResource(hDlgTmpl)))
+    if (!(hDlgTmpl = LoadResource(COMDLG32_hInstance, hRes )) ||
+        !(template = LockResource( hDlgTmpl )))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
         return FALSE;
     }
-    if (!(template = HeapAlloc(GetProcessHeap(), 0, dwSize)))
-    {
-        COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-        return FALSE;
-    }
-    memcpy(template, origTemplate, dwSize);
 
     /* msdn: explorer style dialogs permit sizing by default.
      * The OFN_ENABLESIZING flag is only needed when a hook or
-     * custom tmeplate is provided */
+     * custom template is provided */
     if( (fodInfos->ofnInfos->Flags & OFN_EXPLORER) &&
             !(fodInfos->ofnInfos->Flags & ( OFN_ENABLEHOOK | OFN_ENABLETEMPLATE | OFN_ENABLETEMPLATEHANDLE)))
         fodInfos->ofnInfos->Flags |= OFN_ENABLESIZING;
 
     if (fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
     {
-        template->style |= WS_SIZEBOX;
         fodInfos->sizedlg.cx = fodInfos->sizedlg.cy = 0;
         fodInfos->initial_size.x = fodInfos->initial_size.y = 0;
     }
-    else
-        template->style &= ~WS_SIZEBOX;
-
 
     /* old style hook messages */
     if (IsHooked(fodInfos))
@@ -328,8 +314,6 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
                                      (LPARAM) fodInfos);
     if (SUCCEEDED(hr)) 
         OleUninitialize();
-
-    HeapFree(GetProcessHeap(), 0, template);
 
     /* Unable to create the dialog */
     if( lRes == -1)
@@ -1286,7 +1270,31 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 
          if (fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
          {
-             GetWindowRect( hwnd, &rc);
+             DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
+             DWORD ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+             RECT client, client_adjusted;
+
+             if (fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
+             {
+                 style |= WS_SIZEBOX;
+                 ex_style |= WS_EX_WINDOWEDGE;
+             }
+             else
+                 style &= ~WS_SIZEBOX;
+             SetWindowLongW(hwnd, GWL_STYLE, style);
+             SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style);
+
+             GetClientRect( hwnd, &client );
+             GetClientRect( hwnd, &client_adjusted );
+             AdjustWindowRectEx( &client_adjusted, style, FALSE, ex_style );
+
+             GetWindowRect( hwnd, &rc );
+             rc.right += client_adjusted.right - client.right;
+             rc.bottom += client_adjusted.bottom - client.bottom;
+             SetWindowPos(hwnd, 0, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_FRAMECHANGED | SWP_NOACTIVATE |
+                 SWP_NOZORDER | SWP_NOMOVE);
+
+             GetWindowRect( hwnd, &rc );
              fodInfos->DlgInfos.hwndGrip =
                  CreateWindowExA( 0, "SCROLLBAR", NULL,
                      WS_CHILD | WS_GROUP | WS_VISIBLE | WS_CLIPSIBLINGS |
