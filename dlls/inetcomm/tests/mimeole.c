@@ -760,6 +760,25 @@ static void test_MimeOleGetPropertySchema(void)
     IMimePropertySchema_Release(schema);
 }
 
+static void test_mhtml_protocol(void)
+{
+    IUnknown *unk, *unk2;
+    HRESULT hres;
+
+    /* test class factory */
+    hres = CoGetClassObject(&CLSID_IMimeHtmlProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&unk2);
+    ok(hres == S_OK, "Could not get IClassFactory iface: %08x\n", hres);
+    IUnknown_Release(unk2);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&unk2);
+    ok(hres == E_NOINTERFACE, "IInternetProtocolInfo supported\n");
+
+    IUnknown_Release(unk);
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
@@ -774,5 +793,6 @@ START_TEST(mimeole)
     test_BindToObject();
     test_BodyDeleteProp();
     test_MimeOleGetPropertySchema();
+    test_mhtml_protocol();
     OleUninitialize();
 }

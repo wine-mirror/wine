@@ -9,6 +9,7 @@ C_SRCS = \
 	mimeintl.c \
 	mimeole.c \
 	pop3transport.c \
+	protocol.c \
 	smtptransport.c
 
 RC_SRCS = inetcomm.rc
