@@ -2379,7 +2379,7 @@ static HRESULT WINAPI MediaSeeking_IsFormatSupported(IMediaSeeking *iface, const
 
     if (!IsEqualGUID(&TIME_FORMAT_MEDIA_TIME, pFormat))
     {
-        FIXME("Unhandled time format %s\n", debugstr_guid(pFormat));
+        WARN("Unhandled time format %s\n", debugstr_guid(pFormat));
         return S_FALSE;
     }
 
