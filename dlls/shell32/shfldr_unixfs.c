@@ -1475,10 +1475,10 @@ static HRESULT WINAPI ShellFolder2_GetDetailsOf(IShellFolder2* iface,
     LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS *psd)
 {
     UnixFolder *This = impl_from_IShellFolder2(iface);
-    HRESULT hr = E_FAIL;
     struct passwd *pPasswd;
     struct group *pGroup;
     struct stat statItem;
+    HRESULT hr = S_OK;
 
     static const shvheader unixfs_header[SHELLVIEWCOLUMNS] = {
         {IDS_SHV_COLUMN1,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
