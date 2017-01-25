@@ -238,6 +238,51 @@ typedef struct{
 }GSUB_SubstLookupRecord;
 
 typedef struct{
+    WORD SubstFormat;
+    WORD Coverage;
+    WORD SubRuleSetCount;
+    WORD SubRuleSet[1];
+}GSUB_ContextSubstFormat1;
+
+typedef struct{
+    WORD SubRuleCount;
+    WORD SubRule[1];
+}GSUB_SubRuleSet;
+
+typedef struct {
+    WORD GlyphCount;
+    WORD SubstCount;
+    WORD Input[1];
+}GSUB_SubRule_1;
+
+typedef struct {
+    GSUB_SubstLookupRecord SubstLookupRecord[1];
+}GSUB_SubRule_2;
+
+typedef struct {
+    WORD SubstFormat;
+    WORD Coverage;
+    WORD ClassDef;
+    WORD SubClassSetCnt;
+    WORD SubClassSet[1];
+}GSUB_ContextSubstFormat2;
+
+typedef struct {
+    WORD SubClassRuleCnt;
+    WORD SubClassRule[1];
+}GSUB_SubClassSet;
+
+typedef struct {
+    WORD GlyphCount;
+    WORD SubstCount;
+    WORD Class[1];
+}GSUB_SubClassRule_1;
+
+typedef struct {
+    GSUB_SubstLookupRecord SubstLookupRecord[1];
+}GSUB_SubClassRule_2;
+
+typedef struct{
     WORD SubstFormat; /* = 1 */
     WORD Coverage;
     WORD ChainSubRuleSetCount;
@@ -940,6 +985,151 @@ static INT GSUB_apply_LigatureSubst(const OT_LookupTable *look, WORD *glyphs, IN
     return GSUB_E_NOGLYPH;
 }
 
+static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+{
+    int j;
+    TRACE("Context Substitution Subtable\n");
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        const GSUB_ContextSubstFormat1 *csf1;
+
+        csf1 = (const GSUB_ContextSubstFormat1*)GSUB_get_subtable(look, j);
+        if (GET_BE_WORD(csf1->SubstFormat) == 1)
+        {
+            int offset, index;
+            TRACE("Context Substitution Subtable: Class 1\n");
+            offset = GET_BE_WORD(csf1->Coverage);
+            index = GSUB_is_glyph_covered((const BYTE*)csf1+offset, glyphs[glyph_index]);
+            TRACE("  Coverage index %i\n",index);
+            if (index != -1)
+            {
+                int k, count;
+                const GSUB_SubRuleSet *srs;
+                offset = GET_BE_WORD(csf1->SubRuleSet[index]);
+                srs = (const GSUB_SubRuleSet*)((const BYTE*)csf1+offset);
+                count = GET_BE_WORD(srs->SubRuleCount);
+                TRACE("  SubRuleSet has %i members\n",count);
+                for (k = 0; k < count; k++)
+                {
+                    const GSUB_SubRule_1 *sr;
+                    const GSUB_SubRule_2 *sr_2;
+                    int g_count, l;
+                    int newIndex = glyph_index;
+
+                    offset = GET_BE_WORD(srs->SubRule[k]);
+                    sr = (const GSUB_SubRule_1*)((const BYTE*)srs+offset);
+                    g_count = GET_BE_WORD(sr->GlyphCount);
+                    TRACE("   SubRule has %i glyphs\n",g_count);
+                    for (l = 0; l < g_count-1; l++)
+                        if (glyphs[glyph_index + (write_dir * (l+1))] != GET_BE_WORD(sr->Input[l])) break;
+
+                    if (l < g_count-1)
+                    {
+                        TRACE("   Rule does not match\n");
+                        continue;
+                    }
+
+                    TRACE("   Rule matches\n");
+                    sr_2 = (const GSUB_SubRule_2*)((const BYTE*)sr+
+                        FIELD_OFFSET(GSUB_SubRule_1, Input[g_count-1]));
+
+                    for (l = 0; l < GET_BE_WORD(sr->SubstCount); l++)
+                    {
+                        int lookupIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].LookupListIndex);
+                        int SequenceIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].SequenceIndex) * write_dir;
+
+                        TRACE("   SUBST: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
+                        newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
+                        if (newIndex == -1)
+                        {
+                            ERR("   Chain failed to generate a glyph\n");
+                            continue;
+                        }
+                    }
+                    return newIndex;
+                }
+            }
+        }
+        else if (GET_BE_WORD(csf1->SubstFormat) == 2)
+        {
+            const GSUB_ContextSubstFormat2 *csf2;
+            const void *glyph_class_table;
+            int offset, index;
+
+            csf2 = (const GSUB_ContextSubstFormat2*)csf1;
+            TRACE("Context Substitution Subtable: Class 2\n");
+            offset = GET_BE_WORD(csf2->Coverage);
+            index = GSUB_is_glyph_covered((const BYTE*)csf2+offset, glyphs[glyph_index]);
+            TRACE("  Coverage index %i\n",index);
+            if (index != -1)
+            {
+                int k, count, class;
+                const GSUB_SubClassSet *scs;
+
+                offset = GET_BE_WORD(csf2->ClassDef);
+                glyph_class_table = (const BYTE *)csf2 + offset;
+
+                class = OT_get_glyph_class(glyph_class_table,glyphs[glyph_index]);
+
+                offset = GET_BE_WORD(csf2->SubClassSet[class]);
+                if (offset == 0)
+                {
+                    TRACE("  No class rule table for class %i\n",class);
+                    continue;
+                }
+                scs = (const GSUB_SubClassSet*)((const BYTE*)csf2+offset);
+                count = GET_BE_WORD(scs->SubClassRuleCnt);
+                TRACE("  SubClassSet has %i members\n",count);
+                for (k = 0; k < count; k++)
+                {
+                    const GSUB_SubClassRule_1 *sr;
+                    const GSUB_SubClassRule_2 *sr_2;
+                    int g_count, l;
+                    int newIndex = glyph_index;
+
+                    offset = GET_BE_WORD(scs->SubClassRule[k]);
+                    sr = (const GSUB_SubClassRule_1*)((const BYTE*)scs+offset);
+                    g_count = GET_BE_WORD(sr->GlyphCount);
+                    TRACE("   SubClassRule has %i glyphs classes\n",g_count);
+                    for (l = 0; l < g_count-1; l++)
+                    {
+                        int g_class = OT_get_glyph_class(glyph_class_table, glyphs[glyph_index + (write_dir * (l+1))]);
+                        if (g_class != GET_BE_WORD(sr->Class[l])) break;
+                    }
+
+                    if (l < g_count-1)
+                    {
+                        TRACE("   Rule does not match\n");
+                        continue;
+                    }
+
+                    TRACE("   Rule matches\n");
+                    sr_2 = (const GSUB_SubClassRule_2*)((const BYTE*)sr+
+                        FIELD_OFFSET(GSUB_SubClassRule_1, Class[g_count-1]));
+
+                    for (l = 0; l < GET_BE_WORD(sr->SubstCount); l++)
+                    {
+                        int lookupIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].LookupListIndex);
+                        int SequenceIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].SequenceIndex) * write_dir;
+
+                        TRACE("   SUBST: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
+                        newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
+                        if (newIndex == -1)
+                        {
+                            ERR("   Chain failed to generate a glyph\n");
+                            continue;
+                        }
+                    }
+                    return newIndex;
+                }
+            }
+        }
+        else
+            FIXME("Unhandled Context Substitution Format %i\n", GET_BE_WORD(csf1->SubstFormat));
+    }
+    return GSUB_E_NOGLYPH;
+}
+
 static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
@@ -1084,6 +1274,8 @@ static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD
             return GSUB_apply_AlternateSubst(look, glyphs, glyph_index, write_dir, glyph_count);
         case 4:
             return GSUB_apply_LigatureSubst(look, glyphs, glyph_index, write_dir, glyph_count);
+        case 5:
+            return GSUB_apply_ContextSubst(lookup, look, glyphs, glyph_index, write_dir, glyph_count);
         case 6:
             return GSUB_apply_ChainContextSubst(lookup, look, glyphs, glyph_index, write_dir, glyph_count);
         case 7:
