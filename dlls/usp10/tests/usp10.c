@@ -927,8 +927,9 @@ static const itemTest t74[4] = {{{0,0,0,0,0,0},0,0,0,0,1,latn_tag,FALSE},
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
                          DWORD cchString, SCRIPT_CONTROL *Control,
                          SCRIPT_STATE *State, DWORD item, DWORD nGlyphs,
-                         const shapeTest_char* charItems,
-                         const shapeTest_glyph* glyphItems)
+                         const shapeTest_char *charItems,
+                         const shapeTest_glyph *glyphItems,
+                         const SCRIPT_GLYPHPROP *props2)
 {
     HRESULT hr;
     int x, outnItems=0, outnGlyphs=0;
@@ -1014,19 +1015,27 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
                 winetest_trace("%i: Glyph present when it should not be\n",x);
         }
         if (valid > 0)
-            winetest_ok(glyphProp[x].sva.uJustification == glyphItems[x].GlyphProp.sva.uJustification, "%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
+            winetest_ok(glyphProp[x].sva.uJustification == glyphItems[x].GlyphProp.sva.uJustification ||
+                        (props2 && glyphProp[x].sva.uJustification == props2[x].sva.uJustification),
+                         "%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
         else if (glyphProp[x].sva.uJustification != glyphItems[x].GlyphProp.sva.uJustification)
             winetest_trace("%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
         if (valid > 0)
-            winetest_ok(glyphProp[x].sva.fClusterStart == glyphItems[x].GlyphProp.sva.fClusterStart, "%i: fClusterStart incorrect (%i)\n",x,glyphProp[x].sva.fClusterStart);
+            winetest_ok(glyphProp[x].sva.fClusterStart == glyphItems[x].GlyphProp.sva.fClusterStart ||
+                        (props2 && glyphProp[x].sva.fClusterStart == props2[x].sva.fClusterStart),
+                        "%i: fClusterStart incorrect (%i)\n",x,glyphProp[x].sva.fClusterStart);
         else if (glyphProp[x].sva.fClusterStart != glyphItems[x].GlyphProp.sva.fClusterStart)
             winetest_trace("%i: fClusterStart incorrect (%i)\n",x,glyphProp[x].sva.fClusterStart);
         if (valid > 0)
-            winetest_ok(glyphProp[x].sva.fDiacritic == glyphItems[x].GlyphProp.sva.fDiacritic, "%i: fDiacritic incorrect (%i)\n",x,glyphProp[x].sva.fDiacritic);
+            winetest_ok(glyphProp[x].sva.fDiacritic == glyphItems[x].GlyphProp.sva.fDiacritic ||
+                        (props2 && glyphProp[x].sva.fDiacritic == props2[x].sva.fDiacritic),
+                        "%i: fDiacritic incorrect (%i)\n",x,glyphProp[x].sva.fDiacritic);
         else if (glyphProp[x].sva.fDiacritic != glyphItems[x].GlyphProp.sva.fDiacritic)
             winetest_trace("%i: fDiacritic incorrect (%i)\n",x,glyphProp[x].sva.fDiacritic);
         if (valid > 0)
-            winetest_ok(glyphProp[x].sva.fZeroWidth == glyphItems[x].GlyphProp.sva.fZeroWidth, "%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
+            winetest_ok(glyphProp[x].sva.fZeroWidth == glyphItems[x].GlyphProp.sva.fZeroWidth ||
+                        (props2 && glyphProp[x].sva.fZeroWidth == props2[x].sva.fZeroWidth),
+                        "%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
         else if (glyphProp[x].sva.fZeroWidth != glyphItems[x].GlyphProp.sva.fZeroWidth)
             winetest_trace("%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
     }
@@ -1039,9 +1048,14 @@ cleanup:
     ScriptFreeCache(&sc);
 }
 
-#define test_shape_ok(a,b,c,d,e,f,g,h,i) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(1,a,b,c,d,e,f,g,h,i)
+#define test_shape_ok(a,b,c,d,e,f,g,h,i) \
+    (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(1,a,b,c,d,e,f,g,h,i,NULL)
 
-#define test_shape_ok_valid(v,a,b,c,d,e,f,g,h,i) (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(v,a,b,c,d,e,f,g,h,i)
+#define test_shape_ok_valid(v,a,b,c,d,e,f,g,h,i) \
+    (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(v,a,b,c,d,e,f,g,h,i,NULL)
+
+#define test_shape_ok_valid_props2(v,a,b,c,d,e,f,g,h,i,j) \
+    (winetest_set_location(__FILE__,__LINE__), 0) ? 0 : _test_shape_ok(v,a,b,c,d,e,f,g,h,i,j)
 
 typedef struct tagRangeP {
     BYTE range;
@@ -1245,6 +1259,18 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
+    static const SCRIPT_GLYPHPROP phagspa_win10_props[] = {
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0} };
 
     /* Lao */
     static const WCHAR test_lao[] = {0x0ead, 0x0eb1, 0x0e81, 0x0eaa, 0x0ead, 0x0e99, 0x0ea5, 0x0eb2, 0x0ea7, 0};
@@ -1281,6 +1307,24 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
+    static const SCRIPT_GLYPHPROP tibetan_win10_props[] = {
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0},
+                            {{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0} };
 
     /* Devanagari */
     static const WCHAR test_devanagari[] = {0x0926, 0x0947, 0x0935, 0x0928, 0x093e, 0x0917, 0x0930, 0x0940};
@@ -1464,7 +1508,8 @@ static void test_ScriptShapeOpenType(HDC hdc)
     test_valid = find_font_for_range(hdc, "Microsoft PhagsPa", 53, test_phagspa[0], &hfont, &hfont_orig);
     if (hfont != NULL)
     {
-        test_shape_ok_valid(test_valid, hdc, test_phagspa, 11, &Control, &State, 0, 11, phagspa_c, phagspa_g);
+        test_shape_ok_valid_props2(test_valid, hdc, test_phagspa, 11, &Control, &State, 0, 11,
+                                   phagspa_c, phagspa_g, phagspa_win10_props);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
@@ -1480,7 +1525,8 @@ static void test_ScriptShapeOpenType(HDC hdc)
     test_valid = find_font_for_range(hdc, "Microsoft Himalaya", 70, test_tibetan[0], &hfont, &hfont_orig);
     if (hfont != NULL)
     {
-        test_shape_ok_valid(test_valid, hdc, test_tibetan, 17, &Control, &State, 0, 17, tibetan_c, tibetan_g);
+        test_shape_ok_valid_props2(test_valid, hdc, test_tibetan, 17, &Control, &State, 0, 17,
+                                   tibetan_c, tibetan_g, tibetan_win10_props);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
