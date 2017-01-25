@@ -4573,9 +4573,6 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
     }
 }
 
-/*********************************************
- * Pixel Shader Specific Code begins here
- ********************************************/
 static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
@@ -5576,10 +5573,6 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
         }
     }
 }
-
-/*********************************************
- * Vertex Shader Specific Code begins here
- ********************************************/
 
 static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_shader_prog_link *entry)
 {
