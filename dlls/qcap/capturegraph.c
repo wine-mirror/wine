@@ -687,6 +687,7 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
         if (FAILED(hr))
         {
             WARN("Could not enumerate\n");
+            IBaseFilter_Release(filter);
             return hr;
         }
 
@@ -720,6 +721,7 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
                 break;
         }
         IEnumPins_Release(enumpins);
+        IBaseFilter_Release(filter);
 
         if (hr != S_OK)
         {
