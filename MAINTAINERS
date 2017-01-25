@@ -159,6 +159,11 @@ Netstat
 M:	André Hentschel <nerv@dawncrow.de>
 F:	programs/netstat/
 
+Network
+P:	Bruno Jesus <00cpxxx@gmail.com>
+F:	dlls/iphlpapi/
+F:	dlls/ws2_32/
+
 OLE Embedding
 M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/ole32/clipboard.c
