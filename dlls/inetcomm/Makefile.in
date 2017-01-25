@@ -11,4 +11,6 @@ C_SRCS = \
 	pop3transport.c \
 	smtptransport.c
 
+RC_SRCS = inetcomm.rc
+
 IDL_SRCS = inetcomm.idl
