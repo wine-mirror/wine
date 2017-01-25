@@ -110,6 +110,7 @@ typedef struct
         LONG            iDragOverItem;  /* Dragged over item's index, iff pCurDropTarget != NULL */
         UINT            cScrollDelay;   /* Send a WM_*SCROLL msg every 250 ms during drag-scroll */
         POINT           ptLastMousePos; /* Mouse position at last DragOver call */
+        UINT            columns;        /* Number of shell folder columns */
 } IShellViewImpl;
 
 static inline IShellViewImpl *impl_from_IShellView3(IShellView3 *iface)
@@ -383,7 +384,6 @@ static void ShellView_InitList(IShellViewImpl *This)
     SHELLDETAILS sd;
     WCHAR nameW[50];
     HRESULT hr;
-    INT i;
 
     TRACE("(%p)\n", This);
 
@@ -405,39 +405,36 @@ static void ShellView_InitList(IShellViewImpl *This)
         }
     }
 
-    for (i = 0; 1; i++)
+    for (This->columns = 0;; This->columns++)
     {
         if (This->pSF2Parent)
-            hr = IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd);
+            hr = IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, This->columns, &sd);
         else
-            hr = IShellDetails_GetDetailsOf(details, NULL, i, &sd);
+            hr = IShellDetails_GetDetailsOf(details, NULL, This->columns, &sd);
         if (FAILED(hr)) break;
 
         lvColumn.fmt = sd.fmt;
 	lvColumn.cx = sd.cxChar*8; /* chars->pixel */
 	StrRetToStrNW(nameW, sizeof(nameW)/sizeof(WCHAR), &sd.str, NULL);
-	SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, i, (LPARAM) &lvColumn);
+	SendMessageW(This->hWndList, LVM_INSERTCOLUMNW, This->columns, (LPARAM)&lvColumn);
     }
 
     if (details) IShellDetails_Release(details);
 }
 
-/**********************************************************
-* ShellView_CompareItems()
-*
-* NOTES
-*  internal, CALLBACK for DSA_Sort
-*/
-static INT CALLBACK ShellView_CompareItems(LPVOID lParam1, LPVOID lParam2, LPARAM lpData)
+/* LVM_SORTITEMS callback used when initially inserting items */
+static INT CALLBACK ShellView_CompareItems(LPARAM lParam1, LPARAM lParam2, LPARAM lpData)
 {
-	int ret;
-	TRACE("pidl1=%p pidl2=%p lpsf=%p\n", lParam1, lParam2, (LPVOID) lpData);
+    LPITEMIDLIST pidl1 = (LPITEMIDLIST)lParam1;
+    LPITEMIDLIST pidl2 = (LPITEMIDLIST)lParam2;
+    IShellFolder *folder = (IShellFolder *)lpData;
+    int ret;
 
-	if(!lpData) return 0;
+    TRACE("pidl1=%p, pidl2=%p, shellfolder=%p\n", pidl1, pidl2, folder);
 
-	ret =  (SHORT) SCODE_CODE(IShellFolder_CompareIDs((LPSHELLFOLDER)lpData, 0, (LPITEMIDLIST)lParam1, (LPITEMIDLIST)lParam2));
-	TRACE("ret=%i\n",ret);
-	return ret;
+    ret = (SHORT)HRESULT_CODE(IShellFolder_CompareIDs(folder, 0, pidl1, pidl2));
+    TRACE("ret=%i\n", ret);
+    return ret;
 }
 
 /*************************************************************************
@@ -568,19 +565,19 @@ static int LV_FindItemByPidl(
 /**********************************************************
 * LV_AddItem()
 */
-static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
+static void shellview_add_item(IShellViewImpl * This, LPCITEMIDLIST pidl)
 {
 	LVITEMW	lvItem;
 
 	TRACE("(%p)(pidl=%p)\n", This, pidl);
 
 	lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;	/*set the mask*/
-	lvItem.iItem = SendMessageW(This->hWndList, LVM_GETITEMCOUNT, 0, 0); /*add the item to the end of the list*/
+	lvItem.iItem = 0;
 	lvItem.iSubItem = 0;
-	lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidl));				/*set the item's data*/
+	lvItem.lParam = (LPARAM)pidl;
 	lvItem.pszText = LPSTR_TEXTCALLBACKW;			/*get text on a callback basis*/
 	lvItem.iImage = I_IMAGECALLBACK;			/*get the image on a callback basis*/
-        return ListView_InsertItemW(This->hWndList, &lvItem) != -1;
+        ListView_InsertItemW(This->hWndList, &lvItem);
 }
 
 /**********************************************************
@@ -618,16 +615,6 @@ static BOOLEAN LV_RenameItem(IShellViewImpl * This, LPCITEMIDLIST pidlOld, LPCIT
 * - fills the list into the view
 */
 
-static INT CALLBACK fill_list( LPVOID ptr, LPVOID arg )
-{
-    LPITEMIDLIST pidl = ptr;
-    IShellViewImpl *This = arg;
-    /* in a commdlg This works as a filemask*/
-    if ( IncludeObject(This, pidl)==S_OK ) LV_AddItem(This, pidl);
-    SHFree(pidl);
-    return TRUE;
-}
-
 static HRESULT ShellView_FillList(IShellViewImpl *This)
 {
     IFolderView2 *folderview = &This->IFolderView2_iface;
@@ -635,40 +622,28 @@ static HRESULT ShellView_FillList(IShellViewImpl *This)
     LPITEMIDLIST pidl;
     DWORD fetched;
     HRESULT hr;
-    HDPA hdpa;
 
     TRACE("(%p)\n", This);
 
     /* get the itemlist from the shfolder*/
     hr = IShellFolder_EnumObjects(This->pSFParent, This->hWnd, SHCONTF_NONFOLDERS | SHCONTF_FOLDERS, &pEnumIDList);
-    if (hr != S_OK) return hr;
-
-    /* create a pointer array */
-    hdpa = DPA_Create(16);
-    if (!hdpa)
-    {
-        IEnumIDList_Release(pEnumIDList);
-        return E_OUTOFMEMORY;
-    }
-
-    /* copy the items into the array*/
-    while((S_OK == IEnumIDList_Next(pEnumIDList, 1, &pidl, &fetched)) && fetched)
-    {
-        if (DPA_InsertPtr(hdpa, DPA_GetPtrCount(hdpa), pidl) == -1)
-        {
-            SHFree(pidl);
-        }
-    }
-
-    /* sort the array */
-    DPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
+    if (hr != S_OK)
+        return hr;
 
     IFolderView2_SetRedraw(folderview, FALSE);
-    DPA_DestroyCallback(hdpa, fill_list, This);
+
+    /* copy the items into the array */
+    while ((S_OK == IEnumIDList_Next(pEnumIDList, 1, &pidl, &fetched)) && fetched)
+    {
+        if (IncludeObject(This, pidl) == S_OK)
+            shellview_add_item(This, pidl);
+    }
+
+    SendMessageW(This->hWndList, LVM_SORTITEMS, (WPARAM)This->pSFParent, (LPARAM)ShellView_CompareItems);
+
     IFolderView2_SetRedraw(folderview, TRUE);
 
     IEnumIDList_Release(pEnumIDList);
-
     return S_OK;
 }
 
@@ -1626,6 +1601,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 
 static LRESULT ShellView_OnChange(IShellViewImpl * This, const LPCITEMIDLIST *pidls, LONG event)
 {
+    LPCITEMIDLIST pidl;
     BOOL ret = TRUE;
 
     TRACE("(%p)->(%p, %p, 0x%08x)\n", This, pidls[0], pidls[1], event);
@@ -1634,7 +1610,8 @@ static LRESULT ShellView_OnChange(IShellViewImpl * This, const LPCITEMIDLIST *pi
     {
         case SHCNE_MKDIR:
         case SHCNE_CREATE:
-            LV_AddItem(This, pidls[0]);
+            pidl = ILClone(ILFindLastID(pidls[0]));
+            shellview_add_item(This, pidl);
             break;
         case SHCNE_RMDIR:
         case SHCNE_DELETE:
