@@ -562,22 +562,29 @@ static int LV_FindItemByPidl(
 	return -1;
 }
 
-/**********************************************************
-* LV_AddItem()
-*/
-static void shellview_add_item(IShellViewImpl * This, LPCITEMIDLIST pidl)
+static void shellview_add_item(IShellViewImpl *shellview, LPCITEMIDLIST pidl)
 {
-	LVITEMW	lvItem;
+    LVITEMW item;
+    UINT i;
 
-	TRACE("(%p)(pidl=%p)\n", This, pidl);
+    TRACE("(%p)(pidl=%p)\n", shellview, pidl);
 
-	lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;	/*set the mask*/
-	lvItem.iItem = 0;
-	lvItem.iSubItem = 0;
-	lvItem.lParam = (LPARAM)pidl;
-	lvItem.pszText = LPSTR_TEXTCALLBACKW;			/*get text on a callback basis*/
-	lvItem.iImage = I_IMAGECALLBACK;			/*get the image on a callback basis*/
-        ListView_InsertItemW(This->hWndList, &lvItem);
+    item.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    item.lParam = (LPARAM)pidl;
+    item.pszText = LPSTR_TEXTCALLBACKW;
+    item.iImage = I_IMAGECALLBACK;
+    SendMessageW(shellview->hWndList, LVM_INSERTITEMW, 0, (LPARAM)&item);
+
+    for (i = 1; i < shellview->columns; i++)
+    {
+        item.mask = LVIF_TEXT;
+        item.iItem = 0;
+        item.iSubItem = 1;
+        item.pszText = LPSTR_TEXTCALLBACKW;
+        SendMessageW(shellview->hWndList, LVM_SETITEMW, 0, (LPARAM)&item);
+    }
 }
 
 /**********************************************************
