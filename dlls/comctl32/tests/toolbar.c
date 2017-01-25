@@ -2367,6 +2367,47 @@ static void test_save(void)
     RegCloseKey( key );
 }
 
+static void test_drawtext_flags(void)
+{
+    HWND hwnd = NULL;
+    UINT flags;
+
+    rebuild_toolbar(&hwnd);
+
+    flags = SendMessageA(hwnd, TB_SETDRAWTEXTFLAGS, 0, 0);
+todo_wine
+    ok(flags == 0, "Unexpected draw text flags %#x\n", flags);
+
+    /* zero mask, flags are retained */
+    flags = SendMessageA(hwnd, TB_SETDRAWTEXTFLAGS, 0, DT_BOTTOM);
+todo_wine
+    ok(flags == 0, "Unexpected draw text flags %#x\n", flags);
+    ok(!(flags & DT_BOTTOM), "Unexpected DT_BOTTOM style\n");
+
+    flags = SendMessageA(hwnd, TB_SETDRAWTEXTFLAGS, 0, 0);
+todo_wine
+    ok(flags == 0, "Unexpected draw text flags %#x\n", flags);
+    ok(!(flags & DT_BOTTOM), "Unexpected DT_BOTTOM style\n");
+
+    /* set/remove */
+    flags = SendMessageA(hwnd, TB_SETDRAWTEXTFLAGS, DT_BOTTOM, DT_BOTTOM);
+todo_wine
+    ok(flags == 0, "Unexpected draw text flags %#x\n", flags);
+    ok(!(flags & DT_BOTTOM), "Unexpected DT_BOTTOM style\n");
+
+    flags = SendMessageA(hwnd, TB_SETDRAWTEXTFLAGS, DT_BOTTOM, 0);
+todo_wine
+    ok(flags == DT_BOTTOM, "Unexpected draw text flags %#x\n", flags);
+    ok(flags & DT_BOTTOM, "Expected DT_BOTTOM style, %#x\n", flags);
+
+    flags = SendMessageA(hwnd, TB_SETDRAWTEXTFLAGS, DT_BOTTOM, 0);
+todo_wine
+    ok(flags == 0, "Unexpected draw text flags %#x\n", flags);
+    ok(!(flags & DT_BOTTOM), "Unexpected DT_BOTTOM style\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -2411,6 +2452,7 @@ START_TEST(toolbar)
     test_TB_GET_SET_EXTENDEDSTYLE();
     test_noresize();
     test_save();
+    test_drawtext_flags();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
