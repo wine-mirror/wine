@@ -2827,6 +2827,7 @@ static void test__stricmp(void)
 static void test__wcstoi64(void)
 {
     static const WCHAR digit[] = { '9', 0 };
+    static const WCHAR space[] = { ' ', 0 };
     static const WCHAR stock[] = { 0x3231, 0 }; /* PARENTHESIZED IDEOGRAPH STOCK */
     static const WCHAR cjk_1[] = { 0x4e00, 0 }; /* CJK Ideograph, First */
     static const WCHAR tamil[] = { 0x0bef, 0 }; /* TAMIL DIGIT NINE */
@@ -2853,6 +2854,8 @@ static void test__wcstoi64(void)
 
     res = p_wcstoi64(digit, NULL, 10);
     ok(res == 9, "res != 9\n");
+    res = p_wcstoi64(space, &endpos, 0);
+    ok(endpos == space, "endpos != space\n");
     res = p_wcstoi64(stock, &endpos, 10);
     ok(res == 0, "res != 0\n");
     ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);
@@ -2876,6 +2879,8 @@ static void test__wcstoi64(void)
 
     ures = p_wcstoui64(digit, NULL, 10);
     ok(ures == 9, "ures != 9\n");
+    ures = p_wcstoui64(space, &endpos, 0);
+    ok(endpos == space, "endpos != space\n");
     ures = p_wcstoui64(stock, &endpos, 10);
     ok(ures == 0, "ures != 0\n");
     ok(endpos == stock, "Incorrect endpos (%p-%p)\n", stock, endpos);

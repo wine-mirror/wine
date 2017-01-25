@@ -2053,7 +2053,7 @@ static int wctoint(WCHAR c, int base)
 __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
         MSVCRT_wchar_t **endptr, int base, MSVCRT__locale_t locale)
 {
-    BOOL negative = FALSE;
+    BOOL negative = FALSE, empty = TRUE;
     __int64 ret = 0;
 
     TRACE("(%s %p %d %p)\n", debugstr_w(nptr), endptr, base, locale);
@@ -2061,6 +2061,9 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
     if (!MSVCRT_CHECK_PMT(nptr != NULL)) return 0;
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
+
+    if(endptr)
+        *endptr = (MSVCRT_wchar_t*)nptr;
 
     while(isspaceW(*nptr)) nptr++;
 
@@ -2091,6 +2094,7 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
             v = -v;
 
         nptr++;
+        empty = FALSE;
 
         if(!negative && (ret>MSVCRT_I64_MAX/base || ret*base>MSVCRT_I64_MAX-v)) {
             ret = MSVCRT_I64_MAX;
@@ -2102,7 +2106,7 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
             ret = ret*base + v;
     }
 
-    if(endptr)
+    if(endptr && !empty)
         *endptr = (MSVCRT_wchar_t*)nptr;
 
     return ret;
@@ -2209,7 +2213,7 @@ MSVCRT_longlong __cdecl MSVCRT__wtoll(const MSVCRT_wchar_t *str)
 unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
         MSVCRT_wchar_t **endptr, int base, MSVCRT__locale_t locale)
 {
-    BOOL negative = FALSE;
+    BOOL negative = FALSE, empty = TRUE;
     unsigned __int64 ret = 0;
 
     TRACE("(%s %p %d %p)\n", debugstr_w(nptr), endptr, base, locale);
@@ -2217,6 +2221,9 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
     if (!MSVCRT_CHECK_PMT(nptr != NULL)) return 0;
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
+
+    if(endptr)
+        *endptr = (MSVCRT_wchar_t*)nptr;
 
     while(isspaceW(*nptr)) nptr++;
 
@@ -2244,6 +2251,7 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
             break;
 
         nptr++;
+        empty = FALSE;
 
         if(ret>MSVCRT_UI64_MAX/base || ret*base>MSVCRT_UI64_MAX-v) {
             ret = MSVCRT_UI64_MAX;
@@ -2252,7 +2260,7 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
             ret = ret*base + v;
     }
 
-    if(endptr)
+    if(endptr && !empty)
         *endptr = (MSVCRT_wchar_t*)nptr;
 
     return negative ? -ret : ret;
