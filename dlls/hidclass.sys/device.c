@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "hid.h"
 #include "wine/unicode.h"
 #include "winreg.h"
@@ -184,7 +185,7 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
     entry = RemoveHeadList(&ext->irp_queue);
     while(entry != &ext->irp_queue)
     {
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         irp->IoStatus.u.Status = STATUS_DEVICE_REMOVED;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         entry = RemoveHeadList(&ext->irp_queue);
@@ -237,7 +238,7 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
     while(entry != &ext->irp_queue)
     {
         int ptr;
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
         ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
 
         RingBuffer_Read(ext->ring_buffer, ptr, packet, &buffer_size);
@@ -680,7 +681,7 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
     else
     {
         TRACE_(hid_report)("Queue irp\n");
-        InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.ListEntry);
+        InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
         rc = STATUS_PENDING;
     }
     HeapFree(GetProcessHeap(), 0, packet);
