@@ -339,6 +339,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     if(IsEqualGUID(&CLSID_HTMLDocument, rclsid)) {
         TRACE("(CLSID_HTMLDocument %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ClassFactory_Create(riid, ppv, HTMLDocument_Create);
+    }else if(IsEqualGUID(&CLSID_MHTMLDocument, rclsid)) {
+        TRACE("(CLSID_MHTMLDocument %s %p)\n", debugstr_mshtml_guid(riid), ppv);
+        return ClassFactory_Create(riid, ppv, MHTMLDocument_Create);
     }else if(IsEqualGUID(&CLSID_AboutProtocol, rclsid)) {
         TRACE("(CLSID_AboutProtocol %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ProtocolFactory_Create(rclsid, riid, ppv);
@@ -441,7 +444,6 @@ DEFINE_GUID(CLSID_HTMLServerDoc, 0x3050F4E7, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xA
 DEFINE_GUID(CLSID_IImageDecodeFilter, 0x607FD4E8, 0x0A03, 0x11D1, 0xAB,0x1D, 0x00,0xC0,0x4F,0xC9,0xB3,0x04);
 DEFINE_GUID(CLSID_IImgCtx, 0x3050F3D6, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_IntDitherer, 0x05F6FE1A, 0xECEF, 0x11D0, 0xAA,0xE7, 0x00,0xC0,0x4F,0xC9,0xB3,0x04);
-DEFINE_GUID(CLSID_MHTMLDocument, 0x3050F3D9, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_TridentAPI, 0x429AF92C, 0xA51F, 0x11D2, 0x86,0x1E, 0x00,0xC0,0x4F,0xA3,0x5C,0x89);
 
 #define INF_SET_ID(id)            \

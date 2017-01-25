@@ -5105,3 +5105,9 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     return S_OK;
 }
+
+HRESULT MHTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
+{
+    FIXME("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
+    return E_NOTIMPL;
+}
