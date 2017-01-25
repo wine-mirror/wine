@@ -1227,22 +1227,22 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     status = server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle,
                                  &needs_close, &type, &options );
-    if (status == STATUS_BAD_DEVICE_TYPE)
-        return server_write_file( hFile, hEvent, apc, apc_user, io_status, buffer, length, offset, key );
-
     if (status == STATUS_ACCESS_DENIED)
     {
         status = server_get_unix_fd( hFile, FILE_APPEND_DATA, &unix_handle,
                                      &needs_close, &type, &options );
         append_write = TRUE;
     }
-    if (status) return status;
+    if (status && status != STATUS_BAD_DEVICE_TYPE) return status;
 
     if (!virtual_check_buffer_for_read( buffer, length ))
     {
         status = STATUS_INVALID_USER_BUFFER;
         goto done;
     }
+
+    if (status == STATUS_BAD_DEVICE_TYPE)
+        return server_write_file( hFile, hEvent, apc, apc_user, io_status, buffer, length, offset, key );
 
     async_write = !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
 

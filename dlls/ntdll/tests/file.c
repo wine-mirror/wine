@@ -3484,6 +3484,14 @@ static void test_read_write(void)
     ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
     ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
 
+    U(iob).Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtWriteFile(INVALID_HANDLE_VALUE, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE, "expected STATUS_OBJECT_TYPE_MISMATCH, got %#x\n", status);
+    ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+
     hfile = create_temp_file(0);
     if (!hfile) return;
 
@@ -3493,6 +3501,15 @@ static void test_read_write(void)
     ok(status == STATUS_INVALID_USER_BUFFER, "expected STATUS_INVALID_USER_BUFFER, got %#x\n", status);
     ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
     ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+
+    U(iob).Status = -1;
+    iob.Information = -1;
+    SetEvent(event);
+    status = pNtWriteFile(hfile, event, NULL, NULL, &iob, NULL, sizeof(contents), NULL, NULL);
+    ok(status == STATUS_INVALID_USER_BUFFER, "expected STATUS_INVALID_USER_BUFFER, got %#x\n", status);
+    ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+    ok(!is_signaled(event), "event is not signaled\n");
 
     U(iob).Status = -1;
     iob.Information = -1;
