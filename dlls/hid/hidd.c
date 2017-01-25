@@ -87,6 +87,12 @@ BOOLEAN WINAPI HidD_GetManufacturerString(HANDLE HidDeviceObject, PVOID Buffer, 
     return DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_MANUFACTURER_STRING, NULL, 0, Buffer, BufferLength, NULL, NULL);
 }
 
+BOOLEAN WINAPI HidD_GetNumInputBuffers(HANDLE HidDeviceObject, ULONG *NumberBuffers)
+{
+    TRACE("(%p %p)\n", HidDeviceObject, NumberBuffers);
+    return DeviceIoControl(HidDeviceObject, IOCTL_GET_NUM_DEVICE_INPUT_BUFFERS, NULL, 0, NumberBuffers, sizeof(*NumberBuffers), NULL, NULL);
+}
+
 BOOLEAN WINAPI HidD_SetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
 {
     TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
