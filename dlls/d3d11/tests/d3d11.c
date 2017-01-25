@@ -12125,6 +12125,324 @@ static void test_uav_load(void)
     release_test_context(&test_context);
 }
 
+static void test_cs_uav_store(void)
+{
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    static const float zero[4] = {0.0f};
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11UnorderedAccessView *uav;
+    struct device_desc device_desc;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    struct vec4 input = {1.0f};
+    ID3D11Texture2D *texture;
+    ID3D11ComputeShader *cs;
+    ID3D11Device *device;
+    unsigned int x, y;
+    ID3D11Buffer *cb;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const DWORD cs_1_thread_code[] =
+    {
+#if 0
+        RWTexture2D<float> u;
+
+        float value;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            uint x, y, width, height;
+            u.GetDimensions(width, height);
+            for (y = 0; y < height; ++y)
+            {
+                for (x = 0; x < width; ++x)
+                    u[uint2(x, y)] = value;
+            }
+        }
+#endif
+        0x43425844, 0x6503503a, 0x4cd524e6, 0x2473915d, 0x93cf1201, 0x00000001, 0x000001c8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000174, 0x00050050, 0x0000005d, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400189c, 0x0011e000, 0x00000000, 0x00005555,
+        0x02000068, 0x00000003, 0x0400009b, 0x00000001, 0x00000001, 0x00000001, 0x8900103d, 0x800000c2,
+        0x00155543, 0x00100032, 0x00000000, 0x00004001, 0x00000000, 0x0011ee46, 0x00000000, 0x05000036,
+        0x00100042, 0x00000000, 0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100082, 0x00000000,
+        0x0010002a, 0x00000000, 0x0010001a, 0x00000000, 0x03040003, 0x0010003a, 0x00000000, 0x05000036,
+        0x001000e2, 0x00000001, 0x00100aa6, 0x00000000, 0x05000036, 0x00100082, 0x00000000, 0x00004001,
+        0x00000000, 0x01000030, 0x07000050, 0x00100012, 0x00000002, 0x0010003a, 0x00000000, 0x0010000a,
+        0x00000000, 0x03040003, 0x0010000a, 0x00000002, 0x05000036, 0x00100012, 0x00000001, 0x0010003a,
+        0x00000000, 0x080000a4, 0x0011e0f2, 0x00000000, 0x00100e46, 0x00000001, 0x00208006, 0x00000000,
+        0x00000000, 0x0700001e, 0x00100082, 0x00000000, 0x0010003a, 0x00000000, 0x00004001, 0x00000001,
+        0x01000016, 0x0700001e, 0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x00004001, 0x00000001,
+        0x01000016, 0x0100003e,
+    };
+    static const DWORD cs_1_group_code[] =
+    {
+#if 0
+        RWTexture2D<float> u;
+
+        float value;
+
+        [numthreads(16, 16, 1)]
+        void main(uint3 threadID : SV_GroupThreadID)
+        {
+            uint2 count, size ;
+            u.GetDimensions(size.x, size.y);
+            count = size / (uint2)16;
+            for (uint y = 0; y < count.y; ++y)
+                for (uint x = 0; x < count.x; ++x)
+                    u[count * threadID.xy + uint2(x, y)] = value;
+        }
+#endif
+        0x43425844, 0x9fb86044, 0x352c196d, 0x92e14094, 0x46bb95a7, 0x00000001, 0x00000218, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x000001c4, 0x00050050, 0x00000071, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400189c, 0x0011e000, 0x00000000, 0x00005555,
+        0x0200005f, 0x00022032, 0x02000068, 0x00000004, 0x0400009b, 0x00000010, 0x00000010, 0x00000001,
+        0x8900103d, 0x800000c2, 0x00155543, 0x00100032, 0x00000000, 0x00004001, 0x00000000, 0x0011ee46,
+        0x00000000, 0x0a000055, 0x001000f2, 0x00000000, 0x00100546, 0x00000000, 0x00004002, 0x00000004,
+        0x00000004, 0x00000004, 0x00000004, 0x05000036, 0x00100012, 0x00000001, 0x00004001, 0x00000000,
+        0x01000030, 0x07000050, 0x00100022, 0x00000001, 0x0010000a, 0x00000001, 0x0010003a, 0x00000000,
+        0x03040003, 0x0010001a, 0x00000001, 0x05000036, 0x001000e2, 0x00000002, 0x00100006, 0x00000001,
+        0x05000036, 0x00100022, 0x00000001, 0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100042,
+        0x00000001, 0x0010001a, 0x00000001, 0x0010000a, 0x00000000, 0x03040003, 0x0010002a, 0x00000001,
+        0x05000036, 0x00100012, 0x00000002, 0x0010001a, 0x00000001, 0x08000023, 0x001000f2, 0x00000003,
+        0x00100e46, 0x00000000, 0x00022546, 0x00100e46, 0x00000002, 0x080000a4, 0x0011e0f2, 0x00000000,
+        0x00100e46, 0x00000003, 0x00208006, 0x00000000, 0x00000000, 0x0700001e, 0x00100022, 0x00000001,
+        0x0010001a, 0x00000001, 0x00004001, 0x00000001, 0x01000016, 0x0700001e, 0x00100012, 0x00000001,
+        0x0010000a, 0x00000001, 0x00004001, 0x00000001, 0x01000016, 0x0100003e,
+    };
+    static const DWORD cs_1_store_code[] =
+    {
+#if 0
+        RWTexture2D<float> u;
+
+        float value;
+
+        [numthreads(1, 1, 1)]
+        void main(uint3 groupID : SV_GroupID)
+        {
+            u[groupID.xy] = value;
+        }
+#endif
+        0x43425844, 0xc3add41b, 0x67df51b1, 0x2b887930, 0xcb1ee991, 0x00000001, 0x000000b8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000064, 0x00050050, 0x00000019, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400189c, 0x0011e000, 0x00000000, 0x00005555,
+        0x0200005f, 0x00021032, 0x0400009b, 0x00000001, 0x00000001, 0x00000001, 0x070000a4, 0x0011e0f2,
+        0x00000000, 0x00021546, 0x00208006, 0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const DWORD cs_dispatch_id_code[] =
+    {
+#if 0
+        RWTexture2D<float> u;
+
+        float value;
+
+        [numthreads(4, 4, 1)]
+        void main(uint3 id : SV_DispatchThreadID)
+        {
+            u[id.xy] = value;
+        }
+#endif
+        0x43425844, 0x60166991, 0x4b595266, 0x7fb67d79, 0x485c4f0d, 0x00000001, 0x000000b8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000064, 0x00050050, 0x00000019, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400189c, 0x0011e000, 0x00000000, 0x00005555,
+        0x0200005f, 0x00020032, 0x0400009b, 0x00000004, 0x00000004, 0x00000001, 0x070000a4, 0x0011e0f2,
+        0x00000000, 0x00020546, 0x00208006, 0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const DWORD cs_group_index_code[] =
+    {
+#if 0
+        RWTexture2D<float> u;
+
+        float value;
+
+        [numthreads(32, 1, 1)]
+        void main(uint index : SV_GroupIndex)
+        {
+            uint2 size;
+            u.GetDimensions(size.x, size.y);
+            uint count = size.x * size.y / 32;
+            index *= count;
+            for (uint i = 0; i < count; ++i, ++index)
+                u[uint2(index % size.x, index / size.x)] = value;
+        }
+#endif
+        0x43425844, 0xb685a70f, 0x94c2f263, 0x4f1d8eaa, 0xeab65731, 0x00000001, 0x000001f8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x000001a4, 0x00050050, 0x00000069, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400189c, 0x0011e000, 0x00000000, 0x00005555,
+        0x0200005f, 0x00024000, 0x02000068, 0x00000004, 0x0400009b, 0x00000020, 0x00000001, 0x00000001,
+        0x8900103d, 0x800000c2, 0x00155543, 0x00100032, 0x00000000, 0x00004001, 0x00000000, 0x0011ee46,
+        0x00000000, 0x08000026, 0x0000d000, 0x00100022, 0x00000000, 0x0010000a, 0x00000000, 0x0010001a,
+        0x00000000, 0x07000055, 0x00100022, 0x00000000, 0x0010001a, 0x00000000, 0x00004001, 0x00000005,
+        0x07000026, 0x0000d000, 0x00100042, 0x00000000, 0x0002400a, 0x0010001a, 0x00000000, 0x05000036,
+        0x00100012, 0x00000001, 0x0010002a, 0x00000000, 0x05000036, 0x00100022, 0x00000001, 0x00004001,
+        0x00000000, 0x01000030, 0x07000050, 0x00100082, 0x00000000, 0x0010001a, 0x00000001, 0x0010001a,
+        0x00000000, 0x03040003, 0x0010003a, 0x00000000, 0x0900004e, 0x00100012, 0x00000002, 0x00100012,
+        0x00000003, 0x0010000a, 0x00000001, 0x0010000a, 0x00000000, 0x05000036, 0x001000e2, 0x00000003,
+        0x00100006, 0x00000002, 0x080000a4, 0x0011e0f2, 0x00000000, 0x00100e46, 0x00000003, 0x00208006,
+        0x00000000, 0x00000000, 0x0a00001e, 0x00100032, 0x00000001, 0x00100046, 0x00000001, 0x00004002,
+        0x00000001, 0x00000001, 0x00000000, 0x00000000, 0x01000016, 0x0100003e,
+    };
+
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
+    }
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(input), &input.x);
+
+    texture_desc.Width = 64;
+    texture_desc.Height = 64;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    uav_desc.Format = texture_desc.Format;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+    U(uav_desc).Texture2D.MipSlice = 0;
+
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, uav, zero);
+    check_texture_float(texture, 0.0f, 2);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_1_thread_code, sizeof(cs_1_thread_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(texture, 1.0f, 2);
+
+    input.x = 0.5f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(texture, 0.5f, 2);
+
+    ID3D11ComputeShader_Release(cs);
+
+    input.x = 2.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_CSSetShader(context, NULL, NULL, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(texture, 0.5f, 2);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_1_group_code, sizeof(cs_1_group_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(texture, 2.0f, 2);
+
+    input.x = 4.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(texture, 4.0f, 2);
+
+    ID3D11ComputeShader_Release(cs);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_1_store_code, sizeof(cs_1_store_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+
+    input.x = 1.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, texture_desc.Width, texture_desc.Height, 1);
+    todo_wine check_texture_float(texture, 1.0f, 2);
+
+    input.x = 0.5f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 16, 32, 1);
+    get_texture_readback(texture, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            float value = get_readback_float(&rb, x, y);
+            float expected_value = (x < 16 && y < 32) ? 0.5f : 1.0f;
+            todo_wine ok(compare_float(value, expected_value, 2), "Got %.8e at (%u, %u), expected %f.\n",
+                    value, x, y, expected_value);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11ComputeShader_Release(cs);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_dispatch_id_code, sizeof(cs_dispatch_id_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+
+    input.x = 0.6f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 15, 15, 1);
+    get_texture_readback(texture, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            float value = get_readback_float(&rb, x, y);
+            float expected_value = (x < 60 && y < 60) ? 0.6f : 1.0f;
+            todo_wine ok(compare_float(value, expected_value, 2), "Got %.8e at (%u, %u), expected %f.\n",
+                    value, x, y, expected_value);
+        }
+    }
+    release_resource_readback(&rb);
+
+    input.x = 0.7f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 16, 16, 1);
+    todo_wine check_texture_float(texture, 0.7f, 2);
+
+    ID3D11ComputeShader_Release(cs);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_group_index_code, sizeof(cs_group_index_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+
+    input.x = 0.3f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(texture, 0.3f, 2);
+
+    input.x = 0.1f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 2, 2, 2);
+    todo_wine check_texture_float(texture, 0.1f, 2);
+
+    ID3D11ComputeShader_Release(cs);
+
+    ID3D11Buffer_Release(cb);
+    ID3D11Texture2D_Release(texture);
+    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11DeviceContext_Release(context);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_sm4_ret_instruction(void)
 {
     struct d3d11_test_context test_context;
@@ -12763,6 +13081,7 @@ START_TEST(d3d11)
     test_shader_input_registers_limits();
     test_stencil_separate();
     test_uav_load();
+    test_cs_uav_store();
     test_sm4_ret_instruction();
     test_primitive_restart();
     test_sm5_bufinfo_instruction();
