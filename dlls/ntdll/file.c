@@ -417,6 +417,7 @@ static struct async_fileio *alloc_fileio( DWORD size, HANDLE handle, PIO_APC_ROU
 static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc, void **arg )
 {
     struct async_irp *async = user;
+    ULONG information = 0;
 
     if (status == STATUS_ALERTED)
     {
@@ -425,13 +426,14 @@ static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
             status = wine_server_call( req );
-            if (status != STATUS_PENDING) io->Information = reply->size;
+            information = reply->size;
         }
         SERVER_END_REQ;
     }
     if (status != STATUS_PENDING)
     {
         io->u.Status = status;
+        io->Information = information;
         *apc = async->io.apc;
         *arg = async->io.apc_arg;
         release_fileio( &async->io );
