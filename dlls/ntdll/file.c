@@ -853,18 +853,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
     status = server_get_unix_fd( hFile, FILE_READ_DATA, &unix_handle,
                                  &needs_close, &type, &options );
+    if (status && status != STATUS_BAD_DEVICE_TYPE) return status;
+
+    if (!virtual_check_buffer_for_write( buffer, length )) return STATUS_ACCESS_VIOLATION;
+
     if (status == STATUS_BAD_DEVICE_TYPE)
         return server_read_file( hFile, hEvent, apc, apc_user, io_status, buffer, length, offset, key );
 
-    if (status) return status;
-
     async_read = !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
-
-    if (!virtual_check_buffer_for_write( buffer, length ))
-    {
-        status = STATUS_ACCESS_VIOLATION;
-        goto done;
-    }
 
     if (type == FD_TYPE_FILE)
     {

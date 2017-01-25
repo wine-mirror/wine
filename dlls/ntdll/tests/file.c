@@ -3451,17 +3451,27 @@ static void test_read_write(void)
 {
     static const char contents[14] = "1234567890abcd";
     char buf[256];
-    HANDLE hfile;
+    HANDLE hfile, event;
     OVERLAPPED ovl;
     IO_STATUS_BLOCK iob;
     DWORD ret, bytes, status, off;
     LARGE_INTEGER offset;
     LONG i;
 
+    event = CreateEventA( NULL, TRUE, FALSE, NULL );
+
     U(iob).Status = -1;
     iob.Information = -1;
     offset.QuadPart = 0;
     status = pNtReadFile(INVALID_HANDLE_VALUE, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE, "expected STATUS_OBJECT_TYPE_MISMATCH, got %#x\n", status);
+    ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+
+    U(iob).Status = -1;
+    iob.Information = -1;
+    offset.QuadPart = 0;
+    status = pNtReadFile(INVALID_HANDLE_VALUE, 0, NULL, NULL, &iob, NULL, sizeof(buf), &offset, NULL);
     ok(status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE, "expected STATUS_OBJECT_TYPE_MISMATCH, got %#x\n", status);
     ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
     ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
@@ -3490,6 +3500,24 @@ static void test_read_write(void)
     ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x\n", status);
     ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
     ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+
+    U(iob).Status = -1;
+    iob.Information = -1;
+    SetEvent(event);
+    status = pNtReadFile(hfile, event, NULL, NULL, &iob, NULL, sizeof(contents), NULL, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x\n", status);
+    ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+    ok(is_signaled(event), "event is not signaled\n");
+
+    U(iob).Status = -1;
+    iob.Information = -1;
+    SetEvent(event);
+    status = pNtReadFile(hfile, event, NULL, NULL, &iob, (void*)0xdeadbeef, sizeof(contents), NULL, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x\n", status);
+    ok(U(iob).Status == -1, "expected -1, got %#x\n", U(iob).Status);
+    ok(iob.Information == -1, "expected -1, got %lu\n", iob.Information);
+    ok(is_signaled(event), "event is not signaled\n");
 
     U(iob).Status = -1;
     iob.Information = -1;
@@ -4156,6 +4184,7 @@ static void test_read_write(void)
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
 
+    CloseHandle(event);
     CloseHandle(hfile);
 }
 
