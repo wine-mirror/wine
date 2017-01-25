@@ -5378,6 +5378,24 @@ static void test_create_img_elem(IHTMLDocument2 *doc)
     }
 }
 
+#define test_doc_selection_type(a,b) _test_doc_selection_type(__LINE__,a,b)
+static void _test_doc_selection_type(unsigned line, IHTMLDocument2 *doc, const char *type)
+{
+    IHTMLSelectionObject *selection;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_get_selection(doc, &selection);
+    ok_(__FILE__,line)(hres == S_OK, "get_selection failed: %08x\n", hres);
+
+    hres = IHTMLSelectionObject_get_type(selection, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_type failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(str, type), "type = %s, expected %s\n", wine_dbgstr_w(str), type);
+    SysFreeString(str);
+
+    IHTMLSelectionObject_Release(selection);
+}
+
 #define insert_adjacent_elem(a,b,c) _insert_adjacent_elem(__LINE__,a,b,c)
 static void _insert_adjacent_elem(unsigned line, IHTMLElement *parent, const char *where, IHTMLElement *elem)
 {
@@ -5701,6 +5719,11 @@ static void test_txtrange(IHTMLDocument2 *doc)
     test_range_text(range, "abc ");
 
     test_range_set_end_point(range, "xxx", body_range, E_INVALIDARG);
+
+    hres = IHTMLTxtRange_select(range);
+    ok(hres == S_OK, "select failed: %08x\n", hres);
+
+    test_doc_selection_type(doc, "Text");
 
     IHTMLTxtRange_Release(range);
     IHTMLTxtRange_Release(range2);
@@ -6281,16 +6304,12 @@ static void test_default_selection(IHTMLDocument2 *doc)
     IHTMLSelectionObject *selection;
     IHTMLTxtRange *range;
     IDispatch *disp;
-    BSTR str;
     HRESULT hres;
+
+    test_doc_selection_type(doc, "None");
 
     hres = IHTMLDocument2_get_selection(doc, &selection);
     ok(hres == S_OK, "get_selection failed: %08x\n", hres);
-
-    hres = IHTMLSelectionObject_get_type(selection, &str);
-    ok(hres == S_OK, "get_type failed: %08x\n", hres);
-    ok(!strcmp_wa(str, "None"), "type = %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
 
     hres = IHTMLSelectionObject_createRange(selection, &disp);
     IHTMLSelectionObject_Release(selection);
