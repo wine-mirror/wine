@@ -26,6 +26,7 @@
 
 static VOID (WINAPI *pRtlTimeToTimeFields)( const LARGE_INTEGER *liTime, PTIME_FIELDS TimeFields) ;
 static VOID (WINAPI *pRtlTimeFieldsToTime)(  PTIME_FIELDS TimeFields,  PLARGE_INTEGER Time) ;
+static NTSTATUS (WINAPI *pNtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
 
 static const int MonthLengths[2][12] =
 {
@@ -94,13 +95,35 @@ static void test_pRtlTimeToTimeFields(void)
     }
 }
 
+static void test_NtQueryPerformanceCounter(void)
+{
+    LARGE_INTEGER counter, frequency;
+    NTSTATUS status;
+
+    status = pNtQueryPerformanceCounter(NULL, NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    status = pNtQueryPerformanceCounter(NULL, &frequency);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    status = pNtQueryPerformanceCounter(&counter, (void *)0xdeadbee0);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    status = pNtQueryPerformanceCounter((void *)0xdeadbee0, &frequency);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+
+    status = pNtQueryPerformanceCounter(&counter, NULL);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    status = pNtQueryPerformanceCounter(&counter, &frequency);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+}
+
 START_TEST(time)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
     pRtlTimeToTimeFields = (void *)GetProcAddress(mod,"RtlTimeToTimeFields");
     pRtlTimeFieldsToTime = (void *)GetProcAddress(mod,"RtlTimeFieldsToTime");
+    pNtQueryPerformanceCounter = (void *)GetProcAddress(mod, "NtQueryPerformanceCounter");
     if (pRtlTimeToTimeFields && pRtlTimeFieldsToTime)
         test_pRtlTimeToTimeFields();
     else
         win_skip("Required time conversion functions are not available\n");
+    test_NtQueryPerformanceCounter();
 }
