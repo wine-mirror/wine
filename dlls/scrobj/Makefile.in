@@ -1,0 +1,6 @@
+MODULE    = scrobj.dll
+
+C_SRCS = \
+	scrobj.c
+
+IDL_SRCS = scrobj.idl
