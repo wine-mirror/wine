@@ -476,7 +476,11 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
     {
         if (!(dce->flags & DCX_NORESETATTRS)) SetHookFlags( dce->hdc, DCHF_RESETDC );
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
-        if (dce->flags & DCX_CACHE) dce->count = 0;
+        if (dce->flags & DCX_CACHE)
+        {
+            dce->count = 0;
+            SetHookFlags( dce->hdc, DCHF_DISABLEDC );
+        }
         ret = TRUE;
     }
     USER_Unlock();
@@ -1007,8 +1011,11 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         if (!found && count >= DCE_CACHE_SIZE) found = dceUnused;
 
         dce = found;
-        if (dce) dce->count = 1;
-
+        if (dce)
+        {
+            dce->count = 1;
+            SetHookFlags( dce->hdc, DCHF_ENABLEDC );
+        }
         USER_Unlock();
 
         /* if there's no dce empty or unused, allocate a new one */

@@ -112,9 +112,9 @@ static void test_dc_attributes(void)
 
     /* Released cache DCs are 'disabled' */
     rop = SetROP2( old_hdc, R2_BLACK );
-    todo_wine ok( rop == 0, "got %d\n", rop );
+    ok( rop == 0, "got %d\n", rop );
     rop = GetROP2( old_hdc );
-    todo_wine ok( rop == 0, "got %d\n", rop );
+    ok( rop == 0, "got %d\n", rop );
 
     /* test own DC */
 
