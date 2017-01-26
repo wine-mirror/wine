@@ -1740,6 +1740,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     if (!(layout->recompute & RECOMPUTE_LINES))
         return S_OK;
 
+    free_layout_eruns(layout);
+
     hr = layout_compute(layout);
     if (FAILED(hr))
         return hr;
