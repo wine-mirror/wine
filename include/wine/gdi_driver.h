@@ -266,6 +266,8 @@ static inline ULONG window_surface_release( struct window_surface *surface )
 #define DCHF_INVALIDATEVISRGN   0x0001
 #define DCHF_VALIDATEVISRGN     0x0002
 #define DCHF_RESETDC            0x0004  /* Wine extension */
+#define DCHF_DISABLEDC          0x0008  /* Wine extension */
+#define DCHF_ENABLEDC           0x0010  /* Wine extension */
 
 typedef BOOL (CALLBACK *DCHOOKPROC)(HDC,WORD,DWORD_PTR,LPARAM);
 
