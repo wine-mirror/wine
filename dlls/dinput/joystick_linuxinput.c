@@ -1331,9 +1331,9 @@ static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE
     {
     case DISFFC_STOPALL:
     {
-	/* Stop all effects */
         effect_list_item *itr;
 
+        /* Stop all effects */
         LIST_FOR_EACH_ENTRY(itr, &This->ff_effects, effect_list_item, entry)
             IDirectInputEffect_Stop(itr->ref);
         break;
@@ -1341,12 +1341,14 @@ static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE
 
     case DISFFC_RESET:
     {
-        effect_list_item *itr, *ptr;
+        effect_list_item *itr;
 
-	/* Stop, unload, release and free all effects */
-	/* This returns the device to its "bare" state */
-        LIST_FOR_EACH_ENTRY_SAFE(itr, ptr, &This->ff_effects, effect_list_item, entry)
-            IDirectInputEffect_Release(itr->ref);
+        /* Stop and unload all effects. It is not true that effects are released */
+        LIST_FOR_EACH_ENTRY(itr, &This->ff_effects, effect_list_item, entry)
+        {
+            IDirectInputEffect_Stop(itr->ref);
+            IDirectInputEffect_Unload(itr->ref);
+        }
         break;
     }
     case DISFFC_PAUSE:
