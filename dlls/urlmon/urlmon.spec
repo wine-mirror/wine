@@ -49,7 +49,7 @@
 @ stdcall FaultInIEFeature(long ptr ptr long)
 @ stub FindMediaType
 @ stub FindMediaTypeClass
-@ stdcall FindMimeFromData(long ptr ptr long ptr long ptr long)
+@ stdcall FindMimeFromData(ptr ptr ptr long ptr long ptr long)
 @ stdcall GetClassFileOrMime(ptr wstr ptr long wstr long ptr)
 @ stub GetClassURL
 @ stub GetComponentIDFromCLSSPEC
