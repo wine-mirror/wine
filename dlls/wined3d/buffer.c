@@ -567,7 +567,7 @@ static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
     }
 }
 
-static BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
+BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;

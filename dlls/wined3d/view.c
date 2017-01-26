@@ -121,6 +121,35 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
     context_release(context);
 }
 
+static void create_buffer_texture(struct wined3d_gl_view *view,
+        struct wined3d_buffer *buffer, const struct wined3d_format *view_format)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+
+    context = context_acquire(buffer->resource.device, NULL);
+    gl_info = context->gl_info;
+    if (!gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
+    {
+        FIXME("OpenGL implementation does not support buffer textures.\n");
+        context_release(context);
+        return;
+    }
+
+    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
+
+    view->target = GL_TEXTURE_BUFFER;
+    gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
+
+    context_bind_texture(context, GL_TEXTURE_BUFFER, view->name);
+    GL_EXTCALL(glTexBuffer(GL_TEXTURE_BUFFER, view_format->glInternal, buffer->buffer_object));
+    checkGLcall("Create buffer texture");
+
+    context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
+
+    context_release(context);
+}
+
 ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);
@@ -415,7 +444,27 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        FIXME("Buffer shader resource views not supported.\n");
+        struct wined3d_buffer *buffer = buffer_from_resource(resource);
+
+        if (desc->format_id == WINED3DFMT_UNKNOWN)
+        {
+            FIXME("Structured buffer views not supported.\n");
+        }
+        else if (desc->flags & WINED3D_VIEW_BUFFER_RAW)
+        {
+            FIXME("Raw buffer views not supported.\n");
+        }
+        else
+        {
+            /* FIXME: Support for buffer offsets can be implemented using ARB_texture_buffer_range. */
+            if (desc->u.buffer.start_idx
+                    || desc->u.buffer.count * view_format->byte_count != buffer->resource.size)
+            {
+                FIXME("Ignoring buffer range %u-%u.\n", desc->u.buffer.start_idx, desc->u.buffer.count);
+            }
+
+            create_buffer_texture(&view->gl_view, buffer, view_format);
+        }
     }
     else
     {
