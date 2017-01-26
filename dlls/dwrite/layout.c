@@ -193,8 +193,9 @@ struct layout_effective_run {
 
 struct layout_effective_inline {
     struct list entry;
-    const struct layout_run *run; /* nominal run this one is based on */
+    IDWriteInlineObject *object;  /* inline object, set explicitly or added when trimming a line */
     IUnknown *effect;             /* original reference is kept only at range level */
+    FLOAT baseline;
     FLOAT origin_x;               /* left X position */
     FLOAT origin_y;               /* left top corner Y position */
     FLOAT align_dx;               /* adjustment from text alignment */
@@ -1205,11 +1206,12 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         if (!inlineobject)
             return E_OUTOFMEMORY;
 
-        inlineobject->run = r;
+        inlineobject->object = r->u.object.object;
         inlineobject->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
         inlineobject->origin_x = is_rtl ? origin_x - inlineobject->width : origin_x;
         inlineobject->origin_y = 0.0f; /* set after line is built */
         inlineobject->align_dx = 0.0f;
+        inlineobject->baseline = r->baseline;
 
         /* It's not clear how these two are set, possibly directionality
            is derived from surrounding text (replaced text could have
@@ -1585,7 +1587,7 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
         }
 
         while (inrun && inrun->line == line) {
-            inrun->origin_y = origin_y - inrun->run->baseline;
+            inrun->origin_y = origin_y - inrun->baseline;
             inrun = layout_get_next_inline_run(layout, inrun);
         }
     }
@@ -1722,10 +1724,12 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_final_splitting_params params, prev_params;
-    UINT32 strlength, index, start, pos = *textpos;
+    DWRITE_INLINE_OBJECT_METRICS sign_metrics = { 0 };
     UINT32 line = layout->metrics.lineCount, i;
     DWRITE_LINE_METRICS1 metrics = { 0 };
+    UINT32 index, start, pos = *textpos;
     FLOAT descent, trailingspacewidth;
+    BOOL append_trimming_run = FALSE;
     const struct layout_run *run;
     FLOAT width, origin_x;
     HRESULT hr;
@@ -1766,6 +1770,26 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     /* Does not include trailing space width */
     width = get_cluster_range_width(layout, first_cluster, last_cluster + 1);
 
+    /* Append trimming run if necessary */
+    if (width > layout->metrics.layoutWidth && layout->format.trimmingsign != NULL &&
+            layout->format.trimming.granularity != DWRITE_TRIMMING_GRANULARITY_NONE) {
+        FLOAT trimmed_width = width;
+
+        hr = IDWriteInlineObject_GetMetrics(layout->format.trimmingsign, &sign_metrics);
+        if (SUCCEEDED(hr)) {
+            while (last_cluster > first_cluster) {
+                if (trimmed_width + sign_metrics.width <= layout->metrics.layoutWidth)
+                    break;
+                trimmed_width -= layout->clustermetrics[last_cluster--].width;
+            }
+            append_trimming_run = TRUE;
+        }
+        else
+            WARN("Failed to get trimming sign metrics, lines won't be trimmed, hr %#x.\n", hr);
+
+        width = trimmed_width + sign_metrics.width;
+    }
+
     layout_splitting_params_from_pos(layout, pos, &params);
     prev_params = params;
     run = layout->clusters[first_cluster].run;
@@ -1795,24 +1819,39 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     if (FAILED(hr))
         return;
 
+    if (append_trimming_run) {
+        struct layout_effective_inline *trimming_sign;
+
+        trimming_sign = heap_alloc(sizeof(*trimming_sign));
+        if (!trimming_sign)
+            return;
+
+        trimming_sign->object = layout->format.trimmingsign;
+        trimming_sign->width = sign_metrics.width;
+        origin_x += is_rtl ? -get_cluster_range_width(layout, start, i) : get_cluster_range_width(layout, start, i);
+        trimming_sign->origin_x = is_rtl ? origin_x - trimming_sign->width : origin_x;
+        trimming_sign->origin_y = 0.0f; /* set after line is built */
+        trimming_sign->align_dx = 0.0f;
+        trimming_sign->baseline = sign_metrics.baseline;
+
+        trimming_sign->is_sideways = FALSE;
+        trimming_sign->is_rtl = FALSE;
+        trimming_sign->line = line;
+
+        trimming_sign->effect = NULL; /* FIXME */
+
+        list_add_tail(&layout->inlineobjects, &trimming_sign->entry);
+    }
+
     /* Look for max baseline and descent for this line */
-    strlength = metrics.length - metrics.trailingWhitespaceLength;
-    index = last_cluster;
-    metrics.baseline = 0.0f;
-    descent = 0.0f;
-    while (strlength) {
-        DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
+    for (index = first_cluster, metrics.baseline = 0.0f, descent = 0.0f; index <= last_cluster; index++) {
         const struct layout_run *cur = layout->clusters[index].run;
         FLOAT cur_descent = cur->height - cur->baseline;
 
         if (cur->baseline > metrics.baseline)
             metrics.baseline = cur->baseline;
-
         if (cur_descent > descent)
             descent = cur_descent;
-
-        strlength -= cluster->length;
-        index--;
     }
 
     layout->metrics.width = max(width, layout->metrics.width);
@@ -1820,7 +1859,7 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
         layout->metrics.widthIncludingTrailingWhitespace);
 
     metrics.height = descent + metrics.baseline;
-    metrics.isTrimmed = width > layout->metrics.layoutWidth;
+    metrics.isTrimmed = append_trimming_run || width > layout->metrics.layoutWidth;
     layout_set_line_metrics(layout, &metrics);
 
     *textpos += metrics.length;
@@ -1937,10 +1976,11 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
         /* Same for inline runs */
         while (inrun && inrun->line == line) {
-            inrun->origin_y = origin_y - inrun->run->baseline;
+            inrun->origin_y = origin_y - inrun->baseline;
             inrun = layout_get_next_inline_run(layout, inrun);
         }
     }
+
     /* Use last line origin y + line descent as total content height */
     line--;
     layout->metrics.height = origin_y + layout->lines[line].height - layout->lines[line].baseline;
@@ -3360,7 +3400,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout3 *iface,
             context,
             inlineobject->origin_x + inlineobject->align_dx + origin_x,
             SNAP_COORD(inlineobject->origin_y + origin_y),
-            inlineobject->run->u.object.object,
+            inlineobject->object,
             inlineobject->is_sideways,
             inlineobject->is_rtl,
             inlineobject->effect);
@@ -4728,12 +4768,17 @@ static HRESULT WINAPI dwritetrimmingsign_Draw(IDWriteInlineObject *iface, void *
 {
     struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
     DWRITE_TEXT_RANGE range = { 0, ~0u };
+    DWRITE_TEXT_METRICS metrics;
+    DWRITE_LINE_METRICS line;
+    UINT32 line_count;
     HRESULT hr;
 
     TRACE("(%p)->(%p %p %.2f %.2f %d %d %p)\n", This, context, renderer, originX, originY, is_sideways, is_rtl, effect);
 
     IDWriteTextLayout_SetDrawingEffect(This->layout, effect, range);
-    hr = IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY);
+    IDWriteTextLayout_GetLineMetrics(This->layout, &line, 1, &line_count);
+    IDWriteTextLayout_GetMetrics(This->layout, &metrics);
+    hr = IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY - line.baseline);
     IDWriteTextLayout_SetDrawingEffect(This->layout, NULL, range);
     return hr;
 }
@@ -4844,6 +4889,7 @@ HRESULT create_trimmingsign(IDWriteFactory4 *factory, IDWriteTextFormat *format,
     }
 
     IDWriteTextLayout_SetWordWrapping(This->layout, DWRITE_WORD_WRAPPING_NO_WRAP);
+    IDWriteTextLayout_SetParagraphAlignment(This->layout, DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
     *sign = &This->IDWriteInlineObject_iface;
 
     return S_OK;
