@@ -118,6 +118,10 @@ GDIPlus
 M:	Vincent Povirk <vincent@codeweavers.com>
 F:	dlls/gdiplus/
 
+GPhoto Driver
+M:	Marcus Meissner <marcus@jet.franken.de>
+F:	dlls/gphoto2.ds/
+
 HID support
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/hid/
