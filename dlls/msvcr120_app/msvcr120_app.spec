@@ -222,9 +222,9 @@
 @ stub -arch=arm ??0operation_timed_out@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??0operation_timed_out@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0operation_timed_out@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0reader_writer_lock@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??0reader_writer_lock@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0reader_writer_lock@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??0reader_writer_lock@Concurrency@@QAA@XZ(ptr) msvcr120.??0reader_writer_lock@Concurrency@@QAA@XZ
+@ thiscall -arch=win32 ??0reader_writer_lock@Concurrency@@QAE@XZ(ptr) msvcr120.??0reader_writer_lock@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??0reader_writer_lock@Concurrency@@QEAA@XZ(ptr) msvcr120.??0reader_writer_lock@Concurrency@@QEAA@XZ
 @ stub -arch=arm ??0scheduler_not_attached@Concurrency@@QAA@PBD@Z
 @ stub -arch=i386 ??0scheduler_not_attached@Concurrency@@QAE@PBD@Z
 @ stub -arch=win64 ??0scheduler_not_attached@Concurrency@@QEAA@PEBD@Z
@@ -313,9 +313,9 @@
 @ cdecl -arch=arm ??1exception@std@@UAA@XZ(ptr) msvcr120.??1exception@std@@UAA@XZ
 @ thiscall -arch=i386 ??1exception@std@@UAE@XZ(ptr) msvcr120.??1exception@std@@UAE@XZ
 @ cdecl -arch=win64 ??1exception@std@@UEAA@XZ(ptr) msvcr120.??1exception@std@@UEAA@XZ
-@ stub -arch=arm ??1reader_writer_lock@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1reader_writer_lock@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1reader_writer_lock@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1reader_writer_lock@Concurrency@@QAA@XZ(ptr) msvcr120.??1reader_writer_lock@Concurrency@@QAA@XZ
+@ thiscall -arch=win32 ??1reader_writer_lock@Concurrency@@QAE@XZ(ptr) msvcr120.??1reader_writer_lock@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??1reader_writer_lock@Concurrency@@QEAA@XZ(ptr) msvcr120.??1reader_writer_lock@Concurrency@@QEAA@XZ
 @ cdecl -arch=arm ??1scoped_lock@critical_section@Concurrency@@QAA@XZ(ptr) msvcr120.??1scoped_lock@critical_section@Concurrency@@QAA@XZ
 @ thiscall -arch=i386 ??1scoped_lock@critical_section@Concurrency@@QAE@XZ(ptr) msvcr120.??1scoped_lock@critical_section@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??1scoped_lock@critical_section@Concurrency@@QEAA@XZ(ptr) msvcr120.??1scoped_lock@critical_section@Concurrency@@QEAA@XZ
@@ -727,12 +727,12 @@
 @ cdecl -arch=arm ?lock@critical_section@Concurrency@@QAAXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QAAXXZ
 @ thiscall -arch=i386 ?lock@critical_section@Concurrency@@QAEXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QEAAXXZ
-@ stub -arch=arm ?lock@reader_writer_lock@Concurrency@@QAAXXZ
-@ stub -arch=i386 ?lock@reader_writer_lock@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?lock@reader_writer_lock@Concurrency@@QEAAXXZ
-@ stub -arch=arm ?lock_read@reader_writer_lock@Concurrency@@QAAXXZ
-@ stub -arch=i386 ?lock_read@reader_writer_lock@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?lock_read@reader_writer_lock@Concurrency@@QEAAXXZ
+@ cdecl -arch=arm ?lock@reader_writer_lock@Concurrency@@QAAXXZ(ptr) msvcr120.?lock@reader_writer_lock@Concurrency@@QAAXXZ
+@ thiscall -arch=win32 ?lock@reader_writer_lock@Concurrency@@QAEXXZ(ptr) msvcr120.?lock@reader_writer_lock@Concurrency@@QAEXXZ
+@ cdecl -arch=win64 ?lock@reader_writer_lock@Concurrency@@QEAAXXZ(ptr) msvcr120.?lock@reader_writer_lock@Concurrency@@QEAAXXZ
+@ cdecl -arch=arm ?lock_read@reader_writer_lock@Concurrency@@QAAXXZ(ptr) msvcr120.?lock_read@reader_writer_lock@Concurrency@@QAAXXZ
+@ thiscall -arch=win32 ?lock_read@reader_writer_lock@Concurrency@@QAEXXZ(ptr) msvcr120.?lock_read@reader_writer_lock@Concurrency@@QAEXXZ
+@ cdecl -arch=win64 ?lock_read@reader_writer_lock@Concurrency@@QEAAXXZ(ptr) msvcr120.?lock_read@reader_writer_lock@Concurrency@@QEAAXXZ
 @ cdecl -arch=arm ?name@type_info@@QBAPBDPAU__type_info_node@@@Z(ptr ptr) msvcr120.?name@type_info@@QBAPBDPAU__type_info_node@@@Z
 @ thiscall -arch=i386 ?name@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) msvcr120.?name@type_info@@QBEPBDPAU__type_info_node@@@Z
 @ cdecl -arch=win64 ?name@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) msvcr120.?name@type_info@@QEBAPEBDPEAU__type_info_node@@@Z
@@ -769,22 +769,22 @@
 @ cdecl -arch=arm ?try_lock@critical_section@Concurrency@@QAA_NXZ(ptr) msvcr120.?try_lock@critical_section@Concurrency@@QAA_NXZ
 @ thiscall -arch=i386 ?try_lock@critical_section@Concurrency@@QAE_NXZ(ptr) msvcr120.?try_lock@critical_section@Concurrency@@QAE_NXZ
 @ cdecl -arch=win64 ?try_lock@critical_section@Concurrency@@QEAA_NXZ(ptr) msvcr120.?try_lock@critical_section@Concurrency@@QEAA_NXZ
-@ stub -arch=arm ?try_lock@reader_writer_lock@Concurrency@@QAA_NXZ
-@ stub -arch=i386 ?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ
-@ stub -arch=win64 ?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ
+@ cdecl -arch=arm ?try_lock@reader_writer_lock@Concurrency@@QAA_NXZ(ptr) msvcr120.?try_lock@reader_writer_lock@Concurrency@@QAA_NXZ
+@ thiscall -arch=win32 ?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ(ptr) msvcr120.?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ
+@ cdecl -arch=win64 ?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ(ptr) msvcr120.?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ
 @ cdecl -arch=arm ?try_lock_for@critical_section@Concurrency@@QAA_NI@Z(ptr long) msvcr120.?try_lock_for@critical_section@Concurrency@@QAA_NI@Z
 @ thiscall -arch=i386 ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z(ptr long) msvcr120.?try_lock_for@critical_section@Concurrency@@QAE_NI@Z
 @ cdecl -arch=win64 ?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z(ptr long) msvcr120.?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z
-@ stub -arch=arm ?try_lock_read@reader_writer_lock@Concurrency@@QAA_NXZ
-@ stub -arch=i386 ?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ
-@ stub -arch=win64 ?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ
+@ cdecl -arch=arm ?try_lock_read@reader_writer_lock@Concurrency@@QAA_NXZ(ptr) msvcr120.?try_lock_read@reader_writer_lock@Concurrency@@QAA_NXZ
+@ thiscall -arch=win32 ?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ(ptr) msvcr120.?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ
+@ cdecl -arch=win64 ?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ(ptr) msvcr120.?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ
 @ cdecl ?unexpected@@YAXXZ() msvcr120.?unexpected@@YAXXZ
 @ cdecl -arch=arm ?unlock@critical_section@Concurrency@@QAAXXZ(ptr) msvcr120.?unlock@critical_section@Concurrency@@QAAXXZ
 @ thiscall -arch=i386 ?unlock@critical_section@Concurrency@@QAEXXZ(ptr) msvcr120.?unlock@critical_section@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?unlock@critical_section@Concurrency@@QEAAXXZ(ptr) msvcr120.?unlock@critical_section@Concurrency@@QEAAXXZ
-@ stub -arch=arm ?unlock@reader_writer_lock@Concurrency@@QAAXXZ
-@ stub -arch=i386 ?unlock@reader_writer_lock@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?unlock@reader_writer_lock@Concurrency@@QEAAXXZ
+@ cdecl -arch=arm ?unlock@reader_writer_lock@Concurrency@@QAAXXZ(ptr) msvcr120.?unlock@reader_writer_lock@Concurrency@@QAAXXZ
+@ thiscall -arch=win32 ?unlock@reader_writer_lock@Concurrency@@QAEXXZ(ptr) msvcr120.?unlock@reader_writer_lock@Concurrency@@QAEXXZ
+@ cdecl -arch=win64 ?unlock@reader_writer_lock@Concurrency@@QEAAXXZ(ptr) msvcr120.?unlock@reader_writer_lock@Concurrency@@QEAAXXZ
 @ cdecl ?vswprintf@@YAHPA_WIPB_WPAD@Z(ptr long wstr ptr) msvcr120.?vswprintf@@YAHPA_WIPB_WPAD@Z
 @ stub ?wait@Concurrency@@YAXI@Z
 @ cdecl -arch=arm ?wait@_Condition_variable@details@Concurrency@@QAAXAAVcritical_section@3@@Z(ptr ptr) msvcr120.?wait@_Condition_variable@details@Concurrency@@QAAXAAVcritical_section@3@@Z

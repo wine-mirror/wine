@@ -722,6 +722,85 @@ void __thiscall _Condition_variable_notify_all(_Condition_variable *this)
 }
 #endif
 
+#if _MSVCR_VER >= 100
+typedef struct rwl_queue
+{
+    struct rwl_queue *next;
+} rwl_queue;
+
+#define WRITER_WAITING 0x80000000
+/* FIXME: reader_writer_lock structure is not binary compatible
+ * it can't exceed 28/56 bytes */
+typedef struct
+{
+    LONG count;
+    LONG thread_id;
+    rwl_queue active;
+    rwl_queue *writer_head;
+    rwl_queue *writer_tail;
+    rwl_queue *reader_head;
+} reader_writer_lock;
+
+/* ??0reader_writer_lock@Concurrency@@QAE@XZ */
+/* ??0reader_writer_lock@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_ctor, 4)
+reader_writer_lock* __thiscall reader_writer_lock_ctor(reader_writer_lock *this)
+{
+    FIXME("(%p) stub\n", this);
+    return this;
+}
+
+/* ??1reader_writer_lock@Concurrency@@QAE@XZ */
+/* ??1reader_writer_lock@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_dtor, 4)
+void __thiscall reader_writer_lock_dtor(reader_writer_lock *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?lock@reader_writer_lock@Concurrency@@QAEXXZ */
+/* ?lock@reader_writer_lock@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_lock, 4)
+void __thiscall reader_writer_lock_lock(reader_writer_lock *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?lock_read@reader_writer_lock@Concurrency@@QAEXXZ */
+/* ?lock_read@reader_writer_lock@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_lock_read, 4)
+void __thiscall reader_writer_lock_lock_read(reader_writer_lock *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ */
+/* ?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_try_lock, 4)
+MSVCRT_bool __thiscall reader_writer_lock_try_lock(reader_writer_lock *this)
+{
+    FIXME("(%p) stub\n", this);
+    return FALSE;
+}
+
+/* ?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ */
+/* ?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_try_lock_read, 4)
+MSVCRT_bool __thiscall reader_writer_lock_try_lock_read(reader_writer_lock *this)
+{
+    FIXME("(%p) stub\n", this);
+    return FALSE;
+}
+
+/* ?unlock@reader_writer_lock@Concurrency@@QAEXXZ */
+/* ?unlock@reader_writer_lock@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_unlock, 4)
+void __thiscall reader_writer_lock_unlock(reader_writer_lock *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+#endif
+
 /**********************************************************************
  *     msvcrt_free_locks (internal)
  *
