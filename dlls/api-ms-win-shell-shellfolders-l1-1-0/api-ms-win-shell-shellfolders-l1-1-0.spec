@@ -7,7 +7,7 @@
 @ stdcall SHGetFolderPathA(long long long long ptr) shell32.SHGetFolderPathA
 @ stdcall SHGetFolderPathAndSubDirW(long long long long wstr ptr) shell32.SHGetFolderPathAndSubDirW
 @ stdcall SHGetFolderPathW(long long long long ptr) shell32.SHGetFolderPathW
-@ stdcall SHGetInstanceExplorer(long) shell32.SHGetInstanceExplorer
+@ stdcall SHGetInstanceExplorer(ptr) shell32.SHGetInstanceExplorer
 @ stdcall SHGetKnownFolderPath(ptr long ptr ptr) shell32.SHGetKnownFolderPath
 @ stdcall SHGetSpecialFolderPathA(long ptr long long) shell32.SHGetSpecialFolderPathA
 @ stdcall SHGetSpecialFolderPathW(long ptr long long) shell32.SHGetSpecialFolderPathW

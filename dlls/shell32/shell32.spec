@@ -48,7 +48,7 @@
   50 stdcall -noname PathStripToRoot(ptr) PathStripToRootAW
   51 stdcall PathResolve(str long long) PathResolveAW
   52 stdcall -noname PathGetArgs(str) PathGetArgsAW
-  53 stdcall DoEnvironmentSubst(long long) DoEnvironmentSubstAW
+  53 stdcall DoEnvironmentSubst(ptr long) DoEnvironmentSubstAW
   54 stub LogoffWindowsDialog
   55 stdcall -noname PathQuoteSpaces(ptr) PathQuoteSpacesAW
   56 stdcall -noname PathUnquoteSpaces(str) PathUnquoteSpacesAW
@@ -56,18 +56,18 @@
   58 stdcall -noname ParseField(str long ptr long) ParseFieldAW
   59 stdcall -ordinal RestartDialog(long wstr long)
   60 stdcall -noname ExitWindowsDialog(long)
-  61 stdcall -noname RunFileDlg(long long long str str long) RunFileDlgAW
-  62 stdcall -ordinal PickIconDlg(long long long long)
-  63 stdcall -ordinal GetFileNameFromBrowse(long long long long str str str) GetFileNameFromBrowseAW
+  61 stdcall -noname RunFileDlg(long long str str str long) RunFileDlgAW
+  62 stdcall -ordinal PickIconDlg(long long long ptr)
+  63 stdcall -ordinal GetFileNameFromBrowse(long ptr long str str str str) GetFileNameFromBrowseAW
   64 stdcall -ordinal DriveType(long)
   65 stdcall -noname InvalidateDriveType(long)
   66 stdcall -ordinal IsNetDrive(long)
   67 stdcall -ordinal Shell_MergeMenus(long long long long long long)
   68 stdcall -ordinal SHGetSetSettings(ptr long long)
   69 stub -noname SHGetNetResource
-  70 stdcall -noname SHCreateDefClassObject(long long long long long)
+  70 stdcall -noname SHCreateDefClassObject(long long long ptr long)
   71 stdcall -ordinal Shell_GetImageLists(ptr ptr)
-  72 stdcall -ordinal Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
+  72 stdcall -ordinal Shell_GetCachedImageIndex(str long long) Shell_GetCachedImageIndexAW
   73 stdcall -ordinal SHShellFolderView_Message(long long long)
   74 stdcall -ordinal SHCreateStdEnumFmtEtc(long ptr ptr)
   75 stdcall -ordinal PathYetAnotherMakeUniqueName(ptr wstr wstr wstr)
@@ -89,12 +89,12 @@
   94 stdcall -noname Win32RemoveDirectory(wstr) Win32RemoveDirectoryAW
   95 stdcall -noname SHLogILFromFSIL(ptr)
   96 stdcall -noname StrRetToStrN(ptr long ptr ptr) StrRetToStrNAW
-  97 stdcall -noname SHWaitForFileToOpen (long long long)
+  97 stdcall -noname SHWaitForFileToOpen (ptr long long)
   98 stdcall -ordinal SHGetRealIDL(ptr ptr ptr)
   99 stdcall -noname SetAppStartingCursor(long long)
  100 stdcall -ordinal SHRestricted(long)
 
- 102 stdcall -ordinal SHCoCreateInstance(wstr ptr long ptr ptr)
+ 102 stdcall -ordinal SHCoCreateInstance(wstr ptr ptr ptr ptr)
  103 stdcall -ordinal SignalFileOpen(ptr)
  104 stdcall -noname FileMenu_DeleteAllItems(long)
  105 stdcall -noname FileMenu_DrawItem(long ptr)
@@ -126,7 +126,7 @@
  131 stdcall -ordinal DAD_DragEnterEx(long int64)
  132 stdcall -ordinal DAD_DragLeave()
  134 stdcall -ordinal DAD_DragMove(int64)
- 136 stdcall -ordinal DAD_SetDragImage(long long)
+ 136 stdcall -ordinal DAD_SetDragImage(long ptr)
  137 stdcall -ordinal DAD_ShowDragImage(long)
  139 stub Desktop_UpdateBriefcaseOnEvent
  140 stdcall -noname FileMenu_DeleteItemByIndex(long long)
@@ -136,14 +136,14 @@
  144 stdcall -noname FileMenu_GetItemExtent(long long)
  145 stdcall -noname PathFindOnPath(ptr ptr) PathFindOnPathAW
  146 stdcall -noname RLBuildListOfPaths()
- 147 stdcall -ordinal SHCLSIDFromString(long long) SHCLSIDFromStringAW
+ 147 stdcall -ordinal SHCLSIDFromString(ptr ptr) SHCLSIDFromStringAW
  148 stdcall -noname SHMapIDListToImageListIndexAsync(ptr ptr ptr long ptr ptr ptr ptr ptr)
  149 stdcall -ordinal SHFind_InitMenuPopup(long long long long)
 
  151 stdcall -noname SHLoadOLE(long)
  152 stdcall -ordinal ILGetSize(ptr)
  153 stdcall -ordinal ILGetNext(ptr)
- 154 stdcall -ordinal ILAppendID(long long long)
+ 154 stdcall -ordinal ILAppendID(ptr ptr long)
  155 stdcall -ordinal ILFree(ptr)
  156 stdcall -noname ILGlobalFree(ptr)
  157 stdcall -ordinal ILCreateFromPath(ptr) ILCreateFromPathAW
@@ -165,15 +165,15 @@
  173 stdcall -ordinal SHValidateUNC(long wstr long)
  174 stdcall -ordinal SHCreateShellFolderViewEx(ptr ptr)
  175 stdcall -noname SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPathAW
- 176 stdcall -ordinal SHSetInstanceExplorer(long)
+ 176 stdcall -ordinal SHSetInstanceExplorer(ptr)
  177 stub DAD_SetDragImageFromListView
  178 stdcall -ordinal SHObjectProperties(long long wstr wstr)
- 179 stdcall -ordinal SHGetNewLinkInfoA(str str ptr long long)
- 180 stdcall -ordinal SHGetNewLinkInfoW(wstr wstr ptr long long)
+ 179 stdcall -ordinal SHGetNewLinkInfoA(str str ptr ptr long)
+ 180 stdcall -ordinal SHGetNewLinkInfoW(wstr wstr ptr ptr long)
  181 stdcall -noname RegisterShellHook(long long)
  182 varargs -ordinal ShellMessageBoxW(long long wstr wstr long)
  183 varargs -ordinal ShellMessageBoxA(long long str str long)
- 184 stdcall -noname ArrangeWindows(long long long long long)
+ 184 stdcall -noname ArrangeWindows(long long ptr long long)
  185 stub SHHandleDiskFull
  186 stdcall -noname ILGetDisplayNameEx(ptr ptr ptr long)
  187 stub ILGetPseudoNameW
@@ -233,7 +233,7 @@
  525 stub RealDriveTypeFlags
  526 stdcall SHFlushSFCache()
 
- 640 stdcall -noname NTSHChangeNotifyRegister(long long long long long long)
+ 640 stdcall -noname NTSHChangeNotifyRegister(long long long long long ptr)
  641 stdcall -noname NTSHChangeNotifyDeregister(long)
 
  643 stub SHChangeNotifyReceive
@@ -285,8 +285,8 @@
 @ stdcall -private DllInstall(long wstr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
-@ stdcall DoEnvironmentSubstA(str str)
-@ stdcall DoEnvironmentSubstW(wstr wstr)
+@ stdcall DoEnvironmentSubstA(str long)
+@ stdcall DoEnvironmentSubstW(wstr long)
 @ stdcall DragAcceptFiles(long long)
 @ stdcall DragFinish(long)
 @ stdcall DragQueryFile(long long ptr long) DragQueryFileA
@@ -296,8 +296,8 @@
 @ stdcall DragQueryPoint(long ptr)
 @ stdcall DuplicateIcon(long long)
 @ stdcall ExtractAssociatedIconA(long str ptr)
-@ stdcall ExtractAssociatedIconExA(long str long long)
-@ stdcall ExtractAssociatedIconExW(long wstr long long)
+@ stdcall ExtractAssociatedIconExA(long str ptr ptr)
+@ stdcall ExtractAssociatedIconExW(long wstr ptr ptr)
 @ stdcall ExtractAssociatedIconW(long wstr ptr)
 @ stdcall ExtractIconA(long str long)
 @ stdcall ExtractIconEx(ptr long ptr ptr long) ExtractIconExA
@@ -378,7 +378,7 @@
 @ stdcall SHGetIconOverlayIndexA(str long)
 @ stdcall SHGetIconOverlayIndexW(wstr long)
 @ stdcall SHGetIDListFromObject(ptr ptr)
-@ stdcall SHGetInstanceExplorer(long)
+@ stdcall SHGetInstanceExplorer(ptr)
 @ stdcall SHGetItemFromDataObject(ptr long ptr ptr)
 @ stdcall SHGetItemFromObject(ptr ptr ptr)
 @ stdcall SHGetKnownFolderIDList(ptr long ptr ptr)
@@ -387,7 +387,7 @@
 @ stdcall SHGetLocalizedName(wstr ptr long ptr)
 @ stdcall SHGetMalloc(ptr)
 @ stdcall SHGetNameFromIDList(ptr long ptr)
-@ stdcall SHGetNewLinkInfo(str str ptr long long) SHGetNewLinkInfoA
+@ stdcall SHGetNewLinkInfo(str str ptr ptr long) SHGetNewLinkInfoA
 @ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListA
 @ stdcall SHGetPathFromIDListA(ptr ptr)
 @ stdcall SHGetPathFromIDListW(ptr ptr)

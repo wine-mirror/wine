@@ -1,1 +1,1 @@
-@ stdcall SHCoCreateInstance(wstr ptr long ptr ptr) shell32.SHCoCreateInstance
+@ stdcall SHCoCreateInstance(wstr ptr ptr ptr ptr) shell32.SHCoCreateInstance
