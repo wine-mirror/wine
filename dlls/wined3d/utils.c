@@ -5717,9 +5717,27 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
 
     for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
     {
-        if (state->lights[i])
-            settings->light_type |= (state->lights[i]->OriginalParms.type
-                    & WINED3D_FFP_LIGHT_TYPE_MASK) << WINED3D_FFP_LIGHT_TYPE_SHIFT(i);
+        if (!state->lights[i])
+            continue;
+
+        switch (state->lights[i]->OriginalParms.type)
+        {
+            case WINED3D_LIGHT_POINT:
+                ++settings->point_light_count;
+                break;
+            case WINED3D_LIGHT_SPOT:
+                ++settings->spot_light_count;
+                break;
+            case WINED3D_LIGHT_DIRECTIONAL:
+                ++settings->directional_light_count;
+                break;
+            case WINED3D_LIGHT_PARALLELPOINT:
+                ++settings->parallel_point_light_count;
+                break;
+            default:
+                FIXME("Unhandled light type %#x.\n", state->lights[i]->OriginalParms.type);
+                break;
+        }
     }
 
     if (!state->render_states[WINED3D_RS_FOGENABLE])

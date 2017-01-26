@@ -1278,15 +1278,12 @@ static void multiply_vector_matrix(struct wined3d_vec4 *dest, const struct wined
 }
 
 static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context *context,
-        const struct wined3d_state *state, unsigned int light, struct glsl_shader_prog_link *prog)
+        const struct wined3d_state *state, unsigned int light, const struct wined3d_light_info *light_info,
+        struct glsl_shader_prog_link *prog)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_light_info *light_info = state->lights[light];
-    struct wined3d_vec4 vec4;
     const struct wined3d_matrix *view = &state->transforms[WINED3D_TS_VIEW];
-
-    if (!light_info)
-        return;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_vec4 vec4;
 
     GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].diffuse, 1, &light_info->OriginalParms.diffuse.r));
     GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].specular, 1, &light_info->OriginalParms.specular.r));
@@ -1510,9 +1507,70 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_LIGHTS)
     {
+        unsigned int point_idx, spot_idx, directional_idx, parallel_point_idx;
+        DWORD point_count = 0;
+        DWORD spot_count = 0;
+        DWORD directional_count = 0;
+        DWORD parallel_point_count = 0;
+
+        for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
+        {
+            if (!state->lights[i])
+                continue;
+
+            switch (state->lights[i]->OriginalParms.type)
+            {
+                case WINED3D_LIGHT_POINT:
+                    ++point_count;
+                    break;
+                case WINED3D_LIGHT_SPOT:
+                    ++spot_count;
+                    break;
+                case WINED3D_LIGHT_DIRECTIONAL:
+                    ++directional_count;
+                    break;
+                case WINED3D_LIGHT_PARALLELPOINT:
+                    ++parallel_point_count;
+                    break;
+                default:
+                    FIXME("Unhandled light type %#x.\n", state->lights[i]->OriginalParms.type);
+                    break;
+            }
+        }
+        point_idx = 0;
+        spot_idx = point_idx + point_count;
+        directional_idx = spot_idx + spot_count;
+        parallel_point_idx = directional_idx + directional_count;
+
         shader_glsl_ffp_vertex_lightambient_uniform(context, state, prog);
         for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
-            shader_glsl_ffp_vertex_light_uniform(context, state, i, prog);
+        {
+            const struct wined3d_light_info *light_info = state->lights[i];
+            unsigned int idx;
+
+            if (!light_info)
+                continue;
+
+            switch (light_info->OriginalParms.type)
+            {
+                case WINED3D_LIGHT_POINT:
+                    idx = point_idx++;
+                    break;
+                case WINED3D_LIGHT_SPOT:
+                    idx = spot_idx++;
+                    break;
+                case WINED3D_LIGHT_DIRECTIONAL:
+                    idx = directional_idx++;
+                    break;
+                case WINED3D_LIGHT_PARALLELPOINT:
+                    idx = parallel_point_idx++;
+                    break;
+                default:
+                    FIXME("Unhandled light type %#x.\n", light_info->OriginalParms.type);
+                    continue;
+            }
+            shader_glsl_ffp_vertex_light_uniform(context, state, idx, light_info, prog);
+        }
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
@@ -6599,8 +6657,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         const struct wined3d_ffp_vs_settings *settings, BOOL legacy_lighting)
 {
     const char *diffuse, *specular, *emissive, *ambient;
-    enum wined3d_light_type light_type;
-    unsigned int i;
+    unsigned int i, idx;
 
     if (!settings->lighting)
     {
@@ -6620,131 +6677,124 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
     specular = shader_glsl_ffp_mcs(settings->specular_source, "ffp_material.specular");
     emissive = shader_glsl_ffp_mcs(settings->emissive_source, "ffp_material.emissive");
 
-    for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
+    idx = 0;
+    for (i = 0; i < settings->point_light_count; ++i, ++idx)
     {
-        light_type = (settings->light_type >> WINED3D_FFP_LIGHT_TYPE_SHIFT(i)) & WINED3D_FFP_LIGHT_TYPE_MASK;
-        switch (light_type)
+        shader_addline(buffer, "dir = ffp_light[%u].position.xyz - ec_pos.xyz;\n", idx);
+        shader_addline(buffer, "dst.z = dot(dir, dir);\n");
+        shader_addline(buffer, "dst.y = sqrt(dst.z);\n");
+        shader_addline(buffer, "dst.x = 1.0;\n");
+        if (legacy_lighting)
         {
-            case WINED3D_LIGHT_POINT:
-                shader_addline(buffer, "dir = ffp_light[%u].position.xyz - ec_pos.xyz;\n", i);
-                shader_addline(buffer, "dst.z = dot(dir, dir);\n");
-                shader_addline(buffer, "dst.y = sqrt(dst.z);\n");
-                shader_addline(buffer, "dst.x = 1.0;\n");
-                if (legacy_lighting)
-                {
-                    shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", i, i);
-                    shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
-                }
-                else
-                {
-                    shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", i);
-                }
-                shader_addline(buffer, "att = dot(dst.xyz, vec3(ffp_light[%u].c_att,"
-                        " ffp_light[%u].l_att, ffp_light[%u].q_att));\n", i, i, i);
-                if (!legacy_lighting)
-                    shader_addline(buffer, "att = 1.0 / att;\n");
-                shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", i);
-                if (!settings->normal)
-                {
-                    if (!legacy_lighting)
-                        shader_addline(buffer, "}\n");
-                    break;
-                }
-                shader_addline(buffer, "dir = normalize(dir);\n");
-                shader_addline(buffer, "diffuse += (clamp(dot(dir, normal), 0.0, 1.0)"
-                        " * ffp_light[%u].diffuse.xyz) * att;\n", i);
-                if (settings->localviewer)
-                    shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
-                else
-                    shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
-                shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
-                        " * ffp_light[%u].specular) * att;\n", i);
-                if (!legacy_lighting)
-                    shader_addline(buffer, "}\n");
-                break;
-
-            case WINED3D_LIGHT_SPOT:
-                shader_addline(buffer, "dir = ffp_light[%u].position.xyz - ec_pos.xyz;\n", i);
-                shader_addline(buffer, "dst.z = dot(dir, dir);\n");
-                shader_addline(buffer, "dst.y = sqrt(dst.z);\n");
-                shader_addline(buffer, "dst.x = 1.0;\n");
-                if (legacy_lighting)
-                {
-                    shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", i, i);
-                    shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
-                }
-                else
-                {
-                    shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", i);
-                }
-                shader_addline(buffer, "dir = normalize(dir);\n");
-                shader_addline(buffer, "t = dot(-dir, normalize(ffp_light[%u].direction));\n", i);
-                shader_addline(buffer, "if (t > ffp_light[%u].cos_htheta) att = 1.0;\n", i);
-                shader_addline(buffer, "else if (t <= ffp_light[%u].cos_hphi) att = 0.0;\n", i);
-                shader_addline(buffer, "else att = pow((t - ffp_light[%u].cos_hphi)"
-                        " / (ffp_light[%u].cos_htheta - ffp_light[%u].cos_hphi), ffp_light[%u].falloff);\n",
-                        i, i, i, i);
-                if (legacy_lighting)
-                    shader_addline(buffer, "att *= dot(dst.xyz, vec3(ffp_light[%u].c_att,"
-                            " ffp_light[%u].l_att, ffp_light[%u].q_att));\n",
-                            i, i, i);
-                else
-                    shader_addline(buffer, "att /= dot(dst.xyz, vec3(ffp_light[%u].c_att,"
-                            " ffp_light[%u].l_att, ffp_light[%u].q_att));\n",
-                            i, i, i);
-                shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", i);
-                if (!settings->normal)
-                {
-                    if (!legacy_lighting)
-                        shader_addline(buffer, "}\n");
-                    break;
-                }
-                shader_addline(buffer, "diffuse += (clamp(dot(dir, normal), 0.0, 1.0)"
-                        " * ffp_light[%u].diffuse.xyz) * att;\n", i);
-                if (settings->localviewer)
-                    shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
-                else
-                    shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
-                shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
-                        " * ffp_light[%u].specular) * att;\n", i);
-                if (!legacy_lighting)
-                    shader_addline(buffer, "}\n");
-                break;
-
-            case WINED3D_LIGHT_DIRECTIONAL:
-                shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz;\n", i);
-                if (!settings->normal)
-                    break;
-                shader_addline(buffer, "dir = normalize(ffp_light[%u].direction.xyz);\n", i);
-                shader_addline(buffer, "diffuse += clamp(dot(dir, normal), 0.0, 1.0)"
-                        " * ffp_light[%u].diffuse.xyz;\n", i);
-                /* TODO: In the non-local viewer case the halfvector is constant
-                 * and could be precomputed and stored in a uniform. */
-                if (settings->localviewer)
-                    shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
-                else
-                    shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
-                shader_addline(buffer, "if (t > 0.0) specular += pow(t, ffp_material.shininess)"
-                        " * ffp_light[%u].specular;\n", i);
-                break;
-
-            case WINED3D_LIGHT_PARALLELPOINT:
-                shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz;\n", i);
-                if (!settings->normal)
-                    break;
-                shader_addline(buffer, "dir = normalize(ffp_light[%u].position.xyz);\n", i);
-                shader_addline(buffer, "diffuse += clamp(dot(dir, normal), 0.0, 1.0)"
-                        " * ffp_light[%u].diffuse.xyz;\n", i);
-                shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
-                shader_addline(buffer, "if (t > 0.0) specular += pow(t, ffp_material.shininess)"
-                        " * ffp_light[%u].specular;\n", i);
-                break;
-
-            default:
-                if (light_type)
-                    FIXME("Unhandled light type %#x.\n", light_type);
-                continue;
+            shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", idx, idx);
+            shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
         }
+        else
+        {
+            shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", idx);
+        }
+        shader_addline(buffer, "att = dot(dst.xyz, vec3(ffp_light[%u].c_att,"
+                " ffp_light[%u].l_att, ffp_light[%u].q_att));\n", idx, idx, idx);
+        if (!legacy_lighting)
+            shader_addline(buffer, "att = 1.0 / att;\n");
+        shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", idx);
+        if (!settings->normal)
+        {
+            if (!legacy_lighting)
+                shader_addline(buffer, "}\n");
+            continue;
+        }
+        shader_addline(buffer, "dir = normalize(dir);\n");
+        shader_addline(buffer, "diffuse += (clamp(dot(dir, normal), 0.0, 1.0)"
+                " * ffp_light[%u].diffuse.xyz) * att;\n", idx);
+        if (settings->localviewer)
+            shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
+        else
+            shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
+        shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
+                " * ffp_light[%u].specular) * att;\n", idx);
+        if (!legacy_lighting)
+            shader_addline(buffer, "}\n");
+    }
+
+    for (i = 0; i < settings->spot_light_count; ++i, ++idx)
+    {
+        shader_addline(buffer, "dir = ffp_light[%u].position.xyz - ec_pos.xyz;\n", idx);
+        shader_addline(buffer, "dst.z = dot(dir, dir);\n");
+        shader_addline(buffer, "dst.y = sqrt(dst.z);\n");
+        shader_addline(buffer, "dst.x = 1.0;\n");
+        if (legacy_lighting)
+        {
+            shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", idx, idx);
+            shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
+        }
+        else
+        {
+            shader_addline(buffer, "if (dst.y <= ffp_light[%u].range)\n{\n", idx);
+        }
+        shader_addline(buffer, "dir = normalize(dir);\n");
+        shader_addline(buffer, "t = dot(-dir, normalize(ffp_light[%u].direction));\n", idx);
+        shader_addline(buffer, "if (t > ffp_light[%u].cos_htheta) att = 1.0;\n", idx);
+        shader_addline(buffer, "else if (t <= ffp_light[%u].cos_hphi) att = 0.0;\n", idx);
+        shader_addline(buffer, "else att = pow((t - ffp_light[%u].cos_hphi)"
+                " / (ffp_light[%u].cos_htheta - ffp_light[%u].cos_hphi), ffp_light[%u].falloff);\n",
+                idx, idx, idx, idx);
+        if (legacy_lighting)
+            shader_addline(buffer, "att *= dot(dst.xyz, vec3(ffp_light[%u].c_att,"
+                    " ffp_light[%u].l_att, ffp_light[%u].q_att));\n",
+                    idx, idx, idx);
+        else
+            shader_addline(buffer, "att /= dot(dst.xyz, vec3(ffp_light[%u].c_att,"
+                    " ffp_light[%u].l_att, ffp_light[%u].q_att));\n",
+                    idx, idx, idx);
+        shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", idx);
+        if (!settings->normal)
+        {
+            if (!legacy_lighting)
+                shader_addline(buffer, "}\n");
+            continue;
+        }
+        shader_addline(buffer, "diffuse += (clamp(dot(dir, normal), 0.0, 1.0)"
+                " * ffp_light[%u].diffuse.xyz) * att;\n", idx);
+        if (settings->localviewer)
+            shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
+        else
+            shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
+        shader_addline(buffer, "if (t > 0.0) specular += (pow(t, ffp_material.shininess)"
+                " * ffp_light[%u].specular) * att;\n", idx);
+        if (!legacy_lighting)
+            shader_addline(buffer, "}\n");
+    }
+
+    for (i = 0; i < settings->directional_light_count; ++i, ++idx)
+    {
+        shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz;\n", idx);
+        if (!settings->normal)
+            continue;
+        shader_addline(buffer, "dir = normalize(ffp_light[%u].direction.xyz);\n", idx);
+        shader_addline(buffer, "diffuse += clamp(dot(dir, normal), 0.0, 1.0)"
+                " * ffp_light[%u].diffuse.xyz;\n", idx);
+        /* TODO: In the non-local viewer case the halfvector is constant
+         * and could be precomputed and stored in a uniform. */
+        if (settings->localviewer)
+            shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
+        else
+            shader_addline(buffer, "t = dot(normal, normalize(dir + vec3(0.0, 0.0, -1.0)));\n");
+        shader_addline(buffer, "if (t > 0.0) specular += pow(t, ffp_material.shininess)"
+                " * ffp_light[%u].specular;\n", idx);
+    }
+
+    for (i = 0; i < settings->parallel_point_light_count; ++i, ++idx)
+    {
+        shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz;\n", idx);
+        if (!settings->normal)
+            continue;
+        shader_addline(buffer, "dir = normalize(ffp_light[%u].position.xyz);\n", idx);
+        shader_addline(buffer, "diffuse += clamp(dot(dir, normal), 0.0, 1.0)"
+                " * ffp_light[%u].diffuse.xyz;\n", idx);
+        shader_addline(buffer, "t = dot(normal, normalize(dir - normalize(ec_pos.xyz)));\n");
+        shader_addline(buffer, "if (t > 0.0) specular += pow(t, ffp_material.shininess)"
+                " * ffp_light[%u].specular;\n", idx);
     }
 
     shader_addline(buffer, "ffp_varying_diffuse.xyz = %s.xyz * ambient + %s.xyz * diffuse + %s.xyz;\n",

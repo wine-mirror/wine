@@ -2377,12 +2377,14 @@ enum wined3d_ffp_vs_fog_mode
 
 struct wined3d_ffp_vs_settings
 {
-    DWORD light_type      : 24; /* MAX_ACTIVE_LIGHTS, 8 * 3 */
+    DWORD point_light_count          : 4;
+    DWORD spot_light_count           : 4;
+    DWORD directional_light_count    : 4;
+    DWORD parallel_point_light_count : 4;
     DWORD diffuse_source  : 2;
     DWORD emissive_source : 2;
     DWORD ambient_source  : 2;
     DWORD specular_source : 2;
-
     DWORD transformed     : 1;
     DWORD vertexblends    : 2;
     DWORD clipping        : 1;
@@ -2390,17 +2392,17 @@ struct wined3d_ffp_vs_settings
     DWORD normalize       : 1;
     DWORD lighting        : 1;
     DWORD localviewer     : 1;
+
     DWORD point_size      : 1;
     DWORD per_vertex_point_size : 1;
     DWORD fog_mode        : 2;
     DWORD texcoords       : 8;  /* MAX_TEXTURES */
     DWORD ortho_fog       : 1;
     DWORD flatshading     : 1;
-    DWORD padding         : 10;
+    DWORD swizzle_map     : 16; /* MAX_ATTRIBS, 16 */
+    DWORD padding         : 2;
 
     DWORD texgen[MAX_TEXTURES];
-
-    WORD swizzle_map; /* MAX_ATTRIBS, 16 */
 };
 
 struct wined3d_ffp_vs_desc
