@@ -634,11 +634,6 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
         {
             wined3d_texture_validate_location(prev_surface->container,
                     prev->sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-            if (prev_surface == device->onscreen_depth_stencil)
-            {
-                wined3d_texture_decref(device->onscreen_depth_stencil->container);
-                device->onscreen_depth_stencil = NULL;
-            }
         }
     }
 

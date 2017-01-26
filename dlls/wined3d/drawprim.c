@@ -466,12 +466,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(dsv);
 
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
-        {
-            if (!context->render_offscreen && ds != device->onscreen_depth_stencil)
-                device_switch_onscreen_ds(device, context, ds);
-
             wined3d_texture_load_location(ds->container, dsv->sub_resource_idx, context, location);
-        }
         else
             wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
     }

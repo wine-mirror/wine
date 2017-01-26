@@ -2560,7 +2560,6 @@ struct wined3d_device
 
     /* Render Target Support */
     struct wined3d_fb_state fb;
-    struct wined3d_surface *onscreen_depth_stencil;
     struct wined3d_rendertarget_view *auto_depth_stencil_view;
 
     /* For rendering to a texture using glCopyTexImage */
@@ -2612,8 +2611,6 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
-void device_switch_onscreen_ds(struct wined3d_device *device, struct wined3d_context *context,
-        struct wined3d_surface *depth_stencil) DECLSPEC_HIDDEN;
 void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
 static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD state)
