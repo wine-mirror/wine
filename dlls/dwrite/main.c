@@ -1291,11 +1291,21 @@ static HRESULT WINAPI dwritefactory3_CreateGlyphRunAnalysis(IDWriteFactory4 *ifa
     IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory4(iface);
+    struct glyphrunanalysis_desc desc;
 
-    FIXME("(%p)->(%p %p %d %d %d %d %.2f %.2f %p): stub\n", This, run, transform, rendering_mode, measuring_mode,
+    TRACE("(%p)->(%p %p %d %d %d %d %.2f %.2f %p)\n", This, run, transform, rendering_mode, measuring_mode,
         gridfit_mode, aa_mode, originX, originY, analysis);
 
-    return E_NOTIMPL;
+    desc.run = run;
+    desc.ppdip = 1.0f;
+    desc.transform = transform;
+    desc.rendering_mode = rendering_mode;
+    desc.measuring_mode = measuring_mode;
+    desc.gridfit_mode = gridfit_mode;
+    desc.aa_mode = aa_mode;
+    desc.origin_x = originX;
+    desc.origin_y = originY;
+    return create_glyphrunanalysis(&desc, analysis);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateCustomRenderingParams(IDWriteFactory4 *iface, FLOAT gamma, FLOAT contrast,

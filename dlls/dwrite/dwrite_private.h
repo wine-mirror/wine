@@ -143,7 +143,7 @@ struct glyphrunanalysis_desc
 {
     const DWRITE_GLYPH_RUN *run;
     const DWRITE_MATRIX *transform;
-    DWRITE_RENDERING_MODE rendering_mode;
+    DWRITE_RENDERING_MODE1 rendering_mode;
     DWRITE_MEASURING_MODE measuring_mode;
     DWRITE_GRID_FIT_MODE gridfit_mode;
     DWRITE_TEXT_ANTIALIAS_MODE aa_mode;
