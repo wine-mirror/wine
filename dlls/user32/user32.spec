@@ -191,7 +191,7 @@
 @ stdcall DrawIcon(long long long long)
 @ stdcall DrawIconEx(long long long long long long long long long)
 @ stdcall DrawMenuBar(long)
-@ stdcall DrawMenuBarTemp(long long long long long)
+@ stdcall DrawMenuBarTemp(long long ptr long long)
 @ stdcall DrawStateA(long long ptr long long long long long long long)
 @ stdcall DrawStateW(long long ptr long long long long long long long)
 @ stdcall DrawTextA(long str long ptr long)
