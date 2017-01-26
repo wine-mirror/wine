@@ -6624,6 +6624,14 @@ static void test_depth_stencil_sampling(void)
 
         srv_desc.Format = tests[i].stencil_view_format;
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &stencil_srv);
+        if (hr == E_OUTOFMEMORY)
+        {
+            skip("Could not create SRV for format %#x.\n", srv_desc.Format);
+            ID3D11DepthStencilView_Release(dsv);
+            ID3D11ShaderResourceView_Release(depth_srv);
+            ID3D11Texture2D_Release(texture);
+            continue;
+        }
         ok(SUCCEEDED(hr), "Failed to create stencil shader resource view for format %#x, hr %#x.\n",
                 srv_desc.Format, hr);
 
