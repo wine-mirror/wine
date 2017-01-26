@@ -887,7 +887,11 @@ static void reset_program_constant_version(struct wine_rb_entry *entry, void *co
 static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
 {
-    GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
+    struct
+    {
+        float sx, sy;
+    }
+    np2fixup_constants[MAX_FRAGMENT_SAMPLERS];
     UINT fixup = ps->np2_fixup_info->active;
     UINT i;
 
@@ -895,7 +899,6 @@ static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps
     {
         const struct wined3d_texture *tex = state->textures[i];
         unsigned char idx = ps->np2_fixup_info->idx[i];
-        GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
         if (!tex)
         {
@@ -903,19 +906,11 @@ static void shader_glsl_load_np2fixup_constants(const struct glsl_ps_program *ps
             continue;
         }
 
-        if (idx % 2)
-        {
-            tex_dim[2] = tex->pow2_matrix[0];
-            tex_dim[3] = tex->pow2_matrix[5];
-        }
-        else
-        {
-            tex_dim[0] = tex->pow2_matrix[0];
-            tex_dim[1] = tex->pow2_matrix[5];
-        }
+        np2fixup_constants[idx].sx = tex->pow2_matrix[0];
+        np2fixup_constants[idx].sy = tex->pow2_matrix[5];
     }
 
-    GL_EXTCALL(glUniform4fv(ps->np2_fixup_location, ps->np2_fixup_info->num_consts, np2fixup_constants));
+    GL_EXTCALL(glUniform4fv(ps->np2_fixup_location, ps->np2_fixup_info->num_consts, &np2fixup_constants[0].sx));
 }
 
 /* Taken and adapted from Mesa. */
