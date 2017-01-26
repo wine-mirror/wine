@@ -1,8 +1,8 @@
 # ordinal exports
-1 stdcall WOWGetDescriptor(long long)
+1 stdcall WOWGetDescriptor(long ptr)
 
 @ stdcall WOWCallback16(long long)
-@ stdcall WOWCallback16Ex(ptr long long ptr ptr)
+@ stdcall WOWCallback16Ex(long long long ptr ptr)
 @ stdcall WOWDirectedYield16(long)
 @ stdcall WOWGetVDMPointer(long long long)
 @ stdcall WOWGetVDMPointerFix(long long long)
