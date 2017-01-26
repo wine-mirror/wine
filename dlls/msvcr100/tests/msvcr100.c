@@ -155,6 +155,14 @@ static void (__thiscall *pSpinWait__SetSpinCount)(SpinWait*, unsigned int);
 static MSVCRT_bool (__thiscall *pSpinWait__ShouldSpinAgain)(SpinWait*);
 static MSVCRT_bool (__thiscall *pSpinWait__SpinOnce)(SpinWait*);
 
+static void* (__thiscall *preader_writer_lock_ctor)(void*);
+static void (__thiscall *preader_writer_lock_dtor)(void*);
+static void (__thiscall *preader_writer_lock_lock)(void*);
+static void (__thiscall *preader_writer_lock_lock_read)(void*);
+static void (__thiscall *preader_writer_lock_unlock)(void*);
+static MSVCRT_bool (__thiscall *preader_writer_lock_try_lock)(void*);
+static MSVCRT_bool (__thiscall *preader_writer_lock_try_lock_read)(void*);
+
 /* make sure we use the correct errno */
 #undef errno
 #define errno (*p_errno())
@@ -195,6 +203,14 @@ static BOOL init(void)
         SET(pSpinWait__SetSpinCount, "?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QEAAXI@Z");
         SET(pSpinWait__ShouldSpinAgain, "?_ShouldSpinAgain@?$_SpinWait@$00@details@Concurrency@@IEAA_NXZ");
         SET(pSpinWait__SpinOnce, "?_SpinOnce@?$_SpinWait@$00@details@Concurrency@@QEAA_NXZ");
+
+        SET(preader_writer_lock_ctor, "??0reader_writer_lock@Concurrency@@QEAA@XZ");
+        SET(preader_writer_lock_dtor, "??1reader_writer_lock@Concurrency@@QEAA@XZ");
+        SET(preader_writer_lock_lock, "?lock@reader_writer_lock@Concurrency@@QEAAXXZ");
+        SET(preader_writer_lock_lock_read, "?lock_read@reader_writer_lock@Concurrency@@QEAAXXZ");
+        SET(preader_writer_lock_unlock, "?unlock@reader_writer_lock@Concurrency@@QEAAXXZ");
+        SET(preader_writer_lock_try_lock, "?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ");
+        SET(preader_writer_lock_try_lock_read, "?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ");
     } else {
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QAE@P6AXXZ@Z");
         SET(pSpinWait_dtor, "??_F?$_SpinWait@$00@details@Concurrency@@QAEXXZ");
@@ -203,6 +219,14 @@ static BOOL init(void)
         SET(pSpinWait__SetSpinCount, "?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QAEXI@Z");
         SET(pSpinWait__ShouldSpinAgain, "?_ShouldSpinAgain@?$_SpinWait@$00@details@Concurrency@@IAE_NXZ");
         SET(pSpinWait__SpinOnce, "?_SpinOnce@?$_SpinWait@$00@details@Concurrency@@QAE_NXZ");
+
+        SET(preader_writer_lock_ctor, "??0reader_writer_lock@Concurrency@@QAE@XZ");
+        SET(preader_writer_lock_dtor, "??1reader_writer_lock@Concurrency@@QAE@XZ");
+        SET(preader_writer_lock_lock, "?lock@reader_writer_lock@Concurrency@@QAEXXZ");
+        SET(preader_writer_lock_lock_read, "?lock_read@reader_writer_lock@Concurrency@@QAEXXZ");
+        SET(preader_writer_lock_unlock, "?unlock@reader_writer_lock@Concurrency@@QAEXXZ");
+        SET(preader_writer_lock_try_lock, "?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ");
+        SET(preader_writer_lock_try_lock_read, "?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ");
     }
 
     init_thiscall_thunk();
@@ -557,6 +581,65 @@ static void test__SpinWait(void)
     call_func1(pSpinWait_dtor, &sp);
 }
 
+static DWORD WINAPI lock_read_thread(void *rw_lock)
+{
+    return (MSVCRT_bool)call_func1(preader_writer_lock_try_lock_read, rw_lock);
+}
+
+static void test_reader_writer_lock(void)
+{
+    /* define reader_writer_lock data big enough to hold every version of structure */
+    char rw_lock[100];
+    MSVCRT_bool ret;
+    HANDLE thread;
+    DWORD d;
+
+    call_func1(preader_writer_lock_ctor, rw_lock);
+
+    ret = call_func1(preader_writer_lock_try_lock, rw_lock);
+    ok(ret, "reader_writer_lock:try_lock returned %x\n", ret);
+    ret = call_func1(preader_writer_lock_try_lock, rw_lock);
+    ok(!ret, "reader_writer_lock:try_lock returned %x\n", ret);
+    ret = call_func1(preader_writer_lock_try_lock_read, rw_lock);
+    ok(!ret, "reader_writer_lock:try_lock_read returned %x\n", ret);
+    call_func1(preader_writer_lock_unlock, rw_lock);
+
+    /* test lock for read on already locked section */
+    ret = call_func1(preader_writer_lock_try_lock_read, rw_lock);
+    ok(ret, "reader_writer_lock:try_lock_read returned %x\n", ret);
+    ret = call_func1(preader_writer_lock_try_lock_read, rw_lock);
+    ok(ret, "reader_writer_lock:try_lock_read returned %x\n", ret);
+    ret = call_func1(preader_writer_lock_try_lock, rw_lock);
+    ok(!ret, "reader_writer_lock:try_lock returned %x\n", ret);
+    call_func1(preader_writer_lock_unlock, rw_lock);
+    ret = call_func1(preader_writer_lock_try_lock, rw_lock);
+    ok(!ret, "reader_writer_lock:try_lock returned %x\n", ret);
+    call_func1(preader_writer_lock_unlock, rw_lock);
+    ret = call_func1(preader_writer_lock_try_lock, rw_lock);
+    ok(ret, "reader_writer_lock:try_lock returned %x\n", ret);
+    call_func1(preader_writer_lock_unlock, rw_lock);
+
+    call_func1(preader_writer_lock_lock, rw_lock);
+    thread = CreateThread(NULL, 0, lock_read_thread, rw_lock, 0, NULL);
+    ok(thread != NULL, "CreateThread failed: %d\n", GetLastError());
+    WaitForSingleObject(thread, INFINITE);
+    ok(GetExitCodeThread(thread, &d), "GetExitCodeThread failed\n");
+    ok(!d, "reader_writer_lock::try_lock_read succeeded on already locked object\n");
+    CloseHandle(thread);
+    call_func1(preader_writer_lock_unlock, rw_lock);
+
+    call_func1(preader_writer_lock_lock_read, rw_lock);
+    thread = CreateThread(NULL, 0, lock_read_thread, rw_lock, 0, NULL);
+    ok(thread != NULL, "CreateThread failed: %d\n", GetLastError());
+    WaitForSingleObject(thread, INFINITE);
+    ok(GetExitCodeThread(thread, &d), "GetExitCodeThread failed\n");
+    ok(d, "reader_writer_lock::try_lock_read failed on object locked for reading\n");
+    CloseHandle(thread);
+    call_func1(preader_writer_lock_unlock, rw_lock);
+
+    call_func1(preader_writer_lock_dtor, rw_lock);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -568,4 +651,5 @@ START_TEST(msvcr100)
     test__aligned_msize();
     test_atoi();
     test__SpinWait();
+    test_reader_writer_lock();
 }
