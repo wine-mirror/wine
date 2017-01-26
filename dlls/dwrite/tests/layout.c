@@ -2161,7 +2161,6 @@ todo_wine
     hr = IDWriteTextLayout_GetLineMetrics(layout, &line, 1, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 1, "got %u\n", count);
-todo_wine
     ok(line.length == 4, "got %u\n", line.length);
     ok(line.isTrimmed, "got %d\n", line.isTrimmed);
 

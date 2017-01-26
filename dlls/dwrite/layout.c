@@ -1230,7 +1230,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         return E_OUTOFMEMORY;
 
     /* No need to iterate for that, use simple fact that:
-       <last cluster position> = first cluster position> + <sum of cluster lengths not including last one> */
+       <last cluster position> = <first cluster position> + <sum of cluster lengths not including last one> */
     last_cluster = first_cluster + cluster_count - 1;
     length = layout->clusters[last_cluster].position - layout->clusters[first_cluster].position +
         layout->clustermetrics[last_cluster].length;
@@ -1303,7 +1303,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     return S_OK;
 }
 
-static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS1 *metrics, UINT32 *line)
+static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS1 *metrics)
 {
     if (!layout->line_alloc) {
         layout->line_alloc = 5;
@@ -1320,9 +1320,7 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
         layout->line_alloc *= 2;
     }
 
-    layout->lines[*line] = *metrics;
-    layout->metrics.lineCount += 1;
-    *line += 1;
+    layout->lines[layout->metrics.lineCount++] = *metrics;
     return S_OK;
 }
 
@@ -1689,10 +1687,10 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
 }
 
 /* Adds zero width line, metrics are derived from font at specified text position. */
-static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, UINT32 pos, UINT32 *line)
+static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, UINT32 pos)
 {
+    DWRITE_LINE_METRICS1 metrics = { 0 };
     DWRITE_FONT_METRICS fontmetrics;
-    DWRITE_LINE_METRICS1 metrics;
     struct layout_range *range;
     IDWriteFontFace *fontface;
     IDWriteFont *font;
@@ -1716,25 +1714,126 @@ static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, U
     layout_get_font_height(range->fontsize, &fontmetrics, &metrics.baseline, &metrics.height);
     IDWriteFontFace_Release(fontface);
 
-    metrics.length = 0;
-    metrics.trailingWhitespaceLength = 0;
-    metrics.newlineLength = 0;
-    metrics.isTrimmed = FALSE;
-    metrics.leadingBefore = 0.0f;
-    metrics.leadingAfter = 0.0f;
-    return layout_set_line_metrics(layout, &metrics, line);
+    return layout_set_line_metrics(layout, &metrics);
+}
+
+static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_cluster, UINT32 last_cluster,
+        UINT32 *textpos)
+{
+    BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
+    struct layout_final_splitting_params params, prev_params;
+    UINT32 strlength, index, start, pos = *textpos;
+    UINT32 line = layout->metrics.lineCount, i;
+    DWRITE_LINE_METRICS1 metrics = { 0 };
+    FLOAT descent, trailingspacewidth;
+    const struct layout_run *run;
+    FLOAT width, origin_x;
+    HRESULT hr;
+
+    /* Take a look at clusters we got for this line in reverse order to set trailing properties for current line */
+    for (index = last_cluster, trailingspacewidth = 0.0f; index >= first_cluster; index--) {
+        DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
+        struct layout_cluster *lc = &layout->clusters[index];
+        WCHAR ch;
+
+        /* This also filters out clusters added from inline objects, those are never
+           treated as a white space. */
+        if (!cluster->isWhitespace)
+            break;
+
+        /* Every isNewline cluster is also isWhitespace, but not every
+           newline character cluster has isNewline set, so go back to original string. */
+        ch = lc->run->u.regular.descr.string[lc->position];
+        if (cluster->length == 1 && lb_is_newline_char(ch))
+            metrics.newlineLength += cluster->length;
+
+        metrics.trailingWhitespaceLength += cluster->length;
+        trailingspacewidth += cluster->width;
+    }
+
+    /* Line metrics length includes trailing whitespace length too */
+    for (i = first_cluster; i <= last_cluster; i++)
+        metrics.length += layout->clustermetrics[i].length;
+
+    /* Ignore trailing whitespaces */
+    while (last_cluster > first_cluster) {
+        if (!layout->clustermetrics[last_cluster].isWhitespace)
+            break;
+
+        last_cluster--;
+    }
+
+    /* Does not include trailing space width */
+    width = get_cluster_range_width(layout, first_cluster, last_cluster + 1);
+
+    layout_splitting_params_from_pos(layout, pos, &params);
+    prev_params = params;
+    run = layout->clusters[first_cluster].run;
+
+    /* Form runs from a range of clusters; this is what will be reported with DrawGlyphRun() */
+    origin_x = is_rtl ? layout->metrics.layoutWidth : 0.0f;
+    for (start = first_cluster, i = first_cluster; i <= last_cluster; i++) {
+        layout_splitting_params_from_pos(layout, pos, &params);
+
+        if (run != layout->clusters[i].run || !is_same_splitting_params(&prev_params, &params)) {
+            hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, &prev_params);
+            if (FAILED(hr))
+                return;
+
+            origin_x += is_rtl ? -get_cluster_range_width(layout, start, i) :
+                get_cluster_range_width(layout, start, i);
+            run = layout->clusters[i].run;
+            start = i;
+        }
+
+        prev_params = params;
+        pos += layout->clustermetrics[i].length;
+    }
+
+    /* Final run from what's left from cluster range */
+    hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, &prev_params);
+    if (FAILED(hr))
+        return;
+
+    /* Look for max baseline and descent for this line */
+    strlength = metrics.length - metrics.trailingWhitespaceLength;
+    index = last_cluster;
+    metrics.baseline = 0.0f;
+    descent = 0.0f;
+    while (strlength) {
+        DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
+        const struct layout_run *cur = layout->clusters[index].run;
+        FLOAT cur_descent = cur->height - cur->baseline;
+
+        if (cur->baseline > metrics.baseline)
+            metrics.baseline = cur->baseline;
+
+        if (cur_descent > descent)
+            descent = cur_descent;
+
+        strlength -= cluster->length;
+        index--;
+    }
+
+    layout->metrics.width = max(width, layout->metrics.width);
+    layout->metrics.widthIncludingTrailingWhitespace = max(width + trailingspacewidth,
+        layout->metrics.widthIncludingTrailingWhitespace);
+
+    metrics.height = descent + metrics.baseline;
+    metrics.isTrimmed = width > layout->metrics.layoutWidth;
+    layout_set_line_metrics(layout, &metrics);
+
+    *textpos += metrics.length;
 }
 
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
-    struct layout_final_splitting_params prev_params, params;
     struct layout_effective_run *erun, *first_underlined;
+    UINT32 i, start, line, textpos, last_breaking_point;
     struct layout_effective_inline *inrun;
-    const struct layout_run *run;
+    FLOAT width, origin_y;
     DWRITE_LINE_METRICS1 metrics;
-    FLOAT width, origin_x, origin_y;
-    UINT32 i, start, line, textpos;
     HRESULT hr;
 
     if (!(layout->recompute & RECOMPUTE_LINES))
@@ -1747,150 +1846,70 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         return hr;
 
     layout->metrics.lineCount = 0;
-    origin_x = is_rtl ? layout->metrics.layoutWidth : 0.0f;
     line = 0;
     memset(&metrics, 0, sizeof(metrics));
 
-    layout_splitting_params_from_pos(layout, 0, &params);
-    prev_params = params;
+    layout->metrics.height = 0.0f;
+    layout->metrics.width = 0.0f;
+    layout->metrics.widthIncludingTrailingWhitespace = 0.0f;
 
-    if (layout->cluster_count)
-        run = layout->clusters[0].run;
-    for (i = 0, start = 0, textpos = 0, width = 0.0f; i < layout->cluster_count; i++) {
-        BOOL overflow;
+    last_breaking_point = ~0u;
 
-        layout_splitting_params_from_pos(layout, textpos, &params);
+    for (i = 0, start = 0, width = 0.0f, textpos = 0; i < layout->cluster_count; i++) {
+        BOOL overflow = FALSE;
 
-        /* switched to next nominal run, at this point all previous pending clusters are already
-           checked for layout line overflow, so new effective run will fit in current line */
-        if (run != layout->clusters[i].run || !is_same_splitting_params(&prev_params, &params)) {
-            hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, &prev_params);
-            if (FAILED(hr))
-                return hr;
-            origin_x += is_rtl ? -get_cluster_range_width(layout, start, i) :
-                                  get_cluster_range_width(layout, start, i);
-            run = layout->clusters[i].run;
-            start = i;
+        while (i < layout->cluster_count && !layout->clustermetrics[i].isNewline) {
+            /* Check for overflow */
+            overflow = ((width + layout->clustermetrics[i].width > layout->metrics.layoutWidth) &&
+                    (layout->format.wrapping != DWRITE_WORD_WRAPPING_NO_WRAP));
+            if (overflow)
+                break;
+
+            if (layout->clustermetrics[i].canWrapLineAfter)
+                last_breaking_point = i;
+            width += layout->clustermetrics[i].width;
+            i++;
         }
+        i = min(i, layout->cluster_count - 1);
 
-        overflow = layout->clustermetrics[i].canWrapLineAfter &&
-            (width + layout->clustermetrics[i].width > layout->metrics.layoutWidth) &&
-            (layout->format.wrapping != DWRITE_WORD_WRAPPING_NO_WRAP);
-        /* check if we got new */
-        if (overflow ||
-            layout->clustermetrics[i].isNewline || /* always wrap on new line */
-            i == layout->cluster_count - 1) /* end of the text */ {
-
-            UINT32 strlength, last_cluster, index;
-            FLOAT descent, trailingspacewidth;
-            struct layout_final_splitting_params *p;
-
-            if (!overflow) {
-                width += layout->clustermetrics[i].width;
-                metrics.length += layout->clustermetrics[i].length;
-                last_cluster = i;
-                p = &params;
+        if (overflow) {
+            /* Overflown on whitespace, ignore it */
+            if (layout->clustermetrics[i].isWhitespace && layout->clustermetrics[i].canWrapLineAfter)
+                i = i;
+            /* Use most recently found breaking point */
+            else if (last_breaking_point != ~0u) {
+                i = last_breaking_point;
+                last_breaking_point = ~0u;
             }
             else {
-                last_cluster = i ? i - 1 : i;
-                p = &prev_params;
+                /* Otherwise proceed forward to next newline or breaking point */
+                for (; i < layout->cluster_count; i++)
+                    if (layout->clustermetrics[i].canWrapLineAfter || layout->clustermetrics[i].isNewline)
+                        break;
             }
-
-            if (i >= start) {
-                hr = layout_add_effective_run(layout, run, start, last_cluster - start + 1, line, origin_x, p);
-                if (FAILED(hr))
-                    return hr;
-                /* we don't need to update origin for next run as we're going to wrap */
-            }
-
-            /* take a look at clusters we got for this line in reverse order to set
-               trailing properties for current line */
-            strlength = metrics.length;
-            index = last_cluster;
-            trailingspacewidth = 0.0f;
-            while (strlength) {
-                DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
-                struct layout_cluster *lc = &layout->clusters[index];
-                WCHAR ch;
-
-                /* This also filters out clusters added from inline objects, those are never
-                   treated as a white space. */
-                if (!cluster->isWhitespace)
-                    break;
-
-                /* Every isNewline cluster is also isWhitespace, but not every
-                   newline character cluster has isNewline set, so go back to original string. */
-                ch = lc->run->u.regular.descr.string[lc->position];
-                if (cluster->length == 1 && lb_is_newline_char(ch))
-                    metrics.newlineLength += cluster->length;
-
-                metrics.trailingWhitespaceLength += cluster->length;
-                trailingspacewidth += cluster->width;
-
-                strlength -= cluster->length;
-                index--;
-            }
-
-            /* look for max baseline and descent for this line */
-            strlength = metrics.length;
-            index = last_cluster;
-            metrics.baseline = 0.0f;
-            descent = 0.0f;
-            while (strlength) {
-                DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
-                const struct layout_run *cur = layout->clusters[index].run;
-                FLOAT cur_descent = cur->height - cur->baseline;
-
-                if (cur->baseline > metrics.baseline)
-                    metrics.baseline = cur->baseline;
-
-                if (cur_descent > descent)
-                    descent = cur_descent;
-
-                strlength -= cluster->length;
-                index--;
-            }
-            metrics.height = descent + metrics.baseline;
-
-            if (width > layout->metrics.widthIncludingTrailingWhitespace)
-                layout->metrics.widthIncludingTrailingWhitespace = width;
-            if (width - trailingspacewidth > layout->metrics.width)
-                layout->metrics.width = width - trailingspacewidth;
-
-            metrics.isTrimmed = width > layout->metrics.layoutWidth;
-            hr = layout_set_line_metrics(layout, &metrics, &line);
-            if (FAILED(hr))
-                return hr;
-
-            width = layout->clustermetrics[i].width;
-            memset(&metrics, 0, sizeof(metrics));
-            origin_x = is_rtl ? layout->metrics.layoutWidth : 0.0f;
-            start = i;
         }
-        else {
-            metrics.length += layout->clustermetrics[i].length;
-            width += layout->clustermetrics[i].width;
-        }
+        i = min(i, layout->cluster_count - 1);
 
-        prev_params = params;
-        textpos += layout->clustermetrics[i].length;
+        layout_add_line(layout, start, i, &textpos);
+        start = i + 1;
+        width = 0.0f;
     }
 
     /* Add dummy line if:
        - there's no text, metrics come from first range in this case;
        - last ended with a mandatory break, metrics come from last text position.
     */
+    line = layout->metrics.lineCount - 1;
     if (layout->len == 0)
-        hr = layout_set_dummy_line_metrics(layout, 0, &line);
-    else if (layout->clustermetrics[layout->cluster_count-1].isNewline)
-        hr = layout_set_dummy_line_metrics(layout, layout->len-1, &line);
+        hr = layout_set_dummy_line_metrics(layout, 0);
+    else if (layout->clustermetrics[layout->cluster_count - 1].isNewline)
+        hr = layout_set_dummy_line_metrics(layout, layout->len - 1);
     if (FAILED(hr))
         return hr;
 
     layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0.0f;
     layout->metrics.top = 0.0f;
     layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
-    layout->metrics.height = 0.0f;
 
     /* Now all line info is here, update effective runs positions in flow direction */
     erun = layout_get_next_erun(layout, NULL);
@@ -1921,15 +1940,16 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             inrun->origin_y = origin_y - inrun->run->baseline;
             inrun = layout_get_next_inline_run(layout, inrun);
         }
-
-        layout->metrics.height += layout->lines[line].height;
     }
+    /* Use last line origin y + line descent as total content height */
+    line--;
+    layout->metrics.height = origin_y + layout->lines[line].height - layout->lines[line].baseline;
 
-    /* initial alignment is always leading */
+    /* Initial alignment is always leading */
     if (layout->format.textalignment != DWRITE_TEXT_ALIGNMENT_LEADING)
         layout_apply_text_alignment(layout);
 
-    /* initial paragraph alignment is always near */
+    /* Initial paragraph alignment is always near */
     if (layout->format.paralign != DWRITE_PARAGRAPH_ALIGNMENT_NEAR)
         layout_apply_par_alignment(layout);
 
@@ -1939,7 +1959,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     return hr;
 }
 
-static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
+static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum layout_range_attr_kind attr,
+        struct layout_range_attr_value *value)
 {
     struct layout_range_spacing const *range_spacing = (struct layout_range_spacing*)h;
     struct layout_range_iface const *range_iface = (struct layout_range_iface*)h;
