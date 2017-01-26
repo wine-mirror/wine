@@ -154,6 +154,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_stencil_texturing",            ARB_STENCIL_TEXTURING         },
     {"GL_ARB_sync",                         ARB_SYNC                      },
     {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP      },
+    {"GL_ARB_texture_buffer_object",        ARB_TEXTURE_BUFFER_OBJECT     },
     {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION       },
     {"GL_ARB_texture_compression_bptc",     ARB_TEXTURE_COMPRESSION_BPTC  },
     {"GL_ARB_texture_compression_rgtc",     ARB_TEXTURE_COMPRESSION_RGTC  },
@@ -2784,6 +2785,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetSynciv)
     USE_GL_FUNC(glIsSync)
     USE_GL_FUNC(glWaitSync)
+    /* GL_ARB_texture_buffer_object */
+    USE_GL_FUNC(glTexBufferARB)
     /* GL_ARB_texture_compression */
     USE_GL_FUNC(glCompressedTexImage2DARB)
     USE_GL_FUNC(glCompressedTexImage3DARB)
@@ -3156,6 +3159,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glShaderSource)             /* OpenGL 2.0 */
     USE_GL_FUNC(glStencilFuncSeparate)      /* OpenGL 2.0 */
     USE_GL_FUNC(glStencilOpSeparate)        /* OpenGL 2.0 */
+    USE_GL_FUNC(glTexBuffer)                /* OpenGL 3.1 */
     USE_GL_FUNC(glTexImage3D)               /* OpenGL 1.2 */
     USE_GL_FUNC(glTexSubImage3D)            /* OpenGL 1.2 */
     USE_GL_FUNC(glUniform1f)                /* OpenGL 2.0 */
@@ -3277,6 +3281,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glLinkProgram, glLinkProgramARB);
     MAP_GL_FUNCTION(glMapBuffer, glMapBufferARB);
     MAP_GL_FUNCTION_CAST(glShaderSource, glShaderSourceARB);
+    MAP_GL_FUNCTION(glTexBuffer, glTexBufferARB);
     MAP_GL_FUNCTION_CAST(glTexImage3D, glTexImage3DEXT);
     MAP_GL_FUNCTION(glTexSubImage3D, glTexSubImage3DEXT);
     MAP_GL_FUNCTION(glUniform1f, glUniform1fARB);
@@ -3621,6 +3626,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
 
         {ARB_COPY_BUFFER,                  MAKEDWORD_VERSION(3, 1)},
         {ARB_DRAW_INSTANCED,               MAKEDWORD_VERSION(3, 1)},
+        {ARB_TEXTURE_BUFFER_OBJECT,        MAKEDWORD_VERSION(3, 1)},
         {ARB_UNIFORM_BUFFER_OBJECT,        MAKEDWORD_VERSION(3, 1)},
         {EXT_TEXTURE_SNORM,                MAKEDWORD_VERSION(3, 1)},
         /* We don't need or want GL_ARB_texture_rectangle (core in 3.1). */
