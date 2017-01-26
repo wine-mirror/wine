@@ -201,6 +201,20 @@ the builtin load fails; load shell32 always as builtin and comctl32
 always as native; oleaut32 will be disabled.
 .RE
 .TP
+.B WINEPATH
+Specifies additional path(s) to be prepended to the default Windows
+.B PATH
+environment variable. This is a list of Windows-style directories
+separated by ";".
+.RS
+.PP
+For a permanent alternative, edit (create if needed) the
+.B PATH
+value under the
+.B HKEY_CURRENT_USER\\\\Environment
+registry key.
+.RE
+.TP
 .B WINEARCH
 Specifies the Windows architecture to support. It can be set either to
 .B win32
