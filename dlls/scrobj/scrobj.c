@@ -34,6 +34,81 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrobj);
 
 static HINSTANCE scrobj_instance;
 
+typedef enum tid_t
+{
+    NULL_tid,
+    IGenScriptletTLib_tid,
+    LAST_tid
+} tid_t;
+
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static REFIID tid_ids[] = {
+    &IID_NULL,
+    &IID_IGenScriptletTLib,
+};
+
+static HRESULT load_typelib(void)
+{
+    HRESULT hres;
+    ITypeLib *tl;
+
+    if (typelib)
+        return S_OK;
+
+    hres = LoadRegTypeLib(&LIBID_Scriptlet, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    if (FAILED(hres))
+    {
+        ERR("LoadRegTypeLib failed: %08x\n", hres);
+        return hres;
+    }
+
+    if (InterlockedCompareExchangePointer((void **)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
+    return hres;
+}
+
+static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hres;
+
+    if (FAILED(hres = load_typelib()))
+        return hres;
+
+    if (!typeinfos[tid])
+    {
+        ITypeInfo *ti;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if (FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            return hres;
+        }
+
+        if (InterlockedCompareExchangePointer((void **)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    ITypeInfo_AddRef(typeinfos[tid]);
+    return S_OK;
+}
+
+static void release_typelib(void)
+{
+    unsigned i;
+
+    if (!typelib)
+        return;
+
+    for (i = 0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+        if (typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
+
 struct scriptlet_typelib
 {
     IGenScriptletTLib IGenScriptletTLib_iface;
@@ -89,9 +164,10 @@ static HRESULT WINAPI scriptlet_typelib_GetTypeInfoCount(IGenScriptletTLib *ifac
 {
     struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
 
-    FIXME("(%p, %p): stub\n", This, count);
+    TRACE("(%p, %p)\n", This, count);
 
-    return E_NOTIMPL;
+    *count = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI scriptlet_typelib_GetTypeInfo(IGenScriptletTLib *iface, UINT index, LCID lcid,
@@ -99,30 +175,49 @@ static HRESULT WINAPI scriptlet_typelib_GetTypeInfo(IGenScriptletTLib *iface, UI
 {
     struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
 
-    FIXME("(%p, %u, %x, %p): stub\n", This, index, lcid, tinfo);
+    TRACE("(%p, %u, %x, %p)\n", This, index, lcid, tinfo);
 
-    return E_NOTIMPL;
+    return get_typeinfo(IGenScriptletTLib_tid, tinfo);
 }
 
 static HRESULT WINAPI scriptlet_typelib_GetIDsOfNames(IGenScriptletTLib *iface, REFIID riid, LPOLESTR *names,
     UINT cNames, LCID lcid, DISPID *dispid)
 {
     struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    FIXME("(%p, %s, %p, %u, %x, %p): stub\n", This, debugstr_guid(riid), names, cNames, lcid, dispid);
+    TRACE("(%p, %s, %p, %u, %x, %p)\n", This, debugstr_guid(riid), names, cNames, lcid, dispid);
 
-    return E_NOTIMPL;
+    hr = get_typeinfo(IGenScriptletTLib_tid, &typeinfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, cNames, dispid);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI scriptlet_typelib_Invoke(IGenScriptletTLib *iface, DISPID dispid, REFIID riid,
     LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *ei, UINT *argerr)
 {
     struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    FIXME("(%p, %d, %s, %x, %x, %p, %p, %p, %p): stub\n", This, dispid, debugstr_guid(riid), lcid, flags,
+    TRACE("(%p, %d, %s, %x, %x, %p, %p, %p, %p)\n", This, dispid, debugstr_guid(riid), lcid, flags,
         params, result, ei, argerr);
 
-    return E_NOTIMPL;
+    hr = get_typeinfo(IGenScriptletTLib_tid, &typeinfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &This->IGenScriptletTLib_iface, dispid, flags,
+                params, result, ei, argerr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI scriptlet_typelib_AddURL(IGenScriptletTLib *iface, BSTR url)
@@ -297,6 +392,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hinst);
             scrobj_instance = hinst;
+            break;
+        case DLL_PROCESS_DETACH:
+            if (reserved) break;
+            release_typelib();
             break;
     }
     return TRUE;
