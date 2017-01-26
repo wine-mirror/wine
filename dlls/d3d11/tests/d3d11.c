@@ -12956,7 +12956,7 @@ static void test_sm5_bufinfo_instruction(void)
             U(srv_desc).BufferEx.NumElements = test->view_element_count;
             U(srv_desc).BufferEx.Flags = 0;
             if (buffer_desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS)
-                U(srv_desc).BufferEx.Flags |= D3D11_BUFFER_UAV_FLAG_RAW;
+                U(srv_desc).BufferEx.Flags |= D3D11_BUFFEREX_SRV_FLAG_RAW;
             hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srv);
             ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
             uav = NULL;
