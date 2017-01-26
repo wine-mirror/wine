@@ -483,12 +483,13 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         return;
     }
 
-    if (fb->depth_stencil && state->render_states[WINED3D_RS_ZWRITEENABLE])
+    if (dsv && state->render_states[WINED3D_RS_ZWRITEENABLE])
     {
-        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(fb->depth_stencil);
+        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(dsv);
         DWORD location = context->render_offscreen ? ds->container->resource.draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        surface_modify_ds_location(ds, location);
+        wined3d_texture_validate_location(ds->container, dsv->sub_resource_idx, location);
+        wined3d_texture_invalidate_location(ds->container, dsv->sub_resource_idx, ~location);
     }
 
     if ((!gl_info->supported[WINED3D_GL_VERSION_2_0]

@@ -712,6 +712,7 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_device *device = src_texture->resource.device;
+    unsigned int dst_sub_resource_idx;
 
     if (!fbo_blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_DEPTH_BLIT,
             src_rect, src_texture->resource.usage, src_texture->resource.pool, src_texture->resource.format,
@@ -720,7 +721,9 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
 
     surface_depth_blt_fbo(device, src_surface, src_location, src_rect, dst_surface, dst_location, dst_rect);
 
-    surface_modify_ds_location(dst_surface, dst_location);
+    dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
+    wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_location);
+    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_location);
 
     return WINED3D_OK;
 }
@@ -2486,18 +2489,6 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     /* Default: Fall back to the generic blt. Not an error, a TRACE is enough */
     TRACE("Didn't find any usable render target setup for hw blit, falling back to software\n");
     return WINED3DERR_INVALIDCALL;
-}
-
-void surface_modify_ds_location(struct wined3d_surface *surface, DWORD location)
-{
-    struct wined3d_texture *texture = surface->container;
-    unsigned int sub_resource_idx;
-
-    TRACE("surface %p, new location %#x.\n", surface, location);
-
-    sub_resource_idx = surface_get_sub_resource_idx(surface);
-    wined3d_texture_validate_location(texture, sub_resource_idx, location);
-    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~location);
 }
 
 static DWORD resource_access_from_location(DWORD location)

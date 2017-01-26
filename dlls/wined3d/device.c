@@ -204,8 +204,8 @@ void device_switch_onscreen_ds(struct wined3d_device *device,
     if (device->onscreen_depth_stencil)
     {
         surface_load_location(device->onscreen_depth_stencil, context, WINED3D_LOCATION_TEXTURE_RGB);
-
-        surface_modify_ds_location(device->onscreen_depth_stencil, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_texture_invalidate_location(device->onscreen_depth_stencil->container,
+                surface_get_sub_resource_idx(device->onscreen_depth_stencil), ~WINED3D_LOCATION_TEXTURE_RGB);
         wined3d_texture_decref(device->onscreen_depth_stencil->container);
     }
     device->onscreen_depth_stencil = depth_stencil;
@@ -331,7 +331,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         DWORD location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        surface_modify_ds_location(depth_stencil, location);
+        wined3d_texture_validate_location(depth_stencil->container, dsv->sub_resource_idx, location);
+        wined3d_texture_invalidate_location(depth_stencil->container, dsv->sub_resource_idx, ~location);
 
         gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));
