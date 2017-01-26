@@ -720,8 +720,7 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
 
     surface_depth_blt_fbo(device, src_surface, src_location, src_rect, dst_surface, dst_location, dst_rect);
 
-    surface_modify_ds_location(dst_surface, dst_location,
-            dst_surface->ds_current_size.cx, dst_surface->ds_current_size.cy);
+    surface_modify_ds_location(dst_surface, dst_location);
 
     return WINED3D_OK;
 }
@@ -2489,17 +2488,14 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     return WINED3DERR_INVALIDCALL;
 }
 
-void surface_modify_ds_location(struct wined3d_surface *surface,
-        DWORD location, UINT w, UINT h)
+void surface_modify_ds_location(struct wined3d_surface *surface, DWORD location)
 {
     struct wined3d_texture *texture = surface->container;
     unsigned int sub_resource_idx;
 
-    TRACE("surface %p, new location %#x, w %u, h %u.\n", surface, location, w, h);
+    TRACE("surface %p, new location %#x.\n", surface, location);
 
     sub_resource_idx = surface_get_sub_resource_idx(surface);
-    surface->ds_current_size.cx = w;
-    surface->ds_current_size.cy = h;
     wined3d_texture_validate_location(texture, sub_resource_idx, location);
     wined3d_texture_invalidate_location(texture, sub_resource_idx, ~location);
 }
@@ -2827,17 +2823,12 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     struct wined3d_texture_sub_resource *sub_resource;
-    unsigned int surface_w, surface_h;
     HRESULT hr;
 
     TRACE("surface %p, location %s.\n", surface, wined3d_debug_location(location));
 
-    surface_w = wined3d_texture_get_level_width(texture, surface->texture_level);
-    surface_h = wined3d_texture_get_level_height(texture, surface->texture_level);
-
     sub_resource = &texture->sub_resources[sub_resource_idx];
-    if (sub_resource->locations & location && (!(texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-            || (surface->ds_current_size.cx == surface_w && surface->ds_current_size.cy == surface_h)))
+    if (sub_resource->locations & location)
     {
         TRACE("Location (%#x) is already up to date.\n", location);
         return WINED3D_OK;
@@ -2906,12 +2897,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
 
 done:
     wined3d_texture_validate_location(texture, sub_resource_idx, location);
-
-    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-    {
-        surface->ds_current_size.cx = surface_w;
-        surface->ds_current_size.cy = surface_h;
-    }
 
     return WINED3D_OK;
 }

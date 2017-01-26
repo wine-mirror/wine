@@ -205,9 +205,7 @@ void device_switch_onscreen_ds(struct wined3d_device *device,
     {
         surface_load_location(device->onscreen_depth_stencil, context, WINED3D_LOCATION_TEXTURE_RGB);
 
-        surface_modify_ds_location(device->onscreen_depth_stencil, WINED3D_LOCATION_TEXTURE_RGB,
-                device->onscreen_depth_stencil->ds_current_size.cx,
-                device->onscreen_depth_stencil->ds_current_size.cy);
+        surface_modify_ds_location(device->onscreen_depth_stencil, WINED3D_LOCATION_TEXTURE_RGB);
         wined3d_texture_decref(device->onscreen_depth_stencil->container);
     }
     device->onscreen_depth_stencil = depth_stencil;
@@ -231,62 +229,6 @@ static BOOL is_full_clear(const struct wined3d_surface *target, const RECT *draw
     return TRUE;
 }
 
-static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context *context,
-        DWORD location, const RECT *draw_rect, UINT rect_count, const RECT *clear_rect, RECT *out_rect)
-{
-    struct wined3d_texture_sub_resource *sub_resource = surface_get_sub_resource(ds);
-    RECT current_rect, r;
-
-    if (sub_resource->locations & WINED3D_LOCATION_DISCARDED)
-    {
-        /* Depth buffer was discarded, make it entirely current in its new location since
-         * there is no other place where we would get data anyway. */
-        SetRect(out_rect, 0, 0,
-                wined3d_texture_get_level_width(ds->container, ds->texture_level),
-                wined3d_texture_get_level_height(ds->container, ds->texture_level));
-        return;
-    }
-
-    if (sub_resource->locations & location)
-        SetRect(&current_rect, 0, 0,
-                ds->ds_current_size.cx,
-                ds->ds_current_size.cy);
-    else
-        SetRectEmpty(&current_rect);
-
-    IntersectRect(&r, draw_rect, &current_rect);
-    if (EqualRect(&r, draw_rect))
-    {
-        /* current_rect ⊇ draw_rect, modify only. */
-        SetRect(out_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
-        return;
-    }
-
-    if (EqualRect(&r, &current_rect))
-    {
-        /* draw_rect ⊇ current_rect, test if we're doing a full clear. */
-
-        if (!rect_count)
-        {
-            /* Full clear, modify only. */
-            *out_rect = *draw_rect;
-            return;
-        }
-
-        IntersectRect(&r, draw_rect, clear_rect);
-        if (EqualRect(&r, draw_rect))
-        {
-            /* clear_rect ⊇ draw_rect, modify only. */
-            *out_rect = *draw_rect;
-            return;
-        }
-    }
-
-    /* Full load. */
-    surface_load_location(ds, context, location);
-    SetRect(out_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
-}
-
 void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
         UINT rect_count, const RECT *clear_rect, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
         float depth, DWORD stencil)
@@ -303,7 +245,6 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     GLbitfield clear_mask = 0;
     BOOL render_offscreen;
     unsigned int i;
-    RECT ds_rect = {0};
 
     context = context_acquire(device, target);
     if (!context->valid)
@@ -361,8 +302,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
         if (!render_offscreen && depth_stencil != device->onscreen_depth_stencil)
             device_switch_onscreen_ds(device, context, depth_stencil);
-        prepare_ds_clear(depth_stencil, context, location,
-                draw_rect, rect_count, clear_rect, &ds_rect);
+        surface_load_location(depth_stencil, context, location);
     }
 
     if (!context_apply_clear_state(context, state, rt_count, fb))
@@ -391,7 +331,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         DWORD location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        surface_modify_ds_location(depth_stencil, location, ds_rect.right, ds_rect.bottom);
+        surface_modify_ds_location(depth_stencil, location);
 
         gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));

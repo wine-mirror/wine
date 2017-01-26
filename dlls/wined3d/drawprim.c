@@ -467,23 +467,10 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
         {
-            RECT current_rect, draw_rect, r;
-
             if (!context->render_offscreen && ds != device->onscreen_depth_stencil)
                 device_switch_onscreen_ds(device, context, ds);
 
-            if (surface_get_sub_resource(ds)->locations & location)
-                SetRect(&current_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
-            else
-                SetRectEmpty(&current_rect);
-
-            wined3d_get_draw_rect(state, &draw_rect);
-
-            IntersectRect(&r, &draw_rect, &current_rect);
-            if (!EqualRect(&r, &draw_rect))
-                wined3d_texture_load_location(ds->container, dsv->sub_resource_idx, context, location);
-            else
-                wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
+            wined3d_texture_load_location(ds->container, dsv->sub_resource_idx, context, location);
         }
         else
             wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
@@ -501,7 +488,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(fb->depth_stencil);
         DWORD location = context->render_offscreen ? ds->container->resource.draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
+        surface_modify_ds_location(ds, location);
     }
 
     if ((!gl_info->supported[WINED3D_GL_VERSION_2_0]
