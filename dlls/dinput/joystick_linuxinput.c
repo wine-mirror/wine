@@ -1351,7 +1351,7 @@ static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE
     }
     case DISFFC_PAUSE:
     case DISFFC_CONTINUE:
-	FIXME("No support for Pause or Continue in linux\n");
+        FIXME("No support for Pause or Continue in linux\n");
         break;
 
     case DISFFC_SETACTUATORSOFF:
@@ -1360,8 +1360,8 @@ static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE
         break;
 
     default:
-	FIXME("Unknown Force Feedback Command!\n");
-	return DIERR_INVALIDPARAM;
+        WARN("Unknown Force Feedback Command %u!\n", dwFlags);
+        return DIERR_INVALIDPARAM;
     }
     return DI_OK;
 #else
