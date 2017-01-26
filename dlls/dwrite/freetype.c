@@ -639,6 +639,32 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
     SetRect(&bitmap->bbox, bbox.xMin, -bbox.yMax, bbox.xMax, -bbox.yMin);
 }
 
+void freetype_get_design_glyph_bbox(IDWriteFontFace4 *fontface, UINT16 unitsperEm, UINT16 glyph, RECT *bbox)
+{
+    FTC_ScalerRec scaler;
+    FT_Size size;
+
+    scaler.face_id = fontface;
+    scaler.width  = unitsperEm;
+    scaler.height = unitsperEm;
+    scaler.pixel = 1;
+    scaler.x_res = 0;
+    scaler.y_res = 0;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
+         if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_SCALE) == 0) {
+             FT_Glyph_Metrics *metrics = &size->face->glyph->metrics;
+
+             bbox->left = metrics->horiBearingX;
+             bbox->right = bbox->left + metrics->horiAdvance;
+             bbox->top = -metrics->horiBearingY;
+             bbox->bottom = bbox->top + metrics->height;
+         }
+    }
+    LeaveCriticalSection(&freetype_cs);
+}
+
 static BOOL freetype_get_aliased_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_Glyph glyph)
 {
     const RECT *bbox = &bitmap->bbox;
@@ -887,6 +913,11 @@ INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace4 *fontface, UINT16 le
 void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
     memset(&bitmap->bbox, 0, sizeof(bitmap->bbox));
+}
+
+void freetype_get_design_glyph_bbox(IDWriteFontFace4 *fontface, UINT16 unitsperEm, UINT16 glyph, RECT *bbox)
+{
+    memset(bbox, 0, sizeof(*bbox));
 }
 
 BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)

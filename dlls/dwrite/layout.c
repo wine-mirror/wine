@@ -223,10 +223,12 @@ struct layout_cluster {
 };
 
 enum layout_recompute_mask {
-    RECOMPUTE_CLUSTERS      = 1 << 0,
-    RECOMPUTE_MINIMAL_WIDTH = 1 << 1,
-    RECOMPUTE_LINES         = 1 << 2,
-    RECOMPUTE_EVERYTHING    = 0xffff
+    RECOMPUTE_CLUSTERS            = 1 << 0,
+    RECOMPUTE_MINIMAL_WIDTH       = 1 << 1,
+    RECOMPUTE_LINES               = 1 << 2,
+    RECOMPUTE_OVERHANGS           = 1 << 3,
+    RECOMPUTE_LINES_AND_OVERHANGS = RECOMPUTE_LINES | RECOMPUTE_OVERHANGS,
+    RECOMPUTE_EVERYTHING          = 0xffff
 };
 
 struct dwrite_textlayout {
@@ -267,6 +269,7 @@ struct dwrite_textlayout {
     UINT32 line_alloc;
 
     DWRITE_TEXT_METRICS1 metrics;
+    DWRITE_OVERHANG_METRICS overhangs;
 
     DWRITE_MEASURING_MODE measuringmode;
 
@@ -2905,7 +2908,7 @@ static HRESULT WINAPI dwritetextlayout_SetMaxWidth(IDWriteTextLayout3 *iface, FL
     This->metrics.layoutWidth = maxWidth;
 
     if (changed)
-        This->recompute |= RECOMPUTE_LINES;
+        This->recompute |= RECOMPUTE_LINES_AND_OVERHANGS;
     return S_OK;
 }
 
@@ -2923,7 +2926,7 @@ static HRESULT WINAPI dwritetextlayout_SetMaxHeight(IDWriteTextLayout3 *iface, F
     This->metrics.layoutHeight = maxHeight;
 
     if (changed)
-        This->recompute |= RECOMPUTE_LINES;
+        This->recompute |= RECOMPUTE_LINES_AND_OVERHANGS;
     return S_OK;
 }
 
@@ -3468,11 +3471,119 @@ static HRESULT WINAPI dwritetextlayout_GetMetrics(IDWriteTextLayout3 *iface, DWR
     return hr;
 }
 
-static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout3 *iface, DWRITE_OVERHANG_METRICS *overhangs)
+static void scale_glyph_bbox(RECT *bbox, FLOAT emSize, UINT16 units_per_em, D2D_RECT_F *ret)
+{
+#define SCALE(x) ((FLOAT)x * emSize / (FLOAT)units_per_em)
+    ret->left = SCALE(bbox->left);
+    ret->right = SCALE(bbox->right);
+    ret->top = SCALE(bbox->top);
+    ret->bottom = SCALE(bbox->bottom);
+#undef SCALE
+}
+
+static void d2d_rect_offset(D2D_RECT_F *rect, FLOAT x, FLOAT y)
+{
+    rect->left += x;
+    rect->right += x;
+    rect->top += y;
+    rect->bottom += y;
+}
+
+static BOOL d2d_rect_is_empty(const D2D_RECT_F *rect)
+{
+    return ((rect->left >= rect->right) || (rect->top >= rect->bottom));
+}
+
+static void d2d_rect_union(D2D_RECT_F *dst, const D2D_RECT_F *src)
+{
+    if (d2d_rect_is_empty(dst)) {
+        if (d2d_rect_is_empty(src)) {
+            dst->left = dst->right = dst->top = dst->bottom = 0.0f;
+            return;
+        }
+        else
+            *dst = *src;
+    }
+    else {
+        if (!d2d_rect_is_empty(src)) {
+            dst->left   = min(dst->left, src->left);
+            dst->right  = max(dst->right, src->right);
+            dst->top    = min(dst->top, src->top);
+            dst->bottom = max(dst->bottom, src->bottom);
+        }
+    }
+}
+
+static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout_effective_run *run, D2D_RECT_F *bbox)
+{
+    const struct regular_layout_run *regular = &run->run->u.regular;
+    UINT32 start_glyph = regular->clustermap[run->start];
+    const DWRITE_GLYPH_RUN *glyph_run = &regular->run;
+    DWRITE_FONT_METRICS font_metrics;
+    D2D_POINT_2F origin = { 0 };
+    UINT32 i;
+
+    IDWriteFontFace_GetMetrics(glyph_run->fontFace, &font_metrics);
+
+    origin.x = run->origin_x + run->align_dx;
+    origin.y = run->origin_y;
+    for (i = 0; i < run->glyphcount; i++) {
+        D2D_RECT_F glyph_bbox;
+        RECT design_bbox;
+
+        freetype_get_design_glyph_bbox((IDWriteFontFace4 *)glyph_run->fontFace, font_metrics.designUnitsPerEm,
+                glyph_run->glyphIndices[i + start_glyph], &design_bbox);
+
+        scale_glyph_bbox(&design_bbox, glyph_run->fontEmSize, font_metrics.designUnitsPerEm, &glyph_bbox);
+        d2d_rect_offset(&glyph_bbox, origin.x + glyph_run->glyphOffsets[i + start_glyph].advanceOffset,
+                origin.y + glyph_run->glyphOffsets[i + start_glyph].ascenderOffset);
+        d2d_rect_union(bbox, &glyph_bbox);
+
+        /* FIXME: take care of vertical/rtl */
+        origin.x += glyph_run->glyphAdvances[i + start_glyph];
+    }
+}
+
+static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout3 *iface,
+        DWRITE_OVERHANG_METRICS *overhangs)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    FIXME("(%p)->(%p): stub\n", This, overhangs);
-    return E_NOTIMPL;
+    struct layout_effective_run *run;
+    D2D_RECT_F bbox = { 0 };
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, overhangs);
+
+    memset(overhangs, 0, sizeof(*overhangs));
+
+    if (!(This->recompute & RECOMPUTE_OVERHANGS)) {
+        *overhangs = This->overhangs;
+        return S_OK;
+    }
+
+    hr = layout_compute_effective_runs(This);
+    if (FAILED(hr))
+        return hr;
+
+    LIST_FOR_EACH_ENTRY(run, &This->eruns, struct layout_effective_run, entry) {
+        D2D_RECT_F run_bbox;
+
+        layout_get_erun_bbox(This, run, &run_bbox);
+        d2d_rect_union(&bbox, &run_bbox);
+    }
+
+    /* FIXME: iterate over inline objects too */
+
+    /* deltas from text content metrics */
+    This->overhangs.left = -bbox.left;
+    This->overhangs.top = -bbox.top;
+    This->overhangs.right = bbox.right - This->metrics.layoutWidth;
+    This->overhangs.bottom = bbox.bottom - This->metrics.layoutHeight;
+    This->recompute &= ~RECOMPUTE_OVERHANGS;
+
+    *overhangs = This->overhangs;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout3 *iface,
@@ -3739,7 +3850,7 @@ static HRESULT WINAPI dwritetextlayout3_SetLineSpacing(IDWriteTextLayout3 *iface
         return hr;
 
     if (changed)
-        This->recompute = RECOMPUTE_LINES;
+        This->recompute |= RECOMPUTE_LINES_AND_OVERHANGS;
 
     return S_OK;
 }
@@ -3930,7 +4041,7 @@ static HRESULT WINAPI dwritetextformat_layout_SetWordWrapping(IDWriteTextFormat1
         return hr;
 
     if (changed)
-        This->recompute |= RECOMPUTE_LINES;
+        This->recompute |= RECOMPUTE_LINES_AND_OVERHANGS;
 
     return S_OK;
 }
@@ -3990,7 +4101,7 @@ static HRESULT WINAPI dwritetextformat_layout_SetTrimming(IDWriteTextFormat1 *if
     hr = format_set_trimming(&This->format, trimming, trimming_sign, &changed);
 
     if (changed)
-        This->recompute |= RECOMPUTE_LINES;
+        This->recompute |= RECOMPUTE_LINES_AND_OVERHANGS;
 
     return hr;
 }
