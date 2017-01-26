@@ -8517,7 +8517,6 @@ static void test_clear_render_target_view(void)
         win_skip("Skipping broken test on WARP.\n");
     }
 
-
     ID3D11RenderTargetView_Release(srgb_rtv);
     ID3D11RenderTargetView_Release(rtv);
     ID3D11Texture2D_Release(texture);
@@ -13014,6 +13013,189 @@ static void test_render_target_device_mismatch(void)
     release_test_context(&test_context);
 }
 
+static void test_buffer_srv(void)
+{
+    struct buffer
+    {
+        UINT byte_count;
+        const void *data;
+    };
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    struct d3d11_test_context test_context;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    const struct buffer *current_buffer;
+    ID3D11ShaderResourceView *srv;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Buffer *cb, *buffer;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int i, x, y;
+    struct vec4 cb_size;
+    DWORD color;
+    HRESULT hr;
+
+    static const DWORD ps_float4_code[] =
+    {
+#if 0
+        Buffer<float4> b;
+
+        float2 size;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float2 p;
+            int2 coords;
+            p.x = position.x / 640.0f;
+            p.y = position.y / 480.0f;
+            coords = int2(p.x * size.x, p.y * size.y);
+            return b.Load(coords.y * size.x + coords.x);
+        }
+#endif
+        0x43425844, 0xf10ea650, 0x311f5c38, 0x3a888b7f, 0x58230334, 0x00000001, 0x000001a0, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000104, 0x00000040,
+        0x00000041, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x04000858, 0x00107000, 0x00000000,
+        0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x08000038, 0x00100032, 0x00000000, 0x00101516, 0x00000000, 0x00208516,
+        0x00000000, 0x00000000, 0x0a000038, 0x00100032, 0x00000000, 0x00100046, 0x00000000, 0x00004002,
+        0x3b088889, 0x3acccccd, 0x00000000, 0x00000000, 0x05000043, 0x00100032, 0x00000000, 0x00100046,
+        0x00000000, 0x0a000032, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x0020800a, 0x00000000,
+        0x00000000, 0x0010001a, 0x00000000, 0x0500001b, 0x00100012, 0x00000000, 0x0010000a, 0x00000000,
+        0x0700002d, 0x001020f2, 0x00000000, 0x00100006, 0x00000000, 0x00107e46, 0x00000000, 0x0100003e,
+    };
+    static const DWORD rgba16[] =
+    {
+        0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
+        0xffff0000, 0xffff00ff, 0xff000000, 0xff7f7f7f,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xff000000,
+        0xffffffff, 0xff000000, 0xff000000, 0xff000000,
+    };
+    static const DWORD rgba4[] =
+    {
+        0xffffffff, 0xff0000ff,
+        0xff000000, 0xff00ff00,
+    };
+    static const struct buffer rgba16_buffer = {sizeof(rgba16), &rgba16};
+    static const struct buffer rgba4_buffer  = {sizeof(rgba4),  &rgba4};
+    static const DWORD rgba4_colors[] =
+    {
+        0xffffffff, 0xffffffff, 0xff0000ff, 0xff0000ff,
+        0xffffffff, 0xffffffff, 0xff0000ff, 0xff0000ff,
+        0xff000000, 0xff000000, 0xff00ff00, 0xff00ff00,
+        0xff000000, 0xff000000, 0xff00ff00, 0xff00ff00,
+    };
+    static const DWORD zero_colors[16] = {0};
+    static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+
+    static const struct test
+    {
+        const struct buffer *buffer;
+        DXGI_FORMAT srv_format;
+        UINT srv_first_element;
+        UINT srv_element_count;
+        struct vec2 size;
+        const DWORD *expected_colors;
+    }
+    tests[] =
+    {
+        {&rgba16_buffer, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 16, {4.0f, 4.0f}, rgba16},
+        {&rgba4_buffer,  DXGI_FORMAT_R8G8B8A8_UNORM, 0,  4, {2.0f, 2.0f}, rgba4_colors},
+        {NULL,           0,                          0,  0, {2.0f, 2.0f}, zero_colors},
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cb_size), NULL);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_float4_code, sizeof(ps_float4_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+
+    srv = NULL;
+    buffer = NULL;
+    current_buffer = NULL;
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        const struct test *test = &tests[i];
+
+        if (current_buffer != test->buffer)
+        {
+            if (buffer)
+                ID3D11Buffer_Release(buffer);
+            if (srv)
+                ID3D11ShaderResourceView_Release(srv);
+
+            current_buffer = test->buffer;
+            if (current_buffer)
+            {
+                buffer_desc.ByteWidth = current_buffer->byte_count;
+                buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+                buffer_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+                buffer_desc.CPUAccessFlags = 0;
+                buffer_desc.MiscFlags = 0;
+                buffer_desc.StructureByteStride = 0;
+                resource_data.SysMemPitch = 0;
+                resource_data.SysMemSlicePitch = 0;
+                resource_data.pSysMem = current_buffer->data;
+                hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
+                ok(SUCCEEDED(hr), "Test %u: Failed to create buffer, hr %#x.\n", i, hr);
+
+                srv_desc.Format = test->srv_format;
+                srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+                U(srv_desc).Buffer.FirstElement = test->srv_first_element;
+                U(srv_desc).Buffer.NumElements = test->srv_element_count;
+                hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srv);
+                ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+            }
+            else
+            {
+                buffer = NULL;
+                srv = NULL;
+            }
+
+            ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+        }
+
+        cb_size.x = test->size.x;
+        cb_size.y = test->size.y;
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &cb_size, 0, 0);
+
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+        draw_quad(&test_context);
+
+        get_texture_readback(test_context.backbuffer, 0, &rb);
+        for (y = 0; y < 4; ++y)
+        {
+            for (x = 0; x < 4; ++x)
+            {
+                color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120);
+                ok(compare_color(color, test->expected_colors[y * 4 + x], 1),
+                        "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
+            }
+        }
+        release_resource_readback(&rb);
+    }
+    if (srv)
+        ID3D11ShaderResourceView_Release(srv);
+    if (buffer)
+        ID3D11Buffer_Release(buffer);
+
+    ID3D11Buffer_Release(cb);
+    ID3D11PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -13084,4 +13266,5 @@ START_TEST(d3d11)
     test_primitive_restart();
     test_sm5_bufinfo_instruction();
     test_render_target_device_mismatch();
+    test_buffer_srv();
 }
