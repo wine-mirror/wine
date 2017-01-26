@@ -88,6 +88,8 @@ HRESULT linuxinput_create_effect(int* fd, REFGUID rguid, struct list *parent_lis
 HRESULT linuxinput_get_info_A(int fd, REFGUID rguid, LPDIEFFECTINFOA info);
 HRESULT linuxinput_get_info_W(int fd, REFGUID rguid, LPDIEFFECTINFOW info);
 
+static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE8W iface, DWORD dwFlags);
+
 typedef struct JoystickImpl JoystickImpl;
 static const IDirectInputDevice8AVtbl JoystickAvt;
 static const IDirectInputDevice8WVtbl JoystickWvt;
@@ -745,18 +747,10 @@ static HRESULT WINAPI JoystickWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
     TRACE("(this=%p)\n",This);
     res = IDirectInputDevice2WImpl_Unacquire(iface);
     if (res==DI_OK && This->joyfd!=-1) {
-      effect_list_item *itr;
       struct input_event event;
 
-      /* For each known effect:
-       * - stop it
-       * - unload it
-       * But, unlike DISFFC_RESET, do not release the effect.
-       */
-      LIST_FOR_EACH_ENTRY(itr, &This->ff_effects, effect_list_item, entry) {
-          IDirectInputEffect_Stop(itr->ref);
-          IDirectInputEffect_Unload(itr->ref);
-      }
+      /* Stop and unload all effects */
+      JoystickWImpl_SendForceFeedbackCommand(iface, DISFFC_RESET);
 
       /* Enable autocenter. */
       event.type = EV_FF;
