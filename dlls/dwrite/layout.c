@@ -2833,26 +2833,36 @@ static HRESULT WINAPI dwritetextlayout_GetLocaleName(IDWriteTextLayout3 *iface, 
 static HRESULT WINAPI dwritetextlayout_SetMaxWidth(IDWriteTextLayout3 *iface, FLOAT maxWidth)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
+    BOOL changed;
 
     TRACE("(%p)->(%.2f)\n", This, maxWidth);
 
     if (maxWidth < 0.0f)
         return E_INVALIDARG;
 
+    changed = This->metrics.layoutWidth != maxWidth;
     This->metrics.layoutWidth = maxWidth;
+
+    if (changed)
+        This->recompute |= RECOMPUTE_LINES;
     return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_SetMaxHeight(IDWriteTextLayout3 *iface, FLOAT maxHeight)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
+    BOOL changed;
 
     TRACE("(%p)->(%.2f)\n", This, maxHeight);
 
     if (maxHeight < 0.0f)
         return E_INVALIDARG;
 
+    changed = This->metrics.layoutHeight != maxHeight;
     This->metrics.layoutHeight = maxHeight;
+
+    if (changed)
+        This->recompute |= RECOMPUTE_LINES;
     return S_OK;
 }
 
