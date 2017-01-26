@@ -234,10 +234,15 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetEffectStatus(
         LPDIRECTINPUTEFFECT iface,
 	LPDWORD pdwFlags)
 {
-    TRACE("(this=%p,%p)\n", iface, pdwFlags);
+    LinuxInputEffectImpl *This = impl_from_IDirectInputEffect(iface);
+
+    TRACE("(this=%p,%p)\n", This, pdwFlags);
 
     if (!pdwFlags)
         return E_POINTER;
+
+    if (This->effect.id == -1)
+        return DIERR_NOTDOWNLOADED;
 
     /* linux sends the effect status through an event.
      * that event is trapped by our parent joystick driver
