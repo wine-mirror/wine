@@ -1,4 +1,5 @@
 MODULE    = scrobj.dll
+IMPORTS   = uuid
 
 C_SRCS = \
 	scrobj.c

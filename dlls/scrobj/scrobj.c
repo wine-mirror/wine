@@ -26,11 +26,265 @@
 #include "olectl.h"
 #include "rpcproxy.h"
 
+#include "initguid.h"
+#include "scrobj.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrobj);
 
 static HINSTANCE scrobj_instance;
+
+struct scriptlet_typelib
+{
+    IGenScriptletTLib IGenScriptletTLib_iface;
+    LONG ref;
+};
+
+static inline struct scriptlet_typelib *impl_from_IGenScriptletTLib(IGenScriptletTLib *iface)
+{
+    return CONTAINING_RECORD(iface, struct scriptlet_typelib, IGenScriptletTLib_iface);
+}
+
+static HRESULT WINAPI scriptlet_typelib_QueryInterface(IGenScriptletTLib *iface, REFIID riid, void **obj)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IGenScriptletTLib) ||
+            IsEqualIID(riid, &IID_IDispatch) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IGenScriptletTLib_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI scriptlet_typelib_AddRef(IGenScriptletTLib *iface)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI scriptlet_typelib_Release(IGenScriptletTLib *iface)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI scriptlet_typelib_GetTypeInfoCount(IGenScriptletTLib *iface, UINT *count)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %p): stub\n", This, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_GetTypeInfo(IGenScriptletTLib *iface, UINT index, LCID lcid,
+    ITypeInfo **tinfo)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %u, %x, %p): stub\n", This, index, lcid, tinfo);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_GetIDsOfNames(IGenScriptletTLib *iface, REFIID riid, LPOLESTR *names,
+    UINT cNames, LCID lcid, DISPID *dispid)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %s, %p, %u, %x, %p): stub\n", This, debugstr_guid(riid), names, cNames, lcid, dispid);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_Invoke(IGenScriptletTLib *iface, DISPID dispid, REFIID riid,
+    LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *ei, UINT *argerr)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %d, %s, %x, %x, %p, %p, %p, %p): stub\n", This, dispid, debugstr_guid(riid), lcid, flags,
+        params, result, ei, argerr);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_AddURL(IGenScriptletTLib *iface, BSTR url)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %s): stub\n", This, debugstr_w(url));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_put_Path(IGenScriptletTLib *iface, BSTR path)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %s): stub\n", This, debugstr_w(path));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_get_Path(IGenScriptletTLib *iface, BSTR *path)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %p): stub\n", This, path);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_put_Doc(IGenScriptletTLib *iface, BSTR doc)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %s): stub\n", This, debugstr_w(doc));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_get_Doc(IGenScriptletTLib *iface, BSTR *doc)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %p): stub\n", This, doc);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_put_Name(IGenScriptletTLib *iface, BSTR name)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %s): stub\n", This, debugstr_w(name));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_get_Name(IGenScriptletTLib *iface, BSTR *name)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %p): stub\n", This, name);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_put_MajorVersion(IGenScriptletTLib *iface, WORD version)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %x): stub\n", This, version);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_get_MajorVersion(IGenScriptletTLib *iface, WORD *version)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %p): stub\n", This, version);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_put_MinorVersion(IGenScriptletTLib *iface, WORD version)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %x): stub\n", This, version);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_get_MinorVersion(IGenScriptletTLib *iface, WORD *version)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %p): stub\n", This, version);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_Write(IGenScriptletTLib *iface)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p): stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_Reset(IGenScriptletTLib *iface)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p): stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_put_GUID(IGenScriptletTLib *iface, BSTR guid)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %s): stub\n", This, debugstr_w(guid));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI scriptlet_typelib_get_GUID(IGenScriptletTLib *iface, BSTR *guid)
+{
+    struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
+
+    FIXME("(%p, %p): stub\n", This, guid);
+
+    return E_NOTIMPL;
+}
+
+static const IGenScriptletTLibVtbl scriptlet_typelib_vtbl =
+{
+    scriptlet_typelib_QueryInterface,
+    scriptlet_typelib_AddRef,
+    scriptlet_typelib_Release,
+    scriptlet_typelib_GetTypeInfoCount,
+    scriptlet_typelib_GetTypeInfo,
+    scriptlet_typelib_GetIDsOfNames,
+    scriptlet_typelib_Invoke,
+    scriptlet_typelib_AddURL,
+    scriptlet_typelib_put_Path,
+    scriptlet_typelib_get_Path,
+    scriptlet_typelib_put_Doc,
+    scriptlet_typelib_get_Doc,
+    scriptlet_typelib_put_Name,
+    scriptlet_typelib_get_Name,
+    scriptlet_typelib_put_MajorVersion,
+    scriptlet_typelib_get_MajorVersion,
+    scriptlet_typelib_put_MinorVersion,
+    scriptlet_typelib_get_MinorVersion,
+    scriptlet_typelib_Write,
+    scriptlet_typelib_Reset,
+    scriptlet_typelib_put_GUID,
+    scriptlet_typelib_get_GUID
+};
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
@@ -66,11 +320,92 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources(scrobj_instance);
 }
 
+HRESULT WINAPI scriptlet_typelib_CreateInstance(IClassFactory *factory, IUnknown *outer, REFIID riid, void **obj)
+{
+    struct scriptlet_typelib *This;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s, %p)\n", factory, outer, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->IGenScriptletTLib_iface.lpVtbl = &scriptlet_typelib_vtbl;
+    This->ref = 1;
+
+    hr = IGenScriptletTLib_QueryInterface(&This->IGenScriptletTLib_iface, riid, obj);
+    IGenScriptletTLib_Release(&This->IGenScriptletTLib_iface);
+    return hr;
+}
+
+static HRESULT WINAPI scrruncf_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+    {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+    else if (IsEqualGUID(&IID_IClassFactory, riid))
+    {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown *)*ppv);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI scrruncf_AddRef(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI scrruncf_Release(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 1;
+}
+
+static HRESULT WINAPI scrruncf_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%p)->(%x)\n", iface, fLock);
+    return S_OK;
+}
+
+static const struct IClassFactoryVtbl scriptlet_typelib_factory_vtbl =
+{
+    scrruncf_QueryInterface,
+    scrruncf_AddRef,
+    scrruncf_Release,
+    scriptlet_typelib_CreateInstance,
+    scrruncf_LockServer
+};
+
+static IClassFactory scriptlet_typelib_factory = { &scriptlet_typelib_factory_vtbl };
+
 /***********************************************************************
  *      DllGetClassObject (scrobj.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
+    if (IsEqualGUID(&CLSID_TypeLib, rclsid))
+    {
+        TRACE("(Scriptlet.TypeLib %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&scriptlet_typelib_factory, riid, ppv);
+    }
+
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }

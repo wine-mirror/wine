@@ -17,6 +17,7 @@
  */
 
 #pragma makedep regtypelib
+#pragma makedep header
 
 import "unknwn.idl";
 import "objidl.idl";
