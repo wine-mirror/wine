@@ -93,7 +93,7 @@
 @ extern NlsAnsiCodePage
 @ extern NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag
-@ stdcall NtAcceptConnectPort(ptr long ptr long long ptr)
+@ stdcall NtAcceptConnectPort(ptr long ptr long ptr ptr)
 @ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stdcall NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
 # @ stub NtAccessCheckByType
@@ -110,7 +110,7 @@
 @ stdcall NtAllocateLocallyUniqueId(ptr)
 # @ stub NtAllocateUserPhysicalPages
 @ stdcall NtAllocateUuids(ptr ptr ptr)
-@ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long)
+@ stdcall NtAllocateVirtualMemory(long ptr long ptr long long)
 @ stdcall NtAreMappedFilesTheSame(ptr ptr)
 @ stdcall NtAssignProcessToJobObject(long long)
 @ stub NtCallbackReturn
@@ -135,7 +135,7 @@
 @ stdcall NtCreateIoCompletion(ptr long ptr long)
 @ stdcall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
-@ stdcall NtCreateKey(ptr long ptr long ptr long long)
+@ stdcall NtCreateKey(ptr long ptr long ptr long ptr)
 @ stdcall NtCreateKeyTransacted(ptr long ptr long ptr long long ptr)
 @ stdcall NtCreateKeyedEvent(ptr long ptr long)
 @ stdcall NtCreateMailslotFile(ptr long ptr ptr long long long ptr)
@@ -230,7 +230,7 @@
 @ stdcall NtOpenProcessToken(long long ptr)
 @ stdcall NtOpenProcessTokenEx(long long long ptr)
 @ stdcall NtOpenSection(ptr long ptr)
-@ stdcall NtOpenSemaphore(long long ptr)
+@ stdcall NtOpenSemaphore(ptr long ptr)
 @ stdcall NtOpenSymbolicLinkObject (ptr long ptr)
 @ stdcall NtOpenThread(ptr long ptr ptr)
 @ stdcall NtOpenThreadToken(long long long ptr)
@@ -289,7 +289,7 @@
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long)
 @ stdcall NtQueueApcThread(long ptr long long long)
 @ stdcall NtRaiseException(ptr ptr long)
-@ stdcall NtRaiseHardError(long long ptr ptr long long)
+@ stdcall NtRaiseHardError(long long ptr ptr long ptr)
 @ stdcall NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stdcall NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtReadRequestData
@@ -343,7 +343,7 @@
 @ stdcall NtSetInformationThread(long long ptr long)
 @ stdcall NtSetInformationToken(long long ptr long)
 @ stdcall NtSetIntervalProfile(long long)
-@ stdcall NtSetIoCompletion(ptr long ptr long long)
+@ stdcall NtSetIoCompletion(ptr long long long long)
 @ stdcall NtSetLdtEntries(long long long long long long)
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
@@ -375,7 +375,7 @@
 # @ stub NtTraceEvent
 # @ stub NtTranslateFilePath
 @ stdcall NtUnloadDriver(ptr)
-@ stdcall NtUnloadKey(long)
+@ stdcall NtUnloadKey(ptr)
 @ stub NtUnloadKeyEx
 @ stdcall NtUnlockFile(long ptr ptr ptr ptr)
 @ stdcall NtUnlockVirtualMemory(long ptr ptr long)
@@ -605,8 +605,8 @@
 @ stdcall RtlFindLastBackwardRunClear(ptr long ptr)
 @ stdcall RtlFindLastBackwardRunSet(ptr long ptr)
 @ stdcall RtlFindLeastSignificantBit(int64)
-@ stdcall RtlFindLongestRunClear(ptr long)
-@ stdcall RtlFindLongestRunSet(ptr long)
+@ stdcall RtlFindLongestRunClear(ptr ptr)
+@ stdcall RtlFindLongestRunSet(ptr ptr)
 @ stdcall RtlFindMessage(long long long long ptr)
 @ stdcall RtlFindMostSignificantBit(int64)
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr)
@@ -621,7 +621,7 @@
 # @ stub RtlFlushSecureMemoryCache
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)
 @ stdcall RtlFormatMessage(ptr long long long long ptr ptr long)
-@ stdcall RtlFreeAnsiString(long)
+@ stdcall RtlFreeAnsiString(ptr)
 @ stdcall RtlFreeHandle(ptr ptr)
 @ stdcall RtlFreeHeap(long long ptr)
 @ stdcall RtlFreeOemString(ptr)
@@ -687,7 +687,7 @@
 @ stdcall RtlInitUnicodeString(ptr wstr)
 @ stdcall RtlInitUnicodeStringEx(ptr wstr)
 # @ stub RtlInitializeAtomPackage
-@ stdcall RtlInitializeBitMap(ptr long long)
+@ stdcall RtlInitializeBitMap(ptr ptr long)
 @ stdcall RtlInitializeConditionVariable(ptr)
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr)
@@ -766,7 +766,7 @@
 # @ stub RtlLookupElementGenericTableAvl
 @ stdcall -arch=arm,x86_64 RtlLookupFunctionEntry(long ptr ptr)
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr)
-@ stdcall RtlMapGenericMask(long ptr)
+@ stdcall RtlMapGenericMask(ptr ptr)
 # @ stub RtlMapSecurityErrorToNtStatus
 # @ stub RtlMergeRangeLists
 @ stdcall RtlMoveMemory(ptr ptr long)
@@ -975,7 +975,7 @@
 # @ stub RtlpApplyLengthFunction
 # @ stub RtlpEnsureBufferSize
 # @ stub RtlpNotOwnerCriticalSection
-@ stdcall RtlpNtCreateKey(ptr long ptr long ptr long long)
+@ stdcall RtlpNtCreateKey(ptr long ptr long ptr long ptr)
 @ stdcall RtlpNtEnumerateSubKey(ptr ptr long)
 @ stdcall RtlpNtMakeTemporaryKey(ptr)
 @ stdcall RtlpNtOpenKey(ptr long ptr)
@@ -1019,7 +1019,7 @@
 @ stdcall WinSqmEndSession(long)
 @ stdcall WinSqmIsOptedIn()
 @ stdcall WinSqmStartSession(ptr long long)
-@ stdcall -private ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
+@ stdcall -private ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort
 @ stdcall -private ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stdcall -private ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
 # @ stub ZwAccessCheckByType
@@ -1036,7 +1036,7 @@
 @ stdcall -private ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
 # @ stub ZwAllocateUserPhysicalPages
 @ stdcall -private ZwAllocateUuids(ptr ptr ptr) NtAllocateUuids
-@ stdcall -private ZwAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
+@ stdcall -private ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
 @ stdcall -private ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
 @ stdcall -private ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
 @ stub ZwCallbackReturn
@@ -1061,7 +1061,7 @@
 @ stdcall -private ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
 @ stdcall -private ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
-@ stdcall -private ZwCreateKey(ptr long ptr long ptr long long) NtCreateKey
+@ stdcall -private ZwCreateKey(ptr long ptr long ptr long ptr) NtCreateKey
 @ stdcall -private ZwCreateKeyTransacted(ptr long ptr long ptr long long ptr) NtCreateKeyTransacted
 @ stdcall -private ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
 @ stdcall -private ZwCreateMailslotFile(ptr long ptr ptr long long long ptr) NtCreateMailslotFile
@@ -1155,7 +1155,7 @@
 @ stdcall -private ZwOpenProcessToken(long long ptr) NtOpenProcessToken
 @ stdcall -private ZwOpenProcessTokenEx(long long long ptr) NtOpenProcessTokenEx
 @ stdcall -private ZwOpenSection(ptr long ptr) NtOpenSection
-@ stdcall -private ZwOpenSemaphore(long long ptr) NtOpenSemaphore
+@ stdcall -private ZwOpenSemaphore(ptr long ptr) NtOpenSemaphore
 @ stdcall -private ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
 @ stdcall -private ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall -private ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
@@ -1214,7 +1214,7 @@
 @ stdcall -private ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stdcall -private ZwQueueApcThread(long ptr long long long) NtQueueApcThread
 @ stdcall -private ZwRaiseException(ptr ptr long) NtRaiseException
-@ stdcall -private ZwRaiseHardError(long long ptr ptr long long) NtRaiseHardError
+@ stdcall -private ZwRaiseHardError(long long ptr ptr long ptr) NtRaiseHardError
 @ stdcall -private ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile
 @ stdcall -private ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
 @ stub ZwReadRequestData
@@ -1268,7 +1268,7 @@
 @ stdcall -private ZwSetInformationThread(long long ptr long) NtSetInformationThread
 @ stdcall -private ZwSetInformationToken(long long ptr long) NtSetInformationToken
 @ stdcall -private ZwSetIntervalProfile(long long) NtSetIntervalProfile
-@ stdcall -private ZwSetIoCompletion(ptr long ptr long long) NtSetIoCompletion
+@ stdcall -private ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
 @ stdcall -private ZwSetLdtEntries(long long long long long long) NtSetLdtEntries
 @ stub ZwSetLowEventPair
 @ stub ZwSetLowWaitHighEventPair
@@ -1300,7 +1300,7 @@
 # @ stub ZwTraceEvent
 # @ stub ZwTranslateFilePath
 @ stdcall -private ZwUnloadDriver(ptr) NtUnloadDriver
-@ stdcall -private ZwUnloadKey(long) NtUnloadKey
+@ stdcall -private ZwUnloadKey(ptr) NtUnloadKey
 @ stub ZwUnloadKeyEx
 @ stdcall -private ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile
 @ stdcall -private ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory

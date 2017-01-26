@@ -737,7 +737,7 @@
 @ stdcall NtAdjustPrivilegesToken(long long ptr long ptr ptr) ntdll.NtAdjustPrivilegesToken
 @ stdcall NtAllocateLocallyUniqueId(ptr) ntdll.NtAllocateLocallyUniqueId
 @ stdcall NtAllocateUuids(ptr ptr ptr) ntdll.NtAllocateUuids
-@ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long) ntdll.NtAllocateVirtualMemory
+@ stdcall NtAllocateVirtualMemory(long ptr long ptr long long) ntdll.NtAllocateVirtualMemory
 @ stub NtBuildNumber
 @ stdcall NtClose(long) ntdll.NtClose
 @ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) ntdll.NtConnectPort
@@ -1016,7 +1016,7 @@
 @ stub RtlFindFirstRunClear
 @ stdcall RtlFindLastBackwardRunClear(ptr long ptr) ntdll.RtlFindLastBackwardRunClear
 @ stdcall RtlFindLeastSignificantBit(int64) ntdll.RtlFindLeastSignificantBit
-@ stdcall RtlFindLongestRunClear(ptr long) ntdll.RtlFindLongestRunClear
+@ stdcall RtlFindLongestRunClear(ptr ptr) ntdll.RtlFindLongestRunClear
 @ stdcall RtlFindMessage(long long long long ptr) ntdll.RtlFindMessage
 @ stdcall RtlFindMostSignificantBit(int64) ntdll.RtlFindMostSignificantBit
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr) ntdll.RtlFindNextForwardRunClear
@@ -1025,7 +1025,7 @@
 @ stdcall RtlFindSetBitsAndClear(ptr long long) ntdll.RtlFindSetBitsAndClear
 @ stub RtlFindUnicodePrefix
 @ stdcall RtlFormatCurrentUserKeyPath(ptr) ntdll.RtlFormatCurrentUserKeyPath
-@ stdcall RtlFreeAnsiString(long) ntdll.RtlFreeAnsiString
+@ stdcall RtlFreeAnsiString(ptr) ntdll.RtlFreeAnsiString
 @ stdcall RtlFreeHeap(long long ptr) ntdll.RtlFreeHeap
 @ stdcall RtlFreeOemString(ptr) ntdll.RtlFreeOemString
 @ stub RtlFreeRangeList
@@ -1054,7 +1054,7 @@
 @ stub RtlInitCodePageTable
 @ stdcall RtlInitString(ptr str) ntdll.RtlInitString
 @ stdcall RtlInitUnicodeString(ptr wstr) ntdll.RtlInitUnicodeString
-@ stdcall RtlInitializeBitMap(ptr long long) ntdll.RtlInitializeBitMap
+@ stdcall RtlInitializeBitMap(ptr ptr long) ntdll.RtlInitializeBitMap
 @ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr) ntdll.RtlInitializeGenericTable
 @ stdcall RtlInitializeGenericTableAvl(ptr ptr ptr ptr ptr) ntdll.RtlInitializeGenericTableAvl
 @ stub RtlInitializeRangeList
@@ -1107,7 +1107,7 @@
 @ stub RtlLookupElementGenericTableAvl
 @ stub RtlLookupElementGenericTableFull
 @ stub RtlLookupElementGenericTableFullAvl
-@ stdcall RtlMapGenericMask(long ptr) ntdll.RtlMapGenericMask
+@ stdcall RtlMapGenericMask(ptr ptr) ntdll.RtlMapGenericMask
 @ stub RtlMapSecurityErrorToNtStatus
 @ stub RtlMergeRangeLists
 @ stdcall RtlMoveMemory(ptr ptr long) ntdll.RtlMoveMemory
@@ -1282,7 +1282,7 @@
 @ stub ZwAddBootEntry
 @ stdcall -private ZwAdjustPrivilegesToken(long long ptr long ptr ptr) ntdll.ZwAdjustPrivilegesToken
 @ stdcall -private ZwAlertThread(long) ntdll.ZwAlertThread
-@ stdcall -private ZwAllocateVirtualMemory(long ptr ptr ptr long long) ntdll.ZwAllocateVirtualMemory
+@ stdcall -private ZwAllocateVirtualMemory(long ptr long ptr long long) ntdll.ZwAllocateVirtualMemory
 @ stdcall -private ZwAssignProcessToJobObject(long long) ntdll.ZwAssignProcessToJobObject
 @ stdcall -private ZwCancelIoFile(long ptr) ntdll.ZwCancelIoFile
 @ stdcall -private ZwCancelTimer(long ptr) ntdll.ZwCancelTimer
@@ -1294,7 +1294,7 @@
 @ stdcall -private ZwCreateEvent(ptr long ptr long long) ntdll.ZwCreateEvent
 @ stdcall -private ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) ntdll.ZwCreateFile
 @ stdcall -private ZwCreateJobObject(ptr long ptr) ntdll.ZwCreateJobObject
-@ stdcall -private ZwCreateKey(ptr long ptr long ptr long long) ntdll.ZwCreateKey
+@ stdcall -private ZwCreateKey(ptr long ptr long ptr long ptr) ntdll.ZwCreateKey
 @ stdcall -private ZwCreateSection(ptr long ptr ptr long long long) ntdll.ZwCreateSection
 @ stdcall -private ZwCreateSymbolicLinkObject(ptr long ptr ptr) ntdll.ZwCreateSymbolicLinkObject
 @ stdcall -private ZwCreateTimer(ptr long ptr long) ntdll.ZwCreateTimer
@@ -1387,7 +1387,7 @@
 @ stdcall -private ZwTerminateProcess(long long) ntdll.ZwTerminateProcess
 @ stub ZwTranslateFilePath
 @ stdcall ZwUnloadDriver(ptr)
-@ stdcall -private ZwUnloadKey(long) ntdll.ZwUnloadKey
+@ stdcall -private ZwUnloadKey(ptr) ntdll.ZwUnloadKey
 @ stdcall -private ZwUnmapViewOfSection(long ptr) ntdll.ZwUnmapViewOfSection
 @ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) ntdll.ZwWaitForMultipleObjects
 @ stdcall -private ZwWaitForSingleObject(long long ptr) ntdll.ZwWaitForSingleObject
