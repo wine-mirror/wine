@@ -113,6 +113,8 @@ struct scriptlet_typelib
 {
     IGenScriptletTLib IGenScriptletTLib_iface;
     LONG ref;
+
+    BSTR guid;
 };
 
 static inline struct scriptlet_typelib *impl_from_IGenScriptletTLib(IGenScriptletTLib *iface)
@@ -155,7 +157,10 @@ static ULONG WINAPI scriptlet_typelib_Release(IGenScriptletTLib *iface)
     TRACE("(%p)->(%u)\n", This, ref);
 
     if (!ref)
+    {
+        SysFreeString(This->guid);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -346,13 +351,34 @@ static HRESULT WINAPI scriptlet_typelib_put_GUID(IGenScriptletTLib *iface, BSTR 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI scriptlet_typelib_get_GUID(IGenScriptletTLib *iface, BSTR *guid)
+static HRESULT WINAPI scriptlet_typelib_get_GUID(IGenScriptletTLib *iface, BSTR *ret)
 {
     struct scriptlet_typelib *This = impl_from_IGenScriptletTLib(iface);
 
-    FIXME("(%p, %p): stub\n", This, guid);
+    TRACE("(%p, %p)\n", This, ret);
 
-    return E_NOTIMPL;
+    *ret = NULL;
+
+    if (!This->guid)
+    {
+        WCHAR guidW[39];
+        GUID guid;
+        HRESULT hr;
+
+        hr = CoCreateGuid(&guid);
+        if (FAILED(hr))
+            return hr;
+
+        hr = StringFromGUID2(&guid, guidW, sizeof(guidW)/sizeof(guidW[0]));
+        if (FAILED(hr))
+            return hr;
+
+        if (!(This->guid = SysAllocString(guidW)))
+            return E_OUTOFMEMORY;
+    }
+
+    *ret = SysAllocString(This->guid);
+    return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
 static const IGenScriptletTLibVtbl scriptlet_typelib_vtbl =
@@ -434,6 +460,7 @@ HRESULT WINAPI scriptlet_typelib_CreateInstance(IClassFactory *factory, IUnknown
 
     This->IGenScriptletTLib_iface.lpVtbl = &scriptlet_typelib_vtbl;
     This->ref = 1;
+    This->guid = NULL;
 
     hr = IGenScriptletTLib_QueryInterface(&This->IGenScriptletTLib_iface, riid, obj);
     IGenScriptletTLib_Release(&This->IGenScriptletTLib_iface);

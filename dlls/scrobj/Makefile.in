@@ -1,5 +1,5 @@
 MODULE    = scrobj.dll
-IMPORTS   = uuid oleaut32
+IMPORTS   = uuid ole32 oleaut32
 
 C_SRCS = \
 	scrobj.c
