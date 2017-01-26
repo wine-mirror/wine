@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(inetcomm);
 
 typedef struct {
     IInternetProtocol IInternetProtocol_iface;
+    IInternetProtocolInfo IInternetProtocolInfo_iface;
     LONG ref;
 } MimeHtmlProtocol;
 
@@ -50,6 +51,9 @@ static HRESULT WINAPI MimeHtmlProtocol_QueryInterface(IInternetProtocol *iface, 
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
         TRACE("(%p)->(IID_IInternetProtocol %p)\n", iface, ppv);
         *ppv = &This->IInternetProtocol_iface;
+    }else if(IsEqualGUID(&IID_IInternetProtocolInfo, riid)) {
+        TRACE("(%p)->(IID_IInternetProtocolInfo %p)\n", iface, ppv);
+        *ppv = &This->IInternetProtocolInfo_iface;
     }else {
         FIXME("unknown interface %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -173,6 +177,78 @@ static const IInternetProtocolVtbl MimeHtmlProtocolVtbl = {
     MimeHtmlProtocol_UnlockRequest
 };
 
+static inline MimeHtmlProtocol *impl_from_IInternetProtocolInfo(IInternetProtocolInfo *iface)
+{
+    return CONTAINING_RECORD(iface, MimeHtmlProtocol, IInternetProtocolInfo_iface);
+}
+
+static HRESULT WINAPI MimeHtmlProtocolInfo_QueryInterface(IInternetProtocolInfo *iface, REFIID riid, void **ppv)
+{
+    MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
+    return IInternetProtocol_QueryInterface(&This->IInternetProtocol_iface, riid, ppv);
+}
+
+static ULONG WINAPI MimeHtmlProtocolInfo_AddRef(IInternetProtocolInfo *iface)
+{
+    MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
+    return IInternetProtocol_AddRef(&This->IInternetProtocol_iface);
+}
+
+static ULONG WINAPI MimeHtmlProtocolInfo_Release(IInternetProtocolInfo *iface)
+{
+    MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
+    return IInternetProtocol_Release(&This->IInternetProtocol_iface);
+}
+
+static HRESULT WINAPI MimeHtmlProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
+        PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
+        DWORD* pcchResult, DWORD dwReserved)
+{
+    MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
+    FIXME("(%p)->(%s %d %x %p %d %p %d)\n", This, debugstr_w(pwzUrl), ParseAction,
+          dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
+    return INET_E_DEFAULT_ACTION;
+}
+
+static HRESULT WINAPI MimeHtmlProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags, LPWSTR pwzResult,
+        DWORD cchResult, DWORD* pcchResult, DWORD dwReserved)
+{
+    MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
+    FIXME("(%p)->(%s %s %08x %p %d %p %d)\n", This, debugstr_w(pwzBaseUrl),
+          debugstr_w(pwzRelativeUrl), dwCombineFlags, pwzResult, cchResult,
+          pcchResult, dwReserved);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeHtmlProtocolInfo_CompareUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl1,
+        LPCWSTR pwzUrl2, DWORD dwCompareFlags)
+{
+    MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
+    FIXME("(%p)->(%s %s %08x)\n", This, debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeHtmlProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
+        QUERYOPTION QueryOption, DWORD dwQueryFlags, LPVOID pBuffer, DWORD cbBuffer, DWORD* pcbBuf,
+        DWORD dwReserved)
+{
+    MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
+    FIXME("(%p)->(%s %08x %08x %p %d %p %d)\n", This, debugstr_w(pwzUrl), QueryOption, dwQueryFlags, pBuffer,
+          cbBuffer, pcbBuf, dwReserved);
+    return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
+}
+
+static const IInternetProtocolInfoVtbl MimeHtmlProtocolInfoVtbl = {
+    MimeHtmlProtocolInfo_QueryInterface,
+    MimeHtmlProtocolInfo_AddRef,
+    MimeHtmlProtocolInfo_Release,
+    MimeHtmlProtocolInfo_ParseUrl,
+    MimeHtmlProtocolInfo_CombineUrl,
+    MimeHtmlProtocolInfo_CompareUrl,
+    MimeHtmlProtocolInfo_QueryInfo
+};
+
 HRESULT MimeHtmlProtocol_create(IUnknown *outer, void **obj)
 {
     MimeHtmlProtocol *protocol;
@@ -185,6 +261,7 @@ HRESULT MimeHtmlProtocol_create(IUnknown *outer, void **obj)
         return E_OUTOFMEMORY;
 
     protocol->IInternetProtocol_iface.lpVtbl = &MimeHtmlProtocolVtbl;
+    protocol->IInternetProtocolInfo_iface.lpVtbl = &MimeHtmlProtocolInfoVtbl;
     protocol->ref = 1;
 
     *obj = &protocol->IInternetProtocol_iface;

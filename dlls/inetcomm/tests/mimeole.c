@@ -760,6 +760,18 @@ static void test_MimeOleGetPropertySchema(void)
     IMimePropertySchema_Release(schema);
 }
 
+static void test_mhtml_protocol_info(void)
+{
+    IInternetProtocolInfo *protocol_info;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_IMimeHtmlProtocol, NULL, CLSCTX_INPROC_SERVER,
+                            &IID_IInternetProtocolInfo, (void**)&protocol_info);
+    ok(hres == S_OK, "Could not create protocol info: %08x\n", hres);
+
+    IInternetProtocolInfo_Release(protocol_info);
+}
+
 static void test_mhtml_protocol(void)
 {
     IUnknown *unk, *unk2;
@@ -777,6 +789,8 @@ static void test_mhtml_protocol(void)
     ok(hres == E_NOINTERFACE, "IInternetProtocolInfo supported\n");
 
     IUnknown_Release(unk);
+
+    test_mhtml_protocol_info();
 }
 
 START_TEST(mimeole)
