@@ -663,7 +663,7 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
     ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
 
     irp->IoStatus.Information = 0;
-    RingBuffer_Read(ext->ring_buffer, ptr, packet, &buffer_size);
+    RingBuffer_ReadNew(ext->ring_buffer, ptr, packet, &buffer_size);
 
     if (buffer_size)
     {
