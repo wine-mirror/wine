@@ -772,8 +772,32 @@ static void test_mhtml_protocol_info(void)
     IInternetProtocolInfo_Release(protocol_info);
 }
 
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl outer_vtbl = {
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release
+};
+
 static void test_mhtml_protocol(void)
 {
+    IUnknown outer = { &outer_vtbl };
+    IClassFactory *class_factory;
     IUnknown *unk, *unk2;
     HRESULT hres;
 
@@ -781,14 +805,24 @@ static void test_mhtml_protocol(void)
     hres = CoGetClassObject(&CLSID_IMimeHtmlProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
 
-    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&unk2);
-    ok(hres == S_OK, "Could not get IClassFactory iface: %08x\n", hres);
-    IUnknown_Release(unk2);
-
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&unk2);
     ok(hres == E_NOINTERFACE, "IInternetProtocolInfo supported\n");
 
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&class_factory);
+    ok(hres == S_OK, "Could not get IClassFactory iface: %08x\n", hres);
     IUnknown_Release(unk);
+
+    hres = IClassFactory_CreateInstance(class_factory, &outer, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CreateInstance returned: %08x\n", hres);
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&unk2);
+    ok(hres == S_OK, "Coult not get IInternetProtocol iface: %08x\n", hres);
+    IUnknown_Release(unk2);
+    IUnknown_Release(unk);
+
+    hres = IClassFactory_CreateInstance(class_factory, (IUnknown*)0xdeadbeef, &IID_IInternetProtocol, (void**)&unk2);
+    ok(hres == CLASS_E_NOAGGREGATION, "CreateInstance returned: %08x\n", hres);
+
+    IClassFactory_Release(class_factory);
 
     test_mhtml_protocol_info();
 }

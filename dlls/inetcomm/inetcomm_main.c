@@ -117,13 +117,20 @@ static HRESULT WINAPI cf_CreateInstance( IClassFactory *iface, LPUNKNOWN pOuter,
 
     *ppobj = NULL;
 
+    if (pOuter && !IsEqualGUID(&IID_IUnknown, riid))
+        return CLASS_E_NOAGGREGATION;
+
     r = This->create_object( pOuter, (LPVOID*) &punk );
     if (FAILED(r))
         return r;
 
+    if (IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppobj = punk;
+        return S_OK;
+    }
+
     r = IUnknown_QueryInterface( punk, riid, ppobj );
     IUnknown_Release( punk );
-
     return r;
 }
 
