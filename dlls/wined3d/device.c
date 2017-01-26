@@ -694,6 +694,29 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
         checkGLcall("glTexImage3D");
     }
 
+    if (gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
+    {
+        GLuint buffer;
+
+        GL_EXTCALL(glGenBuffers(1, &buffer));
+        GL_EXTCALL(glBindBuffer(GL_TEXTURE_BUFFER, buffer));
+        GL_EXTCALL(glBufferData(GL_TEXTURE_BUFFER, sizeof(color), &color, GL_STATIC_DRAW));
+        GL_EXTCALL(glBindBuffer(GL_TEXTURE_BUFFER, 0));
+        checkGLcall("Create buffer object");
+
+        gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_textures.tex_buffer);
+        checkGLcall("glGenTextures");
+        TRACE("Dummy buffer texture given name %u.\n", device->dummy_textures.tex_buffer);
+
+        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_BUFFER, device->dummy_textures.tex_buffer);
+        checkGLcall("glBindTexture");
+        GL_EXTCALL(glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA8, buffer));
+        checkGLcall("glTexBuffer");
+
+        GL_EXTCALL(glDeleteBuffers(1, &buffer));
+        checkGLcall("glDeleteBuffers");
+    }
+
     context_bind_dummy_textures(device, context);
 }
 
@@ -701,6 +724,9 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
 static void destroy_dummy_textures(struct wined3d_device *device, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_buffer);
 
     if (gl_info->supported[EXT_TEXTURE_ARRAY])
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_2d_array);
