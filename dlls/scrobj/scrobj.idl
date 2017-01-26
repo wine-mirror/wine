@@ -83,15 +83,14 @@ library Scriptlet
         HRESULT GUID([out, retval] BSTR *guid);
     }
 
-}
-
-[
-    uuid(06290bd5-48aa-11d2-8432-006008c3fbfc ),
-    version(1.0),
-    threading(apartment),
-    progid("Scriptlet.TypeLib")
-]
-coclass TypeLib
-{
-    [default] interface IGenScriptletTLib;
+    [
+        uuid(06290bd5-48aa-11d2-8432-006008c3fbfc ),
+        version(1.0),
+        threading(apartment),
+        progid("Scriptlet.TypeLib")
+    ]
+    coclass TypeLib
+    {
+        [default] interface IGenScriptletTLib;
+    }
 }
