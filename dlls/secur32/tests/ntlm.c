@@ -971,6 +971,10 @@ static void testSignSeal(void)
     {
         client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
 
+        ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
+                "Running the client returned %s, more tests will fail.\n",
+                getSecError(client_stat));
+
         communicate(&client, &server);
 
         server_stat = runFakeServer(&server, first, SECURITY_NETWORK_DREP);
@@ -978,6 +982,12 @@ static void testSignSeal(void)
         communicate(&server, &client);
         trace("Looping\n");
         first = FALSE;
+    }
+
+    if(client_stat != SEC_E_OK)
+    {
+	skip("Authentication failed, skipping test.\n");
+	goto end;
     }
 
     /********************************************
