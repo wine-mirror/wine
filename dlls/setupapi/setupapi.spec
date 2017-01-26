@@ -67,8 +67,8 @@
 @ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr)
 @ stub CM_Get_Depth
 @ stub CM_Get_Depth_Ex
-@ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr long long)
-@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr long long)
+@ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr ptr long)
+@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long)
 @ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Status(ptr ptr long long)
@@ -389,8 +389,8 @@
 @ stdcall SetupDiSetClassInstallParamsW(ptr ptr ptr long)
 @ stdcall SetupDiSetDeviceInstallParamsA(ptr ptr ptr)
 @ stdcall SetupDiSetDeviceInstallParamsW(ptr ptr ptr)
-@ stdcall SetupDiSetDeviceRegistryPropertyA(ptr ptr long ptr ptr)
-@ stdcall SetupDiSetDeviceRegistryPropertyW(ptr ptr long ptr ptr)
+@ stdcall SetupDiSetDeviceRegistryPropertyA(ptr ptr long ptr long)
+@ stdcall SetupDiSetDeviceRegistryPropertyW(ptr ptr long ptr long)
 @ stub SetupDiSetDriverInstallParamsA
 @ stub SetupDiSetDriverInstallParamsW
 @ stdcall SetupDiSetSelectedDevice(ptr ptr)

@@ -18,7 +18,7 @@
 @ stub CM_Get_Device_Interface_PropertyW
 @ stub CM_Get_DevNode_Property_Keys
 @ stub CM_Get_DevNode_PropertyW
-@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr long long) setupapi.CM_Get_DevNode_Registry_PropertyW
+@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr ptr long) setupapi.CM_Get_DevNode_Registry_PropertyW
 @ stdcall CM_Get_DevNode_Status(ptr ptr long long) setupapi.CM_Get_DevNode_Status
 @ stdcall CM_Get_Parent(ptr long long) setupapi.CM_Get_Parent
 @ stub CM_Get_Sibling
