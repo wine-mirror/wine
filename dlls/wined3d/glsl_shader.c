@@ -59,7 +59,7 @@ static const struct
 resource_type_info[] =
 {
     {0, 0, ""},        /* WINED3D_SHADER_RESOURCE_NONE */
-    {1, 1, ""},        /* WINED3D_SHADER_RESOURCE_BUFFER */
+    {1, 1, "Buffer"},  /* WINED3D_SHADER_RESOURCE_BUFFER */
     {1, 1, "1D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
     {2, 2, "2D"},      /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
     {2, 2, ""},        /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
@@ -2083,6 +2083,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         shadow_sampler = glsl_is_shadow_sampler(shader, ps_args, entry->resource_idx, entry->sampler_idx);
         switch (reg_maps->resource_info[entry->resource_idx].type)
         {
+            case WINED3D_SHADER_RESOURCE_BUFFER:
+                sampler_type = "samplerBuffer";
+                break;
+
             case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
                 if (shadow_sampler)
                     sampler_type = "sampler1DShadow";
