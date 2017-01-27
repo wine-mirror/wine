@@ -900,7 +900,7 @@ static void clear_test(void)
     D3DVIEWPORT9 old_vp, vp;
     RECT scissor;
     DWORD oldColorWrite;
-    BOOL invalid_clear_failed = FALSE;
+    BOOL invalid_clear_failed = FALSE, srgb_supported;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     ULONG refcount;
@@ -1149,6 +1149,9 @@ static void clear_test(void)
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
     /* Test D3DRS_SRGBWRITEENABLE interactions with clears. */
+    srgb_supported = SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_QUERY_SRGBWRITE, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8));
+    trace("sRGB writing to D3DFMT_A8R8G8B8 is %ssupported.\n", srgb_supported ? "" : "not ");
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f7f7f7f, 0.0, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
