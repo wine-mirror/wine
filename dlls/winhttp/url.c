@@ -417,13 +417,12 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
 {
     static const WCHAR formatW[] = {'%','u',0};
     static const WCHAR twoslashW[] = {'/','/'};
-
     DWORD len;
     INTERNET_SCHEME scheme;
 
     TRACE("%p, 0x%08x, %p, %p\n", uc, flags, url, required);
 
-    if (!uc || uc->dwStructSize != sizeof(URL_COMPONENTS) || !required || !url)
+    if (!uc || uc->dwStructSize != sizeof(URL_COMPONENTS) || !required)
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -435,6 +434,11 @@ BOOL WINAPI WinHttpCreateUrl( LPURL_COMPONENTS uc, DWORD flags, LPWSTR url, LPDW
     {
         *required = len + 1;
         set_last_error( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+    if (!url)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
