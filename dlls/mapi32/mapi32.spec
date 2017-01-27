@@ -175,7 +175,7 @@
 236 stub cmc_read
 237 stub cmc_send
 238 stub cmc_send_documents
-239 stub HrDispatchNotifications@4
+239 stdcall HrDispatchNotifications@4(long) HrDispatchNotifications
 241 stub HrValidateParameters@8
 244 stub ScCreateConversationIndex@16
 246 stub HrGetOmiProvidersFlags
