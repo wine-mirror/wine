@@ -940,7 +940,10 @@ static INT GSUB_apply_MultipleSubst(const OT_LookupTable *look, WORD *glyphs, IN
                 TRACE("\n");
             }
 
-            return glyph_index + (sub_count * write_dir);
+            if (write_dir > 0)
+                return glyph_index + sub_count;
+            else
+                return glyph_index - 1;
         }
     }
     return GSUB_E_NOGLYPH;
