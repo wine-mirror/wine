@@ -230,13 +230,10 @@ static HRESULT WINAPI sub_stream_Read(
 {
     sub_stream_t *This = impl_from_IStream(iface);
     HRESULT hr;
-    ULARGE_INTEGER base_pos;
     LARGE_INTEGER tmp_pos;
 
     TRACE("(%p, %d, %p)\n", pv, cb, pcbRead);
 
-    tmp_pos.QuadPart = 0;
-    IStream_Seek(This->base, tmp_pos, STREAM_SEEK_CUR, &base_pos);
     tmp_pos.QuadPart = This->pos.QuadPart + This->start.QuadPart;
     IStream_Seek(This->base, tmp_pos, STREAM_SEEK_SET, NULL);
 
@@ -246,9 +243,6 @@ static HRESULT WINAPI sub_stream_Read(
     hr = IStream_Read(This->base, pv, cb, pcbRead);
 
     This->pos.QuadPart += *pcbRead;
-
-    tmp_pos.QuadPart = base_pos.QuadPart;
-    IStream_Seek(This->base, tmp_pos, STREAM_SEEK_SET, NULL);
 
     return hr;
 }
