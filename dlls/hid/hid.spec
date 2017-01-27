@@ -20,7 +20,7 @@
 @ stdcall HidD_SetOutputReport(long ptr long)
 @ stdcall HidP_GetButtonCaps(long ptr ptr ptr)
 @ stdcall HidP_GetCaps(ptr ptr)
-@ stub HidP_GetData
+@ stdcall HidP_GetData(long ptr ptr ptr ptr long)
 @ stub HidP_GetExtendedAttributes
 @ stub HidP_GetLinkCollectionNodes
 @ stdcall HidP_GetScaledUsageValue(long long long long ptr ptr ptr long)

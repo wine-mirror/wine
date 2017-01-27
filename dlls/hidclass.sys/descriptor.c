@@ -694,7 +694,7 @@ static inline void new_report(WINE_HID_REPORT *wine_report, struct feature* feat
     wine_report->elementCount = 0;
 }
 
-static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature, DWORD *bitOffset)
+static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature, DWORD *bitOffset, unsigned int *data_index)
 {
     unsigned int i;
 
@@ -729,6 +729,9 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
                 wine_element->caps.button.u.Range.StringMax = feature->caps.u.Range.StringMax;
                 wine_element->caps.button.u.Range.DesignatorMin = feature->caps.u.Range.DesignatorMin;
                 wine_element->caps.button.u.Range.DesignatorMax = feature->caps.u.Range.DesignatorMax;
+                wine_element->caps.button.u.Range.DataIndexMin = *data_index;
+                wine_element->caps.button.u.Range.DataIndexMax = *data_index + wine_element->bitCount - 1;
+                *data_index = *data_index + wine_element->bitCount;
             }
             else
             {
@@ -737,6 +740,8 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
                 wine_element->caps.button.u.NotRange.Usage = feature->caps.u.NotRange.Usage[i];
                 wine_element->caps.button.u.NotRange.StringIndex = feature->caps.u.NotRange.StringIndex;
                 wine_element->caps.button.u.NotRange.DesignatorIndex = feature->caps.u.NotRange.DesignatorIndex;
+                wine_element->caps.button.u.NotRange.DataIndex = *data_index;
+                *data_index = *data_index + 1;
             }
         }
         else
@@ -776,12 +781,21 @@ static void build_elements(WINE_HID_REPORT *wine_report, struct feature* feature
                 wine_element->caps.value.u.Range.StringMax = feature->caps.u.Range.StringMax;
                 wine_element->caps.value.u.Range.DesignatorMin = feature->caps.u.Range.DesignatorMin;
                 wine_element->caps.value.u.Range.DesignatorMax = feature->caps.u.Range.DesignatorMax;
+                wine_element->caps.value.u.Range.DataIndexMin = *data_index;
+                wine_element->caps.value.u.Range.DataIndexMax = *data_index +
+                    (wine_element->caps.value.u.Range.UsageMax -
+                     wine_element->caps.value.u.Range.UsageMin);
+                *data_index = *data_index +
+                    (wine_element->caps.value.u.Range.UsageMax -
+                     wine_element->caps.value.u.Range.UsageMin) + 1;
             }
             else
             {
                 wine_element->caps.value.u.NotRange.Usage = feature->caps.u.NotRange.Usage[i];
                 wine_element->caps.value.u.NotRange.StringIndex = feature->caps.u.NotRange.StringIndex;
                 wine_element->caps.value.u.NotRange.DesignatorIndex = feature->caps.u.NotRange.DesignatorIndex;
+                wine_element->caps.value.u.NotRange.DataIndex = *data_index;
+                *data_index = *data_index + 1;
             }
         }
 
@@ -821,6 +835,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
     unsigned int i;
     unsigned int element_count;
     unsigned int size = 0;
+    unsigned int data_index;
 
     if (features[0]->caps.ReportID != 0)
     {
@@ -915,6 +930,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
     wine_report = data->InputReports;
     if (i_count)
     {
+        data_index = 0;
         bitLength = 0;
         new_report(wine_report, input_features[0]);
         data->dwInputReportCount++;
@@ -933,17 +949,19 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
                 bitLength = max(bitOffset, bitLength);
                 bitOffset = 8;
             }
-            build_elements(wine_report, input_features[i], &bitOffset);
+            build_elements(wine_report, input_features[i], &bitOffset, &data_index);
             count_elements(input_features[i], &data->caps.NumberInputButtonCaps,
                 &data->caps.NumberInputValueCaps);
         }
         wine_report->dwSize += (sizeof(WINE_HID_ELEMENT) * wine_report->elementCount);
         bitLength = max(bitOffset, bitLength);
         data->caps.InputReportByteLength = ((bitLength + 7) & ~7)/8;
+        data->caps.NumberInputDataIndices = data_index;
     }
 
     if (o_count)
     {
+        data_index = 0;
         bitLength = 0;
         wine_report = (WINE_HID_REPORT*)(((BYTE*)wine_report)+wine_report->dwSize);
         data->dwOutputReportOffset = (BYTE*)wine_report - (BYTE*)data->InputReports;
@@ -962,17 +980,19 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
                 bitLength = max(bitOffset, bitLength);
                 bitOffset = 8;
             }
-            build_elements(wine_report, output_features[i], &bitOffset);
+            build_elements(wine_report, output_features[i], &bitOffset, &data_index);
             count_elements(output_features[i], &data->caps.NumberOutputButtonCaps,
                 &data->caps.NumberOutputValueCaps);
         }
         wine_report->dwSize += (sizeof(WINE_HID_ELEMENT) * wine_report->elementCount);
         bitLength = max(bitOffset, bitLength);
         data->caps.OutputReportByteLength = ((bitLength + 7) & ~7)/8;
+        data->caps.NumberOutputDataIndices = data_index;
     }
 
     if (f_count)
     {
+        data_index = 0;
         bitLength = 0;
         wine_report = (WINE_HID_REPORT*)(((BYTE*)wine_report)+wine_report->dwSize);
         data->dwFeatureReportOffset = (BYTE*)wine_report - (BYTE*)data->InputReports;
@@ -991,12 +1011,13 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
                 bitLength = max(bitOffset, bitLength);
                 bitOffset = 8;
             }
-            build_elements(wine_report, feature_features[i], &bitOffset);
+            build_elements(wine_report, feature_features[i], &bitOffset, &data_index);
             count_elements(feature_features[i], &data->caps.NumberFeatureButtonCaps,
                 &data->caps.NumberFeatureValueCaps);
         }
         bitLength = max(bitOffset, bitLength);
         data->caps.FeatureReportByteLength = ((bitLength + 7) & ~7)/8;
+        data->caps.NumberFeatureDataIndices = data_index;
     }
 
     return data;
