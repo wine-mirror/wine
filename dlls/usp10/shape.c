@@ -1128,8 +1128,18 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 
         if (psc->GSUB_Table)
         {
-            INT nextIndex;
+            INT nextIndex, offset = 0;
             INT prevCount = *pcGlyphs;
+
+            /* Apply CCMP first */
+            apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, glyph_index, dirL, pcGlyphs, "ccmp");
+
+            if (prevCount != *pcGlyphs)
+            {
+                offset = *pcGlyphs - prevCount;
+                if (dirL < 0)
+                    glyph_index -= offset * dirL;
+            }
 
             /* Apply the contextual feature */
             nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, glyph_index, dirL, pcGlyphs, contextual_features[context_shape[char_index]]);
@@ -1138,7 +1148,13 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
             {
                 UpdateClusters(glyph_index, *pcGlyphs - prevCount, dirL, cChars, pwLogClust);
                 char_index += dirL;
-                glyph_index = nextIndex;
+                if (!offset)
+                    glyph_index = nextIndex;
+                else
+                {
+                    offset = *pcGlyphs - prevCount;
+                    glyph_index += dirL * (offset + 1);
+                }
             }
             shaped = (nextIndex > GSUB_E_NOGLYPH);
         }
