@@ -1158,7 +1158,7 @@ static void wined3d_buffer_unmap(struct wined3d_buffer *buffer)
         return;
     }
 
-    if (!(buffer->flags & WINED3D_BUFFER_PIN_SYSMEM) && buffer->buffer_object)
+    if (buffer->map_ptr)
     {
         struct wined3d_device *device = buffer->resource.device;
         const struct wined3d_gl_info *gl_info;
