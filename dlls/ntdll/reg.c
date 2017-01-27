@@ -682,6 +682,16 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
 }
 
 /******************************************************************************
+ *  NtLoadKey2  [NTDLL.@]
+ *  ZwLoadKey2  [NTDLL.@]
+ */
+NTSTATUS WINAPI NtLoadKey2(OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file, ULONG flags)
+{
+    FIXME("(%p,%p,0x%08x) semi-stub: ignoring flags\n", attr, file, flags);
+    return NtLoadKey(attr, file);
+}
+
+/******************************************************************************
  *  NtNotifyChangeMultipleKeys  [NTDLL.@]
  *  ZwNotifyChangeMultipleKeys  [NTDLL.@]
  */

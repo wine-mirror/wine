@@ -198,7 +198,7 @@
 # @ stub NtIsSystemResumeAutomatic
 @ stdcall NtListenPort(ptr ptr)
 @ stdcall NtLoadDriver(ptr)
-# @ stub NtLoadKey2
+@ stdcall NtLoadKey2(ptr ptr long)
 @ stdcall NtLoadKey(ptr ptr)
 @ stdcall NtLockFile(long long ptr ptr ptr ptr ptr ptr long long)
 # @ stub NtLockProductActivationKeys
@@ -1123,7 +1123,7 @@
 # @ stub ZwIsSystemResumeAutomatic
 @ stdcall -private ZwListenPort(ptr ptr) NtListenPort
 @ stdcall -private ZwLoadDriver(ptr) NtLoadDriver
-# @ stub ZwLoadKey2
+@ stdcall ZwLoadKey2(ptr ptr long) NtLoadKey2
 @ stdcall -private ZwLoadKey(ptr ptr) NtLoadKey
 @ stdcall -private ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
 # @ stub ZwLockProductActivationKeys
