@@ -1098,7 +1098,7 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
 
                         TRACE("   SUBST: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
                         newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
-                        if (newIndex == -1)
+                        if (newIndex == GSUB_E_NOGLYPH)
                         {
                             ERR("   Chain failed to generate a glyph\n");
                             continue;
@@ -1172,7 +1172,7 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
 
                         TRACE("   SUBST: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
                         newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
-                        if (newIndex == -1)
+                        if (newIndex == GSUB_E_NOGLYPH)
                         {
                             ERR("   Chain failed to generate a glyph\n");
                             continue;
@@ -1316,7 +1316,7 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
 
                         TRACE("SUBST: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
                         newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
-                        if (newIndex == -1)
+                        if (newIndex == GSUB_E_NOGLYPH)
                         {
                             ERR("Chain failed to generate a glyph\n");
                             continue;
@@ -1390,7 +1390,7 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
 
                     TRACE("SUBST: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
                     newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
-                    if (newIndex == -1)
+                    if (newIndex == GSUB_E_NOGLYPH)
                     {
                         ERR("Chain failed to generate a glyph\n");
                         continue;
@@ -1401,7 +1401,7 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
             else return GSUB_E_NOGLYPH;
         }
     }
-    return -1;
+    return GSUB_E_NOGLYPH;
 }
 
 static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
