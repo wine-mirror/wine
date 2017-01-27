@@ -763,3 +763,23 @@ NTSTATUS WINAPI HidP_GetUsagesEx(HIDP_REPORT_TYPE ReportType, USHORT LinkCollect
 
     return rc;
 }
+
+ULONG WINAPI HidP_MaxDataListLength(HIDP_REPORT_TYPE ReportType, PHIDP_PREPARSED_DATA PreparsedData)
+{
+    WINE_HIDP_PREPARSED_DATA *data = (WINE_HIDP_PREPARSED_DATA *)PreparsedData;
+    TRACE("(%i, %p)\n", ReportType, PreparsedData);
+    if (data->magic != HID_MAGIC)
+        return 0;
+
+    switch(ReportType)
+    {
+        case HidP_Input:
+            return data->caps.NumberInputDataIndices;
+        case HidP_Output:
+            return data->caps.NumberOutputDataIndices;
+        case HidP_Feature:
+            return data->caps.NumberFeatureDataIndices;
+        default:
+            return 0;
+    }
+}

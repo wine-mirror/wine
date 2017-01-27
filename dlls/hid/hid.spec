@@ -32,7 +32,7 @@
 @ stdcall HidP_GetUsagesEx(long long ptr ptr ptr ptr long)
 @ stdcall HidP_GetValueCaps(long ptr ptr ptr)
 @ stdcall HidP_InitializeReportForID(long long ptr ptr long)
-@ stub HidP_MaxDataListLength
+@ stdcall HidP_MaxDataListLength(long ptr)
 @ stdcall HidP_MaxUsageListLength(long long ptr)
 @ stub HidP_SetData
 @ stub HidP_SetScaledUsageValue
