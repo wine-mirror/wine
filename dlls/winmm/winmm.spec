@@ -1,5 +1,5 @@
 # ordinal exports
-1 stdcall @(ptr long long) PlaySoundA
+2 stdcall @(ptr long long) PlaySoundA
 3 stub @
 4 stub @
 
