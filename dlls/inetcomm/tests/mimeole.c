@@ -131,6 +131,17 @@ static IStream *create_stream_from_string(const char *data)
     return stream;
 }
 
+#define test_current_encoding(a,b) _test_current_encoding(__LINE__,a,b)
+static void _test_current_encoding(unsigned line, IMimeBody *mime_body, ENCODINGTYPE encoding)
+{
+    ENCODINGTYPE current_encoding;
+    HRESULT hres;
+
+    hres = IMimeBody_GetCurrentEncoding(mime_body, &current_encoding);
+    ok_(__FILE__,line)(hres == S_OK, "GetCurrentEncoding failed: %08x\n", hres);
+    ok_(__FILE__,line)(current_encoding == encoding, "encoding = %d, expected %d\n", current_encoding, encoding);
+}
+
 static void test_CreateBody(void)
 {
     HRESULT hr;
@@ -158,9 +169,7 @@ static void test_CreateBody(void)
     hr = IMimeBody_InitNew(body);
     ok(hr == S_OK, "ret %08x\n", hr);
 
-    hr = IMimeBody_GetCurrentEncoding(body, &enc);
-    ok(hr == S_OK, "ret %08x\n", hr);
-    ok(enc == IET_7BIT, "encoding %d\n", enc);
+    test_current_encoding(body, IET_7BIT);
 
     hr = IMimeBody_Load(body, in);
     ok(hr == S_OK, "ret %08x\n", hr);
@@ -444,6 +453,8 @@ static void test_SetData(void)
     hr = IMimeBody_IsContentType(body, "text", "plain");
     todo_wine
     ok(hr == S_OK, "ret %08x\n", hr);
+
+    test_current_encoding(body, IET_BINARY);
 
     SET_EXPECT(Stream_Stat);
     SET_EXPECT(Stream_Seek_END);
