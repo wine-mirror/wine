@@ -2,7 +2,7 @@
 @ stub PSetupAssociateICMProfiles
 @ stub PSetupBuildDriversFromPath
 @ stub PSetupCreateDrvSetupPage
-@ stdcall PSetupCreateMonitorInfo(long ptr ptr)
+@ stdcall PSetupCreateMonitorInfo(long wstr)
 @ stub PSetupCreatePrinterDeviceInfoList
 @ stub PSetupDestroyDriverInfo3
 @ stdcall PSetupDestroyMonitorInfo(long)

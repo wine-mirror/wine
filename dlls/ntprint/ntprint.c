@@ -65,18 +65,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  */
 
-HANDLE WINAPI PSetupCreateMonitorInfo(LPVOID unknown1, LPVOID  unknown2,LPVOID unknown3)
+HANDLE WINAPI PSetupCreateMonitorInfo(DWORD unknown1, WCHAR *server)
 {
     monitorinfo_t * mi=NULL;
     DWORD needed;
     DWORD res;
 
-    TRACE("(%p, %p, %p)\n", unknown1, unknown2, unknown3);
-
-    if ((unknown2 != NULL) || (unknown3 != NULL)) {
-        FIXME("got unknown parameter: (%p, %p, %p)\n", unknown1, unknown2, unknown3);
-        return NULL;
-    }
+    TRACE("(%d, %s)\n", unknown1, debugstr_w(server));
 
     mi = HeapAlloc(GetProcessHeap(), 0, sizeof(monitorinfo_t));
     if (!mi) {
@@ -85,15 +80,14 @@ HANDLE WINAPI PSetupCreateMonitorInfo(LPVOID unknown1, LPVOID  unknown2,LPVOID u
     }
 
     /* Get the needed size for all Monitors */
-    res = EnumMonitorsW(NULL, 2, NULL, 0, &needed, &mi->installed);
+    res = EnumMonitorsW(server, 2, NULL, 0, &needed, &mi->installed);
     if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
         mi->mi2 = HeapAlloc(GetProcessHeap(), 0, needed);
-        res = EnumMonitorsW(NULL, 2, (LPBYTE) mi->mi2, needed, &needed, &mi->installed);
+        res = EnumMonitorsW(server, 2, (LPBYTE) mi->mi2, needed, &needed, &mi->installed);
     }
 
     if (!res) {
         HeapFree(GetProcessHeap(), 0, mi);
-        /* FIXME: SetLastError() needed? */
         return NULL;
     }
 
