@@ -43,7 +43,7 @@
 @ stub CM_Free_Res_Des_Ex
 @ stub CM_Free_Res_Des_Handle
 @ stdcall CM_Get_Child(ptr long long) setupapi.CM_Get_Child
-@ stub CM_Get_Child_Ex
+@ stdcall CM_Get_Child_Ex(ptr long long ptr) setupapi.CM_Get_Child_Ex
 @ stub CM_Get_Class_Key_NameA
 @ stub CM_Get_Class_Key_NameW
 @ stub CM_Get_Class_Key_Name_ExA
