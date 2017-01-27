@@ -3893,6 +3893,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         /* Current wined3d sRGB infrastructure requires EXT_texture_sRGB_decode
          * for GL_ARB_framebuffer_sRGB support (without EXT_texture_sRGB_decode
          * we never render to sRGB surfaces). */
+        TRACE("EXT_texture_sRGB_decode is not supported, disabling ARB_framebuffer_sRGB.\n");
         gl_info->supported[ARB_FRAMEBUFFER_SRGB] = FALSE;
     }
     if (gl_info->supported[ARB_OCCLUSION_QUERY])

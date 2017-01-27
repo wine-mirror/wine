@@ -1220,7 +1220,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_RENDERTARGET,
             EXT_PACKED_FLOAT},
     /* Palettized formats */
-    {WINED3DFMT_P8_UINT,                GL_R8,                            GL_R8,                              0,
+    {WINED3DFMT_P8_UINT,                GL_R8,                            GL_R8,                                  0,
             GL_RED,                     GL_UNSIGNED_BYTE,                 0,
             0,
             ARB_TEXTURE_RG,             NULL},
@@ -2382,11 +2382,14 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
                 TRACE("Format %s's sRGB format is FBO attachable, type %u.\n",
                         debug_d3dformat(format->id), type);
                 format->flags[type] |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
+                if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+                    format->glInternal = format->glGammaInternal;
             }
             else
             {
                 WARN("Format %s's sRGB format is not FBO attachable, type %u.\n",
                         debug_d3dformat(format->id), type);
+                format_clear_flag(format, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
             }
         }
         else if (status == GL_FRAMEBUFFER_COMPLETE)
@@ -2523,11 +2526,14 @@ static void init_format_fbo_compat_info(struct wined3d_caps_gl_ctx *ctx)
                         TRACE("Format %s's sRGB format is FBO attachable, resource type %u.\n",
                                 debug_d3dformat(format->id), type);
                         format->flags[type] |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
+                        if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+                            format->glInternal = format->glGammaInternal;
                     }
                     else
                     {
                         WARN("Format %s's sRGB format is not FBO attachable, resource type %u.\n",
                                 debug_d3dformat(format->id), type);
+                        format_clear_flag(format, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
                     }
                 }
                 else if (format->flags[type] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
@@ -2739,7 +2745,8 @@ static void query_internal_format(struct wined3d_adapter *adapter,
 
             if (!(format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE)))
                 format->glGammaInternal = format->glInternal;
-            else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+            else if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+                    && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
                 format->glInternal = format->glGammaInternal;
         }
     }
@@ -2761,7 +2768,8 @@ static void query_internal_format(struct wined3d_adapter *adapter,
                 format->glGammaInternal = format->glInternal;
                 format_clear_flag(format, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
             }
-            else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+            else if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+                    && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
             {
                 format->glInternal = format->glGammaInternal;
             }
