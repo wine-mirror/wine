@@ -288,9 +288,9 @@
 @ cdecl lroundl(double) ucrtbase.lroundl
 @ cdecl modf(double ptr) ucrtbase.modf
 @ cdecl -arch=arm,x86_64 modff(float ptr) ucrtbase.modff
-@ stub nan
-@ stub nanf
-@ stub nanl
+@ cdecl nan(str) ucrtbase.nan
+@ cdecl nanf(str) ucrtbase.nanf
+@ cdecl nanl(str) ucrtbase.nanl
 @ cdecl nearbyint(double) ucrtbase.nearbyint
 @ cdecl nearbyintf(float) ucrtbase.nearbyintf
 @ cdecl nearbyintl(double) ucrtbase.nearbyintl

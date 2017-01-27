@@ -2293,9 +2293,9 @@
 @ cdecl memset(ptr long long) MSVCRT_memset
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl -arch=arm,x86_64 modff(float ptr) MSVCRT_modff
-@ stub nan
-@ stub nanf
-@ stub nanl
+@ cdecl nan(str) MSVCR120_nan
+@ cdecl nanf(str) MSVCR120_nanf
+@ cdecl nanl(str) MSVCR120_nan
 @ cdecl nearbyint(double) MSVCRT_nearbyint
 @ cdecl nearbyintf(float) MSVCRT_nearbyintf
 @ cdecl nearbyintl(double) MSVCRT_nearbyint
