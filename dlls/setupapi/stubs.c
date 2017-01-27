@@ -499,6 +499,16 @@ CONFIGRET WINAPI CM_Get_Class_Registry_PropertyW(LPGUID class, ULONG prop, PULON
     return CR_FAILURE;
 }
 
+/***********************************************************************
+ *             CM_Get_Sibling_Ex  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Sibling_Ex(
+    PDEVINST pdnDevInst, DEVINST DevInst, ULONG ulFlags, HMACHINE hMachine)
+{
+    FIXME("%p 0x%08x 0x%08x %p: stub\n", pdnDevInst, DevInst, ulFlags, hMachine);
+    return CR_FAILURE;
+}
+
 CONFIGRET WINAPI CM_Reenumerate_DevNode(DEVINST dnDevInst, ULONG ulFlags)
 {
     FIXME("0x%08x 0x%08x: stub\n", dnDevInst, ulFlags);

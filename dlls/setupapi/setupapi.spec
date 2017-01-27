@@ -124,7 +124,7 @@
 @ stub CM_Get_Res_Des_Data_Size
 @ stub CM_Get_Res_Des_Data_Size_Ex
 @ stub CM_Get_Sibling
-@ stub CM_Get_Sibling_Ex
+@ stdcall CM_Get_Sibling_Ex(ptr long long ptr)
 @ stdcall CM_Get_Version()
 @ stub CM_Get_Version_Ex
 @ stub CM_Intersect_Range_List
