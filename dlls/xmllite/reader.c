@@ -2777,7 +2777,8 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *nodetype)
     if (hr == S_OK)
     {
         TRACE("node type %s\n", debugstr_nodetype(This->nodetype));
-        *nodetype = This->nodetype;
+        if (nodetype)
+            *nodetype = This->nodetype;
     }
 
     return hr;
