@@ -35,8 +35,8 @@ WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *, ULONG ) DECLSPEC_HIDDE
 HRESULT append_attribute( WS_XML_ELEMENT_NODE *, WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 void free_attribute( WS_XML_ATTRIBUTE * ) DECLSPEC_HIDDEN;
 WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
-BOOL set_fp_rounding( unsigned short * ) DECLSPEC_HIDDEN;
-void restore_fp_rounding( unsigned short ) DECLSPEC_HIDDEN;
+BOOL set_fpword( unsigned short, unsigned short * ) DECLSPEC_HIDDEN;
+void restore_fpword( unsigned short ) DECLSPEC_HIDDEN;
 HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
 HRESULT set_input( WS_XML_READER *, char *, ULONG ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;

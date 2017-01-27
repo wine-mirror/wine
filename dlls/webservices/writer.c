@@ -1373,9 +1373,9 @@ static HRESULT text_to_utf8text( const WS_XML_TEXT *text, WS_XML_UTF8_TEXT **ret
         unsigned short fpword;
         ULONG len;
 
-        if (!set_fp_rounding( &fpword )) return E_NOTIMPL;
+        if (!set_fpword( 0x37f, &fpword )) return E_NOTIMPL;
         len = format_double( &double_text->value, buf );
-        restore_fp_rounding( fpword );
+        restore_fpword( fpword );
         if (!len) return E_NOTIMPL;
         if (!(*ret = alloc_utf8_text( buf, len ))) return E_OUTOFMEMORY;
         return S_OK;

@@ -2065,9 +2065,28 @@ static void test_text_types(void)
     WsFreeWriter( writer );
 }
 
+static BOOL get_fpword( unsigned short *ret )
+{
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    unsigned short fpword;
+    __asm__ __volatile__( "fstcw %0" : "=m" (fpword) );
+    *ret = fpword;
+    return TRUE;
+#endif
+    return FALSE;
+}
+
+static void set_fpword( unsigned short fpword )
+{
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
+#endif
+}
+
 static void test_double(void)
 {
     WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    unsigned short fpword;
     static const struct
     {
         double      val;
@@ -2154,6 +2173,34 @@ static void test_double(void)
     hr = WsWriteEndElement( writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output( writer, "<t>-INF</t>", __LINE__ );
+
+    if (!get_fpword( &fpword ))
+    {
+        skip( "can't get floating point control word\n" );
+        WsFreeWriter( writer );
+        return;
+    }
+    ok( fpword == 0x27f, "got %04x\n", fpword );
+    set_fpword( 0x1f7f );
+    get_fpword( &fpword );
+    ok( fpword == 0x1f7f, "got %04x\n", fpword );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    text.value = 100000000000000;
+    hr = WsWriteText( writer, &text.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>100000000000000</t>", __LINE__ );
+
+    get_fpword( &fpword );
+    ok( fpword == 0x1f7f, "got %04x\n", fpword );
+    set_fpword( 0x27f );
 
     WsFreeWriter( writer );
 }

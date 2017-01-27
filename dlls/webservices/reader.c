@@ -2294,17 +2294,14 @@ static HRESULT str_to_uint64( const unsigned char *str, ULONG len, UINT64 max, U
     return S_OK;
 }
 
-#if defined(__i386__) || defined(__x86_64__)
-
-#define RC_DOWN 0x100;
-BOOL set_fp_rounding( unsigned short *save )
+BOOL set_fpword( unsigned short new, unsigned short *old )
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     unsigned short fpword;
 
     __asm__ __volatile__( "fstcw %0" : "=m" (fpword) );
-    *save = fpword;
-    fpword |= RC_DOWN;
+    *old = fpword;
+    fpword = new;
     __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
     return TRUE;
 #else
@@ -2312,25 +2309,15 @@ BOOL set_fp_rounding( unsigned short *save )
     return FALSE;
 #endif
 }
-void restore_fp_rounding( unsigned short fpword )
+
+void restore_fpword( unsigned short fpword )
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
 #else
     FIXME( "not implemented\n" );
 #endif
 }
-#else
-BOOL set_fp_rounding( unsigned short *save )
-{
-    FIXME( "not implemented\n" );
-    return FALSE;
-}
-void restore_fp_rounding( unsigned short fpword )
-{
-    FIXME( "not implemented\n" );
-}
-#endif
 
 static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
 {
@@ -2373,7 +2360,7 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
     else if (*p == '+') { p++; len--; };
     if (!len) return S_OK;
 
-    if (!set_fp_rounding( &fpword )) return E_NOTIMPL;
+    if (!set_fpword( 0x37f, &fpword )) return E_NOTIMPL;
 
     q = p;
     while (len && isdigit( *q )) { q++; len--; }
@@ -2444,7 +2431,7 @@ static HRESULT str_to_double( const unsigned char *str, ULONG len, double *ret )
     hr = S_OK;
 
 done:
-    restore_fp_rounding( fpword );
+    restore_fpword( fpword );
     return hr;
 }
 
