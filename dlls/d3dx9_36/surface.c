@@ -1837,10 +1837,10 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     }
     else /* Stretching or format conversion. */
     {
-        if (((srcformatdesc->type != FORMAT_ARGB) && (srcformatdesc->type != FORMAT_INDEX)) ||
-            (destformatdesc->type != FORMAT_ARGB))
+        if (!is_conversion_from_supported(srcformatdesc)
+                || !is_conversion_to_supported(destformatdesc))
         {
-            FIXME("Format conversion missing %#x -> %#x\n", src_format, surfdesc.Format);
+            FIXME("Unsupported format conversion %#x -> %#x.\n", src_format, surfdesc.Format);
             return E_NOTIMPL;
         }
 
@@ -2112,9 +2112,10 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
 
             src_format_desc = get_format_info(src_surface_desc.Format);
             dst_format_desc = get_format_info(d3d_pixel_format);
-            if (src_format_desc->type != FORMAT_ARGB || dst_format_desc->type != FORMAT_ARGB)
+            if (!is_conversion_from_supported(src_format_desc)
+                    || !is_conversion_to_supported(dst_format_desc))
             {
-                FIXME("Unsupported pixel format conversion %#x -> %#x\n",
+                FIXME("Unsupported format conversion %#x -> %#x.\n",
                     src_surface_desc.Format, d3d_pixel_format);
                 hr = E_NOTIMPL;
                 goto cleanup;

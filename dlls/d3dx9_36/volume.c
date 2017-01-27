@@ -188,8 +188,8 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         const BYTE *src_addr;
 
 
-        if (((src_format_desc->type != FORMAT_ARGB) && (src_format_desc->type != FORMAT_INDEX)) ||
-            (dst_format_desc->type != FORMAT_ARGB))
+        if (!is_conversion_from_supported(src_format_desc)
+                || !is_conversion_to_supported(dst_format_desc))
         {
             FIXME("Pixel format conversion is not implemented %#x -> %#x\n",
                     src_format_desc->format, dst_format_desc->format);

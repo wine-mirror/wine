@@ -65,6 +65,22 @@ struct pixel_format_desc {
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
 
+static inline BOOL is_conversion_from_supported(const struct pixel_format_desc *format)
+{
+    if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
+            || format->type == FORMAT_ARGBF)
+        return TRUE;
+    return !!format->to_rgba;
+}
+
+static inline BOOL is_conversion_to_supported(const struct pixel_format_desc *format)
+{
+    if (format->type == FORMAT_ARGB || format->type == FORMAT_ARGBF16
+            || format->type == FORMAT_ARGBF)
+        return TRUE;
+    return !!format->from_rgba;
+}
+
 HRESULT map_view_of_file(const WCHAR *filename, void **buffer, DWORD *length) DECLSPEC_HIDDEN;
 HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, void **buffer, DWORD *length) DECLSPEC_HIDDEN;
 
