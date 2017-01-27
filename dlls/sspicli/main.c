@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "rpc.h"
 #include "sspi.h"
+#include "wincred.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -139,4 +140,60 @@ void SEC_ENTRY SspiLocalFree( void *ptr )
 {
     TRACE( "%p\n", ptr );
     HeapFree( GetProcessHeap(), 0, ptr );
+}
+
+/***********************************************************************
+ *		SspiPrepareForCredWrite (SECUR32.0)
+ */
+SECURITY_STATUS SEC_ENTRY SspiPrepareForCredWrite( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id,
+    PCWSTR target, PULONG type, PCWSTR *targetname, PCWSTR *username, PUCHAR *blob, PULONG size )
+{
+    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+    WCHAR *str, *str2;
+    UCHAR *password;
+    ULONG len;
+
+    FIXME( "%p %s %p %p %p %p %p\n", opaque_id, debugstr_w(target), type, targetname, username,
+           blob, size );
+
+    if (id->DomainLength)
+    {
+        len = (id->DomainLength + id->UserLength + 2) * sizeof(WCHAR);
+        if (!(str = HeapAlloc(GetProcessHeap(), 0 , len ))) return SEC_E_INSUFFICIENT_MEMORY;
+        memcpy( str, id->Domain, id->DomainLength * sizeof(WCHAR) );
+        str[id->DomainLength] = '\\';
+        memcpy( str + id->DomainLength + 1, id->User, id->UserLength * sizeof(WCHAR) );
+        str[id->DomainLength + 1 + id->UserLength] = 0;
+    }
+    else
+    {
+        len = (id->UserLength + 1) * sizeof(WCHAR);
+        if (!(str = HeapAlloc(GetProcessHeap(), 0 , len ))) return SEC_E_INSUFFICIENT_MEMORY;
+        memcpy( str, id->User, id->UserLength * sizeof(WCHAR) );
+        str[id->UserLength] = 0;
+    }
+
+    str2 = target ? strdupW( target ) : strdupW( str );
+    if (!str2)
+    {
+        HeapFree( GetProcessHeap(), 0, str );
+        return SEC_E_INSUFFICIENT_MEMORY;
+    }
+
+    len = id->PasswordLength * sizeof(WCHAR);
+    if (!(password = HeapAlloc(GetProcessHeap(), 0 , len )))
+    {
+        HeapFree( GetProcessHeap(), 0, str );
+        HeapFree( GetProcessHeap(), 0, str2 );
+        return SEC_E_INSUFFICIENT_MEMORY;
+    }
+    memcpy( password, id->Password, len );
+
+    *type = CRED_TYPE_DOMAIN_PASSWORD;
+    *username = str;
+    *targetname = str2;
+    *blob = password;
+    *size = len;
+
+    return SEC_E_OK;
 }

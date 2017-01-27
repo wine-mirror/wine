@@ -95,7 +95,7 @@
 @ stdcall SspiLocalFree(ptr)
 @ stub SspiMarshalAuthIdentity
 @ stub SspiPrepareForCredRead
-@ stub SspiPrepareForCredWrite
+@ stdcall SspiPrepareForCredWrite(ptr wstr ptr ptr ptr ptr ptr)
 @ stub SspiUnmarshalAuthIdentity
 @ stub SspiUnmarshalAuthIdentityInternal
 @ stub SspiValidateAuthIdentity
