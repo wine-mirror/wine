@@ -82,6 +82,25 @@ static void test_CreateSecurity(void)
     IMimeSecurity_Release(sec);
 }
 
+static IStream *create_stream_from_string(const char *data)
+{
+    LARGE_INTEGER off;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IStream_Write(stream, data, strlen(data), NULL);
+    ok(hr == S_OK, "Write failed: %08x\n", hr);
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Seek failed: %08x\n", hr);
+
+    return stream;
+}
+
 static void test_CreateBody(void)
 {
     HRESULT hr;
@@ -103,11 +122,7 @@ static void test_CreateBody(void)
     ok(hr == MIME_E_NO_DATA, "ret %08x\n", hr);
     ok(handle == NULL, "handle %p\n", handle);
 
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &in);
-    ok(hr == S_OK, "ret %08x\n", hr);
-    IStream_Write(in, msg1, sizeof(msg1) - 1, NULL);
-    off.QuadPart = 0;
-    IStream_Seek(in, off, STREAM_SEEK_SET, NULL);
+    in = create_stream_from_string(msg1);
 
     /* Need to call InitNew before Load otherwise Load crashes with native inetcomm */
     hr = IMimeBody_InitNew(body);
@@ -212,7 +227,6 @@ static void test_CreateMessage(void)
     HRESULT hr;
     IMimeMessage *msg;
     IStream *stream;
-    LARGE_INTEGER pos;
     LONG ref;
     HBODY hbody, hbody2;
     IMimeBody *body;
@@ -230,10 +244,7 @@ static void test_CreateMessage(void)
     hr = MimeOleCreateMessage(NULL, &msg);
     ok(hr == S_OK, "ret %08x\n", hr);
 
-    CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    IStream_Write(stream, msg1, sizeof(msg1) - 1, NULL);
-    pos.QuadPart = 0;
-    IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+    stream = create_stream_from_string(msg1);
 
     hr = IMimeMessage_Load(msg, stream);
     ok(hr == S_OK, "ret %08x\n", hr);
