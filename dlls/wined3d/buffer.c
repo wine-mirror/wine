@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
 #define WINED3D_BUFFER_USE_BO       0x02    /* Use a buffer object for this buffer. */
-#define WINED3D_BUFFER_DOUBLEBUFFER 0x04    /* Keep both a buffer object and a system memory copy for this buffer. */
+#define WINED3D_BUFFER_PIN_SYSMEM   0x04    /* Keep a system memory copy for this buffer. */
 #define WINED3D_BUFFER_DISCARD      0x08    /* A DISCARD lock has occurred since the last preload. */
 #define WINED3D_BUFFER_APPLESYNC    0x10    /* Using sync as in GL_APPLE_flush_buffer_range. */
 
@@ -249,7 +249,7 @@ static BOOL buffer_create_buffer_object(struct wined3d_buffer *buffer, struct wi
 
     buffer->buffer_object_usage = gl_usage;
 
-    if (buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER)
+    if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
     {
         buffer_invalidate_bo_range(buffer, 0, 0);
     }
@@ -606,7 +606,7 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
             GL_EXTCALL(glGetBufferSubData(buffer->buffer_type_hint, 0, buffer->resource.size,
                     buffer->resource.heap_memory));
             checkGLcall("buffer download");
-            buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
+            buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
             break;
 
         case WINED3D_LOCATION_BUFFER:
@@ -669,8 +669,8 @@ static void buffer_unload(struct wined3d_resource *resource)
 
         /* Download the buffer, but don't permanently enable double buffering. */
         wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
-        if (!(flags & WINED3D_BUFFER_DOUBLEBUFFER))
-            buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
+        if (!(flags & WINED3D_BUFFER_PIN_SYSMEM))
+            buffer->flags &= ~WINED3D_BUFFER_PIN_SYSMEM;
 
         wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
         buffer_destroy_buffer_object(buffer, context);
@@ -989,7 +989,7 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         TRACE("No conversion needed.\n");
 
         /* Nothing to do because heap memory exists if the buffer is double buffer or has no BO at all. */
-        if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+        if (!(buffer->flags & WINED3D_BUFFER_PIN_SYSMEM))
             return;
 
         wined3d_buffer_upload_ranges(buffer, context, buffer->resource.heap_memory,
@@ -1042,7 +1042,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
             dirty_size = 0;
         }
 
-        if (buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER)
+        if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
         {
             if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
             {
@@ -1149,7 +1149,7 @@ static void wined3d_buffer_unmap(struct wined3d_buffer *buffer)
         return;
     }
 
-    if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER) && buffer->buffer_object)
+    if (!(buffer->flags & WINED3D_BUFFER_PIN_SYSMEM) && buffer->buffer_object)
     {
         struct wined3d_device *device = buffer->resource.device;
         const struct wined3d_gl_info *gl_info;
@@ -1420,7 +1420,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
          * maps and retain data in DISCARD maps. Keep a system memory copy of
          * the buffer to provide the same behavior to the application. */
         TRACE("Using doublebuffer mode.\n");
-        buffer->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
+        buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
     }
 
     /* Observations show that draw_primitive_immediate_mode() is faster on
