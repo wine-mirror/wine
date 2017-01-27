@@ -32,6 +32,36 @@
 
 #include "wine/test.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        expect_ ## func = FALSE; \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func  "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(Stream_Read);
+DEFINE_EXPECT(Stream_Stat);
+DEFINE_EXPECT(Stream_Seek);
+DEFINE_EXPECT(Stream_Seek_END);
+
 static const char msg1[] =
     "MIME-Version: 1.0\r\n"
     "Content-Type: multipart/mixed;\r\n"
@@ -209,6 +239,250 @@ static void test_CreateBody(void)
     IMimeAllocator_Release(alloc);
 
     IStream_Release(in);
+    IMimeBody_Release(body);
+}
+
+typedef struct {
+    IStream IStream_iface;
+    LONG ref;
+    unsigned pos;
+} TestStream;
+
+static inline TestStream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, TestStream, IStream_iface);
+}
+
+static HRESULT WINAPI Stream_QueryInterface(IStream *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ISequentialStream, riid) || IsEqualGUID(&IID_IStream, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Stream_AddRef(IStream *iface)
+{
+    TestStream *This = impl_from_IStream(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI Stream_Release(IStream *iface)
+{
+    TestStream *This = impl_from_IStream(iface);
+    return InterlockedDecrement(&This->ref);
+}
+
+static HRESULT WINAPI Stream_Read(IStream *iface, void *pv, ULONG cb, ULONG *pcbRead)
+{
+    TestStream *This = impl_from_IStream(iface);
+    BYTE *output = pv;
+    unsigned i;
+
+    CHECK_EXPECT(Stream_Read);
+
+    for(i = 0; i < cb; i++)
+        output[i] = '0' + This->pos++;
+    *pcbRead = i;
+    return S_OK;
+}
+
+static HRESULT WINAPI Stream_Write(IStream *iface, const void *pv, ULONG cb, ULONG *pcbWritten)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static DWORD expect_seek_pos;
+
+static HRESULT WINAPI Stream_Seek(IStream *iface, LARGE_INTEGER dlibMove, DWORD dwOrigin,
+                                  ULARGE_INTEGER *plibNewPosition)
+{
+    TestStream *This = impl_from_IStream(iface);
+
+    if(dwOrigin == STREAM_SEEK_END) {
+        CHECK_EXPECT(Stream_Seek_END);
+        ok(dlibMove.QuadPart == expect_seek_pos, "unexpected seek pos %u\n", dlibMove.u.LowPart);
+        if(plibNewPosition)
+            plibNewPosition->QuadPart = 10;
+        return S_OK;
+    }
+
+    CHECK_EXPECT(Stream_Seek);
+
+    ok(dlibMove.QuadPart == expect_seek_pos, "unexpected seek pos %u\n", dlibMove.u.LowPart);
+    ok(dwOrigin == STREAM_SEEK_SET, "dwOrigin = %d\n", dwOrigin);
+    This->pos = dlibMove.QuadPart;
+    if(plibNewPosition)
+        plibNewPosition->QuadPart = This->pos;
+    return S_OK;
+}
+
+static HRESULT WINAPI Stream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_CopyTo(IStream *iface, IStream *pstm, ULARGE_INTEGER cb,
+                                    ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Commit(IStream *iface, DWORD grfCommitFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Revert(IStream *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_LockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+                                        ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_UnlockRegion(IStream *iface,
+        ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Stat(IStream *iface, STATSTG *pstatstg, DWORD dwStatFlag)
+{
+    CHECK_EXPECT(Stream_Stat);
+    ok(dwStatFlag == STATFLAG_NONAME, "dwStatFlag = %x\n", dwStatFlag);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Clone(IStream *iface, IStream **ppstm)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl StreamVtbl = {
+    Stream_QueryInterface,
+    Stream_AddRef,
+    Stream_Release,
+    Stream_Read,
+    Stream_Write,
+    Stream_Seek,
+    Stream_SetSize,
+    Stream_CopyTo,
+    Stream_Commit,
+    Stream_Revert,
+    Stream_LockRegion,
+    Stream_UnlockRegion,
+    Stream_Stat,
+    Stream_Clone
+};
+
+static TestStream *create_test_stream(void)
+{
+    TestStream *stream;
+    stream = HeapAlloc(GetProcessHeap(), 0, sizeof(*stream));
+    stream->IStream_iface.lpVtbl = &StreamVtbl;
+    stream->ref = 1;
+    stream->pos = 0;
+    return stream;
+}
+
+#define test_stream_read(a,b,c,d) _test_stream_read(__LINE__,a,b,c,d)
+static void _test_stream_read(unsigned line, IStream *stream, HRESULT exhres, const char *exdata, unsigned read_size)
+{
+    ULONG read = 0xdeadbeed, exread = strlen(exdata);
+    char buf[1024];
+    HRESULT hres;
+
+    if(read_size == -1)
+        read_size = sizeof(buf)-1;
+
+    hres = IStream_Read(stream, buf, read_size, &read);
+    ok_(__FILE__,line)(hres == exhres, "Read returned %08x, expected %08x\n", hres, exhres);
+    ok_(__FILE__,line)(read == exread, "unexpected read size %u, expected %u\n", read, exread);
+    buf[read] = 0;
+    ok_(__FILE__,line)(read == exread && !memcmp(buf, exdata, read), "unexpected data %s\n", buf);
+}
+
+static void test_SetData(void)
+{
+    IStream *stream, *stream2;
+    TestStream *test_stream;
+    IMimeBody *body;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_IMimeBody, NULL, CLSCTX_INPROC_SERVER, &IID_IMimeBody, (void**)&body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    /* Need to call InitNew before Load otherwise Load crashes with native inetcomm */
+    hr = IMimeBody_InitNew(body);
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    stream = create_stream_from_string(msg1);
+    hr = IMimeBody_Load(body, stream);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    IStream_Release(stream);
+
+    test_stream = create_test_stream();
+    hr = IMimeBody_SetData(body, IET_BINARY, "text", "plain", &IID_IStream, &test_stream->IStream_iface);
+
+    ok(hr == S_OK, "ret %08x\n", hr);
+    hr = IMimeBody_IsContentType(body, "text", "plain");
+    todo_wine
+    ok(hr == S_OK, "ret %08x\n", hr);
+
+    SET_EXPECT(Stream_Stat);
+    SET_EXPECT(Stream_Seek_END);
+    hr = IMimeBody_GetData(body, IET_BINARY, &stream);
+    CHECK_CALLED(Stream_Stat);
+    CHECK_CALLED(Stream_Seek_END);
+    ok(hr == S_OK, "GetData failed %08x\n", hr);
+    ok(stream != &test_stream->IStream_iface, "unexpected stream\n");
+
+    SET_EXPECT(Stream_Seek);
+    SET_EXPECT(Stream_Read);
+    test_stream_read(stream, S_OK, "012", 3);
+    CHECK_CALLED(Stream_Seek);
+    CHECK_CALLED(Stream_Read);
+
+    SET_EXPECT(Stream_Stat);
+    SET_EXPECT(Stream_Seek_END);
+    hr = IMimeBody_GetData(body, IET_BINARY, &stream2);
+    CHECK_CALLED(Stream_Stat);
+    CHECK_CALLED(Stream_Seek_END);
+    ok(hr == S_OK, "GetData failed %08x\n", hr);
+    ok(stream2 != stream, "unexpected stream\n");
+
+    SET_EXPECT(Stream_Seek);
+    SET_EXPECT(Stream_Read);
+    test_stream_read(stream2, S_OK, "01", 2);
+    CHECK_CALLED(Stream_Seek);
+    CHECK_CALLED(Stream_Read);
+
+    expect_seek_pos = 3;
+    SET_EXPECT(Stream_Seek);
+    SET_EXPECT(Stream_Read);
+    test_stream_read(stream, S_OK, "345", 3);
+    CHECK_CALLED(Stream_Seek);
+    CHECK_CALLED(Stream_Read);
+
+    IStream_Release(stream);
+    IStream_Release(stream2);
+    IStream_Release(&test_stream->IStream_iface);
     IMimeBody_Release(body);
 }
 
@@ -844,6 +1118,7 @@ START_TEST(mimeole)
     test_CreateVirtualStream();
     test_CreateSecurity();
     test_CreateBody();
+    test_SetData();
     test_Allocator();
     test_CreateMessage();
     test_MessageSetProp();
