@@ -804,31 +804,27 @@ drop_query:
     This->flags &= ~WINED3D_BUFFER_APPLESYNC;
 }
 
-/* The caller provides a GL context */
-static void buffer_direct_upload(struct wined3d_buffer *This, struct wined3d_context *context)
+/* Context activation is done by the caller. */
+static void wined3d_buffer_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
+        const void *data, unsigned int range_count, const struct wined3d_map_range *ranges)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int start, len;
+    const struct wined3d_map_range *range;
 
-    buffer_bind(This, context);
+    buffer_bind(buffer, context);
 
-    while (This->modified_areas)
+    while (range_count--)
     {
-        This->modified_areas--;
-        start = This->maps[This->modified_areas].offset;
-        len = This->maps[This->modified_areas].size;
-
-        GL_EXTCALL(glBufferSubData(This->buffer_type_hint, start, len, (BYTE *)This->resource.heap_memory + start));
-        checkGLcall("glBufferSubData");
+        range = &ranges[range_count];
+        GL_EXTCALL(glBufferSubData(buffer->buffer_type_hint,
+                range->offset, range->size, (BYTE *)data + range->offset));
     }
-
-    wined3d_buffer_validate_location(This, WINED3D_LOCATION_BUFFER);
+    checkGLcall("glBufferSubData");
 }
 
 static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    unsigned int i, j, start, end, len, vertex_count;
+    unsigned int i, j, range_idx, start, end, vertex_count;
     BYTE *data;
 
     wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
@@ -842,13 +838,10 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
         return;
     }
 
-    buffer_bind(buffer, context);
-    while (buffer->modified_areas)
+    for (range_idx = 0; range_idx < buffer->modified_areas; ++range_idx)
     {
-        buffer->modified_areas--;
-        start = buffer->maps[buffer->modified_areas].offset;
-        len = buffer->maps[buffer->modified_areas].size;
-        end = start + len;
+        start = buffer->maps[range_idx].offset;
+        end = start + buffer->maps[range_idx].size;
 
         memcpy(data + start, (BYTE *)buffer->resource.heap_memory + start, end - start);
         for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertex_count); ++i)
@@ -873,14 +866,11 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
                 }
             }
         }
-
-        GL_EXTCALL(glBufferSubData(buffer->buffer_type_hint, start, len, data + start));
-        checkGLcall("glBufferSubData");
     }
 
-    HeapFree(GetProcessHeap(), 0, data);
+    wined3d_buffer_upload_ranges(buffer, context, data, buffer->modified_areas, buffer->maps);
 
-    wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
+    HeapFree(GetProcessHeap(), 0, data);
 }
 
 void buffer_mark_used(struct wined3d_buffer *buffer)
@@ -1002,12 +992,14 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
             return;
 
-        buffer_direct_upload(buffer, context);
+        wined3d_buffer_upload_ranges(buffer, context, buffer->resource.heap_memory,
+                buffer->modified_areas, buffer->maps);
     }
     else
     {
         buffer_conversion_upload(buffer, context);
     }
+    wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
 }
 
 struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)
