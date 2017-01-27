@@ -442,6 +442,22 @@ static HRESULT create_sub_stream(IStream *stream, ULARGE_INTEGER start, ULARGE_I
     return S_OK;
 }
 
+static HRESULT get_stream_size(IStream *stream, ULARGE_INTEGER *size)
+{
+    STATSTG statstg = {NULL};
+    LARGE_INTEGER zero;
+    HRESULT hres;
+
+    hres = IStream_Stat(stream, &statstg, STATFLAG_NONAME);
+    if(SUCCEEDED(hres)) {
+        *size = statstg.cbSize;
+        return S_OK;
+    }
+
+    zero.QuadPart = 0;
+    return IStream_Seek(stream, zero, STREAM_SEEK_END, size);
+}
+
 static inline MimeBody *impl_from_IMimeBody(IMimeBody *iface)
 {
     return CONTAINING_RECORD(iface, MimeBody, IMimeBody_iface);
@@ -1505,11 +1521,16 @@ static HRESULT WINAPI MimeBody_GetData(
                               IStream** ppStream)
 {
     MimeBody *This = impl_from_IMimeBody(iface);
+    ULARGE_INTEGER start, size;
+    HRESULT hres;
+
     FIXME("(%p)->(%d, %p). Ignoring encoding type.\n", This, ietEncoding, ppStream);
 
-    *ppStream = This->data;
-    IStream_AddRef(*ppStream);
-    return S_OK;
+    start.QuadPart = 0;
+    hres = get_stream_size(This->data, &size);
+    if(SUCCEEDED(hres))
+        hres = create_sub_stream(This->data, start, size, ppStream);
+    return hres;
 }
 
 static HRESULT WINAPI MimeBody_SetData(
