@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 #include "wine/test.h"
 
 typedef struct bitmap_data {
@@ -577,6 +578,50 @@ struct setting {
     void *value;
 };
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
+static void test_set_frame_palette(IWICBitmapFrameEncode *frameencode)
+{
+    IWICComponentFactory *factory;
+    IWICPalette *palette;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+
+    hr = IWICBitmapFrameEncode_SetPalette(frameencode, NULL);
+    ok(hr == E_INVALIDARG, "SetPalette failed, hr=%x\n", hr);
+
+    hr = IWICComponentFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette failed, hr=%x\n", hr);
+
+    hr = IWICBitmapFrameEncode_SetPalette(frameencode, palette);
+todo_wine
+    ok(hr == WINCODEC_ERR_NOTINITIALIZED, "Unexpected hr=%x\n", hr);
+
+    hr = IWICPalette_InitializePredefined(palette, WICBitmapPaletteTypeFixedHalftone256, FALSE);
+    ok(hr == S_OK, "InitializePredefined failed, hr=%x\n", hr);
+
+    EXPECT_REF(palette, 1);
+    hr = IWICBitmapFrameEncode_SetPalette(frameencode, palette);
+    ok(hr == S_OK, "SetPalette failed, hr=%x\n", hr);
+    EXPECT_REF(palette, 1);
+
+    hr = IWICBitmapFrameEncode_SetPalette(frameencode, NULL);
+    ok(hr == E_INVALIDARG, "SetPalette failed, hr=%x\n", hr);
+
+    IWICPalette_Release(palette);
+    IWICComponentFactory_Release(factory);
+}
+
 static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* clsid_encoder,
     const struct bitmap_data **dsts, const CLSID *clsid_decoder, WICRect *rc,
     const struct setting *settings, const char *name)
@@ -654,6 +699,9 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
 
                     hr = IWICBitmapFrameEncode_SetSize(frameencode, srcs[i]->width, srcs[i]->height);
                     ok(SUCCEEDED(hr), "SetSize failed, hr=%x\n", hr);
+
+                    if (IsEqualGUID(clsid_encoder, &CLSID_WICPngEncoder))
+                        test_set_frame_palette(frameencode);
 
                     hr = IWICBitmapFrameEncode_WriteSource(frameencode, &src_obj->IWICBitmapSource_iface, rc);
                     if (rc && (rc->Width <= 0 || rc->Height <= 0))
