@@ -101,6 +101,16 @@ CONFIGRET WINAPI CM_Get_Child(
 }
 
 /***********************************************************************
+ *             CM_Get_Child_Ex  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Child_Ex(
+    PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags, HMACHINE hMachine)
+{
+    FIXME("%p 0x%08x 0x%08x %p: stub\n", pdnDevInst, dnDevInst, ulFlags, hMachine);
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
  *             CM_Get_Device_ID_ExA  (SETUPAPI.@)
  */
 DWORD WINAPI CM_Get_Device_ID_ExA(
