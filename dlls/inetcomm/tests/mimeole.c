@@ -494,6 +494,28 @@ static void test_SetData(void)
     IStream_Release(stream);
     IStream_Release(stream2);
     IStream_Release(&test_stream->IStream_iface);
+
+    stream = create_stream_from_string(" \t\r\n|}~YWJj ZGV|}~mZw== \t"); /* "abcdefg" in base64 obscured by invalid chars */
+    hr = IMimeBody_SetData(body, IET_BASE64, "text", "plain", &IID_IStream, stream);
+    IStream_Release(stream);
+    ok(hr == S_OK, "SetData failed: %08x\n", hr);
+
+    test_current_encoding(body, IET_BASE64);
+
+    hr = IMimeBody_GetData(body, IET_BINARY, &stream);
+    ok(hr == S_OK, "GetData failed %08x\n", hr);
+
+    test_stream_read(stream, S_OK, "abc", 3);
+    test_stream_read(stream, S_OK, "defg", -1);
+
+    IStream_Release(stream);
+
+    hr = IMimeBody_GetData(body, IET_BASE64, &stream);
+    ok(hr == S_OK, "GetData failed %08x\n", hr);
+
+    test_stream_read(stream, S_OK, " \t\r", 3);
+    IStream_Release(stream);
+
     IMimeBody_Release(body);
 }
 

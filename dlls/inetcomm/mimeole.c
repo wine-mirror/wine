@@ -1515,6 +1515,88 @@ static HRESULT WINAPI MimeBody_GetDataHere(
     return E_NOTIMPL;
 }
 
+static const signed char base64_decode_table[] =
+{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x00 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x10 */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, /* 0x20 */
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, /* 0x30 */
+    -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, /* 0x40 */
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, /* 0x50 */
+    -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, /* 0x60 */
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1  /* 0x70 */
+};
+
+static HRESULT decode_base64(IStream *input, IStream **ret_stream)
+{
+    const unsigned char *ptr, *end;
+    unsigned char buf[1024];
+    LARGE_INTEGER pos;
+    unsigned char *ret;
+    unsigned char in[4];
+    IStream *output;
+    DWORD size;
+    int n = 0;
+    HRESULT hres;
+
+    pos.QuadPart = 0;
+    hres = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &output);
+    if(FAILED(hres))
+        return hres;
+
+    while(1) {
+        hres = IStream_Read(input, buf, sizeof(buf), &size);
+        if(FAILED(hres) || !size)
+            break;
+
+        ptr = ret = buf;
+        end = buf + size;
+
+        while(1) {
+            /* skip invalid chars */
+            while(ptr < end &&
+                  (*ptr >= sizeof(base64_decode_table)/sizeof(*base64_decode_table)
+                   || base64_decode_table[*ptr] == -1))
+                ptr++;
+            if(ptr == end)
+                break;
+
+            in[n++] = base64_decode_table[*ptr++];
+            switch(n) {
+            case 2:
+                *ret++ = in[0] << 2 | in[1] >> 4;
+                continue;
+            case 3:
+                *ret++ = in[1] << 4 | in[2] >> 2;
+                continue;
+            case 4:
+                *ret++ = ((in[2] << 6) & 0xc0) | in[3];
+                n = 0;
+            }
+        }
+
+        if(ret > buf) {
+            hres = IStream_Write(output, buf, ret - buf, NULL);
+            if(FAILED(hres))
+                break;
+        }
+    }
+
+    if(SUCCEEDED(hres))
+        hres = IStream_Seek(output, pos, STREAM_SEEK_SET, NULL);
+    if(FAILED(hres)) {
+        IStream_Release(output);
+        return hres;
+    }
+
+    *ret_stream = output;
+    return S_OK;
+}
+
 static HRESULT WINAPI MimeBody_GetData(
                               IMimeBody* iface,
                               ENCODINGTYPE ietEncoding,
@@ -1524,7 +1606,18 @@ static HRESULT WINAPI MimeBody_GetData(
     ULARGE_INTEGER start, size;
     HRESULT hres;
 
-    FIXME("(%p)->(%d, %p). Ignoring encoding type.\n", This, ietEncoding, ppStream);
+    TRACE("(%p)->(%d %p)\n", This, ietEncoding, ppStream);
+
+    if(This->encoding != ietEncoding) {
+        switch(This->encoding) {
+        case IET_BASE64:
+            if(ietEncoding != IET_BINARY)
+                FIXME("Encofing %d is not supported.\n", ietEncoding);
+            return decode_base64(This->data, ppStream);
+        default:
+            FIXME("Decoding %d is not supported.\n", This->encoding);
+        }
+    }
 
     start.QuadPart = 0;
     hres = get_stream_size(This->data, &size);
