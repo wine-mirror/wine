@@ -2901,3 +2901,20 @@ LDOUBLE CDECL MSVCR120_lgammal(LDOUBLE x)
 {
     return MSVCR120_lgamma(x);
 }
+
+/*********************************************************************
+ *      nan (MSVCR120.@)
+ */
+double CDECL MSVCR120_nan(const char *tagp)
+{
+    /* Windows ignores input (MSDN) */
+    return NAN;
+}
+
+/*********************************************************************
+ *      nanf (MSVCR120.@)
+ */
+float CDECL MSVCR120_nanf(const char *tagp)
+{
+    return NAN;
+}
