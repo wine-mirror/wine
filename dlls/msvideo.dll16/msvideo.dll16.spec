@@ -35,7 +35,7 @@
 111 stub DRAWDIBCHANGEPALETTE
 112 pascal -ret16 DrawDibRealize(word word word) DrawDibRealize16
 113 stub DRAWDIBTIME
-114 stub DRAWDIBPROFILEDISPLAY
+114 pascal -ret16 DrawDibProfileDisplay(ptr) DrawDibProfileDisplay16
 115 stub STRETCHDIB
 118 pascal -ret16 DrawDibStart(word long) DrawDibStart16
 119 pascal -ret16 DrawDibStop(word) DrawDibStop16
