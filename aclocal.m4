@@ -346,7 +346,7 @@ wine_fn_config_dll ()
 
     AS_VAR_IF([enable_tools],[no],,[ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"])
     case $ac_name in
-      *16) ac_implibflags=" -m16" ;;
+      *.*16) ac_implibflags=" -m16" ;;
       *.*) ;;
       *)   ac_dll=$ac_dll.dll ;;
     esac

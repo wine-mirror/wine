@@ -7722,7 +7722,7 @@ else
   ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"
 fi
     case $ac_name in
-      *16) ac_implibflags=" -m16" ;;
+      *.*16) ac_implibflags=" -m16" ;;
       *.*) ;;
       *)   ac_dll=$ac_dll.dll ;;
     esac
