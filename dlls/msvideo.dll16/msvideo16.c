@@ -121,6 +121,15 @@ UINT16 VFWAPI DrawDibRealize16(HDRAWDIB16 hdd, HDC16 hdc,
 }
 
 /*************************************************************************
+ *      DrawDibProfileDisplay     [MSVIDEO.114]
+ */
+BOOL16 VFWAPI DrawDibProfileDisplay16(LPBITMAPINFOHEADER lpbi)
+{
+    TRACE("(%p)\n", lpbi);
+    return DrawDibProfileDisplay(lpbi);
+}
+
+/*************************************************************************
  *		DrawDibStart		[MSVIDEO.118]
  */
 BOOL16 VFWAPI DrawDibStart16(HDRAWDIB16 hdd, DWORD rate)
