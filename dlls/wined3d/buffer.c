@@ -40,6 +40,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
 #define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
+static void wined3d_buffer_evict_sysmem(struct wined3d_buffer *buffer)
+{
+    if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
+    {
+        TRACE("Not evicting system memory for buffer %p.\n", buffer);
+        return;
+    }
+
+    TRACE("Evicting system memory for buffer %p.\n", buffer);
+    wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_SYSMEM);
+    wined3d_resource_free_sysmem(&buffer->resource);
+}
+
 static void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, unsigned int offset, unsigned int size)
 {
     if (!offset && (!size || size == buffer->resource.size))
@@ -250,15 +263,11 @@ static BOOL buffer_create_buffer_object(struct wined3d_buffer *buffer, struct wi
     buffer->buffer_object_usage = gl_usage;
 
     if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
-    {
         buffer_invalidate_bo_range(buffer, 0, 0);
-    }
     else
-    {
-        wined3d_resource_free_sysmem(&buffer->resource);
         wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
-        wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_SYSMEM);
-    }
+
+    wined3d_buffer_evict_sysmem(buffer);
 
     return TRUE;
 
