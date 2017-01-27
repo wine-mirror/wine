@@ -2389,7 +2389,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
             {
                 WARN("Format %s's sRGB format is not FBO attachable, type %u.\n",
                         debug_d3dformat(format->id), type);
-                format_clear_flag(format, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
+                format_clear_flag(format, WINED3DFMT_FLAG_SRGB_WRITE);
             }
         }
         else if (status == GL_FRAMEBUFFER_COMPLETE)
@@ -2533,7 +2533,7 @@ static void init_format_fbo_compat_info(struct wined3d_caps_gl_ctx *ctx)
                     {
                         WARN("Format %s's sRGB format is not FBO attachable, resource type %u.\n",
                                 debug_d3dformat(format->id), type);
-                        format_clear_flag(format, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
+                        format_clear_flag(format, WINED3DFMT_FLAG_SRGB_WRITE);
                     }
                 }
                 else if (format->flags[type] & WINED3DFMT_FLAG_FBO_ATTACHABLE)

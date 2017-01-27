@@ -2949,12 +2949,6 @@ struct wined3d_surface
     struct list               overlay_entry;
 };
 
-static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *context)
-{
-    return !context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
-            && context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL;
-}
-
 static inline unsigned int surface_get_sub_resource_idx(const struct wined3d_surface *surface)
 {
     return surface->texture_layer * surface->container->level_count + surface->texture_level;
@@ -2963,13 +2957,6 @@ static inline unsigned int surface_get_sub_resource_idx(const struct wined3d_sur
 static inline struct wined3d_texture_sub_resource *surface_get_sub_resource(struct wined3d_surface *surface)
 {
     return &surface->container->sub_resources[surface_get_sub_resource_idx(surface)];
-}
-
-static inline GLuint surface_get_texture_name(const struct wined3d_surface *surface,
-        const struct wined3d_context *context, BOOL srgb)
-{
-    return srgb && needs_separate_srgb_gl_texture(context)
-            ? surface->container->texture_srgb.name : surface->container->texture_rgb.name;
 }
 
 HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
@@ -3842,12 +3829,30 @@ static inline void context_apply_state(struct wined3d_context *context,
     state_table[rep].apply(context, state, rep);
 }
 
+static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *context,
+        const struct wined3d_texture *texture)
+{
+    unsigned int flags = texture->resource.format_flags;
+
+    return (!context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+            || (flags & (WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE))
+            != (WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE))
+            && context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL;
+}
+
 static inline BOOL needs_srgb_write(const struct wined3d_context *context,
         const struct wined3d_state *state, const struct wined3d_fb_state *fb)
 {
     return (!(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
             || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
             && fb->render_targets[0] && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
+}
+
+static inline GLuint surface_get_texture_name(const struct wined3d_surface *surface,
+        const struct wined3d_context *context, BOOL srgb)
+{
+    return srgb && needs_separate_srgb_gl_texture(context, surface->container)
+            ? surface->container->texture_srgb.name : surface->container->texture_rgb.name;
 }
 
 static inline BOOL can_use_texture_swizzle(const struct wined3d_gl_info *gl_info, const struct wined3d_format *format)
