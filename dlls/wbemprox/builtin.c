@@ -2350,7 +2350,7 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
     struct record_printer *rec;
     enum fill_status status = FILL_STATUS_UNFILTERED;
     PRINTER_INFO_2W *info;
-    DWORD i, offset = 0, count = 0, size = 0;
+    DWORD i, offset = 0, count = 0, size = 0, num_rows = 0;
 
     EnumPrintersW( PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &size, &count );
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FILL_STATUS_FAILED;
@@ -2382,9 +2382,10 @@ static enum fill_status fill_printer( struct table *table, const struct expr *co
             continue;
         }
         offset += sizeof(*rec);
+        num_rows++;
     }
-    TRACE("created %u rows\n", count);
-    table->num_rows = count;
+    TRACE("created %u rows\n", num_rows);
+    table->num_rows = num_rows;
 
     heap_free( info );
     return status;
@@ -2567,7 +2568,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     static const WCHAR fmtW[] = {'C','P','U','%','u',0};
     WCHAR caption[100], device_id[14], processor_id[17], manufacturer[13], name[49] = {0}, version[50];
     struct record_processor *rec;
-    UINT i, offset = 0, num_cores, num_logical_processors, count = get_processor_count();
+    UINT i, offset = 0, num_rows = 0, num_cores, num_logical_processors, count = get_processor_count();
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!resize_table( table, count, sizeof(*rec) )) return FILL_STATUS_FAILED;
@@ -2608,10 +2609,11 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
             continue;
         }
         offset += sizeof(*rec);
+        num_rows++;
     }
 
-    TRACE("created %u rows\n", count);
-    table->num_rows = count;
+    TRACE("created %u rows\n", num_rows);
+    table->num_rows = num_rows;
     return status;
 }
 
