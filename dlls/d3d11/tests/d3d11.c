@@ -10664,6 +10664,32 @@ static void test_uint_shader_instructions(void)
         0x00000000, 0x00000000, 0x0500008d, 0x00102022, 0x00000000, 0x0010000a, 0x00000000, 0x05000036,
         0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_bits_code[] =
+    {
+#if 0
+        uint u;
+        int i;
+
+        uint4 main() : SV_Target
+        {
+            return uint4(countbits(u), firstbitlow(u), firstbithigh(u), firstbithigh(i));
+        }
+#endif
+        0x43425844, 0x23fee911, 0x145287d1, 0xea904419, 0x8aa59a6a, 0x00000001, 0x000001b4, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x0000013c, 0x00000050, 0x0000004f,
+        0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x06000089, 0x00100012, 0x00000000, 0x0020801a, 0x00000000, 0x00000000,
+        0x07000020, 0x00100022, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0xffffffff, 0x0800001e,
+        0x00100012, 0x00000000, 0x00004001, 0x0000001f, 0x8010000a, 0x00000041, 0x00000000, 0x09000037,
+        0x00102082, 0x00000000, 0x0010001a, 0x00000000, 0x00004001, 0xffffffff, 0x0010000a, 0x00000000,
+        0x06000087, 0x00100012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0800001e, 0x00100012,
+        0x00000000, 0x00004001, 0x0000001f, 0x8010000a, 0x00000041, 0x00000000, 0x0a000037, 0x00102042,
+        0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0xffffffff,
+        0x06000086, 0x00102012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x06000088, 0x00102022,
+        0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
+    };
     static const DWORD ps_ftou_code[] =
     {
 #if 0
@@ -10742,6 +10768,7 @@ static void test_uint_shader_instructions(void)
     static const struct shader ps_bfi = {ps_bfi_code, sizeof(ps_bfi_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ubfe = {ps_ubfe_code, sizeof(ps_ubfe_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_bfrev = {ps_bfrev_code, sizeof(ps_bfrev_code), D3D_FEATURE_LEVEL_11_0};
+    static const struct shader ps_bits = {ps_bits_code, sizeof(ps_bits_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ftou = {ps_ftou_code, sizeof(ps_ftou_code), D3D_FEATURE_LEVEL_10_0};
     static const struct shader ps_f16tof32 = {ps_f16tof32_code, sizeof(ps_f16tof32_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_f32tof16 = {ps_f32tof16_code, sizeof(ps_f32tof16_code), D3D_FEATURE_LEVEL_11_0};
@@ -10785,6 +10812,19 @@ static void test_uint_shader_instructions(void)
         {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}},
         {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}},
         {&ps_bfrev, {0xffffffff}, {0xffffffff, 0xffffffff, 0xffff0000, 0xffff0000}},
+
+        {&ps_bits, {         0,          0}, { 0, ~0u, ~0u, ~0u}},
+        {&ps_bits, {       ~0u,        ~0u}, {32,   0,  31, ~0u}},
+        {&ps_bits, {0x7fffffff, 0x7fffffff}, {31,   0,  30,  30}},
+        {&ps_bits, {0x80000000, 0x80000000}, { 1,  31,  31,  30}},
+        {&ps_bits, {0x00000001, 0x00000001}, { 1,   0,   0,   0}},
+        {&ps_bits, {0x80000001, 0x80000001}, { 2,   0,  31,  30}},
+        {&ps_bits, {0x88888888, 0x88888888}, { 8,   3,  31,  30}},
+        {&ps_bits, {0xcccccccc, 0xcccccccc}, {16,   2,  31,  29}},
+        {&ps_bits, {0x11111111, 0x11111c11}, { 8,   0,  28,  28}},
+        {&ps_bits, {0x0000000f, 0x0000000f}, { 4,   0,   3,   3}},
+        {&ps_bits, {0x8000000f, 0x8000000f}, { 5,   0,  31,  30}},
+        {&ps_bits, {0x00080000, 0x00080000}, { 1,  19,  19,  19}},
 
         {&ps_ftou, {BITS_NNAN}, { 0,  0}},
         {&ps_ftou, {BITS_NAN},  { 0,  0}},
