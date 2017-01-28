@@ -3731,6 +3731,9 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
         case WINED3DSIH_DSY_COARSE: instruction = "ycorrection.y * dFdyCoarse"; break;
         case WINED3DSIH_DSY_FINE: instruction = "ycorrection.y * dFdyFine"; break;
+        case WINED3DSIH_FIRSTBIT_HI: instruction = "findMSB"; break;
+        case WINED3DSIH_FIRSTBIT_LO: instruction = "findLSB"; break;
+        case WINED3DSIH_FIRSTBIT_SHI: instruction = "findMSB"; break;
         case WINED3DSIH_FRC: instruction = "fract"; break;
         case WINED3DSIH_IMAX: instruction = "max"; break;
         case WINED3DSIH_IMIN: instruction = "min"; break;
@@ -3750,6 +3753,9 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 
     write_mask = shader_glsl_append_dst(buffer, ins);
 
+    /* In D3D bits are numbered from the most significant bit. */
+    if (ins->handler_idx == WINED3DSIH_FIRSTBIT_HI || ins->handler_idx == WINED3DSIH_FIRSTBIT_SHI)
+        shader_addline(buffer, "31 - ");
     shader_addline(buffer, "%s(", instruction);
 
     if (ins->src_count)
@@ -8963,6 +8969,9 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_F16TOF32                         */ shader_glsl_float16,
     /* WINED3DSIH_F32TOF16                         */ shader_glsl_float16,
     /* WINED3DSIH_FCALL                            */ NULL,
+    /* WINED3DSIH_FIRSTBIT_HI                      */ shader_glsl_map2gl,
+    /* WINED3DSIH_FIRSTBIT_LO                      */ shader_glsl_map2gl,
+    /* WINED3DSIH_FIRSTBIT_SHI                     */ shader_glsl_map2gl,
     /* WINED3DSIH_FRC                              */ shader_glsl_map2gl,
     /* WINED3DSIH_FTOI                             */ shader_glsl_to_int,
     /* WINED3DSIH_FTOU                             */ shader_glsl_to_uint,
