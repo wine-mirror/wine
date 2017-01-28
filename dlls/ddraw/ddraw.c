@@ -26,6 +26,8 @@
 
 #include "ddraw_private.h"
 
+#include "wine/exception.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static const struct ddraw *exclusive_ddraw;
@@ -2977,14 +2979,22 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     DDSD_to_DDSD2(surface_desc, &surface_desc2);
     hr = ddraw_surface_create(ddraw, &surface_desc2, &impl, outer_unknown, 1);
     wined3d_mutex_unlock();
-    if (FAILED(hr))
-    {
-        *surface = NULL;
-        return hr;
-    }
 
-    *surface = &impl->IDirectDrawSurface_iface;
-    impl->ifaceToRelease = NULL;
+    __TRY
+    {
+        if (FAILED(hr))
+        {
+            *surface = NULL;
+            break;
+        }
+        *surface = &impl->IDirectDrawSurface_iface;
+        impl->ifaceToRelease = NULL;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        hr = E_INVALIDARG;
+    }
+    __ENDTRY;
 
     return hr;
 }
