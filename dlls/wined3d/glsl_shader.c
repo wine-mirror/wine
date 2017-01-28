@@ -3793,10 +3793,21 @@ static void shader_glsl_float16(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
 {
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     struct wined3d_shader_dst_param dst;
     struct glsl_src_param src[4];
+    const char *instruction;
     unsigned int i, j;
     DWORD write_mask;
+
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_BFI:  instruction = "bitfieldInsert";  break;
+        case WINED3DSIH_UBFE: instruction = "bitfieldExtract"; break;
+        default:
+            ERR("Unhandled opcode %#x.\n", ins->handler_idx);
+            return;
+    }
 
     dst = ins->dst[0];
     for (i = 0; i < 4; ++i)
@@ -3808,10 +3819,12 @@ static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
                 &dst, dst.reg.data_type)))
             continue;
 
-        for (j = 0; j < ARRAY_SIZE(src); ++j)
+        for (j = 0; j < ins->src_count; ++j)
             shader_glsl_add_src_param(ins, &ins->src[j], write_mask, &src[j]);
-        shader_addline(ins->ctx->buffer, "bitfieldInsert(%s, %s, %s & 0x1f, %s & 0x1f));\n",
-                src[3].param_str, src[2].param_str, src[1].param_str, src[0].param_str);
+        shader_addline(buffer, "%s(", instruction);
+        for (j = 0; j < ins->src_count - 2; ++j)
+            shader_addline(buffer, "%s, ", src[ins->src_count - j - 1].param_str);
+        shader_addline(buffer, "%s & 0x1f, %s & 0x1f));\n", src[1].param_str, src[0].param_str);
     }
 }
 
@@ -9066,7 +9079,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_TEXREG2AR                        */ shader_glsl_texreg2ar,
     /* WINED3DSIH_TEXREG2GB                        */ shader_glsl_texreg2gb,
     /* WINED3DSIH_TEXREG2RGB                       */ shader_glsl_texreg2rgb,
-    /* WINED3DSIH_UBFE                             */ NULL,
+    /* WINED3DSIH_UBFE                             */ shader_glsl_bitwise_op,
     /* WINED3DSIH_UDIV                             */ shader_glsl_udiv,
     /* WINED3DSIH_UGE                              */ shader_glsl_relop,
     /* WINED3DSIH_ULT                              */ shader_glsl_relop,
