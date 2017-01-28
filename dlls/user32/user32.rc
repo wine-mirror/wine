@@ -266,6 +266,40 @@ OCR_DRAGOBJECT CURSOR resources/ocr_dragobject.cur
 /* @makedep: resources/ocr_pen.cur */
 OCR_PEN CURSOR resources/ocr_pen.cur
 
+/* @makedep: resources/ocr_rdrvert.cur */
+OCR_RDRVERT CURSOR resources/ocr_rdrvert.cur
+
+/* @makedep: resources/ocr_rdrhorz.cur */
+/* FIXME: OCR_DRAGOBJECT already uses same resource number even though cursor image
+ * is entirely different */
+/*OCR_RDRHORZ CURSOR resources/ocr_rdrhorz.cur*/
+
+/* @makedep: resources/ocr_rdr2dim.cur */
+OCR_RDR2DIM CURSOR resources/ocr_rdr2dim.cur
+
+/* @makedep: resources/ocr_rdrnorth.cur */
+OCR_RDRNORTH CURSOR resources/ocr_rdrnorth.cur
+
+/* @makedep: resources/ocr_rdrsouth.cur */
+OCR_RDRSOUTH CURSOR resources/ocr_rdrsouth.cur
+
+/* @makedep: resources/ocr_rdrwest.cur */
+OCR_RDRWEST CURSOR resources/ocr_rdrwest.cur
+
+/* @makedep: resources/ocr_rdreast.cur */
+OCR_RDREAST CURSOR resources/ocr_rdreast.cur
+
+/* @makedep: resources/ocr_rdrnorthwest.cur */
+OCR_RDRNORTHWEST CURSOR resources/ocr_rdrnorthwest.cur
+
+/* @makedep: resources/ocr_rdrnortheast.cur */
+OCR_RDRNORTHEAST CURSOR resources/ocr_rdrnortheast.cur
+
+/* @makedep: resources/ocr_rdrsouthwest.cur */
+OCR_RDRSOUTHWEST CURSOR resources/ocr_rdrsouthwest.cur
+
+/* @makedep: resources/ocr_rdrsoutheast.cur */
+OCR_RDRSOUTHEAST CURSOR resources/ocr_rdrsoutheast.cur
 
 /****************************************************************/
 /* Icons */
