@@ -3723,6 +3723,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     switch (ins->handler_idx)
     {
         case WINED3DSIH_ABS: instruction = "abs"; break;
+        case WINED3DSIH_BFREV: instruction = "bitfieldReverse"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSX_COARSE: instruction = "dFdxCoarse"; break;
         case WINED3DSIH_DSX_FINE: instruction = "dFdxFine"; break;
@@ -8844,7 +8845,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ATOMIC_XOR                       */ NULL,
     /* WINED3DSIH_BEM                              */ shader_glsl_bem,
     /* WINED3DSIH_BFI                              */ NULL,
-    /* WINED3DSIH_BFREV                            */ NULL,
+    /* WINED3DSIH_BFREV                            */ shader_glsl_map2gl,
     /* WINED3DSIH_BREAK                            */ shader_glsl_break,
     /* WINED3DSIH_BREAKC                           */ shader_glsl_breakc,
     /* WINED3DSIH_BREAKP                           */ shader_glsl_breakp,

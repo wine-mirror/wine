@@ -10741,9 +10741,9 @@ static void test_uint_shader_instructions(void)
         {&ps_bfi, {  2,   3,   4,   5}, {9, 14, 19, 20}, TRUE},
         {&ps_bfi, {~0u, ~0u, ~0u, ~0u}, {0xfffffffd, 0xfffffffe, 0xffffffff, 0xfffffffc}, TRUE},
 
-        {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}, TRUE},
-        {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}, TRUE},
-        {&ps_bfrev, {0xffffffff}, {0xffffffff, 0xffffffff, 0xffff0000, 0xffff0000}, TRUE},
+        {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}},
+        {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}},
+        {&ps_bfrev, {0xffffffff}, {0xffffffff, 0xffffffff, 0xffff0000, 0xffff0000}},
 
         {&ps_ftou, {BITS_NNAN}, { 0,  0}},
         {&ps_ftou, {BITS_NAN},  { 0,  0}},
