@@ -10731,29 +10731,28 @@ static void test_uint_shader_instructions(void)
         const struct shader *ps;
         unsigned int bits[4];
         struct uvec4 expected_result;
-        BOOL todo;
     }
     tests[] =
     {
-        {&ps_bfi, {     0,      0,    0,    0}, {         0,          0,          0,          0}, TRUE},
-        {&ps_bfi, {     0,      0,    0,    1}, {         1,          1,          1,          1}, TRUE},
-        {&ps_bfi, {   ~0u,      0,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}, TRUE},
-        {&ps_bfi, {   ~0u,    ~0u,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}, TRUE},
-        {&ps_bfi, {   ~0u,  0x1fu,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}, TRUE},
-        {&ps_bfi, {   ~0u, ~0x1fu,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}, TRUE},
-        {&ps_bfi, {     0,      0, 0xff,    1}, {         1,          1,          1,          1}, TRUE},
-        {&ps_bfi, {     0,      0, 0xff,    2}, {         2,          2,          2,          2}, TRUE},
-        {&ps_bfi, {    16,     16, 0xff, 0xff}, {0x00ff00ff, 0x00ff00ff, 0x00ff00ff, 0x00ff00ff}, TRUE},
-        {&ps_bfi, {     0,      0,  ~0u,  ~0u}, {       ~0u,        ~0u,        ~0u,        ~0u}, TRUE},
-        {&ps_bfi, {~0x1fu,      0,  ~0u,    0}, {         0,          0,          0,          0}, TRUE},
-        {&ps_bfi, {~0x1fu,      0,  ~0u,    1}, {         1,          1,          1,          1}, TRUE},
-        {&ps_bfi, {~0x1fu,      0,  ~0u,    2}, {         2,          2,          2,          2}, TRUE},
-        {&ps_bfi, {     0, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}, TRUE},
-        {&ps_bfi, {     0, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}, TRUE},
-        {&ps_bfi, {     0, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}, TRUE},
-        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}, TRUE},
-        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}, TRUE},
-        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}, TRUE},
+        {&ps_bfi, {     0,      0,    0,    0}, {         0,          0,          0,          0}},
+        {&ps_bfi, {     0,      0,    0,    1}, {         1,          1,          1,          1}},
+        {&ps_bfi, {   ~0u,      0,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}},
+        {&ps_bfi, {   ~0u,    ~0u,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}},
+        {&ps_bfi, {   ~0u,  0x1fu,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}},
+        {&ps_bfi, {   ~0u, ~0x1fu,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}},
+        {&ps_bfi, {     0,      0, 0xff,    1}, {         1,          1,          1,          1}},
+        {&ps_bfi, {     0,      0, 0xff,    2}, {         2,          2,          2,          2}},
+        {&ps_bfi, {    16,     16, 0xff, 0xff}, {0x00ff00ff, 0x00ff00ff, 0x00ff00ff, 0x00ff00ff}},
+        {&ps_bfi, {     0,      0,  ~0u,  ~0u}, {       ~0u,        ~0u,        ~0u,        ~0u}},
+        {&ps_bfi, {~0x1fu,      0,  ~0u,    0}, {         0,          0,          0,          0}},
+        {&ps_bfi, {~0x1fu,      0,  ~0u,    1}, {         1,          1,          1,          1}},
+        {&ps_bfi, {~0x1fu,      0,  ~0u,    2}, {         2,          2,          2,          2}},
+        {&ps_bfi, {     0, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}},
+        {&ps_bfi, {     0, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}},
+        {&ps_bfi, {     0, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}},
+        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}},
+        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}},
+        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}},
 
         {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}},
         {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}},
@@ -10809,7 +10808,6 @@ static void test_uint_shader_instructions(void)
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, tests[i].bits, 0, 0);
 
         draw_quad(&test_context);
-        todo_wine_if(tests[i].todo)
         check_texture_uvec4(texture, &tests[i].expected_result);
 
         ID3D11PixelShader_Release(ps);

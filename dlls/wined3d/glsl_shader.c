@@ -3791,6 +3791,30 @@ static void shader_glsl_float16(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_shader_dst_param dst;
+    struct glsl_src_param src[4];
+    unsigned int i, j;
+    DWORD write_mask;
+
+    dst = ins->dst[0];
+    for (i = 0; i < 4; ++i)
+    {
+        write_mask = WINED3DSP_WRITEMASK_0 << i;
+        dst.write_mask = ins->dst[0].write_mask & write_mask;
+
+        if (!(write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins,
+                &dst, dst.reg.data_type)))
+            continue;
+
+        for (j = 0; j < ARRAY_SIZE(src); ++j)
+            shader_glsl_add_src_param(ins, &ins->src[j], write_mask, &src[j]);
+        shader_addline(ins->ctx->buffer, "bitfieldInsert(%s, %s, %s & 0x1f, %s & 0x1f));\n",
+                src[3].param_str, src[2].param_str, src[1].param_str, src[0].param_str);
+    }
+}
+
 static void shader_glsl_nop(const struct wined3d_shader_instruction *ins) {}
 
 static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
@@ -8844,7 +8868,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ATOMIC_UMIN                      */ NULL,
     /* WINED3DSIH_ATOMIC_XOR                       */ NULL,
     /* WINED3DSIH_BEM                              */ shader_glsl_bem,
-    /* WINED3DSIH_BFI                              */ NULL,
+    /* WINED3DSIH_BFI                              */ shader_glsl_bitwise_op,
     /* WINED3DSIH_BFREV                            */ shader_glsl_map2gl,
     /* WINED3DSIH_BREAK                            */ shader_glsl_break,
     /* WINED3DSIH_BREAKC                           */ shader_glsl_breakc,
