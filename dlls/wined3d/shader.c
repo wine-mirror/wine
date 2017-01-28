@@ -131,6 +131,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_EXP                              */ "exp",
     /* WINED3DSIH_EXPP                             */ "expp",
     /* WINED3DSIH_F16TOF32                         */ "f16tof32",
+    /* WINED3DSIH_F32TOF16                         */ "f32tof16",
     /* WINED3DSIH_FCALL                            */ "fcall",
     /* WINED3DSIH_FRC                              */ "frc",
     /* WINED3DSIH_FTOI                             */ "ftoi",

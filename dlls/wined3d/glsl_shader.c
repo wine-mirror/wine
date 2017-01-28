@@ -3764,12 +3764,16 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "));\n");
 }
 
-static void shader_glsl_f16tof32(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_float16(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_dst_param dst;
     struct glsl_src_param src;
     DWORD write_mask;
+    const char *fmt;
     unsigned int i;
+
+    fmt = ins->handler_idx == WINED3DSIH_F16TOF32
+            ? "unpackHalf2x16(%s).x);\n" : "packHalf2x16(vec2(%s, 0.0)));\n";
 
     dst = ins->dst[0];
     for (i = 0; i < 4; ++i)
@@ -3782,7 +3786,7 @@ static void shader_glsl_f16tof32(const struct wined3d_shader_instruction *ins)
             continue;
 
         shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src);
-        shader_addline(ins->ctx->buffer, "unpackHalf2x16(%s).x);\n", src.param_str);
+        shader_addline(ins->ctx->buffer, fmt, src.param_str);
     }
 }
 
@@ -8913,7 +8917,8 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_EQ                               */ shader_glsl_relop,
     /* WINED3DSIH_EXP                              */ shader_glsl_scalar_op,
     /* WINED3DSIH_EXPP                             */ shader_glsl_expp,
-    /* WINED3DSIH_F16TOF32                         */ shader_glsl_f16tof32,
+    /* WINED3DSIH_F16TOF32                         */ shader_glsl_float16,
+    /* WINED3DSIH_F32TOF16                         */ shader_glsl_float16,
     /* WINED3DSIH_FCALL                            */ NULL,
     /* WINED3DSIH_FRC                              */ shader_glsl_map2gl,
     /* WINED3DSIH_FTOI                             */ shader_glsl_to_int,
