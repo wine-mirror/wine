@@ -3724,6 +3724,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     {
         case WINED3DSIH_ABS: instruction = "abs"; break;
         case WINED3DSIH_BFREV: instruction = "bitfieldReverse"; break;
+        case WINED3DSIH_COUNTBITS: instruction = "bitCount"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSX_COARSE: instruction = "dFdxCoarse"; break;
         case WINED3DSIH_DSX_FINE: instruction = "dFdxFine"; break;
@@ -8893,6 +8894,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_CMP                              */ shader_glsl_conditional_move,
     /* WINED3DSIH_CND                              */ shader_glsl_cnd,
     /* WINED3DSIH_CONTINUE                         */ shader_glsl_continue,
+    /* WINED3DSIH_COUNTBITS                        */ shader_glsl_map2gl,
     /* WINED3DSIH_CRS                              */ shader_glsl_cross,
     /* WINED3DSIH_CUT                              */ shader_glsl_cut,
     /* WINED3DSIH_CUT_STREAM                       */ shader_glsl_cut,

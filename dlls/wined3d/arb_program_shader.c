@@ -5040,6 +5040,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_CMP                              */ pshader_hw_cmp,
     /* WINED3DSIH_CND                              */ pshader_hw_cnd,
     /* WINED3DSIH_CONTINUE                         */ NULL,
+    /* WINED3DSIH_COUNTBITS                        */ NULL,
     /* WINED3DSIH_CRS                              */ shader_hw_map2gl,
     /* WINED3DSIH_CUT                              */ NULL,
     /* WINED3DSIH_CUT_STREAM                       */ NULL,
