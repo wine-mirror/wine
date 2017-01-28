@@ -10622,6 +10622,25 @@ static void test_uint_shader_instructions(void)
         0x0f00008c, 0x001020f2, 0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x00208556, 0x00000000,
         0x00000000, 0x00208aa6, 0x00000000, 0x00000000, 0x00208ff6, 0x00000000, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_ubfe_code[] =
+    {
+#if 0
+        uint u;
+
+        uint4 main() : SV_Target
+        {
+            return uint4((u & 0xf0) >> 4, (u & 0x7fffff00) >> 8, (u & 0xfe) >> 1, (u & 0x7fffffff) >> 1);
+        }
+#endif
+        0x43425844, 0xc4ac0509, 0xaea83154, 0xf1fb3b80, 0x4c22e3cc, 0x00000001, 0x000000e4, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x0000006c, 0x00000050, 0x0000001b,
+        0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x1000008a, 0x001020f2, 0x00000000, 0x00004002, 0x00000004, 0x00000017, 0x00000007, 0x0000001e,
+        0x00004002, 0x00000004, 0x00000008, 0x00000001, 0x00000001, 0x00208006, 0x00000000, 0x00000000,
+        0x0100003e,
+    };
     static const DWORD ps_bfrev_code[] =
     {
 #if 0
@@ -10721,6 +10740,7 @@ static void test_uint_shader_instructions(void)
         0x00000000, 0x0600003b, 0x00102042, 0x00000000, 0x0020800a, 0x00000000, 0x00000001, 0x0100003e,
     };
     static const struct shader ps_bfi = {ps_bfi_code, sizeof(ps_bfi_code), D3D_FEATURE_LEVEL_11_0};
+    static const struct shader ps_ubfe = {ps_ubfe_code, sizeof(ps_ubfe_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_bfrev = {ps_bfrev_code, sizeof(ps_bfrev_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ftou = {ps_ftou_code, sizeof(ps_ftou_code), D3D_FEATURE_LEVEL_10_0};
     static const struct shader ps_f16tof32 = {ps_f16tof32_code, sizeof(ps_f16tof32_code), D3D_FEATURE_LEVEL_11_0};
@@ -10753,6 +10773,14 @@ static void test_uint_shader_instructions(void)
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}},
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}},
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}},
+
+        {&ps_ubfe,  {0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ubfe,  {0xffffffff}, {0x0000000f, 0x007fffff, 0x0000007f, 0x3fffffff}},
+        {&ps_ubfe,  {0xff000000}, {0x00000000, 0x007f0000, 0x00000000, 0x3f800000}},
+        {&ps_ubfe,  {0x00ff0000}, {0x00000000, 0x0000ff00, 0x00000000, 0x007f8000}},
+        {&ps_ubfe,  {0x000000ff}, {0x0000000f, 0x00000000, 0x0000007f, 0x0000007f}},
+        {&ps_ubfe,  {0x80000001}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ubfe,  {0xc0000003}, {0x00000000, 0x00400000, 0x00000001, 0x20000001}},
 
         {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}},
         {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}},
