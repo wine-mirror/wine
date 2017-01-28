@@ -2924,14 +2924,22 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
 
     hr = ddraw_surface_create(ddraw, &surface_desc2, &impl, outer_unknown, 2);
     wined3d_mutex_unlock();
-    if (FAILED(hr))
-    {
-        *surface = NULL;
-        return hr;
-    }
 
-    *surface = &impl->IDirectDrawSurface_iface;
-    impl->ifaceToRelease = NULL;
+    __TRY
+    {
+        if (FAILED(hr))
+        {
+            *surface = NULL;
+            break;
+        }
+        *surface = &impl->IDirectDrawSurface_iface;
+        impl->ifaceToRelease = NULL;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        hr = E_INVALIDARG;
+    }
+    __ENDTRY;
 
     return hr;
 }
