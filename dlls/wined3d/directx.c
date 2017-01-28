@@ -130,6 +130,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT        },
     {"GL_ARB_framebuffer_sRGB",             ARB_FRAMEBUFFER_SRGB          },
     {"GL_ARB_geometry_shader4",             ARB_GEOMETRY_SHADER4          },
+    {"GL_ARB_gpu_shader5",                  ARB_GPU_SHADER5               },
     {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL          },
     {"GL_ARB_half_float_vertex",            ARB_HALF_FLOAT_VERTEX         },
     {"GL_ARB_instanced_arrays",             ARB_INSTANCED_ARRAYS          },
@@ -3650,6 +3651,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_TEXTURE_SWIZZLE,              MAKEDWORD_VERSION(3, 3)},
         {ARB_TIMER_QUERY,                  MAKEDWORD_VERSION(3, 3)},
         {ARB_VERTEX_TYPE_2_10_10_10_REV,   MAKEDWORD_VERSION(3, 3)},
+
+        {ARB_GPU_SHADER5,                  MAKEDWORD_VERSION(4, 0)},
 
         {ARB_ES2_COMPATIBILITY,            MAKEDWORD_VERSION(4, 1)},
         {ARB_VIEWPORT_ARRAY,               MAKEDWORD_VERSION(4, 1)},
