@@ -10606,22 +10606,21 @@ static void test_uint_shader_instructions(void)
     static const DWORD ps_bfi_code[] =
     {
 #if 0
-        uint4 v;
+        uint bits, offset, insert, base;
 
         uint4 main() : SV_Target
         {
-            return uint4(4 * v.x + 1, 4 * v.y + 2, 4 * v.z + 3, 4 * v.w);
+            uint mask = ((1 << bits) - 1) << offset;
+            return ((insert << offset) & mask) | (base & ~mask);
         }
 #endif
-        0x43425844, 0xb1a78f7c, 0xaf9d6725, 0x251fdbfc, 0x23c60c00, 0x00000001, 0x00000118, 0x00000003,
+        0x43425844, 0xbe9af688, 0xf5caec6f, 0x63ed2522, 0x5f91f209, 0x00000001, 0x000000e0, 0x00000003,
         0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
         0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
-        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x000000a0, 0x00000050, 0x00000028,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000068, 0x00000050, 0x0000001a,
         0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
-        0x1500008c, 0x00102072, 0x00000000, 0x00004002, 0x0000001e, 0x0000001e, 0x0000001e, 0x00000000,
-        0x00004002, 0x00000002, 0x00000002, 0x00000002, 0x00000000, 0x00208246, 0x00000000, 0x00000000,
-        0x00004002, 0x00000001, 0x00000002, 0x00000003, 0x00000000, 0x08000029, 0x00102082, 0x00000000,
-        0x0020803a, 0x00000000, 0x00000000, 0x00004001, 0x00000002, 0x0100003e,
+        0x0f00008c, 0x001020f2, 0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x00208556, 0x00000000,
+        0x00000000, 0x00208aa6, 0x00000000, 0x00000000, 0x00208ff6, 0x00000000, 0x00000000, 0x0100003e,
     };
     static const DWORD ps_bfrev_code[] =
     {
@@ -10736,10 +10735,25 @@ static void test_uint_shader_instructions(void)
     }
     tests[] =
     {
-        {&ps_bfi, {  0,   0,   0,   0}, {1,  2,  3,  0}, TRUE},
-        {&ps_bfi, {  1,   1,   1,   1}, {5,  6,  7,  4}, TRUE},
-        {&ps_bfi, {  2,   3,   4,   5}, {9, 14, 19, 20}, TRUE},
-        {&ps_bfi, {~0u, ~0u, ~0u, ~0u}, {0xfffffffd, 0xfffffffe, 0xffffffff, 0xfffffffc}, TRUE},
+        {&ps_bfi, {     0,      0,    0,    0}, {         0,          0,          0,          0}, TRUE},
+        {&ps_bfi, {     0,      0,    0,    1}, {         1,          1,          1,          1}, TRUE},
+        {&ps_bfi, {   ~0u,      0,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}, TRUE},
+        {&ps_bfi, {   ~0u,    ~0u,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}, TRUE},
+        {&ps_bfi, {   ~0u,  0x1fu,  ~0u,    0}, {0x80000000, 0x80000000, 0x80000000, 0x80000000}, TRUE},
+        {&ps_bfi, {   ~0u, ~0x1fu,  ~0u,    0}, {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}, TRUE},
+        {&ps_bfi, {     0,      0, 0xff,    1}, {         1,          1,          1,          1}, TRUE},
+        {&ps_bfi, {     0,      0, 0xff,    2}, {         2,          2,          2,          2}, TRUE},
+        {&ps_bfi, {    16,     16, 0xff, 0xff}, {0x00ff00ff, 0x00ff00ff, 0x00ff00ff, 0x00ff00ff}, TRUE},
+        {&ps_bfi, {     0,      0,  ~0u,  ~0u}, {       ~0u,        ~0u,        ~0u,        ~0u}, TRUE},
+        {&ps_bfi, {~0x1fu,      0,  ~0u,    0}, {         0,          0,          0,          0}, TRUE},
+        {&ps_bfi, {~0x1fu,      0,  ~0u,    1}, {         1,          1,          1,          1}, TRUE},
+        {&ps_bfi, {~0x1fu,      0,  ~0u,    2}, {         2,          2,          2,          2}, TRUE},
+        {&ps_bfi, {     0, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}, TRUE},
+        {&ps_bfi, {     0, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}, TRUE},
+        {&ps_bfi, {     0, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}, TRUE},
+        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}, TRUE},
+        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}, TRUE},
+        {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}, TRUE},
 
         {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}},
         {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}},
