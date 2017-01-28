@@ -1848,7 +1848,7 @@ HRESULT CDECL IStorage16_fnOpenStorage(IStorage16 *iface, LPCOLESTR16 pwcsName,
 	IStorage16 *pstgPrio, DWORD grfMode, SNB16 snbExclude, DWORD reserved, IStorage16 **ppstg)
 {
 	IStorage16Impl *This = impl_from_IStorage16(iface);
-	IStream16Impl*	lpstg;
+	IStorage16Impl *lpstg;
 	WCHAR		name[33];
 	int		newpps;
 
@@ -1869,12 +1869,12 @@ HRESULT CDECL IStorage16_fnOpenStorage(IStorage16 *iface, LPCOLESTR16 pwcsName,
         MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, name, sizeof(name)/sizeof(WCHAR));
 	newpps = STORAGE_look_for_named_pps(&lpstg->str,This->stde.pps_dir,name);
 	if (newpps==-1) {
-		IStream16_fnRelease(&lpstg->IStream16_iface);
+		IStorage16_fnRelease(&lpstg->IStorage16_iface);
 		return E_FAIL;
 	}
 
 	if (1!=STORAGE_get_pps_entry(&lpstg->str,newpps,&(lpstg->stde))) {
-		IStream16_fnRelease(&lpstg->IStream16_iface);
+		IStorage16_fnRelease(&lpstg->IStorage16_iface);
 		return E_FAIL;
 	}
 	lpstg->ppsent		= newpps;
