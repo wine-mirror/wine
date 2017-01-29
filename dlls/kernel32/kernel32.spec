@@ -348,7 +348,7 @@
 @ stdcall CreateWaitableTimerExW(ptr wstr long long)
 @ stdcall CreateWaitableTimerW(ptr long wstr)
 # @ stub CtrlRoutine
-@ stdcall DeactivateActCtx(long ptr)
+@ stdcall DeactivateActCtx(long long)
 @ stdcall DebugActiveProcess(long)
 @ stdcall DebugActiveProcessStop(long)
 @ stdcall DebugBreak()
@@ -564,7 +564,7 @@
 # @ stub GetCalendarSupportedDateRange
 # @ stub GetCalendarWeekNumber
 # @ stub GetComPlusPackageInstallStatus
-@ stdcall GetCommConfig(long ptr long)
+@ stdcall GetCommConfig(long ptr ptr)
 @ stdcall GetCommMask(long ptr)
 @ stdcall GetCommModemStatus(long ptr)
 @ stdcall GetCommProperties(long ptr)
@@ -640,8 +640,8 @@
 @ stdcall GetDateFormatEx(wstr long ptr wstr ptr long wstr)
 @ stdcall GetDateFormatW(long long ptr wstr ptr long)
 @ stdcall GetDaylightFlag()
-@ stdcall GetDefaultCommConfigA(str ptr long)
-@ stdcall GetDefaultCommConfigW(wstr ptr long)
+@ stdcall GetDefaultCommConfigA(str ptr ptr)
+@ stdcall GetDefaultCommConfigW(wstr ptr ptr)
 @ stub GetDefaultSortkeySize
 @ stdcall GetDevicePowerState(long ptr)
 @ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr)
@@ -1329,7 +1329,7 @@
 # @ stub SetComPlusPackageInstallStatus
 @ stdcall SetCommBreak(long)
 @ stdcall SetCommConfig(long ptr long)
-@ stdcall SetCommMask(long ptr)
+@ stdcall SetCommMask(long long)
 @ stdcall SetCommState(long ptr)
 @ stdcall SetCommTimeouts(long ptr)
 @ stdcall SetComputerNameA(str)
