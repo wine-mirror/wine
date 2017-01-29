@@ -91,6 +91,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT   */ "dcl_output_control_point_count",
     /* WINED3DSIH_DCL_OUTPUT_SIV                   */ "dcl_output_siv",
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY              */ "dcl_outputTopology",
+    /* WINED3DSIH_DCL_RESOURCE_RAW                 */ "dcl_resource_raw",
     /* WINED3DSIH_DCL_RESOURCE_STRUCTURED          */ "dcl_resource_structured",
     /* WINED3DSIH_DCL_SAMPLER                      */ "dcl_sampler",
     /* WINED3DSIH_DCL_STREAM                       */ "dcl_stream",
@@ -2441,6 +2442,11 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             shader_addline(&buffer, "%s fp[%u][%u][%u] = {...}",
                     shader_opcode_names[ins.handler_idx], ins.declaration.fp.index,
                     ins.declaration.fp.array_size, ins.declaration.fp.body_count);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_RESOURCE_RAW)
+        {
+            shader_addline(&buffer, "%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_dst_param(&buffer, &ins.declaration.dst, &shader_version);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_RESOURCE_STRUCTURED)
         {
