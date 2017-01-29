@@ -102,10 +102,16 @@ library MSDASC
                         [in] DWORD dwClsCtx, [in] LPWSTR pwszReserved,
                         [in] REFIID riid, [out] IUnknown** ppDataSource);
 
+        [local]
+        HRESULT CreateDBInstanceEx([in] REFCLSID clsidProvider,  [in] IUnknown* pUnkOuter,
+                        [in] DWORD dwClsCtx, [in] LPWSTR pwszReserved,  [in] COSERVERINFO* pServerInfo,
+                        [in] DWORD cmq,  [in, out, size_is(cmq)] MULTI_QI *results);
+
+        [call_as(CreateDBInstanceEx)]
         HRESULT RemoteCreateDBInstanceEx([in] REFCLSID clsidProvider,  [in] IUnknown* pUnkOuter,
                         [in] DWORD dwClsCtx, [in] LPWSTR pwszReserved,  [in] COSERVERINFO* pServerInfo,
-                        [in] DWORD cmq,  [in] GUID** rgpIID,  [out] IUnknown** rgpItf,
-                        [out] HRESULT* rghr);
+                        [in] DWORD cmq,  [in, size_is(cmq)] const IID **iids, [out, size_is(cmq)] IUnknown **ifs,
+                        [out, size_is(cmq)] HRESULT *hr);
 
         HRESULT LoadStringFromStorage([in] LPWSTR pwszFileName, [out] LPWSTR* ppwszInitializationString);
 

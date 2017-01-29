@@ -918,13 +918,13 @@ static HRESULT WINAPI datainit_CreateDBInstance(IDataInitialize *iface, REFCLSID
     return CoCreateInstance(provider, outer, clsctx, riid, (void**)datasource);
 }
 
-static HRESULT WINAPI datainit_RemoteCreateDBInstanceEx(IDataInitialize *iface, REFCLSID clsidProvider,
-                                IUnknown *pUnkOuter, DWORD dwClsCtx, LPWSTR pwszReserved, COSERVERINFO *pServerInfo,
-                                DWORD cmq, GUID **rgpIID, IUnknown **rgpItf, HRESULT *rghr)
+static HRESULT WINAPI datainit_CreateDBInstanceEx(IDataInitialize *iface, REFCLSID provider, IUnknown *outer,
+    DWORD clsctx, LPWSTR reserved, COSERVERINFO *server_info, DWORD cmq, MULTI_QI *results)
 {
     datainit *This = impl_from_IDataInitialize(iface);
 
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s %p %#x %s %p %u %p)\n", This, debugstr_guid(provider), outer, clsctx,
+        debugstr_w(reserved), server_info, cmq, results);
 
     return E_NOTIMPL;
 }
@@ -958,7 +958,7 @@ static const struct IDataInitializeVtbl datainit_vtbl =
     datainit_GetDataSource,
     datainit_GetInitializationString,
     datainit_CreateDBInstance,
-    datainit_RemoteCreateDBInstanceEx,
+    datainit_CreateDBInstanceEx,
     datainit_LoadStringFromStorage,
     datainit_WriteStringToStorage
 };
