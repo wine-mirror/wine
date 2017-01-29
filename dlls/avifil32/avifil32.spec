@@ -49,7 +49,7 @@
 @ stdcall AVIStreamOpenFromFileW(ptr wstr long long long ptr)
 @ stdcall AVIStreamRead(ptr long long ptr long ptr ptr)
 @ stdcall AVIStreamReadData(ptr long ptr ptr)
-@ stdcall AVIStreamReadFormat(ptr long ptr long)
+@ stdcall AVIStreamReadFormat(ptr long ptr ptr)
 @ stdcall AVIStreamRelease(ptr)
 @ stdcall AVIStreamSampleToTime(ptr long)
 @ stdcall AVIStreamSetFormat(ptr long ptr long)
