@@ -34,7 +34,7 @@
 @ stub SCardIntroduceReaderGroupW
 @ stub SCardIntroduceReaderW
 @ stdcall SCardIsValidContext(long)
-@ stdcall SCardListCardsA(long ptr ptr long str long)
+@ stdcall SCardListCardsA(long ptr ptr long str ptr)
 @ stub SCardListCardsW
 @ stub SCardListInterfacesA
 @ stub SCardListInterfacesW
@@ -55,8 +55,8 @@
 @ stub SCardSetCardTypeProviderNameA
 @ stub SCardSetCardTypeProviderNameW
 @ stub SCardState
-@ stdcall SCardStatusA (long str long long long ptr long )
-@ stdcall SCardStatusW (long wstr long long long ptr long )
+@ stdcall SCardStatusA(long str ptr ptr ptr ptr ptr)
+@ stdcall SCardStatusW(long wstr ptr ptr ptr ptr ptr)
 @ stub SCardTransmit
 @ extern g_rgSCardRawPci
 @ extern g_rgSCardT0Pci
