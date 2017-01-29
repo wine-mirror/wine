@@ -411,8 +411,8 @@
 @ stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall LookupPrivilegeDisplayNameA(str str str ptr ptr)
 @ stdcall LookupPrivilegeDisplayNameW(wstr wstr wstr ptr ptr)
-@ stdcall LookupPrivilegeNameA(str ptr ptr long)
-@ stdcall LookupPrivilegeNameW(wstr ptr ptr long)
+@ stdcall LookupPrivilegeNameA(str ptr ptr ptr)
+@ stdcall LookupPrivilegeNameW(wstr ptr ptr ptr)
 @ stdcall LookupPrivilegeValueA(ptr ptr ptr)
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
 # @ stub LookupSecurityDescriptorPartsA
@@ -716,7 +716,7 @@
 # @ stub SetSecurityInfoExW
 @ stdcall SetServiceBits(long long long long)
 @ stdcall SetServiceObjectSecurity(long long ptr)
-@ stdcall SetServiceStatus(long long)
+@ stdcall SetServiceStatus(long ptr)
 @ stdcall SetThreadToken (ptr ptr)
 @ stdcall SetTokenInformation (long long ptr long)
 # @ stub SetTraceCallback
