@@ -33,7 +33,7 @@
 @ stdcall InitializeSecurityContextA(ptr ptr str long long long ptr long ptr ptr ptr ptr)
 @ stdcall InitializeSecurityContextW(ptr ptr wstr long long long ptr long ptr ptr ptr ptr)
 @ stdcall LsaCallAuthenticationPackage(long long ptr long ptr ptr ptr)
-@ stdcall LsaConnectUntrusted(long)
+@ stdcall LsaConnectUntrusted(ptr)
 @ stdcall LsaDeregisterLogonProcess(long)
 @ stdcall LsaEnumerateLogonSessions(ptr ptr)
 @ stdcall LsaFreeReturnBuffer(ptr)
