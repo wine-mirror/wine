@@ -87,8 +87,8 @@
 144 stub HrDecomposeEID@28
 145 stub HrComposeMsgID@24
 146 stub HrDecomposeMsgID@24
-147 stdcall OpenStreamOnFile@24(ptr ptr ptr ptr ptr ptr) OpenStreamOnFile
-148 stdcall OpenStreamOnFile(ptr ptr ptr ptr ptr ptr)
+147 stdcall OpenStreamOnFile@24(ptr ptr long ptr ptr ptr) OpenStreamOnFile
+148 stdcall OpenStreamOnFile(ptr ptr long ptr ptr ptr)
 149 stub OpenTnefStream@28
 150 stub OpenTnefStream
 151 stub OpenTnefStreamEx@32
@@ -145,17 +145,17 @@
 205 stub FDecodeID@12
 206 stub CchOfEncoding@4
 207 stdcall CbOfEncoded@4(ptr) CbOfEncoded
-208 stdcall MAPISendDocuments(ptr str str str long)
-209 stdcall MAPILogon(ptr str str long long ptr)
-210 stdcall MAPILogoff(ptr ptr long long)
-211 stdcall MAPISendMail(ptr ptr ptr long long)
-212 stdcall MAPISaveMail(ptr ptr ptr long long str)
-213 stdcall MAPIReadMail(ptr ptr str long long ptr)
-214 stdcall MAPIFindNext(ptr ptr str str long long ptr)
-215 stdcall MAPIDeleteMail(ptr ptr str long long)
-217 stdcall MAPIAddress(ptr ptr str long str long ptr long long ptr ptr)
-218 stdcall MAPIDetails(ptr ptr ptr long long)
-219 stdcall MAPIResolveName(ptr ptr str long long ptr)
+208 stdcall MAPISendDocuments(long str str str long)
+209 stdcall MAPILogon(long str str long long ptr)
+210 stdcall MAPILogoff(ptr long long long)
+211 stdcall MAPISendMail(ptr long ptr long long)
+212 stdcall MAPISaveMail(ptr long ptr long long str)
+213 stdcall MAPIReadMail(ptr long str long long ptr)
+214 stdcall MAPIFindNext(ptr long str str long long ptr)
+215 stdcall MAPIDeleteMail(ptr long str long long)
+217 stdcall MAPIAddress(ptr long str long str long ptr long long ptr ptr)
+218 stdcall MAPIDetails(ptr long ptr long long)
+219 stdcall MAPIResolveName(ptr long str long long ptr)
 220 stub BMAPISendMail
 221 stub BMAPISaveMail
 222 stub BMAPIReadMail
@@ -188,4 +188,4 @@
 253 stub FixMAPI@0
 254 stdcall FGetComponentPath(str str ptr long long)
 255 stdcall FGetComponentPath@20(str str ptr long long) FGetComponentPath
-256 stdcall MAPISendMailW(ptr ptr ptr long long)
+256 stdcall MAPISendMailW(ptr long ptr long long)
