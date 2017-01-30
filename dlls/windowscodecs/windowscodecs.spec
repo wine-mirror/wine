@@ -72,7 +72,7 @@
 @ stdcall IWICImagingFactory_CreateBitmapScaler_Proxy(ptr ptr) IWICImagingFactory_CreateBitmapScaler_Proxy_W
 @ stdcall IWICImagingFactory_CreateBitmap_Proxy(ptr long long ptr long ptr) IWICImagingFactory_CreateBitmap_Proxy_W
 @ stdcall IWICImagingFactory_CreateComponentInfo_Proxy(ptr ptr ptr) IWICImagingFactory_CreateComponentInfo_Proxy_W
-@ stdcall IWICImagingFactory_CreateDecoderFromFileHandle_Proxy(ptr ptr ptr long ptr) IWICImagingFactory_CreateDecoderFromFileHandle_Proxy_W
+@ stdcall IWICImagingFactory_CreateDecoderFromFileHandle_Proxy(ptr long ptr long ptr) IWICImagingFactory_CreateDecoderFromFileHandle_Proxy_W
 @ stdcall IWICImagingFactory_CreateDecoderFromFilename_Proxy(ptr wstr ptr long long ptr) IWICImagingFactory_CreateDecoderFromFilename_Proxy_W
 @ stdcall IWICImagingFactory_CreateDecoderFromStream_Proxy(ptr ptr ptr long ptr) IWICImagingFactory_CreateDecoderFromStream_Proxy_W
 @ stdcall IWICImagingFactory_CreateEncoder_Proxy(ptr ptr ptr ptr) IWICImagingFactory_CreateEncoder_Proxy_W
