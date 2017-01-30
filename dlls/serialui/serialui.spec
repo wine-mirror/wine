@@ -1,4 +1,4 @@
-1 stdcall EnumPropPages(ptr ptr ptr)
+1 stdcall EnumPropPages(ptr ptr long)
 2 stdcall drvCommConfigDialogW(ptr long ptr)
 3 stdcall drvCommConfigDialogA(ptr long ptr)
 4 stdcall drvSetDefaultCommConfigW(wstr ptr long)
