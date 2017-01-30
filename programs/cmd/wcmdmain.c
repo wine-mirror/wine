@@ -2527,8 +2527,6 @@ int wmain (int argc, WCHAR *argvW[])
 
         /* Otherwise we now need to look in the path to see if we can find it */
         } else {
-          p = thisArg + strlenW(thisArg);
-
           /* Does file exist with this name? */
           if (SearchPathW(NULL, thisArg, NULL, sizeof(string)/sizeof(WCHAR), string, NULL) != 0)  {
             WINE_TRACE("Found on path as '%s'\n", wine_dbgstr_w(string));

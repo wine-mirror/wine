@@ -4109,7 +4109,7 @@ void WCMD_setshow_env (WCHAR *s) {
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
       WINE_TRACE("set /p: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
                  wine_dbgstr_w(string));
-      status = SetEnvironmentVariableW(s, string);
+      SetEnvironmentVariableW(s, string);
     }
 
   /* See if /A supplied, and if so calculate the results of all the expressions */
