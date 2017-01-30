@@ -71,7 +71,6 @@ static void test_WlanOpenHandle(void)
     ok(neg_version == 1, "Expected 1, got %d\n", neg_version);
     ok(handle != bad_handle && handle, "handle changed\n");
     ret = WlanCloseHandle(handle, NULL);
-todo_wine
     ok(ret == 0, "Expected 0, got %d\n", ret);
 
     ret = WlanOpenHandle(2, NULL, &neg_version, &handle);
@@ -82,7 +81,6 @@ todo_wine
       ok(neg_version == 1, "Expected 1, got %d\n", neg_version);
     ok(handle != bad_handle && handle, "bad handle\n");
     ret = WlanCloseHandle(handle, NULL);
-todo_wine
     ok(ret == 0, "Expected 0, got %d\n", ret);
 
     /* open twice */
@@ -91,15 +89,19 @@ todo_wine
     ret = WlanOpenHandle(1, NULL, &neg_version, &handle2);
     ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
 
-todo_wine {
+    ret = WlanCloseHandle(handle, &reserved);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+
     ret = WlanCloseHandle(handle, NULL);
     ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
     ret = WlanCloseHandle(handle2, NULL);
     ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
 
+    ret = WlanCloseHandle(bad_handle, NULL);
+    ok(ret == ERROR_INVALID_HANDLE, "Expected 6, got %d\n", ret);
+
     ret = WlanCloseHandle(NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "Expected 0, got %d\n", ret);
-}
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
 }
 
 static void test_WlanAllocateFreeMemory(void)

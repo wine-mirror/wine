@@ -35,6 +35,16 @@ static struct wine_wlan
     DWORD magic, cli_version;
 } handle_table[16];
 
+static struct wine_wlan* handle_index(HANDLE handle)
+{
+    ULONG_PTR i = (ULONG_PTR)handle - 1;
+
+    if (i < sizeof(handle_table) / sizeof(handle_table[0]) && handle_table[i].magic == WLAN_MAGIC)
+        return &handle_table[i];
+
+    return NULL;
+}
+
 static HANDLE handle_new(struct wine_wlan **entry)
 {
     ULONG_PTR i;
@@ -59,8 +69,19 @@ DWORD WINAPI WlanEnumInterfaces(HANDLE handle, void *reserved, WLAN_INTERFACE_IN
 
 DWORD WINAPI WlanCloseHandle(HANDLE handle, void *reserved)
 {
-    FIXME("(%p, %p) stub\n", handle, reserved);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct wine_wlan *wlan;
+
+    TRACE("(%p, %p)\n", handle, reserved);
+
+    if (!handle || reserved)
+        return ERROR_INVALID_PARAMETER;
+
+    wlan = handle_index(handle);
+    if (!wlan)
+        return ERROR_INVALID_HANDLE;
+
+    wlan->magic = 0;
+    return ERROR_SUCCESS;
 }
 
 DWORD WINAPI WlanOpenHandle(DWORD client_version, void *reserved, DWORD *negotiated_version, HANDLE *handle)
