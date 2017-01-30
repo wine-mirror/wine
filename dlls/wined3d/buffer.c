@@ -1039,7 +1039,8 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
             dirty_size = 0;
         }
 
-        if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
+        if (!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD | WINED3D_MAP_READONLY))
+                || buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
         {
             if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
             {
