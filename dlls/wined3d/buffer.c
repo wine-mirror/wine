@@ -247,12 +247,7 @@ static BOOL buffer_create_buffer_object(struct wined3d_buffer *buffer, struct wi
         /* No setup is needed here for GL_ARB_map_buffer_range. */
     }
 
-    /* Reserve memory for the buffer. The amount of data won't change
-     * so we are safe with calling glBufferData once and
-     * calling glBufferSubData on updates. Upload the actual data in case
-     * we're not double buffering, so we can release the heap mem afterwards.
-     */
-    GL_EXTCALL(glBufferData(buffer->buffer_type_hint, buffer->resource.size, buffer->resource.heap_memory, gl_usage));
+    GL_EXTCALL(glBufferData(buffer->buffer_type_hint, buffer->resource.size, NULL, gl_usage));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
@@ -261,11 +256,7 @@ static BOOL buffer_create_buffer_object(struct wined3d_buffer *buffer, struct wi
     }
 
     buffer->buffer_object_usage = gl_usage;
-
-    if (buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
-        buffer_invalidate_bo_range(buffer, 0, 0);
-    else
-        wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
+    buffer_invalidate_bo_range(buffer, 0, 0);
 
     return TRUE;
 
@@ -915,9 +906,6 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         return;
     }
 
-    if (buffer->resource.heap_memory)
-        wined3d_buffer_evict_sysmem(buffer);
-
     /* Reading the declaration makes only sense if we have valid state information
      * (i.e., if this function is called during draws). */
     if (state)
@@ -995,16 +983,7 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
 
     if (!buffer->conversion_map)
     {
-        /* That means that there is nothing to fixup. Just upload from
-         * buffer->resource.heap_memory directly into the BO. Do not
-         * free the system memory copy because drawPrimitive may need it if
-         * the stride is 0, for instancing emulation, vertex blending
-         * emulation or shader emulation. */
         TRACE("No conversion needed.\n");
-
-        /* Nothing to do because heap memory exists if the buffer is double buffer or has no BO at all. */
-        if (!(buffer->flags & WINED3D_BUFFER_PIN_SYSMEM))
-            return;
 
         wined3d_buffer_upload_ranges(buffer, context, buffer->resource.heap_memory,
                 buffer->modified_areas, buffer->maps);
@@ -1014,6 +993,9 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         buffer_conversion_upload(buffer, context);
     }
     wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
+
+    if (buffer->resource.heap_memory)
+        wined3d_buffer_evict_sysmem(buffer);
 }
 
 struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)
