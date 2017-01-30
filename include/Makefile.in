@@ -27,6 +27,7 @@ IDL_SRCS = \
 	colinf.idl \
 	comcat.idl \
 	commoncontrols.idl \
+	comsvcs.idl \
 	control.idl \
 	cor.idl \
 	cordebug.idl \
