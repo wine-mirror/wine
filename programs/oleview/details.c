@@ -139,7 +139,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
         }
         else if(addings && !memcmp(wszName, wszProxyStubClsid32, sizeof(WCHAR[17])))
         {
-            lenData = sizeof(WCHAR[MAX_LOAD_STRING]);
+            lenData = sizeof(wszData);
 
             RegQueryValueW(hCurKey, NULL, wszData, (LONG *)&lenData);
             RegCloseKey(hCurKey);
@@ -155,7 +155,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
             RegCloseKey(hCurKey);
 
-            memmove(&wszData[6], wszData, lenData * sizeof(WCHAR));
+            memmove(&wszData[6], wszData, lenData);
             memcpy(wszData, wszCLSID, sizeof(WCHAR[6]));
             wszData[5] = '\\';
 
@@ -183,7 +183,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
             RegCloseKey(hCurKey);
 
-            memmove(&wszData[8], wszData, lenData * sizeof(WCHAR));
+            memmove(&wszData[8], wszData, lenData);
             memcpy(wszData, wszTypeLib, sizeof(WCHAR[8]));
             wszData[7] = '\\';
             RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey);
@@ -229,12 +229,11 @@ static void CreateReg(WCHAR *buffer)
             *path = '\\';
             path += 1;
 
-            lenTree = sizeof(WCHAR[MAX_LOAD_STRING]);
+            lenTree = sizeof(wszTree);
 
             if(RegQueryValueW(hKey, NULL, wszTree, (LONG *)&lenTree) == ERROR_SUCCESS)
             {
-                memmove(&wszTree[lenBuffer-lastLenBuffer+3], wszTree,
-                        lenTree * sizeof(WCHAR));
+                memmove(&wszTree[lenBuffer-lastLenBuffer+3], wszTree, lenTree);
                 memcpy(wszTree, &buffer[lastLenBuffer],
                         (lenBuffer - lastLenBuffer) * sizeof(WCHAR));
 
