@@ -1720,7 +1720,6 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         }
 
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
-        dwApplicationNameLen = lstrlenW(buf) + 1;
         wszApplicationName = buf;
         sei_tmp.lpFile = wszApplicationName;
     }
@@ -1734,7 +1733,6 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
             ExpandEnvironmentStringsW(sei_tmp.lpFile, buf, len + 1);
             HeapFree(GetProcessHeap(), 0, wszApplicationName);
-            dwApplicationNameLen = len + 1;
             wszApplicationName = buf;
 
             sei_tmp.lpFile = wszApplicationName;
