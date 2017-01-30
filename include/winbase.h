@@ -2600,6 +2600,7 @@ WINBASEAPI BOOL        WINAPI TzSpecificLocalTimeToSystemTime(const TIME_ZONE_IN
 WINBASEAPI LONG        WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS);
 WINBASEAPI BOOL        WINAPI UnlockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
 WINBASEAPI BOOL        WINAPI UnlockFileEx(HANDLE,DWORD,DWORD,DWORD,LPOVERLAPPED);
+#define                       UnlockResource(handle) ((handle), 0)
 #define                       UnlockSegment(handle) GlobalUnfix((HANDLE)(handle))
 WINBASEAPI BOOL        WINAPI UnmapViewOfFile(LPCVOID);
 WINBASEAPI HRESULT     WINAPI UnregisterApplicationRestart(void);
