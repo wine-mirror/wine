@@ -1981,6 +1981,7 @@ cards_nvidia_binary[] =
 cards_amd_binary[] =
 {
     {"RX 480",                      CARD_AMD_RADEON_RX_480},
+    {"RX 460",                      CARD_AMD_RADEON_RX_460},
     {"R9 Fury Series",              CARD_AMD_RADEON_R9_FURY},
     /* Southern Islands */
     {"HD 7900",                     CARD_AMD_RADEON_HD7900},
