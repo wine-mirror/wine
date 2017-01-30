@@ -994,8 +994,9 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
     }
     wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
 
-    if (buffer->resource.heap_memory)
+    if (buffer->resource.heap_memory && !(buffer->resource.usage & WINED3DUSAGE_DYNAMIC))
         wined3d_buffer_evict_sysmem(buffer);
+
 }
 
 struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)
@@ -1054,6 +1055,9 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
         {
             if (!(flags & WINED3D_MAP_READONLY))
                 buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
+
+            if ((flags & WINED3D_MAP_DISCARD) && buffer->resource.heap_memory)
+                wined3d_buffer_evict_sysmem(buffer);
 
             if (count == 1)
             {
