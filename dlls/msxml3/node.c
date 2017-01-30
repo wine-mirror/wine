@@ -829,7 +829,7 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, DWORD *first, DWORD *las
     case XML_DOCUMENT_FRAG_NODE:
         if (trim && !preserving)
         {
-            xmlChar* ret = str;
+            xmlChar* ret;
             int len;
 
             if (!str)
