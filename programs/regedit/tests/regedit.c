@@ -314,6 +314,61 @@ static void test_basic_import(void)
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
 }
 
+static void test_basic_import_31(void)
+{
+    HKEY hkey;
+    LONG lr;
+
+    lr = RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
+            "RegDeleteKeyA failed: %d\n", lr);
+
+    /* Test simple value */
+    exec_import_str("REGEDIT\r\n"
+		    "HKEY_CLASSES_ROOT\\" KEY_BASE " = Value0\r\n");
+    lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, KEY_READ, &hkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
+    verify_reg(hkey, "", REG_SZ, "Value0", 7, 0);
+
+    /* Test proper handling of spaces and equals signs */
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE " =Value1\r\n");
+    verify_reg(hkey, "", REG_SZ, "Value1", 7, 0);
+
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE " =  Value2\r\n");
+    verify_reg(hkey, "", REG_SZ, " Value2", 8, 0);
+
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE " = Value3 \r\n");
+    verify_reg(hkey, "", REG_SZ, "Value3 ", 8, 0);
+
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE " Value4\r\n");
+    verify_reg(hkey, "", REG_SZ, "Value4", 7, 0);
+
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE "  Value5\r\n");
+    verify_reg(hkey, "", REG_SZ, "Value5", 7, 0);
+
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE "\r\n");
+    verify_reg(hkey, "", REG_SZ, "", 1, 0);
+
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE "  \r\n");
+    verify_reg(hkey, "", REG_SZ, "", 1, 0);
+
+    exec_import_str("REGEDIT\r\n"
+                    "HKEY_CLASSES_ROOT\\" KEY_BASE " = No newline");
+    verify_reg(hkey, "", REG_SZ, "No newline", 11, TODO_REG_SIZE | TODO_REG_DATA);
+
+    RegCloseKey(hkey);
+
+    lr = RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+}
+
 static void test_invalid_import(void)
 {
     LONG lr;
@@ -493,6 +548,7 @@ START_TEST(regedit)
     supports_wchar = exec_import_wstr(wchar_test);
 
     test_basic_import();
+    test_basic_import_31();
     test_invalid_import();
     test_comments();
 }
