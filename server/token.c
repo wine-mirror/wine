@@ -1080,8 +1080,7 @@ DECL_HANDLER(adjust_token_privileges)
         if (req->disable_all)
             token_disable_privileges( token );
         else
-            modified_priv_count = token_adjust_privileges( token, privs,
-                priv_count, modified_privs, modified_priv_count );
+            token_adjust_privileges( token, privs, priv_count, modified_privs, modified_priv_count );
 
         release_object( token );
     }
