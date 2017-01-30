@@ -28,6 +28,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wlanapi);
 
+#define WLAN_MAGIC 0x574c414e /* WLAN */
+
+static struct wine_wlan
+{
+    DWORD magic, cli_version;
+} handle_table[16];
+
+static HANDLE handle_new(struct wine_wlan **entry)
+{
+    ULONG_PTR i;
+
+    for (i = 0; i < sizeof(handle_table) / sizeof(handle_table[0]); i++)
+    {
+        if (handle_table[i].magic == 0)
+        {
+            *entry = &handle_table[i];
+            return (HANDLE)(i + 1);
+        }
+    }
+
+    return NULL;
+}
+
 DWORD WINAPI WlanEnumInterfaces(HANDLE handle, void *reserved, WLAN_INTERFACE_INFO_LIST **interface_list)
 {
     FIXME("(%p, %p, %p) stub\n", handle, reserved, interface_list);
@@ -42,8 +65,26 @@ DWORD WINAPI WlanCloseHandle(HANDLE handle, void *reserved)
 
 DWORD WINAPI WlanOpenHandle(DWORD client_version, void *reserved, DWORD *negotiated_version, HANDLE *handle)
 {
-    FIXME("(%u, %p, %p, %p) stub\n", client_version, reserved, negotiated_version, handle);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct wine_wlan *wlan;
+    HANDLE ret_handle;
+
+    TRACE("(%u, %p, %p, %p)\n", client_version, reserved, negotiated_version, handle);
+
+    if (reserved || !negotiated_version || !handle)
+        return ERROR_INVALID_PARAMETER;
+
+    if (client_version != 1 && client_version != 2)
+        return ERROR_NOT_SUPPORTED;
+
+    ret_handle = handle_new(&wlan);
+    if (!ret_handle)
+        return ERROR_REMOTE_SESSION_LIMIT_EXCEEDED;
+
+    wlan->magic = WLAN_MAGIC;
+    wlan->cli_version = *negotiated_version = client_version;
+    *handle = ret_handle;
+
+    return ERROR_SUCCESS;
 }
 
 void WINAPI WlanFreeMemory(void *ptr)

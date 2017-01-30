@@ -26,7 +26,7 @@
 
 static void test_WlanOpenHandle(void)
 {
-    HANDLE bad_handle = (HANDLE) 0xdeadcafe, handle = bad_handle;
+    HANDLE bad_handle = (HANDLE) 0xdeadcafe, handle = bad_handle, handle2;
     DWORD ret, neg_version = 0xdeadbeef, reserved = 0xdead;
     BOOL is_xp;
 
@@ -35,30 +35,25 @@ static void test_WlanOpenHandle(void)
     is_xp = ret == ERROR_SUCCESS;
     if (!is_xp) /* the results in XP differ completely from all other versions */
     {
-todo_wine
         ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %d\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
         ok(handle == bad_handle, "handle changed\n");
         ret = WlanOpenHandle(10, NULL, &neg_version, &handle);
-todo_wine
         ok(ret == ERROR_NOT_SUPPORTED, "Expected 50, got %d\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
         ok(handle == bad_handle, "handle changed\n");
 
         /* reserved parameter must not be used */
         ret = WlanOpenHandle(1, &reserved, &neg_version, &handle);
-todo_wine
         ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
         ok(handle == bad_handle, "handle changed\n");
 
         /* invalid parameters */
         ret = WlanOpenHandle(1, NULL, NULL, &handle);
-todo_wine
         ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
         ok(handle == bad_handle, "bad handle\n");
         ret = WlanOpenHandle(1, NULL, &neg_version, NULL);
-todo_wine
         ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
         ok(neg_version == 0xdeadbeef, "neg_vesion changed\n");
     }
@@ -71,12 +66,12 @@ todo_wine
     }
 
     /* good tests */
-todo_wine {
     ret = WlanOpenHandle(1, NULL, &neg_version, &handle);
     ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
     ok(neg_version == 1, "Expected 1, got %d\n", neg_version);
     ok(handle != bad_handle && handle, "handle changed\n");
     ret = WlanCloseHandle(handle, NULL);
+todo_wine
     ok(ret == 0, "Expected 0, got %d\n", ret);
 
     ret = WlanOpenHandle(2, NULL, &neg_version, &handle);
@@ -87,7 +82,20 @@ todo_wine {
       ok(neg_version == 1, "Expected 1, got %d\n", neg_version);
     ok(handle != bad_handle && handle, "bad handle\n");
     ret = WlanCloseHandle(handle, NULL);
+todo_wine
     ok(ret == 0, "Expected 0, got %d\n", ret);
+
+    /* open twice */
+    ret = WlanOpenHandle(1, NULL, &neg_version, &handle);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ret = WlanOpenHandle(1, NULL, &neg_version, &handle2);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+
+todo_wine {
+    ret = WlanCloseHandle(handle, NULL);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+    ret = WlanCloseHandle(handle2, NULL);
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
 
     ret = WlanCloseHandle(NULL, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Expected 0, got %d\n", ret);
@@ -120,7 +128,6 @@ static void test_WlanEnumInterfaces(void)
     WLAN_INTERFACE_INFO *info;
 
     ret = WlanOpenHandle(1, NULL, &neg_version, &handle);
-todo_wine
     ok(ret == 0, "Expected 0, got %d\n", ret);
 
     /* invalid parameters */
