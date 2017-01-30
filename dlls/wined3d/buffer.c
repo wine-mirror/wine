@@ -267,8 +267,6 @@ static BOOL buffer_create_buffer_object(struct wined3d_buffer *buffer, struct wi
     else
         wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
 
-    wined3d_buffer_evict_sysmem(buffer);
-
     return TRUE;
 
 fail:
@@ -911,7 +909,14 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         return;
     }
 
-    wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER);
+    if (!wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER))
+    {
+        ERR("Failed to prepare buffer location.\n");
+        return;
+    }
+
+    if (buffer->resource.heap_memory)
+        wined3d_buffer_evict_sysmem(buffer);
 
     /* Reading the declaration makes only sense if we have valid state information
      * (i.e., if this function is called during draws). */
