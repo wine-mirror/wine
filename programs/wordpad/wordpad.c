@@ -2012,7 +2012,7 @@ static LRESULT OnUser( HWND hWnd )
     SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_ALIGN_CENTER, (pf.wAlignment == PFA_CENTER));
     SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_ALIGN_RIGHT, (pf.wAlignment == PFA_RIGHT));
 
-    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_BULLETONOFF, pf.wNumbering ? TRUE : FALSE);
+    SendMessageW(hwndFormatBar, TB_CHECKBUTTON, ID_BULLETONOFF, pf.wNumbering != 0);
     return 0;
 }
 
