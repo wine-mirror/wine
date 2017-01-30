@@ -883,7 +883,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             run->run.fontEmSize = range->fontsize * scale;
 
             if (mapped_length < length) {
-                struct regular_layout_run *nextrun = &r->u.regular;
+                struct regular_layout_run *nextrun;
                 struct layout_run *nextr;
 
                 /* keep mapped part for current run, add another run for the rest */
