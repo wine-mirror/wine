@@ -46,6 +46,31 @@ DWORD WINAPI WlanOpenHandle(DWORD client_version, void *reserved, DWORD *negotia
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+void WINAPI WlanFreeMemory(void *ptr)
+{
+    TRACE("(%p)\n", ptr);
+
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
+
+void *WINAPI WlanAllocateMemory(DWORD size)
+{
+    void *ret;
+
+    TRACE("(%d)", size);
+
+    if (!size)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!ret)
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+
+    return ret;
+}
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *reserved)
 {

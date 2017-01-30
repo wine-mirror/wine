@@ -94,6 +94,23 @@ todo_wine {
 }
 }
 
+static void test_WlanAllocateFreeMemory(void)
+{
+    void *ptr;
+
+    SetLastError(0xdeadbeef);
+    ptr = WlanAllocateMemory(0);
+    ok(ptr == NULL, "Expected NULL, got %p\n", ptr);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", GetLastError());
+
+    ptr = WlanAllocateMemory(1024);
+    ok(ptr != NULL, "Expected non-NULL\n");
+
+    WlanFreeMemory(ptr);
+
+    WlanFreeMemory(NULL); /* return is void, proves that won't crash */
+}
+
 START_TEST(wlanapi)
 {
   HANDLE handle;
@@ -108,4 +125,5 @@ START_TEST(wlanapi)
   }
 
   test_WlanOpenHandle();
+  test_WlanAllocateFreeMemory();
 }

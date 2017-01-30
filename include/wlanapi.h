@@ -48,5 +48,7 @@ typedef struct _WLAN_INTERFACE_INFO_LIST
 DWORD WINAPI WlanCloseHandle(HANDLE, void *);
 DWORD WINAPI WlanEnumInterfaces(HANDLE, void *, WLAN_INTERFACE_INFO_LIST **);
 DWORD WINAPI WlanOpenHandle(DWORD, void *, DWORD *, HANDLE *);
+void *WINAPI WlanAllocateMemory(DWORD);
+void WINAPI WlanFreeMemory(void *);
 
 #endif /* _WLAN_WLANAPI_H */
