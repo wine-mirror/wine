@@ -2341,7 +2341,6 @@ HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitma
                             IWICFormatConverter_Release(converter);
                             converter = NULL;
                         }
-                        res = S_OK;
                     }
                 }
 
