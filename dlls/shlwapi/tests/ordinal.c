@@ -568,6 +568,12 @@ static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
     ok(ret, "SHUnlockShared failed: %u\n", GetLastError());
 
     /* test SHMapHandle */
+    SetLastError(0xdeadbeef);
+    hmem2 = pSHMapHandle(NULL, procid, GetCurrentProcessId(), 0, 0);
+    ok(hmem2 == NULL, "expected NULL, got new handle\n");
+todo_wine
+    ok(GetLastError() == 0xdeadbeef, "last error should not have changed, got %u\n", GetLastError());
+
     hmem2 = pSHMapHandle(hmem, procid, GetCurrentProcessId(), 0, 0);
 
     /* It seems like Windows Vista/2008 uses a different internal implementation
