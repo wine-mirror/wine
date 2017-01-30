@@ -91,6 +91,12 @@ DirectInput
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/dinput/
 
+DirectPlay
+M:	Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
+F:	dlls/dplayx/
+F:	dlls/dpnet/
+F:	dlls/dpwsockx/
+
 DirectShow
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/amstream/
