@@ -1297,7 +1297,7 @@ static inline BOOL logical_proc_info_add_by_id(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
         (*pdata)[i].u.Reserved[1] = id;
         *len = i+1;
     }else{
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex = *pdataex;
+        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
         DWORD ofs = 0;
 
         while(ofs < *len)
@@ -1365,7 +1365,7 @@ static inline BOOL logical_proc_info_add_cache(SYSTEM_LOGICAL_PROCESSOR_INFORMAT
     }
     else
     {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex = *pdataex;
+        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
         DWORD ofs;
 
         for (ofs = 0; ofs < *len; )
