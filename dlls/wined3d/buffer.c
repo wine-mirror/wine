@@ -574,7 +574,7 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
     if (buffer->locations & location)
     {
         TRACE("Location (%#x) is already up to date.\n", location);
-        return WINED3D_OK;
+        return TRUE;
     }
 
     if (!buffer->locations)
