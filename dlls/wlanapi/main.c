@@ -28,31 +28,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wlanapi);
 
-DWORD WINAPI WlanEnumInterfaces(HANDLE client, void *reserved, WLAN_INTERFACE_INFO_LIST **interface_list)
+DWORD WINAPI WlanEnumInterfaces(HANDLE handle, void *reserved, WLAN_INTERFACE_INFO_LIST **interface_list)
 {
-    FIXME("(%p, %p, %p) stub\n", client, reserved, interface_list);
+    FIXME("(%p, %p, %p) stub\n", handle, reserved, interface_list);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD WINAPI WlanCloseHandle(HANDLE client_handle, VOID *reserved)
+DWORD WINAPI WlanCloseHandle(HANDLE handle, void *reserved)
 {
-    FIXME("(%p, %p) stub\n", client_handle, reserved);
+    FIXME("(%p, %p) stub\n", handle, reserved);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-DWORD WINAPI WlanOpenHandle(DWORD clientVersion, PVOID reserved,
-        PDWORD negotiatedVersion, PHANDLE clientHandle)
+DWORD WINAPI WlanOpenHandle(DWORD client_version, void *reserved, DWORD *negotiated_version, HANDLE *handle)
 {
-    FIXME("(%d, %p, %p, %p) stub\n",clientVersion, reserved, negotiatedVersion, clientHandle);
+    FIXME("(%u, %p, %p, %p) stub\n", client_version, reserved, negotiated_version, handle);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *reserved)
 {
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(0x%p, %u, %p)\n", hinstDLL, reason, reserved);
 
-    switch (fdwReason)
+    switch (reason)
     {
         case DLL_WINE_PREATTACH:
             return FALSE;    /* prefer native version */
