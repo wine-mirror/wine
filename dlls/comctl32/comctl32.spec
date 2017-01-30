@@ -5,7 +5,7 @@
 
   2 stdcall MenuHelp(long long long long long long ptr)
   3 stdcall ShowHideMenuCtl(long long ptr)
-  4 stdcall GetEffectiveClientRect(long long long)
+  4 stdcall GetEffectiveClientRect(long ptr ptr)
   5 stdcall DrawStatusTextA(long ptr str long)
   6 stdcall CreateStatusWindowA(long str long long)
   7 stdcall CreateToolbar(long long long long long long ptr long)
@@ -93,7 +93,7 @@
 382 stdcall -noname SmoothScrollWindow(ptr)
 383 stub -noname DoReaderMode
 384 stdcall -noname SetPathWordBreakProc(ptr long)
-385 stdcall -ordinal DPA_EnumCallback(long long ptr)
+385 stdcall -ordinal DPA_EnumCallback(ptr ptr ptr)
 386 stdcall -ordinal DPA_DestroyCallback(ptr ptr ptr)
 387 stdcall -ordinal DSA_EnumCallback(ptr ptr ptr)
 388 stdcall -ordinal DSA_DestroyCallback(ptr ptr ptr)
