@@ -410,7 +410,7 @@ static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
                              unsigned int *feature_index,
                              struct feature *feature)
 {
-    if (bSize <= 0)
+    if (bSize == 0)
     {
         return;
     }
