@@ -66,6 +66,7 @@ static BOOL (WINAPI *pImageList_SetImageCount)(HIMAGELIST,UINT);
 static HRESULT (WINAPI *pImageList_CoCreateInstance)(REFCLSID,const IUnknown *,
     REFIID,void **);
 static HRESULT (WINAPI *pHIMAGELIST_QueryInterface)(HIMAGELIST,REFIID,void **);
+static int (WINAPI *pImageList_SetColorTable)(HIMAGELIST,int,int,RGBQUAD*);
 
 static HINSTANCE hinst;
 
@@ -2030,6 +2031,205 @@ static void test_create_destroy(void)
     ok(himl == NULL, "got %p\n", himl);
 }
 
+static void check_color_table(const char *name, HDC hdc, HIMAGELIST himl, UINT ilc,
+                              RGBQUAD *expect, RGBQUAD *broken_expect)
+{
+    IMAGEINFO info;
+    INT ret;
+    char bmi_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *bmi = (BITMAPINFO *)bmi_buffer;
+    int i, depth = ilc & 0xfe;
+
+    ret = ImageList_GetImageInfo(himl, 0, &info);
+    ok(ret, "got %d\n", ret);
+    ok(info.hbmImage != NULL, "got %p\n", info.hbmImage);
+
+    memset(bmi_buffer, 0, sizeof(bmi_buffer));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    ret = GetDIBits(hdc, info.hbmImage, 0, 0, NULL, bmi, DIB_RGB_COLORS);
+    ok(ret, "got %d\n", ret);
+    ok(bmi->bmiHeader.biBitCount == depth, "got %d\n", bmi->bmiHeader.biBitCount);
+
+    ret = GetDIBits(hdc, info.hbmImage, 0, 0, NULL, bmi, DIB_RGB_COLORS);
+    ok(ret, "got %d\n", ret);
+    ok(bmi->bmiHeader.biBitCount == depth, "got %d\n", bmi->bmiHeader.biBitCount);
+
+    for (i = 0; i < (1 << depth); i++)
+        ok((bmi->bmiColors[i].rgbRed == expect[i].rgbRed &&
+            bmi->bmiColors[i].rgbGreen == expect[i].rgbGreen &&
+            bmi->bmiColors[i].rgbBlue == expect[i].rgbBlue) ||
+           broken(bmi->bmiColors[i].rgbRed == broken_expect[i].rgbRed &&
+                  bmi->bmiColors[i].rgbGreen == broken_expect[i].rgbGreen &&
+                  bmi->bmiColors[i].rgbBlue == broken_expect[i].rgbBlue),
+           "%d: %s: got color[%d] %02x %02x %02x expect %02x %02x %02x\n", depth, name, i,
+           bmi->bmiColors[i].rgbRed, bmi->bmiColors[i].rgbGreen, bmi->bmiColors[i].rgbBlue,
+           expect[i].rgbRed, expect[i].rgbGreen, expect[i].rgbBlue);
+}
+
+static void get_default_color_table(HDC hdc, int bpp, RGBQUAD *table)
+{
+    char bmi_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *bmi = (BITMAPINFO *)bmi_buffer;
+    HBITMAP tmp;
+    int i;
+    HPALETTE pal;
+    PALETTEENTRY entries[256];
+
+    switch (bpp)
+    {
+    case 4:
+        tmp = CreateBitmap( 1, 1, 1, 1, NULL );
+        memset(bmi_buffer, 0, sizeof(bmi_buffer));
+        bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+        bmi->bmiHeader.biHeight = 1;
+        bmi->bmiHeader.biWidth = 1;
+        bmi->bmiHeader.biBitCount = bpp;
+        bmi->bmiHeader.biPlanes = 1;
+        bmi->bmiHeader.biCompression = BI_RGB;
+        GetDIBits( hdc, tmp, 0, 0, NULL, bmi, DIB_RGB_COLORS );
+
+        memcpy(table, bmi->bmiColors, (1 << bpp) * sizeof(RGBQUAD));
+        table[7] = bmi->bmiColors[8];
+        table[8] = bmi->bmiColors[7];
+        DeleteObject( tmp );
+        break;
+
+    case 8:
+        pal = CreateHalftonePalette(hdc);
+        GetPaletteEntries(pal, 0, 256, entries);
+        for (i = 0; i < 256; i++)
+        {
+            table[i].rgbRed = entries[i].peRed;
+            table[i].rgbGreen = entries[i].peGreen;
+            table[i].rgbBlue = entries[i].peBlue;
+            table[i].rgbReserved = 0;
+        }
+        DeleteObject(pal);
+        break;
+
+    default:
+        ok(0, "unhandled depth %d\n", bpp);
+    }
+}
+
+static void test_color_table(UINT ilc)
+{
+    HIMAGELIST himl;
+    INT ret;
+    char bmi_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *bmi = (BITMAPINFO *)bmi_buffer;
+    HDC hdc = CreateCompatibleDC(0);
+    HBITMAP dib4, dib8, dib32;
+    RGBQUAD rgb[256], default_table[256];
+
+    get_default_color_table(hdc, ilc & 0xfe, default_table);
+
+    himl = ImageList_Create(16, 16, ilc, 0, 3);
+    ok(himl != NULL, "got %p\n", himl);
+
+    memset(bmi_buffer, 0, sizeof(bmi_buffer));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    bmi->bmiHeader.biHeight = 16;
+    bmi->bmiHeader.biWidth = 16;
+    bmi->bmiHeader.biBitCount = 8;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    bmi->bmiColors[0].rgbRed = 0xff;
+    bmi->bmiColors[1].rgbGreen = 0xff;
+    bmi->bmiColors[2].rgbBlue = 0xff;
+
+    dib8 = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+
+    bmi->bmiHeader.biBitCount = 4;
+    bmi->bmiColors[0].rgbRed   = 0xff;
+    bmi->bmiColors[0].rgbGreen = 0x00;
+    bmi->bmiColors[0].rgbBlue  = 0xff;
+    bmi->bmiColors[1].rgbRed   = 0xff;
+    bmi->bmiColors[1].rgbGreen = 0xff;
+    bmi->bmiColors[1].rgbBlue  = 0x00;
+    bmi->bmiColors[2].rgbRed   = 0x00;
+    bmi->bmiColors[2].rgbGreen = 0xff;
+    bmi->bmiColors[2].rgbBlue  = 0xff;
+
+    dib4 = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+
+    bmi->bmiHeader.biBitCount = 32;
+
+    dib32 = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+
+    /* add 32 first then 8.  This won't set the color table */
+    ret = ImageList_Add(himl, dib32, NULL);
+    ok(ret == 0, "got %d\n", ret);
+    ret = ImageList_Add(himl, dib8, NULL);
+    ok(ret == 1, "got %d\n", ret);
+
+    check_color_table("add 32, 8", hdc, himl, ilc, default_table, NULL);
+
+    /* since the previous _Adds didn't set the color table, this one will */
+    ret = ImageList_Remove(himl, -1);
+    ok(ret, "got %d\n", ret);
+    ret = ImageList_Add(himl, dib8, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    memset(rgb, 0, sizeof(rgb));
+    rgb[0].rgbRed = 0xff;
+    rgb[1].rgbGreen = 0xff;
+    rgb[2].rgbBlue = 0xff;
+    check_color_table("remove all, add 8", hdc, himl, ilc, rgb, default_table);
+
+    /* remove all, add 4. Color table remains the same since it's inplicitly
+       been set by the previous _Add */
+    ret = ImageList_Remove(himl, -1);
+    ok(ret, "got %d\n", ret);
+    ret = ImageList_Add(himl, dib4, NULL);
+    ok(ret == 0, "got %d\n", ret);
+    check_color_table("remove all, add 4", hdc, himl, ilc, rgb, default_table);
+
+    ImageList_Destroy(himl);
+    himl = ImageList_Create(16, 16, ilc, 0, 3);
+    ok(himl != NULL, "got %p\n", himl);
+
+    /* add 4 */
+    ret = ImageList_Add(himl, dib4, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    memset(rgb, 0, 16 * sizeof(rgb[0]));
+    rgb[0].rgbRed = 0xff;
+    rgb[0].rgbBlue = 0xff;
+    rgb[1].rgbRed = 0xff;
+    rgb[1].rgbGreen = 0xff;
+    rgb[2].rgbGreen = 0xff;
+    rgb[2].rgbBlue = 0xff;
+    memcpy(rgb + 16, default_table + 16, 240 * sizeof(rgb[0]));
+
+    check_color_table("add 4", hdc, himl, ilc, rgb, default_table);
+
+    ImageList_Destroy(himl);
+    himl = ImageList_Create(16, 16, ilc, 0, 3);
+    ok(himl != NULL, "got %p\n", himl);
+
+    /* set color table, add 8 */
+    ret = ImageList_Remove(himl, -1);
+    ok(ret, "got %d\n", ret);
+    memset(rgb, 0, sizeof(rgb));
+    rgb[0].rgbRed = 0xcc;
+    rgb[1].rgbBlue = 0xcc;
+    ret = pImageList_SetColorTable(himl, 0, 2, rgb);
+    ok(ret == 2, "got %d\n", ret);
+    /* the table is set, so this doesn't change it */
+    ret = ImageList_Add(himl, dib8, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    memcpy(rgb + 2, default_table + 2, 254 * sizeof(rgb[0]));
+    check_color_table("SetColorTable", hdc, himl, ilc, rgb, NULL);
+
+    DeleteObject(dib32);
+    DeleteObject(dib8);
+    DeleteObject(dib4);
+    DeleteDC(hdc);
+    ImageList_Destroy(himl);
+}
+
 static void test_IImageList_Clone(void)
 {
     IImageList *imgl, *imgl2;
@@ -2162,6 +2362,7 @@ START_TEST(imagelist)
     pImageList_Add = NULL;
     pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
     pImageList_SetImageCount = (void*)GetProcAddress(hComCtl32, "ImageList_SetImageCount");
+    pImageList_SetColorTable = (void*)GetProcAddress(hComCtl32, (const char*)390);
 
     hinst = GetModuleHandleA(NULL);
 
@@ -2177,6 +2378,8 @@ START_TEST(imagelist)
     test_merge_colors();
     test_imagelist_storage();
     test_iconsize();
+    test_color_table(ILC_COLOR4);
+    test_color_table(ILC_COLOR8);
 
     FreeLibrary(hComCtl32);
 
