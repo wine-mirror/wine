@@ -608,6 +608,49 @@ static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
     }
 }
 
+/* version for Windows 3.1 */
+static void processRegEntry31(WCHAR *line)
+{
+    int key_end = 0;
+    WCHAR *value;
+    int res;
+
+    static WCHAR empty[] = {0};
+
+    if (line[0] == '\0') return;
+
+    /* get key name */
+    while (line[key_end] && !isspaceW(line[key_end])) key_end++;
+
+    value = line + key_end;
+    while (isspaceW(value[0])) value++;
+
+    if (value[0] == '=') value++;
+    if (value[0] == ' ') value++; /* at most one space is skipped */
+
+    line[key_end] = '\0';
+    if (openKeyW(line) != ERROR_SUCCESS)
+	output_message(STRING_OPEN_KEY_FAILED, line);
+
+    res = RegSetValueExW(
+	       currentKeyHandle,
+	       empty,
+               0,                  /* Reserved */
+	       REG_SZ,
+	       (BYTE *)value,
+	       (strlenW(value) + 1) * sizeof(WCHAR));
+    if (res != ERROR_SUCCESS)
+	output_message(STRING_SETVALUE_FAILED, empty, currentKeyName);
+
+    closeKey();
+}
+
+/* version constants */
+
+#define REG_VERSION_31  3
+#define REG_VERSION_40  4
+#define REG_VERSION_50  5
+
 /******************************************************************************
  * Processes a registry file.
  * Correctly processes comments (in # and ; form), line continuation.
@@ -624,6 +667,11 @@ static void processRegLinesA(FILE *in, char* first_chars)
     char *s; /* A pointer to buf for fread */
     char *line; /* The start of the current line */
     WCHAR *lineW;
+    unsigned long version = 0;
+
+    static const char header_31[] = "REGEDIT";
+    static const char header_40[] = "REGEDIT4";
+    static const char header_50[] = "Windows Registry Editor Version 5.00";
 
     buf = HeapAlloc(GetProcessHeap(), 0, line_size);
     CHECK_ENOUGH_MEMORY(buf);
@@ -720,9 +768,22 @@ static void processRegLinesA(FILE *in, char* first_chars)
                 *s_eol++ = '\0';
             *s_eol = '\0';
 
-            lineW = GetWideString(line);
-            processRegEntry(lineW, FALSE);
-            HeapFree(GetProcessHeap(), 0, lineW);
+	    /* Check if the line is a header string */
+	    if (!memcmp(line, header_31, sizeof(header_31))) {
+		version = REG_VERSION_31;
+	    } else if (!memcmp(line, header_40, sizeof(header_40))) {
+		version = REG_VERSION_40;
+	    } else if (!memcmp(line, header_50, sizeof(header_50))) {
+		version = REG_VERSION_50;
+	    } else {
+		lineW = GetWideString(line);
+		if (version == REG_VERSION_31) {
+		    processRegEntry31(lineW);
+		} else if(version == REG_VERSION_40 || version == REG_VERSION_50) {
+		    processRegEntry(lineW, FALSE);
+		}
+		HeapFree(GetProcessHeap(), 0, lineW);
+	    }
             line = s_eol + 1;
         }
     }
