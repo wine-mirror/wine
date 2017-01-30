@@ -111,6 +111,72 @@ static void test_WlanAllocateFreeMemory(void)
     WlanFreeMemory(NULL); /* return is void, proves that won't crash */
 }
 
+static void test_WlanEnumInterfaces(void)
+{
+    HANDLE handle;
+    DWORD neg_version, i, ret, reserved = 0xdeadbeef;
+    WLAN_INTERFACE_INFO_LIST *bad_list = (WLAN_INTERFACE_INFO_LIST *)0xdeadcafe,
+                             *list = bad_list;
+    WLAN_INTERFACE_INFO *info;
+
+    ret = WlanOpenHandle(1, NULL, &neg_version, &handle);
+todo_wine
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+
+    /* invalid parameters */
+    ret = WlanEnumInterfaces(NULL, NULL, &list);
+todo_wine
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(list == bad_list, "list changed\n");
+    ret = WlanEnumInterfaces(handle, &reserved, &list);
+todo_wine
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(list == bad_list, "list changed\n");
+    ret = WlanEnumInterfaces(handle, NULL, NULL);
+todo_wine
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+    ok(list == bad_list, "list changed\n");
+
+    /* good tests */
+    list = NULL;
+    ret = WlanEnumInterfaces(handle, NULL, &list);
+todo_wine
+    ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
+todo_wine
+    ok(list != NULL, "bad interface list\n");
+    if (!list || !list->dwNumberOfItems)
+    {
+        skip("No wireless interfaces\n");
+        WlanCloseHandle(handle, NULL);
+        return;
+    }
+
+    trace("Wireless interfaces: %d\n", list->dwNumberOfItems);
+    for (i = 0; i < list->dwNumberOfItems;i ++)
+    {
+        info = &list->InterfaceInfo[i];
+        trace("  Index[%d] GUID: %s\n", i, wine_dbgstr_guid(&info->InterfaceGuid));
+        switch (info->isState)
+        {
+            case wlan_interface_state_disconnected:
+                trace("  Status: Disconnected\n");
+                break;
+            case wlan_interface_state_connected:
+                trace("  Status: Connected\n");
+                break;
+            default:
+                trace("  Status: Other\n");
+                break;
+        }
+        trace("  Description: %s\n", wine_dbgstr_w(info->strInterfaceDescription));
+    }
+
+    WlanFreeMemory(list);
+
+    ret = WlanCloseHandle(handle, NULL);
+    ok(ret == 0, "Expected 0, got %d\n", ret);
+}
+
 START_TEST(wlanapi)
 {
   HANDLE handle;
@@ -126,4 +192,5 @@ START_TEST(wlanapi)
 
   test_WlanOpenHandle();
   test_WlanAllocateFreeMemory();
+  test_WlanEnumInterfaces();
 }
