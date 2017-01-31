@@ -532,8 +532,8 @@ static HRESULT copy_headers_to_buf(IStream *stm, char **ptr)
             if(new_end - last_end == 2)
             {
                 LARGE_INTEGER off;
-                off.QuadPart = new_end;
-                IStream_Seek(stm, off, STREAM_SEEK_SET, NULL);
+                off.QuadPart = (LONGLONG)new_end - offset;
+                IStream_Seek(stm, off, STREAM_SEEK_CUR, NULL);
                 buf[new_end] = '\0';
                 done = TRUE;
             }
