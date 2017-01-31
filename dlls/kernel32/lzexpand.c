@@ -534,6 +534,7 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 HFILE WINAPI LZOpenFileA( LPSTR fn, LPOFSTRUCT ofs, WORD mode )
 {
 	HFILE	fd,cfd;
+	BYTE    ofs_cBytes = ofs->cBytes;
 
 	TRACE("(%s,%p,%d)\n",fn,ofs,mode);
 	/* 0x70 represents all OF_SHARE_* flags, ignore them for the check */
@@ -544,6 +545,8 @@ HFILE WINAPI LZOpenFileA( LPSTR fn, LPOFSTRUCT ofs, WORD mode )
             fd = OpenFile(mfn,ofs,mode);
             HeapFree( GetProcessHeap(), 0, mfn );
 	}
+	if (fd==HFILE_ERROR)
+		ofs->cBytes = ofs_cBytes;
 	if ((mode&~0x70)!=OF_READ)
 		return fd;
 	if (fd==HFILE_ERROR)
