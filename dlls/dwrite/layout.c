@@ -1868,6 +1868,14 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     *textpos += metrics.length;
 }
 
+static BOOL layout_can_wrap_after(const struct dwrite_textlayout *layout, UINT32 cluster)
+{
+    if (layout->format.wrapping == DWRITE_WORD_WRAPPING_CHARACTER)
+        return TRUE;
+
+    return layout->clustermetrics[cluster].canWrapLineAfter;
+}
+
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
@@ -1907,7 +1915,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             if (overflow)
                 break;
 
-            if (layout->clustermetrics[i].canWrapLineAfter)
+            if (layout_can_wrap_after(layout, i))
                 last_breaking_point = i;
             width += layout->clustermetrics[i].width;
             i++;
@@ -1916,7 +1924,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
         if (overflow) {
             /* Overflown on whitespace, ignore it */
-            if (layout->clustermetrics[i].isWhitespace && layout->clustermetrics[i].canWrapLineAfter)
+            if (layout->clustermetrics[i].isWhitespace && layout_can_wrap_after(layout, i))
                 i = i;
             /* Use most recently found breaking point */
             else if (last_breaking_point != ~0u) {
@@ -1926,7 +1934,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             else {
                 /* Otherwise proceed forward to next newline or breaking point */
                 for (; i < layout->cluster_count; i++)
-                    if (layout->clustermetrics[i].canWrapLineAfter || layout->clustermetrics[i].isNewline)
+                    if (layout_can_wrap_after(layout, i) || layout->clustermetrics[i].isNewline)
                         break;
             }
         }
