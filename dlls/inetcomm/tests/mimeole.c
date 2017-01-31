@@ -90,6 +90,22 @@ static const char msg1[] =
     "More stuff\r\n"
     "--------------1.5.0.6--\r\n";
 
+static const char mhtml_page1[] =
+    "MIME-Version: 1.0\r\n"
+    "Content-Type: multipart/related; type:=\"text/html\"; boundary=\"----=_NextPart_000_00\"\r\n"
+    "\r\n"
+    "------=_NextPart_000_00\r\n"
+    "Content-Type: text/html; charset=\"Windows-1252\"\r\n"
+    "Content-Transfer-Encoding: quoted-printable\r\n"
+    "\r\n"
+    "<HTML></HTML>\r\n"
+    "------=_NextPart_000_00\r\n"
+    "Content-Type: Image/Jpeg\r\n"
+    "Content-Transfer-Encoding: base64\r\n"
+    "Content-Location: http://winehq.org/mhtmltest.html\r\n"
+    "\r\n\t\t\t\tVGVzdA==\r\n\r\n"
+    "------=_NextPart_000_00--";
+
 static void test_CreateVirtualStream(void)
 {
     HRESULT hr;
@@ -721,6 +737,60 @@ static void test_CreateMessage(void)
     IStream_Release(stream);
 }
 
+static void test_mhtml_message(void)
+{
+    IMimeMessage *mime_message;
+    IMimeBody *mime_body;
+    HBODY *body_list;
+    IStream *stream;
+    ULONG count;
+    HRESULT hres;
+
+    hres = MimeOleCreateMessage(NULL, &mime_message);
+    ok(hres == S_OK, "MimeOleCreateMessage failed: %08x\n", hres);
+
+    stream = create_stream_from_string(mhtml_page1);
+    hres = IMimeMessage_Load(mime_message, stream);
+    IStream_Release(stream);
+    ok(hres == S_OK, "Load failed: %08x\n", hres);
+
+    hres = IMimeMessage_CountBodies(mime_message, HBODY_ROOT, TRUE, &count);
+    ok(hres == S_OK, "CountBodies failed: %08x\n", hres);
+    ok(count == 3, "got %d\n", count);
+
+    hres = IMimeMessage_GetAttachments(mime_message, &count, &body_list);
+    ok(hres == S_OK, "GetAttachments failed: %08x\n", hres);
+    ok(count == 2, "count = %u\n", count);
+
+    hres = IMimeMessage_BindToObject(mime_message, body_list[0], &IID_IMimeBody, (void**)&mime_body);
+    ok(hres == S_OK, "BindToObject failed: %08x\n", hres);
+
+    hres = IMimeBody_GetData(mime_body, IET_BINARY, &stream);
+    ok(hres == S_OK, "GetData failed: %08x\n", hres);
+    test_stream_read(stream, S_OK, "<HTML></HTML>", -1);
+    IStream_Release(stream);
+
+    test_current_encoding(mime_body, IET_QP);
+
+    IMimeBody_Release(mime_body);
+
+    hres = IMimeMessage_BindToObject(mime_message, body_list[1], &IID_IMimeBody, (void**)&mime_body);
+    ok(hres == S_OK, "BindToObject failed: %08x\n", hres);
+
+    test_current_encoding(mime_body, IET_BASE64);
+
+    hres = IMimeBody_GetData(mime_body, IET_BINARY, &stream);
+    ok(hres == S_OK, "GetData failed: %08x\n", hres);
+    test_stream_read(stream, S_OK, "Test", -1);
+    IStream_Release(stream);
+
+    IMimeBody_Release(mime_body);
+
+    CoTaskMemFree(body_list);
+
+    IMimeMessage_Release(mime_message);
+}
+
 static void test_MessageSetProp(void)
 {
     static const char topic[] = "wine topic";
@@ -1152,6 +1222,7 @@ START_TEST(mimeole)
     test_BindToObject();
     test_BodyDeleteProp();
     test_MimeOleGetPropertySchema();
+    test_mhtml_message();
     test_mhtml_protocol();
     OleUninitialize();
 }
