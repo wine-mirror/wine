@@ -2027,19 +2027,27 @@ end:
 
 static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *offset, body_t *parent)
 {
+    ULARGE_INTEGER start, length;
     MimeBody *mime_body;
     HRESULT hr;
     body_t *body;
-    ULARGE_INTEGER cur;
-    LARGE_INTEGER zero;
+    LARGE_INTEGER pos;
+
+    pos.QuadPart = offset->cbHeaderStart;
+    IStream_Seek(pStm, pos, STREAM_SEEK_SET, NULL);
 
     mime_body = mimebody_create();
     IMimeBody_Load(&mime_body->IMimeBody_iface, pStm);
-    zero.QuadPart = 0;
-    hr = IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &cur);
-    offset->cbBodyStart = cur.u.LowPart + offset->cbHeaderStart;
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(pStm, pos, STREAM_SEEK_CUR, &start);
+    offset->cbBodyStart = start.QuadPart;
     if (parent) MimeBody_set_offsets(mime_body, offset);
-    IMimeBody_SetData(&mime_body->IMimeBody_iface, IET_BINARY, NULL, NULL, &IID_IStream, pStm);
+
+    length.QuadPart = offset->cbBodyEnd - offset->cbBodyStart;
+    create_sub_stream(pStm, start, length, (IStream**)&mime_body->data);
+    mime_body->data_iid = IID_IStream;
+
     body = new_body_entry(mime_body, msg->next_index++, parent);
 
     if(IMimeBody_IsContentType(&mime_body->IMimeBody_iface, "multipart", NULL) == S_OK)
@@ -2064,14 +2072,8 @@ static body_t *create_sub_body(MimeMessage *msg, IStream *pStm, BODYOFFSETS *off
                 LIST_FOR_EACH_ENTRY_SAFE(cur, cursor2, &offset_list, offset_entry_t, entry)
                 {
                     body_t *sub_body;
-                    IStream *sub_stream;
-                    ULARGE_INTEGER start, length;
 
-                    start.QuadPart = cur->offsets.cbHeaderStart;
-                    length.QuadPart = cur->offsets.cbBodyEnd - cur->offsets.cbHeaderStart;
-                    create_sub_stream(pStm, start, length, &sub_stream);
-                    sub_body = create_sub_body(msg, sub_stream, &cur->offsets, body);
-                    IStream_Release(sub_stream);
+                    sub_body = create_sub_body(msg, pStm, &cur->offsets, body);
                     list_add_tail(&body->children, &sub_body->entry);
                     list_remove(&cur->entry);
                     HeapFree(GetProcessHeap(), 0, cur);

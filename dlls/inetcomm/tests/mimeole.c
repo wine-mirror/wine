@@ -693,9 +693,7 @@ static void test_CreateMessage(void)
         hr = IMimeBody_IsContentType(attachment, "multipart", NULL);
         ok(hr == S_FALSE, "ret %08x\n", hr);
 
-        hr = IMimeBody_GetCurrentEncoding(attachment, &encoding);
-        ok(hr == S_OK, "ret %08x\n", hr);
-        todo_wine ok(encoding == IET_7BIT, "ret %d\n", encoding);
+        test_current_encoding(attachment, IET_7BIT);
 
         prop.vt = VT_LPSTR;
         hr = IMimeBody_GetProp(attachment, "Content-Transfer-Encoding", 0, &prop);
