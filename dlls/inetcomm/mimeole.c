@@ -1942,18 +1942,16 @@ typedef struct
 static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struct list *body_offsets)
 {
     HRESULT hr;
-    DWORD read;
+    DWORD read, boundary_start;
     int boundary_len = strlen(boundary);
-    char *buf, *nl_boundary, *ptr, *overlap;
+    char *buf, *ptr, *overlap;
     DWORD start = 0, overlap_no;
     offset_entry_t *cur_body = NULL;
+    BOOL is_first_line = TRUE;
     ULARGE_INTEGER cur;
     LARGE_INTEGER zero;
 
     list_init(body_offsets);
-    nl_boundary = HeapAlloc(GetProcessHeap(), 0, 4 + boundary_len + 1);
-    memcpy(nl_boundary, "\r\n--", 4);
-    memcpy(nl_boundary + 4, boundary, boundary_len + 1);
 
     overlap_no = boundary_len + 5;
 
@@ -1970,39 +1968,44 @@ static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struc
         overlap[read] = '\0';
 
         ptr = buf;
-        do {
-            ptr = strstr(ptr, nl_boundary);
-            if(ptr)
-            {
-                DWORD boundary_start = start + ptr - buf;
-                char *end = ptr + boundary_len + 4;
-
-                if(*end == '\0' || *(end + 1) == '\0')
+        while(1) {
+            if(is_first_line) {
+                is_first_line = FALSE;
+            }else {
+                ptr = strstr(ptr, "\r\n");
+                if(!ptr)
                     break;
+                ptr += 2;
+            }
 
-                if(*end == '\r' && *(end + 1) == '\n')
+            boundary_start = start + ptr - buf;
+
+            if(*ptr == '-' && *(ptr + 1) == '-' && !memcmp(ptr + 2, boundary, boundary_len)) {
+                ptr += boundary_len + 2;
+
+                if(*ptr == '\r' && *(ptr + 1) == '\n')
                 {
+                    ptr += 2;
                     if(cur_body)
                     {
-                        cur_body->offsets.cbBodyEnd = boundary_start;
+                        cur_body->offsets.cbBodyEnd = boundary_start - 2;
                         list_add_tail(body_offsets, &cur_body->entry);
                     }
                     cur_body = HeapAlloc(GetProcessHeap(), 0, sizeof(*cur_body));
-                    cur_body->offsets.cbBoundaryStart = boundary_start + 2; /* doesn't including the leading \r\n */
-                    cur_body->offsets.cbHeaderStart = boundary_start + boundary_len + 6;
+                    cur_body->offsets.cbBoundaryStart = boundary_start;
+                    cur_body->offsets.cbHeaderStart = start + ptr - buf;
                 }
-                else if(*end == '-' && *(end + 1) == '-')
+                else if(*ptr == '-' && *(ptr + 1) == '-')
                 {
                     if(cur_body)
                     {
-                        cur_body->offsets.cbBodyEnd = boundary_start;
+                        cur_body->offsets.cbBodyEnd = boundary_start - 2;
                         list_add_tail(body_offsets, &cur_body->entry);
                         goto end;
                     }
                 }
-                ptr = end + 2;
             }
-        } while(ptr);
+        }
 
         if(overlap == buf) /* 1st iteration */
         {
@@ -2018,7 +2021,6 @@ static HRESULT create_body_offset_list(IStream *stm, const char *boundary, struc
     } while(1);
 
 end:
-    HeapFree(GetProcessHeap(), 0, nl_boundary);
     HeapFree(GetProcessHeap(), 0, buf);
     return hr;
 }
