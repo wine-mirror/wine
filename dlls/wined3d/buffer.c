@@ -604,7 +604,6 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
             GL_EXTCALL(glGetBufferSubData(buffer->buffer_type_hint, 0, buffer->resource.size,
                     buffer->resource.heap_memory));
             checkGLcall("buffer download");
-            buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
             break;
 
         case WINED3D_LOCATION_BUFFER:
@@ -623,7 +622,8 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
 /* Context activation is done by the caller. */
 BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
-    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+    if (wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM))
+        buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
     return buffer->resource.heap_memory;
 }
 
@@ -655,7 +655,6 @@ DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer,
 static void buffer_unload(struct wined3d_resource *resource)
 {
     struct wined3d_buffer *buffer = buffer_from_resource(resource);
-    DWORD flags = buffer->flags;
 
     TRACE("buffer %p.\n", buffer);
 
@@ -665,11 +664,7 @@ static void buffer_unload(struct wined3d_resource *resource)
 
         context = context_acquire(resource->device, NULL);
 
-        /* Download the buffer, but don't permanently enable double buffering. */
         wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
-        if (!(flags & WINED3D_BUFFER_PIN_SYSMEM))
-            buffer->flags &= ~WINED3D_BUFFER_PIN_SYSMEM;
-
         wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
         buffer_destroy_buffer_object(buffer, context);
         buffer_clear_dirty_areas(buffer);
@@ -825,7 +820,12 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
     unsigned int i, j, range_idx, start, end, vertex_count;
     BYTE *data;
 
-    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+    if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM))
+    {
+        ERR("Failed to load system memory.\n");
+        return;
+    }
+    buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
 
     /* Now for each vertex in the buffer that needs conversion. */
     vertex_count = buffer->resource.size / buffer->stride;
@@ -1106,6 +1106,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
                     {
                         TRACE("Falling back to doublebuffered operation.\n");
                         wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
+                        buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
                     }
                     TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
                     buffer->map_ptr = NULL;
