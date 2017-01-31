@@ -305,8 +305,84 @@ static void test_read_device(void)
     HeapFree(GetProcessHeap(), 0, report);
 }
 
+static void test_get_input_report(void)
+{
+    PHIDP_PREPARSED_DATA ppd;
+    HIDP_CAPS Caps;
+    WCHAR device_name[128];
+    CHAR *data = NULL;
+    DWORD tick, spent, max_time;
+    char *report;
+    BOOL rc;
+    NTSTATUS status;
+
+    USAGE device_usages[] = {HID_USAGE_GENERIC_JOYSTICK, HID_USAGE_GENERIC_GAMEPAD};
+    HANDLE device = get_device(HID_USAGE_PAGE_GENERIC, device_usages, 2, GENERIC_READ);
+
+    if (!device)
+        device = get_device(0x0, NULL, 0x0, GENERIC_READ);
+
+    if (!device)
+    {
+        trace("No device found for testing\n");
+        return;
+    }
+    rc = HidD_GetProductString(device, device_name, sizeof(device_name));
+    ok(rc, "Failed to get product string(0x%x)\n", GetLastError());
+    trace("HidD_GetInputRpeort tests on device :%s\n",wine_dbgstr_w(device_name));
+
+    rc = HidD_GetPreparsedData(device, &ppd);
+    ok(rc, "Failed to get preparsed data(0x%x)\n", GetLastError());
+    status = HidP_GetCaps(ppd, &Caps);
+    ok(status == HIDP_STATUS_SUCCESS, "Failed to get Caps(0x%x)\n", status);
+    data = HeapAlloc(GetProcessHeap(), 0, Caps.InputReportByteLength);
+
+    if (winetest_interactive)
+        max_time = READ_MAX_TIME;
+    else
+        max_time = 100;
+    if (winetest_interactive)
+        trace("Test your device for the next %i seconds\n", max_time/1000);
+    report = HeapAlloc(GetProcessHeap(), 0, 3 * Caps.InputReportByteLength);
+    tick = GetTickCount();
+    spent = 0;
+    do
+    {
+        int i;
+
+        data[0] = 0; /* Just testing report ID 0 for now, That will catch most devices */
+        rc = HidD_GetInputReport(device, data, Caps.InputReportByteLength);
+        spent = GetTickCount() - tick;
+
+        if (rc)
+        {
+            report[0] = 0;
+            for (i = 0; i < Caps.InputReportByteLength && i < Caps.InputReportByteLength; i++)
+            {
+                char bytestr[5];
+                sprintf(bytestr, "%x ", (BYTE)data[i]);
+                strcat(report, bytestr);
+            }
+            trace("Input report (%i): %s\n", Caps.InputReportByteLength, report);
+
+            process_data(Caps, ppd, data, Caps.InputReportByteLength);
+        }
+        else
+            trace("Failed to get Input Report, (%x)\n", rc);
+        trace("REMAINING: %d ms\n", max_time - spent);
+        Sleep(500);
+    } while(spent < max_time);
+
+    rc = HidD_FreePreparsedData(ppd);
+    ok(rc, "Failed to free preparsed data(0x%x)\n", GetLastError());
+    CloseHandle(device);
+    HeapFree(GetProcessHeap(), 0, data);
+    HeapFree(GetProcessHeap(), 0, report);
+}
+
 START_TEST(device)
 {
     run_for_each_device(test_device_info);
     test_read_device();
+    test_get_input_report();
 }
