@@ -363,20 +363,31 @@ enum linebreaking_classes {
     b_ZWJ,
 };
 
+static BOOL has_strong_condition(DWRITE_BREAK_CONDITION old_condition, DWRITE_BREAK_CONDITION new_condition)
+{
+    if (old_condition == DWRITE_BREAK_CONDITION_MAY_NOT_BREAK || old_condition == DWRITE_BREAK_CONDITION_MUST_BREAK)
+        return TRUE;
+
+    if (old_condition == DWRITE_BREAK_CONDITION_CAN_BREAK && new_condition != DWRITE_BREAK_CONDITION_MUST_BREAK)
+        return TRUE;
+
+    return FALSE;
+}
+
 /* "Can break" is a weak condition, stronger "may not break" and "must break" override it. Initially all conditions are
     set to "can break" and could only be changed once. */
 static inline void set_break_condition(UINT32 pos, enum BreakConditionLocation location, DWRITE_BREAK_CONDITION condition,
     struct linebreaking_state *state)
 {
     if (location == BreakConditionBefore) {
-        if (state->breakpoints[pos].breakConditionBefore != DWRITE_BREAK_CONDITION_CAN_BREAK)
+        if (has_strong_condition(state->breakpoints[pos].breakConditionBefore, condition))
             return;
         state->breakpoints[pos].breakConditionBefore = condition;
         if (pos > 0)
             state->breakpoints[pos-1].breakConditionAfter = condition;
     }
     else {
-        if (state->breakpoints[pos].breakConditionAfter != DWRITE_BREAK_CONDITION_CAN_BREAK)
+        if (has_strong_condition(state->breakpoints[pos].breakConditionAfter, condition))
             return;
         state->breakpoints[pos].breakConditionAfter = condition;
         if (pos + 1 < state->count)
@@ -403,14 +414,12 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
     state.breakpoints = breakpoints;
     state.count = count;
 
-    /* LB31 - allow breaks everywhere. It will be overridden if needed as
-       other rules dictate. */
     for (i = 0; i < count; i++)
     {
         break_class[i] = get_table_entry(wine_linebreak_table, text[i]);
 
-        breakpoints[i].breakConditionBefore = DWRITE_BREAK_CONDITION_CAN_BREAK;
-        breakpoints[i].breakConditionAfter  = DWRITE_BREAK_CONDITION_CAN_BREAK;
+        breakpoints[i].breakConditionBefore = DWRITE_BREAK_CONDITION_NEUTRAL;
+        breakpoints[i].breakConditionAfter  = DWRITE_BREAK_CONDITION_NEUTRAL;
         breakpoints[i].isWhitespace = !!isspaceW(text[i]);
         breakpoints[i].isSoftHyphen = text[i] == 0x00ad /* Unicode Soft Hyphen */;
         breakpoints[i].padding = 0;
@@ -432,8 +441,10 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
 
     /* LB2 - never break at the start */
     set_break_condition(0, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
-    /* LB3 - always break at the end. This one is ignored. */
+    /* LB3 - always break at the end. */
+    set_break_condition(count - 1, BreakConditionAfter, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
 
+    /* LB4 - LB6 - mandatory breaks. */
     for (i = 0; i < count; i++)
     {
         switch (break_class[i])
@@ -455,16 +466,27 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                 /* LB6 - do not break before hard breaks */
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
+        }
+    }
+
+    /* LB7 - LB8 - explicit breaks and non-breaks */
+    for (i = 0; i < count; i++)
+    {
+        switch (break_class[i])
+        {
             /* LB7 - do not break before spaces */
             case b_SP:
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
             case b_ZW:
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
-            /* LB8 - break before character after zero-width space, skip spaces in-between */
-                while (i < count-1 && break_class[i+1] == b_SP)
-                    i++;
-                set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
+
+                /* LB8 - break before character after zero-width space, skip spaces in-between */
+                j = i;
+                while (j < count-1 && break_class[j+1] == b_SP)
+                    j++;
+                if (j < count-1 && break_class[j+1] != b_ZW)
+                    set_break_condition(j, BreakConditionAfter, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
                 break;
             /* LB8a - do not break between ZWJ and an ideograph, emoji base or emoji modifier */
             case b_ZWJ:
@@ -474,7 +496,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
         }
     }
 
-    /* LB9 - LB10 */
+    /* LB9 - LB10 - combining marks */
     for (i = 0; i < count; i++)
     {
         if (break_class[i] == b_CM || break_class[i] == b_ZWJ)
@@ -492,7 +514,10 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                         break_class[i] = b_AL;
                         break;
                     default:
+                    {
                         break_class[i] = break_class[i-1];
+                        set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+                    }
                 }
             }
             else break_class[i] = b_AL;
@@ -526,22 +551,20 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
             case b_SY:
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
-            /* LB14 */
+            /* LB14 - do not break after OP, even after spaces */
             case b_OP:
-                set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
-                while (i < count-1 && break_class[i+1] == b_SP) {
-                    set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
-                    i++;
-                }
-                break;
-            /* LB15 */
-            case b_QU:
-                j = i+1;
-                while (j < count-1 && break_class[j] == b_SP)
+                j = i;
+                while (j < count-1 && break_class[j+1] == b_SP)
                     j++;
-                if (break_class[j] == b_OP)
-                    for (; j > i; j--)
-                        set_break_condition(j, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+                set_break_condition(j, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+                break;
+            /* LB15 - do not break within QU-OP, even with intervening spaces */
+            case b_QU:
+                j = i;
+                while (j < count-1 && break_class[j+1] == b_SP)
+                    j++;
+                if (j < count - 1 && break_class[j+1] == b_OP)
+                    set_break_condition(j, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
             /* LB16 */
             case b_NS:
@@ -552,14 +575,13 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                     for (j++; j <= i; j++)
                         set_break_condition(j, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
-            /* LB17 */
+            /* LB17 - do not break within B2, even with intervening spaces */
             case b_B2:
-                j = i+1;
-                while (j < count && break_class[j] == b_SP)
+                j = i;
+                while (j < count && break_class[j+1] == b_SP)
                     j++;
-                if (break_class[j] == b_B2)
-                    for (; j > i; j--)
-                        set_break_condition(j, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+                if (j < count - 1 && break_class[j+1] == b_B2)
+                    set_break_condition(j, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
         }
     }
@@ -580,7 +602,8 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
             /* LB20 */
             case b_CB:
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
-                set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
+                if (i < count - 1 && break_class[i+1] != b_QU)
+                    set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
                 break;
             /* LB21 */
             case b_BA:
@@ -589,7 +612,8 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                 set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
             case b_BB:
-                set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
+                if (i < count - 1 && break_class[i+1] != b_CB)
+                    set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
             /* LB21a, LB21b */
             case b_HL:
@@ -701,7 +725,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                     if (break_class[i+1] == b_IN || break_class[i+1] == b_PO)
                         set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
             }
-            if (break_class[i] == b_PO)
+            if (break_class[i] == b_PR)
             {
                 switch (break_class[i+1])
                 {
@@ -731,7 +755,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                  break_class[i+1] == b_OP)
                 set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
             if (break_class[i] == b_CP &&
-               (break_class[i+1] == b_AL || break_class[i] == b_HL || break_class[i] == b_NU))
+               (break_class[i+1] == b_AL || break_class[i+1] == b_HL || break_class[i+1] == b_NU))
                 set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
 
             /* LB30a - break between two RIs if and only if there are an even number of RIs preceding position of the break */
@@ -750,6 +774,13 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
             if (break_class[i] == b_EB && break_class[i+1] == b_EM)
                 set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
         }
+    }
+
+    /* LB31 - allow breaks everywhere else. */
+    for (i = 0; i < count; i++)
+    {
+        set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
+        set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_CAN_BREAK, &state);
     }
 
     heap_free(break_class);
