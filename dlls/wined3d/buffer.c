@@ -532,7 +532,7 @@ ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 
 /* Context activation is done by the caller. */
 static void wined3d_buffer_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const void *data, unsigned int range_count, const struct wined3d_map_range *ranges)
+        const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_map_range *ranges)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_map_range *range;
@@ -543,7 +543,7 @@ static void wined3d_buffer_upload_ranges(struct wined3d_buffer *buffer, struct w
     {
         range = &ranges[range_count];
         GL_EXTCALL(glBufferSubData(buffer->buffer_type_hint,
-                range->offset, range->size, (BYTE *)data + range->offset));
+                range->offset, range->size, (BYTE *)data + range->offset - data_offset));
     }
     checkGLcall("glBufferSubData");
 }
@@ -599,7 +599,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
         }
     }
 
-    wined3d_buffer_upload_ranges(buffer, context, data, buffer->modified_areas, buffer->maps);
+    wined3d_buffer_upload_ranges(buffer, context, data, 0, buffer->modified_areas, buffer->maps);
 
     HeapFree(GetProcessHeap(), 0, data);
 }
@@ -683,7 +683,7 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
         case WINED3D_LOCATION_BUFFER:
             if (!buffer->conversion_map)
                 wined3d_buffer_upload_ranges(buffer, context, buffer->resource.heap_memory,
-                        buffer->modified_areas, buffer->maps);
+                        0, buffer->modified_areas, buffer->maps);
             else
                 buffer_conversion_upload(buffer, context);
             break;
@@ -1266,31 +1266,23 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     return WINED3D_OK;
 }
 
-HRESULT wined3d_buffer_upload_data(struct wined3d_buffer *buffer,
+void wined3d_buffer_upload_data(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_box *box, const void *data)
 {
-    UINT offset, size;
-    HRESULT hr;
-    BYTE *ptr;
+    struct wined3d_map_range range;
 
     if (box)
     {
-        offset = box->left;
-        size = box->right - box->left;
+        range.offset = box->left;
+        range.size = box->right - box->left;
     }
     else
     {
-        offset = 0;
-        size = buffer->resource.size;
+        range.offset = 0;
+        range.size = buffer->resource.size;
     }
 
-    if (FAILED(hr = wined3d_buffer_map(buffer, offset, size, &ptr, 0)))
-        return hr;
-
-    memcpy(ptr, data, size);
-
-    wined3d_buffer_unmap(buffer);
-    return WINED3D_OK;
+    wined3d_buffer_upload_ranges(buffer, context, data, range.offset, 1, &range);
 }
 
 static ULONG buffer_resource_incref(struct wined3d_resource *resource)

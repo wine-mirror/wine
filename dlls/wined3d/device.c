@@ -4061,7 +4061,6 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
-        HRESULT hr;
 
         if (sub_resource_idx > 0)
         {
@@ -4069,8 +4068,16 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
             return;
         }
 
-        if (FAILED(hr = wined3d_buffer_upload_data(buffer, box, data)))
-            WARN("Failed to update buffer data, hr %#x.\n", hr);
+        context = context_acquire(resource->device, NULL);
+        if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER))
+        {
+            ERR("Failed to load buffer location.\n");
+            return;
+        }
+
+        wined3d_buffer_upload_data(buffer, context, box, data);
+        wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
+        context_release(context);
 
         return;
     }
