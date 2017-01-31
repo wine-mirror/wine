@@ -909,10 +909,15 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		case 0x0B:	/* Continue */
 		case 0x0C:	/* Stop */
 		case 0x0E: 	/* Active Sensing. */
-		    /* FIXME: Is this function suitable for these purposes
-		       (and also Song Select and Song Position Pointer) */
-	            snd_seq_ev_set_sysex(&event, 1, &evt);
+		{
+		    snd_midi_event_t *midi_event;
+
+		    snd_midi_event_new(1, &midi_event);
+		    snd_midi_event_init(midi_event);
+		    snd_midi_event_encode_byte(midi_event, evt, &event);
+		    snd_midi_event_free(midi_event);
 		    break;
+		}
 		case 0x0F: 	/* Reset */
 				/* snd_seq_ev_set_sysex(&event, 1, &evt);
 				   this other way may be better */
