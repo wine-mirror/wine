@@ -616,8 +616,9 @@ static void processRegEntry31(WCHAR *line)
     int res;
 
     static WCHAR empty[] = {0};
+    static WCHAR hkcr[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T'};
 
-    if (line[0] == '\0') return;
+    if (strncmpW(line, hkcr, sizeof(hkcr) / sizeof(WCHAR))) return;
 
     /* get key name */
     while (line[key_end] && !isspaceW(line[key_end])) key_end++;
@@ -769,11 +770,11 @@ static void processRegLinesA(FILE *in, char* first_chars)
             *s_eol = '\0';
 
 	    /* Check if the line is a header string */
-	    if (!memcmp(line, header_31, sizeof(header_31))) {
+	    if (!strcmp(line, header_31)) {
 		version = REG_VERSION_31;
-	    } else if (!memcmp(line, header_40, sizeof(header_40))) {
+	    } else if (!strcmp(line, header_40)) {
 		version = REG_VERSION_40;
-	    } else if (!memcmp(line, header_50, sizeof(header_50))) {
+	    } else if (!strcmp(line, header_50)) {
 		version = REG_VERSION_50;
 	    } else {
 		lineW = GetWideString(line);
