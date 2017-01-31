@@ -1034,6 +1034,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
         }
 
         if (!(flags & (WINED3D_MAP_NOOVERWRITE | WINED3D_MAP_DISCARD | WINED3D_MAP_READONLY))
+                || ((flags & WINED3D_MAP_READONLY) && (buffer->locations & WINED3D_LOCATION_SYSMEM))
                 || buffer->flags & WINED3D_BUFFER_PIN_SYSMEM)
         {
             if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
@@ -1048,6 +1049,14 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
         }
         else
         {
+            const struct wined3d_gl_info *gl_info;
+
+            context = context_acquire(device, NULL);
+            gl_info = context->gl_info;
+
+            if (!(flags & WINED3D_MAP_DISCARD))
+                wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
+
             if (!(flags & WINED3D_MAP_READONLY))
                 buffer_invalidate_bo_range(buffer, dirty_offset, dirty_size);
 
@@ -1056,11 +1065,6 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
 
             if (count == 1)
             {
-                const struct wined3d_gl_info *gl_info;
-
-                context = context_acquire(device, NULL);
-                gl_info = context->gl_info;
-
                 buffer_bind(buffer, context);
 
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
@@ -1105,8 +1109,9 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
                     TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
                     buffer->map_ptr = NULL;
                 }
-                context_release(context);
             }
+
+            context_release(context);
         }
 
         if (flags & WINED3D_MAP_DISCARD)
