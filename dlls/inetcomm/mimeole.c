@@ -746,12 +746,6 @@ static void init_content_type(MimeBody *body, header_t *header)
     char *slash;
     DWORD len;
 
-    if(header->prop->id != PID_HDR_CNTTYPE)
-    {
-        ERR("called with header %s\n", header->prop->name);
-        return;
-    }
-
     slash = strchr(header->value.u.pszVal, '/');
     if(!slash)
     {
