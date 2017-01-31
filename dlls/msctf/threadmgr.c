@@ -618,7 +618,7 @@ static HRESULT WINAPI ThreadMgrSource_AdviseSink(ITfSource *iface,
     if (IsEqualIID(riid, &IID_ITfThreadFocusSink))
     {
         WARN("semi-stub for ITfThreadFocusSink: sink won't be used.\n");
-        return advise_sink(&This->ThreadMgrEventSink, &IID_ITfThreadMgrEventSink, COOKIE_MAGIC_TMSINK, punk, pdwCookie);
+        return advise_sink(&This->ThreadFocusSink, &IID_ITfThreadFocusSink, COOKIE_MAGIC_THREADFOCUSSINK, punk, pdwCookie);
     }
 
     FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
