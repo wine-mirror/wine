@@ -150,7 +150,6 @@ static void test_CreateBody(void)
     IStream *in;
     LARGE_INTEGER off;
     ULARGE_INTEGER pos;
-    ENCODINGTYPE enc;
     ULONG count, found_param, i;
     MIMEPARAMINFO *param_info;
     IMimeAllocator *alloc;
@@ -191,9 +190,7 @@ static void test_CreateBody(void)
     hr = IMimeBody_IsContentType(body, "text", "plain");
     todo_wine
         ok(hr == S_OK, "ret %08x\n", hr);
-    hr = IMimeBody_GetCurrentEncoding(body, &enc);
-    ok(hr == S_OK, "ret %08x\n", hr);
-    ok(enc == IET_8BIT, "encoding %d\n", enc);
+    test_current_encoding(body, IET_8BIT);
 
     memset(&offsets, 0xcc, sizeof(offsets));
     hr = IMimeBody_GetOffsets(body, &offsets);
@@ -658,7 +655,6 @@ static void test_CreateMessage(void)
     ok(count == 2, "got %d\n", count);
     if(count == 2)
     {
-        ENCODINGTYPE encoding;
         IMimeBody *attachment;
         PROPVARIANT prop;
 
@@ -670,9 +666,7 @@ static void test_CreateMessage(void)
         hr = IMimeBody_IsContentType(attachment, "multipart", NULL);
         ok(hr == S_FALSE, "ret %08x\n", hr);
 
-        hr = IMimeBody_GetCurrentEncoding(attachment, &encoding);
-        ok(hr == S_OK, "ret %08x\n", hr);
-        todo_wine ok(encoding == IET_8BIT, "ret %d\n", encoding);
+        test_current_encoding(attachment, IET_8BIT);
 
         prop.vt = VT_LPSTR;
         hr = IMimeBody_GetProp(attachment, "Content-Transfer-Encoding", 0, &prop);

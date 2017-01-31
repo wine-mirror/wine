@@ -765,6 +765,22 @@ static void init_content_type(MimeBody *body, header_t *header)
     body->content_sub_type = strdupA(slash + 1);
 }
 
+static void init_content_encoding(MimeBody *body, header_t *header)
+{
+    const char *encoding = header->value.u.pszVal;
+
+    if(!strcasecmp(encoding, "base64"))
+        body->encoding = IET_BASE64;
+    else if(!strcasecmp(encoding, "quoted-printable"))
+        body->encoding = IET_QP;
+    else if(!strcasecmp(encoding, "7bit"))
+        body->encoding = IET_7BIT;
+    else if(!strcasecmp(encoding, "8bit"))
+        body->encoding = IET_8BIT;
+    else
+        FIXME("unknown encoding %s\n", debugstr_a(encoding));
+}
+
 static HRESULT parse_headers(MimeBody *body, IStream *stm)
 {
     char *header_buf, *cur_header_ptr;
@@ -780,8 +796,14 @@ static HRESULT parse_headers(MimeBody *body, IStream *stm)
         read_value(header, &cur_header_ptr);
         list_add_tail(&body->headers, &header->entry);
 
-        if(header->prop->id == PID_HDR_CNTTYPE)
+        switch(header->prop->id) {
+        case PID_HDR_CNTTYPE:
             init_content_type(body, header);
+            break;
+        case PID_HDR_CNTXFER:
+            init_content_encoding(body, header);
+            break;
+        }
     }
 
     HeapFree(GetProcessHeap(), 0, header_buf);
