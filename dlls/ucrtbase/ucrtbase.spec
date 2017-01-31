@@ -73,11 +73,11 @@
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl ___mb_cur_max_l_func(ptr)
 @ cdecl __acrt_iob_func(long) MSVCRT___acrt_iob_func
-@ stub __conio_common_vcprintf
+@ cdecl __conio_common_vcprintf(int64 str ptr ptr) MSVCRT__conio_common_vcprintf
 @ stub __conio_common_vcprintf_p
 @ stub __conio_common_vcprintf_s
 @ stub __conio_common_vcscanf
-@ stub __conio_common_vcwprintf
+@ cdecl __conio_common_vcwprintf(int64 wstr ptr ptr) MSVCRT__conio_common_vcwprintf
 @ stub __conio_common_vcwprintf_p
 @ stub __conio_common_vcwprintf_s
 @ stub __conio_common_vcwscanf

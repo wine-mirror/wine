@@ -560,3 +560,27 @@ int CDECL _cwprintf(const MSVCRT_wchar_t* format, ...)
 
   return retval;
 }
+
+/*********************************************************************
+ *		__conio_common_vcprintf (MSVCRT.@)
+ */
+int CDECL MSVCRT__conio_common_vcprintf(unsigned __int64 options, const char* format,
+                                        MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    return pf_printf_a(puts_clbk_console_a, NULL, format, locale,
+             options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
+}
+
+/*********************************************************************
+ *		__conio_common_vcwprintf (MSVCRT.@)
+ */
+int CDECL MSVCRT__conio_common_vcwprintf(unsigned __int64 options, const MSVCRT_wchar_t* format,
+                                         MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    return pf_printf_w(puts_clbk_console_w, NULL, format, locale,
+             options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
+}

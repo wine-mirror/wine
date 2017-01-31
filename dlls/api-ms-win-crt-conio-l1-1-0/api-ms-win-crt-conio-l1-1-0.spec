@@ -1,8 +1,8 @@
-@ stub __conio_common_vcprintf
+@ cdecl __conio_common_vcprintf(int64 str ptr ptr) ucrtbase.__conio_common_vcprintf
 @ stub __conio_common_vcprintf_p
 @ stub __conio_common_vcprintf_s
 @ stub __conio_common_vcscanf
-@ stub __conio_common_vcwprintf
+@ cdecl __conio_common_vcwprintf(int64 wstr ptr ptr) ucrtbase.__conio_common_vcwprintf
 @ stub __conio_common_vcwprintf_p
 @ stub __conio_common_vcwprintf_s
 @ stub __conio_common_vcwscanf
