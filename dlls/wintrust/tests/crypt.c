@@ -203,16 +203,10 @@ static void test_context(void)
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* NULL GUID */
+    if (0) { /* crashes on 64-bit win10 */
     ret = pCryptCATAdminAcquireContext(&hca, NULL, 0);
     ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
     ok(hca != NULL, "Expected a context handle, got NULL\n");
-
-    /* All NULL */
-    SetLastError(0xdeadbeef);
-    ret = pCryptCATAdminReleaseContext(NULL, 0);
-    ok(!ret, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Proper release */
     SetLastError(0xdeadbeef);
@@ -222,6 +216,14 @@ static void test_context(void)
     /* Try to release a second time */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminReleaseContext(hca, 0);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+
+    /* All NULL */
+    SetLastError(0xdeadbeef);
+    ret = pCryptCATAdminReleaseContext(NULL, 0);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
