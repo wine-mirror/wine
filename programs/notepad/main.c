@@ -615,7 +615,7 @@ static int AlertFileDoesNotExist(LPCWSTR szFileName)
 
 static void HandleCommandLine(LPWSTR cmdline)
 {
-    WCHAR delimiter;
+    WCHAR delimiter, *ptr;
     BOOL opt_print = FALSE;
 
     /* skip white space */
@@ -630,22 +630,29 @@ static void HandleCommandLine(LPWSTR cmdline)
 
     if (*cmdline == delimiter) cmdline++;
 
-    while (*cmdline == ' ' || *cmdline == '-' || *cmdline == '/')
+    ptr = cmdline;
+    while (*ptr == ' ' || *ptr == '-' || *ptr == '/')
     {
         WCHAR option;
 
-        if (*cmdline++ == ' ') continue;
+        if (*ptr++ == ' ') continue;
 
-        option = *cmdline;
-        if (option) cmdline++;
-        while (*cmdline == ' ') cmdline++;
+        option = *ptr;
+        if (option) ptr++;
+        while (*ptr == ' ') ptr++;
 
         switch(option)
         {
             case 'p':
             case 'P':
-                opt_print = TRUE;
+            {
+                if (!opt_print)
+                {
+                    opt_print = TRUE;
+                    cmdline = ptr;
+                }
                 break;
+            }
         }
     }
 
