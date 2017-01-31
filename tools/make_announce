@@ -109,7 +109,7 @@ my $old = get_current_version();
 my $new = $ARGV[0];
 unless ($new)
 {
-    if ($old =~ /^([0-9]+)\.([0-9]+)$/) { $new = "$1.$2.1"; }
+    if ($old =~ /^([0-9]+)\.([0-9]+)$/) { $new = "$1." . ($2 + 1); }
     elsif ($old =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)$/) { $new = "$1.$2." . ($3 + 1); }
     elsif ($old =~ /^([0-9]+)\.([0-9]+)-rc([0-9]+)$/) { $new = "$1.$2-rc" . ($3 + 1); }
     else { die "unknown version format $old"; }
@@ -117,8 +117,12 @@ unless ($new)
 
 print "Updating files for release $new\n";
 
-(my $reldir = $new) =~ s/^([0-9]+\.[0-9]+).*/$1/;
-my $is_stable = ($new =~ /^([0-9]+)\.([0-9]+)\.([0-9]+)$/) && !($2 % 2);  # stable releases have an even minor number
+my $reldir = $new;
+if ($reldir =~ /^([0-9]+\.0)/) { $reldir = $1; }
+elsif ($reldir =~ /^([0-9]+)\./) { $reldir = "$1.x"; }
+else { die "unknown version format $reldir"; }
+
+my $is_stable = ($new =~ /^([0-9]+)\.0\.([0-9]+)$/);  # stable releases have a 0 minor number
 my $filter = "product=Wine&resolution=FIXED&" . ($is_stable ? "target_milestone=$reldir.x" : "bug_status=RESOLVED");
 
 my %bugs = get_bugs( $filter );
@@ -128,11 +132,16 @@ my %authors = get_authors();
 
 open ANNOUNCE, "<ANNOUNCE" or die "cannot open ANNOUNCE";
 open NEW, ">ANNOUNCE.new" or die "cannot create ANNOUNCE.new";
+
+# replace version number in first line
+$_ = <ANNOUNCE>;
+s/(([0-9]+)\.)+[0-9]+(-rc[0-9]+)?/$new/;
+print NEW $_;
+
 while (<ANNOUNCE>)
 {
     last if /^------------------/;
-    s!http://mirrors.ibiblio.org/wine/source/.*!http://mirrors.ibiblio.org/wine/source/$reldir/wine-$new.tar.bz2!;
-    s!http://dl.winehq.org/wine/source/.*!http://dl.winehq.org/wine/source/$reldir/wine-$new.tar.bz2!;
+    s!(https?://.*/wine/source/).*\.tar!$1$reldir/wine-$new.tar!;
     print NEW $_;
 }
 
