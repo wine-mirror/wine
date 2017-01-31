@@ -3505,8 +3505,12 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
         for (i = 0, map = context->stream_info.use_map; map; map >>= 1, ++i)
         {
             if (map & 1)
-                buffer_mark_used(state->streams[context->stream_info.elements[i].stream_idx].buffer);
+                wined3d_buffer_load(state->streams[context->stream_info.elements[i].stream_idx].buffer,
+                        context, state);
         }
+        /* Loading the buffers above may have invalidated the stream info. */
+        if (isStateDirty(context, STATE_STREAMSRC))
+            context_update_stream_info(context, state);
     }
     if (state->index_buffer)
     {
