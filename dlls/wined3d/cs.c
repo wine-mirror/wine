@@ -446,14 +446,41 @@ static void acquire_shader_resources(const struct wined3d_state *state)
     }
 }
 
+static void release_shader_resources(const struct wined3d_state *state)
+{
+    struct wined3d_shader_sampler_map_entry *entry;
+    struct wined3d_shader_resource_view *view;
+    struct wined3d_shader *shader;
+    unsigned int i, j;
+
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        if (!(shader = state->shader[i]))
+            continue;
+
+        for (j = 0; j < WINED3D_MAX_CBS; ++j)
+        {
+            if (state->cb[i][j])
+                wined3d_resource_release(&state->cb[i][j]->resource);
+        }
+
+        for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
+        {
+            entry = &shader->reg_maps.sampler_map.entries[j];
+
+            if (!(view = state->shader_resource_view[i][entry->resource_idx]))
+                continue;
+
+            wined3d_resource_release(view->resource);
+        }
+    }
+}
+
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
     struct wined3d_state *state = &cs->device->state;
-    struct wined3d_shader_sampler_map_entry *entry;
-    struct wined3d_shader_resource_view *view;
     const struct wined3d_cs_draw *op = data;
-    struct wined3d_shader *shader;
-    unsigned int i, j;
+    unsigned int i;
 
     if (!cs->device->adapter->gl_info.supported[ARB_DRAW_ELEMENTS_BASE_VERTEX]
             && state->load_base_vertex_index != op->base_vertex_idx)
@@ -484,27 +511,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
     }
     if (state->fb->depth_stencil)
         wined3d_resource_release(state->fb->depth_stencil->resource);
-    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
-    {
-        if (!(shader = state->shader[i]))
-            continue;
-
-        for (j = 0; j < WINED3D_MAX_CBS; ++j)
-        {
-            if (state->cb[i][j])
-                wined3d_resource_release(&state->cb[i][j]->resource);
-        }
-
-        for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
-        {
-            entry = &shader->reg_maps.sampler_map.entries[j];
-
-            if (!(view = state->shader_resource_view[i][entry->resource_idx]))
-                continue;
-
-            wined3d_resource_release(view->resource);
-        }
-    }
+    release_shader_resources(state);
 }
 
 void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned int start_idx,
