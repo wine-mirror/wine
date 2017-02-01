@@ -39,7 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(oledb);
 
 typedef struct DSLocatorImpl
 {
-    IDataSourceLocator     IDataSourceLocator_iface;
+    IDataSourceLocator IDataSourceLocator_iface;
+    IDataInitialize IDataInitialize_iface;
     LONG ref;
 
     HWND hwnd;
@@ -50,6 +51,10 @@ static inline DSLocatorImpl *impl_from_IDataSourceLocator( IDataSourceLocator *i
     return CONTAINING_RECORD(iface, DSLocatorImpl, IDataSourceLocator_iface);
 }
 
+static inline DSLocatorImpl *impl_from_IDataInitialize(IDataInitialize *iface)
+{
+    return CONTAINING_RECORD(iface, DSLocatorImpl, IDataInitialize_iface);
+}
 
 static HRESULT WINAPI dslocator_QueryInterface(IDataSourceLocator *iface, REFIID riid, void **ppvoid)
 {
@@ -63,6 +68,10 @@ static HRESULT WINAPI dslocator_QueryInterface(IDataSourceLocator *iface, REFIID
         IsEqualIID(riid, &IID_IDataSourceLocator))
     {
       *ppvoid = &This->IDataSourceLocator_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IDataInitialize))
+    {
+      *ppvoid = &This->IDataInitialize_iface;
     }
 
     if(*ppvoid)
@@ -191,6 +200,81 @@ static const IDataSourceLocatorVtbl DSLocatorVtbl =
     dslocator_PromptEdit
 };
 
+static HRESULT WINAPI datainitialize_QueryInterface(IDataInitialize *iface, REFIID riid, void **obj)
+{
+    DSLocatorImpl *This = impl_from_IDataInitialize(iface);
+    return IDataSourceLocator_QueryInterface(&This->IDataSourceLocator_iface, riid, obj);
+}
+
+static ULONG WINAPI datainitialize_AddRef(IDataInitialize *iface)
+{
+    DSLocatorImpl *This = impl_from_IDataInitialize(iface);
+    return IDataSourceLocator_AddRef(&This->IDataSourceLocator_iface);
+}
+
+static ULONG WINAPI datainitialize_Release(IDataInitialize *iface)
+{
+    DSLocatorImpl *This = impl_from_IDataInitialize(iface);
+    return IDataSourceLocator_Release(&This->IDataSourceLocator_iface);
+}
+
+static HRESULT WINAPI datainitialize_GetDataSource(IDataInitialize *iface,
+    IUnknown *outer, DWORD context, LPWSTR initstring, REFIID riid, IUnknown **datasource)
+{
+    FIXME("(%p)->(%p %#x %s %s %p): stub\n", iface, outer, context, debugstr_w(initstring), debugstr_guid(riid),
+        datasource);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI datainitialize_GetInitializationString(IDataInitialize *iface, IUnknown *datasource,
+    boolean include_password, LPWSTR *initstring)
+{
+    FIXME("(%p)->(%d %p): stub\n", iface, include_password, initstring);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI datainitialize_CreateDBInstance(IDataInitialize *iface, REFCLSID prov, IUnknown *outer,
+    DWORD clsctx, LPWSTR reserved, REFIID riid, IUnknown **datasource)
+{
+    FIXME("(%p)->(%s %p %#x %p %s %p): stub\n", iface, debugstr_guid(prov), outer, clsctx, reserved,
+        debugstr_guid(riid), datasource);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI datainitialize_CreateDBInstanceEx(IDataInitialize *iface, REFCLSID prov, IUnknown *outer,
+    DWORD clsctx, LPWSTR reserved, COSERVERINFO *server_info, DWORD cmq, MULTI_QI *results)
+{
+    FIXME("(%p)->(%s %p %#x %p %p %u %p): stub\n", iface, debugstr_guid(prov), outer, clsctx, reserved,
+        server_info, cmq, results);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI datainitialize_LoadStringFromStorage(IDataInitialize *iface, LPWSTR filename, LPWSTR *initstring)
+{
+    FIXME("(%p)->(%s %p): stub\n", iface, debugstr_w(filename), initstring);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI datainitialize_WriteStringToStorage(IDataInitialize *iface, LPWSTR filename, LPWSTR initstring,
+    DWORD disposition)
+{
+    FIXME("(%p)->(%s %s %#x): stub\n", iface, debugstr_w(filename), debugstr_w(initstring), disposition);
+    return E_NOTIMPL;
+}
+
+static const IDataInitializeVtbl ds_datainitialize_vtbl =
+{
+    datainitialize_QueryInterface,
+    datainitialize_AddRef,
+    datainitialize_Release,
+    datainitialize_GetDataSource,
+    datainitialize_GetInitializationString,
+    datainitialize_CreateDBInstance,
+    datainitialize_CreateDBInstanceEx,
+    datainitialize_LoadStringFromStorage,
+    datainitialize_WriteStringToStorage,
+};
+
 HRESULT create_dslocator(IUnknown *outer, void **obj)
 {
     DSLocatorImpl *This;
@@ -205,6 +289,7 @@ HRESULT create_dslocator(IUnknown *outer, void **obj)
     if(!This) return E_OUTOFMEMORY;
 
     This->IDataSourceLocator_iface.lpVtbl = &DSLocatorVtbl;
+    This->IDataInitialize_iface.lpVtbl = &ds_datainitialize_vtbl;
     This->ref = 1;
     This->hwnd = 0;
 
