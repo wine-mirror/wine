@@ -11732,7 +11732,7 @@ msgstr "S'ha cancel·lat l'operació de registre\n"
 msgid "(Default)"
 msgstr "(Per defecte)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Esteu segur que voleu suprimir el valor de registre '%1'?"
 
@@ -12231,27 +12231,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Mostra informació de programa, nombre de versió i drets d'autor"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "No es pot consultar el valor '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "No es pot editar les claus d'aquest tipus (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "El valor és massa gran (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Confirmar eliminació de valor"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Esteu segur que voleu suprimir el valor '%s'?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Cadena de cerca '%s' no trobada"
 
 #: regedit.rc:186
@@ -12267,8 +12271,10 @@ msgid "New Value #%d"
 msgstr "Valor nou #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "No es pot consultar la clau '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "regedit: No s'ha pogut obrir la clau de registre '%1'.\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

@@ -11568,7 +11568,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(výchozí)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -12061,27 +12061,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Zobrazí informace o programu, jeho verzi a copyright"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Nelze najít položku '%s'"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Nemohu upravit klíče tohoto typu (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "Hodnota je příliš velká (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Potvrďte smazání položky"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Opravdu chcete smazat hodnotu „%s“?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Hledaný řetězec „%s“ nebyl nalezen"
 
 #: regedit.rc:186
@@ -12097,8 +12101,10 @@ msgid "New Value #%d"
 msgstr "Nová položka #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Nelze najít klíč „%s“"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

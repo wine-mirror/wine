@@ -11650,7 +11650,7 @@ msgstr "Operația pe registru a fost anulată\n"
 msgid "(Default)"
 msgstr "(Implicit)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Sigur doriți să ștergeți valoarea de registru „%1”?"
 
@@ -12118,27 +12118,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Afișează informații despre program, numărul versiunii și licența"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Nu se poate interoga valoarea „%s”"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Nu se pot edita chei de acest tip (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "Valoarea este prea mare (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Confirmă ștergerea valorii"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Sigur doriți să ștergeți valoarea „%s”?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Șirul de căutare „%s” nu a fost găsit"
 
 #: regedit.rc:186
@@ -12154,8 +12158,10 @@ msgid "New Value #%d"
 msgstr "Valoare nouă #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Nu se poate interoga cheia „%s”"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

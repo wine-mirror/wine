@@ -11183,7 +11183,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Defaŭlta)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -11660,27 +11660,31 @@ msgid "Displays program information, version number and copyright"
 msgstr ""
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Ne eblas mendi valoron '%s'"
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to query the registry value '%1'."
+msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Ne eblas redakti ŝlosilon de tiu tipo (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "Valoro estas tro granda (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Konfirmi forigon de valoro"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Ĉu vi certas pri forigo de '%s'?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Mi ne trovis la ĉenon %s"
 
 #: regedit.rc:186
@@ -11696,8 +11700,10 @@ msgid "New Value #%d"
 msgstr "Nova valoro #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Ne eblas trovi ŝlosilon '%s'"
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to query the registry key '%1'."
+msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

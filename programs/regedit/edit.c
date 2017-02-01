@@ -46,39 +46,43 @@ struct edit_params
     LONG    cbData;
 };
 
-static INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
+static int vmessagebox(HWND hwnd, int buttons, int titleId, int resId, __ms_va_list va_args)
 {
     WCHAR title[256];
-    WCHAR errfmt[1024];
-    WCHAR errstr[1024];
+    WCHAR fmt[1024];
+    WCHAR *str;
+    int ret;
 
     LoadStringW(hInst, titleId, title, COUNT_OF(title));
-    LoadStringW(hInst, resId, errfmt, COUNT_OF(errfmt));
+    LoadStringW(hInst, resId, fmt, COUNT_OF(fmt));
 
-    vsnprintfW(errstr, COUNT_OF(errstr), errfmt, ap);
+    FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                   fmt, 0, 0, (WCHAR *)&str, 0, &va_args);
+    ret = MessageBoxW(hwnd, str, title, buttons);
+    LocalFree(str);
 
-    return MessageBoxW(hwnd, errstr, title, buttons);
+    return ret;
 }
 
-static INT messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
+static INT __cdecl messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
 {
-    va_list ap;
+    __ms_va_list ap;
     INT result;
 
-    va_start(ap, resId);
+    __ms_va_start(ap, resId);
     result = vmessagebox(hwnd, buttons, titleId, resId, ap);
-    va_end(ap);
+    __ms_va_end(ap);
 
     return result;
 }
 
-void error(HWND hwnd, INT resId, ...)
+void __cdecl error(HWND hwnd, INT resId, ...)
 {
-    va_list ap;
+    __ms_va_list ap;
 
-    va_start(ap, resId);
+    __ms_va_start(ap, resId);
     vmessagebox(hwnd, MB_OK | MB_ICONERROR, IDS_ERROR, resId, ap);
-    va_end(ap);
+    __ms_va_end(ap);
 }
 
 static void error_code_messagebox(HWND hwnd, DWORD error_code)

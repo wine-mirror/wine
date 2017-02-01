@@ -11630,7 +11630,7 @@ msgstr "Register-operasjonen ble avbrutt\n"
 msgid "(Default)"
 msgstr "(Standard)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Virkelig slette registerverdien \"%1\"?"
 
@@ -12128,27 +12128,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Viser programinformasjon, versjonnummer og opphavsrett"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Kan ikke lese verdien \"%s\""
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Kan ikke redigere nøkler av typen (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "Verdien er for stor (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Bekreft sletting av verdi"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Virkelig slette verdien \"%s\"?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Fant ikke søkestrengen \"%s\""
 
 #: regedit.rc:186
@@ -12164,8 +12168,10 @@ msgid "New Value #%d"
 msgstr "Ny verdi #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Kan ikke lese nøkkelen \"%s\""
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

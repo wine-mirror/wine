@@ -11748,7 +11748,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "Подразумевано"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 #, fuzzy
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Желите ли да избришете ових %1 ставки?"
@@ -12246,15 +12246,17 @@ msgid "Displays program information, version number and copyright"
 msgstr ""
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr ""
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to query the registry value '%1'."
+msgstr "Желите ли да избришете „%1“?"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr ""
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr ""
 
 #: regedit.rc:184
@@ -12262,14 +12264,9 @@ msgstr ""
 msgid "Confirm Value Delete"
 msgstr "Потврда брисања датотеке"
 
-#: regedit.rc:185
-#, fuzzy
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Желите ли да избришете „%1“?"
-
 #: regedit.rc:189
 #, fuzzy
-msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "%s путања није пронађена"
 
 #: regedit.rc:186
@@ -12286,8 +12283,10 @@ msgid "New Value #%d"
 msgstr ""
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr ""
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to query the registry key '%1'."
+msgstr "Желите ли да избришете „%1“?"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

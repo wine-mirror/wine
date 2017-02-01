@@ -11701,7 +11701,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Omissão)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -12204,27 +12204,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Exibe informações do programa, número da versão e direitos de autor"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Não pode perguntar o valor '%s'"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Não pode editar chaves deste tipo (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "Valor muito grande (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Confirmar exclusão de valor"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Tem certeza que deseja excluir o valor '%s'?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Chave de pesquisa '%s' não encontrada"
 
 #: regedit.rc:186
@@ -12240,8 +12244,10 @@ msgid "New Value #%d"
 msgstr "Novo valor #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Não pode perguntar a chave '%s'"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
 
 #: regedit.rc:152
 #, fuzzy

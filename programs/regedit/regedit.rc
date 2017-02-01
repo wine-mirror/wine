@@ -176,16 +176,16 @@ END
 STRINGTABLE
 BEGIN
     IDS_ERROR		    "Error"
-    IDS_BAD_KEY		    "Can't query key '%s'"
-    IDS_BAD_VALUE           "Can't query value '%s'"
-    IDS_UNSUPPORTED_TYPE    "Can't edit keys of this type (%u)"
-    IDS_TOO_BIG_VALUE       "Value is too big (%u)"
+    IDS_BAD_KEY             "Unable to query the registry key '%1'."
+    IDS_BAD_VALUE           "Unable to query the registry value '%1'."
+    IDS_UNSUPPORTED_TYPE    "Unable to edit registry keys of this type (%1!u!)."
+    IDS_TOO_BIG_VALUE       "The value is too big (%1!u!)."
     IDS_DELETE_BOX_TITLE    "Confirm Value Delete"
-    IDS_DELETE_BOX_TEXT     "Are you sure you want to delete value '%s'?"
+    IDS_DELETE_BOX_TEXT     "Are you sure you want to delete the registry value '%1'?"
     IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "New Key #%d"
     IDS_NEWVALUE            "New Value #%d"
-    IDS_NOTFOUND            "Search string '%s' not found"
+    IDS_NOTFOUND            "The search string '%1' was not found."
 END
 
 STRINGTABLE

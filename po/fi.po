@@ -11614,7 +11614,7 @@ msgstr "Rekisterin toimenpide peruttiin\n"
 msgid "(Default)"
 msgstr "(Oletus)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Haluatko varmasti tuhota rekisteristä arvon '%1'?"
 
@@ -12106,27 +12106,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Näyttää ohjelman tiedot, versionumeron ja tekijänoikeustiedot"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Ei voida kysellä arvolla '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Ei voida muokata avaimia tälle tyypille (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "Arvo on liian suuri (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Vahvista arvon tuhoaminen"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Haluatko varmasti tuhota arvon '%s'?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Haettua merkkijonoa '%s' ei löydy"
 
 #: regedit.rc:186
@@ -12142,8 +12146,10 @@ msgid "New Value #%d"
 msgstr "Uusi arvo #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Ei voida kysellä avaimella '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

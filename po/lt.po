@@ -11640,7 +11640,7 @@ msgstr "Registro operacija buvo nutraukta\n"
 msgid "(Default)"
 msgstr "(numatytoji)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Ar tikrai norite pašalinti registro reikšmę „%1“?"
 
@@ -12132,27 +12132,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Parodo informaciją apie programą, versijos numerį ir autoriaus teises"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Nepavyko perskaityti reikšmės „%s“"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Šio tipo raktų redaguoti negalima (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "Reikšmė per didelė (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Reikšmės šalinimo patvirtinimas"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Ar tikrai norite pašalinti reikšmę „%s“?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Ieškoma eilutė „%s“ nerasta"
 
 #: regedit.rc:186
@@ -12168,8 +12172,10 @@ msgid "New Value #%d"
 msgstr "Nauja reikšmė #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Nepavyko perskaityti rakto „%s“"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

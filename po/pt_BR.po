@@ -11693,7 +11693,7 @@ msgstr "A operação de registro foi cancelada\n"
 msgid "(Default)"
 msgstr "(Padrão)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Tem certeza que deseja excluir o valor do registro '%1'?"
 
@@ -12193,27 +12193,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Exibe informações do programa, número da versão e direitos autorais"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Não é possível consultar o valor '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Não é possível editar chaves deste tipo (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "O valor é muito grande (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Confirmar Exclusão de Valor"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Tem certeza que deseja excluir o valor '%s'?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Chave de busca '%s' não encontrada"
 
 #: regedit.rc:186
@@ -12229,8 +12233,10 @@ msgid "New Value #%d"
 msgstr "Novo valor #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Não é possível consultar a chave '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "regedit: Não foi possível abrir a chave de registro '%1'.\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

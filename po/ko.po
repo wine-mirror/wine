@@ -11899,7 +11899,7 @@ msgstr ""
 msgid "(Default)"
 msgstr "(기본)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -12394,27 +12394,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "풀그림 정보,버젼, 저작권 보여주기"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "값 '%s'를 질의할 수 없습니다"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "이 타입 (%u)의 키를 고칠 수 없습니다"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "값이 너무 큽니다 (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "값 지우기 확인"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "당신은 이 값 '%s'을 정말로 지우겠습니까?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "'%s'을 찾을 수 없습니다"
 
 #: regedit.rc:186
@@ -12430,8 +12434,10 @@ msgid "New Value #%d"
 msgstr "새 값 #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "키 '%s'를 질의할 수 없습니다"
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"

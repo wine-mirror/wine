@@ -11724,7 +11724,7 @@ msgstr "Операцію з реєстром було скасовано\n"
 msgid "(Default)"
 msgstr "(За замовчуванням)"
 
-#: reg.rc:54
+#: reg.rc:54 regedit.rc:185
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Ви впевнені, що хочете видалити значення реєстру '%1'?"
 
@@ -12218,27 +12218,31 @@ msgid "Displays program information, version number and copyright"
 msgstr "Відображає інформацію про програму, номер версії та авторство"
 
 #: regedit.rc:181
-msgid "Can't query value '%s'"
-msgstr "Не можу запросити значення '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry value '%1'."
+msgstr "regedit: Неможливо відкрити ключ '%1'.\n"
 
 #: regedit.rc:182
-msgid "Can't edit keys of this type (%u)"
+#, fuzzy
+#| msgid "Can't edit keys of this type (%u)"
+msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Неможливо редагувати ключі цього типу (%u)"
 
 #: regedit.rc:183
-msgid "Value is too big (%u)"
+#, fuzzy
+#| msgid "Value is too big (%u)"
+msgid "The value is too big (%1!u!)."
 msgstr "значення задовге (%u)"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Підтвердження видалення значення"
 
-#: regedit.rc:185
-msgid "Are you sure you want to delete value '%s'?"
-msgstr "Ви впевнені, що хочете видалити значення '%s'?"
-
 #: regedit.rc:189
-msgid "Search string '%s' not found"
+#, fuzzy
+#| msgid "Search string '%s' not found"
+msgid "The search string '%1' was not found."
 msgstr "Шукане значення '%s' не знайдене"
 
 #: regedit.rc:186
@@ -12254,8 +12258,10 @@ msgid "New Value #%d"
 msgstr "Нове значення #%d"
 
 #: regedit.rc:180
-msgid "Can't query key '%s'"
-msgstr "Не можу запросити ключ '%s'"
+#, fuzzy
+#| msgid "regedit: Unable to open the registry key '%1'.\n"
+msgid "Unable to query the registry key '%1'."
+msgstr "regedit: Неможливо відкрити ключ '%1'.\n"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
