@@ -1094,7 +1094,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
             macdrv_set_view_frame(data->cocoa_view, frame);
             force_z_order = TRUE;
         }
-        else
+        else if (!EqualRect(&data->whole_rect, old_whole_rect))
             macdrv_set_view_frame(data->cocoa_view, frame);
     }
 
