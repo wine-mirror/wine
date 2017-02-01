@@ -1474,6 +1474,7 @@ enable_winspool_drv
 enable_winsta
 enable_wintab32
 enable_wintrust
+enable_winusb
 enable_wlanapi
 enable_wldap32
 enable_wmasf
@@ -18429,6 +18430,7 @@ wine_fn_config_dll wintab32 enable_wintab32 implib
 wine_fn_config_test dlls/wintab32/tests wintab32_test
 wine_fn_config_dll wintrust enable_wintrust implib
 wine_fn_config_test dlls/wintrust/tests wintrust_test
+wine_fn_config_dll winusb enable_winusb
 wine_fn_config_dll wlanapi enable_wlanapi implib
 wine_fn_config_test dlls/wlanapi/tests wlanapi_test
 wine_fn_config_dll wldap32 enable_wldap32 clean,implib
