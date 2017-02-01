@@ -17,6 +17,7 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include <assert.h>
 
@@ -35,6 +36,10 @@ typedef struct {
 
     LONG ref;
     IUnknown *outer_unk;
+
+    WCHAR *location;
+    IStream *stream;
+    IInternetProtocolSink *sink;
 } MimeHtmlProtocol;
 
 typedef struct {
@@ -43,8 +48,35 @@ typedef struct {
     const WCHAR *location;
 } mhtml_url_t;
 
+typedef struct {
+    IBindStatusCallback IBindStatusCallback_iface;
+
+    LONG ref;
+
+    MimeHtmlProtocol *protocol;
+    HRESULT status;
+    IStream *stream;
+    WCHAR url[1];
+} MimeHtmlBinding;
+
 static const WCHAR mhtml_prefixW[] = {'m','h','t','m','l',':'};
 static const WCHAR mhtml_separatorW[] = {'!','x','-','u','s','c',':'};
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        if(ret)
+            memcpy(ret, str, size);
+    }
+
+    return ret;
+}
 
 static HRESULT parse_mhtml_url(const WCHAR *url, mhtml_url_t *r)
 {
@@ -69,6 +101,270 @@ static HRESULT parse_mhtml_url(const WCHAR *url, mhtml_url_t *r)
     r->location = p;
     return S_OK;
 }
+
+static HRESULT report_result(MimeHtmlProtocol *protocol, HRESULT result)
+{
+    if(protocol->sink) {
+        IInternetProtocolSink_ReportResult(protocol->sink, result, ERROR_SUCCESS, NULL);
+        IInternetProtocolSink_Release(protocol->sink);
+        protocol->sink = NULL;
+    }
+
+    return result;
+}
+
+static HRESULT on_mime_message_available(MimeHtmlProtocol *protocol, IMimeMessage *mime_message)
+{
+    FINDBODY find = {NULL};
+    IMimeBody *mime_body;
+    PROPVARIANT value;
+    HBODY body;
+    HRESULT hres;
+
+    hres = IMimeMessage_FindFirst(mime_message, &find, &body);
+    if(FAILED(hres))
+        return report_result(protocol, hres);
+
+    if(protocol->location) {
+        BOOL found = FALSE;
+        do {
+            hres = IMimeMessage_FindNext(mime_message, &find, &body);
+            if(FAILED(hres)) {
+                WARN("location %s not found\n", debugstr_w(protocol->location));
+                return report_result(protocol, hres);
+            }
+
+            value.vt = VT_LPWSTR;
+            hres = IMimeMessage_GetBodyProp(mime_message, body, "content-location", 0, &value);
+            if(hres == MIME_E_NOT_FOUND)
+                continue;
+            if(FAILED(hres))
+                return report_result(protocol, hres);
+
+            found = !strcmpW(protocol->location, value.u.pwszVal);
+            PropVariantClear(&value);
+        }while(!found);
+    }else {
+        hres = IMimeMessage_FindNext(mime_message, &find, &body);
+        if(FAILED(hres)) {
+            WARN("location %s not found\n", debugstr_w(protocol->location));
+            return report_result(protocol, hres);
+        }
+    }
+
+    hres = IMimeMessage_BindToObject(mime_message, body, &IID_IMimeBody, (void**)&mime_body);
+    if(FAILED(hres))
+        return report_result(protocol, hres);
+
+    value.vt = VT_LPWSTR;
+    hres = IMimeBody_GetProp(mime_body, "content-type", 0, &value);
+    if(SUCCEEDED(hres)) {
+        hres = IInternetProtocolSink_ReportProgress(protocol->sink, BINDSTATUS_MIMETYPEAVAILABLE, value.u.pwszVal);
+        PropVariantClear(&value);
+    }
+
+    /* FIXME: Create and report cache file. */
+
+    hres = IMimeBody_GetData(mime_body, IET_DECODED, &protocol->stream);
+    if(FAILED(hres))
+        return report_result(protocol, hres);
+
+    IInternetProtocolSink_ReportData(protocol->sink, BSCF_FIRSTDATANOTIFICATION
+                                     | BSCF_INTERMEDIATEDATANOTIFICATION
+                                     | BSCF_LASTDATANOTIFICATION
+                                     | BSCF_DATAFULLYAVAILABLE
+                                     | BSCF_AVAILABLEDATASIZEUNKNOWN, 0, 0);
+
+    return report_result(protocol, S_OK);
+}
+
+static HRESULT load_mime_message(IStream *stream, IMimeMessage **ret)
+{
+    IMimeMessage *mime_message;
+    HRESULT hres;
+
+    hres = MimeMessage_create(NULL, (void**)&mime_message);
+    if(FAILED(hres))
+        return hres;
+
+    IMimeMessage_InitNew(mime_message);
+
+    hres = IMimeMessage_Load(mime_message, stream);
+    if(FAILED(hres)) {
+        IMimeMessage_Release(mime_message);
+        return hres;
+    }
+
+    *ret = mime_message;
+    return S_OK;
+}
+
+static inline MimeHtmlBinding *impl_from_IBindStatusCallback(IBindStatusCallback *iface)
+{
+    return CONTAINING_RECORD(iface, MimeHtmlBinding, IBindStatusCallback_iface);
+}
+
+static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
+        REFIID riid, void **ppv)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IBindStatusCallback_iface;
+    }else if(IsEqualGUID(&IID_IBindStatusCallback, riid)) {
+        TRACE("(%p)->(IID_IBindStatusCallback %p)\n", This, ppv);
+        *ppv = &This->IBindStatusCallback_iface;
+    }else {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI BindStatusCallback_AddRef(IBindStatusCallback *iface)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        if(This->protocol)
+            IInternetProtocol_Release(&This->protocol->IInternetProtocol_iface);
+        if(This->stream)
+            IStream_Release(This->stream);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *iface,
+        DWORD dwReserved, IBinding *pib)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%x %p)\n", This, dwReserved, pib);
+
+    assert(!This->stream);
+    return CreateStreamOnHGlobal(NULL, TRUE, &This->stream);
+}
+
+static HRESULT WINAPI BindStatusCallback_GetPriority(IBindStatusCallback *iface, LONG *pnPriority)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnLowResource(IBindStatusCallback *iface, DWORD dwReserved)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, ULONG ulProgress,
+        ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+    TRACE("(%p)->(%u/%u %u %s)\n", This, ulProgress, ulProgressMax, ulStatusCode, debugstr_w(szStatusText));
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *iface, HRESULT hresult, LPCWSTR szError)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+    IMimeMessage *mime_message = NULL;
+
+    TRACE("(%p)->(%x %s)\n", This, hresult, debugstr_w(szError));
+
+    if(SUCCEEDED(hresult)) {
+        hresult = load_mime_message(This->stream, &mime_message);
+        IStream_Release(This->stream);
+        This->stream = NULL;
+    }
+
+    This->status = hresult;
+
+    if(mime_message)
+        on_mime_message_available(This->protocol, mime_message);
+    else
+        report_result(This->protocol, hresult);
+
+    if(mime_message)
+        IMimeMessage_Release(mime_message);
+    IInternetProtocol_Release(&This->protocol->IInternetProtocol_iface);
+    This->protocol = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
+        DWORD* grfBINDF, BINDINFO* pbindinfo)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)\n", This);
+
+    *grfBINDF = BINDF_ASYNCHRONOUS;
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF,
+        DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
+{
+    MimeHtmlBinding *This = impl_from_IBindStatusCallback(iface);
+    BYTE buf[4*1024];
+    DWORD read;
+    HRESULT hres;
+
+    TRACE("(%p)\n", This);
+
+    assert(pstgmed->tymed == TYMED_ISTREAM);
+
+    while(1) {
+        hres = IStream_Read(pstgmed->u.pstm, buf, sizeof(buf), &read);
+        if(FAILED(hres))
+            return hres;
+        if(!read)
+            break;
+        hres = IStream_Write(This->stream, buf, read, NULL);
+        if(FAILED(hres))
+            return hres;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
+        REFIID riid, IUnknown* punk)
+{
+    ERR("\n");
+    return E_NOTIMPL;
+}
+
+static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
+    BindStatusCallback_QueryInterface,
+    BindStatusCallback_AddRef,
+    BindStatusCallback_Release,
+    BindStatusCallback_OnStartBinding,
+    BindStatusCallback_GetPriority,
+    BindStatusCallback_OnLowResource,
+    BindStatusCallback_OnProgress,
+    BindStatusCallback_OnStopBinding,
+    BindStatusCallback_GetBindInfo,
+    BindStatusCallback_OnDataAvailable,
+    BindStatusCallback_OnObjectAvailable
+};
 
 static inline MimeHtmlProtocol *impl_from_IUnknown(IUnknown *iface)
 {
@@ -118,8 +414,14 @@ static ULONG WINAPI MimeHtmlProtocol_Release(IUnknown *iface)
 
     TRACE("(%p) ref=%x\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->sink)
+            IInternetProtocolSink_Release(This->sink);
+        if(This->stream)
+            IStream_Release(This->stream);
+        heap_free(This->location);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -158,9 +460,70 @@ static HRESULT WINAPI MimeHtmlProtocol_Start(IInternetProtocol *iface, const WCH
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
     MimeHtmlProtocol *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
-          pOIBindInfo, grfPI, dwReserved);
-    return E_NOTIMPL;
+    BINDINFO bindinfo = { sizeof(bindinfo) };
+    MimeHtmlBinding *binding;
+    IBindCtx *bind_ctx;
+    IStream *stream;
+    mhtml_url_t url;
+    DWORD bindf = 0;
+    IMoniker *mon;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink, pOIBindInfo, grfPI, dwReserved);
+
+    hres = parse_mhtml_url(szUrl, &url);
+    if(FAILED(hres))
+        return hres;
+
+    if(url.location && !(This->location = heap_strdupW(url.location)))
+        return E_OUTOFMEMORY;
+
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bindf, &bindinfo);
+    if(FAILED(hres)) {
+        WARN("GetBindInfo failed: %08x\n", hres);
+        return hres;
+    }
+    if((bindf & (BINDF_ASYNCHRONOUS|BINDF_FROMURLMON|BINDF_NEEDFILE)) != (BINDF_ASYNCHRONOUS|BINDF_FROMURLMON|BINDF_NEEDFILE))
+        FIXME("unsupported bindf %x\n", bindf);
+
+    IInternetProtocolSink_AddRef(This->sink = pOIProtSink);
+
+    binding = heap_alloc(FIELD_OFFSET(MimeHtmlBinding,  url[url.mhtml_len+1]));
+    if(!binding)
+        return E_OUTOFMEMORY;
+    memcpy(binding->url, url.mhtml, url.mhtml_len*sizeof(WCHAR));
+    binding->url[url.mhtml_len] = 0;
+
+    hres = CreateURLMoniker(NULL, binding->url, &mon);
+    if(FAILED(hres))
+        return hres;
+
+    binding->IBindStatusCallback_iface.lpVtbl = &BindStatusCallbackVtbl;
+    binding->ref = 1;
+    binding->status = E_PENDING;
+    binding->stream = NULL;
+    binding->protocol = NULL;
+
+    hres = CreateAsyncBindCtx(0, &binding->IBindStatusCallback_iface, NULL, &bind_ctx);
+    if(FAILED(hres)) {
+        IMoniker_Release(mon);
+        IBindStatusCallback_Release(&binding->IBindStatusCallback_iface);
+        return hres;
+    }
+
+    IInternetProtocol_AddRef(&This->IInternetProtocol_iface);
+    binding->protocol = This;
+
+    hres = IMoniker_BindToStorage(mon, bind_ctx, NULL, &IID_IStream, (void**)&stream);
+    IBindCtx_Release(bind_ctx);
+    IMoniker_Release(mon);
+    if(stream)
+        IStream_Release(stream);
+    hres = binding->status;
+    IBindStatusCallback_Release(&binding->IBindStatusCallback_iface);
+    if(FAILED(hres) && hres != E_PENDING)
+        report_result(This, hres);
+    return hres;
 }
 
 static HRESULT WINAPI MimeHtmlProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)
@@ -201,8 +564,10 @@ static HRESULT WINAPI MimeHtmlProtocol_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI MimeHtmlProtocol_Read(IInternetProtocol *iface, void* pv, ULONG cb, ULONG* pcbRead)
 {
     MimeHtmlProtocol *This = impl_from_IInternetProtocol(iface);
-    FIXME("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
+
+    return IStream_Read(This->stream, pv, cb, pcbRead);
 }
 
 static HRESULT WINAPI MimeHtmlProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,
@@ -364,6 +729,9 @@ HRESULT MimeHtmlProtocol_create(IUnknown *outer, void **obj)
     protocol->IInternetProtocolInfo_iface.lpVtbl = &MimeHtmlProtocolInfoVtbl;
     protocol->ref = 1;
     protocol->outer_unk = outer ? outer : &protocol->IUnknown_inner;
+    protocol->location = NULL;
+    protocol->stream = NULL;
+    protocol->sink = NULL;
 
     *obj = &protocol->IUnknown_inner;
     return S_OK;
