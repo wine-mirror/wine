@@ -486,6 +486,9 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   width  = (WORD)*p; p++;
   height = (WORD)*p; p++;
 
+  if (lppsp->dwFlags & (PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE))
+    psInfo->ppshheader.dwFlags |= PSH_HEADER;
+
   /* Special calculation for interior wizard pages so the largest page is
    * calculated correctly. We need to add all the padding and space occupied
    * by the header so the width and height sums up to the whole wizard client
