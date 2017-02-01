@@ -2724,7 +2724,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cy = 0;
 
     hr = IDirectDrawSurface_Restore(primary);
-    todo_wine ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
     hr = set_display_mode(ddraw, param.ddraw_width, param.ddraw_height);
     if (hr == DDERR_NOEXCLUSIVEMODE /* NT4 testbot */)
     {
@@ -2735,9 +2735,9 @@ static void test_coop_level_mode_set(void)
     }
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDrawSurface_Restore(primary);
-    todo_wine ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(primary);
-    todo_wine ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
 
     ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
@@ -2894,13 +2894,13 @@ static void test_coop_level_mode_set(void)
     screen_size.cy = 0;
 
     hr = IDirectDrawSurface_Restore(primary);
-    todo_wine ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
     hr = set_display_mode(ddraw, param.ddraw_width, param.ddraw_height);
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDrawSurface_Restore(primary);
-    todo_wine ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(primary);
-    todo_wine ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
 
     ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;

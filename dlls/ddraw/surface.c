@@ -3622,6 +3622,26 @@ static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
 
     TRACE("iface %p.\n", iface);
 
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+        struct wined3d_swapchain *swapchain = surface->ddraw->wined3d_swapchain;
+        struct wined3d_display_mode mode;
+        HRESULT hr;
+
+        if (FAILED(hr = wined3d_swapchain_get_display_mode(swapchain, &mode, NULL)))
+        {
+            WARN("Failed to get display mode, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (mode.width != surface->surface_desc.dwWidth || mode.height != surface->surface_desc.dwHeight)
+        {
+            WARN("Display mode %ux%u doesn't match surface dimensions %ux%u.\n",
+                    mode.width, mode.height, surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
+            return DDERR_WRONGMODE;
+        }
+    }
+
     ddraw_update_lost_surfaces(surface->ddraw);
     surface->is_lost = FALSE;
 
