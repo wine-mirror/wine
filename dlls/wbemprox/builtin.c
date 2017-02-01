@@ -31,8 +31,17 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
-#include "winsock2.h"
-#include "ws2tcpip.h"
+#ifdef __MINGW32__
+# include "winsock2.h"
+# include "ws2tcpip.h"
+# define WS_AF_UNSPEC AF_UNSPEC
+# define WS_NI_MAXHOST NI_MAXHOST
+# define WS_NI_NAMEREQD NI_NAMEREQD
+#else
+# define USE_WS_PREFIX
+# include "winsock2.h"
+# include "ws2tcpip.h"
+#endif
 #include "initguid.h"
 #include "wbemcli.h"
 #include "wbemprov.h"
