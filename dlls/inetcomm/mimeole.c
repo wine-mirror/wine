@@ -1614,6 +1614,90 @@ static HRESULT decode_base64(IStream *input, IStream **ret_stream)
     return S_OK;
 }
 
+static int hex_digit(char c)
+{
+    if('0' <= c && c <= '9')
+        return c - '0';
+    if('A' <= c && c <= 'F')
+        return c - 'A' + 10;
+    if('a' <= c && c <= 'f')
+        return c - 'a' + 10;
+    return -1;
+}
+
+static HRESULT decode_qp(IStream *input, IStream **ret_stream)
+{
+    const unsigned char *ptr, *end;
+    unsigned char *ret, prev = 0;
+    unsigned char buf[1024];
+    LARGE_INTEGER pos;
+    IStream *output;
+    DWORD size;
+    int n = -1;
+    HRESULT hres;
+
+    pos.QuadPart = 0;
+    hres = IStream_Seek(input, pos, STREAM_SEEK_SET, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &output);
+    if(FAILED(hres))
+        return hres;
+
+    while(1) {
+        hres = IStream_Read(input, buf, sizeof(buf), &size);
+        if(FAILED(hres) || !size)
+            break;
+
+        ptr = ret = buf;
+        end = buf + size;
+
+        while(ptr < end) {
+            unsigned char byte = *ptr++;
+
+            switch(n) {
+            case -1:
+                if(byte == '=')
+                    n = 0;
+                else
+                    *ret++ = byte;
+                continue;
+            case 0:
+                prev = byte;
+                n = 1;
+                continue;
+            case 1:
+                if(prev != '\r' || byte != '\n') {
+                    int h1 = hex_digit(prev), h2 = hex_digit(byte);
+                    if(h1 != -1 && h2 != -1)
+                        *ret++ = (h1 << 4) | h2;
+                    else
+                        *ret++ = '=';
+                }
+                n = -1;
+                continue;
+            }
+        }
+
+        if(ret > buf) {
+            hres = IStream_Write(output, buf, ret - buf, NULL);
+            if(FAILED(hres))
+                break;
+        }
+    }
+
+    if(SUCCEEDED(hres))
+        hres = IStream_Seek(output, pos, STREAM_SEEK_SET, NULL);
+    if(FAILED(hres)) {
+        IStream_Release(output);
+        return hres;
+    }
+
+    *ret_stream = output;
+    return S_OK;
+}
+
 static HRESULT WINAPI MimeBody_GetData(
                               IMimeBody* iface,
                               ENCODINGTYPE ietEncoding,
@@ -1628,12 +1712,19 @@ static HRESULT WINAPI MimeBody_GetData(
     if(This->encoding != ietEncoding) {
         switch(This->encoding) {
         case IET_BASE64:
-            if(ietEncoding != IET_BINARY)
-                FIXME("Encofing %d is not supported.\n", ietEncoding);
-            return decode_base64(This->data, ppStream);
+            hres = decode_base64(This->data, ppStream);
+            break;
+        case IET_QP:
+            hres = decode_qp(This->data, ppStream);
+            break;
         default:
             FIXME("Decoding %d is not supported.\n", This->encoding);
+            hres = S_FALSE;
         }
+        if(ietEncoding != IET_BINARY)
+            FIXME("Encoding %d is not supported.\n", ietEncoding);
+        if(hres != S_FALSE)
+            return hres;
     }
 
     start.QuadPart = 0;

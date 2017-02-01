@@ -556,6 +556,20 @@ static void test_SetData(void)
     test_stream_read(stream, S_OK, " \t\r", 3);
     IStream_Release(stream);
 
+    stream = create_stream_from_string(" =3d=3D\"one\" \t=\r\ntw=  o=\nx3\n=34\r\n5");
+    hr = IMimeBody_SetData(body, IET_QP, "text", "plain", &IID_IStream, stream);
+    IStream_Release(stream);
+    ok(hr == S_OK, "SetData failed: %08x\n", hr);
+
+    test_current_encoding(body, IET_QP);
+
+    hr = IMimeBody_GetData(body, IET_BINARY, &stream);
+    ok(hr == S_OK, "GetData failed %08x\n", hr);
+
+    test_stream_read(stream, S_OK, " ==\"one\" \ttw=o=3\n4\r\n5", -1);
+
+    IStream_Release(stream);
+
     IMimeBody_Release(body);
 }
 
