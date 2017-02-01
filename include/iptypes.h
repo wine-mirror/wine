@@ -94,22 +94,43 @@ typedef NL_DAD_STATE IP_DAD_STATE;
 
 #ifdef _WINSOCK2API_
 
-typedef struct _IP_ADAPTER_UNICAST_ADDRESS {
+typedef struct _IP_ADAPTER_UNICAST_ADDRESS_LH {
     union {
         struct {
             ULONG Length;
             DWORD Flags;
         } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME;
-    struct _IP_ADAPTER_UNICAST_ADDRESS *Next;
-    SOCKET_ADDRESS                      Address;
-    IP_PREFIX_ORIGIN                    PrefixOrigin;
-    IP_SUFFIX_ORIGIN                    SuffixOrigin;
-    IP_DAD_STATE                        DadState;
-    ULONG                               ValidLifetime;
-    ULONG                               PreferredLifetime;
-    ULONG                               LeaseLifetime;
-} IP_ADAPTER_UNICAST_ADDRESS, *PIP_ADAPTER_UNICAST_ADDRESS;
+    struct _IP_ADAPTER_UNICAST_ADDRESS_LH   *Next;
+    SOCKET_ADDRESS                          Address;
+    IP_PREFIX_ORIGIN                        PrefixOrigin;
+    IP_SUFFIX_ORIGIN                        SuffixOrigin;
+    IP_DAD_STATE                            DadState;
+    ULONG                                   ValidLifetime;
+    ULONG                                   PreferredLifetime;
+    ULONG                                   LeaseLifetime;
+    UINT8                                   OnLinkPrefixLength;
+} IP_ADAPTER_UNICAST_ADDRESS_LH, *PIP_ADAPTER_UNICAST_ADDRESS_LH;
+
+typedef struct _IP_ADAPTER_UNICAST_ADDRESS_XP {
+    union {
+        struct {
+            ULONG Length;
+            DWORD Flags;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_UNICAST_ADDRESS_XP   *Next;
+    SOCKET_ADDRESS                          Address;
+    IP_PREFIX_ORIGIN                        PrefixOrigin;
+    IP_SUFFIX_ORIGIN                        SuffixOrigin;
+    IP_DAD_STATE                            DadState;
+    ULONG                                   ValidLifetime;
+    ULONG                                   PreferredLifetime;
+    ULONG                                   LeaseLifetime;
+} IP_ADAPTER_UNICAST_ADDRESS_XP, *PIP_ADAPTER_UNICAST_ADDRESS_XP;
+
+typedef IP_ADAPTER_UNICAST_ADDRESS_LH IP_ADAPTER_UNICAST_ADDRESS;
+typedef IP_ADAPTER_UNICAST_ADDRESS_LH *PIP_ADAPTER_UNICAST_ADDRESS;
 
 typedef struct _IP_ADAPTER_ANYCAST_ADDRESS {
     union {
@@ -277,8 +298,8 @@ typedef struct _IP_ADAPTER_ADDRESSES_XP {
     PIP_ADAPTER_PREFIX              FirstPrefix;
 } IP_ADAPTER_ADDRESSES_XP, *PIP_ADAPTER_ADDRESSES_XP;
 
-#define IP_ADAPTER_ADDRESSES IP_ADAPTER_ADDRESSES_LH
-#define PIP_ADAPTER_ADDRESSES PIP_ADAPTER_ADDRESSES_LH
+typedef IP_ADAPTER_ADDRESSES_LH IP_ADAPTER_ADDRESSES;
+typedef IP_ADAPTER_ADDRESSES_LH *PIP_ADAPTER_ADDRESSES;
 
 #define GAA_FLAG_SKIP_UNICAST                0x00000001
 #define GAA_FLAG_SKIP_ANYCAST                0x00000002
