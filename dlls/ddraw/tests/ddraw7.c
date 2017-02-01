@@ -6867,6 +6867,19 @@ static void test_primary_palette(void)
     hr = IDirectDrawSurface7_GetPalette(primary, &tmp);
     ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x.\n", hr);
 
+    hr = IDirectDrawSurface7_IsLost(primary);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = set_display_mode(ddraw, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_IsLost(primary);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Restore(primary);
+    ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_IsLost(primary);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+
 done:
     refcount = IDirectDrawSurface7_Release(backbuffer);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);

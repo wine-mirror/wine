@@ -3625,6 +3625,7 @@ static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         struct wined3d_swapchain *swapchain = surface->ddraw->wined3d_swapchain;
+        struct wined3d_sub_resource_desc wined3d_desc;
         struct wined3d_display_mode mode;
         HRESULT hr;
 
@@ -3634,10 +3635,23 @@ static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
             return hr;
         }
 
-        if (mode.width != surface->surface_desc.dwWidth || mode.height != surface->surface_desc.dwHeight)
+        if (FAILED(hr = wined3d_texture_get_sub_resource_desc(surface->wined3d_texture, 0, &wined3d_desc)))
         {
-            WARN("Display mode %ux%u doesn't match surface dimensions %ux%u.\n",
-                    mode.width, mode.height, surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
+            WARN("Failed to get resource desc, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (mode.width != wined3d_desc.width || mode.height != wined3d_desc.height)
+        {
+            WARN("Display mode dimensions %ux%u don't match surface dimensions %ux%u.\n",
+                    mode.width, mode.height, wined3d_desc.width, wined3d_desc.height);
+            return DDERR_WRONGMODE;
+        }
+
+        if (mode.format_id != wined3d_desc.format)
+        {
+            WARN("Display mode format %#x doesn't match surface format %#x.\n",
+                    mode.format_id, wined3d_desc.format);
             return DDERR_WRONGMODE;
         }
     }
