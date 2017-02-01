@@ -486,6 +486,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
     struct wined3d_state *state = &cs->device->state;
     const struct wined3d_cs_draw *op = data;
+    struct wined3d_shader *shader;
     unsigned int i;
 
     if (!cs->device->adapter->gl_info.supported[ARB_DRAW_ELEMENTS_BASE_VERTEX]
@@ -518,12 +519,27 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
     if (state->fb->depth_stencil)
         wined3d_resource_release(state->fb->depth_stencil->resource);
     release_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
+    if ((shader = state->shader[WINED3D_SHADER_TYPE_PIXEL]))
+    {
+        struct wined3d_unordered_access_view *view;
+        for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
+        {
+            if (!shader->reg_maps.uav_resource_info[i].type)
+                continue;
+
+            if (!(view = state->unordered_access_view[i]))
+                continue;
+
+            wined3d_resource_release(view->resource);
+        }
+    }
 }
 
 void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned int start_idx,
         unsigned int index_count, unsigned int start_instance, unsigned int instance_count, BOOL indexed)
 {
     const struct wined3d_state *state = &cs->device->state;
+    struct wined3d_shader *shader;
     struct wined3d_cs_draw *op;
     unsigned int i;
 
@@ -556,6 +572,20 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned i
     if (state->fb->depth_stencil)
         wined3d_resource_acquire(state->fb->depth_stencil->resource);
     acquire_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
+    if ((shader = state->shader[WINED3D_SHADER_TYPE_PIXEL]))
+    {
+        struct wined3d_unordered_access_view *view;
+        for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
+        {
+            if (!shader->reg_maps.uav_resource_info[i].type)
+                continue;
+
+            if (!(view = state->unordered_access_view[i]))
+                continue;
+
+            wined3d_resource_acquire(view->resource);
+        }
+    }
 
     cs->ops->submit(cs);
 }
