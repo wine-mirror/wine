@@ -675,16 +675,15 @@ static void test_merge(void)
 
 #define BMP_CX 48
 
-struct my_IStream
+struct memstream
 {
     IStream IStream_iface;
-    char *iml_data; /* written imagelist data */
-    ULONG iml_data_size;
+    IStream *stream;
 };
 
-static struct my_IStream *impl_from_IStream(IStream *iface)
+static struct memstream *impl_from_IStream(IStream *iface)
 {
-    return CONTAINING_RECORD(iface, struct my_IStream, IStream_iface);
+    return CONTAINING_RECORD(iface, struct memstream, IStream_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE Test_Stream_QueryInterface(IStream *iface, REFIID riid,
@@ -709,34 +708,15 @@ static ULONG STDMETHODCALLTYPE Test_Stream_Release(IStream *iface)
 static HRESULT STDMETHODCALLTYPE Test_Stream_Read(IStream *iface, void *pv, ULONG cb,
                                                   ULONG *pcbRead)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static BOOL allocate_storage(struct my_IStream *my_is, ULONG add)
-{
-    my_is->iml_data_size += add;
-
-    if (!my_is->iml_data)
-        my_is->iml_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, my_is->iml_data_size);
-    else
-        my_is->iml_data = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, my_is->iml_data, my_is->iml_data_size);
-
-    return my_is->iml_data != NULL;
+    struct memstream *stream = impl_from_IStream(iface);
+    return IStream_Read(stream->stream, pv, cb, pcbRead);
 }
 
 static HRESULT STDMETHODCALLTYPE Test_Stream_Write(IStream *iface, const void *pv, ULONG cb,
                                                    ULONG *pcbWritten)
 {
-    struct my_IStream *my_is = impl_from_IStream(iface);
-    ULONG current_iml_data_size = my_is->iml_data_size;
-
-    if (!allocate_storage(my_is, cb)) return E_FAIL;
-
-    memcpy(my_is->iml_data + current_iml_data_size, pv, cb);
-    if (pcbWritten) *pcbWritten = cb;
-
-    return S_OK;
+    struct memstream *stream = impl_from_IStream(iface);
+    return IStream_Write(stream->stream, pv, cb, pcbWritten);
 }
 
 static HRESULT STDMETHODCALLTYPE Test_Stream_Seek(IStream *iface, LARGE_INTEGER dlibMove,
@@ -817,7 +797,17 @@ static const IStreamVtbl Test_Stream_Vtbl =
     Test_Stream_Clone
 };
 
-static struct my_IStream Test_Stream = { { &Test_Stream_Vtbl }, 0, 0 };
+static void init_memstream(struct memstream *stream)
+{
+    stream->IStream_iface.lpVtbl = &Test_Stream_Vtbl;
+    CreateStreamOnHGlobal(NULL, TRUE, &stream->stream);
+}
+
+static void cleanup_memstream(struct memstream *stream)
+{
+    IStream_Release(stream->stream);
+}
+
 
 static INT DIB_GetWidthBytes( int width, int bpp )
 {
@@ -916,15 +906,17 @@ static HBITMAP create_bitmap(INT cx, INT cy, COLORREF color, const char *comment
     return hbmp;
 }
 
-#define iml_clear_stream_data() \
-    HeapFree(GetProcessHeap(), 0, Test_Stream.iml_data); \
-    Test_Stream.iml_data = NULL; \
-    Test_Stream.iml_data_size = 0;
-
 static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, INT grow,
                            INT width, INT height, INT flags, const char *comment)
 {
     INT ret, cxx, cyy, size;
+    struct memstream stream;
+    LARGE_INTEGER mv;
+    HIMAGELIST himl2;
+    HGLOBAL hglobal;
+    STATSTG stat;
+    char *data;
+    HRESULT hr;
 
     trace("%s\n", comment);
 
@@ -936,25 +928,39 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
     ok(cxx == cx, "wrong cx %d (expected %d)\n", cxx, cx);
     ok(cyy == cy, "wrong cy %d (expected %d)\n", cyy, cy);
 
-    iml_clear_stream_data();
-    ret = ImageList_Write(himl, &Test_Stream.IStream_iface);
+    init_memstream(&stream);
+    ret = ImageList_Write(himl, &stream.IStream_iface);
     ok(ret, "ImageList_Write failed\n");
 
-    ok(Test_Stream.iml_data != 0, "ImageList_Write didn't write any data\n");
-    ok(Test_Stream.iml_data_size > sizeof(ILHEAD), "ImageList_Write wrote not enough data\n");
+    hr = GetHGlobalFromStream(stream.stream, &hglobal);
+    ok(hr == S_OK, "Failed to get hglobal, %#x\n", hr);
 
-    check_ilhead_data(Test_Stream.iml_data, cx, cy, cur, max, grow, flags);
-    size = check_bitmap_data(Test_Stream.iml_data + sizeof(ILHEAD),
-                             Test_Stream.iml_data_size - sizeof(ILHEAD),
-                             width, height, flags & 0xfe, comment);
-    if (size < Test_Stream.iml_data_size - sizeof(ILHEAD))  /* mask is present */
+    IStream_Stat(stream.stream, &stat, STATFLAG_NONAME);
+
+    data = GlobalLock(hglobal);
+
+    ok(data != 0, "ImageList_Write didn't write any data\n");
+    ok(stat.cbSize.LowPart > sizeof(ILHEAD), "ImageList_Write wrote not enough data\n");
+
+    check_ilhead_data(data, cx, cy, cur, max, grow, flags);
+    size = check_bitmap_data(data + sizeof(ILHEAD), stat.cbSize.LowPart - sizeof(ILHEAD),
+            width, height, flags & 0xfe, comment);
+    if (size < stat.cbSize.LowPart - sizeof(ILHEAD))  /* mask is present */
     {
-        ok( flags & ILC_MASK, "extra data %u/%u but mask not expected\n",
-            Test_Stream.iml_data_size, size );
-        check_bitmap_data(Test_Stream.iml_data + sizeof(ILHEAD) + size,
-                          Test_Stream.iml_data_size - sizeof(ILHEAD) - size,
+        ok( flags & ILC_MASK, "extra data %u/%u but mask not expected\n", stat.cbSize.LowPart, size );
+        check_bitmap_data(data + sizeof(ILHEAD) + size, stat.cbSize.LowPart - sizeof(ILHEAD) - size,
                           width, height, 1, comment);
     }
+
+    /* rewind and reconstruct from stream */
+    mv.QuadPart = 0;
+    IStream_Seek(stream.stream, mv, STREAM_SEEK_SET, NULL);
+    himl2 = ImageList_Read(&stream.IStream_iface);
+    ok(himl2 != NULL, "Failed to deserialize imagelist\n");
+    ImageList_Destroy(himl2);
+
+    GlobalUnlock(hglobal);
+    cleanup_memstream(&stream);
 }
 
 static void image_list_init(HIMAGELIST himl)
@@ -1059,8 +1065,6 @@ static void test_imagelist_storage(void)
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
 
-    iml_clear_stream_data();
-
     /* test ImageList_Create storage allocation */
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 0, 32);
@@ -1073,7 +1077,6 @@ static void test_imagelist_storage(void)
     DeleteObject(hbm);
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 4, 4);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1088,70 +1091,60 @@ static void test_imagelist_storage(void)
     DeleteObject(hbm);
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 207, 209);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 208, 212, BMP_CX * 4, BMP_CX * 52, ILC_COLOR24, "init 207 grow 209");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 209, 207);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 210, 208, BMP_CX * 4, BMP_CX * 53, ILC_COLOR24, "init 209 grow 207");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 14, 4);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 15, 4, BMP_CX * 4, BMP_CX * 4, ILC_COLOR24, "init 14 grow 4");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 5, 9);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 6, 12, BMP_CX * 4, BMP_CX * 2, ILC_COLOR24, "init 5 grow 9");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 9, 5);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 10, 8, BMP_CX * 4, BMP_CX * 3, ILC_COLOR24, "init 9 grow 5");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 2, 4);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 3, 4, BMP_CX * 4, BMP_CX * 1, ILC_COLOR24, "init 2 grow 4");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 4, 2);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 5, 4, BMP_CX * 4, BMP_CX * 2, ILC_COLOR24, "init 4 grow 2");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR8, 4, 2);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 5, 4, BMP_CX * 4, BMP_CX * 2, ILC_COLOR8, "bpp 8");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4, 4, 2);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 5, 4, BMP_CX * 4, BMP_CX * 2, ILC_COLOR4, "bpp 4");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, 0, 4, 2);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1163,7 +1156,6 @@ static void test_imagelist_storage(void)
     check_iml_data(himl, BMP_CX, BMP_CX, 2, 5, 4, BMP_CX * 4, BMP_CX * 2, ILC_COLOR4, "bpp default");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24|ILC_MASK, 4, 2);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1177,7 +1169,6 @@ static void test_imagelist_storage(void)
                    "bpp 24 + mask");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 4, 2);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1191,7 +1182,6 @@ static void test_imagelist_storage(void)
                    "bpp 4 + mask");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, 99);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1220,7 +1210,6 @@ static void test_imagelist_storage(void)
                    "init 2 grow 99 set count 42");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, 65536+12);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1228,7 +1217,6 @@ static void test_imagelist_storage(void)
                    "init 2 grow 65536+12");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, 65535);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1236,7 +1224,6 @@ static void test_imagelist_storage(void)
                    "init 2 grow 65535");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 
     himl = ImageList_Create(BMP_CX, BMP_CX, ILC_COLOR4|ILC_MASK, 2, -20);
     ok(himl != 0, "ImageList_Create failed\n");
@@ -1244,7 +1231,6 @@ static void test_imagelist_storage(void)
                    "init 2 grow -20");
     ret = ImageList_Destroy(himl);
     ok(ret, "ImageList_Destroy failed\n");
-    iml_clear_stream_data();
 }
 
 static void test_shell_imagelist(void)
