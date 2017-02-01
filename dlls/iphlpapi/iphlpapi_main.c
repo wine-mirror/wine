@@ -868,6 +868,27 @@ static ULONG count_v4_gateways(DWORD index, PMIB_IPFORWARDTABLE routeTable)
     return num_gateways;
 }
 
+static DWORD mask_v4_to_prefix(DWORD m)
+{
+#ifdef HAVE___BUILTIN_POPCOUNT
+    return __builtin_popcount(m);
+#else
+    m -= m >> 1 & 0x55555555;
+    m = (m & 0x33333333) + (m >> 2 & 0x33333333);
+    return ((m + (m >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
+#endif
+}
+
+static DWORD mask_v6_to_prefix(SOCKET_ADDRESS *m)
+{
+    const IN6_ADDR *mask = &((struct WS_sockaddr_in6 *)m->lpSockaddr)->sin6_addr;
+    DWORD ret = 0, i;
+
+    for (i = 0; i < 8; i++)
+        ret += mask_v4_to_prefix(mask->u.Word[i]);
+    return ret;
+}
+
 static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
                                          PMIB_IPFORWARDTABLE routeTable)
 {
@@ -1065,6 +1086,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                       debugstr_ipv4(&sa->sin_addr.S_un.S_addr, addr_buf));
                 fill_unicast_addr_data(aa, ua);
 
+                ua->OnLinkPrefixLength = mask_v4_to_prefix(v4masks[i]);
+
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v4addrs - 1)
                 {
@@ -1103,6 +1126,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                       debugstr_ipv6(sa, addr_buf));
                 fill_unicast_addr_data(aa, ua);
 
+                ua->OnLinkPrefixLength = mask_v6_to_prefix(&v6masks[i]);
+
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v6addrs - 1)
                 {
@@ -1132,12 +1157,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 sa->sin_addr.S_un.S_addr = v4addrs[i] & v4masks[i];
                 sa->sin_port             = 0;
 
-                prefix->PrefixLength = 0;
-                for (j = 0; j < sizeof(*v4masks) * 8; j++)
-                {
-                    if (v4masks[i] & 1 << j) prefix->PrefixLength++;
-                    else break;
-                }
+                prefix->PrefixLength = mask_v4_to_prefix(v4masks[i]);
+
                 TRACE("IPv4 network: %s/%u\n",
                       debugstr_ipv4((const in_addr_t *)&sa->sin_addr.S_un.S_addr, addr_buf),
                       prefix->PrefixLength);
@@ -1168,8 +1189,6 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 char addr_buf[46];
                 struct WS_sockaddr_in6 *sa;
                 const IN6_ADDR *addr, *mask;
-                BOOL done = FALSE;
-                ULONG k;
 
                 prefix->u.s.Length = sizeof(*prefix);
                 prefix->u.s.Flags  = 0;
@@ -1186,15 +1205,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 for (j = 0; j < 8; j++) sa->sin6_addr.u.Word[j] = addr->u.Word[j] & mask->u.Word[j];
                 sa->sin6_scope_id = 0;
 
-                prefix->PrefixLength = 0;
-                for (k = 0; k < 8 && !done; k++)
-                {
-                    for (j = 0; j < sizeof(WORD) * 8 && !done; j++)
-                    {
-                        if (mask->u.Word[k] & 1 << j) prefix->PrefixLength++;
-                        else done = TRUE;
-                    }
-                }
+                prefix->PrefixLength = mask_v6_to_prefix(&v6masks[i]);
+
                 TRACE("IPv6 network: %s/%u\n", debugstr_ipv6(sa, addr_buf), prefix->PrefixLength);
 
                 ptr += prefix->u.s.Length + prefix->Address.iSockaddrLength;

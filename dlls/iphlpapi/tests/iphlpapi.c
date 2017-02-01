@@ -1409,6 +1409,9 @@ static void test_GetAdaptersAddresses(void)
         ua = aa->FirstUnicastAddress;
         while (ua)
         {
+            ok(S(U(*ua)).Length == sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ||
+               S(U(*ua)).Length == sizeof(IP_ADAPTER_UNICAST_ADDRESS_XP),
+               "Unknown structure size of %u bytes\n", S(U(*ua)).Length);
             ok(ua->PrefixOrigin != IpPrefixOriginOther,
                "bad address config value %d\n", ua->PrefixOrigin);
             ok(ua->SuffixOrigin != IpSuffixOriginOther,
@@ -1435,6 +1438,13 @@ static void test_GetAdaptersAddresses(void)
             trace("\tValidLifetime:           %u seconds\n", ua->ValidLifetime);
             trace("\tPreferredLifetime:       %u seconds\n", ua->PreferredLifetime);
             trace("\tLeaseLifetime:           %u seconds\n", ua->LeaseLifetime);
+            if (S(U(*ua)).Length < sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH))
+            {
+                trace("\n");
+                ua = ua->Next;
+                continue;
+            }
+            trace("\tOnLinkPrefixLength:      %u\n", ua->OnLinkPrefixLength);
             trace("\n");
             ua = ua->Next;
         }
