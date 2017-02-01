@@ -416,6 +416,36 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     cs->ops->submit(cs);
 }
 
+static void acquire_shader_resources(const struct wined3d_state *state)
+{
+    struct wined3d_shader_sampler_map_entry *entry;
+    struct wined3d_shader_resource_view *view;
+    struct wined3d_shader *shader;
+    unsigned int i, j;
+
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        if (!(shader = state->shader[i]))
+            continue;
+
+        for (j = 0; j < WINED3D_MAX_CBS; ++j)
+        {
+            if (state->cb[i][j])
+                wined3d_resource_acquire(&state->cb[i][j]->resource);
+        }
+
+        for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
+        {
+            entry = &shader->reg_maps.sampler_map.entries[j];
+
+            if (!(view = state->shader_resource_view[i][entry->resource_idx]))
+                continue;
+
+            wined3d_resource_acquire(view->resource);
+        }
+    }
+}
+
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
     struct wined3d_state *state = &cs->device->state;
@@ -481,11 +511,8 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned i
         unsigned int index_count, unsigned int start_instance, unsigned int instance_count, BOOL indexed)
 {
     const struct wined3d_state *state = &cs->device->state;
-    struct wined3d_shader_sampler_map_entry *entry;
-    struct wined3d_shader_resource_view *view;
-    struct wined3d_shader *shader;
     struct wined3d_cs_draw *op;
-    unsigned int i, j;
+    unsigned int i;
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_DRAW;
@@ -515,27 +542,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned i
     }
     if (state->fb->depth_stencil)
         wined3d_resource_acquire(state->fb->depth_stencil->resource);
-    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
-    {
-        if (!(shader = state->shader[i]))
-            continue;
-
-        for (j = 0; j < WINED3D_MAX_CBS; ++j)
-        {
-            if (state->cb[i][j])
-                wined3d_resource_acquire(&state->cb[i][j]->resource);
-        }
-
-        for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
-        {
-            entry = &shader->reg_maps.sampler_map.entries[j];
-
-            if (!(view = state->shader_resource_view[i][entry->resource_idx]))
-                continue;
-
-            wined3d_resource_acquire(view->resource);
-        }
-    }
+    acquire_shader_resources(state);
 
     cs->ops->submit(cs);
 }
