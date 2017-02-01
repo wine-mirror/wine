@@ -562,7 +562,7 @@ static void test_thread_handle_close(void)
     DWORD ret;
 
     /* _beginthread: handle is not closed on ExitThread and _endthreadex */
-    hThread = (HANDLE)_beginthread(test_thread_func, 0, (void*)0);
+    hThread = (HANDLE)_beginthread(test_thread_func, 0, NULL);
     ok(hThread != INVALID_HANDLE_VALUE, "_beginthread failed (%d)\n", errno);
     WaitForSingleObject(hThread, INFINITE);
     ret = CloseHandle(hThread);
