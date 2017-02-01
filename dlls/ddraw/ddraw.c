@@ -1129,7 +1129,19 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
     /* TODO: The possible return values from msdn suggest that the screen mode
      * can't be changed if a surface is locked or some drawing is in progress. */
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
+    {
+        if (ddraw->primary)
+        {
+            DDSURFACEDESC2 *surface_desc = &ddraw->primary->surface_desc;
+
+            if (FAILED(hr = wined3d_swapchain_resize_buffers(ddraw->wined3d_swapchain, 0,
+                    surface_desc->dwWidth, surface_desc->dwHeight, mode.format_id, WINED3D_MULTISAMPLE_NONE, 0)))
+                ERR("Failed to resize buffers, hr %#x.\n", hr);
+            else
+                ddrawformat_from_wined3dformat(&ddraw->primary->surface_desc.u4.ddpfPixelFormat, mode.format_id);
+        }
         ddraw->flags |= DDRAW_RESTORE_MODE;
+    }
 
     InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_OK);
 

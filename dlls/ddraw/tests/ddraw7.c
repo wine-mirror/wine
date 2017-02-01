@@ -6870,8 +6870,27 @@ static void test_primary_palette(void)
     hr = IDirectDrawSurface7_IsLost(primary);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(primary, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(surface_desc.dwWidth == 640, "Got unexpected surface width %u.\n", surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == 480, "Got unexpected surface height %u.\n", surface_desc.dwHeight);
+    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 8, "Got unexpected bit count %u.\n",
+            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount);
+
     hr = set_display_mode(ddraw, 640, 480);
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(primary, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(surface_desc.dwWidth == 640, "Got unexpected surface width %u.\n", surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == 480, "Got unexpected surface height %u.\n", surface_desc.dwHeight);
+    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 32
+            || U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 24,
+            "Got unexpected bit count %u.\n", U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount);
 
     hr = IDirectDrawSurface7_IsLost(primary);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
@@ -6879,6 +6898,16 @@ static void test_primary_palette(void)
     ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_IsLost(primary);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(primary, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(surface_desc.dwWidth == 640, "Got unexpected surface width %u.\n", surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == 480, "Got unexpected surface height %u.\n", surface_desc.dwHeight);
+    ok(U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 32
+            || U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount == 24,
+            "Got unexpected bit count %u.\n", U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount);
 
 done:
     refcount = IDirectDrawSurface7_Release(backbuffer);
