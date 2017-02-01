@@ -695,6 +695,8 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, NULL)))
         ddraw->flags &= ~DDRAW_RESTORE_MODE;
 
+    InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_OK);
+
     wined3d_mutex_unlock();
 
     return hr;
@@ -1128,6 +1130,8 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
      * can't be changed if a surface is locked or some drawing is in progress. */
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
         ddraw->flags |= DDRAW_RESTORE_MODE;
+
+    InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_OK);
 
     wined3d_mutex_unlock();
 

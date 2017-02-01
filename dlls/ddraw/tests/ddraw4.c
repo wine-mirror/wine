@@ -3086,7 +3086,7 @@ static void test_coop_level_mode_set(void)
     hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
     hr = IDirectDrawSurface4_IsLost(primary);
-    todo_wine ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
 
     ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
@@ -3249,7 +3249,7 @@ static void test_coop_level_mode_set(void)
     hr = IDirectDraw4_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
     hr = IDirectDrawSurface4_IsLost(primary);
-    todo_wine ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
 
     ok(!expect_messages->message, "Expected message %#x, but didn't receive it.\n", expect_messages->message);
     expect_messages = NULL;
