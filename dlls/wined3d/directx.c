@@ -3333,15 +3333,15 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
 static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
 {
     GLfloat gl_floatv[2];
+    unsigned int i;
     GLint gl_max;
 
     gl_info->limits.blends = 1;
     gl_info->limits.buffers = 1;
     gl_info->limits.textures = 1;
     gl_info->limits.texture_coords = 1;
-    gl_info->limits.vertex_uniform_blocks = 0;
-    gl_info->limits.geometry_uniform_blocks = 0;
-    gl_info->limits.fragment_uniform_blocks = 0;
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+        gl_info->limits.uniform_blocks[i] = 0;
     gl_info->limits.fragment_samplers = 1;
     gl_info->limits.vertex_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
@@ -3522,15 +3522,17 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
         {
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &gl_max);
-            gl_info->limits.vertex_uniform_blocks = min(gl_max, WINED3D_MAX_CBS);
-            TRACE("Max vertex uniform blocks: %u (%d).\n", gl_info->limits.vertex_uniform_blocks, gl_max);
+            gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_VERTEX] = min(gl_max, WINED3D_MAX_CBS);
+            TRACE("Max vertex uniform blocks: %u (%d).\n",
+                    gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_VERTEX], gl_max);
         }
     }
     if (gl_info->supported[ARB_GEOMETRY_SHADER4] && gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
     {
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_BLOCKS, &gl_max);
-        gl_info->limits.geometry_uniform_blocks = min(gl_max, WINED3D_MAX_CBS);
-        TRACE("Max geometry uniform blocks: %u (%d).\n", gl_info->limits.geometry_uniform_blocks, gl_max);
+        gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_GEOMETRY] = min(gl_max, WINED3D_MAX_CBS);
+        TRACE("Max geometry uniform blocks: %u (%d).\n",
+                gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_GEOMETRY], gl_max);
     }
     if (gl_info->supported[ARB_FRAGMENT_SHADER])
     {
@@ -3544,8 +3546,9 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
         {
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &gl_max);
-            gl_info->limits.fragment_uniform_blocks = min(gl_max, WINED3D_MAX_CBS);
-            TRACE("Max fragment uniform blocks: %u (%d).\n", gl_info->limits.fragment_uniform_blocks, gl_max);
+            gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_PIXEL] = min(gl_max, WINED3D_MAX_CBS);
+            TRACE("Max fragment uniform blocks: %u (%d).\n",
+                    gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_PIXEL], gl_max);
         }
     }
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])

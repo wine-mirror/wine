@@ -5904,26 +5904,17 @@ BOOL wined3d_clip_blit(const RECT *clip_rect, RECT *clipped, RECT *other)
 void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *gl_limits,
         enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count)
 {
+    unsigned int i;
+
     *base = 0;
-    *count = gl_limits->vertex_uniform_blocks;
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        *count = gl_limits->uniform_blocks[i];
+        if (i == shader_type)
+            return;
+        *base += *count;
+    }
 
-    if (shader_type == WINED3D_SHADER_TYPE_VERTEX)
-        return;
-
-    *base += *count;
-    *count = gl_limits->geometry_uniform_blocks;
-
-    if (shader_type == WINED3D_SHADER_TYPE_GEOMETRY)
-        return;
-
-    *base += *count;
-    *count = gl_limits->fragment_uniform_blocks;
-
-    if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
-        return;
-
-    *base += *count;
+    ERR("Unrecognized shader type %#x.\n", shader_type);
     *count = 0;
-
-    ERR("Unhandled shader type %#x.\n", shader_type);
 }
