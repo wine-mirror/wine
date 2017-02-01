@@ -249,7 +249,7 @@ BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR keyName)
 
     if (!LoadStringW(GetModuleHandleW(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) goto done;
 
-    /* try to find out a name for the newly create key (max 100 times) */
+    /* try to find a name for the key being created (maximum = 100 attempts) */
     for (keyNum = 1; keyNum < 100; keyNum++) {
 	wsprintfW(keyName, newKey, keyNum);
 	lRet = RegOpenKeyW(hKey, keyName, &retKey);
@@ -453,7 +453,7 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
 
     if (!LoadStringW(GetModuleHandleW(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) goto done;
 
-    /* try to find out a name for the newly create key (max 100 times) */
+    /* try to find a name for the value being created (maximum = 100 attempts) */
     for (valueNum = 1; valueNum < 100; valueNum++) {
 	wsprintfW(valueName, newValue, valueNum);
 	lRet = RegQueryValueExW(hKey, valueName, 0, 0, 0, 0);
@@ -492,7 +492,7 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR oldName, LPC
         error_code_messagebox(hwnd, IDS_RENAME_VALUE_FAILED);
 	return FALSE;
     }
-    /* check if value already exists */
+    /* check if the value already exists */
     if (check_value(hwnd, hKey, newName)) {
         error_code_messagebox(hwnd, IDS_VALUE_EXISTS, oldName);
         goto done;
