@@ -1316,6 +1316,8 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
 
 static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_LINE_METRICS1 *metrics)
 {
+    UINT32 i = layout->metrics.lineCount;
+
     if (!layout->line_alloc) {
         layout->line_alloc = 5;
         layout->linemetrics = heap_alloc(layout->line_alloc * sizeof(*layout->linemetrics));
@@ -1344,9 +1346,28 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
         layout->line_alloc *= 2;
     }
 
-    layout->linemetrics[layout->metrics.lineCount] = *metrics;
-    layout->lines[layout->metrics.lineCount].height = metrics->height;
-    layout->lines[layout->metrics.lineCount].baseline = metrics->baseline;
+    layout->linemetrics[i] = *metrics;
+
+    switch (layout->format.spacing.method)
+    {
+    case DWRITE_LINE_SPACING_METHOD_UNIFORM:
+        if (layout->format.spacing.method == DWRITE_LINE_SPACING_METHOD_UNIFORM) {
+            layout->linemetrics[i].height = layout->format.spacing.height;
+            layout->linemetrics[i].baseline = layout->format.spacing.baseline;
+        }
+        break;
+    case DWRITE_LINE_SPACING_METHOD_PROPORTIONAL:
+        if (layout->format.spacing.method == DWRITE_LINE_SPACING_METHOD_UNIFORM) {
+            layout->linemetrics[i].height = layout->format.spacing.height * metrics->height;
+            layout->linemetrics[i].baseline = layout->format.spacing.baseline * metrics->baseline;
+        }
+        break;
+    default:
+        /* using content values */;
+    }
+
+    layout->lines[i].height = metrics->height;
+    layout->lines[i].baseline = metrics->baseline;
 
     layout->metrics.lineCount++;
     return S_OK;
@@ -1604,17 +1625,19 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
     erun = layout_get_next_erun(layout, NULL);
     inrun = layout_get_next_inline_run(layout, NULL);
     for (line = 0; line < layout->metrics.lineCount; line++) {
-        origin_y += layout->linemetrics[line].baseline;
+        FLOAT pos_y = origin_y + layout->linemetrics[line].baseline;
 
         while (erun && erun->line == line) {
-            erun->origin_y = origin_y;
+            erun->origin_y = pos_y;
             erun = layout_get_next_erun(layout, erun);
         }
 
         while (inrun && inrun->line == line) {
-            inrun->origin_y = origin_y - inrun->baseline;
+            inrun->origin_y = pos_y - inrun->baseline;
             inrun = layout_get_next_inline_run(layout, inrun);
         }
+
+        origin_y += layout->linemetrics[line].height;
     }
 }
 
@@ -1890,6 +1913,42 @@ static void layout_add_line(struct dwrite_textlayout *layout, UINT32 first_clust
     *textpos += metrics.length;
 }
 
+static void layout_set_line_positions(struct dwrite_textlayout *layout)
+{
+    struct layout_effective_inline *inrun;
+    struct layout_effective_run *erun;
+    FLOAT origin_y;
+    UINT32 line;
+
+    /* Now all line info is here, update effective runs positions in flow direction */
+    erun = layout_get_next_erun(layout, NULL);
+    inrun = layout_get_next_inline_run(layout, NULL);
+
+    for (line = 0, origin_y = 0.0f; line < layout->metrics.lineCount; line++) {
+        FLOAT pos_y = origin_y + layout->linemetrics[line].baseline;
+
+        /* For all runs on this line */
+        while (erun && erun->line == line) {
+            erun->origin_y = pos_y;
+            erun = layout_get_next_erun(layout, erun);
+        }
+
+        /* Same for inline runs */
+        while (inrun && inrun->line == line) {
+            inrun->origin_y = pos_y - inrun->baseline;
+            inrun = layout_get_next_inline_run(layout, inrun);
+        }
+
+        origin_y += layout->linemetrics[line].height;
+    }
+
+    layout->metrics.height = origin_y;
+
+    /* Initial paragraph alignment is always near */
+    if (layout->format.paralign != DWRITE_PARAGRAPH_ALIGNMENT_NEAR)
+        layout_apply_par_alignment(layout);
+}
+
 static BOOL layout_can_wrap_after(const struct dwrite_textlayout *layout, UINT32 cluster)
 {
     if (layout->format.wrapping == DWRITE_WORD_WRAPPING_CHARACTER)
@@ -1902,10 +1961,10 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_effective_run *erun, *first_underlined;
-    UINT32 i, start, line, textpos, last_breaking_point;
-    struct layout_effective_inline *inrun;
-    FLOAT width, origin_y;
+    UINT32 i, start, textpos, last_breaking_point;
     DWRITE_LINE_METRICS1 metrics;
+    FLOAT width;
+    UINT32 line;
     HRESULT hr;
 
     if (!(layout->recompute & RECOMPUTE_LINES))
@@ -1918,7 +1977,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         return hr;
 
     layout->metrics.lineCount = 0;
-    line = 0;
     memset(&metrics, 0, sizeof(metrics));
 
     layout->metrics.height = 0.0f;
@@ -1971,7 +2029,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
        - there's no text, metrics come from first range in this case;
        - last ended with a mandatory break, metrics come from last text position.
     */
-    line = layout->metrics.lineCount - 1;
     if (layout->len == 0)
         hr = layout_set_dummy_line_metrics(layout, 0);
     else if (layout->clustermetrics[layout->cluster_count - 1].isNewline)
@@ -1983,20 +2040,11 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     layout->metrics.top = 0.0f;
     layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
 
-    /* Now all line info is here, update effective runs positions in flow direction */
+    /* Add explicit underlined runs */
     erun = layout_get_next_erun(layout, NULL);
     first_underlined = erun && erun->underlined ? erun : NULL;
-
-    inrun = layout_get_next_inline_run(layout, NULL);
-
-    origin_y = 0.0f;
     for (line = 0; line < layout->metrics.lineCount; line++) {
-
-        origin_y += layout->linemetrics[line].baseline;
-
-        /* For all runs on this line */
         while (erun && erun->line == line) {
-            erun->origin_y = origin_y;
             erun = layout_get_next_erun(layout, erun);
 
             if (first_underlined && (!erun || !erun->underlined)) {
@@ -2006,27 +2054,14 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             else if (!first_underlined && erun && erun->underlined)
                 first_underlined = erun;
         }
-
-        /* Same for inline runs */
-        while (inrun && inrun->line == line) {
-            inrun->origin_y = origin_y - inrun->baseline;
-            inrun = layout_get_next_inline_run(layout, inrun);
-        }
     }
 
-    /* Use last line origin y + line descent as total content height */
-    line--;
-    layout->metrics.height = origin_y + layout->linemetrics[line].height - layout->linemetrics[line].baseline;
+    /* Position runs in flow direction */
+    layout_set_line_positions(layout);
 
     /* Initial alignment is always leading */
     if (layout->format.textalignment != DWRITE_TEXT_ALIGNMENT_LEADING)
         layout_apply_text_alignment(layout);
-
-    /* Initial paragraph alignment is always near */
-    if (layout->format.paralign != DWRITE_PARAGRAPH_ALIGNMENT_NEAR)
-        layout_apply_par_alignment(layout);
-
-    layout->metrics.heightIncludingTrailingWhitespace = layout->metrics.height; /* FIXME: not true for vertical text */
 
     layout->recompute &= ~RECOMPUTE_LINES;
     return hr;
@@ -3880,8 +3915,39 @@ static HRESULT WINAPI dwritetextlayout3_SetLineSpacing(IDWriteTextLayout3 *iface
     if (FAILED(hr))
         return hr;
 
-    if (changed)
-        This->recompute |= RECOMPUTE_LINES_AND_OVERHANGS;
+    if (changed) {
+        if (!(This->recompute & RECOMPUTE_LINES)) {
+            UINT32 line;
+
+            switch (This->format.spacing.method)
+            {
+            case DWRITE_LINE_SPACING_METHOD_DEFAULT:
+                for (line = 0; line < This->metrics.lineCount; line++) {
+                    This->linemetrics[line].height = This->lines[line].height;
+                    This->linemetrics[line].baseline = This->lines[line].baseline;
+                }
+                break;
+            case DWRITE_LINE_SPACING_METHOD_UNIFORM:
+                for (line = 0; line < This->metrics.lineCount; line++) {
+                    This->linemetrics[line].height = This->format.spacing.height;
+                    This->linemetrics[line].baseline = This->format.spacing.baseline;
+                }
+                break;
+            case DWRITE_LINE_SPACING_METHOD_PROPORTIONAL:
+                for (line = 0; line < This->metrics.lineCount; line++) {
+                    This->linemetrics[line].height = This->format.spacing.height * This->lines[line].height;
+                    This->linemetrics[line].baseline = This->format.spacing.baseline * This->lines[line].baseline;
+                }
+                break;
+            default:
+                ;
+            }
+
+            layout_set_line_positions(This);
+        }
+
+        This->recompute |= RECOMPUTE_OVERHANGS;
+    }
 
     return S_OK;
 }

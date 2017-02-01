@@ -3633,10 +3633,8 @@ static void test_GetLineMetrics(void)
     ok(count == 2, "got %u\n", count);
 
     for (i = 0; i < count; i++) {
-    todo_wine {
         ok(metrics[i].height == 456.0f, "%u: got line height %f\n", i, metrics[i].height);
         ok(metrics[i].baseline == 123.0f, "%u: got line baseline %f\n", i, metrics[i].baseline);
-    }
     }
 
     IDWriteTextLayout_Release(layout);
