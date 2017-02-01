@@ -35,6 +35,7 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "inetcomm_private.h"
 
@@ -3562,10 +3563,70 @@ HRESULT WINAPI MimeGetAddressFormatW(REFIID riid, void *object, DWORD addr_type,
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI mime_obj_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    FIXME("(%s %p)\n", debugstr_guid(riid), ppv);
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI mime_obj_AddRef(IUnknown *iface)
+{
+    TRACE("\n");
+    return 2;
+}
+
+static ULONG WINAPI mime_obj_Release(IUnknown *iface)
+{
+    TRACE("\n");
+    return 1;
+}
+
+static const IUnknownVtbl mime_obj_vtbl = {
+    mime_obj_QueryInterface,
+    mime_obj_AddRef,
+    mime_obj_Release
+};
+
+static IUnknown mime_obj = { &mime_obj_vtbl };
+
 HRESULT WINAPI MimeOleObjectFromMoniker(BINDF bindf, IMoniker *moniker, IBindCtx *binding,
        REFIID riid, void **out, IMoniker **moniker_new)
 {
-    FIXME("(0x%08x, %p, %p, %s, %p, %p) stub\n", bindf, moniker, binding, debugstr_guid(riid), out, moniker_new);
+    WCHAR *display_name, *mhtml_url;
+    size_t len;
+    HRESULT hres;
 
-    return E_NOTIMPL;
+    static const WCHAR mhtml_prefixW[] = {'m','h','t','m','l',':'};
+
+    WARN("(0x%08x, %p, %p, %s, %p, %p) semi-stub\n", bindf, moniker, binding, debugstr_guid(riid), out, moniker_new);
+
+    if(!IsEqualGUID(&IID_IUnknown, riid)) {
+        FIXME("Unsupported riid %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    hres = IMoniker_GetDisplayName(moniker, NULL, NULL, &display_name);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("display name %s\n", debugstr_w(display_name));
+
+    len = strlenW(display_name);
+    mhtml_url = heap_alloc((len+1)*sizeof(WCHAR) + sizeof(mhtml_prefixW));
+    if(!mhtml_url)
+        return E_OUTOFMEMORY;
+
+    memcpy(mhtml_url, mhtml_prefixW, sizeof(mhtml_prefixW));
+    strcpyW(mhtml_url + sizeof(mhtml_prefixW)/sizeof(WCHAR), display_name);
+    HeapFree(GetProcessHeap(), 0, display_name);
+
+    hres = CreateURLMoniker(NULL, mhtml_url, moniker_new);
+    heap_free(mhtml_url);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: We most likely should start binding here and return something more meaningful as mime object. */
+    *out = &mime_obj;
+    return S_OK;
 }

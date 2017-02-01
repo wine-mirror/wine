@@ -106,6 +106,27 @@ static const char mhtml_page1[] =
     "\r\n\t\t\t\tVGVzdA==\r\n\r\n"
     "------=_NextPart_000_00--";
 
+static WCHAR *a2w(const char *str)
+{
+    WCHAR *ret;
+    int len;
+
+    if(!str)
+        return NULL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+static int strcmp_wa(const WCHAR *strw, const char *stra)
+{
+    WCHAR buf[512];
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
+    return lstrcmpW(strw, buf);
+}
+
 static void test_CreateVirtualStream(void)
 {
     HRESULT hr;
@@ -1207,6 +1228,53 @@ static void test_mhtml_protocol(void)
     test_mhtml_protocol_info();
 }
 
+static void test_MimeOleObjectFromMoniker(void)
+{
+    IMoniker *mon, *new_mon;
+    WCHAR *mhtml_url, *url;
+    IBindCtx *bind_ctx;
+    IUnknown *unk;
+    unsigned i;
+    HRESULT hres;
+
+    static const struct {
+        const char *url;
+        const char *mhtml_url;
+    } tests[] = {
+        {"file:///x:\\dir\\file.mht", "mhtml:file://x:\\dir\\file.mht"},
+        {"file:///x:/dir/file.mht", "mhtml:file://x:\\dir\\file.mht"},
+        {"http://www.winehq.org/index.html?query#hash", "mhtml:http://www.winehq.org/index.html?query#hash"},
+        {"../test.mht", "mhtml:../test.mht"}
+    };
+
+    for(i = 0; i < sizeof(tests)/sizeof(*tests); i++) {
+        url = a2w(tests[i].url);
+        hres = CreateURLMoniker(NULL, url, &mon);
+        ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
+        HeapFree(GetProcessHeap(), 0, url);
+
+        hres = CreateBindCtx(0, &bind_ctx);
+        ok(hres == S_OK, "CreateBindCtx failed: %08x\n", hres);
+
+        hres = MimeOleObjectFromMoniker(0, mon, bind_ctx, &IID_IUnknown, (void**)&unk, &new_mon);
+        ok(hres == S_OK || broken(!i && hres == INET_E_RESOURCE_NOT_FOUND), "MimeOleObjectFromMoniker failed: %08x\n", hres);
+        IBindCtx_Release(bind_ctx);
+        if(hres == INET_E_RESOURCE_NOT_FOUND) { /* winxp */
+            win_skip("Broken MHTML behaviour found. Skipping some tests.\n");
+            return;
+        }
+
+        hres = IMoniker_GetDisplayName(new_mon, NULL, NULL, &mhtml_url);
+        ok(hres == S_OK, "GetDisplayName failed: %08x\n", hres);
+        ok(!strcmp_wa(mhtml_url, tests[i].mhtml_url), "[%d] unexpected mhtml URL: %s\n", i, wine_dbgstr_w(mhtml_url));
+        CoTaskMemFree(mhtml_url);
+
+        IUnknown_Release(unk);
+        IMoniker_Release(new_mon);
+        IMoniker_Release(mon);
+    }
+}
+
 START_TEST(mimeole)
 {
     OleInitialize(NULL);
@@ -1223,6 +1291,7 @@ START_TEST(mimeole)
     test_BodyDeleteProp();
     test_MimeOleGetPropertySchema();
     test_mhtml_message();
+    test_MimeOleObjectFromMoniker();
     test_mhtml_protocol();
     OleUninitialize();
 }
