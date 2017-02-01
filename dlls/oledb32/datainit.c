@@ -587,12 +587,10 @@ static WCHAR *strstriW(const WCHAR *str, const WCHAR *sub)
     return r;
 }
 
-static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *outer, DWORD clsctx,
-                                LPWSTR initstring, REFIID riid, IUnknown **datasource)
+HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID riid, IUnknown **datasource)
 {
     static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r','=',0};
     static const WCHAR msdasqlW[] = {'M','S','D','A','S','Q','L',0};
-    datainit *This = impl_from_IDataInitialize(iface);
     BOOL datasource_created = FALSE;
     IDBProperties *dbprops;
     DBPROPSET *propset;
@@ -600,7 +598,6 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
     CLSID provclsid;
     HRESULT hr;
 
-    TRACE("(%p)->(%p 0x%x %s %s %p)\n", This, outer, clsctx, debugstr_w(initstring), debugstr_guid(riid), datasource);
 
     /* first get provider name */
     provclsid = IID_NULL;
@@ -725,6 +722,16 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
     }
 
     return hr;
+}
+
+static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *outer, DWORD clsctx,
+                                LPWSTR initstring, REFIID riid, IUnknown **datasource)
+{
+    datainit *This = impl_from_IDataInitialize(iface);
+
+    TRACE("(%p)->(%p 0x%x %s %s %p)\n", This, outer, clsctx, debugstr_w(initstring), debugstr_guid(riid), datasource);
+
+    return get_data_source(outer, clsctx, initstring, riid, datasource);
 }
 
 /* returns character length of string representation */

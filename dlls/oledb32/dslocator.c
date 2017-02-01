@@ -221,9 +221,10 @@ static ULONG WINAPI datainitialize_Release(IDataInitialize *iface)
 static HRESULT WINAPI datainitialize_GetDataSource(IDataInitialize *iface,
     IUnknown *outer, DWORD context, LPWSTR initstring, REFIID riid, IUnknown **datasource)
 {
-    FIXME("(%p)->(%p %#x %s %s %p): stub\n", iface, outer, context, debugstr_w(initstring), debugstr_guid(riid),
+    TRACE("(%p)->(%p %#x %s %s %p)\n", iface, outer, context, debugstr_w(initstring), debugstr_guid(riid),
         datasource);
-    return E_NOTIMPL;
+
+    return get_data_source(outer, context, initstring, riid, datasource);
 }
 
 static HRESULT WINAPI datainitialize_GetInitializationString(IDataInitialize *iface, IUnknown *datasource,

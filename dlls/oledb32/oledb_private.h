@@ -23,6 +23,9 @@ HRESULT create_error_info(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
 HRESULT create_oledb_rowpos(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
 HRESULT create_dslocator(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
 
+HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID riid,
+    IUnknown **datasource) DECLSPEC_HIDDEN;
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
