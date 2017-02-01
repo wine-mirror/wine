@@ -2021,7 +2021,7 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     data->window_rect = *window_rect;
     data->whole_rect  = *visible_rect;
     data->client_rect = *client_rect;
-    if (!data->ulw_layered)
+    if (data->cocoa_window && !data->ulw_layered)
     {
         if (surface) window_surface_add_ref(surface);
         if (new_style & WS_MINIMIZE)
