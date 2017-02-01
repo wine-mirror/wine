@@ -222,6 +222,11 @@ struct layout_cluster {
     UINT32 position;        /* relative to run, first cluster has 0 position */
 };
 
+struct layout_line {
+    FLOAT height;   /* height based on content */
+    FLOAT baseline; /* baseline based on content */
+};
+
 enum layout_recompute_mask {
     RECOMPUTE_CLUSTERS            = 1 << 0,
     RECOMPUTE_MINIMAL_WIDTH       = 1 << 1,
@@ -265,7 +270,8 @@ struct dwrite_textlayout {
     UINT32 cluster_count;
     FLOAT  minwidth;
 
-    DWRITE_LINE_METRICS1 *lines;
+    struct layout_line *lines;
+    DWRITE_LINE_METRICS1 *linemetrics;
     UINT32 line_alloc;
 
     DWRITE_TEXT_METRICS1 metrics;
@@ -1312,23 +1318,39 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
 {
     if (!layout->line_alloc) {
         layout->line_alloc = 5;
-        layout->lines = heap_alloc(layout->line_alloc*sizeof(*layout->lines));
-        if (!layout->lines)
+        layout->linemetrics = heap_alloc(layout->line_alloc * sizeof(*layout->linemetrics));
+        layout->lines = heap_alloc(layout->line_alloc * sizeof(*layout->lines));
+        if (!layout->linemetrics || !layout->lines) {
+            heap_free(layout->linemetrics);
+            heap_free(layout->lines);
+            layout->linemetrics = NULL;
+            layout->lines = NULL;
             return E_OUTOFMEMORY;
+        }
     }
 
     if (layout->metrics.lineCount == layout->line_alloc) {
-        DWRITE_LINE_METRICS1 *l = heap_realloc(layout->lines, layout->line_alloc*2*sizeof(*layout->lines));
-        if (!l)
+        DWRITE_LINE_METRICS1 *metrics;
+        struct layout_line *lines;
+
+        if ((metrics = heap_realloc(layout->linemetrics, layout->line_alloc * 2 * sizeof(*layout->linemetrics))))
+            layout->linemetrics = metrics;
+        if ((lines = heap_realloc(layout->lines, layout->line_alloc * 2 * sizeof(*layout->lines))))
+            layout->lines = lines;
+
+        if (!metrics || !lines)
             return E_OUTOFMEMORY;
-        layout->lines = l;
+
         layout->line_alloc *= 2;
     }
 
-    layout->lines[layout->metrics.lineCount++] = *metrics;
+    layout->linemetrics[layout->metrics.lineCount] = *metrics;
+    layout->lines[layout->metrics.lineCount].height = metrics->height;
+    layout->lines[layout->metrics.lineCount].baseline = metrics->baseline;
+
+    layout->metrics.lineCount++;
     return S_OK;
 }
-
 
 static inline struct layout_effective_run *layout_get_next_erun(struct dwrite_textlayout *layout,
     const struct layout_effective_run *cur)
@@ -1582,7 +1604,7 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
     erun = layout_get_next_erun(layout, NULL);
     inrun = layout_get_next_inline_run(layout, NULL);
     for (line = 0; line < layout->metrics.lineCount; line++) {
-        origin_y += layout->lines[line].baseline;
+        origin_y += layout->linemetrics[line].baseline;
 
         while (erun && erun->line == line) {
             erun->origin_y = origin_y;
@@ -1970,7 +1992,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     origin_y = 0.0f;
     for (line = 0; line < layout->metrics.lineCount; line++) {
 
-        origin_y += layout->lines[line].baseline;
+        origin_y += layout->linemetrics[line].baseline;
 
         /* For all runs on this line */
         while (erun && erun->line == line) {
@@ -1994,7 +2016,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
     /* Use last line origin y + line descent as total content height */
     line--;
-    layout->metrics.height = origin_y + layout->lines[line].height - layout->lines[line].baseline;
+    layout->metrics.height = origin_y + layout->linemetrics[line].height - layout->linemetrics[line].baseline;
 
     /* Initial alignment is always leading */
     if (layout->format.textalignment != DWRITE_TEXT_ALIGNMENT_LEADING)
@@ -2736,6 +2758,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout3 *iface)
         heap_free(This->actual_breakpoints);
         heap_free(This->clustermetrics);
         heap_free(This->clusters);
+        heap_free(This->linemetrics);
         heap_free(This->lines);
         heap_free(This->str);
         heap_free(This);
@@ -3457,7 +3480,7 @@ static HRESULT WINAPI dwritetextlayout_GetLineMetrics(IDWriteTextLayout3 *iface,
     if (metrics) {
         UINT32 i, c = min(max_count, This->metrics.lineCount);
         for (i = 0; i < c; i++)
-            memcpy(metrics + i, This->lines + i, sizeof(*metrics));
+            memcpy(metrics + i, This->linemetrics + i, sizeof(*metrics));
     }
 
     *count = This->metrics.lineCount;
@@ -3886,7 +3909,7 @@ static HRESULT WINAPI dwritetextlayout3_GetLineMetrics(IDWriteTextLayout3 *iface
         return hr;
 
     if (metrics)
-        memcpy(metrics, This->lines, sizeof(*metrics)*min(max_count, This->metrics.lineCount));
+        memcpy(metrics, This->linemetrics, sizeof(*metrics) * min(max_count, This->metrics.lineCount));
 
     *count = This->metrics.lineCount;
     return max_count >= This->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
@@ -4751,6 +4774,7 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     layout->cluster_count = 0;
     layout->clustermetrics = NULL;
     layout->clusters = NULL;
+    layout->linemetrics = NULL;
     layout->lines = NULL;
     layout->line_alloc = 0;
     layout->minwidth = 0.0f;
