@@ -3340,7 +3340,7 @@ void macdrv_set_view_frame(macdrv_view v, CGRect rect)
 
     if (CGRectIsNull(rect)) rect = CGRectZero;
 
-    OnMainThread(^{
+    OnMainThreadAsync(^{
         NSRect newFrame = NSRectFromCGRect(cgrect_mac_from_win(rect));
         NSRect oldFrame = [view frame];
 
@@ -3387,7 +3387,7 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
     if (!superview)
         superview = [window contentView];
 
-    OnMainThread(^{
+    OnMainThreadAsync(^{
         if (superview == [view superview])
         {
             NSArray* subviews = [superview subviews];
@@ -3430,7 +3430,7 @@ void macdrv_set_view_hidden(macdrv_view v, int hidden)
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     WineContentView* view = (WineContentView*)v;
 
-    OnMainThread(^{
+    OnMainThreadAsync(^{
         [view setHidden:hidden];
     });
 
