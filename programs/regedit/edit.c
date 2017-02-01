@@ -76,18 +76,13 @@ static INT __cdecl messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ..
     return result;
 }
 
-void __cdecl error(HWND hwnd, INT resId, ...)
+void __cdecl error_code_messagebox(HWND hwnd, unsigned int msg_id, ...)
 {
     __ms_va_list ap;
 
-    __ms_va_start(ap, resId);
-    vmessagebox(hwnd, MB_OK | MB_ICONERROR, IDS_ERROR, resId, ap);
+    __ms_va_start(ap, msg_id);
+    vmessagebox(hwnd, MB_OK|MB_ICONERROR, IDS_ERROR, msg_id, ap);
     __ms_va_end(ap);
-}
-
-static void error_code_messagebox(HWND hwnd, unsigned int msg_id)
-{
-    vmessagebox(hwnd, MB_OK|MB_ICONERROR, IDS_ERROR, msg_id, NULL);
 }
 
 static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
@@ -214,17 +209,17 @@ static LPWSTR read_value(HWND hwnd, HKEY hKey, LPCWSTR valueName, DWORD *lpType,
             *buffer = '\0';
             return buffer;
         }
-        error(hwnd, IDS_BAD_VALUE, valueName);
+        error_code_messagebox(hwnd, IDS_BAD_VALUE, valueName);
         goto done;
     }
     if ( *lpType == REG_DWORD ) valueDataLen = sizeof(DWORD);
     if (!(buffer = HeapAlloc(GetProcessHeap(), 0, valueDataLen+sizeof(WCHAR)))) {
-        error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
+        error_code_messagebox(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
         goto done;
     }
     lRet = RegQueryValueExW(hKey, valueName, 0, 0, (LPBYTE)buffer, &valueDataLen);
     if (lRet != ERROR_SUCCESS) {
-        error(hwnd, IDS_BAD_VALUE, valueName);
+        error_code_messagebox(hwnd, IDS_BAD_VALUE, valueName);
         goto done;
     }
     if((valueDataLen % sizeof(WCHAR)) == 0)
@@ -375,7 +370,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
             else error_code_messagebox(hwnd, IDS_SET_VALUE_FAILED);
         }
     } else {
-        error(hwnd, IDS_UNSUPPORTED_TYPE, type);
+        error_code_messagebox(hwnd, IDS_UNSUPPORTED_TYPE, type);
     }
 
 done:
@@ -402,7 +397,7 @@ BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath)
 	
     lRet = SHDeleteKeyW(hKeyRoot, keyPath);
     if (lRet != ERROR_SUCCESS) {
-	error(hwnd, IDS_BAD_KEY, keyPath);
+        error_code_messagebox(hwnd, IDS_BAD_KEY, keyPath);
 	goto done;
     }
     result = TRUE;
@@ -431,7 +426,7 @@ BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, B
 
     lRet = RegDeleteValueW(hKey, valueName ? valueName : &empty);
     if (lRet != ERROR_SUCCESS && valueName) {
-        error(hwnd, IDS_BAD_VALUE, valueName);
+        error_code_messagebox(hwnd, IDS_BAD_VALUE, valueName);
     }
     if (lRet != ERROR_SUCCESS) goto done;
     result = TRUE;

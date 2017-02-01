@@ -773,7 +773,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     SetFocus(g_pChildWnd->hTreeWnd);
                 }
             } else {
-                error(hWnd, IDS_NOTFOUND, searchString);
+                error_code_messagebox(hWnd, IDS_NOTFOUND, searchString);
             }
         }
         break;

@@ -143,7 +143,7 @@ extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName, BOOL showMessageBox);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR oldName, LPCWSTR newName);
 extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName);
-extern void __cdecl error(HWND hwnd, INT resId, ...);
+extern void __cdecl error_code_messagebox(HWND hwnd, unsigned int msg_id, ...);
 
 /* hexedit.c */
 extern void HexEdit_Register(void);
