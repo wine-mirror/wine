@@ -12094,7 +12094,7 @@ msgstr "Bekräfta borttagning av värde"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Hittade inte den sökta strängen '%s'"
 
 #: regedit.rc:186

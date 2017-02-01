@@ -12446,7 +12446,7 @@ msgstr "Waarde verwijderen bevestigen"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Tekenreeks '%s' niet gevonden"
 
 #: regedit.rc:186

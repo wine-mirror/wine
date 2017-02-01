@@ -12201,7 +12201,7 @@ msgstr "Подтверждение"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Искомая строка «%s» не найдена"
 
 #: regedit.rc:186

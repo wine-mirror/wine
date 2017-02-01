@@ -12466,7 +12466,7 @@ msgstr "값 지우기 확인"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "'%s'을 찾을 수 없습니다"
 
 #: regedit.rc:186

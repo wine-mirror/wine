@@ -12184,8 +12184,8 @@ msgid "Confirm Value Delete"
 msgstr "Confirm Value Delete"
 
 #: regedit.rc:189
-msgid "The search string '%1' was not found."
-msgstr "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
+msgstr "Search complete. The string '%1' was not found."
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"

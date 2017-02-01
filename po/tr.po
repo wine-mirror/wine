@@ -12219,7 +12219,7 @@ msgstr "Değer silmeyi onayla"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Arama dizesi '%s' bulunamadı"
 
 #: regedit.rc:186

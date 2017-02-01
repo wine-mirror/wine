@@ -11755,7 +11755,7 @@ msgid "Confirm Value Delete"
 msgstr ""
 
 #: regedit.rc:189
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr ""
 
 #: regedit.rc:186

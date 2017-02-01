@@ -12281,7 +12281,7 @@ msgstr "Bitte bestätigen"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Suchfolge '%s' wurde nicht gefunden"
 
 #: regedit.rc:186

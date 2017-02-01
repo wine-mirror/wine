@@ -11984,7 +11984,7 @@ msgstr "确认删除值"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "未找到字符串 '%s'"
 
 #: regedit.rc:186

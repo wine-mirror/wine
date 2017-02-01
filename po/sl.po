@@ -12421,7 +12421,7 @@ msgstr "Potrditev brisanja vrednosti"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Iskanega niza '%s' ni mogoče najti"
 
 #: regedit.rc:186

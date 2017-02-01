@@ -12276,7 +12276,7 @@ msgstr "Confirmar exclusão de valor"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Chave de pesquisa '%s' não encontrada"
 
 #: regedit.rc:186

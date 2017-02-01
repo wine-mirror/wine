@@ -12294,7 +12294,7 @@ msgstr "Potwierdzenie kasowania"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Nie udało się wyszukać ciągu '%s'"
 
 #: regedit.rc:186

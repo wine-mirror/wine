@@ -185,7 +185,7 @@ BEGIN
     IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
     IDS_NEWKEY              "New Key #%d"
     IDS_NEWVALUE            "New Value #%d"
-    IDS_NOTFOUND            "The search string '%1' was not found."
+    IDS_NOTFOUND            "Search complete. The string '%1' was not found."
 END
 
 STRINGTABLE

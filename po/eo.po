@@ -11732,7 +11732,7 @@ msgstr "Konfirmi forigon de valoro"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Mi ne trovis la ĉenon %s"
 
 #: regedit.rc:186

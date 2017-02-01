@@ -12204,7 +12204,7 @@ msgstr "Reikšmės šalinimo patvirtinimas"
 #: regedit.rc:189
 #, fuzzy
 #| msgid "Search string '%s' not found"
-msgid "The search string '%1' was not found."
+msgid "Search complete. The string '%1' was not found."
 msgstr "Ieškoma eilutė „%s“ nerasta"
 
 #: regedit.rc:186
