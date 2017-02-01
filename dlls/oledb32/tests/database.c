@@ -295,6 +295,8 @@ static void test_database(void)
     static WCHAR extended_prop[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','d','u','m','m','y',';',
         'E','x','t','e','n','d','e','d',' ','P','r','o','p','e','r','t','i','e','s','=','\"','D','R','I','V','E','R','=','A',
         ' ','W','i','n','e',' ','O','D','B','C',' ','d','r','i','v','e','r',';','U','I','D','=','w','i','n','e',';','\"',';',0};
+    static WCHAR extended_prop2[] = {'d','a','t','a',' ','s','o','u','r','c','e','=','\'','d','u','m','m','y','\'',';',
+        'c','u','s','t','o','m','p','r','o','p','=','\'','1','2','3','.','4','\'',';',0};
     IDataInitialize *datainit = NULL;
     HRESULT hr;
 
@@ -312,6 +314,7 @@ static void test_database(void)
     test_GetDataSource(initstring_lower);
     test_GetDataSource2(customprop);
     test_GetDataSource2(extended_prop);
+    test_GetDataSource2(extended_prop2);
 }
 
 static void free_dispparams(DISPPARAMS *params)
