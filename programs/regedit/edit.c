@@ -48,15 +48,12 @@ struct edit_params
 
 static INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
 {
-    static const WCHAR errorW[] = {'E','r','r','o','r',0};
-    static const WCHAR unknownW[] = {'U','n','k','n','o','w','n',' ','e','r','r','o','r',' ','s','t','r','i','n','g','!',0};
-
     WCHAR title[256];
     WCHAR errfmt[1024];
     WCHAR errstr[1024];
 
-    if (!LoadStringW(hInst, titleId, title, COUNT_OF(title))) lstrcpyW(title, errorW);
-    if (!LoadStringW(hInst, resId, errfmt, COUNT_OF(errfmt))) lstrcpyW(errfmt, unknownW);
+    LoadStringW(hInst, titleId, title, COUNT_OF(title));
+    LoadStringW(hInst, resId, errfmt, COUNT_OF(errfmt));
 
     vsnprintfW(errstr, COUNT_OF(errstr), errfmt, ap);
 
@@ -87,20 +84,14 @@ void error(HWND hwnd, INT resId, ...)
 static void error_code_messagebox(HWND hwnd, DWORD error_code)
 {
     LPWSTR lpMsgBuf;
-    DWORD status;
     WCHAR title[256];
-    static WCHAR fallback[] = {'E','r','r','o','r',' ','d','i','s','p','l','a','y','i','n','g',' ','e','r','r','o','r',' ','m','e','s','s','a','g','e','.','\n',0};
-    static const WCHAR title_error[] = {'E','r','r','o','r',0};
 
-    if (!LoadStringW(hInst, IDS_ERROR, title, COUNT_OF(title)))
-        lstrcpyW(title, title_error);
-    status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                           NULL, error_code, 0, (LPWSTR)&lpMsgBuf, 0, NULL);
-    if (!status)
-        lpMsgBuf = fallback;
+    LoadStringW(hInst, IDS_ERROR, title, COUNT_OF(title));
+    FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                   NULL, error_code, 0, (LPWSTR)&lpMsgBuf, 0, NULL);
+
     MessageBoxW(hwnd, lpMsgBuf, title, MB_OK | MB_ICONERROR);
-    if (lpMsgBuf != fallback)
-        LocalFree(lpMsgBuf);
+    LocalFree(lpMsgBuf);
 }
 
 static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
