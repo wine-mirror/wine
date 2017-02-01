@@ -3624,6 +3624,21 @@ static void test_GetLineMetrics(void)
     ok(metrics[3].height == metrics[1].height, "got %f, old %f\n", metrics[3].height, metrics[1].height);
     ok(metrics[3].baseline == metrics[1].baseline, "got %f, old %f\n", metrics[3].baseline, metrics[1].baseline);
 
+    /* Switch to uniform spacing */
+    hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_UNIFORM, 456.0f, 123.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 2, "got %u\n", count);
+
+    for (i = 0; i < count; i++) {
+    todo_wine {
+        ok(metrics[i].height == 456.0f, "%u: got line height %f\n", i, metrics[i].height);
+        ok(metrics[i].baseline == 123.0f, "%u: got line baseline %f\n", i, metrics[i].baseline);
+    }
+    }
+
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
