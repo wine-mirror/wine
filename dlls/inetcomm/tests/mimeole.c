@@ -27,6 +27,7 @@
 #include "ocidl.h"
 
 #include "mimeole.h"
+#include "wininet.h"
 
 #include <stdio.h>
 
@@ -1161,14 +1162,90 @@ static void test_MimeOleGetPropertySchema(void)
     IMimePropertySchema_Release(schema);
 }
 
+static const struct {
+    const char *base_url;
+    const char *relative_url;
+    const char *expected_result;
+    BOOL todo;
+} combine_tests[] = {
+    {
+        "mhtml:file:///c:/dir/test.mht", "http://test.org",
+        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org"
+    }, {
+        "mhtml:file:///c:/dir/test.mht", "3D\"http://test.org\"",
+        "mhtml:file:///c:/dir/test.mht!x-usc:3D\"http://test.org\""
+    }, {
+        "mhtml:file:///c:/dir/test.mht", "123abc",
+        "mhtml:file:///c:/dir/test.mht!x-usc:123abc"
+    }, {
+        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "123abc",
+        "mhtml:file:///c:/dir/test.mht!x-usc:123abc"
+    }, {
+        "MhtMl:file:///c:/dir/test.mht!x-usc:http://test.org/dir/dir2/file.html", "../..",
+        "mhtml:file:///c:/dir/test.mht!x-usc:../.."
+    }, {"mhtml:file:///c:/dir/test.mht!x-usc:file:///c:/dir/dir2/file.html", "../..",
+        "mhtml:file:///c:/dir/test.mht!x-usc:../.."
+    }, {
+        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "",
+        "mhtml:file:///c:/dir/test.mht"
+    }, {
+        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "mhtml:file:///d:/file.html",
+        "file:///d:/file.html", TRUE
+    }, {
+        "mhtml:file:///c:/dir/test.mht!x-usc:http://test.org", "mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org",
+        "mhtml:file:///c:/dir2/test.mht!x-usc:http://test.org", TRUE
+    }, {
+        "mhtml:file:///c:/dir/test.mht!http://test.org", "123abc",
+        "mhtml:file:///c:/dir/test.mht!x-usc:123abc"
+    }, {
+        "mhtml:file:///c:/dir/test.mht!http://test.org", "",
+        "mhtml:file:///c:/dir/test.mht"
+    }
+};
+
 static void test_mhtml_protocol_info(void)
 {
+    WCHAR *base_url, *relative_url, combined_url[INTERNET_MAX_URL_LENGTH];
     IInternetProtocolInfo *protocol_info;
+    DWORD combined_len;
+    unsigned i, exlen;
     HRESULT hres;
+
+    static const WCHAR http_url[] = {'h','t','t','p',':','/','/','t','e','s','t','.','o','r','g',0};
 
     hres = CoCreateInstance(&CLSID_IMimeHtmlProtocol, NULL, CLSCTX_INPROC_SERVER,
                             &IID_IInternetProtocolInfo, (void**)&protocol_info);
     ok(hres == S_OK, "Could not create protocol info: %08x\n", hres);
+
+    for(i = 0; i < sizeof(combine_tests)/sizeof(*combine_tests); i++) {
+        base_url = a2w(combine_tests[i].base_url);
+        relative_url = a2w(combine_tests[i].relative_url);
+
+        combined_len = 0xdeadbeef;
+        hres = IInternetProtocolInfo_CombineUrl(protocol_info, base_url, relative_url, ICU_BROWSER_MODE,
+                                                combined_url, sizeof(combined_url)/sizeof(WCHAR), &combined_len, 0);
+        todo_wine_if(combine_tests[i].todo)
+        ok(hres == S_OK, "[%u] CombineUrl failed: %08x\n", i, hres);
+        if(SUCCEEDED(hres)) {
+            exlen = strlen(combine_tests[i].expected_result);
+            ok(combined_len == exlen, "[%u] combined len is %u, expected %u\n", i, combined_len, exlen);
+            ok(!strcmp_wa(combined_url, combine_tests[i].expected_result), "[%u] combined URL is %s, expected %s\n",
+               i, wine_dbgstr_w(combined_url), combine_tests[i].expected_result);
+
+            combined_len = 0xdeadbeef;
+            hres = IInternetProtocolInfo_CombineUrl(protocol_info, base_url, relative_url, ICU_BROWSER_MODE,
+                                                    combined_url, exlen, &combined_len, 0);
+            ok(hres == E_FAIL, "[%u] CombineUrl returned: %08x\n", i, hres);
+            ok(!combined_len, "[%u] combined_len = %u\n", i, combined_len);
+        }
+
+        HeapFree(GetProcessHeap(), 0, base_url);
+        HeapFree(GetProcessHeap(), 0, relative_url);
+    }
+
+    hres = IInternetProtocolInfo_CombineUrl(protocol_info, http_url, http_url, ICU_BROWSER_MODE,
+                                            combined_url, sizeof(combined_url)/sizeof(WCHAR), &combined_len, 0);
+    ok(hres == E_FAIL, "CombineUrl failed: %08x\n", hres);
 
     IInternetProtocolInfo_Release(protocol_info);
 }
@@ -1194,6 +1271,8 @@ static const IUnknownVtbl outer_vtbl = {
     outer_AddRef,
     outer_Release
 };
+
+static BOOL broken_mhtml_resolver;
 
 static void test_mhtml_protocol(void)
 {
@@ -1225,7 +1304,8 @@ static void test_mhtml_protocol(void)
 
     IClassFactory_Release(class_factory);
 
-    test_mhtml_protocol_info();
+    if(!broken_mhtml_resolver)
+        test_mhtml_protocol_info();
 }
 
 static void test_MimeOleObjectFromMoniker(void)
@@ -1261,6 +1341,7 @@ static void test_MimeOleObjectFromMoniker(void)
         IBindCtx_Release(bind_ctx);
         if(hres == INET_E_RESOURCE_NOT_FOUND) { /* winxp */
             win_skip("Broken MHTML behaviour found. Skipping some tests.\n");
+            broken_mhtml_resolver = TRUE;
             return;
         }
 
