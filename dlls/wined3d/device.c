@@ -2818,6 +2818,13 @@ void CDECL wined3d_device_set_compute_shader(struct wined3d_device *device, stru
         wined3d_shader_decref(prev);
 }
 
+void CDECL wined3d_device_set_cs_cb(struct wined3d_device *device, unsigned int idx, struct wined3d_buffer *buffer)
+{
+    TRACE("device %p, idx %u, buffer %p.\n", device, idx, buffer);
+
+    wined3d_device_set_constant_buffer(device, WINED3D_SHADER_TYPE_COMPUTE, idx, buffer);
+}
+
 void CDECL wined3d_device_set_unordered_access_view(struct wined3d_device *device,
         unsigned int idx, struct wined3d_unordered_access_view *uav)
 {
