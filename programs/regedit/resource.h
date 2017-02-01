@@ -151,6 +151,15 @@
 #define IDC_FIND_WHOLE                  2008
 #define IDD_EDIT_MULTI_STRING           2009
 
+#define IDS_SET_VALUE_FAILED            2010
+#define IDS_CREATE_KEY_FAILED           2011
+#define IDS_CREATE_VALUE_FAILED         2012
+#define IDS_KEY_EXISTS                  2013
+#define IDS_VALUE_EXISTS                2014
+#define IDS_DELETE_KEY_FAILED           2015
+#define IDS_RENAME_KEY_FAILED           2016
+#define IDS_RENAME_VALUE_FAILED         2017
+
 #define IDC_EXPORT_BASE                 100
 #define IDC_EXPORT_ALL                  101
 #define IDC_EXPORT_SELECTED             102

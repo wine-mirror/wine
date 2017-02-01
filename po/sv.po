@@ -65,8 +65,8 @@ msgstr "Supportinformation"
 #: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
 #: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162 oleview.rc:175
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
-#: progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258 regedit.rc:271
-#: regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442 taskmgr.rc:517
+#: progman.rc:199 progman.rc:216 regedit.rc:259 regedit.rc:270 regedit.rc:283
+#: regedit.rc:299 regedit.rc:312 regedit.rc:325 taskmgr.rc:442 taskmgr.rc:517
 #: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:128
 #: winefile.rc:151 winefile.rc:181 winemine.rc:71 winemine.rc:81 winemine.rc:95
 #: wordpad.rc:215 wordpad.rc:226 wordpad.rc:244 wordpad.rc:257
@@ -147,8 +147,8 @@ msgstr "&Installera"
 #: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:163 oleview.rc:176 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
-#: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
-#: regedit.rc:301 regedit.rc:314 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
+#: progman.rc:217 regedit.rc:260 regedit.rc:271 regedit.rc:284 regedit.rc:300
+#: regedit.rc:313 regedit.rc:326 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
 #: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:129
 #: winefile.rc:152 winefile.rc:182 winemine.rc:96 wordpad.rc:216 wordpad.rc:227
 #: wordpad.rc:245 wordpad.rc:258
@@ -387,7 +387,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:237 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:249 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Stäng"
@@ -446,7 +446,7 @@ msgstr "Skrivare:"
 msgid "Print range"
 msgstr "Skriv ut"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:219
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:231
 msgid "&All"
 msgstr "&Allt"
 
@@ -616,7 +616,7 @@ msgstr "&Lägg till egendefinierad färg"
 msgid "&Define Custom Colors >>"
 msgstr "&Definiera egen färg >>"
 
-#: comdlg32.rc:316 regedit.rc:226 regedit.rc:236
+#: comdlg32.rc:316 regedit.rc:238 regedit.rc:248
 msgid "Find"
 msgstr "Sök"
 
@@ -10785,7 +10785,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:323 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:335 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10805,7 +10805,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:324 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:336 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11659,83 +11659,83 @@ msgstr "&Om Registereditorn"
 msgid "Modify Binary Data..."
 msgstr "Ändra binärdata..."
 
-#: regedit.rc:218
+#: regedit.rc:230
 msgid "Export registry"
 msgstr "&Exportera register"
 
-#: regedit.rc:220
+#: regedit.rc:232
 msgid "S&elected branch:"
 msgstr "&Markerad del:"
 
-#: regedit.rc:229
+#: regedit.rc:241
 msgid "Find:"
 msgstr "Sök:"
 
-#: regedit.rc:231
+#: regedit.rc:243
 msgid "Find in:"
 msgstr "Sök i:"
 
-#: regedit.rc:232
+#: regedit.rc:244
 msgid "Keys"
 msgstr "Nycklar"
 
-#: regedit.rc:233
+#: regedit.rc:245
 msgid "Value names"
 msgstr "Värdenamn"
 
-#: regedit.rc:234
+#: regedit.rc:246
 msgid "Value content"
 msgstr "Värdeinnehåll"
 
-#: regedit.rc:235
+#: regedit.rc:247
 msgid "Whole string only"
 msgstr "Enbart hela strängar"
 
-#: regedit.rc:242
+#: regedit.rc:254
 msgid "Add Favorite"
 msgstr "Lägg till favorit"
 
-#: regedit.rc:245 regedit.rc:256
+#: regedit.rc:257 regedit.rc:268
 msgid "Name:"
 msgstr "Namn:"
 
-#: regedit.rc:253
+#: regedit.rc:265
 msgid "Remove Favorite"
 msgstr "Ta bort favorit"
 
-#: regedit.rc:264
+#: regedit.rc:276
 msgid "Edit String"
 msgstr "Redigera sträng"
 
-#: regedit.rc:267 regedit.rc:280 regedit.rc:296 regedit.rc:309
+#: regedit.rc:279 regedit.rc:292 regedit.rc:308 regedit.rc:321
 msgid "Value name:"
 msgstr "Värdenamn:"
 
-#: regedit.rc:269 regedit.rc:282 regedit.rc:298 regedit.rc:311
+#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
 msgid "Value data:"
 msgstr "Värdedata:"
 
-#: regedit.rc:277
+#: regedit.rc:289
 msgid "Edit DWORD"
 msgstr "Redigera DWORD"
 
-#: regedit.rc:284
+#: regedit.rc:296
 msgid "Base"
 msgstr "Bas"
 
-#: regedit.rc:285
+#: regedit.rc:297
 msgid "Hexadecimal"
 msgstr "Hexadecimal"
 
-#: regedit.rc:286
+#: regedit.rc:298
 msgid "Decimal"
 msgstr "Decimal"
 
-#: regedit.rc:293
+#: regedit.rc:305
 msgid "Edit Binary"
 msgstr "Redigera binär"
 
-#: regedit.rc:306
+#: regedit.rc:318
 msgid "Edit Multi-String"
 msgstr "Redigera flersträng"
 
@@ -11797,7 +11797,55 @@ msgstr "(kunde inte visa värde)"
 msgid "(unknown %d)"
 msgstr "(okänt %d)"
 
-#: regedit.rc:359
+#: regedit.rc:212
+#, fuzzy
+#| msgid "reg: Unable to access remote machine\n"
+msgid "Unable to modify the selected registry value."
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+
+#: regedit.rc:213
+#, fuzzy
+#| msgid "reg: Unable to access remote machine\n"
+msgid "Unable to create a new registry key."
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+
+#: regedit.rc:214
+#, fuzzy
+#| msgid "reg: Unable to access remote machine\n"
+msgid "Unable to create a new registry value."
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+
+#: regedit.rc:215
+msgid ""
+"Unable to rename the selected key.\n"
+"The specified key name already exists."
+msgstr ""
+
+#: regedit.rc:216
+msgid ""
+"Unable to rename the selected value.\n"
+"The specified value name already exists."
+msgstr ""
+
+#: regedit.rc:217
+#, fuzzy
+#| msgid "reg: Unable to access remote machine\n"
+msgid "Unable to delete the selected registry key."
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+
+#: regedit.rc:218
+#, fuzzy
+#| msgid "reg: Unable to access remote machine\n"
+msgid "Unable to rename the selected registry key."
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+
+#: regedit.rc:219
+#, fuzzy
+#| msgid "reg: Unable to access remote machine\n"
+msgid "Unable to rename the selected registry value."
+msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
+
+#: regedit.rc:371
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -11828,105 +11876,105 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
 
-#: regedit.rc:360
+#: regedit.rc:372
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: regedit.rc:361
+#: regedit.rc:373
 msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
-#: regedit.rc:362
+#: regedit.rc:374
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
 msgstr "Inget kommando angavs."
 
-#: regedit.rc:363
+#: regedit.rc:375
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: regedit.rc:364
+#: regedit.rc:376
 msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
-#: regedit.rc:365
+#: regedit.rc:377
 #, fuzzy
 #| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
 
-#: regedit.rc:366
+#: regedit.rc:378
 #, fuzzy
 #| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
 msgstr "Ogiltig referensoperation.\n"
 
-#: regedit.rc:367
+#: regedit.rc:379
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
-#: regedit.rc:368
+#: regedit.rc:380
 #, fuzzy
 #| msgid "reg: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "reg: Ogiltigt nyckelnamn\n"
 
-#: regedit.rc:369
+#: regedit.rc:381
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: regedit.rc:370
+#: regedit.rc:382
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: regedit.rc:371
+#: regedit.rc:383
 #, fuzzy
 #| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "reg: Ej stödd typ [%1] i registret\n"
 
-#: regedit.rc:372
+#: regedit.rc:384
 #, fuzzy
 #| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
 
-#: regedit.rc:373
+#: regedit.rc:385
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "Inget kommando angavs."
 
-#: regedit.rc:374
+#: regedit.rc:386
 #, fuzzy
 #| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
 
-#: regedit.rc:375
+#: regedit.rc:387
 #, fuzzy
 #| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
 
-#: regedit.rc:376
+#: regedit.rc:388
 #, fuzzy
 #| msgid "reg: Unsupported registry data type [%1]\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "reg: Ej stödd typ [%1] i registret\n"
 
-#: regedit.rc:377
+#: regedit.rc:389
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: regedit.rc:378
+#: regedit.rc:390
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:379
+#: regedit.rc:391
 #, fuzzy
 #| msgid ""
 #| "reg: The system was unable to find the specified registry key or value\n"
@@ -11935,7 +11983,7 @@ msgid ""
 msgstr ""
 "reg: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
 
-#: regedit.rc:380
+#: regedit.rc:392
 #, fuzzy
 #| msgid "reg: Unable to access remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"

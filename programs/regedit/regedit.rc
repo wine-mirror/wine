@@ -206,6 +206,18 @@ BEGIN
     IDS_REGISTRY_UNKNOWN_TYPE        "(unknown %d)"
 END
 
+STRINGTABLE
+BEGIN
+    IDS_SET_VALUE_FAILED     "Unable to modify the selected registry value."
+    IDS_CREATE_KEY_FAILED    "Unable to create a new registry key."
+    IDS_CREATE_VALUE_FAILED  "Unable to create a new registry value."
+    IDS_KEY_EXISTS           "Unable to rename the selected key.\nThe specified key name already exists."
+    IDS_VALUE_EXISTS         "Unable to rename the selected value.\nThe specified value name already exists."
+    IDS_DELETE_KEY_FAILED    "Unable to delete the selected registry key."
+    IDS_RENAME_KEY_FAILED    "Unable to rename the selected registry key."
+    IDS_RENAME_VALUE_FAILED  "Unable to rename the selected registry value."
+END
+
 /*
  * Dialogs
  */

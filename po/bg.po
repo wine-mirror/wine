@@ -65,8 +65,8 @@ msgstr "Информация"
 #: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
 #: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162 oleview.rc:175
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
-#: progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258 regedit.rc:271
-#: regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442 taskmgr.rc:517
+#: progman.rc:199 progman.rc:216 regedit.rc:259 regedit.rc:270 regedit.rc:283
+#: regedit.rc:299 regedit.rc:312 regedit.rc:325 taskmgr.rc:442 taskmgr.rc:517
 #: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:128
 #: winefile.rc:151 winefile.rc:181 winemine.rc:71 winemine.rc:81 winemine.rc:95
 #: wordpad.rc:215 wordpad.rc:226 wordpad.rc:244 wordpad.rc:257
@@ -151,8 +151,8 @@ msgstr "Инсталирай"
 #: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:163 oleview.rc:176 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
-#: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
-#: regedit.rc:301 regedit.rc:314 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
+#: progman.rc:217 regedit.rc:260 regedit.rc:271 regedit.rc:284 regedit.rc:300
+#: regedit.rc:313 regedit.rc:326 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
 #: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:129
 #: winefile.rc:152 winefile.rc:182 winemine.rc:96 wordpad.rc:216 wordpad.rc:227
 #: wordpad.rc:245 wordpad.rc:258
@@ -394,7 +394,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Нищо"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:237 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:249 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Затвори"
@@ -453,7 +453,7 @@ msgstr "Принтер:"
 msgid "Print range"
 msgstr "Разпечатай"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:219
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:231
 msgid "&All"
 msgstr "&Всичко"
 
@@ -625,7 +625,7 @@ msgstr "&Добави потребителски цвят"
 msgid "&Define Custom Colors >>"
 msgstr "&Определи цветове >>"
 
-#: comdlg32.rc:316 regedit.rc:226 regedit.rc:236
+#: comdlg32.rc:316 regedit.rc:238 regedit.rc:248
 msgid "Find"
 msgstr "Търсене"
 
@@ -10721,7 +10721,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:323 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:335 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10741,7 +10741,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:324 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:336 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11627,84 +11627,84 @@ msgstr "&Относно редактора на системния регист�
 msgid "Modify Binary Data..."
 msgstr "Промени двоичните данни"
 
-#: regedit.rc:218
+#: regedit.rc:230
 #, fuzzy
 msgid "Export registry"
 msgstr "&Изнеси файл от регистъра..."
 
-#: regedit.rc:220
+#: regedit.rc:232
 msgid "S&elected branch:"
 msgstr ""
 
-#: regedit.rc:229
+#: regedit.rc:241
 msgid "Find:"
 msgstr "Търси:"
 
-#: regedit.rc:231
+#: regedit.rc:243
 msgid "Find in:"
 msgstr "Търси в:"
 
-#: regedit.rc:232
+#: regedit.rc:244
 msgid "Keys"
 msgstr "Ключове"
 
-#: regedit.rc:233
+#: regedit.rc:245
 msgid "Value names"
 msgstr "Имена на стойности"
 
-#: regedit.rc:234
+#: regedit.rc:246
 msgid "Value content"
 msgstr "Съдържание на стойности"
 
-#: regedit.rc:235
+#: regedit.rc:247
 msgid "Whole string only"
 msgstr "Търси за целия низ"
 
-#: regedit.rc:242
+#: regedit.rc:254
 msgid "Add Favorite"
 msgstr "Добави отметка"
 
-#: regedit.rc:245 regedit.rc:256
+#: regedit.rc:257 regedit.rc:268
 msgid "Name:"
 msgstr "Име:"
 
-#: regedit.rc:253
+#: regedit.rc:265
 msgid "Remove Favorite"
 msgstr "Премахни отметка"
 
-#: regedit.rc:264
+#: regedit.rc:276
 msgid "Edit String"
 msgstr "Редактирай символен низ"
 
-#: regedit.rc:267 regedit.rc:280 regedit.rc:296 regedit.rc:309
+#: regedit.rc:279 regedit.rc:292 regedit.rc:308 regedit.rc:321
 msgid "Value name:"
 msgstr "Име на стойността:"
 
-#: regedit.rc:269 regedit.rc:282 regedit.rc:298 regedit.rc:311
+#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
 msgid "Value data:"
 msgstr "Данни:"
 
-#: regedit.rc:277
+#: regedit.rc:289
 msgid "Edit DWORD"
 msgstr "Редактирай DWORD"
 
-#: regedit.rc:284
+#: regedit.rc:296
 msgid "Base"
 msgstr "Основа"
 
-#: regedit.rc:285
+#: regedit.rc:297
 msgid "Hexadecimal"
 msgstr "Шестанедесетична"
 
-#: regedit.rc:286
+#: regedit.rc:298
 msgid "Decimal"
 msgstr "Десетична"
 
-#: regedit.rc:293
+#: regedit.rc:305
 msgid "Edit Binary"
 msgstr "Редактирай двоична стойност"
 
-#: regedit.rc:306
+#: regedit.rc:318
 #, fuzzy
 msgid "Edit Multi-String"
 msgstr "Редактирай символен низ"
@@ -11769,7 +11769,55 @@ msgstr ""
 msgid "(unknown %d)"
 msgstr ""
 
-#: regedit.rc:359
+#: regedit.rc:212
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to modify the selected registry value."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: regedit.rc:213
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to create a new registry key."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: regedit.rc:214
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to create a new registry value."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: regedit.rc:215
+msgid ""
+"Unable to rename the selected key.\n"
+"The specified key name already exists."
+msgstr ""
+
+#: regedit.rc:216
+msgid ""
+"Unable to rename the selected value.\n"
+"The specified value name already exists."
+msgstr ""
+
+#: regedit.rc:217
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to delete the selected registry key."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: regedit.rc:218
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to rename the selected registry key."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: regedit.rc:219
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Unable to rename the selected registry value."
+msgstr "Наистина ли искате да изтриете '%1'?"
+
+#: regedit.rc:371
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -11800,93 +11848,93 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
 
-#: regedit.rc:360
+#: regedit.rc:372
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: regedit.rc:361
+#: regedit.rc:373
 msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
-#: regedit.rc:362
+#: regedit.rc:374
 msgid "regedit: No filename was specified.\n"
 msgstr ""
 
-#: regedit.rc:363
+#: regedit.rc:375
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: regedit.rc:364
+#: regedit.rc:376
 msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
-#: regedit.rc:365
+#: regedit.rc:377
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr ""
 
-#: regedit.rc:366
+#: regedit.rc:378
 msgid "regedit: Unhandled action.\n"
 msgstr ""
 
-#: regedit.rc:367
+#: regedit.rc:379
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
-#: regedit.rc:368
+#: regedit.rc:380
 #, fuzzy
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "Невалидни знаци в пътя.\n"
 
-#: regedit.rc:369
+#: regedit.rc:381
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: regedit.rc:370
+#: regedit.rc:382
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: regedit.rc:371
+#: regedit.rc:383
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr ""
 
-#: regedit.rc:372
+#: regedit.rc:384
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:373
+#: regedit.rc:385
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr ""
 
-#: regedit.rc:374
+#: regedit.rc:386
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr ""
 
-#: regedit.rc:375
+#: regedit.rc:387
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "Наистина ли искате да изтриете '%1'?"
 
-#: regedit.rc:376
+#: regedit.rc:388
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr ""
 
-#: regedit.rc:377
+#: regedit.rc:389
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: regedit.rc:378
+#: regedit.rc:390
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:379
+#: regedit.rc:391
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
 
-#: regedit.rc:380
+#: regedit.rc:392
 #, fuzzy
 #| msgid "Are you sure you want to delete value '%s'?"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
