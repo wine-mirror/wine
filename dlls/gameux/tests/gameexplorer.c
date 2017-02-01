@@ -673,16 +673,16 @@ START_TEST(gameexplorer)
     {
         HRESULT hr;
 
-        hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
         ok(hr == S_OK, "Failed to initialize COM, hr %#x.\n", hr);
-        trace("Running apartment threaded tests.\n");
+        trace("Running multithreaded tests.\n");
         run_tests();
         if(SUCCEEDED(hr))
             CoUninitialize();
 
-        hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
         ok(hr == S_OK, "Failed to initialize COM, hr %#x.\n", hr);
-        trace("Running multithreaded tests.\n");
+        trace("Running apartment threaded tests.\n");
         run_tests();
         if(SUCCEEDED(hr))
             CoUninitialize();
