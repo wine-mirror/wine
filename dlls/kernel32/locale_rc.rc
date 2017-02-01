@@ -232,6 +232,8 @@
 
 #include "nls/syr.nls"   /* 0x045a  LANG_SYRIAC, SUBLANG_DEFAULT */
 
+#include "nls/nep.nls"   /* 0x0461  LANG_NEPALI, SUBLANG_NEPALI_NEPAL */
+
 #include "nls/div.nls"   /* 0x0465  LANG_DIVEHI, SUBLANG_DEFAULT */
 
 #include "nls/brf.nls"   /* 0x047e  LANG_BRETON, SUBLANG_DEFAULT */
