@@ -12190,13 +12190,13 @@ msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니
 
 #: regedit.rc:215
 msgid ""
-"Unable to rename the selected key.\n"
+"Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
 
 #: regedit.rc:216
 msgid ""
-"Unable to rename the selected value.\n"
+"Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
 

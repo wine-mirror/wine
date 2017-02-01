@@ -493,7 +493,10 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR oldName, LPC
 	return FALSE;
     }
     /* check if value already exists */
-    if (check_value(hwnd, hKey, newName)) goto done;
+    if (check_value(hwnd, hKey, newName)) {
+        error_code_messagebox(hwnd, IDS_VALUE_EXISTS, oldName);
+        goto done;
+    }
     value = read_value(hwnd, hKey, oldName, &type, &len);
     if(!value) goto done;
     lRet = RegSetValueExW(hKey, newName, 0, type, (BYTE*)value, len);
@@ -554,7 +557,7 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCWSTR keyPath, LPCWSTR newName)
     if (disposition == REG_OPENED_EXISTING_KEY)
         lRet = ERROR_FILE_EXISTS;
     if (lRet != ERROR_SUCCESS) {
-        error_code_messagebox(hwnd, IDS_KEY_EXISTS);
+        error_code_messagebox(hwnd, IDS_KEY_EXISTS, srcSubKey);
         goto done;
     }
 

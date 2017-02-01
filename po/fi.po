@@ -11900,13 +11900,13 @@ msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
 
 #: regedit.rc:215
 msgid ""
-"Unable to rename the selected key.\n"
+"Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
 
 #: regedit.rc:216
 msgid ""
-"Unable to rename the selected value.\n"
+"Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
 
