@@ -416,7 +416,7 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     cs->ops->submit(cs);
 }
 
-static void acquire_shader_resources(const struct wined3d_state *state)
+static void acquire_shader_resources(const struct wined3d_state *state, unsigned int shader_mask)
 {
     struct wined3d_shader_sampler_map_entry *entry;
     struct wined3d_shader_resource_view *view;
@@ -425,6 +425,9 @@ static void acquire_shader_resources(const struct wined3d_state *state)
 
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
+        if (!(shader_mask & (1u << i)))
+            continue;
+
         if (!(shader = state->shader[i]))
             continue;
 
@@ -446,7 +449,7 @@ static void acquire_shader_resources(const struct wined3d_state *state)
     }
 }
 
-static void release_shader_resources(const struct wined3d_state *state)
+static void release_shader_resources(const struct wined3d_state *state, unsigned int shader_mask)
 {
     struct wined3d_shader_sampler_map_entry *entry;
     struct wined3d_shader_resource_view *view;
@@ -455,6 +458,9 @@ static void release_shader_resources(const struct wined3d_state *state)
 
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
+        if (!(shader_mask & (1u << i)))
+            continue;
+
         if (!(shader = state->shader[i]))
             continue;
 
@@ -511,7 +517,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
     }
     if (state->fb->depth_stencil)
         wined3d_resource_release(state->fb->depth_stencil->resource);
-    release_shader_resources(state);
+    release_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
 }
 
 void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned int start_idx,
@@ -549,7 +555,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned i
     }
     if (state->fb->depth_stencil)
         wined3d_resource_acquire(state->fb->depth_stencil->resource);
-    acquire_shader_resources(state);
+    acquire_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
 
     cs->ops->submit(cs);
 }
