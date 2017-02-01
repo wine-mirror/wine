@@ -62,6 +62,11 @@ DEFINE_EXPECT(Stream_Read);
 DEFINE_EXPECT(Stream_Stat);
 DEFINE_EXPECT(Stream_Seek);
 DEFINE_EXPECT(Stream_Seek_END);
+DEFINE_EXPECT(GetBindInfo);
+DEFINE_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+DEFINE_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+DEFINE_EXPECT(ReportData);
+DEFINE_EXPECT(ReportResult);
 
 static const char msg1[] =
     "MIME-Version: 1.0\r\n"
@@ -1162,6 +1167,268 @@ static void test_MimeOleGetPropertySchema(void)
     IMimePropertySchema_Release(schema);
 }
 
+typedef struct {
+    const char *url;
+    const char *content;
+    const char *mime;
+    const char *data;
+} mhtml_binding_test_t;
+
+static const mhtml_binding_test_t binding_tests[] = {
+    {
+        "mhtml:file://%s",
+        mhtml_page1,
+        "text/html",
+        "<HTML></HTML>"
+    },
+    {
+        "mhtml:file://%s!http://winehq.org/mhtmltest.html",
+        mhtml_page1,
+        "Image/Jpeg",
+        "Test"
+    }
+};
+
+static const mhtml_binding_test_t *current_binding_test;
+static IInternetProtocol *current_binding_protocol;
+
+static HRESULT WINAPI BindInfo_QueryInterface(IInternetBindInfo *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetBindInfo, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI BindInfo_AddRef(IInternetBindInfo *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI BindInfo_Release(IInternetBindInfo *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
+{
+    CHECK_EXPECT(GetBindInfo);
+
+    ok(grfBINDF != NULL, "grfBINDF == NULL\n");
+    ok(pbindinfo != NULL, "pbindinfo == NULL\n");
+    ok(pbindinfo->cbSize == sizeof(BINDINFO), "wrong size of pbindinfo: %d\n", pbindinfo->cbSize);
+
+    *grfBINDF = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NEEDFILE;
+    return S_OK;
+}
+
+static HRESULT WINAPI BindInfo_GetBindString(IInternetBindInfo *iface, ULONG ulStringType, LPOLESTR *ppwzStr,
+        ULONG cEl, ULONG *pcElFetched)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IInternetBindInfoVtbl InternetBindInfoVtbl = {
+    BindInfo_QueryInterface,
+    BindInfo_AddRef,
+    BindInfo_Release,
+    BindInfo_GetBindInfo,
+    BindInfo_GetBindString
+};
+
+static IInternetBindInfo bind_info = {
+    &InternetBindInfoVtbl
+};
+
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&CLSID_MimeEdit, guidService)) {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
+    return E_FAIL;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+static IServiceProvider service_provider = { &ServiceProviderVtbl };
+
+static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        *ppv = &service_provider;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ProtocolSink_AddRef(IInternetProtocolSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ProtocolSink_Release(IInternetProtocolSink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOLDATA *pProtocolData)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, ULONG ulStatusCode,
+        const WCHAR *szStatusText)
+{
+    switch(ulStatusCode) {
+    case BINDSTATUS_MIMETYPEAVAILABLE:
+        CHECK_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        ok(!strcmp_wa(szStatusText, current_binding_test->mime), "status text %s\n", wine_dbgstr_w(szStatusText));
+        return S_OK;
+    case BINDSTATUS_CACHEFILENAMEAVAILABLE:
+        CHECK_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+        return S_OK;
+    default:
+        ok(0, "unexpected call %u %s\n", ulStatusCode, wine_dbgstr_w(szStatusText));
+    }
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWORD grfBSCF, ULONG ulProgress,
+        ULONG ulProgressMax)
+{
+    char buf[1024];
+    DWORD read;
+    HRESULT hres;
+
+    CHECK_EXPECT(ReportData);
+
+    ok(!ulProgress, "ulProgress = %u\n", ulProgress);
+    ok(ulProgress == ulProgressMax, "ulProgress != ulProgressMax\n");
+    ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_INTERMEDIATEDATANOTIFICATION
+                   | BSCF_LASTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE | BSCF_AVAILABLEDATASIZEUNKNOWN),
+            "grcf = %08x\n", grfBSCF);
+
+    hres = IInternetProtocol_Read(current_binding_protocol, buf, sizeof(buf), &read);
+    ok(hres == S_OK, "Read failed: %08x\n", hres);
+    buf[read] = 0;
+    ok(!strcmp(buf, current_binding_test->data), "unexpected data: %s\n", buf);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HRESULT hrResult, DWORD dwError,
+        LPCWSTR szResult)
+{
+    CHECK_EXPECT(ReportResult);
+    ok(hrResult == S_OK, "hrResult = %08x\n", hrResult);
+    ok(!dwError, "dwError = %u\n", dwError);
+    ok(!szResult, "szResult = %s\n", wine_dbgstr_w(szResult));
+    return S_OK;
+}
+
+static IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
+    ProtocolSink_QueryInterface,
+    ProtocolSink_AddRef,
+    ProtocolSink_Release,
+    ProtocolSink_Switch,
+    ProtocolSink_ReportProgress,
+    ProtocolSink_ReportData,
+    ProtocolSink_ReportResult
+};
+
+static IInternetProtocolSink protocol_sink = { &InternetProtocolSinkVtbl };
+
+static void test_mhtml_protocol_binding(const mhtml_binding_test_t *test)
+{
+    char file_name[MAX_PATH+32], *p, urla[INTERNET_MAX_URL_LENGTH];
+    WCHAR test_url[INTERNET_MAX_URL_LENGTH];
+    IInternetProtocol *protocol;
+    IUnknown *unk;
+    HRESULT hres;
+    HANDLE file;
+    DWORD size;
+
+    p = file_name + GetCurrentDirectoryA(sizeof(file_name), file_name);
+    *p++ = '\\';
+    strcpy(p, "winetest.mht");
+
+    file = CreateFileA(file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+
+    WriteFile(file, test->content, strlen(test->content), &size, NULL);
+    CloseHandle(file);
+
+    sprintf(urla, test->url, file_name);
+    MultiByteToWideChar(CP_ACP, 0, urla, -1, test_url, sizeof(test_url)/sizeof(WCHAR));
+
+    hres = CoCreateInstance(&CLSID_IMimeHtmlProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void**)&protocol);
+    ok(hres == S_OK, "Could not create protocol handler: %08x\n", hres);
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolEx, (void**)&unk);
+    ok(hres == E_NOINTERFACE, "Could get IInternetProtocolEx\n");
+
+    current_binding_test = test;
+    current_binding_protocol = protocol;
+
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+    SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+    SET_EXPECT(ReportData);
+    SET_EXPECT(ReportResult);
+    hres = IInternetProtocol_Start(protocol, test_url, &protocol_sink, &bind_info, 0, 0);
+    ok(hres == S_OK, "Start failed: %08x\n", hres);
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+    todo_wine CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
+    CHECK_CALLED(ReportData);
+    CHECK_CALLED(ReportResult);
+
+    IInternetProtocol_Release(protocol);
+    ok(DeleteFileA("winetest.mht"), "DeleteFile failed: %u\n", GetLastError());
+}
+
 static const struct {
     const char *base_url;
     const char *relative_url;
@@ -1279,6 +1546,7 @@ static void test_mhtml_protocol(void)
     IUnknown outer = { &outer_vtbl };
     IClassFactory *class_factory;
     IUnknown *unk, *unk2;
+    unsigned i;
     HRESULT hres;
 
     /* test class factory */
@@ -1306,6 +1574,9 @@ static void test_mhtml_protocol(void)
 
     if(!broken_mhtml_resolver)
         test_mhtml_protocol_info();
+
+    for(i = 0; i < sizeof(binding_tests)/sizeof(*binding_tests); i++)
+        test_mhtml_protocol_binding(binding_tests + i);
 }
 
 static void test_MimeOleObjectFromMoniker(void)
