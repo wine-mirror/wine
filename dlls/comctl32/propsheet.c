@@ -3205,61 +3205,65 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	COLORREF clrOld = 0;
 	int oldBkMode = 0;
 
-	hbmp = SelectObject(hdcSrc, psInfo->ppshheader.u5.hbmHeader);
-	hOldFont = SelectObject(hdc, psInfo->hFontBold);
+        GetClientRect(hwndLineHeader, &r);
+        MapWindowPoints(hwndLineHeader, hwnd, (LPPOINT) &r, 2);
+        SetRect(&rzone, 0, 0, r.right + 1, r.top - 1);
 
-	GetClientRect(hwndLineHeader, &r);
-	MapWindowPoints(hwndLineHeader, hwnd, (LPPOINT) &r, 2);
-	SetRect(&rzone, 0, 0, r.right + 1, r.top - 1);
+        hOldFont = SelectObject(hdc, psInfo->hFontBold);
 
-	GetObjectW(psInfo->ppshheader.u5.hbmHeader, sizeof(BITMAP), &bm);
+        if (psInfo->ppshheader.dwFlags & PSH_USEHBMHEADER)
+        {
+            hbmp = SelectObject(hdcSrc, psInfo->ppshheader.u5.hbmHeader);
 
- 	if (psInfo->ppshheader.dwFlags & PSH_WIZARD97_OLD)
- 	{
- 	    /* Fill the unoccupied part of the header with color of the
- 	     * left-top pixel, but do it only when needed.
- 	     */
- 	    if (bm.bmWidth < r.right || bm.bmHeight < r.bottom)
- 	    {
- 	        hbr = CreateSolidBrush(GetPixel(hdcSrc, 0, 0));
-                r = rzone;
- 	        if (bm.bmWidth < r.right)
- 	        {
- 	            r.left = bm.bmWidth;
- 	            FillRect(hdc, &r, hbr);
- 	        }
- 	        if (bm.bmHeight < r.bottom)
- 	        {
- 	            r.left = 0;
- 	            r.top = bm.bmHeight;
- 	            FillRect(hdc, &r, hbr);
- 	        }
- 	        DeleteObject(hbr);
- 	    }
+            GetObjectW(psInfo->ppshheader.u5.hbmHeader, sizeof(BITMAP), &bm);
+            if (psInfo->ppshheader.dwFlags & PSH_WIZARD97_OLD)
+            {
+                /* Fill the unoccupied part of the header with color of the
+                 * left-top pixel, but do it only when needed.
+                 */
+                if (bm.bmWidth < r.right || bm.bmHeight < r.bottom)
+                {
+                    hbr = CreateSolidBrush(GetPixel(hdcSrc, 0, 0));
+                    r = rzone;
+                    if (bm.bmWidth < r.right)
+                    {
+                        r.left = bm.bmWidth;
+                        FillRect(hdc, &r, hbr);
+                    }
+                    if (bm.bmHeight < r.bottom)
+                    {
+                        r.left = 0;
+                        r.top = bm.bmHeight;
+                        FillRect(hdc, &r, hbr);
+                    }
+                    DeleteObject(hbr);
+                }
 
- 	    /* Draw the header itself. */
- 	    BitBlt(hdc, 0, 0,
- 	           bm.bmWidth, min(bm.bmHeight, rzone.bottom),
- 	           hdcSrc, 0, 0, SRCCOPY);
- 	}
- 	else
- 	{
-            int margin;
- 	    hbr = GetSysColorBrush(COLOR_WINDOW);
- 	    FillRect(hdc, &rzone, hbr);
+                /* Draw the header itself. */
+                BitBlt(hdc, 0, 0, bm.bmWidth, min(bm.bmHeight, rzone.bottom),
+                        hdcSrc, 0, 0, SRCCOPY);
+            }
+            else
+            {
+                int margin;
+                hbr = GetSysColorBrush(COLOR_WINDOW);
+                FillRect(hdc, &rzone, hbr);
 
- 	    /* Draw the header bitmap. It's always centered like a
- 	     * common 49 x 49 bitmap. */
-            margin = (rzone.bottom - 49) / 2;
- 	    BitBlt(hdc, rzone.right - 49 - margin, margin,
-                   min(bm.bmWidth, 49), min(bm.bmHeight, 49),
-                   hdcSrc, 0, 0, SRCCOPY);
+                /* Draw the header bitmap. It's always centered like a
+                 * common 49 x 49 bitmap. */
+                margin = (rzone.bottom - 49) / 2;
+                BitBlt(hdc, rzone.right - 49 - margin, margin,
+                        min(bm.bmWidth, 49), min(bm.bmHeight, 49),
+                        hdcSrc, 0, 0, SRCCOPY);
 
- 	    /* NOTE: Native COMCTL32 draws a white stripe over the bitmap
- 	     * if its height is smaller than 49 pixels. Because the reason
- 	     * for this bug is unknown the current code doesn't try to
- 	     * replicate it. */
- 	}
+                /* NOTE: Native COMCTL32 draws a white stripe over the bitmap
+                 * if its height is smaller than 49 pixels. Because the reason
+                 * for this bug is unknown the current code doesn't try to
+                 * replicate it. */
+            }
+
+            SelectObject(hdcSrc, hbmp);
+        }
 
 	clrOld = SetTextColor (hdc, 0x00000000);
 	oldBkMode = SetBkMode (hdc, TRANSPARENT); 
@@ -3300,7 +3304,6 @@ static LRESULT PROPSHEET_Paint(HWND hwnd, HDC hdcParam)
 	SetTextColor(hdc, clrOld);
 	SetBkMode(hdc, oldBkMode);
 	SelectObject(hdc, hOldFont);
-	SelectObject(hdcSrc, hbmp);
     }
 
     if ( (ppshpage && (ppshpage->dwFlags & PSP_HIDEHEADER)) &&
