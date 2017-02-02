@@ -313,6 +313,7 @@ HEADER_SRCS = \
 	devguid.h \
 	devpkey.h \
 	devpropdef.h \
+	dhcpcsdk.h \
 	difxapi.h \
 	digitalv.h \
 	dinput.h \
