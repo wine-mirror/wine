@@ -35,7 +35,7 @@
 
 
 @implementation WineOpenGLContext
-@synthesize latentView, needsUpdate, shouldClearToBlack;
+@synthesize latentView, needsUpdate, needsReattach, shouldClearToBlack;
 
     - (void) dealloc
     {
@@ -215,6 +215,7 @@
                 [self setLatentView:nil];
         }
         needsUpdate = FALSE;
+        needsReattach = FALSE;
     }
 
 @end
@@ -279,6 +280,7 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v, CGRect 
             if (context.needsUpdate)
             {
                 context.needsUpdate = FALSE;
+                context.needsReattach = FALSE;
                 if (context.view)
                     [context setView:[[context class] dummyView]];
                 [context wine_updateBackingSize:&r.size];
@@ -328,7 +330,9 @@ void macdrv_update_opengl_context(macdrv_opengl_context c)
 
     if (context.needsUpdate)
     {
+        BOOL reattach = context.needsReattach;
         context.needsUpdate = FALSE;
+        context.needsReattach = FALSE;
         if (context.latentView)
         {
             [context setView:context.latentView];
@@ -339,7 +343,14 @@ void macdrv_update_opengl_context(macdrv_opengl_context c)
         }
         else
         {
-            [context update];
+            if (reattach)
+            {
+                NSView* view = [[context.view retain] autorelease];
+                [context clearDrawableLeavingSurfaceOnScreen];
+                context.view = view;
+            }
+            else
+                [context update];
             [context resetSurfaceIfBackingSizeChanged];
         }
     }

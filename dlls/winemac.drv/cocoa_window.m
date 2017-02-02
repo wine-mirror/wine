@@ -500,10 +500,19 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [(WineWindow*)[self window] updateForGLSubviews];
     }
 
-    - (void) updateGLContexts
+    - (void) updateGLContexts:(BOOL)reattach
     {
         for (WineOpenGLContext* context in glContexts)
+        {
             context.needsUpdate = TRUE;
+            if (reattach)
+                context.needsReattach = TRUE;
+        }
+    }
+
+    - (void) updateGLContexts
+    {
+        [self updateGLContexts:NO];
     }
 
     - (BOOL) hasGLContext
@@ -605,6 +614,23 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         return NO;
     }
 
+    - (void) viewDidHide
+    {
+        [super viewDidHide];
+        if ([self hasGLContext])
+            [self invalidateHasGLDescendant];
+    }
+
+    - (void) viewDidUnhide
+    {
+        [super viewDidUnhide];
+        if ([self hasGLContext])
+        {
+            [self updateGLContexts:YES];
+            [self invalidateHasGLDescendant];
+        }
+    }
+
     - (void) completeText:(NSString*)text
     {
         macdrv_event* event;
@@ -649,12 +675,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 [self invalidateHasGLDescendant];
         }
         [super willRemoveSubview:subview];
-    }
-
-    - (void) setHidden:(BOOL)hidden
-    {
-        [super setHidden:hidden];
-        [self invalidateHasGLDescendant];
     }
 
     /*
@@ -3432,6 +3452,7 @@ void macdrv_set_view_hidden(macdrv_view v, int hidden)
 
     OnMainThreadAsync(^{
         [view setHidden:hidden];
+        [(WineWindow*)view.window updateForGLSubviews];
     });
 
     [pool release];

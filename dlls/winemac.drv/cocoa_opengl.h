@@ -25,12 +25,14 @@
 {
     NSView* latentView;
     BOOL needsUpdate;
+    BOOL needsReattach;
     BOOL shouldClearToBlack;
 
     GLint backing_size[2];
 }
 
 @property BOOL needsUpdate;
+@property BOOL needsReattach;
 @property BOOL shouldClearToBlack;
 
 @end
