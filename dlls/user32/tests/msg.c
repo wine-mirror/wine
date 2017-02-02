@@ -1675,6 +1675,10 @@ static const struct message WmTrackPopupMenu[] = {
     { 0 }
 };
 
+static const struct message WmTrackPopupMenuEsc[] = {
+    { 0 }
+};
+
 static const struct message WmTrackPopupMenuCapture[] = {
     { HCBT_CREATEWND, hook },
     { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
@@ -15637,6 +15641,7 @@ static LRESULT WINAPI cancel_init_proc(HWND hwnd, UINT message, WPARAM wParam, L
 
 static void test_TrackPopupMenu(void)
 {
+    MSG msg;
     HWND hwnd;
     BOOL ret;
 
@@ -15658,6 +15663,20 @@ static void test_TrackPopupMenu(void)
     ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
     ok_sequence(WmTrackPopupMenu, "TrackPopupMenu", TRUE);
     ok(ret == 1, "TrackPopupMenu failed with error %i\n", GetLastError());
+
+    /* Test popup closing with an ESC-press */
+    flush_events();
+    PostMessageW(hwnd, WM_KEYDOWN, VK_ESCAPE, 0);
+    ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
+    ok(ret == 1, "TrackPopupMenu failed with error %i\n", GetLastError());
+    PostQuitMessage(0);
+    flush_sequence();
+    while ( PeekMessageA(&msg, 0, 0, 0, PM_REMOVE) )
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+    ok_sequence(WmTrackPopupMenuEsc, "TrackPopupMenuEsc", FALSE); /* Shouldn't get any message */
 
     SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)cancel_init_proc);
 
