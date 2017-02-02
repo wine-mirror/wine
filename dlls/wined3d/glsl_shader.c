@@ -8497,6 +8497,13 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
     }
 }
 
+/* Context activation is done by the caller. */
+static void shader_glsl_select_compute(void *shader_priv, struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    FIXME("Compute pipeline not supported yet.\n");
+}
+
 /* "context" is not necessarily the currently active context. */
 static void shader_glsl_invalidate_current_program(struct wined3d_context *context)
 {
@@ -9152,6 +9159,7 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
 {
     shader_glsl_handle_instruction,
     shader_glsl_select,
+    shader_glsl_select_compute,
     shader_glsl_disable,
     shader_glsl_update_float_vertex_constants,
     shader_glsl_update_float_pixel_constants,

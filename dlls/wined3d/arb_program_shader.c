@@ -4698,6 +4698,11 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
     }
 }
 
+static void shader_arb_select_compute(void *shader_priv, struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    ERR("Compute pipeline not supported by the ARB shader backend.\n");
+}
 
 /* Context activation is done by the caller. */
 static void shader_arb_disable(void *shader_priv, struct wined3d_context *context)
@@ -5659,6 +5664,7 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
 {
     shader_arb_handle_instruction,
     shader_arb_select,
+    shader_arb_select_compute,
     shader_arb_disable,
     shader_arb_update_float_vertex_constants,
     shader_arb_update_float_pixel_constants,

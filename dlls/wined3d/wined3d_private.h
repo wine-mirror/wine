@@ -1208,6 +1208,8 @@ struct wined3d_shader_backend_ops
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
     void (*shader_select)(void *shader_priv, struct wined3d_context *context,
             const struct wined3d_state *state);
+    void (*shader_select_compute)(void *shader_priv, struct wined3d_context *context,
+            const struct wined3d_state *state);
     void (*shader_disable)(void *shader_priv, struct wined3d_context *context);
     void (*shader_update_float_vertex_constants)(struct wined3d_device *device, UINT start, UINT count);
     void (*shader_update_float_pixel_constants)(struct wined3d_device *device, UINT start, UINT count);
