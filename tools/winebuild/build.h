@@ -80,7 +80,7 @@ enum arg_type
 typedef struct
 {
     int n_values;
-    int *values;
+    unsigned int *values;
 } ORD_VARIABLE;
 
 typedef struct
