@@ -7143,6 +7143,25 @@ static void test_hwnd_message(void)
 
     HWND parent = 0, hwnd, found;
     RECT rect;
+    static const struct
+    {
+        int offset;
+        ULONG_PTR expect;
+        DWORD error;
+    }
+    tests[] =
+    {
+        { GWLP_USERDATA,   0, 0 },
+        { GWL_STYLE,       WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0 },
+        { GWL_EXSTYLE,     0, 0 },
+        { GWLP_ID,         0, 0 },
+        /* GWLP_HWNDPARENT - returns random values */
+        /* GWLP_HINSTANCE  - not useful and not consistent between Windows versions */
+        { GWLP_WNDPROC,    0, ERROR_ACCESS_DENIED },
+        { DWLP_MSGRESULT,  0, ERROR_INVALID_INDEX }
+    };
+    DWORD_PTR result;
+    int i;
 
     /* HWND_MESSAGE is not supported below w2k, but win9x return != 0
        on CreateWindowExA and crash later in the test.
@@ -7166,7 +7185,7 @@ static void test_hwnd_message(void)
         ok(parent != desktop, "GetAncestor(GA_PARENT) should not return desktop for message windows\n");
         root = pGetAncestor(hwnd, GA_ROOT);
         ok(root == hwnd, "GetAncestor(GA_ROOT) should return hwnd for message windows\n");
-        ok( !pGetAncestor(parent, GA_PARENT) || broken(pGetAncestor(parent, GA_PARENT) != 0), /* win2k */
+        ok( !pGetAncestor(parent, GA_PARENT),
             "parent shouldn't have parent %p\n", pGetAncestor(parent, GA_PARENT) );
         trace("parent %p root %p desktop %p\n", parent, root, desktop);
         if (!GetClassNameA( parent, buffer, sizeof(buffer) )) buffer[0] = 0;
@@ -7201,6 +7220,21 @@ static void test_hwnd_message(void)
 
     ok( !IsWindowVisible( hwnd ), "HWND_MESSAGE window is visible\n" );
     if (parent) ok( !IsWindowVisible( parent ), "HWND_MESSAGE parent is visible\n" );
+
+    /* GetWindowLong */
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        result = GetWindowLongPtrW( parent, tests[i].offset );
+        ok( result == tests[i].expect, "offset %d, got %08lx expect %08lx\n",
+            tests[i].offset, result, tests[i].expect );
+        if (tests[i].error)
+            ok( GetLastError() == tests[i].error, "offset %d: error %d expect %d\n",
+                tests[i].offset, GetLastError(), tests[i].error );
+        else
+            ok( GetLastError() == 0xdeadbeef, "offset %d: error %d expect unchanged\n",
+                tests[i].offset, GetLastError() );
+    }
 
     DestroyWindow(hwnd);
 }
@@ -9567,6 +9601,45 @@ static void test_LockWindowUpdate(HWND parent)
     DestroyWindow(child);
 }
 
+static void test_desktop( void )
+{
+    HWND desktop = GetDesktopWindow();
+    /* GetWindowLong Desktop window tests */
+    static const struct
+    {
+        int offset;
+        ULONG_PTR expect;
+        DWORD error;
+    }
+    tests[] =
+    {
+        { GWLP_USERDATA,   0, 0 },
+        { GWL_STYLE,       WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0 },
+        { GWL_EXSTYLE,     0, 0 },
+        { GWLP_ID,         0, 0 },
+        { GWLP_HWNDPARENT, 0, 0 },
+        /* GWLP_HINSTANCE - not useful and not consistent between Windows versions */
+        { GWLP_WNDPROC,    0, ERROR_ACCESS_DENIED },
+        { DWLP_MSGRESULT,  0, ERROR_INVALID_INDEX }
+    };
+    DWORD_PTR result;
+    int i;
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        result = GetWindowLongPtrW( desktop, tests[i].offset );
+        ok( result == tests[i].expect, "offset %d, got %08lx expect %08lx\n",
+            tests[i].offset, result, tests[i].expect );
+        if (tests[i].error)
+            ok( GetLastError() == tests[i].error, "offset %d: error %d expect %d\n",
+                tests[i].offset, GetLastError(), tests[i].error );
+        else
+            ok( GetLastError() == 0xdeadbeef, "offset %d: error %d expect unchanged\n",
+                tests[i].offset, GetLastError() );
+    }
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -9714,6 +9787,7 @@ START_TEST(win)
     test_winproc_handles(argv[0]);
     test_deferwindowpos();
     test_LockWindowUpdate(hwndMain);
+    test_desktop();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);

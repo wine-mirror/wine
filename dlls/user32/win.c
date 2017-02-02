@@ -2242,7 +2242,29 @@ static LONG_PTR WIN_GetWindowLong( HWND hwnd, INT offset, UINT size, BOOL unicod
         return 0;
     }
 
-    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP)
+    if (wndPtr == WND_DESKTOP)
+    {
+        switch (offset)
+        {
+        case GWL_STYLE:
+            retvalue = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; /* message parent is not visible */
+            if (WIN_GetFullHandle( hwnd ) == GetDesktopWindow())
+                retvalue |= WS_VISIBLE;
+            return retvalue;
+        case GWL_EXSTYLE:
+        case GWLP_USERDATA:
+        case GWLP_ID:
+        case GWLP_HINSTANCE:
+            return 0;
+        case GWLP_WNDPROC:
+            SetLastError( ERROR_ACCESS_DENIED );
+            return 0;
+        }
+        SetLastError( ERROR_INVALID_INDEX );
+        return 0;
+    }
+
+    if (wndPtr == WND_OTHER_PROCESS)
     {
         if (offset == GWLP_WNDPROC)
         {
