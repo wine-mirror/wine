@@ -50,6 +50,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 DEFINE_GUID(SID_SContainerDispatch,0xb722be00,0x4e68,0x101b,0xa2,0xbc,0x00,0xaa,0x00,0x40,0x47,0x70);
+DEFINE_GUID(outer_test_iid,0xabcabc00,0,0,0,0,0,0,0,0,0,0x66);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -203,6 +204,8 @@ DEFINE_EXPECT(EnumConnections);
 DEFINE_EXPECT(EnumConnections_Next);
 DEFINE_EXPECT(WindowClosing);
 DEFINE_EXPECT(NavigateWithBindCtx);
+DEFINE_EXPECT(outer_QI_IPersistMoniker);
+DEFINE_EXPECT(outer_QI_test);
 
 static BOOL is_ie9plus;
 static IUnknown *doc_unk;
@@ -8541,6 +8544,73 @@ static void test_ServiceProvider(void)
     release_document(doc);
 }
 
+static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IPersistMoniker)) {
+        CHECK_EXPECT(outer_QI_IPersistMoniker);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    if(IsEqualGUID(riid, &outer_test_iid)) {
+        CHECK_EXPECT(outer_QI_test);
+        *ppv = (IUnknown*)0xdeadbeef;
+        return S_OK;
+    }
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI outer_AddRef(IUnknown *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI outer_Release(IUnknown *iface)
+{
+    return 1;
+}
+
+static const IUnknownVtbl outer_vtbl = {
+    outer_QueryInterface,
+    outer_AddRef,
+    outer_Release
+};
+
+static void test_com_aggregation(const CLSID *clsid)
+{
+    IUnknown outer = { &outer_vtbl };
+    IClassFactory *class_factory;
+    IUnknown *unk, *unk2, *unk3;
+    HRESULT hres;
+
+    hres = CoGetClassObject(clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)&class_factory);
+    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+
+    SET_EXPECT(outer_QI_IPersistMoniker); /* Some IE version QI for that. */
+    hres = IClassFactory_CreateInstance(class_factory, &outer, &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CreateInstance returned: %08x\n", hres);
+    SET_CALLED(outer_QI_IPersistMoniker);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&unk2);
+    ok(hres == S_OK, "Coult not get IDispatch iface: %08x\n", hres);
+
+    SET_EXPECT(outer_QI_test);
+    hres = IUnknown_QueryInterface(unk2, &outer_test_iid, (void**)&unk3);
+    CHECK_CALLED(outer_QI_test);
+    ok(hres == S_OK, "Coult not get IInternetProtocol iface: %08x\n", hres);
+    ok(unk3 == (IUnknown*)0xdeadbeef, "unexpected unk2\n");
+
+    IUnknown_Release(unk2);
+    IUnknown_Release(unk);
+
+    unk = (void*)0xdeadbeef;
+    hres = IClassFactory_CreateInstance(class_factory, &outer, &IID_IDispatch, (void**)&unk);
+    ok(hres == E_INVALIDARG, "CreateInstance returned: %08x\n", hres);
+    ok(!unk, "unk = %p\n", unk);
+
+    IClassFactory_Release(class_factory);
+}
+
 START_TEST(htmldoc)
 {
     CoInitialize(NULL);
@@ -8578,6 +8648,7 @@ START_TEST(htmldoc)
     test_UIActivate(TRUE, TRUE, TRUE);
     test_HTMLDoc_ISupportErrorInfo();
     test_ServiceProvider();
+    test_com_aggregation(&CLSID_HTMLDocument);
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
