@@ -1927,8 +1927,10 @@ static void test_Input_mouse(void)
     struct thread_data thread_data;
     HANDLE thread;
     DWORD thread_id;
-    POINT pt;
+    POINT pt, pt_org;
     MSG msg;
+
+    GetCursorPos(&pt_org);
 
     button_win = CreateWindowA("button", "button", WS_VISIBLE | WS_POPUP,
             100, 100, 100, 100, 0, NULL, NULL, NULL);
@@ -2129,6 +2131,7 @@ static void test_Input_mouse(void)
     ok(got_button_up, "expected WM_LBUTTONUP message\n");
     DestroyWindow(hwnd);
     ok(ReleaseCapture(), "ReleaseCapture failed\n");
+    SetCursorPos(pt_org.x, pt_org.y);
 
     CloseHandle(thread_data.start_event);
     CloseHandle(thread_data.end_event);
