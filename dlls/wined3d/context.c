@@ -3564,6 +3564,12 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
     return TRUE;
 }
 
+void context_apply_compute_state(struct wined3d_context *context,
+        const struct wined3d_device *device, const struct wined3d_state *state)
+{
+    FIXME("Implement applying compute state.\n");
+}
+
 static void context_setup_target(struct wined3d_context *context,
         struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {

@@ -28,6 +28,7 @@ enum wined3d_cs_op
 {
     WINED3D_CS_OP_PRESENT,
     WINED3D_CS_OP_CLEAR,
+    WINED3D_CS_OP_DISPATCH,
     WINED3D_CS_OP_DRAW,
     WINED3D_CS_OP_SET_PREDICATION,
     WINED3D_CS_OP_SET_VIEWPORT,
@@ -81,6 +82,14 @@ struct wined3d_cs_clear
     DWORD stencil;
     unsigned int rect_count;
     RECT rects[1];
+};
+
+struct wined3d_cs_dispatch
+{
+    enum wined3d_cs_op opcode;
+    unsigned int group_count_x;
+    unsigned int group_count_y;
+    unsigned int group_count_z;
 };
 
 struct wined3d_cs_draw
@@ -480,6 +489,32 @@ static void release_shader_resources(const struct wined3d_state *state, unsigned
             wined3d_resource_release(view->resource);
         }
     }
+}
+
+static void wined3d_cs_exec_dispatch(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_dispatch *op = data;
+
+    dispatch_compute(cs->device, &cs->device->state,
+            op->group_count_x, op->group_count_y, op->group_count_z);
+
+    release_shader_resources(&cs->device->state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
+}
+
+void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
+        unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z)
+{
+    struct wined3d_cs_dispatch *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_DISPATCH;
+    op->group_count_x = group_count_x;
+    op->group_count_y = group_count_y;
+    op->group_count_z = group_count_z;
+
+    acquire_shader_resources(&cs->device->state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
+
+    cs->ops->submit(cs);
 }
 
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
@@ -1462,6 +1497,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
 {
     /* WINED3D_CS_OP_PRESENT                    */ wined3d_cs_exec_present,
     /* WINED3D_CS_OP_CLEAR                      */ wined3d_cs_exec_clear,
+    /* WINED3D_CS_OP_DISPATCH                   */ wined3d_cs_exec_dispatch,
     /* WINED3D_CS_OP_DRAW                       */ wined3d_cs_exec_draw,
     /* WINED3D_CS_OP_SET_PREDICATION            */ wined3d_cs_exec_set_predication,
     /* WINED3D_CS_OP_SET_VIEWPORT               */ wined3d_cs_exec_set_viewport,

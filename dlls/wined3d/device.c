@@ -3483,6 +3483,15 @@ struct wined3d_query * CDECL wined3d_device_get_predication(struct wined3d_devic
     return device->state.predicate;
 }
 
+void CDECL wined3d_device_dispatch_compute(struct wined3d_device *device,
+        unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z)
+{
+    TRACE("device %p, group_count_x %u, group_count_y %u, group_count_z %u.\n",
+            device, group_count_x, group_count_y, group_count_z);
+
+    wined3d_cs_emit_dispatch(device->cs, group_count_x, group_count_y, group_count_z);
+}
+
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
         enum wined3d_primitive_type primitive_type)
 {

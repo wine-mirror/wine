@@ -39,6 +39,7 @@
 @ cdecl wined3d_device_copy_sub_resource_region(ptr ptr long long long long ptr long ptr)
 @ cdecl wined3d_device_create(ptr long long ptr long long ptr ptr)
 @ cdecl wined3d_device_decref(ptr)
+@ cdecl wined3d_device_dispatch_compute(ptr long long long)
 @ cdecl wined3d_device_draw_indexed_primitive(ptr long long)
 @ cdecl wined3d_device_draw_indexed_primitive_instanced(ptr long long long long)
 @ cdecl wined3d_device_draw_primitive(ptr long long)

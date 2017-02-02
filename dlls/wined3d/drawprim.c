@@ -580,3 +580,46 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     TRACE("Done all gl drawing.\n");
 }
+
+void dispatch_compute(struct wined3d_device *device, const struct wined3d_state *state,
+        unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+
+    context = context_acquire(device, NULL);
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping dispatch.\n");
+        return;
+    }
+    gl_info = context->gl_info;
+
+    if (!gl_info->supported[ARB_COMPUTE_SHADER])
+    {
+        context_release(context);
+        FIXME("OpenGL implementation does not support compute shaders.\n");
+        return;
+    }
+
+    context_apply_compute_state(context, device, state);
+
+    if (!state->shader[WINED3D_SHADER_TYPE_COMPUTE])
+    {
+        context_release(context);
+        WARN("No compute shader bound, skipping dispatch.\n");
+        return;
+    }
+
+    GL_EXTCALL(glDispatchCompute(group_count_x, group_count_y, group_count_z));
+    checkGLcall("glDispatchCompute");
+
+    GL_EXTCALL(glMemoryBarrier(GL_ALL_BARRIER_BITS));
+    checkGLcall("glMemoryBarrier");
+
+    if (wined3d_settings.strict_draw_ordering)
+        gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
+
+    context_release(context);
+}
