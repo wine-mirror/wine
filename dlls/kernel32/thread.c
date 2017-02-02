@@ -918,8 +918,17 @@ LANGID WINAPI GetThreadUILanguage( void )
  */
 BOOL WINAPI GetThreadIOPendingFlag( HANDLE thread, PBOOL io_pending )
 {
-    FIXME("%p, %p\n", thread, io_pending);
-    *io_pending = FALSE;
+    NTSTATUS status;
+
+    TRACE("%p, %p\n", thread, io_pending);
+
+    status = NtQueryInformationThread( thread, ThreadIsIoPending,
+                                       io_pending, sizeof(*io_pending), NULL );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
     return TRUE;
 }
 

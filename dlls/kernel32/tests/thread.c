@@ -1969,6 +1969,7 @@ todo_wine
 
         case ThreadAffinityMask:
         case ThreadQuerySetWin32StartAddress:
+        case ThreadIsIoPending:
 todo_wine
             ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
