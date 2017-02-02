@@ -334,7 +334,7 @@ static void X11DRV_DestroyIM(XIM xim, XPointer p, XPointer data)
 static BOOL open_xim( Display *display )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
-    XIMStyle ximStyleCallback, ximStyleNone;
+    XIMStyle ximStyleNone;
     XIMStyles *ximStyles = NULL;
     INT i;
     XIM xim;
@@ -371,7 +371,6 @@ static BOOL open_xim( Display *display )
 
         ximStyleRoot = 0;
         ximStyleNone = 0;
-        ximStyleCallback = 0;
 
         for (i = 0; i < ximStyles->count_styles; ++i)
         {
@@ -394,12 +393,6 @@ static BOOL open_xim( Display *display )
                 ximStyleRoot = STYLE_ROOT;
                 TRACE("Setting Style: ximStyleRoot = STYLE_ROOT\n");
             }
-            else if (!ximStyleCallback &&(ximStyles->supported_styles[i] ==
-                     STYLE_CALLBACK))
-            {
-                ximStyleCallback = STYLE_CALLBACK;
-                TRACE("Setting Style: ximStyleCallback = STYLE_CALLBACK\n");
-            }
             else if (!ximStyleNone && (ximStyles->supported_styles[i] ==
                      STYLE_NONE))
             {
@@ -414,13 +407,6 @@ static BOOL open_xim( Display *display )
 
         if (ximStyle == 0)
             ximStyle = ximStyleNone;
-
-        if (ximStyleCallback == 0)
-        {
-            TRACE("No callback style available\n");
-            ximStyleCallback = ximStyle;
-        }
-
     }
 
     thread_data->xim = xim;
