@@ -3463,6 +3463,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         }
         TRACE("Max vertex samplers: %u.\n", gl_info->limits.vertex_samplers);
         TRACE("Max combined samplers: %u.\n", gl_info->limits.combined_samplers);
+        TRACE("Max vertex attributes: %u.\n", gl_info->limits.vertex_attribs);
     }
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
