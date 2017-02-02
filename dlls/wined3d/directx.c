@@ -3532,7 +3532,8 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
                     gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_VERTEX], gl_max);
         }
     }
-    if (gl_info->supported[ARB_GEOMETRY_SHADER4] && gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
+    if ((!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] || gl_info->supported[ARB_GEOMETRY_SHADER4])
+            && gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
     {
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_BLOCKS, &gl_max);
         gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_GEOMETRY] = min(gl_max, WINED3D_MAX_CBS);
