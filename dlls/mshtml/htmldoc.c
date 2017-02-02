@@ -4576,7 +4576,7 @@ static const cpc_entry_t HTMLDocument_cpc[] = {
     {NULL}
 };
 
-static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
+static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
 {
     doc->IHTMLDocument2_iface.lpVtbl = &HTMLDocumentVtbl;
     doc->IHTMLDocument3_iface.lpVtbl = &HTMLDocument3Vtbl;
@@ -4589,7 +4589,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     doc->IProvideClassInfo_iface.lpVtbl = &ProvideClassInfoVtbl;
 
-    doc->unk_impl = unk_impl;
+    doc->outer_unk = outer;
     doc->dispex = dispex;
     doc->task_magic = get_task_target_magic();
 
