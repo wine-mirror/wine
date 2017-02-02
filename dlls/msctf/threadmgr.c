@@ -631,7 +631,7 @@ static HRESULT WINAPI ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCo
 
     TRACE("(%p) %x\n",This,pdwCookie);
 
-    if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_TMSINK)
+    if (get_Cookie_magic(pdwCookie) != COOKIE_MAGIC_TMSINK && get_Cookie_magic(pdwCookie) != COOKIE_MAGIC_THREADFOCUSSINK)
         return E_INVALIDARG;
 
     return unadvise_sink(pdwCookie);
