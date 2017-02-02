@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-06-10 19:00+0200\n"
+"PO-Revision-Date: 2017-02-02 16:00+0100\n"
 "Last-Translator: Kim Malmo <berencamlost@msn.com>\n"
 "Language-Team: Norwegian Bokmål <alexsornes@gmail.com>\n"
 "Language: nb_NO\n"
@@ -8363,8 +8363,6 @@ msgid "Wine Control Panel"
 msgstr "Wine Kontrollpanel"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "Klarte ikke vise Kjør-vinduet (intern feil)"
 
@@ -11897,52 +11895,44 @@ msgid "(unknown %d)"
 msgstr "(ukjent %d)"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke modifisere den valgte registerverdien."
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke opprette en ny registernøkkel."
 
 #: regedit.rc:214
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke opprette en ny registerverdi."
 
 #: regedit.rc:215
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"Kan ikke gi nytt navn til nøkkel \"%1\".\n"
+"Det spesifiserte nøkkelnavnet finnes allerede."
 
 #: regedit.rc:216
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"Kan ikke gi nytt navn til verdien \"%1\".\n"
+"Det spesifiserte verdinavnet finnes allerede."
 
 #: regedit.rc:217
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke slette den valgte registernøkkelen."
 
 #: regedit.rc:218
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke gi nytt navn til den valgte registernøkkelen."
 
 #: regedit.rc:219
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke gi nytt navn til den valgte registerverdien."
 
 #: regedit.rc:371
 msgid ""
@@ -12176,32 +12166,24 @@ msgid "Displays program information, version number and copyright"
 msgstr "Viser programinformasjon, versjonnummer og opphavsrett"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke forespørre registerverdien \"%1\"."
 
 #: regedit.rc:182
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Kan ikke redigere nøkler av typen (%u)"
+msgstr "Kan ikke redigere registernøkler av typen (%1!u!)."
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Verdien er for stor (%u)"
+msgstr "Verdien er for stor (%1!u!)."
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Bekreft sletting av verdi"
 
 #: regedit.rc:189
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Fant ikke søkestrengen \"%s\""
+msgstr "Søk fullført. Fant ikke søkestrengen \"%1\"."
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"
@@ -12216,10 +12198,8 @@ msgid "New Value #%d"
 msgstr "Ny verdi #%d"
 
 #: regedit.rc:180
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
+msgstr "Kan ikke forespørre registernøkkelen \"%1\"."
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
