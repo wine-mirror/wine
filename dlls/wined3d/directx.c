@@ -113,6 +113,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_blend_func_extended",          ARB_BLEND_FUNC_EXTENDED       },
     {"GL_ARB_clip_control",                 ARB_CLIP_CONTROL              },
     {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT        },
+    {"GL_ARB_compute_shader",               ARB_COMPUTE_SHADER            },
     {"GL_ARB_copy_buffer",                  ARB_COPY_BUFFER               },
     {"GL_ARB_debug_output",                 ARB_DEBUG_OUTPUT              },
     {"GL_ARB_depth_buffer_float",           ARB_DEPTH_BUFFER_FLOAT        },
@@ -2633,6 +2634,9 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glClipControl)
     /* GL_ARB_color_buffer_float */
     USE_GL_FUNC(glClampColorARB)
+    /* GL_ARB_compute_shader */
+    USE_GL_FUNC(glDispatchCompute)
+    USE_GL_FUNC(glDispatchComputeIndirect)
     /* GL_ARB_copy_buffer */
     USE_GL_FUNC(glCopyBufferSubData)
     /* GL_ARB_debug_output */
@@ -3557,6 +3561,13 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
                     gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_PIXEL], gl_max);
         }
     }
+    if (gl_info->supported[ARB_COMPUTE_SHADER])
+    {
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_BLOCKS, &gl_max);
+        gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_COMPUTE] = min(gl_max, WINED3D_MAX_CBS);
+        TRACE("Max compute uniform blocks: %u (%d).\n",
+                gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_COMPUTE], gl_max);
+    }
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
     {
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS, &gl_max);
@@ -3674,6 +3685,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_TEXTURE_COMPRESSION_BPTC,     MAKEDWORD_VERSION(4, 2)},
         {ARB_TEXTURE_STORAGE,              MAKEDWORD_VERSION(4, 2)},
 
+        {ARB_COMPUTE_SHADER,               MAKEDWORD_VERSION(4, 3)},
         {ARB_DEBUG_OUTPUT,                 MAKEDWORD_VERSION(4, 3)},
         {ARB_ES3_COMPATIBILITY,            MAKEDWORD_VERSION(4, 3)},
         {ARB_INTERNALFORMAT_QUERY2,        MAKEDWORD_VERSION(4, 3)},

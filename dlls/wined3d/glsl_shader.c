@@ -8801,6 +8801,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
      * soon as we introduce them, adjusting the GL / GLSL version checks
      * accordingly. */
     if (gl_info->glsl_version >= MAKEDWORD_VERSION(4, 30) && gl_info->supported[WINED3D_GL_VERSION_4_3]
+            && gl_info->supported[ARB_COMPUTE_SHADER]
             && gl_info->supported[ARB_DERIVATIVE_CONTROL]
             && gl_info->supported[ARB_GPU_SHADER5]
             && gl_info->supported[ARB_SHADER_IMAGE_LOAD_STORE]
