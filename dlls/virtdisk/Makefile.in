@@ -1,0 +1,4 @@
+MODULE    = virtdisk.dll
+
+C_SRCS = \
+	virtdisk_main.c

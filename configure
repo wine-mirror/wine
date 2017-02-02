@@ -1439,6 +1439,7 @@ enable_vcomp90
 enable_vcruntime140
 enable_vdmdbg
 enable_version
+enable_virtdisk
 enable_vssapi
 enable_wbemdisp
 enable_wbemprox
@@ -18365,6 +18366,7 @@ wine_fn_config_dll vdmdbg enable_vdmdbg implib
 wine_fn_config_dll ver.dll16 enable_win16
 wine_fn_config_dll version enable_version implib
 wine_fn_config_test dlls/version/tests version_test
+wine_fn_config_dll virtdisk enable_virtdisk
 wine_fn_config_dll vmm.vxd enable_win16
 wine_fn_config_dll vnbt.vxd enable_win16
 wine_fn_config_dll vnetbios.vxd enable_win16
