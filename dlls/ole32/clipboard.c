@@ -1198,9 +1198,11 @@ static HRESULT get_priv_data(ole_priv_data **data)
 
         for(cf = 0; (cf = EnumClipboardFormats(cf)) != 0; count++)
         {
-            char buf[100];
-            GetClipboardFormatNameA(cf, buf, sizeof(buf));
-            TRACE("cf %04x %s\n", cf, buf);
+            WCHAR buf[256];
+            if (GetClipboardFormatNameW(cf, buf, sizeof(buf)))
+                TRACE("cf %04x %s\n", cf, debugstr_w(buf));
+            else
+                TRACE("cf %04x\n", cf);
         }
         TRACE("count %d\n", count);
         size += count * sizeof(ret->entries[0]);
