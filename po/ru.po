@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-11-10 09:53+0300\n"
+"PO-Revision-Date: 2017-02-02 09:41+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -8364,10 +8364,8 @@ msgid "Wine Control Panel"
 msgstr "Панель Управления Wine"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
-msgstr "Невозможно отобразить диалог Запуск файла (внутренняя ошибка)"
+msgstr "Не удалось отобразить диалог запуска программ (внутренняя ошибка)"
 
 #: shell32.rc:196
 msgid "Unable to display Browse dialog box (internal error)"
@@ -11903,52 +11901,44 @@ msgid "(unknown %d)"
 msgstr "(неизвестно %d)"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось изменить выбранное значение."
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось создать ключ реестра."
 
 #: regedit.rc:214
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось создать новое значение."
 
 #: regedit.rc:215
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"Не удалось переименовать ключ «%1».\n"
+"Ключ с указанным именем уже существует."
 
 #: regedit.rc:216
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"Не удалось переименовать значение «%1».\n"
+"Значение с указанным именем уже существует."
 
 #: regedit.rc:217
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось удалить выбранный ключ реестра."
 
 #: regedit.rc:218
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось переименовать выбранный ключ реестра."
 
 #: regedit.rc:219
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось переименовать выбранное значение реестра."
 
 #: regedit.rc:371
 msgid ""
@@ -12177,32 +12167,24 @@ msgid "Displays program information, version number and copyright"
 msgstr "Отображает информацию о программе, номер версии и список авторов"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось прочитать значение реестра «%1»."
 
 #: regedit.rc:182
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Редактирование разделов типа (%u) не поддерживается"
+msgstr "Редактирование значений типа (%1!u!) не поддерживается."
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Значение слишком велико (%u)"
+msgstr "Значение слишком велико (%1!u!)."
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Подтверждение"
 
 #: regedit.rc:189
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Искомая строка «%s» не найдена"
+msgstr "Поиск завершён. Строка «%1» не найдена."
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"
@@ -12217,10 +12199,8 @@ msgid "New Value #%d"
 msgstr "Новое значение #%d"
 
 #: regedit.rc:180
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: не удалось открыть ключ «%1».\n"
+msgstr "Не удалось прочитать ключ реестра «%1»."
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
