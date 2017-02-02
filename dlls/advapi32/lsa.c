@@ -514,13 +514,14 @@ NTSTATUS WINAPI LsaLookupSids(
             {
                 (*Names)[i].Name.Length = (name_size - 1) * sizeof(WCHAR);
                 (*Names)[i].Name.MaximumLength = name_size * sizeof(WCHAR);
-                name_fullsize += (*Names)[i].Name.MaximumLength;
             }
             else
             {
                 (*Names)[i].Name.Length = 0;
-                (*Names)[i].Name.MaximumLength = 0;
+                (*Names)[i].Name.MaximumLength = sizeof(WCHAR);
             }
+
+            name_fullsize += (*Names)[i].Name.MaximumLength;
 
             /* This potentially allocates more than needed, cause different names will reuse same domain index.
                Also it's not possible to store domain name length right here for the same reason. */
@@ -545,6 +546,13 @@ NTSTATUS WINAPI LsaLookupSids(
                 domain_fullsize += sid_size;
 
                 heap_free(name);
+            }
+            else
+            {
+                /* If we don't have a domain name, use a zero-length entry rather than a null value. */
+                domain_fullsize += sizeof(WCHAR);
+                domain.Length = 0;
+                domain.MaximumLength = sizeof(WCHAR);
             }
         }
     }
@@ -572,18 +580,22 @@ NTSTATUS WINAPI LsaLookupSids(
             {
                 domain.Length = (domain_size - 1) * sizeof(WCHAR);
                 domain.MaximumLength = domain_size * sizeof(WCHAR);
-                domain.Buffer = heap_alloc(domain.MaximumLength);
             }
+            else
+            {
+                /* Use a zero-length buffer */
+                domain.Length = 0;
+                domain.MaximumLength = sizeof(WCHAR);
+            }
+
+            domain.Buffer = heap_alloc(domain.MaximumLength);
 
             (*Names)[i].Name.Buffer = name_buffer;
             LookupAccountSidW(NULL, Sids[i], (*Names)[i].Name.Buffer, &name_size, domain.Buffer, &domain_size, &use);
             (*Names)[i].Use = use;
 
-            if (domain_size)
-            {
-                (*Names)[i].DomainIndex = lsa_reflist_add_domain(*ReferencedDomains, &domain, &domain_data);
-                heap_free(domain.Buffer);
-            }
+            (*Names)[i].DomainIndex = lsa_reflist_add_domain(*ReferencedDomains, &domain, &domain_data);
+            heap_free(domain.Buffer);
         }
 
         name_buffer += name_size;
