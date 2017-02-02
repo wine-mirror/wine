@@ -3361,9 +3361,12 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     gl_info->limits.user_clip_distances = min(MAX_CLIP_DISTANCES, gl_max);
     TRACE("Clip plane support - max planes %d.\n", gl_max);
 
-    gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
-    gl_info->limits.lights = gl_max;
-    TRACE("Light support - max lights %d.\n", gl_max);
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    {
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
+        gl_info->limits.lights = gl_max;
+        TRACE("Light support - max lights %d.\n", gl_max);
+    }
 
     gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max);
     gl_info->limits.texture_size = gl_max;
@@ -4003,6 +4006,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
     adapter->d3d_info.xyzrhw = vertex_caps.xyzrhw;
     adapter->d3d_info.ffp_generic_attributes = vertex_caps.ffp_generic_attributes;
     adapter->d3d_info.limits.ffp_vertex_blend_matrices = vertex_caps.max_vertex_blend_matrices;
+    adapter->d3d_info.limits.active_light_count = vertex_caps.max_active_lights;
     adapter->d3d_info.emulated_flatshading = vertex_caps.emulated_flatshading;
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);

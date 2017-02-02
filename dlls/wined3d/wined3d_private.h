@@ -2219,6 +2219,7 @@ struct wined3d_d3d_limits
     UINT ffp_textures;
     UINT ffp_blend_stages;
     UINT ffp_vertex_blend_matrices;
+    unsigned int active_light_count;
 };
 
 typedef void (WINE_GLAPI *wined3d_ffp_attrib_func)(const void *data);

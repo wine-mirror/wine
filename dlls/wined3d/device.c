@@ -1730,10 +1730,11 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
         }
         else
         {
+            unsigned int light_count = device->adapter->d3d_info.limits.active_light_count;
             unsigned int i;
-            const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-            /* Find a free GL light. */
-            for (i = 0; i < gl_info->limits.lights; ++i)
+
+            /* Find a free light. */
+            for (i = 0; i < light_count; ++i)
             {
                 if (!device->update_state->lights[i])
                 {
