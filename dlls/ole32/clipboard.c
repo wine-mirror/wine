@@ -2098,8 +2098,7 @@ static HWND create_clipbrd_window(void)
     RegisterClassExW(&class);
 
     return CreateWindowW(clipbrd_wndclass, title, WS_POPUP | WS_CLIPSIBLINGS | WS_OVERLAPPED,
-                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                         NULL, NULL, hinst, 0);
+                         0, 0, 0, 0, HWND_MESSAGE, NULL, hinst, 0);
 }
 
 /*********************************************************************
