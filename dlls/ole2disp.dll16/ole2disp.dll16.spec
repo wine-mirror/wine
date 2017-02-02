@@ -30,8 +30,8 @@
 30 stub DISPINVOKE
 31 pascal CreateDispTypeInfo(ptr long ptr) CreateDispTypeInfo16
 32 pascal CreateStdDispatch(ptr ptr ptr ptr) CreateStdDispatch16
-33 stub _IID_IDISPATCH
-34 stub _IID_IENUMVARIANT
+33 variable _IID_IDispatch(0x00020400 0x00000000 0x000000c0 0x46000000)
+34 variable _IID_IEnumVARIANT(0x00020404 0x00000000 0x000000c0 0x46000000)
 35 pascal RegisterActiveObject(ptr ptr long ptr) RegisterActiveObject16
 36 stub REVOKEACTIVEOBJECT
 37 stub GETACTIVEOBJECT
@@ -110,9 +110,9 @@
 110 pascal SetErrorInfo(long ptr) SetErrorInfo16
 111 stub GETERRORINFO
 112 stub CREATEERRORINFO
-113 stub _IID_IERRORINFO
-114 stub _IID_ICREATEERRORINFO
-115 stub _IID_ISUPPORTERRORINFO
+113 variable _IID_IErrorInfo(0x1cf2b120 0x101b547d 0x0008658e 0x19d12b2b)
+114 variable _IID_ICreateErrorInfo(0x22f03340 0x101b547d 0x0008658e 0x19d12b2b)
+115 variable _IID_ISupportErrorInfo(0xdf0b3d60 0x101b548f 0x0008658e 0x19d12b2b)
 116 stub VARUI1FROMI2
 117 stub VARUI1FROMI4
 118 stub VARUI1FROMR4
