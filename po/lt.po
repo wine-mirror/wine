@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-01-27 22:03+0300\n"
+"PO-Revision-Date: 2017-02-02 08:02+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11904,52 +11904,44 @@ msgid "(unknown %d)"
 msgstr "(nežinomas %d)"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko modifikuoti pasirinktos registro reikšmės."
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko sukurti naujo registro rakto."
 
 #: regedit.rc:214
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko sukurti naujos registro reikšmės."
 
 #: regedit.rc:215
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"Nepavyko pervadinti rakto „%1“.\n"
+"Nurodytas rakto vardas jau egzistuoja."
 
 #: regedit.rc:216
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"Nepavyko pervadinti reikšmės „%1“.\n"
+"Nurodytas reikšmės vardas jau egzistuoja."
 
 #: regedit.rc:217
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko pašalinti pasirinkto registro rakto."
 
 #: regedit.rc:218
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko pervadinti pasirinkto registro rakto."
 
 #: regedit.rc:219
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko pervadinti pasirinktos registro reikšmės."
 
 #: regedit.rc:371
 msgid ""
@@ -12180,32 +12172,24 @@ msgid "Displays program information, version number and copyright"
 msgstr "Parodo informaciją apie programą, versijos numerį ir autoriaus teises"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko užklausti registro reikšmės „%1“."
 
 #: regedit.rc:182
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Šio tipo raktų redaguoti negalima (%u)"
+msgstr "Nepavyko redaguoti šio tipo registro raktų (%1!u!)."
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Reikšmė per didelė (%u)"
+msgstr "Reikšmė per didelė (%1!u!)."
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Reikšmės šalinimo patvirtinimas"
 
 #: regedit.rc:189
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Ieškoma eilutė „%s“ nerasta"
+msgstr "Paieška baigta. Eilutė „%1“ nerasta."
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"
@@ -12220,10 +12204,8 @@ msgid "New Value #%d"
 msgstr "Nauja reikšmė #%d"
 
 #: regedit.rc:180
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: Nepavyko atverti registro rakto „%1“.\n"
+msgstr "Nepavyko užklausti registro rakto „%1“."
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
