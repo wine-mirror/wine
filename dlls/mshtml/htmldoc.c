@@ -4886,25 +4886,22 @@ static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *do
     return S_OK;
 }
 
-/**********************************************************
- * ICustomDoc implementation
- */
-
-static inline HTMLDocumentObj *impl_from_ICustomDoc(ICustomDoc *iface)
+static inline HTMLDocumentObj *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDocumentObj, ICustomDoc_iface);
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_outer);
 }
 
-static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
-    if(htmldoc_qi(&This->basedoc, riid, ppv))
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &This->IUnknown_outer;
+    }else if(htmldoc_qi(&This->basedoc, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
-
-    if(IsEqualGUID(&IID_ICustomDoc, riid)) {
+    }else if(IsEqualGUID(&IID_ICustomDoc, riid)) {
         *ppv = &This->ICustomDoc_iface;
     }else if(IsEqualGUID(&IID_ITargetContainer, riid)) {
         *ppv = &This->ITargetContainer_iface;
@@ -4920,9 +4917,9 @@ static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, v
     return S_OK;
 }
 
-static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
+static ULONG WINAPI HTMLDocumentObj_AddRef(IUnknown *iface)
 {
-    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref = %u\n", This, ref);
@@ -4930,9 +4927,9 @@ static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
     return ref;
 }
 
-static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
+static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
 {
-    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+    HTMLDocumentObj *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref = %u\n", This, ref);
@@ -4992,6 +4989,42 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
     return ref;
 }
 
+static const IUnknownVtbl HTMLDocumentObjVtbl = {
+    HTMLDocumentObj_QueryInterface,
+    HTMLDocumentObj_AddRef,
+    HTMLDocumentObj_Release
+};
+
+/**********************************************************
+ * ICustomDoc implementation
+ */
+
+static inline HTMLDocumentObj *impl_from_ICustomDoc(ICustomDoc *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, ICustomDoc_iface);
+}
+
+static HRESULT WINAPI CustomDoc_QueryInterface(ICustomDoc *iface, REFIID riid, void **ppv)
+{
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+
+    return htmldoc_query_interface(&This->basedoc, riid, ppv);
+}
+
+static ULONG WINAPI CustomDoc_AddRef(ICustomDoc *iface)
+{
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+
+    return htmldoc_addref(&This->basedoc);
+}
+
+static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
+{
+    HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
+
+    return htmldoc_release(&This->basedoc);
+}
+
 static HRESULT WINAPI CustomDoc_SetUIHandler(ICustomDoc *iface, IDocHostUIHandler *pUIHandler)
 {
     HTMLDocumentObj *This = impl_from_ICustomDoc(iface);
@@ -5042,7 +5075,7 @@ static dispex_static_data_t HTMLDocumentObj_dispex = {
     HTMLDocumentObj_iface_tids
 };
 
-HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
+HRESULT HTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
 {
     mozIDOMWindowProxy *mozwindow;
     HTMLDocumentObj *doc;
@@ -5050,18 +5083,24 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     nsresult nsres;
     HRESULT hres;
 
-    TRACE("(%p %s %p)\n", pUnkOuter, debugstr_mshtml_guid(riid), ppvObject);
+    TRACE("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
+
+    if(outer && !IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = NULL;
+        return E_INVALIDARG;
+    }
 
     doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
     if(!doc)
         return E_OUTOFMEMORY;
 
-    init_dispex(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex);
-    init_doc(&doc->basedoc, (IUnknown*)&doc->ICustomDoc_iface, &doc->dispex.IDispatchEx_iface);
-    TargetContainer_Init(doc);
-
-    doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
     doc->ref = 1;
+    doc->IUnknown_outer.lpVtbl = &HTMLDocumentObjVtbl;
+    doc->ICustomDoc_iface.lpVtbl = &CustomDocVtbl;
+
+    init_dispex(&doc->dispex, (IUnknown*)&doc->ICustomDoc_iface, &HTMLDocumentObj_dispex);
+    init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_outer, &doc->dispex.IDispatchEx_iface);
+    TargetContainer_Init(doc);
     doc->basedoc.doc_obj = doc;
 
     doc->usermode = UNKNOWN_USERMODE;
@@ -5075,10 +5114,14 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         return hres;
     }
 
-    hres = htmldoc_query_interface(&doc->basedoc, riid, ppvObject);
-    htmldoc_release(&doc->basedoc);
-    if(FAILED(hres))
-        return hres;
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &doc->IUnknown_outer;
+    }else {
+        hres = htmldoc_query_interface(&doc->basedoc, riid, ppv);
+        htmldoc_release(&doc->basedoc);
+        if(FAILED(hres))
+            return hres;
+    }
 
     nsres = nsIWebBrowser_GetContentDOMWindow(doc->nscontainer->webbrowser, &mozwindow);
     if(NS_FAILED(nsres))

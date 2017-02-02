@@ -609,6 +609,7 @@ static inline ULONG htmldoc_release(HTMLDocument *This)
 struct HTMLDocumentObj {
     HTMLDocument basedoc;
     DispatchEx dispex;
+    IUnknown IUnknown_outer;
     ICustomDoc ICustomDoc_iface;
     ITargetContainer ITargetContainer_iface;
 
