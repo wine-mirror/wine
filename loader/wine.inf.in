@@ -3255,7 +3255,7 @@ DisplayName="Platform Bus Kernel"
 ServiceBinary="%12%\winebus.sys"
 LoadOrderGroup="WinePlugPlay"
 ServiceType=1
-StartType=3
+StartType=2
 ErrorControl=1
 
 [WineHIDService]
