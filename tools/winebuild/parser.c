@@ -182,7 +182,7 @@ static ORDDEF *add_entry_point( DLLSPEC *spec )
 static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
 {
     char *endptr;
-    int *value_array;
+    unsigned int *value_array;
     int n_values;
     int value_array_size;
     const char *token;
@@ -214,7 +214,7 @@ static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
 	if (*token == ')')
 	    break;
 
-	value_array[n_values++] = strtol(token, &endptr, 0);
+	value_array[n_values++] = strtoul(token, &endptr, 0);
 	if (n_values == value_array_size)
 	{
 	    value_array_size += 25;
