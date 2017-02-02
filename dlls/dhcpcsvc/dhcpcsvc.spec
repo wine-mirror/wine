@@ -31,7 +31,7 @@
 @ stub DhcpRenewIpAddressLeaseEx
 @ stub DhcpRequestCachedParams
 @ stub DhcpRequestOptions
-@ stub DhcpRequestParams
+@ stdcall DhcpRequestParams(long ptr wstr ptr int64 int64 ptr ptr wstr)
 @ stub DhcpSetMSFTVendorSpecificOptions
 @ stub DhcpStaticRefreshParams
 @ stub DhcpUndoRequestParams

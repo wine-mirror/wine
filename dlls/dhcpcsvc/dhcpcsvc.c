@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "dhcpcsdk.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dhcpcsvc);
@@ -36,4 +37,13 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             break;
     }
     return TRUE;
+}
+
+DWORD WINAPI DhcpRequestParams( DWORD flags, void *reserved, WCHAR *adaptername, DHCPCAPI_CLASSID *classid,
+                                DHCPCAPI_PARAMS_ARRAY sendparams, DHCPCAPI_PARAMS_ARRAY recdparams,
+                                BYTE *buffer, DWORD *size, WCHAR *requestidstr )
+{
+    FIXME("(%08x, %p, %s, %p, %u, %u, %p, %p, %s): stub\n", flags, reserved, debugstr_w(adaptername), classid,
+            sendparams.nParams, recdparams.nParams, buffer, size, debugstr_w(requestidstr));
+    return ERROR_SUCCESS;
 }
