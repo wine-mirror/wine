@@ -2731,7 +2731,7 @@ static void test_create_depthstencil_view(void)
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, current_desc, &dsview);
         ok(SUCCEEDED(hr), "Test %u: Failed to create depth stencil view, hr %#x.\n", i, hr);
         refcount = get_refcount((IUnknown *)texture);
-        todo_wine ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
 
         hr = ID3D11DepthStencilView_QueryInterface(dsview, &IID_ID3D10DepthStencilView, (void **)&iface);
         ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
@@ -3095,7 +3095,7 @@ static void test_create_rendertarget_view(void)
         hr = ID3D11Device_CreateRenderTargetView(device, texture, current_desc, &rtview);
         ok(SUCCEEDED(hr), "Test %u: Failed to create render target view, hr %#x.\n", i, hr);
         refcount = get_refcount((IUnknown *)texture);
-        todo_wine ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
 
         hr = ID3D11RenderTargetView_QueryInterface(rtview, &IID_ID3D10RenderTargetView, (void **)&iface);
         ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
@@ -3454,7 +3454,7 @@ static void test_create_shader_resource_view(void)
         hr = ID3D11Device_CreateShaderResourceView(device, texture, current_desc, &srview);
         ok(SUCCEEDED(hr), "Test %u: Failed to create a shader resource view, hr %#x.\n", i, hr);
         refcount = get_refcount((IUnknown *)texture);
-        todo_wine ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
 
         hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView, (void **)&iface);
         ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
@@ -8132,7 +8132,7 @@ static void test_swapchain_views(void)
     context = test_context.immediate_context;
 
     refcount = get_refcount((IUnknown *)test_context.backbuffer);
-    todo_wine ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
 
     draw_color_quad(&test_context, &color);
     check_texture_color(test_context.backbuffer, 0xff7f4c33, 1);
@@ -8145,7 +8145,7 @@ static void test_swapchain_views(void)
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     refcount = get_refcount((IUnknown *)test_context.backbuffer);
-    todo_wine ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
 
     draw_color_quad(&test_context, &color);
     todo_wine check_texture_color(test_context.backbuffer, 0xffbc957c, 1);
@@ -10365,7 +10365,7 @@ static void test_create_unordered_access_view(void)
         hr = ID3D11Device_CreateUnorderedAccessView(device, texture, current_desc, &uav);
         ok(SUCCEEDED(hr), "Test %u: Failed to create unordered access view, hr %#x.\n", i, hr);
         refcount = get_refcount((IUnknown *)texture);
-        todo_wine ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
 
         memset(&uav_desc, 0, sizeof(uav_desc));
         ID3D11UnorderedAccessView_GetDesc(uav, &uav_desc);
