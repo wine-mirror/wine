@@ -996,7 +996,6 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_Release(ID3D11DepthStenci
     {
         wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(view->wined3d_view);
-        ID3D11Resource_Release(view->resource);
         ID3D11Device_Release(view->device);
         wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
@@ -1312,7 +1311,6 @@ static HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, st
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    ID3D11Resource_AddRef(resource);
     view->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(view->device);
 
@@ -1419,7 +1417,6 @@ static ULONG STDMETHODCALLTYPE d3d11_rendertarget_view_Release(ID3D11RenderTarge
     {
         wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(view->wined3d_view);
-        ID3D11Resource_Release(view->resource);
         ID3D11Device_Release(view->device);
         wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
@@ -1740,7 +1737,6 @@ static HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, st
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    ID3D11Resource_AddRef(resource);
     view->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(view->device);
 
@@ -1848,7 +1844,6 @@ static ULONG STDMETHODCALLTYPE d3d11_shader_resource_view_Release(ID3D11ShaderRe
     {
         wined3d_mutex_lock();
         wined3d_shader_resource_view_decref(view->wined3d_view);
-        ID3D11Resource_Release(view->resource);
         ID3D11Device_Release(view->device);
         wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
@@ -2221,7 +2216,6 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    ID3D11Resource_AddRef(resource);
     view->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(view->device);
 
@@ -2314,7 +2308,6 @@ static ULONG STDMETHODCALLTYPE d3d11_unordered_access_view_Release(ID3D11Unorder
     {
         wined3d_mutex_lock();
         wined3d_unordered_access_view_decref(view->wined3d_view);
-        ID3D11Resource_Release(view->resource);
         ID3D11Device_Release(view->device);
         wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
@@ -2510,7 +2503,7 @@ static HRESULT d3d11_unordered_access_view_init(struct d3d11_unordered_access_vi
 
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
-    ID3D11Resource_AddRef(view->resource = resource);
+    view->resource = resource;
     ID3D11Device_AddRef(view->device = &device->ID3D11Device_iface);
 
     return S_OK;
