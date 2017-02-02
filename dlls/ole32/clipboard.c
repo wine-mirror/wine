@@ -1110,7 +1110,7 @@ static HRESULT get_current_dataobject(IDataObject **data)
 
     h = GetClipboardData(wine_marshal_clipboard_format);
     if(!h) return S_FALSE;
-    if(GlobalSize(h) == 0) return S_FALSE;
+    if(GlobalSize(h) <= 1) return S_FALSE;
     ptr = GlobalLock(h);
     if(!ptr) return S_FALSE;
 
@@ -1957,7 +1957,7 @@ static HRESULT expose_marshalled_dataobject(ole_clipbrd *clipbrd, IDataObject *d
         dup_global_mem(h_stm, GMEM_DDESHARE|GMEM_MOVEABLE, &h);
     }
     else /* flushed */
-        h = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, 0);
+        h = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, 1);
 
     if(!h) return E_OUTOFMEMORY;
 
