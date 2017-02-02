@@ -1296,7 +1296,6 @@ static LRESULT CALLBACK hook_proc(int code, WPARAM wp, LPARAM lp)
              * after GetOpenFileA() is a file dialog window. Mark Vista+
              * behavior as broken. */
             hr = OleInitialize(NULL);
-            todo_wine_if(first_dlg)
             ok((first_dlg ? hr == S_OK : hr == S_FALSE)
                     || broken(first_dlg && hr == S_FALSE),
                     "OleInitialize() returned %#x (first dialog %#x)\n", hr, first_dlg);

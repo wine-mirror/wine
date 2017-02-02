@@ -252,7 +252,6 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
     void *template;
     HRSRC hRes;
     HANDLE hDlgTmpl = 0;
-    HRESULT hr;
 
     /* test for missing functionality */
     if (fodInfos->ofnInfos->Flags & UNIMPLEMENTED_FLAGS)
@@ -297,9 +296,6 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
       fodInfos->HookMsg.sharevistring = RegisterWindowMessageW(SHAREVISTRINGW);
     }
 
-    /* Some shell namespace extensions depend on COM being initialized. */
-    hr = OleInitialize(NULL);
-
     if (fodInfos->unicode)
       lRes = DialogBoxIndirectParamW(COMDLG32_hInstance,
                                      template,
@@ -312,7 +308,7 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
                                      fodInfos->ofnInfos->hwndOwner,
                                      FileOpenDlgProc95,
                                      (LPARAM) fodInfos);
-    if (SUCCEEDED(hr)) 
+    if (fodInfos->ole_initialized)
         OleUninitialize();
 
     /* Unable to create the dialog */
@@ -1262,7 +1258,11 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
          int gripx = GetSystemMetrics( SM_CYHSCROLL);
          int gripy = GetSystemMetrics( SM_CYVSCROLL);
 
-	 /* Adds the FileOpenDlgInfos in the property list of the dialog
+         /* Some shell namespace extensions depend on COM being initialized. */
+         if (SUCCEEDED(OleInitialize(NULL)))
+             fodInfos->ole_initialized = TRUE;
+
+         /* Adds the FileOpenDlgInfos in the property list of the dialog
             so it will be easily accessible through a GetPropA(...) */
          SetPropA(hwnd, FileOpenDlgInfosStr, fodInfos);
 
