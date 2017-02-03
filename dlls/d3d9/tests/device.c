@@ -5598,7 +5598,7 @@ static void test_occlusion_query(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(data.dword[0] == 0xdddddddd && data.dword[1] == 0xffffffff,
+    ok(data.dword[0] == 0xdddddddd && data.dword[1] == 0xffffffff,
             "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
@@ -5810,7 +5810,7 @@ static void test_timestamp_query(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DQuery9_GetData(freq_query, freq, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(freq[0] == 0xdddddddd && freq[1] == 0xffffffff,
+    ok(freq[0] == 0xdddddddd && freq[1] == 0xffffffff,
             "Got unexpected query result 0x%08x%08x.\n", freq[1], freq[0]);
 
     hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_TIMESTAMPDISJOINT, &disjoint_query);
@@ -5823,12 +5823,12 @@ static void test_timestamp_query(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DQuery9_GetData(disjoint_query, &disjoint, sizeof(WORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(disjoint[0] == 0xdddd && disjoint[1] == 0xffff,
-            "Got unexpected query result 0x%08x%08x.\n", disjoint[1], disjoint[0]);
+    ok(disjoint[0] == 0xdddd && disjoint[1] == 0xffff,
+            "Got unexpected query result 0x%04x%04x.\n", disjoint[1], disjoint[0]);
     hr = IDirect3DQuery9_GetData(disjoint_query, &disjoint, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(disjoint[0] == 0xdddd && disjoint[1] == 0xdddd,
-            "Got unexpected query result 0x%08x%08x.\n", disjoint[1], disjoint[0]);
+    ok(disjoint[0] == 0xdddd && disjoint[1] == 0xdddd,
+            "Got unexpected query result 0x%04x%04x.\n", disjoint[1], disjoint[0]);
 
     hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_TIMESTAMP, &query);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -5860,11 +5860,11 @@ static void test_timestamp_query(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(timestamp[0] == 0xdddddddd && timestamp[1] == 0xffffffff,
+    ok(timestamp[0] == 0xdddddddd && timestamp[1] == 0xffffffff,
             "Got unexpected query result 0x%08x%08x.\n", timestamp[1], timestamp[0]);
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(timestamp[0] == 0xdddddddd && timestamp[1] == 0xdddddddd,
+    ok(timestamp[0] == 0xdddddddd && timestamp[1] == 0xdddddddd,
             "Got unexpected query result 0x%08x%08x.\n", timestamp[1], timestamp[0]);
 
     hr = IDirect3DQuery9_Issue(disjoint_query, D3DISSUE_END);

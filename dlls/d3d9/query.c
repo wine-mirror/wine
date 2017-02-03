@@ -159,7 +159,8 @@ static HRESULT WINAPI d3d9_query_GetData(IDirect3DQuery9 *iface, void *data, DWO
             size = sizeof(data_disjoint.disjoint);
 
         hr = wined3d_query_get_data(query->wined3d_query, &data_disjoint, sizeof(data_disjoint), flags);
-        memcpy(data, &data_disjoint.disjoint, size);
+        if (SUCCEEDED(hr))
+            memcpy(data, &data_disjoint.disjoint, size);
     }
     else
     {
@@ -168,7 +169,15 @@ static HRESULT WINAPI d3d9_query_GetData(IDirect3DQuery9 *iface, void *data, DWO
     wined3d_mutex_unlock();
 
     if (hr == D3DERR_INVALIDCALL)
+    {
+        if (data)
+        {
+            DWORD data_size = d3d9_query_GetDataSize(iface);
+            memset(data, 0, size);
+            memset(data, 0xdd, min(size, data_size));
+        }
         return S_OK;
+    }
     return hr;
 }
 
