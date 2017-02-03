@@ -252,7 +252,7 @@ static void test_chordmap(void)
 
     /* Unimplemented IPersistStream methods */
     hr = IPersistStream_IsDirty(ps);
-    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    ok(hr == S_FALSE || broken(hr == S_OK), "IPersistStream_IsDirty failed: %08x\n", hr);
     hr = IPersistStream_GetSizeMax(ps, &size);
     ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
     hr = IPersistStream_Save(ps, NULL, TRUE);
