@@ -771,6 +771,9 @@ static struct msvideo_thunk*    MSVIDEO_HasThunk(HIC16 hic)
 {
     struct msvideo_thunk* thunk;
 
+    if (!MSVIDEO_Thunks)
+        return NULL;
+
     for (thunk = MSVIDEO_Thunks; thunk < &MSVIDEO_Thunks[MAX_THUNKS]; thunk++)
     {
         if (thunk->hIC16 == hic) return thunk;
