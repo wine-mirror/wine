@@ -3890,8 +3890,19 @@ static void test_timestamp_query(void)
     data_size = ID3D10Query_GetDataSize(timestamp_disjoint_query);
     ok(data_size == sizeof(disjoint), "Got unexpected data size %u.\n", data_size);
 
+    hr = ID3D10Query_GetData(timestamp_disjoint_query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
     /* Test a TIMESTAMP_DISJOINT query. */
     ID3D10Query_Begin(timestamp_disjoint_query);
+
+    hr = ID3D10Query_GetData(timestamp_disjoint_query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
     ID3D10Query_End(timestamp_disjoint_query);
     for (i = 0; i < 500; ++i)
     {
