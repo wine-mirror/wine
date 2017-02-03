@@ -4735,10 +4735,10 @@ static void test_occlusion_query(void)
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
             "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     ID3D11DeviceContext_End(context, query);
@@ -4903,11 +4903,11 @@ static void test_timestamp_query(void)
     disjoint.Frequency = 0xdeadbeef;
     disjoint.Disjoint = 0xdeadbeef;
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(disjoint.Frequency == 0xdeadbeef, "Frequency data was modified.\n");
-    todo_wine ok(disjoint.Disjoint == 0xdeadbeef, "Disjoint data was modified.\n");
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(disjoint.Frequency == 0xdeadbeef, "Frequency data was modified.\n");
+    ok(disjoint.Disjoint == 0xdeadbeef, "Disjoint data was modified.\n");
 
     /* Test a TIMESTAMP_DISJOINT query. */
     ID3D11DeviceContext_Begin(context, timestamp_disjoint_query);
@@ -4961,18 +4961,18 @@ static void test_timestamp_query(void)
 
     memset(&timestamp, 0xff, sizeof(timestamp));
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(timestamp == ~(UINT64)0, "Timestamp data was modified.\n");
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(timestamp == ~(UINT64)0, "Timestamp data was modified.\n");
 
     /* Test a TIMESTAMP query inside a TIMESTAMP_DISJOINT query. */
     ID3D11DeviceContext_Begin(context, timestamp_disjoint_query);
 
     memset(&timestamp, 0xff, sizeof(timestamp));
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(timestamp == ~(UINT64)0, "Timestamp data was modified.\n");
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(timestamp == ~(UINT64)0, "Timestamp data was modified.\n");
 
     draw_color_quad(&test_context, &red);
 

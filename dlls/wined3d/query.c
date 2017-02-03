@@ -330,8 +330,12 @@ HRESULT CDECL wined3d_query_get_data(struct wined3d_query *query,
     }
 
     if (query->state == QUERY_CREATED)
+    {
         WARN("Query wasn't started yet.\n");
-    else if (!query->query_ops->query_poll(query, flags))
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (!query->query_ops->query_poll(query, flags))
         return S_FALSE;
 
     if (data)

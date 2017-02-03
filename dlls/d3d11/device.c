@@ -536,6 +536,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_GetData(ID3D11DeviceCon
     if (!data_size || wined3d_query_get_data_size(query->wined3d_query) == data_size)
     {
         hr = wined3d_query_get_data(query->wined3d_query, data, data_size, wined3d_flags);
+        if (hr == WINED3DERR_INVALIDCALL)
+            hr = DXGI_ERROR_INVALID_CALL;
     }
     else
     {
