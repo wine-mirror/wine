@@ -119,7 +119,7 @@ void *WINAPI WlanAllocateMemory(DWORD size)
 {
     void *ret;
 
-    TRACE("(%d)", size);
+    TRACE("(%d)\n", size);
 
     if (!size)
     {
