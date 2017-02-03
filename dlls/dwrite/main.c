@@ -141,16 +141,29 @@ static DWRITE_PIXEL_GEOMETRY WINAPI renderingparams_GetPixelGeometry(IDWriteRend
     return This->geometry;
 }
 
+static DWRITE_RENDERING_MODE rendering_mode_from_mode1(DWRITE_RENDERING_MODE1 mode)
+{
+    static const DWRITE_RENDERING_MODE rendering_modes[] = {
+        DWRITE_RENDERING_MODE_DEFAULT,           /* DWRITE_RENDERING_MODE1_DEFAULT */
+        DWRITE_RENDERING_MODE_ALIASED,           /* DWRITE_RENDERING_MODE1_ALIASED */
+        DWRITE_RENDERING_MODE_GDI_CLASSIC,       /* DWRITE_RENDERING_MODE1_GDI_CLASSIC */
+        DWRITE_RENDERING_MODE_GDI_NATURAL,       /* DWRITE_RENDERING_MODE1_GDI_NATURAL */
+        DWRITE_RENDERING_MODE_NATURAL,           /* DWRITE_RENDERING_MODE1_NATURAL */
+        DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, /* DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC */
+        DWRITE_RENDERING_MODE_OUTLINE,           /* DWRITE_RENDERING_MODE1_OUTLINE */
+        DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, /* DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED */
+    };
+
+    return rendering_modes[mode];
+}
+
 static DWRITE_RENDERING_MODE WINAPI renderingparams_GetRenderingMode(IDWriteRenderingParams3 *iface)
 {
     struct renderingparams *This = impl_from_IDWriteRenderingParams3(iface);
 
     TRACE("(%p)\n", This);
 
-    if (This->mode == DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED)
-        return DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
-
-    return This->mode;
+    return rendering_mode_from_mode1(This->mode);
 }
 
 static FLOAT WINAPI renderingparams1_GetGrayscaleEnhancedContrast(IDWriteRenderingParams3 *iface)
@@ -189,7 +202,7 @@ static const struct IDWriteRenderingParams3Vtbl renderingparamsvtbl = {
 };
 
 static HRESULT create_renderingparams(FLOAT gamma, FLOAT contrast, FLOAT grayscalecontrast, FLOAT cleartype_level,
-    DWRITE_PIXEL_GEOMETRY geometry, DWRITE_RENDERING_MODE mode, DWRITE_GRID_FIT_MODE gridfit, IDWriteRenderingParams3 **params)
+    DWRITE_PIXEL_GEOMETRY geometry, DWRITE_RENDERING_MODE1 mode, DWRITE_GRID_FIT_MODE gridfit, IDWriteRenderingParams3 **params)
 {
     struct renderingparams *This;
 
@@ -966,8 +979,8 @@ static HRESULT WINAPI dwritefactory_CreateMonitorRenderingParams(IDWriteFactory4
     if (!fixme_once++)
         FIXME("(%p): monitor setting ignored\n", monitor);
 
-    hr = IDWriteFactory4_CreateCustomRenderingParams(iface, 0.0f, 0.0f, 1.0f, 0.0f, DWRITE_PIXEL_GEOMETRY_FLAT, DWRITE_RENDERING_MODE_DEFAULT,
-        DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
+    hr = IDWriteFactory4_CreateCustomRenderingParams(iface, 0.0f, 0.0f, 1.0f, 0.0f, DWRITE_PIXEL_GEOMETRY_FLAT,
+        DWRITE_RENDERING_MODE1_DEFAULT, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
     *params = (IDWriteRenderingParams*)params3;
     return hr;
 }
@@ -982,7 +995,7 @@ static HRESULT WINAPI dwritefactory_CreateCustomRenderingParams(IDWriteFactory4 
     TRACE("(%p)->(%f %f %f %d %d %p)\n", This, gamma, enhancedContrast, cleartype_level, geometry, mode, params);
 
     hr = IDWriteFactory4_CreateCustomRenderingParams(iface, gamma, enhancedContrast, 1.0f, cleartype_level, geometry,
-        mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
+        (DWRITE_RENDERING_MODE1)mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
     *params = (IDWriteRenderingParams*)params3;
     return hr;
 }
@@ -1162,7 +1175,7 @@ static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory4 *ifac
     desc.run = run;
     desc.ppdip = ppdip;
     desc.transform = transform;
-    desc.rendering_mode = rendering_mode;
+    desc.rendering_mode = (DWRITE_RENDERING_MODE1)rendering_mode;
     desc.measuring_mode = measuring_mode;
     desc.gridfit_mode = DWRITE_GRID_FIT_MODE_DEFAULT;
     desc.aa_mode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
@@ -1204,7 +1217,7 @@ static HRESULT WINAPI dwritefactory1_CreateCustomRenderingParams(IDWriteFactory4
     TRACE("(%p)->(%.2f %.2f %.2f %.2f %d %d %p)\n", This, gamma, enhcontrast, enhcontrast_grayscale,
         cleartype_level, geometry, mode, params);
     hr = IDWriteFactory4_CreateCustomRenderingParams(iface, gamma, enhcontrast, enhcontrast_grayscale,
-        cleartype_level, geometry, mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
+        cleartype_level, geometry, (DWRITE_RENDERING_MODE1)mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
     *params = (IDWriteRenderingParams1*)params3;
     return hr;
 }
@@ -1257,7 +1270,7 @@ static HRESULT WINAPI dwritefactory2_CreateCustomRenderingParams(IDWriteFactory4
         geometry, mode, gridfit, params);
 
     hr = IDWriteFactory4_CreateCustomRenderingParams(iface, gamma, contrast, grayscalecontrast,
-        cleartype_level, geometry, mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
+        cleartype_level, geometry, (DWRITE_RENDERING_MODE1)mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params3);
     *params = (IDWriteRenderingParams2*)params3;
     return hr;
 }
@@ -1276,7 +1289,7 @@ static HRESULT WINAPI dwritefactory2_CreateGlyphRunAnalysis(IDWriteFactory4 *ifa
     desc.run = run;
     desc.ppdip = 1.0f;
     desc.transform = transform;
-    desc.rendering_mode = rendering_mode;
+    desc.rendering_mode = (DWRITE_RENDERING_MODE1)rendering_mode;
     desc.measuring_mode = measuring_mode;
     desc.gridfit_mode = gridfit_mode;
     desc.aa_mode = aa_mode;
