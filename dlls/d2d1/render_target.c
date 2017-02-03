@@ -614,11 +614,121 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillEllipse(ID2D1RenderTarge
     ID2D1EllipseGeometry_Release(geometry);
 }
 
+static void d2d_rt_draw_geometry(struct d2d_d3d_render_target *render_target,
+        const struct d2d_geometry *geometry, struct d2d_brush *brush, float stroke_width)
+{
+    ID3D10Buffer *ib, *vb, *vs_cb, *ps_cb;
+    D3D10_SUBRESOURCE_DATA buffer_data;
+    D3D10_BUFFER_DESC buffer_desc;
+    const D2D1_MATRIX_3X2_F *w;
+    float tmp_x, tmp_y;
+    HRESULT hr;
+    struct
+    {
+        struct
+        {
+            float _11, _21, _31, pad0;
+            float _12, _22, _32, stroke_width;
+        } transform_geometry;
+        struct d2d_vec4 transform_rtx;
+        struct d2d_vec4 transform_rty;
+    } vs_cb_data;
+
+    vs_cb_data.transform_geometry._11 = geometry->transform._11;
+    vs_cb_data.transform_geometry._21 = geometry->transform._21;
+    vs_cb_data.transform_geometry._31 = geometry->transform._31;
+    vs_cb_data.transform_geometry.pad0 = 0.0f;
+    vs_cb_data.transform_geometry._12 = geometry->transform._12;
+    vs_cb_data.transform_geometry._22 = geometry->transform._22;
+    vs_cb_data.transform_geometry._32 = geometry->transform._32;
+    vs_cb_data.transform_geometry.stroke_width = stroke_width;
+
+    w = &render_target->drawing_state.transform;
+
+    tmp_x = render_target->desc.dpiX / 96.0f;
+    vs_cb_data.transform_rtx.x = w->_11 * tmp_x;
+    vs_cb_data.transform_rtx.y = w->_21 * tmp_x;
+    vs_cb_data.transform_rtx.z = w->_31 * tmp_x;
+    vs_cb_data.transform_rtx.w = 2.0f / render_target->pixel_size.width;
+
+    tmp_y = render_target->desc.dpiY / 96.0f;
+    vs_cb_data.transform_rty.x = w->_12 * tmp_y;
+    vs_cb_data.transform_rty.y = w->_22 * tmp_y;
+    vs_cb_data.transform_rty.z = w->_32 * tmp_y;
+    vs_cb_data.transform_rty.w = -2.0f / render_target->pixel_size.height;
+
+    buffer_desc.ByteWidth = sizeof(vs_cb_data);
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    buffer_data.pSysMem = &vs_cb_data;
+    buffer_data.SysMemPitch = 0;
+    buffer_data.SysMemSlicePitch = 0;
+
+    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &vs_cb)))
+    {
+        WARN("Failed to create constant buffer, hr %#x.\n", hr);
+        return;
+    }
+
+    if (FAILED(hr = d2d_brush_get_ps_cb(brush, NULL, render_target, &ps_cb)))
+    {
+        WARN("Failed to get ps constant buffer, hr %#x.\n", hr);
+        ID3D10Buffer_Release(vs_cb);
+        return;
+    }
+
+    if (geometry->outline.face_count)
+    {
+        buffer_desc.ByteWidth = geometry->outline.face_count * sizeof(*geometry->outline.faces);
+        buffer_desc.BindFlags = D3D10_BIND_INDEX_BUFFER;
+        buffer_data.pSysMem = geometry->outline.faces;
+
+        if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ib)))
+        {
+            WARN("Failed to create index buffer, hr %#x.\n", hr);
+            goto done;
+        }
+
+        buffer_desc.ByteWidth = geometry->outline.vertex_count * sizeof(*geometry->outline.vertices);
+        buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+        buffer_data.pSysMem = geometry->outline.vertices;
+
+        if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &vb)))
+        {
+            ERR("Failed to create vertex buffer, hr %#x.\n", hr);
+            ID3D10Buffer_Release(ib);
+            goto done;
+        }
+
+        d2d_rt_draw(render_target, D2D_SHAPE_TYPE_OUTLINE, ib, 3 * geometry->outline.face_count, vb,
+                sizeof(*geometry->outline.vertices), vs_cb, ps_cb, brush, NULL);
+
+        ID3D10Buffer_Release(vb);
+        ID3D10Buffer_Release(ib);
+    }
+
+done:
+    ID3D10Buffer_Release(ps_cb);
+    ID3D10Buffer_Release(vs_cb);
+}
+
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGeometry(ID2D1RenderTarget *iface,
         ID2D1Geometry *geometry, ID2D1Brush *brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
 {
-    FIXME("iface %p, geometry %p, brush %p, stroke_width %.8e, stroke_style %p stub!\n",
+    const struct d2d_geometry *geometry_impl = unsafe_impl_from_ID2D1Geometry(geometry);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_brush *brush_impl = unsafe_impl_from_ID2D1Brush(brush);
+
+    TRACE("iface %p, geometry %p, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, geometry, brush, stroke_width, stroke_style);
+
+    if (stroke_style)
+        FIXME("Ignoring stoke style %p.\n", stroke_style);
+
+    d2d_rt_draw_geometry(render_target, geometry_impl, brush_impl, stroke_width);
 }
 
 static void d2d_rt_fill_geometry(struct d2d_d3d_render_target *render_target,
@@ -1770,6 +1880,11 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     unsigned int i, j, k;
     HRESULT hr;
 
+    static const D3D10_INPUT_ELEMENT_DESC il_desc_outline[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"DIRECTION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
     static const D3D10_INPUT_ELEMENT_DESC il_desc_triangle[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
@@ -1778,6 +1893,53 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const DWORD vs_code_outline[] =
+    {
+#if 0
+        float3x2 transform_geometry;
+        float stroke_width;
+        float4 transform_rtx;
+        float4 transform_rty;
+
+        float4 main(float2 position : POSITION, float2 direction : DIRECTION) : SV_POSITION
+        {
+            float2 v_p;
+
+            v_p = normalize(float2(-dot(direction.xy, transform_geometry._12_22),
+                    dot(direction.xy, transform_geometry._11_21)));
+            position = mul(float3(position, 1.0f), transform_geometry) + stroke_width * 0.5f * v_p;
+
+            return float4(mul(float2x3(transform_rtx.xyz * transform_rtx.w, transform_rty.xyz * transform_rty.w),
+                    float3(position.xy, 1.0f)) + float2(-1.0f, 1.0f), 0.0f, 1.0f);
+        }
+#endif
+        0x43425844, 0xdae1a8d0, 0x71b89c55, 0x19c91fd3, 0x3192cf04, 0x00000001, 0x00000334, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000303, 0x00000041, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000303, 0x49534f50, 0x4e4f4954, 0x52494400, 0x49544345, 0xab004e4f,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x00000278, 0x00010040,
+        0x0000009e, 0x04000059, 0x00208e46, 0x00000000, 0x00000004, 0x0300005f, 0x00101032, 0x00000000,
+        0x0300005f, 0x00101032, 0x00000001, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x02000068,
+        0x00000003, 0x0800000f, 0x00100012, 0x00000000, 0x00101046, 0x00000001, 0x00208046, 0x00000000,
+        0x00000001, 0x06000036, 0x00100012, 0x00000000, 0x8010000a, 0x00000041, 0x00000000, 0x0800000f,
+        0x00100022, 0x00000000, 0x00101046, 0x00000001, 0x00208046, 0x00000000, 0x00000000, 0x0700000f,
+        0x00100042, 0x00000000, 0x00100046, 0x00000000, 0x00100046, 0x00000000, 0x05000044, 0x00100042,
+        0x00000000, 0x0010002a, 0x00000000, 0x07000038, 0x00100032, 0x00000000, 0x00100aa6, 0x00000000,
+        0x00100046, 0x00000000, 0x08000038, 0x00100042, 0x00000000, 0x0020803a, 0x00000000, 0x00000001,
+        0x00004001, 0x3f000000, 0x05000036, 0x00100032, 0x00000001, 0x00101046, 0x00000000, 0x05000036,
+        0x00100042, 0x00000001, 0x00004001, 0x3f800000, 0x08000010, 0x00100012, 0x00000002, 0x00100246,
+        0x00000001, 0x00208246, 0x00000000, 0x00000000, 0x08000010, 0x00100022, 0x00000002, 0x00100246,
+        0x00000001, 0x00208246, 0x00000000, 0x00000001, 0x09000032, 0x00100032, 0x00000000, 0x00100aa6,
+        0x00000000, 0x00100046, 0x00000000, 0x00100046, 0x00000002, 0x09000038, 0x00100072, 0x00000001,
+        0x00208ff6, 0x00000000, 0x00000002, 0x00208246, 0x00000000, 0x00000002, 0x05000036, 0x00100042,
+        0x00000000, 0x00004001, 0x3f800000, 0x07000010, 0x00100012, 0x00000001, 0x00100246, 0x00000001,
+        0x00100246, 0x00000000, 0x09000038, 0x00100072, 0x00000002, 0x00208ff6, 0x00000000, 0x00000003,
+        0x00208246, 0x00000000, 0x00000003, 0x07000010, 0x00100022, 0x00000001, 0x00100246, 0x00000002,
+        0x00100246, 0x00000000, 0x0a000000, 0x00102032, 0x00000000, 0x00100046, 0x00000001, 0x00004002,
+        0xbf800000, 0x3f800000, 0x00000000, 0x00000000, 0x08000036, 0x001020c2, 0x00000000, 0x00004002,
+        0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e,
     };
     static const DWORD vs_code_triangle[] =
     {
@@ -2154,6 +2316,14 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
+    if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_outline,
+            sizeof(il_desc_outline) / sizeof(*il_desc_outline), vs_code_outline, sizeof(vs_code_outline),
+            &render_target->shape_resources[D2D_SHAPE_TYPE_OUTLINE].il)))
+    {
+        WARN("Failed to create outline input layout, hr %#x.\n", hr);
+        goto err;
+    }
+
     if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->device, il_desc_triangle,
             sizeof(il_desc_triangle) / sizeof(*il_desc_triangle), vs_code_triangle, sizeof(vs_code_triangle),
             &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].il)))
@@ -2167,6 +2337,13 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
             &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER].il)))
     {
         WARN("Failed to create bezier input layout, hr %#x.\n", hr);
+        goto err;
+    }
+
+    if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->device, vs_code_outline,
+            sizeof(vs_code_outline), &render_target->shape_resources[D2D_SHAPE_TYPE_OUTLINE].vs)))
+    {
+        WARN("Failed to create outline vertex shader, hr %#x.\n", hr);
         goto err;
     }
 
@@ -2193,6 +2370,18 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
             WARN("Failed to create pixel shader for shape type %#x and brush types %#x/%#x.\n",
                     bs->shape_type, bs->brush_type, bs->opacity_brush_type);
             goto err;
+        }
+    }
+
+    for (j = 0; j < D2D_BRUSH_TYPE_COUNT; ++j)
+    {
+        for (k = 0; k < D2D_BRUSH_TYPE_COUNT + 1; ++k)
+        {
+            struct d2d_shape_resources *outline = &render_target->shape_resources[D2D_SHAPE_TYPE_OUTLINE];
+            struct d2d_shape_resources *triangle = &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE];
+
+            if (triangle->ps[j][k])
+                ID3D10PixelShader_AddRef(outline->ps[j][k] = triangle->ps[j][k]);
         }
     }
 
