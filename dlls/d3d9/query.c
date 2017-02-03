@@ -108,22 +108,10 @@ static D3DQUERYTYPE WINAPI d3d9_query_GetType(IDirect3DQuery9 *iface)
 static DWORD WINAPI d3d9_query_GetDataSize(IDirect3DQuery9 *iface)
 {
     struct d3d9_query *query = impl_from_IDirect3DQuery9(iface);
-    enum wined3d_query_type type;
-    DWORD ret;
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    type = wined3d_query_get_type(query->wined3d_query);
-    if (type == WINED3D_QUERY_TYPE_OCCLUSION)
-        ret = sizeof(DWORD);
-    else if (type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT)
-        ret = sizeof(BOOL);
-    else
-        ret = wined3d_query_get_data_size(query->wined3d_query);
-    wined3d_mutex_unlock();
-
-    return ret;
+    return query->data_size;
 }
 
 static HRESULT WINAPI d3d9_query_Issue(IDirect3DQuery9 *iface, DWORD flags)
@@ -172,9 +160,8 @@ static HRESULT WINAPI d3d9_query_GetData(IDirect3DQuery9 *iface, void *data, DWO
     {
         if (data)
         {
-            DWORD data_size = d3d9_query_GetDataSize(iface);
             memset(data, 0, size);
-            memset(data, 0xdd, min(size, data_size));
+            memset(data, 0xdd, min(size, query->data_size));
         }
         return S_OK;
     }
@@ -202,13 +189,20 @@ HRESULT query_init(struct d3d9_query *query, struct d3d9_device *device, D3DQUER
     query->refcount = 1;
 
     wined3d_mutex_lock();
-    hr = wined3d_query_create(device->wined3d_device, type, query, &query->wined3d_query);
-    wined3d_mutex_unlock();
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_query_create(device->wined3d_device, type, query, &query->wined3d_query)))
     {
+        wined3d_mutex_unlock();
         WARN("Failed to create wined3d query, hr %#x.\n", hr);
         return hr;
     }
+
+    if (type == D3DQUERYTYPE_OCCLUSION)
+        query->data_size = sizeof(DWORD);
+    else if (type == D3DQUERYTYPE_TIMESTAMPDISJOINT)
+        query->data_size = sizeof(BOOL);
+    else
+        query->data_size = wined3d_query_get_data_size(query->wined3d_query);
+    wined3d_mutex_unlock();
 
     query->parent_device = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(query->parent_device);

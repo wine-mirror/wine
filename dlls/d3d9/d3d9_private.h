@@ -341,6 +341,7 @@ struct d3d9_query
     LONG refcount;
     struct wined3d_query *wined3d_query;
     IDirect3DDevice9Ex *parent_device;
+    DWORD data_size;
 };
 
 HRESULT query_init(struct d3d9_query *query, struct d3d9_device *device, D3DQUERYTYPE type) DECLSPEC_HIDDEN;
