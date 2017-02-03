@@ -564,10 +564,18 @@ static HRESULT WINAPI MimeHtmlProtocol_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI MimeHtmlProtocol_Read(IInternetProtocol *iface, void* pv, ULONG cb, ULONG* pcbRead)
 {
     MimeHtmlProtocol *This = impl_from_IInternetProtocol(iface);
+    ULONG read = 0;
+    HRESULT hres;
 
     TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
-    return IStream_Read(This->stream, pv, cb, pcbRead);
+    hres = IStream_Read(This->stream, pv, cb, &read);
+    if(pcbRead)
+        *pcbRead = read;
+    if(hres != S_OK)
+        return hres;
+
+    return read ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI MimeHtmlProtocol_Seek(IInternetProtocol *iface, LARGE_INTEGER dlibMove,

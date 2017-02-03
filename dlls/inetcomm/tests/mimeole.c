@@ -1368,6 +1368,8 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
     buf[read] = 0;
     ok(!strcmp(buf, current_binding_test->data), "unexpected data: %s\n", buf);
 
+    hres = IInternetProtocol_Read(current_binding_protocol, buf, sizeof(buf), &read);
+    ok(hres == S_FALSE, "Read failed: %08x\n", hres);
     return S_OK;
 }
 
