@@ -366,6 +366,7 @@ struct d2d_geometry
         struct
         {
             ID2D1Geometry *src_geometry;
+            D2D_MATRIX_3X2_F transform;
         } transformed;
     } u;
 };

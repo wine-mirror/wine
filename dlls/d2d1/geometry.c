@@ -3090,7 +3090,7 @@ static void STDMETHODCALLTYPE d2d_transformed_geometry_GetTransform(ID2D1Transfo
 
     TRACE("iface %p, transform %p.\n", iface, transform);
 
-    *transform = geometry->transform;
+    *transform = geometry->u.transformed.transform;
 }
 
 static const struct ID2D1TransformedGeometryVtbl d2d_transformed_geometry_vtbl =
@@ -3120,10 +3120,15 @@ void d2d_transformed_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *
         ID2D1Geometry *src_geometry, const D2D_MATRIX_3X2_F *transform)
 {
     struct d2d_geometry *src_impl;
+    D2D_MATRIX_3X2_F g;
 
-    d2d_geometry_init(geometry, factory, transform, (ID2D1GeometryVtbl *)&d2d_transformed_geometry_vtbl);
-    ID2D1Geometry_AddRef(geometry->u.transformed.src_geometry = src_geometry);
     src_impl = unsafe_impl_from_ID2D1Geometry(src_geometry);
+
+    g = src_impl->transform;
+    d2d_matrix_multiply(&g, transform);
+    d2d_geometry_init(geometry, factory, &g, (ID2D1GeometryVtbl *)&d2d_transformed_geometry_vtbl);
+    ID2D1Geometry_AddRef(geometry->u.transformed.src_geometry = src_geometry);
+    geometry->u.transformed.transform = *transform;
     geometry->fill = src_impl->fill;
     geometry->outline = src_impl->outline;
 }
