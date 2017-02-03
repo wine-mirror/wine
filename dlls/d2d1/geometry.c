@@ -498,6 +498,12 @@ static BOOL d2d_figure_insert_vertex(struct d2d_figure *figure, size_t idx, D2D1
 
 static BOOL d2d_figure_add_vertex(struct d2d_figure *figure, D2D1_POINT_2F vertex)
 {
+    size_t last = figure->vertex_count - 1;
+
+    if (figure->vertex_count && figure->vertex_types[last] == D2D_VERTEX_TYPE_LINE
+            && !memcmp(&figure->vertices[last], &vertex, sizeof(vertex)))
+        return TRUE;
+
     if (!d2d_array_reserve((void **)&figure->vertices, &figure->vertices_size,
             figure->vertex_count + 1, sizeof(*figure->vertices)))
     {
@@ -1181,7 +1187,7 @@ static BOOL d2d_path_geometry_point_inside(const struct d2d_geometry *geometry,
     const D2D1_POINT_2F *p0, *p1;
     D2D1_POINT_2F v_p, v_probe;
     unsigned int score;
-    size_t i, j;
+    size_t i, j, last;
 
     for (i = 0, score = 0; i < geometry->u.path.figure_count; ++i)
     {
@@ -1191,8 +1197,14 @@ static BOOL d2d_path_geometry_point_inside(const struct d2d_geometry *geometry,
                 || probe->y < figure->bounds.top || probe->y > figure->bounds.bottom)
             continue;
 
-        p0 = &figure->vertices[figure->vertex_count - 1];
-        for (j = 0; j < figure->vertex_count; ++j)
+        last = figure->vertex_count - 1;
+        if (!triangles_only)
+        {
+            while (last && figure->vertex_types[last] == D2D_VERTEX_TYPE_NONE)
+                --last;
+        }
+        p0 = &figure->vertices[last];
+        for (j = 0; j <= last; ++j)
         {
             if (!triangles_only && figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE)
                 continue;
@@ -1430,6 +1442,10 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
         figure = &geometry->u.path.figures[i];
+
+        /* Degenerate figure. */
+        if (figure->vertex_count < 2)
+            continue;
 
         p = bsearch(&figure->vertices[figure->vertex_count - 1], cdt->vertices,
                 geometry->fill.vertex_count, sizeof(*p), d2d_cdt_compare_vertices);
@@ -1880,8 +1896,9 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
 
     figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
     figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_LINE;
-    if (figure_end != D2D1_FIGURE_END_CLOSED)
-        FIXME("Ignoring figure_end %#x.\n", figure_end);
+    if (figure_end == D2D1_FIGURE_END_CLOSED && !memcmp(&figure->vertices[0],
+            &figure->vertices[figure->vertex_count - 1], sizeof(*figure->vertices)))
+        --figure->vertex_count;
 
     geometry->u.path.state = D2D_GEOMETRY_STATE_OPEN;
 }
