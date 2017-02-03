@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "shlguid.h"
 #include "idispids.h"
+#include "mimeole.h"
 
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
@@ -587,6 +588,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         IMoniker *pimkName, LPBC pibc, DWORD grfMode)
 {
     HTMLDocument *This = impl_from_IPersistMoniker(iface);
+    IMoniker *mon;
     HRESULT hres;
 
     TRACE("(%p)->(%x %p %p %08x)\n", This, fFullyAvailable, pimkName, pibc, grfMode);
@@ -620,9 +622,22 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    prepare_for_binding(This, pimkName, FALSE);
+    if(This->doc_obj->is_mhtml) {
+        IUnknown *unk;
+
+        hres = MimeOleObjectFromMoniker(0, pimkName, pibc, &IID_IUnknown, (void**)&unk, &mon);
+        if(FAILED(hres))
+            return hres;
+        IUnknown_Release(unk);
+        pibc = NULL;
+    }else {
+        IMoniker_AddRef(mon = pimkName);
+    }
+
+    prepare_for_binding(This, mon, FALSE);
     call_docview_84(This->doc_obj);
-    hres = set_moniker(This->window, pimkName, NULL, pibc, NULL, TRUE);
+    hres = set_moniker(This->window, mon, NULL, pibc, NULL, TRUE);
+    IMoniker_Release(mon);
     if(FAILED(hres))
         return hres;
 

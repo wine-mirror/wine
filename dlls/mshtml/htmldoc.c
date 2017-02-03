@@ -5075,15 +5075,13 @@ static dispex_static_data_t HTMLDocumentObj_dispex = {
     HTMLDocumentObj_iface_tids
 };
 
-HRESULT HTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
+static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID riid, void **ppv)
 {
     mozIDOMWindowProxy *mozwindow;
     HTMLDocumentObj *doc;
     nsIDOMWindow *nswindow = NULL;
     nsresult nsres;
     HRESULT hres;
-
-    TRACE("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
 
     if(outer && !IsEqualGUID(&IID_IUnknown, riid)) {
         *ppv = NULL;
@@ -5102,6 +5100,7 @@ HRESULT HTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
     init_doc(&doc->basedoc, outer ? outer : &doc->IUnknown_outer, &doc->dispex.IDispatchEx_iface);
     TargetContainer_Init(doc);
     doc->basedoc.doc_obj = doc;
+    doc->is_mhtml = is_mhtml;
 
     doc->usermode = UNKNOWN_USERMODE;
 
@@ -5149,8 +5148,14 @@ HRESULT HTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
     return S_OK;
 }
 
+HRESULT HTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
+{
+    TRACE("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
+    return create_document_object(FALSE, outer, riid, ppv);
+}
+
 HRESULT MHTMLDocument_Create(IUnknown *outer, REFIID riid, void **ppv)
 {
-    FIXME("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
-    return E_NOTIMPL;
+    TRACE("(%p %s %p)\n", outer, debugstr_mshtml_guid(riid), ppv);
+    return create_document_object(TRUE, outer, riid, ppv);
 }
