@@ -204,7 +204,7 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
         status = HidP_GetValueCaps(HidP_Input, values, &length, ppd);
         ok(status == HIDP_STATUS_SUCCESS, "Failed to get value caps (%x)\n",status);
 
-        trace("\tValues: \n");
+        trace("\tValues:\n");
         for (i = 0; i < length; i++)
         {
             status = HidP_GetUsageValue(HidP_Input, values[i].UsagePage, 0,
