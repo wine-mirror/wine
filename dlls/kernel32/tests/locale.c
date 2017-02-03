@@ -2705,6 +2705,12 @@ static void test_LocaleNameToLCID(void)
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
     static const WCHAR enW[] = {'e','n',0};
     static const WCHAR esesW[] = {'e','s','-','e','s',0};
+    static const WCHAR zhHansW[] = {'z','h','-','H','a','n','s',0};
+    static const WCHAR zhhansW[] = {'z','h','-','h','a','n','s',0};
+    static const WCHAR zhHantW[] = {'z','h','-','H','a','n','t',0};
+    static const WCHAR zhhantW[] = {'z','h','-','h','a','n','t',0};
+    static const WCHAR zhcnW[] = {'z','h','-','C','N',0};
+    static const WCHAR zhhkW[] = {'z','h','-','H','K',0};
 
     if (!pLocaleNameToLCID)
     {
@@ -2772,6 +2778,44 @@ static void test_LocaleNameToLCID(void)
 
             ptr++;
         }
+
+        /* zh-Hant */
+        lcid = pLocaleNameToLCID(zhHantW, 0);
+        todo_wine ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG), SORT_DEFAULT),
+           "%s: got wrong lcid 0x%04x\n", wine_dbgstr_w(zhHantW), lcid);
+        ret = pLCIDToLocaleName(lcid, buffer, sizeof(buffer)/sizeof(WCHAR), 0);
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHantW), ret);
+        todo_wine ok(!lstrcmpW(zhhkW, buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(zhHantW), wine_dbgstr_w(buffer));
+
+        /* zh-hant */
+        lcid = pLocaleNameToLCID(zhhantW, 0);
+        todo_wine ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG), SORT_DEFAULT),
+           "%s: got wrong lcid 0x%04x\n", wine_dbgstr_w(zhhantW),
+           MAKELCID(MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG), SORT_DEFAULT));
+        ret = pLCIDToLocaleName(lcid, buffer, sizeof(buffer)/sizeof(WCHAR), 0);
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhhantW), ret);
+        todo_wine ok(!lstrcmpW(zhhkW, buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(zhhantW), wine_dbgstr_w(buffer));
+
+        /* zh-Hans */
+        lcid = pLocaleNameToLCID(zhHansW, 0);
+        todo_wine ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE_SIMPLIFIED, SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT),
+           "%s: got wrong lcid 0x%04x\n", wine_dbgstr_w(zhHansW), lcid);
+        ret = pLCIDToLocaleName(lcid, buffer, sizeof(buffer)/sizeof(WCHAR), 0);
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHansW), ret);
+        todo_wine ok(!lstrcmpW(zhcnW, buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(zhHansW), wine_dbgstr_w(buffer));
+
+        /* zh-hans */
+        lcid = pLocaleNameToLCID(zhhansW, 0);
+        todo_wine ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE_SIMPLIFIED, SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT),
+           "%s: got wrong lcid 0x%04x\n", wine_dbgstr_w(zhhansW),
+           MAKELCID(MAKELANGID(LANG_CHINESE_SIMPLIFIED, SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT));
+        ret = pLCIDToLocaleName(lcid, buffer, sizeof(buffer)/sizeof(WCHAR), 0);
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhhansW), ret);
+        todo_wine ok(!lstrcmpW(zhcnW, buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(zhhansW), wine_dbgstr_w(buffer));
     }
 }
 
