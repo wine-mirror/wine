@@ -1123,7 +1123,7 @@
 # @ stub ZwIsSystemResumeAutomatic
 @ stdcall -private ZwListenPort(ptr ptr) NtListenPort
 @ stdcall -private ZwLoadDriver(ptr) NtLoadDriver
-@ stdcall ZwLoadKey2(ptr ptr long) NtLoadKey2
+@ stdcall -private ZwLoadKey2(ptr ptr long) NtLoadKey2
 @ stdcall -private ZwLoadKey(ptr ptr) NtLoadKey
 @ stdcall -private ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
 # @ stub ZwLockProductActivationKeys
