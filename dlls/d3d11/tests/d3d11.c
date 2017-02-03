@@ -7972,8 +7972,7 @@ static void test_resource_map(void)
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture3d, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
-    todo_wine ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
-    if (FAILED(hr)) goto done;
+    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
     ok(mapped_subresource.RowPitch == 4 * 64, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
     ok(mapped_subresource.DepthPitch == 4 * 64 * 64, "Got unexpected depth pitch %u.\n",
             mapped_subresource.DepthPitch);
@@ -7990,7 +7989,6 @@ static void test_resource_map(void)
     ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)texture3d, 0);
 
-done:
     refcount = ID3D11Texture3D_Release(texture3d);
     ok(!refcount, "3D texture has %u references left.\n", refcount);
 

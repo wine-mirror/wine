@@ -946,7 +946,7 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = wined3d_usage_from_d3d11(desc->BindFlags, desc->Usage);
-    wined3d_desc.pool = WINED3D_POOL_DEFAULT;
+    wined3d_desc.pool = desc->Usage == D3D11_USAGE_STAGING ? WINED3D_POOL_MANAGED : WINED3D_POOL_DEFAULT;
     wined3d_desc.width = desc->Width;
     wined3d_desc.height = desc->Height;
     wined3d_desc.depth = desc->Depth;
