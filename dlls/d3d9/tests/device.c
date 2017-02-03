@@ -5593,10 +5593,13 @@ static void test_occlusion_query(void)
     data_size = IDirect3DQuery9_GetDataSize(query);
     ok(data_size == sizeof(DWORD), "Unexpected data size %u.\n", data_size);
 
+    memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(data.dword[0] == 0xdddddddd && data.dword[1] == 0xffffffff,
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -5648,7 +5651,7 @@ static void test_occlusion_query(void)
         ok(data.word[0] == expected.word[0],
                 "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
     ok(data.word[1] == 0xffff,
-            "data was modified outside of the expected size (0x%.8x).\n", data.dword[0]);
+            "Data was modified outside of the expected size (0x%.8x).\n", data.dword[0]);
 
     memset(&data, 0xf0, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
@@ -5802,10 +5805,30 @@ static void test_timestamp_query(void)
     data_size = IDirect3DQuery9_GetDataSize(freq_query);
     ok(data_size == sizeof(UINT64), "Query data size is %u, 8 expected.\n", data_size);
 
+    memset(freq, 0xff, sizeof(freq));
+    hr = IDirect3DQuery9_GetData(freq_query, NULL, 0, D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_GetData(freq_query, freq, sizeof(DWORD), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(freq[0] == 0xdddddddd && freq[1] == 0xffffffff,
+            "Got unexpected query result 0x%08x%08x.\n", freq[1], freq[0]);
+
     hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_TIMESTAMPDISJOINT, &disjoint_query);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     data_size = IDirect3DQuery9_GetDataSize(disjoint_query);
     ok(data_size == sizeof(BOOL), "Query data size is %u, 4 expected.\n", data_size);
+
+    memset(disjoint, 0xff, sizeof(disjoint));
+    hr = IDirect3DQuery9_GetData(disjoint_query, NULL, 0, D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_GetData(disjoint_query, &disjoint, sizeof(WORD), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(disjoint[0] == 0xdddd && disjoint[1] == 0xffff,
+            "Got unexpected query result 0x%08x%08x.\n", disjoint[1], disjoint[0]);
+    hr = IDirect3DQuery9_GetData(disjoint_query, &disjoint, sizeof(DWORD), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(disjoint[0] == 0xdddd && disjoint[1] == 0xdddd,
+            "Got unexpected query result 0x%08x%08x.\n", disjoint[1], disjoint[0]);
 
     hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_TIMESTAMP, &query);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -5826,16 +5849,23 @@ static void test_timestamp_query(void)
     hr = IDirect3DQuery9_GetData(freq_query, freq, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(freq[1] == 0xffffffff,
-            "freq was modified outside of the expected size (0x%.8x).\n", freq[1]);
+            "Freq was modified outside of the expected size (0x%.8x).\n", freq[1]);
     hr = IDirect3DQuery9_GetData(freq_query, &freq, sizeof(freq), D3DGETDATA_FLUSH);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    ok(freq[1] != 0xffffffff, "high bytes of freq were not modified (0x%.8x).\n",
+    ok(freq[1] != 0xffffffff, "High bytes of freq were not modified (0x%.8x).\n",
             freq[1]);
 
+    memset(timestamp, 0xff, sizeof(timestamp));
     hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(DWORD), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(timestamp[0] == 0xdddddddd && timestamp[1] == 0xffffffff,
+            "Got unexpected query result 0x%08x%08x.\n", timestamp[1], timestamp[0]);
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(timestamp[0] == 0xdddddddd && timestamp[1] == 0xdddddddd,
+            "Got unexpected query result 0x%08x%08x.\n", timestamp[1], timestamp[0]);
 
     hr = IDirect3DQuery9_Issue(disjoint_query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -5870,7 +5900,7 @@ static void test_timestamp_query(void)
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(timestamp[1] == 0xffffffff,
-            "timestamp was modified outside of the expected size (0x%.8x).\n",
+            "Timestamp was modified outside of the expected size (0x%.8x).\n",
             timestamp[1]);
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
@@ -5894,10 +5924,10 @@ static void test_timestamp_query(void)
     hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(WORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(disjoint[1] == 0xffff,
-            "disjoint was modified outside of the expected size (0x%.4hx).\n", disjoint[1]);
+            "Disjoint was modified outside of the expected size (0x%.4hx).\n", disjoint[1]);
     hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(disjoint), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(disjoint[1] != 0xffff, "high bytes of disjoint were not modified (0x%.4hx).\n", disjoint[1]);
+    ok(disjoint[1] != 0xffff, "High bytes of disjoint were not modified (0x%.4hx).\n", disjoint[1]);
 
     /* It's not strictly necessary for the TIMESTAMP query to be inside
      * a TIMESTAMP_DISJOINT query. */
