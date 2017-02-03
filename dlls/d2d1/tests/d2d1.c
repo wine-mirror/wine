@@ -3569,16 +3569,20 @@ static void test_gradient(void)
 
 static void test_draw_geometry(void)
 {
+    ID2D1TransformedGeometry *transformed_geometry[3];
+    ID2D1RectangleGeometry *rect_geometry[2];
     D2D1_POINT_2F point = {0.0f, 0.0f};
     ID2D1SolidColorBrush *brush;
     ID2D1PathGeometry *geometry;
     IDXGISwapChain *swapchain;
+    D2D1_MATRIX_3X2_F matrix;
     ID2D1GeometrySink *sink;
     ID2D1RenderTarget *rt;
     ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
+    D2D1_RECT_F rect;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -3751,6 +3755,110 @@ static void test_draw_geometry(void)
             "Cn8KDAqAAQoMCoEBCgoKggEKCgqDAQoICoQBCggKhQEKBgqGAQoGCocBCgQKiAEKBAqJAQoCCooB"
             "CgIKiwEUjAEUjQESjgESjwEQkAEQkQEOkgEOkwEMlAEMlQEKlgEKlwEImAEImQEGmgEGmwEEnAEE"
             "nQECngECrycA");
+    ok(match, "Figure does not match.\n");
+
+    set_rect(&rect, 20.0f, 80.0f, 60.0f, 240.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &rect_geometry[0]);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &rect_geometry[1]);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 160.0f, 640.0f);
+    scale_matrix(&matrix, 40.0f, 160.0f);
+    rotate_matrix(&matrix, M_PI / -5.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(factory,
+            (ID2D1Geometry *)rect_geometry[1], &matrix, &transformed_geometry[0]);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 0.5f, 1.0f);
+    translate_matrix(&matrix, -80.0f, 0.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(factory,
+            (ID2D1Geometry *)transformed_geometry[0], &matrix, &transformed_geometry[1]);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_matrix_identity(&matrix);
+    rotate_matrix(&matrix, M_PI / 2.0f);
+    translate_matrix(&matrix, 80.0f, -320.0f);
+    scale_matrix(&matrix, 2.0f, 0.25f);
+    hr = ID2D1Factory_CreateTransformedGeometry(factory,
+            (ID2D1Geometry *)transformed_geometry[1], &matrix, &transformed_geometry[2]);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_DrawGeometry(rt, (ID2D1Geometry *)rect_geometry[0], (ID2D1Brush *)brush, 10.0f, NULL);
+    ID2D1RenderTarget_DrawGeometry(rt, (ID2D1Geometry *)transformed_geometry[0], (ID2D1Brush *)brush, 10.0f, NULL);
+    ID2D1RenderTarget_DrawGeometry(rt, (ID2D1Geometry *)transformed_geometry[1], (ID2D1Brush *)brush, 5.0f, NULL);
+    ID2D1RenderTarget_DrawGeometry(rt, (ID2D1Geometry *)transformed_geometry[2], (ID2D1Brush *)brush, 15.0f, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    ID2D1TransformedGeometry_Release(transformed_geometry[2]);
+    ID2D1TransformedGeometry_Release(transformed_geometry[1]);
+    ID2D1TransformedGeometry_Release(transformed_geometry[0]);
+    ID2D1RectangleGeometry_Release(rect_geometry[1]);
+    ID2D1RectangleGeometry_Release(rect_geometry[0]);
+
+    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0,
+            "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
+    ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160,   0, 320, 160, 0xff652e89, 32,
+            "8XYGtQIOrAIXpAIfmwIokwIwigI4gwJA+gFJ8gFR6QEzAiXhATMKJdgBMxMl0AEzGyXHATMkJb8B"
+            "MysmtgEzNCWvATM8JaYBM0UlngEzTSWVATNWJY0BM14lhAEzZyV8M28lczN4JWszgAElYjOIASZa"
+            "M5ABJVgtmQElWCWhASVYJaEBJVgloQElWCWhASVYJaEBJVgloQElWCWhASVYJaEBJVglmQEtWCWQ"
+            "ATNaJogBM2IlgAEzayV4M3MlbzN8JWczhAElXjONASVWM5UBJU0zngElRTOmASU8M68BJTQztgEm"
+            "KzO/ASUkM8cBJRsz0AElEzPYASUKM+EBJQIz6QFR8gFJ+gFAgwI4igIwkwIomwIfpAIXrAIOtQIG"
+            "8XYA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 32,
+            "ujEBngECnQEDnQEEmwEFmgEHmQEHmAEIlwEKlgEKlQELlAENkwENkgEOkQEQjwERjwESjQETjAEU"
+            "jAEKAQqKAQoCCokBCgMKiQEKBAqHAQoFCoYBCgYKhgEKBwqEAQoICoMBCgkKgwEKCgqBAQoLCoAB"
+            "Cg0KfgsNCn4KDgp9ChAKewsQCnsKEQp6ChMKeAoUCngKFAp3ChYKdQoXCnUKGApzChkKcgoaCnIK"
+            "GwpwChwKbwodCm4LHgptCh8KbAogCmsLIQpqCiIKaQokCmcKJQpnCiUKZgonCmQKKApkCigKYwoq"
+            "CmEKKwphCisKYAotCl4KLgpdCy8KXAowClsKMQpaCzIKWQozClgKNApXCjYKVgo2ClUKNwpUCjkK"
+            "Uwo5ClIKOwpQCjwKTws8Ck8KPgpNCj8KTAs/CkwKQQpKCkIKSQtCCkkKRApHCkUKRgpHCkUKRwpE"
+            "CkgKQwpKCkIKSgpBCksKQApNCj4LTQo+Ck4KPQpQCjsLUAo7ClIKOQpTCjgLUwo4ClUKNgpWCjUK"
+            "Vwo1ClgKMwpZCjQKWAo0ClkKMwpZCjQKWQozClkKMwpZCjQKWQozClkKMwpZCjQKWQozClkKNApY"
+            "CjQKWQozClkKNApZCjMKWQozClkKNApZCjMKWQozClkKNApZCjMKWQo0ClgKNApZCjMKWQo0ClkK"
+            "MwpZCjMKWQo0ClkKMwpZCjMKWQo0ClkKMwpZCjQKWAo0ClkKMwpYCjUKVwo1ClYKNgpVCjgKUws4"
+            "ClMKOQpSCjsKUAs7ClAKPQpOCj4KTQs+Ck0KQApLCkEKSgpCCkoKQwpICkQKRwpFCkcKRgpFCkcK"
+            "RApJCkILSQpCCkoKQQpMCj8LTAo/Ck0KPgpPCjwLTwo8ClAKOwpSCjkKUwo5ClQKNwpVCjYKVgo2"
+            "ClcKNApYCjMKWQoyC1oKMQpbCjAKXAovC10KLgpeCi0KYAorCmEKKwphCioKYwooCmQKKApkCicK"
+            "ZgolCmcKJQpnCiQKaQoiCmoKIQtrCiAKbAofCm0KHgtuCh0KbwocCnAKGwpyChoKcgoZCnMKGAp1"
+            "ChcKdQoWCncKFAp4ChQKeAoTCnoKEQp7ChALewoQCn0KDgp+Cg0LfgoNCoABCgsKgQEKCgqDAQoJ"
+            "CoMBCggKhAEKBwqGAQoGCoYBCgUKhwEKBAqJAQoDCokBCgIKigEKAQqMARSMARONARKPARGPARCR"
+            "AQ6SAQ2TAQ2UAQuVAQqWAQqXAQiYAQeZAQeaAQWbAQSdAQOdAQKeAQG6MQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160, 160, 320, 320, 0xff652e89, 64,
+            "82ICvQIEugIHuAIJtgIKtAINsgIPsAIRrQITrAIVqQIYpwIZpgIbowIeoQIgnwIhnQIkmwImmAIp"
+            "lgIVARSVAhUDFJICFQUVkAIVBxSPAhUJFIwCFQwUigIVDRWHAhYPFIYCFRIUhAIVFBSBAhUWFf8B"
+            "FRgU/gEVGhT7ARUcFfkBFR4U9wEWIBT1ARUjFPMBFSQV8AEVJxTvARUpFOwBFisU6gEVLRXoARUv"
+            "FOYBFjEU5AEVMxXiARU1FOABFTgU3gEVOhTbARY7FdkBFT4U2AEVQBTVARZCFNMBFUQV0QEVRhTP"
+            "ARVJFM0BFUoVygEWTBTJARVPFMcBFVEUxAEVUxXCARVVFMEBFVcUvgEVWRW8ARVbFbkBFl0UuAEV"
+            "YBS2ARVhFbMBFWQUsgEVZhSwARVoFK0BFWoVqwEVbBSpARZuFKcBFXAVpQEVchWiARV1FKEBFXcU"
+            "nwEVeBWcARV7FJsBFX0UmAEWfxSWARWBARWUARWDARSSARWGARSQARWHARWOARWJARWLARWMARSK"
+            "ARWOARSHARaPARWFARWSARSEARWUARSBARWXARR/FZgBFX0VmgEUexWdARR5FZ4BFXYWoAEVdBWj"
+            "ARRzFaUBFHAVpwEVbhWpARRtFasBFGoVrgEUaBWvARVmFbEBFGcUsgEUZxSxARVmFbEBFWYUsgEU"
+            "ZxSyARRnFLEBFWYVsQEUZxSyARRnFLIBFGcUsQEVZhWxARRnFLIBFGcUsQEVZhWxARVmFLIBFGcU"
+            "sgEUZxSxARVmFbEBFGcUsgEUZxSyARRmFbEBFWYVsQEUZxSyARRnFLEBFWYVsQEUZxSyARRnFLIB"
+            "FGcUsQEVZhWxARRnFLIBFGcUsgEUZhWxARVmFbEBFGcUsgEUZxSxARVmFa8BFWgUrgEVahSrARVt"
+            "FKkBFW4VpwEVcBSlARVzFKMBFXQVoAEWdhWeARV5FJ0BFXsUmgEVfRWYARV/FJcBFYEBFJQBFYQB"
+            "FJIBFYUBFY8BFocBFI4BFYoBFIwBFYsBFYkBFY4BFYcBFZABFIYBFZIBFIMBFZQBFYEBFZYBFH8W"
+            "mAEUfRWbARR7FZwBFXgVnwEUdxWhARR1FaIBFXIVpQEVcBWnARRuFqkBFGwVqwEVahWtARRoFbAB"
+            "FGYVsgEUZBWzARVhFbYBFGAVuAEUXRa5ARVbFbwBFVkVvgEUVxXBARRVFcIBFVMVxAEUURXHARRP"
+            "FckBFEwWygEVShXNARRJFc8BFEYV0QEVRBXTARRCFtUBFEAV2AEUPhXZARU7FtsBFDoV3gEUOBXg"
+            "ARQ1FeIBFTMV5AEUMRbmARQvFegBFS0V6gEUKxbsARQpFe8BFCcV8AEVJBXzARQjFfUBFCAW9wEU"
+            "HhX5ARUcFfsBFBoV/gEUGBX/ARUWFYECFBQVhAIUEhWGAhQPFocCFQ0VigIUDBWMAhQJFY8CFAcV"
+            "kAIVBRWSAhQDFZUCFAEVlgIpmAImmwIknQIhnwIgoQIeowIbpgIZpwIYqQIVrAITrQIRsAIPsgIN"
+            "tAIKtgIJuAIHugIEvQIC82IA");
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);

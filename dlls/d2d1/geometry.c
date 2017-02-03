@@ -2816,45 +2816,59 @@ static const struct ID2D1RectangleGeometryVtbl d2d_rectangle_geometry_vtbl =
 
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory, const D2D1_RECT_F *rect)
 {
-    D2D1_POINT_2F *fv;
+    struct d2d_face *f;
+    D2D1_POINT_2F *v;
     float l, r, t, b;
 
     d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
     geometry->u.rectangle.rect = *rect;
 
     if (!(geometry->fill.vertices = HeapAlloc(GetProcessHeap(), 0, 4 * sizeof(*geometry->fill.vertices))))
-    {
-        d2d_geometry_cleanup(geometry);
-        return E_OUTOFMEMORY;
-    }
-    geometry->fill.vertex_count = 4;
+        goto fail;
     if (!d2d_array_reserve((void **)&geometry->fill.faces,
             &geometry->fill.faces_size, 2, sizeof(*geometry->fill.faces)))
-    {
-        d2d_geometry_cleanup(geometry);
-        return E_OUTOFMEMORY;
-    }
-    geometry->fill.face_count = 2;
+        goto fail;
 
     l = min(rect->left, rect->right);
     r = max(rect->left, rect->right);
     t = min(rect->top, rect->bottom);
     b = max(rect->top, rect->bottom);
 
-    fv = geometry->fill.vertices;
-    d2d_point_set(&fv[0], l, t);
-    d2d_point_set(&fv[1], l, b);
-    d2d_point_set(&fv[2], r, t);
-    d2d_point_set(&fv[3], r, b);
+    v = geometry->fill.vertices;
+    d2d_point_set(&v[0], l, t);
+    d2d_point_set(&v[1], l, b);
+    d2d_point_set(&v[2], r, b);
+    d2d_point_set(&v[3], r, t);
+    geometry->fill.vertex_count = 4;
 
-    geometry->fill.faces[0].v[0] = 0;
-    geometry->fill.faces[0].v[1] = 2;
-    geometry->fill.faces[0].v[2] = 1;
-    geometry->fill.faces[1].v[0] = 1;
-    geometry->fill.faces[1].v[1] = 2;
-    geometry->fill.faces[1].v[2] = 3;
+    f = geometry->fill.faces;
+    d2d_face_set(&f[0], 1, 2, 0);
+    d2d_face_set(&f[1], 0, 2, 3);
+    geometry->fill.face_count = 2;
+
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[0], &v[1]))
+        goto fail;
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[1], &v[2]))
+        goto fail;
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[2], &v[3]))
+        goto fail;
+    if (!d2d_geometry_outline_add_line_segment(geometry, &v[3], &v[0]))
+        goto fail;
+
+    if (!d2d_geometry_outline_add_join(geometry, &v[3], &v[0], &v[1]))
+        goto fail;
+    if (!d2d_geometry_outline_add_join(geometry, &v[0], &v[1], &v[2]))
+        goto fail;
+    if (!d2d_geometry_outline_add_join(geometry, &v[1], &v[2], &v[3]))
+        goto fail;
+    if (!d2d_geometry_outline_add_join(geometry, &v[2], &v[3], &v[0]))
+        goto fail;
 
     return S_OK;
+
+fail:
+    d2d_geometry_cleanup(geometry);
+    return E_OUTOFMEMORY;
 }
 
 static inline struct d2d_geometry *impl_from_ID2D1TransformedGeometry(ID2D1TransformedGeometry *iface)
