@@ -2002,12 +2002,10 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         }
         i = min(i, layout->cluster_count - 1);
 
-        if (overflow) {
-            /* Overflown on whitespace, ignore it */
-            if (layout->clustermetrics[i].isWhitespace && layout_can_wrap_after(layout, i))
-                i = i;
+        /* Ignore if overflown on whitespace */
+        if (overflow && !(layout->clustermetrics[i].isWhitespace && layout_can_wrap_after(layout, i))) {
             /* Use most recently found breaking point */
-            else if (last_breaking_point != ~0u) {
+            if (last_breaking_point != ~0u) {
                 i = last_breaking_point;
                 last_breaking_point = ~0u;
             }
