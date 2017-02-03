@@ -1174,15 +1174,14 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
         ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) ||
             broken(!result && GetLastError() ==  NTE_BAD_DATA) || /* Vista.64 */
             broken(!result && GetLastError() ==  NTE_BAD_TYPE) || /* Win2K-W2K8, Win7.64 */
-            broken(!result && GetLastError() ==  NTE_BAD_ALGID) || /* W7SP164 (32 bit dssenh) */
-            broken(result), /* WinNT4 */
+            broken(!result && GetLastError() ==  NTE_BAD_ALGID),  /* W7SP164 (32 bit dssenh) */
             "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
 
         result = CryptImportKey(hProv, pubKeyBuffer1, pubKeyLen1, privKey2, 0, &sessionKey2);
         ok((!result && GetLastError() ==  ERROR_INVALID_PARAMETER) ||
+            broken(!result && GetLastError() ==  NTE_BAD_DATA) || /* Win 7 */
             broken(!result && GetLastError() ==  NTE_BAD_TYPE) || /* Win2K-W2K8, Win7.64 */
-            broken(!result && GetLastError() ==  NTE_BAD_ALGID) || /* W7SP164 (32 bit dssenh) */
-            broken(result), /* WinNT4 */
+            broken(!result && GetLastError() ==  NTE_BAD_ALGID),  /* W7SP164 (32 bit dssenh) */
             "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
 
         /* Set the shared key parameters to matching type */
