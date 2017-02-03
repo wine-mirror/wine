@@ -844,7 +844,10 @@ static unsigned int token_access_check( struct token *token,
     if (!dacl_present || !dacl)
     {
         if (priv_count) *priv_count = 0;
-        *granted_access = desired_access;
+        if (desired_access & MAXIMUM_ALLOWED)
+            *granted_access = mapping->GenericAll;
+        else
+            *granted_access = desired_access;
         return *status = STATUS_SUCCESS;
     }
 

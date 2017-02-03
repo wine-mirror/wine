@@ -1376,6 +1376,12 @@ static void test_AccessCheck(void)
     ok(AccessStatus && (Access == KEY_READ),
         "AccessCheck failed to grant access with error %d\n",
         GetLastError());
+    ret = AccessCheck(SecurityDescriptor, Token, MAXIMUM_ALLOWED, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+    ok(AccessStatus && (Access == KEY_ALL_ACCESS),
+        "AccessCheck failed to grant access with error %d\n",
+        GetLastError());
 
     /* sd with blank dacl */
     ret = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
