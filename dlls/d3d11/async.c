@@ -452,7 +452,7 @@ HRESULT d3d_query_create(struct d3d_device *device, const D3D11_QUERY_DESC *desc
         return hr;
     }
 
-    TRACE("Created predicate %p.\n", object);
+    TRACE("Created query %p.\n", object);
     *query = object;
 
     return S_OK;
