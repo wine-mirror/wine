@@ -240,7 +240,7 @@
 240 stdcall GdipGetCustomLineCapBaseInset(ptr ptr)
 241 stub GdipGetCustomLineCapStrokeCaps
 242 stdcall GdipGetCustomLineCapStrokeJoin(ptr ptr)
-243 stub GdipGetCustomLineCapType
+243 stdcall GdipGetCustomLineCapType(ptr ptr)
 244 stdcall GdipGetCustomLineCapWidthScale(ptr ptr)
 245 stdcall GdipGetDC(ptr ptr)
 246 stdcall GdipGetDpiX(ptr ptr)

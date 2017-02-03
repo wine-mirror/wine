@@ -267,6 +267,50 @@ todo_wine
     GdipDeleteCustomLineCap((GpCustomLineCap*)cap);
 }
 
+static void test_captype(void)
+{
+    GpAdjustableArrowCap *arrowcap;
+    GpCustomLineCap *custom;
+    CustomLineCapType type;
+    GpStatus stat;
+    GpPath *path;
+
+    stat = GdipGetCustomLineCapType(NULL, NULL);
+    ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
+
+    type = 10;
+    stat = GdipGetCustomLineCapType(NULL, &type);
+    ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
+    ok(type == 10, "Unexpected cap type, %d\n", type);
+
+    /* default cap */
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    ok(stat == Ok, "Failed to create path, %d\n", stat);
+    stat = GdipAddPathRectangle(path, 5.0, 5.0, 10.0, 10.0);
+    ok(stat == Ok, "AddPathRectangle failed, %d\n", stat);
+
+    stat = GdipCreateCustomLineCap(NULL, path, LineCapFlat, 0.0, &custom);
+    ok(stat == Ok, "Failed to create cap, %d\n", stat);
+    stat = GdipGetCustomLineCapType(custom, &type);
+    ok(stat == Ok, "Failed to get cap type, %d\n", stat);
+    ok(type == CustomLineCapTypeDefault, "Unexpected cap type %d\n", stat);
+    GdipDeleteCustomLineCap(custom);
+    GdipDeletePath(path);
+
+    /* arrow cap */
+    stat = GdipCreateAdjustableArrowCap(17.0, 15.0, TRUE, &arrowcap);
+todo_wine
+    ok(stat == Ok, "Failed to create adjustable cap, %d\n", stat);
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetCustomLineCapType((GpCustomLineCap*)arrowcap, &type);
+    ok(stat == Ok, "Failed to get cap type, %d\n", stat);
+    ok(type == CustomLineCapTypeAdjustableArrow, "Unexpected cap type %d\n", stat);
+
+    GdipDeleteCustomLineCap((GpCustomLineCap*)arrowcap);
+}
+
 START_TEST(customlinecap)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -284,6 +328,7 @@ START_TEST(customlinecap)
     test_inset();
     test_scale();
     test_create_adjustable_cap();
+    test_captype();
 
     GdiplusShutdown(gdiplusToken);
 }

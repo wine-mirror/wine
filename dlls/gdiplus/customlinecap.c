@@ -77,6 +77,7 @@ GpStatus WINGDIPAPI GdipCreateCustomLineCap(GpPath* fillPath, GpPath* strokePath
     *customCap = heap_alloc_zero(sizeof(GpCustomLineCap));
     if(!*customCap)    return OutOfMemory;
 
+    (*customCap)->type = CustomLineCapTypeDefault;
     if(strokePath){
         (*customCap)->fill = FALSE;
         pathdata = &strokePath->pathdata;
@@ -242,6 +243,17 @@ GpStatus WINGDIPAPI GdipGetCustomLineCapBaseCap(GpCustomLineCap *customCap, GpLi
 
     *baseCap = customCap->cap;
 
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetCustomLineCapType(GpCustomLineCap *customCap, CustomLineCapType *type)
+{
+    TRACE("(%p, %p)\n", customCap, type);
+
+    if(!customCap || !type)
+        return InvalidParameter;
+
+    *type = customCap->type;
     return Ok;
 }
 
