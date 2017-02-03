@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-01-11 13:40+0200\n"
+"PO-Revision-Date: 2017-02-03 17:32+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
@@ -8352,10 +8352,8 @@ msgid "Wine Control Panel"
 msgstr "Winen Ohjauspaneeli"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
-msgstr "Suorita tiedosto -valintaikkunaa ei voida näyttää (sisäinen virhe)"
+msgstr "Suorita-valintaikkunaa ei voida näyttää (sisäinen virhe)"
 
 #: shell32.rc:196
 msgid "Unable to display Browse dialog box (internal error)"
@@ -11881,52 +11879,44 @@ msgid "(unknown %d)"
 msgstr "(tuntematon %d)"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Valitun rekisteriarvon muokkaaminen ei onnistu."
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Uuden rekisteriavaimen luominen ei onnistu."
 
 #: regedit.rc:214
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Uuden rekisteriarvon luominen ei onnistu."
 
 #: regedit.rc:215
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"Avaimen '%1' nimeäminen ei onnistu.\n"
+"Annettu avaimen nimi on jo varattu."
 
 #: regedit.rc:216
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"Arvon '%1' nimeäminen ei onnistu.\n"
+"Annettu arvon nimi on jo varattu."
 
 #: regedit.rc:217
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Valitun rekisteriavaimen poistaminen ei onnistu."
 
 #: regedit.rc:218
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Valitun rekisteriavaimen uudelleennimeäminen ei onnistu."
 
 #: regedit.rc:219
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Valitun rekisteriarvon uudelleennimeäminen ei onnistu."
 
 #: regedit.rc:371
 msgid ""
@@ -12154,32 +12144,24 @@ msgid "Displays program information, version number and copyright"
 msgstr "Näyttää ohjelman tiedot, versionumeron ja tekijänoikeustiedot"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Rekisteriarvon '%1' hakeminen ei onnistu."
 
 #: regedit.rc:182
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Ei voida muokata avaimia tälle tyypille (%u)"
+msgstr "Tämän tyypin (%1!u!) rekisteriavainten muokkaaminen ei onnistu."
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Arvo on liian suuri (%u)"
+msgstr "Arvo on liian suuri (%1!u!)."
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "Vahvista arvon tuhoaminen"
 
 #: regedit.rc:189
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Haettua merkkijonoa '%s' ei löydy"
+msgstr "Haku on valmis. Merkkijonoa '%1' ei löydy."
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"
@@ -12194,10 +12176,8 @@ msgid "New Value #%d"
 msgstr "Uusi arvo #%d"
 
 #: regedit.rc:180
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "Rekisteriavaimen '%1' hakeminen ei onnistu."
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
