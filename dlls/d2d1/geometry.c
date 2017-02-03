@@ -135,10 +135,11 @@ static void d2d_face_set(struct d2d_face *f, UINT16 v0, UINT16 v1, UINT16 v2)
 }
 
 static void d2d_outline_vertex_set(struct d2d_outline_vertex *v, float x, float y,
-        float direction_x, float direction_y)
+        float prev_x, float prev_y, float next_x, float next_y)
 {
     d2d_point_set(&v->position, x, y);
-    d2d_point_set(&v->direction, direction_x, direction_y);
+    d2d_point_set(&v->prev, prev_x, prev_y);
+    d2d_point_set(&v->next, next_x, next_y);
 }
 
 static void d2d_fp_two_sum(float *out, float a, float b)
@@ -1735,6 +1736,62 @@ static BOOL d2d_path_geometry_add_figure(struct d2d_geometry *geometry)
     return TRUE;
 }
 
+static BOOL d2d_geometry_outline_add_join(struct d2d_geometry *geometry,
+        const D2D1_POINT_2F *prev, const D2D1_POINT_2F *p0, const D2D1_POINT_2F *next)
+{
+    D2D1_POINT_2F q_prev, q_next;
+    struct d2d_outline_vertex *v;
+    struct d2d_face *f;
+    size_t base_idx;
+
+    if (!d2d_array_reserve((void **)&geometry->outline.vertices, &geometry->outline.vertices_size,
+            geometry->outline.vertex_count + 4, sizeof(*geometry->outline.vertices)))
+    {
+        ERR("Failed to grow outline vertices array.\n");
+        return FALSE;
+    }
+    base_idx = geometry->outline.vertex_count;
+    v = &geometry->outline.vertices[base_idx];
+
+    if (!d2d_array_reserve((void **)&geometry->outline.faces, &geometry->outline.faces_size,
+            geometry->outline.face_count + 2, sizeof(*geometry->outline.faces)))
+    {
+        ERR("Failed to grow outline faces array.\n");
+        return FALSE;
+    }
+    f = &geometry->outline.faces[geometry->outline.face_count];
+
+    d2d_point_subtract(&q_prev, p0, prev);
+    d2d_point_subtract(&q_next, next, p0);
+
+    d2d_point_normalise(&q_prev);
+    d2d_point_normalise(&q_next);
+
+    if (d2d_point_dot(&q_prev, &q_next) == -1.0f)
+    {
+        d2d_outline_vertex_set(&v[0], p0->x, p0->y,  q_prev.x,  q_prev.y,  q_prev.x,  q_prev.y);
+        d2d_outline_vertex_set(&v[1], p0->x, p0->y, -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
+        d2d_outline_vertex_set(&v[2], p0->x + 25.0f * q_prev.x, p0->y + 25.0f * q_prev.y,
+                -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
+        d2d_outline_vertex_set(&v[3], p0->x + 25.0f * q_prev.x, p0->y + 25.0f * q_prev.y,
+                 q_prev.x,  q_prev.y,  q_prev.x,  q_prev.y);
+    }
+    else
+    {
+        d2d_outline_vertex_set(&v[0], p0->x, p0->y, 0.0f, 0.0f, 0.0f, 0.0f);
+        d2d_outline_vertex_set(&v[1], p0->x, p0->y, q_prev.x, q_prev.y, q_prev.x, q_prev.y);
+        d2d_outline_vertex_set(&v[2], p0->x, p0->y, q_prev.x, q_prev.y, q_next.x, q_next.y);
+        d2d_outline_vertex_set(&v[3], p0->x, p0->y, q_next.x, q_next.y, q_next.x, q_next.y);
+    }
+    geometry->outline.vertex_count += 4;
+
+    d2d_face_set(&f[0], base_idx + 1, base_idx + 0, base_idx + 2);
+    d2d_face_set(&f[1], base_idx + 2, base_idx + 0, base_idx + 3);
+    geometry->outline.face_count += 2;
+
+    return TRUE;
+}
+
 static BOOL d2d_geometry_outline_add_line_segment(struct d2d_geometry *geometry,
         const D2D1_POINT_2F *p0, const D2D1_POINT_2F *next)
 {
@@ -1763,10 +1820,10 @@ static BOOL d2d_geometry_outline_add_line_segment(struct d2d_geometry *geometry,
     d2d_point_subtract(&q_next, next, p0);
     d2d_point_normalise(&q_next);
 
-    d2d_outline_vertex_set(&v[0], p0->x, p0->y,  q_next.x,  q_next.y);
-    d2d_outline_vertex_set(&v[1], p0->x, p0->y, -q_next.x, -q_next.y);
-    d2d_outline_vertex_set(&v[2], next->x, next->y,  q_next.x,  q_next.y);
-    d2d_outline_vertex_set(&v[3], next->x, next->y, -q_next.x, -q_next.y);
+    d2d_outline_vertex_set(&v[0], p0->x, p0->y,  q_next.x,  q_next.y,  q_next.x,  q_next.y);
+    d2d_outline_vertex_set(&v[1], p0->x, p0->y, -q_next.x, -q_next.y, -q_next.x, -q_next.y);
+    d2d_outline_vertex_set(&v[2], next->x, next->y,  q_next.x,  q_next.y,  q_next.x,  q_next.y);
+    d2d_outline_vertex_set(&v[3], next->x, next->y, -q_next.x, -q_next.y, -q_next.x, -q_next.y);
     geometry->outline.vertex_count += 4;
 
     d2d_face_set(&f[0], base_idx + 0, base_idx + 1, base_idx + 2);
@@ -1779,26 +1836,50 @@ static BOOL d2d_geometry_outline_add_line_segment(struct d2d_geometry *geometry,
 static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
         struct d2d_figure *figure, D2D1_FIGURE_END figure_end)
 {
-    const D2D1_POINT_2F *p0, *next;
-    enum d2d_vertex_type type;
+    const D2D1_POINT_2F *prev, *p0, *next;
+    enum d2d_vertex_type prev_type, type;
     size_t bezier_idx, i;
 
     for (i = 0, bezier_idx = 0; i < figure->vertex_count; ++i)
     {
         type = figure->vertex_types[i];
-        if (type == D2D_VERTEX_TYPE_BEZIER)
-            ++bezier_idx;
-        if (type != D2D_VERTEX_TYPE_LINE)
+        if (type == D2D_VERTEX_TYPE_NONE)
             continue;
 
         p0 = &figure->vertices[i];
 
-        if (i == figure->vertex_count - 1)
+        if (!i)
+        {
+            prev_type = figure->vertex_types[figure->vertex_count - 1];
+            if (prev_type == D2D_VERTEX_TYPE_BEZIER)
+                prev = &figure->bezier_controls[figure->bezier_control_count - 1];
+            else
+                prev = &figure->vertices[figure->vertex_count - 1];
+        }
+        else
+        {
+            prev_type = figure->vertex_types[i - 1];
+            if (prev_type == D2D_VERTEX_TYPE_BEZIER)
+                prev = &figure->bezier_controls[bezier_idx - 1];
+            else
+                prev = &figure->vertices[i - 1];
+        }
+
+        if (type == D2D_VERTEX_TYPE_BEZIER)
+            next = &figure->bezier_controls[bezier_idx++];
+        else if (i == figure->vertex_count - 1)
             next = &figure->vertices[0];
         else
             next = &figure->vertices[i + 1];
 
-        if ((figure_end == D2D1_FIGURE_END_CLOSED || i < figure->vertex_count - 1)
+        if ((figure_end == D2D1_FIGURE_END_CLOSED || (i && i < figure->vertex_count - 1))
+                && !d2d_geometry_outline_add_join(geometry, prev, p0, next))
+        {
+            ERR("Failed to add join.\n");
+            return FALSE;
+        }
+
+        if (type == D2D_VERTEX_TYPE_LINE && (figure_end == D2D1_FIGURE_END_CLOSED || i < figure->vertex_count - 1)
                 && !d2d_geometry_outline_add_line_segment(geometry, p0, next))
         {
             ERR("Failed to add line segment.\n");

@@ -308,7 +308,8 @@ struct d2d_vec4
 struct d2d_outline_vertex
 {
     D2D1_POINT_2F position;
-    D2D1_POINT_2F direction;
+    D2D1_POINT_2F prev;
+    D2D1_POINT_2F next;
 };
 
 struct d2d_geometry
