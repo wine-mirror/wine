@@ -463,7 +463,7 @@
 @ stub IoStartPacket
 @ stdcall IoStartTimer(ptr)
 @ stub IoStatisticsLock
-@ stub IoStopTimer
+@ stdcall IoStopTimer(ptr)
 @ stub IoSynchronousInvalidateDeviceRelations
 @ stub IoSynchronousPageWrite
 @ stub IoThreadToProcess

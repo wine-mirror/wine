@@ -682,6 +682,15 @@ void WINAPI IoStartTimer(PDEVICE_OBJECT DeviceObject)
 
 
 /***********************************************************************
+ *           IoStopTimer   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoStopTimer(PDEVICE_OBJECT DeviceObject)
+{
+    FIXME( "stub: %p\n", DeviceObject );
+}
+
+
+/***********************************************************************
  *           IoAllocateIrp  (NTOSKRNL.EXE.@)
  */
 PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )
