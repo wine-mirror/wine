@@ -17287,8 +17287,10 @@ static void add_dirty_rect_test_draw(IDirect3DDevice9 *device)
 static void add_dirty_rect_test(void)
 {
     HRESULT hr;
-    IDirect3DTexture9 *tex_dst1, *tex_dst2, *tex_src_red, *tex_src_green, *tex_managed;
-    IDirect3DSurface9 *surface_dst2, *surface_src_green, *surface_src_red, *surface_managed;
+    IDirect3DTexture9 *tex_dst1, *tex_dst2, *tex_src_red, *tex_src_green,
+        *tex_managed, *tex_dynamic;
+    IDirect3DSurface9 *surface_dst2, *surface_src_green, *surface_src_red,
+        *surface_managed, *surface_dynamic;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     unsigned int i;
@@ -17325,6 +17327,9 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
             D3DPOOL_MANAGED, &tex_managed, NULL);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, D3DUSAGE_DYNAMIC,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &tex_dynamic, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     hr = IDirect3DTexture9_GetSurfaceLevel(tex_dst2, 0, &surface_dst2);
     ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
@@ -17333,6 +17338,8 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DTexture9_GetSurfaceLevel(tex_src_red, 0, &surface_src_red);
     ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
     hr = IDirect3DTexture9_GetSurfaceLevel(tex_managed, 0, &surface_managed);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_dynamic, 0, &surface_dynamic);
     ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
 
     fill_surface(surface_src_red, 0x00ff0000, 0);
@@ -17526,6 +17533,7 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
+    /* Tests with managed textures. */
     fill_surface(surface_managed, 0x00ff0000, 0);
     hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex_managed);
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
@@ -17560,13 +17568,32 @@ static void add_dirty_rect_test(void)
 
     /* So does EvictManagedResources. */
     fill_surface(surface_managed, 0x000000ff, D3DLOCK_NO_DIRTY_UPDATE);
-    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
     hr = IDirect3DDevice9_EvictManagedResources(device);
     ok(SUCCEEDED(hr), "Failed to evict managed resources, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x000000ff, 1),
             "Expected color 0x000000ff, got 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Tests with dynamic textures */
+    fill_surface(surface_dynamic, 0x0000ffff, 0);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex_dynamic);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ffff, 1),
+            "Expected color 0x0000ffff, got 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Dynamic textures don't honor D3DLOCK_NO_DIRTY_UPDATE. */
+    fill_surface(surface_dynamic, 0x00ffff00, D3DLOCK_NO_DIRTY_UPDATE);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00ffff00, 1),
+            "Expected color 0x00ffff00, got 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
@@ -17592,11 +17619,13 @@ static void add_dirty_rect_test(void)
     IDirect3DSurface9_Release(surface_managed);
     IDirect3DSurface9_Release(surface_src_red);
     IDirect3DSurface9_Release(surface_src_green);
+    IDirect3DSurface9_Release(surface_dynamic);
     IDirect3DTexture9_Release(tex_src_red);
     IDirect3DTexture9_Release(tex_src_green);
     IDirect3DTexture9_Release(tex_dst1);
     IDirect3DTexture9_Release(tex_dst2);
     IDirect3DTexture9_Release(tex_managed);
+    IDirect3DTexture9_Release(tex_dynamic);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D9_Release(d3d);
