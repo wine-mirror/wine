@@ -1752,7 +1752,8 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         return E_OUTOFMEMORY;
     }
 
-    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
+    if (!(flags & WINED3D_MAP_READONLY)
+        && (!(flags & WINED3D_MAP_NO_DIRTY_UPDATE) || (resource->usage & WINED3DUSAGE_DYNAMIC)))
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
