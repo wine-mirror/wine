@@ -642,18 +642,15 @@ static void test_Extract(void)
     session.Operation = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
     res = pExtract(&session, "extract.cab");
     node = session.FileList;
-    todo_wine
-    {
-        ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || res == E_FAIL,
-           "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) or E_FAIL, got %08x\n", res);
-        ok(session.FileSize == 6, "Expected 6, got %d\n", session.FileSize);
-        ok(session.Error.erfOper == FDIERROR_USER_ABORT,
-           "Expected FDIERROR_USER_ABORT, got %d\n", session.Error.erfOper);
-        ok(session.Error.fError == TRUE, "Expected TRUE, got %d\n", session.Error.fError);
-        ok(session.FileCount == 1, "Expected 1, got %d\n", session.FileCount);
-        ok(!lstrcmpA(session.CurrentFile, "dest\\a.txt"),
-           "Expected dest\\a.txt, got %s\n", session.CurrentFile);
-    }
+    ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || res == E_FAIL,
+       "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) or E_FAIL, got %08x\n", res);
+    ok(session.FileSize == 6, "Expected 6, got %d\n", session.FileSize);
+    ok(session.Error.erfOper == FDIERROR_USER_ABORT,
+       "Expected FDIERROR_USER_ABORT, got %d\n", session.Error.erfOper);
+    ok(session.Error.fError == TRUE, "Expected TRUE, got %d\n", session.Error.fError);
+    ok(session.FileCount == 1, "Expected 1, got %d\n", session.FileCount);
+    ok(!lstrcmpA(session.CurrentFile, "dest\\a.txt"),
+       "Expected dest\\a.txt, got %s\n", session.CurrentFile);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
     ok(session.Operation == (EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES),
        "Expected EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES, got %d\n", session.Operation);
@@ -662,15 +659,12 @@ static void test_Extract(void)
     ok(!session.FilterList, "Expected empty filter list\n");
     ok(getFileSize("dest\\a.txt") == 11, "Expected dest\\a.txt to be 11 bytes\n");
     ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to be read-only\n");
-    todo_wine
-    {
-        ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
-        ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
-        ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
-        ok(!check_list(&node, "testdir\\d.txt", FALSE), "list entry should not exist\n");
-        ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry should not exist\n");
-        ok(!check_list(&node, "b.txt", FALSE), "list entry should not exist\n");
-    }
+    ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
+    ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
+    ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
+    ok(!check_list(&node, "testdir\\d.txt", FALSE), "list entry should not exist\n");
+    ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry should not exist\n");
+    ok(!check_list(&node, "b.txt", FALSE), "list entry should not exist\n");
     ok(!check_list(&node, "a.txt", FALSE), "list entry should not exist\n");
     free_file_list(&session);
 
@@ -686,18 +680,15 @@ static void test_Extract(void)
     session.Operation = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
     res = pExtract(&session, "extract.cab");
     node = session.FileList;
-    todo_wine
-    {
-        ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || res == E_FAIL,
-           "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) or E_FAIL, got %08x\n", res);
-        ok(session.FileSize == 26, "Expected 26, got %d\n", session.FileSize);
-        ok(session.Error.erfOper == FDIERROR_USER_ABORT,
-           "Expected FDIERROR_USER_ABORT, got %d\n", session.Error.erfOper);
-        ok(session.Error.fError == TRUE, "Expected TRUE, got %d\n", session.Error.fError);
-        ok(session.FileCount == 3, "Expected 3, got %d\n", session.FileCount);
-        ok(!lstrcmpA(session.CurrentFile, "dest\\testdir\\c.txt"),
-           "Expected dest\\c.txt, got %s\n", session.CurrentFile);
-    }
+    ok(res == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || res == E_FAIL,
+       "Expected HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) or E_FAIL, got %08x\n", res);
+    ok(session.FileSize == 26, "Expected 26, got %d\n", session.FileSize);
+    ok(session.Error.erfOper == FDIERROR_USER_ABORT,
+       "Expected FDIERROR_USER_ABORT, got %d\n", session.Error.erfOper);
+    ok(session.Error.fError == TRUE, "Expected TRUE, got %d\n", session.Error.fError);
+    ok(session.FileCount == 3, "Expected 3, got %d\n", session.FileCount);
+    ok(!lstrcmpA(session.CurrentFile, "dest\\testdir\\c.txt"),
+       "Expected dest\\c.txt, got %s\n", session.CurrentFile);
     ok(session.Error.erfType == 0, "Expected 0, got %d\n", session.Error.erfType);
     ok(session.Operation == (EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES),
        "Expected EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES, got %d\n", session.Operation);
@@ -708,11 +699,8 @@ static void test_Extract(void)
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
     ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to be read-only\n");
-    todo_wine
-    {
-        ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
-        ok(!check_list(&node, "testdir\\d.txt", FALSE), "list entry should not exist\n");
-    }
+    ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");
+    ok(!check_list(&node, "testdir\\d.txt", FALSE), "list entry should not exist\n");
     ok(!check_list(&node, "testdir\\c.txt", FALSE), "list entry wrong\n");
     ok(!check_list(&node, "b.txt", FALSE), "list entry wrong\n");
     ok(!check_list(&node, "a.txt", TRUE), "list entry wrong\n");
