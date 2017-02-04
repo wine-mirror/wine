@@ -2171,8 +2171,8 @@ int CDECL MSVCRT__wsopen_dispatch( const MSVCRT_wchar_t* path, int oflags, int s
 
   if (oflags & MSVCRT__O_CREAT)
   {
-    if(pmode & ~(MSVCRT__S_IREAD | MSVCRT__S_IWRITE))
-      FIXME(": pmode 0x%04x ignored\n", pmode);
+    if (secure && !MSVCRT_CHECK_PMT(!(pmode & ~(MSVCRT__S_IREAD | MSVCRT__S_IWRITE))))
+      return MSVCRT_EINVAL;
 
     if (oflags & MSVCRT__O_EXCL)
       creation = CREATE_NEW;

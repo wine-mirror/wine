@@ -396,11 +396,9 @@ static void test__sopen_dispatch(void)
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
     ret = p_sopen_dispatch(tempf, _O_CREAT, _SH_DENYWR, 0xff, &fd, 1);
-todo_wine {
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
-}
     if (fd > 0)
     {
         _close(fd);
@@ -438,11 +436,9 @@ static void test__sopen_s(void)
     SET_EXPECT(global_invalid_parameter_handler);
     fd = 0;
     ret = p_sopen_s(&fd, tempf, _O_CREAT, _SH_DENYWR, 0xff);
-todo_wine {
     ok(ret == EINVAL, "got %d\n", ret);
     ok(fd == -1, "got fd %d\n", fd);
     CHECK_CALLED(global_invalid_parameter_handler);
-}
     p__set_invalid_parameter_handler(NULL);
 
     free(tempf);
