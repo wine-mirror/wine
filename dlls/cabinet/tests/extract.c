@@ -80,6 +80,18 @@ static void createTestFile(const CHAR *name)
     CloseHandle(file);
 }
 
+static int getFileSize(const CHAR *name)
+{
+    HANDLE file;
+    int size;
+    file = CreateFileA(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return -1;
+    size = GetFileSize(file, NULL);
+    CloseHandle(file);
+    return size;
+}
+
 static void create_test_files(void)
 {
     int len;
@@ -621,9 +633,10 @@ static void test_Extract(void)
     ok(!check_list(&node, "a.txt", FALSE), "list entry should not exist\n");
     free_file_list(&session);
 
-    /* first file exists */
+    /* first file exists but is read-only */
     createTestFile("dest\\a.txt");
     SetFileAttributesA("dest\\a.txt", FILE_ATTRIBUTE_READONLY);
+    ok(getFileSize("dest\\a.txt") == 11, "Expected dest\\a.txt to be 11 bytes\n");
     ZeroMemory(&session, sizeof(SESSION));
     lstrcpyA(session.Destination, "dest");
     session.Operation = EXTRACT_FILLFILELIST | EXTRACT_EXTRACTFILES;
@@ -647,7 +660,8 @@ static void test_Extract(void)
     ok(!lstrcmpA(session.Destination, "dest"), "Expected dest, got %s\n", session.Destination);
     ok(!*session.Reserved, "Expected empty string, got %s\n", session.Reserved);
     ok(!session.FilterList, "Expected empty filter list\n");
-    ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to not exist\n");
+    ok(getFileSize("dest\\a.txt") == 11, "Expected dest\\a.txt to be 11 bytes\n");
+    ok(!DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to be read-only\n");
     todo_wine
     {
         ok(!DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to not exist\n");
@@ -663,7 +677,8 @@ static void test_Extract(void)
     SetFileAttributesA("dest\\a.txt", FILE_ATTRIBUTE_NORMAL);
     DeleteFileA("dest\\a.txt");
 
-    /* third file exists */
+    /* first file exists and is writable, third file exists but is read-only */
+    createTestFile("dest\\a.txt");
     createTestFile("dest\\testdir\\c.txt");
     SetFileAttributesA("dest\\testdir\\c.txt", FILE_ATTRIBUTE_READONLY);
     ZeroMemory(&session, sizeof(SESSION));
@@ -689,9 +704,10 @@ static void test_Extract(void)
     ok(!lstrcmpA(session.Destination, "dest"), "Expected dest, got %s\n", session.Destination);
     ok(!*session.Reserved, "Expected empty string, got %s\n", session.Reserved);
     ok(!session.FilterList, "Expected empty filter list\n");
+    ok(getFileSize("dest\\a.txt") == 6, "Expected dest\\a.txt to be 6 bytes\n");
     ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
     ok(DeleteFileA("dest\\b.txt"), "Expected dest\\b.txt to exist\n");
-    ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to not exist\n");
+    ok(!DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to be read-only\n");
     todo_wine
     {
         ok(!DeleteFileA("dest\\testdir\\d.txt"), "Expected dest\\testdir\\d.txt to not exist\n");

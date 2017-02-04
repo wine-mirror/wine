@@ -251,7 +251,7 @@ static INT_PTR CDECL fdi_notify_extract(FDINOTIFICATIONTYPE fdint, PFDINOTIFICAT
                 }
 
                 hFile = CreateFileA(szFullPath, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                                    CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+                                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
                 if (hFile == INVALID_HANDLE_VALUE)
                     hFile = 0;
