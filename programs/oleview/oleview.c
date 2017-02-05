@@ -282,16 +282,13 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
     BOOL vis;
     HTREEITEM hSelect;
     WCHAR wszAbout[MAX_LOAD_STRING];
-    WCHAR wszAboutVer[MAX_LOAD_STRING];
 
     switch(wParam)
     {
         case IDM_ABOUT:
             LoadStringW(globals.hMainInst, IDS_ABOUT, wszAbout,
                     sizeof(wszAbout)/sizeof(wszAbout[0]));
-            LoadStringW(globals.hMainInst, IDS_ABOUTVER, wszAboutVer,
-                    sizeof(wszAboutVer)/sizeof(wszAboutVer[0]));
-            ShellAboutW(hWnd, wszAbout, wszAboutVer, NULL);
+            ShellAboutW(hWnd, wszAbout, NULL, NULL);
             break;
         case IDM_COPYCLSID:
             hSelect = (HTREEITEM)SendMessageW(globals.hTree,

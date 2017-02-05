@@ -96,7 +96,6 @@ STRINGTABLE
     IDS_APPTITLE           "OleView"
     IDS_READY              "Ready"
     IDS_ABOUT              "OleView - OLE/COM Object Viewer"
-    IDS_ABOUTVER           "version 1.0"
     IDS_TYPELIBTITLE       "ITypeLib viewer"
     IDS_OPEN               "Open"
     IDS_OPEN_FILTER_TYPELIB "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"

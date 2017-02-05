@@ -70,7 +70,7 @@ msgstr "פרטי תמיכה"
 #: mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62 oledlg.rc:94 serialui.rc:41
 #: setupapi.rc:59 shell32.rc:276 shell32.rc:300 shell32.rc:322 shell32.rc:341
 #: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
-#: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162 oleview.rc:175
+#: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:161 oleview.rc:174
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
 #: progman.rc:199 progman.rc:216 regedit.rc:259 regedit.rc:270 regedit.rc:283
 #: regedit.rc:299 regedit.rc:312 regedit.rc:325 taskmgr.rc:442 taskmgr.rc:517
@@ -151,7 +151,7 @@ msgstr "ה&תקנה"
 #: msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95 serialui.rc:42 setupapi.rc:42
 #: setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312 shell32.rc:342
 #: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
-#: winspool.rc:43 notepad.rc:118 oleview.rc:163 oleview.rc:176 progman.rc:107
+#: winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
 #: progman.rc:217 regedit.rc:260 regedit.rc:271 regedit.rc:284 regedit.rc:300
 #: regedit.rc:313 regedit.rc:326 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
@@ -231,7 +231,7 @@ msgid "Programs (*.exe)"
 msgstr "תכניות (‎*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:104 progman.rc:82 regedit.rc:198 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:198 winedbg.rc:42 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
@@ -341,8 +341,8 @@ msgstr "סיום"
 msgid "Customize Toolbar"
 msgstr "התאמת סרגל כלים"
 
-#: comctl32.rc:84 cryptui.rc:351 ieframe.rc:43 oleview.rc:83 oleview.rc:188
-#: oleview.rc:201 oleview.rc:213 taskmgr.rc:139
+#: comctl32.rc:84 cryptui.rc:351 ieframe.rc:43 oleview.rc:83 oleview.rc:187
+#: oleview.rc:200 oleview.rc:212 taskmgr.rc:139
 msgid "&Close"
 msgstr "&סגירה"
 
@@ -407,7 +407,7 @@ msgid "Go to today"
 msgstr "מעבר ליום הנוכחי"
 
 #: comdlg32.rc:157 comdlg32.rc:170 comdlg32.rc:459 comdlg32.rc:485
-#: shell32.rc:167 oleview.rc:102
+#: shell32.rc:167 oleview.rc:101
 msgid "Open"
 msgstr "פתיחה"
 
@@ -7617,11 +7617,11 @@ msgctxt "object state"
 msgid "has popup"
 msgstr ""
 
-#: oleaut32.rc:30 oleview.rc:147
+#: oleaut32.rc:30 oleview.rc:146
 msgid "True"
 msgstr "אמת"
 
-#: oleaut32.rc:31 oleview.rc:148
+#: oleaut32.rc:31 oleview.rc:147
 msgid "False"
 msgstr "שקר"
 
@@ -11100,31 +11100,31 @@ msgstr "שמירה &בשם..."
 msgid "&Group by type kind"
 msgstr "&קיבוץ לפי סוג"
 
-#: oleview.rc:157
+#: oleview.rc:156
 msgid "Connect to another machine"
 msgstr "התחברות למחשב אחר"
 
-#: oleview.rc:160
+#: oleview.rc:159
 msgid "&Machine name:"
 msgstr "&שם המחשב:"
 
-#: oleview.rc:168
+#: oleview.rc:167
 msgid "System Configuration"
 msgstr "הגדרות המערכת"
 
-#: oleview.rc:171
+#: oleview.rc:170
 msgid "System Settings"
 msgstr "הגדרות המערכת"
 
-#: oleview.rc:172
+#: oleview.rc:171
 msgid "&Enable Distributed COM"
 msgstr "הפעלת COM מ&בוזר"
 
-#: oleview.rc:173
+#: oleview.rc:172
 msgid "Enable &Remote Connections (Win95 only)"
 msgstr "הפעלת חיבורים מ&רחוק (Win95 בלבד)"
 
-#: oleview.rc:174
+#: oleview.rc:173
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
@@ -11132,35 +11132,35 @@ msgstr ""
 "הגדרות אלו משנות רק את ערכי הרישום.\n"
 "אין להן שום השפעה על הביצועים של Wine."
 
-#: oleview.rc:181
+#: oleview.rc:180
 msgid "Default Interface Viewer"
 msgstr "מציג מנשקי בררת המחדל"
 
-#: oleview.rc:184
+#: oleview.rc:183
 msgid "Interface"
 msgstr "מנשק"
 
-#: oleview.rc:186
+#: oleview.rc:185
 msgid "IID:"
 msgstr "IID:"
 
-#: oleview.rc:189
+#: oleview.rc:188
 msgid "&View Type Info"
 msgstr "&צפייה בפרטי הסוג"
 
-#: oleview.rc:194
+#: oleview.rc:193
 msgid "IPersist Interface Viewer"
 msgstr "מציג מנשקי ה־IPersist"
 
-#: oleview.rc:197 oleview.rc:209
+#: oleview.rc:196 oleview.rc:208
 msgid "Class Name:"
 msgstr "שם המחלקה:"
 
-#: oleview.rc:199 oleview.rc:211
+#: oleview.rc:198 oleview.rc:210
 msgid "CLSID:"
 msgstr "CLSID:"
 
-#: oleview.rc:206
+#: oleview.rc:205
 msgid "IPersistStream Interface Viewer"
 msgstr "מציג מנשקי ה־IPersistStream"
 
@@ -11168,7 +11168,7 @@ msgstr "מציג מנשקי ה־IPersistStream"
 msgid "OleView"
 msgstr "OleView"
 
-#: oleview.rc:101
+#: oleview.rc:100
 msgid "ITypeLib viewer"
 msgstr "מציג ITypeLib"
 
@@ -11176,176 +11176,172 @@ msgstr "מציג ITypeLib"
 msgid "OleView - OLE/COM Object Viewer"
 msgstr "OleView - מציג פרטי OLE/COM"
 
-#: oleview.rc:100
-msgid "version 1.0"
-msgstr "גרסה 1.0"
-
-#: oleview.rc:103
+#: oleview.rc:102
 #, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 msgstr "קובצי TypeLib‏ (‎*.tlb;*.olb;*.dll;*.ocx;*.exe)‏"
 
-#: oleview.rc:106
+#: oleview.rc:105
 msgid "Bind to file via a File Moniker"
 msgstr "איגוד לקובץ באמצעות מכנה קבצים"
 
-#: oleview.rc:107
+#: oleview.rc:106
 msgid "Open a TypeLib file and view the contents"
 msgstr "פתיחת קובץ TypeLib וצפייה בתכנים"
 
-#: oleview.rc:108
+#: oleview.rc:107
 msgid "Change machine wide Distributed COM settings"
 msgstr "שינוי הגדרות ה־COM המבוזר לכלל המערכת"
 
-#: oleview.rc:109
+#: oleview.rc:108
 msgid "Run the Wine registry editor"
 msgstr "הפעלת עורך רישומי המערכת של Wine"
 
-#: oleview.rc:110
+#: oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
 msgstr "יציאה מהיישום. הצגת בקשה לשמירת השינויים"
 
-#: oleview.rc:111
+#: oleview.rc:110
 msgid "Create an instance of the selected object"
 msgstr "יצירת מופע של העצם הנבחר"
 
-#: oleview.rc:112
+#: oleview.rc:111
 msgid "Create an instance of the selected object on a specific machine"
 msgstr "יצירת מופע של הפריט הנבחר במחשב מסוים"
 
-#: oleview.rc:113
+#: oleview.rc:112
 msgid "Release the currently selected object instance"
 msgstr "שחרור מופע העצם הנבחר"
 
-#: oleview.rc:114
+#: oleview.rc:113
 msgid "Copy the GUID of the currently selected item to the clipboard"
 msgstr "העתקת ה־GUID של הפריט הנבחר ללוח הגזירים"
 
-#: oleview.rc:115
+#: oleview.rc:114
 msgid "Display the viewer for the selected item"
 msgstr "הצגת המציג עבור הפריט הנבחר"
 
-#: oleview.rc:120
+#: oleview.rc:119
 msgid "Toggle between expert and novice display mode"
 msgstr "החלפה בין מצב התצוגה למומחה לבין מצב תצוגה למתחיל"
 
-#: oleview.rc:121
+#: oleview.rc:120
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
 msgstr "החלפת מצב התצוגה של קטגוריות רכיבים שאינן אמורות להופיע"
 
-#: oleview.rc:122
+#: oleview.rc:121
 msgid "Show or hide the toolbar"
 msgstr "הצגה או הסתרה של סרגל הכלים"
 
-#: oleview.rc:123
+#: oleview.rc:122
 msgid "Show or hide the status bar"
 msgstr "הצגה או הסתרה של שורת המצב"
 
-#: oleview.rc:124
+#: oleview.rc:123
 msgid "Refresh all lists"
 msgstr "רענון כל הרשימות"
 
-#: oleview.rc:125
+#: oleview.rc:124
 msgid "Display program information, version number and copyright"
 msgstr "הצגת פרטי התכנית, מספר הגרסה וזכויות היוצרים"
 
-#: oleview.rc:116
+#: oleview.rc:115
 msgid "Ask for an in-process server when calling CoGetClassObject"
 msgstr ""
 
-#: oleview.rc:117
+#: oleview.rc:116
 msgid "Ask for an in-process handler when calling CoGetClassObject"
 msgstr ""
 
-#: oleview.rc:118
+#: oleview.rc:117
 #, fuzzy
 msgid "Ask for a local server when calling CoGetClassObject"
 msgstr "שימוש ב־CLSCTX_LOCAL_SERVER בעת קריאה ל־CoGetClassObject"
 
-#: oleview.rc:119
+#: oleview.rc:118
 #, fuzzy
 msgid "Ask for a remote server when calling CoGetClassObject"
 msgstr "שימוש ב־CLSCTX_LOCAL_SERVER בעת קריאה ל־CoGetClassObject"
 
-#: oleview.rc:131
+#: oleview.rc:130
 msgid "ObjectClasses"
 msgstr "ObjectClasses"
 
-#: oleview.rc:132
+#: oleview.rc:131
 msgid "Grouped by Component Category"
 msgstr "מקובץ לפי קטגוריית הרכיבים"
 
-#: oleview.rc:133
+#: oleview.rc:132
 msgid "OLE 1.0 Objects"
 msgstr "עצמי OLE 1.0"
 
-#: oleview.rc:134
+#: oleview.rc:133
 msgid "COM Library Objects"
 msgstr "עצמי COM מספרייה"
 
-#: oleview.rc:135
+#: oleview.rc:134
 msgid "All Objects"
 msgstr "כל העצמים"
 
-#: oleview.rc:136
+#: oleview.rc:135
 msgid "Application IDs"
 msgstr "מזהי היישומים"
 
-#: oleview.rc:137
+#: oleview.rc:136
 msgid "Type Libraries"
 msgstr "ספריות סוג"
 
-#: oleview.rc:138
+#: oleview.rc:137
 msgid "ver."
 msgstr "גרסה"
 
-#: oleview.rc:139
+#: oleview.rc:138
 msgid "Interfaces"
 msgstr "מנשקים"
 
-#: oleview.rc:141
+#: oleview.rc:140
 msgid "Registry"
 msgstr "רישומי המערכת"
 
-#: oleview.rc:142
+#: oleview.rc:141
 msgid "Implementation"
 msgstr "הטמעה"
 
-#: oleview.rc:143
+#: oleview.rc:142
 msgid "Activation"
 msgstr "הפעלה"
 
-#: oleview.rc:145
+#: oleview.rc:144
 msgid "CoGetClassObject failed."
 msgstr "CoGetClassObject נכשל."
 
-#: oleview.rc:146
+#: oleview.rc:145
 msgid "Unknown error"
 msgstr "שגיאה בלתי ידועה"
 
-#: oleview.rc:149
+#: oleview.rc:148
 msgid "bytes"
 msgstr "בתים"
 
-#: oleview.rc:151
+#: oleview.rc:150
 #, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
 msgstr "LoadTypeLib( %s ) נכשל ($%x)"
 
-#: oleview.rc:152
+#: oleview.rc:151
 msgid "Inherited Interfaces"
 msgstr "מנשקים שהתקבלו בירושה"
 
-#: oleview.rc:127
+#: oleview.rc:126
 msgid "Save as an .IDL or .H file"
 msgstr "שמירה כקובץ ‎.IDL או קובץ ‎.H"
 
-#: oleview.rc:128
+#: oleview.rc:127
 msgid "Close window"
 msgstr "סגירת החלון"
 
-#: oleview.rc:129
+#: oleview.rc:128
 msgid "Group typeinfos by kind"
 msgstr "קיבוץ פרטי סוגים לפי סוג"
 
