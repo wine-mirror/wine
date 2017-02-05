@@ -154,3 +154,9 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
     threading(apartment),
     uuid(77f10cf0-3db5-4966-b520-b7c54fd35ed6)
 ] coclass DestinationList { interface ICustomDestinationList; }
+
+[
+    helpstring("Shell Image Data Factory"),
+    threading(apartment),
+    uuid(66e4e4fb-f385-4dd0-8d74-a2efd1bc6178)
+] coclass ShellImageDataFactory { interface IShellImageDataFactory; }

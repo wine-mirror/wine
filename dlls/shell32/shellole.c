@@ -36,6 +36,7 @@
 #include "shlobj.h"
 #include "shlguid.h"
 #include "shldisp.h"
+#include "shimgdata.h"
 #include "winreg.h"
 #include "winerror.h"
 
@@ -50,6 +51,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 extern INT WINAPI SHStringFromGUIDW(REFGUID guid, LPWSTR lpszDest, INT cchMax);  /* shlwapi.24 */
+static HRESULT WINAPI ShellImageDataFactory_Constructor(IUnknown *outer, REFIID riid, void **obj);
 
 /**************************************************************************
  * Default ClassFactory types
@@ -84,6 +86,7 @@ static const struct {
 	{&CLSID_KnownFolderManager, KnownFolderManager_Constructor},
 	{&CLSID_Shell,          IShellDispatch_Constructor},
 	{&CLSID_DestinationList, CustomDestinationList_Constructor},
+	{&CLSID_ShellImageDataFactory, ShellImageDataFactory_Constructor},
 	{NULL, NULL}
 };
 
@@ -806,4 +809,92 @@ HRESULT WINAPI SHCreateQueryCancelAutoPlayMoniker(IMoniker **moniker)
 
     if (!moniker) return E_INVALIDARG;
     return CreateClassMoniker(&CLSID_QueryCancelAutoPlay, moniker);
+}
+
+/* IShellImageDataFactory */
+static HRESULT WINAPI ShellImageDataFactory_QueryInterface(IShellImageDataFactory *iface, REFIID riid, void **obj)
+{
+    TRACE("(%p, %s, %p)\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(&IID_IShellImageDataFactory, riid) || IsEqualIID(&IID_IUnknown, riid))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME("not implemented for %s\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI ShellImageDataFactory_AddRef(IShellImageDataFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+
+    return 2;
+}
+
+static ULONG WINAPI ShellImageDataFactory_Release(IShellImageDataFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+
+    return 1;
+}
+
+static HRESULT WINAPI ShellImageDataFactory_CreateIShellImageData(IShellImageDataFactory *iface, IShellImageData **data)
+{
+    FIXME("%p, %p: stub\n", iface, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageDataFactory_CreateImageFromFile(IShellImageDataFactory *iface, const WCHAR *path,
+    IShellImageData **data)
+{
+    FIXME("%p, %s, %p: stub\n", iface, debugstr_w(path), data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageDataFactory_CreateImageFromStream(IShellImageDataFactory *iface, IStream *stream,
+    IShellImageData **data)
+{
+    FIXME("%p, %p, %p: stub\n", iface, stream, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageDataFactory_GetDataFormatFromPath(IShellImageDataFactory *iface, const WCHAR *path,
+    GUID *format)
+{
+    FIXME("%p, %s, %p: stub\n", iface, debugstr_w(path), format);
+
+    return E_NOTIMPL;
+}
+
+static const IShellImageDataFactoryVtbl ShellImageDataFactoryVtbl =
+{
+    ShellImageDataFactory_QueryInterface,
+    ShellImageDataFactory_AddRef,
+    ShellImageDataFactory_Release,
+    ShellImageDataFactory_CreateIShellImageData,
+    ShellImageDataFactory_CreateImageFromFile,
+    ShellImageDataFactory_CreateImageFromStream,
+    ShellImageDataFactory_GetDataFormatFromPath,
+};
+
+static IShellImageDataFactory ShellImageDataFactory = { &ShellImageDataFactoryVtbl };
+
+HRESULT WINAPI ShellImageDataFactory_Constructor(IUnknown *outer, REFIID riid, void **obj)
+{
+    TRACE("%p %s %p\n", outer, debugstr_guid(riid), obj);
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    return IShellImageDataFactory_QueryInterface(&ShellImageDataFactory, riid, obj);
 }

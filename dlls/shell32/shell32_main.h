@@ -44,6 +44,8 @@
 extern HMODULE	huser32 DECLSPEC_HIDDEN;
 extern HINSTANCE shell32_hInstance DECLSPEC_HIDDEN;
 
+extern CLSID CLSID_ShellImageDataFactory;
+
 /* Iconcache */
 #define INVALID_INDEX -1
 void SIC_Destroy(void) DECLSPEC_HIDDEN;
