@@ -2049,6 +2049,43 @@ static void test_namespaceuri(void)
     IXmlReader_Release(reader);
 }
 
+static void test_read_charref(void)
+{
+    static const char testA[] = "<a b=\"c\">&#x1f3;&#x103;</a>";
+    static const WCHAR chardataW[] = {0x01f3,0x0103,0};
+    const WCHAR *value;
+    IXmlReader *reader;
+    XmlNodeType type;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    stream = create_stream_on_data(testA, sizeof(testA));
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Element, "Unexpected node type %d\n", type);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Text, "Unexpected node type %d\n", type);
+
+    hr = IXmlReader_GetValue(reader, &value, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!lstrcmpW(value, chardataW), "Text value : %s\n", wine_dbgstr_w(value));
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_EndElement, "Unexpected node type %d\n", type);
+
+    IXmlReader_Release(reader);
+    IStream_Release(stream);
+}
+
 START_TEST(reader)
 {
     test_reader_create();
@@ -2070,4 +2107,5 @@ START_TEST(reader)
     test_reader_properties();
     test_prefix();
     test_namespaceuri();
+    test_read_charref();
 }

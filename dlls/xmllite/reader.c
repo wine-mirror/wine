@@ -2382,6 +2382,8 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
 
     while (*ptr)
     {
+        static const WCHAR ampW[] = {'&',0};
+
         /* CDATA closing sequence ']]>' is not allowed */
         if (ptr[0] == ']' && ptr[1] == ']' && ptr[2] == '>')
             return WC_E_CDSECTEND;
@@ -2398,11 +2400,15 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
             return S_OK;
         }
 
-        reader_skipn(reader, 1);
-
         /* this covers a case when text has leading whitespace chars */
         if (!is_wchar_space(*ptr)) reader->nodetype = XmlNodeType_Text;
-        ptr++;
+
+        if (!reader_cmp(reader, ampW))
+            reader_parse_reference(reader);
+        else
+            reader_skipn(reader, 1);
+
+        ptr = reader_get_ptr(reader);
     }
 
     return S_OK;
@@ -2413,7 +2419,6 @@ static HRESULT reader_parse_content(xmlreader *reader)
 {
     static const WCHAR cdstartW[] = {'<','!','[','C','D','A','T','A','[',0};
     static const WCHAR etagW[] = {'<','/',0};
-    static const WCHAR ampW[] = {'&',0};
 
     if (reader->resumestate != XmlReadResumeState_Initial)
     {
@@ -2447,9 +2452,6 @@ static HRESULT reader_parse_content(xmlreader *reader)
 
     if (!reader_cmp(reader, cdstartW))
         return reader_parse_cdata(reader);
-
-    if (!reader_cmp(reader, ampW))
-        return reader_parse_reference(reader);
 
     if (!reader_cmp(reader, ltW))
         return reader_parse_element(reader);
