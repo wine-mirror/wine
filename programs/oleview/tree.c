@@ -604,40 +604,7 @@ static void AddBaseEntries(void)
 
 void EmptyTree(void)
 {
-    HTREEITEM cur, del;
-    TVITEMW tvi;
-
-    tvi.mask = TVIF_PARAM;
-    cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
-            TVGN_CHILD, (LPARAM)TVI_ROOT);
-
-    while(TRUE)
-    {
-        del = cur;
-        cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
-                TVGN_CHILD, (LPARAM)del);
-
-        if(!cur) cur = (HTREEITEM)SendMessageW(globals.hTree,
-                TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)del);
-        if(!cur)
-        {
-            cur = (HTREEITEM)SendMessageW(globals.hTree, TVM_GETNEXTITEM,
-                    TVGN_PREVIOUS, (LPARAM)del);
-            if(!cur) cur = (HTREEITEM)SendMessageW(globals.hTree,
-                    TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)del);
-
-            tvi.hItem = del;
-            if(SendMessageW(globals.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi) && tvi.lParam)
-            {
-                if(((ITEM_INFO *)tvi.lParam)->loaded) ReleaseInst(del);
-                HeapFree(GetProcessHeap(), 0, (ITEM_INFO *)tvi.lParam);
-
-                SendMessageW(globals.hTree, TVM_DELETEITEM, 0, (LPARAM)del);
-            }
-
-            if(!cur) break;
-        }
-    }
+    SendMessageW(globals.hTree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
 }
 
 void AddTreeEx(void)
@@ -678,6 +645,19 @@ static LRESULT CALLBACK TreeProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     RefreshMenu(((NMTREEVIEWW *)lParam)->itemNew.hItem);
                     RefreshDetails(((NMTREEVIEWW *)lParam)->itemNew.hItem);
                     break;
+                case TVN_DELETEITEMW:
+                {
+                    NMTREEVIEWW *nm = (NMTREEVIEWW*)lParam;
+                    ITEM_INFO *info = (ITEM_INFO*)nm->itemOld.lParam;
+
+                    if (info)
+                    {
+                        if (info->loaded)
+                            ReleaseInst(nm->itemOld.hItem);
+                        HeapFree(GetProcessHeap(), 0, info);
+                    }
+                    break;
+                }
             }
             break;
         case WM_SIZE:

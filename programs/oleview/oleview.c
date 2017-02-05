@@ -469,8 +469,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg,
             MenuCommand(LOWORD(wParam), hWnd);
             break;
         case WM_DESTROY:
-            OleUninitialize();
             EmptyTree();
+            OleUninitialize();
             PostQuitMessage(0);
             break;
         case WM_MENUSELECT:
