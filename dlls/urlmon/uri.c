@@ -6768,7 +6768,7 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
     HRESULT hr;
     IInternetProtocolInfo *info;
 
-    TRACE("(%p %s %x %p %x) stub\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
+    TRACE("(%p %s %x %p %x)\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
         ppCombinedUri, (DWORD)dwReserved);
 
     if(!ppCombinedUri)
