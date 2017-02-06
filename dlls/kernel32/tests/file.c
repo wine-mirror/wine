@@ -3898,6 +3898,18 @@ todo_wine_if (i == 1)
                 ok(!ret, "%d: WriteFile should fail\n", i);
                 ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
             }
+            SetLastError(0xdeadbeef);
+            ret = SetFileTime(hfile, NULL, NULL, NULL);
+            if (td[i].access & GENERIC_WRITE) /* actually FILE_WRITE_ATTRIBUTES */
+                ok(ret, "%d: SetFileTime error %d\n", i, GetLastError());
+            else
+            {
+                todo_wine
+                {
+                ok(!ret, "%d: SetFileTime should fail\n", i);
+                ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+                }
+            }
             CloseHandle(hfile);
         }
         else
