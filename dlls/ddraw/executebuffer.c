@@ -352,8 +352,30 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 break;
 
             case D3DOP_TEXTURELOAD:
-                WARN("TEXTURELOAD-s    (%u)\n", count);
-                instr += count * size;
+                TRACE("TEXTURELOAD    (%u)\n", count);
+
+                for (i = 0; i < count; ++i)
+                {
+                    D3DTEXTURELOAD *ci = (D3DTEXTURELOAD *)instr;
+                    struct ddraw_surface *dst, *src;
+
+                    instr += size;
+
+                    if (!(dst = ddraw_get_object(&device->handle_table,
+                            ci->hDestTexture - 1, DDRAW_HANDLE_SURFACE)))
+                    {
+                        WARN("Invalid destination texture handle %#x.\n", ci->hDestTexture);
+                        continue;
+                    }
+                    if (!(src = ddraw_get_object(&device->handle_table,
+                            ci->hSrcTexture - 1, DDRAW_HANDLE_SURFACE)))
+                    {
+                        WARN("Invalid source texture handle %#x.\n", ci->hSrcTexture);
+                        continue;
+                    }
+
+                    IDirect3DTexture2_Load(&dst->IDirect3DTexture2_iface, &src->IDirect3DTexture2_iface);
+                }
                 break;
 
             case D3DOP_EXIT:
