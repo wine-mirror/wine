@@ -1427,6 +1427,8 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 
 #define STATE_HIGHEST (STATE_COLOR_KEY)
 
+#define STATE_COMPUTE_HIGHEST (STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE))
+
 enum fogsource {
     FOGSOURCE_FFP,
     FOGSOURCE_VS,
@@ -1530,6 +1532,7 @@ struct wined3d_context
     DWORD                   dirtyArray[STATE_HIGHEST + 1]; /* Won't get bigger than that, a state is never marked dirty 2 times */
     DWORD                   numDirtyEntries;
     DWORD isStateDirty[STATE_HIGHEST / (sizeof(DWORD) * CHAR_BIT) + 1]; /* Bitmap to find out quickly if a state is dirty */
+    unsigned int dirty_compute_states[STATE_COMPUTE_HIGHEST / (sizeof(unsigned int) * CHAR_BIT) + 1];
 
     struct wined3d_device *device;
     struct wined3d_swapchain *swapchain;
@@ -1811,6 +1814,7 @@ GLenum context_get_offscreen_gl_buffer(const struct wined3d_context *context) DE
 DWORD context_get_tls_idx(void) DECLSPEC_HIDDEN;
 void context_gl_resource_released(struct wined3d_device *device,
         GLuint name, BOOL rb_namespace) DECLSPEC_HIDDEN;
+void context_invalidate_compute_state(struct wined3d_context *context, DWORD state_id) DECLSPEC_HIDDEN;
 void context_invalidate_state(struct wined3d_context *context, DWORD state_id) DECLSPEC_HIDDEN;
 void context_release(struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_resource_released(const struct wined3d_device *device,
@@ -2627,6 +2631,7 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void device_invalidate_compute_state(const struct wined3d_device *device, DWORD state_id) DECLSPEC_HIDDEN;
 void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
 static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD state)

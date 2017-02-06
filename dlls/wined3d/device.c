@@ -5113,6 +5113,14 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
     }
 }
 
+void device_invalidate_compute_state(const struct wined3d_device *device, DWORD state_id)
+{
+    unsigned int i;
+
+    for (i = 0; i < device->context_count; ++i)
+        context_invalidate_compute_state(device->contexts[i], state_id);
+}
+
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc)
 {
