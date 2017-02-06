@@ -1407,7 +1407,7 @@ static void context_enter(struct wined3d_context *context)
 
 void context_invalidate_compute_state(struct wined3d_context *context, DWORD state_id)
 {
-    DWORD representative = context->state_table[state_id].representative;
+    DWORD representative = context->state_table[state_id].representative - STATE_COMPUTE_OFFSET;
     unsigned int index, shift;
 
     index = representative / (sizeof(*context->dirty_compute_states) * CHAR_BIT);
@@ -3585,7 +3585,7 @@ void context_apply_compute_state(struct wined3d_context *context,
 
     context_load_shader_resources(context, state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
 
-    for (i = 0, state_id = 0; i < ARRAY_SIZE(context->dirty_compute_states); ++i)
+    for (i = 0, state_id = STATE_COMPUTE_OFFSET; i < ARRAY_SIZE(context->dirty_compute_states); ++i)
     {
         for (j = 0; j < sizeof(*context->dirty_compute_states) * CHAR_BIT; ++j, ++state_id)
         {
