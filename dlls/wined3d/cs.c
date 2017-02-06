@@ -907,10 +907,7 @@ static void wined3d_cs_exec_set_constant_buffer(struct wined3d_cs *cs, const voi
     if (prev)
         InterlockedDecrement(&prev->resource.bind_count);
 
-    if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
-        device_invalidate_state(cs->device, STATE_CONSTANT_BUFFER(op->type));
-    else
-        device_invalidate_compute_state(cs->device, STATE_CONSTANT_BUFFER(op->type));
+    device_invalidate_state(cs->device, STATE_CONSTANT_BUFFER(op->type));
 }
 
 void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,
@@ -1097,15 +1094,9 @@ static void wined3d_cs_exec_set_shader(struct wined3d_cs *cs, const void *data)
     const struct wined3d_cs_set_shader *op = data;
 
     cs->state.shader[op->type] = op->shader;
+    device_invalidate_state(cs->device, STATE_SHADER(op->type));
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
-    {
-        device_invalidate_state(cs->device, STATE_SHADER(op->type));
         device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
-    }
-    else
-    {
-        device_invalidate_compute_state(cs->device, STATE_SHADER(op->type));
-    }
 }
 
 void wined3d_cs_emit_set_shader(struct wined3d_cs *cs, enum wined3d_shader_type type, struct wined3d_shader *shader)

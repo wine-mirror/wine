@@ -1443,6 +1443,7 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 #define STATE_COMPUTE_HIGHEST (STATE_COMPUTE_CONSTANT_BUFFER)
 #define STATE_HIGHEST (STATE_COMPUTE_CONSTANT_BUFFER)
 
+#define STATE_IS_COMPUTE(a) ((a) >= STATE_COMPUTE_OFFSET && (a) <= STATE_COMPUTE_HIGHEST)
 #define STATE_COMPUTE_COUNT (STATE_COMPUTE_HIGHEST - STATE_COMPUTE_OFFSET + 1)
 
 #define STATE_SHADER(a) ((a) != WINED3D_SHADER_TYPE_COMPUTE ? STATE_GRAPHICS_SHADER(a) : STATE_COMPUTE_SHADER)
@@ -2651,7 +2652,6 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
 void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
-void device_invalidate_compute_state(const struct wined3d_device *device, DWORD state_id) DECLSPEC_HIDDEN;
 void device_invalidate_state(const struct wined3d_device *device, DWORD state) DECLSPEC_HIDDEN;
 
 static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD state)

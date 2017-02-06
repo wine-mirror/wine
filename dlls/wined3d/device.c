@@ -5092,7 +5092,6 @@ err:
     return hr;
 }
 
-
 void device_invalidate_state(const struct wined3d_device *device, DWORD state)
 {
     DWORD rep = device->StateTable[state].representative;
@@ -5100,6 +5099,13 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
     DWORD idx;
     BYTE shift;
     UINT i;
+
+    if (STATE_IS_COMPUTE(state))
+    {
+        for (i = 0; i < device->context_count; ++i)
+            context_invalidate_compute_state(device->contexts[i], state);
+        return;
+    }
 
     for (i = 0; i < device->context_count; ++i)
     {
@@ -5111,14 +5117,6 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
         shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
         context->isStateDirty[idx] |= (1u << shift);
     }
-}
-
-void device_invalidate_compute_state(const struct wined3d_device *device, DWORD state_id)
-{
-    unsigned int i;
-
-    for (i = 0; i < device->context_count; ++i)
-        context_invalidate_compute_state(device->contexts[i], state_id);
 }
 
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
