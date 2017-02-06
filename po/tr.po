@@ -8358,10 +8358,8 @@ msgid "Wine Control Panel"
 msgstr "Wine Denetim Masası"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
-msgstr "Dosya Çalıştır iletişim kutusu görüntülenemedi (dahili hata)"
+msgstr "Çalıştır iletişim kutusu görüntülenemedi (dahili hata)"
 
 #: shell32.rc:196
 msgid "Unable to display Browse dialog box (internal error)"
@@ -9132,7 +9130,7 @@ msgid ""
 "until the device is free, and then try again."
 msgstr ""
 "Geçerli dalga aygıtı kullanımda olduğundan yürütme için açılamıyor. Aygıt "
-"boşalana kadar bekleyin ve yeniden deneyin."
+"lana kadar bekleyin ve yeniden deneyin."
 
 #: winmm.rc:114
 msgid ""
@@ -11882,7 +11880,7 @@ msgstr "Veri"
 
 #: regedit.rc:132
 msgid "Registry Editor"
-msgstr "Kayıt DÜzenleyici"
+msgstr "Kayıt Düzenleyici"
 
 #: regedit.rc:194
 msgid "Import Registry File"
@@ -11906,55 +11904,47 @@ msgstr "(değer görüntülenemiyor)"
 
 #: regedit.rc:207
 msgid "(unknown %d)"
-msgstr "(%d bilinmiyor)"
+msgstr "(bilinmeyen %d)"
 
 #: regedit.rc:212
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "Seçilen kayıt değeri değiştirilemiyor."
 
 #: regedit.rc:213
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "Yeni bir kayıt anahtarı oluşturulamıyor."
 
 #: regedit.rc:214
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "Yeni bir kayıt değeri oluşturulamıyor."
 
 #: regedit.rc:215
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"'%1' anahtarı yeniden adlandırılamıyor.\n"
+"Belirtilen anahtar adı zaten var."
 
 #: regedit.rc:216
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"'%1' değeri yeniden adlandırılamıyor.\n"
+"Belirtilen değer adı zaten var."
 
 #: regedit.rc:217
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "Seçilen kayıt anahtarı silinemiyor."
 
 #: regedit.rc:218
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "Seçilen kayıt anahtarı yeniden adlandırılamıyor."
 
 #: regedit.rc:219
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "Seçilen kayıt değeri yeniden adlandırılamıyor."
 
 #: regedit.rc:371
 msgid ""
@@ -12191,32 +12181,24 @@ msgid "Displays program information, version number and copyright"
 msgstr "Program bilgisini, sürüm numarasını ve telif hakkını gösterir"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "'%1' kayıt değeri sorgulanamıyor."
 
 #: regedit.rc:182
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Bu tür (%u) anahtarlar değiştirilemez"
+msgstr "Bu tür (%1!u!) kayıt anahtarları değiştirilemez."
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Değer çok büyük (%u)"
+msgstr "Değer çok büyük (%1!u!)."
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
-msgstr "Değer silmeyi onayla"
+msgstr "Değer Silmeyi Onayla"
 
 #: regedit.rc:189
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Arama dizesi '%s' bulunamadı"
+msgstr "Arama tamamlandı. '%1' dizesi bulunamadı."
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"
@@ -12231,10 +12213,8 @@ msgid "New Value #%d"
 msgstr "Yeni Değer #%d"
 
 #: regedit.rc:180
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "'%1' kayıt anahtarı sorgulanamıyor."
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
@@ -13180,7 +13160,7 @@ msgstr "İşlem İlişkisine Erişme veya Ayarlama Başarısız"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
-msgstr "Sistem Boşta İşlemi"
+msgstr "Boş Sistem İşlemi"
 
 #: taskmgr.rc:323
 msgid "Not Responding"

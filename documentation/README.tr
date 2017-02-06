@@ -124,7 +124,7 @@ bir dosya adı belirtebilirsiniz.
 Örneğin: Not Defteri'ni çalıştırmak için:
 
 	wine notepad		   (dosyaları konumlandırmak için config
-	wine notepad.exe	   (dosyasındaki Path arama yolunu kullanarak)
+	wine notepad.exe	    dosyasındaki Path arama yolunu kullanarak)
 
 	wine c:\\windows\\notepad.exe  (DOS dosya adı sözdizimi ile)
 
@@ -145,17 +145,18 @@ WWW:	Wine hakkında geniş bilgiyi WineHQ sitesine http://www.winehq.org/
 	başlangıç noktasıdır.
 
 SSS:	Wine hakkında sıkça sorulan sorulara buradan ulaşabilirsiniz:
+              http://www.winehq.org/FAQ
 
 Hatalar:
-	Hatalarınızı http://bugs.winehq.org adresinden Wine Bugzilla
-	ile bildirebilirsiniz. Lütfen bir hata bildirmeden önce
-	hatanın önceden girilip girilmediğini öğrenmek için bugzilla'da
+	Karşılaştığınız hataları http://bugs.winehq.org adresinden Wine
+	Bugzilla ile bildirebilirsiniz. Lütfen bir hata bildirmeden önce
+	hatanın önceden girilip girilmediğini öğrenmek için Bugzilla'da
 	arama yapınız.
 
 IRC:	irc.freenode.net sunucusundan #WineHQ kanalı ile çevrimiçi yardım
 	alabilirsiniz.
 
-Git:	Geçerli Wine geliştirme ağacına Git üzerinden erişilebilir.
+Git:	Geçerli Wine geliştirme ağacına Git üzerinden erişim sağlanabilir.
 	Daha fazla bilgi için http://www.winehq.org/git adresine gidiniz.
 
 E-posta listeleri:
@@ -163,8 +164,8 @@ E-posta listeleri:
 	Daha fazla bilgi için http://www.winehq.org/forums adresine gidiniz.
 
 Eğer bir şey eklemek veya hata düzeltmek istiyorsanız, lütfen sonraki
-sürümde içerilmesi için wine-patches@winehq.org e-posta listesine bir yama
-('diff -u' biçiminde) gönderiniz.
+sürümde yer alabilmesii için wine-patches@winehq.org e-posta listesine bir
+yama ('diff -u' biçiminde) gönderiniz.
 
 --
 Alexandre Julliard
