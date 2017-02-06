@@ -162,6 +162,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_IMM_ATOMIC_CMP_EXCH              */ "imm_atomic_cmp_exch",
     /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ "imm_atomic_consume",
     /* WINED3DSIH_IMM_ATOMIC_EXCH                  */ "imm_atomic_exch",
+    /* WINED3DSIH_IMM_ATOMIC_IADD                  */ "imm_atomic_iadd",
     /* WINED3DSIH_IMM_ATOMIC_OR                    */ "imm_atomic_or",
     /* WINED3DSIH_IMM_ATOMIC_UMAX                  */ "imm_atomic_umax",
     /* WINED3DSIH_IMM_ATOMIC_UMIN                  */ "imm_atomic_umin",
