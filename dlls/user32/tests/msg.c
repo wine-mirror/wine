@@ -5800,10 +5800,11 @@ static void test_button_messages(void)
           WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq,
           WmSetTextButtonSeq },
     };
+    LOGFONTA logfont = { 0 };
+    HFONT zfont, hfont2;
     unsigned int i;
     HWND hwnd, parent;
     DWORD dlg_code;
-    HFONT zfont;
 
     /* selection with VK_SPACE should capture button window */
     hwnd = CreateWindowExA(0, "button", "test", BS_CHECKBOX | WS_VISIBLE | WS_POPUP,
@@ -5822,11 +5823,21 @@ static void test_button_messages(void)
                              100, 100, 200, 200, 0, 0, 0, NULL);
     ok(parent != 0, "Failed to create parent window\n");
 
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = -12;
+    logfont.lfWeight = FW_NORMAL;
+    strcpy(logfont.lfFaceName, "Tahoma");
+
+    hfont2 = CreateFontIndirectA(&logfont);
+    ok(hfont2 != NULL, "Failed to create Tahoma font\n");
+
     for (i = 0; i < sizeof(button)/sizeof(button[0]); i++)
     {
         MSG msg;
         DWORD style, state;
+        HFONT prevfont;
         char desc[64];
+        HDC hdc;
 
         trace("button style %08x\n", button[i].style);
 
@@ -6001,15 +6012,35 @@ static void test_button_messages(void)
         ok_sequence(button[i].lbuttonup, desc, FALSE);
 
         flush_sequence();
-        zfont = GetStockObject(SYSTEM_FONT);
+        zfont = GetStockObject(DEFAULT_GUI_FONT);
         SendMessageA(hwnd, WM_SETFONT, (WPARAM)zfont, TRUE);
         UpdateWindow(hwnd);
         sprintf(desc, "button[%i]: WM_SETFONT on a button", i);
         ok_sequence(button[i].setfont, desc, FALSE);
 
+        /* Test that original font is not selected back after painting */
+        hdc = CreateCompatibleDC(0);
+
+        prevfont = SelectObject(hdc, hfont2);
+        ok(prevfont == GetStockObject(SYSTEM_FONT), "Unexpected default font\n");
+        SendMessageA(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, 0);
+    todo_wine
+        ok(GetStockObject(SYSTEM_FONT) == GetCurrentObject(hdc, OBJ_FONT), "button[%u]: unexpected font selected after WM_PRINTCLIENT\n", i);
+        SelectObject(hdc, prevfont);
+
+        prevfont = SelectObject(hdc, hfont2);
+        ok(prevfont == GetStockObject(SYSTEM_FONT), "Unexpected default font\n");
+        SendMessageA(hwnd, WM_PAINT, (WPARAM)hdc, 0);
+    todo_wine
+        ok(GetStockObject(SYSTEM_FONT) == GetCurrentObject(hdc, OBJ_FONT), "button[%u]: unexpected font selected after WM_PAINT\n", i);
+        SelectObject(hdc, prevfont);
+
+        DeleteDC(hdc);
+
         DestroyWindow(hwnd);
     }
 
+    DeleteObject(hfont2);
     DestroyWindow(parent);
 }
 
