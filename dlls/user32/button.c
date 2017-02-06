@@ -598,15 +598,22 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
    switch (style & (BS_ICON|BS_BITMAP))
    {
       case BS_TEXT:
+      {
+          HFONT hFont, hPrevFont = 0;
+
           if (!(text = get_button_text( hwnd ))) goto empty_rect;
           if (!text[0])
           {
               HeapFree( GetProcessHeap(), 0, text );
               goto empty_rect;
           }
+
+          if ((hFont = get_button_font( hwnd ))) hPrevFont = SelectObject( hdc, hFont );
           DrawTextW(hdc, text, -1, &r, dtStyle | DT_CALCRECT);
+          if (hPrevFont) SelectObject( hdc, hPrevFont );
           HeapFree( GetProcessHeap(), 0, text );
           break;
+      }
 
       case BS_ICON:
          if (!GetIconInfo((HICON)GetWindowLongPtrW( hwnd, HIMAGE_GWL_OFFSET ), &iconInfo))
