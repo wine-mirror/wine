@@ -394,6 +394,9 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
             GetClientRect(hWnd, &client);
             rc = client;
+            /* FIXME: check other BS_* handlers */
+            if (btn_type == BS_GROUPBOX)
+                InflateRect(&rc, -7, 1); /* GB_Paint does this */
             BUTTON_CalcLabelRect(hWnd, hdc, &rc);
             /* Clip by client rect bounds */
             if (rc.right > client.right) rc.right = client.right;
