@@ -352,6 +352,23 @@ static void emit_tquad_tlist(void **ptr, WORD base_idx)
     *ptr = tri;
 }
 
+static void emit_texture_load(void **ptr, D3DTEXTUREHANDLE dst_texture,
+        D3DTEXTUREHANDLE src_texture)
+{
+    D3DINSTRUCTION *instruction = *ptr;
+    D3DTEXTURELOAD *texture_load = (D3DTEXTURELOAD *)(instruction + 1);
+
+    instruction->bOpcode = D3DOP_TEXTURELOAD;
+    instruction->bSize = sizeof(*texture_load);
+    instruction->wCount = 1;
+
+    texture_load->hDestTexture = dst_texture;
+    texture_load->hSrcTexture = src_texture;
+    ++texture_load;
+
+    *ptr = texture_load;
+}
+
 static void emit_end(void **ptr)
 {
     D3DINSTRUCTION *inst = *ptr;
@@ -9996,6 +10013,156 @@ static void test_surface_desc_size(void)
     ok(!refcount, "DirectDraw has %u references left.\n", refcount);
 }
 
+static void test_texture_load(void)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    static D3DTLVERTEX tquad[] =
+    {
+        {{  0.0f}, {480.0f}, {0.0f}, {1.0f}, {0xffffffff}, {0x00000000}, {0.0f}, {0.0f}},
+        {{  0.0f}, {  0.0f}, {0.0f}, {1.0f}, {0xffffffff}, {0x00000000}, {0.0f}, {1.0f}},
+        {{640.0f}, {480.0f}, {0.0f}, {1.0f}, {0xffffffff}, {0x00000000}, {1.0f}, {0.0f}},
+        {{640.0f}, {  0.0f}, {0.0f}, {1.0f}, {0xffffffff}, {0x00000000}, {1.0f}, {1.0f}},
+    };
+    D3DTEXTUREHANDLE dst_texture_handle, src_texture_handle;
+    IDirectDrawSurface *dst_surface, *src_surface;
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    IDirect3DMaterial *background;
+    IDirect3DViewport *viewport;
+    DDSURFACEDESC surface_desc;
+    IDirect3DTexture *texture;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirectDraw *ddraw;
+    UINT inst_length;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    DDBLTFX fx;
+    HRESULT hr;
+    void *ptr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    background = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, background);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 256;
+    surface_desc.dwHeight = 256;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(surface_desc.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(src_surface, &IID_IDirect3DTexture, (void **)&texture);
+    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device, &src_texture_handle);
+    ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
+    IDirect3DTexture_Release(texture);
+
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &dst_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(dst_surface, &IID_IDirect3DTexture, (void **)&texture);
+    ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device, &dst_texture_handle);
+    ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
+    IDirect3DTexture_Release(texture);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    U5(fx).dwFillColor = 0x0000ffff;
+    hr = IDirectDrawSurface_Blt(src_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+    ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+    memcpy(exec_desc.lpData, tquad, sizeof(tquad));
+    ptr = (BYTE *)exec_desc.lpData + sizeof(tquad);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
+    emit_texture_load(&ptr, dst_texture_handle, src_texture_handle);
+    emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, dst_texture_handle);
+    emit_tquad(&ptr, 0);
+    emit_end(&ptr);
+    inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData - sizeof(tquad);
+    hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ffffff, 1), "Got unexpected color 0x%08x.\n", color);
+    set_execute_data(execute_buffer, 4, sizeof(tquad), inst_length);
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x0000ffff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    U5(fx).dwFillColor = 0x000000ff;
+    hr = IDirectDrawSurface_Blt(src_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ffffff, 1), "Got unexpected color 0x%08x.\n", color);
+    set_execute_data(execute_buffer, 4, sizeof(tquad), inst_length);
+    hr = IDirect3DDevice_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+    ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDirectDrawSurface_Release(dst_surface);
+    IDirectDrawSurface_Release(src_surface);
+    IDirectDrawSurface_Release(rt);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    IDirect3DMaterial_Release(background);
+    destroy_viewport(device, viewport);
+    IDirect3DDevice_Release(device);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "DirectDraw has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     IDirectDraw *ddraw;
@@ -10081,4 +10248,5 @@ START_TEST(ddraw1)
     test_transform_vertices();
     test_display_mode_surface_pixel_format();
     test_surface_desc_size();
+    test_texture_load();
 }
