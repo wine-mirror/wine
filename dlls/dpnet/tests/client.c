@@ -24,8 +24,9 @@
 #include <dplobby8.h>
 #include <winver.h>
 #define COBJMACROS
-#include <netfw.h>
 #include "wine/test.h"
+
+#include "dpnet_test.h"
 
 static IDirectPlay8Peer* peer = NULL;
 static IDirectPlay8Client* client = NULL;
@@ -607,153 +608,6 @@ static void test_cleanup_dp_peer(void)
     IDirectPlay8Peer_Release(peer);
 
     CoUninitialize();
-}
-
-static BOOL is_process_elevated(void)
-{
-    HANDLE token;
-    if (OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token ))
-    {
-        TOKEN_ELEVATION_TYPE type;
-        DWORD size;
-        BOOL ret;
-
-        ret = GetTokenInformation( token, TokenElevationType, &type, sizeof(type), &size );
-        CloseHandle( token );
-        return (ret && type == TokenElevationTypeFull);
-    }
-    return FALSE;
-}
-
-static BOOL is_firewall_enabled(void)
-{
-    HRESULT hr, init;
-    INetFwMgr *mgr = NULL;
-    INetFwPolicy *policy = NULL;
-    INetFwProfile *profile = NULL;
-    VARIANT_BOOL enabled = VARIANT_FALSE;
-
-    init = CoInitializeEx( 0, COINIT_APARTMENTTHREADED );
-
-    hr = CoCreateInstance( &CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER, &IID_INetFwMgr,
-                           (void **)&mgr );
-    ok( hr == S_OK, "got %08x\n", hr );
-    if (hr != S_OK) goto done;
-
-    hr = INetFwMgr_get_LocalPolicy( mgr, &policy );
-    ok( hr == S_OK, "got %08x\n", hr );
-    if (hr != S_OK) goto done;
-
-    hr = INetFwPolicy_get_CurrentProfile( policy, &profile );
-    if (hr != S_OK) goto done;
-
-    hr = INetFwProfile_get_FirewallEnabled( profile, &enabled );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-done:
-    if (policy) INetFwPolicy_Release( policy );
-    if (profile) INetFwProfile_Release( profile );
-    if (mgr) INetFwMgr_Release( mgr );
-    if (SUCCEEDED( init )) CoUninitialize();
-    return (enabled == VARIANT_TRUE);
-}
-
-enum firewall_op
-{
-    APP_ADD,
-    APP_REMOVE
-};
-
-static HRESULT set_firewall( enum firewall_op op )
-{
-    static const WCHAR testW[] = {'d','p','n','e','t','_','t','e','s','t',0};
-    HRESULT hr, init;
-    INetFwMgr *mgr = NULL;
-    INetFwPolicy *policy = NULL;
-    INetFwProfile *profile = NULL;
-    INetFwAuthorizedApplication *app = NULL;
-    INetFwAuthorizedApplications *apps = NULL;
-    BSTR name, image = SysAllocStringLen( NULL, MAX_PATH );
-
-    if (!GetModuleFileNameW( NULL, image, MAX_PATH ))
-    {
-        SysFreeString( image );
-        return E_FAIL;
-    }
-    init = CoInitializeEx( 0, COINIT_APARTMENTTHREADED );
-
-    hr = CoCreateInstance( &CLSID_NetFwMgr, NULL, CLSCTX_INPROC_SERVER, &IID_INetFwMgr,
-                           (void **)&mgr );
-    ok( hr == S_OK, "got %08x\n", hr );
-    if (hr != S_OK) goto done;
-
-    hr = INetFwMgr_get_LocalPolicy( mgr, &policy );
-    ok( hr == S_OK, "got %08x\n", hr );
-    if (hr != S_OK) goto done;
-
-    hr = INetFwPolicy_get_CurrentProfile( policy, &profile );
-    if (hr != S_OK) goto done;
-
-    INetFwProfile_get_AuthorizedApplications( profile, &apps );
-    ok( hr == S_OK, "got %08x\n", hr );
-    if (hr != S_OK) goto done;
-
-    hr = CoCreateInstance( &CLSID_NetFwAuthorizedApplication, NULL, CLSCTX_INPROC_SERVER,
-                           &IID_INetFwAuthorizedApplication, (void **)&app );
-    ok( hr == S_OK, "got %08x\n", hr );
-    if (hr != S_OK) goto done;
-
-    hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
-    if (hr != S_OK) goto done;
-
-    name = SysAllocString( testW );
-    hr = INetFwAuthorizedApplication_put_Name( app, name );
-    SysFreeString( name );
-    ok( hr == S_OK, "got %08x\n", hr );
-    if (hr != S_OK) goto done;
-
-    if (op == APP_ADD)
-        hr = INetFwAuthorizedApplications_Add( apps, app );
-    else if (op == APP_REMOVE)
-        hr = INetFwAuthorizedApplications_Remove( apps, image );
-    else
-        hr = E_INVALIDARG;
-
-done:
-    if (app) INetFwAuthorizedApplication_Release( app );
-    if (apps) INetFwAuthorizedApplications_Release( apps );
-    if (policy) INetFwPolicy_Release( policy );
-    if (profile) INetFwProfile_Release( profile );
-    if (mgr) INetFwMgr_Release( mgr );
-    if (SUCCEEDED( init )) CoUninitialize();
-    SysFreeString( image );
-    return hr;
-}
-
-/* taken from programs/winetest/main.c */
-static BOOL is_stub_dll(const char *filename)
-{
-    DWORD size, ver;
-    BOOL isstub = FALSE;
-    char *p, *data;
-
-    size = GetFileVersionInfoSizeA(filename, &ver);
-    if (!size) return FALSE;
-
-    data = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!data) return FALSE;
-
-    if (GetFileVersionInfoA(filename, ver, size, data))
-    {
-        char buf[256];
-
-        sprintf(buf, "\\StringFileInfo\\%04x%04x\\OriginalFilename", MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), 1200);
-        if (VerQueryValueA(data, buf, (void**)&p, &size))
-            isstub = !lstrcmpiA("wcodstub.dll", p);
-    }
-    HeapFree(GetProcessHeap(), 0, data);
-
-    return isstub;
 }
 
 START_TEST(client)
