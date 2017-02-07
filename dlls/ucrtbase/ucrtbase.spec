@@ -2293,7 +2293,7 @@
 @ stub feholdexcept
 @ cdecl feof(ptr) MSVCRT_feof
 @ cdecl ferror(ptr) MSVCRT_ferror
-@ stub fesetenv
+@ cdecl fesetenv(ptr) MSVCRT_fesetenv
 @ stub fesetexceptflag
 @ stub fesetround
 @ stub fetestexcept
