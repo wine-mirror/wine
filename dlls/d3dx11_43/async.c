@@ -224,8 +224,9 @@ HRESULT WINAPI D3DX11CompileFromMemory(const char *data, SIZE_T data_size, const
 {
     TRACE("data %s, data_size %lu, filename %s, defines %p, include %p, entry_point %s, target %s, "
             "sflags %#x, eflags %#x, pump %p, shader %p, error_messages %p, hresult %p.\n",
-            debugstr_a(data), data_size, debugstr_a(filename), defines, include, debugstr_a(entry_point),
-            debugstr_a(target), sflags, eflags, pump, shader, error_messages, hresult);
+            debugstr_an(data, data_size), data_size, debugstr_a(filename), defines, include,
+            debugstr_a(entry_point), debugstr_a(target), sflags, eflags, pump, shader,
+            error_messages, hresult);
 
     if (pump)
         FIXME("Unimplemented ID3DX11ThreadPump handling.\n");
