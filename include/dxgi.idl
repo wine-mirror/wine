@@ -23,28 +23,7 @@ import "dxgitype.h";
 const UINT _FACDXGI = 0x87a;
 
 cpp_quote("#define MAKE_DXGI_STATUS(x)                         MAKE_HRESULT(0, _FACDXGI, x)")
-cpp_quote("#define DXGI_STATUS_OCCLUDED                        MAKE_DXGI_STATUS(1)")
-cpp_quote("#define DXGI_STATUS_CLIPPED                         MAKE_DXGI_STATUS(2)")
-cpp_quote("#define DXGI_STATUS_NO_REDIRECTION                  MAKE_DXGI_STATUS(4)")
-cpp_quote("#define DXGI_STATUS_NO_DESKTOP_ACCESS               MAKE_DXGI_STATUS(5)")
-cpp_quote("#define DXGI_STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE    MAKE_DXGI_STATUS(6)")
-cpp_quote("#define DXGI_STATUS_MODE_CHANGED                    MAKE_DXGI_STATUS(7)")
-cpp_quote("#define DXGI_STATUS_MODE_CHANGE_IN_PROGRESS         MAKE_DXGI_STATUS(8)")
-
 cpp_quote("#define MAKE_DXGI_HRESULT(x)                        MAKE_HRESULT(1, _FACDXGI, x)")
-cpp_quote("#define DXGI_ERROR_INVALID_CALL                     MAKE_DXGI_HRESULT(1)")
-cpp_quote("#define DXGI_ERROR_NOT_FOUND                        MAKE_DXGI_HRESULT(2)")
-cpp_quote("#define DXGI_ERROR_MORE_DATA                        MAKE_DXGI_HRESULT(3)")
-cpp_quote("#define DXGI_ERROR_UNSUPPORTED                      MAKE_DXGI_HRESULT(4)")
-cpp_quote("#define DXGI_ERROR_DEVICE_REMOVED                   MAKE_DXGI_HRESULT(5)")
-cpp_quote("#define DXGI_ERROR_DEVICE_HUNG                      MAKE_DXGI_HRESULT(6)")
-cpp_quote("#define DXGI_ERROR_DEVICE_RESET                     MAKE_DXGI_HRESULT(7)")
-cpp_quote("#define DXGI_ERROR_WAS_STILL_DRAWING                MAKE_DXGI_HRESULT(10)")
-cpp_quote("#define DXGI_ERROR_FRAME_STATISTICS_DISJOINT        MAKE_DXGI_HRESULT(11)")
-cpp_quote("#define DXGI_ERROR_GRAPHICS_VIDPN_SOURCE_IN_USE     MAKE_DXGI_HRESULT(12)")
-cpp_quote("#define DXGI_ERROR_DRIVER_INTERNAL_ERROR            MAKE_DXGI_HRESULT(32)")
-cpp_quote("#define DXGI_ERROR_NONEXCLUSIVE                     MAKE_DXGI_HRESULT(33)")
-cpp_quote("#define DXGI_ERROR_NOT_CURRENTLY_AVAILABLE          MAKE_DXGI_HRESULT(34)")
 
 cpp_quote("#if 0")
 typedef HANDLE HMONITOR;
