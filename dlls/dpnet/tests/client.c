@@ -613,10 +613,16 @@ static void test_cleanup_dp_peer(void)
 START_TEST(client)
 {
     BOOL firewall_enabled;
+    char path[MAX_PATH];
 
-    if (!winetest_interactive &&
-        (is_stub_dll("c:\\windows\\system32\\dpnet.dll") ||
-         is_stub_dll("c:\\windows\\syswow64\\dpnet.dll")))
+    if(!GetSystemDirectoryA(path, MAX_PATH))
+    {
+        skip("Failed to get systems directory\n");
+        return;
+    }
+    strcat(path, "\\dpnet.dll");
+
+    if (!winetest_interactive && is_stub_dll(path))
     {
         win_skip("dpnet is a stub dll, skipping tests\n");
         return;

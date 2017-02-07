@@ -236,11 +236,8 @@ done:
 HRESULT set_firewall( enum firewall_op op )
 {
     static const WCHAR dpnsvrW[] =
-        {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2','\\',
-         'd','p','n','s','v','r','.','e','x','e',0};
-    static const WCHAR dpnsvr_wow64W[] =
-        {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','w','o','w','6','4','\\',
-         'd','p','n','s','v','r','.','e','x','e',0};
+        {'d','p','n','s','v','r','.','e','x','e',0};
+    static const WCHAR seperator[] = {'\\',0};
     static const WCHAR clientW[] =
         {'d','p','n','e','t','_','c','l','i','e','n','t',0};
     static const WCHAR serverW[] =
@@ -252,13 +249,21 @@ HRESULT set_firewall( enum firewall_op op )
     INetFwAuthorizedApplication *app = NULL;
     INetFwAuthorizedApplications *apps = NULL;
     BSTR name, image = SysAllocStringLen( NULL, MAX_PATH );
-    BOOL is_wow64;
+    WCHAR path[MAX_PATH];
 
     if (!GetModuleFileNameW( NULL, image, MAX_PATH ))
     {
         SysFreeString( image );
         return E_FAIL;
     }
+
+    if(!GetSystemDirectoryW(path, MAX_PATH))
+    {
+        SysFreeString( image );
+        return E_FAIL;
+    }
+    lstrcatW(path, seperator);
+    lstrcatW(path, dpnsvrW);
 
     init = CoInitializeEx( 0, COINIT_APARTMENTTHREADED );
 
@@ -307,8 +312,7 @@ HRESULT set_firewall( enum firewall_op op )
     if (hr != S_OK) goto done;
 
     SysFreeString( image );
-    IsWow64Process( GetCurrentProcess(), &is_wow64 );
-    image = is_wow64 ? SysAllocString( dpnsvr_wow64W ) : SysAllocString( dpnsvrW );
+    image = SysAllocString( path );
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
@@ -366,10 +370,16 @@ START_TEST(server)
 {
     HRESULT hr;
     BOOL firewall_enabled;
+    char path[MAX_PATH];
 
-    if (!winetest_interactive &&
-        (is_stub_dll("c:\\windows\\system32\\dpnet.dll") ||
-         is_stub_dll("c:\\windows\\syswow64\\dpnet.dll")))
+    if(!GetSystemDirectoryA(path, MAX_PATH))
+    {
+        skip("Failed to get systems directory\n");
+        return;
+    }
+    strcat(path, "\\dpnet.dll");
+
+    if (!winetest_interactive && is_stub_dll(path))
     {
         win_skip("dpnet is a stub dll, skipping tests\n");
         return;
