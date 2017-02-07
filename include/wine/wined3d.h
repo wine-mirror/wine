@@ -400,6 +400,10 @@ enum wined3d_blend
     WINED3D_BLEND_BOTHINVSRCALPHA           = 13,
     WINED3D_BLEND_BLENDFACTOR               = 14,
     WINED3D_BLEND_INVBLENDFACTOR            = 15,
+    WINED3D_BLEND_SRC1COLOR                 = 16,
+    WINED3D_BLEND_INVSRC1COLOR              = 17,
+    WINED3D_BLEND_SRC1ALPHA                 = 18,
+    WINED3D_BLEND_INVSRC1ALPHA              = 19,
 };
 
 enum wined3d_blend_op
