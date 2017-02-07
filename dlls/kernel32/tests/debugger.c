@@ -321,8 +321,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
         TerminateProcess(info.hProcess, WAIT_TIMEOUT);
         WaitForSingleObject(info.hProcess, 5000);
         CloseHandle(info.hProcess);
-        assert(DeleteFileA(dbglog) != 0);
-        assert(DeleteFileA(childlog) != 0);
+        DeleteFileA(dbglog);
+        DeleteFileA(childlog);
         win_skip("Giving up on child process\n");
         return;
     }
@@ -357,8 +357,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     skip_crash_and_debug = broken(wait_code == WAIT_TIMEOUT);
     if (skip_crash_and_debug)
     {
-        assert(DeleteFileA(dbglog) != 0);
-        assert(DeleteFileA(childlog) != 0);
+        DeleteFileA(dbglog);
+        DeleteFileA(childlog);
         win_skip("Giving up on debugger\n");
         return;
     }
@@ -375,8 +375,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
     ok(dbg_blackbox.nokill_rc, "DebugSetProcessKillOnExit(FALSE) failed err=%d\n", dbg_blackbox.nokill_err);
     ok(dbg_blackbox.detach_rc, "DebugActiveProcessStop(%d) failed err=%d\n", dbg_blackbox.pid, dbg_blackbox.detach_err);
 
-    assert(DeleteFileA(dbglog) != 0);
-    assert(DeleteFileA(childlog) != 0);
+    DeleteFileA(dbglog);
+    DeleteFileA(childlog);
 }
 
 static void crash_and_winedbg(HKEY hkey, const char* argv0)

@@ -632,7 +632,7 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* not so simplistic now */
     memset(&startup, 0, sizeof(startup));
@@ -670,7 +670,7 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* not so simplistic now */
     memset(&startup, 0, sizeof(startup));
@@ -708,7 +708,7 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* not so simplistic now */
     memset(&startup, 0, sizeof(startup));
@@ -746,7 +746,7 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* not so simplistic now */
     memset(&startup, 0, sizeof(startup));
@@ -786,7 +786,7 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* not so simplistic now */
     memset(&startup, 0, sizeof(startup));
@@ -824,7 +824,7 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* not so simplistic now */
     memset(&startup, 0, sizeof(startup));
@@ -862,7 +862,7 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* TODO: test for A/W and W/A and W/W */
 }
@@ -894,7 +894,7 @@ static void test_CommandLine(void)
     okChildString("Arguments", "argvA5", NULL);
     okChildString("Arguments", "CommandLineA", buffer);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -917,7 +917,7 @@ static void test_CommandLine(void)
     okChildString("Arguments", "argvA7", NULL);
     okChildString("Arguments", "CommandLineA", buffer);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* Test for Bug1330 to show that XP doesn't change '/' to '\\' in argv[0]*/
     get_file_name(resfile);
@@ -933,7 +933,7 @@ static void test_CommandLine(void)
     sprintf(buffer, "./%s", exename);
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     get_file_name(resfile);
     /* Use exename to avoid buffer containing things like 'C:' */
@@ -948,8 +948,8 @@ static void test_CommandLine(void)
     sprintf(buffer, ".\\%s", exename);
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
-    
+    DeleteFileA(resfile);
+
     get_file_name(resfile);
     GetFullPathNameA(selfname, MAX_PATH, fullpath, &lpFilePart);
     assert ( lpFilePart != 0);
@@ -969,7 +969,7 @@ static void test_CommandLine(void)
     else sprintf(buffer, "./%s", exename);
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* Using AppName */
     get_file_name(resfile);
@@ -993,7 +993,7 @@ static void test_CommandLine(void)
     okChildString("Arguments", "CommandLineA", buffer2);
     okChildStringWA("Arguments", "CommandLineW", buffer2);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     if (0) /* Test crashes on NT-based Windows. */
     {
@@ -1088,7 +1088,7 @@ static void test_Directory(void)
 
     okChildIString("Misc", "CurrDirA", windir);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     /* search PATH for the exe if directory is NULL */
     ok(CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
@@ -1301,7 +1301,7 @@ static void test_Environment(void)
     env = GetEnvironmentStringsA();
     cmpEnvironment(env);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -1360,7 +1360,7 @@ static void test_Environment(void)
     HeapFree(GetProcessHeap(), 0, child_env);
     FreeEnvironmentStringsA(env);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 }
 
 static  void    test_SuspendFlag(void)
@@ -1408,7 +1408,7 @@ static  void    test_SuspendFlag(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 }
 
 static  void    test_DebuggingFlag(void)
@@ -1470,7 +1470,7 @@ static  void    test_DebuggingFlag(void)
     okChildInt("StartupInfoA", "dwFlags", startup.dwFlags);
     okChildInt("StartupInfoA", "wShowWindow", startup.wShowWindow);
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 }
 
 static BOOL is_console(HANDLE h)
@@ -1617,7 +1617,7 @@ static void test_Console(void)
     ok(sbiC.dwCursorPosition.Y == (sbi.dwCursorPosition.Y ^ 1), "Wrong cursor position\n");
 
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 
     ok(CreatePipe(&hParentIn, &hChildOut, NULL, 0), "Creating parent-input pipe\n");
     ok(DuplicateHandle(GetCurrentProcess(), hChildOut, GetCurrentProcess(), 
@@ -1660,7 +1660,7 @@ static void test_Console(void)
     okChildString("StdHandle", "msg", msg);
 
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 }
 
 static  void    test_ExitCode(void)
@@ -1689,7 +1689,7 @@ static  void    test_ExitCode(void)
     okChildInt("ExitCode", "value", code);
 
     release_memory();
-    assert(DeleteFileA(resfile) != 0);
+    DeleteFileA(resfile);
 }
 
 static void test_OpenProcess(void)
