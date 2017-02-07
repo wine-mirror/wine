@@ -8295,11 +8295,11 @@ static void test_shademode(void)
         hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
         ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice2_BeginScene(device);
+        hr = IDirect3DDevice_BeginScene(device);
         set_execute_data(execute_buffer, 4, sizeof(quad_strip), inst_length);
         hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
         ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
-        hr = IDirect3DDevice2_EndScene(device);
+        hr = IDirect3DDevice_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
         color0 = get_surface_color(rt, 100, 100); /* Inside first triangle */
