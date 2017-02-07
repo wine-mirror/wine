@@ -215,16 +215,6 @@ static inline LPWSTR heap_strdupAtoW( LPCSTR str)
     return p;
 }
 
-static inline LPWSTR strdupW( LPCWSTR src )
-{
-    LPWSTR dest;
-    if (!src) return NULL;
-    dest = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(src)+1)*sizeof(WCHAR) );
-    if (dest)
-        lstrcpyW(dest, src);
-    return dest;
-}
-
 /**************************************************************************
  *  IPersistFile_QueryInterface
  */

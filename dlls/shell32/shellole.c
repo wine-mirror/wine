@@ -811,6 +811,386 @@ HRESULT WINAPI SHCreateQueryCancelAutoPlayMoniker(IMoniker **moniker)
     return CreateClassMoniker(&CLSID_QueryCancelAutoPlay, moniker);
 }
 
+/* IShellImageData */
+typedef struct
+{
+    IShellImageData IShellImageData_iface;
+    LONG ref;
+
+    WCHAR *path;
+} ShellImageData;
+
+static inline ShellImageData *impl_from_IShellImageData(IShellImageData *iface)
+{
+    return CONTAINING_RECORD(iface, ShellImageData, IShellImageData_iface);
+}
+
+static HRESULT WINAPI ShellImageData_QueryInterface(IShellImageData *iface, REFIID riid, void **obj)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    TRACE("%p, %s, %p\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IShellImageData) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = &This->IShellImageData_iface;
+        IShellImageData_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ShellImageData_AddRef(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("%p, %u\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ShellImageData_Release(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("%p, %u\n", This, ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, This->path);
+        SHFree(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ShellImageData_Decode(IShellImageData *iface, DWORD flags, ULONG cx_desired, ULONG cy_desired)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %#x, %u, %u: stub\n", This, flags, cx_desired, cy_desired);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_Draw(IShellImageData *iface, HDC hdc, RECT *dest, RECT *src)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p, %s, %s: stub\n", This, hdc, wine_dbgstr_rect(dest), wine_dbgstr_rect(src));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_NextFrame(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_NextPage(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_PrevPage(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_IsTransparent(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_IsAnimated(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_IsVector(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_IsMultipage(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_IsEditable(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_IsPrintable(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_IsDecoded(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetCurrentPage(IShellImageData *iface, ULONG *page)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetPageCount(IShellImageData *iface, ULONG *count)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageDate_SelectPage(IShellImageData *iface, ULONG page)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %u: stub\n", This, page);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetSize(IShellImageData *iface, SIZE *size)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetRawDataFormat(IShellImageData *iface, GUID *format)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetPixelFormat(IShellImageData *iface, PixelFormat *format)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetDelay(IShellImageData *iface, DWORD *delay)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, delay);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetProperties(IShellImageData *iface, DWORD mode, IPropertySetStorage **props)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %#x, %p: stub\n", This, mode, props);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_Rotate(IShellImageData *iface, DWORD angle)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %u: stub\n", This, angle);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_Scale(IShellImageData *iface, ULONG cx, ULONG cy, InterpolationMode mode)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %u, %u, %#x: stub\n", This, cx, cy, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_DiscardEdit(IShellImageData *iface)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p: stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageDate_SetEncoderParams(IShellImageData *iface, IPropertyBag *params)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, params);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_DisplayName(IShellImageData *iface, LPWSTR name, UINT count)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p, %u: stub\n", This, name, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetResolution(IShellImageData *iface, ULONG *res_x, ULONG *res_y)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p, %p: stub\n", This, res_x, res_y);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_GetEncoderParams(IShellImageData *iface, GUID *format, EncoderParameters **params)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p, %p: stub\n", This, format, params);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_RegisterAbort(IShellImageData *iface, IShellImageDataAbort *abort,
+    IShellImageDataAbort **prev)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p, %p: stub\n", This, abort, prev);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_CloneFrame(IShellImageData *iface, Image **frame)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, frame);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellImageData_ReplaceFrame(IShellImageData *iface, Image *frame)
+{
+    ShellImageData *This = impl_from_IShellImageData(iface);
+
+    FIXME("%p, %p: stub\n", This, frame);
+
+    return E_NOTIMPL;
+}
+
+static const IShellImageDataVtbl ShellImageDataVtbl =
+{
+    ShellImageData_QueryInterface,
+    ShellImageData_AddRef,
+    ShellImageData_Release,
+    ShellImageData_Decode,
+    ShellImageData_Draw,
+    ShellImageData_NextFrame,
+    ShellImageData_NextPage,
+    ShellImageData_PrevPage,
+    ShellImageData_IsTransparent,
+    ShellImageData_IsAnimated,
+    ShellImageData_IsVector,
+    ShellImageData_IsMultipage,
+    ShellImageData_IsEditable,
+    ShellImageData_IsPrintable,
+    ShellImageData_IsDecoded,
+    ShellImageData_GetCurrentPage,
+    ShellImageData_GetPageCount,
+    ShellImageDate_SelectPage,
+    ShellImageData_GetSize,
+    ShellImageData_GetRawDataFormat,
+    ShellImageData_GetPixelFormat,
+    ShellImageData_GetDelay,
+    ShellImageData_GetProperties,
+    ShellImageData_Rotate,
+    ShellImageData_Scale,
+    ShellImageData_DiscardEdit,
+    ShellImageDate_SetEncoderParams,
+    ShellImageData_DisplayName,
+    ShellImageData_GetResolution,
+    ShellImageData_GetEncoderParams,
+    ShellImageData_RegisterAbort,
+    ShellImageData_CloneFrame,
+    ShellImageData_ReplaceFrame,
+};
+
+static HRESULT create_shellimagedata_from_path(const WCHAR *path, IShellImageData **data)
+{
+    ShellImageData *This;
+
+    This = SHAlloc(sizeof(*This));
+
+    This->IShellImageData_iface.lpVtbl = &ShellImageDataVtbl;
+    This->ref = 1;
+
+    This->path = strdupW(path);
+
+    *data = &This->IShellImageData_iface;
+    return S_OK;
+}
+
 /* IShellImageDataFactory */
 static HRESULT WINAPI ShellImageDataFactory_QueryInterface(IShellImageDataFactory *iface, REFIID riid, void **obj)
 {
@@ -855,9 +1235,9 @@ static HRESULT WINAPI ShellImageDataFactory_CreateIShellImageData(IShellImageDat
 static HRESULT WINAPI ShellImageDataFactory_CreateImageFromFile(IShellImageDataFactory *iface, const WCHAR *path,
     IShellImageData **data)
 {
-    FIXME("%p, %s, %p: stub\n", iface, debugstr_w(path), data);
+    TRACE("%p, %s, %p\n", iface, debugstr_w(path), data);
 
-    return E_NOTIMPL;
+    return create_shellimagedata_from_path(path, data);
 }
 
 static HRESULT WINAPI ShellImageDataFactory_CreateImageFromStream(IShellImageDataFactory *iface, IStream *stream,
