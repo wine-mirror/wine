@@ -1046,10 +1046,22 @@ static HRESULT WINAPI ShellImageDate_SelectPage(IShellImageData *iface, ULONG pa
 static HRESULT WINAPI ShellImageData_GetSize(IShellImageData *iface, SIZE *size)
 {
     ShellImageData *This = impl_from_IShellImageData(iface);
+    REAL cx, cy;
+    HRESULT hr;
 
-    FIXME("%p, %p: stub\n", This, size);
+    TRACE("%p, %p\n", This, size);
 
-    return E_NOTIMPL;
+    if (!This->image)
+        return E_FAIL;
+
+    hr = gpstatus_to_hresult(GdipGetImageDimension(This->image, &cx, &cy));
+    if (SUCCEEDED(hr))
+    {
+        size->cx = cx;
+        size->cy = cy;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI ShellImageData_GetRawDataFormat(IShellImageData *iface, GUID *format)
