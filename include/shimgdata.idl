@@ -27,10 +27,17 @@ cpp_quote("#ifndef _GDIPLUSENUMS_H")
 typedef DWORD InterpolationMode;
 cpp_quote("#endif")
 
-cpp_quote("#ifndef _GDIPLUSHEADERS_H")
+cpp_quote("#ifndef _GDIPLUSIMAGING_H")
 typedef BYTE EncoderParameters;
+cpp_quote("#endif")
+
+cpp_quote("#ifndef _GDIPLUSHEADERS_H")
 typedef BYTE Image;
 cpp_quote("#endif")
+
+cpp_quote("#define SHIMGDEC_DEFAULT   0x0")
+cpp_quote("#define SHIMGDEC_THUMBNAIL 0x1")
+cpp_quote("#define SHIMGDEC_LOADFULL  0x2")
 
 [
     object,

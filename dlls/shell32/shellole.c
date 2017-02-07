@@ -36,6 +36,7 @@
 #include "shlobj.h"
 #include "shlguid.h"
 #include "shldisp.h"
+#include "gdiplus.h"
 #include "shimgdata.h"
 #include "winreg.h"
 #include "winerror.h"
@@ -811,6 +812,23 @@ HRESULT WINAPI SHCreateQueryCancelAutoPlayMoniker(IMoniker **moniker)
     return CreateClassMoniker(&CLSID_QueryCancelAutoPlay, moniker);
 }
 
+static HRESULT gpstatus_to_hresult(GpStatus status)
+{
+    switch (status)
+    {
+    case Ok:
+        return S_OK;
+    case InvalidParameter:
+        return E_INVALIDARG;
+    case OutOfMemory:
+        return E_OUTOFMEMORY;
+    case NotImplemented:
+        return E_NOTIMPL;
+    default:
+        return E_FAIL;
+    }
+}
+
 /* IShellImageData */
 typedef struct
 {
@@ -818,6 +836,7 @@ typedef struct
     LONG ref;
 
     WCHAR *path;
+    GpImage *image;
 } ShellImageData;
 
 static inline ShellImageData *impl_from_IShellImageData(IShellImageData *iface)
@@ -861,6 +880,7 @@ static ULONG WINAPI ShellImageData_Release(IShellImageData *iface)
 
     if (!ref)
     {
+        GdipDisposeImage(This->image);
         HeapFree(GetProcessHeap(), 0, This->path);
         SHFree(This);
     }
@@ -871,10 +891,30 @@ static ULONG WINAPI ShellImageData_Release(IShellImageData *iface)
 static HRESULT WINAPI ShellImageData_Decode(IShellImageData *iface, DWORD flags, ULONG cx_desired, ULONG cy_desired)
 {
     ShellImageData *This = impl_from_IShellImageData(iface);
+    GpImage *image;
+    HRESULT hr;
 
-    FIXME("%p, %#x, %u, %u: stub\n", This, flags, cx_desired, cy_desired);
+    TRACE("%p, %#x, %u, %u\n", This, flags, cx_desired, cy_desired);
 
-    return E_NOTIMPL;
+    if (This->image)
+        return S_FALSE;
+
+    if (flags & SHIMGDEC_LOADFULL)
+        FIXME("LOADFULL flag ignored\n");
+
+    hr = gpstatus_to_hresult(GdipLoadImageFromFile(This->path, &image));
+    if (FAILED(hr))
+        return hr;
+
+    if (flags & SHIMGDEC_THUMBNAIL)
+    {
+        hr = gpstatus_to_hresult(GdipGetImageThumbnail(image, cx_desired, cy_desired, &This->image, NULL, NULL));
+        GdipDisposeImage(image);
+    }
+    else
+        This->image = image;
+
+    return hr;
 }
 
 static HRESULT WINAPI ShellImageData_Draw(IShellImageData *iface, HDC hdc, RECT *dest, RECT *src)
@@ -1186,6 +1226,7 @@ static HRESULT create_shellimagedata_from_path(const WCHAR *path, IShellImageDat
     This->ref = 1;
 
     This->path = strdupW(path);
+    This->image = NULL;
 
     *data = &This->IShellImageData_iface;
     return S_OK;
