@@ -365,8 +365,8 @@ static void crash_and_debug(HKEY hkey, const char* argv0, const char* dbgtasks)
 #endif
     ok(wait_code == WAIT_OBJECT_0, "Timed out waiting for the debugger\n");
 
-    assert(load_blackbox(childlog, &crash_blackbox, sizeof(crash_blackbox)));
-    assert(load_blackbox(dbglog, &dbg_blackbox, sizeof(dbg_blackbox)));
+    ok(load_blackbox(childlog, &crash_blackbox, sizeof(crash_blackbox)), "failed to open: %s\n", childlog);
+    ok(load_blackbox(dbglog, &dbg_blackbox, sizeof(dbg_blackbox)), "failed to open: %s\n", dbglog);
 
     ok(dbg_blackbox.argc == 6, "wrong debugger argument count: %d\n", dbg_blackbox.argc);
     ok(dbg_blackbox.pid == crash_blackbox.pid, "the child and debugged pids don't match: %d != %d\n", crash_blackbox.pid, dbg_blackbox.pid);
