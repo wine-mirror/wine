@@ -670,6 +670,9 @@ static void test_bitmap_rendering( BOOL use_dib )
             glGetIntegerv( GL_VIEWPORT, viewport );
             ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
                 "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+            wglDeleteContext(hglrc2);
+            wglDeleteContext(hglrc);
         }
     }
 
