@@ -920,10 +920,30 @@ static HRESULT WINAPI ShellImageData_Decode(IShellImageData *iface, DWORD flags,
 static HRESULT WINAPI ShellImageData_Draw(IShellImageData *iface, HDC hdc, RECT *dest, RECT *src)
 {
     ShellImageData *This = impl_from_IShellImageData(iface);
+    GpGraphics *graphics;
+    HRESULT hr;
 
-    FIXME("%p, %p, %s, %s: stub\n", This, hdc, wine_dbgstr_rect(dest), wine_dbgstr_rect(src));
+    TRACE("%p, %p, %s, %s\n", This, hdc, wine_dbgstr_rect(dest), wine_dbgstr_rect(src));
 
-    return E_NOTIMPL;
+    if (!This->image)
+        return E_FAIL;
+
+    if (!dest)
+        return E_INVALIDARG;
+
+    if (!src)
+        return S_OK;
+
+    hr = gpstatus_to_hresult(GdipCreateFromHDC(hdc, &graphics));
+    if (FAILED(hr))
+        return hr;
+
+    hr = gpstatus_to_hresult(GdipDrawImageRectRectI(graphics, This->image, dest->left, dest->top, dest->right - dest->left,
+        dest->bottom - dest->top, src->left, src->top, src->right - src->left, src->bottom - src->top,
+        UnitPixel, NULL, NULL, NULL));
+    GdipDeleteGraphics(graphics);
+
+    return hr;
 }
 
 static HRESULT WINAPI ShellImageData_NextFrame(IShellImageData *iface)
