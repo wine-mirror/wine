@@ -1272,8 +1272,67 @@ void CDECL _fpreset(void)
  */
 int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
 {
-    FIXME("(%p) stub\n", env);
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    struct {
+        WORD control_word;
+        WORD unused1;
+        WORD status_word;
+        WORD unused2;
+        WORD tag_word;
+        WORD unused3;
+        DWORD instruction_pointer;
+        WORD code_segment;
+        WORD unused4;
+        DWORD operand_addr;
+        WORD data_segment;
+        WORD unused5;
+    } fenv;
+
+    TRACE( "(%p)\n", env );
+
+    if (!env->control && !env->status) {
+        _fpreset();
+        return 0;
+    }
+
+    __asm__ __volatile__( "fnstenv %0" : "=m" (fenv) );
+
+    fenv.control_word &= ~0x3d;
+    if (env->control & MSVCRT__EM_INVALID) fenv.control_word |= 0x1;
+    if (env->control & MSVCRT__EM_ZERODIVIDE) fenv.control_word |= 0x4;
+    if (env->control & MSVCRT__EM_OVERFLOW) fenv.control_word |= 0x8;
+    if (env->control & MSVCRT__EM_UNDERFLOW) fenv.control_word |= 0x10;
+    if (env->control & MSVCRT__EM_INEXACT) fenv.control_word |= 0x20;
+
+    fenv.status_word &= ~0x3d;
+    if (env->status & MSVCRT__SW_INVALID) fenv.status_word |= 0x1;
+    if (env->status & MSVCRT__SW_ZERODIVIDE) fenv.status_word |= 0x4;
+    if (env->status & MSVCRT__SW_OVERFLOW) fenv.status_word |= 0x8;
+    if (env->status & MSVCRT__SW_UNDERFLOW) fenv.status_word |= 0x10;
+    if (env->status & MSVCRT__SW_INEXACT) fenv.status_word |= 0x20;
+
+    __asm__ __volatile__( "fldenv %0" : : "m" (fenv) : "st", "st(1)",
+            "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)" );
+
+    if (sse2_supported)
+    {
+        DWORD fpword;
+
+        __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
+        fpword &= ~0x1e80;
+        if (env->control & MSVCRT__EM_INVALID) fpword |= 0x80;
+        if (env->control & MSVCRT__EM_ZERODIVIDE) fpword |= 0x200;
+        if (env->control & MSVCRT__EM_OVERFLOW) fpword |= 0x400;
+        if (env->control & MSVCRT__EM_UNDERFLOW) fpword |= 0x800;
+        if (env->control & MSVCRT__EM_INEXACT) fpword |= 0x1000;
+        __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
+    }
+
     return 0;
+#else
+    FIXME( "not implemented\n" );
+#endif
+    return 1;
 }
 
 /*********************************************************************
