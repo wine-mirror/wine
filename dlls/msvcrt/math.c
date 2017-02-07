@@ -1268,6 +1268,15 @@ void CDECL _fpreset(void)
 }
 
 /*********************************************************************
+ *              fesetenv (MSVCR120.@)
+ */
+int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
+{
+    FIXME("(%p) stub\n", env);
+    return 0;
+}
+
+/*********************************************************************
  *		_isnan (MSVCRT.@)
  */
 INT CDECL MSVCRT__isnan(double num)

@@ -92,7 +92,7 @@
 @ stub fegetexceptflag
 @ stub fegetround
 @ stub feholdexcept
-@ stub fesetenv
+@ cdecl fesetenv(ptr) ucrtbase.fesetenv
 @ stub fesetexceptflag
 @ stub fesetround
 @ stub fetestexcept

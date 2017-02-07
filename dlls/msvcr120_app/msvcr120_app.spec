@@ -1817,7 +1817,7 @@
 @ cdecl feof(ptr) msvcr120.feof
 @ stub feraiseexcept
 @ cdecl ferror(ptr) msvcr120.ferror
-@ stub fesetenv
+@ cdecl fesetenv(ptr) msvcr120.fesetenv
 @ stub fesetexceptflag
 @ stub fesetround
 @ stub fetestexcept
