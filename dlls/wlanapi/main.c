@@ -63,8 +63,28 @@ static HANDLE handle_new(struct wine_wlan **entry)
 
 DWORD WINAPI WlanEnumInterfaces(HANDLE handle, void *reserved, WLAN_INTERFACE_INFO_LIST **interface_list)
 {
-    FIXME("(%p, %p, %p) stub\n", handle, reserved, interface_list);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct wine_wlan *wlan;
+    WLAN_INTERFACE_INFO_LIST *ret_list;
+
+    FIXME("(%p, %p, %p) semi-stub\n", handle, reserved, interface_list);
+
+    if (!handle || reserved || !interface_list)
+        return ERROR_INVALID_PARAMETER;
+
+    wlan = handle_index(handle);
+    if (!wlan)
+        return ERROR_INVALID_HANDLE;
+
+    ret_list = WlanAllocateMemory(sizeof(WLAN_INTERFACE_INFO_LIST));
+    if (!ret_list)
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    memset(&ret_list->InterfaceInfo[0], 0, sizeof(WLAN_INTERFACE_INFO));
+    ret_list->dwNumberOfItems = 0;
+    ret_list->dwIndex = 0; /* unused in this function */
+    *interface_list = ret_list;
+
+    return ERROR_SUCCESS;
 }
 
 DWORD WINAPI WlanCloseHandle(HANDLE handle, void *reserved)

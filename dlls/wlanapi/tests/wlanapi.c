@@ -134,24 +134,19 @@ static void test_WlanEnumInterfaces(void)
 
     /* invalid parameters */
     ret = WlanEnumInterfaces(NULL, NULL, &list);
-todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
     ok(list == bad_list, "list changed\n");
     ret = WlanEnumInterfaces(handle, &reserved, &list);
-todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
     ok(list == bad_list, "list changed\n");
     ret = WlanEnumInterfaces(handle, NULL, NULL);
-todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
     ok(list == bad_list, "list changed\n");
 
     /* good tests */
     list = NULL;
     ret = WlanEnumInterfaces(handle, NULL, &list);
-todo_wine
     ok(ret == ERROR_SUCCESS, "Expected 0, got %d\n", ret);
-todo_wine
     ok(list != NULL, "bad interface list\n");
     if (!list || !list->dwNumberOfItems)
     {
