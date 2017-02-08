@@ -626,6 +626,10 @@ run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
     PROCESS_INFORMATION pi;
     DWORD wait, status;
 
+    /* Flush to disk so we know which test caused Windows to crash if it does */
+    if (out_file)
+        FlushFileBuffers(out_file);
+
     GetStartupInfoA (&si);
     si.dwFlags    = STARTF_USESTDHANDLES;
     si.hStdInput  = GetStdHandle( STD_INPUT_HANDLE );
