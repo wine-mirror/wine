@@ -2,6 +2,7 @@
  * uxtheme Double-buffered Drawing API
  *
  * Copyright (C) 2008 Reece H. Dunn
+ * Copyright 2017 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,6 +35,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
+struct paintbuffer
+{
+    HDC targetdc;
+    HDC memorydc;
+    RECT rect;
+    void *bits;
+};
+
+static void free_paintbuffer(struct paintbuffer *buffer)
+{
+    DeleteDC(buffer->memorydc);
+    HeapFree(GetProcessHeap(), 0, buffer);
+}
+
 /***********************************************************************
  *      BufferedPaintInit                                  (UXTHEME.@)
  */
@@ -55,23 +70,70 @@ HRESULT WINAPI BufferedPaintUnInit(VOID)
 /***********************************************************************
  *      BeginBufferedPaint                                 (UXTHEME.@)
  */
-HPAINTBUFFER WINAPI BeginBufferedPaint(HDC hdcTarget,
-                                       const RECT * prcTarget,
-                                       BP_BUFFERFORMAT dwFormat,
-                                       BP_PAINTPARAMS *pPaintParams,
-                                       HDC *phdc)
+HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
+        BP_BUFFERFORMAT format, BP_PAINTPARAMS *params, HDC *retdc)
 {
-    static int i;
+    char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *bmi = (BITMAPINFO *)bmibuf;
+    struct paintbuffer *buffer;
+    HBITMAP hbm;
 
-    TRACE("Stub (%p %p %d %p %p)\n", hdcTarget, prcTarget, dwFormat,
-          pPaintParams, phdc);
+    TRACE("(%p %s %d %p %p)\n", targetdc, wine_dbgstr_rect(rect), format,
+          params, retdc);
 
-    if (!i++)
-        FIXME("Stub (%p %p %d %p %p)\n", hdcTarget, prcTarget, dwFormat,
-              pPaintParams, phdc);
-    return NULL;
+    if (retdc)
+        *retdc = NULL;
+
+    if (!targetdc || IsRectEmpty(rect))
+        return NULL;
+
+    if (params)
+        FIXME("painting parameters are ignored\n");
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer));
+    buffer->targetdc = targetdc;
+    buffer->rect = *rect;
+    buffer->memorydc = CreateCompatibleDC(targetdc);
+
+    switch (format)
+    {
+    case BPBF_COMPATIBLEBITMAP:
+        hbm = CreateCompatibleBitmap(buffer->memorydc, rect->right - rect->left, rect->bottom - rect->top);
+        buffer->bits = NULL;
+        break;
+    case BPBF_DIB:
+    case BPBF_TOPDOWNDIB:
+    case BPBF_TOPDOWNMONODIB:
+        /* create DIB section */
+        memset(bmi, 0, sizeof(bmibuf));
+        bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+        bmi->bmiHeader.biHeight = format == BPBF_DIB ? rect->bottom - rect->top :
+                -(rect->bottom - rect->top);
+        bmi->bmiHeader.biWidth = rect->right - rect->left;
+        bmi->bmiHeader.biBitCount = format == BPBF_TOPDOWNMONODIB ? 1 : 32;
+        bmi->bmiHeader.biPlanes = 1;
+        bmi->bmiHeader.biCompression = BI_RGB;
+        hbm = CreateDIBSection(buffer->memorydc, bmi, DIB_RGB_COLORS, &buffer->bits, NULL, 0);
+        break;
+    default:
+        WARN("Unknown buffer format %d\n", format);
+        free_paintbuffer(buffer);
+        return NULL;
+    }
+
+    if (!hbm)
+    {
+        WARN("Failed to create buffer bitmap\n");
+        free_paintbuffer(buffer);
+        return NULL;
+    }
+
+    DeleteObject(SelectObject(buffer->memorydc, hbm));
+
+    *retdc = buffer->memorydc;
+
+    return (HPAINTBUFFER)buffer;
 }
-
 
 /***********************************************************************
  *      EndBufferedPaint                                   (UXTHEME.@)
