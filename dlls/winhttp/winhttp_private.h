@@ -306,22 +306,22 @@ void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;
 
-static inline void *heap_alloc( SIZE_T size )
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
 }
 
-static inline void *heap_alloc_zero( SIZE_T size )
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
 }
 
-static inline void *heap_realloc( LPVOID mem, SIZE_T size )
+static inline void* __WINE_ALLOC_SIZE(2) heap_realloc( LPVOID mem, SIZE_T size )
 {
     return HeapReAlloc( GetProcessHeap(), 0, mem, size );
 }
 
-static inline void *heap_realloc_zero( LPVOID mem, SIZE_T size )
+static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero( LPVOID mem, SIZE_T size )
 {
     return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size );
 }
