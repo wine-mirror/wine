@@ -617,7 +617,6 @@ todo_wine
     ok(hdc == src, "Unexpected hdc, %p, buffered dc %p\n", hdc, src);
 
     hdc = pGetBufferedPaintTargetDC(buffer);
-todo_wine
     ok(hdc == target, "Unexpected target hdc %p, original %p\n", hdc, target);
 
     hr = pGetBufferedPaintTargetRect(buffer, NULL);

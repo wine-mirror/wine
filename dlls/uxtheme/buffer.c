@@ -211,10 +211,13 @@ HDC WINAPI GetBufferedPaintDC(HPAINTBUFFER bufferhandle)
 /***********************************************************************
  *      GetBufferedPaintTargetDC                           (UXTHEME.@)
  */
-HDC WINAPI GetBufferedPaintTargetDC(HPAINTBUFFER hBufferedPaint)
+HDC WINAPI GetBufferedPaintTargetDC(HPAINTBUFFER bufferhandle)
 {
-    FIXME("Stub (%p)\n", hBufferedPaint);
-    return NULL;
+    struct paintbuffer *buffer = get_buffer_obj(bufferhandle);
+
+    TRACE("(%p)\n", buffer);
+
+    return buffer ? buffer->targetdc : NULL;
 }
 
 /***********************************************************************
