@@ -434,7 +434,9 @@ static void test_AddMonitor(void)
     mi2a.pDLLName = entry->dllname;
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
-    ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
+    /* Some apps depend on the result of GetLastError() also on success of AddMonitor */
+    ok(res && (GetLastError() == ERROR_SUCCESS),
+        "returned %d with %d (expected '!= 0' with ERROR_SUCCESS)\n", res, GetLastError());
 
     /* add a monitor twice */
     SetLastError(MAGIC_DEAD);
