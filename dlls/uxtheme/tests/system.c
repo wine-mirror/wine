@@ -648,7 +648,6 @@ todo_wine
         bits = NULL;
         row = 0;
         hr = pGetBufferedPaintBits(buffer, &bits, &row);
-todo_wine {
         if (format == BPBF_COMPATIBLEBITMAP)
             ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
         else
@@ -657,7 +656,7 @@ todo_wine {
             ok(bits != NULL, "Bitmap bits %p\n", bits);
             ok(row > 0, "Bitmap width %d\n", row);
         }
-}
+
         hr = pEndBufferedPaint(buffer, FALSE);
         ok(hr == S_OK, "Unexpected return code %#x\n", hr);
     }

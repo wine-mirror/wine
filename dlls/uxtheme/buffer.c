@@ -189,11 +189,22 @@ HRESULT WINAPI BufferedPaintSetAlpha(HPAINTBUFFER hBufferedPaint, const RECT *pr
 /***********************************************************************
  *      GetBufferedPaintBits                               (UXTHEME.@)
  */
-HRESULT WINAPI GetBufferedPaintBits(HPAINTBUFFER hBufferedPaint, RGBQUAD **ppbBuffer,
-                                    int *pcxRow)
+HRESULT WINAPI GetBufferedPaintBits(HPAINTBUFFER bufferhandle, RGBQUAD **bits, int *width)
 {
-    FIXME("Stub (%p %p %p)\n", hBufferedPaint, ppbBuffer, pcxRow);
-    return E_NOTIMPL;
+    struct paintbuffer *buffer = get_buffer_obj(bufferhandle);
+
+    TRACE("(%p %p %p)\n", buffer, bits, width);
+
+    if (!bits || !width)
+        return E_POINTER;
+
+    if (!buffer || !buffer->bits)
+        return E_FAIL;
+
+    *bits = buffer->bits;
+    *width = buffer->rect.right - buffer->rect.left;
+
+    return S_OK;
 }
 
 /***********************************************************************
