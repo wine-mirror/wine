@@ -1579,7 +1579,7 @@ static void test_mhtml_protocol(void)
     hres = IClassFactory_CreateInstance(class_factory, &outer, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CreateInstance returned: %08x\n", hres);
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocol, (void**)&unk2);
-    ok(hres == S_OK, "Coult not get IInternetProtocol iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IInternetProtocol iface: %08x\n", hres);
     IUnknown_Release(unk2);
     IUnknown_Release(unk);
 
