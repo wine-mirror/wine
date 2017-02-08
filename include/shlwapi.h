@@ -984,6 +984,9 @@ HRESULT WINAPI SHCreateStreamWrapper(LPBYTE,DWORD,DWORD,struct IStream**);
 
 #endif /* NO_SHLWAPI_STREAM */
 
+HRESULT WINAPI IStream_Reset(IStream*);
+HRESULT WINAPI IStream_Size(IStream*,ULARGE_INTEGER*);
+
 /* SHAutoComplete flags */
 #define SHACF_DEFAULT               0x00000000
 #define SHACF_FILESYSTEM            0x00000001
