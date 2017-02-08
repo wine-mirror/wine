@@ -12631,6 +12631,187 @@ static void test_cs_uav_store(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_ps_cs_uav_binding(void)
+{
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    ID3D11UnorderedAccessView *cs_uav, *ps_uav;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    ID3D11Texture2D *cs_texture, *ps_texture;
+    struct d3d11_test_context test_context;
+    static const float zero[4] = {0.0f};
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Buffer *cs_cb, *ps_cb;
+    struct vec4 input = {1.0f};
+    ID3D11ComputeShader *cs;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const DWORD cs_code[] =
+    {
+#if 0
+        RWTexture2D<float> u;
+
+        float value;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            uint x, y, width, height;
+            u.GetDimensions(width, height);
+            for (y = 0; y < height; ++y)
+            {
+                for (x = 0; x < width; ++x)
+                    u[uint2(x, y)] = value;
+            }
+        }
+#endif
+        0x43425844, 0x6503503a, 0x4cd524e6, 0x2473915d, 0x93cf1201, 0x00000001, 0x000001c8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000174, 0x00050050, 0x0000005d, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400189c, 0x0011e000, 0x00000000, 0x00005555,
+        0x02000068, 0x00000003, 0x0400009b, 0x00000001, 0x00000001, 0x00000001, 0x8900103d, 0x800000c2,
+        0x00155543, 0x00100032, 0x00000000, 0x00004001, 0x00000000, 0x0011ee46, 0x00000000, 0x05000036,
+        0x00100042, 0x00000000, 0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100082, 0x00000000,
+        0x0010002a, 0x00000000, 0x0010001a, 0x00000000, 0x03040003, 0x0010003a, 0x00000000, 0x05000036,
+        0x001000e2, 0x00000001, 0x00100aa6, 0x00000000, 0x05000036, 0x00100082, 0x00000000, 0x00004001,
+        0x00000000, 0x01000030, 0x07000050, 0x00100012, 0x00000002, 0x0010003a, 0x00000000, 0x0010000a,
+        0x00000000, 0x03040003, 0x0010000a, 0x00000002, 0x05000036, 0x00100012, 0x00000001, 0x0010003a,
+        0x00000000, 0x080000a4, 0x0011e0f2, 0x00000000, 0x00100e46, 0x00000001, 0x00208006, 0x00000000,
+        0x00000000, 0x0700001e, 0x00100082, 0x00000000, 0x0010003a, 0x00000000, 0x00004001, 0x00000001,
+        0x01000016, 0x0700001e, 0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x00004001, 0x00000001,
+        0x01000016, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        RWTexture2D<float> u : register(u1);
+
+        float value;
+
+        void main()
+        {
+            uint x, y, width, height;
+            u.GetDimensions(width, height);
+            for (y = 0; y < height; ++y)
+            {
+                for (x = 0; x < width; ++x)
+                    u[uint2(x, y)] = value;
+            }
+        }
+#endif
+        0x43425844, 0x2e14423b, 0x62c015c8, 0x5ea5ab9f, 0x514f1e22, 0x00000001, 0x000001b8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000164, 0x00000050, 0x00000059, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400189c, 0x0011e000, 0x00000001, 0x00005555,
+        0x02000068, 0x00000003, 0x8900103d, 0x800000c2, 0x00155543, 0x00100032, 0x00000000, 0x00004001,
+        0x00000000, 0x0011ee46, 0x00000001, 0x05000036, 0x00100042, 0x00000000, 0x00004001, 0x00000000,
+        0x01000030, 0x07000050, 0x00100082, 0x00000000, 0x0010002a, 0x00000000, 0x0010001a, 0x00000000,
+        0x03040003, 0x0010003a, 0x00000000, 0x05000036, 0x001000e2, 0x00000001, 0x00100aa6, 0x00000000,
+        0x05000036, 0x00100082, 0x00000000, 0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100012,
+        0x00000002, 0x0010003a, 0x00000000, 0x0010000a, 0x00000000, 0x03040003, 0x0010000a, 0x00000002,
+        0x05000036, 0x00100012, 0x00000001, 0x0010003a, 0x00000000, 0x080000a4, 0x0011e0f2, 0x00000001,
+        0x00100e46, 0x00000001, 0x00208006, 0x00000000, 0x00000000, 0x0700001e, 0x00100082, 0x00000000,
+        0x0010003a, 0x00000000, 0x00004001, 0x00000001, 0x01000016, 0x0700001e, 0x00100042, 0x00000000,
+        0x0010002a, 0x00000000, 0x00004001, 0x00000001, 0x01000016, 0x0100003e,
+    };
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    ps_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(input), &input.x);
+    cs_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(input), &input.x);
+
+    texture_desc.Width = 64;
+    texture_desc.Height = 64;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &cs_texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &ps_texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    uav_desc.Format = texture_desc.Format;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+    U(uav_desc).Texture2D.MipSlice = 0;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)cs_texture, &uav_desc, &cs_uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)ps_texture, &uav_desc, &ps_uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cs_cb);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &cs_uav, NULL);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &ps_cb);
+    /* FIXME: Set the render targets to NULL when no attachment draw calls are supported in wined3d. */
+    ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context,
+            1, &test_context.backbuffer_rtv, NULL, 1, 1, &ps_uav, NULL);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, cs_uav, zero);
+    check_texture_float(cs_texture, 0.0f, 2);
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, ps_uav, zero);
+    check_texture_float(ps_texture, 0.0f, 2);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_code, sizeof(cs_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(cs_texture, 1.0f, 2);
+    check_texture_float(ps_texture, 0.0f, 2);
+    draw_quad(&test_context);
+    todo_wine check_texture_float(cs_texture, 1.0f, 2);
+    todo_wine check_texture_float(ps_texture, 1.0f, 2);
+
+    input.x = 0.5f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cs_cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(cs_texture, 0.5f, 2);
+    todo_wine check_texture_float(ps_texture, 1.0f, 2);
+    input.x = 2.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
+    draw_quad(&test_context);
+    todo_wine check_texture_float(cs_texture, 0.5f, 2);
+    todo_wine check_texture_float(ps_texture, 2.0f, 2);
+
+    input.x = 8.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cs_cb, 0, NULL, &input, 0, 0);
+    input.x = 4.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    todo_wine check_texture_float(cs_texture, 8.0f, 2);
+    todo_wine check_texture_float(ps_texture, 2.0f, 2);
+    draw_quad(&test_context);
+    todo_wine check_texture_float(cs_texture, 8.0f, 2);
+    todo_wine check_texture_float(ps_texture, 4.0f, 2);
+
+    ID3D11ComputeShader_Release(cs);
+    ID3D11PixelShader_Release(ps);
+    ID3D11Buffer_Release(cs_cb);
+    ID3D11Buffer_Release(ps_cb);
+    ID3D11Texture2D_Release(cs_texture);
+    ID3D11Texture2D_Release(ps_texture);
+    ID3D11UnorderedAccessView_Release(cs_uav);
+    ID3D11UnorderedAccessView_Release(ps_uav);
+    ID3D11DeviceContext_Release(context);
+    release_test_context(&test_context);
+}
+
 static void test_sm4_ret_instruction(void)
 {
     struct d3d11_test_context test_context;
@@ -13440,6 +13621,7 @@ START_TEST(d3d11)
     test_stencil_separate();
     test_uav_load();
     test_cs_uav_store();
+    test_ps_cs_uav_binding();
     test_sm4_ret_instruction();
     test_primitive_restart();
     test_sm5_bufinfo_instruction();
