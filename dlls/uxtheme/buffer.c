@@ -49,6 +49,13 @@ static void free_paintbuffer(struct paintbuffer *buffer)
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
+static struct paintbuffer *get_buffer_obj(HPAINTBUFFER handle)
+{
+    if (!handle)
+        return NULL;
+    return handle;
+}
+
 /***********************************************************************
  *      BufferedPaintInit                                  (UXTHEME.@)
  */
@@ -138,9 +145,26 @@ HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
 /***********************************************************************
  *      EndBufferedPaint                                   (UXTHEME.@)
  */
-HRESULT WINAPI EndBufferedPaint(HPAINTBUFFER hPaintBuffer, BOOL fUpdateTarget)
+HRESULT WINAPI EndBufferedPaint(HPAINTBUFFER bufferhandle, BOOL update)
 {
-    FIXME("Stub (%p %d)\n", hPaintBuffer, fUpdateTarget);
+    struct paintbuffer *buffer = get_buffer_obj(bufferhandle);
+
+    TRACE("(%p %d)\n", bufferhandle, update);
+
+    if (!buffer)
+        return E_INVALIDARG;
+
+    if (update)
+    {
+        if (!BitBlt(buffer->targetdc, buffer->rect.left, buffer->rect.top,
+                buffer->rect.right - buffer->rect.left, buffer->rect.bottom - buffer->rect.top,
+                buffer->memorydc, 0, 0, SRCCOPY))
+        {
+            WARN("BitBlt() failed\n");
+        }
+    }
+
+    free_paintbuffer(buffer);
     return S_OK;
 }
 
