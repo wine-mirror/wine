@@ -530,7 +530,9 @@ static void test_buffered_paint(void)
     HDC target, src, hdc;
     HPAINTBUFFER buffer;
     RECT rect, rect2;
+    RGBQUAD *bits;
     HRESULT hr;
+    int row;
 
     if (!pBeginBufferedPaint)
     {
@@ -636,12 +638,41 @@ todo_wine
     hr = pEndBufferedPaint(buffer, FALSE);
     ok(hr == S_OK, "Unexpected return code %#x\n", hr);
 
+    /* invalid buffer handle */
+    hr = pEndBufferedPaint(NULL, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected return code %#x\n", hr);
+
+    hdc = pGetBufferedPaintDC(NULL);
+    ok(hdc == NULL, "Unexpected hdc %p\n", hdc);
+
+    hdc = pGetBufferedPaintTargetDC(NULL);
+    ok(hdc == NULL, "Unexpected target hdc %p\n", hdc);
+
+    hr = pGetBufferedPaintTargetRect(NULL, &rect2);
+    ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
+
+    hr = pGetBufferedPaintTargetRect(NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+
+    bits = (void *)0xdeadbeef;
+    row = 10;
+    hr = pGetBufferedPaintBits(NULL, &bits, &row);
+    ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
+    ok(row == 10, "Unexpected row count %d\n", row);
+    ok(bits == (void *)0xdeadbeef, "Unepexpected data pointer %p\n", bits);
+
+    hr = pGetBufferedPaintBits(NULL, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+
+    hr = pGetBufferedPaintBits(NULL, &bits, NULL);
+    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+
+    hr = pGetBufferedPaintBits(NULL, NULL, &row);
+    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+
     /* access buffer bits */
     for (format = BPBF_COMPATIBLEBITMAP; format <= BPBF_TOPDOWNMONODIB; format++)
     {
-        RGBQUAD *bits;
-        int row;
-
         buffer = pBeginBufferedPaint(target, &rect, format, &params, &src);
 
         /* only works for DIB buffers */
@@ -654,7 +685,7 @@ todo_wine
         {
             ok(hr == S_OK, "Unexpected return code %#x\n", hr);
             ok(bits != NULL, "Bitmap bits %p\n", bits);
-            ok(row > 0, "Bitmap width %d\n", row);
+            ok(row >= (rect.right - rect.left), "format %d: bitmap width %d\n", format, row);
         }
 
         hr = pEndBufferedPaint(buffer, FALSE);
