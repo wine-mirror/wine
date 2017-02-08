@@ -1507,6 +1507,8 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
     }
     monitor_unload(pm);
 
+    SetLastError(ERROR_SUCCESS); /* Monitor installer depends on this */
+
     if (RegCreateKeyW(HKEY_LOCAL_MACHINE, monitorsW, &hroot) != ERROR_SUCCESS) {
         ERR("unable to create key %s\n", debugstr_w(monitorsW));
         return FALSE;
