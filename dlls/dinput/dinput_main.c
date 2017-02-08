@@ -930,7 +930,9 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
     LPDIRECTINPUTDEVICE8A lpdid;
     DWORD callbackFlags;
     int i, j;
-
+    int device_count = 0;
+    int remain;
+    DIDEVICEINSTANCEA *didevis = 0;
 
     FIXME("(this=%p,%s,%p,%p,%p,%04x): semi-stub\n", This, debugstr_a(ptszUserName), lpdiActionFormat,
           lpCallback, pvRef, dwFlags);
@@ -958,18 +960,36 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
         {
             TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
 
-            callbackFlags = diactionformat_priorityA(lpdiActionFormat, lpdiActionFormat->dwGenre);
             /* Default behavior is to enumerate attached game controllers */
             enumSuccess = dinput_devices[i]->enum_deviceA(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
             if (enumSuccess == S_OK)
             {
-                IDirectInput_CreateDevice(iface, &didevi.guidInstance, &lpdid, NULL);
-
-                if (lpCallback(&didevi, lpdid, callbackFlags, 0, pvRef) == DIENUM_STOP)
-                    return DI_OK;
+                if (device_count++)
+                    didevis = HeapReAlloc(GetProcessHeap(), 0, didevis, sizeof(DIDEVICEINSTANCEW)*device_count);
+                else
+                    didevis = HeapAlloc(GetProcessHeap(), 0, sizeof(DIDEVICEINSTANCEW)*device_count);
+                didevis[device_count-1] = didevi;
             }
         }
     }
+
+    remain = device_count;
+    if (!(dwFlags & DIEDBSFL_FORCEFEEDBACK))
+        remain += sizeof(guids)/sizeof(guids[0]);
+
+    for (i = 0; i < device_count; i++)
+    {
+        callbackFlags = diactionformat_priorityA(lpdiActionFormat, lpdiActionFormat->dwGenre);
+        IDirectInput_CreateDevice(iface, &didevis[i].guidInstance, &lpdid, NULL);
+
+        if (lpCallback(&didevis[i], lpdid, callbackFlags, --remain, pvRef) == DIENUM_STOP)
+        {
+            HeapFree(GetProcessHeap(), 0, didevis);
+            return DI_OK;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, didevis);
 
     if (dwFlags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
 
@@ -1001,6 +1021,9 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
     LPDIRECTINPUTDEVICE8W lpdid;
     DWORD callbackFlags;
     int i, j;
+    int device_count = 0;
+    int remain;
+    DIDEVICEINSTANCEW *didevis = 0;
 
     FIXME("(this=%p,%s,%p,%p,%p,%04x): semi-stub\n", This, debugstr_w(ptszUserName), lpdiActionFormat,
           lpCallback, pvRef, dwFlags);
@@ -1018,18 +1041,36 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
         {
             TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
 
-            callbackFlags = diactionformat_priorityW(lpdiActionFormat, lpdiActionFormat->dwGenre);
             /* Default behavior is to enumerate attached game controllers */
             enumSuccess = dinput_devices[i]->enum_deviceW(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
             if (enumSuccess == S_OK)
             {
-                IDirectInput_CreateDevice(iface, &didevi.guidInstance, &lpdid, NULL);
-
-                if (lpCallback(&didevi, lpdid, callbackFlags, 0, pvRef) == DIENUM_STOP)
-                    return DI_OK;
+                if (device_count++)
+                    didevis = HeapReAlloc(GetProcessHeap(), 0, didevis, sizeof(DIDEVICEINSTANCEW)*device_count);
+                else
+                    didevis = HeapAlloc(GetProcessHeap(), 0, sizeof(DIDEVICEINSTANCEW)*device_count);
+                didevis[device_count-1] = didevi;
             }
         }
     }
+
+    remain = device_count;
+    if (!(dwFlags & DIEDBSFL_FORCEFEEDBACK))
+        remain += sizeof(guids)/sizeof(guids[0]);
+
+    for (i = 0; i < device_count; i++)
+    {
+        callbackFlags = diactionformat_priorityW(lpdiActionFormat, lpdiActionFormat->dwGenre);
+        IDirectInput_CreateDevice(iface, &didevis[i].guidInstance, &lpdid, NULL);
+
+        if (lpCallback(&didevis[i], lpdid, callbackFlags, --remain, pvRef) == DIENUM_STOP)
+        {
+            HeapFree(GetProcessHeap(), 0, didevis);
+            return DI_OK;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, didevis);
 
     if (dwFlags & DIEDBSFL_FORCEFEEDBACK) return DI_OK;
 

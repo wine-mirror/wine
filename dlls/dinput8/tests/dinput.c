@@ -445,6 +445,7 @@ static void test_EnumDevices(void)
 struct enum_semantics_test
 {
     unsigned int device_count;
+    DWORD first_remaining;
     BOOL mouse;
     BOOL keyboard;
     DIACTIONFORMATA *lpdiaf;
@@ -476,6 +477,12 @@ static BOOL CALLBACK enum_semantics_callback(const DIDEVICEINSTANCEA *lpddi, IDi
 
     if (context == NULL) return DIENUM_STOP;
 
+    if (!data->device_count) {
+        data->first_remaining = dwRemaining;
+    }
+    ok (dwRemaining == data->first_remaining - data->device_count,
+        "enum semantics remaining devices is wrong, expected %d, had %d\n",
+        data->first_remaining - data->device_count, dwRemaining);
     data->device_count++;
 
     if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysKeyboard)) data->keyboard = TRUE;
@@ -507,7 +514,7 @@ static void test_EnumDevicesBySemantics(void)
     HRESULT hr;
     DIACTIONFORMATA diaf;
     const GUID ACTION_MAPPING_GUID = { 0x1, 0x2, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
-    struct enum_semantics_test data = { 0, FALSE, FALSE, &diaf, NULL };
+    struct enum_semantics_test data = { 0, 0, FALSE, FALSE, &diaf, NULL };
     int device_total = 0;
 
     hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, &IID_IDirectInput8A, (void **)&pDI, NULL);
@@ -539,6 +546,7 @@ static void test_EnumDevicesBySemantics(void)
     /* Enumerate Force feedback devices. We should get no mouse nor keyboard */
     data.keyboard = FALSE;
     data.mouse = FALSE;
+    data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, &data, DIEDBSFL_FORCEFEEDBACK);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
     ok (!data.keyboard, "Keyboard should not be enumerated when asking for forcefeedback\n");
@@ -595,6 +603,7 @@ static void test_EnumDevicesBySemantics(void)
 
     /* The call fails with a zeroed GUID */
     memset(&diaf.guidActionMap, 0, sizeof(GUID));
+    data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, NULL, 0);
     todo_wine ok(FAILED(hr), "EnumDevicesBySemantics succeeded with invalid GUID hr=%08x\n", hr);
 
