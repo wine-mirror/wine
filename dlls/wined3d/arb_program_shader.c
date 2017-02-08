@@ -7713,6 +7713,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
     enum complex_fixup src_fixup;
+    BOOL decompress;
 
     if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return FALSE;
@@ -7735,7 +7736,9 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
             return FALSE;
     }
 
-    if (src_pool == WINED3D_POOL_SYSTEM_MEM || dst_pool == WINED3D_POOL_SYSTEM_MEM)
+    decompress = src_format && (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
+            && !(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED);
+    if (!decompress && (dst_pool == WINED3D_POOL_SYSTEM_MEM || src_pool == WINED3D_POOL_SYSTEM_MEM))
         return FALSE;
 
     src_fixup = get_complex_fixup(src_format->color_fixup);
