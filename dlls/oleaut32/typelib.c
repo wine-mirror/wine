@@ -1600,30 +1600,6 @@ static void TLB_abort(void)
     DebugBreak();
 }
 
-void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(unsigned size)
-{
-    void *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-    if (!ret) ERR("cannot allocate memory\n");
-    return ret;
-}
-
-void* __WINE_ALLOC_SIZE(1) heap_alloc(unsigned size)
-{
-    void *ret = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!ret) ERR("cannot allocate memory\n");
-    return ret;
-}
-
-void* __WINE_ALLOC_SIZE(2) heap_realloc(void *ptr, unsigned size)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
-}
-
-void heap_free(void *ptr)
-{
-    HeapFree(GetProcessHeap(), 0, ptr);
-}
-
 /* returns the size required for a deep copy of a typedesc into a
  * flat buffer */
 static SIZE_T TLB_SizeTypeDesc( const TYPEDESC *tdesc, BOOL alloc_initial_space )
