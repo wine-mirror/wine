@@ -306,22 +306,25 @@ static void compute_expected_swapchain_fullscreen_state_after_fullscreen_change_
 static IDXGIDevice *create_device(void)
 {
     IDXGIDevice *dxgi_device;
-    ID3D10Device *device;
+    ID3D10Device1 *device;
     HRESULT hr;
 
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
+    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL,
+            0, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
         goto success;
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
+    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_WARP, NULL,
+            0, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
         goto success;
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
+    if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL,
+            0, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
         goto success;
 
     return NULL;
 
 success:
-    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(SUCCEEDED(hr), "Created device does not implement IDXGIDevice\n");
-    ID3D10Device_Release(device);
+    ID3D10Device1_Release(device);
 
     return dxgi_device;
 }
