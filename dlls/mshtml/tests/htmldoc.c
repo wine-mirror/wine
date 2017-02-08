@@ -8693,12 +8693,12 @@ static void test_com_aggregation(const CLSID *clsid)
     SET_CALLED(outer_QI_IPersistMoniker);
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&unk2);
-    ok(hres == S_OK, "Coult not get IDispatch iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IDispatch iface: %08x\n", hres);
 
     SET_EXPECT(outer_QI_test);
     hres = IUnknown_QueryInterface(unk2, &outer_test_iid, (void**)&unk3);
     CHECK_CALLED(outer_QI_test);
-    ok(hres == S_OK, "Coult not get IInternetProtocol iface: %08x\n", hres);
+    ok(hres == S_OK, "Could not get IInternetProtocol iface: %08x\n", hres);
     ok(unk3 == (IUnknown*)0xdeadbeef, "unexpected unk2\n");
 
     IUnknown_Release(unk2);
