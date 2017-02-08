@@ -223,10 +223,20 @@ HDC WINAPI GetBufferedPaintTargetDC(HPAINTBUFFER bufferhandle)
 /***********************************************************************
  *      GetBufferedPaintTargetRect                         (UXTHEME.@)
  */
-HRESULT WINAPI GetBufferedPaintTargetRect(HPAINTBUFFER hBufferedPaint, RECT *prc)
+HRESULT WINAPI GetBufferedPaintTargetRect(HPAINTBUFFER bufferhandle, RECT *rect)
 {
-    FIXME("Stub (%p %p)\n", hBufferedPaint, prc);
-    return E_NOTIMPL;
+    struct paintbuffer *buffer = get_buffer_obj(bufferhandle);
+
+    TRACE("(%p %p)\n", buffer, rect);
+
+    if (!rect)
+        return E_POINTER;
+
+    if (!buffer)
+        return E_FAIL;
+
+    *rect = buffer->rect;
+    return S_OK;
 }
 
 /***********************************************************************

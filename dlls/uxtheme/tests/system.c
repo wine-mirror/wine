@@ -619,16 +619,20 @@ todo_wine
     hdc = pGetBufferedPaintTargetDC(buffer);
     ok(hdc == target, "Unexpected target hdc %p, original %p\n", hdc, target);
 
-    hr = pGetBufferedPaintTargetRect(buffer, NULL);
-todo_wine
+    hr = pGetBufferedPaintTargetRect(NULL, NULL);
     ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+
+    hr = pGetBufferedPaintTargetRect(buffer, NULL);
+    ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+
+    hr = pGetBufferedPaintTargetRect(NULL, &rect2);
+    ok(hr == E_FAIL, "Unexpected return code %#x\n", hr);
 
     SetRectEmpty(&rect2);
     hr = pGetBufferedPaintTargetRect(buffer, &rect2);
-todo_wine {
     ok(hr == S_OK, "Unexpected return code %#x\n", hr);
     ok(EqualRect(&rect, &rect2), "Wrong target rect\n");
-}
+
     hr = pEndBufferedPaint(buffer, FALSE);
     ok(hr == S_OK, "Unexpected return code %#x\n", hr);
 
