@@ -4,3 +4,6 @@ IMPORTS   = ole32
 
 C_SRCS = \
 	main.c
+
+IDL_SRCS = \
+	comsvcs_tlb.idl
