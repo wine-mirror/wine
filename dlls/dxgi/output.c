@@ -268,7 +268,12 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_FindClosestMatchingMode(IDXGIOutput
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_WaitForVBlank(IDXGIOutput *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    static BOOL once = FALSE;
+
+    if (!once++)
+        FIXME("iface %p stub!\n", iface);
+    else
+        TRACE("iface %p stub!\n", iface);
 
     return E_NOTIMPL;
 }
