@@ -12776,18 +12776,18 @@ static void test_ps_cs_uav_binding(void)
     check_texture_float(ps_texture, 0.0f, 2);
     draw_quad(&test_context);
     todo_wine check_texture_float(cs_texture, 1.0f, 2);
-    todo_wine check_texture_float(ps_texture, 1.0f, 2);
+    check_texture_float(ps_texture, 1.0f, 2);
 
     input.x = 0.5f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cs_cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
     todo_wine check_texture_float(cs_texture, 0.5f, 2);
-    todo_wine check_texture_float(ps_texture, 1.0f, 2);
+    check_texture_float(ps_texture, 1.0f, 2);
     input.x = 2.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
     draw_quad(&test_context);
     todo_wine check_texture_float(cs_texture, 0.5f, 2);
-    todo_wine check_texture_float(ps_texture, 2.0f, 2);
+    check_texture_float(ps_texture, 2.0f, 2);
 
     input.x = 8.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cs_cb, 0, NULL, &input, 0, 0);
@@ -12795,10 +12795,10 @@ static void test_ps_cs_uav_binding(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
     todo_wine check_texture_float(cs_texture, 8.0f, 2);
-    todo_wine check_texture_float(ps_texture, 2.0f, 2);
+    check_texture_float(ps_texture, 2.0f, 2);
     draw_quad(&test_context);
     todo_wine check_texture_float(cs_texture, 8.0f, 2);
-    todo_wine check_texture_float(ps_texture, 4.0f, 2);
+    check_texture_float(ps_texture, 4.0f, 2);
 
     ID3D11ComputeShader_Release(cs);
     ID3D11PixelShader_Release(ps);

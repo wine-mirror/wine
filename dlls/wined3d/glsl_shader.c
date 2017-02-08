@@ -4922,7 +4922,7 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     if (resource_type >= ARRAY_SIZE(resource_type_info))
     {
         ERR("Unexpected resource type %#x.\n", resource_type);
-        resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
+        return;
     }
     data_type = reg_maps->uav_resource_info[uav_idx].data_type;
     coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
@@ -4966,6 +4966,38 @@ static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &image_coord_param);
     shader_addline(ins->ctx->buffer, "imageLoad(%s_image%u, %s)%s);\n",
             shader_glsl_get_prefix(version->type), uav_idx, image_coord_param.param_str, dst_swizzle);
+}
+
+static void shader_glsl_store_uav(const struct wined3d_shader_instruction *ins)
+{
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const struct wined3d_shader_version *version = &reg_maps->shader_version;
+    struct glsl_src_param image_coord_param, image_data_param;
+    enum wined3d_shader_resource_type resource_type;
+    enum wined3d_data_type data_type;
+    unsigned int uav_idx;
+    DWORD coord_mask;
+
+    uav_idx = ins->dst[0].reg.idx[0].offset;
+    if (uav_idx >= ARRAY_SIZE(reg_maps->uav_resource_info))
+    {
+        ERR("Invalid UAV index %u.\n", uav_idx);
+        return;
+    }
+    resource_type = reg_maps->uav_resource_info[uav_idx].type;
+    if (resource_type >= ARRAY_SIZE(resource_type_info))
+    {
+        ERR("Unexpected resource type %#x.\n", resource_type);
+        return;
+    }
+    data_type = reg_maps->uav_resource_info[uav_idx].data_type;
+    coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
+
+    shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &image_coord_param);
+    shader_glsl_add_src_param_ext(ins, &ins->src[1], WINED3DSP_WRITEMASK_ALL, &image_data_param, data_type);
+    shader_addline(ins->ctx->buffer, "imageStore(%s_image%u, %s, %s);\n",
+            shader_glsl_get_prefix(version->type), uav_idx,
+            image_coord_param.param_str, image_data_param.param_str);
 }
 
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
@@ -9094,7 +9126,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SQRT                             */ shader_glsl_map2gl,
     /* WINED3DSIH_STORE_RAW                        */ NULL,
     /* WINED3DSIH_STORE_STRUCTURED                 */ NULL,
-    /* WINED3DSIH_STORE_UAV_TYPED                  */ NULL,
+    /* WINED3DSIH_STORE_UAV_TYPED                  */ shader_glsl_store_uav,
     /* WINED3DSIH_SUB                              */ shader_glsl_binop,
     /* WINED3DSIH_SWAPC                            */ NULL,
     /* WINED3DSIH_SWITCH                           */ shader_glsl_switch,
