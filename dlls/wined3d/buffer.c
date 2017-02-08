@@ -1353,10 +1353,15 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_resource_sub_resource_unmap,
 };
 
-static GLenum buffer_type_hint_from_bind_flags(unsigned int bind_flags)
+static GLenum buffer_type_hint_from_bind_flags(const struct wined3d_gl_info *gl_info,
+        unsigned int bind_flags)
 {
     if (bind_flags == WINED3D_BIND_INDEX_BUFFER)
         return GL_ELEMENT_ARRAY_BUFFER;
+
+    if (bind_flags & (WINED3D_BIND_SHADER_RESOURCE | WINED3D_BIND_UNORDERED_ACCESS)
+            && gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
+        return GL_TEXTURE_BUFFER;
 
     if (bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
         return GL_UNIFORM_BUFFER;
@@ -1395,7 +1400,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
         WARN("Failed to initialize resource, hr %#x.\n", hr);
         return hr;
     }
-    buffer->buffer_type_hint = buffer_type_hint_from_bind_flags(bind_flags);
+    buffer->buffer_type_hint = buffer_type_hint_from_bind_flags(gl_info, bind_flags);
     buffer->bind_flags = bind_flags;
     buffer->locations = WINED3D_LOCATION_SYSMEM;
 
