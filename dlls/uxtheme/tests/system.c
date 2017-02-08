@@ -614,7 +614,6 @@ todo_wine
 
     /* access buffer attributes */
     hdc = pGetBufferedPaintDC(buffer);
-todo_wine
     ok(hdc == src, "Unexpected hdc, %p, buffered dc %p\n", hdc, src);
 
     hdc = pGetBufferedPaintTargetDC(buffer);

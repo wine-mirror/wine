@@ -199,10 +199,13 @@ HRESULT WINAPI GetBufferedPaintBits(HPAINTBUFFER hBufferedPaint, RGBQUAD **ppbBu
 /***********************************************************************
  *      GetBufferedPaintDC                                 (UXTHEME.@)
  */
-HDC WINAPI GetBufferedPaintDC(HPAINTBUFFER hBufferedPaint)
+HDC WINAPI GetBufferedPaintDC(HPAINTBUFFER bufferhandle)
 {
-    FIXME("Stub (%p)\n", hBufferedPaint);
-    return NULL;
+    struct paintbuffer *buffer = get_buffer_obj(bufferhandle);
+
+    TRACE("(%p)\n", buffer);
+
+    return buffer ? buffer->memorydc : NULL;
 }
 
 /***********************************************************************
