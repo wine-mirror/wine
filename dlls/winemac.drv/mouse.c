@@ -206,7 +206,7 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
         DWORD size, ret;
 
         value[0] = 0;
-        size = sizeof(value) / sizeof(WCHAR);
+        size = sizeof(value);
         ret = RegQueryValueExW(key, name, NULL, NULL, (BYTE *)value, &size);
         RegCloseKey(key);
         if (!ret)
