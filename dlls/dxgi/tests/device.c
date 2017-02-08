@@ -303,20 +303,20 @@ static void compute_expected_swapchain_fullscreen_state_after_fullscreen_change_
     }
 }
 
-static IDXGIDevice *create_device(void)
+static IDXGIDevice *create_device(UINT flags)
 {
     IDXGIDevice *dxgi_device;
     ID3D10Device1 *device;
     HRESULT hr;
 
     if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL,
-            0, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
+            flags, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
         goto success;
     if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_WARP, NULL,
-            0, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
+            flags, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
         goto success;
     if (SUCCEEDED(D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL,
-            0, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
+            flags, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
         goto success;
 
     return NULL;
@@ -339,7 +339,7 @@ static void test_adapter_desc(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
@@ -407,7 +407,7 @@ static void test_check_interface_support(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
@@ -462,7 +462,7 @@ static void test_create_surface(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
@@ -508,7 +508,7 @@ static void test_parents(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
@@ -576,7 +576,7 @@ static void test_output(void)
     UINT mode_count, mode_count_comp, i;
     DXGI_MODE_DESC *modes;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
@@ -683,7 +683,7 @@ static void test_find_closest_matching_mode(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
@@ -867,13 +867,14 @@ static void test_create_swapchain(void)
     struct swapchain_fullscreen_state initial_state, expected_state;
     unsigned int  i, expected_width, expected_height;
     DXGI_SWAP_CHAIN_DESC creation_desc, result_desc;
+    IDXGIDevice *device, *bgra_device;
     ULONG refcount, expected_refcount;
+    IUnknown *obj, *obj2, *parent;
     RECT *expected_client_rect;
     IDXGISwapChain *swapchain;
-    IUnknown *obj, *parent;
+    IDXGISurface1 *surface;
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
-    IDXGIDevice *device;
     IDXGIOutput *target;
     BOOL fullscreen;
     HRESULT hr;
@@ -887,7 +888,7 @@ static void test_create_swapchain(void)
         { 0,  0,  TRUE, FALSE},
     };
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
@@ -1003,6 +1004,55 @@ static void test_create_swapchain(void)
     }
 
     check_window_fullscreen_state(creation_desc.OutputWindow, &initial_state.fullscreen_state);
+
+    /* Test GDI-compatible swapchain */
+    bgra_device = create_device(D3D10_CREATE_DEVICE_BGRA_SUPPORT);
+    ok(!!bgra_device, "Failed to create BGRA capable device.\n");
+
+    hr = IDXGIDevice_QueryInterface(bgra_device, &IID_IUnknown, (void **)&obj2);
+    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IUnknown.\n");
+
+    hr = IDXGIFactory_CreateSwapChain(factory, obj2, &creation_desc, &swapchain);
+    ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface1, (void **)&surface);
+    if (SUCCEEDED(hr))
+    {
+        HDC hdc;
+
+        hr = IDXGISurface1_GetDC(surface, FALSE, &hdc);
+        ok(FAILED(hr), "Expected GetDC() to fail, %#x\n", hr);
+
+        IDXGISurface1_Release(surface);
+        IDXGISwapChain_Release(swapchain);
+
+        creation_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        creation_desc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+
+        hr = IDXGIFactory_CreateSwapChain(factory, obj2, &creation_desc, &swapchain);
+        ok(SUCCEEDED(hr), "CreateSwapChain failed, hr %#x.\n", hr);
+
+        creation_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        creation_desc.Flags = 0;
+
+        hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface1, (void **)&surface);
+        ok(SUCCEEDED(hr), "Failed to get front buffer, hr %#x.\n", hr);
+
+        hr = IDXGISurface1_GetDC(surface, FALSE, &hdc);
+    todo_wine
+        ok(SUCCEEDED(hr), "Expected GetDC() to succeed, %#x\n", hr);
+        IDXGISurface1_ReleaseDC(surface, NULL);
+
+        IDXGISurface1_Release(surface);
+        IDXGISwapChain_Release(swapchain);
+    }
+    else
+    {
+        win_skip("IDXGISurface1 is not supported, skipping GetDC() tests.\n");
+        IDXGISwapChain_Release(swapchain);
+    }
+    IUnknown_Release(obj2);
+    IDXGIDevice_Release(bgra_device);
 
     creation_desc.Windowed = FALSE;
 
@@ -1231,7 +1281,7 @@ static void test_get_containing_output(void)
     HRESULT hr;
     BOOL ret;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
@@ -1585,7 +1635,7 @@ static void test_set_fullscreen(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
@@ -1678,7 +1728,7 @@ static void test_default_fullscreen_target_output(void)
     HRESULT hr;
     BOOL ret;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
@@ -1958,7 +2008,7 @@ static void test_resize_target(void)
         {{10, 10}, FALSE, TRUE,  DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH},
     };
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
@@ -2095,7 +2145,7 @@ static void test_inexact_modes(void)
         {799, 601},
     };
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
@@ -2333,13 +2383,13 @@ static void test_private_data(void)
         {0x9b, 0x4b, 0x89, 0xd7, 0xd1, 0x12, 0xe7, 0x2b}
     };
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
     }
 
-    test_object = create_device();
+    test_object = create_device(0);
 
     /* SetPrivateData with a pointer of NULL has the purpose of FreePrivateData in previous
      * d3d versions. A successful clear returns S_OK. A redundant clear S_FALSE. Setting a
@@ -2462,7 +2512,7 @@ static void test_swapchain_resize(void)
     HRESULT hr;
     BOOL ret;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
@@ -2832,7 +2882,7 @@ static void test_swapchain_parameters(void)
         {FALSE, 17, DXGI_SWAP_EFFECT_FLIP_DISCARD,    DXGI_ERROR_INVALID_CALL, DXGI_ERROR_INVALID_CALL,  0},
     };
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device, skipping tests.\n");
         return;
@@ -2953,7 +3003,7 @@ static void test_maximum_frame_latency(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
+    if (!(device = create_device(0)))
     {
         skip("Failed to create device.\n");
         return;
