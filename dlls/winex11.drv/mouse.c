@@ -967,7 +967,7 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     HKEY key;
     WCHAR *p, name[MAX_PATH * 2], valueW[64];
     char valueA[64];
-    DWORD size, ret;
+    DWORD ret;
 
     if (!info->szModName[0]) return 0;
 
@@ -982,7 +982,7 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver\Cursors */
     if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\X11 Driver\\Cursors", &key ))
     {
-        size = sizeof(valueW) / sizeof(WCHAR);
+        DWORD size = sizeof(valueW);
         ret = RegQueryValueExW( key, name, NULL, NULL, (BYTE *)valueW, &size );
         RegCloseKey( key );
         if (!ret)
