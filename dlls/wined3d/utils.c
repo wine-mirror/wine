@@ -5810,6 +5810,12 @@ const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *g
     };
     unsigned int i;
 
+    TRACE("gl_info %p, d3d_info %p, blit_op %#x, src_rect %s, src_usage %s, src_pool %s, src_format %s, "
+            "dst_rect %s, dst_usage %s, dst_pool %s, dst_format %s.\n", gl_info, d3d_info, blit_op,
+            wine_dbgstr_rect(src_rect), debug_d3dusage(src_usage), debug_d3dpool(src_pool),
+            src_format ? debug_d3dformat(src_format->id) : "(null)", wine_dbgstr_rect(dst_rect),
+            debug_d3dusage(dst_usage), debug_d3dpool(dst_pool), debug_d3dformat(dst_format->id));
+
     for (i = 0; i < sizeof(blitters) / sizeof(*blitters); ++i)
     {
         if (blitters[i]->blit_supported(gl_info, d3d_info, blit_op,
