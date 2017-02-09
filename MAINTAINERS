@@ -134,12 +134,6 @@ F:	dlls/hid/
 F:	dlls/hidclass.sys/
 F:	dlls/winehid.sys/
 
-HTML rendering (Gecko)
-M:	Jacek Caban <jacek@codeweavers.com>
-F:	dlls/ieframe/
-F:	dlls/mshtml/
-F:	dlls/shdocvw/
-
 Input methods
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/imm32/
@@ -242,9 +236,23 @@ Uniscribe
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/usp10/
 
+URL Moniker
+M:	Jacek Caban <jacek@codeweavers.com>
+F:	dlls/urlmon/
+
+VBScript
+M:	Jacek Caban <jacek@codeweavers.com>
+F:	dlls/vbscript/
+
 Web Services
 M:	Hans Leidekker <hans@codeweavers.com>
 F:	dlls/webservices/
+
+WebBrowser control
+M:	Jacek Caban <jacek@codeweavers.com>
+F:	dlls/ieframe/
+F:	dlls/mshtml/
+F:	dlls/shdocvw/
 
 Windows Imaging Component
 M:	Vincent Povirk <vincent@codeweavers.com>
@@ -271,13 +279,13 @@ WinHTTP
 M:	Hans Leidekker <hans@codeweavers.com>
 F:	dlls/winhttp/
 
+WinINet
+P:	Jacek Caban <jacek@codeweavers.com>
+F:	dlls/wininet/
+
 WPcap
 M:	André Hentschel <nerv@dawncrow.de>
 F:	dlls/wpcap/
-
-VB Script
-M:	Jacek Caban <jacek@codeweavers.com>
-F:	dlls/vbscript/
 
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org>
@@ -294,6 +302,7 @@ M:	Alexandre Julliard <julliard@winehq.org>
 P:	Alex Henrie <alexhenrie24@gmail.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
+P:	Jacek Caban <jacek@codeweavers.com>
 P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Vincent Povirk <vincent@codeweavers.com>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
