@@ -3701,6 +3701,81 @@ static void test_backbuffer_resize(void)
     DestroyWindow(window);
 }
 
+static void test_format_unknown(void)
+{
+    IDirect3DDevice9Ex *device;
+    UINT refcount;
+    HWND window;
+    void *iface;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateRenderTarget(device, 64, 64,
+            D3DFMT_UNKNOWN, D3DMULTISAMPLE_NONE, 0, FALSE, (IDirect3DSurface9 **)&iface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateRenderTargetEx(device, 64, 64,
+            D3DFMT_UNKNOWN, D3DMULTISAMPLE_NONE, 0, FALSE, (IDirect3DSurface9 **)&iface, NULL, 0);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateDepthStencilSurface(device, 64, 64,
+            D3DFMT_UNKNOWN, D3DMULTISAMPLE_NONE, 0, TRUE, (IDirect3DSurface9 **)&iface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateDepthStencilSurfaceEx(device, 64, 64,
+            D3DFMT_UNKNOWN, D3DMULTISAMPLE_NONE, 0, TRUE, (IDirect3DSurface9 **)&iface, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 64, 64,
+            D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, (IDirect3DSurface9 **)&iface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurfaceEx(device, 64, 64,
+            D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, (IDirect3DSurface9 **)&iface, NULL, 9);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 64, 64, 1, 0,
+            D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, (IDirect3DTexture9 **)&iface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateCubeTexture(device, 64, 1, 0,
+            D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, (IDirect3DCubeTexture9 **)&iface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    iface = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9Ex_CreateVolumeTexture(device, 64, 64, 1, 1, 0,
+            D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, (IDirect3DVolumeTexture9 **)&iface, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
+
+    refcount = IDirect3DDevice9Ex_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(d3d9ex)
 {
     DEVMODEW current_mode;
@@ -3749,4 +3824,5 @@ START_TEST(d3d9ex)
     test_window_style();
     test_swapchain_parameters();
     test_backbuffer_resize();
+    test_format_unknown();
 }
