@@ -3560,6 +3560,11 @@ struct wined3d_pixel_shader
     DWORD color0_reg;
 };
 
+struct wined3d_compute_shader
+{
+    struct wined3d_shader_thread_group_size thread_group_size;
+};
+
 struct wined3d_shader
 {
     LONG ref;
@@ -3597,6 +3602,7 @@ struct wined3d_shader
         struct wined3d_vertex_shader vs;
         struct wined3d_geometry_shader gs;
         struct wined3d_pixel_shader ps;
+        struct wined3d_compute_shader cs;
     } u;
 };
 

@@ -1033,6 +1033,18 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         {
             reg_maps->temporary_count = ins.declaration.count;
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_THREAD_GROUP)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
+            {
+                shader->u.cs.thread_group_size = ins.declaration.thread_group_size;
+            }
+            else
+            {
+                FIXME("Invalid instruction %#x for shader type %#x.\n",
+                        ins.handler_idx, shader_version.type);
+            }
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)

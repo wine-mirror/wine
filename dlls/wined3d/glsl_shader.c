@@ -353,7 +353,8 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
 static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_info,
         const struct wined3d_shader_version *version)
 {
-    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT]
+            || (version && version->type == WINED3D_SHADER_TYPE_COMPUTE))
         return 150;
     else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30) && version && version->major >= 4)
         return 130;
@@ -6584,6 +6585,7 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *
         struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
         const struct wined3d_shader *shader)
 {
+    const struct wined3d_shader_thread_group_size *thread_group_size = &shader->u.cs.thread_group_size;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const DWORD *function = shader->function;
@@ -6601,6 +6603,10 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.string_buffers = string_buffers;
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    shader_addline(buffer, "layout(local_size_x = %u, local_size_y = %u, local_size_z = %u) in;\n",
+            thread_group_size->x, thread_group_size->y, thread_group_size->z);
+
     shader_addline(buffer, "void main()\n{\n");
     shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
     shader_addline(buffer, "}\n");
@@ -9203,7 +9209,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_TESSELLATOR_PARTITIONING     */ NULL,
     /* WINED3DSIH_DCL_TGSM_RAW                     */ NULL,
     /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ NULL,
-    /* WINED3DSIH_DCL_THREAD_GROUP                 */ NULL,
+    /* WINED3DSIH_DCL_THREAD_GROUP                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_UAV_RAW                      */ NULL,
     /* WINED3DSIH_DCL_UAV_STRUCTURED               */ NULL,
     /* WINED3DSIH_DCL_UAV_TYPED                    */ shader_glsl_nop,
