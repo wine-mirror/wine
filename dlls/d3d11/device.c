@@ -859,8 +859,15 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstancedIndirect(ID3D
 static void STDMETHODCALLTYPE d3d11_immediate_context_Dispatch(ID3D11DeviceContext *iface,
         UINT thread_group_count_x, UINT thread_group_count_y, UINT thread_group_count_z)
 {
-    FIXME("iface %p, thread_group_count_x %u, thread_group_count_y %u, thread_group_count_z %u stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, thread_group_count_x %u, thread_group_count_y %u, thread_group_count_z %u.\n",
             iface, thread_group_count_x, thread_group_count_y, thread_group_count_z);
+
+    wined3d_mutex_lock();
+    wined3d_device_dispatch_compute(device->wined3d_device,
+            thread_group_count_x, thread_group_count_y, thread_group_count_z);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_DispatchIndirect(ID3D11DeviceContext *iface,

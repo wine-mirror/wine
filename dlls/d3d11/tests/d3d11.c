@@ -12536,12 +12536,12 @@ static void test_cs_uav_store(void)
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(texture, 1.0f, 2);
+    check_texture_float(texture, 1.0f, 2);
 
     input.x = 0.5f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(texture, 0.5f, 2);
+    check_texture_float(texture, 0.5f, 2);
 
     ID3D11ComputeShader_Release(cs);
 
@@ -12549,19 +12549,19 @@ static void test_cs_uav_store(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_CSSetShader(context, NULL, NULL, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(texture, 0.5f, 2);
+    check_texture_float(texture, 0.5f, 2);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_1_group_code, sizeof(cs_1_group_code), NULL, &cs);
     ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(texture, 2.0f, 2);
+    check_texture_float(texture, 2.0f, 2);
 
     input.x = 4.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(texture, 4.0f, 2);
+    check_texture_float(texture, 4.0f, 2);
 
     ID3D11ComputeShader_Release(cs);
 
@@ -12572,17 +12572,17 @@ static void test_cs_uav_store(void)
     input.x = 1.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, texture_desc.Width, texture_desc.Height, 1);
-    todo_wine check_texture_float(texture, 1.0f, 2);
+    check_texture_float(texture, 1.0f, 2);
 
     input.x = 0.5f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 16, 32, 1);
     SetRect(&rect, 0, 0, 16, 32);
-    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 0.5f, 2);
+    check_texture_sub_resource_float(texture, 0, &rect, 0.5f, 2);
     SetRect(&rect, 0, 32, texture_desc.Width, texture_desc.Height);
-    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
+    check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
     SetRect(&rect, 16, 0, texture_desc.Width, texture_desc.Height);
-    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
+    check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
 
     ID3D11ComputeShader_Release(cs);
 
@@ -12594,16 +12594,16 @@ static void test_cs_uav_store(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 15, 15, 1);
     SetRect(&rect, 0, 0, 60, 60);
-    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 0.6f, 2);
+    check_texture_sub_resource_float(texture, 0, &rect, 0.6f, 2);
     SetRect(&rect, 0, 60, texture_desc.Width, texture_desc.Height);
-    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
+    check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
     SetRect(&rect, 60, 0, texture_desc.Width, texture_desc.Height);
-    todo_wine check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
+    check_texture_sub_resource_float(texture, 0, &rect, 1.0f, 2);
 
     input.x = 0.7f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 16, 16, 1);
-    todo_wine check_texture_float(texture, 0.7f, 2);
+    check_texture_float(texture, 0.7f, 2);
 
     ID3D11ComputeShader_Release(cs);
 
@@ -12614,12 +12614,12 @@ static void test_cs_uav_store(void)
     input.x = 0.3f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(texture, 0.3f, 2);
+    check_texture_float(texture, 0.3f, 2);
 
     input.x = 0.1f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 2, 2, 2);
-    todo_wine check_texture_float(texture, 0.1f, 2);
+    check_texture_float(texture, 0.1f, 2);
 
     ID3D11ComputeShader_Release(cs);
 
@@ -12772,21 +12772,21 @@ static void test_ps_cs_uav_binding(void)
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(cs_texture, 1.0f, 2);
+    check_texture_float(cs_texture, 1.0f, 2);
     check_texture_float(ps_texture, 0.0f, 2);
     draw_quad(&test_context);
-    todo_wine check_texture_float(cs_texture, 1.0f, 2);
+    check_texture_float(cs_texture, 1.0f, 2);
     check_texture_float(ps_texture, 1.0f, 2);
 
     input.x = 0.5f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cs_cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(cs_texture, 0.5f, 2);
+    check_texture_float(cs_texture, 0.5f, 2);
     check_texture_float(ps_texture, 1.0f, 2);
     input.x = 2.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
     draw_quad(&test_context);
-    todo_wine check_texture_float(cs_texture, 0.5f, 2);
+    check_texture_float(cs_texture, 0.5f, 2);
     check_texture_float(ps_texture, 2.0f, 2);
 
     input.x = 8.0f;
@@ -12794,10 +12794,10 @@ static void test_ps_cs_uav_binding(void)
     input.x = 4.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)ps_cb, 0, NULL, &input, 0, 0);
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
-    todo_wine check_texture_float(cs_texture, 8.0f, 2);
+    check_texture_float(cs_texture, 8.0f, 2);
     check_texture_float(ps_texture, 2.0f, 2);
     draw_quad(&test_context);
-    todo_wine check_texture_float(cs_texture, 8.0f, 2);
+    check_texture_float(cs_texture, 8.0f, 2);
     check_texture_float(ps_texture, 4.0f, 2);
 
     ID3D11ComputeShader_Release(cs);
