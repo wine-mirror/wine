@@ -207,6 +207,12 @@ struct glsl_ps_program
     const struct ps_np2fixup_info *np2_fixup_info;
 };
 
+struct glsl_cs_program
+{
+    struct list shader_entry;
+    GLuint id;
+};
+
 /* Struct to maintain data about a linked GLSL program */
 struct glsl_shader_prog_link
 {
@@ -214,6 +220,7 @@ struct glsl_shader_prog_link
     struct glsl_vs_program vs;
     struct glsl_gs_program gs;
     struct glsl_ps_program ps;
+    struct glsl_cs_program cs;
     GLuint id;
     DWORD constant_update_mask;
     UINT constant_version;
@@ -224,6 +231,7 @@ struct glsl_program_key
     GLuint vs_id;
     GLuint gs_id;
     GLuint ps_id;
+    GLuint cs_id;
 };
 
 struct shader_glsl_ctx_priv {
@@ -258,6 +266,11 @@ struct glsl_gs_compiled_shader
     GLuint id;
 };
 
+struct glsl_cs_compiled_shader
+{
+    GLuint id;
+};
+
 struct glsl_shader_private
 {
     union
@@ -265,6 +278,7 @@ struct glsl_shader_private
         struct glsl_vs_compiled_shader *vs;
         struct glsl_gs_compiled_shader *gs;
         struct glsl_ps_compiled_shader *ps;
+        struct glsl_cs_compiled_shader *cs;
     } gl_shaders;
     UINT num_gl_shaders, shader_array_size;
 };
@@ -5774,6 +5788,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
     key.vs_id = entry->vs.id;
     key.gs_id = entry->gs.id;
     key.ps_id = entry->ps.id;
+    key.cs_id = entry->cs.id;
 
     if (wine_rb_put(&priv->program_lookup, &key, &entry->program_lookup_entry) == -1)
     {
@@ -5782,16 +5797,11 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(const struct shader_glsl_priv *priv,
-        GLuint vs_id, GLuint gs_id, GLuint ps_id)
+        const struct glsl_program_key *key)
 {
     struct wine_rb_entry *entry;
-    struct glsl_program_key key;
 
-    key.vs_id = vs_id;
-    key.gs_id = gs_id;
-    key.ps_id = ps_id;
-
-    entry = wine_rb_get(&priv->program_lookup, &key);
+    entry = wine_rb_get(&priv->program_lookup, key);
     return entry ? WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry) : NULL;
 }
 
@@ -5808,6 +5818,8 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
         list_remove(&entry->gs.shader_entry);
     if (entry->ps.id)
         list_remove(&entry->ps.shader_entry);
+    if (entry->cs.id)
+        list_remove(&entry->cs.shader_entry);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -6559,11 +6571,44 @@ static void shader_glsl_generate_shader_epilogue(const struct wined3d_shader_con
             shader_glsl_generate_vs_epilogue(gl_info, ctx->buffer, shader, priv->cur_vs_args);
             break;
         case WINED3D_SHADER_TYPE_GEOMETRY:
+        case WINED3D_SHADER_TYPE_COMPUTE:
             break;
         default:
             FIXME("Unhandled shader type %#x.\n", shader->reg_maps.shader_version.type);
             break;
     }
+}
+
+/* Context activation is done by the caller. */
+static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *context,
+        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
+        const struct wined3d_shader *shader)
+{
+    const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const DWORD *function = shader->function;
+    struct shader_glsl_ctx_priv priv_ctx;
+    GLuint shader_id;
+
+    shader_id = GL_EXTCALL(glCreateShader(GL_COMPUTE_SHADER));
+
+    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
+
+    shader_glsl_enable_extensions(buffer, gl_info);
+    if (gl_info->supported[ARB_COMPUTE_SHADER])
+        shader_addline(buffer, "#extension GL_ARB_compute_shader : enable\n");
+
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.string_buffers = string_buffers;
+    shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+    shader_addline(buffer, "void main()\n{\n");
+    shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
+    shader_addline(buffer, "}\n");
+
+    TRACE("Compiling shader object %u.\n", shader_id);
+    shader_glsl_compile(gl_info, shader_id, buffer->buffer);
+
+    return shader_id;
 }
 
 static GLuint find_glsl_pshader(const struct wined3d_context *context,
@@ -6776,6 +6821,46 @@ static GLuint find_glsl_geometry_shader(const struct wined3d_context *context,
     string_buffer_clear(&priv->shader_buffer);
     ret = shader_glsl_generate_geometry_shader(context, priv, shader, args);
     gl_shaders[shader_data->num_gl_shaders].args = *args;
+    gl_shaders[shader_data->num_gl_shaders++].id = ret;
+
+    return ret;
+}
+
+static GLuint find_glsl_compute_shader(const struct wined3d_context *context,
+        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
+        struct wined3d_shader *shader)
+{
+    struct glsl_cs_compiled_shader *gl_shaders;
+    struct glsl_shader_private *shader_data;
+    GLuint ret;
+
+    if (!shader->backend_data)
+    {
+        if (!(shader->backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data))))
+        {
+            ERR("Failed to allocate backend data.\n");
+            return 0;
+        }
+    }
+    shader_data = shader->backend_data;
+    gl_shaders = shader_data->gl_shaders.cs;
+
+    /* No shader variants are used for compute shaders. */
+    if (shader_data->num_gl_shaders)
+        return gl_shaders[0].id;
+
+    TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
+
+    if (!(shader_data->gl_shaders.cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_shaders))))
+    {
+        ERR("Failed to allocate GL shader array.\n");
+        return 0;
+    }
+    shader_data->shader_array_size = 1;
+    gl_shaders = shader_data->gl_shaders.cs;
+
+    string_buffer_clear(buffer);
+    ret = shader_glsl_generate_compute_shader(context, buffer, string_buffers, shader);
     gl_shaders[shader_data->num_gl_shaders++].id = ret;
 
     return ret;
@@ -8102,6 +8187,73 @@ static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info
 }
 
 /* Context activation is done by the caller. */
+static void set_glsl_compute_shader_program(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct glsl_shader_prog_link *entry = NULL;
+    struct wined3d_shader *shader;
+    struct glsl_program_key key;
+    GLuint program_id, cs_id;
+
+    if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_COMPUTE)))
+        return;
+
+    if (!(shader = state->shader[WINED3D_SHADER_TYPE_COMPUTE]))
+    {
+        WARN("Compute shader is NULL.\n");
+        ctx_data->glsl_program = NULL;
+        return;
+    }
+
+    cs_id = find_glsl_compute_shader(context, &priv->shader_buffer, &priv->string_buffers, shader);
+    memset(&key, 0, sizeof(key));
+    key.cs_id = cs_id;
+    if ((entry = get_glsl_program_entry(priv, &key)))
+    {
+        ctx_data->glsl_program = entry;
+        return;
+    }
+
+    program_id = GL_EXTCALL(glCreateProgram());
+    TRACE("Created new GLSL shader program %u.\n", program_id);
+
+    if (!(entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry))))
+    {
+        ERR("Out of memory.\n");
+        return;
+    }
+    entry->id = program_id;
+    entry->vs.id = 0;
+    entry->gs.id = 0;
+    entry->ps.id = 0;
+    entry->cs.id = cs_id;
+    entry->constant_version = 0;
+    entry->ps.np2_fixup_info = NULL;
+    add_glsl_program_entry(priv, entry);
+
+    ctx_data->glsl_program = entry;
+
+    TRACE("Attaching GLSL shader object %u to program %u.\n", cs_id, program_id);
+    GL_EXTCALL(glAttachShader(program_id, cs_id));
+    checkGLcall("glAttachShader");
+
+    list_add_head(&shader->linked_programs, &entry->cs.shader_entry);
+
+    TRACE("Linking GLSL shader program %u.\n", program_id);
+    GL_EXTCALL(glLinkProgram(program_id));
+    shader_glsl_validate_link(gl_info, program_id);
+
+    GL_EXTCALL(glUseProgram(program_id));
+    checkGLcall("glUseProgram");
+    shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &shader->reg_maps);
+    shader_glsl_load_icb(gl_info, priv, program_id, &shader->reg_maps);
+    shader_glsl_load_images(gl_info, priv, program_id, &shader->reg_maps);
+
+    entry->constant_update_mask = 0;
+}
+
+/* Context activation is done by the caller. */
 static void set_glsl_shader_program(const struct wined3d_context *context, const struct wined3d_state *state,
         struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
 {
@@ -8112,8 +8264,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     struct wined3d_shader *vshader = NULL;
     struct wined3d_shader *gshader = NULL;
     struct wined3d_shader *pshader = NULL;
-    GLuint program_id;
     GLuint reorder_shader_id = 0;
+    struct glsl_program_key key;
+    GLuint program_id;
     unsigned int i;
     GLuint vs_id = 0;
     GLuint gs_id = 0;
@@ -8209,7 +8362,11 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         ps_list = &ffp_shader->linked_programs;
     }
 
-    if ((!vs_id && !gs_id && !ps_id) || (entry = get_glsl_program_entry(priv, vs_id, gs_id, ps_id)))
+    key.vs_id = vs_id;
+    key.gs_id = gs_id;
+    key.ps_id = ps_id;
+    key.cs_id = 0;
+    if ((!vs_id && !gs_id && !ps_id) || (entry = get_glsl_program_entry(priv, &key)))
     {
         ctx_data->glsl_program = entry;
         return;
@@ -8225,6 +8382,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     entry->vs.id = vs_id;
     entry->gs.id = gs_id;
     entry->ps.id = ps_id;
+    entry->cs.id = 0;
     entry->constant_version = 0;
     entry->ps.np2_fixup_info = np2fixup_info;
     /* Add the hash table entry */
@@ -8521,13 +8679,36 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
         if (program_id)
             context->constant_update_mask |= ctx_data->glsl_program->constant_update_mask;
     }
+
+    context->shader_update_mask |= (1u << WINED3D_SHADER_TYPE_COMPUTE);
 }
 
 /* Context activation is done by the caller. */
 static void shader_glsl_select_compute(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    FIXME("Compute pipeline not supported yet.\n");
+    struct glsl_context_data *ctx_data = context->shader_backend_data;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct shader_glsl_priv *priv = shader_priv;
+    GLuint program_id, prev_id;
+
+    prev_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
+    set_glsl_compute_shader_program(context, state, priv, ctx_data);
+    program_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
+
+    TRACE("Using GLSL program %u.\n", program_id);
+
+    if (prev_id != program_id)
+    {
+        GL_EXTCALL(glUseProgram(program_id));
+        checkGLcall("glUseProgram");
+    }
+
+    context->shader_update_mask |= (1u << WINED3D_SHADER_TYPE_PIXEL)
+            | (1u << WINED3D_SHADER_TYPE_VERTEX)
+            | (1u << WINED3D_SHADER_TYPE_GEOMETRY)
+            | (1u << WINED3D_SHADER_TYPE_HULL)
+            | (1u << WINED3D_SHADER_TYPE_DOMAIN);
 }
 
 /* "context" is not necessarily the currently active context. */
@@ -8677,6 +8858,28 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 break;
             }
 
+            case WINED3D_SHADER_TYPE_COMPUTE:
+            {
+                struct glsl_cs_compiled_shader *gl_shaders = shader_data->gl_shaders.cs;
+
+                for (i = 0; i < shader_data->num_gl_shaders; ++i)
+                {
+                    TRACE("Deleting compute shader %u.\n", gl_shaders[i].id);
+                    GL_EXTCALL(glDeleteShader(gl_shaders[i].id));
+                    checkGLcall("glDeleteShader");
+                }
+                HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.cs);
+
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs,
+                        struct glsl_shader_prog_link, cs.shader_entry)
+                {
+                    shader_glsl_invalidate_contexts_program(device, entry);
+                    delete_glsl_program_entry(priv, gl_info, entry);
+                }
+
+                break;
+            }
+
             default:
                 ERR("Unhandled shader type %#x.\n", shader->reg_maps.shader_version.type);
                 break;
@@ -8703,6 +8906,9 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
 
     if (k->ps_id > prog->ps.id) return 1;
     else if (k->ps_id < prog->ps.id) return -1;
+
+    if (k->cs_id > prog->cs.id) return 1;
+    else if (k->cs_id < prog->cs.id) return -1;
 
     return 0;
 }
