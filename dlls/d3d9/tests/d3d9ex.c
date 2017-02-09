@@ -3739,7 +3739,7 @@ static void test_format_unknown(void)
     hr = IDirect3DDevice9Ex_CreateDepthStencilSurfaceEx(device, 64, 64,
             D3DFMT_UNKNOWN, D3DMULTISAMPLE_NONE, 0, TRUE, (IDirect3DSurface9 **)&iface, NULL, 0);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(!iface, "Got unexpected iface %p.\n", iface);
+    ok(!iface, "Got unexpected iface %p.\n", iface);
 
     iface = (void *)0xdeadbeef;
     hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 64, 64,

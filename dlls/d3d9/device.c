@@ -3474,6 +3474,7 @@ static HRESULT WINAPI d3d9_device_CreateDepthStencilSurfaceEx(IDirect3DDevice9Ex
     if (discard)
         flags |= WINED3D_TEXTURE_CREATE_DISCARD;
 
+    *surface = NULL;
     return d3d9_device_create_surface(device, width, height, format, flags, surface,
             D3DUSAGE_DEPTHSTENCIL | usage, D3DPOOL_DEFAULT, multisample_type, multisample_quality, NULL);
 }
