@@ -28,14 +28,52 @@
 
 #include "dpnet_test.h"
 
+static IDirectPlay8Server* server = NULL;
 static IDirectPlay8Peer* peer = NULL;
 static IDirectPlay8Client* client = NULL;
 static IDirectPlay8LobbiedApplication* lobbied = NULL;
 static const GUID appguid = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa5 } };
+static const WCHAR localhost[] = {'1','2','7','.','0','.','0','.','1',0};
+
+static HRESULT   lastAsyncCode   = E_FAIL;
+static DPNHANDLE lastAsyncHandle = 0xdeadbeef;
+static HANDLE    enumevent       = NULL;
+static int       handlecnt       = 0;
+
+static HRESULT WINAPI DirectPlayServerHandler(void *context, DWORD message_id, void *buffer)
+{
+    switch(message_id)
+    {
+        case DPN_MSGID_CREATE_PLAYER:
+        case DPN_MSGID_DESTROY_PLAYER:
+            /* These are tested in the server test */
+            break;
+        default:
+            trace("DirectPlayServerHandler: 0x%08x\n", message_id);
+    }
+    return S_OK;
+}
 
 static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, PVOID buffer)
 {
-    trace("DirectPlayMessageHandler: 0x%08x\n", message_id);
+    switch(message_id)
+    {
+        case DPN_MSGID_ENUM_HOSTS_RESPONSE:
+            handlecnt++;
+            if(handlecnt >= 2)
+                SetEvent(enumevent);
+            break;
+        case DPN_MSGID_ASYNC_OP_COMPLETE:
+        {
+            DPNMSG_ASYNC_OP_COMPLETE *async_msg = (DPNMSG_ASYNC_OP_COMPLETE*)buffer;
+            lastAsyncCode   = async_msg->hResultCode;
+            lastAsyncHandle = async_msg->hAsyncOp;
+            break;
+        }
+        default:
+            trace("DirectPlayMessageHandler: 0x%08x\n", message_id);
+    }
+
     return S_OK;
 }
 
@@ -51,14 +89,44 @@ static HRESULT WINAPI DirectPlayLobbyClientMessageHandler(void *context, DWORD m
     return S_OK;
 }
 
+static void create_server(void)
+{
+    static WCHAR sessionname[] = {'w','i','n','e','g','a','m','e','s','s','e','r','v','e','r',0};
+    HRESULT hr;
+    IDirectPlay8Address *localaddr = NULL;
+    DPN_APPLICATION_DESC appdesc;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Server, NULL, CLSCTX_ALL, &IID_IDirectPlay8Server, (void **)&server);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Server object\n");
+
+    hr = IDirectPlay8Server_Initialize(server, NULL, DirectPlayServerHandler, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL,  CLSCTX_ALL, &IID_IDirectPlay8Address, (void **)&localaddr);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Address object\n");
+
+    hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
+    appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
+    appdesc.dwFlags = DPNSESSION_CLIENT_SERVER;
+    appdesc.guidApplication  = appguid;
+    appdesc.pwszSessionName  = sessionname;
+
+    hr = IDirectPlay8Server_Host(server, &appdesc, &localaddr, 1, NULL, NULL, NULL, 0);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDirectPlay8Address_Release(localaddr);
+}
+
 static BOOL test_init_dp(void)
 {
     HRESULT hr;
     DPN_SP_CAPS caps;
     DPNHANDLE lobbyConnection;
 
-    hr = CoInitialize(0);
-    ok(hr == S_OK, "CoInitialize failed with %x\n", hr);
+    enumevent = CreateEventA( NULL, TRUE, FALSE, NULL);
 
     hr = CoCreateInstance(&CLSID_DirectPlay8Client, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Client, (void **)&client);
     ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
@@ -148,15 +216,20 @@ static void test_enum_service_providers(void)
 static void test_enum_hosts(void)
 {
     HRESULT hr;
+    IDirectPlay8Client *client2;
     IDirectPlay8Address *host = NULL;
     IDirectPlay8Address *local = NULL;
     DPN_APPLICATION_DESC appdesc;
-    DPNHANDLE async = 0;
-    static const WCHAR localhost[] = {'1','2','7','.','0','.','0','.','1',0};
+    DPNHANDLE async = 0, async2 = 0;
+    DPN_SP_CAPS caps;
+    char *data;
 
     memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
     appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
     appdesc.guidApplication  = appguid;
+
+    hr = CoCreateInstance(&CLSID_DirectPlay8Client, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Client, (void **)&client2);
+    ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
 
     hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&local);
     ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
@@ -174,16 +247,69 @@ static void test_enum_hosts(void)
                                                          DPNA_DATATYPE_STRING);
     ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
 
-    /* Since we are running asynchronously, EnumHosts returns DPNSUCCESS_PENDING. */
-    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
-    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumServiceProviders failed with 0x%08x\n", hr);
+    caps.dwSize = sizeof(DPN_SP_CAPS);
+
+    hr = IDirectPlay8Client_GetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "got %x\n", hr);
+    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, caps.dwMaxEnumPayloadSize + 1);
+
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, 2, 1000, 1000, NULL,  &async, DPNENUMHOSTS_SYNC);
+    todo_wine ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, data, caps.dwMaxEnumPayloadSize + 1,
+                                        INFINITE, 0, INFINITE, NULL,  &async, DPNENUMHOSTS_SYNC);
+    todo_wine ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
+    async = 0;
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, data, caps.dwMaxEnumPayloadSize + 1, INFINITE, 0,
+                                        INFINITE, NULL,  &async, 0);
+    todo_wine ok(hr == DPNERR_ENUMQUERYTOOLARGE, "got 0x%08x\n", hr);
+    ok(!async, "Handle returned\n");
+
+    async = 0;
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, data, caps.dwMaxEnumPayloadSize, INFINITE, 0, INFINITE,
+                                        NULL,  &async, 0);
+    todo_wine ok(hr == DPNSUCCESS_PENDING, "got 0x%08x\n", hr);
     todo_wine ok(async, "No Handle returned\n");
 
+    /* This CancelAsyncOperation doesn't generate a DPN_MSGID_ASYNC_OP_COMPLETE */
+    hr = IDirectPlay8Client_CancelAsyncOperation(client, async, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    HeapFree(GetProcessHeap(), 0, data);
+
+    /* No Initialize has been called on client2. */
+    hr = IDirectPlay8Client_EnumHosts(client2, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
+    todo_wine ok(hr == DPNERR_UNINITIALIZED, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
+
+    /* Since we are running asynchronously, EnumHosts returns DPNSUCCESS_PENDING. */
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
+    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
+    todo_wine ok(async, "No Handle returned\n");
+
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async2, 0);
+    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
+    todo_wine ok(async2, "No Handle returned\n");
+    todo_wine ok(async2 != async, "Same handle returned.\n");
+
+    WaitForSingleObject(enumevent, 1000);
+
+    lastAsyncCode = E_FAIL;
+    lastAsyncHandle = 0xdeadbeef;
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async, 0);
     ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08x\n", hr);
+    todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08x\n", lastAsyncCode);
+    todo_wine ok(lastAsyncHandle == async, "got 0x%08x\n", async);
+
+    lastAsyncCode = E_FAIL;
+    lastAsyncHandle = 0xdeadbeef;
+    hr = IDirectPlay8Client_CancelAsyncOperation(client, async2, 0);
+    ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08x\n", hr);
+    todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08x\n", lastAsyncCode);
+    todo_wine ok(lastAsyncHandle == async2, "got 0x%08x\n", async2);
 
     IDirectPlay8Address_Release(local);
     IDirectPlay8Address_Release(host);
+    IDirectPlay8Client_Release(client2);
 }
 
 static void test_get_sp_caps(void)
@@ -319,8 +445,6 @@ static void test_cleanup_dp(void)
     }
 
     IDirectPlay8Client_Release(client);
-
-    CoUninitialize();
 }
 
 static void test_close(void)
@@ -355,9 +479,6 @@ static void test_init_dp_peer(void)
     HRESULT hr;
     DPN_SP_CAPS caps;
     DPNHANDLE lobbyConnection;
-
-    hr = CoInitialize(0);
-    ok(hr == S_OK, "CoInitialize failed with %x\n", hr);
 
     hr = CoCreateInstance(&CLSID_DirectPlay8Peer, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Peer, (void **)&peer);
     ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
@@ -459,7 +580,6 @@ static void test_enum_hosts_peer(void)
     IDirectPlay8Address *local = NULL;
     DPN_APPLICATION_DESC appdesc;
     DPNHANDLE async = 0;
-    static const WCHAR localhost[] = {'1','2','7','.','0','.','0','.','1',0};
 
     memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
     appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
@@ -606,13 +726,12 @@ static void test_cleanup_dp_peer(void)
     }
 
     IDirectPlay8Peer_Release(peer);
-
-    CoUninitialize();
 }
 
 START_TEST(client)
 {
     BOOL firewall_enabled;
+    HRESULT hr;
     char path[MAX_PATH];
 
     if(!GetSystemDirectoryA(path, MAX_PATH))
@@ -636,7 +755,7 @@ START_TEST(client)
 
     if (firewall_enabled)
     {
-        HRESULT hr = set_firewall(APP_ADD);
+        hr = set_firewall(APP_ADD);
         if (hr != S_OK)
         {
             skip("can't authorize app in firewall %08x\n", hr);
@@ -644,7 +763,13 @@ START_TEST(client)
         }
     }
 
-    if (!test_init_dp()) goto done;
+    hr = CoInitialize(0);
+    ok(hr == S_OK, "CoInitialize failed with %x\n", hr);
+
+    if (!test_init_dp())
+        goto done;
+
+    create_server();
 
     test_enum_service_providers();
     test_enum_hosts();
@@ -661,6 +786,14 @@ START_TEST(client)
     test_player_info_peer();
     test_cleanup_dp_peer();
 
+    hr = IDirectPlay8Server_Close(server, 0);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDirectPlay8Server_Release(server);
+
+    CloseHandle(enumevent);
+
 done:
     if (firewall_enabled) set_firewall(APP_REMOVE);
+
+    CoUninitialize();
 }
