@@ -208,6 +208,8 @@
 
 #include "nls/ttt.nls"   /* 0x0444  LANG_TATAR, SUBLANG_DEFAULT */
 
+#include "nls/ben.nls"   /* 0x0445  LANG_BANGLA, SUBLANG_BANGLA_INDIA */
+
 #include "nls/pan.nls"   /* 0x0446  LANG_PUNJABI, SUBLANG_DEFAULT */
 
 #include "nls/guj.nls"   /* 0x0447  LANG_GUJARATI, SUBLANG_DEFAULT */

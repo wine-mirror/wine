@@ -45,6 +45,7 @@
 #define LANG_ARMENIAN       0x2b
 #define LANG_ASSAMESE       0x4d
 #define LANG_AZERI          0x2c
+#define LANG_BANGLA         0x45
 #define LANG_BASHKIR        0x6d
 #define LANG_BASQUE         0x2d
 #define LANG_BELARUSIAN     0x23
@@ -211,6 +212,8 @@
 #define SUBLANG_ASSAMESE_INDIA             0x01
 #define SUBLANG_AZERI_LATIN                0x01
 #define SUBLANG_AZERI_CYRILLIC             0x02
+#define SUBLANG_BANGLA_BANGLADESH          0x02
+#define SUBLANG_BANGLA_INDIA               0x01
 #define SUBLANG_BASHKIR_RUSSIA             0x01
 #define SUBLANG_BASQUE_BASQUE              0x01
 #define SUBLANG_BELARUSIAN_BELARUS         0x01
