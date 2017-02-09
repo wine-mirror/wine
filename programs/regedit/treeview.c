@@ -482,6 +482,7 @@ BOOL RefreshTreeView(HWND hwndTV)
 
     SendMessageW(hwndTV, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(hwndTV, NULL, FALSE);
+    SendMessageW(hwndTV, TVM_SORTCHILDREN, TRUE, (LPARAM)hSelectedItem);
     SetCursor(hcursorOld);
     
     /* We reselect the currently selected node, this will prompt a refresh of the listview. */
