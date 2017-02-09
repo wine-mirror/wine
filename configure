@@ -16711,7 +16711,13 @@ _ACEOF
 fi
 
 
-ac_fn_c_check_type "$LINENO" "struct __res_state" "ac_cv_type_struct___res_state" "#ifdef HAVE_RESOLV_H
+ac_fn_c_check_type "$LINENO" "struct __res_state" "ac_cv_type_struct___res_state" "#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_RESOLV_H
 #include <resolv.h>
 #endif
 "
