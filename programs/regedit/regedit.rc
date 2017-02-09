@@ -216,6 +216,8 @@ BEGIN
     IDS_DELETE_KEY_FAILED    "Unable to delete the selected registry key."
     IDS_RENAME_KEY_FAILED    "Unable to rename the selected registry key."
     IDS_RENAME_VALUE_FAILED  "Unable to rename the selected registry value."
+    IDS_IMPORT_SUCCESSFUL    "The keys and values contained in %1 were successfully added to the registry."
+    IDS_IMPORT_FAILED        "Unable to import %1. The specified file is not a valid registry file."
 END
 
 /*

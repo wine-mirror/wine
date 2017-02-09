@@ -360,8 +360,13 @@ static BOOL ImportRegistryFile(HWND hWnd)
     LoadStringW(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
     if (GetOpenFileNameW(&ofn)) {
-        if (!import_registry_filename(ofn.lpstrFile))
+        if (!import_registry_filename(ofn.lpstrFile)) {
+            messagebox(hWnd, MB_OK|MB_ICONERROR, IDS_APP_TITLE, IDS_IMPORT_FAILED, ofn.lpstrFile);
             return FALSE;
+        } else {
+            messagebox(hWnd, MB_OK|MB_ICONINFORMATION, IDS_APP_TITLE,
+                       IDS_IMPORT_SUCCESSFUL, ofn.lpstrFile);
+        }
     } else {
         CheckCommDlgError(hWnd);
     }

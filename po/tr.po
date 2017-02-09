@@ -67,8 +67,8 @@ msgstr "Destek Bilgisi"
 #: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
 #: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:161 oleview.rc:174
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
-#: progman.rc:199 progman.rc:216 regedit.rc:259 regedit.rc:270 regedit.rc:283
-#: regedit.rc:299 regedit.rc:312 regedit.rc:325 taskmgr.rc:442 taskmgr.rc:517
+#: progman.rc:199 progman.rc:216 regedit.rc:261 regedit.rc:272 regedit.rc:285
+#: regedit.rc:301 regedit.rc:314 regedit.rc:327 taskmgr.rc:442 taskmgr.rc:517
 #: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:128
 #: winefile.rc:151 winefile.rc:181 winemine.rc:71 winemine.rc:81 winemine.rc:95
 #: wordpad.rc:215 wordpad.rc:226 wordpad.rc:244 wordpad.rc:257
@@ -149,8 +149,8 @@ msgstr "&Yükle"
 #: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
-#: progman.rc:217 regedit.rc:260 regedit.rc:271 regedit.rc:284 regedit.rc:300
-#: regedit.rc:313 regedit.rc:326 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
+#: progman.rc:217 regedit.rc:262 regedit.rc:273 regedit.rc:286 regedit.rc:302
+#: regedit.rc:315 regedit.rc:328 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
 #: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:129
 #: winefile.rc:152 winefile.rc:182 winemine.rc:96 wordpad.rc:216 wordpad.rc:227
 #: wordpad.rc:245 wordpad.rc:258
@@ -390,7 +390,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Hiçbiri"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:249 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:251 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Kapat"
@@ -449,7 +449,7 @@ msgstr "Yazıcı:"
 msgid "Print range"
 msgstr "Yazdırma aralığı"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:231
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:233
 msgid "&All"
 msgstr "&Tümü"
 
@@ -619,7 +619,7 @@ msgstr "&Özel Renklere Ekle"
 msgid "&Define Custom Colors >>"
 msgstr "&Özel Renkleri Tanımla >>"
 
-#: comdlg32.rc:316 regedit.rc:238 regedit.rc:248
+#: comdlg32.rc:316 regedit.rc:240 regedit.rc:250
 msgid "Find"
 msgstr "Bul"
 
@@ -10889,7 +10889,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:335 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:337 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10909,7 +10909,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:336 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:338 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11768,83 +11768,83 @@ msgstr "Kayıt Defteri Düzenleyicisi &Hakkında"
 msgid "Modify Binary Data..."
 msgstr "İkili Değeri Değiştir..."
 
-#: regedit.rc:230
+#: regedit.rc:232
 msgid "Export registry"
 msgstr "Kayıt Defterini Ver"
 
-#: regedit.rc:232
+#: regedit.rc:234
 msgid "S&elected branch:"
 msgstr "S&eçilen kısım:"
 
-#: regedit.rc:241
+#: regedit.rc:243
 msgid "Find:"
 msgstr "Bul:"
 
-#: regedit.rc:243
+#: regedit.rc:245
 msgid "Find in:"
 msgstr "Konum:"
 
-#: regedit.rc:244
+#: regedit.rc:246
 msgid "Keys"
 msgstr "Anahtarlar"
 
-#: regedit.rc:245
+#: regedit.rc:247
 msgid "Value names"
 msgstr "Değer adları"
 
-#: regedit.rc:246
+#: regedit.rc:248
 msgid "Value content"
 msgstr "Değer içeriği"
 
-#: regedit.rc:247
+#: regedit.rc:249
 msgid "Whole string only"
 msgstr "Yalnızca tüm sözcükler"
 
-#: regedit.rc:254
+#: regedit.rc:256
 msgid "Add Favorite"
 msgstr "Sık Kullanılanlara Ekle"
 
-#: regedit.rc:257 regedit.rc:268
+#: regedit.rc:259 regedit.rc:270
 msgid "Name:"
 msgstr "Ad:"
 
-#: regedit.rc:265
+#: regedit.rc:267
 msgid "Remove Favorite"
 msgstr "Sık Kullanılanlardan Sil"
 
-#: regedit.rc:276
+#: regedit.rc:278
 msgid "Edit String"
 msgstr "Dizeyi Düzenle"
 
-#: regedit.rc:279 regedit.rc:292 regedit.rc:308 regedit.rc:321
+#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
 msgid "Value name:"
 msgstr "Değer adı:"
 
-#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
+#: regedit.rc:283 regedit.rc:296 regedit.rc:312 regedit.rc:325
 msgid "Value data:"
 msgstr "Değer verisi:"
 
-#: regedit.rc:289
+#: regedit.rc:291
 msgid "Edit DWORD"
 msgstr "DWORD Düzenle"
 
-#: regedit.rc:296
+#: regedit.rc:298
 msgid "Base"
 msgstr "Taban"
 
-#: regedit.rc:297
+#: regedit.rc:299
 msgid "Hexadecimal"
 msgstr "Onaltılı"
 
-#: regedit.rc:298
+#: regedit.rc:300
 msgid "Decimal"
 msgstr "Onlu"
 
-#: regedit.rc:305
+#: regedit.rc:307
 msgid "Edit Binary"
 msgstr "İkiliyi Düzenle"
 
-#: regedit.rc:318
+#: regedit.rc:320
 msgid "Edit Multi-String"
 msgstr "Çoklu Dizeyi Düzenle"
 
@@ -11946,7 +11946,22 @@ msgstr "Seçilen kayıt anahtarı yeniden adlandırılamıyor."
 msgid "Unable to rename the selected registry value."
 msgstr "Seçilen kayıt değeri yeniden adlandırılamıyor."
 
-#: regedit.rc:371
+#: regedit.rc:220
+msgid ""
+"The keys and values contained in %1 were successfully added to the registry."
+msgstr ""
+
+#: regedit.rc:221
+#, fuzzy
+#| msgid ""
+#| "Unable to rename the key '%1'.\n"
+#| "The specified key name already exists."
+msgid "Unable to import %1. The specified file is not a valid registry file."
+msgstr ""
+"'%1' anahtarı yeniden adlandırılamıyor.\n"
+"Belirtilen anahtar adı zaten var."
+
+#: regedit.rc:373
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12006,45 +12021,45 @@ msgstr ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
-#: regedit.rc:372
+#: regedit.rc:374
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 "regedit: Geçersiz veya bilinmeyen değişken [%1]\n"
 "\n"
 
-#: regedit.rc:373
+#: regedit.rc:375
 msgid "Type \"regedit /?\" for help.\n"
 msgstr "Yardım için \"regedit /?\" yazın.\n"
 
-#: regedit.rc:374
+#: regedit.rc:376
 msgid "regedit: No filename was specified.\n"
 msgstr "regedit: Dosya adı belirtilmemiş.\n"
 
-#: regedit.rc:375
+#: regedit.rc:377
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr "regedit: Kaldırmak için kayıt anahtarı belirtilmemiş.\n"
 
-#: regedit.rc:376
+#: regedit.rc:378
 msgid "regedit: The file '%1' was not found.\n"
 msgstr "regedit: '%1' dosyası bulunamadı.\n"
 
-#: regedit.rc:377
+#: regedit.rc:379
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "regedit: '%1' dosyası açılamıyor.\n"
 
-#: regedit.rc:378
+#: regedit.rc:380
 msgid "regedit: Unhandled action.\n"
 msgstr "regedit: İşlenmeyen eylem.\n"
 
-#: regedit.rc:379
+#: regedit.rc:381
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr "regedit: Yetersiz bellek! (%1!S!, satır %2!u!)\n"
 
-#: regedit.rc:380
+#: regedit.rc:382
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "regedit: Geçersiz onaltılık değer.\n"
 
-#: regedit.rc:381
+#: regedit.rc:383
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
@@ -12052,51 +12067,51 @@ msgstr ""
 "regedit: Onaltılık değeri çevirme başarısız. '%1''de geçersiz bir değerle "
 "karşılaşıldı.\n"
 
-#: regedit.rc:382
+#: regedit.rc:384
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 "regedit: Bilinmeyen kaçış sırası [\\%1!c!]\n"
 "\n"
 
-#: regedit.rc:383
+#: regedit.rc:385
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "regedit: Desteklenmeyen kayıt defteri veri türü [%1]\n"
 
-#: regedit.rc:384
+#: regedit.rc:386
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "regedit: '%1''de beklenmeyen satır sonu.\n"
 
-#: regedit.rc:385
+#: regedit.rc:387
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "regedit: '%1' satırı bilinmiyor.\n"
 
-#: regedit.rc:386
+#: regedit.rc:388
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "regedit: '%1' kayıt değeri, '%2''ye eklenemiyor.\n"
 
-#: regedit.rc:387
+#: regedit.rc:389
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: '%1' kayıt anahtarı açılamıyor.\n"
 
-#: regedit.rc:388
+#: regedit.rc:390
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr ""
 "regedit: Desteklenmeyen [%1] kayıt veri türüyle '%2''de karşılaşıldı.\n"
 
-#: regedit.rc:389
+#: regedit.rc:391
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: '%1' kayıt değeri ikili veri olarak dışa verilecek.\n"
 
-#: regedit.rc:390
+#: regedit.rc:392
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr "'%1''de yanlış kayıt sınıfı özelliği.\n"
 
-#: regedit.rc:391
+#: regedit.rc:393
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr "regedit: '%1' verilemiyor. Belirtilen kayıt anahtarı bulunamadı.\n"
 
-#: regedit.rc:392
+#: regedit.rc:394
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: '%1' kayıt sınıfı silinemiyor.\n"
 

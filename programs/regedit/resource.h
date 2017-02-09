@@ -159,6 +159,8 @@
 #define IDS_DELETE_KEY_FAILED           2015
 #define IDS_RENAME_KEY_FAILED           2016
 #define IDS_RENAME_VALUE_FAILED         2017
+#define IDS_IMPORT_SUCCESSFUL           2018
+#define IDS_IMPORT_FAILED               2019
 
 #define IDC_EXPORT_BASE                 100
 #define IDC_EXPORT_ALL                  101

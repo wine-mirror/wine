@@ -70,8 +70,8 @@ msgstr "Informazioni di supporto"
 #: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
 #: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:161 oleview.rc:174
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
-#: progman.rc:199 progman.rc:216 regedit.rc:259 regedit.rc:270 regedit.rc:283
-#: regedit.rc:299 regedit.rc:312 regedit.rc:325 taskmgr.rc:442 taskmgr.rc:517
+#: progman.rc:199 progman.rc:216 regedit.rc:261 regedit.rc:272 regedit.rc:285
+#: regedit.rc:301 regedit.rc:314 regedit.rc:327 taskmgr.rc:442 taskmgr.rc:517
 #: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:128
 #: winefile.rc:151 winefile.rc:181 winemine.rc:71 winemine.rc:81 winemine.rc:95
 #: wordpad.rc:215 wordpad.rc:226 wordpad.rc:244 wordpad.rc:257
@@ -154,8 +154,8 @@ msgstr "&Installa"
 #: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
-#: progman.rc:217 regedit.rc:260 regedit.rc:271 regedit.rc:284 regedit.rc:300
-#: regedit.rc:313 regedit.rc:326 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
+#: progman.rc:217 regedit.rc:262 regedit.rc:273 regedit.rc:286 regedit.rc:302
+#: regedit.rc:315 regedit.rc:328 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
 #: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:129
 #: winefile.rc:152 winefile.rc:182 winemine.rc:96 wordpad.rc:216 wordpad.rc:227
 #: wordpad.rc:245 wordpad.rc:258
@@ -407,7 +407,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Nessuno"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:249 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:251 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Chiudi"
@@ -466,7 +466,7 @@ msgstr "Stampante:"
 msgid "Print range"
 msgstr "Pagine da stampare"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:231
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:233
 msgid "&All"
 msgstr "&Tutti"
 
@@ -636,7 +636,7 @@ msgstr "&Aggiungi ai colori personalizzati"
 msgid "&Define Custom Colors >>"
 msgstr "&Definisci i colori personalizzati >>"
 
-#: comdlg32.rc:316 regedit.rc:238 regedit.rc:248
+#: comdlg32.rc:316 regedit.rc:240 regedit.rc:250
 msgid "Find"
 msgstr "Trova"
 
@@ -11148,7 +11148,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:335 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:337 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -11168,7 +11168,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:336 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:338 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -12040,83 +12040,83 @@ msgstr "&Informazioni sull'Editor di registro"
 msgid "Modify Binary Data..."
 msgstr "Modifica dati binari..."
 
-#: regedit.rc:230
+#: regedit.rc:232
 msgid "Export registry"
 msgstr "Esporta registro"
 
-#: regedit.rc:232
+#: regedit.rc:234
 msgid "S&elected branch:"
 msgstr "Ramo s&elezionato:"
 
-#: regedit.rc:241
+#: regedit.rc:243
 msgid "Find:"
 msgstr "Trova:"
 
-#: regedit.rc:243
+#: regedit.rc:245
 msgid "Find in:"
 msgstr "Trova in:"
 
-#: regedit.rc:244
+#: regedit.rc:246
 msgid "Keys"
 msgstr "Chiavi"
 
-#: regedit.rc:245
+#: regedit.rc:247
 msgid "Value names"
 msgstr "Nome (campo)"
 
-#: regedit.rc:246
+#: regedit.rc:248
 msgid "Value content"
 msgstr "Dati (campo)"
 
-#: regedit.rc:247
+#: regedit.rc:249
 msgid "Whole string only"
 msgstr "Solo stringhe intere"
 
-#: regedit.rc:254
+#: regedit.rc:256
 msgid "Add Favorite"
 msgstr "Aggiungi preferito"
 
-#: regedit.rc:257 regedit.rc:268
+#: regedit.rc:259 regedit.rc:270
 msgid "Name:"
 msgstr "Nome:"
 
-#: regedit.rc:265
+#: regedit.rc:267
 msgid "Remove Favorite"
 msgstr "Rimuovi preferito"
 
-#: regedit.rc:276
+#: regedit.rc:278
 msgid "Edit String"
 msgstr "Modifica stringa"
 
-#: regedit.rc:279 regedit.rc:292 regedit.rc:308 regedit.rc:321
+#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
 msgid "Value name:"
 msgstr "Nome del valore:"
 
-#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
+#: regedit.rc:283 regedit.rc:296 regedit.rc:312 regedit.rc:325
 msgid "Value data:"
 msgstr "Dati del valore:"
 
-#: regedit.rc:289
+#: regedit.rc:291
 msgid "Edit DWORD"
 msgstr "Modifica DWORD"
 
-#: regedit.rc:296
+#: regedit.rc:298
 msgid "Base"
 msgstr "Base"
 
-#: regedit.rc:297
+#: regedit.rc:299
 msgid "Hexadecimal"
 msgstr "Esadecimale"
 
-#: regedit.rc:298
+#: regedit.rc:300
 msgid "Decimal"
 msgstr "Decimale"
 
-#: regedit.rc:305
+#: regedit.rc:307
 msgid "Edit Binary"
 msgstr "Modifica binario"
 
-#: regedit.rc:318
+#: regedit.rc:320
 msgid "Edit Multi-String"
 msgstr "Modifica multi stringa"
 
@@ -12227,7 +12227,21 @@ msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
 msgid "Unable to rename the selected registry value."
 msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
 
-#: regedit.rc:371
+#: regedit.rc:220
+msgid ""
+"The keys and values contained in %1 were successfully added to the registry."
+msgstr ""
+
+#: regedit.rc:221
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "Unable to import %1. The specified file is not a valid registry file."
+msgstr ""
+"Errore: il sistema non è riuscito a trovare la chiave di registro o il "
+"valore specificati\n"
+
+#: regedit.rc:373
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12258,105 +12272,105 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
 
-#: regedit.rc:372
+#: regedit.rc:374
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: regedit.rc:373
+#: regedit.rc:375
 msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
-#: regedit.rc:374
+#: regedit.rc:376
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
 msgstr "Non è stato specificato nessun comando."
 
-#: regedit.rc:375
+#: regedit.rc:377
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: regedit.rc:376
+#: regedit.rc:378
 msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
-#: regedit.rc:377
+#: regedit.rc:379
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
 
-#: regedit.rc:378
+#: regedit.rc:380
 #, fuzzy
 #| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
 msgstr "Handle operazione non valido.\n"
 
-#: regedit.rc:379
+#: regedit.rc:381
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
-#: regedit.rc:380
+#: regedit.rc:382
 #, fuzzy
 #| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "Errore: nome della chiave non valido\n"
 
-#: regedit.rc:381
+#: regedit.rc:383
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: regedit.rc:382
+#: regedit.rc:384
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: regedit.rc:383
+#: regedit.rc:385
 #, fuzzy
 #| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Tipo non supportato.\n"
 
-#: regedit.rc:384
+#: regedit.rc:386
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
 
-#: regedit.rc:385
+#: regedit.rc:387
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "Non è stato specificato nessun comando."
 
-#: regedit.rc:386
+#: regedit.rc:388
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
 
-#: regedit.rc:387
+#: regedit.rc:389
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
 
-#: regedit.rc:388
+#: regedit.rc:390
 #, fuzzy
 #| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Tipo non supportato.\n"
 
-#: regedit.rc:389
+#: regedit.rc:391
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: regedit.rc:390
+#: regedit.rc:392
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:391
+#: regedit.rc:393
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
@@ -12366,7 +12380,7 @@ msgstr ""
 "Errore: il sistema non è riuscito a trovare la chiave di registro o il "
 "valore specificati\n"
 
-#: regedit.rc:392
+#: regedit.rc:394
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"

@@ -64,8 +64,8 @@ msgstr "지원 정보"
 #: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
 #: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:161 oleview.rc:174
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
-#: progman.rc:199 progman.rc:216 regedit.rc:259 regedit.rc:270 regedit.rc:283
-#: regedit.rc:299 regedit.rc:312 regedit.rc:325 taskmgr.rc:442 taskmgr.rc:517
+#: progman.rc:199 progman.rc:216 regedit.rc:261 regedit.rc:272 regedit.rc:285
+#: regedit.rc:301 regedit.rc:314 regedit.rc:327 taskmgr.rc:442 taskmgr.rc:517
 #: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:128
 #: winefile.rc:151 winefile.rc:181 winemine.rc:71 winemine.rc:81 winemine.rc:95
 #: wordpad.rc:215 wordpad.rc:226 wordpad.rc:244 wordpad.rc:257
@@ -146,8 +146,8 @@ msgstr "설치(&I)"
 #: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
-#: progman.rc:217 regedit.rc:260 regedit.rc:271 regedit.rc:284 regedit.rc:300
-#: regedit.rc:313 regedit.rc:326 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
+#: progman.rc:217 regedit.rc:262 regedit.rc:273 regedit.rc:286 regedit.rc:302
+#: regedit.rc:315 regedit.rc:328 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
 #: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:129
 #: winefile.rc:152 winefile.rc:182 winemine.rc:96 wordpad.rc:216 wordpad.rc:227
 #: wordpad.rc:245 wordpad.rc:258
@@ -388,7 +388,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "없음"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:249 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:251 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "닫기"
@@ -447,7 +447,7 @@ msgstr "프린터:"
 msgid "Print range"
 msgstr "인쇄 범위"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:231
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:233
 msgid "&All"
 msgstr "모두(&A)"
 
@@ -617,7 +617,7 @@ msgstr "사용자 정의 색상에 더하기(&A)"
 msgid "&Define Custom Colors >>"
 msgstr "사용자 정의 색상 결정(&D) >>"
 
-#: comdlg32.rc:316 regedit.rc:238 regedit.rc:248
+#: comdlg32.rc:316 regedit.rc:240 regedit.rc:250
 msgid "Find"
 msgstr "찾기"
 
@@ -11143,7 +11143,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:335 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:337 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -11163,7 +11163,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:336 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:338 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -12029,83 +12029,83 @@ msgstr "레지스트리 편집기 정보(&A)"
 msgid "Modify Binary Data..."
 msgstr "이진값 고치기..."
 
-#: regedit.rc:230
+#: regedit.rc:232
 msgid "Export registry"
 msgstr "레지스트리 불러오기"
 
-#: regedit.rc:232
+#: regedit.rc:234
 msgid "S&elected branch:"
 msgstr "선택된 부분만(&E):"
 
-#: regedit.rc:241
+#: regedit.rc:243
 msgid "Find:"
 msgstr "찾기:"
 
-#: regedit.rc:243
+#: regedit.rc:245
 msgid "Find in:"
 msgstr "찾기 옵션:"
 
-#: regedit.rc:244
+#: regedit.rc:246
 msgid "Keys"
 msgstr "키"
 
-#: regedit.rc:245
+#: regedit.rc:247
 msgid "Value names"
 msgstr "값 이름"
 
-#: regedit.rc:246
+#: regedit.rc:248
 msgid "Value content"
 msgstr "값 내용"
 
-#: regedit.rc:247
+#: regedit.rc:249
 msgid "Whole string only"
 msgstr "완전한 단어만 찾기"
 
-#: regedit.rc:254
+#: regedit.rc:256
 msgid "Add Favorite"
 msgstr "즐겨 찾기 추가"
 
-#: regedit.rc:257 regedit.rc:268
+#: regedit.rc:259 regedit.rc:270
 msgid "Name:"
 msgstr "이름:"
 
-#: regedit.rc:265
+#: regedit.rc:267
 msgid "Remove Favorite"
 msgstr "즐겨 찾기 제거"
 
-#: regedit.rc:276
+#: regedit.rc:278
 msgid "Edit String"
 msgstr "문자열 편집"
 
-#: regedit.rc:279 regedit.rc:292 regedit.rc:308 regedit.rc:321
+#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
 msgid "Value name:"
 msgstr "값 이름:"
 
-#: regedit.rc:281 regedit.rc:294 regedit.rc:310 regedit.rc:323
+#: regedit.rc:283 regedit.rc:296 regedit.rc:312 regedit.rc:325
 msgid "Value data:"
 msgstr "값 데이터:"
 
-#: regedit.rc:289
+#: regedit.rc:291
 msgid "Edit DWORD"
 msgstr "DWORD 편집"
 
-#: regedit.rc:296
+#: regedit.rc:298
 msgid "Base"
 msgstr "단위"
 
-#: regedit.rc:297
+#: regedit.rc:299
 msgid "Hexadecimal"
 msgstr "16 진수"
 
-#: regedit.rc:298
+#: regedit.rc:300
 msgid "Decimal"
 msgstr "10 진수"
 
-#: regedit.rc:305
+#: regedit.rc:307
 msgid "Edit Binary"
 msgstr "이진 값 편집"
 
-#: regedit.rc:318
+#: regedit.rc:320
 msgid "Edit Multi-String"
 msgstr "다중 문자열 편집"
 
@@ -12214,7 +12214,19 @@ msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니
 msgid "Unable to rename the selected registry value."
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
-#: regedit.rc:371
+#: regedit.rc:220
+msgid ""
+"The keys and values contained in %1 were successfully added to the registry."
+msgstr ""
+
+#: regedit.rc:221
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "Unable to import %1. The specified file is not a valid registry file."
+msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
+
+#: regedit.rc:373
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12245,105 +12257,105 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
 
-#: regedit.rc:372
+#: regedit.rc:374
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: regedit.rc:373
+#: regedit.rc:375
 msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
-#: regedit.rc:374
+#: regedit.rc:376
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
 msgstr "어떤 명령도 정의되지 않았습니다."
 
-#: regedit.rc:375
+#: regedit.rc:377
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: regedit.rc:376
+#: regedit.rc:378
 msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
-#: regedit.rc:377
+#: regedit.rc:379
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
-#: regedit.rc:378
+#: regedit.rc:380
 #, fuzzy
 #| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
 msgstr "올바르지 않은 핸들 작업.\n"
 
-#: regedit.rc:379
+#: regedit.rc:381
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
-#: regedit.rc:380
+#: regedit.rc:382
 #, fuzzy
 #| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "오류: 올바르지 않은 키 이름\n"
 
-#: regedit.rc:381
+#: regedit.rc:383
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: regedit.rc:382
+#: regedit.rc:384
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: regedit.rc:383
+#: regedit.rc:385
 #, fuzzy
 #| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "지원하지 않는 형식.\n"
 
-#: regedit.rc:384
+#: regedit.rc:386
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
-#: regedit.rc:385
+#: regedit.rc:387
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "어떤 명령도 정의되지 않았습니다."
 
-#: regedit.rc:386
+#: regedit.rc:388
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
-#: regedit.rc:387
+#: regedit.rc:389
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
-#: regedit.rc:388
+#: regedit.rc:390
 #, fuzzy
 #| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "지원하지 않는 형식.\n"
 
-#: regedit.rc:389
+#: regedit.rc:391
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: regedit.rc:390
+#: regedit.rc:392
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:391
+#: regedit.rc:393
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
@@ -12351,7 +12363,7 @@ msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
 
-#: regedit.rc:392
+#: regedit.rc:394
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
