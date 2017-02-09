@@ -1,5 +1,5 @@
 TESTDLL   = services.exe
-IMPORTS   = advapi32
+IMPORTS   = user32 advapi32
 
 C_SRCS = \
 	service.c
