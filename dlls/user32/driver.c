@@ -39,6 +39,8 @@ static USER_DRIVER null_driver, lazy_load_driver;
 const USER_DRIVER *USER_Driver = &lazy_load_driver;
 static char driver_load_error[80];
 
+static BOOL CDECL nodrv_CreateWindow( HWND hwnd );
+
 static HMODULE load_desktop_driver( HWND hwnd )
 {
     static const WCHAR display_device_guid_propW[] = {
@@ -151,6 +153,16 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SystemParametersInfo);
         GET_USER_FUNC(ThreadDetach);
 #undef GET_USER_FUNC
+    }
+    else
+    {
+        USEROBJECTFLAGS flags;
+        HWINSTA winstation;
+
+        winstation = GetProcessWindowStation();
+        if (!GetUserObjectInformationA(winstation, UOI_FLAGS, &flags, sizeof(flags), NULL)
+            || (flags.dwFlags & WSF_VISIBLE))
+            driver->pCreateWindow = nodrv_CreateWindow;
     }
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );
@@ -360,7 +372,7 @@ static BOOL CDECL nulldrv_CreateDesktopWindow( HWND hwnd )
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
+static BOOL CDECL nodrv_CreateWindow( HWND hwnd )
 {
     static int warned;
     HWND parent = GetAncestor( hwnd, GA_PARENT );
@@ -372,6 +384,11 @@ static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
     ERR_(winediag)( "Application tried to create a window, but no driver could be loaded.\n" );
     if (driver_load_error[0]) ERR_(winediag)( "%s\n", driver_load_error );
     return FALSE;
+}
+
+static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
+{
+    return TRUE;
 }
 
 static void CDECL nulldrv_DestroyWindow( HWND hwnd )
