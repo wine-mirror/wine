@@ -354,6 +354,8 @@ static BOOL ImportRegistryFile(HWND hWnd)
 {
     OPENFILENAMEW ofn;
     WCHAR title[128];
+    HKEY root_key = NULL;
+    WCHAR *key_path;
 
     InitOpenFileName(hWnd, &ofn);
     ofn.Flags |= OFN_ENABLESIZING;
@@ -371,6 +373,11 @@ static BOOL ImportRegistryFile(HWND hWnd)
         CheckCommDlgError(hWnd);
     }
     RefreshTreeView(g_pChildWnd->hTreeWnd);
+
+    key_path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &root_key);
+    RefreshListView(g_pChildWnd->hListWnd, root_key, key_path, NULL);
+    HeapFree(GetProcessHeap(), 0, key_path);
+
     return TRUE;
 }
 
