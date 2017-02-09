@@ -515,6 +515,11 @@ void state_unbind_resources(struct wined3d_state *state)
             state->unordered_access_view[i] = NULL;
             wined3d_unordered_access_view_decref(uav);
         }
+        if ((uav = state->compute_unordered_access_view[i]))
+        {
+            state->compute_unordered_access_view[i] = NULL;
+            wined3d_unordered_access_view_decref(uav);
+        }
     }
 }
 

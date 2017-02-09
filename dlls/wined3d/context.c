@@ -3425,19 +3425,18 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
 }
 
 static void context_bind_unordered_access_views(struct wined3d_context *context,
-        const struct wined3d_state *state)
+        const struct wined3d_shader *shader, struct wined3d_unordered_access_view * const *views)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_unordered_access_view *view;
     struct wined3d_texture *texture;
-    struct wined3d_shader *shader;
     GLuint texture_name;
     unsigned int i;
     GLint level;
 
     context->uses_uavs = 0;
 
-    if (!(shader = state->shader[WINED3D_SHADER_TYPE_PIXEL]))
+    if (!shader)
         return;
 
     for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
@@ -3445,7 +3444,7 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
         if (!shader->reg_maps.uav_resource_info[i].type)
             continue;
 
-        if (!(view = state->unordered_access_view[i]))
+        if (!(view = views[i]))
         {
             WARN("No unordered access view bound at index %u.\n", i);
             GL_EXTCALL(glBindImageTexture(i, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R8));
@@ -3563,8 +3562,10 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
 
     if (context->update_unordered_access_view_bindings)
     {
-        context_bind_unordered_access_views(context, state);
+        context_bind_unordered_access_views(context,
+                state->shader[WINED3D_SHADER_TYPE_PIXEL], state->unordered_access_view);
         context->update_unordered_access_view_bindings = 0;
+        context->update_compute_unordered_access_view_bindings = 1;
     }
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -3600,6 +3601,14 @@ void context_apply_compute_state(struct wined3d_context *context,
     {
         device->shader_backend->shader_select_compute(device->shader_priv, context, state);
         context->shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
+    }
+
+    if (context->update_compute_unordered_access_view_bindings)
+    {
+        context_bind_unordered_access_views(context,
+                state->shader[WINED3D_SHADER_TYPE_COMPUTE], state->compute_unordered_access_view);
+        context->update_compute_unordered_access_view_bindings = 0;
+        context->update_unordered_access_view_bindings = 1;
     }
 
     context->last_was_blit = FALSE;

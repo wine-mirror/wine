@@ -44,6 +44,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_TEXTURE,
     WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW,
     WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW,
+    WINED3D_CS_OP_SET_COMPUTE_UAV,
     WINED3D_CS_OP_SET_SAMPLER,
     WINED3D_CS_OP_SET_SHADER,
     WINED3D_CS_OP_SET_RASTERIZER_STATE,
@@ -1067,6 +1068,35 @@ void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, unsigned i
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_compute_unordered_access_view(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_unordered_access_view *op = data;
+    struct wined3d_unordered_access_view *prev;
+
+    prev = cs->state.compute_unordered_access_view[op->view_idx];
+    cs->state.compute_unordered_access_view[op->view_idx] = op->view;
+
+    if (op->view)
+        InterlockedIncrement(&op->view->resource->bind_count);
+    if (prev)
+        InterlockedDecrement(&prev->resource->bind_count);
+
+    device_invalidate_state(cs->device, STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING);
+}
+
+void wined3d_cs_emit_set_compute_unordered_access_view(struct wined3d_cs *cs, unsigned int view_idx,
+        struct wined3d_unordered_access_view *view)
+{
+    struct wined3d_cs_set_unordered_access_view *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_COMPUTE_UAV;
+    op->view_idx = view_idx;
+    op->view = view;
+
+    cs->ops->submit(cs);
+}
+
 static void wined3d_cs_exec_set_sampler(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_sampler *op = data;
@@ -1515,6 +1545,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_TEXTURE                */ wined3d_cs_exec_set_texture,
     /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW   */ wined3d_cs_exec_set_shader_resource_view,
     /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW  */ wined3d_cs_exec_set_unordered_access_view,
+    /* WINED3D_CS_OP_SET_COMPUTE_UAV            */ wined3d_cs_exec_set_compute_unordered_access_view,
     /* WINED3D_CS_OP_SET_SAMPLER                */ wined3d_cs_exec_set_sampler,
     /* WINED3D_CS_OP_SET_SHADER                 */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_RASTERIZER_STATE       */ wined3d_cs_exec_set_rasterizer_state,

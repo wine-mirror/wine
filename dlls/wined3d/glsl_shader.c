@@ -623,6 +623,7 @@ static void shader_glsl_load_images(const struct wined3d_gl_info *gl_info, struc
         GLuint program_id, const struct wined3d_shader_reg_maps *reg_maps)
 {
     struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
+    const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
     GLint location;
     unsigned int i;
 
@@ -631,7 +632,7 @@ static void shader_glsl_load_images(const struct wined3d_gl_info *gl_info, struc
         if (!reg_maps->uav_resource_info[i].type)
             continue;
 
-        string_buffer_sprintf(name, "ps_image%u", i);
+        string_buffer_sprintf(name, "%s_image%u", prefix, i);
         location = GL_EXTCALL(glGetUniformLocation(program_id, name->buffer));
         if (location == -1)
             continue;

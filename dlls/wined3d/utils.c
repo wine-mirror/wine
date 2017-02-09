@@ -4387,6 +4387,8 @@ const char *debug_d3dstate(DWORD state)
         return wine_dbg_sprintf("STATE_CONSTANT_BUFFER(%s)", debug_shader_type(state - STATE_CONSTANT_BUFFER(0)));
     if (STATE_IS_SHADER_RESOURCE_BINDING(state))
         return "STATE_SHADER_RESOURCE_BINDING";
+    if (STATE_IS_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING(state))
+        return "STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING";
     if (STATE_IS_UNORDERED_ACCESS_VIEW_BINDING(state))
         return "STATE_UNORDERED_ACCESS_VIEW_BINDING";
     if (STATE_IS_TRANSFORM(state))
