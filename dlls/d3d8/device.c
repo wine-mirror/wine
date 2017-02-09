@@ -791,6 +791,9 @@ static HRESULT WINAPI d3d8_device_CreateTexture(IDirect3DDevice8 *iface,
     TRACE("iface %p, width %u, height %u, levels %u, usage %#x, format %#x, pool %#x, texture %p.\n",
             iface, width, height, levels, usage, format, pool, texture);
 
+    if (!format)
+        return D3DERR_INVALIDCALL;
+
     *texture = NULL;
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)

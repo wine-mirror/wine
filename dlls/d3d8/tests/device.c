@@ -8230,7 +8230,7 @@ static void test_format_unknown(void)
     hr = IDirect3DDevice8_CreateTexture(device, 64, 64, 1, 0,
             D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, (IDirect3DTexture8 **)&iface);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(iface == (void *)0xdeadbeef, "Got unexpected iface %p.\n", iface);
+    ok(iface == (void *)0xdeadbeef, "Got unexpected iface %p.\n", iface);
 
     iface = (void *)0xdeadbeef;
     hr = IDirect3DDevice8_CreateCubeTexture(device, 64, 1, 0,
