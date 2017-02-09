@@ -137,6 +137,8 @@ extern HRESULT DPNET_CreateDirectPlay8LobbyClient(IClassFactory *iface, IUnknown
 
 extern void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps) DECLSPEC_HIDDEN;
 extern void init_winsock(void) DECLSPEC_HIDDEN;
+extern HRESULT enum_services_providers(const GUID * const service, DPN_SERVICE_PROVIDER_INFO * const info_buffer,
+        DWORD * const buf_size, DWORD * const returned) DECLSPEC_HIDDEN;
 
 /* used for generic dumping (copied from ddraw) */
 typedef struct {

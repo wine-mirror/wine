@@ -126,7 +126,7 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_Initialize(IDirectPlay8Peer *iface,
     return DPN_OK;
 }
 
-static HRESULT enum_services_providers(const GUID * const service, DPN_SERVICE_PROVIDER_INFO * const info_buffer,
+HRESULT enum_services_providers(const GUID * const service, DPN_SERVICE_PROVIDER_INFO * const info_buffer,
         DWORD * const buf_size, DWORD * const returned)
 {
     static const WCHAR serviceproviders[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\',

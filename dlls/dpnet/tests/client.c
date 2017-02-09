@@ -97,20 +97,20 @@ static void test_enum_service_providers(void)
     items = 0;
 
     hr = IDirectPlay8Client_EnumServiceProviders(client, NULL, NULL, NULL, &size, NULL, 0);
-    todo_wine ok(hr == E_POINTER, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
+    ok(hr == E_POINTER, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
 
     hr = IDirectPlay8Client_EnumServiceProviders(client, NULL, NULL, NULL, NULL, &items, 0);
-    todo_wine ok(hr == E_POINTER, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
+    ok(hr == E_POINTER, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
 
     hr = IDirectPlay8Client_EnumServiceProviders(client, NULL, NULL, NULL, &size, &items, 0);
-    todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(size != 0, "size is unexpectedly 0\n");
+    ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
+    ok(size != 0, "size is unexpectedly 0\n");
 
     serv_prov_info = HeapAlloc(GetProcessHeap(), 0, size);
 
     hr = IDirectPlay8Client_EnumServiceProviders(client, NULL, NULL, serv_prov_info, &size, &items, 0);
     ok(hr == S_OK, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(items != 0, "Found unexpectedly no service providers\n");
+    ok(items != 0, "Found unexpectedly no service providers\n");
 
     trace("number of items found: %d\n", items);
 
@@ -126,14 +126,14 @@ static void test_enum_service_providers(void)
     items = 0;
 
     hr = IDirectPlay8Client_EnumServiceProviders(client, &CLSID_DP8SP_TCPIP, NULL, NULL, &size, &items, 0);
-    todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(size != 0, "size is unexpectedly 0\n");
+    ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
+    ok(size != 0, "size is unexpectedly 0\n");
 
     serv_prov_info = HeapAlloc(GetProcessHeap(), 0, size);
 
     hr = IDirectPlay8Client_EnumServiceProviders(client, &CLSID_DP8SP_TCPIP, NULL, serv_prov_info, &size, &items, 0);
     ok(hr == S_OK, "IDirectPlay8Client_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(items != 0, "Found unexpectedly no adapter\n");
+    ok(items != 0, "Found unexpectedly no adapter\n");
 
 
     for (i=0;i<items;i++)

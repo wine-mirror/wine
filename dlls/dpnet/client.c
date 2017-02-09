@@ -124,9 +124,17 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_EnumServiceProviders(IDirectPlay8Cl
         DPN_SERVICE_PROVIDER_INFO * const pSPInfoBuffer, PDWORD const pcbEnumData,
         PDWORD const pcReturned, const DWORD dwFlags)
 {
-  IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-  FIXME("(%p):(%x): Stub\n", This, dwFlags);
-  return DPN_OK; 
+    IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
+    TRACE("(%p)->(%s,%s,%p,%p,%p,%x)\n", This, debugstr_guid(pguidServiceProvider), debugstr_guid(pguidApplication),
+                                             pSPInfoBuffer, pcbEnumData, pcReturned, dwFlags);
+
+    if(dwFlags)
+        FIXME("Unhandled flags %x\n", dwFlags);
+
+    if(pguidApplication)
+        FIXME("Application guid %s is currently being ignored\n", debugstr_guid(pguidApplication));
+
+    return enum_services_providers(pguidServiceProvider, pSPInfoBuffer, pcbEnumData, pcReturned);
 }
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_EnumHosts(IDirectPlay8Client *iface,
