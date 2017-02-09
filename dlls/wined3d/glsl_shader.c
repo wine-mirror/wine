@@ -236,6 +236,7 @@ struct shader_glsl_ctx_priv {
 struct glsl_context_data
 {
     struct glsl_shader_prog_link *glsl_program;
+    GLenum vertex_color_clamp;
 };
 
 struct glsl_ps_compiled_shader
@@ -8475,22 +8476,13 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
     struct glsl_context_data *ctx_data = context->shader_backend_data;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = shader_priv;
-    GLuint program_id = 0, prev_id = 0;
-    GLenum old_vertex_color_clamp, current_vertex_color_clamp;
+    GLenum current_vertex_color_clamp;
+    GLuint program_id, prev_id;
 
     priv->vertex_pipe->vp_enable(gl_info, !use_vs(state));
     priv->fragment_pipe->enable_extension(gl_info, !use_ps(state));
 
-    if (ctx_data->glsl_program)
-    {
-        prev_id = ctx_data->glsl_program->id;
-        old_vertex_color_clamp = ctx_data->glsl_program->vs.vertex_color_clamp;
-    }
-    else
-    {
-        prev_id = 0;
-        old_vertex_color_clamp = GL_FIXED_ONLY_ARB;
-    }
+    prev_id = ctx_data->glsl_program ? ctx_data->glsl_program->id : 0;
 
     set_glsl_shader_program(context, state, priv, ctx_data);
 
@@ -8505,8 +8497,9 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
         current_vertex_color_clamp = GL_FIXED_ONLY_ARB;
     }
 
-    if (old_vertex_color_clamp != current_vertex_color_clamp)
+    if (ctx_data->vertex_color_clamp != current_vertex_color_clamp)
     {
+        ctx_data->vertex_color_clamp = current_vertex_color_clamp;
         if (gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
         {
             GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, current_vertex_color_clamp));
@@ -8514,7 +8507,7 @@ static void shader_glsl_select(void *shader_priv, struct wined3d_context *contex
         }
         else
         {
-            FIXME("vertex color clamp needs to be changed, but extension not supported.\n");
+            FIXME("Vertex color clamp needs to be changed, but extension not supported.\n");
         }
     }
 
@@ -8554,6 +8547,7 @@ static void shader_glsl_invalidate_current_program(struct wined3d_context *conte
 /* Context activation is done by the caller. */
 static void shader_glsl_disable(void *shader_priv, struct wined3d_context *context)
 {
+    struct glsl_context_data *ctx_data = context->shader_backend_data;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = shader_priv;
 
@@ -8566,6 +8560,7 @@ static void shader_glsl_disable(void *shader_priv, struct wined3d_context *conte
 
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
     {
+        ctx_data->vertex_color_clamp = GL_FIXED_ONLY_ARB;
         GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FIXED_ONLY_ARB));
         checkGLcall("glClampColorARB");
     }
@@ -8836,8 +8831,12 @@ static void shader_glsl_free(struct wined3d_device *device)
 
 static BOOL shader_glsl_allocate_context_data(struct wined3d_context *context)
 {
-    return !!(context->shader_backend_data = HeapAlloc(GetProcessHeap(),
-            HEAP_ZERO_MEMORY, sizeof(struct glsl_context_data)));
+    struct glsl_context_data *ctx_data;
+    if (!(ctx_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ctx_data))))
+        return FALSE;
+    ctx_data->vertex_color_clamp = GL_FIXED_ONLY_ARB;
+    context->shader_backend_data = ctx_data;
+    return TRUE;
 }
 
 static void shader_glsl_free_context_data(struct wined3d_context *context)
