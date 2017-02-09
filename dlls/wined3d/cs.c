@@ -1024,13 +1024,14 @@ static void wined3d_cs_exec_set_shader_resource_view(struct wined3d_cs *cs, cons
         device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
 }
 
-void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, unsigned int view_idx,
-        struct wined3d_unordered_access_view *view)
+void wined3d_cs_emit_set_shader_resource_view(struct wined3d_cs *cs, enum wined3d_shader_type type,
+        UINT view_idx, struct wined3d_shader_resource_view *view)
 {
-    struct wined3d_cs_set_unordered_access_view *op;
+    struct wined3d_cs_set_shader_resource_view *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW;
+    op->opcode = WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW;
+    op->type = type;
     op->view_idx = view_idx;
     op->view = view;
 
@@ -1053,14 +1054,13 @@ static void wined3d_cs_exec_set_unordered_access_view(struct wined3d_cs *cs, con
     device_invalidate_state(cs->device, STATE_UNORDERED_ACCESS_VIEW_BINDING);
 }
 
-void wined3d_cs_emit_set_shader_resource_view(struct wined3d_cs *cs, enum wined3d_shader_type type,
-        UINT view_idx, struct wined3d_shader_resource_view *view)
+void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, unsigned int view_idx,
+        struct wined3d_unordered_access_view *view)
 {
-    struct wined3d_cs_set_shader_resource_view *op;
+    struct wined3d_cs_set_unordered_access_view *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW;
-    op->type = type;
+    op->opcode = WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW;
     op->view_idx = view_idx;
     op->view = view;
 
