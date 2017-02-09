@@ -5275,7 +5275,7 @@ static HRESULT CDECL device_parent_sub_resource_created(struct wined3d_device_pa
 }
 
 static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *wined3d_desc,
+        void *container_parent, const struct wined3d_resource_desc *wined3d_desc, DWORD texture_flags,
         struct wined3d_texture **wined3d_texture)
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
@@ -5284,8 +5284,9 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("device_parent %p, container_parent %p, wined3d_desc %p, wined3d_texture %p partial stub!\n",
-            device_parent, container_parent, wined3d_desc, wined3d_texture);
+    FIXME("device_parent %p, container_parent %p, wined3d_desc %p, texture flags %#x, "
+            "wined3d_texture %p partial stub!\n", device_parent, container_parent,
+            wined3d_desc, texture_flags, wined3d_texture);
 
     FIXME("Implement DXGI<->wined3d usage conversion.\n");
 
@@ -5300,6 +5301,15 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     desc.BindFlags = D3D10_BIND_RENDER_TARGET;
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
+
+    if (texture_flags & WINED3D_TEXTURE_CREATE_GET_DC)
+    {
+        desc.MiscFlags |= D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
+        texture_flags &= ~WINED3D_TEXTURE_CREATE_GET_DC;
+    }
+
+    if (texture_flags)
+        FIXME("Unhandled flags %#x.\n", texture_flags);
 
     if (FAILED(hr = d3d10_device_CreateTexture2D(&device->ID3D10Device1_iface,
             &desc, NULL, &texture_iface)))

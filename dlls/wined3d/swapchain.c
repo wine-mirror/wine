@@ -784,6 +784,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     const struct wined3d_adapter *adapter = device->adapter;
     struct wined3d_resource_desc texture_desc;
     BOOL displaymode_set = FALSE;
+    DWORD texture_flags = 0;
     RECT client_rect;
     HWND window;
     HRESULT hr;
@@ -856,8 +857,11 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     texture_desc.depth = 1;
     texture_desc.size = 0;
 
+    if (swapchain->desc.flags & WINED3D_SWAPCHAIN_GDI_COMPATIBLE)
+        texture_flags |= WINED3D_TEXTURE_CREATE_GET_DC;
+
     if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
-            parent, &texture_desc, &swapchain->front_buffer)))
+            parent, &texture_desc, texture_flags, &swapchain->front_buffer)))
     {
         WARN("Failed to create front buffer, hr %#x.\n", hr);
         goto err;
@@ -972,7 +976,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         {
             TRACE("Creating back buffer %u.\n", i);
             if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
-                    parent, &texture_desc, &swapchain->back_buffers[i])))
+                    parent, &texture_desc, texture_flags, &swapchain->back_buffers[i])))
             {
                 WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
                 swapchain->desc.backbuffer_count = i;
@@ -995,7 +999,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
             texture_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
 
             if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
-                    device->device_parent, &texture_desc, &ds)))
+                    device->device_parent, &texture_desc, texture_flags, &ds)))
             {
                 WARN("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
                 goto err;

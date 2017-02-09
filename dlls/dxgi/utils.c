@@ -468,6 +468,12 @@ unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
         flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     }
 
+    if (wined3d_flags & WINED3D_SWAPCHAIN_GDI_COMPATIBLE)
+    {
+        wined3d_flags &= ~WINED3D_SWAPCHAIN_GDI_COMPATIBLE;
+        flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+    }
+
     if (wined3d_flags)
         FIXME("Unhandled flags %#x.\n", flags);
 
@@ -482,6 +488,12 @@ unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
     {
         flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
         wined3d_flags |= WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
+    }
+
+    if (flags & DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE)
+    {
+        flags &= ~DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+        wined3d_flags |= WINED3D_SWAPCHAIN_GDI_COMPATIBLE;
     }
 
     if (flags)

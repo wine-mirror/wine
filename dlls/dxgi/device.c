@@ -201,7 +201,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         IUnknown *parent;
 
         if (FAILED(hr = device_parent->ops->create_swapchain_texture(device_parent,
-                NULL, &surface_desc, &wined3d_texture)))
+                NULL, &surface_desc, 0, &wined3d_texture)))
         {
             ERR("Failed to create surface, hr %#x.\n", hr);
             goto fail;

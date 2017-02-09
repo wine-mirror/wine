@@ -1039,7 +1039,6 @@ static void test_create_swapchain(void)
         ok(SUCCEEDED(hr), "Failed to get front buffer, hr %#x.\n", hr);
 
         hr = IDXGISurface1_GetDC(surface, FALSE, &hdc);
-    todo_wine
         ok(SUCCEEDED(hr), "Expected GetDC() to succeed, %#x\n", hr);
         IDXGISurface1_ReleaseDC(surface, NULL);
 

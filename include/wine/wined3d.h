@@ -834,6 +834,7 @@ enum wined3d_display_rotation
 #define WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH                     0x00001000u
 #define WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE             0x00002000u
 #define WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT                   0x00004000u
+#define WINED3D_SWAPCHAIN_GDI_COMPATIBLE                        0x00008000u
 
 #define WINED3DDP_MAXTEXCOORD                                   8
 
@@ -2030,7 +2031,7 @@ struct wined3d_device_parent_ops
             struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
             void **parent, const struct wined3d_parent_ops **parent_ops);
     HRESULT (__cdecl *create_swapchain_texture)(struct wined3d_device_parent *device_parent, void *parent,
-            const struct wined3d_resource_desc *desc, struct wined3d_texture **texture);
+            const struct wined3d_resource_desc *desc, DWORD texture_flags, struct wined3d_texture **texture);
     HRESULT (__cdecl *create_swapchain)(struct wined3d_device_parent *device_parent,
             struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain);
 };
