@@ -508,17 +508,15 @@ void state_unbind_resources(struct wined3d_state *state)
         }
     }
 
-    for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
+    for (i = 0; i < WINED3D_PIPELINE_COUNT; ++i)
     {
-        if ((uav = state->unordered_access_view[i]))
+        for (j = 0; j < MAX_UNORDERED_ACCESS_VIEWS; ++j)
         {
-            state->unordered_access_view[i] = NULL;
-            wined3d_unordered_access_view_decref(uav);
-        }
-        if ((uav = state->compute_unordered_access_view[i]))
-        {
-            state->compute_unordered_access_view[i] = NULL;
-            wined3d_unordered_access_view_decref(uav);
+            if ((uav = state->unordered_access_view[i][j]))
+            {
+                state->unordered_access_view[i][j] = NULL;
+                wined3d_unordered_access_view_decref(uav);
+            }
         }
     }
 }

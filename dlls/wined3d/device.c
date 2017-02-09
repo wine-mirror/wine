@@ -2826,12 +2826,10 @@ void CDECL wined3d_device_set_cs_cb(struct wined3d_device *device, unsigned int 
     wined3d_device_set_constant_buffer(device, WINED3D_SHADER_TYPE_COMPUTE, idx, buffer);
 }
 
-void CDECL wined3d_device_set_cs_uav(struct wined3d_device *device, unsigned int idx,
-        struct wined3d_unordered_access_view *uav)
+static void wined3d_device_set_pipeline_unordered_access_view(struct wined3d_device *device,
+        enum wined3d_pipeline pipeline, unsigned int idx, struct wined3d_unordered_access_view *uav)
 {
     struct wined3d_unordered_access_view *prev;
-
-    TRACE("device %p, idx %u, uav %p.\n", device, idx, uav);
 
     if (idx >= MAX_UNORDERED_ACCESS_VIEWS)
     {
@@ -2839,43 +2837,33 @@ void CDECL wined3d_device_set_cs_uav(struct wined3d_device *device, unsigned int
         return;
     }
 
-    prev = device->update_state->compute_unordered_access_view[idx];
+    prev = device->update_state->unordered_access_view[pipeline][idx];
     if (uav == prev)
         return;
 
     if (uav)
         wined3d_unordered_access_view_incref(uav);
-    device->update_state->compute_unordered_access_view[idx] = uav;
+    device->update_state->unordered_access_view[pipeline][idx] = uav;
     if (!device->recording)
-        wined3d_cs_emit_set_compute_unordered_access_view(device->cs, idx, uav);
+        wined3d_cs_emit_set_unordered_access_view(device->cs, pipeline, idx, uav);
     if (prev)
         wined3d_unordered_access_view_decref(prev);
+}
+
+void CDECL wined3d_device_set_cs_uav(struct wined3d_device *device, unsigned int idx,
+        struct wined3d_unordered_access_view *uav)
+{
+    TRACE("device %p, idx %u, uav %p.\n", device, idx, uav);
+
+    wined3d_device_set_pipeline_unordered_access_view(device, WINED3D_PIPELINE_COMPUTE, idx, uav);
 }
 
 void CDECL wined3d_device_set_unordered_access_view(struct wined3d_device *device,
         unsigned int idx, struct wined3d_unordered_access_view *uav)
 {
-    struct wined3d_unordered_access_view *prev;
-
     TRACE("device %p, idx %u, uav %p.\n", device, idx, uav);
 
-    if (idx >= MAX_UNORDERED_ACCESS_VIEWS)
-    {
-        WARN("Invalid UAV index %u.\n", idx);
-        return;
-    }
-
-    prev = device->update_state->unordered_access_view[idx];
-    if (uav == prev)
-        return;
-
-    if (uav)
-        wined3d_unordered_access_view_incref(uav);
-    device->update_state->unordered_access_view[idx] = uav;
-    if (!device->recording)
-        wined3d_cs_emit_set_unordered_access_view(device->cs, idx, uav);
-    if (prev)
-        wined3d_unordered_access_view_decref(prev);
+    wined3d_device_set_pipeline_unordered_access_view(device, WINED3D_PIPELINE_GRAPHICS, idx, uav);
 }
 
 /* Context activation is done by the caller. */

@@ -3563,7 +3563,8 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
     if (context->update_unordered_access_view_bindings)
     {
         context_bind_unordered_access_views(context,
-                state->shader[WINED3D_SHADER_TYPE_PIXEL], state->unordered_access_view);
+                state->shader[WINED3D_SHADER_TYPE_PIXEL],
+                state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
         context->update_unordered_access_view_bindings = 0;
         context->update_compute_unordered_access_view_bindings = 1;
     }
@@ -3606,7 +3607,8 @@ void context_apply_compute_state(struct wined3d_context *context,
     if (context->update_compute_unordered_access_view_bindings)
     {
         context_bind_unordered_access_views(context,
-                state->shader[WINED3D_SHADER_TYPE_COMPUTE], state->compute_unordered_access_view);
+                state->shader[WINED3D_SHADER_TYPE_COMPUTE],
+                state->unordered_access_view[WINED3D_PIPELINE_COMPUTE]);
         context->update_compute_unordered_access_view_bindings = 0;
         context->update_unordered_access_view_bindings = 1;
     }

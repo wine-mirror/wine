@@ -44,7 +44,6 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_TEXTURE,
     WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW,
     WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW,
-    WINED3D_CS_OP_SET_COMPUTE_UAV,
     WINED3D_CS_OP_SET_SAMPLER,
     WINED3D_CS_OP_SET_SHADER,
     WINED3D_CS_OP_SET_RASTERIZER_STATE,
@@ -210,6 +209,7 @@ struct wined3d_cs_set_shader_resource_view
 struct wined3d_cs_set_unordered_access_view
 {
     enum wined3d_cs_op opcode;
+    enum wined3d_pipeline pipeline;
     unsigned int view_idx;
     struct wined3d_unordered_access_view *view;
 };
@@ -542,7 +542,7 @@ static void wined3d_cs_exec_dispatch(struct wined3d_cs *cs, const void *data)
 
     release_shader_resources(state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
     release_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_COMPUTE],
-            state->compute_unordered_access_view);
+            state->unordered_access_view[WINED3D_PIPELINE_COMPUTE]);
 }
 
 void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
@@ -559,7 +559,7 @@ void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
 
     acquire_shader_resources(state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
     acquire_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_COMPUTE],
-            state->compute_unordered_access_view);
+            state->unordered_access_view[WINED3D_PIPELINE_COMPUTE]);
 
     cs->ops->submit(cs);
 }
@@ -601,7 +601,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         wined3d_resource_release(state->fb->depth_stencil->resource);
     release_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     release_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_PIXEL],
-            state->unordered_access_view);
+            state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
 }
 
 void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned int start_idx,
@@ -641,7 +641,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned i
         wined3d_resource_acquire(state->fb->depth_stencil->resource);
     acquire_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     acquire_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_PIXEL],
-            state->unordered_access_view);
+            state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
 
     cs->ops->submit(cs);
 }
@@ -1064,53 +1064,25 @@ static void wined3d_cs_exec_set_unordered_access_view(struct wined3d_cs *cs, con
     const struct wined3d_cs_set_unordered_access_view *op = data;
     struct wined3d_unordered_access_view *prev;
 
-    prev = cs->state.unordered_access_view[op->view_idx];
-    cs->state.unordered_access_view[op->view_idx] = op->view;
+    prev = cs->state.unordered_access_view[op->pipeline][op->view_idx];
+    cs->state.unordered_access_view[op->pipeline][op->view_idx] = op->view;
 
     if (op->view)
         InterlockedIncrement(&op->view->resource->bind_count);
     if (prev)
         InterlockedDecrement(&prev->resource->bind_count);
 
-    device_invalidate_state(cs->device, STATE_UNORDERED_ACCESS_VIEW_BINDING);
+    device_invalidate_state(cs->device, STATE_UNORDERED_ACCESS_VIEW_BINDING(op->pipeline));
 }
 
-void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, unsigned int view_idx,
-        struct wined3d_unordered_access_view *view)
+void wined3d_cs_emit_set_unordered_access_view(struct wined3d_cs *cs, enum wined3d_pipeline pipeline,
+        unsigned int view_idx, struct wined3d_unordered_access_view *view)
 {
     struct wined3d_cs_set_unordered_access_view *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW;
-    op->view_idx = view_idx;
-    op->view = view;
-
-    cs->ops->submit(cs);
-}
-
-static void wined3d_cs_exec_set_compute_unordered_access_view(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_set_unordered_access_view *op = data;
-    struct wined3d_unordered_access_view *prev;
-
-    prev = cs->state.compute_unordered_access_view[op->view_idx];
-    cs->state.compute_unordered_access_view[op->view_idx] = op->view;
-
-    if (op->view)
-        InterlockedIncrement(&op->view->resource->bind_count);
-    if (prev)
-        InterlockedDecrement(&prev->resource->bind_count);
-
-    device_invalidate_state(cs->device, STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING);
-}
-
-void wined3d_cs_emit_set_compute_unordered_access_view(struct wined3d_cs *cs, unsigned int view_idx,
-        struct wined3d_unordered_access_view *view)
-{
-    struct wined3d_cs_set_unordered_access_view *op;
-
-    op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_SET_COMPUTE_UAV;
+    op->pipeline = pipeline;
     op->view_idx = view_idx;
     op->view = view;
 
@@ -1565,7 +1537,6 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_TEXTURE                */ wined3d_cs_exec_set_texture,
     /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW   */ wined3d_cs_exec_set_shader_resource_view,
     /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW  */ wined3d_cs_exec_set_unordered_access_view,
-    /* WINED3D_CS_OP_SET_COMPUTE_UAV            */ wined3d_cs_exec_set_compute_unordered_access_view,
     /* WINED3D_CS_OP_SET_SAMPLER                */ wined3d_cs_exec_set_sampler,
     /* WINED3D_CS_OP_SET_SHADER                 */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_RASTERIZER_STATE       */ wined3d_cs_exec_set_rasterizer_state,
