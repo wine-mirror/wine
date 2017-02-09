@@ -6060,6 +6060,23 @@ static const struct message WmClearStateButtonSeq[] =
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
+static const struct message WmDisableButtonSeq[] =
+{
+    { WM_LBUTTONDOWN, sent },
+    { BM_SETSTATE, sent|defwinproc },
+    { WM_CTLCOLORSTATIC, sent|defwinproc|optional },
+    { WM_CTLCOLORBTN, sent|optional },
+    { WM_LBUTTONUP, sent },
+    { BM_SETSTATE, sent|defwinproc },
+    { WM_CTLCOLORBTN, sent|defwinproc|optional },
+    { WM_CTLCOLORSTATIC, sent|defwinproc|optional },
+    { BM_SETCHECK, sent|defwinproc|optional },
+    { WM_CTLCOLORBTN, sent|optional },
+    { WM_CTLCOLORSTATIC, sent|defwinproc|optional },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { WM_COMMAND, sent },
+    { 0 }
+};
 static const struct message WmClearStateOwnerdrawSeq[] =
 {
     { BM_SETSTATE, sent },
@@ -6447,6 +6464,24 @@ static void test_button_messages(void)
     }
 
     DeleteObject(hfont2);
+    DestroyWindow(parent);
+
+    /* Test if WM_LBUTTONDOWN and WM_LBUTTONUP to a disabled button leads to a WM_COMMAND for the parent */
+
+    parent = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+
+    hwnd = CreateWindowExA(0, "my_button_class", "test", BS_DEFPUSHBUTTON | WS_VISIBLE | WS_CHILD,
+                                   0, 0, 50, 14, parent, 0, 0, NULL);
+
+    EnableWindow(hwnd, FALSE);
+    flush_sequence();
+    SendMessageA(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, 0);
+    ok_sequence(WmDisableButtonSeq, "Mouseclick on a disabled button", FALSE);
+
+    DestroyWindow(hwnd);
     DestroyWindow(parent);
 }
 
