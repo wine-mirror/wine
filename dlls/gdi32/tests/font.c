@@ -107,20 +107,20 @@ static void init(void)
     system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
 }
 
-static void *heap_alloc( size_t len )
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
 {
-    return HeapAlloc( GetProcessHeap(), 0, len );
+    return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
-static void *heap_realloc( void *p, size_t len )
+static inline void* __WINE_ALLOC_SIZE(2) heap_realloc(void *mem, size_t size)
 {
-    if (!p) return heap_alloc( len );
-    return HeapReAlloc( GetProcessHeap(), 0, p, len );
+    if (!mem) return heap_alloc(size);
+    return HeapReAlloc(GetProcessHeap(), 0, mem, size);
 }
 
-static void heap_free( void *p )
+static inline BOOL heap_free(void *mem)
 {
-    HeapFree( GetProcessHeap(), 0, p );
+    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static INT CALLBACK is_truetype_font_installed_proc(const LOGFONTA *elf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
