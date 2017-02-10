@@ -24,6 +24,8 @@
 #include <math.h>
 #include "d3d.h"
 
+HRESULT WINAPI GetSurfaceFromDC(HDC dc, struct IDirectDrawSurface **surface, HDC *device_dc);
+
 static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *guid, void **ddraw, REFIID iid, IUnknown *outer_unknown);
 static BOOL is_ddraw64 = sizeof(DWORD) != sizeof(DWORD *);
 static DEVMODEW registry_mode;
@@ -12403,14 +12405,15 @@ static void test_surface_desc_size(void)
 
 static void test_get_surface_from_dc(void)
 {
+    IDirectDrawSurface *surface1, *tmp1;
     IDirectDrawSurface7 *surface, *tmp;
-    IDirectDrawSurface *surface1;
     DDSURFACEDESC2 surface_desc;
     IDirectDraw7 *ddraw;
+    HDC dc, device_dc;
     ULONG refcount;
     HWND window;
     HRESULT hr;
-    HDC dc;
+    DWORD ret;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -12439,6 +12442,33 @@ static void test_get_surface_from_dc(void)
     hr = IDirectDrawSurface7_GetDC(surface, &dc);
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
 
+    tmp1 = (void *)0xdeadbeef;
+    device_dc = (void *)0xdeadbeef;
+    hr = GetSurfaceFromDC(NULL, &tmp1, &device_dc);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(!tmp1, "Got unexpected surface %p.\n", tmp1);
+    ok(!device_dc, "Got unexpected device_dc %p.\n", device_dc);
+
+    device_dc = (void *)0xdeadbeef;
+    hr = GetSurfaceFromDC(dc, NULL, &device_dc);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(device_dc == (void *)0xdeadbeef, "Got unexpected device_dc %p.\n", device_dc);
+
+    tmp1 = (void *)0xdeadbeef;
+    hr = GetSurfaceFromDC(dc, &tmp1, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!tmp1, "Got unexpected surface %p.\n", tmp1);
+
+    hr = GetSurfaceFromDC(dc, &tmp1, &device_dc);
+    ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
+    ok(tmp1 == surface1, "Got unexpected surface %p, expected %p.\n", tmp1, surface1);
+    IDirectDrawSurface_Release(tmp1);
+
+    ret = GetObjectType(device_dc);
+    todo_wine ok(ret == OBJ_DC, "Got unexpected object type %#x.\n", ret);
+    ret = GetDeviceCaps(device_dc, TECHNOLOGY);
+    todo_wine ok(ret == DT_RASDISPLAY, "Got unexpected technology %#x.\n", ret);
+
     hr = IDirectDraw7_GetSurfaceFromDC(ddraw, dc, NULL);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
@@ -12458,6 +12488,13 @@ static void test_get_surface_from_dc(void)
 
     dc = CreateCompatibleDC(NULL);
     ok(!!dc, "CreateCompatibleDC failed.\n");
+
+    tmp1 = (void *)0xdeadbeef;
+    device_dc = (void *)0xdeadbeef;
+    hr = GetSurfaceFromDC(dc, &tmp1, &device_dc);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(!tmp1, "Got unexpected surface %p.\n", tmp1);
+    ok(!device_dc, "Got unexpected device_dc %p.\n", device_dc);
 
     tmp = (void *)0xdeadbeef;
     hr = IDirectDraw7_GetSurfaceFromDC(ddraw, dc, &tmp);

@@ -200,6 +200,40 @@ void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_ha
     return entry->object;
 }
 
+HRESULT WINAPI GetSurfaceFromDC(HDC dc, IDirectDrawSurface4 **surface, HDC *device_dc)
+{
+    struct ddraw *ddraw;
+
+    TRACE("dc %p, surface %p, device_dc %p.\n", dc, surface, device_dc);
+
+    if (!surface)
+        return E_INVALIDARG;
+
+    if (!device_dc)
+    {
+        *surface = NULL;
+
+        return E_INVALIDARG;
+    }
+
+    wined3d_mutex_lock();
+    LIST_FOR_EACH_ENTRY(ddraw, &global_ddraw_list, struct ddraw, ddraw_list_entry)
+    {
+        if (FAILED(IDirectDraw4_GetSurfaceFromDC(&ddraw->IDirectDraw4_iface, dc, surface)))
+            continue;
+
+        *device_dc = NULL; /* FIXME */
+        wined3d_mutex_unlock();
+        return DD_OK;
+    }
+    wined3d_mutex_unlock();
+
+    *surface = NULL;
+    *device_dc = NULL;
+
+    return DDERR_NOTFOUND;
+}
+
 /***********************************************************************
  *
  * Helper function for DirectDrawCreate and friends
