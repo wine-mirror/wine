@@ -12772,6 +12772,82 @@ static void test_surface_desc_size(void)
     ok(!refcount, "DirectDraw has %u references left.\n", refcount);
 }
 
+static void test_get_surface_from_dc(void)
+{
+    IDirectDrawSurface *surface1, *tmp;
+    IDirectDrawSurface4 *surface;
+    DDSURFACEDESC2 surface_desc;
+    IDirectDraw4 *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    HDC dc;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_QueryInterface(surface, &IID_IDirectDrawSurface, (void **)&surface1);
+    ok(SUCCEEDED(hr), "Failed to query IDirectDrawSurface interface, hr %#x.\n", hr);
+
+    refcount = get_refcount((IUnknown *)surface1);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    refcount = get_refcount((IUnknown *)surface);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    hr = IDirectDrawSurface4_GetDC(surface, &dc);
+    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+
+    hr = IDirectDraw4_GetSurfaceFromDC(ddraw, dc, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDraw4_GetSurfaceFromDC(ddraw, dc, (IDirectDrawSurface4 **)&tmp);
+    ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
+    ok(tmp == surface1, "Got unexpected surface %p, expected %p.\n", tmp, surface1);
+
+    refcount = get_refcount((IUnknown *)surface1);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    refcount = get_refcount((IUnknown *)surface);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+    ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
+
+    IDirectDrawSurface_Release(tmp);
+
+    dc = CreateCompatibleDC(NULL);
+    ok(!!dc, "CreateCompatibleDC failed.\n");
+
+    tmp = (void *)0xdeadbeef;
+    hr = IDirectDraw4_GetSurfaceFromDC(ddraw, dc, (IDirectDrawSurface4 **)&tmp);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(!tmp, "Got unexpected surface %p.\n", tmp);
+
+    ok(DeleteDC(dc), "DeleteDC failed.\n");
+
+    tmp = (void *)0xdeadbeef;
+    hr = IDirectDraw4_GetSurfaceFromDC(ddraw, NULL, (IDirectDrawSurface4 **)&tmp);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(!tmp, "Got unexpected surface %p.\n", tmp);
+
+    IDirectDrawSurface4_Release(surface);
+    IDirectDrawSurface_Release(surface1);
+    IDirectDraw4_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     IDirectDraw4 *ddraw;
@@ -12874,4 +12950,5 @@ START_TEST(ddraw4)
     test_transform_vertices();
     test_display_mode_surface_pixel_format();
     test_surface_desc_size();
+    test_get_surface_from_dc();
 }
