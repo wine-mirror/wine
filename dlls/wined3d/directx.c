@@ -6394,7 +6394,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
     return TRUE;
 }
 
-static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordinal)
+static BOOL wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordinal)
 {
     DISPLAY_DEVICEW display_device;
 
@@ -6408,7 +6408,8 @@ static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordi
     else
         adapter->vram_bytes = 128 * 1024 * 1024;
 
-    initPixelFormatsNoGL(&adapter->gl_info);
+    if (!wined3d_adapter_init_format_info(adapter, NULL))
+        return FALSE;
 
     adapter->vertex_pipe = &none_vertex_pipe;
     adapter->fragment_pipe = &none_fragment_pipe;
@@ -6419,6 +6420,8 @@ static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordi
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
     TRACE("DeviceName: %s\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->DeviceName, display_device.DeviceName);
+
+    return TRUE;
 }
 
 static void STDMETHODCALLTYPE wined3d_null_wined3d_object_destroyed(void *parent) {}
@@ -6430,19 +6433,18 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
 
 HRESULT wined3d_init(struct wined3d *wined3d, DWORD flags)
 {
+    BOOL ret;
+
     wined3d->ref = 1;
     wined3d->flags = flags;
 
     TRACE("Initializing adapters.\n");
 
     if (flags & WINED3D_NO3D)
-    {
-        wined3d_adapter_init_nogl(&wined3d->adapters[0], 0);
-        wined3d->adapter_count = 1;
-        return WINED3D_OK;
-    }
-
-    if (!wined3d_adapter_init(&wined3d->adapters[0], 0, flags))
+        ret = wined3d_adapter_init_nogl(&wined3d->adapters[0], 0);
+    else
+        ret = wined3d_adapter_init(&wined3d->adapters[0], 0, flags);
+    if (!ret)
     {
         WARN("Failed to initialize adapter.\n");
         return E_FAIL;

@@ -2337,7 +2337,6 @@ BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter,
         struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECLSPEC_HIDDEN;
 
-BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void install_gl_compat_wrapper(struct wined3d_gl_info *gl_info, enum wined3d_gl_extension ext) DECLSPEC_HIDDEN;
 
 enum projection_types
