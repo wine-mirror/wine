@@ -3244,15 +3244,23 @@ static void test_create_shader_resource_view(void)
         {{ 1, 12, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0,  1},          {RGBA8_UNORM, TEX_3D,       0,  1}},
         {{ 1, 12, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, ~0u},         {RGBA8_UNORM, TEX_3D,       0,  1}},
         {{ 4, 12, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_3D,       0, ~0u},         {RGBA8_UNORM, TEX_3D,       0,  4}},
+        {{ 1,  6, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, TEX_CUBE,     0,  1}},
+        {{ 2,  6, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, TEX_CUBE,     0,  2}},
+        {{ 2,  9, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, TEX_CUBE,     0,  2}},
+        {{ 2, 11, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, TEX_CUBE,     0,  2}},
         {{ 2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     0, ~0u},         {RGBA8_UNORM, TEX_CUBE,     0,  2}},
         {{ 2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     0,  1},          {RGBA8_UNORM, TEX_CUBE ,    0,  1}},
         {{ 2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, TEX_CUBE,     1,  1},          {RGBA8_UNORM, TEX_CUBE ,    1,  1}},
         {{ 2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0,  1,  0,  1},  {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 1}},
         {{ 2,  6, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, ~0u, 0, ~0u}, {RGBA8_UNORM, CUBE_ARRAY,   0,  2, 0, 1}},
         {{ 1,  8, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, ~0u, 0, ~0u}, {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 1}},
+        {{ 1, 12, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
         {{ 1, 12, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, ~0u, 0, ~0u}, {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
         {{ 1, 12, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, ~0u, 0,  1},  {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 1}},
         {{ 1, 12, RGBA8_UNORM}, {FMT_UNKNOWN, CUBE_ARRAY,   0, ~0u, 0,  2},  {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
+        {{ 1, 13, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
+        {{ 1, 14, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 2}},
+        {{ 1, 18, RGBA8_UNORM}, {0},                                         {RGBA8_UNORM, CUBE_ARRAY,   0,  1, 0, 3}},
     };
     static const struct
     {
@@ -3438,11 +3446,13 @@ static void test_create_shader_resource_view(void)
             texture2d_desc.Format = tests[i].texture.format;
             texture2d_desc.MiscFlags = 0;
 
-            if (tests[i].srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBE
-                    || tests[i].srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY)
+            if (tests[i].expected_srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBE
+                    || tests[i].expected_srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY)
                 texture2d_desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
 
-            if (tests[i].srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY
+            if (texture2d_desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE
+                    && (texture2d_desc.ArraySize != 6
+                    || tests[i].expected_srv_desc.dimension == D3D11_SRV_DIMENSION_TEXTURECUBEARRAY)
                     && feature_level < D3D_FEATURE_LEVEL_10_1)
             {
                 skip("Test %u: Cube map array textures require feature level 10_1.\n", i);

@@ -520,7 +520,24 @@ static HRESULT set_srv_desc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc,
             ID3D11Texture2D_Release(texture);
 
             desc->Format = texture_desc.Format;
-            if (texture_desc.ArraySize == 1)
+            if (texture_desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
+            {
+                if (texture_desc.ArraySize >= 12)
+                {
+                    desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+                    desc->u.TextureCubeArray.MostDetailedMip = 0;
+                    desc->u.TextureCubeArray.MipLevels = texture_desc.MipLevels;
+                    desc->u.TextureCubeArray.First2DArrayFace = 0;
+                    desc->u.TextureCubeArray.NumCubes = texture_desc.ArraySize / 6;
+                }
+                else
+                {
+                    desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+                    desc->u.TextureCube.MostDetailedMip = 0;
+                    desc->u.TextureCube.MipLevels = texture_desc.MipLevels;
+                }
+            }
+            else if (texture_desc.ArraySize == 1)
             {
                 if (texture_desc.SampleDesc.Count == 1)
                 {
