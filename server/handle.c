@@ -272,6 +272,7 @@ static obj_handle_t alloc_handle_entry( struct process *process, void *ptr,
 obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, unsigned int access, unsigned int attr )
 {
     struct object *obj = ptr;
+    if (access & MAXIMUM_ALLOWED) access = GENERIC_ALL;
     access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL;
     return alloc_handle_entry( process, ptr, access, attr );
 }

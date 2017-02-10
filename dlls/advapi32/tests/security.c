@@ -6414,6 +6414,43 @@ static void test_pseudo_tokens(void)
                  "Expected ERROR_NO_TOKEN, got %u\n", GetLastError());
 }
 
+static void test_maximum_allowed(void)
+{
+    HANDLE (WINAPI *pCreateEventExA)(SECURITY_ATTRIBUTES *, LPCSTR, DWORD, DWORD);
+    char buffer_sd[SECURITY_DESCRIPTOR_MIN_LENGTH], buffer_acl[256];
+    SECURITY_DESCRIPTOR *sd = (SECURITY_DESCRIPTOR *)&buffer_sd;
+    SECURITY_ATTRIBUTES sa;
+    ACL *acl = (ACL *)&buffer_acl;
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+    ACCESS_MASK mask;
+    HANDLE handle;
+    BOOL ret;
+
+    pCreateEventExA = (void *)GetProcAddress(hkernel32, "CreateEventExA");
+    if (!pCreateEventExA)
+    {
+        win_skip("CreateEventExA is not available\n");
+        return;
+    }
+
+    ret = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(ret, "InitializeSecurityDescriptor failed with %u\n", GetLastError());
+    ret = InitializeAcl(acl, 256, ACL_REVISION);
+    ok(ret, "InitializeAcl failed with %u\n", GetLastError());
+    ret = SetSecurityDescriptorDacl(sd, TRUE, acl, FALSE);
+    ok(ret, "SetSecurityDescriptorDacl failed with %u\n", GetLastError());
+
+    sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
+    sa.lpSecurityDescriptor = sd;
+    sa.bInheritHandle       = FALSE;
+
+    handle = pCreateEventExA(&sa, NULL, 0, MAXIMUM_ALLOWED | 0x4);
+    ok(handle != NULL, "CreateEventExA failed with error %u\n", GetLastError());
+    mask = get_obj_access(handle);
+    ok(mask == EVENT_ALL_ACCESS, "Expected %x, got %x\n", EVENT_ALL_ACCESS, mask);
+    CloseHandle(handle);
+}
+
 START_TEST(security)
 {
     init();
@@ -6461,4 +6498,5 @@ START_TEST(security)
     test_system_security_access();
     test_GetSidIdentifierAuthority();
     test_pseudo_tokens();
+    test_maximum_allowed();
 }
