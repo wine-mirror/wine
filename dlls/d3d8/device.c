@@ -1010,6 +1010,9 @@ static HRESULT WINAPI d3d8_device_CreateDepthStencilSurface(IDirect3DDevice8 *if
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, surface %p.\n",
             iface, width, height, format, multisample_type, surface);
 
+    if (!format)
+        return D3DERR_INVALIDCALL;
+
     *surface = NULL;
 
     /* TODO: Verify that Discard is false */
