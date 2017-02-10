@@ -456,6 +456,25 @@ static BOOL is_gdi_compatible_texture(const D3D11_TEXTURE2D_DESC *desc)
     return TRUE;
 }
 
+static BOOL validate_texture2d_desc(const D3D11_TEXTURE2D_DESC *desc)
+{
+    if (desc->MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE
+            && desc->ArraySize < 6)
+    {
+        WARN("Invalid array size %u for cube texture.\n", desc->ArraySize);
+        return FALSE;
+    }
+
+    if (desc->MiscFlags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE
+            && !is_gdi_compatible_texture(desc))
+    {
+        WARN("Incompatible description used to create GDI compatible texture.\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_device *device,
         const D3D11_TEXTURE2D_DESC *desc, const D3D11_SUBRESOURCE_DATA *data)
 {
@@ -463,6 +482,9 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
     unsigned int levels;
     DWORD flags = 0;
     HRESULT hr;
+
+    if (!validate_texture2d_desc(desc))
+        return E_INVALIDARG;
 
     texture->ID3D11Texture2D_iface.lpVtbl = &d3d11_texture2d_vtbl;
     texture->ID3D10Texture2D_iface.lpVtbl = &d3d10_texture2d_vtbl;
@@ -488,17 +510,7 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
     levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(max(desc->Width, desc->Height)) + 1;
 
     if (desc->MiscFlags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
-    {
-        if (is_gdi_compatible_texture(desc))
-            flags |= WINED3D_TEXTURE_CREATE_GET_DC;
-        else
-        {
-            WARN("Incompatible description used to create GDI compatible texture.\n");
-            wined3d_private_store_cleanup(&texture->private_store);
-            wined3d_mutex_unlock();
-            return E_INVALIDARG;
-        }
-    }
+        flags |= WINED3D_TEXTURE_CREATE_GET_DC;
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
             desc->ArraySize, levels, flags, (struct wined3d_sub_resource_data *)data,
