@@ -965,9 +965,9 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
             if (enumSuccess == S_OK)
             {
                 if (device_count++)
-                    didevis = HeapReAlloc(GetProcessHeap(), 0, didevis, sizeof(DIDEVICEINSTANCEW)*device_count);
+                    didevis = HeapReAlloc(GetProcessHeap(), 0, didevis, sizeof(DIDEVICEINSTANCEA)*device_count);
                 else
-                    didevis = HeapAlloc(GetProcessHeap(), 0, sizeof(DIDEVICEINSTANCEW)*device_count);
+                    didevis = HeapAlloc(GetProcessHeap(), 0, sizeof(DIDEVICEINSTANCEA)*device_count);
                 didevis[device_count-1] = didevi;
             }
         }
