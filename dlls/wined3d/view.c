@@ -24,20 +24,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+#define WINED3D_VIEW_CUBE_ARRAY (WINED3D_VIEW_TEXTURE_CUBE | WINED3D_VIEW_TEXTURE_ARRAY)
+
 static BOOL is_stencil_view_format(const struct wined3d_format *format)
 {
     return format->id == WINED3DFMT_X24_TYPELESS_G8_UINT
             || format->id == WINED3DFMT_X32_TYPELESS_G8X24_UINT;
 }
 
-static GLenum get_texture_view_target(const struct wined3d_view_desc *desc,
-        const struct wined3d_texture *texture)
+static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_view_desc *desc, const struct wined3d_texture *texture)
 {
     static const struct
     {
         GLenum texture_target;
         unsigned int view_flags;
         GLenum view_target;
+        enum wined3d_gl_extension extension;
     }
     view_types[] =
     {
@@ -46,14 +49,19 @@ static GLenum get_texture_view_target(const struct wined3d_view_desc *desc,
         {GL_TEXTURE_2D_ARRAY, 0,                          GL_TEXTURE_2D},
         {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_ARRAY, GL_TEXTURE_2D_ARRAY},
         {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_TEXTURE_CUBE,  GL_TEXTURE_CUBE_MAP},
+        {GL_TEXTURE_2D_ARRAY, WINED3D_VIEW_CUBE_ARRAY,    GL_TEXTURE_CUBE_MAP_ARRAY, ARB_TEXTURE_CUBE_MAP_ARRAY},
         {GL_TEXTURE_3D,       0,                          GL_TEXTURE_3D},
     };
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(view_types); ++i)
     {
-        if (view_types[i].texture_target == texture->target && view_types[i].view_flags == desc->flags)
+        if (view_types[i].texture_target != texture->target || view_types[i].view_flags != desc->flags)
+            continue;
+        if (gl_info->supported[view_types[i].extension])
             return view_types[i].view_target;
+
+        FIXME("Extension %#x not supported.\n", view_types[i].extension);
     }
 
     FIXME("Unhandled view flags %#x for texture target %#x.\n", desc->flags, texture->target);
@@ -478,7 +486,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
                 || desc->u.texture.layer_count > texture->layer_count - desc->u.texture.layer_idx)
             return E_INVALIDARG;
 
-        view_target = get_texture_view_target(desc, texture);
+        view_target = get_texture_view_target(gl_info, desc, texture);
 
         if (resource->format->id == view_format->id && texture->target == view_target
                 && !desc->u.texture.level_idx && desc->u.texture.level_count == texture->level_count
@@ -659,7 +667,7 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
 
         if (desc->u.texture.layer_idx || desc->u.texture.layer_count != depth_or_layer_count)
         {
-            create_texture_view(&view->gl_view, get_texture_view_target(desc, texture),
+            create_texture_view(&view->gl_view, get_texture_view_target(gl_info, desc, texture),
                     desc, texture, view->format);
         }
 

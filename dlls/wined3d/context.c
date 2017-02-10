@@ -2453,6 +2453,10 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_textures.tex_cube);
                 checkGLcall("glBindTexture");
                 break;
+            case GL_TEXTURE_CUBE_MAP_ARRAY:
+                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
+                checkGLcall("glBindTexture");
+                break;
             case GL_TEXTURE_3D:
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_3D, device->dummy_textures.tex_3d);
                 checkGLcall("glBindTexture");
