@@ -255,7 +255,7 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     else async->iosb = NULL;
 
     list_add_tail( &queue->queue, &async->queue_entry );
-    list_add_tail( &thread->process->asyncs, &async->process_entry );
+    list_add_head( &thread->process->asyncs, &async->process_entry );
     grab_object( async );
 
     if (queue->fd) set_fd_signaled( queue->fd, 0 );
