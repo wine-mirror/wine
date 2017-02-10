@@ -514,11 +514,8 @@ static void remove_dir (const char *dir)
 
 static const char* get_test_source_file(const char* test, const char* subtest)
 {
-    static const char* special_dirs[][2] = {
-	{ 0, 0 }
-    };
     static char buffer[MAX_PATH];
-    int i, len = strlen(test);
+    int len = strlen(test);
 
     if (len > 4 && !strcmp( test + len - 4, ".exe" ))
     {
@@ -526,14 +523,6 @@ static const char* get_test_source_file(const char* test, const char* subtest)
         buffer[len] = 0;
     }
     else len = sprintf(buffer, "dlls/%s", test);
-
-    for (i = 0; special_dirs[i][0]; i++) {
-	if (strcmp(test, special_dirs[i][0]) == 0) {
-            strcpy( buffer, special_dirs[i][1] );
-            len = strlen(buffer);
-	    break;
-	}
-    }
 
     sprintf(buffer + len, "/tests/%s.c", subtest);
     return buffer;
