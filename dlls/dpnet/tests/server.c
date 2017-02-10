@@ -237,7 +237,7 @@ HRESULT set_firewall( enum firewall_op op )
 {
     static const WCHAR dpnsvrW[] =
         {'d','p','n','s','v','r','.','e','x','e',0};
-    static const WCHAR seperator[] = {'\\',0};
+    static const WCHAR separator[] = {'\\',0};
     static const WCHAR clientW[] =
         {'d','p','n','e','t','_','c','l','i','e','n','t',0};
     static const WCHAR serverW[] =
@@ -262,7 +262,7 @@ HRESULT set_firewall( enum firewall_op op )
         SysFreeString( image );
         return E_FAIL;
     }
-    lstrcatW(path, seperator);
+    lstrcatW(path, separator);
     lstrcatW(path, dpnsvrW);
 
     init = CoInitializeEx( 0, COINIT_APARTMENTTHREADED );
