@@ -839,7 +839,7 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
     swapchain_desc.Windowed = TRUE;
     swapchain_desc.SwapEffect = hwnd_rt_desc->presentOptions & D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS ?
         DXGI_SWAP_EFFECT_SEQUENTIAL : DXGI_SWAP_EFFECT_DISCARD;
-    swapchain_desc.Flags = 0;
+    swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
 
     hr = IDXGIFactory_CreateSwapChain(dxgi_factory, (IUnknown *)device, &swapchain_desc, &render_target->swapchain);
     IDXGIFactory_Release(dxgi_factory);
