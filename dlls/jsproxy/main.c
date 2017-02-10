@@ -635,7 +635,7 @@ BOOL WINAPI InternetGetProxyInfo( LPCSTR url, DWORD len_url, LPCSTR hostname, DW
     WCHAR *urlW = NULL, *hostnameW = NULL;
     BOOL ret = FALSE;
 
-    TRACE( "%s, %u, %s, %u, %p, %p\n", url, len_url, hostname, len_hostname, proxy, len_proxy );
+    TRACE( "%s, %u, %s, %u, %p, %p\n", debugstr_a(url), len_url, hostname, len_hostname, proxy, len_proxy );
 
     EnterCriticalSection( &cs_jsproxy );
 
