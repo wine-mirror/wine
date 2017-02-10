@@ -387,6 +387,9 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         device->blitter->set_shader(device->blit_priv, context2, back_buffer, NULL);
         gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
         gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
+        if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+            gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target,
+                    GL_TEXTURE_SRGB_DECODE_EXT, GL_SKIP_DECODE_EXT);
 
         context_set_draw_buffer(context, GL_BACK);
 
