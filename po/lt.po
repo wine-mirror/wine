@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-02 08:02+0300\n"
+"PO-Revision-Date: 2017-02-10 21:23+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11948,17 +11948,12 @@ msgstr "Nepavyko pervadinti pasirinktos registro reikšmės."
 #: regedit.rc:220
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "Raktai ir reikšmės iš %1 buvo sėkmingai pridėti į registrą."
 
 #: regedit.rc:221
-#, fuzzy
-#| msgid ""
-#| "Unable to rename the key '%1'.\n"
-#| "The specified key name already exists."
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"Nepavyko pervadinti rakto „%1“.\n"
-"Nurodytas rakto vardas jau egzistuoja."
+"Nepavyko importuoti %1. Nurodytas failas nėra teisingas registro failas."
 
 #: regedit.rc:373
 msgid ""
