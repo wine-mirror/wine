@@ -121,7 +121,7 @@ send_str (SOCKET s, ...)
 }
 
 static int
-send_file_direct (const char *name)
+send_file_direct (const char * url, const char *name)
 {
     SOCKET s;
     HANDLE file;
@@ -138,6 +138,11 @@ send_file_direct (const char *name)
         "User-Agent: " USER_AGENT "\r\n"
         CONTENT_HEADERS
         "\r\n";
+
+    if (url) {
+        report (R_WARNING, "Can't submit to an alternative URL");
+        return 0;
+    }
 
     s = open_http (SERVER_NAME);
     if (s == INVALID_SOCKET) return 1;
@@ -243,7 +248,7 @@ send_file_direct (const char *name)
 }
 
 static int
-send_file_wininet (const char *name)
+send_file_wininet (const char *url, const char *name)
 {
     int ret = 0;
     HMODULE wininet_mod = NULL;
@@ -264,6 +269,7 @@ send_file_wininet (const char *name)
     HINTERNET request = NULL;
     INTERNET_BUFFERSA buffers_in = { 0 };
     char buffer[BUFLEN+1];
+    URL_COMPONENTSA uc = { 0 };
 
     static const char extra_headers[] =
         CONTENT_HEADERS;
@@ -282,6 +288,38 @@ send_file_wininet (const char *name)
     if (pInternetOpen == NULL || pInternetConnect == NULL || pHttpOpenRequest == NULL || pHttpSendRequestEx == NULL || pHttpEndRequest == NULL ||
         pInternetWriteFile == NULL || pInternetReadFile == NULL || pInternetCloseHandle == NULL) {
         goto done;
+    }
+    if (url) {
+        BOOL (WINAPI *pInternetCrackUrlA)(const char *url, DWORD url_length, DWORD flags, URL_COMPONENTSA *ret_comp);
+        pInternetCrackUrlA = (void *)GetProcAddress(wininet_mod, "InternetCrackUrlA");
+        if (pInternetCrackUrlA == NULL)
+            goto done;
+        uc.dwStructSize = sizeof(uc);
+        uc.dwSchemeLength = uc.dwHostNameLength = uc.dwUserNameLength =
+            uc.dwPasswordLength = uc.dwUrlPathLength = uc.dwExtraInfoLength =
+            strlen(url) + 1;
+        uc.lpszScheme = heap_alloc (uc.dwSchemeLength);
+        uc.lpszHostName = heap_alloc (uc.dwHostNameLength);
+        uc.lpszUserName = heap_alloc (uc.dwUserNameLength);
+        uc.lpszPassword = heap_alloc (uc.dwPasswordLength);
+        uc.lpszUrlPath = heap_alloc (uc.dwUrlPathLength);
+        uc.lpszExtraInfo = heap_alloc (uc.dwExtraInfoLength);
+        if (!pInternetCrackUrlA(url, 0, 0, &uc)) {
+            report (R_WARNING, "Can't parse submit URL '%s'", url);
+            goto done;
+        }
+        if ((uc.nScheme != INTERNET_SCHEME_HTTP && uc.nScheme != INTERNET_SCHEME_HTTPS) || *uc.lpszExtraInfo) {
+            report (R_WARNING, "Can't submit report to scheme %s or extra info '%s'", uc.lpszScheme, uc.lpszExtraInfo);
+            goto done;
+        }
+
+    } else {
+        uc.nScheme = INTERNET_SCHEME_HTTP;
+        uc.lpszHostName = heap_strdup (SERVER_NAME);
+        uc.nPort = INTERNET_DEFAULT_HTTP_PORT;
+        uc.lpszUserName = heap_strdup ("");
+        uc.lpszPassword = heap_strdup ("");
+        uc.lpszUrlPath = heap_strdup (URL_PATH);
     }
 
     ret = 1;
@@ -310,20 +348,22 @@ send_file_wininet (const char *name)
         filesize = 1.5*1024*1024;
     }
 
-    report (R_STATUS, "Opening HTTP connection to " SERVER_NAME);
+    report (R_STATUS, "Opening %s connection to %s:%d",
+            (uc.nScheme == INTERNET_SCHEME_HTTP ? "http" : "https"),
+            uc.lpszHostName, uc.nPort);
     session = pInternetOpen (USER_AGENT, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     if (session == NULL) {
         report (R_WARNING, "Unable to open connection, error %u", GetLastError());
         goto done;
     }
-    connection = pInternetConnect (session, SERVER_NAME, INTERNET_DEFAULT_HTTP_PORT, "", "", INTERNET_SERVICE_HTTP, 0, 0);
+    connection = pInternetConnect (session, uc.lpszHostName, uc.nPort, uc.lpszUserName, uc.lpszPassword, INTERNET_SERVICE_HTTP, 0, 0);
     if (connection == NULL) {
         report (R_WARNING, "Unable to connect, error %u", GetLastError());
         goto done;
     }
-    request = pHttpOpenRequest (connection, "POST", URL_PATH, NULL, NULL, NULL,
+    request = pHttpOpenRequest (connection, "POST", uc.lpszUrlPath, NULL, NULL, NULL,
                                 INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_UI |
-                                INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
+                                INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD | (uc.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0), 0);
     if (request == NULL) {
         report (R_WARNING, "Unable to open request, error %u", GetLastError());
         goto done;
@@ -396,6 +436,12 @@ send_file_wininet (const char *name)
     }
 
  done:
+    heap_free (uc.lpszScheme);
+    heap_free (uc.lpszHostName);
+    heap_free (uc.lpszUserName);
+    heap_free (uc.lpszPassword);
+    heap_free (uc.lpszUrlPath);
+    heap_free (uc.lpszExtraInfo);
     heap_free((void *)buffers_in.lpcszHeader);
     heap_free(str);
     if (pInternetCloseHandle != NULL && request != NULL)
@@ -413,7 +459,7 @@ send_file_wininet (const char *name)
 }
 
 int
-send_file (const char *name)
+send_file (const char *url, const char *name)
 {
-    return send_file_wininet( name ) || send_file_direct( name );
+    return send_file_wininet( url, name ) || send_file_direct( url, name );
 }
