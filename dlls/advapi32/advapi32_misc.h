@@ -35,28 +35,26 @@ DWORD SERV_OpenSCManagerW(LPCWSTR, LPCWSTR, DWORD, SC_HANDLE*) DECLSPEC_HIDDEN;
 DWORD SERV_OpenServiceW(SC_HANDLE, LPCWSTR, DWORD, SC_HANDLE*) DECLSPEC_HIDDEN;
 NTSTATUS SERV_QueryServiceObjectSecurity(SC_HANDLE, SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, DWORD, LPDWORD) DECLSPEC_HIDDEN;
 
-/* heap allocation helpers */
-static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
-static inline void *heap_alloc( size_t len )
+/* memory allocation functions */
+
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
 {
-    return HeapAlloc( GetProcessHeap(), 0, len );
+    return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
-static void *heap_alloc_zero( size_t len ) __WINE_ALLOC_SIZE(1);
-static inline void *heap_alloc_zero( size_t len )
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t size)
 {
-    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
-static void *heap_realloc( void *mem, size_t len ) __WINE_ALLOC_SIZE(2);
-static inline void *heap_realloc( void *mem, size_t len )
+static inline void* __WINE_ALLOC_SIZE(2) heap_realloc(void *mem, size_t size)
 {
-    return HeapReAlloc( GetProcessHeap(), 0, mem, len );
+    return HeapReAlloc(GetProcessHeap(), 0, mem, size);
 }
 
-static inline BOOL heap_free( void *mem )
+static inline BOOL heap_free(void *mem)
 {
-    return HeapFree( GetProcessHeap(), 0, mem );
+    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static inline WCHAR *strdupAW( const char *src )
