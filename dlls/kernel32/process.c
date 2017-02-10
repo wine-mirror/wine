@@ -1085,6 +1085,7 @@ static inline DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry )
  */
 static DWORD WINAPI start_process( LPTHREAD_START_ROUTINE entry )
 {
+    BOOL being_debugged;
     PEB *peb = NtCurrentTeb()->Peb;
 
     if (!entry)
@@ -1098,8 +1099,11 @@ static DWORD WINAPI start_process( LPTHREAD_START_ROUTINE entry )
         DPRINTF( "%04x:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
                  debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
 
+    if (!CheckRemoteDebuggerPresent( GetCurrentProcess(), &being_debugged ))
+        being_debugged = FALSE;
+
     SetLastError( 0 );  /* clear error code */
-    if (peb->BeingDebugged) DbgBreakPoint();
+    if (being_debugged) DbgBreakPoint();
     return call_process_entry( peb, entry );
 }
 
