@@ -92,8 +92,8 @@ typedef enum {
     LDAP_NO_MEMORY                  =   0x5a,
     LDAP_CONNECT_ERROR              =   0x5b,
     LDAP_NOT_SUPPORTED              =   0x5c,
-    LDAP_NO_RESULTS_RETURNED        =   0x5e,
     LDAP_CONTROL_NOT_FOUND          =   0x5d,
+    LDAP_NO_RESULTS_RETURNED        =   0x5e,
     LDAP_MORE_RESULTS_TO_RETURN     =   0x5f,
 
     LDAP_CLIENT_LOOP                =   0x60,
