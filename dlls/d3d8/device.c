@@ -990,6 +990,9 @@ static HRESULT WINAPI d3d8_device_CreateRenderTarget(IDirect3DDevice8 *iface, UI
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, lockable %#x, surface %p.\n",
             iface, width, height, format, multisample_type, lockable, surface);
 
+    if (!format)
+        return D3DERR_INVALIDCALL;
+
     *surface = NULL;
     if (lockable)
         flags |= WINED3D_TEXTURE_CREATE_MAPPABLE;

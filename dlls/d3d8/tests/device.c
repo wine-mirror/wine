@@ -8212,7 +8212,7 @@ static void test_format_unknown(void)
     hr = IDirect3DDevice8_CreateRenderTarget(device, 64, 64,
             D3DFMT_UNKNOWN, D3DMULTISAMPLE_NONE, FALSE, (IDirect3DSurface8 **)&iface);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(iface == (void *)0xdeadbeef, "Got unexpected iface %p.\n", iface);
+    ok(iface == (void *)0xdeadbeef, "Got unexpected iface %p.\n", iface);
 
     iface = (void *)0xdeadbeef;
     hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 64, 64,
