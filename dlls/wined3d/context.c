@@ -1432,16 +1432,17 @@ void context_invalidate_state(struct wined3d_context *context, DWORD state)
 /* This function takes care of wined3d pixel format selection. */
 static int context_choose_pixel_format(const struct wined3d_device *device, HDC hdc,
         const struct wined3d_format *color_format, const struct wined3d_format *ds_format,
-        BOOL auxBuffers, BOOL findCompatible)
+        BOOL auxBuffers)
 {
-    int iPixelFormat=0;
-    unsigned int current_value;
     unsigned int cfg_count = device->adapter->cfg_count;
+    unsigned int current_value;
+    PIXELFORMATDESCRIPTOR pfd;
+    int iPixelFormat = 0;
     unsigned int i;
 
-    TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x, find_compatible %#x.\n",
+    TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x.\n",
             device, hdc, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
-            auxBuffers, findCompatible);
+            auxBuffers);
 
     current_value = 0;
     for (i = 0; i < cfg_count; ++i)
@@ -1496,16 +1497,11 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         }
     }
 
-    /* When findCompatible is set and no suitable format was found, let ChoosePixelFormat choose a pixel format in order not to crash. */
-    if(!iPixelFormat && !findCompatible) {
-        ERR("Can't find a suitable iPixelFormat\n");
-        return FALSE;
-    } else if(!iPixelFormat) {
-        PIXELFORMATDESCRIPTOR pfd;
+    if (!iPixelFormat)
+    {
+        ERR("Trying to locate a compatible pixel format because an exact match failed.\n");
 
-        TRACE("Falling back to ChoosePixelFormat as we weren't able to find an exactly matching pixel format\n");
-        /* PixelFormat selection */
-        ZeroMemory(&pfd, sizeof(pfd));
+        memset(&pfd, 0, sizeof(pfd));
         pfd.nSize      = sizeof(pfd);
         pfd.nVersion   = 1;
         pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
@@ -1517,15 +1513,15 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         pfd.cStencilBits = ds_format->stencil_size;
         pfd.iLayerType = PFD_MAIN_PLANE;
 
-        iPixelFormat = ChoosePixelFormat(hdc, &pfd);
-        if(!iPixelFormat) {
-            /* If this happens something is very wrong as ChoosePixelFormat barely fails */
-            ERR("Can't find a suitable iPixelFormat\n");
-            return FALSE;
+        if (!(iPixelFormat = ChoosePixelFormat(hdc, &pfd)))
+        {
+            /* Something is very wrong as ChoosePixelFormat() barely fails. */
+            ERR("Can't find a suitable pixel format.\n");
+            return 0;
         }
     }
 
-    TRACE("Found iPixelFormat=%d for ColorFormat=%s, DepthStencilFormat=%s\n",
+    TRACE("Found iPixelFormat=%d for ColorFormat=%s, DepthStencilFormat=%s.\n",
             iPixelFormat, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id));
     return iPixelFormat;
 }
@@ -1780,21 +1776,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     }
 
     /* Try to find a pixel format which matches our requirements. */
-    pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format, auxBuffers, FALSE);
-
-    /* Try to locate a compatible format if we weren't able to find anything. */
-    if (!pixel_format)
-    {
-        TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
-        pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format, auxBuffers, TRUE);
-    }
-
-    /* If we still don't have a pixel format, something is very wrong as ChoosePixelFormat barely fails */
-    if (!pixel_format)
-    {
-        ERR("Can't find a suitable pixel format.\n");
+    if (!(pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format, auxBuffers)))
         goto out;
-    }
 
     ret->gl_info = gl_info;
 
