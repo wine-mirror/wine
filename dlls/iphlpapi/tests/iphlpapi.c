@@ -75,6 +75,7 @@ static DWORD (WINAPI *pGetTcpTable)(PMIB_TCPTABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUdpTable)(PMIB_UDPTABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetPerAdapterInfo)(ULONG,PIP_PER_ADAPTER_INFO,PULONG);
 static DWORD (WINAPI *pGetAdaptersAddresses)(ULONG,ULONG,PVOID,PIP_ADAPTER_ADDRESSES,PULONG);
+static DWORD (WINAPI *pGetUnicastIpAddressEntry)(MIB_UNICASTIPADDRESS_ROW*);
 static DWORD (WINAPI *pNotifyAddrChange)(PHANDLE,LPOVERLAPPED);
 static BOOL  (WINAPI *pCancelIPChangeNotify)(LPOVERLAPPED);
 static DWORD (WINAPI *pGetExtendedTcpTable)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CLASS,ULONG);
@@ -123,6 +124,7 @@ static void loadIPHlpApi(void)
     pGetUdpTable = (void *)GetProcAddress(hLibrary, "GetUdpTable");
     pGetPerAdapterInfo = (void *)GetProcAddress(hLibrary, "GetPerAdapterInfo");
     pGetAdaptersAddresses = (void *)GetProcAddress(hLibrary, "GetAdaptersAddresses");
+    pGetUnicastIpAddressEntry = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressEntry");
     pNotifyAddrChange = (void *)GetProcAddress(hLibrary, "NotifyAddrChange");
     pCancelIPChangeNotify = (void *)GetProcAddress(hLibrary, "CancelIPChangeNotify");
     pGetExtendedTcpTable = (void *)GetProcAddress(hLibrary, "GetExtendedTcpTable");
@@ -1965,6 +1967,116 @@ static void test_GetIfTable2(void)
     pFreeMibTable( table );
 }
 
+static void test_GetUnicastIpAddressEntry(void)
+{
+    IP_ADAPTER_ADDRESSES *aa, *ptr;
+    MIB_UNICASTIPADDRESS_ROW row;
+    DWORD ret, size;
+
+    if (!pGetUnicastIpAddressEntry)
+    {
+        win_skip( "GetUnicastIpAddressEntry not available\n" );
+        return;
+    }
+
+    ret = pGetUnicastIpAddressEntry( NULL );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    memset( &row, 0, sizeof(row) );
+    ret = pGetUnicastIpAddressEntry( &row );
+    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    memset( &row, 0, sizeof(row) );
+    row.Address.Ipv4.sin_family = AF_INET;
+    row.Address.Ipv4.sin_port = 0;
+    row.Address.Ipv4.sin_addr.S_un.S_addr = 0x01020304;
+    ret = pGetUnicastIpAddressEntry( &row );
+    ok( ret == ERROR_FILE_NOT_FOUND, "got %u\n", ret );
+
+    memset( &row, 0, sizeof(row) );
+    row.InterfaceIndex = 123;
+    ret = pGetUnicastIpAddressEntry( &row );
+    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    memset( &row, 0, sizeof(row) );
+    row.InterfaceIndex = get_interface_index();
+    row.Address.Ipv4.sin_family = AF_INET;
+    row.Address.Ipv4.sin_port = 0;
+    row.Address.Ipv4.sin_addr.S_un.S_addr = 0x01020304;
+    ret = pGetUnicastIpAddressEntry( &row );
+    ok( ret == ERROR_NOT_FOUND, "got %u\n", ret );
+
+    memset( &row, 0, sizeof(row) );
+    row.InterfaceIndex = 123;
+    row.Address.Ipv4.sin_family = AF_INET;
+    row.Address.Ipv4.sin_port = 0;
+    row.Address.Ipv4.sin_addr.S_un.S_addr = 0x01020304;
+    ret = pGetUnicastIpAddressEntry( &row );
+    ok( ret == ERROR_FILE_NOT_FOUND, "got %u\n", ret );
+
+    ret = pGetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_INTERFACES, NULL, NULL, &size);
+    ok(ret == ERROR_BUFFER_OVERFLOW, "expected ERROR_BUFFER_OVERFLOW, got %u\n", ret);
+    if (ret != ERROR_BUFFER_OVERFLOW) return;
+
+    ptr = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pGetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_INTERFACES, NULL, ptr, &size);
+    ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
+
+    for (aa = ptr; !ret && aa; aa = aa->Next)
+    {
+        IP_ADAPTER_UNICAST_ADDRESS *ua;
+
+        ua = aa->FirstUnicastAddress;
+        while (ua)
+        {
+            /* test with luid */
+            memset( &row, 0, sizeof(row) );
+            memcpy(&row.InterfaceLuid, &aa->Luid, sizeof(aa->Luid));
+            memcpy(&row.Address, ua->Address.lpSockaddr, ua->Address.iSockaddrLength);
+            ret = pGetUnicastIpAddressEntry( &row );
+            ok( ret == NO_ERROR, "got %u\n", ret );
+
+            /* test with index */
+            memset( &row, 0, sizeof(row) );
+            row.InterfaceIndex = S(U(*aa)).IfIndex;
+            memcpy(&row.Address, ua->Address.lpSockaddr, ua->Address.iSockaddrLength);
+            ret = pGetUnicastIpAddressEntry( &row );
+            ok( ret == NO_ERROR, "got %u\n", ret );
+            if (ret == NO_ERROR)
+            {
+                ok(row.InterfaceLuid.Info.Reserved == aa->Luid.Info.Reserved, "Expected %d, got %d\n",
+                    aa->Luid.Info.Reserved, row.InterfaceLuid.Info.Reserved);
+                ok(row.InterfaceLuid.Info.NetLuidIndex == aa->Luid.Info.NetLuidIndex, "Expected %d, got %d\n",
+                    aa->Luid.Info.NetLuidIndex, row.InterfaceLuid.Info.NetLuidIndex);
+                ok(row.InterfaceLuid.Info.IfType == aa->Luid.Info.IfType, "Expected %d, got %d\n",
+                    aa->Luid.Info.IfType, row.InterfaceLuid.Info.IfType);
+                ok(row.InterfaceIndex == S(U(*aa)).IfIndex, "Expected %d, got %d\n",
+                    S(U(*aa)).IfIndex, row.InterfaceIndex);
+                ok(row.PrefixOrigin == ua->PrefixOrigin, "Expected %d, got %d\n",
+                    ua->PrefixOrigin, row.PrefixOrigin);
+                ok(row.SuffixOrigin == ua->SuffixOrigin, "Expected %d, got %d\n",
+                    ua->SuffixOrigin, row.SuffixOrigin);
+                ok(row.ValidLifetime == ua->ValidLifetime, "Expected %d, got %d\n",
+                    ua->ValidLifetime, row.ValidLifetime);
+                ok(row.PreferredLifetime == ua->PreferredLifetime, "Expected %d, got %d\n",
+                    ua->PreferredLifetime, row.PreferredLifetime);
+                ok(row.OnLinkPrefixLength == ua->OnLinkPrefixLength, "Expected %d, got %d\n",
+                    ua->OnLinkPrefixLength, row.OnLinkPrefixLength);
+                ok(row.SkipAsSource == 0, "Expected 0, got %d\n", row.SkipAsSource);
+                ok(row.DadState == ua->DadState, "Expected %d, got %d\n", ua->DadState, row.DadState);
+                if (row.Address.si_family == AF_INET6)
+                    ok(row.ScopeId.Value == row.Address.Ipv6.sin6_scope_id, "Expected %d, got %d\n",
+                        row.Address.Ipv6.sin6_scope_id, row.ScopeId.Value);
+                else
+                    ok(row.ScopeId.Value == 0, "Expected 0, got %d\n", row.ScopeId.Value);
+                ok(row.CreationTimeStamp.QuadPart, "CreationTimeStamp is 0\n");
+            }
+            ua = ua->Next;
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -1989,6 +2101,7 @@ START_TEST(iphlpapi)
     test_interface_identifier_conversion();
     test_GetIfEntry2();
     test_GetIfTable2();
+    test_GetUnicastIpAddressEntry();
     freeIPHlpApi();
   }
 }
