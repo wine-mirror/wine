@@ -579,7 +579,6 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
-        if (status != STATUS_PENDING) io->Information = wine_server_reply_size( reply );
     }
     SERVER_END_REQ;
 
@@ -627,7 +626,6 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
-        if (status != STATUS_PENDING) io->Information = reply->size;
     }
     SERVER_END_REQ;
 
