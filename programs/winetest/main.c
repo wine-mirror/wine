@@ -773,6 +773,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
 static void
 run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const char *tempdir)
 {
+    /* Build the source filename so analysis tools can link to it */
     const char* file = get_test_source_file(test->name, subtest);
 
     if (test_filtered_out( test->name, subtest ))
