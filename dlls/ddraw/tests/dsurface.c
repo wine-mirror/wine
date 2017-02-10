@@ -2163,129 +2163,6 @@ static BOOL can_create_primary_surface(void)
     return TRUE;
 }
 
-static void GetDCTest(void)
-{
-    DDSURFACEDESC ddsd;
-    DDSURFACEDESC2 ddsd2;
-    IDirectDrawSurface *surf;
-    IDirectDrawSurface4 *surf4;
-    IDirectDrawSurface7 *surf7;
-    IDirectDrawSurface *tmp;
-    IDirectDrawSurface7 *tmp7;
-    HRESULT hr;
-    IDirectDraw4 *dd4;
-    IDirectDraw7 *dd7;
-    HDC dc;
-    ULONG ref;
-
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-    ddsd.dwWidth = 64;
-    ddsd.dwHeight = 64;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    memset(&ddsd2, 0, sizeof(ddsd2));
-    ddsd2.dwSize = sizeof(ddsd2);
-    ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-    ddsd2.dwWidth = 64;
-    ddsd2.dwHeight = 64;
-    ddsd2.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-
-    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw4, (void **) &dd4);
-    ok(hr == DD_OK, "IDirectDraw_QueryInterface failed: 0x%08x\n", hr);
-
-    surf = NULL;
-    hr = IDirectDraw4_CreateSurface(dd4, &ddsd2, &surf4, NULL);
-    ok(hr == DD_OK, "IDirectDraw4_CreateSurface failed: 0x%08x\n", hr);
-
-    hr = IDirectDrawSurface4_QueryInterface(surf4, &IID_IDirectDrawSurface, (void **)&surf);
-    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
-
-    ref = getRefcount((IUnknown *) surf);
-    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
-    ref = getRefcount((IUnknown *) surf4);
-    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
-
-    hr = IDirectDrawSurface4_GetDC(surf4, &dc);
-    ok(SUCCEEDED(hr), "GetDC failed, hr %#x.\n", hr);
-
-    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, NULL);
-    ok(hr == E_INVALIDARG, "Expected hr E_INVALIDARG, got %#x.\n", hr);
-
-    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, (IDirectDrawSurface4 **)&tmp);
-    ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
-    ok(tmp == surf, "Expected surface %p, got %p.\n\n", surf, tmp);
-
-    ref = getRefcount((IUnknown *) surf);
-    ok(ref == 2, "Refcount is %u, expected 2\n", ref);
-    ref = getRefcount((IUnknown *) tmp);
-    ok(ref == 2, "Refcount is %u, expected 2\n", ref);
-    ref = getRefcount((IUnknown *) surf4);
-    ok(ref == 1, "Refcount is %u, expected 1\n", ref);
-
-    hr = IDirectDrawSurface4_ReleaseDC(surf4, dc);
-    ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
-
-    IDirectDrawSurface_Release(tmp);
-
-    dc = CreateCompatibleDC(NULL);
-    ok(!!dc, "CreateCompatibleDC failed.\n");
-
-    tmp = (IDirectDrawSurface *)0xdeadbeef;
-    hr = IDirectDraw4_GetSurfaceFromDC(dd4, dc, (IDirectDrawSurface4 **)&tmp);
-    ok(hr == DDERR_NOTFOUND, "GetSurfaceFromDC failed, hr %#x.\n", hr);
-    ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
-
-    ok(DeleteDC(dc), "DeleteDC failed.\n");
-
-    tmp = (IDirectDrawSurface *)0xdeadbeef;
-    hr = IDirectDraw4_GetSurfaceFromDC(dd4, NULL, (IDirectDrawSurface4 **)&tmp);
-    ok(hr == DDERR_NOTFOUND, "GetSurfaceFromDC failed, hr %#x.\n", hr);
-    ok(!tmp, "Expected surface NULL, got %p.\n", tmp);
-
-    IDirectDrawSurface4_Release(surf4);
-    IDirectDrawSurface_Release(surf);
-    IDirectDraw4_Release(dd4);
-
-    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
-    ok(hr == DD_OK, "IDirectDraw_QueryInterface failed: 0x%08x\n", hr);
-
-    hr = IDirectDraw7_CreateSurface(dd7, &ddsd2, &surf7, NULL);
-    ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed: 0x%08x\n", hr);
-
-    hr = IDirectDrawSurface7_GetDC(surf7, &dc);
-    ok(SUCCEEDED(hr), "GetDC failed, hr %#x.\n", hr);
-
-    hr = IDirectDraw7_GetSurfaceFromDC(dd7, dc, NULL);
-    ok(hr == E_INVALIDARG, "Expected hr E_INVALIDARG, got %#x.\n", hr);
-
-    hr = IDirectDraw7_GetSurfaceFromDC(dd7, dc, &tmp7);
-    ok(SUCCEEDED(hr), "GetSurfaceFromDC failed, hr %#x.\n", hr);
-    ok(tmp7 == surf7, "Expected surface %p, got %p.\n\n", surf7, tmp7);
-    IDirectDrawSurface7_Release(tmp7);
-
-    hr = IDirectDrawSurface7_ReleaseDC(surf7, dc);
-    ok(SUCCEEDED(hr), "ReleaseDC failed, hr %#x.\n", hr);
-
-    dc = CreateCompatibleDC(NULL);
-    ok(!!dc, "CreateCompatibleDC failed.\n");
-
-    tmp7 = (IDirectDrawSurface7 *)0xdeadbeef;
-    hr = IDirectDraw7_GetSurfaceFromDC(dd7, dc, &tmp7);
-    ok(hr == DDERR_NOTFOUND, "GetSurfaceFromDC failed, hr %#x.\n", hr);
-    ok(!tmp7, "Expected surface NULL, got %p.\n", tmp7);
-
-    ok(DeleteDC(dc), "DeleteDC failed.\n");
-
-    tmp7 = (IDirectDrawSurface7 *)0xdeadbeef;
-    hr = IDirectDraw7_GetSurfaceFromDC(dd7, NULL, (IDirectDrawSurface7 **)&tmp7);
-    ok(hr == DDERR_NOTFOUND, "GetSurfaceFromDC failed, hr %#x.\n", hr);
-    ok(!tmp7, "Expected surface NULL, got %p.\n", tmp7);
-
-    IDirectDrawSurface7_Release(surf7);
-    IDirectDraw7_Release(dd7);
-}
-
 static void BackBufferCreateSurfaceTest(void)
 {
     DDSURFACEDESC ddsd;
@@ -3277,7 +3154,6 @@ START_TEST(dsurface)
     BltParamTest();
     PaletteTest();
     SurfaceCapsTest();
-    GetDCTest();
     BackBufferCreateSurfaceTest();
     BackBufferAttachmentFlipTest();
     CreateSurfaceBadCapsSizeTest();
