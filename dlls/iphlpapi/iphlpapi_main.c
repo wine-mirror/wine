@@ -2467,6 +2467,73 @@ DWORD WINAPI GetExtendedUdpTable(PVOID pUdpTable, PDWORD pdwSize, BOOL bOrder,
     return ret;
 }
 
+DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW *row)
+{
+    IP_ADAPTER_ADDRESSES *aa, *ptr;
+    ULONG size = 0;
+    DWORD ret;
+
+    TRACE("%p\n", row);
+
+    if (!row)
+        return ERROR_INVALID_PARAMETER;
+
+    ret = GetAdaptersAddresses(row->Address.si_family, 0, NULL, NULL, &size);
+    if (ret != ERROR_BUFFER_OVERFLOW)
+        return ret;
+    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, size)))
+        return ERROR_OUTOFMEMORY;
+    if ((ret = GetAdaptersAddresses(row->Address.si_family, 0, NULL, ptr, &size)))
+    {
+        HeapFree(GetProcessHeap(), 0, ptr);
+        return ret;
+    }
+
+    ret = ERROR_FILE_NOT_FOUND;
+    for (aa = ptr; aa; aa = aa->Next)
+    {
+        IP_ADAPTER_UNICAST_ADDRESS *ua;
+
+        if (aa->u.s.IfIndex != row->InterfaceIndex &&
+            memcmp(&aa->Luid, &row->InterfaceLuid, sizeof(row->InterfaceLuid)))
+            continue;
+        ret = ERROR_NOT_FOUND;
+
+        ua = aa->FirstUnicastAddress;
+        while (ua)
+        {
+            SOCKADDR_INET *uaaddr = (SOCKADDR_INET *)ua->Address.lpSockaddr;
+
+            if ((row->Address.si_family == WS_AF_INET6 &&
+                 !memcmp(&row->Address.Ipv6.sin6_addr, &uaaddr->Ipv6.sin6_addr, sizeof(uaaddr->Ipv6.sin6_addr))) ||
+                (row->Address.si_family == WS_AF_INET &&
+                 row->Address.Ipv4.sin_addr.S_un.S_addr == uaaddr->Ipv4.sin_addr.S_un.S_addr))
+            {
+                memcpy(&row->InterfaceLuid, &aa->Luid, sizeof(aa->Luid));
+                row->InterfaceIndex     = aa->u.s.IfIndex;
+                row->PrefixOrigin       = ua->PrefixOrigin;
+                row->SuffixOrigin       = ua->SuffixOrigin;
+                row->ValidLifetime      = ua->ValidLifetime;
+                row->PreferredLifetime  = ua->PreferredLifetime;
+                row->OnLinkPrefixLength = ua->OnLinkPrefixLength;
+                row->SkipAsSource       = 0;
+                row->DadState           = ua->DadState;
+                if (row->Address.si_family == WS_AF_INET6)
+                    row->ScopeId.u.Value  = row->Address.Ipv6.sin6_scope_id;
+                else
+                    row->ScopeId.u.Value  = 0;
+                NtQuerySystemTime(&row->CreationTimeStamp);
+                HeapFree(GetProcessHeap(), 0, ptr);
+                return NO_ERROR;
+            }
+            ua = ua->Next;
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, ptr);
+
+    return ret;
+}
+
 /******************************************************************
  *    GetUniDirectionalAdapterInfo (IPHLPAPI.@)
  *

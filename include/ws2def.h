@@ -27,6 +27,8 @@
 #define WS(x)    x
 #endif
 
+typedef USHORT ADDRESS_FAMILY;
+
 #ifndef __CSADDR_DEFINED__
 #define __CSADDR_DEFINED__
 
@@ -77,6 +79,17 @@ typedef enum {
     ScopeLevelOrganization = 8,
     ScopeLevelGlobal       = 14
 } SCOPE_LEVEL;
+
+typedef struct
+{
+    union {
+        struct {
+            ULONG Zone  : 28;
+            ULONG Level : 4;
+        } DUMMYSTRUCTNAME;
+        ULONG Value;
+    } DUMMYUNIONNAME;
+} SCOPE_ID, *PSCOPE_ID;
 
 typedef struct _WSABUF
 {
