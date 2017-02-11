@@ -1859,11 +1859,13 @@ HRESULT CDECL IStorage16_fnOpenStorage(IStorage16 *iface, LPCOLESTR16 pwcsName,
 	newpps = STORAGE_look_for_named_pps(&lpstg->str,This->stde.pps_dir,name);
 	if (newpps==-1) {
 		IStorage16_fnRelease(&lpstg->IStorage16_iface);
+		*ppstg = NULL;
 		return E_FAIL;
 	}
 
 	if (1!=STORAGE_get_pps_entry(&lpstg->str,newpps,&(lpstg->stde))) {
 		IStorage16_fnRelease(&lpstg->IStorage16_iface);
+		*ppstg = NULL;
 		return E_FAIL;
 	}
 	lpstg->ppsent		= newpps;
@@ -1899,11 +1901,13 @@ HRESULT CDECL IStorage16_fnOpenStream(IStorage16 *iface, LPCOLESTR16 pwcsName, v
 	newpps = STORAGE_look_for_named_pps(&lpstr->str,This->stde.pps_dir,name);
 	if (newpps==-1) {
 		IStream16_fnRelease(&lpstr->IStream16_iface);
+		*ppstm = NULL;
 		return E_FAIL;
 	}
 
 	if (1!=STORAGE_get_pps_entry(&lpstr->str,newpps,&(lpstr->stde))) {
 		IStream16_fnRelease(&lpstr->IStream16_iface);
+		*ppstm = NULL;
 		return E_FAIL;
 	}
 	lpstr->offset.u.LowPart		= 0;
