@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-10 21:23+0300\n"
+"PO-Revision-Date: 2017-02-11 08:54+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9353,10 +9353,8 @@ msgid "Confidentiality Required"
 msgstr "Reikalingas slaptumas"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Vyksta sistemos stabdymas.\n"
+msgstr "Vyksta SASL saistymas"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
