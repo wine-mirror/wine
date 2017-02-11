@@ -70,7 +70,7 @@ struct storage_pps_entry {
 	GUID	pps_guid;	/* 50: class ID */
 	DWORD	pps_unknown1;	/* 60: unknown */
 	FILETIME pps_ft1;	/* 64: filetime1 */
-	FILETIME pps_ft2;	/* 70: filetime2 */
+	FILETIME pps_ft2;	/* 6C: filetime2 */
 	DWORD	pps_sb;		/* 74: data startblock */
 	DWORD	pps_size;	/* 78: datalength. (<0x1000)?small:big blocks*/
 	DWORD	pps_unknown2;	/* 7C: unknown */
