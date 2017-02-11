@@ -50,13 +50,15 @@ static HRESULT PROPVAR_ConvertFILETIME(PROPVARIANT *ppropvarDest,
             static const char format[] = "%04d/%02d/%02d:%02d:%02d:%02d.%03d";
 
             ppropvarDest->u.pszVal = HeapAlloc(GetProcessHeap(), 0,
-                                             lstrlenA(format) + 1);
+                                             sizeof(format));
             if (!ppropvarDest->u.pszVal)
                 return E_OUTOFMEMORY;
 
-            sprintf(ppropvarDest->u.pszVal, format, time.wYear, time.wMonth,
-                    time.wDay, time.wHour, time.wMinute,
-                    time.wSecond, time.wMilliseconds);
+            snprintf( ppropvarDest->u.pszVal, sizeof(format),
+                      format,
+                      time.wYear, time.wMonth, time.wDay,
+                      time.wHour, time.wMinute, time.wSecond,
+                      time.wMilliseconds );
 
             return S_OK;
         }
