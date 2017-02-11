@@ -200,6 +200,17 @@ typedef struct tagSRB32_GetDiskInfo {
  BYTE         SRB_Rsvd1[10];            /* 0E Reserved */
 } SRB_GetDiskInfo, *PSRB_GetDiskInfo;
 
+typedef struct tagSRB32_GetSetTimeouts {
+ BYTE         SRB_Cmd;                  /* 00 ASPI cmd code = SC_GETSET_TIMEOUTS */
+ BYTE         SRB_Status;               /* 01 ASPI command status byte */
+ BYTE         SRB_HaId;                 /* 02 ASPI host adapter number */
+ BYTE         SRB_Flags;                /* 03 Reserved */
+ DWORD        SRB_Hdr_Rsvd;             /* 04 Reserved */
+ BYTE         SRB_Target;               /* 08 Target's SCSI ID */
+ BYTE         SRB_Lun;                  /* 09 Target's LUN number */
+ DWORD        SRB_Timeout;              /* 10 Target's Timeout value */
+} SRB_GetSetTimeouts, *PSRB_GetSetTimeouts;
+
 /* SRB header */
 typedef struct tagSRB32_Header {
  BYTE         SRB_Cmd;                  /* 00 ASPI cmd code = SC_RESET_DEV */
