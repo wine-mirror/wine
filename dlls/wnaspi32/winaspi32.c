@@ -573,6 +573,12 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     FIXME("SC_GET_DISK_INFO always return 'int13 unassociated disk'.\n");
     lpSRB->diskinfo.SRB_DriveFlags = 0; /* disk is not int13 served */
     return SS_COMP;
+  case SC_GETSET_TIMEOUTS: {
+    PSRB_GetSetTimeouts psrb_gst = (PSRB_GetSetTimeouts)lpSRB;
+    FIXME("SC_GETSET_TIMEOUTS doesn't actually change the timeout value nor does it return the current value.\n");
+    psrb_gst->SRB_Status = SS_COMP; /* synchronous call, should be the same as the return value of SendASPI32Command */
+    return SS_COMP;
+  }
   default:
     FIXME("Unknown command %d\n", lpSRB->common.SRB_Cmd);
   }
