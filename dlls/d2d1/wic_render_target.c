@@ -841,7 +841,8 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     texture_desc.Usage = D3D10_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET | D3D10_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
+    texture_desc.MiscFlags = desc->usage & D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE ?
+            D3D10_RESOURCE_MISC_GDI_COMPATIBLE : 0;
 
     if (FAILED(hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &texture)))
     {
@@ -860,6 +861,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     texture_desc.Usage = D3D10_USAGE_STAGING;
     texture_desc.BindFlags = 0;
     texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+    texture_desc.MiscFlags = 0;
 
     if (FAILED(hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &render_target->readback_texture)))
     {
