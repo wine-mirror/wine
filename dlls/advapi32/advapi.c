@@ -231,7 +231,7 @@ BOOL WINAPI InitiateSystemShutdownExA( LPSTR lpMachineName, LPSTR lpMessage,
          DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
          DWORD dwReason)
 {
-     FIXME("%s %s %d %d %d %d\n", debugstr_a(lpMachineName),
+     FIXME("%s %s %d %d %d %#x\n", debugstr_a(lpMachineName),
             debugstr_a(lpMessage), dwTimeout, bForceAppsClosed,
             bRebootAfterShutdown, dwReason);
      return TRUE;
@@ -246,7 +246,7 @@ BOOL WINAPI InitiateSystemShutdownExW( LPWSTR lpMachineName, LPWSTR lpMessage,
          DWORD dwTimeout, BOOL bForceAppsClosed, BOOL bRebootAfterShutdown,
          DWORD dwReason)
 {
-     FIXME("%s %s %d %d %d %d\n", debugstr_w(lpMachineName),
+     FIXME("%s %s %d %d %d %#x\n", debugstr_w(lpMachineName),
             debugstr_w(lpMessage), dwTimeout, bForceAppsClosed,
             bRebootAfterShutdown, dwReason);
      return TRUE;
