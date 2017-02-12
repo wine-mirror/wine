@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-02 09:41+0300\n"
+"PO-Revision-Date: 2017-02-11 02:32+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -9352,10 +9352,8 @@ msgid "Confidentiality Required"
 msgstr "Требуется конфиденциальность"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Система подготавливается к отключению.\n"
+msgstr "Выполняется привязка с помощью SASL"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -11945,17 +11943,11 @@ msgstr "Не удалось переименовать выбранное зна
 #: regedit.rc:220
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "Ключи и значения из «%1» были успешно добавлены в реестр."
 
 #: regedit.rc:221
-#, fuzzy
-#| msgid ""
-#| "Unable to rename the key '%1'.\n"
-#| "The specified key name already exists."
 msgid "Unable to import %1. The specified file is not a valid registry file."
-msgstr ""
-"Не удалось переименовать ключ «%1».\n"
-"Ключ с указанным именем уже существует."
+msgstr "Не удалось импортировать «%1». Некорректный файл реестра."
 
 #: regedit.rc:373
 msgid ""
