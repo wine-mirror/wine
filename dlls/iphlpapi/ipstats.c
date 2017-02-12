@@ -510,7 +510,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
         }
         if (kc) kstat_close( kc );
     }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS) && defined(HAVE_STRUCT_ICMPSTAT_ICPS_INHIST)
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS) && (defined(HAVE_STRUCT_ICMPSTAT_ICPS_INHIST) || defined(HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST))
     {
         int mib[] = {CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS};
 #define MIB_LEN (sizeof(mib) / sizeof(mib[0]))
@@ -520,6 +520,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
 
         if(sysctl(mib, MIB_LEN, &icmp_stat, &needed, NULL, 0) != -1)
         {
+#ifdef HAVE_STRUCT_ICMPSTAT_ICPS_INHIST
             /*in stats */
             stats->stats.icmpInStats.dwMsgs = icmp_stat.icps_badcode + icmp_stat.icps_checksum + icmp_stat.icps_tooshort + icmp_stat.icps_badlen;
             for(i = 0; i <= ICMP_MAXTYPE; i++)
@@ -538,6 +539,7 @@ DWORD WINAPI GetIcmpStatistics(PMIB_ICMP stats)
             stats->stats.icmpInStats.dwTimestampReps = icmp_stat.icps_inhist[ICMP_TSTAMPREPLY];
             stats->stats.icmpInStats.dwAddrMasks = icmp_stat.icps_inhist[ICMP_MASKREQ];
             stats->stats.icmpInStats.dwAddrMaskReps = icmp_stat.icps_inhist[ICMP_MASKREPLY];
+#endif
 
 #ifdef HAVE_STRUCT_ICMPSTAT_ICPS_OUTHIST
             /* out stats */

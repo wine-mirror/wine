@@ -16768,6 +16768,9 @@ fi
 ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_inhist" "ac_cv_member_struct_icmpstat_icps_inhist" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #ifdef HAVE_NETINET_IP_H
 #include <netinet/ip.h>
 #endif

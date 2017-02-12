@@ -2380,6 +2380,9 @@ AC_CHECK_MEMBERS([struct icmpstat.icps_inhist],,,
 [#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #ifdef HAVE_NETINET_IP_H
 #include <netinet/ip.h>
 #endif
