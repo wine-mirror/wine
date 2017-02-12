@@ -935,7 +935,7 @@ static void test_PSM_INSERTPAGE(void)
 
     /* add pages one by one */
     ret = SendMessageA(hdlg, PSM_INSERTPAGE, 5, (LPARAM)hpsp[1]);
-    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    ok(ret == TRUE, "got %d\n", ret);
 
     /* try with invalid values */
     ret = SendMessageA(hdlg, PSM_INSERTPAGE, 0, 0);
@@ -954,34 +954,34 @@ if (0)
     tab = (HWND)SendMessageA(hdlg, PSM_GETTABCONTROL, 0, 0);
 
     r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
-    todo_wine ok(r == 2, "got %d\n", r);
+    ok(r == 2, "got %d\n", r);
 
     ret = SendMessageA(hdlg, PSM_INSERTPAGE, (WPARAM)hpsp[1], (LPARAM)hpsp[2]);
-    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    ok(ret == TRUE, "got %d\n", ret);
 
     r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
-    todo_wine ok(r == 3, "got %d\n", r);
+    ok(r == 3, "got %d\n", r);
 
     /* add property sheet page that can't be created */
     ret = SendMessageA(hdlg, PSM_INSERTPAGE, 1, (LPARAM)hpsp[3]);
-    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    ok(ret == TRUE, "got %d\n", ret);
 
     r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
-    todo_wine ok(r == 4, "got %d\n", r);
+    ok(r == 4, "got %d\n", r);
 
     /* select page that can't be created */
     ret = SendMessageA(hdlg, PSM_SETCURSEL, 1, 0);
-    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    ok(ret == TRUE, "got %d\n", ret);
 
     r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
-    todo_wine ok(r == 3, "got %d\n", r);
+    ok(r == 3, "got %d\n", r);
 
     /* test PSP_PREMATURE flag with incorrect property sheet page */
     ret = SendMessageA(hdlg, PSM_INSERTPAGE, 0, (LPARAM)hpsp[4]);
     ok(ret == FALSE, "got %d\n", ret);
 
     r = SendMessageA(tab, TCM_GETITEMCOUNT, 0, 0);
-    todo_wine ok(r == 3, "got %d\n", r);
+    ok(r == 3, "got %d\n", r);
 
     DestroyPropertySheetPage(hpsp[4]);
     DestroyWindow(hdlg);
