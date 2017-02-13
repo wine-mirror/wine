@@ -81,7 +81,7 @@ static HRESULT WINAPI infosoftcf_fnQueryInterface ( LPCLASSFACTORY iface,
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IClassFactory))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IClassFactory_iface;
         return S_OK;
     }
 
