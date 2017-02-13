@@ -927,6 +927,79 @@ static const struct message WmShowVisiblePopupSeq_3[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE, 0, SWP_SHOWWINDOW },
     { 0 }
 };
+/* CreateWindow (for a popup window with WS_VISIBLE style set)
+ */
+static const struct message WmShowPopupFirstDrawSeq_1[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_ACTIVATEAPP, sent },
+    { WM_NCACTIVATE, sent },
+    { WM_ACTIVATE, sent },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_PAINT, sent },
+    /* ocasionally received on test machines */
+    { WM_NCPAINT, sent|beginpaint|optional },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
+    { 0 }
+};
+/* CreateWindow (for a popup window that is shown with ShowWindow(SW_SHOWMAXIMIZED))
+ */
+static const struct message WmShowPopupFirstDrawSeq_2[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_STATECHANGED|SWP_SHOWWINDOW|SWP_FRAMECHANGED  },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_NCPAINT, sent|optional|wparam, 1 },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_ACTIVATEAPP, sent },
+    { WM_NCACTIVATE, sent },
+    { WM_ACTIVATE, sent },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc, 0 },
+    { WM_PAINT, sent},
+    /* ocasionally received on test machines */
+    { WM_NCPAINT, sent|beginpaint|optional },
+    { WM_ERASEBKGND, sent|beginpaint|optional },
+    { 0 }
+};
 /* CreateWindow (for child window, not initially visible) */
 static const struct message WmCreateChildSeq[] = {
     { HCBT_CREATEWND, hook },
@@ -4829,6 +4902,42 @@ static void test_messages(void)
 
     DestroyWindow(hwnd);
     ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped", FALSE);
+
+    /* Test if windows are correctly drawn when first shown */
+
+    /* Visible, redraw */
+    flush_events();
+    flush_sequence();
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test Popup", WS_POPUP | WS_VISIBLE,
+                             10, 10, 100, 100, NULL, 0, 0, NULL );
+    ok (hwnd != 0, "Failed to create popup window\n");
+    RedrawWindow(hwnd, NULL, NULL, RDW_UPDATENOW);
+    ok_sequence(WmShowPopupFirstDrawSeq_1, "RedrawWindow:show_popup_first_draw_visible", TRUE);
+    DestroyWindow(hwnd);
+
+    /* Invisible, show, message */
+    flush_events();
+    flush_sequence();
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test Popup", WS_POPUP,
+                             10, 10, 100, 100, NULL, 0, 0, NULL );
+    ok (hwnd != 0, "Failed to create popup window\n");
+    ShowWindow(hwnd, SW_SHOW);
+    SendMessageW(hwnd, WM_PAINT, 0, 0);
+    ok_sequence(WmShowPopupFirstDrawSeq_1, "RedrawWindow:show_popup_first_draw_show", TRUE);
+    DestroyWindow(hwnd);
+
+    /* Invisible, show maximized, redraw */
+    flush_events();
+    flush_sequence();
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test Popup", WS_POPUP,
+                             10, 10, 100, 100, NULL, 0, 0, NULL );
+    ok (hwnd != 0, "Failed to create popup window\n");
+    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+    RedrawWindow(hwnd, NULL, NULL, RDW_UPDATENOW);
+    ok_sequence(WmShowPopupFirstDrawSeq_2, "RedrawWindow:show_popup_first_draw_show_maximized", TRUE);
+    DestroyWindow(hwnd);
+
+    /* Test child windows */
 
     hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               100, 100, 200, 200, 0, 0, 0, NULL);
