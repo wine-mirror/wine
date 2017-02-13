@@ -1614,7 +1614,7 @@ static void test_ScriptShape(HDC hdc)
     SCRIPT_CACHE sc = NULL;
     WORD glyphs[4], glyphs2[4], logclust[4], glyphs3[4];
     SCRIPT_VISATTR attrs[4];
-    SCRIPT_ITEM items[2];
+    SCRIPT_ITEM items[4];
     int nb, i, j;
 
     hr = ScriptItemize(test1, 4, 2, NULL, NULL, items, NULL);
@@ -1744,9 +1744,33 @@ static void test_ScriptShape(HDC hdc)
     for (i = 0; i < 2; i++)
     {
         static const WCHAR space[]  = {' ', 0};
-        static const WCHAR blanks[] = {'\t', '\r', '\n', 0x001c, 0x001d, 0x001e, 0x001f,
-                                       0x200b, 0x200c, 0x200d, 0x200e, 0x200f,          /* ZWSP, ZWNJ, ZWJ, LRM, RLM */
-                                       0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0};      /* LRE, RLE, PDF, LRO, RLO */
+        static const struct
+        {
+            WCHAR c;
+            unsigned int item_count;
+            unsigned int item;
+        }
+        test_data[] =
+        {
+            {0x0009, 3, 1}, /* \t   */
+            {0x000a, 3, 1}, /* \n   */
+            {0x000d, 3, 1}, /* \r   */
+            {0x001c, 3, 1}, /* FS   */
+            {0x001d, 3, 1}, /* GS   */
+            {0x001e, 3, 1}, /* RS   */
+            {0x001f, 3, 1}, /* US   */
+            {0x200b, 1, 0}, /* ZWSP */
+            {0x200c, 1, 0}, /* ZWNJ */
+            {0x200d, 1, 0}, /* ZWJ  */
+            {0x200e, 3, 1}, /* LRM  */
+            {0x200f, 3, 1}, /* RLM  */
+            {0x202a, 3, 1}, /* LRE  */
+            {0x202b, 3, 1}, /* RLE  */
+            {0x202c, 3, 1}, /* PDF  */
+            {0x202d, 3, 1}, /* LRO  */
+            {0x202e, 3, 1}, /* RLO  */
+        };
+        WCHAR chars[3];
         HFONT font, oldfont = NULL;
         LOGFONTA lf;
 
@@ -1765,43 +1789,52 @@ static void test_ScriptShape(HDC hdc)
         ok(hr == S_OK, "%s: expected S_OK, got %08x\n", lf.lfFaceName, hr);
         ok(nb == 1, "%s: expected 1, got %d\n", lf.lfFaceName, nb);
 
-        for (j = 0; blanks[j]; j++)
+        chars[0] = 'A';
+        chars[2] = 'A';
+        for (j = 0; j < sizeof(test_data) / sizeof(*test_data); ++j)
         {
-            hr = ScriptItemize(&blanks[j], 1, 2, NULL, NULL, items, NULL);
-            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
+            WCHAR c = test_data[j].c;
+            SCRIPT_ITEM *item;
 
-            ok(!items[0].a.fNoGlyphIndex, "%s: [%02x] got unexpected fNoGlyphIndex %#x.\n",
-               lf.lfFaceName, blanks[j], items[0].a.fNoGlyphIndex);
-            hr = ScriptShape(hdc, &sc, &blanks[j], 1, 1, &items[0].a, glyphs2, logclust, attrs, &nb);
-            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
-            ok(nb == 1, "%s: [%02x] expected 1, got %d\n", lf.lfFaceName, blanks[j], nb);
-            ok(!items[0].a.fNoGlyphIndex, "%s: [%02x] got unexpected fNoGlyphIndex %#x.\n",
-               lf.lfFaceName, blanks[j], items[0].a.fNoGlyphIndex);
+            chars[1] = c;
+            hr = ScriptItemize(chars, 3, 4, NULL, NULL, items, &nb);
+            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, c, hr);
+            todo_wine_if(c == 0x200b) ok(nb == test_data[j].item_count, "%s: [%02x] Got unexpected item count %d.\n",
+               lf.lfFaceName, c, nb);
+            item = &items[test_data[j].item];
 
-            ok(glyphs[0] == glyphs2[0] ||
-               broken(glyphs2[0] == blanks[j] && (blanks[j] < 0x10)),
-               "%s: [%02x] expected %04x, got %04x\n", lf.lfFaceName, blanks[j], glyphs[0], glyphs2[0]);
-            ok(attrs[0].fZeroWidth || broken(!attrs[0].fZeroWidth && (blanks[j] < 0x10) /* Vista */),
-               "%s: [%02x] got unexpected fZeroWidth %#x.\n", lf.lfFaceName, blanks[j], attrs[0].fZeroWidth);
+            ok(!item->a.fNoGlyphIndex, "%s: [%02x] got unexpected fNoGlyphIndex %#x.\n",
+               lf.lfFaceName, c, item->a.fNoGlyphIndex);
+            hr = ScriptShape(hdc, &sc, chars, 3, 3, &item->a, glyphs2, logclust, attrs, &nb);
+            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, c, hr);
+            ok(nb == 3, "%s: [%02x] expected 3, got %d\n", lf.lfFaceName, c, nb);
+            ok(!item->a.fNoGlyphIndex, "%s: [%02x] got unexpected fNoGlyphIndex %#x.\n",
+               lf.lfFaceName, c, item->a.fNoGlyphIndex);
 
-            items[0].a.fNoGlyphIndex = 1;
-            hr = ScriptShape(hdc, &sc, &blanks[j], 1, 1, &items[0].a, glyphs2, logclust, attrs, &nb);
-            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
-            ok(nb == 1, "%s: [%02x] expected 1, got %d\n", lf.lfFaceName, blanks[j], nb);
+            ok(glyphs[0] == glyphs2[1] ||
+               broken(glyphs2[1] == c && (c < 0x10)),
+               "%s: [%02x] expected %04x, got %04x\n", lf.lfFaceName, c, glyphs[0], glyphs2[1]);
+            ok(attrs[1].fZeroWidth || broken(!attrs[1].fZeroWidth && (c < 0x10) /* Vista */),
+               "%s: [%02x] got unexpected fZeroWidth %#x.\n", lf.lfFaceName, c, attrs[1].fZeroWidth);
 
-            if (blanks[j] == 0x200b || blanks[j] == 0x200c || blanks[j] == 0x200d)
+            item->a.fNoGlyphIndex = 1;
+            hr = ScriptShape(hdc, &sc, chars, 3, 3, &item->a, glyphs2, logclust, attrs, &nb);
+            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, c, hr);
+            ok(nb == 3, "%s: [%02x] expected 1, got %d\n", lf.lfFaceName, c, nb);
+
+            if (c == 0x200b || c == 0x200c || c == 0x200d)
             {
-                ok(glyphs2[0] == 0x0020,
-                   "%s: [%02x] got unexpected %04x.\n", lf.lfFaceName, blanks[j], glyphs2[0]);
-                ok(attrs[0].fZeroWidth, "%s: [%02x] got unexpected fZeroWidth %#x.\n",
-                   lf.lfFaceName, blanks[j], attrs[0].fZeroWidth);
+                ok(glyphs2[1] == 0x0020,
+                   "%s: [%02x] got unexpected %04x.\n", lf.lfFaceName, c, glyphs2[1]);
+                ok(attrs[1].fZeroWidth, "%s: [%02x] got unexpected fZeroWidth %#x.\n",
+                   lf.lfFaceName, c, attrs[1].fZeroWidth);
             }
             else
             {
-                ok(glyphs2[0] == blanks[j],
-                   "%s: [%02x] got unexpected %04x.\n", lf.lfFaceName, blanks[j], glyphs2[0]);
-                ok(!attrs[0].fZeroWidth, "%s: [%02x] got unexpected fZeroWidth %#x.\n",
-                   lf.lfFaceName, blanks[j], attrs[0].fZeroWidth);
+                ok(glyphs2[1] == c,
+                   "%s: [%02x] got unexpected %04x.\n", lf.lfFaceName, c, glyphs2[1]);
+                ok(!attrs[1].fZeroWidth, "%s: [%02x] got unexpected fZeroWidth %#x.\n",
+                   lf.lfFaceName, c, attrs[1].fZeroWidth);
             }
         }
         if (oldfont)
