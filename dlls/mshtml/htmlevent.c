@@ -911,6 +911,27 @@ static inline event_target_t *get_event_target_data(EventTarget *event_target, B
     return event_target->ptr = heap_alloc_zero(sizeof(event_target_t));
 }
 
+static handler_vector_t *get_handler_vector(EventTarget *event_target, eventid_t eid, BOOL alloc)
+{
+    event_target_t *data;
+
+    data = get_event_target_data(event_target, alloc);
+    if(!data)
+        return NULL;
+
+    if(alloc && !data->event_table[eid]) {
+        data->event_table[eid] = heap_alloc_zero(sizeof(*data->event_table[eid]));
+        if(data->event_table[eid]) {
+            const dispex_static_data_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
+            if(vtbl->bind_event)
+                vtbl->bind_event(&event_target->dispex, eid);
+            else
+                FIXME("Unsupported event binding on target %p\n", event_target);
+        }
+    }
+    return data->event_table[eid];
+}
+
 static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
 {
     IDispatchEx *dispex;
@@ -1315,15 +1336,6 @@ HRESULT call_fire_event(HTMLDOMNode *node, eventid_t eid)
     return S_OK;
 }
 
-static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid)
-{
-    if(event_target->event_table[eid])
-        return TRUE;
-
-    event_target->event_table[eid] = heap_alloc_zero(sizeof(*event_target->event_table[eid]));
-    return event_target->event_table[eid] != NULL;
-}
-
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
 {
     nsIDOMNode *nsnode = NULL;
@@ -1378,16 +1390,6 @@ void detach_events(HTMLDocumentNode *doc)
     release_nsevents(doc);
 }
 
-/* Caller should ensure that it's called only once for given event in the target. */
-static void bind_event(EventTarget *event_target, eventid_t eid)
-{
-    const dispex_static_data_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
-    if(vtbl->bind_event)
-        vtbl->bind_event(&event_target->dispex, eid);
-    else
-        FIXME("Unsupported event binding on target %p\n", event_target);
-}
-
 static void remove_event_handler(EventTarget *event_target, eventid_t eid)
 {
     event_target_t *data;
@@ -1407,7 +1409,7 @@ static void remove_event_handler(EventTarget *event_target, eventid_t eid)
 
 static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, IDispatch *disp)
 {
-    event_target_t *data;
+    handler_vector_t *handler_vector;
 
     if(event_info[eid].flags & EVENT_FIXME)
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
@@ -1416,20 +1418,14 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, 
     if(!disp)
         return S_OK;
 
-    data = get_event_target_data(event_target, TRUE);
-    if(!data)
+    handler_vector = get_handler_vector(event_target, eid, TRUE);
+    if(!handler_vector)
         return E_OUTOFMEMORY;
 
-    if(!data->event_table[eid]) {
-        if(!alloc_handler_vector(data, eid))
-            return E_OUTOFMEMORY;
+    if(handler_vector->handler_prop)
+        IDispatch_Release(handler_vector->handler_prop);
 
-        bind_event(event_target, eid);
-    }else if(data->event_table[eid]->handler_prop) {
-        IDispatch_Release(data->event_table[eid]->handler_prop);
-    }
-
-    data->event_table[eid]->handler_prop = disp;
+    handler_vector->handler_prop = disp;
     IDispatch_AddRef(disp);
     return S_OK;
 }
@@ -1503,7 +1499,7 @@ HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
 
 HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARIANT_BOOL *res)
 {
-    event_target_t *data;
+    handler_vector_t *handler_vector;
     eventid_t eid;
     DWORD i = 0;
 
@@ -1517,31 +1513,25 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
     if(event_info[eid].flags & EVENT_FIXME)
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
 
-    data = get_event_target_data(event_target, TRUE);
-    if(!data)
+    handler_vector = get_handler_vector(event_target, eid, TRUE);
+    if(!handler_vector)
         return E_OUTOFMEMORY;
 
-    if(data->event_table[eid]) {
-        while(i < data->event_table[eid]->handler_cnt && data->event_table[eid]->handlers[i])
-            i++;
-    }else if(alloc_handler_vector(data, eid)) {
-        bind_event(event_target, eid);
-    }else {
-        return E_OUTOFMEMORY;
-    }
-    if(i == data->event_table[eid]->handler_cnt) {
+    while(i < handler_vector->handler_cnt && handler_vector->handlers[i])
+        i++;
+    if(i == handler_vector->handler_cnt) {
         if(i)
-            data->event_table[eid]->handlers = heap_realloc_zero(data->event_table[eid]->handlers,
-                                                                 (i + 1) * sizeof(*data->event_table[eid]->handlers));
+            handler_vector->handlers = heap_realloc_zero(handler_vector->handlers,
+                                                         (i + 1) * sizeof(*handler_vector->handlers));
         else
-            data->event_table[eid]->handlers = heap_alloc_zero(sizeof(*data->event_table[eid]->handlers));
-        if(!data->event_table[eid]->handlers)
+            handler_vector->handlers = heap_alloc_zero(sizeof(*handler_vector->handlers));
+        if(!handler_vector->handlers)
             return E_OUTOFMEMORY;
-        data->event_table[eid]->handler_cnt++;
+        handler_vector->handler_cnt++;
     }
 
     IDispatch_AddRef(disp);
-    data->event_table[eid]->handlers[i] = disp;
+    handler_vector->handlers[i] = disp;
 
     *res = VARIANT_TRUE;
     return S_OK;
