@@ -316,7 +316,7 @@ static void *get_pixel_ptr( const BITMAPINFO *info, void *bits, int x, int y )
         return (char *)bits + y * get_dib_stride( width, bpp ) + x * bpp / 8;
 }
 
-static BOOL build_rle_bitmap( const BITMAPINFO *info, struct gdi_image_bits *bits, HRGN *clip )
+static BOOL build_rle_bitmap( BITMAPINFO *info, struct gdi_image_bits *bits, HRGN *clip )
 {
     DWORD i = 0;
     int left, right;
@@ -449,6 +449,7 @@ done:
     bits->ptr     = out_bits;
     bits->is_copy = TRUE;
     bits->free    = free_heap_bits;
+    info->bmiHeader.biSizeImage = get_dib_image_size( info );
 
     return TRUE;
 
