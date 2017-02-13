@@ -1004,12 +1004,12 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
 void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTarget *event_target,
         ConnectionPointContainer *cp_container, eventid_t eid, IDispatch *this_obj)
 {
-    event_target_t *data = get_event_target_data(event_target, FALSE);
+    handler_vector_t *handler_vector = get_handler_vector(event_target, eid, FALSE);
     const BOOL cancelable = event_info[eid].flags & EVENT_CANCELABLE;
     VARIANT v;
     HRESULT hres;
 
-    if(data && data->event_table[eid] && data->event_table[eid]->handler_prop) {
+    if(handler_vector && handler_vector->handler_prop) {
         DISPID named_arg = DISPID_THIS;
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, &named_arg, 1, 1};
@@ -1019,7 +1019,7 @@ void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTa
         V_VT(&v) = VT_EMPTY;
 
         TRACE("%s >>>\n", debugstr_w(event_info[eid].name));
-        hres = call_disp_func(data->event_table[eid]->handler_prop, &dp, &v);
+        hres = call_disp_func(handler_vector->handler_prop, &dp, &v);
         if(hres == S_OK) {
             TRACE("%s <<< %s\n", debugstr_w(event_info[eid].name), debugstr_variant(&v));
 
@@ -1037,7 +1037,7 @@ void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTa
         }
     }
 
-    if(data && data->event_table[eid] && data->event_table[eid]->handler_cnt) {
+    if(handler_vector && handler_vector->handler_cnt) {
         VARIANTARG arg;
         DISPPARAMS dp = {&arg, NULL, 1, 0};
         int i;
@@ -1045,13 +1045,13 @@ void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTa
         V_VT(&arg) = VT_DISPATCH;
         V_DISPATCH(&arg) = (IDispatch*)&event_obj->dispex.IDispatchEx_iface;
 
-        i = data->event_table[eid]->handler_cnt;
+        i = handler_vector->handler_cnt;
         while(i--) {
-            if(data->event_table[eid]->handlers[i]) {
+            if(handler_vector->handlers[i]) {
                 V_VT(&v) = VT_EMPTY;
 
                 TRACE("%s [%d] >>>\n", debugstr_w(event_info[eid].name), i);
-                hres = call_disp_func(data->event_table[eid]->handlers[i], &dp, &v);
+                hres = call_disp_func(handler_vector->handlers[i], &dp, &v);
                 if(hres == S_OK) {
                     TRACE("%s [%d] <<<\n", debugstr_w(event_info[eid].name), i);
 
