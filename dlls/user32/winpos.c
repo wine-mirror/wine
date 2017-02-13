@@ -1643,7 +1643,8 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT
 
     /* Send WM_WINDOWPOSCHANGING message */
 
-    if (!(pWinpos->flags & SWP_NOSENDCHANGING))
+    if (!(pWinpos->flags & SWP_NOSENDCHANGING)
+           && !((pWinpos->flags & SWP_AGG_NOCLIENTCHANGE) && (pWinpos->flags & SWP_SHOWWINDOW)))
         SendMessageW( pWinpos->hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)pWinpos );
 
     if (!(wndPtr = WIN_GetPtr( pWinpos->hwnd )) ||
@@ -2271,7 +2272,8 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
 
     TRACE("\tstatus flags = %04x\n", winpos->flags & SWP_AGG_STATUSFLAGS);
 
-    if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE))
+    if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE)
+            && !((orig_flags & SWP_AGG_NOCLIENTCHANGE) && (orig_flags & SWP_SHOWWINDOW)))
     {
         /* WM_WINDOWPOSCHANGED is sent even if SWP_NOSENDCHANGING is set
            and always contains final window position.

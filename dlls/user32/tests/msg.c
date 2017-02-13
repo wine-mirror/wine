@@ -5164,31 +5164,31 @@ static void test_messages(void)
     test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, 0, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq3,
-            SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER, TRUE);
+            SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER, FALSE);
 
     test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq4, SWP_SHOWWINDOW | SWP_NOMOVE, FALSE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCLIENTSIZE, TRUE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCLIENTMOVE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCLIENTSIZE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCLIENTMOVE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOZORDER, FALSE);
 
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_DEFERERASE, FALSE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOCLIENTMOVE, TRUE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOCLIENTSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOCLIENTMOVE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOCLIENTSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq5, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOMOVE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOZORDER, FALSE);
 
     test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOCOPYBITS, FALSE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOCLIENTMOVE, TRUE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOCLIENTSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOCLIENTMOVE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOCLIENTSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq4, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOMOVE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOZORDER, FALSE);
 
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW, FALSE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOCLIENTMOVE, TRUE);
-    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOCLIENTSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOCLIENTMOVE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOCLIENTSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq5, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOMOVE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOZORDER, FALSE);
