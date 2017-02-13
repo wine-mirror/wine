@@ -831,6 +831,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
             else if (src.y >= lines) return lines;
         }
         src_info->bmiHeader.biHeight = top_down ? -lines : lines;
+        src_info->bmiHeader.biSizeImage = get_dib_image_size( src_info );
     }
 
     src.visrect.left = src.x;
