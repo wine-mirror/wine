@@ -137,6 +137,16 @@ DWORD WINAPI WlanScan(HANDLE handle, const GUID *guid, const DOT11_SSID *ssid,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI WlanRegisterNotification(HANDLE handle, DWORD notify_source, BOOL ignore_dup,
+                                      WLAN_NOTIFICATION_CALLBACK callback, void *context,
+                                      void *reserved, DWORD *notify_prev)
+{
+    FIXME("(%p, %d, %d, %p, %p, %p, %p) stub\n",
+          handle, notify_source, ignore_dup, callback, context, reserved, notify_prev);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 void WINAPI WlanFreeMemory(void *ptr)
 {
     TRACE("(%p)\n", ptr);

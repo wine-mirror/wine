@@ -58,11 +58,23 @@ typedef struct _WLAN_RAW_DATA
     BYTE DataBlob[1];
 } WLAN_RAW_DATA, *PWLAN_RAW_DATA;
 
+typedef struct _WLAN_NOTIFICATION_DATA
+{
+    DWORD NotificationSource;
+    DWORD NotificationCode;
+    GUID InterfaceGuid;
+    DWORD dwDataSize;
+    PVOID pData;
+} WLAN_NOTIFICATION_DATA, *PWLAN_NOTIFICATION_DATA;
+
+typedef void (WINAPI *WLAN_NOTIFICATION_CALLBACK)(WLAN_NOTIFICATION_DATA *, void *);
+
 DWORD WINAPI WlanCloseHandle(HANDLE, void *);
 DWORD WINAPI WlanEnumInterfaces(HANDLE, void *, WLAN_INTERFACE_INFO_LIST **);
 DWORD WINAPI WlanOpenHandle(DWORD, void *, DWORD *, HANDLE *);
 void *WINAPI WlanAllocateMemory(DWORD);
 void WINAPI WlanFreeMemory(void *);
 DWORD WINAPI WlanScan(HANDLE, const GUID *, const DOT11_SSID *, const WLAN_RAW_DATA *, void *);
+DWORD WINAPI WlanRegisterNotification(HANDLE, DWORD, BOOL, WLAN_NOTIFICATION_CALLBACK, void *, void *, DWORD *);
 
 #endif /* _WLAN_WLANAPI_H */
