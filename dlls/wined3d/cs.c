@@ -1039,8 +1039,16 @@ void wined3d_cs_emit_set_texture(struct wined3d_cs *cs, UINT stage, struct wined
 static void wined3d_cs_exec_set_shader_resource_view(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_shader_resource_view *op = data;
+    struct wined3d_shader_resource_view *prev;
 
+    prev = cs->state.shader_resource_view[op->type][op->view_idx];
     cs->state.shader_resource_view[op->type][op->view_idx] = op->view;
+
+    if (op->view)
+        InterlockedIncrement(&op->view->resource->bind_count);
+    if (prev)
+        InterlockedDecrement(&prev->resource->bind_count);
+
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
         device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
 }
