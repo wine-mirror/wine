@@ -1000,6 +1000,126 @@ static const struct message WmShowPopupFirstDrawSeq_2[] = {
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
+static const struct message WmFirstDrawSetWindowPosSeq1[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_ACTIVATEAPP, sent },
+    { WM_NCACTIVATE, sent },
+    { WM_ACTIVATE, sent },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_MOVE, sent|defwinproc },
+    { 0 }
+};
+static const struct message WmFirstDrawSetWindowPosSeq2[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { HCBT_ACTIVATE, hook },
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_ACTIVATEAPP, sent },
+    { WM_NCACTIVATE, sent },
+    { WM_ACTIVATE, sent },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_MOVE, sent|defwinproc },
+    { 0 }
+};
+static const struct message WmFirstDrawSetWindowPosSeq3[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { HCBT_ACTIVATE, hook|optional },
+    /* Probably shouldn't happen, but not part of this test */
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_ACTIVATEAPP, sent|optional },
+    { WM_NCACTIVATE, sent|optional },
+    { WM_ACTIVATE, sent|optional },
+    { HCBT_SETFOCUS, hook|optional },
+    { WM_SETFOCUS, sent|defwinproc|optional },
+    { 0 }
+};
+static const struct message WmFirstDrawSetWindowPosSeq4[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_ACTIVATEAPP, sent },
+    { WM_NCACTIVATE, sent },
+    { WM_ACTIVATE, sent },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_ERASEBKGND, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { 0 }
+};
+static const struct message WmFirstDrawSetWindowPosSeq5[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SIZE, sent|wparam, SIZE_RESTORED },
+    { WM_MOVE, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_QUERYNEWPALETTE, sent|optional },
+    { WM_ACTIVATEAPP, sent },
+    { WM_NCACTIVATE, sent },
+    { WM_ACTIVATE, sent },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { HCBT_SETFOCUS, hook },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent },
+    { 0 }
+};
 /* CreateWindow (for child window, not initially visible) */
 static const struct message WmCreateChildSeq[] = {
     { HCBT_CREATEWND, hook },
@@ -4777,6 +4897,23 @@ static DWORD CALLBACK show_window_thread(LPVOID arg)
    return 0;
 }
 
+/* Helper function to easier test SetWindowPos messages */
+#define test_msg_setpos( expected_list, flags, todo ) \
+        test_msg_setpos_( (expected_list), (flags), (todo), __FILE__, __LINE__)
+static void test_msg_setpos_(const struct message *expected_list, UINT flags, BOOL todo, const char *file, int line)
+{
+    HWND hwnd;
+
+    flush_events();
+    flush_sequence();
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test Popup", WS_POPUP,
+                             10, 10, 100, 100, NULL, 0, 0, NULL );
+    ok (hwnd != 0, "Failed to create popup window\n");
+    SetWindowPos(hwnd, NULL, 0, 0, 100, 100, flags);
+    ok_sequence_(expected_list, "SetWindowPos:show_popup_first_show_window", todo, file, line);
+    DestroyWindow(hwnd);
+}
+
 /* test if we receive the right sequence of messages */
 static void test_messages(void)
 {
@@ -4936,6 +5073,39 @@ static void test_messages(void)
     RedrawWindow(hwnd, NULL, NULL, RDW_UPDATENOW);
     ok_sequence(WmShowPopupFirstDrawSeq_2, "RedrawWindow:show_popup_first_draw_show_maximized", TRUE);
     DestroyWindow(hwnd);
+
+    /* Test SetWindowPos */
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq2, 0, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3,
+            SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER, TRUE);
+
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq4, SWP_SHOWWINDOW | SWP_NOMOVE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCLIENTSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCLIENTMOVE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOZORDER, TRUE);
+
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_DEFERERASE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOCLIENTMOVE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOCLIENTSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq5, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOMOVE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOSIZE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_DEFERERASE | SWP_NOZORDER, FALSE);
+
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOCOPYBITS, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOCLIENTMOVE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOCLIENTSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq4, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOMOVE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq1, SWP_SHOWWINDOW | SWP_NOCOPYBITS | SWP_NOZORDER, TRUE);
+
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOCLIENTMOVE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq3, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOCLIENTSIZE, TRUE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq5, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOMOVE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOSIZE, FALSE);
+    test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOZORDER, FALSE);
 
     /* Test child windows */
 
