@@ -31,7 +31,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wordpad);
 
 struct IRichEditOleCallbackImpl {
-    const IRichEditOleCallbackVtbl *vtbl;
+    IRichEditOleCallback IRichEditOleCallback_iface;
     IStorage *stg;
     int item_num;
 };
@@ -196,7 +196,7 @@ struct IRichEditOleCallbackVtbl olecallbackVtbl = {
 };
 
 struct IRichEditOleCallbackImpl olecallback = {
-    &olecallbackVtbl, NULL, 0
+    { &olecallbackVtbl }, NULL, 0
 };
 
 HRESULT setup_richedit_olecallback(HWND hEditorWnd)
@@ -205,6 +205,6 @@ HRESULT setup_richedit_olecallback(HWND hEditorWnd)
           STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE,
           0, &olecallback.stg);
 
-    SendMessageW(hEditorWnd, EM_SETOLECALLBACK, 0, (LPARAM)&olecallback);
+    SendMessageW(hEditorWnd, EM_SETOLECALLBACK, 0, (LPARAM)&olecallback.IRichEditOleCallback_iface);
     return hr;
 }
