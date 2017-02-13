@@ -1539,9 +1539,9 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
 
 HRESULT detach_event(EventTarget *event_target, BSTR name, IDispatch *disp)
 {
-    event_target_t *data;
+    handler_vector_t *handler_vector;
     eventid_t eid;
-    DWORD i = 0;
+    unsigned i;
 
     eid = attr_to_eid(name);
     if(eid == EVENTID_LAST) {
@@ -1549,19 +1549,15 @@ HRESULT detach_event(EventTarget *event_target, BSTR name, IDispatch *disp)
         return S_OK;
     }
 
-    data = get_event_target_data(event_target, FALSE);
-    if(!data)
+    handler_vector = get_handler_vector(event_target, eid, FALSE);
+    if(!handler_vector)
         return S_OK;
 
-    if(!data->event_table[eid])
-        return S_OK;
-
-    while(i < data->event_table[eid]->handler_cnt) {
-        if(data->event_table[eid]->handlers[i] == disp) {
-            IDispatch_Release(data->event_table[eid]->handlers[i]);
-            data->event_table[eid]->handlers[i] = NULL;
+    for(i = 0; i < handler_vector->handler_cnt; i++) {
+        if(handler_vector->handlers[i] == disp) {
+            IDispatch_Release(handler_vector->handlers[i]);
+            handler_vector->handlers[i] = NULL;
         }
-        i++;
     }
 
     return S_OK;
