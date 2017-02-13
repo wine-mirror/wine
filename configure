@@ -18249,6 +18249,7 @@ wine_fn_config_test dlls/propsys/tests propsys_test
 wine_fn_config_dll psapi enable_psapi implib
 wine_fn_config_test dlls/psapi/tests psapi_test
 wine_fn_config_dll pstorec enable_pstorec clean
+wine_fn_config_test dlls/pstorec/tests pstorec_test
 wine_fn_config_dll qcap enable_qcap
 wine_fn_config_test dlls/qcap/tests qcap_test
 wine_fn_config_dll qedit enable_qedit clean

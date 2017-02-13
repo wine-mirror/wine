@@ -24,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "initguid.h"
 #include "ole2.h"
 #include "pstore.h"
 
@@ -67,13 +68,13 @@ static HRESULT WINAPI PStore_fnQueryInterface(
 {
     PStore_impl *This = impl_from_IPStore(iface);
 
-    TRACE("%p %s\n",This,debugstr_guid(riid));
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObj);
 
     *ppvObj = NULL;
 
-    if (IsEqualIID(riid, &IID_IUnknown))
+    if (IsEqualIID(riid, &IID_IPStore) || IsEqualIID(riid, &IID_IUnknown))
     {
-        *ppvObj = This;
+        *ppvObj = &This->IPStore_iface;
     }
 
     if (*ppvObj)
