@@ -844,6 +844,17 @@ static BOOL is_amd_device(ID3D10Device *device)
     return adapter_desc.VendorId == 0x1002;
 }
 
+static BOOL is_nvidia_device(ID3D10Device *device)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    get_device_adapter_desc(device, &adapter_desc);
+    return adapter_desc.VendorId == 0x10de;
+}
+
 static BOOL is_d3d11_interface_available(ID3D10Device *device)
 {
     ID3D11Device *d3d11_device;
@@ -8130,7 +8141,9 @@ static void test_clear_render_target_view(void)
     ID3D10RenderTargetView *rtv, *srgb_rtv;
     D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
+    struct resource_readback rb;
     ID3D10Device *device;
+    unsigned int i, j;
     HRESULT hr;
 
     if (!init_test_context(&test_context))
@@ -8203,15 +8216,20 @@ static void test_clear_render_target_view(void)
     ID3D10Device_ClearRenderTargetView(device, rtv, color);
     check_texture_color(texture, expected_color, 1);
 
-    if (!is_warp_device(device))
+    ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
+    get_texture_readback(texture, 0, &rb);
+    for (i = 0; i < 4; ++i)
     {
-        ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
-        todo_wine check_texture_color(texture, expected_srgb_color, 1);
+        for (j = 0; j < 4; ++j)
+        {
+            BOOL broken_device = is_warp_device(device) || is_nvidia_device(device);
+            DWORD color = get_readback_color(&rb, 80 + i * 160, 60 + j * 120);
+            todo_wine ok(compare_color(color, expected_srgb_color, 1)
+                    || broken(compare_color(color, expected_color, 1) && broken_device),
+                    "Got unexpected color 0x%08x.\n", color);
+        }
     }
-    else
-    {
-        win_skip("sRGB clears are broken on WARP.\n");
-    }
+    release_resource_readback(&rb);
 
     ID3D10RenderTargetView_Release(srgb_rtv);
     ID3D10RenderTargetView_Release(rtv);
