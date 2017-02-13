@@ -136,16 +136,24 @@ static inline struct wine_rb_entry *wine_rb_postorder_next(struct wine_rb_entry 
          &(elem)->field; \
          (elem) = WINE_RB_ENTRY_VALUE(wine_rb_next(&elem->field), type, field))
 
+/* iterate through the tree using using postorder, making it safe to free the entry */
+#define WINE_RB_FOR_EACH_DESTRUCTOR(cursor, cursor2, tree) \
+    for ((cursor) = wine_rb_postorder_head((tree)->root); \
+         (cursor) && (((cursor2) = wine_rb_postorder_next(cursor)) || 1); \
+         (cursor) = (cursor2))
+
+/* iterate through the tree using a tree entry and postorder, making it safe to free the entry */
+#define WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(elem, elem2, tree, type, field) \
+    for ((elem) = WINE_RB_ENTRY_VALUE(wine_rb_postorder_head((tree)->root), type, field); \
+         &(elem)->field \
+             && (((elem2) = WINE_RB_ENTRY_VALUE(wine_rb_postorder_next(&(elem)->field), type, field)) || 1); \
+         (elem) = (elem2))
+
 
 static inline void wine_rb_postorder(struct wine_rb_tree *tree, wine_rb_traverse_func_t *callback, void *context)
 {
     struct wine_rb_entry *iter, *next;
-
-    for (iter = wine_rb_postorder_head(tree->root); iter; iter = next)
-    {
-        next = wine_rb_postorder_next(iter);
-        callback(iter, context);
-    }
+    WINE_RB_FOR_EACH_DESTRUCTOR(iter, next, tree) callback(iter, context);
 }
 
 static inline void wine_rb_init(struct wine_rb_tree *tree, wine_rb_compare_func_t compare)
