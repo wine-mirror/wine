@@ -1743,6 +1743,7 @@ static BOOL d2d_geometry_outline_add_join(struct d2d_geometry *geometry,
     struct d2d_outline_vertex *v;
     struct d2d_face *f;
     size_t base_idx;
+    float ccw;
 
     if (!d2d_array_reserve((void **)&geometry->outline.vertices, &geometry->outline.vertices_size,
             geometry->outline.vertex_count + 4, sizeof(*geometry->outline.vertices)))
@@ -1767,7 +1768,8 @@ static BOOL d2d_geometry_outline_add_join(struct d2d_geometry *geometry,
     d2d_point_normalise(&q_prev);
     d2d_point_normalise(&q_next);
 
-    if (d2d_point_dot(&q_prev, &q_next) == -1.0f)
+    ccw = d2d_point_ccw(p0, prev, next);
+    if (ccw == 0.0f)
     {
         d2d_outline_vertex_set(&v[0], p0->x, p0->y,  q_prev.x,  q_prev.y,  q_prev.x,  q_prev.y);
         d2d_outline_vertex_set(&v[1], p0->x, p0->y, -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
@@ -1775,6 +1777,13 @@ static BOOL d2d_geometry_outline_add_join(struct d2d_geometry *geometry,
                 -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
         d2d_outline_vertex_set(&v[3], p0->x + 25.0f * q_prev.x, p0->y + 25.0f * q_prev.y,
                  q_prev.x,  q_prev.y,  q_prev.x,  q_prev.y);
+    }
+    else if (ccw < 0.0f)
+    {
+        d2d_outline_vertex_set(&v[0], p0->x, p0->y, 0.0f, 0.0f, 0.0f, 0.0f);
+        d2d_outline_vertex_set(&v[1], p0->x, p0->y, -q_next.x, -q_next.y, -q_next.x, -q_next.y);
+        d2d_outline_vertex_set(&v[2], p0->x, p0->y, -q_next.x, -q_next.y, -q_prev.x, -q_prev.y);
+        d2d_outline_vertex_set(&v[3], p0->x, p0->y, -q_prev.x, -q_prev.y, -q_prev.x, -q_prev.y);
     }
     else
     {

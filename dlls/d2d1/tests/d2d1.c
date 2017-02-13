@@ -3680,6 +3680,7 @@ static void test_draw_geometry(void)
 
     ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_ALTERNATE);
     hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -3738,7 +3739,7 @@ static void test_draw_geometry(void)
             "CgIKiwEUjAEUjQESjgESjwEQkAEQkQEOkgEOkwEMlAEMlQEKlgEKlwEImAEImQEGmgEGmwEEnAEE"
             "nQECngECrycA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 2,
+    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
             "rycCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEKAgqKAQoCCokBCgQKiAEKBAqHAQoGCoYBCgYKhQEKCAqEAQoICoMBCgoKggEKCgqBAQoM"
             "CoABCgwKfwoOCn4KDgp9ChAKfAoQCnsKEgp6ChIKeQoUCngKFAp3ChYKdgoWCnUKGAp0ChgKcwoa"
