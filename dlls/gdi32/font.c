@@ -2004,6 +2004,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
             info->bmiHeader.biSize   = sizeof(info->bmiHeader);
             info->bmiHeader.biWidth  = src.width;
             info->bmiHeader.biHeight = -src.height;
+            info->bmiHeader.biSizeImage = get_dib_image_size( info );
             err = dst_dev->funcs->pPutImage( dst_dev, 0, info, NULL, NULL, NULL, 0 );
             if (!err || err == ERROR_BAD_FORMAT)
             {
@@ -2013,7 +2014,7 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
                 src.visrect.right = src.width;
                 src.visrect.bottom = src.height;
 
-                bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ));
+                bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage );
                 if (!bits.ptr) return ERROR_OUTOFMEMORY;
                 bits.is_copy = TRUE;
                 bits.free = free_heap_bits;
@@ -2026,13 +2027,13 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
             err = src_dev->funcs->pGetImage( src_dev, info, &bits, &src );
             if (!err && !bits.is_copy)
             {
-                void *ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ));
+                void *ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage );
                 if (!ptr)
                 {
                     if (bits.free) bits.free( &bits );
                     return ERROR_OUTOFMEMORY;
                 }
-                memcpy( ptr, bits.ptr, get_dib_image_size( info ));
+                memcpy( ptr, bits.ptr, info->bmiHeader.biSizeImage );
                 if (bits.free) bits.free( &bits );
                 bits.ptr = ptr;
                 bits.is_copy = TRUE;
