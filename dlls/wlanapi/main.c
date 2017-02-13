@@ -16,6 +16,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* How does this DLL work?
+ * This DLL is used to probe and configure wireless access points using the
+ * available wireless interfaces. Most functions are tied to a handle that is
+ * first obtained by calling WlanOpenHandle. Usually it is followed by a call
+ * to WlanEnumInterfaces and then for each interface a WlanScan call is made.
+ * WlanScan starts a parallel access point discovery that delivers the ready
+ * response through the callback registered by WlanRegisterNotification. After
+ * that the program calls WlanGetAvailableNetworkList or WlanGetNetworkBssList.
+ */
+
 #include "config.h"
 
 #include <stdarg.h>
