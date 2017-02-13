@@ -267,7 +267,7 @@ LONG WINAPI GetBitmapBits(
     if (!get_image_from_bitmap( bmp, info, &src_bits, &src ))
     {
         const char *src_ptr = src_bits.ptr;
-        int src_stride = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+        int src_stride = info->bmiHeader.biSizeImage / abs( info->bmiHeader.biHeight );
 
         /* GetBitmapBits returns 16-bit aligned data */
 
