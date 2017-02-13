@@ -1446,7 +1446,7 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
 
         /*
          * Setting event handler to string is a rare case and we don't want to
-         * complicate nor increase memory of event_target_t for that. Instead,
+         * complicate nor increase memory of handler_vector_t for that. Instead,
          * we store the value in DispatchEx, which can already handle custom
          * properties.
          */
@@ -1475,7 +1475,7 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
 
 HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var)
 {
-    event_target_t *data;
+    handler_vector_t *handler_vector;
     VARIANT *v;
     HRESULT hres;
 
@@ -1485,10 +1485,10 @@ HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
         return VariantCopy(var, v);
     }
 
-    data = get_event_target_data(event_target, FALSE);
-    if(data && data->event_table[eid] && data->event_table[eid]->handler_prop) {
+    handler_vector = get_handler_vector(event_target, eid, FALSE);
+    if(handler_vector && handler_vector->handler_prop) {
         V_VT(var) = VT_DISPATCH;
-        V_DISPATCH(var) = data->event_table[eid]->handler_prop;
+        V_DISPATCH(var) = handler_vector->handler_prop;
         IDispatch_AddRef(V_DISPATCH(var));
     }else {
         V_VT(var) = VT_NULL;
