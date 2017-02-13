@@ -2492,28 +2492,6 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     return WINED3DERR_INVALIDCALL;
 }
 
-static DWORD resource_access_from_location(DWORD location)
-{
-    switch (location)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-        case WINED3D_LOCATION_USER_MEMORY:
-        case WINED3D_LOCATION_BUFFER:
-            return WINED3D_RESOURCE_ACCESS_CPU;
-
-        case WINED3D_LOCATION_DRAWABLE:
-        case WINED3D_LOCATION_TEXTURE_SRGB:
-        case WINED3D_LOCATION_TEXTURE_RGB:
-        case WINED3D_LOCATION_RB_MULTISAMPLE:
-        case WINED3D_LOCATION_RB_RESOLVED:
-            return WINED3D_RESOURCE_ACCESS_GPU;
-
-        default:
-            FIXME("Unhandled location %#x.\n", location);
-            return 0;
-    }
-}
-
 static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD location)
 {
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
@@ -2814,46 +2792,15 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
 {
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
-    struct wined3d_texture_sub_resource *sub_resource;
     HRESULT hr;
 
     TRACE("surface %p, location %s.\n", surface, wined3d_debug_location(location));
 
-    sub_resource = &texture->sub_resources[sub_resource_idx];
-    if (sub_resource->locations & location)
-    {
-        TRACE("Location (%#x) is already up to date.\n", location);
-        return WINED3D_OK;
-    }
-
-    if (WARN_ON(d3d))
-    {
-        DWORD required_access = resource_access_from_location(location);
-        if ((texture->resource.access_flags & required_access) != required_access)
-            WARN("Operation requires %#x access, but surface only has %#x.\n",
-                    required_access, texture->resource.access_flags);
-    }
-
-    if (sub_resource->locations & WINED3D_LOCATION_DISCARDED)
-    {
-        TRACE("Surface previously discarded, nothing to do.\n");
-        wined3d_texture_prepare_location(texture, sub_resource_idx, context, location);
-        wined3d_texture_validate_location(texture, sub_resource_idx, location);
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-        goto done;
-    }
-
-    if (!sub_resource->locations)
-    {
-        ERR("Surface %p does not have any up to date location.\n", surface);
-        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-        return surface_load_location(surface, context, location);
-    }
-
     if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
+        DWORD current = texture->sub_resources[sub_resource_idx].locations;
         FIXME("Unimplemented copy from %s to %s for depth/stencil buffers.\n",
-                wined3d_debug_location(sub_resource->locations), wined3d_debug_location(location));
+                wined3d_debug_location(current), wined3d_debug_location(location));
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -2886,9 +2833,6 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
             ERR("Don't know how to handle location %#x.\n", location);
             break;
     }
-
-done:
-    wined3d_texture_validate_location(texture, sub_resource_idx, location);
 
     return WINED3D_OK;
 }

@@ -88,11 +88,15 @@ static DWORD wined3d_resource_access_from_location(DWORD location)
             return 0;
 
         case WINED3D_LOCATION_SYSMEM:
+        case WINED3D_LOCATION_USER_MEMORY:
             return WINED3D_RESOURCE_ACCESS_CPU;
 
         case WINED3D_LOCATION_BUFFER:
+        case WINED3D_LOCATION_DRAWABLE:
         case WINED3D_LOCATION_TEXTURE_RGB:
         case WINED3D_LOCATION_TEXTURE_SRGB:
+        case WINED3D_LOCATION_RB_MULTISAMPLE:
+        case WINED3D_LOCATION_RB_RESOLVED:
             return WINED3D_RESOURCE_ACCESS_GPU;
 
         default:
@@ -179,7 +183,50 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
 BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
 {
-    return texture->texture_ops->texture_load_location(texture, sub_resource_idx, context, location);
+    DWORD current = texture->sub_resources[sub_resource_idx].locations;
+    BOOL ret;
+
+    TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
+            texture, sub_resource_idx, context, wined3d_debug_location(location));
+
+    TRACE("Current resource location %s.\n", wined3d_debug_location(current));
+
+    if (current & location)
+    {
+        TRACE("Location %s is already up to date.\n", wined3d_debug_location(location));
+        return TRUE;
+    }
+
+    if (WARN_ON(d3d))
+    {
+        DWORD required_access = wined3d_resource_access_from_location(location);
+        if ((texture->resource.access_flags & required_access) != required_access)
+            WARN("Operation requires %#x access, but texture only has %#x.\n",
+                    required_access, texture->resource.access_flags);
+    }
+
+    if (current & WINED3D_LOCATION_DISCARDED)
+    {
+        TRACE("Sub-resource previously discarded, nothing to do.\n");
+        if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
+            return FALSE;
+        wined3d_texture_validate_location(texture, sub_resource_idx, location);
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
+        return TRUE;
+    }
+
+    if (!current)
+    {
+        ERR("Sub-resource %u of texture %p does not have any up to date location.\n",
+                sub_resource_idx, texture);
+        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
+        return wined3d_texture_load_location(texture, sub_resource_idx, context, location);
+    }
+
+    if ((ret = texture->texture_ops->texture_load_location(texture, sub_resource_idx, context, location)))
+        wined3d_texture_validate_location(texture, sub_resource_idx, location);
+
+    return ret;
 }
 
 /* Context activation is done by the caller. */
@@ -2253,37 +2300,10 @@ static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned in
         struct wined3d_context *context, DWORD location)
 {
     struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
-    DWORD required_access = wined3d_resource_access_from_location(location);
     unsigned int row_pitch, slice_pitch;
-
-    TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
-            texture, sub_resource_idx, context, wined3d_debug_location(location));
-
-    TRACE("Current resource location %s.\n", wined3d_debug_location(sub_resource->locations));
-
-    if ((sub_resource->locations & location) == location)
-    {
-        TRACE("Location(s) already up to date.\n");
-        return TRUE;
-    }
-
-    if ((texture->resource.access_flags & required_access) != required_access)
-    {
-        ERR("Operation requires %#x access, but volume only has %#x.\n",
-                required_access, texture->resource.access_flags);
-        return FALSE;
-    }
 
     if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
         return FALSE;
-
-    if (sub_resource->locations & WINED3D_LOCATION_DISCARDED)
-    {
-        TRACE("Volume previously discarded, nothing to do.\n");
-        wined3d_texture_validate_location(texture, sub_resource_idx, location);
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-        goto done;
-    }
 
     switch (location)
     {
@@ -2368,9 +2388,6 @@ static BOOL texture3d_load_location(struct wined3d_texture *texture, unsigned in
                     wined3d_debug_location(sub_resource->locations));
             return FALSE;
     }
-
-done:
-    wined3d_texture_validate_location(texture, sub_resource_idx, location);
 
     return TRUE;
 }
