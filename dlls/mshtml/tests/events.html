@@ -157,6 +157,18 @@ function test_string_event_handler() {
     ok(string_handler_called === false, "string handler called");
 }
 
+function test_body_events() {
+    var f = function() {}
+
+    document.body.onload = f;
+    ok(document.body.onload === f, "body.onload != f");
+    ok(window.onload === f, "window.onload != f");
+
+    document.body.onfocus = f;
+    ok(document.body.onfocus === f, "body.onfocus != f");
+    ok(window.onfocus === f, "window.onfocus != f");
+}
+
 window.onload = function() {
     try {
         ok(inlscr_complete_called, "onreadystatechange not fired");
@@ -178,6 +190,7 @@ window.onload = function() {
         test_handler_this();
         test_insert_script();
         test_string_event_handler();
+        test_body_events();
     }catch(e) {
         ok(false, "Got an exception: " + e.message);
     }
