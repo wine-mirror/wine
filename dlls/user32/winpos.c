@@ -45,6 +45,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
     (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
 #define SWP_AGG_STATUSFLAGS \
     (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
+#define SWP_AGG_NOCLIENTCHANGE \
+        (SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE)
 
 #define HAS_DLGFRAME(style,exStyle) \
     (((exStyle) & WS_EX_DLGMODALFRAME) || \
@@ -2229,16 +2231,7 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
                          &newWindowRect, &newClientRect, valid_rects ))
         return FALSE;
 
-    /* erase parent when hiding or resizing child */
-    if (!(orig_flags & SWP_DEFERERASE) &&
-        ((orig_flags & SWP_HIDEWINDOW) ||
-         (!(orig_flags & SWP_SHOWWINDOW) &&
-          (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE)))
-    {
-        HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
-        if (!parent || parent == GetDesktopWindow()) parent = winpos->hwnd;
-        erase_now( parent, 0 );
-    }
+
 
     if( winpos->flags & SWP_HIDEWINDOW )
         HideCaret(winpos->hwnd);
@@ -2252,6 +2245,26 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
             SendMessageW( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
         else
             SetForegroundWindow( winpos->hwnd );
+    }
+
+    if(!(orig_flags & SWP_DEFERERASE))
+    {
+        /* erase parent when hiding or resizing child */
+        if ((orig_flags & SWP_HIDEWINDOW) ||
+         (!(orig_flags & SWP_SHOWWINDOW) &&
+          (winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOGEOMETRYCHANGE))
+        {
+            HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
+            if (!parent || parent == GetDesktopWindow()) parent = winpos->hwnd;
+            erase_now( parent, 0 );
+        }
+
+        /* Give newly shown windows a chance to redraw */
+        if(((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE)
+                && !(orig_flags & SWP_AGG_NOCLIENTCHANGE) && (orig_flags & SWP_SHOWWINDOW))
+        {
+            erase_now(winpos->hwnd, 0);
+        }
     }
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
