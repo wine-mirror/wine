@@ -5663,8 +5663,10 @@ static void test_D3DKMTCreateDCFromMemory( void )
     HGDIOBJ *bitmap;
     DIBSECTION dib;
     BOOL fail, ret;
-    DWORD type;
+    DWORD type, pixel;
     int size;
+    HDC bmp_dc;
+    HBITMAP bmp;
 
     static const struct
     {
@@ -5859,6 +5861,15 @@ static void test_D3DKMTCreateDCFromMemory( void )
         ret = BitBlt( create_desc.hDc, 1, 1, 2, 2, NULL, 0, 0, WHITENESS );
         ok(ret, "Failed to blit.\n");
 
+        /* Also test blitting to a regular bitmap */
+        bmp_dc = CreateCompatibleDC( create_desc.hDeviceDc );
+        ok(bmp_dc != NULL, "failed to create DC\n");
+        bmp = CreateCompatibleBitmap( bmp_dc, create_desc.Width, create_desc.Height );
+        ok(bmp != NULL, "failed to create bmp\n");
+        bmp = SelectObject( bmp_dc, bmp );
+        ret = BitBlt( bmp_dc, 0, 0, create_desc.Width, create_desc.Height, create_desc.hDc, 0, 0, SRCCOPY );
+        ok(ret, "Failed to blit.\n");
+
         destroy_desc.hDc = create_desc.hDc;
         destroy_desc.hBitmap = create_desc.hBitmap;
 
@@ -5891,8 +5902,25 @@ static void test_D3DKMTCreateDCFromMemory( void )
                    test_data[i].name, colour, x, y, expected);
                 if (colour != expected)
                     fail = TRUE;
+
+                /* 'Xn' or 'An' formats don't successfully blit to the regular bmp */
+                if (test_data[i].format == D3DDDIFMT_R8G8B8 || test_data[i].format == D3DDDIFMT_R5G6B5)
+                {
+                    pixel = GetPixel( bmp_dc, x, y );
+                    if ((x == 1 || x == 2) && (y == 1 || y == 2))
+                        expected = 0x00ffffff;
+                    else if (x < create_desc.Width && y < create_desc.Height)
+                        expected = 0x00000000;
+                    else
+                        expected = CLR_INVALID;
+                    ok(pixel == expected, "%s: got 0x%08x at %u, %u, expect 0x%08x\n", test_data[i].name,
+                       pixel, x, y, expected);
+                }
             }
         }
+
+        DeleteObject( SelectObject( bmp_dc, bmp ) );
+        DeleteDC( bmp_dc );
     }
 }
 
