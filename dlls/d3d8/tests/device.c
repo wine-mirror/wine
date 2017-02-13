@@ -515,10 +515,10 @@ static void test_refcount(void)
      */
     hr = IDirect3DDevice8_GetRenderTarget(device, &pRenderTarget);
     CHECK_CALL(hr, "GetRenderTarget", device, ++refcount);
-    if(pRenderTarget)
+    if (pRenderTarget)
     {
         CHECK_SURFACE_CONTAINER(pRenderTarget, IID_IDirect3DDevice8, device);
-        CHECK_REFCOUNT( pRenderTarget, 1);
+        CHECK_REFCOUNT(pRenderTarget, 1);
 
         CHECK_ADDREF_REFCOUNT(pRenderTarget, 2);
         CHECK_REFCOUNT(device, refcount);
@@ -527,7 +527,7 @@ static void test_refcount(void)
 
         hr = IDirect3DDevice8_GetRenderTarget(device, &pRenderTarget);
         CHECK_CALL(hr, "GetRenderTarget", device, refcount);
-        CHECK_REFCOUNT( pRenderTarget, 2);
+        CHECK_REFCOUNT(pRenderTarget, 2);
         CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
         CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
         CHECK_REFCOUNT(device, --refcount);
@@ -537,26 +537,30 @@ static void test_refcount(void)
         CHECK_REFCOUNT(device, ++refcount);
         CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
         CHECK_REFCOUNT(device, --refcount);
+        CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
+        CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
     }
 
     /* Render target and back buffer are identical. */
     hr = IDirect3DDevice8_GetBackBuffer(device, 0, 0, &pBackBuffer);
     CHECK_CALL(hr, "GetBackBuffer", device, ++refcount);
-    if(pBackBuffer)
+    if (pBackBuffer)
     {
         CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
         ok(pRenderTarget == pBackBuffer, "RenderTarget=%p and BackBuffer=%p should be the same.\n",
-           pRenderTarget, pBackBuffer);
+                pRenderTarget, pBackBuffer);
+        CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
+        CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
         pBackBuffer = NULL;
     }
     CHECK_REFCOUNT(device, --refcount);
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &pStencilSurface);
     CHECK_CALL(hr, "GetDepthStencilSurface", device, ++refcount);
-    if(pStencilSurface)
+    if (pStencilSurface)
     {
         CHECK_SURFACE_CONTAINER(pStencilSurface, IID_IDirect3DDevice8, device);
-        CHECK_REFCOUNT( pStencilSurface, 1);
+        CHECK_REFCOUNT(pStencilSurface, 1);
 
         CHECK_ADDREF_REFCOUNT(pStencilSurface, 2);
         CHECK_REFCOUNT(device, refcount);
@@ -571,6 +575,8 @@ static void test_refcount(void)
         CHECK_REFCOUNT(device, ++refcount);
         CHECK_RELEASE_REFCOUNT(pStencilSurface, 0);
         CHECK_REFCOUNT(device, --refcount);
+        CHECK_RELEASE_REFCOUNT(pStencilSurface, 0);
+        CHECK_RELEASE_REFCOUNT(pStencilSurface, 0);
         pStencilSurface = NULL;
     }
 
@@ -729,6 +735,8 @@ static void test_refcount(void)
             CHECK_REFCOUNT(device, ++refcount);
             CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
             CHECK_REFCOUNT(device, --refcount);
+            CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
+            CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
             pBackBuffer = NULL;
         }
         CHECK_REFCOUNT( pSwapChain, 1);
@@ -752,12 +760,14 @@ static void test_refcount(void)
      * Otherwise GetRenderTarget would re-allocate it and the pointer would change.*/
     hr = IDirect3DDevice8_GetRenderTarget(device, &pRenderTarget2);
     CHECK_CALL(hr, "GetRenderTarget", device, ++refcount);
-    if(pRenderTarget2)
+    if (pRenderTarget2)
     {
         CHECK_RELEASE_REFCOUNT(pRenderTarget2, 0);
         ok(pRenderTarget == pRenderTarget2, "RenderTarget=%p and RenderTarget2=%p should be the same.\n",
-           pRenderTarget, pRenderTarget2);
+                pRenderTarget, pRenderTarget2);
         CHECK_REFCOUNT(device, --refcount);
+        CHECK_RELEASE_REFCOUNT(pRenderTarget2, 0);
+        CHECK_RELEASE_REFCOUNT(pRenderTarget2, 0);
         pRenderTarget2 = NULL;
     }
     pRenderTarget = NULL;
