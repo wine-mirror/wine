@@ -90,8 +90,15 @@ static ULONG WINAPI d3d9_swapchain_AddRef(IDirect3DSwapChain9Ex *iface)
 static ULONG WINAPI d3d9_swapchain_Release(IDirect3DSwapChain9Ex *iface)
 {
     struct d3d9_swapchain *swapchain = impl_from_IDirect3DSwapChain9Ex(iface);
-    ULONG refcount = InterlockedDecrement(&swapchain->refcount);
+    ULONG refcount;
 
+    if (!swapchain->refcount)
+    {
+        WARN("Swapchain does not have any references.\n");
+        return 0;
+    }
+
+    refcount = InterlockedDecrement(&swapchain->refcount);
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)

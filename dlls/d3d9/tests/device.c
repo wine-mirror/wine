@@ -1437,15 +1437,15 @@ static void test_refcount(void)
     CHECK_CALL(hr, "GetSwapChain", device, ++refcount);
     if (pSwapChain)
     {
-        CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_REFCOUNT(pSwapChain, 1);
 
         hr = IDirect3DDevice9_GetRenderTarget(device, 0, &pRenderTarget);
         CHECK_CALL(hr, "GetRenderTarget", device, ++refcount);
-        CHECK_REFCOUNT( pSwapChain, 1);
-        if(pRenderTarget)
+        CHECK_REFCOUNT(pSwapChain, 1);
+        if (pRenderTarget)
         {
-            CHECK_SURFACE_CONTAINER( pRenderTarget, IID_IDirect3DSwapChain9, pSwapChain);
-            CHECK_REFCOUNT( pRenderTarget, 1);
+            CHECK_SURFACE_CONTAINER(pRenderTarget, IID_IDirect3DSwapChain9, pSwapChain);
+            CHECK_REFCOUNT(pRenderTarget, 1);
 
             CHECK_ADDREF_REFCOUNT(pRenderTarget, 2);
             CHECK_REFCOUNT(device, refcount);
@@ -1454,9 +1454,9 @@ static void test_refcount(void)
 
             hr = IDirect3DDevice9_GetRenderTarget(device, 0, &pRenderTarget);
             CHECK_CALL(hr, "GetRenderTarget", device, refcount);
-            CHECK_REFCOUNT( pRenderTarget, 2);
-            CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
-            CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
+            CHECK_REFCOUNT(pRenderTarget, 2);
+            CHECK_RELEASE_REFCOUNT(pRenderTarget, 1);
+            CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
             CHECK_REFCOUNT(device, --refcount);
 
             /* The render target is released with the device, so AddRef with refcount=0 is fine here. */
@@ -1484,7 +1484,7 @@ static void test_refcount(void)
 
         hr = IDirect3DDevice9_GetDepthStencilSurface(device, &pStencilSurface);
         CHECK_CALL(hr, "GetDepthStencilSurface", device, ++refcount);
-        CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_REFCOUNT(pSwapChain, 1);
         if (pStencilSurface)
         {
             CHECK_SURFACE_CONTAINER(pStencilSurface, IID_IDirect3DDevice9, device);
@@ -1508,14 +1508,18 @@ static void test_refcount(void)
             pStencilSurface = NULL;
         }
 
-        CHECK_RELEASE_REFCOUNT( pSwapChain, 0);
+        CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
         CHECK_REFCOUNT(device, --refcount);
+        CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
+        CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
 
         /* The implicit swapchwin is released with the device, so AddRef with refcount=0 is fine here. */
         CHECK_ADDREF_REFCOUNT(pSwapChain, 1);
         CHECK_REFCOUNT(device, ++refcount);
         CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
         CHECK_REFCOUNT(device, --refcount);
+        CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
+        CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
         pSwapChain = NULL;
     }
 
@@ -1524,7 +1528,7 @@ static void test_refcount(void)
     CHECK_CALL(hr, "CreateIndexBuffer", device, ++refcount );
     if(pIndexBuffer)
     {
-        tmp = get_refcount( (IUnknown *)pIndexBuffer );
+        tmp = get_refcount((IUnknown *)pIndexBuffer);
 
         hr = IDirect3DDevice9_SetIndices(device, pIndexBuffer);
         CHECK_CALL( hr, "SetIndices", pIndexBuffer, tmp);
@@ -1641,17 +1645,17 @@ static void test_refcount(void)
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
     hr = IDirect3DDevice9_CreateAdditionalSwapChain(device, &d3dpp, &pSwapChain);
     CHECK_CALL(hr, "CreateAdditionalSwapChain", device, ++refcount);
-    if(pSwapChain)
+    if (pSwapChain)
     {
         /* check implicit back buffer */
         hr = IDirect3DSwapChain9_GetBackBuffer(pSwapChain, 0, 0, &pBackBuffer);
         CHECK_CALL(hr, "GetBackBuffer", device, ++refcount);
-        CHECK_REFCOUNT( pSwapChain, 1);
-        if(pBackBuffer)
+        CHECK_REFCOUNT(pSwapChain, 1);
+        if (pBackBuffer)
         {
-            CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DSwapChain9, pSwapChain);
-            CHECK_REFCOUNT( pBackBuffer, 1);
-            CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
+            CHECK_SURFACE_CONTAINER(pBackBuffer, IID_IDirect3DSwapChain9, pSwapChain);
+            CHECK_REFCOUNT(pBackBuffer, 1);
+            CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
             CHECK_REFCOUNT(device, --refcount);
 
             /* The back buffer is released with the swapchain, so AddRef with refcount=0 is fine here. */
@@ -1663,7 +1667,7 @@ static void test_refcount(void)
             CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
             pBackBuffer = NULL;
         }
-        CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_REFCOUNT(pSwapChain, 1);
     }
     hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_EVENT, &pQuery);
     CHECK_CALL(hr, "CreateQuery", device, ++refcount);
