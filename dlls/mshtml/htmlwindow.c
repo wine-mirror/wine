@@ -253,6 +253,8 @@ static void release_inner_window(HTMLInnerWindow *This)
         htmldoc_release(&This->doc->basedoc);
     }
 
+    if(This->event_target.ptr)
+        release_event_target(This->event_target.ptr);
     release_dispex(&This->event_target.dispex);
 
     for(i=0; i < This->global_prop_cnt; i++)
@@ -2943,7 +2945,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 static event_target_t **HTMLWindow_get_event_target_ptr(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-    return &This->doc->body_event_target;
+    return &This->event_target.ptr;
 }
 
 static void HTMLWindow_bind_event(DispatchEx *dispex, int eid)

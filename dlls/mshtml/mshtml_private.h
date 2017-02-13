@@ -801,7 +801,6 @@ struct HTMLDocumentNode {
 
     nsIDOMHTMLDocument *nsdoc;
     BOOL content_ready;
-    event_target_t *body_event_target;
 
     IHTMLDOMImplementation *dom_implementation;
 

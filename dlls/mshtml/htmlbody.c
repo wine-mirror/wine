@@ -829,8 +829,8 @@ static event_target_t **HTMLBodyElement_get_event_target_ptr(HTMLDOMNode *iface)
 {
     HTMLBodyElement *This = impl_from_HTMLDOMNode(iface);
 
-    return This->textcont.element.node.doc
-        ? &This->textcont.element.node.doc->body_event_target
+    return This->textcont.element.node.doc && This->textcont.element.node.doc->window
+        ? &This->textcont.element.node.doc->window->event_target.ptr
         : &This->textcont.element.node.event_target.ptr;
 }
 
