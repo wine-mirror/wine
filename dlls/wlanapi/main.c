@@ -128,6 +128,15 @@ DWORD WINAPI WlanOpenHandle(DWORD client_version, void *reserved, DWORD *negotia
     return ERROR_SUCCESS;
 }
 
+DWORD WINAPI WlanScan(HANDLE handle, const GUID *guid, const DOT11_SSID *ssid,
+                      const WLAN_RAW_DATA *raw, void *reserved)
+{
+    FIXME("(%p, %s, %p, %p, %p) stub\n",
+          handle, wine_dbgstr_guid(guid), ssid, raw, reserved);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 void WINAPI WlanFreeMemory(void *ptr)
 {
     TRACE("(%p)\n", ptr);

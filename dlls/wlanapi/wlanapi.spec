@@ -22,7 +22,7 @@
 @ stub WlanRegisterNotification
 @ stub WlanRenameProfile
 @ stub WlanSaveTemporaryProfile
-@ stub WlanScan
+@ stdcall WlanScan(ptr ptr ptr ptr ptr)
 @ stub WlanSetAutoConfigParameter
 @ stub WlanSetFilterList
 @ stub WlanSetInterface

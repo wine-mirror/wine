@@ -45,10 +45,24 @@ typedef struct _WLAN_INTERFACE_INFO_LIST
     WLAN_INTERFACE_INFO InterfaceInfo[1];
 } WLAN_INTERFACE_INFO_LIST, *PWLAN_INTERFACE_INFO_LIST;
 
+#define DOT11_SSID_MAX_LENGTH 32
+typedef struct _DOT11_SSID
+{
+    DWORD uSSIDLength;
+    UCHAR ucSSID[DOT11_SSID_MAX_LENGTH];
+} DOT11_SSID;
+
+typedef struct _WLAN_RAW_DATA
+{
+    DWORD dwDataSize;
+    BYTE DataBlob[1];
+} WLAN_RAW_DATA, *PWLAN_RAW_DATA;
+
 DWORD WINAPI WlanCloseHandle(HANDLE, void *);
 DWORD WINAPI WlanEnumInterfaces(HANDLE, void *, WLAN_INTERFACE_INFO_LIST **);
 DWORD WINAPI WlanOpenHandle(DWORD, void *, DWORD *, HANDLE *);
 void *WINAPI WlanAllocateMemory(DWORD);
 void WINAPI WlanFreeMemory(void *);
+DWORD WINAPI WlanScan(HANDLE, const GUID *, const DOT11_SSID *, const WLAN_RAW_DATA *, void *);
 
 #endif /* _WLAN_WLANAPI_H */
