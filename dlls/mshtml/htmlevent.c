@@ -36,14 +36,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 typedef struct {
+    struct wine_rb_entry entry;
+    eventid_t event_id;
     IDispatch *handler_prop;
     DWORD handler_cnt;
     IDispatch **handlers;
 } handler_vector_t;
-
-struct event_target_t {
-    handler_vector_t *event_table[EVENTID_LAST];
-};
 
 static const WCHAR abortW[] = {'a','b','o','r','t',0};
 static const WCHAR onabortW[] = {'o','n','a','b','o','r','t',0};
@@ -899,37 +897,35 @@ HRESULT create_event_obj(IHTMLEventObj **ret)
     return S_OK;
 }
 
-static inline event_target_t *get_event_target_data(EventTarget *event_target, BOOL alloc)
-{
-    const dispex_static_data_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
-
-    if(vtbl && vtbl->get_event_target)
-        event_target = vtbl->get_event_target(&event_target->dispex);
-    if(event_target->ptr || !alloc)
-        return event_target->ptr;
-
-    return event_target->ptr = heap_alloc_zero(sizeof(event_target_t));
-}
-
 static handler_vector_t *get_handler_vector(EventTarget *event_target, eventid_t eid, BOOL alloc)
 {
-    event_target_t *data;
+    const dispex_static_data_vtbl_t *vtbl;
+    handler_vector_t *handler_vector;
+    struct wine_rb_entry *entry;
 
-    data = get_event_target_data(event_target, alloc);
-    if(!data)
+    vtbl = dispex_get_vtbl(&event_target->dispex);
+    if(vtbl->get_event_target)
+        event_target = vtbl->get_event_target(&event_target->dispex);
+
+    entry = wine_rb_get(&event_target->handler_map, (const void*)eid);
+    if(entry)
+        return WINE_RB_ENTRY_VALUE(entry, handler_vector_t, entry);
+    if(!alloc)
         return NULL;
 
-    if(alloc && !data->event_table[eid]) {
-        data->event_table[eid] = heap_alloc_zero(sizeof(*data->event_table[eid]));
-        if(data->event_table[eid]) {
-            const dispex_static_data_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
-            if(vtbl->bind_event)
-                vtbl->bind_event(&event_target->dispex, eid);
-            else
-                FIXME("Unsupported event binding on target %p\n", event_target);
-        }
-    }
-    return data->event_table[eid];
+    handler_vector = heap_alloc_zero(sizeof(*handler_vector));
+    if(!handler_vector)
+        return NULL;
+
+    handler_vector->event_id = eid;
+    vtbl = dispex_get_vtbl(&event_target->dispex);
+    if(vtbl->bind_event)
+        vtbl->bind_event(&event_target->dispex, eid);
+    else
+        FIXME("Unsupported event binding on target %p\n", event_target);
+
+    wine_rb_put(&event_target->handler_map, (const void*)eid, &handler_vector->entry);
+    return handler_vector;
 }
 
 static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
@@ -1642,25 +1638,28 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
     return S_OK;
 }
 
+static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
+{
+    return (INT_PTR)key - WINE_RB_ENTRY_VALUE(entry, handler_vector_t, entry)->event_id;
+}
+
+void init_event_target(EventTarget *event_target)
+{
+    wine_rb_init(&event_target->handler_map, event_id_cmp);
+}
+
 void release_event_target(EventTarget *event_target)
 {
-    int i;
-    unsigned int j;
+    handler_vector_t *iter, *iter2;
+    unsigned i;
 
-    if(!event_target->ptr)
-        return;
-
-    for(i=0; i < EVENTID_LAST; i++) {
-        if(event_target->ptr->event_table[i]) {
-            if(event_target->ptr->event_table[i]->handler_prop)
-                IDispatch_Release(event_target->ptr->event_table[i]->handler_prop);
-            for(j=0; j < event_target->ptr->event_table[i]->handler_cnt; j++)
-                if(event_target->ptr->event_table[i]->handlers[j])
-                    IDispatch_Release(event_target->ptr->event_table[i]->handlers[j]);
-            heap_free(event_target->ptr->event_table[i]->handlers);
-            heap_free(event_target->ptr->event_table[i]);
-        }
+    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &event_target->handler_map, handler_vector_t, entry) {
+        if(iter->handler_prop)
+            IDispatch_Release(iter->handler_prop);
+        for(i = 0; i < iter->handler_cnt; i++)
+            if(iter->handlers[i])
+                IDispatch_Release(iter->handlers[i]);
+        heap_free(iter->handlers);
+        heap_free(iter);
     }
-
-    heap_free(event_target->ptr);
 }

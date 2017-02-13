@@ -1214,6 +1214,7 @@ void HTMLDOMNode_Init(HTMLDocumentNode *doc, HTMLDOMNode *node, nsIDOMNode *nsno
     node->IHTMLDOMNode2_iface.lpVtbl = &HTMLDOMNode2Vtbl;
 
     ccref_init(&node->ccref, 1);
+    init_event_target(&node->event_target);
 
     if(&doc->node != node)
         htmldoc_addref(&doc->basedoc);

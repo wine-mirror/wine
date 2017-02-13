@@ -72,7 +72,6 @@
 typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
-typedef struct event_target_t event_target_t;
 typedef struct EventTarget EventTarget;
 
 #define TID_LIST \
@@ -366,7 +365,7 @@ typedef struct {
 
 struct EventTarget {
     DispatchEx dispex;
-    event_target_t *ptr;
+    struct wine_rb_tree handler_map;
 };
 
 typedef struct {
