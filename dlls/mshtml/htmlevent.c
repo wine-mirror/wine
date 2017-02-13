@@ -1392,7 +1392,7 @@ void detach_events(HTMLDocumentNode *doc)
 
 static void remove_event_handler(EventTarget *event_target, eventid_t eid)
 {
-    event_target_t *data;
+    handler_vector_t *handler_vector;
     VARIANT *store;
     HRESULT hres;
 
@@ -1400,10 +1400,10 @@ static void remove_event_handler(EventTarget *event_target, eventid_t eid)
     if(SUCCEEDED(hres))
         VariantClear(store);
 
-    data = get_event_target_data(event_target, FALSE);
-    if(data && data->event_table[eid] && data->event_table[eid]->handler_prop) {
-        IDispatch_Release(data->event_table[eid]->handler_prop);
-        data->event_table[eid]->handler_prop = NULL;
+    handler_vector = get_handler_vector(event_target, eid, FALSE);
+    if(handler_vector && handler_vector->handler_prop) {
+        IDispatch_Release(handler_vector->handler_prop);
+        handler_vector->handler_prop = NULL;
     }
 }
 
