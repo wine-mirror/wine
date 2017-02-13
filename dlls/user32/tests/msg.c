@@ -1120,6 +1120,17 @@ static const struct message WmFirstDrawSetWindowPosSeq5[] = {
     { WM_WINDOWPOSCHANGED, sent },
     { 0 }
 };
+static const struct message WmFirstDrawChildSeq1[] = {
+    { 0 }
+};
+static const struct message WmFirstDrawChildSeq2[] = {
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_ERASEBKGND, sent },
+    /* ocasionally received on test machines */
+    { WM_NCPAINT, sent|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { 0 }
+};
 /* CreateWindow (for child window, not initially visible) */
 static const struct message WmCreateChildSeq[] = {
     { HCBT_CREATEWND, hook },
@@ -5106,6 +5117,38 @@ static void test_messages(void)
     test_msg_setpos(WmFirstDrawSetWindowPosSeq5, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOMOVE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOSIZE, FALSE);
     test_msg_setpos(WmFirstDrawSetWindowPosSeq2, SWP_SHOWWINDOW | SWP_NOREDRAW | SWP_NOZORDER, FALSE);
+
+    /* Test SetWindowPos with child windows */
+    flush_events();
+    hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hparent != 0, "Failed to create parent window\n");
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+    flush_sequence();
+    SetWindowPos(hparent, NULL, 0, 0, 100, 100, SWP_SHOWWINDOW);
+    ok_sequence(WmFirstDrawChildSeq1, /* Expect no messages for the child */
+                "SetWindowPos:show_popup_first_show_window_child1", FALSE);
+    DestroyWindow(hchild);
+    DestroyWindow(hparent);
+
+    flush_events();
+    hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hparent != 0, "Failed to create parent window\n");
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+    flush_sequence();
+    SetWindowPos(hparent, NULL, 0, 0, 100, 100, SWP_SHOWWINDOW);
+    ok_sequence(WmFirstDrawChildSeq2, /* Expect child to be redrawn */
+                "SetWindowPos:show_popup_first_show_window_child2", TRUE);
+    DestroyWindow(hchild);
+    DestroyWindow(hparent);
+
 
     /* Test child windows */
 
