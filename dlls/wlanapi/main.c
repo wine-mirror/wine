@@ -147,6 +147,15 @@ DWORD WINAPI WlanRegisterNotification(HANDLE handle, DWORD notify_source, BOOL i
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI WlanGetAvailableNetworkList(HANDLE handle, const GUID *guid, DWORD flags,
+                                         void *reserved, WLAN_AVAILABLE_NETWORK_LIST **network_list)
+{
+    FIXME("(%p, %s, 0x%x, %p, %p) stub\n",
+          handle, wine_dbgstr_guid(guid), flags, reserved, network_list);
+
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 void WINAPI WlanFreeMemory(void *ptr)
 {
     TRACE("(%p)\n", ptr);

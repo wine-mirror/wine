@@ -6,7 +6,7 @@
 @ stdcall WlanEnumInterfaces(long ptr ptr)
 @ stub WlanExtractPsdIEDataList
 @ stdcall WlanFreeMemory(ptr)
-@ stub WlanGetAvailableNetworkList
+@ stdcall WlanGetAvailableNetworkList(ptr ptr long ptr ptr)
 @ stub WlanGetFilterList
 @ stub WlanGetInterfaceCapability
 @ stub WlanGetNetworkBssList
