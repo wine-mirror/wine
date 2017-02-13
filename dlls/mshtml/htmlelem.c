@@ -5074,12 +5074,12 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
     return S_OK;
 }
 
-static event_target_t **HTMLElement_get_event_target_ptr(DispatchEx *dispex)
+static EventTarget *HTMLElement_get_event_target(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
     return This->node.vtbl->get_event_target
-        ? &This->node.vtbl->get_event_target(&This->node)->ptr
-        : &This->node.event_target.ptr;
+        ? This->node.vtbl->get_event_target(&This->node)
+        : &This->node.event_target;
 }
 
 static void HTMLElement_bind_event(DispatchEx *dispex, int eid)
@@ -5113,7 +5113,7 @@ static dispex_static_data_vtbl_t HTMLElement_dispex_vtbl = {
     HTMLElement_get_dispid,
     HTMLElement_invoke,
     HTMLElement_populate_props,
-    HTMLElement_get_event_target_ptr,
+    HTMLElement_get_event_target,
     HTMLElement_bind_event
 };
 

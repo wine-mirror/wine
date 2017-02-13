@@ -2942,10 +2942,10 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
     return hres;
 }
 
-static event_target_t **HTMLWindow_get_event_target_ptr(DispatchEx *dispex)
+static EventTarget *HTMLWindow_get_event_target(DispatchEx *dispex)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
-    return &This->event_target.ptr;
+    return &This->event_target;
 }
 
 static void HTMLWindow_bind_event(DispatchEx *dispex, int eid)
@@ -2964,7 +2964,7 @@ static const dispex_static_data_vtbl_t HTMLWindow_dispex_vtbl = {
     NULL,
     HTMLWindow_invoke,
     NULL,
-    HTMLWindow_get_event_target_ptr,
+    HTMLWindow_get_event_target,
     HTMLWindow_bind_event
 };
 

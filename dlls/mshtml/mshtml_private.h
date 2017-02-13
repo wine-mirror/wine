@@ -259,7 +259,7 @@ typedef struct {
     HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*populate_props)(DispatchEx*);
     /* We abuse this vtbl for EventTarget functions to avoid separated vtbl. */
-    event_target_t **(*get_event_target_ptr)(DispatchEx*);
+    EventTarget *(*get_event_target)(DispatchEx*);
     void (*bind_event)(DispatchEx*,int);
 } dispex_static_data_vtbl_t;
 

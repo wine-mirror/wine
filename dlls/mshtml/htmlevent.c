@@ -902,15 +902,13 @@ HRESULT create_event_obj(IHTMLEventObj **ret)
 static inline event_target_t *get_event_target_data(EventTarget *event_target, BOOL alloc)
 {
     const dispex_static_data_vtbl_t *vtbl = dispex_get_vtbl(&event_target->dispex);
-    event_target_t **ptr;
 
-    ptr = vtbl && vtbl->get_event_target_ptr
-        ? vtbl->get_event_target_ptr(&event_target->dispex)
-        : &event_target->ptr;
-    if(*ptr || !alloc)
-        return *ptr;
+    if(vtbl && vtbl->get_event_target)
+        event_target = vtbl->get_event_target(&event_target->dispex);
+    if(event_target->ptr || !alloc)
+        return event_target->ptr;
 
-    return *ptr = heap_alloc_zero(sizeof(event_target_t));
+    return event_target->ptr = heap_alloc_zero(sizeof(event_target_t));
 }
 
 static HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp, VARIANT *retv)
