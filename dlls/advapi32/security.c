@@ -6055,6 +6055,9 @@ BOOL WINAPI SaferCloseLevel(SAFER_LEVEL_HANDLE handle)
     return TRUE;
 }
 
+/******************************************************************************
+ * TreeResetNamedSecurityInfoW   [ADVAPI32.@]
+ */
 DWORD WINAPI TreeResetNamedSecurityInfoW( LPWSTR pObjectName,
                 SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
                 PSID pOwner, PSID pGroup, PACL pDacl, PACL pSacl,
