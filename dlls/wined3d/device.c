@@ -286,7 +286,8 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     {
         DWORD location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        surface_load_location(depth_stencil, context, location);
+        wined3d_texture_load_location(depth_stencil->container,
+                dsv->sub_resource_idx, context, location);
     }
 
     if (!context_apply_clear_state(context, state, rt_count, fb))
