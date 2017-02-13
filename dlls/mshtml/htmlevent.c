@@ -1642,20 +1642,25 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
     return S_OK;
 }
 
-void release_event_target(event_target_t *event_target)
+void release_event_target(EventTarget *event_target)
 {
     int i;
     unsigned int j;
 
+    if(!event_target->ptr)
+        return;
+
     for(i=0; i < EVENTID_LAST; i++) {
-        if(event_target->event_table[i]) {
-            if(event_target->event_table[i]->handler_prop)
-                IDispatch_Release(event_target->event_table[i]->handler_prop);
-            for(j=0; j < event_target->event_table[i]->handler_cnt; j++)
-                if(event_target->event_table[i]->handlers[j])
-                    IDispatch_Release(event_target->event_table[i]->handlers[j]);
+        if(event_target->ptr->event_table[i]) {
+            if(event_target->ptr->event_table[i]->handler_prop)
+                IDispatch_Release(event_target->ptr->event_table[i]->handler_prop);
+            for(j=0; j < event_target->ptr->event_table[i]->handler_cnt; j++)
+                if(event_target->ptr->event_table[i]->handlers[j])
+                    IDispatch_Release(event_target->ptr->event_table[i]->handlers[j]);
+            heap_free(event_target->ptr->event_table[i]->handlers);
+            heap_free(event_target->ptr->event_table[i]);
         }
     }
 
-    heap_free(event_target);
+    heap_free(event_target->ptr);
 }

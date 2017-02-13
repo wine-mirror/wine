@@ -1185,12 +1185,11 @@ HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
 
 void HTMLDOMNode_destructor(HTMLDOMNode *This)
 {
+    release_event_target(&This->event_target);
     if(This->nsnode)
         nsIDOMNode_Release(This->nsnode);
     if(This->doc && &This->doc->node != This)
         htmldoc_release(&This->doc->basedoc);
-    if(This->event_target.ptr)
-        release_event_target(This->event_target.ptr);
 }
 
 static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMNode **ret)

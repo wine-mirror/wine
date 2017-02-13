@@ -253,8 +253,7 @@ static void release_inner_window(HTMLInnerWindow *This)
         htmldoc_release(&This->doc->basedoc);
     }
 
-    if(This->event_target.ptr)
-        release_event_target(This->event_target.ptr);
+    release_event_target(&This->event_target);
     release_dispex(&This->event_target.dispex);
 
     for(i=0; i < This->global_prop_cnt; i++)
