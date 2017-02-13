@@ -73,6 +73,7 @@ typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 typedef struct event_target_t event_target_t;
+typedef struct EventTarget EventTarget;
 
 #define TID_LIST \
     XIID(NULL) \
@@ -363,10 +364,10 @@ typedef struct {
     DISPID id;
 } global_prop_t;
 
-typedef struct {
+struct EventTarget {
     DispatchEx dispex;
     event_target_t *ptr;
-} EventTarget;
+};
 
 typedef struct {
     DispatchEx dispex;
@@ -695,7 +696,7 @@ typedef struct {
     HRESULT (*clone)(HTMLDOMNode*,nsIDOMNode*,HTMLDOMNode**);
     HRESULT (*handle_event)(HTMLDOMNode*,DWORD,nsIDOMEvent*,BOOL*);
     HRESULT (*get_attr_col)(HTMLDOMNode*,HTMLAttributeCollection**);
-    event_target_t **(*get_event_target_ptr)(HTMLDOMNode*);
+    EventTarget *(*get_event_target)(HTMLDOMNode*);
     HRESULT (*fire_event)(HTMLDOMNode*,DWORD,BOOL*);
     HRESULT (*put_disabled)(HTMLDOMNode*,VARIANT_BOOL);
     HRESULT (*get_disabled)(HTMLDOMNode*,VARIANT_BOOL*);

@@ -5077,8 +5077,8 @@ static HRESULT HTMLElement_populate_props(DispatchEx *dispex)
 static event_target_t **HTMLElement_get_event_target_ptr(DispatchEx *dispex)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
-    return This->node.vtbl->get_event_target_ptr
-        ? This->node.vtbl->get_event_target_ptr(&This->node)
+    return This->node.vtbl->get_event_target
+        ? &This->node.vtbl->get_event_target(&This->node)->ptr
         : &This->node.event_target.ptr;
 }
 
