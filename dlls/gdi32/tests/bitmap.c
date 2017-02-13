@@ -4303,8 +4303,10 @@ static void test_GetDIBits_scanlines(void)
     memset( data, 0xaa, sizeof(data) );
 
     info->bmiHeader.biHeight = 16;
+    info->bmiHeader.biSizeImage = 0;
     ret = GetDIBits( hdc, dib, 1, 12, data, info, DIB_RGB_COLORS );
     ok( ret == 5, "got %d\n", ret );
+    ok( info->bmiHeader.biSizeImage == 128 * 4, "got %d\n", info->bmiHeader.biSizeImage );
     for (i = 0; i < 56; i++) ok( data[i] == 0, "%d: got %08x\n", i, data[i] );
     ok( !memcmp( data + 56, dib_bits, 40 * 4 ), "bits differ\n");
     for (i = 96; i < 128; i++) ok( data[i] == 0xaaaaaaaa, "%d: got %08x\n", i, data[i] );

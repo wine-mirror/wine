@@ -1051,8 +1051,7 @@ static void copy_color_info(BITMAPINFO *dst, const BITMAPINFO *src, UINT colorus
     }
     else
     {
-        dst->bmiHeader.biClrUsed   = src->bmiHeader.biClrUsed;
-        dst->bmiHeader.biSizeImage = src->bmiHeader.biSizeImage;
+        dst->bmiHeader.biClrUsed = src->bmiHeader.biClrUsed;
 
         if (src->bmiHeader.biCompression == BI_BITFIELDS)
             /* bitfields are always at bmiColors even in larger structures */
@@ -1388,7 +1387,6 @@ INT WINAPI GetDIBits(
             }
             break;
         }
-        src_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
         copy_color_info( dst_info, src_info, coloruse );
     }
     else if (dst_info->bmiHeader.biBitCount <= 8) /* otherwise construct a default colour table for the dst, if needed */
@@ -1409,6 +1407,7 @@ INT WINAPI GetDIBits(
             dst_info->bmiHeader.biHeight = src.height;
         else
             dst_info->bmiHeader.biHeight = -src.height;
+        dst_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
 
         convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits );
         if (src_bits.free) src_bits.free( &src_bits );
@@ -1425,7 +1424,11 @@ INT WINAPI GetDIBits(
     }
 
     copy_color_info( info, dst_info, coloruse );
-    if (info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER)) info->bmiHeader.biClrUsed = 0;
+    if (info->bmiHeader.biSize != sizeof(BITMAPCOREHEADER))
+    {
+        info->bmiHeader.biClrUsed = 0;
+        info->bmiHeader.biSizeImage = get_dib_image_size( info );
+    }
 
 done:
     release_dc_ptr( dc );
