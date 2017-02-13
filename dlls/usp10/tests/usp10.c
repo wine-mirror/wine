@@ -1799,7 +1799,7 @@ static void test_ScriptShape(HDC hdc)
             chars[1] = c;
             hr = ScriptItemize(chars, 3, 4, NULL, NULL, items, &nb);
             ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, c, hr);
-            todo_wine_if(c == 0x200b) ok(nb == test_data[j].item_count, "%s: [%02x] Got unexpected item count %d.\n",
+            ok(nb == test_data[j].item_count, "%s: [%02x] Got unexpected item count %d.\n",
                lf.lfFaceName, c, nb);
             item = &items[test_data[j].item];
 

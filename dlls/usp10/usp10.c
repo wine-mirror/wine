@@ -1363,7 +1363,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     for (i = 0; i < cInChars; i++)
     {
         /* Joiners get merged preferencially right */
-        if (i > 0 && (pwcInChars[i] == ZWJ || pwcInChars[i] == ZWNJ))
+        if (i > 0 && (pwcInChars[i] == ZWJ || pwcInChars[i] == ZWNJ || pwcInChars[i] == ZWSP))
         {
             int j;
             if (i+1 == cInChars)
@@ -1372,7 +1372,8 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
             {
                 for (j = i+1; j < cInChars; j++)
                 {
-                    if (pwcInChars[j] != ZWJ && pwcInChars[j] != ZWNJ && pwcInChars[j] != Numeric_space)
+                    if (pwcInChars[j] != ZWJ && pwcInChars[j] != ZWNJ
+                            && pwcInChars[j] != ZWSP && pwcInChars[j] != Numeric_space)
                     {
                         scripts[i] = scripts[j];
                         break;
@@ -1497,14 +1498,15 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                 }
 
                 /* Joiners get merged preferencially right */
-                if (i > 0 && (pwcInChars[i] == ZWJ || pwcInChars[i] == ZWNJ))
+                if (i > 0 && (pwcInChars[i] == ZWJ || pwcInChars[i] == ZWNJ || pwcInChars[i] == ZWSP))
                 {
                     int j;
                     if (i+1 == cInChars && levels[i-1] == levels[i])
                         strength[i] = strength[i-1];
                     else
                         for (j = i+1; j < cInChars && levels[i] == levels[j]; j++)
-                            if (pwcInChars[j] != ZWJ && pwcInChars[j] != ZWNJ && pwcInChars[j] != Numeric_space)
+                            if (pwcInChars[j] != ZWJ && pwcInChars[j] != ZWNJ
+                                    && pwcInChars[j] != ZWSP && pwcInChars[j] != Numeric_space)
                             {
                                 strength[i] = strength[j];
                                 break;
