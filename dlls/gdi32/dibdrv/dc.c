@@ -154,7 +154,10 @@ static void init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, int stride,
 
 void init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits)
 {
-    init_dib_info( dib, &info->bmiHeader, get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount ),
+    int width_bytes = get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
+    if (info->bmiHeader.biSizeImage)
+        width_bytes = info->bmiHeader.biSizeImage / abs( info->bmiHeader.biHeight );
+    init_dib_info( dib, &info->bmiHeader, width_bytes,
                    (const DWORD *)info->bmiColors, info->bmiColors, bits );
 }
 
