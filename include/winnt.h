@@ -5436,6 +5436,14 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 #define RtlFillMemory(Destination, Length, Fill) memset((Destination),(Fill),(Length))
 #define RtlZeroMemory(Destination, Length) memset((Destination),0,(Length))
 
+static FORCEINLINE void *RtlSecureZeroMemory(void *buffer, SIZE_T length)
+{
+    volatile char *ptr = buffer;
+
+    while (length--) *ptr++ = 0;
+    return buffer;
+}
+
 #include <guiddef.h>
 
 typedef struct _OBJECT_TYPE_LIST {

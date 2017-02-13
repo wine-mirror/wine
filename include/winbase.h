@@ -2778,6 +2778,7 @@ WINBASEAPI UINT        WINAPI _lwrite(HFILE,LPCSTR,UINT);
 #define     MoveMemory RtlMoveMemory
 #define     ZeroMemory RtlZeroMemory
 #define     CopyMemory RtlCopyMemory
+#define     SecureZeroMemory RtlSecureZeroMemory
 
 /* Wine internal functions */
 
