@@ -1177,6 +1177,7 @@ void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info )
     info->bmiHeader.biPlanes        = 1;
     info->bmiHeader.biBitCount      = bmp->dib.dsBm.bmBitsPixel;
     info->bmiHeader.biCompression   = BI_RGB;
+    info->bmiHeader.biSizeImage     = get_dib_image_size( info );
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrUsed       = 0;
