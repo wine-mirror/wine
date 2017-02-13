@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     IDispatch *handler_prop;
     DWORD handler_cnt;
-    IDispatch *handlers[0];
+    IDispatch **handlers;
 } handler_vector_t;
 
 struct event_target_t {
@@ -1315,25 +1315,13 @@ HRESULT call_fire_event(HTMLDOMNode *node, eventid_t eid)
     return S_OK;
 }
 
-static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid, int cnt)
+static BOOL alloc_handler_vector(event_target_t *event_target, eventid_t eid)
 {
-    handler_vector_t *new_vector, *handler_vector = event_target->event_table[eid];
+    if(event_target->event_table[eid])
+        return TRUE;
 
-    if(handler_vector) {
-        if(cnt <= handler_vector->handler_cnt)
-            return TRUE;
-
-        new_vector = heap_realloc_zero(handler_vector, sizeof(handler_vector_t) + sizeof(IDispatch*)*cnt);
-    }else {
-        new_vector = heap_alloc_zero(sizeof(handler_vector_t) + sizeof(IDispatch*)*cnt);
-    }
-
-    if(!new_vector)
-        return FALSE;
-
-    new_vector->handler_cnt = cnt;
-    event_target->event_table[eid] = new_vector;
-    return TRUE;
+    event_target->event_table[eid] = heap_alloc_zero(sizeof(*event_target->event_table[eid]));
+    return event_target->event_table[eid] != NULL;
 }
 
 HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, eventid_t eid)
@@ -1433,7 +1421,7 @@ static HRESULT set_event_handler_disp(EventTarget *event_target, eventid_t eid, 
         return E_OUTOFMEMORY;
 
     if(!data->event_table[eid]) {
-        if(!alloc_handler_vector(data, eid, 0))
+        if(!alloc_handler_vector(data, eid))
             return E_OUTOFMEMORY;
 
         bind_event(event_target, eid);
@@ -1536,12 +1524,20 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
     if(data->event_table[eid]) {
         while(i < data->event_table[eid]->handler_cnt && data->event_table[eid]->handlers[i])
             i++;
-        if(i == data->event_table[eid]->handler_cnt && !alloc_handler_vector(data, eid, i+1))
-            return E_OUTOFMEMORY;
-    }else if(alloc_handler_vector(data, eid, i+1)) {
+    }else if(alloc_handler_vector(data, eid)) {
         bind_event(event_target, eid);
     }else {
         return E_OUTOFMEMORY;
+    }
+    if(i == data->event_table[eid]->handler_cnt) {
+        if(i)
+            data->event_table[eid]->handlers = heap_realloc_zero(data->event_table[eid]->handlers,
+                                                                 (i + 1) * sizeof(*data->event_table[eid]->handlers));
+        else
+            data->event_table[eid]->handlers = heap_alloc_zero(sizeof(*data->event_table[eid]->handlers));
+        if(!data->event_table[eid]->handlers)
+            return E_OUTOFMEMORY;
+        data->event_table[eid]->handler_cnt++;
     }
 
     IDispatch_AddRef(disp);
