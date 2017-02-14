@@ -189,12 +189,6 @@ static HRESULT create_buffer_view(struct wined3d_gl_view *view,
         return WINED3D_OK;
     }
 
-    if (desc->flags & WINED3D_VIEW_BUFFER_RAW)
-    {
-        FIXME("Raw buffer views not supported.\n");
-        return WINED3D_OK;
-    }
-
     if (desc->u.buffer.start_idx > ~0u / view_format->byte_count
             || desc->u.buffer.count > ~0u / view_format->byte_count)
         return E_INVALIDARG;
@@ -491,8 +485,18 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     GLenum view_target;
 
     view_format = wined3d_get_format(gl_info, desc->format_id, resource->usage);
-    if (wined3d_format_is_typeless(view_format)
-            && !(view_format->id == WINED3DFMT_R32_TYPELESS && (desc->flags & WINED3D_VIEW_BUFFER_RAW)))
+    if (resource->type == WINED3D_RTYPE_BUFFER && desc->flags & WINED3D_VIEW_BUFFER_RAW)
+    {
+        if (view_format->id != WINED3DFMT_R32_TYPELESS)
+        {
+            WARN("Invalid format %s for raw buffer view.\n", debug_d3dformat(view_format->id));
+            return E_INVALIDARG;
+        }
+
+        view_format = wined3d_get_format(gl_info, WINED3DFMT_R32_UINT, resource->usage);
+    }
+
+    if (wined3d_format_is_typeless(view_format))
     {
         WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view_format->id));
         return E_INVALIDARG;
@@ -672,9 +676,18 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     view->parent_ops = parent_ops;
 
     view->format = wined3d_get_format(gl_info, desc->format_id, resource->usage);
+    if (resource->type == WINED3D_RTYPE_BUFFER && desc->flags & WINED3D_VIEW_BUFFER_RAW)
+    {
+        if (view->format->id != WINED3DFMT_R32_TYPELESS)
+        {
+            WARN("Invalid format %s for raw buffer view.\n", debug_d3dformat(view->format->id));
+            return E_INVALIDARG;
+        }
 
-    if (wined3d_format_is_typeless(view->format)
-            && !(view->format->id == WINED3DFMT_R32_TYPELESS && (desc->flags & WINED3D_VIEW_BUFFER_RAW)))
+        view->format = wined3d_get_format(gl_info, WINED3DFMT_R32_UINT, resource->usage);
+    }
+
+    if (wined3d_format_is_typeless(view->format))
     {
         WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view->format->id));
         return E_INVALIDARG;
