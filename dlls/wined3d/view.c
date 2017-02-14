@@ -177,6 +177,39 @@ static void create_buffer_texture(struct wined3d_gl_view *view,
     context_release(context);
 }
 
+static HRESULT create_buffer_view(struct wined3d_gl_view *view,
+        const struct wined3d_view_desc *desc, struct wined3d_buffer *buffer,
+        const struct wined3d_format *view_format)
+{
+    unsigned int offset, size;
+
+    if (desc->format_id == WINED3DFMT_UNKNOWN)
+    {
+        FIXME("Structured buffer views not supported.\n");
+        return WINED3D_OK;
+    }
+
+    if (desc->flags & WINED3D_VIEW_BUFFER_RAW)
+    {
+        FIXME("Raw buffer views not supported.\n");
+        return WINED3D_OK;
+    }
+
+    if (desc->u.buffer.start_idx > ~0u / view_format->byte_count
+            || desc->u.buffer.count > ~0u / view_format->byte_count)
+        return E_INVALIDARG;
+
+    offset = desc->u.buffer.start_idx * view_format->byte_count;
+    size = desc->u.buffer.count * view_format->byte_count;
+
+    if (offset >= buffer->resource.size
+            || size > buffer->resource.size - offset)
+        return E_INVALIDARG;
+
+    create_buffer_texture(view, buffer, view_format, offset, size);
+    return WINED3D_OK;
+}
+
 ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);
@@ -472,32 +505,10 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        HRESULT hr;
 
-        if (desc->format_id == WINED3DFMT_UNKNOWN)
-        {
-            FIXME("Structured buffer views not supported.\n");
-        }
-        else if (desc->flags & WINED3D_VIEW_BUFFER_RAW)
-        {
-            FIXME("Raw buffer views not supported.\n");
-        }
-        else
-        {
-            unsigned int offset, size;
-
-            if (desc->u.buffer.start_idx > ~0u / view_format->byte_count
-                    || desc->u.buffer.count > ~0u / view_format->byte_count)
-                return E_INVALIDARG;
-
-            offset = desc->u.buffer.start_idx * view_format->byte_count;
-            size = desc->u.buffer.count * view_format->byte_count;
-
-            if (offset >= buffer->resource.size
-                    || size > buffer->resource.size - offset)
-                return E_INVALIDARG;
-
-            create_buffer_texture(&view->gl_view, buffer, view_format, offset, size);
-        }
+        if (FAILED(hr = create_buffer_view(&view->gl_view, desc, buffer, view_format)))
+            return hr;
     }
     else
     {
@@ -638,7 +649,7 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
+        wined3d_buffer_invalidate_location(buffer_from_resource(resource), location);
         return;
     }
 
@@ -671,7 +682,11 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        FIXME("Buffer unordered access views not supported.\n");
+        struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        HRESULT hr;
+
+        if (FAILED(hr = create_buffer_view(&view->gl_view, desc, buffer, view->format)))
+            return hr;
     }
     else
     {

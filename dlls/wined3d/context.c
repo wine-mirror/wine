@@ -3416,7 +3416,8 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_unordered_access_view *view;
-    struct wined3d_texture *texture;
+    struct wined3d_texture *texture = NULL;
+    struct wined3d_buffer *buffer;
     GLuint texture_name;
     unsigned int i;
     GLint level;
@@ -3440,25 +3441,34 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
 
         if (view->resource->type == WINED3D_RTYPE_BUFFER)
         {
-            FIXME("Buffer unordered access views not implemented.\n");
-            continue;
+            buffer = buffer_from_resource(view->resource);
+            wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
+            wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_BUFFER);
+        }
+        else
+        {
+            texture = texture_from_resource(view->resource);
+            wined3d_texture_load(texture, context, FALSE);
+            wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_TEXTURE_RGB);
         }
 
         context->uses_uavs = 1;
-
-        texture = texture_from_resource(view->resource);
-        wined3d_texture_load(texture, context, FALSE);
-        wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_TEXTURE_RGB);
 
         if (view->gl_view.name)
         {
             texture_name = view->gl_view.name;
             level = 0;
         }
-        else
+        else if (texture)
         {
             texture_name = wined3d_texture_get_gl_texture(texture, FALSE)->name;
             level = view->level_idx;
+        }
+        else
+        {
+            FIXME("Unsupported buffer unordered access view.\n");
+            GL_EXTCALL(glBindImageTexture(i, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R8));
+            continue;
         }
 
         GL_EXTCALL(glBindImageTexture(i, texture_name, level, GL_TRUE, 0, GL_READ_WRITE,
