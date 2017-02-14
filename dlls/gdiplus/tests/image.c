@@ -1666,6 +1666,7 @@ static void test_createhbitmap(void)
     HDC hdc;
     COLORREF pixel;
     BYTE bits[640];
+    BitmapData lockeddata;
 
     memset(bits, 0x68, 640);
 
@@ -1850,6 +1851,30 @@ static void test_createhbitmap(void)
 
     stat = GdipDisposeImage((GpImage*)bitmap);
     expect(Ok, stat);
+
+    /* create HBITMAP from locked data */
+    memset(bits, 0x68, 640);
+    stat = GdipCreateBitmapFromScan0(10, 20, 32, PixelFormat24bppRGB, bits, &bitmap);
+    expect(Ok, stat);
+
+    memset(&lockeddata, 0, sizeof(lockeddata));
+    stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead | ImageLockModeWrite,
+            PixelFormat32bppRGB, &lockeddata);
+    expect(Ok, stat);
+    ((DWORD*)lockeddata.Scan0)[0] = 0xff242424;
+    stat = GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
+    expect(Ok, stat);
+    stat = GdipBitmapUnlockBits(bitmap, &lockeddata);
+    expect(Ok, stat);
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    hdc = CreateCompatibleDC(NULL);
+    oldhbitmap = SelectObject(hdc, hbitmap);
+    pixel = GetPixel(hdc, 0, 0);
+    expect(0x686868, pixel);
+    SelectObject(hdc, oldhbitmap);
+    DeleteDC(hdc);
 }
 
 static void test_getthumbnail(void)
