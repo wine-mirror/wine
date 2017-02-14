@@ -66,6 +66,11 @@ struct vec4
     float x, y, z, w;
 };
 
+struct ivec4
+{
+    int x, y, z, w;
+};
+
 struct uvec4
 {
     unsigned int x, y, z, w;
@@ -12842,6 +12847,177 @@ static void test_ps_cs_uav_binding(void)
     release_test_context(&test_context);
 }
 
+static void test_ps_uav_atomic_instructions(void)
+{
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11UnorderedAccessView *uav;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    struct resource_readback rb;
+    ID3D11Buffer *cb, *raw_uav;
+    ID3D11Texture2D *texture;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    D3D11_VIEWPORT vp;
+    unsigned int i, j;
+    HRESULT hr;
+
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const DWORD ps_atomics_code[] =
+    {
+#if 0
+        RWByteAddressBuffer u;
+
+        uint4 v;
+        int4 i;
+
+        void main()
+        {
+            u.InterlockedAnd(0 * 4, v.x);
+            u.InterlockedCompareStore(1 * 4, v.y, v.x);
+            u.InterlockedAdd(2 * 4, v.x);
+            u.InterlockedOr(3 * 4, v.x);
+            u.InterlockedMax(4 * 4, i.x);
+            u.InterlockedMin(5 * 4, i.x);
+            u.InterlockedMax(6 * 4, v.x);
+            u.InterlockedMin(7 * 4, v.x);
+            u.InterlockedXor(8 * 4, v.x);
+        }
+#endif
+        0x43425844, 0x24c6a30c, 0x2ce4437d, 0xdee8a0df, 0xd18cb4bc, 0x00000001, 0x000001ac, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000158, 0x00000050, 0x00000056, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x0300009d, 0x0011e000, 0x00000000, 0x080000a9,
+        0x0011e000, 0x00000000, 0x00004001, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0b0000ac,
+        0x0011e000, 0x00000000, 0x00004001, 0x00000004, 0x0020801a, 0x00000000, 0x00000000, 0x0020800a,
+        0x00000000, 0x00000000, 0x080000ad, 0x0011e000, 0x00000000, 0x00004001, 0x00000008, 0x0020800a,
+        0x00000000, 0x00000000, 0x080000aa, 0x0011e000, 0x00000000, 0x00004001, 0x0000000c, 0x0020800a,
+        0x00000000, 0x00000000, 0x080000ae, 0x0011e000, 0x00000000, 0x00004001, 0x00000010, 0x0020800a,
+        0x00000000, 0x00000001, 0x080000af, 0x0011e000, 0x00000000, 0x00004001, 0x00000014, 0x0020800a,
+        0x00000000, 0x00000001, 0x080000b0, 0x0011e000, 0x00000000, 0x00004001, 0x00000018, 0x0020800a,
+        0x00000000, 0x00000000, 0x080000b1, 0x0011e000, 0x00000000, 0x00004001, 0x0000001c, 0x0020800a,
+        0x00000000, 0x00000000, 0x080000ab, 0x0011e000, 0x00000000, 0x00004001, 0x00000020, 0x0020800a,
+        0x00000000, 0x00000000, 0x0100003e,
+    };
+
+    static const char * const instructions[] =
+    {
+        "atomic_and", "atomic_cmp_store", "atomic_iadd", "atomic_or",
+        "atomic_imax", "atomic_imin", "atomic_umax", "atomic_umin", "atomic_xor",
+    };
+    static const struct test
+    {
+        struct uvec4 v;
+        struct ivec4 i;
+        unsigned int input[sizeof(instructions) / sizeof(*instructions)];
+        unsigned int expected_result[sizeof(instructions) / sizeof(*instructions)];
+    }
+    tests[] =
+    {
+        {{1,     0}, {-1}, {0xffff,   0, 1, 0, 0, 0, 0, 0, 0xff}, {     1,   1, 2,   1, 0, ~0u,  1, 0, 0xfe}},
+        {{~0u, ~0u}, { 0}, {0xffff, 0xf, 1, 0, 0, 0, 0, 9,  ~0u}, {0xffff, 0xf, 0, ~0u, 0,  0, ~0u, 9,    0}},
+    };
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    texture_desc.Width = 1;
+    texture_desc.Height = 1;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 2 * sizeof(struct uvec4), NULL);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+
+    buffer_desc.ByteWidth = sizeof(tests->input);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &raw_uav);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+
+    uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(*tests->input);
+    U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)raw_uav, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    /* FIXME: Set the render targets to NULL when no attachment draw calls are supported in wined3d. */
+    ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, NULL,
+            0, 1, &uav, NULL);
+
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    vp.Width = texture_desc.Width;
+    vp.Height = texture_desc.Height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_atomics_code, sizeof(ps_atomics_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        const struct test *test = &tests[i];
+
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+                NULL, &test->v, 0, 0);
+
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)raw_uav, 0,
+                NULL, test->input, 0, 0);
+
+        draw_quad(&test_context);
+
+        get_buffer_readback(raw_uav, &rb);
+        for (j = 0; j < sizeof(instructions) / sizeof(*instructions); ++j)
+        {
+            unsigned int value = get_readback_color(&rb, j, 0);
+            unsigned int expected = test->expected_result[j];
+
+            todo_wine_if(expected != test->input[j]
+                    && (!strcmp(instructions[j], "atomic_imax")
+                    || !strcmp(instructions[j], "atomic_imin")
+                    || !strcmp(instructions[j], "atomic_umax")
+                    || !strcmp(instructions[j], "atomic_umin")))
+            ok(value == expected, "Test %u: Got %#x (%d), expected %#x (%d) for '%s' "
+                    "with inputs (%u, %u), (%d), %#x (%d).\n",
+                    i, value, value, expected, expected, instructions[j],
+                    test->v.x, test->v.y, test->i.x, test->input[j], test->input[j]);
+        }
+        release_resource_readback(&rb);
+    }
+
+    ID3D11Buffer_Release(cb);
+    ID3D11Buffer_Release(raw_uav);
+    ID3D11PixelShader_Release(ps);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture2D_Release(texture);
+    ID3D11UnorderedAccessView_Release(uav);
+    release_test_context(&test_context);
+}
+
 static void test_sm4_ret_instruction(void)
 {
     struct d3d11_test_context test_context;
@@ -14075,6 +14251,7 @@ START_TEST(d3d11)
     test_uav_load();
     test_cs_uav_store();
     test_ps_cs_uav_binding();
+    test_ps_uav_atomic_instructions();
     test_sm4_ret_instruction();
     test_primitive_restart();
     test_resinfo_instruction();
