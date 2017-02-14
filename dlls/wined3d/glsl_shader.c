@@ -4926,20 +4926,12 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_shader_version *version = &reg_maps->shader_version;
-    struct glsl_src_param image_coord_param, image_data_param;
+    struct glsl_src_param coord_param, data_param, data_param2;
     enum wined3d_shader_resource_type resource_type;
     enum wined3d_data_type data_type;
     unsigned int uav_idx;
     DWORD coord_mask;
     const char *op;
-
-    switch (ins->handler_idx)
-    {
-        case WINED3DSIH_ATOMIC_IADD: op = "imageAtomicAdd"; break;
-        default:
-            ERR("Unhandled opcode %#x.\n", ins->handler_idx);
-            return;
-    }
 
     uav_idx = ins->dst[0].reg.idx[0].offset;
     resource_type = reg_maps->uav_resource_info[uav_idx].type;
@@ -4951,11 +4943,46 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     data_type = reg_maps->uav_resource_info[uav_idx].data_type;
     coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
 
-    shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &image_coord_param);
-    shader_glsl_add_src_param_ext(ins, &ins->src[1], WINED3DSP_WRITEMASK_ALL, &image_data_param, data_type);
-    shader_addline(ins->ctx->buffer, "%s(%s_image%u, %s, %s);\n",
-            op, shader_glsl_get_prefix(version->type), uav_idx,
-            image_coord_param.param_str, image_data_param.param_str);
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_ATOMIC_AND:
+            op = "imageAtomicAnd";
+            break;
+        case WINED3DSIH_ATOMIC_CMP_STORE:
+            op = "imageAtomicCompSwap";
+            break;
+        case WINED3DSIH_ATOMIC_IADD:
+            op = "imageAtomicAdd";
+            break;
+        case WINED3DSIH_ATOMIC_OR:
+            op = "imageAtomicOr";
+            break;
+        case WINED3DSIH_ATOMIC_XOR:
+            op = "imageAtomicXor";
+            break;
+        default:
+            ERR("Unhandled opcode %#x.\n", ins->handler_idx);
+            return;
+    }
+
+    shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &coord_param);
+
+    if (reg_maps->uav_resource_info[uav_idx].flags & WINED3D_VIEW_BUFFER_RAW)
+        shader_addline(ins->ctx->buffer, "%s(%s_image%u, %s / 4, ",
+                op, shader_glsl_get_prefix(version->type), uav_idx, coord_param.param_str);
+    else
+        shader_addline(ins->ctx->buffer, "%s(%s_image%u, %s, ",
+                op, shader_glsl_get_prefix(version->type), uav_idx, coord_param.param_str);
+
+    shader_glsl_add_src_param_ext(ins, &ins->src[1], WINED3DSP_WRITEMASK_0, &data_param, data_type);
+    shader_addline(ins->ctx->buffer, "%s", data_param.param_str);
+    if (ins->src_count >= 3)
+    {
+        shader_glsl_add_src_param_ext(ins, &ins->src[2], WINED3DSP_WRITEMASK_0, &data_param2, data_type);
+        shader_addline(ins->ctx->buffer, ", %s", data_param2.param_str);
+    }
+
+    shader_addline(ins->ctx->buffer, ");\n");
 }
 
 static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
@@ -9160,15 +9187,15 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ABS                              */ shader_glsl_map2gl,
     /* WINED3DSIH_ADD                              */ shader_glsl_binop,
     /* WINED3DSIH_AND                              */ shader_glsl_binop,
-    /* WINED3DSIH_ATOMIC_AND                       */ NULL,
-    /* WINED3DSIH_ATOMIC_CMP_STORE                 */ NULL,
+    /* WINED3DSIH_ATOMIC_AND                       */ shader_glsl_atomic,
+    /* WINED3DSIH_ATOMIC_CMP_STORE                 */ shader_glsl_atomic,
     /* WINED3DSIH_ATOMIC_IADD                      */ shader_glsl_atomic,
     /* WINED3DSIH_ATOMIC_IMAX                      */ NULL,
     /* WINED3DSIH_ATOMIC_IMIN                      */ NULL,
-    /* WINED3DSIH_ATOMIC_OR                        */ NULL,
+    /* WINED3DSIH_ATOMIC_OR                        */ shader_glsl_atomic,
     /* WINED3DSIH_ATOMIC_UMAX                      */ NULL,
     /* WINED3DSIH_ATOMIC_UMIN                      */ NULL,
-    /* WINED3DSIH_ATOMIC_XOR                       */ NULL,
+    /* WINED3DSIH_ATOMIC_XOR                       */ shader_glsl_atomic,
     /* WINED3DSIH_BEM                              */ shader_glsl_bem,
     /* WINED3DSIH_BFI                              */ shader_glsl_bitwise_op,
     /* WINED3DSIH_BFREV                            */ shader_glsl_map2gl,

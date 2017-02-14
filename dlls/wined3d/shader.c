@@ -1282,14 +1282,14 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 }
             }
 
-            if (ins.handler_idx == WINED3DSIH_ATOMIC_IADD
+            if ((WINED3DSIH_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_ATOMIC_XOR)
                     || ins.handler_idx == WINED3DSIH_LD_UAV_TYPED)
             {
                 unsigned int reg_idx;
-                if (ins.handler_idx == WINED3DSIH_ATOMIC_IADD)
-                    reg_idx = ins.dst[0].reg.idx[0].offset;
-                else
+                if (ins.handler_idx == WINED3DSIH_LD_UAV_TYPED)
                     reg_idx = ins.src[1].reg.idx[0].offset;
+                else
+                    reg_idx = ins.dst[0].reg.idx[0].offset;
                 if (reg_idx >= MAX_UNORDERED_ACCESS_VIEWS)
                 {
                     ERR("Invalid UAV index %u.\n", reg_idx);
