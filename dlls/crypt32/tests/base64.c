@@ -385,7 +385,6 @@ static void testStringToBinaryA(void)
     decodeBase64WithLen("V=", 2, 0, ERROR_INVALID_DATA);
     decodeBase64WithLen("VV=", 3, 0, ERROR_INVALID_DATA);
     decodeBase64WithLen("V==", 3, 0, ERROR_INVALID_DATA);
-    todo_wine {
     decodeBase64WithLenBroken("V", 0, "T", 0);
     decodeBase64WithLenBroken("VV", 0, "U", 0);
     decodeBase64WithLenBroken("VVV", 0, "UU", 0);
@@ -410,18 +409,17 @@ static void testStringToBinaryA(void)
     decodeBase64WithLen("VV==VVVV", 8, "U", 0);
     decodeBase64WithLen("VVV=VVVV", 8, "UU", 0);
     decodeBase64WithLen("VVVV=VVVV", 8, "UUU", 0);
-    }
 
     decodeBase64WithFmt("-----BEGIN-----VVVV-----END-----", CRYPT_STRING_BASE64HEADER, 0, ERROR_INVALID_DATA);
     decodeBase64WithFmt("-----BEGIN-----VVVV-----END -----", CRYPT_STRING_BASE64HEADER, 0, ERROR_INVALID_DATA);
     decodeBase64WithFmt("-----BEGIN -----VVVV-----END-----", CRYPT_STRING_BASE64HEADER, 0, ERROR_INVALID_DATA);
     decodeBase64WithFmt("-----BEGIN -----VVVV-----END -----", CRYPT_STRING_BASE64HEADER, "UUU", 0);
 
-    todo_wine {
     decodeBase64WithFmt("-----BEGIN -----V-----END -----", CRYPT_STRING_BASE64HEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END -----", CRYPT_STRING_BASE64HEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END foo-----", CRYPT_STRING_BASE64HEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN -----V-----END foo-----", CRYPT_STRING_BASE64HEADER, "T", 0);
+    todo_wine {
     decodeBase64WithFmt("-----BEGIN -----V-----END -----", CRYPT_STRING_BASE64X509CRLHEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END -----", CRYPT_STRING_BASE64X509CRLHEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END foo-----", CRYPT_STRING_BASE64X509CRLHEADER, "T", 0);
@@ -436,7 +434,6 @@ static void testStringToBinaryA(void)
     buf[0] = 0;
     bufLen = 4;
     ret = pCryptStringToBinaryA("VVVVVVVV", 8, CRYPT_STRING_BASE64, (BYTE*)buf, &bufLen, NULL, NULL);
-    todo_wine
     ok(!ret && bufLen == 4 && buf[0] == 0,
      "Expected ret 0, bufLen 4, buf[0] '\\0', got ret %d, bufLen %d, buf[0] '%c'\n",
      ret, bufLen, buf[0]);
@@ -450,7 +447,7 @@ static void testStringToBinaryA(void)
          */
         ret = pCryptStringToBinaryA(tests[i].base64, 1, CRYPT_STRING_BASE64,
          NULL, &bufLen, NULL, NULL);
-        todo_wine ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
+        ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
         /* Check with the precise format */
         decodeAndCompareBase64_A(tests[i].base64, NULL, NULL,
          CRYPT_STRING_BASE64, CRYPT_STRING_BASE64, tests[i].toEncode,
@@ -507,7 +504,7 @@ static void testStringToBinaryA(void)
          */
         ret = pCryptStringToBinaryA(testsNoCR[i].base64, 1, CRYPT_STRING_BASE64,
          NULL, &bufLen, NULL, NULL);
-        todo_wine ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
+        ok(ret, "CryptStringToBinaryA failed: %d\n", GetLastError());
         /* Check with the precise format */
         decodeAndCompareBase64_A(testsNoCR[i].base64, NULL, NULL,
          CRYPT_STRING_BASE64, CRYPT_STRING_BASE64, testsNoCR[i].toEncode,

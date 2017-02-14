@@ -483,9 +483,13 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
     return encoder(pbBinary, cbBinary, dwFlags, pszString, pcchString);
 }
 
-static inline BYTE decodeBase64Byte(int c)
+#define BASE64_DECODE_PADDING    0x100
+#define BASE64_DECODE_WHITESPACE 0x200
+#define BASE64_DECODE_INVALID    0x300
+
+static inline int decodeBase64Byte(int c)
 {
-    BYTE ret;
+    int ret = BASE64_DECODE_INVALID;
 
     if (c >= 'A' && c <= 'Z')
         ret = c - 'A';
@@ -497,76 +501,11 @@ static inline BYTE decodeBase64Byte(int c)
         ret = 62;
     else if (c == '/')
         ret = 63;
-    else
-        ret = 64;
+    else if (c == '=')
+        ret = BASE64_DECODE_PADDING;
+    else if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        ret = BASE64_DECODE_WHITESPACE;
     return ret;
-}
-
-static LONG decodeBase64Block(const char *in_buf, int in_len,
- const char **nextBlock, PBYTE out_buf, DWORD *out_len)
-{
-    int len = in_len;
-    const char *d = in_buf;
-    int  ip0, ip1, ip2, ip3;
-
-    if (len < 4)
-        return ERROR_INVALID_DATA;
-
-    if (d[2] == '=')
-    {
-        if ((ip0 = decodeBase64Byte(d[0])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip1 = decodeBase64Byte(d[1])) > 63)
-            return ERROR_INVALID_DATA;
-
-        if (out_buf)
-            out_buf[0] = (ip0 << 2) | (ip1 >> 4);
-        *out_len = 1;
-    }
-    else if (d[3] == '=')
-    {
-        if ((ip0 = decodeBase64Byte(d[0])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip1 = decodeBase64Byte(d[1])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip2 = decodeBase64Byte(d[2])) > 63)
-            return ERROR_INVALID_DATA;
-
-        if (out_buf)
-        {
-            out_buf[0] = (ip0 << 2) | (ip1 >> 4);
-            out_buf[1] = (ip1 << 4) | (ip2 >> 2);
-        }
-        *out_len = 2;
-    }
-    else
-    {
-        if ((ip0 = decodeBase64Byte(d[0])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip1 = decodeBase64Byte(d[1])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip2 = decodeBase64Byte(d[2])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip3 = decodeBase64Byte(d[3])) > 63)
-            return ERROR_INVALID_DATA;
-
-        if (out_buf)
-        {
-            out_buf[0] = (ip0 << 2) | (ip1 >> 4);
-            out_buf[1] = (ip1 << 4) | (ip2 >> 2);
-            out_buf[2] = (ip2 << 6) |  ip3;
-        }
-        *out_len = 3;
-    }
-    if (len >= 6 && d[4] == '\r' && d[5] == '\n')
-        *nextBlock = d + 6;
-    else if (len >= 5 && d[4] == '\n')
-        *nextBlock = d + 5;
-    else if (len >= 4 && d[4])
-        *nextBlock = d + 4;
-    else
-        *nextBlock = NULL;
-    return ERROR_SUCCESS;
 }
 
 /* Unlike CryptStringToBinaryA, cchString is guaranteed to be the length of the
@@ -575,39 +514,92 @@ static LONG decodeBase64Block(const char *in_buf, int in_len,
 typedef LONG (*StringToBinaryAFunc)(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags);
 
+static LONG Base64ToBinary(const void* pszString, BOOL wide, DWORD cchString,
+ BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
+{
+    DWORD cbIn, cbValid, cbOut, hasPadding;
+    BYTE block[4];
+    for (cbIn = cbValid = cbOut = hasPadding = 0; cbIn < cchString; ++cbIn)
+    {
+        int c = wide ? (int)((WCHAR*)pszString)[cbIn] : (int)((char*)pszString)[cbIn];
+        int d = decodeBase64Byte(c);
+        if (d == BASE64_DECODE_INVALID)
+            goto invalid;
+        if (d == BASE64_DECODE_WHITESPACE)
+            continue;
+
+        /* When padding starts, data is not acceptable */
+        if (hasPadding && d != BASE64_DECODE_PADDING)
+            goto invalid;
+
+        /* Padding after a full block (like "VVVV=") is ok and stops decoding */
+        if (d == BASE64_DECODE_PADDING && (cbValid & 3) == 0)
+            break;
+
+        cbValid += 1;
+
+        if (d == BASE64_DECODE_PADDING)
+        {
+            hasPadding = 1;
+            /* When padding reaches a full block, stop decoding */
+            if ((cbValid & 3) == 0)
+                break;
+            continue;
+        }
+
+        /* cbOut is incremented in the 4-char block as follows: "1-23" */
+        if ((cbValid & 3) != 2)
+            cbOut += 1;
+    }
+    /* Fail if the block has bad padding; omitting padding is fine */
+    if ((cbValid & 3) != 0 && hasPadding)
+        goto invalid;
+    /* Check available buffer size */
+    if (pbBinary && *pcbBinary && cbOut > *pcbBinary)
+        goto overflow;
+    /* Convert the data; this step depends on the validity checks above! */
+    if (pbBinary) for (cbIn = cbValid = cbOut = 0; cbIn < cchString; ++cbIn)
+    {
+        int c = wide ? (int)((WCHAR*)pszString)[cbIn] : (int)((char*)pszString)[cbIn];
+        int d = decodeBase64Byte(c);
+        if (d == BASE64_DECODE_WHITESPACE)
+            continue;
+        if (d == BASE64_DECODE_PADDING)
+            break;
+        block[cbValid & 3] = d;
+        cbValid += 1;
+        switch (cbValid & 3) {
+        case 1:
+            pbBinary[cbOut++] = (block[0] << 2);
+            break;
+        case 2:
+            pbBinary[cbOut-1] = (block[0] << 2) | (block[1] >> 4);
+            break;
+        case 3:
+            pbBinary[cbOut++] = (block[1] << 4) | (block[2] >> 2);
+            break;
+        case 0:
+            pbBinary[cbOut++] = (block[2] << 6) | (block[3] >> 0);
+            break;
+        }
+    }
+    *pcbBinary = cbOut;
+    if (pdwSkip)
+        *pdwSkip = 0;
+    if (pdwFlags)
+        *pdwFlags = CRYPT_STRING_BASE64;
+    return ERROR_SUCCESS;
+overflow:
+    return ERROR_INSUFFICIENT_BUFFER;
+invalid:
+    *pcbBinary = cbOut;
+    return ERROR_INVALID_DATA;
+}
+
 static LONG Base64ToBinaryA(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
-    LONG ret = ERROR_SUCCESS;
-    const char *nextBlock;
-    DWORD outLen = 0;
-
-    nextBlock = pszString;
-    while (nextBlock && !ret)
-    {
-        DWORD len = 0;
-
-        ret = decodeBase64Block(nextBlock, cchString - (nextBlock - pszString),
-         &nextBlock, pbBinary ? pbBinary + outLen : NULL, &len);
-        if (!ret)
-            outLen += len;
-        if (cchString - (nextBlock - pszString) <= 0)
-            nextBlock = NULL;
-    }
-    *pcbBinary = outLen;
-    if (!ret)
-    {
-        if (pdwSkip)
-            *pdwSkip = 0;
-        if (pdwFlags)
-            *pdwFlags = CRYPT_STRING_BASE64;
-    }
-    else if (ret == ERROR_INSUFFICIENT_BUFFER)
-    {
-        if (!pbBinary)
-            ret = ERROR_SUCCESS;
-    }
-    return ret;
+    return Base64ToBinary(pszString, FALSE, cchString, pbBinary, pcbBinary, pdwSkip, pdwFlags);
 }
 
 static LONG Base64WithHeaderAndTrailerToBinaryA(LPCSTR pszString,
@@ -830,75 +822,6 @@ BOOL WINAPI CryptStringToBinaryA(LPCSTR pszString,
     return ret == ERROR_SUCCESS;
 }
 
-static LONG decodeBase64BlockW(const WCHAR *in_buf, int in_len,
- const WCHAR **nextBlock, PBYTE out_buf, DWORD *out_len)
-{
-    int len = in_len, i;
-    const WCHAR *d = in_buf;
-    int  ip0, ip1, ip2, ip3;
-
-    if (len < 4)
-        return ERROR_INVALID_DATA;
-
-    i = 0;
-    if (d[2] == '=')
-    {
-        if ((ip0 = decodeBase64Byte(d[0])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip1 = decodeBase64Byte(d[1])) > 63)
-            return ERROR_INVALID_DATA;
-
-        if (out_buf)
-            out_buf[i] = (ip0 << 2) | (ip1 >> 4);
-        i++;
-    }
-    else if (d[3] == '=')
-    {
-        if ((ip0 = decodeBase64Byte(d[0])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip1 = decodeBase64Byte(d[1])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip2 = decodeBase64Byte(d[2])) > 63)
-            return ERROR_INVALID_DATA;
-
-        if (out_buf)
-        {
-            out_buf[i + 0] = (ip0 << 2) | (ip1 >> 4);
-            out_buf[i + 1] = (ip1 << 4) | (ip2 >> 2);
-        }
-        i += 2;
-    }
-    else
-    {
-        if ((ip0 = decodeBase64Byte(d[0])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip1 = decodeBase64Byte(d[1])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip2 = decodeBase64Byte(d[2])) > 63)
-            return ERROR_INVALID_DATA;
-        if ((ip3 = decodeBase64Byte(d[3])) > 63)
-            return ERROR_INVALID_DATA;
-
-        if (out_buf)
-        {
-            out_buf[i + 0] = (ip0 << 2) | (ip1 >> 4);
-            out_buf[i + 1] = (ip1 << 4) | (ip2 >> 2);
-            out_buf[i + 2] = (ip2 << 6) |  ip3;
-        }
-        i += 3;
-    }
-    if (len >= 6 && d[4] == '\r' && d[5] == '\n')
-        *nextBlock = d + 6;
-    else if (len >= 5 && d[4] == '\n')
-        *nextBlock = d + 5;
-    else if (len >= 4 && d[4])
-        *nextBlock = d + 4;
-    else
-        *nextBlock = NULL;
-    *out_len = i;
-    return ERROR_SUCCESS;
-}
-
 /* Unlike CryptStringToBinaryW, cchString is guaranteed to be the length of the
  * string to convert.
  */
@@ -908,36 +831,7 @@ typedef LONG (*StringToBinaryWFunc)(LPCWSTR pszString, DWORD cchString,
 static LONG Base64ToBinaryW(LPCWSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
-    LONG ret = ERROR_SUCCESS;
-    const WCHAR *nextBlock;
-    DWORD outLen = 0;
-
-    nextBlock = pszString;
-    while (nextBlock && !ret)
-    {
-        DWORD len = 0;
-
-        ret = decodeBase64BlockW(nextBlock, cchString - (nextBlock - pszString),
-         &nextBlock, pbBinary ? pbBinary + outLen : NULL, &len);
-        if (!ret)
-            outLen += len;
-        if (cchString - (nextBlock - pszString) <= 0)
-            nextBlock = NULL;
-    }
-    *pcbBinary = outLen;
-    if (!ret)
-    {
-        if (pdwSkip)
-            *pdwSkip = 0;
-        if (pdwFlags)
-            *pdwFlags = CRYPT_STRING_BASE64;
-    }
-    else if (ret == ERROR_INSUFFICIENT_BUFFER)
-    {
-        if (!pbBinary)
-            ret = ERROR_SUCCESS;
-    }
-    return ret;
+    return Base64ToBinary(pszString, TRUE, cchString, pbBinary, pcbBinary, pdwSkip, pdwFlags);
 }
 
 static LONG Base64WithHeaderAndTrailerToBinaryW(LPCWSTR pszString,
