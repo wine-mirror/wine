@@ -9325,10 +9325,8 @@ msgid "Confidentiality Required"
 msgstr "Vaaditaan luottamuksellisuutta"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Sulkeminen meneillään.\n"
+msgstr "SASL-todennus on kesken"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -11923,17 +11921,11 @@ msgstr "Valitun rekisteriarvon uudelleennimeäminen ei onnistu."
 #: regedit.rc:220
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "Avaimet ja arvot tiedostosta %1 on nyt lisätty rekisteriin."
 
 #: regedit.rc:221
-#, fuzzy
-#| msgid ""
-#| "Unable to rename the key '%1'.\n"
-#| "The specified key name already exists."
 msgid "Unable to import %1. The specified file is not a valid registry file."
-msgstr ""
-"Avaimen '%1' nimeäminen ei onnistu.\n"
-"Annettu avaimen nimi on jo varattu."
+msgstr "Tiedostoa %1 ei voi tuoda, koska se ei ole kelpo rekisteritiedosto."
 
 #: regedit.rc:373
 msgid ""
