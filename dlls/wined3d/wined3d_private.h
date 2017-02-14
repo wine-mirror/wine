@@ -824,6 +824,7 @@ struct wined3d_shader_resource_info
 {
     enum wined3d_shader_resource_type type;
     enum wined3d_data_type data_type;
+    unsigned int flags;
 };
 
 #define WINED3D_SAMPLER_DEFAULT ~0x0u
