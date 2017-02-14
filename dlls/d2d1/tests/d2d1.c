@@ -250,6 +250,33 @@ static BOOL compare_surface(IDXGISurface *surface, const char *ref_sha1)
     return ret;
 }
 
+static BOOL compare_wic_bitmap(IWICBitmap *bitmap, const char *ref_sha1)
+{
+    UINT stride, width, height, buffer_size;
+    IWICBitmapLock *lock;
+    BYTE *data;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = IWICBitmap_Lock(bitmap, NULL, WICBitmapLockRead, &lock);
+    ok(SUCCEEDED(hr), "Failed to lock bitmap, hr %#x.\n", hr);
+
+    hr = IWICBitmapLock_GetDataPointer(lock, &buffer_size, &data);
+    ok(SUCCEEDED(hr), "Failed to get bitmap data, hr %#x.\n", hr);
+
+    hr = IWICBitmapLock_GetStride(lock, &stride);
+    ok(SUCCEEDED(hr), "Failed to get bitmap stride, hr %#x.\n", hr);
+
+    hr = IWICBitmapLock_GetSize(lock, &width, &height);
+    ok(SUCCEEDED(hr), "Failed to get bitmap size, hr %#x.\n", hr);
+
+    ret = compare_sha1(data, stride, 4, width, height, ref_sha1);
+
+    IWICBitmapLock_Release(lock);
+
+    return ret;
+}
+
 static void serialize_figure(struct figure *figure)
 {
     static const char lookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -2248,15 +2275,16 @@ static void test_shared_bitmap(void)
 {
     IDXGISwapChain *swapchain1, *swapchain2;
     IWICBitmap *wic_bitmap1, *wic_bitmap2;
+    ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
+    ID2D1RenderTarget *rt1, *rt2, *rt3;
     IDXGISurface *surface1, *surface2;
     ID2D1Factory *factory1, *factory2;
     ID3D10Device1 *device1, *device2;
     IWICImagingFactory *wic_factory;
     ID2D1Bitmap *bitmap1, *bitmap2;
     DXGI_SURFACE_DESC surface_desc;
-    ID2D1RenderTarget *rt1, *rt2;
     D2D1_SIZE_U size = {4, 4};
     IDXGISurface1 *surface3;
     HWND window1, window2;
@@ -2365,6 +2393,14 @@ static void test_shared_bitmap(void)
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
     hr = ID2D1RenderTarget_CreateBitmap(rt1, size, NULL, 0, &bitmap_desc, &bitmap1);
     ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+    hr = ID2D1RenderTarget_QueryInterface(rt1, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(SUCCEEDED(hr), "Failed to get interop target, hr %#x.\n", hr);
+    hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1RenderTarget, (void **)&rt3);
+    ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+    ok(rt3 == rt1, "Unexpected render target\n");
+    ID2D1RenderTarget_Release(rt3);
+    ID2D1GdiInteropRenderTarget_Release(interop);
 
     hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory2, wic_bitmap2, &desc, &rt2);
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
@@ -2764,8 +2800,11 @@ static void test_create_target(void)
 
     for (i = 0; i < sizeof(create_dpi_tests) / sizeof(*create_dpi_tests); ++i)
     {
+        ID2D1GdiInteropRenderTarget *interop;
         D2D1_RENDER_TARGET_PROPERTIES desc;
+        ID2D1RenderTarget *rt2;
         float dpi_x, dpi_y;
+        IUnknown *unk;
 
         desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
         desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
@@ -2781,6 +2820,19 @@ static void test_create_target(void)
 
         if (FAILED(hr))
             continue;
+
+        hr = ID2D1RenderTarget_QueryInterface(rt, &IID_IUnknown, (void **)&unk);
+        ok(SUCCEEDED(hr), "Failed to get IUnknown, hr %#x.\n", hr);
+        ok(unk == (IUnknown *)rt, "Expected same interface pointer.\n");
+        IUnknown_Release(unk);
+
+        hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+        ok(SUCCEEDED(hr), "Failed to get interop target, hr %#x.\n", hr);
+        hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1RenderTarget, (void **)&rt2);
+        ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+        ok(rt2 == rt, "Unexpected render target\n");
+        ID2D1RenderTarget_Release(rt2);
+        ID2D1GdiInteropRenderTarget_Release(interop);
 
         ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
         ok(dpi_x == create_dpi_tests[i].rt_dpi_x, "Wrong dpi_x %.8e, expected %.8e, test %u\n",
@@ -2946,11 +2998,13 @@ static void test_dc_target(void)
         { DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
     };
     D2D1_TEXT_ANTIALIAS_MODE text_aa_mode;
+    ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_MATRIX_3X2_F matrix, matrix2;
+    ID2D1DCRenderTarget *rt, *rt2;
     D2D1_ANTIALIAS_MODE aa_mode;
     ID2D1SolidColorBrush *brush;
-    ID2D1DCRenderTarget *rt;
+    ID2D1RenderTarget *rt3;
     ID2D1Factory *factory;
     ID3D10Device1 *device;
     FLOAT dpi_x, dpi_y;
@@ -2997,6 +3051,18 @@ static void test_dc_target(void)
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
     hr = ID2D1Factory_CreateDCRenderTarget(factory, &desc, &rt);
     ok(SUCCEEDED(hr), "Failed to create target, hr %#x.\n", hr);
+
+    hr = ID2D1DCRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(SUCCEEDED(hr), "Failed to get interop target, hr %#x.\n", hr);
+    hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1RenderTarget, (void **)&rt3);
+    ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+    ok(rt3 == (ID2D1RenderTarget *)rt, "Unexpected render target\n");
+    ID2D1RenderTarget_Release(rt3);
+    hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1DCRenderTarget, (void **)&rt2);
+    ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+    ok(rt2 == rt, "Unexpected render target\n");
+    ID2D1DCRenderTarget_Release(rt2);
+    ID2D1GdiInteropRenderTarget_Release(interop);
 
     size = ID2D1DCRenderTarget_GetSize(rt);
     ok(size.width == 0.0f, "got width %.08e.\n", size.width);
@@ -3125,8 +3191,10 @@ static void test_dc_target(void)
 static void test_hwnd_target(void)
 {
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
+    ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
-    ID2D1HwndRenderTarget *rt;
+    ID2D1HwndRenderTarget *rt, *rt2;
+    ID2D1RenderTarget *rt3;
     ID2D1Factory *factory;
     ID3D10Device1 *device;
     D2D1_SIZE_U size;
@@ -3167,6 +3235,18 @@ static void test_hwnd_target(void)
     hr = ID2D1Factory_CreateHwndRenderTarget(factory, &desc, &hwnd_rt_desc, &rt);
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
 
+    hr = ID2D1HwndRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(SUCCEEDED(hr), "Failed to get interop target, hr %#x.\n", hr);
+    hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1RenderTarget, (void **)&rt3);
+    ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+    ok(rt3 == (ID2D1RenderTarget *)rt, "Unexpected render target\n");
+    ID2D1RenderTarget_Release(rt3);
+    hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1HwndRenderTarget, (void **)&rt2);
+    ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+    ok(rt2 == rt, "Unexpected render target\n");
+    ID2D1HwndRenderTarget_Release(rt2);
+    ID2D1GdiInteropRenderTarget_Release(interop);
+
     size.width = 128;
     size.height = 64;
     hr = ID2D1HwndRenderTarget_Resize(rt, &size);
@@ -3181,13 +3261,15 @@ static void test_hwnd_target(void)
 static void test_bitmap_target(void)
 {
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
+    ID2D1GdiInteropRenderTarget *interop;
     D2D1_SIZE_U pixel_size, pixel_size2;
     D2D1_RENDER_TARGET_PROPERTIES desc;
+    ID2D1BitmapRenderTarget *rt, *rt2;
     ID2D1HwndRenderTarget *hwnd_rt;
     ID2D1Bitmap *bitmap, *bitmap2;
-    ID2D1BitmapRenderTarget *rt;
     ID2D1DCRenderTarget *dc_rt;
     D2D1_SIZE_F size, size2;
+    ID2D1RenderTarget *rt3;
     ID2D1Factory *factory;
     ID3D10Device1 *device;
     float dpi[2], dpi2[2];
@@ -3225,6 +3307,18 @@ static void test_bitmap_target(void)
     hr = ID2D1HwndRenderTarget_CreateCompatibleRenderTarget(hwnd_rt, NULL, NULL, NULL,
             D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &rt);
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = ID2D1BitmapRenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(SUCCEEDED(hr), "Failed to get interop target, hr %#x.\n", hr);
+    hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1RenderTarget, (void **)&rt3);
+    ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+    ok(rt3 == (ID2D1RenderTarget *)rt, "Unexpected render target\n");
+    ID2D1RenderTarget_Release(rt3);
+    hr = ID2D1GdiInteropRenderTarget_QueryInterface(interop, &IID_ID2D1BitmapRenderTarget, (void **)&rt2);
+    ok(SUCCEEDED(hr), "Failed to get render target back, %#x.\n", hr);
+    ok(rt2 == rt, "Unexpected render target\n");
+    ID2D1BitmapRenderTarget_Release(rt2);
+    ID2D1GdiInteropRenderTarget_Release(interop);
 
     /* See if parent target is referenced. */
     ID2D1HwndRenderTarget_AddRef(hwnd_rt);
@@ -3872,6 +3966,112 @@ static void test_draw_geometry(void)
     DestroyWindow(window);
 }
 
+static void test_gdi_interop(void)
+{
+    ID2D1GdiInteropRenderTarget *interop;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    IWICImagingFactory *wic_factory;
+    IWICBitmap *wic_bitmap;
+    ID2D1RenderTarget *rt;
+    ID2D1Factory *factory;
+    ID3D10Device1 *device;
+    D2D1_COLOR_F color;
+    HRESULT hr;
+    BOOL match;
+    RECT rect;
+    HDC dc;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&wic_factory);
+    ok(SUCCEEDED(hr), "Failed to create WIC imaging factory, hr %#x.\n", hr);
+    hr = IWICImagingFactory_CreateBitmap(wic_factory, 16, 16,
+            &GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnDemand, &wic_bitmap);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    IWICImagingFactory_Release(wic_factory);
+
+    /* WIC target, default usage */
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 0.0f;
+    desc.dpiY = 0.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory, wic_bitmap, &desc, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(SUCCEEDED(hr), "Failed to get gdi interop interface, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    dc = (void *)0xdeadbeef;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    ok(FAILED(hr), "GetDC() was expected to fail, hr %#x.\n", hr);
+todo_wine
+    ok(dc == NULL, "Expected NULL dc, got %p.\n", dc);
+    ID2D1GdiInteropRenderTarget_Release(interop);
+    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+
+    ID2D1RenderTarget_Release(rt);
+
+    /* WIC target, gdi compatible */
+    desc.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory, wic_bitmap, &desc, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1GdiInteropRenderTarget, (void **)&interop);
+    ok(SUCCEEDED(hr), "Failed to get gdi interop interface, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    dc = NULL;
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    ok(SUCCEEDED(hr), "GetDC() was expected to succeed, hr %#x.\n", hr);
+    ok(dc != NULL, "Expected NULL dc, got %p.\n", dc);
+    ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 1.0f, 0.0f, 0.0f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+
+    match = compare_wic_bitmap(wic_bitmap, "54034063dbc1c1bb61cb60ec57e4498678dc2b13");
+    ok(match, "Bitmap does not match.\n");
+
+    /* Do solid fill using GDI */
+    ID2D1RenderTarget_BeginDraw(rt);
+
+    hr = ID2D1GdiInteropRenderTarget_GetDC(interop, D2D1_DC_INITIALIZE_MODE_COPY, &dc);
+    ok(SUCCEEDED(hr), "GetDC() was expected to succeed, hr %#x.\n", hr);
+
+    SetRect(&rect, 0, 0, 16, 16);
+    FillRect(dc, &rect, GetStockObject(BLACK_BRUSH));
+    ID2D1GdiInteropRenderTarget_ReleaseDC(interop, NULL);
+
+    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+
+    match = compare_wic_bitmap(wic_bitmap, "60cacbf3d72e1e7834203da608037b1bf83b40e8");
+    ok(match, "Bitmap does not match.\n");
+
+    ID2D1GdiInteropRenderTarget_Release(interop);
+    ID2D1RenderTarget_Release(rt);
+
+    IWICBitmap_Release(wic_bitmap);
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -3895,4 +4095,5 @@ START_TEST(d2d1)
     test_stroke_style();
     test_gradient();
     test_draw_geometry();
+    test_gdi_interop();
 }

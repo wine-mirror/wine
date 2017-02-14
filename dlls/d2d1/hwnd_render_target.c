@@ -40,6 +40,8 @@ static inline struct d2d_hwnd_render_target *impl_from_ID2D1HwndRenderTarget(ID2
 static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_QueryInterface(ID2D1HwndRenderTarget *iface,
         REFIID iid, void **out)
 {
+    struct d2d_hwnd_render_target *render_target = impl_from_ID2D1HwndRenderTarget(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_ID2D1HwndRenderTarget)
@@ -51,6 +53,8 @@ static HRESULT STDMETHODCALLTYPE d2d_hwnd_render_target_QueryInterface(ID2D1Hwnd
         *out = iface;
         return S_OK;
     }
+    else if (IsEqualGUID(iid, &IID_ID2D1GdiInteropRenderTarget))
+        return ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, iid, out);
 
     WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
 
@@ -856,7 +860,9 @@ HRESULT d2d_hwnd_render_target_init(struct d2d_hwnd_render_target *render_target
         return hr;
     }
 
-    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, dxgi_surface, &dxgi_rt_desc, &render_target->dxgi_target);
+    render_target->ID2D1HwndRenderTarget_iface.lpVtbl = &d2d_hwnd_render_target_vtbl;
+    hr = d2d_d3d_create_render_target(factory, dxgi_surface, (IUnknown *)&render_target->ID2D1HwndRenderTarget_iface,
+            &dxgi_rt_desc, &render_target->dxgi_target);
     IDXGISurface_Release(dxgi_surface);
     if (FAILED(hr))
     {

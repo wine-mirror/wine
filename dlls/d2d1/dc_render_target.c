@@ -51,6 +51,8 @@ static inline struct d2d_dc_render_target *impl_from_ID2D1DCRenderTarget(ID2D1DC
 
 static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_QueryInterface(ID2D1DCRenderTarget *iface, REFIID iid, void **out)
 {
+    struct d2d_dc_render_target *render_target = impl_from_ID2D1DCRenderTarget(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_ID2D1DCRenderTarget)
@@ -62,6 +64,8 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_QueryInterface(ID2D1DCRend
         *out = iface;
         return S_OK;
     }
+    else if (IsEqualGUID(iid, &IID_ID2D1GdiInteropRenderTarget))
+        return ID2D1RenderTarget_QueryInterface(render_target->dxgi_target, iid, out);
 
     WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
 
@@ -863,8 +867,8 @@ HRESULT d2d_dc_render_target_init(struct d2d_dc_render_target *render_target, ID
         return hr;
     }
 
-    if (FAILED(hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory,
-            (IDXGISurface *)render_target->dxgi_surface, desc, &render_target->dxgi_target)))
+    if (FAILED(hr = d2d_d3d_create_render_target(factory, (IDXGISurface *)render_target->dxgi_surface,
+            (IUnknown *)&render_target->ID2D1DCRenderTarget_iface, desc, &render_target->dxgi_target)))
     {
         WARN("Failed to create DXGI surface render target, hr %#x.\n", hr);
         IDXGISurface1_Release(render_target->dxgi_surface);

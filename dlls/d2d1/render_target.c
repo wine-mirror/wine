@@ -207,6 +207,8 @@ static inline struct d2d_d3d_render_target *impl_from_ID2D1RenderTarget(ID2D1Ren
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_QueryInterface(ID2D1RenderTarget *iface, REFIID iid, void **out)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_ID2D1RenderTarget)
@@ -215,6 +217,12 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_QueryInterface(ID2D1Rende
     {
         ID2D1RenderTarget_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_ID2D1GdiInteropRenderTarget))
+    {
+        ID2D1GdiInteropRenderTarget_AddRef(&render_target->ID2D1GdiInteropRenderTarget_iface);
+        *out = &render_target->ID2D1GdiInteropRenderTarget_iface;
         return S_OK;
     }
 
@@ -1866,8 +1874,107 @@ static const struct IDWriteTextRendererVtbl d2d_text_renderer_vtbl =
     d2d_text_renderer_DrawInlineObject,
 };
 
-HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
-        IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc)
+static inline struct d2d_d3d_render_target *impl_from_ID2D1GdiInteropRenderTarget(ID2D1GdiInteropRenderTarget *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_d3d_render_target, ID2D1GdiInteropRenderTarget_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_gdi_interop_render_target_QueryInterface(ID2D1GdiInteropRenderTarget *iface,
+        REFIID iid, void **out)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1GdiInteropRenderTarget(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    return IUnknown_QueryInterface(render_target->outer_unknown, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_gdi_interop_render_target_AddRef(ID2D1GdiInteropRenderTarget *iface)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1GdiInteropRenderTarget(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IUnknown_AddRef(render_target->outer_unknown);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_gdi_interop_render_target_Release(ID2D1GdiInteropRenderTarget *iface)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1GdiInteropRenderTarget(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IUnknown_Release(render_target->outer_unknown);
+}
+
+static HRESULT d2d_d3d_render_target_get_surface(struct d2d_d3d_render_target *render_target, IDXGISurface1 **surface)
+{
+    ID3D10Resource *resource;
+    HRESULT hr;
+
+    ID3D10RenderTargetView_GetResource(render_target->view, &resource);
+    hr = ID3D10Resource_QueryInterface(resource, &IID_IDXGISurface1, (void **)surface);
+    ID3D10Resource_Release(resource);
+    if (FAILED(hr))
+    {
+        *surface = NULL;
+        WARN("Failed to get DXGI surface, %#x.\n", hr);
+        return hr;
+    }
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_gdi_interop_render_target_GetDC(ID2D1GdiInteropRenderTarget *iface,
+        D2D1_DC_INITIALIZE_MODE mode, HDC *dc)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1GdiInteropRenderTarget(iface);
+    IDXGISurface1 *surface;
+    HRESULT hr;
+
+    TRACE("iface %p, mode %d, dc %p.\n", iface, mode, dc);
+
+    if (FAILED(hr = d2d_d3d_render_target_get_surface(render_target, &surface)))
+        return hr;
+
+    hr = IDXGISurface1_GetDC(surface, mode != D2D1_DC_INITIALIZE_MODE_COPY, dc);
+    IDXGISurface1_Release(surface);
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_gdi_interop_render_target_ReleaseDC(ID2D1GdiInteropRenderTarget *iface,
+        const RECT *update)
+{
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1GdiInteropRenderTarget(iface);
+    IDXGISurface1 *surface;
+    RECT update_rect;
+    HRESULT hr;
+
+    TRACE("iface %p, update rect %s.\n", iface, wine_dbgstr_rect(update));
+
+    if (FAILED(hr = d2d_d3d_render_target_get_surface(render_target, &surface)))
+        return hr;
+
+    if (update)
+        update_rect = *update;
+    hr = IDXGISurface1_ReleaseDC(surface, update ? &update_rect : NULL);
+    IDXGISurface1_Release(surface);
+
+    return hr;
+}
+
+static const struct ID2D1GdiInteropRenderTargetVtbl d2d_gdi_interop_render_target_vtbl =
+{
+    d2d_gdi_interop_render_target_QueryInterface,
+    d2d_gdi_interop_render_target_AddRef,
+    d2d_gdi_interop_render_target_Release,
+    d2d_gdi_interop_render_target_GetDC,
+    d2d_gdi_interop_render_target_ReleaseDC,
+};
+
+static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
+        IDXGISurface *surface, IUnknown *outer_unknown, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_STATE_BLOCK_MASK state_mask;
@@ -2308,10 +2415,14 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         WARN("Ignoring feature level %#x.\n", desc->minLevel);
 
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_d3d_render_target_vtbl;
+    render_target->ID2D1GdiInteropRenderTarget_iface.lpVtbl = &d2d_gdi_interop_render_target_vtbl;
     render_target->IDWriteTextRenderer_iface.lpVtbl = &d2d_text_renderer_vtbl;
     render_target->refcount = 1;
     render_target->factory = factory;
     ID2D1Factory_AddRef(render_target->factory);
+
+    render_target->outer_unknown = outer_unknown ? outer_unknown :
+            (IUnknown *)&render_target->ID2D1RenderTarget_iface;
 
     if (FAILED(hr = IDXGISurface_GetDevice(surface, &IID_ID3D10Device, (void **)&render_target->device)))
     {
@@ -2555,6 +2666,28 @@ err:
         ID3D10Device_Release(render_target->device);
     ID2D1Factory_Release(render_target->factory);
     return hr;
+}
+
+HRESULT d2d_d3d_create_render_target(ID2D1Factory *factory, IDXGISurface *surface, IUnknown *outer_unknown,
+        const D2D1_RENDER_TARGET_PROPERTIES *desc, ID2D1RenderTarget **render_target)
+{
+    struct d2d_d3d_render_target *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_d3d_render_target_init(object, factory, surface, outer_unknown, desc)))
+    {
+        WARN("Failed to initialize render target, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created render target %p.\n", object);
+    *render_target = &object->ID2D1RenderTarget_iface;
+
+    return S_OK;
 }
 
 HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *iface, IDXGISurface1 *surface)

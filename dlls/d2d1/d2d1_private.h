@@ -69,8 +69,11 @@ struct d2d_shape_resources
 struct d2d_d3d_render_target
 {
     ID2D1RenderTarget ID2D1RenderTarget_iface;
+    ID2D1GdiInteropRenderTarget ID2D1GdiInteropRenderTarget_iface;
     IDWriteTextRenderer IDWriteTextRenderer_iface;
     LONG refcount;
+
+    IUnknown *outer_unknown;
 
     ID2D1Factory *factory;
     ID3D10Device *device;
@@ -93,8 +96,8 @@ struct d2d_d3d_render_target
     struct d2d_clip_stack clip_stack;
 };
 
-HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
-        IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
+HRESULT d2d_d3d_create_render_target(ID2D1Factory *factory, IDXGISurface *surface, IUnknown *outer_unknown,
+        const D2D1_RENDER_TARGET_PROPERTIES *desc, ID2D1RenderTarget **render_target) DECLSPEC_HIDDEN;
 HRESULT d2d_d3d_render_target_create_rtv(ID2D1RenderTarget *render_target, IDXGISurface1 *surface) DECLSPEC_HIDDEN;
 
 struct d2d_wic_render_target
