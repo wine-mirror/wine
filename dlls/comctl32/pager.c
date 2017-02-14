@@ -388,34 +388,6 @@ PAGER_SetPos(PAGER_INFO* infoPtr, INT newPos, BOOL fromBtnPress)
     return 0;
 }
 
-static LRESULT
-PAGER_WindowPosChanging(PAGER_INFO* infoPtr, WINDOWPOS *winpos)
-{
-    if ((infoPtr->dwStyle & CCS_NORESIZE) && !(winpos->flags & SWP_NOSIZE))
-    {
-        /* don't let the app resize the nonscrollable dimension of a control
-         * that was created with CCS_NORESIZE style
-         * (i.e. height for a horizontal pager, or width for a vertical one) */
-
-	/* except if the current dimension is 0 and app is setting for
-	 * first time, then save amount as dimension. - GA 8/01 */
-
-        if (infoPtr->dwStyle & PGS_HORZ)
-	    if (!infoPtr->nHeight && winpos->cy)
-		infoPtr->nHeight = winpos->cy;
-	    else
-		winpos->cy = infoPtr->nHeight;
-        else
-	    if (!infoPtr->nWidth && winpos->cx)
-		infoPtr->nWidth = winpos->cx;
-	    else
-		winpos->cx = infoPtr->nWidth;
-	return 0;
-    }
-
-    return DefWindowProcW (infoPtr->hwndSelf, WM_WINDOWPOSCHANGING, 0, (LPARAM)winpos);
-}
-
 /******************************************************************
  * For the PGM_RECALCSIZE message (but not the other uses in      *
  * this module), the native control does only the following:      *
@@ -1095,9 +1067,6 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_NCPAINT:
             return PAGER_NCPaint (infoPtr, (HRGN)wParam);
-
-        case WM_WINDOWPOSCHANGING:
-            return PAGER_WindowPosChanging (infoPtr, (WINDOWPOS*)lParam);
 
         case WM_STYLECHANGED:
             return PAGER_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
