@@ -2208,6 +2208,8 @@ struct wined3d_gl_limits
     UINT samples;
     UINT vertex_attribs;
 
+    unsigned int texture_buffer_offset_alignment;
+
     UINT glsl_varyings;
     UINT glsl_vs_float_constants;
     UINT glsl_ps_float_constants;

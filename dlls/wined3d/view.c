@@ -130,7 +130,8 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
 }
 
 static void create_buffer_texture(struct wined3d_gl_view *view,
-        struct wined3d_buffer *buffer, const struct wined3d_format *view_format)
+        struct wined3d_buffer *buffer, const struct wined3d_format *view_format,
+        unsigned int offset, unsigned int size)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
@@ -144,13 +145,31 @@ static void create_buffer_texture(struct wined3d_gl_view *view,
         return;
     }
 
+    if ((offset & (gl_info->limits.texture_buffer_offset_alignment - 1)))
+    {
+        FIXME("Buffer offset %u is not %u byte aligned.\n",
+                offset, gl_info->limits.texture_buffer_offset_alignment);
+        context_release(context);
+        return;
+    }
+
     wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
 
     view->target = GL_TEXTURE_BUFFER;
     gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
 
     context_bind_texture(context, GL_TEXTURE_BUFFER, view->name);
-    GL_EXTCALL(glTexBuffer(GL_TEXTURE_BUFFER, view_format->glInternal, buffer->buffer_object));
+    if (gl_info->supported[ARB_TEXTURE_BUFFER_RANGE])
+    {
+        GL_EXTCALL(glTexBufferRange(GL_TEXTURE_BUFFER, view_format->glInternal,
+                buffer->buffer_object, offset, size));
+    }
+    else
+    {
+        if (!offset || size != buffer->resource.size)
+            FIXME("OpenGL implementation does not support ARB_texture_buffer_range.\n");
+        GL_EXTCALL(glTexBuffer(GL_TEXTURE_BUFFER, view_format->glInternal, buffer->buffer_object));
+    }
     checkGLcall("Create buffer texture");
 
     context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
@@ -464,14 +483,20 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
         }
         else
         {
-            /* FIXME: Support for buffer offsets can be implemented using ARB_texture_buffer_range. */
-            if (desc->u.buffer.start_idx
-                    || desc->u.buffer.count * view_format->byte_count != buffer->resource.size)
-            {
-                FIXME("Ignoring buffer range %u-%u.\n", desc->u.buffer.start_idx, desc->u.buffer.count);
-            }
+            unsigned int offset, size;
 
-            create_buffer_texture(&view->gl_view, buffer, view_format);
+            if (desc->u.buffer.start_idx > ~0u / view_format->byte_count
+                    || desc->u.buffer.count > ~0u / view_format->byte_count)
+                return E_INVALIDARG;
+
+            offset = desc->u.buffer.start_idx * view_format->byte_count;
+            size = desc->u.buffer.count * view_format->byte_count;
+
+            if (offset >= buffer->resource.size
+                    || size > buffer->resource.size - offset)
+                return E_INVALIDARG;
+
+            create_buffer_texture(&view->gl_view, buffer, view_format, offset, size);
         }
     }
     else

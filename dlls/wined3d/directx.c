@@ -158,6 +158,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_sync",                         ARB_SYNC                      },
     {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP      },
     {"GL_ARB_texture_buffer_object",        ARB_TEXTURE_BUFFER_OBJECT     },
+    {"GL_ARB_texture_buffer_range",         ARB_TEXTURE_BUFFER_RANGE      },
     {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION       },
     {"GL_ARB_texture_compression_bptc",     ARB_TEXTURE_COMPRESSION_BPTC  },
     {"GL_ARB_texture_compression_rgtc",     ARB_TEXTURE_COMPRESSION_RGTC  },
@@ -2795,6 +2796,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glWaitSync)
     /* GL_ARB_texture_buffer_object */
     USE_GL_FUNC(glTexBufferARB)
+    /* GL_ARB_texture_buffer_range */
+    USE_GL_FUNC(glTexBufferRange)
     /* GL_ARB_texture_compression */
     USE_GL_FUNC(glCompressedTexImage2DARB)
     USE_GL_FUNC(glCompressedTexImage3DARB)
@@ -3351,6 +3354,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     gl_info->limits.vertex_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
     gl_info->limits.vertex_attribs = 16;
+    gl_info->limits.texture_buffer_offset_alignment = 1;
     gl_info->limits.glsl_vs_float_constants = 0;
     gl_info->limits.glsl_ps_float_constants = 0;
     gl_info->limits.arb_vs_float_constants = 0;
@@ -3576,6 +3580,12 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &gl_max);
         TRACE("Max uniform buffer bindings: %d.\n", gl_max);
     }
+    if (gl_info->supported[ARB_TEXTURE_BUFFER_RANGE])
+    {
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT, &gl_max);
+        gl_info->limits.texture_buffer_offset_alignment = gl_max;
+        TRACE("Minimum required texture buffer offset alignment %d.\n", gl_max);
+    }
 
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
         gl_info->gl_ops.gl.p_glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->limits.shininess);
@@ -3693,6 +3703,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
         {ARB_INTERNALFORMAT_QUERY2,        MAKEDWORD_VERSION(4, 3)},
         {ARB_SHADER_IMAGE_SIZE,            MAKEDWORD_VERSION(4, 3)},
         {ARB_STENCIL_TEXTURING,            MAKEDWORD_VERSION(4, 3)},
+        {ARB_TEXTURE_BUFFER_RANGE,         MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_QUERY_LEVELS,         MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_VIEW,                 MAKEDWORD_VERSION(4, 3)},
 
