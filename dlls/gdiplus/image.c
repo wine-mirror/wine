@@ -1477,10 +1477,12 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     UINT width, height;
     BITMAPINFOHEADER bih;
     LPBYTE bits;
-    BitmapData lockeddata;
+    BOOL unlock;
+
     TRACE("(%p,%p,%x)\n", bitmap, hbmReturn, background);
 
     if (!bitmap || !hbmReturn) return InvalidParameter;
+    if (!image_lock(&bitmap->image, &unlock)) return ObjectBusy;
 
     GdipGetImageWidth(&bitmap->image, &width);
     GdipGetImageHeight(&bitmap->image, &height);
@@ -1498,41 +1500,36 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     bih.biClrImportant = 0;
 
     result = CreateDIBSection(0, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
-
-    if (result)
+    if (!result)
     {
-        lockeddata.Stride = -width * 4;
-        lockeddata.Scan0 = bits + (width * 4 * (height - 1));
-
-        stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead|ImageLockModeUserInputBuf,
-            PixelFormat32bppPARGB, &lockeddata);
-
-        if (stat == Ok)
-            stat = GdipBitmapUnlockBits(bitmap, &lockeddata);
-
-        if (stat == Ok && (background & 0xffffff))
-        {
-            DWORD *ptr;
-            UINT i;
-            for (ptr = (DWORD*)bits, i = 0; i < width * height; ptr++, i++)
-            {
-                if ((*ptr & 0xff000000) == 0xff000000) continue;
-                *ptr = blend_argb_no_bkgnd_alpha(*ptr, background);
-            }
-        }
+        image_unlock(&bitmap->image, unlock);
+        return GenericError;
     }
-    else
-        stat = GenericError;
 
-    if (stat != Ok && result)
+    stat = convert_pixels(width, height, -width*4,
+            bits + (width * 4 * (height - 1)), PixelFormat32bppPARGB,
+            bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette);
+    if (stat != Ok)
     {
         DeleteObject(result);
-        result = NULL;
+        image_unlock(&bitmap->image, unlock);
+        return stat;
+    }
+
+    if (background & 0xffffff)
+    {
+        DWORD *ptr;
+        UINT i;
+        for (ptr = (DWORD*)bits, i = 0; i < width * height; ptr++, i++)
+        {
+            if ((*ptr & 0xff000000) == 0xff000000) continue;
+            *ptr = blend_argb_no_bkgnd_alpha(*ptr, background);
+        }
     }
 
     *hbmReturn = result;
-
-    return stat;
+    image_unlock(&bitmap->image, unlock);
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipCreateBitmapFromGraphics(INT width, INT height,
