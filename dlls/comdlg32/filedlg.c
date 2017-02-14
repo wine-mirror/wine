@@ -2951,7 +2951,8 @@ static void FILEDLG95_SHELL_Clean(HWND hwnd)
       IShellView_DestroyViewWindow(fodInfos->Shell.FOIShellView);
       IShellView_Release(fodInfos->Shell.FOIShellView);
     }
-    IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
+    if (fodInfos->Shell.FOIShellFolder)
+      IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
     IShellBrowser_Release(fodInfos->Shell.FOIShellBrowser);
     if (fodInfos->Shell.FOIDataObject)
       IDataObject_Release(fodInfos->Shell.FOIDataObject);
