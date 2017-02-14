@@ -576,14 +576,21 @@ static void test_enum_service_providers_peer(void)
 static void test_enum_hosts_peer(void)
 {
     HRESULT hr;
+    IDirectPlay8Peer *peer2;
     IDirectPlay8Address *host = NULL;
     IDirectPlay8Address *local = NULL;
     DPN_APPLICATION_DESC appdesc;
-    DPNHANDLE async = 0;
+    DPNHANDLE async = 0, async2 = 0;
+
+    ResetEvent(enumevent);
+    handlecnt = 0;
 
     memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
     appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
     appdesc.guidApplication  = appguid;
+
+    hr = CoCreateInstance(&CLSID_DirectPlay8Peer, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Peer, (void **)&peer2);
+    ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
 
     hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&local);
     ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
@@ -608,6 +615,37 @@ static void test_enum_hosts_peer(void)
     hr = IDirectPlay8Peer_CancelAsyncOperation(peer, async, 0);
     todo_wine ok(hr == S_OK, "IDirectPlay8Peer_CancelAsyncOperation failed with 0x%08x\n", hr);
 
+    /* No Initialize has been called on peer2. */
+    hr = IDirectPlay8Peer_EnumHosts(peer2, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
+    todo_wine ok(hr == DPNERR_UNINITIALIZED, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
+
+    /* Since we are running asynchronously, EnumHosts returns DPNSUCCESS_PENDING. */
+    hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
+    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
+    todo_wine ok(async, "No Handle returned\n");
+
+    hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async2, 0);
+    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
+    todo_wine ok(async2, "No Handle returned\n");
+    todo_wine ok(async2 != async, "Same handle returned.\n");
+
+    WaitForSingleObject(enumevent, 1000);
+
+    lastAsyncCode = E_FAIL;
+    lastAsyncHandle = 0xdeadbeef;
+    hr = IDirectPlay8Peer_CancelAsyncOperation(peer, async, 0);
+    todo_wine ok(hr == S_OK, "IDirectPlay8Peer_CancelAsyncOperation failed with 0x%08x\n", hr);
+    todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08x\n", lastAsyncCode);
+    todo_wine ok(lastAsyncHandle == async, "got 0x%08x\n", async);
+
+    lastAsyncCode = E_FAIL;
+    lastAsyncHandle = 0xdeadbeef;
+    hr = IDirectPlay8Peer_CancelAsyncOperation(peer, async2, 0);
+    todo_wine ok(hr == S_OK, "IDirectPlay8Peer_CancelAsyncOperation failed with 0x%08x\n", hr);
+    todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08x\n", lastAsyncCode);
+    todo_wine ok(lastAsyncHandle == async2, "got 0x%08x\n", async2);
+
+    IDirectPlay8Peer_Release(peer2);
     IDirectPlay8Address_Release(local);
     IDirectPlay8Address_Release(host);
 }
