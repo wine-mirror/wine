@@ -1022,6 +1022,17 @@ static BOOL is_amd_device(ID3D11Device *device)
     return adapter_desc.VendorId == 0x1002;
 }
 
+static BOOL is_nvidia_device(ID3D11Device *device)
+{
+    DXGI_ADAPTER_DESC adapter_desc;
+
+    if (!strcmp(winetest_platform, "wine"))
+        return FALSE;
+
+    get_device_adapter_desc(device, &adapter_desc);
+    return adapter_desc.VendorId == 0x10de;
+}
+
 static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, const struct swapchain_desc *swapchain_desc)
 {
     DXGI_SWAP_CHAIN_DESC dxgi_desc;
@@ -8496,7 +8507,9 @@ static void test_clear_render_target_view(void)
     D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
     D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11DeviceContext *context;
+    struct resource_readback rb;
     ID3D11Device *device;
+    unsigned int i, j;
     HRESULT hr;
 
     if (!init_test_context(&test_context, NULL))
@@ -8565,15 +8578,20 @@ static void test_clear_render_target_view(void)
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, color);
     check_texture_color(texture, expected_color, 1);
 
-    if (!is_warp_device(device))
+    ID3D11DeviceContext_ClearRenderTargetView(context, srgb_rtv, color);
+    get_texture_readback(texture, 0, &rb);
+    for (i = 0; i < 4; ++i)
     {
-        ID3D11DeviceContext_ClearRenderTargetView(context, srgb_rtv, color);
-        todo_wine check_texture_color(texture, expected_srgb_color, 1);
+        for (j = 0; j < 4; ++j)
+        {
+            BOOL broken_device = is_warp_device(device) || is_nvidia_device(device);
+            DWORD color = get_readback_color(&rb, 80 + i * 160, 60 + j * 120);
+            todo_wine ok(compare_color(color, expected_srgb_color, 1)
+                    || broken(compare_color(color, expected_color, 1) && broken_device),
+                    "Got unexpected color 0x%08x.\n", color);
+        }
     }
-    else
-    {
-        win_skip("Skipping broken test on WARP.\n");
-    }
+    release_resource_readback(&rb);
 
     ID3D11RenderTargetView_Release(srgb_rtv);
     ID3D11RenderTargetView_Release(rtv);
@@ -11052,6 +11070,7 @@ static void test_index_buffer_offset(void)
         { 1.0f, -1.0f, 0.0f, 1.0f}, {3.0f},
         {-1.0f, -1.0f, 0.0f, 1.0f}, {1.0f},
     };
+    static const struct vec4 broken_result = {0.0f, 0.0f, 0.0f, 1.0f};
 
     if (!init_test_context(&test_context, &feature_level))
         return;
@@ -11102,7 +11121,8 @@ static void test_index_buffer_offset(void)
     for (i = 0; i < sizeof(expected_data) / sizeof(*expected_data); ++i)
     {
         data = get_readback_vec4(&rb, i, 0);
-        ok(compare_vec4(data, &expected_data[i], 0),
+        ok(compare_vec4(data, &expected_data[i], 0)
+                || broken(is_nvidia_device(device) && !(i % 2) && compare_vec4(data, &broken_result, 0)),
                 "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u.\n",
                 data->x, data->y, data->z, data->w, i);
     }
