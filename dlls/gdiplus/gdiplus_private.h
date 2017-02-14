@@ -391,7 +391,6 @@ struct GpBitmap{
     INT height;
     PixelFormat format;
     ImageLockMode lockmode;
-    INT numlocks;
     BYTE *bitmapbits;   /* pointer to the buffer we passed in BitmapLockBits */
     HBITMAP hbitmap;
     HDC hdc;

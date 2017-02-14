@@ -1071,7 +1071,6 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
                             bitmap->stride * act_rect.Y;
 
         bitmap->lockmode = flags | ImageLockModeRead;
-        bitmap->numlocks++;
 
         image_unlock(&bitmap->image, unlock);
         return Ok;
@@ -1148,7 +1147,6 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     }
 
     bitmap->lockmode = flags | ImageLockModeRead;
-    bitmap->numlocks++;
     bitmap->lockx = act_rect.X;
     bitmap->locky = act_rect.Y;
 
@@ -1190,9 +1188,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     }
 
     if(!(lockeddata->Reserved & ImageLockModeWrite)){
-        if(!(--bitmap->numlocks))
-            bitmap->lockmode = 0;
-
+        bitmap->lockmode = 0;
         heap_free(bitmap->bitmapbits);
         bitmap->bitmapbits = NULL;
         image_unlock(&bitmap->image, unlock);
@@ -1203,7 +1199,6 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     {
         /* we passed a direct reference; no need to do anything */
         bitmap->lockmode = 0;
-        bitmap->numlocks = 0;
         image_unlock(&bitmap->image, unlock);
         return Ok;
     }
@@ -1228,7 +1223,6 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     heap_free(bitmap->bitmapbits);
     bitmap->bitmapbits = NULL;
     bitmap->lockmode = 0;
-    bitmap->numlocks = 0;
 
     image_unlock(&bitmap->image, unlock);
     return stat;
