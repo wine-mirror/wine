@@ -4138,6 +4138,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
         if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER))
         {
             ERR("Failed to load buffer location.\n");
+            context_release(context);
             return;
         }
 
