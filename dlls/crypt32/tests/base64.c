@@ -419,7 +419,6 @@ static void testStringToBinaryA(void)
     decodeBase64WithFmt("-----BEGIN foo-----V-----END -----", CRYPT_STRING_BASE64HEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END foo-----", CRYPT_STRING_BASE64HEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN -----V-----END foo-----", CRYPT_STRING_BASE64HEADER, "T", 0);
-    todo_wine {
     decodeBase64WithFmt("-----BEGIN -----V-----END -----", CRYPT_STRING_BASE64X509CRLHEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END -----", CRYPT_STRING_BASE64X509CRLHEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END foo-----", CRYPT_STRING_BASE64X509CRLHEADER, "T", 0);
@@ -428,7 +427,6 @@ static void testStringToBinaryA(void)
     decodeBase64WithFmt("-----BEGIN foo-----V-----END -----", CRYPT_STRING_BASE64REQUESTHEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN foo-----V-----END foo-----", CRYPT_STRING_BASE64REQUESTHEADER, "T", 0);
     decodeBase64WithFmt("-----BEGIN -----V-----END foo-----", CRYPT_STRING_BASE64REQUESTHEADER, "T", 0);
-    }
 
     /* Too small buffer */
     buf[0] = 0;
