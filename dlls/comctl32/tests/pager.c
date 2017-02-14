@@ -83,6 +83,28 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         add_message(sequences, PAGER_SEQ_INDEX, &msg);
     }
 
+    if (message == WM_NOTIFY)
+    {
+        NMHDR *nmhdr = (NMHDR *)lParam;
+
+        switch (nmhdr->code)
+        {
+            case PGN_CALCSIZE:
+            {
+                NMPGCALCSIZE *nmpgcs = (NMPGCALCSIZE *)lParam;
+                DWORD style = GetWindowLongA(nmpgcs->hdr.hwndFrom, GWL_STYLE);
+
+                if (style & PGS_HORZ)
+                    ok(nmpgcs->dwFlag == PGF_CALCWIDTH, "Unexpected flags %#x.\n", nmpgcs->dwFlag);
+                else
+                    ok(nmpgcs->dwFlag == PGF_CALCHEIGHT, "Unexpected flags %#x.\n", nmpgcs->dwFlag);
+                break;
+            }
+            default:
+                ;
+        }
+    }
+
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
     defwndproc_counter--;
