@@ -412,11 +412,9 @@ static void testStringToBinaryA(void)
     decodeBase64WithLen("VVVV=VVVV", 8, "UUU", 0);
     }
 
-    todo_wine {
     decodeBase64WithFmt("-----BEGIN-----VVVV-----END-----", CRYPT_STRING_BASE64HEADER, 0, ERROR_INVALID_DATA);
     decodeBase64WithFmt("-----BEGIN-----VVVV-----END -----", CRYPT_STRING_BASE64HEADER, 0, ERROR_INVALID_DATA);
     decodeBase64WithFmt("-----BEGIN -----VVVV-----END-----", CRYPT_STRING_BASE64HEADER, 0, ERROR_INVALID_DATA);
-    }
     decodeBase64WithFmt("-----BEGIN -----VVVV-----END -----", CRYPT_STRING_BASE64HEADER, "UUU", 0);
 
     todo_wine {

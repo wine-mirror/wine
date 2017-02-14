@@ -30,10 +30,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 #define CERT_HEADER          "-----BEGIN CERTIFICATE-----"
-#define CERT_HEADER_START    "-----BEGIN"
+#define CERT_HEADER_START    "-----BEGIN "
 #define CERT_DELIMITER       "-----"
 #define CERT_TRAILER         "-----END CERTIFICATE-----"
-#define CERT_TRAILER_START   "-----END"
+#define CERT_TRAILER_START   "-----END "
 #define CERT_REQUEST_HEADER  "-----BEGIN NEW CERTIFICATE REQUEST-----"
 #define CERT_REQUEST_TRAILER "-----END NEW CERTIFICATE REQUEST-----"
 #define X509_HEADER          "-----BEGIN X509 CRL-----"
@@ -43,11 +43,11 @@ static const WCHAR CERT_HEADER_W[] = {
 '-','-','-','-','-','B','E','G','I','N',' ','C','E','R','T','I','F','I','C',
 'A','T','E','-','-','-','-','-',0 };
 static const WCHAR CERT_HEADER_START_W[] = {
-'-','-','-','-','-','B','E','G','I','N',0 };
+'-','-','-','-','-','B','E','G','I','N',' ',0 };
 static const WCHAR CERT_DELIMITER_W[] = {
 '-','-','-','-','-',0 };
 static const WCHAR CERT_TRAILER_W[] = {
-'-','-','-','-','-','E','N','D',0 };
+'-','-','-','-','-','E','N','D',' ',0 };
 static const WCHAR CERT_TRAILER_START_W[] = {
 '-','-','-','-','-','E','N','D',' ','C','E','R','T','I','F','I','C','A','T',
 'E','-','-','-','-','-',0 };
