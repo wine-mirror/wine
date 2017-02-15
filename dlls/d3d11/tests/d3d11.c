@@ -10823,23 +10823,21 @@ static void test_uint_shader_instructions(void)
     static const DWORD ps_not_code[] =
     {
 #if 0
-        uint bits[2];
+        uint2 bits;
 
         uint4 main() : SV_Target
         {
-            return uint4(~bits[0], ~(bits[0] ^ ~0u), ~bits[1], ~(bits[1] ^ ~0u));
+            return uint4(~bits.x, ~(bits.x ^ ~0u), ~bits.y, ~(bits.y ^ ~0u));
         }
 #endif
-        0x43425844, 0x1d56b429, 0xb5f4c0e1, 0x496a0bfd, 0xfc6f8e6f, 0x00000001, 0x00000140, 0x00000003,
+        0x43425844, 0xaed0fd26, 0xf719a878, 0xc832efd6, 0xba03c264, 0x00000001, 0x00000100, 0x00000003,
         0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
         0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
-        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000c8, 0x00000040, 0x00000032,
-        0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
-        0x00000001, 0x08000057, 0x00100012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x00004001,
-        0xffffffff, 0x0500003b, 0x00102022, 0x00000000, 0x0010000a, 0x00000000, 0x08000057, 0x00100012,
-        0x00000000, 0x0020800a, 0x00000000, 0x00000001, 0x00004001, 0xffffffff, 0x0500003b, 0x00102082,
-        0x00000000, 0x0010000a, 0x00000000, 0x0600003b, 0x00102012, 0x00000000, 0x0020800a, 0x00000000,
-        0x00000000, 0x0600003b, 0x00102042, 0x00000000, 0x0020800a, 0x00000000, 0x00000001, 0x0100003e,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000088, 0x00000040, 0x00000022,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
+        0x00000001, 0x0b000057, 0x00100032, 0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x00004002,
+        0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0x0500003b, 0x001020a2, 0x00000000, 0x00100406,
+        0x00000000, 0x0600003b, 0x00102052, 0x00000000, 0x00208106, 0x00000000, 0x00000000, 0x0100003e,
     };
     static const struct shader ps_bfi = {ps_bfi_code, sizeof(ps_bfi_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ubfe = {ps_ubfe_code, sizeof(ps_ubfe_code), D3D_FEATURE_LEVEL_11_0};
@@ -10877,13 +10875,13 @@ static void test_uint_shader_instructions(void)
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}},
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}},
 
-        {&ps_ubfe,  {0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
-        {&ps_ubfe,  {0xffffffff}, {0x0000000f, 0x007fffff, 0x0000007f, 0x3fffffff}},
-        {&ps_ubfe,  {0xff000000}, {0x00000000, 0x007f0000, 0x00000000, 0x3f800000}},
-        {&ps_ubfe,  {0x00ff0000}, {0x00000000, 0x0000ff00, 0x00000000, 0x007f8000}},
-        {&ps_ubfe,  {0x000000ff}, {0x0000000f, 0x00000000, 0x0000007f, 0x0000007f}},
-        {&ps_ubfe,  {0x80000001}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
-        {&ps_ubfe,  {0xc0000003}, {0x00000000, 0x00400000, 0x00000001, 0x20000001}},
+        {&ps_ubfe, {0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ubfe, {0xffffffff}, {0x0000000f, 0x007fffff, 0x0000007f, 0x3fffffff}},
+        {&ps_ubfe, {0xff000000}, {0x00000000, 0x007f0000, 0x00000000, 0x3f800000}},
+        {&ps_ubfe, {0x00ff0000}, {0x00000000, 0x0000ff00, 0x00000000, 0x007f8000}},
+        {&ps_ubfe, {0x000000ff}, {0x0000000f, 0x00000000, 0x0000007f, 0x0000007f}},
+        {&ps_ubfe, {0x80000001}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ubfe, {0xc0000003}, {0x00000000, 0x00400000, 0x00000001, 0x20000001}},
 
         {&ps_bfrev, {0x12345678}, {0x1e6a2c48, 0x12345678, 0x1e6a0000, 0x2c480000}},
         {&ps_bfrev, {0xffff0000}, {0x0000ffff, 0xffff0000, 0x00000000, 0xffff0000}},
@@ -10927,7 +10925,7 @@ static void test_uint_shader_instructions(void)
     context = test_context.immediate_context;
     feature_level = ID3D11Device_GetFeatureLevel(device);
 
-    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 4 * sizeof(tests[0].bits), NULL);
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(tests[0].bits), NULL);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
