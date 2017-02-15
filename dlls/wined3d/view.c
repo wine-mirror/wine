@@ -682,10 +682,43 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
 
     texture = texture_from_resource(resource);
 
-    sub_resource_idx = view->layer_idx * texture->level_count + view->level_idx;
-    layer_count = (resource->type != WINED3D_RTYPE_TEXTURE_3D) ? view->layer_count : 1;
+    sub_resource_idx = view->desc.u.texture.layer_idx * texture->level_count + view->desc.u.texture.level_idx;
+    layer_count = (resource->type != WINED3D_RTYPE_TEXTURE_3D) ? view->desc.u.texture.layer_count : 1;
     for (i = 0; i < layer_count; ++i, sub_resource_idx += texture->level_count)
         wined3d_texture_invalidate_location(texture, sub_resource_idx, location);
+}
+
+static void wined3d_unordered_access_view_cs_init(void *object)
+{
+    struct wined3d_unordered_access_view *view = object;
+    struct wined3d_resource *resource = view->resource;
+    struct wined3d_view_desc *desc = &view->desc;
+    const struct wined3d_gl_info *gl_info;
+
+    gl_info = &resource->device->adapter->gl_info;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_buffer *buffer = buffer_from_resource(resource);
+
+        create_buffer_view(&view->gl_view, desc, buffer, view->format);
+    }
+    else
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+        unsigned int depth_or_layer_count;
+
+        if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
+            depth_or_layer_count = wined3d_texture_get_level_depth(texture, desc->u.texture.level_idx);
+        else
+            depth_or_layer_count = texture->layer_count;
+
+        if (desc->u.texture.layer_idx || desc->u.texture.layer_count != depth_or_layer_count)
+        {
+            create_texture_view(&view->gl_view, get_texture_view_target(gl_info, desc, texture),
+                    desc, texture, view->format);
+        }
+    }
 }
 
 static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_access_view *view,
@@ -699,6 +732,8 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     view->parent_ops = parent_ops;
 
     view->format = wined3d_get_format(gl_info, desc->format_id, resource->usage);
+    view->desc = *desc;
+
     if (resource->type == WINED3D_RTYPE_BUFFER && desc->flags & WINED3D_VIEW_BUFFER_RAW)
     {
         if (view->format->id != WINED3DFMT_R32_TYPELESS)
@@ -727,8 +762,6 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
                     || desc->u.buffer.count > buffer_size - desc->u.buffer.start_idx)
                 return E_INVALIDARG;
         }
-
-        create_buffer_view(&view->gl_view, desc, buffer, view->format);
     }
     else
     {
@@ -746,18 +779,10 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
                 || !desc->u.texture.layer_count
                 || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
             return E_INVALIDARG;
-
-        if (desc->u.texture.layer_idx || desc->u.texture.layer_count != depth_or_layer_count)
-        {
-            create_texture_view(&view->gl_view, get_texture_view_target(gl_info, desc, texture),
-                    desc, texture, view->format);
-        }
-
-        view->layer_idx = desc->u.texture.layer_idx;
-        view->layer_count = desc->u.texture.layer_count;
-        view->level_idx = desc->u.texture.level_idx;
     }
     wined3d_resource_incref(view->resource = resource);
+
+    wined3d_cs_init_object(resource->device->cs, wined3d_unordered_access_view_cs_init, view);
 
     return WINED3D_OK;
 }
