@@ -82,13 +82,32 @@ static ULONG WINAPI IDirectPlay8ThreadPoolImpl_Release(IDirectPlay8ThreadPool *i
 static HRESULT WINAPI IDirectPlay8ThreadPoolImpl_Initialize(IDirectPlay8ThreadPool *iface,
         void * const pvUserContext, const PFNDPNMESSAGEHANDLER pfn, const DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%p,%x): stub\n", iface, pvUserContext, pfn, dwFlags);
+    IDirectPlay8ThreadPoolImpl *This = impl_from_IDirectPlay8ThreadPool(iface);
+
+    TRACE("(%p)->(%p,%p,%x)\n", This, pvUserContext, pfn, dwFlags);
+
+    if(!pfn)
+        return DPNERR_INVALIDPARAM;
+
+    if(This->msghandler)
+        return DPNERR_ALREADYINITIALIZED;
+
+    This->msghandler  = pfn;
+    This->flags       = dwFlags;
+    This->usercontext = pvUserContext;
+
     return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8ThreadPoolImpl_Close(IDirectPlay8ThreadPool *iface,
         const DWORD dwFlags)
 {
+    IDirectPlay8ThreadPoolImpl *This = impl_from_IDirectPlay8ThreadPool(iface);
+
+    FIXME("(%p)->(%x)\n", This, dwFlags);
+
+    This->msghandler = NULL;
+
     return DPN_OK;
 }
 

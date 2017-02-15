@@ -64,7 +64,7 @@ static void create_threadpool(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, NULL, 0);
-    todo_wine ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -132,6 +132,9 @@ static void test_enum_hosts(void)
 
     hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
+    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
