@@ -945,9 +945,10 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
     wined3d_device_set_render_state(device, WINED3D_RS_ZENABLE, ds_enable);
 }
 
-static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
+static void wined3d_device_delete_opengl_contexts_cs(void *object)
 {
     struct wined3d_resource *resource, *cursor;
+    struct wined3d_device *device = object;
     struct wined3d_context *context;
     struct wined3d_shader *shader;
 
@@ -976,6 +977,11 @@ static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
         else
             context_destroy(device, device->contexts[0]);
     }
+}
+
+static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
+{
+    wined3d_cs_destroy_object(device->cs, wined3d_device_delete_opengl_contexts_cs, device);
 }
 
 static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
