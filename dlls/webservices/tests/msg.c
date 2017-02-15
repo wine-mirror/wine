@@ -912,6 +912,7 @@ static void test_WsReadEnvelopeStart(void)
     WS_MESSAGE *msg, *msg2;
     WS_XML_READER *reader;
     WS_MESSAGE_STATE state;
+    const WS_XML_NODE *node;
     HRESULT hr;
 
     hr = WsReadEnvelopeStart( NULL, NULL, NULL, NULL, NULL );
@@ -945,6 +946,24 @@ static void test_WsReadEnvelopeStart(void)
     hr = WsGetMessageProperty( msg2, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == WS_MESSAGE_STATE_READING, "got %u\n", state );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    hr = WsReadEndElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    hr = WsReadEndElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
     WsFreeMessage( msg );
     WsFreeMessage( msg2 );
