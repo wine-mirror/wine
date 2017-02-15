@@ -808,7 +808,7 @@ static void test_NonExistentPath(void)
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
-                startup.dwFlags = SW_SHOWNORMAL;
+                startup.wShowWindow = SW_SHOWNORMAL;
                 CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL,
                  &startup, &info);
                 winetest_wait_child_process( info.hProcess );
@@ -823,7 +823,7 @@ static void test_NonExistentPath(void)
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
-                startup.dwFlags = SW_SHOWNORMAL;
+                startup.wShowWindow = SW_SHOWNORMAL;
                 CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL,
                  &startup, &info);
                 ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0,
