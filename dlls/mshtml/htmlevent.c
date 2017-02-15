@@ -46,6 +46,9 @@ typedef struct {
 static const WCHAR abortW[] = {'a','b','o','r','t',0};
 static const WCHAR onabortW[] = {'o','n','a','b','o','r','t',0};
 
+static const WCHAR beforeactivateW[] = {'b','e','f','o','r','e','a','c','t','i','v','a','t','e',0};
+static const WCHAR onbeforeactivateW[] = {'o','n','b','e','f','o','r','e','a','c','t','i','v','a','t','e',0};
+
 static const WCHAR beforeunloadW[] = {'b','e','f','o','r','e','u','n','l','o','a','d',0};
 static const WCHAR onbeforeunloadW[] = {'o','n','b','e','f','o','r','e','u','n','l','o','a','d',0};
 
@@ -179,6 +182,8 @@ typedef struct {
 static const event_info_t event_info[] = {
     {abortW,             onabortW,             EVENTT_NONE,   DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_BODY},
+    {beforeactivateW,    onbeforeactivateW,    EVENTT_NONE,   DISPID_EVMETH_ONBEFOREACTIVATE,
+        EVENT_FIXME},
     {beforeunloadW,      onbeforeunloadW,      EVENTT_NONE,   DISPID_EVMETH_ONBEFOREUNLOAD,
         EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
     {blurW,              onblurW,              EVENTT_HTML,   DISPID_EVMETH_ONBLUR,
