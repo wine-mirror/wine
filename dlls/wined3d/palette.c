@@ -45,7 +45,7 @@ ULONG CDECL wined3d_palette_decref(struct wined3d_palette *palette)
     TRACE("%p decreasing refcount to %u.\n", palette, refcount);
 
     if (!refcount)
-        wined3d_cs_emit_destroy_object(palette->device->cs, wined3d_palette_destroy_object, palette);
+        wined3d_cs_destroy_object(palette->device->cs, wined3d_palette_destroy_object, palette);
 
     return refcount;
 }

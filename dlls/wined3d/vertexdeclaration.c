@@ -67,7 +67,7 @@ ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration 
     if (!refcount)
     {
         declaration->parent_ops->wined3d_object_destroyed(declaration->parent);
-        wined3d_cs_emit_destroy_object(declaration->device->cs,
+        wined3d_cs_destroy_object(declaration->device->cs,
                 wined3d_vertex_declaration_destroy_object, declaration);
     }
 

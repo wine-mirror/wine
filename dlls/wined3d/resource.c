@@ -256,7 +256,7 @@ void resource_cleanup(struct wined3d_resource *resource)
 
     device_resource_released(resource->device, resource);
     wined3d_resource_acquire(resource);
-    wined3d_cs_emit_destroy_object(resource->device->cs, wined3d_resource_destroy_object, resource);
+    wined3d_cs_destroy_object(resource->device->cs, wined3d_resource_destroy_object, resource);
 }
 
 void resource_unload(struct wined3d_resource *resource)

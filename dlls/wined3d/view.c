@@ -232,7 +232,7 @@ ULONG CDECL wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *v
         /* Call wined3d_object_destroyed() before releasing the resource,
          * since releasing the resource may end up destroying the parent. */
         view->parent_ops->wined3d_object_destroyed(view->parent);
-        wined3d_cs_emit_destroy_object(device->cs, wined3d_rendertarget_view_destroy_object, view);
+        wined3d_cs_destroy_object(device->cs, wined3d_rendertarget_view_destroy_object, view);
         wined3d_resource_decref(resource);
     }
 
@@ -462,7 +462,7 @@ ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_v
         /* Call wined3d_object_destroyed() before releasing the resource,
          * since releasing the resource may end up destroying the parent. */
         view->parent_ops->wined3d_object_destroyed(view->parent);
-        wined3d_cs_emit_destroy_object(device->cs, wined3d_shader_resource_view_destroy_object, view);
+        wined3d_cs_destroy_object(device->cs, wined3d_shader_resource_view_destroy_object, view);
         wined3d_resource_decref(resource);
     }
 
@@ -630,7 +630,7 @@ ULONG CDECL wined3d_unordered_access_view_decref(struct wined3d_unordered_access
         /* Call wined3d_object_destroyed() before releasing the resource,
          * since releasing the resource may end up destroying the parent. */
         view->parent_ops->wined3d_object_destroyed(view->parent);
-        wined3d_cs_emit_destroy_object(device->cs, wined3d_unordered_access_view_destroy_object, view);
+        wined3d_cs_destroy_object(device->cs, wined3d_unordered_access_view_destroy_object, view);
         wined3d_resource_decref(resource);
     }
 

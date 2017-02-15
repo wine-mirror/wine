@@ -797,7 +797,7 @@ ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
     {
         buffer->resource.parent_ops->wined3d_object_destroyed(buffer->resource.parent);
         resource_cleanup(&buffer->resource);
-        wined3d_cs_emit_destroy_object(buffer->resource.device->cs, wined3d_buffer_destroy_object, buffer);
+        wined3d_cs_destroy_object(buffer->resource.device->cs, wined3d_buffer_destroy_object, buffer);
     }
 
     return refcount;

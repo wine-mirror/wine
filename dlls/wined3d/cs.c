@@ -55,7 +55,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_MATERIAL,
     WINED3D_CS_OP_RESET_STATE,
-    WINED3D_CS_OP_DESTROY_OBJECT,
+    WINED3D_CS_OP_CALLBACK,
     WINED3D_CS_OP_QUERY_ISSUE,
     WINED3D_CS_OP_PRELOAD_RESOURCE,
     WINED3D_CS_OP_UNLOAD_RESOURCE,
@@ -283,7 +283,7 @@ struct wined3d_cs_reset_state
     enum wined3d_cs_op opcode;
 };
 
-struct wined3d_cs_destroy_object
+struct wined3d_cs_callback
 {
     enum wined3d_cs_op opcode;
     void (*callback)(void *object);
@@ -1389,23 +1389,33 @@ void wined3d_cs_emit_reset_state(struct wined3d_cs *cs)
     cs->ops->submit(cs);
 }
 
-static void wined3d_cs_exec_destroy_object(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_callback(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_destroy_object *op = data;
+    const struct wined3d_cs_callback *op = data;
 
     op->callback(op->object);
 }
 
-void wined3d_cs_emit_destroy_object(struct wined3d_cs *cs, void (*callback)(void *object), void *object)
+static void wined3d_cs_emit_callback(struct wined3d_cs *cs, void (*callback)(void *object), void *object)
 {
-    struct wined3d_cs_destroy_object *op;
+    struct wined3d_cs_callback *op;
 
     op = cs->ops->require_space(cs, sizeof(*op));
-    op->opcode = WINED3D_CS_OP_DESTROY_OBJECT;
+    op->opcode = WINED3D_CS_OP_CALLBACK;
     op->callback = callback;
     op->object = object;
 
     cs->ops->submit(cs);
+}
+
+void wined3d_cs_destroy_object(struct wined3d_cs *cs, void (*callback)(void *object), void *object)
+{
+    wined3d_cs_emit_callback(cs, callback, object);
+}
+
+void wined3d_cs_init_object(struct wined3d_cs *cs, void (*callback)(void *object), void *object)
+{
+    wined3d_cs_emit_callback(cs, callback, object);
 }
 
 static void wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
@@ -1556,7 +1566,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_COLOR_KEY              */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
     /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
-    /* WINED3D_CS_OP_DESTROY_OBJECT             */ wined3d_cs_exec_destroy_object,
+    /* WINED3D_CS_OP_CALLBACK                   */ wined3d_cs_exec_callback,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
     /* WINED3D_CS_OP_PRELOAD_RESOURCE           */ wined3d_cs_exec_preload_resource,
     /* WINED3D_CS_OP_UNLOAD_RESOURCE            */ wined3d_cs_exec_unload_resource,

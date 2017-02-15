@@ -312,7 +312,7 @@ ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
     TRACE("%p decreasing refcount to %u.\n", query, refcount);
 
     if (!refcount)
-        wined3d_cs_emit_destroy_object(query->device->cs, wined3d_query_destroy_object, query);
+        wined3d_cs_destroy_object(query->device->cs, wined3d_query_destroy_object, query);
 
     return refcount;
 }

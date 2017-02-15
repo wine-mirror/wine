@@ -3174,11 +3174,10 @@ struct wined3d_cs
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
-
+void wined3d_cs_destroy_object(struct wined3d_cs *cs,
+        void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_destroy_object(struct wined3d_cs *cs,
-        void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
         unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
@@ -3233,6 +3232,8 @@ void wined3d_cs_emit_set_vertex_declaration(struct wined3d_cs *cs,
         struct wined3d_vertex_declaration *declaration) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_viewport(struct wined3d_cs *cs, const struct wined3d_viewport *viewport) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_unload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void wined3d_cs_init_object(struct wined3d_cs *cs,
+        void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
 HRESULT wined3d_cs_map(struct wined3d_cs *cs, struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, unsigned int flags) DECLSPEC_HIDDEN;
 HRESULT wined3d_cs_unmap(struct wined3d_cs *cs, struct wined3d_resource *resource,

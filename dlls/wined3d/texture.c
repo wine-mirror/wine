@@ -929,7 +929,7 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
         wined3d_texture_sub_resources_destroyed(texture);
         texture->resource.parent_ops->wined3d_object_destroyed(texture->resource.parent);
         resource_cleanup(&texture->resource);
-        wined3d_cs_emit_destroy_object(texture->resource.device->cs, wined3d_texture_destroy_object, texture);
+        wined3d_cs_destroy_object(texture->resource.device->cs, wined3d_texture_destroy_object, texture);
     }
 
     return refcount;

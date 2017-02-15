@@ -60,7 +60,7 @@ ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *sta
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
-        wined3d_cs_emit_destroy_object(device->cs, wined3d_rasterizer_state_destroy_object, state);
+        wined3d_cs_destroy_object(device->cs, wined3d_rasterizer_state_destroy_object, state);
 
     return refcount;
 }

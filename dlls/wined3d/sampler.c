@@ -54,7 +54,7 @@ ULONG CDECL wined3d_sampler_decref(struct wined3d_sampler *sampler)
     TRACE("%p decreasing refcount to %u.\n", sampler, refcount);
 
     if (!refcount)
-        wined3d_cs_emit_destroy_object(sampler->device->cs, wined3d_sampler_destroy_object, sampler);
+        wined3d_cs_destroy_object(sampler->device->cs, wined3d_sampler_destroy_object, sampler);
 
     return refcount;
 }
@@ -66,20 +66,17 @@ void * CDECL wined3d_sampler_get_parent(const struct wined3d_sampler *sampler)
     return sampler->parent;
 }
 
-static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d_device *device,
-        const struct wined3d_sampler_desc *desc, void *parent)
+static void wined3d_sampler_cs_init(void *object)
 {
+    struct wined3d_sampler *sampler = object;
+    const struct wined3d_sampler_desc *desc;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
-    sampler->refcount = 1;
-    sampler->device = device;
-    sampler->parent = parent;
-    sampler->desc = *desc;
-
-    context = context_acquire(device, NULL, 0);
+    context = context_acquire(sampler->device, NULL, 0);
     gl_info = context->gl_info;
 
+    desc = &sampler->desc;
     GL_EXTCALL(glGenSamplers(1, &sampler->name));
     GL_EXTCALL(glSamplerParameteri(sampler->name, GL_TEXTURE_WRAP_S,
             gl_info->wrap_lookup[desc->address_u - WINED3D_TADDRESS_WRAP]));
@@ -109,6 +106,16 @@ static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d
     TRACE("Created sampler %u.\n", sampler->name);
 
     context_release(context);
+}
+
+static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d_device *device,
+        const struct wined3d_sampler_desc *desc, void *parent)
+{
+    sampler->refcount = 1;
+    sampler->device = device;
+    sampler->parent = parent;
+    sampler->desc = *desc;
+    wined3d_cs_init_object(device->cs, wined3d_sampler_cs_init, sampler);
 }
 
 HRESULT CDECL wined3d_sampler_create(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
