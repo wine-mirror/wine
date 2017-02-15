@@ -144,9 +144,21 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_EnumHosts(IDirectPlay8Client *iface
         const DWORD dwTimeOut, void * const pvUserContext, DPNHANDLE * const pAsyncHandle,
         const DWORD dwFlags)
 {
-  IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-  FIXME("(%p):(%p,%p,%x): Stub\n", This, pvUserContext, pAsyncHandle, dwFlags);
-  return DPN_OK; 
+    IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
+
+    FIXME("(%p):(%p,%p,%p,%p,%u,%u,%u,%u,%p,%p,%x)\n", This, pApplicationDesc, pAddrHost, pDeviceInfo, pUserEnumData,
+        dwUserEnumDataSize, dwEnumCount, dwRetryInterval, dwTimeOut, pvUserContext, pAsyncHandle, dwFlags);
+
+    if(!This->msghandler)
+        return DPNERR_UNINITIALIZED;
+
+    if((dwFlags & DPNENUMHOSTS_SYNC) && pAsyncHandle)
+        return DPNERR_INVALIDPARAM;
+
+    if(dwUserEnumDataSize > This->spcaps.dwMaxEnumPayloadSize)
+        return DPNERR_ENUMQUERYTOOLARGE;
+
+    return (dwFlags & DPNENUMHOSTS_SYNC) ? DPN_OK : DPNSUCCESS_PENDING;
 }
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_CancelAsyncOperation(IDirectPlay8Client *iface,

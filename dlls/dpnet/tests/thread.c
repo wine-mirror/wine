@@ -164,7 +164,7 @@ static void test_enum_hosts(void)
     ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
 
     hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
-    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
+    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
     todo_wine ok(async, "No Handle returned\n");
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
@@ -172,7 +172,7 @@ static void test_enum_hosts(void)
     todo_wine ok(threadcnt == 6, "got %d\n", threadcnt);
 
     hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async2, 0);
-    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
+    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
 
     WaitForSingleObject(enumevent, 1000);
 
