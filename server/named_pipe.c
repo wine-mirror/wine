@@ -142,7 +142,7 @@ static const struct object_ops named_pipe_ops =
 static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
-static obj_handle_t pipe_server_flush( struct fd *fd, const async_data_t *async, int blocking );
+static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int blocking );
 static enum server_fd_type pipe_server_get_fd_type( struct fd *fd );
 static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async,
                                        int blocking );
@@ -187,7 +187,7 @@ static void pipe_client_dump( struct object *obj, int verbose );
 static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
-static obj_handle_t pipe_client_flush( struct fd *fd, const async_data_t *async, int blocking );
+static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int blocking );
 static enum server_fd_type pipe_client_get_fd_type( struct fd *fd );
 
 static const struct object_ops pipe_client_ops =
@@ -545,17 +545,16 @@ static void check_flushed( void *arg )
     }
 }
 
-static obj_handle_t pipe_server_flush( struct fd *fd, const async_data_t *async_data, int blocking )
+static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int blocking )
 {
     struct pipe_server *server = get_fd_user( fd );
     obj_handle_t handle = 0;
-    struct async *async;
 
     if (!server || server->state != ps_connected_server) return 0;
 
     if (!pipe_data_remaining( server )) return 0;
 
-    if ((async = fd_queue_async( server->fd, async_data, NULL, ASYNC_TYPE_WAIT )))
+    if ((async = fd_queue_async( server->fd, async_get_data( async ), NULL, ASYNC_TYPE_WAIT )))
     {
         /* there's no unix way to be alerted when a pipe becomes empty, so resort to polling */
         if (!server->flush_poll)
@@ -567,7 +566,7 @@ static obj_handle_t pipe_server_flush( struct fd *fd, const async_data_t *async_
     return handle;
 }
 
-static obj_handle_t pipe_client_flush( struct fd *fd, const async_data_t *async, int blocking )
+static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int blocking )
 {
     /* FIXME: what do we have to do for this? */
     return 0;
