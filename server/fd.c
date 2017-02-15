@@ -2091,16 +2091,14 @@ void fd_reselect_async( struct fd *fd, struct async_queue *queue )
     fd->fd_ops->reselect_async( fd, queue );
 }
 
-void no_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
+void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
 }
 
-void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
+void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
-    struct async *async;
-
-    if ((async = fd_queue_async( fd, data, NULL, type )))
+    if ((async = fd_queue_async( fd, async_get_data( async ), NULL, type )))
     {
         release_object( async );
         set_error( STATUS_PENDING );
@@ -2509,6 +2507,7 @@ DECL_HANDLER(ioctl)
 DECL_HANDLER(register_async)
 {
     unsigned int access;
+    struct async *async;
     struct fd *fd;
 
     switch(req->type)
@@ -2526,7 +2525,11 @@ DECL_HANDLER(register_async)
 
     if ((fd = get_handle_fd_obj( current->process, req->async.handle, access )))
     {
-        if (get_unix_fd( fd ) != -1) fd->fd_ops->queue_async( fd, &req->async, req->type, req->count );
+        if (get_unix_fd( fd ) != -1 && (async = create_async( current, &req->async, NULL )))
+        {
+            fd->fd_ops->queue_async( fd, async, req->type, req->count );
+            release_object( async );
+        }
         release_object( fd );
     }
 }

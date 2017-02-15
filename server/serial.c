@@ -61,7 +61,7 @@ static struct fd *serial_get_fd( struct object *obj );
 static void serial_destroy(struct object *obj);
 
 static enum server_fd_type serial_get_fd_type( struct fd *fd );
-static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
+static void serial_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void serial_reselect_async( struct fd *fd, struct async_queue *queue );
 
 struct serial
@@ -183,11 +183,10 @@ static enum server_fd_type serial_get_fd_type( struct fd *fd )
     return FD_TYPE_SERIAL;
 }
 
-static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
+static void serial_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
     struct serial *serial = get_fd_user( fd );
     timeout_t timeout = 0;
-    struct async *async;
 
     assert(serial->obj.ops == &serial_ops);
 
@@ -201,7 +200,7 @@ static void serial_queue_async( struct fd *fd, const async_data_t *data, int typ
         break;
     }
 
-    if ((async = fd_queue_async( fd, data, NULL, type )))
+    if ((async = fd_queue_async( fd, async_get_data( async ), NULL, type )))
     {
         if (timeout) async_set_timeout( async, timeout * -10000, STATUS_TIMEOUT );
         release_object( async );
