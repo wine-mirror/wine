@@ -609,7 +609,7 @@ static void test_enum_hosts_peer(void)
     ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
 
     hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
-    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumServiceProviders failed with 0x%08x\n", hr);
+    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumServiceProviders failed with 0x%08x\n", hr);
     todo_wine ok(async, "No Handle returned\n");
 
     hr = IDirectPlay8Peer_CancelAsyncOperation(peer, async, 0);
@@ -617,15 +617,15 @@ static void test_enum_hosts_peer(void)
 
     /* No Initialize has been called on peer2. */
     hr = IDirectPlay8Peer_EnumHosts(peer2, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
-    todo_wine ok(hr == DPNERR_UNINITIALIZED, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
+    ok(hr == DPNERR_UNINITIALIZED, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
 
     /* Since we are running asynchronously, EnumHosts returns DPNSUCCESS_PENDING. */
     hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
-    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
+    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
     todo_wine ok(async, "No Handle returned\n");
 
     hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async2, 0);
-    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
+    ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumHosts failed with 0x%08x\n", hr);
     todo_wine ok(async2, "No Handle returned\n");
     todo_wine ok(async2 != async, "Same handle returned.\n");
 

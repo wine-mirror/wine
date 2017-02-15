@@ -457,11 +457,22 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_EnumHosts(IDirectPlay8Peer *iface,
         const DWORD dwUserEnumDataSize, const DWORD dwEnumCount, const DWORD dwRetryInterval,
         const DWORD dwTimeOut, void * const pvUserContext, DPNHANDLE * const pAsyncHandle, const DWORD dwFlags)
 {
+    IDirectPlay8PeerImpl* This = impl_from_IDirectPlay8Peer(iface);
+
     FIXME("(%p)->(%p,%p,%p,%p,%x,%x,%x,%x,%p,%p,%x): stub\n",
-            iface, pApplicationDesc, pAddrHost, pDeviceInfo, pUserEnumData, dwUserEnumDataSize, dwEnumCount,
+            This, pApplicationDesc, pAddrHost, pDeviceInfo, pUserEnumData, dwUserEnumDataSize, dwEnumCount,
             dwRetryInterval, dwTimeOut, pvUserContext, pAsyncHandle, dwFlags);
 
-    return DPNERR_GENERIC;
+    if(!This->msghandler)
+        return DPNERR_UNINITIALIZED;
+
+    if((dwFlags & DPNENUMHOSTS_SYNC) && pAsyncHandle)
+        return DPNERR_INVALIDPARAM;
+
+    if(dwUserEnumDataSize > This->spcaps.dwMaxEnumPayloadSize)
+        return DPNERR_ENUMQUERYTOOLARGE;
+
+    return (dwFlags & DPNENUMHOSTS_SYNC) ? DPN_OK : DPNSUCCESS_PENDING;
 }
 
 static HRESULT WINAPI IDirectPlay8PeerImpl_DestroyPeer(IDirectPlay8Peer *iface, const DPNID dpnidClient,
