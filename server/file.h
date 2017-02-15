@@ -52,9 +52,9 @@ struct fd_ops
     /* get file information */
     enum server_fd_type (*get_fd_type)(struct fd *fd);
     /* perform a read on the file */
-    obj_handle_t (*read)(struct fd *, const async_data_t *, int, file_pos_t, struct iosb * );
+    obj_handle_t (*read)(struct fd *, struct async *, int, file_pos_t );
     /* perform a write on the file */
-    obj_handle_t (*write)(struct fd *, const async_data_t *, int, file_pos_t, struct iosb * );
+    obj_handle_t (*write)(struct fd *, struct async *, int, file_pos_t );
     /* flush the object buffers */
     obj_handle_t (*flush)(struct fd *, const async_data_t *, int);
     /* perform an ioctl on the file */
@@ -100,10 +100,8 @@ extern void default_poll_event( struct fd *fd, int event );
 extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct iosb *iosb, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos,
-                                struct iosb *iosb );
-extern obj_handle_t no_fd_write( struct fd *fd, const async_data_t *async, int blocking,
-                                 file_pos_t pos, struct iosb *iosb );
+extern obj_handle_t no_fd_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
+extern obj_handle_t no_fd_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
 extern obj_handle_t no_fd_flush( struct fd *fd, const async_data_t *async, int blocking );
 extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
 extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
@@ -189,6 +187,8 @@ extern void async_wake_up( struct async_queue *queue, unsigned int status );
 extern struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key );
 extern void fd_copy_completion( struct fd *src, struct fd *dst );
 extern struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_size_t out_size );
+extern struct iosb *async_get_iosb( struct async *async );
+extern const async_data_t *async_get_data( struct async *async );
 extern void cancel_process_asyncs( struct process *process );
 
 /* access rights that require Unix read permission */

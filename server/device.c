@@ -174,10 +174,8 @@ static struct fd *device_file_get_fd( struct object *obj );
 static int device_file_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void device_file_destroy( struct object *obj );
 static enum server_fd_type device_file_get_fd_type( struct fd *fd );
-static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_data, int blocking,
-                                      file_pos_t pos, struct iosb *iosb );
-static obj_handle_t device_file_write( struct fd *fd, const async_data_t *async_data, int blocking,
-                                       file_pos_t pos, struct iosb *iosb );
+static obj_handle_t device_file_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
+static obj_handle_t device_file_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
 static obj_handle_t device_file_flush( struct fd *fd, const async_data_t *async_data, int blocking );
 static obj_handle_t device_file_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                        int blocking );
@@ -489,13 +487,13 @@ static enum server_fd_type device_file_get_fd_type( struct fd *fd )
     return FD_TYPE_DEVICE;
 }
 
-static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_data, int blocking,
-                                      file_pos_t pos, struct iosb *iosb )
+static obj_handle_t device_file_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
 {
     struct device_file *file = get_fd_user( fd );
     struct irp_call *irp;
     obj_handle_t handle;
     irp_params_t params;
+    struct iosb *iosb;
 
     memset( &params, 0, sizeof(params) );
     params.read.major = IRP_MJ_READ;
@@ -503,21 +501,23 @@ static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_d
     params.read.pos   = pos;
     params.read.file  = file->user_ptr;
 
+    iosb = async_get_iosb( async );
     irp = create_irp( file, &params, iosb );
+    release_object( iosb );
     if (!irp) return 0;
 
-    handle = queue_irp( file, irp, async_data, blocking );
+    handle = queue_irp( file, irp, async_get_data( async ), blocking );
     release_object( irp );
     return handle;
 }
 
-static obj_handle_t device_file_write( struct fd *fd, const async_data_t *async_data, int blocking,
-                                       file_pos_t pos, struct iosb *iosb )
+static obj_handle_t device_file_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
 {
     struct device_file *file = get_fd_user( fd );
     struct irp_call *irp;
     obj_handle_t handle;
     irp_params_t params;
+    struct iosb *iosb;
 
     memset( &params, 0, sizeof(params) );
     params.write.major = IRP_MJ_WRITE;
@@ -525,10 +525,12 @@ static obj_handle_t device_file_write( struct fd *fd, const async_data_t *async_
     params.write.pos   = pos;
     params.write.file  = file->user_ptr;
 
+    iosb = async_get_iosb( async );
     irp = create_irp( file, &params, iosb );
+    release_object( iosb );
     if (!irp) return 0;
 
-    handle = queue_irp( file, irp, async_data, blocking );
+    handle = queue_irp( file, irp, async_get_data( async ), blocking );
     release_object( irp );
     return handle;
 }

@@ -2167,15 +2167,14 @@ static void unmount_device( struct fd *device_fd )
 }
 
 /* default read() routine */
-obj_handle_t no_fd_read( struct fd *fd, const async_data_t *async, int blocking, file_pos_t pos, struct iosb *iosb )
+obj_handle_t no_fd_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
 /* default write() routine */
-obj_handle_t no_fd_write( struct fd *fd, const async_data_t *async, int blocking,
-                          file_pos_t pos, struct iosb *iosb )
+obj_handle_t no_fd_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
@@ -2450,14 +2449,20 @@ DECL_HANDLER(get_handle_fd)
 DECL_HANDLER(read)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_READ_DATA );
+    struct async *async;
     struct iosb *iosb;
 
     if (!fd) return;
 
     if ((iosb = create_iosb( NULL, 0, get_reply_max_size() )))
     {
-        reply->wait    = fd->fd_ops->read( fd, &req->async, req->blocking, req->pos, iosb );
-        reply->options = fd->options;
+        async = create_async( current, &req->async, iosb );
+        if (async)
+        {
+            reply->wait    = fd->fd_ops->read( fd, async, req->blocking, req->pos );
+            reply->options = fd->options;
+            release_object( async );
+        }
         release_object( iosb );
     }
     release_object( fd );
@@ -2467,14 +2472,20 @@ DECL_HANDLER(read)
 DECL_HANDLER(write)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_WRITE_DATA );
+    struct async *async;
     struct iosb *iosb;
 
     if (!fd) return;
 
     if ((iosb = create_iosb( get_req_data(), get_req_data_size(), 0 )))
     {
-        reply->wait    = fd->fd_ops->write( fd, &req->async, req->blocking, req->pos, iosb );
-        reply->options = fd->options;
+        async = create_async( current, &req->async, iosb );
+        if (async)
+        {
+            reply->wait    = fd->fd_ops->write( fd, async, req->blocking, req->pos );
+            reply->options = fd->options;
+            release_object( async );
+        }
         release_object( iosb );
     }
     release_object( fd );
