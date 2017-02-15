@@ -1203,7 +1203,7 @@ static inline int year_size( int year )
 static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
 {
     static const char fmt[] = "%04u-%02u-%02uT%02u:%02u:%02u";
-    int day, hour, min, sec, sec_frac, month = 1, year = 1, tz_hour;
+    int day, hour, min, sec, sec_frac, month = 0, year = 1, tz_hour;
     unsigned __int64 ticks, day_ticks;
     ULONG len;
 
@@ -1235,9 +1235,8 @@ static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
         day -= month_days[leap_year( year )][month];
         month++;
     }
-    day++;
 
-    len = sprintf( (char *)buf, fmt, year, month, day, hour, min, sec );
+    len = sprintf( (char *)buf, fmt, year, month + 1, day + 1, hour, min, sec );
     if (sec_frac)
     {
         static const char fmt_frac[] = ".%07u";

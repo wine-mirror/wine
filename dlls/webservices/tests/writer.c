@@ -2716,6 +2716,10 @@ static void test_datetime(void)
         { 0x701ce51ced5d800, WS_DATETIME_FORMAT_LOCAL, S_OK, "<t>1601-01-01T07:00:00+00:00</t>",
           "<t>1601-01-01T01:00:00-06:00</t>" /* win7 */ },
         { 0, WS_DATETIME_FORMAT_NONE + 1, WS_E_INVALID_FORMAT },
+        { 0x38a080649c000, WS_DATETIME_FORMAT_UTC, S_OK, "<t>0004-02-28T00:00:00Z</t>" },
+        { 0x38ad130b38000, WS_DATETIME_FORMAT_UTC, S_OK, "<t>0004-02-29T00:00:00Z</t>" },
+        { 0x8c1505f0e438000, WS_DATETIME_FORMAT_UTC, S_OK, "<t>2000-02-29T00:00:00Z</t>" },
+        { 0x8d46035e7870000, WS_DATETIME_FORMAT_UTC, S_OK, "<t>2017-03-01T00:00:00Z</t>" },
     };
     HRESULT hr;
     WS_XML_WRITER *writer;
