@@ -1013,7 +1013,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     static const struct wined3d_color black = {0.0f, 0.0f, 0.0f, 0.0f};
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_swapchain *swapchain = NULL;
-    struct wined3d_context *context;
     DWORD clear_flags = 0;
     HRESULT hr;
 
@@ -1026,18 +1025,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     if (!(device->fb.render_targets = wined3d_calloc(gl_info->limits.buffers, sizeof(*device->fb.render_targets))))
         return E_OUTOFMEMORY;
-
-    if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
-            device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
-    {
-        TRACE("Shader private data couldn't be allocated\n");
-        goto err_out;
-    }
-    if (FAILED(hr = device->blitter->alloc_private(device)))
-    {
-        TRACE("Blitter private data couldn't be allocated\n");
-        goto err_out;
-    }
 
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
@@ -1075,18 +1062,14 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         goto err_out;
     }
     device->swapchains[0] = swapchain;
+
+    if (FAILED(hr = create_primary_opengl_context(device, swapchain)))
+        goto err_out;
     device_init_swapchain_state(device, swapchain);
-
-    context = context_acquire(device, NULL, 0);
-
-    create_dummy_textures(device, context);
-    create_default_samplers(device, context);
 
     device->contexts[0]->last_was_rhw = 0;
 
     TRACE("All defaults now set up, leaving 3D init.\n");
-
-    context_release(context);
 
     /* Clear the screen */
     if (swapchain->back_buffers && swapchain->back_buffers[0])
@@ -1103,17 +1086,13 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     return WINED3D_OK;
 
 err_out:
-    HeapFree(GetProcessHeap(), 0, device->fb.render_targets);
     HeapFree(GetProcessHeap(), 0, device->swapchains);
     device->swapchain_count = 0;
     if (device->back_buffer_view)
         wined3d_rendertarget_view_decref(device->back_buffer_view);
     if (swapchain)
         wined3d_swapchain_decref(swapchain);
-    if (device->blit_priv)
-        device->blitter->free_private(device);
-    if (device->shader_priv)
-        device->shader_backend->shader_free_private(device);
+    HeapFree(GetProcessHeap(), 0, device->fb.render_targets);
 
     return hr;
 }
