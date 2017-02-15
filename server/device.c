@@ -48,7 +48,6 @@ struct irp_call
     struct list            mgr_entry;     /* entry in manager queue */
     struct device_file    *file;          /* file containing this irp */
     struct thread         *thread;        /* thread that queued the irp */
-    client_ptr_t           user_arg;      /* user arg used to identify the request */
     struct async          *async;         /* pending async op */
     irp_params_t           params;        /* irp parameters */
     struct iosb           *iosb;          /* I/O status block */
@@ -480,7 +479,6 @@ static obj_handle_t queue_irp( struct device_file *file, struct irp_call *irp,
         if (handle) close_handle( current->process, handle );
         return 0;
     }
-    irp->user_arg = async_data->arg;
     add_irp_to_queue( file, irp, current );
     set_error( STATUS_PENDING );
     return handle;
