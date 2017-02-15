@@ -4924,6 +4924,8 @@ static unsigned int shader_glsl_find_sampler(const struct wined3d_shader_sampler
 
 static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
 {
+    const BOOL is_imm_instruction = WINED3DSIH_IMM_ATOMIC_AND <= ins->handler_idx
+            && ins->handler_idx <= WINED3DSIH_IMM_ATOMIC_XOR;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_shader_version *version = &reg_maps->shader_version;
     struct glsl_src_param coord_param, data_param, data_param2;
@@ -4933,7 +4935,7 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     DWORD coord_mask;
     const char *op;
 
-    uav_idx = ins->dst[0].reg.idx[0].offset;
+    uav_idx = ins->dst[is_imm_instruction].reg.idx[0].offset;
     resource_type = reg_maps->uav_resource_info[uav_idx].type;
     if (resource_type >= ARRAY_SIZE(resource_type_info))
     {
@@ -4946,24 +4948,35 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     switch (ins->handler_idx)
     {
         case WINED3DSIH_ATOMIC_AND:
+        case WINED3DSIH_IMM_ATOMIC_AND:
             op = "imageAtomicAnd";
             break;
         case WINED3DSIH_ATOMIC_CMP_STORE:
+        case WINED3DSIH_IMM_ATOMIC_CMP_EXCH:
             op = "imageAtomicCompSwap";
             break;
         case WINED3DSIH_ATOMIC_IADD:
+        case WINED3DSIH_IMM_ATOMIC_IADD:
             op = "imageAtomicAdd";
             break;
         case WINED3DSIH_ATOMIC_OR:
+        case WINED3DSIH_IMM_ATOMIC_OR:
             op = "imageAtomicOr";
             break;
         case WINED3DSIH_ATOMIC_XOR:
+        case WINED3DSIH_IMM_ATOMIC_XOR:
             op = "imageAtomicXor";
+            break;
+        case WINED3DSIH_IMM_ATOMIC_EXCH:
+            op = "imageAtomicExchange";
             break;
         default:
             ERR("Unhandled opcode %#x.\n", ins->handler_idx);
             return;
     }
+
+    if (is_imm_instruction)
+        shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], data_type);
 
     shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &coord_param);
 
@@ -4982,6 +4995,8 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
         shader_addline(ins->ctx->buffer, ", %s", data_param2.param_str);
     }
 
+    if (is_imm_instruction)
+        shader_addline(ins->ctx->buffer, ")");
     shader_addline(ins->ctx->buffer, ");\n");
 }
 
@@ -9324,15 +9339,15 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMAX                             */ shader_glsl_map2gl,
     /* WINED3DSIH_IMIN                             */ shader_glsl_map2gl,
     /* WINED3DSIH_IMM_ATOMIC_ALLOC                 */ NULL,
-    /* WINED3DSIH_IMM_ATOMIC_AND                   */ NULL,
-    /* WINED3DSIH_IMM_ATOMIC_CMP_EXCH              */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_AND                   */ shader_glsl_atomic,
+    /* WINED3DSIH_IMM_ATOMIC_CMP_EXCH              */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ NULL,
-    /* WINED3DSIH_IMM_ATOMIC_EXCH                  */ NULL,
-    /* WINED3DSIH_IMM_ATOMIC_IADD                  */ NULL,
-    /* WINED3DSIH_IMM_ATOMIC_OR                    */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_EXCH                  */ shader_glsl_atomic,
+    /* WINED3DSIH_IMM_ATOMIC_IADD                  */ shader_glsl_atomic,
+    /* WINED3DSIH_IMM_ATOMIC_OR                    */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_UMAX                  */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_UMIN                  */ NULL,
-    /* WINED3DSIH_IMM_ATOMIC_XOR                   */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_XOR                   */ shader_glsl_atomic,
     /* WINED3DSIH_IMUL                             */ shader_glsl_imul,
     /* WINED3DSIH_INE                              */ shader_glsl_relop,
     /* WINED3DSIH_INEG                             */ shader_glsl_unary_op,
