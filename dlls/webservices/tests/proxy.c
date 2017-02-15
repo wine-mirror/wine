@@ -42,7 +42,7 @@ static inline void set_field_desc( WS_FIELD_DESCRIPTION *desc, WS_FIELD_MAPPING 
 
 static inline void set_struct_desc( WS_STRUCT_DESCRIPTION *desc, ULONG size, ULONG alignment,
                                     WS_FIELD_DESCRIPTION **fields, ULONG count, WS_XML_STRING *localname,
-                                    WS_XML_STRING *ns )
+                                    WS_XML_STRING *ns, ULONG options )
 {
     memset( desc, 0, sizeof(*desc) );
     desc->size          = size;
@@ -51,6 +51,7 @@ static inline void set_struct_desc( WS_STRUCT_DESCRIPTION *desc, ULONG size, ULO
     desc->fieldCount    = count;
     desc->typeLocalName = localname;
     desc->typeNs        = ns;
+    desc->structOptions = options;
 }
 
 static inline void set_elem_desc( WS_ELEMENT_DESCRIPTION *desc, WS_XML_STRING *localname, WS_XML_STRING *ns,
@@ -412,7 +413,7 @@ static void test_WsCall( int port )
     fields[0] = &f;
     fields[1] = &f4;
 
-    set_struct_desc( &input_struct, sizeof(struct input), TYPE_ALIGNMENT(struct input), fields, 2, &req, &ns );
+    set_struct_desc( &input_struct, sizeof(struct input), TYPE_ALIGNMENT(struct input), fields, 2, &req, &ns, 0 );
     set_elem_desc( &input_elem, &req_elem, &ns, WS_STRUCT_TYPE, &input_struct );
     set_msg_desc( &input_msg, &req_action, &input_elem );
 
@@ -423,7 +424,7 @@ static void test_WsCall( int port )
     fields2[0] = &f2;
     fields2[1] = &f3;
 
-    set_struct_desc( &output_struct, sizeof(struct output), TYPE_ALIGNMENT(struct output), fields2, 2, &resp, &ns );
+    set_struct_desc( &output_struct, sizeof(struct output), TYPE_ALIGNMENT(struct output), fields2, 2, &resp, &ns, 0 );
     set_elem_desc( &output_elem, &resp_elem, &ns, WS_STRUCT_TYPE, &output_struct );
     set_msg_desc( &output_msg, &resp_action, &output_elem );
 
@@ -473,31 +474,105 @@ static void test_WsCall( int port )
     WsFreeHeap( heap );
 }
 
+static const char req_test3[] =
+    "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body>"
+    "<req_test3 xmlns=\"ns\"><val>1</val></req_test3>"
+    "</s:Body></s:Envelope>";
+
+static const char resp_test3[] =
+    "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body/></s:Envelope>";
+
+static void test_empty_response( int port )
+{
+    WS_XML_STRING req = {3, (BYTE *)"req"};
+    WS_XML_STRING resp = {4, (BYTE *)"resp"};
+    WS_XML_STRING req_action = {9, (BYTE *)"req_test3"};
+    WS_XML_STRING resp_action = {10, (BYTE *)"resp_test3"};
+    WS_XML_STRING req_elem = {9, (BYTE *)"req_test3"};
+    WS_XML_STRING resp_elem = {10, (BYTE *)"resp_test3"};
+    WS_XML_STRING ns = {2, (BYTE *)"ns"};
+    WS_XML_STRING ns2 = {0, (BYTE *)""};
+    WS_XML_STRING val = {3, (BYTE *)"val"};
+    HRESULT hr;
+    WS_SERVICE_PROXY *proxy;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_STRUCT_DESCRIPTION input_struct, output_struct;
+    WS_ELEMENT_DESCRIPTION input_elem, output_elem;
+    WS_MESSAGE_DESCRIPTION input_msg, output_msg;
+    WS_PARAMETER_DESCRIPTION param[1];
+    WS_OPERATION_DESCRIPTION op;
+    const void *args[1];
+    WS_HEAP *heap;
+    struct input
+    {
+        INT32 val;
+    } in;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = create_proxy( port, &proxy );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    set_field_desc( &f, WS_ELEMENT_FIELD_MAPPING, &val, &ns, WS_INT32_TYPE, NULL, 0, 0, 0, NULL, NULL );
+    fields[0] = &f;
+
+    set_struct_desc( &input_struct, sizeof(struct input), TYPE_ALIGNMENT(struct input), fields, 1, &req, &ns, 0 );
+    set_elem_desc( &input_elem, &req_elem, &ns, WS_STRUCT_TYPE, &input_struct );
+    set_msg_desc( &input_msg, &req_action, &input_elem );
+
+    set_struct_desc( &output_struct, 0, 1, NULL, 0, &resp, &ns2, 0x6 );
+    set_elem_desc( &output_elem, &resp_elem, &ns, WS_STRUCT_TYPE, NULL );
+    set_msg_desc( &output_msg, &resp_action, &output_elem );
+
+    set_param_desc( param, WS_PARAMETER_TYPE_NORMAL, 0, 0xffff );
+    set_op_desc( &op, &input_msg, &output_msg, 1, param );
+
+    in.val = 1;
+    args[0] = &in.val;
+    hr = WsCall( proxy, &op, args, heap, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    set_elem_desc( &output_elem, &resp_elem, &ns, WS_STRUCT_TYPE, &output_struct );
+    hr = WsCall( proxy, &op, args, heap, NULL, 0, NULL, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = WsCloseServiceProxy( proxy, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    WsFreeServiceProxy( proxy );
+    WsFreeHeap( heap );
+}
+
+static const char status_200[] = "HTTP/1.1 200 OK\r\n";
+
 static const struct
 {
     const char   *req_action;
     const char   *req_data;
     unsigned int  req_len;
-    const char   *resp_action;
+    const char   *resp_status;
     const char   *resp_data;
     unsigned int  resp_len;
 }
 tests[] =
 {
-    { "req_test1", req_test1, sizeof(req_test1)-1, "resp_test1", resp_test1, sizeof(resp_test1)-1 },
-    { "req_test2", req_test2, sizeof(req_test2)-1, "resp_test2", resp_test2, sizeof(resp_test2)-1 },
+    { "req_test1", req_test1, sizeof(req_test1)-1, status_200, resp_test1, sizeof(resp_test1)-1 },
+    { "req_test2", req_test2, sizeof(req_test2)-1, status_200, resp_test2, sizeof(resp_test2)-1 },
+    { "req_test3", req_test3, sizeof(req_test3)-1, status_200, resp_test3, sizeof(resp_test3)-1 },
 };
 
-static void send_response( int c, const char *action, const char *data, unsigned int len )
+static void send_response( int c, const char *status, const char *data, unsigned int len )
 {
     static const char headers[] =
-        "HTTP/1.1 200 OK\r\nContent-Type: text/xml; charset=utf-8\r\nConnection: close\r\n";
+        "Content-Type: text/xml; charset=utf-8\r\nConnection: close\r\n";
     static const char fmt[] =
-        "SOAPAction: \"%s\"\r\nContent-Length: %u\r\n\r\n";
+        "Content-Length: %u\r\n\r\n";
     char buf[128];
 
+    send( c, status, strlen(status), 0 );
     send( c, headers, sizeof(headers) - 1, 0 );
-    sprintf( buf, fmt, action, len );
+    sprintf( buf, fmt, len );
     send( c, buf, strlen(buf), 0 );
     send( c, data, len, 0 );
 }
@@ -571,9 +646,9 @@ static DWORD CALLBACK server_proc( void *arg )
                     ok( tests[j].req_len == data_len, "%u: unexpected data length %u %u\n",
                         j, data_len, tests[j].req_len );
                     if (tests[j].req_len == data_len)
-                        ok( !memcmp( tests[j].req_data, buf, tests[j].req_len ), "%u: unexpected data\n", j );
+                        ok( !memcmp( tests[j].req_data, buf, tests[j].req_len ), "%u: unexpected data %s\n", j, buf );
                 }
-                send_response( c, tests[j].resp_action, tests[j].resp_data, tests[j].resp_len );
+                send_response( c, tests[j].resp_status, tests[j].resp_data, tests[j].resp_len );
                 break;
             }
         }
@@ -610,6 +685,7 @@ START_TEST(proxy)
     test_WsSendMessage( info.port, &test1 );
     test_WsReceiveMessage( info.port );
     test_WsCall( info.port );
+    test_empty_response( info.port );
 
     test_WsSendMessage( info.port, &quit );
     WaitForSingleObject( thread, 3000 );
