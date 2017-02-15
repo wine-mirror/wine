@@ -12883,18 +12883,19 @@ static void test_ps_cs_uav_binding(void)
     release_test_context(&test_context);
 }
 
-static void test_ps_uav_atomic_instructions(void)
+static void test_atomic_instructions(void)
 {
+    ID3D11UnorderedAccessView *in_uav, *out_uav;
+    ID3D11Buffer *cb, *in_buffer, *out_buffer;
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
     struct d3d11_test_context test_context;
+    struct resource_readback rb, out_rb;
     D3D11_TEXTURE2D_DESC texture_desc;
-    ID3D11UnorderedAccessView *uav;
     D3D11_BUFFER_DESC buffer_desc;
     ID3D11DeviceContext *context;
     ID3D11RenderTargetView *rtv;
-    struct resource_readback rb;
-    ID3D11Buffer *cb, *raw_uav;
     ID3D11Texture2D *texture;
+    ID3D11ComputeShader *cs;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
     D3D11_VIEWPORT vp;
@@ -12902,6 +12903,7 @@ static void test_ps_uav_atomic_instructions(void)
     HRESULT hr;
 
     static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const unsigned int zero[4] = {0, 0, 0, 0};
     static const DWORD ps_atomics_code[] =
     {
 #if 0
@@ -12938,11 +12940,70 @@ static void test_ps_uav_atomic_instructions(void)
         0x00000000, 0x00000000, 0x080000ab, 0x0011e000, 0x00000000, 0x00004001, 0x00000020, 0x0020800a,
         0x00000000, 0x00000000, 0x0100003e,
     };
+    static const DWORD cs_atomics_code[] =
+    {
+#if 0
+        RWByteAddressBuffer u;
+        RWByteAddressBuffer u2;
+
+        uint4 v;
+        int4 i;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            uint r;
+            u.InterlockedAnd(0 * 4, v.x, r);
+            u2.Store(0 * 4, r);
+            u.InterlockedCompareExchange(1 * 4, v.y, v.x, r);
+            u2.Store(1 * 4, r);
+            u.InterlockedAdd(2 * 4, v.x, r);
+            u2.Store(2 * 4, r);
+            u.InterlockedOr(3 * 4, v.x, r);
+            u2.Store(3 * 4, r);
+            u.InterlockedMax(4 * 4, i.x, r);
+            u2.Store(4 * 4, r);
+            u.InterlockedMin(5 * 4, i.x, r);
+            u2.Store(5 * 4, r);
+            u.InterlockedMax(6 * 4, v.x, r);
+            u2.Store(6 * 4, r);
+            u.InterlockedMin(7 * 4, v.x, r);
+            u2.Store(7 * 4, r);
+            u.InterlockedXor(8 * 4, v.x, r);
+            u2.Store(8 * 4, r);
+        }
+#endif
+        0x43425844, 0x859a96e3, 0x1a35e463, 0x1e89ce58, 0x5cfe430a, 0x00000001, 0x0000026c, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000218, 0x00050050, 0x00000086, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x0300009d, 0x0011e000, 0x00000000, 0x0300009d,
+        0x0011e000, 0x00000001, 0x02000068, 0x00000001, 0x0400009b, 0x00000001, 0x00000001, 0x00000001,
+        0x0a0000b5, 0x00100012, 0x00000000, 0x0011e000, 0x00000000, 0x00004001, 0x00000000, 0x0020800a,
+        0x00000000, 0x00000000, 0x0d0000b9, 0x00100022, 0x00000000, 0x0011e000, 0x00000000, 0x00004001,
+        0x00000004, 0x0020801a, 0x00000000, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x0a0000b4,
+        0x00100042, 0x00000000, 0x0011e000, 0x00000000, 0x00004001, 0x00000008, 0x0020800a, 0x00000000,
+        0x00000000, 0x0a0000b6, 0x00100082, 0x00000000, 0x0011e000, 0x00000000, 0x00004001, 0x0000000c,
+        0x0020800a, 0x00000000, 0x00000000, 0x070000a6, 0x0011e0f2, 0x00000001, 0x00004001, 0x00000000,
+        0x00100e46, 0x00000000, 0x0a0000ba, 0x00100012, 0x00000000, 0x0011e000, 0x00000000, 0x00004001,
+        0x00000010, 0x0020800a, 0x00000000, 0x00000001, 0x0a0000bb, 0x00100022, 0x00000000, 0x0011e000,
+        0x00000000, 0x00004001, 0x00000014, 0x0020800a, 0x00000000, 0x00000001, 0x0a0000bc, 0x00100042,
+        0x00000000, 0x0011e000, 0x00000000, 0x00004001, 0x00000018, 0x0020800a, 0x00000000, 0x00000000,
+        0x0a0000bd, 0x00100082, 0x00000000, 0x0011e000, 0x00000000, 0x00004001, 0x0000001c, 0x0020800a,
+        0x00000000, 0x00000000, 0x070000a6, 0x0011e0f2, 0x00000001, 0x00004001, 0x00000010, 0x00100e46,
+        0x00000000, 0x0a0000b7, 0x00100012, 0x00000000, 0x0011e000, 0x00000000, 0x00004001, 0x00000020,
+        0x0020800a, 0x00000000, 0x00000000, 0x070000a6, 0x0011e012, 0x00000001, 0x00004001, 0x00000020,
+        0x0010000a, 0x00000000, 0x0100003e,
+    };
 
     static const char * const instructions[] =
     {
         "atomic_and", "atomic_cmp_store", "atomic_iadd", "atomic_or",
         "atomic_imax", "atomic_imin", "atomic_umax", "atomic_umin", "atomic_xor",
+    };
+    static const char * const imm_instructions[] =
+    {
+        "imm_atomic_and", "imm_atomic_cmp_exch", "imm_atomic_iadd", "imm_atomic_or",
+        "imm_atomic_imax", "imm_atomic_imin", "imm_atomic_umax", "imm_atomic_umin", "imm_atomic_xor",
     };
     static const struct test
     {
@@ -12981,13 +13042,16 @@ static void test_ps_uav_atomic_instructions(void)
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 2 * sizeof(struct uvec4), NULL);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
 
     buffer_desc.ByteWidth = sizeof(tests->input);
     buffer_desc.Usage = D3D11_USAGE_DEFAULT;
     buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
-    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &raw_uav);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &in_buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &out_buffer);
     ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
@@ -12995,12 +13059,10 @@ static void test_ps_uav_atomic_instructions(void)
     U(uav_desc).Buffer.FirstElement = 0;
     U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(*tests->input);
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
-    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)raw_uav, &uav_desc, &uav);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)in_buffer, &uav_desc, &in_uav);
     ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
-
-    /* FIXME: Set the render targets to NULL when no attachment draw calls are supported in wined3d. */
-    ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, NULL,
-            0, 1, &uav, NULL);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)out_buffer, &uav_desc, &out_uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
 
     vp.TopLeftX = 0.0f;
     vp.TopLeftY = 0.0f;
@@ -13014,6 +13076,10 @@ static void test_ps_uav_atomic_instructions(void)
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
+    hr = ID3D11Device_CreateComputeShader(device, cs_atomics_code, sizeof(cs_atomics_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         const struct test *test = &tests[i];
@@ -13021,12 +13087,15 @@ static void test_ps_uav_atomic_instructions(void)
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
                 NULL, &test->v, 0, 0);
 
-        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)raw_uav, 0,
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)in_buffer, 0,
                 NULL, test->input, 0, 0);
 
-        draw_quad(&test_context);
+        /* FIXME: Set the render targets to NULL when no attachment draw calls are supported in wined3d. */
+        ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, NULL,
+                0, 1, &in_uav, NULL);
 
-        get_buffer_readback(raw_uav, &rb);
+        draw_quad(&test_context);
+        get_buffer_readback(in_buffer, &rb);
         for (j = 0; j < sizeof(instructions) / sizeof(*instructions); ++j)
         {
             unsigned int value = get_readback_color(&rb, j, 0);
@@ -13043,14 +13112,50 @@ static void test_ps_uav_atomic_instructions(void)
                     test->v.x, test->v.y, test->i.x, test->input[j], test->input[j]);
         }
         release_resource_readback(&rb);
+
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)in_buffer, 0,
+                NULL, test->input, 0, 0);
+        ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, out_uav, zero);
+
+        ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &in_uav, NULL);
+        ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 1, 1, &out_uav, NULL);
+
+        ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+        get_buffer_readback(in_buffer, &rb);
+        get_buffer_readback(out_buffer, &out_rb);
+        for (j = 0; j < sizeof(instructions) / sizeof(*instructions); ++j)
+        {
+            BOOL todo_instruction = !strcmp(imm_instructions[j], "imm_atomic_imax")
+                    || !strcmp(imm_instructions[j], "imm_atomic_imin")
+                    || !strcmp(imm_instructions[j], "imm_atomic_umax")
+                    || !strcmp(imm_instructions[j], "imm_atomic_umin");
+            unsigned int out_value = get_readback_color(&out_rb, j, 0);
+            unsigned int value = get_readback_color(&rb, j, 0);
+            unsigned int expected = test->expected_result[j];
+
+            todo_wine_if(expected != test->input[j] && todo_instruction)
+            ok(value == expected, "Test %u: Got %#x (%d), expected %#x (%d) for '%s' "
+                    "with inputs (%u, %u), (%d), %#x (%d).\n",
+                    i, value, value, expected, expected, imm_instructions[j],
+                    test->v.x, test->v.y, test->i.x, test->input[j], test->input[j]);
+
+            todo_wine_if(todo_instruction && out_value != test->input[j])
+            ok(out_value == test->input[j], "Got original value %u, expected %u for '%s'.\n",
+                    out_value, test->input[j], imm_instructions[j]);
+        }
+        release_resource_readback(&out_rb);
+        release_resource_readback(&rb);
     }
 
     ID3D11Buffer_Release(cb);
-    ID3D11Buffer_Release(raw_uav);
+    ID3D11Buffer_Release(in_buffer);
+    ID3D11Buffer_Release(out_buffer);
+    ID3D11ComputeShader_Release(cs);
     ID3D11PixelShader_Release(ps);
     ID3D11RenderTargetView_Release(rtv);
     ID3D11Texture2D_Release(texture);
-    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11UnorderedAccessView_Release(in_uav);
+    ID3D11UnorderedAccessView_Release(out_uav);
     release_test_context(&test_context);
 }
 
@@ -14287,7 +14392,7 @@ START_TEST(d3d11)
     test_uav_load();
     test_cs_uav_store();
     test_ps_cs_uav_binding();
-    test_ps_uav_atomic_instructions();
+    test_atomic_instructions();
     test_sm4_ret_instruction();
     test_primitive_restart();
     test_resinfo_instruction();
