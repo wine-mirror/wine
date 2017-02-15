@@ -942,6 +942,87 @@ static void device_init_swapchain_state(struct wined3d_device *device, struct wi
     wined3d_device_set_render_state(device, WINED3D_RS_ZENABLE, ds_enable);
 }
 
+static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
+{
+    struct wined3d_resource *resource, *cursor;
+    struct wined3d_context *context;
+    struct wined3d_shader *shader;
+
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("Unloading resource %p.\n", resource);
+        wined3d_cs_emit_unload_resource(device->cs, resource);
+    }
+
+    LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
+    {
+        device->shader_backend->shader_destroy(shader);
+    }
+
+    context = context_acquire(device, NULL);
+    device->blitter->free_private(device);
+    device->shader_backend->shader_free_private(device);
+    destroy_dummy_textures(device, context);
+    destroy_default_samplers(device, context);
+    context_release(context);
+
+    while (device->context_count)
+    {
+        if (device->contexts[0]->swapchain)
+            swapchain_destroy_contexts(device->contexts[0]->swapchain);
+        else
+            context_destroy(device, device->contexts[0]);
+    }
+}
+
+static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
+{
+    struct wined3d_context *context;
+    struct wined3d_texture *target;
+    HRESULT hr;
+
+    if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
+            device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
+    {
+        ERR("Failed to allocate shader private data, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = device->blitter->alloc_private(device)))
+    {
+        ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
+        device->shader_backend->shader_free_private(device);
+        return hr;
+    }
+
+    /* Recreate the primary swapchain's context. */
+    if (!(swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context))))
+    {
+        ERR("Failed to allocate memory for swapchain context array.\n");
+        device->blitter->free_private(device);
+        device->shader_backend->shader_free_private(device);
+        return E_OUTOFMEMORY;
+    }
+
+    target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
+    if (!(context = context_create(swapchain, target, swapchain->ds_format)))
+    {
+        WARN("Failed to create context.\n");
+        HeapFree(GetProcessHeap(), 0, swapchain->context);
+        device->blitter->free_private(device);
+        device->shader_backend->shader_free_private(device);
+        return E_FAIL;
+    }
+
+    swapchain->context[0] = context;
+    swapchain->num_contexts = 1;
+    create_dummy_textures(device, context);
+    create_default_samplers(device, context);
+    context_release(context);
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         struct wined3d_swapchain_desc *swapchain_desc)
 {
@@ -1094,21 +1175,12 @@ static void device_free_sampler(struct wine_rb_entry *entry, void *context)
 
 HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 {
-    struct wined3d_resource *resource, *cursor;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
     UINT i;
 
     TRACE("device %p.\n", device);
 
     if (!device->d3d_initialized)
         return WINED3DERR_INVALIDCALL;
-
-    /* I don't think that the interface guarantees that the device is destroyed from the same thread
-     * it was created. Thus make sure a context is active for the glDelete* calls
-     */
-    context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
 
     if (device->logo_texture)
         wined3d_texture_decref(device->logo_texture);
@@ -1117,22 +1189,9 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 
     state_unbind_resources(&device->state);
 
-    /* Unload resources */
-    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
-    {
-        TRACE("Unloading resource %p.\n", resource);
-        wined3d_cs_emit_unload_resource(device->cs, resource);
-    }
-
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
 
-    /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
-    device->blitter->free_private(device);
-    device->shader_backend->shader_free_private(device);
-    destroy_dummy_textures(device, context);
-    destroy_default_samplers(device, context);
-
-    context_release(context);
+    wined3d_device_delete_opengl_contexts(device);
 
     if (device->fb.depth_stencil)
     {
@@ -1153,7 +1212,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
             ERR("Something's still holding the auto depth/stencil view (%p).\n", view);
     }
 
-    for (i = 0; i < gl_info->limits.buffers; ++i)
+    for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
     {
         wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
     }
@@ -4526,90 +4585,6 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
             wined3d_cs_emit_unload_resource(device->cs, resource);
         }
     }
-}
-
-static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
-{
-    struct wined3d_resource *resource, *cursor;
-    struct wined3d_context *context;
-    struct wined3d_shader *shader;
-
-    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
-    {
-        TRACE("Unloading resource %p.\n", resource);
-        wined3d_cs_emit_unload_resource(device->cs, resource);
-    }
-
-    LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
-    {
-        device->shader_backend->shader_destroy(shader);
-    }
-
-    context = context_acquire(device, NULL);
-
-    device->blitter->free_private(device);
-    device->shader_backend->shader_free_private(device);
-    destroy_dummy_textures(device, context);
-    destroy_default_samplers(device, context);
-
-    context_release(context);
-
-    while (device->context_count)
-    {
-        if (device->contexts[0]->swapchain)
-            swapchain_destroy_contexts(device->contexts[0]->swapchain);
-        else
-            context_destroy(device, device->contexts[0]);
-    }
-}
-
-static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
-{
-    struct wined3d_context *context;
-    struct wined3d_texture *target;
-    HRESULT hr;
-
-    if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
-            device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
-    {
-        ERR("Failed to allocate shader private data, hr %#x.\n", hr);
-        return hr;
-    }
-
-    if (FAILED(hr = device->blitter->alloc_private(device)))
-    {
-        ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
-        device->shader_backend->shader_free_private(device);
-        return hr;
-    }
-
-    /* Recreate the primary swapchain's context */
-    swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
-    if (!swapchain->context)
-    {
-        ERR("Failed to allocate memory for swapchain context array.\n");
-        device->blitter->free_private(device);
-        device->shader_backend->shader_free_private(device);
-        return E_OUTOFMEMORY;
-    }
-
-    target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
-    if (!(context = context_create(swapchain, target, swapchain->ds_format)))
-    {
-        WARN("Failed to create context.\n");
-        device->blitter->free_private(device);
-        device->shader_backend->shader_free_private(device);
-        HeapFree(GetProcessHeap(), 0, swapchain->context);
-        return E_FAIL;
-    }
-
-    swapchain->context[0] = context;
-    swapchain->num_contexts = 1;
-    create_dummy_textures(device, context);
-    create_default_samplers(device, context);
-    context_release(context);
-
-    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
