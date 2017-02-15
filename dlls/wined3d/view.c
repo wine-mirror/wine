@@ -79,7 +79,7 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
 
     view->target = view_target;
 
-    context = context_acquire(texture->resource.device, NULL);
+    context = context_acquire(texture->resource.device, NULL, 0);
     gl_info = context->gl_info;
 
     if (!gl_info->supported[ARB_TEXTURE_VIEW])
@@ -136,7 +136,7 @@ static void create_buffer_texture(struct wined3d_gl_view *view,
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
-    context = context_acquire(buffer->resource.device, NULL);
+    context = context_acquire(buffer->resource.device, NULL, 0);
     gl_info = context->gl_info;
     if (!gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
     {
@@ -438,7 +438,7 @@ static void wined3d_shader_resource_view_destroy_object(void *object)
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
-        context = context_acquire(view->resource->device, NULL);
+        context = context_acquire(view->resource->device, NULL, 0);
         gl_info = context->gl_info;
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->gl_view.name);
         checkGLcall("glDeleteTextures");

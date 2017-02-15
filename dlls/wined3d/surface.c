@@ -280,7 +280,7 @@ void wined3d_surface_destroy_dc(struct wined3d_surface *surface)
 
     if (device->d3d_initialized)
     {
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
     }
 
@@ -316,7 +316,7 @@ HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface)
 
     if (device->d3d_initialized)
     {
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
     }
 
@@ -406,7 +406,7 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     if (src_mask & WINED3DFMT_FLAG_STENCIL)
         gl_mask |= GL_STENCIL_BUFFER_BIT;
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     if (!context->valid)
     {
         context_release(context);
@@ -526,7 +526,8 @@ static void surface_blt_fbo(const struct wined3d_device *device,
 
     restore_rt = context_get_rt_surface(old_ctx);
     if (restore_rt != required_rt)
-        context = context_acquire(device, required_rt);
+        context = context_acquire(device, required_rt ? required_rt->container : NULL,
+                required_rt ? surface_get_sub_resource_idx(required_rt) : 0);
     else
         restore_rt = NULL;
 
@@ -1152,7 +1153,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     if (dst_format->convert || wined3d_format_get_color_key_conversion(dst_texture, FALSE))
         return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3D_TEXF_POINT);
 
-    context = context_acquire(dst_texture->resource.device, NULL);
+    context = context_acquire(dst_texture->resource.device, NULL, 0);
     gl_info = context->gl_info;
 
     /* Only load the surface for partial updates. For newly allocated texture
@@ -1582,7 +1583,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
         POINT dst_point = {0, 0};
 
         TRACE("Using upload conversion.\n");
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
 
         wined3d_texture_prepare_texture(dst_texture, context, FALSE);
@@ -1679,7 +1680,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
 
     restore_rt = context_get_rt_surface(old_ctx);
     if (restore_rt != surface)
-        context = context_acquire(device, surface);
+        context = context_acquire(device, texture, sub_resource_idx);
     else
         restore_rt = NULL;
 
@@ -1790,7 +1791,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
 
     restore_rt = context_get_rt_surface(old_ctx);
     if (restore_rt != surface)
-        context = context_acquire(device, surface);
+        context = context_acquire(device, texture, surface_get_sub_resource_idx(surface));
     else
         restore_rt = NULL;
 
@@ -1822,6 +1823,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
 static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struct wined3d_surface *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, enum wined3d_texture_filter_type filter)
 {
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
@@ -1843,7 +1845,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
         upsidedown = TRUE;
     }
 
-    context = context_acquire(device, src_surface);
+    context = context_acquire(device, src_texture, src_sub_resource_idx);
     gl_info = context->gl_info;
     context_apply_blit_state(context, device);
     wined3d_texture_load(dst_texture, context, FALSE);
@@ -1936,6 +1938,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
 static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, struct wined3d_surface *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, enum wined3d_texture_filter_type filter)
 {
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     unsigned int src_width, src_height, src_pow2_width, src_pow2_height;
     struct wined3d_texture *src_texture = src_surface->container;
@@ -1955,7 +1958,7 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
-    context = context_acquire(device, src_surface);
+    context = context_acquire(device, src_texture, src_sub_resource_idx);
     gl_info = context->gl_info;
     context_apply_blit_state(context, device);
     wined3d_texture_load(dst_texture, context, FALSE);
@@ -2249,6 +2252,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
+    unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     const struct wined3d_gl_info *gl_info;
@@ -2261,7 +2265,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
 
     restore_rt = context_get_rt_surface(old_ctx);
     if (restore_rt != dst_surface)
-        context = context_acquire(device, dst_surface);
+        context = context_acquire(device, dst_texture, dst_sub_resource_idx);
     else
         restore_rt = NULL;
 
@@ -2508,7 +2512,7 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
 
     if (dst.buffer_object)
     {
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst.buffer_object));
         GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sub_resource->size, src.addr));
@@ -2519,7 +2523,7 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
     }
     if (src.buffer_object)
     {
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src.buffer_object));
         GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, sub_resource->size, dst.addr));
@@ -2985,7 +2989,7 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
 
     wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT, color_key);
 
-    context = context_acquire(device, dst_surface);
+    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
     gl_info = context->gl_info;
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
@@ -3937,7 +3941,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                     {
                         if (!wined3d_resource_is_offscreen(&dst_texture->resource))
                         {
-                            struct wined3d_context *context = context_acquire(device, dst_surface);
+                            struct wined3d_context *context = context_acquire(device,
+                                    dst_texture, dst_sub_resource_idx);
                             wined3d_texture_load_location(dst_texture, dst_sub_resource_idx,
                                     context, dst_texture->resource.draw_binding);
                             context_release(context);
@@ -3976,7 +3981,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 struct wined3d_context *context;
                 TRACE("Using FBO blit.\n");
 
-                context = context_acquire(device, NULL);
+                context = context_acquire(device, NULL, 0);
                 surface_blt_fbo(device, context, filter,
                         src_surface, src_texture->resource.draw_binding, src_rect,
                         dst_surface, dst_texture->resource.draw_binding, dst_rect);

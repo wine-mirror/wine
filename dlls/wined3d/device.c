@@ -232,7 +232,10 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     BOOL render_offscreen;
     unsigned int i;
 
-    context = context_acquire(device, target);
+    if (target)
+        context = context_acquire(device, target->container, rtv->sub_resource_idx);
+    else
+        context = context_acquire(device, NULL, 0);
     if (!context->valid)
     {
         context_release(context);
@@ -959,7 +962,7 @@ static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
         device->shader_backend->shader_destroy(shader);
     }
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, context);
@@ -1093,7 +1096,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     device->swapchains[0] = swapchain;
     device_init_swapchain_state(device, swapchain);
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
 
     create_dummy_textures(device, context);
     create_default_samplers(device, context);
@@ -3211,7 +3214,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         FIXME("Output vertex declaration not implemented yet.\n");
 
     /* Need any context to write to the vbo. */
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     gl_info = context->gl_info;
 
     vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
@@ -3471,7 +3474,7 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
         return WINED3DERR_INVALIDCALL;
     }
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
     context->gl_info->gl_ops.gl.p_glFlush();
     /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
@@ -3657,7 +3660,7 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
 
     /* Only a prepare, since we're uploading entire volumes. */
     wined3d_texture_prepare_texture(dst_texture, context, FALSE);
@@ -3744,7 +3747,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     }
 
     /* Make sure that the destination texture is loaded. */
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     wined3d_texture_load(dst_texture, context, FALSE);
     context_release(context);
 
@@ -4150,7 +4153,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
             return;
         }
 
-        context = context_acquire(resource->device, NULL);
+        context = context_acquire(resource->device, NULL, 0);
         if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER))
         {
             ERR("Failed to load buffer location.\n");
@@ -4193,7 +4196,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     addr.buffer_object = 0;
     addr.addr = data;
 
-    context = context_acquire(resource->device, NULL);
+    context = context_acquire(resource->device, NULL, 0);
 
     /* Only load the sub-resource for partial updates. */
     if (!box || (!box->left && !box->top && !box->front

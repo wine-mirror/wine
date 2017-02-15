@@ -8822,7 +8822,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
         return;
     }
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     gl_info = context->gl_info;
 
     TRACE("Deleting linked programs.\n");

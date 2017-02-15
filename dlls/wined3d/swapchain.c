@@ -365,7 +365,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         float tex_right = src_rect->right;
         float tex_bottom = src_rect->bottom;
 
-        context2 = context_acquire(device, back_buffer);
+        context2 = context_acquire(device, texture, 0);
         context_apply_blit_state(context2, device);
 
         if (texture->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
@@ -493,7 +493,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     struct wined3d_context *context;
     BOOL render_to_fbo;
 
-    context = context_acquire(swapchain->device, back_buffer->sub_resources[0].u.surface);
+    context = context_acquire(swapchain->device, back_buffer, 0);
     if (!context->valid)
     {
         context_release(context);
@@ -636,7 +636,7 @@ static void swapchain_gl_frontbuffer_updated(struct wined3d_swapchain *swapchain
     struct wined3d_texture *front_buffer = swapchain->front_buffer;
     struct wined3d_context *context;
 
-    context = context_acquire(swapchain->device, front_buffer->sub_resources[0].u.surface);
+    context = context_acquire(swapchain->device, front_buffer, 0);
     wined3d_texture_load_location(front_buffer, 0, context, front_buffer->resource.draw_binding);
     context_release(context);
     SetRectEmpty(&swapchain->front_buffer_update);
@@ -1199,7 +1199,7 @@ void swapchain_update_swap_interval(struct wined3d_swapchain *swapchain)
     struct wined3d_context *context;
     int swap_interval;
 
-    context = context_acquire(swapchain->device, swapchain->front_buffer->sub_resources[0].u.surface);
+    context = context_acquire(swapchain->device, swapchain->front_buffer, 0);
     gl_info = context->gl_info;
 
     switch (swapchain->desc.swap_interval)

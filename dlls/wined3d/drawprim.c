@@ -427,7 +427,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     if (!(rtv = fb->render_targets[0]))
         rtv = fb->depth_stencil;
-    context = context_acquire(device, wined3d_rendertarget_view_get_surface(rtv));
+    context = context_acquire(device, wined3d_texture_from_resource(rtv->resource), rtv->sub_resource_idx);
     if (!context->valid)
     {
         context_release(context);
@@ -587,7 +587,7 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     if (!context->valid)
     {
         context_release(context);

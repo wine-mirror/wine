@@ -1376,7 +1376,8 @@ void context_restore(struct wined3d_context *context, struct wined3d_surface *re
             || context->current_rt.sub_resource_idx != surface_get_sub_resource_idx(restore))
     {
         context_release(context);
-        context = context_acquire(restore->container->resource.device, restore);
+        context = context_acquire(restore->container->resource.device,
+                restore->container, surface_get_sub_resource_idx(restore));
     }
 
     context_release(context);
@@ -3675,53 +3676,47 @@ static void context_setup_target(struct wined3d_context *context,
     context_set_render_offscreen(context, render_offscreen);
 }
 
-struct wined3d_context *context_acquire(const struct wined3d_device *device, struct wined3d_surface *target)
+struct wined3d_context *context_acquire(const struct wined3d_device *device,
+        struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
     struct wined3d_context *current_context = context_get_current();
-    struct wined3d_texture *target_texture;
-    unsigned int target_sub_resource_idx;
     struct wined3d_context *context;
 
-    TRACE("device %p, target %p.\n", device, target);
+    TRACE("device %p, texture %p, sub_resource_idx %u.\n", device, texture, sub_resource_idx);
 
     if (current_context && current_context->destroyed)
         current_context = NULL;
 
-    if (target)
-    {
-        target_texture = target->container;
-        target_sub_resource_idx = surface_get_sub_resource_idx(target);
-    }
-    else
+    if (!texture)
     {
         if (current_context
                 && current_context->current_rt.texture
                 && current_context->device == device)
         {
-            target_texture = current_context->current_rt.texture;
-            target_sub_resource_idx = current_context->current_rt.sub_resource_idx;
+            texture = current_context->current_rt.texture;
+            sub_resource_idx = current_context->current_rt.sub_resource_idx;
         }
         else
         {
             struct wined3d_swapchain *swapchain = device->swapchains[0];
 
             if (swapchain->back_buffers)
-                target_texture = swapchain->back_buffers[0];
+                texture = swapchain->back_buffers[0];
             else
-                target_texture = swapchain->front_buffer;
-            target_sub_resource_idx = 0;
+                texture = swapchain->front_buffer;
+            sub_resource_idx = 0;
         }
     }
 
-    if (current_context && current_context->current_rt.texture == target_texture)
+    if (current_context && current_context->current_rt.texture == texture)
     {
         context = current_context;
     }
-    else if (target_texture->swapchain)
+    else if (texture->swapchain)
     {
         TRACE("Rendering onscreen.\n");
 
-        context = swapchain_get_context(target_texture->swapchain);
+        context = swapchain_get_context(texture->swapchain);
     }
     else
     {
@@ -3737,7 +3732,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
 
     context_enter(context);
     context_update_window(context);
-    context_setup_target(context, target_texture, target_sub_resource_idx);
+    context_setup_target(context, texture, sub_resource_idx);
     if (!context->valid) return context;
 
     if (context != current_context)

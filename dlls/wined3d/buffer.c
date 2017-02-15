@@ -744,7 +744,7 @@ static void buffer_unload(struct wined3d_resource *resource)
     {
         struct wined3d_context *context;
 
-        context = context_acquire(resource->device, NULL);
+        context = context_acquire(resource->device, NULL, 0);
 
         wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
         wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
@@ -776,7 +776,7 @@ static void wined3d_buffer_destroy_object(void *object)
 
     if (buffer->buffer_object)
     {
-        context = context_acquire(buffer->resource.device, NULL);
+        context = context_acquire(buffer->resource.device, NULL, 0);
         buffer_destroy_buffer_object(buffer, context);
         context_release(context);
 
@@ -1039,7 +1039,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
         {
             if (!(buffer->locations & WINED3D_LOCATION_SYSMEM))
             {
-                context = context_acquire(device, NULL);
+                context = context_acquire(device, NULL, 0);
                 wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM);
                 context_release(context);
             }
@@ -1051,7 +1051,7 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
         {
             const struct wined3d_gl_info *gl_info;
 
-            context = context_acquire(device, NULL);
+            context = context_acquire(device, NULL, 0);
             gl_info = context->gl_info;
 
             if (!(flags & WINED3D_MAP_DISCARD))
@@ -1156,7 +1156,7 @@ static void wined3d_buffer_unmap(struct wined3d_buffer *buffer)
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
 
         buffer_bind(buffer, context);
@@ -1206,7 +1206,7 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
 
     device = dst_buffer->resource.device;
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     gl_info = context->gl_info;
 
     dst_location = wined3d_buffer_get_memory(dst_buffer, &dst, dst_buffer->locations);
@@ -1300,7 +1300,7 @@ static void buffer_resource_preload(struct wined3d_resource *resource)
 {
     struct wined3d_context *context;
 
-    context = context_acquire(resource->device, NULL);
+    context = context_acquire(resource->device, NULL, 0);
     wined3d_buffer_load(buffer_from_resource(resource), context, NULL);
     context_release(context);
 }

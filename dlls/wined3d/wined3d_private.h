@@ -1819,7 +1819,7 @@ const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *g
         DECLSPEC_HIDDEN;
 
 struct wined3d_context *context_acquire(const struct wined3d_device *device,
-        struct wined3d_surface *target) DECLSPEC_HIDDEN;
+        struct wined3d_texture *texture, unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
 void context_alloc_event_query(struct wined3d_context *context,
         struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_alloc_occlusion_query(struct wined3d_context *context,

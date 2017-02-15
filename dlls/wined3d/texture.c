@@ -406,7 +406,7 @@ static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
     unsigned int i;
 
     if (device->d3d_initialized)
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
 
     for (i = 0; i < sub_count; ++i)
     {
@@ -515,7 +515,7 @@ static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
     if (texture->texture_rgb.name || texture->texture_srgb.name
             || texture->rb_multisample || texture->rb_resolved)
     {
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
     }
 
@@ -588,7 +588,7 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
          * general, but if a buffer object was previously created we can. */
         if (!context)
         {
-            context = context_acquire(device, NULL);
+            context = context_acquire(device, NULL, 0);
             gl_info = context->gl_info;
         }
 
@@ -1471,7 +1471,7 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     if (dirty_region)
         FIXME("Ignoring dirty_region %s.\n", debug_box(dirty_region));
 
-    context = context_acquire(texture->resource.device, NULL);
+    context = context_acquire(texture->resource.device, NULL, 0);
     if (!wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding))
     {
         ERR("Failed to load location %s.\n", wined3d_debug_location(texture->resource.map_binding));
@@ -1591,7 +1591,7 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
 
         if (!context && !list_empty(&surface->renderbuffers))
         {
-            context = context_acquire(device, NULL);
+            context = context_acquire(device, NULL, 0);
             gl_info = context->gl_info;
         }
 
@@ -1648,7 +1648,7 @@ static void texture_resource_preload(struct wined3d_resource *resource)
     struct wined3d_texture *texture = texture_from_resource(resource);
     struct wined3d_context *context;
 
-    context = context_acquire(resource->device, NULL);
+    context = context_acquire(resource->device, NULL, 0);
     wined3d_texture_load(texture, context, texture->flags & WINED3D_TEXTURE_IS_SRGB);
     context_release(context);
 }
@@ -1664,7 +1664,7 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
 
     TRACE("texture %p.\n", texture);
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     gl_info = context->gl_info;
 
     for (i = 0; i < sub_count; ++i)
@@ -1773,7 +1773,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
 
     if (device->d3d_initialized)
     {
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
     }
 
@@ -1890,7 +1890,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
 
     if (device->d3d_initialized)
     {
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
         gl_info = context->gl_info;
     }
 
@@ -2939,7 +2939,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
         return WINED3DERR_INVALIDCALL;
 
     if (device->d3d_initialized)
-        context = context_acquire(device, NULL);
+        context = context_acquire(device, NULL, 0);
 
     wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding);
     wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);

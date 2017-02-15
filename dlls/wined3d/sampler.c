@@ -39,7 +39,7 @@ static void wined3d_sampler_destroy_object(void *object)
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
-    context = context_acquire(sampler->device, NULL);
+    context = context_acquire(sampler->device, NULL, 0);
     gl_info = context->gl_info;
     GL_EXTCALL(glDeleteSamplers(1, &sampler->name));
     context_release(context);
@@ -77,7 +77,7 @@ static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d
     sampler->parent = parent;
     sampler->desc = *desc;
 
-    context = context_acquire(device, NULL);
+    context = context_acquire(device, NULL, 0);
     gl_info = context->gl_info;
 
     GL_EXTCALL(glGenSamplers(1, &sampler->name));

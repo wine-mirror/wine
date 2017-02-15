@@ -4755,7 +4755,7 @@ static void shader_arb_destroy(struct wined3d_shader *shader)
 
         if (shader_data->num_gl_shaders)
         {
-            struct wined3d_context *context = context_acquire(device, NULL);
+            struct wined3d_context *context = context_acquire(device, NULL, 0);
 
             for (i = 0; i < shader_data->num_gl_shaders; ++i)
             {
@@ -4779,7 +4779,7 @@ static void shader_arb_destroy(struct wined3d_shader *shader)
 
         if (shader_data->num_gl_shaders)
         {
-            struct wined3d_context *context = context_acquire(device, NULL);
+            struct wined3d_context *context = context_acquire(device, NULL, 0);
 
             for (i = 0; i < shader_data->num_gl_shaders; ++i)
             {
@@ -7798,7 +7798,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
     struct wined3d_color_key alpha_test_key;
 
     /* Activate the destination context, set it up for blitting */
-    context = context_acquire(device, dst_surface);
+    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
 
     /* Now load the surface */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
