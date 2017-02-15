@@ -3352,6 +3352,9 @@ struct wined3d_shader_resource_view
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
 
+    const struct wined3d_format *format;
+    struct wined3d_view_desc desc;
+
     struct wined3d_gl_view gl_view;
 };
 
