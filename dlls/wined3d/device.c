@@ -998,27 +998,8 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
         return hr;
     }
 
-    /* Recreate the primary swapchain's context. */
-    if (!(swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context))))
-    {
-        ERR("Failed to allocate memory for swapchain context array.\n");
-        device->blitter->free_private(device);
-        device->shader_backend->shader_free_private(device);
-        return E_OUTOFMEMORY;
-    }
-
     target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
-    if (!(context = context_create(swapchain, target, swapchain->ds_format)))
-    {
-        WARN("Failed to create context.\n");
-        HeapFree(GetProcessHeap(), 0, swapchain->context);
-        device->blitter->free_private(device);
-        device->shader_backend->shader_free_private(device);
-        return E_FAIL;
-    }
-
-    swapchain->context[0] = context;
-    swapchain->num_contexts = 1;
+    context = context_acquire(device, target, 0);
     create_dummy_textures(device, context);
     create_default_samplers(device, context);
     context_release(context);
