@@ -9478,23 +9478,21 @@ static void test_uint_shader_instructions(void)
     static const DWORD ps_not_code[] =
     {
 #if 0
-        uint bits[2];
+        uint2 bits;
 
         uint4 main() : SV_Target
         {
-            return uint4(~bits[0], ~(bits[0] ^ ~0u), ~bits[1], ~(bits[1] ^ ~0u));
+            return uint4(~bits.x, ~(bits.x ^ ~0u), ~bits.y, ~(bits.y ^ ~0u));
         }
 #endif
-        0x43425844, 0x1d56b429, 0xb5f4c0e1, 0x496a0bfd, 0xfc6f8e6f, 0x00000001, 0x00000140, 0x00000003,
+        0x43425844, 0xaed0fd26, 0xf719a878, 0xc832efd6, 0xba03c264, 0x00000001, 0x00000100, 0x00000003,
         0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
         0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
-        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000c8, 0x00000040, 0x00000032,
-        0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
-        0x00000001, 0x08000057, 0x00100012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x00004001,
-        0xffffffff, 0x0500003b, 0x00102022, 0x00000000, 0x0010000a, 0x00000000, 0x08000057, 0x00100012,
-        0x00000000, 0x0020800a, 0x00000000, 0x00000001, 0x00004001, 0xffffffff, 0x0500003b, 0x00102082,
-        0x00000000, 0x0010000a, 0x00000000, 0x0600003b, 0x00102012, 0x00000000, 0x0020800a, 0x00000000,
-        0x00000000, 0x0600003b, 0x00102042, 0x00000000, 0x0020800a, 0x00000000, 0x00000001, 0x0100003e,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000088, 0x00000040, 0x00000022,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
+        0x00000001, 0x0b000057, 0x00100032, 0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x00004002,
+        0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0x0500003b, 0x001020a2, 0x00000000, 0x00100406,
+        0x00000000, 0x0600003b, 0x00102052, 0x00000000, 0x00208106, 0x00000000, 0x00000000, 0x0100003e,
     };
     static const struct shader ps_ftou = {ps_ftou_code, sizeof(ps_ftou_code)};
     static const struct shader ps_not = {ps_not_code, sizeof(ps_not_code)};
@@ -9513,8 +9511,9 @@ static void test_uint_shader_instructions(void)
         {&ps_ftou,  {BITS_INF},  {~0u, 0}},
         {&ps_ftou,  {BITS_N1_0}, { 0,  1}},
         {&ps_ftou,  {BITS_1_0},  { 1,  0}},
-        {&ps_not,   {0x00000000, 0xffffffff}, {0xffffffff, 0x00000000, 0x00000000, 0xffffffff}},
-        {&ps_not,   {0xf0f0f0f0, 0x0f0f0f0f}, {0x0f0f0f0f, 0xf0f0f0f0, 0xf0f0f0f0, 0x0f0f0f0f}},
+
+        {&ps_not, {0x00000000, 0xffffffff}, {0xffffffff, 0x00000000, 0x00000000, 0xffffffff}},
+        {&ps_not, {0xf0f0f0f0, 0x0f0f0f0f}, {0x0f0f0f0f, 0xf0f0f0f0, 0xf0f0f0f0, 0x0f0f0f0f}},
     };
 
     if (!init_test_context(&test_context))
@@ -9522,7 +9521,7 @@ static void test_uint_shader_instructions(void)
 
     device = test_context.device;
 
-    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, 4 * sizeof(tests[0].bits), NULL);
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(tests[0].bits), NULL);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
 
     ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
