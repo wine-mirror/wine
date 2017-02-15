@@ -67,6 +67,7 @@ static NTSTATUS (WINAPI *pNtWriteFile)(HANDLE hFile, HANDLE hEvent,
 static NTSTATUS (WINAPI *pNtCancelIoFile)(HANDLE hFile, PIO_STATUS_BLOCK io_status);
 static NTSTATUS (WINAPI *pNtCancelIoFileEx)(HANDLE hFile, PIO_STATUS_BLOCK iosb, PIO_STATUS_BLOCK io_status);
 static NTSTATUS (WINAPI *pNtClose)( PHANDLE );
+static NTSTATUS (WINAPI *pNtFsControlFile) (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, PVOID apc_context, PIO_STATUS_BLOCK io, ULONG code, PVOID in_buffer, ULONG in_size, PVOID out_buffer, ULONG out_size);
 
 static NTSTATUS (WINAPI *pNtCreateIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG);
 static NTSTATUS (WINAPI *pNtOpenIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES);
@@ -4375,6 +4376,29 @@ static void test_read_write(void)
     CloseHandle(hfile);
 }
 
+static void test_ioctl(void)
+{
+    HANDLE event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    IO_STATUS_BLOCK iosb;
+    HANDLE file;
+    NTSTATUS status;
+
+    file = create_temp_file(FILE_FLAG_OVERLAPPED);
+    ok(file != INVALID_HANDLE_VALUE, "coult not create temp file\n");
+
+    SetEvent(event);
+    status = pNtFsControlFile(file, event, NULL, NULL, &iosb, 0xdeadbeef, 0, 0, 0, 0);
+    todo_wine
+    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtFsControlFile returned %x\n", status);
+    ok(!is_signaled(event), "event is signaled\n");
+
+    status = pNtFsControlFile(file, (HANDLE)0xdeadbeef, NULL, NULL, &iosb, 0xdeadbeef, 0, 0, 0, 0);
+    ok(status == STATUS_INVALID_HANDLE, "NtFsControlFile returned %x\n", status);
+
+    CloseHandle(event);
+    CloseHandle(file);
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -4401,6 +4425,7 @@ START_TEST(file)
     pNtCancelIoFile         = (void *)GetProcAddress(hntdll, "NtCancelIoFile");
     pNtCancelIoFileEx       = (void *)GetProcAddress(hntdll, "NtCancelIoFileEx");
     pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
+    pNtFsControlFile        = (void *)GetProcAddress(hntdll, "NtFsControlFile");
     pNtCreateIoCompletion   = (void *)GetProcAddress(hntdll, "NtCreateIoCompletion");
     pNtOpenIoCompletion     = (void *)GetProcAddress(hntdll, "NtOpenIoCompletion");
     pNtQueryIoCompletion    = (void *)GetProcAddress(hntdll, "NtQueryIoCompletion");
@@ -4434,4 +4459,5 @@ START_TEST(file)
     test_file_id_information();
     test_query_volume_information_file();
     test_query_attribute_information_file();
+    test_ioctl();
 }

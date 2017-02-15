@@ -106,6 +106,11 @@ static BOOL init_func_ptrs(void)
     return TRUE;
 }
 
+static inline BOOL is_signaled( HANDLE obj )
+{
+    return WaitForSingleObject( obj, 0 ) == WAIT_OBJECT_0;
+}
+
 static const WCHAR testpipe[] = { '\\', '\\', '.', '\\', 'p', 'i', 'p', 'e', '\\',
                                   't', 'e', 's', 't', 'p', 'i', 'p', 'e', 0 };
 static const WCHAR testpipe_nt[] = { '\\', '?', '?', '\\', 'p', 'i', 'p', 'e', '\\',
@@ -312,10 +317,12 @@ static void test_overlapped(void)
 
     if (hClient != INVALID_HANDLE_VALUE)
     {
+        SetEvent(hEvent);
         memset(&iosb, 0x55, sizeof(iosb));
         res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
         ok(res == STATUS_PIPE_CONNECTED, "NtFsControlFile returned %x\n", res);
         ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
+        ok(!is_signaled(hEvent), "hEvent not signaled\n");
 
         CloseHandle(hClient);
     }

@@ -58,7 +58,7 @@ struct fd_ops
     /* flush the object buffers */
     obj_handle_t (*flush)(struct fd *, const async_data_t *, int);
     /* perform an ioctl on the file */
-    obj_handle_t (*ioctl)(struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
+    obj_handle_t (*ioctl)(struct fd *fd, ioctl_code_t code, struct async *async, int blocking );
     /* queue an async operation */
     void (*queue_async)(struct fd *, struct async *async, int type, int count);
     /* selected events for async i/o need an update */
@@ -103,8 +103,8 @@ extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern obj_handle_t no_fd_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
 extern obj_handle_t no_fd_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
 extern obj_handle_t no_fd_flush( struct fd *fd, const async_data_t *async, int blocking );
-extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
-extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking );
+extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async, int blocking );
+extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async, int blocking );
 extern void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count );
 extern void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );

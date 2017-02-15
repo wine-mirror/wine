@@ -2186,14 +2186,14 @@ obj_handle_t no_fd_flush( struct fd *fd, const async_data_t *async, int blocking
 }
 
 /* default ioctl() routine */
-obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking )
+obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async, int blocking )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
 /* default ioctl() routine */
-obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async, int blocking )
+obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async, int blocking )
 {
     switch(code)
     {
@@ -2494,13 +2494,22 @@ DECL_HANDLER(ioctl)
 {
     unsigned int access = (req->code >> 14) & (FILE_READ_DATA|FILE_WRITE_DATA);
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, access );
+    struct async *async;
+    struct iosb *iosb;
 
-    if (fd)
+    if (!fd) return;
+
+    if ((iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() )))
     {
-        reply->wait    = fd->fd_ops->ioctl( fd, req->code, &req->async, req->blocking );
-        reply->options = fd->options;
-        release_object( fd );
+        if ((async = create_async( current, &req->async, iosb )))
+        {
+            reply->wait    = fd->fd_ops->ioctl( fd, req->code, async, req->blocking );
+            reply->options = fd->options;
+            release_object( async );
+        }
+        release_object( iosb );
     }
+    release_object( fd );
 }
 
 /* create / reschedule an async I/O */
