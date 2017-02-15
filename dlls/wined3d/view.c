@@ -166,7 +166,7 @@ static void create_buffer_texture(struct wined3d_gl_view *view,
     }
     else
     {
-        if (!offset || size != buffer->resource.size)
+        if (offset || size != buffer->resource.size)
             FIXME("OpenGL implementation does not support ARB_texture_buffer_range.\n");
         GL_EXTCALL(glTexBuffer(GL_TEXTURE_BUFFER, view_format->glInternal, buffer->buffer_object));
     }
