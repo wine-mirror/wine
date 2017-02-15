@@ -114,7 +114,7 @@ static const struct object_ops async_queue_ops =
 
 static inline void async_reselect( struct async *async )
 {
-    if (async->queue->fd) fd_reselect_async( async->queue->fd, async->queue );
+    if (async->queue && async->queue->fd) fd_reselect_async( async->queue->fd, async->queue );
 }
 
 static void async_dump( struct object *obj, int verbose )
@@ -137,13 +137,17 @@ static void async_destroy( struct object *obj )
     assert( obj->ops == &async_ops );
 
     list_remove( &async->process_entry );
-    list_remove( &async->queue_entry );
-    async_reselect( async );
+
+    if (async->queue)
+    {
+        list_remove( &async->queue_entry );
+        async_reselect( async );
+        release_object( async->queue );
+    }
 
     if (async->timeout) remove_timeout_user( async->timeout );
     if (async->event) release_object( async->event );
     if (async->iosb) release_object( async->iosb );
-    release_object( async->queue );
     release_object( async->thread );
 }
 
@@ -191,7 +195,7 @@ void async_terminate( struct async *async, unsigned int status )
     else async_set_result( &async->obj, STATUS_SUCCESS, 0, 0, 0 );
 
     async_reselect( async );
-    release_object( async );  /* so that it gets destroyed when the async is done */
+    if (async->queue) release_object( async );  /* so that it gets destroyed when the async is done */
 }
 
 /* callback for timeout on an async request */
@@ -227,9 +231,18 @@ void free_async_queue( struct async_queue *queue )
     release_object( queue );
 }
 
+void queue_async( struct async_queue *queue, struct async *async )
+{
+    async->queue = (struct async_queue *)grab_object( queue );
+
+    grab_object( async );
+    list_add_tail( &queue->queue, &async->queue_entry );
+
+    if (queue->fd) set_fd_signaled( queue->fd, 0 );
+}
+
 /* create an async on a given queue of a fd */
-struct async *create_async( struct thread *thread, struct async_queue *queue, const async_data_t *data,
-                            struct iosb *iosb )
+struct async *create_async( struct thread *thread, const async_data_t *data, struct iosb *iosb )
 {
     struct event *event = NULL;
     struct async *async;
@@ -248,18 +261,15 @@ struct async *create_async( struct thread *thread, struct async_queue *queue, co
     async->status  = STATUS_PENDING;
     async->data    = *data;
     async->timeout = NULL;
-    async->queue   = (struct async_queue *)grab_object( queue );
+    async->queue   = NULL;
     async->signaled = 0;
 
     if (iosb) async->iosb = (struct iosb *)grab_object( iosb );
     else async->iosb = NULL;
 
-    list_add_tail( &queue->queue, &async->queue_entry );
     list_add_head( &thread->process->asyncs, &async->process_entry );
-    grab_object( async );
-
-    if (queue->fd) set_fd_signaled( queue->fd, 0 );
     if (event) reset_event( event );
+
     return async;
 }
 
@@ -318,7 +328,8 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         async->status = status;
         if (status == STATUS_MORE_PROCESSING_REQUIRED) return;  /* don't report the completion */
 
-        if (async->data.cvalue) add_async_completion( async->queue, async->data.cvalue, status, total );
+        if (async->queue && async->data.cvalue)
+            add_async_completion( async->queue, async->data.cvalue, status, total );
         if (apc)
         {
             apc_call_t data;
@@ -331,7 +342,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             thread_queue_apc( async->thread, NULL, &data );
         }
         if (async->event) set_event( async->event );
-        else if (async->queue->fd) set_fd_signaled( async->queue->fd, 1 );
+        else if (async->queue && async->queue->fd) set_fd_signaled( async->queue->fd, 1 );
         async->signaled = 1;
         wake_up( &async->obj, 0 );
     }
@@ -364,7 +375,7 @@ restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
         if (async->status == STATUS_CANCELLED) continue;
-        if ((!obj || (async->queue->fd && get_fd_user( async->queue->fd ) == obj)) &&
+        if ((!obj || (async->queue && async->queue->fd && get_fd_user( async->queue->fd ) == obj)) &&
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
         {

@@ -838,6 +838,7 @@ static obj_handle_t named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code,
             struct named_pipe *pipe;
             struct pipe_server *server;
             struct unicode_str name;
+            timeout_t when;
 
             if (size < sizeof(*buffer) ||
                 size < FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[buffer->NameLength/sizeof(WCHAR)]))
@@ -855,9 +856,10 @@ static obj_handle_t named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code,
 
                 if (!pipe->waiters && !(pipe->waiters = create_async_queue( NULL ))) goto done;
 
-                if ((async = create_async( current, pipe->waiters, async_data, NULL )))
+                if ((async = create_async( current, async_data, NULL )))
                 {
-                    timeout_t when = buffer->TimeoutSpecified ? buffer->Timeout.QuadPart : pipe->timeout;
+                    queue_async( pipe->waiters, async );
+                    when = buffer->TimeoutSpecified ? buffer->Timeout.QuadPart : pipe->timeout;
                     async_set_timeout( async, when, STATUS_IO_TIMEOUT );
                     if (blocking) wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
                     release_object( async );

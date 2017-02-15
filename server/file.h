@@ -177,8 +177,8 @@ extern struct object *create_serial( struct fd *fd );
 /* async I/O functions */
 extern struct async_queue *create_async_queue( struct fd *fd );
 extern void free_async_queue( struct async_queue *queue );
-extern struct async *create_async( struct thread *thread, struct async_queue *queue,
-                                   const async_data_t *data, struct iosb *iosb );
+extern struct async *create_async( struct thread *thread, const async_data_t *data, struct iosb *iosb );
+extern void queue_async( struct async_queue *queue, struct async *async );
 extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status );
 extern void async_set_result( struct object *obj, unsigned int status,
                               apc_param_t total, client_ptr_t apc, client_ptr_t apc_arg );

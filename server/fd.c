@@ -2054,12 +2054,16 @@ struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct io
         assert(0);
     }
 
-    if ((async = create_async( current, queue, data, iosb )) && type != ASYNC_TYPE_WAIT)
+    if ((async = create_async( current, data, iosb )))
     {
-        if (!fd->inode)
-            set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
-        else  /* regular files are always ready for read and write */
-            async_wake_up( queue, STATUS_ALERTED );
+        queue_async( queue, async );
+        if (type != ASYNC_TYPE_WAIT)
+        {
+            if (!fd->inode)
+                set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+            else  /* regular files are always ready for read and write */
+                async_wake_up( queue, STATUS_ALERTED );
+        }
     }
     return async;
 }

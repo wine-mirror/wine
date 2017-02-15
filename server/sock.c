@@ -552,7 +552,8 @@ obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *a
             return 0;
         }
         if (!(ifchange_q = sock_get_ifchange_q( sock ))) return 0;
-        if (!(async = create_async( current, ifchange_q, async_data, NULL ))) return 0;
+        if (!(async = create_async( current, async_data, NULL ))) return 0;
+        queue_async( ifchange_q, async );
         if (blocking) wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
         release_object( async );
         set_error( STATUS_PENDING );
@@ -593,7 +594,8 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
         return;
     }
 
-    if (!(async = create_async( current, queue, data, NULL ))) return;
+    if (!(async = create_async( current, data, NULL ))) return;
+    queue_async( queue, async );
     release_object( async );
 
     sock_reselect( sock );
