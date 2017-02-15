@@ -4528,7 +4528,7 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
     }
 }
 
-static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
+static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
 {
     struct wined3d_resource *resource, *cursor;
     struct wined3d_context *context;
@@ -4561,9 +4561,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
         else
             context_destroy(device, device->contexts[0]);
     }
-
-    HeapFree(GetProcessHeap(), 0, swapchain->context);
-    swapchain->context = NULL;
 }
 
 static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
@@ -4827,7 +4824,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         state_cleanup(&device->state);
 
         if (device->d3d_initialized)
-            delete_opengl_contexts(device, swapchain);
+            wined3d_device_delete_opengl_contexts(device);
 
         state_init(&device->state, &device->fb, &device->adapter->gl_info,
                 &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);

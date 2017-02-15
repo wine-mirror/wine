@@ -1136,7 +1136,9 @@ void swapchain_destroy_contexts(struct wined3d_swapchain *swapchain)
     {
         context_destroy(swapchain->device, swapchain->context[i]);
     }
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
     swapchain->num_contexts = 0;
+    swapchain->context = NULL;
 }
 
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain)
