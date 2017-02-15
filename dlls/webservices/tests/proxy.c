@@ -22,6 +22,73 @@
 #include "webservices.h"
 #include "wine/test.h"
 
+static inline void set_field_desc( WS_FIELD_DESCRIPTION *desc, WS_FIELD_MAPPING mapping,
+                                   WS_XML_STRING *localname, WS_XML_STRING *ns, WS_TYPE type,
+                                   void *type_desc, ULONG offset, ULONG options, ULONG count_offset,
+                                   WS_XML_STRING *item_localname, WS_XML_STRING *item_ns )
+{
+    memset( desc, 0, sizeof(*desc) );
+    desc->mapping         = mapping;
+    desc->localName       = localname;
+    desc->ns              = ns;
+    desc->type            = type;
+    desc->typeDescription = type_desc;
+    desc->offset          = offset;
+    desc->options         = options;
+    desc->countOffset     = count_offset;
+    desc->itemLocalName   = item_localname;
+    desc->itemNs          = item_ns;
+}
+
+static inline void set_struct_desc( WS_STRUCT_DESCRIPTION *desc, ULONG size, ULONG alignment,
+                                    WS_FIELD_DESCRIPTION **fields, ULONG count, WS_XML_STRING *localname,
+                                    WS_XML_STRING *ns )
+{
+    memset( desc, 0, sizeof(*desc) );
+    desc->size          = size;
+    desc->alignment     = alignment;
+    desc->fields        = fields;
+    desc->fieldCount    = count;
+    desc->typeLocalName = localname;
+    desc->typeNs        = ns;
+}
+
+static inline void set_elem_desc( WS_ELEMENT_DESCRIPTION *desc, WS_XML_STRING *localname, WS_XML_STRING *ns,
+                                  WS_TYPE type, void *type_desc )
+{
+    desc->elementLocalName = localname;
+    desc->elementNs        = ns;
+    desc->type             = type;
+    desc->typeDescription  = type_desc;
+}
+
+static inline void set_msg_desc( WS_MESSAGE_DESCRIPTION *desc, WS_XML_STRING *action,
+                                 WS_ELEMENT_DESCRIPTION *elem_desc )
+{
+    desc->action                 = action;
+    desc->bodyElementDescription = elem_desc;
+}
+
+static inline void set_param_desc( WS_PARAMETER_DESCRIPTION *desc, WS_PARAMETER_TYPE type,
+                                   USHORT input_index, USHORT output_index )
+{
+    desc->parameterType      = type;
+    desc->inputMessageIndex  = input_index;
+    desc->outputMessageIndex = output_index;
+}
+
+static inline void set_op_desc( WS_OPERATION_DESCRIPTION *desc, WS_MESSAGE_DESCRIPTION *input_msg,
+                                WS_MESSAGE_DESCRIPTION *output_msg, ULONG count,
+                                WS_PARAMETER_DESCRIPTION *param_desc )
+{
+    memset( desc, 0, sizeof(*desc) );
+    desc->versionInfo              = 1;
+    desc->inputMessageDescription  = input_msg;
+    desc->outputMessageDescription = output_msg;
+    desc->parameterCount           = count;
+    desc->parameterDescription     = param_desc;
+}
+
 static void test_WsCreateServiceProxy(void)
 {
     HRESULT hr;
@@ -166,12 +233,8 @@ static void test_WsSendMessage( int port, WS_XML_STRING *action )
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    body.elementLocalName = &req;
-    body.elementNs        = &ns;
-    body.type             = WS_INT32_TYPE;
-    body.typeDescription  = NULL;
-    desc.action                 = action;
-    desc.bodyElementDescription = &body;
+    set_elem_desc( &body, &req, &ns, WS_INT32_TYPE, NULL );
+    set_msg_desc( &desc, action, &body );
     hr = WsSendMessage( NULL, msg, &desc, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
@@ -208,12 +271,8 @@ static void test_WsReceiveMessage( int port )
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    body.elementLocalName = &req;
-    body.elementNs        = &ns;
-    body.type             = WS_INT32_TYPE;
-    body.typeDescription  = NULL;
-    desc_req.action                 = &req;
-    desc_req.bodyElementDescription = &body;
+    set_elem_desc( &body, &req, &ns, WS_INT32_TYPE, NULL );
+    set_msg_desc( &desc_req, &req, &body );
     hr = WsSendMessage( channel, msg, &desc_req, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     WsFreeMessage( msg );
@@ -221,9 +280,8 @@ static void test_WsReceiveMessage( int port )
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    body.elementLocalName = &resp;
-    desc_resp.action                 = &resp;
-    desc_resp.bodyElementDescription = &body;
+    set_elem_desc( &body, &resp, &ns, WS_INT32_TYPE, NULL );
+    set_msg_desc( &desc_resp, &resp, &body );
     desc[0] = &desc_resp;
     hr = WsReceiveMessage( NULL, msg, desc, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
                            NULL, &val, sizeof(val), NULL, NULL, NULL );
@@ -348,102 +406,35 @@ static void test_WsCall( int port )
     hr = WsCall( proxy, NULL, NULL, NULL, NULL, 0, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
-    memset( &f, 0, sizeof(f) );
-    f.mapping   = WS_ELEMENT_FIELD_MAPPING;
-    f.localName = &val;
-    f.ns        = &ns;
-    f.type      = WS_INT32_TYPE;
+    set_field_desc( &f, WS_ELEMENT_FIELD_MAPPING, &val, &ns, WS_INT32_TYPE, NULL, 0, 0, 0, NULL, NULL );
+    set_field_desc( &f4, WS_REPEATING_ELEMENT_FIELD_MAPPING, NULL, NULL, WS_WSZ_TYPE, NULL,
+                    FIELD_OFFSET(struct input, str), 0, FIELD_OFFSET(struct input, count), &str, &ns );
     fields[0] = &f;
-
-    memset( &f4, 0, sizeof(f4) );
-    f4.mapping       = WS_REPEATING_ELEMENT_FIELD_MAPPING;
-    f4.type          = WS_WSZ_TYPE;
-    f4.offset        = FIELD_OFFSET(struct input, str);
-    f4.countOffset   = FIELD_OFFSET(struct input, count);
-    f4.itemLocalName = &str;
-    f4.itemNs        = &ns;
     fields[1] = &f4;
 
-    memset( &input_struct, 0, sizeof(input_struct) );
-    input_struct.size          = sizeof(struct input);
-    input_struct.alignment     = TYPE_ALIGNMENT(struct input);
-    input_struct.fields        = fields;
-    input_struct.fieldCount    = 2;
-    input_struct.typeLocalName = &req;
-    input_struct.typeNs        = &ns;
+    set_struct_desc( &input_struct, sizeof(struct input), TYPE_ALIGNMENT(struct input), fields, 2, &req, &ns );
+    set_elem_desc( &input_elem, &req_elem, &ns, WS_STRUCT_TYPE, &input_struct );
+    set_msg_desc( &input_msg, &req_action, &input_elem );
 
-    input_elem.elementLocalName = &req_elem;
-    input_elem.elementNs        = &ns;
-    input_elem.type             = WS_STRUCT_TYPE;
-    input_elem.typeDescription  = &input_struct;
-    input_msg.action                 = &req_action;
-    input_msg.bodyElementDescription = &input_elem;
-
-    memset( &f2, 0, sizeof(f2) );
-    f2.mapping       = WS_ELEMENT_FIELD_MAPPING;
-    f2.localName     = &str;
-    f2.ns            = &ns;
-    f2.type          = WS_WSZ_TYPE;
-    f2.offset        = FIELD_OFFSET(struct output, str);
+    set_field_desc( &f2, WS_ELEMENT_FIELD_MAPPING, &str, &ns, WS_WSZ_TYPE, NULL, FIELD_OFFSET(struct output, str),
+                    0, 0, NULL, NULL );
+    set_field_desc( &f3, WS_REPEATING_ELEMENT_FIELD_MAPPING, NULL, NULL, WS_INT32_TYPE, NULL,
+                    FIELD_OFFSET(struct output, val), 0, FIELD_OFFSET(struct output, count), &val, &ns );
     fields2[0] = &f2;
-
-    memset( &f3, 0, sizeof(f3) );
-    f3.mapping       = WS_REPEATING_ELEMENT_FIELD_MAPPING;
-    f3.type          = WS_INT32_TYPE;
-    f3.offset        = FIELD_OFFSET(struct output, val);
-    f3.countOffset   = FIELD_OFFSET(struct output, count);
-    f3.itemLocalName = &val;
-    f3.itemNs        = &ns;
     fields2[1] = &f3;
 
-    memset( &output_struct, 0, sizeof(output_struct) );
-    output_struct.size          = sizeof(struct output);
-    output_struct.alignment     = TYPE_ALIGNMENT(struct output);
-    output_struct.fields        = fields2;
-    output_struct.fieldCount    = 2;
-    output_struct.typeLocalName = &resp;
-    output_struct.typeNs        = &ns;
+    set_struct_desc( &output_struct, sizeof(struct output), TYPE_ALIGNMENT(struct output), fields2, 2, &resp, &ns );
+    set_elem_desc( &output_elem, &resp_elem, &ns, WS_STRUCT_TYPE, &output_struct );
+    set_msg_desc( &output_msg, &resp_action, &output_elem );
 
-    output_elem.elementLocalName = &resp_elem;
-    output_elem.elementNs        = &ns;
-    output_elem.type             = WS_STRUCT_TYPE;
-    output_elem.typeDescription  = &output_struct;
-    output_msg.action                 = &resp_action;
-    output_msg.bodyElementDescription = &output_elem;
+    set_param_desc( &param[0], WS_PARAMETER_TYPE_NORMAL, 0, 0xffff );
+    set_param_desc( &param[1], WS_PARAMETER_TYPE_ARRAY, 1, 0xffff );
+    set_param_desc( &param[2], WS_PARAMETER_TYPE_ARRAY_COUNT, 1, 0xffff );
+    set_param_desc( &param[3], WS_PARAMETER_TYPE_NORMAL, 0xffff, 0 );
+    set_param_desc( &param[4], WS_PARAMETER_TYPE_ARRAY, 0xffff, 1 );
+    set_param_desc( &param[5], WS_PARAMETER_TYPE_ARRAY_COUNT, 0xffff, 1 );
 
-    param[0].parameterType      = WS_PARAMETER_TYPE_NORMAL;
-    param[0].inputMessageIndex  = 0;
-    param[0].outputMessageIndex = 0xffff;
-
-    param[1].parameterType      = WS_PARAMETER_TYPE_ARRAY;
-    param[1].inputMessageIndex  = 1;
-    param[1].outputMessageIndex = 0xffff;
-
-    param[2].parameterType      = WS_PARAMETER_TYPE_ARRAY_COUNT;
-    param[2].inputMessageIndex  = 1;
-    param[2].outputMessageIndex = 0xffff;
-
-    param[3].parameterType      = WS_PARAMETER_TYPE_NORMAL;
-    param[3].inputMessageIndex  = 0xffff;
-    param[3].outputMessageIndex = 0;
-
-    param[4].parameterType      = WS_PARAMETER_TYPE_ARRAY;
-    param[4].inputMessageIndex  = 0xffff;
-    param[4].outputMessageIndex = 1;
-
-    param[5].parameterType      = WS_PARAMETER_TYPE_ARRAY_COUNT;
-    param[5].inputMessageIndex  = 0xffff;
-    param[5].outputMessageIndex = 1;
-
-    op.versionInfo              = 1;
-    op.inputMessageDescription  = &input_msg;
-    op.outputMessageDescription = &output_msg;
-    op.inputMessageOptions      = 0;
-    op.outputMessageOptions     = 0;
-    op.parameterCount           = 6;
-    op.parameterDescription     = param;
-    op.stubCallback             = NULL;
-    op.style                    = 0;
+    set_op_desc( &op, &input_msg, &output_msg, 6, param );
     hr = WsCall( proxy, &op, NULL, NULL, NULL, 0, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
