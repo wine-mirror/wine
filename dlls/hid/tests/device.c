@@ -358,7 +358,7 @@ static void test_get_input_report(void)
         {
             ok(data[0] == 0, "Report ID (0) is not the first byte of the data\n");
             report[0] = 0;
-            for (i = 0; i < Caps.InputReportByteLength && i < Caps.InputReportByteLength; i++)
+            for (i = 0; i < Caps.InputReportByteLength; i++)
             {
                 char bytestr[5];
                 sprintf(bytestr, "%x ", (BYTE)data[i]);
