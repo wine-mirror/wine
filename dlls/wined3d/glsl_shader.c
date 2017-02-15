@@ -5051,6 +5051,28 @@ static void shader_glsl_store_uav(const struct wined3d_shader_instruction *ins)
             image_coord_param.param_str, image_data_param.param_str);
 }
 
+static void shader_glsl_store_raw(const struct wined3d_shader_instruction *ins)
+{
+    const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    struct glsl_src_param offset, data;
+    DWORD write_mask;
+    unsigned int i;
+
+    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &offset);
+
+    for (i = 0; i < 4; ++i)
+    {
+        if (!(write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i)))
+            continue;
+
+        shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &data);
+
+        shader_addline(buffer, "imageStore(%s_image%u, %s / 4 + %u, uvec4(%s, 0, 0, 0));\n",
+                prefix, ins->dst[0].reg.idx[0].offset, offset.param_str, i, data.param_str);
+    }
+}
+
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
@@ -9372,7 +9394,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SINCOS                           */ shader_glsl_sincos,
     /* WINED3DSIH_SLT                              */ shader_glsl_compare,
     /* WINED3DSIH_SQRT                             */ shader_glsl_map2gl,
-    /* WINED3DSIH_STORE_RAW                        */ NULL,
+    /* WINED3DSIH_STORE_RAW                        */ shader_glsl_store_raw,
     /* WINED3DSIH_STORE_STRUCTURED                 */ NULL,
     /* WINED3DSIH_STORE_UAV_TYPED                  */ shader_glsl_store_uav,
     /* WINED3DSIH_SUB                              */ shader_glsl_binop,
