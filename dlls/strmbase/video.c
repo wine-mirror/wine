@@ -569,8 +569,7 @@ HRESULT WINAPI BaseControlVideoImpl_GetVideoPaletteEntries(IBasicVideo *iface, L
     if (!pRetrieved || !pPalette)
         return E_POINTER;
 
-    if (pRetrieved)
-        *pRetrieved = 0;
+    *pRetrieved = 0;
     return VFW_E_NO_PALETTE_AVAILABLE;
 }
 
