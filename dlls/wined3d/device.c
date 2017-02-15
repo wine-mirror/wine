@@ -1126,15 +1126,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
 
-    /* Destroy the depth blt resources, they will be invalid after the reset. Also free shader
-     * private data, it might contain opengl pointers
-     */
-    if (device->depth_blt_texture)
-    {
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->depth_blt_texture);
-        device->depth_blt_texture = 0;
-    }
-
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
@@ -4540,7 +4531,6 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
 static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
     struct wined3d_resource *resource, *cursor;
-    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_shader *shader;
 
@@ -4556,13 +4546,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     }
 
     context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
-
-    if (device->depth_blt_texture)
-    {
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->depth_blt_texture);
-        device->depth_blt_texture = 0;
-    }
 
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);

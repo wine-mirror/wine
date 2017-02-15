@@ -2618,9 +2618,6 @@ struct wined3d_device
     struct wined3d_fb_state fb;
     struct wined3d_rendertarget_view *auto_depth_stencil_view;
 
-    /* For rendering to a texture using glCopyTexImage */
-    GLuint                  depth_blt_texture;
-
     /* Cursor management */
     UINT                    xHotSpot;
     UINT                    yHotSpot;
