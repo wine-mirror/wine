@@ -2815,6 +2815,18 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
         return DDERR_INVALIDPARAMS;
     }
 
+    __TRY
+    {
+        *surface = NULL;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN("Surface pointer %p is invalid.\n", surface);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPARAMS;
+    }
+    __ENDTRY;
+
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
         if (TRACE_ON(ddraw))
@@ -2830,23 +2842,12 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
 
     hr = ddraw_surface_create(ddraw, surface_desc, &impl, outer_unknown, 7);
     wined3d_mutex_unlock();
+    if (FAILED(hr))
+        return hr;
 
-    __TRY
-    {
-        if (FAILED(hr))
-        {
-            *surface = NULL;
-            break;
-        }
-        *surface = &impl->IDirectDrawSurface7_iface;
-        IDirectDraw7_AddRef(iface);
-        impl->ifaceToRelease = (IUnknown *)iface;
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        hr = E_INVALIDARG;
-    }
-    __ENDTRY;
+    *surface = &impl->IDirectDrawSurface7_iface;
+    IDirectDraw7_AddRef(iface);
+    impl->ifaceToRelease = (IUnknown *)iface;
 
     return hr;
 }
@@ -2877,6 +2878,18 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    __TRY
+    {
+        *surface = NULL;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN("Surface pointer %p is invalid.\n", surface);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPARAMS;
+    }
+    __ENDTRY;
+
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
         if (TRACE_ON(ddraw))
@@ -2892,23 +2905,12 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
 
     hr = ddraw_surface_create(ddraw, surface_desc, &impl, outer_unknown, 4);
     wined3d_mutex_unlock();
+    if (FAILED(hr))
+        return hr;
 
-    __TRY
-    {
-        if (FAILED(hr))
-        {
-            *surface = NULL;
-            break;
-        }
-        *surface = &impl->IDirectDrawSurface4_iface;
-        IDirectDraw4_AddRef(iface);
-        impl->ifaceToRelease = (IUnknown *)iface;
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        hr = E_INVALIDARG;
-    }
-    __ENDTRY;
+    *surface = &impl->IDirectDrawSurface4_iface;
+    IDirectDraw4_AddRef(iface);
+    impl->ifaceToRelease = (IUnknown *)iface;
 
     return hr;
 }
@@ -2940,6 +2942,18 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    __TRY
+    {
+        *surface = NULL;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN("Surface pointer %p is invalid.\n", surface);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPARAMS;
+    }
+    __ENDTRY;
+
     DDSD_to_DDSD2(surface_desc, &surface_desc2);
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
@@ -2956,22 +2970,11 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
 
     hr = ddraw_surface_create(ddraw, &surface_desc2, &impl, outer_unknown, 2);
     wined3d_mutex_unlock();
+    if (FAILED(hr))
+        return hr;
 
-    __TRY
-    {
-        if (FAILED(hr))
-        {
-            *surface = NULL;
-            break;
-        }
-        *surface = &impl->IDirectDrawSurface_iface;
-        impl->ifaceToRelease = NULL;
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        hr = E_INVALIDARG;
-    }
-    __ENDTRY;
+    *surface = &impl->IDirectDrawSurface_iface;
+    impl->ifaceToRelease = NULL;
 
     return hr;
 }
@@ -3003,6 +3006,18 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
         return DDERR_INVALIDPARAMS;
     }
 
+    __TRY
+    {
+        *surface = NULL;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN("Surface pointer %p is invalid.\n", surface);
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPARAMS;
+    }
+    __ENDTRY;
+
     if ((surface_desc->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_BACKBUFFER))
             == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_BACKBUFFER)
             || (surface_desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER))
@@ -3016,22 +3031,11 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     DDSD_to_DDSD2(surface_desc, &surface_desc2);
     hr = ddraw_surface_create(ddraw, &surface_desc2, &impl, outer_unknown, 1);
     wined3d_mutex_unlock();
+    if (FAILED(hr))
+        return hr;
 
-    __TRY
-    {
-        if (FAILED(hr))
-        {
-            *surface = NULL;
-            break;
-        }
-        *surface = &impl->IDirectDrawSurface_iface;
-        impl->ifaceToRelease = NULL;
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        hr = E_INVALIDARG;
-    }
-    __ENDTRY;
+    *surface = &impl->IDirectDrawSurface_iface;
+    impl->ifaceToRelease = NULL;
 
     return hr;
 }
