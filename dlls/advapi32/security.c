@@ -6093,3 +6093,27 @@ BOOL WINAPI SaferSetLevelInformation(SAFER_LEVEL_HANDLE handle, SAFER_OBJECT_INF
     FIXME("(%p %u %p %u) stub\n", handle, infotype, buffer, size);
     return FALSE;
 }
+
+/******************************************************************************
+ * LookupSecurityDescriptorPartsA   [ADVAPI32.@]
+ */
+DWORD WINAPI LookupSecurityDescriptorPartsA(TRUSTEEA *owner, TRUSTEEA *group, ULONG *access_count,
+                                            EXPLICIT_ACCESSA *access_list, ULONG *audit_count,
+                                            EXPLICIT_ACCESSA *audit_list, SECURITY_DESCRIPTOR *descriptor)
+{
+    FIXME("(%p %p %p %p %p %p %p) stub\n", owner, group, access_count,
+          access_list, audit_count, audit_list, descriptor);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * LookupSecurityDescriptorPartsW   [ADVAPI32.@]
+ */
+DWORD WINAPI LookupSecurityDescriptorPartsW(TRUSTEEW *owner, TRUSTEEW *group, ULONG *access_count,
+                                            EXPLICIT_ACCESSW *access_list, ULONG *audit_count,
+                                            EXPLICIT_ACCESSW *audit_list, SECURITY_DESCRIPTOR *descriptor)
+{
+    FIXME("(%p %p %p %p %p %p %p) stub\n", owner, group, access_count,
+          access_list, audit_count, audit_list, descriptor);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

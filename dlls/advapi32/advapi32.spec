@@ -415,8 +415,8 @@
 @ stdcall LookupPrivilegeNameW(wstr ptr ptr ptr)
 @ stdcall LookupPrivilegeValueA(ptr ptr ptr)
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
-# @ stub LookupSecurityDescriptorPartsA
-# @ stub LookupSecurityDescriptorPartsW
+@ stdcall LookupSecurityDescriptorPartsA(ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall LookupSecurityDescriptorPartsW(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall LsaAddAccountRights(ptr ptr ptr long)
 @ stub LsaAddPrivilegesToAccount
 # @ stub LsaClearAuditLog
