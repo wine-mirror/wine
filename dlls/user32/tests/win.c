@@ -9500,6 +9500,7 @@ static void test_winproc_limit(void)
 static void test_deferwindowpos(void)
 {
     HDWP hdwp, hdwp2;
+    HWND hwnd;
     BOOL ret;
 
     hdwp = BeginDeferWindowPos(0);
@@ -9528,6 +9529,17 @@ todo_wine
     ok(hdwp2 == NULL && GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "got %p, error %d\n", hdwp2, GetLastError());
 
     ret = EndDeferWindowPos(hdwp);
+    ok(ret, "got %d\n", ret);
+    hdwp = BeginDeferWindowPos(0);
+    ok(hdwp != NULL, "got %p\n", hdwp);
+
+    hwnd = create_tool_window(WS_POPUP, 0);
+    hdwp2 = DeferWindowPos(hdwp, hwnd, NULL, 0, 0, 10, 10, 0);
+    ok(hdwp2 != NULL, "got %p, error %d\n", hdwp2, GetLastError());
+    DestroyWindow(hwnd);
+
+    ret = EndDeferWindowPos(hdwp);
+todo_wine
     ok(ret, "got %d\n", ret);
 }
 
