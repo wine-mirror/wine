@@ -9539,7 +9539,6 @@ todo_wine
     DestroyWindow(hwnd);
 
     ret = EndDeferWindowPos(hdwp);
-todo_wine
     ok(ret, "got %d\n", ret);
 }
 

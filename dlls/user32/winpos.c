@@ -2430,7 +2430,6 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
 {
     DWP *pDWP;
     WINDOWPOS *winpos;
-    BOOL res = TRUE;
     int i;
 
     TRACE("%p\n", hdwp);
@@ -2442,20 +2441,20 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
         return FALSE;
     }
 
-    for (i = 0, winpos = pDWP->winPos; res && i < pDWP->actualCount; i++, winpos++)
+    for (i = 0, winpos = pDWP->winPos; i < pDWP->actualCount; i++, winpos++)
     {
         TRACE("hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
                winpos->hwnd, winpos->hwndInsertAfter, winpos->x, winpos->y,
                winpos->cx, winpos->cy, winpos->flags);
 
         if (WIN_IsCurrentThread( winpos->hwnd ))
-            res = USER_SetWindowPos( winpos );
+            USER_SetWindowPos( winpos );
         else
-            res = SendMessageW( winpos->hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)winpos );
+            SendMessageW( winpos->hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)winpos );
     }
     HeapFree( GetProcessHeap(), 0, pDWP->winPos );
     HeapFree( GetProcessHeap(), 0, pDWP );
-    return res;
+    return TRUE;
 }
 
 
