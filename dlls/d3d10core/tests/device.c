@@ -5267,6 +5267,7 @@ static void test_texture(void)
         0x00000000, 0x00100e46, 0x00000000, 0x0700002d, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000,
         0x00107e46, 0x00000000, 0x0100003e,
     };
+    static const struct shader ps_ld = {ps_ld_code, sizeof(ps_ld_code)};
     static const DWORD ps_ld_sint8_code[] =
     {
 #if 0
@@ -5304,6 +5305,7 @@ static void test_texture(void)
         0x00004002, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, 0x0a000038, 0x001020f2, 0x00000000,
         0x00100e46, 0x00000000, 0x00004002, 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, 0x0100003e,
     };
+    static const struct shader ps_ld_sint8 = {ps_ld_sint8_code, sizeof(ps_ld_sint8_code)};
     static const DWORD ps_ld_uint8_code[] =
     {
 #if 0
@@ -5336,6 +5338,7 @@ static void test_texture(void)
         0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x3b808081, 0x3b808081, 0x3b808081,
         0x3b808081, 0x0100003e,
     };
+    static const struct shader ps_ld_uint8 = {ps_ld_uint8_code, sizeof(ps_ld_uint8_code)};
     static const DWORD ps_sample_code[] =
     {
 #if 0
@@ -5362,6 +5365,7 @@ static void test_texture(void)
         0x3b088889, 0x00000000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100046, 0x00000000,
         0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
     };
+    static const struct shader ps_sample = {ps_sample_code, sizeof(ps_sample_code)};
     static const DWORD ps_sample_b_code[] =
     {
 #if 0
@@ -5391,6 +5395,7 @@ static void test_texture(void)
         0x001020f2, 0x00000000, 0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000,
         0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
     };
+    static const struct shader ps_sample_b = {ps_sample_b_code, sizeof(ps_sample_b_code)};
     static const DWORD ps_sample_l_code[] =
     {
 #if 0
@@ -5420,6 +5425,7 @@ static void test_texture(void)
         0x001020f2, 0x00000000, 0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000,
         0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
     };
+    static const struct shader ps_sample_l = {ps_sample_l_code, sizeof(ps_sample_l_code)};
     static const DWORD ps_sample_2d_array_code[] =
     {
 #if 0
@@ -5451,12 +5457,6 @@ static void test_texture(void)
         0x0020800a, 0x00000000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100246, 0x00000000,
         0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
     };
-    static const struct shader ps_ld = {ps_ld_code, sizeof(ps_ld_code)};
-    static const struct shader ps_ld_sint8 = {ps_ld_sint8_code, sizeof(ps_ld_sint8_code)};
-    static const struct shader ps_ld_uint8 = {ps_ld_uint8_code, sizeof(ps_ld_uint8_code)};
-    static const struct shader ps_sample = {ps_sample_code, sizeof(ps_sample_code)};
-    static const struct shader ps_sample_b = {ps_sample_b_code, sizeof(ps_sample_b_code)};
-    static const struct shader ps_sample_l = {ps_sample_l_code, sizeof(ps_sample_l_code)};
     static const struct shader ps_sample_2d_array = {ps_sample_2d_array_code, sizeof(ps_sample_2d_array_code)};
     static const DWORD red_data[] =
     {
@@ -5544,6 +5544,20 @@ static void test_texture(void)
         0x10, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x10, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0x10, 0x7f, 0xb6, 0x6d, 0xdb, 0xb6, 0x6d, 0xdb, 0x10, 0x7f, 0xb6, 0x6d, 0xdb, 0xb6, 0x6d, 0xdb,
     };
+    static const float r32_float[] =
+    {
+        0.0f, 1.0f,  0.5f, 0.50f,
+        1.0f, 0.0f,  0.0f, 0.75f,
+        0.0f, 1.0f,  0.5f, 0.25f,
+        1.0f, 0.0f,  0.0f, 0.75f,
+    };
+    static const DWORD r32_uint[] =
+    {
+          0,   1,   2,   3,
+        100, 200, 255, 128,
+         40,  30,  20,  10,
+        250, 210, 155, 190,
+    };
     static const struct texture rgba_texture =
     {
         4, 4, 3, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -5583,6 +5597,10 @@ static void test_texture(void)
             {blue_data,  5 * sizeof(*blue_data)},
         }
     };
+    static const struct texture r32f_typeless = {4, 4, 1, 1, DXGI_FORMAT_R32_TYPELESS,
+            {{r32_float, 4 * sizeof(*r32_float)}}};
+    static const struct texture r32u_typeless = {4, 4, 1, 1, DXGI_FORMAT_R32_TYPELESS,
+            {{r32_uint, 4 * sizeof(*r32_uint)}}};
     static const DWORD red_colors[] =
     {
         0xff0000ff, 0xff0000ff, 0xff0000ff, 0xff0000ff,
@@ -5659,6 +5677,20 @@ static void test_texture(void)
         0x7e7e8080, 0x7e7e7f7f, 0x7e808080, 0x7effffff,
         0x7e7e7e7e, 0x7e7e7e7e, 0x7e7e7e7e, 0x7e808080,
         0x7e7e7e7e, 0x7e7f7f7f, 0x7e7f7f7f, 0x7e7f7f7f,
+    };
+    static const DWORD r32f_colors[] =
+    {
+        0xff000000, 0xff0000ff, 0xff00007f, 0xff00007f,
+        0xff0000ff, 0xff000000, 0xff000000, 0xff0000bf,
+        0xff000000, 0xff0000ff, 0xff00007f, 0xff000040,
+        0xff0000ff, 0xff000000, 0xff000000, 0xff0000bf,
+    };
+    static const DWORD r32u_colors[16] =
+    {
+        0x01000000, 0x01000001, 0x01000002, 0x01000003,
+        0x01000064, 0x010000c8, 0x010000ff, 0x01000080,
+        0x01000028, 0x0100001e, 0x01000014, 0x0100000a,
+        0x010000fa, 0x010000d2, 0x0100009b, 0x010000be,
     };
     static const DWORD zero_colors[4 * 4] = {0};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
@@ -5798,6 +5830,8 @@ static void test_texture(void)
 #define BC3_UNORM_SRGB      DXGI_FORMAT_BC3_UNORM_SRGB
 #define R8G8B8A8_UNORM_SRGB DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
 #define R8G8B8A8_UNORM      DXGI_FORMAT_R8G8B8A8_UNORM
+#define R32_FLOAT           DXGI_FORMAT_R32_FLOAT
+#define R32_UINT            DXGI_FORMAT_R32_UINT
 #define FMT_UNKNOWN         DXGI_FORMAT_UNKNOWN
         {&ps_sample,          &bc1_typeless,     {BC1_UNORM,           TEX_2D,       0, 1},       0.0f, bc_colors},
         {&ps_sample,          &bc1_typeless,     {BC1_UNORM_SRGB,      TEX_2D,       0, 1},       0.0f, bc_colors},
@@ -5807,10 +5841,12 @@ static void test_texture(void)
         {&ps_sample,          &bc3_typeless,     {BC3_UNORM_SRGB,      TEX_2D,       0, 1},       0.0f, bc_colors},
         {&ps_sample,          &srgb_typeless,    {R8G8B8A8_UNORM_SRGB, TEX_2D,       0, 1},       0.0f, srgb_colors},
         {&ps_sample,          &srgb_typeless,    {R8G8B8A8_UNORM,      TEX_2D,       0, 1},       0.0f, srgb_data},
+        {&ps_sample,          &r32f_typeless,    {R32_FLOAT,           TEX_2D,       0, 1},       0.0f, r32f_colors},
         {&ps_sample,          &array_2d_texture, {FMT_UNKNOWN,         TEX_2D,       0, 1},       0.0f, red_colors},
         {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 0, 1}, 0.0f, red_colors},
         {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 1, 1}, 0.0f, green_data},
         {&ps_sample_2d_array, &array_2d_texture, {FMT_UNKNOWN,         TEX_2D_ARRAY, 0, 1, 2, 1}, 0.0f, blue_colors},
+        {&ps_ld_uint8,        &r32u_typeless,    {R32_UINT,            TEX_2D,       0, 1},       0.0f, r32u_colors},
 #undef TEX_2D
 #undef TEX_2D_ARRAY
 #undef BC1_UNORM
@@ -5821,6 +5857,8 @@ static void test_texture(void)
 #undef BC3_UNORM_SRGB
 #undef R8G8B8A8_UNORM_SRGB
 #undef R8G8B8A8_UNORM
+#undef R32_FLOAT
+#undef R32_UINT
 #undef FMT_UNKNOWN
     };
 
