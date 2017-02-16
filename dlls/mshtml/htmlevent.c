@@ -139,6 +139,9 @@ static const WCHAR onscrollW[] = {'o','n','s','c','r','o','l','l',0};
 static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
 static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
 
+static const WCHAR selectionchangeW[] = {'s','e','l','e','c','t','i','o','n','c','h','a','n','g','e',0};
+static const WCHAR onselectionchangeW[] = {'o','n','s','e','l','e','c','t','i','o','n','c','h','a','n','g','e',0};
+
 static const WCHAR submitW[] = {'s','u','b','m','i','t',0};
 static const WCHAR onsubmitW[] = {'o','n','s','u','b','m','i','t',0};
 
@@ -242,6 +245,8 @@ static const event_info_t event_info[] = {
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {scrollW,            onscrollW,            EVENTT_HTML,   DISPID_EVMETH_ONSCROLL,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {selectionchangeW,   onselectionchangeW,   EVENTT_NONE,   DISPID_EVMETH_ONSELECTSTART,
+        EVENT_FIXME},
     {selectstartW,       onselectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
         EVENT_CANCELABLE},
     {submitW,            onsubmitW,            EVENTT_HTML,   DISPID_EVMETH_ONSUBMIT,
