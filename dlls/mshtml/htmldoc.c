@@ -3475,15 +3475,19 @@ static HRESULT WINAPI HTMLDocument7_get_onchange(IHTMLDocument7 *iface, VARIANT 
 static HRESULT WINAPI HTMLDocument7_put_ondrag(IHTMLDocument7 *iface, VARIANT v)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    return set_doc_event(This, EVENTID_DRAG, &v);
 }
 
 static HRESULT WINAPI HTMLDocument7_get_ondrag(IHTMLDocument7 *iface, VARIANT *p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_doc_event(This, EVENTID_DRAG, p);
 }
 
 static HRESULT WINAPI HTMLDocument7_put_ondragend(IHTMLDocument7 *iface, VARIANT v)
