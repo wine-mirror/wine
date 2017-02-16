@@ -1711,10 +1711,13 @@ BOOL WINAPI AddAce(
     return set_ntstatus(RtlAddAce(pAcl, dwAceRevision, dwStartingAceIndex, pAceList, nAceListLength));
 }
 
+/******************************************************************************
+ *  AddMandatoryAce [ADVAPI32.@]
+ */
 BOOL WINAPI AddMandatoryAce(ACL *acl, DWORD ace_revision, DWORD ace_flags, DWORD mandatory_policy, PSID label_sid)
 {
-    FIXME("%p %x %x %x %p - stub\n", acl, ace_revision, ace_flags, mandatory_policy, label_sid);
-    return FALSE;
+    return set_ntstatus(RtlAddMandatoryAce(acl, ace_revision, ace_flags, mandatory_policy,
+                                           SYSTEM_MANDATORY_LABEL_ACE_TYPE, label_sid));
 }
 
 /******************************************************************************
