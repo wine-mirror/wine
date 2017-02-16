@@ -3971,6 +3971,7 @@ static void test_gdi_interop(void)
     ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
     IWICImagingFactory *wic_factory;
+    IWICBitmapLock *wic_lock;
     IWICBitmap *wic_bitmap;
     ID2D1RenderTarget *rt;
     ID2D1Factory *factory;
@@ -4064,6 +4065,19 @@ todo_wine
 
     match = compare_wic_bitmap(wic_bitmap, "60cacbf3d72e1e7834203da608037b1bf83b40e8");
     ok(match, "Bitmap does not match.\n");
+
+    /* Bitmap is locked at BeginDraw(). */
+    hr = IWICBitmap_Lock(wic_bitmap, NULL, WICBitmapLockRead, &wic_lock);
+    ok(SUCCEEDED(hr), "Expected bitmap to be unlocked, hr %#x.\n", hr);
+    IWICBitmapLock_Release(wic_lock);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    hr = IWICBitmap_Lock(wic_bitmap, NULL, WICBitmapLockRead, &wic_lock);
+todo_wine
+    ok(hr == WINCODEC_ERR_ALREADYLOCKED, "Expected bitmap to be locked, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IWICBitmapLock_Release(wic_lock);
+    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
 
     ID2D1GdiInteropRenderTarget_Release(interop);
     ID2D1RenderTarget_Release(rt);
