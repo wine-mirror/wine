@@ -3277,7 +3277,7 @@ static void test_file_id_information(void)
     status = pNtQueryInformationFile( h, &io, &fid, sizeof(fid), FileIdInformation );
     if (status == STATUS_NOT_IMPLEMENTED || status == STATUS_INVALID_INFO_CLASS)
     {
-        skip( "FileIdInformation not supported\n" );
+        win_skip( "FileIdInformation not supported\n" );
         CloseHandle( h );
         return;
     }
