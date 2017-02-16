@@ -9345,6 +9345,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMM_ATOMIC_EXCH                  */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_IADD                  */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_IMAX                  */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_IMIN                  */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_OR                    */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_UMAX                  */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_UMIN                  */ NULL,
