@@ -926,7 +926,6 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
     case FileFullDirectoryRestartInfo:
     case FileStorageInfo:
     case FileAlignmentInfo:
-    case FileIdInfo:
     case FileIdExtdDirectoryInfo:
     case FileIdExtdDirectoryRestartInfo:
         FIXME( "%p, %u, %p, %u\n", handle, class, info, size );
@@ -943,6 +942,10 @@ BOOL WINAPI GetFileInformationByHandleEx( HANDLE handle, FILE_INFO_BY_HANDLE_CLA
 
     case FileNameInfo:
         status = NtQueryInformationFile( handle, &io, info, size, FileNameInformation );
+        break;
+
+    case FileIdInfo:
+        status = NtQueryInformationFile( handle, &io, info, size, FileIdInformation );
         break;
 
     case FileIdBothDirectoryRestartInfo:
