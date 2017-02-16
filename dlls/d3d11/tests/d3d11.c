@@ -1016,7 +1016,7 @@ static BOOL is_warp_device(ID3D11Device *device)
             || (adapter_desc.VendorId == 0x1414 && adapter_desc.DeviceId == 0x008c));
 }
 
-static BOOL is_amd_device(ID3D11Device *device)
+static BOOL is_vendor_device(ID3D11Device *device, unsigned int vendor_id)
 {
     DXGI_ADAPTER_DESC adapter_desc;
 
@@ -1024,18 +1024,22 @@ static BOOL is_amd_device(ID3D11Device *device)
         return FALSE;
 
     get_device_adapter_desc(device, &adapter_desc);
-    return adapter_desc.VendorId == 0x1002;
+    return adapter_desc.VendorId == vendor_id;
+}
+
+static BOOL is_amd_device(ID3D11Device *device)
+{
+    return is_vendor_device(device, 0x1002);
+}
+
+static BOOL is_intel_device(ID3D11Device *device)
+{
+    return is_vendor_device(device, 0x8086);
 }
 
 static BOOL is_nvidia_device(ID3D11Device *device)
 {
-    DXGI_ADAPTER_DESC adapter_desc;
-
-    if (!strcmp(winetest_platform, "wine"))
-        return FALSE;
-
-    get_device_adapter_desc(device, &adapter_desc);
-    return adapter_desc.VendorId == 0x10de;
+    return is_vendor_device(device, 0x10de);
 }
 
 static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, const struct swapchain_desc *swapchain_desc)
@@ -14325,6 +14329,289 @@ static void test_buffer_srv(void)
     release_test_context(&test_context);
 }
 
+static void test_unaligned_raw_buffer_access(void)
+{
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    struct d3d11_test_context test_context;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    D3D_FEATURE_LEVEL feature_level;
+    ID3D11UnorderedAccessView *uav;
+    ID3D11ShaderResourceView *srv;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11Buffer *cb, *raw_buffer;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Texture2D *texture;
+    ID3D11ComputeShader *cs;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int i, data;
+    struct uvec4 offset;
+    HRESULT hr;
+
+    static const unsigned int buffer_data[] =
+    {
+        0xffffffff, 0x00000000,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        ByteAddressBuffer buffer;
+
+        uint offset;
+
+        uint main() : SV_Target0
+        {
+            return buffer.Load(offset);
+        }
+#endif
+        0x43425844, 0xda171175, 0xb001721f, 0x60ef80eb, 0xe1fa7e75, 0x00000001, 0x000000e4, 0x00000004,
+        0x00000030, 0x00000040, 0x00000074, 0x000000d4, 0x4e475349, 0x00000008, 0x00000000, 0x00000008,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001,
+        0x00000000, 0x00000e01, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000058, 0x00000040,
+        0x00000016, 0x0100486a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x030000a1, 0x00107000,
+        0x00000000, 0x03000065, 0x00102012, 0x00000000, 0x080000a5, 0x00102012, 0x00000000, 0x0020800a,
+        0x00000000, 0x00000000, 0x00107006, 0x00000000, 0x0100003e, 0x30494653, 0x00000008, 0x00000002,
+        0x00000000,
+    };
+    static const DWORD cs_code[] =
+    {
+#if 0
+        RWByteAddressBuffer buffer;
+
+        uint2 input;
+
+        [numthreads(1, 1, 1)]
+        void main()
+        {
+            buffer.Store(input.x, input.y);
+        }
+#endif
+        0x43425844, 0x3c7103b0, 0xe6313979, 0xbcfb0c11, 0x3958af0c, 0x00000001, 0x000000b4, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000060, 0x00050050, 0x00000018, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300009d, 0x0011e000, 0x00000000, 0x0400009b,
+        0x00000001, 0x00000001, 0x00000001, 0x090000a6, 0x0011e012, 0x00000000, 0x0020800a, 0x00000000,
+        0x00000000, 0x0020801a, 0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+    feature_level = ID3D11Device_GetFeatureLevel(device);
+
+    if (is_intel_device(device))
+    {
+        /* Offsets for raw buffer reads and writes should be 4 bytes aligned.
+         * This test checks what happens when offsets are not properly aligned.
+         * The behavior seems to be undefined on Intel hardware. */
+        win_skip("Skipping the test on Intel hardware.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    if (hr == E_INVALIDARG)
+    {
+        /* This skips the test on testbot Win Vista and Win 2008 VMs. */
+        win_skip("Failed to create pixel shader.\n");
+        release_test_context(&test_context);
+        return;
+    }
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    memset(&offset, 0, sizeof(offset));
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(offset), &offset.x);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R32_UINT;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    buffer_desc.ByteWidth = sizeof(buffer_data);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+    resource_data.pSysMem = buffer_data;
+    resource_data.SysMemPitch = 0;
+    resource_data.SysMemSlicePitch = 0;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &raw_buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+
+    srv_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+    U(srv_desc).BufferEx.FirstElement = 0;
+    U(srv_desc).BufferEx.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
+    U(srv_desc).BufferEx.Flags = D3D11_BUFFEREX_SRV_FLAG_RAW;
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)raw_buffer, &srv_desc, &srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+
+    offset.x = 0;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
+    draw_quad(&test_context);
+    check_texture_color(texture, buffer_data[0], 0);
+    offset.x = 1;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
+    draw_quad(&test_context);
+    check_texture_color(texture, buffer_data[0], 0);
+    offset.x = 2;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
+    draw_quad(&test_context);
+    check_texture_color(texture, buffer_data[0], 0);
+    offset.x = 3;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
+    draw_quad(&test_context);
+    check_texture_color(texture, buffer_data[0], 0);
+
+    offset.x = 4;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
+    draw_quad(&test_context);
+    check_texture_color(texture, buffer_data[1], 0);
+    offset.x = 7;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
+    draw_quad(&test_context);
+    check_texture_color(texture, buffer_data[1], 0);
+
+    if (feature_level < D3D_FEATURE_LEVEL_11_0)
+    {
+        skip("Feature level 11_0 required for unaligned UAV test.\n");
+        goto done;
+    }
+
+    ID3D11Buffer_Release(raw_buffer);
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &raw_buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+
+    uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
+    U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)raw_buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_code, sizeof(cs_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+
+    offset.x = 0;
+    offset.y = 0xffffffff;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, uav, black);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_buffer_readback(raw_buffer, &rb);
+    for (i = 0; i < sizeof(buffer_data) / sizeof(*buffer_data); ++i)
+    {
+        data = get_readback_color(&rb, i, 0);
+        ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
+    }
+    release_resource_readback(&rb);
+
+    offset.x = 1;
+    offset.y = 0xffffffff;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, uav, black);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_buffer_readback(raw_buffer, &rb);
+    for (i = 0; i < sizeof(buffer_data) / sizeof(*buffer_data); ++i)
+    {
+        data = get_readback_color(&rb, i, 0);
+        ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
+    }
+    release_resource_readback(&rb);
+
+    offset.x = 2;
+    offset.y = 0xffffffff;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, uav, black);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_buffer_readback(raw_buffer, &rb);
+    for (i = 0; i < sizeof(buffer_data) / sizeof(*buffer_data); ++i)
+    {
+        data = get_readback_color(&rb, i, 0);
+        ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
+    }
+    release_resource_readback(&rb);
+
+    offset.x = 3;
+    offset.y = 0xffffffff;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, uav, black);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_buffer_readback(raw_buffer, &rb);
+    for (i = 0; i < sizeof(buffer_data) / sizeof(*buffer_data); ++i)
+    {
+        data = get_readback_color(&rb, i, 0);
+        ok(data == buffer_data[i], "Got unexpected result %#x at %u.\n", data, i);
+    }
+    release_resource_readback(&rb);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, uav, black);
+    offset.x = 3;
+    offset.y = 0xffff;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    offset.x = 4;
+    offset.y = 0xa;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &offset, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    get_buffer_readback(raw_buffer, &rb);
+    data = get_readback_color(&rb, 0, 0);
+    ok(data == 0xffff, "Got unexpected result %#x.\n", data);
+    data = get_readback_color(&rb, 1, 0);
+    ok(data == 0xa, "Got unexpected result %#x.\n", data);
+    release_resource_readback(&rb);
+
+    ID3D11ComputeShader_Release(cs);
+    ID3D11UnorderedAccessView_Release(uav);
+
+done:
+    ID3D11Buffer_Release(cb);
+    ID3D11Buffer_Release(raw_buffer);
+    ID3D11PixelShader_Release(ps);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11Texture2D_Release(texture);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -14399,4 +14686,5 @@ START_TEST(d3d11)
     test_sm5_bufinfo_instruction();
     test_render_target_device_mismatch();
     test_buffer_srv();
+    test_unaligned_raw_buffer_access();
 }
