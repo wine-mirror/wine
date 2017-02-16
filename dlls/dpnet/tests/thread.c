@@ -209,6 +209,34 @@ static void test_enum_hosts(void)
     CloseHandle(enumevent);
 }
 
+static void test_singleton(void)
+{
+    HRESULT hr;
+    IDirectPlay8ThreadPool *pool1, *pool2;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8ThreadPool, NULL, CLSCTX_ALL, &IID_IDirectPlay8ThreadPool, (void**)&pool1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8ThreadPool, NULL, CLSCTX_ALL, &IID_IDirectPlay8ThreadPool, (void**)&pool2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(pool1 != pool2, "same pointer returned.\n");
+
+    hr = IDirectPlay8ThreadPool_Initialize(pool1, NULL, &DirectPlayThreadHandler, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDirectPlay8ThreadPool_Initialize(pool2, NULL, &DirectPlayThreadHandler, 0);
+    todo_wine ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
+
+    hr = IDirectPlay8ThreadPool_Close(pool1, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDirectPlay8ThreadPool_Close(pool2, 0);
+    todo_wine ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
+
+    IDirectPlay8ThreadPool_Release(pool1);
+    IDirectPlay8ThreadPool_Release(pool2);
+}
+
 START_TEST(thread)
 {
     HRESULT hr;
@@ -251,6 +279,7 @@ START_TEST(thread)
 
     create_threadpool();
     test_enum_hosts();
+    test_singleton();
 
     CoUninitialize();
 }
