@@ -112,7 +112,10 @@ DWORD WINAPI DECLSPEC_HOTPATCH XInputGetStateEx(DWORD index, XINPUT_STATE_EX* st
 
 DWORD WINAPI XInputGetKeystroke(DWORD index, DWORD reserved, PXINPUT_KEYSTROKE keystroke)
 {
-    FIXME("(index %u, reserved %u, keystroke %p) Stub!\n", index, reserved, keystroke);
+    static int warn_once;
+
+    if (!warn_once++)
+        FIXME("(index %u, reserved %u, keystroke %p) Stub!\n", index, reserved, keystroke);
 
     if (index >= XUSER_MAX_COUNT)
         return ERROR_BAD_ARGUMENTS;
