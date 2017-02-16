@@ -177,6 +177,26 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsheet);
 
+static WCHAR *heap_strdupW(const WCHAR *str)
+{
+    int len = strlenW(str) + 1;
+    WCHAR *ret = Alloc(len * sizeof(WCHAR));
+    strcpyW(ret, str);
+    return ret;
+}
+
+static WCHAR *heap_strdupAtoW(const char *str)
+{
+    WCHAR *ret;
+    INT len;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, 0, 0);
+    ret = Alloc(len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 #define add_flag(a) if (dwFlags & a) {strcat(string, #a );strcat(string," ");}
 /******************************************************************************
  *            PROPSHEET_UnImplementedFlags
@@ -270,23 +290,6 @@ static INT PROPSHEET_FindPageByResId(const PropSheetInfo * psInfo, LRESULT resId
 }
 
 /******************************************************************************
- *            PROPSHEET_AtoW
- *
- * Convert ASCII to Unicode since all data is saved as Unicode.
- */
-static void PROPSHEET_AtoW(LPCWSTR *tostr, LPCSTR frstr)
-{
-    INT len;
-    WCHAR *to;
-
-    TRACE("<%s>\n", frstr);
-    len = MultiByteToWideChar(CP_ACP, 0, frstr, -1, 0, 0);
-    to = Alloc(len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, frstr, -1, to, len);
-    *tostr = to;
-}
-
-/******************************************************************************
  *            PROPSHEET_CollectSheetInfoCommon
  *
  * Common code for PROPSHEET_CollectSheetInfoA/W
@@ -374,12 +377,7 @@ static void PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
   else
   {
      if (!IS_INTRESOURCE(lppsh->pszCaption))
-     {
-        int len = strlenW(lppsh->pszCaption);
-        WCHAR *caption = Alloc( (len+1)*sizeof(WCHAR) );
-
-        psInfo->ppshheader.pszCaption = strcpyW( caption, lppsh->pszCaption );
-     }
+       psInfo->ppshheader.pszCaption = heap_strdupW( lppsh->pszCaption );
   }
   psInfo->nPages = lppsh->nPages;
 
@@ -552,8 +550,6 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
     WCHAR szTitle[256];
     const WCHAR *pTitle;
     static const WCHAR pszNull[] = { '(','n','u','l','l',')',0 };
-    WCHAR *text;
-    int len;
 
     if (IS_INTRESOURCE( lppsp->pszTitle ))
     {
@@ -567,9 +563,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
     else
       pTitle = lppsp->pszTitle;
 
-    len = strlenW(pTitle);
-    text = Alloc( (len+1)*sizeof (WCHAR) );
-    psInfo->proppage[index].pszText = strcpyW( text, pTitle);
+    psInfo->proppage[index].pszText = heap_strdupW( pTitle );
   }
 
   /*
@@ -2945,15 +2939,15 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
     if (ppsp->dwFlags & PSP_USEICONID)
     {
         if (!IS_INTRESOURCE( ppsp->u2.pszIcon ))
-            PROPSHEET_AtoW(&ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon);
+            ppsp->u2.pszIcon = heap_strdupAtoW( lpPropSheetPage->u2.pszIcon );
     }
 
     if (ppsp->dwFlags & PSP_USETITLE)
     {
-        if (!IS_INTRESOURCE( ppsp->pszTitle ))
-            PROPSHEET_AtoW( &ppsp->pszTitle, lpPropSheetPage->pszTitle );
-        else
+        if (IS_INTRESOURCE( ppsp->pszTitle ))
             ppsp->pszTitle = load_string( ppsp->hInstance, ppsp->pszTitle );
+        else
+            ppsp->pszTitle = heap_strdupAtoW( lpPropSheetPage->pszTitle );
     }
     else
         ppsp->pszTitle = NULL;
@@ -2963,20 +2957,20 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
 
     if (ppsp->dwFlags & PSP_USEHEADERTITLE)
     {
-        if (!IS_INTRESOURCE( ppsp->pszHeaderTitle ))
-            PROPSHEET_AtoW(&ppsp->pszHeaderTitle, lpPropSheetPage->pszHeaderTitle);
-        else
+        if (IS_INTRESOURCE( ppsp->pszHeaderTitle ))
             ppsp->pszHeaderTitle = load_string( ppsp->hInstance, ppsp->pszHeaderTitle );
+        else
+            ppsp->pszHeaderTitle = heap_strdupAtoW( lpPropSheetPage->pszHeaderTitle );
     }
     else
         ppsp->pszHeaderTitle = NULL;
 
     if (ppsp->dwFlags & PSP_USEHEADERSUBTITLE)
     {
-        if (!IS_INTRESOURCE( ppsp->pszHeaderSubTitle ))
-            PROPSHEET_AtoW(&ppsp->pszHeaderSubTitle, lpPropSheetPage->pszHeaderSubTitle);
-        else
+        if (IS_INTRESOURCE( ppsp->pszHeaderSubTitle ))
             ppsp->pszHeaderSubTitle = load_string( ppsp->hInstance, ppsp->pszHeaderSubTitle );
+        else
+            ppsp->pszHeaderSubTitle = heap_strdupAtoW( lpPropSheetPage->pszHeaderSubTitle );
     }
     else
         ppsp->pszHeaderSubTitle = NULL;
@@ -3000,23 +2994,13 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
     if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) )
     {
         if (!IS_INTRESOURCE( ppsp->u.pszTemplate ))
-        {
-            int len = strlenW(lpPropSheetPage->u.pszTemplate) + 1;
-            WCHAR *template = Alloc( len * sizeof (WCHAR) );
-
-            ppsp->u.pszTemplate = strcpyW( template, lpPropSheetPage->u.pszTemplate );
-        }
+            ppsp->u.pszTemplate = heap_strdupW( lpPropSheetPage->u.pszTemplate );
     }
 
     if ( ppsp->dwFlags & PSP_USEICONID )
     {
         if (!IS_INTRESOURCE( ppsp->u2.pszIcon ))
-        {
-            int len = strlenW(lpPropSheetPage->u2.pszIcon) + 1;
-            WCHAR *icon = Alloc( len * sizeof (WCHAR) );
-
-            ppsp->u2.pszIcon = strcpyW( icon, lpPropSheetPage->u2.pszIcon );
-        }
+            ppsp->u2.pszIcon = heap_strdupW( lpPropSheetPage->u2.pszIcon );
     }
 
     if (ppsp->dwFlags & PSP_USETITLE)
