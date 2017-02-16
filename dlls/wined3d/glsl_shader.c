@@ -3831,9 +3831,7 @@ static void shader_glsl_float16(const struct wined3d_shader_instruction *ins)
     dst = ins->dst[0];
     for (i = 0; i < 4; ++i)
     {
-        write_mask = WINED3DSP_WRITEMASK_0 << i;
-        dst.write_mask = ins->dst[0].write_mask & write_mask;
-
+        dst.write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i);
         if (!(write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins,
                 &dst, dst.reg.data_type)))
             continue;
@@ -3864,9 +3862,7 @@ static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
     dst = ins->dst[0];
     for (i = 0; i < 4; ++i)
     {
-        write_mask = WINED3DSP_WRITEMASK_0 << i;
-        dst.write_mask = ins->dst[0].write_mask & write_mask;
-
+        dst.write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i);
         if (!(write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins,
                 &dst, dst.reg.data_type)))
             continue;
@@ -5032,6 +5028,45 @@ static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &image_coord_param);
     shader_addline(ins->ctx->buffer, "imageLoad(%s_image%u, %s)%s);\n",
             shader_glsl_get_prefix(version->type), uav_idx, image_coord_param.param_str, dst_swizzle);
+}
+
+static void shader_glsl_ld_raw(const struct wined3d_shader_instruction *ins)
+{
+    const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
+    const struct wined3d_shader_src_param *src = &ins->src[1];
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    struct wined3d_shader_dst_param dst;
+    const char *function, *resource;
+    struct glsl_src_param offset;
+    char dst_swizzle[6];
+    DWORD write_mask;
+    unsigned int i;
+
+    if (src->reg.type == WINED3DSPR_RESOURCE)
+    {
+        function = "texelFetch";
+        resource = "sampler";
+    }
+    else
+    {
+        function = "imageLoad";
+        resource = "image";
+    }
+
+    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &offset);
+
+    dst = ins->dst[0];
+    for (i = 0; i < 4; ++i)
+    {
+        dst.write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i);
+        if (!(write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins,
+                &dst, dst.reg.data_type)))
+            continue;
+
+        shader_glsl_swizzle_to_str(src->swizzle, FALSE, write_mask, dst_swizzle);
+        shader_addline(buffer, "%s(%s_%s%u, %s / 4)%s);\n",
+                function, prefix, resource, src->reg.idx[0].offset, offset.param_str, dst_swizzle);
+    }
 }
 
 static void shader_glsl_store_uav(const struct wined3d_shader_instruction *ins)
@@ -9359,7 +9394,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_LABEL                            */ shader_glsl_label,
     /* WINED3DSIH_LD                               */ shader_glsl_ld,
     /* WINED3DSIH_LD2DMS                           */ NULL,
-    /* WINED3DSIH_LD_RAW                           */ NULL,
+    /* WINED3DSIH_LD_RAW                           */ shader_glsl_ld_raw,
     /* WINED3DSIH_LD_STRUCTURED                    */ NULL,
     /* WINED3DSIH_LD_UAV_TYPED                     */ shader_glsl_ld_uav,
     /* WINED3DSIH_LIT                              */ shader_glsl_lit,
