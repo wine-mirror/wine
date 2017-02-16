@@ -3261,6 +3261,45 @@ static void test_file_all_name_information(void)
     HeapFree( GetProcessHeap(), 0, file_name );
 }
 
+static void test_file_id_information(void)
+{
+    BY_HANDLE_FILE_INFORMATION info;
+    FILE_ID_INFORMATION fid;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    DWORD *dwords;
+    HANDLE h;
+    BOOL ret;
+
+    if (!(h = create_temp_file(0))) return;
+
+    memset( &fid, 0x11, sizeof(fid) );
+    status = pNtQueryInformationFile( h, &io, &fid, sizeof(fid), FileIdInformation );
+    if (status == STATUS_NOT_IMPLEMENTED || status == STATUS_INVALID_INFO_CLASS)
+    {
+        skip( "FileIdInformation not supported\n" );
+        CloseHandle( h );
+        return;
+    }
+
+    memset( &info, 0x22, sizeof(info) );
+    ret = GetFileInformationByHandle( h, &info );
+    ok( ret, "GetFileInformationByHandle failed\n" );
+
+    dwords = (DWORD *)&fid.VolumeSerialNumber;
+    ok( dwords[0] == info.dwVolumeSerialNumber, "expected %08x, got %08x\n",
+        info.dwVolumeSerialNumber, dwords[0] );
+    ok( dwords[1] != 0x11111111, "expected != 0x11111111\n" );
+
+    dwords = (DWORD *)&fid.FileId;
+    ok( dwords[0] == info.nFileIndexLow, "expected %08x, got %08x\n", info.nFileIndexLow, dwords[0] );
+    ok( dwords[1] == info.nFileIndexHigh, "expected %08x, got %08x\n", info.nFileIndexHigh, dwords[1] );
+    ok( dwords[2] == 0, "expected 0, got %08x\n", dwords[2] );
+    ok( dwords[3] == 0, "expected 0, got %08x\n", dwords[3] );
+
+    CloseHandle( h );
+}
+
 static void test_query_volume_information_file(void)
 {
     NTSTATUS status;
@@ -4260,6 +4299,7 @@ START_TEST(file)
     test_file_rename_information();
     test_file_link_information();
     test_file_disposition_information();
+    test_file_id_information();
     test_query_volume_information_file();
     test_query_attribute_information_file();
 }
