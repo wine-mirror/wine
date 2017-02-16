@@ -1379,6 +1379,33 @@ NTSTATUS WINAPI RtlAddAuditAccessObjectAce(
     return STATUS_NOT_IMPLEMENTED;
 }
 
+/**************************************************************************
+ *  RtlAddMandatoryAce     [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddMandatoryAce(
+    IN OUT PACL pAcl,
+    IN DWORD dwAceRevision,
+    IN DWORD dwAceFlags,
+    IN DWORD dwMandatoryFlags,
+    IN DWORD dwAceType,
+    IN PSID pSid)
+{
+    static const DWORD valid_flags = SYSTEM_MANDATORY_LABEL_NO_WRITE_UP |
+                                     SYSTEM_MANDATORY_LABEL_NO_READ_UP |
+                                     SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP;
+
+    TRACE("(%p, %u, 0x%08x, 0x%08x, %u, %p)\n", pAcl, dwAceRevision, dwAceFlags,
+                                                dwMandatoryFlags, dwAceType, pSid);
+
+    if (dwAceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+        return STATUS_INVALID_PARAMETER;
+
+    if (dwMandatoryFlags & ~valid_flags)
+        return STATUS_INVALID_PARAMETER;
+
+    return add_access_ace(pAcl, dwAceRevision, dwAceFlags, dwMandatoryFlags, pSid, dwAceType);
+}
+
 /******************************************************************************
  *  RtlValidAcl		[NTDLL.@]
  */
