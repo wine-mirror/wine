@@ -34,7 +34,6 @@
  *   - Messages:
  *     o PSM_RECALCPAGESIZES
  *     o PSM_SETHEADERSUBTITLE
- *     o PSM_SETHEADERTITLE
  *     o WM_HELP
  *     o WM_CONTEXTMENU
  *   - Notifications:
@@ -2497,17 +2496,37 @@ static void PROPSHEET_SetWizButtons(HWND hwndDlg, DWORD dwFlags)
 /******************************************************************************
  *            PROPSHEET_SetHeaderTitleW
  */
-static void PROPSHEET_SetHeaderTitleW(HWND hwndDlg, int iPageIndex, LPCWSTR pszHeaderTitle)
+static void PROPSHEET_SetHeaderTitleW(HWND hwndDlg, UINT page_index, const WCHAR *title)
 {
-    FIXME("(%p, %d, %s): stub\n", hwndDlg, iPageIndex, debugstr_w(pszHeaderTitle));
+    PropSheetInfo *psInfo = GetPropW(hwndDlg, PropSheetInfoStr);
+    PROPSHEETPAGEW *page;
+
+    TRACE("(%p, %u, %s)\n", hwndDlg, page_index, debugstr_w(title));
+
+    if (page_index >= psInfo->nPages)
+        return;
+
+    page = (PROPSHEETPAGEW *)psInfo->proppage[page_index].hpage;
+
+    if (!IS_INTRESOURCE(page->pszHeaderTitle))
+        Free((void *)page->pszHeaderTitle);
+
+    page->pszHeaderTitle = heap_strdupW(title);
+    page->dwFlags |= PSP_USEHEADERTITLE;
 }
 
 /******************************************************************************
  *            PROPSHEET_SetHeaderTitleA
  */
-static void PROPSHEET_SetHeaderTitleA(HWND hwndDlg, int iPageIndex, LPCSTR pszHeaderTitle)
+static void PROPSHEET_SetHeaderTitleA(HWND hwndDlg, UINT page_index, const char *title)
 {
-    FIXME("(%p, %d, %s): stub\n", hwndDlg, iPageIndex, debugstr_a(pszHeaderTitle));
+    WCHAR *titleW;
+
+    TRACE("(%p, %u, %s)\n", hwndDlg, page_index, debugstr_a(title));
+
+    titleW = heap_strdupAtoW(title);
+    PROPSHEET_SetHeaderTitleW(hwndDlg, page_index, titleW);
+    Free(titleW);
 }
 
 /******************************************************************************
@@ -3723,11 +3742,11 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 
     case PSM_SETHEADERTITLEW:
-        PROPSHEET_SetHeaderTitleW(hwnd, (int)wParam, (LPCWSTR)lParam);
+        PROPSHEET_SetHeaderTitleW(hwnd, wParam, (LPCWSTR)lParam);
         return TRUE;
 
     case PSM_SETHEADERTITLEA:
-        PROPSHEET_SetHeaderTitleA(hwnd, (int)wParam, (LPCSTR)lParam);
+        PROPSHEET_SetHeaderTitleA(hwnd, wParam, (LPCSTR)lParam);
         return TRUE;
 
     case PSM_SETHEADERSUBTITLEW:
