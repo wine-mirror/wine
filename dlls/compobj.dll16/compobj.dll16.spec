@@ -4,7 +4,7 @@
 4 pascal CoGetMalloc(long ptr) CoGetMalloc16
 5 pascal CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject16
 6 pascal CoRevokeClassObject(long) CoRevokeClassObject16
-7 pascal CoGetClassObject(ptr long ptr ptr ptr) CoGetClassObject16
+7 pascal CoGetClassObject(segptr long ptr segptr segptr) CoGetClassObject16
 8 stub COMARSHALINTERFACE
 9 stub COUNMARSHALINTERFACE
 10 stub COLOADLIBRARY
