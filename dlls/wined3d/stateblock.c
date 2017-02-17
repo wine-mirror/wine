@@ -575,6 +575,51 @@ struct wined3d_light_info *wined3d_state_get_light(const struct wined3d_state *s
     return NULL;
 }
 
+void wined3d_state_enable_light(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info,
+        struct wined3d_light_info *light_info, BOOL enable)
+{
+    unsigned int light_count, i;
+
+    if (!(light_info->enabled = enable))
+    {
+        if (light_info->glIndex == -1)
+        {
+            TRACE("Light already disabled, nothing to do.\n");
+            return;
+        }
+
+        state->lights[light_info->glIndex] = NULL;
+        light_info->glIndex = -1;
+        return;
+    }
+
+    if (light_info->glIndex != -1)
+    {
+        TRACE("Light already enabled, nothing to do.\n");
+        return;
+    }
+
+    /* Find a free light. */
+    light_count = d3d_info->limits.active_light_count;
+    for (i = 0; i < light_count; ++i)
+    {
+        if (state->lights[i])
+            continue;
+
+        state->lights[i] = light_info;
+        light_info->glIndex = i;
+        return;
+    }
+
+    /* Our tests show that Windows returns D3D_OK in this situation, even with
+     * D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE devices.
+     * This is consistent among ddraw, d3d8 and d3d9. GetLightEnable returns
+     * TRUE * as well for those lights.
+     *
+     * TODO: Test how this affects rendering. */
+    WARN("Too many concurrently active lights.\n");
+}
+
 static void wined3d_state_record_lights(struct wined3d_state *dst_state, const struct wined3d_state *src_state)
 {
     UINT i;

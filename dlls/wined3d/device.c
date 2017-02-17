@@ -1678,6 +1678,7 @@ HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device,
 HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
 {
     struct wined3d_light_info *light_info;
+    int prev_idx;
 
     TRACE("device %p, light_idx %u, enable %#x.\n", device, light_idx, enable);
 
@@ -1694,66 +1695,12 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
         }
     }
 
-    if (!enable)
+    prev_idx = light_info->glIndex;
+    wined3d_state_enable_light(device->update_state, &device->adapter->d3d_info, light_info, enable);
+    if (!device->recording && light_info->glIndex != prev_idx)
     {
-        if (light_info->glIndex != -1)
-        {
-            if (!device->recording)
-            {
-                device_invalidate_state(device, STATE_LIGHT_TYPE);
-                device_invalidate_state(device, STATE_ACTIVELIGHT(light_info->glIndex));
-            }
-
-            device->update_state->lights[light_info->glIndex] = NULL;
-            light_info->glIndex = -1;
-        }
-        else
-        {
-            TRACE("Light already disabled, nothing to do\n");
-        }
-        light_info->enabled = FALSE;
-    }
-    else
-    {
-        light_info->enabled = TRUE;
-        if (light_info->glIndex != -1)
-        {
-            TRACE("Nothing to do as light was enabled\n");
-        }
-        else
-        {
-            unsigned int light_count = device->adapter->d3d_info.limits.active_light_count;
-            unsigned int i;
-
-            /* Find a free light. */
-            for (i = 0; i < light_count; ++i)
-            {
-                if (!device->update_state->lights[i])
-                {
-                    device->update_state->lights[i] = light_info;
-                    light_info->glIndex = i;
-                    break;
-                }
-            }
-            if (light_info->glIndex == -1)
-            {
-                /* Our tests show that Windows returns D3D_OK in this situation, even with
-                 * D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE devices. This
-                 * is consistent among ddraw, d3d8 and d3d9. GetLightEnable returns TRUE
-                 * as well for those lights.
-                 *
-                 * TODO: Test how this affects rendering. */
-                WARN("Too many concurrently active lights\n");
-                return WINED3D_OK;
-            }
-
-            /* i == light_info->glIndex */
-            if (!device->recording)
-            {
-                device_invalidate_state(device, STATE_LIGHT_TYPE);
-                device_invalidate_state(device, STATE_ACTIVELIGHT(i));
-            }
-        }
+        device_invalidate_state(device, STATE_LIGHT_TYPE);
+        device_invalidate_state(device, STATE_ACTIVELIGHT(enable ? light_info->glIndex : prev_idx));
     }
 
     return WINED3D_OK;
