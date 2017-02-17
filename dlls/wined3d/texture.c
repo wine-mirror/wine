@@ -178,11 +178,56 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
                 sub_resource_idx, texture);
 }
 
+static BOOL wined3d_texture_copy_sysmem_location(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
+{
+    unsigned int size = texture->sub_resources[sub_resource_idx].size;
+    struct wined3d_device *device = texture->resource.device;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_address dst, src;
+
+    if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
+        return FALSE;
+
+    wined3d_texture_get_memory(texture, sub_resource_idx, &dst, location);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &src,
+            texture->sub_resources[sub_resource_idx].locations);
+
+    if (dst.buffer_object)
+    {
+        context = context_acquire(device, NULL, 0);
+        gl_info = context->gl_info;
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst.buffer_object));
+        GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, size, src.addr));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+        checkGLcall("PBO upload");
+        context_release(context);
+        return TRUE;
+    }
+
+    if (src.buffer_object)
+    {
+        context = context_acquire(device, NULL, 0);
+        gl_info = context->gl_info;
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src.buffer_object));
+        GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, size, dst.addr));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("PBO download");
+        context_release(context);
+        return TRUE;
+    }
+
+    memcpy(dst.addr, src.addr, size);
+    return TRUE;
+}
+
 /* Context activation is done by the caller. Context may be NULL in
  * WINED3D_NO3D mode. */
 BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
 {
+    static const DWORD sysmem_locations = WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_USER_MEMORY
+            | WINED3D_LOCATION_BUFFER;
     DWORD current = texture->sub_resources[sub_resource_idx].locations;
     BOOL ret;
 
@@ -223,7 +268,12 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
         return wined3d_texture_load_location(texture, sub_resource_idx, context, location);
     }
 
-    if ((ret = texture->texture_ops->texture_load_location(texture, sub_resource_idx, context, location)))
+    if ((location & sysmem_locations) && (current & sysmem_locations))
+        ret = wined3d_texture_copy_sysmem_location(texture, sub_resource_idx, context, location);
+    else
+        ret = texture->texture_ops->texture_load_location(texture, sub_resource_idx, context, location);
+
+    if (ret)
         wined3d_texture_validate_location(texture, sub_resource_idx, location);
 
     return ret;
