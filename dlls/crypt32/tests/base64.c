@@ -47,6 +47,9 @@ static BOOL (WINAPI *pCryptBinaryToStringA)(const BYTE *pbBinary,
 static BOOL (WINAPI *pCryptStringToBinaryA)(LPCSTR pszString,
  DWORD cchString, DWORD dwFlags, BYTE *pbBinary, DWORD *pcbBinary,
  DWORD *pdwSkip, DWORD *pdwFlags);
+static BOOL (WINAPI *pCryptStringToBinaryW)(LPCWSTR pszString,
+ DWORD cchString, DWORD dwFlags, BYTE *pbBinary, DWORD *pcbBinary,
+ DWORD *pdwSkip, DWORD *pdwFlags);
 
 struct BinTests
 {
@@ -299,10 +302,24 @@ static void decodeAndCompareBase64_A(LPCSTR toDecode, LPCSTR header,
     }
 }
 
+static void decodeBase64WithLenFmtW(LPCSTR strA, int len, DWORD fmt, BOOL retA,
+ const BYTE *bufA, DWORD bufLenA, DWORD fmtUsedA)
+{
+    BYTE buf[8] = {0};
+    DWORD bufLen = sizeof(buf)-1, fmtUsed = 0xdeadbeef;
+    BOOL ret;
+    WCHAR strW[64];
+    int i;
+    for (i = 0; (strW[i] = strA[i]) != 0; ++i);
+    ret = pCryptStringToBinaryW(strW, len, fmt, buf, &bufLen, NULL, &fmtUsed);
+    ok(ret == retA && bufLen == bufLenA && memcmp(bufA, buf, bufLen) == 0
+     && fmtUsed == fmtUsedA, "base64 \"%s\" len %d: W and A differ\n", strA, len);
+}
+
 static void decodeBase64WithLenFmt(LPCSTR str, int len, DWORD fmt, LPCSTR expected, int le, BOOL isBroken)
 {
     BYTE buf[8] = {0};
-    DWORD bufLen = sizeof(buf)-1, fmtUsed;
+    DWORD bufLen = sizeof(buf)-1, fmtUsed = 0xdeadbeef;
     BOOL ret;
     SetLastError(0xdeadbeef);
     ret = pCryptStringToBinaryA(str, len, fmt, buf, &bufLen, NULL, &fmtUsed);
@@ -320,6 +337,8 @@ static void decodeBase64WithLenFmt(LPCSTR str, int len, DWORD fmt, LPCSTR expect
          "base64 \"%s\" len %d: expected failure, got \"%s\" (ret %d, le %d)\n",
          str, len, (char*)buf, ret, GetLastError());
     }
+    if (pCryptStringToBinaryW)
+        decodeBase64WithLenFmtW(str, len, fmt, ret, buf, bufLen, fmtUsed);
 }
 
 static void decodeBase64WithLenBroken(LPCSTR str, int len, LPCSTR expected, int le)
@@ -539,6 +558,7 @@ START_TEST(base64)
 
     pCryptBinaryToStringA = (void *)GetProcAddress(lib, "CryptBinaryToStringA");
     pCryptStringToBinaryA = (void *)GetProcAddress(lib, "CryptStringToBinaryA");
+    pCryptStringToBinaryW = (void *)GetProcAddress(lib, "CryptStringToBinaryW");
 
     if (pCryptBinaryToStringA)
         testBinaryToStringA();

@@ -47,10 +47,10 @@ static const WCHAR CERT_HEADER_START_W[] = {
 static const WCHAR CERT_DELIMITER_W[] = {
 '-','-','-','-','-',0 };
 static const WCHAR CERT_TRAILER_W[] = {
-'-','-','-','-','-','E','N','D',' ',0 };
-static const WCHAR CERT_TRAILER_START_W[] = {
 '-','-','-','-','-','E','N','D',' ','C','E','R','T','I','F','I','C','A','T',
 'E','-','-','-','-','-',0 };
+static const WCHAR CERT_TRAILER_START_W[] = {
+'-','-','-','-','-','E','N','D',' ',0 };
 static const WCHAR CERT_REQUEST_HEADER_W[] = {
 '-','-','-','-','-','B','E','G','I','N',' ','N','E','W',' ','C','E','R','T',
 'I','F','I','C','A','T','E','R','E','Q','U','E','S','T','-','-','-','-','-',0 };
