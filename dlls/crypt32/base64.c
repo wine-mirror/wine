@@ -604,7 +604,7 @@ static LONG Base64ToBinaryA(LPCSTR pszString, DWORD cchString,
 
 static LONG Base64WithHeaderAndTrailerToBinaryA(LPCSTR pszString,
  DWORD cchString, BYTE *pbBinary,
- DWORD *pcbBinary, DWORD *pdwSkip, BOOL exactHeaderAndTrailerMatch)
+ DWORD *pcbBinary, DWORD *pdwSkip)
 {
     LONG ret;
     LPCSTR header = CERT_HEADER_START;
@@ -627,43 +627,20 @@ static LONG Base64WithHeaderAndTrailerToBinaryA(LPCSTR pszString,
     }
 
     dataBegins = headerBegins + strlen(header);
-    if (!exactHeaderAndTrailerMatch)
+    if (!(dataBegins = strstr(dataBegins, CERT_DELIMITER)))
     {
-        if ((dataBegins = strstr(dataBegins, CERT_DELIMITER)))
-        {
-            dataBegins += strlen(CERT_DELIMITER);
-        }
-        else
-        {
-            return ERROR_INVALID_DATA;
-        }
+        return ERROR_INVALID_DATA;
     }
+    dataBegins += strlen(CERT_DELIMITER);
     if (*dataBegins == '\r') dataBegins++;
     if (*dataBegins == '\n') dataBegins++;
 
-    if (exactHeaderAndTrailerMatch)
+    if (!(trailerBegins = strstr(dataBegins, trailer)))
     {
-        trailerBegins = pszString + cchString - strlen(trailer);
-        if (pszString[cchString - 1] == '\n') trailerBegins--;
-        if (pszString[cchString - 2] == '\r') trailerBegins--;
-
-        if (*(trailerBegins-1) == '\n') trailerBegins--;
-        if (*(trailerBegins-1) == '\r') trailerBegins--;
-
-        if (!strncmp(trailerBegins, trailer, strlen(trailer)))
-        {
-            return ERROR_INVALID_DATA;
-        }
+        return ERROR_INVALID_DATA;
     }
-    else
-    {
-        if (!(trailerBegins = strstr(dataBegins, trailer)))
-        {
-            return ERROR_INVALID_DATA;
-        }
-        if (*(trailerBegins-1) == '\n') trailerBegins--;
-        if (*(trailerBegins-1) == '\r') trailerBegins--;
-    }
+    if (*(trailerBegins-1) == '\n') trailerBegins--;
+    if (*(trailerBegins-1) == '\r') trailerBegins--;
 
     if (pdwSkip)
        *pdwSkip = headerBegins - pszString;
@@ -680,7 +657,7 @@ static LONG Base64HeaderToBinaryA(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryA(pszString, cchString,
-     pbBinary, pcbBinary, pdwSkip, FALSE);
+     pbBinary, pcbBinary, pdwSkip);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64HEADER;
@@ -691,7 +668,7 @@ static LONG Base64RequestHeaderToBinaryA(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryA(pszString, cchString,
-     pbBinary, pcbBinary, pdwSkip, FALSE);
+     pbBinary, pcbBinary, pdwSkip);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64REQUESTHEADER;
@@ -702,7 +679,7 @@ static LONG Base64X509HeaderToBinaryA(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryA(pszString, cchString,
-     pbBinary, pcbBinary, pdwSkip, FALSE);
+     pbBinary, pcbBinary, pdwSkip);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64X509CRLHEADER;
@@ -838,7 +815,7 @@ static LONG Base64ToBinaryW(LPCWSTR pszString, DWORD cchString,
 
 static LONG Base64WithHeaderAndTrailerToBinaryW(LPCWSTR pszString,
  DWORD cchString, BYTE *pbBinary,
- DWORD *pcbBinary, DWORD *pdwSkip, BOOL exactHeaderAndTrailerMatch)
+ DWORD *pcbBinary, DWORD *pdwSkip)
 {
     LONG ret;
     LPCWSTR header = CERT_HEADER_START_W;
@@ -861,43 +838,20 @@ static LONG Base64WithHeaderAndTrailerToBinaryW(LPCWSTR pszString,
     }
 
     dataBegins = headerBegins + strlenW(header);
-    if (!exactHeaderAndTrailerMatch)
+    if (!(dataBegins = strstrW(dataBegins, CERT_DELIMITER_W)))
     {
-        if ((dataBegins = strstrW(dataBegins, CERT_DELIMITER_W)))
-        {
-            dataBegins += strlenW(CERT_DELIMITER_W);
-        }
-        else
-        {
-            return ERROR_INVALID_DATA;
-        }
+        return ERROR_INVALID_DATA;
     }
+    dataBegins += strlenW(CERT_DELIMITER_W);
     if (*dataBegins == '\r') dataBegins++;
     if (*dataBegins == '\n') dataBegins++;
 
-    if (exactHeaderAndTrailerMatch)
+    if (!(trailerBegins = strstrW(dataBegins, trailer)))
     {
-        trailerBegins = pszString + cchString - strlenW(trailer);
-        if (pszString[cchString - 1] == '\n') trailerBegins--;
-        if (pszString[cchString - 2] == '\r') trailerBegins--;
-
-        if (*(trailerBegins-1) == '\n') trailerBegins--;
-        if (*(trailerBegins-1) == '\r') trailerBegins--;
-
-        if (!strncmpW(trailerBegins, trailer, strlenW(trailer)))
-        {
-            return ERROR_INVALID_DATA;
-        }
+        return ERROR_INVALID_DATA;
     }
-    else
-    {
-        if (!(trailerBegins = strstrW(dataBegins, trailer)))
-        {
-            return ERROR_INVALID_DATA;
-        }
-        if (*(trailerBegins-1) == '\n') trailerBegins--;
-        if (*(trailerBegins-1) == '\r') trailerBegins--;
-    }
+    if (*(trailerBegins-1) == '\n') trailerBegins--;
+    if (*(trailerBegins-1) == '\r') trailerBegins--;
 
     if (pdwSkip)
        *pdwSkip = headerBegins - pszString;
@@ -914,7 +868,7 @@ static LONG Base64HeaderToBinaryW(LPCWSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryW(pszString, cchString,
-     pbBinary, pcbBinary, pdwSkip, FALSE);
+     pbBinary, pcbBinary, pdwSkip);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64HEADER;
@@ -925,7 +879,7 @@ static LONG Base64RequestHeaderToBinaryW(LPCWSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryW(pszString, cchString,
-     pbBinary, pcbBinary, pdwSkip, FALSE);
+     pbBinary, pcbBinary, pdwSkip);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64REQUESTHEADER;
@@ -936,7 +890,7 @@ static LONG Base64X509HeaderToBinaryW(LPCWSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryW(pszString, cchString,
-     pbBinary, pcbBinary, pdwSkip, FALSE);
+     pbBinary, pcbBinary, pdwSkip);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64X509CRLHEADER;
