@@ -3170,7 +3170,7 @@ struct wined3d_cs
     struct wined3d_fb_state fb;
     struct wined3d_state state;
 
-    size_t data_size;
+    size_t data_size, start, end;
     void *data;
 };
 

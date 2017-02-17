@@ -1576,26 +1576,47 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)
 {
-    if (size > cs->data_size)
+    if (size > (cs->data_size - cs->end))
     {
+        size_t new_size;
         void *new_data;
 
-        size = max( size, cs->data_size * 2 );
-        if (!(new_data = HeapReAlloc(GetProcessHeap(), 0, cs->data, size)))
+        new_size = max(size, cs->data_size * 2);
+        if (!cs->end)
+            new_data = HeapReAlloc(GetProcessHeap(), 0, cs->data, new_size);
+        else
+            new_data = HeapAlloc(GetProcessHeap(), 0, new_size);
+        if (!new_data)
             return NULL;
 
-        cs->data_size = size;
+        cs->data_size = new_size;
+        cs->start = cs->end = 0;
         cs->data = new_data;
     }
 
-    return cs->data;
+    cs->end += size;
+
+    return (BYTE *)cs->data + cs->start;
 }
 
 static void wined3d_cs_st_submit(struct wined3d_cs *cs)
 {
-    enum wined3d_cs_op opcode = *(const enum wined3d_cs_op *)cs->data;
+    enum wined3d_cs_op opcode;
+    size_t start;
+    BYTE *data;
 
-    wined3d_cs_op_handlers[opcode](cs, cs->data);
+    data = cs->data;
+    start = cs->start;
+    cs->start = cs->end;
+    opcode = *(const enum wined3d_cs_op *)&data[start];
+    wined3d_cs_op_handlers[opcode](cs, &data[start]);
+    if (!start)
+    {
+        if (cs->data != data)
+            HeapFree(GetProcessHeap(), 0, data);
+        else
+            cs->start = cs->end = 0;
+    }
 }
 
 static void wined3d_cs_st_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
