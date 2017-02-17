@@ -62,7 +62,7 @@
 @ stub _dsin
 @ cdecl _dtest(ptr) ucrtbase._dtest
 @ stub _dunscale
-@ stub _except1
+@ cdecl _except1(long long double double long ptr) ucrtbase._except1
 @ stub _fd_int
 @ cdecl _fdclass(float) ucrtbase._fdclass
 @ stub _fdexp
