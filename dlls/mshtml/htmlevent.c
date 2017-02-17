@@ -1396,13 +1396,22 @@ void detach_events(HTMLDocumentNode *doc)
     release_nsevents(doc);
 }
 
+static HRESULT get_event_dispex_ref(EventTarget *event_target, eventid_t eid, BOOL alloc, VARIANT **ret)
+{
+    WCHAR buf[64];
+    buf[0] = 'o';
+    buf[1] = 'n';
+    strcpyW(buf+2, event_info[eid].name);
+    return dispex_get_dprop_ref(&event_target->dispex, buf, alloc, ret);
+}
+
 static void remove_event_handler(EventTarget *event_target, eventid_t eid)
 {
     handler_vector_t *handler_vector;
     VARIANT *store;
     HRESULT hres;
 
-    hres = dispex_get_dprop_ref(&event_target->dispex, event_info[eid].attr_name, FALSE, &store);
+    hres = get_event_dispex_ref(event_target, eid, FALSE, &store);
     if(SUCCEEDED(hres))
         VariantClear(store);
 
@@ -1458,7 +1467,7 @@ HRESULT set_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
          */
         remove_event_handler(event_target, eid);
 
-        hres = dispex_get_dprop_ref(&event_target->dispex, event_info[eid].attr_name, TRUE, &v);
+        hres = get_event_dispex_ref(event_target, eid, TRUE, &v);
         if(FAILED(hres))
             return hres;
 
@@ -1485,7 +1494,7 @@ HRESULT get_event_handler(EventTarget *event_target, eventid_t eid, VARIANT *var
     VARIANT *v;
     HRESULT hres;
 
-    hres = dispex_get_dprop_ref(&event_target->dispex, event_info[eid].attr_name, FALSE, &v);
+    hres = get_event_dispex_ref(event_target, eid, FALSE, &v);
     if(SUCCEEDED(hres) && V_VT(v) != VT_EMPTY) {
         V_VT(var) = VT_EMPTY;
         return VariantCopy(var, v);
