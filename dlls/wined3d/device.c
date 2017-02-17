@@ -984,8 +984,10 @@ static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
     wined3d_cs_destroy_object(device->cs, wined3d_device_delete_opengl_contexts_cs, device);
 }
 
-static HRESULT create_primary_opengl_context(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
+static void wined3d_device_create_primary_opengl_context_cs(void *object)
 {
+    struct wined3d_device *device = object;
+    struct wined3d_swapchain *swapchain;
     struct wined3d_context *context;
     struct wined3d_texture *target;
     HRESULT hr;
@@ -994,21 +996,29 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
             device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
     {
         ERR("Failed to allocate shader private data, hr %#x.\n", hr);
-        return hr;
+        return;
     }
 
     if (FAILED(hr = device->blitter->alloc_private(device)))
     {
         ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
         device->shader_backend->shader_free_private(device);
-        return hr;
+        return;
     }
 
+    swapchain = device->swapchains[0];
     target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
     context = context_acquire(device, target, 0);
     create_dummy_textures(device, context);
     create_default_samplers(device, context);
     context_release(context);
+}
+
+static HRESULT wined3d_device_create_primary_opengl_context(struct wined3d_device *device)
+{
+    wined3d_cs_init_object(device->cs, wined3d_device_create_primary_opengl_context_cs, device);
+    if (!device->swapchains[0]->num_contexts)
+        return E_FAIL;
 
     return WINED3D_OK;
 }
@@ -1069,7 +1079,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     }
     device->swapchains[0] = swapchain;
 
-    if (FAILED(hr = create_primary_opengl_context(device, swapchain)))
+    if (FAILED(hr = wined3d_device_create_primary_opengl_context(device)))
         goto err_out;
     device_init_swapchain_state(device, swapchain);
 
@@ -4798,7 +4808,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     if (device->d3d_initialized)
     {
         if (reset_state)
-            hr = create_primary_opengl_context(device, swapchain);
+            hr = wined3d_device_create_primary_opengl_context(device);
         swapchain_update_swap_interval(swapchain);
     }
 
