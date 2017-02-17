@@ -719,8 +719,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             curIndex = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, curIndex, MAKELPARAM(LVNI_SELECTED, 0));
             if(curIndex != -1 && firstItem) {
-                if (MessageBoxW(hWnd, MAKEINTRESOURCEW(IDS_DELETE_BOX_TEXT_MULTIPLE),
-                                MAKEINTRESOURCEW(IDS_DELETE_BOX_TITLE),
+                if (MessageBoxW(hWnd, MAKEINTRESOURCEW(IDS_DELETE_VALUE_TEXT_MULTIPLE),
+                                MAKEINTRESOURCEW(IDS_DELETE_VALUE_TITLE),
                                 MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
                     break;
             }
