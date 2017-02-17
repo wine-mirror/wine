@@ -461,6 +461,17 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     return TRUE;
 }
 
+static void treeview_sort_item(HWND hWnd, HTREEITEM item)
+{
+    HTREEITEM child = (HTREEITEM)SendMessageW(hWnd, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)item);
+
+    while (child != NULL) {
+        treeview_sort_item(hWnd, child);
+        child = (HTREEITEM)SendMessageW(hWnd, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)child);
+    }
+    SendMessageW(hWnd, TVM_SORTCHILDREN, 0, (LPARAM)item);
+}
+
 BOOL RefreshTreeView(HWND hwndTV)
 {
     HTREEITEM hItem;
@@ -477,12 +488,12 @@ BOOL RefreshTreeView(HWND hwndTV)
     hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hRoot);
     while (hItem) {
         RefreshTreeItem(hwndTV, hItem);
+        treeview_sort_item(hwndTV, hItem);
         hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hItem);
     }
 
     SendMessageW(hwndTV, WM_SETREDRAW, TRUE, 0);
     InvalidateRect(hwndTV, NULL, FALSE);
-    SendMessageW(hwndTV, TVM_SORTCHILDREN, TRUE, (LPARAM)hSelectedItem);
     SetCursor(hcursorOld);
     
     /* We reselect the currently selected node, this will prompt a refresh of the listview. */
