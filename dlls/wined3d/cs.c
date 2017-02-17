@@ -1608,15 +1608,14 @@ static void wined3d_cs_st_submit(struct wined3d_cs *cs)
     data = cs->data;
     start = cs->start;
     cs->start = cs->end;
+
     opcode = *(const enum wined3d_cs_op *)&data[start];
     wined3d_cs_op_handlers[opcode](cs, &data[start]);
-    if (!start)
-    {
-        if (cs->data != data)
-            HeapFree(GetProcessHeap(), 0, data);
-        else
-            cs->start = cs->end = 0;
-    }
+
+    if (cs->data == data)
+        cs->start = cs->end = start;
+    else if (!start)
+        HeapFree(GetProcessHeap(), 0, data);
 }
 
 static void wined3d_cs_st_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
