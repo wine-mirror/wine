@@ -1596,34 +1596,82 @@ void update_doc_cp_events(HTMLDocumentNode *doc, cp_static_data_t *cp)
 
 void check_event_attr(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
-    const PRUnichar *attr_value;
-    nsAString attr_value_str;
+    nsIDOMMozNamedAttrMap *attr_map;
+    const PRUnichar *name, *value;
+    nsAString name_str, value_str;
+    HTMLDOMNode *node = NULL;
+    cpp_bool has_attrs;
+    nsIDOMAttr *attr;
     IDispatch *disp;
-    HTMLDOMNode *node;
-    int i;
+    UINT32 length, i;
+    eventid_t eid;
     nsresult nsres;
     HRESULT hres;
 
-    for(i=0; i < EVENTID_LAST; i++) {
-        nsres = get_elem_attr_value(nselem, event_info[i].attr_name, &attr_value_str, &attr_value);
-        if(NS_SUCCEEDED(nsres)) {
-            if(!*attr_value)
-                continue;
+    nsres = nsIDOMHTMLElement_HasAttributes(nselem, &has_attrs);
+    if(NS_FAILED(nsres) || !has_attrs)
+        return;
 
-            TRACE("%p.%s = %s\n", nselem, debugstr_w(event_info[i].attr_name), debugstr_w(attr_value));
+    nsres = nsIDOMHTMLElement_GetAttributes(nselem, &attr_map);
+    if(NS_FAILED(nsres))
+        return;
 
-            disp = script_parse_event(doc->window, attr_value);
-            if(disp) {
-                hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
-                if(SUCCEEDED(hres)) {
-                    set_event_handler_disp(&node->event_target, i, disp);
-                    node_release(node);
-                }
-                IDispatch_Release(disp);
-            }
-            nsAString_Finish(&attr_value_str);
+    nsres = nsIDOMMozNamedAttrMap_GetLength(attr_map, &length);
+    assert(nsres == NS_OK);
+
+    nsAString_Init(&name_str, NULL);
+    nsAString_Init(&value_str, NULL);
+
+    for(i = 0; i < length; i++) {
+        nsres = nsIDOMMozNamedAttrMap_Item(attr_map, i, &attr);
+        if(NS_FAILED(nsres))
+            continue;
+
+        nsres = nsIDOMAttr_GetName(attr, &name_str);
+        if(NS_FAILED(nsres)) {
+            nsIDOMAttr_Release(attr);
+            continue;
         }
+
+        nsAString_GetData(&name_str, &name);
+        eid = attr_to_eid(name);
+        if(eid == EVENTID_LAST) {
+            nsIDOMAttr_Release(attr);
+            continue;
+        }
+
+        nsres = nsIDOMAttr_GetValue(attr, &value_str);
+        nsIDOMAttr_Release(attr);
+        if(NS_FAILED(nsres))
+            continue;
+
+        nsAString_GetData(&value_str, &value);
+        if(!*value)
+            continue;
+
+        TRACE("%p.%s = %s\n", nselem, debugstr_w(name), debugstr_w(value));
+
+        disp = script_parse_event(doc->window, value);
+        if(!disp)
+            continue;
+
+        if(!node) {
+            hres = get_node(doc, (nsIDOMNode*)nselem, TRUE, &node);
+            if(FAILED(hres)) {
+                IDispatch_Release(disp);
+                break;
+            }
+        }
+
+        set_event_handler_disp(&node->event_target, eid, disp);
+        IDispatch_Release(disp);
     }
+
+    if(node)
+        node_release(node);
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&value_str);
+    nsIDOMMozNamedAttrMap_Release(attr_map);
 }
 
 HRESULT doc_init_events(HTMLDocumentNode *doc)
