@@ -268,12 +268,15 @@ eventid_t str_to_eid(LPCWSTR str)
     return EVENTID_LAST;
 }
 
-static eventid_t attr_to_eid(LPCWSTR str)
+static eventid_t attr_to_eid(const WCHAR *str)
 {
     int i;
 
+    if((str[0] != 'o' && str[0] != 'O') || (str[1] != 'n' && str[1] != 'N'))
+        return EVENTID_LAST;
+
     for(i=0; i < sizeof(event_info)/sizeof(event_info[0]); i++) {
-        if(!strcmpW(event_info[i].attr_name, str))
+        if(!strcmpW(event_info[i].name, str+2))
             return i;
     }
 
