@@ -9344,10 +9344,8 @@ msgid "Confidentiality Required"
 msgstr "Krever konfidensialitet"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Avslutting pågår.\n"
+msgstr "SASL binding pågår"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -11939,17 +11937,12 @@ msgstr "Kan ikke gi nytt navn til den valgte registerverdien."
 #: regedit.rc:220
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "Nøklene og verdiene i %1 ble vellykket lagt til registeret."
 
 #: regedit.rc:221
-#, fuzzy
-#| msgid ""
-#| "Unable to rename the key '%1'.\n"
-#| "The specified key name already exists."
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"Kan ikke gi nytt navn til nøkkel \"%1\".\n"
-"Det spesifiserte nøkkelnavnet finnes allerede."
+"Kan ikke importere %1. Den spesifiserte filen er ikke en gyldig registerfil."
 
 #: regedit.rc:373
 msgid ""
