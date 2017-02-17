@@ -2986,3 +2986,95 @@ float CDECL MSVCR120_nanf(const char *tagp)
 {
     return NAN;
 }
+
+/*********************************************************************
+ *      _except1 (MSVCR120.@)
+ *  TODO:
+ *   - find meaning of ignored cw and operation bits
+ *   - unk parameter
+ */
+double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, DWORD cw, void *unk)
+{
+    ULONG_PTR exception_arg;
+    DWORD exception = 0;
+    MSVCRT_fenv_t env;
+    DWORD fpword = 0;
+    WORD operation;
+
+    TRACE("(%x %x %lf %lf %x %p)\n", fpe, op, arg, res, cw, unk);
+
+#ifdef _WIN64
+    cw = ((cw >> 7) & 0x3f) | ((cw >> 3) & 0xc00);
+#endif
+    operation = op << 5;
+    exception_arg = (ULONG_PTR)&operation;
+
+    MSVCRT_fegetenv(&env);
+
+    if (fpe & 0x1) { /* overflow */
+        if ((fpe == 0x1 && (cw & 0x8)) || (fpe==0x11 && (cw & 0x28))) {
+            /* 32-bit version also sets SW_INEXACT here */
+            env.status |= MSVCRT__SW_OVERFLOW;
+            if (fpe & 0x10) env.status |= MSVCRT__SW_INEXACT;
+            res = signbit(res) ? -INFINITY : INFINITY;
+        } else {
+            exception = EXCEPTION_FLT_OVERFLOW;
+        }
+    } else if (fpe & 0x2) { /* underflow */
+        if ((fpe == 0x2 && (cw & 0x10)) || (fpe==0x12 && (cw & 0x30))) {
+            env.status |= MSVCRT__SW_UNDERFLOW;
+            if (fpe & 0x10) env.status |= MSVCRT__SW_INEXACT;
+            res = signbit(res) ? -0.0 : 0.0;
+        } else {
+            exception = EXCEPTION_FLT_UNDERFLOW;
+        }
+    } else if (fpe & 0x4) { /* zerodivide */
+        if ((fpe == 0x4 && (cw & 0x4)) || (fpe==0x14 && (cw & 0x24))) {
+            env.status |= MSVCRT__SW_ZERODIVIDE;
+            if (fpe & 0x10) env.status |= MSVCRT__SW_INEXACT;
+        } else {
+            exception = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+        }
+    } else if (fpe & 0x8) { /* invalid */
+        if (fpe == 0x8 && (cw & 0x1)) {
+            env.status |= MSVCRT__SW_INVALID;
+        } else {
+            exception = EXCEPTION_FLT_INVALID_OPERATION;
+        }
+    } else if (fpe & 0x10) { /* inexact */
+        if (fpe == 0x10 && (cw & 0x20)) {
+            env.status |= MSVCRT__SW_INEXACT;
+        } else {
+            exception = EXCEPTION_FLT_INEXACT_RESULT;
+        }
+    }
+
+    if (exception)
+        env.status = 0;
+    MSVCRT_fesetenv(&env);
+    if (exception)
+        RaiseException(exception, 0, 1, &exception_arg);
+
+    if (cw & 0x1) fpword |= MSVCRT__EM_INVALID;
+    if (cw & 0x2) fpword |= MSVCRT__EM_DENORMAL;
+    if (cw & 0x4) fpword |= MSVCRT__EM_ZERODIVIDE;
+    if (cw & 0x8) fpword |= MSVCRT__EM_OVERFLOW;
+    if (cw & 0x10) fpword |= MSVCRT__EM_UNDERFLOW;
+    if (cw & 0x20) fpword |= MSVCRT__EM_INEXACT;
+    switch (cw & 0xc00)
+    {
+        case 0xc00: fpword |= MSVCRT__RC_UP|MSVCRT__RC_DOWN; break;
+        case 0x800: fpword |= MSVCRT__RC_UP; break;
+        case 0x400: fpword |= MSVCRT__RC_DOWN; break;
+    }
+    switch (cw & 0x300)
+    {
+        case 0x0:   fpword |= MSVCRT__PC_24; break;
+        case 0x200: fpword |= MSVCRT__PC_53; break;
+        case 0x300: fpword |= MSVCRT__PC_64; break;
+    }
+    if (cw & 0x1000) fpword |= MSVCRT__IC_AFFINE;
+    _control87(fpword, 0xffffffff);
+
+    return res;
+}
