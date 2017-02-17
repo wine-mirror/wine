@@ -44,109 +44,40 @@ typedef struct {
 } handler_vector_t;
 
 static const WCHAR abortW[] = {'a','b','o','r','t',0};
-static const WCHAR onabortW[] = {'o','n','a','b','o','r','t',0};
-
 static const WCHAR beforeactivateW[] = {'b','e','f','o','r','e','a','c','t','i','v','a','t','e',0};
-static const WCHAR onbeforeactivateW[] = {'o','n','b','e','f','o','r','e','a','c','t','i','v','a','t','e',0};
-
 static const WCHAR beforeunloadW[] = {'b','e','f','o','r','e','u','n','l','o','a','d',0};
-static const WCHAR onbeforeunloadW[] = {'o','n','b','e','f','o','r','e','u','n','l','o','a','d',0};
-
 static const WCHAR blurW[] = {'b','l','u','r',0};
-static const WCHAR onblurW[] = {'o','n','b','l','u','r',0};
-
 static const WCHAR changeW[] = {'c','h','a','n','g','e',0};
-static const WCHAR onchangeW[] = {'o','n','c','h','a','n','g','e',0};
-
 static const WCHAR clickW[] = {'c','l','i','c','k',0};
-static const WCHAR onclickW[] = {'o','n','c','l','i','c','k',0};
-
 static const WCHAR contextmenuW[] = {'c','o','n','t','e','x','t','m','e','n','u',0};
-static const WCHAR oncontextmenuW[] = {'o','n','c','o','n','t','e','x','t','m','e','n','u',0};
-
 static const WCHAR dataavailableW[] = {'d','a','t','a','a','v','a','i','l','a','b','l','e',0};
-static const WCHAR ondataavailableW[] = {'o','n','d','a','t','a','a','v','a','i','l','a','b','l','e',0};
-
 static const WCHAR dblclickW[] = {'d','b','l','c','l','i','c','k',0};
-static const WCHAR ondblclickW[] = {'o','n','d','b','l','c','l','i','c','k',0};
-
 static const WCHAR dragW[] = {'d','r','a','g',0};
-static const WCHAR ondragW[] = {'o','n','d','r','a','g',0};
-
 static const WCHAR dragstartW[] = {'d','r','a','g','s','t','a','r','t',0};
-static const WCHAR ondragstartW[] = {'o','n','d','r','a','g','s','t','a','r','t',0};
-
 static const WCHAR errorW[] = {'e','r','r','o','r',0};
-static const WCHAR onerrorW[] = {'o','n','e','r','r','o','r',0};
-
 static const WCHAR focusW[] = {'f','o','c','u','s',0};
-static const WCHAR onfocusW[] = {'o','n','f','o','c','u','s',0};
-
 static const WCHAR focusinW[] = {'f','o','c','u','s','i','n',0};
-static const WCHAR onfocusinW[] = {'o','n','f','o','c','u','s','i','n',0};
-
 static const WCHAR focusoutW[] = {'f','o','c','u','s','o','u','t',0};
-static const WCHAR onfocusoutW[] = {'o','n','f','o','c','u','s','o','u','t',0};
-
 static const WCHAR helpW[] = {'h','e','l','p',0};
-static const WCHAR onhelpW[] = {'o','n','h','e','l','p',0};
-
 static const WCHAR keydownW[] = {'k','e','y','d','o','w','n',0};
-static const WCHAR onkeydownW[] = {'o','n','k','e','y','d','o','w','n',0};
-
 static const WCHAR keypressW[] = {'k','e','y','p','r','e','s','s',0};
-static const WCHAR onkeypressW[] = {'o','n','k','e','y','p','r','e','s','s',0};
-
 static const WCHAR keyupW[] = {'k','e','y','u','p',0};
-static const WCHAR onkeyupW[] = {'o','n','k','e','y','u','p',0};
-
 static const WCHAR loadW[] = {'l','o','a','d',0};
-static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
-
 static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
-static const WCHAR onmessageW[] = {'o','n','m','e','s','s','a','g','e',0};
-
 static const WCHAR mousedownW[] = {'m','o','u','s','e','d','o','w','n',0};
-static const WCHAR onmousedownW[] = {'o','n','m','o','u','s','e','d','o','w','n',0};
-
 static const WCHAR mousemoveW[] = {'m','o','u','s','e','m','o','v','e',0};
-static const WCHAR onmousemoveW[] = {'o','n','m','o','u','s','e','m','o','v','e',0};
-
 static const WCHAR mouseoutW[] = {'m','o','u','s','e','o','u','t',0};
-static const WCHAR onmouseoutW[] = {'o','n','m','o','u','s','e','o','u','t',0};
-
 static const WCHAR mouseoverW[] = {'m','o','u','s','e','o','v','e','r',0};
-static const WCHAR onmouseoverW[] = {'o','n','m','o','u','s','e','o','v','e','r',0};
-
 static const WCHAR mouseupW[] = {'m','o','u','s','e','u','p',0};
-static const WCHAR onmouseupW[] = {'o','n','m','o','u','s','e','u','p',0};
-
 static const WCHAR mousewheelW[] = {'m','o','u','s','e','w','h','e','e','l',0};
-static const WCHAR onmousewheelW[] = {'o','n','m','o','u','s','e','w','h','e','e','l',0};
-
 static const WCHAR pasteW[] = {'p','a','s','t','e',0};
-static const WCHAR onpasteW[] = {'o','n','p','a','s','t','e',0};
-
 static const WCHAR readystatechangeW[] = {'r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
-static const WCHAR onreadystatechangeW[] = {'o','n','r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
-
 static const WCHAR resizeW[] = {'r','e','s','i','z','e',0};
-static const WCHAR onresizeW[] = {'o','n','r','e','s','i','z','e',0};
-
 static const WCHAR scrollW[] = {'s','c','r','o','l','l',0};
-static const WCHAR onscrollW[] = {'o','n','s','c','r','o','l','l',0};
-
 static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
-static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
-
 static const WCHAR selectionchangeW[] = {'s','e','l','e','c','t','i','o','n','c','h','a','n','g','e',0};
-static const WCHAR onselectionchangeW[] = {'o','n','s','e','l','e','c','t','i','o','n','c','h','a','n','g','e',0};
-
 static const WCHAR submitW[] = {'s','u','b','m','i','t',0};
-static const WCHAR onsubmitW[] = {'o','n','s','u','b','m','i','t',0};
-
 static const WCHAR unloadW[] = {'u','n','l','o','a','d',0};
-static const WCHAR onunloadW[] = {'o','n','u','n','l','o','a','d',0};
 
 static const WCHAR HTMLEventsW[] = {'H','T','M','L','E','v','e','n','t','s',0};
 static const WCHAR KeyboardEventW[] = {'K','e','y','b','o','a','r','d','E','v','e','n','t',0};
@@ -167,8 +98,7 @@ static const WCHAR *event_types[] = {
 };
 
 typedef struct {
-    LPCWSTR name;
-    LPCWSTR attr_name;
+    const WCHAR *name;
     DWORD type;
     DISPID dispid;
     DWORD flags;
@@ -183,75 +113,75 @@ typedef struct {
 #define EVENT_FIXME              0x0040
 
 static const event_info_t event_info[] = {
-    {abortW,             onabortW,             EVENTT_NONE,   DISPID_EVMETH_ONABORT,
+    {abortW,             EVENTT_NONE,   DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_BODY},
-    {beforeactivateW,    onbeforeactivateW,    EVENTT_NONE,   DISPID_EVMETH_ONBEFOREACTIVATE,
+    {beforeactivateW,    EVENTT_NONE,   DISPID_EVMETH_ONBEFOREACTIVATE,
         EVENT_FIXME},
-    {beforeunloadW,      onbeforeunloadW,      EVENTT_NONE,   DISPID_EVMETH_ONBEFOREUNLOAD,
+    {beforeunloadW,      EVENTT_NONE,   DISPID_EVMETH_ONBEFOREUNLOAD,
         EVENT_DEFAULTLISTENER|EVENT_FORWARDBODY},
-    {blurW,              onblurW,              EVENTT_HTML,   DISPID_EVMETH_ONBLUR,
+    {blurW,              EVENTT_HTML,   DISPID_EVMETH_ONBLUR,
         EVENT_DEFAULTLISTENER},
-    {changeW,            onchangeW,            EVENTT_HTML,   DISPID_EVMETH_ONCHANGE,
+    {changeW,            EVENTT_HTML,   DISPID_EVMETH_ONCHANGE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {clickW,             onclickW,             EVENTT_MOUSE,  DISPID_EVMETH_ONCLICK,
+    {clickW,             EVENTT_MOUSE,  DISPID_EVMETH_ONCLICK,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_HASDEFAULTHANDLERS},
-    {contextmenuW,       oncontextmenuW,       EVENTT_MOUSE,  DISPID_EVMETH_ONCONTEXTMENU,
+    {contextmenuW,       EVENTT_MOUSE,  DISPID_EVMETH_ONCONTEXTMENU,
         EVENT_BUBBLE|EVENT_CANCELABLE},
-    {dataavailableW,     ondataavailableW,     EVENTT_NONE,   DISPID_EVMETH_ONDATAAVAILABLE,
+    {dataavailableW,     EVENTT_NONE,   DISPID_EVMETH_ONDATAAVAILABLE,
         EVENT_BUBBLE},
-    {dblclickW,          ondblclickW,          EVENTT_MOUSE,  DISPID_EVMETH_ONDBLCLICK,
+    {dblclickW,          EVENTT_MOUSE,  DISPID_EVMETH_ONDBLCLICK,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
-    {dragW,              ondragW,              EVENTT_MOUSE,  DISPID_EVMETH_ONDRAG,
+    {dragW,              EVENTT_MOUSE,  DISPID_EVMETH_ONDRAG,
         EVENT_FIXME|EVENT_CANCELABLE},
-    {dragstartW,         ondragstartW,         EVENTT_MOUSE,  DISPID_EVMETH_ONDRAGSTART,
+    {dragstartW,         EVENTT_MOUSE,  DISPID_EVMETH_ONDRAGSTART,
         EVENT_FIXME|EVENT_CANCELABLE},
-    {errorW,             onerrorW,             EVENTT_NONE,   DISPID_EVMETH_ONERROR,
+    {errorW,             EVENTT_NONE,   DISPID_EVMETH_ONERROR,
         EVENT_BIND_TO_BODY},
-    {focusW,             onfocusW,             EVENTT_HTML,   DISPID_EVMETH_ONFOCUS,
+    {focusW,             EVENTT_HTML,   DISPID_EVMETH_ONFOCUS,
         EVENT_DEFAULTLISTENER},
-    {focusinW,           onfocusinW,           EVENTT_HTML,   DISPID_EVMETH_ONFOCUSIN,
+    {focusinW,           EVENTT_HTML,   DISPID_EVMETH_ONFOCUSIN,
         EVENT_BUBBLE},
-    {focusoutW,          onfocusoutW,          EVENTT_HTML,   DISPID_EVMETH_ONFOCUSOUT,
+    {focusoutW,          EVENTT_HTML,   DISPID_EVMETH_ONFOCUSOUT,
         EVENT_BUBBLE},
-    {helpW,              onhelpW,              EVENTT_KEY,    DISPID_EVMETH_ONHELP,
+    {helpW,              EVENTT_KEY,    DISPID_EVMETH_ONHELP,
         EVENT_BUBBLE|EVENT_CANCELABLE},
-    {keydownW,           onkeydownW,           EVENTT_KEY,    DISPID_EVMETH_ONKEYDOWN,
+    {keydownW,           EVENTT_KEY,    DISPID_EVMETH_ONKEYDOWN,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_HASDEFAULTHANDLERS},
-    {keypressW,          onkeypressW,          EVENTT_KEY,    DISPID_EVMETH_ONKEYPRESS,
+    {keypressW,          EVENTT_KEY,    DISPID_EVMETH_ONKEYPRESS,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {keyupW,             onkeyupW,             EVENTT_KEY,    DISPID_EVMETH_ONKEYUP,
+    {keyupW,             EVENTT_KEY,    DISPID_EVMETH_ONKEYUP,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {loadW,              onloadW,              EVENTT_HTML,   DISPID_EVMETH_ONLOAD,
+    {loadW,              EVENTT_HTML,   DISPID_EVMETH_ONLOAD,
         EVENT_BIND_TO_BODY},
-    {messageW,           onmessageW,           EVENTT_NONE,   DISPID_EVMETH_ONMESSAGE,
+    {messageW,           EVENTT_NONE,   DISPID_EVMETH_ONMESSAGE,
         EVENT_FORWARDBODY /* FIXME: remove when we get the target right */ },
-    {mousedownW,         onmousedownW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEDOWN,
+    {mousedownW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEDOWN,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE},
-    {mousemoveW,         onmousemoveW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEMOVE,
+    {mousemoveW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEMOVE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoutW,          onmouseoutW,          EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOUT,
+    {mouseoutW,          EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOUT,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseoverW,         onmouseoverW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOVER,
+    {mouseoverW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOVER,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mouseupW,           onmouseupW,           EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEUP,
+    {mouseupW,           EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEUP,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {mousewheelW,        onmousewheelW,        EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEWHEEL,
+    {mousewheelW,        EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEWHEEL,
         EVENT_FIXME},
-    {pasteW,             onpasteW,             EVENTT_NONE,   DISPID_EVMETH_ONPASTE,
+    {pasteW,             EVENTT_NONE,   DISPID_EVMETH_ONPASTE,
         EVENT_CANCELABLE},
-    {readystatechangeW,  onreadystatechangeW,  EVENTT_NONE,   DISPID_EVMETH_ONREADYSTATECHANGE,
+    {readystatechangeW,  EVENTT_NONE,   DISPID_EVMETH_ONREADYSTATECHANGE,
         0},
-    {resizeW,            onresizeW,            EVENTT_NONE,   DISPID_EVMETH_ONRESIZE,
+    {resizeW,            EVENTT_NONE,   DISPID_EVMETH_ONRESIZE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {scrollW,            onscrollW,            EVENTT_HTML,   DISPID_EVMETH_ONSCROLL,
+    {scrollW,            EVENTT_HTML,   DISPID_EVMETH_ONSCROLL,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
-    {selectionchangeW,   onselectionchangeW,   EVENTT_NONE,   DISPID_EVMETH_ONSELECTSTART,
+    {selectionchangeW,   EVENTT_NONE,   DISPID_EVMETH_ONSELECTIONCHANGE,
         EVENT_FIXME},
-    {selectstartW,       onselectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
+    {selectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
         EVENT_CANCELABLE},
-    {submitW,            onsubmitW,            EVENTT_HTML,   DISPID_EVMETH_ONSUBMIT,
+    {submitW,            EVENTT_HTML,   DISPID_EVMETH_ONSUBMIT,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE|EVENT_CANCELABLE|EVENT_HASDEFAULTHANDLERS},
-    {unloadW,            onunloadW,            EVENTT_HTML,   DISPID_EVMETH_ONUNLOAD,
+    {unloadW,            EVENTT_HTML,   DISPID_EVMETH_ONUNLOAD,
         EVENT_FIXME}
 };
 
