@@ -1107,7 +1107,6 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
                         buffer->flags |= WINED3D_BUFFER_PIN_SYSMEM;
                     }
                     TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
-                    buffer->map_ptr = NULL;
                 }
             }
 
