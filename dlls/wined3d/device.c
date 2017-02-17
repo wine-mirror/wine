@@ -1513,7 +1513,6 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
 {
     UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
     struct wined3d_light_info *object = NULL;
-    struct list *e;
     float rho;
 
     TRACE("device %p, light_idx %u, light %p.\n", device, light_idx, light);
@@ -1547,15 +1546,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    LIST_FOR_EACH(e, &device->update_state->light_map[hash_idx])
-    {
-        object = LIST_ENTRY(e, struct wined3d_light_info, entry);
-        if (object->OriginalIndex == light_idx)
-            break;
-        object = NULL;
-    }
-
-    if (!object)
+    if (!(object = wined3d_state_get_light(device->update_state, light_idx)))
     {
         TRACE("Adding new light\n");
         object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -1670,21 +1661,11 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
 HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device,
         UINT light_idx, struct wined3d_light *light)
 {
-    UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
-    struct wined3d_light_info *light_info = NULL;
-    struct list *e;
+    struct wined3d_light_info *light_info;
 
     TRACE("device %p, light_idx %u, light %p.\n", device, light_idx, light);
 
-    LIST_FOR_EACH(e, &device->state.light_map[hash_idx])
-    {
-        light_info = LIST_ENTRY(e, struct wined3d_light_info, entry);
-        if (light_info->OriginalIndex == light_idx)
-            break;
-        light_info = NULL;
-    }
-
-    if (!light_info)
+    if (!(light_info = wined3d_state_get_light(&device->state, light_idx)))
     {
         TRACE("Light information requested but light not defined\n");
         return WINED3DERR_INVALIDCALL;
@@ -1696,36 +1677,17 @@ HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device,
 
 HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
 {
-    UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
-    struct wined3d_light_info *light_info = NULL;
-    struct list *e;
+    struct wined3d_light_info *light_info;
 
     TRACE("device %p, light_idx %u, enable %#x.\n", device, light_idx, enable);
 
-    LIST_FOR_EACH(e, &device->update_state->light_map[hash_idx])
-    {
-        light_info = LIST_ENTRY(e, struct wined3d_light_info, entry);
-        if (light_info->OriginalIndex == light_idx)
-            break;
-        light_info = NULL;
-    }
-    TRACE("Found light %p.\n", light_info);
-
     /* Special case - enabling an undefined light creates one with a strict set of parameters. */
-    if (!light_info)
+    if (!(light_info = wined3d_state_get_light(device->update_state, light_idx)))
     {
         TRACE("Light enabled requested but light not defined, so defining one!\n");
         wined3d_device_set_light(device, light_idx, &WINED3D_default_light);
 
-        /* Search for it again! Should be fairly quick as near head of list. */
-        LIST_FOR_EACH(e, &device->update_state->light_map[hash_idx])
-        {
-            light_info = LIST_ENTRY(e, struct wined3d_light_info, entry);
-            if (light_info->OriginalIndex == light_idx)
-                break;
-            light_info = NULL;
-        }
-        if (!light_info)
+        if (!(light_info = wined3d_state_get_light(device->update_state, light_idx)))
         {
             FIXME("Adding default lights has failed dismally\n");
             return WINED3DERR_INVALIDCALL;
@@ -1799,21 +1761,11 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
 
 HRESULT CDECL wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable)
 {
-    UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
-    struct wined3d_light_info *light_info = NULL;
-    struct list *e;
+    struct wined3d_light_info *light_info;
 
     TRACE("device %p, light_idx %u, enable %p.\n", device, light_idx, enable);
 
-    LIST_FOR_EACH(e, &device->state.light_map[hash_idx])
-    {
-        light_info = LIST_ENTRY(e, struct wined3d_light_info, entry);
-        if (light_info->OriginalIndex == light_idx)
-            break;
-        light_info = NULL;
-    }
-
-    if (!light_info)
+    if (!(light_info = wined3d_state_get_light(&device->state, light_idx)))
     {
         TRACE("Light enabled state requested but light not defined.\n");
         return WINED3DERR_INVALIDCALL;

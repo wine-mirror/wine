@@ -560,6 +560,21 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
     return refcount;
 }
 
+struct wined3d_light_info *wined3d_state_get_light(const struct wined3d_state *state, unsigned int idx)
+{
+    struct wined3d_light_info *light_info;
+    unsigned int hash_idx;
+
+    hash_idx = LIGHTMAP_HASHFUNC(idx);
+    LIST_FOR_EACH_ENTRY(light_info, &state->light_map[hash_idx], struct wined3d_light_info, entry)
+    {
+        if (light_info->OriginalIndex == idx)
+            return light_info;
+    }
+
+    return NULL;
+}
+
 static void wined3d_state_record_lights(struct wined3d_state *dst_state, const struct wined3d_state *src_state)
 {
     UINT i;
