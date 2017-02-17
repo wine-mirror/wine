@@ -893,7 +893,11 @@ static BOOL CALLBACK EnumAddress_cb2( REFGUID guidDataType,
     }
     else if ( IsEqualGUID( types[1], guidDataType ) )
     {
-        todo_wine checkGuid( sps[ callbackData->dwCounter1 ], lpData );
+        BOOL found = FALSE;
+        int i;
+        for( i=0; i < sizeof(sps) / sizeof(sps[0]) && !found; i++ )
+            found = IsEqualGUID( sps[i], lpData );
+        ok( found, "Unknown Address type found %s\n", wine_dbgstr_guid(lpData) );
     }
 
     callbackData->dwCounter2++;
@@ -957,14 +961,14 @@ static void test_EnumConnections(void)
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
                                        &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
-    check( 4, callbackData.dwCounter1 );
+    ok( callbackData.dwCounter1 == 4 || callbackData.dwCounter1 == 3, "got=%d\n", callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = 0;
     hr = IDirectPlayX_EnumConnections( pDP, NULL, EnumConnections_cb,
                                        &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
-    check( 4, callbackData.dwCounter1 );
+    ok( callbackData.dwCounter1 == 4 || callbackData.dwCounter1 == 3, "got=%d\n", callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = 0;
@@ -980,7 +984,7 @@ static void test_EnumConnections(void)
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
                                        &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
-    check( 4, callbackData.dwCounter1 );
+    ok( callbackData.dwCounter1 == 4 || callbackData.dwCounter1 == 3, "got=%d\n", callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = DPCONNECTION_DIRECTPLAYLOBBY;
@@ -995,7 +999,7 @@ static void test_EnumConnections(void)
     hr = IDirectPlayX_EnumConnections( pDP, &appGuid, EnumConnections_cb,
                                        &callbackData, callbackData.dwFlags );
     checkHR( DP_OK, hr );
-    check( 4, callbackData.dwCounter1 );
+    ok( callbackData.dwCounter1 == 4 || callbackData.dwCounter1 == 3, "got=%d\n", callbackData.dwCounter1 );
 
     callbackData.dwCounter1 = 0;
     callbackData.dwFlags = ~( DPCONNECTION_DIRECTPLAY |
@@ -1094,7 +1098,7 @@ static void test_GetCaps(void)
     {
 
         hr = IDirectPlayX_GetCaps( pDP, &dpcaps, dwFlags );
-        checkHR( DP_OK, hr );
+        todo_wine checkHR( DP_OK, hr );
 
 
         if ( hr == DP_OK )
@@ -6890,20 +6894,19 @@ START_TEST(dplayx)
     test_COM();
     test_COM_dplobby();
     test_EnumerateProviders();
+    test_DirectPlayCreate();
+    test_EnumConnections();
+    test_InitializeConnection();
+    test_GetCaps();
 
     if (!winetest_interactive)
     {
-        skip("Run in interactive mode to run dplayx tests.\n");
+        skip("Run in interactive mode to run all dplayx tests.\n");
         return;
     }
 
     trace("Running in interactive mode, tests will take a while\n");
 
-    test_DirectPlayCreate();
-    test_EnumConnections();
-    test_InitializeConnection();
-
-    test_GetCaps();
     /* test_Open() takes almost a minute, */
     test_Open();
     /* test_EnumSession takes three minutes */
