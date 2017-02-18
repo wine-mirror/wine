@@ -985,7 +985,7 @@ static const struct message WmShowPopupExtremeLocationSeq[] = {
     { WM_NCPAINT, sent|wparam, 1 },
     { WM_ERASEBKGND, sent },
     { WM_WINDOWPOSCHANGED, sent },
-    /* ocasionally received on test machines */
+    /* occasionally received on test machines */
     { WM_NCPAINT, sent|optional },
     { WM_ERASEBKGND, sent|optional },
     { 0 }
@@ -1018,7 +1018,7 @@ static const struct message WmShowPopupFirstDrawSeq_1[] = {
     { WM_ERASEBKGND, sent },
     { WM_WINDOWPOSCHANGED, sent },
     { WM_PAINT, sent },
-    /* ocasionally received on test machines */
+    /* occasionally received on test machines */
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
@@ -1058,7 +1058,7 @@ static const struct message WmShowPopupFirstDrawSeq_2[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc, 0 },
     { WM_PAINT, sent},
-    /* ocasionally received on test machines */
+    /* occasionally received on test machines */
     { WM_NCPAINT, sent|beginpaint|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
@@ -1189,7 +1189,7 @@ static const struct message WmFirstDrawChildSeq1[] = {
 static const struct message WmFirstDrawChildSeq2[] = {
     { WM_NCPAINT, sent|wparam, 1 },
     { WM_ERASEBKGND, sent },
-    /* ocasionally received on test machines */
+    /* occasionally received on test machines */
     { WM_NCPAINT, sent|optional },
     { WM_ERASEBKGND, sent|optional },
     { 0 }
