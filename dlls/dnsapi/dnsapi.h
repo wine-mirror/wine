@@ -22,19 +22,19 @@
 # error You must include config.h to use this header
 #endif
 
-static inline void *heap_alloc( SIZE_T size )
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
 {
-    return HeapAlloc( GetProcessHeap(), 0, size );
+    return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
-static inline void *heap_alloc_zero( SIZE_T size )
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t size)
 {
-    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
-static inline BOOL heap_free( LPVOID mem )
+static inline BOOL heap_free(void *mem)
 {
-    return HeapFree( GetProcessHeap(), 0, mem );
+    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 static inline LPSTR dns_strdup_a( LPCSTR src )
