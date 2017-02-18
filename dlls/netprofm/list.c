@@ -41,14 +41,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netprofm);
 
-static inline void *heap_alloc( SIZE_T size )
+static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
 {
-    return HeapAlloc( GetProcessHeap(), 0, size );
+    return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
-static inline BOOL heap_free( void *mem )
+static inline BOOL heap_free(void *mem)
 {
-    return HeapFree( GetProcessHeap(), 0, mem );
+    return HeapFree(GetProcessHeap(), 0, mem);
 }
 
 struct network
