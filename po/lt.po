@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-11 08:54+0300\n"
+"PO-Revision-Date: 2017-02-18 08:33+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12226,17 +12226,13 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Eksportuoja pasirinktą registro šaką į tekstinį failą"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Reikšmės šalinimo patvirtinimas"
+msgstr "Rakto šalinimo patvirtinimas"
 
 #: regedit.rc:188
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "Ar tikrai norite pašalinti registro raktą „%1“?"
+msgstr "Ar tikrai norite pašalinti registro raktą „%1“ ir visus jo porakčius?"
 
 #: regsvr32.rc:32
 msgid ""
