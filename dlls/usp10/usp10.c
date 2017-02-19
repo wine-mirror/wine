@@ -3347,15 +3347,24 @@ HRESULT WINAPI ScriptPlaceOpenType( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS 
         }
         else if (!get_cache_glyph_widths(psc, pwGlyphs[i], &abc))
         {
+            BOOL ret;
             if (!hdc) return E_PENDING;
-            if ((get_cache_pitch_family(psc) & TMPF_TRUETYPE) && !psa->fNoGlyphIndex)
+            if (get_cache_pitch_family(psc) & TMPF_TRUETYPE)
             {
-                if (!GetCharABCWidthsI(hdc, 0, 1, (WORD *)&pwGlyphs[i], &abc)) return S_FALSE;
+                if (psa->fNoGlyphIndex)
+                    ret = GetCharABCWidthsW(hdc, pwGlyphs[i], pwGlyphs[i], &abc);
+                else
+                    ret = GetCharABCWidthsI(hdc, 0, 1, (WORD *)&pwGlyphs[i], &abc);
+                if (!ret) return S_FALSE;
             }
             else
             {
                 INT width;
-                if (!GetCharWidth32W(hdc, pwGlyphs[i], pwGlyphs[i], &width)) return S_FALSE;
+                if (psa->fNoGlyphIndex)
+                    ret = GetCharWidth32W(hdc, pwGlyphs[i], pwGlyphs[i], &width);
+                else
+                    ret = GetCharWidthI(hdc, 0, 1, (WORD *)&pwGlyphs[i], &width);
+                if (!ret) return S_FALSE;
                 abc.abcB = width;
                 abc.abcA = abc.abcC = 0;
             }
