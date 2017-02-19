@@ -55,6 +55,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_MATERIAL,
     WINED3D_CS_OP_SET_LIGHT,
+    WINED3D_CS_OP_SET_LIGHT_ENABLE,
     WINED3D_CS_OP_RESET_STATE,
     WINED3D_CS_OP_CALLBACK,
     WINED3D_CS_OP_QUERY_ISSUE,
@@ -283,6 +284,13 @@ struct wined3d_cs_set_light
 {
     enum wined3d_cs_op opcode;
     struct wined3d_light_info light;
+};
+
+struct wined3d_cs_set_light_enable
+{
+    enum wined3d_cs_op opcode;
+    unsigned int idx;
+    BOOL enable;
 };
 
 struct wined3d_cs_reset_state
@@ -1399,6 +1407,13 @@ static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
         light_info->OriginalIndex = light_idx;
     }
 
+    if (light_info->glIndex != -1)
+    {
+        if (light_info->OriginalParms.type != op->light.OriginalParms.type)
+            device_invalidate_state(cs->device, STATE_LIGHT_TYPE);
+        device_invalidate_state(cs->device, STATE_ACTIVELIGHT(light_info->glIndex));
+    }
+
     light_info->OriginalParms = op->light.OriginalParms;
     light_info->position = op->light.position;
     light_info->direction = op->light.direction;
@@ -1413,6 +1428,40 @@ void wined3d_cs_emit_set_light(struct wined3d_cs *cs, const struct wined3d_light
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_SET_LIGHT;
     op->light = *light;
+
+    cs->ops->submit(cs);
+}
+
+static void wined3d_cs_exec_set_light_enable(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_light_enable *op = data;
+    struct wined3d_device *device = cs->device;
+    struct wined3d_light_info *light_info;
+    int prev_idx;
+
+    if (!(light_info = wined3d_state_get_light(&cs->state, op->idx)))
+    {
+        ERR("Light doesn't exist.\n");
+        return;
+    }
+
+    prev_idx = light_info->glIndex;
+    wined3d_state_enable_light(&cs->state, &device->adapter->d3d_info, light_info, op->enable);
+    if (light_info->glIndex != prev_idx)
+    {
+        device_invalidate_state(device, STATE_LIGHT_TYPE);
+        device_invalidate_state(device, STATE_ACTIVELIGHT(op->enable ? light_info->glIndex : prev_idx));
+    }
+}
+
+void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, unsigned int idx, BOOL enable)
+{
+    struct wined3d_cs_set_light_enable *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_LIGHT_ENABLE;
+    op->idx = idx;
+    op->enable = enable;
 
     cs->ops->submit(cs);
 }
@@ -1614,6 +1663,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_COLOR_KEY              */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
     /* WINED3D_CS_OP_SET_LIGHT                  */ wined3d_cs_exec_set_light,
+    /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
     /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
     /* WINED3D_CS_OP_CALLBACK                   */ wined3d_cs_exec_callback,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,

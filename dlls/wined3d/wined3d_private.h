@@ -3204,6 +3204,7 @@ void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
         enum wined3d_format_id format_id, unsigned int offset) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_light(struct wined3d_cs *cs, const struct wined3d_light_info *light) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, unsigned int idx, BOOL enable) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_material *material) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_predication(struct wined3d_cs *cs,
         struct wined3d_query *predicate, BOOL value) DECLSPEC_HIDDEN;

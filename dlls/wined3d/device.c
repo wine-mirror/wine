@@ -1568,14 +1568,6 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
             light->direction.x, light->direction.y, light->direction.z,
             light->range, light->falloff, light->theta, light->phi);
 
-    /* Update the live definitions if the light is currently assigned a glIndex. */
-    if (object->glIndex != -1 && !device->recording)
-    {
-        if (object->OriginalParms.type != light->type)
-            device_invalidate_state(device, STATE_LIGHT_TYPE);
-        device_invalidate_state(device, STATE_ACTIVELIGHT(object->glIndex));
-    }
-
     /* Save away the information. */
     object->OriginalParms = *light;
 
@@ -1681,7 +1673,6 @@ HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device,
 HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
 {
     struct wined3d_light_info *light_info;
-    int prev_idx;
 
     TRACE("device %p, light_idx %u, enable %#x.\n", device, light_idx, enable);
 
@@ -1698,13 +1689,9 @@ HRESULT CDECL wined3d_device_set_light_enable(struct wined3d_device *device, UIN
         }
     }
 
-    prev_idx = light_info->glIndex;
     wined3d_state_enable_light(device->update_state, &device->adapter->d3d_info, light_info, enable);
-    if (!device->recording && light_info->glIndex != prev_idx)
-    {
-        device_invalidate_state(device, STATE_LIGHT_TYPE);
-        device_invalidate_state(device, STATE_ACTIVELIGHT(enable ? light_info->glIndex : prev_idx));
-    }
+    if (!device->recording)
+        wined3d_cs_emit_set_light_enable(device->cs, light_idx, enable);
 
     return WINED3D_OK;
 }
