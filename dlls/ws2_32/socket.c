@@ -2737,10 +2737,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
     TRACE("socket %04lx\n", s );
     status = _is_blocking(s, &is_blocking);
     if (status)
-    {
-        set_error(status);
-        return INVALID_SOCKET;
-    }
+        goto error;
 
     do {
         /* try accepting first (if there is a deferred connection) */
@@ -2773,7 +2770,9 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
         }
     } while (is_blocking && status == STATUS_CANT_WAIT);
 
+error:
     set_error(status);
+    WARN(" -> ERROR %d\n", GetLastError());
     return INVALID_SOCKET;
 }
 
