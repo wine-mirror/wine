@@ -882,15 +882,17 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
 
 static VOID GPOS_apply_feature(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance, LoadedFeature *feature, const WORD *glyphs, INT glyph_count, GOFFSET *pGoffset)
 {
-    int i;
+    int dir = analysis->fLogicalOrder && analysis->fRTL ? -1 : 1;
+    unsigned int start_idx, i, j;
 
     TRACE("%i lookups\n", feature->lookup_count);
+
+    start_idx = dir < 0 ? glyph_count - 1 : 0;
     for (i = 0; i < feature->lookup_count; i++)
     {
-        int j;
         for (j = 0; j < glyph_count; )
             j += OpenType_apply_GPOS_lookup(psc, lpotm, lplogfont, analysis, piAdvance,
-                    feature->lookups[i], glyphs, j, glyph_count, pGoffset);
+                    feature->lookups[i], glyphs, start_idx + dir * j, glyph_count, pGoffset);
     }
 }
 
