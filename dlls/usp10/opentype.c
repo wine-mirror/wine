@@ -1695,7 +1695,8 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const SCRIPT_AN
     int j;
     int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
 
-    if (glyph_index + write_dir < 0 || glyph_index + write_dir >= glyph_count) return glyph_index + 1;
+    if (glyph_index + write_dir < 0 || glyph_index + write_dir >= glyph_count)
+        return 1;
 
     TRACE("Pair Adjustment Positioning Subtable\n");
 
@@ -1731,7 +1732,7 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const SCRIPT_AN
                         TRACE("Format 1: Found Pair %x,%x\n",glyphs[glyph_index],glyphs[glyph_index+write_dir]);
                         apply_pair_value( ppf1, ValueFormat1, ValueFormat2, pair_val_rec->Value1, ppem, ptAdjust, ptAdvance );
                         if (ValueFormat2) next++;
-                        return glyph_index + next;
+                        return next;
                     }
                     pair_val_rec = (const GPOS_PairValueRecord *)(pair_val_rec->Value1 + val_fmt1_size + val_fmt2_size);
                 }
@@ -1764,14 +1765,14 @@ static INT GPOS_apply_PairAdjustment(const OT_LookupTable *look, const SCRIPT_AN
 
                     apply_pair_value( ppf2, ValueFormat1, ValueFormat2, pair_val, ppem, ptAdjust, ptAdvance );
                     if (ValueFormat2) next++;
-                    return glyph_index + next;
+                    return next;
                 }
             }
         }
         else
             FIXME("Pair Adjustment Positioning: Format %i Unhandled\n",GET_BE_WORD(ppf1->PosFormat));
     }
-    return glyph_index+1;
+    return 1;
 }
 
 static VOID GPOS_apply_CursiveAttachment(const OT_LookupTable *look, const SCRIPT_ANALYSIS *analysis, const WORD *glyphs, INT glyph_index,
@@ -2320,11 +2321,12 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             POINT advance[2]= {{0,0},{0,0}};
             POINT adjust[2]= {{0,0},{0,0}};
             double devX, devY;
-            int index;
+            int index_offset;
             int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
             int offset_sign = (analysis->fRTL && analysis->fLogicalOrder) ? -1 : 1;
 
-            index = GPOS_apply_PairAdjustment(look, analysis, glyphs, glyph_index, glyph_count, ppem, adjust, advance);
+            index_offset = GPOS_apply_PairAdjustment(look, analysis, glyphs,
+                    glyph_index, glyph_count, ppem, adjust, advance);
             if (adjust[0].x || adjust[0].y)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, adjust[0].x, adjust[0].y, &devX, &devY);
@@ -2347,7 +2349,7 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, advance[1].x, advance[1].y, &devX, &devY);
                 piAdvance[glyph_index + write_dir] += round(devX);
             }
-            return index;
+            return glyph_index + index_offset;
         }
 
         case GPOS_LOOKUP_ATTACH_CURSIVE:
