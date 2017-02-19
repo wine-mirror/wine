@@ -2349,7 +2349,7 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, advance[1].x, advance[1].y, &devX, &devY);
                 piAdvance[glyph_index + write_dir] += round(devX);
             }
-            return glyph_index + index_offset;
+            return index_offset;
         }
 
         case GPOS_LOOKUP_ATTACH_CURSIVE:
@@ -2417,17 +2417,17 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
         }
 
         case GPOS_LOOKUP_POSITION_CONTEXT:
-            return glyph_index + GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
+            return GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
                     lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
 
         case GPOS_LOOKUP_POSITION_CONTEXT_CHAINED:
-            return glyph_index + GPOS_apply_ChainContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
+            return GPOS_apply_ChainContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
                     lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
 
         default:
             FIXME("Unhandled GPOS lookup type %#x.\n", type);
     }
-    return glyph_index+1;
+    return 1;
 }
 
 INT OpenType_apply_GPOS_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance, INT lookup_index, const WORD *glyphs, INT glyph_index, INT glyph_count, GOFFSET *pGoffset)

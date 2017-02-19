@@ -889,7 +889,8 @@ static VOID GPOS_apply_feature(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPL
     {
         int j;
         for (j = 0; j < glyph_count; )
-            j = OpenType_apply_GPOS_lookup(psc, lpotm, lplogfont, analysis, piAdvance, feature->lookups[i], glyphs, j, glyph_count, pGoffset);
+            j += OpenType_apply_GPOS_lookup(psc, lpotm, lplogfont, analysis, piAdvance,
+                    feature->lookups[i], glyphs, j, glyph_count, pGoffset);
     }
 }
 
