@@ -242,8 +242,7 @@ static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_fla
     if(flags->Alternate)
         *p++ = flags->Alternate;
     if(flags->Precision >= 0) {
-        sprintf(p, ".%d", flags->Precision);
-        p += strlen(p);
+        p += sprintf(p, ".%d", flags->Precision);
     }
     *p++ = flags->Format;
     *p++ = 0;
