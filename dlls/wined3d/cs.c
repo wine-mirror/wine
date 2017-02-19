@@ -54,6 +54,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_CLIP_PLANE,
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_MATERIAL,
+    WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_RESET_STATE,
     WINED3D_CS_OP_CALLBACK,
     WINED3D_CS_OP_QUERY_ISSUE,
@@ -276,6 +277,12 @@ struct wined3d_cs_set_material
 {
     enum wined3d_cs_op opcode;
     struct wined3d_material material;
+};
+
+struct wined3d_cs_set_light
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_light_info light;
 };
 
 struct wined3d_cs_reset_state
@@ -1369,6 +1376,47 @@ void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_ma
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_light *op = data;
+    struct wined3d_light_info *light_info;
+    unsigned int light_idx, hash_idx;
+
+    light_idx = op->light.OriginalIndex;
+
+    if (!(light_info = wined3d_state_get_light(&cs->state, light_idx)))
+    {
+        TRACE("Adding new light.\n");
+        if (!(light_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*light_info))))
+        {
+            ERR("Failed to allocate light info.\n");
+            return;
+        }
+
+        hash_idx = LIGHTMAP_HASHFUNC(light_idx);
+        list_add_head(&cs->state.light_map[hash_idx], &light_info->entry);
+        light_info->glIndex = -1;
+        light_info->OriginalIndex = light_idx;
+    }
+
+    light_info->OriginalParms = op->light.OriginalParms;
+    light_info->position = op->light.position;
+    light_info->direction = op->light.direction;
+    light_info->exponent = op->light.exponent;
+    light_info->cutoff = op->light.cutoff;
+}
+
+void wined3d_cs_emit_set_light(struct wined3d_cs *cs, const struct wined3d_light_info *light)
+{
+    struct wined3d_cs_set_light *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SET_LIGHT;
+    op->light = *light;
+
+    cs->ops->submit(cs);
+}
+
 static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 {
     struct wined3d_adapter *adapter = cs->device->adapter;
@@ -1565,6 +1613,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_CLIP_PLANE             */ wined3d_cs_exec_set_clip_plane,
     /* WINED3D_CS_OP_SET_COLOR_KEY              */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
+    /* WINED3D_CS_OP_SET_LIGHT                  */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
     /* WINED3D_CS_OP_CALLBACK                   */ wined3d_cs_exec_callback,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,

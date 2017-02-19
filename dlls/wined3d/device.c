@@ -1655,6 +1655,9 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
             FIXME("Unrecognized light type %#x.\n", light->type);
     }
 
+    if (!device->recording)
+        wined3d_cs_emit_set_light(device->cs, object);
+
     return WINED3D_OK;
 }
 
