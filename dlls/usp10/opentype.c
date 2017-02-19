@@ -1492,10 +1492,18 @@ static INT GPOS_get_device_table_value(const OT_DeviceTable *DeviceTable, WORD p
     static const WORD mask[3] = {3,0xf,0xff};
     if (DeviceTable && ppem >= GET_BE_WORD(DeviceTable->StartSize) && ppem  <= GET_BE_WORD(DeviceTable->EndSize))
     {
-        int format = GET_BE_WORD(DeviceTable->DeltaFormat);
+        WORD format = GET_BE_WORD(DeviceTable->DeltaFormat);
         int index = ppem - GET_BE_WORD(DeviceTable->StartSize);
         int value;
-        TRACE("device table, format %i, index %i\n",format, index);
+
+        TRACE("device table, format %#x, index %i\n", format, index);
+
+        if (format & ~0x3)
+        {
+            WARN("invalid delta format %#x\n", format);
+            return 0;
+        }
+
         index = index << format;
         value = (DeviceTable->DeltaValue[index/sizeof(WORD)] << (index%sizeof(WORD)))&mask[format-1];
         TRACE("offset %i, value %i\n",index, value);
