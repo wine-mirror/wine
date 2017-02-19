@@ -2139,7 +2139,7 @@ static INT GPOS_apply_ContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, L
                         TRACE("Position: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
                         GPOS_apply_lookup(psc, lpotm, lplogfont, analysis, piAdvance, lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, glyph_count, pGoffset);
                     }
-                    return glyph_index + 1;
+                    return 1;
                 }
             }
 
@@ -2156,7 +2156,7 @@ static INT GPOS_apply_ContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, L
         else
             FIXME("Unhandled Contextual Positioning Format %i\n",GET_BE_WORD(cpf2->PosFormat));
     }
-    return glyph_index + 1;
+    return 1;
 }
 
 static INT GPOS_apply_ChainContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
@@ -2417,7 +2417,7 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
         }
 
         case GPOS_LOOKUP_POSITION_CONTEXT:
-            return GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
+            return glyph_index + GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
                     lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
 
         case GPOS_LOOKUP_POSITION_CONTEXT_CHAINED:
