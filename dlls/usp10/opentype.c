@@ -48,6 +48,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 /* These are all structures needed for the cmap format 12 table */
 #define CMAP_TAG MS_MAKE_TAG('c', 'm', 'a', 'p')
 
+enum gpos_lookup_type
+{
+    GPOS_LOOKUP_ADJUST_SINGLE = 0x1,
+    GPOS_LOOKUP_ADJUST_PAIR = 0x2,
+    GPOS_LOOKUP_ATTACH_CURSIVE = 0x3,
+    GPOS_LOOKUP_ATTACH_MARK_TO_BASE = 0x4,
+    GPOS_LOOKUP_ATTACH_MARK_TO_LIGATURE = 0x5,
+    GPOS_LOOKUP_ATTACH_MARK_TO_MARK = 0x6,
+    GPOS_LOOKUP_POSITION_CONTEXT = 0x7,
+    GPOS_LOOKUP_POSITION_CONTEXT_CHAINED = 0x8,
+    GPOS_LOOKUP_POSITION_EXTENSION = 0x9,
+};
+
 typedef struct {
     WORD platformID;
     WORD encodingID;
@@ -1587,7 +1600,7 @@ static const BYTE *GPOS_get_subtable(const OT_LookupTable *look, int index)
 {
     int offset = GET_BE_WORD(look->SubTable[index]);
 
-    if (GET_BE_WORD(look->LookupType) == 9)
+    if (GET_BE_WORD(look->LookupType) == GPOS_LOOKUP_POSITION_EXTENSION)
     {
         const GPOS_ExtensionPosFormat1 *ext = (const GPOS_ExtensionPosFormat1 *)((const BYTE *)look + offset);
         if (GET_BE_WORD(ext->PosFormat) == 1)
@@ -2250,13 +2263,15 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
     int offset;
     const OT_LookupTable *look;
     int ppem = lpotm->otmTextMetrics.tmAscent + lpotm->otmTextMetrics.tmDescent - lpotm->otmTextMetrics.tmInternalLeading;
-    WORD type;
+    enum gpos_lookup_type type;
 
     offset = GET_BE_WORD(lookup->Lookup[lookup_index]);
     look = (const OT_LookupTable*)((const BYTE*)lookup + offset);
     type = GET_BE_WORD(look->LookupType);
-    TRACE("type %i, flag %x, subtables %i\n",type,GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
-    if (type == 9)
+    TRACE("type %#x, flag %#x, subtables %u.\n", type,
+            GET_BE_WORD(look->LookupFlag), GET_BE_WORD(look->SubTableCount));
+
+    if (type == GPOS_LOOKUP_POSITION_EXTENSION)
     {
         if (GET_BE_WORD(look->SubTableCount))
         {
@@ -2278,7 +2293,7 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
     }
     switch (type)
     {
-        case 1:
+        case GPOS_LOOKUP_ADJUST_SINGLE:
         {
             double devX, devY;
             POINT adjust = {0,0};
@@ -2299,7 +2314,8 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             }
             break;
         }
-        case 2:
+
+        case GPOS_LOOKUP_ADJUST_PAIR:
         {
             POINT advance[2]= {{0,0},{0,0}};
             POINT adjust[2]= {{0,0},{0,0}};
@@ -2333,7 +2349,8 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             }
             return index;
         }
-        case 3:
+
+        case GPOS_LOOKUP_ATTACH_CURSIVE:
         {
             POINT desU = {0,0};
             double devX, devY;
@@ -2348,7 +2365,8 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             }
             break;
         }
-        case 4:
+
+        case GPOS_LOOKUP_ATTACH_MARK_TO_BASE:
         {
             double devX, devY;
             POINT desU = {0,0};
@@ -2366,7 +2384,8 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             }
             break;
         }
-        case 5:
+
+        case GPOS_LOOKUP_ATTACH_MARK_TO_LIGATURE:
         {
             double devX, devY;
             POINT desU = {0,0};
@@ -2379,7 +2398,8 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             }
             break;
         }
-        case 6:
+
+        case GPOS_LOOKUP_ATTACH_MARK_TO_MARK:
         {
             double devX, devY;
             POINT desU = {0,0};
@@ -2393,14 +2413,17 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
             }
             break;
         }
-        case 7:
-            return GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance, lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
-        case 8:
-        {
-            return GPOS_apply_ChainContextPos(psc, lpotm, lplogfont, analysis, piAdvance, lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
-        }
+
+        case GPOS_LOOKUP_POSITION_CONTEXT:
+            return GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
+                    lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
+
+        case GPOS_LOOKUP_POSITION_CONTEXT_CHAINED:
+            return GPOS_apply_ChainContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
+                    lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
+
         default:
-            FIXME("We do not handle SubType %i\n",type);
+            FIXME("Unhandled GPOS lookup type %#x.\n", type);
     }
     return glyph_index+1;
 }
