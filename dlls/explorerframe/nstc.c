@@ -72,6 +72,8 @@ static const DWORD unsupported_styles2 =
     NSTCS2_INTERRUPTNOTIFICATIONS | NSTCS2_SHOWNULLSPACEMENU | NSTCS2_DISPLAYPADDING |
     NSTCS2_DISPLAYPINNEDONLY | NTSCS2_NOSINGLETONAUTOEXPAND | NTSCS2_NEVERINSERTNONENUMERATED;
 
+static const WCHAR thispropW[] = {'P','R','O','P','_','T','H','I','S',0};
+
 static inline NSTC2Impl *impl_from_INameSpaceTreeControl2(INameSpaceTreeControl2 *iface)
 {
     return CONTAINING_RECORD(iface, NSTC2Impl, INameSpaceTreeControl2_iface);
@@ -502,7 +504,7 @@ static LRESULT create_namespacetree(HWND hWnd, CREATESTRUCTW *crs)
     This->tv_oldwndproc = (WNDPROC)SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC,
                                                      (ULONG_PTR)tv_wndproc);
     if(This->tv_oldwndproc)
-        SetPropA(This->hwnd_tv, "PROP_THIS", This);
+        SetPropW(This->hwnd_tv, thispropW, This);
 
     return TRUE;
 }
@@ -526,7 +528,7 @@ static LRESULT destroy_namespacetree(NSTC2Impl *This)
     if(This->tv_oldwndproc)
     {
         SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC, (ULONG_PTR)This->tv_oldwndproc);
-        RemovePropA(This->hwnd_tv, "PROP_THIS");
+        RemovePropW(This->hwnd_tv, thispropW);
     }
 
     INameSpaceTreeControl2_RemoveAllRoots(&This->INameSpaceTreeControl2_iface);
@@ -754,7 +756,7 @@ static LRESULT on_kbd_event(NSTC2Impl *This, UINT uMsg, WPARAM wParam, LPARAM lP
 
 static LRESULT CALLBACK tv_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-    NSTC2Impl *This = (NSTC2Impl*)GetPropA(hWnd, "PROP_THIS");
+    NSTC2Impl *This = (NSTC2Impl*)GetPropW(hWnd, thispropW);
 
     switch(uMessage) {
     case WM_KEYDOWN:
