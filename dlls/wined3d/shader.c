@@ -886,7 +886,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     void *fe_data = shader->frontend_data;
     struct wined3d_shader_version shader_version;
-    const DWORD *ptr = byte_code;
+    const DWORD *ptr;
     unsigned int i;
 
     memset(reg_maps, 0, sizeof(*reg_maps));
@@ -2179,7 +2179,7 @@ static void shader_dump_src_param(struct wined3d_string_buffer *buffer,
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on MSDN. */
 void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
-        const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
+        const struct wined3d_shader_reg_maps *reg_maps, void *backend_ctx)
 {
     struct wined3d_device *device = shader->device;
     const struct wined3d_shader_frontend *fe = shader->frontend;
@@ -2189,7 +2189,7 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_st
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_tex_mx tex_mx;
     struct wined3d_shader_context ctx;
-    const DWORD *ptr = byte_code;
+    const DWORD *ptr;
 
     /* Initialize current parsing state. */
     tex_mx.current_row = 0;
@@ -2329,13 +2329,13 @@ static void shader_dump_interpolation_mode(struct wined3d_string_buffer *buffer,
     }
 }
 
-static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *byte_code)
+static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data)
 {
     struct wined3d_shader_version shader_version;
     struct wined3d_string_buffer buffer;
-    const DWORD *ptr = byte_code;
     const char *type_prefix;
     const char *p, *q;
+    const DWORD *ptr;
     DWORD i;
 
     if (!string_buffer_init(&buffer))
@@ -2344,9 +2344,9 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         return;
     }
 
-    TRACE("Parsing %p.\n", byte_code);
-
     fe->shader_read_header(fe_data, &ptr, &shader_version);
+
+    TRACE("Parsing %p.\n", ptr);
 
     switch (shader_version.type)
     {
@@ -2887,7 +2887,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
 
     /* First pass: trace shader. */
     if (TRACE_ON(d3d_shader))
-        shader_trace_init(fe, shader->frontend_data, byte_code);
+        shader_trace_init(fe, shader->frontend_data);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc. */
     if (FAILED(hr = shader_get_registers_used(shader, fe, reg_maps, &shader->input_signature,

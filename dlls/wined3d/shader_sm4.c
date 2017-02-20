@@ -396,7 +396,7 @@ struct wined3d_shader_src_param_entry
 struct wined3d_sm4_data
 {
     struct wined3d_shader_version shader_version;
-    const DWORD *end;
+    const DWORD *start, *end;
 
     unsigned int output_map[MAX_REG_OUTPUT];
 
@@ -1123,14 +1123,55 @@ static enum wined3d_data_type map_data_type(char t)
 
 static void *shader_sm4_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
 {
+    DWORD version_token, token_count;
     struct wined3d_sm4_data *priv;
     unsigned int i;
+
+    version_token = byte_code[0];
+    TRACE("Version: 0x%08x.\n", version_token);
+    token_count = byte_code[1];
+    TRACE("Token count: %u.\n", token_count);
 
     if (!(priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv))))
     {
         ERR("Failed to allocate private data\n");
         return NULL;
     }
+
+    priv->start = &byte_code[2];
+    priv->end = &byte_code[token_count];
+
+    switch (version_token >> 16)
+    {
+        case WINED3D_SM4_PS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_PIXEL;
+            break;
+
+        case WINED3D_SM4_VS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_VERTEX;
+            break;
+
+        case WINED3D_SM4_GS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_GEOMETRY;
+            break;
+
+        case WINED3D_SM5_HS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_HULL;
+            break;
+
+        case WINED3D_SM5_DS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_DOMAIN;
+            break;
+
+        case WINED3D_SM5_CS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_COMPUTE;
+            break;
+
+        default:
+            FIXME("Unrecognised shader type %#x.\n", version_token >> 16);
+    }
+    priv->shader_version.major = WINED3D_SM4_VERSION_MAJOR(version_token);
+    priv->shader_version.minor = WINED3D_SM4_VERSION_MINOR(version_token);
 
     memset(priv->output_map, 0xff, sizeof(priv->output_map));
     for (i = 0; i < output_signature->element_count; ++i)
@@ -1190,48 +1231,8 @@ static struct wined3d_shader_src_param *get_src_param(struct wined3d_sm4_data *p
 static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d_shader_version *shader_version)
 {
     struct wined3d_sm4_data *priv = data;
-    DWORD version_token;
 
-    priv->end = *ptr;
-
-    version_token = *(*ptr)++;
-    TRACE("Version: 0x%08x.\n", version_token);
-
-    TRACE("Token count: %u.\n", **ptr);
-    priv->end += *(*ptr)++;
-
-    switch (version_token >> 16)
-    {
-        case WINED3D_SM4_PS:
-            priv->shader_version.type = WINED3D_SHADER_TYPE_PIXEL;
-            break;
-
-        case WINED3D_SM4_VS:
-            priv->shader_version.type = WINED3D_SHADER_TYPE_VERTEX;
-            break;
-
-        case WINED3D_SM4_GS:
-            priv->shader_version.type = WINED3D_SHADER_TYPE_GEOMETRY;
-            break;
-
-        case WINED3D_SM5_HS:
-            priv->shader_version.type = WINED3D_SHADER_TYPE_HULL;
-            break;
-
-        case WINED3D_SM5_DS:
-            priv->shader_version.type = WINED3D_SHADER_TYPE_DOMAIN;
-            break;
-
-        case WINED3D_SM5_CS:
-            priv->shader_version.type = WINED3D_SHADER_TYPE_COMPUTE;
-            break;
-
-        default:
-            FIXME("Unrecognized shader type %#x.\n", version_token >> 16);
-    }
-    priv->shader_version.major = WINED3D_SM4_VERSION_MAJOR(version_token);
-    priv->shader_version.minor = WINED3D_SM4_VERSION_MINOR(version_token);
-
+    *ptr = priv->start;
     *shader_version = priv->shader_version;
 }
 

@@ -3643,7 +3643,7 @@ void string_buffer_free(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps,
         unsigned int max) DECLSPEC_HIDDEN;
 void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
-        const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx) DECLSPEC_HIDDEN;
+        const struct wined3d_shader_reg_maps *reg_maps, void *backend_ctx) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
 
 static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)

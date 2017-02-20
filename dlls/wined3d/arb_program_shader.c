@@ -3510,7 +3510,6 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
-    const DWORD *function = shader->function;
     GLuint retval;
     char fragcolor[16];
     DWORD next_local = 0;
@@ -3810,7 +3809,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     }
 
     /* Base Shader Body */
-    shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main(shader, buffer, reg_maps, &priv_ctx);
 
     if(args->super.srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2], srgbtmp[3],
@@ -4114,7 +4113,6 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     const struct arb_vshader_private *shader_data = shader->backend_data;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     struct shader_arb_priv *priv = shader->device->shader_priv;
-    const DWORD *function = shader->function;
     GLuint ret;
     DWORD next_local = 0;
     struct shader_arb_ctx_priv priv_ctx;
@@ -4224,7 +4222,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     /* The shader starts with the main function */
     priv_ctx.in_main_func = TRUE;
     /* Base Shader Body */
-    shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main(shader, buffer, reg_maps, &priv_ctx);
 
     if (!priv_ctx.footer_written) vshader_add_footer(&priv_ctx,
             shader_data, args, reg_maps, gl_info, buffer);
