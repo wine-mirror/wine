@@ -709,21 +709,14 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
         case WINED3DSPR_INPUT:
             if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
             {
+                /* If relative addressing is used, we must assume that all
+                 * registers are used. Even if it is a construct like v3[aL],
+                 * we can't assume that v0, v1 and v2 aren't read because aL
+                 * can be negative. */
                 if (reg->idx[0].rel_addr)
-                {
-                    /* If relative addressing is used, we must assume that all registers
-                     * are used. Even if it is a construct like v3[aL], we can't assume
-                     * that v0, v1 and v2 aren't read because aL can be negative */
-                    unsigned int i;
-                    for (i = 0; i < MAX_REG_INPUT; ++i)
-                    {
-                        shader->u.ps.input_reg_used[i] = TRUE;
-                    }
-                }
+                    shader->u.ps.input_reg_used = ~0u;
                 else
-                {
-                    shader->u.ps.input_reg_used[reg->idx[0].offset] = TRUE;
-                }
+                    shader->u.ps.input_reg_used |= 1u << reg->idx[0].offset;
             }
             else
                 reg_maps->input_registers |= 1u << reg->idx[0].offset;
@@ -3493,7 +3486,7 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
 
     for (i = 0; i < MAX_REG_INPUT; ++i)
     {
-        if (shader->u.ps.input_reg_used[i])
+        if (shader->u.ps.input_reg_used & (1u << i))
         {
             ++num_regs_used;
             highest_reg_used = i;
@@ -3526,7 +3519,7 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
         shader->u.ps.declared_in_count = 0;
         for (i = 0; i < MAX_REG_INPUT; ++i)
         {
-            if (shader->u.ps.input_reg_used[i])
+            if (shader->u.ps.input_reg_used & (1u << i))
                 shader->u.ps.input_reg_map[i] = shader->u.ps.declared_in_count++;
             else shader->u.ps.input_reg_map[i] = ~0U;
         }

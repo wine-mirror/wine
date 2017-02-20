@@ -1856,11 +1856,11 @@ static BOOL glsl_is_color_reg_read(const struct wined3d_shader *shader, unsigned
 {
     const struct wined3d_shader_signature *input_signature = &shader->input_signature;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
-    const BOOL *input_reg_used = shader->u.ps.input_reg_used;
+    DWORD input_reg_used = shader->u.ps.input_reg_used;
     unsigned int i;
 
     if (reg_maps->shader_version.major < 3)
-        return input_reg_used[idx];
+        return input_reg_used & (1u << idx);
 
     for (i = 0; i < input_signature->element_count; ++i)
     {
@@ -1871,12 +1871,7 @@ static BOOL glsl_is_color_reg_read(const struct wined3d_shader *shader, unsigned
 
         if (shader_match_semantic(input->semantic_name, WINED3D_DECL_USAGE_COLOR)
                 && input->semantic_idx == idx)
-        {
-            if (input_reg_used[input->register_idx])
-                return TRUE;
-            else
-                return FALSE;
-        }
+            return input_reg_used & (1u << input->register_idx);
     }
     return FALSE;
 }

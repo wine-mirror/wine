@@ -3572,7 +3572,7 @@ struct wined3d_pixel_shader
 {
     /* Pixel shader input semantics */
     DWORD input_reg_map[MAX_REG_INPUT];
-    BOOL input_reg_used[MAX_REG_INPUT];
+    DWORD input_reg_used; /* MAX_REG_INPUT, 32 */
     unsigned int declared_in_count;
 
     /* Some information about the shader behavior */
