@@ -426,7 +426,7 @@ void filter_caps(D3DCAPS9* pCaps)
 static HRESULT WINAPI d3d9_GetDeviceCaps(IDirect3D9Ex *iface, UINT adapter, D3DDEVTYPE device_type, D3DCAPS9 *caps)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
-    WINED3DCAPS *wined3d_caps;
+    WINED3DCAPS wined3d_caps;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, caps %p.\n", iface, adapter, device_type, caps);
@@ -434,16 +434,13 @@ static HRESULT WINAPI d3d9_GetDeviceCaps(IDirect3D9Ex *iface, UINT adapter, D3DD
     if (!caps)
         return D3DERR_INVALIDCALL;
 
-    if (!(wined3d_caps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINED3DCAPS))))
-        return D3DERR_INVALIDCALL; /*well this is what MSDN says to return*/
     memset(caps, 0, sizeof(*caps));
 
     wined3d_mutex_lock();
-    hr = wined3d_get_device_caps(d3d9->wined3d, adapter, device_type, wined3d_caps);
+    hr = wined3d_get_device_caps(d3d9->wined3d, adapter, device_type, &wined3d_caps);
     wined3d_mutex_unlock();
 
-    WINECAPSTOD3D9CAPS(caps, wined3d_caps)
-    HeapFree(GetProcessHeap(), 0, wined3d_caps);
+    WINECAPSTOD3D9CAPS(caps, &wined3d_caps)
 
     /* Some functionality is implemented in d3d9.dll, not wined3d.dll. Add the needed caps */
     caps->DevCaps2 |= D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES;
