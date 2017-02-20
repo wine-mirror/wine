@@ -1195,7 +1195,17 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                         case WINED3DSPR_TEXCRDOUT:
                             if (shader_version.major >= 3)
                             {
+                                if (idx >= ARRAY_SIZE(reg_maps->u.output_registers_mask))
+                                {
+                                    WARN("Invalid output register index %u.\n", idx);
+                                    break;
+                                }
                                 reg_maps->u.output_registers_mask[idx] |= ins.dst[i].write_mask;
+                                break;
+                            }
+                            if (idx >= ARRAY_SIZE(reg_maps->u.texcoord_mask))
+                            {
+                                WARN("Invalid texcoord index %u.\n", idx);
                                 break;
                             }
                             reg_maps->u.texcoord_mask[idx] |= ins.dst[i].write_mask;
