@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-11 02:32+0300\n"
+"PO-Revision-Date: 2017-02-20 15:18+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -12189,7 +12189,7 @@ msgstr "Значение слишком велико (%1!u!)."
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
-msgstr "Подтверждение"
+msgstr "Подтверждение удаления значения"
 
 #: regedit.rc:191
 msgid "Search complete. The string '%1' was not found."
@@ -12220,17 +12220,13 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Экспортирует выделенную ветку реестра в текстовый файл"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Подтверждение"
+msgstr "Подтверждение удаления ключа"
 
 #: regedit.rc:188
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "Вы точно хотите удалить ключ реестра «%1»?"
+msgstr "Вы точно хотите удалить ключ реестра «%1» и все вложенные ключи?"
 
 #: regsvr32.rc:32
 msgid ""
