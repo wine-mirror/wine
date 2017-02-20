@@ -43,10 +43,9 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wgl);
-
 #ifdef SONAME_LIBGL
 
+WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #include "wine/wgl.h"
