@@ -800,6 +800,12 @@ enum wined3d_display_rotation
     WINED3D_DISPLAY_ROTATION_270            = 4,
 };
 
+enum wined3d_shader_byte_code_format
+{
+    WINED3D_SHADER_BYTE_CODE_FORMAT_SM1     = 0,
+    WINED3D_SHADER_BYTE_CODE_FORMAT_SM4     = 1,
+};
+
 #define WINED3DCOLORWRITEENABLE_RED                             (1u << 0)
 #define WINED3DCOLORWRITEENABLE_GREEN                           (1u << 1)
 #define WINED3DCOLORWRITEENABLE_BLUE                            (1u << 2)
@@ -1960,6 +1966,7 @@ struct wined3d_shader_desc
 {
     const DWORD *byte_code;
     size_t byte_code_size;
+    enum wined3d_shader_byte_code_format format;
     struct wined3d_shader_signature input_signature;
     struct wined3d_shader_signature output_signature;
     unsigned int max_version;

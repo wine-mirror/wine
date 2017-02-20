@@ -392,24 +392,18 @@ static void shader_signature_from_usage(struct wined3d_shader_signature_element 
     e->mask = write_mask;
 }
 
-static const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token)
+static const struct wined3d_shader_frontend *shader_select_frontend(enum wined3d_shader_byte_code_format format)
 {
-    switch (version_token >> 16)
+    switch (format)
     {
-        case WINED3D_SM1_VS:
-        case WINED3D_SM1_PS:
+        case WINED3D_SHADER_BYTE_CODE_FORMAT_SM1:
             return &sm1_shader_frontend;
 
-        case WINED3D_SM4_PS:
-        case WINED3D_SM4_VS:
-        case WINED3D_SM4_GS:
-        case WINED3D_SM5_HS:
-        case WINED3D_SM5_DS:
-        case WINED3D_SM5_CS:
+        case WINED3D_SHADER_BYTE_CODE_FORMAT_SM4:
             return &sm4_shader_frontend;
 
         default:
-            FIXME("Unrecognised version token %#x.\n", version_token);
+            WARN("Invalid byte code format %#x specified.\n", format);
             return NULL;
     }
 }
@@ -2854,7 +2848,8 @@ const struct wined3d_shader_backend_ops none_shader_backend =
 };
 
 static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *byte_code,
-        size_t byte_code_size, DWORD float_const_count, enum wined3d_shader_type type, unsigned int max_version)
+        size_t byte_code_size, enum wined3d_shader_byte_code_format format,
+        DWORD float_const_count, enum wined3d_shader_type type, unsigned int max_version)
 {
     struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_shader_frontend *fe;
@@ -2862,8 +2857,9 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     unsigned int backend_version;
     const struct wined3d_d3d_info *d3d_info = &shader->device->adapter->d3d_info;
 
-    TRACE("shader %p, byte_code %p, byte_code_size %#lx, float_const_count %u, type %#x, max_version %u.\n",
-            shader, byte_code, (long)byte_code_size, float_const_count, type, max_version);
+    TRACE("shader %p, byte_code %p, byte_code_size %#lx, format %#x, "
+            "float_const_count %u, type %#x, max_version %u.\n",
+            shader, byte_code, (long)byte_code_size, format, float_const_count, type, max_version);
 
     list_init(&shader->constantsF);
     list_init(&shader->constantsB);
@@ -2871,8 +2867,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     shader->lconst_inf_or_nan = FALSE;
     list_init(&reg_maps->indexable_temps);
 
-    fe = shader_select_frontend(*byte_code);
-    if (!fe)
+    if (!(fe = shader_select_frontend(format)))
     {
         FIXME("Unable to find frontend for shader.\n");
         return WINED3DERR_INVALIDCALL;
@@ -3192,8 +3187,8 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     list_init(&shader->linked_programs);
     list_add_head(&device->shaders, &shader->shader_list_entry);
 
-    if (FAILED(hr = shader_set_function(shader, desc->byte_code,
-            desc->byte_code_size, float_const_count, type, desc->max_version)))
+    if (FAILED(hr = shader_set_function(shader, desc->byte_code, desc->byte_code_size,
+            desc->format, float_const_count, type, desc->max_version)))
     {
         WARN("Failed to set function, hr %#x.\n", hr);
         shader_cleanup(shader);

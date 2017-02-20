@@ -144,6 +144,7 @@ HRESULT vertexshader_init(struct d3d9_vertexshader *shader, struct d3d9_device *
 
     desc.byte_code = byte_code;
     desc.byte_code_size = ~(size_t)0;
+    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM1;
     desc.input_signature.element_count = 0;
     desc.output_signature.element_count = 0;
     desc.max_version = 3;
@@ -296,6 +297,7 @@ HRESULT pixelshader_init(struct d3d9_pixelshader *shader, struct d3d9_device *de
 
     desc.byte_code = byte_code;
     desc.byte_code_size = ~(size_t)0;
+    desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM1;
     desc.input_signature.element_count = 0;
     desc.output_signature.element_count = 0;
     desc.max_version = 3;

@@ -77,6 +77,7 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
                 FIXME("Multiple shader code chunks.\n");
             desc->byte_code = (const DWORD *)data;
             desc->byte_code_size = data_size;
+            desc->format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM4;
             break;
 
         case TAG_AON9:
@@ -105,6 +106,7 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
                     FIXME("Multiple shader code chunks.\n");
                 desc->byte_code = (const DWORD *)byte_code;
                 desc->byte_code_size = data_size - header->byte_code_offset;
+                desc->format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM1;
                 TRACE("Feature level 9 shader version 0%08x, 0%08x.\n", header->shader_version, *desc->byte_code);
             }
             else
