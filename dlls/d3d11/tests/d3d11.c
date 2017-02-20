@@ -11557,7 +11557,8 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     release_test_context(&test_context);
 }
 
-static void run_for_each_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL fl))
+static void run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL begin,
+        D3D_FEATURE_LEVEL end, void (*test_func)(const D3D_FEATURE_LEVEL fl))
 {
     static const D3D_FEATURE_LEVEL feature_levels[] =
     {
@@ -11571,22 +11572,24 @@ static void run_for_each_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL
     };
     unsigned int i;
 
+    assert(begin <= end);
     for (i = 0; i < sizeof(feature_levels) / sizeof(*feature_levels); ++i)
-        test_func(feature_levels[i]);
+    {
+        if (begin <= feature_levels[i] && feature_levels[i] <= end)
+            test_func(feature_levels[i]);
+    }
+}
+
+static void run_for_each_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL fl))
+{
+    run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_9_1,
+            D3D_FEATURE_LEVEL_11_1, test_func);
 }
 
 static void run_for_each_9_x_feature_level(void (*test_func)(const D3D_FEATURE_LEVEL fl))
 {
-    static const D3D_FEATURE_LEVEL feature_levels[] =
-    {
-        D3D_FEATURE_LEVEL_9_3,
-        D3D_FEATURE_LEVEL_9_2,
-        D3D_FEATURE_LEVEL_9_1,
-    };
-    unsigned int i;
-
-    for (i = 0; i < sizeof(feature_levels) / sizeof(*feature_levels); ++i)
-        test_func(feature_levels[i]);
+    run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_9_1,
+            D3D_FEATURE_LEVEL_9_3, test_func);
 }
 
 static void test_ddy(void)
@@ -14329,14 +14332,23 @@ static void test_buffer_srv(void)
     release_test_context(&test_context);
 }
 
-static void test_unaligned_raw_buffer_access(void)
+static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
+{
+    D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS options;
+
+    if (FAILED(ID3D11Device_CheckFeatureSupport(device,
+            D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &options, sizeof(options))))
+        return FALSE;
+    return options.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
+}
+
+static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_level)
 {
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
     struct d3d11_test_context test_context;
     D3D11_SUBRESOURCE_DATA resource_data;
     D3D11_TEXTURE2D_DESC texture_desc;
-    D3D_FEATURE_LEVEL feature_level;
     ID3D11UnorderedAccessView *uav;
     ID3D11ShaderResourceView *srv;
     D3D11_BUFFER_DESC buffer_desc;
@@ -14399,12 +14411,22 @@ static void test_unaligned_raw_buffer_access(void)
     };
     static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    if (!init_test_context(&test_context, NULL))
+    if (!init_test_context(&test_context, &feature_level))
         return;
 
     device = test_context.device;
     context = test_context.immediate_context;
-    feature_level = ID3D11Device_GetFeatureLevel(device);
+
+    if (feature_level < D3D_FEATURE_LEVEL_11_0 && !check_compute_shaders_via_sm4_support(device))
+    {
+        hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+        todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+            ID3D11PixelShader_Release(ps);
+        skip("Raw buffers are not supported.\n");
+        release_test_context(&test_context);
+        return;
+    }
 
     if (is_intel_device(device))
     {
@@ -14417,13 +14439,6 @@ static void test_unaligned_raw_buffer_access(void)
     }
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    if (hr == E_INVALIDARG)
-    {
-        /* This skips the test on testbot Win Vista and Win 2008 VMs. */
-        win_skip("Failed to create pixel shader.\n");
-        release_test_context(&test_context);
-        return;
-    }
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
     memset(&offset, 0, sizeof(offset));
@@ -14686,5 +14701,6 @@ START_TEST(d3d11)
     test_sm5_bufinfo_instruction();
     test_render_target_device_mismatch();
     test_buffer_srv();
-    test_unaligned_raw_buffer_access();
+    run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0,
+            test_unaligned_raw_buffer_access);
 }
