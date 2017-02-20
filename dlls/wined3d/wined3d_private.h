@@ -1097,6 +1097,7 @@ typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
 #define WINED3D_SHADER_CAP_VS_CLIPPING      0x00000001
 #define WINED3D_SHADER_CAP_SRGB_WRITE       0x00000002
+#define WINED3D_SHADER_CAP_DOUBLE_PRECISION 0x00000004
 
 struct shader_caps
 {
@@ -2299,6 +2300,7 @@ struct wined3d_d3d_info
     BOOL shader_color_key;
     DWORD valid_rt_mask;
     DWORD wined3d_creation_flags;
+    BOOL shader_double_precision;
 };
 
 /* The adapter structure */

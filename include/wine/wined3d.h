@@ -1888,6 +1888,8 @@ typedef struct _WINED3DCAPS
     DWORD Reserved3;
 
     struct wined3d_ddraw_caps ddraw_caps;
+
+    BOOL shader_double_precision;
 } WINED3DCAPS;
 
 struct wined3d_color_key

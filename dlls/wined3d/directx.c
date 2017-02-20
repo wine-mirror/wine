@@ -4029,6 +4029,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD 
     adapter->d3d_info.limits.vs_uniform_count = shader_caps.vs_uniform_count;
     adapter->d3d_info.limits.ps_uniform_count = shader_caps.ps_uniform_count;
     adapter->d3d_info.limits.varying_count = shader_caps.varying_count;
+    adapter->d3d_info.shader_double_precision = shader_caps.wined3d_caps & WINED3D_SHADER_CAP_DOUBLE_PRECISION;
 
     adapter->vertex_pipe->vp_get_caps(gl_info, &vertex_caps);
     adapter->d3d_info.xyzrhw = vertex_caps.xyzrhw;
@@ -5331,11 +5332,12 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         enum wined3d_device_type device_type, WINED3DCAPS *caps)
 {
     const struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
+    const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
-    struct shader_caps shader_caps;
-    struct fragment_caps fragment_caps;
     struct wined3d_vertex_caps vertex_caps;
     DWORD ckey_caps, blit_caps, fx_caps;
+    struct fragment_caps fragment_caps;
+    struct shader_caps shader_caps;
 
     TRACE("wined3d %p, adapter_idx %u, device_type %s, caps %p.\n",
             wined3d, adapter_idx, debug_d3ddevicetype(device_type), caps);
@@ -5902,6 +5904,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDSCAPS_ZBUFFER;
         caps->ddraw_caps.caps |=        WINEDDCAPS_3D;
     }
+
+    caps->shader_double_precision = d3d_info->shader_double_precision;
 
     return WINED3D_OK;
 }
