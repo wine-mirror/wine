@@ -1271,6 +1271,12 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 {
                     unsigned int reg_idx = ins.dst[i].reg.idx[0].offset;
 
+                    if (reg_idx >= ARRAY_SIZE(reg_maps->resource_info))
+                    {
+                        WARN("Invalid 1.x sampler index %u.\n", reg_idx);
+                        continue;
+                    }
+
                     TRACE("Setting fake 2D resource for 1.x pixelshader.\n");
                     reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
                     reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_FLOAT;
