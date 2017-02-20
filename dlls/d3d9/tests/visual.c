@@ -10641,6 +10641,17 @@ static void test_pointsize(void)
         goto done;
     }
 
+    /* The r500 Windows driver needs a draw with regular texture coordinates at least once during the
+     * device's lifetime, otherwise texture coordinate generation only works for texture 0. */
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr=%#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, vertices, sizeof(float) * 5);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
