@@ -533,7 +533,8 @@ static unsigned int shader_skip_unrecognized(const struct wined3d_sm1_data *priv
     return tokens_read;
 }
 
-static void *shader_sm1_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
+static void *shader_sm1_init(const DWORD *byte_code, size_t byte_code_size,
+        const struct wined3d_shader_signature *output_signature)
 {
     struct wined3d_sm1_data *priv;
     BYTE major, minor;

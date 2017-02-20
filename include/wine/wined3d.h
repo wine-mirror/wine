@@ -1959,6 +1959,7 @@ struct wined3d_shader_signature
 struct wined3d_shader_desc
 {
     const DWORD *byte_code;
+    size_t byte_code_size;
     struct wined3d_shader_signature input_signature;
     struct wined3d_shader_signature output_signature;
     unsigned int max_version;

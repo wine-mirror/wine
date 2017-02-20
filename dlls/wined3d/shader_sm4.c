@@ -1121,16 +1121,29 @@ static enum wined3d_data_type map_data_type(char t)
     }
 }
 
-static void *shader_sm4_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
+static void *shader_sm4_init(const DWORD *byte_code, size_t byte_code_size,
+        const struct wined3d_shader_signature *output_signature)
 {
     DWORD version_token, token_count;
     struct wined3d_sm4_data *priv;
     unsigned int i;
 
+    if (byte_code_size / sizeof(*byte_code) < 2)
+    {
+        WARN("Invalid byte code size %lu.\n", (long)byte_code_size);
+        return NULL;
+    }
+
     version_token = byte_code[0];
     TRACE("Version: 0x%08x.\n", version_token);
     token_count = byte_code[1];
     TRACE("Token count: %u.\n", token_count);
+
+    if (token_count < 2 || byte_code_size / sizeof(*byte_code) < token_count)
+    {
+        WARN("Invalid token count %u.\n", token_count);
+        return NULL;
+    }
 
     if (!(priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv))))
     {
