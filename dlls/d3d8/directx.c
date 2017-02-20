@@ -334,7 +334,7 @@ void fixup_caps(WINED3DCAPS *caps)
 static HRESULT WINAPI d3d8_GetDeviceCaps(IDirect3D8 *iface, UINT adapter, D3DDEVTYPE device_type, D3DCAPS8 *caps)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
-    WINED3DCAPS *wined3d_caps;
+    WINED3DCAPS wined3d_caps;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, caps %p.\n", iface, adapter, device_type, caps);
@@ -342,16 +342,12 @@ static HRESULT WINAPI d3d8_GetDeviceCaps(IDirect3D8 *iface, UINT adapter, D3DDEV
     if (!caps)
         return D3DERR_INVALIDCALL;
 
-    if (!(wined3d_caps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wined3d_caps))))
-        return D3DERR_INVALIDCALL;
-
     wined3d_mutex_lock();
-    hr = wined3d_get_device_caps(d3d8->wined3d, adapter, device_type, wined3d_caps);
+    hr = wined3d_get_device_caps(d3d8->wined3d, adapter, device_type, &wined3d_caps);
     wined3d_mutex_unlock();
 
-    fixup_caps(wined3d_caps);
-    WINECAPSTOD3D8CAPS(caps, wined3d_caps)
-    HeapFree(GetProcessHeap(), 0, wined3d_caps);
+    fixup_caps(&wined3d_caps);
+    WINECAPSTOD3D8CAPS(caps, &wined3d_caps)
 
     return hr;
 }
