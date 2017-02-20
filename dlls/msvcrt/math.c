@@ -1844,6 +1844,19 @@ MSVCRT_ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 }
 #endif /* ifdef __i386__ */
 
+/*********************************************************************
+ *		lldiv (MSVCRT.@)
+ */
+MSVCRT_lldiv_t CDECL MSVCRT_lldiv(MSVCRT_longlong num, MSVCRT_longlong denom)
+{
+  MSVCRT_lldiv_t ret;
+
+  ret.quot = num / denom;
+  ret.rem = num % denom;
+
+  return ret;
+}
+
 #ifdef __i386__
 
 /*********************************************************************

@@ -67,6 +67,11 @@ typedef struct MSVCRT__onexit_table_t
     MSVCRT__onexit_t *_end;
 } MSVCRT__onexit_table_t;
 
+typedef struct MSVCRT__lldiv_t {
+    LONGLONG quot;  /* quotient */
+    LONGLONG rem;   /* remainder */
+} MSVCRT_lldiv_t;
+
 static int (CDECL *p_initialize_onexit_table)(MSVCRT__onexit_table_t *table);
 static int (CDECL *p_register_onexit_function)(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func);
 static int (CDECL *p_execute_onexit_table)(MSVCRT__onexit_table_t *table);
@@ -80,6 +85,7 @@ static int (CDECL *p__ltoa_s)(LONG, char*, size_t, int);
 static char* (CDECL *p__get_narrow_winmain_command_line)(void);
 static int (CDECL *p_sopen_dispatch)(const char *, int, int, int, int *, int);
 static int (CDECL *p_sopen_s)(int *, const char *, int, int, int);
+static MSVCRT_lldiv_t (CDECL *p_lldiv)(LONGLONG,LONGLONG);
 
 static void test__initialize_onexit_table(void)
 {
@@ -373,6 +379,7 @@ static BOOL init(void)
     p__get_narrow_winmain_command_line = (void*)GetProcAddress(GetModuleHandleA("ucrtbase.dll"), "_get_narrow_winmain_command_line");
     p_sopen_dispatch = (void*)GetProcAddress(module, "_sopen_dispatch");
     p_sopen_s = (void*)GetProcAddress(module, "_sopen_s");
+    p_lldiv = (void*)GetProcAddress(module, "lldiv");
 
     return TRUE;
 }
@@ -444,6 +451,15 @@ static void test__sopen_s(void)
     free(tempf);
 }
 
+static void test_lldiv(void)
+{
+    MSVCRT_lldiv_t r;
+
+    r = p_lldiv((LONGLONG)0x111 << 32 | 0x222, (LONGLONG)1 << 32);
+    ok(r.quot == 0x111, "quot = %x%08x\n", (INT32)(r.quot >> 32), (UINT32)r.quot);
+    ok(r.rem == 0x222, "rem = %x%08x\n", (INT32)(r.rem >> 32), (UINT32)r.rem);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -466,4 +482,5 @@ START_TEST(misc)
     test__get_narrow_winmain_command_line(arg_v[0]);
     test__sopen_dispatch();
     test__sopen_s();
+    test_lldiv();
 }

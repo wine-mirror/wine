@@ -2381,7 +2381,7 @@
 @ cdecl lgammaf(float) MSVCR120_lgammaf
 @ cdecl lgammal(double) MSVCR120_lgammal
 @ cdecl -ret64 llabs(int64) MSVCRT_llabs
-@ stub lldiv
+@ cdecl lldiv(int64 int64) MSVCRT_lldiv
 @ cdecl -ret64 llrint(double) MSVCR120_llrint
 @ cdecl -ret64 llrintf(float) MSVCR120_llrintf
 @ cdecl -ret64 llrintl(double) MSVCR120_llrintl
