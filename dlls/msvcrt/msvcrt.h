@@ -448,6 +448,11 @@ typedef struct MSVCRT__ldiv_t {
     MSVCRT_long rem;   /* remainder */
 } MSVCRT_ldiv_t;
 
+typedef struct MSVCRT__lldiv_t {
+    MSVCRT_longlong quot;  /* quotient */
+    MSVCRT_longlong rem;   /* remainder */
+} MSVCRT_lldiv_t;
+
 struct MSVCRT__heapinfo {
   int*           _pentry;
   MSVCRT_size_t  _size;

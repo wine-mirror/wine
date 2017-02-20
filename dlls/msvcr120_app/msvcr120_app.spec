@@ -1910,7 +1910,7 @@
 @ cdecl lgammaf(float) msvcr120.lgammaf
 @ cdecl lgammal(double) msvcr120.lgammal
 @ cdecl -ret64 llabs(int64) msvcr120.llabs
-@ stub lldiv
+@ cdecl lldiv(int64 int64) msvcr120.lldiv
 @ cdecl -ret64 llrint(double) msvcr120.llrint
 @ cdecl -ret64 llrintf(float) msvcr120.llrintf
 @ cdecl -ret64 llrintl(double) msvcr120.llrintl
