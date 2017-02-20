@@ -2864,6 +2864,10 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckCounter(ID3D11Device *iface, 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *iface, D3D11_FEATURE feature,
         void *feature_support_data, UINT feature_support_data_size)
 {
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    WINED3DCAPS wined3d_caps;
+    HRESULT hr;
+
     TRACE("iface %p, feature %u, feature_support_data %p, feature_support_data_size %u.\n",
             iface, feature, feature_support_data, feature_support_data_size);
 
@@ -2885,6 +2889,29 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *
             threading_data->DriverCommandLists = TRUE;
             return S_OK;
         }
+
+        case D3D11_FEATURE_DOUBLES:
+        {
+            D3D11_FEATURE_DATA_DOUBLES *doubles_data = feature_support_data;
+            if (feature_support_data_size != sizeof(*doubles_data))
+            {
+                WARN("Invalid data size.\n");
+                return E_INVALIDARG;
+            }
+
+            wined3d_mutex_lock();
+            hr = wined3d_device_get_device_caps(device->wined3d_device, &wined3d_caps);
+            wined3d_mutex_unlock();
+            if (FAILED(hr))
+            {
+                WARN("Failed to get device caps, hr %#x.\n", hr);
+                return hr;
+            }
+
+            doubles_data->DoublePrecisionFloatShaderOps = wined3d_caps.shader_double_precision;
+            return S_OK;
+        }
+
         case D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS:
         {
             D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS *options = feature_support_data;
