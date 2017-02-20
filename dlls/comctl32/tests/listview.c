@@ -5529,6 +5529,43 @@ static void test_LVM_SETITEMTEXT(void)
     DestroyWindow(hwnd);
 }
 
+static void test_LVM_REDRAWITEMS(void)
+{
+    HWND list;
+    DWORD ret;
+
+    list = create_listview_control(LVS_ICON);
+    ok(list != NULL, "failed to create listview window\n");
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, 0, 0);
+    expect(TRUE, ret);
+
+    insert_item(list, 0);
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, -1, 0);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, 0, -1);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, 0, 0);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, 0, 1);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, 0, 2);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, 1, 0);
+    expect(TRUE, ret);
+
+    ret = SendMessageA(list, LVM_REDRAWITEMS, 2, 3);
+    expect(TRUE, ret);
+
+    DestroyWindow(list);
+}
+
 static void test_imagelists(void)
 {
     HWND hwnd, header;
@@ -5903,6 +5940,7 @@ START_TEST(listview)
     test_createdragimage();
     test_dispinfo();
     test_LVM_SETITEMTEXT();
+    test_LVM_REDRAWITEMS();
     test_imagelists();
     test_deleteitem();
     test_insertitem();

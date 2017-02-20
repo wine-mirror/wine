@@ -7989,12 +7989,8 @@ static BOOL LISTVIEW_IsItemVisible(const LISTVIEW_INFO *infoPtr, INT nItem)
 static BOOL LISTVIEW_RedrawItems(const LISTVIEW_INFO *infoPtr, INT nFirst, INT nLast)
 {
     INT i;
- 
-    if (nLast < nFirst || min(nFirst, nLast) < 0 || 
-	max(nFirst, nLast) >= infoPtr->nItemCount)
-	return FALSE;
-    
-    for (i = nFirst; i <= nLast; i++)
+
+    for (i = max(nFirst, 0); i <= min(nLast, infoPtr->nItemCount - 1); i++)
 	LISTVIEW_InvalidateItem(infoPtr, i);
 
     return TRUE;
