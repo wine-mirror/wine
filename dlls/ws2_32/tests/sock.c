@@ -1565,6 +1565,8 @@ todo_wine
     /* test SO_PROTOCOL_INFO structure returned for different protocols */
     for (i = 0; i < sizeof(prottest) / sizeof(prottest[0]); i++)
     {
+        int k;
+
         s = socket(prottest[i].family, prottest[i].type, prottest[i].proto);
         if (s == INVALID_SOCKET && prottest[i].family == AF_INET6) continue;
 
@@ -1608,6 +1610,76 @@ todo_wine
            prottest[i].type, infoA.iSocketType);
         ok(infoA.iProtocol == prottest[i].proto, "socket protocol invalid, expected %d received %d\n",
            prottest[i].proto, infoA.iProtocol);
+
+        /* IP_HDRINCL is supported only on SOCK_RAW but passed to SOCK_DGRAM by Impossible Creatures */
+        size = sizeof(i);
+        k = 1;
+        SetLastError(0xdeadbeef);
+        err = setsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, size);
+        if (err == -1) /* >= Vista */
+        {
+            todo_wine {
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            k = 99;
+            SetLastError(0xdeadbeef);
+            err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
+            ok(err == -1, "Expected -1, got %d\n", err);
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(k == 99, "Expected 99, got %d\n", k);
+
+            size = sizeof(k);
+            k = 0;
+            SetLastError(0xdeadbeef);
+            err = setsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, size);
+            }
+            ok(err == -1, "Expected -1, got %d\n", err);
+            todo_wine {
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            k = 99;
+            SetLastError(0xdeadbeef);
+            err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
+            ok(err == -1, "Expected -1, got %d\n", err);
+            ok(GetLastError() == WSAEINVAL, "Expected 10022, got %d\n", GetLastError());
+            ok(k == 99, "Expected 99, got %d\n", k);
+            }
+        }
+        else /* <= 2003 the tests differ between TCP and UDP, UDP silenty accepts */
+        {
+            SetLastError(0xdeadbeef);
+            k = 99;
+            err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
+            if (prottest[i].type == SOCK_DGRAM)
+            {
+                ok(err == 0, "Expected 0, got %d\n", err);
+                ok(k == 1, "Expected 1, got %d\n", k);
+            }
+            else
+            {
+                /* contratry to what we could expect the function returns error but k is changed */
+                ok(err == -1, "Expected -1, got %d\n", err);
+                ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %d\n", GetLastError());
+                ok(k == 0, "Expected 0, got %d\n", k);
+            }
+
+            k = 0;
+            err = setsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, size);
+            ok(err == 0, "Expected 0, got %d\n", err);
+
+            k = 99;
+            err = getsockopt(s, IPPROTO_IP, IP_HDRINCL, (char *) &k, &size);
+            if (prottest[i].type == SOCK_DGRAM)
+            {
+                ok(err == 0, "Expected 0, got %d\n", err);
+                ok(k == 0, "Expected 0, got %d\n", k);
+            }
+            else
+            {
+                /* contratry to what we could expect the function returns error but k is changed */
+                ok(err == -1, "Expected -1, got %d\n", err);
+                ok(GetLastError() == WSAENOPROTOOPT, "Expected 10042, got %d\n", GetLastError());
+                ok(k == 0, "Expected 0, got %d\n", k);
+            }
+        }
 
         closesocket(s);
     }
