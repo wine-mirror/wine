@@ -117,6 +117,17 @@ static const IClassFactoryVtbl CompositeMonikerCFVtbl =
 
 static IClassFactory CompositeMonikerCF = { &CompositeMonikerCFVtbl };
 
+static const IClassFactoryVtbl ClassMonikerCFVtbl =
+{
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassMoniker_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory ClassMonikerCF = { &ClassMonikerCFVtbl };
+
 /***********************************************************************
  *           DllGetClassObject [OLE32.@]
  */
@@ -142,7 +153,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
     if (IsEqualCLSID(rclsid, &CLSID_CompositeMoniker))
         return IClassFactory_QueryInterface(&CompositeMonikerCF, iid, ppv);
     if (IsEqualCLSID(rclsid, &CLSID_ClassMoniker))
-        return ClassMonikerCF_Create(iid, ppv);
+        return IClassFactory_QueryInterface(&ClassMonikerCF, iid, ppv);
     if (IsEqualCLSID(rclsid, &CLSID_PointerMoniker))
         return PointerMonikerCF_Create(iid, ppv);
     if (IsEqualGUID(rclsid, &CLSID_StdComponentCategoriesMgr))

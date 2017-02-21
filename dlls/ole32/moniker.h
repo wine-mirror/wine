@@ -34,7 +34,7 @@ HRESULT WINAPI FileMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, 
 HRESULT WINAPI ItemMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI AntiMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI CompositeMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
-HRESULT ClassMonikerCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
+HRESULT WINAPI ClassMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT PointerMonikerCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 HRESULT ComCatCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 
