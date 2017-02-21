@@ -30,7 +30,7 @@ DEFINE_OLEGUID( CLSID_CompositeMoniker, 0x309, 0, 0 );
 DEFINE_OLEGUID( CLSID_ClassMoniker,     0x31a, 0, 0 );
 DEFINE_OLEGUID( CLSID_PointerMoniker,   0x306, 0, 0 );
 
-HRESULT FileMonikerCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
+HRESULT WINAPI FileMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT ItemMonikerCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 HRESULT AntiMonikerCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 HRESULT CompositeMonikerCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;

@@ -39,6 +39,51 @@
 #include "moniker.h"
 #include "comcat.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%x)\n", fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl FileMonikerCFVtbl =
+{
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    FileMoniker_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory FileMonikerCF = { &FileMonikerCFVtbl };
+
 /***********************************************************************
  *           DllGetClassObject [OLE32.@]
  */
@@ -56,7 +101,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
     if (IsEqualIID(rclsid,&CLSID_StdGlobalInterfaceTable) && (IsEqualIID(iid,&IID_IClassFactory) || IsEqualIID(iid,&IID_IUnknown)))
         return StdGlobalInterfaceTable_GetFactory(ppv);
     if (IsEqualCLSID(rclsid, &CLSID_FileMoniker))
-        return FileMonikerCF_Create(iid, ppv);
+        return IClassFactory_QueryInterface(&FileMonikerCF, iid, ppv);
     if (IsEqualCLSID(rclsid, &CLSID_ItemMoniker))
         return ItemMonikerCF_Create(iid, ppv);
     if (IsEqualCLSID(rclsid, &CLSID_AntiMoniker))
