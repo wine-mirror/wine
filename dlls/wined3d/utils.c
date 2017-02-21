@@ -4974,7 +4974,7 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
 
 static float color_to_float(DWORD color, DWORD size, DWORD offset)
 {
-    DWORD mask = (1u << size) - 1;
+    DWORD mask = size < 32 ? (1u << size) - 1 : ~0u;
 
     if (!size)
         return 1.0f;
@@ -5028,6 +5028,14 @@ BOOL wined3d_format_convert_color_to_float(const struct wined3d_format *format,
                 float_color->b = 0.0f;
             }
             float_color->a = color / 255.0f;
+            return TRUE;
+
+        case WINED3DFMT_S1_UINT_D15_UNORM:
+        case WINED3DFMT_D16_UNORM:
+        case WINED3DFMT_D24_UNORM_S8_UINT:
+        case WINED3DFMT_X8D24_UNORM:
+        case WINED3DFMT_D32_UNORM:
+            float_color->r = color_to_float(color, format->depth_size, 0);
             return TRUE;
 
         default:

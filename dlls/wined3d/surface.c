@@ -641,37 +641,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
-static BOOL surface_convert_depth_to_float(const struct wined3d_surface *surface, DWORD depth, float *float_depth)
-{
-    const struct wined3d_format *format = surface->container->resource.format;
-
-    switch (format->id)
-    {
-        case WINED3DFMT_S1_UINT_D15_UNORM:
-            *float_depth = depth / (float)0x00007fff;
-            break;
-
-        case WINED3DFMT_D16_UNORM:
-            *float_depth = depth / (float)0x0000ffff;
-            break;
-
-        case WINED3DFMT_D24_UNORM_S8_UINT:
-        case WINED3DFMT_X8D24_UNORM:
-            *float_depth = depth / (float)0x00ffffff;
-            break;
-
-        case WINED3DFMT_D32_UNORM:
-            *float_depth = depth / (float)0xffffffff;
-            break;
-
-        default:
-            ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->id));
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
 static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const RECT *rect, float depth)
 {
     struct wined3d_resource *resource = &surface->container->resource;
@@ -3814,14 +3783,14 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     {
         if (flags & WINED3D_BLT_DEPTH_FILL)
         {
-            float depth;
+            struct wined3d_color color;
 
             TRACE("Depth fill.\n");
 
-            if (!surface_convert_depth_to_float(dst_surface, fx->fill_color, &depth))
+            if (!wined3d_format_convert_color_to_float(dst_texture->resource.format, NULL, fx->fill_color, &color))
                 return WINED3DERR_INVALIDCALL;
 
-            if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, dst_rect, depth)))
+            if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, dst_rect, color.r)))
                 return WINED3D_OK;
         }
         else
