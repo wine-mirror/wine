@@ -508,15 +508,17 @@ static BOOL GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   else
     fodInfos.filename = NULL;
 
+  fodInfos.initdir = NULL;
   if(ofn->lpstrInitialDir)
   {
     /* fodInfos.initdir = strdupW(ofn->lpstrInitialDir); */
-    DWORD len = lstrlenW(ofn->lpstrInitialDir)+1;
-    fodInfos.initdir = MemAlloc(len*sizeof(WCHAR));
-    memcpy(fodInfos.initdir,ofn->lpstrInitialDir,len*sizeof(WCHAR));
+    DWORD len = ExpandEnvironmentStringsW(ofn->lpstrInitialDir, NULL, 0);
+    if (len)
+    {
+      fodInfos.initdir = MemAlloc(len * sizeof(WCHAR));
+      ExpandEnvironmentStringsW(ofn->lpstrInitialDir, fodInfos.initdir, len);
+    }
   }
-  else
-    fodInfos.initdir = NULL;
 
   /* save current directory */
   if (ofn->Flags & OFN_NOCHANGEDIR)
