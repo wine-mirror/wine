@@ -36,7 +36,7 @@ HRESULT WINAPI AntiMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, 
 HRESULT WINAPI CompositeMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI ClassMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 HRESULT WINAPI PointerMoniker_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
-HRESULT ComCatCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
+HRESULT WINAPI ComCat_CreateInstance(IClassFactory *iface, IUnknown *pUnk, REFIID riid, void **ppv);
 
 /* This function decomposes a String path to a String Table containing all the elements ("\" or "subDirectory" or "Directory" or "FileName") of the path */
 int FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable) DECLSPEC_HIDDEN;
