@@ -2497,7 +2497,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
 }
 
 /* Context activation is done by the caller. */
-static void surface_load_sysmem(struct wined3d_surface *surface,
+static BOOL surface_load_sysmem(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD dst_location)
 {
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
@@ -2519,17 +2519,18 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
         surface_download_data(surface, gl_info, dst_location);
         ++texture->download_count;
 
-        return;
+        return TRUE;
     }
 
     if (sub_resource->locations & WINED3D_LOCATION_DRAWABLE)
     {
         read_from_framebuffer(surface, context, dst_location);
-        return;
+        return TRUE;
     }
 
     FIXME("Can't load surface %p with location flags %s into sysmem.\n",
             surface, wined3d_debug_location(sub_resource->locations));
+    return FALSE;
 }
 
 /* Context activation is done by the caller. */
@@ -2767,8 +2768,7 @@ BOOL surface_load_location(struct wined3d_surface *surface, struct wined3d_conte
         case WINED3D_LOCATION_USER_MEMORY:
         case WINED3D_LOCATION_SYSMEM:
         case WINED3D_LOCATION_BUFFER:
-            surface_load_sysmem(surface, context, location);
-            return TRUE;
+            return surface_load_sysmem(surface, context, location);
 
         case WINED3D_LOCATION_DRAWABLE:
             return SUCCEEDED(surface_load_drawable(surface, context));
