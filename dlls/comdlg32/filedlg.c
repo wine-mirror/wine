@@ -318,236 +318,162 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
     return lRes;
 }
 
-/***********************************************************************
- *      GetFileDialog95A
- *
- * Call GetFileName95 with this structure and clean the memory.
- *
- * IN  : The OPENFILENAMEA initialisation structure passed to
- *       GetOpenFileNameA win api function (see filedlg.c)
- */
-static BOOL GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
+static WCHAR *heap_strdupAtoW(const char *str)
 {
-  BOOL ret;
-  FileOpenDlgInfos fodInfos;
-  LPSTR lpstrSavDir = NULL;
-  LPWSTR title = NULL;
-  LPWSTR defext = NULL;
-  LPWSTR filter = NULL;
-  LPWSTR customfilter = NULL;
-  INITCOMMONCONTROLSEX icc;
+    WCHAR *ret;
+    INT len;
 
-  /* Initialize ComboBoxEx32 */
-  icc.dwSize = sizeof(icc);
-  icc.dwICC = ICC_USEREX_CLASSES;
-  InitCommonControlsEx(&icc);
+    if (!str)
+        return NULL;
 
-  /* Initialize CommDlgExtendedError() */
-  COMDLG32_SetCommDlgExtendedError(0);
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, 0, 0);
+    ret = MemAlloc(len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
 
-  /* Initialize FileOpenDlgInfos structure */
-  ZeroMemory(&fodInfos, sizeof(FileOpenDlgInfos));
+    return ret;
+}
 
-  /* Pass in the original ofn */
-  fodInfos.ofnInfos = (LPOPENFILENAMEW)ofn;
+static void init_filedlg_infoW(OPENFILENAMEW *ofn, FileOpenDlgInfos *info)
+{
+    INITCOMMONCONTROLSEX icc;
 
-  /* save current directory */
-  if (ofn->Flags & OFN_NOCHANGEDIR)
-  {
-     lpstrSavDir = MemAlloc(MAX_PATH);
-     GetCurrentDirectoryA(MAX_PATH, lpstrSavDir);
-  }
+    /* Initialize ComboBoxEx32 */
+    icc.dwSize = sizeof(icc);
+    icc.dwICC = ICC_USEREX_CLASSES;
+    InitCommonControlsEx(&icc);
 
-  fodInfos.unicode = FALSE;
+    /* Initialize CommDlgExtendedError() */
+    COMDLG32_SetCommDlgExtendedError(0);
 
-  /* convert all the input strings to unicode */
-  if(ofn->lpstrInitialDir)
-  {
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, ofn->lpstrInitialDir, -1, NULL, 0 );
-    fodInfos.initdir = MemAlloc((len+1)*sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, ofn->lpstrInitialDir, -1, fodInfos.initdir, len);
-  }
-  else
-    fodInfos.initdir = NULL;
+    memset(info, 0, sizeof(*info));
 
-  if(ofn->lpstrFile)
-  {
-    fodInfos.filename = MemAlloc(ofn->nMaxFile*sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, ofn->lpstrFile, -1, fodInfos.filename, ofn->nMaxFile);
-  }
-  else
-    fodInfos.filename = NULL;
+    /* Pass in the original ofn */
+    info->ofnInfos = ofn;
 
-  if(ofn->lpstrDefExt)
-  {
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, ofn->lpstrDefExt, -1, NULL, 0 );
-    defext = MemAlloc((len+1)*sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, ofn->lpstrDefExt, -1, defext, len);
-  }
-  fodInfos.defext = defext;
+    info->title = ofn->lpstrTitle;
+    info->defext = ofn->lpstrDefExt;
+    info->filter = ofn->lpstrFilter;
+    info->customfilter = ofn->lpstrCustomFilter;
 
-  if(ofn->lpstrTitle)
-  {
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, ofn->lpstrTitle, -1, NULL, 0 );
-    title = MemAlloc((len+1)*sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, ofn->lpstrTitle, -1, title, len);
-  }
-  fodInfos.title = title;
+    if (ofn->lpstrFile)
+    {
+        info->filename = MemAlloc(ofn->nMaxFile * sizeof(WCHAR));
+        lstrcpynW(info->filename, ofn->lpstrFile, ofn->nMaxFile);
+    }
 
-  if (ofn->lpstrFilter)
-  {
-    LPCSTR s;
-    int n, len;
+    if (ofn->lpstrInitialDir)
+    {
+        DWORD len = ExpandEnvironmentStringsW(ofn->lpstrInitialDir, NULL, 0);
+        if (len)
+        {
+            info->initdir = MemAlloc(len * sizeof(WCHAR));
+            ExpandEnvironmentStringsW(ofn->lpstrInitialDir, info->initdir, len);
+        }
+    }
 
-    /* filter is a list...  title\0ext\0......\0\0 */
-    s = ofn->lpstrFilter;
-    while (*s) s = s+strlen(s)+1;
-    s++;
-    n = s - ofn->lpstrFilter;
-    len = MultiByteToWideChar( CP_ACP, 0, ofn->lpstrFilter, n, NULL, 0 );
-    filter = MemAlloc(len*sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, ofn->lpstrFilter, n, filter, len );
-  }
-  fodInfos.filter = filter;
+    info->unicode = TRUE;
+}
 
-  /* convert lpstrCustomFilter */
-  if (ofn->lpstrCustomFilter)
-  {
-    LPCSTR s;
-    int n, len;
+static void init_filedlg_infoA(OPENFILENAMEA *ofn, FileOpenDlgInfos *info)
+{
+    OPENFILENAMEW ofnW;
 
-    /* customfilter contains a pair of strings...  title\0ext\0 */
-    s = ofn->lpstrCustomFilter;
-    if (*s) s = s+strlen(s)+1;
-    if (*s) s = s+strlen(s)+1;
-    n = s - ofn->lpstrCustomFilter;
-    len = MultiByteToWideChar( CP_ACP, 0, ofn->lpstrCustomFilter, n, NULL, 0 );
-    customfilter = MemAlloc(len*sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, ofn->lpstrCustomFilter, n, customfilter, len );
-  }
-  fodInfos.customfilter = customfilter;
+    ofnW = *(OPENFILENAMEW *)ofn;
 
-  /* Initialize the dialog property */
-  fodInfos.DlgInfos.dwDlgProp = 0;
-  fodInfos.DlgInfos.hwndCustomDlg = NULL;
+    ofnW.lpstrInitialDir = heap_strdupAtoW(ofn->lpstrInitialDir);
+    ofnW.lpstrFile = heap_strdupAtoW(ofn->lpstrFile);
+    ofnW.lpstrDefExt = heap_strdupAtoW(ofn->lpstrDefExt);
+    ofnW.lpstrTitle = heap_strdupAtoW(ofn->lpstrTitle);
 
-  switch(iDlgType)
-  {
-    case OPEN_DIALOG :
-      ret = GetFileName95(&fodInfos);
-      break;
-    case SAVE_DIALOG :
-      fodInfos.DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
-      ret = GetFileName95(&fodInfos);
-      break;
-    default :
-      ret = FALSE;
-  }
+    if (ofn->lpstrFilter)
+    {
+        int n, len;
+        LPCSTR s;
 
-  if (lpstrSavDir)
-  {
-      SetCurrentDirectoryA(lpstrSavDir);
-      MemFree(lpstrSavDir);
-  }
+        /* filter is a list...  title\0ext\0......\0\0 */
+        s = ofn->lpstrFilter;
+        while (*s) s = s+strlen(s)+1;
+        s++;
+        n = s - ofn->lpstrFilter;
+        len = MultiByteToWideChar(CP_ACP, 0, ofn->lpstrFilter, n, NULL, 0);
+        ofnW.lpstrFilter = MemAlloc(len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, ofn->lpstrFilter, n, (WCHAR *)ofnW.lpstrFilter, len);
+    }
 
-  MemFree(title);
-  MemFree(defext);
-  MemFree(filter);
-  MemFree(customfilter);
-  MemFree(fodInfos.initdir);
-  MemFree(fodInfos.filename);
+    /* convert lpstrCustomFilter */
+    if (ofn->lpstrCustomFilter)
+    {
+        int n, len;
+        LPCSTR s;
 
-  TRACE("selected file: %s\n",ofn->lpstrFile);
+        /* customfilter contains a pair of strings...  title\0ext\0 */
+        s = ofn->lpstrCustomFilter;
+        if (*s) s = s+strlen(s)+1;
+        if (*s) s = s+strlen(s)+1;
+        n = s - ofn->lpstrCustomFilter;
+        len = MultiByteToWideChar(CP_ACP, 0, ofn->lpstrCustomFilter, n, NULL, 0);
+        ofnW.lpstrCustomFilter = MemAlloc(len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, ofn->lpstrCustomFilter, n, ofnW.lpstrCustomFilter, len);
+    }
 
-  return ret;
+    init_filedlg_infoW(&ofnW, info);
+
+    /* fixup A-specific fields */
+    info->ofnInfos = (OPENFILENAMEW *)ofn;
+    info->unicode = FALSE;
+
+    /* free what was duplicated */
+    MemFree((WCHAR *)ofnW.lpstrInitialDir);
+    MemFree((WCHAR *)ofnW.lpstrFile);
 }
 
 /***********************************************************************
- *      GetFileDialog95W
+ *      GetFileDialog95
  *
- * Copy the OPENFILENAMEW structure in a FileOpenDlgInfos structure.
  * Call GetFileName95 with this structure and clean the memory.
- *
  */
-static BOOL GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
+static BOOL GetFileDialog95(FileOpenDlgInfos *info, UINT dlg_type)
 {
-  BOOL ret;
-  FileOpenDlgInfos fodInfos;
-  LPWSTR lpstrSavDir = NULL;
-  INITCOMMONCONTROLSEX icc;
+    WCHAR *current_dir = NULL;
+    BOOL ret;
 
-  /* Initialize ComboBoxEx32 */
-  icc.dwSize = sizeof(icc);
-  icc.dwICC = ICC_USEREX_CLASSES;
-  InitCommonControlsEx(&icc);
-
-  /* Initialize CommDlgExtendedError() */
-  COMDLG32_SetCommDlgExtendedError(0);
-
-  /* Initialize FileOpenDlgInfos structure */
-  ZeroMemory(&fodInfos, sizeof(FileOpenDlgInfos));
-
-  /*  Pass in the original ofn */
-  fodInfos.ofnInfos = ofn;
-
-  fodInfos.title = ofn->lpstrTitle;
-  fodInfos.defext = ofn->lpstrDefExt;
-  fodInfos.filter = ofn->lpstrFilter;
-  fodInfos.customfilter = ofn->lpstrCustomFilter;
-
-  /* convert string arguments, save others */
-  if(ofn->lpstrFile)
-  {
-    fodInfos.filename = MemAlloc(ofn->nMaxFile*sizeof(WCHAR));
-    lstrcpynW(fodInfos.filename,ofn->lpstrFile,ofn->nMaxFile);
-  }
-  else
-    fodInfos.filename = NULL;
-
-  fodInfos.initdir = NULL;
-  if(ofn->lpstrInitialDir)
-  {
-    /* fodInfos.initdir = strdupW(ofn->lpstrInitialDir); */
-    DWORD len = ExpandEnvironmentStringsW(ofn->lpstrInitialDir, NULL, 0);
-    if (len)
+    /* save current directory */
+    if (info->ofnInfos->Flags & OFN_NOCHANGEDIR)
     {
-      fodInfos.initdir = MemAlloc(len * sizeof(WCHAR));
-      ExpandEnvironmentStringsW(ofn->lpstrInitialDir, fodInfos.initdir, len);
+        current_dir = MemAlloc(MAX_PATH * sizeof(WCHAR));
+        GetCurrentDirectoryW(MAX_PATH, current_dir);
     }
-  }
 
-  /* save current directory */
-  if (ofn->Flags & OFN_NOCHANGEDIR)
-  {
-     lpstrSavDir = MemAlloc(MAX_PATH*sizeof(WCHAR));
-     GetCurrentDirectoryW(MAX_PATH, lpstrSavDir);
-  }
+    switch (dlg_type)
+    {
+    case OPEN_DIALOG:
+        ret = GetFileName95(info);
+        break;
+    case SAVE_DIALOG:
+        info->DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
+        ret = GetFileName95(info);
+        break;
+    default:
+        ret = FALSE;
+    }
 
-  fodInfos.unicode = TRUE;
+    if (current_dir)
+    {
+        SetCurrentDirectoryW(current_dir);
+        MemFree(current_dir);
+    }
 
-  switch(iDlgType)
-  {
-  case OPEN_DIALOG :
-      ret = GetFileName95(&fodInfos);
-      break;
-  case SAVE_DIALOG :
-      fodInfos.DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
-      ret = GetFileName95(&fodInfos);
-      break;
-  default :
-      ret = FALSE;
-  }
+    if (!info->unicode)
+    {
+        MemFree((WCHAR *)info->defext);
+        MemFree((WCHAR *)info->title);
+        MemFree((WCHAR *)info->filter);
+        MemFree((WCHAR *)info->customfilter);
+    }
 
-  if (lpstrSavDir)
-  {
-      SetCurrentDirectoryW(lpstrSavDir);
-      MemFree(lpstrSavDir);
-  }
-
-  /* restore saved IN arguments and convert OUT arguments back */
-  MemFree(fodInfos.filename);
-  MemFree(fodInfos.initdir);
-  return ret;
+    MemFree(info->filename);
+    MemFree(info->initdir);
+    return ret;
 }
 
 /******************************************************************************
@@ -4080,8 +4006,7 @@ static inline BOOL is_win16_looks(DWORD flags)
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
  */
-BOOL WINAPI GetOpenFileNameA(
-	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
+BOOL WINAPI GetOpenFileNameA(OPENFILENAMEA *ofn)
 {
     TRACE("flags %08x\n", ofn->Flags);
 
@@ -4098,7 +4023,12 @@ BOOL WINAPI GetOpenFileNameA(
     if (is_win16_looks(ofn->Flags))
         return GetFileName31A(ofn, OPEN_DIALOG);
     else
-        return GetFileDialog95A(ofn, OPEN_DIALOG);
+    {
+        FileOpenDlgInfos info;
+
+        init_filedlg_infoA(ofn, &info);
+        return GetFileDialog95(&info, OPEN_DIALOG);
+    }
 }
 
 /***********************************************************************
@@ -4111,8 +4041,7 @@ BOOL WINAPI GetOpenFileNameA(
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
  */
-BOOL WINAPI GetOpenFileNameW(
-	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
+BOOL WINAPI GetOpenFileNameW(OPENFILENAMEW *ofn)
 {
     TRACE("flags %08x\n", ofn->Flags);
 
@@ -4129,7 +4058,12 @@ BOOL WINAPI GetOpenFileNameW(
     if (is_win16_looks(ofn->Flags))
         return GetFileName31W(ofn, OPEN_DIALOG);
     else
-        return GetFileDialog95W(ofn, OPEN_DIALOG);
+    {
+        FileOpenDlgInfos info;
+
+        init_filedlg_infoW(ofn, &info);
+        return GetFileDialog95(&info, OPEN_DIALOG);
+    }
 }
 
 
@@ -4143,8 +4077,7 @@ BOOL WINAPI GetOpenFileNameW(
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
  */
-BOOL WINAPI GetSaveFileNameA(
-	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
+BOOL WINAPI GetSaveFileNameA(OPENFILENAMEA *ofn)
 {
     if (!valid_struct_size( ofn->lStructSize ))
     {
@@ -4155,7 +4088,12 @@ BOOL WINAPI GetSaveFileNameA(
     if (is_win16_looks(ofn->Flags))
         return GetFileName31A(ofn, SAVE_DIALOG);
     else
-        return GetFileDialog95A(ofn, SAVE_DIALOG);
+    {
+        FileOpenDlgInfos info;
+
+        init_filedlg_infoA(ofn, &info);
+        return GetFileDialog95(&info, SAVE_DIALOG);
+    }
 }
 
 /***********************************************************************
@@ -4180,7 +4118,12 @@ BOOL WINAPI GetSaveFileNameW(
     if (is_win16_looks(ofn->Flags))
         return GetFileName31W(ofn, SAVE_DIALOG);
     else
-        return GetFileDialog95W(ofn, SAVE_DIALOG);
+    {
+        FileOpenDlgInfos info;
+
+        init_filedlg_infoW(ofn, &info);
+        return GetFileDialog95(&info, SAVE_DIALOG);
+    }
 }
 
 /***********************************************************************
