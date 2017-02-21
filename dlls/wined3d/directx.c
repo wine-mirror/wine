@@ -3419,7 +3419,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &gl_max);
             gl_info->limits.texture_coords = min(MAX_TEXTURES, gl_max);
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
-            gl_info->limits.fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, gl_max);
+            gl_info->limits.fragment_samplers = gl_max;
         }
         else
         {

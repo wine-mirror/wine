@@ -3323,7 +3323,7 @@ static void tex_coordindex(struct wined3d_context *context, const struct wined3d
         return;
     }
 
-    if (mapped_stage >= gl_info->limits.fragment_samplers)
+    if (mapped_stage >= min(gl_info->limits.fragment_samplers, MAX_FRAGMENT_SAMPLERS))
     {
         WARN("stage %u not mapped to a valid texture unit (%u)\n", stage, mapped_stage);
         return;
