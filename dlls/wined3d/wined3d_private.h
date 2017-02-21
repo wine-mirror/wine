@@ -3024,7 +3024,7 @@ HRESULT wined3d_surface_create_dc(struct wined3d_surface *surface) DECLSPEC_HIDD
 void wined3d_surface_destroy_dc(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
-HRESULT surface_load_location(struct wined3d_surface *surface,
+BOOL surface_load_location(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
