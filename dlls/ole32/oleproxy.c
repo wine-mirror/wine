@@ -106,6 +106,17 @@ static const IClassFactoryVtbl AntiMonikerCFVtbl =
 
 static IClassFactory AntiMonikerCF = { &AntiMonikerCFVtbl };
 
+static const IClassFactoryVtbl CompositeMonikerCFVtbl =
+{
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    CompositeMoniker_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory CompositeMonikerCF = { &CompositeMonikerCFVtbl };
+
 /***********************************************************************
  *           DllGetClassObject [OLE32.@]
  */
@@ -129,7 +140,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
     if (IsEqualCLSID(rclsid, &CLSID_AntiMoniker))
         return IClassFactory_QueryInterface(&AntiMonikerCF, iid, ppv);
     if (IsEqualCLSID(rclsid, &CLSID_CompositeMoniker))
-        return CompositeMonikerCF_Create(iid, ppv);
+        return IClassFactory_QueryInterface(&CompositeMonikerCF, iid, ppv);
     if (IsEqualCLSID(rclsid, &CLSID_ClassMoniker))
         return ClassMonikerCF_Create(iid, ppv);
     if (IsEqualCLSID(rclsid, &CLSID_PointerMoniker))
