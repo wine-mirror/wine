@@ -1060,6 +1060,8 @@ static void test_secure_connection(void)
         trace("lpszSignatureAlgName %s\n", wine_dbgstr_w(info.lpszSignatureAlgName));
         trace("lpszEncryptionAlgName %s\n", wine_dbgstr_w(info.lpszEncryptionAlgName));
         trace("dwKeySize %u\n", info.dwKeySize);
+        LocalFree( info.lpszSubjectInfo );
+        LocalFree( info.lpszIssuerInfo );
     }
 
     ret = WinHttpReceiveResponse(req, NULL);
