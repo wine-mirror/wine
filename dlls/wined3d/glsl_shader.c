@@ -363,23 +363,10 @@ static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_inf
         return 120;
 }
 
-static const char *shader_glsl_get_version_declaration(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_shader_version *version)
+static void shader_glsl_add_version_declaration(struct wined3d_string_buffer *buffer,
+        const struct wined3d_gl_info *gl_info, const struct wined3d_shader_version *version)
 {
-    unsigned int glsl_version;
-
-    switch (glsl_version = shader_glsl_get_version(gl_info, version))
-    {
-        case 150:
-            return "#version 150";
-        case 130:
-            return "#version 130";
-        case 120:
-            return "#version 120";
-        default:
-            FIXME("Unexpected GLSL version %u requested.\n", glsl_version);
-            return "";
-    }
+    shader_addline(buffer, "#version %u\n", shader_glsl_get_version(gl_info, version));
 }
 
 static void shader_glsl_append_imm_vec4(struct wined3d_string_buffer *buffer, const float *values)
@@ -6150,7 +6137,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 
     string_buffer_clear(buffer);
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &vs->reg_maps.shader_version));
+    shader_glsl_add_version_declaration(buffer, gl_info, &vs->reg_maps.shader_version);
 
     if (per_vertex_point_size)
     {
@@ -6431,7 +6418,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     priv_ctx.cur_np2fixup_info = np2fixup_info;
     priv_ctx.string_buffers = string_buffers;
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
+    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DERIVATIVE_CONTROL])
@@ -6585,7 +6572,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     /* Create the hw GLSL shader program and assign it as the shader->prgId */
     GLuint shader_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
+    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DRAW_INSTANCED])
@@ -6641,7 +6628,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
 
     shader_id = GL_EXTCALL(glCreateShader(GL_GEOMETRY_SHADER));
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
+    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_GEOMETRY_SHADER4])
@@ -6699,7 +6686,7 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *
 
     shader_id = GL_EXTCALL(glCreateShader(GL_COMPUTE_SHADER));
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, &reg_maps->shader_version));
+    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_COMPUTE_SHADER])
@@ -7172,7 +7159,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     string_buffer_clear(buffer);
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, NULL));
+    shader_glsl_add_version_declaration(buffer, gl_info, NULL);
 
     if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
@@ -7743,7 +7730,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     }
     lowest_disabled_stage = stage;
 
-    shader_addline(buffer, "%s\n", shader_glsl_get_version_declaration(gl_info, NULL));
+    shader_glsl_add_version_declaration(buffer, gl_info, NULL);
 
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
