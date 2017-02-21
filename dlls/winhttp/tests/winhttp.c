@@ -2011,6 +2011,11 @@ static const char cookiemsg[] =
 "Set-Cookie: NAME = value \r\n"
 "\r\n";
 
+static const char cookiemsg2[] =
+"HTTP/1.1 200 OK\r\n"
+"Set-Cookie: name2=value; Domain = localhost; Path=/cookie5;Expires=Wed, 13 Jan 2021 22:23:01 GMT; HttpOnly; \r\n"
+"\r\n";
+
 static const char nocontentmsg[] =
 "HTTP/1.1 204 No Content\r\n"
 "Server: winetest\r\n"
@@ -2143,6 +2148,17 @@ static DWORD CALLBACK server_thread(LPVOID param)
         {
             send(c, headmsg, sizeof headmsg - 1, 0);
             continue;
+        }
+        if (strstr(buffer, "GET /cookie5"))
+        {
+            if (strstr(buffer, "Cookie: name2=value\r\n"))
+                send(c, okmsg, sizeof(okmsg) - 1, 0);
+            else
+                send(c, notokmsg, sizeof(notokmsg) - 1, 0);
+        }
+        if (strstr(buffer, "GET /cookie4"))
+        {
+            send(c, cookiemsg2, sizeof(cookiemsg2) - 1, 0);
         }
         if (strstr(buffer, "GET /cookie3"))
         {
@@ -2813,6 +2829,8 @@ static void test_cookies( int port )
     static const WCHAR cookieW[] = {'/','c','o','o','k','i','e',0};
     static const WCHAR cookie2W[] = {'/','c','o','o','k','i','e','2',0};
     static const WCHAR cookie3W[] = {'/','c','o','o','k','i','e','3',0};
+    static const WCHAR cookie4W[] = {'/','c','o','o','k','i','e','4',0};
+    static const WCHAR cookie5W[] = {'/','c','o','o','k','i','e','5',0};
     static const WCHAR cookieheaderW[] =
         {'C','o','o','k','i','e',':',' ','n','a','m','e','=','v','a','l','u','e','2','\r','\n',0};
     HINTERNET ses, con, req;
@@ -2919,6 +2937,48 @@ static void test_cookies( int port )
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
     ok( status == HTTP_STATUS_BAD_REQUEST, "request failed unexpectedly %u\n", status );
+
+    WinHttpCloseHandle( req );
+    WinHttpCloseHandle( con );
+    WinHttpCloseHandle( ses );
+
+    ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
+    ok( ses != NULL, "failed to open session %u\n", GetLastError() );
+
+    con = WinHttpConnect( ses, localhostW, port, 0 );
+    ok( con != NULL, "failed to open a connection %u\n", GetLastError() );
+
+    req = WinHttpOpenRequest( con, NULL, cookie4W, NULL, NULL, NULL, 0 );
+    ok( req != NULL, "failed to open a request %u\n", GetLastError() );
+
+    ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
+    ok( ret, "failed to send request %u\n", GetLastError() );
+
+    ret = WinHttpReceiveResponse( req, NULL );
+    ok( ret, "failed to receive response %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
+    ok( ret, "failed to query status code %u\n", GetLastError() );
+    ok( status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status );
+    WinHttpCloseHandle( req );
+
+    req = WinHttpOpenRequest( con, NULL, cookie5W, NULL, NULL, NULL, 0 );
+    ok( req != NULL, "failed to open a request %u\n", GetLastError() );
+
+    ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
+    ok( ret, "failed to send request %u\n", GetLastError() );
+
+    ret = WinHttpReceiveResponse( req, NULL );
+    ok( ret, "failed to receive response %u\n", GetLastError() );
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
+    ok( ret, "failed to query status code %u\n", GetLastError() );
+    ok( status == HTTP_STATUS_OK || broken(status == HTTP_STATUS_BAD_REQUEST) /* < win7 */,
+        "request failed unexpectedly %u\n", status );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
