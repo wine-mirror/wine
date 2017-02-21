@@ -2505,9 +2505,16 @@ static BOOL surface_load_sysmem(struct wined3d_surface *surface,
     struct wined3d_texture *texture = surface->container;
     struct wined3d_texture_sub_resource *sub_resource;
 
+    sub_resource = &texture->sub_resources[sub_resource_idx];
+    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        FIXME("Unimplemented copy from %s for depth/stencil buffers.\n",
+                wined3d_debug_location(sub_resource->locations));
+        return FALSE;
+    }
+
     wined3d_texture_prepare_location(texture, sub_resource_idx, context, dst_location);
 
-    sub_resource = &texture->sub_resources[sub_resource_idx];
     if (sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED))
         wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
 
@@ -2534,18 +2541,26 @@ static BOOL surface_load_sysmem(struct wined3d_surface *surface,
 }
 
 /* Context activation is done by the caller. */
-static HRESULT surface_load_drawable(struct wined3d_surface *surface,
+static BOOL surface_load_drawable(struct wined3d_surface *surface,
         struct wined3d_context *context)
 {
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
     RECT r;
 
+    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        DWORD current = texture->sub_resources[sub_resource_idx].locations;
+        FIXME("Unimplemented copy from %s for depth/stencil buffers.\n",
+                wined3d_debug_location(current));
+        return FALSE;
+    }
+
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
             && wined3d_resource_is_offscreen(&texture->resource))
     {
         ERR("Trying to load offscreen surface into WINED3D_LOCATION_DRAWABLE.\n");
-        return WINED3DERR_INVALIDCALL;
+        return FALSE;
     }
 
     surface_get_rect(surface, NULL, &r);
@@ -2553,7 +2568,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
     surface_blt_to_drawable(texture->resource.device, context,
             WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
 
-    return WINED3D_OK;
+    return TRUE;
 }
 
 static HRESULT surface_load_texture(struct wined3d_surface *surface,
@@ -2573,13 +2588,20 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     RECT src_rect;
 
     sub_resource = surface_get_sub_resource(surface);
+    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        FIXME("Unimplemented copy from %s for depth/stencil buffers.\n",
+                wined3d_debug_location(sub_resource->locations));
+        return FALSE;
+    }
+
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && wined3d_resource_is_offscreen(&texture->resource)
             && (sub_resource->locations & WINED3D_LOCATION_DRAWABLE))
     {
         surface_load_fb_texture(surface, srgb, context);
 
-        return WINED3D_OK;
+        return TRUE;
     }
 
     width = wined3d_texture_get_level_width(texture, surface->texture_level);
@@ -2599,7 +2621,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_SRGB,
                     &src_rect, surface, WINED3D_LOCATION_TEXTURE_RGB, &src_rect);
 
-        return WINED3D_OK;
+        return TRUE;
     }
 
     if (sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED)
@@ -2615,7 +2637,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, src_location,
                 &src_rect, surface, dst_location, &src_rect);
 
-        return WINED3D_OK;
+        return TRUE;
     }
 
     /* Upload from system memory */
@@ -2678,7 +2700,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             ERR("Out of memory (%u).\n", dst_slice_pitch);
             context_release(context);
-            return E_OUTOFMEMORY;
+            return FALSE;
         }
         format.convert(src_mem, dst_mem, src_row_pitch, src_slice_pitch,
                 dst_row_pitch, dst_slice_pitch, width, height, 1);
@@ -2702,7 +2724,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             ERR("Out of memory (%u).\n", dst_slice_pitch);
             context_release(context);
-            return E_OUTOFMEMORY;
+            return FALSE;
         }
         if (texture->swapchain && texture->swapchain->palette)
             palette = texture->swapchain->palette;
@@ -2720,11 +2742,11 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
     HeapFree(GetProcessHeap(), 0, dst_mem);
 
-    return WINED3D_OK;
+    return TRUE;
 }
 
 /* Context activation is done by the caller. */
-static void surface_load_renderbuffer(struct wined3d_surface *surface, struct wined3d_context *context,
+static BOOL surface_load_renderbuffer(struct wined3d_surface *surface, struct wined3d_context *context,
         DWORD dst_location)
 {
     struct wined3d_texture *texture = surface->container;
@@ -2733,6 +2755,13 @@ static void surface_load_renderbuffer(struct wined3d_surface *surface, struct wi
             wined3d_texture_get_level_height(texture, surface->texture_level)};
     DWORD locations = surface_get_sub_resource(surface)->locations;
     DWORD src_location;
+
+    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+    {
+        FIXME("Unimplemented copy from %s for depth/stencil buffers.\n",
+                wined3d_debug_location(locations));
+        return FALSE;
+    }
 
     if (locations & WINED3D_LOCATION_RB_MULTISAMPLE)
         src_location = WINED3D_LOCATION_RB_MULTISAMPLE;
@@ -2745,23 +2774,14 @@ static void surface_load_renderbuffer(struct wined3d_surface *surface, struct wi
 
     surface_blt_fbo(texture->resource.device, context, WINED3D_TEXF_POINT,
             surface, src_location, &rect, surface, dst_location, &rect);
+
+    return TRUE;
 }
 
 /* Context activation is done by the caller. Context may be NULL in ddraw-only mode. */
 BOOL surface_load_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
-    unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
-    struct wined3d_texture *texture = surface->container;
-
     TRACE("surface %p, location %s.\n", surface, wined3d_debug_location(location));
-
-    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-    {
-        DWORD current = texture->sub_resources[sub_resource_idx].locations;
-        FIXME("Unimplemented copy from %s to %s for depth/stencil buffers.\n",
-                wined3d_debug_location(current), wined3d_debug_location(location));
-        return FALSE;
-    }
 
     switch (location)
     {
@@ -2771,17 +2791,16 @@ BOOL surface_load_location(struct wined3d_surface *surface, struct wined3d_conte
             return surface_load_sysmem(surface, context, location);
 
         case WINED3D_LOCATION_DRAWABLE:
-            return SUCCEEDED(surface_load_drawable(surface, context));
+            return surface_load_drawable(surface, context);
 
         case WINED3D_LOCATION_RB_RESOLVED:
         case WINED3D_LOCATION_RB_MULTISAMPLE:
-            surface_load_renderbuffer(surface, context, location);
-            return TRUE;
+            return surface_load_renderbuffer(surface, context, location);
 
         case WINED3D_LOCATION_TEXTURE_RGB:
         case WINED3D_LOCATION_TEXTURE_SRGB:
-            return SUCCEEDED(surface_load_texture(surface, context,
-                    location == WINED3D_LOCATION_TEXTURE_SRGB));
+            return surface_load_texture(surface, context,
+                    location == WINED3D_LOCATION_TEXTURE_SRGB);
 
         default:
             ERR("Don't know how to handle location %#x.\n", location);
