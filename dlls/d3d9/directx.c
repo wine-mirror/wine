@@ -440,7 +440,7 @@ static HRESULT WINAPI d3d9_GetDeviceCaps(IDirect3D9Ex *iface, UINT adapter, D3DD
     hr = wined3d_get_device_caps(d3d9->wined3d, adapter, device_type, &wined3d_caps);
     wined3d_mutex_unlock();
 
-    WINECAPSTOD3D9CAPS(caps, &wined3d_caps)
+    d3dcaps_from_wined3dcaps(caps, &wined3d_caps);
 
     /* Some functionality is implemented in d3d9.dll, not wined3d.dll. Add the needed caps */
     caps->DevCaps2 |= D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES;
