@@ -315,22 +315,6 @@ static HRESULT WINAPI d3d8_CheckDepthStencilMatch(IDirect3D8 *iface, UINT adapte
     return hr;
 }
 
-void fixup_caps(WINED3DCAPS *caps)
-{
-    /* D3D8 doesn't support SM 2.0 or higher, so clamp to 1.x */
-    if (caps->PixelShaderVersion)
-        caps->PixelShaderVersion = D3DPS_VERSION(1,4);
-    else
-        caps->PixelShaderVersion = D3DPS_VERSION(0,0);
-    if (caps->VertexShaderVersion)
-        caps->VertexShaderVersion = D3DVS_VERSION(1,1);
-    else
-        caps->VertexShaderVersion = D3DVS_VERSION(0,0);
-    caps->MaxVertexShaderConst = min(D3D8_MAX_VERTEX_SHADER_CONSTANTF, caps->MaxVertexShaderConst);
-
-    caps->StencilCaps &= ~WINED3DSTENCILCAPS_TWOSIDED;
-}
-
 static HRESULT WINAPI d3d8_GetDeviceCaps(IDirect3D8 *iface, UINT adapter, D3DDEVTYPE device_type, D3DCAPS8 *caps)
 {
     struct d3d8 *d3d8 = impl_from_IDirect3D8(iface);
@@ -346,7 +330,6 @@ static HRESULT WINAPI d3d8_GetDeviceCaps(IDirect3D8 *iface, UINT adapter, D3DDEV
     hr = wined3d_get_device_caps(d3d8->wined3d, adapter, device_type, &wined3d_caps);
     wined3d_mutex_unlock();
 
-    fixup_caps(&wined3d_caps);
     d3dcaps_from_wined3dcaps(caps, &wined3d_caps);
 
     return hr;

@@ -42,7 +42,6 @@
 #define VS_HIGHESTFIXEDFXF 0xF0000000
 
 void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const WINED3DCAPS *wined3d_caps) DECLSPEC_HIDDEN;
-void fixup_caps(WINED3DCAPS *pWineCaps) DECLSPEC_HIDDEN;
 
 struct d3d8
 {

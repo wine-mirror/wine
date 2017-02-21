@@ -282,6 +282,19 @@ void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const WINED3DCAPS *wined3d_caps)
     caps->MaxVertexShaderConst      = wined3d_caps->MaxVertexShaderConst;
     caps->PixelShaderVersion        = wined3d_caps->PixelShaderVersion;
     caps->MaxPixelShaderValue       = wined3d_caps->PixelShader1xMaxValue;
+
+    /* D3D8 doesn't support SM 2.0 or higher, so clamp to 1.x */
+    if (caps->PixelShaderVersion)
+        caps->PixelShaderVersion = D3DPS_VERSION(1, 4);
+    else
+        caps->PixelShaderVersion = D3DPS_VERSION(0, 0);
+    if (caps->VertexShaderVersion)
+        caps->VertexShaderVersion = D3DVS_VERSION(1, 1);
+    else
+        caps->VertexShaderVersion = D3DVS_VERSION(0, 0);
+    caps->MaxVertexShaderConst = min(D3D8_MAX_VERTEX_SHADER_CONSTANTF, caps->MaxVertexShaderConst);
+
+    caps->StencilCaps &= ~WINED3DSTENCILCAPS_TWOSIDED;
 }
 
 /* Handle table functions */
@@ -527,7 +540,6 @@ static HRESULT WINAPI d3d8_device_GetDeviceCaps(IDirect3DDevice8 *iface, D3DCAPS
     hr = wined3d_device_get_device_caps(device->wined3d_device, &wined3d_caps);
     wined3d_mutex_unlock();
 
-    fixup_caps(&wined3d_caps);
     d3dcaps_from_wined3dcaps(caps, &wined3d_caps);
 
     return hr;
