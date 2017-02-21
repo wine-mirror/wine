@@ -2865,14 +2865,8 @@ static void context_map_fixed_function_samplers(struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i, tex;
     WORD ffu_map;
-
-    context_update_fixed_function_usage_map(context, state);
-
-    if (gl_info->limits.combined_samplers >= MAX_COMBINED_SAMPLERS)
-        return;
 
     ffu_map = context->fixed_function_usage_map;
 
@@ -2915,13 +2909,9 @@ static void context_map_fixed_function_samplers(struct wined3d_context *context,
 static void context_map_psamplers(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_shader_resource_info *resource_info =
             state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.resource_info;
     unsigned int i;
-
-    if (gl_info->limits.combined_samplers >= MAX_COMBINED_SAMPLERS)
-        return;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
     {
@@ -2970,9 +2960,6 @@ static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, cons
     int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
     int i;
 
-    if (gl_info->limits.combined_samplers >= MAX_COMBINED_SAMPLERS)
-        return;
-
     /* Note that we only care if a resource is used or not, not the
      * resource's specific type. Otherwise we'd need to call
      * shader_update_samplers() here for 1.x pixelshaders. */
@@ -3008,13 +2995,20 @@ static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, cons
 
 static void context_update_tex_unit_map(struct wined3d_context *context, const struct wined3d_state *state)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL vs = use_vs(state);
     BOOL ps = use_ps(state);
+
+    if (!ps)
+        context_update_fixed_function_usage_map(context, state);
 
     /* Try to go for a 1:1 mapping of the samplers when possible. Pixel shaders
      * need a 1:1 map at the moment.
      * When the mapping of a stage is changed, sampler and ALL texture stage
      * states have to be reset. */
+
+    if (gl_info->limits.combined_samplers >= MAX_COMBINED_SAMPLERS)
+        return;
 
     if (ps)
         context_map_psamplers(context, state);
