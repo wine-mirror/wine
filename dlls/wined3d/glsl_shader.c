@@ -366,7 +366,11 @@ static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_inf
 static void shader_glsl_add_version_declaration(struct wined3d_string_buffer *buffer,
         const struct wined3d_gl_info *gl_info, const struct wined3d_shader_version *version)
 {
-    shader_addline(buffer, "#version %u\n", shader_glsl_get_version(gl_info, version));
+    unsigned int glsl_version = shader_glsl_get_version(gl_info, version);
+    if (glsl_version >= 150 && gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        shader_addline(buffer, "#version %u compatibility\n", glsl_version);
+    else
+        shader_addline(buffer, "#version %u\n", glsl_version);
 }
 
 static void shader_glsl_append_imm_vec4(struct wined3d_string_buffer *buffer, const float *values)
