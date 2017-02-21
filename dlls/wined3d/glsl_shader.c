@@ -2910,7 +2910,8 @@ static DWORD shader_glsl_get_write_mask(const struct wined3d_shader_dst_param *p
     return mask;
 }
 
-static unsigned int shader_glsl_get_write_mask_size(DWORD write_mask) {
+static unsigned int shader_glsl_get_write_mask_size(DWORD write_mask)
+{
     unsigned int size = 0;
 
     if (write_mask & WINED3DSP_WRITEMASK_0) ++size;
@@ -2921,19 +2922,27 @@ static unsigned int shader_glsl_get_write_mask_size(DWORD write_mask) {
     return size;
 }
 
-static void shader_glsl_swizzle_to_str(const DWORD swizzle, BOOL fixup, DWORD mask, char *str)
+static unsigned int shader_glsl_swizzle_get_component(DWORD swizzle,
+        unsigned int component_idx)
+{
+    /* swizzle bits fields: wwzzyyxx */
+    return (swizzle >> (2 * component_idx)) & 0x3;
+}
+
+static void shader_glsl_swizzle_to_str(DWORD swizzle, BOOL fixup, DWORD mask, char *str)
 {
     /* For registers of type WINED3DDECLTYPE_D3DCOLOR, data is stored as "bgra",
      * but addressed as "rgba". To fix this we need to swap the register's x
      * and z components. */
     const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
+    unsigned int i;
 
     *str++ = '.';
-    /* swizzle bits fields: wwzzyyxx */
-    if (mask & WINED3DSP_WRITEMASK_0) *str++ = swizzle_chars[swizzle & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_1) *str++ = swizzle_chars[(swizzle >> 2) & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_2) *str++ = swizzle_chars[(swizzle >> 4) & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_3) *str++ = swizzle_chars[(swizzle >> 6) & 0x03];
+    for (i = 0; i < 4; ++i)
+    {
+        if (mask & (WINED3DSP_WRITEMASK_0 << i))
+            *str++ = swizzle_chars[shader_glsl_swizzle_get_component(swizzle, i)];
+    }
     *str = '\0';
 }
 
@@ -4142,7 +4151,7 @@ static void shader_glsl_conditional_move(const struct wined3d_shader_instruction
         /* Find the destination channels which use the current source0 channel. */
         for (j = 0; j < 4; ++j)
         {
-            if (((ins->src[0].swizzle >> (2 * j)) & 0x3) == i)
+            if (shader_glsl_swizzle_get_component(ins->src[0].swizzle, j) == i)
             {
                 write_mask |= WINED3DSP_WRITEMASK_0 << j;
                 cmp_channel = WINED3DSP_WRITEMASK_0 << j;
@@ -5033,9 +5042,7 @@ static void shader_glsl_ld_raw(const struct wined3d_shader_instruction *ins)
     struct wined3d_shader_dst_param dst;
     const char *function, *resource;
     struct glsl_src_param offset;
-    char dst_swizzle[6];
-    DWORD write_mask;
-    unsigned int i;
+    unsigned int i, swizzle;
 
     if (src->reg.type == WINED3DSPR_RESOURCE)
     {
@@ -5054,13 +5061,12 @@ static void shader_glsl_ld_raw(const struct wined3d_shader_instruction *ins)
     for (i = 0; i < 4; ++i)
     {
         dst.write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i);
-        if (!(write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins,
-                &dst, dst.reg.data_type)))
+        if (!shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &dst, dst.reg.data_type))
             continue;
 
-        shader_glsl_swizzle_to_str(src->swizzle, FALSE, write_mask, dst_swizzle);
-        shader_addline(buffer, "%s(%s_%s%u, %s / 4)%s);\n",
-                function, prefix, resource, src->reg.idx[0].offset, offset.param_str, dst_swizzle);
+        swizzle = shader_glsl_swizzle_get_component(src->swizzle, i);
+        shader_addline(buffer, "%s(%s_%s%u, %s / 4 + %u).x);\n",
+                function, prefix, resource, src->reg.idx[0].offset, offset.param_str, swizzle);
     }
 }
 
