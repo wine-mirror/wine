@@ -256,12 +256,12 @@ BOOL set_cookies( request_t *request, const WCHAR *cookies )
     len = strlenW( p );
     while (len && (attr = parse_attr( p, &used )))
     {
-        if (!strcmpW( attr->name, domainW ))
+        if (!strcmpiW( attr->name, domainW ))
         {
             domain = attr;
             cookie_domain = attr->value;
         }
-        else if (!strcmpW( attr->name, pathW ))
+        else if (!strcmpiW( attr->name, pathW ))
         {
             path = attr;
             cookie_path = attr->value;
