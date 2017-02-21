@@ -3416,11 +3416,10 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
 
         if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
         {
-            GLint tmp;
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &gl_max);
             gl_info->limits.texture_coords = min(MAX_TEXTURES, gl_max);
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-            gl_info->limits.fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
+            gl_info->limits.fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, gl_max);
         }
         else
         {
@@ -3432,13 +3431,12 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
 
         if (gl_info->supported[ARB_VERTEX_SHADER])
         {
-            GLint tmp;
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-            gl_info->limits.vertex_samplers = tmp;
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-            gl_info->limits.combined_samplers = tmp;
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
-            gl_info->limits.vertex_attribs = tmp;
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
+            gl_info->limits.vertex_samplers = gl_max;
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
+            gl_info->limits.combined_samplers = gl_max;
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &gl_max);
+            gl_info->limits.vertex_attribs = gl_max;
 
             /* Loading GLSL sampler uniforms is much simpler if we can assume that the sampler setup
              * is known at shader link time. In a vertex shader + pixel shader combination this isn't
