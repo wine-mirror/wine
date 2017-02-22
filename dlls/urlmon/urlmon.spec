@@ -6,7 +6,7 @@
 #3 stub IsJITInProgress
 
 @ stub AsyncGetClassBits
-@ stdcall AsyncInstallDistributionUnit(ptr ptr ptr long long ptr ptr ptr long)
+@ stdcall AsyncInstallDistributionUnit(wstr wstr wstr long long wstr ptr ptr long)
 @ stdcall BindAsyncMoniker(ptr long ptr ptr ptr)
 @ stdcall CoGetClassObjectFromURL(ptr wstr long long wstr ptr long ptr ptr ptr)
 @ stub CoInstall
@@ -17,7 +17,7 @@
 @ stdcall CoInternetCreateSecurityManager(ptr ptr long)
 @ stdcall CoInternetCreateZoneManager(ptr ptr long)
 @ stub CoInternetGetProtocolFlags
-@ stdcall CoInternetGetSecurityUrl(ptr ptr long long)
+@ stdcall CoInternetGetSecurityUrl(wstr ptr long long)
 @ stdcall CoInternetGetSecurityUrlEx(ptr ptr long long)
 @ stdcall CoInternetGetSession(long ptr long)
 @ stdcall CoInternetIsFeatureEnabled(long long)
@@ -25,7 +25,7 @@
 @ stdcall CoInternetIsFeatureZoneElevationEnabled(wstr wstr ptr long)
 @ stdcall CoInternetParseUrl(wstr long long wstr long ptr long)
 @ stdcall CoInternetParseIUri(ptr long long wstr long ptr long)
-@ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
+@ stdcall CoInternetQueryInfo(wstr long long ptr long ptr long)
 @ stdcall CoInternetSetFeatureEnabled(long long long)
 @ stdcall CompareSecurityIds(ptr long ptr long long)
 @ stdcall CopyBindInfo(ptr ptr)
@@ -45,16 +45,16 @@
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllRegisterServerEx()
 @ stdcall -private DllUnregisterServer()
-@ stdcall Extract(long ptr)
+@ stdcall Extract(ptr str)
 @ stdcall FaultInIEFeature(long ptr ptr long)
 @ stub FindMediaType
 @ stub FindMediaTypeClass
-@ stdcall FindMimeFromData(ptr ptr ptr long ptr long ptr long)
+@ stdcall FindMimeFromData(ptr wstr ptr long wstr long ptr long)
 @ stdcall GetClassFileOrMime(ptr wstr ptr long wstr long ptr)
 @ stub GetClassURL
 @ stub GetComponentIDFromCLSSPEC
 @ stub GetMarkOfTheWeb
-@ stdcall GetSoftwareUpdateInfo(ptr ptr)
+@ stdcall GetSoftwareUpdateInfo(wstr ptr)
 @ stub HlinkGoBack
 @ stub HlinkGoForward
 @ stub HlinkNavigateMoniker
