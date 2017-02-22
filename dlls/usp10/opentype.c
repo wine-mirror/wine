@@ -1512,7 +1512,7 @@ static INT GPOS_get_device_table_value(const OT_DeviceTable *DeviceTable, WORD p
 
         TRACE("device table, format %#x, index %i\n", format, index);
 
-        if (format & ~0x3)
+        if (format < 1 || format > 3)
         {
             WARN("invalid delta format %#x\n", format);
             return 0;
