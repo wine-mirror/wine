@@ -304,7 +304,7 @@
 @ stub InbvSolidColorFill
 @ extern InitSafeBootMode
 @ stdcall IoAcquireCancelSpinLock(ptr)
-@ stdcall IoAcquireRemoveLockEx(ptr ptr ptr long long)
+@ stdcall IoAcquireRemoveLockEx(ptr ptr str long long)
 @ stub IoAcquireVpbSpinLock
 @ stub IoAdapterObjectType
 @ stub IoAllocateAdapterChannel
@@ -339,7 +339,7 @@
 @ stdcall IoCreateDevice(ptr long ptr long long long ptr)
 @ stub IoCreateDisk
 @ stdcall IoCreateDriver(ptr ptr)
-@ stdcall IoCreateFile(ptr long ptr ptr long long long ptr long long ptr long ptr long)
+@ stdcall IoCreateFile(ptr long ptr ptr ptr long long long long ptr long long ptr long)
 @ stub IoCreateFileSpecifyDeviceObjectHint
 @ stub IoCreateNotificationEvent
 @ stub IoCreateStreamFileObject
