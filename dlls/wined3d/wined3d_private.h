@@ -1622,7 +1622,7 @@ struct wined3d_context
     UINT                    blit_w, blit_h;
     enum fogsource          fog_source;
     DWORD active_texture;
-    DWORD texture_type[MAX_COMBINED_SAMPLERS];
+    DWORD *texture_type;
 
     UINT instance_count;
 

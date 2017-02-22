@@ -1724,6 +1724,9 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
             ret->rev_tex_unit_map[s] = WINED3D_UNMAPPED_STAGE;
         }
     }
+    if (!(ret->texture_type = wined3d_calloc(gl_info->limits.combined_samplers,
+            sizeof(*ret->texture_type))))
+        goto out;
 
     if (!(hdc = GetDCEx(swapchain->win_handle, 0, DCX_USESTYLE | DCX_CACHE)))
     {
@@ -2018,6 +2021,7 @@ out:
     if (hdc) wined3d_release_dc(swapchain->win_handle, hdc);
     device->shader_backend->shader_free_context_data(ret);
     device->adapter->fragment_pipe->free_context_data(ret);
+    HeapFree(GetProcessHeap(), 0, ret->texture_type);
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_timestamp_queries);
@@ -2064,6 +2068,7 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
 
     device->shader_backend->shader_free_context_data(context);
     device->adapter->fragment_pipe->free_context_data(context);
+    HeapFree(GetProcessHeap(), 0, context->texture_type);
     HeapFree(GetProcessHeap(), 0, context->fbo_key);
     HeapFree(GetProcessHeap(), 0, context->draw_buffers);
     HeapFree(GetProcessHeap(), 0, context->blit_targets);
