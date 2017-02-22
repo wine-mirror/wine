@@ -798,6 +798,7 @@ static int encode_type(
     if (!alignment) alignment = &scratch;
     if (!decoded_size) decoded_size = &scratch;
 
+    *decoded_size = 0;
 
     switch (vt) {
     case VT_I1:
