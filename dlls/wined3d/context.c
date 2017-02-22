@@ -3350,16 +3350,56 @@ static void context_load_shader_resources(struct wined3d_context *context, const
     }
 }
 
-static void context_bind_shader_resources(struct wined3d_context *context, const struct wined3d_state *state)
+static void context_bind_shader_resources(struct wined3d_context *context,
+        const struct wined3d_state *state, enum wined3d_shader_type shader_type,
+        unsigned int base_idx, unsigned int count)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_device *device = context->device;
     struct wined3d_shader_sampler_map_entry *entry;
     struct wined3d_shader_resource_view *view;
+    unsigned int shader_sampler_count, i;
+    const struct wined3d_shader *shader;
     struct wined3d_sampler *sampler;
-    struct wined3d_shader *shader;
-    unsigned int i, j, count;
     GLuint sampler_name;
+
+    if (!(shader = state->shader[shader_type]))
+        return;
+
+    shader_sampler_count = shader->reg_maps.sampler_map.count;
+    if (shader_sampler_count > count)
+        FIXME("Shader %p needs %u samplers, but only %u are supported.\n",
+                shader, shader_sampler_count, count);
+    count = min(shader_sampler_count, count);
+
+    for (i = 0; i < count; ++i)
+    {
+        entry = &shader->reg_maps.sampler_map.entries[i];
+
+        if (!(view = state->shader_resource_view[shader_type][entry->resource_idx]))
+        {
+            WARN("No resource view bound at index %u, %u.\n", shader_type, entry->resource_idx);
+            continue;
+        }
+
+        if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
+            sampler_name = device->default_sampler;
+        else if ((sampler = state->sampler[shader_type][entry->sampler_idx]))
+            sampler_name = sampler->name;
+        else
+            sampler_name = device->null_sampler;
+
+        context_active_texture(context, gl_info, base_idx + entry->bind_idx);
+        GL_EXTCALL(glBindSampler(base_idx + entry->bind_idx, sampler_name));
+        checkGLcall("glBindSampler");
+        wined3d_shader_resource_view_bind(view, context);
+    }
+}
+
+static void context_bind_graphics_shader_resources(struct wined3d_context *context,
+        const struct wined3d_state *state)
+{
+    unsigned int i;
 
     static const struct
     {
@@ -3374,41 +3414,8 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
     };
 
     for (i = 0; i < ARRAY_SIZE(shader_types); ++i)
-    {
-        if (!(shader = state->shader[shader_types[i].type]))
-            continue;
-
-        count = shader->reg_maps.sampler_map.count;
-        if (count > shader_types[i].count)
-        {
-            FIXME("Shader %p needs %u samplers, but only %u are supported.\n",
-                    shader, count, shader_types[i].count);
-            count = shader_types[i].count;
-        }
-
-        for (j = 0; j < count; ++j)
-        {
-            entry = &shader->reg_maps.sampler_map.entries[j];
-
-            if (!(view = state->shader_resource_view[shader_types[i].type][entry->resource_idx]))
-            {
-                WARN("No resource view bound at index %u, %u.\n", shader_types[i].type, entry->resource_idx);
-                continue;
-            }
-
-            if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
-                sampler_name = device->default_sampler;
-            else if ((sampler = state->sampler[shader_types[i].type][entry->sampler_idx]))
-                sampler_name = sampler->name;
-            else
-                sampler_name = device->null_sampler;
-
-            context_active_texture(context, gl_info, shader_types[i].base_idx + entry->bind_idx);
-            GL_EXTCALL(glBindSampler(shader_types[i].base_idx + entry->bind_idx, sampler_name));
-            checkGLcall("glBindSampler");
-            wined3d_shader_resource_view_bind(view, context);
-        }
-    }
+        context_bind_shader_resources(context, state, shader_types[i].type,
+                shader_types[i].base_idx, shader_types[i].count);
 }
 
 static void context_load_unordered_access_resources(struct wined3d_context *context,
@@ -3502,12 +3509,12 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
         const struct wined3d_device *device, const struct wined3d_state *state)
 {
     const struct StateEntry *state_table = context->state_table;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_fb_state *fb = state->fb;
     unsigned int i;
     WORD map;
 
-    if (!context_validate_rt_config(context->gl_info->limits.buffers,
-            fb->render_targets, fb->depth_stencil))
+    if (!context_validate_rt_config(gl_info->limits.buffers, fb->render_targets, fb->depth_stencil))
         return FALSE;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && isStateDirty(context, STATE_FRAMEBUFFER))
@@ -3575,8 +3582,10 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
 
     if (context->update_shader_resource_bindings)
     {
-        context_bind_shader_resources(context, state);
+        context_bind_graphics_shader_resources(context, state);
         context->update_shader_resource_bindings = 0;
+        if (gl_info->limits.combined_samplers == gl_info->limits.graphics_samplers)
+            context->update_compute_shader_resource_bindings = 1;
     }
 
     if (context->update_unordered_access_view_bindings)
@@ -3603,6 +3612,7 @@ void context_apply_compute_state(struct wined3d_context *context,
         const struct wined3d_device *device, const struct wined3d_state *state)
 {
     const struct StateEntry *state_table = context->state_table;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int state_id, i, j;
 
     context_load_shader_resources(context, state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
@@ -3623,6 +3633,17 @@ void context_apply_compute_state(struct wined3d_context *context,
     {
         device->shader_backend->shader_select_compute(device->shader_priv, context, state);
         context->shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
+    }
+
+    if (context->update_compute_shader_resource_bindings)
+    {
+        unsigned int base_idx, count;
+        wined3d_gl_limits_get_texture_unit_range(&gl_info->limits,
+                WINED3D_SHADER_TYPE_COMPUTE, &base_idx, &count);
+        context_bind_shader_resources(context, state, WINED3D_SHADER_TYPE_COMPUTE, base_idx, count);
+        context->update_compute_shader_resource_bindings = 0;
+        if (gl_info->limits.combined_samplers == gl_info->limits.graphics_samplers)
+            context->update_shader_resource_bindings = 1;
     }
 
     if (context->update_compute_unordered_access_view_bindings)
