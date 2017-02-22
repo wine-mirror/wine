@@ -91,7 +91,7 @@
 @ cdecl __dstbias() MSVCRT___p__dstbias
 @ cdecl __fpe_flt_rounds()
 @ cdecl __fpecode()
-@ stub __initialize_lconv_for_unsigned_char
+@ cdecl __initialize_lconv_for_unsigned_char() __lconv_init
 @ stub __intrinsic_abnormal_termination
 @ cdecl -arch=i386,x86_64,arm -norelay __intrinsic_setjmp(ptr) MSVCRT__setjmp
 @ stub __intrinsic_setjmpex

@@ -3,7 +3,7 @@
 @ cdecl ___lc_locale_name_func() ucrtbase.___lc_locale_name_func
 @ cdecl ___mb_cur_max_func() ucrtbase.___mb_cur_max_func
 @ cdecl ___mb_cur_max_l_func(ptr) ucrtbase.___mb_cur_max_l_func
-@ stub __initialize_lconv_for_unsigned_char
+@ cdecl __initialize_lconv_for_unsigned_char() ucrtbase.__initialize_lconv_for_unsigned_char
 @ cdecl __pctype_func() ucrtbase.__pctype_func
 @ stub __pwctype_func
 @ cdecl _configthreadlocale(long) ucrtbase._configthreadlocale
