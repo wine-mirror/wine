@@ -632,7 +632,7 @@
 @ stdcall -arch=win32 _KERNEL32_99(long)
 @ stdcall -arch=win32 _KERNEL32_100(long long long)
 
-@ stdcall -arch=win32 AllocSLCallback(ptr ptr)
+@ stdcall -arch=win32 AllocSLCallback(long long)
 @ stdcall -arch=win32 -norelay FT_Exit0()
 @ stdcall -arch=win32 -norelay FT_Exit12()
 @ stdcall -arch=win32 -norelay FT_Exit16()
