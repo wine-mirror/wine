@@ -3406,18 +3406,52 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
     }
 }
 
+static void context_load_unordered_access_resources(struct wined3d_context *context,
+        const struct wined3d_shader *shader, struct wined3d_unordered_access_view * const *views)
+{
+    struct wined3d_unordered_access_view *view;
+    struct wined3d_texture *texture;
+    struct wined3d_buffer *buffer;
+    unsigned int i;
+
+    context->uses_uavs = 0;
+
+    if (!shader)
+        return;
+
+    for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
+    {
+        if (!shader->reg_maps.uav_resource_info[i].type)
+            continue;
+
+        if (!(view = views[i]))
+            continue;
+
+        if (view->resource->type == WINED3D_RTYPE_BUFFER)
+        {
+            buffer = buffer_from_resource(view->resource);
+            wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
+            wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_BUFFER);
+        }
+        else
+        {
+            texture = texture_from_resource(view->resource);
+            wined3d_texture_load(texture, context, FALSE);
+            wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_TEXTURE_RGB);
+        }
+
+        context->uses_uavs = 1;
+    }
+}
+
 static void context_bind_unordered_access_views(struct wined3d_context *context,
         const struct wined3d_shader *shader, struct wined3d_unordered_access_view * const *views)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_unordered_access_view *view;
-    struct wined3d_texture *texture = NULL;
-    struct wined3d_buffer *buffer;
     GLuint texture_name;
     unsigned int i;
     GLint level;
-
-    context->uses_uavs = 0;
 
     if (!shader)
         return;
@@ -3434,28 +3468,14 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
             continue;
         }
 
-        if (view->resource->type == WINED3D_RTYPE_BUFFER)
-        {
-            buffer = buffer_from_resource(view->resource);
-            wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
-            wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_BUFFER);
-        }
-        else
-        {
-            texture = texture_from_resource(view->resource);
-            wined3d_texture_load(texture, context, FALSE);
-            wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_TEXTURE_RGB);
-        }
-
-        context->uses_uavs = 1;
-
         if (view->gl_view.name)
         {
             texture_name = view->gl_view.name;
             level = 0;
         }
-        else if (texture)
+        else if (view->resource->type != WINED3D_RTYPE_BUFFER)
         {
+            struct wined3d_texture *texture = texture_from_resource(view->resource);
             texture_name = wined3d_texture_get_gl_texture(texture, FALSE)->name;
             level = view->desc.u.texture.level_idx;
         }
@@ -3496,6 +3516,8 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
     context_update_tex_unit_map(context, state);
     context_preload_textures(context, state);
     context_load_shader_resources(context, state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
+    context_load_unordered_access_resources(context, state->shader[WINED3D_SHADER_TYPE_PIXEL],
+            state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
     /* TODO: Right now the dependency on the vertex shader is necessary
      * since context_stream_info_from_declaration depends on the reg_maps of
      * the current VS but maybe it's possible to relax the coupling in some
@@ -3579,6 +3601,8 @@ void context_apply_compute_state(struct wined3d_context *context,
     unsigned int state_id, i, j;
 
     context_load_shader_resources(context, state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
+    context_load_unordered_access_resources(context, state->shader[WINED3D_SHADER_TYPE_COMPUTE],
+            state->unordered_access_view[WINED3D_PIPELINE_COMPUTE]);
 
     for (i = 0, state_id = STATE_COMPUTE_OFFSET; i < ARRAY_SIZE(context->dirty_compute_states); ++i)
     {
