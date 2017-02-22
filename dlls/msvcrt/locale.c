@@ -1342,14 +1342,14 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lconv->mon_grouping[0] = '\0';
         locinfo->lconv->positive_sign[0] = '\0';
         locinfo->lconv->negative_sign[0] = '\0';
-        locinfo->lconv->int_frac_digits = 127;
-        locinfo->lconv->frac_digits = 127;
-        locinfo->lconv->p_cs_precedes = 127;
-        locinfo->lconv->p_sep_by_space = 127;
-        locinfo->lconv->n_cs_precedes = 127;
-        locinfo->lconv->n_sep_by_space = 127;
-        locinfo->lconv->p_sign_posn = 127;
-        locinfo->lconv->n_sign_posn = 127;
+        locinfo->lconv->int_frac_digits = charmax;
+        locinfo->lconv->frac_digits = charmax;
+        locinfo->lconv->p_cs_precedes = charmax;
+        locinfo->lconv->p_sep_by_space = charmax;
+        locinfo->lconv->n_cs_precedes = charmax;
+        locinfo->lconv->n_sep_by_space = charmax;
+        locinfo->lconv->p_sign_posn = charmax;
+        locinfo->lconv->n_sign_posn = charmax;
 
 #if _MSVCR_VER >= 100
         locinfo->lconv->_W_int_curr_symbol = MSVCRT_malloc(sizeof(MSVCRT_wchar_t));
