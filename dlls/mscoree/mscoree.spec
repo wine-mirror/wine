@@ -38,7 +38,7 @@
 @ stub EEDllGetClassObjectFromClass
 @ stub EEDllRegisterServer
 @ stub EEDllUnregisterServer
-@ stdcall GetAssemblyMDImport(ptr ptr ptr)
+@ stdcall GetAssemblyMDImport(wstr ptr ptr)
 @ stub GetCORRequiredVersion
 @ stub GetCORRootDirectory
 @ stdcall GetCORSystemDirectory(ptr long ptr)
@@ -69,7 +69,7 @@
 @ stub GetXMLElement
 @ stub GetXMLElementAttribute
 @ stub GetXMLObject
-@ stdcall LoadLibraryShim(ptr ptr ptr ptr)
+@ stdcall LoadLibraryShim(wstr wstr ptr ptr)
 @ stub LoadLibraryWithPolicyShim
 @ stdcall LoadStringRCEx(long long ptr long long ptr)
 @ stdcall LockClrVersion(ptr ptr ptr)
@@ -116,4 +116,4 @@
 @ stdcall _CorExeMain2(ptr long ptr ptr ptr)
 @ stdcall _CorExeMain()
 @ stdcall _CorImageUnloading(ptr)
-@ stdcall _CorValidateImage(ptr ptr)
+@ stdcall _CorValidateImage(ptr wstr)
