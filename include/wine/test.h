@@ -590,8 +590,9 @@ static int run_test( const char *name )
 
     if (winetest_debug)
     {
-        printf( "%s: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
-                test->name, successes + failures + todo_successes + todo_failures,
+        printf( "%04x:%s: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+                GetCurrentProcessId(), test->name,
+                successes + failures + todo_successes + todo_failures,
                 todo_successes, failures + todo_failures,
                 (failures + todo_failures != 1) ? "failures" : "failure",
                 skipped );
@@ -617,7 +618,8 @@ static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
     if (data->current_file)
         printf( "%s:%d: this is the last test seen before the exception\n",
                 data->current_file, data->current_line );
-    printf( "%s: unhandled exception %08x at %p\n", current_test->name,
+    printf( "%04x:%s: unhandled exception %08x at %p\n",
+            GetCurrentProcessId(), current_test->name,
             ptrs->ExceptionRecord->ExceptionCode, ptrs->ExceptionRecord->ExceptionAddress );
     fflush( stdout );
     return EXCEPTION_EXECUTE_HANDLER;

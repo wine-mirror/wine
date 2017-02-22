@@ -609,7 +609,7 @@ static void append_path( const char *path)
    value of WaitForSingleObject.
  */
 static int
-run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
+run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms, DWORD* pid)
 {
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
@@ -627,9 +627,13 @@ run_ex (char *cmd, HANDLE out_file, const char *tempdir, DWORD ms)
 
     if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE,
                          NULL, tempdir, &si, &pi))
+    {
+        if (pid) *pid = 0;
         return -2;
+    }
 
     CloseHandle (pi.hThread);
+    if (pid) *pid = pi.dwProcessId;
     status = wait_process( pi.hProcess, ms );
     switch (status)
     {
@@ -713,7 +717,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
         /* We need to add the path (to the main dll) to PATH */
         append_path(test->maindllpath);
     }
-    status = run_ex (cmd, subfile, tempdir, 5000);
+    status = run_ex (cmd, subfile, tempdir, 5000, NULL);
     err = GetLastError();
     if (test->maindllpath) {
         /* Restore PATH again */
@@ -785,13 +789,13 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
     else
     {
         int status;
-        DWORD start = GetTickCount();
+        DWORD pid, start = GetTickCount();
         char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
         report (R_STEP, "Running: %s:%s", test->name, subtest);
         xprintf ("%s:%s start %s -\n", test->name, subtest, file);
-        status = run_ex (cmd, out_file, tempdir, 120000);
+        status = run_ex (cmd, out_file, tempdir, 120000, &pid);
         heap_free (cmd);
-        xprintf ("%s:%s done (%d) in %ds\n", test->name, subtest, status, (GetTickCount()-start)/1000);
+        xprintf ("%s:%s:%04x done (%d) in %ds\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000);
         if (status) failures++;
     }
     if (failures) report (R_STATUS, "Running tests - %u failures", failures);
