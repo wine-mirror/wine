@@ -2256,6 +2256,8 @@ void __cdecl wined3d_device_set_compute_shader(struct wined3d_device *device, st
 void __cdecl wined3d_device_set_cs_cb(struct wined3d_device *device, unsigned int idx, struct wined3d_buffer *buffer);
 void __cdecl wined3d_device_set_cs_resource_view(struct wined3d_device *device,
         unsigned int idx, struct wined3d_shader_resource_view *view);
+void __cdecl wined3d_device_set_cs_sampler(struct wined3d_device *device,
+        unsigned int idx, struct wined3d_sampler *sampler);
 void __cdecl wined3d_device_set_cs_uav(struct wined3d_device *device, unsigned int idx,
         struct wined3d_unordered_access_view *uav);
 void __cdecl wined3d_device_set_cursor_position(struct wined3d_device *device,
