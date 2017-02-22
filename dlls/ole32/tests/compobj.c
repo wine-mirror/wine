@@ -32,6 +32,7 @@
 #include "shlguid.h"
 #include "urlmon.h" /* for CLSID_FileProtocol */
 #include "dde.h"
+#include "cguid.h"
 
 #include "ctxtcall.h"
 
@@ -96,6 +97,7 @@ static const GUID IID_TestPS = { 0x66666666, 0x8888, 0x7777, { 0x66, 0x66, 0x55,
 
 DEFINE_GUID(CLSID_InProcFreeMarshaler, 0x0000033a,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(CLSID_testclsid, 0xacd014c7,0x9535,0x4fac,0x8b,0x53,0xa4,0x8c,0xa7,0xf4,0xd7,0x26);
+DEFINE_GUID(CLSID_GlobalOptions, 0x0000034b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
 static const WCHAR stdfont[] = {'S','t','d','F','o','n','t',0};
 static const WCHAR wszNonExistent[] = {'N','o','n','E','x','i','s','t','e','n','t',0};
@@ -3558,6 +3560,26 @@ todo_wine {
     CoUninitialize();
 }
 
+static void test_GlobalOptions(void)
+{
+    IGlobalOptions *global_options;
+    HRESULT hres;
+
+    CoInitialize(NULL);
+
+    hres = CoCreateInstance(&CLSID_GlobalOptions, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IGlobalOptions, (void**)&global_options);
+    ok(hres == S_OK, "CoCreateInstance(CLSID_GlobalOptions) failed: %08x\n", hres);
+
+    IGlobalOptions_Release(global_options);
+
+    hres = CoCreateInstance(&CLSID_GlobalOptions, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
+            &IID_IGlobalOptions, (void**)&global_options);
+    ok(hres == E_INVALIDARG, "CoCreateInstance(CLSID_GlobalOptions) failed: %08x\n", hres);
+
+    CoUninitialize();
+}
+
 static void init_funcs(void)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -3629,4 +3651,5 @@ START_TEST(compobj)
     test_CoGetCurrentLogicalThreadId();
     test_IInitializeSpy();
     test_CoGetInstanceFromFile();
+    test_GlobalOptions();
 }

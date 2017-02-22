@@ -150,6 +150,17 @@ static const IClassFactoryVtbl ComCatCFVtbl =
 
 static IClassFactory ComCatCF = { &ComCatCFVtbl };
 
+static const IClassFactoryVtbl GlobalOptionsCFVtbl =
+{
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    GlobalOptions_CreateInstance,
+    ClassFactory_LockServer
+};
+
+IClassFactory GlobalOptionsCF = { &GlobalOptionsCFVtbl };
+
 /***********************************************************************
  *           DllGetClassObject [OLE32.@]
  */
