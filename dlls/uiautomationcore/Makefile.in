@@ -1,0 +1,4 @@
+MODULE = uiautomationcore.dll
+
+C_SRCS = \
+	uia_main.c

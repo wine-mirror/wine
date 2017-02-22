@@ -1420,6 +1420,7 @@ enable_tdi_sys
 enable_traffic
 enable_twain_32
 enable_ucrtbase
+enable_uiautomationcore
 enable_unicows
 enable_updspapi
 enable_url
@@ -18345,6 +18346,7 @@ wine_fn_config_test dlls/twain_32/tests twain_32_test
 wine_fn_config_dll typelib.dll16 enable_win16
 wine_fn_config_dll ucrtbase enable_ucrtbase implib
 wine_fn_config_test dlls/ucrtbase/tests ucrtbase_test
+wine_fn_config_dll uiautomationcore enable_uiautomationcore
 wine_fn_config_dll unicows enable_unicows implib
 wine_fn_config_dll updspapi enable_updspapi
 wine_fn_config_dll url enable_url implib
