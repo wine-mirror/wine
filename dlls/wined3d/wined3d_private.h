@@ -2202,9 +2202,11 @@ struct wined3d_gl_limits
     UINT textures;
     UINT texture_coords;
     unsigned int uniform_blocks[WINED3D_SHADER_TYPE_COUNT];
-    UINT fragment_samplers;
-    UINT vertex_samplers;
-    UINT combined_samplers;
+    unsigned int fragment_samplers;
+    unsigned int vertex_samplers;
+    unsigned int compute_samplers;
+    unsigned int graphics_samplers;
+    unsigned int combined_samplers;
     UINT general_combiners;
     UINT user_clip_distances;
     UINT texture_size;

@@ -3352,7 +3352,9 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.uniform_blocks[i] = 0;
     gl_info->limits.fragment_samplers = 1;
     gl_info->limits.vertex_samplers = 0;
+    gl_info->limits.compute_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
+    gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
     gl_info->limits.vertex_attribs = 16;
     gl_info->limits.texture_buffer_offset_alignment = 1;
     gl_info->limits.glsl_vs_float_constants = 0;
@@ -3471,6 +3473,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         TRACE("Max vertex samplers: %u.\n", gl_info->limits.vertex_samplers);
         TRACE("Max combined samplers: %u.\n", gl_info->limits.combined_samplers);
         TRACE("Max vertex attributes: %u.\n", gl_info->limits.vertex_attribs);
+        gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
     }
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
@@ -3570,6 +3573,13 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_COMPUTE] = min(gl_max, WINED3D_MAX_CBS);
         TRACE("Max compute uniform blocks: %u (%d).\n",
                 gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_COMPUTE], gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS, &gl_max);
+        gl_info->limits.compute_samplers = gl_max;
+        TRACE("Max compute samplers: %u.\n", gl_info->limits.compute_samplers);
+        /* A majority of OpenGL implementations allow to statically partition
+         * the set of texture bindings into six separate sets. */
+        if (gl_info->limits.combined_samplers >= MAX_COMBINED_SAMPLERS + gl_info->limits.compute_samplers)
+            gl_info->limits.graphics_samplers -= gl_info->limits.compute_samplers;
     }
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
     {

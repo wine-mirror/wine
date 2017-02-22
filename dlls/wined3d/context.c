@@ -1713,7 +1713,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (s = 0; s < MAX_COMBINED_SAMPLERS; ++s)
     {
-        if (s < gl_info->limits.combined_samplers)
+        if (s < gl_info->limits.graphics_samplers)
         {
             ret->tex_unit_map[s] = s;
             ret->rev_tex_unit_map[s] = s;
@@ -2962,7 +2962,7 @@ static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, cons
             state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.resource_info;
     const struct wined3d_shader_resource_info *ps_resource_info = NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
+    int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.graphics_samplers) - 1;
     int i;
 
     /* Note that we only care if a resource is used or not, not the
@@ -3012,7 +3012,7 @@ static void context_update_tex_unit_map(struct wined3d_context *context, const s
      * When the mapping of a stage is changed, sampler and ALL texture stage
      * states have to be reset. */
 
-    if (gl_info->limits.combined_samplers >= MAX_COMBINED_SAMPLERS)
+    if (gl_info->limits.graphics_samplers >= MAX_COMBINED_SAMPLERS)
         return;
 
     if (ps)

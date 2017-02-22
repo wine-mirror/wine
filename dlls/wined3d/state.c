@@ -3604,10 +3604,8 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         return;
     }
 
-    if (mapped_stage >= gl_info->limits.combined_samplers)
-    {
+    if (mapped_stage >= gl_info->limits.graphics_samplers)
         return;
-    }
     context_active_texture(context, gl_info, mapped_stage);
 
     if (state->textures[sampler_idx])

@@ -592,7 +592,7 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
                 continue;
 
             mapped_unit = tex_unit_map[sampler_info[i].base_idx + j];
-            if (mapped_unit == WINED3D_UNMAPPED_STAGE || mapped_unit >= gl_info->limits.combined_samplers)
+            if (mapped_unit == WINED3D_UNMAPPED_STAGE || mapped_unit >= gl_info->limits.graphics_samplers)
             {
                 ERR("Trying to load sampler %s on unsupported unit %u.\n", sampler_name->buffer, mapped_unit);
                 continue;
