@@ -548,23 +548,31 @@ static void check_flushed( void *arg )
     }
 }
 
+static obj_handle_t pipe_end_flush( struct pipe_end *pipe_end, struct async *async, int blocking )
+{
+    obj_handle_t handle = 0;
+
+    if (!fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT )) return 0;
+
+    if (!blocking || (handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 )))
+        set_error( STATUS_PENDING );
+    return handle;
+}
+
 static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int blocking )
 {
     struct pipe_server *server = get_fd_user( fd );
-    obj_handle_t handle = 0;
+    obj_handle_t handle;
 
     if (!server || server->state != ps_connected_server) return 0;
 
     if (!pipe_data_remaining( server )) return 0;
 
-    if (fd_queue_async( server->pipe_end.fd, async, ASYNC_TYPE_WAIT ))
-    {
-        /* there's no unix way to be alerted when a pipe becomes empty, so resort to polling */
-        if (!server->flush_poll)
-            server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
-        if (blocking) handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
-        set_error( STATUS_PENDING );
-    }
+    handle = pipe_end_flush( &server->pipe_end, async, blocking );
+
+    /* there's no unix way to be alerted when a pipe becomes empty, so resort to polling */
+    if (handle && !server->flush_poll)
+        server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
     return handle;
 }
 
