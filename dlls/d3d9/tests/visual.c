@@ -10445,6 +10445,9 @@ static void test_pointsize(void)
     vertex_pointsize = {64.0f, 64.0f, 0.1f, 48.0f},
     vertex_pointsize_scaled = {64.0f, 64.0f, 0.1f, 24.0f},
     vertex_pointsize_zero = {64.0f, 64.0f, 0.1f, 0.0f};
+    /* Writing a texture coordinate from the shader is technically unnecessary, but is required
+     * to make Windows AMD r500 drivers work. Without it, texture coordinates in the pixel
+     * shaders are 0. */
     static const DWORD vshader_code[] =
     {
         0xfffe0101,                                                 /* vs_1_1                 */
@@ -10453,6 +10456,8 @@ static void test_pointsize(void)
         0x00000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
         0x00000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
         0x00000004, 0xc00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad oPos, v0.w, c3, r0 */
+        0x00000001, 0xe00f0000, 0x90e40000,                         /* mov oT0, v0            */
+        0x00000001, 0xe00f0001, 0x90e40000,                         /* mov oT1, v0            */
         0x0000ffff
     };
     static const DWORD vshader_psize_code[] =
@@ -10464,7 +10469,9 @@ static void test_pointsize(void)
         0x00000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
         0x00000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
         0x00000004, 0xc00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad oPos, v0.w, c3, r0 */
-        0x00000001, 0xc00f0002, 0x90000001,                         /* mov oPts, v1.x */
+        0x00000001, 0xc00f0002, 0x90000001,                         /* mov oPts, v1.x         */
+        0x00000001, 0xe00f0000, 0x90e40000,                         /* mov oT0, v0            */
+        0x00000001, 0xe00f0001, 0x90e40000,                         /* mov oT1, v0            */
         0x0000ffff
     };
     static const DWORD pshader_code[] =
@@ -10508,10 +10515,14 @@ static void test_pointsize(void)
         0xfffe0300,                                                 /* vs_3_0                 */
         0x0200001f, 0x80000000, 0x900f0000,                         /* dcl_position v0        */
         0x0200001f, 0x80000000, 0xe00f0000,                         /* dcl_position o0        */
+        0x0200001f, 0x80000005, 0xe00f0001,                         /* dcl_texcoord0 o1       */
+        0x0200001f, 0x80010005, 0xe00f0002,                         /* dcl_texcoord1 o2       */
         0x03000005, 0x800f0000, 0x90000000, 0xa0e40000,             /* mul r0, v0.x, c0       */
         0x04000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
         0x04000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
         0x04000004, 0xe00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad o0, v0.w, c3, r0   */
+        0x02000001, 0xe00f0001, 0x90000000,                         /* mov o1, v0.x           */
+        0x02000001, 0xe00f0002, 0x90000000,                         /* mov o2, v0.x           */
         0x0000ffff
     };
     static const DWORD vshader3_psize_code[] =
@@ -10521,11 +10532,15 @@ static void test_pointsize(void)
         0x0200001f, 0x80000004, 0x90010001,                         /* dcl_psize v1.x         */
         0x0200001f, 0x80000000, 0xe00f0000,                         /* dcl_position o0        */
         0x0200001f, 0x80000004, 0xe00f0001,                         /* dcl_psize o1           */
+        0x0200001f, 0x80000005, 0xe00f0002,                         /* dcl_texcoord0 o2       */
+        0x0200001f, 0x80010005, 0xe00f0003,                         /* dcl_texcoord1 o3       */
         0x03000005, 0x800f0000, 0x90000000, 0xa0e40000,             /* mul r0, v0.x, c0       */
         0x04000004, 0x800f0000, 0x90550000, 0xa0e40001, 0x80e40000, /* mad r0, v0.y, c1, r0   */
         0x04000004, 0x800f0000, 0x90aa0000, 0xa0e40002, 0x80e40000, /* mad r0, v0.z, c2, r0   */
         0x04000004, 0xe00f0000, 0x90ff0000, 0xa0e40003, 0x80e40000, /* mad o0, v0.w, c3, r0   */
         0x02000001, 0xe00f0001, 0x90000001,                         /* mov o1, v1.x           */
+        0x02000001, 0xe00f0002, 0x90000000,                         /* mov o2, v0.x           */
+        0x02000001, 0xe00f0003, 0x90000000,                         /* mov o3, v0.x           */
         0x0000ffff
     };
     static const DWORD pshader3_code[] =
