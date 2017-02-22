@@ -554,13 +554,12 @@ static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int b
 
     if (!pipe_data_remaining( server )) return 0;
 
-    if ((async = fd_queue_async( server->fd, async_get_data( async ), NULL, ASYNC_TYPE_WAIT )))
+    if (fd_queue_async( server->fd, async, ASYNC_TYPE_WAIT ))
     {
         /* there's no unix way to be alerted when a pipe becomes empty, so resort to polling */
         if (!server->flush_poll)
             server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
         if (blocking) handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
-        release_object( async );
         set_error( STATUS_PENDING );
     }
     return handle;
@@ -600,12 +599,11 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct 
         {
         case ps_idle_server:
         case ps_wait_connect:
-            if ((async = fd_queue_async( server->ioctl_fd, async_get_data( async ), NULL, ASYNC_TYPE_WAIT )))
+            if (fd_queue_async( server->ioctl_fd, async, ASYNC_TYPE_WAIT ))
             {
                 if (blocking) wait_handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 );
                 set_server_state( server, ps_wait_open );
                 if (server->pipe->waiters) async_wake_up( server->pipe->waiters, STATUS_SUCCESS );
-                release_object( async );
                 set_error( STATUS_PENDING );
                 return wait_handle;
             }

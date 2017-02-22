@@ -97,7 +97,7 @@ extern int default_fd_signaled( struct object *obj, struct wait_queue_entry *ent
 extern unsigned int default_fd_map_access( struct object *obj, unsigned int access );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
-extern struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct iosb *iosb, int type );
+extern int fd_queue_async( struct fd *fd, struct async *async, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
 extern obj_handle_t no_fd_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
@@ -188,7 +188,6 @@ extern struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key )
 extern void fd_copy_completion( struct fd *src, struct fd *dst );
 extern struct iosb *create_iosb( const void *in_data, data_size_t in_size, data_size_t out_size );
 extern struct iosb *async_get_iosb( struct async *async );
-extern const async_data_t *async_get_data( struct async *async );
 extern void cancel_process_asyncs( struct process *process );
 
 /* access rights that require Unix read permission */

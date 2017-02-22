@@ -200,10 +200,9 @@ static void serial_queue_async( struct fd *fd, struct async *async, int type, in
         break;
     }
 
-    if ((async = fd_queue_async( fd, async_get_data( async ), NULL, type )))
+    if (fd_queue_async( fd, async, type ))
     {
         if (timeout) async_set_timeout( async, timeout * -10000, STATUS_TIMEOUT );
-        release_object( async );
         set_error( STATUS_PENDING );
     }
 }

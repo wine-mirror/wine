@@ -1246,7 +1246,8 @@ DECL_HANDLER(read_directory_changes)
         return;
 
     /* requests don't timeout */
-    if (!(async = fd_queue_async( dir->fd, &req->async, NULL, ASYNC_TYPE_WAIT ))) goto end;
+    if (!(async = create_async( current, &req->async, NULL ))) goto end;
+    if (!fd_queue_async( dir->fd, async, ASYNC_TYPE_WAIT )) goto end;
 
     /* assign it once */
     if (!dir->filter)
@@ -1266,10 +1267,10 @@ DECL_HANDLER(read_directory_changes)
     if (!inotify_adjust_changes( dir ))
         dnotify_adjust_changes( dir );
 
-    release_object( async );
     set_error(STATUS_PENDING);
 
 end:
+    if (async) release_object( async );
     release_object( dir );
 }
 

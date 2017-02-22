@@ -242,7 +242,7 @@ static void irp_call_destroy( struct object *obj )
     if (irp->thread) release_object( irp->thread );
 }
 
-static struct irp_call *create_irp( struct device_file *file, const irp_params_t *params, struct iosb *iosb )
+static struct irp_call *create_irp( struct device_file *file, const irp_params_t *params, struct async *async )
 {
     struct irp_call *irp;
 
@@ -258,12 +258,10 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
         irp->thread   = NULL;
         irp->async    = NULL;
         irp->params   = *params;
+        irp->iosb     = NULL;
 
-        if (iosb)
-        {
-            irp->iosb = (struct iosb *)grab_object( iosb );
-        }
-        else if (!(irp->iosb = create_iosb( NULL, 0, 0 )))
+        if (async) irp->iosb = async_get_iosb( async );
+        if (!irp->iosb && !(irp->iosb = create_iosb( NULL, 0, 0 )))
         {
             release_object( irp );
             irp = NULL;
@@ -471,11 +469,12 @@ static obj_handle_t queue_irp( struct device_file *file, struct irp_call *irp,
 
     if (blocking && !(handle = alloc_handle( current->process, irp, SYNCHRONIZE, 0 ))) return 0;
 
-    if (!(irp->async = fd_queue_async( file->fd, async_get_data( async ), irp->iosb, ASYNC_TYPE_WAIT )))
+    if (!fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT ))
     {
         if (handle) close_handle( current->process, handle );
         return 0;
     }
+    irp->async = (struct async *)grab_object( async );
     add_irp_to_queue( file, irp, current );
     set_error( STATUS_PENDING );
     return handle;
@@ -492,7 +491,6 @@ static obj_handle_t device_file_read( struct fd *fd, struct async *async, int bl
     struct irp_call *irp;
     obj_handle_t handle;
     irp_params_t params;
-    struct iosb *iosb;
 
     memset( &params, 0, sizeof(params) );
     params.read.major = IRP_MJ_READ;
@@ -500,9 +498,7 @@ static obj_handle_t device_file_read( struct fd *fd, struct async *async, int bl
     params.read.pos   = pos;
     params.read.file  = file->user_ptr;
 
-    iosb = async_get_iosb( async );
-    irp = create_irp( file, &params, iosb );
-    release_object( iosb );
+    irp = create_irp( file, &params, async );
     if (!irp) return 0;
 
     handle = queue_irp( file, irp, async, blocking );
@@ -516,7 +512,6 @@ static obj_handle_t device_file_write( struct fd *fd, struct async *async, int b
     struct irp_call *irp;
     obj_handle_t handle;
     irp_params_t params;
-    struct iosb *iosb;
 
     memset( &params, 0, sizeof(params) );
     params.write.major = IRP_MJ_WRITE;
@@ -524,9 +519,7 @@ static obj_handle_t device_file_write( struct fd *fd, struct async *async, int b
     params.write.pos   = pos;
     params.write.file  = file->user_ptr;
 
-    iosb = async_get_iosb( async );
-    irp = create_irp( file, &params, iosb );
-    release_object( iosb );
+    irp = create_irp( file, &params, async );
     if (!irp) return 0;
 
     handle = queue_irp( file, irp, async, blocking );
@@ -560,17 +553,13 @@ static obj_handle_t device_file_ioctl( struct fd *fd, ioctl_code_t code, struct 
     struct irp_call *irp;
     obj_handle_t handle;
     irp_params_t params;
-    struct iosb *iosb;
 
     memset( &params, 0, sizeof(params) );
     params.ioctl.major = IRP_MJ_DEVICE_CONTROL;
     params.ioctl.code  = code;
     params.ioctl.file = file->user_ptr;
 
-    iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() );
-    if (!iosb) return 0;
-    irp = create_irp( file, &params, iosb );
-    release_object(iosb);
+    irp = create_irp( file, &params, async );
     if (!irp) return 0;
 
     handle = queue_irp( file, irp, async, blocking );

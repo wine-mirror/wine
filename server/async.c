@@ -474,11 +474,6 @@ struct iosb *async_get_iosb( struct async *async )
     return async->iosb ? (struct iosb *)grab_object( async->iosb ) : NULL;
 }
 
-const async_data_t *async_get_data( struct async *async )
-{
-    return &async->data;
-}
-
 /* cancels all async I/O */
 DECL_HANDLER(cancel_async)
 {

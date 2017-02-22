@@ -2030,23 +2030,22 @@ void default_poll_event( struct fd *fd, int event )
     else if (!fd->inode) set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
 }
 
-struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct iosb *iosb, int type )
+int fd_queue_async( struct fd *fd, struct async *async, int type )
 {
     struct async_queue *queue;
-    struct async *async;
 
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        if (!fd->read_q && !(fd->read_q = create_async_queue( fd ))) return NULL;
+        if (!fd->read_q && !(fd->read_q = create_async_queue( fd ))) return 0;
         queue = fd->read_q;
         break;
     case ASYNC_TYPE_WRITE:
-        if (!fd->write_q && !(fd->write_q = create_async_queue( fd ))) return NULL;
+        if (!fd->write_q && !(fd->write_q = create_async_queue( fd ))) return 0;
         queue = fd->write_q;
         break;
     case ASYNC_TYPE_WAIT:
-        if (!fd->wait_q && !(fd->wait_q = create_async_queue( fd ))) return NULL;
+        if (!fd->wait_q && !(fd->wait_q = create_async_queue( fd ))) return 0;
         queue = fd->wait_q;
         break;
     default:
@@ -2054,18 +2053,16 @@ struct async *fd_queue_async( struct fd *fd, const async_data_t *data, struct io
         assert(0);
     }
 
-    if ((async = create_async( current, data, iosb )))
+    queue_async( queue, async );
+
+    if (type != ASYNC_TYPE_WAIT)
     {
-        queue_async( queue, async );
-        if (type != ASYNC_TYPE_WAIT)
-        {
-            if (!fd->inode)
-                set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
-            else  /* regular files are always ready for read and write */
-                async_wake_up( queue, STATUS_ALERTED );
-        }
+        if (!fd->inode)
+            set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+        else  /* regular files are always ready for read and write */
+            async_wake_up( queue, STATUS_ALERTED );
     }
-    return async;
+    return 1;
 }
 
 void fd_async_wake_up( struct fd *fd, int type, unsigned int status )
@@ -2098,11 +2095,7 @@ void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count 
 
 void default_fd_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
-    if ((async = fd_queue_async( fd, async_get_data( async ), NULL, type )))
-    {
-        release_object( async );
-        set_error( STATUS_PENDING );
-    }
+    if (fd_queue_async( fd, async, type )) set_error( STATUS_PENDING );
 }
 
 /* default reselect_async() fd routine */
