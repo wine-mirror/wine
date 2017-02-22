@@ -16,9 +16,9 @@
 @ stdcall ExecuteCabA(ptr ptr ptr)
 @ stdcall ExecuteCabW(ptr ptr ptr)
 @ stdcall ExecuteCab(ptr ptr ptr) ExecuteCabA
-@ stdcall ExtractFilesA(str str long ptr ptr long)
-@ stdcall ExtractFilesW(wstr wstr long ptr ptr long)
-@ stdcall ExtractFiles(str str long ptr ptr long) ExtractFilesA
+@ stdcall ExtractFilesA(str str long str ptr long)
+@ stdcall ExtractFilesW(wstr wstr long wstr ptr long)
+@ stdcall ExtractFiles(str str long str ptr long) ExtractFilesA
 @ stdcall FileSaveMarkNotExistA(str str str)
 @ stdcall FileSaveMarkNotExistW(wstr wstr wstr)
 @ stdcall FileSaveMarkNotExist(str str str) FileSaveMarkNotExistA
