@@ -806,8 +806,6 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
 void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)
 {
-    DWORD active_sampler;
-
     /* We don't need a specific texture unit, but after binding the texture
      * the current unit is dirty. Read the unit back instead of switching to
      * 0, this avoids messing around with the state manager's GL states. The
@@ -817,9 +815,12 @@ void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
      * called from sampler() in state.c. This means we can't touch anything
      * other than whatever happens to be the currently active texture, or we
      * would risk marking already applied sampler states dirty again. */
-    active_sampler = context->rev_tex_unit_map[context->active_texture];
-    if (active_sampler != WINED3D_UNMAPPED_STAGE)
-        context_invalidate_state(context, STATE_SAMPLER(active_sampler));
+    if (context->active_texture < MAX_COMBINED_SAMPLERS)
+    {
+        DWORD active_sampler = context->rev_tex_unit_map[context->active_texture];
+        if (active_sampler != WINED3D_UNMAPPED_STAGE)
+            context_invalidate_state(context, STATE_SAMPLER(active_sampler));
+    }
     /* FIXME: Ideally we'd only do this when touching a binding that's used by
      * a shader. */
     context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
