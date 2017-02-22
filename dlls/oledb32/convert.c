@@ -865,6 +865,30 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         return hr;
     }
 
+    case DBTYPE_BYREF | DBTYPE_STR:
+    {
+        BSTR b;
+        char **d = dst;
+        DBLENGTH length;
+        hr = IDataConvert_DataConvert(iface, src_type, DBTYPE_BSTR, src_len, &length,
+                                      src, &b, sizeof(BSTR), src_status, dst_status,
+                                      precision, scale, flags);
+        if(hr != S_OK) return hr;
+
+        length = WideCharToMultiByte(CP_ACP, 0, b, -1, NULL, 0, NULL, NULL);
+        *dst_len = length - 1; /* Doesn't include size for '\0' */
+        *dst_status = DBSTATUS_S_OK;
+        *d = CoTaskMemAlloc(length);
+
+        if(*d)
+            WideCharToMultiByte(CP_ACP, 0, b, -1, *d, length, NULL, NULL);
+        else
+            hr = E_OUTOFMEMORY;
+        SysFreeString(b);
+
+        return hr;
+    }
+
     case DBTYPE_VARIANT:
     {
         VARIANT *v = dst;

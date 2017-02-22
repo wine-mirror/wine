@@ -2103,6 +2103,99 @@ static void test_converttobyrefwstr(void)
     ok(dst_len == 44, "got %ld\n", dst_len);
 }
 
+static void test_converttobyrefstr(void)
+{
+    HRESULT hr;
+    char *dst;
+    BYTE src[20];
+    DBSTATUS dst_status;
+    DBLENGTH dst_len;
+    static const WCHAR ten[] = {'1','0',0};
+    BSTR b;
+    VARIANT v;
+
+    VariantInit(&v);
+
+    hr = IDataConvert_DataConvert(convert, DBTYPE_EMPTY, DBTYPE_STR | DBTYPE_BYREF, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 0, "got %ld\n", dst_len);
+    ok(dst[0] == 0, "got %04x\n", dst[0]);
+    CoTaskMemFree(dst);
+
+    dst = (void*)0x12345678;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_STR | DBTYPE_BYREF, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
+    ok(dst_len == 0x1234, "got %ld\n", dst_len);
+    ok(dst == (void*)0x12345678, "got %p\n", dst);
+
+    *(short *)src = 4321;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR | DBTYPE_BYREF, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 4, "got %ld\n", dst_len);
+    ok(!lstrcmpA(dst, "4321"), "got %s\n", dst);
+    CoTaskMemFree(dst);
+
+    *(short *)src = 4321;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_I2, DBTYPE_STR | DBTYPE_BYREF, 0, &dst_len, src, &dst, 0, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 4, "got %ld\n", dst_len);
+    ok(!lstrcmpA(dst, "4321"), "got %s\n", dst);
+    CoTaskMemFree(dst);
+
+    b = SysAllocString(ten);
+    *(BSTR *)src = b;
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_STR | DBTYPE_BYREF, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 2, "got %ld\n", dst_len);
+    ok(!lstrcmpA("10", dst), "got %s\n", dst);
+    CoTaskMemFree(dst);
+    SysFreeString(b);
+
+    memcpy(src, ten, sizeof(ten));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_STR | DBTYPE_BYREF, 2, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 1, "got %ld\n", dst_len);
+    ok(dst[0] == '1', "got %02x\n", dst[0]);
+    ok(dst[1] == 0, "got %02x\n", dst[1]);
+    CoTaskMemFree(dst);
+
+    memcpy(src, ten, sizeof(ten));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_STR | DBTYPE_BYREF, 4, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 2, "got %ld\n", dst_len);
+    ok(!lstrcmpA("10", dst), "got %s\n", dst);
+    CoTaskMemFree(dst);
+
+    memcpy(src, ten, sizeof(ten));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_WSTR, DBTYPE_STR | DBTYPE_BYREF, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, DBDATACONVERT_LENGTHFROMNTS);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 2, "got %ld\n", dst_len);
+    ok(!lstrcmpA("10", dst), "got %s\n", dst);
+    CoTaskMemFree(dst);
+
+    dst_len = 44;
+    V_VT(&v) = VT_NULL;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_STR | DBTYPE_BYREF, 0, &dst_len, &v, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
+    ok(dst_len == 44, "got %ld\n", dst_len);
+}
+
 static void test_converttoguid(void)
 {
     HRESULT hr;
@@ -3116,6 +3209,7 @@ START_TEST(convert)
     test_converttobstr();
     test_converttowstr();
     test_converttobyrefwstr();
+    test_converttobyrefstr();
     test_converttoguid();
     test_converttoui1();
     test_converttoui4();
