@@ -1828,11 +1828,11 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->d3d_info = d3d_info;
     ret->state_table = device->StateTable;
 
-    /* Mark all states dirty to force a proper initialization of the states
-     * on the first use of the context. */
+    /* Mark all states dirty to force a proper initialization of the states on
+     * the first use of the context. Compute states do not need initialization. */
     for (state = 0; state <= STATE_HIGHEST; ++state)
     {
-        if (ret->state_table[state].representative)
+        if (ret->state_table[state].representative && !STATE_IS_COMPUTE(state))
             context_invalidate_state(ret, state);
     }
 
