@@ -2236,6 +2236,8 @@ struct wined3d_gl_limits
     UINT arb_ps_temps;
 };
 
+void wined3d_gl_limits_get_texture_unit_range(const struct wined3d_gl_limits *gl_limits,
+        enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count) DECLSPEC_HIDDEN;
 void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *gl_limits,
         enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count) DECLSPEC_HIDDEN;
 
@@ -2568,7 +2570,7 @@ struct wined3d_state
     struct wined3d_rasterizer_state *rasterizer_state;
 };
 
-#define WINED3D_UNMAPPED_STAGE ~0U
+#define WINED3D_UNMAPPED_STAGE ~0u
 
 /* Multithreaded flag. Removed from the public header to signal that
  * wined3d_device_create() ignores it. */

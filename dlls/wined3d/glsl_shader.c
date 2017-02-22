@@ -560,13 +560,40 @@ void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint pro
 
 /* Context activation is done by the caller. */
 static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
+        struct shader_glsl_priv *priv, const char *prefix, unsigned int base_idx,
+        unsigned int count, const DWORD *tex_unit_map, GLuint program_id)
+{
+    struct wined3d_string_buffer *sampler_name = string_buffer_get(&priv->string_buffers);
+    unsigned int mapped_unit, i;
+    GLint name_loc;
+
+    for (i = 0; i < count; ++i)
+    {
+        string_buffer_sprintf(sampler_name, "%s_sampler%u", prefix, i);
+        name_loc = GL_EXTCALL(glGetUniformLocation(program_id, sampler_name->buffer));
+        if (name_loc == -1)
+            continue;
+
+        mapped_unit = tex_unit_map ? tex_unit_map[base_idx + i] : base_idx + i;
+        if (mapped_unit == WINED3D_UNMAPPED_STAGE || mapped_unit >= gl_info->limits.combined_samplers)
+        {
+            ERR("Trying to load sampler %s on unsupported unit %u.\n", sampler_name->buffer, mapped_unit);
+            continue;
+        }
+
+        TRACE("Loading sampler %s on unit %u.\n", sampler_name->buffer, mapped_unit);
+        GL_EXTCALL(glUniform1i(name_loc, mapped_unit));
+    }
+    checkGLcall("Load sampler bindings");
+    string_buffer_release(&priv->string_buffers, sampler_name);
+}
+
+/* Context activation is done by the caller. */
+static void shader_glsl_load_graphics_samplers(const struct wined3d_gl_info *gl_info,
         struct shader_glsl_priv *priv, const DWORD *tex_unit_map, GLuint program_id)
 {
-    unsigned int mapped_unit;
-    struct wined3d_string_buffer *sampler_name = string_buffer_get(&priv->string_buffers);
     const char *prefix;
-    unsigned int i, j;
-    GLint name_loc;
+    unsigned int i;
 
     static const struct
     {
@@ -583,27 +610,9 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
     for (i = 0; i < ARRAY_SIZE(sampler_info); ++i)
     {
         prefix = shader_glsl_get_prefix(sampler_info[i].type);
-
-        for (j = 0; j < sampler_info[i].count; ++j)
-        {
-            string_buffer_sprintf(sampler_name, "%s_sampler%u", prefix, j);
-            name_loc = GL_EXTCALL(glGetUniformLocation(program_id, sampler_name->buffer));
-            if (name_loc == -1)
-                continue;
-
-            mapped_unit = tex_unit_map[sampler_info[i].base_idx + j];
-            if (mapped_unit == WINED3D_UNMAPPED_STAGE || mapped_unit >= gl_info->limits.graphics_samplers)
-            {
-                ERR("Trying to load sampler %s on unsupported unit %u.\n", sampler_name->buffer, mapped_unit);
-                continue;
-            }
-
-            TRACE("Loading sampler %s on unit %u.\n", sampler_name->buffer, mapped_unit);
-            GL_EXTCALL(glUniform1i(name_loc, mapped_unit));
-        }
+        shader_glsl_load_samplers(gl_info, priv, prefix,
+                sampler_info[i].base_idx, sampler_info[i].count, tex_unit_map, program_id);
     }
-    checkGLcall("Load sampler bindings");
-    string_buffer_release(&priv->string_buffers, sampler_name);
 }
 
 static void shader_glsl_load_icb(const struct wined3d_gl_info *gl_info, struct shader_glsl_priv *priv,
@@ -8293,6 +8302,7 @@ static void set_glsl_compute_shader_program(const struct wined3d_context *contex
         const struct wined3d_state *state, struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    unsigned int base_sampler_idx, sampler_count;
     struct glsl_shader_prog_link *entry = NULL;
     struct wined3d_shader *shader;
     struct glsl_program_key key;
@@ -8351,6 +8361,10 @@ static void set_glsl_compute_shader_program(const struct wined3d_context *contex
     shader_glsl_init_uniform_block_bindings(gl_info, priv, program_id, &shader->reg_maps);
     shader_glsl_load_icb(gl_info, priv, program_id, &shader->reg_maps);
     shader_glsl_load_images(gl_info, priv, program_id, &shader->reg_maps);
+    wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, WINED3D_SHADER_TYPE_COMPUTE,
+            &base_sampler_idx, &sampler_count);
+    shader_glsl_load_samplers(gl_info, priv, shader_glsl_get_prefix(WINED3D_SHADER_TYPE_COMPUTE),
+            base_sampler_idx, sampler_count, NULL, program_id);
 
     entry->constant_update_mask = 0;
 }
@@ -8629,7 +8643,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
     /* Texture unit mapping is set up to be the same each time the shader
      * program is used so we can hardcode the sampler uniform values. */
-    shader_glsl_load_samplers(gl_info, priv, context->tex_unit_map, program_id);
+    shader_glsl_load_graphics_samplers(gl_info, priv, context->tex_unit_map, program_id);
 
     entry->constant_update_mask = 0;
     if (vshader)
