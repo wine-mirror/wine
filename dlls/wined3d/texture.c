@@ -823,7 +823,8 @@ void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
     }
     /* FIXME: Ideally we'd only do this when touching a binding that's used by
      * a shader. */
-    context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
+    context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
+    context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
     wined3d_texture_bind(texture, context, srgb);
 }

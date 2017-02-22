@@ -1065,7 +1065,9 @@ static void wined3d_cs_exec_set_shader_resource_view(struct wined3d_cs *cs, cons
         InterlockedDecrement(&prev->resource->bind_count);
 
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
-        device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
+        device_invalidate_state(cs->device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
+    else
+        device_invalidate_state(cs->device, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
 }
 
 void wined3d_cs_emit_set_shader_resource_view(struct wined3d_cs *cs, enum wined3d_shader_type type,
@@ -1117,7 +1119,10 @@ static void wined3d_cs_exec_set_sampler(struct wined3d_cs *cs, const void *data)
     const struct wined3d_cs_set_sampler *op = data;
 
     cs->state.sampler[op->type][op->sampler_idx] = op->sampler;
-    device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
+    if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
+        device_invalidate_state(cs->device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
+    else
+        device_invalidate_state(cs->device, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
 }
 
 void wined3d_cs_emit_set_sampler(struct wined3d_cs *cs, enum wined3d_shader_type type,
@@ -1141,7 +1146,9 @@ static void wined3d_cs_exec_set_shader(struct wined3d_cs *cs, const void *data)
     cs->state.shader[op->type] = op->shader;
     device_invalidate_state(cs->device, STATE_SHADER(op->type));
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
-        device_invalidate_state(cs->device, STATE_SHADER_RESOURCE_BINDING);
+        device_invalidate_state(cs->device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
+    else
+        device_invalidate_state(cs->device, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
 }
 
 void wined3d_cs_emit_set_shader(struct wined3d_cs *cs, enum wined3d_shader_type type, struct wined3d_shader *shader)

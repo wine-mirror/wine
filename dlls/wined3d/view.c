@@ -123,7 +123,8 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
         gl_info->gl_ops.gl.p_glTexParameteri(view->target, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
         checkGLcall("Initialize stencil view");
 
-        context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
+        context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
+        context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
     }
 
     context_release(context);
@@ -172,7 +173,8 @@ static void create_buffer_texture(struct wined3d_gl_view *view,
     }
     checkGLcall("Create buffer texture");
 
-    context_invalidate_state(context, STATE_SHADER_RESOURCE_BINDING);
+    context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
+    context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
     context_release(context);
 }

@@ -4983,6 +4983,13 @@ static void state_shader_resource_binding(struct wined3d_context *context,
     context->update_shader_resource_bindings = 1;
 }
 
+static void state_cs_resource_binding(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    context->update_compute_shader_resource_bindings = 1;
+}
+
 static void state_uav_binding(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -5012,9 +5019,10 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
     { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE), { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE), state_cb,           }, ARB_UNIFORM_BUFFER_OBJECT       },
     { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE), { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE), state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SHADER_RESOURCE_BINDING,                      { STATE_SHADER_RESOURCE_BINDING,                      state_shader_resource_binding}, WINED3D_GL_EXT_NONE    },
+    { STATE_GRAPHICS_SHADER_RESOURCE_BINDING,             { STATE_GRAPHICS_SHADER_RESOURCE_BINDING,             state_shader_resource_binding}, WINED3D_GL_EXT_NONE    },
     { STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING,       { STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING,       state_uav_binding   }, ARB_SHADER_IMAGE_LOAD_STORE     },
     { STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING,       { STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING,       state_uav_warn      }, WINED3D_GL_EXT_NONE             },
+    { STATE_COMPUTE_SHADER_RESOURCE_BINDING,              { STATE_COMPUTE_SHADER_RESOURCE_BINDING,              state_cs_resource_binding}, WINED3D_GL_EXT_NONE        },
     { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        state_cs_uav_binding}, ARB_SHADER_IMAGE_LOAD_STORE     },
     { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        state_uav_warn      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
@@ -5994,7 +6002,10 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),
         STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),
         STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE),
-        STATE_SHADER_RESOURCE_BINDING,
+        STATE_COMPUTE_SHADER_RESOURCE_BINDING,
+        STATE_GRAPHICS_SHADER_RESOURCE_BINDING,
+        STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,
+        STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING,
         STATE_VIEWPORT,
         STATE_LIGHT_TYPE,
         STATE_SCISSORRECT,

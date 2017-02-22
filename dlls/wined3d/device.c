@@ -2745,6 +2745,14 @@ void CDECL wined3d_device_set_cs_cb(struct wined3d_device *device, unsigned int 
     wined3d_device_set_constant_buffer(device, WINED3D_SHADER_TYPE_COMPUTE, idx, buffer);
 }
 
+void CDECL wined3d_device_set_cs_resource_view(struct wined3d_device *device,
+        unsigned int idx, struct wined3d_shader_resource_view *view)
+{
+    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
+
+    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_COMPUTE, idx, view);
+}
+
 static void wined3d_device_set_pipeline_unordered_access_view(struct wined3d_device *device,
         enum wined3d_pipeline pipeline, unsigned int idx, struct wined3d_unordered_access_view *uav)
 {
