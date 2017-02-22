@@ -52,7 +52,7 @@
 @ stub TransformPattern_Resize
 @ stub TransformPattern_Rotate
 @ stub UiaAddEvent
-@ stub UiaClientsAreListening
+@ stdcall UiaClientsAreListening()
 @ stub UiaEventAddWindow
 @ stub UiaEventRemoveWindow
 @ stub UiaFind

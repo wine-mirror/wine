@@ -36,3 +36,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, void *lpv)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *          UiaClientsAreListening (uiautomationcore.@)
+ */
+BOOL WINAPI UiaClientsAreListening(void)
+{
+    FIXME("()\n");
+    return FALSE;
+}
