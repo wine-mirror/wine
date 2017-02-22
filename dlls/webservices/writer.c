@@ -233,7 +233,7 @@ static struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap )
     if (!(ret = ws_alloc( heap, sizeof(*ret) ))) return NULL;
     if (!(ret->ptr = ws_alloc( heap, XML_BUFFER_INITIAL_ALLOCATED_SIZE )))
     {
-        ws_free( heap, ret );
+        ws_free( heap, ret, sizeof(*ret) );
         return NULL;
     }
     ret->heap           = heap;
@@ -245,8 +245,8 @@ static struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap )
 static void free_xmlbuf( struct xmlbuf *xmlbuf )
 {
     if (!xmlbuf) return;
-    ws_free( xmlbuf->heap, xmlbuf->ptr );
-    ws_free( xmlbuf->heap, xmlbuf );
+    ws_free( xmlbuf->heap, xmlbuf->ptr, xmlbuf->size_allocated );
+    ws_free( xmlbuf->heap, xmlbuf, sizeof(*xmlbuf) );
 }
 
 /**************************************************************************
@@ -260,7 +260,7 @@ HRESULT WINAPI WsCreateXmlBuffer( WS_HEAP *heap, const WS_XML_BUFFER_PROPERTY *p
     if (!heap || !handle) return E_INVALIDARG;
     if (count) FIXME( "properties not implemented\n" );
 
-    if (!(xmlbuf = alloc_xmlbuf( heap ))) return E_OUTOFMEMORY;
+    if (!(xmlbuf = alloc_xmlbuf( heap ))) return WS_E_QUOTA_EXCEEDED;
 
     *handle = (WS_XML_BUFFER *)xmlbuf;
     return S_OK;
@@ -355,7 +355,7 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
     {
         struct xmlbuf *xmlbuf;
 
-        if (!(xmlbuf = alloc_xmlbuf( writer->output_heap ))) return E_OUTOFMEMORY;
+        if (!(xmlbuf = alloc_xmlbuf( writer->output_heap ))) return WS_E_QUOTA_EXCEEDED;
         set_output_buffer( writer, xmlbuf );
         break;
     }
@@ -414,7 +414,7 @@ static HRESULT write_grow_buffer( struct writer *writer, ULONG size )
         return S_OK;
     }
     new_size = max( buf->size_allocated * 2, writer->write_pos + size );
-    if (!(tmp = ws_realloc( buf->heap, buf->ptr, new_size ))) return E_OUTOFMEMORY;
+    if (!(tmp = ws_realloc( buf->heap, buf->ptr, buf->size_allocated, new_size ))) return WS_E_QUOTA_EXCEEDED;
     writer->write_bufptr = buf->ptr = tmp;
     buf->size_allocated = new_size;
     buf->size = writer->write_pos + size;

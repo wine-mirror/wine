@@ -177,7 +177,7 @@ HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS
     HRESULT hr = WS_E_QUOTA_EXCEEDED;
     WCHAR *p, *q, *decoded = NULL;
     WS_HTTP_URL *url = NULL;
-    ULONG len, port = 0;
+    ULONG len, len_decoded, port = 0;
 
     TRACE( "%s %08x %p %p %p\n", str ? debugstr_wn(str->chars, str->length) : "null", flags,
            heap, ret, error );
@@ -190,12 +190,13 @@ HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS
         FIXME( "unimplemented flags %08x\n", flags );
         return E_NOTIMPL;
     }
-    if (!(decoded = url_decode( str->chars, str->length, heap, &len )) ||
+    if (!(decoded = url_decode( str->chars, str->length, heap, &len_decoded )) ||
         !(url = ws_alloc( heap, sizeof(*url) ))) goto error;
 
     hr = WS_E_INVALID_FORMAT;
 
     p = q = decoded;
+    len = len_decoded;
     while (len && *q != ':') { q++; len--; };
     if (*q != ':') goto error;
     if ((url->url.scheme = scheme_type( p, q - p )) == ~0u) goto error;
@@ -259,8 +260,8 @@ HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS
     return S_OK;
 
 error:
-    if (decoded != str->chars) ws_free( heap, decoded );
-    ws_free( heap, url );
+    if (decoded != str->chars) ws_free( heap, decoded, len_decoded );
+    ws_free( heap, url, sizeof(*url) );
     return hr;
 }
 
@@ -418,7 +419,7 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
                             WS_ERROR *error )
 {
     static const WCHAR fmtW[] = {':','%','u',0};
-    ULONG len = 0, len_scheme, len_enc;
+    ULONG len = 0, len_scheme, len_enc, ret_size;
     const WS_HTTP_URL *url = (const WS_HTTP_URL *)base;
     const WCHAR *scheme;
     WCHAR *str, *p, *q;
@@ -454,7 +455,8 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
         return hr;
     len += len_enc + 1; /* '#' */
 
-    if (!(str = ws_alloc( heap, len * sizeof(WCHAR) ))) return WS_E_QUOTA_EXCEEDED;
+    ret_size = len * sizeof(WCHAR);
+    if (!(str = ws_alloc( heap, ret_size ))) return WS_E_QUOTA_EXCEEDED;
 
     memcpy( str, scheme, len_scheme * sizeof(WCHAR) );
     p = str + len_scheme;
@@ -520,6 +522,6 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
     return S_OK;
 
 error:
-    ws_free( heap, str );
+    ws_free( heap, str, ret_size );
     return hr;
 }

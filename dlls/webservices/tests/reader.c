@@ -1762,15 +1762,15 @@ static void test_WsAlloc(void)
     hr = WsCreateHeap( 256, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    ptr = NULL;
+    ptr = (void *)0xdeadbeef;
     hr = WsAlloc( NULL, 16, &ptr, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
-    ok( ptr == NULL, "ptr set\n" );
+    ok( ptr == (void *)0xdeadbeef, "ptr set\n" );
 
-    ptr = NULL;
+    ptr = (void *)0xdeadbeef;
     hr = WsAlloc( heap, 512, &ptr, NULL );
-    todo_wine ok( hr == WS_E_QUOTA_EXCEEDED, "got %08x\n", hr );
-    todo_wine ok( ptr == NULL, "ptr not set\n" );
+    ok( hr == WS_E_QUOTA_EXCEEDED, "got %08x\n", hr );
+    ok( ptr == (void *)0xdeadbeef, "ptr set\n" );
 
     ptr = NULL;
     hr = WsAlloc( heap, 16, &ptr, NULL );

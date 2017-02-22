@@ -170,6 +170,8 @@ static const struct prop_desc heap_props[] =
 struct heap
 {
     HANDLE      handle;
+    SIZE_T      max_size;
+    SIZE_T      allocated;
     ULONG       prop_count;
     struct prop prop[sizeof(heap_props)/sizeof(heap_props[0])];
 };
@@ -178,45 +180,75 @@ static BOOL ensure_heap( struct heap *heap )
 {
     SIZE_T size;
     if (heap->handle) return TRUE;
-    if (prop_get( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_MAX_SIZE, &size, sizeof(size) ) != S_OK)
-        return FALSE;
-    if (!(heap->handle = HeapCreate( 0, 0, size ))) return FALSE;
+    prop_get( heap->prop, heap->prop_count, WS_HEAP_PROPERTY_MAX_SIZE, &size, sizeof(size) );
+    if (!(heap->handle = HeapCreate( 0, 0, 0 ))) return FALSE;
+    heap->max_size  = size;
+    heap->allocated = 0;
     return TRUE;
 }
 
 void *ws_alloc( WS_HEAP *handle, SIZE_T size )
 {
+    void *ret;
     struct heap *heap = (struct heap *)handle;
-    if (!ensure_heap( heap )) return NULL;
-    return HeapAlloc( heap->handle, 0, size );
+    if (!ensure_heap( heap ) || size > heap->max_size - heap->allocated) return NULL;
+    if ((ret = HeapAlloc( heap->handle, 0, size ))) heap->allocated += size;
+    return ret;
 }
 
 static void *ws_alloc_zero( WS_HEAP *handle, SIZE_T size )
 {
+    void *ret;
     struct heap *heap = (struct heap *)handle;
-    if (!ensure_heap( heap )) return NULL;
-    return HeapAlloc( heap->handle, HEAP_ZERO_MEMORY, size );
+    if (!ensure_heap( heap ) || size > heap->max_size - heap->allocated) return NULL;
+    if ((ret = HeapAlloc( heap->handle, HEAP_ZERO_MEMORY, size ))) heap->allocated += size;
+    return ret;
 }
 
-void *ws_realloc( WS_HEAP *handle, void *ptr, SIZE_T size )
+void *ws_realloc( WS_HEAP *handle, void *ptr, SIZE_T old_size, SIZE_T new_size )
 {
+    void *ret;
     struct heap *heap = (struct heap *)handle;
     if (!ensure_heap( heap )) return NULL;
-    return HeapReAlloc( heap->handle, 0, ptr, size );
+    if (new_size >= old_size)
+    {
+        SIZE_T size = new_size - old_size;
+        if (size > heap->max_size - heap->allocated) return NULL;
+        if ((ret = HeapReAlloc( heap->handle, 0, ptr, new_size ))) heap->allocated += size;
+    }
+    else
+    {
+        SIZE_T size = old_size - new_size;
+        if ((ret = HeapReAlloc( heap->handle, 0, ptr, new_size ))) heap->allocated -= size;
+    }
+    return ret;
 }
 
-static void *ws_realloc_zero( WS_HEAP *handle, void *ptr, SIZE_T size )
+static void *ws_realloc_zero( WS_HEAP *handle, void *ptr, SIZE_T old_size, SIZE_T new_size )
 {
+    void *ret;
     struct heap *heap = (struct heap *)handle;
     if (!ensure_heap( heap )) return NULL;
-    return HeapReAlloc( heap->handle, HEAP_ZERO_MEMORY, ptr, size );
+    if (new_size >= old_size)
+    {
+        SIZE_T size = new_size - old_size;
+        if (size > heap->max_size - heap->allocated) return NULL;
+        if ((ret = HeapReAlloc( heap->handle, HEAP_ZERO_MEMORY, ptr, new_size ))) heap->allocated += size;
+    }
+    else
+    {
+        SIZE_T size = old_size - new_size;
+        if ((ret = HeapReAlloc( heap->handle, HEAP_ZERO_MEMORY, ptr, new_size ))) heap->allocated -= size;
+    }
+    return ret;
 }
 
-void ws_free( WS_HEAP *handle, void *ptr )
+void ws_free( WS_HEAP *handle, void *ptr, SIZE_T size )
 {
     struct heap *heap = (struct heap *)handle;
     if (!heap->handle) return;
     HeapFree( heap->handle, 0, ptr );
+    heap->allocated -= size;
 }
 
 /**************************************************************************
@@ -230,8 +262,7 @@ HRESULT WINAPI WsAlloc( WS_HEAP *handle, SIZE_T size, void **ptr, WS_ERROR *erro
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!handle || !ptr) return E_INVALIDARG;
-
-    if (!(mem = ws_alloc( handle, size ))) return E_OUTOFMEMORY;
+    if (!(mem = ws_alloc( handle, size ))) return WS_E_QUOTA_EXCEEDED;
     *ptr = mem;
     return S_OK;
 }
@@ -296,7 +327,8 @@ HRESULT WINAPI WsResetHeap( WS_HEAP *handle, WS_ERROR *error )
     if (!heap) return E_INVALIDARG;
 
     HeapDestroy( heap->handle );
-    heap->handle = NULL;
+    heap->handle   = NULL;
+    heap->max_size = heap->allocated = 0;
     return S_OK;
 }
 
@@ -3858,7 +3890,8 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
     {
         if (nb_items >= nb_allocated)
         {
-            if (!(buf = ws_realloc_zero( heap, buf, nb_allocated * 2 * item_size )))
+            SIZE_T old_size = nb_allocated * item_size, new_size = old_size * 2;
+            if (!(buf = ws_realloc_zero( heap, buf, old_size, new_size )))
                 return WS_E_QUOTA_EXCEEDED;
             nb_allocated *= 2;
         }
@@ -3867,7 +3900,7 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
         if (hr == WS_E_INVALID_FORMAT) break;
         if (hr != S_OK)
         {
-            ws_free( heap, buf );
+            ws_free( heap, buf, nb_allocated * item_size );
             return hr;
         }
         offset += item_size;
@@ -3880,7 +3913,7 @@ static HRESULT read_type_repeating_element( struct reader *reader, const WS_FIEL
     {
         TRACE( "number of items %u out of range (%u-%u)\n", nb_items, desc->itemRange->minItemCount,
                desc->itemRange->maxItemCount );
-        ws_free( heap, buf );
+        ws_free( heap, buf, nb_allocated * item_size );
         return WS_E_INVALID_FORMAT;
     }
 
@@ -4035,7 +4068,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     case WS_READ_REQUIRED_POINTER:
         if (hr != S_OK)
         {
-            ws_free( heap, buf );
+            ws_free( heap, buf, desc->size );
             return hr;
         }
         *(char **)ret = buf;
@@ -4045,7 +4078,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     case WS_READ_NILLABLE_POINTER:
         if (is_nil_value( buf, desc->size ))
         {
-            ws_free( heap, buf );
+            ws_free( heap, buf, desc->size );
             buf = NULL;
         }
         *(char **)ret = buf;
