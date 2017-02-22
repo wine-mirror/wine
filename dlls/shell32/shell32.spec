@@ -57,7 +57,7 @@
   59 stdcall -ordinal RestartDialog(long wstr long)
   60 stdcall -noname ExitWindowsDialog(long)
   61 stdcall -noname RunFileDlg(long long str str str long) RunFileDlgAW
-  62 stdcall -ordinal PickIconDlg(long long long ptr)
+  62 stdcall -ordinal PickIconDlg(long ptr long ptr)
   63 stdcall -ordinal GetFileNameFromBrowse(long ptr long str str str str) GetFileNameFromBrowseAW
   64 stdcall -ordinal DriveType(long)
   65 stdcall -noname InvalidateDriveType(long)
@@ -65,7 +65,7 @@
   67 stdcall -ordinal Shell_MergeMenus(long long long long long long)
   68 stdcall -ordinal SHGetSetSettings(ptr long long)
   69 stub -noname SHGetNetResource
-  70 stdcall -noname SHCreateDefClassObject(long long long ptr long)
+  70 stdcall -noname SHCreateDefClassObject(ptr ptr long ptr ptr)
   71 stdcall -ordinal Shell_GetImageLists(ptr ptr)
   72 stdcall -ordinal Shell_GetCachedImageIndex(str long long) Shell_GetCachedImageIndexAW
   73 stdcall -ordinal SHShellFolderView_Message(long long long)
@@ -118,7 +118,7 @@
  123 stdcall -noname SHFreeUnusedLibraries()
  124 stdcall -noname FileMenu_AppendFilesForPidl(long ptr long)
  125 stdcall -noname FileMenu_AddFilesForPidl(long long long ptr long long ptr)
- 126 stdcall -noname SHOutOfMemoryMessageBox(long long long)
+ 126 stdcall -noname SHOutOfMemoryMessageBox(long str long)
  127 stdcall -noname SHWinHelp(long long long long)
  128 stdcall -noname SHDllGetClassObject(ptr ptr ptr) DllGetClassObject
  129 stdcall -ordinal DAD_AutoScroll(long ptr ptr)
@@ -155,11 +155,11 @@
  163 stdcall -noname StrToOleStr(wstr str) StrToOleStrAW
  164 stdcall -ordinal Win32DeleteFile(str) Win32DeleteFileAW
  165 stdcall -ordinal SHCreateDirectory(long ptr)
- 166 stdcall -noname CallCPLEntry16(long long long long long long)
- 167 stdcall -ordinal SHAddFromPropSheetExtArray(long long long)
+ 166 stdcall -noname CallCPLEntry16(long ptr long long long long)
+ 167 stdcall -ordinal SHAddFromPropSheetExtArray(long ptr long)
  168 stdcall -ordinal SHCreatePropSheetExtArray(long wstr long)
  169 stdcall -ordinal SHDestroyPropSheetExtArray(long)
- 170 stdcall -ordinal SHReplaceFromPropSheetExtArray(long long long long)
+ 170 stdcall -ordinal SHReplaceFromPropSheetExtArray(long long ptr long)
  171 stdcall -ordinal PathCleanupSpec(ptr ptr)
  172 stdcall -noname SHCreateLinks(long str ptr long ptr)
  173 stdcall -ordinal SHValidateUNC(long wstr long)
@@ -173,7 +173,7 @@
  181 stdcall -noname RegisterShellHook(long long)
  182 varargs -ordinal ShellMessageBoxW(long long wstr wstr long)
  183 varargs -ordinal ShellMessageBoxA(long long str str long)
- 184 stdcall -noname ArrangeWindows(long long ptr long long)
+ 184 stdcall -noname ArrangeWindows(long long ptr long ptr)
  185 stub SHHandleDiskFull
  186 stdcall -noname ILGetDisplayNameEx(ptr ptr ptr long)
  187 stub ILGetPseudoNameW
@@ -300,7 +300,7 @@
 @ stdcall ExtractAssociatedIconExW(long wstr ptr ptr)
 @ stdcall ExtractAssociatedIconW(long wstr ptr)
 @ stdcall ExtractIconA(long str long)
-@ stdcall ExtractIconEx(ptr long ptr ptr long) ExtractIconExA
+@ stdcall ExtractIconEx(str long ptr ptr long) ExtractIconExA
 @ stdcall ExtractIconExA(str long ptr ptr long)
 @ stdcall ExtractIconExW(wstr long ptr ptr long)
 @ stub ExtractIconResInfoA
@@ -365,9 +365,9 @@
 @ stdcall SHGetDiskFreeSpaceA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
 @ stdcall SHGetDiskFreeSpaceExA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
 @ stdcall SHGetDiskFreeSpaceExW(wstr ptr ptr ptr) kernel32.GetDiskFreeSpaceExW
-@ stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfoA
-@ stdcall SHGetFileInfoA(ptr long ptr long long)
-@ stdcall SHGetFileInfoW(ptr long ptr long long)
+@ stdcall SHGetFileInfo(str long ptr long long) SHGetFileInfoA
+@ stdcall SHGetFileInfoA(str long ptr long long)
+@ stdcall SHGetFileInfoW(wstr long ptr long long)
 @ stdcall SHGetFolderLocation(long long long long ptr)
 @ stdcall SHGetFolderPathA(long long long long ptr)
 @ stdcall SHGetFolderPathEx(ptr long ptr ptr long)
@@ -404,7 +404,7 @@
 @ stub SHInvokePrinterCommandA
 @ stub SHInvokePrinterCommandW
 @ stdcall SHIsFileAvailableOffline(wstr ptr)
-@ stdcall SHLoadInProc(long)
+@ stdcall SHLoadInProc(ptr)
 @ stdcall SHLoadNonloadedIconOverlayIdentifiers()
 @ stdcall SHOpenFolderAndSelectItems(ptr long ptr long)
 @ stdcall SHParseDisplayName(wstr ptr ptr long ptr)

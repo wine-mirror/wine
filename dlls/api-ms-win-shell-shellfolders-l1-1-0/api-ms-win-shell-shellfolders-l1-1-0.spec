@@ -2,7 +2,7 @@
 @ stdcall PathIsExe(ptr) shell32.PathIsExe
 @ stdcall SHCreateDirectoryExW(long wstr ptr) shell32.SHCreateDirectoryExW
 @ stdcall SHGetDesktopFolder(ptr) shell32.SHGetDesktopFolder
-@ stdcall SHGetFileInfoW(ptr long ptr long long) shell32.SHGetFileInfoW
+@ stdcall SHGetFileInfoW(wstr long ptr long long) shell32.SHGetFileInfoW
 @ stdcall SHGetFolderLocation(long long long long ptr) shell32.SHGetFolderLocation
 @ stdcall SHGetFolderPathA(long long long long ptr) shell32.SHGetFolderPathA
 @ stdcall SHGetFolderPathAndSubDirW(long long long long wstr ptr) shell32.SHGetFolderPathAndSubDirW
