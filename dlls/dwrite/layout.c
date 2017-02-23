@@ -1,7 +1,7 @@
 /*
  *    Text format and layout
  *
- * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1662,27 +1662,29 @@ static BOOL is_same_u_splitting(struct layout_underline_splitting_params *left,
 static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct layout_effective_run *first,
     struct layout_effective_run *last)
 {
+    FLOAT thickness, offset, runheight;
     struct layout_effective_run *cur;
     DWRITE_FONT_METRICS metrics;
-    FLOAT thickness, offset;
 
     if (first == layout_get_prev_erun(layout, last)) {
         layout_get_erun_font_metrics(layout, first, &metrics);
         thickness = SCALE_FONT_METRIC(metrics.underlineThickness, first->run->u.regular.run.fontEmSize, &metrics);
         offset = SCALE_FONT_METRIC(metrics.underlinePosition, first->run->u.regular.run.fontEmSize, &metrics);
+        runheight = SCALE_FONT_METRIC(metrics.capHeight, first->run->u.regular.run.fontEmSize, &metrics);
     }
     else {
         FLOAT width = 0.0f;
 
         /* Single underline is added for consecutive underlined runs. In this case underline parameters are
            calculated as weighted average, where run width acts as a weight. */
-        thickness = offset = 0.0f;
+        thickness = offset = runheight = 0.0f;
         cur = first;
         do {
             layout_get_erun_font_metrics(layout, cur, &metrics);
 
             thickness += SCALE_FONT_METRIC(metrics.underlineThickness, cur->run->u.regular.run.fontEmSize, &metrics) * cur->width;
             offset += SCALE_FONT_METRIC(metrics.underlinePosition, cur->run->u.regular.run.fontEmSize, &metrics) * cur->width;
+            runheight = max(SCALE_FONT_METRIC(metrics.capHeight, cur->run->u.regular.run.fontEmSize, &metrics), runheight);
             width += cur->width;
 
             cur = layout_get_next_erun(layout, cur);
@@ -1721,7 +1723,7 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
         /* Font metrics convention is to have it negative when below baseline, for rendering
            however Y grows from baseline down for horizontal baseline. */
         u->u.offset = -offset;
-        u->u.runHeight = 0.0f; /* FIXME */
+        u->u.runHeight = runheight;
         u->u.readingDirection = is_run_rtl(cur) ? DWRITE_READING_DIRECTION_RIGHT_TO_LEFT :
             DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
         u->u.flowDirection = layout->format.flow;

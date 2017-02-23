@@ -596,7 +596,6 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
     if (ctxt)
         TEST_MEASURING_MODE(ctxt, underline->measuringMode);
 
-todo_wine
     ok(underline->runHeight > 0.0f, "Expected non-zero run height\n");
     if (ctxt && ctxt->format) {
         DWRITE_FONT_METRICS metrics;
@@ -609,7 +608,6 @@ todo_wine
 
         ok(emsize == metrics.designUnitsPerEm, "Unexpected font size %f\n", emsize);
         /* Expected height is in design units, allow some absolute difference from it. Seems to only happen on Vista */
-    todo_wine
         ok(abs(metrics.capHeight - underline->runHeight) < 2.0f, "Expected runHeight %u, got %f\n",
             metrics.capHeight, underline->runHeight);
 
