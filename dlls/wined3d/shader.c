@@ -1058,6 +1058,21 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             reg_maps->uav_resource_info[reg_idx].data_type = WINED3D_DATA_UINT;
             reg_maps->uav_resource_info[reg_idx].flags = WINED3D_VIEW_BUFFER_RAW;
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_UAV_STRUCTURED)
+        {
+            unsigned int reg_idx = ins.declaration.structured_resource.reg.reg.idx[0].offset;
+            if (reg_idx >= ARRAY_SIZE(reg_maps->uav_resource_info))
+            {
+                ERR("Invalid UAV resource index %u.\n", reg_idx);
+                break;
+            }
+            if (ins.flags)
+                FIXME("Ignoring structured UAV flags %#x.\n", ins.flags);
+            reg_maps->uav_resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_BUFFER;
+            reg_maps->uav_resource_info[reg_idx].data_type = WINED3D_DATA_UINT;
+            reg_maps->uav_resource_info[reg_idx].flags = 0;
+            reg_maps->uav_resource_info[reg_idx].stride = ins.declaration.structured_resource.byte_stride / 4;
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)

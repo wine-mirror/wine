@@ -753,6 +753,8 @@ static void shader_sm5_read_dcl_uav_structured(struct wined3d_shader_instruction
     shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_UAV, &ins->declaration.structured_resource.reg);
     ins->flags = (opcode_token & WINED3D_SM5_UAV_FLAGS_MASK) >> WINED3D_SM5_UAV_FLAGS_SHIFT;
     ins->declaration.structured_resource.byte_stride = *tokens;
+    if (ins->declaration.structured_resource.byte_stride % 4)
+        FIXME("Byte stride %u is not multiple of 4.\n", ins->declaration.structured_resource.byte_stride);
 }
 
 static void shader_sm5_read_dcl_tgsm_raw(struct wined3d_shader_instruction *ins,
