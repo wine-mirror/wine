@@ -291,6 +291,15 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
          */
         break;
 
+    case WM_XBUTTONUP:
+    case WM_NCXBUTTONUP:
+        if (HIWORD(wParam) == XBUTTON1 || HIWORD(wParam) == XBUTTON2)
+        {
+            SendMessageW(hwnd, WM_APPCOMMAND, (WPARAM)hwnd,
+                         MAKELPARAM(LOWORD(wParam), FAPPCOMMAND_MOUSE | HIWORD(wParam)));
+        }
+        break;
+
     case WM_CONTEXTMENU:
         if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
             SendMessageW( GetParent(hwnd), msg, wParam, lParam );

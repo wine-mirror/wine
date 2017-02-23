@@ -14378,6 +14378,18 @@ static const struct message NCRBUTTONDOWNSeq[] =
     { 0 }
 };
 
+static const struct message NCXBUTTONUPSeq1[] =
+{
+    { WM_APPCOMMAND, sent|lparam, /*hwnd*/0, MAKELPARAM(0, FAPPCOMMAND_MOUSE | APPCOMMAND_BROWSER_BACKWARD) },
+    { 0 }
+};
+
+static const struct message NCXBUTTONUPSeq2[] =
+{
+    { WM_APPCOMMAND, sent|lparam, /*hwnd*/0, MAKELPARAM(0, FAPPCOMMAND_MOUSE | APPCOMMAND_BROWSER_FORWARD) },
+    { 0 }
+};
+
 struct rbuttonup_thread_data
 {
     HWND hwnd;
@@ -14436,6 +14448,22 @@ static void test_defwinproc(void)
 
     DefWindowProcA( hwnd, WM_NCRBUTTONDOWN, HTCAPTION, MAKELPARAM(x, y));
     ok_sequence(NCRBUTTONDOWNSeq, "WM_NCRBUTTONDOWN on caption", FALSE);
+
+    res = DefWindowProcA(hwnd, WM_NCXBUTTONUP, 0, MAKELPARAM(x, y));
+    ok(!res, "WM_NCXBUTTONUP returned %ld\n", res);
+    ok_sequence(WmEmptySeq, "WM_NCXBUTTONUP without button", FALSE);
+
+    res = DefWindowProcA(hwnd, WM_NCXBUTTONUP, MAKEWPARAM(0, XBUTTON1), MAKELPARAM(x, y));
+    ok(!res, "WM_NCXBUTTONUP returned %ld\n", res);
+    ok_sequence(NCXBUTTONUPSeq1, "WM_NCXBUTTONUP with XBUTTON1", FALSE);
+
+    res = DefWindowProcA(hwnd, WM_NCXBUTTONUP, MAKEWPARAM(0, XBUTTON2), MAKELPARAM(x, y));
+    ok(!res, "WM_NCXBUTTONUP returned %ld\n", res);
+    ok_sequence(NCXBUTTONUPSeq2, "WM_NCXBUTTONUP with XBUTTON2", FALSE);
+
+    res = DefWindowProcA(hwnd, WM_NCXBUTTONUP, MAKEWPARAM(0, 3), MAKELPARAM(x, y));
+    ok(!res, "WM_NCXBUTTONUP returned %ld\n", res);
+    ok_sequence(WmEmptySeq, "WM_NCXBUTTONUP with invalid button", FALSE);
 
     SetEvent( data.wndproc_finished );
     WaitForSingleObject( thread, 1000 );
