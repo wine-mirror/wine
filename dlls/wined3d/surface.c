@@ -2540,7 +2540,7 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
     return TRUE;
 }
 
-static HRESULT surface_load_texture(struct wined3d_surface *surface,
+static BOOL surface_load_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb)
 {
     unsigned int width, height, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
