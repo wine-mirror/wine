@@ -89,6 +89,7 @@ IDL_SRCS = \
 	mediaobj.idl \
 	metahost.idl \
 	mfobjects.idl \
+	mfreadwrite.idl \
 	mimeinfo.idl \
 	mimeole.idl \
 	mlang.idl \
