@@ -61,6 +61,18 @@ enum gpos_lookup_type
     GPOS_LOOKUP_POSITION_EXTENSION = 0x9,
 };
 
+enum gsub_lookup_type
+{
+    GSUB_LOOKUP_SINGLE = 0x1,
+    GSUB_LOOKUP_MULTIPLE = 0x2,
+    GSUB_LOOKUP_ALTERNATE = 0x3,
+    GSUB_LOOKUP_LIGATURE = 0x4,
+    GSUB_LOOKUP_CONTEXT = 0x5,
+    GSUB_LOOKUP_CONTEXT_CHAINED = 0x6,
+    GSUB_LOOKUP_EXTENSION = 0x7,
+    GSUB_LOOKUP_CONTEXT_CHAINED_REVERSE = 0x8,
+};
+
 typedef struct {
     WORD platformID;
     WORD encodingID;
@@ -851,7 +863,7 @@ static const BYTE *GSUB_get_subtable(const OT_LookupTable *look, int index)
 {
     int offset = GET_BE_WORD(look->SubTable[index]);
 
-    if (GET_BE_WORD(look->LookupType) == 7)
+    if (GET_BE_WORD(look->LookupType) == GSUB_LOOKUP_EXTENSION)
     {
         const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)look + offset);
         if (GET_BE_WORD(ext->SubstFormat) == 1)
@@ -1423,14 +1435,16 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
 static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int offset;
-    int type;
+    enum gsub_lookup_type type;
     const OT_LookupTable *look;
 
     offset = GET_BE_WORD(lookup->Lookup[lookup_index]);
     look = (const OT_LookupTable*)((const BYTE*)lookup + offset);
     type = GET_BE_WORD(look->LookupType);
-    TRACE("type %i, flag %x, subtables %i\n",type,GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
-    if (type == 7)
+    TRACE("type %#x, flag %#x, subtables %u.\n", type,
+            GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
+
+    if (type == GSUB_LOOKUP_EXTENSION)
     {
         if (GET_BE_WORD(look->SubTableCount))
         {
@@ -1452,23 +1466,23 @@ static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD
     }
     switch(type)
     {
-        case 1:
+        case GSUB_LOOKUP_SINGLE:
             return GSUB_apply_SingleSubst(look, glyphs, glyph_index, write_dir, glyph_count);
-        case 2:
+        case GSUB_LOOKUP_MULTIPLE:
             return GSUB_apply_MultipleSubst(look, glyphs, glyph_index, write_dir, glyph_count);
-        case 3:
+        case GSUB_LOOKUP_ALTERNATE:
             return GSUB_apply_AlternateSubst(look, glyphs, glyph_index, write_dir, glyph_count);
-        case 4:
+        case GSUB_LOOKUP_LIGATURE:
             return GSUB_apply_LigatureSubst(look, glyphs, glyph_index, write_dir, glyph_count);
-        case 5:
+        case GSUB_LOOKUP_CONTEXT:
             return GSUB_apply_ContextSubst(lookup, look, glyphs, glyph_index, write_dir, glyph_count);
-        case 6:
+        case GSUB_LOOKUP_CONTEXT_CHAINED:
             return GSUB_apply_ChainContextSubst(lookup, look, glyphs, glyph_index, write_dir, glyph_count);
-        case 7:
+        case GSUB_LOOKUP_EXTENSION:
             FIXME("Extension Substitution types not valid here\n");
             break;
         default:
-            FIXME("We do not handle SubType %i\n",type);
+            FIXME("Unhandled GSUB lookup type %#x.\n", type);
     }
     return GSUB_E_NOGLYPH;
 }
