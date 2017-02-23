@@ -600,7 +600,7 @@ STORAGE_get_next_small_blocknr(stream_access16 *str,int blocknr) {
  */
 static int
 STORAGE_get_nth_next_small_blocknr(stream_access16*str,int blocknr,int nr) {
-	int	lastblocknr=-1;
+	int	lastblocknr=-129;
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
 	struct storage_header sth;
