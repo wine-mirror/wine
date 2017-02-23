@@ -71,6 +71,13 @@ static void set_rect_u(D2D1_RECT_U *rect, UINT32 left, UINT32 top, UINT32 right,
     rect->bottom = bottom;
 }
 
+static void set_ellipse(D2D1_ELLIPSE *ellipse, float x, float y, float rx, float ry)
+{
+    set_point(&ellipse->point, x, y);
+    ellipse->radiusX = rx;
+    ellipse->radiusY = ry;
+}
+
 static void set_color(D2D1_COLOR_F *color, float r, float g, float b, float a)
 {
     color->r = r;
@@ -486,6 +493,7 @@ static BOOL compare_figure(IDXGISurface *surface, unsigned int x, unsigned int y
     }
     if (diff > max_diff)
     {
+        trace("diff %u > max_diff %u.\n", diff, max_diff);
         read_figure(&figure, mapped_texture.pData, mapped_texture.RowPitch, x, y, w, h, prev);
         serialize_figure(&figure);
     }
@@ -3675,6 +3683,8 @@ static void test_draw_geometry(void)
     ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
+    D2D1_POINT_2F p0, p1;
+    D2D1_ELLIPSE ellipse;
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
     ULONG refcount;
@@ -3700,6 +3710,102 @@ static void test_draw_geometry(void)
     set_color(&color, 0.890f, 0.851f, 0.600f, 1.0f);
     hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
     ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    set_color(&color, 0.396f, 0.180f, 0.537f, 1.0f);
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    set_point(&p0, 40.0f, 160.0f);
+    ID2D1RenderTarget_DrawLine(rt, p0, p0, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_point(&p0, 100.0f, 160.0f);
+    set_point(&p1, 140.0f, 160.0f);
+    ID2D1RenderTarget_DrawLine(rt, p0, p1, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_point(&p0, 200.0f,  80.0f);
+    set_point(&p1, 200.0f, 240.0f);
+    ID2D1RenderTarget_DrawLine(rt, p0, p1, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_point(&p0, 260.0f, 240.0f);
+    set_point(&p1, 300.0f,  80.0f);
+    ID2D1RenderTarget_DrawLine(rt, p0, p1, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    set_rect(&rect, 40.0f, 480.0f, 40.0f, 480.0f);
+    ID2D1RenderTarget_DrawRectangle(rt, &rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rect(&rect, 100.0f, 480.0f, 140.0f, 480.0f);
+    ID2D1RenderTarget_DrawRectangle(rt, &rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rect(&rect, 200.0f, 400.0f, 200.0f, 560.0f);
+    ID2D1RenderTarget_DrawRectangle(rt, &rect, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_rect(&rect, 260.0f, 560.0f, 300.0f, 400.0f);
+    ID2D1RenderTarget_DrawRectangle(rt, &rect, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    set_ellipse(&ellipse,  40.0f, 800.0f,  0.0f,  0.0f);
+    ID2D1RenderTarget_DrawEllipse(rt, &ellipse, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_ellipse(&ellipse, 120.0f, 800.0f, 20.0f,  0.0f);
+    ID2D1RenderTarget_DrawEllipse(rt, &ellipse, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_ellipse(&ellipse, 200.0f, 800.0f,  0.0f, 80.0f);
+    ID2D1RenderTarget_DrawEllipse(rt, &ellipse, (ID2D1Brush *)brush, 10.0f, NULL);
+    set_ellipse(&ellipse, 280.0f, 800.0f, 20.0f, 80.0f);
+    ID2D1RenderTarget_DrawEllipse(rt, &ellipse, (ID2D1Brush *)brush, 10.0f, NULL);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+
+    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQUFBQUFBQUFDoYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+            "xjIUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUxjIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 2,
+            "zjECnQETjAEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
+            "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
+            "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
+            "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
+            "igEVigEVigEVigEVjAETnQECzjEA");
+    todo_wine ok(match, "Figure does not match.\n");
+
+    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "5mAUjAEUjAEUjAEUjAEUhmIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "vmBkPGQ8ZDxkPGTeYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0,
+            "5i4UjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUhjAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 0,
+            "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
+            "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
+    ok(match, "Figure does not match.\n");
+
+    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+            "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
+            "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
+    todo_wine ok(match, "Figure does not match.\n");
+    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 10,
+            "hDAYgwEieyh1LnAybBcIF2gWDhZkFhIWYRUWFV4VGhVbFRwVWRUeFVcVIBVVFCQUUxQmFFEUKBRP"
+            "FSgVTRUqFUwULBRLFC4USRQwFEgUMBRHFDIURhQyFEUUNBREFDQUQxQ2FEIUNhRBFDgUQBQ4FEAU"
+            "OBQ/FDoUPhQ6FD4UOhQ+FDoUPhQ6FD0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
+            "FDwUPBQ8FDwUPBQ8FD0UOhQ+FDoUPhQ6FD4UOhQ+FDoUPxQ4FEAUOBRAFDgUQRQ2FEIUNhRDFDQU"
+            "RBQ0FEUUMhRGFDIURxQwFEgUMBRJFC4USxQsFEwVKhVNFSgVTxQoFFEUJhRTFCQUVRUgFVcVHhVZ"
+            "FRwVWxUaFV4VFhVhFhIWZBYOFmgXCBdsMnAudSh7IoMBGIQw");
+    todo_wine ok(match, "Figure does not match.\n");
 
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
@@ -3778,7 +3884,6 @@ static void test_draw_geometry(void)
     ID2D1GeometrySink_Release(sink);
 
     ID2D1RenderTarget_BeginDraw(rt);
-    set_color(&color, 0.396f, 0.180f, 0.537f, 1.0f);
     ID2D1RenderTarget_Clear(rt, &color);
     ID2D1RenderTarget_DrawGeometry(rt, (ID2D1Geometry *)geometry, (ID2D1Brush *)brush, 5.0f, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
