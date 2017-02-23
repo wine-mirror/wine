@@ -700,7 +700,7 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
     TRACE("%p %s %i %p\n", pad, wine_dbgstr_longlong(ofs), len, buf);
 
     *buf = NULL;
-    if (ofs == (guint64)-1)
+    if (ofs == GST_BUFFER_OFFSET_NONE)
         ofs = This->nextpullofs;
     if (ofs >= This->filesize) {
         WARN("Reading past eof: %s, %u\n", wine_dbgstr_longlong(ofs), len);
