@@ -14627,6 +14627,157 @@ done:
     release_test_context(&test_context);
 }
 
+static void test_compute_shader_registers(void)
+{
+    struct data
+    {
+        unsigned int group_id[3];
+        unsigned int group_index;
+        unsigned int dispatch_id[3];
+        unsigned int thread_id[3];
+    };
+
+    struct d3d11_test_context test_context;
+    unsigned int i, x, y, group_x, group_y;
+    ID3D11UnorderedAccessView *uav;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Buffer *cb, *buffer;
+    struct uvec4 dimensions;
+    ID3D11ComputeShader *cs;
+    const struct data *data;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const DWORD cs_code[] =
+    {
+#if 0
+        struct data
+        {
+            uint3 group_id;
+            uint group_index;
+            uint3 dispatch_id;
+            uint3 group_thread_id;
+        };
+
+        RWStructuredBuffer<data> u;
+
+        uint2 dim;
+
+        [numthreads(3, 2, 1)]
+        void main(uint3 group_id : SV_GroupID,
+                uint group_index : SV_GroupIndex,
+                uint3 dispatch_id : SV_DispatchThreadID,
+                uint3 group_thread_id : SV_GroupThreadID)
+        {
+            uint i = dispatch_id.x + dispatch_id.y * 3 * dim.x;
+            u[i].group_id = group_id;
+            u[i].group_index = group_index;
+            u[i].dispatch_id = dispatch_id;
+            u[i].group_thread_id = group_thread_id;
+        }
+#endif
+        0x43425844, 0xf0bce218, 0xfc1e8267, 0xe6d57544, 0x342df592, 0x00000001, 0x000001a4, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000150, 0x00050050, 0x00000054, 0x0100086a,
+        0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0400009e, 0x0011e000, 0x00000000, 0x00000028,
+        0x0200005f, 0x00024000, 0x0200005f, 0x00021072, 0x0200005f, 0x00022072, 0x0200005f, 0x00020072,
+        0x02000068, 0x00000002, 0x0400009b, 0x00000003, 0x00000002, 0x00000001, 0x04000036, 0x00100072,
+        0x00000000, 0x00021246, 0x04000036, 0x00100082, 0x00000000, 0x0002400a, 0x08000026, 0x0000d000,
+        0x00100012, 0x00000001, 0x0002001a, 0x0020800a, 0x00000000, 0x00000000, 0x08000023, 0x00100012,
+        0x00000001, 0x0010000a, 0x00000001, 0x00004001, 0x00000003, 0x0002000a, 0x090000a8, 0x0011e0f2,
+        0x00000000, 0x0010000a, 0x00000001, 0x00004001, 0x00000000, 0x00100e46, 0x00000000, 0x04000036,
+        0x00100072, 0x00000000, 0x00020246, 0x04000036, 0x00100082, 0x00000000, 0x0002200a, 0x090000a8,
+        0x0011e0f2, 0x00000000, 0x0010000a, 0x00000001, 0x00004001, 0x00000010, 0x00100e46, 0x00000000,
+        0x080000a8, 0x0011e032, 0x00000000, 0x0010000a, 0x00000001, 0x00004001, 0x00000020, 0x00022596,
+        0x0100003e,
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    buffer_desc.ByteWidth = 10240;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    buffer_desc.StructureByteStride = 40;
+    assert(sizeof(struct data) == buffer_desc.StructureByteStride);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(dimensions), NULL);
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_code, sizeof(cs_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+
+    dimensions.x = 2;
+    dimensions.y = 3;
+    dimensions.z = 1;
+    dimensions.w = 0;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0,
+            NULL, &dimensions, 0, 0);
+    ID3D11DeviceContext_Dispatch(context, dimensions.x, dimensions.y, dimensions.z);
+
+    get_buffer_readback(buffer, &rb);
+    i = 0;
+    data = rb.map_desc.pData;
+    for (y = 0; y < dimensions.y; ++y)
+    {
+        for (group_y = 0; group_y < 2; ++group_y)
+        {
+            for (x = 0; x < dimensions.x; ++x)
+            {
+                for (group_x = 0; group_x < 3; ++group_x)
+                {
+                    const unsigned int dispatch_id[2] = {x * 3 + group_x, y * 2 + group_y};
+                    const unsigned int group_index = group_y * 3 + group_x;
+                    const struct data *d = &data[i];
+
+                    ok(d->group_id[0] == x && d->group_id[1] == y && !d->group_id[2],
+                            "Got group id (%u, %u, %u), expected (%u, %u, %u) at %u (%u, %u, %u, %u).\n",
+                            d->group_id[0], d->group_id[1], d->group_id[2], x, y, 0,
+                            i, x, y, group_x, group_y);
+                    ok(d->group_index == group_index,
+                            "Got group index %u, expected %u at %u (%u, %u, %u, %u).\n",
+                            d->group_index, group_index, i, x, y, group_x, group_y);
+                    ok(d->dispatch_id[0] == dispatch_id[0] && d->dispatch_id[1] == dispatch_id[1]
+                            && !d->dispatch_id[2],
+                            "Got dispatch id (%u, %u, %u), expected (%u, %u, %u) "
+                            "at %u (%u, %u, %u, %u).\n",
+                            d->dispatch_id[0], d->dispatch_id[1], d->dispatch_id[2],
+                            dispatch_id[0], dispatch_id[1], 0,
+                            i, x, y, group_x, group_y);
+                    ok(d->thread_id[0] == group_x && d->thread_id[1] == group_y && !d->thread_id[2],
+                            "Got group thread id (%u, %u, %u), expected (%u, %u, %u) "
+                            "at %u (%u, %u, %u, %u).\n",
+                            d->thread_id[0], d->thread_id[1], d->thread_id[2], group_x, group_y, 0,
+                            i, x, y, group_x, group_y);
+                    ++i;
+                }
+            }
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11Buffer_Release(cb);
+    ID3D11Buffer_Release(buffer);
+    ID3D11ComputeShader_Release(cs);
+    ID3D11UnorderedAccessView_Release(uav);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -14703,4 +14854,5 @@ START_TEST(d3d11)
     test_buffer_srv();
     run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0,
             test_unaligned_raw_buffer_access);
+    test_compute_shader_registers();
 }
