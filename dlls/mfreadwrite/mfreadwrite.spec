@@ -3,5 +3,5 @@
 @ stub MFCreateSinkWriterFromMediaSink
 @ stub MFCreateSinkWriterFromURL
 @ stub MFCreateSourceReaderFromByteStream
-@ stub MFCreateSourceReaderFromMediaSource
+@ stdcall MFCreateSourceReaderFromMediaSource(ptr ptr ptr)
 @ stub MFCreateSourceReaderFromURL

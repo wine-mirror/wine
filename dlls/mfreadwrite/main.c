@@ -22,6 +22,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "mfreadwrite.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -35,4 +40,13 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+
+HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes,
+                                                   IMFSourceReader **reader)
+{
+    FIXME("%p %p %p stub.\n", source, attributes, reader);
+
+    return E_NOTIMPL;
 }
