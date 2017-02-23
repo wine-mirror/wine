@@ -5133,26 +5133,46 @@ static void shader_glsl_store_uav(const struct wined3d_shader_instruction *ins)
             image_coord_param.param_str, image_data_param.param_str);
 }
 
-static void shader_glsl_store_raw(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_store_buffer(const struct wined3d_shader_instruction *ins)
 {
     const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
+    struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
-    struct glsl_src_param offset, data;
+    struct glsl_src_param structure_idx, offset, data;
+    struct wined3d_string_buffer *address;
+    unsigned int i, uav_idx, src_idx = 0;
     DWORD write_mask;
-    unsigned int i;
 
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &offset);
+    uav_idx = ins->dst[0].reg.idx[0].offset;
+    if (uav_idx >= ARRAY_SIZE(reg_maps->uav_resource_info))
+    {
+        ERR("Invalid UAV index %u.\n", uav_idx);
+        return;
+    }
+
+    address = string_buffer_get(priv->string_buffers);
+    if (ins->handler_idx == WINED3DSIH_STORE_STRUCTURED)
+    {
+        shader_glsl_add_src_param(ins, &ins->src[src_idx++], WINED3DSP_WRITEMASK_0, &structure_idx);
+        shader_addline(address, "%s * %u + ", structure_idx.param_str,
+                reg_maps->uav_resource_info[uav_idx].stride);
+    }
+    shader_glsl_add_src_param(ins, &ins->src[src_idx++], WINED3DSP_WRITEMASK_0, &offset);
+    shader_addline(address, "%s / 4", offset.param_str);
 
     for (i = 0; i < 4; ++i)
     {
         if (!(write_mask = ins->dst[0].write_mask & (WINED3DSP_WRITEMASK_0 << i)))
             continue;
 
-        shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &data);
+        shader_glsl_add_src_param(ins, &ins->src[src_idx], write_mask, &data);
 
-        shader_addline(buffer, "imageStore(%s_image%u, %s / 4 + %u, uvec4(%s, 0, 0, 0));\n",
-                prefix, ins->dst[0].reg.idx[0].offset, offset.param_str, i, data.param_str);
+        shader_addline(buffer, "imageStore(%s_image%u, %s + %u, uvec4(%s, 0, 0, 0));\n",
+                prefix, uav_idx, address->buffer, i, data.param_str);
     }
+
+    string_buffer_release(priv->string_buffers, address);
 }
 
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
@@ -9479,8 +9499,8 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SINCOS                           */ shader_glsl_sincos,
     /* WINED3DSIH_SLT                              */ shader_glsl_compare,
     /* WINED3DSIH_SQRT                             */ shader_glsl_map2gl,
-    /* WINED3DSIH_STORE_RAW                        */ shader_glsl_store_raw,
-    /* WINED3DSIH_STORE_STRUCTURED                 */ NULL,
+    /* WINED3DSIH_STORE_RAW                        */ shader_glsl_store_buffer,
+    /* WINED3DSIH_STORE_STRUCTURED                 */ shader_glsl_store_buffer,
     /* WINED3DSIH_STORE_UAV_TYPED                  */ shader_glsl_store_uav,
     /* WINED3DSIH_SUB                              */ shader_glsl_binop,
     /* WINED3DSIH_SWAPC                            */ NULL,
