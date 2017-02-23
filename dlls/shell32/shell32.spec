@@ -390,6 +390,7 @@
 @ stdcall SHGetNewLinkInfo(str str ptr ptr long) SHGetNewLinkInfoA
 @ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListA
 @ stdcall SHGetPathFromIDListA(ptr ptr)
+@ stdcall SHGetPathFromIDListEx(ptr ptr long long)
 @ stdcall SHGetPathFromIDListW(ptr ptr)
 @ stdcall SHGetPropertyStoreForWindow(long ptr ptr)
 @ stdcall SHGetPropertyStoreFromParsingName(wstr ptr long ptr ptr)

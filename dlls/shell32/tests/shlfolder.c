@@ -76,6 +76,7 @@ static HRESULT (WINAPI *pSHCreateDefaultContextMenu)(const DEFCONTEXTMENU*,REFII
 static HRESULT (WINAPI *pSHCreateShellFolderView)(const SFV_CREATE *pcsfv, IShellView **ppsv);
 static HRESULT (WINAPI *pSHCreateShellFolderViewEx)(LPCSFV psvcbi, IShellView **ppv);
 static HRESULT (WINAPI *pSHILCreateFromPath)(LPCWSTR, LPITEMIDLIST *,DWORD*);
+static BOOL (WINAPI *pSHGetPathFromIDListEx)(PCIDLIST_ABSOLUTE,WCHAR*,DWORD,GPFIDL_FLAGS);
 
 static WCHAR *make_wstr(const char *str)
 {
@@ -135,6 +136,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHCreateDefaultContextMenu);
     MAKEFUNC(SHCreateShellFolderView);
     MAKEFUNC(SHCreateShellFolderViewEx);
+    MAKEFUNC(SHGetPathFromIDListEx);
 #undef MAKEFUNC
 
 #define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
@@ -1347,10 +1349,34 @@ static void test_SHGetPathFromIDList(void)
 
     result = pSHGetPathFromIDListW(pidlTestFile, wszPath);
     ok(result, "SHGetPathFromIDListW failed! Last error: %u\n", GetLastError());
-    IMalloc_Free(ppM, pidlTestFile);
-    if (!result) return;
     ok(0 == lstrcmpW(wszFileName, wszPath), "SHGetPathFromIDListW returned incorrect path for file placed on desktop\n");
 
+    if (pSHGetPathFromIDListEx)
+    {
+        result = pSHGetPathFromIDListEx(pidlEmpty, wszPath, MAX_PATH, SFGAO_FILESYSTEM);
+        ok(result, "SHGetPathFromIDListEx failed: %u\n", GetLastError());
+        ok(!lstrcmpiW(wszDesktop, wszPath), "Unexpected SHGetPathFromIDListEx result %s, expected %s\n",
+           wine_dbgstr_w(wszPath), wine_dbgstr_w(wszDesktop));
+
+        result = pSHGetPathFromIDListEx(pidlTestFile, wszPath, MAX_PATH, SFGAO_FILESYSTEM);
+        ok(result, "SHGetPathFromIDListEx failed: %u\n", GetLastError());
+        ok(!lstrcmpiW(wszFileName, wszPath), "Unexpected SHGetPathFromIDListEx result %s, expected %s\n",
+           wine_dbgstr_w(wszPath), wine_dbgstr_w(wszFileName));
+
+        SetLastError(0xdeadbeef);
+        memset(wszPath, 0x55, sizeof(wszPath));
+        result = pSHGetPathFromIDListEx(pidlTestFile, wszPath, 5, SFGAO_FILESYSTEM);
+        ok(!result, "SHGetPathFromIDListEx returned: %x(%u)\n", result, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        memset(wszPath, 0x55, sizeof(wszPath));
+        result = pSHGetPathFromIDListEx(pidlEmpty, wszPath, 5, SFGAO_FILESYSTEM);
+        ok(!result, "SHGetPathFromIDListEx returned: %x(%u)\n", result, GetLastError());
+    }
+    else
+        win_skip("SHGetPathFromIDListEx not available\n");
+
+    IMalloc_Free(ppM, pidlTestFile);
 
     /* Test if we can get the path from the start menu "program files" PIDL. */
     hr = pSHGetSpecialFolderLocation(NULL, CSIDL_PROGRAM_FILES, &pidlPrograms);
@@ -1358,7 +1384,7 @@ static void test_SHGetPathFromIDList(void)
 
     SetLastError(0xdeadbeef);
     result = pSHGetPathFromIDListW(pidlPrograms, wszPath);
-	IMalloc_Free(ppM, pidlPrograms);
+    IMalloc_Free(ppM, pidlPrograms);
     ok(result, "SHGetPathFromIDListW failed\n");
 }
 

@@ -1245,16 +1245,27 @@ BOOL WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath)
  */
 BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
 {
+    return SHGetPathFromIDListEx(pidl, pszPath, MAX_PATH, 0);
+}
+
+/*************************************************************************
+ * SHGetPathFromIDListEx             [SHELL32.@]
+ */
+BOOL WINAPI SHGetPathFromIDListEx(LPCITEMIDLIST pidl, WCHAR *path, DWORD path_size, GPFIDL_FLAGS flags)
+{
     HRESULT hr;
     LPCITEMIDLIST pidlLast;
     LPSHELLFOLDER psfFolder;
     DWORD dwAttributes;
     STRRET strret;
 
-    TRACE_(shell)("(pidl=%p,%p)\n", pidl, pszPath);
+    TRACE_(shell)("(pidl=%p,%p,%u,%x)\n", pidl, path, path_size, flags);
     pdump(pidl);
 
-    *pszPath = '\0';
+    if (flags != GPFIDL_DEFAULT)
+        FIXME("Unsupported flags %x\n", flags);
+
+    *path = '\0';
     if (!pidl)
         return FALSE;
 
@@ -1272,9 +1283,9 @@ BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
     IShellFolder_Release(psfFolder);
     if (FAILED(hr)) return FALSE;
 
-    hr = StrRetToBufW(&strret, pidlLast, pszPath, MAX_PATH);
+    hr = StrRetToBufW(&strret, pidlLast, path, path_size);
 
-    TRACE_(shell)("-- %s, 0x%08x\n",debugstr_w(pszPath), hr);
+    TRACE_(shell)("-- %s, 0x%08x\n",debugstr_w(path), hr);
     return SUCCEEDED(hr);
 }
 
