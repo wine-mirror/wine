@@ -1916,11 +1916,12 @@ struct wined3d_blt_fx
 
 struct wined3d_buffer_desc
 {
-    UINT byte_width;
+    unsigned int byte_width;
     DWORD usage;
-    UINT bind_flags;
-    UINT cpu_access_flags;
-    UINT misc_flags;
+    unsigned int bind_flags;
+    unsigned int cpu_access_flags;
+    unsigned int misc_flags;
+    unsigned int structure_byte_stride;
 };
 
 struct wined3d_rasterizer_state_desc

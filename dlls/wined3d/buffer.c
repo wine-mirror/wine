@@ -1467,15 +1467,13 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, const struct 
     TRACE("device %p, desc %p, data %p, parent %p, parent_ops %p, buffer %p.\n",
             device, desc, data, parent, parent_ops, buffer);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     FIXME("Ignoring access flags (pool).\n");
 
-    hr = buffer_init(object, device, desc->byte_width, desc->usage, WINED3DFMT_UNKNOWN,
-            WINED3D_POOL_MANAGED, desc->bind_flags, data, parent, parent_ops);
-    if (FAILED(hr))
+    if (FAILED(hr = buffer_init(object, device, desc->byte_width, desc->usage, WINED3DFMT_UNKNOWN,
+            WINED3D_POOL_MANAGED, desc->bind_flags, data, parent, parent_ops)))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

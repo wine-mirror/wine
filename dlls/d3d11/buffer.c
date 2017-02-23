@@ -444,9 +444,7 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
     wined3d_desc.bind_flags = buffer->desc.BindFlags;
     wined3d_desc.cpu_access_flags = buffer->desc.CPUAccessFlags;
     wined3d_desc.misc_flags = buffer->desc.MiscFlags;
-
-    if (buffer->desc.StructureByteStride)
-        FIXME("Ignoring structure byte stride %u.\n", buffer->desc.StructureByteStride);
+    wined3d_desc.structure_byte_stride = buffer->desc.StructureByteStride;
 
     wined3d_mutex_lock();
     wined3d_private_store_init(&buffer->private_store);
