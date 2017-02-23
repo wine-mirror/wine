@@ -1,7 +1,7 @@
 /*
  *    Text layout/format tests
  *
- * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -220,6 +220,46 @@ static void get_script_analysis(const WCHAR *str, UINT32 len, DWRITE_SCRIPT_ANAL
 
     *sa = analysissink.sa;
     IDWriteFactory_Release(factory);
+}
+
+static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
+{
+    IDWriteFontCollection *collection;
+    IDWriteFontFamily *family;
+    IDWriteFontFace *fontface;
+    IDWriteFont *font;
+    WCHAR nameW[255];
+    UINT32 index;
+    BOOL exists;
+    HRESULT hr;
+
+    hr = IDWriteTextFormat_GetFontCollection(format, &collection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_GetFontFamilyName(format, nameW, sizeof(nameW)/sizeof(WCHAR));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_FindFamilyName(collection, nameW, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontCollection_Release(collection);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family,
+        IDWriteTextFormat_GetFontWeight(format),
+        IDWriteTextFormat_GetFontStretch(format),
+        IDWriteTextFormat_GetFontStyle(format),
+        &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFont_Release(font);
+    IDWriteFontFamily_Release(family);
+
+    return fontface;
 }
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
@@ -447,6 +487,7 @@ struct renderer_context {
     FLOAT ppdip;
     FLOAT originX;
     FLOAT originY;
+    IDWriteTextFormat *format;
 };
 
 static HRESULT WINAPI testrenderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
@@ -554,6 +595,26 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
 
     if (ctxt)
         TEST_MEASURING_MODE(ctxt, underline->measuringMode);
+
+todo_wine
+    ok(underline->runHeight > 0.0f, "Expected non-zero run height\n");
+    if (ctxt && ctxt->format) {
+        DWRITE_FONT_METRICS metrics;
+        IDWriteFontFace *fontface;
+        FLOAT emsize;
+
+        fontface = get_fontface_from_format(ctxt->format);
+        emsize = IDWriteTextFormat_GetFontSize(ctxt->format);
+        IDWriteFontFace_GetMetrics(fontface, &metrics);
+
+        ok(emsize == metrics.designUnitsPerEm, "Unexpected font size %f\n", emsize);
+        /* Expected height is in design units, allow some absolute difference from it. Seems to only happen on Vista */
+    todo_wine
+        ok(abs(metrics.capHeight - underline->runHeight) < 2.0f, "Expected runHeight %u, got %f\n",
+            metrics.capHeight, underline->runHeight);
+
+        IDWriteFontFace_Release(fontface);
+    }
 
     entry.kind = DRAW_UNDERLINE;
     if (effect)
@@ -1506,8 +1567,7 @@ static void test_Draw(void)
 
     factory = create_factory();
 
-    ctxt.gdicompat = FALSE;
-    ctxt.use_gdi_natural = FALSE;
+    memset(&ctxt, 0, sizeof(ctxt));
     ctxt.snapping_disabled = TRUE;
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
@@ -3273,46 +3333,6 @@ static void test_SetDrawingEffect(void)
     IDWriteFactory_Release(factory);
 }
 
-static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
-{
-    IDWriteFontCollection *collection;
-    IDWriteFontFamily *family;
-    IDWriteFontFace *fontface;
-    IDWriteFont *font;
-    WCHAR nameW[255];
-    UINT32 index;
-    BOOL exists;
-    HRESULT hr;
-
-    hr = IDWriteTextFormat_GetFontCollection(format, &collection);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteTextFormat_GetFontFamilyName(format, nameW, sizeof(nameW)/sizeof(WCHAR));
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteFontCollection_FindFamilyName(collection, nameW, &index, &exists);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    IDWriteFontCollection_Release(collection);
-
-    hr = IDWriteFontFamily_GetFirstMatchingFont(family,
-        IDWriteTextFormat_GetFontWeight(format),
-        IDWriteTextFormat_GetFontStretch(format),
-        IDWriteTextFormat_GetFontStyle(format),
-        &font);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteFont_CreateFontFace(font, &fontface);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    IDWriteFont_Release(font);
-    IDWriteFontFamily_Release(family);
-
-    return fontface;
-}
-
 static BOOL get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT32 size)
 {
     UINT32 index;
@@ -4852,12 +4872,13 @@ static void test_SetUnderline(void)
 {
     static const WCHAR encaW[] = {'e','n','-','C','A',0};
     static const WCHAR strW[] = {'a','e',0x0300,'d',0}; /* accent grave */
+    IDWriteFontCollection *syscollection;
     DWRITE_CLUSTER_METRICS clusters[4];
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
     IDWriteFactory *factory;
-    UINT32 count;
+    UINT32 count, i;
     HRESULT hr;
 
     factory = create_factory();
@@ -4948,6 +4969,103 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
+
+    /* Test runHeight value with all available fonts */
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
+
+    for (i = 0; i < count; i++) {
+        DWRITE_FONT_METRICS fontmetrics;
+        IDWriteLocalizedStrings *names;
+        struct renderer_context ctxt;
+        IDWriteFontFamily *family;
+        IDWriteFontFace *fontface;
+        IDWriteFont *font;
+        WCHAR nameW[256];
+        BOOL exists;
+
+        format = NULL;
+        layout = NULL;
+
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, i, &family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFont_CreateFontFace(font, &fontface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        if (!(exists = get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0])))) {
+            IDWriteLocalFontFileLoader *localloader;
+            IDWriteFontFileLoader *loader;
+            IDWriteFontFile *file;
+            const void *key;
+            UINT32 keysize;
+            UINT32 count;
+
+            count = 1;
+            hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            hr = IDWriteFontFile_GetLoader(file, &loader);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void**)&localloader);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            IDWriteFontFileLoader_Release(loader);
+
+            hr = IDWriteFontFile_GetReferenceKey(file, &key, &keysize);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, keysize, nameW, sizeof(nameW)/sizeof(*nameW));
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            skip("Failed to get English family name, font file %s\n", wine_dbgstr_w(nameW));
+
+            IDWriteLocalFontFileLoader_Release(localloader);
+            IDWriteFontFile_Release(file);
+        }
+
+        IDWriteLocalizedStrings_Release(names);
+        IDWriteFont_Release(font);
+
+        if (!exists)
+            goto cleanup;
+
+        IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
+        hr = IDWriteFactory_CreateTextFormat(factory, nameW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, enusW, &format);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFactory_CreateTextLayout(factory, strW, 2, format, 30000.0f, 100.0f, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        range.startPosition = 0;
+        range.length = 2;
+        hr = IDWriteTextLayout_SetUnderline(layout, TRUE, range);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        memset(&ctxt, 0, sizeof(ctxt));
+        ctxt.format = format;
+        hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    cleanup:
+        if (layout)
+            IDWriteTextLayout_Release(layout);
+        if (format)
+            IDWriteTextFormat_Release(format);
+        IDWriteFontFace_Release(fontface);
+        IDWriteFontFamily_Release(family);
+    }
+    IDWriteFontCollection_Release(syscollection);
+
     IDWriteFactory_Release(factory);
 }
 
