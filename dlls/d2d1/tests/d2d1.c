@@ -3749,23 +3749,23 @@ static void test_draw_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
     match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQUFBQUFBQUFDoYQAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
             "xjIUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUxjIA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
     match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 2,
             "zjECnQETjAEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVjAETnQECzjEA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "5mAUjAEUjAEUjAEUjAEUhmIA");
     todo_wine ok(match, "Figure does not match.\n");

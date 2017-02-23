@@ -494,9 +494,9 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawLine(ID2D1RenderTarget *
         return;
     }
 
-    ID2D1GeometrySink_BeginFigure(sink, p0, D2D1_FIGURE_BEGIN_FILLED);
+    ID2D1GeometrySink_BeginFigure(sink, p0, D2D1_FIGURE_BEGIN_HOLLOW);
     ID2D1GeometrySink_AddLine(sink, p1);
-    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_OPEN);
     if (FAILED(hr = ID2D1GeometrySink_Close(sink)))
         WARN("Close() failed, %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
