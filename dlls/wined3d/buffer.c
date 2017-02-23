@@ -1054,7 +1054,9 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
             context = context_acquire(device, NULL, 0);
             gl_info = context->gl_info;
 
-            if (!(flags & WINED3D_MAP_DISCARD))
+            if (flags & WINED3D_MAP_DISCARD)
+                wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_BUFFER);
+            else
                 wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
 
             if (!(flags & WINED3D_MAP_READONLY))
