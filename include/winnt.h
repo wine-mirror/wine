@@ -5438,7 +5438,7 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 
 static FORCEINLINE void *RtlSecureZeroMemory(void *buffer, SIZE_T length)
 {
-    volatile char *ptr = buffer;
+    volatile char *ptr = (volatile char *)buffer;
 
     while (length--) *ptr++ = 0;
     return buffer;
