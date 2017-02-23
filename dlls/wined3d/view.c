@@ -187,12 +187,14 @@ static void create_buffer_view(struct wined3d_gl_view *view,
 
     if (desc->format_id == WINED3DFMT_UNKNOWN)
     {
-        FIXME("Structured buffer views not supported.\n");
-        return;
+        offset = desc->u.buffer.start_idx * buffer->desc.structure_byte_stride;
+        size = desc->u.buffer.count * buffer->desc.structure_byte_stride;
     }
-
-    offset = desc->u.buffer.start_idx * view_format->byte_count;
-    size = desc->u.buffer.count * view_format->byte_count;
+    else
+    {
+        offset = desc->u.buffer.start_idx * view_format->byte_count;
+        size = desc->u.buffer.count * view_format->byte_count;
+    }
 
     create_buffer_texture(view, buffer, view_format, offset, size);
 }
@@ -546,14 +548,31 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        unsigned int buffer_size, element_size;
 
-        if (view_format->byte_count)
+        if (buffer->desc.structure_byte_stride)
         {
-            unsigned int buffer_size = buffer->resource.size / view_format->byte_count;
-            if (desc->u.buffer.start_idx >= buffer_size
-                    || desc->u.buffer.count > buffer_size - desc->u.buffer.start_idx)
+            if (desc->format_id != WINED3DFMT_UNKNOWN)
+            {
+                WARN("Invalid format %s for structured buffer view.\n", debug_d3dformat(desc->format_id));
                 return E_INVALIDARG;
+            }
+
+            view_format = wined3d_get_format(gl_info, WINED3DFMT_R32_UINT, resource->usage);
+            element_size = buffer->desc.structure_byte_stride;
         }
+        else
+        {
+            element_size = view_format->byte_count;
+        }
+
+        if (!element_size)
+            return E_INVALIDARG;
+
+        buffer_size = buffer->resource.size / element_size;
+        if (desc->u.buffer.start_idx >= buffer_size
+                || desc->u.buffer.count > buffer_size - desc->u.buffer.start_idx)
+            return E_INVALIDARG;
     }
     else
     {
@@ -756,14 +775,31 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        unsigned int buffer_size, element_size;
 
-        if (view->format->byte_count)
+        if (buffer->desc.structure_byte_stride)
         {
-            unsigned int buffer_size = buffer->resource.size / view->format->byte_count;
-            if (desc->u.buffer.start_idx >= buffer_size
-                    || desc->u.buffer.count > buffer_size - desc->u.buffer.start_idx)
+            if (desc->format_id != WINED3DFMT_UNKNOWN)
+            {
+                WARN("Invalid format %s for structured buffer view.\n", debug_d3dformat(desc->format_id));
                 return E_INVALIDARG;
+            }
+
+            view->format = wined3d_get_format(gl_info, WINED3DFMT_R32_UINT, resource->usage);
+            element_size = buffer->desc.structure_byte_stride;
         }
+        else
+        {
+            element_size = view->format->byte_count;
+        }
+
+        if (!element_size)
+            return E_INVALIDARG;
+
+        buffer_size = buffer->resource.size / element_size;
+        if (desc->u.buffer.start_idx >= buffer_size
+                || desc->u.buffer.count > buffer_size - desc->u.buffer.start_idx)
+            return E_INVALIDARG;
     }
     else
     {
