@@ -246,6 +246,10 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
 
     DataObjectImpl_GetData_calls++;
 
+    ok(pmedium->tymed == 0, "pmedium->tymed = %u\n", pmedium->tymed);
+    ok(U(*pmedium).hGlobal == NULL, "pmedium->hGlobal = %p\n", U(*pmedium).hGlobal);
+    ok(pmedium->pUnkForRelease == NULL, "pmedium->pUnkForRelease = %p\n", pmedium->pUnkForRelease);
+
     if(pformatetc->lindex != -1)
         return DV_E_FORMATETC;
 
