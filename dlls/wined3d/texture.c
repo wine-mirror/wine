@@ -1957,10 +1957,6 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
         if (!(sub_resource->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
             texture->swapchain->swapchain_ops->swapchain_frontbuffer_updated(texture->swapchain);
     }
-    else if (resource->format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-    {
-        FIXME("Depth / stencil buffer locking is not implemented.\n");
-    }
 
     --sub_resource->map_count;
     if (!--resource->map_count && texture->update_map_binding)
