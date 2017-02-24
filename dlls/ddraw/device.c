@@ -4337,7 +4337,7 @@ static HRESULT WINAPI d3d_device3_DrawPrimitiveVB(IDirect3DDevice3 *iface, D3DPR
         IDirect3DVertexBuffer *D3DVertexBuf, DWORD StartVertex, DWORD NumVertices, DWORD Flags)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
-    struct d3d_vertex_buffer *vb = unsafe_impl_from_IDirect3DVertexBuffer(D3DVertexBuf);
+    struct d3d_vertex_buffer *vb = unsafe_impl_from_IDirect3DVertexBuffer7((IDirect3DVertexBuffer7 *)D3DVertexBuf);
 
     TRACE("iface %p, primitive_type %#x, vb %p, start_vertex %u, vertex_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Flags);
@@ -4477,7 +4477,7 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface
         DWORD IndexCount, DWORD Flags)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
-    struct d3d_vertex_buffer *vb = unsafe_impl_from_IDirect3DVertexBuffer(D3DVertexBuf);
+    struct d3d_vertex_buffer *vb = unsafe_impl_from_IDirect3DVertexBuffer7((IDirect3DVertexBuffer7 *)D3DVertexBuf);
 
     TRACE("iface %p, primitive_type %#x, vb %p, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, Indices, IndexCount, Flags);

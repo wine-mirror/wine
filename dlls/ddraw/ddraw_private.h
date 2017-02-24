@@ -548,8 +548,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *execute_buffer,
 struct d3d_vertex_buffer
 {
     IDirect3DVertexBuffer7 IDirect3DVertexBuffer7_iface;
-    IDirect3DVertexBuffer IDirect3DVertexBuffer_iface;
     LONG ref;
+    unsigned int version;
 
     /*** WineD3D and ddraw links ***/
     struct wined3d_buffer *wined3d_buffer;
