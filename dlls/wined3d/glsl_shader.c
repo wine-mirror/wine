@@ -5072,8 +5072,8 @@ static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
 {
     const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
     const struct wined3d_shader_src_param *src = &ins->src[ins->src_count - 1];
+    unsigned int i, swizzle, resource_idx, bind_idx, stride, src_idx = 0;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
-    unsigned int i, swizzle, resource_idx, stride, src_idx = 0;
     struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param structure_idx, offset;
@@ -5090,6 +5090,7 @@ static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
             return;
         }
         stride = reg_maps->resource_info[resource_idx].stride;
+        bind_idx = shader_glsl_find_sampler(&reg_maps->sampler_map, resource_idx, WINED3D_SAMPLER_DEFAULT);
         function = "texelFetch";
         resource = "sampler";
     }
@@ -5101,6 +5102,7 @@ static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
             return;
         }
         stride = reg_maps->uav_resource_info[resource_idx].stride;
+        bind_idx = resource_idx;
         function = "imageLoad";
         resource = "image";
     }
@@ -5123,7 +5125,7 @@ static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
 
         swizzle = shader_glsl_swizzle_get_component(src->swizzle, i);
         shader_addline(buffer, "%s(%s_%s%u, %s + %u).x);\n",
-                function, prefix, resource, src->reg.idx[0].offset, address->buffer, swizzle);
+                function, prefix, resource, bind_idx, address->buffer, swizzle);
     }
 
     string_buffer_release(priv->string_buffers, address);
