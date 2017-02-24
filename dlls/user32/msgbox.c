@@ -261,8 +261,8 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     /* Get the text size */
     GetClientRect(GetDlgItem(hwnd, MSGBOX_IDTEXT), &rect);
     rect.top = rect.left = rect.bottom = 0;
-    DrawTextW( hdc, lpszText, -1, &rect,
-	       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
+    DrawTextW(hdc, lpszText, -1, &rect,
+              DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);
     /* Min text width corresponds to space for the buttons */
     tleft = ileft;
     if (iwidth) tleft += ileft + iwidth;
