@@ -18,7 +18,7 @@
 @ stub _Cmulcc
 @ stub _Cmulcr
 @ cdecl _CreateFrameInfo(ptr ptr)
-@ stdcall _CxxThrowException(long long)
+@ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
 @ stub _Exit
 @ stub _FCbuild

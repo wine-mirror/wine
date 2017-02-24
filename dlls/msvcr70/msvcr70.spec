@@ -108,7 +108,7 @@
 @ cdecl -arch=i386 _CItan()
 @ cdecl -arch=i386 _CItanh()
 @ cdecl _CRT_RTC_INIT(ptr ptr long long long)
-@ stdcall _CxxThrowException(long long)
+@ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
 @ cdecl _Getdays()
 @ cdecl _Getmonths()

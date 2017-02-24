@@ -843,7 +843,7 @@
 @ cdecl _CRT_RTC_INIT(ptr ptr long long long)
 @ cdecl _CRT_RTC_INITW(ptr ptr long long long)
 @ cdecl _CreateFrameInfo(ptr ptr)
-@ stdcall _CxxThrowException(long long)
+@ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
 @ stub -arch=arm _FPE_Raise
 @ cdecl _FindAndUnlinkFrame(ptr)

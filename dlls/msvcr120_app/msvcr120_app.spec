@@ -820,7 +820,7 @@
 @ cdecl -arch=i386 _CItanh() msvcr120._CItanh
 @ stub _Cbuild
 @ cdecl _CreateFrameInfo(ptr ptr) msvcr120._CreateFrameInfo
-@ stdcall _CxxThrowException(long long) msvcr120._CxxThrowException
+@ stdcall _CxxThrowException(ptr ptr) msvcr120._CxxThrowException
 @ cdecl -arch=i386 -norelay _EH_prolog() msvcr120._EH_prolog
 @ stub -arch=arm _FPE_Raise
 @ stub _FCbuild
