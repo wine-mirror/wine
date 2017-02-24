@@ -2955,12 +2955,12 @@ static void shader_glsl_get_swizzle(const struct wined3d_shader_src_param *param
         shader_glsl_swizzle_to_str(param->swizzle, fixup, mask, swizzle_str);
 }
 
-static void shader_glsl_sprintf_cast(char *dst_param_str, const char *src_param_str,
+static void shader_glsl_sprintf_cast(struct wined3d_string_buffer *dst_param, const char *src_param,
         enum wined3d_data_type dst_data_type, enum wined3d_data_type src_data_type)
 {
     if (dst_data_type == src_data_type)
     {
-        sprintf(dst_param_str, "%s", src_param_str);
+        string_buffer_sprintf(dst_param, "%s", src_param);
         return;
     }
 
@@ -2969,12 +2969,12 @@ static void shader_glsl_sprintf_cast(char *dst_param_str, const char *src_param_
         switch (dst_data_type)
         {
             case WINED3D_DATA_INT:
-                sprintf(dst_param_str, "floatBitsToInt(%s)", src_param_str);
+                string_buffer_sprintf(dst_param, "floatBitsToInt(%s)", src_param);
                 return;
             case WINED3D_DATA_RESOURCE:
             case WINED3D_DATA_SAMPLER:
             case WINED3D_DATA_UINT:
-                sprintf(dst_param_str, "floatBitsToUint(%s)", src_param_str);
+                string_buffer_sprintf(dst_param, "floatBitsToUint(%s)", src_param);
                 return;
             default:
                 break;
@@ -2983,18 +2983,18 @@ static void shader_glsl_sprintf_cast(char *dst_param_str, const char *src_param_
 
     if (src_data_type == WINED3D_DATA_UINT && dst_data_type == WINED3D_DATA_FLOAT)
     {
-        sprintf(dst_param_str, "uintBitsToFloat(%s)", src_param_str);
+        string_buffer_sprintf(dst_param, "uintBitsToFloat(%s)", src_param);
         return;
     }
 
     if (src_data_type == WINED3D_DATA_INT && dst_data_type == WINED3D_DATA_FLOAT)
     {
-        sprintf(dst_param_str, "intBitsToFloat(%s)", src_param_str);
+        string_buffer_sprintf(dst_param, "intBitsToFloat(%s)", src_param);
         return;
     }
 
     FIXME("Unhandled cast from %#x to %#x.\n", src_data_type, dst_data_type);
-    sprintf(dst_param_str, "%s", src_param_str);
+    string_buffer_sprintf(dst_param, "%s", src_param);
 }
 
 /* From a given parameter token, generate the corresponding GLSL string.
@@ -3004,10 +3004,11 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
         const struct wined3d_shader_src_param *wined3d_src, DWORD mask, struct glsl_src_param *glsl_src,
         enum wined3d_data_type data_type)
 {
+    struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+    struct wined3d_string_buffer *reg_name = string_buffer_get(priv->string_buffers);
     enum wined3d_data_type param_data_type;
     BOOL is_color = FALSE;
     char swizzle_str[6];
-    char reg_name[200];
 
     glsl_src->reg_name[0] = '\0';
     glsl_src->param_str[0] = '\0';
@@ -3036,7 +3037,9 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
     }
 
     shader_glsl_sprintf_cast(reg_name, glsl_src->reg_name, data_type, param_data_type);
-    shader_glsl_gen_modifier(wined3d_src->modifiers, reg_name, swizzle_str, glsl_src->param_str);
+    shader_glsl_gen_modifier(wined3d_src->modifiers, reg_name->buffer, swizzle_str, glsl_src->param_str);
+
+    string_buffer_release(priv->string_buffers, reg_name);
 }
 
 static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *ins,
