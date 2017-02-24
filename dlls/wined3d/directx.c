@@ -3346,8 +3346,8 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
 
     gl_info->limits.blends = 1;
     gl_info->limits.buffers = 1;
-    gl_info->limits.textures = 1;
-    gl_info->limits.texture_coords = 1;
+    gl_info->limits.textures = 0;
+    gl_info->limits.texture_coords = 0;
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
         gl_info->limits.uniform_blocks[i] = 0;
     gl_info->limits.fragment_samplers = 1;
@@ -3412,23 +3412,33 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     }
     if (gl_info->supported[ARB_MULTITEXTURE])
     {
-        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-        gl_info->limits.textures = min(MAX_TEXTURES, gl_max);
-        TRACE("Max textures: %d.\n", gl_info->limits.textures);
-
-        if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
         {
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &gl_max);
-            gl_info->limits.texture_coords = min(MAX_TEXTURES, gl_max);
-            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+            gl_info->limits.textures = min(MAX_TEXTURES, gl_max);
+            TRACE("Max textures: %d.\n", gl_info->limits.textures);
+
+            if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+            {
+                gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &gl_max);
+                gl_info->limits.texture_coords = min(MAX_TEXTURES, gl_max);
+            }
+            else
+            {
+                gl_info->limits.texture_coords = gl_info->limits.textures;
+            }
+            TRACE("Max texture coords: %d.\n", gl_info->limits.texture_coords);
+        }
+
+        if (gl_info->supported[ARB_FRAGMENT_PROGRAM] || gl_info->supported[ARB_FRAGMENT_SHADER])
+        {
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &gl_max);
             gl_info->limits.fragment_samplers = gl_max;
         }
         else
         {
-            gl_info->limits.texture_coords = max(gl_info->limits.texture_coords, gl_max);
-            gl_info->limits.fragment_samplers = max(gl_info->limits.fragment_samplers, gl_max);
+            gl_info->limits.fragment_samplers = gl_info->limits.textures;
         }
-        TRACE("Max texture coords: %d.\n", gl_info->limits.texture_coords);
         TRACE("Max fragment samplers: %d.\n", gl_info->limits.fragment_samplers);
 
         if (gl_info->supported[ARB_VERTEX_SHADER])
@@ -3475,6 +3485,12 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         TRACE("Max vertex attributes: %u.\n", gl_info->limits.vertex_attribs);
         gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
     }
+    else
+    {
+        gl_info->limits.textures = 1;
+        gl_info->limits.texture_coords = 1;
+    }
+
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
