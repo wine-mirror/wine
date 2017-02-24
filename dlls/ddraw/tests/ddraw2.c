@@ -23,6 +23,7 @@
 #define COBJMACROS
 #include "wine/test.h"
 #include <limits.h>
+#include <math.h>
 #include "d3d.h"
 
 static BOOL is_ddraw64 = sizeof(DWORD) != sizeof(DWORD *);
@@ -8409,6 +8410,7 @@ static void test_color_fill(void)
     IDirectDrawSurface *surface, *surface2;
     DDSURFACEDESC surface_desc;
     ULONG refcount;
+    BOOL is_warp;
     HWND window;
     unsigned int i;
     DDBLTFX fx;
@@ -8463,7 +8465,7 @@ static void test_color_fill(void)
         },
         {
             DDSCAPS_ZBUFFER | DDSCAPS_VIDEOMEMORY,
-            DDERR_INVALIDPARAMS, DD_OK, TRUE, "vidmem zbuffer", 0, FALSE,
+            DDERR_INVALIDPARAMS, DD_OK, TRUE, "vidmem zbuffer", 0xdeadbeef, TRUE,
             {0, 0, 0, {0}, {0}, {0}, {0}, {0}}
         },
         {
@@ -8569,6 +8571,7 @@ static void test_color_fill(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
+    is_warp = ddraw_is_warp(ddraw);
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -8604,6 +8607,9 @@ static void test_color_fill(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
+        DWORD expected_broken = tests[i].result;
+        DWORD mask = 0xffffffffu;
+
         /* Some Windows drivers modify dwFillColor when it is used on P8 or FourCC formats. */
         memset(&fx, 0, sizeof(fx));
         fx.dwSize = sizeof(fx);
@@ -8638,6 +8644,21 @@ static void test_color_fill(void)
             surface_desc.dwFlags &= ~DDSD_PIXELFORMAT;
             surface_desc.dwFlags |= DDSD_ZBUFFERBITDEPTH;
             U2(surface_desc).dwZBufferBitDepth = get_device_z_depth(device);
+            mask >>= (32 - U2(surface_desc).dwZBufferBitDepth);
+            /* Some drivers seem to convert depth values incorrectly or not at
+             * all. Affects at least AMD PALM, 8.17.10.1247. */
+            if (tests[i].caps & DDSCAPS_VIDEOMEMORY)
+            {
+                DWORD expected;
+                float f, g;
+
+                expected = tests[i].result & mask;
+                f = ceilf(log2f(expected + 1.0f));
+                g = (f + 1.0f) / 2.0f;
+                g -= (int)g;
+                expected_broken = (expected / exp2f(f) - g) * 256;
+                expected_broken *= 0x01010101;
+            }
         }
 
         hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
@@ -8672,6 +8693,22 @@ static void test_color_fill(void)
         hr = IDirectDrawSurface_Blt(surface, &rect, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
         ok(hr == tests[i].depthfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                 hr, tests[i].depthfill_hr, tests[i].name);
+
+        if (SUCCEEDED(hr) && tests[i].check_result)
+        {
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface_Lock(surface, NULL, &surface_desc, DDLOCK_READONLY, 0);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+            color = surface_desc.lpSurface;
+            todo_wine_if(tests[i].caps & DDSCAPS_VIDEOMEMORY && U2(surface_desc).dwZBufferBitDepth != 16)
+                ok((*color & mask) == (tests[i].result & mask) || broken((*color & mask) == (expected_broken & mask))
+                        || broken(is_warp && (*color & mask) == (~0u & mask)) /* Windows 8+ testbot. */,
+                        "Got clear result 0x%08x, expected 0x%08x, surface %s.\n",
+                        *color & mask, tests[i].result & mask, tests[i].name);
+            hr = IDirectDrawSurface_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, surface %s.\n", hr, tests[i].name);
+        }
 
         U5(fx).dwFillColor = 0xdeadbeef;
         fx.dwROP = BLACKNESS;
