@@ -1349,8 +1349,8 @@
 @ stdcall SetConsoleFont(long long)
 @ stub SetConsoleHardwareState
 @ stdcall SetConsoleIcon(ptr)
-@ stdcall SetConsoleInputExeNameA(ptr)
-@ stdcall SetConsoleInputExeNameW(ptr)
+@ stdcall SetConsoleInputExeNameA(str)
+@ stdcall SetConsoleInputExeNameW(wstr)
 @ stdcall SetConsoleKeyShortcuts(long long ptr long)
 @ stub SetConsoleLocalEUDC
 @ stub SetConsoleMaximumWindowSize
