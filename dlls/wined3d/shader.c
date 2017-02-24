@@ -1331,11 +1331,15 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     || (WINED3DSIH_IMM_ATOMIC_AND <= ins.handler_idx
                     && ins.handler_idx <= WINED3DSIH_IMM_ATOMIC_XOR
                     && ins.handler_idx != WINED3DSIH_IMM_ATOMIC_CONSUME)
-                    || ins.handler_idx == WINED3DSIH_LD_UAV_TYPED)
+                    || ins.handler_idx == WINED3DSIH_LD_UAV_TYPED
+                    || (ins.handler_idx == WINED3DSIH_LD_RAW && ins.src[1].reg.type == WINED3DSPR_UAV)
+                    || (ins.handler_idx == WINED3DSIH_LD_STRUCTURED && ins.src[2].reg.type == WINED3DSPR_UAV))
             {
                 unsigned int reg_idx;
-                if (ins.handler_idx == WINED3DSIH_LD_UAV_TYPED)
+                if (ins.handler_idx == WINED3DSIH_LD_UAV_TYPED || ins.handler_idx == WINED3DSIH_LD_RAW)
                     reg_idx = ins.src[1].reg.idx[0].offset;
+                else if (ins.handler_idx == WINED3DSIH_LD_STRUCTURED)
+                    reg_idx = ins.src[2].reg.idx[0].offset;
                 else if (WINED3DSIH_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_ATOMIC_XOR)
                     reg_idx = ins.dst[0].reg.idx[0].offset;
                 else
