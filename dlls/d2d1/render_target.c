@@ -1818,24 +1818,24 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
     struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
     const D2D1_MATRIX_3X2_F *m = &render_target->drawing_state.transform;
     struct d2d_draw_text_layout_ctx *context = ctx;
-    float min_thickness;
+    D2D1_POINT_2F start, end;
     ID2D1Brush *brush;
-    D2D1_RECT_F rect;
+    float thickness;
 
     TRACE("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, underline %p, effect %p\n",
             iface, ctx, baseline_origin_x, baseline_origin_y, underline, effect);
 
     /* minimal thickness in DIPs that will result in at least 1 pixel thick line */
-    min_thickness = 96.0f / (render_target->desc.dpiY * sqrtf(m->_21 * m->_21 + m->_22 * m->_22));
-
-    rect.left   = baseline_origin_x;
-    rect.top    = baseline_origin_y + underline->offset;
-    rect.right  = baseline_origin_x + underline->width;
-    rect.bottom = baseline_origin_y + underline->offset + max(underline->thickness, min_thickness);
+    thickness = max(96.0f / (render_target->desc.dpiY * sqrtf(m->_21 * m->_21 + m->_22 * m->_22)),
+            underline->thickness);
 
     brush = d2d_draw_get_text_brush(context, effect);
 
-    ID2D1RenderTarget_FillRectangle(&render_target->ID2D1RenderTarget_iface, &rect, brush);
+    start.x = baseline_origin_x;
+    start.y = baseline_origin_y + underline->offset + thickness / 2.0f;
+    end.x = start.x + underline->width;
+    end.y = start.y;
+    d2d_d3d_render_target_DrawLine(&render_target->ID2D1RenderTarget_iface, start, end, brush, thickness, NULL);
 
     ID2D1Brush_Release(brush);
 
