@@ -415,6 +415,62 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "MixedQuotes");
     verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
 
+    /* Test import with non-standard registry file headers */
+    exec_import_str("REGEDIT3\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test1\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test1");
+
+    exec_import_str("regedit4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test2\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test2");
+
+    exec_import_str("Regedit4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test3\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test3");
+
+    exec_import_str("REGEDIT 4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test4\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test4");
+
+    exec_import_str("REGEDIT4FOO\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test5\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test5");
+
+    exec_import_str("REGEDIT4 FOO\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test6\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test6");
+
+    exec_import_str("REGEDIT5\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test7\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test7");
+
+    exec_import_str("Windows Registry Editor Version 4.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test8\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test8");
+
+    exec_import_str("Windows Registry Editor Version 5\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test9\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test9");
+
+    exec_import_str("WINDOWS REGISTRY EDITOR VERSION 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test10\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test10");
+
+    exec_import_str("Windows Registry Editor version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test11\"=\"Value\"\n");
+    verify_reg_nonexist(hkey, "Test11");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
