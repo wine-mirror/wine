@@ -780,6 +780,8 @@ static void shader_sm5_read_dcl_resource_structured(struct wined3d_shader_instru
 {
     shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_RESOURCE, &ins->declaration.structured_resource.reg);
     ins->declaration.structured_resource.byte_stride = *tokens;
+    if (ins->declaration.structured_resource.byte_stride % 4)
+        FIXME("Byte stride %u is not multiple of 4.\n", ins->declaration.structured_resource.byte_stride);
 }
 
 static void shader_sm5_read_dcl_resource_raw(struct wined3d_shader_instruction *ins,
