@@ -246,6 +246,7 @@ void sync_window_cursor( Window window )
     set_window_cursor( window, cursor );
 }
 
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
 /***********************************************************************
  *              update_relative_valuators
  */
@@ -281,6 +282,7 @@ static void update_relative_valuators(XIAnyClassInfo **valuators, int n_valuator
         }
     }
 }
+#endif
 
 
 /***********************************************************************
