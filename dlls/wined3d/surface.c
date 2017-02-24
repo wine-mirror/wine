@@ -2475,13 +2475,6 @@ static BOOL surface_load_sysmem(struct wined3d_surface *surface,
     struct wined3d_texture_sub_resource *sub_resource;
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
-    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-    {
-        FIXME("Unimplemented copy from %s for depth/stencil buffers.\n",
-                wined3d_debug_location(sub_resource->locations));
-        return FALSE;
-    }
-
     wined3d_texture_prepare_location(texture, sub_resource_idx, context, dst_location);
 
     if (sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED))
@@ -2498,7 +2491,8 @@ static BOOL surface_load_sysmem(struct wined3d_surface *surface,
         return TRUE;
     }
 
-    if (sub_resource->locations & WINED3D_LOCATION_DRAWABLE)
+    if (!(texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
+            && (sub_resource->locations & WINED3D_LOCATION_DRAWABLE))
     {
         read_from_framebuffer(surface, context, dst_location);
         return TRUE;
