@@ -147,10 +147,10 @@ HRESULT enum_services_providers(const GUID * const service, DPN_SERVICE_PROVIDER
     if(!returned || !buf_size)
         return E_POINTER;
 
-    *returned = 0;
-
     if(!service)
     {
+        *returned = 0;
+
         res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, serviceproviders, 0, KEY_READ, &key);
         if(res == ERROR_FILE_NOT_FOUND)
             return DPNERR_DOESNOTEXIST;

@@ -211,6 +211,12 @@ static void test_enum_service_providers(void)
     }
 
     ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
+
+    /* Invalid GUID */
+    items = 88;
+    hr = IDirectPlay8Client_EnumServiceProviders(client, &appguid, NULL, serv_prov_info, &size, &items, 0);
+    ok(hr == DPNERR_DOESNOTEXIST, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+    ok(items == 88, "Found adapter %d\n", items);
 }
 
 static void test_enum_hosts(void)
@@ -571,6 +577,12 @@ static void test_enum_service_providers_peer(void)
 
     serv_prov_info -= items; /* set pointer back */
     ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
+
+    /* Invalid GUID */
+    items = 88;
+    hr = IDirectPlay8Peer_EnumServiceProviders(peer, &appguid, NULL, serv_prov_info, &size, &items, 0);
+    ok(hr == DPNERR_DOESNOTEXIST, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+    ok(items == 88, "Found adapter %d\n", items);
 }
 
 static void test_enum_hosts_peer(void)
