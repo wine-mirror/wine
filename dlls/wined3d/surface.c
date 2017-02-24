@@ -2549,16 +2549,12 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
     struct wined3d_format format;
     POINT dst_point = {0, 0};
     RECT src_rect;
+    BOOL depth;
 
+    depth = texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL;
     sub_resource = surface_get_sub_resource(surface);
-    if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
-    {
-        FIXME("Unimplemented copy from %s for depth/stencil buffers.\n",
-                wined3d_debug_location(sub_resource->locations));
-        return FALSE;
-    }
 
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+    if (!depth && wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && wined3d_resource_is_offscreen(&texture->resource)
             && (sub_resource->locations & WINED3D_LOCATION_DRAWABLE))
     {
@@ -2571,7 +2567,7 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
     height = wined3d_texture_get_level_height(texture, surface->texture_level);
     SetRect(&src_rect, 0, 0, width, height);
 
-    if (sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
+    if (!depth && sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
             && (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 NULL, texture->resource.usage, texture->resource.pool, texture->resource.format,
@@ -2587,7 +2583,7 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
         return TRUE;
     }
 
-    if (sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED)
+    if (!depth && sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED)
             && (!srgb || (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 NULL, texture->resource.usage, texture->resource.pool, texture->resource.format,
