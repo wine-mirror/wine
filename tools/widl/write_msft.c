@@ -885,6 +885,8 @@ static int encode_type(
 
     case VT_VARIANT:
         *encoded_type = default_type;
+        *width = 8 + 2 * pointer_size;
+        *alignment = 8;
         break;
 
     case VT_LPSTR:
