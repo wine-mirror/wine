@@ -6626,7 +6626,7 @@ static void test_WSARecv(void)
 {
     SOCKET src, dest, server = INVALID_SOCKET;
     char buf[20];
-    WSABUF bufs;
+    WSABUF bufs[2];
     WSAOVERLAPPED ov;
     DWORD bytesReturned, flags, id;
     struct linger ling;
@@ -6645,8 +6645,8 @@ static void test_WSARecv(void)
 
     memset(&ov, 0, sizeof(ov));
     flags = 0;
-    bufs.len = 2;
-    bufs.buf = buf;
+    bufs[0].len = 2;
+    bufs[0].buf = buf;
 
     /* Send 4 bytes and receive in two calls of 2 */
     SetLastError(0xdeadbeef);
@@ -6655,31 +6655,49 @@ static void test_WSARecv(void)
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
-    iret = WSARecv(dest, &bufs, 1, &bytesReturned, &flags, NULL, NULL);
+    iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
-    ok(bytesReturned, "Expected 2, got %d\n", bytesReturned);
+    ok(bytesReturned == 2, "Expected 2, got %d\n", bytesReturned);
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
-    iret = WSARecv(dest, &bufs, 1, &bytesReturned, &flags, NULL, NULL);
+    iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
-    ok(bytesReturned, "Expected 2, got %d\n", bytesReturned);
+    ok(bytesReturned == 2, "Expected 2, got %d\n", bytesReturned);
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
 
-    bufs.len = 4;
+    bufs[0].len = 4;
     SetLastError(0xdeadbeef);
     iret = send(src, "test", 4, 0);
     ok(iret == 4, "Expected 4, got %d\n", iret);
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
-    iret = WSARecv(dest, &bufs, 1, &bytesReturned, &flags, NULL, NULL);
+    iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
-    ok(bytesReturned, "Expected 4, got %d\n", bytesReturned);
+    ok(bytesReturned == 4, "Expected 4, got %d\n", bytesReturned);
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
 
-    bufs.len = sizeof(buf);
+    /* Test 2 buffers */
+    bufs[0].len = 4;
+    bufs[1].len = 5;
+    bufs[1].buf = buf + 10;
+    SetLastError(0xdeadbeef);
+    iret = send(src, "deadbeefs", 9, 0);
+    ok(iret == 9, "Expected 9, got %d\n", iret);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    bytesReturned = 0xdeadbeef;
+    iret = WSARecv(dest, bufs, 2, &bytesReturned, &flags, NULL, NULL);
+    ok(!iret, "Expected 0, got %d\n", iret);
+    ok(bytesReturned == 9, "Expected 9, got %d\n", bytesReturned);
+    bufs[0].buf[4] = '\0';
+    bufs[1].buf[5] = '\0';
+    ok(!strcmp(bufs[0].buf, "dead"), "buf[0] doesn't match: %s != dead\n", bufs[0].buf);
+    ok(!strcmp(bufs[1].buf, "beefs"), "buf[1] doesn't match: %s != beefs\n", bufs[1].buf);
+    ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
 
+    bufs[0].len = sizeof(buf);
     ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
     if (!ov.hEvent)
@@ -6690,10 +6708,10 @@ static void test_WSARecv(void)
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
     ok(!iret, "Failed to set linger %d\n", GetLastError());
 
-    iret = WSARecv(dest, &bufs, 1, NULL, &flags, &ov, NULL);
+    iret = WSARecv(dest, bufs, 1, NULL, &flags, &ov, NULL);
     ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
 
-    iret = WSARecv(dest, &bufs, 1, &bytesReturned, &flags, &ov, NULL);
+    iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, &ov, NULL);
     ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
 
     closesocket(src);
