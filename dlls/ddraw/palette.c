@@ -158,7 +158,6 @@ static HRESULT WINAPI ddraw_palette_GetCaps(IDirectDrawPalette *iface, DWORD *ca
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if PalEnt is NULL
- *  For details, see IWineD3DDevice::SetEntries
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_palette_SetEntries(IDirectDrawPalette *iface,
@@ -198,7 +197,6 @@ static HRESULT WINAPI ddraw_palette_SetEntries(IDirectDrawPalette *iface,
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if PalEnt is NULL
- *  For details, see IWineD3DDevice::SetEntries
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_palette_GetEntries(IDirectDrawPalette *iface,

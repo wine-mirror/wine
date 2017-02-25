@@ -1488,7 +1488,7 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     hr = wined3d_device_get_device_caps(ddraw->wined3d_device, &winecaps);
     if (FAILED(hr))
     {
-        WARN("IWineD3DDevice::GetDeviceCaps failed\n");
+        WARN("Failed to get device caps, %#x.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -4236,7 +4236,6 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
  * Returns
  *  D3D_OK on success
  *  DDERR_OUTOFMEMORY if memory allocation failed
- *  The return value of IWineD3DDevice::CreateVertexBuffer if this call fails
  *  DDERR_INVALIDPARAMS if desc or vertex_buffer is NULL
  *
  *****************************************************************************/
@@ -4306,7 +4305,6 @@ static HRESULT WINAPI d3d3_CreateVertexBuffer(IDirect3D3 *iface, D3DVERTEXBUFFER
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if callback is NULL
- *  For details, see IWineD3DDevice::EnumZBufferFormats
  *
  *****************************************************************************/
 static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device_iid,

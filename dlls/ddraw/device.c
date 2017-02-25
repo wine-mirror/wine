@@ -1019,9 +1019,8 @@ static HRESULT WINAPI d3d_device1_GetPickRecords(IDirect3DDevice *iface,
 /*****************************************************************************
  * IDirect3DDevice7::EnumTextureformats
  *
- * Enumerates the supported texture formats. It has a list of all possible
- * formats and calls IWineD3D::CheckDeviceFormat for each format to see if
- * WineD3D supports it. If so, then it is passed to the app.
+ * Enumerates the supported texture formats. It checks against a list of all possible
+ * formats to see if WineD3D supports it. If so, then it is passed to the app.
  *
  * This is for Version 7 and 3, older versions have a different
  * callback function and their own implementation
@@ -1461,7 +1460,7 @@ static HRESULT WINAPI d3d_device1_DeleteMatrix(IDirect3DDevice *iface, D3DMATRIX
  * Version 1, 2, 3 and 7
  *
  * Returns:
- *  D3D_OK on success, for details see IWineD3DDevice::BeginScene
+ *  D3D_OK on success,
  *  D3DERR_SCENE_IN_SCENE if WineD3D returns an error(Only in case of an already
  *  started scene).
  *
@@ -1534,7 +1533,7 @@ static HRESULT WINAPI d3d_device1_BeginScene(IDirect3DDevice *iface)
  * Version 1, 2, 3 and 7
  *
  * Returns:
- *  D3D_OK on success, for details see IWineD3DDevice::EndScene
+ *  D3D_OK on success,
  *  D3DERR_SCENE_NOT_IN_SCENE is returned if WineD3D returns an error. It does
  *  that only if the scene was already ended.
  *
@@ -2284,7 +2283,7 @@ static HRESULT WINAPI d3d_device2_Index(IDirect3DDevice2 *iface, WORD index)
  *  Value: Address to store the value at
  *
  * Returns:
- *  D3D_OK on success, for details see IWineD3DDevice::GetRenderState
+ *  D3D_OK on success,
  *  DDERR_INVALIDPARAMS if Value == NULL
  *
  *****************************************************************************/
@@ -2555,10 +2554,6 @@ static HRESULT WINAPI d3d_device2_GetRenderState(IDirect3DDevice2 *iface,
  * Params:
  *  RenderStateType: State to set
  *  Value: Value to assign to that state
- *
- * Returns:
- *  D3D_OK on success,
- *  for details see IWineD3DDevice::SetRenderState
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
@@ -3137,7 +3132,6 @@ static HRESULT WINAPI d3d_device2_GetLightState(IDirect3DDevice2 *iface,
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Matrix == NULL
- *  For details see IWineD3DDevice::SetTransform
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetTransform(IDirect3DDevice7 *iface,
@@ -3247,7 +3241,6 @@ static HRESULT WINAPI d3d_device2_SetTransform(IDirect3DDevice2 *iface,
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Matrix == NULL
- *  For details, see IWineD3DDevice::GetTransform
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetTransform(IDirect3DDevice7 *iface,
@@ -3352,7 +3345,6 @@ static HRESULT WINAPI d3d_device2_GetTransform(IDirect3DDevice2 *iface,
  * Returns
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if D3DMatrix is NULL
- *  For details, see IWineD3DDevice::MultiplyTransform
  *
  *****************************************************************************/
 static HRESULT d3d_device7_MultiplyTransform(IDirect3DDevice7 *iface,
@@ -3462,7 +3454,6 @@ static HRESULT WINAPI d3d_device2_MultiplyTransform(IDirect3DDevice2 *iface,
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Vertices is NULL
- *  For details, see IWineD3DDevice::DrawPrimitiveUP
  *
  *****************************************************************************/
 
@@ -3649,7 +3640,6 @@ static HRESULT WINAPI d3d_device2_DrawPrimitive(IDirect3DDevice2 *iface,
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Vertices or Indices is NULL
- *  For details, see IWineD3DDevice::DrawIndexedPrimitiveUP
  *
  *****************************************************************************/
 /* The caller is responsible for wined3d locking */
@@ -3882,10 +3872,6 @@ static HRESULT WINAPI d3d_device7_SetClipStatus(IDirect3DDevice7 *iface, D3DCLIP
 {
     FIXME("iface %p, clip_status %p stub!\n", iface, clip_status);
 
-    /* D3DCLIPSTATUS and WINED3DCLIPSTATUS are different. I don't know how to convert them
-     * Perhaps this needs a new data type and an additional IWineD3DDevice method
-     */
-    /* return IWineD3DDevice_SetClipStatus(This->wineD3DDevice, ClipStatus);*/
     return D3D_OK;
 }
 
@@ -3923,8 +3909,6 @@ static HRESULT WINAPI d3d_device7_GetClipStatus(IDirect3DDevice7 *iface, D3DCLIP
 {
     FIXME("iface %p, clip_status %p stub!\n", iface, clip_status);
 
-    /* D3DCLIPSTATUS and WINED3DCLIPSTATUS are different. I don't know how to convert them */
-    /* return IWineD3DDevice_GetClipStatus(This->wineD3DDevice, ClipStatus);*/
     return D3D_OK;
 }
 
@@ -3964,7 +3948,6 @@ static HRESULT WINAPI d3d_device2_GetClipStatus(IDirect3DDevice2 *iface, D3DCLIP
  * Returns:
  *  D3D_OK, because it's a stub
  *  (DDERR_INVALIDPARAMS if D3DDrawPrimStrideData is NULL)
- *  (For details, see IWineD3DDevice::DrawPrimitiveStrided)
  *
  *****************************************************************************/
 static void pack_strided_data(BYTE *dst, DWORD count, const D3DDRAWPRIMITIVESTRIDEDDATA *src, DWORD fvf)
@@ -4132,7 +4115,6 @@ static HRESULT WINAPI d3d_device3_DrawPrimitiveStrided(IDirect3DDevice3 *iface,
  *  D3D_OK, because it's a stub
  *  (DDERR_INVALIDPARAMS if D3DDrawPrimStrideData is NULL)
  *  (DDERR_INVALIDPARAMS if Indices is NULL)
- *  (For more details, see IWineD3DDevice::DrawIndexedPrimitiveStrided)
  *
  *****************************************************************************/
 static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
@@ -4392,7 +4374,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
      * 1) Upload the indices to the index buffer
      * 2) Set the index source
      * 3) Set the Vertex Buffer as the Stream source
-     * 4) Call IWineD3DDevice::DrawIndexedPrimitive
+     * 4) Call wined3d_device_draw_indexed_primitive()
      */
 
     wined3d_mutex_lock();
@@ -4623,7 +4605,6 @@ static HRESULT WINAPI d3d_device3_ComputeSphereVisibility(IDirect3DDevice3 *ifac
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Texture is NULL
- *  For details, see IWineD3DDevice::GetTexture
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetTexture(IDirect3DDevice7 *iface,
@@ -4705,7 +4686,6 @@ static HRESULT WINAPI d3d_device3_GetTexture(IDirect3DDevice3 *iface, DWORD stag
  *
  * Returns
  * D3D_OK on success
- * For details, see IWineD3DDevice::SetTexture
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetTexture(IDirect3DDevice7 *iface,
@@ -4850,7 +4830,6 @@ tss_lookup[] =
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if State is NULL
- *  For details, see IWineD3DDevice::GetTextureStageState
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetTextureStageState(IDirect3DDevice7 *iface,
@@ -4990,7 +4969,6 @@ static HRESULT WINAPI d3d_device3_GetTextureStageState(IDirect3DDevice3 *iface,
  *
  * Returns:
  *  D3D_OK on success
- *  For details, see IWineD3DDevice::SetTextureStageState
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetTextureStageState(IDirect3DDevice7 *iface,
@@ -5132,7 +5110,6 @@ static HRESULT WINAPI d3d_device3_SetTextureStageState(IDirect3DDevice3 *iface,
  *
  * Returns:
  *  D3D_OK on success
- *  See IWineD3DDevice::ValidateDevice for more details
  *
  *****************************************************************************/
 static HRESULT d3d_device7_ValidateDevice(IDirect3DDevice7 *iface, DWORD *pass_count)
@@ -5193,7 +5170,6 @@ static HRESULT WINAPI d3d_device3_ValidateDevice(IDirect3DDevice3 *iface, DWORD 
  *
  * Returns:
  *  D3D_OK on success
- *  For details, see IWineD3DDevice::Clear
  *
  *****************************************************************************/
 static HRESULT d3d_device7_Clear(IDirect3DDevice7 *iface, DWORD count,
@@ -5258,7 +5234,6 @@ static HRESULT WINAPI d3d_device7_Clear_FPUPreserve(IDirect3DDevice7 *iface, DWO
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Data is NULL
- *  For more details, see IWineDDDevice::SetViewport
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *viewport)
@@ -5308,7 +5283,6 @@ static HRESULT WINAPI d3d_device7_SetViewport_FPUPreserve(IDirect3DDevice7 *ifac
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Data is NULL
- *  For more details, see IWineD3DDevice::GetViewport
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *viewport)
@@ -5358,7 +5332,6 @@ static HRESULT WINAPI d3d_device7_GetViewport_FPUPreserve(IDirect3DDevice7 *ifac
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Mat is NULL.
- *  For more details, see IWineD3DDevice::SetMaterial
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetMaterial(IDirect3DDevice7 *iface, D3DMATERIAL7 *material)
@@ -5408,7 +5381,6 @@ static HRESULT WINAPI d3d_device7_SetMaterial_FPUPreserve(IDirect3DDevice7 *ifac
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Mat is NULL
- *  For more details, see IWineD3DDevice::GetMaterial
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetMaterial(IDirect3DDevice7 *iface, D3DMATERIAL7 *material)
@@ -5455,7 +5427,6 @@ static HRESULT WINAPI d3d_device7_GetMaterial_FPUPreserve(IDirect3DDevice7 *ifac
  *
  * Returns:
  *  D3D_OK on success
- *  For more details, see IWineD3DDevice::SetLight
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetLight(IDirect3DDevice7 *iface, DWORD light_idx, D3DLIGHT7 *light)
@@ -5501,7 +5472,6 @@ static HRESULT WINAPI d3d_device7_SetLight_FPUPreserve(IDirect3DDevice7 *iface, 
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Light is NULL
- *  For details, see IWineD3DDevice::GetLight
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetLight(IDirect3DDevice7 *iface, DWORD light_idx, D3DLIGHT7 *light)
@@ -5546,7 +5516,6 @@ static HRESULT WINAPI d3d_device7_GetLight_FPUPreserve(IDirect3DDevice7 *iface, 
  *
  * Returns:
  *  D3D_OK on success
- *  For details see IWineD3DDevice::BeginStateBlock
  *
  *****************************************************************************/
 static HRESULT d3d_device7_BeginStateBlock(IDirect3DDevice7 *iface)
@@ -5594,7 +5563,6 @@ static HRESULT WINAPI d3d_device7_BeginStateBlock_FPUPreserve(IDirect3DDevice7 *
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if BlockHandle is NULL
- *  See IWineD3DDevice::EndStateBlock for more details
  *
  *****************************************************************************/
 static HRESULT d3d_device7_EndStateBlock(IDirect3DDevice7 *iface, DWORD *stateblock)
@@ -5667,7 +5635,6 @@ static HRESULT WINAPI d3d_device7_EndStateBlock_FPUPreserve(IDirect3DDevice7 *if
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Texture is NULL
- *  See IWineD3DSurface::PreLoad for details
  *
  *****************************************************************************/
 static HRESULT d3d_device7_PreLoad(IDirect3DDevice7 *iface, IDirectDrawSurface7 *texture)
@@ -5768,7 +5735,6 @@ static HRESULT WINAPI d3d_device7_ApplyStateBlock_FPUPreserve(IDirect3DDevice7 *
  * Returns:
  *  D3D_OK on success
  *  D3DERR_INVALIDSTATEBLOCK if BlockHandle is NULL
- *  See IWineD3DDevice::CaptureStateBlock for more details
  *
  *****************************************************************************/
 static HRESULT d3d_device7_CaptureStateBlock(IDirect3DDevice7 *iface, DWORD stateblock)
@@ -6311,7 +6277,6 @@ static HRESULT WINAPI d3d_device7_Load_FPUPreserve(IDirect3DDevice7 *iface, IDir
  *
  * Returns:
  *  D3D_OK on success
- *  For more details, see IWineD3DDevice::SetLightEnable
  *
  *****************************************************************************/
 static HRESULT d3d_device7_LightEnable(IDirect3DDevice7 *iface, DWORD light_idx, BOOL enabled)
@@ -6359,7 +6324,6 @@ static HRESULT WINAPI d3d_device7_LightEnable_FPUPreserve(IDirect3DDevice7 *ifac
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Enable is NULL
- *  See IWineD3DDevice::GetLightEnable for more details
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetLightEnable(IDirect3DDevice7 *iface, DWORD light_idx, BOOL *enabled)
@@ -6410,7 +6374,6 @@ static HRESULT WINAPI d3d_device7_GetLightEnable_FPUPreserve(IDirect3DDevice7 *i
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if PlaneEquation is NULL
- *  See IWineD3DDevice::SetClipPlane for more details
  *
  *****************************************************************************/
 static HRESULT d3d_device7_SetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DVALUE *plane)
@@ -6459,7 +6422,6 @@ static HRESULT WINAPI d3d_device7_SetClipPlane_FPUPreserve(IDirect3DDevice7 *ifa
  * Returns:
  *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if PlaneEquation is NULL
- *  See IWineD3DDevice::GetClipPlane for more details
  *
  *****************************************************************************/
 static HRESULT d3d_device7_GetClipPlane(IDirect3DDevice7 *iface, DWORD idx, D3DVALUE *plane)
