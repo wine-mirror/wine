@@ -365,6 +365,10 @@ static void test_mciParser(HWND hwnd)
     ok(!err,"capability device type: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "waveaudio"), "capability device type is %s\n", buf);
 
+    err = mciSendStringA("info a version", buf, sizeof(buf), hwnd);
+    ok(!err,"info version: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf, "1.1"), "info version is %s\n", buf);
+
     err = mciSendCommandA(wDeviceID, MCI_CLOSE, 0, 0);
     ok(!err,"mciCommand close returned %s\n", dbg_mcierr(err));
 
