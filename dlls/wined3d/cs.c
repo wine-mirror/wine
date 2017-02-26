@@ -97,6 +97,7 @@ struct wined3d_cs_dispatch
 struct wined3d_cs_draw
 {
     enum wined3d_cs_op opcode;
+    GLenum primitive_type;
     int base_vertex_idx;
     unsigned int start_idx;
     unsigned int index_count;
@@ -592,6 +593,13 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         device_invalidate_state(cs->device, STATE_BASEVERTEXINDEX);
     }
 
+    if (cs->state.gl_primitive_type != op->primitive_type)
+    {
+        if (cs->state.gl_primitive_type == GL_POINTS || op->primitive_type == GL_POINTS)
+            device_invalidate_state(cs->device, STATE_POINT_ENABLE);
+        cs->state.gl_primitive_type = op->primitive_type;
+    }
+
     draw_primitive(cs->device, state, op->base_vertex_idx, op->start_idx,
             op->index_count, op->start_instance, op->instance_count, op->indexed);
 
@@ -619,7 +627,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
 }
 
-void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned int start_idx,
+void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, int base_vertex_idx, unsigned int start_idx,
         unsigned int index_count, unsigned int start_instance, unsigned int instance_count, BOOL indexed)
 {
     const struct wined3d_state *state = &cs->device->state;
@@ -628,6 +636,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, int base_vertex_idx, unsigned i
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_DRAW;
+    op->primitive_type = primitive_type;
     op->base_vertex_idx = base_vertex_idx;
     op->start_idx = start_idx;
     op->index_count = index_count;
