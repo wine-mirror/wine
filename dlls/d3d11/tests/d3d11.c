@@ -1042,6 +1042,16 @@ static BOOL is_nvidia_device(ID3D11Device *device)
     return is_vendor_device(device, 0x10de);
 }
 
+static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
+{
+    D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS options;
+
+    if (FAILED(ID3D11Device_CheckFeatureSupport(device,
+            D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &options, sizeof(options))))
+        return FALSE;
+    return options.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
+}
+
 static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window, const struct swapchain_desc *swapchain_desc)
 {
     DXGI_SWAP_CHAIN_DESC dxgi_desc;
@@ -14095,17 +14105,26 @@ static void test_render_target_device_mismatch(void)
 
 static void test_buffer_srv(void)
 {
+    struct shader
+    {
+        const DWORD *code;
+        size_t size;
+        BOOL requires_raw_and_structured_buffers;
+    };
     struct buffer
     {
         unsigned int byte_count;
         unsigned int data_offset;
         const void *data;
+        unsigned int structure_byte_stride;
     };
 
+    BOOL raw_and_structured_buffers_supported;
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
     struct d3d11_test_context test_context;
     D3D11_SUBRESOURCE_DATA resource_data;
     const struct buffer *current_buffer;
+    const struct shader *current_shader;
     ID3D11ShaderResourceView *srv;
     D3D11_BUFFER_DESC buffer_desc;
     ID3D11DeviceContext *context;
@@ -14149,6 +14168,40 @@ static void test_buffer_srv(void)
         0x00000000, 0x0010001a, 0x00000000, 0x0500001b, 0x00100012, 0x00000000, 0x0010000a, 0x00000000,
         0x0700002d, 0x001020f2, 0x00000000, 0x00100006, 0x00000000, 0x00107e46, 0x00000000, 0x0100003e,
     };
+    static const struct shader ps_float4 = {ps_float4_code, sizeof(ps_float4_code)};
+    static const DWORD ps_structured_code[] =
+    {
+#if 0
+        StructuredBuffer<float4> b;
+
+        float2 size;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float2 p;
+            int2 coords;
+            p.x = position.x / 640.0f;
+            p.y = position.y / 480.0f;
+            coords = int2(p.x * size.x, p.y * size.y);
+            return b[coords.y * size.x + coords.x];
+        }
+#endif
+        0x43425844, 0x246caabb, 0xf1e7d6b9, 0xcbe720dc, 0xcdc23036, 0x00000001, 0x000001c0, 0x00000004,
+        0x00000030, 0x00000064, 0x00000098, 0x000001b0, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f,
+        0x004e4f49, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000110,
+        0x00000040, 0x00000044, 0x0100486a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x040000a2,
+        0x00107000, 0x00000000, 0x00000010, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065,
+        0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x08000038, 0x00100032, 0x00000000, 0x00101516,
+        0x00000000, 0x00208516, 0x00000000, 0x00000000, 0x0a000038, 0x00100032, 0x00000000, 0x00100046,
+        0x00000000, 0x00004002, 0x3b088889, 0x3acccccd, 0x00000000, 0x00000000, 0x05000043, 0x00100032,
+        0x00000000, 0x00100046, 0x00000000, 0x0a000032, 0x00100012, 0x00000000, 0x0010000a, 0x00000000,
+        0x0020800a, 0x00000000, 0x00000000, 0x0010001a, 0x00000000, 0x0500001c, 0x00100012, 0x00000000,
+        0x0010000a, 0x00000000, 0x090000a7, 0x001020f2, 0x00000000, 0x0010000a, 0x00000000, 0x00004001,
+        0x00000000, 0x00107e46, 0x00000000, 0x0100003e, 0x30494653, 0x00000008, 0x00000002, 0x00000000,
+    };
+    static const struct shader ps_structured = {ps_structured_code, sizeof(ps_structured_code), TRUE};
     static const DWORD rgba16[] =
     {
         0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
@@ -14166,11 +14219,19 @@ static void test_buffer_srv(void)
         0xde, 0xad,
         0xba, 0xbe,
     };
+    static const struct vec4 rgba_float[] =
+    {
+        {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f},
+    };
     static const struct buffer rgba16_buffer = {sizeof(rgba16), 0, &rgba16};
     static const struct buffer rgba16_offset_buffer = {256 + sizeof(rgba16), 256, &rgba16};
     static const struct buffer rgba4_buffer  = {sizeof(rgba4), 0, &rgba4};
     static const struct buffer r4_buffer = {sizeof(r4), 0, &r4};
     static const struct buffer r4_offset_buffer = {256 + sizeof(r4), 256, &r4};
+    static const struct buffer float_buffer = {sizeof(rgba_float), 0, &rgba_float, sizeof(*rgba_float)};
+    static const struct buffer float_offset_buffer = {256 + sizeof(rgba_float), 256,
+            &rgba_float, sizeof(*rgba_float)};
     static const DWORD rgba16_colors2x2[] =
     {
         0xff0000ff, 0xff0000ff, 0xff00ffff, 0xff00ffff,
@@ -14204,23 +14265,27 @@ static void test_buffer_srv(void)
 
     static const struct test
     {
+        const struct shader *shader;
         const struct buffer *buffer;
         DXGI_FORMAT srv_format;
-        UINT srv_first_element;
-        UINT srv_element_count;
+        unsigned int srv_first_element;
+        unsigned int srv_element_count;
         struct vec2 size;
         const DWORD *expected_colors;
     }
     tests[] =
     {
-        {&rgba16_buffer,        DXGI_FORMAT_R8G8B8A8_UNORM,   0, 16, {4.0f, 4.0f}, rgba16},
-        {&rgba16_offset_buffer, DXGI_FORMAT_R8G8B8A8_UNORM,  64, 16, {4.0f, 4.0f}, rgba16},
-        {&rgba16_buffer,        DXGI_FORMAT_R8G8B8A8_UNORM,   0,  4, {2.0f, 2.0f}, rgba16_colors2x2},
-        {&rgba16_buffer,        DXGI_FORMAT_R8G8B8A8_UNORM,   0,  1, {1.0f, 1.0f}, rgba16_colors1x1},
-        {&rgba4_buffer,         DXGI_FORMAT_R8G8B8A8_UNORM,   0,  4, {2.0f, 2.0f}, rgba4_colors},
-        {&r4_buffer,            DXGI_FORMAT_R8_UNORM,         0,  4, {2.0f, 2.0f}, r4_colors},
-        {&r4_offset_buffer,     DXGI_FORMAT_R8_UNORM,       256,  4, {2.0f, 2.0f}, r4_colors},
-        {NULL,                  0,                            0,  0, {2.0f, 2.0f}, zero_colors},
+        {&ps_float4,     &rgba16_buffer,        DXGI_FORMAT_R8G8B8A8_UNORM,   0, 16, {4.0f, 4.0f}, rgba16},
+        {&ps_float4,     &rgba16_offset_buffer, DXGI_FORMAT_R8G8B8A8_UNORM,  64, 16, {4.0f, 4.0f}, rgba16},
+        {&ps_float4,     &rgba16_buffer,        DXGI_FORMAT_R8G8B8A8_UNORM,   0,  4, {2.0f, 2.0f}, rgba16_colors2x2},
+        {&ps_float4,     &rgba16_buffer,        DXGI_FORMAT_R8G8B8A8_UNORM,   0,  1, {1.0f, 1.0f}, rgba16_colors1x1},
+        {&ps_float4,     &rgba4_buffer,         DXGI_FORMAT_R8G8B8A8_UNORM,   0,  4, {2.0f, 2.0f}, rgba4_colors},
+        {&ps_float4,     &r4_buffer,            DXGI_FORMAT_R8_UNORM,         0,  4, {2.0f, 2.0f}, r4_colors},
+        {&ps_float4,     &r4_offset_buffer,     DXGI_FORMAT_R8_UNORM,       256,  4, {2.0f, 2.0f}, r4_colors},
+        {&ps_structured, &float_buffer,         DXGI_FORMAT_UNKNOWN,          0,  4, {2.0f, 2.0f}, rgba4_colors},
+        {&ps_structured, &float_offset_buffer,  DXGI_FORMAT_UNKNOWN,         16,  4, {2.0f, 2.0f}, rgba4_colors},
+        {&ps_float4,     NULL,                  0,                            0,  0, {2.0f, 2.0f}, zero_colors},
+        {&ps_float4,     NULL,                  0,                            0,  0, {1.0f, 1.0f}, zero_colors},
     };
 
     if (!init_test_context(&test_context, NULL))
@@ -14228,21 +14293,45 @@ static void test_buffer_srv(void)
 
     device = test_context.device;
     context = test_context.immediate_context;
+    raw_and_structured_buffers_supported = ID3D11Device_GetFeatureLevel(device) >= D3D_FEATURE_LEVEL_11_0
+            || check_compute_shaders_via_sm4_support(device);
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cb_size), NULL);
-
-    hr = ID3D11Device_CreatePixelShader(device, ps_float4_code, sizeof(ps_float4_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
-
-    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
+    ps = NULL;
     srv = NULL;
     buffer = NULL;
+    current_shader = NULL;
     current_buffer = NULL;
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         const struct test *test = &tests[i];
+
+        if (test->shader->requires_raw_and_structured_buffers && !raw_and_structured_buffers_supported)
+        {
+            skip("Test %u: Raw and structured buffers are not supported.\n", i);
+            continue;
+        }
+        /* Structured buffer views with an offset don't seem to work on WARP. */
+        if (test->srv_format == DXGI_FORMAT_UNKNOWN && test->srv_first_element
+                && is_warp_device(device))
+        {
+            skip("Test %u: Broken WARP.\n", i);
+            continue;
+        }
+
+        if (current_shader != test->shader)
+        {
+            if (ps)
+                ID3D11PixelShader_Release(ps);
+
+            current_shader = test->shader;
+
+            hr = ID3D11Device_CreatePixelShader(device, current_shader->code, current_shader->size, NULL, &ps);
+            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+        }
 
         if (current_buffer != test->buffer)
         {
@@ -14259,7 +14348,8 @@ static void test_buffer_srv(void)
                 buffer_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
                 buffer_desc.CPUAccessFlags = 0;
                 buffer_desc.MiscFlags = 0;
-                buffer_desc.StructureByteStride = 0;
+                if ((buffer_desc.StructureByteStride = current_buffer->structure_byte_stride))
+                    buffer_desc.MiscFlags |= D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
                 resource_data.SysMemPitch = 0;
                 resource_data.SysMemSlicePitch = 0;
                 if (current_buffer->data_offset)
@@ -14330,16 +14420,6 @@ static void test_buffer_srv(void)
     ID3D11Buffer_Release(cb);
     ID3D11PixelShader_Release(ps);
     release_test_context(&test_context);
-}
-
-static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
-{
-    D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS options;
-
-    if (FAILED(ID3D11Device_CheckFeatureSupport(device,
-            D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &options, sizeof(options))))
-        return FALSE;
-    return options.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
 }
 
 static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_level)
