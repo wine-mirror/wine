@@ -202,7 +202,6 @@ static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, 
     unsigned int i;
 
     /* Single values */
-    states->primitive_type = 1;
     states->indices = 1;
     states->material = 1;
     states->viewport = 1;
@@ -772,9 +771,6 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
         stateblock->state.transforms[transform] = src_state->transforms[transform];
     }
 
-    if (stateblock->changed.primitive_type)
-        stateblock->state.gl_primitive_type = src_state->gl_primitive_type;
-
     if (stateblock->changed.indices
             && ((stateblock->state.index_buffer != src_state->index_buffer)
                 || (stateblock->state.base_vertex_index != src_state->base_vertex_index)
@@ -1043,19 +1039,6 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
     {
         wined3d_device_set_transform(device, stateblock->contained_transform_states[i],
                 &stateblock->state.transforms[stateblock->contained_transform_states[i]]);
-    }
-
-    if (stateblock->changed.primitive_type)
-    {
-        GLenum gl_primitive_type, prev;
-
-        if (device->recording)
-            device->recording->changed.primitive_type = TRUE;
-        gl_primitive_type = stateblock->state.gl_primitive_type;
-        prev = device->update_state->gl_primitive_type;
-        device->update_state->gl_primitive_type = gl_primitive_type;
-        if (gl_primitive_type != prev && (gl_primitive_type == GL_POINTS || prev == GL_POINTS))
-            device_invalidate_state(device, STATE_POINT_ENABLE);
     }
 
     if (stateblock->changed.indices)

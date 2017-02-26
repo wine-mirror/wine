@@ -3449,11 +3449,9 @@ void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
     TRACE("device %p, primitive_type %s\n", device, debug_d3dprimitivetype(primitive_type));
 
     gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
-    prev = device->update_state->gl_primitive_type;
-    device->update_state->gl_primitive_type = gl_primitive_type;
-    if (device->recording)
-        device->recording->changed.primitive_type = TRUE;
-    else if (gl_primitive_type != prev && (gl_primitive_type == GL_POINTS || prev == GL_POINTS))
+    prev = device->state.gl_primitive_type;
+    device->state.gl_primitive_type = gl_primitive_type;
+    if (gl_primitive_type != prev && (gl_primitive_type == GL_POINTS || prev == GL_POINTS))
         device_invalidate_state(device, STATE_POINT_ENABLE);
 }
 

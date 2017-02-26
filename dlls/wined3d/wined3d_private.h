@@ -3101,7 +3101,6 @@ struct wined3d_saved_states
     WORD vertexShaderConstantsI;                /* WINED3D_MAX_CONSTS_I, 16 */
     BOOL vs_consts_f[WINED3D_MAX_VS_CONSTS_F];
     DWORD textures : 20;                        /* MAX_COMBINED_SAMPLERS, 20 */
-    DWORD primitive_type : 1;
     DWORD indices : 1;
     DWORD material : 1;
     DWORD viewport : 1;
@@ -3109,7 +3108,7 @@ struct wined3d_saved_states
     DWORD pixelShader : 1;
     DWORD vertexShader : 1;
     DWORD scissorRect : 1;
-    DWORD padding : 4;
+    DWORD padding : 5;
 };
 
 struct StageState {
