@@ -1832,16 +1832,15 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     if (flags & WINED3D_MAP_DISCARD)
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking %s as up to date.\n",
-                wined3d_debug_location(texture->resource.map_binding));
-        if ((ret = wined3d_texture_prepare_location(texture, sub_resource_idx,
-                context, texture->resource.map_binding)))
-            wined3d_texture_validate_location(texture, sub_resource_idx, texture->resource.map_binding);
+                wined3d_debug_location(resource->map_binding));
+        if ((ret = wined3d_texture_prepare_location(texture, sub_resource_idx, context, resource->map_binding)))
+            wined3d_texture_validate_location(texture, sub_resource_idx, resource->map_binding);
     }
     else
     {
         if (resource->usage & WINED3DUSAGE_DYNAMIC)
             WARN_(d3d_perf)("Mapping a dynamic texture without WINED3D_MAP_DISCARD.\n");
-        ret = wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding);
+        ret = wined3d_texture_load_location(texture, sub_resource_idx, context, resource->map_binding);
     }
 
     if (!ret)
@@ -1852,10 +1851,10 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     }
 
     if (!(flags & WINED3D_MAP_READONLY)
-        && (!(flags & WINED3D_MAP_NO_DIRTY_UPDATE) || (resource->usage & WINED3DUSAGE_DYNAMIC)))
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
+            && (!(flags & WINED3D_MAP_NO_DIRTY_UPDATE) || (resource->usage & WINED3DUSAGE_DYNAMIC)))
+        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~resource->map_binding);
 
-    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, resource->map_binding);
     base_memory = wined3d_texture_map_bo_address(&data, sub_resource->size,
             gl_info, GL_PIXEL_UNPACK_BUFFER, flags);
     TRACE("Base memory pointer %p.\n", base_memory);
