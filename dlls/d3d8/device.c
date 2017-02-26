@@ -1683,7 +1683,7 @@ static HRESULT WINAPI d3d8_device_EndStateBlock(IDirect3DDevice8 *iface, DWORD *
     hr = wined3d_device_end_stateblock(device->wined3d_device, &stateblock);
     if (FAILED(hr))
     {
-        WARN("IWineD3DDevice_EndStateBlock returned an error\n");
+        WARN("Failed to end the state block, %#x.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -1799,7 +1799,7 @@ static HRESULT WINAPI d3d8_device_CreateStateBlock(IDirect3DDevice8 *iface,
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();
-        ERR("IWineD3DDevice_CreateStateBlock failed, hr %#x\n", hr);
+        ERR("Failed to create the state block, hr %#x\n", hr);
         return hr;
     }
 
