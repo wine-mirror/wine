@@ -5000,6 +5000,24 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_IMM_ATOMIC_OR:
             op = "imageAtomicOr";
             break;
+        case WINED3DSIH_ATOMIC_UMAX:
+        case WINED3DSIH_IMM_ATOMIC_UMAX:
+            op = "imageAtomicMax";
+            if (data_type != WINED3D_DATA_UINT)
+            {
+                FIXME("Unhandled opcode %#x for signed integers.\n", ins->handler_idx);
+                return;
+            }
+            break;
+        case WINED3DSIH_ATOMIC_UMIN:
+        case WINED3DSIH_IMM_ATOMIC_UMIN:
+            op = "imageAtomicMin";
+            if (data_type != WINED3D_DATA_UINT)
+            {
+                FIXME("Unhandled opcode %#x for signed integers.\n", ins->handler_idx);
+                return;
+            }
+            break;
         case WINED3DSIH_ATOMIC_XOR:
         case WINED3DSIH_IMM_ATOMIC_XOR:
             op = "imageAtomicXor";
@@ -9353,8 +9371,8 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ATOMIC_IMAX                      */ NULL,
     /* WINED3DSIH_ATOMIC_IMIN                      */ NULL,
     /* WINED3DSIH_ATOMIC_OR                        */ shader_glsl_atomic,
-    /* WINED3DSIH_ATOMIC_UMAX                      */ NULL,
-    /* WINED3DSIH_ATOMIC_UMIN                      */ NULL,
+    /* WINED3DSIH_ATOMIC_UMAX                      */ shader_glsl_atomic,
+    /* WINED3DSIH_ATOMIC_UMIN                      */ shader_glsl_atomic,
     /* WINED3DSIH_ATOMIC_XOR                       */ shader_glsl_atomic,
     /* WINED3DSIH_BEM                              */ shader_glsl_bem,
     /* WINED3DSIH_BFI                              */ shader_glsl_bitwise_op,
@@ -9470,8 +9488,8 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMM_ATOMIC_IMAX                  */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_IMIN                  */ NULL,
     /* WINED3DSIH_IMM_ATOMIC_OR                    */ shader_glsl_atomic,
-    /* WINED3DSIH_IMM_ATOMIC_UMAX                  */ NULL,
-    /* WINED3DSIH_IMM_ATOMIC_UMIN                  */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_UMAX                  */ shader_glsl_atomic,
+    /* WINED3DSIH_IMM_ATOMIC_UMIN                  */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_XOR                   */ shader_glsl_atomic,
     /* WINED3DSIH_IMUL                             */ shader_glsl_imul,
     /* WINED3DSIH_INE                              */ shader_glsl_relop,

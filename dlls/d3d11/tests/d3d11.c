@@ -13120,9 +13120,7 @@ static void test_atomic_instructions(void)
 
             todo_wine_if(expected != test->input[j]
                     && (!strcmp(instructions[j], "atomic_imax")
-                    || !strcmp(instructions[j], "atomic_imin")
-                    || !strcmp(instructions[j], "atomic_umax")
-                    || !strcmp(instructions[j], "atomic_umin")))
+                    || !strcmp(instructions[j], "atomic_imin")))
             ok(value == expected, "Test %u: Got %#x (%d), expected %#x (%d) for '%s' "
                     "with inputs (%u, %u), (%d), %#x (%d).\n",
                     i, value, value, expected, expected, instructions[j],
@@ -13143,9 +13141,7 @@ static void test_atomic_instructions(void)
         for (j = 0; j < sizeof(instructions) / sizeof(*instructions); ++j)
         {
             BOOL todo_instruction = !strcmp(imm_instructions[j], "imm_atomic_imax")
-                    || !strcmp(imm_instructions[j], "imm_atomic_imin")
-                    || !strcmp(imm_instructions[j], "imm_atomic_umax")
-                    || !strcmp(imm_instructions[j], "imm_atomic_umin");
+                    || !strcmp(imm_instructions[j], "imm_atomic_imin");
             unsigned int out_value = get_readback_color(&out_rb, j, 0);
             unsigned int value = get_readback_color(&rb, j, 0);
             unsigned int expected = test->expected_result[j];
