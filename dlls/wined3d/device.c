@@ -223,7 +223,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     struct wined3d_surface *target = rtv ? wined3d_rendertarget_view_get_surface(rtv) : NULL;
     struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
     struct wined3d_surface *depth_stencil = dsv ? wined3d_rendertarget_view_get_surface(dsv) : NULL;
-    const struct wined3d_state *state = &device->state;
+    const struct wined3d_state *state = &device->cs->state;
     const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
     struct wined3d_color corrected_color;

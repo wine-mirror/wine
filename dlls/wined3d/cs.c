@@ -397,7 +397,7 @@ static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
     state = &device->state;
     wined3d_get_draw_rect(state, &draw_rect);
     device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
-            &device->fb, op->rect_count, op->rects, &draw_rect, op->flags,
+            cs->state.fb, op->rect_count, op->rects, &draw_rect, op->flags,
             &op->color, op->depth, op->stencil);
 
     if (op->flags & WINED3DCLEAR_TARGET)
