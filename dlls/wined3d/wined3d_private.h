@@ -3672,7 +3672,6 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
         case WINED3DSPR_LOOP:       /* aL */
         case WINED3DSPR_PREDICATE:  /* p0 */
         case WINED3DSPR_PRIMID:     /* primID */
-        case WINED3DSPR_LOCALTHREADINDEX: /* vThreadIDInGroupFlattened */
             return TRUE;
 
         case WINED3DSPR_MISCTYPE:

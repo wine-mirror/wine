@@ -2860,7 +2860,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_LOCALTHREADINDEX:
-            sprintf(register_name, "int(gl_LocalInvocationIndex)");
+            sprintf(register_name, "ivec2(gl_LocalInvocationIndex, 0)");
             break;
 
         case WINED3DSPR_THREADID:
