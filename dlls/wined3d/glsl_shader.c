@@ -2860,7 +2860,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_LOCALTHREADINDEX:
-            sprintf(register_name, "ivec2(gl_LocalInvocationIndex, 0)");
+            if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
+                sprintf(register_name, "int(gl_LocalInvocationIndex)");
+            else
+                sprintf(register_name, "ivec2(gl_LocalInvocationIndex, 0)");
             break;
 
         case WINED3DSPR_THREADID:
@@ -6459,6 +6462,8 @@ static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
         shader_addline(buffer, "#extension GL_ARB_shader_image_load_store : enable\n");
     if (gl_info->supported[ARB_SHADER_IMAGE_SIZE])
         shader_addline(buffer, "#extension GL_ARB_shader_image_size : enable\n");
+    if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
+        shader_addline(buffer, "#extension GL_ARB_shading_language_420pack : enable\n");
     if (gl_info->supported[ARB_SHADING_LANGUAGE_PACKING])
         shader_addline(buffer, "#extension GL_ARB_shading_language_packing : enable\n");
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP_ARRAY])
