@@ -1845,10 +1845,31 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteTextRenderer *iface, void *ctx,
         float baseline_origin_x, float baseline_origin_y, const DWRITE_STRIKETHROUGH *strikethrough, IUnknown *effect)
 {
-    FIXME("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, strikethrough %p, effect %p stub!\n",
+    struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
+    const D2D1_MATRIX_3X2_F *m = &render_target->drawing_state.transform;
+    struct d2d_draw_text_layout_ctx *context = ctx;
+    D2D1_POINT_2F start, end;
+    ID2D1Brush *brush;
+    float thickness;
+
+    TRACE("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, strikethrough %p, effect %p.\n",
             iface, ctx, baseline_origin_x, baseline_origin_y, strikethrough, effect);
 
-    return E_NOTIMPL;
+    /* minimal thickness in DIPs that will result in at least 1 pixel thick line */
+    thickness = max(96.0f / (render_target->desc.dpiY * sqrtf(m->_21 * m->_21 + m->_22 * m->_22)),
+            strikethrough->thickness);
+
+    brush = d2d_draw_get_text_brush(context, effect);
+
+    start.x = baseline_origin_x;
+    start.y = baseline_origin_y + strikethrough->offset + thickness / 2.0f;
+    end.x = start.x + strikethrough->width;
+    end.y = start.y;
+    d2d_d3d_render_target_DrawLine(&render_target->ID2D1RenderTarget_iface, start, end, brush, thickness, NULL);
+
+    ID2D1Brush_Release(brush);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawInlineObject(IDWriteTextRenderer *iface, void *ctx,
