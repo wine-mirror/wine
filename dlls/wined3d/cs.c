@@ -387,17 +387,16 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 
 static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
 {
+    const struct wined3d_state *state = &cs->state;
     const struct wined3d_cs_clear *op = data;
-    const struct wined3d_state *state;
     struct wined3d_device *device;
     unsigned int i;
     RECT draw_rect;
 
     device = cs->device;
-    state = &device->state;
     wined3d_get_draw_rect(state, &draw_rect);
     device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
-            cs->state.fb, op->rect_count, op->rects, &draw_rect, op->flags,
+            state->fb, op->rect_count, op->rects, &draw_rect, op->flags,
             &op->color, op->depth, op->stencil);
 
     if (op->flags & WINED3DCLEAR_TARGET)
