@@ -964,15 +964,6 @@ HRESULT WINAPI SHGetPropertyStoreForWindow(HWND hwnd, REFIID riid, void **ppv)
     return E_NOTIMPL;
 }
 
-/*************************************************************************
- * SHGetPropertyStoreFromParsingName [SHELL32.@]
- */
-HRESULT WINAPI SHGetPropertyStoreFromParsingName(PCWSTR pszPath, IBindCtx *pbc, GETPROPERTYSTOREFLAGS flags, REFIID riid, void **ppv)
-{
-    FIXME("(%s %p %u %p %p) stub!\n", debugstr_w(pszPath), pbc, flags, riid, ppv);
-    return E_NOTIMPL;
-}
-
 /*************************************************************************/
 
 typedef struct

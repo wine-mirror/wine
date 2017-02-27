@@ -1331,6 +1331,24 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
     return ret;
 }
 
+HRESULT WINAPI SHGetPropertyStoreFromParsingName(const WCHAR *path, IBindCtx *pbc, GETPROPERTYSTOREFLAGS flags,
+    REFIID riid, void **ppv)
+{
+    IShellItem2 *item;
+    HRESULT hr;
+
+    TRACE("(%s %p %#x %p %p)\n", debugstr_w(path), pbc, flags, riid, ppv);
+
+    hr = SHCreateItemFromParsingName(path, pbc, &IID_IShellItem2, (void **)&item);
+    if(SUCCEEDED(hr))
+    {
+        hr = IShellItem2_GetPropertyStore(item, flags, riid, ppv);
+        IShellItem2_Release(item);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI CustomDestinationList_QueryInterface(ICustomDestinationList *iface, REFIID riid, void **obj)
 {
     CustomDestinationList *This = impl_from_ICustomDestinationList(iface);
