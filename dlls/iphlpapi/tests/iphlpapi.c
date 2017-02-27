@@ -2067,8 +2067,6 @@ static void test_GetUnicastIpAddressEntry(void)
                 if (row.Address.si_family == AF_INET6)
                     ok(row.ScopeId.Value == row.Address.Ipv6.sin6_scope_id, "Expected %d, got %d\n",
                         row.Address.Ipv6.sin6_scope_id, row.ScopeId.Value);
-                else
-                    ok(row.ScopeId.Value == 0, "Expected 0, got %d\n", row.ScopeId.Value);
                 ok(row.CreationTimeStamp.QuadPart, "CreationTimeStamp is 0\n");
             }
             ua = ua->Next;
