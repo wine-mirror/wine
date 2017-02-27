@@ -3137,7 +3137,7 @@ static void test_D3DXSHMultiply3(void)
     D3DXSHMultiply3(c, c, b);
     for (i = 0; i < 20; i++)
         ok(relative_error(c[i], expected_aliased[i]) < admitted_error,
-                "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
+                "Expected[%d] = %f, received = %f\n", i, expected_aliased[i], c[i]);
 }
 
 static void test_D3DXSHMultiply4(void)
