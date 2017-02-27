@@ -134,6 +134,10 @@ typedef struct
     yield_func yield_func;
 } SpinWait;
 
+typedef struct {
+    CRITICAL_SECTION cs;
+} _ReentrantBlockingLock;
+
 static int* (__cdecl *p_errno)(void);
 static int (__cdecl *p_wmemcpy_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
 static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
@@ -162,6 +166,17 @@ static void (__thiscall *preader_writer_lock_lock_read)(void*);
 static void (__thiscall *preader_writer_lock_unlock)(void*);
 static MSVCRT_bool (__thiscall *preader_writer_lock_try_lock)(void*);
 static MSVCRT_bool (__thiscall *preader_writer_lock_try_lock_read)(void*);
+
+static _ReentrantBlockingLock* (__thiscall *p_ReentrantBlockingLock_ctor)(_ReentrantBlockingLock*);
+static void (__thiscall *p_ReentrantBlockingLock_dtor)(_ReentrantBlockingLock*);
+static void (__thiscall *p_ReentrantBlockingLock__Acquire)(_ReentrantBlockingLock*);
+static void (__thiscall *p_ReentrantBlockingLock__Release)(_ReentrantBlockingLock*);
+static MSVCRT_bool (__thiscall *p_ReentrantBlockingLock__TryAcquire)(_ReentrantBlockingLock*);
+static _ReentrantBlockingLock* (__thiscall *p_NonReentrantBlockingLock_ctor)(_ReentrantBlockingLock*);
+static void (__thiscall *p_NonReentrantBlockingLock_dtor)(_ReentrantBlockingLock*);
+static void (__thiscall *p_NonReentrantBlockingLock__Acquire)(_ReentrantBlockingLock*);
+static void (__thiscall *p_NonReentrantBlockingLock__Release)(_ReentrantBlockingLock*);
+static MSVCRT_bool (__thiscall *p_NonReentrantBlockingLock__TryAcquire)(_ReentrantBlockingLock*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -211,6 +226,17 @@ static BOOL init(void)
         SET(preader_writer_lock_unlock, "?unlock@reader_writer_lock@Concurrency@@QEAAXXZ");
         SET(preader_writer_lock_try_lock, "?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ");
         SET(preader_writer_lock_try_lock_read, "?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ");
+
+        SET(p_ReentrantBlockingLock_ctor, "??0_ReentrantBlockingLock@details@Concurrency@@QEAA@XZ");
+        SET(p_ReentrantBlockingLock_dtor, "??1_ReentrantBlockingLock@details@Concurrency@@QEAA@XZ");
+        SET(p_ReentrantBlockingLock__Acquire, "?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ");
+        SET(p_ReentrantBlockingLock__Release, "?_Release@_ReentrantBlockingLock@details@Concurrency@@QEAAXXZ");
+        SET(p_ReentrantBlockingLock__TryAcquire, "?_TryAcquire@_ReentrantBlockingLock@details@Concurrency@@QEAA_NXZ");
+        SET(p_NonReentrantBlockingLock_ctor, "??0_NonReentrantBlockingLock@details@Concurrency@@QEAA@XZ");
+        SET(p_NonReentrantBlockingLock_dtor, "??1_NonReentrantBlockingLock@details@Concurrency@@QEAA@XZ");
+        SET(p_NonReentrantBlockingLock__Acquire, "?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ");
+        SET(p_NonReentrantBlockingLock__Release, "?_Release@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ");
+        SET(p_NonReentrantBlockingLock__TryAcquire, "?_TryAcquire@_NonReentrantBlockingLock@details@Concurrency@@QEAA_NXZ");
     } else {
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QAE@P6AXXZ@Z");
         SET(pSpinWait_dtor, "??_F?$_SpinWait@$00@details@Concurrency@@QAEXXZ");
@@ -227,6 +253,17 @@ static BOOL init(void)
         SET(preader_writer_lock_unlock, "?unlock@reader_writer_lock@Concurrency@@QAEXXZ");
         SET(preader_writer_lock_try_lock, "?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ");
         SET(preader_writer_lock_try_lock_read, "?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ");
+
+        SET(p_ReentrantBlockingLock_ctor, "??0_ReentrantBlockingLock@details@Concurrency@@QAE@XZ");
+        SET(p_ReentrantBlockingLock_dtor, "??1_ReentrantBlockingLock@details@Concurrency@@QAE@XZ");
+        SET(p_ReentrantBlockingLock__Acquire, "?_Acquire@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ");
+        SET(p_ReentrantBlockingLock__Release, "?_Release@_ReentrantBlockingLock@details@Concurrency@@QAEXXZ");
+        SET(p_ReentrantBlockingLock__TryAcquire, "?_TryAcquire@_ReentrantBlockingLock@details@Concurrency@@QAE_NXZ");
+        SET(p_NonReentrantBlockingLock_ctor, "??0_NonReentrantBlockingLock@details@Concurrency@@QAE@XZ");
+        SET(p_NonReentrantBlockingLock_dtor, "??1_NonReentrantBlockingLock@details@Concurrency@@QAE@XZ");
+        SET(p_NonReentrantBlockingLock__Acquire, "?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ");
+        SET(p_NonReentrantBlockingLock__Release, "?_Release@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ");
+        SET(p_NonReentrantBlockingLock__TryAcquire, "?_TryAcquire@_NonReentrantBlockingLock@details@Concurrency@@QAE_NXZ");
     }
 
     init_thiscall_thunk();
@@ -640,6 +677,34 @@ static void test_reader_writer_lock(void)
     call_func1(preader_writer_lock_dtor, rw_lock);
 }
 
+static void test__ReentrantBlockingLock(void)
+{
+    _ReentrantBlockingLock rbl;
+    MSVCRT_bool ret;
+
+    call_func1(p_ReentrantBlockingLock_ctor, &rbl);
+    ret = call_func1(p_ReentrantBlockingLock__TryAcquire, &rbl);
+    ok(ret, "_ReentrantBlockingLock__TryAcquire failed\n");
+    call_func1(p_ReentrantBlockingLock__Acquire, &rbl);
+    ret = call_func1(p_ReentrantBlockingLock__TryAcquire, &rbl);
+    ok(ret, "_ReentrantBlockingLock__TryAcquire failed\n");
+    call_func1(p_ReentrantBlockingLock__Release, &rbl);
+    call_func1(p_ReentrantBlockingLock__Release, &rbl);
+    call_func1(p_ReentrantBlockingLock__Release, &rbl);
+    call_func1(p_ReentrantBlockingLock_dtor, &rbl);
+
+    call_func1(p_NonReentrantBlockingLock_ctor, &rbl);
+    ret = call_func1(p_NonReentrantBlockingLock__TryAcquire, &rbl);
+    ok(ret, "_NonReentrantBlockingLock__TryAcquire failed\n");
+    call_func1(p_NonReentrantBlockingLock__Acquire, &rbl);
+    ret = call_func1(p_NonReentrantBlockingLock__TryAcquire, &rbl);
+    ok(ret, "_NonReentrantBlockingLock__TryAcquire failed\n");
+    call_func1(p_NonReentrantBlockingLock__Release, &rbl);
+    call_func1(p_NonReentrantBlockingLock__Release, &rbl);
+    call_func1(p_NonReentrantBlockingLock__Release, &rbl);
+    call_func1(p_NonReentrantBlockingLock_dtor, &rbl);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -652,4 +717,5 @@ START_TEST(msvcr100)
     test_atoi();
     test__SpinWait();
     test_reader_writer_lock();
+    test__ReentrantBlockingLock();
 }
