@@ -1731,13 +1731,16 @@ static inline BOOL supported_protocol(int protocol)
 
 /**********************************************************************/
 
-/* Returns the length of the converted address if successful, 0 if it was too small to
- * start with.
+/* Returns the length of the converted address if successful, 0 if it was too
+ * small to start with or unknown family or invalid address buffer.
  */
 static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen,
                                      union generic_unix_sockaddr *uaddr)
 {
     unsigned int uaddrlen = 0;
+
+    if (!wsaddr)
+        return 0;
 
     switch (wsaddr->sa_family)
     {

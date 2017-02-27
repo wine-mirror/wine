@@ -5841,6 +5841,11 @@ static void test_events(int useMessages)
         goto end;
     }
 
+    SetLastError(0xdeadbeef);
+    ret = connect(src, NULL, 0);
+    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
+    ok(GetLastError() == WSAEFAULT, "expected 10014, got %d\n", GetLastError());
+
     ret = connect(src, (struct sockaddr*)&addr, sizeof(addr));
     if (ret == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
     {
