@@ -914,6 +914,17 @@ static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, struct w
     return data[0] != 0x00ff0000 || data[3] != 0x0000ff00;
 }
 
+static BOOL match_broken_viewport_subpixel_bits(const struct wined3d_gl_info *gl_info,
+        struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    if (!gl_info->supported[ARB_VIEWPORT_ARRAY])
+        return FALSE;
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        return FALSE;
+    return !wined3d_caps_gl_ctx_test_viewport_subpixel_bits(ctx);
+}
+
 static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
 {
     /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
@@ -1042,6 +1053,17 @@ static void quirk_broken_arb_fog(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_BROKEN_ARB_FOG;
 }
 
+static void quirk_broken_viewport_subpixel_bits(struct wined3d_gl_info *gl_info)
+{
+    TRACE("Disabling ARB_viewport_array.\n");
+    gl_info->supported[ARB_VIEWPORT_ARRAY] = FALSE;
+    if (gl_info->supported[ARB_CLIP_CONTROL])
+    {
+        TRACE("Disabling ARB_clip_control.\n");
+        gl_info->supported[ARB_CLIP_CONTROL] = FALSE;
+    }
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
@@ -1132,6 +1154,11 @@ static const struct driver_quirk quirk_table[] =
         match_broken_arb_fog,
         quirk_broken_arb_fog,
         "ARBfp fogstart == fogend workaround"
+    },
+    {
+        match_broken_viewport_subpixel_bits,
+        quirk_broken_viewport_subpixel_bits,
+        "Nvidia viewport subpixel bits bug"
     },
 };
 
