@@ -108,6 +108,7 @@ DWORD WINAPI ConvertInterfaceNameToLuidA(const char*,NET_LUID*);
 DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR*,NET_LUID*);
 void WINAPI FreeMibTable(void*);
 DWORD WINAPI GetIfEntry2(MIB_IF_ROW2*);
+DWORD WINAPI GetIfTable2(MIB_IF_TABLE2**);
 DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW*);
 
 #endif /* __WINE_NETIOAPI_H */
