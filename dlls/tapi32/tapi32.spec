@@ -154,7 +154,7 @@
 @ stdcall phoneGetVolume(long long ptr)
 @ stdcall phoneInitialize(ptr long ptr str ptr)
 @ stdcall phoneInitializeExA(ptr long ptr str ptr ptr ptr)
-@ stdcall phoneInitializeExW(ptr long ptr str ptr ptr ptr)
+@ stdcall phoneInitializeExW(ptr long ptr wstr ptr ptr ptr)
 @ stdcall phoneNegotiateAPIVersion(long long long long ptr ptr)
 @ stdcall phoneNegotiateExtVersion(long long long long long ptr)
 @ stdcall phoneOpen(long long ptr long long long long)
