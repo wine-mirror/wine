@@ -2682,17 +2682,20 @@ static BOOL netconn_drain_content(data_stream_t *stream, http_request_t *req)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
     BYTE buf[1024];
-    int len;
+    int len, res;
+    size_t size;
 
-    if(netconn_end_of_data(stream, req))
-        return TRUE;
+    if(netconn_stream->content_length == ~0u)
+        return FALSE;
 
-    do {
-        if(NETCON_recv(req->netconn, buf, sizeof(buf), FALSE, &len) != ERROR_SUCCESS)
+    while(netconn_stream->content_read < netconn_stream->content_length) {
+        size = min(sizeof(buf), netconn_stream->content_length-netconn_stream->content_read);
+        res = NETCON_recv(req->netconn, buf, size, FALSE, &len);
+        if(res || !len)
             return FALSE;
 
         netconn_stream->content_read += len;
-    }while(netconn_stream->content_read < netconn_stream->content_length);
+    }
 
     return TRUE;
 }

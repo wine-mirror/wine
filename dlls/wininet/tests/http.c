@@ -4652,7 +4652,14 @@ static void _readex_expect_sync_data(unsigned line, HINTERNET req, DWORD flags, 
     _readex_expect_sync_data_len(line, req, flags, buf, buf_size, exdata, strlen(exdata));
 }
 
-static void send_response_and_wait(const char *response, BOOL close_connection, INTERNET_BUFFERSW *buf)
+static void close_connection(void)
+{
+    char c;
+    SetEvent(conn_wait_event);
+    recv(server_socket, &c, 1, 0);
+}
+
+static void send_response_and_wait(const char *response, BOOL do_close_connection, INTERNET_BUFFERSW *buf)
 {
     DWORD orig_size = buf->dwBufferLength;
 
@@ -4661,11 +4668,8 @@ static void send_response_and_wait(const char *response, BOOL close_connection, 
     if(response)
         server_send_string(response);
 
-    if(close_connection) {
-        char c;
-        SetEvent(conn_wait_event);
-        recv(server_socket, &c, 1, 0);
-    }
+    if(do_close_connection)
+        close_connection();
 
     WaitForSingleObject(hCompleteEvent, INFINITE);
 
@@ -4821,6 +4825,41 @@ static void test_http_read(int port)
     CloseHandle(server_req_rec_event);
 }
 
+static void test_connection_break(int port)
+{
+    INTERNET_BUFFERSW ib;
+    test_request_t req;
+    char buf[24000];
+
+    if(!is_ie7plus)
+        return;
+
+    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    conn_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    server_req_rec_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    memset(&ib, 0, sizeof(ib));
+    ib.dwStructSize = sizeof(ib);
+    ib.lpvBuffer = buf;
+
+    trace("Testing InternetReadFileExW on broken connection...\n");
+
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "Content-Length: 10000\r\n"
+                           "\r\n"
+                           "xx");
+
+    /* close connection and make sure that it's closed on handle release. */
+    close_connection();
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    close_async_handle(req.session, hCompleteEvent, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+}
+
 static void test_long_url(int port)
 {
     char long_path[INTERNET_MAX_PATH_LENGTH*2] = "/echo_request?";
@@ -4919,6 +4958,7 @@ static void test_http_connection(void)
     test_basic_auth_credentials_reuse(si.port);
     test_async_read(si.port);
     test_http_read(si.port);
+    test_connection_break(si.port);
     test_long_url(si.port);
     test_remove_dot_segments(si.port);
 
