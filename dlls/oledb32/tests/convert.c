@@ -2097,7 +2097,7 @@ static void test_converttobyrefwstr(void)
 
     dst_len = 44;
     V_VT(&v) = VT_NULL;
-    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_BYREF | DBTYPE_WSTR, 0, &dst_len, &v, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_BYREF | DBTYPE_WSTR, 0, &dst_len, &v, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_ISNULL, "got %08x\n", dst_status);
     ok(dst_len == 44, "got %ld\n", dst_len);
