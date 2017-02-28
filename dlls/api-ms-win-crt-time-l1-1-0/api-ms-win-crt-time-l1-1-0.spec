@@ -23,7 +23,7 @@
 @ cdecl _futime32(long ptr) ucrtbase._futime32
 @ cdecl _futime64(long ptr) ucrtbase._futime64
 @ cdecl _get_daylight(ptr) ucrtbase._get_daylight
-@ stub _get_dstbias
+@ cdecl _get_dstbias(ptr) ucrtbase._get_dstbias
 @ cdecl _get_timezone(ptr) ucrtbase._get_timezone
 @ cdecl _get_tzname(ptr str long long) ucrtbase._get_tzname
 @ cdecl _getsystime(ptr) ucrtbase._getsystime

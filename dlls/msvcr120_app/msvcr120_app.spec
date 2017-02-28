@@ -1149,7 +1149,7 @@
 @ cdecl _get_current_locale() msvcr120._get_current_locale
 @ cdecl _get_daylight(ptr) msvcr120._get_daylight
 @ cdecl _get_doserrno(ptr) msvcr120._get_doserrno
-@ stub _get_dstbias
+@ cdecl _get_dstbias(ptr) msvcr120._get_dstbias
 @ cdecl _get_errno(ptr) msvcr120._get_errno
 @ cdecl _get_fmode(ptr) msvcr120._get_fmode
 @ cdecl _get_heap_handle() msvcr120._get_heap_handle
