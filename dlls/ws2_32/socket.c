@@ -6540,7 +6540,7 @@ static int convert_aiflag_w2u(int winflags) {
             winflags &= ~ws_aiflag_map[i][0];
         }
     if (winflags)
-        FIXME("Unhandled windows AI_xxx flags %x\n", winflags);
+        FIXME("Unhandled windows AI_xxx flags 0x%x\n", winflags);
     return unixflags;
 }
 
@@ -6554,7 +6554,7 @@ static int convert_niflag_w2u(int winflags) {
             winflags &= ~ws_niflag_map[i][0];
         }
     if (winflags)
-        FIXME("Unhandled windows NI_xxx flags %x\n", winflags);
+        FIXME("Unhandled windows NI_xxx flags 0x%x\n", winflags);
     return unixflags;
 }
 
@@ -6567,8 +6567,8 @@ static int convert_aiflag_u2w(int unixflags) {
             winflags |= ws_aiflag_map[i][0];
             unixflags &= ~ws_aiflag_map[i][1];
         }
-    if (unixflags) /* will warn usually */
-        WARN("Unhandled UNIX AI_xxx flags %x\n", unixflags);
+    if (unixflags)
+        WARN("Unhandled UNIX AI_xxx flags 0x%x\n", unixflags);
     return winflags;
 }
 
