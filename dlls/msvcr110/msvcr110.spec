@@ -854,7 +854,7 @@
 @ cdecl _Gettnames()
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _IsExceptionObjectToBeDestroyed(ptr)
-@ stub _Lock_shared_ptr_spin_lock
+@ cdecl _Lock_shared_ptr_spin_lock()
 @ stub -arch=i386 _NLG_Dispatch2
 @ stub -arch=arm,win64 __NLG_Dispatch2
 @ stub -arch=i386 _NLG_Return
@@ -863,7 +863,7 @@
 @ stub -arch=win64 _SetImageBase
 @ stub -arch=win64 _SetThrowImageBase
 @ cdecl _Strftime(str long str ptr ptr)
-@ stub _Unlock_shared_ptr_spin_lock
+@ cdecl _Unlock_shared_ptr_spin_lock()
 @ cdecl _W_Getdays()
 @ cdecl _W_Getmonths()
 @ cdecl _W_Gettnames()
