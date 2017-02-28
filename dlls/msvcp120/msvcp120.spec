@@ -3760,7 +3760,7 @@
 @ stub _LXp_sqrtx
 @ stub _LXp_subx
 @ extern _LZero
-@ stub _Lock_shared_ptr_spin_lock
+@ cdecl _Lock_shared_ptr_spin_lock()
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr)
 @ stub _Mtx_clear_owner
 @ cdecl _Mtx_current_owns(ptr)
@@ -3821,7 +3821,7 @@
 @ stub _Tss_delete
 @ stub _Tss_get
 @ stub _Tss_set
-@ stub _Unlock_shared_ptr_spin_lock
+@ cdecl _Unlock_shared_ptr_spin_lock()
 @ cdecl _Wcrtomb(ptr long ptr ptr)
 @ cdecl _Wcscoll(ptr ptr ptr ptr ptr)
 @ stub _Wcsxfrm
