@@ -719,20 +719,12 @@ void context_free_occlusion_query(struct wined3d_occlusion_query *query)
     list_remove(&query->entry);
     query->context = NULL;
 
-    if (context->free_occlusion_query_count >= context->free_occlusion_query_size - 1)
+    if (!wined3d_array_reserve((void **)&context->free_occlusion_queries,
+            &context->free_occlusion_query_size, context->free_occlusion_query_count + 1,
+            sizeof(*context->free_occlusion_queries)))
     {
-        UINT new_size = context->free_occlusion_query_size << 1;
-        GLuint *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_occlusion_queries,
-                new_size * sizeof(*context->free_occlusion_queries));
-
-        if (!new_data)
-        {
-            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
-            return;
-        }
-
-        context->free_occlusion_query_size = new_size;
-        context->free_occlusion_queries = new_data;
+        ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
+        return;
     }
 
     context->free_occlusion_queries[context->free_occlusion_query_count++] = query->id;
@@ -787,20 +779,12 @@ void context_free_event_query(struct wined3d_event_query *query)
     list_remove(&query->entry);
     query->context = NULL;
 
-    if (context->free_event_query_count >= context->free_event_query_size - 1)
+    if (!wined3d_array_reserve((void **)&context->free_event_queries,
+            &context->free_event_query_size, context->free_event_query_count + 1,
+            sizeof(*context->free_event_queries)))
     {
-        UINT new_size = context->free_event_query_size << 1;
-        union wined3d_gl_query_object *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_event_queries,
-                new_size * sizeof(*context->free_event_queries));
-
-        if (!new_data)
-        {
-            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->object.id, context);
-            return;
-        }
-
-        context->free_event_query_size = new_size;
-        context->free_event_queries = new_data;
+        ERR("Failed to grow free list, leaking query %u in context %p.\n", query->object.id, context);
+        return;
     }
 
     context->free_event_queries[context->free_event_query_count++] = query->object;
@@ -834,20 +818,12 @@ void context_free_timestamp_query(struct wined3d_timestamp_query *query)
     list_remove(&query->entry);
     query->context = NULL;
 
-    if (context->free_timestamp_query_count >= context->free_timestamp_query_size - 1)
+    if (!wined3d_array_reserve((void **)&context->free_timestamp_queries,
+            &context->free_timestamp_query_size, context->free_timestamp_query_count + 1,
+            sizeof(*context->free_timestamp_queries)))
     {
-        UINT new_size = context->free_timestamp_query_size << 1;
-        GLuint *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_timestamp_queries,
-                new_size * sizeof(*context->free_timestamp_queries));
-
-        if (!new_data)
-        {
-            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
-            return;
-        }
-
-        context->free_timestamp_query_size = new_size;
-        context->free_timestamp_queries = new_data;
+        ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
+        return;
     }
 
     context->free_timestamp_queries[context->free_timestamp_query_count++] = query->id;

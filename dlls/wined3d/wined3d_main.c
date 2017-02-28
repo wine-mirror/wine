@@ -43,7 +43,7 @@ struct wined3d_wndproc_table
 {
     struct wined3d_wndproc *entries;
     unsigned int count;
-    unsigned int size;
+    SIZE_T size;
 };
 
 static struct wined3d_wndproc_table wndproc_table;
@@ -443,25 +443,12 @@ BOOL wined3d_register_window(HWND window, struct wined3d_device *device)
         return TRUE;
     }
 
-    if (wndproc_table.size == wndproc_table.count)
+    if (!wined3d_array_reserve((void **)&wndproc_table.entries, &wndproc_table.size,
+            wndproc_table.count + 1, sizeof(*entry)))
     {
-        unsigned int new_size = max(1, wndproc_table.size * 2);
-        struct wined3d_wndproc *new_entries;
-
-        if (!wndproc_table.entries)
-            new_entries = wined3d_calloc(new_size, sizeof(*new_entries));
-        else
-            new_entries = HeapReAlloc(GetProcessHeap(), 0, wndproc_table.entries, new_size * sizeof(*new_entries));
-
-        if (!new_entries)
-        {
-            wined3d_wndproc_mutex_unlock();
-            ERR("Failed to grow table.\n");
-            return FALSE;
-        }
-
-        wndproc_table.entries = new_entries;
-        wndproc_table.size = new_size;
+        wined3d_wndproc_mutex_unlock();
+        ERR("Failed to grow table.\n");
+        return FALSE;
     }
 
     entry = &wndproc_table.entries[wndproc_table.count++];

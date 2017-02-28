@@ -64,18 +64,11 @@ static void buffer_invalidate_bo_range(struct wined3d_buffer *buffer, unsigned i
         goto invalidate_all;
     }
 
-    if (buffer->modified_areas >= buffer->maps_size)
+    if (!wined3d_array_reserve((void **)&buffer->maps, &buffer->maps_size,
+            buffer->modified_areas + 1, sizeof(*buffer->maps)))
     {
-        struct wined3d_map_range *new;
-
-        if (!(new = HeapReAlloc(GetProcessHeap(), 0, buffer->maps, 2 * buffer->maps_size * sizeof(*buffer->maps))))
-        {
-            ERR("Failed to allocate maps array, invalidating entire buffer.\n");
-            goto invalidate_all;
-        }
-
-        buffer->maps = new;
-        buffer->maps_size *= 2;
+        ERR("Failed to allocate maps array, invalidating entire buffer.\n");
+        goto invalidate_all;
     }
 
     buffer->maps[buffer->modified_areas].offset = offset;

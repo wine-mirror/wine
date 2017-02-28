@@ -1660,18 +1660,18 @@ struct wined3d_context
 
     /* Queries */
     GLuint *free_occlusion_queries;
-    UINT free_occlusion_query_size;
-    UINT free_occlusion_query_count;
+    SIZE_T free_occlusion_query_size;
+    unsigned int free_occlusion_query_count;
     struct list occlusion_queries;
 
     union wined3d_gl_query_object *free_event_queries;
-    UINT free_event_query_size;
-    UINT free_event_query_count;
+    SIZE_T free_event_query_size;
+    unsigned int free_event_query_count;
     struct list event_queries;
 
     GLuint *free_timestamp_queries;
-    UINT free_timestamp_query_size;
-    UINT free_timestamp_query_count;
+    SIZE_T free_timestamp_query_size;
+    unsigned int free_timestamp_query_count;
     struct list timestamp_queries;
 
     struct wined3d_stream_info stream_info;
@@ -3296,7 +3296,7 @@ struct wined3d_buffer
     void *map_ptr;
 
     struct wined3d_map_range *maps;
-    ULONG maps_size, modified_areas;
+    SIZE_T maps_size, modified_areas;
     DWORD locations;
     struct wined3d_event_query *query;
 
@@ -3878,6 +3878,8 @@ void wined3d_format_get_float_color_key(const struct wined3d_format *format,
         const struct wined3d_color_key *key, struct wined3d_color *float_colors) DECLSPEC_HIDDEN;
 const struct wined3d_color_key_conversion * wined3d_format_get_color_key_conversion(
         const struct wined3d_texture *texture, BOOL need_alpha_ck) DECLSPEC_HIDDEN;
+
+BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size) DECLSPEC_HIDDEN;
 
 static inline BOOL wined3d_format_is_typeless(const struct wined3d_format *format)
 {
