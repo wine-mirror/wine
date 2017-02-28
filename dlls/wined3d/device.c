@@ -4681,6 +4681,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         if (device->d3d_initialized)
             wined3d_device_delete_opengl_contexts(device);
 
+        memset(&device->state, 0, sizeof(device->state));
         state_init(&device->state, &device->fb, &device->adapter->gl_info,
                 &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
         device->update_state = &device->state;
