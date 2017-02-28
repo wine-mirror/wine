@@ -1055,7 +1055,6 @@ err:
     {
         if (swapchain->context[0])
         {
-            context_release(swapchain->context[0]);
             context_destroy(device, swapchain->context[0]);
             swapchain->num_contexts = 0;
         }
