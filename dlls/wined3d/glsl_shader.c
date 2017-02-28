@@ -4965,10 +4965,13 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             && ins->handler_idx <= WINED3DSIH_IMM_ATOMIC_XOR;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const struct wined3d_shader_version *version = &reg_maps->shader_version;
-    struct glsl_src_param coord_param, data_param, data_param2;
+    struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+    struct glsl_src_param structure_idx, offset, data, data2;
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     enum wined3d_shader_resource_type resource_type;
+    struct wined3d_string_buffer *address;
     enum wined3d_data_type data_type;
-    unsigned int uav_idx;
+    unsigned int uav_idx, stride;
     DWORD coord_mask;
     const char *op;
 
@@ -4981,6 +4984,7 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     }
     data_type = reg_maps->uav_resource_info[uav_idx].data_type;
     coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
+    stride = reg_maps->uav_resource_info[uav_idx].stride;
 
     switch (ins->handler_idx)
     {
@@ -5048,29 +5052,40 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             return;
     }
 
-    if (is_imm_instruction)
-        shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], data_type);
-
-    shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &coord_param);
-
-    if (reg_maps->uav_resource_info[uav_idx].flags & WINED3D_VIEW_BUFFER_RAW)
-        shader_addline(ins->ctx->buffer, "%s(%s_image%u, %s / 4, ",
-                op, shader_glsl_get_prefix(version->type), uav_idx, coord_param.param_str);
-    else
-        shader_addline(ins->ctx->buffer, "%s(%s_image%u, %s, ",
-                op, shader_glsl_get_prefix(version->type), uav_idx, coord_param.param_str);
-
-    shader_glsl_add_src_param_ext(ins, &ins->src[1], WINED3DSP_WRITEMASK_0, &data_param, data_type);
-    shader_addline(ins->ctx->buffer, "%s", data_param.param_str);
-    if (ins->src_count >= 3)
+    address = string_buffer_get(priv->string_buffers);
+    if (stride)
     {
-        shader_glsl_add_src_param_ext(ins, &ins->src[2], WINED3DSP_WRITEMASK_0, &data_param2, data_type);
-        shader_addline(ins->ctx->buffer, ", %s", data_param2.param_str);
+        shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &structure_idx);
+        shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_1, &offset);
+        string_buffer_sprintf(address, "%s * %u + %s / 4", structure_idx.param_str, stride, offset.param_str);
+    }
+    else
+    {
+        shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &offset);
+        string_buffer_sprintf(address, "%s", offset.param_str);
+        if (reg_maps->uav_resource_info[uav_idx].flags & WINED3D_VIEW_BUFFER_RAW)
+            shader_addline(address, "/ 4");
     }
 
     if (is_imm_instruction)
-        shader_addline(ins->ctx->buffer, ")");
-    shader_addline(ins->ctx->buffer, ");\n");
+        shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], data_type);
+
+    shader_addline(buffer, "%s(%s_image%u, %s, ",
+            op, shader_glsl_get_prefix(version->type), uav_idx, address->buffer);
+
+    shader_glsl_add_src_param_ext(ins, &ins->src[1], WINED3DSP_WRITEMASK_0, &data, data_type);
+    shader_addline(buffer, "%s", data.param_str);
+    if (ins->src_count >= 3)
+    {
+        shader_glsl_add_src_param_ext(ins, &ins->src[2], WINED3DSP_WRITEMASK_0, &data2, data_type);
+        shader_addline(buffer, ", %s", data2.param_str);
+    }
+
+    if (is_imm_instruction)
+        shader_addline(buffer, ")");
+    shader_addline(buffer, ");\n");
+
+    string_buffer_release(priv->string_buffers, address);
 }
 
 static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
