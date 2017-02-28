@@ -3668,7 +3668,7 @@
 @ extern _LSnan _LSnan
 @ stub _Last_write_time
 @ stub _Link
-@ stub _Lock_shared_ptr_spin_lock
+@ cdecl _Lock_shared_ptr_spin_lock()
 @ stub _Lstat
 @ stub _Make_dir
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr) _Mbrtowc
@@ -3738,7 +3738,7 @@
 @ cdecl _Towlower(long ptr) _Towlower
 @ cdecl _Towupper(long ptr) _Towupper
 @ stub _Unlink
-@ stub _Unlock_shared_ptr_spin_lock
+@ cdecl _Unlock_shared_ptr_spin_lock()
 @ stub _WStod
 @ stub _WStodx
 @ stub _WStof

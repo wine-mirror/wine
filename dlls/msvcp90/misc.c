@@ -1339,3 +1339,24 @@ void __cdecl threads__Mtx_unlock(void *mtx)
 {
     LeaveCriticalSection(mtx);
 }
+
+#if _MSVCP_VER >= 110
+static LONG shared_ptr_lock;
+
+void __cdecl _Lock_shared_ptr_spin_lock(void)
+{
+    LONG l = 0;
+
+    while(InterlockedCompareExchange(&shared_ptr_lock, 1, 0) != 0) {
+        if(l++ == 1000) {
+            Sleep(0);
+            l = 0;
+        }
+    }
+}
+
+void __cdecl _Unlock_shared_ptr_spin_lock(void)
+{
+    shared_ptr_lock = 0;
+}
+#endif

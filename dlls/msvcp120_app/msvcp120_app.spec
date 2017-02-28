@@ -3760,7 +3760,7 @@
 @ stub _LXp_sqrtx
 @ stub _LXp_subx
 @ extern _LZero msvcp120._LZero
-@ stub _Lock_shared_ptr_spin_lock
+@ cdecl _Lock_shared_ptr_spin_lock() msvcp120._Lock_shared_ptr_spin_lock
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr) msvcp120._Mbrtowc
 @ stub _Mtx_clear_owner
 @ cdecl _Mtx_current_owns(ptr) msvcp120._Mtx_current_owns
@@ -3821,7 +3821,7 @@
 @ stub _Tss_delete
 @ stub _Tss_get
 @ stub _Tss_set
-@ stub _Unlock_shared_ptr_spin_lock
+@ cdecl _Unlock_shared_ptr_spin_lock() msvcp120._Unlock_shared_ptr_spin_lock
 @ cdecl _Wcrtomb(ptr long ptr ptr) msvcp120._Wcrtomb
 @ cdecl _Wcscoll(ptr ptr ptr ptr ptr) msvcp120._Wcscoll
 @ stub _Wcsxfrm
