@@ -774,6 +774,8 @@ static void shader_sm5_read_dcl_tgsm_structured(struct wined3d_shader_instructio
     shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_FLOAT, &ins->declaration.tgsm_structured.reg);
     ins->declaration.tgsm_structured.byte_stride = *tokens++;
     ins->declaration.tgsm_structured.structure_count = *tokens;
+    if (ins->declaration.tgsm_structured.byte_stride % 4)
+        FIXME("Byte stride %u is not multiple of 4.\n", ins->declaration.tgsm_structured.byte_stride);
 }
 
 static void shader_sm5_read_dcl_resource_structured(struct wined3d_shader_instruction *ins,

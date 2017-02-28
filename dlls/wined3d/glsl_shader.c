@@ -9462,7 +9462,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ NULL,
     /* WINED3DSIH_DCL_TESSELLATOR_PARTITIONING     */ NULL,
     /* WINED3DSIH_DCL_TGSM_RAW                     */ shader_glsl_nop,
-    /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ NULL,
+    /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ shader_glsl_nop,
     /* WINED3DSIH_DCL_THREAD_GROUP                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_UAV_RAW                      */ shader_glsl_nop,
     /* WINED3DSIH_DCL_UAV_STRUCTURED               */ shader_glsl_nop,

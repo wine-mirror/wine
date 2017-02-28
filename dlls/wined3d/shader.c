@@ -1065,6 +1065,33 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 reg_maps->tgsm_count = reg_idx + 1;
                 tgsm = &reg_maps->tgsm[reg_idx];
                 tgsm->size = ins.declaration.tgsm_raw.byte_count / 4;
+                tgsm->stride = 0;
+            }
+            else
+            {
+                FIXME("Invalid instruction %#x for shader type %#x.\n",
+                        ins.handler_idx, shader_version.type);
+            }
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TGSM_STRUCTURED)
+        {
+            unsigned int reg_idx = ins.declaration.tgsm_structured.reg.reg.idx[0].offset;
+            if (reg_idx >= MAX_TGSM_REGISTERS)
+            {
+                ERR("Invalid TGSM register index %u.\n", reg_idx);
+                break;
+            }
+            if (shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
+            {
+                struct wined3d_shader_tgsm *tgsm;
+
+                if (!wined3d_array_reserve((void **)&reg_maps->tgsm, &reg_maps->tgsm_capacity,
+                        reg_idx + 1, sizeof(*reg_maps->tgsm)))
+                    return E_OUTOFMEMORY;
+                reg_maps->tgsm_count = reg_idx + 1;
+                tgsm = &reg_maps->tgsm[reg_idx];
+                tgsm->stride = ins.declaration.tgsm_structured.byte_stride / 4;
+                tgsm->size = tgsm->stride * ins.declaration.tgsm_structured.structure_count;
             }
             else
             {

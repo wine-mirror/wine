@@ -1006,6 +1006,7 @@ struct wined3d_shader_structured_resource
 struct wined3d_shader_tgsm
 {
     unsigned int size;
+    unsigned int stride;
 };
 
 struct wined3d_shader_tgsm_raw
