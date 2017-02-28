@@ -624,6 +624,7 @@ static const int ws_flags_map[][2] =
     MAP_OPTION( MSG_PEEK ),
     MAP_OPTION( MSG_DONTROUTE ),
     MAP_OPTION( MSG_WAITALL ),
+    { WS_MSG_PARTIAL, 0 },
 };
 
 static const int ws_sock_map[][2] =
