@@ -100,9 +100,32 @@ static HRESULT WINAPI DPWSCB_GetAddress( LPDPSP_GETADDRESSDATA data )
 
 static HRESULT WINAPI DPWSCB_GetCaps( LPDPSP_GETCAPSDATA data )
 {
-    FIXME( "(%d,%p,0x%08x,%p)\n",
+    TRACE( "(%d,%p,0x%08x,%p)\n",
            data->idPlayer, data->lpCaps, data->dwFlags, data->lpISP );
-    return DPERR_UNSUPPORTED;
+
+    data->lpCaps->dwFlags = ( DPCAPS_ASYNCSUPPORTED |
+                              DPCAPS_GUARANTEEDOPTIMIZED |
+                              DPCAPS_GUARANTEEDSUPPORTED );
+
+    data->lpCaps->dwMaxQueueSize    = DPWS_MAXQUEUESIZE;
+    data->lpCaps->dwHundredBaud     = DPWS_HUNDREDBAUD;
+    data->lpCaps->dwLatency         = DPWS_LATENCY;
+    data->lpCaps->dwMaxLocalPlayers = DPWS_MAXLOCALPLAYERS;
+    data->lpCaps->dwHeaderLength    = sizeof(DPSP_MSG_HEADER);
+    data->lpCaps->dwTimeout         = DPWS_TIMEOUT;
+
+    if ( data->dwFlags & DPGETCAPS_GUARANTEED )
+    {
+        data->lpCaps->dwMaxBufferSize = DPWS_GUARANTEED_MAXBUFFERSIZE;
+        data->lpCaps->dwMaxPlayers    = DPWS_GUARANTEED_MAXPLAYERS;
+    }
+    else
+    {
+        data->lpCaps->dwMaxBufferSize = DPWS_MAXBUFFERSIZE;
+        data->lpCaps->dwMaxPlayers    = DPWS_MAXPLAYERS;
+    }
+
+    return DP_OK;
 }
 
 static HRESULT WINAPI DPWSCB_Open( LPDPSP_OPENDATA data )

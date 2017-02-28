@@ -1088,7 +1088,7 @@ static void test_GetCaps(void)
 
     /* dpcaps not ininitialized */
     hr = IDirectPlayX_GetCaps( pDP, &dpcaps, 0 );
-    todo_wine checkHR( DPERR_INVALIDPARAMS, hr );
+    checkHR( DPERR_INVALIDPARAMS, hr );
 
     dpcaps.dwSize = sizeof(DPCAPS);
 
@@ -1098,35 +1098,30 @@ static void test_GetCaps(void)
     {
 
         hr = IDirectPlayX_GetCaps( pDP, &dpcaps, dwFlags );
-        todo_wine checkHR( DP_OK, hr );
+        checkHR( DP_OK, hr );
+        check( sizeof(DPCAPS), dpcaps.dwSize );
+        check( DPCAPS_ASYNCSUPPORTED |
+               DPCAPS_GUARANTEEDOPTIMIZED |
+               DPCAPS_GUARANTEEDSUPPORTED,
+               dpcaps.dwFlags );
+        check( 0,     dpcaps.dwMaxQueueSize );
+        check( 0,     dpcaps.dwHundredBaud );
+        check( 500,   dpcaps.dwLatency );
+        check( 65536, dpcaps.dwMaxLocalPlayers );
+        check( 20,    dpcaps.dwHeaderLength );
+        check( 5000,  dpcaps.dwTimeout );
 
-
-        if ( hr == DP_OK )
+        switch (dwFlags)
         {
-            check( sizeof(DPCAPS), dpcaps.dwSize );
-            check( DPCAPS_ASYNCSUPPORTED |
-                   DPCAPS_GUARANTEEDOPTIMIZED |
-                   DPCAPS_GUARANTEEDSUPPORTED,
-                   dpcaps.dwFlags );
-            check( 0,     dpcaps.dwMaxQueueSize );
-            check( 0,     dpcaps.dwHundredBaud );
-            check( 500,   dpcaps.dwLatency );
-            check( 65536, dpcaps.dwMaxLocalPlayers );
-            check( 20,    dpcaps.dwHeaderLength );
-            check( 5000,  dpcaps.dwTimeout );
-
-            switch (dwFlags)
-            {
-            case 0:
-                check( 65479,   dpcaps.dwMaxBufferSize );
-                check( 65536,   dpcaps.dwMaxPlayers );
-                break;
-            case DPGETCAPS_GUARANTEED:
-                check( 1048547, dpcaps.dwMaxBufferSize );
-                check( 64,      dpcaps.dwMaxPlayers );
-                break;
-            default: break;
-            }
+        case 0:
+            check( 65479,   dpcaps.dwMaxBufferSize );
+            check( 65536,   dpcaps.dwMaxPlayers );
+            break;
+        case DPGETCAPS_GUARANTEED:
+            check( 1048547, dpcaps.dwMaxBufferSize );
+            check( 64,      dpcaps.dwMaxPlayers );
+            break;
+        default: break;
         }
     }
 
@@ -2189,7 +2184,6 @@ static void test_GetPlayerCaps(void)
     hr = IDirectPlayX_GetPlayerCaps( pDP[0], dpid[0], &playerCaps, 0 );
     checkHR( DPERR_INVALIDPARAMS, hr );
 
-
     /* Invalid player */
     playerCaps.dwSize = sizeof(DPCAPS);
 
@@ -2202,6 +2196,8 @@ static void test_GetPlayerCaps(void)
     hr = IDirectPlayX_GetPlayerCaps( pDP[0], dpid[0], &playerCaps, 0 );
     checkHR( DP_OK, hr );
 
+    hr = IDirectPlayX_GetPlayerCaps( pDP[0], dpid[0], NULL, 0 );
+    checkHR( DPERR_INVALIDPARAMS, hr );
 
     /* Regular parameters */
     for (i=0; i<2; i++)

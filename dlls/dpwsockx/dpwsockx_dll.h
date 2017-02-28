@@ -25,6 +25,15 @@
 #include "winnt.h"
 #include "wine/dplaysp.h"
 
+#define DPWS_MAXQUEUESIZE             0
+#define DPWS_HUNDREDBAUD              0
+#define DPWS_LATENCY                  500
+#define DPWS_MAXLOCALPLAYERS          65536
+#define DPWS_TIMEOUT                  5000
+#define DPWS_MAXBUFFERSIZE            65479
+#define DPWS_MAXPLAYERS               65536
+#define DPWS_GUARANTEED_MAXBUFFERSIZE 1048547
+#define DPWS_GUARANTEED_MAXPLAYERS    64
 
 typedef struct tagDPWS_THREADDATA
 {

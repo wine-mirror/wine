@@ -2891,8 +2891,14 @@ static HRESULT WINAPI IDirectPlay4Impl_GetPlayerCaps( IDirectPlay4 *iface, DPID 
 
     TRACE( "(%p)->(0x%08x,%p,0x%08x)\n", This, player, caps, flags);
 
+    if ( !caps )
+        return DPERR_INVALIDPARAMS;
+
     if ( This->dp2->connectionInitialized == NO_PROVIDER )
         return DPERR_UNINITIALIZED;
+
+    if( caps->dwSize != sizeof(DPCAPS) )
+        return DPERR_INVALIDPARAMS;
 
     /* Query the service provider */
     data.idPlayer = player;
