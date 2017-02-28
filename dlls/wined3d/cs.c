@@ -581,7 +581,7 @@ void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
 
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
 {
-    struct wined3d_state *state = &cs->device->state;
+    struct wined3d_state *state = &cs->state;
     const struct wined3d_cs_draw *op = data;
     unsigned int i;
 
@@ -592,11 +592,11 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         device_invalidate_state(cs->device, STATE_BASEVERTEXINDEX);
     }
 
-    if (cs->state.gl_primitive_type != op->primitive_type)
+    if (state->gl_primitive_type != op->primitive_type)
     {
-        if (cs->state.gl_primitive_type == GL_POINTS || op->primitive_type == GL_POINTS)
+        if (state->gl_primitive_type == GL_POINTS || op->primitive_type == GL_POINTS)
             device_invalidate_state(cs->device, STATE_POINT_ENABLE);
-        cs->state.gl_primitive_type = op->primitive_type;
+        state->gl_primitive_type = op->primitive_type;
     }
 
     draw_primitive(cs->device, state, op->base_vertex_idx, op->start_idx,
