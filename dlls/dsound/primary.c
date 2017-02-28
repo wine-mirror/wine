@@ -240,7 +240,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
     /* reallocate emulated primary buffer */
     if (forcewave || !mixfloat) {
         if (!forcewave)
-            new_buflen = frames * sizeof(float);
+            new_buflen = frames * wfx->nChannels * sizeof(float);
 
         if (device->buffer)
             newbuf = HeapReAlloc(GetProcessHeap(), 0, device->buffer, new_buflen);
