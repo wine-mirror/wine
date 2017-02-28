@@ -549,8 +549,8 @@ static void release_unordered_access_resources(const struct wined3d_shader *shad
 
 static void wined3d_cs_exec_dispatch(struct wined3d_cs *cs, const void *data)
 {
-    struct wined3d_state *state = &cs->device->state;
     const struct wined3d_cs_dispatch *op = data;
+    struct wined3d_state *state = &cs->state;
 
     dispatch_compute(cs->device, state,
             op->group_count_x, op->group_count_y, op->group_count_z);
