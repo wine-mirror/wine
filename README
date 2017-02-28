@@ -13,11 +13,11 @@ LICENSE for the details.
 
 2. QUICK START
 
-Whenever you compile from source, it is recommended to use the Wine
-Installer to build and install Wine.  From the top-level directory
-of the Wine source (which contains this file), run:
+From the top-level directory of the Wine source (which contains this file),
+run:
 
-./tools/wineinstall
+./configure
+make
 
 Run programs as "wine program".  For more information and problem
 resolution, read the rest of this file, the Wine man page, and
@@ -84,8 +84,7 @@ Optional support libraries:
 
 4. COMPILATION
 
-In case you chose to not use wineinstall, run the following commands
-to build Wine:
+To build Wine, do:
 
 ./configure
 make
@@ -96,6 +95,8 @@ The library "libwine" ("Winelib") can be used to compile and link
 Windows source code under Unix.
 
 To see compile configuration options, do ./configure --help.
+
+For more information, see https://wiki.winehq.org/Building_Wine
 
 5. SETUP
 
