@@ -891,6 +891,16 @@ int * CDECL MSVCRT___p__dstbias(void)
 }
 
 /*********************************************************************
+ *              _get_dstbias (MSVCR80.@)
+ */
+int CDECL  MSVCRT__get_dstbias(int *seconds)
+{
+    if (!MSVCRT_CHECK_PMT(seconds != NULL)) return MSVCRT_EINVAL;
+    *seconds = MSVCRT__dstbias;
+    return 0;
+}
+
+/*********************************************************************
  *		__p__timezone (MSVCRT.@)
  */
 MSVCRT_long * CDECL MSVCRT___p__timezone(void)
