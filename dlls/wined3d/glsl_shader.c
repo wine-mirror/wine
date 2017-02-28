@@ -5148,7 +5148,7 @@ static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
         function = "texelFetch";
         resource = "sampler";
     }
-    else
+    else if (src->reg.type == WINED3DSPR_UAV)
     {
         if (resource_idx >= ARRAY_SIZE(reg_maps->uav_resource_info))
         {
@@ -5159,6 +5159,18 @@ static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
         bind_idx = resource_idx;
         function = "imageLoad";
         resource = "image";
+    }
+    else
+    {
+        if (resource_idx >= reg_maps->tgsm_count)
+        {
+            ERR("Invalid TGSM index %u.\n", resource_idx);
+            return;
+        }
+        stride = reg_maps->tgsm[resource_idx].stride;
+        bind_idx = resource_idx;
+        function = NULL;
+        resource = "g";
     }
 
     address = string_buffer_get(priv->string_buffers);
@@ -5178,8 +5190,12 @@ static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
             continue;
 
         swizzle = shader_glsl_swizzle_get_component(src->swizzle, i);
-        shader_addline(buffer, "%s(%s_%s%u, %s + %u).x);\n",
-                function, prefix, resource, bind_idx, address->buffer, swizzle);
+        if (function)
+            shader_addline(buffer, "%s(%s_%s%u, %s + %u).x);\n",
+                    function, prefix, resource, bind_idx, address->buffer, swizzle);
+        else
+            shader_addline(buffer, "%s_%s%u[%s + %u]);\n",
+                    prefix, resource, bind_idx, address->buffer, swizzle);
     }
 
     string_buffer_release(priv->string_buffers, address);
