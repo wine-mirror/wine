@@ -265,13 +265,7 @@ MSVCRT_bool __thiscall SpinWait__SpinOnce(SpinWait *this)
         SpinWait__Reset(this);
         /* fall through */
     case SPINWAIT_SPIN:
-#ifdef __i386__
-        __asm__ __volatile__( "rep;nop" : : : "memory" );
-#else
-        __asm__ __volatile__( "" : : : "memory" );
-#endif
-
-        this->spin--;
+        InterlockedDecrement((LONG*)&this->spin);
         if(!this->spin)
             this->state = this->unknown ? SPINWAIT_YIELD : SPINWAIT_DONE;
         return TRUE;
