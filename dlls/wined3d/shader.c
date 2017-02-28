@@ -863,6 +863,33 @@ static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HAN
     }
 }
 
+static HRESULT shader_reg_maps_add_tgsm(struct wined3d_shader_reg_maps *reg_maps,
+        unsigned int register_idx, unsigned int size, unsigned int stride)
+{
+    struct wined3d_shader_tgsm *tgsm;
+
+    if (register_idx >= MAX_TGSM_REGISTERS)
+    {
+        ERR("Invalid TGSM register index %u.\n", register_idx);
+        return S_OK;
+    }
+    if (reg_maps->shader_version.type != WINED3D_SHADER_TYPE_COMPUTE)
+    {
+        FIXME("TGSM declarations are allowed only in compute shaders.\n");
+        return S_OK;
+    }
+
+    if (!wined3d_array_reserve((void **)&reg_maps->tgsm, &reg_maps->tgsm_capacity,
+            register_idx + 1, sizeof(*reg_maps->tgsm)))
+        return E_OUTOFMEMORY;
+
+    reg_maps->tgsm_count = register_idx + 1;
+    tgsm = &reg_maps->tgsm[register_idx];
+    tgsm->size = size;
+    tgsm->stride = stride;
+    return S_OK;
+}
+
 /* Note that this does not count the loop register as an address register. */
 static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const struct wined3d_shader_frontend *fe,
         struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_signature *input_signature,
@@ -875,6 +902,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     struct wined3d_shader_version shader_version;
     const DWORD *ptr;
     unsigned int i;
+    HRESULT hr;
 
     memset(reg_maps, 0, sizeof(*reg_maps));
     memset(input_signature_elements, 0, sizeof(input_signature_elements));
@@ -1049,55 +1077,17 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_TGSM_RAW)
         {
-            unsigned int reg_idx = ins.declaration.tgsm_raw.reg.reg.idx[0].offset;
-            if (reg_idx >= MAX_TGSM_REGISTERS)
-            {
-                ERR("Invalid TGSM register index %u.\n", reg_idx);
-                break;
-            }
-            if (shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
-            {
-                struct wined3d_shader_tgsm *tgsm;
-
-                if (!wined3d_array_reserve((void **)&reg_maps->tgsm, &reg_maps->tgsm_capacity,
-                        reg_idx + 1, sizeof(*reg_maps->tgsm)))
-                    return E_OUTOFMEMORY;
-                reg_maps->tgsm_count = reg_idx + 1;
-                tgsm = &reg_maps->tgsm[reg_idx];
-                tgsm->size = ins.declaration.tgsm_raw.byte_count / 4;
-                tgsm->stride = 0;
-            }
-            else
-            {
-                FIXME("Invalid instruction %#x for shader type %#x.\n",
-                        ins.handler_idx, shader_version.type);
-            }
+            if (FAILED(hr = shader_reg_maps_add_tgsm(reg_maps, ins.declaration.tgsm_raw.reg.reg.idx[0].offset,
+                    ins.declaration.tgsm_raw.byte_count / 4, 0)))
+                return hr;
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_TGSM_STRUCTURED)
         {
-            unsigned int reg_idx = ins.declaration.tgsm_structured.reg.reg.idx[0].offset;
-            if (reg_idx >= MAX_TGSM_REGISTERS)
-            {
-                ERR("Invalid TGSM register index %u.\n", reg_idx);
-                break;
-            }
-            if (shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
-            {
-                struct wined3d_shader_tgsm *tgsm;
-
-                if (!wined3d_array_reserve((void **)&reg_maps->tgsm, &reg_maps->tgsm_capacity,
-                        reg_idx + 1, sizeof(*reg_maps->tgsm)))
-                    return E_OUTOFMEMORY;
-                reg_maps->tgsm_count = reg_idx + 1;
-                tgsm = &reg_maps->tgsm[reg_idx];
-                tgsm->stride = ins.declaration.tgsm_structured.byte_stride / 4;
-                tgsm->size = tgsm->stride * ins.declaration.tgsm_structured.structure_count;
-            }
-            else
-            {
-                FIXME("Invalid instruction %#x for shader type %#x.\n",
-                        ins.handler_idx, shader_version.type);
-            }
+            unsigned int stride = ins.declaration.tgsm_structured.byte_stride / 4;
+            unsigned int size = stride * ins.declaration.tgsm_structured.structure_count;
+            if (FAILED(hr = shader_reg_maps_add_tgsm(reg_maps,
+                    ins.declaration.tgsm_structured.reg.reg.idx[0].offset, size, stride)))
+                return hr;
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_THREAD_GROUP)
         {
