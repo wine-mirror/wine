@@ -487,7 +487,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, DWORD flags)
 {
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
-    const struct wined3d_fb_state *fb = &swapchain->device->fb;
+    const struct wined3d_fb_state *fb = &swapchain->device->cs->fb;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_texture *logo_texture;
     struct wined3d_context *context;
