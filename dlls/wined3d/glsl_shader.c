@@ -6833,6 +6833,7 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
+    unsigned int i;
 
     shader_id = GL_EXTCALL(glCreateShader(GL_COMPUTE_SHADER));
 
@@ -6845,6 +6846,12 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.string_buffers = string_buffers;
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    for (i = 0; i < reg_maps->tgsm_count; ++i)
+    {
+        if (reg_maps->tgsm[i].size)
+            shader_addline(buffer, "shared uint cs_g%u[%u];\n", i, reg_maps->tgsm[i].size);
+    }
 
     shader_addline(buffer, "layout(local_size_x = %u, local_size_y = %u, local_size_z = %u) in;\n",
             thread_group_size->x, thread_group_size->y, thread_group_size->z);
@@ -9454,7 +9461,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_TESSELLATOR_DOMAIN           */ NULL,
     /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ NULL,
     /* WINED3DSIH_DCL_TESSELLATOR_PARTITIONING     */ NULL,
-    /* WINED3DSIH_DCL_TGSM_RAW                     */ NULL,
+    /* WINED3DSIH_DCL_TGSM_RAW                     */ shader_glsl_nop,
     /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ NULL,
     /* WINED3DSIH_DCL_THREAD_GROUP                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_UAV_RAW                      */ shader_glsl_nop,

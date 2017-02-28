@@ -1047,6 +1047,31 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         {
             reg_maps->temporary_count = ins.declaration.count;
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TGSM_RAW)
+        {
+            unsigned int reg_idx = ins.declaration.tgsm_raw.reg.reg.idx[0].offset;
+            if (reg_idx >= MAX_TGSM_REGISTERS)
+            {
+                ERR("Invalid TGSM register index %u.\n", reg_idx);
+                break;
+            }
+            if (shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
+            {
+                struct wined3d_shader_tgsm *tgsm;
+
+                if (!wined3d_array_reserve((void **)&reg_maps->tgsm, &reg_maps->tgsm_capacity,
+                        reg_idx + 1, sizeof(*reg_maps->tgsm)))
+                    return E_OUTOFMEMORY;
+                reg_maps->tgsm_count = reg_idx + 1;
+                tgsm = &reg_maps->tgsm[reg_idx];
+                tgsm->size = ins.declaration.tgsm_raw.byte_count / 4;
+            }
+            else
+            {
+                FIXME("Invalid instruction %#x for shader type %#x.\n",
+                        ins.handler_idx, shader_version.type);
+            }
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_THREAD_GROUP)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
@@ -1522,6 +1547,8 @@ static void shader_cleanup_reg_maps(struct wined3d_shader_reg_maps *reg_maps)
     LIST_FOR_EACH_ENTRY_SAFE(reg, reg_next, &reg_maps->indexable_temps, struct wined3d_shader_indexable_temp, entry)
         HeapFree(GetProcessHeap(), 0, reg);
     list_init(&reg_maps->indexable_temps);
+
+    HeapFree(GetProcessHeap(), 0, reg_maps->tgsm);
 }
 
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps, unsigned int max)

@@ -763,6 +763,8 @@ static void shader_sm5_read_dcl_tgsm_raw(struct wined3d_shader_instruction *ins,
 {
     shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_FLOAT, &ins->declaration.tgsm_raw.reg);
     ins->declaration.tgsm_raw.byte_count = *tokens;
+    if (ins->declaration.tgsm_raw.byte_count % 4)
+        FIXME("Byte count %u is not multiple of 4.\n", ins->declaration.tgsm_raw.byte_count);
 }
 
 static void shader_sm5_read_dcl_tgsm_structured(struct wined3d_shader_instruction *ins,

@@ -185,6 +185,7 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
 #define MAX_SAMPLER_OBJECTS         16
 #define MAX_SHADER_RESOURCE_VIEWS   128
 #define MAX_UNORDERED_ACCESS_VIEWS  8
+#define MAX_TGSM_REGISTERS          8192
 #define MAX_VERTEX_BLENDS           4
 #define MAX_MULTISAMPLE_TYPES       8
 
@@ -915,6 +916,10 @@ struct wined3d_shader_reg_maps
     /* Whether or not loops are used in this shader, and nesting depth */
     unsigned loop_depth;
     UINT min_rel_offset, max_rel_offset;
+
+    struct wined3d_shader_tgsm *tgsm;
+    SIZE_T tgsm_capacity;
+    unsigned int tgsm_count;
 };
 
 /* Keeps track of details for TEX_M#x# instructions which need to maintain
@@ -996,6 +1001,11 @@ struct wined3d_shader_structured_resource
 {
     struct wined3d_shader_dst_param reg;
     unsigned int byte_stride;
+};
+
+struct wined3d_shader_tgsm
+{
+    unsigned int size;
 };
 
 struct wined3d_shader_tgsm_raw
