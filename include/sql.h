@@ -506,15 +506,15 @@ SQLRETURN WINAPI   SQLAllocStmt(SQLHDBC ConnectionHandle,
 
 SQLRETURN WINAPI   SQLBindCol(SQLHSTMT StatementHandle,
 		   SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
-		   SQLPOINTER TargetValue, SQLINTEGER BufferLength,
+		   SQLPOINTER TargetValue, SQLLEN BufferLength,
 		   SQLLEN *StrLen_or_Ind);
 
 #if (ODBCVER >= 0x0300)
 SQLRETURN WINAPI   SQLBindParam(SQLHSTMT StatementHandle,
            SQLUSMALLINT ParameterNumber, SQLSMALLINT ValueType,
-           SQLSMALLINT ParameterType, SQLUINTEGER LengthPrecision,
+           SQLSMALLINT ParameterType, SQLULEN LengthPrecision,
            SQLSMALLINT ParameterScale, SQLPOINTER ParameterValue,
-           SQLINTEGER *StrLen_or_Ind);
+           SQLLEN *StrLen_or_Ind);
 #endif
 
 SQLRETURN WINAPI   SQLCancel(SQLHSTMT StatementHandle);
@@ -525,7 +525,7 @@ SQLRETURN WINAPI   SQLCloseCursor(SQLHSTMT StatementHandle);
 SQLRETURN WINAPI   SQLColAttribute (SQLHSTMT StatementHandle,
            SQLUSMALLINT ColumnNumber, SQLUSMALLINT FieldIdentifier,
            SQLPOINTER CharacterAttribute, SQLSMALLINT BufferLength,
-           SQLSMALLINT *StringLength, SQLPOINTER NumericAttribute);
+           SQLSMALLINT *StringLength, SQLLEN *NumericAttribute);
 #endif
 
 
@@ -555,7 +555,7 @@ SQLRETURN WINAPI   SQLDataSources(SQLHENV EnvironmentHandle,
 SQLRETURN WINAPI   SQLDescribeCol(SQLHSTMT StatementHandle,
            SQLUSMALLINT ColumnNumber, SQLCHAR *ColumnName,
            SQLSMALLINT BufferLength, SQLSMALLINT *NameLength,
-           SQLSMALLINT *DataType, SQLUINTEGER *ColumnSize,
+           SQLSMALLINT *DataType, SQLULEN *ColumnSize,
            SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable);
 
 SQLRETURN WINAPI   SQLDisconnect(SQLHDBC ConnectionHandle);
@@ -580,7 +580,7 @@ SQLRETURN WINAPI   SQLFetch(SQLHSTMT StatementHandle);
 
 #if (ODBCVER >= 0x0300)
 SQLRETURN WINAPI   SQLFetchScroll(SQLHSTMT StatementHandle,
-           SQLSMALLINT FetchOrientation, SQLINTEGER FetchOffset);
+           SQLSMALLINT FetchOrientation, SQLLEN FetchOffset);
 #endif
 
 SQLRETURN WINAPI   SQLFreeConnect(SQLHDBC ConnectionHandle);
@@ -609,8 +609,8 @@ SQLRETURN WINAPI   SQLGetCursorName(SQLHSTMT StatementHandle,
 
 SQLRETURN WINAPI   SQLGetData(SQLHSTMT StatementHandle,
            SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
-           SQLPOINTER TargetValue, SQLINTEGER BufferLength,
-           SQLINTEGER *StrLen_or_Ind);
+           SQLPOINTER TargetValue, SQLLEN BufferLength,
+           SQLLEN *StrLen_or_Ind);
 
 #if (ODBCVER >= 0x0300)
 SQLRETURN WINAPI   SQLGetDescField(SQLHDESC DescriptorHandle,
@@ -622,7 +622,7 @@ SQLRETURN WINAPI   SQLGetDescRec(SQLHDESC DescriptorHandle,
            SQLSMALLINT RecNumber, SQLCHAR *Name,
            SQLSMALLINT BufferLength, SQLSMALLINT *StringLength,
            SQLSMALLINT *Type, SQLSMALLINT *SubType,
-           SQLINTEGER *Length, SQLSMALLINT *Precision,
+           SQLLEN *Length, SQLSMALLINT *Precision,
            SQLSMALLINT *Scale, SQLSMALLINT *Nullable);
 
 SQLRETURN WINAPI   SQLGetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
@@ -669,10 +669,10 @@ SQLRETURN WINAPI   SQLPrepare(SQLHSTMT StatementHandle,
            SQLCHAR *StatementText, SQLINTEGER TextLength);
 
 SQLRETURN WINAPI   SQLPutData(SQLHSTMT StatementHandle,
-           SQLPOINTER Data, SQLINTEGER StrLen_or_Ind);
+           SQLPOINTER Data, SQLLEN StrLen_or_Ind);
 
 SQLRETURN WINAPI   SQLRowCount(SQLHSTMT StatementHandle,
-	   SQLINTEGER *RowCount);
+	   SQLLEN *RowCount);
 
 #if (ODBCVER >= 0x0300)
 SQLRETURN WINAPI   SQLSetConnectAttr(SQLHDBC ConnectionHandle,
@@ -681,7 +681,7 @@ SQLRETURN WINAPI   SQLSetConnectAttr(SQLHDBC ConnectionHandle,
 #endif
 
 SQLRETURN WINAPI   SQLSetConnectOption(SQLHDBC ConnectionHandle,
-           SQLUSMALLINT Option, SQLUINTEGER Value);
+           SQLUSMALLINT Option, SQLULEN Value);
 
 SQLRETURN WINAPI   SQLSetCursorName(SQLHSTMT StatementHandle,
            SQLCHAR *CursorName, SQLSMALLINT NameLength);
@@ -693,10 +693,10 @@ SQLRETURN WINAPI   SQLSetDescField(SQLHDESC DescriptorHandle,
 
 SQLRETURN WINAPI   SQLSetDescRec(SQLHDESC DescriptorHandle,
            SQLSMALLINT RecNumber, SQLSMALLINT Type,
-           SQLSMALLINT SubType, SQLINTEGER Length,
+           SQLSMALLINT SubType, SQLLEN Length,
            SQLSMALLINT Precision, SQLSMALLINT Scale,
-           SQLPOINTER Data, SQLINTEGER *StringLength,
-           SQLINTEGER *Indicator);
+           SQLPOINTER Data, SQLLEN *StringLength,
+           SQLLEN *Indicator);
 
 SQLRETURN WINAPI   SQLSetEnvAttr(SQLHENV EnvironmentHandle,
            SQLINTEGER Attribute, SQLPOINTER Value,
@@ -705,9 +705,9 @@ SQLRETURN WINAPI   SQLSetEnvAttr(SQLHENV EnvironmentHandle,
 
 SQLRETURN WINAPI   SQLSetParam(SQLHSTMT StatementHandle,
            SQLUSMALLINT ParameterNumber, SQLSMALLINT ValueType,
-           SQLSMALLINT ParameterType, SQLUINTEGER LengthPrecision,
+           SQLSMALLINT ParameterType, SQLULEN LengthPrecision,
            SQLSMALLINT ParameterScale, SQLPOINTER ParameterValue,
-           SQLINTEGER *StrLen_or_Ind);
+           SQLLEN *StrLen_or_Ind);
 
 #if (ODBCVER >= 0x0300)
 SQLRETURN WINAPI   SQLSetStmtAttr(SQLHSTMT StatementHandle,
@@ -716,7 +716,7 @@ SQLRETURN WINAPI   SQLSetStmtAttr(SQLHSTMT StatementHandle,
 #endif
 
 SQLRETURN WINAPI   SQLSetStmtOption(SQLHSTMT StatementHandle,
-           SQLUSMALLINT Option, SQLUINTEGER Value);
+           SQLUSMALLINT Option, SQLULEN Value);
 
 SQLRETURN WINAPI   SQLSpecialColumns(SQLHSTMT StatementHandle,
            SQLUSMALLINT IdentifierType, SQLCHAR *CatalogName,

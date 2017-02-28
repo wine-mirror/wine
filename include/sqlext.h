@@ -1455,7 +1455,7 @@ SQLRETURN WINAPI  SQLColAttributes(
     SQLPOINTER         rgbDesc,
     SQLSMALLINT        cbDescMax,
     SQLSMALLINT 	  *pcbDesc,
-    SQLINTEGER 		  *pfDesc);
+    SQLLEN		  *pfDesc);
 
 SQLRETURN WINAPI  SQLColumnPrivileges(
     SQLHSTMT           hstmt,
@@ -1472,15 +1472,15 @@ SQLRETURN WINAPI  SQLDescribeParam(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       ipar,
     SQLSMALLINT 	  *pfSqlType,
-    SQLUINTEGER 	  *pcbParamDef,
+    SQLULEN		  *pcbParamDef,
     SQLSMALLINT 	  *pibScale,
     SQLSMALLINT 	  *pfNullable);
 
 SQLRETURN WINAPI  SQLExtendedFetch(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       fFetchType,
-    SQLINTEGER         irow,
-    SQLUINTEGER 	  *pcrow,
+    SQLLEN	       irow,
+    SQLULEN		  *pcrow,
     SQLUSMALLINT 	  *rgfRowStatus);
 
 SQLRETURN WINAPI  SQLForeignKeys(
@@ -1515,8 +1515,8 @@ SQLRETURN WINAPI  SQLNumParams(
 
 SQLRETURN WINAPI  SQLParamOptions(
     SQLHSTMT           hstmt,
-    SQLUINTEGER        crow,
-    SQLUINTEGER 	  *pirow);
+    SQLULEN	       crow,
+    SQLULEN		  *pirow);
 
 SQLRETURN WINAPI  SQLPrimaryKeys(
     SQLHSTMT           hstmt,
@@ -1549,7 +1549,7 @@ SQLRETURN WINAPI  SQLProcedures(
 
 SQLRETURN WINAPI  SQLSetPos(
     SQLHSTMT           hstmt,
-    SQLUSMALLINT       irow,
+    SQLSETPOSIROW      irow,
     SQLUSMALLINT       fOption,
     SQLUSMALLINT       fLock);
 
@@ -1578,11 +1578,11 @@ SQLRETURN WINAPI  SQLBindParameter(
     SQLSMALLINT        fParamType,
     SQLSMALLINT        fCType,
     SQLSMALLINT        fSqlType,
-    SQLUINTEGER        cbColDef,
+    SQLULEN	       cbColDef,
     SQLSMALLINT        ibScale,
     SQLPOINTER         rgbValue,
-    SQLINTEGER         cbValueMax,
-    SQLINTEGER 		  *pcbValue);
+    SQLLEN	       cbValueMax,
+    SQLLEN		  *pcbValue);
 
 #ifdef ODBC_STD
 #define SQLAllocHandle  SQLAllocHandleStd
@@ -1629,7 +1629,7 @@ SQLRETURN WINAPI  SQLAllocHandleStd(
 SQLRETURN WINAPI  SQLSetScrollOptions(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       fConcurrency,
-    SQLINTEGER         crowKeyset,
+    SQLLEN	       crowKeyset,
     SQLUSMALLINT       crowRowset);
 
 #define		TRACE_VERSION	1000
