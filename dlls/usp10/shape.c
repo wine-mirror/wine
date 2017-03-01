@@ -753,11 +753,9 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
     {
         int i;
         int target_glyph = nextIndex - write_dir;
-        int seeking_glyph;
         int target_index = -1;
         int replacing_glyph = -1;
         int changed = 0;
-        int top_logclust = 0;
 
         if (changeCount > 0)
         {
@@ -767,35 +765,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
                 target_glyph = nextIndex + (changeCount + 1);
         }
 
-        seeking_glyph = target_glyph;
-        for (i = 0; i < chars; i++)
-            if (pwLogClust[i] > top_logclust)
-                top_logclust = pwLogClust[i];
-
-        do {
-            if (write_dir > 0)
-                for (i = 0; i < chars; i++)
-                {
-                    if (pwLogClust[i] == seeking_glyph)
-                    {
-                        target_index = i;
-                        break;
-                    }
-                }
-            else
-                for (i = chars - 1; i >= 0; i--)
-                {
-                    if (pwLogClust[i] == seeking_glyph)
-                    {
-                        target_index = i;
-                        break;
-                    }
-                }
-            if (target_index == -1)
-                seeking_glyph ++;
-        }
-        while (target_index == -1 && seeking_glyph <= top_logclust);
-
+        target_index = USP10_FindGlyphInLogClust(pwLogClust, chars, target_glyph);
         if (target_index == -1)
         {
             ERR("Unable to find target glyph\n");
