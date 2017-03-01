@@ -150,6 +150,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_shader_bit_encoding",          ARB_SHADER_BIT_ENCODING       },
     {"GL_ARB_shader_image_load_store",      ARB_SHADER_IMAGE_LOAD_STORE   },
     {"GL_ARB_shader_image_size",            ARB_SHADER_IMAGE_SIZE         },
+    {"GL_ARB_shader_storage_buffer_object", ARB_SHADER_STORAGE_BUFFER_OBJECT},
     {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD        },
     {"GL_ARB_shading_language_100",         ARB_SHADING_LANGUAGE_100      },
     {"GL_ARB_shading_language_420pack",     ARB_SHADING_LANGUAGE_420PACK  },
@@ -2832,6 +2833,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glUniformMatrix4fvARB)
     USE_GL_FUNC(glUseProgramObjectARB)
     USE_GL_FUNC(glValidateProgramARB)
+    /* GL_ARB_shader_storage_buffer_object */
+    USE_GL_FUNC(glShaderStorageBlockBinding)
     /* GL_ARB_sync */
     USE_GL_FUNC(glClientWaitSync)
     USE_GL_FUNC(glDeleteSync)
@@ -3774,6 +3777,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_ES3_COMPATIBILITY,            MAKEDWORD_VERSION(4, 3)},
         {ARB_INTERNALFORMAT_QUERY2,        MAKEDWORD_VERSION(4, 3)},
         {ARB_SHADER_IMAGE_SIZE,            MAKEDWORD_VERSION(4, 3)},
+        {ARB_SHADER_STORAGE_BUFFER_OBJECT, MAKEDWORD_VERSION(4, 3)},
         {ARB_STENCIL_TEXTURING,            MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_BUFFER_RANGE,         MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_QUERY_LEVELS,         MAKEDWORD_VERSION(4, 3)},

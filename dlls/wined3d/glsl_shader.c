@@ -6613,6 +6613,8 @@ static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
         shader_addline(buffer, "#extension GL_ARB_shader_image_load_store : enable\n");
     if (gl_info->supported[ARB_SHADER_IMAGE_SIZE])
         shader_addline(buffer, "#extension GL_ARB_shader_image_size : enable\n");
+    if (gl_info->supported[ARB_SHADER_STORAGE_BUFFER_OBJECT])
+        shader_addline(buffer, "#extension GL_ARB_shader_storage_buffer_object : enable\n");
     if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
         shader_addline(buffer, "#extension GL_ARB_shading_language_420pack : enable\n");
     if (gl_info->supported[ARB_SHADING_LANGUAGE_PACKING])
