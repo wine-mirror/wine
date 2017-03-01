@@ -1080,7 +1080,6 @@ static void test_CreatePropertySheetPage(void)
         else
         {
             ok(hpsp != NULL, "Failed to create a page, size %u\n", page.u.pageA.dwSize);
-        todo_wine_if(page.u.pageA.dwSize > PROPSHEETPAGEA_V1_SIZE)
             ok(page.addref_called == (page.u.pageA.dwSize > PROPSHEETPAGEA_V1_SIZE) ? 1 : 0, "Expected ADDREF callback message\n");
         }
 
@@ -1089,7 +1088,6 @@ static void test_CreatePropertySheetPage(void)
             page.release_called = 0;
             ret = DestroyPropertySheetPage(hpsp);
             ok(ret, "Failed to destroy a page\n");
-        todo_wine
             ok(page.release_called == 1, "Expected RELEASE callback message\n");
         }
     }
@@ -1111,7 +1109,6 @@ static void test_CreatePropertySheetPage(void)
         else
         {
             ok(hpsp != NULL, "Failed to create a page, size %u\n", page.u.pageW.dwSize);
-        todo_wine_if(page.u.pageW.dwSize > PROPSHEETPAGEW_V1_SIZE)
             ok(page.addref_called == (page.u.pageW.dwSize > PROPSHEETPAGEW_V1_SIZE) ? 1 : 0, "Expected ADDREF callback message\n");
         }
 
@@ -1120,7 +1117,6 @@ static void test_CreatePropertySheetPage(void)
             page.release_called = 0;
             ret = DestroyPropertySheetPage(hpsp);
             ok(ret, "Failed to destroy a page\n");
-        todo_wine
             ok(page.release_called == 1, "Expected RELEASE callback message\n");
         }
     }
