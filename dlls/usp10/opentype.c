@@ -1058,9 +1058,8 @@ static INT GSUB_apply_LigatureSubst(const OT_LookupTable *look, WORD *glyphs, IN
                     TRACE("0x%x\n",glyphs[replaceIdx]);
                     if (CompCount > 0)
                     {
-                        int j;
-                        for (j = replaceIdx + 1; j < *glyph_count; j++)
-                            glyphs[j] =glyphs[j+CompCount];
+                        unsigned int j = replaceIdx + 1;
+                        memmove(&glyphs[j], &glyphs[j + CompCount], (*glyph_count - j) * sizeof(*glyphs));
                         *glyph_count = *glyph_count - CompCount;
                     }
                     return replaceIdx + write_dir;
