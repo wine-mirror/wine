@@ -5122,7 +5122,7 @@ static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
             shader_glsl_get_prefix(version->type), uav_idx, image_coord_param.param_str, dst_swizzle);
 }
 
-static void shader_glsl_ld_buffer(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_ld_raw_structured(const struct wined3d_shader_instruction *ins)
 {
     const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
     const struct wined3d_shader_src_param *src = &ins->src[ins->src_count - 1];
@@ -9556,8 +9556,8 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_LABEL                            */ shader_glsl_label,
     /* WINED3DSIH_LD                               */ shader_glsl_ld,
     /* WINED3DSIH_LD2DMS                           */ NULL,
-    /* WINED3DSIH_LD_RAW                           */ shader_glsl_ld_buffer,
-    /* WINED3DSIH_LD_STRUCTURED                    */ shader_glsl_ld_buffer,
+    /* WINED3DSIH_LD_RAW                           */ shader_glsl_ld_raw_structured,
+    /* WINED3DSIH_LD_STRUCTURED                    */ shader_glsl_ld_raw_structured,
     /* WINED3DSIH_LD_UAV_TYPED                     */ shader_glsl_ld_uav,
     /* WINED3DSIH_LIT                              */ shader_glsl_lit,
     /* WINED3DSIH_LOD                              */ NULL,
