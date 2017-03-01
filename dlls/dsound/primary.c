@@ -264,7 +264,7 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device, WAVEFORMATEX *wfx, 
 
     device->writelead = (wfx->nSamplesPerSec / 100) * wfx->nBlockAlign;
 
-    TRACE("buflen: %u, fraglen: %u\n", device->buflen, device->fraglen);
+    TRACE("buflen: %u, frames %u\n", device->buflen, frames);
 
     if (!mixfloat)
         device->normfunction = normfunctions[wfx->wBitsPerSample/8 - 1];
@@ -351,7 +351,7 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 
     aclen_frames = min(acbuf_frames, 3 * frag_frames);
 
-    TRACE("period %u ms fraglen %u buflen %u\n", period_ms, frag_frames * wfx->nBlockAlign, aclen_frames * wfx->nBlockAlign);
+    TRACE("period %u ms frag_frames %u buf_frames %u\n", period_ms, frag_frames, aclen_frames);
 
     hres = DSOUND_PrimaryOpen(device, wfx, aclen_frames, forcewave);
     if(FAILED(hres))
@@ -361,8 +361,8 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
     device->client = client;
     device->render = render;
     device->volume = volume;
-    device->fraglen = frag_frames * wfx->nBlockAlign;
-    device->aclen = aclen_frames * wfx->nBlockAlign;
+    device->frag_frames = frag_frames;
+    device->ac_frames = aclen_frames;
 
     if (period_ms < 3)
         device->sleeptime = 5;

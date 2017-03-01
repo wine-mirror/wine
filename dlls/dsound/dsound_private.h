@@ -77,7 +77,7 @@ struct DirectSoundDevice
     DWORD                       priolevel, sleeptime;
     PWAVEFORMATEX               pwfx, primary_pwfx;
     LPBYTE                      buffer;
-    DWORD                       writelead, buflen, aclen, fraglen, playpos, pad, stopped;
+    DWORD                       writelead, buflen, ac_frames, frag_frames, playpos, pad, stopped;
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
     RTL_RWLOCK                  buffer_list_lock;
