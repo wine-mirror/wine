@@ -487,10 +487,9 @@ static void DSOUND_MixerVol(const IDirectSoundBufferImpl *dsb, INT frames)
  * (and it is not looping).
  *
  * dsb  = the secondary buffer to mix from
- * writepos = position (offset) in device buffer to write at
  * fraglen = number of bytes to mix
  */
-static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD writepos, DWORD fraglen)
+static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD fraglen)
 {
 	INT len = fraglen;
 	float *ibuf;
@@ -498,7 +497,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, 
 	UINT frames = fraglen / dsb->device->pwfx->nBlockAlign;
 
 	TRACE("sec_mixpos=%d/%d\n", dsb->sec_mixpos, dsb->buflen);
-	TRACE("(%p,%d,%d)\n",dsb,writepos,fraglen);
+	TRACE("(%p,%d)\n",dsb,fraglen);
 
 	if (len % dsb->device->pwfx->nBlockAlign) {
 		INT nBlockAlign = dsb->device->pwfx->nBlockAlign;
@@ -532,18 +531,16 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, float *mix_buffer, 
  *
  * dsb = the secondary buffer
  * playpos = the current play position in the device buffer (primary buffer)
- * writepos = the current safe-to-write position in the device buffer
  * mixlen = the maximum number of bytes in the primary buffer to mix, from the
  *          current writepos.
  *
  * Returns: the number of bytes beyond the writepos that were mixed.
  */
-static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD writepos, DWORD mixlen)
+static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD mixlen)
 {
 	DWORD primary_done = 0;
 
-	TRACE("(%p,%d,%d)\n",dsb,writepos,mixlen);
-	TRACE("writepos=%d, mixlen=%d\n", writepos, mixlen);
+	TRACE("(%p,%d)\n",dsb,mixlen);
 	TRACE("looping=%d, leadin=%d\n", dsb->playflags, dsb->leadin);
 
 	/* If leading in, only mix about 20 ms, and 'skip' mixing the rest, for more fluid pointer advancement */
@@ -552,7 +549,6 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD
 		if (mixlen > 2 * dsb->device->fraglen) {
 			primary_done = mixlen - 2 * dsb->device->fraglen;
 			mixlen = 2 * dsb->device->fraglen;
-			writepos += primary_done;
 			dsb->sec_mixpos += (primary_done / dsb->device->pwfx->nBlockAlign) *
 				dsb->pwfx->nBlockAlign * dsb->freqAdjustNum / dsb->freqAdjustDen;
 		}
@@ -565,7 +561,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD
 	/* First try to mix to the end of the buffer if possible
 	 * Theoretically it would allow for better optimization
 	*/
-	primary_done += DSOUND_MixInBuffer(dsb, mix_buffer, writepos, mixlen);
+	primary_done += DSOUND_MixInBuffer(dsb, mix_buffer, mixlen);
 
 	TRACE("total mixed data=%d\n", primary_done);
 
@@ -577,7 +573,6 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD
  * For a DirectSoundDevice, go through all the currently playing buffers and
  * mix them in to the device buffer.
  *
- * writepos = the current safe-to-write position in the primary buffer
  * mixlen = the maximum amount to mix into the primary buffer
  *          (beyond the current writepos)
  * all_stopped = reports back if all buffers have stopped
@@ -585,7 +580,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, float *mix_buffer, DWORD
  * Returns:  the length beyond the writepos that was mixed to.
  */
 
-static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buffer, DWORD writepos, DWORD mixlen, BOOL *all_stopped)
+static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buffer, DWORD mixlen, BOOL *all_stopped)
 {
 	INT i;
 	IDirectSoundBufferImpl	*dsb;
@@ -593,7 +588,7 @@ static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buff
 	/* unless we find a running buffer, all have stopped */
 	*all_stopped = TRUE;
 
-	TRACE("(%d,%d)\n", writepos, mixlen);
+	TRACE("(%d)\n", mixlen);
 	for (i = 0; i < device->nrofbuffers; i++) {
 		dsb = device->buffers[i];
 
@@ -613,7 +608,7 @@ static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buff
 					dsb->state = STATE_PLAYING;
 
 				/* mix next buffer into the main buffer */
-				DSOUND_MixOne(dsb, mix_buffer, writepos, mixlen);
+				DSOUND_MixOne(dsb, mix_buffer, mixlen);
 
 				*all_stopped = FALSE;
 			}
@@ -671,7 +666,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, LPBYTE pos, DWORD bytes)
  */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
-	UINT32 pad, maxq, writepos;
+	UINT32 pad, maxq;
 	DWORD block;
 	HRESULT hr;
 
@@ -701,8 +696,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 	if (maxq > device->fraglen * 3)
 		maxq = device->fraglen * 3;
 
-	writepos = (device->playpos + pad) % device->buflen;
-
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
 		BOOL all_stopped = FALSE;
 		int nfiller;
@@ -726,12 +719,12 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		memset(buffer, nfiller, maxq);
 
 		if (!device->normfunction)
-			DSOUND_MixToPrimary(device, buffer, writepos, maxq, &all_stopped);
+			DSOUND_MixToPrimary(device, buffer, maxq, &all_stopped);
 		else {
 			memset(device->buffer, nfiller, device->buflen);
 
 			/* do the mixing */
-			DSOUND_MixToPrimary(device, (float*)device->buffer, writepos, maxq, &all_stopped);
+			DSOUND_MixToPrimary(device, (float*)device->buffer, maxq, &all_stopped);
 
 			device->normfunction(device->buffer, buffer, maxq);
 		}
@@ -742,6 +735,8 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		device->pad += maxq;
 	} else if (!device->stopped) {
+                DWORD writepos = (device->playpos + pad) % device->buflen;
+
 		if (maxq > device->buflen)
 			maxq = device->buflen;
 		if (writepos + maxq > device->buflen) {
