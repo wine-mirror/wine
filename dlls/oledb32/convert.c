@@ -876,13 +876,13 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
                                       precision, scale, flags);
         if(hr != S_OK) return hr;
 
-        length = WideCharToMultiByte(CP_ACP, 0, b, -1, NULL, 0, NULL, NULL);
+        length = WideCharToMultiByte(CP_ACP, 0, b, SysStringLen(b) + 1, NULL, 0, NULL, NULL);
         *dst_len = length - 1; /* Doesn't include size for '\0' */
         *dst_status = DBSTATUS_S_OK;
         *d = CoTaskMemAlloc(length);
 
         if(*d)
-            WideCharToMultiByte(CP_ACP, 0, b, -1, *d, length, NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, b, SysStringLen(b) + 1, *d, length, NULL, NULL);
         else
             hr = E_OUTOFMEMORY;
         SysFreeString(b);

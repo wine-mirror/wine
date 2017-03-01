@@ -2155,6 +2155,7 @@ static void test_converttobyrefstr(void)
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
+    static const char withnull[] = "test\0ed";
     BSTR b;
     VARIANT v;
 
@@ -2231,6 +2232,37 @@ static void test_converttobyrefstr(void)
     ok(dst_len == 2, "got %ld\n", dst_len);
     ok(!lstrcmpA("10", dst), "got %s\n", dst);
     CoTaskMemFree(dst);
+
+    memcpy(src, withnull, sizeof(withnull));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR | DBTYPE_BYREF, sizeof(withnull), &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 8, "got %ld\n", dst_len);
+    ok(!memcmp(withnull, dst, 8), "got %s\n", dst);
+    ok(dst[8] == 0, "got %02x\n", dst[8]);
+    CoTaskMemFree(dst);
+
+    memcpy(src, withnull, sizeof(withnull));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR | DBTYPE_BYREF, 7, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 7, "got %ld\n", dst_len);
+    ok(!memcmp(withnull, dst, 7), "got %s\n", dst);
+    ok(dst[7] == 0, "got %02x\n", dst[7]);
+    CoTaskMemFree(dst);
+
+    memcpy(src, withnull, sizeof(withnull));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR | DBTYPE_BYREF, 6, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 6, "got %ld\n", dst_len);
+    ok(!memcmp(withnull, dst, 6), "got %s\n", dst);
+    ok(dst[6] == 0, "got %02x\n", dst[6]);
+    CoTaskMemFree(dst);
+
 
     dst_len = 44;
     V_VT(&v) = VT_NULL;
