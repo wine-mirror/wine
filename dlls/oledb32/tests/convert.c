@@ -1516,6 +1516,9 @@ static void test_converttostr(void)
     DBSTATUS dst_status;
     DBLENGTH dst_len;
     static const WCHAR ten[] = {'1','0',0};
+    static const WCHAR idW[] = {'0','C','7','3','3','A','8','D','-','2','A','1','C',0 };
+    static const char idA[] = "0C733A8D";
+    static const char withnull[] = "test\0ed";
     static const char ten_a[] = "10";
     static const char fourthreetwoone[] = "4321";
     static const char guid_str[] = "{0C733A8D-2A1C-11CE-ADE5-00AA0044773D}";
@@ -1876,6 +1879,47 @@ static void test_converttostr(void)
     ok(dst_len == 2, "got %ld\n", dst_len);
     ok(!lstrcmpA(ten_a, dst), "got %s\n", dst);
     SysFreeString(b);
+
+    b = SysAllocString(idW);
+    *(BSTR *)src = b;
+    memset(dst, 0xcc, sizeof(dst));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_BSTR, DBTYPE_STR, 0, &dst_len, src, dst, 9, 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_TRUNCATED, "got %08x\n", dst_status);
+    ok(dst_len == 13, "got %ld\n", dst_len);
+    ok(!lstrcmpA(idA, dst), "got %s\n", dst);
+    SysFreeString(b);
+
+    memcpy(src, withnull, sizeof(withnull));
+    memset(dst, 0xcc, sizeof(dst));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR, sizeof(withnull), &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 8, "got %ld\n", dst_len);
+    ok(!memcmp(withnull, dst, 8), "got %s\n", dst);
+    ok(dst[8] == 0, "got %02x\n", dst[8]);
+
+    memcpy(src, withnull, sizeof(withnull));
+    memset(dst, 0xcc, sizeof(dst));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR, 7, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 7, "got %ld\n", dst_len);
+    ok(!memcmp(withnull, dst, 7), "got %s\n", dst);
+    ok(dst[7] == 0, "got %02x\n", dst[7]);
+
+    memcpy(src, withnull, sizeof(withnull));
+    memset(dst, 0xcc, sizeof(dst));
+    dst_len = 0x1234;
+    hr = IDataConvert_DataConvert(convert, DBTYPE_STR, DBTYPE_STR, 6, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
+    ok(dst_len == 6, "got %ld\n", dst_len);
+    ok(!memcmp(withnull, dst, 6), "got %s\n", dst);
+    ok(dst[6] == 0, "got %02x\n", dst[6]);
 
     memcpy(src, ten, sizeof(ten));
     memset(dst, 0xcc, sizeof(dst));
