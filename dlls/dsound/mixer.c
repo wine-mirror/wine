@@ -716,7 +716,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			/* do the mixing */
 			DSOUND_MixToPrimary(device, (float*)device->buffer, frames, &all_stopped);
 
-			device->normfunction(device->buffer, buffer, frames * block);
+			device->normfunction(device->buffer, buffer, frames * device->pwfx->nChannels);
 		}
 
 		hr = IAudioRenderClient_ReleaseBuffer(device->render, frames, 0);

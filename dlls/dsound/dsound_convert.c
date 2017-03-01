@@ -286,10 +286,10 @@ void mixieee32(float *src, float *dst, unsigned samples)
         *(dst++) += *(src++);
 }
 
-static void norm8(float *src, unsigned char *dst, unsigned len)
+static void norm8(float *src, unsigned char *dst, unsigned samples)
 {
-    TRACE("%p - %p %d\n", src, dst, len);
-    while (len--)
+    TRACE("%p - %p %d\n", src, dst, samples);
+    while (samples--)
     {
         *dst = f_to_8(*src);
         ++dst;
@@ -297,11 +297,10 @@ static void norm8(float *src, unsigned char *dst, unsigned len)
     }
 }
 
-static void norm16(float *src, SHORT *dst, unsigned len)
+static void norm16(float *src, SHORT *dst, unsigned samples)
 {
-    TRACE("%p - %p %d\n", src, dst, len);
-    len /= 2;
-    while (len--)
+    TRACE("%p - %p %d\n", src, dst, samples);
+    while (samples--)
     {
         *dst = f_to_16(*src);
         ++dst;
@@ -309,11 +308,10 @@ static void norm16(float *src, SHORT *dst, unsigned len)
     }
 }
 
-static void norm24(float *src, BYTE *dst, unsigned len)
+static void norm24(float *src, BYTE *dst, unsigned samples)
 {
-    TRACE("%p - %p %d\n", src, dst, len);
-    len /= 3;
-    while (len--)
+    TRACE("%p - %p %d\n", src, dst, samples);
+    while (samples--)
     {
         LONG t = f_to_24(*src);
         dst[0] = (t >> 8) & 0xFF;
@@ -324,11 +322,10 @@ static void norm24(float *src, BYTE *dst, unsigned len)
     }
 }
 
-static void norm32(float *src, INT *dst, unsigned len)
+static void norm32(float *src, INT *dst, unsigned samples)
 {
-    TRACE("%p - %p %d\n", src, dst, len);
-    len /= 4;
-    while (len--)
+    TRACE("%p - %p %d\n", src, dst, samples);
+    while (samples--)
     {
         *dst = f_to_32(*src);
         ++dst;
