@@ -80,6 +80,7 @@ static NTSTATUS (WINAPI *pNtQueryDirectoryFile)(HANDLE,HANDLE,PIO_APC_ROUTINE,PV
                                                 PVOID,ULONG,FILE_INFORMATION_CLASS,BOOLEAN,PUNICODE_STRING,BOOLEAN);
 static NTSTATUS (WINAPI *pNtQueryVolumeInformationFile)(HANDLE,PIO_STATUS_BLOCK,PVOID,ULONG,FS_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtQueryFullAttributesFile)(const OBJECT_ATTRIBUTES*, FILE_NETWORK_OPEN_INFORMATION*);
+static NTSTATUS (WINAPI *pNtFlushBuffersFile)(HANDLE, IO_STATUS_BLOCK*);
 
 static inline BOOL is_signaled( HANDLE obj )
 {
@@ -4399,6 +4400,46 @@ static void test_ioctl(void)
     CloseHandle(file);
 }
 
+static void test_flush_buffers_file(void)
+{
+    char path[MAX_PATH], buffer[MAX_PATH];
+    HANDLE hfile, hfileread;
+    NTSTATUS status;
+    IO_STATUS_BLOCK io_status_block;
+
+    GetTempPathA(MAX_PATH, path);
+    GetTempFileNameA(path, "foo", 0, buffer);
+    hfile = CreateFileA(buffer, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create temp file.\n" );
+
+    hfileread = CreateFileA(buffer, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, 0, NULL);
+    ok(hfileread != INVALID_HANDLE_VALUE, "could not open temp file, error %d.\n", GetLastError());
+
+    status = pNtFlushBuffersFile(hfile, NULL);
+    todo_wine
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
+
+    status = pNtFlushBuffersFile(hfile, (IO_STATUS_BLOCK *)0xdeadbeaf);
+    todo_wine
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
+
+    status = pNtFlushBuffersFile(hfile, &io_status_block);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+
+    status = pNtFlushBuffersFile(hfileread, &io_status_block);
+    todo_wine
+    ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#x.\n", status);
+
+    status = pNtFlushBuffersFile(NULL, &io_status_block);
+    ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+
+    CloseHandle(hfileread);
+    CloseHandle(hfile);
+    DeleteFileA(buffer);
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -4436,6 +4477,7 @@ START_TEST(file)
     pNtQueryDirectoryFile   = (void *)GetProcAddress(hntdll, "NtQueryDirectoryFile");
     pNtQueryVolumeInformationFile = (void *)GetProcAddress(hntdll, "NtQueryVolumeInformationFile");
     pNtQueryFullAttributesFile = (void *)GetProcAddress(hntdll, "NtQueryFullAttributesFile");
+    pNtFlushBuffersFile = (void *)GetProcAddress(hntdll, "NtFlushBuffersFile");
 
     test_read_write();
     test_NtCreateFile();
@@ -4460,4 +4502,5 @@ START_TEST(file)
     test_query_volume_information_file();
     test_query_attribute_information_file();
     test_ioctl();
+    test_flush_buffers_file();
 }
