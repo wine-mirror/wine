@@ -4,3 +4,5 @@ IMPORTS   = kernel32
 C_SRCS = \
 	wmvcore_main.c \
 	writer.c
+
+RC_SRCS = version.rc
