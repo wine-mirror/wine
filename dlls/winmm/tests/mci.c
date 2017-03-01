@@ -198,7 +198,7 @@ static void test_mciParser(HWND hwnd)
 
     buf[0]='z';
     err = mciSendStringA("", buf, sizeof(buf), NULL);
-    todo_wine ok(err==MCIERR_MISSING_COMMAND_STRING,"empty string: %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_MISSING_COMMAND_STRING,"empty string: %s\n", dbg_mcierr(err));
     ok(!buf[0], "error buffer %s\n", buf);
 
     buf[0]='d';

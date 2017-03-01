@@ -1343,6 +1343,9 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
           debugstr_w(lpstrCommand), lpstrRet, uRetLen, hwndCallback);
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
+    if (!lpstrCommand[0])
+        return MCIERR_MISSING_COMMAND_STRING;
+
     /* format is <command> <device> <optargs> */
     if (!(verb = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpstrCommand)+1) * sizeof(WCHAR))))
 	return MCIERR_OUT_OF_MEMORY;
