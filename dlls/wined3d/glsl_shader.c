@@ -5338,6 +5338,27 @@ static void shader_glsl_store_raw_structured(const struct wined3d_shader_instruc
     string_buffer_release(priv->string_buffers, address);
 }
 
+static void shader_glsl_sync(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    unsigned int sync_flags = ins->flags;
+
+    if (sync_flags & WINED3DSSF_THREAD_GROUP)
+    {
+        shader_addline(buffer, "barrier();\n");
+        sync_flags &= ~(WINED3DSSF_THREAD_GROUP | WINED3DSSF_GROUP_SHARED_MEMORY);
+    }
+
+    if (sync_flags & WINED3DSSF_GROUP_SHARED_MEMORY)
+    {
+        shader_addline(buffer, "memoryBarrierShared();\n");
+        sync_flags &= ~WINED3DSSF_GROUP_SHARED_MEMORY;
+    }
+
+    if (sync_flags)
+        FIXME("Unhandled sync flags %#x.\n", sync_flags);
+}
+
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
@@ -9677,7 +9698,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_SUB                              */ shader_glsl_binop,
     /* WINED3DSIH_SWAPC                            */ NULL,
     /* WINED3DSIH_SWITCH                           */ shader_glsl_switch,
-    /* WINED3DSIH_SYNC                             */ NULL,
+    /* WINED3DSIH_SYNC                             */ shader_glsl_sync,
     /* WINED3DSIH_TEX                              */ shader_glsl_tex,
     /* WINED3DSIH_TEXBEM                           */ shader_glsl_texbem,
     /* WINED3DSIH_TEXBEML                          */ shader_glsl_texbem,
