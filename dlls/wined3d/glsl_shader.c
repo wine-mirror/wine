@@ -4971,34 +4971,66 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     enum wined3d_shader_resource_type resource_type;
     struct wined3d_string_buffer *address;
     enum wined3d_data_type data_type;
-    unsigned int uav_idx, stride;
+    unsigned int resource_idx, stride;
+    const char *op, *resource;
     DWORD coord_mask;
-    const char *op;
+    BOOL is_tgsm;
 
-    uav_idx = ins->dst[is_imm_instruction].reg.idx[0].offset;
-    resource_type = reg_maps->uav_resource_info[uav_idx].type;
-    if (resource_type >= ARRAY_SIZE(resource_type_info))
+    resource_idx = ins->dst[is_imm_instruction].reg.idx[0].offset;
+    is_tgsm = ins->dst[is_imm_instruction].reg.type == WINED3DSPR_GROUPSHAREDMEM;
+    if (is_tgsm)
     {
-        ERR("Unexpected resource type %#x.\n", resource_type);
-        return;
+        if (resource_idx >= reg_maps->tgsm_count)
+        {
+            ERR("Invalid TGSM index %u.\n", resource_idx);
+            return;
+        }
+        resource = "g";
+        data_type = WINED3D_DATA_UINT;
+        coord_mask = 1;
+        stride = reg_maps->tgsm[resource_idx].stride;
     }
-    data_type = reg_maps->uav_resource_info[uav_idx].data_type;
-    coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
-    stride = reg_maps->uav_resource_info[uav_idx].stride;
+    else
+    {
+        if (resource_idx >= ARRAY_SIZE(reg_maps->uav_resource_info))
+        {
+            ERR("Invalid UAV index %u.\n", resource_idx);
+            return;
+        }
+        resource_type = reg_maps->uav_resource_info[resource_idx].type;
+        if (resource_type >= ARRAY_SIZE(resource_type_info))
+        {
+            ERR("Unexpected resource type %#x.\n", resource_type);
+            return;
+        }
+        resource = "image";
+        data_type = reg_maps->uav_resource_info[resource_idx].data_type;
+        coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
+        stride = reg_maps->uav_resource_info[resource_idx].stride;
+    }
 
     switch (ins->handler_idx)
     {
         case WINED3DSIH_ATOMIC_AND:
         case WINED3DSIH_IMM_ATOMIC_AND:
-            op = "imageAtomicAnd";
+            if (is_tgsm)
+                op = "atomicAnd";
+            else
+                op = "imageAtomicAnd";
             break;
         case WINED3DSIH_ATOMIC_CMP_STORE:
         case WINED3DSIH_IMM_ATOMIC_CMP_EXCH:
-            op = "imageAtomicCompSwap";
+            if (is_tgsm)
+                op = "atomicCompSwap";
+            else
+                op = "imageAtomicCompSwap";
             break;
         case WINED3DSIH_ATOMIC_IADD:
         case WINED3DSIH_IMM_ATOMIC_IADD:
-            op = "imageAtomicAdd";
+            if (is_tgsm)
+                op = "atomicAdd";
+            else
+                op = "imageAtomicAdd";
             break;
         case WINED3DSIH_ATOMIC_IMAX:
         case WINED3DSIH_IMM_ATOMIC_IMAX:
@@ -5020,7 +5052,10 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             break;
         case WINED3DSIH_ATOMIC_OR:
         case WINED3DSIH_IMM_ATOMIC_OR:
-            op = "imageAtomicOr";
+            if (is_tgsm)
+                op = "atomicOr";
+            else
+                op = "imageAtomicOr";
             break;
         case WINED3DSIH_ATOMIC_UMAX:
         case WINED3DSIH_IMM_ATOMIC_UMAX:
@@ -5042,10 +5077,16 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             break;
         case WINED3DSIH_ATOMIC_XOR:
         case WINED3DSIH_IMM_ATOMIC_XOR:
-            op = "imageAtomicXor";
+            if (is_tgsm)
+                op = "atomicXor";
+            else
+                op = "imageAtomicXor";
             break;
         case WINED3DSIH_IMM_ATOMIC_EXCH:
-            op = "imageAtomicExchange";
+            if (is_tgsm)
+                op = "atomicExchange";
+            else
+                op = "imageAtomicExchange";
             break;
         default:
             ERR("Unhandled opcode %#x.\n", ins->handler_idx);
@@ -5063,15 +5104,19 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     {
         shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &offset);
         string_buffer_sprintf(address, "%s", offset.param_str);
-        if (reg_maps->uav_resource_info[uav_idx].flags & WINED3D_VIEW_BUFFER_RAW)
+        if (reg_maps->uav_resource_info[resource_idx].flags & WINED3D_VIEW_BUFFER_RAW)
             shader_addline(address, "/ 4");
     }
 
     if (is_imm_instruction)
         shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], data_type);
 
-    shader_addline(buffer, "%s(%s_image%u, %s, ",
-            op, shader_glsl_get_prefix(version->type), uav_idx, address->buffer);
+    if (is_tgsm)
+        shader_addline(buffer, "%s(%s_%s%u[%s], ",
+                op, shader_glsl_get_prefix(version->type), resource, resource_idx, address->buffer);
+    else
+        shader_addline(buffer, "%s(%s_%s%u, %s, ",
+                op, shader_glsl_get_prefix(version->type), resource, resource_idx, address->buffer);
 
     shader_glsl_add_src_param_ext(ins, &ins->src[1], WINED3DSP_WRITEMASK_0, &data, data_type);
     shader_addline(buffer, "%s", data.param_str);
