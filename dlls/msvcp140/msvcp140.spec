@@ -358,9 +358,9 @@
 @ cdecl -arch=arm ??0ios_base@std@@IAA@XZ(ptr) ios_base_ctor
 @ thiscall -arch=i386 ??0ios_base@std@@IAE@XZ(ptr) ios_base_ctor
 @ cdecl -arch=win64 ??0ios_base@std@@IEAA@XZ(ptr) ios_base_ctor
-@ stub -arch=arm ??0task_continuation_context@Concurrency@@AAA@XZ
-@ stub -arch=i386 ??0task_continuation_context@Concurrency@@AAE@XZ
-@ stub -arch=win64 ??0task_continuation_context@Concurrency@@AEAA@XZ
+@ cdecl -arch=arm ??0task_continuation_context@Concurrency@@AAA@XZ(ptr) task_continuation_context_ctor
+@ thiscall -arch=i386 ??0task_continuation_context@Concurrency@@AAE@XZ(ptr) task_continuation_context_ctor
+@ cdecl -arch=win64 ??0task_continuation_context@Concurrency@@AEAA@XZ(ptr) task_continuation_context_ctor
 @ stub -arch=arm ??0time_base@std@@QAA@I@Z
 @ stub -arch=i386 ??0time_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0time_base@std@@QEAA@_K@Z
