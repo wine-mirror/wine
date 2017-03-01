@@ -21,7 +21,57 @@
 #include "wine/test.h"
 #include "winbase.h"
 
+#undef __thiscall
+#ifdef __i386__
+#define __thiscall __stdcall
+#else
+#define __thiscall __cdecl
+#endif
+
+/* Emulate a __thiscall */
+#ifdef __i386__
+
+#include "pshpack1.h"
+struct thiscall_thunk
+{
+    BYTE pop_eax;    /* popl  %eax (ret addr) */
+    BYTE pop_edx;    /* popl  %edx (func) */
+    BYTE pop_ecx;    /* popl  %ecx (this) */
+    BYTE push_eax;   /* pushl %eax */
+    WORD jmp_edx;    /* jmp  *%edx */
+};
+#include "poppack.h"
+
+static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
+
+static void init_thiscall_thunk(void)
+{
+    struct thiscall_thunk *thunk = VirtualAlloc( NULL, sizeof(*thunk),
+            MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    thunk->pop_eax  = 0x58;   /* popl  %eax */
+    thunk->pop_edx  = 0x5a;   /* popl  %edx */
+    thunk->pop_ecx  = 0x59;   /* popl  %ecx */
+    thunk->push_eax = 0x50;   /* pushl %eax */
+    thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
+    call_thiscall_func1 = (void *)thunk;
+}
+
+#define call_func1(func,_this) call_thiscall_func1(func,_this)
+
+#else
+
+#define init_thiscall_thunk()
+#define call_func1(func,_this) func(_this)
+
+#endif /* __i386__ */
+
+typedef struct {
+    void *unk0;
+    BYTE unk1;
+} task_continuation_context;
+
 static unsigned int (__cdecl *p__Thrd_id)(void);
+static task_continuation_context* (__thiscall *p_task_continuation_context_ctor)(task_continuation_context*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -37,6 +87,17 @@ static BOOL init(void)
 
     SET(p__Thrd_id, "_Thrd_id");
 
+    if(sizeof(void*) == 8) { /* 64-bit initialization */
+        SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AEAA@XZ");
+    } else {
+#ifdef __arm__
+        SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
+#else
+        SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAE@XZ");
+#endif
+    }
+
+    init_thiscall_thunk();
     return TRUE;
 }
 
@@ -82,10 +143,21 @@ static void test_vbtable_size_exports(void)
     }
 }
 
+static void test_task_continuation_context(void)
+{
+    task_continuation_context tcc;
+
+    memset(&tcc, 0xdead, sizeof(tcc));
+    call_func1(p_task_continuation_context_ctor, &tcc);
+    ok(!tcc.unk0, "tcc.unk0 != NULL (%p)\n", tcc.unk0);
+    ok(!tcc.unk1, "tcc.unk1 != 0 (%x)\n", tcc.unk1);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
     test_thrd();
     test_vbtable_size_exports();
+    test_task_continuation_context();
     FreeLibrary(msvcp);
 }
