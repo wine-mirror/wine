@@ -3423,7 +3423,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
     {
         ret = COMM_FlushBuffersFile( fd );
     }
-    else
+    else if (ret != STATUS_ACCESS_DENIED)
     {
         SERVER_START_REQ( flush )
         {

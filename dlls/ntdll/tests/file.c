@@ -4429,7 +4429,6 @@ static void test_flush_buffers_file(void)
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
 
     status = pNtFlushBuffersFile(hfileread, &io_status_block);
-    todo_wine
     ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#x.\n", status);
 
     status = pNtFlushBuffersFile(NULL, &io_status_block);
