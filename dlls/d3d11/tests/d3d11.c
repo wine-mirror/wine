@@ -14854,6 +14854,289 @@ static void test_compute_shader_registers(void)
     release_test_context(&test_context);
 }
 
+static void test_tgsm(void)
+{
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    struct d3d11_test_context test_context;
+    ID3D11UnorderedAccessView *uav, *uav2;
+    struct resource_readback rb, rb2;
+    unsigned int i, data, expected;
+    ID3D11Buffer *buffer, *buffer2;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    ID3D11ComputeShader *cs;
+    ID3D11Device *device;
+    float float_data;
+    HRESULT hr;
+
+    static const DWORD raw_tgsm_code[] =
+    {
+#if 0
+        RWByteAddressBuffer u;
+        groupshared uint m;
+
+        [numthreads(32, 1, 1)]
+        void main(uint local_idx : SV_GroupIndex, uint group_id : SV_GroupID)
+        {
+            if (!local_idx)
+                m = group_id.x;
+            GroupMemoryBarrierWithGroupSync();
+            InterlockedAdd(m, group_id.x);
+            GroupMemoryBarrierWithGroupSync();
+            if (!local_idx)
+                u.Store(4 * group_id.x, m);
+        }
+#endif
+        0x43425844, 0x467df6d9, 0x5f56edda, 0x5c96b787, 0x60c91fb8, 0x00000001, 0x00000148, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x000000f4, 0x00050050, 0x0000003d, 0x0100086a,
+        0x0300009d, 0x0011e000, 0x00000000, 0x0200005f, 0x00024000, 0x0200005f, 0x00021012, 0x02000068,
+        0x00000001, 0x0400009f, 0x0011f000, 0x00000000, 0x00000004, 0x0400009b, 0x00000020, 0x00000001,
+        0x00000001, 0x0200001f, 0x0002400a, 0x060000a6, 0x0011f012, 0x00000000, 0x00004001, 0x00000000,
+        0x0002100a, 0x01000015, 0x010018be, 0x060000ad, 0x0011f000, 0x00000000, 0x00004001, 0x00000000,
+        0x0002100a, 0x010018be, 0x0200001f, 0x0002400a, 0x06000029, 0x00100012, 0x00000000, 0x0002100a,
+        0x00004001, 0x00000002, 0x070000a5, 0x00100022, 0x00000000, 0x00004001, 0x00000000, 0x0011f006,
+        0x00000000, 0x070000a6, 0x0011e012, 0x00000000, 0x0010000a, 0x00000000, 0x0010001a, 0x00000000,
+        0x01000015, 0x0100003e,
+    };
+    static const DWORD structured_tgsm_code[] =
+    {
+#if 0
+#define GROUP_SIZE 32
+
+        RWByteAddressBuffer u;
+        RWByteAddressBuffer u2;
+        groupshared uint m[GROUP_SIZE];
+
+        [numthreads(GROUP_SIZE, 1, 1)]
+        void main(uint local_idx : SV_GroupIndex, uint group_id : SV_GroupID)
+        {
+            uint sum, original, i;
+
+            if (!local_idx)
+            {
+                for (i = 0; i < GROUP_SIZE; ++i)
+                    m[i] = 2 * group_id.x;
+            }
+            GroupMemoryBarrierWithGroupSync();
+            InterlockedAdd(m[local_idx], 1);
+            GroupMemoryBarrierWithGroupSync();
+            for (i = 0, sum = 0; i < GROUP_SIZE; sum += m[i++]);
+            u.InterlockedExchange(4 * group_id.x, sum, original);
+            u2.Store(4 * group_id.x, original);
+        }
+#endif
+        0x43425844, 0x9d906c94, 0x81f5ad92, 0x11e860b2, 0x3623c824, 0x00000001, 0x000002c0, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x0000026c, 0x00050050, 0x0000009b, 0x0100086a,
+        0x0300009d, 0x0011e000, 0x00000000, 0x0300009d, 0x0011e000, 0x00000001, 0x0200005f, 0x00024000,
+        0x0200005f, 0x00021012, 0x02000068, 0x00000002, 0x050000a0, 0x0011f000, 0x00000000, 0x00000004,
+        0x00000020, 0x0400009b, 0x00000020, 0x00000001, 0x00000001, 0x0200001f, 0x0002400a, 0x06000029,
+        0x00100012, 0x00000000, 0x0002100a, 0x00004001, 0x00000001, 0x05000036, 0x00100022, 0x00000000,
+        0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100042, 0x00000000, 0x0010001a, 0x00000000,
+        0x00004001, 0x00000020, 0x03040003, 0x0010002a, 0x00000000, 0x090000a8, 0x0011f012, 0x00000000,
+        0x0010001a, 0x00000000, 0x00004001, 0x00000000, 0x0010000a, 0x00000000, 0x0700001e, 0x00100022,
+        0x00000000, 0x0010001a, 0x00000000, 0x00004001, 0x00000001, 0x01000016, 0x01000015, 0x010018be,
+        0x04000036, 0x00100012, 0x00000000, 0x0002400a, 0x05000036, 0x00100022, 0x00000000, 0x00004001,
+        0x00000000, 0x070000ad, 0x0011f000, 0x00000000, 0x00100046, 0x00000000, 0x00004001, 0x00000001,
+        0x010018be, 0x08000036, 0x00100032, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x01000030, 0x07000050, 0x00100042, 0x00000000, 0x0010001a, 0x00000000, 0x00004001,
+        0x00000020, 0x03040003, 0x0010002a, 0x00000000, 0x0700001e, 0x00100022, 0x00000001, 0x0010001a,
+        0x00000000, 0x00004001, 0x00000001, 0x090000a7, 0x00100042, 0x00000000, 0x0010001a, 0x00000000,
+        0x00004001, 0x00000000, 0x0011f006, 0x00000000, 0x0700001e, 0x00100012, 0x00000001, 0x0010000a,
+        0x00000000, 0x0010002a, 0x00000000, 0x05000036, 0x00100032, 0x00000000, 0x00100046, 0x00000001,
+        0x01000016, 0x06000029, 0x00100022, 0x00000000, 0x0002100a, 0x00004001, 0x00000002, 0x090000b8,
+        0x00100012, 0x00000001, 0x0011e000, 0x00000000, 0x0010001a, 0x00000000, 0x0010000a, 0x00000000,
+        0x070000a6, 0x0011e012, 0x00000001, 0x0010001a, 0x00000000, 0x0010000a, 0x00000001, 0x0100003e,
+    };
+    static const DWORD structured_tgsm_float_code[] =
+    {
+#if 0
+#define GROUP_SIZE 32
+
+        struct data
+        {
+            float f;
+            uint u;
+        };
+
+        RWBuffer<float> u;
+        RWBuffer<uint> u2;
+        groupshared data m[GROUP_SIZE];
+
+        [numthreads(GROUP_SIZE, 1, 1)]
+        void main(uint local_idx : SV_GroupIndex, uint group_id : SV_GroupID,
+                uint thread_id : SV_DispatchThreadID)
+        {
+            uint i;
+            if (!local_idx)
+            {
+                for (i = 0; i < GROUP_SIZE; ++i)
+                {
+                    m[i].f = group_id.x;
+                    m[i].u = group_id.x;
+                }
+            }
+            GroupMemoryBarrierWithGroupSync();
+            for (i = 0; i < local_idx; ++i)
+            {
+                m[local_idx].f += group_id.x;
+                m[local_idx].u += group_id.x;
+            }
+            u[thread_id.x] = m[local_idx].f;
+            u2[thread_id.x] = m[local_idx].u;
+        }
+#endif
+        0x43425844, 0xaadf1a71, 0x16f60224, 0x89b6ce76, 0xb66fb96f, 0x00000001, 0x000002ac, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000258, 0x00050050, 0x00000096, 0x0100086a,
+        0x0400089c, 0x0011e000, 0x00000000, 0x00005555, 0x0400089c, 0x0011e000, 0x00000001, 0x00004444,
+        0x0200005f, 0x00024000, 0x0200005f, 0x00021012, 0x0200005f, 0x00020012, 0x02000068, 0x00000002,
+        0x050000a0, 0x0011f000, 0x00000000, 0x00000008, 0x00000020, 0x0400009b, 0x00000020, 0x00000001,
+        0x00000001, 0x0200001f, 0x0002400a, 0x04000056, 0x00100012, 0x00000000, 0x0002100a, 0x04000036,
+        0x00100022, 0x00000000, 0x0002100a, 0x05000036, 0x00100042, 0x00000000, 0x00004001, 0x00000000,
+        0x01000030, 0x07000050, 0x00100082, 0x00000000, 0x0010002a, 0x00000000, 0x00004001, 0x00000020,
+        0x03040003, 0x0010003a, 0x00000000, 0x090000a8, 0x0011f032, 0x00000000, 0x0010002a, 0x00000000,
+        0x00004001, 0x00000000, 0x00100046, 0x00000000, 0x0700001e, 0x00100042, 0x00000000, 0x0010002a,
+        0x00000000, 0x00004001, 0x00000001, 0x01000016, 0x01000015, 0x010018be, 0x04000056, 0x00100012,
+        0x00000000, 0x0002100a, 0x05000036, 0x00100022, 0x00000000, 0x00004001, 0x00000000, 0x01000030,
+        0x06000050, 0x00100042, 0x00000000, 0x0010001a, 0x00000000, 0x0002400a, 0x03040003, 0x0010002a,
+        0x00000000, 0x080000a7, 0x001000c2, 0x00000000, 0x0002400a, 0x00004001, 0x00000000, 0x0011f406,
+        0x00000000, 0x07000000, 0x00100012, 0x00000001, 0x0010000a, 0x00000000, 0x0010002a, 0x00000000,
+        0x0600001e, 0x00100022, 0x00000001, 0x0010003a, 0x00000000, 0x0002100a, 0x080000a8, 0x0011f032,
+        0x00000000, 0x0002400a, 0x00004001, 0x00000000, 0x00100046, 0x00000001, 0x0700001e, 0x00100022,
+        0x00000000, 0x0010001a, 0x00000000, 0x00004001, 0x00000001, 0x01000016, 0x080000a7, 0x00100032,
+        0x00000000, 0x0002400a, 0x00004001, 0x00000000, 0x0011f046, 0x00000000, 0x060000a4, 0x0011e0f2,
+        0x00000000, 0x00020006, 0x00100006, 0x00000000, 0x060000a4, 0x0011e0f2, 0x00000001, 0x00020006,
+        0x00100556, 0x00000000, 0x0100003e,
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const unsigned int zero[4] = {0};
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+
+    uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
+    U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateComputeShader(device, raw_tgsm_code, sizeof(raw_tgsm_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_Dispatch(context, 64, 1, 1);
+    get_buffer_readback(buffer, &rb);
+    for (i = 0; i < 64; ++i)
+    {
+        data = get_readback_color(&rb, i, 0);
+        expected = 33 * i;
+        ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
+    }
+    release_resource_readback(&rb);
+
+    ID3D11Buffer_Release(buffer);
+    ID3D11ComputeShader_Release(cs);
+    ID3D11UnorderedAccessView_Release(uav);
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer2);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer2, &uav_desc, &uav2);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateComputeShader(device, structured_tgsm_code, sizeof(structured_tgsm_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 1, 1, &uav2, NULL);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, zero);
+    ID3D11DeviceContext_Dispatch(context, 32, 1, 1);
+    get_buffer_readback(buffer, &rb);
+    get_buffer_readback(buffer2, &rb2);
+    for (i = 0; i < 32; ++i)
+    {
+        expected = 64 * i + 32;
+        data = get_readback_color(&rb, i, 0);
+        ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
+        data = get_readback_color(&rb2, i, 0);
+        ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
+    }
+    release_resource_readback(&rb);
+    release_resource_readback(&rb2);
+
+    ID3D11Buffer_Release(buffer);
+    ID3D11Buffer_Release(buffer2);
+    ID3D11ComputeShader_Release(cs);
+    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11UnorderedAccessView_Release(uav2);
+
+    buffer_desc.MiscFlags = 0;
+    U(uav_desc).Buffer.Flags = 0;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    uav_desc.Format = DXGI_FORMAT_R32_FLOAT;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer2);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    uav_desc.Format = DXGI_FORMAT_R32_UINT;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer2, &uav_desc, &uav2);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateComputeShader(device, structured_tgsm_float_code,
+            sizeof(structured_tgsm_float_code), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 1, 1, &uav2, NULL);
+
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
+    ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav2, zero);
+    ID3D11DeviceContext_Dispatch(context, 3, 1, 1);
+    get_buffer_readback(buffer, &rb);
+    get_buffer_readback(buffer2, &rb2);
+    for (i = 0; i < 96; ++i)
+    {
+        expected = (i % 32 + 1) * (i / 32);
+        float_data = get_readback_float(&rb, i, 0);
+        ok(float_data == expected, "Got %.8e, expected %u (index %u).\n", float_data, expected, i);
+        data = get_readback_color(&rb2, i, 0);
+        ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
+    }
+    release_resource_readback(&rb);
+    release_resource_readback(&rb2);
+
+    ID3D11Buffer_Release(buffer);
+    ID3D11Buffer_Release(buffer2);
+    ID3D11ComputeShader_Release(cs);
+    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11UnorderedAccessView_Release(uav2);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -14931,4 +15214,5 @@ START_TEST(d3d11)
     run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0,
             test_unaligned_raw_buffer_access);
     test_compute_shader_registers();
+    test_tgsm();
 }
