@@ -1076,7 +1076,6 @@ static void test_CreatePropertySheetPage(void)
         hpsp = CreatePropertySheetPageA(&page.u.pageA);
 
         if (page.u.pageA.dwSize < PROPSHEETPAGEA_V1_SIZE)
-        todo_wine
             ok(hpsp == NULL, "Expected failure, size %u\n", page.u.pageA.dwSize);
         else
         {
@@ -1108,7 +1107,6 @@ static void test_CreatePropertySheetPage(void)
         hpsp = CreatePropertySheetPageW(&page.u.pageW);
 
         if (page.u.pageW.dwSize < PROPSHEETPAGEW_V1_SIZE)
-        todo_wine
             ok(hpsp == NULL, "Expected failure, size %u\n", page.u.pageW.dwSize);
         else
         {

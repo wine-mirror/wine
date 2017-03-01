@@ -2957,8 +2957,12 @@ static LPWSTR load_string( HINSTANCE instance, LPCWSTR str )
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                           LPCPROPSHEETPAGEA lpPropSheetPage)
 {
-  PROPSHEETPAGEW* ppsp = Alloc(sizeof(PROPSHEETPAGEW));
+    PROPSHEETPAGEW *ppsp;
 
+    if (lpPropSheetPage->dwSize < PROPSHEETPAGEA_V1_SIZE)
+        return NULL;
+
+    ppsp = Alloc(sizeof(PROPSHEETPAGEW));
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEA)));
 
   ppsp->dwFlags &= ~ PSP_INTERNAL_UNICODE;
@@ -3023,8 +3027,12 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage)
 {
-  PROPSHEETPAGEW* ppsp = Alloc(sizeof(PROPSHEETPAGEW));
+    PROPSHEETPAGEW *ppsp;
 
+    if (lpPropSheetPage->dwSize < PROPSHEETPAGEW_V1_SIZE)
+        return NULL;
+
+    ppsp = Alloc(sizeof(PROPSHEETPAGEW));
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEW)));
 
   ppsp->dwFlags |= PSP_INTERNAL_UNICODE;
