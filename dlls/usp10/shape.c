@@ -125,7 +125,7 @@ typedef void (*second_reorder_function)(LPWSTR pwChar, IndicSyllable *syllable,W
 typedef int (*combining_lexical_function)(WCHAR c);
 
 /* the orders of joined_forms and contextual_features need to line up */
-static const char* contextual_features[] =
+static const char *const contextual_features[] =
 {
     "isol",
     "fina",
@@ -168,7 +168,7 @@ static OPENTYPE_FEATURE_RECORD arabic_features[] =
     { MS_MAKE_TAG('m','s','e','t'), 1},
 };
 
-static const char* required_arabic_features[] =
+static const char *const required_arabic_features[] =
 {
     "fina",
     "init",
@@ -205,7 +205,7 @@ static OPENTYPE_FEATURE_RECORD syriac_features[] =
     { MS_MAKE_TAG('d','l','i','g'), 1},
 };
 
-static const char* required_syriac_features[] =
+static const char *const required_syriac_features[] =
 {
     "fina",
     "fin2",
@@ -263,13 +263,13 @@ static OPENTYPE_FEATURE_RECORD thai_gpos_features[] =
     { MS_MAKE_TAG('m','k','m','k'), 1},
 };
 
-static const char* required_lao_features[] =
+static const char *const required_lao_features[] =
 {
     "ccmp",
     NULL
 };
 
-static const char* required_devanagari_features[] =
+static const char *const required_devanagari_features[] =
 {
     "nukt",
     "akhn",
@@ -309,7 +309,7 @@ static OPENTYPE_FEATURE_RECORD myanmar_features[] =
     { MS_MAKE_TAG('c','l','i','g'), 1},
 };
 
-static const char* required_bengali_features[] =
+static const char *const required_bengali_features[] =
 {
     "nukt",
     "akhn",
@@ -326,7 +326,7 @@ static const char* required_bengali_features[] =
     NULL
 };
 
-static const char* required_gurmukhi_features[] =
+static const char *const required_gurmukhi_features[] =
 {
     "nukt",
     "akhn",
@@ -345,7 +345,7 @@ static const char* required_gurmukhi_features[] =
     NULL
 };
 
-static const char* required_oriya_features[] =
+static const char *const required_oriya_features[] =
 {
     "nukt",
     "akhn",
@@ -362,7 +362,7 @@ static const char* required_oriya_features[] =
     NULL
 };
 
-static const char* required_tamil_features[] =
+static const char *const required_tamil_features[] =
 {
     "nukt",
     "akhn",
@@ -378,7 +378,7 @@ static const char* required_tamil_features[] =
     NULL
 };
 
-static const char* required_telugu_features[] =
+static const char *const required_telugu_features[] =
 {
     "nukt",
     "akhn",
@@ -405,7 +405,7 @@ static OPENTYPE_FEATURE_RECORD khmer_features[] =
     { MS_MAKE_TAG('c','l','i','g'), 1},
 };
 
-static const char* required_khmer_features[] =
+static const char *const required_khmer_features[] =
 {
     "pref",
     "blwf",
@@ -446,7 +446,7 @@ static OPENTYPE_FEATURE_RECORD mongolian_features[] =
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     TEXTRANGE_PROPERTIES   defaultGPOSTextRange;
-    const char**           requiredFeatures;
+    const char *const *requiredFeatures;
     OPENTYPE_TAG           newOtTag;
     ContextualShapingProc  contextProc;
     ShapeCharGlyphPropProc charGlyphPropProc;
