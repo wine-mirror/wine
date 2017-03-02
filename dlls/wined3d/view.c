@@ -673,7 +673,21 @@ ULONG CDECL wined3d_unordered_access_view_incref(struct wined3d_unordered_access
 
 static void wined3d_unordered_access_view_destroy_object(void *object)
 {
-    HeapFree(GetProcessHeap(), 0, object);
+    struct wined3d_unordered_access_view *view = object;
+
+    if (view->gl_view.name)
+    {
+        const struct wined3d_gl_info *gl_info;
+        struct wined3d_context *context;
+
+        context = context_acquire(view->resource->device, NULL, 0);
+        gl_info = context->gl_info;
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->gl_view.name);
+        checkGLcall("glDeleteTextures");
+        context_release(context);
+    }
+
+    HeapFree(GetProcessHeap(), 0, view);
 }
 
 ULONG CDECL wined3d_unordered_access_view_decref(struct wined3d_unordered_access_view *view)
