@@ -12197,17 +12197,13 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Vie rekisterin valitun haaran tekstitiedostoon"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Vahvista arvon tuhoaminen"
+msgstr "Vahvista avaimen tuhoaminen"
 
 #: regedit.rc:188
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "Haluatko varmasti tuhota rekisteriavaimen '%1'?"
+msgstr "Haluatko varmasti tuhota rekisteriavaimen '%1' ja sen aliavaimet?"
 
 #: regsvr32.rc:32
 msgid ""
