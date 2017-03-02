@@ -4908,68 +4908,54 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         break;
    }
 
-   case WS_SIO_FLUSH:
-	FIXME("SIO_FLUSH: stub.\n");
-	break;
+    case WS_SIO_FLUSH:
+        FIXME("SIO_FLUSH: stub.\n");
+        break;
 
-   case WS_SIO_GET_EXTENSION_FUNCTION_POINTER:
-   {
-        static const GUID connectex_guid = WSAID_CONNECTEX;
-        static const GUID disconnectex_guid = WSAID_DISCONNECTEX;
-        static const GUID acceptex_guid = WSAID_ACCEPTEX;
-        static const GUID getaccepexsockaddrs_guid = WSAID_GETACCEPTEXSOCKADDRS;
-        static const GUID transmitfile_guid = WSAID_TRANSMITFILE;
-        static const GUID transmitpackets_guid = WSAID_TRANSMITPACKETS;
-        static const GUID wsarecvmsg_guid = WSAID_WSARECVMSG;
-        static const GUID wsasendmsg_guid = WSAID_WSASENDMSG;
+    case WS_SIO_GET_EXTENSION_FUNCTION_POINTER:
+    {
+#define EXTENSION_FUNCTION(x, y) { x, y, #y },
+        static const struct
+        {
+            GUID guid;
+            void *func_ptr;
+            const char *name;
+        } guid_funcs[] = {
+            EXTENSION_FUNCTION(WSAID_CONNECTEX, WS2_ConnectEx)
+            EXTENSION_FUNCTION(WSAID_DISCONNECTEX, WS2_DisconnectEx)
+            EXTENSION_FUNCTION(WSAID_ACCEPTEX, WS2_AcceptEx)
+            EXTENSION_FUNCTION(WSAID_GETACCEPTEXSOCKADDRS, WS2_GetAcceptExSockaddrs)
+            EXTENSION_FUNCTION(WSAID_TRANSMITFILE, WS2_TransmitFile)
+            /* EXTENSION_FUNCTION(WSAID_TRANSMITPACKETS, WS2_TransmitPackets) */
+            EXTENSION_FUNCTION(WSAID_WSARECVMSG, WS2_WSARecvMsg)
+            EXTENSION_FUNCTION(WSAID_WSASENDMSG, WSASendMsg)
+        };
+#undef EXTENSION_FUNCTION
+        BOOL found = FALSE;
+        unsigned int i;
 
-        if ( IsEqualGUID(&connectex_guid, in_buff) )
+        for (i = 0; i < sizeof(guid_funcs) / sizeof(guid_funcs[0]); i++)
         {
-            *(LPFN_CONNECTEX *)out_buff = WS2_ConnectEx;
-            break;
+            if (IsEqualGUID(&guid_funcs[i].guid, in_buff))
+            {
+                found = TRUE;
+                break;
+            }
         }
-        else if ( IsEqualGUID(&disconnectex_guid, in_buff) )
-        {
-            *(LPFN_DISCONNECTEX *)out_buff = WS2_DisconnectEx;
-            break;
-        }
-        else if ( IsEqualGUID(&acceptex_guid, in_buff) )
-        {
-            *(LPFN_ACCEPTEX *)out_buff = WS2_AcceptEx;
-            break;
-        }
-        else if ( IsEqualGUID(&getaccepexsockaddrs_guid, in_buff) )
-        {
-            *(LPFN_GETACCEPTEXSOCKADDRS *)out_buff = WS2_GetAcceptExSockaddrs;
-            break;
-        }
-        else if ( IsEqualGUID(&transmitfile_guid, in_buff) )
-        {
-            *(LPFN_TRANSMITFILE *)out_buff = WS2_TransmitFile;
-            break;
-        }
-        else if ( IsEqualGUID(&transmitpackets_guid, in_buff) )
-        {
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented TransmitPackets\n");
-        }
-        else if ( IsEqualGUID(&wsarecvmsg_guid, in_buff) )
-        {
-            *(LPFN_WSARECVMSG *)out_buff = WS2_WSARecvMsg;
-            break;
-        }
-        else if ( IsEqualGUID(&wsasendmsg_guid, in_buff) )
-        {
-            *(LPFN_WSASENDMSG *)out_buff = WSASendMsg;
-            break;
-        }
-        else
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(in_buff));
 
+        if (found)
+        {
+            TRACE("-> got %s\n", guid_funcs[i].name);
+            *(void **)out_buff = guid_funcs[i].func_ptr;
+            break;
+        }
+
+        FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(in_buff));
         status = WSAEOPNOTSUPP;
         break;
-   }
-   case WS_SIO_KEEPALIVE_VALS:
-   {
+    }
+    case WS_SIO_KEEPALIVE_VALS:
+    {
         struct tcp_keepalive *k;
         int keepalive, keepidle, keepintvl;
 
