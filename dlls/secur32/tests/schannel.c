@@ -870,7 +870,49 @@ todo_wine
     status = pQueryContextAttributesA(&context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
     ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_REMOTE_CERT_CONTEXT) failed: %08x\n", status);
     if(status == SEC_E_OK) {
+        SecPkgContext_Bindings bindings = {0xdeadbeef, (void*)0xdeadbeef};
+
         test_remote_cert(cert);
+
+        status = pQueryContextAttributesA(&context, SECPKG_ATTR_ENDPOINT_BINDINGS, &bindings);
+        ok(status == SEC_E_OK || broken(status == SEC_E_UNSUPPORTED_FUNCTION),
+           "QueryContextAttributesW(SECPKG_ATTR_ENDPOINT_BINDINGS) failed: %08x\n", status);
+        if(status == SEC_E_OK) {
+            static const char prefix[] = "tls-server-end-point:";
+            const char *p;
+            BYTE hash[64];
+            DWORD hash_size;
+
+            ok(bindings.BindingsLength == sizeof(*bindings.Bindings) + sizeof(prefix)-1 + 32 /* hash size */,
+               "bindings.BindingsLength = %u\n", bindings.BindingsLength);
+            ok(!bindings.Bindings->dwInitiatorAddrType, "dwInitiatorAddrType = %x\n", bindings.Bindings->dwInitiatorAddrType);
+            ok(!bindings.Bindings->cbInitiatorLength, "cbInitiatorLength = %x\n", bindings.Bindings->cbInitiatorLength);
+            ok(!bindings.Bindings->dwInitiatorOffset, "dwInitiatorOffset = %x\n", bindings.Bindings->dwInitiatorOffset);
+            ok(!bindings.Bindings->dwAcceptorAddrType, "dwAcceptorAddrType = %x\n", bindings.Bindings->dwAcceptorAddrType);
+            ok(!bindings.Bindings->cbAcceptorLength, "cbAcceptorLength = %x\n", bindings.Bindings->cbAcceptorLength);
+            ok(!bindings.Bindings->dwAcceptorOffset, "dwAcceptorOffset = %x\n", bindings.Bindings->dwAcceptorOffset);
+            ok(sizeof(*bindings.Bindings) + bindings.Bindings->cbApplicationDataLength == bindings.BindingsLength,
+               "cbApplicationDataLength = %x\n", bindings.Bindings->cbApplicationDataLength);
+            ok(bindings.Bindings->dwApplicationDataOffset == sizeof(*bindings.Bindings),
+               "dwApplicationDataOffset = %x\n", bindings.Bindings->dwApplicationDataOffset);
+            p = (const char*)(bindings.Bindings+1);
+            ok(!memcmp(p, prefix, sizeof(prefix)-1), "missing prefix\n");
+            p += sizeof(prefix)-1;
+
+            hash_size = sizeof(hash);
+            ret = CryptHashCertificate(0, CALG_SHA_256, 0, cert->pbCertEncoded, cert->cbCertEncoded, hash, &hash_size);
+            if(ret) {
+                ok(hash_size == 32, "hash_size = %u\n", hash_size);
+                ok(!memcmp(hash, p, hash_size), "unexpected hash part\n");
+            }else {
+                win_skip("SHA 256 hash not supported.\n");
+            }
+
+            FreeContextBuffer(bindings.Bindings);
+        }else {
+            win_skip("SECPKG_ATTR_ENDPOINT_BINDINGS not supported\n");
+        }
+
         CertFreeCertificateContext(cert);
     }
 
