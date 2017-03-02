@@ -1055,15 +1055,15 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
         return;
     }
 
-    if (!psa->fLogicalOrder && psa->fRTL)
-    {
-        dirR = 1;
-        dirL = -1;
-    }
-    else
+    if (psa->fLogicalOrder && psa->fRTL)
     {
         dirR = -1;
         dirL = 1;
+    }
+    else
+    {
+        dirR = 1;
+        dirL = -1;
     }
 
     load_ot_tables(hdc, psc);
@@ -2946,19 +2946,19 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     spaces = HeapAlloc(GetProcessHeap(),0,cGlyphs);
     memset(spaces,0,cGlyphs);
 
-    if (!psa->fLogicalOrder && psa->fRTL)
-    {
-        initGlyph = cGlyphs-1;
-        finaGlyph = 0;
-        dirR = 1;
-        dirL = -1;
-    }
-    else
+    if (psa->fLogicalOrder && psa->fRTL)
     {
         initGlyph = 0;
         finaGlyph = cGlyphs-1;
         dirR = -1;
         dirL = 1;
+    }
+    else
+    {
+        initGlyph = cGlyphs-1;
+        finaGlyph = 0;
+        dirR = 1;
+        dirL = -1;
     }
 
     for (i = 0; i < cGlyphs; i++)
