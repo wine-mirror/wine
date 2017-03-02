@@ -1017,11 +1017,16 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
                 winetest_trace("%i: Glyph present when it should not be\n",x);
         }
         if (valid > 0)
-            winetest_ok(glyphProp[x].sva.uJustification == glyphItems[x].GlyphProp.sva.uJustification ||
-                        (props2 && glyphProp[x].sva.uJustification == props2[x].sva.uJustification),
-                         "%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
+        {
+            todo_wine_if(tags[item] == syrc_tag && !x)
+                winetest_ok(glyphProp[x].sva.uJustification == glyphItems[x].GlyphProp.sva.uJustification ||
+                            (props2 && glyphProp[x].sva.uJustification == props2[x].sva.uJustification),
+                             "%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
+        }
         else if (glyphProp[x].sva.uJustification != glyphItems[x].GlyphProp.sva.uJustification)
+        {
             winetest_trace("%i: uJustification incorrect (%i)\n",x,glyphProp[x].sva.uJustification);
+        }
         if (valid > 0)
             winetest_ok(glyphProp[x].sva.fClusterStart == glyphItems[x].GlyphProp.sva.fClusterStart ||
                         (props2 && glyphProp[x].sva.fClusterStart == props2[x].sva.fClusterStart),
@@ -1225,12 +1230,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}}};
 
     /* Syriac */
-    static const WCHAR test_syriac[] = {0x0710, 0x0710, 0x0710, 0x0728, 0x0718, 0x0723,0};
-    static const shapeTest_char syriac_c[] = {{5,{0,0}},{4,{0,0}},{3,{0,0}},{2,{0,0}},{1,{0,0}},{0,{0,0}}};
+    static const WCHAR test_syriac[] = {0x0710, 0x072c, 0x0728, 0x0742, 0x0718, 0x0723, 0x0720, 0x0710, 0};
+    static const shapeTest_char syriac_c[] = {{6, {0, 0}}, {5, {0, 0}}, {4, {0, 0}},
+            {4, {0, 0}}, {2, {0, 0}}, {1, {0, 0}}, {0, {0, 0}}, {0, {0, 0}}};
     static const shapeTest_glyph syriac_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_ARABIC_NORMAL,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
-                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,1,1,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}} };
@@ -1509,7 +1516,7 @@ static void test_ScriptShapeOpenType(HDC hdc)
     test_valid = find_font_for_range(hdc, "Estrangelo Edessa", 71, test_syriac[0], &hfont, &hfont_orig);
     if (hfont != NULL)
     {
-        test_shape_ok_valid(test_valid, hdc, test_syriac, 6, &Control, &State, 0, 6, syriac_c, syriac_g);
+        test_shape_ok_valid(test_valid, hdc, test_syriac, 8, &Control, &State, 0, 7, syriac_c, syriac_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
