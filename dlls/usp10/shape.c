@@ -751,6 +751,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
         return;
     else
     {
+        int cluster_dir = pwLogClust[0] < pwLogClust[chars-1] ? 1 : -1;
         int i;
         int target_glyph = nextIndex - write_dir;
         int target_index = -1;
@@ -775,7 +776,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
         if (changeCount < 0)
         {
             /* merge glyphs */
-            for(i = target_index; i < chars && i >= 0; i+=write_dir)
+            for (i = target_index; i < chars && i >= 0; i += cluster_dir)
             {
                 if (pwLogClust[i] == target_glyph)
                     continue;
@@ -794,8 +795,8 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
                 }
             }
 
-            /* renumber trailing indexes*/
-            for(i = target_index; i < chars && i >= 0; i+=write_dir)
+            /* renumber trailing indexes */
+            for (i = target_index; i < chars && i >= 0; i += cluster_dir)
             {
                 if (pwLogClust[i] != target_glyph)
                     pwLogClust[i] += changeCount;
@@ -803,8 +804,8 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
         }
         else
         {
-            for(i = target_index; i < chars && i >= 0; i+=write_dir)
-                    pwLogClust[i] += changeCount;
+            for (i = target_index; i < chars && i >= 0; i += cluster_dir)
+                pwLogClust[i] += changeCount;
         }
     }
 }
@@ -3382,7 +3383,7 @@ static void SHAPE_ApplyOpenTypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYS
     if (!psc->GSUB_Table)
         return;
 
-    if (!psa->fLogicalOrder && psa->fRTL)
+    if (scriptInformation[psa->eScript].a.fRTL && (!psa->fLogicalOrder || !psa->fRTL))
         dirL = -1;
     else
         dirL = 1;
