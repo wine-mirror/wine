@@ -138,6 +138,10 @@ typedef struct {
     CRITICAL_SECTION cs;
 } _ReentrantBlockingLock;
 
+typedef struct {
+    char pad[64];
+} event;
+
 static int* (__cdecl *p_errno)(void);
 static int (__cdecl *p_wmemcpy_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
 static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
@@ -177,6 +181,13 @@ static void (__thiscall *p_NonReentrantBlockingLock_dtor)(_ReentrantBlockingLock
 static void (__thiscall *p_NonReentrantBlockingLock__Acquire)(_ReentrantBlockingLock*);
 static void (__thiscall *p_NonReentrantBlockingLock__Release)(_ReentrantBlockingLock*);
 static MSVCRT_bool (__thiscall *p_NonReentrantBlockingLock__TryAcquire)(_ReentrantBlockingLock*);
+
+static event* (__thiscall *p_event_ctor)(event*);
+static void (__thiscall *p_event_dtor)(event*);
+static void (__thiscall *p_event_reset)(event*);
+static void (__thiscall *p_event_set)(event*);
+static size_t (__thiscall *p_event_wait)(event*, unsigned int);
+static int (__cdecl *p_event_wait_for_multiple)(event**, size_t, MSVCRT_bool, unsigned int);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -237,6 +248,13 @@ static BOOL init(void)
         SET(p_NonReentrantBlockingLock__Acquire, "?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ");
         SET(p_NonReentrantBlockingLock__Release, "?_Release@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ");
         SET(p_NonReentrantBlockingLock__TryAcquire, "?_TryAcquire@_NonReentrantBlockingLock@details@Concurrency@@QEAA_NXZ");
+
+        SET(p_event_ctor, "??0event@Concurrency@@QEAA@XZ");
+        SET(p_event_dtor, "??1event@Concurrency@@QEAA@XZ");
+        SET(p_event_reset, "?reset@event@Concurrency@@QEAAXXZ");
+        SET(p_event_set, "?set@event@Concurrency@@QEAAXXZ");
+        SET(p_event_wait, "?wait@event@Concurrency@@QEAA_KI@Z");
+        SET(p_event_wait_for_multiple, "?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z");
     } else {
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QAE@P6AXXZ@Z");
         SET(pSpinWait_dtor, "??_F?$_SpinWait@$00@details@Concurrency@@QAEXXZ");
@@ -264,6 +282,13 @@ static BOOL init(void)
         SET(p_NonReentrantBlockingLock__Acquire, "?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ");
         SET(p_NonReentrantBlockingLock__Release, "?_Release@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ");
         SET(p_NonReentrantBlockingLock__TryAcquire, "?_TryAcquire@_NonReentrantBlockingLock@details@Concurrency@@QAE_NXZ");
+
+        SET(p_event_ctor, "??0event@Concurrency@@QAE@XZ");
+        SET(p_event_dtor, "??1event@Concurrency@@QAE@XZ");
+        SET(p_event_reset, "?reset@event@Concurrency@@QAEXXZ");
+        SET(p_event_set, "?set@event@Concurrency@@QAEXXZ");
+        SET(p_event_wait, "?wait@event@Concurrency@@QAEII@Z");
+        SET(p_event_wait_for_multiple, "?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z");
     }
 
     init_thiscall_thunk();
@@ -705,6 +730,112 @@ static void test__ReentrantBlockingLock(void)
     call_func1(p_NonReentrantBlockingLock_dtor, &rbl);
 }
 
+static DWORD WINAPI test_event_thread(void *arg)
+{
+    event *evt = arg;
+    call_func1(p_event_set, evt);
+    return 0;
+}
+
+static DWORD WINAPI multiple_events_thread(void *arg)
+{
+     event **events = arg;
+
+     Sleep(50);
+     call_func1(p_event_set, events[0]);
+     call_func1(p_event_reset, events[0]);
+     call_func1(p_event_set, events[1]);
+     call_func1(p_event_reset, events[1]);
+     return 0;
+}
+
+static void test_event(void)
+{
+    int i;
+    int ret;
+    event evt;
+    event *evts[70];
+    HANDLE thread;
+    HANDLE threads[NUMELMS(evts)];
+
+    call_func1(p_event_ctor, &evt);
+
+    ret = call_func2(p_event_wait, &evt, 100);
+    ok(ret == -1, "expected -1, got %d\n", ret);
+
+    call_func1(p_event_set, &evt);
+    ret = call_func2(p_event_wait, &evt, 100);
+    ok(!ret, "expected 0, got %d\n", ret);
+
+    ret = call_func2(p_event_wait, &evt, 100);
+    ok(!ret, "expected 0, got %d\n", ret);
+
+    call_func1(p_event_reset, &evt);
+    ret = call_func2(p_event_wait, &evt, 100);
+    ok(ret == -1, "expected -1, got %d\n", ret);
+
+    thread = CreateThread(NULL, 0, test_event_thread, (void*)&evt, 0, NULL);
+    ret = call_func2(p_event_wait, &evt, 5000);
+    ok(!ret, "expected 0, got %d\n", ret);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    if (0) /* crashes on Windows */
+        p_event_wait_for_multiple(NULL, 10, TRUE, 0);
+
+    for (i = 0; i < NUMELMS(evts); i++) {
+        evts[i] = malloc(sizeof(evt));
+        call_func1(p_event_ctor, evts[i]);
+    }
+
+    ret = p_event_wait_for_multiple(evts, 0, TRUE, 100);
+    ok(!ret, "expected 0, got %d\n", ret);
+
+    ret = p_event_wait_for_multiple(evts, NUMELMS(evts), TRUE, 100);
+    ok(ret == -1, "expected -1, got %d\n", ret);
+
+    /* reset and test wait for multiple with all */
+    for (i = 0; i < NUMELMS(evts); i++)
+        threads[i] = CreateThread(NULL, 0, test_event_thread, (void*)evts[i], 0, NULL);
+
+    ret = p_event_wait_for_multiple(evts, NUMELMS(evts), TRUE, 5000);
+    ok(ret != -1, "didn't expect -1\n");
+
+    for (i = 0; i < NUMELMS(evts); i++) {
+        WaitForSingleObject(threads[i], INFINITE);
+        CloseHandle(threads[i]);
+    }
+
+    /* reset and test wait for multiple with any */
+    call_func1(p_event_reset, evts[0]);
+
+    thread = CreateThread(NULL, 0, test_event_thread, (void*)evts[0], 0, NULL);
+    ret = p_event_wait_for_multiple(evts, 1, FALSE, 5000);
+    ok(!ret, "expected 0, got %d\n", ret);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    call_func1(p_event_reset, evts[0]);
+    call_func1(p_event_reset, evts[1]);
+    thread = CreateThread(NULL, 0, multiple_events_thread, (void*)evts, 0, NULL);
+    ret = p_event_wait_for_multiple(evts, 2, TRUE, 500);
+    ok(ret == -1, "expected -1, got %d\n", ret);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    call_func1(p_event_reset, evts[0]);
+    call_func1(p_event_set, evts[1]);
+    ret = p_event_wait_for_multiple(evts, 2, FALSE, 0);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+
+    for (i = 0; i < NUMELMS(evts); i++) {
+        call_func1(p_event_dtor, evts[i]);
+        free(evts[i]);
+    }
+
+    call_func1(p_event_dtor, &evt);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -718,4 +849,5 @@ START_TEST(msvcr100)
     test__SpinWait();
     test_reader_writer_lock();
     test__ReentrantBlockingLock();
+    test_event();
 }
