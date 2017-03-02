@@ -12,11 +12,10 @@ lisenssistä on englanniksi tiedostossa LICENSE.
 
 2. PIKAOPAS
 
-Kun Wine käännetään lähdekoodeistaan, on suositeltavaa käyttää Winen omaa
-asennusohjelmaa, joka ajetaan seuraavalla komennolla Winen lähdekoodin
-juurihakemistosta:
+Aja Winen lähdekoodin juurihakemistossa seuraavat komennot:
 
-./tools/wineinstall
+./configure
+make
 
 Ohjelmat ajetaan komennolla "wine ohjelma". Lisätietoja sekä apua ongelmien
 ratkaisemiseen on jäljempänä tässä tiedostossa, Winen man-sivuilla sekä
@@ -81,8 +80,7 @@ Valinnaisia tukikirjastoja:
 
 4. KÄÄNTÄMINEN
 
-Aiemmin mainitun wineinstall-skriptin sijaan Winen voi kääntää myös
-seuraavilla komennoilla:
+Winen voi kääntää seuraavilla komennoilla:
 
 ./configure
 make
@@ -94,6 +92,8 @@ kääntämiseen Unixissa.
 
 Komento './configure --help' näyttää asetuksia ja valintoja, joita
 käännösprosessiin voi lisätä.
+
+Lisätietoja on osoitteessa https://wiki.winehq.org/Building_Wine
 
 5. ASENNUS
 
