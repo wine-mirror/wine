@@ -2054,8 +2054,12 @@ static HRESULT reader_parse_reference(xmlreader *reader)
         /* normalize */
         if (is_wchar_space(ch)) ch = ' ';
 
-        len = buffer->written - ((char*)ptr - buffer->data) - sizeof(WCHAR);
-        memmove(start+1, ptr+1, len);
+        ptr = reader_get_ptr(reader);
+        start = reader_get_ptr2(reader, cur);
+        len = buffer->written - ((char *)ptr - buffer->data);
+        memmove(start + 1, ptr + 1, len);
+
+        buffer->written -= (reader_get_cur(reader) - cur) * sizeof(WCHAR);
         buffer->cur = cur + 1;
 
         *start = ch;
