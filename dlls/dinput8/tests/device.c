@@ -174,6 +174,7 @@ static BOOL CALLBACK enumeration_callback(const DIDEVICEINSTANCEA *lpddi, IDirec
     struct enum_data *data = pvRef;
     DWORD cnt;
     DIDEVICEOBJECTDATA buffer[5];
+    IDirectInputDevice8A *lpdid2;
 
     if (!data) return DIENUM_CONTINUE;
 
@@ -205,6 +206,10 @@ static BOOL CALLBACK enumeration_callback(const DIDEVICEINSTANCEA *lpddi, IDirec
         ok (dwFlags & DIEDBS_MAPPEDPRI1, "Mouse should be mapped as pri1 dwFlags=%08x\n", dwFlags);
     }
 
+    /* Creating second device object to check if it has the same username */
+    hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, &lpdid2, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+
     /* Building and setting an action map */
     /* It should not use any pre-stored mappings so we use DIDBAM_HWDEFAULTS */
     hr = IDirectInputDevice8_BuildActionMap(lpdid, data->lpdiaf, NULL, DIDBAM_HWDEFAULTS);
@@ -228,6 +233,11 @@ static BOOL CALLBACK enumeration_callback(const DIDEVICEINSTANCEA *lpddi, IDirec
     dps.wsz[0] = '\0';
 
     hr = IDirectInputDevice_GetProperty(lpdid, DIPROP_USERNAME, &dps.diph);
+    ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
+    ok (!lstrcmpW(usernameW, dps.wsz), "Username not set correctly expected=%s, got=%s\n", wine_dbgstr_w(usernameW), wine_dbgstr_w(dps.wsz));
+
+    dps.wsz[0] = '\0';
+    hr = IDirectInputDevice_GetProperty(lpdid2, DIPROP_USERNAME, &dps.diph);
     ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
     ok (!lstrcmpW(usernameW, dps.wsz), "Username not set correctly expected=%s, got=%s\n", wine_dbgstr_w(usernameW), wine_dbgstr_w(dps.wsz));
 
@@ -315,6 +325,7 @@ static void test_action_mapping(void)
     af.dwBufferSize = 32;
 
     /* This enumeration builds and sets the action map for all devices */
+    data.pDI = pDI;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
 

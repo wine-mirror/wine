@@ -577,6 +577,7 @@ static HRESULT initialize_directinput_instance(IDirectInputImpl *This, DWORD dwV
         This->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectInputImpl*->crit");
 
         list_init( &This->devices_list );
+        list_init( &This->device_players );
 
         /* Add self to the list of the IDirectInputs */
         EnterCriticalSection( &dinput_hook_crit );
@@ -599,10 +600,15 @@ static void uninitialize_directinput_instance(IDirectInputImpl *This)
 {
     if (This->initialized)
     {
+        struct DevicePlayer *device_player, *device_player2;
         /* Remove self from the list of the IDirectInputs */
         EnterCriticalSection( &dinput_hook_crit );
         list_remove( &This->entry );
         LeaveCriticalSection( &dinput_hook_crit );
+
+        LIST_FOR_EACH_ENTRY_SAFE( device_player, device_player2,
+                &This->device_players, struct DevicePlayer, entry )
+            HeapFree(GetProcessHeap(), 0, device_player);
 
         check_hook_thread();
 
