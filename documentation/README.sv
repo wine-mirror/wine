@@ -1,31 +1,31 @@
 1. INLEDNING
 
-Wine är ett program som gör det möjligt att köra Windows-program
-(inkluderat DOS, Windows 3.x, Win32 och Win64) i Unix. Det består av en
-programstartare som startar och kör Windows-programfiler, samt ett
-bibliotek (kallat Winelib) som implementerar Windows API-anrop med hjälp
-av deras Unix- eller X11-motsvarigheter. Biblioteket kan också användas
+Wine Ã¤r ett program som gÃ¶r det mÃ¶jligt att kÃ¶ra Windows-program
+(inkluderat DOS, Windows 3.x, Win32 och Win64) i Unix. Det bestÃ¥r av en
+programstartare som startar och kÃ¶r Windows-programfiler, samt ett
+bibliotek (kallat Winelib) som implementerar Windows API-anrop med hjÃ¤lp
+av deras Unix- eller X11-motsvarigheter. Biblioteket kan ocksÃ¥ anvÃ¤ndas
 till att porta Windows-kod till vanliga Unix-program.
 
-Wine är fri programvara, utgett under villkoren i GNU LGPL; se
-filen LICENSE för detaljer.
+Wine Ã¤r fri programvara, utgett under villkoren i GNU LGPL; se
+filen LICENSE fÃ¶r detaljer.
 
 
-2. KOM IGÅNG
+2. KOM IGÃ…NG
 
-När du bygger Wine från källkod så rekommenderas du använda Wines
-installationsprogram. Kör följande i rotkatalogen för Wines källkod:
+KÃ¶r fÃ¶ljande kommandon i rotkatalogen fÃ¶r Wines kÃ¤llkod:
 
-./tools/wineinstall
+./configure
+make
 
-Kör program med "wine [val] program". Se resten av denna fil,
-Wines man-sidor samt sist men inte minst http://www.winehq.org/ för mer
-information och tips om hur problem kan lösas.
+KÃ¶r program med "wine [val] program". Se resten av denna fil,
+Wines man-sidor samt sist men inte minst http://www.winehq.org/ fÃ¶r mer
+information och tips om hur problem kan lÃ¶sas.
 
 
 3. SYSTEMKRAV
 
-För att kompilera och köra Wine krävs ett av följande:
+FÃ¶r att kompilera och kÃ¶ra Wine krÃ¤vs ett av fÃ¶ljande:
 
   Linux version 2.0.36 eller senare
   FreeBSD 8.0 eller senare
@@ -33,133 +33,135 @@ För att kompilera och köra Wine krävs ett av följande:
   NetBSD-current
   Mac OS X 10.5 eller senare
 
-Wine kräver stöd för trådar på kernelnivå, och därför är det bara
-operativsystemen ovan som stöds. Andra operativsystem som
-stöder kerneltrådar kommer eventuellt att stödjas i framtiden.
+Wine krÃ¤ver stÃ¶d fÃ¶r trÃ¥dar pÃ¥ kernelnivÃ¥, och dÃ¤rfÃ¶r Ã¤r det bara
+operativsystemen ovan som stÃ¶ds. Andra operativsystem som
+stÃ¶der kerneltrÃ¥dar kommer eventuellt att stÃ¶djas i framtiden.
 
-Information för FreeBSD:
-  Wine kommer i regel inte att fungera på FreeBSD-versioner äldre än 8.0.
-  Se http://wiki.freebsd.org/Wine för mer information.
+Information fÃ¶r FreeBSD:
+  Wine kommer i regel inte att fungera pÃ¥ FreeBSD-versioner Ã¤ldre Ã¤n 8.0.
+  Se http://wiki.freebsd.org/Wine fÃ¶r mer information.
 
-Information för Solaris:
-  Wine måste antagligen byggas med GNU toolchain (gcc, gas etc.).
-  Varning: även om gas installeras så är det inte säkert att det används av
-  gcc. Det sägs att det är nödvändigt att antingen bygga gcc på nytt, eller
-  skapa symboliska länkar från "cc", "as" och "ld" till GNU toolchain.
+Information fÃ¶r Solaris:
+  Wine mÃ¥ste antagligen byggas med GNU toolchain (gcc, gas etc.).
+  Varning: Ã¤ven om gas installeras sÃ¥ Ã¤r det inte sÃ¤kert att det anvÃ¤nds av
+  gcc. Det sÃ¤gs att det Ã¤r nÃ¶dvÃ¤ndigt att antingen bygga gcc pÃ¥ nytt, eller
+  skapa symboliska lÃ¤nkar frÃ¥n "cc", "as" och "ld" till GNU toolchain.
 
-Information för NetBSD:
-  USER_LDT, SYSVSHM, SYSVSEM och SYSVMSG måste vara aktiverade i kerneln.
+Information fÃ¶r NetBSD:
+  USER_LDT, SYSVSHM, SYSVSEM och SYSVMSG mÃ¥ste vara aktiverade i kerneln.
 
-Information för Mac OS X:
-  Du behöver Xcode 2.4 eller senare för att korrekt kunna bygga Wine på x86.
-  Mac-drivrutinen kräver OS X 10.6 eller senare och kommer inte att byggas på 10.5.
+Information fÃ¶r Mac OS X:
+  Du behÃ¶ver Xcode 2.4 eller senare fÃ¶r att korrekt kunna bygga Wine pÃ¥ x86.
+  Mac-drivrutinen krÃ¤ver OS X 10.6 eller senare och kommer inte att byggas pÃ¥ 10.5.
 
 
-Stödda filsystem:
-  Wine kan köra på de flesta filsystem, men det har rapporterats problem vad
-  gäller kompatibilitet då samba används för att ansluta till filer. NTFS
-  tillhandahåller inte heller alla filsystemsfunktioner som behövs av alla
-  program. Det rekommenderas att använda ett riktigt Unix-filsystem.
+StÃ¶dda filsystem:
+  Wine kan kÃ¶ra pÃ¥ de flesta filsystem, men det har rapporterats problem vad
+  gÃ¤ller kompatibilitet dÃ¥ samba anvÃ¤nds fÃ¶r att ansluta till filer. NTFS
+  tillhandahÃ¥ller inte heller alla filsystemsfunktioner som behÃ¶vs av alla
+  program. Det rekommenderas att anvÃ¤nda ett riktigt Unix-filsystem.
 
-Grundläggande krav:
-  Utvecklingsfilerna för X11 måste vara installerade (de kallas xlib6g-dev i
+GrundlÃ¤ggande krav:
+  Utvecklingsfilerna fÃ¶r X11 mÃ¥ste vara installerade (de kallas xlib6g-dev i
   Debian och XFree86-devel i Red Hat).
 
-  Du måste givetvis också ha "make" (mest troligt "GNU make").
+  Du mÃ¥ste givetvis ocksÃ¥ ha "make" (mest troligt "GNU make").
 
-  Det är också nödvändigt att ha flex 2.5.33 eller senare samt bison.
+  Det Ã¤r ocksÃ¥ nÃ¶dvÃ¤ndigt att ha flex 2.5.33 eller senare samt bison.
 
-Valfria stödbibliotek:
-  configure-skriptet visar varningar när valfria bibliotek inte hittats.
-  Se http://wiki.winehq.org/Recommended_Packages för information om
-  vilka paket du bör installera.
+Valfria stÃ¶dbibliotek:
+  configure-skriptet visar varningar nÃ¤r valfria bibliotek inte hittats.
+  Se http://wiki.winehq.org/Recommended_Packages fÃ¶r information om
+  vilka paket du bÃ¶r installera.
 
-  På 64 bit-system måste du säkerställa att 32 bit-versionerna av
-  ovannämnda bibliotek installerats; se http://wiki.winehq.org/WineOn64bit
-  för närmare detaljer. Om du vill ha ett sant 64-bit Wine (eller en mixad
-  32- och 64-bit Wine-installation), se http://wiki.winehq.org/Wine64 för
+  PÃ¥ 64 bit-system mÃ¥ste du sÃ¤kerstÃ¤lla att 32 bit-versionerna av
+  ovannÃ¤mnda bibliotek installerats; se http://wiki.winehq.org/WineOn64bit
+  fÃ¶r nÃ¤rmare detaljer. Om du vill ha ett sant 64-bit Wine (eller en mixad
+  32- och 64-bit Wine-installation), se http://wiki.winehq.org/Wine64 fÃ¶r
   detaljer.
 
 4. KOMPILERING
 
-Kör följande kommandon för att bygga Wine om du inte använder wineinstall:
+KÃ¶r fÃ¶ljande kommandon fÃ¶r att bygga Wine:
 
 ./configure
 make
 
-Detta bygger programmet "wine" och diverse stödbibliotek/programfiler.
-Programfilen "wine" laddar och kör Windows-program.
-Biblioteket "libwine" ("Winelib") kan användas till att bygga och länka
-Windows-källkod i Unix.
+Detta bygger programmet "wine" och diverse stÃ¶dbibliotek/programfiler.
+Programfilen "wine" laddar och kÃ¶r Windows-program.
+Biblioteket "libwine" ("Winelib") kan anvÃ¤ndas till att bygga och lÃ¤nka
+Windows-kÃ¤llkod i Unix.
 
-Kör './configure --help' för att se inställningar och val vid kompilering.
+KÃ¶r './configure --help' fÃ¶r att se instÃ¤llningar och val vid kompilering.
+
+FÃ¶r mer information se https://wiki.winehq.org/Building_Wine
 
 5. INSTALLATION
 
-När Wine är byggt kan du köra "make install" för att installera det;
-detta installerar också man-sidorna och några fler nödvändiga filer.
+NÃ¤r Wine Ã¤r byggt kan du kÃ¶ra "make install" fÃ¶r att installera det;
+detta installerar ocksÃ¥ man-sidorna och nÃ¥gra fler nÃ¶dvÃ¤ndiga filer.
 
-Glöm inte att först avinstallera gamla Wine-versioner. Pröva antingen
-"dpkg -r wine", "rpm -e wine" eller "make uninstall" före installationen.
+GlÃ¶m inte att fÃ¶rst avinstallera gamla Wine-versioner. PrÃ¶va antingen
+"dpkg -r wine", "rpm -e wine" eller "make uninstall" fÃ¶re installationen.
 
-När Wine är installerat kan du använda inställningsprogrammet "winecfg".
-Se hjälpavdelningen på http://www.winehq.org/ för tips om inställningar.
+NÃ¤r Wine Ã¤r installerat kan du anvÃ¤nda instÃ¤llningsprogrammet "winecfg".
+Se hjÃ¤lpavdelningen pÃ¥ http://www.winehq.org/ fÃ¶r tips om instÃ¤llningar.
 
 
-6. KÖRNING AV PROGRAM
+6. KÃ–RNING AV PROGRAM
 
-När du använder Wine kan du uppge hela sökvägen till programfilen, eller
+NÃ¤r du anvÃ¤nder Wine kan du uppge hela sÃ¶kvÃ¤gen till programfilen, eller
 enbart ett filnamn.
 
-Exempel: för att köra Notepad:
+Exempel: fÃ¶r att kÃ¶ra Notepad:
 
-        wine notepad               (använder sökvägen angiven i Wines
-        wine notepad.exe            konfigurationsfil för att finna filen)
+        wine notepad               (anvÃ¤nder sÃ¶kvÃ¤gen angiven i Wines
+        wine notepad.exe            konfigurationsfil fÃ¶r att finna filen)
 
-        wine c:\\windows\\notepad.exe  (användning av DOS-filnamnssyntax)
+        wine c:\\windows\\notepad.exe  (anvÃ¤ndning av DOS-filnamnssyntax)
 
-        wine ~/.wine/drive_c/windows/notepad.exe  (användning av Unix-filvägar)
+        wine ~/.wine/drive_c/windows/notepad.exe  (anvÃ¤ndning av Unix-filvÃ¤gar)
 
-        wine notepad.exe readme.txt  (köra program med parametrar)
+        wine notepad.exe readme.txt  (kÃ¶ra program med parametrar)
 
-Wine är inte perfekt, så det är möjligt att vissa program kraschar.
-I så fall får du en kraschlogg som du bör bifoga till din rapport då du
+Wine Ã¤r inte perfekt, sÃ¥ det Ã¤r mÃ¶jligt att vissa program kraschar.
+I sÃ¥ fall fÃ¥r du en kraschlogg som du bÃ¶r bifoga till din rapport dÃ¥ du
 rapporterar ett fel.
 
 
 7. MER INFORMATION
 
-Internet:  Mycket information om Wine finns samlat på WineHQ på
+Internet:  Mycket information om Wine finns samlat pÃ¥ WineHQ pÃ¥
            http://www.winehq.org/ : diverse guider, en programdatabas samt
-           felspårning. Detta är antagligen det bästa stället att börja.
+           felspÃ¥rning. Detta Ã¤r antagligen det bÃ¤sta stÃ¤llet att bÃ¶rja.
 
-Frågor:    Frågor och svar om Wine finns samlade på http://www.winehq.org/FAQ
+FrÃ¥gor:    FrÃ¥gor och svar om Wine finns samlade pÃ¥ http://www.winehq.org/FAQ
 
-Wiki:      Wines Wiki finns på http://wiki.winehq.org
+Wiki:      Wines Wiki finns pÃ¥ http://wiki.winehq.org
 
 E-postlistor:
-           Det finns flera e-postlistor för Wine-användare och -utvecklare; se
-           http://www.winehq.org/forums för mer information.
+           Det finns flera e-postlistor fÃ¶r Wine-anvÃ¤ndare och -utvecklare; se
+           http://www.winehq.org/forums fÃ¶r mer information.
 
-Fel:       Rapportera fel till Wines Bugzilla på http://bugs.winehq.org
-           Sök i Bugzilla-databasen för att se om problemet redan finns
-           rapporterat innan du sänder en felrapport.
+Fel:       Rapportera fel till Wines Bugzilla pÃ¥ http://bugs.winehq.org
+           SÃ¶k i Bugzilla-databasen fÃ¶r att se om problemet redan finns
+           rapporterat innan du sÃ¤nder en felrapport.
 
-IRC:       Hjälp finns tillgänglig online på kanalen #WineHQ på
+IRC:       HjÃ¤lp finns tillgÃ¤nglig online pÃ¥ kanalen #WineHQ pÃ¥
            irc.freenode.net.
 
-Git:       Wines nuvarande utvecklingsversion finns tillgänglig genom Git.
-           Gå till http://www.winehq.org/git för mer information.
+Git:       Wines nuvarande utvecklingsversion finns tillgÃ¤nglig genom Git.
+           GÃ¥ till http://www.winehq.org/git fÃ¶r mer information.
 
-Om du lägger till något eller fixar ett fel, är det bra om du sänder
-en patch (förslagsvis med git-format-patch) till listan wine-patches@winehq.org
-för inkludering i nästa utgåva av Wine.
+Om du lÃ¤gger till nÃ¥got eller fixar ett fel, Ã¤r det bra om du sÃ¤nder
+en patch (fÃ¶rslagsvis med git-format-patch) till listan wine-patches@winehq.org
+fÃ¶r inkludering i nÃ¤sta utgÃ¥va av Wine.
 
 --
 Originalet till denna fil skrevs av
 Alexandre Julliard
 julliard@winehq.org
 
-Översatt till svenska av
+Ã–versatt till svenska av
 Anders Jonsson
 anders.jonsson@norsjonet.se
