@@ -562,6 +562,13 @@ static void test_EnumDevicesBySemantics(void)
     /* Keep the device total */
     device_total = data.device_count;
 
+    /* There should be no devices for any user. No device should be enumerated with DIEDBSFL_THISUSER.
+       MSDN defines that all unowned devices are also enumerated but this doesn't seem to be happening. */
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, "Sh4d0w M4g3", &diaf, enum_semantics_callback, &data, DIEDBSFL_THISUSER);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    ok (data.device_count == 0, "No devices should be assigned for this user assigned=%d\n", data.device_count);
+
     /* This enumeration builds and sets the action map for all devices with a NULL username */
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, set_action_map_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
@@ -570,7 +577,7 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, &data, DIEDBSFL_AVAILABLEDEVICES);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
-    todo_wine ok (data.device_count == 0, "No device should be available after action mapping available=%d\n", data.device_count);
+    ok (data.device_count == 0, "No device should be available after action mapping available=%d\n", data.device_count);
 
     /* Now we'll give all the devices to a specific user */
     data.username = "Sh4d0w M4g3";
@@ -593,7 +600,7 @@ static void test_EnumDevicesBySemantics(void)
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, "Ninja Brian", &diaf, enum_semantics_callback, &data, DIEDBSFL_THISUSER);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
-    todo_wine ok (data.device_count == 0, "This user should own no devices owned=%d\n", data.device_count);
+    ok (data.device_count == 0, "This user should own no devices owned=%d\n", data.device_count);
 
     /* Sh4d0w M4g3 has ownership of all devices */
     data.device_count = 0;
