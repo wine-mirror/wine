@@ -1185,6 +1185,13 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}},
                             {0,{{SCRIPT_JUSTIFY_CHARACTER,1,0,0,0,0},0}} };
 
+    static const WCHAR test3[] = {'t', 't', 'f', 'f', 'f', 'i', 0};
+    static const shapeTest_char t3_c[] = {{0, {0, 0}}, {0, {0, 0}}, {0, {0, 0}},
+            {1, {0, 0}}, {1, {0, 0}}, {1, {0, 0}}};
+    static const shapeTest_glyph t3_g[] = {
+                            {1, {{SCRIPT_JUSTIFY_CHARACTER, 1, 0, 0, 0, 0}, 0}},
+                            {1, {{SCRIPT_JUSTIFY_CHARACTER, 1, 0, 0, 0, 0}, 0}}};
+
     /* Hebrew */
     static const WCHAR test_hebrew[]  = {0x05e9, 0x05dc, 0x05d5, 0x05dd,0};
     static const shapeTest_char hebrew_c[] = {{3,{0,0}},{2,{0,0}},{1,{0,0}},{0,{0,0}}};
@@ -1466,6 +1473,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
         glyph_test[3].Glyph = 1;
 
     test_shape_ok(hdc, test2, 4, &Control, &State, 1, 4, t2_c, glyph_test);
+
+    test_valid = find_font_for_range(hdc, "Calibri", 0, test3[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test3, 6, &Control, &State, 0, 2, t3_c, t3_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
 
     test_valid = find_font_for_range(hdc, "Microsoft Sans Serif", 11, test_hebrew[0], &hfont, &hfont_orig);
     if (hfont != NULL)
