@@ -141,6 +141,7 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
 #define thai_tag MS_MAKE_TAG('t','h','a','i')
 #define hebr_tag MS_MAKE_TAG('h','e','b','r')
 #define syrc_tag MS_MAKE_TAG('s','y','r','c')
+#define thaa_tag MS_MAKE_TAG('t','h','a','a')
 #define deva_tag MS_MAKE_TAG('d','e','v','a')
 #define beng_tag MS_MAKE_TAG('b','e','n','g')
 #define guru_tag MS_MAKE_TAG('g','u','r','u')
@@ -934,15 +935,21 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
                          const SCRIPT_GLYPHPROP *props2)
 {
     HRESULT hr;
-    int x, outnItems=0, outnGlyphs=0;
+    int x, outnItems = 0, outnGlyphs = 0, outnGlyphs2 = 0;
+    const SCRIPT_PROPERTIES **script_properties;
     SCRIPT_ITEM outpItems[15];
     SCRIPT_CACHE sc = NULL;
-    WORD *glyphs;
-    WORD *logclust;
+    WORD *glyphs, *glyphs2;
+    WORD *logclust, *logclust2;
     int maxGlyphs = cchString * 1.5;
-    SCRIPT_GLYPHPROP *glyphProp;
-    SCRIPT_CHARPROP  *charProp;
+    SCRIPT_GLYPHPROP *glyphProp, *glyphProp2;
+    SCRIPT_CHARPROP  *charProp, *charProp2;
+    int script_count;
+    WCHAR *string2;
     ULONG tags[15];
+
+    hr = ScriptGetProperties(&script_properties, &script_count);
+    winetest_ok(SUCCEEDED(hr), "Failed to get script properties, hr %#x.\n", hr);
 
     hr = pScriptItemizeOpenType(string, cchString, 15, Control, State, outpItems, tags, &outnItems);
     if (hr == USP_E_SCRIPT_NOT_IN_FONT)
@@ -976,6 +983,18 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
     glyphProp = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPT_GLYPHPROP) * maxGlyphs);
     memset(glyphProp,'a',sizeof(SCRIPT_GLYPHPROP) * cchString);
 
+    string2 = HeapAlloc(GetProcessHeap(), 0, cchString * sizeof(*string2));
+    logclust2 = HeapAlloc(GetProcessHeap(), 0, cchString * sizeof(*logclust2));
+    memset(logclust2, 'a', cchString * sizeof(*logclust2));
+    charProp2 = HeapAlloc(GetProcessHeap(), 0, cchString * sizeof(*charProp2));
+    memset(charProp2, 'a', cchString * sizeof(*charProp2));
+    glyphs2 = HeapAlloc(GetProcessHeap(), 0, maxGlyphs * sizeof(*glyphs2));
+    memset(glyphs2, 'a', maxGlyphs * sizeof(*glyphs2));
+    glyphProp2 = HeapAlloc(GetProcessHeap(), 0, maxGlyphs * sizeof(*glyphProp2));
+    memset(glyphProp2, 'a', maxGlyphs * sizeof(*glyphProp2));
+
+    winetest_ok(!outpItems[item].a.fLogicalOrder, "Got unexpected fLogicalOrder %#x.\n",
+            outpItems[item].a.fLogicalOrder);
     hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0, string, cchString, maxGlyphs, logclust, charProp, glyphs, glyphProp, &outnGlyphs);
     if (valid > 0)
         winetest_ok(hr == S_OK, "ScriptShapeOpenType failed (%x)\n",hr);
@@ -1047,7 +1066,131 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
             winetest_trace("%i: fZeroWidth incorrect (%i)\n",x,glyphProp[x].sva.fZeroWidth);
     }
 
+    outpItems[item].a.fLogicalOrder = 1;
+    hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
+            string, cchString, maxGlyphs, logclust2, charProp2, glyphs2, glyphProp2, &outnGlyphs2);
+    winetest_ok(hr == S_OK, "ScriptShapeOpenType failed (%x)\n",hr);
+    /* Cluster maps are hard. */
+    if (tags[item] != thaa_tag && tags[item] != syrc_tag)
+    {
+        for (x = 0; x < cchString; ++x)
+        {
+            unsigned int compare_idx = outpItems[item].a.fRTL ? cchString - x - 1 : x;
+            winetest_ok(logclust2[x] == logclust[compare_idx],
+                    "Got unexpected logclust2[%u] %#x, expected %#x.\n",
+                    x, logclust2[x], logclust[compare_idx]);
+            winetest_ok(charProp2[x].fCanGlyphAlone == charProp[compare_idx].fCanGlyphAlone,
+                    "Got unexpected charProp2[%u].fCanGlyphAlone %#x, expected %#x.\n",
+                    x, charProp2[x].fCanGlyphAlone, charProp[compare_idx].fCanGlyphAlone);
+        }
+    }
+    winetest_ok(outnGlyphs2 == outnGlyphs, "Got unexpected glyph count %u.\n", outnGlyphs2);
+    for (x = 0; x < outnGlyphs2; ++x)
+    {
+        unsigned int compare_idx = outpItems[item].a.fRTL ? outnGlyphs2 - x - 1 : x;
+        winetest_ok(glyphs2[x] == glyphs[compare_idx], "Got unexpected glyphs2[%u] %#x, expected %#x.\n",
+                x, glyphs2[x], glyphs[compare_idx]);
+        winetest_ok(glyphProp2[x].sva.uJustification == glyphProp[compare_idx].sva.uJustification,
+                "Got unexpected glyphProp2[%u].sva.uJustification %#x, expected %#x.\n",
+                x, glyphProp2[x].sva.uJustification, glyphProp[compare_idx].sva.uJustification);
+        winetest_ok(glyphProp2[x].sva.fClusterStart == glyphProp[compare_idx].sva.fClusterStart,
+                "Got unexpected glyphProp2[%u].sva.fClusterStart %#x, expected %#x.\n",
+                x, glyphProp2[x].sva.fClusterStart, glyphProp[compare_idx].sva.fClusterStart);
+        winetest_ok(glyphProp2[x].sva.fDiacritic == glyphProp[compare_idx].sva.fDiacritic,
+                "Got unexpected glyphProp2[%u].sva.fDiacritic %#x, expected %#x.\n",
+                x, glyphProp2[x].sva.fDiacritic, glyphProp[compare_idx].sva.fDiacritic);
+        winetest_ok(glyphProp2[x].sva.fZeroWidth == glyphProp[compare_idx].sva.fZeroWidth,
+                "Got unexpected glyphProp2[%u].sva.fZeroWidth %#x, expected %#x.\n",
+                x, glyphProp2[x].sva.fZeroWidth, glyphProp[compare_idx].sva.fZeroWidth);
+    }
+
+    /* Most scripts get this wrong. For example, when the font has the
+     * appropriate ligatures, "ttfffi" get rendered as "<ttf><ffi>", but
+     * "<RLO>iffftt" gets rendered as "t<ft><ff>i". Arabic gets it right,
+     * and there exist applications that depend on that. */
+    if (tags[item] == arab_tag && broken(script_count <= 75))
+    {
+        winetest_win_skip("Test broken on this platform, skipping.\n");
+    }
+    else if (tags[item] == arab_tag)
+    {
+        for (x = 0; x < cchString; ++x)
+        {
+            string2[x] = string[cchString - x - 1];
+        }
+        outpItems[item].a.fLogicalOrder = 0;
+        outpItems[item].a.fRTL = !outpItems[item].a.fRTL;
+        hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
+                string2, cchString, maxGlyphs, logclust2, charProp2, glyphs2, glyphProp2, &outnGlyphs2);
+        winetest_ok(hr == S_OK, "ScriptShapeOpenType failed (%x)\n",hr);
+        for (x = 0; x < cchString; ++x)
+        {
+            unsigned int compare_idx = cchString - x - 1;
+            winetest_ok(logclust2[x] == logclust[compare_idx],
+                    "Got unexpected logclust2[%u] %#x, expected %#x.\n",
+                    x, logclust2[x], logclust[compare_idx]);
+            winetest_ok(charProp2[x].fCanGlyphAlone == charProp[compare_idx].fCanGlyphAlone,
+                    "Got unexpected charProp2[%u].fCanGlyphAlone %#x, expected %#x.\n",
+                    x, charProp2[x].fCanGlyphAlone, charProp[compare_idx].fCanGlyphAlone);
+        }
+        winetest_ok(outnGlyphs2 == outnGlyphs, "Got unexpected glyph count %u.\n", outnGlyphs2);
+        for (x = 0; x < outnGlyphs2; ++x)
+        {
+            winetest_ok(glyphs2[x] == glyphs[x], "Got unexpected glyphs2[%u] %#x, expected %#x.\n",
+                    x, glyphs2[x], glyphs[x]);
+            winetest_ok(glyphProp2[x].sva.uJustification == glyphProp[x].sva.uJustification,
+                    "Got unexpected glyphProp2[%u].sva.uJustification %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.uJustification, glyphProp[x].sva.uJustification);
+            winetest_ok(glyphProp2[x].sva.fClusterStart == glyphProp[x].sva.fClusterStart,
+                    "Got unexpected glyphProp2[%u].sva.fClusterStart %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.fClusterStart, glyphProp[x].sva.fClusterStart);
+            winetest_ok(glyphProp2[x].sva.fDiacritic == glyphProp[x].sva.fDiacritic,
+                    "Got unexpected glyphProp2[%u].sva.fDiacritic %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.fDiacritic, glyphProp[x].sva.fDiacritic);
+            winetest_ok(glyphProp2[x].sva.fZeroWidth == glyphProp[x].sva.fZeroWidth,
+                    "Got unexpected glyphProp2[%u].sva.fZeroWidth %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.fZeroWidth, glyphProp[x].sva.fZeroWidth);
+        }
+        outpItems[item].a.fLogicalOrder = 1;
+        hr = pScriptShapeOpenType(hdc, &sc, &outpItems[item].a, tags[item], 0x00000000, NULL, NULL, 0,
+                string2, cchString, maxGlyphs, logclust2, charProp2, glyphs2, glyphProp2, &outnGlyphs2);
+        winetest_ok(hr == S_OK, "ScriptShapeOpenType failed (%x)\n",hr);
+        for (x = 0; x < cchString; ++x)
+        {
+            unsigned int compare_idx = outpItems[item].a.fRTL ? x : cchString - x - 1;
+            winetest_ok(logclust2[x] == logclust[compare_idx], "Got unexpected logclust2[%u] %#x, expected %#x.\n",
+                    x, logclust2[x], logclust[compare_idx]);
+            winetest_ok(charProp2[x].fCanGlyphAlone == charProp[compare_idx].fCanGlyphAlone,
+                    "Got unexpected charProp2[%u].fCanGlyphAlone %#x, expected %#x.\n",
+                    x, charProp2[x].fCanGlyphAlone, charProp[compare_idx].fCanGlyphAlone);
+        }
+        winetest_ok(outnGlyphs2 == outnGlyphs, "Got unexpected glyph count %u.\n", outnGlyphs2);
+        for (x = 0; x < outnGlyphs2; ++x)
+        {
+            unsigned int compare_idx = outpItems[item].a.fRTL ? outnGlyphs2 - x - 1 : x;
+            winetest_ok(glyphs2[x] == glyphs[compare_idx], "Got unexpected glyphs2[%u] %#x, expected %#x.\n",
+                    x, glyphs2[x], glyphs[compare_idx]);
+            winetest_ok(glyphProp2[x].sva.uJustification == glyphProp[compare_idx].sva.uJustification,
+                    "Got unexpected glyphProp2[%u].sva.uJustification %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.uJustification, glyphProp[compare_idx].sva.uJustification);
+            winetest_ok(glyphProp2[x].sva.fClusterStart == glyphProp[compare_idx].sva.fClusterStart,
+                    "Got unexpected glyphProp2[%u].sva.fClusterStart %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.fClusterStart, glyphProp[compare_idx].sva.fClusterStart);
+            winetest_ok(glyphProp2[x].sva.fDiacritic == glyphProp[compare_idx].sva.fDiacritic,
+                    "Got unexpected glyphProp2[%u].sva.fDiacritic %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.fDiacritic, glyphProp[compare_idx].sva.fDiacritic);
+            winetest_ok(glyphProp2[x].sva.fZeroWidth == glyphProp[compare_idx].sva.fZeroWidth,
+                    "Got unexpected glyphProp2[%u].sva.fZeroWidth %#x, expected %#x.\n",
+                    x, glyphProp2[x].sva.fZeroWidth, glyphProp[compare_idx].sva.fZeroWidth);
+        }
+    }
+
 cleanup:
+    HeapFree(GetProcessHeap(),0,logclust2);
+    HeapFree(GetProcessHeap(),0,charProp2);
+    HeapFree(GetProcessHeap(),0,glyphs2);
+    HeapFree(GetProcessHeap(),0,glyphProp2);
+
     HeapFree(GetProcessHeap(),0,logclust);
     HeapFree(GetProcessHeap(),0,charProp);
     HeapFree(GetProcessHeap(),0,glyphs);
