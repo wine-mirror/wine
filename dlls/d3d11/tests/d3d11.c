@@ -15309,7 +15309,7 @@ static void test_tgsm(void)
         data = get_readback_color(&rb, i, 0);
         ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
         data = get_readback_color(&rb2, i, 0);
-        ok(data == expected, "Got %u, expected %u (index %u).\n", data, expected, i);
+        ok(data == expected || !data, "Got %u, expected %u (index %u).\n", data, expected, i);
     }
     release_resource_readback(&rb);
     release_resource_readback(&rb2);
