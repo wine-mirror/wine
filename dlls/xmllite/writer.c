@@ -473,7 +473,7 @@ static ULONG WINAPI xmlwriter_Release(IXmlWriter *iface)
     xmlwriter *This = impl_from_IXmlWriter(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->>(%u)\n", This, ref);
+    TRACE("(%p)->(%u)\n", This, ref);
 
     if (ref == 0) {
         struct element *element, *element2;
