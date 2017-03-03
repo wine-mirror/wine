@@ -5034,7 +5034,10 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             break;
         case WINED3DSIH_ATOMIC_IMAX:
         case WINED3DSIH_IMM_ATOMIC_IMAX:
-            op = "imageAtomicMax";
+            if (is_tgsm)
+                op = "atomicMax";
+            else
+                op = "imageAtomicMax";
             if (data_type != WINED3D_DATA_INT)
             {
                 FIXME("Unhandled opcode %#x for unsigned integers.\n", ins->handler_idx);
@@ -5043,7 +5046,10 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             break;
         case WINED3DSIH_ATOMIC_IMIN:
         case WINED3DSIH_IMM_ATOMIC_IMIN:
-            op = "imageAtomicMin";
+            if (is_tgsm)
+                op = "atomicMin";
+            else
+                op = "imageAtomicMin";
             if (data_type != WINED3D_DATA_INT)
             {
                 FIXME("Unhandled opcode %#x for unsigned integers.\n", ins->handler_idx);
@@ -5059,7 +5065,10 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             break;
         case WINED3DSIH_ATOMIC_UMAX:
         case WINED3DSIH_IMM_ATOMIC_UMAX:
-            op = "imageAtomicMax";
+            if (is_tgsm)
+                op = "atomicMax";
+            else
+                op = "imageAtomicMax";
             if (data_type != WINED3D_DATA_UINT)
             {
                 FIXME("Unhandled opcode %#x for signed integers.\n", ins->handler_idx);
@@ -5068,7 +5077,10 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
             break;
         case WINED3DSIH_ATOMIC_UMIN:
         case WINED3DSIH_IMM_ATOMIC_UMIN:
-            op = "imageAtomicMin";
+            if (is_tgsm)
+                op = "atomicMin";
+            else
+                op = "imageAtomicMin";
             if (data_type != WINED3D_DATA_UINT)
             {
                 FIXME("Unhandled opcode %#x for signed integers.\n", ins->handler_idx);
