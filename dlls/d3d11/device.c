@@ -654,9 +654,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetRenderTargetsAndUnord
 
     if (unordered_access_view_count != D3D11_KEEP_UNORDERED_ACCESS_VIEWS)
     {
-        if (initial_counts)
-            FIXME("Ignoring initial counts.\n");
-
         wined3d_mutex_lock();
         for (i = 0; i < unordered_access_view_start_slot; ++i)
         {
@@ -666,6 +663,12 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetRenderTargetsAndUnord
         {
             struct d3d11_unordered_access_view *view
                     = unsafe_impl_from_ID3D11UnorderedAccessView(unordered_access_views[i]);
+
+        if (initial_counts && view && view->desc.ViewDimension == D3D11_UAV_DIMENSION_BUFFER
+                && (view->desc.u.Buffer.Flags & (D3D11_BUFFER_UAV_FLAG_APPEND | D3D11_BUFFER_UAV_FLAG_COUNTER))
+                && initial_counts[i] != ~(UINT)0)
+            FIXME("Ignoring initial count %u for slot %u.\n",
+                    initial_counts[i], unordered_access_view_start_slot + i);
 
             wined3d_device_set_unordered_access_view(device->wined3d_device,
                     unordered_access_view_start_slot + i,
@@ -1226,13 +1229,15 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSSetUnorderedAccessViews(
     TRACE("iface %p, start_slot %u, view_count %u, views %p, initial_counts %p.\n",
             iface, start_slot, view_count, views, initial_counts);
 
-    if (initial_counts)
-        FIXME("Ignoring initial counts.\n");
-
     wined3d_mutex_lock();
     for (i = 0; i < view_count; ++i)
     {
         struct d3d11_unordered_access_view *view = unsafe_impl_from_ID3D11UnorderedAccessView(views[i]);
+
+        if (initial_counts && view && view->desc.ViewDimension == D3D11_UAV_DIMENSION_BUFFER
+                && (view->desc.u.Buffer.Flags & (D3D11_BUFFER_UAV_FLAG_APPEND | D3D11_BUFFER_UAV_FLAG_COUNTER))
+                && initial_counts[i] != ~(UINT)0)
+            FIXME("Ignoring initial count %u for slot %u.\n", initial_counts[i], start_slot + i);
 
         wined3d_device_set_cs_uav(device->wined3d_device, start_slot + i,
                 view ? view->wined3d_view : NULL);
