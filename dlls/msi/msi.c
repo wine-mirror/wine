@@ -2778,8 +2778,28 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
     return r;
 }
 
-static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
-                                         awstring* lpPathBuf, LPDWORD pcchBuf)
+static BOOL open_userdata_comp_key( const WCHAR *comp, const WCHAR *usersid, MSIINSTALLCONTEXT ctx,
+                                    HKEY *hkey )
+{
+    if (ctx & MSIINSTALLCONTEXT_MACHINE)
+    {
+        if (!MSIREG_OpenUserDataComponentKey( comp, szLocalSid, hkey, FALSE )) return TRUE;
+    }
+    if (ctx & (MSIINSTALLCONTEXT_USERMANAGED|MSIINSTALLCONTEXT_USERUNMANAGED))
+    {
+        if (usersid && !strcmpiW( usersid, szAllSid ))
+        {
+            FIXME( "only looking at the current user\n" );
+            usersid = NULL;
+        }
+        if (!MSIREG_OpenUserDataComponentKey( comp, usersid, hkey, FALSE )) return TRUE;
+    }
+    return FALSE;
+}
+
+static INSTALLSTATE MSI_GetComponentPath( const WCHAR *szProduct, const WCHAR *szComponent,
+                                          const WCHAR *szUserSid, MSIINSTALLCONTEXT ctx,
+                                          awstring *lpPathBuf, DWORD *pcchBuf )
 {
     static const WCHAR wininstaller[] =
         {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
@@ -2797,20 +2817,20 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     if (!squash_guid( szProduct, squashed_pc ) || !squash_guid( szComponent, squashed_comp ))
         return INSTALLSTATE_INVALIDARG;
 
+    if (szUserSid && ctx == MSIINSTALLCONTEXT_MACHINE)
+        return INSTALLSTATE_INVALIDARG;
+
     state = INSTALLSTATE_UNKNOWN;
 
-    if (MSIREG_OpenUserDataComponentKey(szComponent, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
-        MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
+    if (open_userdata_comp_key( szComponent, szUserSid, ctx, &hkey ))
     {
         path = msi_reg_get_val_str( hkey, squashed_pc );
         RegCloseKey(hkey);
 
         state = INSTALLSTATE_ABSENT;
 
-        if ((MSIREG_OpenInstallProps(szProduct, MSIINSTALLCONTEXT_MACHINE, NULL,
-                                     &hkey, FALSE) == ERROR_SUCCESS ||
-            MSIREG_OpenUserDataProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                          NULL, &hkey, FALSE) == ERROR_SUCCESS) &&
+        if ((!MSIREG_OpenInstallProps(szProduct, MSIINSTALLCONTEXT_MACHINE, NULL, &hkey, FALSE) ||
+             !MSIREG_OpenUserDataProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED, NULL, &hkey, FALSE)) &&
             msi_reg_get_val_dword(hkey, wininstaller, &version) &&
             GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES)
         {
@@ -2820,16 +2840,12 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
     }
 
     if (state != INSTALLSTATE_LOCAL &&
-        (MSIREG_OpenProductKey(szProduct, NULL,
-                               MSIINSTALLCONTEXT_USERUNMANAGED,
-                               &hkey, FALSE) == ERROR_SUCCESS ||
-         MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_MACHINE,
-                               &hkey, FALSE) == ERROR_SUCCESS))
+        (!MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, &hkey, FALSE) ||
+         !MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_MACHINE, &hkey, FALSE)))
     {
         RegCloseKey(hkey);
 
-        if (MSIREG_OpenUserDataComponentKey(szComponent, szLocalSid, &hkey, FALSE) == ERROR_SUCCESS ||
-            MSIREG_OpenUserDataComponentKey(szComponent, NULL, &hkey, FALSE) == ERROR_SUCCESS)
+        if (open_userdata_comp_key( szComponent, szUserSid, ctx, &hkey ))
         {
             msi_free(path);
             path = msi_reg_get_val_str( hkey, squashed_pc );
@@ -2856,51 +2872,63 @@ static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
 }
 
 /******************************************************************
- * MsiGetComponentPathW      [MSI.@]
+ * MsiGetComponentPathExW      [MSI.@]
  */
-INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
-                                         LPWSTR lpPathBuf, LPDWORD pcchBuf)
+INSTALLSTATE WINAPI MsiGetComponentPathExW( LPCWSTR product, LPCWSTR comp, LPCWSTR usersid,
+                                            MSIINSTALLCONTEXT ctx, LPWSTR buf, LPDWORD buflen )
 {
     awstring path;
 
-    TRACE("%s %s %p %p\n", debugstr_w(szProduct), debugstr_w(szComponent), lpPathBuf, pcchBuf);
+    TRACE( "%s %s %s 0x%x %p %p\n", debugstr_w(product), debugstr_w(comp), debugstr_w(usersid),
+           ctx, buf, buflen );
 
     path.unicode = TRUE;
-    path.str.w = lpPathBuf;
+    path.str.w   = buf;
 
-    return MSI_GetComponentPath( szProduct, szComponent, &path, pcchBuf );
+    return MSI_GetComponentPath( product, comp, usersid, ctx, &path, buflen );
+}
+
+INSTALLSTATE WINAPI MsiGetComponentPathExA( LPCSTR product, LPCSTR comp, LPCSTR usersid,
+                                            MSIINSTALLCONTEXT ctx, LPSTR buf, LPDWORD buflen )
+{
+    WCHAR *productW = NULL, *compW = NULL, *usersidW =  NULL;
+    INSTALLSTATE r = INSTALLSTATE_UNKNOWN;
+    awstring path;
+
+    TRACE( "%s %s %s 0x%x %p %p\n", debugstr_a(product), debugstr_a(comp), debugstr_a(usersid),
+           ctx, buf, buflen );
+
+    if (product && !(productW = strdupAtoW( product ))) return INSTALLSTATE_UNKNOWN;
+    if (comp && !(compW = strdupAtoW( comp ))) goto end;
+    if (usersid && !(usersidW = strdupAtoW( usersid ))) goto end;
+
+    path.unicode = FALSE;
+    path.str.a   = buf;
+
+    r = MSI_GetComponentPath( productW, compW, usersidW, ctx, &path, buflen );
+
+end:
+    msi_free( productW );
+    msi_free( compW );
+    msi_free( usersidW );
+
+    return r;
+}
+
+/******************************************************************
+ * MsiGetComponentPathW      [MSI.@]
+ */
+INSTALLSTATE WINAPI MsiGetComponentPathW( LPCWSTR product, LPCWSTR comp, LPWSTR buf, LPDWORD buflen )
+{
+    return MsiGetComponentPathExW( product, comp, szAllSid, MSIINSTALLCONTEXT_ALL, buf, buflen );
 }
 
 /******************************************************************
  * MsiGetComponentPathA      [MSI.@]
  */
-INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
-                                         LPSTR lpPathBuf, LPDWORD pcchBuf)
+INSTALLSTATE WINAPI MsiGetComponentPathA( LPCSTR product, LPCSTR comp, LPSTR buf, LPDWORD buflen )
 {
-    LPWSTR szwProduct, szwComponent = NULL;
-    INSTALLSTATE r = INSTALLSTATE_UNKNOWN;
-    awstring path;
-
-    TRACE("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szComponent), lpPathBuf, pcchBuf);
-
-    szwProduct = strdupAtoW( szProduct );
-    if( szProduct && !szwProduct)
-        goto end;
-
-    szwComponent = strdupAtoW( szComponent );
-    if( szComponent && !szwComponent )
-        goto end;
-
-    path.unicode = FALSE;
-    path.str.a = lpPathBuf;
-
-    r = MSI_GetComponentPath( szwProduct, szwComponent, &path, pcchBuf );
-
-end:
-    msi_free( szwProduct );
-    msi_free( szwComponent );
-
-    return r;
+    return MsiGetComponentPathExA( product, comp, "s-1-1-0", MSIINSTALLCONTEXT_ALL, buf, buflen );
 }
 
 static UINT query_feature_state( const WCHAR *product, const WCHAR *squashed, const WCHAR *usersid,
@@ -3422,7 +3450,7 @@ static UINT MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
         StringFromGUID2( &guid, comp, sizeof(comp)/sizeof(comp[0]) );
     }
 
-    state = MSI_GetComponentPath( szProduct, comp, lpPathBuf, pcchPathBuf );
+    state = MSI_GetComponentPath( szProduct, comp, szAllSid, MSIINSTALLCONTEXT_ALL, lpPathBuf, pcchPathBuf );
 
     if (state == INSTALLSTATE_MOREDATA) return ERROR_MORE_DATA;
     if (state != INSTALLSTATE_LOCAL) return ERROR_FILE_NOT_FOUND;
