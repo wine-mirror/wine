@@ -3426,7 +3426,6 @@ static void test_WSAStringToAddressA(void)
     ret = WSAStringToAddressA( address7, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-todo_wine
     ok( ret == 0, "WSAStringToAddressA() failed for IPv6 address: %d\n", GLE);
 
     len = sizeof(sockaddr6);
@@ -3436,7 +3435,6 @@ todo_wine
     ret = WSAStringToAddressA( address8, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-todo_wine
     ok( ret == 0 && sockaddr6.sin6_port == 0xffff,
         "WSAStringToAddressA() failed for IPv6 address: %d\n", GLE);
 
@@ -3568,7 +3566,6 @@ static void test_WSAStringToAddressW(void)
     ret = WSAStringToAddressW( address7, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-todo_wine
     ok( ret == 0, "WSAStringToAddressW() failed for IPv6 address: %d\n", GLE);
 
     len = sizeof(sockaddr6);
@@ -3578,7 +3575,6 @@ todo_wine
     ret = WSAStringToAddressW( address8, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-todo_wine
     ok( ret == 0 && sockaddr6.sin6_port == 0xffff,
         "WSAStringToAddressW() failed for IPv6 address: %d\n", GLE);
 

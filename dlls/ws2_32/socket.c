@@ -8255,10 +8255,6 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             ((LPSOCKADDR_IN)lpAddress)->sin_port = htons(atoi(ptrPort+1));
             *ptrPort = '\0';
         }
-        else
-        {
-            ((LPSOCKADDR_IN)lpAddress)->sin_port = 0;
-        }
 
         if(inet_aton(workBuffer, &inetaddr) > 0)
         {
@@ -8269,11 +8265,12 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             res = WSAEINVAL;
 
         break;
-
     }
     case WS_AF_INET6:
     {
         struct in6_addr inetaddr;
+        char *ptrAddr = workBuffer;
+
         /* If lpAddressLength is too small, tell caller the size we need */
         if (*lpAddressLength < sizeof(SOCKADDR_IN6))
         {
@@ -8287,24 +8284,27 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
 
         ((LPSOCKADDR_IN6)lpAddress)->sin6_family = WS_AF_INET6;
 
-        /* This one is a bit tricky. An IPv6 address contains colons, so the
-         * check from IPv4 doesn't work like that. However, IPv6 addresses that
-         * contain a port are written with braces like [fd12:3456:7890::1]:12345
-         * so what we will do is to look for ']', check if the next char is a
-         * colon, and if it is, parse the port as in IPv4. */
+        /* Valid IPv6 addresses can also be surrounded by [ ], and in this case
+         * a port number may follow after like in [fd12:3456:7890::1]:12345
+         * We need to cut the brackets and find the port if any. */
 
-        ptrPort = strchr(workBuffer, ']');
-        if(ptrPort && *(++ptrPort) == ':')
+        if(*workBuffer == '[')
         {
-            ((LPSOCKADDR_IN6)lpAddress)->sin6_port = htons(atoi(ptrPort+1));
+            ptrPort = strchr(workBuffer, ']');
+            if (!ptrPort)
+            {
+                SetLastError(WSAEINVAL);
+                return SOCKET_ERROR;
+            }
+
+            if (ptrPort[1] == ':')
+                ((LPSOCKADDR_IN6)lpAddress)->sin6_port = htons(atoi(ptrPort + 2));
+
             *ptrPort = '\0';
-        }
-        else
-        {
-            ((LPSOCKADDR_IN6)lpAddress)->sin6_port = 0;
+            ptrAddr = workBuffer + 1;
         }
 
-        if(inet_pton(AF_INET6, workBuffer, &inetaddr) > 0)
+        if(inet_pton(AF_INET6, ptrAddr, &inetaddr) > 0)
         {
             memcpy(&((LPSOCKADDR_IN6)lpAddress)->sin6_addr, &inetaddr,
                     sizeof(struct in6_addr));
