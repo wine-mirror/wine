@@ -1,6 +1,6 @@
 MODULE    = taskkill.exe
 APPMODE   = -mconsole -municode
-IMPORTS   = psapi user32
+IMPORTS   = user32
 
 C_SRCS = taskkill.c
 
