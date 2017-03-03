@@ -1370,7 +1370,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 }
             }
 
-            if (ins.handler_idx == WINED3DSIH_IMM_ATOMIC_ALLOC)
+            if (ins.handler_idx == WINED3DSIH_IMM_ATOMIC_ALLOC || ins.handler_idx == WINED3DSIH_IMM_ATOMIC_CONSUME)
             {
                 unsigned int reg_idx = ins.src[0].reg.idx[0].offset;
                 if (reg_idx >= MAX_UNORDERED_ACCESS_VIEWS)
@@ -1381,9 +1381,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 reg_maps->uav_counter_mask |= (1u << reg_idx);
             }
             else if ((WINED3DSIH_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_ATOMIC_XOR)
-                    || (WINED3DSIH_IMM_ATOMIC_AND <= ins.handler_idx
-                    && ins.handler_idx <= WINED3DSIH_IMM_ATOMIC_XOR
-                    && ins.handler_idx != WINED3DSIH_IMM_ATOMIC_CONSUME)
+                    || (WINED3DSIH_IMM_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_IMM_ATOMIC_XOR)
                     || ins.handler_idx == WINED3DSIH_LD_UAV_TYPED
                     || (ins.handler_idx == WINED3DSIH_LD_RAW && ins.src[1].reg.type == WINED3DSPR_UAV)
                     || (ins.handler_idx == WINED3DSIH_LD_STRUCTURED && ins.src[2].reg.type == WINED3DSPR_UAV))

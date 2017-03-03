@@ -5152,10 +5152,15 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_uav_counter(const struct wined3d_shader_instruction *ins)
 {
     const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
+    const char *op;
+
+    if (ins->handler_idx == WINED3DSIH_IMM_ATOMIC_ALLOC)
+        op = "atomicCounterIncrement";
+    else
+        op = "atomicCounterDecrement";
 
     shader_glsl_append_dst(ins->ctx->buffer, ins);
-    shader_addline(ins->ctx->buffer, "atomicCounterIncrement(%s_counter%u));\n",
-            prefix, ins->src[0].reg.idx[0].offset);
+    shader_addline(ins->ctx->buffer, "%s(%s_counter%u));\n", op, prefix, ins->src[0].reg.idx[0].offset);
 }
 
 static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
@@ -9653,7 +9658,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMM_ATOMIC_ALLOC                 */ shader_glsl_uav_counter,
     /* WINED3DSIH_IMM_ATOMIC_AND                   */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_CMP_EXCH              */ shader_glsl_atomic,
-    /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ shader_glsl_uav_counter,
     /* WINED3DSIH_IMM_ATOMIC_EXCH                  */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_IADD                  */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_IMAX                  */ shader_glsl_atomic,
