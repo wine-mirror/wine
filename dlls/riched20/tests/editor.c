@@ -3951,7 +3951,7 @@ static void test_EM_STREAMOUT_empty_para(void)
 
     SendMessageA(hwnd, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
     ok((p = strstr(buf, "\\pard")) != NULL, "missing \\pard\n");
-    todo_wine ok(((p = strstr(p, "\\fs")) && isdigit(p[3])), "missing \\fs\n");
+    ok(((p = strstr(p, "\\fs")) && isdigit(p[3])), "missing \\fs\n");
 
     DestroyWindow(hwnd);
 }

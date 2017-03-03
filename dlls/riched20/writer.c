@@ -1074,6 +1074,9 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
       }
       nChars--;
     } else if (cursor.pRun->member.run.nFlags & MERF_ENDPARA) {
+      if (!ME_StreamOutRTFCharProps(pStream, &cursor.pRun->member.run.style->fmt))
+        return FALSE;
+
       if (cursor.pPara->member.para.fmt.dwMask & PFM_TABLE &&
           cursor.pPara->member.para.fmt.wEffects & PFE_TABLE &&
           !(cursor.pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)))
