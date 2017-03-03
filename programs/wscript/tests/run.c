@@ -21,6 +21,7 @@
 #define COBJMACROS
 #define CONST_VTABLE
 
+#define PSAPI_VERSION 1
 #include <initguid.h>
 #include <windows.h>
 #include <psapi.h>

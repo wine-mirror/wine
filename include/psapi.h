@@ -21,6 +21,10 @@
 #ifndef __WINE_PSAPI_H
 #define __WINE_PSAPI_H
 
+#ifndef PSAPI_VERSION
+#define PSAPI_VERSION 2
+#endif
+
 typedef struct _MODULEINFO {
   LPVOID lpBaseOfDll;
   DWORD SizeOfImage;
@@ -77,6 +81,36 @@ typedef BOOL (*PENUM_PAGE_FILE_CALLBACKW) (LPVOID, PENUM_PAGE_FILE_INFORMATION, 
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if PSAPI_VERSION > 1
+#define EnumProcesses               K32EnumProcesses
+#define EnumProcessModules          K32EnumProcessModules
+#define EnumProcessModulesEx        K32EnumProcessModulesEx
+#define GetModuleBaseNameA          K32GetModuleBaseNameA
+#define GetModuleBaseNameW          K32GetModuleBaseNameW
+#define GetModuleFileNameExA        K32GetModuleFileNameExA
+#define GetModuleFileNameExW        K32GetModuleFileNameExW
+#define GetModuleInformation        K32GetModuleInformation
+#define EmptyWorkingSet             K32EmptyWorkingSet
+#define QueryWorkingSet             K32QueryWorkingSet
+#define QueryWorkingSetEx           K32QueryWorkingSetEx
+#define InitializeProcessForWsWatch K32InitializeProcessForWsWatch
+#define GetWsChanges                K32GetWsChanges
+#define GetWsChangesEx              K32GetWsChangesEx
+#define GetMappedFileNameW          K32GetMappedFileNameW
+#define GetMappedFileNameA          K32GetMappedFileNameA
+#define EnumDeviceDrivers           K32EnumDeviceDrivers
+#define GetDeviceDriverBaseNameA    K32GetDeviceDriverBaseNameA
+#define GetDeviceDriverBaseNameW    K32GetDeviceDriverBaseNameW
+#define GetDeviceDriverFileNameA    K32GetDeviceDriverFileNameA
+#define GetDeviceDriverFileNameW    K32GetDeviceDriverFileNameW
+#define GetProcessMemoryInfo        K32GetProcessMemoryInfo
+#define GetPerformanceInfo          K32GetPerformanceInfo
+#define EnumPageFilesW              K32EnumPageFilesW
+#define EnumPageFilesA              K32EnumPageFilesA
+#define GetProcessImageFileNameA    K32GetProcessImageFileNameA
+#define GetProcessImageFileNameW    K32GetProcessImageFileNameW
 #endif
 
 BOOL  WINAPI EnumProcesses(DWORD*, DWORD, DWORD*);
