@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11.h"
@@ -14703,6 +14704,204 @@ done:
     release_test_context(&test_context);
 }
 
+static unsigned int read_uav_counter(ID3D11DeviceContext *context,
+        ID3D11Buffer *staging_buffer, ID3D11UnorderedAccessView *uav)
+{
+    D3D11_MAPPED_SUBRESOURCE map_desc;
+    unsigned int counter;
+
+    ID3D11DeviceContext_CopyStructureCount(context, staging_buffer, 0, uav);
+
+    if (FAILED(ID3D11DeviceContext_Map(context, (ID3D11Resource *)staging_buffer, 0,
+            D3D11_MAP_READ, 0, &map_desc)))
+        return 0xdeadbeef;
+    counter = *(unsigned int *)map_desc.pData;
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)staging_buffer, 0);
+    return counter;
+}
+
+static int compare_id(const void *a, const void *b)
+{
+    return *(int *)a - *(int *)b;
+}
+
+static void test_uav_counters(void)
+{
+    ID3D11Buffer *buffer, *buffer2, *staging_buffer;
+    ID3D11ComputeShader *cs_producer, *cs_consumer;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    struct d3d11_test_context test_context;
+    ID3D11UnorderedAccessView *uav, *uav2;
+    unsigned int data, id[128], i;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Device *device;
+    D3D11_BOX box;
+    HRESULT hr;
+
+    static const DWORD cs_producer_code[] =
+    {
+#if 0
+        RWStructuredBuffer<uint> u;
+
+        [numthreads(4, 1, 1)]
+        void main(uint3 dispatch_id : SV_DispatchThreadID)
+        {
+            uint counter = u.IncrementCounter();
+            u[counter] = dispatch_id.x;
+        }
+#endif
+        0x43425844, 0x013163a8, 0xe7d371b8, 0x4f71e39a, 0xd479e584, 0x00000001, 0x000000c8, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000074, 0x00050050, 0x0000001d, 0x0100086a,
+        0x0480009e, 0x0011e000, 0x00000000, 0x00000004, 0x0200005f, 0x00020012, 0x02000068, 0x00000001,
+        0x0400009b, 0x00000004, 0x00000001, 0x00000001, 0x050000b2, 0x00100012, 0x00000000, 0x0011e000,
+        0x00000000, 0x080000a8, 0x0011e012, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000000,
+        0x0002000a, 0x0100003e,
+    };
+    static const DWORD cs_consumer_code[] =
+    {
+#if 0
+        RWStructuredBuffer<uint> u;
+        RWStructuredBuffer<uint> u2;
+
+        [numthreads(4, 1, 1)]
+        void main()
+        {
+            uint counter = u.DecrementCounter();
+            u2[counter] = u[counter];
+        }
+#endif
+        0x43425844, 0x957ef3dd, 0x9f317559, 0x09c8f12d, 0xdbfd98c8, 0x00000001, 0x00000100, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x000000ac, 0x00050050, 0x0000002b, 0x0100086a,
+        0x0480009e, 0x0011e000, 0x00000000, 0x00000004, 0x0400009e, 0x0011e000, 0x00000001, 0x00000004,
+        0x02000068, 0x00000001, 0x0400009b, 0x00000004, 0x00000001, 0x00000001, 0x050000b3, 0x00100012,
+        0x00000000, 0x0011e000, 0x00000000, 0x8b0000a7, 0x80002302, 0x00199983, 0x00100022, 0x00000000,
+        0x0010000a, 0x00000000, 0x00004001, 0x00000000, 0x0011e006, 0x00000000, 0x090000a8, 0x0011e012,
+        0x00000001, 0x0010000a, 0x00000000, 0x00004001, 0x00000000, 0x0010001a, 0x00000000, 0x0100003e,
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreateComputeShader(device, cs_producer_code, sizeof(cs_producer_code), NULL, &cs_producer);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateComputeShader(device, cs_consumer_code, sizeof(cs_consumer_code), NULL, &cs_consumer);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    memset(&buffer_desc, 0, sizeof(buffer_desc));
+    buffer_desc.ByteWidth = sizeof(unsigned int);
+    buffer_desc.Usage = D3D11_USAGE_STAGING;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &staging_buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    buffer_desc.StructureByteStride = sizeof(unsigned int);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    uav_desc.Format = DXGI_FORMAT_UNKNOWN;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
+    U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_COUNTER;
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer2);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer2, NULL, &uav2);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(!data, "Got unexpected initial value %u.\n", data);
+    data = 8;
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, &data);
+    data = read_uav_counter(context, staging_buffer, uav);
+    todo_wine ok(data == 8, "Got unexpected value %u.\n", data);
+
+    ID3D11DeviceContext_CSSetShader(context, cs_producer, NULL, 0);
+    data = 0;
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, &data);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 1, 1, &uav2, NULL);
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(!data, "Got unexpected value %u.\n", data);
+
+    /* produce */
+    ID3D11DeviceContext_Dispatch(context, 16, 1, 1);
+    data = read_uav_counter(context, staging_buffer, uav);
+    todo_wine ok(data == 64, "Got unexpected value %u.\n", data);
+    get_buffer_readback(buffer, &rb);
+    memcpy(id, rb.map_desc.pData, 64 * sizeof(*id));
+    release_resource_readback(&rb);
+    qsort(id, 64, sizeof(*id), compare_id);
+    for (i = 0; i < 64; ++i)
+    {
+        if (id[i] != i)
+            break;
+    }
+    ok(i == 64, "Got unexpected id %u at %u.\n", id[i], i);
+
+    /* consume */
+    ID3D11DeviceContext_CSSetShader(context, cs_consumer, NULL, 0);
+    ID3D11DeviceContext_Dispatch(context, 16, 1, 1);
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(!data, "Got unexpected value %u.\n", data);
+    get_buffer_readback(buffer2, &rb);
+    memcpy(id, rb.map_desc.pData, 64 * sizeof(*id));
+    release_resource_readback(&rb);
+    qsort(id, 64, sizeof(*id), compare_id);
+    for (i = 0; i < 64; ++i)
+    {
+        if (id[i] != i)
+            break;
+    }
+    ok(i == 64, "Got unexpected id %u at %u.\n", id[i], i);
+
+    /* produce on CPU */
+    for (i = 0; i < 8; ++i)
+        id[i] = 0xdeadbeef;
+    set_box(&box, 0, 0, 0, 8 * sizeof(*id), 1, 1);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)buffer, 0, &box, id, 0, 0);
+    data = 8;
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, &data);
+    data = read_uav_counter(context, staging_buffer, uav);
+    todo_wine ok(data == 8, "Got unexpected value %u.\n", data);
+
+    /* consume */
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    data = read_uav_counter(context, staging_buffer, uav);
+    todo_wine ok(data == 4, "Got unexpected value %u.\n", data);
+    ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
+    data = read_uav_counter(context, staging_buffer, uav);
+    ok(!data, "Got unexpected value %u.\n", data);
+    get_buffer_readback(buffer2, &rb);
+    for (i = 0; i < 8; ++i)
+    {
+        data = get_readback_color(&rb, i, 0);
+        todo_wine ok(data == 0xdeadbeef, "Got data %u at %u.\n", data, i);
+    }
+    release_resource_readback(&rb);
+
+    ID3D11Buffer_Release(buffer);
+    ID3D11Buffer_Release(buffer2);
+    ID3D11Buffer_Release(staging_buffer);
+    ID3D11ComputeShader_Release(cs_producer);
+    ID3D11ComputeShader_Release(cs_consumer);
+    ID3D11UnorderedAccessView_Release(uav);
+    ID3D11UnorderedAccessView_Release(uav2);
+    release_test_context(&test_context);
+}
+
 static void test_compute_shader_registers(void)
 {
     struct data
@@ -15213,6 +15412,7 @@ START_TEST(d3d11)
     test_buffer_srv();
     run_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0,
             test_unaligned_raw_buffer_access);
+    test_uav_counters();
     test_compute_shader_registers();
     test_tgsm();
 }
