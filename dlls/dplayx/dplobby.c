@@ -1726,8 +1726,7 @@ HRESULT DPL_CreateCompoundAddress
     }
     else
     {
-      ERR( "Unknown GUID %s\n", debugstr_guid(&lpElements->guidDataType) );
-      return DPERR_INVALIDFLAGS;
+      WARN( "Skipping Unknown GUID %s\n", debugstr_guid(&lpElements->guidDataType) );
     }
   }
 

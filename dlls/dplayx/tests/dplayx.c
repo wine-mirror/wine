@@ -64,6 +64,7 @@ static HRESULT (WINAPI *pDirectPlayCreate)( GUID *GUID, LPDIRECTPLAY *lplpDP, IU
 DEFINE_GUID(appGuid, 0xbdcfe03e, 0xf0ec, 0x415b, 0x82, 0x11, 0x6f, 0x86, 0xd8, 0x19, 0x7f, 0xe1);
 DEFINE_GUID(appGuid2, 0x93417d3f, 0x7d26, 0x46ba, 0xb5, 0x76, 0xfe, 0x4b, 0x20, 0xbb, 0xad, 0x70);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+DEFINE_GUID(invalid_guid, 0x7b48b707, 0x0034, 0xc000, 0x02, 0x00, 0x00, 0x00, 0xec, 0xf6, 0x32, 0x00);
 
 
 typedef struct tagCallbackData
@@ -1126,6 +1127,53 @@ static void test_GetCaps(void)
     }
 
     IDirectPlayX_Release( pDP );
+}
+
+static void test_EnumAddressTypes(void)
+{
+    IDirectPlay4 *pDP;
+    HRESULT hr;
+    DPCOMPOUNDADDRESSELEMENT addressElements[2];
+    LPVOID pAddress = NULL;
+    DWORD dwAddressSize = 0;
+    IDirectPlayLobby3 *pDPL;
+    WORD port = 6001;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlay4A, (LPVOID*) &pDP );
+    ok( SUCCEEDED(hr), "CCI of CLSID_DirectPlay / IID_IDirectPlay4A failed\n" );
+    if (FAILED(hr))
+        return;
+
+    hr = CoCreateInstance( &CLSID_DirectPlayLobby, NULL, CLSCTX_ALL,
+                           &IID_IDirectPlayLobby3A, (LPVOID*) &pDPL );
+    ok (SUCCEEDED (hr), "CCI of CLSID_DirectPlayLobby / IID_IDirectPlayLobby3A failed\n");
+    if (FAILED (hr)) return;
+
+    addressElements[0].guidDataType = DPAID_ServiceProvider;
+    addressElements[0].dwDataSize   = sizeof(GUID);
+    addressElements[0].lpData       = (void*) &DPSPGUID_TCPIP;
+
+    addressElements[1].guidDataType = invalid_guid;
+    addressElements[1].dwDataSize   = sizeof(WORD);
+    addressElements[1].lpData       = &port;
+
+    hr = IDirectPlayLobby_CreateCompoundAddress( pDPL, addressElements, 2, NULL, &dwAddressSize );
+    checkHR( DPERR_BUFFERTOOSMALL, hr );
+
+    if( hr == DPERR_BUFFERTOOSMALL )
+    {
+        pAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwAddressSize );
+        hr = IDirectPlayLobby_CreateCompoundAddress( pDPL, addressElements, 2,
+                                                     pAddress, &dwAddressSize );
+        checkHR( DP_OK, hr );
+    }
+
+    IDirectPlayX_Close(pDP);
+    IDirectPlayX_Release(pDP);
+    IDirectPlayLobby_Release(pDPL);
+
+    HeapFree( GetProcessHeap(), 0, pAddress );
 }
 
 /* Open */
@@ -6894,6 +6942,7 @@ START_TEST(dplayx)
     test_EnumConnections();
     test_InitializeConnection();
     test_GetCaps();
+    test_EnumAddressTypes();
 
     if (!winetest_interactive)
     {
