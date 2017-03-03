@@ -3410,9 +3410,6 @@ static void context_load_unordered_access_resources(struct wined3d_context *cont
 
     for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
     {
-        if (!shader->reg_maps.uav_resource_info[i].type)
-            continue;
-
         if (!(view = views[i]))
             continue;
 
@@ -3447,12 +3444,10 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
 
     for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
     {
-        if (!shader->reg_maps.uav_resource_info[i].type)
-            continue;
-
         if (!(view = views[i]))
         {
-            WARN("No unordered access view bound at index %u.\n", i);
+            if (shader->reg_maps.uav_resource_info[i].type)
+                WARN("No unordered access view bound at index %u.\n", i);
             GL_EXTCALL(glBindImageTexture(i, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R8));
             continue;
         }
