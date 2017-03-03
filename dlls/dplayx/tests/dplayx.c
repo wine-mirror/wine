@@ -700,7 +700,7 @@ static void init_TCPIP_provider( IDirectPlay4 *pDP, LPCSTR strIPAddressString, W
     checkHR( DP_OK, hr );
 
     HeapFree( GetProcessHeap(), 0, pAddress );
-
+    IDirectPlayLobby_Release(pDPL);
 }
 
 static BOOL CALLBACK EnumSessions_cb_join( LPCDPSESSIONDESC2 lpThisSD,
@@ -939,6 +939,8 @@ static BOOL CALLBACK EnumConnections_cb( LPCGUID lpguidSP,
     todo_wine check( 3, callbackData->dwCounter2 );
 
     callbackData->dwCounter1++;
+
+    IDirectPlayLobby_Release(pDPL);
 
     return TRUE;
 }
@@ -3075,7 +3077,7 @@ static void test_GetPlayerAddress(void)
     if ( hr == DP_OK )
     {
         todo_wine win_skip( "GetPlayerAddress not implemented\n" );
-        return;
+        goto cleanup;
     }
 
     init_TCPIP_provider( pDP[0], "127.0.0.1", 0 );
@@ -3171,9 +3173,11 @@ static void test_GetPlayerAddress(void)
 
 
     HeapFree( GetProcessHeap(), 0, lpData );
+
+cleanup:
     IDirectPlayX_Release( pDP[0] );
     IDirectPlayX_Release( pDP[1] );
-
+    IDirectPlayLobby_Release(pDPL);
 }
 
 /* GetPlayerFlags */
