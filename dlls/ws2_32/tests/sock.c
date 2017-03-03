@@ -3397,15 +3397,27 @@ static void test_WSAStringToAddressA(void)
         (ret == SOCKET_ERROR && (GLE == ERROR_INVALID_PARAMETER || GLE == WSAEINVAL)),
         "WSAStringToAddressA() failed unexpectedly: %d\n", GLE );
 
+    len = sizeof(sockaddr);
+
+    ret = WSAStringToAddressA( address9, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    GLE = WSAGetLastError();
+    ok( (ret == SOCKET_ERROR && GLE == WSAEINVAL),
+        "WSAStringToAddressA() should have failed with %d\n", GLE );
+
     len = sizeof(sockaddr6);
     memset(&sockaddr6, 0, len);
     sockaddr6.sin6_family = AF_INET6;
 
     ret = WSAStringToAddressA( address6, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
+    if (ret == SOCKET_ERROR)
+    {
+        win_skip("IPv6 not supported\n");
+        return;
+    }
+
     GLE = WSAGetLastError();
-    ok( ret == 0 || (ret == SOCKET_ERROR && GLE == WSAEINVAL),
-        "WSAStringToAddressA() failed for IPv6 address: %d\n", GLE);
+    ok( ret == 0, "WSAStringToAddressA() failed for IPv6 address: %d\n", GLE);
 
     len = sizeof(sockaddr6);
     memset(&sockaddr6, 0, len);
@@ -3414,8 +3426,8 @@ static void test_WSAStringToAddressA(void)
     ret = WSAStringToAddressA( address7, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-    ok( ret == 0 || (ret == SOCKET_ERROR && GLE == WSAEINVAL),
-        "WSAStringToAddressA() failed for IPv6 address: %d\n", GLE);
+todo_wine
+    ok( ret == 0, "WSAStringToAddressA() failed for IPv6 address: %d\n", GLE);
 
     len = sizeof(sockaddr6);
     memset(&sockaddr6, 0, len);
@@ -3424,16 +3436,23 @@ static void test_WSAStringToAddressA(void)
     ret = WSAStringToAddressA( address8, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-    ok( (ret == 0 && sockaddr6.sin6_port == 0xffff) ||
-        (ret == SOCKET_ERROR && GLE == WSAEINVAL),
+todo_wine
+    ok( ret == 0 && sockaddr6.sin6_port == 0xffff,
         "WSAStringToAddressA() failed for IPv6 address: %d\n", GLE);
 
-    len = sizeof(sockaddr);
+    len = sizeof(sockaddr6);
 
-    ret = WSAStringToAddressA( address9, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ret = WSAStringToAddressA( address7 + 1, AF_INET6, NULL, (SOCKADDR*)&sockaddr, &len );
     GLE = WSAGetLastError();
     ok( (ret == SOCKET_ERROR && GLE == WSAEINVAL),
-        "WSAStringToAddressA() should have failed with %d\n", GLE );
+        "WSAStringToAddressW() should have failed with %d\n", GLE );
+
+    len = sizeof(sockaddr6);
+
+    ret = WSAStringToAddressA( address8 + 1, AF_INET6, NULL, (SOCKADDR*)&sockaddr, &len );
+    GLE = WSAGetLastError();
+    ok( (ret == SOCKET_ERROR && GLE == WSAEINVAL),
+        "WSAStringToAddressW() should have failed with %d\n", GLE );
 }
 
 static void test_WSAStringToAddressW(void)
@@ -3520,15 +3539,27 @@ static void test_WSAStringToAddressW(void)
         broken(len == sizeof(SOCKADDR_STORAGE)) /* NT4/2k */,
         "unexpected length %d\n", len );
 
+    len = sizeof(sockaddr);
+
+    ret = WSAStringToAddressW( address9, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    GLE = WSAGetLastError();
+    ok( (ret == SOCKET_ERROR && GLE == WSAEINVAL),
+        "WSAStringToAddressW() should have failed with %d\n", GLE );
+
     len = sizeof(sockaddr6);
     memset(&sockaddr6, 0, len);
     sockaddr6.sin6_family = AF_INET6;
 
     ret = WSAStringToAddressW( address6, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
+    if (ret == SOCKET_ERROR)
+    {
+        win_skip("IPv6 not supported\n");
+        return;
+    }
+
     GLE = WSAGetLastError();
-    ok( ret == 0 || (ret == SOCKET_ERROR && GLE == WSAEINVAL),
-        "WSAStringToAddressW() failed for IPv6 address: %d\n", GLE);
+    ok( ret == 0, "WSAStringToAddressW() failed for IPv6 address: %d\n", GLE);
 
     len = sizeof(sockaddr6);
     memset(&sockaddr6, 0, len);
@@ -3537,8 +3568,8 @@ static void test_WSAStringToAddressW(void)
     ret = WSAStringToAddressW( address7, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-    ok( ret == 0 || (ret == SOCKET_ERROR && GLE == WSAEINVAL),
-        "WSAStringToAddressW() failed for IPv6 address: %d\n", GLE);
+todo_wine
+    ok( ret == 0, "WSAStringToAddressW() failed for IPv6 address: %d\n", GLE);
 
     len = sizeof(sockaddr6);
     memset(&sockaddr6, 0, len);
@@ -3547,13 +3578,20 @@ static void test_WSAStringToAddressW(void)
     ret = WSAStringToAddressW( address8, AF_INET6, NULL, (SOCKADDR*)&sockaddr6,
             &len );
     GLE = WSAGetLastError();
-    ok( (ret == 0 && sockaddr6.sin6_port == 0xffff) ||
-        (ret == SOCKET_ERROR && GLE == WSAEINVAL),
+todo_wine
+    ok( ret == 0 && sockaddr6.sin6_port == 0xffff,
         "WSAStringToAddressW() failed for IPv6 address: %d\n", GLE);
 
-    len = sizeof(sockaddr);
+    len = sizeof(sockaddr6);
 
-    ret = WSAStringToAddressW( address9, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
+    ret = WSAStringToAddressW( address7 + 1, AF_INET6, NULL, (SOCKADDR*)&sockaddr, &len );
+    GLE = WSAGetLastError();
+    ok( (ret == SOCKET_ERROR && GLE == WSAEINVAL),
+        "WSAStringToAddressW() should have failed with %d\n", GLE );
+
+    len = sizeof(sockaddr6);
+
+    ret = WSAStringToAddressW( address8 + 1, AF_INET6, NULL, (SOCKADDR*)&sockaddr, &len );
     GLE = WSAGetLastError();
     ok( (ret == SOCKET_ERROR && GLE == WSAEINVAL),
         "WSAStringToAddressW() should have failed with %d\n", GLE );
