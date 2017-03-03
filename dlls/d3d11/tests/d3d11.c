@@ -14079,7 +14079,7 @@ static void test_sm5_bufinfo_instruction(void)
         }
 
         draw_quad(&test_context);
-        todo_wine check_texture_uvec4(texture, &test->expected_result);
+        check_texture_uvec4(texture, &test->expected_result);
 
         if (srv)
             ID3D11ShaderResourceView_Release(srv);

@@ -1382,6 +1382,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             }
             else if ((WINED3DSIH_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_ATOMIC_XOR)
                     || (WINED3DSIH_IMM_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_IMM_ATOMIC_XOR)
+                    || (ins.handler_idx == WINED3DSIH_BUFINFO && ins.src[0].reg.type == WINED3DSPR_UAV)
                     || ins.handler_idx == WINED3DSIH_LD_UAV_TYPED
                     || (ins.handler_idx == WINED3DSIH_LD_RAW && ins.src[1].reg.type == WINED3DSPR_UAV)
                     || (ins.handler_idx == WINED3DSIH_LD_STRUCTURED && ins.src[2].reg.type == WINED3DSPR_UAV))
@@ -1393,6 +1394,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     reg_idx = ins.src[2].reg.idx[0].offset;
                 else if (WINED3DSIH_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_ATOMIC_XOR)
                     reg_idx = ins.dst[0].reg.idx[0].offset;
+                else if (ins.handler_idx == WINED3DSIH_BUFINFO)
+                    reg_idx = ins.src[0].reg.idx[0].offset;
                 else
                     reg_idx = ins.dst[1].reg.idx[0].offset;
                 if (reg_idx >= MAX_UNORDERED_ACCESS_VIEWS)
@@ -1445,6 +1448,11 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             {
                 shader_record_sample(reg_maps, ins.src[1].reg.idx[0].offset,
                         ins.src[2].reg.idx[0].offset, reg_maps->sampler_map.count);
+            }
+            else if (ins.handler_idx == WINED3DSIH_BUFINFO && ins.src[0].reg.type == WINED3DSPR_RESOURCE)
+            {
+                shader_record_sample(reg_maps, ins.src[0].reg.idx[0].offset,
+                        WINED3D_SAMPLER_DEFAULT, reg_maps->sampler_map.count);
             }
             else if (ins.handler_idx == WINED3DSIH_LD
                     || (ins.handler_idx == WINED3DSIH_LD_RAW && ins.src[1].reg.type == WINED3DSPR_RESOURCE)

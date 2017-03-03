@@ -5389,6 +5389,70 @@ static void shader_glsl_sync(const struct wined3d_shader_instruction *ins)
         FIXME("Unhandled sync flags %#x.\n", sync_flags);
 }
 
+static const struct wined3d_shader_resource_info *shader_glsl_get_resource_info(
+        const struct wined3d_shader_instruction *ins, const struct wined3d_shader_register *reg)
+{
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    unsigned int idx = reg->idx[0].offset;
+
+    if (reg->type == WINED3DSPR_RESOURCE)
+    {
+        if (idx >= ARRAY_SIZE(reg_maps->resource_info))
+        {
+            ERR("Invalid resource index %u.\n", idx);
+            return NULL;
+        }
+        return &reg_maps->resource_info[idx];
+    }
+
+    if (reg->type == WINED3DSPR_UAV)
+    {
+        if (idx >= ARRAY_SIZE(reg_maps->uav_resource_info))
+        {
+            ERR("Invalid UAV index %u.\n", idx);
+            return NULL;
+        }
+        return &reg_maps->uav_resource_info[idx];
+    }
+
+    FIXME("Unhandled register type %#x.\n", reg->type);
+    return NULL;
+}
+
+static void shader_glsl_bufinfo(const struct wined3d_shader_instruction *ins)
+{
+    const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
+    const struct wined3d_shader_resource_info *resource_info;
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    unsigned int resource_idx;
+    char dst_swizzle[6];
+    DWORD write_mask;
+
+    write_mask = shader_glsl_append_dst(buffer, ins);
+    shader_glsl_get_swizzle(&ins->src[0], FALSE, write_mask, dst_swizzle);
+
+    if (!(resource_info = shader_glsl_get_resource_info(ins, &ins->src[0].reg)))
+        return;
+    resource_idx = ins->src[0].reg.idx[0].offset;
+
+    shader_addline(buffer, "ivec2(");
+    if (ins->src[0].reg.type == WINED3DSPR_RESOURCE)
+    {
+        unsigned int bind_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
+                resource_idx, WINED3D_SAMPLER_DEFAULT);
+        shader_addline(buffer, "textureSize(%s_sampler%u)", prefix, bind_idx);
+    }
+    else
+    {
+        shader_addline(buffer, "imageSize(%s_image%u)", prefix, resource_idx);
+    }
+    if (resource_info->stride)
+        shader_addline(buffer, " / %u", resource_info->stride);
+    else if (resource_info->flags & WINED3D_VIEW_BUFFER_RAW)
+        shader_addline(buffer, " * 4");
+    shader_addline(buffer, ", %u)%s);\n", resource_info->stride, dst_swizzle);
+}
+
 static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
@@ -9555,7 +9619,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_BREAK                            */ shader_glsl_break,
     /* WINED3DSIH_BREAKC                           */ shader_glsl_breakc,
     /* WINED3DSIH_BREAKP                           */ shader_glsl_breakp,
-    /* WINED3DSIH_BUFINFO                          */ NULL,
+    /* WINED3DSIH_BUFINFO                          */ shader_glsl_bufinfo,
     /* WINED3DSIH_CALL                             */ shader_glsl_call,
     /* WINED3DSIH_CALLNZ                           */ shader_glsl_callnz,
     /* WINED3DSIH_CASE                             */ shader_glsl_case,
