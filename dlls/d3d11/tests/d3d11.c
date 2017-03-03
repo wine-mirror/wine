@@ -13824,6 +13824,34 @@ static void test_sm5_bufinfo_instruction(void)
         0x00000000, 0x00004002, 0x00000000, 0x00000014, 0x00000000, 0x00000001, 0x0100003e,
     };
     static const struct shader ps_uav_structured = {ps_uav_structured_code, sizeof(ps_uav_structured_code)};
+    static const DWORD ps_uav_structured32_code[] =
+    {
+#if 0
+        struct s
+        {
+            uint4 u;
+            bool4 b;
+        };
+
+        RWStructuredBuffer<s> b;
+
+        uint4 main(void) : SV_Target
+        {
+            uint count, stride;
+            b.GetDimensions(count, stride);
+            return uint4(count, stride, 0, 1);
+        }
+#endif
+        0x43425844, 0xdd87a805, 0x28090470, 0xe4fa7c4d, 0x57963f52, 0x00000001, 0x000000fc, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x00000084, 0x00000050, 0x00000021,
+        0x0100086a, 0x0400009e, 0x0011e000, 0x00000001, 0x00000020, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x87000079, 0x80010302, 0x00199983, 0x00100012, 0x00000000, 0x0011ee46,
+        0x00000001, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x08000036, 0x001020e2,
+        0x00000000, 0x00004002, 0x00000000, 0x00000020, 0x00000000, 0x00000001, 0x0100003e,
+    };
+    static const struct shader ps_uav_structured32 = {ps_uav_structured32_code, sizeof(ps_uav_structured32_code)};
     static const DWORD ps_srv_structured_code[] =
     {
 #if 0
@@ -13946,24 +13974,24 @@ static void test_sm5_bufinfo_instruction(void)
     {
 #define RAW        D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS
 #define STRUCTURED D3D11_RESOURCE_MISC_BUFFER_STRUCTURED
-        {&ps_uav_raw,        TRUE,  100,        RAW,  0, DXGI_FORMAT_R32_TYPELESS, 0, 25, {100, 100, 100, 100}},
-        {&ps_uav_raw,        TRUE,  100,        RAW,  0, DXGI_FORMAT_R32_TYPELESS, 8, 17, { 68,  68,  68,  68}},
-        {&ps_srv_raw,        FALSE, 100,        RAW,  0, DXGI_FORMAT_R32_TYPELESS, 0, 25, {100, 100, 100, 100}},
-        {&ps_srv_raw,        FALSE, 100,        RAW,  0, DXGI_FORMAT_R32_TYPELESS, 8, 17, { 68,  68,  68,  68}},
-        {&ps_uav_structured, TRUE,  100, STRUCTURED, 20, DXGI_FORMAT_UNKNOWN,      0,  5, {  5,  20,   0,   1}},
-        {&ps_uav_structured, TRUE,  100, STRUCTURED, 20, DXGI_FORMAT_UNKNOWN,      0,  2, {  2,  20,   0,   1}},
-        {&ps_uav_structured, TRUE,  100, STRUCTURED, 20, DXGI_FORMAT_UNKNOWN,      1,  2, {  2,  20,   0,   1}},
-        {&ps_srv_structured, FALSE, 100, STRUCTURED,  4, DXGI_FORMAT_UNKNOWN,      0,  5, {  5,   4,   0,   1}},
-        {&ps_srv_structured, FALSE, 100, STRUCTURED,  4, DXGI_FORMAT_UNKNOWN,      0,  2, {  2,   4,   0,   1}},
-        {&ps_srv_structured, FALSE, 100, STRUCTURED,  4, DXGI_FORMAT_UNKNOWN,      1,  2, {  2,   4,   0,   1}},
-        {&ps_uav_typed,      TRUE,  200,          0,  0, DXGI_FORMAT_R32_FLOAT,    0, 50, { 50,  50,  50,  50}},
-        {&ps_uav_typed,      TRUE,  200,          0,  0, DXGI_FORMAT_R32_FLOAT,   49,  1, {  1,   1,   1,   1}},
-        {&ps_uav_typed,      TRUE,  100,          0,  0, DXGI_FORMAT_R16_FLOAT,    0, 50, { 50,  50,  50,  50}},
-        {&ps_uav_typed,      TRUE,  100,          0,  0, DXGI_FORMAT_R16_FLOAT,   49,  1, {  1,   1,   1,   1}},
-        {&ps_srv_typed,      FALSE, 200,          0,  0, DXGI_FORMAT_R32_FLOAT,    0, 50, { 50,  50,  50,  50}},
-        {&ps_srv_typed,      FALSE, 200,          0,  0, DXGI_FORMAT_R32_FLOAT,   49,  1, {  1,   1,   1,   1}},
-        {&ps_srv_typed,      FALSE, 100,          0,  0, DXGI_FORMAT_R16_FLOAT,    0, 50, { 50,  50,  50,  50}},
-        {&ps_srv_typed,      FALSE, 100,          0,  0, DXGI_FORMAT_R16_FLOAT,   49,  1, {  1,   1,   1,   1}},
+        {&ps_uav_raw,          TRUE,  100,        RAW,  0, DXGI_FORMAT_R32_TYPELESS,   0, 25, {100, 100, 100, 100}},
+        {&ps_uav_raw,          TRUE,  512,        RAW,  0, DXGI_FORMAT_R32_TYPELESS,  64, 64, {256, 256, 256, 256}},
+        {&ps_srv_raw,          FALSE, 100,        RAW,  0, DXGI_FORMAT_R32_TYPELESS,   0, 25, {100, 100, 100, 100}},
+        {&ps_srv_raw,          FALSE, 500,        RAW,  0, DXGI_FORMAT_R32_TYPELESS,  64,  4, { 16,  16,  16,  16}},
+        {&ps_uav_structured,   TRUE,  100, STRUCTURED, 20, DXGI_FORMAT_UNKNOWN,        0,  5, {  5,  20,   0,   1}},
+        {&ps_uav_structured,   TRUE,  100, STRUCTURED, 20, DXGI_FORMAT_UNKNOWN,        0,  2, {  2,  20,   0,   1}},
+        {&ps_uav_structured32, TRUE,  320, STRUCTURED, 32, DXGI_FORMAT_UNKNOWN,        8,  2, {  2,  32,   0,   1}},
+        {&ps_srv_structured,   FALSE, 100, STRUCTURED,  4, DXGI_FORMAT_UNKNOWN,        0,  5, {  5,   4,   0,   1}},
+        {&ps_srv_structured,   FALSE, 100, STRUCTURED,  4, DXGI_FORMAT_UNKNOWN,        0,  2, {  2,   4,   0,   1}},
+        {&ps_srv_structured,   FALSE, 400, STRUCTURED,  4, DXGI_FORMAT_UNKNOWN,       64,  2, {  2,   4,   0,   1}},
+        {&ps_uav_typed,        TRUE,  200,          0,  0, DXGI_FORMAT_R32_FLOAT,      0, 50, { 50,  50,  50,  50}},
+        {&ps_uav_typed,        TRUE,  400,          0,  0, DXGI_FORMAT_R32_FLOAT,     64,  1, {  1,   1,   1,   1}},
+        {&ps_uav_typed,        TRUE,  100,          0,  0, DXGI_FORMAT_R16_FLOAT,      0, 50, { 50,  50,  50,  50}},
+        {&ps_uav_typed,        TRUE,  400,          0,  0, DXGI_FORMAT_R16_FLOAT,    128,  1, {  1,   1,   1,   1}},
+        {&ps_srv_typed,        FALSE, 200,          0,  0, DXGI_FORMAT_R32_FLOAT,      0, 50, { 50,  50,  50,  50}},
+        {&ps_srv_typed,        FALSE, 400,          0,  0, DXGI_FORMAT_R32_FLOAT,     64,  1, {  1,   1,   1,   1}},
+        {&ps_srv_typed,        FALSE, 100,          0,  0, DXGI_FORMAT_R16_FLOAT,      0, 50, { 50,  50,  50,  50}},
+        {&ps_srv_typed,        FALSE, 400,          0,  0, DXGI_FORMAT_R16_FLOAT,    128,  2, {  2,   2,   2,   2}},
 #undef RAW
 #undef STRUCTURED
     };
