@@ -896,6 +896,7 @@ struct wined3d_shader_reg_maps
     BYTE luminanceparams;                           /* MAX_TEXTURES, 8 */
     struct wined3d_shader_resource_info uav_resource_info[MAX_UNORDERED_ACCESS_VIEWS];
     DWORD uav_read_mask;                            /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
+    DWORD uav_counter_mask;                         /* MAX_UNORDERED_ACCESS_VIEWS, 8 */
 
     WORD usesnrm        : 1;
     WORD vpos           : 1;

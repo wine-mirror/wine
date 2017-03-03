@@ -2225,6 +2225,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         else
             shader_addline(buffer, "writeonly uniform %s%s %s_image%u;\n",
                     image_type_prefix, image_type, prefix, i);
+
+        if (reg_maps->uav_counter_mask & (1u << i))
+            shader_addline(buffer, "layout(binding = %u) uniform atomic_uint %s_counter%u;\n",
+                    i, prefix, i);
     }
 
     /* Declare uniforms for NP2 texcoord fixup:
@@ -5143,6 +5147,15 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, ");\n");
 
     string_buffer_release(priv->string_buffers, address);
+}
+
+static void shader_glsl_uav_counter(const struct wined3d_shader_instruction *ins)
+{
+    const char *prefix = shader_glsl_get_prefix(ins->ctx->reg_maps->shader_version.type);
+
+    shader_glsl_append_dst(ins->ctx->buffer, ins);
+    shader_addline(ins->ctx->buffer, "atomicCounterIncrement(%s_counter%u));\n",
+            prefix, ins->src[0].reg.idx[0].offset);
 }
 
 static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
@@ -9637,7 +9650,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMAD                             */ shader_glsl_mad,
     /* WINED3DSIH_IMAX                             */ shader_glsl_map2gl,
     /* WINED3DSIH_IMIN                             */ shader_glsl_map2gl,
-    /* WINED3DSIH_IMM_ATOMIC_ALLOC                 */ NULL,
+    /* WINED3DSIH_IMM_ATOMIC_ALLOC                 */ shader_glsl_uav_counter,
     /* WINED3DSIH_IMM_ATOMIC_AND                   */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_CMP_EXCH              */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_CONSUME               */ NULL,
