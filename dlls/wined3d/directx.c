@@ -147,6 +147,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE              },
     {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX          },
     {"GL_ARB_sampler_objects",              ARB_SAMPLER_OBJECTS           },
+    {"GL_ARB_shader_atomic_counters",       ARB_SHADER_ATOMIC_COUNTERS    },
     {"GL_ARB_shader_bit_encoding",          ARB_SHADER_BIT_ENCODING       },
     {"GL_ARB_shader_image_load_store",      ARB_SHADER_IMAGE_LOAD_STORE   },
     {"GL_ARB_shader_image_size",            ARB_SHADER_IMAGE_SIZE         },
@@ -2788,6 +2789,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetSamplerParameterfv)
     USE_GL_FUNC(glGetSamplerParameterIiv)
     USE_GL_FUNC(glGetSamplerParameterIuiv)
+    /* GL_ARB_shader_atomic_counters */
+    USE_GL_FUNC(glGetActiveAtomicCounterBufferiv)
     /* GL_ARB_shader_image_load_store */
     USE_GL_FUNC(glBindImageTexture)
     USE_GL_FUNC(glMemoryBarrier)
@@ -3659,6 +3662,23 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.texture_buffer_offset_alignment = gl_max;
         TRACE("Minimum required texture buffer offset alignment %d.\n", gl_max);
     }
+    if (gl_info->supported[ARB_SHADER_ATOMIC_COUNTERS])
+    {
+        GLint max_fragment_buffers, max_combined_buffers, max_bindings;
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS, &max_fragment_buffers);
+        TRACE("Max fragment atomic counter buffers: %d.\n", max_fragment_buffers);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMBINED_ATOMIC_COUNTER_BUFFERS, &max_combined_buffers);
+        TRACE("Max combined atomic counter buffers: %d.\n", max_combined_buffers);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_ATOMIC_COUNTER_BUFFER_BINDINGS, &max_bindings);
+        TRACE("Max atomic counter buffer bindings: %d.\n", max_bindings);
+        if (max_fragment_buffers < MAX_UNORDERED_ACCESS_VIEWS
+                || max_combined_buffers < MAX_UNORDERED_ACCESS_VIEWS
+                || max_bindings < MAX_UNORDERED_ACCESS_VIEWS)
+        {
+            WARN("Disabling ARB_shader_atomic_counters.\n");
+            gl_info->supported[ARB_SHADER_ATOMIC_COUNTERS] = FALSE;
+        }
+    }
 
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
         gl_info->gl_ops.gl.p_glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->limits.shininess);
@@ -3766,6 +3786,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
         {ARB_INTERNALFORMAT_QUERY,         MAKEDWORD_VERSION(4, 2)},
         {ARB_MAP_BUFFER_ALIGNMENT,         MAKEDWORD_VERSION(4, 2)},
+        {ARB_SHADER_ATOMIC_COUNTERS,       MAKEDWORD_VERSION(4, 2)},
         {ARB_SHADER_IMAGE_LOAD_STORE,      MAKEDWORD_VERSION(4, 2)},
         {ARB_SHADING_LANGUAGE_420PACK,     MAKEDWORD_VERSION(4, 2)},
         {ARB_SHADING_LANGUAGE_PACKING,     MAKEDWORD_VERSION(4, 2)},
