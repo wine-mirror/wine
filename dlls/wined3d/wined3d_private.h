@@ -3410,6 +3410,7 @@ struct wined3d_unordered_access_view
     struct wined3d_view_desc desc;
 
     struct wined3d_gl_view gl_view;
+    GLuint counter_bo;
 };
 
 void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_access_view *view,

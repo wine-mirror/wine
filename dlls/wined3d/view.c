@@ -206,19 +206,15 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
     context_release(context);
 }
 
-static void create_buffer_texture(struct wined3d_gl_view *view,
+static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_context *context,
         struct wined3d_buffer *buffer, const struct wined3d_format *view_format,
         unsigned int offset, unsigned int size)
 {
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    context = context_acquire(buffer->resource.device, NULL, 0);
-    gl_info = context->gl_info;
     if (!gl_info->supported[ARB_TEXTURE_BUFFER_OBJECT])
     {
         FIXME("OpenGL implementation does not support buffer textures.\n");
-        context_release(context);
         return;
     }
 
@@ -226,7 +222,6 @@ static void create_buffer_texture(struct wined3d_gl_view *view,
     {
         FIXME("Buffer offset %u is not %u byte aligned.\n",
                 offset, gl_info->limits.texture_buffer_offset_alignment);
-        context_release(context);
         return;
     }
 
@@ -251,11 +246,9 @@ static void create_buffer_texture(struct wined3d_gl_view *view,
 
     context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
     context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
-
-    context_release(context);
 }
 
-static void create_buffer_view(struct wined3d_gl_view *view,
+static void create_buffer_view(struct wined3d_gl_view *view, struct wined3d_context *context,
         const struct wined3d_view_desc *desc, struct wined3d_buffer *buffer,
         const struct wined3d_format *view_format)
 {
@@ -272,7 +265,7 @@ static void create_buffer_view(struct wined3d_gl_view *view,
         size = desc->u.buffer.count * view_format->byte_count;
     }
 
-    create_buffer_texture(view, buffer, view_format, offset, size);
+    create_buffer_texture(view, context, buffer, view_format, offset, size);
 }
 
 ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view)
@@ -563,8 +556,11 @@ static void wined3d_shader_resource_view_cs_init(void *object)
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        struct wined3d_context *context;
 
-        create_buffer_view(&view->gl_view, desc, buffer, view_format);
+        context = context_acquire(resource->device, NULL, 0);
+        create_buffer_view(&view->gl_view, context, desc, buffer, view_format);
+        context_release(context);
     }
     else
     {
@@ -675,15 +671,18 @@ static void wined3d_unordered_access_view_destroy_object(void *object)
 {
     struct wined3d_unordered_access_view *view = object;
 
-    if (view->gl_view.name)
+    if (view->gl_view.name || view->counter_bo)
     {
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
         context = context_acquire(view->resource->device, NULL, 0);
         gl_info = context->gl_info;
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->gl_view.name);
-        checkGLcall("glDeleteTextures");
+        if (view->gl_view.name)
+            gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->gl_view.name);
+        if (view->counter_bo)
+            GL_EXTCALL(glDeleteBuffers(1, &view->counter_bo));
+        checkGLcall("delete resources");
         context_release(context);
     }
 
@@ -751,8 +750,21 @@ static void wined3d_unordered_access_view_cs_init(void *object)
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        struct wined3d_context *context;
 
-        create_buffer_view(&view->gl_view, desc, buffer, view->format);
+        context = context_acquire(resource->device, NULL, 0);
+        gl_info = context->gl_info;
+        create_buffer_view(&view->gl_view, context, desc, buffer, view->format);
+        if (desc->flags & WINED3D_VIEW_BUFFER_COUNTER)
+        {
+            static const GLuint initial_value = 0;
+            GL_EXTCALL(glGenBuffers(1, &view->counter_bo));
+            GL_EXTCALL(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, view->counter_bo));
+            GL_EXTCALL(glBufferData(GL_ATOMIC_COUNTER_BUFFER,
+                    sizeof(initial_value), &initial_value, GL_STATIC_DRAW));
+            checkGLcall("create atomic counter buffer");
+        }
+        context_release(context);
     }
     else
     {
@@ -784,7 +796,7 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
         return E_INVALIDARG;
     view->desc = *desc;
 
-    if (desc->flags & (WINED3D_VIEW_BUFFER_APPEND | WINED3D_VIEW_BUFFER_COUNTER))
+    if (desc->flags & WINED3D_VIEW_BUFFER_APPEND)
         FIXME("Unhandled view flags %#x.\n", desc->flags);
 
     wined3d_resource_incref(view->resource = resource);
