@@ -784,6 +784,9 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
         return E_INVALIDARG;
     view->desc = *desc;
 
+    if (desc->flags & (WINED3D_VIEW_BUFFER_APPEND | WINED3D_VIEW_BUFFER_COUNTER))
+        FIXME("Unhandled view flags %#x.\n", desc->flags);
+
     wined3d_resource_incref(view->resource = resource);
 
     wined3d_cs_init_object(resource->device->cs, wined3d_unordered_access_view_cs_init, view);
