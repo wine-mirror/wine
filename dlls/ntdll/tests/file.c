@@ -4436,6 +4436,15 @@ static void test_flush_buffers_file(void)
 
     CloseHandle(hfileread);
     CloseHandle(hfile);
+    hfile = CreateFileA(buffer, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, 0, NULL);
+    ok(hfile != INVALID_HANDLE_VALUE, "could not open temp file, error %d.\n", GetLastError());
+
+    status = pNtFlushBuffersFile(hfile, &io_status_block);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+
+    CloseHandle(hfile);
     DeleteFileA(buffer);
 }
 
