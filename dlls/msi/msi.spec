@@ -286,8 +286,8 @@
 290 stdcall MsiEnumComponentsExW(wstr long long ptr ptr ptr ptr)
 291 stdcall MsiEnumClientsExA(str str long long ptr ptr ptr ptr)
 292 stdcall MsiEnumClientsExW(wstr wstr long long ptr ptr ptr ptr)
-293 stub MsiGetComponentPathExA
-294 stub MsiGetComponentPathExW
+293 stdcall MsiGetComponentPathExA(str str str long ptr ptr)
+294 stdcall MsiGetComponentPathExW(wstr wstr wstr long ptr ptr)
 295 stub QueryInstanceCount
 
 @ stdcall -private DllCanUnloadNow()
