@@ -1,6 +1,6 @@
 MODULE    = taskmgr.exe
 APPMODE   = -mwindows -mno-cygwin
-IMPORTS   = psapi shell32 comctl32 user32 gdi32 advapi32
+IMPORTS   = shell32 comctl32 user32 gdi32 advapi32
 
 C_SRCS = \
 	about.c \
