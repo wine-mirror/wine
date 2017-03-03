@@ -390,7 +390,7 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
                            (pStream->colortbl[i] >> 8) & 0xFF, (pStream->colortbl[i] >> 16) & 0xFF))
       return FALSE;
   }
-  if (!ME_StreamOutPrint(pStream, "}")) return FALSE;
+  if (!ME_StreamOutPrint(pStream, "}\r\n")) return FALSE;
 
   return TRUE;
 }
@@ -1017,7 +1017,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
 
   /* TODO: stylesheet table */
 
-  if (!ME_StreamOutPrint(pStream, "{\\*\\generator Wine Riched20 2.0;}"))
+  if (!ME_StreamOutPrint(pStream, "{\\*\\generator Wine Riched20 2.0;}\r\n"))
     return FALSE;
 
   /* TODO: information group */
