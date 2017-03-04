@@ -4,7 +4,7 @@
 @ stub GetApplicationUserModelId
 @ stub GetCurrentApplicationUserModelId
 @ stub GetCurrentPackageFamilyName
-@ stub GetCurrentPackageFullName
+@ stdcall GetCurrentPackageFullName(ptr ptr) kernel32.GetCurrentPackageFullName
 @ stdcall GetCurrentPackageId(ptr ptr) kernel32.GetCurrentPackageId
 @ stub GetCurrentPackageInfo
 @ stub GetCurrentPackagePath

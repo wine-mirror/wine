@@ -207,3 +207,12 @@ LONG WINAPI GetCurrentPackageId(UINT32 *len, BYTE *buffer)
     FIXME("(%p %p): stub\n", len, buffer);
     return APPMODEL_ERROR_NO_PACKAGE;
 }
+
+/***********************************************************************
+ *           GetCurrentPackageFullName       (KERNEL32.@)
+ */
+LONG WINAPI GetCurrentPackageFullName(UINT32 *length, PWSTR name)
+{
+    FIXME("(%p %p): stub\n", length, name);
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
