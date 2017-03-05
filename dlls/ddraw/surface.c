@@ -950,7 +950,6 @@ static HRESULT WINAPI ddraw_surface1_GetAttachedSurface(IDirectDrawSurface *ifac
  * Returns:
  *  DD_OK on success
  *  DDERR_INVALIDPARAMS if DDSD is NULL
- *  For more details, see IWineD3DSurface::LockRect
  *
  *****************************************************************************/
 static HRESULT surface_lock(struct ddraw_surface *surface,
@@ -1005,10 +1004,10 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
         switch(hr)
         {
             /* D3D8 and D3D9 return the general D3DERR_INVALIDCALL error, but ddraw has a more
-             * specific error. But since IWineD3DSurface::LockRect returns that error in this
-             * only occasion, keep d3d8 and d3d9 free from the return value override. There are
-             * many different places where d3d8/9 would have to catch the DDERR_SURFACEBUSY, it
-             * is much easier to do it in one place in ddraw
+             * specific error. But since wined3d returns that error in this only occasion,
+             * keep d3d8 and d3d9 free from the return value override. There are many different
+             * places where d3d8/9 would have to catch the DDERR_SURFACEBUSY, it is much easier
+             * to do it in one place in ddraw.
              */
             case WINED3DERR_INVALIDCALL:    return DDERR_SURFACEBUSY;
             default:                        return hr;
@@ -1170,8 +1169,7 @@ static HRESULT WINAPI ddraw_surface1_Lock(IDirectDrawSurface *iface, RECT *rect,
  *  Rect: Not used by this implementation
  *
  * Returns:
- *  D3D_OK on success
- *  For more details, see IWineD3DSurface::UnlockRect
+ *  D3D_OK on success, error code otherwise.
  *
  *****************************************************************************/
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pRect)
@@ -1537,8 +1535,7 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
  *  DDBltFx: Some extended blt parameters, connected to the flags
  *
  * Returns:
- *  D3D_OK on success
- *  See IWineD3DSurface::Blt for more details
+ *  D3D_OK on success, error code otherwise.
  *
  *****************************************************************************/
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *dst_rect,
@@ -2141,7 +2138,6 @@ static HRESULT WINAPI ddraw_surface1_AddOverlayDirtyRect(IDirectDrawSurface *ifa
  * Returns:
  *  DD_OK on success
  *  DDERR_INVALIDPARAMS if hdc is NULL
- *  For details, see IWineD3DSurface::GetDC
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *dc)
@@ -2241,8 +2237,7 @@ static HRESULT WINAPI ddraw_surface1_GetDC(IDirectDrawSurface *iface, HDC *dc)
  *  hdc: HDC to release
  *
  * Returns:
- *  DD_OK on success
- *  For more details, see IWineD3DSurface::ReleaseDC
+ *  DD_OK on success, error code otherwise.
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC hdc)
@@ -2458,8 +2453,7 @@ static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWO
  *  Flags: Some flags
  *
  * Returns:
- *  D3D_OK on success
- *  For more details, see IWineD3DSurface::SetPrivateData
+ *  D3D_OK on success, error code otherwise.
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_SetPrivateData(IDirectDrawSurface7 *iface,
@@ -2507,7 +2501,6 @@ static HRESULT WINAPI ddraw_surface4_SetPrivateData(IDirectDrawSurface4 *iface,
  * Returns:
  *  DD_OK on success
  *  DDERR_INVALIDPARAMS if Data is NULL
- *  For more details, see IWineD3DSurface::GetPrivateData
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_GetPrivateData(IDirectDrawSurface7 *iface, REFGUID tag, void *data, DWORD *size)
@@ -2571,8 +2564,7 @@ static HRESULT WINAPI ddraw_surface4_GetPrivateData(IDirectDrawSurface4 *iface, 
  *  tag: Tag of the data to free
  *
  * Returns:
- *  D3D_OK on success
- *  For more details, see IWineD3DSurface::FreePrivateData
+ *  D3D_OK on success, error code otherwise.
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_FreePrivateData(IDirectDrawSurface7 *iface, REFGUID tag)
@@ -3004,9 +2996,6 @@ static HRESULT WINAPI ddraw_surface1_EnumOverlayZOrders(IDirectDrawSurface *ifac
  * Params:
  *  Flags: DDGBS_CANBLT or DDGBS_ISBLTDONE
  *
- * Returns:
- *  See IWineD3DSurface::Blt
- *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_GetBltStatus(IDirectDrawSurface7 *iface, DWORD Flags)
 {
@@ -3175,9 +3164,6 @@ static HRESULT WINAPI ddraw_surface1_GetColorKey(IDirectDrawSurface *iface, DWOR
  *
  * Params:
  *  Flags: DDGFS_CANFLIP of DDGFS_ISFLIPDONE
- *
- * Returns:
- *  See IWineD3DSurface::GetFlipStatus
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_GetFlipStatus(IDirectDrawSurface7 *iface, DWORD Flags)
@@ -3554,7 +3540,6 @@ static HRESULT WINAPI d3d_texture1_Initialize(IDirect3DTexture *iface,
  * Returns:
  *  DD_OK, if the surface is usable
  *  DDERR_ISLOST if the surface is lost
- *  See IWineD3DSurface::IsLost for more details
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_IsLost(IDirectDrawSurface7 *iface)
@@ -3612,8 +3597,7 @@ static HRESULT WINAPI ddraw_surface1_IsLost(IDirectDrawSurface *iface)
  * doesn't reload its old contents
  *
  * Returns:
- *  DD_OK on success
- *  See IWineD3DSurface::Restore for more details
+ *  DD_OK on success, error code otherwise.
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
@@ -4187,8 +4171,7 @@ static HRESULT WINAPI ddraw_surface7_GetLOD(IDirectDrawSurface7 *iface, DWORD *M
  *  trans: Type of transfer. Some DDBLTFAST_* flags
  *
  * Returns:
- *  DD_OK on success
- *  For more details, see IWineD3DSurface::BltFast
+ *  DD_OK on success, error code otherwise.
  *
  *****************************************************************************/
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_BltFast(IDirectDrawSurface7 *iface,
@@ -5063,8 +5046,7 @@ static HRESULT WINAPI d3d_texture1_Unload(IDirect3DTexture *iface)
 /*****************************************************************************
  * IDirect3DTexture2::GetHandle
  *
- * Returns handle for the texture. At the moment, the interface
- * to the IWineD3DTexture is used.
+ * Returns handle for the texture.
  *
  * Params:
  *  device: Device this handle is assigned to

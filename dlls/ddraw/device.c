@@ -4392,10 +4392,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     if (device->index_buffer_size - index_count * sizeof(WORD) < ib_pos)
         ib_pos = 0;
 
-    /* Copy the index stream into the index buffer. A new IWineD3DDevice
-     * method could be created which takes an user pointer containing the
-     * indices or a SetData-Method for the index buffer, which overrides the
-     * index buffer data with our pointer. */
+    /* Copy the index stream into the index buffer. */
     wined3d_box.left = ib_pos;
     wined3d_box.right = ib_pos + index_count * sizeof(WORD);
     ib = wined3d_buffer_get_resource(device->index_buffer);
