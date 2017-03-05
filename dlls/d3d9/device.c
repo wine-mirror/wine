@@ -2120,7 +2120,7 @@ static HRESULT WINAPI d3d9_device_EndStateBlock(IDirect3DDevice9Ex *iface, IDire
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
-       WARN("IWineD3DDevice_EndStateBlock() failed, hr %#x.\n", hr);
+       WARN("Failed to end the state block, hr %#x.\n", hr);
        return hr;
     }
 
