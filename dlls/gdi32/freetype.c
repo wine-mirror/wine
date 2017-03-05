@@ -7914,7 +7914,8 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         font->potm->otmfsSelection |= 1;
     if (font->fake_bold)
         font->potm->otmfsSelection |= 1 << 5;
-    font->potm->otmfsType = pOS2->fsType;
+    /* Only return valid bits that define embedding and subsetting restrictions */
+    font->potm->otmfsType = pOS2->fsType & 0x30e;
     font->potm->otmsCharSlopeRise = pHori->caret_Slope_Rise;
     font->potm->otmsCharSlopeRun = pHori->caret_Slope_Run;
     font->potm->otmItalicAngle = 0; /* POST table */

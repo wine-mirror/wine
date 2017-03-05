@@ -5676,7 +5676,6 @@ static void test_fstype_fixup(void)
 
     /* Test font has fsType set to 0x7fff, test that reserved bits are filtered out,
        valid bits are 1, 2, 3, 8, 9. */
-todo_wine
     ok((otm->otmfsType & ~0x30e) == 0, "fsType %#x\n", otm->otmfsType);
 
     HeapFree(GetProcessHeap(), 0, otm);
