@@ -647,8 +647,9 @@ static void test_readerinput(void)
 
 static void test_reader_state(void)
 {
-    IXmlReader *reader;
     XmlNodeType nodetype;
+    IXmlReader *reader;
+    IStream *stream;
     HRESULT hr;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
@@ -662,10 +663,33 @@ static void test_reader_state(void)
     test_read_state(reader, XmlReadState_Closed, -1, FALSE);
 if (0)
 {
-    /* newer versions crash here, probably cause no input was set */
+    /* newer versions crash here, probably because no input was set */
     hr = IXmlReader_Read(reader, &nodetype);
     ok(hr == S_FALSE, "got %08x\n", hr);
 }
+
+    stream = create_stream_on_data("xml", sizeof("xml"));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    test_read_state(reader, XmlReadState_Initial, -1, FALSE);
+
+    nodetype = XmlNodeType_Element;
+    hr = IXmlReader_Read(reader, &nodetype);
+todo_wine
+    ok(FAILED(hr), "got %08x\n", hr);
+    ok(nodetype == XmlNodeType_None, "Unexpected node type %d\n", nodetype);
+
+    test_read_state(reader, XmlReadState_Error, -1, TRUE);
+
+    nodetype = XmlNodeType_Element;
+    hr = IXmlReader_Read(reader, &nodetype);
+todo_wine
+    ok(FAILED(hr), "got %08x\n", hr);
+    ok(nodetype == XmlNodeType_None, "Unexpected node type %d\n", nodetype);
+
+    IStream_Release(stream);
     IXmlReader_Release(reader);
 }
 
@@ -1118,9 +1142,8 @@ static void test_read_full(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     i = 0;
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    while (hr == S_OK)
+    type = ~0u;
+    while (IXmlReader_Read(reader, &type) == S_OK)
     {
         ok(test->types[i] != XmlNodeType_None, "%d: unexpected end of test data\n", i);
         if (test->types[i] == XmlNodeType_None) break;
@@ -1134,7 +1157,6 @@ static void test_read_full(void)
             ok(hr == S_OK, "%d: GetValue failed 0x%08x\n", i, hr);
             ok(len > 0, "%d: wrong value length %d\n", i, len);
         }
-        hr = IXmlReader_Read(reader, &type);
         i++;
     }
     ok(test->types[i] == XmlNodeType_None, "incomplete sequence, got %d\n", test->types[i]);
@@ -2024,6 +2046,7 @@ static void test_namespaceuri(void)
         hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
         ok(hr == S_OK, "got %08x\n", hr);
 
+        type = ~0u;
         while (IXmlReader_Read(reader, &type) == S_OK) {
             const WCHAR *uri, *local;
             WCHAR *uriW;
@@ -2042,6 +2065,8 @@ static void test_namespaceuri(void)
 
             j++;
         }
+    todo_wine
+        ok(type == XmlNodeType_None, "Unexpected node type %d\n", type);
 
         IStream_Release(stream);
     }
