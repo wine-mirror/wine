@@ -49,7 +49,7 @@ static void free_str(WCHAR *str)
 static const char xmldecl_full[] = "\xef\xbb\xbf<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
 static const char xmldecl_short[] = "<?xml version=\"1.0\"?><RegistrationInfo/>";
 
-static IStream *create_stream_on_data(const char *data, int size)
+static IStream *create_stream_on_data(const void *data, unsigned int size)
 {
     IStream *stream = NULL;
     HGLOBAL hglobal;
@@ -2086,6 +2086,70 @@ static void test_read_charref(void)
     IStream_Release(stream);
 }
 
+static void test_encoding_detection(void)
+{
+    static const struct encoding_testW
+    {
+        WCHAR text[16];
+    }
+    encoding_testsW[] =
+    {
+        { { '<','?','p','i',' ','?','>',0 } },
+        { { '<','!','-','-',' ','c','-','-','>',0 } },
+        { { 0xfeff,'<','a','/','>',0 } },
+        { { '<','a','/','>',0 } },
+    };
+    static const char *encoding_testsA[] =
+    {
+        "<?pi ?>",
+        "<!-- comment -->",
+        "\xef\xbb\xbf<a/>", /* UTF-8 BOM */
+        "<a/>",
+    };
+    IXmlReader *reader;
+    XmlNodeType type;
+    IStream *stream;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    /* there's no way to query detected encoding back, so just verify that document is browsable */
+
+    for (i = 0; i < sizeof(encoding_testsA)/sizeof(encoding_testsA[0]); i++)
+    {
+        stream = create_stream_on_data(encoding_testsA[i], strlen(encoding_testsA[i]));
+
+        hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        type = XmlNodeType_None;
+        hr = IXmlReader_Read(reader, &type);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(type != XmlNodeType_None, "Unexpected node type %d\n", type);
+
+        IStream_Release(stream);
+    }
+
+    for (i = 0; i < sizeof(encoding_testsW)/sizeof(encoding_testsW[0]); i++)
+    {
+        stream = create_stream_on_data(encoding_testsW[i].text, lstrlenW(encoding_testsW[i].text) * sizeof(WCHAR));
+
+        hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        type = XmlNodeType_None;
+        hr = IXmlReader_Read(reader, &type);
+        ok(hr == S_OK, "%u: got %08x\n", i, hr);
+        ok(type != XmlNodeType_None, "%u: unexpected node type %d\n", i, type);
+
+        IStream_Release(stream);
+    }
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     test_reader_create();
@@ -2108,4 +2172,5 @@ START_TEST(reader)
     test_prefix();
     test_namespaceuri();
     test_read_charref();
+    test_encoding_detection();
 }

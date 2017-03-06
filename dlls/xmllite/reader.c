@@ -1,7 +1,7 @@
 /*
  * IXmlReader implementation
  *
- * Copyright 2010, 2012-2013, 2016 Nikolay Sivov
+ * Copyright 2010, 2012-2013, 2016-2017 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -92,6 +92,8 @@ static const WCHAR ltW[] = {'<',0};
 static const WCHAR gtW[] = {'>',0};
 static const WCHAR commentW[] = {'<','!','-','-',0};
 static const WCHAR piW[] = {'<','?',0};
+
+static BOOL is_namestartchar(WCHAR ch);
 
 static const char *debugstr_nodetype(XmlNodeType nodetype)
 {
@@ -840,10 +842,9 @@ static inline BOOL readerinput_is_utf8(xmlreaderinput *readerinput)
 static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encoding *enc)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
-    static const WCHAR startW[] = {'<','?'};
-    static const WCHAR commentW[] = {'<','!'};
     static const char utf8bom[] = {0xef,0xbb,0xbf};
     static const char utf16lebom[] = {0xff,0xfe};
+    WCHAR *ptrW;
 
     *enc = XmlEncoding_Unknown;
 
@@ -854,13 +855,17 @@ static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encod
         if (buffer->written <= 3) return MX_E_INPUTEND;
     }
 
+    ptrW = (WCHAR *)buffer->data;
     /* try start symbols if we have enough data to do that, input buffer should contain
        first chunk already */
     if (readerinput_is_utf8(readerinput))
         *enc = XmlEncoding_UTF8;
-    else if (!memcmp(buffer->data, startW, sizeof(startW)) ||
-             !memcmp(buffer->data, commentW, sizeof(commentW)))
-        *enc = XmlEncoding_UTF16;
+    else if (*ptrW == '<')
+    {
+        ptrW++;
+        if (*ptrW == '?' || *ptrW == '!' || is_namestartchar(*ptrW))
+            *enc = XmlEncoding_UTF16;
+    }
     /* try with BOM now */
     else if (!memcmp(buffer->data, utf8bom, sizeof(utf8bom)))
     {
@@ -2492,7 +2497,8 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
 
                 /* try to detect encoding by BOM or data and set input code page */
                 hr = readerinput_detectencoding(reader->input, &enc);
-                TRACE("detected encoding %s, 0x%08x\n", debugstr_w(xml_encoding_map[enc].name), hr);
+                TRACE("detected encoding %s, 0x%08x\n", enc == XmlEncoding_Unknown ? "(unknown)" :
+                        debugstr_w(xml_encoding_map[enc].name), hr);
                 if (FAILED(hr)) return hr;
 
                 /* always switch first time cause we have to put something in */
