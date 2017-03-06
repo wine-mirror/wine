@@ -3079,8 +3079,9 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
 {
     struct wined3d_state *state = &device->state;
     struct wined3d_stream_info stream_info;
-    const struct wined3d_gl_info *gl_info;
+    struct wined3d_resource *resource;
     struct wined3d_context *context;
+    struct wined3d_box box = {0};
     struct wined3d_shader *vs;
     unsigned int i;
     HRESULT hr;
@@ -3094,13 +3095,11 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     if (declaration)
         FIXME("Output vertex declaration not implemented yet.\n");
 
-    /* Need any context to write to the vbo. */
-    context = context_acquire(device, NULL, 0);
-    gl_info = context->gl_info;
-
     vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;
+    context = context_acquire(device, NULL, 0);
     context_stream_info_from_declaration(context, state, &stream_info);
+    context_release(context);
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = vs;
 
     /* We can't convert FROM a VBO, and vertex buffers used to source into
@@ -3111,29 +3110,33 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     for (i = 0, map = stream_info.use_map; map; map >>= 1, ++i)
     {
         struct wined3d_stream_info_element *e;
-        struct wined3d_buffer *buffer;
+        struct wined3d_map_desc map_desc;
 
         if (!(map & 1))
             continue;
 
         e = &stream_info.elements[i];
-        buffer = state->streams[e->stream_idx].buffer;
+        resource = &state->streams[e->stream_idx].buffer->resource;
+        box.left = src_start_idx * e->stride;
+        box.right = box.left + vertex_count * e->stride;
+        if (FAILED(wined3d_resource_map(resource, 0, &map_desc, &box, WINED3D_MAP_READONLY)))
+            ERR("Failed to map resource.\n");
         e->data.buffer_object = 0;
-        e->data.addr += (ULONG_PTR)wined3d_buffer_load_sysmem(buffer, context);
-        if (buffer->buffer_object)
-        {
-            GL_EXTCALL(glDeleteBuffers(1, &buffer->buffer_object));
-            buffer->buffer_object = 0;
-            wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_BUFFER);
-        }
-        if (e->data.addr)
-            e->data.addr += e->stride * src_start_idx;
+        e->data.addr += (ULONG_PTR)map_desc.data;
     }
 
     hr = process_vertices_strided(device, dst_idx, vertex_count,
             &stream_info, dst_buffer, flags, dst_fvf);
 
-    context_release(context);
+    for (i = 0, map = stream_info.use_map; map; map >>= 1, ++i)
+    {
+        if (!(map & 1))
+            continue;
+
+        resource = &state->streams[stream_info.elements[i].stream_idx].buffer->resource;
+        if (FAILED(wined3d_resource_unmap(resource, 0)))
+            ERR("Failed to unmap resource.\n");
+    }
 
     return hr;
 }
