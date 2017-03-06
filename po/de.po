@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2016-11-22 12:35+0100\n"
+"PO-Revision-Date: 2017-03-06 16:05+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -8376,10 +8376,8 @@ msgid "Wine Control Panel"
 msgstr "Wine-Systemsteuerung"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
-msgstr "Konnte Ausführen-Dialog nicht anzeigen (interner Fehler)"
+msgstr "Ausführen-Dialog konnte nicht angezeigt werden (interner Fehler)"
 
 #: shell32.rc:196
 msgid "Unable to display Browse dialog box (internal error)"
@@ -9398,10 +9396,8 @@ msgid "Confidentiality Required"
 msgstr "Vertraulichkeit erforderlich"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Herunterfahren im Gange.\n"
+msgstr "SASL-Bindung im Gange"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -11980,67 +11976,57 @@ msgid "(unknown %d)"
 msgstr "(unbekannt %d)"
 
 #: regedit.rc:214
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Der ausgewählte Wert konnte nicht geändert werden."
 
 #: regedit.rc:215
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Es konnte kein neuer Schlüssel angelegt werden."
 
 #: regedit.rc:216
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Es konnte kein neuer Wert angelegt werden."
 
 #: regedit.rc:217
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"Der Schlüssel '%1' konnte nicht umbenannt werden.\n"
+"Der angegebene Schlüsselname ist bereits vorhanden."
 
 #: regedit.rc:218
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"Der Wert '%1' konnte nicht umbenannt werden.\n"
+"Der angegebene Name ist bereits vorhanden."
 
 #: regedit.rc:219
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Der ausgewählte Schlüssel konnte nicht gelöscht werden."
 
 #: regedit.rc:220
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Der ausgewählte Schlüssel konnte nicht umbenannt werden."
 
 #: regedit.rc:221
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Der ausgewählte Wert konnte nicht umbenannt werden."
 
 #: regedit.rc:222
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
+"Die in %1 enthaltenen Schlüssel und Werte wurden erfolgreich zur "
+"Registrierung hinzugefügt."
 
 #: regedit.rc:223
-#, fuzzy
-#| msgid ""
-#| "regedit: Unable to export '%1'. The specified registry key was not "
-#| "found.\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"regedit: '%1' konnte nicht exportiert werden. Der angegebene Schlüssel wurde "
-"nicht gefunden.\n"
+"%1 konnte nicht importiert werden. Die angegebene Datei ist keine gültige "
+"Registrierungsdatei."
 
 #: regedit.rc:375
 msgid ""
@@ -12274,32 +12260,24 @@ msgid "Displays program information, version number and copyright"
 msgstr "Zeigt Programminformationen, Version und Copyright an"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Der Wert '%1' konnte nicht abgefragt werden."
 
 #: regedit.rc:182
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "Schlüssel von diesem Typ (%u) können nicht geändert werden"
+msgstr "Schlüssel von diesem Typ (%1!u!) können nicht bearbeitet werden."
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "Der Wert ist zu groß (%u)"
+msgstr "Der Wert ist zu groß (%1!u!)."
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
-msgstr "Bitte bestätigen"
+msgstr "Löschen des Wertes bestätigen"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Suchfolge '%s' wurde nicht gefunden"
+msgstr "Suche abgeschlossen. Die Zeichenfolge '%1' wurde nicht gefunden."
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"
@@ -12314,10 +12292,8 @@ msgid "New Value #%d"
 msgstr "Neuer Wert #%d"
 
 #: regedit.rc:180
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "Der Schlüssel '%1' konnte nicht abgefragt werden."
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
@@ -12325,20 +12301,18 @@ msgstr "Fügt eine neue mehrteilige Zeichenfolge hinzu"
 
 #: regedit.rc:174
 msgid "Exports selected branch of the registry to a text file"
-msgstr "Exportiert den ausgewählten Zweig der Registry in eine Textdatei"
+msgstr "Exportiert den ausgewählten Zweig der Registrierung in eine Textdatei"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Bitte bestätigen"
+msgstr "Löschen des Schlüssels bestätigen"
 
 #: regedit.rc:188
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "Sind Sie sicher, dass Sie den Schlüssel '%1' löschen möchten?"
+msgstr ""
+"Sind Sie sicher, dass Sie den Schlüssel '%1' und alle Unterschlüssel löschen "
+"möchten?"
 
 #: regsvr32.rc:32
 msgid ""
