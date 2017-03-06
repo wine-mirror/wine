@@ -72,6 +72,49 @@
 #define WINED3D_QUIRK_LIMITED_TEX_FILTERING     0x00000100
 #define WINED3D_QUIRK_BROKEN_ARB_FOG            0x00000200
 
+enum wined3d_ffp_idx
+{
+    WINED3D_FFP_POSITION = 0,
+    WINED3D_FFP_BLENDWEIGHT = 1,
+    WINED3D_FFP_BLENDINDICES = 2,
+    WINED3D_FFP_NORMAL = 3,
+    WINED3D_FFP_PSIZE = 4,
+    WINED3D_FFP_DIFFUSE = 5,
+    WINED3D_FFP_SPECULAR = 6,
+    WINED3D_FFP_TEXCOORD0 = 7,
+    WINED3D_FFP_TEXCOORD1 = 8,
+    WINED3D_FFP_TEXCOORD2 = 9,
+    WINED3D_FFP_TEXCOORD3 = 10,
+    WINED3D_FFP_TEXCOORD4 = 11,
+    WINED3D_FFP_TEXCOORD5 = 12,
+    WINED3D_FFP_TEXCOORD6 = 13,
+    WINED3D_FFP_TEXCOORD7 = 14,
+    WINED3D_FFP_ATTRIBS_COUNT = 15,
+};
+
+enum wined3d_ffp_emit_idx
+{
+    WINED3D_FFP_EMIT_FLOAT1,
+    WINED3D_FFP_EMIT_FLOAT2,
+    WINED3D_FFP_EMIT_FLOAT3,
+    WINED3D_FFP_EMIT_FLOAT4,
+    WINED3D_FFP_EMIT_D3DCOLOR,
+    WINED3D_FFP_EMIT_UBYTE4,
+    WINED3D_FFP_EMIT_SHORT2,
+    WINED3D_FFP_EMIT_SHORT4,
+    WINED3D_FFP_EMIT_UBYTE4N,
+    WINED3D_FFP_EMIT_SHORT2N,
+    WINED3D_FFP_EMIT_SHORT4N,
+    WINED3D_FFP_EMIT_USHORT2N,
+    WINED3D_FFP_EMIT_USHORT4N,
+    WINED3D_FFP_EMIT_UDEC3,
+    WINED3D_FFP_EMIT_DEC3N,
+    WINED3D_FFP_EMIT_FLOAT16_2,
+    WINED3D_FFP_EMIT_FLOAT16_4,
+    WINED3D_FFP_EMIT_INVALID,
+    WINED3D_FFP_EMIT_COUNT,
+};
+
 /* Texture format fixups */
 
 enum fixup_channel_source
@@ -109,6 +152,47 @@ struct color_fixup_desc
     unsigned short w_source : 3;
 };
 #include <poppack.h>
+
+struct wined3d_d3d_limits
+{
+    unsigned int vs_version, hs_version, ds_version, gs_version, ps_version, cs_version;
+    DWORD vs_uniform_count;
+    DWORD ps_uniform_count;
+    unsigned int varying_count;
+    unsigned int ffp_textures;
+    unsigned int ffp_blend_stages;
+    unsigned int ffp_vertex_blend_matrices;
+    unsigned int active_light_count;
+};
+
+typedef void (WINE_GLAPI *wined3d_ffp_attrib_func)(const void *data);
+typedef void (WINE_GLAPI *wined3d_ffp_texcoord_func)(GLenum unit, const void *data);
+typedef void (WINE_GLAPI *wined3d_generic_attrib_func)(GLuint idx, const void *data);
+extern wined3d_ffp_attrib_func specular_func_3ubv DECLSPEC_HIDDEN;
+
+struct wined3d_ffp_attrib_ops
+{
+    wined3d_ffp_attrib_func position[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_attrib_func diffuse[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_attrib_func specular[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_attrib_func normal[WINED3D_FFP_EMIT_COUNT];
+    wined3d_ffp_texcoord_func texcoord[WINED3D_FFP_EMIT_COUNT];
+    wined3d_generic_attrib_func generic[WINED3D_FFP_EMIT_COUNT];
+};
+
+struct wined3d_d3d_info
+{
+    struct wined3d_d3d_limits limits;
+    struct wined3d_ffp_attrib_ops ffp_attrib_ops;
+    BOOL xyzrhw;
+    BOOL emulated_flatshading;
+    BOOL ffp_generic_attributes;
+    BOOL vs_clipping;
+    BOOL shader_color_key;
+    DWORD valid_rt_mask;
+    DWORD wined3d_creation_flags;
+    BOOL shader_double_precision;
+};
 
 static const struct color_fixup_desc COLOR_FIXUP_IDENTITY =
         {0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W};
@@ -1288,49 +1372,6 @@ do {                                                                \
 #define checkGLcall(A) do {} while(0)
 #endif
 
-enum wined3d_ffp_idx
-{
-    WINED3D_FFP_POSITION = 0,
-    WINED3D_FFP_BLENDWEIGHT = 1,
-    WINED3D_FFP_BLENDINDICES = 2,
-    WINED3D_FFP_NORMAL = 3,
-    WINED3D_FFP_PSIZE = 4,
-    WINED3D_FFP_DIFFUSE = 5,
-    WINED3D_FFP_SPECULAR = 6,
-    WINED3D_FFP_TEXCOORD0 = 7,
-    WINED3D_FFP_TEXCOORD1 = 8,
-    WINED3D_FFP_TEXCOORD2 = 9,
-    WINED3D_FFP_TEXCOORD3 = 10,
-    WINED3D_FFP_TEXCOORD4 = 11,
-    WINED3D_FFP_TEXCOORD5 = 12,
-    WINED3D_FFP_TEXCOORD6 = 13,
-    WINED3D_FFP_TEXCOORD7 = 14,
-    WINED3D_FFP_ATTRIBS_COUNT = 15,
-};
-
-enum wined3d_ffp_emit_idx
-{
-    WINED3D_FFP_EMIT_FLOAT1,
-    WINED3D_FFP_EMIT_FLOAT2,
-    WINED3D_FFP_EMIT_FLOAT3,
-    WINED3D_FFP_EMIT_FLOAT4,
-    WINED3D_FFP_EMIT_D3DCOLOR,
-    WINED3D_FFP_EMIT_UBYTE4,
-    WINED3D_FFP_EMIT_SHORT2,
-    WINED3D_FFP_EMIT_SHORT4,
-    WINED3D_FFP_EMIT_UBYTE4N,
-    WINED3D_FFP_EMIT_SHORT2N,
-    WINED3D_FFP_EMIT_SHORT4N,
-    WINED3D_FFP_EMIT_USHORT2N,
-    WINED3D_FFP_EMIT_USHORT4N,
-    WINED3D_FFP_EMIT_UDEC3,
-    WINED3D_FFP_EMIT_DEC3N,
-    WINED3D_FFP_EMIT_FLOAT16_2,
-    WINED3D_FFP_EMIT_FLOAT16_4,
-    WINED3D_FFP_EMIT_INVALID,
-    WINED3D_FFP_EMIT_COUNT
-};
-
 struct wined3d_bo_address
 {
     GLuint buffer_object;
@@ -1365,6 +1406,10 @@ struct wined3d_stream_info
     WORD swizzle_map; /* MAX_ATTRIBS, 16 */
     WORD use_map; /* MAX_ATTRIBS, 16 */
 };
+
+void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_info,
+        const struct wined3d_state *state, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
 
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
         int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
@@ -1887,8 +1932,6 @@ void context_state_drawbuf(struct wined3d_context *context,
 void context_state_fb(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void context_surface_update(struct wined3d_context *context, const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
-void context_stream_info_from_declaration(struct wined3d_context *context,
-        const struct wined3d_state *state, struct wined3d_stream_info *stream_info) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Internal representation of a light
@@ -2285,47 +2328,6 @@ struct wined3d_driver_info
     UINT64 vram_bytes;
     DWORD version_high;
     DWORD version_low;
-};
-
-struct wined3d_d3d_limits
-{
-    unsigned int vs_version, hs_version, ds_version, gs_version, ps_version, cs_version;
-    DWORD vs_uniform_count;
-    DWORD ps_uniform_count;
-    UINT varying_count;
-    UINT ffp_textures;
-    UINT ffp_blend_stages;
-    UINT ffp_vertex_blend_matrices;
-    unsigned int active_light_count;
-};
-
-typedef void (WINE_GLAPI *wined3d_ffp_attrib_func)(const void *data);
-typedef void (WINE_GLAPI *wined3d_ffp_texcoord_func)(GLenum unit, const void *data);
-typedef void (WINE_GLAPI *wined3d_generic_attrib_func)(GLuint idx, const void *data);
-extern wined3d_ffp_attrib_func specular_func_3ubv DECLSPEC_HIDDEN;
-
-struct wined3d_ffp_attrib_ops
-{
-    wined3d_ffp_attrib_func position[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_attrib_func diffuse[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_attrib_func specular[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_attrib_func normal[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_texcoord_func texcoord[WINED3D_FFP_EMIT_COUNT];
-    wined3d_generic_attrib_func generic[WINED3D_FFP_EMIT_COUNT];
-};
-
-struct wined3d_d3d_info
-{
-    struct wined3d_d3d_limits limits;
-    struct wined3d_ffp_attrib_ops ffp_attrib_ops;
-    BOOL xyzrhw;
-    BOOL emulated_flatshading;
-    BOOL ffp_generic_attributes;
-    BOOL vs_clipping;
-    BOOL shader_color_key;
-    DWORD valid_rt_mask;
-    DWORD wined3d_creation_flags;
-    BOOL shader_double_precision;
 };
 
 /* The adapter structure */

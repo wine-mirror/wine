@@ -3045,12 +3045,13 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
 }
 
 /* Context activation is done by the caller. */
-void context_stream_info_from_declaration(struct wined3d_context *context,
-        const struct wined3d_state *state, struct wined3d_stream_info *stream_info)
+void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_info,
+        const struct wined3d_state *state, const struct wined3d_gl_info *gl_info,
+        const struct wined3d_d3d_info *d3d_info)
 {
     /* We need to deal with frequency data! */
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
-    BOOL generic_attributes = context->d3d_info->ffp_generic_attributes;
+    BOOL generic_attributes = d3d_info->ffp_generic_attributes;
     BOOL use_vshader = use_vs(state);
     unsigned int i;
 
@@ -3142,7 +3143,7 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
                 stream_info->elements[idx].divisor = 0;
             }
 
-            if (!context->gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
+            if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                     && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)
             {
                 stream_info->swizzle_map |= 1u << idx;
@@ -3162,7 +3163,7 @@ static void context_update_stream_info(struct wined3d_context *context, const st
     unsigned int i;
     WORD map;
 
-    context_stream_info_from_declaration(context, state, stream_info);
+    wined3d_stream_info_from_declaration(stream_info, state, gl_info, d3d_info);
 
     stream_info->all_vbo = 1;
     context->num_buffer_queries = 0;
@@ -3510,7 +3511,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context,
     context_load_unordered_access_resources(context, state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
     /* TODO: Right now the dependency on the vertex shader is necessary
-     * since context_stream_info_from_declaration depends on the reg_maps of
+     * since wined3d_stream_info_from_declaration() depends on the reg_maps of
      * the current VS but maybe it's possible to relax the coupling in some
      * situations at least. */
     if (isStateDirty(context, STATE_VDECL) || isStateDirty(context, STATE_STREAMSRC)

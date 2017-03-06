@@ -3080,7 +3080,6 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     struct wined3d_state *state = &device->state;
     struct wined3d_stream_info stream_info;
     struct wined3d_resource *resource;
-    struct wined3d_context *context;
     struct wined3d_box box = {0};
     struct wined3d_shader *vs;
     unsigned int i;
@@ -3097,9 +3096,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
 
     vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;
-    context = context_acquire(device, NULL, 0);
-    context_stream_info_from_declaration(context, state, &stream_info);
-    context_release(context);
+    wined3d_stream_info_from_declaration(&stream_info, state, &device->adapter->gl_info, &device->adapter->d3d_info);
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = vs;
 
     /* We can't convert FROM a VBO, and vertex buffers used to source into
