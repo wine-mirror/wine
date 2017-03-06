@@ -1027,11 +1027,11 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
     }
 }
 
-static BOOL surface_check_block_align_rect(struct wined3d_surface *surface, const RECT *rect)
+static BOOL wined3d_surface_check_rect_dimensions(struct wined3d_surface *surface, const RECT *rect)
 {
     struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
 
-    return wined3d_texture_check_block_align(surface->container, surface->texture_level, &box);
+    return SUCCEEDED(wined3d_texture_check_box_dimensions(surface->container, surface->texture_level, &box));
 }
 
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
@@ -1044,12 +1044,10 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     unsigned int src_row_pitch, src_slice_pitch;
     const struct wined3d_format *src_format;
     const struct wined3d_format *dst_format;
-    unsigned int src_fmt_flags, dst_fmt_flags;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_bo_address data;
     UINT update_w, update_h;
-    UINT dst_w, dst_h;
     RECT r, dst_rect;
     POINT p;
 
@@ -1059,8 +1057,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 
     src_format = src_texture->resource.format;
     dst_format = dst_texture->resource.format;
-    src_fmt_flags = src_texture->resource.format_flags;
-    dst_fmt_flags = dst_texture->resource.format_flags;
 
     if (src_format->id != dst_format->id)
     {
@@ -1086,33 +1082,17 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
                 wined3d_texture_get_level_height(src_texture, src_surface->texture_level));
         src_rect = &r;
     }
-    else if (src_rect->left < 0 || src_rect->top < 0 || IsRectEmpty(src_rect))
-    {
-        WARN("Invalid source rectangle.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
-    dst_w = wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level);
-    dst_h = wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level);
-
-    update_w = src_rect->right - src_rect->left;
-    update_h = src_rect->bottom - src_rect->top;
-
-    if (update_w > dst_w || dst_point->x > dst_w - update_w
-            || update_h > dst_h || dst_point->y > dst_h - update_h)
-    {
-        WARN("Destination out of bounds.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if ((src_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align_rect(src_surface, src_rect))
+    if (!wined3d_surface_check_rect_dimensions(src_surface, src_rect))
     {
         WARN("Source rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
+    update_w = src_rect->right - src_rect->left;
+    update_h = src_rect->bottom - src_rect->top;
     SetRect(&dst_rect, dst_point->x, dst_point->y, dst_point->x + update_w, dst_point->y + update_h);
-    if ((dst_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align_rect(dst_surface, &dst_rect))
+    if (!wined3d_surface_check_rect_dimensions(dst_surface, &dst_rect))
     {
         WARN("Destination rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
@@ -1128,7 +1108,8 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     /* Only load the surface for partial updates. For newly allocated texture
      * the texture wouldn't be the current location, and we'd upload zeroes
      * just to overwrite them again. */
-    if (update_w == dst_w && update_h == dst_h)
+    if (update_w == wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level)
+            && update_h == wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level))
         wined3d_texture_prepare_texture(dst_texture, context, FALSE);
     else
         wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
@@ -3613,10 +3594,10 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     struct wined3d_texture *src_texture = NULL;
-    unsigned int dst_w, dst_h, src_w, src_h;
     unsigned int src_sub_resource_idx = 0;
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
+    HRESULT hr;
 
     static const DWORD simple_blit = WINED3D_BLT_ASYNC
             | WINED3D_BLT_COLOR_FILL
@@ -3657,46 +3638,12 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         return WINEDDERR_SURFACEBUSY;
     }
 
-    dst_w = wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level);
-    dst_h = wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level);
-    if (IsRectEmpty(dst_rect) || dst_rect->left > dst_w || dst_rect->left < 0
-            || dst_rect->top > dst_h || dst_rect->top < 0
-            || dst_rect->right > dst_w || dst_rect->right < 0
-            || dst_rect->bottom > dst_h || dst_rect->bottom < 0)
-    {
-        WARN("The application gave us a bad destination rectangle.\n");
-        return WINEDDERR_INVALIDRECT;
-    }
+    if (FAILED(hr = wined3d_texture_check_box_dimensions(dst_texture, dst_surface->texture_level, &dst_box)))
+        return hr;
 
-    if ((dst_texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
-            && !wined3d_texture_check_block_align(dst_texture,
-            dst_sub_resource_idx % dst_texture->level_count, &dst_box))
-    {
-        WARN("Destination rectangle not block-aligned.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (src_texture)
-    {
-        src_w = wined3d_texture_get_level_width(src_texture, src_surface->texture_level);
-        src_h = wined3d_texture_get_level_height(src_texture, src_surface->texture_level);
-        if (IsRectEmpty(src_rect) || src_rect->left > src_w || src_rect->left < 0
-                || src_rect->top > src_h || src_rect->top < 0
-                || src_rect->right > src_w || src_rect->right < 0
-                || src_rect->bottom > src_h || src_rect->bottom < 0)
-        {
-            WARN("The application gave us a bad source rectangle.\n");
-            return WINEDDERR_INVALIDRECT;
-        }
-
-        if ((src_texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
-                && !wined3d_texture_check_block_align(src_texture,
-                src_sub_resource_idx % src_texture->level_count, &src_box))
-        {
-            WARN("Source rectangle not block-aligned.\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-    }
+    if (src_texture && FAILED(hr = wined3d_texture_check_box_dimensions(src_texture,
+            src_surface->texture_level, &src_box)))
+        return hr;
 
     if (!fx || !(fx->fx))
         flags &= ~WINED3D_BLT_FX;

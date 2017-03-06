@@ -1063,20 +1063,44 @@ void * CDECL wined3d_texture_get_parent(const struct wined3d_texture *texture)
     return texture->resource.parent;
 }
 
-static BOOL wined3d_texture_check_box_dimensions(const struct wined3d_texture *texture,
+HRESULT wined3d_texture_check_box_dimensions(const struct wined3d_texture *texture,
         unsigned int level, const struct wined3d_box *box)
 {
-    if (box->left >= box->right
-            || box->top >= box->bottom
-            || box->front >= box->back)
-        return FALSE;
+    const struct wined3d_format *format = texture->resource.format;
+    unsigned int width_mask, height_mask, width, height, depth;
 
-    if (box->right > wined3d_texture_get_level_width(texture, level)
-            || box->bottom > wined3d_texture_get_level_height(texture, level)
-            || box->back > wined3d_texture_get_level_depth(texture, level))
-        return FALSE;
+    width = wined3d_texture_get_level_width(texture, level);
+    height = wined3d_texture_get_level_height(texture, level);
+    depth = wined3d_texture_get_level_depth(texture, level);
 
-    return TRUE;
+    if (box->left >= box->right || box->right > width
+            || box->top >= box->bottom || box->bottom > height
+            || box->front >= box->back || box->back > depth)
+    {
+        WARN("Box %s is invalid.\n", debug_box(box));
+        return WINEDDERR_INVALIDRECT;
+    }
+
+    if (texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+    {
+        /* This assumes power of two block sizes, but NPOT block sizes would
+         * be silly anyway.
+         *
+         * This also assumes that the format's block depth is 1. */
+        width_mask = format->block_width - 1;
+        height_mask = format->block_height - 1;
+
+        if ((box->left & width_mask) || (box->top & height_mask)
+                || (box->right & width_mask && box->right != width)
+                || (box->bottom & height_mask && box->bottom != height))
+        {
+            WARN("Box %s is misaligned for %ux%u blocks.\n",
+                    debug_box(box), format->block_width, format->block_height);
+            return WINED3DERR_INVALIDCALL;
+        }
+    }
+
+    return WINED3D_OK;
 }
 
 void CDECL wined3d_texture_get_pitch(const struct wined3d_texture *texture,
@@ -1788,19 +1812,11 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         return E_INVALIDARG;
 
     texture_level = sub_resource_idx % texture->level_count;
-    if (box && !wined3d_texture_check_box_dimensions(texture, texture_level, box))
+    if (box && FAILED(wined3d_texture_check_box_dimensions(texture, texture_level, box)))
     {
         WARN("Map box is invalid.\n");
-        if (resource->type != WINED3D_RTYPE_TEXTURE_2D)
-            return WINED3DERR_INVALIDCALL;
-    }
-
-    if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && box
-            && !wined3d_texture_check_block_align(texture, texture_level, box))
-    {
-        WARN("Map box %s is misaligned for %ux%u blocks.\n",
-                debug_box(box), format->block_width, format->block_height);
-        if (resource->type != WINED3D_RTYPE_TEXTURE_2D || resource->pool == WINED3D_POOL_DEFAULT)
+        if (((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && resource->pool == WINED3D_POOL_DEFAULT)
+                || resource->type != WINED3D_RTYPE_TEXTURE_2D)
             return WINED3DERR_INVALIDCALL;
     }
 
@@ -2482,35 +2498,6 @@ static const struct wined3d_texture_ops texture3d_ops =
     texture3d_prepare_texture,
     texture3d_cleanup_sub_resources,
 };
-
-BOOL wined3d_texture_check_block_align(const struct wined3d_texture *texture,
-        unsigned int level, const struct wined3d_box *box)
-{
-    const struct wined3d_format *format = texture->resource.format;
-    unsigned int height = wined3d_texture_get_level_height(texture, level);
-    unsigned int width = wined3d_texture_get_level_width(texture, level);
-    unsigned int width_mask, height_mask;
-
-    if ((box->left >= box->right)
-            || (box->top >= box->bottom)
-            || (box->right > width)
-            || (box->bottom > height))
-        return FALSE;
-
-    /* This assumes power of two block sizes, but NPOT block sizes would be
-     * silly anyway.
-     *
-     * This also assumes that the format's block depth is 1. */
-    width_mask = format->block_width - 1;
-    height_mask = format->block_height - 1;
-
-    if ((box->left & width_mask) || (box->top & height_mask)
-            || (box->right & width_mask && box->right != width)
-            || (box->bottom & height_mask && box->bottom != height))
-        return FALSE;
-
-    return TRUE;
-}
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
         UINT layer_count, UINT level_count, struct wined3d_device *device, void *parent,
