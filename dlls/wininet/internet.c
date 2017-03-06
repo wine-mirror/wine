@@ -1182,11 +1182,7 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
 {
     TRACE("(%p, 0x%08x)\n", lpdwStatus, dwReserved);
 
-    if (lpdwStatus) {
-	WARN("always returning LAN connection.\n");
-	*lpdwStatus = INTERNET_CONNECTION_LAN;
-    }
-    return TRUE;
+    return InternetGetConnectedStateExW(lpdwStatus, NULL, 0, dwReserved);
 }
 
 
