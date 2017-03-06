@@ -664,7 +664,6 @@ static void test_GetFileVersionInfoEx(void)
     todo_wine_if(lang != english)
     ok(LOWORD(translation) == lang, "got %u, expected lang is %u\n",
        LOWORD(translation), lang);
-    todo_wine
     ok(HIWORD(translation) == unicode, "got %u, expected codepage is %u\n",
        HIWORD(translation), unicode);
 
@@ -706,7 +705,6 @@ static void test_GetFileVersionInfoEx(void)
         else
             ok(LOWORD(translation) == english, "[%u] got %u, expected lang is %u\n",
                i, LOWORD(translation), english);
-        todo_wine
         ok(HIWORD(translation) == unicode, "[%u] got %u, expected codepage is %u\n",
            i, HIWORD(translation), unicode);
 
