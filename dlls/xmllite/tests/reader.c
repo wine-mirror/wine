@@ -904,8 +904,7 @@ todo_wine
     hr = IXmlReader_Read(reader, &type);
 todo_wine
     ok(hr == WC_E_SYNTAX || hr == WC_E_XMLCHARACTER /* XP */, "expected WC_E_SYNTAX, got %08x\n", hr);
-todo_wine
-    ok(type == XmlNodeType_None, "expected None, got %s\n", type_to_str(type));
+    ok(type == XmlNodeType_None, "expected XmlNodeType_None, got %s\n", type_to_str(type));
     ok_pos(reader, 1, 41, -1, -1, TRUE);
     test_read_state(reader, XmlReadState_Error, -1, TRUE);
 
@@ -2065,7 +2064,6 @@ static void test_namespaceuri(void)
 
             j++;
         }
-    todo_wine
         ok(type == XmlNodeType_None, "Unexpected node type %d\n", type);
 
         IStream_Release(stream);

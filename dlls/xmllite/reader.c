@@ -2552,7 +2552,10 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
             if (FAILED(hr)) return hr;
 
             if (hr == S_FALSE)
+            {
                 reader->instate = XmlReadInState_Eof;
+                reader->nodetype = XmlNodeType_None;
+            }
             return hr;
         case XmlReadInState_Eof:
             return S_FALSE;
