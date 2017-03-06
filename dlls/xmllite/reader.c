@@ -2554,6 +2554,7 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
             if (hr == S_FALSE)
             {
                 reader->instate = XmlReadInState_Eof;
+                reader->state = XmlReadState_EndOfFile;
                 reader->nodetype = XmlNodeType_None;
             }
             return hr;
@@ -3171,8 +3172,9 @@ static HRESULT WINAPI xmlreader_GetDepth(IXmlReader* iface, UINT *depth)
 
 static BOOL WINAPI xmlreader_IsEOF(IXmlReader* iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return FALSE;
+    xmlreader *This = impl_from_IXmlReader(iface);
+    TRACE("(%p)\n", iface);
+    return This->state == XmlReadState_EndOfFile;
 }
 
 static const struct IXmlReaderVtbl xmlreader_vtbl =

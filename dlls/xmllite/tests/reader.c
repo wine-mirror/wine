@@ -2173,6 +2173,61 @@ static void test_encoding_detection(void)
     IXmlReader_Release(reader);
 }
 
+static void test_eof_state(IXmlReader *reader, BOOL eof)
+{
+    LONG_PTR state;
+    HRESULT hr;
+
+    ok(IXmlReader_IsEOF(reader) == eof, "Unexpected IsEOF() result\n");
+    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, &state);
+    ok(hr == S_OK, "GetProperty() failed, %#x\n", hr);
+    ok((state == XmlReadState_EndOfFile) == eof, "Unexpected EndOfFile state %ld\n", state);
+}
+
+static void test_endoffile(void)
+{
+    static const char *xml = "<a/>";
+    IXmlReader *reader;
+    XmlNodeType type;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    test_eof_state(reader, FALSE);
+
+    stream = create_stream_on_data(xml, strlen(xml));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    test_eof_state(reader, FALSE);
+
+    type = XmlNodeType_None;
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(type == XmlNodeType_Element, "Unexpected type %d\n", type);
+
+    test_eof_state(reader, FALSE);
+
+    type = XmlNodeType_Element;
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_FALSE, "got %#x\n", hr);
+    ok(type == XmlNodeType_None, "Unexpected type %d\n", type);
+
+    test_eof_state(reader, TRUE);
+
+    hr = IXmlReader_SetInput(reader, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    test_eof_state(reader, FALSE);
+
+    IStream_Release(stream);
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     test_reader_create();
@@ -2196,4 +2251,5 @@ START_TEST(reader)
     test_namespaceuri();
     test_read_charref();
     test_encoding_detection();
+    test_endoffile();
 }
