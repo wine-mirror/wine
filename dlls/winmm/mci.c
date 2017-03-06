@@ -2063,13 +2063,18 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
  */
 static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
 {
+    DWORD dwRet;
+
     if (lpParms == NULL)
         return MCIERR_NULL_PARAMETER_BLOCK;
-    FIXME("(%04x) vkey %04X stub\n", dwFlags, lpParms->nVirtKey);
 
-    if (dwFlags & MCI_NOTIFY)
+    TRACE("(%08x, %08X, vkey %04X, hwnd %p)\n", wDevID, dwFlags,
+          lpParms->nVirtKey, lpParms->hwndBreak);
+
+    dwRet = MCI_SendCommandFrom32(wDevID, MCI_BREAK, dwFlags, (DWORD_PTR)lpParms);
+    if (!dwRet && (dwFlags & MCI_NOTIFY))
         mciDriverNotify((HWND)lpParms->dwCallback, wDevID, MCI_NOTIFY_SUCCESSFUL);
-    return MMSYSERR_NOERROR;
+    return dwRet;
 }
 
 /**************************************************************************
