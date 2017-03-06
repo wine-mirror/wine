@@ -755,6 +755,11 @@ static void test_read_xmldeclaration(void)
     ok_pos(reader, 1, 3, -1, 55, TRUE);
     test_read_state(reader, XmlReadState_Interactive, -1, FALSE);
 
+    count = 1;
+    hr = IXmlReader_GetDepth(reader, &count);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(count == 0, "Expected 1, got %d\n", count);
+
     hr = IXmlReader_GetValue(reader, &val, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
@@ -762,6 +767,11 @@ static void test_read_xmldeclaration(void)
     /* check attributes */
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    count = 0;
+    hr = IXmlReader_GetDepth(reader, &count);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(count == 1, "Expected 1, got %d\n", count);
 
     type = XmlNodeType_None;
     hr = IXmlReader_GetNodeType(reader, &type);
@@ -812,6 +822,7 @@ static void test_read_xmldeclaration(void)
         ok(hr == ((i < count - 1) ? S_OK : S_FALSE), "got %08x\n", hr);
     }
 
+    count = 0;
     hr = IXmlReader_GetDepth(reader, &count);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(count == 1, "Expected 1, got %d\n", count);
@@ -845,7 +856,7 @@ todo_wine {
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_XmlDeclaration, "expected XmlDeclaration, got %s\n", type_to_str(type));
     ok_pos(reader, 1, 3, 1, 21, TRUE);
-    test_read_state(reader, XmlReadState_Interactive, -1, TRUE);
+    test_read_state(reader, XmlReadState_Interactive, -1, FALSE);
 
     hr = IXmlReader_GetAttributeCount(reader, &count);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
@@ -882,7 +893,7 @@ todo_wine
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_Element, "expected Element, got %s\n", type_to_str(type));
     ok_pos(reader, 1, 23, 1, 40, TRUE);
-    test_read_state(reader, XmlReadState_Interactive, -1, TRUE);
+    test_read_state(reader, XmlReadState_Interactive, -1, FALSE);
 
     hr = IXmlReader_GetAttributeCount(reader, &count);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
@@ -1368,11 +1379,20 @@ static struct test_entry element_tests[] = {
 static void test_read_element(void)
 {
     struct test_entry *test = element_tests;
-    static const char stag[] = "<a><b></b></a>";
+    static const char stag[] =
+         "<a attr1=\"_a\">"
+             "<b attr2=\"_b\">"
+                 "text"
+                 "<c attr3=\"_c\"/>"
+                 "<d attr4=\"_d\"></d>"
+             "</b>"
+         "</a>";
+    static const UINT depths[] = { 0, 1, 2, 2, 2, 3, 2, 1 };
     static const char mismatch[] = "<a></b>";
     IXmlReader *reader;
     XmlNodeType type;
     IStream *stream;
+    unsigned int i;
     UINT depth;
     HRESULT hr;
 
@@ -1424,56 +1444,50 @@ static void test_read_element(void)
 
     /* test reader depth increment */
     stream = create_stream_on_data(stag, sizeof(stag));
-    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    depth = 1;
-    hr = IXmlReader_GetDepth(reader, &depth);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(depth == 0, "got %d\n", depth);
+    i = 0;
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        ok(type == XmlNodeType_Element || type == XmlNodeType_EndElement ||
+                type == XmlNodeType_Text, "Unexpected node type %d\n", type);
 
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_Element, "got %d\n", type);
+        depth = 123;
+        hr = IXmlReader_GetDepth(reader, &depth);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(depth == depths[i], "%u: got depth %u, expected %u\n", i, depth, depths[i]);
 
-    depth = 1;
-    hr = IXmlReader_GetDepth(reader, &depth);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(depth == 0, "got %d\n", depth);
+        if (type == XmlNodeType_Element)
+        {
+            UINT count = 0;
 
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_Element, "got %d\n", type);
+            hr = IXmlReader_GetAttributeCount(reader, &count);
+            ok(hr == S_OK, "got %08x\n", hr);
 
-    depth = 0;
-    hr = IXmlReader_GetDepth(reader, &depth);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(depth == 1, "got %d\n", depth);
+            /* moving to attributes increases depth */
+            if (count)
+            {
+                hr = IXmlReader_MoveToFirstAttribute(reader);
+                ok(hr == S_OK, "got %08x\n", hr);
 
-    /* read end tag for inner element */
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_EndElement, "got %d\n", type);
+                depth = 123;
+                hr = IXmlReader_GetDepth(reader, &depth);
+                ok(hr == S_OK, "got %08x\n", hr);
+                ok(depth == depths[i] + 1, "%u: got depth %u, expected %u\n", i, depth, depths[i] + 1);
 
-    depth = 0;
-    hr = IXmlReader_GetDepth(reader, &depth);
-    ok(hr == S_OK, "got %08x\n", hr);
-todo_wine
-    ok(depth == 2, "got %d\n", depth);
+                hr = IXmlReader_MoveToElement(reader);
+                ok(hr == S_OK, "got %08x\n", hr);
 
-    /* read end tag for container element */
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_EndElement, "got %d\n", type);
+                depth = 123;
+                hr = IXmlReader_GetDepth(reader, &depth);
+                ok(hr == S_OK, "got %08x\n", hr);
+                ok(depth == depths[i], "%u: got depth %u, expected %u\n", i, depth, depths[i]);
+            }
+        }
 
-    depth = 0;
-    hr = IXmlReader_GetDepth(reader, &depth);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(depth == 1, "got %d\n", depth);
+        i++;
+    }
 
     IStream_Release(stream);
 

@@ -477,7 +477,8 @@ static HRESULT reader_inc_depth(xmlreader *reader)
 
 static void reader_dec_depth(xmlreader *reader)
 {
-    if (reader->depth > 1) reader->depth--;
+    if (reader->depth)
+        reader->depth--;
 }
 
 static HRESULT reader_push_ns(xmlreader *reader, const strval *prefix, const strval *uri, BOOL def)
@@ -541,33 +542,21 @@ static HRESULT reader_push_element(xmlreader *reader, strval *prefix, strval *lo
     struct element *element;
     HRESULT hr;
 
-    if (!list_empty(&reader->elements))
-    {
-        hr = reader_inc_depth(reader);
-        if (FAILED(hr))
-             return hr;
-    }
-
     element = reader_alloc_zero(reader, sizeof(*element));
-    if (!element) {
-        hr = E_OUTOFMEMORY;
-        goto failed;
-    }
+    if (!element)
+        return E_OUTOFMEMORY;
 
-    if ((hr = reader_strvaldup(reader, prefix, &element->prefix)) != S_OK ||
-            (hr = reader_strvaldup(reader, localname, &element->localname)) != S_OK ||
-            (hr = reader_strvaldup(reader, qname, &element->qname)) != S_OK)
+    if ((hr = reader_strvaldup(reader, prefix, &element->prefix)) == S_OK &&
+            (hr = reader_strvaldup(reader, localname, &element->localname)) == S_OK &&
+            (hr = reader_strvaldup(reader, qname, &element->qname)) == S_OK)
     {
-        reader_free_element(reader, element);
-        goto failed;
+        list_add_head(&reader->elements, &element->entry);
+        reader_mark_ns_nodes(reader, element);
+        reader->is_empty_element = FALSE;
     }
+    else
+        reader_free_element(reader, element);
 
-    list_add_head(&reader->elements, &element->entry);
-    reader_mark_ns_nodes(reader, element);
-    reader->is_empty_element = FALSE;
-
-failed:
-    reader_dec_depth(reader);
     return hr;
 }
 
@@ -608,7 +597,6 @@ static void reader_pop_element(xmlreader *reader)
 
     reader_pop_ns_nodes(reader, element);
     reader_free_element(reader, element);
-    reader_dec_depth(reader);
 
     /* It was a root element, the rest is expected as Misc */
     if (list_empty(&reader->elements))
@@ -1310,7 +1298,6 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
     if (reader_cmp(reader, declcloseW)) return WC_E_XMLDECL;
     reader_skipn(reader, 2);
 
-    reader_inc_depth(reader);
     reader->nodetype = XmlNodeType_XmlDeclaration;
     reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
@@ -2478,10 +2465,23 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
         reader_clear_attrs(reader);
 
     /* When moving from EndElement or empty element, pop its own namespace definitions */
-    if (nodetype == XmlNodeType_Element && reader->is_empty_element)
-        reader_pop_ns_nodes(reader, &reader->empty_element);
-    else if (nodetype == XmlNodeType_EndElement)
+    switch (nodetype)
+    {
+    case XmlNodeType_Element:
+        if (reader->is_empty_element)
+            reader_pop_ns_nodes(reader, &reader->empty_element);
+        else
+            reader_inc_depth(reader);
+        break;
+    case XmlNodeType_EndElement:
         reader_pop_element(reader);
+        /* fallthrough */
+    case XmlNodeType_Attribute:
+        reader_dec_depth(reader);
+        break;
+    default:
+        ;
+    }
 
     while (1)
     {
@@ -2658,6 +2658,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     This->line = This->pos = 0;
     reader_clear_elements(This);
     This->depth = 0;
+    This->nodetype = XmlNodeType_None;
     This->resumestate = XmlReadResumeState_Initial;
     memset(This->resume, 0, sizeof(This->resume));
 
@@ -2816,6 +2817,14 @@ static HRESULT reader_move_to_first_attribute(xmlreader *reader)
     if (!reader->attr_count)
         return S_FALSE;
 
+    if (!reader->attr)
+    {
+        HRESULT hr;
+
+        if (FAILED(hr = reader_inc_depth(reader)))
+            return hr;
+    }
+
     reader->attr = LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry);
     reader_set_strvalue(reader, StringValue_Prefix, &reader->attr->prefix);
     reader_set_strvalue(reader, StringValue_LocalName, &reader->attr->localname);
@@ -2872,6 +2881,10 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
     TRACE("(%p)\n", This);
 
     if (!This->attr_count) return S_FALSE;
+
+    if (This->attr)
+        reader_dec_depth(This);
+
     This->attr = NULL;
 
     /* FIXME: support other node types with 'attributes' like DTD */
