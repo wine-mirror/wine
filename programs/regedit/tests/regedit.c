@@ -471,6 +471,31 @@ static void test_invalid_import(void)
                     "\"Test11\"=\"Value\"\n");
     verify_reg_nonexist(hkey, "Test11");
 
+    /* Test multi-line import with incorrect comma placement */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line1\"=hex(7):4c,69,6e,65,20\\\n"
+                    ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Multi-Line1");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line2\"=hex(7):4c,69,6e,65,20\\\n"
+                    "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
+    verify_reg_nonexist(hkey, "Multi-Line2");
+
+    exec_import_str("Windows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line3\"=hex(7):4c,69,6e,65,20\\\n"
+                    ",63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Multi-Line3");
+
+    exec_import_str("Windows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line4\"=hex(7):4c,69,6e,65,20\\\n"
+                    "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
+    verify_reg_nonexist(hkey, "Multi-Line4");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
