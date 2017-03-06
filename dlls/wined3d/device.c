@@ -4011,84 +4011,65 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
         unsigned int sub_resource_idx, const struct wined3d_box *box, const void *data, unsigned int row_pitch,
         unsigned int depth_pitch)
 {
-    unsigned int width, height, depth, level;
-    struct wined3d_const_bo_address addr;
-    struct wined3d_context *context;
-    struct wined3d_texture *texture;
+    unsigned int width, height, depth;
+    struct wined3d_box b;
 
     TRACE("device %p, resource %p, sub_resource_idx %u, box %s, data %p, row_pitch %u, depth_pitch %u.\n",
             device, resource, sub_resource_idx, debug_box(box), data, row_pitch, depth_pitch);
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        struct wined3d_buffer *buffer = buffer_from_resource(resource);
-
         if (sub_resource_idx > 0)
         {
             WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
             return;
         }
 
-        context = context_acquire(resource->device, NULL, 0);
-        if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER))
+        width = resource->size;
+        height = 1;
+        depth = 1;
+    }
+    else if (resource->type == WINED3D_RTYPE_TEXTURE_2D || resource->type == WINED3D_RTYPE_TEXTURE_3D)
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+        unsigned int level;
+
+        if (sub_resource_idx >= texture->level_count * texture->layer_count)
         {
-            ERR("Failed to load buffer location.\n");
-            context_release(context);
+            WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
             return;
         }
 
-        wined3d_buffer_upload_data(buffer, context, box, data);
-        wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
-        context_release(context);
-
-        return;
+        level = sub_resource_idx % texture->level_count;
+        width = wined3d_texture_get_level_width(texture, level);
+        height = wined3d_texture_get_level_height(texture, level);
+        depth = wined3d_texture_get_level_depth(texture, level);
     }
-
-    if (resource->type != WINED3D_RTYPE_TEXTURE_2D && resource->type != WINED3D_RTYPE_TEXTURE_3D)
+    else
     {
         FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
         return;
     }
 
-    texture = texture_from_resource(resource);
-    if (sub_resource_idx >= texture->level_count * texture->layer_count)
+    if (!box)
     {
-        WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
-        return;
+        b.left = 0;
+        b.top = 0;
+        b.right = width;
+        b.bottom = height;
+        b.front = 0;
+        b.back = depth;
+        box = &b;
     }
-
-    level = sub_resource_idx % texture->level_count;
-    width = wined3d_texture_get_level_width(texture, level);
-    height = wined3d_texture_get_level_height(texture, level);
-    depth = wined3d_texture_get_level_depth(texture, level);
-
-    if (box && (box->left >= box->right || box->right > width
+    else if (box->left >= box->right || box->right > width
             || box->top >= box->bottom || box->bottom > height
-            || box->front >= box->back || box->back > depth))
+            || box->front >= box->back || box->back > depth)
     {
         WARN("Invalid box %s specified.\n", debug_box(box));
         return;
     }
 
-    addr.buffer_object = 0;
-    addr.addr = data;
-
-    context = context_acquire(resource->device, NULL, 0);
-
-    /* Only load the sub-resource for partial updates. */
-    if (!box || (!box->left && !box->top && !box->front
-            && box->right == width && box->bottom == height && box->back == depth))
-        wined3d_texture_prepare_texture(texture, context, FALSE);
-    else
-        wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
-    wined3d_texture_bind_and_dirtify(texture, context, FALSE);
-
-    wined3d_texture_upload_data(texture, sub_resource_idx, context, box, &addr, row_pitch, depth_pitch);
-
-    context_release(context);
-
-    wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
-    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_cs_emit_update_sub_resource(device->cs, resource, sub_resource_idx, box, data, row_pitch, depth_pitch);
 }
 
 HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
