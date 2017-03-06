@@ -3183,22 +3183,6 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
             goto release;
         }
 
-        if (!wined3d_texture_check_block_align(src_texture,
-                src_sub_resource_idx % src_texture->level_count, src_box))
-        {
-            WARN("Source rectangle not block-aligned.\n");
-            hr = WINED3DERR_INVALIDCALL;
-            goto release;
-        }
-
-        if (!wined3d_texture_check_block_align(dst_texture,
-                dst_sub_resource_idx % dst_texture->level_count, dst_box))
-        {
-            WARN("Destination rectangle not block-aligned.\n");
-            hr = WINED3DERR_INVALIDCALL;
-            goto release;
-        }
-
         hr = surface_cpu_blt_compressed(sbase, dbuf,
                 src_map.row_pitch, dst_map.row_pitch, dst_width, dst_height,
                 src_format, flags, fx);
@@ -3684,6 +3668,14 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         return WINEDDERR_INVALIDRECT;
     }
 
+    if ((dst_texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+            && !wined3d_texture_check_block_align(dst_texture,
+            dst_sub_resource_idx % dst_texture->level_count, &dst_box))
+    {
+        WARN("Destination rectangle not block-aligned.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (src_texture)
     {
         src_w = wined3d_texture_get_level_width(src_texture, src_surface->texture_level);
@@ -3695,6 +3687,14 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         {
             WARN("The application gave us a bad source rectangle.\n");
             return WINEDDERR_INVALIDRECT;
+        }
+
+        if ((src_texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+                && !wined3d_texture_check_block_align(src_texture,
+                src_sub_resource_idx % src_texture->level_count, &src_box))
+        {
+            WARN("Source rectangle not block-aligned.\n");
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
