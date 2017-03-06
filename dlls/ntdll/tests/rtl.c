@@ -2094,6 +2094,65 @@ static void test_RtlInitializeCriticalSectionEx(void)
     RtlDeleteCriticalSection(&cs);
 }
 
+static void test_RtlLeaveCriticalSection(void)
+{
+    RTL_CRITICAL_SECTION cs;
+    NTSTATUS status;
+
+    if (!pRtlInitializeCriticalSectionEx)
+        return; /* Skip winxp */
+
+    status = RtlInitializeCriticalSection(&cs);
+    ok(!status, "RtlInitializeCriticalSection failed: %x\n", status);
+
+    status = RtlEnterCriticalSection(&cs);
+    ok(!status, "RtlEnterCriticalSection failed: %x\n", status);
+    todo_wine
+    ok(cs.LockCount == -2, "expected LockCount == -2, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == 1, "expected RecursionCount == 1, got %d\n", cs.RecursionCount);
+    ok(cs.OwningThread == ULongToHandle(GetCurrentThreadId()), "unexpected OwningThread\n");
+
+    status = RtlLeaveCriticalSection(&cs);
+    ok(!status, "RtlLeaveCriticalSection failed: %x\n", status);
+    ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == 0, "expected RecursionCount == 0, got %d\n", cs.RecursionCount);
+    ok(!cs.OwningThread, "unexpected OwningThread %p\n", cs.OwningThread);
+
+    /*
+     * Trying to leave a section that wasn't acquired modifies RecusionCount to an invalid value,
+     * but doesn't modify LockCount so that an attempt to enter the section later will work.
+     */
+    status = RtlLeaveCriticalSection(&cs);
+    ok(!status, "RtlLeaveCriticalSection failed: %x\n", status);
+    ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == -1, "expected RecursionCount == -1, got %d\n", cs.RecursionCount);
+    ok(!cs.OwningThread, "unexpected OwningThread %p\n", cs.OwningThread);
+
+    /* and again */
+    status = RtlLeaveCriticalSection(&cs);
+    ok(!status, "RtlLeaveCriticalSection failed: %x\n", status);
+    ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == -2, "expected RecursionCount == -2, got %d\n", cs.RecursionCount);
+    ok(!cs.OwningThread, "unexpected OwningThread %p\n", cs.OwningThread);
+
+    /* entering section fixes RecursionCount */
+    status = RtlEnterCriticalSection(&cs);
+    ok(!status, "RtlEnterCriticalSection failed: %x\n", status);
+    todo_wine
+    ok(cs.LockCount == -2, "expected LockCount == -2, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == 1, "expected RecursionCount == 1, got %d\n", cs.RecursionCount);
+    ok(cs.OwningThread == ULongToHandle(GetCurrentThreadId()), "unexpected OwningThread\n");
+
+    status = RtlLeaveCriticalSection(&cs);
+    ok(!status, "RtlLeaveCriticalSection failed: %x\n", status);
+    ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == 0, "expected RecursionCount == 0, got %d\n", cs.RecursionCount);
+    ok(!cs.OwningThread, "unexpected OwningThread %p\n", cs.OwningThread);
+
+    status = RtlDeleteCriticalSection(&cs);
+    ok(!status, "RtlDeleteCriticalSection failed: %x\n", status);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -2125,4 +2184,5 @@ START_TEST(rtl)
     test_RtlDecompressBuffer();
     test_RtlIsCriticalSectionLocked();
     test_RtlInitializeCriticalSectionEx();
+    test_RtlLeaveCriticalSection();
 }

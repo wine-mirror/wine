@@ -665,7 +665,11 @@ BOOL WINAPI RtlIsCriticalSectionLockedByThread( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlLeaveCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    if (--crit->RecursionCount) interlocked_dec( &crit->LockCount );
+    if (--crit->RecursionCount)
+    {
+        if (crit->RecursionCount > 0) interlocked_dec( &crit->LockCount );
+        else ERR( "section %p is not acquired\n", crit );
+    }
     else
     {
         crit->OwningThread = 0;
