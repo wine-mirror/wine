@@ -355,7 +355,7 @@ static void testGetIpForwardTable(void)
        "GetIpForwardTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n",
        apiReturn);
 
-      if (apiReturn == NO_ERROR && winetest_debug > 1)
+      if (apiReturn == NO_ERROR)
       {
           DWORD i;
 
@@ -363,11 +363,31 @@ static void testGetIpForwardTable(void)
           for (i = 0; i < buf->dwNumEntries; i++)
           {
               char buffer[100];
+
+              if (!U1(buf->table[i]).dwForwardDest) /* Default route */
+              {
+todo_wine
+                  ok (U1(buf->table[i]).dwForwardProto == MIB_IPPROTO_NETMGMT,
+                  "Unexpected dwForwardProto %d\n", U1(buf->table[i]).dwForwardProto);
+                  ok (U1(buf->table[i]).dwForwardType == MIB_IPROUTE_TYPE_INDIRECT,
+                  "Unexpected dwForwardType %d\n",  U1(buf->table[i]).dwForwardType);
+              }
+              else
+              {
+                  /* In general we should get MIB_IPPROTO_LOCAL but does not work
+                   * for Vista, 2008 and 7. */
+                  ok (U1(buf->table[i]).dwForwardProto == MIB_IPPROTO_LOCAL ||
+                      broken(U1(buf->table[i]).dwForwardProto == MIB_IPPROTO_NETMGMT),
+                  "Unexpected dwForwardProto %d\n", U1(buf->table[i]).dwForwardProto);
+                  /* The forward type varies depending on the address and gateway
+                   * value so it is not worth testing in this case. */
+              }
+
               sprintf( buffer, "dest %s", ntoa( buf->table[i].dwForwardDest ));
               sprintf( buffer + strlen(buffer), " mask %s", ntoa( buf->table[i].dwForwardMask ));
-              trace( "%u: %s gw %s if %u type %u\n", i, buffer,
-                     ntoa( buf->table[i].dwForwardNextHop ),
-                     buf->table[i].dwForwardIfIndex, U1(buf->table[i]).dwForwardType );
+              trace( "%u: %s gw %s if %u type %u proto %u\n", i, buffer,
+                     ntoa( buf->table[i].dwForwardNextHop ), buf->table[i].dwForwardIfIndex,
+                     U1(buf->table[i]).dwForwardType, U1(buf->table[i]).dwForwardProto );
           }
       }
       HeapFree(GetProcessHeap(), 0, buf);
