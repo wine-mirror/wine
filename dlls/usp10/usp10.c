@@ -43,7 +43,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
-static const struct
+static const struct usp10_script_range
 {
     enum usp10_script script;
     DWORD rangeFirst;
@@ -51,7 +51,7 @@ static const struct
     enum usp10_script numericScript;
     enum usp10_script punctScript;
 }
-scriptRanges[] =
+script_ranges[] =
 {
     /* Basic Latin: U+0000–U+007A */
     { Script_Latin,      0x00,   0x07a ,  Script_Numeric, Script_Punctuation},
@@ -296,8 +296,6 @@ scriptRanges[] =
     { Script_Osmanya,    0x10480, 0x104AF,  Script_Osmanya_Numeric, 0},
     /* Mathematical Alphanumeric Symbols: U+1D400–U+1D7FF */
     { Script_MathAlpha,  0x1D400, 0x1D7FF,  0, 0},
-    /* END */
-    { SCRIPT_UNDEFINED,  0, 0, 0}
 };
 
 /* this must be in order so that the index matches the Script value */
@@ -888,13 +886,25 @@ static inline DWORD decode_surrogate_pair(LPCWSTR str, INT index, INT end)
     return 0;
 }
 
+static int usp10_compare_script_range(const void *key, const void *value)
+{
+    const struct usp10_script_range *range = value;
+    const DWORD *ch = key;
+
+    if (*ch < range->rangeFirst)
+        return -1;
+    if (*ch > range->rangeLast)
+        return 1;
+    return 0;
+}
+
 static enum usp10_script get_char_script(const WCHAR *str, unsigned int index,
         unsigned int end, unsigned int *consumed)
 {
     static const WCHAR latin_punc[] = {'#','$','&','\'',',',';','<','>','?','@','\\','^','_','`','{','|','}','~', 0x00a0, 0};
+    struct usp10_script_range *range;
     WORD type = 0, type2 = 0;
     DWORD ch;
-    int i;
 
     *consumed = 1;
 
@@ -936,24 +946,15 @@ static enum usp10_script get_char_script(const WCHAR *str, unsigned int index,
     else
         ch = str[index];
 
-    i = 0;
-    do
-    {
-        if (ch < scriptRanges[i].rangeFirst || scriptRanges[i].script == SCRIPT_UNDEFINED)
-            break;
+    if (!(range = bsearch(&ch, script_ranges, ARRAY_SIZE(script_ranges),
+            sizeof(*script_ranges), usp10_compare_script_range)))
+        return Script_Undefined;
 
-        if (ch >= scriptRanges[i].rangeFirst && ch <= scriptRanges[i].rangeLast)
-        {
-            if (scriptRanges[i].numericScript && (type & C1_DIGIT || type2 == C2_ARABICNUMBER))
-                return scriptRanges[i].numericScript;
-            if (scriptRanges[i].punctScript && type & C1_PUNCT)
-                return scriptRanges[i].punctScript;
-            return scriptRanges[i].script;
-        }
-        i++;
-    } while (1);
-
-    return SCRIPT_UNDEFINED;
+    if (range->numericScript && (type & C1_DIGIT || type2 == C2_ARABICNUMBER))
+        return range->numericScript;
+    if (range->punctScript && type & C1_PUNCT)
+        return range->punctScript;
+    return range->script;
 }
 
 static int compare_FindGlyph(const void *a, const void* b)

@@ -24,6 +24,9 @@
             ( (ULONG)_x2 <<  8 ) |     \
               (ULONG)_x1         )
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
 
 enum usp10_script
 {
