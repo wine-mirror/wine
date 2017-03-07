@@ -3813,6 +3813,40 @@ static const DWORD test_effect_preshader_effect_blob[] =
 #define TEST_EFFECT_PRESHADER_VSHADER_POS 2458
 #define TEST_EFFECT_PRESHADER_VSHADER_LEN 13
 
+#define test_effect_preshader_compare_shader(a, b, c) \
+        test_effect_preshader_compare_shader_(__LINE__, a, b, c)
+static void test_effect_preshader_compare_shader_(unsigned int line, IDirect3DDevice9 *device,
+        int expected_shader_index, BOOL todo)
+{
+    IDirect3DVertexShader9 *vshader;
+    void *byte_code;
+    unsigned int byte_code_size;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok_(__FILE__, line)(hr == D3D_OK, "IDirect3DDevice9_GetVertexShader result %#x.\n", hr);
+
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(!!vshader, "Got NULL vshader.\n");
+    if (!vshader)
+        return;
+
+    hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
+    ok_(__FILE__, line)(hr == D3D_OK, "IDirect3DVertexShader9_GetFunction %#x.\n", hr);
+    ok_(__FILE__, line)(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
+
+    byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
+    hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(!memcmp(byte_code, &test_effect_preshader_effect_blob[TEST_EFFECT_PRESHADER_VSHADER_POS
+            + expected_shader_index * TEST_EFFECT_PRESHADER_VSHADER_LEN], byte_code_size),
+            "Incorrect shader selected.\n");
+    HeapFree(GetProcessHeap(), 0, byte_code);
+    IDirect3DVertexShader9_Release(vshader);
+ }
+
 static void test_effect_preshader(IDirect3DDevice9 *device)
 {
     static const D3DXVECTOR4 test_effect_preshader_fconstsv[] =
@@ -3933,8 +3967,6 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     int idata[TEST_EFFECT_PRES_NINT][4];
     BOOL bdata[TEST_EFFECT_PRES_NBOOL];
     IDirect3DVertexShader9 *vshader;
-    void *byte_code;
-    unsigned int byte_code_size;
     unsigned int i, j;
     D3DCAPS9 caps;
 
@@ -4071,22 +4103,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(!!vshader, "Got NULL vshader.\n");
-
-    hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
-    hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
-    ok(!memcmp(byte_code,
-            &test_effect_preshader_effect_blob[TEST_EFFECT_PRESHADER_VSHADER_POS +
-            TEST_EFFECT_PRESHADER_VSHADER_LEN], byte_code_size),
-            "Incorrect shader selected.\n");
-    HeapFree(GetProcessHeap(), 0, byte_code);
-    IDirect3DVertexShader9_Release(vshader);
+    test_effect_preshader_compare_shader(device, 1, FALSE);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4284,6 +4301,118 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
+{
+    ID3DXEffect *effect;
+    HRESULT hr;
+    D3DXHANDLE param;
+    int ivect[4];
+    unsigned int passes_count;
+    IDirect3DVertexShader9 *vshader;
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect, NULL);
+
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ivect[0] = ivect[1] = ivect[3] = 1;
+
+    param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_iVect");
+    ok(!!param, "GetParameterByName failed.\n");
+    ivect[2] = 3;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    todo_wine ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        effect->lpVtbl->EndPass(effect);
+
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_preshader_compare_shader(device, 2, TRUE);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ivect[2] = -2;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    todo_wine ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        hr = effect->lpVtbl->EndPass(effect);
+
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!vshader, "Got non NULL vshader.\n");
+
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_preshader_compare_shader(device, 2, TRUE);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ivect[2] = -1;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_preshader_compare_shader(device, 0, TRUE);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ivect[2] = 3;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->CommitChanges(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!vshader, "Got non NULL vshader.\n");
+
+    ivect[2] = -1;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->CommitChanges(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!vshader, "Got non NULL vshader.\n");
+
+    ivect[2] = 1;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->CommitChanges(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_preshader_compare_shader(device, 1, FALSE);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -4327,6 +4456,7 @@ START_TEST(effect)
     test_effect_preshader(device);
     test_effect_preshader_ops(device);
     test_effect_isparameterused(device);
+    test_effect_out_of_bounds_selector(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
