@@ -3188,3 +3188,16 @@ VOID WINAPI KeClearEvent(PRKEVENT event)
 {
     FIXME("stub: %p\n", event);
 }
+
+/***********************************************************************
+ *           KeAcquireInStackQueuedSpinLock (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( KeAcquireInStackQueuedSpinLock )
+void WINAPI __regs_KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *spinlock, KLOCK_QUEUE_HANDLE *handle )
+#else
+void WINAPI KeAcquireInStackQueuedSpinLock( KSPIN_LOCK *spinlock, KLOCK_QUEUE_HANDLE *handle )
+#endif
+{
+    FIXME( "stub: %p %p\n", spinlock, handle );
+}

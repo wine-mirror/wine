@@ -41,6 +41,7 @@
 @ stub IoWritePartitionTable
 @ stdcall -norelay IofCallDriver(ptr ptr)
 @ stdcall -norelay IofCompleteRequest(ptr long)
+@ stdcall -norelay KeAcquireInStackQueuedSpinLock(ptr ptr)
 @ stub KeAcquireInStackQueuedSpinLockAtDpcLevel
 @ stub KeReleaseInStackQueuedSpinLockFromDpcLevel
 @ stub KeSetTimeUpdateNotifyRoutine
