@@ -2066,9 +2066,11 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
 __ASM_GLOBAL_FUNC( raise_func_trampoline,
                    __ASM_CFI(".cfi_signal_frame\n\t")
-                   __ASM_CFI(".cfi_def_cfa %rbp,144\n\t")  /* red zone + rip + rbp */
-                   __ASM_CFI(".cfi_rel_offset %rip,8\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   __ASM_CFI(".cfi_def_cfa %rbp,160\n\t")  /* red zone + rip + rbp + rdi + rsi */
+                   __ASM_CFI(".cfi_rel_offset %rip,24\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,16\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rdi,8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rsi,0\n\t")
                    "call *%rdx\n\t"
                    "int $3")
 
@@ -2085,6 +2087,8 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     {
         CONTEXT           context;
         EXCEPTION_RECORD  rec;
+        ULONG64           rsi;
+        ULONG64           rdi;
         ULONG64           rbp;
         ULONG64           rip;
         ULONG64           red_zone[16];
@@ -2154,6 +2158,8 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     rsp_ptr = (ULONG64 *)RSP_sig(sigcontext) - 16;
     *(--rsp_ptr) = RIP_sig(sigcontext);
     *(--rsp_ptr) = RBP_sig(sigcontext);
+    *(--rsp_ptr) = RDI_sig(sigcontext);
+    *(--rsp_ptr) = RSI_sig(sigcontext);
 
     /* now modify the sigcontext to return to the raise function */
     RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
