@@ -474,8 +474,7 @@ static void reader_clear_elements(xmlreader *reader)
 
 static HRESULT reader_inc_depth(xmlreader *reader)
 {
-    if (++reader->depth > reader->max_depth) return SC_E_MAXELEMENTDEPTH;
-    return S_OK;
+    return (++reader->depth >= reader->max_depth && reader->max_depth) ? SC_E_MAXELEMENTDEPTH : S_OK;
 }
 
 static void reader_dec_depth(xmlreader *reader)
@@ -2471,16 +2470,17 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
     /* When moving from EndElement or empty element, pop its own namespace definitions */
     switch (nodetype)
     {
+    case XmlNodeType_Attribute:
+        reader_dec_depth(reader);
+        /* fallthrough */
     case XmlNodeType_Element:
         if (reader->is_empty_element)
             reader_pop_ns_nodes(reader, &reader->empty_element);
-        else
-            reader_inc_depth(reader);
+        else if (FAILED(hr = reader_inc_depth(reader)))
+            return hr;
         break;
     case XmlNodeType_EndElement:
         reader_pop_element(reader);
-        /* fallthrough */
-    case XmlNodeType_Attribute:
         reader_dec_depth(reader);
         break;
     default:
@@ -2735,6 +2735,9 @@ static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LO
         case XmlReaderProperty_ReadState:
             *value = This->state;
             break;
+        case XmlReaderProperty_MaxElementDepth:
+            *value = This->max_depth;
+            break;
         default:
             FIXME("Unimplemented property (%u)\n", property);
             return E_NOTIMPL;
@@ -2772,7 +2775,7 @@ static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LO
             This->dtdmode = value;
             break;
         case XmlReaderProperty_MaxElementDepth:
-            FIXME("Ignoring MaxElementDepth %ld\n", value);
+            This->max_depth = value;
             break;
         default:
             FIXME("Unimplemented property (%u)\n", property);
@@ -2822,12 +2825,7 @@ static HRESULT reader_move_to_first_attribute(xmlreader *reader)
         return S_FALSE;
 
     if (!reader->attr)
-    {
-        HRESULT hr;
-
-        if (FAILED(hr = reader_inc_depth(reader)))
-            return hr;
-    }
+        reader_inc_depth(reader);
 
     reader->attr = LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry);
     reader_set_strvalue(reader, StringValue_Prefix, &reader->attr->prefix);

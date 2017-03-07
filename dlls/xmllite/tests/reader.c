@@ -1,7 +1,7 @@
 /*
  * IXmlReader tests
  *
- * Copyright 2010, 2012-2013 Nikolay Sivov
+ * Copyright 2010, 2012-2013, 2016-2017 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -213,28 +213,26 @@ static const char *type_to_str(XmlNodeType type)
     }
 }
 
-static void test_read_state_(IXmlReader *reader, XmlReadState expected,
-                             XmlReadState exp_broken, BOOL todo, int line)
+static void test_read_state(IXmlReader *reader, XmlReadState expected,
+    XmlReadState exp_broken, int line)
 {
-    LONG_PTR state;
-    HRESULT hr;
     BOOL broken_state;
+    LONG_PTR state;
 
-    state = -1; /* invalid value */
-    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, &state);
-    ok_(__FILE__, line)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    state = -1; /* invalid state value */
+    IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, &state);
 
     if (exp_broken == -1)
         broken_state = FALSE;
     else
         broken_state = broken(exp_broken == state);
 
-    todo_wine_if (todo)
-        ok_(__FILE__, line)(state == expected || broken_state, "Expected (%s), got (%s)\n",
-                                   state_to_str(expected), state_to_str(state));
+    ok_(__FILE__, line)(state == expected || broken_state, "Expected (%s), got (%s)\n",
+            state_to_str(expected), state_to_str(state));
 }
 
-#define test_read_state(reader, exp, brk, todo) test_read_state_(reader, exp, brk, todo, __LINE__)
+#define TEST_READER_STATE(reader, state) test_read_state(reader, state, -1, __LINE__)
+#define TEST_READER_STATE2(reader, state, brk) test_read_state(reader, state, brk, __LINE__)
 
 typedef struct _testinput
 {
@@ -420,7 +418,7 @@ static void test_reader_create(void)
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_state(reader, XmlReadState_Closed, -1, FALSE);
+    TEST_READER_STATE(reader, XmlReadState_Closed);
 
     nodetype = XmlNodeType_Element;
     hr = IXmlReader_GetNodeType(reader, &nodetype);
@@ -470,7 +468,7 @@ static void test_reader_create(void)
     hr = IXmlReader_SetInput(reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_state(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
+    TEST_READER_STATE2(reader, XmlReadState_Initial, XmlReadState_Closed);
 
     /* test input interface selection sequence */
     hr = testinput_createinstance((void**)&input);
@@ -533,7 +531,7 @@ static void test_readerinput(void)
     hr = IXmlReader_SetInput(reader, reader_input);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_state(reader, XmlReadState_Initial, -1, FALSE);
+    TEST_READER_STATE(reader, XmlReadState_Initial);
 
     nodetype = XmlNodeType_Element;
     hr = IXmlReader_GetNodeType(reader, &nodetype);
@@ -553,7 +551,7 @@ static void test_readerinput(void)
     hr = IXmlReader_SetInput(reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_state(reader, XmlReadState_Initial, XmlReadState_Closed, FALSE);
+    TEST_READER_STATE2(reader, XmlReadState_Initial, XmlReadState_Closed);
 
     IXmlReader_Release(reader);
 
@@ -611,7 +609,7 @@ static void test_readerinput(void)
     ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
     ok_iids(&input_iids, setinput_readerinput, NULL, FALSE);
 
-    test_read_state(reader, XmlReadState_Closed, -1, FALSE);
+    TEST_READER_STATE(reader, XmlReadState_Closed);
 
     ref = IUnknown_AddRef(input);
     ok(ref == 3, "Expected 3, got %d\n", ref);
@@ -660,7 +658,8 @@ static void test_reader_state(void)
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     /* attempt to read on closed reader */
-    test_read_state(reader, XmlReadState_Closed, -1, FALSE);
+    TEST_READER_STATE(reader, XmlReadState_Closed);
+
 if (0)
 {
     /* newer versions crash here, probably because no input was set */
@@ -673,7 +672,7 @@ if (0)
     hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    test_read_state(reader, XmlReadState_Initial, -1, FALSE);
+    TEST_READER_STATE(reader, XmlReadState_Initial);
 
     nodetype = XmlNodeType_Element;
     hr = IXmlReader_Read(reader, &nodetype);
@@ -681,7 +680,8 @@ todo_wine
     ok(FAILED(hr), "got %08x\n", hr);
     ok(nodetype == XmlNodeType_None, "Unexpected node type %d\n", nodetype);
 
-    test_read_state(reader, XmlReadState_Error, -1, TRUE);
+todo_wine
+    TEST_READER_STATE(reader, XmlReadState_Error);
 
     nodetype = XmlNodeType_Element;
     hr = IXmlReader_Read(reader, &nodetype);
@@ -692,6 +692,22 @@ todo_wine
     IStream_Release(stream);
     IXmlReader_Release(reader);
 }
+
+static void test_reader_depth(IXmlReader *reader, UINT depth, UINT brk, int line)
+{
+    BOOL condition;
+    UINT d = ~0u;
+
+    IXmlReader_GetDepth(reader, &d);
+
+    condition = d == depth;
+    if (brk != ~0u)
+        condition |= broken(d == brk);
+    ok_(__FILE__, line)(condition, "Unexpected nesting depth %u, expected %u\n", d, depth);
+}
+
+#define TEST_DEPTH(reader, depth) test_reader_depth(reader, depth, ~0u, __LINE__)
+#define TEST_DEPTH2(reader, depth, brk) test_reader_depth(reader, depth, brk, __LINE__)
 
 static void test_read_xmldeclaration(void)
 {
@@ -753,12 +769,9 @@ static void test_read_xmldeclaration(void)
                      "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
     /* new version 1.2.x and 1.3.x properly update position for <?xml ?> */
     ok_pos(reader, 1, 3, -1, 55, TRUE);
-    test_read_state(reader, XmlReadState_Interactive, -1, FALSE);
 
-    count = 1;
-    hr = IXmlReader_GetDepth(reader, &count);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(count == 0, "Expected 1, got %d\n", count);
+    TEST_DEPTH(reader, 0);
+    TEST_READER_STATE(reader, XmlReadState_Interactive);
 
     hr = IXmlReader_GetValue(reader, &val, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -768,10 +781,7 @@ static void test_read_xmldeclaration(void)
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    count = 0;
-    hr = IXmlReader_GetDepth(reader, &count);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(count == 1, "Expected 1, got %d\n", count);
+    TEST_DEPTH(reader, 1);
 
     type = XmlNodeType_None;
     hr = IXmlReader_GetNodeType(reader, &type);
@@ -822,10 +832,7 @@ static void test_read_xmldeclaration(void)
         ok(hr == ((i < count - 1) ? S_OK : S_FALSE), "got %08x\n", hr);
     }
 
-    count = 0;
-    hr = IXmlReader_GetDepth(reader, &count);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(count == 1, "Expected 1, got %d\n", count);
+    TEST_DEPTH(reader, 1);
 
     hr = IXmlReader_MoveToElement(reader);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -856,7 +863,7 @@ todo_wine {
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_XmlDeclaration, "expected XmlDeclaration, got %s\n", type_to_str(type));
     ok_pos(reader, 1, 3, 1, 21, TRUE);
-    test_read_state(reader, XmlReadState_Interactive, -1, FALSE);
+    TEST_READER_STATE(reader, XmlReadState_Interactive);
 
     hr = IXmlReader_GetAttributeCount(reader, &count);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
@@ -898,7 +905,7 @@ todo_wine {
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_Element, "expected Element, got %s\n", type_to_str(type));
     ok_pos(reader, 1, 23, 1, 40, TRUE);
-    test_read_state(reader, XmlReadState_Interactive, -1, FALSE);
+    TEST_READER_STATE(reader, XmlReadState_Interactive);
 
     hr = IXmlReader_GetAttributeCount(reader, &count);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
@@ -921,7 +928,8 @@ todo_wine
     ok(hr == WC_E_SYNTAX || hr == WC_E_XMLCHARACTER /* XP */, "expected WC_E_SYNTAX, got %08x\n", hr);
     ok(type == XmlNodeType_None, "expected XmlNodeType_None, got %s\n", type_to_str(type));
     ok_pos(reader, 1, 41, -1, -1, TRUE);
-    test_read_state(reader, XmlReadState_Error, -1, TRUE);
+todo_wine
+    TEST_READER_STATE(reader, XmlReadState_Error);
 
     IStream_Release(stream);
     IXmlReader_Release(reader);
@@ -1953,16 +1961,27 @@ static void test_read_attribute(void)
 static void test_reader_properties(void)
 {
     IXmlReader *reader;
+    LONG_PTR value;
     HRESULT hr;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    value = 0;
+    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_MaxElementDepth, &value);
+    ok(hr == S_OK, "GetProperty failed: %08x\n", hr);
+    ok(value == 256, "Unexpected default max depth value %ld\n", value);
 
     hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MultiLanguage, 0);
     ok(hr == S_OK, "SetProperty failed: %08x\n", hr);
 
     hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MaxElementDepth, 0);
     ok(hr == S_OK, "SetProperty failed: %08x\n", hr);
+
+    value = 256;
+    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_MaxElementDepth, &value);
+    ok(hr == S_OK, "GetProperty failed: %08x\n", hr);
+    ok(value == 0, "Unexpected max depth value %ld\n", value);
 
     IXmlReader_Release(reader);
 }
@@ -2269,6 +2288,120 @@ static void test_endoffile(void)
     IXmlReader_Release(reader);
 }
 
+static void test_max_element_depth(void)
+{
+    static const char *xml =
+        "<a>"
+            "<b attrb=\"_b\">"
+                "<c>"
+                   "<d></d>"
+                "</c>"
+            "</b>"
+        "</a>";
+    unsigned int count;
+    IXmlReader *reader;
+    IStream *stream;
+    HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    stream = create_stream_on_data(xml, strlen(xml));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MaxElementDepth, 2);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    TEST_DEPTH(reader, 0);
+
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    TEST_DEPTH(reader, 0);
+
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    TEST_DEPTH(reader, 1);
+    TEST_READER_STATE(reader, XmlReadState_Interactive);
+
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
+
+todo_wine {
+    TEST_DEPTH2(reader, 0, 2);
+    TEST_READER_STATE(reader, XmlReadState_Error);
+}
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MaxElementDepth, 10);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IXmlReader_Read(reader, NULL);
+todo_wine {
+    ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
+
+    TEST_DEPTH2(reader, 0, 2);
+    TEST_READER_STATE(reader, XmlReadState_Error);
+}
+    IStream_Release(stream);
+
+    /* test if stepping into attributes enforces depth limit too */
+    stream = create_stream_on_data(xml, strlen(xml));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MaxElementDepth, 2);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    TEST_DEPTH(reader, 0);
+
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    TEST_DEPTH(reader, 0);
+
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    TEST_DEPTH(reader, 1);
+
+    hr = IXmlReader_MoveToFirstAttribute(reader);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    TEST_DEPTH(reader, 2);
+    TEST_READER_STATE(reader, XmlReadState_Interactive);
+
+    hr = IXmlReader_Read(reader, NULL);
+    ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
+
+todo_wine {
+    TEST_DEPTH2(reader, 0, 2);
+    TEST_READER_STATE(reader, XmlReadState_Error);
+}
+    IStream_Release(stream);
+
+    /* set max depth to 0, this disables depth limit */
+    stream = create_stream_on_data(xml, strlen(xml));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MaxElementDepth, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    count = 0;
+    while (IXmlReader_Read(reader, NULL) == S_OK)
+        count++;
+    ok(count == 8, "Unexpected node number %u\n", count);
+    TEST_READER_STATE(reader, XmlReadState_EndOfFile);
+
+    IStream_Release(stream);
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     test_reader_create();
@@ -2293,4 +2426,5 @@ START_TEST(reader)
     test_read_charref();
     test_encoding_detection();
     test_endoffile();
+    test_max_element_depth();
 }
