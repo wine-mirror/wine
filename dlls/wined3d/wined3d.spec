@@ -55,6 +55,7 @@
 @ cdecl wined3d_device_get_creation_parameters(ptr ptr)
 @ cdecl wined3d_device_get_cs_cb(ptr long)
 @ cdecl wined3d_device_get_cs_resource_view(ptr long)
+@ cdecl wined3d_device_get_cs_sampler(ptr long)
 @ cdecl wined3d_device_get_depth_stencil_view(ptr)
 @ cdecl wined3d_device_get_device_caps(ptr ptr)
 @ cdecl wined3d_device_get_display_mode(ptr long ptr ptr)

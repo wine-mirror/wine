@@ -2795,6 +2795,19 @@ void CDECL wined3d_device_set_cs_sampler(struct wined3d_device *device,
     wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_COMPUTE, idx, sampler);
 }
 
+struct wined3d_sampler * CDECL wined3d_device_get_cs_sampler(const struct wined3d_device *device, unsigned int idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    if (idx >= MAX_SAMPLER_OBJECTS)
+    {
+        WARN("Invalid sampler index %u.\n", idx);
+        return NULL;
+    }
+
+    return device->state.sampler[WINED3D_SHADER_TYPE_COMPUTE][idx];
+}
+
 static void wined3d_device_set_pipeline_unordered_access_view(struct wined3d_device *device,
         enum wined3d_pipeline pipeline, unsigned int idx, struct wined3d_unordered_access_view *uav)
 {
