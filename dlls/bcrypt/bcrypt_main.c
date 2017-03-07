@@ -55,9 +55,6 @@ MAKE_FUNCPTR(gnutls_global_deinit);
 MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
-MAKE_FUNCPTR(gnutls_hash);
-MAKE_FUNCPTR(gnutls_hash_deinit);
-MAKE_FUNCPTR(gnutls_hash_init);
 MAKE_FUNCPTR(gnutls_perror);
 #undef MAKE_FUNCPTR
 
@@ -87,9 +84,6 @@ static BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_global_init)
     LOAD_FUNCPTR(gnutls_global_set_log_function)
     LOAD_FUNCPTR(gnutls_global_set_log_level)
-    LOAD_FUNCPTR(gnutls_hash);
-    LOAD_FUNCPTR(gnutls_hash_deinit);
-    LOAD_FUNCPTR(gnutls_hash_init);
     LOAD_FUNCPTR(gnutls_perror)
 #undef LOAD_FUNCPTR
 
@@ -277,171 +271,6 @@ NTSTATUS WINAPI BCryptGetFipsAlgorithmMode(BOOLEAN *enabled)
     return STATUS_SUCCESS;
 }
 
-#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
-struct hash_impl
-{
-    union
-    {
-        CC_MD5_CTX    md5_ctx;
-        CC_SHA1_CTX   sha1_ctx;
-        CC_SHA256_CTX sha256_ctx;
-        CC_SHA512_CTX sha512_ctx;
-    } u;
-};
-
-static NTSTATUS hash_init( struct hash_impl *hash, enum alg_id alg_id )
-{
-    switch (alg_id)
-    {
-    case ALG_ID_MD5:
-        CC_MD5_Init( &hash->u.md5_ctx );
-        break;
-
-    case ALG_ID_SHA1:
-        CC_SHA1_Init( &hash->u.sha1_ctx );
-        break;
-
-    case ALG_ID_SHA256:
-        CC_SHA256_Init( &hash->u.sha256_ctx );
-        break;
-
-    case ALG_ID_SHA384:
-        CC_SHA384_Init( &hash->u.sha512_ctx );
-        break;
-
-    case ALG_ID_SHA512:
-        CC_SHA512_Init( &hash->u.sha512_ctx );
-        break;
-
-    default:
-        ERR( "unhandled id %u\n", alg_id );
-        return STATUS_NOT_IMPLEMENTED;
-    }
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS hash_update( struct hash_impl *hash, enum alg_id alg_id,
-                             UCHAR *input, ULONG size )
-{
-    switch (alg_id)
-    {
-    case ALG_ID_MD5:
-        CC_MD5_Update( &hash->u.md5_ctx, input, size );
-        break;
-
-    case ALG_ID_SHA1:
-        CC_SHA1_Update( &hash->u.sha1_ctx, input, size );
-        break;
-
-    case ALG_ID_SHA256:
-        CC_SHA256_Update( &hash->u.sha256_ctx, input, size );
-        break;
-
-    case ALG_ID_SHA384:
-        CC_SHA384_Update( &hash->u.sha512_ctx, input, size );
-        break;
-
-    case ALG_ID_SHA512:
-        CC_SHA512_Update( &hash->u.sha512_ctx, input, size );
-        break;
-
-    default:
-        ERR( "unhandled id %u\n", alg_id );
-        return STATUS_NOT_IMPLEMENTED;
-    }
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id,
-                             UCHAR *output, ULONG size )
-{
-    switch (alg_id)
-    {
-    case ALG_ID_MD5:
-        CC_MD5_Final( output, &hash->u.md5_ctx );
-        break;
-
-    case ALG_ID_SHA1:
-        CC_SHA1_Final( output, &hash->u.sha1_ctx );
-        break;
-
-    case ALG_ID_SHA256:
-        CC_SHA256_Final( output, &hash->u.sha256_ctx );
-        break;
-
-    case ALG_ID_SHA384:
-        CC_SHA384_Final( output, &hash->u.sha512_ctx );
-        break;
-
-    case ALG_ID_SHA512:
-        CC_SHA512_Final( output, &hash->u.sha512_ctx );
-        break;
-
-    default:
-        ERR( "unhandled id %u\n", alg_id );
-        break;
-    }
-    return STATUS_SUCCESS;
-}
-
-#elif defined(HAVE_GNUTLS_HASH)
-struct hash_impl
-{
-    gnutls_hash_hd_t hash_handle;
-};
-
-static NTSTATUS hash_init( struct hash_impl *hash, enum alg_id alg_id )
-{
-    gnutls_digest_algorithm_t alg;
-
-    if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
-
-    switch (alg_id)
-    {
-    case ALG_ID_MD5:
-        alg = GNUTLS_DIG_MD5;
-        break;
-
-    case ALG_ID_SHA1:
-        alg = GNUTLS_DIG_SHA1;
-        break;
-
-    case ALG_ID_SHA256:
-        alg = GNUTLS_DIG_SHA256;
-        break;
-
-    case ALG_ID_SHA384:
-        alg = GNUTLS_DIG_SHA384;
-        break;
-
-    case ALG_ID_SHA512:
-        alg = GNUTLS_DIG_SHA512;
-        break;
-
-    default:
-        ERR( "unhandled id %u\n", alg_id );
-        return STATUS_NOT_IMPLEMENTED;
-    }
-
-    if (pgnutls_hash_init( &hash->hash_handle, alg )) return STATUS_INTERNAL_ERROR;
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS hash_update( struct hash_impl *hash, enum alg_id alg_id,
-                             UCHAR *input, ULONG size )
-{
-    if (pgnutls_hash( hash->hash_handle, input, size )) return STATUS_INTERNAL_ERROR;
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id,
-                             UCHAR *output, ULONG size )
-{
-    pgnutls_hash_deinit( hash->hash_handle, output );
-    return STATUS_SUCCESS;
-}
-
-#else
 struct hash_impl
 {
     union
@@ -548,7 +377,6 @@ static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id,
     }
     return STATUS_SUCCESS;
 }
-#endif
 
 struct hash
 {
