@@ -909,7 +909,6 @@ todo_wine {
 
     hr = IXmlReader_GetValue(reader, &val, NULL);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-todo_wine
     ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
 
     hr = IXmlReader_GetLocalName(reader, &val, NULL);
@@ -1473,8 +1472,16 @@ static void test_read_element(void)
             /* moving to attributes increases depth */
             if (count)
             {
+                const WCHAR *value;
+
+                hr = IXmlReader_GetValue(reader, &value, NULL);
+                ok(*value == 0, "Unexpected value %s\n", wine_dbgstr_w(value));
+
                 hr = IXmlReader_MoveToFirstAttribute(reader);
                 ok(hr == S_OK, "got %08x\n", hr);
+
+                hr = IXmlReader_GetValue(reader, &value, NULL);
+                ok(*value != 0, "Unexpected value %s\n", wine_dbgstr_w(value));
 
                 depth = 123;
                 hr = IXmlReader_GetDepth(reader, &depth);
@@ -1483,6 +1490,9 @@ static void test_read_element(void)
 
                 hr = IXmlReader_MoveToElement(reader);
                 ok(hr == S_OK, "got %08x\n", hr);
+
+                hr = IXmlReader_GetValue(reader, &value, NULL);
+                ok(*value == 0, "Unexpected value %s\n", wine_dbgstr_w(value));
 
                 depth = 123;
                 hr = IXmlReader_GetDepth(reader, &depth);

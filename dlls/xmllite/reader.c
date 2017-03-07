@@ -2244,6 +2244,7 @@ static HRESULT reader_parse_element(xmlreader *reader)
         reader_set_strvalue(reader, StringValue_Prefix, &prefix);
         reader_set_strvalue(reader, StringValue_LocalName, &local);
         reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
+        reader_set_strvalue(reader, StringValue_Value, &strval_empty);
         break;
     }
     default:
@@ -2899,6 +2900,7 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
             reader_set_strvalue(This, StringValue_QualifiedName, &element->qname);
         }
     }
+    reader_set_strvalue(This, StringValue_Value, &strval_empty);
 
     return S_OK;
 }
