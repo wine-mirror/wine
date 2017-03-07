@@ -2048,8 +2048,28 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetShader(ID3D11DeviceCo
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetSamplers(ID3D11DeviceContext *iface,
         UINT start_slot, UINT sampler_count, ID3D11SamplerState **samplers)
 {
-    FIXME("iface %p, start_slot %u, sampler_count %u, samplers %p stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    unsigned int i;
+
+    TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
+
+    wined3d_mutex_lock();
+    for (i = 0; i < sampler_count; ++i)
+    {
+        struct wined3d_sampler *wined3d_sampler;
+        struct d3d_sampler_state *sampler_impl;
+
+        if (!(wined3d_sampler = wined3d_device_get_cs_sampler(device->wined3d_device, start_slot + i)))
+        {
+            samplers[i] = NULL;
+            continue;
+        }
+
+        sampler_impl = wined3d_sampler_get_parent(wined3d_sampler);
+        ID3D11SamplerState_AddRef(samplers[i] = &sampler_impl->ID3D11SamplerState_iface);
+    }
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetConstantBuffers(ID3D11DeviceContext *iface,
