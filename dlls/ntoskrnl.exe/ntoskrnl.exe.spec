@@ -43,6 +43,7 @@
 @ stdcall -norelay IofCompleteRequest(ptr long)
 @ stdcall -norelay KeAcquireInStackQueuedSpinLock(ptr ptr)
 @ stub KeAcquireInStackQueuedSpinLockAtDpcLevel
+@ stdcall -norelay KeReleaseInStackQueuedSpinLock(ptr)
 @ stub KeReleaseInStackQueuedSpinLockFromDpcLevel
 @ stub KeSetTimeUpdateNotifyRoutine
 @ stub KefAcquireSpinLockAtDpcLevel
