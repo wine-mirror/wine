@@ -218,7 +218,7 @@ static LONG todo_successes;  /* number of successful tests inside todo block */
 static LONG todo_failures;   /* number of failures inside todo block */
 
 /* The following data must be kept track of on a per-thread basis */
-typedef struct
+struct tls_data
 {
     const char* current_file;        /* file of current check */
     int current_line;                /* line of current check */
@@ -226,19 +226,19 @@ typedef struct
     int todo_do_loop;
     char *str_pos;                   /* position in debug buffer */
     char strings[2000];              /* buffer for debug strings */
-} tls_data;
+};
 static DWORD tls_index;
 
-static tls_data* get_tls_data(void)
+static struct tls_data *get_tls_data(void)
 {
-    tls_data* data;
+    struct tls_data *data;
     DWORD last_error;
 
     last_error=GetLastError();
     data=TlsGetValue(tls_index);
     if (!data)
     {
-        data=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(tls_data));
+        data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
         data->str_pos = data->strings;
         TlsSetValue(tls_index,data);
     }
@@ -249,7 +249,7 @@ static tls_data* get_tls_data(void)
 /* allocate some tmp space for a string */
 static char *get_temp_buffer( size_t n )
 {
-    tls_data *data = get_tls_data();
+    struct tls_data *data = get_tls_data();
     char *res = data->str_pos;
 
     if (res + n >= &data->strings[sizeof(data->strings)]) res = data->strings;
@@ -260,7 +260,7 @@ static char *get_temp_buffer( size_t n )
 /* release extra space that we requested in get_temp_buffer() */
 static void release_temp_buffer( char *ptr, size_t size )
 {
-    tls_data *data = get_tls_data();
+    struct tls_data *data = get_tls_data();
     data->str_pos = ptr + size;
 }
 
@@ -273,7 +273,7 @@ static void exit_process( int code )
 
 void winetest_set_location( const char* file, int line )
 {
-    tls_data* data=get_tls_data();
+    struct tls_data *data = get_tls_data();
     data->current_file=strrchr(file,'/');
     if (data->current_file==NULL)
         data->current_file=strrchr(file,'\\');
@@ -301,7 +301,7 @@ int broken( int condition )
  */
 int winetest_vok( int condition, const char *msg, __winetest_va_list args )
 {
-    tls_data* data=get_tls_data();
+    struct tls_data *data = get_tls_data();
 
     if (data->todo_level)
     {
@@ -358,7 +358,7 @@ void __winetest_cdecl winetest_ok( int condition, const char *msg, ... )
 void __winetest_cdecl winetest_trace( const char *msg, ... )
 {
     __winetest_va_list valist;
-    tls_data* data=get_tls_data();
+    struct tls_data *data = get_tls_data();
 
     if (winetest_debug > 0)
     {
@@ -371,7 +371,7 @@ void __winetest_cdecl winetest_trace( const char *msg, ... )
 
 void winetest_vskip( const char *msg, __winetest_va_list args )
 {
-    tls_data* data=get_tls_data();
+    struct tls_data *data = get_tls_data();
 
     printf( "%s:%d: Tests skipped: ", data->current_file, data->current_line );
     vprintf(msg, args);
@@ -399,14 +399,14 @@ void __winetest_cdecl winetest_win_skip( const char *msg, ... )
 
 void winetest_start_todo( int is_todo )
 {
-    tls_data* data=get_tls_data();
+    struct tls_data *data = get_tls_data();
     data->todo_level = (data->todo_level << 1) | (is_todo != 0);
     data->todo_do_loop=1;
 }
 
 int winetest_loop_todo(void)
 {
-    tls_data* data=get_tls_data();
+    struct tls_data *data = get_tls_data();
     int do_loop=data->todo_do_loop;
     data->todo_do_loop=0;
     return do_loop;
@@ -414,7 +414,7 @@ int winetest_loop_todo(void)
 
 void winetest_end_todo(void)
 {
-    tls_data* data=get_tls_data();
+    struct tls_data *data = get_tls_data();
     data->todo_level >>= 1;
 }
 
@@ -613,7 +613,7 @@ static void usage( const char *argv0 )
 /* trap unhandled exceptions */
 static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
 {
-    tls_data *data = get_tls_data();
+    struct tls_data *data = get_tls_data();
 
     if (data->current_file)
         printf( "%s:%d: this is the last test seen before the exception\n",
