@@ -2752,6 +2752,19 @@ void CDECL wined3d_device_set_cs_cb(struct wined3d_device *device, unsigned int 
     wined3d_device_set_constant_buffer(device, WINED3D_SHADER_TYPE_COMPUTE, idx, buffer);
 }
 
+struct wined3d_buffer * CDECL wined3d_device_get_cs_cb(const struct wined3d_device *device, unsigned int idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    if (idx >= MAX_CONSTANT_BUFFERS)
+    {
+        WARN("Invalid constant buffer index %u.\n", idx);
+        return NULL;
+    }
+
+    return device->state.cb[WINED3D_SHADER_TYPE_COMPUTE][idx];
+}
+
 void CDECL wined3d_device_set_cs_resource_view(struct wined3d_device *device,
         unsigned int idx, struct wined3d_shader_resource_view *view)
 {
