@@ -869,9 +869,14 @@ todo_wine {
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
 
+    val = NULL;
     hr = IXmlReader_GetLocalName(reader, &val, NULL);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-todo_wine
+    ok(!lstrcmpW(val, xmlW), "got %s\n", wine_dbgstr_w(val));
+
+    val = NULL;
+    hr = IXmlReader_GetQualifiedName(reader, &val, NULL);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(val, xmlW), "got %s\n", wine_dbgstr_w(val));
 
     /* check attributes */
