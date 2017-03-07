@@ -2207,18 +2207,24 @@ void CDECL wined3d_device_set_vs_resource_view(struct wined3d_device *device,
     wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_VERTEX, idx, view);
 }
 
-struct wined3d_shader_resource_view * CDECL wined3d_device_get_vs_resource_view(const struct wined3d_device *device,
-        UINT idx)
+static struct wined3d_shader_resource_view *wined3d_device_get_shader_resource_view(
+        const struct wined3d_device *device, enum wined3d_shader_type shader_type, unsigned int idx)
 {
-    TRACE("device %p, idx %u.\n", device, idx);
-
     if (idx >= MAX_SHADER_RESOURCE_VIEWS)
     {
         WARN("Invalid view index %u.\n", idx);
         return NULL;
     }
 
-    return device->state.shader_resource_view[WINED3D_SHADER_TYPE_VERTEX][idx];
+    return device->state.shader_resource_view[shader_type][idx];
+}
+
+struct wined3d_shader_resource_view * CDECL wined3d_device_get_vs_resource_view(const struct wined3d_device *device,
+        UINT idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_VERTEX, idx);
 }
 
 static void wined3d_device_set_sampler(struct wined3d_device *device,
@@ -2463,13 +2469,7 @@ struct wined3d_shader_resource_view * CDECL wined3d_device_get_ps_resource_view(
 {
     TRACE("device %p, idx %u.\n", device, idx);
 
-    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
-    {
-        WARN("Invalid view index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->state.shader_resource_view[WINED3D_SHADER_TYPE_PIXEL][idx];
+    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_PIXEL, idx);
 }
 
 void CDECL wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
@@ -2686,13 +2686,7 @@ struct wined3d_shader_resource_view * CDECL wined3d_device_get_gs_resource_view(
 {
     TRACE("device %p, idx %u.\n", device, idx);
 
-    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
-    {
-        WARN("Invalid view index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->state.shader_resource_view[WINED3D_SHADER_TYPE_GEOMETRY][idx];
+    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_GEOMETRY, idx);
 }
 
 void CDECL wined3d_device_set_gs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
@@ -2766,13 +2760,7 @@ struct wined3d_shader_resource_view * CDECL wined3d_device_get_cs_resource_view(
 {
     TRACE("device %p, idx %u.\n", device, idx);
 
-    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
-    {
-        WARN("Invalid view index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->state.shader_resource_view[WINED3D_SHADER_TYPE_COMPUTE][idx];
+    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_COMPUTE, idx);
 }
 
 void CDECL wined3d_device_set_cs_sampler(struct wined3d_device *device,
