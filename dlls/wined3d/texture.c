@@ -2627,7 +2627,11 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
         const RECT *dst_rect, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
         const RECT *src_rect, DWORD flags, const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
+    struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
+    struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
     struct wined3d_texture_sub_resource *dst_resource, *src_resource = NULL;
+    unsigned int dst_format_flags, src_format_flags = 0;
+    HRESULT hr;
 
     TRACE("dst_texture %p, dst_sub_resource_idx %u, dst_rect %s, src_texture %p, "
             "src_sub_resource_idx %u, src_rect %s, flags %#x, fx %p, filter %s.\n",
@@ -2638,11 +2642,42 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
             || dst_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
         return WINED3DERR_INVALIDCALL;
 
+    dst_format_flags = dst_texture->resource.format_flags;
+    if (FAILED(hr = wined3d_texture_check_box_dimensions(dst_texture,
+            dst_sub_resource_idx % dst_texture->level_count, &dst_box)))
+        return hr;
+
     if (src_texture)
     {
         if (!(src_resource = wined3d_texture_get_sub_resource(src_texture, src_sub_resource_idx))
                 || src_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
             return WINED3DERR_INVALIDCALL;
+
+        src_format_flags = src_texture->resource.format_flags;
+        if (FAILED(hr = wined3d_texture_check_box_dimensions(src_texture,
+                src_sub_resource_idx % src_texture->level_count, &src_box)))
+            return hr;
+    }
+
+    if (dst_texture->sub_resources[dst_sub_resource_idx].map_count
+            || (src_texture && src_texture->sub_resources[src_sub_resource_idx].map_count))
+    {
+        WARN("Sub-resource is busy, returning WINEDDERR_SURFACEBUSY.\n");
+        return WINEDDERR_SURFACEBUSY;
+    }
+
+    if ((dst_format_flags & WINED3DFMT_FLAG_BLOCKS) && (flags & WINED3D_BLT_COLOR_FILL))
+    {
+        WARN("Color fill not supported on block-based formats.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if ((src_format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+            != (dst_format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+            && !(flags & WINED3D_BLT_DEPTH_FILL))
+    {
+        WARN("Rejecting depth/stencil blit between incompatible formats.\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
     return wined3d_surface_blt(dst_resource->u.surface, dst_rect,

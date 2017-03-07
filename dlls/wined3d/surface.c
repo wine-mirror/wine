@@ -3598,7 +3598,6 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     unsigned int src_sub_resource_idx = 0;
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
-    HRESULT hr;
 
     static const DWORD simple_blit = WINED3D_BLT_ASYNC
             | WINED3D_BLT_COLOR_FILL
@@ -3631,20 +3630,6 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         src_texture = src_surface->container;
         src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     }
-
-    if (dst_texture->sub_resources[dst_sub_resource_idx].map_count
-            || (src_texture && src_texture->sub_resources[src_sub_resource_idx].map_count))
-    {
-        WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
-        return WINEDDERR_SURFACEBUSY;
-    }
-
-    if (FAILED(hr = wined3d_texture_check_box_dimensions(dst_texture, dst_surface->texture_level, &dst_box)))
-        return hr;
-
-    if (src_texture && FAILED(hr = wined3d_texture_check_box_dimensions(src_texture,
-            src_surface->texture_level, &src_box)))
-        return hr;
 
     if (!fx || !(fx->fx))
         flags &= ~WINED3D_BLT_FX;
@@ -3738,17 +3723,10 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, dst_rect, color.r)))
                 return WINED3D_OK;
         }
-        else
+        else if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_texture->resource.draw_binding,
+                src_rect, dst_surface, dst_texture->resource.draw_binding, dst_rect)))
         {
-            if (src_ds_flags != dst_ds_flags)
-            {
-                WARN("Rejecting depth / stencil blit between incompatible formats.\n");
-                return WINED3DERR_INVALIDCALL;
-            }
-
-            if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_texture->resource.draw_binding,
-                    src_rect, dst_surface, dst_texture->resource.draw_binding, dst_rect)))
-                return WINED3D_OK;
+            return WINED3D_OK;
         }
     }
     else
