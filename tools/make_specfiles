@@ -338,6 +338,10 @@ my @dll_groups =
   "bcrypt",
   "ncrypt",
  ],
+ [
+  "ntoskrnl.exe",
+  "hal",
+ ],
 );
 
 my $update_flags = 0;

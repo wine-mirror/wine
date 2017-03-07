@@ -1210,6 +1210,16 @@ typedef struct _CALLBACK_OBJECT
     UCHAR reserved[3];
 } CALLBACK_OBJECT, *PCALLBACK_OBJECT;
 
+typedef struct _KSPIN_LOCK_QUEUE {
+    struct _KSPIN_LOCK_QUEUE * volatile Next;
+    volatile PKSPIN_LOCK Lock;
+} KSPIN_LOCK_QUEUE, *PKSPIN_LOCK_QUEUE;
+
+typedef struct _KLOCK_QUEUE_HANDLE {
+    KSPIN_LOCK_QUEUE LockQueue;
+    KIRQL OldIrql;
+} KLOCK_QUEUE_HANDLE, *PKLOCK_QUEUE_HANDLE;
+
 typedef NTSTATUS (NTAPI EX_CALLBACK_FUNCTION)(void *CallbackContext, void *Argument1, void *Argument2);
 typedef EX_CALLBACK_FUNCTION *PEX_CALLBACK_FUNCTION;
 
