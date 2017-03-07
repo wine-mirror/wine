@@ -43,16 +43,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
-typedef struct _scriptRange
+static const struct
 {
-    WORD script;
+    enum usp10_script script;
     DWORD rangeFirst;
     DWORD rangeLast;
-    WORD numericScript;
-    WORD punctScript;
-} scriptRange;
-
-static const scriptRange scriptRanges[] = {
+    enum usp10_script numericScript;
+    enum usp10_script punctScript;
+}
+scriptRanges[] =
+{
     /* Basic Latin: U+0000–U+007A */
     { Script_Latin,      0x00,   0x07a ,  Script_Numeric, Script_Punctuation},
     /* Latin-1 Supplement: U+0080–U+00FF */
@@ -888,7 +888,8 @@ static inline DWORD decode_surrogate_pair(LPCWSTR str, INT index, INT end)
     return 0;
 }
 
-static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
+static enum usp10_script get_char_script(const WCHAR *str, unsigned int index,
+        unsigned int end, unsigned int *consumed)
 {
     static const WCHAR latin_punc[] = {'#','$','&','\'',',',';','<','>','?','@','\\','^','_','`','{','|','}','~', 0x00a0, 0};
     WORD type = 0, type2 = 0;
@@ -1220,12 +1221,12 @@ HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE *sds,
     }
 }
 
-static inline BOOL is_indic(WORD script)
+static inline BOOL is_indic(enum usp10_script script)
 {
     return (script >= Script_Devanagari && script <= Script_Malayalam_Numeric);
 }
 
-static inline WORD base_indic(WORD script)
+static inline enum usp10_script base_indic(enum usp10_script script)
 {
     switch (script)
     {
@@ -1250,11 +1251,11 @@ static inline WORD base_indic(WORD script)
         case Script_Malayalam:
         case Script_Malayalam_Numeric: return Script_Malayalam;
         default:
-            return -1;
+            return Script_Undefined;
     };
 }
 
-static BOOL script_is_numeric(WORD script)
+static BOOL script_is_numeric(enum usp10_script script)
 {
     return scriptInformation[script].props.fNumeric;
 }
@@ -1270,21 +1271,21 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 #define ZWNJ 0x200C
 #define ZWJ  0x200D
 
+    enum usp10_script last_indic = Script_Undefined;
     int   cnt = 0, index = 0, str = 0;
-    int   New_Script = -1;
+    enum usp10_script New_Script = -1;
     int   i;
     WORD  *levels = NULL;
     WORD  *layout_levels = NULL;
     WORD  *overrides = NULL;
     WORD  *strength = NULL;
-    WORD  *scripts = NULL;
+    enum usp10_script *scripts;
     WORD  baselevel = 0;
     WORD  baselayout = 0;
     BOOL  new_run;
-    WORD  last_indic = -1;
     WORD layoutRTL = 0;
     BOOL forceLevels = FALSE;
-    INT consumed = 0;
+    unsigned int consumed = 0;
     HRESULT res = E_OUTOFMEMORY;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
@@ -1293,13 +1294,12 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
         return E_INVALIDARG;
 
-    scripts = heap_alloc(cInChars * sizeof(WORD));
-    if (!scripts)
+    if (!(scripts = heap_alloc(cInChars * sizeof(*scripts))))
         return E_OUTOFMEMORY;
 
     for (i = 0; i < cInChars; i++)
     {
-        if (consumed <= 0)
+        if (!consumed)
         {
             scripts[i] = get_char_script(pwcInChars,i,cInChars,&consumed);
             consumed --;
@@ -1311,7 +1311,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         }
         /* Devanagari danda (U+0964) and double danda (U+0965) are used for
            all Indic scripts */
-        if ((pwcInChars[i] == 0x964 || pwcInChars[i] ==0x965) && last_indic > 0)
+        if ((pwcInChars[i] == 0x964 || pwcInChars[i] ==0x965) && last_indic != Script_Undefined)
             scripts[i] = last_indic;
         else if (is_indic(scripts[i]))
             last_indic = base_indic(scripts[i]);
@@ -1338,10 +1338,10 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                 {
                     int j;
                     BOOL asian = FALSE;
-                    WORD first_script = scripts[i-1];
+                    enum usp10_script first_script = scripts[i-1];
                     for (j = i-1; j >= 0 &&  scripts[j] == first_script && pwcInChars[j] != Numeric_space; j--)
                     {
-                        WORD original = scripts[j];
+                        enum usp10_script original = scripts[j];
                         if (original == Script_Ideograph || original == Script_Kana || original == Script_Yi || original == Script_CJK_Han || original == Script_Bopomofo)
                         {
                             asian = TRUE;
@@ -1877,7 +1877,7 @@ static BOOL requires_fallback(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
     return FALSE;
 }
 
-static void find_fallback_font(DWORD scriptid, LPWSTR FaceName)
+static void find_fallback_font(enum usp10_script scriptid, WCHAR *FaceName)
 {
     HKEY hkey;
 
@@ -2995,14 +2995,13 @@ HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS 
  */
 HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 {
-    int i;
-    INT consumed = 0;
+    enum usp10_script script;
+    unsigned int i, consumed;
 
     TRACE("(%s,%d,0x%x)\n", debugstr_wn(chars, len), len, flag);
 
     for (i = 0; i < len; i+=consumed)
     {
-        int script;
         if (i >= len)
             break;
 
