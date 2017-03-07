@@ -2446,6 +2446,19 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             info->EaSize = 0;
         }
         break;
+    case FileAccessInformation:
+        {
+            FILE_ACCESS_INFORMATION *info = ptr;
+            SERVER_START_REQ( get_object_info )
+            {
+                req->handle = wine_server_obj_handle( hFile );
+                io->u.Status = wine_server_call( req );
+                if (io->u.Status == STATUS_SUCCESS)
+                    info->AccessFlags = reply->access;
+            }
+            SERVER_END_REQ;
+        }
+        break;
     case FileEndOfFileInformation:
         if (fd_get_file_info( fd, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
         else fill_file_info( &st, attr, ptr, class );

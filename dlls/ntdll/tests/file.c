@@ -3433,6 +3433,29 @@ static void test_file_id_information(void)
     CloseHandle( h );
 }
 
+static void test_file_access_information(void)
+{
+    FILE_ACCESS_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE h;
+
+    if (!(h = create_temp_file(0))) return;
+
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info) - 1, FileAccessInformation );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+
+    status = pNtQueryInformationFile( (HANDLE)0xdeadbeef, &io, &info, sizeof(info), FileAccessInformation );
+    ok( status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08x\n", status );
+
+    memset(&info, 0x11, sizeof(info));
+    status = pNtQueryInformationFile( h, &io, &info, sizeof(info), FileAccessInformation );
+    ok( status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status );
+    ok( info.AccessFlags == 0x13019f, "got %08x\n", info.AccessFlags );
+
+    CloseHandle( h );
+}
+
 static void test_query_volume_information_file(void)
 {
     NTSTATUS status;
@@ -4506,6 +4529,7 @@ START_TEST(file)
     test_file_disposition_information();
     test_file_completion_information();
     test_file_id_information();
+    test_file_access_information();
     test_query_volume_information_file();
     test_query_attribute_information_file();
     test_ioctl();
