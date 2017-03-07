@@ -2034,6 +2034,17 @@ static void test_prefix(void)
             wine_dbgstr_w(expected));
         free_str(expected);
 
+        /* back to the element, check prefix */
+        hr = IXmlReader_MoveToElement(reader);
+        ok(hr == S_OK, "MoveToElement() failed, %#x.\n", hr);
+
+        expected = a2w(prefix_tests[i].prefix1);
+        hr = IXmlReader_GetPrefix(reader, &prefix, NULL);
+        ok(hr == S_OK, "GetPrefix() failed, %#x.\n", hr);
+        ok(!lstrcmpW(prefix, expected), "Unexpected prefix %s, expected %s.\n", wine_dbgstr_w(prefix),
+            wine_dbgstr_w(expected));
+        free_str(expected);
+
         IStream_Release(stream);
     }
 

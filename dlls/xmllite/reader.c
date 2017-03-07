@@ -2890,12 +2890,14 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
 
     /* FIXME: support other node types with 'attributes' like DTD */
     if (This->is_empty_element) {
+        reader_set_strvalue(This, StringValue_Prefix, &This->empty_element.prefix);
         reader_set_strvalue(This, StringValue_LocalName, &This->empty_element.localname);
         reader_set_strvalue(This, StringValue_QualifiedName, &This->empty_element.qname);
     }
     else {
         struct element *element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
         if (element) {
+            reader_set_strvalue(This, StringValue_Prefix, &element->prefix);
             reader_set_strvalue(This, StringValue_LocalName, &element->localname);
             reader_set_strvalue(This, StringValue_QualifiedName, &element->qname);
         }
