@@ -51,6 +51,7 @@
 @ cdecl wined3d_device_get_base_vertex_index(ptr)
 @ cdecl wined3d_device_get_clip_plane(ptr long ptr)
 @ cdecl wined3d_device_get_clip_status(ptr ptr)
+@ cdecl wined3d_device_get_compute_shader(ptr)
 @ cdecl wined3d_device_get_creation_parameters(ptr ptr)
 @ cdecl wined3d_device_get_depth_stencil_view(ptr)
 @ cdecl wined3d_device_get_device_caps(ptr ptr)

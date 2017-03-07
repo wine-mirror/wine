@@ -2738,6 +2738,13 @@ void CDECL wined3d_device_set_compute_shader(struct wined3d_device *device, stru
         wined3d_shader_decref(prev);
 }
 
+struct wined3d_shader * CDECL wined3d_device_get_compute_shader(const struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return device->state.shader[WINED3D_SHADER_TYPE_COMPUTE];
+}
+
 void CDECL wined3d_device_set_cs_cb(struct wined3d_device *device, unsigned int idx, struct wined3d_buffer *buffer)
 {
     TRACE("device %p, idx %u, buffer %p.\n", device, idx, buffer);
