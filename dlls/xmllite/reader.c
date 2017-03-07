@@ -229,6 +229,7 @@ struct attribute
     struct list entry;
     strval prefix;
     strval localname;
+    strval qname;
     strval value;
 };
 
@@ -386,7 +387,8 @@ static void reader_clear_attrs(xmlreader *reader)
 
 /* attribute data holds pointers to buffer data, so buffer shrink is not possible
    while we are on a node with attributes */
-static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localname, strval *value)
+static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localname, strval *qname,
+    strval *value)
 {
     struct attribute *attr;
 
@@ -398,6 +400,7 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localn
     else
         memset(&attr->prefix, 0, sizeof(attr->prefix));
     attr->localname = *localname;
+    attr->qname = qname ? *qname : *localname;
     attr->value = *value;
     list_add_tail(&reader->attrs, &attr->entry);
     reader->attr_count++;
@@ -1150,7 +1153,7 @@ static HRESULT reader_parse_versioninfo(xmlreader *reader)
     /* skip "'"|'"' */
     reader_skipn(reader, 1);
 
-    return reader_add_attr(reader, NULL, &name, &val);
+    return reader_add_attr(reader, NULL, &name, NULL, &val);
 }
 
 /* ([A-Za-z0-9._] | '-') */
@@ -1226,7 +1229,7 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
     /* skip "'"|'"' */
     reader_skipn(reader, 1);
 
-    return reader_add_attr(reader, NULL, &name, &val);
+    return reader_add_attr(reader, NULL, &name, NULL, &val);
 }
 
 /* [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) */
@@ -1268,7 +1271,7 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
     /* skip "'"|'"' */
     reader_skipn(reader, 1);
 
-    return reader_add_attr(reader, NULL, &name, &val);
+    return reader_add_attr(reader, NULL, &name, NULL, &val);
 }
 
 /* [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>' */
@@ -1737,7 +1740,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         if (FAILED(hr)) return hr;
 
         reader_init_cstrvalue(publicW, strlenW(publicW), &name);
-        hr = reader_add_attr(reader, NULL, &name, &pub);
+        hr = reader_add_attr(reader, NULL, &name, NULL, &pub);
         if (FAILED(hr)) return hr;
 
         cnt = reader_skipspaces(reader);
@@ -1748,7 +1751,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         if (FAILED(hr)) return S_OK;
 
         reader_init_cstrvalue(systemW, strlenW(systemW), &name);
-        hr = reader_add_attr(reader, NULL, &name, &sys);
+        hr = reader_add_attr(reader, NULL, &name, NULL, &sys);
         if (FAILED(hr)) return hr;
 
         return S_OK;
@@ -1762,7 +1765,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         if (FAILED(hr)) return hr;
 
         reader_init_cstrvalue(systemW, strlenW(systemW), &name);
-        return reader_add_attr(reader, NULL, &name, &sys);
+        return reader_add_attr(reader, NULL, &name, NULL, &sys);
     }
 
     return S_FALSE;
@@ -2160,7 +2163,7 @@ static HRESULT reader_parse_attribute(xmlreader *reader)
         reader_push_ns(reader, nsdef ? &strval_xmlns : &local, &value, nsdef);
 
     TRACE("%s=%s\n", debug_strval(reader, &local), debug_strval(reader, &value));
-    return reader_add_attr(reader, &prefix, &local, &value);
+    return reader_add_attr(reader, &prefix, &local, &qname, &value);
 }
 
 /* [12 NS] STag ::= '<' QName (S Attribute)* S? '>'
@@ -2829,6 +2832,7 @@ static HRESULT reader_move_to_first_attribute(xmlreader *reader)
     reader->attr = LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry);
     reader_set_strvalue(reader, StringValue_Prefix, &reader->attr->prefix);
     reader_set_strvalue(reader, StringValue_LocalName, &reader->attr->localname);
+    reader_set_strvalue(reader, StringValue_QualifiedName, &reader->attr->qname);
     reader_set_strvalue(reader, StringValue_Value, &reader->attr->value);
 
     return S_OK;
@@ -2861,6 +2865,7 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
         This->attr = LIST_ENTRY(next, struct attribute, entry);
         reader_set_strvalue(This, StringValue_Prefix, &This->attr->prefix);
         reader_set_strvalue(This, StringValue_LocalName, &This->attr->localname);
+        reader_set_strvalue(This, StringValue_QualifiedName, &This->attr->qname);
         reader_set_strvalue(This, StringValue_Value, &This->attr->value);
     }
 

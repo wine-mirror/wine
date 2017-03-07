@@ -1275,9 +1275,10 @@ todo_wine {
     str = NULL;
     hr = IXmlReader_GetQualifiedName(reader, &str, &len);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
     ok(len == lstrlenW(dtdnameW), "got %u\n", len);
     ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
-
+}
     IStream_Release(stream);
     IXmlReader_Release(reader);
 }
@@ -1355,9 +1356,10 @@ todo_wine {
     str = NULL;
     hr = IXmlReader_GetQualifiedName(reader, &str, &len);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
     ok(len == lstrlenW(dtdnameW), "got %u\n", len);
     ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
-
+}
     type = XmlNodeType_None;
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got 0x%8x\n", hr);
@@ -1925,12 +1927,11 @@ static void test_read_attribute(void)
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-        todo_wine {
             ok(len == strlen(test->name), "got %u\n", len);
             str_exp = a2w(test->name);
             ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
             free_str(str_exp);
-        }
+
             /* value */
             len = 1;
             str = NULL;
