@@ -2002,8 +2002,27 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetUnorderedAccessViews(
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetShader(ID3D11DeviceContext *iface,
         ID3D11ComputeShader **shader, ID3D11ClassInstance **class_instances, UINT *class_instance_count)
 {
-    FIXME("iface %p, shader %p, class_instances %p, class_instance_count %p stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct d3d11_compute_shader *shader_impl;
+    struct wined3d_shader *wined3d_shader;
+
+    TRACE("iface %p, shader %p, class_instances %p, class_instance_count %p.\n",
             iface, shader, class_instances, class_instance_count);
+
+    if (class_instances || class_instance_count)
+        FIXME("Dynamic linking not implemented yet.\n");
+
+    wined3d_mutex_lock();
+    if (!(wined3d_shader = wined3d_device_get_compute_shader(device->wined3d_device)))
+    {
+        wined3d_mutex_unlock();
+        *shader = NULL;
+        return;
+    }
+
+    shader_impl = wined3d_shader_get_parent(wined3d_shader);
+    wined3d_mutex_unlock();
+    ID3D11ComputeShader_AddRef(*shader = &shader_impl->ID3D11ComputeShader_iface);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetSamplers(ID3D11DeviceContext *iface,
