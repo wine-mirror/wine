@@ -884,7 +884,7 @@ static HRESULT shader_reg_maps_add_tgsm(struct wined3d_shader_reg_maps *reg_maps
             register_idx + 1, sizeof(*reg_maps->tgsm)))
         return E_OUTOFMEMORY;
 
-    reg_maps->tgsm_count = register_idx + 1;
+    reg_maps->tgsm_count = max(register_idx + 1, reg_maps->tgsm_count);
     tgsm = &reg_maps->tgsm[register_idx];
     tgsm->size = size;
     tgsm->stride = stride;
