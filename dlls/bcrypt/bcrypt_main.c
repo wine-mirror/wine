@@ -36,6 +36,8 @@
 #include "ntsecapi.h"
 #include "bcrypt.h"
 
+#include "bcrypt_internal.h"
+
 #include "wine/debug.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
@@ -442,27 +444,71 @@ static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id,
 #else
 struct hash_impl
 {
-
+    union
+    {
+        MD5_CTX md5;
+        SHA_CTX sha1;
+    } u;
 };
 
 static NTSTATUS hash_init( struct hash_impl *hash, enum alg_id alg_id )
 {
-    ERR( "support for hashes not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
+    switch (alg_id)
+    {
+    case ALG_ID_MD5:
+        MD5Init( &hash->u.md5 );
+        break;
+
+    case ALG_ID_SHA1:
+        A_SHAInit( &hash->u.sha1 );
+        break;
+
+    default:
+        ERR( "unhandled id %u\n", alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS hash_update( struct hash_impl *hash, enum alg_id alg_id,
                              UCHAR *input, ULONG size )
 {
-    ERR( "support for hashes not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
+    switch (alg_id)
+    {
+    case ALG_ID_MD5:
+        MD5Update( &hash->u.md5, input, size );
+        break;
+
+    case ALG_ID_SHA1:
+        A_SHAUpdate( &hash->u.sha1, input, size );
+        break;
+
+    default:
+        ERR( "unhandled id %u\n", alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id,
                              UCHAR *output, ULONG size )
 {
-    ERR( "support for hashes not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
+    switch (alg_id)
+    {
+    case ALG_ID_MD5:
+        MD5Final( &hash->u.md5 );
+        memcpy( output, hash->u.md5.digest, 16 );
+        break;
+
+    case ALG_ID_SHA1:
+        A_SHAFinal( &hash->u.sha1, (ULONG *)output );
+        break;
+
+    default:
+        ERR( "unhandled id %u\n", alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    return STATUS_SUCCESS;
 }
 #endif
 
