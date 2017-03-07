@@ -2156,17 +2156,23 @@ void CDECL wined3d_device_set_vs_cb(struct wined3d_device *device, UINT idx, str
     wined3d_device_set_constant_buffer(device, WINED3D_SHADER_TYPE_VERTEX, idx, buffer);
 }
 
-struct wined3d_buffer * CDECL wined3d_device_get_vs_cb(const struct wined3d_device *device, UINT idx)
+static struct wined3d_buffer *wined3d_device_get_constant_buffer(const struct wined3d_device *device,
+        enum wined3d_shader_type shader_type, unsigned int idx)
 {
-    TRACE("device %p, idx %u.\n", device, idx);
-
     if (idx >= MAX_CONSTANT_BUFFERS)
     {
         WARN("Invalid constant buffer index %u.\n", idx);
         return NULL;
     }
 
-    return device->state.cb[WINED3D_SHADER_TYPE_VERTEX][idx];
+    return device->state.cb[shader_type][idx];
+}
+
+struct wined3d_buffer * CDECL wined3d_device_get_vs_cb(const struct wined3d_device *device, UINT idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    return wined3d_device_get_constant_buffer(device, WINED3D_SHADER_TYPE_VERTEX, idx);
 }
 
 static void wined3d_device_set_shader_resource_view(struct wined3d_device *device,
@@ -2441,13 +2447,7 @@ struct wined3d_buffer * CDECL wined3d_device_get_ps_cb(const struct wined3d_devi
 {
     TRACE("device %p, idx %u.\n", device, idx);
 
-    if (idx >= MAX_CONSTANT_BUFFERS)
-    {
-        WARN("Invalid constant buffer index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->state.cb[WINED3D_SHADER_TYPE_PIXEL][idx];
+    return wined3d_device_get_constant_buffer(device, WINED3D_SHADER_TYPE_PIXEL, idx);
 }
 
 void CDECL wined3d_device_set_ps_resource_view(struct wined3d_device *device,
@@ -2670,13 +2670,7 @@ struct wined3d_buffer * CDECL wined3d_device_get_gs_cb(const struct wined3d_devi
 {
     TRACE("device %p, idx %u.\n", device, idx);
 
-    if (idx >= MAX_CONSTANT_BUFFERS)
-    {
-        WARN("Invalid constant buffer index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->state.cb[WINED3D_SHADER_TYPE_GEOMETRY][idx];
+    return wined3d_device_get_constant_buffer(device, WINED3D_SHADER_TYPE_GEOMETRY, idx);
 }
 
 void CDECL wined3d_device_set_gs_resource_view(struct wined3d_device *device,
@@ -2756,13 +2750,7 @@ struct wined3d_buffer * CDECL wined3d_device_get_cs_cb(const struct wined3d_devi
 {
     TRACE("device %p, idx %u.\n", device, idx);
 
-    if (idx >= MAX_CONSTANT_BUFFERS)
-    {
-        WARN("Invalid constant buffer index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->state.cb[WINED3D_SHADER_TYPE_COMPUTE][idx];
+    return wined3d_device_get_constant_buffer(device, WINED3D_SHADER_TYPE_COMPUTE, idx);
 }
 
 void CDECL wined3d_device_set_cs_resource_view(struct wined3d_device *device,
