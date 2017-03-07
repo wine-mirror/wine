@@ -1129,8 +1129,14 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
                     offset = *pcGlyphs - prevCount;
                     glyph_index += dirL * (offset + 1);
                 }
+                shaped = TRUE;
             }
-            shaped = (nextIndex > GSUB_E_NOGLYPH);
+            else if (nextIndex == GSUB_E_NOGLYPH)
+            {
+                char_index += dirL;
+                glyph_index += dirL;
+                shaped = TRUE;
+            }
         }
 
         if (!shaped)
