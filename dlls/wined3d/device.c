@@ -3819,9 +3819,8 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource)
 {
     struct wined3d_texture *dst_texture, *src_texture;
-    RECT dst_rect, src_rect;
+    struct wined3d_box box;
     unsigned int i, j;
-    HRESULT hr;
 
     TRACE("device %p, dst_resource %p, src_resource %p.\n", device, dst_resource, src_resource);
 
@@ -3859,10 +3858,15 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
 
     if (dst_resource->type == WINED3D_RTYPE_BUFFER)
     {
-        if (FAILED(hr = wined3d_buffer_copy(buffer_from_resource(dst_resource), 0,
-                buffer_from_resource(src_resource), 0,
-                dst_resource->size)))
-            ERR("Failed to copy buffer, hr %#x.\n", hr);
+        box.left = 0;
+        box.top = 0;
+        box.right = src_resource->size;
+        box.bottom = 1;
+        box.front = 0;
+        box.back = 1;
+
+        wined3d_cs_emit_blt_sub_resource(device->cs, dst_resource, 0, &box,
+                src_resource, 0, &box, 0, NULL, WINED3D_TEXF_POINT);
         return;
     }
 
@@ -3886,19 +3890,19 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
 
     for (i = 0; i < dst_texture->level_count; ++i)
     {
-        SetRect(&dst_rect, 0, 0,
-                wined3d_texture_get_level_width(dst_texture, i),
-                wined3d_texture_get_level_height(dst_texture, i));
-        SetRect(&src_rect, 0, 0,
-                wined3d_texture_get_level_width(src_texture, i),
-                wined3d_texture_get_level_height(dst_texture, i));
+        box.left = 0;
+        box.top = 0;
+        box.right = wined3d_texture_get_level_width(dst_texture, i);
+        box.bottom = wined3d_texture_get_level_height(dst_texture, i);
+        box.front = 0;
+        box.back = wined3d_texture_get_level_depth(dst_texture, i);
+
         for (j = 0; j < dst_texture->layer_count; ++j)
         {
             unsigned int idx = j * dst_texture->level_count + i;
 
-            if (FAILED(hr = wined3d_texture_blt(dst_texture, idx, &dst_rect,
-                    src_texture, idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
-                ERR("Failed to blit, sub-resource %u, hr %#x.\n", idx, hr);
+            wined3d_cs_emit_blt_sub_resource(device->cs, dst_resource, idx, &box,
+                    src_resource, idx, &box, 0, NULL, WINED3D_TEXF_POINT);
         }
     }
 }
