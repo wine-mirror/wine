@@ -202,9 +202,21 @@ BOOL WINAPI GetProductInfo(DWORD dwOSMajorVersion, DWORD dwOSMinorVersion, DWORD
                              dwSpMajorVersion, dwSpMinorVersion, pdwReturnedProductType);
 }
 
+/***********************************************************************
+ *           GetCurrentPackageId       (KERNEL32.@)
+ */
 LONG WINAPI GetCurrentPackageId(UINT32 *len, BYTE *buffer)
 {
     FIXME("(%p %p): stub\n", len, buffer);
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+/***********************************************************************
+ *           GetCurrentPackageFamilyName       (KERNEL32.@)
+ */
+LONG WINAPI GetCurrentPackageFamilyName(UINT32 *length, PWSTR name)
+{
+    FIXME("(%p %p): stub\n", length, name);
     return APPMODEL_ERROR_NO_PACKAGE;
 }
 
