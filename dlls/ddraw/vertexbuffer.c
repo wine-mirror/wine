@@ -81,24 +81,26 @@ static ULONG WINAPI d3d_vertex_buffer7_Release(IDirect3DVertexBuffer7 *iface)
 
     TRACE("%p decreasing refcount to %u.\n", buffer, ref);
 
-    if (ref == 0)
+    if (!ref)
     {
-        struct wined3d_buffer *curVB = NULL;
+        struct wined3d_buffer *vb = NULL;
         UINT offset, stride;
 
-        /* D3D7 Vertex buffers don't stay bound in the device, they are passed
-         * as a parameter to drawPrimitiveVB. DrawPrimitiveVB sets them as the
-         * stream source in wined3d, and they should get unset there before
+        /* D3D7 vertex buffers don't stay bound in the device, they are passed
+         * as a parameter to DrawPrimitiveVB. DrawPrimitiveVB sets them as the
+         * stream source in wined3d and they should get unset there before
          * they are destroyed. */
         wined3d_mutex_lock();
-        wined3d_device_get_stream_source(buffer->ddraw->wined3d_device,
-                0, &curVB, &offset, &stride);
-        if (curVB == buffer->wined3d_buffer)
+        wined3d_device_get_stream_source(buffer->ddraw->wined3d_device, 0, &vb, &offset, &stride);
+        if (vb == buffer->wined3d_buffer)
             wined3d_device_set_stream_source(buffer->ddraw->wined3d_device, 0, NULL, 0, 0);
 
         wined3d_vertex_declaration_decref(buffer->wined3d_declaration);
         wined3d_buffer_decref(buffer->wined3d_buffer);
         wined3d_mutex_unlock();
+
+        if (buffer->version == 7)
+            IDirectDraw7_Release(&buffer->ddraw->IDirectDraw7_iface);
 
         HeapFree(GetProcessHeap(), 0, buffer);
     }
@@ -451,7 +453,8 @@ HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **vertex_buf,
     buffer->IDirect3DVertexBuffer7_iface.lpVtbl = &d3d_vertex_buffer7_vtbl;
     buffer->ref = 1;
     buffer->version = ddraw->d3dversion;
-
+    if (buffer->version == 7)
+        IDirectDraw7_AddRef(&ddraw->IDirectDraw7_iface);
     buffer->ddraw = ddraw;
     buffer->Caps = desc->dwCaps;
     buffer->fvf = desc->dwFVF;
