@@ -3206,7 +3206,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         type_part = resource_type_info[resource_type].type_part;
         if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2D && texrect)
             type_part = "2DRect";
-        if (!type_part[0])
+        if (!type_part[0] && resource_type != WINED3D_SHADER_RESOURCE_TEXTURE_CUBEARRAY)
             FIXME("Unhandled resource type %#x.\n", resource_type);
 
         if (!lod && grad && !shader_glsl_has_core_grad(gl_info, &ctx->shader->reg_maps.shader_version))
