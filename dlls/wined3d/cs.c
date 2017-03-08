@@ -1674,24 +1674,39 @@ HRESULT wined3d_cs_unmap(struct wined3d_cs *cs, struct wined3d_resource *resourc
 
 static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *data)
 {
-    struct wined3d_surface *dst_surface, *src_surface = NULL;
     const struct wined3d_cs_blt_sub_resource *op = data;
-    struct wined3d_texture *dst_texture, *src_texture;
-    RECT src_rect, dst_rect;
 
-    dst_texture = texture_from_resource(op->dst_resource);
-    dst_surface = dst_texture->sub_resources[op->dst_sub_resource_idx].u.surface;
-    if (op->src_resource)
+    if (op->dst_resource->type == WINED3D_RTYPE_BUFFER)
     {
-        src_texture = texture_from_resource(op->src_resource);
-        src_surface = src_texture->sub_resources[op->src_sub_resource_idx].u.surface;
+        if (FAILED(wined3d_buffer_copy(buffer_from_resource(op->dst_resource), op->dst_box.left,
+                buffer_from_resource(op->src_resource), op->src_box.left,
+                op->src_box.right - op->src_box.left)))
+            ERR("Failed to copy buffer.\n");
     }
-    SetRect(&dst_rect, op->dst_box.left, op->dst_box.top, op->dst_box.right, op->dst_box.bottom);
-    SetRect(&src_rect, op->src_box.left, op->src_box.top, op->src_box.right, op->src_box.bottom);
+    else if (op->dst_resource->type == WINED3D_RTYPE_TEXTURE_2D)
+    {
+        struct wined3d_surface *dst_surface, *src_surface = NULL;
+        struct wined3d_texture *dst_texture, *src_texture;
+        RECT dst_rect, src_rect;
 
-    if (FAILED(wined3d_surface_blt(dst_surface, &dst_rect, src_surface,
-            &src_rect, op->flags, &op->fx, op->filter)))
-        FIXME("Blit failed.\n");
+        dst_texture = texture_from_resource(op->dst_resource);
+        dst_surface = dst_texture->sub_resources[op->dst_sub_resource_idx].u.surface;
+        if (op->src_resource)
+        {
+            src_texture = texture_from_resource(op->src_resource);
+            src_surface = src_texture->sub_resources[op->src_sub_resource_idx].u.surface;
+        }
+        SetRect(&dst_rect, op->dst_box.left, op->dst_box.top, op->dst_box.right, op->dst_box.bottom);
+        SetRect(&src_rect, op->src_box.left, op->src_box.top, op->src_box.right, op->src_box.bottom);
+
+        if (FAILED(wined3d_surface_blt(dst_surface, &dst_rect, src_surface,
+                &src_rect, op->flags, &op->fx, op->filter)))
+            FIXME("Blit failed.\n");
+    }
+    else
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(op->dst_resource->type));
+    }
 
     if (op->src_resource)
         wined3d_resource_release(op->src_resource);
