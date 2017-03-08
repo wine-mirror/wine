@@ -21,6 +21,14 @@
 
 #include <ntddndis.h>
 
+typedef enum _MIB_NOTIFICATION_TYPE
+{
+    MibParameterNotification,
+    MibAddInstance,
+    MibDeleteInstance,
+    MibInitialNotification,
+} MIB_NOTIFICATION_TYPE, *PMIB_NOTIFICATION_TYPE;
+
 typedef struct _MIB_IF_ROW2
 {
     NET_LUID InterfaceLuid;
@@ -97,6 +105,9 @@ typedef struct _MIB_UNICASTIPADDRESS_ROW
     SCOPE_ID            ScopeId;
     LARGE_INTEGER       CreationTimeStamp;
 } MIB_UNICASTIPADDRESS_ROW, *PMIB_UNICASTIPADDRESS_ROW;
+
+typedef VOID (WINAPI *PUNICAST_IPADDRESS_CHANGE_CALLBACK)(PVOID, PMIB_UNICASTIPADDRESS_ROW,
+                                                          MIB_NOTIFICATION_TYPE);
 
 DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID*,NET_LUID*);
 DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX,NET_LUID*);

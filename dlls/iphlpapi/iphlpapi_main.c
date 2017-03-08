@@ -2674,6 +2674,18 @@ DWORD WINAPI NotifyRouteChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 
 
 /******************************************************************
+ *    NotifyUnicastIpAddressChange (IPHLPAPI.@)
+ */
+DWORD WINAPI NotifyUnicastIpAddressChange(ADDRESS_FAMILY family, PUNICAST_IPADDRESS_CHANGE_CALLBACK callback,
+                                          PVOID context, BOOLEAN init_notify, PHANDLE handle)
+{
+    FIXME("(family %d, callback %p, context %p, init_notify %d, handle %p): stub\n",
+          family, callback, context, init_notify, handle);
+    if (handle) *handle = NULL;
+    return ERROR_NOT_SUPPORTED;
+}
+
+/******************************************************************
  *    SendARP (IPHLPAPI.@)
  *
  * Send an ARP request.

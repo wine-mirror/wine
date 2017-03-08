@@ -239,7 +239,7 @@
 @ stub NotifyRouteChangeEx
 #@ stub NotifyStableUnicastIpAddressTable
 #@ stub NotifyTeredoPortChange
-#@ stub NotifyUnicastIpAddressChange
+@ stdcall NotifyUnicastIpAddressChange(long ptr ptr long ptr)
 #@ stub NTPTimeToNTFileTime
 #@ stub NTTimeToNTPTime
 #@ stub ParseNetworkString
