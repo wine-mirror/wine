@@ -3060,7 +3060,7 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value,
 
     *value = NULL;
 
-    if ((reader->nodetype == XmlNodeType_Comment && !val->str) || is_reader_pending(reader))
+    if ((reader->nodetype == XmlNodeType_Comment && !val->str && !val->len) || is_reader_pending(reader))
     {
         XmlNodeType type;
         HRESULT hr;

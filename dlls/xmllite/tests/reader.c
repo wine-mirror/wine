@@ -954,18 +954,47 @@ static struct test_entry comment_tests[] = {
 
 static void test_read_comment(void)
 {
+    static const char *teststr = "<a>text<!-- comment --></a>";
     struct test_entry *test = comment_tests;
+    static const XmlNodeType types[] =
+    {
+        XmlNodeType_Element,
+        XmlNodeType_Text,
+        XmlNodeType_Comment,
+        XmlNodeType_EndElement,
+    };
+    unsigned int i = 0;
     IXmlReader *reader;
+    XmlNodeType type;
+    IStream *stream;
     HRESULT hr;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
+    stream = create_stream_on_data(teststr, strlen(teststr));
+    hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        const WCHAR *value;
+
+        ok(type == types[i], "%d: unexpected node type %d\n", i, type);
+
+        if (type == XmlNodeType_Text || type == XmlNodeType_Comment)
+        {
+            hr = IXmlReader_GetValue(reader, &value, NULL);
+            ok(hr == S_OK, "got %08x\n", hr);
+            ok(*value != 0, "Expected node value\n");
+        }
+        i++;
+    }
+
+    IStream_Release(stream);
+
     while (test->xml)
     {
-        XmlNodeType type;
-        IStream *stream;
-
         stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
         hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
         ok(hr == S_OK, "got %08x\n", hr);
