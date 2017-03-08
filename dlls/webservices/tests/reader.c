@@ -1758,6 +1758,8 @@ static void test_WsAlloc(void)
     HRESULT hr;
     WS_HEAP *heap;
     void *ptr;
+    SIZE_T requested, actual;
+    ULONG size;
 
     hr = WsCreateHeap( 256, 0, NULL, 0, &heap, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1776,6 +1778,19 @@ static void test_WsAlloc(void)
     hr = WsAlloc( heap, 16, &ptr, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( ptr != NULL, "ptr not set\n" );
+
+    requested = 0xdeadbeef;
+    size = sizeof(requested);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( requested == 16, "got %u\n", (ULONG)requested );
+
+    actual = 0xdeadbeef;
+    size = sizeof(actual);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE, &actual, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( actual == 128, "got %u\n", (ULONG)actual );
+
     WsFreeHeap( heap );
 }
 
@@ -3078,13 +3093,13 @@ static void test_WsResetHeap(void)
     size = sizeof(requested);
     hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( requested == 128, "got %u\n", (ULONG)requested );
+    ok( requested == 128, "got %u\n", (ULONG)requested );
 
     actual = 0xdeadbeef;
     size = sizeof(actual);
     hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE, &actual, size, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( actual == 128, "got %u\n", (ULONG)actual );
+    ok( actual == 128, "got %u\n", (ULONG)actual );
 
     hr = WsAlloc( heap, 1, &ptr, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -3093,7 +3108,7 @@ static void test_WsResetHeap(void)
     size = sizeof(requested);
     hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( requested == 129, "got %u\n", (ULONG)requested );
+    ok( requested == 129, "got %u\n", (ULONG)requested );
 
     actual = 0xdeadbeef;
     size = sizeof(actual);

@@ -877,7 +877,19 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    return prop_get( heap->prop, heap->prop_count, id, buf, size );
+    switch (id)
+    {
+    case WS_HEAP_PROPERTY_REQUESTED_SIZE:
+    case WS_HEAP_PROPERTY_ACTUAL_SIZE:
+    {
+        SIZE_T *heap_size = buf;
+        if (!buf || size != sizeof(heap_size)) return E_INVALIDARG;
+        *heap_size = heap->allocated;
+        return S_OK;
+    }
+    default:
+        return prop_get( heap->prop, heap->prop_count, id, buf, size );
+    }
 }
 
 /**************************************************************************
