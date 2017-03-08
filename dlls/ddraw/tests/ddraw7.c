@@ -12592,6 +12592,473 @@ static void test_get_surface_from_dc(void)
     DestroyWindow(window);
 }
 
+static void test_ck_operation(void)
+{
+    IDirectDrawSurface7 *src, *dst;
+    IDirectDrawSurface *src1, *dst1;
+    DDSURFACEDESC2 surface_desc;
+    IDirectDraw7 *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    D3DCOLOR *color;
+    unsigned int i;
+    DDCOLORKEY ckey;
+    DDBLTFX fx;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 4;
+    surface_desc.dwHeight = 1;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(surface_desc.ddpfPixelFormat)).dwRGBBitCount = 32;
+    U2(U4(surface_desc.ddpfPixelFormat)).dwRBitMask = 0x00ff0000;
+    U3(U4(surface_desc.ddpfPixelFormat)).dwGBitMask = 0x0000ff00;
+    U4(U4(surface_desc.ddpfPixelFormat)).dwBBitMask = 0x000000ff;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    surface_desc.dwFlags |= DDSD_CKSRCBLT;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00ff00ff;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00ff00ff;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(src, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    ok(!(surface_desc.dwFlags & DDSD_LPSURFACE), "Surface desc has LPSURFACE Flags set.\n");
+    color = surface_desc.lpSurface;
+    color[0] = 0x77010203;
+    color[1] = 0x00010203;
+    color[2] = 0x77ff00ff;
+    color[3] = 0x00ff00ff;
+    hr = IDirectDrawSurface7_Unlock(src, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    for (i = 0; i < 2; ++i)
+    {
+        hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        color = surface_desc.lpSurface;
+        color[0] = 0xcccccccc;
+        color[1] = 0xcccccccc;
+        color[2] = 0xcccccccc;
+        color[3] = 0xcccccccc;
+        hr = IDirectDrawSurface7_Unlock(dst, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+        if (i)
+        {
+            hr = IDirectDrawSurface7_BltFast(dst, 0, 0, src, NULL, DDBLTFAST_SRCCOLORKEY);
+            ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+        }
+        else
+        {
+            hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYSRC, NULL);
+            ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+        }
+
+        hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT | DDLOCK_READONLY, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(!(surface_desc.dwFlags & DDSD_LPSURFACE), "Surface desc has LPSURFACE Flags set.\n");
+        color = surface_desc.lpSurface;
+        /* Different behavior on some drivers / windows versions. Some versions ignore the X channel when
+         * color keying, but copy it to the destination surface. Others (sysmem surfaces) apply it for
+         * color keying, but do not copy it into the destination surface. Nvidia neither uses it for
+         * color keying nor copies it. */
+        ok((color[0] == 0x77010203 && color[1] == 0x00010203
+                && color[2] == 0xcccccccc && color[3] == 0xcccccccc) /* AMD, Wine */
+                || broken(color[0] == 0x00010203 && color[1] == 0x00010203
+                && color[2] == 0x00ff00ff && color[3] == 0xcccccccc) /* Sysmem surfaces? */
+                || broken(color[0] == 0x00010203 && color[1] == 0x00010203
+                && color[2] == 0xcccccccc && color[3] == 0xcccccccc) /* Nvidia */
+                || broken(color[0] == 0xff010203 && color[1] == 0xff010203
+                && color[2] == 0xcccccccc && color[3] == 0xcccccccc) /* Testbot */,
+                "Destination data after blitting is %08x %08x %08x %08x, i=%u.\n",
+                color[0], color[1], color[2], color[3], i);
+        hr = IDirectDrawSurface7_Unlock(dst, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+    }
+
+    hr = IDirectDrawSurface7_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x00ff00ff && ckey.dwColorSpaceHighValue == 0x00ff00ff,
+            "Got unexpected color key low=%08x high=%08x.\n", ckey.dwColorSpaceLowValue, ckey.dwColorSpaceHighValue);
+
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0;
+    hr = IDirectDrawSurface7_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x0000ff00 && ckey.dwColorSpaceHighValue == 0x0000ff00,
+            "Got unexpected color key low=%08x high=%08x.\n", ckey.dwColorSpaceLowValue, ckey.dwColorSpaceHighValue);
+
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0;
+    hr = IDirectDrawSurface7_GetSurfaceDesc(src, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue == 0x0000ff00
+            && surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue == 0x0000ff00,
+            "Got unexpected color key low=%08x high=%08x.\n", surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue,
+            surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue);
+
+    /* Test SetColorKey with dwColorSpaceHighValue < dwColorSpaceLowValue */
+    ckey.dwColorSpaceLowValue = 0x000000ff;
+    ckey.dwColorSpaceHighValue = 0x00000000;
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0;
+    hr = IDirectDrawSurface7_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x000000ff && ckey.dwColorSpaceHighValue == 0x000000ff,
+            "Got unexpected color key low=%08x high=%08x.\n", ckey.dwColorSpaceLowValue, ckey.dwColorSpaceHighValue);
+
+    ckey.dwColorSpaceLowValue = 0x000000ff;
+    ckey.dwColorSpaceHighValue = 0x00000001;
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0;
+    hr = IDirectDrawSurface7_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x000000ff && ckey.dwColorSpaceHighValue == 0x000000ff,
+            "Got unexpected color key low=%08x high=%08x.\n", ckey.dwColorSpaceLowValue, ckey.dwColorSpaceHighValue);
+
+    ckey.dwColorSpaceLowValue = 0x000000fe;
+    ckey.dwColorSpaceHighValue = 0x000000fd;
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    ckey.dwColorSpaceLowValue = ckey.dwColorSpaceHighValue = 0;
+    hr = IDirectDrawSurface7_GetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x000000fe && ckey.dwColorSpaceHighValue == 0x000000fe,
+            "Got unexpected color key low=%08x high=%08x.\n", ckey.dwColorSpaceLowValue, ckey.dwColorSpaceHighValue);
+
+    IDirectDrawSurface7_Release(src);
+    IDirectDrawSurface7_Release(dst);
+
+    /* Test source and destination keys and where they are read from. Use a surface with alpha
+     * to avoid driver-dependent content in the X channel. */
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 6;
+    surface_desc.dwHeight = 1;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U1(U4(surface_desc.ddpfPixelFormat)).dwRGBBitCount = 32;
+    U2(U4(surface_desc.ddpfPixelFormat)).dwRBitMask = 0x00ff0000;
+    U3(U4(surface_desc.ddpfPixelFormat)).dwGBitMask = 0x0000ff00;
+    U4(U4(surface_desc.ddpfPixelFormat)).dwBBitMask = 0x000000ff;
+    U5(U4(surface_desc.ddpfPixelFormat)).dwRGBAlphaBitMask = 0xff000000;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    ckey.dwColorSpaceLowValue = 0x0000ff00;
+    ckey.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface7_SetColorKey(dst, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    ckey.dwColorSpaceLowValue = 0x00ff0000;
+    ckey.dwColorSpaceHighValue = 0x00ff0000;
+    hr = IDirectDrawSurface7_SetColorKey(dst, DDCKEY_DESTBLT, &ckey);
+    ok(SUCCEEDED(hr) || hr == DDERR_NOCOLORKEYHW, "Failed to set color key, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        /* Nvidia reject dest keys, AMD allows them. This applies to vidmem and sysmem surfaces. */
+        skip("Failed to set destination color key, skipping related tests.\n");
+        goto done;
+    }
+
+    ckey.dwColorSpaceLowValue = 0x000000ff;
+    ckey.dwColorSpaceHighValue = 0x000000ff;
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    ckey.dwColorSpaceLowValue = 0x000000aa;
+    ckey.dwColorSpaceHighValue = 0x000000aa;
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_DESTBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.ddckSrcColorkey.dwColorSpaceHighValue = 0x00110000;
+    fx.ddckSrcColorkey.dwColorSpaceLowValue = 0x00110000;
+    fx.ddckDestColorkey.dwColorSpaceHighValue = 0x00001100;
+    fx.ddckDestColorkey.dwColorSpaceLowValue = 0x00001100;
+
+    hr = IDirectDrawSurface7_Lock(src, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    color[0] = 0x000000ff; /* Applies to src blt key in src surface. */
+    color[1] = 0x000000aa; /* Applies to dst blt key in src surface. */
+    color[2] = 0x00ff0000; /* Dst color key in dst surface. */
+    color[3] = 0x0000ff00; /* Src color key in dst surface. */
+    color[4] = 0x00001100; /* Src color key in ddbltfx. */
+    color[5] = 0x00110000; /* Dst color key in ddbltfx. */
+    hr = IDirectDrawSurface7_Unlock(src, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    color[0] = color[1] = color[2] = color[3] = color[4] = color[5] = 0x55555555;
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Test a blit without keying. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, 0, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Should have copied src data unmodified to dst. */
+    ok(color[0] == 0x000000ff && color[1] == 0x000000aa && color[2] == 0x00ff0000 &&
+            color[3] == 0x0000ff00 && color[4] == 0x00001100 && color[5] == 0x00110000,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+
+    color[0] = color[1] = color[2] = color[3] = color[4] = color[5] = 0x55555555;
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Src key. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYSRC, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Src key applied to color[0]. It is unmodified, the others are copied. */
+    ok(color[0] == 0x55555555 && color[1] == 0x000000aa && color[2] == 0x00ff0000 &&
+            color[3] == 0x0000ff00 && color[4] == 0x00001100 && color[5] == 0x00110000,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+
+    color[0] = color[1] = color[2] = color[3] = color[4] = color[5] = 0x55555555;
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Src override. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYSRCOVERRIDE, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Override key applied to color[5]. It is unmodified, the others are copied. */
+    ok(color[0] == 0x000000ff && color[1] == 0x000000aa && color[2] == 0x00ff0000 &&
+            color[3] == 0x0000ff00 && color[4] == 0x00001100 && color[5] == 0x55555555,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+
+    color[0] = color[1] = color[2] = color[3] = color[4] = color[5] = 0x55555555;
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Src override AND src key. That is not supposed to work. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Ensure the desination was not changed. */
+    ok(color[0] == 0x55555555 && color[1] == 0x55555555 && color[2] == 0x55555555 &&
+            color[3] == 0x55555555 && color[4] == 0x55555555 && color[5] == 0x55555555,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+
+    /* Use different dst colors for the dst key test. */
+    color[0] = 0x00ff0000; /* Dest key in dst surface. */
+    color[1] = 0x00ff0000; /* Dest key in dst surface. */
+    color[2] = 0x00001100; /* Dest key in override. */
+    color[3] = 0x00001100; /* Dest key in override. */
+    color[4] = 0x000000aa; /* Dest key in src surface. */
+    color[5] = 0x000000aa; /* Dest key in src surface. */
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Dest key blit. The key is taken from the DESTINATION surface in v7! */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYDEST, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Dst key applied to color[0,1], they are the only changed pixels. */
+    todo_wine ok(color[0] == 0x000000ff && color[1] == 0x000000aa && color[2] == 0x00001100 &&
+            color[3] == 0x00001100 && color[4] == 0x000000aa && color[5] == 0x000000aa,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+
+    color[0] = 0x00ff0000; /* Dest key in dst surface. */
+    color[1] = 0x00ff0000; /* Dest key in dst surface. */
+    color[2] = 0x00001100; /* Dest key in override. */
+    color[3] = 0x00001100; /* Dest key in override. */
+    color[4] = 0x000000aa; /* Dest key in src surface. */
+    color[5] = 0x000000aa; /* Dest key in src surface. */
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* What happens with a QI'd older version of the interface? It takes the key
+     * from the source surface. */
+    hr = IDirectDrawSurface7_QueryInterface(src, &IID_IDirectDrawSurface, (void **)&src1);
+    ok(SUCCEEDED(hr), "Failed to query IDirectDrawSurface interface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_QueryInterface(dst, &IID_IDirectDrawSurface, (void **)&dst1);
+    ok(SUCCEEDED(hr), "Failed to query IDirectDrawSurface interface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Blt(dst1, NULL, src1, NULL, DDBLT_KEYDEST, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    IDirectDrawSurface_Release(dst1);
+    IDirectDrawSurface_Release(src1);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Dst key applied to color[4,5], they are the only changed pixels. */
+    ok(color[0] == 0x00ff0000 && color[1] == 0x00ff0000 && color[2] == 0x00001100 &&
+            color[3] == 0x00001100 && color[4] == 0x00001100 && color[5] == 0x00110000,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+
+    color[0] = 0x00ff0000; /* Dest key in dst surface. */
+    color[1] = 0x00ff0000; /* Dest key in dst surface. */
+    color[2] = 0x00001100; /* Dest key in override. */
+    color[3] = 0x00001100; /* Dest key in override. */
+    color[4] = 0x000000aa; /* Dest key in src surface. */
+    color[5] = 0x000000aa; /* Dest key in src surface. */
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Dest override key blit. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYDESTOVERRIDE, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Dst key applied to color[2,3], they are the only changed pixels. */
+    ok(color[0] == 0x00ff0000 && color[1] == 0x00ff0000 && color[2] == 0x00ff0000 &&
+            color[3] == 0x0000ff00 && color[4] == 0x000000aa && color[5] == 0x000000aa,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+
+    color[0] = 0x00ff0000; /* Dest key in dst surface. */
+    color[1] = 0x00ff0000; /* Dest key in dst surface. */
+    color[2] = 0x00001100; /* Dest key in override. */
+    color[3] = 0x00001100; /* Dest key in override. */
+    color[4] = 0x000000aa; /* Dest key in src surface. */
+    color[5] = 0x000000aa; /* Dest key in src surface. */
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Dest override together with surface key. Supposed to fail. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYDEST | DDBLT_KEYDESTOVERRIDE, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Destination is unchanged. */
+    ok(color[0] == 0x00ff0000 && color[1] == 0x00ff0000 && color[2] == 0x00001100 &&
+            color[3] == 0x00001100 && color[4] == 0x000000aa && color[5] == 0x000000aa,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Source and destination key. This is driver dependent. New HW treats it like
+     * DDBLT_KEYSRC. Older HW and some software renderers apply both keys. */
+    if (0)
+    {
+        hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYDEST | DDBLT_KEYSRC, &fx);
+        ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+        hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        color = surface_desc.lpSurface;
+        /* Color[0] is filtered by the src key, 2-5 are filtered by the dst key, if
+         * the driver applies it. */
+        ok(color[0] == 0x00ff0000 && color[1] == 0x000000aa && color[2] == 0x00ff0000 &&
+                color[3] == 0x0000ff00 && color[4] == 0x00001100 && color[5] == 0x00110000,
+                "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+                color[0], color[1], color[2], color[3], color[4], color[5]);
+
+        color[0] = 0x00ff0000; /* Dest key in dst surface. */
+        color[1] = 0x00ff0000; /* Dest key in dst surface. */
+        color[2] = 0x00001100; /* Dest key in override. */
+        color[3] = 0x00001100; /* Dest key in override. */
+        color[4] = 0x000000aa; /* Dest key in src surface. */
+        color[5] = 0x000000aa; /* Dest key in src surface. */
+        hr = IDirectDrawSurface7_Unlock(dst, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+    }
+
+    /* Override keys without ddbltfx parameter fail */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYDESTOVERRIDE, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYSRCOVERRIDE, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Try blitting without keys in the source surface. */
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_SRCBLT, NULL);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetColorKey(src, DDCKEY_DESTBLT, NULL);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    /* That fails now. Do not bother to check that the data is unmodified. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYSRC, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Dest key blit still works, the destination surface key is used in v7. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYDEST, &fx);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    color = surface_desc.lpSurface;
+    /* Dst key applied to color[0,1], they are the only changed pixels. */
+    todo_wine ok(color[0] == 0x000000ff && color[1] == 0x000000aa && color[2] == 0x00001100 &&
+            color[3] == 0x00001100 && color[4] == 0x000000aa && color[5] == 0x000000aa,
+            "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
+            color[0], color[1], color[2], color[3], color[4], color[5]);
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* Try blitting without keys in the destination surface. */
+    hr = IDirectDrawSurface7_SetColorKey(dst, DDCKEY_SRCBLT, NULL);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetColorKey(dst, DDCKEY_DESTBLT, NULL);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    /* This fails, as sanity would dictate. */
+    hr = IDirectDrawSurface7_Blt(dst, NULL, src, NULL, DDBLT_KEYDEST, &fx);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+done:
+    IDirectDrawSurface7_Release(src);
+    IDirectDrawSurface7_Release(dst);
+    refcount = IDirectDraw7_Release(ddraw);
+    ok(!refcount, "DirectDraw has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -12705,4 +13172,5 @@ START_TEST(ddraw7)
     test_display_mode_surface_pixel_format();
     test_surface_desc_size();
     test_get_surface_from_dc();
+    test_ck_operation();
 }
