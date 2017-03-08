@@ -284,12 +284,16 @@ static const struct prop_desc heap_props[] =
 
 struct heap
 {
-    HANDLE      handle;
-    SIZE_T      max_size;
-    SIZE_T      allocated;
-    ULONG       prop_count;
-    struct prop prop[sizeof(heap_props)/sizeof(heap_props[0])];
+    ULONG            magic;
+    CRITICAL_SECTION cs;
+    HANDLE           handle;
+    SIZE_T           max_size;
+    SIZE_T           allocated;
+    ULONG            prop_count;
+    struct prop      prop[sizeof(heap_props)/sizeof(heap_props[0])];
 };
+
+#define HEAP_MAGIC (('H' << 24) | ('E' << 16) | ('A' << 8) | 'P')
 
 static BOOL ensure_heap( struct heap *heap )
 {
@@ -304,31 +308,48 @@ static BOOL ensure_heap( struct heap *heap )
 
 void *ws_alloc( WS_HEAP *handle, SIZE_T size )
 {
-    void *ret;
     struct heap *heap = (struct heap *)handle;
-    if (!ensure_heap( heap ) || size > heap->max_size - heap->allocated) return NULL;
+    void *ret = NULL;
+
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic != HEAP_MAGIC) goto done;
+    if (!ensure_heap( heap ) || size > heap->max_size - heap->allocated) goto done;
     if ((ret = HeapAlloc( heap->handle, 0, size ))) heap->allocated += size;
+
+done:
+    LeaveCriticalSection( &heap->cs );
     return ret;
 }
 
 static void *ws_alloc_zero( WS_HEAP *handle, SIZE_T size )
 {
-    void *ret;
     struct heap *heap = (struct heap *)handle;
-    if (!ensure_heap( heap ) || size > heap->max_size - heap->allocated) return NULL;
+    void *ret = NULL;
+
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic != HEAP_MAGIC) goto done;
+    if (!ensure_heap( heap ) || size > heap->max_size - heap->allocated) goto done;
     if ((ret = HeapAlloc( heap->handle, HEAP_ZERO_MEMORY, size ))) heap->allocated += size;
+
+done:
+    LeaveCriticalSection( &heap->cs );
     return ret;
 }
 
 void *ws_realloc( WS_HEAP *handle, void *ptr, SIZE_T old_size, SIZE_T new_size )
 {
-    void *ret;
     struct heap *heap = (struct heap *)handle;
-    if (!ensure_heap( heap )) return NULL;
+    void *ret = NULL;
+
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic != HEAP_MAGIC || !ensure_heap( heap )) goto done;
     if (new_size >= old_size)
     {
         SIZE_T size = new_size - old_size;
-        if (size > heap->max_size - heap->allocated) return NULL;
+        if (size > heap->max_size - heap->allocated) goto done;
         if ((ret = HeapReAlloc( heap->handle, 0, ptr, new_size ))) heap->allocated += size;
     }
     else
@@ -336,18 +357,24 @@ void *ws_realloc( WS_HEAP *handle, void *ptr, SIZE_T old_size, SIZE_T new_size )
         SIZE_T size = old_size - new_size;
         if ((ret = HeapReAlloc( heap->handle, 0, ptr, new_size ))) heap->allocated -= size;
     }
+
+done:
+    LeaveCriticalSection( &heap->cs );
     return ret;
 }
 
 static void *ws_realloc_zero( WS_HEAP *handle, void *ptr, SIZE_T old_size, SIZE_T new_size )
 {
-    void *ret;
     struct heap *heap = (struct heap *)handle;
-    if (!ensure_heap( heap )) return NULL;
+    void *ret = NULL;
+
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic != HEAP_MAGIC || !ensure_heap( heap )) goto done;
     if (new_size >= old_size)
     {
         SIZE_T size = new_size - old_size;
-        if (size > heap->max_size - heap->allocated) return NULL;
+        if (size > heap->max_size - heap->allocated) goto done;
         if ((ret = HeapReAlloc( heap->handle, HEAP_ZERO_MEMORY, ptr, new_size ))) heap->allocated += size;
     }
     else
@@ -355,15 +382,25 @@ static void *ws_realloc_zero( WS_HEAP *handle, void *ptr, SIZE_T old_size, SIZE_
         SIZE_T size = old_size - new_size;
         if ((ret = HeapReAlloc( heap->handle, HEAP_ZERO_MEMORY, ptr, new_size ))) heap->allocated -= size;
     }
+
+done:
+    LeaveCriticalSection( &heap->cs );
     return ret;
 }
 
 void ws_free( WS_HEAP *handle, void *ptr, SIZE_T size )
 {
     struct heap *heap = (struct heap *)handle;
-    if (!heap->handle) return;
-    HeapFree( heap->handle, 0, ptr );
-    heap->allocated -= size;
+
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic == HEAP_MAGIC)
+    {
+        HeapFree( heap->handle, 0, ptr );
+        heap->allocated -= size;
+    }
+
+    LeaveCriticalSection( &heap->cs );
 }
 
 /**************************************************************************
@@ -389,6 +426,11 @@ static struct heap *alloc_heap(void)
     ULONG size = sizeof(*ret) + prop_size( heap_props, count );
 
     if (!(ret = heap_alloc_zero( size ))) return NULL;
+
+    ret->magic      = HEAP_MAGIC;
+    InitializeCriticalSection( &ret->cs );
+    ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": heap.cs");
+
     prop_init( heap_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
@@ -415,6 +457,13 @@ HRESULT WINAPI WsCreateHeap( SIZE_T max_size, SIZE_T trim_size, const WS_HEAP_PR
     return S_OK;
 }
 
+static void reset_heap( struct heap *heap )
+{
+    HeapDestroy( heap->handle );
+    heap->handle   = NULL;
+    heap->max_size = heap->allocated = 0;
+}
+
 /**************************************************************************
  *          WsFreeHeap		[webservices.@]
  */
@@ -425,7 +474,22 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
     TRACE( "%p\n", handle );
 
     if (!heap) return;
-    HeapDestroy( heap->handle );
+
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic != HEAP_MAGIC)
+    {
+        LeaveCriticalSection( &heap->cs );
+        return;
+    }
+
+    reset_heap( heap );
+    heap->magic = 0;
+
+    LeaveCriticalSection( &heap->cs );
+
+    heap->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &heap->cs );
     heap_free( heap );
 }
 
@@ -441,10 +505,58 @@ HRESULT WINAPI WsResetHeap( WS_HEAP *handle, WS_ERROR *error )
 
     if (!heap) return E_INVALIDARG;
 
-    HeapDestroy( heap->handle );
-    heap->handle   = NULL;
-    heap->max_size = heap->allocated = 0;
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic != HEAP_MAGIC)
+    {
+        LeaveCriticalSection( &heap->cs );
+        return E_INVALIDARG;
+    }
+
+    reset_heap( heap );
+
+    LeaveCriticalSection( &heap->cs );
     return S_OK;
+}
+
+/**************************************************************************
+ *          WsGetHeapProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void *buf,
+                                  ULONG size, WS_ERROR *error )
+{
+    struct heap *heap = (struct heap *)handle;
+    HRESULT hr = S_OK;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!heap) return E_INVALIDARG;
+
+    EnterCriticalSection( &heap->cs );
+
+    if (heap->magic != HEAP_MAGIC)
+    {
+        LeaveCriticalSection( &heap->cs );
+        return E_INVALIDARG;
+    }
+
+    switch (id)
+    {
+    case WS_HEAP_PROPERTY_REQUESTED_SIZE:
+    case WS_HEAP_PROPERTY_ACTUAL_SIZE:
+    {
+        SIZE_T *heap_size = buf;
+        if (!buf || size != sizeof(heap_size)) hr = E_INVALIDARG;
+        else *heap_size = heap->allocated;
+        break;
+    }
+    default:
+        hr = prop_get( heap->prop, heap->prop_count, id, buf, size );
+    }
+
+    LeaveCriticalSection( &heap->cs );
+    return hr;
 }
 
 struct node *alloc_node( WS_XML_NODE_TYPE type )
@@ -958,32 +1070,6 @@ HRESULT WINAPI WsFillReader( WS_XML_READER *handle, ULONG min_size, const WS_ASY
     reader->read_pos  = 0;
 
     return S_OK;
-}
-
-/**************************************************************************
- *          WsGetHeapProperty		[webservices.@]
- */
-HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void *buf,
-                                  ULONG size, WS_ERROR *error )
-{
-    struct heap *heap = (struct heap *)handle;
-
-    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
-    if (error) FIXME( "ignoring error parameter\n" );
-
-    switch (id)
-    {
-    case WS_HEAP_PROPERTY_REQUESTED_SIZE:
-    case WS_HEAP_PROPERTY_ACTUAL_SIZE:
-    {
-        SIZE_T *heap_size = buf;
-        if (!buf || size != sizeof(heap_size)) return E_INVALIDARG;
-        *heap_size = heap->allocated;
-        return S_OK;
-    }
-    default:
-        return prop_get( heap->prop, heap->prop_count, id, buf, size );
-    }
 }
 
 /**************************************************************************
