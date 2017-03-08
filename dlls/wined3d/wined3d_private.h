@@ -5074,7 +5074,11 @@ enum wined3d_push_constants
 };
 
 #define WINED3D_CS_QUERY_POLL_INTERVAL  10u
+#if defined(_WIN64)
+#define WINED3D_CS_QUEUE_SIZE           0x1000000u
+#else
 #define WINED3D_CS_QUEUE_SIZE           0x400000u
+#endif
 #define WINED3D_CS_SPIN_COUNT           10000000u
 #define WINED3D_CS_QUEUE_MASK           (WINED3D_CS_QUEUE_SIZE - 1)
 
