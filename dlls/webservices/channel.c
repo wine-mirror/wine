@@ -87,6 +87,8 @@ static const struct prop_desc channel_props[] =
 
 struct channel
 {
+    ULONG                   magic;
+    CRITICAL_SECTION        cs;
     WS_CHANNEL_TYPE         type;
     WS_CHANNEL_BINDING      binding;
     WS_CHANNEL_STATE        state;
@@ -100,6 +102,8 @@ struct channel
     struct prop             prop[sizeof(channel_props)/sizeof(channel_props[0])];
 };
 
+#define CHANNEL_MAGIC (('C' << 24) | ('H' << 16) | ('A' << 8) | 'N')
+
 static struct channel *alloc_channel(void)
 {
     static const ULONG count = sizeof(channel_props)/sizeof(channel_props[0]);
@@ -107,6 +111,11 @@ static struct channel *alloc_channel(void)
     ULONG size = sizeof(*ret) + prop_size( channel_props, count );
 
     if (!(ret = heap_alloc_zero( size ))) return NULL;
+
+    ret->magic      = CHANNEL_MAGIC;
+    InitializeCriticalSection( &ret->cs );
+    ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": channel.cs");
+
     prop_init( channel_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
@@ -114,13 +123,15 @@ static struct channel *alloc_channel(void)
 
 static void free_channel( struct channel *channel )
 {
-    if (!channel) return;
     WsFreeWriter( channel->writer );
     WsFreeReader( channel->reader );
     WinHttpCloseHandle( channel->http_request );
     WinHttpCloseHandle( channel->http_connect );
     WinHttpCloseHandle( channel->http_session );
     heap_free( channel->addr.url.chars );
+
+    channel->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &channel->cs );
     heap_free( channel );
 }
 
@@ -197,6 +208,20 @@ void WINAPI WsFreeChannel( WS_CHANNEL *handle )
     struct channel *channel = (struct channel *)handle;
 
     TRACE( "%p\n", handle );
+
+    if (!channel) return;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return;
+    }
+
+    channel->magic = 0;
+
+    LeaveCriticalSection( &channel->cs );
     free_channel( channel );
 }
 
@@ -207,12 +232,25 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
                                      ULONG size, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
-    return prop_get( channel->prop, channel->prop_count, id, buf, size );
+    if (!channel) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = prop_get( channel->prop, channel->prop_count, id, buf, size );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -222,12 +260,25 @@ HRESULT WINAPI WsSetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
                                      ULONG size, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
 
     TRACE( "%p %u %p %u\n", handle, id, value, size );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
-    return prop_set( channel->prop, channel->prop_count, id, value, size );
+    if (!channel) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = prop_set( channel->prop, channel->prop_count, id, value, size );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
 }
 
 static HRESULT open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS *endpoint )
@@ -253,15 +304,32 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
                               const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
 
     TRACE( "%p %p %p %p\n", handle, endpoint, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    if (!handle || !endpoint) return E_INVALIDARG;
-    if (channel->state != WS_CHANNEL_STATE_CREATED) return WS_E_INVALID_OPERATION;
+    if (!channel || !endpoint) return E_INVALIDARG;
 
-    return open_channel( channel, endpoint );
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if (channel->state != WS_CHANNEL_STATE_CREATED)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    hr = open_channel( channel, endpoint );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
 }
 
 static HRESULT close_channel( struct channel *channel )
@@ -287,13 +355,26 @@ static HRESULT close_channel( struct channel *channel )
 HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
 
     TRACE( "%p %p %p\n", handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
-    return close_channel( channel );
+    if (!channel) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = close_channel( channel );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
 }
 
 static HRESULT parse_url( const WCHAR *url, ULONG len, URL_COMPONENTS *uc )
@@ -444,10 +525,26 @@ HRESULT channel_send_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
     WS_BYTES buf;
     HRESULT hr;
 
-    if ((hr = connect_channel( channel, msg )) != S_OK) return hr;
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((hr = connect_channel( channel, msg )) != S_OK)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return hr;
+    }
+
     WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_BODY_WRITER, &writer, sizeof(writer), NULL );
     WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &buf, sizeof(buf), NULL );
-    return send_message( channel, buf.bytes, buf.length );
+    hr = send_message( channel, buf.bytes, buf.length );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -464,18 +561,28 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    if (!handle || !msg || !desc) return E_INVALIDARG;
+    if (!channel || !msg || !desc) return E_INVALIDARG;
 
-    if ((hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL )) != S_OK) return hr;
-    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) return hr;
-    if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
+    EnterCriticalSection( &channel->cs );
 
-    if (!channel->writer && (hr = WsCreateWriter( NULL, 0, &channel->writer, NULL )) != S_OK) return hr;
-    if ((hr = set_output( channel->writer )) != S_OK) return hr;
-    if ((hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size )) != S_OK)
-        return hr;
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
 
-    return channel_send_message( handle, msg );
+    if ((hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL )) != S_OK) goto done;
+    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) goto done;
+    if ((hr = message_set_action( msg, desc->action )) != S_OK) goto done;
+
+    if (!channel->writer && (hr = WsCreateWriter( NULL, 0, &channel->writer, NULL )) != S_OK) goto done;
+    if ((hr = set_output( channel->writer )) != S_OK) goto done;
+    hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size );
+
+done:
+    LeaveCriticalSection( &channel->cs );
+    if (hr == S_OK) hr = channel_send_message( handle, msg );
+    return hr;
 }
 
 #define INITIAL_READ_BUFFER_SIZE 4096
@@ -529,9 +636,21 @@ HRESULT channel_receive_message( WS_CHANNEL *handle, char **buf, ULONG *len )
 {
     struct channel *channel = (struct channel *)handle;
     ULONG max_len;
+    HRESULT hr;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
 
     WsGetChannelProperty( handle, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE, &max_len, sizeof(max_len), NULL );
-    return receive_message( channel, max_len, buf, len );
+    hr = receive_message( channel, max_len, buf, len );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
 }
 
 HRESULT set_input( WS_XML_READER *reader, char *data, ULONG size )
@@ -586,14 +705,25 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
         return E_NOTIMPL;
     }
 
-    if (!handle || !msg || !desc || !count) return E_INVALIDARG;
+    if (!channel || !msg || !desc || !count) return E_INVALIDARG;
 
     if ((hr = channel_receive_message( handle, &buf, &len )) != S_OK) return hr;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        heap_free( buf );
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
     if (!channel->reader && (hr = WsCreateReader( NULL, 0, &channel->reader, NULL )) != S_OK) goto done;
     if ((hr = set_input( channel->reader, buf, len )) != S_OK) goto done;
     hr = read_message( msg, channel->reader, desc[0]->bodyElementDescription, read_option, heap, value, size );
 
 done:
     heap_free( buf );
+    LeaveCriticalSection( &channel->cs );
     return hr;
 }
