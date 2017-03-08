@@ -221,7 +221,7 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
     return blend_bitmapinfo( src_info, src_bits->ptr, src, dst_info, dst_bits->ptr, dst, blend );
 }
 
-static RGBQUAD get_dc_rgb_color( DC *dc, COLORREF color )
+static RGBQUAD get_dc_rgb_color( DC *dc, int color_table_size, COLORREF color )
 {
     RGBQUAD ret = { 0, 0, 0, 0 };
 
@@ -238,8 +238,11 @@ static RGBQUAD get_dc_rgb_color( DC *dc, COLORREF color )
     }
     if (color >> 16 == 0x10ff)  /* DIBINDEX */
     {
-        /* FIXME: need to propagate the index into the conversion functions */
-        WARN( "monochrome blit uses DIBINDEX %x\n", color );
+        if (color_table_size)
+        {
+            if (LOWORD(color) >= color_table_size) color = 0x10ff0000;  /* fallback to index 0 */
+            *(DWORD *)&ret = color;
+        }
         return ret;
     }
     ret.rgbRed   = GetRValue( color );
@@ -249,10 +252,10 @@ static RGBQUAD get_dc_rgb_color( DC *dc, COLORREF color )
 }
 
 /* helper to retrieve either both colors or only the background color for monochrome blits */
-void get_mono_dc_colors( DC *dc, BITMAPINFO *info, int count )
+void get_mono_dc_colors( DC *dc, int color_table_size, BITMAPINFO *info, int count )
 {
-    info->bmiColors[count - 1] = get_dc_rgb_color( dc, dc->backgroundColor );
-    if (count > 1) info->bmiColors[0] = get_dc_rgb_color( dc, dc->textColor );
+    info->bmiColors[count - 1] = get_dc_rgb_color( dc, color_table_size, dc->backgroundColor );
+    if (count > 1) info->bmiColors[0] = get_dc_rgb_color( dc, color_table_size, dc->textColor );
     info->bmiHeader.biClrUsed = count;
 }
 
@@ -284,12 +287,12 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
         /* 1-bpp source without a color table uses the destination DC colors */
         if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
-            get_mono_dc_colors( dc_dst, src_info, 2 );
+            get_mono_dc_colors( dc_dst, dst_info->bmiHeader.biClrUsed, src_info, 2 );
 
         /* 1-bpp destination without a color table requires a fake 1-entry table
          * that contains only the background color */
         if (dst_info->bmiHeader.biBitCount == 1 && !dst_colors)
-            get_mono_dc_colors( dc_src, dst_info, 1 );
+            get_mono_dc_colors( dc_src, src_info->bmiHeader.biClrUsed, dst_info, 1 );
 
         if (!(err = convert_bits( src_info, src, dst_info, &bits )))
         {

@@ -108,6 +108,9 @@ static const BYTE pixel_masks_4[2] = {0xf0, 0x0f};
 static const BYTE pixel_masks_1[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 static const BYTE edge_masks_1[8] = {0xff, 0x7f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01};
 
+#define FILTER_DIBINDEX(rgbquad,other_val) \
+    (HIWORD( *(DWORD *)(&rgbquad) ) == 0x10ff ? LOWORD( *(DWORD *)(&rgbquad) ) : (other_val))
+
 #define ROPS_WITHOUT_COPY( _d, _s )                                     \
 case R2_BLACK:        LOOP( (_d) = 0 ) break;                           \
 case R2_NOTMERGEPEN:  LOOP( (_d) = ~((_d) | (_s)) ) break;              \
@@ -3757,7 +3760,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-            dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
+            dst_colors[i] = FILTER_DIBINDEX(color_table[i], rgbquad_to_pixel_colortable(dst, color_table[i]));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4144,7 +4147,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-            dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
+            dst_colors[i] = FILTER_DIBINDEX(color_table[i], rgbquad_to_pixel_colortable(dst, color_table[i]));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4188,7 +4191,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
     case 32:
     {
         DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top), *src_pixel;
-        DWORD bg_pixel = rgbquad_to_pixel_masks(src, bg_entry);
+        DWORD bg_pixel = FILTER_DIBINDEX(bg_entry, rgbquad_to_pixel_masks(src, bg_entry));
 
         if(src->funcs == &funcs_8888)
         {
@@ -4289,7 +4292,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
     case 24:
     {
         BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
-        DWORD bg_pixel = RGB( bg_entry.rgbRed, bg_entry.rgbGreen, bg_entry.rgbBlue );
+        DWORD bg_pixel = FILTER_DIBINDEX(bg_entry, RGB(bg_entry.rgbRed, bg_entry.rgbGreen, bg_entry.rgbBlue));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4323,7 +4326,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
     case 16:
     {
         WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
-        DWORD bg_pixel = rgbquad_to_pixel_masks(src, bg_entry);
+        DWORD bg_pixel = FILTER_DIBINDEX(bg_entry, rgbquad_to_pixel_masks(src, bg_entry));
 
         if(src->funcs == &funcs_555)
         {
@@ -4463,7 +4466,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_8(src, src_rect->left, src_rect->top), *src_pixel;
-        DWORD bg_pixel = rgbquad_to_pixel_colortable( src, bg_entry );
+        DWORD bg_pixel = FILTER_DIBINDEX(bg_entry, rgbquad_to_pixel_colortable(src, bg_entry));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4500,7 +4503,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_4(src, src_rect->left, src_rect->top), *src_pixel;
-        DWORD bg_pixel = rgbquad_to_pixel_colortable( src, bg_entry );
+        DWORD bg_pixel = FILTER_DIBINDEX(bg_entry, rgbquad_to_pixel_colortable(src, bg_entry));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4543,7 +4546,7 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         const RGBQUAD *color_table = get_dib_color_table( src );
         BYTE *src_start = get_pixel_ptr_1(src, src_rect->left, src_rect->top);
-        DWORD bg_pixel = rgbquad_to_pixel_colortable(src, bg_entry);
+        DWORD bg_pixel = FILTER_DIBINDEX(bg_entry, rgbquad_to_pixel_colortable(src, bg_entry));
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4553,8 +4556,8 @@ static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
             {
                 src_val = (src_start[pos / 8] & pixel_masks_1[pos % 8]) ? 1 : 0;
                 rgb = color_table[src_val];
-                dst_val = rgb_to_pixel_mono(dst, dither, x, y, src_val, bg_pixel,
-                                            rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+                dst_val = FILTER_DIBINDEX(rgb, rgb_to_pixel_mono(dst, dither, x, y, src_val, bg_pixel,
+                                                                 rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue));
                 if(bit_pos == 0) *dst_pixel = 0;
                 *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
 
@@ -5866,7 +5869,7 @@ static void mask_rect_8( const dib_info *dst, const RECT *rc,
     get_rop_codes( rop2, &codes );
 
     for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        dst_colors[i] = rgbquad_to_pixel_colortable( dst, color_table[i] );
+        dst_colors[i] = FILTER_DIBINDEX(color_table[i], rgbquad_to_pixel_colortable(dst, color_table[i]));
 
     /* Special case starting and finishing in same byte, neither on byte boundary */
     if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
@@ -6005,7 +6008,7 @@ static void mask_rect_4( const dib_info *dst, const RECT *rc,
 
     for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
     {
-        dst_colors[i] = rgbquad_to_pixel_colortable( dst, color_table[i] );
+        dst_colors[i] = FILTER_DIBINDEX(color_table[i],rgbquad_to_pixel_colortable(dst, color_table[i]));
         /* Set high nibble to match so we don't need to shift it later. */
         dst_colors[i] |= dst_colors[i] << 4;
     }

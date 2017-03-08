@@ -2477,8 +2477,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     }
     SetTextColor( hdc, old_text );
     SetBkColor( hdc, old_bkgnd );
-    compare_hash_broken_todo(hdc, bmi, bits, "BitBlt src 1-bpp ddb SRCCOPY", 0,
-                             bmi->bmiHeader.biBitCount <= 8 /* todo: DIBINDEX for indexed formats */ );
+    compare_hash(hdc, bmi, bits, "BitBlt src 1-bpp ddb SRCCOPY" );
 
     DeleteObject( bmp );
 
@@ -2536,8 +2535,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     GetBitmapBits( bmp, 32, bits + get_stride(bmi) * i++ );
     SetTextColor( hdc, old_text );
     SetBkColor( hdc, old_bkgnd );
-    compare_hash_broken_todo(hdc, bmi, bits, "BitBlt dst 1-bpp ddb", 0,
-                             bmi->bmiHeader.biBitCount <= 8 /* todo: DIBINDEX for indexed formats */ );
+    compare_hash(hdc, bmi, bits, "BitBlt dst 1-bpp ddb");
 
     DeleteDC( src_dc );
     DeleteObject( bmp );
