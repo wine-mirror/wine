@@ -1969,12 +1969,18 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         if (gl_info->supported[ARB_ES3_COMPATIBILITY])
         {
             gl_info->gl_ops.gl.p_glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
-            checkGLcall("Enable GL_PRIMITIVE_RESTART_FIXED_INDEX");
+            checkGLcall("enable GL_PRIMITIVE_RESTART_FIXED_INDEX");
         }
         else
         {
             FIXME("OpenGL implementation does not support GL_PRIMITIVE_RESTART_FIXED_INDEX.\n");
         }
+    }
+    if (!(d3d_info->wined3d_creation_flags & WINED3D_LEGACY_CUBEMAP_FILTERING)
+            && gl_info->supported[ARB_SEAMLESS_CUBE_MAP])
+    {
+        gl_info->gl_ops.gl.p_glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+        checkGLcall("enable seamless cube map filtering");
     }
     if (gl_info->supported[ARB_CLIP_CONTROL])
         GL_EXTCALL(glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT));

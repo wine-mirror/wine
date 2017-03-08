@@ -147,6 +147,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE              },
     {"GL_ARB_provoking_vertex",             ARB_PROVOKING_VERTEX          },
     {"GL_ARB_sampler_objects",              ARB_SAMPLER_OBJECTS           },
+    {"GL_ARB_seamless_cube_map",            ARB_SEAMLESS_CUBE_MAP         },
     {"GL_ARB_shader_atomic_counters",       ARB_SHADER_ATOMIC_COUNTERS    },
     {"GL_ARB_shader_bit_encoding",          ARB_SHADER_BIT_ENCODING       },
     {"GL_ARB_shader_image_load_store",      ARB_SHADER_IMAGE_LOAD_STORE   },
@@ -3765,6 +3766,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
          * extension for core-only support. */
         {ARB_FRAGMENT_COORD_CONVENTIONS,   MAKEDWORD_VERSION(3, 2)},
         {ARB_PROVOKING_VERTEX,             MAKEDWORD_VERSION(3, 2)},
+        {ARB_SEAMLESS_CUBE_MAP,            MAKEDWORD_VERSION(3, 2)},
         {ARB_SYNC,                         MAKEDWORD_VERSION(3, 2)},
         {ARB_VERTEX_ARRAY_BGRA,            MAKEDWORD_VERSION(3, 2)},
 
