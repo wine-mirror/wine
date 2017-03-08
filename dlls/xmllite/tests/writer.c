@@ -31,6 +31,15 @@
 #include "initguid.h"
 DEFINE_GUID(IID_IXmlWriterOutput, 0xc1131708, 0x0f59, 0x477f, 0x93, 0x59, 0x7d, 0x33, 0x24, 0x51, 0xbc, 0x1a);
 
+#define EXPECT_REF(obj, ref) _expect_ref((IUnknown *)obj, ref, __LINE__)
+static void _expect_ref(IUnknown *obj, ULONG ref, int line)
+{
+    ULONG refcount;
+    IUnknown_AddRef(obj);
+    refcount = IUnknown_Release(obj);
+    ok_(__FILE__, line)(refcount == ref, "expected refcount %d, got %d\n", ref, refcount);
+}
+
 static void check_output(IStream *stream, const char *expected, BOOL todo, int line)
 {
     int len = strlen(expected), size;
@@ -273,6 +282,7 @@ static void test_writeroutput(void)
     output = NULL;
     hr = CreateXmlWriterOutputWithEncodingName(&testoutput, NULL, NULL, &output);
     ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_REF(output, 1);
     IUnknown_Release(output);
 
     hr = CreateXmlWriterOutputWithEncodingName(&testoutput, NULL, utf16W, &output);
@@ -280,8 +290,12 @@ static void test_writeroutput(void)
     unk = NULL;
     hr = IUnknown_QueryInterface(output, &IID_IXmlWriterOutput, (void**)&unk);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(unk != NULL, "got %p\n", unk);
+todo_wine
+    ok(unk != NULL && unk != output, "got %p, output %p\n", unk, output);
+    EXPECT_REF(output, 2);
     /* releasing 'unk' crashes on native */
+    IUnknown_Release(output);
+    EXPECT_REF(output, 1);
     IUnknown_Release(output);
 
     output = NULL;
@@ -296,6 +310,7 @@ static void test_writeroutput(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(unk != NULL, "got %p\n", unk);
     /* releasing 'unk' crashes on native */
+    IUnknown_Release(output);
     IUnknown_Release(output);
 }
 
