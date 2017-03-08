@@ -2429,7 +2429,7 @@ static void test_unsupported_shaders(void)
     hr = IDirect3DDevice9Ex_CreatePixelShader(device, ps_3_224, &ps);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CreatePixelShader(device, ps_2_0_boolint, &ps);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     if (ps)
         IDirect3DPixelShader9_Release(ps);
 
