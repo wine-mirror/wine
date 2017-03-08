@@ -43,10 +43,14 @@ static const struct prop_desc proxy_props[] =
 
 struct proxy
 {
-    WS_CHANNEL     *channel;
-    ULONG           prop_count;
-    struct prop     prop[sizeof(proxy_props)/sizeof(proxy_props[0])];
+    ULONG             magic;
+    CRITICAL_SECTION  cs;
+    WS_CHANNEL       *channel;
+    ULONG             prop_count;
+    struct prop       prop[sizeof(proxy_props)/sizeof(proxy_props[0])];
 };
+
+#define PROXY_MAGIC (('P' << 24) | ('R' << 16) | ('O' << 8) | 'X')
 
 static struct proxy *alloc_proxy(void)
 {
@@ -55,6 +59,11 @@ static struct proxy *alloc_proxy(void)
     ULONG size = sizeof(*ret) + prop_size( proxy_props, count );
 
     if (!(ret = heap_alloc_zero( size ))) return NULL;
+
+    ret->magic      = PROXY_MAGIC;
+    InitializeCriticalSection( &ret->cs );
+    ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": proxy.cs");
+
     prop_init( proxy_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
@@ -62,8 +71,9 @@ static struct proxy *alloc_proxy(void)
 
 static void free_proxy( struct proxy *proxy )
 {
-    if (!proxy) return;
     WsFreeChannel( proxy->channel );
+    proxy->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &proxy->cs );
     heap_free( proxy );
 }
 
@@ -188,6 +198,20 @@ void WINAPI WsFreeServiceProxy( WS_SERVICE_PROXY *handle )
     struct proxy *proxy = (struct proxy *)handle;
 
     TRACE( "%p\n", handle );
+
+    if (!proxy) return;
+
+    EnterCriticalSection( &proxy->cs );
+
+    if (proxy->magic != PROXY_MAGIC)
+    {
+        LeaveCriticalSection( &proxy->cs );
+        return;
+    }
+
+    proxy->magic = 0;
+
+    LeaveCriticalSection( &proxy->cs );
     free_proxy( proxy );
 }
 
@@ -198,11 +222,25 @@ HRESULT WINAPI WsGetServiceProxyProperty( WS_SERVICE_PROXY *handle, WS_PROXY_PRO
                                           void *buf, ULONG size, WS_ERROR *error )
 {
     struct proxy *proxy = (struct proxy *)handle;
+    HRESULT hr;
 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    return prop_get( proxy->prop, proxy->prop_count, id, buf, size );
+    if (!proxy) return E_INVALIDARG;
+
+    EnterCriticalSection( &proxy->cs );
+
+    if (proxy->magic != PROXY_MAGIC)
+    {
+        LeaveCriticalSection( &proxy->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = prop_get( proxy->prop, proxy->prop_count, id, buf, size );
+
+    LeaveCriticalSection( &proxy->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -212,13 +250,26 @@ HRESULT WINAPI WsOpenServiceProxy( WS_SERVICE_PROXY *handle, const WS_ENDPOINT_A
                                    const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct proxy *proxy = (struct proxy *)handle;
+    HRESULT hr;
 
     TRACE( "%p %p %p %p\n", handle, endpoint, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    if (!handle || !endpoint) return E_INVALIDARG;
-    return WsOpenChannel( proxy->channel, endpoint, NULL, NULL );
+    if (!proxy || !endpoint) return E_INVALIDARG;
+
+    EnterCriticalSection( &proxy->cs );
+
+    if (proxy->magic != PROXY_MAGIC)
+    {
+        LeaveCriticalSection( &proxy->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = WsOpenChannel( proxy->channel, endpoint, NULL, NULL );
+
+    LeaveCriticalSection( &proxy->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -227,13 +278,26 @@ HRESULT WINAPI WsOpenServiceProxy( WS_SERVICE_PROXY *handle, const WS_ENDPOINT_A
 HRESULT WINAPI WsCloseServiceProxy( WS_SERVICE_PROXY *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct proxy *proxy = (struct proxy *)handle;
+    HRESULT hr;
 
     TRACE( "%p %p %p\n", handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
     if (ctx) FIXME( "ignoring ctx parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
-    return WsCloseChannel( proxy->channel, NULL, NULL );
+    if (!proxy) return E_INVALIDARG;
+
+    EnterCriticalSection( &proxy->cs );
+
+    if (proxy->magic != PROXY_MAGIC)
+    {
+        LeaveCriticalSection( &proxy->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = WsCloseChannel( proxy->channel, NULL, NULL );
+
+    LeaveCriticalSection( &proxy->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -374,7 +438,7 @@ HRESULT WINAPI WsCall( WS_SERVICE_PROXY *handle, const WS_OPERATION_DESCRIPTION 
                        const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct proxy *proxy = (struct proxy *)handle;
-    WS_MESSAGE *msg;
+    WS_MESSAGE *msg = NULL;
     HRESULT hr;
     ULONG i;
 
@@ -391,17 +455,29 @@ HRESULT WINAPI WsCall( WS_SERVICE_PROXY *handle, const WS_OPERATION_DESCRIPTION 
         }
     }
 
-    if (!handle || !desc || (desc->parameterCount && !args)) return E_INVALIDARG;
+    if (!proxy || !desc || (desc->parameterCount && !args)) return E_INVALIDARG;
 
-    if ((hr = create_input_message( proxy->channel, properties, count, &msg )) != S_OK) return hr;
-    hr = send_message( proxy->channel, msg, desc->inputMessageDescription, desc->parameterDescription,
-                       desc->parameterCount, args );
+    EnterCriticalSection( &proxy->cs );
+
+    if (proxy->magic != PROXY_MAGIC)
+    {
+        LeaveCriticalSection( &proxy->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((hr = create_input_message( proxy->channel, properties, count, &msg )) != S_OK) goto done;
+    if ((hr = send_message( proxy->channel, msg, desc->inputMessageDescription, desc->parameterDescription,
+                            desc->parameterCount, args )) != S_OK) goto done;
+
     WsFreeMessage( msg );
-    if (hr != S_OK) return hr;
+    msg = NULL;
 
-    if ((hr = create_output_message( proxy->channel, properties, count, &msg )) != S_OK) return hr;
+    if ((hr = create_output_message( proxy->channel, properties, count, &msg )) != S_OK) goto done;
     hr = receive_message( proxy->channel, msg, desc->outputMessageDescription, desc->parameterDescription,
                           desc->parameterCount, heap, args );
+
+done:
     WsFreeMessage( msg );
+    LeaveCriticalSection( &proxy->cs );
     return hr;
 }
