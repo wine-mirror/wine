@@ -2116,6 +2116,18 @@ static void test_namespaceuri(void)
                 { "defns a", "ns r", "defns a" }},
         { "<a><b><c/></b></a>",
                 { "", "", "", "", "" }},
+        { "<a>text</a>",
+                { "", "", "" }},
+        { "<a>\r\n</a>",
+                { "", "", "" }},
+        { "<a><![CDATA[data]]></a>",
+                { "", "", "" }},
+        { "<?xml version=\"1.0\" ?><a/>",
+                { "", "" }},
+        { "<a><?pi ?></a>",
+                { "", "", "" }},
+        { "<a><!-- comment --></a>",
+                { "", "", "" }},
     };
     IXmlReader *reader;
     XmlNodeType type;
@@ -2137,13 +2149,22 @@ static void test_namespaceuri(void)
             const WCHAR *uri, *local;
             WCHAR *uriW;
 
-            ok(type == XmlNodeType_Element || type == XmlNodeType_EndElement, "Unexpected node type %d.\n", type);
+            ok(type == XmlNodeType_Element ||
+                    type == XmlNodeType_Text ||
+                    type == XmlNodeType_CDATA ||
+                    type == XmlNodeType_ProcessingInstruction ||
+                    type == XmlNodeType_Comment ||
+                    type == XmlNodeType_Whitespace ||
+                    type == XmlNodeType_EndElement ||
+                    type == XmlNodeType_XmlDeclaration, "Unexpected node type %d.\n", type);
 
             hr = IXmlReader_GetLocalName(reader, &local, NULL);
             ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
+            uri = NULL;
             hr = IXmlReader_GetNamespaceUri(reader, &uri, NULL);
             ok(hr == S_OK, "S_OK, got %08x\n", hr);
+            ok(uri != NULL, "Unexpected NULL uri pointer\n");
 
             uriW = a2w(uri_tests[i].uri[j]);
             ok(!lstrcmpW(uriW, uri), "%s: uri %s\n", wine_dbgstr_w(local), wine_dbgstr_w(uri));

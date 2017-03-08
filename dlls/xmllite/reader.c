@@ -3011,6 +3011,15 @@ static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface, const WCHAR *
             }
         }
         break;
+    case XmlNodeType_Text:
+    case XmlNodeType_CDATA:
+    case XmlNodeType_ProcessingInstruction:
+    case XmlNodeType_Comment:
+    case XmlNodeType_Whitespace:
+    case XmlNodeType_XmlDeclaration:
+        *uri = emptyW;
+        *len = 0;
+        break;
     default:
         FIXME("Unhandled node type %d\n", nodetype);
         return E_NOTIMPL;
