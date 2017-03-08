@@ -2148,6 +2148,7 @@ static void test_namespaceuri(void)
         while (IXmlReader_Read(reader, &type) == S_OK) {
             const WCHAR *uri, *local;
             WCHAR *uriW;
+            UINT length;
 
             ok(type == XmlNodeType_Element ||
                     type == XmlNodeType_Text ||
@@ -2158,8 +2159,17 @@ static void test_namespaceuri(void)
                     type == XmlNodeType_EndElement ||
                     type == XmlNodeType_XmlDeclaration, "Unexpected node type %d.\n", type);
 
-            hr = IXmlReader_GetLocalName(reader, &local, NULL);
+            local = NULL;
+            length = 0;
+            hr = IXmlReader_GetLocalName(reader, &local, &length);
             ok(hr == S_OK, "S_OK, got %08x\n", hr);
+            ok(local != NULL, "Unexpected NULL local name pointer\n");
+
+            if (type == XmlNodeType_Element || type == XmlNodeType_EndElement)
+            {
+                ok(*local != 0, "Unexpected empty local name\n");
+                ok(length > 0, "Unexpected local name length\n");
+            }
 
             uri = NULL;
             hr = IXmlReader_GetNamespaceUri(reader, &uri, NULL);

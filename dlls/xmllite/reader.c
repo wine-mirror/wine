@@ -2260,7 +2260,7 @@ static HRESULT reader_parse_element(xmlreader *reader)
 static HRESULT reader_parse_endtag(xmlreader *reader)
 {
     strval prefix, local, qname;
-    struct element *elem;
+    struct element *element;
     HRESULT hr;
 
     /* skip '</' */
@@ -2278,12 +2278,12 @@ static HRESULT reader_parse_endtag(xmlreader *reader)
 
     /* Element stack should never be empty at this point, cause we shouldn't get to
        content parsing if it's empty. */
-    elem = LIST_ENTRY(list_head(&reader->elements), struct element, entry);
-    if (!strval_eq(reader, &elem->qname, &qname)) return WC_E_ELEMENTMATCH;
+    element = LIST_ENTRY(list_head(&reader->elements), struct element, entry);
+    if (!strval_eq(reader, &element->qname, &qname)) return WC_E_ELEMENTMATCH;
 
     reader->nodetype = XmlNodeType_EndElement;
+    reader->is_empty_element = FALSE;
     reader_set_strvalue(reader, StringValue_Prefix, &prefix);
-    reader_set_strvalue(reader, StringValue_LocalName, &local);
     reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
 
     return S_OK;
@@ -3031,10 +3031,35 @@ static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface, const WCHAR *
 static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, UINT *len)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    XmlNodeType nodetype;
+    UINT length;
 
     TRACE("(%p)->(%p %p)\n", This, name, len);
-    *name = This->strvalues[StringValue_LocalName].str;
-    if (len) *len = This->strvalues[StringValue_LocalName].len;
+
+    if (!len)
+        len = &length;
+
+    switch ((nodetype = reader_get_nodetype(This)))
+    {
+    case XmlNodeType_Element:
+    case XmlNodeType_EndElement:
+        /* empty elements are not added to the stack */
+        if (!This->is_empty_element)
+        {
+            struct element *element;
+
+            element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
+            *name = element->localname.str;
+            *len = element->localname.len;
+            break;
+        }
+        /* fallthrough */
+    default:
+        *name = This->strvalues[StringValue_LocalName].str;
+        *len = This->strvalues[StringValue_LocalName].len;
+        break;
+    }
+
     return S_OK;
 }
 
