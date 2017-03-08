@@ -2282,7 +2282,7 @@ static void shader_dump_src_param(struct wined3d_string_buffer *buffer,
 
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on MSDN. */
-void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
+HRESULT shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, void *backend_ctx)
 {
     struct wined3d_device *device = shader->device;
@@ -2320,8 +2320,8 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_st
         /* Unknown opcode and its parameters. */
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
         {
-            TRACE("Skipping unrecognized instruction.\n");
-            continue;
+            WARN("Encountered unrecognised or invalid instruction.\n");
+            return WINED3DERR_INVALIDCALL;
         }
 
         if (ins.predicate)
@@ -2330,6 +2330,8 @@ void shader_generate_main(const struct wined3d_shader *shader, struct wined3d_st
         /* Call appropriate function for output target */
         device->shader_backend->shader_handle_instruction(&ins);
     }
+
+    return WINED3D_OK;
 }
 
 static void shader_dump_ins_modifiers(struct wined3d_string_buffer *buffer,
