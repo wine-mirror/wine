@@ -10588,7 +10588,7 @@ static void test_pointsize(void)
     ps2 = {D3DPS_VERSION(2, 0), pshader2_code},
     ps2_zw = {D3DPS_VERSION(2, 0), pshader2_zw_code},
     ps3 = {D3DPS_VERSION(3, 0), pshader3_code},
-    ps3_zw = {D3DVS_VERSION(3, 0), pshader3_zw_code};
+    ps3_zw = {D3DPS_VERSION(3, 0), pshader3_zw_code};
     static const struct
     {
         const struct test_shader *vs;
