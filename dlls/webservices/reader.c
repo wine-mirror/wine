@@ -79,9 +79,13 @@ static const struct prop_desc error_props[] =
 
 struct error
 {
-    ULONG       prop_count;
-    struct prop prop[sizeof(error_props)/sizeof(error_props[0])];
+    ULONG            magic;
+    CRITICAL_SECTION cs;
+    ULONG            prop_count;
+    struct prop      prop[sizeof(error_props)/sizeof(error_props[0])];
 };
+
+#define ERROR_MAGIC (('E' << 24) | ('R' << 16) | ('R' << 8) | 'O')
 
 static struct error *alloc_error(void)
 {
@@ -90,9 +94,21 @@ static struct error *alloc_error(void)
     ULONG size = sizeof(*ret) + prop_size( error_props, count );
 
     if (!(ret = heap_alloc_zero( size ))) return NULL;
+
+    ret->magic      = ERROR_MAGIC;
+    InitializeCriticalSection( &ret->cs );
+    ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": error.cs");
+
     prop_init( error_props, count, ret->prop, &ret[1] );
     ret->prop_count = count;
     return ret;
+}
+
+static void free_error( struct error *error )
+{
+    error->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &error->cs );
+    heap_free( error );
 }
 
 /**************************************************************************
@@ -115,20 +131,27 @@ HRESULT WINAPI WsCreateError( const WS_ERROR_PROPERTY *properties, ULONG count, 
     {
         if (properties[i].id == WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE)
         {
-            heap_free( error );
+            free_error( error );
             return E_INVALIDARG;
         }
         hr = prop_set( error->prop, error->prop_count, properties[i].id, properties[i].value,
                        properties[i].valueSize );
         if (hr != S_OK)
         {
-            heap_free( error );
+            free_error( error );
             return hr;
         }
     }
 
     *handle = (WS_ERROR *)error;
     return S_OK;
+}
+
+static void reset_error( struct error *error )
+{
+    ULONG code = 0;
+    /* FIXME: release strings added with WsAddErrorString when it's implemented, reset string count */
+    prop_set( error->prop, error->prop_count, WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE, &code, sizeof(code) );
 }
 
 /**************************************************************************
@@ -139,7 +162,22 @@ void WINAPI WsFreeError( WS_ERROR *handle )
     struct error *error = (struct error *)handle;
 
     TRACE( "%p\n", handle );
-    heap_free( error );
+
+    if (!error) return;
+
+    EnterCriticalSection( &error->cs );
+
+    if (error->magic != ERROR_MAGIC)
+    {
+        LeaveCriticalSection( &error->cs );
+        return;
+    }
+
+    reset_error( error );
+    error->magic = 0;
+
+    LeaveCriticalSection( &error->cs );
+    free_error( error );
 }
 
 /**************************************************************************
@@ -148,15 +186,92 @@ void WINAPI WsFreeError( WS_ERROR *handle )
 HRESULT WINAPI WsResetError( WS_ERROR *handle )
 {
     struct error *error = (struct error *)handle;
-    ULONG code;
 
     TRACE( "%p\n", handle );
 
-    if (!handle) return E_INVALIDARG;
+    if (!error) return E_INVALIDARG;
 
-    /* FIXME: release strings added with WsAddErrorString when it's implemented, reset string count */
-    code = 0;
-    return prop_set( error->prop, error->prop_count, WS_ERROR_PROPERTY_ORIGINAL_ERROR_CODE, &code, sizeof(code) );
+    EnterCriticalSection( &error->cs );
+
+    if (error->magic != ERROR_MAGIC)
+    {
+        LeaveCriticalSection( &error->cs );
+        return E_INVALIDARG;
+    }
+
+    reset_error( error );
+
+    LeaveCriticalSection( &error->cs );
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsGetErrorProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, void *buf,
+                                   ULONG size )
+{
+    struct error *error = (struct error *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %u %p %u\n", handle, id, buf, size );
+
+    if (!error) return E_INVALIDARG;
+
+    EnterCriticalSection( &error->cs );
+
+    if (error->magic != ERROR_MAGIC)
+    {
+        LeaveCriticalSection( &error->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = prop_get( error->prop, error->prop_count, id, buf, size );
+
+    LeaveCriticalSection( &error->cs );
+    return hr;
+}
+
+/**************************************************************************
+ *          WsGetErrorString		[webservices.@]
+ */
+HRESULT WINAPI WsGetErrorString( WS_ERROR *handle, ULONG index, WS_STRING *str )
+{
+    FIXME( "%p %u %p: stub\n", handle, index, str );
+    return E_NOTIMPL;
+}
+
+/**************************************************************************
+ *          WsSetErrorProperty		[webservices.@]
+ */
+HRESULT WINAPI WsSetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, const void *value,
+                                   ULONG size )
+{
+    struct error *error = (struct error *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %u %p %u\n", handle, id, value, size );
+
+    if (!error) return E_INVALIDARG;
+
+    EnterCriticalSection( &error->cs );
+
+    if (error->magic != ERROR_MAGIC)
+    {
+        LeaveCriticalSection( &error->cs );
+        return E_INVALIDARG;
+    }
+
+    if (id == WS_ERROR_PROPERTY_LANGID)
+    {
+        LeaveCriticalSection( &error->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    hr = prop_set( error->prop, error->prop_count, id, value, size );
+
+    LeaveCriticalSection( &error->cs );
+    return hr;
 }
 
 static const struct prop_desc heap_props[] =
@@ -843,27 +958,6 @@ HRESULT WINAPI WsFillReader( WS_XML_READER *handle, ULONG min_size, const WS_ASY
     reader->read_pos  = 0;
 
     return S_OK;
-}
-
-/**************************************************************************
- *          WsGetErrorProperty		[webservices.@]
- */
-HRESULT WINAPI WsGetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, void *buf,
-                                   ULONG size )
-{
-    struct error *error = (struct error *)handle;
-
-    TRACE( "%p %u %p %u\n", handle, id, buf, size );
-    return prop_get( error->prop, error->prop_count, id, buf, size );
-}
-
-/**************************************************************************
- *          WsGetErrorString		[webservices.@]
- */
-HRESULT WINAPI WsGetErrorString( WS_ERROR *handle, ULONG index, WS_STRING *str )
-{
-    FIXME( "%p %u %p: stub\n", handle, index, str );
-    return E_NOTIMPL;
 }
 
 /**************************************************************************
@@ -4356,20 +4450,6 @@ HRESULT WINAPI WsReadValue( WS_XML_READER *handle, WS_VALUE_TYPE value_type, voi
 
     return read_type( reader, WS_ELEMENT_TYPE_MAPPING, type, NULL, NULL, NULL, WS_READ_REQUIRED_VALUE,
                       NULL, value, size );
-}
-
-/**************************************************************************
- *          WsSetErrorProperty		[webservices.@]
- */
-HRESULT WINAPI WsSetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, const void *value,
-                                   ULONG size )
-{
-    struct error *error = (struct error *)handle;
-
-    TRACE( "%p %u %p %u\n", handle, id, value, size );
-
-    if (id == WS_ERROR_PROPERTY_LANGID) return WS_E_INVALID_OPERATION;
-    return prop_set( error->prop, error->prop_count, id, value, size );
 }
 
 static inline BOOL is_utf8( const unsigned char *data, ULONG size, ULONG *offset )
