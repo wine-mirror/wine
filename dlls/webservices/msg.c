@@ -64,6 +64,8 @@ struct header
 
 struct msg
 {
+    ULONG                               magic;
+    CRITICAL_SECTION                    cs;
     WS_MESSAGE_INITIALIZATION           init;
     WS_MESSAGE_STATE                    state;
     GUID                                id;
@@ -86,7 +88,9 @@ struct msg
     struct prop                         prop[sizeof(msg_props)/sizeof(msg_props[0])];
 };
 
+#define MSG_MAGIC (('M' << 24) | ('E' << 16) | ('S' << 8) | 'S')
 #define HEADER_ARRAY_SIZE 2
+
 static struct msg *alloc_msg(void)
 {
     static const ULONG count = sizeof(msg_props)/sizeof(msg_props[0]);
@@ -99,8 +103,13 @@ static struct msg *alloc_msg(void)
         heap_free( ret );
         return NULL;
     }
+    ret->magic       = MSG_MAGIC;
     ret->state       = WS_MESSAGE_STATE_EMPTY;
     ret->header_size = HEADER_ARRAY_SIZE;
+
+    InitializeCriticalSection( &ret->cs );
+    ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": msg.cs");
+
     prop_init( msg_props, count, ret->prop, &ret[1] );
     ret->prop_count  = count;
     return ret;
@@ -117,13 +126,16 @@ static void free_header( struct header *header )
 static void free_msg( struct msg *msg )
 {
     ULONG i;
-    if (!msg) return;
+
     WsFreeWriter( msg->writer );
     WsFreeHeap( msg->heap );
     heap_free( msg->addr.chars );
     heap_free( msg->action.chars );
     for (i = 0; i < msg->header_count; i++) free_header( msg->header[i] );
     heap_free( msg->header );
+
+    msg->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &msg->cs );
     heap_free( msg );
 }
 
@@ -221,6 +233,20 @@ void WINAPI WsFreeMessage( WS_MESSAGE *handle )
     struct msg *msg = (struct msg *)handle;
 
     TRACE( "%p\n", handle );
+
+    if (!msg) return;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return;
+    }
+
+    msg->magic = 0;
+
+    LeaveCriticalSection( &msg->cs );
     free_msg( msg );
 }
 
@@ -231,57 +257,69 @@ HRESULT WINAPI WsGetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
                                      ULONG size, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
+    if (!msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
 
     switch (id)
     {
     case WS_MESSAGE_PROPERTY_STATE:
-        if (!buf || size != sizeof(msg->state)) return E_INVALIDARG;
-        *(WS_MESSAGE_STATE *)buf = msg->state;
-        return S_OK;
+        if (!buf || size != sizeof(msg->state)) hr = E_INVALIDARG;
+        else *(WS_MESSAGE_STATE *)buf = msg->state;
+        break;
 
     case WS_MESSAGE_PROPERTY_HEAP:
-        if (!buf || size != sizeof(msg->heap)) return E_INVALIDARG;
-        *(WS_HEAP **)buf = msg->heap;
-        return S_OK;
+        if (!buf || size != sizeof(msg->heap)) hr = E_INVALIDARG;
+        else *(WS_HEAP **)buf = msg->heap;
+        break;
 
     case WS_MESSAGE_PROPERTY_ENVELOPE_VERSION:
-        if (!buf || size != sizeof(msg->version_env)) return E_INVALIDARG;
-        *(WS_ENVELOPE_VERSION *)buf = msg->version_env;
-        return S_OK;
+        if (!buf || size != sizeof(msg->version_env)) hr = E_INVALIDARG;
+        else *(WS_ENVELOPE_VERSION *)buf = msg->version_env;
+        break;
 
     case WS_MESSAGE_PROPERTY_ADDRESSING_VERSION:
-        if (!buf || size != sizeof(msg->version_addr)) return E_INVALIDARG;
-        *(WS_ADDRESSING_VERSION *)buf = msg->version_addr;
-        return S_OK;
+        if (!buf || size != sizeof(msg->version_addr)) hr = E_INVALIDARG;
+        else *(WS_ADDRESSING_VERSION *)buf = msg->version_addr;
+        break;
 
     case WS_MESSAGE_PROPERTY_HEADER_BUFFER:
-        if (!buf || size != sizeof(msg->buf)) return E_INVALIDARG;
-        *(WS_XML_BUFFER **)buf = msg->buf;
-        return S_OK;
+        if (!buf || size != sizeof(msg->buf)) hr = E_INVALIDARG;
+        else *(WS_XML_BUFFER **)buf = msg->buf;
+        break;
 
     case WS_MESSAGE_PROPERTY_BODY_READER:
-        if (!buf || size != sizeof(msg->reader_body)) return E_INVALIDARG;
-        *(WS_XML_READER **)buf = msg->reader_body;
-        return S_OK;
+        if (!buf || size != sizeof(msg->reader_body)) hr = E_INVALIDARG;
+        else *(WS_XML_READER **)buf = msg->reader_body;
+        break;
 
     case WS_MESSAGE_PROPERTY_BODY_WRITER:
-        if (!buf || size != sizeof(msg->writer_body)) return E_INVALIDARG;
-        *(WS_XML_WRITER **)buf = msg->writer_body;
-        return S_OK;
+        if (!buf || size != sizeof(msg->writer_body)) hr = E_INVALIDARG;
+        else *(WS_XML_WRITER **)buf = msg->writer_body;
+        break;
 
     case WS_MESSAGE_PROPERTY_IS_ADDRESSED:
-        if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
-        *(BOOL *)buf = msg->is_addressed;
-        return S_OK;
+        if (msg->state < WS_MESSAGE_STATE_INITIALIZED) hr = WS_E_INVALID_OPERATION;
+        else *(BOOL *)buf = msg->is_addressed;
+        break;
 
     default:
-        return prop_get( msg->prop, msg->prop_count, id, buf, size );
+        hr = prop_get( msg->prop, msg->prop_count, id, buf, size );
     }
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -291,11 +329,20 @@ HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
                                      ULONG size, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
 
     TRACE( "%p %u %p %u\n", handle, id, value, size );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
+    if (!msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
 
     switch (id)
     {
@@ -303,13 +350,16 @@ HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
     case WS_MESSAGE_PROPERTY_ENVELOPE_VERSION:
     case WS_MESSAGE_PROPERTY_ADDRESSING_VERSION:
     case WS_MESSAGE_PROPERTY_IS_ADDRESSED:
-        if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
-        return E_INVALIDARG;
+        if (msg->state < WS_MESSAGE_STATE_INITIALIZED) hr = WS_E_INVALID_OPERATION;
+        else hr = E_INVALIDARG;
+        break;
 
     default:
-        break;
+        hr = prop_set( msg->prop, msg->prop_count, id, value, size );
     }
-    return prop_set( msg->prop, msg->prop_count, id, value, size );
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -318,6 +368,7 @@ HRESULT WINAPI WsSetMessageProperty( WS_MESSAGE *handle, WS_MESSAGE_PROPERTY_ID 
 HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *addr, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %p %p\n", handle, addr, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -327,18 +378,36 @@ HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *
         return E_NOTIMPL;
     }
 
-    if (!handle) return E_INVALIDARG;
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED || msg->is_addressed) return WS_E_INVALID_OPERATION;
+    if (!msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED || msg->is_addressed)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
 
     if (addr && addr->url.length)
     {
-        if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
-        memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
-        msg->addr.length = addr->url.length;
+        if (!(msg->addr.chars = heap_alloc( addr->url.length * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
+        else
+        {
+            memcpy( msg->addr.chars, addr->url.chars, addr->url.length * sizeof(WCHAR) );
+            msg->addr.length = addr->url.length;
+        }
     }
 
     msg->is_addressed = TRUE;
-    return S_OK;
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 static HRESULT get_env_namespace( WS_ENVELOPE_VERSION ver, WS_XML_STRING *str )
@@ -523,15 +592,31 @@ HRESULT WINAPI WsWriteEnvelopeStart( WS_MESSAGE *handle, WS_XML_WRITER *writer,
         return E_NOTIMPL;
     }
 
-    if (!handle || !writer) return E_INVALIDARG;
-    if (msg->state != WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (!msg || !writer) return E_INVALIDARG;
 
-    if ((hr = write_envelope( msg )) != S_OK) return hr;
-    if ((hr = write_envelope_start( msg, writer )) != S_OK) return hr;
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state != WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if ((hr = write_envelope( msg )) != S_OK) goto done;
+    if ((hr = write_envelope_start( msg, writer )) != S_OK) goto done;
 
     msg->writer_body = writer;
     msg->state       = WS_MESSAGE_STATE_WRITING;
-    return S_OK;
+
+done:
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -545,13 +630,26 @@ HRESULT WINAPI WsWriteEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
     TRACE( "%p %p\n", handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
-    if (msg->state != WS_MESSAGE_STATE_WRITING) return WS_E_INVALID_OPERATION;
+    if (!msg) return E_INVALIDARG;
 
-    if ((hr = write_envelope_end( msg->writer_body )) != S_OK) return hr;
+    EnterCriticalSection( &msg->cs );
 
-    msg->state = WS_MESSAGE_STATE_DONE;
-    return S_OK;
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state != WS_MESSAGE_STATE_WRITING)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if ((hr = write_envelope_end( msg->writer_body )) == S_OK) msg->state = WS_MESSAGE_STATE_DONE;
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -566,17 +664,33 @@ HRESULT WINAPI WsWriteBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *de
     TRACE( "%p %p %08x %p %u %p\n", handle, desc, option, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle || !desc) return E_INVALIDARG;
-    if (msg->state != WS_MESSAGE_STATE_WRITING) return WS_E_INVALID_OPERATION;
+    if (!msg || !desc) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state != WS_MESSAGE_STATE_WRITING)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
 
     if (desc->elementLocalName &&
         (hr = WsWriteStartElement( msg->writer_body, NULL, desc->elementLocalName, desc->elementNs,
-                                   NULL )) != S_OK) return hr;
+                                   NULL )) != S_OK) goto done;
 
     if ((hr = WsWriteType( msg->writer_body, WS_ANY_ELEMENT_TYPE_MAPPING, desc->type, desc->typeDescription,
-                           option, value, size, NULL )) != S_OK) return hr;
+                           option, value, size, NULL )) != S_OK) goto done;
 
     if (desc->elementLocalName) hr = WsWriteEndElement( msg->writer_body, NULL );
+
+done:
+    LeaveCriticalSection( &msg->cs );
     return hr;
 }
 
@@ -621,14 +735,30 @@ HRESULT WINAPI WsReadEnvelopeStart( WS_MESSAGE *handle, WS_XML_READER *reader, W
         return E_NOTIMPL;
     }
 
-    if (!handle || !reader) return E_INVALIDARG;
-    if (msg->state != WS_MESSAGE_STATE_EMPTY) return WS_E_INVALID_OPERATION;
+    if (!msg || !reader) return E_INVALIDARG;
 
-    if ((hr = read_envelope_start( reader )) != S_OK) return hr;
+    EnterCriticalSection( &msg->cs );
 
-    msg->reader_body = reader;
-    msg->state       = WS_MESSAGE_STATE_READING;
-    return S_OK;
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state != WS_MESSAGE_STATE_EMPTY)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if ((hr = read_envelope_start( reader )) == S_OK)
+    {
+        msg->reader_body = reader;
+        msg->state       = WS_MESSAGE_STATE_READING;
+    }
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 static HRESULT read_envelope_end( WS_XML_READER *reader )
@@ -649,13 +779,26 @@ HRESULT WINAPI WsReadEnvelopeEnd( WS_MESSAGE *handle, WS_ERROR *error )
     TRACE( "%p %p\n", handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
-    if (msg->state != WS_MESSAGE_STATE_READING) return WS_E_INVALID_OPERATION;
+    if (!msg) return E_INVALIDARG;
 
-    if ((hr = read_envelope_end( msg->reader_body )) != S_OK) return hr;
+    EnterCriticalSection( &msg->cs );
 
-    msg->state = WS_MESSAGE_STATE_DONE;
-    return S_OK;
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state != WS_MESSAGE_STATE_READING)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if ((hr = read_envelope_end( msg->reader_body )) == S_OK) msg->state = WS_MESSAGE_STATE_DONE;
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -665,14 +808,31 @@ HRESULT WINAPI WsReadBody( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *des
                            WS_HEAP *heap, void *value, ULONG size, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
 
     TRACE( "%p %p %08x %p %p %u %p\n", handle, desc, option, heap, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle || !desc) return E_INVALIDARG;
-    if (msg->state != WS_MESSAGE_STATE_READING) return WS_E_INVALID_OPERATION;
+    if (!msg || !desc) return E_INVALIDARG;
 
-    return WsReadElement( msg->reader_body, desc, option, heap, value, size, NULL );
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state != WS_MESSAGE_STATE_READING)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    hr = WsReadElement( msg->reader_body, desc, option, heap, value, size, NULL );
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -682,6 +842,7 @@ HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATIO
                                     WS_MESSAGE *src_handle, WS_ERROR *error )
 {
     struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
 
     TRACE( "%p %u %p %p\n", handle, init, src_handle, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -691,12 +852,30 @@ HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATIO
         return E_NOTIMPL;
     }
 
-    if (!handle || init > WS_FAULT_MESSAGE) return E_INVALIDARG;
-    if (msg->state >= WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (!msg || init > WS_FAULT_MESSAGE) return E_INVALIDARG;
 
-    msg->init  = init;
-    msg->state = WS_MESSAGE_STATE_INITIALIZED;
-    return write_envelope( msg );
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state >= WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if ((hr = write_envelope( msg )) == S_OK)
+    {
+        msg->init  = init;
+        msg->state = WS_MESSAGE_STATE_INITIALIZED;
+    }
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 static HRESULT grow_header_array( struct msg *msg, ULONG size )
@@ -799,8 +978,21 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
     TRACE( "%p %u %u %08x %p %u %p\n", handle, type, value_type, option, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle || type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER) return E_INVALIDARG;
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (!msg || type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
 
     for (i = 0; i < msg->header_count; i++)
     {
@@ -813,18 +1005,22 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
 
     if (!found)
     {
-        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
+        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) goto done;
         i = msg->header_count;
     }
 
     if ((hr = build_standard_header( msg->heap, type, value_type, option, value, size, &header )) != S_OK)
-        return hr;
+        goto done;
 
     if (!found) msg->header_count++;
     else free_header( msg->header[i] );
 
     msg->header[i] = header;
-    return write_envelope( msg );
+    hr = write_envelope( msg );
+
+done:
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 static void remove_header( struct msg *msg, ULONG i )
@@ -841,14 +1037,33 @@ HRESULT WINAPI WsRemoveHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_ERROR
 {
     struct msg *msg = (struct msg *)handle;
     BOOL removed = FALSE;
+    HRESULT hr = S_OK;
     ULONG i;
 
     TRACE( "%p %u %p\n", handle, type, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle) return E_INVALIDARG;
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
-    if (type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER) return E_INVALIDARG;
+    if (!msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if (type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
 
     for (i = 0; i < msg->header_count; i++)
     {
@@ -860,8 +1075,10 @@ HRESULT WINAPI WsRemoveHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_ERROR
         }
     }
 
-    if (removed) return write_envelope( msg );
-    return S_OK;
+    if (removed) hr = write_envelope( msg );
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 static HRESULT build_mapped_header( const WS_XML_STRING *name, WS_TYPE type, WS_WRITE_OPTION option,
@@ -966,8 +1183,21 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
     TRACE( "%p %s %u %08x %p %u %p\n", handle, debugstr_xmlstr(name), type, option, value, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle || !name) return E_INVALIDARG;
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (!msg || !name) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
 
     for (i = 0; i < msg->header_count; i++)
     {
@@ -981,17 +1211,20 @@ HRESULT WINAPI WsAddMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *name,
 
     if (!found)
     {
-        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
+        if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) goto done;
         i = msg->header_count;
     }
 
-    if ((hr = build_mapped_header( name, type, option, value, size, &header )) != S_OK) return hr;
+    if ((hr = build_mapped_header( name, type, option, value, size, &header )) != S_OK) goto done;
 
     if (!found) msg->header_count++;
     else free_header( msg->header[i] );
 
     msg->header[i] = header;
-    return S_OK;
+
+done:
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -1005,8 +1238,21 @@ HRESULT WINAPI WsRemoveMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
     TRACE( "%p %s %p\n", handle, debugstr_xmlstr(name), error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle || !name) return E_INVALIDARG;
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (!msg || !name) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
 
     for (i = 0; i < msg->header_count; i++)
     {
@@ -1018,6 +1264,7 @@ HRESULT WINAPI WsRemoveMappedHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
         }
     }
 
+    LeaveCriticalSection( &msg->cs );
     return S_OK;
 }
 
@@ -1070,15 +1317,31 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     TRACE( "%p %p %08x %p %u %08x %p\n", handle, desc, option, value, size, attrs, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle || !desc) return E_INVALIDARG;
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (!msg || !desc) return E_INVALIDARG;
 
-    if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) return hr;
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if ((hr = grow_header_array( msg, msg->header_count + 1 )) != S_OK) goto done;
     if ((hr = build_custom_header( msg->heap, desc->elementLocalName, desc->elementNs, desc->type,
-                                   desc->typeDescription, option, value, size, &header )) != S_OK) return hr;
-
+                                   desc->typeDescription, option, value, size, &header )) != S_OK) goto done;
     msg->header[msg->header_count++] = header;
-    return write_envelope( msg );
+    hr = write_envelope( msg );
+
+done:
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 /**************************************************************************
@@ -1089,13 +1352,27 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
 {
     struct msg *msg = (struct msg *)handle;
     BOOL removed = FALSE;
+    HRESULT hr = S_OK;
     ULONG i;
 
     TRACE( "%p %s %s %p\n", handle, debugstr_xmlstr(name), debugstr_xmlstr(ns), error );
     if (error) FIXME( "ignoring error parameter\n" );
 
-    if (!handle || !name || !ns) return E_INVALIDARG;
-    if (msg->state < WS_MESSAGE_STATE_INITIALIZED) return WS_E_INVALID_OPERATION;
+    if (!msg || !name || !ns) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
 
     for (i = 0; i < msg->header_count; i++)
     {
@@ -1109,8 +1386,10 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
         }
     }
 
-    if (removed) return write_envelope( msg );
-    return S_OK;
+    if (removed) hr = write_envelope( msg );
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 static WCHAR *build_http_header( const WCHAR *name, const WCHAR *value, ULONG *ret_len )
@@ -1119,6 +1398,12 @@ static WCHAR *build_http_header( const WCHAR *name, const WCHAR *value, ULONG *r
     WCHAR *ret = heap_alloc( (strlenW(name) + strlenW(value) + 3) * sizeof(WCHAR) );
     if (ret) *ret_len = sprintfW( ret, fmtW, name, value );
     return ret;
+}
+
+static inline HRESULT insert_http_header( HINTERNET req, const WCHAR *header, ULONG len, ULONG flags )
+{
+    if (WinHttpAddRequestHeaders( req, header, len, flags )) return S_OK;
+    return HRESULT_FROM_WIN32( GetLastError() );
 }
 
 HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
@@ -1132,9 +1417,17 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     static const WCHAR charsetW[] =
         {'c','h','a','r','s','e','t','=','u','t','f','-','8',0};
     struct msg *msg = (struct msg *)handle;
-    WCHAR *header, *buf;
+    HRESULT hr = E_OUTOFMEMORY;
+    WCHAR *header = NULL, *buf;
     ULONG len;
-    BOOL ret;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
 
     switch (msg->version_env)
     {
@@ -1148,18 +1441,19 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
 
     default:
         FIXME( "unhandled envelope version %u\n", msg->version_env );
-        return E_NOTIMPL;
+        hr = E_NOTIMPL;
     }
-    if (!header) return E_OUTOFMEMORY;
+    if (!header) goto done;
 
-    ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_ADD );
+    if ((hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_ADD )) != S_OK) goto done;
     heap_free( header );
-    if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
 
-    if (!(header = build_http_header( contenttypeW, charsetW, &len ))) return E_OUTOFMEMORY;
-    ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
+    hr = E_OUTOFMEMORY;
+    if (!(header = build_http_header( contenttypeW, charsetW, &len ))) goto done;
+    if ((hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON )) != S_OK)
+        goto done;
     heap_free( header );
-    if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
+    header = NULL;
 
     switch (msg->version_env)
     {
@@ -1168,18 +1462,19 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
         static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',0};
 
         if (!(len = msg->action.length)) break;
-        if (!(buf = heap_alloc( (len + 3) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+
+        hr = E_OUTOFMEMORY;
+        if (!(buf = heap_alloc( (len + 3) * sizeof(WCHAR) ))) goto done;
         buf[0] = '"';
         memcpy( buf + 1, msg->action.chars, len * sizeof(WCHAR) );
         buf[len + 1] = '"';
         buf[len + 2] = 0;
+
         header = build_http_header( soapactionW, buf, &len );
         heap_free( buf );
-        if (!header) return E_OUTOFMEMORY;
+        if (!header) goto done;
 
-        ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_ADD );
-        heap_free( header );
-        if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
+        hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_ADD );
         break;
     }
     case WS_ENVELOPE_VERSION_SOAP_1_2:
@@ -1188,46 +1483,81 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
         ULONG len_action = sizeof(actionW)/sizeof(actionW[0]);
 
         if (!(len = msg->action.length)) break;
-        if (!(buf = heap_alloc( (len + len_action + 2) * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+
+        hr = E_OUTOFMEMORY;
+        if (!(buf = heap_alloc( (len + len_action + 2) * sizeof(WCHAR) ))) goto done;
         memcpy( buf, actionW, len_action * sizeof(WCHAR) );
         memcpy( buf + len_action, msg->action.chars, len * sizeof(WCHAR) );
         len += len_action;
         buf[len++] = '"';
         buf[len] = 0;
+
         header = build_http_header( contenttypeW, buf, &len );
         heap_free( buf );
-        if (!header) return E_OUTOFMEMORY;
+        if (!header) goto done;
 
-        ret = WinHttpAddRequestHeaders( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
-        heap_free( header );
-        if (!ret) return HRESULT_FROM_WIN32( GetLastError() );
+        hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
         break;
     }
     default:
         FIXME( "unhandled envelope version %u\n", msg->version_env );
-        return E_NOTIMPL;
+        hr = E_NOTIMPL;
     }
 
-    return S_OK;
+done:
+    heap_free( header );
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
 
 void message_set_send_context( WS_MESSAGE *handle, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT *ctx )
 {
     struct msg *msg = (struct msg *)handle;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return;
+    }
+
     msg->ctx_send.callback = ctx->callback;
     msg->ctx_send.state    = ctx->state;
+
+    LeaveCriticalSection( &msg->cs );
 }
 
 void message_set_receive_context( WS_MESSAGE *handle, const WS_PROXY_MESSAGE_CALLBACK_CONTEXT *ctx )
 {
     struct msg *msg = (struct msg *)handle;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return;
+    }
+
     msg->ctx_receive.callback = ctx->callback;
     msg->ctx_receive.state    = ctx->state;
+
+    LeaveCriticalSection( &msg->cs );
 }
 
 void message_do_send_callback( WS_MESSAGE *handle )
 {
     struct msg *msg = (struct msg *)handle;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return;
+    }
+
     if (msg->ctx_send.callback)
     {
         HRESULT hr;
@@ -1235,11 +1565,22 @@ void message_do_send_callback( WS_MESSAGE *handle )
         hr = msg->ctx_send.callback( handle, msg->heap, msg->ctx_send.state, NULL );
         TRACE( "callback %p returned %08x\n", msg->ctx_send.callback, hr );
     }
+
+    LeaveCriticalSection( &msg->cs );
 }
 
 void message_do_receive_callback( WS_MESSAGE *handle )
 {
     struct msg *msg = (struct msg *)handle;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return;
+    }
+
     if (msg->ctx_receive.callback)
     {
         HRESULT hr;
@@ -1247,28 +1588,43 @@ void message_do_receive_callback( WS_MESSAGE *handle )
         hr = msg->ctx_receive.callback( handle, msg->heap, msg->ctx_receive.state, NULL );
         TRACE( "callback %p returned %08x\n", msg->ctx_receive.callback, hr );
     }
+
+    LeaveCriticalSection( &msg->cs );
 }
 
 HRESULT message_set_action( WS_MESSAGE *handle, const WS_XML_STRING *action )
 {
     struct msg *msg = (struct msg *)handle;
-    WCHAR *chars;
-    int len;
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
 
     if (!action || !action->length)
     {
         heap_free( msg->action.chars );
         msg->action.chars  = NULL;
         msg->action.length = 0;
-        return S_OK;
     }
-    len = MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, NULL, 0 );
-    if (!(chars = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
-    MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, chars, len );
+    else
+    {
+        WCHAR *chars;
+        int len = MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, NULL, 0 );
+        if (!(chars = heap_alloc( len * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
+        else
+        {
+            MultiByteToWideChar( CP_UTF8, 0, (char *)action->bytes, action->length, chars, len );
+            heap_free( msg->action.chars );
+            msg->action.chars  = chars;
+            msg->action.length = len;
+        }
+    }
 
-    heap_free( msg->action.chars );
-    msg->action.chars  = chars;
-    msg->action.length = len;
-
-    return S_OK;
+    LeaveCriticalSection( &msg->cs );
+    return hr;
 }
