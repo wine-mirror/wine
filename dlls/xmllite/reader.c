@@ -2284,7 +2284,6 @@ static HRESULT reader_parse_endtag(xmlreader *reader)
     reader->nodetype = XmlNodeType_EndElement;
     reader->is_empty_element = FALSE;
     reader_set_strvalue(reader, StringValue_Prefix, &prefix);
-    reader_set_strvalue(reader, StringValue_QualifiedName, &qname);
 
     return S_OK;
 }
@@ -2913,10 +2912,35 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
 static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *name, UINT *len)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    XmlNodeType nodetype;
+    UINT length;
 
     TRACE("(%p)->(%p %p)\n", This, name, len);
-    *name = This->strvalues[StringValue_QualifiedName].str;
-    if (len) *len  = This->strvalues[StringValue_QualifiedName].len;
+
+    if (!len)
+        len = &length;
+
+    switch ((nodetype = reader_get_nodetype(This)))
+    {
+    case XmlNodeType_Element:
+    case XmlNodeType_EndElement:
+        /* empty elements are not added to the stack */
+        if (!This->is_empty_element)
+        {
+            struct element *element;
+
+            element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
+            *name = element->qname.str;
+            *len = element->qname.len;
+            break;
+        }
+        /* fallthrough */
+    default:
+        *name = This->strvalues[StringValue_QualifiedName].str;
+        *len = This->strvalues[StringValue_QualifiedName].len;
+        break;
+    }
+
     return S_OK;
 }
 
