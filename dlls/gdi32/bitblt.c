@@ -286,16 +286,10 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
             get_mono_dc_colors( dc_dst, src_info, 2 );
 
+        /* 1-bpp destination without a color table requires a fake 1-entry table
+         * that contains only the background color */
         if (dst_info->bmiHeader.biBitCount == 1 && !dst_colors)
-        {
-            /* 1-bpp destination without a color table requires a fake 1-entry table
-             * that contains only the background color; except with a 1-bpp source,
-             * in which case it uses the source colors */
-            if (src_info->bmiHeader.biBitCount > 1)
-                get_mono_dc_colors( dc_src, dst_info, 1 );
-            else
-                get_mono_dc_colors( dc_src, dst_info, 2 );
-        }
+            get_mono_dc_colors( dc_src, dst_info, 1 );
 
         if (!(err = convert_bits( src_info, src, dst_info, &bits )))
         {

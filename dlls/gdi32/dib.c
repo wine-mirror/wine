@@ -577,17 +577,13 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
         DWORD dst_colors = dst_info->bmiHeader.biClrUsed;
 
         /* 1-bpp destination without a color table requires a fake 1-entry table
-         * that contains only the background color; except with a 1-bpp source,
-         * in which case it uses the source colors */
+         * that contains only the background color. There is no source DC to get
+         * it from, so the background is hardcoded to the default color. */
         if (dst_info->bmiHeader.biBitCount == 1 && !dst_colors)
         {
-            if (src_info->bmiHeader.biBitCount > 1)
-                get_mono_dc_colors( dc, dst_info, 1 );
-            else
-            {
-                memcpy( dst_info->bmiColors, src_info->bmiColors, 2 * sizeof(dst_info->bmiColors[0]) );
-                dst_info->bmiHeader.biClrUsed = 2;
-            }
+            static const RGBQUAD default_bg = { 255, 255, 255 };
+            dst_info->bmiColors[0] = default_bg;
+            dst_info->bmiHeader.biClrUsed = 1;
         }
 
         if (!(err = convert_bits( src_info, &src, dst_info, &src_bits )))
