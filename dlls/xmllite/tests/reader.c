@@ -1724,6 +1724,8 @@ static void test_read_cdata(void)
 static struct test_entry text_tests[] = {
     { "<a>simple text</a>", "", "simple text", S_OK },
     { "<a>text ]]> text</a>", "", "", WC_E_CDSECTEND },
+    { "<a>\n \r\n \n\n text</a>", "", "\n \n \n\n text", S_OK, S_OK, TRUE },
+    { "<a>\r \r\r\n \n\n text</a>", "", "\n \n\n \n\n text", S_OK, S_OK, TRUE },
     { NULL }
 };
 
@@ -1748,17 +1750,13 @@ static void test_read_text(void)
         type = XmlNodeType_None;
         hr = IXmlReader_Read(reader, &type);
 
-        /* read one more to get to CDATA */
+        /* read one more to get to text node */
         if (type == XmlNodeType_Element)
         {
             type = XmlNodeType_None;
             hr = IXmlReader_Read(reader, &type);
         }
-
-        if (test->hr_broken)
-            ok(hr == test->hr || broken(hr == test->hr_broken), "got %08x for %s\n", hr, test->xml);
-        else
-            ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
+        ok(hr == test->hr, "got %08x for %s\n", hr, test->xml);
         if (hr == S_OK)
         {
             const WCHAR *str;
