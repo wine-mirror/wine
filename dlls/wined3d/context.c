@@ -1525,6 +1525,9 @@ void context_bind_dummy_textures(const struct wined3d_device *device, const stru
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP, device->dummy_textures.tex_cube);
 
+        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP_ARRAY])
+            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, device->dummy_textures.tex_cube_array);
+
         if (gl_info->supported[EXT_TEXTURE_ARRAY])
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_ARRAY, device->dummy_textures.tex_2d_array);
 
@@ -2419,7 +2422,7 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
                 checkGLcall("glBindTexture");
                 break;
             case GL_TEXTURE_CUBE_MAP_ARRAY:
-                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
+                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, device->dummy_textures.tex_cube_array);
                 checkGLcall("glBindTexture");
                 break;
             case GL_TEXTURE_3D:

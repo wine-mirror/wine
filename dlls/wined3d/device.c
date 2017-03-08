@@ -684,6 +684,24 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
         }
     }
 
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP_ARRAY])
+    {
+        DWORD cube_array_data[6];
+
+        gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_textures.tex_cube_array);
+        checkGLcall("glGenTextures");
+        TRACE("Dummy cube array texture given name %u.\n", device->dummy_textures.tex_cube_array);
+
+        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, device->dummy_textures.tex_cube_array);
+        checkGLcall("glBindTexture");
+
+        for (i = 0; i < ARRAY_SIZE(cube_array_data); ++i)
+            cube_array_data[i] = color;
+        GL_EXTCALL(glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_RGBA8, 1, 1, 6, 0,
+                    GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, cube_array_data));
+        checkGLcall("glTexImage3D");
+    }
+
     if (gl_info->supported[EXT_TEXTURE_ARRAY])
     {
         gl_info->gl_ops.gl.p_glGenTextures(1, &device->dummy_textures.tex_2d_array);
@@ -734,6 +752,9 @@ static void destroy_dummy_textures(struct wined3d_device *device, struct wined3d
 
     if (gl_info->supported[EXT_TEXTURE_ARRAY])
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_2d_array);
+
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP_ARRAY])
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_cube_array);
 
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->dummy_textures.tex_cube);
