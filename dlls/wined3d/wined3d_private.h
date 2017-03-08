@@ -3212,6 +3212,10 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HID
 void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy_object(struct wined3d_cs *cs,
         void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_blt_sub_resource(struct wined3d_cs *cs, struct wined3d_resource *dst_resource,
+        unsigned int dst_sub_resource_idx, const struct wined3d_box *dst_box, struct wined3d_resource *src_resource,
+        unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, DWORD flags,
+        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,

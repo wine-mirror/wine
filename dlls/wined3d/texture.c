@@ -2629,7 +2629,6 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
 {
     struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
     struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
-    struct wined3d_texture_sub_resource *dst_resource, *src_resource = NULL;
     unsigned int dst_format_flags, src_format_flags = 0;
     HRESULT hr;
 
@@ -2638,7 +2637,7 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
             dst_texture, dst_sub_resource_idx, wine_dbgstr_rect(dst_rect), src_texture,
             src_sub_resource_idx, wine_dbgstr_rect(src_rect), flags, fx, debug_d3dtexturefiltertype(filter));
 
-    if (!(dst_resource = wined3d_texture_get_sub_resource(dst_texture, dst_sub_resource_idx))
+    if (dst_sub_resource_idx >= dst_texture->level_count * dst_texture->layer_count
             || dst_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
         return WINED3DERR_INVALIDCALL;
 
@@ -2649,7 +2648,7 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
 
     if (src_texture)
     {
-        if (!(src_resource = wined3d_texture_get_sub_resource(src_texture, src_sub_resource_idx))
+        if (src_sub_resource_idx >= src_texture->level_count * src_texture->layer_count
                 || src_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D)
             return WINED3DERR_INVALIDCALL;
 
@@ -2680,8 +2679,10 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
         return WINED3DERR_INVALIDCALL;
     }
 
-    return wined3d_surface_blt(dst_resource->u.surface, dst_rect,
-            src_resource ? src_resource->u.surface : NULL, src_rect, flags, fx, filter);
+    wined3d_cs_emit_blt_sub_resource(dst_texture->resource.device->cs, &dst_texture->resource, dst_sub_resource_idx,
+            &dst_box, src_texture ? &src_texture->resource : NULL, src_sub_resource_idx, &src_box, flags, fx, filter);
+
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_texture_get_overlay_position(const struct wined3d_texture *texture,
