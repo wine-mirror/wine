@@ -97,8 +97,8 @@ Um Wine zu kompilieren, führen Sie aus:
 make
 
 Damit werden das Programm "wine" und diverse unterstützende Bibliotheken und
-Binärdateienerschiedener erstellt. Das Programm "wine" lädt ausführbare
-Windows-Dateien und führt diese aus.
+Binärdateien erstellt. Das Programm "wine" lädt ausführbare Windows-Dateien
+und führt diese aus.
 Die Bibliothek "libwine" ("Winelib") kann benutzt werden, um Windows-Quelltexte
 unter Unix zu kompilieren und zu verlinken.
 
