@@ -2082,17 +2082,21 @@ static inline DWORD put_field(DWORD field, int shift, int len)
     return field;
 }
 
-static DWORD colorref_to_pixel_masks(const dib_info *dib, COLORREF colour)
+static DWORD rgb_to_pixel_masks(const dib_info *dib, DWORD r, DWORD g, DWORD b)
 {
-    DWORD r,g,b;
-
-    r = GetRValue(colour);
-    g = GetGValue(colour);
-    b = GetBValue(colour);
-
     return put_field(r, dib->red_shift,   dib->red_len) |
            put_field(g, dib->green_shift, dib->green_len) |
            put_field(b, dib->blue_shift,  dib->blue_len);
+}
+
+static DWORD rgbquad_to_pixel_masks(const dib_info *dib, RGBQUAD rgb)
+{
+    return rgb_to_pixel_masks(dib, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
+}
+
+static DWORD colorref_to_pixel_masks(const dib_info *dib, COLORREF colour)
+{
+    return rgb_to_pixel_masks(dib, GetRValue(colour), GetGValue(colour), GetBValue(colour));
 }
 
 static DWORD colorref_to_pixel_555(const dib_info *dib, COLORREF color)
@@ -2147,6 +2151,11 @@ static DWORD rgb_to_pixel_mono(const dib_info *dib, BOOL dither, int x, int y, B
         ret = ((30 * r + 59 * g + 11 * b) / 100 + bayer_16x16[y % 16][x % 16]) > 255;
 
     return ret ? 0xff : 0;
+}
+
+static DWORD rgbquad_to_pixel_colortable(const dib_info *dib, RGBQUAD rgb)
+{
+    return rgb_to_pixel_colortable( dib, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue );
 }
 
 static DWORD colorref_to_pixel_colortable(const dib_info *dib, COLORREF color)
@@ -2475,9 +2484,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(src_val >> 16, dst->red_shift,   dst->red_len)   |
-                                   put_field(src_val >>  8, dst->green_shift, dst->green_len) |
-                                   put_field(src_val,       dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst, src_val >> 16, src_val >> 8, src_val);
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
@@ -2527,9 +2534,10 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(get_field(src_val, src->red_shift,   src->red_len ),   dst->red_shift,   dst->red_len)   |
-                                   put_field(get_field(src_val, src->green_shift, src->green_len ), dst->green_shift, dst->green_len) |
-                                   put_field(get_field(src_val, src->blue_shift,  src->blue_len ),  dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      get_field(src_val, src->red_shift, src->red_len),
+                                                      get_field(src_val, src->green_shift, src->green_len),
+                                                      get_field(src_val, src->blue_shift, src->blue_len));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
@@ -2547,17 +2555,8 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         {
             dst_pixel = dst_start;
             src_pixel = src_start;
-            for(x = src_rect->left; x < src_rect->right; x++)
-            {
-                RGBQUAD rgb;
-                rgb.rgbBlue  = *src_pixel++;
-                rgb.rgbGreen = *src_pixel++;
-                rgb.rgbRed   = *src_pixel++;
-
-                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len)   |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-            }
+            for(x = src_rect->left; x < src_rect->right; x++, src_pixel += 3)
+                *dst_pixel++ = rgb_to_pixel_masks(dst, src_pixel[2], src_pixel[1], src_pixel[0]);
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 4;
             src_start += src->stride;
@@ -2577,9 +2576,10 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07), dst->red_shift,   dst->red_len) |
-                                   put_field(((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07), dst->green_shift, dst->green_len) |
-                                   put_field(((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07), dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07),
+                                                      ((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07),
+                                                      ((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
@@ -2595,12 +2595,13 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field( (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                              (((src_val >> src->red_shift)   >> 2) & 0x07), dst->red_shift, dst->red_len ) |
-                                   put_field( (((src_val >> src->green_shift) << 3) & 0xf8) |
-                                              (((src_val >> src->green_shift) >> 2) & 0x07), dst->green_shift, dst->green_len ) |
-                                   put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                              (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                      (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                      (((src_val >> src->green_shift) << 3) & 0xf8) |
+                                                      (((src_val >> src->green_shift) >> 2) & 0x07),
+                                                      (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                      (((src_val >> src->blue_shift)  >> 2) & 0x07));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
@@ -2616,12 +2617,13 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field( (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                              (((src_val >> src->red_shift)   >> 2) & 0x07), dst->red_shift, dst->red_len ) |
-                                   put_field( (((src_val >> src->green_shift) << 2) & 0xfc) |
-                                              (((src_val >> src->green_shift) >> 4) & 0x03), dst->green_shift, dst->green_len ) |
-                                   put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                              (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                      (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                      (((src_val >> src->green_shift) << 2) & 0xfc) |
+                                                      (((src_val >> src->green_shift) >> 4) & 0x03),
+                                                      (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                      (((src_val >> src->blue_shift)  >> 2) & 0x07));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
@@ -2637,9 +2639,10 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(get_field(src_val, src->red_shift,   src->red_len ),   dst->red_shift,   dst->red_len)   |
-                                   put_field(get_field(src_val, src->green_shift, src->green_len ), dst->green_shift, dst->green_len) |
-                                   put_field(get_field(src_val, src->blue_shift,  src->blue_len ),  dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      get_field(src_val, src->red_shift,   src->red_len),
+                                                      get_field(src_val, src->green_shift, src->green_len),
+                                                      get_field(src_val, src->blue_shift,  src->blue_len));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 4;
@@ -2656,12 +2659,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         DWORD dst_colors[256], i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-        }
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2684,12 +2682,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         DWORD dst_colors[16], i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-        }
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -2716,12 +2709,7 @@ static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         DWORD dst_colors[2], i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-        }
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3260,9 +3248,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(src_val >> 16, dst->red_shift,   dst->red_len)   |
-                                   put_field(src_val >>  8, dst->green_shift, dst->green_len) |
-                                   put_field(src_val,       dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst, src_val >> 16, src_val >> 8, src_val);
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
@@ -3278,9 +3264,10 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(src_val >> src->red_shift,   dst->red_shift,   dst->red_len)   |
-                                   put_field(src_val >> src->green_shift, dst->green_shift, dst->green_len) |
-                                   put_field(src_val >> src->blue_shift,  dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      src_val >> src->red_shift,
+                                                      src_val >> src->green_shift,
+                                                      src_val >> src->blue_shift);
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
@@ -3296,9 +3283,10 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(get_field(src_val, src->red_shift,   src->red_len ),   dst->red_shift,   dst->red_len)   |
-                                   put_field(get_field(src_val, src->green_shift, src->green_len ), dst->green_shift, dst->green_len) |
-                                   put_field(get_field(src_val, src->blue_shift,  src->blue_len ),  dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      get_field(src_val, src->red_shift, src->red_len),
+                                                      get_field(src_val, src->green_shift, src->green_len),
+                                                      get_field(src_val, src->blue_shift, src->blue_len ));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
@@ -3316,17 +3304,8 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         {
             dst_pixel = dst_start;
             src_pixel = src_start;
-            for(x = src_rect->left; x < src_rect->right; x++)
-            {
-                RGBQUAD rgb;
-                rgb.rgbBlue  = *src_pixel++;
-                rgb.rgbGreen = *src_pixel++;
-                rgb.rgbRed   = *src_pixel++;
-
-                *dst_pixel++ = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                               put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                               put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-            }
+            for(x = src_rect->left; x < src_rect->right; x++, src_pixel += 3)
+                *dst_pixel++ = rgb_to_pixel_masks(dst, src_pixel[2], src_pixel[1], src_pixel[0]);
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride / 2;
             src_start += src->stride;
@@ -3346,9 +3325,10 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07), dst->red_shift,   dst->red_len) |
-                                   put_field(((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07), dst->green_shift, dst->green_len) |
-                                   put_field(((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07), dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07),
+                                                      ((src_val >> 2) & 0xf8) | ((src_val >>  7) & 0x07),
+                                                      ((src_val << 3) & 0xf8) | ((src_val >>  2) & 0x07));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
@@ -3379,12 +3359,13 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field( (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                              (((src_val >> src->red_shift)   >> 2) & 0x07), dst->red_shift, dst->red_len ) |
-                                   put_field( (((src_val >> src->green_shift) << 3) & 0xf8) |
-                                              (((src_val >> src->green_shift) >> 2) & 0x07), dst->green_shift, dst->green_len ) |
-                                   put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                              (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                      (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                      (((src_val >> src->green_shift) << 3) & 0xf8) |
+                                                      (((src_val >> src->green_shift) >> 2) & 0x07),
+                                                      (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                      (((src_val >> src->blue_shift)  >> 2) & 0x07));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
@@ -3400,12 +3381,13 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field( (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                              (((src_val >> src->red_shift)   >> 2) & 0x07), dst->red_shift, dst->red_len ) |
-                                   put_field( (((src_val >> src->green_shift) << 2) & 0xfc) |
-                                              (((src_val >> src->green_shift) >> 4) & 0x03), dst->green_shift, dst->green_len ) |
-                                   put_field( (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                              (((src_val >> src->blue_shift)  >> 2) & 0x07), dst->blue_shift, dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                      (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                      (((src_val >> src->green_shift) << 2) & 0xfc) |
+                                                      (((src_val >> src->green_shift) >> 4) & 0x03),
+                                                      (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                      (((src_val >> src->blue_shift)  >> 2) & 0x07));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
@@ -3421,9 +3403,10 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = put_field(get_field(src_val, src->red_shift,   src->red_len ),   dst->red_shift,   dst->red_len)   |
-                                   put_field(get_field(src_val, src->green_shift, src->green_len ), dst->green_shift, dst->green_len) |
-                                   put_field(get_field(src_val, src->blue_shift,  src->blue_len ),  dst->blue_shift,  dst->blue_len);
+                    *dst_pixel++ = rgb_to_pixel_masks(dst,
+                                                      get_field(src_val, src->red_shift,   src->red_len),
+                                                      get_field(src_val, src->green_shift, src->green_len),
+                                                      get_field(src_val, src->blue_shift,  src->blue_len));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride / 2;
@@ -3441,12 +3424,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                            put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                            put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-        }
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3470,12 +3448,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                            put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                            put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-        }
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3503,12 +3476,7 @@ static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = put_field(rgb.rgbRed,   dst->red_shift,   dst->red_len) |
-                            put_field(rgb.rgbGreen, dst->green_shift, dst->green_len) |
-                            put_field(rgb.rgbBlue,  dst->blue_shift,  dst->blue_len);
-        }
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3741,10 +3709,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
             int i;
 
             for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-            {
-                RGBQUAD rgb = color_table[i];
-                dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
-            }
+                dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
             for(y = src_rect->top; y < src_rect->bottom; y++)
             {
@@ -3769,10 +3734,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
-        }
+            dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -3800,10 +3762,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
-        }
+            dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4095,10 +4054,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
-        }
+            dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4152,10 +4108,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
             int i;
 
             for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-            {
-                RGBQUAD rgb = color_table[i];
-                dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
-            }
+                dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
             for(y = src_rect->top; y < src_rect->bottom; y++)
             {
@@ -4196,10 +4149,7 @@ static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         int i;
 
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        {
-            RGBQUAD rgb = color_table[i];
-            dst_colors[i] = rgb_to_pixel_colortable(dst, rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue);
-        }
+            dst_colors[i] = rgbquad_to_pixel_colortable(dst, color_table[i]);
 
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
@@ -4751,9 +4701,7 @@ static void blend_rect_32(const dib_info *dst, const RECT *rc,
                                        get_field( dst_ptr[x], dst->green_shift, dst->green_len ),
                                        get_field( dst_ptr[x], dst->blue_shift, dst->blue_len ),
                                        src_ptr[x], blend );
-                dst_ptr[x] = (put_field( val >> 16, dst->red_shift,   dst->red_len )   |
-                              put_field( val >> 8,  dst->green_shift, dst->green_len ) |
-                              put_field( val,       dst->blue_shift,  dst->blue_len ));
+                dst_ptr[x] = rgb_to_pixel_masks( dst, val >> 16, val >> 8, val );
             }
         }
     }
@@ -4814,9 +4762,7 @@ static void blend_rect_16(const dib_info *dst, const RECT *rc,
                                    get_field( dst_ptr[x], dst->green_shift, dst->green_len ),
                                    get_field( dst_ptr[x], dst->blue_shift, dst->blue_len ),
                                    src_ptr[x], blend );
-            dst_ptr[x] = (put_field((val >> 16), dst->red_shift,   dst->red_len)   |
-                          put_field((val >>  8), dst->green_shift, dst->green_len) |
-                          put_field( val,        dst->blue_shift,  dst->blue_len));
+            dst_ptr[x] = rgb_to_pixel_masks( dst, val >> 16, val >> 8, val );
         }
     }
 }
@@ -5067,9 +5013,7 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
             for (x = 0; x < rc->right - rc->left; x++)
             {
                 DWORD val = gradient_rgb_24( v, rc->left + x - v[0].x, v[1].x - v[0].x );
-                ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                          put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                          put_field( val,       dib->blue_shift,  dib->blue_len ));
+                ptr[x] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
             }
         }
 
@@ -5086,9 +5030,7 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
                        (((val >> 8)  & 0xff) << dib->green_shift) |
                        (((val >> 16) & 0xff) << dib->red_shift));
             else
-                val = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                       put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                       put_field( val,       dib->blue_shift,  dib->blue_len ));
+                val = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
 
             memset_32( ptr, val, rc->right - rc->left );
         }
@@ -5112,9 +5054,7 @@ static BOOL gradient_rect_32( const dib_info *dib, const RECT *rc, const TRIVERT
                 for (x = left; x < right; x++)
                 {
                     DWORD val = gradient_triangle_24( v, x, y, det );
-                    ptr[x - rc->left] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                                         put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                                         put_field( val,       dib->blue_shift,  dib->blue_len ));
+                    ptr[x - rc->left] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
                 }
         }
         break;
@@ -5221,9 +5161,10 @@ static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
             for (x = rc->left; x < rc->right; x++)
             {
                 WORD val = gradient_rgb_555( v, x - v[0].x, v[1].x - v[0].x, x, y );
-                ptr[x - rc->left] = (put_field(((val >> 7) & 0xf8) | ((val >> 12) & 0x07), dib->red_shift,   dib->red_len)   |
-                                     put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
-                                     put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
+                ptr[x - rc->left] = rgb_to_pixel_masks( dib,
+                                                        ((val >> 7) & 0xf8) | ((val >> 12) & 0x07),
+                                                        ((val >> 2) & 0xf8) | ((val >> 7)  & 0x07),
+                                                        ((val << 3) & 0xf8) | ((val >> 2)  & 0x07) );
             }
         for ( ; y < rc->bottom; y++, ptr += dib->stride / 2)
             memcpy( ptr, ptr - dib->stride * 2, (rc->right - rc->left) * 2 );
@@ -5236,9 +5177,10 @@ static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
             for (x = 0; x < 4; x++)
             {
                 WORD val = gradient_rgb_555( v, y - v[0].y, v[1].y - v[0].y, x, y );
-                values[x] = (put_field(((val >> 7) & 0xf8) | ((val >> 12) & 0x07), dib->red_shift,   dib->red_len)   |
-                             put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
-                             put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
+                values[x] = rgb_to_pixel_masks( dib,
+                                                ((val >> 7) & 0xf8) | ((val >> 12) & 0x07),
+                                                ((val >> 2) & 0xf8) | ((val >> 7)  & 0x07),
+                                                ((val << 3) & 0xf8) | ((val >> 2)  & 0x07) );
             }
             for (x = rc->left; x < rc->right; x++) ptr[x - rc->left] = values[x % 4];
         }
@@ -5252,9 +5194,10 @@ static BOOL gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
             for (x = left; x < right; x++)
             {
                 WORD val = gradient_triangle_555( v, x, y, det );
-                ptr[x - rc->left] = (put_field(((val >> 7) & 0xf8) | ((val >> 12) & 0x07), dib->red_shift,   dib->red_len)   |
-                                     put_field(((val >> 2) & 0xf8) | ((val >> 7)  & 0x07), dib->green_shift, dib->green_len) |
-                                     put_field(((val << 3) & 0xf8) | ((val >> 2)  & 0x07), dib->blue_shift,  dib->blue_len));
+                ptr[x - rc->left] = rgb_to_pixel_masks( dib,
+                                                        ((val >> 7) & 0xf8) | ((val >> 12) & 0x07),
+                                                        ((val >> 2) & 0xf8) | ((val >> 7)  & 0x07),
+                                                        ((val << 3) & 0xf8) | ((val >> 2)  & 0x07) );
             }
         }
         break;
@@ -5437,9 +5380,7 @@ static void mask_rect_32( const dib_info *dst, const RECT *rc,
                 color_table[i].rgbBlue;
     else
         for (i = 0; i < 2; i++)
-            dst_colors[i] = put_field(color_table[i].rgbRed,   dst->red_shift,   dst->red_len) |
-                            put_field(color_table[i].rgbGreen, dst->green_shift, dst->green_len) |
-                            put_field(color_table[i].rgbBlue,  dst->blue_shift,  dst->blue_len);
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
     /* Creating a BYTE-sized table so we don't need to mask the lsb of bit_val */
     for (i = 2; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
@@ -5785,9 +5726,7 @@ static void mask_rect_16( const dib_info *dst, const RECT *rc,
                             ((color_table[i].rgbBlue  >> 3) & 0x001f);
     else
         for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-            dst_colors[i] = put_field(color_table[i].rgbRed,   dst->red_shift,   dst->red_len) |
-                            put_field(color_table[i].rgbGreen, dst->green_shift, dst->green_len) |
-                            put_field(color_table[i].rgbBlue,  dst->blue_shift,  dst->blue_len);
+            dst_colors[i] = rgbquad_to_pixel_masks(dst, color_table[i]);
 
     /* Special case starting and finishing in same byte, neither on byte boundary */
     if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
@@ -5923,8 +5862,7 @@ static void mask_rect_8( const dib_info *dst, const RECT *rc,
     get_rop_codes( rop2, &codes );
 
     for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
-        dst_colors[i] = rgb_to_pixel_colortable( dst, color_table[i].rgbRed, color_table[i].rgbGreen,
-                                                 color_table[i].rgbBlue );
+        dst_colors[i] = rgbquad_to_pixel_colortable( dst, color_table[i] );
 
     /* Special case starting and finishing in same byte, neither on byte boundary */
     if ((origin->x & 7) && (origin_end & 7) && (origin->x & ~7) == (origin_end & ~7))
@@ -6063,8 +6001,7 @@ static void mask_rect_4( const dib_info *dst, const RECT *rc,
 
     for (i = 0; i < sizeof(dst_colors) / sizeof(dst_colors[0]); i++)
     {
-        dst_colors[i] = rgb_to_pixel_colortable( dst, color_table[i].rgbRed, color_table[i].rgbGreen,
-                                                 color_table[i].rgbBlue );
+        dst_colors[i] = rgbquad_to_pixel_colortable( dst, color_table[i] );
         /* Set high nibble to match so we don't need to shift it later. */
         dst_colors[i] |= dst_colors[i] << 4;
     }
@@ -6160,9 +6097,7 @@ static void draw_glyph_32( const dib_info *dib, const RECT *rect, const dib_info
                           get_field(dst_ptr[x], dib->green_shift, dib->green_len),
                           get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
                           text, ranges + glyph_ptr[x] );
-            dst_ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                          put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                          put_field( val,       dib->blue_shift,  dib->blue_len ));
+            dst_ptr[x] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
         }
         dst_ptr += dib->stride / 4;
         glyph_ptr += glyph->stride;
@@ -6247,9 +6182,7 @@ static void draw_glyph_16( const dib_info *dib, const RECT *rect, const dib_info
                           get_field(dst_ptr[x], dib->green_shift, dib->green_len),
                           get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
                           text, ranges + glyph_ptr[x] );
-            dst_ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                          put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                          put_field( val,       dib->blue_shift,  dib->blue_len ));
+            dst_ptr[x] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
         }
         dst_ptr += dib->stride / 2;
         glyph_ptr += glyph->stride;
@@ -6376,9 +6309,7 @@ static void draw_subpixel_glyph_32( const dib_info *dib, const RECT *rect, const
                                   get_field(dst_ptr[x], dib->green_shift, dib->green_len),
                                   get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
                                   text, glyph_ptr[x] );
-            dst_ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                          put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                          put_field( val,       dib->blue_shift,  dib->blue_len ));
+            dst_ptr[x] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
         }
         dst_ptr += dib->stride / 4;
         glyph_ptr += glyph->stride / 4;
@@ -6458,9 +6389,7 @@ static void draw_subpixel_glyph_16( const dib_info *dib, const RECT *rect, const
                                   get_field(dst_ptr[x], dib->green_shift, dib->green_len),
                                   get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
                                   text, glyph_ptr[x] );
-            dst_ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
-                          put_field( val >> 8,  dib->green_shift, dib->green_len ) |
-                          put_field( val,       dib->blue_shift,  dib->blue_len ));
+            dst_ptr[x] = rgb_to_pixel_masks( dib, val >> 16, val >> 8, val );
         }
         dst_ptr += dib->stride / 2;
         glyph_ptr += glyph->stride / 4;
