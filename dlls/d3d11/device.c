@@ -2078,7 +2078,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetConstantBuffers(ID3D1
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
     unsigned int i;
 
-    TRACE("iface %p, start_slot %u, buffer_count %u, buffer %p.\n",
+    TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p.\n",
             iface, start_slot, buffer_count, buffers);
 
     wined3d_mutex_lock();
