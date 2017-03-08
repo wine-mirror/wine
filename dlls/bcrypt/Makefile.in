@@ -5,6 +5,7 @@ EXTRAINCL = $(GNUTLS_CFLAGS)
 
 C_SRCS = \
 	bcrypt_main.c \
-	sha256.c
+	sha256.c \
+	sha512.c
 
 RC_SRCS = version.rc

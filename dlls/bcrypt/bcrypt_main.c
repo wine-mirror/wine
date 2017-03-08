@@ -449,6 +449,7 @@ struct hash_impl
         MD5_CTX md5;
         SHA_CTX sha1;
         SHA256_CTX sha256;
+        SHA512_CTX sha512;
     } u;
 };
 
@@ -466,6 +467,14 @@ static NTSTATUS hash_init( struct hash_impl *hash, enum alg_id alg_id )
 
     case ALG_ID_SHA256:
         sha256_init( &hash->u.sha256 );
+        break;
+
+    case ALG_ID_SHA384:
+        sha384_init( &hash->u.sha512 );
+        break;
+
+    case ALG_ID_SHA512:
+        sha512_init( &hash->u.sha512 );
         break;
 
     default:
@@ -492,6 +501,14 @@ static NTSTATUS hash_update( struct hash_impl *hash, enum alg_id alg_id,
         sha256_update( &hash->u.sha256, input, size );
         break;
 
+    case ALG_ID_SHA384:
+        sha384_update( &hash->u.sha512, input, size );
+        break;
+
+    case ALG_ID_SHA512:
+        sha512_update( &hash->u.sha512, input, size );
+        break;
+
     default:
         ERR( "unhandled id %u\n", alg_id );
         return STATUS_NOT_IMPLEMENTED;
@@ -515,6 +532,14 @@ static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id,
 
     case ALG_ID_SHA256:
         sha256_finalize( &hash->u.sha256, output );
+        break;
+
+    case ALG_ID_SHA384:
+        sha384_finalize( &hash->u.sha512, output );
+        break;
+
+    case ALG_ID_SHA512:
+        sha512_finalize( &hash->u.sha512, output );
         break;
 
     default:
