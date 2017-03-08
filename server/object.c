@@ -28,6 +28,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -92,11 +95,22 @@ void close_objects(void)
 
 /*****************************************************************/
 
+/* mark a block of memory as uninitialized for debugging purposes */
+static inline void mark_block_uninitialized( void *ptr, size_t size )
+{
+    memset( ptr, 0x55, size );
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
+#elif defined(VALGRIND_MAKE_WRITABLE)
+    VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
+#endif
+}
+
 /* malloc replacement */
 void *mem_alloc( size_t size )
 {
     void *ptr = malloc( size );
-    if (ptr) memset( ptr, 0x55, size );
+    if (ptr) mark_block_uninitialized( ptr, size );
     else set_error( STATUS_NO_MEMORY );
     return ptr;
 }
