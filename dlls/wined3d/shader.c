@@ -995,6 +995,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     }
                     reg_maps->uav_resource_info[reg_idx].type = semantic->resource_type;
                     reg_maps->uav_resource_info[reg_idx].data_type = semantic->resource_data_type;
+                    if (ins.flags)
+                        FIXME("Ignoring typed UAV flags %#x.\n", ins.flags);
                     break;
 
                 default:
@@ -1110,6 +1112,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 ERR("Invalid UAV resource index %u.\n", reg_idx);
                 break;
             }
+            if (ins.flags)
+                FIXME("Ignoring raw UAV flags %#x.\n", ins.flags);
             reg_maps->uav_resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_BUFFER;
             reg_maps->uav_resource_info[reg_idx].data_type = WINED3D_DATA_UINT;
             reg_maps->uav_resource_info[reg_idx].flags = WINED3D_VIEW_BUFFER_RAW;
@@ -1731,7 +1735,8 @@ static void shader_dump_sysval_semantic(struct wined3d_string_buffer *buffer, en
 }
 
 static void shader_dump_decl_usage(struct wined3d_string_buffer *buffer,
-        const struct wined3d_shader_semantic *semantic, const struct wined3d_shader_version *shader_version)
+        const struct wined3d_shader_semantic *semantic, unsigned int flags,
+        const struct wined3d_shader_version *shader_version)
 {
     shader_addline(buffer, "dcl");
 
@@ -1808,6 +1813,8 @@ static void shader_dump_decl_usage(struct wined3d_string_buffer *buffer,
                 shader_addline(buffer, "unknown");
                 break;
         }
+        if (semantic->reg.reg.type == WINED3DSPR_UAV)
+            shader_dump_uav_flags(buffer, flags);
         switch (semantic->resource_data_type)
         {
             case WINED3D_DATA_FLOAT:
@@ -2502,7 +2509,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
         if (ins.handler_idx == WINED3DSIH_DCL || ins.handler_idx == WINED3DSIH_DCL_UAV_TYPED)
         {
-            shader_dump_decl_usage(&buffer, &ins.declaration.semantic, &shader_version);
+            shader_dump_decl_usage(&buffer, &ins.declaration.semantic, ins.flags, &shader_version);
             shader_dump_ins_modifiers(&buffer, &ins.declaration.semantic.reg);
             shader_addline(&buffer, " ");
             shader_dump_dst_param(&buffer, &ins.declaration.semantic.reg, &shader_version);

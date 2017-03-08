@@ -67,8 +67,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM5_FP_ARRAY_SIZE_SHIFT         16
 #define WINED3D_SM5_FP_TABLE_COUNT_MASK         0xffffu
 
-#define WINED3D_SM5_UAV_FLAGS_SHIFT             11
-#define WINED3D_SM5_UAV_FLAGS_MASK              (0x1fffu << WINED3D_SM5_UAV_FLAGS_SHIFT)
+#define WINED3D_SM5_UAV_FLAGS_SHIFT             15
+#define WINED3D_SM5_UAV_FLAGS_MASK              (0x1ffu << WINED3D_SM5_UAV_FLAGS_SHIFT)
 
 #define WINED3D_SM5_SYNC_FLAGS_SHIFT            11
 #define WINED3D_SM5_SYNC_FLAGS_MASK             (0xffu << WINED3D_SM5_SYNC_FLAGS_SHIFT)
@@ -546,6 +546,9 @@ static void shader_sm4_read_dcl_resource(struct wined3d_shader_instruction *ins,
     {
         ins->declaration.semantic.resource_data_type = data_type_table[data_type];
     }
+
+    if (reg_data_type == WINED3D_DATA_UAV)
+        ins->flags = (opcode_token & WINED3D_SM5_UAV_FLAGS_MASK) >> WINED3D_SM5_UAV_FLAGS_SHIFT;
 }
 
 static void shader_sm4_read_dcl_constant_buffer(struct wined3d_shader_instruction *ins,

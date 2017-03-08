@@ -562,8 +562,8 @@ enum wined3d_shader_sync_flags
 
 enum wined3d_shader_uav_flags
 {
-    WINED3DSUF_GLOBALLY_COHERENT = 0x20,
-    WINED3DSUF_ORDER_PRESERVING_COUNTER = 0x1000,
+    WINED3DSUF_GLOBALLY_COHERENT = 0x2,
+    WINED3DSUF_ORDER_PRESERVING_COUNTER = 0x100,
 };
 
 enum wined3d_tessellator_domain
