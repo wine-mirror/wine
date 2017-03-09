@@ -13386,6 +13386,70 @@ done:
     DestroyWindow(window);
 }
 
+static void test_vb_refcount(void)
+{
+    ULONG prev_d3d_refcount, prev_device_refcount;
+    ULONG cur_d3d_refcount, cur_device_refcount;
+    IDirect3DVertexBuffer *vb, *vb1;
+    IDirect3DVertexBuffer7 *vb7;
+    D3DVERTEXBUFFERDESC vb_desc;
+    IDirect3DDevice3 *device;
+    IDirect3D3 *d3d;
+    ULONG refcount;
+    IUnknown *unk;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d3_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D3 interface, hr %#x.\n", hr);
+
+    prev_d3d_refcount = get_refcount((IUnknown *)d3d);
+    prev_device_refcount = get_refcount((IUnknown *)device);
+
+    memset(&vb_desc, 0, sizeof(vb_desc));
+    vb_desc.dwSize = sizeof(vb_desc);
+    vb_desc.dwFVF = D3DFVF_XYZ;
+    vb_desc.dwNumVertices = 4;
+    hr = IDirect3D3_CreateVertexBuffer(d3d, &vb_desc, &vb, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    cur_d3d_refcount = get_refcount((IUnknown *)d3d);
+    cur_device_refcount = get_refcount((IUnknown *)device);
+    ok(cur_d3d_refcount == prev_d3d_refcount, "D3D object refcount changed from %u to %u.\n",
+            prev_d3d_refcount, cur_d3d_refcount);
+    ok(cur_device_refcount == prev_device_refcount, "Device refcount changed from %u to %u.\n",
+            prev_device_refcount, cur_device_refcount);
+
+    hr = IDirect3DVertexBuffer_QueryInterface(vb, &IID_IDirect3DVertexBuffer, (void **)&vb1);
+    ok(hr == DD_OK, "Failed to query IDirect3DVertexBuffer, hr %#x.\n", hr);
+    IDirect3DVertexBuffer_Release(vb1);
+
+    hr = IDirect3DVertexBuffer_QueryInterface(vb, &IID_IDirect3DVertexBuffer7, (void **)&vb7);
+    ok(hr == E_NOINTERFACE, "Querying IDirect3DVertexBuffer7 returned unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer_QueryInterface(vb, &IID_IUnknown, (void **)&unk);
+    ok(hr == DD_OK, "Failed to query IUnknown, hr %#x.\n", hr);
+    ok((IUnknown *)vb == unk,
+            "IDirect3DVertexBuffer and IUnknown interface pointers don't match, %p != %p.\n", vb, unk);
+    IUnknown_Release(unk);
+
+    refcount = IDirect3DVertexBuffer_Release(vb);
+    ok(!refcount, "Vertex buffer has %u references left.\n", refcount);
+    IDirect3D3_Release(d3d);
+    refcount = IDirect3DDevice3_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     IDirectDraw4 *ddraw;
@@ -13490,4 +13554,5 @@ START_TEST(ddraw4)
     test_surface_desc_size();
     test_get_surface_from_dc();
     test_ck_operation();
+    test_vb_refcount();
 }
