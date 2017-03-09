@@ -760,7 +760,6 @@ static void test_read_xmldeclaration(void)
     ok(type == XmlNodeType_XmlDeclaration,
                      "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
     /* new version 1.2.x and 1.3.x properly update position for <?xml ?> */
-todo_wine
     TEST_READER_POSITION2(reader, 1, 3, ~0u, 55);
 
     TEST_DEPTH(reader, 0);
@@ -829,6 +828,7 @@ todo_wine
 
     hr = IXmlReader_MoveToElement(reader);
     ok(hr == S_OK, "got %08x\n", hr);
+    TEST_READER_POSITION2(reader, 1, 3, ~0u, 55);
 
     type = XmlNodeType_None;
     hr = IXmlReader_GetNodeType(reader, &type);
@@ -855,7 +855,6 @@ todo_wine {
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_XmlDeclaration, "expected XmlDeclaration, got %s\n", type_to_str(type));
-todo_wine
     TEST_READER_POSITION2(reader, 1, 3, ~0u, 21);
     TEST_READER_STATE(reader, XmlReadState_Interactive);
 

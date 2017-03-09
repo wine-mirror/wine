@@ -281,7 +281,8 @@ typedef struct
     UINT depth;
     UINT max_depth;
     BOOL is_empty_element;
-    struct element empty_element;
+    struct element empty_element; /* used for empty elements without end tag <a />,
+                                     and to keep <?xml reader position */
     UINT resume[XmlReadResume_Last]; /* offsets used to resume reader */
 } xmlreader;
 
@@ -1294,12 +1295,16 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
 {
     static const WCHAR xmldeclW[] = {'<','?','x','m','l',' ',0};
     static const WCHAR declcloseW[] = {'?','>',0};
+    struct reader_position position;
     HRESULT hr;
 
     /* check if we have "<?xml " */
-    if (reader_cmp(reader, xmldeclW)) return S_FALSE;
+    if (reader_cmp(reader, xmldeclW))
+        return S_FALSE;
 
-    reader_skipn(reader, 5);
+    reader_skipn(reader, 2);
+    position = reader->position;
+    reader_skipn(reader, 3);
     hr = reader_parse_versioninfo(reader);
     if (FAILED(hr))
         return hr;
@@ -1313,10 +1318,14 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
         return hr;
 
     reader_skipspaces(reader);
-    if (reader_cmp(reader, declcloseW)) return WC_E_XMLDECL;
+    if (reader_cmp(reader, declcloseW))
+        return WC_E_XMLDECL;
+
+    /* skip '?>' */
     reader_skipn(reader, 2);
 
     reader->nodetype = XmlNodeType_XmlDeclaration;
+    reader->empty_element.position = position;
     reader_set_strvalue(reader, StringValue_LocalName, &strval_xml);
     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_xml);
     reader_set_strvalue(reader, StringValue_Value, &strval_empty);
@@ -3291,6 +3300,9 @@ static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *line_numb
     case XmlNodeType_Attribute:
         *line_number = This->attr->position.line_number;
         break;
+    case XmlNodeType_XmlDeclaration:
+        *line_number = This->empty_element.position.line_number;
+        break;
     default:
         *line_number = This->position.line_number;
         break;
@@ -3322,6 +3334,9 @@ static HRESULT WINAPI xmlreader_GetLinePosition(IXmlReader* iface, UINT *line_po
         break;
     case XmlNodeType_Attribute:
         *line_position = This->attr->position.line_position;
+        break;
+    case XmlNodeType_XmlDeclaration:
+        *line_position = This->empty_element.position.line_position;
         break;
     default:
         *line_position = This->position.line_position;
