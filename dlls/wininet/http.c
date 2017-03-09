@@ -484,10 +484,8 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
                 break;
 
             if(!current_read) {
-                if(blocking_mode != BLOCKING_DISALLOW) {
-                    WARN("unexpected end of data\n");
-                    gzip_stream->end_of_data = TRUE;
-                }
+                WARN("unexpected end of data\n");
+                gzip_stream->end_of_data = TRUE;
                 break;
             }
         }
@@ -518,6 +516,8 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
     }
 
     TRACE("read %u bytes\n", ret_read);
+    if(ret_read)
+        res = ERROR_SUCCESS;
     *read = ret_read;
     return res;
 }
@@ -2572,6 +2572,12 @@ static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD 
     DWORD res;
 
     res = req->data_stream->vtbl->read(req->data_stream, req, buf, size, read, blocking_mode);
+    if(res != ERROR_SUCCESS) {
+        if(res != WSAEWOULDBLOCK)
+            return res;
+        *read = 0;
+        return ERROR_SUCCESS;
+    }
     assert(*read <= size);
 
     if(req->hCacheFile) {
@@ -2584,7 +2590,7 @@ static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD 
                 FIXME("WriteFile failed: %u\n", GetLastError());
         }
 
-        if(req->data_stream->vtbl->end_of_data(req->data_stream, req))
+        if(!*read || req->data_stream->vtbl->end_of_data(req->data_stream, req))
             commit_cache_entry(req);
     }
 
@@ -2669,7 +2675,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
                 break;
         }
 
-        if(ret || (blocking_mode == BLOCKING_DISALLOW && res == WSAEWOULDBLOCK))
+        if(res == WSAEWOULDBLOCK && ret)
             res = ERROR_SUCCESS;
     }
 
@@ -2750,6 +2756,8 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
                 if(res == ERROR_SUCCESS && read_bytes) {
                     chunked_stream->buf_size += read_bytes;
                 }else if(res == WSAEWOULDBLOCK) {
+                    if(ret_read)
+                        res = ERROR_SUCCESS;
                     continue_read = FALSE;
                     continue;
                 }else {
@@ -2853,7 +2861,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
 
     if(ret_read)
         res = ERROR_SUCCESS;
-    if(res != ERROR_SUCCESS && res != WSAEWOULDBLOCK)
+    if(res != ERROR_SUCCESS)
         return res;
 
     TRACE("read %d bytes\n", ret_read);
