@@ -306,6 +306,13 @@ static void test_enum_hosts(void)
     todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08x\n", lastAsyncCode);
     todo_wine ok(lastAsyncHandle == async, "got 0x%08x\n", async);
 
+    hr = IDirectPlay8Client_Initialize(client2, NULL, DirectPlayMessageHandler, 0);
+    ok(hr == S_OK, "got %x\n", hr);
+
+    /* Show that handlers are per object. */
+    hr = IDirectPlay8Client_CancelAsyncOperation(client2, async2, 0);
+    todo_wine ok(hr == DPNERR_INVALIDHANDLE, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08x\n", hr);
+
     lastAsyncCode = E_FAIL;
     lastAsyncHandle = 0xdeadbeef;
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async2, 0);
