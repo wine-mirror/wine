@@ -2024,6 +2024,7 @@ static void test_prefix(void)
     } prefix_tests[] =
     {
         { "<b xmlns=\"defns\" xml:a=\"a ns\"/>", "", "", "xml" },
+        { "<c:b xmlns:c=\"c ns\" xml:a=\"a ns\"/>", "c", "xmlns", "xml" },
     };
     IXmlReader *reader;
     unsigned int i;

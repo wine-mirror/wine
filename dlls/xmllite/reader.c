@@ -3087,13 +3087,51 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
     return S_OK;
 }
 
-static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface, LPCWSTR *prefix, UINT *len)
+static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface, const WCHAR **ret, UINT *len)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    XmlNodeType nodetype;
+    UINT length;
 
-    TRACE("(%p)->(%p %p)\n", This, prefix, len);
-    *prefix = This->strvalues[StringValue_Prefix].str;
-    if (len) *len = This->strvalues[StringValue_Prefix].len;
+    TRACE("(%p)->(%p %p)\n", This, ret, len);
+
+    if (!len)
+        len = &length;
+
+    *ret = emptyW;
+    *len = 0;
+
+    switch ((nodetype = reader_get_nodetype(This)))
+    {
+    case XmlNodeType_Element:
+    case XmlNodeType_EndElement:
+    case XmlNodeType_Attribute:
+    {
+        const strval *prefix = &This->strvalues[StringValue_Prefix];
+        struct ns *ns;
+
+        if (strval_eq(This, prefix, &strval_xml))
+        {
+            *ret = xmlW;
+            *len = 3;
+        }
+        else if (strval_eq(This, prefix, &strval_xmlns))
+        {
+            *ret = xmlnsW;
+            *len = 5;
+        }
+        else if ((ns = reader_lookup_ns(This, prefix)))
+        {
+            *ret = ns->prefix.str;
+            *len = ns->prefix.len;
+        }
+
+        break;
+    }
+    default:
+        ;
+    }
+
     return S_OK;
 }
 
