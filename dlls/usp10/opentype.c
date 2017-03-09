@@ -2472,7 +2472,7 @@ static void GSUB_initialize_script_cache(ScriptCache *psc)
         TRACE("initializing %i scripts in this font\n",psc->script_count);
         if (psc->script_count)
         {
-            psc->scripts = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(LoadedScript) * psc->script_count);
+            psc->scripts = heap_alloc_zero(psc->script_count * sizeof(*psc->scripts));
             for (i = 0; i < psc->script_count; i++)
             {
                 int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
@@ -2504,7 +2504,7 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
         TRACE("initializing %i scripts in this font\n",psc->script_count);
         if (psc->script_count)
         {
-            psc->scripts = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(LoadedScript) * psc->script_count);
+            psc->scripts = heap_alloc_zero(psc->script_count * sizeof(*psc->scripts));
             for (i = 0; i < psc->script_count; i++)
             {
                 int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
@@ -2602,7 +2602,7 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
         {
             TRACE("Deflang %p, LangCount %i\n",script->default_language.gsub_table, script->language_count);
 
-            script->languages = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LoadedLanguage) * script->language_count);
+            script->languages = heap_alloc_zero(script->language_count * sizeof(*script->languages));
 
             for (i = 0; i < script->language_count; i++)
             {
@@ -2639,7 +2639,7 @@ static void GPOS_expand_language_cache(LoadedScript *script)
         int i;
         script->language_count = count;
 
-        script->languages = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LoadedLanguage) * script->language_count);
+        script->languages = heap_alloc_zero(script->language_count * sizeof(*script->languages));
 
         for (i = 0; i < script->language_count; i++)
         {

@@ -212,6 +212,21 @@ typedef struct {
 
 enum {lex_Halant, lex_Composed_Vowel, lex_Matra_post, lex_Matra_pre, lex_Matra_above, lex_Matra_below, lex_ZWJ, lex_ZWNJ, lex_NBSP, lex_Modifier, lex_Vowel, lex_Consonant, lex_Generic, lex_Ra, lex_Vedic, lex_Anudatta, lex_Nukta};
 
+static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t size)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 static inline BOOL is_consonant( int type )
 {
     return (type == lex_Ra || type == lex_Consonant);

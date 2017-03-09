@@ -708,21 +708,6 @@ typedef struct {
     WORD target;
 } FindGlyph_struct;
 
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), 0, size);
-}
-
-static inline void* __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t size)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
-
 /* TODO Fix font properties on Arabic locale */
 static inline BOOL set_cache_font_properties(const HDC hdc, ScriptCache *sc)
 {
