@@ -3285,56 +3285,60 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
     return res;
 }
 
-typedef struct {
-    task_header_t hdr;
-    DWORD *ret_size;
-} http_data_available_task_t;
-
-static void AsyncQueryDataAvailableProc(task_header_t *hdr)
-{
-    http_data_available_task_t *task = (http_data_available_task_t*)hdr;
-
-    HTTP_ReceiveRequestData((http_request_t*)task->hdr.hdr, FALSE, task->ret_size);
-}
-
 static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
     http_request_t *req = (http_request_t*)hdr;
+    DWORD res = ERROR_SUCCESS, avail = 0, error = ERROR_SUCCESS;
+    BOOL allow_blocking, notify_received = FALSE;
 
     TRACE("(%p %p %x %lx)\n", req, available, flags, ctx);
 
-    if (req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        http_data_available_task_t *task;
+    if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
+        FIXME("these dwFlags aren't implemented: 0x%x\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
 
-        /* never wait, if we can't enter the section we queue an async request right away */
-        if (TryEnterCriticalSection( &req->read_section ))
-        {
-            refill_read_buffer(req, BLOCKING_DISALLOW, NULL);
-            if ((*available = get_avail_data( req ))) goto done;
-            if (end_of_read_data( req )) goto done;
-            LeaveCriticalSection( &req->read_section );
+    *available = 0;
+    allow_blocking = !(req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
+
+    if(allow_blocking || TryEnterCriticalSection(&req->read_section)) {
+        if(allow_blocking)
+            EnterCriticalSection(&req->read_section);
+        if(hdr->dwError == ERROR_SUCCESS)
+            hdr->dwError = INTERNET_HANDLE_IN_USE;
+        else if(hdr->dwError == INTERNET_HANDLE_IN_USE)
+            hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
+
+        avail = req->read_size;
+
+        if(!avail && !end_of_read_data(req)) {
+            LeaveCriticalSection(&req->read_section);
+            INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+            EnterCriticalSection( &req->read_section );
+            notify_received = TRUE;
+
+            res = refill_read_buffer(req, allow_blocking ? BLOCKING_ALLOW : BLOCKING_DISALLOW, &avail);
         }
 
-        task = alloc_async_task(&req->hdr, AsyncQueryDataAvailableProc, sizeof(*task));
-        task->ret_size = available;
-        INTERNET_AsyncCall(&task->hdr);
-        return ERROR_IO_PENDING;
+        if(hdr->dwError == INTERNET_HANDLE_IN_USE)
+            hdr->dwError = ERROR_SUCCESS;
+        else
+            error = hdr->dwError;
+
+        LeaveCriticalSection( &req->read_section );
+    }else {
+        res = WSAEWOULDBLOCK;
     }
 
-    EnterCriticalSection( &req->read_section );
+    if(res == WSAEWOULDBLOCK)
+        return async_read(req, NULL, 0, 0, available);
 
-    if (!(*available = get_avail_data( req )) && !end_of_read_data( req ))
-    {
-        refill_read_buffer( req, BLOCKING_ALLOW, NULL );
-        *available = get_avail_data( req );
-    }
+    if (res != ERROR_SUCCESS)
+        return res;
 
-done:
-    LeaveCriticalSection( &req->read_section );
-
-    TRACE( "returning %u\n", *available );
-    return ERROR_SUCCESS;
+    *available = avail;
+    if(notify_received)
+        INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
+                &avail, sizeof(avail));
+    return error;
 }
 
 static DWORD HTTPREQ_LockRequestFile(object_header_t *hdr, req_file_t **ret)
