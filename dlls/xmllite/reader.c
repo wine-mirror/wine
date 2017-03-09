@@ -2167,7 +2167,7 @@ static HRESULT reader_parse_attribute(xmlreader *reader)
 
 /* [12 NS] STag ::= '<' QName (S Attribute)* S? '>'
    [14 NS] EmptyElemTag ::= '<' QName (S Attribute)* S? '/>' */
-static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *local, strval *qname, int *empty)
+static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *local, strval *qname)
 {
     HRESULT hr;
 
@@ -2181,11 +2181,10 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
         reader_skipspaces(reader);
 
         /* empty element */
-        if ((*empty = !reader_cmp(reader, endW)))
+        if ((reader->is_empty_element = !reader_cmp(reader, endW)))
         {
             /* skip '/>' */
             reader_skipn(reader, 2);
-            reader->is_empty_element = TRUE;
             reader->empty_element.prefix = *prefix;
             reader->empty_element.localname = *local;
             reader->empty_element.qname = *qname;
@@ -2227,16 +2226,15 @@ static HRESULT reader_parse_element(xmlreader *reader)
     case XmlReadResumeState_STag:
     {
         strval qname, prefix, local;
-        int empty = 0;
 
         /* this handles empty elements too */
-        hr = reader_parse_stag(reader, &prefix, &local, &qname, &empty);
+        hr = reader_parse_stag(reader, &prefix, &local, &qname);
         if (FAILED(hr)) return hr;
 
         /* FIXME: need to check for defined namespace to reject invalid prefix */
 
         /* if we got empty element and stack is empty go straight to Misc */
-        if (empty && list_empty(&reader->elements))
+        if (reader->is_empty_element && list_empty(&reader->elements))
             reader->instate = XmlReadInState_MiscEnd;
         else
             reader->instate = XmlReadInState_Content;
