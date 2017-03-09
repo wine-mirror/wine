@@ -3166,77 +3166,73 @@ static DWORD async_read(http_request_t *req, void *buf, DWORD size, DWORD read_p
 static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWORD *ret_read,
         DWORD flags, DWORD_PTR context)
 {
-
     http_request_t *req = (http_request_t*)hdr;
-    DWORD res, read, cread, error = ERROR_SUCCESS;
+    DWORD res = ERROR_SUCCESS, read = 0, cread, error = ERROR_SUCCESS;
+    BOOL allow_blocking, notify_received = FALSE;
 
     TRACE("(%p %p %u %x)\n", req, buf, size, flags);
 
     if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
         FIXME("these dwFlags aren't implemented: 0x%x\n", flags & ~(IRF_ASYNC|IRF_NO_WAIT));
 
-    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+    allow_blocking = !(req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
 
-    if (req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        if (TryEnterCriticalSection( &req->read_section ))
-        {
-            if (get_avail_data(req) || end_of_read_data(req))
-            {
-                res = HTTPREQ_Read(req, buf, size, &read, BLOCKING_DISALLOW);
-                LeaveCriticalSection( &req->read_section );
-                goto done;
-            }
-            LeaveCriticalSection( &req->read_section );
+    if(allow_blocking || TryEnterCriticalSection(&req->read_section)) {
+        if(allow_blocking)
+            EnterCriticalSection(&req->read_section);
+        if(hdr->dwError == ERROR_SUCCESS)
+            hdr->dwError = INTERNET_HANDLE_IN_USE;
+        else if(hdr->dwError == INTERNET_HANDLE_IN_USE)
+            hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
+
+        if(req->read_size) {
+            read = min(size, req->read_size);
+            memcpy(buf, req->read_buf + req->read_pos, read);
+            req->read_size -= read;
+            req->read_pos += read;
         }
 
-        if(flags & IRF_NO_WAIT)
-            return async_read(req, NULL, 0, 0, 0);
-        return async_read(req, buf, size, 0, ret_read);
-    }
+        if(read < size && (!read || !(flags & IRF_NO_WAIT)) && !end_of_read_data(req)) {
+            LeaveCriticalSection(&req->read_section);
+            INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+            EnterCriticalSection( &req->read_section );
+            notify_received = TRUE;
 
-    read = 0;
+            while(read < size) {
+                res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread,
+                                   allow_blocking ? BLOCKING_ALLOW : BLOCKING_DISALLOW);
+                read += cread;
+                if (res != ERROR_SUCCESS || !cread)
+                    break;
+            }
+        }
 
-    EnterCriticalSection( &req->read_section );
-    if(hdr->dwError == ERROR_SUCCESS)
-        hdr->dwError = INTERNET_HANDLE_IN_USE;
-    else if(hdr->dwError == INTERNET_HANDLE_IN_USE)
-        hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
-
-    while(1) {
-        res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread, BLOCKING_ALLOW);
-        if(res != ERROR_SUCCESS)
-            break;
-
-        read += cread;
-        if(read == size || end_of_read_data(req))
-            break;
+        if(hdr->dwError == INTERNET_HANDLE_IN_USE)
+            hdr->dwError = ERROR_SUCCESS;
+        else
+            error = hdr->dwError;
 
         LeaveCriticalSection( &req->read_section );
-
-        INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
-                &cread, sizeof(cread));
-        INTERNET_SendCallback(&req->hdr, req->hdr.dwContext,
-                INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
-
-        EnterCriticalSection( &req->read_section );
+    }else {
+        res = WSAEWOULDBLOCK;
     }
 
-    if(hdr->dwError == INTERNET_HANDLE_IN_USE)
-        hdr->dwError = ERROR_SUCCESS;
-    else
-        error = hdr->dwError;
+    if(res == WSAEWOULDBLOCK) {
+        if(!(flags & IRF_NO_WAIT))
+            return async_read(req, buf, size, read, ret_read);
+        if(!read)
+            return async_read(req, NULL, 0, 0, NULL);
+        res = ERROR_SUCCESS;
+    }
 
-    LeaveCriticalSection( &req->read_section );
-
-done:
     *ret_read = read;
-    if (res == ERROR_SUCCESS) {
+    if (res != ERROR_SUCCESS)
+        return res;
+
+    if(notify_received)
         INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
                 &read, sizeof(read));
-    }
-
-    return res==ERROR_SUCCESS ? error : res;
+    return error;
 }
 
 static DWORD HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)

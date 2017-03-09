@@ -1111,16 +1111,9 @@ static void InternetReadFileExA_test(int flags)
     inetbuffers.lpvBuffer = NULL;
     inetbuffers.dwOffsetHigh = 1234;
     inetbuffers.dwOffsetLow = 5678;
-    SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
-    SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
     rc = InternetReadFileExA(hor, &inetbuffers, 0, 0xdeadcafe);
     ok(rc, "InternetReadFileEx failed with error %u\n", GetLastError());
     trace("read %i bytes\n", inetbuffers.dwBufferLength);
-    todo_wine
-    {
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
-    }
 
     rc = InternetReadFileExA(NULL, &inetbuffers, 0, 0xdeadcafe);
     ok(!rc && (GetLastError() == ERROR_INVALID_HANDLE),
@@ -1167,10 +1160,8 @@ static void InternetReadFileExA_test(int flags)
             CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
             if (inetbuffers.dwBufferLength)
             {
-                todo_wine {
                 CHECK_NOT_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
                 CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
-                }
             }
             else
             {
@@ -4463,7 +4454,6 @@ static void test_async_read(int port)
         if (!ib.dwBufferLength) break;
     }
 
-    todo_wine
     ok( pending_reads == 1, "expected 1 pending read, got %u\n", pending_reads );
     ok( !strcmp(buffer, page1), "unexpected buffer content\n" );
     close_async_handle( ses, hCompleteEvent, 2 );
