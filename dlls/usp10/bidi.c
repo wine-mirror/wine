@@ -695,8 +695,8 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
     int pair_count = 0;
     int i;
 
-    open_stack = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * iso_run->length);
-    stack_index = HeapAlloc(GetProcessHeap(), 0, sizeof(int) * iso_run->length);
+    open_stack = heap_alloc(iso_run->length * sizeof(*open_stack));
+    stack_index = heap_alloc(iso_run->length * sizeof(*stack_index));
 
     for (i = 0; i < iso_run->length; i++)
     {
@@ -705,7 +705,7 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
         {
             if (!out)
             {
-                out = HeapAlloc(GetProcessHeap(),0,sizeof(BracketPair));
+                out = heap_alloc(sizeof(*out));
                 out[0].start = -1;
             }
 
@@ -995,8 +995,8 @@ static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, WORD *pLevel
     Run *runs;
     IsolatedRun *current_isolated;
 
-    runs = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(Run));
-    if (!runs) return;
+    if (!(runs = heap_alloc(uCount * sizeof(*runs))))
+        return;
 
     list_init(set);
 
@@ -1023,8 +1023,9 @@ static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, WORD *pLevel
         {
             int type_fence, real_end;
             int j;
-            current_isolated = HeapAlloc(GetProcessHeap(), 0, sizeof(IsolatedRun) + sizeof(RunChar)*uCount);
-            if (!current_isolated) break;
+
+            if (!(current_isolated = heap_alloc(FIELD_OFFSET(IsolatedRun, item[uCount]))))
+                break;
 
             run_start = runs[k].start;
             current_isolated->e = runs[k].e;
@@ -1141,8 +1142,7 @@ BOOL BIDI_DetermineLevels(
 
     TRACE("%s, %d\n", debugstr_wn(lpString, uCount), uCount);
 
-    chartype = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD));
-    if (!chartype)
+    if (!(chartype = heap_alloc(uCount * sizeof(*chartype))))
     {
         WARN("Out of memory\n");
         return FALSE;

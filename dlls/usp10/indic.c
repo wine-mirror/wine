@@ -342,7 +342,7 @@ void Indic_ParseSyllables( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCW
             if (*syllable_count)
                 *syllables = HeapReAlloc(GetProcessHeap(),0,*syllables, sizeof(IndicSyllable)*(*syllable_count+1));
             else
-                *syllables = HeapAlloc(GetProcessHeap(),0,sizeof(IndicSyllable));
+                *syllables = heap_alloc(sizeof(**syllables));
             (*syllables)[*syllable_count].start = index;
             (*syllables)[*syllable_count].base = center;
             (*syllables)[*syllable_count].ralf = -1;
