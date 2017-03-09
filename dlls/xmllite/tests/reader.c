@@ -781,7 +781,6 @@ todo_wine
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
-todo_wine
     TEST_READER_POSITION2(reader, 1, 7, ~0u, 55);
 
     /* try to move from last attribute */
@@ -799,7 +798,6 @@ todo_wine
 
     hr = IXmlReader_MoveToFirstAttribute(reader);
     ok(hr == S_OK, "got %08x\n", hr);
-todo_wine
     TEST_READER_POSITION2(reader, 1, 7, ~0u, 55);
 
     hr = IXmlReader_GetAttributeCount(reader, NULL);
@@ -890,7 +888,6 @@ todo_wine
     hr = IXmlReader_GetNodeType(reader, &type);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
-todo_wine
     TEST_READER_POSITION2(reader, 1, 7, ~0u, 21);
 
     /* try to move from last attribute */
@@ -901,7 +898,6 @@ todo_wine
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(type == XmlNodeType_Element, "expected Element, got %s\n", type_to_str(type));
-todo_wine
     TEST_READER_POSITION2(reader, 1, 23, ~0u, 40);
     TEST_READER_STATE(reader, XmlReadState_Interactive);
 
@@ -925,10 +921,10 @@ todo_wine
 todo_wine
     ok(hr == WC_E_SYNTAX || hr == WC_E_XMLCHARACTER /* XP */, "expected WC_E_SYNTAX, got %08x\n", hr);
     ok(type == XmlNodeType_None, "expected XmlNodeType_None, got %s\n", type_to_str(type));
-todo_wine {
     TEST_READER_POSITION(reader, 1, 41);
+todo_wine
     TEST_READER_STATE(reader, XmlReadState_Error);
-}
+
     IStream_Release(stream);
     IXmlReader_Release(reader);
 }
@@ -2473,12 +2469,12 @@ todo_wine {
 
 static void test_reader_position(void)
 {
-    static const char *xml = "<c:a xmlns:c=\"nsdef c\" b=\"attr b\" />";
+    static const char *xml = "<c:a xmlns:c=\"nsdef c\" b=\"attr b\"></c:a>";
     IXmlReader *reader;
     XmlNodeType type;
     IStream *stream;
-    HRESULT hr;
     UINT position;
+    HRESULT hr;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
@@ -2511,23 +2507,24 @@ todo_wine
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Element, "got type %d\n", type);
-todo_wine
-    TEST_READER_POSITION2(reader, 1, 2, ~0u, 36);
+    TEST_READER_POSITION2(reader, 1, 2, ~0u, 34);
 
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_OK, "got %08x\n", hr);
-todo_wine
-    TEST_READER_POSITION2(reader, 1, 6, ~0u, 36);
+    TEST_READER_POSITION2(reader, 1, 6, ~0u, 34);
 
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_OK, "got %08x\n", hr);
-todo_wine
-    TEST_READER_POSITION2(reader, 1, 24, ~0u, 36);
+    TEST_READER_POSITION2(reader, 1, 24, ~0u, 34);
 
     hr = IXmlReader_MoveToElement(reader);
     ok(hr == S_OK, "got %08x\n", hr);
-todo_wine
-    TEST_READER_POSITION2(reader, 1, 2, ~0u, 36);
+    TEST_READER_POSITION2(reader, 1, 2, ~0u, 34);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_EndElement, "got type %d\n", type);
+    TEST_READER_POSITION2(reader, 1, 37, ~0u, 40);
 
     IXmlReader_SetInput(reader, NULL);
     TEST_READER_POSITION(reader, 0, 0);
