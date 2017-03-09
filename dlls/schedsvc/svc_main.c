@@ -27,6 +27,8 @@
 #include "schrpc.h"
 #include "wine/debug.h"
 
+#include "schedsvc_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(schedsvc);
 
 static const WCHAR scheduleW[] = {'S','c','h','e','d','u','l','e',0};
@@ -200,10 +202,10 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 
 void  __RPC_FAR * __RPC_USER MIDL_user_allocate(SIZE_T len)
 {
-    return HeapAlloc(GetProcessHeap(), 0, len);
+    return heap_alloc(len);
 }
 
 void __RPC_USER MIDL_user_free(void __RPC_FAR * ptr)
 {
-    HeapFree(GetProcessHeap(), 0, ptr);
+    heap_free(ptr);
 }
