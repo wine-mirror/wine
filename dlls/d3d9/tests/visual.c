@@ -19772,9 +19772,15 @@ static void test_updatetexture(void)
             skip("%s textures not supported, skipping some tests.\n", texture_types[t].name);
             continue;
         }
-
         if (FAILED(IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-                D3DFMT_X8R8G8B8, 0, texture_types[t].type, MAKEFOURCC('A','T','I','2'))))
+                D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_FILTER, texture_types[t].type, D3DFMT_A8R8G8B8)))
+        {
+            skip("%s D3DFMT_A8R8G8B8 texture filtering is not supported, skipping some tests.\n",
+                    texture_types[t].name);
+            continue;
+        }
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_FILTER, texture_types[t].type, MAKEFOURCC('A','T','I','2'))))
         {
             skip("%s ATI2N textures are not supported, skipping some tests.\n", texture_types[t].name);
             ati2n_supported = FALSE;
