@@ -3028,13 +3028,10 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD
 }
 
 /* read data from the http connection (the read section must be held) */
-static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *read)
+static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *read, blocking_mode_t blocking_mode)
 {
     DWORD current_read = 0, ret_read = 0;
-    blocking_mode_t blocking_mode;
     DWORD res = ERROR_SUCCESS;
-
-    blocking_mode = req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC ? BLOCKING_ALLOW : BLOCKING_WAITALL;
 
     EnterCriticalSection( &req->read_section );
 
@@ -3082,7 +3079,7 @@ static BOOL drain_content(http_request_t *req, BOOL blocking)
         DWORD bytes_read, res;
         BYTE buf[4096];
 
-        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read);
+        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read, BLOCKING_ALLOW);
         if(res != ERROR_SUCCESS) {
             ret = FALSE;
             break;
@@ -3113,7 +3110,7 @@ static void AsyncReadFileExProc(task_header_t *hdr)
     TRACE("%p\n", req);
 
     if(task->ret_read)
-        res = HTTPREQ_Read(req, task->buf, task->size, &read);
+        res = HTTPREQ_Read(req, task->buf, task->size, &read, BLOCKING_ALLOW);
     if(res == ERROR_SUCCESS)
         res = refill_read_buffer(req, task->ret_read ? BLOCKING_DISALLOW : BLOCKING_ALLOW, &buffered);
     if (res == ERROR_SUCCESS)
@@ -3150,7 +3147,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
         {
             if (get_avail_data(req) || end_of_read_data(req))
             {
-                res = HTTPREQ_Read(req, buf, size, &read);
+                res = HTTPREQ_Read(req, buf, size, &read, BLOCKING_DISALLOW);
                 LeaveCriticalSection( &req->read_section );
                 goto done;
             }
@@ -3176,7 +3173,7 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
         hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
 
     while(1) {
-        res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread);
+        res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread, BLOCKING_ALLOW);
         if(res != ERROR_SUCCESS)
             break;
 
@@ -3240,7 +3237,7 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
         {
             if (get_avail_data(req) || end_of_read_data(req))
             {
-                res = HTTPREQ_Read(req, buffer, size, read);
+                res = HTTPREQ_Read(req, buffer, size, read, BLOCKING_DISALLOW);
                 LeaveCriticalSection( &req->read_section );
                 return res;
             }
@@ -3262,7 +3259,7 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
     if(hdr->dwError == INTERNET_HANDLE_IN_USE)
         hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
 
-    res = HTTPREQ_Read(req, buffer, size, read);
+    res = HTTPREQ_Read(req, buffer, size, read, BLOCKING_WAITALL);
     if(res == ERROR_SUCCESS)
         res = hdr->dwError;
     LeaveCriticalSection( &req->read_section );
