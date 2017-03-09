@@ -53,7 +53,7 @@ struct atifs_ffp_desc
     struct ffp_frag_desc parent;
     GLuint shader;
     unsigned int num_textures_used;
-    enum atifs_constant_value constants[8];
+    enum atifs_constant_value constants[MAX_TEXTURES];
 };
 
 struct atifs_private_data
@@ -938,7 +938,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES],
     constants[ATIFS_CONST_TFACTOR - GL_CON_0_ATI] = ATIFS_CONSTANT_TFACTOR;
 
     /* Assign unused constants to avoid reloading due to unused <-> bump matrix switches. */
-    for (stage = 0; stage < 8; ++stage)
+    for (stage = 0; stage < MAX_TEXTURES; ++stage)
     {
         if (constants[stage] == ATIFS_CONSTANT_UNUSED)
             constants[stage] = ATIFS_CONSTANT_BUMP;
@@ -1062,7 +1062,7 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
     GL_EXTCALL(glBindFragmentShaderATI(desc->shader));
     ctx_priv->last_shader = desc;
 
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < MAX_TEXTURES; i++)
     {
         if (last_shader && last_shader->constants[i] == desc->constants[i])
             continue;
