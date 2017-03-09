@@ -1182,6 +1182,8 @@ HRESULT WINAPI WsGetNamespaceFromPrefix( WS_XML_READER *handle, const WS_XML_STR
         }
     }
 
+    LeaveCriticalSection( &reader->cs );
+
     if (!found)
     {
         if (required) return WS_E_INVALID_FORMAT;
@@ -1189,7 +1191,6 @@ HRESULT WINAPI WsGetNamespaceFromPrefix( WS_XML_READER *handle, const WS_XML_STR
         return S_FALSE;
     }
 
-    LeaveCriticalSection( &reader->cs );
     return S_OK;
 }
 
