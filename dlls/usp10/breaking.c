@@ -438,6 +438,6 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, break_before);
-    HeapFree(GetProcessHeap(), 0, break_class);
+    heap_free(break_before);
+    heap_free(break_class);
 }

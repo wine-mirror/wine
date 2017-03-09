@@ -742,14 +742,14 @@ static BracketPair *computeBracketPairs(IsolatedRun *iso_run)
     }
     if (pair_count == 0)
     {
-        HeapFree(GetProcessHeap(),0,out);
+        heap_free(out);
         out = NULL;
     }
     else if (pair_count > 1)
         qsort(out, pair_count, sizeof(BracketPair), compr);
 
-    HeapFree(GetProcessHeap(), 0, open_stack);
-    HeapFree(GetProcessHeap(), 0, stack_index);
+    heap_free(open_stack);
+    heap_free(stack_index);
     return out;
 }
 
@@ -848,7 +848,7 @@ static void resolveNeutrals(IsolatedRun *iso_run)
             i++;
             p = &pairs[i];
         }
-        HeapFree(GetProcessHeap(),0,pairs);
+        heap_free(pairs);
     }
 
     /* N1 */
@@ -1120,7 +1120,7 @@ search:
         i++;
     }
 
-    HeapFree(GetProcessHeap(), 0, runs);
+    heap_free(runs);
 }
 
 /*************************************************************
@@ -1175,7 +1175,7 @@ BOOL BIDI_DetermineLevels(
         if (TRACE_ON(bidi)) iso_dump_types("After Neutrals", iso_run);
 
         list_remove(&iso_run->entry);
-        HeapFree(GetProcessHeap(),0,iso_run);
+        heap_free(iso_run);
     }
 
     if (TRACE_ON(bidi)) dump_types("Before Implicit", chartype, 0, uCount);
@@ -1186,7 +1186,7 @@ BOOL BIDI_DetermineLevels(
     classify(lpString, chartype, uCount, c);
     resolveResolved(baselevel, chartype, lpOutLevels, 0, uCount-1);
 
-    HeapFree(GetProcessHeap(), 0, chartype);
+    heap_free(chartype);
     return TRUE;
 }
 
