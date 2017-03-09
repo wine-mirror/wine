@@ -4520,7 +4520,6 @@ static void test_async_read(int port)
         {
             ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
             ok( bytes == 0, "expected 0, got %u\n", bytes );
-            todo_wine
             CHECK_NOTIFIED( INTERNET_STATUS_RECEIVING_RESPONSE );
             SET_EXPECT( INTERNET_STATUS_REQUEST_COMPLETE );
             if (!pending_reads++)
@@ -4543,7 +4542,6 @@ static void test_async_read(int port)
         if (!bytes) break;
     }
 
-    todo_wine
     ok( pending_reads == 1, "expected 1 pending read, got %u\n", pending_reads );
     ok( !strcmp(buffer, page1), "unexpected buffer content\n" );
     close_async_handle( ses, hCompleteEvent, 2 );

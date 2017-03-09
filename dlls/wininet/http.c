@@ -3163,7 +3163,7 @@ static DWORD async_read(http_request_t *req, void *buf, DWORD size, DWORD read_p
     return ERROR_IO_PENDING;
 }
 
-static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWORD *ret_read,
+static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buf, DWORD size, DWORD *ret_read,
         DWORD flags, DWORD_PTR context)
 {
     http_request_t *req = (http_request_t*)hdr;
@@ -3251,40 +3251,6 @@ static DWORD HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD s
     return res;
 }
 
-static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
-{
-    http_request_t *req = (http_request_t*)hdr;
-    DWORD res;
-
-    if (req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        if (TryEnterCriticalSection( &req->read_section ))
-        {
-            if (get_avail_data(req) || end_of_read_data(req))
-            {
-                res = HTTPREQ_Read(req, buffer, size, read, BLOCKING_DISALLOW);
-                LeaveCriticalSection( &req->read_section );
-                return res;
-            }
-            LeaveCriticalSection( &req->read_section );
-        }
-
-        *read = 0;
-        return async_read(req, buffer, size, 0, read);
-    }
-
-    EnterCriticalSection( &req->read_section );
-    if(hdr->dwError == INTERNET_HANDLE_IN_USE)
-        hdr->dwError = ERROR_INTERNET_INTERNAL_ERROR;
-
-    res = HTTPREQ_Read(req, buffer, size, read, BLOCKING_WAITALL);
-    if(res == ERROR_SUCCESS)
-        res = hdr->dwError;
-    LeaveCriticalSection( &req->read_section );
-
-    return res;
-}
-
 static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
     http_request_t *req = (http_request_t*)hdr;
@@ -3362,7 +3328,6 @@ static const object_vtbl_t HTTPREQVtbl = {
     HTTPREQ_QueryOption,
     HTTPREQ_SetOption,
     HTTPREQ_ReadFile,
-    HTTPREQ_ReadFileEx,
     HTTPREQ_WriteFile,
     HTTPREQ_QueryDataAvailable,
     NULL,
@@ -5847,7 +5812,6 @@ static const object_vtbl_t HTTPSESSIONVtbl = {
     NULL,
     HTTPSESSION_QueryOption,
     HTTPSESSION_SetOption,
-    NULL,
     NULL,
     NULL,
     NULL,
