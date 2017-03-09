@@ -325,6 +325,68 @@ static void test_enum_hosts(void)
     IDirectPlay8Client_Release(client2);
 }
 
+static void test_enum_hosts_sync(void)
+{
+    HRESULT hr;
+    IDirectPlay8Address *host = NULL;
+    IDirectPlay8Address *local = NULL;
+    DPN_APPLICATION_DESC appdesc;
+    DWORD port = 5445, type = 0, size;
+
+    memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
+    appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
+    appdesc.guidApplication  = appguid;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (void**)&local);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_SetSP(local, &CLSID_DP8SP_TCPIP);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (void**)&host);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_SetSP(host, &CLSID_DP8SP_TCPIP);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_HOSTNAME, localhost, sizeof(localhost),
+                                                         DPNA_DATATYPE_STRING);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    handlecnt = 0;
+    lastAsyncCode = 0xdeadbeef;
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, 3, 1500, 1000,
+                                        NULL,  NULL, DPNENUMHOSTS_SYNC);
+    ok(hr == DPN_OK, "got 0x%08x\n", hr);
+    ok(lastAsyncCode == 0xdeadbeef, "got 0x%08x\n", lastAsyncCode);
+    todo_wine ok(handlecnt == 2, "message handler not called\n");
+
+    size = sizeof(port);
+    hr = IDirectPlay8Address_GetComponentByName(host, DPNA_KEY_PORT, &port, &size, &type);
+    ok(hr == DPNERR_DOESNOTEXIST, "got 0x%08x\n", hr);
+
+    size = sizeof(port);
+    hr = IDirectPlay8Address_GetComponentByName(local, DPNA_KEY_PORT, &port, &size, &type);
+    ok(hr == DPNERR_DOESNOTEXIST, "got 0x%08x\n", hr);
+
+    /* Try with specific port */
+    port = 5445;
+    hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_PORT, &port, sizeof(port),
+                                                         DPNA_DATATYPE_DWORD);
+
+    handlecnt = 0;
+    lastAsyncCode = 0xbeefdead;
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+    hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, 1, 1500, 1000,
+                                        NULL,  NULL, DPNENUMHOSTS_SYNC);
+    ok(hr == DPN_OK, "got 0x%08x\n", hr);
+    ok(lastAsyncCode == 0xbeefdead, "got 0x%08x\n", lastAsyncCode);
+    ok(handlecnt == 0, "message handler called\n");
+
+    IDirectPlay8Address_Release(local);
+    IDirectPlay8Address_Release(host);
+}
+
 static void test_get_sp_caps(void)
 {
     DPN_SP_CAPS caps;
@@ -669,6 +731,68 @@ static void test_enum_hosts_peer(void)
     IDirectPlay8Address_Release(host);
 }
 
+static void test_enum_hosts_sync_peer(void)
+{
+    HRESULT hr;
+    IDirectPlay8Address *host = NULL;
+    IDirectPlay8Address *local = NULL;
+    DPN_APPLICATION_DESC appdesc;
+    DWORD port = 5445, type = 0, size;
+
+    memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
+    appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
+    appdesc.guidApplication  = appguid;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (void**)&local);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_SetSP(local, &CLSID_DP8SP_TCPIP);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (void**)&host);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_SetSP(host, &CLSID_DP8SP_TCPIP);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_HOSTNAME, localhost, sizeof(localhost),
+                                                         DPNA_DATATYPE_STRING);
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+
+    handlecnt = 0;
+    lastAsyncCode = 0xdeadbeef;
+    hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, 3, 1500, 1000,
+                                        NULL,  NULL, DPNENUMHOSTS_SYNC);
+    ok(hr == DPN_OK, "got 0x%08x\n", hr);
+    ok(lastAsyncCode == 0xdeadbeef, "got 0x%08x\n", lastAsyncCode);
+    todo_wine ok(handlecnt == 2, "wrong handle cnt\n");
+
+    size = sizeof(port);
+    hr = IDirectPlay8Address_GetComponentByName(host, DPNA_KEY_PORT, &port, &size, &type);
+    ok(hr == DPNERR_DOESNOTEXIST, "got 0x%08x\n", hr);
+
+    size = sizeof(port);
+    hr = IDirectPlay8Address_GetComponentByName(local, DPNA_KEY_PORT, &port, &size, &type);
+    ok(hr == DPNERR_DOESNOTEXIST, "got 0x%08x\n", hr);
+
+    /* Try with specific port */
+    port = 5445;
+    hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_PORT, &port, sizeof(port),
+                                                         DPNA_DATATYPE_DWORD);
+
+    handlecnt = 0;
+    lastAsyncCode = 0xbeefdead;
+    ok(hr == S_OK, "Failed with 0x%08x\n", hr);
+    hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, 1, 1500, 1000,
+                                        NULL,  NULL, DPNENUMHOSTS_SYNC);
+    ok(hr == DPN_OK, "got 0x%08x\n", hr);
+    ok(lastAsyncCode == 0xbeefdead, "got 0x%08x\n", lastAsyncCode);
+    ok(handlecnt == 0, "message handler called\n");
+
+    IDirectPlay8Address_Release(local);
+    IDirectPlay8Address_Release(host);
+}
+
 static void test_get_sp_caps_peer(void)
 {
     DPN_SP_CAPS caps;
@@ -830,6 +954,7 @@ START_TEST(client)
 
     test_enum_service_providers();
     test_enum_hosts();
+    test_enum_hosts_sync();
     test_get_sp_caps();
     test_player_info();
     test_lobbyclient();
@@ -839,6 +964,7 @@ START_TEST(client)
     test_init_dp_peer();
     test_enum_service_providers_peer();
     test_enum_hosts_peer();
+    test_enum_hosts_sync_peer();
     test_get_sp_caps_peer();
     test_player_info_peer();
     test_cleanup_dp_peer();
