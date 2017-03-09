@@ -2599,7 +2599,7 @@ HRESULT WINAPI WsWriteArray( WS_XML_WRITER *handle, const WS_XML_STRING *localna
     struct writer *writer = (struct writer *)handle;
     WS_TYPE type;
     ULONG type_size, i;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %s %s %u %p %u %u %u %p\n", handle, debugstr_xmlstr(localname), debugstr_xmlstr(ns),
            value_type, array, size, offset, count, error );
