@@ -3102,34 +3102,65 @@ typedef struct {
     task_header_t hdr;
     void *buf;
     DWORD size;
+    DWORD read_pos;
     DWORD *ret_read;
-} read_file_ex_task_t;
+} read_file_task_t;
 
-static void AsyncReadFileExProc(task_header_t *hdr)
+static void async_read_file_proc(task_header_t *hdr)
 {
-    read_file_ex_task_t *task = (read_file_ex_task_t*)hdr;
+    read_file_task_t *task = (read_file_task_t*)hdr;
     http_request_t *req = (http_request_t*)task->hdr.hdr;
-    DWORD res = ERROR_SUCCESS, read = 0, buffered = 0;
+    DWORD res = ERROR_SUCCESS, read = task->read_pos, complete_arg = 0;
 
-    TRACE("%p\n", req);
+    TRACE("req %p buf %p size %u read_pos %u ret_read %p\n", req, task->buf, task->size, task->read_pos, task->ret_read);
+
+    if(task->buf) {
+        DWORD read_bytes;
+        while (read < task->size) {
+            res = HTTPREQ_Read(req, (char*)task->buf + read, task->size - read, &read_bytes, BLOCKING_ALLOW);
+            if (res != ERROR_SUCCESS || !read_bytes)
+                break;
+            read += read_bytes;
+        }
+    }else {
+        EnterCriticalSection(&req->read_section);
+        res = refill_read_buffer(req, BLOCKING_ALLOW, &read);
+        LeaveCriticalSection(&req->read_section);
+
+        if(task->ret_read)
+            complete_arg = read; /* QueryDataAvailable reports read bytes in request complete notification */
+        if(res != ERROR_SUCCESS || !read)
+            http_release_netconn(req, drain_content(req, FALSE));
+    }
+
+    TRACE("res %u read %u\n", res, read);
 
     if(task->ret_read)
-        res = HTTPREQ_Read(req, task->buf, task->size, &read, BLOCKING_ALLOW);
-    if(res == ERROR_SUCCESS) {
-        res = refill_read_buffer(req, task->ret_read ? BLOCKING_DISALLOW : BLOCKING_ALLOW, &buffered);
-        if(res == WSAEWOULDBLOCK)
-            res = ERROR_SUCCESS;
-    }
-    if (res == ERROR_SUCCESS)
-    {
-        if(task->ret_read)
-            *task->ret_read = read;
-        read += buffered;
-        INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
-                &read, sizeof(read));
-    }
+        *task->ret_read = read;
 
-    send_request_complete(req, res == ERROR_SUCCESS, res);
+    /* FIXME: We should report bytes transferred before decoding content. */
+    INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED, &read, sizeof(read));
+
+    if(res != ERROR_SUCCESS)
+        complete_arg = res;
+    send_request_complete(req, res == ERROR_SUCCESS, complete_arg);
+}
+
+static DWORD async_read(http_request_t *req, void *buf, DWORD size, DWORD read_pos, DWORD *ret_read)
+{
+    read_file_task_t *task;
+
+    task = alloc_async_task(&req->hdr, async_read_file_proc, sizeof(*task));
+    if(!task)
+        return ERROR_OUTOFMEMORY;
+
+    task->buf = buf;
+    task->size = size;
+    task->read_pos = read_pos;
+    task->ret_read = ret_read;
+
+    INTERNET_AsyncCall(&task->hdr);
+    return ERROR_IO_PENDING;
 }
 
 static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWORD *ret_read,
@@ -3148,8 +3179,6 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
 
     if (req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        read_file_ex_task_t *task;
-
         if (TryEnterCriticalSection( &req->read_section ))
         {
             if (get_avail_data(req) || end_of_read_data(req))
@@ -3161,14 +3190,9 @@ static DWORD HTTPREQ_ReadFileEx(object_header_t *hdr, void *buf, DWORD size, DWO
             LeaveCriticalSection( &req->read_section );
         }
 
-        task = alloc_async_task(&req->hdr, AsyncReadFileExProc, sizeof(*task));
-        task->buf = buf;
-        task->size = size;
-        task->ret_read = (flags & IRF_NO_WAIT) ? NULL : ret_read;
-
-        INTERNET_AsyncCall(&task->hdr);
-
-        return ERROR_IO_PENDING;
+        if(flags & IRF_NO_WAIT)
+            return async_read(req, NULL, 0, 0, 0);
+        return async_read(req, buf, size, 0, ret_read);
     }
 
     read = 0;
@@ -3238,8 +3262,6 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
 
     if (req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        read_file_ex_task_t *task;
-
         if (TryEnterCriticalSection( &req->read_section ))
         {
             if (get_avail_data(req) || end_of_read_data(req))
@@ -3251,15 +3273,8 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
             LeaveCriticalSection( &req->read_section );
         }
 
-        task = alloc_async_task(&req->hdr, AsyncReadFileExProc, sizeof(*task));
-        task->buf = buffer;
-        task->size = size;
-        task->ret_read = read;
-
         *read = 0;
-        INTERNET_AsyncCall(&task->hdr);
-
-        return ERROR_IO_PENDING;
+        return async_read(req, buffer, size, 0, read);
     }
 
     EnterCriticalSection( &req->read_section );
