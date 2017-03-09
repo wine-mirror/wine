@@ -1570,10 +1570,6 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     p = *ptr;
     *ptr += len;
 
-    previous_token = opcode_token;
-    while (previous_token & WINED3D_SM4_INSTRUCTION_MODIFIER)
-        shader_sm4_read_instruction_modifier(previous_token = *p++, ins);
-
     if (opcode_info->read_opcode_func)
     {
         opcode_info->read_opcode_func(ins, opcode, opcode_token, p, len, priv);
@@ -1581,6 +1577,10 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     else
     {
         enum wined3d_shader_dst_modifier instruction_dst_modifier = WINED3DSPDM_NONE;
+
+        previous_token = opcode_token;
+        while (previous_token & WINED3D_SM4_INSTRUCTION_MODIFIER && p != *ptr)
+            shader_sm4_read_instruction_modifier(previous_token = *p++, ins);
 
         ins->flags = (opcode_token & WINED3D_SM4_INSTRUCTION_FLAGS_MASK) >> WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT;
 
