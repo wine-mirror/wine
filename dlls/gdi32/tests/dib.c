@@ -1880,7 +1880,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
         compare_hash_broken_todo(hdc, bmi, bits, "bottom-up 8888 dib brush patblt", 1, FALSE);
     else
-        compare_hash_broken_todo(hdc, bmi, bits, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+        compare_hash_broken_todo(hdc, bmi, bits, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, FALSE);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);
@@ -1910,7 +1910,7 @@ static void draw_graphics(HDC hdc, const BITMAPINFO *bmi, BYTE *bits)
     if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
         compare_hash_broken_todo(hdc, bmi, bits, "top-down 24 bpp brush patblt", 1, FALSE);
     else
-        compare_hash_broken_todo(hdc, bmi, bits, "top-down 24 bpp brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+        compare_hash_broken_todo(hdc, bmi, bits, "top-down 24 bpp brush patblt", dib_is_1bpp ? 2 : 0, FALSE);
 
     SelectObject(hdc, orig_brush);
     DeleteObject(dib_brush);

@@ -2141,12 +2141,16 @@ static DWORD rgb_to_pixel_mono(const dib_info *dib, BOOL dither, int x, int y,
 {
     DWORD ret;
 
-    if (dither)
-        ret = ((30 * r + 59 * g + 11 * b) / 100 + bayer_16x16[y % 16][x % 16]) > 255;
-    else if (dib->color_table_size == 1)
-        ret = (src_pixel == bg_pixel);
-    else
+    if (dib->color_table_size != 1)
+    {
+        if (dither)
+        {
+            if (((30 * r + 59 * g + 11 * b) / 100 + bayer_16x16[y % 16][x % 16]) > 255) r = g = b = 255;
+            else r = g = b = 0;
+        }
         ret = rgb_to_pixel_colortable( dib, r, g, b );
+    }
+    else ret = (src_pixel == bg_pixel);  /* only match raw pixel value */
 
     return ret ? 0xff : 0;
 }
