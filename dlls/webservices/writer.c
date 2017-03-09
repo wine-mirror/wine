@@ -945,7 +945,7 @@ HRESULT WINAPI WsWriteEndStartElement( WS_XML_WRITER *handle, WS_ERROR *error )
 
 done:
     LeaveCriticalSection( &writer->cs );
-    return S_OK;
+    return hr;
 }
 
 static HRESULT write_add_attribute( struct writer *writer, const WS_XML_STRING *prefix,
@@ -1018,7 +1018,7 @@ HRESULT WINAPI WsWriteStartAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
         writer->state = WRITER_STATE_STARTATTRIBUTE;
 
     LeaveCriticalSection( &writer->cs );
-    return S_OK;
+    return hr;
 }
 
 /* flush current start element if necessary */
@@ -2676,7 +2676,7 @@ HRESULT WINAPI WsWriteXmlBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer, W
 
 done:
     LeaveCriticalSection( &writer->cs );
-    return S_OK;
+    return hr;
 }
 
 /**************************************************************************
