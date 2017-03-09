@@ -380,15 +380,10 @@ static WCHAR *get_host_header( http_request_t *req )
     return ret;
 }
 
-typedef enum {
-    BLOCKING_ALLOW,
-    BLOCKING_DISALLOW
-} blocking_mode_t;
-
 struct data_stream_vtbl_t {
     DWORD (*get_avail_data)(data_stream_t*,http_request_t*);
     BOOL (*end_of_data)(data_stream_t*,http_request_t*);
-    DWORD (*read)(data_stream_t*,http_request_t*,BYTE*,DWORD,DWORD*,blocking_mode_t);
+    DWORD (*read)(data_stream_t*,http_request_t*,BYTE*,DWORD,DWORD*,BOOL);
     BOOL (*drain_content)(data_stream_t*,http_request_t*);
     void (*destroy)(data_stream_t*);
 };
@@ -459,7 +454,7 @@ static BOOL gzip_end_of_data(data_stream_t *stream, http_request_t *req)
 }
 
 static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DWORD size,
-        DWORD *read, blocking_mode_t blocking_mode)
+        DWORD *read, BOOL allow_blocking)
 {
     gzip_stream_t *gzip_stream = (gzip_stream_t*)stream;
     z_stream *zstream = &gzip_stream->zstream;
@@ -467,7 +462,7 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
     int zres;
     DWORD res = ERROR_SUCCESS;
 
-    TRACE("(%d %d)\n", size, blocking_mode);
+    TRACE("(%d %x)\n", size, allow_blocking);
 
     while(size && !gzip_stream->end_of_data) {
         if(!gzip_stream->buf_size) {
@@ -477,7 +472,7 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
                 gzip_stream->buf_pos = 0;
             }
             res = gzip_stream->parent_stream->vtbl->read(gzip_stream->parent_stream, req, gzip_stream->buf+gzip_stream->buf_size,
-                    sizeof(gzip_stream->buf)-gzip_stream->buf_size, &current_read, blocking_mode);
+                    sizeof(gzip_stream->buf)-gzip_stream->buf_size, &current_read, allow_blocking);
             gzip_stream->buf_size += current_read;
             if(res != ERROR_SUCCESS)
                 break;
@@ -510,8 +505,8 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
             break;
         }
 
-        if(ret_read && blocking_mode == BLOCKING_ALLOW)
-            blocking_mode = BLOCKING_DISALLOW;
+        if(ret_read)
+            allow_blocking = FALSE;
     }
 
     TRACE("read %u bytes\n", ret_read);
@@ -2566,11 +2561,11 @@ static BOOL end_of_read_data( http_request_t *req )
     return !req->read_size && req->data_stream->vtbl->end_of_data(req->data_stream, req);
 }
 
-static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD *read, blocking_mode_t blocking_mode)
+static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD *read, BOOL allow_blocking)
 {
     DWORD res;
 
-    res = req->data_stream->vtbl->read(req->data_stream, req, buf, size, read, blocking_mode);
+    res = req->data_stream->vtbl->read(req->data_stream, req, buf, size, read, allow_blocking);
     if(res != ERROR_SUCCESS)
         *read = 0;
     assert(*read <= size);
@@ -2593,7 +2588,7 @@ static DWORD read_http_stream(http_request_t *req, BYTE *buf, DWORD size, DWORD 
 }
 
 /* fetch some more data into the read buffer (the read section must be held) */
-static DWORD refill_read_buffer(http_request_t *req, blocking_mode_t blocking_mode, DWORD *read_bytes)
+static DWORD refill_read_buffer(http_request_t *req, BOOL allow_blocking, DWORD *read_bytes)
 {
     DWORD res, read=0;
 
@@ -2607,7 +2602,7 @@ static DWORD refill_read_buffer(http_request_t *req, blocking_mode_t blocking_mo
     }
 
     res = read_http_stream(req, req->read_buf+req->read_size, sizeof(req->read_buf) - req->read_size,
-            &read, blocking_mode);
+            &read, allow_blocking);
     if(res != ERROR_SUCCESS)
         return res;
 
@@ -2653,7 +2648,7 @@ static BOOL netconn_end_of_data(data_stream_t *stream, http_request_t *req)
 }
 
 static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DWORD size,
-        DWORD *read, blocking_mode_t blocking_mode)
+        DWORD *read, BOOL allow_blocking)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
     DWORD res = ERROR_SUCCESS;
@@ -2662,7 +2657,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     size = min(size, netconn_stream->content_length-netconn_stream->content_read);
 
     if(size && is_valid_netconn(req->netconn)) {
-        res = NETCON_recv(req->netconn, buf, size, blocking_mode != BLOCKING_DISALLOW, &ret);
+        res = NETCON_recv(req->netconn, buf, size, allow_blocking, &ret);
         if(res == ERROR_SUCCESS) {
             if(!ret)
                 netconn_stream->content_length = netconn_stream->content_read;
@@ -2724,7 +2719,7 @@ static BOOL chunked_end_of_data(data_stream_t *stream, http_request_t *req)
 }
 
 static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DWORD size,
-        DWORD *read, blocking_mode_t blocking_mode)
+        DWORD *read, BOOL allow_blocking)
 {
     chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
     DWORD ret_read = 0, res = ERROR_SUCCESS;
@@ -2743,7 +2738,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
             case CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA:
             case CHUNKED_STREAM_STATE_DISCARD_EOL_AT_END:
                 chunked_stream->buf_pos = 0;
-                res = NETCON_recv(req->netconn, chunked_stream->buf, sizeof(chunked_stream->buf), blocking_mode != BLOCKING_DISALLOW, &read_bytes);
+                res = NETCON_recv(req->netconn, chunked_stream->buf, sizeof(chunked_stream->buf), allow_blocking, &read_bytes);
                 if(res == ERROR_SUCCESS && read_bytes) {
                     chunked_stream->buf_size += read_bytes;
                 }else if(res == WSAEWOULDBLOCK) {
@@ -2807,7 +2802,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
                 chunked_stream->buf_size -= read_bytes;
             }else {
                 res = NETCON_recv(req->netconn, (char*)buf+ret_read, read_bytes,
-                                  blocking_mode != BLOCKING_DISALLOW, (int*)&read_bytes);
+                                  allow_blocking, (int*)&read_bytes);
                 if(res != ERROR_SUCCESS) {
                     continue_read = FALSE;
                     break;
@@ -2824,8 +2819,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
             ret_read += read_bytes;
             if(!chunked_stream->chunk_size)
                 chunked_stream->state = CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA;
-            if(blocking_mode == BLOCKING_ALLOW)
-                blocking_mode = BLOCKING_DISALLOW;
+            allow_blocking = FALSE;
             break;
 
         case CHUNKED_STREAM_STATE_DISCARD_EOL_AFTER_DATA:
@@ -2869,7 +2863,7 @@ static DWORD chunked_get_avail_data(data_stream_t *stream, http_request_t *req)
         DWORD res, read;
 
         /* try to process to the next chunk */
-        res = chunked_read(stream, req, NULL, 0, &read, BLOCKING_DISALLOW);
+        res = chunked_read(stream, req, NULL, 0, &read, FALSE);
         if(res != ERROR_SUCCESS || chunked_stream->state != CHUNKED_STREAM_STATE_READING_CHUNK)
             return 0;
     }
@@ -2987,14 +2981,14 @@ static void send_request_complete(http_request_t *req, DWORD_PTR result, DWORD e
 static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD *ret_size)
 {
     DWORD res, read = 0, avail = 0;
-    blocking_mode_t mode;
+    BOOL allow_blocking;
 
     TRACE("%p\n", req);
 
     EnterCriticalSection( &req->read_section );
 
-    mode = first_notif && req->read_size ? BLOCKING_DISALLOW : BLOCKING_ALLOW;
-    res = refill_read_buffer(req, mode, &read);
+    allow_blocking = !first_notif || !req->read_size;
+    res = refill_read_buffer(req, allow_blocking, &read);
     if(res == ERROR_SUCCESS) {
         avail = get_avail_data(req);
         read += req->read_size;
@@ -3021,7 +3015,7 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD
 }
 
 /* read data from the http connection (the read section must be held) */
-static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *read, blocking_mode_t blocking_mode)
+static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *read, BOOL allow_blocking)
 {
     DWORD current_read = 0, ret_read = 0;
     DWORD res = ERROR_SUCCESS;
@@ -3033,12 +3027,11 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
         memcpy(buffer, req->read_buf+req->read_pos, ret_read);
         req->read_size -= ret_read;
         req->read_pos += ret_read;
-        if(blocking_mode == BLOCKING_ALLOW)
-            blocking_mode = BLOCKING_DISALLOW;
+        allow_blocking = FALSE;
     }
 
     if(ret_read < size) {
-        res = read_http_stream(req, (BYTE*)buffer+ret_read, size-ret_read, &current_read, blocking_mode);
+        res = read_http_stream(req, (BYTE*)buffer+ret_read, size-ret_read, &current_read, allow_blocking);
         if(res == ERROR_SUCCESS)
             ret_read += current_read;
         else if(res == WSAEWOULDBLOCK && ret_read)
@@ -3075,7 +3068,7 @@ static BOOL drain_content(http_request_t *req, BOOL blocking)
         DWORD bytes_read, res;
         BYTE buf[4096];
 
-        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read, BLOCKING_ALLOW);
+        res = HTTPREQ_Read(req, buf, sizeof(buf), &bytes_read, TRUE);
         if(res != ERROR_SUCCESS) {
             ret = FALSE;
             break;
@@ -3109,14 +3102,14 @@ static void async_read_file_proc(task_header_t *hdr)
     if(task->buf) {
         DWORD read_bytes;
         while (read < task->size) {
-            res = HTTPREQ_Read(req, (char*)task->buf + read, task->size - read, &read_bytes, BLOCKING_ALLOW);
+            res = HTTPREQ_Read(req, (char*)task->buf + read, task->size - read, &read_bytes, TRUE);
             if (res != ERROR_SUCCESS || !read_bytes)
                 break;
             read += read_bytes;
         }
     }else {
         EnterCriticalSection(&req->read_section);
-        res = refill_read_buffer(req, BLOCKING_ALLOW, &read);
+        res = refill_read_buffer(req, TRUE, &read);
         LeaveCriticalSection(&req->read_section);
 
         if(task->ret_read)
@@ -3191,8 +3184,7 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buf, DWORD size, DWORD
             notify_received = TRUE;
 
             while(read < size) {
-                res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread,
-                                   allow_blocking ? BLOCKING_ALLOW : BLOCKING_DISALLOW);
+                res = HTTPREQ_Read(req, (char*)buf+read, size-read, &cread, allow_blocking);
                 read += cread;
                 if (res != ERROR_SUCCESS || !cread)
                     break;
@@ -3273,7 +3265,7 @@ static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
             EnterCriticalSection( &req->read_section );
             notify_received = TRUE;
 
-            res = refill_read_buffer(req, allow_blocking ? BLOCKING_ALLOW : BLOCKING_DISALLOW, &avail);
+            res = refill_read_buffer(req, allow_blocking, &avail);
         }
 
         if(hdr->dwError == INTERNET_HANDLE_IN_USE)
