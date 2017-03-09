@@ -1507,16 +1507,36 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     DWORD opcode_token, opcode, previous_token;
     struct wined3d_sm4_data *priv = data;
     unsigned int i, len;
+    SIZE_T remaining;
     const DWORD *p;
 
     list_move_head(&priv->src_free, &priv->src);
+
+    if (*ptr >= priv->end)
+    {
+        WARN("End of byte-code, failed to read opcode.\n");
+        goto fail;
+    }
+    remaining = priv->end - *ptr;
 
     opcode_token = *(*ptr)++;
     opcode = opcode_token & WINED3D_SM4_OPCODE_MASK;
 
     len = ((opcode_token & WINED3D_SM4_INSTRUCTION_LENGTH_MASK) >> WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT);
     if (!len)
+    {
+        if (remaining < 2)
+        {
+            WARN("End of byte-code, failed to read length token.\n");
+            goto fail;
+        }
         len = **ptr;
+    }
+    if (!len || remaining < len)
+    {
+        WARN("Read invalid length %u (remaining %lu).\n", len, remaining);
+        goto fail;
+    }
     --len;
 
     if (TRACE_ON(d3d_bytecode))
@@ -1589,6 +1609,13 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
             }
         }
     }
+
+    return;
+
+fail:
+    *ptr = priv->end;
+    ins->handler_idx = WINED3DSIH_TABLE_SIZE;
+    return;
 }
 
 static BOOL shader_sm4_is_end(void *data, const DWORD **ptr)
