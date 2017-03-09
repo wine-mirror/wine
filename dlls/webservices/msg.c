@@ -404,7 +404,7 @@ HRESULT WINAPI WsAddressMessage( WS_MESSAGE *handle, const WS_ENDPOINT_ADDRESS *
         }
     }
 
-    msg->is_addressed = TRUE;
+    if (hr == S_OK) msg->is_addressed = TRUE;
 
     LeaveCriticalSection( &msg->cs );
     return hr;
