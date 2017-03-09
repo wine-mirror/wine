@@ -382,8 +382,7 @@ static WCHAR *get_host_header( http_request_t *req )
 
 typedef enum {
     BLOCKING_ALLOW,
-    BLOCKING_DISALLOW,
-    BLOCKING_WAITALL
+    BLOCKING_DISALLOW
 } blocking_mode_t;
 
 struct data_stream_vtbl_t {
@@ -2658,27 +2657,20 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
     DWORD res = ERROR_SUCCESS;
-    int len = 0, ret = 0;
+    int ret = 0;
 
     size = min(size, netconn_stream->content_length-netconn_stream->content_read);
 
     if(size && is_valid_netconn(req->netconn)) {
-        while((res = NETCON_recv(req->netconn, buf+ret, size-ret, blocking_mode != BLOCKING_DISALLOW, &len)) == ERROR_SUCCESS) {
-            if(!len) {
+        res = NETCON_recv(req->netconn, buf, size, blocking_mode != BLOCKING_DISALLOW, &ret);
+        if(res == ERROR_SUCCESS) {
+            if(!ret)
                 netconn_stream->content_length = netconn_stream->content_read;
-                break;
-            }
-            ret += len;
-            netconn_stream->content_read += len;
-            if(blocking_mode != BLOCKING_WAITALL || size == ret)
-                break;
+            netconn_stream->content_read += ret;
         }
-
-        if(res == WSAEWOULDBLOCK && ret)
-            res = ERROR_SUCCESS;
     }
 
-    TRACE("read %u bytes\n", ret);
+    TRACE("res %u read %u bytes\n", res, ret);
     *read = ret;
     return res;
 }
