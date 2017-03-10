@@ -464,6 +464,7 @@ HEADER_SRCS = \
 	msidefs.h \
 	msiquery.h \
 	mssip.h \
+	msstkppg.h \
 	mstcpip.h \
 	msvcrt/assert.h \
 	msvcrt/conio.h \
