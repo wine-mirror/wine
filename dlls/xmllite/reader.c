@@ -1353,7 +1353,6 @@ static HRESULT reader_parse_comment(xmlreader *reader)
         reader->nodetype = XmlNodeType_Comment;
         reader->resume[XmlReadResume_Body] = start;
         reader->resumestate = XmlReadResumeState_Comment;
-        reader_set_strvalue(reader, StringValue_LocalName, NULL);
         reader_set_strvalue(reader, StringValue_QualifiedName, NULL);
         reader_set_strvalue(reader, StringValue_Value, NULL);
     }
@@ -1376,7 +1375,6 @@ static HRESULT reader_parse_comment(xmlreader *reader)
                     /* skip rest of markup '->' */
                     reader_skipn(reader, 3);
 
-                    reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
                     reader_set_strvalue(reader, StringValue_Value, &value);
                     reader->resume[XmlReadResume_Body] = 0;
@@ -2343,7 +2341,6 @@ static HRESULT reader_parse_cdata(xmlreader *reader)
         reader->nodetype = XmlNodeType_CDATA;
         reader->resume[XmlReadResume_Body] = start;
         reader->resumestate = XmlReadResumeState_CDATA;
-        reader_set_strvalue(reader, StringValue_LocalName, NULL);
         reader_set_strvalue(reader, StringValue_QualifiedName, NULL);
         reader_set_strvalue(reader, StringValue_Value, NULL);
     }
@@ -2360,7 +2357,6 @@ static HRESULT reader_parse_cdata(xmlreader *reader)
             reader_skipn(reader, 3);
             TRACE("%s\n", debug_strval(reader, &value));
 
-            reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
             reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
             reader_set_strvalue(reader, StringValue_Value, &value);
             reader->resume[XmlReadResume_Body] = 0;
@@ -2404,7 +2400,6 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
         reader->nodetype = is_wchar_space(*ptr) ? XmlNodeType_Whitespace : XmlNodeType_Text;
         reader->resume[XmlReadResume_Body] = start;
         reader->resumestate = XmlReadResumeState_CharData;
-        reader_set_strvalue(reader, StringValue_LocalName, &strval_empty);
         reader_set_strvalue(reader, StringValue_QualifiedName, &strval_empty);
         reader_set_strvalue(reader, StringValue_Value, NULL);
     }
@@ -3090,7 +3085,6 @@ static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface, const WCHAR *
 static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, UINT *len)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
-    XmlNodeType nodetype;
     UINT length;
 
     TRACE("(%p)->(%p %p)\n", This, name, len);
@@ -3098,8 +3092,15 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
     if (!len)
         len = &length;
 
-    switch ((nodetype = reader_get_nodetype(This)))
+    switch (reader_get_nodetype(This))
     {
+    case XmlNodeType_Text:
+    case XmlNodeType_CDATA:
+    case XmlNodeType_Comment:
+    case XmlNodeType_Whitespace:
+        *name = emptyW;
+        *len = 0;
+        break;
     case XmlNodeType_Element:
     case XmlNodeType_EndElement:
         /* empty elements are not added to the stack */
