@@ -527,7 +527,6 @@ NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDL
 end:
     if (status != STATUS_SUCCESS)
     {
-        /* FIXME: call hash_finish to release resources */
         HeapFree( GetProcessHeap(), 0, hash );
         return status;
     }
