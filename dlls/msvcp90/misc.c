@@ -1266,6 +1266,16 @@ HANDLE CDECL MSVCP__crtCreateSemaphoreExW(
     return CreateSemaphoreExW(attribs, initial_count, max_count, name, flags, access);
 }
 
+/*********************************************************************
+ *  __crtCreateThreadpoolTimer (MSVCP140.@)
+ */
+PTP_TIMER CDECL MSVCP__crtCreateThreadpoolTimer(PTP_TIMER_CALLBACK callback,
+        PVOID userdata, TP_CALLBACK_ENVIRON *environment)
+{
+    TRACE("(%p %p %p)\n", callback, userdata, environment);
+    return CreateThreadpoolTimer(callback, userdata, environment);
+}
+
 /* ?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z */
 /* ?_Execute_once@std@@YAHAEAUonce_flag@1@P6AHPEAX1PEAPEAX@Z1@Z */
 BOOL __cdecl _Execute_once(INIT_ONCE *flag, PINIT_ONCE_FN func, void *param)

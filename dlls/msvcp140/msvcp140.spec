@@ -3760,7 +3760,7 @@
 @ cdecl __crtCreateEventExW(ptr wstr long long) MSVCP__crtCreateEventExW
 @ cdecl __crtCreateSemaphoreExW(ptr long long wstr long long) MSVCP__crtCreateSemaphoreExW
 @ stub __crtCreateSymbolicLinkW
-@ stub __crtCreateThreadpoolTimer
+@ cdecl __crtCreateThreadpoolTimer(ptr ptr ptr) MSVCP__crtCreateThreadpoolTimer
 @ stub __crtCreateThreadpoolWait
 @ stub __crtFlushProcessWriteBuffers
 @ stub __crtFreeLibraryWhenCallbackReturns
