@@ -2531,7 +2531,6 @@ static void test_reader_position(void)
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Whitespace, "got type %d\n", type);
-todo_wine
     TEST_READER_POSITION2(reader, 1, 35, 2, 6);
 
     hr = IXmlReader_Read(reader, &type);

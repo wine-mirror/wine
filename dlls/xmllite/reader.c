@@ -2383,6 +2383,7 @@ static HRESULT reader_parse_cdata(xmlreader *reader)
 /* [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*) */
 static HRESULT reader_parse_chardata(xmlreader *reader)
 {
+    struct reader_position position;
     WCHAR *ptr;
     UINT start;
 
@@ -2404,6 +2405,7 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
         reader_set_strvalue(reader, StringValue_Value, NULL);
     }
 
+    position = reader->position;
     while (*ptr)
     {
         static const WCHAR ampW[] = {'&',0};
@@ -2417,6 +2419,7 @@ static HRESULT reader_parse_chardata(xmlreader *reader)
         {
             strval value;
 
+            reader->empty_element.position = position;
             reader_init_strvalue(start, reader_get_cur(reader)-start, &value);
             reader_set_strvalue(reader, StringValue_Value, &value);
             reader->resume[XmlReadResume_Body] = 0;
@@ -3314,6 +3317,7 @@ static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *line_numb
     case XmlNodeType_Attribute:
         *line_number = This->attr->position.line_number;
         break;
+    case XmlNodeType_Whitespace:
     case XmlNodeType_XmlDeclaration:
         *line_number = This->empty_element.position.line_number;
         break;
@@ -3349,6 +3353,7 @@ static HRESULT WINAPI xmlreader_GetLinePosition(IXmlReader* iface, UINT *line_po
     case XmlNodeType_Attribute:
         *line_position = This->attr->position.line_position;
         break;
+    case XmlNodeType_Whitespace:
     case XmlNodeType_XmlDeclaration:
         *line_position = This->empty_element.position.line_position;
         break;
