@@ -2484,6 +2484,8 @@ static void test_reader_position(void)
     hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
+    TEST_READER_STATE(reader, XmlReadState_Closed);
+
     /* position methods with Null args */
     hr = IXmlReader_GetLineNumber(reader, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
@@ -2493,13 +2495,11 @@ static void test_reader_position(void)
 
     position = 123;
     hr = IXmlReader_GetLinePosition(reader, &position);
-todo_wine
     ok(hr == S_FALSE, "got %#x\n", hr);
     ok(position == 0, "got %u\n", position);
 
     position = 123;
     hr = IXmlReader_GetLineNumber(reader, &position);
-todo_wine
     ok(hr == S_FALSE, "got %#x\n", hr);
     ok(position == 0, "got %u\n", position);
 
@@ -2508,6 +2508,7 @@ todo_wine
     hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
     ok(hr == S_OK, "got %08x\n", hr);
 
+    TEST_READER_STATE(reader, XmlReadState_Initial);
     TEST_READER_POSITION(reader, 0, 0);
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -2532,6 +2533,7 @@ todo_wine
     TEST_READER_POSITION2(reader, 1, 37, ~0u, 40);
 
     IXmlReader_SetInput(reader, NULL);
+    TEST_READER_STATE2(reader, XmlReadState_Initial, XmlReadState_Closed);
     TEST_READER_POSITION(reader, 0, 0);
 
     IStream_Release(stream);

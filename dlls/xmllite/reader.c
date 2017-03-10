@@ -3320,7 +3320,7 @@ static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *line_numb
         break;
     }
 
-    return S_OK;
+    return This->state == XmlReadState_Closed ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI xmlreader_GetLinePosition(IXmlReader* iface, UINT *line_position)
@@ -3355,7 +3355,7 @@ static HRESULT WINAPI xmlreader_GetLinePosition(IXmlReader* iface, UINT *line_po
         break;
     }
 
-    return S_OK;
+    return This->state == XmlReadState_Closed ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI xmlreader_GetAttributeCount(IXmlReader* iface, UINT *count)
