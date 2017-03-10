@@ -147,16 +147,17 @@ enum alg_id
 #define MAX_HASH_BLOCK_BITS 1024
 
 static const struct {
+    ULONG object_length;
     ULONG hash_length;
     ULONG block_bits;
     const WCHAR *alg_name;
 } alg_props[] = {
-    /* ALG_ID_MD5    */ { 16,  512, BCRYPT_MD5_ALGORITHM },
-    /* ALG_ID_RNG    */ {  0,    0, BCRYPT_RNG_ALGORITHM },
-    /* ALG_ID_SHA1   */ { 20,  512, BCRYPT_SHA1_ALGORITHM },
-    /* ALG_ID_SHA256 */ { 32,  512, BCRYPT_SHA256_ALGORITHM },
-    /* ALG_ID_SHA384 */ { 48, 1024, BCRYPT_SHA384_ALGORITHM },
-    /* ALG_ID_SHA512 */ { 64, 1024, BCRYPT_SHA512_ALGORITHM }
+    /* ALG_ID_MD5    */ {  274,   16,  512, BCRYPT_MD5_ALGORITHM },
+    /* ALG_ID_RNG    */ {    0,    0,    0, BCRYPT_RNG_ALGORITHM },
+    /* ALG_ID_SHA1   */ {  278,   20,  512, BCRYPT_SHA1_ALGORITHM },
+    /* ALG_ID_SHA256 */ {  286,   32,  512, BCRYPT_SHA256_ALGORITHM },
+    /* ALG_ID_SHA384 */ {  382,   48, 1024, BCRYPT_SHA384_ALGORITHM },
+    /* ALG_ID_SHA512 */ {  382,   64, 1024, BCRYPT_SHA512_ALGORITHM }
 };
 
 struct algorithm
@@ -387,14 +388,20 @@ struct hash
     struct hash_impl inner;
 };
 
-#define OBJECT_LENGTH_MD5       274
-#define OBJECT_LENGTH_SHA1      278
-#define OBJECT_LENGTH_SHA256    286
-#define OBJECT_LENGTH_SHA384    382
-#define OBJECT_LENGTH_SHA512    382
-
 static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
+    if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
+    {
+        if (!alg_props[id].object_length)
+            return STATUS_NOT_SUPPORTED;
+        *ret_size = sizeof(ULONG);
+        if (size < sizeof(ULONG))
+            return STATUS_BUFFER_TOO_SMALL;
+        if (buf)
+            *(ULONG *)buf = alg_props[id].object_length;
+        return STATUS_SUCCESS;
+    }
+
     if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
     {
         *ret_size = sizeof(ULONG);
@@ -421,78 +428,11 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
 static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
-    ULONG value;
 
     status = generic_alg_property( id, prop, buf, size, ret_size );
-    if (status != STATUS_NOT_IMPLEMENTED)
-        return status;
-
-    switch (id)
-    {
-    case ALG_ID_MD5:
-        if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
-        {
-            value = OBJECT_LENGTH_MD5;
-            break;
-        }
-        FIXME( "unsupported md5 algorithm property %s\n", debugstr_w(prop) );
-        return STATUS_NOT_IMPLEMENTED;
-
-    case ALG_ID_RNG:
-        if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH )) return STATUS_NOT_SUPPORTED;
-        FIXME( "unsupported rng algorithm property %s\n", debugstr_w(prop) );
-        return STATUS_NOT_IMPLEMENTED;
-
-    case ALG_ID_SHA1:
-        if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
-        {
-            value = OBJECT_LENGTH_SHA1;
-            break;
-        }
-        FIXME( "unsupported sha1 algorithm property %s\n", debugstr_w(prop) );
-        return STATUS_NOT_IMPLEMENTED;
-
-    case ALG_ID_SHA256:
-        if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
-        {
-            value = OBJECT_LENGTH_SHA256;
-            break;
-        }
-        FIXME( "unsupported sha256 algorithm property %s\n", debugstr_w(prop) );
-        return STATUS_NOT_IMPLEMENTED;
-
-    case ALG_ID_SHA384:
-        if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
-        {
-            value = OBJECT_LENGTH_SHA384;
-            break;
-        }
-        FIXME( "unsupported sha384 algorithm property %s\n", debugstr_w(prop) );
-        return STATUS_NOT_IMPLEMENTED;
-
-    case ALG_ID_SHA512:
-        if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
-        {
-            value = OBJECT_LENGTH_SHA512;
-            break;
-        }
-        FIXME( "unsupported sha512 algorithm property %s\n", debugstr_w(prop) );
-        return STATUS_NOT_IMPLEMENTED;
-
-    default:
-        FIXME( "unsupported algorithm %u\n", id );
-        return STATUS_NOT_IMPLEMENTED;
-    }
-
-    if (size < sizeof(ULONG))
-    {
-        *ret_size = sizeof(ULONG);
-        return STATUS_BUFFER_TOO_SMALL;
-    }
-    if (buf) *(ULONG *)buf = value;
-    *ret_size = sizeof(ULONG);
-
-    return STATUS_SUCCESS;
+    if (status == STATUS_NOT_IMPLEMENTED)
+        FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    return status;
 }
 
 static NTSTATUS get_hash_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
