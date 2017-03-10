@@ -3761,7 +3761,7 @@
 @ cdecl __crtCreateSemaphoreExW(ptr long long wstr long long) MSVCP__crtCreateSemaphoreExW
 @ stub __crtCreateSymbolicLinkW
 @ cdecl __crtCreateThreadpoolTimer(ptr ptr ptr) MSVCP__crtCreateThreadpoolTimer
-@ stub __crtCreateThreadpoolWait
+@ cdecl __crtCreateThreadpoolWait(ptr ptr ptr) MSVCP__crtCreateThreadpoolWait
 @ stub __crtFlushProcessWriteBuffers
 @ stub __crtFreeLibraryWhenCallbackReturns
 @ stub __crtGetCurrentProcessorNumber

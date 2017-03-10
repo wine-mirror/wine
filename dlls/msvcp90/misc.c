@@ -1286,6 +1286,16 @@ VOID CDECL MSVCP__crtSetThreadpoolTimer(TP_TIMER *timer,
     return SetThreadpoolTimer(timer, due_time, period, window_length);
 }
 
+/*********************************************************************
+ *  __crtCreateThreadpoolWait (MSVCP140.@)
+ */
+PTP_WAIT CDECL MSVCP__crtCreateThreadpoolWait(PTP_WAIT_CALLBACK callback,
+        PVOID userdata, TP_CALLBACK_ENVIRON *environment)
+{
+    TRACE("(%p %p %p)\n", callback, userdata, environment);
+    return CreateThreadpoolWait(callback, userdata, environment);
+}
+
 /* ?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z */
 /* ?_Execute_once@std@@YAHAEAUonce_flag@1@P6AHPEAX1PEAPEAX@Z1@Z */
 BOOL __cdecl _Execute_once(INIT_ONCE *flag, PINIT_ONCE_FN func, void *param)
