@@ -404,6 +404,8 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
 
     if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
     {
+        if (!alg_props[id].hash_length)
+            return STATUS_NOT_SUPPORTED;
         *ret_size = sizeof(ULONG);
         if (size < sizeof(ULONG))
             return STATUS_BUFFER_TOO_SMALL;

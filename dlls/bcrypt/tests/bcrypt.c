@@ -763,6 +763,10 @@ static void test_rng(void)
     ret = pBCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
     ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
 
+    len = size = 0xdeadbeef;
+    ret = pBCryptGetProperty(alg, BCRYPT_HASH_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
+
     test_alg_name(alg, "RNG");
 
     memset(buf, 0, 16);
