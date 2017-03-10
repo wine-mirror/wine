@@ -2424,7 +2424,18 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     /*
      * ---------- NSResponder method overrides ----------
      */
-    - (void) keyDown:(NSEvent *)theEvent { [self postKeyEvent:theEvent]; }
+    - (void) keyDown:(NSEvent *)theEvent
+    {
+        if ([theEvent isARepeat])
+        {
+            if (!allowKeyRepeats)
+                return;
+        }
+        else
+            allowKeyRepeats = YES;
+
+        [self postKeyEvent:theEvent];
+    }
 
     - (void) flagsChanged:(NSEvent *)theEvent
     {
@@ -2460,6 +2471,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             if (changed & modifiers[i].mask)
             {
                 BOOL pressed = (modifierFlags & modifiers[i].mask) != 0;
+
+                if (pressed)
+                    allowKeyRepeats = NO;
 
                 if (i == last_changed)
                     lastModifierFlags = modifierFlags;

@@ -81,6 +81,8 @@
 
     NSTimeInterval lastDockIconSnapshot;
 
+    BOOL allowKeyRepeats;
+
     BOOL ignore_windowDeminiaturize;
     BOOL ignore_windowResize;
     BOOL fakingClose;
