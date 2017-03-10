@@ -149,6 +149,8 @@ static void  (CDECL   *pomp_unset_nest_lock)(omp_nest_lock_t *lock);
 #define VCOMP_REDUCTION_FLAGS_BOOL_AND  0x600
 #define VCOMP_REDUCTION_FLAGS_BOOL_OR   0x700
 
+#define ULL(a,b) (((ULONG64)(a) << 32) | (b))
+
 #ifdef __i386__
 #define ARCH "x86"
 #elif defined(__x86_64__)
@@ -1750,15 +1752,15 @@ static void test_atomic_integer64(void)
     }
     tests1[] =
     {
-        { p_vcomp_atomic_add_i8,  0x1122334455667788,  0x7766554433221100, -0x7777777777777778 },
-        { p_vcomp_atomic_and_i8,  0x1122334455667788,  0x7766554433221100,  0x1122114411221100 },
-        { p_vcomp_atomic_div_i8,  0x7766554433221100,  0x1122334455667788,                   6 },
-        { p_vcomp_atomic_div_i8,  0x7766554433221100, -0x1122334455667788,                  -6 },
-        { p_vcomp_atomic_mul_i8,  0x1122334455667788,  0x7766554433221100,  0x3e963337c6000800 },
-        { p_vcomp_atomic_mul_i8,  0x1122334455667788, -0x7766554433221100,  0xc169ccc839fff800 },
-        { p_vcomp_atomic_or_i8,   0x1122334455667788,  0x7766554433221100,  0x7766774477667788 },
-        { p_vcomp_atomic_sub_i8,  0x1122334455667788,  0x7766554433221100, -0x664421ffddbb9978 },
-        { p_vcomp_atomic_xor_i8,  0x1122334455667788,  0x7766554433221100,  0x6644660066446688 },
+        { p_vcomp_atomic_add_i8,  ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100), -ULL(0x77777777,0x77777778) },
+        { p_vcomp_atomic_and_i8,  ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x11221144,0x11221100) },
+        { p_vcomp_atomic_div_i8,  ULL(0x77665544,0x33221100),  ULL(0x11223344,0x55667788),                           6 },
+        { p_vcomp_atomic_div_i8,  ULL(0x77665544,0x33221100), -ULL(0x11223344,0x55667788),                          -6 },
+        { p_vcomp_atomic_mul_i8,  ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x3e963337,0xc6000800) },
+        { p_vcomp_atomic_mul_i8,  ULL(0x11223344,0x55667788), -ULL(0x77665544,0x33221100),  ULL(0xc169ccc8,0x39fff800) },
+        { p_vcomp_atomic_or_i8,   ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x77667744,0x77667788) },
+        { p_vcomp_atomic_sub_i8,  ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100), -ULL(0x664421ff,0xddbb9978) },
+        { p_vcomp_atomic_xor_i8,  ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x66446600,0x66446688) },
     };
     struct
     {
@@ -1770,22 +1772,22 @@ static void test_atomic_integer64(void)
     }
     tests2[] =
     {
-        { p_vcomp_atomic_shl_i8,  0x1122334455667788,  3, -0x76ee65dd54cc43c0 },
-        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 60,  0x8000000000000000 },
-        { p_vcomp_atomic_shl_i8, -0x1122334455667788,  3,  0x76ee65dd54cc43c0 },
-        { p_vcomp_atomic_shr_i8,  0x1122334455667788,  3,   0x22446688aaccef1 },
-        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 60,                   1 },
-        { p_vcomp_atomic_shr_i8, -0x1122334455667788,  3,  -0x22446688aaccef1 },
+        { p_vcomp_atomic_shl_i8,  ULL(0x11223344,0x55667788),  3, -ULL(0x76ee65dd,0x54cc43c0) },
+        { p_vcomp_atomic_shl_i8,  ULL(0x11223344,0x55667788), 60,  ULL(0x80000000,0x00000000) },
+        { p_vcomp_atomic_shl_i8, -ULL(0x11223344,0x55667788),  3,  ULL(0x76ee65dd,0x54cc43c0) },
+        { p_vcomp_atomic_shr_i8,  ULL(0x11223344,0x55667788),  3,  ULL(0x02244668,0x8aaccef1) },
+        { p_vcomp_atomic_shr_i8,  ULL(0x11223344,0x55667788), 60,                           1 },
+        { p_vcomp_atomic_shr_i8, -ULL(0x11223344,0x55667788),  3, -ULL(0x02244668,0x8aaccef1) },
 #if defined(__i386__)
-        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 64,                   0, TRUE },
-        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 67,                   0, TRUE },
-        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 64,                   0, TRUE },
-        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 67,                   0, TRUE },
+        { p_vcomp_atomic_shl_i8,  ULL(0x11223344,0x55667788), 64,                           0, TRUE },
+        { p_vcomp_atomic_shl_i8,  ULL(0x11223344,0x55667788), 67,                           0, TRUE },
+        { p_vcomp_atomic_shr_i8,  ULL(0x11223344,0x55667788), 64,                           0, TRUE },
+        { p_vcomp_atomic_shr_i8,  ULL(0x11223344,0x55667788), 67,                           0, TRUE },
 #elif defined(__x86_64__)
-        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 64,  0x1122334455667788 },
-        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 67, -0x76ee65dd54cc43c0 },
-        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 64,  0x1122334455667788 },
-        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 67,   0x22446688aaccef1 },
+        { p_vcomp_atomic_shl_i8,  ULL(0x11223344,0x55667788), 64,  ULL(0x11223344,0x55667788) },
+        { p_vcomp_atomic_shl_i8,  ULL(0x11223344,0x55667788), 67, -ULL(0x76ee65dd,0x54cc43c0) },
+        { p_vcomp_atomic_shr_i8,  ULL(0x11223344,0x55667788), 64,  ULL(0x11223344,0x55667788) },
+        { p_vcomp_atomic_shr_i8,  ULL(0x11223344,0x55667788), 67,  ULL(0x02244668,0x8aaccef1) },
 #endif
     };
     struct
@@ -1795,8 +1797,8 @@ static void test_atomic_integer64(void)
     }
     tests3[] =
     {
-        { p_vcomp_atomic_div_ui8, 0x7766554455667788, 0x1122334433221100, 6 },
-        { p_vcomp_atomic_div_ui8, 0x7766554455667788, 0xeeddccbbaa998878, 0 },
+        { p_vcomp_atomic_div_ui8, ULL(0x77665544,0x55667788), ULL(0x11223344,0x33221100), 6 },
+        { p_vcomp_atomic_div_ui8, ULL(0x77665544,0x55667788), ULL(0xeeddccbb,0xaa998878), 0 },
     };
     struct
     {
@@ -1808,15 +1810,15 @@ static void test_atomic_integer64(void)
     }
     tests4[] =
     {
-        { p_vcomp_atomic_shr_ui8, 0x1122334455667788,  3,  0x22446688aaccef1 },
-        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 60,                  1 },
-        { p_vcomp_atomic_shr_ui8, 0xeeddccbbaa998878,  3, 0x1ddbb9977553310f },
+        { p_vcomp_atomic_shr_ui8, ULL(0x11223344,0x55667788),  3, ULL(0x02244668,0x8aaccef1) },
+        { p_vcomp_atomic_shr_ui8, ULL(0x11223344,0x55667788), 60,                          1 },
+        { p_vcomp_atomic_shr_ui8, ULL(0xeeddccbb,0xaa998878),  3, ULL(0x1ddbb997,0x7553310f) },
 #if defined(__i386__)
-        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 64,                  0, TRUE },
-        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 67,                  0, TRUE },
+        { p_vcomp_atomic_shr_ui8, ULL(0x11223344,0x55667788), 64,                          0, TRUE },
+        { p_vcomp_atomic_shr_ui8, ULL(0x11223344,0x55667788), 67,                          0, TRUE },
 #elif defined(__x86_64__)
-        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 64, 0x1122334455667788 },
-        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 67,  0x22446688aaccef1 },
+        { p_vcomp_atomic_shr_ui8, ULL(0x11223344,0x55667788), 64, ULL(0x11223344,0x55667788) },
+        { p_vcomp_atomic_shr_ui8, ULL(0x11223344,0x55667788), 67, ULL(0x02244668,0x8aaccef1) },
 #endif
     };
     int i;
@@ -2078,23 +2080,23 @@ static void test_reduction_integer64(void)
     }
     tests[] =
     {
-        { 0x000,                            0x1122334455667788,  0x7766554433221100, -0x7777777777777778 },
-        { VCOMP_REDUCTION_FLAGS_ADD,        0x1122334455667788,  0x7766554433221100, -0x7777777777777778 },
-        { VCOMP_REDUCTION_FLAGS_MUL,        0x1122334455667788,  0x7766554433221100,  0x3e963337c6000800 },
-        { VCOMP_REDUCTION_FLAGS_MUL,        0x1122334455667788, -0x7766554433221100,  0xc169ccc839fff800 },
-        { VCOMP_REDUCTION_FLAGS_AND,        0x1122334455667788,  0x7766554433221100,  0x1122114411221100 },
-        { VCOMP_REDUCTION_FLAGS_OR,         0x1122334455667788,  0x7766554433221100,  0x7766774477667788 },
-        { VCOMP_REDUCTION_FLAGS_XOR,        0x1122334455667788,  0x7766554433221100,  0x6644660066446688 },
-        { VCOMP_REDUCTION_FLAGS_BOOL_AND,                    1,                   2,                   1 },
-        { VCOMP_REDUCTION_FLAGS_BOOL_OR,                     0,                   2,                   1 },
-        { 0x800,                                             0,                   2,                   1 },
-        { 0x900,                                             0,                   2,                   1 },
-        { 0xa00,                                             0,                   2,                   1 },
-        { 0xb00,                                             0,                   2,                   1 },
-        { 0xc00,                                             0,                   2,                   1 },
-        { 0xd00,                                             0,                   2,                   1 },
-        { 0xe00,                                             0,                   2,                   1 },
-        { 0xf00,                                             0,                   2,                   1 },
+        { 0x000,                            ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100), -ULL(0x77777777,0x77777778) },
+        { VCOMP_REDUCTION_FLAGS_ADD,        ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100), -ULL(0x77777777,0x77777778) },
+        { VCOMP_REDUCTION_FLAGS_MUL,        ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x3e963337,0xc6000800) },
+        { VCOMP_REDUCTION_FLAGS_MUL,        ULL(0x11223344,0x55667788), -ULL(0x77665544,0x33221100),  ULL(0xc169ccc8,0x39fff800) },
+        { VCOMP_REDUCTION_FLAGS_AND,        ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x11221144,0x11221100) },
+        { VCOMP_REDUCTION_FLAGS_OR,         ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x77667744,0x77667788) },
+        { VCOMP_REDUCTION_FLAGS_XOR,        ULL(0x11223344,0x55667788),  ULL(0x77665544,0x33221100),  ULL(0x66446600,0x66446688) },
+        { VCOMP_REDUCTION_FLAGS_BOOL_AND,   1, 2, 1 },
+        { VCOMP_REDUCTION_FLAGS_BOOL_OR,    0, 2, 1 },
+        { 0x800,                            0, 2, 1 },
+        { 0x900,                            0, 2, 1 },
+        { 0xa00,                            0, 2, 1 },
+        { 0xb00,                            0, 2, 1 },
+        { 0xc00,                            0, 2, 1 },
+        { 0xd00,                            0, 2, 1 },
+        { 0xe00,                            0, 2, 1 },
+        { 0xf00,                            0, 2, 1 },
     };
     int i;
 
