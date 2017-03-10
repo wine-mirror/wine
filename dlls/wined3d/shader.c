@@ -266,6 +266,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ULT                              */ "ult",
     /* WINED3DSIH_UMAX                             */ "umax",
     /* WINED3DSIH_UMIN                             */ "umin",
+    /* WINED3DSIH_UMUL                             */ "umul",
     /* WINED3DSIH_USHR                             */ "ushr",
     /* WINED3DSIH_UTOF                             */ "utof",
     /* WINED3DSIH_XOR                              */ "xor",
