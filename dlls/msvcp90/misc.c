@@ -1376,4 +1376,55 @@ task_continuation_context* __thiscall task_continuation_context_ctor(task_contin
     memset(this, 0, sizeof(*this));
     return this;
 }
+
+typedef struct {
+    const vtable_ptr *vtable;
+    void (__cdecl *func)(void);
+    int unk[4];
+    void *unk2[3];
+    void *this;
+} function_void_cdecl_void;
+
+/* ?_Assign@_ContextCallback@details@Concurrency@@AAEXPAX@Z */
+/* ?_Assign@_ContextCallback@details@Concurrency@@AEAAXPEAX@Z */
+DEFINE_THISCALL_WRAPPER(_ContextCallback__Assign, 8)
+void __thiscall _ContextCallback__Assign(void *this, void *v)
+{
+    TRACE("(%p %p)\n", this, v);
+}
+
+#define call_function_do_call(this) CALL_VTBL_FUNC(this, 8, void, (function_void_cdecl_void*), (this))
+#define call_function_do_clean(this,b) CALL_VTBL_FUNC(this, 16, void, (function_void_cdecl_void*,MSVCP_bool), (this, b))
+/* ?_CallInContext@_ContextCallback@details@Concurrency@@QBEXV?$function@$$A6AXXZ@std@@_N@Z */
+/* ?_CallInContext@_ContextCallback@details@Concurrency@@QEBAXV?$function@$$A6AXXZ@std@@_N@Z */
+DEFINE_THISCALL_WRAPPER(_ContextCallback__CallInContext, 48)
+void __thiscall _ContextCallback__CallInContext(const void *this, function_void_cdecl_void func, MSVCP_bool b)
+{
+    TRACE("(%p %p %x)\n", this, func.func, b);
+    call_function_do_call(func.this);
+    call_function_do_clean(func.this, func.this!=&func);
+}
+
+/* ?_Capture@_ContextCallback@details@Concurrency@@AAEXXZ */
+/* ?_Capture@_ContextCallback@details@Concurrency@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_ContextCallback__Capture, 4)
+void __thiscall _ContextCallback__Capture(void *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+/* ?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ */
+/* ?_Reset@_ContextCallback@details@Concurrency@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_ContextCallback__Reset, 4)
+void __thiscall _ContextCallback__Reset(void *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+/* ?_IsCurrentOriginSTA@_ContextCallback@details@Concurrency@@CA_NXZ */
+MSVCP_bool __cdecl _ContextCallback__IsCurrentOriginSTA(void *this)
+{
+    TRACE("(%p)\n", this);
+    return FALSE;
+}
 #endif
