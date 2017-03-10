@@ -3776,7 +3776,7 @@
 @ stub __crtLCMapStringEx
 @ cdecl __crtLCMapStringW(long long wstr long ptr long long long) msvcrt.__crtLCMapStringW
 @ stub __crtSetFileInformationByHandle
-@ stub __crtSetThreadpoolTimer
+@ cdecl __crtSetThreadpoolTimer(ptr ptr long long) MSVCP__crtSetThreadpoolTimer
 @ stub __crtSetThreadpoolWait
 @ stub __crtWaitForThreadpoolTimerCallbacks
 @ stub __set_stl_sync_api_mode

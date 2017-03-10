@@ -1276,6 +1276,16 @@ PTP_TIMER CDECL MSVCP__crtCreateThreadpoolTimer(PTP_TIMER_CALLBACK callback,
     return CreateThreadpoolTimer(callback, userdata, environment);
 }
 
+/*********************************************************************
+ *  __crtSetThreadpoolTimer (MSVCP140.@)
+ */
+VOID CDECL MSVCP__crtSetThreadpoolTimer(TP_TIMER *timer,
+        FILETIME *due_time, DWORD period, DWORD window_length)
+{
+    TRACE("(%p %p 0x%08x 0x%08x)\n", timer, due_time, period, window_length);
+    return SetThreadpoolTimer(timer, due_time, period, window_length);
+}
+
 /* ?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z */
 /* ?_Execute_once@std@@YAHAEAUonce_flag@1@P6AHPEAX1PEAPEAX@Z1@Z */
 BOOL __cdecl _Execute_once(INIT_ONCE *flag, PINIT_ONCE_FN func, void *param)
