@@ -1838,7 +1838,7 @@ static HRESULT reader_parse_dtd(xmlreader *reader)
 }
 
 /* [11 NS] LocalPart ::= NCName */
-static HRESULT reader_parse_local(xmlreader *reader, strval *local)
+static HRESULT reader_parse_local(xmlreader *reader, strval *local, BOOL check_for_separator)
 {
     WCHAR *ptr;
     UINT start;
@@ -1859,6 +1859,9 @@ static HRESULT reader_parse_local(xmlreader *reader, strval *local)
         reader_skipn(reader, 1);
         ptr = reader_get_ptr(reader);
     }
+
+    if (check_for_separator && *ptr == ':')
+        return NC_E_QNAMECOLON;
 
     if (is_reader_pending(reader))
     {
@@ -1898,7 +1901,7 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
 
     if (reader->resume[XmlReadResume_Local])
     {
-        hr = reader_parse_local(reader, local);
+        hr = reader_parse_local(reader, local, FALSE);
         if (FAILED(hr)) return hr;
 
         reader_init_strvalue(reader->resume[XmlReadResume_Name],
@@ -1923,7 +1926,7 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
 
             /* skip ':' */
             reader_skipn(reader, 1);
-            hr = reader_parse_local(reader, local);
+            hr = reader_parse_local(reader, local, TRUE);
             if (FAILED(hr)) return hr;
         }
         else

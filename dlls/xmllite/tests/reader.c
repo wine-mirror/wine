@@ -1415,6 +1415,8 @@ static struct test_entry element_tests[] = {
     { "<a >", "a", "", S_OK },
     { "<a \r \t\n>", "a", "", S_OK },
     { "</a>", NULL, NULL, NC_E_QNAMECHARACTER },
+    { "<a:b:c />", NULL, NULL, NC_E_QNAMECOLON },
+    { "<:b:c />", NULL, NULL, NC_E_QNAMECHARACTER },
     { NULL }
 };
 
