@@ -1328,7 +1328,6 @@ static HRESULT reader_parse_xmldecl(xmlreader *reader)
     reader->empty_element.position = position;
     reader_set_strvalue(reader, StringValue_LocalName, &strval_xml);
     reader_set_strvalue(reader, StringValue_QualifiedName, &strval_xml);
-    reader_set_strvalue(reader, StringValue_Value, &strval_empty);
 
     return S_OK;
 }
@@ -3171,26 +3170,17 @@ static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface, const WCHAR **ret, 
     return S_OK;
 }
 
-static BOOL is_namespace_definition(xmlreader *reader)
-{
-    const strval *local = &reader->strvalues[StringValue_LocalName];
-    const strval *prefix = &reader->strvalues[StringValue_Prefix];
-
-    if (reader_get_nodetype(reader) != XmlNodeType_Attribute)
-        return FALSE;
-
-    return ((strval_eq(reader, prefix, &strval_empty) && strval_eq(reader, local, &strval_xmlns)) ||
-            strval_eq(reader, prefix, &strval_xmlns));
-}
-
 static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value, UINT *len)
 {
     xmlreader *reader = impl_from_IXmlReader(iface);
     strval *val = &reader->strvalues[StringValue_Value];
+    UINT length;
 
     TRACE("(%p)->(%p %p)\n", reader, value, len);
 
     *value = NULL;
+    if (!len)
+        len = &length;
 
     if ((reader->nodetype == XmlNodeType_Comment && !val->str && !val->len) || is_reader_pending(reader))
     {
@@ -3204,29 +3194,46 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value,
         if (is_reader_pending(reader)) return E_PENDING;
     }
 
-    if (!val->str)
+    switch (reader_get_nodetype(reader))
     {
-        WCHAR *ptr = reader_alloc(reader, (val->len+1)*sizeof(WCHAR));
-        if (!ptr) return E_OUTOFMEMORY;
-        memcpy(ptr, reader_get_strptr(reader, val), val->len*sizeof(WCHAR));
-        ptr[val->len] = 0;
-        val->str = ptr;
+    case XmlNodeType_XmlDeclaration:
+        *value = emptyW;
+        *len = 0;
+        break;
+    case XmlNodeType_Attribute:
+        {
+            const strval *local = &reader->strvalues[StringValue_LocalName];
+            const strval *prefix = &reader->strvalues[StringValue_Prefix];
+
+            /* For namespace definition attributes return values from namespace list */
+            if (((strval_eq(reader, prefix, &strval_empty) && strval_eq(reader, local, &strval_xmlns)) ||
+                    strval_eq(reader, prefix, &strval_xmlns)))
+            {
+                struct ns *ns;
+
+                if (!(ns = reader_lookup_ns(reader, local)))
+                    ns = reader_lookup_nsdef(reader);
+
+                *value = ns->uri.str;
+                *len = ns->uri.len;
+                break;
+            }
+        }
+        /* fallthrough */
+    default:
+        if (!val->str)
+        {
+            WCHAR *ptr = reader_alloc(reader, (val->len+1)*sizeof(WCHAR));
+            if (!ptr) return E_OUTOFMEMORY;
+            memcpy(ptr, reader_get_strptr(reader, val), val->len*sizeof(WCHAR));
+            ptr[val->len] = 0;
+            val->str = ptr;
+        }
+        *value = val->str;
+        *len = val->len;
+        break;
     }
 
-    /* For namespace definition attributes return values from namespace list */
-    if (is_namespace_definition(reader)) {
-        const strval *local = &reader->strvalues[StringValue_LocalName];
-        struct ns *ns;
-
-        ns = reader_lookup_ns(reader, local);
-        if (!ns)
-            ns = reader_lookup_nsdef(reader);
-
-        val = &ns->uri;
-    }
-
-    *value = val->str;
-    if (len) *len = val->len;
     return S_OK;
 }
 
