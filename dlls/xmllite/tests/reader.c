@@ -1590,6 +1590,7 @@ static void test_read_pending(void)
     ok(hr == S_OK || broken(hr == E_PENDING), "got 0x%08x\n", hr);
     /* newer versions are happy when it's enough data to detect node type,
        older versions keep reading until it fails to read more */
+todo_wine
     ok(stream_readcall == 1 || broken(stream_readcall > 1), "got %d\n", stream_readcall);
     ok(type == XmlNodeType_Comment || broken(type == XmlNodeType_None), "got %d\n", type);
 
@@ -2474,7 +2475,7 @@ todo_wine {
 
 static void test_reader_position(void)
 {
-    static const char *xml = "<c:a xmlns:c=\"nsdef c\" b=\"attr b\"></c:a>";
+    static const char *xml = "<c:a xmlns:c=\"nsdef c\" b=\"attr b\">\n</c:a>";
     IXmlReader *reader;
     XmlNodeType type;
     IStream *stream;
@@ -2529,8 +2530,14 @@ static void test_reader_position(void)
 
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Whitespace, "got type %d\n", type);
+todo_wine
+    TEST_READER_POSITION2(reader, 1, 35, 2, 6);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_EndElement, "got type %d\n", type);
-    TEST_READER_POSITION2(reader, 1, 37, ~0u, 40);
+    TEST_READER_POSITION2(reader, 2, 3, 2, 6);
 
     IXmlReader_SetInput(reader, NULL);
     TEST_READER_STATE2(reader, XmlReadState_Initial, XmlReadState_Closed);

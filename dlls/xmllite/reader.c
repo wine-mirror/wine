@@ -1050,16 +1050,29 @@ static int reader_cmp(xmlreader *reader, const WCHAR *str)
     return 0;
 }
 
+static void reader_update_position(xmlreader *reader, WCHAR ch)
+{
+    if (ch == '\r')
+        reader->position.line_position = 1;
+    else if (ch == '\n')
+    {
+        reader->position.line_number++;
+        reader->position.line_position = 1;
+    }
+    else
+        reader->position.line_position++;
+}
+
 /* moves cursor n WCHARs forward */
 static void reader_skipn(xmlreader *reader, int n)
 {
     encoded_buffer *buffer = &reader->input->buffer->utf16;
-    const WCHAR *ptr = reader_get_ptr(reader);
+    const WCHAR *ptr;
 
-    while (*ptr++ && n--)
+    while (*(ptr = reader_get_ptr(reader)) && n--)
     {
+        reader_update_position(reader, *ptr);
         buffer->cur++;
-        reader->position.line_position++;
     }
 }
 
@@ -1071,23 +1084,12 @@ static inline BOOL is_wchar_space(WCHAR ch)
 /* [3] S ::= (#x20 | #x9 | #xD | #xA)+ */
 static int reader_skipspaces(xmlreader *reader)
 {
-    encoded_buffer *buffer = &reader->input->buffer->utf16;
     const WCHAR *ptr = reader_get_ptr(reader);
     UINT start = reader_get_cur(reader);
 
     while (is_wchar_space(*ptr))
     {
-        if (*ptr == '\r')
-            reader->position.line_position = 0;
-        else if (*ptr == '\n')
-        {
-            reader->position.line_number++;
-            reader->position.line_position = 0;
-        }
-        else
-            reader->position.line_position++;
-
-        buffer->cur++;
+        reader_skipn(reader, 1);
         ptr = reader_get_ptr(reader);
     }
 
