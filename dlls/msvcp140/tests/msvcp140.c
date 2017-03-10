@@ -21,6 +21,38 @@
 #include "wine/test.h"
 #include "winbase.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    do { \
+        expect_ ## func = TRUE; \
+        errno = 0xdeadbeef; \
+    }while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+#ifdef _WIN64
+DEFINE_EXPECT(function_do_call);
+DEFINE_EXPECT(function_do_clean);
+#endif
+
 #undef __thiscall
 #ifdef __i386__
 #define __thiscall __stdcall
@@ -43,6 +75,7 @@ struct thiscall_thunk
 #include "poppack.h"
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
+static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
 
 static void init_thiscall_thunk(void)
 {
@@ -54,24 +87,45 @@ static void init_thiscall_thunk(void)
     thunk->push_eax = 0x50;   /* pushl %eax */
     thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
     call_thiscall_func1 = (void *)thunk;
+    call_thiscall_func2 = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,a)
 
 #else
 
 #define init_thiscall_thunk()
 #define call_func1(func,_this) func(_this)
+#define call_func2(func,_this,a) func(_this,a)
 
 #endif /* __i386__ */
+typedef unsigned char MSVCP_bool;
 
 typedef struct {
     void *unk0;
     BYTE unk1;
 } task_continuation_context;
 
+typedef struct {
+    void *unused;
+} _ContextCallback;
+
+typedef struct {
+    const void *vtable;
+    void (__cdecl *func)(void);
+    int unk[4];
+    void *unk2[3];
+    void *this;
+} function_void_cdecl_void;
+
 static unsigned int (__cdecl *p__Thrd_id)(void);
 static task_continuation_context* (__thiscall *p_task_continuation_context_ctor)(task_continuation_context*);
+static void (__thiscall *p__ContextCallback__Assign)(_ContextCallback*, void*);
+static void (__thiscall *p__ContextCallback__CallInContext)(const _ContextCallback*, function_void_cdecl_void, MSVCP_bool);
+static void (__thiscall *p__ContextCallback__Capture)(_ContextCallback*);
+static void (__thiscall *p__ContextCallback__Reset)(_ContextCallback*);
+static MSVCP_bool (__cdecl *p__ContextCallback__IsCurrentOriginSTA)(_ContextCallback*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -86,14 +140,27 @@ static BOOL init(void)
     }
 
     SET(p__Thrd_id, "_Thrd_id");
+    SET(p__ContextCallback__IsCurrentOriginSTA, "?_IsCurrentOriginSTA@_ContextCallback@details@Concurrency@@CA_NXZ");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AEAA@XZ");
+        SET(p__ContextCallback__Assign, "?_Assign@_ContextCallback@details@Concurrency@@AEAAXPEAX@Z");
+        SET(p__ContextCallback__CallInContext, "?_CallInContext@_ContextCallback@details@Concurrency@@QEBAXV?$function@$$A6AXXZ@std@@_N@Z");
+        SET(p__ContextCallback__Capture, "?_Capture@_ContextCallback@details@Concurrency@@AEAAXXZ");
+        SET(p__ContextCallback__Reset, "?_Reset@_ContextCallback@details@Concurrency@@AEAAXXZ");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
+        SET(p__ContextCallback__Assign, "?_Assign@_ContextCallback@details@Concurrency@@AAAXPAX@Z");
+        SET(p__ContextCallback__CallInContext, "?_CallInContext@_ContextCallback@details@Concurrency@@QBAXV?$function@$$A6AXXZ@std@@_N@Z");
+        SET(p__ContextCallback__Capture, "?_Capture@_ContextCallback@details@Concurrency@@AAAXXZ");
+        SET(p__ContextCallback__Reset, "?_Reset@_ContextCallback@details@Concurrency@@AAAXXZ");
 #else
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAE@XZ");
+        SET(p__ContextCallback__Assign, "?_Assign@_ContextCallback@details@Concurrency@@AAEXPAX@Z");
+        SET(p__ContextCallback__CallInContext, "?_CallInContext@_ContextCallback@details@Concurrency@@QBEXV?$function@$$A6AXXZ@std@@_N@Z");
+        SET(p__ContextCallback__Capture, "?_Capture@_ContextCallback@details@Concurrency@@AAEXXZ");
+        SET(p__ContextCallback__Reset, "?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ");
 #endif
     }
 
@@ -153,11 +220,87 @@ static void test_task_continuation_context(void)
     ok(!tcc.unk1, "tcc.unk1 != 0 (%x)\n", tcc.unk1);
 }
 
+#ifdef _WIN64
+static void __cdecl function_do_call(void *this)
+{
+    CHECK_EXPECT(function_do_call);
+}
+
+static void __cdecl function_do_clean(void *this, MSVCP_bool b)
+{
+    CHECK_EXPECT(function_do_clean);
+    ok(b, "b == FALSE\n");
+}
+#endif
+
+static void test__ContextCallback(void)
+{
+    _ContextCallback cc = {0};
+    void *v = (void*)0xdeadbeef;
+#ifdef _WIN64
+    void* function_vtbl[] = {
+        NULL,
+        NULL,
+        (void*)function_do_call,
+        NULL,
+        (void*)function_do_clean,
+        NULL
+    };
+    function_void_cdecl_void function = { function_vtbl, NULL, {0}, {NULL}, &function };
+    function_void_cdecl_void function2 = { NULL, NULL, {0}, {NULL}, &function };
+#endif
+
+    call_func2(p__ContextCallback__Assign, &cc, v);
+    ok(!cc.unused, "cc.unused = %p\n", cc.unused);
+    call_func1(p__ContextCallback__Reset, &cc);
+    ok(!cc.unused, "cc.unused = %p\n", cc.unused);
+    call_func1(p__ContextCallback__Capture, &cc);
+    ok(!cc.unused, "cc.unused = %p\n", cc.unused);
+    ok(!p__ContextCallback__IsCurrentOriginSTA(&cc), "IsCurrentOriginSTA returned TRUE\n");
+
+    cc.unused = v;
+    call_func2(p__ContextCallback__Assign, &cc, NULL);
+    ok(cc.unused == v, "cc.unused = %p\n", cc.unused);
+    call_func1(p__ContextCallback__Reset, &cc);
+    ok(cc.unused == v, "cc.unused = %p\n", cc.unused);
+    call_func1(p__ContextCallback__Capture, &cc);
+    ok(cc.unused == v, "cc.unused = %p\n", cc.unused);
+    ok(!p__ContextCallback__IsCurrentOriginSTA(&cc), "IsCurrentOriginSTA returned TRUE\n");
+    ok(cc.unused == v, "cc.unused = %p\n", cc.unused);
+
+#ifdef _WIN64
+    SET_EXPECT(function_do_call);
+    SET_EXPECT(function_do_clean);
+    p__ContextCallback__CallInContext(&cc, function, FALSE);
+    CHECK_CALLED(function_do_call);
+    CHECK_CALLED(function_do_clean);
+
+    SET_EXPECT(function_do_call);
+    SET_EXPECT(function_do_clean);
+    p__ContextCallback__CallInContext(&cc, function, TRUE);
+    CHECK_CALLED(function_do_call);
+    CHECK_CALLED(function_do_clean);
+
+    SET_EXPECT(function_do_call);
+    SET_EXPECT(function_do_clean);
+    p__ContextCallback__CallInContext(&cc, function2, FALSE);
+    CHECK_CALLED(function_do_call);
+    CHECK_CALLED(function_do_clean);
+
+    SET_EXPECT(function_do_call);
+    SET_EXPECT(function_do_clean);
+    p__ContextCallback__CallInContext(&cc, function2, TRUE);
+    CHECK_CALLED(function_do_call);
+    CHECK_CALLED(function_do_clean);
+#endif
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
     test_thrd();
     test_vbtable_size_exports();
     test_task_continuation_context();
+    test__ContextCallback();
     FreeLibrary(msvcp);
 }
