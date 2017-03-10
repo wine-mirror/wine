@@ -79,6 +79,15 @@ static void test_devenum(IBindCtx *bind_ctx)
                 IPropertyBag* prop_bag = NULL;
                 VARIANT var;
                 HRESULT hr;
+                CLSID clsid = {0};
+
+                hr = IMoniker_GetClassID(moniker, NULL);
+                ok(hr == E_INVALIDARG, "IMoniker_GetClassID should failed %x\n", hr);
+
+                hr = IMoniker_GetClassID(moniker, &clsid);
+                ok(hr == S_OK, "IMoniker_GetClassID failed with error %x\n", hr);
+                ok(IsEqualGUID(&clsid, &CLSID_CDeviceMoniker),
+                   "Expected CLSID_CDeviceMoniker got %s\n", wine_dbgstr_guid(&clsid));
 
                 VariantInit(&var);
                 hr = IMoniker_BindToStorage(moniker, bind_ctx, NULL, &IID_IPropertyBag, (LPVOID*)&prop_bag);

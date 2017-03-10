@@ -355,12 +355,14 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_GetClassID(IMoniker *iface, CLSID
 {
     MediaCatMoniker *This = impl_from_IMoniker(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, pClassID);
+    TRACE("(%p)->(%p)\n", This, pClassID);
 
     if (pClassID == NULL)
-        return E_POINTER;
+        return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    *pClassID = CLSID_CDeviceMoniker;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DEVENUM_IMediaCatMoniker_IsDirty(IMoniker *iface)
