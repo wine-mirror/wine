@@ -11202,7 +11202,7 @@ static void test_resinfo_instruction(void)
     texture_desc.Height = 64;
     texture_desc.MipLevels = 1;
     texture_desc.ArraySize = 1;
-    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.Usage = D3D10_USAGE_DEFAULT;
