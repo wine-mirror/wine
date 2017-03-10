@@ -3595,15 +3595,15 @@ static void shader_glsl_unary_op(const struct wined3d_shader_instruction *ins)
     shader_addline(ins->ctx->buffer, "%s%s);\n", op, src_param.param_str);
 }
 
-static void shader_glsl_imul(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_mul_extended(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param src0_param;
     struct glsl_src_param src1_param;
     DWORD write_mask;
 
-    /* If we have ARB_gpu_shader5 or GLSL 4.0, we can use imulExtended(). If
-     * not, we can emulate it. */
+    /* If we have ARB_gpu_shader5, we can use imulExtended() / umulExtended().
+     * If not, we can emulate it. */
     if (ins->dst[0].reg.type != WINED3DSPR_NULL)
         FIXME("64-bit integer multiplies not implemented.\n");
 
@@ -9733,7 +9733,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMM_ATOMIC_UMAX                  */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_UMIN                  */ shader_glsl_atomic,
     /* WINED3DSIH_IMM_ATOMIC_XOR                   */ shader_glsl_atomic,
-    /* WINED3DSIH_IMUL                             */ shader_glsl_imul,
+    /* WINED3DSIH_IMUL                             */ shader_glsl_mul_extended,
     /* WINED3DSIH_INE                              */ shader_glsl_relop,
     /* WINED3DSIH_INEG                             */ shader_glsl_unary_op,
     /* WINED3DSIH_ISHL                             */ shader_glsl_binop,
@@ -9829,7 +9829,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ULT                              */ shader_glsl_relop,
     /* WINED3DSIH_UMAX                             */ shader_glsl_map2gl,
     /* WINED3DSIH_UMIN                             */ shader_glsl_map2gl,
-    /* WINED3DSIH_UMUL                             */ NULL,
+    /* WINED3DSIH_UMUL                             */ shader_glsl_mul_extended,
     /* WINED3DSIH_USHR                             */ shader_glsl_binop,
     /* WINED3DSIH_UTOF                             */ shader_glsl_to_float,
     /* WINED3DSIH_XOR                              */ shader_glsl_binop,
