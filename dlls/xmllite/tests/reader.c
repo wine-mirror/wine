@@ -1013,11 +1013,21 @@ static void test_read_comment(void)
             ok(len == 0, "got %u\n", len);
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
+            str = NULL;
+            hr = IXmlReader_GetLocalName(reader, &str, NULL);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+
             len = 1;
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(len == 0, "got %u\n", len);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+
+            str = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &str, NULL);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             /* value */
@@ -1708,10 +1718,13 @@ static void test_read_cdata(void)
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            ok(len == 0, "got %u\n", len);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+
+            str = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &str, NULL);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             /* value */
             len = 1;
@@ -1779,30 +1792,29 @@ static void test_read_text(void)
 
             ok(type == XmlNodeType_Text, "got %d for %s\n", type, test->xml);
 
-            str_exp = a2w(test->name);
-
             len = 1;
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
+            ok(len == 0, "got %u\n", len);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, NULL);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-
-            free_str(str_exp);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             len = 1;
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, &len);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            ok(len == 0, "got %u\n", len);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+
+            str = NULL;
+            hr = IXmlReader_GetQualifiedName(reader, &str, NULL);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             /* value */
             len = 1;
