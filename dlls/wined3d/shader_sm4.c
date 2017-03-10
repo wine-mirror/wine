@@ -200,6 +200,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_DCL_RESOURCE                     = 0x58,
     WINED3D_SM4_OP_DCL_CONSTANT_BUFFER              = 0x59,
     WINED3D_SM4_OP_DCL_SAMPLER                      = 0x5a,
+    WINED3D_SM4_OP_DCL_INDEX_RANGE                  = 0x5b,
     WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY              = 0x5c,
     WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE              = 0x5d,
     WINED3D_SM4_OP_DCL_VERTICES_OUT                 = 0x5e,
@@ -571,6 +572,14 @@ static void shader_sm4_read_dcl_sampler(struct wined3d_shader_instruction *ins,
     shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_SAMPLER, &ins->declaration.dst);
 }
 
+static void shader_sm4_read_dcl_index_range(struct wined3d_shader_instruction *ins,
+        DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
+        struct wined3d_sm4_data *priv)
+{
+    shader_sm4_read_dst_param(priv, &tokens, WINED3D_DATA_OPAQUE, &ins->declaration.index_range.first_register);
+    ins->declaration.index_range.last_register = *tokens;
+}
+
 static void shader_sm4_read_dcl_output_topology(struct wined3d_shader_instruction *ins,
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
@@ -909,6 +918,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
             shader_sm4_read_dcl_constant_buffer},
     {WINED3D_SM4_OP_DCL_SAMPLER,                      WINED3DSIH_DCL_SAMPLER,                      "",     "",
             shader_sm4_read_dcl_sampler},
+    {WINED3D_SM4_OP_DCL_INDEX_RANGE,                  WINED3DSIH_DCL_INDEX_RANGE,                  "",     "",
+            shader_sm4_read_dcl_index_range},
     {WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY,              WINED3DSIH_DCL_OUTPUT_TOPOLOGY,              "",     "",
             shader_sm4_read_dcl_output_topology},
     {WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE,              WINED3DSIH_DCL_INPUT_PRIMITIVE,              "",     "",
