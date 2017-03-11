@@ -48,6 +48,21 @@ typedef enum
     IpDadStatePreferred,
 } NL_DAD_STATE;
 
+typedef enum _NL_LINK_LOCAL_ADDRESS_BEHAVIOR
+{
+    LinkLocalAlwaysOff = 0,
+    LinkLocalDelayed,
+    LinkLocalAlwaysOn,
+    LinkLocalUnchanged = -1,
+} NL_LINK_LOCAL_ADDRESS_BEHAVIOR;
+
+typedef enum _NL_ROUTER_DISCOVERY_BEHAVIOR
+{
+    RouterDiscoveryDisabled = 0,
+    RouterDiscoveryEnabled,
+    RouterDiscoveryDhcp,
+    RouterDiscoveryUnchanged = -1,
+} NL_ROUTER_DISCOVERY_BEHAVIOR;
 
 typedef enum
 {
@@ -75,5 +90,16 @@ typedef enum
     MAKE_ROUTE_PROTOCOL(NT_STATIC_NON_DOD, 10007),
 } NL_ROUTE_PROTOCOL, *PNL_ROUTE_PROTOCOL;
 
+typedef struct _NL_INTERFACE_OFFLOAD_ROD
+{
+    BOOLEAN NlChecksumSupported : 1;
+    BOOLEAN NlOptionsSupported : 1;
+    BOOLEAN TlDatagramChecksumSupported : 1;
+    BOOLEAN TlStreamChecksumSupported : 1;
+    BOOLEAN TlStreamOptionsSupported : 1;
+    BOOLEAN FastPathCompatible : 1;
+    BOOLEAN TlLargeSendOffloadSupported : 1;
+    BOOLEAN TlGiantSendOffloadSupported : 1;
+} NL_INTERFACE_OFFLOAD_ROD, *PNL_INTERFACE_OFFLOAD_ROD;
 
 #endif /* __WINE_NLDEF_H */

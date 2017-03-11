@@ -77,7 +77,8 @@ typedef enum {
     ScopeLevelAdmin        = 4,
     ScopeLevelSite         = 5,
     ScopeLevelOrganization = 8,
-    ScopeLevelGlobal       = 14
+    ScopeLevelGlobal       = 14,
+    ScopeLevelCount        = 16,
 } SCOPE_LEVEL;
 
 typedef struct

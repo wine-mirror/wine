@@ -2640,8 +2640,8 @@ DWORD WINAPI NotifyAddrChange(PHANDLE Handle, LPOVERLAPPED overlapped)
 /******************************************************************
  *    NotifyIpInterfaceChange (IPHLPAPI.@)
  */
-DWORD WINAPI NotifyIpInterfaceChange(ULONG family, PVOID callback, PVOID context,
-                                     BOOLEAN init_notify, PHANDLE handle)
+DWORD WINAPI NotifyIpInterfaceChange(ADDRESS_FAMILY family, PIPINTERFACE_CHANGE_CALLBACK callback,
+                                     PVOID context, BOOLEAN init_notify, PHANDLE handle)
 {
     FIXME("(family %d, callback %p, context %p, init_notify %d, handle %p): stub\n",
           family, callback, context, init_notify, handle);
