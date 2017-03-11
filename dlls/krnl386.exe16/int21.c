@@ -5282,7 +5282,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
 
     case 0x68: /* "FFLUSH" - COMMIT FILE */
         TRACE( "FFLUSH - handle %d\n", BX_reg(context) );
-        if (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ))
+        if (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ) &&
+                GetLastError() != ERROR_ACCESS_DENIED)
             bSetDOSExtendedError = TRUE;
         break;
 
@@ -5307,7 +5308,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
 
     case 0x6a: /* COMMIT FILE */
         TRACE( "COMMIT FILE - handle %d\n", BX_reg(context) );
-        if (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ))
+        if (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ) &&
+                GetLastError() != ERROR_ACCESS_DENIED)
             bSetDOSExtendedError = TRUE;
         break;
 
