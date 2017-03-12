@@ -4408,7 +4408,7 @@ static void test_ioctl(void)
     NTSTATUS status;
 
     file = create_temp_file(FILE_FLAG_OVERLAPPED);
-    ok(file != INVALID_HANDLE_VALUE, "coult not create temp file\n");
+    ok(file != INVALID_HANDLE_VALUE, "could not create temp file\n");
 
     SetEvent(event);
     status = pNtFsControlFile(file, event, NULL, NULL, &iosb, 0xdeadbeef, 0, 0, 0, 0);
