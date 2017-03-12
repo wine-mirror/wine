@@ -73,6 +73,11 @@ static HRESULT WINAPI dslocator_QueryInterface(IDataSourceLocator *iface, REFIID
     {
       *ppvoid = &This->IDataInitialize_iface;
     }
+    else if (IsEqualIID(riid, &IID_IRunnableObject))
+    {
+      TRACE("IID_IRunnableObject returning NULL\n");
+      return E_NOINTERFACE;
+    }
 
     if(*ppvoid)
     {

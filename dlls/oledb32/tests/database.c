@@ -859,6 +859,7 @@ static void test_dslocator(void)
     if(SUCCEEDED(hr))
     {
         IDataInitialize *datainit, *datainit2;
+        IRunnableObject *runable;
         COMPATIBLE_LONG hwnd = 0;
 
         if (0) /* Crashes under Window 7 */
@@ -897,6 +898,9 @@ static void test_dslocator(void)
         hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IDataInitialize, (void **)&datainit2);
         ok(hr == S_OK, "got %08x\n", hr);
         ok(datainit == datainit2, "Got %p, previous %p\n", datainit, datainit2);
+
+        hr = IDataSourceLocator_QueryInterface(dslocator, &IID_IRunnableObject, (void **)&runable);
+        ok(hr == E_NOINTERFACE, "got %08x\n", hr);
 
         IDataInitialize_Release(datainit2);
         IDataInitialize_Release(datainit);
