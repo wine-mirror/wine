@@ -445,7 +445,7 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources(scrobj_instance);
 }
 
-HRESULT WINAPI scriptlet_typelib_CreateInstance(IClassFactory *factory, IUnknown *outer, REFIID riid, void **obj)
+static HRESULT WINAPI scriptlet_typelib_CreateInstance(IClassFactory *factory, IUnknown *outer, REFIID riid, void **obj)
 {
     struct scriptlet_typelib *This;
     HRESULT hr;
