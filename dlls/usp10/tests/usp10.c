@@ -1186,6 +1186,7 @@ static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
     }
 
 cleanup:
+    HeapFree(GetProcessHeap(),0,string2);
     HeapFree(GetProcessHeap(),0,logclust2);
     HeapFree(GetProcessHeap(),0,charProp2);
     HeapFree(GetProcessHeap(),0,glyphs2);
