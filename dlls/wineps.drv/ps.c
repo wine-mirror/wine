@@ -50,6 +50,7 @@ static const char *cups_duplexes[3] =
 };
 static const char cups_collate_false[] = "%cupsJobTicket: collate=false\n";
 static const char cups_collate_true[] = "%cupsJobTicket: collate=true\n";
+static const char cups_ap_d_inputslot[] = "%cupsJobTicket: AP_D_InputSlot=\n"; /* intentionally empty value */
 
 static const char psheader[] = /* title llx lly urx ury orientation */
 "%%%%Creator: Wine PostScript Driver\n"
@@ -375,6 +376,10 @@ static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
                 write_spool( dev, cups_collate_true, sizeof(cups_collate_true) - 1 );
         }
     }
+
+    if (!(physDev->Devmode->dmPublic.dmFields & DM_DEFAULTSOURCE) ||
+        physDev->Devmode->dmPublic.u1.s1.dmDefaultSource == DMBIN_AUTO)
+        write_spool( dev, cups_ap_d_inputslot, sizeof(cups_ap_d_inputslot) - 1 );
 }
 
 INT PSDRV_WriteHeader( PHYSDEV dev, LPCWSTR title )
