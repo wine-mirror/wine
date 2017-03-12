@@ -1126,7 +1126,7 @@ static void Direct3D1Test(void)
     /* Interface consistency check. */
     hr = IDirect3DDevice_GetDirect3D(Direct3DDevice1, &Direct3D_alt);
     ok(hr == D3D_OK, "IDirect3DDevice_GetDirect3D failed: %08x\n", hr);
-    ok(Direct3D_alt == Direct3D1, "Direct3D1 struct pointer missmatch: %p != %p\n", Direct3D_alt, Direct3D1);
+    ok(Direct3D_alt == Direct3D1, "Direct3D1 struct pointer mismatch: %p != %p\n", Direct3D_alt, Direct3D1);
     IDirect3D_Release(Direct3D_alt);
 
     memset(&desc, 0, sizeof(desc));

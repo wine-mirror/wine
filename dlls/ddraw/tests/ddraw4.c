@@ -13204,7 +13204,7 @@ static void test_ck_operation(void)
     hr = IDirectDrawSurface4_Lock(dst, NULL, &surface_desc, DDLOCK_WAIT, NULL);
     ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
     color = surface_desc.lpSurface;
-    /* Ensure the desination was not changed. */
+    /* Ensure the destination was not changed. */
     ok(color[0] == 0x55555555 && color[1] == 0x55555555 && color[2] == 0x55555555 &&
             color[3] == 0x55555555 && color[4] == 0x55555555 && color[5] == 0x55555555,
             "Got unexpected content %08x %08x %08x %08x %08x %08x.\n",
