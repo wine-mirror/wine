@@ -383,18 +383,26 @@ static void init_filedlg_infoW(OPENFILENAMEW *ofn, FileOpenDlgInfos *info)
 static void init_filedlg_infoA(OPENFILENAMEA *ofn, FileOpenDlgInfos *info)
 {
     OPENFILENAMEW ofnW;
+    int len;
 
     ofnW = *(OPENFILENAMEW *)ofn;
 
     ofnW.lpstrInitialDir = heap_strdupAtoW(ofn->lpstrInitialDir);
-    ofnW.lpstrFile = heap_strdupAtoW(ofn->lpstrFile);
     ofnW.lpstrDefExt = heap_strdupAtoW(ofn->lpstrDefExt);
     ofnW.lpstrTitle = heap_strdupAtoW(ofn->lpstrTitle);
 
+    if (ofn->lpstrFile)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, ofn->lpstrFile, ofn->nMaxFile, NULL, 0);
+        ofnW.lpstrFile = MemAlloc(len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, ofn->lpstrFile, ofn->nMaxFile, ofnW.lpstrFile, len);
+        ofnW.nMaxFile = len;
+    }
+
     if (ofn->lpstrFilter)
     {
-        int n, len;
         LPCSTR s;
+        int n;
 
         /* filter is a list...  title\0ext\0......\0\0 */
         s = ofn->lpstrFilter;
