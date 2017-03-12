@@ -152,6 +152,7 @@ static void test_WlanEnumInterfaces(void)
     {
         skip("No wireless interfaces\n");
         WlanCloseHandle(handle, NULL);
+        WlanFreeMemory(list);
         return;
     }
 
