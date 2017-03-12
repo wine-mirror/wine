@@ -33,7 +33,7 @@ static LONG CALLBACK rpc_exception_filter(EXCEPTION_POINTERS *ptrs)
 
     if (winetest_debug)
     {
-        fprintf(stdout, "rpcapi: 0 tests executed (0 marked as todo, 0 failures), 1 skipped.\n");
+        fprintf(stdout, "%04x:rpcapi: 0 tests executed (0 marked as todo, 0 failures), 1 skipped.\n", GetCurrentProcessId());
         fflush(stdout);
     }
     ExitProcess(0);
