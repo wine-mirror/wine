@@ -119,7 +119,7 @@ static void test_enum_hosts(void)
     DPN_APPLICATION_DESC appdesc;
     DPNHANDLE async = 0, async2 = 0;
     static const WCHAR localhost[] = {'1','2','7','.','0','.','0','.','1',0};
-    DWORD threadcnt;
+    DWORD threadcnt, threadorig;
 
     enumevent = CreateEventA( NULL, TRUE, FALSE, NULL);
 
@@ -170,9 +170,10 @@ static void test_enum_hosts(void)
     ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
     todo_wine ok(async, "No Handle returned\n");
 
-    hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
+    /* The first EnumHosts call will increase the thread count */
+    hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadorig, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(threadcnt == 6, "got %d\n", threadcnt);
+    todo_wine ok(threadorig > 1, "got %d\n", threadorig);
 
     hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async2, 0);
     ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Client_EnumHosts failed with 0x%08x\n", hr);
@@ -181,21 +182,21 @@ static void test_enum_hosts(void)
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(threadcnt == 6, "got %d\n", threadcnt);
+    ok(threadcnt == threadorig, "got %d\n", threadcnt);
 
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async, 0);
     ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(threadcnt == 6, "got %d\n", threadcnt);
+    ok(threadcnt == threadorig, "got %d\n", threadcnt);
 
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async2, 0);
     ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(threadcnt == 6, "got %d\n", threadcnt);
+    ok(threadcnt == threadorig, "got %d\n", threadcnt);
 
     IDirectPlay8Address_Release(local);
     IDirectPlay8Address_Release(host);
