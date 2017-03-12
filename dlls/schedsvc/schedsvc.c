@@ -259,9 +259,10 @@ static int detect_encoding(const void *buffer, DWORD size)
 
 static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
 {
+    char *src, *buff;
     HANDLE hfile;
     DWORD size, attrs;
-    char *src;
+    HRESULT hr = S_OK;
     int cp;
 
     attrs = GetFileAttributesW(name);
@@ -275,7 +276,7 @@ static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
         return HRESULT_FROM_WIN32(GetLastError());
 
     size = GetFileSize(hfile, NULL);
-    src = heap_alloc(size + 2);
+    buff = src = heap_alloc(size + 2);
     if (!src)
     {
         CloseHandle(hfile);
@@ -300,9 +301,13 @@ static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
 
     size = MultiByteToWideChar(cp, 0, src, -1, NULL, 0);
     *xml = heap_alloc(size * sizeof(WCHAR));
-    if (!*xml) return E_OUTOFMEMORY;
-    MultiByteToWideChar(cp, 0, src, -1, *xml, size);
-    return S_OK;
+    if (*xml)
+        MultiByteToWideChar(cp, 0, src, -1, *xml, size);
+    else
+        hr = E_OUTOFMEMORY;
+    heap_free(buff);
+
+    return hr;
 }
 
 HRESULT __cdecl SchRpcRetrieveTask(const WCHAR *path, const WCHAR *languages, ULONG *n_languages, WCHAR **xml)
