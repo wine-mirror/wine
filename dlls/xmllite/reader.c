@@ -2847,6 +2847,7 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *nodetype)
         {
             This->state = XmlReadState_Error;
             This->nodetype = XmlNodeType_None;
+            This->depth = 0;
             This->error = hr;
         }
     }

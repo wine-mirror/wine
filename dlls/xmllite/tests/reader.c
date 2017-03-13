@@ -2402,7 +2402,6 @@ static void test_max_element_depth(void)
     hr = IXmlReader_Read(reader, NULL);
     ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
 
-todo_wine
     TEST_DEPTH2(reader, 0, 2);
     TEST_READER_STATE(reader, XmlReadState_Error);
 
@@ -2412,7 +2411,6 @@ todo_wine
     hr = IXmlReader_Read(reader, NULL);
     ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
 
-todo_wine
     TEST_DEPTH2(reader, 0, 2);
     TEST_READER_STATE(reader, XmlReadState_Error);
     IStream_Release(stream);
@@ -2454,7 +2452,6 @@ todo_wine
     ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
     ok(nodetype == XmlNodeType_None, "got node type %d\n", nodetype);
 
-todo_wine
     TEST_DEPTH2(reader, 0, 2);
     TEST_READER_STATE(reader, XmlReadState_Error);
 
