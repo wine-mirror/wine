@@ -592,26 +592,13 @@ static void shader_glsl_load_samplers(const struct wined3d_gl_info *gl_info,
 static void shader_glsl_load_graphics_samplers(const struct wined3d_gl_info *gl_info,
         struct shader_glsl_priv *priv, const DWORD *tex_unit_map, GLuint program_id)
 {
-    const char *prefix;
-    unsigned int i;
+    unsigned int i, base_idx, count;
 
-    static const struct
+    for (i = 0; i < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++i)
     {
-        enum wined3d_shader_type type;
-        unsigned int base_idx;
-        unsigned int count;
-    }
-    sampler_info[] =
-    {
-        {WINED3D_SHADER_TYPE_PIXEL,     0,                      MAX_FRAGMENT_SAMPLERS},
-        {WINED3D_SHADER_TYPE_VERTEX,    MAX_FRAGMENT_SAMPLERS,  MAX_VERTEX_SAMPLERS},
-    };
-
-    for (i = 0; i < ARRAY_SIZE(sampler_info); ++i)
-    {
-        prefix = shader_glsl_get_prefix(sampler_info[i].type);
-        shader_glsl_load_samplers(gl_info, priv, prefix,
-                sampler_info[i].base_idx, sampler_info[i].count, tex_unit_map, program_id);
+        wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, i, &base_idx, &count);
+        shader_glsl_load_samplers(gl_info, priv, shader_glsl_get_prefix(i),
+                base_idx, count, tex_unit_map, program_id);
     }
 }
 

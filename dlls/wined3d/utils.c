@@ -5994,10 +5994,32 @@ void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *g
 void wined3d_gl_limits_get_texture_unit_range(const struct wined3d_gl_limits *gl_limits,
         enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count)
 {
+    static const struct
+    {
+        enum wined3d_shader_type type;
+        unsigned int base_idx;
+        unsigned int count;
+    }
+    legacy_sampler_info[] =
+    {
+        {WINED3D_SHADER_TYPE_PIXEL,  0,                     MAX_FRAGMENT_SAMPLERS},
+        {WINED3D_SHADER_TYPE_VERTEX, MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS},
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(legacy_sampler_info); ++i)
+    {
+        if (legacy_sampler_info[i].type == shader_type)
+        {
+            *base = legacy_sampler_info[i].base_idx;
+            *count = legacy_sampler_info[i].count;
+            return;
+        }
+    }
+
     if (shader_type != WINED3D_SHADER_TYPE_COMPUTE)
     {
         *base = *count = 0;
-        ERR("Unhandled shader type %#x.\n", shader_type);
         return;
     }
 

@@ -3385,23 +3385,13 @@ static void context_bind_shader_resources(struct wined3d_context *context,
 static void context_bind_graphics_shader_resources(struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    unsigned int i;
+    unsigned int i, base_idx, count;
 
-    static const struct
+    for (i = 0; i < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++i)
     {
-        enum wined3d_shader_type type;
-        unsigned int base_idx;
-        unsigned int count;
+        wined3d_gl_limits_get_texture_unit_range(&context->gl_info->limits, i, &base_idx, &count);
+        context_bind_shader_resources(context, state, i, base_idx, count);
     }
-    shader_types[] =
-    {
-        {WINED3D_SHADER_TYPE_PIXEL,     0,                      MAX_FRAGMENT_SAMPLERS},
-        {WINED3D_SHADER_TYPE_VERTEX,    MAX_FRAGMENT_SAMPLERS,  MAX_VERTEX_SAMPLERS},
-    };
-
-    for (i = 0; i < ARRAY_SIZE(shader_types); ++i)
-        context_bind_shader_resources(context, state, shader_types[i].type,
-                shader_types[i].base_idx, shader_types[i].count);
 }
 
 static void context_load_unordered_access_resources(struct wined3d_context *context,
