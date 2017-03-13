@@ -805,10 +805,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             GetWindowRect(hwnd, &rc1);
             SetRect(&rc2, winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy);
             /* note: winpos coordinates are relative to parent */
-            MapWindowPoints(GetParent(hwnd), 0, (LPPOINT)&rc2, 2);
-            if (0)
-            {
-            /* Uncomment this once the test succeeds in all cases */
+            MapWindowPoints(GetAncestor(hwnd,GA_PARENT), 0, (LPPOINT)&rc2, 2);
             ok(EqualRect(&rc1, &rc2), "rects do not match %s / %s\n", wine_dbgstr_rect(&rc1),
                wine_dbgstr_rect(&rc2));
 
@@ -817,7 +814,6 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
             ok(EqualRect(&rc1, &rc2), "rects do not match %s / %s\n", wine_dbgstr_rect(&rc1),
                wine_dbgstr_rect(&rc2));
-            }
 	    break;
 	}
 	case WM_NCCREATE:
