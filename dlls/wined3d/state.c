@@ -3489,7 +3489,9 @@ static void sampler_texmatrix(struct wined3d_context *context, const struct wine
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if(!texture) return;
+    if (!texture)
+        return;
+
     /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
      * wined3d_texture_apply_state_changes() multiplies the set matrix with a fixup matrix. Before the
      * scaling is reapplied or removed, the texture matrix has to be reapplied
@@ -3499,17 +3501,16 @@ static void sampler_texmatrix(struct wined3d_context *context, const struct wine
      */
     if (sampler < MAX_TEXTURES)
     {
-        const BOOL texIsPow2 = !(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT);
+        const BOOL tex_is_pow2 = !(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT);
 
-        if (texIsPow2 || (context->lastWasPow2Texture & (1u << sampler)))
+        if (tex_is_pow2 || (context->lastWasPow2Texture & (1u << sampler)))
         {
-            if (texIsPow2)
+            if (tex_is_pow2)
                 context->lastWasPow2Texture |= 1u << sampler;
             else
                 context->lastWasPow2Texture &= ~(1u << sampler);
 
-            transform_texture(context, state,
-                    STATE_TEXTURESTAGE(context->tex_unit_map[sampler], WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
+            transform_texture(context, state, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS));
         }
     }
 }
