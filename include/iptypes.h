@@ -244,7 +244,21 @@ typedef struct _IP_ADAPTER_ADDRESSES_LH {
     PWCHAR                          FriendlyName;
     BYTE                            PhysicalAddress[MAX_ADAPTER_ADDRESS_LENGTH];
     DWORD                           PhysicalAddressLength;
-    DWORD                           Flags;
+    union {
+        DWORD                       Flags;
+        struct {
+            DWORD                   DdnsEnabled : 1;
+            DWORD                   RegisterAdapterSuffix : 1;
+            DWORD                   Dhcpv4Enabled : 1;
+            DWORD                   ReceiveOnly : 1;
+            DWORD                   NoMulticast : 1;
+            DWORD                   Ipv6OtherStatefulConfig : 1;
+            DWORD                   NetbiosOverTcpipEnabled : 1;
+            DWORD                   Ipv4Enabled : 1;
+            DWORD                   Ipv6Enabled : 1;
+            DWORD                   Ipv6ManagedAddressConfigurationSupported : 1;
+        } DUMMYSTRUCTNAME1;
+    } DUMMYUNIONNAME1;
     DWORD                           Mtu;
     DWORD                           IfType;
     IF_OPER_STATUS                  OperStatus;
