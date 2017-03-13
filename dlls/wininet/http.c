@@ -381,7 +381,6 @@ static WCHAR *get_host_header( http_request_t *req )
 }
 
 struct data_stream_vtbl_t {
-    DWORD (*get_avail_data)(data_stream_t*,http_request_t*);
     BOOL (*end_of_data)(data_stream_t*,http_request_t*);
     DWORD (*read)(data_stream_t*,http_request_t*,BYTE*,DWORD,DWORD*,BOOL);
     BOOL (*drain_content)(data_stream_t*,http_request_t*);
@@ -439,12 +438,6 @@ typedef struct {
     DWORD buf_pos;
     BOOL end_of_data;
 } gzip_stream_t;
-
-static DWORD gzip_get_avail_data(data_stream_t *stream, http_request_t *req)
-{
-    /* Allow reading only from read buffer */
-    return 0;
-}
 
 static BOOL gzip_end_of_data(data_stream_t *stream, http_request_t *req)
 {
@@ -534,7 +527,6 @@ static void gzip_destroy(data_stream_t *stream)
 }
 
 static const data_stream_vtbl_t gzip_stream_vtbl = {
-    gzip_get_avail_data,
     gzip_end_of_data,
     gzip_read,
     gzip_drain_content,
@@ -2614,18 +2606,6 @@ static DWORD refill_read_buffer(http_request_t *req, BOOL allow_blocking, DWORD 
     return res;
 }
 
-static DWORD netconn_get_avail_data(data_stream_t *stream, http_request_t *req)
-{
-    netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
-    DWORD avail = 0;
-
-    if(is_valid_netconn(req->netconn))
-        NETCON_query_data_available(req->netconn, &avail);
-    return netconn_stream->content_length == ~0u
-        ? avail
-        : min(avail, netconn_stream->content_length-netconn_stream->content_read);
-}
-
 static BOOL netconn_end_of_data(data_stream_t *stream, http_request_t *req)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
@@ -2682,7 +2662,6 @@ static void netconn_destroy(data_stream_t *stream)
 }
 
 static const data_stream_vtbl_t netconn_stream_vtbl = {
-    netconn_get_avail_data,
     netconn_end_of_data,
     netconn_read,
     netconn_drain_content,
@@ -2839,26 +2818,6 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     return ERROR_SUCCESS;
 }
 
-static DWORD chunked_get_avail_data(data_stream_t *stream, http_request_t *req)
-{
-    chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
-    DWORD avail = 0;
-
-    if(chunked_stream->state != CHUNKED_STREAM_STATE_READING_CHUNK) {
-        DWORD res, read;
-
-        /* try to process to the next chunk */
-        res = chunked_read(stream, req, NULL, 0, &read, FALSE);
-        if(res != ERROR_SUCCESS || chunked_stream->state != CHUNKED_STREAM_STATE_READING_CHUNK)
-            return 0;
-    }
-
-    if(is_valid_netconn(req->netconn) && chunked_stream->buf_size < chunked_stream->chunk_size)
-        NETCON_query_data_available(req->netconn, &avail);
-
-    return min(avail + chunked_stream->buf_size, chunked_stream->chunk_size);
-}
-
 static BOOL chunked_drain_content(data_stream_t *stream, http_request_t *req)
 {
     chunked_stream_t *chunked_stream = (chunked_stream_t*)stream;
@@ -2872,7 +2831,6 @@ static void chunked_destroy(data_stream_t *stream)
 }
 
 static const data_stream_vtbl_t chunked_stream_vtbl = {
-    chunked_get_avail_data,
     chunked_end_of_data,
     chunked_read,
     chunked_drain_content,
