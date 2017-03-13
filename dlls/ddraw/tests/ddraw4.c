@@ -13450,6 +13450,107 @@ static void test_vb_refcount(void)
     DestroyWindow(window);
 }
 
+static void test_compute_sphere_visibility(void)
+{
+    static D3DMATRIX proj_1 =
+    {
+        1.810660f, 0.000000f,  0.000000f, 0.000000f,
+        0.000000f, 2.414213f,  0.000000f, 0.000000f,
+        0.000000f, 0.000000f,  1.020408f, 1.000000f,
+        0.000000f, 0.000000f, -0.102041f, 0.000000f,
+    };
+    static D3DMATRIX proj_2 =
+    {
+        10.0f,  0.0f,  0.0f, 0.0f,
+         0.0f, 10.0f,  0.0f, 0.0f,
+         0.0f,  0.0f, 10.0f, 0.0f,
+         0.0f,  0.0f,  0.0f, 1.0f,
+    };
+    static D3DMATRIX view_1 =
+    {
+          1.000000f, 0.000000f,  0.000000f, 0.000000f,
+          0.000000f, 0.768221f, -0.640185f, 0.000000f,
+         -0.000000f, 0.640185f,  0.768221f, 0.000000f,
+        -14.852037f, 9.857489f, 11.600972f, 1.000000f,
+    };
+    static D3DMATRIX identity =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+    static struct
+    {
+        D3DMATRIX *view, *proj;
+        unsigned int sphere_count;
+        D3DVECTOR center[3];
+        D3DVALUE radius[3];
+        const DWORD expected[3];
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {&view_1, &proj_1, 1, {{{11.461533f}, {-4.761727f}, {-1.171646f}}}, {38.252632f}, {0x1555}},
+        {&view_1, &proj_1, 3, {{{-3.515620f}, {-1.560661f}, {-12.464638f}},
+                 {{14.290396f}, {-2.981143f}, {-24.311312f}},
+                 {{1.461626f}, {-6.093709f}, {-13.901010f}}},
+                 {4.354097f, 12.500704f, 17.251318f}, {0x154a, 0x1555, 0x1555}},
+        {&identity, &proj_2, 1, {{{0.0f}, {0.0f}, {0.05f}}}, {0.04f}, {0x1555}, TRUE},
+        {&identity, &identity, 1, {{{0.0f}, {0.0f}, {0.5f}}}, {0.5f}, {0x1401}},
+        {&identity, &identity, 1, {{{0.0f}, {0.0f}, {0.0f}}}, {0.0f}, {0x401}},
+        {&identity, &identity, 1, {{{-1.0f}, {-1.0f}, {0.5f}}}, {0.25f}, {0x1505}, TRUE}, /* 5 */
+        {&identity, &identity, 1, {{{-20.0f}, {0.0f}, {0.5f}}}, {3.0f}, {0x154a}},
+        {&identity, &identity, 1, {{{20.0f}, {0.0f}, {0.5f}}}, {3.0f}, {0x1562}},
+        {&identity, &identity, 1, {{{0.0f}, {-20.0f}, {0.5f}}}, {3.0f}, {0x1616}},
+        {&identity, &identity, 1, {{{0.0f}, {20.0f}, {0.5f}}}, {3.0f}, {0x1496}},
+        {&identity, &identity, 1, {{{0.0f}, {0.0f}, {-20.0f}}}, {3.0f}, {0x956}}, /* 10 */
+        {&identity, &identity, 1, {{{0.0f}, {0.0f}, {20.0f}}}, {3.0f}, {0x2156}},
+    };
+    IDirect3DViewport3 *viewport;
+    IDirect3DDevice3 *device;
+    unsigned int i, j;
+    DWORD result[3];
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+
+    IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &identity);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_VIEW, tests[i].view);
+        IDirect3DDevice3_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, tests[i].proj);
+
+        hr = IDirect3DDevice3_ComputeSphereVisibility(device, tests[i].center, tests[i].radius,
+                tests[i].sphere_count, 0, result);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+        for (j = 0; j < tests[i].sphere_count; ++j)
+            todo_wine_if(tests[i].todo)
+                ok(result[j] == tests[i].expected[j], "Test %u sphere %u: expected %#x, got %#x.\n",
+                        i, j, tests[i].expected[j], result[j]);
+    }
+
+    destroy_viewport(device, viewport);
+    refcount = IDirect3DDevice3_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     IDirectDraw4 *ddraw;
@@ -13555,4 +13656,5 @@ START_TEST(ddraw4)
     test_get_surface_from_dc();
     test_ck_operation();
     test_vb_refcount();
+    test_compute_sphere_visibility();
 }
