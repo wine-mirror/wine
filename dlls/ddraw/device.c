@@ -4494,46 +4494,48 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface
  *
  *****************************************************************************/
 
-static DWORD in_plane(UINT idx, struct wined3d_vec4 p, D3DVECTOR center, D3DVALUE radius)
+static DWORD in_plane(UINT idx, struct wined3d_vec4 p, D3DVECTOR center, D3DVALUE radius, BOOL equality)
 {
     float distance, norm;
 
     norm = sqrtf(p.x * p.x + p.y * p.y + p.z * p.z);
     distance = (p.x * center.u1.x + p.y * center.u2.y + p.z * center.u3.z + p.w) / norm;
 
-    if (fabs(distance) < radius)
-        return D3DSTATUS_CLIPUNIONLEFT << idx;
-    if (distance < -radius)
-        return (D3DSTATUS_CLIPUNIONLEFT | D3DSTATUS_CLIPINTERSECTIONLEFT) << idx;
+    if (equality)
+    {
+        if (fabs(distance) <= radius)
+            return D3DSTATUS_CLIPUNIONLEFT << idx;
+        if (distance <= -radius)
+            return (D3DSTATUS_CLIPUNIONLEFT | D3DSTATUS_CLIPINTERSECTIONLEFT) << idx;
+    }
+    else
+    {
+        if (fabs(distance) < radius)
+            return D3DSTATUS_CLIPUNIONLEFT << idx;
+        if (distance < -radius)
+            return (D3DSTATUS_CLIPUNIONLEFT | D3DSTATUS_CLIPINTERSECTIONLEFT) << idx;
+    }
     return 0;
 }
 
-static HRESULT WINAPI d3d_device7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
-        D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count, DWORD flags, DWORD *return_values)
+static void prepare_clip_space_planes(struct d3d_device *device, struct wined3d_vec4 *plane)
 {
-    struct wined3d_vec4 plane[12];
-    DWORD enabled_planes;
     D3DMATRIX m, temp;
-    HRESULT hr;
-    UINT i, j;
 
-    TRACE("iface %p, centers %p, radii %p, sphere_count %u, flags %#x, return_values %p.\n",
-            iface, centers, radii, sphere_count, flags, return_values);
+    /* We want the wined3d matrices since those include the legacy viewport
+     * transformation. */
+    wined3d_mutex_lock();
+    wined3d_device_get_transform(device->wined3d_device,
+            WINED3D_TS_WORLD, (struct wined3d_matrix *)&m);
 
-    hr = d3d_device7_GetTransform(iface, D3DTRANSFORMSTATE_WORLD, &m);
-    if (hr != DD_OK)
-        return DDERR_INVALIDPARAMS;
-    hr = d3d_device7_GetTransform(iface, D3DTRANSFORMSTATE_VIEW, &temp);
-    if (hr != DD_OK)
-        return DDERR_INVALIDPARAMS;
+    wined3d_device_get_transform(device->wined3d_device,
+            WINED3D_TS_VIEW, (struct wined3d_matrix *)&temp);
     multiply_matrix(&m, &temp, &m);
 
-    hr = d3d_device7_GetTransform(iface, D3DTRANSFORMSTATE_PROJECTION, &temp);
-    if (hr != DD_OK)
-        return DDERR_INVALIDPARAMS;
+    wined3d_device_get_transform(device->wined3d_device,
+            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&temp);
     multiply_matrix(&m, &temp, &m);
-
-    IDirect3DDevice7_GetRenderState(iface, D3DRENDERSTATE_CLIPPLANEENABLE, &enabled_planes);
+    wined3d_mutex_unlock();
 
     /* Left plane. */
     plane[0].x = m._14 + m._11;
@@ -4570,33 +4572,85 @@ static HRESULT WINAPI d3d_device7_ComputeSphereVisibility(IDirect3DDevice7 *ifac
     plane[5].y = m._24 - m._23;
     plane[5].z = m._34 - m._33;
     plane[5].w = m._44 - m._43;
+}
 
-    for (j = 6; j < 12; ++j)
-        IDirect3DDevice7_GetClipPlane(iface, j - 6, (D3DVALUE *)&plane[j]);
+static void compute_sphere_visibility(struct wined3d_vec4 plane[12], DWORD enabled_planes, BOOL equality,
+        D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count, DWORD *return_values)
+{
+    UINT i, j;
 
     for (i = 0; i < sphere_count; ++i)
     {
         return_values[i] = 0;
-        for (j = 0; j < 6; ++j)
-            return_values[i] |= in_plane(j, plane[j], centers[i], radii[i]);
-        for (; j < 12; ++j)
-            if (enabled_planes & 1u << (j - 6))
-                return_values[i] |= in_plane(j, plane[j], centers[i], radii[i]);
+        for (j = 0; j < 12; ++j)
+            if (enabled_planes & 1u << j)
+                return_values[i] |= in_plane(j, plane[j], centers[i], radii[i], equality);
     }
+}
 
+static HRESULT WINAPI d3d_device7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
+        D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count, DWORD flags, DWORD *return_values)
+{
+    struct wined3d_vec4 plane[12];
+    DWORD enabled_planes = 0x3f;
+    DWORD user_clip_planes;
+    UINT j;
+
+    TRACE("iface %p, centers %p, radii %p, sphere_count %u, flags %#x, return_values %p.\n",
+            iface, centers, radii, sphere_count, flags, return_values);
+
+    prepare_clip_space_planes(impl_from_IDirect3DDevice7(iface), plane);
+
+    IDirect3DDevice7_GetRenderState(iface, D3DRENDERSTATE_CLIPPLANEENABLE, &user_clip_planes);
+    enabled_planes |= user_clip_planes << 6;
+    for (j = 6; j < 12; ++j)
+        IDirect3DDevice7_GetClipPlane(iface, j - 6, (D3DVALUE *)&plane[j]);
+
+    compute_sphere_visibility(plane, enabled_planes, FALSE, centers, radii, sphere_count, return_values);
     return D3D_OK;
 }
 
 static HRESULT WINAPI d3d_device3_ComputeSphereVisibility(IDirect3DDevice3 *iface,
         D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count, DWORD flags, DWORD *return_values)
 {
-    struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
+    static const DWORD enabled_planes = 0x3f;
+    struct wined3d_vec4 plane[6];
+    unsigned int i, j;
 
     TRACE("iface %p, centers %p, radii %p, sphere_count %u, flags %#x, return_values %p.\n",
             iface, centers, radii, sphere_count, flags, return_values);
 
-    return IDirect3DDevice7_ComputeSphereVisibility(&device->IDirect3DDevice7_iface,
-            centers, radii, sphere_count, flags, return_values);
+    prepare_clip_space_planes(impl_from_IDirect3DDevice3(iface), plane);
+
+    compute_sphere_visibility(plane, enabled_planes, TRUE, centers, radii, sphere_count, return_values);
+    for (i = 0; i < sphere_count; ++i)
+    {
+        BOOL intersect_frustum = FALSE, outside_frustum = FALSE;
+        DWORD d3d7_result = return_values[i];
+
+        return_values[i] = 0;
+
+        for (j = 0; j < 6; ++j)
+        {
+            DWORD clip = (d3d7_result >> j) & (D3DSTATUS_CLIPUNIONLEFT | D3DSTATUS_CLIPINTERSECTIONLEFT);
+
+            if (clip == D3DSTATUS_CLIPUNIONLEFT)
+            {
+                return_values[i] |= D3DVIS_INTERSECT_LEFT << j * 2;
+                intersect_frustum = TRUE;
+            }
+            else if (clip)
+            {
+                return_values[i] |= D3DVIS_OUTSIDE_LEFT << j * 2;
+                outside_frustum = TRUE;
+            }
+        }
+        if (outside_frustum)
+            return_values[i] |= D3DVIS_OUTSIDE_FRUSTUM;
+        else if (intersect_frustum)
+            return_values[i] |= D3DVIS_INTERSECT_FRUSTUM;
+    }
+    return D3D_OK;
 }
 
 /*****************************************************************************
