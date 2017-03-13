@@ -1024,7 +1024,8 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
 
     gen_ffp_frag_op(context, state, &settings, TRUE);
     desc = (const struct atifs_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
-    if(!desc) {
+    if (!desc)
+    {
         struct atifs_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*new_desc));
         if (!new_desc)
         {
@@ -1036,13 +1037,13 @@ static void set_tex_op_atifs(struct wined3d_context *context, const struct wined
         {
             if (settings.op[i].cop == WINED3D_TOP_DISABLE)
                 break;
-            new_desc->num_textures_used = i + 1;
+            ++new_desc->num_textures_used;
         }
 
         new_desc->parent.settings = settings;
         new_desc->shader = gen_ati_shader(settings.op, gl_info, new_desc->constants);
         add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
-        TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
+        TRACE("Allocated fixed function replacement shader descriptor %p.\n", new_desc);
         desc = new_desc;
     }
 
