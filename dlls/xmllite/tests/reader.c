@@ -1559,8 +1559,8 @@ static void test_read_element(void)
     type = XmlNodeType_Element;
     hr = IXmlReader_Read(reader, &type);
     ok(hr == WC_E_ELEMENTMATCH, "got %08x\n", hr);
-todo_wine
     ok(type == XmlNodeType_None, "got %d\n", type);
+    TEST_READER_STATE(reader, XmlReadState_Error);
 
     IStream_Release(stream);
 
@@ -2369,6 +2369,7 @@ static void test_max_element_depth(void)
                 "</c>"
             "</b>"
         "</a>";
+    XmlNodeType nodetype;
     unsigned int count;
     IXmlReader *reader;
     IStream *stream;
@@ -2401,20 +2402,19 @@ static void test_max_element_depth(void)
     hr = IXmlReader_Read(reader, NULL);
     ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
 
-todo_wine {
+todo_wine
     TEST_DEPTH2(reader, 0, 2);
     TEST_READER_STATE(reader, XmlReadState_Error);
-}
+
     hr = IXmlReader_SetProperty(reader, XmlReaderProperty_MaxElementDepth, 10);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = IXmlReader_Read(reader, NULL);
-todo_wine {
     ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
 
+todo_wine
     TEST_DEPTH2(reader, 0, 2);
     TEST_READER_STATE(reader, XmlReadState_Error);
-}
     IStream_Release(stream);
 
     /* test if stepping into attributes enforces depth limit too */
@@ -2444,13 +2444,20 @@ todo_wine {
     TEST_DEPTH(reader, 2);
     TEST_READER_STATE(reader, XmlReadState_Interactive);
 
-    hr = IXmlReader_Read(reader, NULL);
+    nodetype = 123;
+    hr = IXmlReader_Read(reader, &nodetype);
     ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
+    ok(nodetype == XmlNodeType_None, "got node type %d\n", nodetype);
 
-todo_wine {
+    nodetype = 123;
+    hr = IXmlReader_Read(reader, &nodetype);
+    ok(hr == SC_E_MAXELEMENTDEPTH, "got %08x\n", hr);
+    ok(nodetype == XmlNodeType_None, "got node type %d\n", nodetype);
+
+todo_wine
     TEST_DEPTH2(reader, 0, 2);
     TEST_READER_STATE(reader, XmlReadState_Error);
-}
+
     IStream_Release(stream);
 
     /* set max depth to 0, this disables depth limit */

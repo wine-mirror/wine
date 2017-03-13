@@ -264,6 +264,7 @@ typedef struct
     xmlreaderinput *input;
     IMalloc *imalloc;
     XmlReadState state;
+    HRESULT error; /* error set on XmlReadState_Error */
     XmlReaderInternalState instate;
     XmlReaderResumeState resumestate;
     XmlNodeType nodetype;
@@ -2821,19 +2822,37 @@ static HRESULT WINAPI xmlreader_Read(IXmlReader* iface, XmlNodeType *nodetype)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
     XmlNodeType oldtype = This->nodetype;
+    XmlNodeType type;
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, nodetype);
 
-    if (This->state == XmlReadState_Closed) return S_FALSE;
+    if (!nodetype)
+        nodetype = &type;
 
-    hr = reader_parse_nextnode(This);
-    if (oldtype == XmlNodeType_None && This->nodetype != oldtype)
-        This->state = XmlReadState_Interactive;
+    switch (This->state)
+    {
+    case XmlReadState_Closed:
+        hr = S_FALSE;
+        break;
+    case XmlReadState_Error:
+        hr = This->error;
+        break;
+    default:
+        hr = reader_parse_nextnode(This);
+        if (SUCCEEDED(hr) && oldtype == XmlNodeType_None && This->nodetype != oldtype)
+            This->state = XmlReadState_Interactive;
+
+        if (FAILED(hr))
+        {
+            This->state = XmlReadState_Error;
+            This->nodetype = XmlNodeType_None;
+            This->error = hr;
+        }
+    }
 
     TRACE("node type %s\n", debugstr_nodetype(This->nodetype));
-    if (nodetype)
-        *nodetype = This->nodetype;
+    *nodetype = This->nodetype;
 
     return hr;
 }
