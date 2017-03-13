@@ -74,6 +74,7 @@ MAKE_FUNCPTR(FT_Glyph_Transform);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
+MAKE_FUNCPTR(FT_Matrix_Multiply);
 MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Copy);
 MAKE_FUNCPTR(FT_Outline_Decompose);
@@ -194,6 +195,7 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
+    LOAD_FUNCPTR(FT_Matrix_Multiply)
     LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FT_Outline_Copy)
     LOAD_FUNCPTR(FT_Outline_Decompose)
@@ -596,35 +598,61 @@ static BOOL is_face_scalable(IDWriteFontFace4 *fontface)
         return FALSE;
 }
 
+static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *ret)
+{
+    USHORT simulations = IDWriteFontFace4_GetSimulations(bitmap->fontface);
+    FT_Matrix m;
+
+    ret->xx = 1 << 16;
+    ret->xy = 0;
+    ret->yx = 0;
+    ret->yy = 1 << 16;
+
+    /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef.
+       Disable transform if that's the case. */
+    if (!(is_face_scalable(bitmap->fontface) && (bitmap->m ||
+            (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE))))
+        return FALSE;
+
+    if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
+        m.xx =  1 << 16;
+        m.xy = (1 << 16) / 3;
+        m.yx =  0;
+        m.yy =  1 << 16;
+        pFT_Matrix_Multiply(&m, ret);
+    }
+
+    if (bitmap->m) {
+        ft_matrix_from_dwrite_matrix(bitmap->m, &m);
+        pFT_Matrix_Multiply(&m, ret);
+    }
+
+    return TRUE;
+}
+
 void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
     FT_BBox bbox = { 0 };
+    BOOL needs_transform;
     FT_Glyph glyph;
+    FT_Matrix m;
 
     EnterCriticalSection(&freetype_cs);
 
-    /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef,
-       disable transform if that's the case. */
-    if (bitmap->m) {
-        if (!is_face_scalable(bitmap->fontface))
-            bitmap->m = NULL;
-    }
+    needs_transform = get_glyph_transform(bitmap, &m);
 
     imagetype.face_id = bitmap->fontface;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
-    imagetype.flags = bitmap->m ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
+    imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
 
     if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
-        if (bitmap->m) {
+        if (needs_transform) {
             FT_Glyph glyph_copy;
 
             if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
-                FT_Matrix ft_matrix;
-
-                ft_matrix_from_dwrite_matrix(bitmap->m, &ft_matrix);
-                pFT_Glyph_Transform(glyph_copy, &ft_matrix, NULL);
+                pFT_Glyph_Transform(glyph_copy, &m, NULL);
                 pFT_Glyph_Get_CBox(glyph_copy, FT_GLYPH_BBOX_PIXELS, &bbox);
                 pFT_Done_Glyph(glyph_copy);
             }
@@ -759,30 +787,26 @@ static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_G
 BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
+    BOOL needs_transform;
     BOOL ret = FALSE;
     FT_Glyph glyph;
+    FT_Matrix m;
 
     EnterCriticalSection(&freetype_cs);
 
-    if (bitmap->m) {
-        if (!is_face_scalable(bitmap->fontface))
-            bitmap->m = NULL;
-    }
+    needs_transform = get_glyph_transform(bitmap, &m);
 
     imagetype.face_id = bitmap->fontface;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
-    imagetype.flags = bitmap->m ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
+    imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
 
     if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
         FT_Glyph glyph_copy;
 
-        if (bitmap->m) {
+        if (needs_transform) {
             if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
-                FT_Matrix ft_matrix;
-
-                ft_matrix_from_dwrite_matrix(bitmap->m, &ft_matrix);
-                pFT_Glyph_Transform(glyph_copy, &ft_matrix, NULL);
+                pFT_Glyph_Transform(glyph_copy, &m, NULL);
                 glyph = glyph_copy;
             }
         }
