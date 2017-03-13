@@ -19631,18 +19631,18 @@ done:
 
 static void test_updatetexture(void)
 {
-    IDirect3DDevice9 *device;
-    IDirect3D9 *d3d9;
-    HWND window;
-    HRESULT hr;
+    BOOL r32f_supported, ati2n_supported, do_visual_test;
     IDirect3DBaseTexture9 *src, *dst;
     unsigned int t, i, f, l, x, y, z;
     D3DLOCKED_RECT locked_rect;
     D3DLOCKED_BOX locked_box;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
     ULONG refcount;
-    D3DCAPS9 caps;
     D3DCOLOR color;
-    BOOL ati2n_supported, do_visual_test;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
     static const struct
     {
         struct vec3 pos;
@@ -19776,15 +19776,19 @@ static void test_updatetexture(void)
                     texture_types[t].name);
             continue;
         }
+        r32f_supported = TRUE;
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_FILTER, texture_types[t].type, D3DFMT_R32F)))
+        {
+            skip("%s R32F textures are not supported, skipping some tests.\n", texture_types[t].name);
+            r32f_supported = FALSE;
+        }
+        ati2n_supported = TRUE;
         if (FAILED(IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
                 D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_FILTER, texture_types[t].type, MAKEFOURCC('A','T','I','2'))))
         {
             skip("%s ATI2N textures are not supported, skipping some tests.\n", texture_types[t].name);
             ati2n_supported = FALSE;
-        }
-        else
-        {
-            ati2n_supported = TRUE;
         }
 
         hr = IDirect3DDevice9_SetFVF(device, texture_types[t].fvf);
@@ -19792,7 +19796,9 @@ static void test_updatetexture(void)
 
         for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
         {
-            if (tests[i].src_format == MAKEFOURCC('A','T','I','2') && !ati2n_supported)
+            if (tests[i].dst_format == D3DFMT_R32F && !r32f_supported)
+                continue;
+            if (tests[i].dst_format == MAKEFOURCC('A','T','I','2') && !ati2n_supported)
                 continue;
 
             switch (texture_types[t].type)
