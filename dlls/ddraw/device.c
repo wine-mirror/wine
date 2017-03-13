@@ -4494,24 +4494,26 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface
  *
  *****************************************************************************/
 
-static DWORD in_plane(UINT plane, D3DVECTOR normal, D3DVALUE origin_plane, D3DVECTOR center, D3DVALUE radius)
+static DWORD in_plane(UINT idx, struct wined3d_vec4 p, D3DVECTOR center, D3DVALUE radius)
 {
     float distance, norm;
 
-    norm = sqrtf(normal.u1.x * normal.u1.x + normal.u2.y * normal.u2.y + normal.u3.z * normal.u3.z);
-    distance = ( origin_plane + normal.u1.x * center.u1.x + normal.u2.y * center.u2.y + normal.u3.z * center.u3.z ) / norm;
+    norm = sqrtf(p.x * p.x + p.y * p.y + p.z * p.z);
+    distance = (p.x * center.u1.x + p.y * center.u2.y + p.z * center.u3.z + p.w) / norm;
 
-    if ( fabs( distance ) < radius ) return D3DSTATUS_CLIPUNIONLEFT << plane;
-    if ( distance < -radius ) return (D3DSTATUS_CLIPUNIONLEFT  | D3DSTATUS_CLIPINTERSECTIONLEFT) << plane;
+    if (fabs(distance) < radius)
+        return D3DSTATUS_CLIPUNIONLEFT << idx;
+    if (distance < -radius)
+        return (D3DSTATUS_CLIPUNIONLEFT | D3DSTATUS_CLIPINTERSECTIONLEFT) << idx;
     return 0;
 }
 
 static HRESULT WINAPI d3d_device7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
         D3DVECTOR *centers, D3DVALUE *radii, DWORD sphere_count, DWORD flags, DWORD *return_values)
 {
+    struct wined3d_vec4 plane[12];
+    DWORD enabled_planes;
     D3DMATRIX m, temp;
-    D3DVALUE origin_plane[6];
-    D3DVECTOR vec[6];
     HRESULT hr;
     UINT i, j;
 
@@ -4519,56 +4521,67 @@ static HRESULT WINAPI d3d_device7_ComputeSphereVisibility(IDirect3DDevice7 *ifac
             iface, centers, radii, sphere_count, flags, return_values);
 
     hr = d3d_device7_GetTransform(iface, D3DTRANSFORMSTATE_WORLD, &m);
-    if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
+    if (hr != DD_OK)
+        return DDERR_INVALIDPARAMS;
     hr = d3d_device7_GetTransform(iface, D3DTRANSFORMSTATE_VIEW, &temp);
-    if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
+    if (hr != DD_OK)
+        return DDERR_INVALIDPARAMS;
     multiply_matrix(&m, &temp, &m);
 
     hr = d3d_device7_GetTransform(iface, D3DTRANSFORMSTATE_PROJECTION, &temp);
-    if ( hr != DD_OK ) return DDERR_INVALIDPARAMS;
+    if (hr != DD_OK)
+        return DDERR_INVALIDPARAMS;
     multiply_matrix(&m, &temp, &m);
 
-/* Left plane */
-    vec[0].u1.x = m._14 + m._11;
-    vec[0].u2.y = m._24 + m._21;
-    vec[0].u3.z = m._34 + m._31;
-    origin_plane[0] = m._44 + m._41;
+    IDirect3DDevice7_GetRenderState(iface, D3DRENDERSTATE_CLIPPLANEENABLE, &enabled_planes);
 
-/* Right plane */
-    vec[1].u1.x = m._14 - m._11;
-    vec[1].u2.y = m._24 - m._21;
-    vec[1].u3.z = m._34 - m._31;
-    origin_plane[1] = m._44 - m._41;
+    /* Left plane. */
+    plane[0].x = m._14 + m._11;
+    plane[0].y = m._24 + m._21;
+    plane[0].z = m._34 + m._31;
+    plane[0].w = m._44 + m._41;
 
-/* Top plane */
-    vec[2].u1.x = m._14 - m._12;
-    vec[2].u2.y = m._24 - m._22;
-    vec[2].u3.z = m._34 - m._32;
-    origin_plane[2] = m._44 - m._42;
+    /* Right plane. */
+    plane[1].x = m._14 - m._11;
+    plane[1].y = m._24 - m._21;
+    plane[1].z = m._34 - m._31;
+    plane[1].w = m._44 - m._41;
 
-/* Bottom plane */
-    vec[3].u1.x = m._14 + m._12;
-    vec[3].u2.y = m._24 + m._22;
-    vec[3].u3.z = m._34 + m._32;
-    origin_plane[3] = m._44 + m._42;
+    /* Top plane. */
+    plane[2].x = m._14 - m._12;
+    plane[2].y = m._24 - m._22;
+    plane[2].z = m._34 - m._32;
+    plane[2].w = m._44 - m._42;
 
-/* Front plane */
-    vec[4].u1.x = m._13;
-    vec[4].u2.y = m._23;
-    vec[4].u3.z = m._33;
-    origin_plane[4] = m._43;
+    /* Bottom plane. */
+    plane[3].x = m._14 + m._12;
+    plane[3].y = m._24 + m._22;
+    plane[3].z = m._34 + m._32;
+    plane[3].w = m._44 + m._42;
 
-/* Back plane*/
-    vec[5].u1.x = m._14 - m._13;
-    vec[5].u2.y = m._24 - m._23;
-    vec[5].u3.z = m._34 - m._33;
-    origin_plane[5] = m._44 - m._43;
+    /* Front plane. */
+    plane[4].x = m._13;
+    plane[4].y = m._23;
+    plane[4].z = m._33;
+    plane[4].w = m._43;
+
+    /* Back plane. */
+    plane[5].x = m._14 - m._13;
+    plane[5].y = m._24 - m._23;
+    plane[5].z = m._34 - m._33;
+    plane[5].w = m._44 - m._43;
+
+    for (j = 6; j < 12; ++j)
+        IDirect3DDevice7_GetClipPlane(iface, j - 6, (D3DVALUE *)&plane[j]);
 
     for (i = 0; i < sphere_count; ++i)
     {
         return_values[i] = 0;
         for (j = 0; j < 6; ++j)
-            return_values[i] |= in_plane(j, vec[j], origin_plane[j], centers[i], radii[i]);
+            return_values[i] |= in_plane(j, plane[j], centers[i], radii[i]);
+        for (; j < 12; ++j)
+            if (enabled_planes & 1u << (j - 6))
+                return_values[i] |= in_plane(j, plane[j], centers[i], radii[i]);
     }
 
     return D3D_OK;
