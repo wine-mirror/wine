@@ -8093,11 +8093,8 @@ static void test_vshader_input(void)
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-        /* WARP ends up using the color attribute from the previous draw. Let's mark
-         * that behavior as broken. */
         color = getPixelColor(device, 160, 360);
-        ok(color_match(color, 0x00000000, 1)
-                || broken(color_match(color, 0x00ffff00, 1)),
+        ok(color_match(color, 0x00000000, 1) || broken(warp),
                 "Got unexpected color 0x%08x for no color attribute test.\n", color);
 
         IDirect3DDevice9_SetVertexShader(device, NULL);
