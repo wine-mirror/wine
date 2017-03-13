@@ -435,16 +435,16 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
 static void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
 {
-    GLuint *buffer_object;
+    GLuint *buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
 
-    buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
     GL_EXTCALL(glDeleteBuffers(1, buffer_object));
     checkGLcall("glDeleteBuffers");
-    wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
-    *buffer_object = 0;
 
     TRACE("Deleted buffer object %u for texture %p, sub-resource %u.\n",
             *buffer_object, texture, sub_resource_idx);
+
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
+    *buffer_object = 0;
 }
 
 static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
