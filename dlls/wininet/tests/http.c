@@ -4995,6 +4995,21 @@ static void test_http_read(int port)
 
     close_async_handle(req.session, hCompleteEvent, 2);
 
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "Connection: close\r\n"
+                           "\r\n");
+    readex_expect_async(req.request, IRF_NO_WAIT, &ib, sizeof(buf), NULL);
+    send_response_ex_and_wait("123", TRUE, &ib, NULL, 0, 3);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "123", 0);
+
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    close_async_handle(req.session, hCompleteEvent, 2);
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+
     trace("Testing InternetQueryDataAvailable...\n");
 
     open_read_test_request(port, &req,

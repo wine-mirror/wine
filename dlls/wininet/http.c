@@ -2614,21 +2614,6 @@ static DWORD refill_read_buffer(http_request_t *req, BOOL allow_blocking, DWORD 
     return res;
 }
 
-/* return the size of data available to be read immediately (the read section must be held) */
-static DWORD get_avail_data( http_request_t *req )
-{
-    DWORD avail = req->read_size;
-
-    /*
-     * Different Windows versions have different limits of returned data, but all
-     * of them return no more than centrain amount. We use READ_BUFFER_SIZE as a limit.
-     */
-    if(avail < READ_BUFFER_SIZE)
-        avail += req->data_stream->vtbl->get_avail_data(req->data_stream, req);
-
-    return min(avail, READ_BUFFER_SIZE);
-}
-
 static DWORD netconn_get_avail_data(data_stream_t *stream, http_request_t *req)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
@@ -2978,21 +2963,17 @@ static void send_request_complete(http_request_t *req, DWORD_PTR result, DWORD e
             sizeof(INTERNET_ASYNC_RESULT));
 }
 
-static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD *ret_size)
+static void HTTP_ReceiveRequestData(http_request_t *req)
 {
-    DWORD res, read = 0, avail = 0;
-    BOOL allow_blocking;
+    DWORD res, read = 0;
 
     TRACE("%p\n", req);
 
     EnterCriticalSection( &req->read_section );
 
-    allow_blocking = !first_notif || !req->read_size;
-    res = refill_read_buffer(req, allow_blocking, &read);
-    if(res == ERROR_SUCCESS) {
-        avail = get_avail_data(req);
+    res = refill_read_buffer(req, FALSE, &read);
+    if(res == ERROR_SUCCESS)
         read += req->read_size;
-    }
 
     LeaveCriticalSection( &req->read_section );
 
@@ -3006,12 +2987,7 @@ static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif, DWORD
         return;
     }
 
-    if(ret_size)
-        *ret_size = avail;
-    if(first_notif)
-        avail = 0;
-
-    send_request_complete(req, req->session->hdr.dwInternalFlags & INET_OPENURL ? (DWORD_PTR)req->hdr.hInternet : 1, avail);
+    send_request_complete(req, req->session->hdr.dwInternalFlags & INET_OPENURL ? (DWORD_PTR)req->hdr.hInternet : 1, 0);
 }
 
 /* read data from the http connection (the read section must be held) */
@@ -5202,7 +5178,7 @@ lend:
     {
         if (res == ERROR_SUCCESS) {
             if(bEndRequest && request->contentLength && request->bytesWritten == request->bytesToWrite)
-                HTTP_ReceiveRequestData(request, TRUE, NULL);
+                HTTP_ReceiveRequestData(request);
             else
                 send_request_complete(request,
                         request->session->hdr.dwInternalFlags & INET_OPENURL ? (DWORD_PTR)request->hdr.hInternet : 1, 0);
@@ -5309,7 +5285,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
         create_cache_entry(request);
 
     if (res == ERROR_SUCCESS && request->contentLength)
-        HTTP_ReceiveRequestData(request, TRUE, NULL);
+        HTTP_ReceiveRequestData(request);
     else
         send_request_complete(request, res == ERROR_SUCCESS, res);
 
