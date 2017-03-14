@@ -1635,7 +1635,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     HGLRC ctx, share_ctx;
     DWORD target_usage;
     int pixel_format;
-    unsigned int s;
+    unsigned int i;
     DWORD state;
     HDC hdc = 0;
 
@@ -1689,20 +1689,40 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
     }
 
-    /* Initialize the texture unit mapping to a 1:1 mapping */
-    for (s = 0; s < MAX_COMBINED_SAMPLERS; ++s)
+    for (i = 0; i < ARRAY_SIZE(ret->tex_unit_map); ++i)
+        ret->tex_unit_map[i] = WINED3D_UNMAPPED_STAGE;
+    for (i = 0; i < ARRAY_SIZE(ret->rev_tex_unit_map); ++i)
+        ret->rev_tex_unit_map[i] = WINED3D_UNMAPPED_STAGE;
+    if (gl_info->limits.graphics_samplers >= MAX_COMBINED_SAMPLERS)
     {
-        if (s < gl_info->limits.graphics_samplers)
+        /* Initialize the texture unit mapping to a 1:1 mapping. */
+        unsigned int base, count;
+
+        wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, WINED3D_SHADER_TYPE_PIXEL, &base, &count);
+        if (base + MAX_FRAGMENT_SAMPLERS > ARRAY_SIZE(ret->rev_tex_unit_map))
         {
-            ret->tex_unit_map[s] = s;
-            ret->rev_tex_unit_map[s] = s;
+            ERR("Unexpected texture unit base index %u.\n", base);
+            goto out;
         }
-        else
+        for (i = 0; i < min(count, MAX_FRAGMENT_SAMPLERS); ++i)
         {
-            ret->tex_unit_map[s] = WINED3D_UNMAPPED_STAGE;
-            ret->rev_tex_unit_map[s] = WINED3D_UNMAPPED_STAGE;
+            ret->tex_unit_map[i] = base + i;
+            ret->rev_tex_unit_map[base + i] = i;
+        }
+
+        wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, WINED3D_SHADER_TYPE_VERTEX, &base, &count);
+        if (base + MAX_VERTEX_SAMPLERS > ARRAY_SIZE(ret->rev_tex_unit_map))
+        {
+            ERR("Unexpected texture unit base index %u.\n", base);
+            goto out;
+        }
+        for (i = 0; i < min(count, MAX_VERTEX_SAMPLERS); ++i)
+        {
+            ret->tex_unit_map[MAX_FRAGMENT_SAMPLERS + i] = base + i;
+            ret->rev_tex_unit_map[base + i] = MAX_FRAGMENT_SAMPLERS + i;
         }
     }
+
     if (!(ret->texture_type = wined3d_calloc(gl_info->limits.combined_samplers,
             sizeof(*ret->texture_type))))
         goto out;
@@ -1918,11 +1938,11 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         /* Set up the previous texture input for all shader units. This applies to bump mapping, and in d3d
          * the previous texture where to source the offset from is always unit - 1.
          */
-        for (s = 1; s < gl_info->limits.textures; ++s)
+        for (i = 1; i < gl_info->limits.textures; ++i)
         {
-            context_active_texture(ret, gl_info, s);
+            context_active_texture(ret, gl_info, i);
             gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_SHADER_NV,
-                    GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + s - 1);
+                    GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + i - 1);
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...");
         }
     }
@@ -1948,9 +1968,9 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
-        for (s = 0; s < gl_info->limits.textures; ++s)
+        for (i = 0; i < gl_info->limits.textures; ++i)
         {
-            context_active_texture(ret, gl_info, s);
+            context_active_texture(ret, gl_info, i);
             gl_info->gl_ops.gl.p_glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
             checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
         }

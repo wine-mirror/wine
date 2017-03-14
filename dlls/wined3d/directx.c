@@ -3395,8 +3395,8 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
 
 static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
 {
+    unsigned int i, sampler_count;
     GLfloat gl_floatv[2];
-    unsigned int i;
     GLint gl_max;
 
     gl_info->limits.blends = 1;
@@ -3538,7 +3538,6 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         TRACE("Max vertex samplers: %u.\n", gl_info->limits.vertex_samplers);
         TRACE("Max combined samplers: %u.\n", gl_info->limits.combined_samplers);
         TRACE("Max vertex attributes: %u.\n", gl_info->limits.vertex_attribs);
-        gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
     }
     else
     {
@@ -3647,10 +3646,6 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS, &gl_max);
         gl_info->limits.compute_samplers = gl_max;
         TRACE("Max compute samplers: %u.\n", gl_info->limits.compute_samplers);
-        /* A majority of OpenGL implementations allow to statically partition
-         * the set of texture bindings into six separate sets. */
-        if (gl_info->limits.combined_samplers >= MAX_COMBINED_SAMPLERS + gl_info->limits.compute_samplers)
-            gl_info->limits.graphics_samplers -= gl_info->limits.compute_samplers;
     }
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
     {
@@ -3694,6 +3689,25 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
         gl_info->limits.samples = gl_max;
     }
+
+    gl_info->limits.fragment_samplers = min(gl_info->limits.fragment_samplers, MAX_GL_FRAGMENT_SAMPLERS);
+    sampler_count = gl_info->limits.vertex_samplers + gl_info->limits.fragment_samplers;
+    if (gl_info->supported[WINED3D_GL_VERSION_3_2] && gl_info->limits.combined_samplers < sampler_count)
+    {
+        /* The minimum value for GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS in OpenGL
+         * 3.2 is 48 (16 per stage). When tessellation shaders are supported
+         * the minimum value is increased to 80. */
+        WARN("Graphics pipeline sampler count %u is greater than combined sampler count %u.\n",
+                sampler_count, gl_info->limits.combined_samplers);
+        gl_info->limits.fragment_samplers = min(gl_info->limits.fragment_samplers, 16);
+        gl_info->limits.vertex_samplers = min(gl_info->limits.vertex_samplers, 16);
+    }
+
+    /* A majority of OpenGL implementations allow us to statically partition
+     * the set of texture bindings into six separate sets. */
+    gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
+    if (gl_info->limits.combined_samplers >= sampler_count + gl_info->limits.compute_samplers)
+        gl_info->limits.graphics_samplers -= gl_info->limits.compute_samplers;
 }
 
 /* Context activation is done by the caller. */

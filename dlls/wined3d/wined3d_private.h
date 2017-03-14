@@ -1629,6 +1629,8 @@ struct wined3d_timestamp_query
 void context_alloc_timestamp_query(struct wined3d_context *context, struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 void context_free_timestamp_query(struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 
+#define MAX_GL_FRAGMENT_SAMPLERS 32
+
 struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info;
@@ -1748,8 +1750,8 @@ struct wined3d_context
     struct wined3d_event_query *buffer_queries[MAX_ATTRIBS];
     unsigned int num_buffer_queries;
 
-    DWORD                     tex_unit_map[MAX_COMBINED_SAMPLERS];
-    DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
+    DWORD tex_unit_map[MAX_COMBINED_SAMPLERS];
+    DWORD rev_tex_unit_map[MAX_GL_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS];
 
     /* Extension emulation */
     GLint                   gl_fog_source;

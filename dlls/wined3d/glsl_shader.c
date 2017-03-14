@@ -630,8 +630,30 @@ static void shader_glsl_load_samplers(const struct wined3d_context *context,
     const DWORD *tex_unit_map;
     unsigned int base, count;
 
-    wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, version->type, &base, &count);
-    tex_unit_map = version->major >= 4 ? NULL : context->tex_unit_map;
+    if (reg_maps->shader_version.major >= 4)
+    {
+        tex_unit_map = NULL;
+        wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, version->type, &base, &count);
+    }
+    else
+    {
+        tex_unit_map = context->tex_unit_map;
+        switch (reg_maps->shader_version.type)
+        {
+            case WINED3D_SHADER_TYPE_PIXEL:
+                base = 0;
+                count = MAX_FRAGMENT_SAMPLERS;
+                break;
+            case WINED3D_SHADER_TYPE_VERTEX:
+                base = MAX_FRAGMENT_SAMPLERS;
+                count = MAX_VERTEX_SAMPLERS;
+                break;
+            default:
+                ERR("Unhandled shader type %#x.\n", reg_maps->shader_version.type);
+                return;
+        }
+    }
+
     shader_glsl_load_samplers_range(gl_info, priv, program_id, prefix, base, count, tex_unit_map);
 }
 
