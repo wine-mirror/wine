@@ -558,6 +558,11 @@ void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint pro
     print_glsl_info_log(gl_info, program, TRUE);
 }
 
+static BOOL shader_glsl_use_layout_binding_qualifier(const struct wined3d_gl_info *gl_info)
+{
+    return !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && gl_info->supported[ARB_SHADING_LANGUAGE_420PACK];
+}
+
 static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info,
         struct shader_glsl_priv *priv, GLuint program_id,
         const struct wined3d_shader_reg_maps *reg_maps)
@@ -650,11 +655,15 @@ static void shader_glsl_load_icb(const struct wined3d_gl_info *gl_info, struct s
 static void shader_glsl_load_images(const struct wined3d_gl_info *gl_info, struct shader_glsl_priv *priv,
         GLuint program_id, const struct wined3d_shader_reg_maps *reg_maps)
 {
-    struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
     const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    struct wined3d_string_buffer *name;
     GLint location;
     unsigned int i;
 
+    if (shader_glsl_use_layout_binding_qualifier(gl_info))
+        return;
+
+    name = string_buffer_get(&priv->string_buffers);
     for (i = 0; i < MAX_UNORDERED_ACCESS_VIEWS; ++i)
     {
         if (!reg_maps->uav_resource_info[i].type)
@@ -2243,6 +2252,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 break;
         }
 
+        if (shader_glsl_use_layout_binding_qualifier(gl_info))
+            shader_addline(buffer, "layout(binding = %u)\n", i);
         if (reg_maps->uav_read_mask & (1u << i))
             shader_addline(buffer, "layout(%s) uniform %s%s %s_image%u;\n",
                     read_format, image_type_prefix, image_type, prefix, i);
