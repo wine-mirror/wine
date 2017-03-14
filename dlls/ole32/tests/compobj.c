@@ -3569,7 +3569,13 @@ static void test_GlobalOptions(void)
 
     hres = CoCreateInstance(&CLSID_GlobalOptions, NULL, CLSCTX_INPROC_SERVER,
             &IID_IGlobalOptions, (void**)&global_options);
-    ok(hres == S_OK, "CoCreateInstance(CLSID_GlobalOptions) failed: %08x\n", hres);
+    ok(hres == S_OK || broken(hres == E_NOINTERFACE), "CoCreateInstance(CLSID_GlobalOptions) failed: %08x\n", hres);
+    if(FAILED(hres))
+    {
+        win_skip("CLSID_GlobalOptions not available\n");
+        CoUninitialize();
+        return;
+    }
 
     IGlobalOptions_Release(global_options);
 
