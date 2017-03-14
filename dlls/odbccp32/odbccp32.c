@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "odbcinst.h"
@@ -38,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 /* Registry key names */
 static const WCHAR drivers_key[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','O','D','B','C','I','N','S','T','.','I','N','I','\\','O','D','B','C',' ','D','r','i','v','e','r','s',0};
 static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C',0};
+static const WCHAR odbcini[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','O','D','B','C','I','N','S','T','.','I','N','I','\\',0};
+static const WCHAR odbcdrivers[] = {'O','D','B','C',' ','D','r','i','v','e','r','s',0};
 
 /* This config mode is known to be process-wide.
  * MSDN documentation suggests that the value is hidden somewhere in the registry but I haven't found it yet.
@@ -626,12 +629,115 @@ BOOL WINAPI SQLInstallDriver(LPCSTR lpszInfFile, LPCSTR lpszDriver,
                               pcbPathOut, ODBC_INSTALL_COMPLETE, &usage);
 }
 
+static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, const  WCHAR *path_in, WCHAR *path,
+                                  DWORD *usage_count)
+{
+    static const WCHAR installed[] = {'I','n','s','t','a','l','l','e','d',0};
+    static const WCHAR slash[] = {'\\', 0};
+    static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
+    static const WCHAR setupW[] = {'S','e','t','u','p',0};
+    HKEY hkey, hkeydriver;
+
+    if (RegCreateKeyW(HKEY_LOCAL_MACHINE, odbcini, &hkey) == ERROR_SUCCESS)
+    {
+        if (RegCreateKeyW(hkey, regkey, &hkeydriver) == ERROR_SUCCESS)
+        {
+            if(RegSetValueExW(hkeydriver, driver, 0, REG_SZ, (BYTE*)installed, sizeof(installed)) != ERROR_SUCCESS)
+                ERR("Failed to write registry installed key\n");
+
+            RegCloseKey(hkeydriver);
+        }
+
+        if (RegCreateKeyW(hkey, driver, &hkeydriver) == ERROR_SUCCESS)
+        {
+            WCHAR entry[1024];
+            const WCHAR *p;
+            DWORD usagecount = 0;
+            DWORD type, size;
+
+            /* Skip name entry */
+            p = driver;
+            p += lstrlenW(p) + 1;
+
+            if (!path_in)
+                GetSystemDirectoryW(path, MAX_PATH);
+            else
+                lstrcpyW(path, path_in);
+
+            /* Store Usage */
+            size = sizeof(usagecount);
+            RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
+            TRACE("Usage count %d\n", usagecount);
+
+            for (; *p; p += lstrlenW(p) + 1)
+            {
+                WCHAR *divider = strchrW(p,'=');
+
+                if (divider)
+                {
+                    WCHAR *value;
+                    int len;
+
+                    /* Write pair values to the registry. */
+                    lstrcpynW(entry, p, divider - p + 1);
+
+                    divider++;
+                    TRACE("Writing pair %s,%s\n", debugstr_w(entry), debugstr_w(divider));
+
+                    /* Driver and Setup entries use the system path unless a path is specified. */
+                    if(lstrcmpiW(driverW, entry) == 0 || lstrcmpiW(setupW, entry) == 0)
+                    {
+                        len = lstrlenW(path) + lstrlenW(slash) + lstrlenW(divider) + 1;
+                        value = heap_alloc(len * sizeof(WCHAR));
+                        if(!value)
+                        {
+                            ERR("Out of memory\n");
+                            return;
+                        }
+
+                        lstrcpyW(value, path);
+                        lstrcatW(value, slash);
+                        lstrcatW(value, divider);
+                    }
+                    else
+                    {
+                        len = lstrlenW(divider) + 1;
+                        value = heap_alloc(len * sizeof(WCHAR));
+                        lstrcpyW(value, divider);
+                    }
+
+                    if (RegSetValueExW(hkeydriver, entry, 0, REG_SZ, (BYTE*)value,
+                                    (lstrlenW(value)+1)*sizeof(WCHAR)) != ERROR_SUCCESS)
+                        ERR("Failed to write registry data %s %s\n", debugstr_w(entry), debugstr_w(value));
+                    heap_free(value);
+                }
+                else
+                {
+                    ERR("No pair found. %s\n", debugstr_w(p));
+                    break;
+                }
+            }
+
+            /* Set Usage Count */
+            usagecount++;
+            if (RegSetValueExA(hkeydriver, "UsageCount", 0, REG_DWORD, (BYTE*)&usagecount, sizeof(usagecount)) != ERROR_SUCCESS)
+                ERR("Failed to write registry UsageCount key\n");
+
+            if (usage_count)
+                *usage_count = usagecount;
+
+            RegCloseKey(hkeydriver);
+        }
+
+        RegCloseKey(hkey);
+    }
+}
+
 BOOL WINAPI SQLInstallDriverExW(LPCWSTR lpszDriver, LPCWSTR lpszPathIn,
                LPWSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                WORD fRequest, LPDWORD lpdwUsageCount)
 {
     UINT len;
-    LPCWSTR p;
     WCHAR path[MAX_PATH];
 
     clear_errors();
@@ -639,15 +745,12 @@ BOOL WINAPI SQLInstallDriverExW(LPCWSTR lpszDriver, LPCWSTR lpszPathIn,
           debugstr_w(lpszPathIn), lpszPathOut, cbPathOutMax, pcbPathOut,
           fRequest, lpdwUsageCount);
 
-    for (p = lpszDriver; *p; p += lstrlenW(p) + 1)
-        TRACE("%s\n", debugstr_w(p));
+    write_registry_values(odbcdrivers, lpszDriver, lpszPathIn, path, lpdwUsageCount);
 
-    len = GetSystemDirectoryW(path, MAX_PATH);
+    len = lstrlenW(path);
 
     if (pcbPathOut)
         *pcbPathOut = len;
-
-    len = GetSystemDirectoryW(path, MAX_PATH);
 
     if (lpszPathOut && cbPathOutMax > len)
     {
@@ -661,7 +764,6 @@ BOOL WINAPI SQLInstallDriverEx(LPCSTR lpszDriver, LPCSTR lpszPathIn,
                LPSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                WORD fRequest, LPDWORD lpdwUsageCount)
 {
-    LPCSTR p;
     LPWSTR driver, pathin;
     WCHAR pathout[MAX_PATH];
     BOOL ret;
@@ -671,9 +773,6 @@ BOOL WINAPI SQLInstallDriverEx(LPCSTR lpszDriver, LPCSTR lpszPathIn,
     TRACE("%s %s %p %d %p %d %p\n", debugstr_a(lpszDriver),
           debugstr_a(lpszPathIn), lpszPathOut, cbPathOutMax, pcbPathOut,
           fRequest, lpdwUsageCount);
-
-    for (p = lpszDriver; *p; p += lstrlenA(p) + 1)
-        TRACE("%s\n", debugstr_a(p));
 
     driver = SQLInstall_strdup_multi(lpszDriver);
     pathin = SQLInstall_strdup(lpszPathIn);
