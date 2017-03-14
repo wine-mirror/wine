@@ -3407,6 +3407,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.uniform_blocks[i] = 0;
     gl_info->limits.fragment_samplers = 1;
     gl_info->limits.vertex_samplers = 0;
+    gl_info->limits.geometry_samplers = 0;
     gl_info->limits.compute_samplers = 0;
     gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
     gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
@@ -3619,6 +3620,9 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_GEOMETRY] = min(gl_max, WINED3D_MAX_CBS);
         TRACE("Max geometry uniform blocks: %u (%d).\n",
                 gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_GEOMETRY], gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS, &gl_max);
+        gl_info->limits.geometry_samplers = gl_max;
+        TRACE("Max geometry samplers: %u.\n", gl_info->limits.geometry_samplers);
     }
     if (gl_info->supported[ARB_FRAGMENT_SHADER])
     {
@@ -3691,7 +3695,8 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     }
 
     gl_info->limits.fragment_samplers = min(gl_info->limits.fragment_samplers, MAX_GL_FRAGMENT_SAMPLERS);
-    sampler_count = gl_info->limits.vertex_samplers + gl_info->limits.fragment_samplers;
+    sampler_count = gl_info->limits.vertex_samplers + gl_info->limits.fragment_samplers
+            + gl_info->limits.geometry_samplers;
     if (gl_info->supported[WINED3D_GL_VERSION_3_2] && gl_info->limits.combined_samplers < sampler_count)
     {
         /* The minimum value for GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS in OpenGL
@@ -3701,6 +3706,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
                 sampler_count, gl_info->limits.combined_samplers);
         gl_info->limits.fragment_samplers = min(gl_info->limits.fragment_samplers, 16);
         gl_info->limits.vertex_samplers = min(gl_info->limits.vertex_samplers, 16);
+        gl_info->limits.geometry_samplers = min(gl_info->limits.geometry_samplers, 16);
     }
 
     /* A majority of OpenGL implementations allow us to statically partition

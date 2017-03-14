@@ -6015,6 +6015,11 @@ void wined3d_gl_limits_get_texture_unit_range(const struct wined3d_gl_limits *gl
         return;
 
     *base += *count;
+    *count = gl_limits->geometry_samplers;
+    if (shader_type == WINED3D_SHADER_TYPE_GEOMETRY)
+        return;
+
+    *base += *count;
     *count = 0;
 }
 
