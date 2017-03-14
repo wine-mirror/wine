@@ -2081,6 +2081,43 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
     if (destroy) HeapFree(GetProcessHeap(), 0, context);
 }
 
+const DWORD *context_get_tex_unit_mapping(const struct wined3d_context *context,
+        const struct wined3d_shader_version *shader_version, unsigned int *base, unsigned int *count)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (!shader_version)
+    {
+        *base = 0;
+        *count = MAX_TEXTURES;
+        return context->tex_unit_map;
+    }
+
+    if (shader_version->major >= 4)
+    {
+        wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, shader_version->type, base, count);
+        return NULL;
+    }
+
+    switch (shader_version->type)
+    {
+        case WINED3D_SHADER_TYPE_PIXEL:
+            *base = 0;
+            *count = MAX_FRAGMENT_SAMPLERS;
+            break;
+        case WINED3D_SHADER_TYPE_VERTEX:
+            *base = MAX_FRAGMENT_SAMPLERS;
+            *count = MAX_VERTEX_SAMPLERS;
+            break;
+        default:
+            ERR("Unhandled shader type %#x.\n", shader_version->type);
+            *base = 0;
+            *count = 0;
+    }
+
+    return context->tex_unit_map;
+}
+
 /* Context activation is done by the caller. */
 static void set_blit_dimension(const struct wined3d_gl_info *gl_info, UINT width, UINT height)
 {

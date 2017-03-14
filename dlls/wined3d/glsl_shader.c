@@ -624,36 +624,15 @@ static void shader_glsl_load_samplers_range(const struct wined3d_gl_info *gl_inf
 static void shader_glsl_load_samplers(const struct wined3d_context *context,
         struct shader_glsl_priv *priv, GLuint program_id, const struct wined3d_shader_reg_maps *reg_maps)
 {
-    const struct wined3d_shader_version *version = &reg_maps->shader_version;
-    const char *prefix = shader_glsl_get_prefix(version->type);
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_shader_version *shader_version;
     const DWORD *tex_unit_map;
     unsigned int base, count;
+    const char *prefix;
 
-    if (reg_maps->shader_version.major >= 4)
-    {
-        tex_unit_map = NULL;
-        wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, version->type, &base, &count);
-    }
-    else
-    {
-        tex_unit_map = context->tex_unit_map;
-        switch (reg_maps->shader_version.type)
-        {
-            case WINED3D_SHADER_TYPE_PIXEL:
-                base = 0;
-                count = MAX_FRAGMENT_SAMPLERS;
-                break;
-            case WINED3D_SHADER_TYPE_VERTEX:
-                base = MAX_FRAGMENT_SAMPLERS;
-                count = MAX_VERTEX_SAMPLERS;
-                break;
-            default:
-                ERR("Unhandled shader type %#x.\n", reg_maps->shader_version.type);
-                return;
-        }
-    }
-
+    shader_version = reg_maps ? &reg_maps->shader_version : NULL;
+    prefix = shader_glsl_get_prefix(shader_version ? shader_version->type : WINED3D_SHADER_TYPE_PIXEL);
+    tex_unit_map = context_get_tex_unit_mapping(context, shader_version, &base, &count);
     shader_glsl_load_samplers_range(gl_info, priv, program_id, prefix, base, count, tex_unit_map);
 }
 
@@ -9096,9 +9075,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         {
             entry->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
 
-            shader_glsl_load_samplers_range(gl_info, priv, program_id,
-                    shader_glsl_get_prefix(WINED3D_SHADER_TYPE_PIXEL),
-                    0, MAX_TEXTURES, context->tex_unit_map);
+            shader_glsl_load_samplers(context, priv, program_id, NULL);
         }
 
         for (i = 0; i < MAX_TEXTURES; ++i)
