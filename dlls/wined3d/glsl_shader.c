@@ -631,7 +631,7 @@ static void shader_glsl_load_samplers(const struct wined3d_context *context,
     unsigned int base, count;
 
     wined3d_gl_limits_get_texture_unit_range(&gl_info->limits, version->type, &base, &count);
-    tex_unit_map = version->type == WINED3D_SHADER_TYPE_COMPUTE ? NULL : context->tex_unit_map;
+    tex_unit_map = version->major >= 4 ? NULL : context->tex_unit_map;
     shader_glsl_load_samplers_range(gl_info, priv, program_id, prefix, base, count, tex_unit_map);
 }
 
