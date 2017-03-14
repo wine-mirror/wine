@@ -192,6 +192,8 @@ struct d3dx_param_eval
     struct d3dx_const_tab shader_inputs;
 };
 
+#define PARAMETER_FLAG_DIRTY 0x1u
+
 struct d3dx_parameter
 {
     char *name;
@@ -206,6 +208,7 @@ struct d3dx_parameter
     UINT member_count;
     DWORD flags;
     UINT bytes;
+    DWORD runtime_flags;
     DWORD object_id;
 
     D3DXHANDLE handle;
@@ -215,6 +218,8 @@ struct d3dx_parameter
 
     struct d3dx_parameter *referenced_param;
     struct d3dx_param_eval *param_eval;
+
+    DWORD *dirty_flag_ptr;
 };
 
 struct d3dx9_base_effect;

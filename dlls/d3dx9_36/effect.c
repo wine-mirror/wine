@@ -1316,6 +1316,29 @@ static D3DXHANDLE d3dx9_base_effect_get_annotation_by_name(struct d3dx9_base_eff
     return NULL;
 }
 
+static BOOL walk_parameter_tree(struct d3dx_parameter *param, walk_parameter_dep_func param_func,
+        void *data)
+{
+    unsigned int i;
+    unsigned int member_count;
+
+    if (param_func(data, param))
+        return TRUE;
+
+    member_count = param->element_count ? param->element_count : param->member_count;
+    for (i = 0; i < member_count; ++i)
+    {
+        if (walk_parameter_tree(&param->members[i], param_func, data))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static void set_dirty(struct d3dx_parameter *param)
+{
+    *param->dirty_flag_ptr |= PARAMETER_FLAG_DIRTY;
+}
+
 static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
         D3DXHANDLE parameter, const void *data, UINT bytes)
 {
@@ -1364,6 +1387,7 @@ static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
             case D3DXPT_FLOAT:
                 TRACE("Copy %u bytes\n", param->bytes);
                 memcpy(param->data, data, param->bytes);
+                set_dirty(param);
                 break;
 
             default:
@@ -1450,6 +1474,7 @@ static HRESULT d3dx9_base_effect_set_bool(struct d3dx9_base_effect *base, D3DXHA
     if (param && !param->element_count && param->rows == 1 && param->columns == 1)
     {
         set_number(param->data, param->type, &b, D3DXPT_BOOL);
+        set_dirty(param);
         return D3D_OK;
     }
 
@@ -1495,6 +1520,7 @@ static HRESULT d3dx9_base_effect_set_bool_array(struct d3dx9_base_effect *base,
                     /* don't crop the input, use D3DXPT_INT instead of D3DXPT_BOOL */
                     set_number((DWORD *)param->data + i, param->type, &b[i], D3DXPT_INT);
                 }
+                set_dirty(param);
                 return D3D_OK;
 
             case D3DXPC_OBJECT:
@@ -1544,7 +1570,12 @@ static HRESULT d3dx9_base_effect_set_int(struct d3dx9_base_effect *base, D3DXHAN
     {
         if (param->rows == 1 && param->columns == 1)
         {
-            set_number(param->data, param->type, &n, D3DXPT_INT);
+            DWORD value;
+
+            set_number(&value, param->type, &n, D3DXPT_INT);
+            if (value != *(DWORD *)param->data)
+                set_dirty(param);
+             *(DWORD *)param->data = value;
             return D3D_OK;
         }
 
@@ -1564,6 +1595,7 @@ static HRESULT d3dx9_base_effect_set_int(struct d3dx9_base_effect *base, D3DXHAN
             {
                 ((FLOAT *)param->data)[3] = ((n & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
             }
+            set_dirty(param);
             return D3D_OK;
         }
     }
@@ -1631,6 +1663,7 @@ static HRESULT d3dx9_base_effect_set_int_array(struct d3dx9_base_effect *base,
                 {
                     set_number((DWORD *)param->data + i, param->type, &n[i], D3DXPT_INT);
                 }
+                set_dirty(param);
                 return D3D_OK;
 
             case D3DXPC_OBJECT:
@@ -1678,7 +1711,12 @@ static HRESULT d3dx9_base_effect_set_float(struct d3dx9_base_effect *base, D3DXH
 
     if (param && !param->element_count && param->rows == 1 && param->columns == 1)
     {
-        set_number((DWORD *)param->data, param->type, &f, D3DXPT_FLOAT);
+        DWORD value;
+
+        set_number(&value, param->type, &f, D3DXPT_FLOAT);
+        if (value != *(DWORD *)param->data)
+            set_dirty(param);
+         *(DWORD *)param->data = value;
         return D3D_OK;
     }
 
@@ -1723,6 +1761,7 @@ static HRESULT d3dx9_base_effect_set_float_array(struct d3dx9_base_effect *base,
                 {
                     set_number((DWORD *)param->data + i, param->type, &f[i], D3DXPT_FLOAT);
                 }
+                set_dirty(param);
                 return D3D_OK;
 
             case D3DXPC_OBJECT:
@@ -1777,6 +1816,7 @@ static HRESULT d3dx9_base_effect_set_vector(struct d3dx9_base_effect *base,
         {
             case D3DXPC_SCALAR:
             case D3DXPC_VECTOR:
+                set_dirty(param);
                 if (param->type == D3DXPT_INT && param->bytes == 4)
                 {
                     DWORD tmp;
@@ -1870,6 +1910,7 @@ static HRESULT d3dx9_base_effect_set_vector_array(struct d3dx9_base_effect *base
         switch (param->class)
         {
             case D3DXPC_VECTOR:
+                set_dirty(param);
                 if (param->type == D3DXPT_FLOAT)
                 {
                     if (param->columns == 4)
@@ -1956,6 +1997,7 @@ static HRESULT d3dx9_base_effect_set_matrix(struct d3dx9_base_effect *base,
         {
             case D3DXPC_MATRIX_ROWS:
                 set_matrix(param, matrix);
+                set_dirty(param);
                 return D3D_OK;
 
             case D3DXPC_SCALAR:
@@ -2021,6 +2063,7 @@ static HRESULT d3dx9_base_effect_set_matrix_array(struct d3dx9_base_effect *base
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
+                set_dirty(param);
                 for (i = 0; i < count; ++i)
                 {
                     set_matrix(&param->members[i], &matrix[i]);
@@ -2095,6 +2138,7 @@ static HRESULT d3dx9_base_effect_set_matrix_pointer_array(struct d3dx9_base_effe
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
+                set_dirty(param);
                 for (i = 0; i < count; ++i)
                 {
                     set_matrix(&param->members[i], matrix[i]);
@@ -2167,6 +2211,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose(struct d3dx9_base_effect *
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
+                set_dirty(param);
                 set_matrix_transpose(param, matrix);
                 return D3D_OK;
 
@@ -2236,6 +2281,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose_array(struct d3dx9_base_ef
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
+                set_dirty(param);
                 for (i = 0; i < count; ++i)
                 {
                     set_matrix_transpose(&param->members[i], &matrix[i]);
@@ -2310,6 +2356,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose_pointer_array(struct d3dx9
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
+                set_dirty(param);
                 for (i = 0; i < count; ++i)
                 {
                     set_matrix_transpose(&param->members[i], matrix[i]);
@@ -2414,6 +2461,7 @@ static HRESULT d3dx9_base_effect_set_texture(struct d3dx9_base_effect *base,
         if (oltexture) IDirect3DBaseTexture9_Release(oltexture);
 
         *(struct IDirect3DBaseTexture9 **)param->data = texture;
+        set_dirty(param);
 
         return D3D_OK;
     }
@@ -5798,6 +5846,12 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
     return hr;
 }
 
+static BOOL param_set_dirty_flag_ptr(void *dirty_flag_ptr, struct d3dx_parameter *param)
+{
+    param->dirty_flag_ptr = (DWORD *)dirty_flag_ptr;
+    return FALSE;
+}
+
 static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *data, UINT data_size, DWORD start)
 {
     const char *ptr = data + start;
@@ -5907,6 +5961,9 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
         }
     }
 
+    for (i = 0; i < base->parameter_count; ++i)
+        walk_parameter_tree(&base->parameters[i], param_set_dirty_flag_ptr,
+                &base->parameters[i].runtime_flags);
     return D3D_OK;
 
 err_out:
