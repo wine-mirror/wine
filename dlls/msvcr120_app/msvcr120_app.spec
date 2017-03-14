@@ -845,7 +845,7 @@
 @ cdecl _W_Getdays() msvcr120._W_Getdays
 @ cdecl _W_Getmonths() msvcr120._W_Getmonths
 @ cdecl _W_Gettnames() msvcr120._W_Gettnames
-@ stub _Wcsftime
+@ cdecl _Wcsftime(ptr long wstr ptr ptr) msvcr120._Wcsftime
 @ cdecl _XcptFilter(long ptr) msvcr120._XcptFilter
 @ cdecl __AdjustPointer(ptr ptr) msvcr120.__AdjustPointer
 @ stub __BuildCatchObject

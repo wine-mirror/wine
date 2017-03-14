@@ -5,7 +5,7 @@
 @ cdecl _W_Getdays() ucrtbase._W_Getdays
 @ cdecl _W_Getmonths() ucrtbase._W_Getmonths
 @ cdecl _W_Gettnames() ucrtbase._W_Gettnames
-@ stub _Wcsftime
+@ cdecl _Wcsftime(ptr long wstr ptr ptr) ucrtbase._Wcsftime
 @ cdecl __daylight() ucrtbase.__daylight
 @ cdecl __dstbias() ucrtbase.__dstbias
 @ cdecl __timezone() ucrtbase.__timezone
