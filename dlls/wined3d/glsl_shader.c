@@ -567,11 +567,15 @@ static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info
         struct shader_glsl_priv *priv, GLuint program_id,
         const struct wined3d_shader_reg_maps *reg_maps)
 {
-    struct wined3d_string_buffer *name = string_buffer_get(&priv->string_buffers);
     const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    struct wined3d_string_buffer *name;
     unsigned int i, base, count;
     GLuint block_idx;
 
+    if (shader_glsl_use_layout_binding_qualifier(gl_info))
+        return;
+
+    name = string_buffer_get(&priv->string_buffers);
     wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, reg_maps->shader_version.type, &base, &count);
     for (i = 0; i < count; ++i)
     {
@@ -1982,6 +1986,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_shader_indexable_temp *idx_temp_reg;
+    unsigned int uniform_block_base, uniform_block_count;
     unsigned int i, extra_constants_needed = 0;
     const struct wined3d_shader_lconst *lconst;
     const char *prefix;
@@ -2082,11 +2087,17 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         shader_addline(buffer, "uniform vec4 %s_icb[%u];\n", prefix, reg_maps->icb->vec4_count);
 
     /* Declare constant buffers */
-    for (i = 0; i < WINED3D_MAX_CBS; ++i)
+    wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, version->type,
+            &uniform_block_base, &uniform_block_count);
+    for (i = 0; i < min(uniform_block_count, WINED3D_MAX_CBS); ++i)
     {
         if (reg_maps->cb_sizes[i])
+        {
+            if (shader_glsl_use_layout_binding_qualifier(gl_info))
+                shader_addline(buffer, "layout(binding = %u)\n", uniform_block_base + i);
             shader_addline(buffer, "layout(std140) uniform block_%s_cb%u { vec4 %s_cb%u[%u]; };\n",
                     prefix, i, prefix, i, reg_maps->cb_sizes[i]);
+        }
     }
 
     /* Declare texture samplers */
