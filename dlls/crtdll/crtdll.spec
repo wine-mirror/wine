@@ -470,7 +470,7 @@
 @ cdecl strcpy(ptr str) msvcrt.strcpy
 @ cdecl strcspn(str str) msvcrt.strcspn
 @ cdecl strerror(long) msvcrt.strerror
-@ cdecl strftime(str long str ptr) msvcrt.strftime
+@ cdecl strftime(ptr long str ptr) msvcrt.strftime
 @ cdecl strlen(str) msvcrt.strlen
 @ cdecl strncat(str str long) msvcrt.strncat
 @ cdecl strncmp(str str long) msvcrt.strncmp

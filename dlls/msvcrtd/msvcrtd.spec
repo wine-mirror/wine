@@ -122,7 +122,7 @@
 @ cdecl _Getmonths() msvcrt._Getmonths
 @ cdecl _Gettnames() msvcrt._Gettnames
 @ extern _HUGE msvcrt._HUGE
-@ cdecl _Strftime(str long str ptr ptr) msvcrt._Strftime
+@ cdecl _Strftime(ptr long str ptr ptr) msvcrt._Strftime
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcrt.__CxxFrameHandler
 @ stdcall -arch=i386 __CxxLongjmpUnwind(ptr) msvcrt.__CxxLongjmpUnwind
@@ -768,7 +768,7 @@
 @ cdecl strcpy(ptr str) msvcrt.strcpy
 @ cdecl strcspn(str str) msvcrt.strcspn
 @ cdecl strerror(long) msvcrt.strerror
-@ cdecl strftime(str long str ptr) msvcrt.strftime
+@ cdecl strftime(ptr long str ptr) msvcrt.strftime
 @ cdecl strlen(str) msvcrt.strlen
 @ cdecl strncat(str str long) msvcrt.strncat
 @ cdecl strncmp(str str long) msvcrt.strncmp

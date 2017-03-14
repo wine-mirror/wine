@@ -841,7 +841,7 @@
 @ stub _SetWinRTOutOfMemoryExceptionCallback
 @ stub -arch=win64 _SetImageBase
 @ stub -arch=win64 _SetThrowImageBase
-@ cdecl _Strftime(str long str ptr ptr) msvcr120._Strftime
+@ cdecl _Strftime(ptr long str ptr ptr) msvcr120._Strftime
 @ cdecl _W_Getdays() msvcr120._W_Getdays
 @ cdecl _W_Getmonths() msvcr120._W_Getmonths
 @ cdecl _W_Gettnames() msvcr120._W_Gettnames
@@ -1419,7 +1419,7 @@
 @ cdecl _strdup(str) msvcr120._strdup
 @ cdecl _strerror(long) msvcr120._strerror
 @ stub _strerror_s
-@ cdecl _strftime_l(str long str ptr ptr) msvcr120._strftime_l
+@ cdecl _strftime_l(ptr long str ptr ptr) msvcr120._strftime_l
 @ cdecl _stricmp(str str) msvcr120._stricmp
 @ cdecl _stricmp_l(str str ptr) msvcr120._stricmp_l
 @ cdecl _stricoll(str str) msvcr120._stricoll
@@ -2036,7 +2036,7 @@
 @ cdecl strcspn(str str) msvcr120.strcspn
 @ cdecl strerror(long) msvcr120.strerror
 @ cdecl strerror_s(ptr long long) msvcr120.strerror_s
-@ cdecl strftime(str long str ptr) msvcr120.strftime
+@ cdecl strftime(ptr long str ptr) msvcr120.strftime
 @ cdecl strlen(str) msvcr120.strlen
 @ cdecl strncat(str str long) msvcr120.strncat
 @ cdecl strncat_s(str long str long) msvcr120.strncat_s

@@ -108,7 +108,7 @@
 @ cdecl _Getmonths()
 @ cdecl _Gettnames()
 @ extern _HUGE MSVCRT__HUGE
-@ cdecl _Strftime(str long str ptr ptr)
+@ cdecl _Strftime(ptr long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
 @ cdecl -arch=i386,x86_64,arm __CppXcptFilter(long ptr)
 @ stub __CxxCallUnwindDtor
@@ -812,7 +812,7 @@
 @ cdecl strcpy(ptr str) ntdll.strcpy
 @ cdecl strcspn(str str) ntdll.strcspn
 @ cdecl strerror(long) MSVCRT_strerror
-@ cdecl strftime(str long str ptr) MSVCRT_strftime
+@ cdecl strftime(ptr long str ptr) MSVCRT_strftime
 @ cdecl strlen(str) MSVCRT_strlen
 @ cdecl strncat(str str long) MSVCRT_strncat
 @ cdecl strncmp(str str long) MSVCRT_strncmp
