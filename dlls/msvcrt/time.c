@@ -1273,16 +1273,14 @@ MSVCRT_size_t CDECL MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *f
     return strftime_helper(str, max, format, mstm, NULL, NULL);
 }
 
-/*********************************************************************
- *              _wcsftime_l (MSVCRT.@)
- */
-MSVCRT_size_t CDECL MSVCRT__wcsftime_l( MSVCRT_wchar_t *str, MSVCRT_size_t max,
-        const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm, MSVCRT__locale_t loc )
+static MSVCRT_size_t wcsftime_helper( MSVCRT_wchar_t *str, MSVCRT_size_t max,
+        const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm,
+        MSVCRT___lc_time_data *time_data, MSVCRT__locale_t loc )
 {
     char *s, *fmt;
     MSVCRT_size_t len;
 
-    TRACE("%p %ld %s %p %p\n", str, max, debugstr_w(format), mstm, loc);
+    TRACE("%p %ld %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
 
     len = MSVCRT__wcstombs_l( NULL, format, 0, loc ) + 1;
     if (!(fmt = MSVCRT_malloc( len ))) return 0;
@@ -1290,7 +1288,7 @@ MSVCRT_size_t CDECL MSVCRT__wcsftime_l( MSVCRT_wchar_t *str, MSVCRT_size_t max,
 
     if ((s = MSVCRT_malloc( max*4 )))
     {
-        if (!MSVCRT__strftime_l( s, max*4, fmt, mstm, loc )) s[0] = 0;
+        if (!strftime_helper( s, max*4, fmt, mstm, time_data, loc )) s[0] = 0;
         len = MSVCRT__mbstowcs_l( str, s, max, loc );
         MSVCRT_free( s );
     }
@@ -1301,12 +1299,31 @@ MSVCRT_size_t CDECL MSVCRT__wcsftime_l( MSVCRT_wchar_t *str, MSVCRT_size_t max,
 }
 
 /*********************************************************************
+ *              _wcsftime_l (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT__wcsftime_l( MSVCRT_wchar_t *str, MSVCRT_size_t max,
+        const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm, MSVCRT__locale_t loc )
+{
+    return wcsftime_helper(str, max, format, mstm, NULL, loc);
+}
+
+/*********************************************************************
  *     wcsftime (MSVCRT.@)
  */
 MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
                                      const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm )
 {
-    return MSVCRT__wcsftime_l(str, max, format, mstm, NULL);
+    return wcsftime_helper(str, max, format, mstm, NULL, NULL);
+}
+
+/*********************************************************************
+ *		_Wcsftime (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL _Wcsftime(MSVCRT_wchar_t *str, MSVCRT_size_t max,
+        const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm,
+        MSVCRT___lc_time_data *time_data)
+{
+    return wcsftime_helper(str, max, format, mstm, time_data, NULL);
 }
 
 static char* asctime_buf(char *buf, const struct MSVCRT_tm *mstm)

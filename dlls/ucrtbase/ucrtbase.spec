@@ -44,7 +44,7 @@
 @ cdecl _W_Getdays()
 @ cdecl _W_Getmonths()
 @ cdecl _W_Gettnames()
-@ stub _Wcsftime
+@ cdecl _Wcsftime(ptr long wstr ptr ptr)
 @ cdecl __AdjustPointer(ptr ptr)
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
