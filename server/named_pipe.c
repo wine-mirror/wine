@@ -71,6 +71,7 @@ struct pipe_end
     struct fd           *fd;         /* pipe file descriptor */
     unsigned int         flags;      /* pipe flags */
     struct pipe_end     *connection; /* the other end of the pipe */
+    data_size_t          buffer_size;/* size of buffered data that doesn't block caller */
 };
 
 struct pipe_server
@@ -694,11 +695,12 @@ static struct pipe_server *get_pipe_server_obj( struct process *process,
     return (struct pipe_server *) obj;
 }
 
-static void init_pipe_end( struct pipe_end *pipe_end, unsigned int pipe_flags )
+static void init_pipe_end( struct pipe_end *pipe_end, unsigned int pipe_flags, data_size_t buffer_size )
 {
     pipe_end->fd = NULL;
     pipe_end->flags = pipe_flags;
     pipe_end->connection = NULL;
+    pipe_end->buffer_size = buffer_size;
 }
 
 static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned int options,
@@ -714,7 +716,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->client = NULL;
     server->flush_poll = NULL;
     server->options = options;
-    init_pipe_end( &server->pipe_end, pipe_flags );
+    init_pipe_end( &server->pipe_end, pipe_flags, pipe->insize );
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
@@ -728,7 +730,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     return server;
 }
 
-static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int pipe_flags )
+static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int pipe_flags, data_size_t buffer_size )
 {
     struct pipe_client *client;
 
@@ -738,7 +740,7 @@ static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int 
 
     client->server = NULL;
     client->flags = flags;
-    init_pipe_end( &client->pipe_end, pipe_flags );
+    init_pipe_end( &client->pipe_end, pipe_flags, buffer_size );
 
     return client;
 }
@@ -802,7 +804,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         return NULL;
     }
 
-    if ((client = create_pipe_client( options, pipe->flags )))
+    if ((client = create_pipe_client( options, pipe->flags, pipe->outsize )))
     {
         if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
         {
