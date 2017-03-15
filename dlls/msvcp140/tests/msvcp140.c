@@ -119,6 +119,12 @@ typedef struct {
     void *this;
 } function_void_cdecl_void;
 
+typedef struct {
+    void *task;
+    MSVCP_bool scheduled;
+    MSVCP_bool started;
+} _TaskEventLogger;
+
 static unsigned int (__cdecl *p__Thrd_id)(void);
 static task_continuation_context* (__thiscall *p_task_continuation_context_ctor)(task_continuation_context*);
 static void (__thiscall *p__ContextCallback__Assign)(_ContextCallback*, void*);
@@ -126,6 +132,12 @@ static void (__thiscall *p__ContextCallback__CallInContext)(const _ContextCallba
 static void (__thiscall *p__ContextCallback__Capture)(_ContextCallback*);
 static void (__thiscall *p__ContextCallback__Reset)(_ContextCallback*);
 static MSVCP_bool (__cdecl *p__ContextCallback__IsCurrentOriginSTA)(_ContextCallback*);
+static void (__thiscall *p__TaskEventLogger__LogCancelTask)(_TaskEventLogger*);
+static void (__thiscall *p__TaskEventLogger__LogScheduleTask)(_TaskEventLogger*, MSVCP_bool);
+static void (__thiscall *p__TaskEventLogger__LogTaskCompleted)(_TaskEventLogger*);
+static void (__thiscall *p__TaskEventLogger__LogTaskExecutionCompleted)(_TaskEventLogger*);
+static void (__thiscall *p__TaskEventLogger__LogWorkItemCompleted)(_TaskEventLogger*);
+static void (__thiscall *p__TaskEventLogger__LogWorkItemStarted)(_TaskEventLogger*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -148,6 +160,12 @@ static BOOL init(void)
         SET(p__ContextCallback__CallInContext, "?_CallInContext@_ContextCallback@details@Concurrency@@QEBAXV?$function@$$A6AXXZ@std@@_N@Z");
         SET(p__ContextCallback__Capture, "?_Capture@_ContextCallback@details@Concurrency@@AEAAXXZ");
         SET(p__ContextCallback__Reset, "?_Reset@_ContextCallback@details@Concurrency@@AEAAXXZ");
+        SET(p__TaskEventLogger__LogCancelTask, "?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
+        SET(p__TaskEventLogger__LogScheduleTask, "?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QEAAX_N@Z");
+        SET(p__TaskEventLogger__LogTaskCompleted, "?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
+        SET(p__TaskEventLogger__LogTaskExecutionCompleted, "?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
+        SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
+        SET(p__TaskEventLogger__LogWorkItemStarted, "?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -155,12 +173,24 @@ static BOOL init(void)
         SET(p__ContextCallback__CallInContext, "?_CallInContext@_ContextCallback@details@Concurrency@@QBAXV?$function@$$A6AXXZ@std@@_N@Z");
         SET(p__ContextCallback__Capture, "?_Capture@_ContextCallback@details@Concurrency@@AAAXXZ");
         SET(p__ContextCallback__Reset, "?_Reset@_ContextCallback@details@Concurrency@@AAAXXZ");
+        SET(p__TaskEventLogger__LogCancelTask, "?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAAXXZ");
+        SET(p__TaskEventLogger__LogScheduleTask, "?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z");
+        SET(p__TaskEventLogger__LogTaskCompleted, "?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
+        SET(p__TaskEventLogger__LogTaskExecutionCompleted, "?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
+        SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
+        SET(p__TaskEventLogger__LogWorkItemStarted, "?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
 #else
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAE@XZ");
         SET(p__ContextCallback__Assign, "?_Assign@_ContextCallback@details@Concurrency@@AAEXPAX@Z");
         SET(p__ContextCallback__CallInContext, "?_CallInContext@_ContextCallback@details@Concurrency@@QBEXV?$function@$$A6AXXZ@std@@_N@Z");
         SET(p__ContextCallback__Capture, "?_Capture@_ContextCallback@details@Concurrency@@AAEXXZ");
         SET(p__ContextCallback__Reset, "?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ");
+        SET(p__TaskEventLogger__LogCancelTask, "?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAEXXZ");
+        SET(p__TaskEventLogger__LogScheduleTask, "?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z");
+        SET(p__TaskEventLogger__LogTaskCompleted, "?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
+        SET(p__TaskEventLogger__LogTaskExecutionCompleted, "?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
+        SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
+        SET(p__TaskEventLogger__LogWorkItemStarted, "?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
 #endif
     }
 
@@ -295,6 +325,76 @@ static void test__ContextCallback(void)
 #endif
 }
 
+static void test__TaskEventLogger(void)
+{
+    _TaskEventLogger logger;
+    memset(&logger, 0, sizeof(logger));
+
+    call_func1(p__TaskEventLogger__LogCancelTask, &logger);
+    ok(!logger.task, "logger.task = %p\n", logger.task);
+    ok(!logger.scheduled, "logger.scheduled = %x\n", logger.scheduled);
+    ok(!logger.started, "logger.started = %x\n", logger.started);
+
+    call_func2(p__TaskEventLogger__LogScheduleTask, &logger, FALSE);
+    ok(!logger.task, "logger.task = %p\n", logger.task);
+    ok(!logger.scheduled, "logger.scheduled = %x\n", logger.scheduled);
+    ok(!logger.started, "logger.started = %x\n", logger.started);
+
+    call_func1(p__TaskEventLogger__LogTaskCompleted, &logger);
+    ok(!logger.task, "logger.task = %p\n", logger.task);
+    ok(!logger.scheduled, "logger.scheduled = %x\n", logger.scheduled);
+    ok(!logger.started, "logger.started = %x\n", logger.started);
+
+    call_func1(p__TaskEventLogger__LogTaskExecutionCompleted, &logger);
+    ok(!logger.task, "logger.task = %p\n", logger.task);
+    ok(!logger.scheduled, "logger.scheduled = %x\n", logger.scheduled);
+    ok(!logger.started, "logger.started = %x\n", logger.started);
+
+    call_func1(p__TaskEventLogger__LogWorkItemCompleted, &logger);
+    ok(!logger.task, "logger.task = %p\n", logger.task);
+    ok(!logger.scheduled, "logger.scheduled = %x\n", logger.scheduled);
+    ok(!logger.started, "logger.started = %x\n", logger.started);
+
+    call_func1(p__TaskEventLogger__LogWorkItemStarted, &logger);
+    ok(!logger.task, "logger.task = %p\n", logger.task);
+    ok(!logger.scheduled, "logger.scheduled = %x\n", logger.scheduled);
+    ok(!logger.started, "logger.started = %x\n", logger.started);
+
+    logger.task = (void*)0xdeadbeef;
+    logger.scheduled = TRUE;
+    logger.started = TRUE;
+
+    call_func1(p__TaskEventLogger__LogCancelTask, &logger);
+    ok(logger.task == (void*)0xdeadbeef, "logger.task = %p\n", logger.task);
+    ok(logger.scheduled, "logger.scheduled = FALSE\n");
+    ok(logger.started, "logger.started = FALSE\n");
+
+    call_func2(p__TaskEventLogger__LogScheduleTask, &logger, FALSE);
+    ok(logger.task == (void*)0xdeadbeef, "logger.task = %p\n", logger.task);
+    ok(logger.scheduled, "logger.scheduled = FALSE\n");
+    ok(logger.started, "logger.started = FALSE\n");
+
+    call_func1(p__TaskEventLogger__LogTaskCompleted, &logger);
+    ok(logger.task == (void*)0xdeadbeef, "logger.task = %p\n", logger.task);
+    ok(logger.scheduled, "logger.scheduled = FALSE\n");
+    ok(logger.started, "logger.started = FALSE\n");
+
+    call_func1(p__TaskEventLogger__LogTaskExecutionCompleted, &logger);
+    ok(logger.task == (void*)0xdeadbeef, "logger.task = %p\n", logger.task);
+    ok(logger.scheduled, "logger.scheduled = FALSE\n");
+    ok(logger.started, "logger.started = FALSE\n");
+
+    call_func1(p__TaskEventLogger__LogWorkItemCompleted, &logger);
+    ok(logger.task == (void*)0xdeadbeef, "logger.task = %p\n", logger.task);
+    ok(logger.scheduled, "logger.scheduled = FALSE\n");
+    ok(logger.started, "logger.started = FALSE\n");
+
+    call_func1(p__TaskEventLogger__LogWorkItemStarted, &logger);
+    ok(logger.task == (void*)0xdeadbeef, "logger.task = %p\n", logger.task);
+    ok(logger.scheduled, "logger.scheduled = FALSE\n");
+    ok(logger.started, "logger.started = FALSE\n");
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -302,5 +402,6 @@ START_TEST(msvcp140)
     test_vbtable_size_exports();
     test_task_continuation_context();
     test__ContextCallback();
+    test__TaskEventLogger();
     FreeLibrary(msvcp);
 }
