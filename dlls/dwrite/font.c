@@ -4903,14 +4903,14 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
 {
     static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
     struct dwrite_glyphbitmap glyph_bitmap;
-    IDWriteFontFace4 *fontface2;
+    IDWriteFontFace4 *fontface;
     D2D_POINT_2F origin;
     UINT32 i, size;
     BOOL is_rtl;
     HRESULT hr;
     RECT *bbox;
 
-    hr = IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace4, (void**)&fontface2);
+    hr = IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace4, (void **)&fontface);
     if (FAILED(hr)) {
         WARN("failed to get IDWriteFontFace4, 0x%08x\n", hr);
         return;
@@ -4925,7 +4925,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     is_rtl = analysis->run.bidiLevel & 1;
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-    glyph_bitmap.fontface = fontface2;
+    glyph_bitmap.fontface = fontface;
     glyph_bitmap.emsize = analysis->run.fontEmSize * analysis->ppdip;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
     glyph_bitmap.type = type;
@@ -5013,7 +5013,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         origin.y += advance->y;
     }
 
-    IDWriteFontFace4_Release(fontface2);
+    IDWriteFontFace4_Release(fontface);
 
     analysis->flags |= RUNANALYSIS_BITMAP_READY;
 
