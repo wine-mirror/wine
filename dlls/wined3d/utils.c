@@ -2759,7 +2759,7 @@ static void query_internal_format(struct wined3d_adapter *adapter,
     }
     else
     {
-        if (!gl_info->limits.vertex_samplers)
+        if (!gl_info->limits.samplers[WINED3D_SHADER_TYPE_VERTEX])
             format_clear_flag(format, WINED3DFMT_FLAG_VTF);
 
         if (!(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
@@ -5994,32 +5994,28 @@ void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *g
 void wined3d_gl_limits_get_texture_unit_range(const struct wined3d_gl_limits *gl_limits,
         enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count)
 {
+    unsigned int i;
+
     if (shader_type == WINED3D_SHADER_TYPE_COMPUTE)
     {
         if (gl_limits->combined_samplers == gl_limits->graphics_samplers)
             *base = 0;
         else
             *base = gl_limits->graphics_samplers - 1;
-        *count = gl_limits->compute_samplers;
+        *count = gl_limits->samplers[WINED3D_SHADER_TYPE_COMPUTE];
         return;
     }
 
     *base = 0;
-    *count = gl_limits->fragment_samplers;
-    if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
-        return;
+    for (i = 0; i < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++i)
+    {
+        *count = gl_limits->samplers[i];
+        if (i == shader_type)
+            return;
+        *base += *count;
+    }
 
-    *base += *count;
-    *count = gl_limits->vertex_samplers;
-    if (shader_type == WINED3D_SHADER_TYPE_VERTEX)
-        return;
-
-    *base += *count;
-    *count = gl_limits->geometry_samplers;
-    if (shader_type == WINED3D_SHADER_TYPE_GEOMETRY)
-        return;
-
-    *base += *count;
+    ERR("Unrecognized shader type %#x.\n", shader_type);
     *count = 0;
 }
 

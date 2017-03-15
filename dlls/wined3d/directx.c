@@ -3404,12 +3404,12 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     gl_info->limits.textures = 0;
     gl_info->limits.texture_coords = 0;
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
         gl_info->limits.uniform_blocks[i] = 0;
-    gl_info->limits.fragment_samplers = 1;
-    gl_info->limits.vertex_samplers = 0;
-    gl_info->limits.geometry_samplers = 0;
-    gl_info->limits.compute_samplers = 0;
-    gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers + gl_info->limits.vertex_samplers;
+        gl_info->limits.samplers[i] = 0;
+    }
+    gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL] = 1;
+    gl_info->limits.combined_samplers = gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL];
     gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
     gl_info->limits.vertex_attribs = 16;
     gl_info->limits.texture_buffer_offset_alignment = 1;
@@ -3489,18 +3489,20 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         if (gl_info->supported[ARB_FRAGMENT_PROGRAM] || gl_info->supported[ARB_FRAGMENT_SHADER])
         {
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &gl_max);
-            gl_info->limits.fragment_samplers = gl_max;
+            gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL] = gl_max;
         }
         else
         {
-            gl_info->limits.fragment_samplers = gl_info->limits.textures;
+            gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL] = gl_info->limits.textures;
         }
-        TRACE("Max fragment samplers: %d.\n", gl_info->limits.fragment_samplers);
+        TRACE("Max fragment samplers: %d.\n", gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL]);
 
         if (gl_info->supported[ARB_VERTEX_SHADER])
         {
+            unsigned int vertex_sampler_count;
+
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
-            gl_info->limits.vertex_samplers = gl_max;
+            vertex_sampler_count = gl_info->limits.samplers[WINED3D_SHADER_TYPE_VERTEX] = gl_max;
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
             gl_info->limits.combined_samplers = gl_max;
             gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &gl_max);
@@ -3520,23 +3522,24 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
              *
              * So this is just a check to check that our assumption holds true. If not, write a warning
              * and reduce the number of vertex samplers or probably disable vertex texture fetch. */
-            if (gl_info->limits.vertex_samplers && gl_info->limits.combined_samplers < 12
-                    && MAX_TEXTURES + gl_info->limits.vertex_samplers > gl_info->limits.combined_samplers)
+            if (vertex_sampler_count && gl_info->limits.combined_samplers < 12
+                    && MAX_TEXTURES + vertex_sampler_count > gl_info->limits.combined_samplers)
             {
                 FIXME("OpenGL implementation supports %u vertex samplers and %u total samplers.\n",
-                        gl_info->limits.vertex_samplers, gl_info->limits.combined_samplers);
+                        vertex_sampler_count, gl_info->limits.combined_samplers);
                 FIXME("Expected vertex samplers + MAX_TEXTURES(=8) > combined_samplers.\n");
                 if (gl_info->limits.combined_samplers > MAX_TEXTURES)
-                    gl_info->limits.vertex_samplers = gl_info->limits.combined_samplers - MAX_TEXTURES;
+                    vertex_sampler_count = gl_info->limits.combined_samplers - MAX_TEXTURES;
                 else
-                    gl_info->limits.vertex_samplers = 0;
+                    vertex_sampler_count = 0;
+                gl_info->limits.samplers[WINED3D_SHADER_TYPE_VERTEX] = vertex_sampler_count;
             }
         }
         else
         {
-            gl_info->limits.combined_samplers = gl_info->limits.fragment_samplers;
+            gl_info->limits.combined_samplers = gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL];
         }
-        TRACE("Max vertex samplers: %u.\n", gl_info->limits.vertex_samplers);
+        TRACE("Max vertex samplers: %u.\n", gl_info->limits.samplers[WINED3D_SHADER_TYPE_VERTEX]);
         TRACE("Max combined samplers: %u.\n", gl_info->limits.combined_samplers);
         TRACE("Max vertex attributes: %u.\n", gl_info->limits.vertex_attribs);
     }
@@ -3621,8 +3624,8 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         TRACE("Max geometry uniform blocks: %u (%d).\n",
                 gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_GEOMETRY], gl_max);
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS, &gl_max);
-        gl_info->limits.geometry_samplers = gl_max;
-        TRACE("Max geometry samplers: %u.\n", gl_info->limits.geometry_samplers);
+        gl_info->limits.samplers[WINED3D_SHADER_TYPE_GEOMETRY] = gl_max;
+        TRACE("Max geometry samplers: %u.\n", gl_info->limits.samplers[WINED3D_SHADER_TYPE_GEOMETRY]);
     }
     if (gl_info->supported[ARB_FRAGMENT_SHADER])
     {
@@ -3648,8 +3651,8 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         TRACE("Max compute uniform blocks: %u (%d).\n",
                 gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_COMPUTE], gl_max);
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS, &gl_max);
-        gl_info->limits.compute_samplers = gl_max;
-        TRACE("Max compute samplers: %u.\n", gl_info->limits.compute_samplers);
+        gl_info->limits.samplers[WINED3D_SHADER_TYPE_COMPUTE] = gl_max;
+        TRACE("Max compute samplers: %u.\n", gl_info->limits.samplers[WINED3D_SHADER_TYPE_COMPUTE]);
     }
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
     {
@@ -3694,9 +3697,11 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.samples = gl_max;
     }
 
-    gl_info->limits.fragment_samplers = min(gl_info->limits.fragment_samplers, MAX_GL_FRAGMENT_SAMPLERS);
-    sampler_count = gl_info->limits.vertex_samplers + gl_info->limits.fragment_samplers
-            + gl_info->limits.geometry_samplers;
+    gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL] =
+            min(gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL], MAX_GL_FRAGMENT_SAMPLERS);
+    sampler_count = 0;
+    for (i = 0; i < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++i)
+        sampler_count += gl_info->limits.samplers[i];
     if (gl_info->supported[WINED3D_GL_VERSION_3_2] && gl_info->limits.combined_samplers < sampler_count)
     {
         /* The minimum value for GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS in OpenGL
@@ -3704,16 +3709,16 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
          * the minimum value is increased to 80. */
         WARN("Graphics pipeline sampler count %u is greater than combined sampler count %u.\n",
                 sampler_count, gl_info->limits.combined_samplers);
-        gl_info->limits.fragment_samplers = min(gl_info->limits.fragment_samplers, 16);
-        gl_info->limits.vertex_samplers = min(gl_info->limits.vertex_samplers, 16);
-        gl_info->limits.geometry_samplers = min(gl_info->limits.geometry_samplers, 16);
+        for (i = 0; i < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++i)
+            gl_info->limits.samplers[i] = min(gl_info->limits.samplers[i], 16);
     }
 
     /* A majority of OpenGL implementations allow us to statically partition
      * the set of texture bindings into six separate sets. */
     gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
-    if (gl_info->limits.combined_samplers >= sampler_count + gl_info->limits.compute_samplers)
-        gl_info->limits.graphics_samplers -= gl_info->limits.compute_samplers;
+    sampler_count += gl_info->limits.samplers[WINED3D_SHADER_TYPE_COMPUTE];
+    if (gl_info->limits.combined_samplers >= sampler_count)
+        gl_info->limits.graphics_samplers -= gl_info->limits.samplers[WINED3D_SHADER_TYPE_COMPUTE];
 }
 
 /* Context activation is done by the caller. */
