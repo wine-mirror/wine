@@ -277,6 +277,12 @@ static const struct fd_ops named_pipe_device_fd_ops =
     default_fd_reselect_async         /* reselect_async */
 };
 
+/* Returns if we handle I/O via server calls. Currently disabled. */
+static int use_server_io( struct pipe_end *pipe_end )
+{
+    return 0; /* FIXME */
+}
+
 static void named_pipe_dump( struct object *obj, int verbose )
 {
     fputs( "Named pipe\n", stderr );
@@ -394,7 +400,8 @@ static void do_disconnect( struct pipe_server *server )
         server->client->pipe_end.fd = NULL;
     }
     assert( server->pipe_end.fd );
-    shutdown( get_unix_fd( server->pipe_end.fd ), SHUT_RDWR );
+    if (!use_server_io( &server->pipe_end ))
+        shutdown( get_unix_fd( server->pipe_end.fd ), SHUT_RDWR );
     release_object( server->pipe_end.fd );
     server->pipe_end.fd = NULL;
 }
@@ -539,6 +546,9 @@ static int pipe_data_remaining( struct pipe_server *server )
 
     assert( server->client );
 
+    if (use_server_io( &server->pipe_end ))
+        return 0;
+
     fd = get_unix_fd( server->client->pipe_end.fd );
     if (fd < 0)
         return 0;
@@ -590,7 +600,7 @@ static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int b
     handle = pipe_end_flush( &server->pipe_end, async, blocking );
 
     /* there's no unix way to be alerted when a pipe becomes empty, so resort to polling */
-    if (handle && !server->flush_poll)
+    if (handle && !use_server_io( &server->pipe_end ) && !server->flush_poll)
         server->flush_poll = add_timeout_user( -TICKS_PER_SEC / 10, check_flushed, server );
     return handle;
 }
@@ -806,7 +816,22 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
 
     if ((client = create_pipe_client( options, pipe->flags, pipe->outsize )))
     {
-        if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
+        if (use_server_io( &server->pipe_end ))
+        {
+            client->pipe_end.fd = alloc_pseudo_fd( &pipe_client_fd_ops, &client->pipe_end.obj, options );
+            if (client->pipe_end.fd)
+            {
+                set_fd_signaled( client->pipe_end.fd, 1 );
+                server->pipe_end.fd = (struct fd *)grab_object( server->ioctl_fd );
+                set_no_fd_status( server->ioctl_fd, STATUS_BAD_DEVICE_TYPE );
+            }
+            else
+            {
+                release_object( client );
+                client = NULL;
+            }
+        }
+        else if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
         {
             assert( !server->pipe_end.fd );
 
@@ -831,14 +856,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
             server->pipe_end.fd = create_anonymous_fd( &pipe_server_fd_ops, fds[0], &server->pipe_end.obj, server->options );
             if (client->pipe_end.fd && server->pipe_end.fd)
             {
-                allow_fd_caching( client->pipe_end.fd );
-                allow_fd_caching( server->pipe_end.fd );
                 fd_copy_completion( server->ioctl_fd, server->pipe_end.fd );
-                if (server->state == ps_wait_open)
-                    fd_async_wake_up( server->ioctl_fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-                set_server_state( server, ps_connected_server );
-                server->client = client;
-                client->server = server;
             }
             else
             {
@@ -854,6 +872,13 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         }
         if (client)
         {
+            allow_fd_caching( client->pipe_end.fd );
+            allow_fd_caching( server->pipe_end.fd );
+            if (server->state == ps_wait_open)
+                fd_async_wake_up( server->ioctl_fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+            set_server_state( server, ps_connected_server );
+            server->client = client;
+            client->server = server;
             server->pipe_end.connection = &client->pipe_end;
             client->pipe_end.connection = &server->pipe_end;
         }
