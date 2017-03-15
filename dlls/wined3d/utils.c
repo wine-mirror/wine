@@ -2803,6 +2803,7 @@ static void query_internal_format(struct wined3d_adapter *adapter,
     {
         if (gl_info->supported[ARB_INTERNALFORMAT_QUERY])
         {
+            count = 0;
             GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
                     GL_NUM_SAMPLE_COUNTS, 1, &count));
             checkGLcall("glGetInternalformativ(GL_NUM_SAMPLE_COUNTS)");
