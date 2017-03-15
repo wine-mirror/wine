@@ -70,6 +70,7 @@ struct pipe_end
     struct object        obj;        /* object header */
     struct fd           *fd;         /* pipe file descriptor */
     unsigned int         flags;      /* pipe flags */
+    struct pipe_end     *connection; /* the other end of the pipe */
 };
 
 struct pipe_server
@@ -368,6 +369,19 @@ static void notify_empty( struct pipe_server *server )
     fd_async_wake_up( server->pipe_end.fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
 }
 
+static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status )
+{
+    struct pipe_end *connection = pipe_end->connection;
+
+    pipe_end->connection = NULL;
+
+    if (connection)
+    {
+        connection->connection = NULL;
+        pipe_end_disconnect( connection, status );
+    }
+}
+
 static void do_disconnect( struct pipe_server *server )
 {
     /* we may only have a server fd, if the client disconnected */
@@ -389,6 +403,8 @@ static void pipe_server_destroy( struct object *obj)
     struct pipe_server *server = (struct pipe_server *)obj;
 
     assert( obj->ops == &pipe_server_ops );
+
+    pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_BROKEN );
 
     if (server->pipe_end.fd)
     {
@@ -416,6 +432,8 @@ static void pipe_client_destroy( struct object *obj)
     struct pipe_server *server = client->server;
 
     assert( obj->ops == &pipe_client_ops );
+
+    pipe_end_disconnect( &client->pipe_end, STATUS_PIPE_BROKEN );
 
     if (server)
     {
@@ -641,6 +659,7 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct 
             notify_empty( server );
 
             /* dump the client and server fds - client loses all waiting data */
+            pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
             do_disconnect( server );
             server->client->server = NULL;
             server->client = NULL;
@@ -648,6 +667,7 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct 
             break;
         case ps_wait_disconnect:
             assert( !server->client );
+            pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
             do_disconnect( server );
             set_server_state( server, ps_wait_connect );
             break;
@@ -678,6 +698,7 @@ static void init_pipe_end( struct pipe_end *pipe_end, unsigned int pipe_flags )
 {
     pipe_end->fd = NULL;
     pipe_end->flags = pipe_flags;
+    pipe_end->connection = NULL;
 }
 
 static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned int options,
@@ -828,6 +849,11 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
             file_set_error();
             release_object( client );
             client = NULL;
+        }
+        if (client)
+        {
+            server->pipe_end.connection = &client->pipe_end;
+            client->pipe_end.connection = &server->pipe_end;
         }
     }
     release_object( server );
