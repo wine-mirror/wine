@@ -212,7 +212,7 @@ struct dwrite_colorglyphenum {
 enum fontface_flags {
     FONTFACE_IS_SYMBOL             = 1 << 0,
     FONTFACE_IS_MONOSPACED         = 1 << 1,
-    FONTFACE_HAS_KERN_PAIRS        = 1 << 2,
+    FONTFACE_HAS_KERNING_PAIRS     = 1 << 2,
     FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 3
 };
 
@@ -967,7 +967,7 @@ static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace4
         return E_INVALIDARG;
     }
 
-    if (This->flags & FONTFACE_HAS_KERN_PAIRS) {
+    if (!(This->flags & FONTFACE_HAS_KERNING_PAIRS)) {
         memset(adjustments, 0, count*sizeof(INT32));
         return S_OK;
     }
@@ -983,7 +983,7 @@ static BOOL WINAPI dwritefontface1_HasKerningPairs(IDWriteFontFace4 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
     TRACE("(%p)\n", This);
-    return !!(This->flags & FONTFACE_HAS_KERN_PAIRS);
+    return !!(This->flags & FONTFACE_HAS_KERNING_PAIRS);
 }
 
 static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFace4 *iface,
@@ -4310,7 +4310,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, IDWriteFontFace4 **ret
     if (is_symbol)
         fontface->flags |= FONTFACE_IS_SYMBOL;
     if (freetype_has_kerning_pairs(&fontface->IDWriteFontFace4_iface))
-        fontface->flags |= FONTFACE_HAS_KERN_PAIRS;
+        fontface->flags |= FONTFACE_HAS_KERNING_PAIRS;
     if (freetype_is_monospaced(&fontface->IDWriteFontFace4_iface))
         fontface->flags |= FONTFACE_IS_MONOSPACED;
     if (opentype_has_vertical_variants(&fontface->IDWriteFontFace4_iface))
