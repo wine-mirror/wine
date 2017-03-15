@@ -2661,7 +2661,6 @@ static HRESULT internal_parse(
         }
         case VT_UNKNOWN:
         case VT_DISPATCH: {
-            IPersistStream *persistStream;
             ISequentialStream *stream = NULL;
             IXMLDOMDocument *xmlDoc;
 
@@ -2678,34 +2677,11 @@ static HRESULT internal_parse(
                 break;
             }
 
-            if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
-                        &IID_IPersistStream, (void**)&persistStream) == S_OK)
-            {
-                IStream *stream_copy;
-
-                hr = CreateStreamOnHGlobal(NULL, TRUE, &stream_copy);
-                if(hr != S_OK)
-                {
-                    IPersistStream_Release(persistStream);
-                    return hr;
-                }
-
-                hr = IPersistStream_Save(persistStream, stream_copy, TRUE);
-                IPersistStream_Release(persistStream);
-                if(hr == S_OK)
-                    IStream_QueryInterface(stream_copy, &IID_ISequentialStream, (void**)&stream);
-
-                IStream_Release(stream_copy);
-            }
-
             /* try base interface first */
-            if(!stream)
-            {
-                IUnknown_QueryInterface(V_UNKNOWN(&varInput), &IID_ISequentialStream, (void**)&stream);
-                if (!stream)
-                    /* this should never happen if IStream is implemented properly, but just in case */
-                    IUnknown_QueryInterface(V_UNKNOWN(&varInput), &IID_IStream, (void**)&stream);
-            }
+            IUnknown_QueryInterface(V_UNKNOWN(&varInput), &IID_ISequentialStream, (void**)&stream);
+            if (!stream)
+                /* this should never happen if IStream is implemented properly, but just in case */
+                IUnknown_QueryInterface(V_UNKNOWN(&varInput), &IID_IStream, (void**)&stream);
 
             if(stream)
             {

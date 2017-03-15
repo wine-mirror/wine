@@ -1908,6 +1908,8 @@ static HRESULT WINAPI istream_QueryInterface(IStream *iface, REFIID riid, void *
 {
     *ppvObject = NULL;
 
+    ok(!IsEqualGUID(riid, &IID_IPersistStream), "Did not expect QI for IPersistStream\n");
+
     if(IsEqualGUID(riid, &IID_IStream) || IsEqualGUID(riid, &IID_IUnknown))
         *ppvObject = iface;
     else
