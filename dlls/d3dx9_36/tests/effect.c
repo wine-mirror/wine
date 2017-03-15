@@ -3938,6 +3938,88 @@ static void test_effect_preshader_compare_shader_(unsigned int line, IDirect3DDe
     IDirect3DVertexShader9_Release(vshader);
  }
 
+static const struct
+{
+    const char *comment;
+    BOOL todo[4];
+    unsigned int result[4];
+    unsigned int ulps;
+}
+test_effect_preshader_op_expected[] =
+{
+    {"1 / op", {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
+    {"rsq",    {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0x7f800000, 0x3f2c985c, 0x1f800001}, 1},
+    {"mul",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0x40d33334, 0x7f800000}},
+    {"add",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x40000000, 0xc0a66666, 0x7f7fffff}},
+    {"lt",     {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x3f800000, 0x00000000, 0x00000000}},
+    {"ge",     {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
+    {"neg",    {FALSE, FALSE, FALSE, FALSE}, {0x80000000, 0x00000000, 0x400ccccd, 0xff7fffff}},
+    {"rcp",    {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
+
+    {"frac",   {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x00000000, 0x3f4ccccc, 0x00000000}},
+    {"min",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0xc0400000, 0x40800000}},
+    {"max",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x40000000, 0xc00ccccd, 0x7f7fffff}},
+#if __x86_64__
+    {"sin",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0xbf0599b3}},
+    {"cos",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0x3f5a5f96}},
+#else
+    {"sin",    {FALSE, FALSE, FALSE,  TRUE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0x3f792dc4}},
+    {"cos",    {FALSE, FALSE, FALSE,  TRUE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0xbe6acefc}},
+#endif
+    {"den mul",{FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbb94f209, 0x000051ec}},
+    {"dot",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x7f800000, 0x41f00000, 0x00000000}},
+    {"prec",   {FALSE, FALSE,  TRUE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0xac531800, 0x00000000}},
+
+    {"dotswiz", {FALSE, FALSE, FALSE, FALSE}, {0xc00ccccd, 0xc0d33334, 0xc10ccccd, 0}},
+    {"reladdr", { TRUE,  TRUE,  TRUE,  TRUE}, {0xc00ccccd, 0x40000000, 0x41a00000, 0x41500000}},
+};
+
+enum expected_state_update
+{
+    EXPECTED_STATE_ZERO,
+    EXPECTED_STATE_UPDATED,
+    EXPECTED_STATE_ANYTHING
+};
+
+#define test_effect_preshader_op_results(a, b, c) test_effect_preshader_op_results_(__LINE__, a, b, c)
+static void test_effect_preshader_op_results_(unsigned int line, IDirect3DDevice9 *device,
+        const enum expected_state_update *expected_state, const char *updated_param)
+{
+    static const D3DCOLORVALUE black = {0.0f};
+    unsigned int i, j;
+    D3DLIGHT9 light;
+    const float *v;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(test_effect_preshader_op_expected); ++i)
+    {
+        hr = IDirect3DDevice9_GetLight(device, i % 8, &light);
+        ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        v = i < 8 ? &light.Diffuse.r : (i < 16 ? &light.Ambient.r : &light.Specular.r);
+        if (!expected_state || expected_state[i] == EXPECTED_STATE_UPDATED)
+        {
+            for (j = 0; j < 4; ++j)
+            {
+                todo_wine_if(test_effect_preshader_op_expected[i].todo[j])
+                ok_(__FILE__, line)(compare_float(v[j],
+                        ((const float *)test_effect_preshader_op_expected[i].result)[j],
+                        test_effect_preshader_op_expected[i].ulps),
+                        "Operation %s, component %u, expected %#x, got %#x (%g).\n",
+                        test_effect_preshader_op_expected[i].comment, j,
+                        test_effect_preshader_op_expected[i].result[j],
+                        ((const unsigned int *)v)[j], v[j]);
+            }
+        }
+        else if (expected_state[i] == EXPECTED_STATE_ZERO)
+        {
+            ok_(__FILE__, line)(!memcmp(v, &black, sizeof(black)),
+                    "Parameter %s, test %d, operation %s, state updated unexpectedly.\n",
+                    updated_param, i, test_effect_preshader_op_expected[i].comment);
+        }
+    }
+}
+
 static void test_effect_preshader(IDirect3DDevice9 *device)
 {
     static const D3DXVECTOR4 test_effect_preshader_fconstsv[] =
@@ -4002,46 +4084,12 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     {
         {4, 3, 2, 1}
     };
-    static const struct
-    {
-        const char *comment;
-        BOOL todo[4];
-        unsigned int result[4];
-        unsigned int ulps;
-    }
-    test_effect_preshader_op_results[] =
-    {
-        {"1 / op", {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
-        {"rsq",    {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0x7f800000, 0x3f2c985c, 0x1f800001}, 1},
-        {"mul",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0x40d33334, 0x7f800000}},
-        {"add",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x40000000, 0xc0a66666, 0x7f7fffff}},
-        {"lt",     {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x3f800000, 0x00000000, 0x00000000}},
-        {"ge",     {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x00000000, 0x3f800000, 0x3f800000}},
-        {"neg",    {FALSE, FALSE, FALSE, FALSE}, {0x80000000, 0x00000000, 0x400ccccd, 0xff7fffff}},
-        {"rcp",    {FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbee8ba2e, 0x00200000}},
-        {"frac",   {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x00000000, 0x3f4ccccc, 0x00000000}},
-        {"min",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0xc0400000, 0x40800000}},
-        {"max",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x40000000, 0xc00ccccd, 0x7f7fffff}},
-#if __x86_64__
-        {"sin",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0xbf0599b3}},
-        {"cos",    {FALSE, FALSE, FALSE, FALSE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0x3f5a5f96}},
-#else
-        {"sin",    {FALSE, FALSE, FALSE,  TRUE}, {0x00000000, 0x80000000, 0xbf4ef99e, 0x3f792dc4}},
-        {"cos",    {FALSE, FALSE, FALSE,  TRUE}, {0x3f800000, 0x3f800000, 0xbf16a803, 0xbe6acefc}},
-#endif
-        {"den mul",{FALSE, FALSE, FALSE, FALSE}, {0x7f800000, 0xff800000, 0xbb94f209, 0x000051ec}},
-        {"dot",    {FALSE, FALSE, FALSE, FALSE}, {0x00000000, 0x7f800000, 0x41f00000, 0x00000000}},
-        {"prec",   {FALSE, FALSE,  TRUE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0xac531800, 0x00000000}},
-        {"dotswiz", {FALSE, FALSE, FALSE, FALSE}, {0xc00ccccd, 0xc0d33334, 0xc10ccccd, 0}},
-        {"reladdr", { TRUE,  TRUE,  TRUE,  TRUE}, {0xc00ccccd, 0x40000000, 0x41a00000, 0x41500000}},
-    };
 #define TEST_EFFECT_PRES_NFLOATV ARRAY_SIZE(test_effect_preshader_fconstsv)
 #define TEST_EFFECT_PRES_NFLOATP ARRAY_SIZE(test_effect_preshader_fconstsp)
 #define TEST_EFFECT_PRES_NFLOATMAX (TEST_EFFECT_PRES_NFLOATV > TEST_EFFECT_PRES_NFLOATP ? \
             TEST_EFFECT_PRES_NFLOATV : TEST_EFFECT_PRES_NFLOATP)
 #define TEST_EFFECT_PRES_NBOOL ARRAY_SIZE(test_effect_preshader_bconsts)
 #define TEST_EFFECT_PRES_NINT ARRAY_SIZE(test_effect_preshader_iconsts)
-#define TEST_EFFECT_PRES_NOPTESTS ARRAY_SIZE(test_effect_preshader_op_results)
 
     static const D3DXVECTOR4 fvect1 = {28.0f, 29.0f, 30.0f, 31.0f};
     static const D3DXVECTOR4 fvect2 = {0.0f, 0.0f, 1.0f, 0.0f};
@@ -4053,12 +4101,11 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     unsigned int npasses;
     DWORD value;
     BOOL bval;
-    D3DLIGHT9 light;
     D3DXVECTOR4 fdata[TEST_EFFECT_PRES_NFLOATMAX];
     int idata[TEST_EFFECT_PRES_NINT][4];
     BOOL bdata[TEST_EFFECT_PRES_NBOOL];
     IDirect3DVertexShader9 *vshader;
-    unsigned int i, j;
+    unsigned int i;
     D3DCAPS9 caps;
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -4160,23 +4207,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
         ok(hr == D3D_OK && !bval, "Got result %#x, boolean register value %u.\n", hr, bval);
     }
 
-    for (i = 0; i < TEST_EFFECT_PRES_NOPTESTS; ++i)
-    {
-        float *v;
-
-        hr = IDirect3DDevice9_GetLight(device, i % 8, &light);
-        v = i < 8 ? &light.Diffuse.r : (i < 16 ? &light.Ambient.r : &light.Specular.r);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
-        for (j = 0; j < 4; ++j)
-        {
-            todo_wine_if(test_effect_preshader_op_results[i].todo[j])
-            ok(compare_float(v[j], ((float *)test_effect_preshader_op_results[i].result)[j],
-                    test_effect_preshader_op_results[i].ulps),
-                    "Operation %s, component %u, expected %#x, got %#x (%g).\n",
-                    test_effect_preshader_op_results[i].comment, j,
-                    test_effect_preshader_op_results[i].result[j], ((unsigned int *)v)[j], v[j]);
-        }
-    }
+    test_effect_preshader_op_results(device, NULL, NULL);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MINFILTER, &value);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
