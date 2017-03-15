@@ -739,11 +739,20 @@ static inline int round_metric(FLOAT metric)
     return (int)floorf(metric + 0.5f);
 }
 
+static UINT32 fontface_get_horz_metric_adjustment(const struct dwrite_fontface *fontface)
+{
+    if (!(fontface->simulations & DWRITE_FONT_SIMULATIONS_BOLD))
+        return 0;
+
+    return (fontface->metrics.designUnitsPerEm + 49) / 50;
+}
+
 static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFace4 *iface, FLOAT emSize, FLOAT ppdip,
     DWRITE_MATRIX const *m, BOOL use_gdi_natural, UINT16 const *glyphs, UINT32 glyph_count,
     DWRITE_GLYPH_METRICS *metrics, BOOL is_sideways)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
+    UINT32 adjustment = fontface_get_horz_metric_adjustment(This);
     DWRITE_MEASURING_MODE mode;
     FLOAT scale, size;
     HRESULT hr;
@@ -762,13 +771,17 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
     for (i = 0; i < glyph_count; i++) {
         DWRITE_GLYPH_METRICS *ret = metrics + i;
         DWRITE_GLYPH_METRICS design;
+        BOOL has_contours;
 
         hr = IDWriteFontFace4_GetDesignGlyphMetrics(iface, glyphs + i, 1, &design, is_sideways);
         if (FAILED(hr))
             return hr;
 
-        ret->advanceWidth = freetype_get_glyph_advance(iface, size, glyphs[i], mode);
-        ret->advanceWidth = round_metric(ret->advanceWidth * This->metrics.designUnitsPerEm / size);
+        ret->advanceWidth = freetype_get_glyph_advance(iface, size, glyphs[i], mode, &has_contours);
+        if (has_contours)
+            ret->advanceWidth = round_metric(ret->advanceWidth * This->metrics.designUnitsPerEm / size + adjustment);
+        else
+            ret->advanceWidth = round_metric(ret->advanceWidth * This->metrics.designUnitsPerEm / size);
 
 #define SCALE_METRIC(x) ret->x = round_metric(round_metric((design.x) * scale) / scale)
         SCALE_METRIC(leftSideBearing);
@@ -878,6 +891,7 @@ static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace4 *i
     UINT32 glyph_count, UINT16 const *glyphs, INT32 *advances, BOOL is_sideways)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
+    UINT32 adjustment = fontface_get_horz_metric_adjustment(This);
     UINT32 i;
 
     TRACE("(%p)->(%u %p %p %d)\n", This, glyph_count, glyphs, advances, is_sideways);
@@ -885,8 +899,14 @@ static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace4 *i
     if (is_sideways)
         FIXME("sideways mode not supported\n");
 
-    for (i = 0; i < glyph_count; i++)
-        advances[i] = freetype_get_glyph_advance(iface, This->metrics.designUnitsPerEm, glyphs[i], DWRITE_MEASURING_MODE_NATURAL);
+    for (i = 0; i < glyph_count; i++) {
+        BOOL has_contours;
+
+        advances[i] = freetype_get_glyph_advance(iface, This->metrics.designUnitsPerEm, glyphs[i],
+                DWRITE_MEASURING_MODE_NATURAL, &has_contours);
+        if (has_contours)
+            advances[i] += adjustment;
+    }
 
     return S_OK;
 }
@@ -896,6 +916,7 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
     BOOL is_sideways, UINT32 glyph_count, UINT16 const *glyphs, INT32 *advances)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
+    UINT32 adjustment = fontface_get_horz_metric_adjustment(This);
     DWRITE_MEASURING_MODE mode;
     UINT32 i;
 
@@ -918,8 +939,13 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
 
     mode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
     for (i = 0; i < glyph_count; i++) {
-        advances[i] = freetype_get_glyph_advance(iface, em_size, glyphs[i], mode);
-        advances[i] = round_metric(advances[i] * This->metrics.designUnitsPerEm / em_size);
+        BOOL has_contours;
+
+        advances[i] = freetype_get_glyph_advance(iface, em_size, glyphs[i], mode, &has_contours);
+        if (has_contours)
+            advances[i] = round_metric(advances[i] * This->metrics.designUnitsPerEm / em_size + adjustment);
+        else
+            advances[i] = round_metric(advances[i] * This->metrics.designUnitsPerEm / em_size);
     }
 
     return S_OK;
