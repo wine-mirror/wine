@@ -3716,7 +3716,9 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     /* A majority of OpenGL implementations allow us to statically partition
      * the set of texture bindings into six separate sets. */
     gl_info->limits.graphics_samplers = gl_info->limits.combined_samplers;
-    sampler_count += gl_info->limits.samplers[WINED3D_SHADER_TYPE_COMPUTE];
+    sampler_count = 0;
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+        sampler_count += gl_info->limits.samplers[i];
     if (gl_info->limits.combined_samplers >= sampler_count)
         gl_info->limits.graphics_samplers -= gl_info->limits.samplers[WINED3D_SHADER_TYPE_COMPUTE];
 }
