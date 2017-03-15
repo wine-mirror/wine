@@ -143,6 +143,9 @@ static const struct object_ops named_pipe_ops =
     named_pipe_destroy            /* destroy */
 };
 
+/* common server and client pipe end functions */
+static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count );
+
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
@@ -183,7 +186,7 @@ static const struct fd_ops pipe_server_fd_ops =
     no_fd_write,                  /* write */
     pipe_server_flush,            /* flush */
     pipe_server_ioctl,            /* ioctl */
-    default_fd_queue_async,       /* queue_async */
+    pipe_end_queue_async,         /* queue_async */
     default_fd_reselect_async    /* reselect_async */
 };
 
@@ -226,7 +229,7 @@ static const struct fd_ops pipe_client_fd_ops =
     no_fd_write,                  /* write */
     pipe_client_flush,            /* flush */
     default_fd_ioctl,             /* ioctl */
-    default_fd_queue_async,       /* queue_async */
+    pipe_end_queue_async,         /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
 
@@ -609,6 +612,13 @@ static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int b
 {
     /* FIXME: what do we have to do for this? */
     return 0;
+}
+
+static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count )
+{
+    struct pipe_end *pipe_end = get_fd_user( fd );
+    if (use_server_io( pipe_end )) no_fd_queue_async( fd, async, type, count );
+    else default_fd_queue_async( fd, async, type, count );
 }
 
 static inline int is_overlapped( unsigned int options )
