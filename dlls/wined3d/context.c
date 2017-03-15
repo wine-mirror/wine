@@ -3380,10 +3380,7 @@ static void context_load_shader_resources(struct wined3d_context *context, const
             entry = &shader->reg_maps.sampler_map.entries[j];
 
             if (!(view = state->shader_resource_view[i][entry->resource_idx]))
-            {
-                WARN("No resource view bound at index %u, %u.\n", i, entry->resource_idx);
                 continue;
-            }
 
             if (view->resource->type == WINED3D_RTYPE_BUFFER)
                 wined3d_buffer_load(buffer_from_resource(view->resource), context, state);
