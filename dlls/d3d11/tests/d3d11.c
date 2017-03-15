@@ -11826,7 +11826,11 @@ static void test_required_format_support(const D3D_FEATURE_LEVEL feature_level)
 static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
 {
     struct d3d11_test_context test_context;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11ShaderResourceView *srv;
     ID3D11DeviceContext *context;
+    ID3D11Texture2D *texture;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
     HRESULT hr;
@@ -11853,6 +11857,34 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
         0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653,
         0x45475241, 0xabab0054,
     };
+    static const DWORD ps_texture_code[] =
+    {
+#if 0
+        Texture2D t;
+        SamplerState s;
+
+        float4 main() : SV_TARGET
+        {
+            return t.Sample(s, (float2)0);
+        }
+#endif
+        0x43425844, 0xf876c2db, 0x13725f1f, 0xcb6d3d65, 0x9994473f, 0x00000001, 0x000001d4, 0x00000005,
+        0x00000034, 0x000000a0, 0x00000124, 0x00000190, 0x000001a0, 0x53414e58, 0x00000064, 0x00000064,
+        0xffff0200, 0x0000003c, 0x00000028, 0x00280000, 0x00280000, 0x00280000, 0x00240001, 0x00280000,
+        0x00000000, 0xffff0200, 0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x0200001f, 0x90000000, 0xa00f0800, 0x03000042, 0x800f0800, 0xa0000000, 0xa0e40800, 0x0000ffff,
+        0x396e6f41, 0x0000007c, 0x0000007c, 0xffff0200, 0x00000054, 0x00000028, 0x00280000, 0x00280000,
+        0x00280000, 0x00240001, 0x00280000, 0x00000000, 0xffff0200, 0x05000051, 0xa00f0000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x0200001f, 0x90000000, 0xa00f0800, 0x02000001, 0x80030000,
+        0xa0000000, 0x03000042, 0x800f0000, 0x80e40000, 0xa0e40800, 0x02000001, 0x800f0800, 0x80e40000,
+        0x0000ffff, 0x52444853, 0x00000064, 0x00000040, 0x00000019, 0x0300005a, 0x00106000, 0x00000000,
+        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x03000065, 0x001020f2, 0x00000000, 0x0c000045,
+        0x001020f2, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00107e46,
+        0x00000000, 0x00106000, 0x00000000, 0x0100003e, 0x4e475349, 0x00000008, 0x00000000, 0x00000008,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054,
+    };
+    static const DWORD texture_data[] = {0xffffff00};
 
     if (!init_test_context(&test_context, &feature_level))
         return;
@@ -11860,9 +11892,27 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     device = test_context.device;
     context = test_context.immediate_context;
 
+    texture_desc.Width = 1;
+    texture_desc.Height = 1;
+    texture_desc.MipLevels = 0;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    resource_data.pSysMem = texture_data;
+    resource_data.SysMemPitch = sizeof(texture_data);
+    resource_data.SysMemSlicePitch = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
+    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x, feature level %#x.\n",
-            hr, feature_level);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     draw_quad(&test_context);
     check_texture_color(test_context.backbuffer, 0x7f0000ff, 1);
@@ -11871,6 +11921,16 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     draw_color_quad(&test_context, &color);
     todo_wine check_texture_color(test_context.backbuffer, 0xff004c33, 1);
 
+    hr = ID3D11Device_CreatePixelShader(device, ps_texture_code, sizeof(ps_texture_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+    draw_quad(&test_context);
+    check_texture_color(test_context.backbuffer, 0xffffff00, 1);
+    ID3D11PixelShader_Release(ps);
+
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11Texture2D_Release(texture);
     release_test_context(&test_context);
 }
 
