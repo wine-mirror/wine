@@ -5,8 +5,8 @@
 @ stdcall clGetDeviceIDs( long long long ptr ptr ) wine_clGetDeviceIDs
 @ stdcall clGetDeviceInfo( long long long ptr ptr ) wine_clGetDeviceInfo
 
-@ stdcall clCreateContext( ptr long ptr long ptr ptr ) wine_clCreateContext
-@ stdcall clCreateContextFromType( ptr long long ptr ptr ) wine_clCreateContextFromType
+@ stdcall clCreateContext(ptr long ptr ptr ptr ptr) wine_clCreateContext
+@ stdcall clCreateContextFromType(ptr long ptr ptr ptr) wine_clCreateContextFromType
 @ stdcall clRetainContext( long ) wine_clRetainContext
 @ stdcall clReleaseContext( long ) wine_clReleaseContext
 @ stdcall clGetContextInfo( long long long ptr ptr ) wine_clGetContextInfo
@@ -71,7 +71,7 @@
 @ stdcall clEnqueueUnmapMemObject( long long ptr long ptr ptr ) wine_clEnqueueUnmapMemObject
 @ stdcall clEnqueueNDRangeKernel( long long long ptr ptr ptr long ptr ptr ) wine_clEnqueueNDRangeKernel
 @ stdcall clEnqueueTask( long long long ptr ptr ) wine_clEnqueueTask
-@ stdcall clEnqueueNativeKernel( long long ptr long long ptr ptr long ptr ptr ) wine_clEnqueueNativeKernel
+@ stdcall clEnqueueNativeKernel(long ptr ptr long long ptr ptr long ptr ptr) wine_clEnqueueNativeKernel
 @ stdcall clEnqueueMarker( long ptr ) wine_clEnqueueMarker
 @ stdcall clEnqueueWaitForEvents( long long ptr ) wine_clEnqueueWaitForEvents
 @ stdcall clEnqueueBarrier( long ) wine_clEnqueueBarrier
