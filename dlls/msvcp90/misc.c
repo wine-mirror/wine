@@ -1466,4 +1466,58 @@ MSVCP_bool __cdecl _ContextCallback__IsCurrentOriginSTA(void *this)
     TRACE("(%p)\n", this);
     return FALSE;
 }
+
+typedef struct {
+    /*_Task_impl_base*/void *task;
+    MSVCP_bool scheduled;
+    MSVCP_bool started;
+} _TaskEventLogger;
+
+/* ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAEXXZ */
+/* ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_TaskEventLogger__LogCancelTask, 4)
+void __thiscall _TaskEventLogger__LogCancelTask(_TaskEventLogger *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+/* ?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z */
+/* ?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QEAAX_N@Z */
+DEFINE_THISCALL_WRAPPER(_TaskEventLogger__LogScheduleTask, 8)
+void __thiscall _TaskEventLogger__LogScheduleTask(_TaskEventLogger *this, MSVCP_bool continuation)
+{
+    TRACE("(%p %x)\n", this, continuation);
+}
+
+/* ?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ */
+/* ?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_TaskEventLogger__LogTaskCompleted, 4)
+void __thiscall _TaskEventLogger__LogTaskCompleted(_TaskEventLogger *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+/* ?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ */
+/* ?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_TaskEventLogger__LogTaskExecutionCompleted, 4)
+void __thiscall _TaskEventLogger__LogTaskExecutionCompleted(_TaskEventLogger *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+/* ?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ */
+/* ?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_TaskEventLogger__LogWorkItemCompleted, 4)
+void __thiscall _TaskEventLogger__LogWorkItemCompleted(_TaskEventLogger *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+/* ?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QAEXXZ */
+/* ?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_TaskEventLogger__LogWorkItemStarted, 4)
+void __thiscall _TaskEventLogger__LogWorkItemStarted(_TaskEventLogger *this)
+{
+    TRACE("(%p)\n", this);
+}
 #endif
