@@ -920,7 +920,7 @@
 @ cdecl __crtSetUnhandledExceptionFilter(ptr) MSVCR110__crtSetUnhandledExceptionFilter
 @ cdecl -arch=i386,win64 __crtTerminateProcess(long) MSVCR110__crtTerminateProcess
 @ stub __crtSleep
-@ stub -arch=i386,win64 __crtUnhandledException
+@ cdecl -arch=i386,win64 __crtUnhandledException(ptr) MSVCRT__crtUnhandledException
 @ cdecl __daylight() MSVCRT___p__daylight
 @ cdecl __dllonexit(ptr ptr ptr)
 @ cdecl __doserrno() MSVCRT___doserrno

@@ -532,3 +532,13 @@ void CDECL MSVCRT__crt_debugger_hook(int reserved)
 {
     WARN("(%x)\n", reserved);
 }
+
+/*********************************************************************
+ *  __crtUnhandledException (MSVCR110.@)
+ */
+LONG CDECL MSVCRT__crtUnhandledException(EXCEPTION_POINTERS *ep)
+{
+    TRACE("(%p)\n", ep);
+    SetUnhandledExceptionFilter(NULL);
+    return UnhandledExceptionFilter(ep);
+}
