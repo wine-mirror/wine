@@ -793,120 +793,79 @@ static void processRegLinesA(FILE *in, char* first_chars)
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
-static void processRegLinesW(FILE *in)
+static WCHAR *get_lineW(FILE *fp)
 {
-    WCHAR* buf           = NULL;  /* line read from input stream */
-    ULONG lineSize       = REG_VAL_BUF_SIZE;
-    size_t CharsInBuf = -1;
+    static size_t size;
+    static WCHAR *buf, *next;
+    WCHAR *line;
 
-    WCHAR* s; /* The pointer into buf for where the current fgets should read */
-    WCHAR* line; /* The start of the current line */
-
-    buf = HeapAlloc(GetProcessHeap(), 0, lineSize * sizeof(WCHAR));
-    CHECK_ENOUGH_MEMORY(buf);
-
-    s = buf;
-    line = buf;
-
-    while(!feof(in)) {
-        size_t size_remaining;
-        int size_to_get;
-        WCHAR *s_eol = NULL; /* various local uses */
-
-        /* Do we need to expand the buffer ? */
-        assert (s >= buf && s <= buf + lineSize);
-        size_remaining = lineSize - (s-buf);
-        if (size_remaining < 2) /* room for 1 character and the \0 */
-        {
-            WCHAR *new_buffer;
-            size_t new_size = lineSize + (REG_VAL_BUF_SIZE / sizeof(WCHAR));
-            if (new_size > lineSize) /* no arithmetic overflow */
-                new_buffer = HeapReAlloc (GetProcessHeap(), 0, buf, new_size * sizeof(WCHAR));
-            else
-                new_buffer = NULL;
-            CHECK_ENOUGH_MEMORY(new_buffer);
-            buf = new_buffer;
-            line = buf;
-            s = buf + lineSize - size_remaining;
-            lineSize = new_size;
-            size_remaining = lineSize - (s-buf);
-        }
-
-        /* Get as much as possible into the buffer, terminated either by
-        * eof, error or getting the maximum amount.  Abort on error.
-        */
-        size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
-
-        CharsInBuf = fread(s, sizeof(WCHAR), size_to_get - 1, in);
-        s[CharsInBuf] = 0;
-
-        if (CharsInBuf == 0) {
-            if (ferror(in)) {
-                perror ("While reading input");
-                exit (IO_ERROR);
-            } else {
-                assert (feof(in));
-                *s = '\0';
-                /* It is not clear to me from the definition that the
-                * contents of the buffer are well defined on detecting
-                * an eof without managing to read anything.
-                */
-            }
-        }
-
-        /* If we didn't read the eol nor the eof go around for the rest */
-        while(1)
-        {
-            const WCHAR line_endings[] = {'\r','\n',0};
-            s_eol = strpbrkW(line, line_endings);
-
-            if(!s_eol) {
-                /* Move the stub of the line to the start of the buffer so
-                 * we get the maximum space to read into, and so we don't
-                 * have to recalculate 'line' if the buffer expands */
-                MoveMemory(buf, line, (strlenW(line)+1) * sizeof(WCHAR));
-                line = buf;
-                s = strchrW(line, '\0');
-                break;
-            }
-
-            /* If it is a comment line then discard it and go around again */
-            if (*line == '#' || *line == ';') {
-                if (*s_eol == '\r' && *(s_eol+1) == '\n')
-                    line = s_eol + 2;
-                else
-                    line = s_eol + 1;
-                continue;
-            }
-
-            /* If there is a concatenating \\ then go around again */
-            if (*(s_eol-1) == '\\') {
-                WCHAR* NextLine = s_eol + 1;
-
-                if(*s_eol == '\r' && *(s_eol+1) == '\n')
-                    NextLine++;
-
-                while(*(NextLine+1) == ' ' || *(NextLine+1) == '\t')
-                    NextLine++;
-
-                MoveMemory(s_eol - 1, NextLine, (CharsInBuf - (NextLine - s) + 1)*sizeof(WCHAR));
-                CharsInBuf -= NextLine - s_eol + 1;
-                continue;
-            }
-
-            /* Remove any line feed.  Leave s_eol on the last \0 */
-            if (*s_eol == '\r' && *(s_eol + 1) == '\n')
-                *s_eol++ = '\0';
-            *s_eol = '\0';
-
-            processRegEntry(line, TRUE);
-            line = s_eol + 1;
-        }
+    if (!size)
+    {
+        size = REG_VAL_BUF_SIZE;
+        buf = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        CHECK_ENOUGH_MEMORY(buf);
+        *buf = 0;
+        next = buf;
     }
+    line = next;
+
+    while (next)
+    {
+        static const WCHAR line_endings[] = {'\r','\n',0};
+        WCHAR *p = strpbrkW(line, line_endings);
+        if (!p)
+        {
+            size_t len, count;
+            len = strlenW(next);
+            memmove(buf, next, (len + 1) * sizeof(WCHAR));
+            if (size - len < 3)
+            {
+                WCHAR *new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, (size * 2) * sizeof(WCHAR));
+                CHECK_ENOUGH_MEMORY(new_buf);
+                buf = new_buf;
+                size *= 2;
+            }
+            if (!(count = fread(buf + len, sizeof(WCHAR), size - len - 1, fp)))
+            {
+                next = NULL;
+                return buf;
+            }
+            buf[len + count] = 0;
+            next = buf;
+            line = buf;
+            continue;
+        }
+        next = p + 1;
+        if (*p == '\r' && *(p + 1) == '\n') next++;
+        *p = 0;
+        if (*(p - 1) == '\\')
+        {
+            *(--p) = 0;
+            while (*next && (*next == ' ' || *next == '\t')) next++;
+            memmove(p, next, (strlenW(next) + 1) * sizeof(WCHAR));
+            next = line;
+            continue;
+        }
+        if (*line == ';' || *line == '#')
+        {
+            line = next;
+            continue;
+        }
+        return line;
+    }
+    HeapFree( GetProcessHeap(), 0, buf );
+    size = 0;
+    return NULL;
+}
+
+static void processRegLinesW(FILE *fp)
+{
+    WCHAR *line;
+
+    while ((line = get_lineW(fp)))
+        processRegEntry(line, TRUE);
 
     closeKey();
-
-    HeapFree(GetProcessHeap(), 0, buf);
 }
 
 /******************************************************************************
