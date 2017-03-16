@@ -1,7 +1,7 @@
 @ stub DhcpAcquireParameters
 @ stub DhcpAcquireParametersByBroadcast
-@ stub DhcpCApiCleanup
-@ stub DhcpCApiInitialize
+@ stdcall DhcpCApiCleanup()
+@ stdcall DhcpCApiInitialize(ptr)
 @ stub DhcpDeRegisterConnectionStateNotification
 @ stub DhcpDeRegisterOptions
 @ stub DhcpDeRegisterParamChange

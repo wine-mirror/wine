@@ -39,6 +39,18 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
+void WINAPI DhcpCApiCleanup(void)
+{
+    FIXME(": stub\n");
+}
+
+DWORD WINAPI DhcpCApiInitialize(LPDWORD version)
+{
+    *version = 2; /* 98, XP, and 8 */
+    FIXME(": stub\n");
+    return ERROR_SUCCESS;
+}
+
 DWORD WINAPI DhcpRequestParams( DWORD flags, void *reserved, WCHAR *adaptername, DHCPCAPI_CLASSID *classid,
                                 DHCPCAPI_PARAMS_ARRAY sendparams, DHCPCAPI_PARAMS_ARRAY recdparams,
                                 BYTE *buffer, DWORD *size, WCHAR *requestidstr )
