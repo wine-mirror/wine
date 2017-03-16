@@ -675,3 +675,25 @@ BOOL WINAPI SetupDiSetSelectedDevice(HDEVINFO SetupDiSetSelectedDevice, PSP_DEVI
 
     return TRUE;
 }
+
+/***********************************************************************
+ *              SetupDiEnumDriverInfoA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiEnumDriverInfoA(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA DeviceInfoData, DWORD DriverType, DWORD MemberIndex, PSP_DRVINFO_DATA_A DriverInfoData)
+{
+    FIXME("(%p, %p, 0x%x, %u, %p stub\n", DeviceInfoSet, DeviceInfoData, DriverType, MemberIndex, DriverInfoData);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *              SetupDiEnumDriverInfoW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiEnumDriverInfoW(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA DeviceInfoData, DWORD DriverType, DWORD MemberIndex, PSP_DRVINFO_DATA_W DriverInfoData)
+{
+    FIXME("(%p, %p, 0x%x, %u, %p stub\n", DeviceInfoSet, DeviceInfoData, DriverType, MemberIndex, DriverInfoData);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

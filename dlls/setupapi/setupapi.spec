@@ -311,8 +311,8 @@
 @ stdcall SetupDiDrawMiniIcon(ptr int128 long long)
 @ stdcall SetupDiEnumDeviceInfo(long long ptr)
 @ stdcall SetupDiEnumDeviceInterfaces(long ptr ptr long ptr)
-@ stub SetupDiEnumDriverInfoA
-@ stub SetupDiEnumDriverInfoW
+@ stdcall SetupDiEnumDriverInfoA(ptr ptr long long ptr)
+@ stdcall SetupDiEnumDriverInfoW(ptr ptr long long ptr)
 @ stdcall SetupDiGetActualSectionToInstallA(long str str long ptr ptr)
 @ stdcall SetupDiGetActualSectionToInstallW(long wstr wstr long ptr ptr)
 @ stdcall SetupDiGetClassBitmapIndex(ptr ptr)
