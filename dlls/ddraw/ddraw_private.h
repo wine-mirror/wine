@@ -127,7 +127,6 @@ struct ddraw
 
 HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
 void ddraw_d3dcaps1_from_7(D3DDEVICEDESC *caps1, D3DDEVICEDESC7 *caps7) DECLSPEC_HIDDEN;
-void ddraw_destroy_swapchain(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 HRESULT ddraw_get_d3dcaps(const struct ddraw *ddraw, D3DDEVICEDESC7 *caps) DECLSPEC_HIDDEN;
 void ddraw_update_lost_surfaces(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 

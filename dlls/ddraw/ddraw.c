@@ -361,7 +361,7 @@ static ULONG WINAPI d3d1_AddRef(IDirect3D *iface)
     return ddraw1_AddRef(&This->IDirectDraw_iface);
 }
 
-void ddraw_destroy_swapchain(struct ddraw *ddraw)
+static void ddraw_destroy_swapchain(struct ddraw *ddraw)
 {
     TRACE("Destroying the swapchain.\n");
 
