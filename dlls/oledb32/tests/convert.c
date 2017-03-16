@@ -2857,6 +2857,9 @@ static void test_getconversionsize(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     VariantClear(&var);
 
+    hr = IDataConvert_GetConversionSize(convert, DBTYPE_NUMERIC, DBTYPE_NUMERIC, NULL, &dst_len, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dst_len == sizeof(DB_NUMERIC), "%ld\n", dst_len);
 }
 
 static void test_converttobytes(void)

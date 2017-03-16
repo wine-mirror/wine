@@ -139,6 +139,8 @@ static int get_length(DBTYPE type)
         return sizeof(FILETIME);
     case DBTYPE_GUID:
         return sizeof(GUID);
+    case DBTYPE_NUMERIC:
+        return sizeof(DB_NUMERIC);
     case DBTYPE_BYTES:
     case DBTYPE_WSTR:
     case DBTYPE_STR:
