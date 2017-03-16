@@ -1839,12 +1839,15 @@ if (0)
     free_bstrs();
 }
 
-static void test_persiststreaminit(void)
+static void test_persiststream(void)
 {
-    IXMLDOMDocument *doc;
     IPersistStreamInit *streaminit;
+    IPersistStream *stream;
+    IXMLDOMDocument *doc;
     ULARGE_INTEGER size;
+    IPersist *persist;
     HRESULT hr;
+    CLSID clsid;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -1857,6 +1860,26 @@ static void test_persiststreaminit(void)
     hr = IPersistStreamInit_GetSizeMax(streaminit, &size);
     ok(hr == E_NOTIMPL, "got 0x%08x\n", hr);
 
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IPersistStream, (void **)&stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok((IUnknown *)stream == (IUnknown *)streaminit, "got %p, %p\n", stream, streaminit);
+
+    hr = IPersistStream_QueryInterface(stream, &IID_IPersist, (void **)&persist);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IPersist, (void **)&persist);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    hr = IPersistStreamInit_GetClassID(streaminit, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    memset(&clsid, 0, sizeof(clsid));
+    hr = IPersistStreamInit_GetClassID(streaminit, &clsid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualGUID(&clsid, &CLSID_DOMDocument2), "wrong clsid %s\n", wine_dbgstr_guid(&clsid));
+
+    IPersistStream_Release(stream);
+    IPersistStreamInit_Release(streaminit);
     IXMLDOMDocument_Release(doc);
 }
 
@@ -12189,7 +12212,7 @@ START_TEST(domdoc)
     }
 
     test_domdoc();
-    test_persiststreaminit();
+    test_persiststream();
     test_domnode();
     test_refs();
     test_create();
