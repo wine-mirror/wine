@@ -6002,7 +6002,7 @@ void wined3d_gl_limits_get_texture_unit_range(const struct wined3d_gl_limits *gl
         if (gl_limits->combined_samplers == gl_limits->graphics_samplers)
             *base = 0;
         else
-            *base = gl_limits->graphics_samplers - 1;
+            *base = gl_limits->graphics_samplers;
         *count = gl_limits->samplers[WINED3D_SHADER_TYPE_COMPUTE];
         return;
     }
