@@ -379,7 +379,7 @@ static void test_create_delete_svc(void)
         {
             svc_handle1 = CreateServiceA(scm_handle, servicename, display, 0, SERVICE_WIN32_OWN_PROCESS,
                                          SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
-            ok(!svc_handle1, "Expected failure\n");
+            ok(!svc_handle1, "Expected failure for display name '%s'\n", display);
             ok(GetLastError() == ERROR_DUPLICATE_SERVICE_NAME,
                "Expected ERROR_DUPLICATE_SERVICE_NAME, got %d\n", GetLastError());
         }
