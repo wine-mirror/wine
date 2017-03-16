@@ -101,11 +101,9 @@ static CRITICAL_SECTION server_auth_info_cs = { &server_auth_info_cs_debug, -1, 
 
 /* whether the server is currently listening */
 static BOOL std_listen;
-/* number of manual listeners (calls to RpcServerListen) */
-static LONG manual_listen_count;
 /* total listeners including auto listeners */
 static LONG listen_count;
-/* event set once all listening is finished */
+/* event set once all manual listening is finished */
 static HANDLE listen_done_event;
 
 static UUID uuid_nil;
@@ -735,13 +733,16 @@ static RPC_STATUS RPCRT4_start_listen(BOOL auto_listen)
   TRACE("\n");
 
   EnterCriticalSection(&listen_cs);
-  if (auto_listen || (manual_listen_count++ == 0))
+  if (auto_listen || !listen_done_event)
   {
     status = RPC_S_OK;
+    if(!auto_listen)
+      listen_done_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     if (++listen_count == 1)
       std_listen = TRUE;
   }
   LeaveCriticalSection(&listen_cs);
+  if (status) return status;
 
   if (std_listen)
   {
@@ -764,38 +765,38 @@ static RPC_STATUS RPCRT4_start_listen(BOOL auto_listen)
 
 static RPC_STATUS RPCRT4_stop_listen(BOOL auto_listen)
 {
+  BOOL stop_listen = FALSE;
   RPC_STATUS status = RPC_S_OK;
 
   EnterCriticalSection(&listen_cs);
-
-  if (!std_listen)
+  if (!std_listen && (auto_listen || !listen_done_event))
   {
     status = RPC_S_NOT_LISTENING;
-    goto done;
   }
-
-  if (auto_listen || (--manual_listen_count == 0))
+  else
   {
-    if (listen_count != 0 && --listen_count == 0) {
-      RpcServerProtseq *cps;
-
-      std_listen = FALSE;
-      LeaveCriticalSection(&listen_cs);
-
-      LIST_FOR_EACH_ENTRY(cps, &protseqs, RpcServerProtseq, entry)
-        RPCRT4_sync_with_server_thread(cps);
-
-      EnterCriticalSection(&listen_cs);
-      if (listen_done_event) SetEvent( listen_done_event );
-      listen_done_event = 0;
-      goto done;
-    }
+    stop_listen = listen_count != 0 && --listen_count == 0;
     assert(listen_count >= 0);
+    if (stop_listen)
+      std_listen = FALSE;
+  }
+  LeaveCriticalSection(&listen_cs);
+
+  if (status) return status;
+
+  if (stop_listen) {
+    RpcServerProtseq *cps;
+    LIST_FOR_EACH_ENTRY(cps, &protseqs, RpcServerProtseq, entry)
+      RPCRT4_sync_with_server_thread(cps);
   }
 
-done:
-  LeaveCriticalSection(&listen_cs);
-  return status;
+  if (!auto_listen)
+  {
+      EnterCriticalSection(&listen_cs);
+      SetEvent( listen_done_event );
+      LeaveCriticalSection(&listen_cs);
+  }
+  return RPC_S_OK;
 }
 
 static BOOL RPCRT4_protseq_is_endpoint_registered(RpcServerProtseq *protseq, const char *endpoint)
@@ -1527,25 +1528,23 @@ RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
   TRACE("()\n");
 
   EnterCriticalSection(&listen_cs);
-
-  if (!std_listen) {
-    LeaveCriticalSection(&listen_cs);
-    return RPC_S_NOT_LISTENING;
-  }
-  if (listen_done_event) {
-    LeaveCriticalSection(&listen_cs);
-    return RPC_S_ALREADY_LISTENING;
-  }
-  event = CreateEventW( NULL, TRUE, FALSE, NULL );
-  listen_done_event = event;
-
+  event = listen_done_event;
   LeaveCriticalSection(&listen_cs);
+
+  if (!event)
+      return RPC_S_NOT_LISTENING;
 
   TRACE( "waiting for server calls to finish\n" );
   WaitForSingleObject( event, INFINITE );
   TRACE( "done waiting\n" );
 
-  CloseHandle( event );
+  EnterCriticalSection(&listen_cs);
+  if (listen_done_event == event)
+  {
+      listen_done_event = NULL;
+      CloseHandle( event );
+  }
+  LeaveCriticalSection(&listen_cs);
   return RPC_S_OK;
 }
 
@@ -1671,7 +1670,7 @@ RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
     status = RPCRT4_IsServerListening(rpc_binding->Protseq, rpc_binding->Endpoint);
   }else {
     EnterCriticalSection(&listen_cs);
-    if (manual_listen_count > 0) status = RPC_S_OK;
+    if (listen_done_event && std_listen) status = RPC_S_OK;
     LeaveCriticalSection(&listen_cs);
   }
 

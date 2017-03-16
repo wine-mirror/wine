@@ -1752,9 +1752,7 @@ server(void)
   if (ret == WAIT_OBJECT_0)
   {
     status = RpcMgmtWaitServerListen();
-    todo_wine {
-      ok(status == RPC_S_OK, "RpcMgmtWaitServerListening failed with status %d\n", status);
-    }
+    ok(status == RPC_S_OK, "RpcMgmtWaitServerListening failed with status %d\n", status);
   }
 }
 
