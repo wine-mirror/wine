@@ -11217,18 +11217,18 @@ static void test_MsiEnumPatchesEx_machine(void)
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
     delete_key(hpatch, "", access & KEY_WOW64_64KEY);
+    RegDeleteValueA(hpatch, "State");
     RegCloseKey(hpatch);
     delete_key(udpatch, "", access & KEY_WOW64_64KEY);
     RegCloseKey(udpatch);
+    delete_key(udprod, "", access & KEY_WOW64_64KEY);
+    RegCloseKey(udprod);
 
 done:
     RegDeleteValueA(patches, patch_squashed);
     RegDeleteValueA(patches, "Patches");
     delete_key(patches, "", access & KEY_WOW64_64KEY);
     RegCloseKey(patches);
-    RegDeleteValueA(hpatch, "State");
-    delete_key(udprod, "", access & KEY_WOW64_64KEY);
-    RegCloseKey(udprod);
     delete_key(prodkey, "", access & KEY_WOW64_64KEY);
     RegCloseKey(prodkey);
 }
