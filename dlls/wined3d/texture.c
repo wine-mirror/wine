@@ -1212,6 +1212,114 @@ HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
+static void texture2d_create_dc(void *object)
+{
+    const struct wined3d_gl_info *gl_info = NULL;
+    struct wined3d_surface *surface = object;
+    struct wined3d_context *context = NULL;
+    const struct wined3d_format *format;
+    unsigned int row_pitch, slice_pitch;
+    struct wined3d_texture *texture;
+    struct wined3d_bo_address data;
+    D3DKMT_CREATEDCFROMMEMORY desc;
+    unsigned int sub_resource_idx;
+    struct wined3d_device *device;
+    NTSTATUS status;
+
+    TRACE("surface %p.\n", surface);
+
+    texture = surface->container;
+    sub_resource_idx = surface_get_sub_resource_idx(surface);
+    device = texture->resource.device;
+
+    format = texture->resource.format;
+    if (!format->ddi_format)
+    {
+        WARN("Cannot create a DC for format %s.\n", debug_d3dformat(format->id));
+        return;
+    }
+
+    if (device->d3d_initialized)
+    {
+        context = context_acquire(device, NULL, 0);
+        gl_info = context->gl_info;
+    }
+
+    wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding);
+    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
+    wined3d_texture_get_pitch(texture, surface->texture_level, &row_pitch, &slice_pitch);
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
+    desc.pMemory = wined3d_texture_map_bo_address(&data, texture->sub_resources[sub_resource_idx].size,
+            gl_info, GL_PIXEL_UNPACK_BUFFER, 0);
+
+    if (context)
+        context_release(context);
+
+    desc.Format = format->ddi_format;
+    desc.Width = wined3d_texture_get_level_width(texture, surface->texture_level);
+    desc.Height = wined3d_texture_get_level_height(texture, surface->texture_level);
+    desc.Pitch = row_pitch;
+    desc.hDeviceDc = CreateCompatibleDC(NULL);
+    desc.pColorTable = NULL;
+
+    status = D3DKMTCreateDCFromMemory(&desc);
+    DeleteDC(desc.hDeviceDc);
+    if (status)
+    {
+        WARN("Failed to create DC, status %#x.\n", status);
+        return;
+    }
+
+    surface->dc = desc.hDc;
+    surface->bitmap = desc.hBitmap;
+
+    TRACE("Created DC %p, bitmap %p for surface %p.\n", surface->dc, surface->bitmap, surface);
+}
+
+static void texture2d_destroy_dc(void *object)
+{
+    const struct wined3d_gl_info *gl_info = NULL;
+    struct wined3d_surface *surface = object;
+    D3DKMT_DESTROYDCFROMMEMORY destroy_desc;
+    struct wined3d_context *context = NULL;
+    struct wined3d_texture *texture;
+    struct wined3d_bo_address data;
+    unsigned int sub_resource_idx;
+    struct wined3d_device *device;
+    NTSTATUS status;
+
+    texture = surface->container;
+    sub_resource_idx = surface_get_sub_resource_idx(surface);
+    device = texture->resource.device;
+
+    if (!surface->dc)
+    {
+        ERR("Surface %p has no DC.\n", surface);
+        return;
+    }
+
+    TRACE("dc %p, bitmap %p.\n", surface->dc, surface->bitmap);
+
+    destroy_desc.hDc = surface->dc;
+    destroy_desc.hBitmap = surface->bitmap;
+    if ((status = D3DKMTDestroyDCFromMemory(&destroy_desc)))
+        ERR("Failed to destroy dc, status %#x.\n", status);
+    surface->dc = NULL;
+    surface->bitmap = NULL;
+
+    if (device->d3d_initialized)
+    {
+        context = context_acquire(device, NULL, 0);
+        gl_info = context->gl_info;
+    }
+
+    wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
+    wined3d_texture_unmap_bo_address(&data, gl_info, GL_PIXEL_UNPACK_BUFFER);
+
+    if (context)
+        context_release(context);
+}
+
 HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT width, UINT height,
         enum wined3d_format_id format_id, enum wined3d_multisample_type multisample_type,
         UINT multisample_quality, void *mem, UINT pitch)
@@ -1271,7 +1379,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     surface = sub_resource->u.surface;
     if (surface->dc)
     {
-        wined3d_surface_destroy_dc(surface);
+        wined3d_cs_destroy_object(device->cs, texture2d_destroy_dc, surface);
         create_dib = TRUE;
     }
 
@@ -1332,7 +1440,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     wined3d_texture_invalidate_location(texture, 0, ~valid_location);
 
     if (create_dib)
-        wined3d_surface_create_dc(surface);
+        wined3d_cs_init_object(device->cs, texture2d_create_dc, surface);
 
     return WINED3D_OK;
 }
@@ -1683,7 +1791,7 @@ static void texture2d_cleanup_sub_resources(struct wined3d_texture *texture)
         }
 
         if (surface->dc)
-            wined3d_surface_destroy_dc(surface);
+            texture2d_destroy_dc(surface);
 
         if (surface->overlay_dest)
             list_remove(&surface->overlay_entry);
@@ -2206,11 +2314,14 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 
             TRACE("Created surface level %u, layer %u @ %p.\n", i, j, surface);
 
-            if (((desc->usage & WINED3DUSAGE_OWNDC) || (device->wined3d->flags & WINED3D_NO3D))
-                    && FAILED(hr = wined3d_surface_create_dc(surface)))
+            if ((desc->usage & WINED3DUSAGE_OWNDC) || (device->wined3d->flags & WINED3D_NO3D))
             {
-                wined3d_texture_cleanup_sync(texture);
-                return hr;
+                wined3d_cs_init_object(device->cs, texture2d_create_dc, surface);
+                if (!surface->dc)
+                {
+                    wined3d_texture_cleanup_sync(texture);
+                    return WINED3DERR_INVALIDCALL;
+                }
             }
         }
     }
@@ -2984,9 +3095,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
 {
     struct wined3d_device *device = texture->resource.device;
     struct wined3d_texture_sub_resource *sub_resource;
-    struct wined3d_context *context = NULL;
     struct wined3d_surface *surface;
-    HRESULT hr = WINED3D_OK;
 
     TRACE("texture %p, sub_resource_idx %u, dc %p.\n", texture, sub_resource_idx, dc);
 
@@ -3011,17 +3120,9 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
     if (texture->resource.map_count && !(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
         return WINED3DERR_INVALIDCALL;
 
-    if (device->d3d_initialized)
-        context = context_acquire(device, NULL, 0);
-
-    wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding);
-    wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
-
     if (!surface->dc)
-        hr = wined3d_surface_create_dc(surface);
-    if (context)
-        context_release(context);
-    if (FAILED(hr))
+        wined3d_cs_init_object(device->cs, texture2d_create_dc, surface);
+    if (!surface->dc)
         return WINED3DERR_INVALIDCALL;
 
     if (!(texture->flags & WINED3D_TEXTURE_GET_DC_LENIENT))
@@ -3032,7 +3133,7 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
     *dc = surface->dc;
     TRACE("Returning dc %p.\n", *dc);
 
-    return hr;
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC dc)
@@ -3064,7 +3165,7 @@ HRESULT CDECL wined3d_texture_release_dc(struct wined3d_texture *texture, unsign
     }
 
     if (!(texture->resource.usage & WINED3DUSAGE_OWNDC) && !(device->wined3d->flags & WINED3D_NO3D))
-        wined3d_surface_destroy_dc(surface);
+        wined3d_cs_destroy_object(device->cs, texture2d_destroy_dc, surface);
 
     --sub_resource->map_count;
     if (!--texture->resource.map_count && texture->update_map_binding)
