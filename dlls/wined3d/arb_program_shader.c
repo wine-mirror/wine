@@ -7790,16 +7790,15 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
 }
 
 static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, struct wined3d_context *context,
-        struct wined3d_surface *src_surface, const RECT *src_rect_in,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
+        struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
-    RECT src_rect = *src_rect_in;
-    RECT dst_rect = *dst_rect_in;
     struct wined3d_color_key alpha_test_key;
+    RECT s, d;
 
     /* Now load the surface */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
@@ -7815,8 +7814,10 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
          * rectangle instead. */
         surface_load_fb_texture(src_surface, FALSE, context);
 
-        src_rect.top = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - src_rect.top;
-        src_rect.bottom = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - src_rect.bottom;
+        s = *src_rect;
+        s.top = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - s.top;
+        s.bottom = wined3d_texture_get_level_height(src_texture, src_surface->texture_level) - s.bottom;
+        src_rect = &s;
     }
     else
         wined3d_texture_load(src_texture, context, FALSE);
@@ -7824,7 +7825,11 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
     context_apply_blit_state(context, device);
 
     if (!wined3d_resource_is_offscreen(&dst_texture->resource))
-        surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
+    {
+        d = *dst_rect;
+        surface_translate_drawable_coords(dst_surface, context->win_handle, &d);
+        dst_rect = &d;
+    }
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
     {
@@ -7837,7 +7842,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
     arbfp_blit_set(device->blit_priv, context, src_surface, color_key);
 
     /* Draw a textured quad */
-    draw_textured_quad(src_surface, context, &src_rect, &dst_rect, filter);
+    draw_textured_quad(src_surface, context, src_rect, dst_rect, filter);
 
     /* Leave the opengl state valid for blitting */
     arbfp_blit_unset(context->gl_info);
