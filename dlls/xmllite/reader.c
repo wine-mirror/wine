@@ -230,6 +230,12 @@ struct reader_position
     UINT line_position;
 };
 
+enum attribute_flags
+{
+    ATTRIBUTE_NS_DEFINITION = 0x1,
+    ATTRIBUTE_DEFAULT_NS_DEFINITION = 0x2,
+};
+
 struct attribute
 {
     struct list entry;
@@ -238,6 +244,7 @@ struct attribute
     strval qname;
     strval value;
     struct reader_position position;
+    unsigned int flags;
 };
 
 struct element
@@ -398,7 +405,7 @@ static void reader_clear_attrs(xmlreader *reader)
 /* attribute data holds pointers to buffer data, so buffer shrink is not possible
    while we are on a node with attributes */
 static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localname, strval *qname,
-    strval *value, const struct reader_position *position)
+    strval *value, const struct reader_position *position, unsigned int flags)
 {
     struct attribute *attr;
 
@@ -413,6 +420,7 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localn
     attr->qname = qname ? *qname : *localname;
     attr->value = *value;
     attr->position = *position;
+    attr->flags = flags;
     list_add_tail(&reader->attrs, &attr->entry);
     reader->attr_count++;
 
@@ -1179,7 +1187,7 @@ static HRESULT reader_parse_versioninfo(xmlreader *reader)
     /* skip "'"|'"' */
     reader_skipn(reader, 1);
 
-    return reader_add_attr(reader, NULL, &name, NULL, &val, &position);
+    return reader_add_attr(reader, NULL, &name, NULL, &val, &position, 0);
 }
 
 /* ([A-Za-z0-9._] | '-') */
@@ -1257,7 +1265,7 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
     /* skip "'"|'"' */
     reader_skipn(reader, 1);
 
-    return reader_add_attr(reader, NULL, &name, NULL, &val, &position);
+    return reader_add_attr(reader, NULL, &name, NULL, &val, &position, 0);
 }
 
 /* [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) */
@@ -1301,7 +1309,7 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
     /* skip "'"|'"' */
     reader_skipn(reader, 1);
 
-    return reader_add_attr(reader, NULL, &name, NULL, &val, &position);
+    return reader_add_attr(reader, NULL, &name, NULL, &val, &position, 0);
 }
 
 /* [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>' */
@@ -1774,7 +1782,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         if (FAILED(hr)) return hr;
 
         reader_init_cstrvalue(publicW, strlenW(publicW), &name);
-        hr = reader_add_attr(reader, NULL, &name, NULL, &pub, &position);
+        hr = reader_add_attr(reader, NULL, &name, NULL, &pub, &position, 0);
         if (FAILED(hr)) return hr;
 
         cnt = reader_skipspaces(reader);
@@ -1785,7 +1793,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         if (FAILED(hr)) return S_OK;
 
         reader_init_cstrvalue(systemW, strlenW(systemW), &name);
-        hr = reader_add_attr(reader, NULL, &name, NULL, &sys, &position);
+        hr = reader_add_attr(reader, NULL, &name, NULL, &sys, &position, 0);
         if (FAILED(hr)) return hr;
 
         return S_OK;
@@ -1799,7 +1807,7 @@ static HRESULT reader_parse_externalid(xmlreader *reader)
         if (FAILED(hr)) return hr;
 
         reader_init_cstrvalue(systemW, strlenW(systemW), &name);
-        return reader_add_attr(reader, NULL, &name, NULL, &sys, &position);
+        return reader_add_attr(reader, NULL, &name, NULL, &sys, &position, 0);
     }
 
     return S_FALSE;
@@ -2179,17 +2187,17 @@ static HRESULT reader_parse_attribute(xmlreader *reader)
 {
     struct reader_position position = reader->position;
     strval prefix, local, qname, value;
-    BOOL ns = FALSE, nsdef = FALSE;
+    enum attribute_flags flags = 0;
     HRESULT hr;
 
     hr = reader_parse_qname(reader, &prefix, &local, &qname);
     if (FAILED(hr)) return hr;
 
     if (strval_eq(reader, &prefix, &strval_xmlns))
-        ns = TRUE;
+        flags |= ATTRIBUTE_NS_DEFINITION;
 
     if (strval_eq(reader, &qname, &strval_xmlns))
-        ns = nsdef = TRUE;
+        flags |= ATTRIBUTE_DEFAULT_NS_DEFINITION;
 
     hr = reader_parse_eq(reader);
     if (FAILED(hr)) return hr;
@@ -2197,11 +2205,11 @@ static HRESULT reader_parse_attribute(xmlreader *reader)
     hr = reader_parse_attvalue(reader, &value);
     if (FAILED(hr)) return hr;
 
-    if (ns)
-        reader_push_ns(reader, nsdef ? &strval_xmlns : &local, &value, nsdef);
+    if (flags & (ATTRIBUTE_NS_DEFINITION | ATTRIBUTE_DEFAULT_NS_DEFINITION))
+        reader_push_ns(reader, &local, &value, !!(flags & ATTRIBUTE_DEFAULT_NS_DEFINITION));
 
     TRACE("%s=%s\n", debug_strval(reader, &local), debug_strval(reader, &value));
-    return reader_add_attr(reader, &prefix, &local, &qname, &value, &position);
+    return reader_add_attr(reader, &prefix, &local, &qname, &value, &position, flags);
 }
 
 /* [12 NS] STag ::= '<' QName (S Attribute)* S? '>'
@@ -2982,6 +2990,7 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
 static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *name, UINT *len)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    struct attribute *attribute = This->attr;
     struct element *element;
     UINT length;
 
@@ -3011,6 +3020,22 @@ static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *nam
         {
             *name = element->localname.str;
             *len = element->localname.len;
+        }
+        break;
+    case XmlNodeType_Attribute:
+        if (attribute->flags & ATTRIBUTE_DEFAULT_NS_DEFINITION)
+        {
+            *name = xmlnsW;
+            *len = 5;
+        } else if (attribute->prefix.len)
+        {
+            *name = This->strvalues[StringValue_QualifiedName].str;
+            *len = This->strvalues[StringValue_QualifiedName].len;
+        }
+        else
+        {
+            *name = This->strvalues[StringValue_LocalName].str;
+            *len = This->strvalues[StringValue_LocalName].len;
         }
         break;
     default:
@@ -3156,6 +3181,18 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
         *name = element->localname.str;
         *len = element->localname.len;
         break;
+    case XmlNodeType_Attribute:
+        if (This->attr->flags & ATTRIBUTE_DEFAULT_NS_DEFINITION)
+        {
+            *name = xmlnsW;
+            *len = 5;
+        }
+        else
+        {
+            *name = This->strvalues[StringValue_LocalName].str;
+            *len = This->strvalues[StringValue_LocalName].len;
+        }
+        break;
     default:
         *name = This->strvalues[StringValue_LocalName].str;
         *len = This->strvalues[StringValue_LocalName].len;
@@ -3246,11 +3283,9 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value,
     case XmlNodeType_Attribute:
         {
             const strval *local = &reader->strvalues[StringValue_LocalName];
-            const strval *prefix = &reader->strvalues[StringValue_Prefix];
 
             /* For namespace definition attributes return values from namespace list */
-            if (((strval_eq(reader, prefix, &strval_empty) && strval_eq(reader, local, &strval_xmlns)) ||
-                    strval_eq(reader, prefix, &strval_xmlns)))
+            if (reader->attr->flags & (ATTRIBUTE_NS_DEFINITION | ATTRIBUTE_DEFAULT_NS_DEFINITION))
             {
                 struct ns *ns;
 
