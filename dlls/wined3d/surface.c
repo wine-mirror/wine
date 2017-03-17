@@ -2785,8 +2785,6 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
         struct wined3d_surface *dst_surface, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
-    unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
-    struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_texture *src_texture = src_surface->container;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -2810,9 +2808,6 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
     /* Restore the color key parameters */
     wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT,
             (old_color_key_flags & WINED3D_CKEY_SRC_BLT) ? &old_blt_key : NULL);
-
-    wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_texture->resource.draw_binding);
-    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_texture->resource.draw_binding);
 }
 
 const struct blit_shader ffp_blit =  {
@@ -3761,6 +3756,12 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 blitter->blit_surface(device, blit_op, context, src_surface,
                         src_rect, dst_surface, dst_rect, color_key, filter);
                 context_release(context);
+
+                wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx,
+                        dst_texture->resource.draw_binding);
+                wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx,
+                        ~dst_texture->resource.draw_binding);
+
                 return WINED3D_OK;
             }
         }
