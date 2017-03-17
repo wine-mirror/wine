@@ -2221,6 +2221,16 @@ static void test_saxreader(void)
 
         SafeArrayDestroy(sa);
 
+        V_VT(&var) = VT_UNKNOWN;
+        V_UNKNOWN(&var) = NULL;
+        hr = ISAXXMLReader_parse(reader, var);
+        ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = NULL;
+        hr = ISAXXMLReader_parse(reader, var);
+        ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
         stream = create_test_stream(testXML, -1);
         V_VT(&var) = VT_UNKNOWN;
         V_UNKNOWN(&var) = (IUnknown*)stream;

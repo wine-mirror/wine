@@ -2664,6 +2664,9 @@ static HRESULT internal_parse(
             ISequentialStream *stream = NULL;
             IXMLDOMDocument *xmlDoc;
 
+            if (!V_UNKNOWN(&varInput))
+                return E_INVALIDARG;
+
             if(IUnknown_QueryInterface(V_UNKNOWN(&varInput),
                         &IID_IXMLDOMDocument, (void**)&xmlDoc) == S_OK)
             {
