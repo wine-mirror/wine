@@ -454,7 +454,7 @@ static void test_EnumObjects(IShellFolder *iFolder)
         flags = ~0u;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok((flags & ~SFGAO_HASSUBFOLDER) == full_attrs[i], "%d: got %08x expected %08x\n", i, flags, full_attrs[i]);
+        ok((flags & ~(SFGAO_HASSUBFOLDER|SFGAO_COMPRESSED)) == full_attrs[i], "%d: got %08x expected %08x\n", i, flags, full_attrs[i]);
     }
 
     for (i=0;i<5;i++)
