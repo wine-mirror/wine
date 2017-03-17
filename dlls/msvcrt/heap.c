@@ -873,3 +873,11 @@ void * CDECL Concurrency_Alloc(MSVCRT_size_t size)
     FIXME("(%ld) returning %p\n", size, p);
     return p;
 }
+
+/* ?Free@Concurrency@@YAXPAX@Z */
+/* ?Free@Concurrency@@YAXPEAX@Z */
+void CDECL Concurrency_Free(void* mem)
+{
+    FIXME("(%p) stub\n", mem);
+    MSVCRT_free(mem);
+}

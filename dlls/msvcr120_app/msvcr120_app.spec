@@ -412,8 +412,8 @@
 @ stub ?Detach@CurrentScheduler@Concurrency@@SAXXZ
 @ stub ?DisableTracing@Concurrency@@YAJXZ
 @ stub ?EnableTracing@Concurrency@@YAJXZ
-@ stub -arch=win32 ?Free@Concurrency@@YAXPAX@Z
-@ stub -arch=win64 ?Free@Concurrency@@YAXPEAX@Z
+@ cdecl -arch=win32 ?Free@Concurrency@@YAXPAX@Z(ptr) msvcr120.?Free@Concurrency@@YAXPAX@Z
+@ cdecl -arch=win64 ?Free@Concurrency@@YAXPEAX@Z(ptr) msvcr120.?Free@Concurrency@@YAXPEAX@Z
 @ stub -arch=win32 ?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ
 @ stub -arch=win64 ?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ
 @ stub ?GetCurrentThreadId@platform@details@Concurrency@@YAJXZ
