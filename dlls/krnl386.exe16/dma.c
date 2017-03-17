@@ -201,22 +201,22 @@ void DMA_ioport_out( WORD port, BYTE val )
         break;
 
     /* Low Page Base Address */
-    case 0x87: DMA_BaseAddress[0]=(DMA_BaseAddress[0] & (~0xFF << 16))|((val & 0xFF) << 16); break;
-    case 0x83: DMA_BaseAddress[1]=(DMA_BaseAddress[1] & (~0xFF << 16))|((val & 0xFF) << 16); break;
-    case 0x81: DMA_BaseAddress[2]=(DMA_BaseAddress[2] & (~0xFF << 16))|((val & 0xFF) << 16); break;
-    case 0x82: DMA_BaseAddress[3]=(DMA_BaseAddress[3] & (~0xFF << 16))|((val & 0xFF) << 16); break;
-    case 0x8B: DMA_BaseAddress[5]=(DMA_BaseAddress[5] & (~0xFF << 16))|((val & 0xFF) << 16); break;
-    case 0x89: DMA_BaseAddress[6]=(DMA_BaseAddress[6] & (~0xFF << 16))|((val & 0xFF) << 16); break;
-    case 0x8A: DMA_BaseAddress[7]=(DMA_BaseAddress[7] & (~0xFF << 16))|((val & 0xFF) << 16); break;
+    case 0x87: DMA_BaseAddress[0]=(DMA_BaseAddress[0] & 0xFF00FFFF)|((val & 0xFF) << 16); break;
+    case 0x83: DMA_BaseAddress[1]=(DMA_BaseAddress[1] & 0xFF00FFFF)|((val & 0xFF) << 16); break;
+    case 0x81: DMA_BaseAddress[2]=(DMA_BaseAddress[2] & 0xFF00FFFF)|((val & 0xFF) << 16); break;
+    case 0x82: DMA_BaseAddress[3]=(DMA_BaseAddress[3] & 0xFF00FFFF)|((val & 0xFF) << 16); break;
+    case 0x8B: DMA_BaseAddress[5]=(DMA_BaseAddress[5] & 0xFF00FFFF)|((val & 0xFF) << 16); break;
+    case 0x89: DMA_BaseAddress[6]=(DMA_BaseAddress[6] & 0xFF00FFFF)|((val & 0xFF) << 16); break;
+    case 0x8A: DMA_BaseAddress[7]=(DMA_BaseAddress[7] & 0xFF00FFFF)|((val & 0xFF) << 16); break;
 
     /* Low Page Base Address (only 4 lower bits are significant) */
-    case 0x487: DMA_BaseAddress[0]=(DMA_BaseAddress[0] & (~0xFFu << 24))|((val & 0x0F) << 24); break;
-    case 0x483: DMA_BaseAddress[1]=(DMA_BaseAddress[1] & (~0xFFu << 24))|((val & 0x0F) << 24); break;
-    case 0x481: DMA_BaseAddress[2]=(DMA_BaseAddress[2] & (~0xFFu << 24))|((val & 0x0F) << 24); break;
-    case 0x482: DMA_BaseAddress[3]=(DMA_BaseAddress[3] & (~0xFFu << 24))|((val & 0x0F) << 24); break;
-    case 0x48B: DMA_BaseAddress[5]=(DMA_BaseAddress[5] & (~0xFFu << 24))|((val & 0x0F) << 24); break;
-    case 0x489: DMA_BaseAddress[6]=(DMA_BaseAddress[6] & (~0xFFu << 24))|((val & 0x0F) << 24); break;
-    case 0x48A: DMA_BaseAddress[7]=(DMA_BaseAddress[7] & (~0xFFu << 24))|((val & 0x0F) << 24); break;
+    case 0x487: DMA_BaseAddress[0]=(DMA_BaseAddress[0] & 0x00FFFFFF)|((val & 0x0F) << 24); break;
+    case 0x483: DMA_BaseAddress[1]=(DMA_BaseAddress[1] & 0x00FFFFFF)|((val & 0x0F) << 24); break;
+    case 0x481: DMA_BaseAddress[2]=(DMA_BaseAddress[2] & 0x00FFFFFF)|((val & 0x0F) << 24); break;
+    case 0x482: DMA_BaseAddress[3]=(DMA_BaseAddress[3] & 0x00FFFFFF)|((val & 0x0F) << 24); break;
+    case 0x48B: DMA_BaseAddress[5]=(DMA_BaseAddress[5] & 0x00FFFFFF)|((val & 0x0F) << 24); break;
+    case 0x489: DMA_BaseAddress[6]=(DMA_BaseAddress[6] & 0x00FFFFFF)|((val & 0x0F) << 24); break;
+    case 0x48A: DMA_BaseAddress[7]=(DMA_BaseAddress[7] & 0x00FFFFFF)|((val & 0x0F) << 24); break;
 
     case 0x08:
     case 0xD0:
