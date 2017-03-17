@@ -1140,13 +1140,16 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
 
     if (texture->lod != lod)
     {
+        struct wined3d_device *device = texture->resource.device;
+
         wined3d_resource_wait_idle(&texture->resource);
         texture->lod = lod;
 
         texture->texture_rgb.base_level = ~0u;
         texture->texture_srgb.base_level = ~0u;
         if (texture->resource.bind_count)
-            device_invalidate_state(texture->resource.device, STATE_SAMPLER(texture->sampler));
+            wined3d_cs_emit_set_sampler_state(device->cs, texture->sampler, WINED3D_SAMP_MAX_MIP_LEVEL,
+                    device->state.sampler_states[texture->sampler][WINED3D_SAMP_MAX_MIP_LEVEL]);
     }
 
     return old;
