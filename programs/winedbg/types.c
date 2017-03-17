@@ -80,11 +80,13 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue,
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+            return rtn;
         }
         if (size > sizeof(rtn))
         {
             WINE_ERR("Size too large (%s)\n", wine_dbgstr_longlong(size));
             RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
+            return rtn;
         }
         switch (bt)
         {
