@@ -1494,6 +1494,8 @@ static void test_read_element(void)
     i = 0;
     while (IXmlReader_Read(reader, &type) == S_OK)
     {
+        UINT count;
+
         ok(type == XmlNodeType_Element || type == XmlNodeType_EndElement ||
                 type == XmlNodeType_Text, "Unexpected node type %d\n", type);
 
@@ -1502,10 +1504,44 @@ static void test_read_element(void)
         ok(hr == S_OK, "got %08x\n", hr);
         ok(depth == depths[i], "%u: got depth %u, expected %u\n", i, depth, depths[i]);
 
+        if (type == XmlNodeType_Element || type == XmlNodeType_EndElement)
+        {
+            const WCHAR *prefix;
+
+            prefix = NULL;
+            hr = IXmlReader_GetPrefix(reader, &prefix, NULL);
+            ok(hr == S_OK, "got %08x\n", hr);
+            ok(prefix != NULL, "got %p\n", prefix);
+
+            if (!*prefix)
+            {
+                const WCHAR *local, *qname;
+
+                local = NULL;
+                hr = IXmlReader_GetLocalName(reader, &local, NULL);
+                ok(hr == S_OK, "got %08x\n", hr);
+                ok(local != NULL, "got %p\n", local);
+
+                qname = NULL;
+                hr = IXmlReader_GetQualifiedName(reader, &qname, NULL);
+                ok(hr == S_OK, "got %08x\n", hr);
+                ok(qname != NULL, "got %p\n", qname);
+
+                ok(local == qname, "expected same pointer\n");
+            }
+        }
+
+        if (type == XmlNodeType_EndElement)
+        {
+            count = 1;
+            hr = IXmlReader_GetAttributeCount(reader, &count);
+            ok(hr == S_OK, "got %08x\n", hr);
+            ok(count == 0, "got %u\n", count);
+        }
+
         if (type == XmlNodeType_Element)
         {
-            UINT count = 0;
-
+            count = 0;
             hr = IXmlReader_GetAttributeCount(reader, &count);
             ok(hr == S_OK, "got %08x\n", hr);
 

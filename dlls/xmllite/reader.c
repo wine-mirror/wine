@@ -490,6 +490,7 @@ static void reader_clear_elements(xmlreader *reader)
     }
     list_init(&reader->elements);
     reader_free_strvalued(reader, &reader->empty_element.localname);
+    reader_free_strvalued(reader, &reader->empty_element.qname);
     reader->is_empty_element = FALSE;
 }
 
@@ -2227,10 +2228,11 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
             /* skip '/>' */
             reader_skipn(reader, 2);
 
+            reader_free_strvalued(reader, &element->qname);
             reader_free_strvalued(reader, &element->localname);
 
             element->prefix = *prefix;
-            element->qname = *qname;
+            reader_strvaldup(reader, qname, &element->qname);
             reader_strvaldup(reader, local, &element->localname);
             element->position = position;
             reader_mark_ns_nodes(reader, element);
@@ -2980,6 +2982,7 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
 static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *name, UINT *len)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    struct element *element;
     UINT length;
 
     TRACE("(%p)->(%p %p)\n", This, name, len);
@@ -2998,14 +3001,18 @@ static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *nam
         break;
     case XmlNodeType_Element:
     case XmlNodeType_EndElement:
-        if (!This->is_empty_element)
+        element = reader_get_element(This);
+        if (element->prefix.len)
         {
-            struct element *element = reader_get_element(This);
             *name = element->qname.str;
             *len = element->qname.len;
-            break;
         }
-        /* fallthrough */
+        else
+        {
+            *name = element->localname.str;
+            *len = element->localname.len;
+        }
+        break;
     default:
         *name = This->strvalues[StringValue_QualifiedName].str;
         *len = This->strvalues[StringValue_QualifiedName].len;
