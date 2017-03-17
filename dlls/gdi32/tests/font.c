@@ -30,10 +30,12 @@
 
 #include "wine/test.h"
 
-/* Do not allow more than 1 deviation here */
-#define match_off_by_1(a, b, exact) (abs((a) - (b)) <= ((exact) ? 0 : 1))
-
-#define near_match(a, b) (abs((a) - (b)) <= 6)
+static inline BOOL match_off_by_n(int a, int b, unsigned int n)
+{
+    return abs(a - b) <= n;
+}
+#define match_off_by_1(a, b, exact) match_off_by_n((a), (b), (exact) ? 0 : 1)
+#define near_match(a, b) match_off_by_n((a), (b), 6)
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
 static LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
