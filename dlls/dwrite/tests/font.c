@@ -41,6 +41,7 @@
 #define MS_HHEA_TAG DWRITE_MAKE_OPENTYPE_TAG('h','h','e','a')
 #define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
 #define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
+#define MS_KERN_TAG DWRITE_MAKE_OPENTYPE_TAG('k','e','r','n')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -6783,6 +6784,80 @@ static void test_HasVerticalGlyphVariants(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_HasKerningPairs(void)
+{
+    IDWriteFontCollection *syscollection;
+    IDWriteFontFace1 *fontface1;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    UINT32 count, i;
+    HRESULT hr;
+
+    factory = create_factory();
+    fontface = create_fontface(factory);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    IDWriteFontFace_Release(fontface);
+    if (hr != S_OK) {
+        win_skip("HasKerningPairs() is not supported.\n");
+        IDWriteFactory_Release(factory);
+        return;
+    }
+    IDWriteFontFace1_Release(fontface1);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    count = IDWriteFontCollection_GetFontFamilyCount(syscollection);
+
+    for (i = 0; i < count; i++) {
+        IDWriteLocalizedStrings *names;
+        BOOL exists, has_kerningpairs;
+        IDWriteFontFamily *family;
+        IDWriteFont *font;
+        WCHAR nameW[256];
+        const void *data;
+        void *context;
+        UINT32 size;
+
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, i, &family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFont_CreateFontFace(font, &fontface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void **)&fontface1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+
+        exists = FALSE;
+        hr = IDWriteFontFace1_TryGetFontTable(fontface1, MS_KERN_TAG, &data, &size, &context, &exists);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteFontFace1_ReleaseFontTable(fontface1, context);
+
+        has_kerningpairs = IDWriteFontFace1_HasKerningPairs(fontface1);
+        if (!exists)
+            ok(!has_kerningpairs, "%s: expected %d, got %d\n", wine_dbgstr_w(nameW), exists, has_kerningpairs);
+
+        IDWriteLocalizedStrings_Release(names);
+        IDWriteFont_Release(font);
+
+        IDWriteFontFace1_Release(fontface1);
+        IDWriteFontFace_Release(fontface);
+        IDWriteFontFamily_Release(family);
+    }
+
+    IDWriteFontCollection_Release(syscollection);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -6841,6 +6916,7 @@ START_TEST(font)
     test_GetFontSignature();
     test_font_properties();
     test_HasVerticalGlyphVariants();
+    test_HasKerningPairs();
 
     IDWriteFactory_Release(factory);
 }
