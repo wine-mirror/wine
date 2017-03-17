@@ -1520,8 +1520,8 @@ static void test_Console(void)
     startup.hStdError = startup.hStdOutput;
 
     ok(GetConsoleScreenBufferInfo(startup.hStdOutput, &sbi), "Getting sb info\n");
-    ok(GetConsoleMode(startup.hStdInput, &modeIn) && 
-       GetConsoleMode(startup.hStdOutput, &modeOut), "Getting console modes\n");
+    ok(GetConsoleMode(startup.hStdInput, &modeIn), "Getting console in mode\n");
+    ok(GetConsoleMode(startup.hStdOutput, &modeOut), "Getting console out mode\n");
     cpIn = GetConsoleCP();
     cpOut = GetConsoleOutputCP();
 
@@ -1536,8 +1536,8 @@ static void test_Console(void)
 
     /* now get the modification the child has made, and resets parents expected values */
     ok(GetConsoleScreenBufferInfo(startup.hStdOutput, &sbiC), "Getting sb info\n");
-    ok(GetConsoleMode(startup.hStdInput, &modeInC) && 
-       GetConsoleMode(startup.hStdOutput, &modeOutC), "Getting console modes\n");
+    ok(GetConsoleMode(startup.hStdInput, &modeInC), "Getting console in mode\n");
+    ok(GetConsoleMode(startup.hStdOutput, &modeOutC), "Getting console out mode\n");
 
     SetConsoleMode(startup.hStdInput, modeIn);
     SetConsoleMode(startup.hStdOutput, modeOut);
