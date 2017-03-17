@@ -3800,10 +3800,10 @@ static void test_ShellItemArrayEnumItems(void)
         hr = IShellFolder_BindToObject(pdesktopsf, pidl_testdir, NULL, (REFIID)&IID_IShellFolder,
                                        (void**)&psf);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
-        if(SUCCEEDED(hr))
-            pILFree(pidl_testdir);
+        pILFree(pidl_testdir);
     }
     IShellFolder_Release(pdesktopsf);
+    if (FAILED(hr)) return;
 
     hr = IShellFolder_EnumObjects(psf, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &peidl);
     ok(hr == S_OK, "Got %08x\n", hr);
