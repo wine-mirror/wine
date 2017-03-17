@@ -2780,16 +2780,15 @@ static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, DWORD filter,
-        struct wined3d_surface *src_surface, const RECT *src_rect,
+static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
+        struct wined3d_context *context, struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        const struct wined3d_color_key *color_key)
+        const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_texture *src_texture = src_surface->container;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     /* Blit from offscreen surface to render target */
     struct wined3d_color_key old_blt_key = src_texture->async.src_blt_color_key;
@@ -2799,9 +2798,6 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
 
     wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT, color_key);
 
-    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
-    gl_info = context->gl_info;
-
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
         gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
 
@@ -2810,8 +2806,6 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-
-    context_release(context);
 
     /* Restore the color key parameters */
     wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT,
@@ -3466,10 +3460,10 @@ static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
             &box, NULL, 0, &src_box, WINED3D_BLT_DEPTH_FILL, &fx, WINED3D_TEXF_POINT);
 }
 
-static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, DWORD filter,
-        struct wined3d_surface *src_surface, const RECT *src_rect,
+static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
+        struct wined3d_context *context, struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        const struct wined3d_color_key *color_key)
+        const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     /* FIXME: Remove error returns from surface_blt_cpu. */
     ERR("Blit method not implemented by cpu_blit.\n");
@@ -3761,8 +3755,12 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                     dst_rect, dst_texture->resource.usage, dst_texture->resource.pool, dst_texture->resource.format);
             if (blitter)
             {
-                blitter->blit_surface(device, blit_op, filter, src_surface,
-                        src_rect, dst_surface, dst_rect, color_key);
+                struct wined3d_context *context;
+
+                context = context_acquire(device, dst_texture, dst_sub_resource_idx);
+                blitter->blit_surface(device, blit_op, context, src_surface,
+                        src_rect, dst_surface, dst_rect, color_key, filter);
+                context_release(context);
                 return WINED3D_OK;
             }
         }

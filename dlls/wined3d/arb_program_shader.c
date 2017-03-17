@@ -7789,21 +7789,17 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
     }
 }
 
-static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, DWORD filter,
+static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, struct wined3d_context *context,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
-        const struct wined3d_color_key *color_key)
+        const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
-    struct wined3d_context *context;
     RECT src_rect = *src_rect_in;
     RECT dst_rect = *dst_rect_in;
     struct wined3d_color_key alpha_test_key;
-
-    /* Activate the destination context, set it up for blitting */
-    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
 
     /* Now load the surface */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
@@ -7849,8 +7845,6 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
     if (wined3d_settings.strict_draw_ordering
             || (dst_texture->swapchain && (dst_texture->swapchain->front_buffer == dst_texture)))
         context->gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
-
-    context_release(context);
 
     wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_texture->resource.draw_binding);
     wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_texture->resource.draw_binding);
