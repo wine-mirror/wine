@@ -1622,45 +1622,6 @@ int WINAPI DrawShadowText(HDC hdc, LPCWSTR text, UINT length, RECT *rect, DWORD 
 }
 
 /***********************************************************************
- * TaskDialogIndirect [COMCTL32.@]
- */
-HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton,
-                                  int *pnRadioButton, BOOL *pfVerificationFlagChecked)
-{
-    UINT uType = 0;
-    INT  ret;
-    FIXME("%p, %p, %p, %p\n", pTaskConfig, pnButton, pnRadioButton, pfVerificationFlagChecked);
-
-    if (pTaskConfig->dwCommonButtons & TDCBF_YES_BUTTON &&
-        pTaskConfig->dwCommonButtons & TDCBF_NO_BUTTON &&
-        pTaskConfig->dwCommonButtons & TDCBF_CANCEL_BUTTON)
-        uType |= MB_YESNOCANCEL;
-    else
-    if (pTaskConfig->dwCommonButtons & TDCBF_YES_BUTTON &&
-        pTaskConfig->dwCommonButtons & TDCBF_NO_BUTTON)
-        uType |= MB_YESNO;
-    else
-    if (pTaskConfig->dwCommonButtons & TDCBF_RETRY_BUTTON &&
-        pTaskConfig->dwCommonButtons & TDCBF_CANCEL_BUTTON)
-        uType |= MB_RETRYCANCEL;
-    else
-    if (pTaskConfig->dwCommonButtons & TDCBF_OK_BUTTON &&
-        pTaskConfig->dwCommonButtons & TDCBF_CANCEL_BUTTON)
-        uType |= MB_OKCANCEL;
-    else
-    if (pTaskConfig->dwCommonButtons & TDCBF_OK_BUTTON)
-        uType |= MB_OK;
-    ret = MessageBoxW(pTaskConfig->hwndParent, pTaskConfig->pszMainInstruction,
-                      pTaskConfig->pszWindowTitle, uType);
-    FIXME("dwCommonButtons=%x uType=%x ret=%x\n", pTaskConfig->dwCommonButtons, uType, ret);
-
-    if (pnButton) *pnButton = ret;
-    if (pnRadioButton) *pnRadioButton = pTaskConfig->nDefaultButton;
-    if (pfVerificationFlagChecked) *pfVerificationFlagChecked = TRUE;
-    return S_OK;
-}
-
-/***********************************************************************
  * LoadIconWithScaleDown [COMCTL32.@]
  */
 HRESULT WINAPI LoadIconWithScaleDown(HINSTANCE hinst, const WCHAR *name, int cx, int cy, HICON *icon)

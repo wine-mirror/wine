@@ -200,24 +200,6 @@ static void test_Alloc(void)
     ok(res == TRUE, "Expected TRUE, got %d\n", res);
 }
 
-static void test_TaskDialogIndirect(void)
-{
-    HINSTANCE hinst;
-    void *ptr, *ptr2;
-
-    hinst = LoadLibraryA("comctl32.dll");
-
-    ptr = GetProcAddress(hinst, "TaskDialogIndirect");
-    if (!ptr)
-    {
-        win_skip("TaskDialogIndirect not exported by name\n");
-        return;
-    }
-
-    ptr2 = GetProcAddress(hinst, (const CHAR*)345);
-    ok(ptr == ptr2, "got wrong pointer for ordinal 345, %p expected %p\n", ptr2, ptr);
-}
-
 static void test_LoadIconWithScaleDown(void)
 {
     static const WCHAR nonexisting_fileW[] = {'n','o','n','e','x','i','s','t','i','n','g','.','i','c','o',0};
@@ -402,7 +384,6 @@ START_TEST(misc)
         return;
 
     test_builtin_classes();
-    test_TaskDialogIndirect();
     test_LoadIconWithScaleDown();
 
     unload_v6_module(ctx_cookie, hCtx);
