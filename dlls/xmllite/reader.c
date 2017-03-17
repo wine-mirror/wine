@@ -419,6 +419,15 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localn
     return S_OK;
 }
 
+/* Returns current element, doesn't check if reader is actually positioned on it. */
+static struct element *reader_get_element(xmlreader *reader)
+{
+    if (reader->is_empty_element)
+        return &reader->empty_element;
+
+    return LIST_ENTRY(list_head(&reader->elements), struct element, entry);
+}
+
 /* This one frees stored string value if needed */
 static void reader_free_strvalued(xmlreader *reader, strval *v)
 {
@@ -480,6 +489,7 @@ static void reader_clear_elements(xmlreader *reader)
         reader_free(reader, elem);
     }
     list_init(&reader->elements);
+    reader_free_strvalued(reader, &reader->empty_element.localname);
     reader->is_empty_element = FALSE;
 }
 
@@ -2212,13 +2222,18 @@ static HRESULT reader_parse_stag(xmlreader *reader, strval *prefix, strval *loca
         /* empty element */
         if ((reader->is_empty_element = !reader_cmp(reader, endW)))
         {
+            struct element *element = &reader->empty_element;
+
             /* skip '/>' */
             reader_skipn(reader, 2);
-            reader->empty_element.prefix = *prefix;
-            reader->empty_element.localname = *local;
-            reader->empty_element.qname = *qname;
-            reader->empty_element.position = position;
-            reader_mark_ns_nodes(reader, &reader->empty_element);
+
+            reader_free_strvalued(reader, &element->localname);
+
+            element->prefix = *prefix;
+            element->qname = *qname;
+            reader_strvaldup(reader, local, &element->localname);
+            element->position = position;
+            reader_mark_ns_nodes(reader, element);
             return S_OK;
         }
 
@@ -2983,12 +2998,9 @@ static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *nam
         break;
     case XmlNodeType_Element:
     case XmlNodeType_EndElement:
-        /* empty elements are not added to the stack */
         if (!This->is_empty_element)
         {
-            struct element *element;
-
-            element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
+            struct element *element = reader_get_element(This);
             *name = element->qname.str;
             *len = element->qname.len;
             break;
@@ -3114,6 +3126,7 @@ static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface, const WCHAR *
 static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, UINT *len)
 {
     xmlreader *This = impl_from_IXmlReader(iface);
+    struct element *element;
     UINT length;
 
     TRACE("(%p)->(%p %p)\n", This, name, len);
@@ -3132,17 +3145,10 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
         break;
     case XmlNodeType_Element:
     case XmlNodeType_EndElement:
-        /* empty elements are not added to the stack */
-        if (!This->is_empty_element)
-        {
-            struct element *element;
-
-            element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
-            *name = element->localname.str;
-            *len = element->localname.len;
-            break;
-        }
-        /* fallthrough */
+        element = reader_get_element(This);
+        *name = element->localname.str;
+        *len = element->localname.len;
+        break;
     default:
         *name = This->strvalues[StringValue_LocalName].str;
         *len = This->strvalues[StringValue_LocalName].len;
@@ -3327,11 +3333,7 @@ static HRESULT WINAPI xmlreader_GetLineNumber(IXmlReader* iface, UINT *line_numb
     {
     case XmlNodeType_Element:
     case XmlNodeType_EndElement:
-        if (This->is_empty_element)
-            element = &This->empty_element;
-        else
-            element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
-
+        element = reader_get_element(This);
         *line_number = element->position.line_number;
         break;
     case XmlNodeType_Attribute:
@@ -3363,11 +3365,7 @@ static HRESULT WINAPI xmlreader_GetLinePosition(IXmlReader* iface, UINT *line_po
     {
     case XmlNodeType_Element:
     case XmlNodeType_EndElement:
-        if (This->is_empty_element)
-            element = &This->empty_element;
-        else
-            element = LIST_ENTRY(list_head(&This->elements), struct element, entry);
-
+        element = reader_get_element(This);
         *line_position = element->position.line_position;
         break;
     case XmlNodeType_Attribute:
@@ -3519,32 +3517,24 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
         reader = IMalloc_Alloc(imalloc, sizeof(*reader));
     else
         reader = heap_alloc(sizeof(*reader));
-    if(!reader) return E_OUTOFMEMORY;
+    if (!reader)
+        return E_OUTOFMEMORY;
 
+    memset(reader, 0, sizeof(*reader));
     reader->IXmlReader_iface.lpVtbl = &xmlreader_vtbl;
     reader->ref = 1;
-    reader->input = NULL;
     reader->state = XmlReadState_Closed;
     reader->instate = XmlReadInState_Initial;
     reader->resumestate = XmlReadResumeState_Initial;
     reader->dtdmode = DtdProcessing_Prohibit;
-    reader->resolver = NULL;
-    reader->mlang = NULL;
-    reader->position.line_number = 0;
-    reader->position.line_position = 0;
     reader->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
     reader->nodetype = XmlNodeType_None;
     list_init(&reader->attrs);
-    reader->attr_count = 0;
-    reader->attr = NULL;
     list_init(&reader->nsdef);
     list_init(&reader->ns);
     list_init(&reader->elements);
-    reader->depth = 0;
     reader->max_depth = 256;
-    reader->is_empty_element = FALSE;
-    memset(reader->resume, 0, sizeof(reader->resume));
 
     for (i = 0; i < StringValue_Last; i++)
         reader->strvalues[i] = strval_empty;
