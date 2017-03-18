@@ -998,7 +998,8 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
     case cmb2:
     case cmb3:
     case cmb5:
-        if (HIWORD(wParam)==CBN_SELCHANGE || HIWORD(wParam)== BN_CLICKED )
+        if (HIWORD(wParam)==CBN_SELCHANGE || HIWORD(wParam)== BN_CLICKED ||
+            HIWORD(wParam) == CBN_EDITCHANGE)
         {
             WCHAR str[256];
             WINDOWINFO wininfo;
