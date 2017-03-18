@@ -217,8 +217,8 @@
 @ stub -arch=i386 ??_F_Scheduler@details@Concurrency@@QAEXXZ
 @ stub -arch=win64 ??_F_Scheduler@details@Concurrency@@QEAAXXZ
 # extern ?AgentEventGuid@Concurrency@@3U_GUID@@B
-@ stub -arch=win32 ?Alloc@Concurrency@@YAPAXI@Z
-@ stub -arch=win64 ?Alloc@Concurrency@@YAPEAX_K@Z
+@ cdecl -arch=win32 ?Alloc@Concurrency@@YAPAXI@Z(long) msvcr120.?Alloc@Concurrency@@YAPAXI@Z
+@ cdecl -arch=win64 ?Alloc@Concurrency@@YAPEAX_K@Z(long) msvcr120.?Alloc@Concurrency@@YAPEAX_K@Z
 @ stub -arch=win64 ?Block@Context@Concurrency@@SAXXZ
 # extern ?ChoreEventGuid@Concurrency@@3U_GUID@@B
 # extern ?ConcRTEventGuid@Concurrency@@3U_GUID@@B
