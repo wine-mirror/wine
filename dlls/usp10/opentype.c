@@ -1497,8 +1497,10 @@ INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, IN
 /**********
  * GPOS
  **********/
-static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
-                             const OT_LookupList* lookup, INT lookup_index, const WORD *glyphs, INT glyph_index, INT glyph_count, GOFFSET *pGoffset);
+static unsigned int GPOS_apply_lookup(const ScriptCache *script_cache, const OUTLINETEXTMETRICW *otm,
+        const LOGFONTW *logfont, const SCRIPT_ANALYSIS *analysis, int *advance, const OT_LookupList *lookup,
+        unsigned int lookup_index, const WORD *glyphs, unsigned int glyph_index, unsigned int glyph_count,
+        GOFFSET *goffset);
 
 static INT GPOS_get_device_table_value(const OT_DeviceTable *DeviceTable, WORD ppem)
 {
@@ -2080,9 +2082,10 @@ static BOOL GPOS_apply_MarkToMark(const OT_LookupTable *look, const SCRIPT_ANALY
     return rc;
 }
 
-static INT GPOS_apply_ContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
-                                      const OT_LookupList *lookup, const OT_LookupTable *look, const WORD *glyphs, INT glyph_index,
-                                      INT glyph_count, INT ppem, GOFFSET *pGoffset)
+static unsigned int GPOS_apply_ContextPos(const ScriptCache *script_cache, const OUTLINETEXTMETRICW *otm,
+        const LOGFONTW *logfont, const SCRIPT_ANALYSIS *analysis, int *advance, const OT_LookupList *lookup,
+        const OT_LookupTable *look, const WORD *glyphs, unsigned int glyph_index, unsigned int glyph_count,
+        GOFFSET *goffset)
 {
     int j;
     int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
@@ -2161,7 +2164,8 @@ static INT GPOS_apply_ContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, L
                         int SequenceIndex = GET_BE_WORD(pr_2->PosLookupRecord[l].SequenceIndex) * write_dir;
 
                         TRACE("Position: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
-                        GPOS_apply_lookup(psc, lpotm, lplogfont, analysis, piAdvance, lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, glyph_count, pGoffset);
+                        GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookupIndex,
+                                glyphs, glyph_index + SequenceIndex, glyph_count, goffset);
                     }
                     return 1;
                 }
@@ -2183,9 +2187,10 @@ static INT GPOS_apply_ContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, L
     return 1;
 }
 
-static INT GPOS_apply_ChainContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance,
-                                      const OT_LookupList *lookup, const OT_LookupTable *look, const WORD *glyphs, INT glyph_index,
-                                      INT glyph_count, INT ppem, GOFFSET *pGoffset)
+static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, const OUTLINETEXTMETRICW *otm,
+        const LOGFONTW *logfont, const SCRIPT_ANALYSIS *analysis, int *advance, const OT_LookupList *lookup,
+        const OT_LookupTable *look, const WORD *glyphs, unsigned int glyph_index, unsigned int glyph_count,
+        GOFFSET *goffset)
 {
     int j;
     int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
@@ -2271,7 +2276,8 @@ static INT GPOS_apply_ChainContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpo
                     int SequenceIndex = GET_BE_WORD(ccpf3_4->PosLookupRecord[k].SequenceIndex) * write_dir;
 
                     TRACE("Position: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
-                    GPOS_apply_lookup(psc, lpotm, lplogfont, analysis, piAdvance, lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, glyph_count, pGoffset);
+                    GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookupIndex,
+                            glyphs, glyph_index + SequenceIndex, glyph_count, goffset);
                 }
                 return indexGlyphs + GET_BE_WORD(ccpf3_3->LookaheadGlyphCount);
             }
@@ -2283,7 +2289,10 @@ static INT GPOS_apply_ChainContextPos(ScriptCache *psc, LPOUTLINETEXTMETRICW lpo
     return 1;
 }
 
-static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance, const OT_LookupList* lookup, INT lookup_index, const WORD *glyphs, INT glyph_index, INT glyph_count, GOFFSET *pGoffset)
+static unsigned int GPOS_apply_lookup(const ScriptCache *script_cache, const OUTLINETEXTMETRICW *lpotm,
+        const LOGFONTW *lplogfont, const SCRIPT_ANALYSIS *analysis, int *piAdvance, const OT_LookupList *lookup,
+        unsigned int lookup_index, const WORD *glyphs, unsigned int glyph_index, unsigned int glyph_count,
+        GOFFSET *pGoffset)
 {
     int offset;
     const OT_LookupTable *look;
@@ -2396,7 +2405,8 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
         {
             double devX, devY;
             POINT desU = {0,0};
-            int base_index = GPOS_apply_MarkToBase(psc, look, analysis, glyphs, glyph_index, glyph_count, ppem, &desU);
+            int base_index = GPOS_apply_MarkToBase(script_cache, look, analysis,
+                    glyphs, glyph_index, glyph_count, ppem, &desU);
             if (base_index != -1)
             {
                 GPOS_convert_design_units_to_device(lpotm, lplogfont, desU.x, desU.y, &devX, &devY);
@@ -2441,12 +2451,12 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
         }
 
         case GPOS_LOOKUP_POSITION_CONTEXT:
-            return GPOS_apply_ContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
-                    lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
+            return GPOS_apply_ContextPos(script_cache, lpotm, lplogfont, analysis, piAdvance,
+                    lookup, look, glyphs, glyph_index, glyph_count, pGoffset);
 
         case GPOS_LOOKUP_POSITION_CONTEXT_CHAINED:
-            return GPOS_apply_ChainContextPos(psc, lpotm, lplogfont, analysis, piAdvance,
-                    lookup, look, glyphs, glyph_index, glyph_count, ppem, pGoffset);
+            return GPOS_apply_ChainContextPos(script_cache, lpotm, lplogfont, analysis, piAdvance,
+                    lookup, look, glyphs, glyph_index, glyph_count, pGoffset);
 
         default:
             FIXME("Unhandled GPOS lookup type %#x.\n", type);
@@ -2454,12 +2464,15 @@ static INT GPOS_apply_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOG
     return 1;
 }
 
-INT OpenType_apply_GPOS_lookup(ScriptCache *psc, LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, const SCRIPT_ANALYSIS *analysis, INT* piAdvance, INT lookup_index, const WORD *glyphs, INT glyph_index, INT glyph_count, GOFFSET *pGoffset)
+unsigned int OpenType_apply_GPOS_lookup(const ScriptCache *script_cache, const OUTLINETEXTMETRICW *otm,
+        const LOGFONTW *logfont, const SCRIPT_ANALYSIS *analysis, int *advance, unsigned int lookup_index,
+        const WORD *glyphs, unsigned int glyph_index, unsigned int glyph_count, GOFFSET *goffset)
 {
-    const GPOS_Header *header = (const GPOS_Header *)psc->GPOS_Table;
+    const GPOS_Header *header = (const GPOS_Header *)script_cache->GPOS_Table;
     const OT_LookupList *lookup = (const OT_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
 
-    return GPOS_apply_lookup(psc, lpotm, lplogfont, analysis, piAdvance, lookup, lookup_index, glyphs, glyph_index, glyph_count, pGoffset);
+    return GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup,
+            lookup_index, glyphs, glyph_index, glyph_count, goffset);
 }
 
 static void GSUB_initialize_script_cache(ScriptCache *psc)
