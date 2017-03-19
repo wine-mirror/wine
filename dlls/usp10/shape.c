@@ -565,19 +565,21 @@ static INT GSUB_apply_feature_all_lookups(LPCVOID header, LoadedFeature *feature
     return out_index;
 }
 
-static OPENTYPE_TAG get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, BOOL tryNew)
+static OPENTYPE_TAG get_opentype_script(HDC hdc, const SCRIPT_ANALYSIS *psa,
+        const ScriptCache *script_cache, BOOL try_new)
 {
     UINT charset;
 
-    if (psc->userScript != 0)
+    if (script_cache->userScript)
     {
-        if (tryNew && ShapingData[psa->eScript].newOtTag != 0 && psc->userScript == scriptInformation[psa->eScript].scriptTag)
+        if (try_new && ShapingData[psa->eScript].newOtTag
+                && script_cache->userScript == scriptInformation[psa->eScript].scriptTag)
             return ShapingData[psa->eScript].newOtTag;
-        else
-            return psc->userScript;
+
+        return script_cache->userScript;
     }
 
-    if (tryNew && ShapingData[psa->eScript].newOtTag != 0)
+    if (try_new && ShapingData[psa->eScript].newOtTag)
         return ShapingData[psa->eScript].newOtTag;
 
     if (scriptInformation[psa->eScript].scriptTag)
