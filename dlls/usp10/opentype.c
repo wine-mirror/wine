@@ -1838,19 +1838,21 @@ static VOID GPOS_apply_CursiveAttachment(const OT_LookupTable *look, const SCRIP
     return;
 }
 
-static int GPOS_apply_MarkToBase(ScriptCache *psc, const OT_LookupTable *look, const SCRIPT_ANALYSIS *analysis, const WORD *glyphs, INT glyph_index, INT glyph_count, INT ppem, LPPOINT pt)
+static int GPOS_apply_MarkToBase(const ScriptCache *script_cache, const OT_LookupTable *look,
+        const SCRIPT_ANALYSIS *analysis, const WORD *glyphs, unsigned int glyph_index,
+        unsigned int glyph_count, unsigned int ppem, POINT *pt)
 {
     int j;
     int write_dir = (analysis->fRTL && !analysis->fLogicalOrder) ? -1 : 1;
-    void *glyph_class_table = NULL;
+    const void *glyph_class_table = NULL;
     int rc = -1;
 
-    if (psc->GDEF_Table)
+    if (script_cache->GDEF_Table)
     {
-        const GDEF_Header *header = psc->GDEF_Table;
+        const GDEF_Header *header = script_cache->GDEF_Table;
         WORD offset = GET_BE_WORD( header->GlyphClassDef );
         if (offset)
-            glyph_class_table = (BYTE *)psc->GDEF_Table + offset;
+            glyph_class_table = (const BYTE *)script_cache->GDEF_Table + offset;
     }
 
     TRACE("MarkToBase Attachment Positioning Subtable\n");
