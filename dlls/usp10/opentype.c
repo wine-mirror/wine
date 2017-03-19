@@ -1579,15 +1579,16 @@ static VOID GPOS_get_anchor_values(LPCVOID table, LPPOINT pt, WORD ppem)
     }
 }
 
-static void GPOS_convert_design_units_to_device(LPOUTLINETEXTMETRICW lpotm, LPLOGFONTW lplogfont, int desX, int desY, double *devX, double *devY)
+static void GPOS_convert_design_units_to_device(const OUTLINETEXTMETRICW *otm, const LOGFONTW *logfont,
+        int desX, int desY, double *devX, double *devY)
 {
-    int emHeight = lpotm->otmTextMetrics.tmAscent + lpotm->otmTextMetrics.tmDescent - lpotm->otmTextMetrics.tmInternalLeading;
+    int emHeight = otm->otmTextMetrics.tmAscent + otm->otmTextMetrics.tmDescent - otm->otmTextMetrics.tmInternalLeading;
 
-    TRACE("emHeight %i lfWidth %i\n",emHeight, lplogfont->lfWidth);
-    *devX = (desX * emHeight) / (double)lpotm->otmEMSquare;
-    *devY = (desY * emHeight) / (double)lpotm->otmEMSquare;
-    if (lplogfont->lfWidth)
-        FIXME("Font with lfWidth set not handled properly\n");
+    TRACE("emHeight %i lfWidth %i\n",emHeight, logfont->lfWidth);
+    *devX = (desX * emHeight) / (double)otm->otmEMSquare;
+    *devY = (desY * emHeight) / (double)otm->otmEMSquare;
+    if (logfont->lfWidth)
+        FIXME("Font with lfWidth set not handled properly.\n");
 }
 
 static INT GPOS_get_value_record(WORD ValueFormat, const WORD data[], GPOS_ValueRecord *record)
