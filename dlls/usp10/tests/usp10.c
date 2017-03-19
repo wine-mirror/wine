@@ -1264,6 +1264,8 @@ static int _find_font_for_range(HDC hdc, const CHAR *recommended, BYTE range, co
                 rc = 1;
             }
         }
+        if (!rc)
+            winetest_skip("Font %s is not available.\n", recommended);
     }
 
     if (!*hfont)
