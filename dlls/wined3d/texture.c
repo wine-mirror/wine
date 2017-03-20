@@ -60,7 +60,13 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
         return GL_NONE;
     }
 
-    if (swapchain->back_buffers && swapchain->back_buffers[0] == texture)
+    if (texture == swapchain->front_buffer)
+    {
+        TRACE("Returning GL_FRONT.\n");
+        return GL_FRONT;
+    }
+
+    if (texture == swapchain->back_buffers[0])
     {
         if (swapchain->render_to_fbo)
         {
@@ -69,11 +75,6 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
         }
         TRACE("Returning GL_BACK.\n");
         return GL_BACK;
-    }
-    else if (texture == swapchain->front_buffer)
-    {
-        TRACE("Returning GL_FRONT.\n");
-        return GL_FRONT;
     }
 
     FIXME("Higher back buffer, returning GL_BACK.\n");
