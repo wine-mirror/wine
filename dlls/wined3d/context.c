@@ -3429,7 +3429,7 @@ static void context_bind_shader_resources(struct wined3d_context *context,
         }
 
         if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
-            sampler_name = device->default_sampler;
+            sampler_name = device->default_sampler->name;
         else if ((sampler = state->sampler[shader_type][entry->sampler_idx]))
             sampler_name = sampler->name;
         else

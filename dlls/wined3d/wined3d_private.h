@@ -2688,7 +2688,7 @@ struct wined3d_device
     } dummy_textures;
 
     /* Default sampler used to emulate the direct resource access without using wined3d_sampler */
-    GLuint default_sampler;
+    struct wined3d_sampler *default_sampler;
     GLuint null_sampler;
 
     /* Command stream */

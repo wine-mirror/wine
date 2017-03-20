@@ -776,20 +776,38 @@ static void destroy_dummy_textures(struct wined3d_device *device, struct wined3d
 static void create_default_samplers(struct wined3d_device *device, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_sampler_desc desc;
+    HRESULT hr;
+
+    desc.address_u = WINED3D_TADDRESS_WRAP;
+    desc.address_v = WINED3D_TADDRESS_WRAP;
+    desc.address_w = WINED3D_TADDRESS_WRAP;
+    memset(desc.border_color, 0, sizeof(desc.border_color));
+    desc.mag_filter = WINED3D_TEXF_POINT;
+    desc.min_filter = WINED3D_TEXF_POINT;
+    desc.mip_filter = WINED3D_TEXF_NONE;
+    desc.lod_bias = 0.0f;
+    desc.min_lod = -1000.0f;
+    desc.max_lod =  1000.0f;
+    desc.max_anisotropy = 1;
+    desc.compare = FALSE;
+    desc.comparison_func = WINED3D_CMP_NEVER;
+    desc.srgb_decode = TRUE;
+
+    /* In SM4+ shaders there is a separation between resources and samplers. Some shader
+     * instructions allow access to resources without using samplers.
+     * In GLSL, resources are always accessed through sampler or image variables. The default
+     * sampler object is used to emulate the direct resource access when there is no sampler state
+     * to use.
+     */
+    if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &device->default_sampler)))
+    {
+        ERR("Failed to create default sampler, hr %#x.\n", hr);
+        device->default_sampler = NULL;
+    }
 
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
-        /* In SM4+ shaders there is a separation between resources and samplers. Some shader
-         * instructions allow access to resources without using samplers.
-         * In GLSL, resources are always accessed through sampler or image variables. The default
-         * sampler object is used to emulate the direct resource access when there is no sampler state
-         * to use.
-         */
-        GL_EXTCALL(glGenSamplers(1, &device->default_sampler));
-        GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-        GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-        checkGLcall("Create default sampler");
-
         /* In D3D10+, a NULL sampler maps to the default sampler state. */
         GL_EXTCALL(glGenSamplers(1, &device->null_sampler));
         GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
@@ -800,7 +818,6 @@ static void create_default_samplers(struct wined3d_device *device, struct wined3
     }
     else
     {
-        device->default_sampler = 0;
         device->null_sampler = 0;
     }
 }
@@ -810,14 +827,15 @@ static void destroy_default_samplers(struct wined3d_device *device, struct wined
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
+    wined3d_sampler_decref(device->default_sampler);
+    device->default_sampler = NULL;
+
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
-        GL_EXTCALL(glDeleteSamplers(1, &device->default_sampler));
         GL_EXTCALL(glDeleteSamplers(1, &device->null_sampler));
         checkGLcall("glDeleteSamplers");
     }
 
-    device->default_sampler = 0;
     device->null_sampler = 0;
 }
 
