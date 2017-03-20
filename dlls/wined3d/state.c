@@ -3633,17 +3633,17 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
             if (FAILED(wined3d_sampler_create(device, &desc, NULL, &sampler)))
             {
                 ERR("Failed to create sampler.\n");
-                sampler = NULL;
+                return;
             }
-            else
+            if (wine_rb_put(&device->samplers, &desc, &sampler->entry) == -1)
             {
-                if (wine_rb_put(&device->samplers, &desc, &sampler->entry) == -1)
-                    ERR("Failed to insert sampler.\n");
+                ERR("Failed to insert sampler.\n");
+                wined3d_sampler_decref(sampler);
+                return;
             }
         }
 
-        if (sampler)
-            wined3d_sampler_bind(sampler, mapped_stage, texture, context);
+        wined3d_sampler_bind(sampler, mapped_stage, texture, context);
 
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
