@@ -638,13 +638,17 @@ HRESULT CDECL wined3d_shader_resource_view_create(const struct wined3d_view_desc
 }
 
 void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view,
-        struct wined3d_context *context)
+        unsigned int unit, struct wined3d_sampler *sampler, struct wined3d_context *context)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_texture *texture;
+
+    context_active_texture(context, gl_info, unit);
 
     if (view->gl_view.name)
     {
         context_bind_texture(context, view->gl_view.target, view->gl_view.name);
+        wined3d_sampler_bind(sampler, unit, NULL, context);
         return;
     }
 
@@ -656,6 +660,7 @@ void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view
 
     texture = wined3d_texture_from_resource(view->resource);
     wined3d_texture_bind(texture, context, FALSE);
+    wined3d_sampler_bind(sampler, unit, texture, context);
 }
 
 ULONG CDECL wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view)

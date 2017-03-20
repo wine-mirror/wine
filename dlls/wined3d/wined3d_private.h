@@ -3087,6 +3087,9 @@ struct wined3d_sampler
     GLuint name;
 };
 
+void wined3d_sampler_bind(struct wined3d_sampler *sampler, unsigned int unit,
+        struct wined3d_texture *texture, const struct wined3d_context *context) DECLSPEC_HIDDEN;
+
 struct wined3d_vertex_declaration_element
 {
     const struct wined3d_format *format;
@@ -3415,8 +3418,8 @@ struct wined3d_shader_resource_view
     struct wined3d_gl_view gl_view;
 };
 
-void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
+void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view, unsigned int unit,
+        struct wined3d_sampler *sampler, struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 struct wined3d_unordered_access_view
 {

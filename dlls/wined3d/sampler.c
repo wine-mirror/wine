@@ -150,3 +150,24 @@ HRESULT CDECL wined3d_sampler_create(struct wined3d_device *device, const struct
 
     return WINED3D_OK;
 }
+
+/* This function relies on the correct texture being bound and loaded. */
+void wined3d_sampler_bind(struct wined3d_sampler *sampler, unsigned int unit,
+        struct wined3d_texture *texture, const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (gl_info->supported[ARB_SAMPLER_OBJECTS])
+    {
+        GL_EXTCALL(glBindSampler(unit, sampler->name));
+        checkGLcall("bind sampler");
+    }
+    else if (texture)
+    {
+        wined3d_texture_apply_sampler_desc(texture, &sampler->desc, context);
+    }
+    else
+    {
+        ERR("Could not apply sampler state.\n");
+    }
+}
