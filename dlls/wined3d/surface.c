@@ -2099,51 +2099,23 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
 }
 
 /* Context activation is done by the caller. */
-static void surface_blt_to_drawable(const struct wined3d_device *device,
-        struct wined3d_context *old_ctx, enum wined3d_texture_filter_type filter,
+static void surface_blt_to_drawable(struct wined3d_device *device,
+        struct wined3d_context *context, enum wined3d_texture_filter_type filter,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
-    struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
-    RECT src_rect, dst_rect;
 
-    src_rect = *src_rect_in;
-    dst_rect = *dst_rect_in;
-
-    restore_rt = context_get_rt_surface(old_ctx);
+    restore_rt = context_get_rt_surface(context);
     if (restore_rt != dst_surface)
         context = context_acquire(device, dst_texture, dst_sub_resource_idx);
     else
         restore_rt = NULL;
 
-    gl_info = context->gl_info;
-
-    /* Make sure the surface is up-to-date. This should probably use
-     * surface_load_location() and worry about the destination surface too,
-     * unless we're overwriting it completely. */
-    wined3d_texture_load(src_texture, context, FALSE);
-
-    /* Activate the destination context, set it up for blitting */
-    context_apply_blit_state(context, device);
-
-    if (!wined3d_resource_is_offscreen(&dst_texture->resource))
-        surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
-
-    device->blitter->set_shader(device->blit_priv, context, src_surface, NULL);
-
-    draw_textured_quad(src_surface, context, &src_rect, &dst_rect, filter);
-
-    /* Leave the opengl state valid for blitting */
-    device->blitter->unset_shader(context->gl_info);
-
-    if (wined3d_settings.strict_draw_ordering
-            || (dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture))
-        gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
+    device->blitter->blit_surface(device, WINED3D_BLIT_OP_COLOR_BLIT, context,
+            src_surface, src_rect_in, dst_surface, dst_rect_in, NULL, filter);
 
     if (restore_rt)
         context_restore(context, restore_rt);
