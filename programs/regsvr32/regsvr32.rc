@@ -50,6 +50,8 @@ Options:\n\
     STRING_UNINSTALL_SUCCESSFUL, "regsvr32: Successfully uninstalled DLL '%1'\n"
 }
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 #define WINE_FILEDESCRIPTION_STR "Wine Register Server"
 #define WINE_FILENAME_STR "REGSVR32.EXE"
 #define WINE_FILETYPE VFT_APP
