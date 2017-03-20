@@ -224,7 +224,8 @@ int wmain (int argc, WCHAR *argv[])
 	 * flags start with / and are case insensitive.
 	 */
 	for (i=1; i<argc; i++) {
-		if (argv[i][0] == '"') {
+                /* parse first quoted argument as console title */
+                if (!title && argv[i][0] == '"') {
 			title = argv[i];
 			continue;
 		}
