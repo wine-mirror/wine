@@ -2578,7 +2578,8 @@ static void test_reader_position(void)
     ok(type == XmlNodeType_EndElement, "got type %d\n", type);
     TEST_READER_POSITION2(reader, 2, 3, 2, 6);
 
-    IXmlReader_SetInput(reader, NULL);
+    hr = IXmlReader_SetInput(reader, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
     TEST_READER_STATE2(reader, XmlReadState_Initial, XmlReadState_Closed);
     TEST_READER_POSITION(reader, 0, 0);
 
