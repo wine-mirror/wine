@@ -2100,8 +2100,7 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
 
 /* Context activation is done by the caller. */
 static void surface_blt_to_drawable(const struct wined3d_device *device,
-        struct wined3d_context *old_ctx,
-        enum wined3d_texture_filter_type filter, BOOL alpha_test,
+        struct wined3d_context *old_ctx, enum wined3d_texture_filter_type filter,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
@@ -2137,34 +2136,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
 
     device->blitter->set_shader(device->blit_priv, context, src_surface, NULL);
 
-    if (alpha_test)
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
-        checkGLcall("glEnable(GL_ALPHA_TEST)");
-
-        /* For P8 surfaces, the alpha component contains the palette index.
-         * Which means that the colorkey is one of the palette entries. In
-         * other cases pixels that should be masked away have alpha set to 0. */
-        if (src_texture->resource.format->id == WINED3DFMT_P8_UINT)
-            gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
-                    (float)src_texture->async.src_blt_color_key.color_space_low_value / 255.0f);
-        else
-            gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL, 0.0f);
-        checkGLcall("glAlphaFunc");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-        checkGLcall("glDisable(GL_ALPHA_TEST)");
-    }
-
     draw_textured_quad(src_surface, context, &src_rect, &dst_rect, filter);
-
-    if (alpha_test)
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-        checkGLcall("glDisable(GL_ALPHA_TEST)");
-    }
 
     /* Leave the opengl state valid for blitting */
     device->blitter->unset_shader(context->gl_info);
@@ -2413,7 +2385,7 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
     surface_get_rect(surface, NULL, &r);
     wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     surface_blt_to_drawable(texture->resource.device, context,
-            WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
+            WINED3D_TEXF_POINT, surface, &r, surface, &r);
 
     return TRUE;
 }
