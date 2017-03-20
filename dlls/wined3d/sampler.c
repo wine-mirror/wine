@@ -39,10 +39,13 @@ static void wined3d_sampler_destroy_object(void *object)
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
-    context = context_acquire(sampler->device, NULL, 0);
-    gl_info = context->gl_info;
-    GL_EXTCALL(glDeleteSamplers(1, &sampler->name));
-    context_release(context);
+    if (sampler->name)
+    {
+        context = context_acquire(sampler->device, NULL, 0);
+        gl_info = context->gl_info;
+        GL_EXTCALL(glDeleteSamplers(1, &sampler->name));
+        context_release(context);
+    }
 
     HeapFree(GetProcessHeap(), 0, sampler);
 }
@@ -115,7 +118,9 @@ static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d
     sampler->device = device;
     sampler->parent = parent;
     sampler->desc = *desc;
-    wined3d_cs_init_object(device->cs, wined3d_sampler_cs_init, sampler);
+
+    if (device->adapter->gl_info.supported[ARB_SAMPLER_OBJECTS])
+        wined3d_cs_init_object(device->cs, wined3d_sampler_cs_init, sampler);
 }
 
 HRESULT CDECL wined3d_sampler_create(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
@@ -124,9 +129,6 @@ HRESULT CDECL wined3d_sampler_create(struct wined3d_device *device, const struct
     struct wined3d_sampler *object;
 
     TRACE("device %p, desc %p, parent %p, sampler %p.\n", device, desc, parent, sampler);
-
-    if (!device->adapter->gl_info.supported[ARB_SAMPLER_OBJECTS])
-        return WINED3DERR_INVALIDCALL;
 
     if (desc->address_u < WINED3D_TADDRESS_WRAP || desc->address_u > WINED3D_TADDRESS_MIRROR_ONCE
             || desc->address_v < WINED3D_TADDRESS_WRAP || desc->address_v > WINED3D_TADDRESS_MIRROR_ONCE
