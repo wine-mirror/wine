@@ -788,6 +788,7 @@ static void create_default_samplers(struct wined3d_device *device, struct wined3
     desc.lod_bias = 0.0f;
     desc.min_lod = -1000.0f;
     desc.max_lod =  1000.0f;
+    desc.mip_base_level = 0;
     desc.max_anisotropy = 1;
     desc.compare = FALSE;
     desc.comparison_func = WINED3D_CMP_NEVER;

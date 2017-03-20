@@ -3562,6 +3562,7 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
     desc->lod_bias = lod_bias.f;
     desc->min_lod = -1000.0f;
     desc->max_lod = 1000.0f;
+    desc->mip_base_level = sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL];
     desc->max_anisotropy = sampler_states[WINED3D_SAMP_MAX_ANISOTROPY];
     if ((sampler_states[WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_ANISOTROPIC
                 && sampler_states[WINED3D_SAMP_MIN_FILTER] != WINED3D_TEXF_ANISOTROPIC
@@ -3618,8 +3619,6 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         struct wined3d_sampler_desc desc;
         struct wined3d_sampler *sampler;
         struct wine_rb_entry *entry;
-        struct gl_texture *gl_tex;
-        unsigned int base_level;
 
         wined3d_sampler_desc_from_sampler_states(&desc, context, sampler_states, texture);
 
@@ -3645,25 +3644,6 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
 
         if (sampler)
             wined3d_sampler_bind(sampler, mapped_stage, texture, context);
-
-        if (texture->flags & WINED3D_TEXTURE_COND_NP2)
-            base_level = 0;
-        else if (desc.mip_filter == WINED3D_TEXF_NONE)
-            base_level = texture->lod;
-        else
-            base_level = min(max(sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL],
-                    texture->lod), texture->level_count - 1);
-
-        gl_tex = wined3d_texture_get_gl_texture(texture, texture->flags & WINED3D_TEXTURE_IS_SRGB);
-        if (base_level != gl_tex->base_level)
-        {
-            /* Note that WINED3D_SAMP_MAX_MIP_LEVEL specifies the largest mipmap
-             * (default 0), while GL_TEXTURE_MAX_LEVEL specifies the smallest
-             * mipmap used (default 1000). So WINED3D_SAMP_MAX_MIP_LEVEL
-             * corresponds to GL_TEXTURE_BASE_LEVEL. */
-            gl_info->gl_ops.gl.p_glTexParameteri(texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
-            gl_tex->base_level = base_level;
-        }
 
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))

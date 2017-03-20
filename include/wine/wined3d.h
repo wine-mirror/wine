@@ -1942,6 +1942,7 @@ struct wined3d_sampler_desc
     float lod_bias;
     float min_lod;
     float max_lod;
+    unsigned int mip_base_level;
     unsigned int max_anisotropy;
     BOOL compare;
     enum wined3d_cmp_func comparison_func;
