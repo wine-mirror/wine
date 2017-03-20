@@ -775,7 +775,6 @@ static void destroy_dummy_textures(struct wined3d_device *device, struct wined3d
 /* Context activation is done by the caller. */
 static void create_default_samplers(struct wined3d_device *device, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_sampler_desc desc;
     HRESULT hr;
 
@@ -806,37 +805,27 @@ static void create_default_samplers(struct wined3d_device *device, struct wined3
         device->default_sampler = NULL;
     }
 
-    if (gl_info->supported[ARB_SAMPLER_OBJECTS])
+    /* In D3D10+, a NULL sampler maps to the default sampler state. */
+    desc.address_u = WINED3D_TADDRESS_CLAMP;
+    desc.address_v = WINED3D_TADDRESS_CLAMP;
+    desc.address_w = WINED3D_TADDRESS_CLAMP;
+    desc.mag_filter = WINED3D_TEXF_LINEAR;
+    desc.min_filter = WINED3D_TEXF_LINEAR;
+    desc.mip_filter = WINED3D_TEXF_LINEAR;
+    if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &device->null_sampler)))
     {
-        /* In D3D10+, a NULL sampler maps to the default sampler state. */
-        GL_EXTCALL(glGenSamplers(1, &device->null_sampler));
-        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
-        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-        GL_EXTCALL(glSamplerParameteri(device->null_sampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
-        checkGLcall("Create null sampler");
-    }
-    else
-    {
-        device->null_sampler = 0;
+        ERR("Failed to create null sampler, hr %#x.n", hr);
+        device->null_sampler = NULL;
     }
 }
 
 /* Context activation is done by the caller. */
 static void destroy_default_samplers(struct wined3d_device *device, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
     wined3d_sampler_decref(device->default_sampler);
     device->default_sampler = NULL;
-
-    if (gl_info->supported[ARB_SAMPLER_OBJECTS])
-    {
-        GL_EXTCALL(glDeleteSamplers(1, &device->null_sampler));
-        checkGLcall("glDeleteSamplers");
-    }
-
-    device->null_sampler = 0;
+    wined3d_sampler_decref(device->null_sampler);
+    device->null_sampler = NULL;
 }
 
 static LONG fullscreen_style(LONG style)

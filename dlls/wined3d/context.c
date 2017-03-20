@@ -3433,7 +3433,7 @@ static void context_bind_shader_resources(struct wined3d_context *context,
         else if ((sampler = state->sampler[shader_type][entry->sampler_idx]))
             sampler_name = sampler->name;
         else
-            sampler_name = device->null_sampler;
+            sampler_name = device->null_sampler->name;
 
         context_active_texture(context, gl_info, bind_idx);
         GL_EXTCALL(glBindSampler(bind_idx, sampler_name));
