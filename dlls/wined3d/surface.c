@@ -2098,29 +2098,6 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
     rect->bottom = drawable_height - rect->bottom;
 }
 
-/* Context activation is done by the caller. */
-static void surface_blt_to_drawable(struct wined3d_device *device,
-        struct wined3d_context *context, enum wined3d_texture_filter_type filter,
-        struct wined3d_surface *src_surface, const RECT *src_rect_in,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
-{
-    unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
-    struct wined3d_texture *dst_texture = dst_surface->container;
-    struct wined3d_surface *restore_rt = NULL;
-
-    restore_rt = context_get_rt_surface(context);
-    if (restore_rt != dst_surface)
-        context = context_acquire(device, dst_texture, dst_sub_resource_idx);
-    else
-        restore_rt = NULL;
-
-    device->blitter->blit_surface(device, WINED3D_BLIT_OP_COLOR_BLIT, context,
-            src_surface, src_rect_in, dst_surface, dst_rect_in, NULL, filter);
-
-    if (restore_rt)
-        context_restore(context, restore_rt);
-}
-
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const struct wined3d_color *color)
 {
     struct wined3d_resource *resource = &s->container->resource;
@@ -2337,6 +2314,8 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
 {
     unsigned int sub_resource_idx = surface_get_sub_resource_idx(surface);
     struct wined3d_texture *texture = surface->container;
+    struct wined3d_surface *restore_rt = NULL;
+    struct wined3d_device *device;
     RECT r;
 
     if (texture->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
@@ -2354,10 +2333,20 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
         return FALSE;
     }
 
+    device = texture->resource.device;
+    restore_rt = context_get_rt_surface(context);
+    if (restore_rt != surface)
+        context = context_acquire(device, texture, sub_resource_idx);
+    else
+        restore_rt = NULL;
+
     surface_get_rect(surface, NULL, &r);
     wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_blt_to_drawable(texture->resource.device, context,
-            WINED3D_TEXF_POINT, surface, &r, surface, &r);
+    device->blitter->blit_surface(device, WINED3D_BLIT_OP_COLOR_BLIT, context,
+            surface, &r, surface, &r, NULL, WINED3D_TEXF_POINT);
+
+    if (restore_rt)
+        context_restore(context, restore_rt);
 
     return TRUE;
 }
