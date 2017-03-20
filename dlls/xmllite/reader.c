@@ -2610,14 +2610,17 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
             return reader_parse_content(reader);
         case XmlReadInState_MiscEnd:
             hr = reader_parse_misc(reader);
-            if (FAILED(hr)) return hr;
+            if (hr != S_FALSE) return hr;
 
-            if (hr == S_FALSE)
+            if (*reader_get_ptr(reader))
             {
-                reader->instate = XmlReadInState_Eof;
-                reader->state = XmlReadState_EndOfFile;
-                reader->nodetype = XmlNodeType_None;
+                WARN("found garbage in the end of XML\n");
+                return WC_E_SYNTAX;
             }
+
+            reader->instate = XmlReadInState_Eof;
+            reader->state = XmlReadState_EndOfFile;
+            reader->nodetype = XmlNodeType_None;
             return hr;
         case XmlReadInState_Eof:
             return S_FALSE;

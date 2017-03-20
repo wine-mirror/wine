@@ -2354,6 +2354,7 @@ static void test_eof_state(IXmlReader *reader, BOOL eof)
 static void test_endoffile(void)
 {
     static const char *xml = "<a/>";
+    static const char *xml_garbageend = "<a/>text";
     IXmlReader *reader;
     XmlNodeType type;
     IStream *stream;
@@ -2391,6 +2392,33 @@ static void test_endoffile(void)
     test_eof_state(reader, FALSE);
 
     IStream_Release(stream);
+
+    IXmlReader_Release(reader);
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    stream = create_stream_on_data(xml_garbageend, strlen(xml_garbageend));
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "got %08x\n", hr);
+    IStream_Release(stream);
+
+    type = XmlNodeType_None;
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(type == XmlNodeType_Element, "Unexpected type %d\n", type);
+
+    test_eof_state(reader, FALSE);
+
+    type = XmlNodeType_Element;
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == WC_E_SYNTAX, "got %#x\n", hr);
+    ok(type == XmlNodeType_None, "Unexpected type %d\n", type);
+
+    test_eof_state(reader, FALSE);
+
+    hr = IXmlReader_SetInput(reader, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     IXmlReader_Release(reader);
 }
