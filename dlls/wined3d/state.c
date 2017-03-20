@@ -3611,50 +3611,40 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
 
     if (state->textures[sampler_idx])
     {
-        struct wined3d_texture *texture = state->textures[sampler_idx];
         BOOL srgb = state->sampler_states[sampler_idx][WINED3D_SAMP_SRGB_TEXTURE];
         const DWORD *sampler_states = state->sampler_states[sampler_idx];
+        struct wined3d_texture *texture = state->textures[sampler_idx];
+        struct wined3d_device *device = context->device;
         struct wined3d_sampler_desc desc;
+        struct wined3d_sampler *sampler;
+        struct wine_rb_entry *entry;
         struct gl_texture *gl_tex;
         unsigned int base_level;
 
         wined3d_sampler_desc_from_sampler_states(&desc, context, sampler_states, texture);
 
         wined3d_texture_bind(texture, context, srgb);
-        if (!gl_info->supported[ARB_SAMPLER_OBJECTS])
+
+        if ((entry = wine_rb_get(&device->samplers, &desc)))
         {
-            wined3d_texture_apply_sampler_desc(texture, &desc, context);
+            sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
         }
         else
         {
-            struct wined3d_device *device = context->device;
-            struct wined3d_sampler *sampler;
-            struct wine_rb_entry *entry;
-
-            if ((entry = wine_rb_get(&device->samplers, &desc)))
+            if (FAILED(wined3d_sampler_create(device, &desc, NULL, &sampler)))
             {
-                sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
+                ERR("Failed to create sampler.\n");
+                sampler = NULL;
             }
             else
             {
-                if (FAILED(wined3d_sampler_create(device, &desc, NULL, &sampler)))
-                {
-                    ERR("Failed to create sampler.\n");
-                    sampler = NULL;
-                }
-                else
-                {
-                    if (wine_rb_put(&device->samplers, &desc, &sampler->entry) == -1)
-                        ERR("Failed to insert sampler.\n");
-                }
-            }
-
-            if (sampler)
-            {
-                GL_EXTCALL(glBindSampler(mapped_stage, sampler->name));
-                checkGLcall("glBindSampler");
+                if (wine_rb_put(&device->samplers, &desc, &sampler->entry) == -1)
+                    ERR("Failed to insert sampler.\n");
             }
         }
+
+        if (sampler)
+            wined3d_sampler_bind(sampler, mapped_stage, texture, context);
 
         if (texture->flags & WINED3D_TEXTURE_COND_NP2)
             base_level = 0;
