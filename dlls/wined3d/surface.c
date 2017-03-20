@@ -2786,24 +2786,68 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_texture *src_texture = src_surface->container;
+    struct wined3d_texture *dst_texture = dst_surface->container;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    /* Blit from offscreen surface to render target */
-    struct wined3d_color_key old_blt_key = src_texture->async.src_blt_color_key;
-    DWORD old_color_key_flags = src_texture->async.color_key_flags;
+    struct wined3d_color_key old_blt_key;
+    DWORD old_color_key_flags;
+    RECT r;
 
     TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
 
+    old_blt_key = src_texture->async.src_blt_color_key;
+    old_color_key_flags = src_texture->async.color_key_flags;
     wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT, color_key);
 
-    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
+    /* Make sure the surface is up-to-date. This should probably use
+     * surface_load_location() and worry about the destination surface too,
+     * unless we're overwriting it completely. */
+    wined3d_texture_load(src_texture, context, FALSE);
+
+    /* Activate the destination context, set it up for blitting. */
+    context_apply_blit_state(context, device);
+
+    if (!wined3d_resource_is_offscreen(&dst_texture->resource))
+    {
+        r = *dst_rect;
+        surface_translate_drawable_coords(dst_surface, context->win_handle, &r);
+        dst_rect = &r;
+    }
+
+    ffp_blit_set(device->blit_priv, context, src_surface, NULL);
+
+    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST || color_key)
+    {
         gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
+        checkGLcall("glEnable(GL_ALPHA_TEST)");
+    }
 
-    surface_blt_to_drawable(device, context, filter,
-            !!color_key, src_surface, src_rect, dst_surface, dst_rect);
+    if (color_key)
+    {
+        /* For P8 surfaces, the alpha component contains the palette index.
+         * Which means that the colorkey is one of the palette entries. In
+         * other cases pixels that should be masked away have alpha set to 0. */
+        if (src_texture->resource.format->id == WINED3DFMT_P8_UINT)
+            gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
+                    (float)src_texture->async.src_blt_color_key.color_space_low_value / 255.0f);
+        else
+            gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL, 0.0f);
+        checkGLcall("glAlphaFunc");
+    }
 
-    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
+    draw_textured_quad(src_surface, context, src_rect, dst_rect, filter);
+
+    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST || color_key)
+    {
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
+        checkGLcall("glDisable(GL_ALPHA_TEST)");
+    }
+
+    /* Leave the OpenGL state valid for blitting. */
+    ffp_blit_unset(gl_info);
+
+    if (wined3d_settings.strict_draw_ordering
+            || (dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture))
+        gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
     /* Restore the color key parameters */
     wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT,
