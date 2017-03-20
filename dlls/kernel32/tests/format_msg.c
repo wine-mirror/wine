@@ -1822,7 +1822,7 @@ static void test_message_from_64bit_number(void)
     {
         r = doitW(FORMAT_MESSAGE_FROM_STRING, I64u,
                   0, 0, outW, sizeof(outW) / sizeof(WCHAR), unsigned_tests[i].number);
-        MultiByteToWideChar(CP_ACP, 0, unsigned_tests[i].expected, -1, expW, sizeof(expW));
+        MultiByteToWideChar(CP_ACP, 0, unsigned_tests[i].expected, -1, expW, sizeof(expW) / sizeof(WCHAR));
 todo_wine {
         ok(!lstrcmpW(outW, expW),"[%d] failed, expected %s, got %s\n", i,
                      unsigned_tests[i].expected, wine_dbgstr_w(outW));
@@ -1841,7 +1841,7 @@ todo_wine {
     {
         r = doitW(FORMAT_MESSAGE_FROM_STRING, I64d,
                   0, 0, outW, sizeof(outW) / sizeof(WCHAR), signed_tests[i].number);
-        MultiByteToWideChar(CP_ACP, 0, signed_tests[i].expected, -1, expW, sizeof(expW));
+        MultiByteToWideChar(CP_ACP, 0, signed_tests[i].expected, -1, expW, sizeof(expW) / sizeof(WCHAR));
 todo_wine {
         ok(!lstrcmpW(outW, expW),"[%d] failed, expected %s, got %s\n", i,
                      signed_tests[i].expected, wine_dbgstr_w(outW));
