@@ -584,24 +584,19 @@ static inline PLARGE_INTEGER evt_timeout(PLARGE_INTEGER pTime, unsigned int time
 
 static void evt_add_queue(thread_wait_entry **head, thread_wait_entry *entry)
 {
-    if(*head) {
-        entry->next = *head;
-        entry->prev = (*head)->prev;
-        (*head)->prev->next = entry;
-        (*head)->prev = entry;
-    } else {
-        entry->next = entry;
-        entry->prev = entry;
-        *head = entry;
-    }
+    entry->next = *head;
+    entry->prev = NULL;
+    if(*head) (*head)->prev = entry;
+    *head = entry;
 }
 
-static void evt_remove(thread_wait_entry **head, thread_wait_entry *entry)
+static void evt_remove_queue(thread_wait_entry **head, thread_wait_entry *entry)
 {
-    entry->next->prev = entry->prev;
-    entry->prev->next = entry->next;
-    if(*head == entry)
-        *head = entry->next == entry ? NULL : entry->next;
+    if(entry == *head)
+        *head = entry->next;
+    else if(entry->prev)
+        entry->prev->next = entry->next;
+    if(entry->next) entry->next->prev = entry->prev;
 }
 
 static MSVCRT_size_t evt_end_wait(thread_wait *wait, event **events, int count)
@@ -611,7 +606,7 @@ static MSVCRT_size_t evt_end_wait(thread_wait *wait, event **events, int count)
     for(i = 0; i < count; i++) {
         critical_section_lock(&events[i]->cs);
         if(events[i] == wait->signaled) ret = i;
-        evt_remove(&events[i]->waiters, &wait->entries[i]);
+        evt_remove_queue(&events[i]->waiters, &wait->entries[i]);
         critical_section_unlock(&events[i]->cs);
     }
 
@@ -698,13 +693,8 @@ void __thiscall event_reset(event *this)
     critical_section_lock(&this->cs);
     if(this->signaled) {
         this->signaled = FALSE;
-        if(this->waiters) {
-            entry = this->waiters;
-            do {
-                InterlockedIncrement(&entry->wait->pending_waits);
-                entry = entry->next;
-            } while (entry != this->waiters);
-        }
+        for(entry=this->waiters; entry; entry = entry->next)
+            InterlockedIncrement(&entry->wait->pending_waits);
     }
     critical_section_unlock(&this->cs);
 }
@@ -714,25 +704,31 @@ void __thiscall event_reset(event *this)
 DEFINE_THISCALL_WRAPPER(event_set, 4)
 void __thiscall event_set(event *this)
 {
-    thread_wait_entry *entry;
+    thread_wait_entry *wakeup = NULL;
+    thread_wait_entry *entry, *next;
 
     TRACE("(%p)\n", this);
 
     critical_section_lock(&this->cs);
     if(!this->signaled) {
         this->signaled = TRUE;
-        if(this->waiters) {
-            entry = this->waiters;
-            do {
-                if(!InterlockedDecrement(&entry->wait->pending_waits)) {
-                    if(InterlockedExchangePointer(&entry->wait->signaled, this) == EVT_WAITING)
-                        NtReleaseKeyedEvent(keyed_event, entry->wait, 0, NULL);
+        for(entry=this->waiters; entry; entry=next) {
+            next = entry->next;
+            if(!InterlockedDecrement(&entry->wait->pending_waits)) {
+                if(InterlockedExchangePointer(&entry->wait->signaled, this) == EVT_WAITING) {
+                    evt_remove_queue(&this->waiters, entry);
+                    evt_add_queue(&wakeup, entry);
                 }
-                entry = entry->next;
-            } while (entry != this->waiters);
+            }
         }
     }
     critical_section_unlock(&this->cs);
+
+    for(entry=wakeup; entry; entry=next) {
+        next = entry->next;
+        entry->next = entry->prev = NULL;
+        NtReleaseKeyedEvent(keyed_event, entry->wait, 0, NULL);
+    }
 }
 
 /* ?wait@event@Concurrency@@QAEII@Z */
