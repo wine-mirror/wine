@@ -33,6 +33,8 @@ STRINGTABLE
     IDS_RUN             "&Run..."
 }
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
 #define WINE_FILEDESCRIPTION_STR "Wine Explorer"
 #define WINE_FILENAME_STR "explorer.exe"
 #define WINE_FILEVERSION 6,1,7601,17567
