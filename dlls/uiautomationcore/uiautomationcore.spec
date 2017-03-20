@@ -69,7 +69,7 @@
 @ stub UiaHUiaNodeFromVariant
 @ stub UiaHasServerSideProvider
 @ stub UiaHostProviderFromHwnd
-@ stub UiaLookupId
+@ stdcall UiaLookupId(long ptr)
 @ stub UiaNavigate
 @ stub UiaNodeFromFocus
 @ stub UiaNodeFromHandle

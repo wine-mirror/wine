@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "uiautomationcore.h"
+#include "uiautomation.h"
 
 #include "wine/debug.h"
 
@@ -44,4 +44,13 @@ BOOL WINAPI UiaClientsAreListening(void)
 {
     FIXME("()\n");
     return FALSE;
+}
+
+/***********************************************************************
+ *          UiaLookupId (uiautomationcore.@)
+ */
+int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid)
+{
+    FIXME("(%d, %s) stub!\n", type, debugstr_guid(guid));
+    return 1;
 }

@@ -39,6 +39,16 @@ DECLARE_HANDLE(HUIAPATTERNOBJECT);
 DECLARE_HANDLE(HUIATEXTRANGE);
 DECLARE_HANDLE(HUIAEVENT);
 
+enum AutomationIdentifierType
+{
+    AutomationIdentifierType_Property,
+    AutomationIdentifierType_Pattern,
+    AutomationIdentifierType_Event,
+    AutomationIdentifierType_ControlType,
+    AutomationIdentifierType_TextAttribute
+};
+
+int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid);
 BOOL WINAPI UiaPatternRelease(HUIAPATTERNOBJECT hobj);
 BOOL WINAPI UiaTextRangeRelease(HUIATEXTRANGE hobj);
 
