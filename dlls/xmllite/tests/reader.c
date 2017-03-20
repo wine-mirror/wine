@@ -2241,8 +2241,8 @@ static void test_namespaceuri(void)
 
 static void test_read_charref(void)
 {
-    static const char testA[] = "<a b=\"c\">&#x1f3;&#x103;</a>";
-    static const WCHAR chardataW[] = {0x01f3,0x0103,0};
+    static const char testA[] = "<a b=\"c\">&#x1f3;&#x103;&gt;</a>";
+    static const WCHAR chardataW[] = {0x01f3,0x0103,'>',0};
     const WCHAR *value;
     IXmlReader *reader;
     XmlNodeType type;
@@ -2252,7 +2252,7 @@ static void test_read_charref(void)
     hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
-    stream = create_stream_on_data(testA, sizeof(testA));
+    stream = create_stream_on_data(testA, sizeof(testA)-1);
     hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
     ok(hr == S_OK, "got %08x\n", hr);
 
@@ -2271,6 +2271,10 @@ static void test_read_charref(void)
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_EndElement, "Unexpected node type %d\n", type);
+
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok(type == XmlNodeType_None, "Unexpected node type %d\n", type);
 
     IXmlReader_Release(reader);
     IStream_Release(stream);
