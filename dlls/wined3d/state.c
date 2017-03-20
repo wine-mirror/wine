@@ -3494,10 +3494,7 @@ static void sampler_texmatrix(struct wined3d_context *context, const struct wine
 
     /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
      * wined3d_texture_apply_state_changes() multiplies the set matrix with a fixup matrix. Before the
-     * scaling is reapplied or removed, the texture matrix has to be reapplied
-     *
-     * The mapped stage is already active because the sampler() function below, which is part of the
-     * misc pipeline
+     * scaling is reapplied or removed, the texture matrix has to be reapplied.
      */
     if (sampler < MAX_TEXTURES)
     {
@@ -3598,7 +3595,6 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Sampler %u.\n", sampler_idx);
-
 
     if (mapped_stage == WINED3D_UNMAPPED_STAGE)
     {
