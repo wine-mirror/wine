@@ -1132,22 +1132,76 @@ BOOL WINAPI SQLRemoveDefaultDataSource(void)
     return FALSE;
 }
 
-BOOL WINAPI SQLRemoveDriverW(LPCWSTR lpszDriver, BOOL fRemoveDSN,
-               LPDWORD lpdwUsageCount)
+BOOL WINAPI SQLRemoveDriverW(LPCWSTR drivername, BOOL remove_dsn, LPDWORD usage_count)
 {
+    HKEY hkey;
+    DWORD usagecount = 1;
+
     clear_errors();
-    FIXME("%s %d %p\n", debugstr_w(lpszDriver), fRemoveDSN, lpdwUsageCount);
-    if (lpdwUsageCount) *lpdwUsageCount = 1;
+    TRACE("%s %d %p\n", debugstr_w(drivername), remove_dsn, usage_count);
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, odbcini, &hkey) == ERROR_SUCCESS)
+    {
+        HKEY hkeydriver;
+
+        if (RegOpenKeyW(hkey, drivername, &hkeydriver) == ERROR_SUCCESS)
+        {
+            DWORD size, type;
+            DWORD count;
+
+            size = sizeof(usagecount);
+            RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
+            TRACE("Usage count %d\n", usagecount);
+            count = usagecount - 1;
+            if (count)
+            {
+                 if (RegSetValueExA(hkeydriver, "UsageCount", 0, REG_DWORD, (BYTE*)&count, sizeof(count)) != ERROR_SUCCESS)
+                    ERR("Failed to write registry UsageCount key\n");
+            }
+
+            RegCloseKey(hkeydriver);
+        }
+
+        if (usagecount)
+            usagecount--;
+
+        if (!usagecount)
+        {
+            if (RegDeleteKeyW(hkey, drivername) != ERROR_SUCCESS)
+                ERR("Failed to delete registry key: %s\n", debugstr_w(drivername));
+
+            if (RegOpenKeyW(hkey, odbcdrivers, &hkeydriver) == ERROR_SUCCESS)
+            {
+                if(RegDeleteValueW(hkeydriver, drivername) != ERROR_SUCCESS)
+                    ERR("Failed to delete registry value: %s\n", debugstr_w(drivername));
+                RegCloseKey(hkeydriver);
+            }
+        }
+
+        RegCloseKey(hkey);
+    }
+
+    if (usage_count)
+        *usage_count = usagecount;
+
     return TRUE;
 }
 
 BOOL WINAPI SQLRemoveDriver(LPCSTR lpszDriver, BOOL fRemoveDSN,
                LPDWORD lpdwUsageCount)
 {
+    WCHAR *driver;
+    BOOL ret;
+
     clear_errors();
-    FIXME("%s %d %p\n", debugstr_a(lpszDriver), fRemoveDSN, lpdwUsageCount);
-    if (lpdwUsageCount) *lpdwUsageCount = 1;
-    return TRUE;
+    TRACE("%s %d %p\n", debugstr_a(lpszDriver), fRemoveDSN, lpdwUsageCount);
+
+    driver = SQLInstall_strdup(lpszDriver);
+
+    ret =  SQLRemoveDriverW(driver, fRemoveDSN, lpdwUsageCount);
+
+    HeapFree(GetProcessHeap(), 0, driver);
+    return ret;
 }
 
 BOOL WINAPI SQLRemoveDriverManager(LPDWORD pdwUsageCount)

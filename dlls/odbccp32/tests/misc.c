@@ -462,12 +462,12 @@ void test_SQLInstallDriverEx(void)
     cnt = 100;
     ret = SQLRemoveDriver("WINE ODBC Driver", FALSE, &cnt);
     ok(ret, "SQLRemoveDriver failed\n");
-    todo_wine ok(cnt == 0, "SQLRemoveDriver failed %d\n", cnt);
+    ok(cnt == 0, "SQLRemoveDriver failed %d\n", cnt);
 
     cnt = 100;
     ret = SQLRemoveDriver("WINE ODBC Driver Path", FALSE, &cnt);
     ok(ret, "SQLRemoveDriver failed\n");
-    todo_wine ok(cnt == 0, "SQLRemoveDriver failed %d\n", cnt);
+    ok(cnt == 0, "SQLRemoveDriver failed %d\n", cnt);
 }
 
 START_TEST(misc)
