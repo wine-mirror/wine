@@ -1520,4 +1520,53 @@ void __thiscall _TaskEventLogger__LogWorkItemStarted(_TaskEventLogger *this)
 {
     TRACE("(%p)\n", this);
 }
+
+typedef struct {
+    PTP_WORK work;
+    void (__cdecl *callback)(void*);
+    void *arg;
+} _Threadpool_chore;
+
+/* ?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z */
+/* ?_Reschedule_chore@details@Concurrency@@YAHPEBU_Threadpool_chore@12@@Z */
+int __cdecl _Reschedule_chore(const _Threadpool_chore *chore)
+{
+    TRACE("(%p)\n", chore);
+
+    SubmitThreadpoolWork(chore->work);
+    return 0;
+}
+
+static void WINAPI threadpool_callback(PTP_CALLBACK_INSTANCE instance, void *context, PTP_WORK work)
+{
+    _Threadpool_chore *chore = context;
+    TRACE("calling chore callback: %p\n", chore);
+    if (chore->callback)
+        chore->callback(chore->arg);
+}
+
+/* ?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z */
+/* ?_Schedule_chore@details@Concurrency@@YAHPEAU_Threadpool_chore@12@@Z */
+int __cdecl _Schedule_chore(_Threadpool_chore *chore)
+{
+    TRACE("(%p)\n", chore);
+
+    chore->work = CreateThreadpoolWork(threadpool_callback, chore, NULL);
+    /* FIXME: what should be returned in case of error */
+    if(!chore->work)
+        return -1;
+
+    return _Reschedule_chore(chore);
+}
+
+/* ?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z */
+/* ?_Release_chore@details@Concurrency@@YAXPEAU_Threadpool_chore@12@@Z */
+void __cdecl _Release_chore(_Threadpool_chore *chore)
+{
+    TRACE("(%p)\n", chore);
+
+    if(!chore->work) return;
+    CloseThreadpoolWork(chore->work);
+    chore->work = NULL;
+}
 #endif

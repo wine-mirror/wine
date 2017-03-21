@@ -1581,8 +1581,8 @@
 @ stub -arch=win32 ?_Raise_handler@std@@3P6AXABVexception@stdext@@@ZA
 @ stub -arch=win64 ?_Raise_handler@std@@3P6AXAEBVexception@stdext@@@ZEA
 @ cdecl ?_Random_device@std@@YAIXZ() _Random_device
-@ stub -arch=win32 ?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z
-@ stub -arch=win64 ?_Release_chore@details@Concurrency@@YAXPEAU_Threadpool_chore@12@@Z
+@ cdecl -arch=win32 ?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z(ptr) _Release_chore
+@ cdecl -arch=win64 ?_Release_chore@details@Concurrency@@YAXPEAU_Threadpool_chore@12@@Z(ptr) _Release_chore
 @ cdecl -arch=win32 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@DI@Z(ptr ptr long ptr long long) num_put_char__Rep
 @ cdecl -arch=win64 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z(ptr ptr ptr long long) num_put_char__Rep
 @ cdecl -arch=win32 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@GI@Z(ptr ptr long ptr long long) num_put_wchar__Rep
@@ -1590,16 +1590,16 @@
 @ cdecl -arch=win32 ?_Rep@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@_WI@Z(ptr ptr long ptr long long) num_put_wchar__Rep
 @ cdecl -arch=win64 ?_Rep@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@_W_K@Z(ptr ptr ptr long long) num_put_wchar__Rep
 @ stub ?_ReportUnobservedException@details@Concurrency@@YAXXZ
-@ stub -arch=win32 ?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z
-@ stub -arch=win64 ?_Reschedule_chore@details@Concurrency@@YAHPEBU_Threadpool_chore@12@@Z
+@ cdecl -arch=win32 ?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z(ptr) _Reschedule_chore
+@ cdecl -arch=win64 ?_Reschedule_chore@details@Concurrency@@YAHPEBU_Threadpool_chore@12@@Z(ptr) _Reschedule_chore
 @ cdecl -arch=arm ?_Reset@_ContextCallback@details@Concurrency@@AAAXXZ(ptr) _ContextCallback__Reset
 @ thiscall -arch=i386 ?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ(ptr) _ContextCallback__Reset
 @ cdecl -arch=win64 ?_Reset@_ContextCallback@details@Concurrency@@AEAAXXZ(ptr) _ContextCallback__Reset
 @ stub ?_Rethrow_future_exception@std@@YAXVexception_ptr@1@@Z
 @ stub -arch=win32 ?_Rng_abort@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Rng_abort@std@@YAXPEBD@Z
-@ stub -arch=win32 ?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z
-@ stub -arch=win64 ?_Schedule_chore@details@Concurrency@@YAHPEAU_Threadpool_chore@12@@Z
+@ cdecl -arch=win32 ?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z(ptr) _Schedule_chore
+@ cdecl -arch=win64 ?_Schedule_chore@details@Concurrency@@YAHPEAU_Threadpool_chore@12@@Z(ptr) _Schedule_chore
 @ cdecl -arch=win32 ?_Setgloballocale@locale@std@@CAXPAX@Z(ptr) locale__Setgloballocale
 @ cdecl -arch=win64 ?_Setgloballocale@locale@std@@CAXPEAX@Z(ptr) locale__Setgloballocale
 @ stub -arch=win32 ?_Src@?1??_Getffld@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHPADAAV?$istreambuf_iterator@DU?$char_traits@D@std@@@3@1AAVios_base@3@PAH@Z@4QBDB
