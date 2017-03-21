@@ -222,6 +222,11 @@ struct d3dx_parameter
     DWORD *dirty_flag_ptr;
 };
 
+static inline BOOL is_param_dirty(struct d3dx_parameter *param)
+{
+    return *param->dirty_flag_ptr & PARAMETER_FLAG_DIRTY;
+}
+
 struct d3dx9_base_effect;
 
 struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
@@ -231,8 +236,9 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
         unsigned int byte_code_size, D3DXPARAMETER_TYPE type, struct d3dx_param_eval **peval) DECLSPEC_HIDDEN;
 void d3dx_free_param_eval(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
 HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval,
-        const struct d3dx_parameter *param, void *param_value) DECLSPEC_HIDDEN;
+        const struct d3dx_parameter *param, void *param_value, BOOL update_all) DECLSPEC_HIDDEN;
 HRESULT d3dx_param_eval_set_shader_constants(struct IDirect3DDevice9 *device,
-        struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
+        struct d3dx_param_eval *peval, BOOL update_all) DECLSPEC_HIDDEN;
+BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DX9_PRIVATE_H */
