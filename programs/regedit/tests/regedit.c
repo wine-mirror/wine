@@ -518,6 +518,7 @@ static void test_comments(void)
                     ";comment\\\n"
                     "\"Wine2\"=\"Line 2\"\n\n");
     lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
     verify_reg(hkey, "Wine1", REG_SZ, "Line 1", 7, 0);
     verify_reg(hkey, "Wine2", REG_SZ, "Line 2", 7, 0);
 
