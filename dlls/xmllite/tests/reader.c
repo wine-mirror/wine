@@ -1140,7 +1140,10 @@ static void test_read_pi(void)
 
 struct nodes_test {
     const char *xml;
-    XmlNodeType types[20];
+    struct {
+        XmlNodeType type;
+        const char *value;
+    } nodes[20];
 };
 
 static const char misc_test_xml[] =
@@ -1164,22 +1167,22 @@ static const char misc_test_xml[] =
 static struct nodes_test misc_test = {
     misc_test_xml,
     {
-        XmlNodeType_Comment,
-        XmlNodeType_Comment,
-        XmlNodeType_ProcessingInstruction,
-        XmlNodeType_Comment,
-        XmlNodeType_Whitespace,
-        XmlNodeType_Comment,
-        XmlNodeType_Element,
-        XmlNodeType_Whitespace,
-        XmlNodeType_Element,
-        XmlNodeType_Text,
-        XmlNodeType_Comment,
-        XmlNodeType_Text,
-        XmlNodeType_ProcessingInstruction,
-        XmlNodeType_Whitespace,
-        XmlNodeType_EndElement,
-        XmlNodeType_None
+        {XmlNodeType_Comment, " comment1 "},
+        {XmlNodeType_Comment, " comment2 "},
+        {XmlNodeType_ProcessingInstruction, "pi1body "},
+        {XmlNodeType_Comment, " comment3 "},
+        {XmlNodeType_Whitespace, " \t \n \n"},
+        {XmlNodeType_Comment, " comment4 "},
+        {XmlNodeType_Element, ""},
+        {XmlNodeType_Whitespace, "\n\t"},
+        {XmlNodeType_Element, ""},
+        {XmlNodeType_Text, "text"},
+        {XmlNodeType_Comment, " comment "},
+        {XmlNodeType_Text, "text2"},
+        {XmlNodeType_ProcessingInstruction, "pibody "},
+        {XmlNodeType_Whitespace, "\n"},
+        {XmlNodeType_EndElement, ""},
+        {XmlNodeType_None, ""}
     }
 };
 
@@ -1187,37 +1190,41 @@ static void test_read_full(void)
 {
     struct nodes_test *test = &misc_test;
     IXmlReader *reader;
+    const WCHAR *value;
     XmlNodeType type;
     IStream *stream;
+    ULONG len;
     HRESULT hr;
     int i;
 
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
-    stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
+    stream = create_stream_on_data(test->xml, strlen(test->xml));
     hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
     ok(hr == S_OK, "got %08x\n", hr);
 
     i = 0;
     type = ~0u;
-    while (IXmlReader_Read(reader, &type) == S_OK)
+    do
     {
-        ok(test->types[i] != XmlNodeType_None, "%d: unexpected end of test data\n", i);
-        if (test->types[i] == XmlNodeType_None) break;
-        ok(type == test->types[i], "%d: got wrong type %d, expected %d\n", i, type, test->types[i]);
-        if (type == XmlNodeType_Whitespace)
-        {
-            const WCHAR *ptr;
-            UINT len = 0;
+        hr = IXmlReader_Read(reader, &type);
+        if (test->nodes[i].type != XmlNodeType_None)
+            ok(hr == S_OK, "Read returned %08x\n", hr);
+        else
+            ok(hr == S_FALSE, "Read returned %08x\n", hr);
 
-            hr = IXmlReader_GetValue(reader, &ptr, &len);
-            ok(hr == S_OK, "%d: GetValue failed 0x%08x\n", i, hr);
-            ok(len > 0, "%d: wrong value length %d\n", i, len);
+        ok(type == test->nodes[i].type, "%d: got wrong type %d, expected %d\n", i, type, test->nodes[i].type);
+
+        len = 0xdeadbeef;
+        hr = IXmlReader_GetValue(reader, &value, &len);
+        ok(hr == S_OK, "GetValue failed: %08x\n", hr);
+        if (test->nodes[i].value)
+        {
+            ok(!strcmp_wa(value, test->nodes[i].value), "value = %s\n", wine_dbgstr_w(value));
+            ok(len == strlen(test->nodes[i].value), "len = %u\n", len);
         }
-        i++;
-    }
-    ok(test->types[i] == XmlNodeType_None, "incomplete sequence, got %d\n", test->types[i]);
+    } while(test->nodes[i++].type != XmlNodeType_None);
 
     IStream_Release(stream);
     IXmlReader_Release(reader);
