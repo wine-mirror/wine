@@ -2731,6 +2731,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     HWND hRulerWnd;
     POINTL EditPoint;
     DWORD bMaximized;
+    MONITORINFO info;
+    HMONITOR monitor;
+    int x, y;
     static const WCHAR wszAccelTable[] = {'M','A','I','N','A','C','C','E','L',
                                           'T','A','B','L','E','\0'};
 
@@ -2767,8 +2770,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     RegisterClassExW(&wc);
 
     registry_read_winrect(&rc);
+    monitor = MonitorFromRect(&rc, MONITOR_DEFAULTTOPRIMARY);
+    info.cbSize = sizeof(info);
+    GetMonitorInfoW(monitor, &info);
+
+    x = rc.left;
+    y = rc.top;
+    IntersectRect(&info.rcWork, &info.rcWork, &rc);
+    if (IsRectEmpty(&info.rcWork))
+        x = y = CW_USEDEFAULT;
+
     hMainWnd = CreateWindowExW(0, wszMainWndClass, wszAppTitle, WS_CLIPCHILDREN|WS_OVERLAPPEDWINDOW,
-      rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, NULL, NULL, hInstance, NULL);
+            x, y, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance, NULL);
     registry_read_maximized(&bMaximized);
     if ((nCmdShow == SW_SHOWNORMAL || nCmdShow == SW_SHOWDEFAULT)
 	     && bMaximized)
