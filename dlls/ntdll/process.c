@@ -271,7 +271,10 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                 else
                 {
                     memset(&pvmi, 0 , sizeof(VM_COUNTERS));
-                    fill_VM_COUNTERS(&pvmi);
+                    if (ProcessHandle == GetCurrentProcess())
+                        fill_VM_COUNTERS(&pvmi);
+                    else
+                        FIXME("Need wineserver call to get VM counters for another process\n");
 
                     len = ProcessInformationLength;
                     if (len != FIELD_OFFSET(VM_COUNTERS,PrivatePageCount)) len = sizeof(VM_COUNTERS);
