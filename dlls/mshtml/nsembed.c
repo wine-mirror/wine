@@ -1204,7 +1204,7 @@ static nsrefcnt NSAPI nsWeakReference_AddRef(nsIWeakReference *iface)
 static nsrefcnt NSAPI nsWeakReference_Release(nsIWeakReference *iface)
 {
     nsWeakReference *This = impl_from_nsIWeakReference(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
