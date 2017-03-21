@@ -4153,7 +4153,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
@@ -4327,7 +4327,7 @@ static void test_preshader_op(IDirect3DDevice9 *device, const DWORD *sample_effe
     }
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetLight(device, blob_position[test->args_count].result_index, &light);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);

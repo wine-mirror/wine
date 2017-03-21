@@ -2572,8 +2572,9 @@ static HRESULT d3dx9_get_param_value_ptr(struct ID3DXEffectImpl *effect, struct 
             TRACE("Array index %u.\n", array_idx);
             if (array_idx >= param->element_count)
             {
-                ERR("Computed array index %u is out of bound %u.\n", array_idx, param->element_count);
-                return D3DERR_INVALIDCALL;
+                WARN("Computed array index %u is larger than array size %u.\n",
+                        array_idx, param->element_count);
+                return E_FAIL;
             }
             param = &param->members[array_idx];
 
@@ -2816,10 +2817,21 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
     HRESULT hr;
 
     TRACE("operation %u, index %u, type %u.\n", state->operation, state->index, state->type);
+
     if (FAILED(hr = d3dx9_get_param_value_ptr(effect, pass, state, &param_value, &param)))
-        /* Native d3dx returns D3D_OK from BeginPass or Commit involving out of bounds array
-         * access and does not touch affected state. */
-        return D3D_OK;
+    {
+        if (hr == E_FAIL)
+        {
+            /* Native d3dx9 returns D3D_OK from BeginPass or Commit involving
+             * out of bounds array access and does not touch the affected
+             * state, except for BeginPass when the out of bounds array index
+             * depends on dirty parameters. The latter case is supposed to
+             * return E_FAIL but is currently TODO. */
+            WARN("Returning D3D_OK on out of bounds array access.\n");
+            return D3D_OK;
+        }
+        return hr;
+    }
 
     switch (state_table[state->operation].class)
     {
