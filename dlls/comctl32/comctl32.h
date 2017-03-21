@@ -99,6 +99,14 @@ extern HBRUSH  COMCTL32_hPattern55AABrush DECLSPEC_HIDDEN;
 #define IDI_TT_WARN_SM                   25
 #define IDI_TT_ERROR_SM                  28
 
+/* Taskdialog strings */
+#define IDS_BUTTON_YES    3000
+#define IDS_BUTTON_NO     3001
+#define IDS_BUTTON_RETRY  3002
+#define IDS_BUTTON_OK     3003
+#define IDS_BUTTON_CANCEL 3004
+#define IDS_BUTTON_CLOSE  3005
+
 typedef struct
 {
     COLORREF clrBtnHighlight;       /* COLOR_BTNHIGHLIGHT                  */
