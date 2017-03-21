@@ -1078,10 +1078,7 @@ static void test_query_process_vm(void)
 
     /* Check if we have some return values */
     trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
-    todo_wine
-    {
-        ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
-    }
+    ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
 }
 
 static void test_query_process_io(void)

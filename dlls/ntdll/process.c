@@ -131,6 +131,34 @@ static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
 #endif
 }
 
+#elif defined(linux)
+
+static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+{
+    FILE *f;
+    char line[256];
+    unsigned long value;
+
+    f = fopen("/proc/self/status", "r");
+    if (!f) return;
+
+    while (fgets(line, sizeof(line), f))
+    {
+        if (sscanf(line, "VmPeak: %lu", &value))
+            pvmi->PeakVirtualSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "VmSize: %lu", &value))
+            pvmi->VirtualSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "VmHWM: %lu", &value))
+            pvmi->PeakWorkingSetSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "VmRSS: %lu", &value))
+            pvmi->WorkingSetSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "VmSwap: %lu", &value))
+            pvmi->PeakPagefileUsage = pvmi->PagefileUsage = (ULONG64)value * 1024;
+    }
+
+    fclose(f);
+}
+
 #else
 
 static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
