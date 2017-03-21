@@ -3091,7 +3091,9 @@ static void test_SetFocus(HWND hwnd)
     ShowWindow(child, SW_SHOW);
     SetFocus(child);
     ok( GetFocus() == child, "Focus should be on child %p\n", child );
+    SetLastError(0xdeadbeef);
     EnableWindow(hwnd, FALSE);
+    ok(GetLastError() == 0xdeadbeef, "got error %u in EnableWindow call\n", GetLastError());
     ok( GetFocus() == child, "Focus should still be on child %p\n", child );
     EnableWindow(hwnd, TRUE);
 
