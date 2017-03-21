@@ -46,6 +46,14 @@ static void free_str(WCHAR *str)
     HeapFree(GetProcessHeap(), 0, str);
 }
 
+static int strcmp_wa(const WCHAR *str1, const char *stra)
+{
+    WCHAR *str2 = a2w(stra);
+    int r = lstrcmpW(str1, str2);
+    free_str(str2);
+    return r;
+}
+
 static const char xmldecl_full[] = "\xef\xbb\xbf<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
 static const char xmldecl_short[] = "<?xml version=\"1.0\"?><RegistrationInfo/>";
 
@@ -1643,11 +1651,12 @@ todo_wine
 
 static void test_readvaluechunk(void)
 {
-    static const char testA[] = "<!-- comment1 -->";
+    static const char testA[] = "<!-- comment1 --><!-- comment2 -->";
     IXmlReader *reader;
     XmlNodeType type;
     IStream *stream;
     const WCHAR *value;
+    WCHAR buf[64];
     WCHAR b;
     HRESULT hr;
     UINT c;
@@ -1661,6 +1670,7 @@ static void test_readvaluechunk(void)
 
     hr = IXmlReader_Read(reader, &type);
     ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Comment, "type = %u\n", type);
 
     c = 0;
     b = 0;
@@ -1669,11 +1679,18 @@ static void test_readvaluechunk(void)
     ok(c == 1, "got %u\n", c);
     ok(b == ' ', "got %x\n", b);
 
+    c = 0;
+    b = 0xffff;
+    hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(c == 1, "got %u\n", c);
+    ok(b == 'c', "got %x\n", b);
+
     /* portion read as chunk is skipped from resulting node value */
     value = NULL;
     hr = IXmlReader_GetValue(reader, &value, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(value[0] == 'c', "got %s\n", wine_dbgstr_w(value));
+    ok(!strcmp_wa(value, "omment1 "), "got %s\n", wine_dbgstr_w(value));
 
     /* once value is returned/allocated it's not possible to read by chunk */
     c = 0;
@@ -1683,10 +1700,59 @@ static void test_readvaluechunk(void)
     ok(c == 0, "got %u\n", c);
     ok(b == 0, "got %x\n", b);
 
+    c = 0xdeadbeef;
+    hr = IXmlReader_ReadValueChunk(reader, buf, 0, &c);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!c, "c = %u\n", c);
+
     value = NULL;
     hr = IXmlReader_GetValue(reader, &value, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(value[0] == 'c', "got %s\n", wine_dbgstr_w(value));
+    ok(!strcmp_wa(value, "omment1 "), "got %s\n", wine_dbgstr_w(value));
+
+    /* read comment2 */
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(type == XmlNodeType_Comment, "type = %u\n", type);
+
+    c = 0xdeadbeef;
+    hr = IXmlReader_ReadValueChunk(reader, buf, 0, &c);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!c, "c = %u\n", c);
+
+    c = 0xdeadbeef;
+    memset(buf, 0xcc, sizeof(buf));
+    hr = IXmlReader_ReadValueChunk(reader, buf, sizeof(buf)/sizeof(WCHAR), &c);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(c == 10, "got %u\n", c);
+    ok(buf[c] == 0xcccc, "buffer overflow\n");
+    buf[c] = 0;
+    ok(!strcmp_wa(buf, " comment2 "), "buf = %s\n", wine_dbgstr_w(buf));
+
+    c = 0xdeadbeef;
+    memset(buf, 0xcc, sizeof(buf));
+    hr = IXmlReader_ReadValueChunk(reader, buf, sizeof(buf)/sizeof(WCHAR), &c);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok(!c, "got %u\n", c);
+
+    /* portion read as chunk is skipped from resulting node value */
+    value = NULL;
+    hr = IXmlReader_GetValue(reader, &value, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!*value, "got %s\n", wine_dbgstr_w(value));
+
+    /* once value is returned/allocated it's not possible to read by chunk */
+    c = 0xdeadbeef;
+    b = 0xffff;
+    hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    ok(c == 0, "got %u\n", c);
+    ok(b == 0xffff, "got %x\n", b);
+
+    value = NULL;
+    hr = IXmlReader_GetValue(reader, &value, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!*value, "got %s\n", wine_dbgstr_w(value));
 
     IXmlReader_Release(reader);
     IStream_Release(stream);

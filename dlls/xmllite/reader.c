@@ -3328,18 +3328,17 @@ static HRESULT WINAPI xmlreader_ReadValueChunk(IXmlReader* iface, WCHAR *buffer,
     TRACE("(%p)->(%p %u %p)\n", reader, buffer, chunk_size, read);
 
     /* Value is already allocated, chunked reads are not possible. */
-    if (val->str) return S_FALSE;
+    len = !val->str && val->len ? min(chunk_size, val->len) : 0;
+    if (read) *read = len;
 
-    if (val->len)
+    if (len)
     {
-        len = min(chunk_size, val->len);
-        memcpy(buffer, reader_get_ptr2(reader, val->start), len);
+        memcpy(buffer, reader_get_ptr2(reader, val->start), len*sizeof(WCHAR));
         val->start += len;
         val->len -= len;
-        if (read) *read = len;
     }
 
-    return S_OK;
+    return len || !chunk_size ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI xmlreader_GetBaseUri(IXmlReader* iface,
