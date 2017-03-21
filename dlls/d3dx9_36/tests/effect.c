@@ -4020,46 +4020,111 @@ static void test_effect_preshader_op_results_(unsigned int line, IDirect3DDevice
     }
 }
 
+static const D3DXVECTOR4 fvect_filler = {-9999.0f, -9999.0f, -9999.0f, -9999.0f};
+
+static void test_effect_preshader_clear_vconsts(IDirect3DDevice9 *device)
+{
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < 256; ++i)
+    {
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, i, &fvect_filler.x, 1);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    }
+}
+
+static const D3DXVECTOR4 test_effect_preshader_fvect_v[] =
+{
+    {0.0f,   0.0f,  0.0f,  0.0f},
+    {0.0f,   0.0f,  0.0f,  0.0f},
+    {0.0f,   0.0f,  0.0f,  0.0f},
+    {1.0f,   2.0f,  3.0f,  0.0f},
+    {4.0f,   0.0f,  0.0f,  0.0f},
+    {5.0f,   6.0f,  7.0f,  8.0f},
+    {1.0f,   2.0f,  3.0f,  0.0f},
+    {4.0f,   0.0f,  0.0f,  0.0f},
+    {5.0f,   6.0f,  7.0f,  8.0f},
+    {9.0f,  10.0f, 11.0f,  0.0f},
+    {12.0f,  0.0f,  0.0f,  0.0f},
+    {13.0f, 14.0f, 15.0f, 16.0f},
+    {11.0f, 12.0f, 13.0f,  0.0f},
+    {21.0f, 22.0f, 23.0f,  0.0f},
+    {31.0f, 32.0f, 33.0f,  0.0f},
+    {41.0f, 42.0f, 43.0f,  0.0f},
+    {11.0f, 21.0f, 31.0f,  0.0f},
+    {12.0f, 22.0f, 32.0f,  0.0f},
+    {13.0f, 23.0f, 33.0f,  0.0f},
+    {14.0f, 24.0f, 34.0f,  0.0f},
+    {11.0f, 12.0f, 13.0f, 14.0f},
+    {21.0f, 22.0f, 23.0f, 24.0f},
+    {31.0f, 32.0f, 33.0f, 34.0f},
+    {11.0f, 21.0f, 31.0f, 41.0f},
+    {12.0f, 22.0f, 32.0f, 42.0f},
+    {13.0f, 23.0f, 33.0f, 43.0f},
+    {9.0f,  10.0f, 11.0f,  0.0f},
+    {12.0f,  0.0f,  0.0f,  0.0f},
+    {13.0f, 14.0f, 15.0f, 16.0f},
+    {92.0f,  0.0f,  0.0f,  0.0f},
+    {93.0f,  0.0f,  0.0f,  0.0f},
+    {0.0f,   0.0f,  0.0f,  0.0f},
+    {91.0f,  0.0f,  0.0f,  0.0f},
+    {4.0f,   5.0f,  6.0f,  7.0f},
+};
+#define TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE (sizeof(unsigned int) * 8)
+
+#define test_effect_preshader_compare_vconsts(a, b, c) \
+        test_effect_preshader_compare_vconsts_(__LINE__, a, b, c)
+static void test_effect_preshader_compare_vconsts_(unsigned int line, IDirect3DDevice9 *device,
+        const unsigned int *const_updated_mask, const char *updated_param)
+{
+    HRESULT hr;
+    unsigned int i;
+    D3DXVECTOR4 fdata[ARRAY_SIZE(test_effect_preshader_fvect_v)];
+
+    hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fdata[0].x,
+            ARRAY_SIZE(test_effect_preshader_fvect_v));
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    if (!const_updated_mask)
+    {
+        ok_(__FILE__, line)(!memcmp(fdata, test_effect_preshader_fvect_v, sizeof(test_effect_preshader_fvect_v)),
+                "Vertex shader float constants do not match.\n");
+    }
+    else
+    {
+        for (i = 0; i < ARRAY_SIZE(test_effect_preshader_fvect_v); ++i)
+        {
+            if (const_updated_mask[i / TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE]
+                    & (1u << (i % TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE)))
+            {
+                ok_(__FILE__, line)(!memcmp(&fdata[i], &test_effect_preshader_fvect_v[i], sizeof(fdata[i])),
+                        "Vertex shader float constants do not match, expected (%g, %g, %g, %g), \
+got (%g, %g, %g, %g), parameter %s.\n",
+                        test_effect_preshader_fvect_v[i].x, test_effect_preshader_fvect_v[i].y,
+                        test_effect_preshader_fvect_v[i].z, test_effect_preshader_fvect_v[i].w,
+                        fdata[i].x, fdata[i].y, fdata[i].z, fdata[i].w, updated_param);
+            }
+            else
+            {
+                ok_(__FILE__, line)(!memcmp(&fdata[i], &fvect_filler, sizeof(fdata[i])),
+                        "Vertex shader float constants updated unexpectedly, parameter %s.\n", updated_param);
+            }
+        }
+    }
+
+    for (i = ARRAY_SIZE(test_effect_preshader_fvect_v); i < 256; ++i)
+    {
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, i, &fdata[0].x, 1);
+        ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok_(__FILE__, line)(!memcmp(fdata, &fvect_filler, sizeof(fvect_filler)),
+                "Vertex shader float constants do not match.\n");
+    }
+}
+
 static void test_effect_preshader(IDirect3DDevice9 *device)
 {
-    static const D3DXVECTOR4 test_effect_preshader_fconstsv[] =
-    {
-        {0.0f,   0.0f,  0.0f,  0.0f},
-        {0.0f,   0.0f,  0.0f,  0.0f},
-        {0.0f,   0.0f,  0.0f,  0.0f},
-        {1.0f,   2.0f,  3.0f,  0.0f},
-        {4.0f,   0.0f,  0.0f,  0.0f},
-        {5.0f,   6.0f,  7.0f,  8.0f},
-        {1.0f,   2.0f,  3.0f,  0.0f},
-        {4.0f,   0.0f,  0.0f,  0.0f},
-        {5.0f,   6.0f,  7.0f,  8.0f},
-        {9.0f,  10.0f, 11.0f,  0.0f},
-        {12.0f,  0.0f,  0.0f,  0.0f},
-        {13.0f, 14.0f, 15.0f, 16.0f},
-        {11.0f, 12.0f, 13.0f,  0.0f},
-        {21.0f, 22.0f, 23.0f,  0.0f},
-        {31.0f, 32.0f, 33.0f,  0.0f},
-        {41.0f, 42.0f, 43.0f,  0.0f},
-        {11.0f, 21.0f, 31.0f,  0.0f},
-        {12.0f, 22.0f, 32.0f,  0.0f},
-        {13.0f, 23.0f, 33.0f,  0.0f},
-        {14.0f, 24.0f, 34.0f,  0.0f},
-        {11.0f, 12.0f, 13.0f, 14.0f},
-        {21.0f, 22.0f, 23.0f, 24.0f},
-        {31.0f, 32.0f, 33.0f, 34.0f},
-        {11.0f, 21.0f, 31.0f, 41.0f},
-        {12.0f, 22.0f, 32.0f, 42.0f},
-        {13.0f, 23.0f, 33.0f, 43.0f},
-        {9.0f,  10.0f, 11.0f,  0.0f},
-        {12.0f,  0.0f,  0.0f,  0.0f},
-        {13.0f, 14.0f, 15.0f, 16.0f},
-        {92.0f,  0.0f,  0.0f,  0.0f},
-        {93.0f,  0.0f,  0.0f,  0.0f},
-        {0.0f,   0.0f,  0.0f,  0.0f},
-        {91.0f,  0.0f,  0.0f,  0.0f},
-        {4.0f,   5.0f,  6.0f,  7.0f},
-    };
-    static const D3DXVECTOR4 test_effect_preshader_fconstsp[] =
+    static const D3DXVECTOR4 test_effect_preshader_fvect_p[] =
     {
         {11.0f, 21.0f,  0.0f, 0.0f},
         {12.0f, 22.0f,  0.0f, 0.0f},
@@ -4084,16 +4149,8 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     {
         {4, 3, 2, 1}
     };
-#define TEST_EFFECT_PRES_NFLOATV ARRAY_SIZE(test_effect_preshader_fconstsv)
-#define TEST_EFFECT_PRES_NFLOATP ARRAY_SIZE(test_effect_preshader_fconstsp)
-#define TEST_EFFECT_PRES_NFLOATMAX (TEST_EFFECT_PRES_NFLOATV > TEST_EFFECT_PRES_NFLOATP ? \
-            TEST_EFFECT_PRES_NFLOATV : TEST_EFFECT_PRES_NFLOATP)
-#define TEST_EFFECT_PRES_NBOOL ARRAY_SIZE(test_effect_preshader_bconsts)
-#define TEST_EFFECT_PRES_NINT ARRAY_SIZE(test_effect_preshader_iconsts)
-
     static const D3DXVECTOR4 fvect1 = {28.0f, 29.0f, 30.0f, 31.0f};
     static const D3DXVECTOR4 fvect2 = {0.0f, 0.0f, 1.0f, 0.0f};
-    static const D3DXVECTOR4 fvect_empty = {-9999.0f, -9999.0f, -9999.0f, -9999.0f};
     static const int ivect_empty[4] = {-1, -1, -1, -1};
     HRESULT hr;
     ID3DXEffect *effect;
@@ -4101,9 +4158,9 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     unsigned int npasses;
     DWORD value;
     BOOL bval;
-    D3DXVECTOR4 fdata[TEST_EFFECT_PRES_NFLOATMAX];
-    int idata[TEST_EFFECT_PRES_NINT][4];
-    BOOL bdata[TEST_EFFECT_PRES_NBOOL];
+    D3DXVECTOR4 fdata[ARRAY_SIZE(test_effect_preshader_fvect_p)];
+    int idata[ARRAY_SIZE(test_effect_preshader_iconsts)][4];
+    BOOL bdata[ARRAY_SIZE(test_effect_preshader_bconsts)];
     IDirect3DVertexShader9 *vshader;
     unsigned int i;
     D3DCAPS9 caps;
@@ -4121,14 +4178,11 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    for (i = 0; i < 256; ++i)
-    {
-        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, i, &fvect_empty.x, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    }
+    test_effect_preshader_clear_vconsts(device);
+
     for (i = 0; i < 224; ++i)
     {
-        hr = IDirect3DDevice9_SetPixelShaderConstantF(device, i, &fvect_empty.x, 1);
+        hr = IDirect3DDevice9_SetPixelShaderConstantF(device, i, &fvect_filler.x, 1);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
     }
     bval = FALSE;
@@ -4161,33 +4215,26 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
 
-    hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fdata[0].x, TEST_EFFECT_PRES_NFLOATV);
+    test_effect_preshader_compare_vconsts(device, NULL, NULL);
+
+    hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, &fdata[0].x,
+            ARRAY_SIZE(test_effect_preshader_fvect_p));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(!memcmp(fdata, test_effect_preshader_fconstsv, sizeof(test_effect_preshader_fconstsv)),
-            "Vertex shader float constants do not match.\n");
-    for (i = TEST_EFFECT_PRES_NFLOATV; i < 256; ++i)
-    {
-        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, i, &fdata[0].x, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
-        ok(!memcmp(fdata, &fvect_empty, sizeof(fvect_empty)),
-                "Vertex shader float constants do not match.\n");
-    }
-    hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, &fdata[0].x, TEST_EFFECT_PRES_NFLOATP);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(!memcmp(fdata, test_effect_preshader_fconstsp, sizeof(test_effect_preshader_fconstsp)),
+    ok(!memcmp(fdata, test_effect_preshader_fvect_p, sizeof(test_effect_preshader_fvect_p)),
             "Pixel shader float constants do not match.\n");
-    for (i = TEST_EFFECT_PRES_NFLOATP; i < 224; ++i)
+    for (i = ARRAY_SIZE(test_effect_preshader_fvect_p); i < 224; ++i)
     {
         hr = IDirect3DDevice9_GetPixelShaderConstantF(device, i, &fdata[0].x, 1);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
-        ok(!memcmp(fdata, &fvect_empty, sizeof(fvect_empty)),
+        ok(!memcmp(fdata, &fvect_filler, sizeof(fvect_filler)),
                 "Pixel shader float constants do not match.\n");
     }
-    hr = IDirect3DDevice9_GetPixelShaderConstantI(device, 0, idata[0], TEST_EFFECT_PRES_NINT);
+    hr = IDirect3DDevice9_GetPixelShaderConstantI(device, 0, idata[0],
+            ARRAY_SIZE(test_effect_preshader_iconsts));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(!memcmp(idata, test_effect_preshader_iconsts, sizeof(test_effect_preshader_iconsts)),
             "Pixel shader integer constants do not match.\n");
-    for (i = TEST_EFFECT_PRES_NINT; i < 16; ++i)
+    for (i = ARRAY_SIZE(test_effect_preshader_iconsts); i < 16; ++i)
     {
         hr = IDirect3DDevice9_GetPixelShaderConstantI(device, i, idata[0], 1);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4195,9 +4242,10 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
                 "Pixel shader integer constants do not match.\n");
     }
 
-    hr = IDirect3DDevice9_GetPixelShaderConstantB(device, 0, bdata, TEST_EFFECT_PRES_NBOOL);
+    hr = IDirect3DDevice9_GetPixelShaderConstantB(device, 0, bdata,
+            ARRAY_SIZE(test_effect_preshader_bconsts));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    for (i = 0; i < TEST_EFFECT_PRES_NBOOL; ++i)
+    for (i = 0; i < ARRAY_SIZE(test_effect_preshader_bconsts); ++i)
         todo_wine_if(!bdata[i] != !test_effect_preshader_bconsts[i])
         ok(!bdata[i] == !test_effect_preshader_bconsts[i],
                 "Pixel shader boolean constants do not match.\n");
