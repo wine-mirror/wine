@@ -125,6 +125,12 @@ typedef struct {
     MSVCP_bool started;
 } _TaskEventLogger;
 
+typedef struct {
+    PTP_WORK work;
+    void (__cdecl *callback)(void*);
+    void *arg;
+} _Threadpool_chore;
+
 static unsigned int (__cdecl *p__Thrd_id)(void);
 static task_continuation_context* (__thiscall *p_task_continuation_context_ctor)(task_continuation_context*);
 static void (__thiscall *p__ContextCallback__Assign)(_ContextCallback*, void*);
@@ -138,6 +144,9 @@ static void (__thiscall *p__TaskEventLogger__LogTaskCompleted)(_TaskEventLogger*
 static void (__thiscall *p__TaskEventLogger__LogTaskExecutionCompleted)(_TaskEventLogger*);
 static void (__thiscall *p__TaskEventLogger__LogWorkItemCompleted)(_TaskEventLogger*);
 static void (__thiscall *p__TaskEventLogger__LogWorkItemStarted)(_TaskEventLogger*);
+static int (__cdecl *p__Schedule_chore)(_Threadpool_chore*);
+static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
+static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -166,6 +175,9 @@ static BOOL init(void)
         SET(p__TaskEventLogger__LogTaskExecutionCompleted, "?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
         SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
         SET(p__TaskEventLogger__LogWorkItemStarted, "?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QEAAXXZ");
+        SET(p__Schedule_chore, "?_Schedule_chore@details@Concurrency@@YAHPEAU_Threadpool_chore@12@@Z");
+        SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPEBU_Threadpool_chore@12@@Z");
+        SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPEAU_Threadpool_chore@12@@Z");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -192,6 +204,9 @@ static BOOL init(void)
         SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
         SET(p__TaskEventLogger__LogWorkItemStarted, "?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
 #endif
+        SET(p__Schedule_chore, "?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z");
+        SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z");
+        SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
     }
 
     init_thiscall_thunk();
@@ -395,6 +410,57 @@ static void test__TaskEventLogger(void)
     ok(logger.started, "logger.started = FALSE\n");
 }
 
+void __cdecl chore_callback(void *arg)
+{
+    HANDLE event = arg;
+    SetEvent(event);
+}
+
+static void test_chore(void)
+{
+    HANDLE event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    _Threadpool_chore chore, old_chore;
+    DWORD wait;
+    int ret;
+
+    memset(&chore, 0, sizeof(chore));
+    ret = p__Schedule_chore(&chore);
+    ok(!ret, "_Schedule_chore returned %d\n", ret);
+    ok(chore.work != NULL, "chore.work == NULL\n");
+    ok(!chore.callback, "chore.callback != NULL\n");
+    p__Release_chore(&chore);
+
+    chore.work = NULL;
+    chore.callback = chore_callback;
+    chore.arg = event;
+    ret = p__Schedule_chore(&chore);
+    ok(!ret, "_Schedule_chore returned %d\n", ret);
+    ok(chore.work != NULL, "chore.work == NULL\n");
+    ok(chore.callback == chore_callback, "chore.callback = %p, expected %p\n", chore.callback, chore_callback);
+    ok(chore.arg == event, "chore.arg = %p, expected %p\n", chore.arg, event);
+    wait = WaitForSingleObject(event, 500);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait);
+
+    old_chore = chore;
+    ret = p__Schedule_chore(&chore);
+    ok(!ret, "_Schedule_chore returned %d\n", ret);
+    ok(old_chore.work != chore.work, "new threadpool work was not created\n");
+    p__Release_chore(&old_chore);
+    wait = WaitForSingleObject(event, 500);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait);
+
+    ret = p__Reschedule_chore(&chore);
+    ok(!ret, "_Reschedule_chore returned %d\n", ret);
+    wait = WaitForSingleObject(event, 500);
+    ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait);
+
+    p__Release_chore(&chore);
+    ok(!chore.work, "chore.work != NULL\n");
+    ok(chore.callback == chore_callback, "chore.callback = %p, expected %p\n", chore.callback, chore_callback);
+    ok(chore.arg == event, "chore.arg = %p, expected %p\n", chore.arg, event);
+    p__Release_chore(&chore);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -403,5 +469,6 @@ START_TEST(msvcp140)
     test_task_continuation_context();
     test__ContextCallback();
     test__TaskEventLogger();
+    test_chore();
     FreeLibrary(msvcp);
 }
