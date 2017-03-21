@@ -128,6 +128,7 @@ my @dll_groups =
   "api-ms-win-security-lsalookup-l2-1-1",
   "api-ms-win-security-lsapolicy-l1-1-0",
   "api-ms-win-security-sddl-l1-1-0",
+  "api-ms-win-security-systemfunctions-l1-1-0",
   "api-ms-win-service-core-l1-1-0",
   "api-ms-win-service-core-l1-1-1",
   "api-ms-win-service-management-l1-1-0",
