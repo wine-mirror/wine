@@ -154,6 +154,7 @@ static const struct object_ops named_pipe_ops =
 };
 
 /* common server and client pipe end functions */
+static obj_handle_t pipe_end_write( struct fd *fd, struct async *async_data, int blocking, file_pos_t pos );
 static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 
@@ -194,7 +195,7 @@ static const struct fd_ops pipe_server_fd_ops =
     default_poll_event,           /* poll_event */
     pipe_server_get_fd_type,      /* get_fd_type */
     no_fd_read,                   /* read */
-    no_fd_write,                  /* write */
+    pipe_end_write,               /* write */
     pipe_server_flush,            /* flush */
     pipe_server_ioctl,            /* ioctl */
     pipe_end_queue_async,         /* queue_async */
@@ -237,7 +238,7 @@ static const struct fd_ops pipe_client_fd_ops =
     default_poll_event,           /* poll_event */
     pipe_client_get_fd_type,      /* get_fd_type */
     no_fd_read,                   /* read */
-    no_fd_write,                  /* write */
+    pipe_end_write,               /* write */
     pipe_client_flush,            /* flush */
     default_fd_ioctl,             /* ioctl */
     pipe_end_queue_async,         /* queue_async */
@@ -709,6 +710,52 @@ static void reselect_write_queue( struct pipe_end *pipe_end )
     }
 
     ignore_reselect = 0;
+}
+
+static obj_handle_t pipe_end_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
+{
+    struct pipe_end *write_end = get_fd_user( fd );
+    struct pipe_end *read_end = write_end->connection;
+    struct pipe_message *message;
+    obj_handle_t handle = 0;
+
+    if (!use_server_io( write_end )) return no_fd_write( fd, async, blocking, pos );
+
+    if (!read_end)
+    {
+        set_error( STATUS_PIPE_DISCONNECTED );
+        return 0;
+    }
+
+    if (!write_end->write_q && !(write_end->write_q = create_async_queue( fd ))) return 0;
+    if (!(handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 ))) return 0;
+
+    if (!(message = mem_alloc( sizeof(*message) )))
+    {
+        close_handle( current->process, handle );
+        return 0;
+    }
+    message->async = (struct async *)grab_object( async );
+    message->iosb = async_get_iosb( async );
+    message->read_pos = 0;
+    list_add_tail( &read_end->message_queue, &message->entry );
+
+    queue_async( write_end->write_q, async );
+    reselect_write_queue( write_end );
+    set_error( STATUS_PENDING );
+
+    if (!blocking)
+    {
+        struct iosb *iosb;
+        iosb = async_get_iosb( async );
+        if (iosb->status == STATUS_PENDING)
+        {
+            close_handle( current->process, handle );
+            handle = 0;
+        }
+        release_object( iosb );
+    }
+    return handle;
 }
 
 static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count )
