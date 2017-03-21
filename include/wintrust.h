@@ -429,7 +429,7 @@ typedef struct _CRYPT_PROVUI_FUNCS {
 
 #include <poppack.h>
 
-#define WVT_OFFSETOF(t,f)     ((ULONG)((ULONG_PTR)(&((t*)0)->f)))
+#define WVT_OFFSETOF(t,f)     ((ULONG)(offsetof(t, f)))
 #define WVT_ISINSTRUCT(t,s,f) (WVT_OFFSETOF(t,f) + sizeof(((t*)0)->f) <= (s))
 #define WVT_IS_CBSTRUCT_GT_MEMBEROFFSET(t,s,f) WVT_ISINSTRUCT(t,s,f)
 
