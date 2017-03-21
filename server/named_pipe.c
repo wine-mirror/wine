@@ -401,6 +401,21 @@ static void pipe_end_disconnect( struct pipe_end *pipe_end, unsigned int status 
 
     pipe_end->connection = NULL;
 
+    if (use_server_io( pipe_end ))
+    {
+        struct pipe_message *message, *next;
+        struct async *async;
+        if (pipe_end->fd) fd_async_wake_up( pipe_end->fd, ASYNC_TYPE_WAIT, status );
+        LIST_FOR_EACH_ENTRY_SAFE( message, next, &pipe_end->message_queue, struct pipe_message, entry )
+        {
+            async = message->async;
+            if (async || status == STATUS_PIPE_DISCONNECTED) free_message( message );
+            if (!async) continue;
+            async_terminate( async, status );
+            release_object( async );
+        }
+        if (status == STATUS_PIPE_DISCONNECTED) set_fd_signaled( pipe_end->fd, 0 );
+    }
     if (connection)
     {
         connection->connection = NULL;
