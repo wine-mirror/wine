@@ -178,6 +178,7 @@ typedef struct
     UINT  cur;
     unsigned int allocated;
     unsigned int written;
+    BOOL prev_cr;
 } encoded_buffer;
 
 typedef struct input_buffer input_buffer;
@@ -687,6 +688,7 @@ static HRESULT init_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer
     buffer->cur = 0;
     buffer->allocated = initial_len;
     buffer->written = 0;
+    buffer->prev_cr = FALSE;
 
     return S_OK;
 }
@@ -952,6 +954,34 @@ static void readerinput_shrinkraw(xmlreaderinput *readerinput, int len)
     buffer->cur = 0;
 }
 
+static void fixup_buffer_cr(encoded_buffer *buffer, int off)
+{
+    BOOL prev_cr = buffer->prev_cr;
+    const WCHAR *src;
+    WCHAR *dest;
+
+    src = dest = (WCHAR*)buffer->data + off;
+    while ((const char*)src < buffer->data + buffer->written)
+    {
+        if (*src == '\r')
+        {
+            *dest++ = '\n';
+            src++;
+            prev_cr = TRUE;
+            continue;
+        }
+        if(prev_cr && *src == '\n')
+            src++;
+        else
+            *dest++ = *src++;
+        prev_cr = FALSE;
+    }
+
+    buffer->written = (char*)dest - buffer->data;
+    buffer->prev_cr = prev_cr;
+    *dest = 0;
+}
+
 /* note that raw buffer content is kept */
 static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding enc)
 {
@@ -976,15 +1006,18 @@ static void readerinput_switchencoding(xmlreaderinput *readerinput, xml_encoding
         readerinput_grow(readerinput, len);
         memcpy(dest->data, src->data + src->cur, len);
         dest->written += len*sizeof(WCHAR);
-        return;
+    }
+    else
+    {
+        dest_len = MultiByteToWideChar(cp, 0, src->data + src->cur, len, NULL, 0);
+        readerinput_grow(readerinput, dest_len);
+        ptr = (WCHAR*)dest->data;
+        MultiByteToWideChar(cp, 0, src->data + src->cur, len, ptr, dest_len);
+        ptr[dest_len] = 0;
+        dest->written += dest_len*sizeof(WCHAR);
     }
 
-    dest_len = MultiByteToWideChar(cp, 0, src->data + src->cur, len, NULL, 0);
-    readerinput_grow(readerinput, dest_len);
-    ptr = (WCHAR*)dest->data;
-    MultiByteToWideChar(cp, 0, src->data + src->cur, len, ptr, dest_len);
-    ptr[dest_len] = 0;
-    dest->written += dest_len*sizeof(WCHAR);
+    fixup_buffer_cr(dest, 0);
 }
 
 /* shrinks parsed data a buffer begins with */
@@ -1010,13 +1043,14 @@ static HRESULT reader_more(xmlreader *reader)
     encoded_buffer *src = &readerinput->buffer->encoded;
     encoded_buffer *dest = &readerinput->buffer->utf16;
     UINT cp = readerinput->buffer->code_page;
-    int len, dest_len;
+    int len, dest_len, prev_len;
     HRESULT hr;
     WCHAR *ptr;
 
     /* get some raw data from stream first */
     hr = readerinput_growraw(readerinput);
     len = readerinput_get_convlen(readerinput);
+    prev_len = dest->written / sizeof(WCHAR);
 
     /* just copy for UTF-16 case */
     if (cp == ~0)
@@ -1024,18 +1058,20 @@ static HRESULT reader_more(xmlreader *reader)
         readerinput_grow(readerinput, len);
         memcpy(dest->data + dest->written, src->data + src->cur, len);
         dest->written += len*sizeof(WCHAR);
-        return hr;
+    }
+    else
+    {
+        dest_len = MultiByteToWideChar(cp, 0, src->data + src->cur, len, NULL, 0);
+        readerinput_grow(readerinput, dest_len);
+        ptr = (WCHAR*)(dest->data + dest->written);
+        MultiByteToWideChar(cp, 0, src->data + src->cur, len, ptr, dest_len);
+        ptr[dest_len] = 0;
+        dest->written += dest_len*sizeof(WCHAR);
+        /* get rid of processed data */
+        readerinput_shrinkraw(readerinput, len);
     }
 
-    dest_len = MultiByteToWideChar(cp, 0, src->data + src->cur, len, NULL, 0);
-    readerinput_grow(readerinput, dest_len);
-    ptr = (WCHAR*)(dest->data + dest->written);
-    MultiByteToWideChar(cp, 0, src->data + src->cur, len, ptr, dest_len);
-    ptr[dest_len] = 0;
-    dest->written += dest_len*sizeof(WCHAR);
-    /* get rid of processed data */
-    readerinput_shrinkraw(readerinput, len);
-
+    fixup_buffer_cr(dest, prev_len);
     return hr;
 }
 
@@ -1974,28 +2010,6 @@ static HRESULT reader_parse_qname(xmlreader *reader, strval *prefix, strval *loc
     return S_OK;
 }
 
-/* Applies normalization rules to a single char, used for attribute values.
-
-   Rules include 2 steps:
-
-   1) replacing \r\n with a single \n;
-   2) replacing all whitespace chars with ' '.
-
- */
-static void reader_normalize_space(xmlreader *reader, WCHAR *ptr)
-{
-    encoded_buffer *buffer = &reader->input->buffer->utf16;
-
-    if (!is_wchar_space(*ptr)) return;
-
-    if (*ptr == '\r' && *(ptr+1) == '\n')
-    {
-        int len = buffer->written - ((char*)ptr - buffer->data) - 2*sizeof(WCHAR);
-        memmove(ptr+1, ptr+2, len);
-    }
-    *ptr = ' ';
-}
-
 static WCHAR get_predefined_entity(const xmlreader *reader, const strval *name)
 {
     static const WCHAR entltW[]   = {'l','t'};
@@ -2171,7 +2185,8 @@ static HRESULT reader_parse_attvalue(xmlreader *reader, strval *value)
         }
         else
         {
-            reader_normalize_space(reader, ptr);
+            /* replace all whitespace chars with ' ' */
+            if (is_wchar_space(*ptr)) *ptr = ' ';
             reader_skipn(reader, 1);
         }
         ptr = reader_get_ptr(reader);
@@ -2393,12 +2408,6 @@ static HRESULT reader_parse_cdata(xmlreader *reader)
         }
         else
         {
-            /* Value normalization is not fully implemented, rules are:
-
-               - single '\r' -> '\n';
-               - sequence '\r\n' -> '\n', in this case value length changes;
-            */
-            if (*ptr == '\r') *ptr = '\n';
             reader_skipn(reader, 1);
             ptr++;
         }

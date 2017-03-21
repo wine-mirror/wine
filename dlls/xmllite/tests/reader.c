@@ -1761,8 +1761,8 @@ static void test_readvaluechunk(void)
 static struct test_entry cdata_tests[] = {
     { "<a><![CDATA[ ]]data ]]></a>", "", " ]]data ", S_OK },
     { "<a><![CDATA[<![CDATA[ data ]]]]></a>", "", "<![CDATA[ data ]]", S_OK },
-    { "<a><![CDATA[\n \r\n \n\n ]]></a>", "", "\n \n \n\n ", S_OK, S_OK, TRUE },
-    { "<a><![CDATA[\r \r\r\n \n\n ]]></a>", "", "\n \n\n \n\n ", S_OK, S_OK, TRUE },
+    { "<a><![CDATA[\n \r\n \n\n ]]></a>", "", "\n \n \n\n ", S_OK, S_OK },
+    { "<a><![CDATA[\r \r\r\n \n\n ]]></a>", "", "\n \n\n \n\n ", S_OK, S_OK },
     { "<a><![CDATA[\r\r \n\r \r \n\n ]]></a>", "", "\n\n \n\n \n \n\n ", S_OK },
     { NULL }
 };
@@ -1856,8 +1856,8 @@ static void test_read_cdata(void)
 static struct test_entry text_tests[] = {
     { "<a>simple text</a>", "", "simple text", S_OK },
     { "<a>text ]]> text</a>", "", "", WC_E_CDSECTEND },
-    { "<a>\n \r\n \n\n text</a>", "", "\n \n \n\n text", S_OK, S_OK, TRUE },
-    { "<a>\r \r\r\n \n\n text</a>", "", "\n \n\n \n\n text", S_OK, S_OK, TRUE },
+    { "<a>\n \r\n \n\n text</a>", "", "\n \n \n\n text", S_OK, S_OK },
+    { "<a>\r \r\r\n \n\n text</a>", "", "\n \n\n \n\n text", S_OK, S_OK },
     { NULL }
 };
 
