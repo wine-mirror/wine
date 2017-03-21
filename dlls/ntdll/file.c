@@ -1727,7 +1727,12 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
             }
 
             if ((status = server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, NULL, NULL )))
+            {
+                if (status == STATUS_BAD_DEVICE_TYPE)
+                    status = server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                                in_buffer, in_size, out_buffer, out_size );
                 break;
+            }
 
 #ifdef FIONREAD
             if (ioctl( fd, FIONREAD, &avail ) != 0)

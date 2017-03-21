@@ -208,6 +208,8 @@ static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *en
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
 static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int blocking );
+static obj_handle_t pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async,
+                                       int blocking );
 static enum server_fd_type pipe_client_get_fd_type( struct fd *fd );
 
 static const struct object_ops pipe_client_ops =
@@ -240,7 +242,7 @@ static const struct fd_ops pipe_client_fd_ops =
     no_fd_read,                   /* read */
     pipe_end_write,               /* write */
     pipe_client_flush,            /* flush */
-    default_fd_ioctl,             /* ioctl */
+    pipe_client_ioctl,            /* ioctl */
     pipe_end_queue_async,         /* queue_async */
     pipe_end_reselect_async       /* reselect_async */
 };
@@ -792,6 +794,44 @@ static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
     return FD_TYPE_PIPE;
 }
 
+static void pipe_end_peek( struct pipe_end *pipe_end )
+{
+    unsigned reply_size = get_reply_max_size();
+    FILE_PIPE_PEEK_BUFFER *buffer;
+    struct pipe_message *message;
+    data_size_t avail = 0;
+
+    if (!use_server_io( pipe_end ))
+    {
+        set_error( STATUS_NOT_SUPPORTED );
+        return;
+    }
+
+    if (reply_size < offsetof( FILE_PIPE_PEEK_BUFFER, Data ))
+    {
+        set_error( STATUS_INFO_LENGTH_MISMATCH );
+        return;
+    }
+    reply_size -= offsetof( FILE_PIPE_PEEK_BUFFER, Data );
+
+    LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
+        avail += message->iosb->in_size - message->read_pos;
+
+    if (avail)
+    {
+        message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
+        reply_size = min( reply_size, message->iosb->in_size - message->read_pos );
+    }
+    else reply_size = 0;
+
+    if (!(buffer = set_reply_data_size( offsetof( FILE_PIPE_PEEK_BUFFER, Data[reply_size] )))) return;
+    buffer->NamedPipeState    = 0;  /* FIXME */
+    buffer->ReadDataAvailable = avail;
+    buffer->NumberOfMessages  = 0;  /* FIXME */
+    buffer->MessageLength     = 0;  /* FIXME */
+    if (reply_size) memcpy( buffer->Data, (const char *)message->iosb->in_data + message->read_pos, reply_size );
+}
+
 static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async,
                                        int blocking )
 {
@@ -856,6 +896,26 @@ static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct 
             set_error( STATUS_PIPE_DISCONNECTED );
             break;
         }
+        return 0;
+
+    case FSCTL_PIPE_PEEK:
+        pipe_end_peek( &server->pipe_end );
+        return 0;
+
+    default:
+        return default_fd_ioctl( fd, code, async, blocking );
+    }
+}
+
+static obj_handle_t pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async,
+                                       int blocking )
+{
+    struct pipe_client *client = get_fd_user( fd );
+
+    switch(code)
+    {
+    case FSCTL_PIPE_PEEK:
+        pipe_end_peek( &client->pipe_end );
         return 0;
 
     default:
