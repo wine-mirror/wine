@@ -3290,6 +3290,8 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value,
     switch (reader_get_nodetype(reader))
     {
     case XmlNodeType_XmlDeclaration:
+    case XmlNodeType_EndElement:
+    case XmlNodeType_None:
         *value = emptyW;
         *len = 0;
         break;
