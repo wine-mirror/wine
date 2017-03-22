@@ -68,11 +68,6 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
 
     if (texture == swapchain->back_buffers[0])
     {
-        if (swapchain->render_to_fbo)
-        {
-            TRACE("Returning GL_COLOR_ATTACHMENT0.\n");
-            return GL_COLOR_ATTACHMENT0;
-        }
         TRACE("Returning GL_BACK.\n");
         return GL_BACK;
     }
