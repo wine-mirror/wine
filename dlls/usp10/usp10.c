@@ -860,7 +860,7 @@ static WCHAR mirror_char( WCHAR ch )
     return ch + wine_mirror_map[wine_mirror_map[ch >> 8] + (ch & 0xff)];
 }
 
-static inline DWORD decode_surrogate_pair(LPCWSTR str, INT index, INT end)
+static DWORD decode_surrogate_pair(const WCHAR *str, unsigned int index, unsigned int end)
 {
     if (index < end-1 && IS_SURROGATE_PAIR(str[index],str[index+1]))
     {

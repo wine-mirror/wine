@@ -159,7 +159,7 @@ static inline void dump_types(const char* header, WORD *types, int start, int en
 }
 
 /* Convert the libwine information to the direction enum */
-static void classify(LPCWSTR lpString, WORD *chartype, DWORD uCount, const SCRIPT_CONTROL *c)
+static void classify(const WCHAR *string, WORD *chartype, DWORD count, const SCRIPT_CONTROL *c)
 {
     static const enum directions dir_map[16] =
     {
@@ -183,14 +183,14 @@ static void classify(LPCWSTR lpString, WORD *chartype, DWORD uCount, const SCRIP
 
     unsigned i;
 
-    for (i = 0; i < uCount; ++i)
+    for (i = 0; i < count; ++i)
     {
-        chartype[i] = dir_map[get_char_typeW(lpString[i]) >> 12];
+        chartype[i] = dir_map[get_char_typeW(string[i]) >> 12];
         switch (chartype[i])
         {
         case ES:
             if (!c->fLegacyBidiClass) break;
-            switch (lpString[i])
+            switch (string[i])
             {
             case '-':
             case '+': chartype[i] = NI; break;
@@ -198,7 +198,7 @@ static void classify(LPCWSTR lpString, WORD *chartype, DWORD uCount, const SCRIP
             }
             break;
         case PDF:
-            switch (lpString[i])
+            switch (string[i])
             {
             case 0x202A: chartype[i] = LRE; break;
             case 0x202B: chartype[i] = RLE; break;
@@ -988,7 +988,8 @@ static void resolveResolved(unsigned baselevel, const WORD * pcls, WORD *plevel,
     }
 }
 
-static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, WORD *pLevel, LPCWSTR lpString, int uCount, struct list *set)
+static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, const WORD *pLevel,
+        const WCHAR *string, unsigned int uCount, struct list *set)
 {
     int run_start, run_end, i;
     int run_count = 0;
@@ -1034,7 +1035,7 @@ static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, WORD *pLevel
             for (j = 0; j < current_isolated->length;  j++)
             {
                 current_isolated->item[j].pcls = &pcls[runs[k].start+j];
-                current_isolated->item[j].ch = lpString[runs[k].start+j];
+                current_isolated->item[j].ch = string[runs[k].start + j];
             }
 
             run_end = runs[k].end;
@@ -1064,7 +1065,7 @@ search:
                     for (m = 0; l < current_isolated->length; l++, m++)
                     {
                         current_isolated->item[l].pcls = &pcls[runs[j].start+m];
-                        current_isolated->item[l].ch = lpString[runs[j].start+m];
+                        current_isolated->item[l].ch = string[runs[j].start + m];
                     }
 
                     TRACE("[%i -- %i]",runs[j].start, runs[j].end);
@@ -1127,8 +1128,8 @@ search:
  *    BIDI_DeterminLevels
  */
 BOOL BIDI_DetermineLevels(
-                LPCWSTR lpString,       /* [in] The string for which information is to be returned */
-                INT uCount,     /* [in] Number of WCHARs in string. */
+                const WCHAR *lpString,  /* [in] The string for which information is to be returned */
+                unsigned int uCount,    /* [in] Number of WCHARs in string. */
                 const SCRIPT_STATE *s,
                 const SCRIPT_CONTROL *c,
                 WORD *lpOutLevels, /* [out] final string levels */
@@ -1287,15 +1288,14 @@ int BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, B
     return ich;
 }
 
-BOOL BIDI_GetStrengths(LPCWSTR lpString, INT uCount, const SCRIPT_CONTROL *c,
-                      WORD* lpStrength)
+BOOL BIDI_GetStrengths(const WCHAR *string, unsigned int count, const SCRIPT_CONTROL *c, WORD *strength)
 {
-    int i;
-    classify(lpString, lpStrength, uCount, c);
+    unsigned int i;
 
-    for ( i = 0; i < uCount; i++)
+    classify(string, strength, count, c);
+    for (i = 0; i < count; i++)
     {
-        switch(lpStrength[i])
+        switch (strength[i])
         {
             case L:
             case LRE:
@@ -1304,7 +1304,7 @@ BOOL BIDI_GetStrengths(LPCWSTR lpString, INT uCount, const SCRIPT_CONTROL *c,
             case AL:
             case RLE:
             case RLO:
-                lpStrength[i] = BIDI_STRONG;
+                strength[i] = BIDI_STRONG;
                 break;
             case PDF:
             case EN:
@@ -1313,14 +1313,14 @@ BOOL BIDI_GetStrengths(LPCWSTR lpString, INT uCount, const SCRIPT_CONTROL *c,
             case AN:
             case CS:
             case BN:
-                lpStrength[i] = BIDI_WEAK;
+                strength[i] = BIDI_WEAK;
                 break;
             case B:
             case S:
             case WS:
             case ON:
             default: /* Neutrals and NSM */
-                lpStrength[i] = BIDI_NEUTRAL;
+                strength[i] = BIDI_NEUTRAL;
         }
     }
     return TRUE;
