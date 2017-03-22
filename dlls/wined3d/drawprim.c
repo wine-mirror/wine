@@ -490,15 +490,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         wined3d_texture_invalidate_location(ds->container, dsv->sub_resource_idx, ~location);
     }
 
-    if ((!gl_info->supported[WINED3D_GL_VERSION_2_0]
-            || !gl_info->supported[NV_POINT_SPRITE])
-            && context->render_offscreen
-            && state->render_states[WINED3D_RS_POINTSPRITEENABLE]
-            && state->gl_primitive_type == GL_POINTS)
-    {
-        FIXME("Point sprite coordinate origin switching not supported.\n");
-    }
-
     stream_info = &context->stream_info;
     if (context->instance_count)
         instance_count = context->instance_count;
