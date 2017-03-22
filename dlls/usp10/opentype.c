@@ -669,22 +669,22 @@ static int compare_group(const void *a, const void* b)
     return 0;
 }
 
-DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWORD pgi, DWORD flags)
+DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, WORD *glyph_index, DWORD flags)
 {
     /* BMP: use gdi32 for ease */
     if (utf32c < 0x10000)
     {
         WCHAR ch = utf32c;
-        return GetGlyphIndicesW(hdc,&ch, 1, pgi, flags);
+        return GetGlyphIndicesW(hdc, &ch, 1, glyph_index, flags);
     }
 
     if (!psc->CMAP_format12_Table)
         psc->CMAP_format12_Table = load_CMAP_format12_table(hdc, psc);
 
     if (flags & GGI_MARK_NONEXISTING_GLYPHS)
-        *pgi = 0xffff;
+        *glyph_index = 0xffffu;
     else
-        *pgi = 0;
+        *glyph_index = 0u;
 
     if (psc->CMAP_format12_Table)
     {
@@ -699,7 +699,7 @@ DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWOR
         if (group)
         {
             DWORD offset = utf32c - GET_BE_DWORD(group->startCharCode);
-            *pgi = GET_BE_DWORD(group->startGlyphID) + offset;
+            *glyph_index = GET_BE_DWORD(group->startGlyphID) + offset;
             return 0;
         }
     }
