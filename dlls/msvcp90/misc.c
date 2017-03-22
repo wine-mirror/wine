@@ -1400,6 +1400,16 @@ void __cdecl _Unlock_shared_ptr_spin_lock(void)
 }
 #endif
 
+/* ?is_current_task_group_canceling@Concurrency@@YA_NXZ */
+MSVCP_bool __cdecl is_current_task_group_canceling(void *this)
+{
+    static int once;
+
+    if (!once++)
+        FIXME("(%p) stub\n", this);
+    return FALSE;
+}
+
 #if _MSVCP_VER >= 140
 typedef struct {
     void *unk0;

@@ -477,7 +477,7 @@
 @ stub ?from_numa_node@location@Concurrency@@SA?AV12@G@Z
 @ stub -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
 @ stub -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
-@ stub ?is_current_task_group_canceling@Concurrency@@YA_NXZ
+@ cdecl ?is_current_task_group_canceling@Concurrency@@YA_NXZ(ptr) msvcp120.?is_current_task_group_canceling@Concurrency@@YA_NXZ
 @ thiscall -arch=i386 ?lock@critical_section@Concurrency@@QAEXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QEAAXXZ
 @ thiscall -arch=win32 ?lock@reader_writer_lock@Concurrency@@QAEXXZ(ptr) msvcr120.?lock@reader_writer_lock@Concurrency@@QAEXXZ

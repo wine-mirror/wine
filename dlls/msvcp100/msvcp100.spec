@@ -2068,7 +2068,7 @@
 @ extern ?is_bounded@_Num_base@std@@2_NB std_Num_base_is_bounded
 @ extern ?is_bounded@_Num_float_base@std@@2_NB std_Num_float_base_is_bounded
 @ extern ?is_bounded@_Num_int_base@std@@2_NB std_Num_int_base_is_bounded
-@ stub ?is_current_task_group_canceling@Concurrency@@YA_NXZ
+@ cdecl ?is_current_task_group_canceling@Concurrency@@YA_NXZ(ptr) is_current_task_group_canceling
 @ extern ?is_exact@_Num_base@std@@2_NB std_Num_base_is_exact
 @ extern ?is_exact@_Num_float_base@std@@2_NB std_Num_float_base_is_exact
 @ extern ?is_exact@_Num_int_base@std@@2_NB std_Num_int_base_is_exact
