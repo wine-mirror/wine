@@ -2078,13 +2078,16 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
     struct wined3d_texture *texture = surface->container;
     UINT drawable_height;
 
-    if (texture->swapchain && texture == texture->swapchain->front_buffer)
+    if (texture->swapchain)
     {
         POINT offset = {0, 0};
         RECT windowsize;
 
-        ScreenToClient(window, &offset);
-        OffsetRect(rect, offset.x, offset.y);
+        if (texture == texture->swapchain->front_buffer)
+        {
+            ScreenToClient(window, &offset);
+            OffsetRect(rect, offset.x, offset.y);
+        }
 
         GetClientRect(window, &windowsize);
         drawable_height = windowsize.bottom - windowsize.top;
