@@ -310,6 +310,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
     UINT src_h = src_rect->bottom - src_rect->top;
     GLenum gl_filter;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    enum wined3d_texture_filter_type filter;
     RECT win_rect;
     UINT win_h;
 
@@ -317,9 +318,15 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
             swapchain, context, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect));
 
     if (src_w == dst_rect->right - dst_rect->left && src_h == dst_rect->bottom - dst_rect->top)
+    {
+        filter = WINED3D_TEXF_NONE;
         gl_filter = GL_NEAREST;
+    }
     else
+    {
+        filter = WINED3D_TEXF_LINEAR;
         gl_filter = GL_LINEAR;
+    }
 
     GetClientRect(swapchain->win_handle, &win_rect);
     win_h = win_rect.bottom - win_rect.top;
@@ -361,75 +368,22 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
     {
         struct wined3d_device *device = swapchain->device;
         struct wined3d_context *context2;
-        float tex_left = src_rect->left;
-        float tex_top = src_rect->top;
-        float tex_right = src_rect->right;
-        float tex_bottom = src_rect->bottom;
+        RECT r;
 
         context2 = context_acquire(device, texture, 0);
         context_apply_blit_state(context2, device);
 
-        if (texture->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
-        {
-            tex_left /= texture->pow2_width;
-            tex_right /= texture->pow2_width;
-            tex_top /= texture->pow2_height;
-            tex_bottom /= texture->pow2_height;
-        }
+        r = *dst_rect;
+        surface_translate_drawable_coords(back_buffer, swapchain->win_handle, &r);
 
         if (is_complex_fixup(texture->resource.format->color_fixup))
-            gl_filter = GL_NEAREST;
+            filter = WINED3D_TEXF_NONE;
 
-        context_apply_fbo_state_blit(context2, GL_FRAMEBUFFER, front_buffer, NULL, WINED3D_LOCATION_DRAWABLE);
-        context_bind_texture(context2, back_buffer->texture_target, texture->texture_rgb.name);
-
-        /* Set up the texture. The surface is not in a wined3d_texture
-         * container, so there are no D3D texture settings to dirtify. */
-        device->blitter->set_shader(device->blit_priv, context2, back_buffer, NULL);
-        gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target, GL_TEXTURE_MIN_FILTER, gl_filter);
-        gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target, GL_TEXTURE_MAG_FILTER, gl_filter);
-        if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-            gl_info->gl_ops.gl.p_glTexParameteri(back_buffer->texture_target,
-                    GL_TEXTURE_SRGB_DECODE_EXT, GL_SKIP_DECODE_EXT);
-
+        context_apply_fbo_state_blit(context2, GL_FRAMEBUFFER, back_buffer, NULL, WINED3D_LOCATION_DRAWABLE);
         context_set_draw_buffer(context, GL_BACK);
 
-        /* Set the viewport to the destination rectandle, disable any projection
-         * transformation set up by context_apply_blit_state(), and draw a
-         * (-1,-1)-(1,1) quad.
-         *
-         * Back up viewport and matrix to avoid breaking last_was_blit
-         *
-         * Note that context_apply_blit_state() set up viewport and ortho to
-         * match the surface size - we want the GL drawable(=window) size. */
-        gl_info->gl_ops.gl.p_glPushAttrib(GL_VIEWPORT_BIT);
-        gl_info->gl_ops.gl.p_glViewport(dst_rect->left, win_h - dst_rect->bottom,
-                dst_rect->right, win_h - dst_rect->top);
-        gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
-        gl_info->gl_ops.gl.p_glPushMatrix();
-        gl_info->gl_ops.gl.p_glLoadIdentity();
-
-        gl_info->gl_ops.gl.p_glBegin(GL_QUADS);
-            /* bottom left */
-            gl_info->gl_ops.gl.p_glTexCoord2f(tex_left, tex_bottom);
-            gl_info->gl_ops.gl.p_glVertex2i(-1, -1);
-
-            /* top left */
-            gl_info->gl_ops.gl.p_glTexCoord2f(tex_left, tex_top);
-            gl_info->gl_ops.gl.p_glVertex2i(-1, 1);
-
-            /* top right */
-            gl_info->gl_ops.gl.p_glTexCoord2f(tex_right, tex_top);
-            gl_info->gl_ops.gl.p_glVertex2i(1, 1);
-
-            /* bottom right */
-            gl_info->gl_ops.gl.p_glTexCoord2f(tex_right, tex_bottom);
-            gl_info->gl_ops.gl.p_glVertex2i(1, -1);
-        gl_info->gl_ops.gl.p_glEnd();
-
-        gl_info->gl_ops.gl.p_glPopMatrix();
-        gl_info->gl_ops.gl.p_glPopAttrib();
-
+        device->blitter->set_shader(device->blit_priv, context2, back_buffer, NULL);
+        draw_textured_quad(back_buffer, context2, src_rect, &r, filter);
         device->blitter->unset_shader(context->gl_info);
         checkGLcall("Swapchain present blit(manual)\n");
 
