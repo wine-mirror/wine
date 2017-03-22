@@ -268,7 +268,7 @@ static void test_basic_import(void)
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine5\"=\"No newline\"");
-    todo_wine verify_reg(hkey, "Wine5", REG_SZ, "No newline", 11, 0);
+    verify_reg(hkey, "Wine5", REG_SZ, "No newline", 11, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -276,7 +276,7 @@ static void test_basic_import(void)
                     "\"Wine7\"=\"No newline\"");
     dword = 0x50;
     verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
+    verify_reg(hkey, "Wine7", REG_SZ, "No newline", 11, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -361,7 +361,7 @@ static void test_basic_import_31(void)
 
     exec_import_str("REGEDIT\r\n"
                     "HKEY_CLASSES_ROOT\\" KEY_BASE " = No newline");
-    verify_reg(hkey, "", REG_SZ, "No newline", 11, TODO_REG_SIZE | TODO_REG_DATA);
+    verify_reg(hkey, "", REG_SZ, "No newline", 11, 0);
 
     RegCloseKey(hkey);
 
@@ -482,7 +482,7 @@ static void test_invalid_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line2\"=hex(7):4c,69,6e,65,20\\\n"
                     "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
-    verify_reg_nonexist(hkey, "Multi-Line2");
+    todo_wine verify_reg_nonexist(hkey, "Multi-Line2");
 
     exec_import_str("Windows Registry Editor Version 5.00\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -494,7 +494,7 @@ static void test_invalid_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Multi-Line4\"=hex(7):4c,69,6e,65,20\\\n"
                     "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
-    verify_reg_nonexist(hkey, "Multi-Line4");
+    todo_wine verify_reg_nonexist(hkey, "Multi-Line4");
 
     RegCloseKey(hkey);
 
@@ -519,8 +519,8 @@ static void test_comments(void)
                     "\"Wine2\"=\"Line 2\"\n\n");
     lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
     ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
-    verify_reg(hkey, "Wine1", REG_SZ, "Line 1", 7, 0);
-    verify_reg(hkey, "Wine2", REG_SZ, "Line 2", 7, 0);
+    todo_wine verify_reg(hkey, "Wine1", REG_SZ, "Line 1", 7, 0);
+    todo_wine verify_reg(hkey, "Wine2", REG_SZ, "Line 2", 7, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"

@@ -675,145 +675,113 @@ static enum reg_versions parse_file_header(WCHAR *s)
     return REG_VERSION_INVALID;
 }
 
-/******************************************************************************
- * Processes a registry file.
- * Correctly processes comments (in # and ; form), line continuation.
- *
- * Parameters:
- *   in - input stream to read from
- *   first_chars - beginning of stream, read due to Unicode check
- */
-static void processRegLinesA(FILE *in, char* first_chars)
+static char *get_lineA(FILE *fp)
 {
-    char *buf = NULL;  /* the line read from the input stream */
-    unsigned long line_size = REG_VAL_BUF_SIZE;
-    size_t chars_in_buf = -1;
-    char *s; /* A pointer to buf for fread */
-    char *line; /* The start of the current line */
-    WCHAR *lineW;
-    unsigned long version = 0;
+    static size_t size;
+    static char *buf, *next;
+    char *line;
 
-    static const char header_31[] = "REGEDIT";
-    static const char header_40[] = "REGEDIT4";
-    static const char header_50[] = "Windows Registry Editor Version 5.00";
-
-    buf = HeapAlloc(GetProcessHeap(), 0, line_size);
-    CHECK_ENOUGH_MEMORY(buf);
-    s = buf;
-    line = buf;
-
-    memcpy(line, first_chars, 2);
-
-    if (first_chars)
-        s += 2;
-
-    while (!feof(in)) {
-        size_t size_remaining;
-        int size_to_get;
-        char *s_eol = NULL; /* various local uses */
-
-        /* Do we need to expand the buffer? */
-        assert(s >= buf && s <= buf + line_size);
-        size_remaining = line_size - (s - buf);
-        if (size_remaining < 3) /* we need at least 3 bytes of room for \r\n\0 */
-        {
-            char *new_buffer;
-            size_t new_size = line_size + REG_VAL_BUF_SIZE;
-            if (new_size > line_size) /* no arithmetic overflow */
-                new_buffer = HeapReAlloc(GetProcessHeap(), 0, buf, new_size);
-            else
-                new_buffer = NULL;
-            CHECK_ENOUGH_MEMORY(new_buffer);
-            buf = new_buffer;
-            line = buf;
-            s = buf + line_size - size_remaining;
-            line_size = new_size;
-            size_remaining = line_size - (s - buf);
-        }
-
-        /* Get as much as possible into the buffer, terminating on EOF,
-         * error or once we have read the maximum amount. Abort on error.
-         */
-        size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
-
-        chars_in_buf = fread(s, 1, size_to_get - 1, in);
-        s[chars_in_buf] = 0;
-
-        if (chars_in_buf == 0) {
-            if (ferror(in)) {
-                perror("While reading input");
-                exit(IO_ERROR);
-            } else {
-                assert(feof(in));
-                *s = '\0';
-            }
-        }
-
-        /* If we didn't read the end-of-line sequence or EOF, go around again */
-        while (1)
-        {
-            s_eol = strpbrk(line, "\r\n");
-            if (!s_eol) {
-                /* Move the stub of the line to the start of the buffer so
-                 * we get the maximum space to read into, and so we don't
-                 * have to recalculate 'line' if the buffer expands */
-                MoveMemory(buf, line, strlen(line) + 1);
-                line = buf;
-                s = strchr(line, '\0');
-                break;
-            }
-
-            /* If we find a comment line, discard it and go around again */
-            if (line [0] == '#' || line [0] == ';') {
-                if (*s_eol == '\r' && *(s_eol + 1) == '\n')
-                    line = s_eol + 2;
-                else
-                    line = s_eol + 1;
-                continue;
-            }
-
-            /* If there is a concatenating '\\', go around again */
-            if (*(s_eol - 1) == '\\') {
-                char *next_line = s_eol + 1;
-
-                if (*s_eol == '\r' && *(s_eol + 1) == '\n')
-                    next_line++;
-
-                while (*(next_line + 1) == ' ' || *(next_line + 1) == '\t')
-                    next_line++;
-
-                MoveMemory(s_eol - 1, next_line, chars_in_buf - (next_line - s) + 1);
-                chars_in_buf -= next_line - s_eol + 1;
-                continue;
-            }
-
-            /* Remove any line feed. Leave s_eol on the last \0 */
-            if (*s_eol == '\r' && *(s_eol + 1) == '\n')
-                *s_eol++ = '\0';
-            *s_eol = '\0';
-
-	    /* Check if the line is a header string */
-	    if (!strcmp(line, header_31)) {
-		version = REG_VERSION_31;
-	    } else if (!strcmp(line, header_40)) {
-		version = REG_VERSION_40;
-	    } else if (!strcmp(line, header_50)) {
-		version = REG_VERSION_50;
-	    } else {
-		lineW = GetWideString(line);
-		if (version == REG_VERSION_31) {
-		    processRegEntry31(lineW);
-		} else if(version == REG_VERSION_40 || version == REG_VERSION_50) {
-		    processRegEntry(lineW, FALSE);
-		}
-		HeapFree(GetProcessHeap(), 0, lineW);
-	    }
-            line = s_eol + 1;
-        }
+    if (!fp)
+    {
+        if (size) HeapFree(GetProcessHeap(), 0, buf);
+        size = 0;
+        return NULL;
     }
-    closeKey();
 
+    if (!size)
+    {
+        size = REG_VAL_BUF_SIZE;
+        buf = HeapAlloc(GetProcessHeap(), 0, size);
+        CHECK_ENOUGH_MEMORY(buf);
+        *buf = 0;
+        next = buf;
+    }
+    line = next;
+
+    while (next)
+    {
+        char *p = strpbrk(line, "\r\n");
+        if (!p)
+        {
+            size_t len, count;
+            len = strlen(next);
+            memmove(buf, next, len + 1);
+            if (size - len < 3)
+            {
+                char *new_buf = HeapReAlloc(GetProcessHeap(), 0, buf, size * 2);
+                CHECK_ENOUGH_MEMORY(new_buf);
+                buf = new_buf;
+                size *= 2;
+            }
+            if (!(count = fread(buf + len, 1, size - len - 1, fp)))
+            {
+                next = NULL;
+                return buf;
+            }
+            buf[len + count] = 0;
+            next = buf;
+            line = buf;
+            continue;
+        }
+        next = p + 1;
+        if (*p == '\r' && *(p + 1) == '\n') next++;
+        *p = 0;
+        if (p > buf && *(p - 1) == '\\')
+        {
+            while (*next == ' ' || *next == '\t') next++;
+            memmove(p - 1, next, strlen(next) + 1);
+            next = line;
+            continue;
+        }
+        if (*line == ';' || *line == '#')
+        {
+            line = next;
+            continue;
+        }
+        return line;
+    }
     HeapFree(GetProcessHeap(), 0, buf);
+    size = 0;
+    return NULL;
+}
+
+static void processRegLinesA(FILE *fp, char *two_chars)
+{
+    char *line, *header;
+    WCHAR *lineW;
+    int reg_version;
+
+    line = get_lineA(fp);
+
+    header = HeapAlloc(GetProcessHeap(), 0, strlen(line) + 3);
+    CHECK_ENOUGH_MEMORY(header);
+    strcpy(header, two_chars);
+    strcpy(header + 2, line);
+
+    lineW = GetWideString(header);
+    HeapFree(GetProcessHeap(), 0, header);
+
+    reg_version = parse_file_header(lineW);
+    HeapFree(GetProcessHeap(), 0, lineW);
+    if (reg_version == REG_VERSION_INVALID)
+    {
+        get_lineA(NULL); /* Reset static variables */
+        return;
+    }
+
+    while ((line = get_lineA(fp)))
+    {
+        lineW = GetWideString(line);
+
+        if (reg_version == REG_VERSION_31)
+            processRegEntry31(lineW);
+        else
+            processRegEntry(lineW, FALSE);
+
+        HeapFree(GetProcessHeap(), 0, lineW);
+    }
+
+    closeKey();
 }
 
 static WCHAR *get_lineW(FILE *fp)
@@ -868,11 +836,10 @@ static WCHAR *get_lineW(FILE *fp)
         next = p + 1;
         if (*p == '\r' && *(p + 1) == '\n') next++;
         *p = 0;
-        if (*(p - 1) == '\\')
+        if (p > buf && *(p - 1) == '\\')
         {
-            *(--p) = 0;
-            while (*next && (*next == ' ' || *next == '\t')) next++;
-            memmove(p, next, (strlenW(next) + 1) * sizeof(WCHAR));
+            while (*next == ' ' || *next == '\t') next++;
+            memmove(p - 1, next, (strlenW(next) + 1) * sizeof(WCHAR));
             next = line;
             continue;
         }
