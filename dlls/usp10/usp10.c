@@ -1875,7 +1875,7 @@ static void find_fallback_font(enum usp10_script scriptid, WCHAR *FaceName)
         DWORD type;
 
         sprintfW(value, szFmt, scriptInformation[scriptid].scriptTag);
-        if (RegQueryValueExW(hkey, value, 0, &type, (LPBYTE)FaceName, &count))
+        if (RegQueryValueExW(hkey, value, 0, &type, (BYTE *)FaceName, &count))
             lstrcpyW(FaceName,scriptInformation[scriptid].fallbackFont);
         RegCloseKey(hkey);
     }
