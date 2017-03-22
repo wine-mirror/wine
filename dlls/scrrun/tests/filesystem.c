@@ -1397,6 +1397,17 @@ static void test_DriveCollection(void)
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(ready == VARIANT_TRUE, "got %x\n", ready);
 
+            if (ready != VARIANT_TRUE) {
+                hr = IDrive_get_DriveLetter(drive, &str);
+                ok(hr == S_OK, "got 0x%08x\n", hr);
+
+                skip("Drive %s is not ready, skipping some tests\n", wine_dbgstr_w(str));
+
+                VariantClear(&var);
+                SysFreeString(str);
+                continue;
+            }
+
             V_VT(&size) = VT_EMPTY;
             hr = IDrive_get_TotalSize(drive, &size);
             ok(hr == S_OK, "got 0x%08x\n", hr);
