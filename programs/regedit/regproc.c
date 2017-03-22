@@ -650,6 +650,7 @@ enum reg_versions {
     REG_VERSION_31,
     REG_VERSION_40,
     REG_VERSION_50,
+    REG_VERSION_FUZZY,
     REG_VERSION_INVALID
 };
 
@@ -671,6 +672,14 @@ static enum reg_versions parse_file_header(WCHAR *s)
 
     if (!strcmpW(s, header_50))
         return REG_VERSION_50;
+
+    /* The Windows version accepts registry file headers beginning with "REGEDIT" and ending
+     * with other characters, as long as "REGEDIT" appears at the start of the line. For example,
+     * "REGEDIT 4", "REGEDIT9" and "REGEDIT4FOO" are all treated as valid file headers.
+     * In all such cases, however, the contents of the registry file are not imported.
+     */
+    if (!strncmpW(s, header_31, 7)) /* "REGEDIT" without NUL */
+        return REG_VERSION_FUZZY;
 
     return REG_VERSION_INVALID;
 }
@@ -763,10 +772,10 @@ static BOOL processRegLinesA(FILE *fp, char *two_chars)
 
     reg_version = parse_file_header(lineW);
     HeapFree(GetProcessHeap(), 0, lineW);
-    if (reg_version == REG_VERSION_INVALID)
+    if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
     {
         get_lineA(NULL); /* Reset static variables */
-        return FALSE;
+        return reg_version == REG_VERSION_FUZZY;
     }
 
     while ((line = get_lineA(fp)))
@@ -863,10 +872,10 @@ static BOOL processRegLinesW(FILE *fp)
 
     line = get_lineW(fp);
     reg_version = parse_file_header(line);
-    if (reg_version == REG_VERSION_INVALID)
+    if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
     {
         get_lineW(NULL); /* Reset static variables */
-        return FALSE;
+        return reg_version == REG_VERSION_FUZZY;
     }
 
     while ((line = get_lineW(fp)))
