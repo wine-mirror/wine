@@ -67,4 +67,25 @@
 #define PERF_DETAIL_EXPERT      300
 #define PERF_DETAIL_WIZARD      400
 
+/* Performance data structure header
+ * returned in answer to HKEY_PERFORMANCE_DATA request
+ */
+
+typedef struct _PERF_DATA_BLOCK {
+  WCHAR         Signature[4];
+  DWORD         LittleEndian;
+  DWORD         Version;
+  DWORD         Revision;
+  DWORD         TotalByteLength;
+  DWORD         HeaderLength;
+  DWORD         NumObjectTypes;
+  DWORD         DefaultObject;
+  SYSTEMTIME    SystemTime;
+  LARGE_INTEGER PerfTime;
+  LARGE_INTEGER PerfFreq;
+  LARGE_INTEGER PerfTime100nSec;
+  DWORD         SystemNameLength;
+  DWORD         SystemNameOffset;
+} PERF_DATA_BLOCK, *PPERF_DATA_BLOCK, *LPPERF_DATA_BLOCK;
+
 #endif /* _WINPERF_ */
