@@ -57,6 +57,16 @@ HRESULT WINAPI UiaGetReservedMixedAttributeValue(IUnknown **value)
 }
 
 /***********************************************************************
+ *          UiaGetReservedNotSupportedValue (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaGetReservedNotSupportedValue(IUnknown **value)
+{
+    FIXME("(%p) stub!\n", value);
+    *value = NULL;
+    return S_OK;
+}
+
+/***********************************************************************
  *          UiaLookupId (uiautomationcore.@)
  */
 int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid)
