@@ -8869,7 +8869,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
                 pshader, &ps_compile_args, &np2fixup_info);
         ps_list = &pshader->linked_programs;
     }
-    else if (priv->fragment_pipe == &glsl_fragment_pipe)
+    else if (priv->fragment_pipe == &glsl_fragment_pipe
+            && !(vshader && vshader->reg_maps.shader_version.major >= 4))
     {
         struct glsl_ffp_fragment_shader *ffp_shader;
         struct ffp_frag_settings settings;
