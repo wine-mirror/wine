@@ -3706,7 +3706,7 @@ static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device1 *iface,
 
     TRACE("iface %p, target_count %u, targets %p, offsets %p.\n", iface, target_count, targets, offsets);
 
-    count = min(target_count, 4);
+    count = min(target_count, D3D10_SO_BUFFER_SLOT_COUNT);
     wined3d_mutex_lock();
     for (i = 0; i < count; ++i)
     {
