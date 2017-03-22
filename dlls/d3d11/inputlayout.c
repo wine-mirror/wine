@@ -31,6 +31,11 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
     if (tag != TAG_ISGN)
         return S_OK;
 
+    if (is->elements)
+    {
+        FIXME("Multiple input signatures.\n");
+        shader_free_signature(is);
+    }
     return shader_parse_signature(data, data_size, is);
 }
 
@@ -42,6 +47,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
     unsigned int i;
     HRESULT hr;
 
+    memset(&is, 0, sizeof(is));
     if (FAILED(hr = parse_dxbc(shader_byte_code, shader_byte_code_length, isgn_handler, &is)))
     {
         ERR("Failed to parse input signature.\n");
