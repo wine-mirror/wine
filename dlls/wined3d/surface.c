@@ -2345,8 +2345,8 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
 
     surface_get_rect(surface, NULL, &r);
     wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
-    device->blitter->blit_surface(device, WINED3D_BLIT_OP_COLOR_BLIT, context,
-            surface, &r, surface, &r, NULL, WINED3D_TEXF_POINT);
+    device->blitter->blit_surface(device, WINED3D_BLIT_OP_COLOR_BLIT, context, surface, &r,
+            surface, WINED3D_LOCATION_DRAWABLE, &r, NULL, WINED3D_TEXF_POINT);
 
     if (restore_rt)
         context_restore(context, restore_rt);
@@ -2718,7 +2718,7 @@ static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
 
 static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
         struct wined3d_context *context, struct wined3d_surface *src_surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect,
+        struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_texture *src_texture = src_surface->container;
@@ -2742,11 +2742,31 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
     /* Activate the destination context, set it up for blitting. */
     context_apply_blit_state(context, device);
 
-    if (!wined3d_resource_is_offscreen(&dst_texture->resource))
+    if (dst_location == WINED3D_LOCATION_DRAWABLE)
     {
         r = *dst_rect;
         surface_translate_drawable_coords(dst_surface, context->win_handle, &r);
         dst_rect = &r;
+    }
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        GLenum buffer;
+
+        if (dst_location == WINED3D_LOCATION_DRAWABLE)
+        {
+            TRACE("Destination surface %p is onscreen.\n", dst_surface);
+            buffer = wined3d_texture_get_gl_buffer(dst_texture);
+        }
+        else
+        {
+            TRACE("Destination surface %p is offscreen.\n", dst_surface);
+            buffer = GL_COLOR_ATTACHMENT0;
+        }
+        context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
+        context_set_draw_buffer(context, buffer);
+        context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
+        context_invalidate_state(context, STATE_FRAMEBUFFER);
     }
 
     ffp_blit_set(device->blit_priv, context, src_surface, NULL);
@@ -3437,7 +3457,7 @@ static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
 
 static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
         struct wined3d_context *context, struct wined3d_surface *src_surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect,
+        struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     /* FIXME: Remove error returns from surface_blt_cpu. */
@@ -3733,8 +3753,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 struct wined3d_context *context;
 
                 context = context_acquire(device, dst_texture, dst_sub_resource_idx);
-                blitter->blit_surface(device, blit_op, context, src_surface,
-                        src_rect, dst_surface, dst_rect, color_key, filter);
+                blitter->blit_surface(device, blit_op, context, src_surface, src_rect, dst_surface,
+                        dst_texture->resource.draw_binding, dst_rect, color_key, filter);
                 context_release(context);
 
                 wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx,
