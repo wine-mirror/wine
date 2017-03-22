@@ -745,7 +745,7 @@ static char *get_lineA(FILE *fp)
     return NULL;
 }
 
-static void processRegLinesA(FILE *fp, char *two_chars)
+static BOOL processRegLinesA(FILE *fp, char *two_chars)
 {
     char *line, *header;
     WCHAR *lineW;
@@ -766,7 +766,7 @@ static void processRegLinesA(FILE *fp, char *two_chars)
     if (reg_version == REG_VERSION_INVALID)
     {
         get_lineA(NULL); /* Reset static variables */
-        return;
+        return FALSE;
     }
 
     while ((line = get_lineA(fp)))
@@ -782,6 +782,7 @@ static void processRegLinesA(FILE *fp, char *two_chars)
     }
 
     closeKey();
+    return TRUE;
 }
 
 static WCHAR *get_lineW(FILE *fp)
@@ -855,7 +856,7 @@ static WCHAR *get_lineW(FILE *fp)
     return NULL;
 }
 
-static void processRegLinesW(FILE *fp)
+static BOOL processRegLinesW(FILE *fp)
 {
     WCHAR *line;
     int reg_version;
@@ -865,13 +866,14 @@ static void processRegLinesW(FILE *fp)
     if (reg_version == REG_VERSION_INVALID)
     {
         get_lineW(NULL); /* Reset static variables */
-        return;
+        return FALSE;
     }
 
     while ((line = get_lineW(fp)))
         processRegEntry(line, TRUE);
 
     closeKey();
+    return TRUE;
 }
 
 /******************************************************************************
@@ -1347,22 +1349,15 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
  */
 BOOL import_registry_file(FILE* reg_file)
 {
-    if (reg_file)
-    {
-        BYTE s[2];
-        if (fread( s, 2, 1, reg_file) == 1)
-        {
-            if (s[0] == 0xff && s[1] == 0xfe)
-            {
-                processRegLinesW(reg_file);
-            } else
-            {
-                processRegLinesA(reg_file, (char*)s);
-            }
-        }
-        return TRUE;
-    }
-    return FALSE;
+    BYTE s[2];
+
+    if (!reg_file || (fread(s, 2, 1, reg_file) != 1))
+        return FALSE;
+
+    if (s[0] == 0xff && s[1] == 0xfe)
+        return processRegLinesW(reg_file);
+    else
+        return processRegLinesA(reg_file, (char *)s);
 }
 
 /******************************************************************************
