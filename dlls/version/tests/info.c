@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winuser.h"
 #include "winver.h"
 #include "verrsrc.h"
 #include "wine/test.h"
@@ -645,6 +646,17 @@ static void test_GetFileVersionInfoEx(void)
         0xdeadbeef, /* invalid value (ignored) */
     };
     char desc[MAX_PATH];
+
+    mod = GetModuleHandleA("kernel32.dll");
+    assert(mod);
+
+    if (!FindResourceExA(mod, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO, lang) &&
+        !FindResourceExA(mod, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO,
+                         MAKELANGID(PRIMARYLANGID(lang),SUBLANG_NEUTRAL)))
+    {
+        skip("Translation is not available\n");
+        return;
+    }
 
     size = GetFileVersionInfoSizeW(kernel32W, NULL);
     ok(size, "GetFileVersionInfoSize(kernel32) error %u\n", GetLastError());
