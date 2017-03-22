@@ -68,6 +68,22 @@ static BOOL uses_larger_font( const language_t *lan )
     return lan->id == LANG_CHINESE || lan->id == LANG_JAPANESE || lan->id == LANG_KOREAN;
 }
 
+static WORD get_default_sublang( const language_t *lan )
+{
+    if (lan->sub != SUBLANG_NEUTRAL)
+        return lan->sub;
+
+    switch (lan->id)
+    {
+    case LANG_SPANISH:
+        return SUBLANG_SPANISH_MODERN;
+    case LANG_CHINESE:
+        return SUBLANG_CHINESE_SIMPLIFIED;
+    default:
+        return SUBLANG_DEFAULT;
+    }
+}
+
 static version_t *get_dup_version( language_t *lang )
 {
     /* English "translations" take precedence over the original rc contents */
@@ -177,6 +193,12 @@ static resource_t *dup_resource( resource_t *res, language_t *lang )
         *new->res.stt = *res->res.stt;
         new->res.stt->lvc.language = lang;
         new->res.stt->lvc.version = get_dup_version( lang );
+        break;
+    case res_ver:
+        new->res.ver = xmalloc( sizeof(*(new)->res.ver) );
+        *new->res.ver = *res->res.ver;
+        new->res.ver->lvc.language = lang;
+        new->res.ver->lvc.version = get_dup_version( lang );
         break;
     default:
         assert(0);
@@ -847,6 +869,83 @@ static void add_po_accel( const resource_t *english, const resource_t *res )
     }
 }
 
+static ver_block_t *get_version_langcharset_block( ver_block_t *block )
+{
+    ver_block_t *stringfileinfo = NULL;
+    char *translation = NULL;
+    ver_value_t *val;
+
+    for (; block; block = block->next)
+    {
+        char *name;
+        name = convert_msgid_ascii( block->name, 0 );
+        if (!strcasecmp( name, "stringfileinfo" ))
+            stringfileinfo = block;
+        else if (!strcasecmp( name, "varfileinfo" ))
+        {
+            for (val = block->values; val; val = val->next)
+            {
+                char *key = convert_msgid_ascii( val->key, 0 );
+                if (val->type == val_words &&
+                    !strcasecmp( key, "Translation" ) &&
+                    val->value.words->nwords >= 2)
+                    translation = strmake( "%04x%04x",
+                                           val->value.words->words[0],
+                                           val->value.words->words[1] );
+                free( key );
+            }
+        }
+        free( name );
+    }
+
+    if (!stringfileinfo || !translation) return NULL;
+
+    for (val = stringfileinfo->values; val; val = val->next)
+    {
+        char *block_name;
+        if (val->type != val_block) continue;
+        block_name = convert_msgid_ascii( val->value.block->name, 0 );
+        if (!strcasecmp( block_name, translation ))
+        {
+            free( block_name );
+            free( translation );
+            return val->value.block;
+        }
+        free( block_name );
+    }
+    free( translation );
+    return NULL;
+}
+
+static void add_pot_versioninfo( po_file_t po, const resource_t *res )
+{
+    ver_value_t *val;
+    ver_block_t *langcharset = get_version_langcharset_block( res->res.ver->blocks );
+
+    if (!langcharset) return;
+    for (val = langcharset->values; val; val = val->next)
+        add_po_string( po, val->value.str, NULL, NULL );
+}
+
+static void add_po_versioninfo( const resource_t *english, const resource_t *res )
+{
+    const ver_block_t *langcharset = get_version_langcharset_block( res->res.ver->blocks );
+    const ver_block_t *english_langcharset = get_version_langcharset_block( english->res.ver->blocks );
+    ver_value_t *val, *english_val;
+    po_file_t po = get_po_file( res->res.ver->lvc.language );
+
+    if (!langcharset && !english_langcharset) return;
+    val = langcharset->values;
+    english_val = english_langcharset->values;
+    while (english_val && val)
+    {
+        if (val->type == val_str)
+            add_po_string( po, english_val->value.str, val->value.str, res->res.ver->lvc.language );
+        val = val->next;
+        english_val = english_val->next;
+    }
+}
+
 static resource_t *find_english_resource( resource_t *res )
 {
     resource_t *ptr;
@@ -877,6 +976,7 @@ void write_pot_file( const char *outname )
         case res_dlg: add_pot_dialog( po, res ); break;
         case res_men: add_pot_menu( po, res ); break;
         case res_stt: add_pot_stringtable( po, res ); break;
+        case res_ver: add_pot_versioninfo( po, res ); break;
         case res_msg: break;  /* FIXME */
         default: break;
         }
@@ -898,6 +998,7 @@ void write_po_files( const char *outname )
         case res_dlg: add_po_dialog( english, res ); break;
         case res_men: add_po_menu( english, res ); break;
         case res_stt: add_po_stringtable( english, res ); break;
+        case res_ver: add_po_versioninfo( english, res ); break;
         case res_msg: break;  /* FIXME */
         default: break;
         }
@@ -1153,6 +1254,148 @@ static event_t *translate_accel( accelerator_t *acc, accelerator_t *new, int *fo
     return head;
 }
 
+static ver_value_t *translate_langcharset_values( ver_value_t *val, language_t *lang, int *found )
+{
+    ver_value_t *new_val, *head = NULL, *tail = NULL;
+    while (val)
+    {
+        new_val = new_ver_value();
+        *new_val = *val;
+        if (val->type == val_str)
+            new_val->value.str = translate_string( val->value.str, found );
+        if (tail) tail->next = new_val;
+        else head = new_val;
+        new_val->next = NULL;
+        new_val->prev = tail;
+        tail = new_val;
+        val = val->next;
+    }
+    return head;
+}
+
+static ver_value_t *translate_stringfileinfo( ver_value_t *val, language_t *lang, int *found )
+{
+    int i;
+    ver_value_t *new_val, *head = NULL, *tail = NULL;
+    const char *english_block_name[2] = { "040904b0", "040904e4" };
+    char *block_name[2];
+    LANGID langid = MAKELANGID( lang->id, get_default_sublang( lang ) );
+
+    block_name[0] = strmake( "%04x%04x", langid, 1200 );
+    block_name[1] = strmake( "%04x%04x", langid, get_language_codepage( lang->id, lang->sub ) );
+
+    while (val)
+    {
+        new_val = new_ver_value();
+        *new_val = *val;
+        if (val->type == val_block)
+        {
+            ver_block_t *blk, *blk_head = NULL, *blk_tail = NULL;
+            for (blk = val->value.block; blk; blk = blk->next)
+            {
+                ver_block_t *new_blk;
+                char *name;
+                new_blk = new_ver_block();
+                *new_blk = *blk;
+                name = convert_msgid_ascii( blk->name, 0 );
+                for (i = 0; i < sizeof(block_name)/sizeof(block_name[0]); i++)
+                {
+                    if (!strcasecmp( name, english_block_name[i] ))
+                    {
+                        string_t *str;
+                        str = new_string();
+                        str->type     = str_char;
+                        str->size     = strlen( block_name[i] ) + 1;
+                        str->str.cstr = xstrdup( block_name[i] );
+                        new_blk->name   = str;
+                        new_blk->values = translate_langcharset_values( blk->values, lang, found );
+                    }
+                }
+                free( name );
+                if (blk_tail) blk_tail->next = new_blk;
+                else blk_head = new_blk;
+                new_blk->next = NULL;
+                new_blk->prev = blk_tail;
+                blk_tail = new_blk;
+            }
+            new_val->value.block = blk_head;
+        }
+        if (tail) tail->next = new_val;
+        else head = new_val;
+        new_val->next = NULL;
+        new_val->prev = tail;
+        tail = new_val;
+        val = val->next;
+    }
+
+    for (i = 0; i < sizeof(block_name)/sizeof(block_name[0]); i++)
+        free( block_name[i] );
+    return head;
+}
+
+static ver_value_t *translate_varfileinfo( ver_value_t *val, language_t *lang )
+{
+    ver_value_t *new_val, *head = NULL, *tail = NULL;
+
+    while (val)
+    {
+        new_val = new_ver_value();
+        *new_val = *val;
+        if (val->type == val_words)
+        {
+            char *key = convert_msgid_ascii( val->key, 0 );
+            if (!strcasecmp( key, "Translation" ) &&
+                val->value.words->nwords == 2 &&
+                val->value.words->words[0] == MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US ))
+            {
+                ver_words_t *new_words;
+                LANGID langid;
+                WORD codepage;
+                langid = MAKELANGID( lang->id, get_default_sublang( lang ) );
+                new_words = new_ver_words( langid );
+                if (val->value.words->words[1] == 1200)
+                    codepage = 1200;
+                else
+                    codepage = get_language_codepage( lang->id, lang->sub );
+                new_val->value.words = add_ver_words( new_words, codepage );
+            }
+            free( key );
+        }
+        if (tail) tail->next = new_val;
+        else head = new_val;
+        new_val->next = NULL;
+        new_val->prev = tail;
+        tail = new_val;
+        val = val->next;
+    }
+    return head;
+}
+
+static ver_block_t *translate_versioninfo( ver_block_t *blk, language_t *lang, int *found )
+{
+    ver_block_t *new_blk, *head = NULL, *tail = NULL;
+    char *name;
+
+    while (blk)
+    {
+        new_blk = new_ver_block();
+        *new_blk = *blk;
+        name = convert_msgid_ascii( blk->name, 0 );
+        if (!strcasecmp( name, "stringfileinfo" ))
+            new_blk->values = translate_stringfileinfo( blk->values, lang, found );
+        else if (!strcasecmp( name, "varfileinfo" ))
+            new_blk->values = translate_varfileinfo( blk->values, lang );
+        free(name);
+        if (tail) tail->next = new_blk;
+        else head = new_blk;
+        new_blk->next = NULL;
+        new_blk->prev = tail;
+        tail = new_blk;
+        blk = blk->next;
+    }
+    return head;
+}
+
 static void translate_resources( language_t *lang )
 {
     resource_t *res;
@@ -1181,6 +1424,10 @@ static void translate_resources( language_t *lang )
         case res_stt:
             new = dup_resource( res, lang );
             new->res.stt = translate_stringtable( res->res.stt, lang, &found );
+            break;
+        case res_ver:
+            new = dup_resource( res, lang );
+            new->res.ver->blocks = translate_versioninfo( res->res.ver->blocks, lang, &found );
             break;
         case res_msg:
             /* FIXME */
