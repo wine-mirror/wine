@@ -646,11 +646,34 @@ static void processRegEntry31(WCHAR *line)
     closeKey();
 }
 
-/* version constants */
+enum reg_versions {
+    REG_VERSION_31,
+    REG_VERSION_40,
+    REG_VERSION_50,
+    REG_VERSION_INVALID
+};
 
-#define REG_VERSION_31  3
-#define REG_VERSION_40  4
-#define REG_VERSION_50  5
+static enum reg_versions parse_file_header(WCHAR *s)
+{
+    static const WCHAR header_31[] = {'R','E','G','E','D','I','T',0};
+    static const WCHAR header_40[] = {'R','E','G','E','D','I','T','4',0};
+    static const WCHAR header_50[] = {'W','i','n','d','o','w','s',' ',
+                                      'R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ',
+                                      'V','e','r','s','i','o','n',' ','5','.','0','0',0};
+
+    while (*s && (*s == ' ' || *s == '\t')) s++;
+
+    if (!strcmpW(s, header_31))
+        return REG_VERSION_31;
+
+    if (!strcmpW(s, header_40))
+        return REG_VERSION_40;
+
+    if (!strcmpW(s, header_50))
+        return REG_VERSION_50;
+
+    return REG_VERSION_INVALID;
+}
 
 /******************************************************************************
  * Processes a registry file.
@@ -799,6 +822,13 @@ static WCHAR *get_lineW(FILE *fp)
     static WCHAR *buf, *next;
     WCHAR *line;
 
+    if (!fp)
+    {
+        if (size) HeapFree(GetProcessHeap(), 0, buf);
+        size = 0;
+        return NULL;
+    }
+
     if (!size)
     {
         size = REG_VAL_BUF_SIZE;
@@ -861,6 +891,15 @@ static WCHAR *get_lineW(FILE *fp)
 static void processRegLinesW(FILE *fp)
 {
     WCHAR *line;
+    int reg_version;
+
+    line = get_lineW(fp);
+    reg_version = parse_file_header(line);
+    if (reg_version == REG_VERSION_INVALID)
+    {
+        get_lineW(NULL); /* Reset static variables */
+        return;
+    }
 
     while ((line = get_lineW(fp)))
         processRegEntry(line, TRUE);
