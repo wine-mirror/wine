@@ -3692,6 +3692,14 @@ msgstr "배열 길이는 반드시  한정된 양의 정수이어야 함"
 msgid "Array object expected"
 msgstr "배열 객체가 필요함"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "성공.\n"
@@ -8631,10 +8639,6 @@ msgstr "창 선택"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "더 많은 창들(&M)..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy

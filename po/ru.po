@@ -3693,6 +3693,14 @@ msgstr "Длиной массива должно быть конечное по�
 msgid "Array object expected"
 msgstr "Ожидается объект типа «Array»"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "Выполнено успешно.\n"
@@ -8579,10 +8587,6 @@ msgstr "Выбор окна"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Ещё окна..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 msgid "Hide %@"

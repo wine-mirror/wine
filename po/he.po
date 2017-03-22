@@ -3700,6 +3700,14 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 #, fuzzy
 msgid "Success.\n"
@@ -8883,10 +8891,6 @@ msgstr "בחירת חלון"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "חלונות &נוספים..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy

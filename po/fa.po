@@ -3662,6 +3662,14 @@ msgstr ""
 msgid "Array object expected"
 msgstr ""
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr ""
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr ""
@@ -8568,10 +8576,6 @@ msgstr "انتخاب &همه\tCtrl+A"
 #, fuzzy
 msgid "&More Windows..."
 msgstr "ذخیره &به نام..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr ""
 
 #: winemac.rc:33
 msgid "Hide %@"

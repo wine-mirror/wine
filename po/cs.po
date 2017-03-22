@@ -3639,6 +3639,14 @@ msgstr "Rozměr pole musí být konečné kladné celé číslo"
 msgid "Array object expected"
 msgstr "Očekáván objekt typu pole"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "Úspěch.\n"
@@ -8558,10 +8566,6 @@ msgstr "Vybrat okno"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Více oken..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy

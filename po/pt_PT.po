@@ -3695,6 +3695,14 @@ msgstr "Tamanho do vector tem de ser um inteiro finito positivo"
 msgid "Array object expected"
 msgstr "Objecto Array esperado"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "Sucesso.\n"
@@ -8576,10 +8584,6 @@ msgstr "Seleccionar Janela"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Mais Janelas..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy

@@ -3744,6 +3744,14 @@ msgstr "A tömb hosszának egy véges pozitív egész számnak kell lennie"
 msgid "Array object expected"
 msgstr "Tömb objektumot vártam"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine súgó"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "Sikeres.\n"
@@ -8674,10 +8682,6 @@ msgstr "Ablak kiválasztása"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&További ablakok..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine súgó"
 
 #: winemac.rc:33
 #, fuzzy

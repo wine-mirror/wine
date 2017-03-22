@@ -125,14 +125,14 @@ FILESUBTYPE    WINE_FILESUBTYPE
         /* LANG_ENGLISH/SUBLANG_DEFAULT, WINE_CODEPAGE */
 	BLOCK "0409" WINE_CODEPAGE_STR
 	{
-	    VALUE "CompanyName", "Microsoft Corporation"  /* GameGuard depends on this */
+	    VALUE "CompanyName", "#msgctxt#do not translate#Microsoft Corporation" /* GameGuard depends on this */
 	    VALUE "FileDescription", WINE_FILEDESCRIPTION_STR
-	    VALUE "FileVersion", WINE_FILEVERSION_STR
-	    VALUE "InternalName", WINE_FILENAME
-	    VALUE "LegalCopyright", WINE_LEGALCOPYRIGHT
-	    VALUE "OriginalFilename", WINE_FILENAME_STR
+	    VALUE "FileVersion", "#msgctxt#do not translate#" WINE_FILEVERSION_STR
+	    VALUE "InternalName", "#msgctxt#do not translate#" WINE_FILENAME
+	    VALUE "LegalCopyright", "#msgctxt#do not translate#" WINE_LEGALCOPYRIGHT
+	    VALUE "OriginalFilename", "#msgctxt#do not translate#" WINE_FILENAME_STR
 	    VALUE "ProductName", WINE_PRODUCTNAME_STR
-	    VALUE "ProductVersion", WINE_PRODUCTVERSION_STR
+	    VALUE "ProductVersion", "#msgctxt#do not translate#" WINE_PRODUCTVERSION_STR
 	    WINE_EXTRAVALUES
 	}
     }

@@ -3752,6 +3752,14 @@ msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 msgid "Array object expected"
 msgstr "Previsto un oggetto array"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "Successo.\n"
@@ -8744,10 +8752,6 @@ msgstr "Seleziona finestra"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Più finestre..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy

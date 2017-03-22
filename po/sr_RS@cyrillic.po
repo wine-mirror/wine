@@ -3734,6 +3734,14 @@ msgstr "Низ дужине мора бити коначан позитиван 
 msgid "Array object expected"
 msgstr "Очекивани низ објекта"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 #, fuzzy
 msgid "Success.\n"
@@ -8943,10 +8951,6 @@ msgstr "Избор"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Више прозора..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy

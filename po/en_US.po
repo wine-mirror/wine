@@ -3685,6 +3685,14 @@ msgstr "Array length must be a finite positive integer"
 msgid "Array object expected"
 msgstr "Array object expected"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr "Wine kernel DLL"
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "Success.\n"
@@ -8575,10 +8583,6 @@ msgstr "Select Window"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&More Windows..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 msgid "Hide %@"

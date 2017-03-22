@@ -3726,6 +3726,14 @@ msgstr "Array længde skal være et endeligt positivt heltal"
 msgid "Array object expected"
 msgstr "Array objekt forventet"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "Vellykket.\n"
@@ -8715,10 +8723,6 @@ msgstr "Vælg vindue"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Flere vinduer..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy

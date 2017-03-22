@@ -3678,6 +3678,14 @@ msgstr "配列の長さは有限の正整数でなければなりません"
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "処理は成功しました。\n"
@@ -8567,10 +8575,6 @@ msgstr "ウィンドウの選択"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "ウィンドウの一覧(&M)..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 msgid "Hide %@"

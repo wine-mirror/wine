@@ -3655,6 +3655,14 @@ msgstr "陣列長度必須是有限正整數"
 msgid "Array object expected"
 msgstr "預期為陣列物件"
 
+#: ../../include/wine/wine_common_ver.rc:129
+msgid "Wine kernel DLL"
+msgstr ""
+
+#: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
 #: winerror.mc:26
 msgid "Success.\n"
 msgstr "成功。\n"
@@ -8583,10 +8591,6 @@ msgstr "選擇視窗"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "更多視窗(&M)..."
-
-#: winemac.rc:32 wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: winemac.rc:33
 #, fuzzy
