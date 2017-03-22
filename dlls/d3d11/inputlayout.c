@@ -28,15 +28,10 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
 {
     struct wined3d_shader_signature *is = ctx;
 
-    switch(tag)
-    {
-        case TAG_ISGN:
-            return shader_parse_signature(data, data_size, is);
+    if (tag != TAG_ISGN)
+        return S_OK;
 
-        default:
-            FIXME("Unhandled chunk %s.\n", debugstr_an((const char *)&tag, 4));
-            return S_OK;
-    }
+    return shader_parse_signature(data, data_size, is);
 }
 
 static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEMENT_DESC *element_descs,
