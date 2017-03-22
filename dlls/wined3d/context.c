@@ -2142,7 +2142,7 @@ static void context_get_rt_size(const struct wined3d_context *context, SIZE *siz
     const struct wined3d_texture *rt = context->current_rt.texture;
     unsigned int level;
 
-    if (rt->swapchain && rt->swapchain->front_buffer == rt)
+    if (rt->swapchain)
     {
         RECT window_size;
 
