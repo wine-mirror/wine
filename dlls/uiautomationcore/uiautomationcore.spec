@@ -59,7 +59,7 @@
 @ stub UiaGetErrorDescription
 @ stub UiaGetPatternProvider
 @ stub UiaGetPropertyValue
-@ stub UiaGetReservedMixedAttributeValue
+@ stdcall UiaGetReservedMixedAttributeValue(ptr)
 @ stub UiaGetReservedNotSupportedValue
 @ stub UiaGetRootNode
 @ stub UiaGetRuntimeId

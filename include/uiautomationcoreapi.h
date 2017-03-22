@@ -48,6 +48,7 @@ enum AutomationIdentifierType
     AutomationIdentifierType_TextAttribute
 };
 
+HRESULT WINAPI UiaGetReservedMixedAttributeValue(IUnknown **value);
 int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid);
 BOOL WINAPI UiaPatternRelease(HUIAPATTERNOBJECT hobj);
 BOOL WINAPI UiaTextRangeRelease(HUIATEXTRANGE hobj);

@@ -47,6 +47,16 @@ BOOL WINAPI UiaClientsAreListening(void)
 }
 
 /***********************************************************************
+ *          UiaGetReservedMixedAttributeValue (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaGetReservedMixedAttributeValue(IUnknown **value)
+{
+    FIXME("(%p) stub!\n", value);
+    *value = NULL;
+    return S_OK;
+}
+
+/***********************************************************************
  *          UiaLookupId (uiautomationcore.@)
  */
 int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid)
