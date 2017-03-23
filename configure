@@ -945,6 +945,7 @@ enable_api_ms_win_core_processthreads_l1_1_2
 enable_api_ms_win_core_profile_l1_1_0
 enable_api_ms_win_core_psapi_l1_1_0
 enable_api_ms_win_core_psapi_obsolete_l1_1_0
+enable_api_ms_win_core_quirks_l1_1_0
 enable_api_ms_win_core_realtime_l1_1_0
 enable_api_ms_win_core_registry_l1_1_0
 enable_api_ms_win_core_registryuserspecific_l1_1_0
@@ -17679,6 +17680,7 @@ wine_fn_config_dll api-ms-win-core-processthreads-l1-1-2 enable_api_ms_win_core_
 wine_fn_config_dll api-ms-win-core-profile-l1-1-0 enable_api_ms_win_core_profile_l1_1_0
 wine_fn_config_dll api-ms-win-core-psapi-l1-1-0 enable_api_ms_win_core_psapi_l1_1_0
 wine_fn_config_dll api-ms-win-core-psapi-obsolete-l1-1-0 enable_api_ms_win_core_psapi_obsolete_l1_1_0
+wine_fn_config_dll api-ms-win-core-quirks-l1-1-0 enable_api_ms_win_core_quirks_l1_1_0
 wine_fn_config_dll api-ms-win-core-realtime-l1-1-0 enable_api_ms_win_core_realtime_l1_1_0
 wine_fn_config_dll api-ms-win-core-registry-l1-1-0 enable_api_ms_win_core_registry_l1_1_0
 wine_fn_config_dll api-ms-win-core-registryuserspecific-l1-1-0 enable_api_ms_win_core_registryuserspecific_l1_1_0

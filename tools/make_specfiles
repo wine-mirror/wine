@@ -255,6 +255,10 @@ my @dll_groups =
   "api-ms-win-core-bem-l1-1-0",
  ],
  [
+  "kernelbase",
+  "api-ms-win-core-quirks-l1-1-0",
+ ],
+ [
   "ole32",
   "api-ms-win-downlevel-ole32-l1-1-0",
   "api-ms-win-core-com-l1-1-0",
