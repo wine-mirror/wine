@@ -2481,6 +2481,19 @@ unsigned int OpenType_apply_GPOS_lookup(const ScriptCache *script_cache, const O
             lookup_index, glyphs, glyph_index, glyph_count, goffset);
 }
 
+static LoadedScript *usp10_script_cache_get_script(ScriptCache *script_cache, OPENTYPE_TAG tag)
+{
+    size_t i;
+
+    for (i = 0; i < script_cache->script_count; ++i)
+    {
+        if (script_cache->scripts[i].tag == tag)
+            return &script_cache->scripts[i];
+    }
+
+    return NULL;
+}
+
 static void GSUB_initialize_script_cache(ScriptCache *psc)
 {
     int i;
@@ -2510,6 +2523,7 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
     int i, count;
     const OT_ScriptList *script;
     const GPOS_Header* header = (const GPOS_Header*)psc->GPOS_Table;
+    LoadedScript *loaded_script;
 
     if (!header)
         return;
@@ -2539,24 +2553,18 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
     {
         for (i = 0; i < count; i++)
         {
-            int j;
             int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
             OPENTYPE_TAG tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
-            for (j = 0; j < psc->script_count; j++)
-            {
-                if (psc->scripts[j].tag == tag)
-                {
-                    psc->scripts[j].gpos_table = ((const BYTE*)script + offset);
-                    break;
-                }
-            }
-            if (j == psc->script_count)
+
+            if (!(loaded_script = usp10_script_cache_get_script(psc, tag)))
             {
                 psc->script_count++;
-                psc->scripts = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,psc->scripts, sizeof(LoadedScript) * psc->script_count);
-                psc->scripts[j].tag = tag;
-                psc->scripts[j].gpos_table = ((const BYTE*)script + offset);
+                psc->scripts = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                        psc->scripts, psc->script_count * sizeof(*psc->scripts));
+                loaded_script = &psc->scripts[psc->script_count - 1];
+                loaded_script->tag = tag;
             }
+            loaded_script->gpos_table = (const BYTE *)script + offset;
         }
     }
 }
@@ -2574,32 +2582,30 @@ static void _initialize_script_cache(ScriptCache *psc)
 HRESULT OpenType_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags)
 {
     int i;
+    const LoadedScript *script;
     HRESULT rc = S_OK;
 
     _initialize_script_cache(psc);
 
     *pcTags = psc->script_count;
 
-    if (!searchingFor && cMaxTags < *pcTags)
-        rc = E_OUTOFMEMORY;
-    else if (searchingFor)
-        rc = USP_E_SCRIPT_NOT_IN_FONT;
-
-    for (i = 0; i < psc->script_count; i++)
+    if (searchingFor)
     {
-        if (i < cMaxTags)
-            pScriptTags[i] = psc->scripts[i].tag;
+        if (!(script = usp10_script_cache_get_script(psc, searchingFor)))
+            return USP_E_SCRIPT_NOT_IN_FONT;
 
-        if (searchingFor)
-        {
-            if (searchingFor == psc->scripts[i].tag)
-            {
-                pScriptTags[0] = psc->scripts[i].tag;
-                *pcTags = 1;
-                rc = S_OK;
-                break;
-            }
-        }
+        *pScriptTags = script->tag;
+        *pcTags = 1;
+        return S_OK;
+    }
+
+    if (cMaxTags < *pcTags)
+        rc = E_OUTOFMEMORY;
+
+    cMaxTags = min(cMaxTags, psc->script_count);
+    for (i = 0; i < cMaxTags; ++i)
+    {
+        pScriptTags[i] = psc->scripts[i].tag;
     }
     return rc;
 }
@@ -2714,17 +2720,7 @@ HRESULT OpenType_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, 
     LoadedScript *script = NULL;
 
     _initialize_script_cache(psc);
-
-    for (i = 0; i < psc->script_count; i++)
-    {
-         if (psc->scripts[i].tag == script_tag)
-         {
-            script = &psc->scripts[i];
-            break;
-         }
-    }
-
-    if (!script)
+    if (!(script = usp10_script_cache_get_script(psc, script_tag)))
         return E_INVALIDARG;
 
     _initialize_language_cache(script);
@@ -2904,22 +2900,12 @@ static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language
 HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, char tableType, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature)
 {
     int i;
+    LoadedScript *script;
     HRESULT rc = S_OK;
-    LoadedScript *script = NULL;
     LoadedLanguage *language = NULL;
 
     _initialize_script_cache(psc);
-
-    for (i = 0; i < psc->script_count; i++)
-    {
-        if (psc->scripts[i].tag == script_tag)
-        {
-            script = &psc->scripts[i];
-            break;
-        }
-    }
-
-    if (!script)
+    if (!(script = usp10_script_cache_get_script(psc, script_tag)))
     {
         *pcTags = 0;
         if (!filtered)
