@@ -3161,6 +3161,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glActiveTexture)            /* OpenGL 1.3 */
     USE_GL_FUNC(glAttachShader)             /* OpenGL 2.0 */
     USE_GL_FUNC(glBeginQuery)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glBeginTransformFeedback)   /* OpenGL 3.0 */
     USE_GL_FUNC(glBindAttribLocation)       /* OpenGL 2.0 */
     USE_GL_FUNC(glBindBuffer)               /* OpenGL 1.5 */
     USE_GL_FUNC(glBindVertexArray)          /* OpenGL 3.0 */
@@ -3195,6 +3196,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glEnablei)                  /* OpenGL 3.0 */
     USE_GL_FUNC(glEnableVertexAttribArray)  /* OpenGL 2.0 */
     USE_GL_FUNC(glEndQuery)                 /* OpenGL 1.5 */
+    USE_GL_FUNC(glEndTransformFeedback)     /* OpenGL 3.0 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGenQueries)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGenVertexArrays)          /* OpenGL 3.0 */
@@ -3228,6 +3230,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glTexBuffer)                /* OpenGL 3.1 */
     USE_GL_FUNC(glTexImage3D)               /* OpenGL 1.2 */
     USE_GL_FUNC(glTexSubImage3D)            /* OpenGL 1.2 */
+    USE_GL_FUNC(glTransformFeedbackVaryings)/* OpenGL 3.0 */
     USE_GL_FUNC(glUniform1f)                /* OpenGL 2.0 */
     USE_GL_FUNC(glUniform1fv)               /* OpenGL 2.0 */
     USE_GL_FUNC(glUniform1i)                /* OpenGL 2.0 */
