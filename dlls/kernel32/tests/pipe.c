@@ -36,6 +36,7 @@ static HANDLE alarm_event;
 static BOOL (WINAPI *pDuplicateTokenEx)(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,
                                         SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,PHANDLE);
 static DWORD (WINAPI *pQueueUserAPC)(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
+static BOOL (WINAPI *pCancelIoEx)(HANDLE handle, LPOVERLAPPED lpOverlapped);
 
 static BOOL user_apc_ran;
 static void CALLBACK user_apc(ULONG_PTR param)
@@ -108,6 +109,13 @@ static BOOL RpcReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD 
 
     SetLastError(rpcargs.lastError);
     return (BOOL)rpcargs.returnValue;
+}
+
+#define test_not_signaled(h) _test_not_signaled(__LINE__,h)
+static void _test_not_signaled(unsigned line, HANDLE handle)
+{
+    DWORD res = WaitForSingleObject(handle, 0);
+    ok_(__FILE__,line)(res == WAIT_TIMEOUT, "WaitForSingleObject returned %u (%u)\n", res, GetLastError());
 }
 
 #define test_signaled(h) _test_signaled(__LINE__,h)
@@ -2508,6 +2516,409 @@ todo_wine
     CloseHandle(event);
 }
 
+#define test_peek_pipe(a,b,c) _test_peek_pipe(__LINE__,a,b,c)
+static void _test_peek_pipe(unsigned line, HANDLE pipe, DWORD expected_read, DWORD expected_avail)
+{
+    DWORD bytes_read = 0xdeadbeed, avail = 0xdeadbeef;
+    char buf[4000];
+    BOOL r;
+
+    r = PeekNamedPipe(pipe, buf, sizeof(buf), &bytes_read, &avail, NULL);
+    ok_(__FILE__,line)(r, "PeekNamedPipe failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(bytes_read == expected_read, "bytes_read = %u, expected %u\n", bytes_read, expected_read);
+    ok_(__FILE__,line)(avail == expected_avail, "avail = %u, expected %u\n", avail, expected_avail);
+}
+
+#define overlapped_read_sync(a,b,c,d,e) _overlapped_read_sync(__LINE__,a,b,c,d,e)
+static void _overlapped_read_sync(unsigned line, HANDLE reader, void *buf, DWORD buf_size, DWORD expected_result, BOOL partial_read)
+{
+    DWORD read_bytes = 0xdeadbeef;
+    OVERLAPPED overlapped;
+    BOOL res;
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    res = ReadFile(reader, buf, buf_size, &read_bytes, &overlapped);
+    if (partial_read)
+        ok_(__FILE__,line)(!res && GetLastError() == ERROR_MORE_DATA, "ReadFile returned: %x (%u)\n", res, GetLastError());
+    else
+        ok_(__FILE__,line)(res, "ReadFile failed: %u\n", GetLastError());
+    if(partial_read)
+        todo_wine ok_(__FILE__,line)(!read_bytes, "read_bytes %u expected 0\n", read_bytes);
+    else
+        ok_(__FILE__,line)(read_bytes == expected_result, "read_bytes %u expected %u\n", read_bytes, expected_result);
+
+    read_bytes = 0xdeadbeef;
+    res = GetOverlappedResult(reader, &overlapped, &read_bytes, FALSE);
+    if (partial_read)
+        ok_(__FILE__,line)(!res && GetLastError() == ERROR_MORE_DATA,
+                           "GetOverlappedResult returned: %x (%u)\n", res, GetLastError());
+    else
+        ok_(__FILE__,line)(res, "GetOverlappedResult failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(read_bytes == expected_result, "read_bytes %u expected %u\n", read_bytes, expected_result);
+    CloseHandle(overlapped.hEvent);
+}
+
+#define overlapped_read_async(a,b,c,d) _overlapped_read_async(__LINE__,a,b,c,d)
+static void _overlapped_read_async(unsigned line, HANDLE reader, void *buf, DWORD buf_size, OVERLAPPED *overlapped)
+{
+    DWORD read_bytes = 0xdeadbeef;
+    BOOL res;
+
+    memset(overlapped, 0, sizeof(*overlapped));
+    overlapped->hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    res = ReadFile(reader, buf, buf_size, &read_bytes, overlapped);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_IO_PENDING, "ReadFile returned %x(%u)\n", res, GetLastError());
+    ok_(__FILE__,line)(!read_bytes, "read_bytes %u expected 0\n", read_bytes);
+
+    _test_not_signaled(line, overlapped->hEvent);
+}
+
+#define overlapped_write_sync(a,b,c) _overlapped_write_sync(__LINE__,a,b,c)
+static void _overlapped_write_sync(unsigned line, HANDLE writer, void *buf, DWORD size)
+{
+    DWORD written_bytes = 0xdeadbeef;
+    OVERLAPPED overlapped;
+    BOOL res;
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    res = WriteFile(writer, buf, size, &written_bytes, &overlapped);
+    ok_(__FILE__,line)(res, "WriteFile returned %x(%u)\n", res, GetLastError());
+    ok_(__FILE__,line)(written_bytes == size, "WriteFile returned written_bytes = %u\n", written_bytes);
+
+    written_bytes = 0xdeadbeef;
+    res = GetOverlappedResult(writer, &overlapped, &written_bytes, FALSE);
+    ok_(__FILE__,line)(res, "GetOverlappedResult failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(written_bytes == size, "GetOverlappedResult returned written_bytes %u expected %u\n", written_bytes, size);
+
+    CloseHandle(overlapped.hEvent);
+}
+
+#define overlapped_write_async(a,b,c,d) _overlapped_write_async(__LINE__,a,b,c,d)
+static void _overlapped_write_async(unsigned line, HANDLE writer, void *buf, DWORD size, OVERLAPPED *overlapped)
+{
+    DWORD written_bytes = 0xdeadbeef;
+    BOOL res;
+
+    memset(overlapped, 0, sizeof(*overlapped));
+    overlapped->hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    res = WriteFile(writer, buf, size, &written_bytes, overlapped);
+    ok_(__FILE__,line)(!res && GetLastError() == ERROR_IO_PENDING, "WriteFile returned %x(%u)\n", res, GetLastError());
+    todo_wine ok_(__FILE__,line)(!written_bytes, "written_bytes = %u\n", written_bytes);
+
+    _test_not_signaled(line, overlapped->hEvent);
+}
+
+#define test_flush_sync(a) _test_flush_sync(__LINE__,a)
+static void _test_flush_sync(unsigned line, HANDLE pipe)
+{
+    BOOL res;
+
+    res = FlushFileBuffers(pipe);
+    ok_(__FILE__,line)(res, "FlushFileBuffers failed: %u\n", GetLastError());
+}
+
+static DWORD expected_flush_error;
+
+static DWORD CALLBACK flush_proc(HANDLE pipe)
+{
+    BOOL res;
+
+    res = FlushFileBuffers(pipe);
+    if (expected_flush_error == ERROR_SUCCESS)
+        ok(res, "FlushFileBuffers failed: %u\n", GetLastError());
+    else
+        todo_wine ok(!res && GetLastError() == expected_flush_error, "FlushFileBuffers failed: %u\n", GetLastError());
+    return 0;
+}
+
+#define test_flush_async(a,b) _test_flush_async(__LINE__,a,b)
+static HANDLE _test_flush_async(unsigned line, HANDLE pipe, DWORD error)
+{
+    HANDLE thread;
+    DWORD tid;
+
+    expected_flush_error = error;
+    thread = CreateThread(NULL, 0, flush_proc, pipe, 0, &tid);
+    ok_(__FILE__,line)(thread != NULL, "CreateThread failed: %u\n", GetLastError());
+
+    Sleep(50);
+    _test_not_signaled(line, thread);
+    return thread;
+}
+
+#define test_flush_done(a) _test_flush_done(__LINE__,a)
+static void _test_flush_done(unsigned line, HANDLE thread)
+{
+    DWORD res = WaitForSingleObject(thread, 1000);
+    ok_(__FILE__,line)(res == WAIT_OBJECT_0, "WaitForSingleObject returned %u (%u)\n", res, GetLastError());
+    CloseHandle(thread);
+}
+
+#define test_overlapped_result(a,b,c,d) _test_overlapped_result(__LINE__,a,b,c,d)
+static void _test_overlapped_result(unsigned line, HANDLE handle, OVERLAPPED *overlapped, DWORD expected_result, BOOL partial_read)
+{
+    DWORD result = 0xdeadbeef;
+    BOOL res;
+
+    _test_signaled(line, overlapped->hEvent);
+
+    res = GetOverlappedResult(handle, overlapped, &result, FALSE);
+    if (partial_read)
+        ok_(__FILE__,line)(!res && GetLastError() == ERROR_MORE_DATA, "GetOverlappedResult returned: %x (%u)\n", res, GetLastError());
+    else
+        ok_(__FILE__,line)(res, "GetOverlappedResult failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(result == expected_result, "read_bytes = %u, expected %u\n", result, expected_result);
+    CloseHandle(overlapped->hEvent);
+}
+
+#define test_overlapped_failure(a,b,c) _test_overlapped_failure(__LINE__,a,b,c)
+static void _test_overlapped_failure(unsigned line, HANDLE handle, OVERLAPPED *overlapped, DWORD error)
+{
+    DWORD result;
+    BOOL res;
+
+    _test_signaled(line, overlapped->hEvent);
+
+    res = GetOverlappedResult(handle, overlapped, &result, FALSE);
+    ok_(__FILE__,line)(!res && GetLastError() == error, "GetOverlappedResult returned: %x (%u), expected error %u\n",
+                       res, GetLastError(), error);
+    ok_(__FILE__,line)(!result, "result = %u\n", result);
+    CloseHandle(overlapped->hEvent);
+}
+
+#define cancel_overlapped(a,b) _cancel_overlapped(__LINE__,a,b)
+static void _cancel_overlapped(unsigned line, HANDLE handle, OVERLAPPED *overlapped)
+{
+    BOOL res;
+
+    res = pCancelIoEx(handle, overlapped);
+    ok_(__FILE__,line)(res, "CancelIoEx failed: %u\n", GetLastError());
+
+    _test_overlapped_failure(line, handle, overlapped, ERROR_OPERATION_ABORTED);
+}
+
+static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL msg_mode, BOOL msg_read)
+{
+    OVERLAPPED read_overlapped, read_overlapped2, write_overlapped, write_overlapped2;
+    char buf[10000], read_buf[10000];
+    HANDLE flush_thread;
+
+    memset(buf, 0xaa, sizeof(buf));
+
+    /* test pending read with overlapped event */
+    overlapped_read_async(reader, read_buf, 1000, &read_overlapped);
+    test_flush_sync(writer);
+    test_peek_pipe(reader, 0, 0);
+
+    /* write more data than needed for read */
+    overlapped_write_sync(writer, buf, 4000);
+    test_overlapped_result(reader, &read_overlapped, 1000, msg_read);
+
+    /* test pending write with overlapped event */
+    overlapped_write_async(writer, buf, buf_size, &write_overlapped);
+
+    /* write one more byte */
+    overlapped_write_async(writer, buf, 1, &write_overlapped2);
+    flush_thread = test_flush_async(writer, ERROR_SUCCESS);
+    test_not_signaled(write_overlapped.hEvent);
+
+    /* empty write will not block */
+    overlapped_write_sync(writer, buf, 0);
+    test_not_signaled(write_overlapped.hEvent);
+    test_not_signaled(write_overlapped2.hEvent);
+
+    /* read remaining data from the first write */
+    overlapped_read_sync(reader, read_buf, 3000, 3000, FALSE);
+    test_overlapped_result(writer, &write_overlapped, buf_size, FALSE);
+    test_not_signaled(write_overlapped2.hEvent);
+    test_not_signaled(flush_thread);
+
+    /* read one byte so that the next write fits the buffer */
+    overlapped_read_sync(reader, read_buf, 1, 1, msg_read);
+    test_overlapped_result(writer, &write_overlapped2, 1, FALSE);
+
+    /* read the whole buffer */
+    overlapped_read_sync(reader, read_buf, buf_size, buf_size-msg_read, FALSE);
+
+    if(msg_read)
+        overlapped_read_sync(reader, read_buf, 1000, 1, FALSE);
+
+    if(msg_mode) {
+        /* we still have an empty message in queue */
+        overlapped_read_sync(reader, read_buf, 1000, 0, FALSE);
+    }
+    test_flush_done(flush_thread);
+
+    /* pipe is empty, the next read will block */
+    overlapped_read_async(reader, read_buf, 0, &read_overlapped);
+    overlapped_read_async(reader, read_buf, 1000, &read_overlapped2);
+
+    /* write one byte */
+    overlapped_write_sync(writer, buf, 1);
+    test_overlapped_result(reader, &read_overlapped, 0, msg_read);
+    test_overlapped_result(reader, &read_overlapped2, 1, FALSE);
+
+    /* write a message larger than buffer */
+    overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
+
+    /* read so that pending write is still larger than the buffer */
+    overlapped_read_sync(reader, read_buf, 1999, 1999, msg_read);
+    test_not_signaled(write_overlapped.hEvent);
+
+    /* read one more byte */
+    overlapped_read_sync(reader, read_buf, 1, 1, msg_read);
+    test_overlapped_result(writer, &write_overlapped, buf_size+2000, FALSE);
+
+    /* read remaining data */
+    overlapped_read_sync(reader, read_buf, buf_size+1, buf_size, FALSE);
+
+    /* simple pass of empty message */
+    overlapped_write_sync(writer, buf, 0);
+    if(msg_mode)
+        overlapped_read_sync(reader, read_buf, 1, 0, FALSE);
+
+    /* pipe is empty, the next read will block */
+    test_flush_sync(writer);
+    overlapped_read_async(reader, read_buf, 0, &read_overlapped);
+    overlapped_read_async(reader, read_buf, 1, &read_overlapped2);
+
+    /* 0 length write wakes one read in msg mode */
+    overlapped_write_sync(writer, buf, 0);
+    if(msg_mode)
+        test_overlapped_result(reader, &read_overlapped, 0, FALSE);
+    else
+        test_not_signaled(read_overlapped.hEvent);
+    test_not_signaled(read_overlapped2.hEvent);
+    overlapped_write_sync(writer, buf, 1);
+    test_overlapped_result(reader, &read_overlapped2, 1, FALSE);
+
+    overlapped_write_sync(writer, buf, 20);
+    test_peek_pipe(reader, 20, 20);
+    overlapped_write_sync(writer, buf, 15);
+    test_peek_pipe(reader, msg_mode ? 20 : 35, 35);
+    overlapped_read_sync(reader, read_buf, 10, 10, msg_read);
+    test_peek_pipe(reader, msg_mode ? 10 : 25, 25);
+    overlapped_read_sync(reader, read_buf, 10, 10, FALSE);
+    test_peek_pipe(reader, 15, 15);
+    overlapped_read_sync(reader, read_buf, 15, 15, FALSE);
+
+    if(!pCancelIoEx) {
+        win_skip("CancelIoEx not available\n");
+        return;
+    }
+
+    /* add one more pending read, then cancel the first one */
+    overlapped_read_async(reader, read_buf, 1, &read_overlapped);
+    overlapped_read_async(reader, read_buf, 1, &read_overlapped2);
+    cancel_overlapped(reader, &read_overlapped2);
+    test_not_signaled(read_overlapped.hEvent);
+    overlapped_write_sync(writer, buf, 1);
+    test_overlapped_result(reader, &read_overlapped, 1, FALSE);
+
+    /* make two async writes, cancel the first one and make sure that we read from the second one */
+    overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
+    overlapped_write_async(writer, buf, 1, &write_overlapped2);
+    cancel_overlapped(writer, &write_overlapped);
+    overlapped_read_sync(reader, read_buf, 1000, 1, FALSE);
+    test_overlapped_result(writer, &write_overlapped2, 1, FALSE);
+
+    /* same as above, but parially read written data before canceling */
+    overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
+    overlapped_write_async(writer, buf, 1, &write_overlapped2);
+    overlapped_read_sync(reader, read_buf, 10, 10, msg_read);
+    test_not_signaled(write_overlapped.hEvent);
+    cancel_overlapped(writer, &write_overlapped);
+    overlapped_read_sync(reader, read_buf, 1000, 1, FALSE);
+    test_overlapped_result(writer, &write_overlapped2, 1, FALSE);
+
+    /* empty queue by canceling write and make sure that flush is signaled */
+    overlapped_write_async(writer, buf, buf_size+2000, &write_overlapped);
+    flush_thread = test_flush_async(writer, ERROR_SUCCESS);
+    test_not_signaled(flush_thread);
+    cancel_overlapped(writer, &write_overlapped);
+    test_flush_done(flush_thread);
+}
+
+static void create_overlapped_pipe(DWORD mode, HANDLE *client, HANDLE *server)
+{
+    SECURITY_ATTRIBUTES sec_attr = { sizeof(sec_attr), NULL, TRUE };
+    DWORD read_mode = mode & (PIPE_READMODE_BYTE | PIPE_READMODE_MESSAGE);
+    OVERLAPPED overlapped;
+    BOOL res;
+
+    *server = CreateNamedPipeA(PIPENAME, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_DUPLEX,
+                               PIPE_WAIT | mode, 1, 5000, 6000, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(&server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    test_signaled(*server);
+
+    memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    res = ConnectNamedPipe(*server, &overlapped);
+    ok(!res && GetLastError() == ERROR_IO_PENDING, "WriteFile returned %x(%u)\n", res, GetLastError());
+    test_not_signaled(*server);
+    test_not_signaled(overlapped.hEvent);
+
+    *client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    ok(*server != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+
+    res = SetNamedPipeHandleState(*client, &read_mode, NULL, NULL);
+    ok(res, "SetNamedPipeHandleState failed: %u\n", GetLastError());
+
+    test_signaled(*client);
+    test_not_signaled(*server);
+    test_overlapped_result(*server, &overlapped, 0, FALSE);
+}
+
+static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
+{
+    OVERLAPPED overlapped, overlapped2;
+    HANDLE server, client, flush;
+    char buf[60000];
+    BOOL res;
+
+    DWORD create_flags =
+        (msg_mode ? PIPE_TYPE_MESSAGE : PIPE_TYPE_BYTE) |
+        (msg_read_mode ? PIPE_READMODE_MESSAGE : PIPE_READMODE_BYTE);
+
+    create_overlapped_pipe(create_flags, &client, &server);
+
+    trace("testing %s, %s server->client writes...\n",
+          msg_mode ? "message mode" : "byte mode", msg_read_mode ? "message read" : "byte read");
+    test_blocking_rw(server, client, 5000, msg_mode, msg_read_mode);
+
+    CloseHandle(client);
+    CloseHandle(server);
+
+    /* close client with pending writes */
+    create_overlapped_pipe(create_flags, &client, &server);
+    overlapped_write_async(server, buf, 7000, &overlapped);
+    flush = test_flush_async(server, ERROR_BROKEN_PIPE);
+    CloseHandle(client);
+    test_overlapped_failure(server, &overlapped, ERROR_BROKEN_PIPE);
+    test_flush_done(flush);
+    CloseHandle(server);
+
+    /* close server with pending writes */
+    create_overlapped_pipe(create_flags, &client, &server);
+    overlapped_write_async(client, buf, 7000, &overlapped);
+    CloseHandle(server);
+    test_overlapped_failure(client, &overlapped, ERROR_BROKEN_PIPE);
+    CloseHandle(client);
+
+    /* disconnect with pending writes */
+    create_overlapped_pipe(create_flags, &client, &server);
+    overlapped_write_async(client, buf, 7000, &overlapped);
+    overlapped_write_async(server, buf, 7000, &overlapped2);
+    res = DisconnectNamedPipe(server);
+    ok(res, "DisconnectNamedPipe failed: %u\n", GetLastError());
+    test_overlapped_failure(client, &overlapped, ERROR_PIPE_NOT_CONNECTED);
+    test_overlapped_failure(client, &overlapped2, ERROR_PIPE_NOT_CONNECTED);
+    CloseHandle(server);
+    CloseHandle(client);
+}
+
 START_TEST(pipe)
 {
     HMODULE hmod;
@@ -2516,6 +2927,7 @@ START_TEST(pipe)
     pDuplicateTokenEx = (void *) GetProcAddress(hmod, "DuplicateTokenEx");
     hmod = GetModuleHandleA("kernel32.dll");
     pQueueUserAPC = (void *) GetProcAddress(hmod, "QueueUserAPC");
+    pCancelIoEx = (void *) GetProcAddress(hmod, "CancelIoEx");
 
     if (test_DisconnectNamedPipe())
         return;
@@ -2531,4 +2943,5 @@ START_TEST(pipe)
     test_NamedPipeHandleState();
     test_GetNamedPipeInfo();
     test_readfileex_pending();
+    test_overlapped_transport(TRUE, FALSE);
 }
