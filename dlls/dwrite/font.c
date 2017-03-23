@@ -4899,7 +4899,7 @@ static inline BYTE *get_pixel_ptr(BYTE *ptr, DWRITE_TEXTURE_TYPE type, const REC
             runbounds->left - bounds->left;
 }
 
-static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DWRITE_TEXTURE_TYPE type)
+static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DWRITE_TEXTURE_TYPE type)
 {
     static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
     struct dwrite_glyphbitmap glyph_bitmap;
@@ -4913,13 +4913,18 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     hr = IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace4, (void **)&fontface);
     if (FAILED(hr)) {
         WARN("failed to get IDWriteFontFace4, 0x%08x\n", hr);
-        return;
+        return hr;
     }
 
     size = (analysis->bounds.right - analysis->bounds.left)*(analysis->bounds.bottom - analysis->bounds.top);
     if (type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         size *= 3;
-    analysis->bitmap = heap_alloc_zero(size);
+    if (!(analysis->bitmap = heap_alloc_zero(size))) {
+        WARN("Failed to allocate run bitmap, %s, type %s.\n", wine_dbgstr_rect(&analysis->bounds),
+                type == DWRITE_TEXTURE_CLEARTYPE_3x1 ? "3x1" : "1x1");
+        IDWriteFontFace4_Release(fontface);
+        return E_OUTOFMEMORY;
+    }
 
     origin.x = origin.y = 0.0f;
     is_rtl = analysis->run.bidiLevel & 1;
@@ -5030,6 +5035,8 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     analysis->ascenderoffsets = NULL;
     analysis->run.glyphIndices = NULL;
     analysis->run.fontFace = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type,
@@ -5081,8 +5088,12 @@ static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysi
         BYTE *src, *dst;
         int y;
 
-        if (!(This->flags & RUNANALYSIS_BITMAP_READY))
-            glyphrunanalysis_render(This, type);
+        if (!(This->flags & RUNANALYSIS_BITMAP_READY)) {
+            HRESULT hr;
+
+            if (FAILED(hr = glyphrunanalysis_render(This, type)))
+                return hr;
+        }
 
         src = get_pixel_ptr(This->bitmap, type, &runbounds, &This->bounds);
         dst = get_pixel_ptr(bitmap, type, &runbounds, bounds);
