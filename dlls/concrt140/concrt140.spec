@@ -219,7 +219,7 @@
 # extern ?AgentEventGuid@Concurrency@@3U_GUID@@B
 @ cdecl -arch=win32 ?Alloc@Concurrency@@YAPAXI@Z(long) msvcr120.?Alloc@Concurrency@@YAPAXI@Z
 @ cdecl -arch=win64 ?Alloc@Concurrency@@YAPEAX_K@Z(long) msvcr120.?Alloc@Concurrency@@YAPEAX_K@Z
-@ stub ?Block@Context@Concurrency@@SAXXZ
+@ cdecl ?Block@Context@Concurrency@@SAXXZ() msvcr120.?Block@Context@Concurrency@@SAXXZ
 # extern ?ChoreEventGuid@Concurrency@@3U_GUID@@B
 # extern ?ConcRTEventGuid@Concurrency@@3U_GUID@@B
 # extern ?ConcRT_ProviderGuid@Concurrency@@3U_GUID@@B
@@ -234,8 +234,8 @@
 @ stub -arch=win64 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@AEAVlocation@2@@Z
 @ stub -arch=win32 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@XZ
 @ stub -arch=win64 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@XZ
-@ stub -arch=win32 ?CurrentContext@Context@Concurrency@@SAPAV12@XZ
-@ stub -arch=win64 ?CurrentContext@Context@Concurrency@@SAPEAV12@XZ
+@ cdecl -arch=win32 ?CurrentContext@Context@Concurrency@@SAPAV12@XZ() msvcr120.?CurrentContext@Context@Concurrency@@SAPAV12@XZ
+@ cdecl -arch=win64 ?CurrentContext@Context@Concurrency@@SAPEAV12@XZ() msvcr120.?CurrentContext@Context@Concurrency@@SAPEAV12@XZ
 @ stub ?Detach@CurrentScheduler@Concurrency@@SAXXZ
 @ stub ?DisableTracing@Concurrency@@YAJXZ
 @ stub ?EnableTracing@Concurrency@@YAJXZ
@@ -254,11 +254,11 @@
 @ stub ?GetSchedulerId@Concurrency@@YAIXZ
 @ stub -arch=win32 ?GetSharedTimerQueue@details@Concurrency@@YAPAXXZ
 @ stub -arch=win64 ?GetSharedTimerQueue@details@Concurrency@@YAPEAXXZ
-@ stub ?Id@Context@Concurrency@@SAIXZ
+@ cdecl ?Id@Context@Concurrency@@SAIXZ() msvcr120.?Id@Context@Concurrency@@SAIXZ
 @ stub ?Id@CurrentScheduler@Concurrency@@SAIXZ
 @ stub -arch=win32 ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z
 @ stub -arch=win64 ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NAEBVlocation@2@@Z
-@ stub ?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ
+@ cdecl ?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ() msvcr120.?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ
 # extern ?LockEventGuid@Concurrency@@3U_GUID@@B
 @ stub -arch=win32 ?Log2@details@Concurrency@@YAKI@Z
 @ stub -arch=win64 ?Log2@details@Concurrency@@YAK_K@Z
@@ -268,7 +268,7 @@
 @ stub -arch=win64 ?NFS_Free@details@Concurrency@@YAXPEAX@Z
 @ stub -arch=win32 ?NFS_GetLineSize@details@Concurrency@@YAIXZ
 @ stub -arch=win64 ?NFS_GetLineSize@details@Concurrency@@YA_KXZ
-@ stub ?Oversubscribe@Context@Concurrency@@SAX_N@Z
+@ cdecl ?Oversubscribe@Context@Concurrency@@SAX_N@Z(long) msvcr120.?Oversubscribe@Context@Concurrency@@SAX_N@Z
 # extern ?PPLParallelForEventGuid@Concurrency@@3U_GUID@@B
 # extern ?PPLParallelForeachEventGuid@Concurrency@@3U_GUID@@B
 # extern ?PPLParallelInvokeEventGuid@Concurrency@@3U_GUID@@B
@@ -277,7 +277,7 @@
 @ stub ?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ
 # extern ?ResourceManagerEventGuid@Concurrency@@3U_GUID@@B
 # extern ?ScheduleGroupEventGuid@Concurrency@@3U_GUID@@B
-@ stub ?ScheduleGroupId@Context@Concurrency@@SAIXZ
+@ cdecl ?ScheduleGroupId@Context@Concurrency@@SAIXZ() msvcr120.?ScheduleGroupId@Context@Concurrency@@SAIXZ
 @ stub -arch=win32 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0@Z
 @ stub -arch=win64 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0@Z
 @ stub -arch=win32 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0AAVlocation@2@@Z
@@ -290,8 +290,8 @@
 @ stub -arch=i386 ?SetPolicyValue@SchedulerPolicy@Concurrency@@QAEIW4PolicyElementKey@2@I@Z
 @ stub -arch=win64 ?SetPolicyValue@SchedulerPolicy@Concurrency@@QEAAIW4PolicyElementKey@2@I@Z
 # extern ?VirtualProcessorEventGuid@Concurrency@@3U_GUID@@B
-@ stub ?VirtualProcessorId@Context@Concurrency@@SAIXZ
-@ stub ?Yield@Context@Concurrency@@SAXXZ
+@ cdecl ?VirtualProcessorId@Context@Concurrency@@SAIXZ() msvcr120.?VirtualProcessorId@Context@Concurrency@@SAIXZ
+@ cdecl ?Yield@Context@Concurrency@@SAXXZ() msvcr120.?Yield@Context@Concurrency@@SAXXZ
 @ stub -arch=i386 ?_Abort@_StructuredTaskCollection@details@Concurrency@@AAEXXZ
 @ stub -arch=win64 ?_Abort@_StructuredTaskCollection@details@Concurrency@@AEAAXXZ
 @ thiscall -arch=i386 ?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) msvcr120.?_Acquire@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ
@@ -450,7 +450,7 @@
 @ cdecl -arch=win64 ?_SpinOnce@?$_SpinWait@$00@details@Concurrency@@QEAA_NXZ(ptr) msvcr120.?_SpinOnce@?$_SpinWait@$00@details@Concurrency@@QEAA_NXZ
 @ thiscall -arch=i386 ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QAE_NXZ(ptr) msvcr120.?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QAE_NXZ
 @ cdecl -arch=win64 ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QEAA_NXZ(ptr) msvcr120.?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QEAA_NXZ
-@ stub ?_SpinYield@Context@Concurrency@@SAXXZ
+@ cdecl ?_SpinYield@Context@Concurrency@@SAXXZ() msvcr120.?_SpinYield@Context@Concurrency@@SAXXZ
 @ stub -arch=i386 ?_Start@_Timer@details@Concurrency@@IAEXXZ
 @ stub -arch=win64 ?_Start@_Timer@details@Concurrency@@IEAAXXZ
 @ stub -arch=i386 ?_Stop@_Timer@details@Concurrency@@IAEXXZ

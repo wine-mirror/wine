@@ -27,6 +27,7 @@ C_SRCS = \
 	misc.c \
 	process.c \
 	scanf.c \
+	scheduler.c \
 	string.c \
 	thread.c \
 	time.c \
