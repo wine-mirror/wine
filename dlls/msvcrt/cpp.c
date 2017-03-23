@@ -649,6 +649,34 @@ void * __thiscall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int f
     return _this;
 }
 
+#if _MSVCR_VER >= 80
+typedef exception bad_alloc;
+extern const vtable_ptr MSVCRT_bad_alloc_vtable;
+
+static void bad_alloc_ctor(bad_alloc *this, const char **name)
+{
+    MSVCRT_exception_ctor(this, name);
+    this->vtable = &MSVCRT_bad_alloc_vtable;
+}
+
+/* bad_alloc class implementation */
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_alloc_copy_ctor,8)
+bad_alloc * __thiscall MSVCRT_bad_alloc_copy_ctor(bad_alloc * _this, const bad_alloc * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    MSVCRT_exception_copy_ctor(_this, rhs);
+    _this->vtable = &MSVCRT_bad_alloc_vtable;
+    return _this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_alloc_dtor,4)
+void __thiscall MSVCRT_bad_alloc_dtor(bad_alloc * _this)
+{
+    TRACE("(%p)\n", _this);
+    MSVCRT_exception_dtor(_this);
+}
+#endif
+
 #if _MSVCR_VER >= 100
 typedef struct {
     exception e;
@@ -724,6 +752,9 @@ __ASM_VTABLE(exception,
 __ASM_VTABLE(exception_old,
         VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(bad_alloc,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
 #endif
 __ASM_VTABLE(bad_typeid,
         VTABLE_ADD_FUNC(MSVCRT_bad_typeid_vector_dtor)
@@ -751,6 +782,7 @@ DEFINE_RTTI_DATA0( exception_old, 0, ".?AVexception@@" )
 DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@std@@" )
 DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@std@@" )
 DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@std@@" )
+DEFINE_RTTI_DATA1( bad_alloc, 0, &exception_rtti_base_descriptor, ".?AVbad_alloc@std@@" )
 #else
 DEFINE_RTTI_DATA0( exception, 0, ".?AVexception@@" )
 DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@@" )
@@ -766,49 +798,11 @@ DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( bad_cast, 1, &exception_cxx_type_info, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( __non_rtti_object, 2, &bad_typeid_cxx_type_info, &exception_cxx_type_info )
+#if _MSVCR_VER >= 80
+DEFINE_EXCEPTION_TYPE_INFO( bad_alloc, 1, &exception_cxx_type_info, NULL )
+#endif
 #if _MSVCR_VER >= 100
 DEFINE_EXCEPTION_TYPE_INFO(scheduler_resource_allocation_error, 1, &exception_cxx_type_info, NULL)
-#endif
-
-#if _MSVCR_VER >= 80
-typedef exception bad_alloc;
-extern const vtable_ptr MSVCRT_bad_alloc_vtable;
-
-static void bad_alloc_ctor(bad_alloc *this, const char **name)
-{
-    MSVCRT_exception_ctor(this, name);
-    this->vtable = &MSVCRT_bad_alloc_vtable;
-}
-
-/* bad_alloc class implementation */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_alloc_copy_ctor,8)
-bad_alloc * __thiscall MSVCRT_bad_alloc_copy_ctor(bad_alloc * _this, const bad_alloc * rhs)
-{
-    TRACE("(%p %p)\n", _this, rhs);
-    MSVCRT_exception_copy_ctor(_this, rhs);
-    _this->vtable = &MSVCRT_bad_alloc_vtable;
-    return _this;
-}
-
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_alloc_dtor,4)
-void __thiscall MSVCRT_bad_alloc_dtor(bad_alloc * _this)
-{
-    TRACE("(%p)\n", _this);
-    MSVCRT_exception_dtor(_this);
-}
-
-__ASM_VTABLE(bad_alloc,
-        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
-        VTABLE_ADD_FUNC(MSVCRT_what_exception));
-DEFINE_RTTI_DATA1( bad_alloc, 0, &exception_rtti_base_descriptor, ".?AVbad_alloc@std@@" )
-DEFINE_EXCEPTION_TYPE_INFO( bad_alloc, 1, &exception_cxx_type_info, NULL )
-
-void throw_bad_alloc(const char *str)
-{
-    bad_alloc e;
-    bad_alloc_ctor(&e, &str);
-    _CxxThrowException(&e, &bad_alloc_exception_type);
-}
 #endif
 
 void msvcrt_init_exception(void *base)
@@ -840,6 +834,14 @@ void msvcrt_init_exception(void *base)
 #endif
 }
 
+#if _MSVCR_VER >= 80
+void throw_bad_alloc(const char *str)
+{
+    bad_alloc e;
+    bad_alloc_ctor(&e, &str);
+    _CxxThrowException(&e, &bad_alloc_exception_type);
+}
+#endif
 
 /******************************************************************
  *		?set_terminate@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)
