@@ -70,7 +70,7 @@ static void create_threadpool(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool2, NULL, &DirectPlayThreadHandler, 0);
-    todo_wine ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_GetThreadCount(pool1, -1, &threadcnt, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -103,7 +103,7 @@ static void create_threadpool(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_Close(pool2, 0);
-    todo_wine ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
 
     IDirectPlay8ThreadPool_Release(pool1);
     IDirectPlay8ThreadPool_Release(pool2);
@@ -226,13 +226,13 @@ static void test_singleton(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_Initialize(pool2, NULL, &DirectPlayThreadHandler, 0);
-    todo_wine ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_ALREADYINITIALIZED, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_Close(pool1, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDirectPlay8ThreadPool_Close(pool2, 0);
-    todo_wine ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
+    ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
 
     IDirectPlay8ThreadPool_Release(pool1);
     IDirectPlay8ThreadPool_Release(pool2);

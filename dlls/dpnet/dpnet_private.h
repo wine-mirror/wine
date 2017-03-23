@@ -122,10 +122,6 @@ struct IDirectPlay8ThreadPoolImpl
 {
     IDirectPlay8ThreadPool IDirectPlay8ThreadPool_iface;
     LONG ref;
-
-    PFNDPNMESSAGEHANDLER msghandler;
-    DWORD flags;
-    void *usercontext;
 };
 
 /**
