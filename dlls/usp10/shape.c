@@ -542,7 +542,8 @@ static const ScriptShapeData ShapingData[] =
 
 extern scriptData scriptInformation[];
 
-static INT GSUB_apply_feature_all_lookups(LPCVOID header, LoadedFeature *feature, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static int GSUB_apply_feature_all_lookups(const void *header, LoadedFeature *feature,
+        WORD *glyphs, unsigned int glyph_index, int write_dir, int *glyph_count)
 {
     int i;
     int out_index = GSUB_E_NOGLYPH;

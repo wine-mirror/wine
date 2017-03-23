@@ -144,15 +144,15 @@ enum usp10_script
 typedef struct {
     OPENTYPE_TAG tag;
     CHAR tableType;
-    LPCVOID  feature;
+    const void *feature;
     INT lookup_count;
     WORD *lookups;
 } LoadedFeature;
 
 typedef struct {
     OPENTYPE_TAG tag;
-    LPCVOID gsub_table;
-    LPCVOID gpos_table;
+    const void *gsub_table;
+    const void *gpos_table;
     BOOL features_initialized;
     INT feature_count;
     LoadedFeature *features;
@@ -160,8 +160,8 @@ typedef struct {
 
 typedef struct {
     OPENTYPE_TAG tag;
-    LPCVOID gsub_table;
-    LPCVOID gpos_table;
+    const void *gsub_table;
+    const void *gpos_table;
     LoadedLanguage default_language;
     BOOL languages_initialized;
     INT language_count;
@@ -273,7 +273,8 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
 
 DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWORD pgi, DWORD flags) DECLSPEC_HIDDEN;
 void OpenType_GDEF_UpdateGlyphProps(ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp) DECLSPEC_HIDDEN;
-INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count) DECLSPEC_HIDDEN;
+int OpenType_apply_GSUB_lookup(const void *table, unsigned int lookup_index, WORD *glyphs,
+        unsigned int glyph_index, int write_dir, int *glyph_count) DECLSPEC_HIDDEN;
 unsigned int OpenType_apply_GPOS_lookup(const ScriptCache *psc, const OUTLINETEXTMETRICW *otm,
         const LOGFONTW *logfont, const SCRIPT_ANALYSIS *analysis, int *advance, unsigned int lookup_index,
         const WORD *glyphs, unsigned int glyph_index, unsigned int glyph_count, GOFFSET *goffset) DECLSPEC_HIDDEN;

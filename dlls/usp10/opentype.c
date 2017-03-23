@@ -815,7 +815,7 @@ void OpenType_GDEF_UpdateGlyphProps(ScriptCache *psc, const WORD *pwGlyphs, cons
  **********/
 static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count);
 
-static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
+static int GSUB_is_glyph_covered(const void *table, unsigned int glyph)
 {
     const OT_CoverageFormat1* cf1;
 
@@ -1486,7 +1486,8 @@ static INT GSUB_apply_lookup(const OT_LookupList* lookup, INT lookup_index, WORD
     return GSUB_E_NOGLYPH;
 }
 
-INT OpenType_apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+int OpenType_apply_GSUB_lookup(const void *table, unsigned int lookup_index, WORD *glyphs,
+        unsigned int glyph_index, int write_dir, int *glyph_count)
 {
     const GSUB_Header *header = (const GSUB_Header *)table;
     const OT_LookupList *lookup = (const OT_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
@@ -2769,7 +2770,7 @@ HRESULT OpenType_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, 
 }
 
 
-static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *language)
+static void GSUB_initialize_feature_cache(const void *table, LoadedLanguage *language)
 {
     int i;
 
@@ -2812,7 +2813,7 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
     }
 }
 
-static void GPOS_expand_feature_cache(LPCVOID table, LoadedLanguage *language)
+static void GPOS_expand_feature_cache(const void *table, LoadedLanguage *language)
 {
     int i, count;
     const OT_LangSys *lang = language->gpos_table;
