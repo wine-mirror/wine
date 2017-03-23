@@ -285,6 +285,9 @@ void msvcrt_set_errno(int) DECLSPEC_HIDDEN;
 #if _MSVCR_VER >= 80
 void throw_bad_alloc(const char*) DECLSPEC_HIDDEN;
 #endif
+#if _MSVCR_VER >= 100
+void throw_scheduler_resource_allocation_error(const char*, HRESULT) DECLSPEC_HIDDEN;
+#endif
 
 void __cdecl _purecall(void);
 void __cdecl _amsg_exit(int errnum);

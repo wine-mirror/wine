@@ -843,6 +843,15 @@ void throw_bad_alloc(const char *str)
 }
 #endif
 
+#if _MSVCR_VER >= 100
+void throw_scheduler_resource_allocation_error(const char *str, HRESULT hr)
+{
+    scheduler_resource_allocation_error e;
+    scheduler_resource_allocation_error_ctor_name(&e, str, hr);
+    _CxxThrowException(&e.e, &scheduler_resource_allocation_error_exception_type);
+}
+#endif
+
 /******************************************************************
  *		?set_terminate@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)
  *
