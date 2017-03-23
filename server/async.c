@@ -474,6 +474,15 @@ struct iosb *async_get_iosb( struct async *async )
     return async->iosb ? (struct iosb *)grab_object( async->iosb ) : NULL;
 }
 
+/* find the first pending async in queue */
+struct async *find_pending_async( struct async_queue *queue )
+{
+    struct async *async;
+    if (queue) LIST_FOR_EACH_ENTRY( async, &queue->queue, struct async, queue_entry )
+        if (async->status == STATUS_PENDING) return (struct async *)grab_object( async );
+    return NULL;
+}
+
 /* cancels all async I/O */
 DECL_HANDLER(cancel_async)
 {
