@@ -649,6 +649,68 @@ void * __thiscall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int f
     return _this;
 }
 
+#if _MSVCR_VER >= 100
+typedef struct {
+    exception e;
+    HRESULT hr;
+} scheduler_resource_allocation_error;
+extern const vtable_ptr MSVCRT_scheduler_resource_allocation_error_vtable;
+
+/* ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z */
+/* ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z */
+DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor_name, 12)
+scheduler_resource_allocation_error* __thiscall scheduler_resource_allocation_error_ctor_name(
+        scheduler_resource_allocation_error *this, const char *name, HRESULT hr)
+{
+    TRACE("(%p %s %x)\n", this, wine_dbgstr_a(name), hr);
+    MSVCRT_exception_ctor(&this->e, &name);
+    this->e.vtable = &MSVCRT_scheduler_resource_allocation_error_vtable;
+    this->hr = hr;
+    return this;
+}
+
+/* ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z */
+/* ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z */
+DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_ctor, 8)
+scheduler_resource_allocation_error* __thiscall scheduler_resource_allocation_error_ctor(
+        scheduler_resource_allocation_error *this, HRESULT hr)
+{
+    return scheduler_resource_allocation_error_ctor_name(this, NULL, hr);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_scheduler_resource_allocation_error_copy_ctor,8)
+scheduler_resource_allocation_error* __thiscall MSVCRT_scheduler_resource_allocation_error_copy_ctor(
+        scheduler_resource_allocation_error *this,
+        const scheduler_resource_allocation_error *rhs)
+{
+    TRACE("(%p,%p)\n", this, rhs);
+
+    if (!rhs->e.do_free)
+        memcpy(this, rhs, sizeof(*this));
+    else
+        scheduler_resource_allocation_error_ctor_name(this, rhs->e.name, rhs->hr);
+    return this;
+}
+
+/* ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ */
+/* ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ */
+DEFINE_THISCALL_WRAPPER(scheduler_resource_allocation_error_get_error_code, 4)
+HRESULT __thiscall scheduler_resource_allocation_error_get_error_code(
+        const scheduler_resource_allocation_error *this)
+{
+    TRACE("(%p)\n", this);
+    return this->hr;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_scheduler_resource_allocation_error_dtor,4)
+void __thiscall MSVCRT_scheduler_resource_allocation_error_dtor(
+        scheduler_resource_allocation_error * this)
+{
+    TRACE("(%p)\n", this);
+    MSVCRT_exception_dtor(&this->e);
+}
+#endif
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -672,6 +734,11 @@ __ASM_VTABLE(bad_cast,
 __ASM_VTABLE(__non_rtti_object,
         VTABLE_ADD_FUNC(MSVCRT___non_rtti_object_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
+#if _MSVCR_VER >= 100
+__ASM_VTABLE(scheduler_resource_allocation_error,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
+#endif
 
 #ifndef __GNUC__
 }
@@ -690,11 +757,18 @@ DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_type
 DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@@" )
 DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" )
 #endif
+#if _MSVCR_VER >= 100
+DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &exception_rtti_base_descriptor,
+        ".?AVscheduler_resource_allocation_error@Concurrency@@")
+#endif
 
 DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( bad_cast, 1, &exception_cxx_type_info, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( __non_rtti_object, 2, &bad_typeid_cxx_type_info, &exception_cxx_type_info )
+#if _MSVCR_VER >= 100
+DEFINE_EXCEPTION_TYPE_INFO(scheduler_resource_allocation_error, 1, &exception_cxx_type_info, NULL)
+#endif
 
 #if _MSVCR_VER >= 80
 typedef exception bad_alloc;
@@ -749,6 +823,9 @@ void msvcrt_init_exception(void *base)
     init_bad_typeid_rtti(base);
     init_bad_cast_rtti(base);
     init___non_rtti_object_rtti(base);
+#if _MSVCR_VER >= 100
+    init_scheduler_resource_allocation_error_rtti(base);
+#endif
 
     init_exception_cxx(base);
     init_bad_typeid_cxx(base);
@@ -756,6 +833,9 @@ void msvcrt_init_exception(void *base)
     init___non_rtti_object_cxx(base);
 #if _MSVCR_VER >= 80
     init_bad_alloc_cxx(base);
+#endif
+#if _MSVCR_VER >= 100
+    init_scheduler_resource_allocation_error_cxx(base);
 #endif
 #endif
 }

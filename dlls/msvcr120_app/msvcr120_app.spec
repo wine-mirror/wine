@@ -231,12 +231,12 @@
 @ stub -arch=arm ??0scheduler_not_attached@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??0scheduler_not_attached@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0scheduler_not_attached@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@J@Z
-@ stub -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z
-@ stub -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@PBDJ@Z
-@ stub -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z
+@ cdecl -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@J@Z(ptr long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QAA@J@Z
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z(ptr long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z(ptr long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z
+@ cdecl -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@PBDJ@Z(ptr str long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QAA@PBDJ@Z
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z(ptr str long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z(ptr str long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z
 @ stub -arch=arm ??0scheduler_worker_creation_error@Concurrency@@QAA@J@Z
 @ stub -arch=i386 ??0scheduler_worker_creation_error@Concurrency@@QAE@J@Z
 @ stub -arch=win64 ??0scheduler_worker_creation_error@Concurrency@@QEAA@J@Z
@@ -721,9 +721,9 @@
 @ cdecl -arch=win64 ?before@type_info@@QEBA_NAEBV1@@Z(ptr ptr) msvcr120.?before@type_info@@QEBA_NAEBV1@@Z
 @ stub ?current@location@Concurrency@@SA?AV12@XZ
 @ stub ?from_numa_node@location@Concurrency@@SA?AV12@G@Z
-@ stub -arch=arm ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBAJXZ
-@ stub -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
-@ stub -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
+@ cdecl -arch=arm ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBAJXZ(ptr) msvcr120.?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBAJXZ
+@ thiscall -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ(ptr) msvcr120.?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
+@ cdecl -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ(ptr) msvcr120.?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
 @ cdecl -arch=arm ?lock@critical_section@Concurrency@@QAAXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QAAXXZ
 @ thiscall -arch=i386 ?lock@critical_section@Concurrency@@QAEXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QEAAXXZ

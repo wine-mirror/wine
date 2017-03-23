@@ -233,12 +233,12 @@
 @ stub -arch=arm ??0scheduler_not_attached@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??0scheduler_not_attached@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0scheduler_not_attached@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@J@Z
-@ stub -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z
-@ stub -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@PBDJ@Z
-@ stub -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z
+@ cdecl -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@J@Z(ptr long) scheduler_resource_allocation_error_ctor
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z(ptr long) scheduler_resource_allocation_error_ctor
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z(ptr long) scheduler_resource_allocation_error_ctor
+@ cdecl -arch=arm ??0scheduler_resource_allocation_error@Concurrency@@QAA@PBDJ@Z(ptr str long) scheduler_resource_allocation_error_ctor_name
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z(ptr str long) scheduler_resource_allocation_error_ctor_name
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z(ptr str long) scheduler_resource_allocation_error_ctor_name
 @ stub -arch=arm ??0scheduler_worker_creation_error@Concurrency@@QAA@J@Z
 @ stub -arch=i386 ??0scheduler_worker_creation_error@Concurrency@@QAE@J@Z
 @ stub -arch=win64 ??0scheduler_worker_creation_error@Concurrency@@QEAA@J@Z
@@ -725,9 +725,9 @@
 @ cdecl -arch=win64 ?before@type_info@@QEBA_NAEBV1@@Z(ptr ptr) MSVCRT_type_info_before
 @ stub ?current@location@Concurrency@@SA?AV12@XZ
 @ stub ?from_numa_node@location@Concurrency@@SA?AV12@G@Z
-@ stub -arch=arm ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBAJXZ
-@ stub -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
-@ stub -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
+@ cdecl -arch=arm ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBAJXZ(ptr) scheduler_resource_allocation_error_get_error_code
+@ thiscall -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ(ptr) scheduler_resource_allocation_error_get_error_code
+@ cdecl -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ(ptr) scheduler_resource_allocation_error_get_error_code
 @ cdecl -arch=arm ?lock@critical_section@Concurrency@@QAAXXZ(ptr) critical_section_lock
 @ thiscall -arch=i386 ?lock@critical_section@Concurrency@@QAEXXZ(ptr) critical_section_lock
 @ cdecl -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ(ptr) critical_section_lock

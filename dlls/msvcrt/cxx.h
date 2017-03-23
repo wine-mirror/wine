@@ -274,3 +274,5 @@ extern void *vtbl_wrapper_20;
 #define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (__cdecl***)type)this)[0][off/4]args
 
 #endif
+
+exception* __thiscall MSVCRT_exception_ctor(exception*, const char**);

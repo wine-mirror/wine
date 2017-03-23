@@ -140,10 +140,10 @@
 @ stub -arch=win64 ??0scheduler_not_attached@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0scheduler_not_attached@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0scheduler_not_attached@Concurrency@@QEAA@XZ
-@ stub -arch=win32 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z
-@ stub -arch=win32 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z(ptr long) scheduler_resource_allocation_error_ctor
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z(ptr long) scheduler_resource_allocation_error_ctor
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z(ptr str long) scheduler_resource_allocation_error_ctor_name
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z(ptr str long) scheduler_resource_allocation_error_ctor_name
 @ thiscall -arch=win32 ??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z(ptr ptr) critical_section_scoped_lock_ctor
 @ cdecl -arch=win64 ??0scoped_lock@critical_section@Concurrency@@QEAA@AEAV12@@Z(ptr ptr) critical_section_scoped_lock_ctor
 @ stub -arch=win32 ??0scoped_lock@reader_writer_lock@Concurrency@@QAE@AAV12@@Z
@@ -457,8 +457,8 @@
 @ cdecl -arch=win64 ?_wsopen@@YAHPEB_WHHH@Z(wstr long long long) MSVCRT__wsopen
 @ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) MSVCRT_type_info_before
 @ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) MSVCRT_type_info_before
-@ stub -arch=win32 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
-@ stub -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
+@ thiscall -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ(ptr) scheduler_resource_allocation_error_get_error_code
+@ cdecl -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ(ptr) scheduler_resource_allocation_error_get_error_code
 @ thiscall -arch=win32 ?lock@critical_section@Concurrency@@QAEXXZ(ptr) critical_section_lock
 @ cdecl -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ(ptr) critical_section_lock
 @ thiscall -arch=win32 ?lock@reader_writer_lock@Concurrency@@QAEXXZ(ptr) reader_writer_lock_lock

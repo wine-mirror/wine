@@ -138,10 +138,10 @@
 @ stub -arch=win64 ??0scheduler_not_attached@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0scheduler_not_attached@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0scheduler_not_attached@Concurrency@@QEAA@XZ
-@ stub -arch=win32 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z
-@ stub -arch=win32 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z
-@ stub -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z(ptr long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QAE@J@Z
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z(ptr long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QEAA@J@Z
+@ thiscall -arch=i386 ??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z(ptr str long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QAE@PBDJ@Z
+@ cdecl -arch=win64 ??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z(ptr str long) msvcr120.??0scheduler_resource_allocation_error@Concurrency@@QEAA@PEBDJ@Z
 @ stub -arch=win32 ??0scheduler_worker_creation_error@Concurrency@@QAE@J@Z
 @ stub -arch=win64 ??0scheduler_worker_creation_error@Concurrency@@QEAA@J@Z
 @ stub -arch=win32 ??0scheduler_worker_creation_error@Concurrency@@QAE@PBDJ@Z
@@ -475,8 +475,8 @@
 @ stub -arch=i386 ?done@agent@Concurrency@@IAE_NXZ
 @ stub -arch=win64 ?done@agent@Concurrency@@IEAA_NXZ
 @ stub ?from_numa_node@location@Concurrency@@SA?AV12@G@Z
-@ stub -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
-@ stub -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
+@ thiscall -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ(ptr) msvcr120.?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
+@ cdecl -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ(ptr) msvcr120.?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
 @ cdecl ?is_current_task_group_canceling@Concurrency@@YA_NXZ(ptr) msvcp120.?is_current_task_group_canceling@Concurrency@@YA_NXZ
 @ thiscall -arch=i386 ?lock@critical_section@Concurrency@@QAEXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ(ptr) msvcr120.?lock@critical_section@Concurrency@@QEAAXXZ
