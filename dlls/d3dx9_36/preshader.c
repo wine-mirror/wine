@@ -1088,16 +1088,11 @@ static HRESULT init_set_constants(struct d3dx_const_tab *const_tab, ID3DXConstan
     return ret;
 }
 
-static double exec_get_arg(struct d3dx_regstore *rs, const struct d3dx_pres_ins *ins,
-        const struct d3dx_pres_operand *opr, unsigned int comp)
+static double exec_get_arg(struct d3dx_regstore *rs, const struct d3dx_pres_operand *opr, unsigned int comp)
 {
     if (!regstore_is_val_set_reg(rs, opr->table, (opr->offset + comp) / table_info[opr->table].reg_component_count))
-    {
-        WARN("Using uninitialized input ");
-        dump_arg(rs, opr, comp);
-        TRACE(".\n");
-        dump_ins(rs, ins);
-    }
+        WARN("Using uninitialized input, table %u, offset %u.\n", opr->table, opr->offset + comp);
+
     return regstore_get_double(rs, opr->table, opr->offset + comp);
 }
 
@@ -1130,7 +1125,7 @@ static HRESULT execute_preshader(struct d3dx_preshader *pres)
             }
             for (k = 0; k < oi->input_count; ++k)
                 for (j = 0; j < ins->component_count; ++j)
-                    args[k * ins->component_count + j] = exec_get_arg(&pres->regs, ins, &ins->inputs[k],
+                    args[k * ins->component_count + j] = exec_get_arg(&pres->regs, &ins->inputs[k],
                             ins->scalar_op && !k ? 0 : j);
             res = oi->func(args, ins->component_count);
 
@@ -1142,7 +1137,7 @@ static HRESULT execute_preshader(struct d3dx_preshader *pres)
             for (j = 0; j < ins->component_count; ++j)
             {
                 for (k = 0; k < oi->input_count; ++k)
-                    args[k] = exec_get_arg(&pres->regs, ins, &ins->inputs[k], ins->scalar_op && !k ? 0 : j);
+                    args[k] = exec_get_arg(&pres->regs, &ins->inputs[k], ins->scalar_op && !k ? 0 : j);
                 res = oi->func(args, ins->component_count);
                 exec_set_arg(&pres->regs, &ins->output, j, res);
             }
