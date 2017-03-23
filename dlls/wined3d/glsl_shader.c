@@ -7063,7 +7063,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
     if (!gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
-    shader_glsl_generate_sm4_rasterizer_input_setup(priv, shader, args->ps_input_count, gl_info);
+    shader_glsl_generate_sm4_rasterizer_input_setup(priv, shader, args->output_count, gl_info);
     shader_addline(buffer, "void main()\n{\n");
     if (FAILED(shader_generate_main(shader, buffer, reg_maps, &priv_ctx)))
         return 0;

@@ -3407,8 +3407,8 @@ static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3
 void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         struct gs_compile_args *args)
 {
-    args->ps_input_count = state->shader[WINED3D_SHADER_TYPE_PIXEL]
-            ? state->shader[WINED3D_SHADER_TYPE_PIXEL]->limits->packed_input : 0;
+    args->output_count = state->shader[WINED3D_SHADER_TYPE_PIXEL]
+            ? state->shader[WINED3D_SHADER_TYPE_PIXEL]->limits->packed_input : shader->limits->packed_output;
 }
 
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,

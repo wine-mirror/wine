@@ -1312,7 +1312,7 @@ struct vs_compile_args
 
 struct gs_compile_args
 {
-    unsigned int ps_input_count;
+    unsigned int output_count;
 };
 
 struct wined3d_context;
