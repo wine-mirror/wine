@@ -226,6 +226,21 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
     return S_OK;
 }
 
+struct wined3d_shader_signature_element *shader_find_signature_element(const struct wined3d_shader_signature *s,
+        const char *semantic_name, unsigned int semantic_idx)
+{
+    struct wined3d_shader_signature_element *e = s->elements;
+    unsigned int i;
+
+    for (i = 0; i < s->element_count; ++i)
+    {
+        if (!strcasecmp(e[i].semantic_name, semantic_name) && e[i].semantic_idx == semantic_idx)
+            return &e[i];
+    }
+
+    return NULL;
+}
+
 void shader_free_signature(struct wined3d_shader_signature *s)
 {
     HeapFree(GetProcessHeap(), 0, s->elements);

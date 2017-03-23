@@ -65,7 +65,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
     {
         struct wined3d_vertex_element *e = &(*wined3d_elements)[i];
         const D3D11_INPUT_ELEMENT_DESC *f = &element_descs[i];
-        unsigned int j;
+        struct wined3d_shader_signature_element *element;
 
         e->format = wined3dformat_from_dxgi_format(f->Format);
         e->input_slot = f->InputSlot;
@@ -77,17 +77,9 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         e->usage = 0;
         e->usage_idx = 0;
 
-        for (j = 0; j < is.element_count; ++j)
-        {
-            if (!strcasecmp(element_descs[i].SemanticName, is.elements[j].semantic_name)
-                    && element_descs[i].SemanticIndex == is.elements[j].semantic_idx)
-            {
-                e->output_slot = is.elements[j].register_idx;
-                break;
-            }
-        }
-
-        if (e->output_slot == WINED3D_OUTPUT_SLOT_UNUSED)
+        if ((element = shader_find_signature_element(&is, f->SemanticName, f->SemanticIndex)))
+            e->output_slot = element->register_idx;
+        else
             WARN("Unused input element %u.\n", i);
     }
 
