@@ -1360,6 +1360,9 @@ static GLenum buffer_type_hint_from_bind_flags(const struct wined3d_gl_info *gl_
     if (bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
         return GL_UNIFORM_BUFFER;
 
+    if (bind_flags & WINED3D_BIND_STREAM_OUTPUT)
+        return GL_TRANSFORM_FEEDBACK_BUFFER;
+
     if (bind_flags & ~(WINED3D_BIND_VERTEX_BUFFER | WINED3D_BIND_INDEX_BUFFER))
         FIXME("Unhandled bind flags %#x.\n", bind_flags);
 
