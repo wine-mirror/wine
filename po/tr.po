@@ -126,9 +126,9 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine, HTML'yi gömülü kullanan uygulamaların düzgün çalışması için "
-"gerekliolan Gecko paketini bulamadı. Wine, paketi sizin için otomatik "
-"indirip yükleyebilir.\n"
+"Wine, HTML'yi gömülü kullanan uygulamaların düzgün çalışması için gerekli "
+"olan Gecko paketini bulamadı. Wine, paketi sizin için otomatik indirip "
+"yükleyebilir.\n"
 "\n"
 "Not: kendi dağıtımınızın paketlerini kullanmanız önerilir. Ayrıntılar için "
 "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
@@ -3702,7 +3702,7 @@ msgstr "Beklenen dizi nesnesi"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "Wine çekirdek DLL'si"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -9135,7 +9135,7 @@ msgid ""
 "until the device is free, and then try again."
 msgstr ""
 "Geçerli dalga aygıtı kullanımda olduğundan yürütme için açılamıyor. Aygıt "
-"lana kadar bekleyin ve yeniden deneyin."
+"boşalana kadar bekleyin ve yeniden deneyin."
 
 #: winmm.rc:114
 msgid ""
@@ -9350,10 +9350,8 @@ msgid "Confidentiality Required"
 msgstr "Gizlilik Gerekli"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Kapatılıyor.\n"
+msgstr "SASL İlişkilendirmesi Yürütülüyor"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -11961,16 +11959,14 @@ msgstr "Seçilen kayıt değeri yeniden adlandırılamıyor."
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
+"%1 dosyasında bulunan kayıt anahtarları ve değerleri, kayıt defterine "
+"başarıyla eklendi."
 
 #: regedit.rc:223
-#, fuzzy
-#| msgid ""
-#| "Unable to rename the key '%1'.\n"
-#| "The specified key name already exists."
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"'%1' anahtarı yeniden adlandırılamıyor.\n"
-"Belirtilen anahtar adı zaten var."
+"%1 dosyası alınamıyor. Belirtilen dosya geçerli bir kayıt defteri dosyası "
+"değil."
 
 #: regedit.rc:375
 msgid ""
@@ -12251,17 +12247,15 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Sistem kaydının seçilen kısmını metin dosyasına aktarır"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Değer Silmeyi Onayla"
+msgstr "Anahtar Silmeyi Onayla"
 
 #: regedit.rc:188
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "'%1' kayıt defteri anahtarını silmek istediğinizden emin misiniz?"
+msgstr ""
+"'%1' kayıt defteri anahtarını ve bütün alt anahtarlarını silmek "
+"istediğinizden emin misiniz?"
 
 #: regsvr32.rc:32
 msgid ""
