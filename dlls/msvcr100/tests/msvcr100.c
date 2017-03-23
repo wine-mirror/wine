@@ -142,6 +142,10 @@ typedef struct {
     char pad[64];
 } event;
 
+typedef struct {
+    void *vtable;
+} Context;
+
 static int* (__cdecl *p_errno)(void);
 static int (__cdecl *p_wmemcpy_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
 static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
@@ -189,6 +193,9 @@ static void (__thiscall *p_event_set)(event*);
 static size_t (__thiscall *p_event_wait)(event*, unsigned int);
 static int (__cdecl *p_event_wait_for_multiple)(event**, size_t, MSVCRT_bool, unsigned int);
 
+static Context* (__cdecl *p_Context_CurrentContext)(void);
+unsigned int (__cdecl *p_Context_Id)(void);
+
 /* make sure we use the correct errno */
 #undef errno
 #define errno (*p_errno())
@@ -220,6 +227,8 @@ static BOOL init(void)
     SET(p__aligned_free, "_aligned_free");
     SET(p__aligned_msize, "_aligned_msize");
     SET(p_atoi, "atoi");
+
+    SET(p_Context_Id, "?Id@Context@Concurrency@@SAIXZ");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QEAA@P6AXXZ@Z");
@@ -255,6 +264,8 @@ static BOOL init(void)
         SET(p_event_set, "?set@event@Concurrency@@QEAAXXZ");
         SET(p_event_wait, "?wait@event@Concurrency@@QEAA_KI@Z");
         SET(p_event_wait_for_multiple, "?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z");
+
+        SET(p_Context_CurrentContext, "?CurrentContext@Context@Concurrency@@SAPEAV12@XZ");
     } else {
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QAE@P6AXXZ@Z");
         SET(pSpinWait_dtor, "??_F?$_SpinWait@$00@details@Concurrency@@QAEXXZ");
@@ -289,6 +300,8 @@ static BOOL init(void)
         SET(p_event_set, "?set@event@Concurrency@@QAEXXZ");
         SET(p_event_wait, "?wait@event@Concurrency@@QAEII@Z");
         SET(p_event_wait_for_multiple, "?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z");
+
+        SET(p_Context_CurrentContext, "?CurrentContext@Context@Concurrency@@SAPAV12@XZ");
     }
 
     init_thiscall_thunk();
@@ -836,11 +849,51 @@ static void test_event(void)
     call_func1(p_event_dtor, &evt);
 }
 
+static DWORD WINAPI external_context_thread(void *arg)
+{
+    unsigned int id;
+    Context *ctx;
+
+    id = p_Context_Id();
+    ok(id == -1, "Context::Id() = %u\n", id);
+
+    ctx = p_Context_CurrentContext();
+    ok(ctx != NULL, "Context::CurrentContext() = NULL\n");
+    id = p_Context_Id();
+    ok(id == 1, "Context::Id() = %u\n", id);
+    return 0;
+}
+
+static void test_ExternalContextBase(void)
+{
+    unsigned int id;
+    Context *ctx;
+    HANDLE thread;
+
+    id = p_Context_Id();
+    ok(id == -1, "Context::Id() = %u\n", id);
+
+    ctx = p_Context_CurrentContext();
+    ok(ctx != NULL, "Context::CurrentContext() = NULL\n");
+    id = p_Context_Id();
+    ok(id == 0, "Context::Id() = %u\n", id);
+
+    ctx = p_Context_CurrentContext();
+    ok(ctx != NULL, "Context::CurrentContext() = NULL\n");
+    id = p_Context_Id();
+    ok(id == 0, "Context::Id() = %u\n", id);
+
+    thread = CreateThread(NULL, 0, external_context_thread, NULL, 0, NULL);
+    ok(thread != NULL, "CreateThread failed: %d\n", GetLastError());
+    WaitForSingleObject(thread, INFINITE);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
         return;
 
+    test_ExternalContextBase();
     test_wmemcpy_s();
     test_wmemmove_s();
     test_fread_s();
