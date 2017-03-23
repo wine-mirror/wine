@@ -1200,38 +1200,24 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     if (f)
     {
         char buffer[256];
-        unsigned long total, used, free, shared, buffers, cached;
+        unsigned long value;
 
         lpmemex->ullTotalPhys = lpmemex->ullAvailPhys = 0;
         lpmemex->ullTotalPageFile = lpmemex->ullAvailPageFile = 0;
         while (fgets( buffer, sizeof(buffer), f ))
         {
-	    /* old style /proc/meminfo ... */
-            if (sscanf( buffer, "Mem: %lu %lu %lu %lu %lu %lu",
-                        &total, &used, &free, &shared, &buffers, &cached ))
-            {
-                lpmemex->ullTotalPhys += total;
-                lpmemex->ullAvailPhys += free + buffers + cached;
-            }
-            if (sscanf( buffer, "Swap: %lu %lu %lu", &total, &used, &free ))
-            {
-                lpmemex->ullTotalPageFile += total;
-                lpmemex->ullAvailPageFile += free;
-            }
-
-            /* new style /proc/meminfo ... */
-            if (sscanf(buffer, "MemTotal: %lu", &total))
-                lpmemex->ullTotalPhys = (ULONG64)total*1024;
-            if (sscanf(buffer, "MemFree: %lu", &free))
-                lpmemex->ullAvailPhys = (ULONG64)free*1024;
-            if (sscanf(buffer, "SwapTotal: %lu", &total))
-                lpmemex->ullTotalPageFile = (ULONG64)total*1024;
-            if (sscanf(buffer, "SwapFree: %lu", &free))
-                lpmemex->ullAvailPageFile = (ULONG64)free*1024;
-            if (sscanf(buffer, "Buffers: %lu", &buffers))
-                lpmemex->ullAvailPhys += (ULONG64)buffers*1024;
-            if (sscanf(buffer, "Cached: %lu", &cached))
-                lpmemex->ullAvailPhys += (ULONG64)cached*1024;
+            if (sscanf(buffer, "MemTotal: %lu", &value))
+                lpmemex->ullTotalPhys = (ULONG64)value*1024;
+            else if (sscanf(buffer, "MemFree: %lu", &value))
+                lpmemex->ullAvailPhys = (ULONG64)value*1024;
+            else if (sscanf(buffer, "SwapTotal: %lu", &value))
+                lpmemex->ullTotalPageFile = (ULONG64)value*1024;
+            else if (sscanf(buffer, "SwapFree: %lu", &value))
+                lpmemex->ullAvailPageFile = (ULONG64)value*1024;
+            else if (sscanf(buffer, "Buffers: %lu", &value))
+                lpmemex->ullAvailPhys += (ULONG64)value*1024;
+            else if (sscanf(buffer, "Cached: %lu", &value))
+                lpmemex->ullAvailPhys += (ULONG64)value*1024;
         }
         fclose( f );
     }
