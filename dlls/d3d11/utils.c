@@ -727,11 +727,11 @@ void skip_dword_unknown(const char **ptr, unsigned int count)
     unsigned int i;
     DWORD d;
 
-    FIXME("Skipping %u unknown DWORDs:\n", count);
+    WARN("Skipping %u unknown DWORDs:\n", count);
     for (i = 0; i < count; ++i)
     {
         read_dword(ptr, &d);
-        FIXME("\t0x%08x\n", d);
+        WARN("\t0x%08x\n", d);
     }
 }
 
@@ -754,10 +754,10 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         return E_INVALIDARG;
     }
 
-    /* checksum? */
+    WARN("Ignoring DXBC checksum.\n");
     skip_dword_unknown(&ptr, 4);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_dword_unknown(&ptr, 1); /* It seems to always be 0x00000001. */
 
     read_dword(&ptr, &total_size);
     TRACE("total size: %#x\n", total_size);

@@ -183,7 +183,7 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
     read_dword(&ptr, &count);
     TRACE("%u elements\n", count);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_dword_unknown(&ptr, 1); /* It seems to always be 0x00000008. */
 
     if (!require_space(ptr - data, count, 6 * sizeof(DWORD), data_size))
     {
