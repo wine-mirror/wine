@@ -115,6 +115,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_init_console();
     msvcrt_init_args();
     msvcrt_init_signals();
+#if _MSVCR_VER >= 100 && _MSVCR_VER <= 120
+    msvcrt_init_scheduler(hinstDLL);
+#endif
 #if _MSVCR_VER == 0
     /* don't allow unloading msvcrt, we can't setup file handles twice */
     LdrAddRefDll( LDR_ADDREF_DLL_PIN, hinstDLL );
@@ -137,11 +140,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     if (!msvcrt_free_tls())
       return FALSE;
     MSVCRT__free_locale(MSVCRT_locale);
+#if _MSVCR_VER >= 100 && _MSVCR_VER <= 120
+    msvcrt_free_scheduler_thread();
+    msvcrt_free_scheduler();
+#endif
     msvcrt_destroy_heap();
     TRACE("finished process free\n");
     break;
   case DLL_THREAD_DETACH:
     msvcrt_free_tls_mem();
+#if _MSVCR_VER >= 100 && _MSVCR_VER <= 120
+    msvcrt_free_scheduler_thread();
+#endif
     TRACE("finished thread free\n");
     break;
   }

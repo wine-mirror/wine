@@ -259,3 +259,18 @@ typedef struct
 } rtti_object_locator;
 
 #endif
+
+#ifdef __i386__
+
+#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (WINAPI*)type)&vtbl_wrapper_##off)args
+
+extern void *vtbl_wrapper_0;
+extern void *vtbl_wrapper_4;
+extern void *vtbl_wrapper_8;
+extern void *vtbl_wrapper_20;
+
+#else
+
+#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (__cdecl***)type)this)[0][off/4]args
+
+#endif

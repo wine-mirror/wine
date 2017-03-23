@@ -329,6 +329,12 @@ extern void msvcrt_free_popen_data(void) DECLSPEC_HIDDEN;
 extern BOOL msvcrt_init_heap(void) DECLSPEC_HIDDEN;
 extern void msvcrt_destroy_heap(void) DECLSPEC_HIDDEN;
 
+#if _MSVCR_VER >= 100
+extern void msvcrt_init_scheduler(void*) DECLSPEC_HIDDEN;
+extern void msvcrt_free_scheduler(void) DECLSPEC_HIDDEN;
+extern void msvcrt_free_scheduler_thread(void) DECLSPEC_HIDDEN;
+#endif
+
 extern unsigned msvcrt_create_io_inherit_block(WORD*, BYTE**) DECLSPEC_HIDDEN;
 
 extern unsigned int __cdecl _control87(unsigned int, unsigned int);
