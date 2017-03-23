@@ -180,11 +180,11 @@ typedef struct {
     BOOL sfnt;
     CacheGlyphPage *page[NUM_PAGES];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
-    LPVOID GSUB_Table;
-    LPVOID GDEF_Table;
-    LPVOID CMAP_Table;
-    LPVOID CMAP_format12_Table;
-    LPVOID GPOS_Table;
+    void *GSUB_Table;
+    void *GDEF_Table;
+    void *CMAP_Table;
+    void *CMAP_format12_Table;
+    void *GPOS_Table;
     BOOL scripts_initialized;
     INT script_count;
     LoadedScript *scripts;
