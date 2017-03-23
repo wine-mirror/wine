@@ -1,0 +1,3 @@
+@ stub RoFreeParameterizedTypeExtra
+@ stub RoGetParameterizedTypeInstanceIID
+@ stub RoParameterizedTypeExtraGetTypeSignature
