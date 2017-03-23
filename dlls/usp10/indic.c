@@ -369,7 +369,8 @@ void Indic_ParseSyllables(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const
     TRACE("Processed %i of %i characters into %i syllables\n",index,cChar,*syllable_count);
 }
 
-void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR input, int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f, BOOL modern)
+void Indic_ReorderCharacters(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, WCHAR *input, unsigned int cChar,
+        IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f, BOOL modern)
 {
     int i;
 

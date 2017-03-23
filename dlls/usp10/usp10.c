@@ -1138,7 +1138,8 @@ HRESULT WINAPI ScriptRecordDigitSubstitution(LCID locale, SCRIPT_DIGITSUBSTITUTE
         sds->NationalDigitLanguage = LANG_ENGLISH;
 
     if (!GetLocaleInfoW(locale, LOCALE_IDIGITSUBSTITUTION | LOCALE_RETURN_NUMBER,
-                        (LPWSTR)&sub, sizeof(sub)/sizeof(WCHAR))) return E_INVALIDARG;
+            (WCHAR *)&sub, sizeof(sub) / sizeof(WCHAR)))
+        return E_INVALIDARG;
 
     switch (sub)
     {
@@ -1963,7 +1964,9 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
         if ((analysis->logattrs = heap_alloc(sizeof(SCRIPT_LOGATTR) * cString)))
         {
             for (i = 0; i < analysis->numItems; i++)
-                ScriptBreak(&((LPWSTR)pString)[analysis->pItem[i].iCharPos], analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos, &analysis->pItem[i].a, &analysis->logattrs[analysis->pItem[i].iCharPos]);
+                ScriptBreak(&((WCHAR *)pString)[analysis->pItem[i].iCharPos],
+                        analysis->pItem[i + 1].iCharPos - analysis->pItem[i].iCharPos,
+                        &analysis->pItem[i].a, &analysis->logattrs[analysis->pItem[i].iCharPos]);
         }
         else
             goto error;

@@ -238,7 +238,7 @@ static inline unsigned short get_table_entry( const unsigned short *table, WCHAR
 }
 
 typedef int (*lexical_function)(WCHAR c);
-typedef void (*reorder_function)(LPWSTR pwChar, IndicSyllable *syllable, lexical_function lex);
+typedef void (*reorder_function)(WCHAR *chars, IndicSyllable *syllable, lexical_function lex);
 
 #define odd(x) ((x) & 1)
 #define BIDI_STRONG  1
@@ -263,7 +263,9 @@ HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
 HRESULT SHAPE_GetFontLanguageTags( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, int cMaxTags, OPENTYPE_TAG *pLangSysTags, int *pcTags) DECLSPEC_HIDDEN;
 HRESULT SHAPE_GetFontFeatureTags( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags) DECLSPEC_HIDDEN;
 
-void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR input, int cChars, IndicSyllable **syllables, int *syllable_count, lexical_function lexical_f, reorder_function reorder_f, BOOL modern) DECLSPEC_HIDDEN;
+void Indic_ReorderCharacters(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, WCHAR *input, unsigned int cChars,
+        IndicSyllable **syllables, int *syllable_count, lexical_function lexical_f,
+        reorder_function reorder_f, BOOL modern) DECLSPEC_HIDDEN;
 void Indic_ParseSyllables(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, const WCHAR *input, unsigned int cChar,
         IndicSyllable **syllables, int *syllable_count, lexical_function lex, BOOL modern) DECLSPEC_HIDDEN;
 
