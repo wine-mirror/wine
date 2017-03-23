@@ -118,7 +118,7 @@ HRESULT WINAPI D3D11CoreRegisterLayers(void)
         {DXGI_DEVICE_LAYER_D3D10_DEVICE, layer_init, layer_get_size, layer_create, layer_set_feature_level},
     };
 
-    DXGID3D10RegisterLayers(layers, sizeof(layers)/sizeof(*layers));
+    DXGID3D10RegisterLayers(layers, ARRAY_SIZE(layers));
 
     return S_OK;
 }
@@ -265,7 +265,7 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
     if (!feature_levels)
     {
         feature_levels = default_feature_levels;
-        levels = sizeof(default_feature_levels) / sizeof(default_feature_levels[0]);
+        levels = ARRAY_SIZE(default_feature_levels);
     }
     hr = D3D11CoreCreateDevice(factory, adapter, flags, feature_levels, levels, &device);
     IDXGIAdapter_Release(adapter);

@@ -386,7 +386,7 @@ static HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device
         /* D3D11_QUERY_SO_OVERFLOW_PREDICATE    */  WINED3D_QUERY_TYPE_SO_OVERFLOW,
     };
 
-    if (desc->Query >= sizeof(query_type_map) / sizeof(*query_type_map))
+    if (desc->Query >= ARRAY_SIZE(query_type_map))
     {
         FIXME("Unhandled query type %#x.\n", desc->Query);
         return E_INVALIDARG;
