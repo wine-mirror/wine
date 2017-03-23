@@ -33,6 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+static int context_id = -1;
+
 #ifdef __i386__
 
 #define DEFINE_VTBL_WRAPPER(off)            \
@@ -64,6 +66,7 @@ typedef struct {
 
 typedef struct {
     Context context;
+    unsigned int id;
 } ExternalContextBase;
 extern const vtable_ptr MSVCRT_ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
@@ -168,8 +171,8 @@ unsigned int __cdecl Context_VirtualProcessorId(void)
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_GetId, 4)
 unsigned int __thiscall ExternalContextBase_GetId(const ExternalContextBase *this)
 {
-    FIXME("(%p)->() stub\n", this);
-    return -1;
+    TRACE("(%p)->()\n", this);
+    return this->id;
 }
 
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_GetVirtualProcessorId, 4)
@@ -225,7 +228,9 @@ Context* __thiscall ExternalContextBase_vector_dtor(ExternalContextBase *this, u
 
 static void ExternalContextBase_ctor(ExternalContextBase *this)
 {
+    TRACE("(%p)->()\n", this);
     this->context.vtable = &MSVCRT_ExternalContextBase_vtable;
+    this->id = InterlockedIncrement(&context_id);
 }
 
 extern const vtable_ptr MSVCRT_type_info_vtable;
