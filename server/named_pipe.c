@@ -452,8 +452,11 @@ static void do_disconnect( struct pipe_server *server )
     {
         assert( server->client->server == server );
         assert( server->client->pipe_end.fd );
-        release_object( server->client->pipe_end.fd );
-        server->client->pipe_end.fd = NULL;
+        if (!use_server_io( &server->pipe_end ))
+        {
+            release_object( server->client->pipe_end.fd );
+            server->client->pipe_end.fd = NULL;
+        }
     }
     assert( server->pipe_end.fd );
     if (!use_server_io( &server->pipe_end ))
