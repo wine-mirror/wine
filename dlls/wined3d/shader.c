@@ -3781,16 +3781,19 @@ HRESULT CDECL wined3d_shader_create_ds(struct wined3d_device *device, const stru
 }
 
 HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
-        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
+        const struct wined3d_stream_output_desc *so_desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
 {
     struct wined3d_shader *object;
     HRESULT hr;
 
-    TRACE("device %p, desc %p, parent %p, parent_ops %p, shader %p.\n",
-            device, desc, parent, parent_ops, shader);
+    TRACE("device %p, desc %p, so_desc %p, parent %p, parent_ops %p, shader %p.\n",
+            device, desc, so_desc, parent, parent_ops, shader);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (so_desc)
+        FIXME("Stream output not supported.\n");
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = geometry_shader_init(object, device, desc, parent, parent_ops)))

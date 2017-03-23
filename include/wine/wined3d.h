@@ -1518,6 +1518,9 @@ enum wined3d_shader_byte_code_format
 #define WINED3D_OUTPUT_SLOT_SEMANTIC                            0xffffffff
 #define WINED3D_OUTPUT_SLOT_UNUSED                              0xfffffffe
 
+#define WINED3D_MAX_STREAM_OUTPUT_BUFFERS                       4
+#define WINED3D_STREAM_OUTPUT_GAP                               0xffffffff
+
 #define WINED3D_VIEW_BUFFER_RAW                                 0x00000001
 #define WINED3D_VIEW_BUFFER_APPEND                              0x00000002
 #define WINED3D_VIEW_BUFFER_COUNTER                             0x00000004
@@ -1973,6 +1976,24 @@ struct wined3d_shader_desc
     struct wined3d_shader_signature input_signature;
     struct wined3d_shader_signature output_signature;
     unsigned int max_version;
+};
+
+struct wined3d_stream_output_element
+{
+    unsigned int stream_idx;
+    unsigned int register_idx;
+    BYTE component_idx;
+    BYTE component_count;
+    BYTE output_slot;
+};
+
+struct wined3d_stream_output_desc
+{
+    struct wined3d_stream_output_element *elements;
+    unsigned int element_count;
+    unsigned int buffer_strides[WINED3D_MAX_STREAM_OUTPUT_BUFFERS];
+    unsigned int buffer_stride_count;
+    unsigned int rasterizer_stream_idx;
 };
 
 struct wined3d_view_desc
@@ -2486,7 +2507,8 @@ HRESULT __cdecl wined3d_shader_create_cs(struct wined3d_device *device, const st
 HRESULT __cdecl wined3d_shader_create_ds(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
 HRESULT __cdecl wined3d_shader_create_gs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
-        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
+        const struct wined3d_stream_output_desc *so_desc, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_shader **shader);
 HRESULT __cdecl wined3d_shader_create_hs(struct wined3d_device *device, const struct wined3d_shader_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
 HRESULT __cdecl wined3d_shader_create_ps(struct wined3d_device *device, const struct wined3d_shader_desc *desc,

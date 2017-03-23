@@ -447,7 +447,7 @@ void state_unbind_resources(struct wined3d_state *state)
         }
     }
 
-    for (i = 0; i < MAX_STREAM_OUT; ++i)
+    for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
     {
         if ((buffer = state->stream_output[i].buffer))
         {

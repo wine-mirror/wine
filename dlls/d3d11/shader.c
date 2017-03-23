@@ -1194,7 +1194,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, stru
     }
     desc.max_version = d3d_sm_from_feature_level(device->feature_level);
 
-    hr = wined3d_shader_create_gs(device->wined3d_device, &desc, shader,
+    hr = wined3d_shader_create_gs(device->wined3d_device, &desc, NULL, shader,
             &d3d_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
     shader_free_signature(&desc.input_signature);
     shader_free_signature(&desc.output_signature);

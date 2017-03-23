@@ -1300,7 +1300,7 @@ void CDECL wined3d_device_set_stream_output(struct wined3d_device *device, UINT 
 
     TRACE("device %p, idx %u, buffer %p, offset %u.\n", device, idx, buffer, offset);
 
-    if (idx >= MAX_STREAM_OUT)
+    if (idx >= WINED3D_MAX_STREAM_OUTPUT_BUFFERS)
     {
         WARN("Invalid stream output %u.\n", idx);
         return;
@@ -1324,7 +1324,7 @@ struct wined3d_buffer * CDECL wined3d_device_get_stream_output(struct wined3d_de
 {
     TRACE("device %p, idx %u, offset %p.\n", device, idx, offset);
 
-    if (idx >= MAX_STREAM_OUT)
+    if (idx >= WINED3D_MAX_STREAM_OUTPUT_BUFFERS)
     {
         WARN("Invalid stream output %u.\n", idx);
         return NULL;

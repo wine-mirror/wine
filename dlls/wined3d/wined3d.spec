@@ -218,7 +218,7 @@
 
 @ cdecl wined3d_shader_create_cs(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_create_ds(ptr ptr ptr ptr ptr)
-@ cdecl wined3d_shader_create_gs(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_shader_create_gs(ptr ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_create_hs(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_create_ps(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_create_vs(ptr ptr ptr ptr ptr)
