@@ -375,9 +375,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     RECT rect = physDev->dc_rect;
 
                     OffsetRect( &rect, -physDev->dc_rect.left, -physDev->dc_rect.top );
-                    /* The GL drawable may be lagged behind if we don't flush first, so
-                     * flush the display make sure we copy up-to-date data */
-                    XFlush( gdi_display );
                     XSetFunction( gdi_display, physDev->gc, GXcopy );
                     XCopyArea( gdi_display, data->gl_drawable, physDev->drawable, physDev->gc,
                                0, 0, rect.right, rect.bottom,

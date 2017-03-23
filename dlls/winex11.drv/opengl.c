@@ -418,6 +418,12 @@ static const char *(*pglXQueryCurrentRendererStringMESA)(int attribute);
 static Bool (*pglXQueryRendererIntegerMESA)(Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
 static const char *(*pglXQueryRendererStringMESA)(Display *dpy, int screen, int renderer, int attribute);
 
+/* OpenML GLX Extensions */
+static Bool (*pglXWaitForSbcOML)( Display *dpy, GLXDrawable drawable,
+        INT64 target_sbc, INT64 *ust, INT64 *msc, INT64 *sbc );
+static INT64 (*pglXSwapBuffersMscOML)( Display *dpy, GLXDrawable drawable,
+        INT64 target_msc, INT64 divisor, INT64 remainder );
+
 /* Standard OpenGL */
 static void (*pglFinish)(void);
 static void (*pglFlush)(void);
@@ -748,6 +754,12 @@ static BOOL WINAPI init_opengl( INIT_ONCE *once, void *param, void **context )
                 (const GLubyte *)"glXQueryCurrentRendererStringMESA" );
         pglXQueryRendererIntegerMESA = pglXGetProcAddressARB( (const GLubyte *)"glXQueryRendererIntegerMESA" );
         pglXQueryRendererStringMESA = pglXGetProcAddressARB( (const GLubyte *)"glXQueryRendererStringMESA" );
+    }
+
+    if (has_extension( WineGLInfo.glxExtensions, "GLX_OML_sync_control" ))
+    {
+        pglXWaitForSbcOML = pglXGetProcAddressARB( (const GLubyte *)"glXWaitForSbcOML" );
+        pglXSwapBuffersMscOML = pglXGetProcAddressARB( (const GLubyte *)"glXSwapBuffersMscOML" );
     }
 
     X11DRV_WineGL_LoadExtensions();
@@ -3298,6 +3310,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     struct x11drv_escape_flush_gl_drawable escape;
     struct gl_drawable *gl;
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    INT64 ust, msc, sbc, target_sbc = 0;
 
     TRACE("(%p)\n", hdc);
 
@@ -3330,6 +3343,12 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
                                    gl->rect.right - gl->rect.left, gl->rect.bottom - gl->rect.top );
             break;
         }
+        if (pglXSwapBuffersMscOML)
+        {
+            pglFlush();
+            target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
+            break;
+        }
         pglXSwapBuffers(gdi_display, gl->drawable);
         break;
     case DC_GL_CHILD_WIN:
@@ -3337,9 +3356,18 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
         escape.gl_drawable = gl->window;
         /* fall through */
     default:
+        if (pglXSwapBuffersMscOML)
+        {
+            pglFlush();
+            target_sbc = pglXSwapBuffersMscOML( gdi_display, gl->drawable, 0, 0, 0 );
+            break;
+        }
         pglXSwapBuffers(gdi_display, gl->drawable);
         break;
     }
+
+    if (escape.gl_drawable && pglXWaitForSbcOML)
+        pglXWaitForSbcOML( gdi_display, gl->drawable, target_sbc, &ust, &msc, &sbc );
 
     release_gl_drawable( gl );
 
