@@ -308,8 +308,7 @@ static void test_CreateNamedPipe(int pipemode)
         }
         else
         {
-            /* ok(readden == sizeof(obuf), "peek3 got %d bytes\n", readden); */
-            if (readden != sizeof(obuf)) todo_wine ok(0, "peek3 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf), "peek3 got %d bytes\n", readden);
         }
         ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
         pbuf = ibuf;
@@ -339,8 +338,7 @@ static void test_CreateNamedPipe(int pipemode)
         }
         else
         {
-            /* ok(readden == sizeof(obuf), "peek4 got %d bytes\n", readden); */
-            if (readden != sizeof(obuf)) todo_wine ok(0, "peek4 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf), "peek4 got %d bytes\n", readden);
         }
         ok(avail == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes available\n", avail);
         pbuf = ibuf;
@@ -381,9 +379,7 @@ static void test_CreateNamedPipe(int pipemode)
             ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), " WriteFile5b\n");
             ok(written == sizeof(obuf2), "write file len 3b\n");
             ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek5\n");
-            /* currently the Wine behavior depends on the kernel version */
-            /* ok(readden == sizeof(obuf), "peek5 got %d bytes\n", readden); */
-            if (readden != sizeof(obuf)) todo_wine ok(0, "peek5 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf), "peek5 got %d bytes\n", readden);
 
             ok(avail == sizeof(obuf) + sizeof(obuf2), "peek5 got %d bytes available\n", avail);
             pbuf = ibuf;
@@ -416,9 +412,7 @@ static void test_CreateNamedPipe(int pipemode)
             ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), " WriteFile6b\n");
             ok(written == sizeof(obuf2), "write file len 6b\n");
             ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek6\n");
-            /* currently the Wine behavior depends on the kernel version */
-            /* ok(readden == sizeof(obuf), "peek6 got %d bytes\n", readden); */
-            if (readden != sizeof(obuf)) todo_wine ok(0, "peek6 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf), "peek6 got %d bytes\n", readden);
 
             ok(avail == sizeof(obuf) + sizeof(obuf2), "peek6b got %d bytes available\n", avail);
             pbuf = ibuf;
@@ -496,7 +490,6 @@ static void test_CreateNamedPipe(int pipemode)
                 ok(GetLastError() == ERROR_MORE_DATA, "wrong error 9\n");
                 ok(readden == 4, "read got %d bytes 9\n", readden);
                 SetLastError(0xdeadbeef);
-                todo_wine
                 ok(!ReadFile(hFile, ibuf + 4, 4, &readden, NULL), "ReadFile 9\n");
                 todo_wine
                 ok(GetLastError() == ERROR_MORE_DATA, "wrong error 9\n");
@@ -536,6 +529,7 @@ static void test_CreateNamedPipe(int pipemode)
                 memset(ibuf, 0, sizeof(ibuf));
                 SetLastError(0xdeadbeef);
                 ret = RpcReadFile(hnp, ibuf, 4, &readden, NULL);
+                todo_wine
                 ok(!ret, "RpcReadFile 10\n");
                 todo_wine
                 ok(GetLastError() == ERROR_MORE_DATA, "wrong error 10\n");
@@ -1424,7 +1418,7 @@ static void test_CloseHandle(void)
     numbytes = 0xdeadbeef;
     memset(buffer, 0, sizeof(buffer));
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
-    todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
+    ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
     numbytes = 0xdeadbeef;
@@ -1470,13 +1464,13 @@ static void test_CloseHandle(void)
     numbytes = 0xdeadbeef;
     memset(buffer, 0, sizeof(buffer));
     ret = ReadFile(hfile, buffer, sizeof(buffer), &numbytes, NULL);
-    todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
+    ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
 
     ret = GetNamedPipeHandleStateA(hfile, &state, NULL, NULL, NULL, NULL, 0);
     ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
@@ -1487,7 +1481,7 @@ static void test_CloseHandle(void)
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = WriteFile(hfile, testdata, sizeof(testdata), &numbytes, NULL);
@@ -1522,7 +1516,7 @@ static void test_CloseHandle(void)
     numbytes = 0xdeadbeef;
     memset(buffer, 0, sizeof(buffer));
     ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
-    todo_wine ok(ret || GetLastError() == ERROR_MORE_DATA /* >= Win 8 */,
+    ok(ret || GetLastError() == ERROR_MORE_DATA /* >= Win 8 */,
                  "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
@@ -1569,7 +1563,7 @@ static void test_CloseHandle(void)
     numbytes = 0xdeadbeef;
     memset(buffer, 0, sizeof(buffer));
     ret = ReadFile(hpipe, buffer, sizeof(buffer), &numbytes, NULL);
-    todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
+    ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
 
     SetLastError(0xdeadbeef);
