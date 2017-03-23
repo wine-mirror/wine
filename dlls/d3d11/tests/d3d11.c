@@ -11448,8 +11448,7 @@ static void test_index_buffer_offset(void)
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
             so_declaration, sizeof(so_declaration) / sizeof(*so_declaration),
             &stride, 1, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
-    todo_wine ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
-    if (FAILED(hr)) goto cleanup;
+    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -11483,6 +11482,7 @@ static void test_index_buffer_offset(void)
     for (i = 0; i < sizeof(expected_data) / sizeof(*expected_data); ++i)
     {
         data = get_readback_vec4(&rb, i, 0);
+        todo_wine
         ok(compare_vec4(data, &expected_data[i], 0)
                 || broken(is_nvidia_device(device) && !(i % 2) && compare_vec4(data, &broken_result, 0)),
                 "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u.\n",
@@ -11495,7 +11495,6 @@ static void test_index_buffer_offset(void)
     ID3D11Buffer_Release(vb);
     ID3D11VertexShader_Release(vs);
     ID3D11GeometryShader_Release(gs);
-cleanup:
     ID3D11InputLayout_Release(input_layout);
     release_test_context(&test_context);
 }

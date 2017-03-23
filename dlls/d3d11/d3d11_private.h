@@ -37,6 +37,10 @@
 #include "wine/winedxgi.h"
 #include "wine/rbtree.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
 #define MAKE_TAG(ch0, ch1, ch2, ch3) \
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
@@ -316,6 +320,8 @@ struct d3d_geometry_shader
 };
 
 HRESULT d3d_geometry_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        const D3D11_SO_DECLARATION_ENTRY *so_entries, unsigned int so_entry_count,
+        const unsigned int *buffer_strides, unsigned int buffer_stride_count, unsigned int rasterizer_stream,
         struct d3d_geometry_shader **shader) DECLSPEC_HIDDEN;
 struct d3d_geometry_shader *unsafe_impl_from_ID3D11GeometryShader(ID3D11GeometryShader *iface) DECLSPEC_HIDDEN;
 struct d3d_geometry_shader *unsafe_impl_from_ID3D10GeometryShader(ID3D10GeometryShader *iface) DECLSPEC_HIDDEN;

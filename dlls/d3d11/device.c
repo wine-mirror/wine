@@ -2476,7 +2476,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateGeometryShader(ID3D11Device 
     if (class_linkage)
         FIXME("Class linkage is not implemented yet.\n");
 
-    if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length, &object)))
+    if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
+            NULL, 0, NULL, 0, 0, &object)))
         return hr;
 
     *shader = &object->ID3D11GeometryShader_iface;
@@ -2486,15 +2487,28 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateGeometryShader(ID3D11Device 
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateGeometryShaderWithStreamOutput(ID3D11Device *iface,
         const void *byte_code, SIZE_T byte_code_length, const D3D11_SO_DECLARATION_ENTRY *so_entries,
-        UINT entry_count, const UINT *buffer_strides, UINT strides_count, UINT rasterized_stream,
+        UINT entry_count, const UINT *buffer_strides, UINT strides_count, UINT rasterizer_stream,
         ID3D11ClassLinkage *class_linkage, ID3D11GeometryShader **shader)
 {
-    FIXME("iface %p, byte_code %p, byte_code_length %lu, so_entries %p, entry_count %u, "
-            "buffer_strides %p, strides_count %u, rasterized_stream %u, class_linkage %p, shader %p stub!\n",
-            iface, byte_code, byte_code_length, so_entries, entry_count, buffer_strides, strides_count,
-            rasterized_stream, class_linkage, shader);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_geometry_shader *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, byte_code %p, byte_code_length %lu, so_entries %p, entry_count %u, "
+            "buffer_strides %p, strides_count %u, rasterizer_stream %u, class_linkage %p, shader %p.\n",
+            iface, byte_code, byte_code_length, so_entries, entry_count, buffer_strides, strides_count,
+            rasterizer_stream, class_linkage, shader);
+
+    if (class_linkage)
+        FIXME("Class linkage is not implemented yet.\n");
+
+    if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
+            so_entries, entry_count, buffer_strides, strides_count, rasterizer_stream, &object)))
+        return hr;
+
+    *shader = &object->ID3D11GeometryShader_iface;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreatePixelShader(ID3D11Device *iface, const void *byte_code,
@@ -4892,7 +4906,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device1
     TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p.\n",
             iface, byte_code, byte_code_length, shader);
 
-    if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length, &object)))
+    if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
+            NULL, 0, NULL, 0, 0, &object)))
         return hr;
 
     *shader = &object->ID3D10GeometryShader_iface;
