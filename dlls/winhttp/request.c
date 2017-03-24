@@ -368,25 +368,21 @@ static int get_header_index( request_t *request, LPCWSTR field, int requested_in
 
 static BOOL insert_header( request_t *request, header_t *header )
 {
-    DWORD count;
+    DWORD count = request->num_headers + 1;
     header_t *hdrs;
 
-    count = request->num_headers + 1;
-    if (count > 1)
+    if (request->headers)
         hdrs = heap_realloc_zero( request->headers, sizeof(header_t) * count );
     else
-        hdrs = heap_alloc_zero( sizeof(header_t) * count );
+        hdrs = heap_alloc_zero( sizeof(header_t) );
+    if (!hdrs) return FALSE;
 
-    if (hdrs)
-    {
-        request->headers = hdrs;
-        request->headers[count - 1].field = strdupW( header->field );
-        request->headers[count - 1].value = strdupW( header->value );
-        request->headers[count - 1].is_request = header->is_request;
-        request->num_headers++;
-        return TRUE;
-    }
-    return FALSE;
+    request->headers = hdrs;
+    request->headers[count - 1].field = strdupW( header->field );
+    request->headers[count - 1].value = strdupW( header->value );
+    request->headers[count - 1].is_request = header->is_request;
+    request->num_headers = count;
+    return TRUE;
 }
 
 static BOOL delete_header( request_t *request, DWORD index )
