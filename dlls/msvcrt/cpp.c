@@ -1671,6 +1671,11 @@ void __cdecl __ExceptionPtrCopyException(exception_ptr *ep,
 }
 #endif
 
+MSVCRT_bool __cdecl __ExceptionPtrCompare(const exception_ptr *ep1, const exception_ptr *ep2)
+{
+    return ep1->rec == ep2->rec;
+}
+
 void* __cdecl __AdjustPointer(void *obj, const this_ptr_offsets *off)
 {
     return get_this_pointer(off, obj);
