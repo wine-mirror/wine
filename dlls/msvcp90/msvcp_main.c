@@ -68,6 +68,10 @@ void (__thiscall *critical_section_unlock)(critical_section*);
 MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
 #endif
 
+#if _MSVCP_VER >= 100
+MSVCP_bool (__cdecl *Context_IsCurrentTaskCollectionCanceling)(void);
+#endif
+
 #define VERSION_STRING(ver) #ver
 #if _MSVCP_VER >= 140
 #define MSVCRT_NAME(ver) "ucrtbase.dll"
@@ -133,7 +137,7 @@ int __cdecl sprintf(char *buf, const char *fmt, ...)
 static void init_cxx_funcs(void)
 {
     HMODULE hmod = GetModuleHandleA( MSVCRT_NAME(_MSVCP_VER) );
-#if _MSVCP_VER >= 110
+#if _MSVCP_VER >= 100
     HMODULE hcon = hmod;
 #endif
 
@@ -187,6 +191,10 @@ static void init_cxx_funcs(void)
 #endif
     }
 #endif /* _MSVCP_VER >= 110 */
+
+#if _MSVCP_VER >= 100
+    Context_IsCurrentTaskCollectionCanceling = (void*)GetProcAddress(hcon, "?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ");
+#endif
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

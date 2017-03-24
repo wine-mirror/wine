@@ -72,6 +72,10 @@ extern void (__thiscall *critical_section_unlock)(critical_section*);
 extern MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
 #endif
 
+#if _MSVCP_VER >= 100
+extern MSVCP_bool (__cdecl *Context_IsCurrentTaskCollectionCanceling)(void);
+#endif
+
 /* basic_string<char, char_traits<char>, allocator<char>> */
 typedef struct
 {

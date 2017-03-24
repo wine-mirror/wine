@@ -2774,7 +2774,7 @@
 @ cdecl -arch=arm ?is@?$ctype@_W@std@@QBA_NF_W@Z(ptr long long) ctype_wchar_is_ch
 @ thiscall -arch=i386 ?is@?$ctype@_W@std@@QBE_NF_W@Z(ptr long long) ctype_wchar_is_ch
 @ cdecl -arch=win64 ?is@?$ctype@_W@std@@QEBA_NF_W@Z(ptr long long) ctype_wchar_is_ch
-@ cdecl ?is_current_task_group_canceling@Concurrency@@YA_NXZ(ptr) is_current_task_group_canceling
+@ cdecl ?is_current_task_group_canceling@Concurrency@@YA_NXZ() is_current_task_group_canceling
 @ cdecl -arch=arm ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAAXXZ(ptr) basic_istream_char_isfx
 @ thiscall -arch=i386 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) basic_istream_char_isfx
 @ cdecl -arch=win64 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) basic_istream_char_isfx

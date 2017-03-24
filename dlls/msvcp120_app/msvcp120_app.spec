@@ -2774,7 +2774,7 @@
 @ cdecl -arch=arm ?is@?$ctype@_W@std@@QBA_NF_W@Z(ptr long long) msvcp120.?is@?$ctype@_W@std@@QBA_NF_W@Z
 @ thiscall -arch=i386 ?is@?$ctype@_W@std@@QBE_NF_W@Z(ptr long long) msvcp120.?is@?$ctype@_W@std@@QBE_NF_W@Z
 @ cdecl -arch=win64 ?is@?$ctype@_W@std@@QEBA_NF_W@Z(ptr long long) msvcp120.?is@?$ctype@_W@std@@QEBA_NF_W@Z
-@ cdecl ?is_current_task_group_canceling@Concurrency@@YA_NXZ(ptr) msvcp120.?is_current_task_group_canceling@Concurrency@@YA_NXZ
+@ cdecl ?is_current_task_group_canceling@Concurrency@@YA_NXZ() msvcp120.?is_current_task_group_canceling@Concurrency@@YA_NXZ
 @ cdecl -arch=arm ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAAXXZ(ptr) msvcp120.?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAAXXZ
 @ thiscall -arch=i386 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXXZ(ptr) msvcp120.?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXXZ
 @ cdecl -arch=win64 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXXZ(ptr) msvcp120.?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXXZ
