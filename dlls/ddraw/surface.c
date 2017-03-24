@@ -529,7 +529,7 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
     wined3d_texture_decref(surface->wined3d_texture);
 }
 
-ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
+static ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
 {
     ULONG iface_count;
 
