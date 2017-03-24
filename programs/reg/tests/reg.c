@@ -1190,6 +1190,36 @@ static void test_import(void)
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line7\"=hex(7):4c,69,6e,\\;comment\n"
+                    "  65,20,\\;comment\n"
+                    "  63,6f,6e,\\;comment\n"
+                    "  63,61,74,\\;comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Multi-Line7", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line8\"=hex(7):4c,69,6e,\\;#comment\n"
+                    "  65,20,\\;#comment\n"
+                    "  63,6f,6e,\\;#comment\n"
+                    "  63,61,74,\\;#comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Multi-Line8", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line9\"=hex(7):4c,69,6e,\\;comment\n"
+                    "  65,20,\\;comment\n"
+                    "  63,6f,6e,\\;comment\n"
+                    "  63,61,74,\\#comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Multi-Line9");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"double\\\"quote\"=\"valid \\\"or\\\" not\"\n"
                     "\"single'quote\"=dword:00000008\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
@@ -1602,6 +1632,36 @@ static void test_import(void)
                      "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg_nonexist(hkey, "Multi-Line6");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Multi-Line7\"=hex(7):4c,00,69,00,6e,00,\\;comment\n"
+                     "  65,00,20,00,\\;comment\n"
+                     "  63,00,6f,00,6e,00,\\;comment\n"
+                     "  63,00,61,00,74,00,\\;comment\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Multi-Line7", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Multi-Line8\"=hex(7):4c,00,69,00,6e,00,\\;#comment\n"
+                     "  65,00,20,00,\\;#comment\n"
+                     "  63,00,6f,00,6e,00,\\;#comment\n"
+                     "  63,00,61,00,74,00,\\;#comment\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Multi-Line8", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Multi-Line9\"=hex(7):4c,00,69,00,6e,00,\\;comment\n"
+                     "  65,00,20,00,\\;comment\n"
+                     "  63,00,6f,00,6e,00,\\;comment\n"
+                     "  63,00,61,00,74,00,\\#comment\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Multi-Line9");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
