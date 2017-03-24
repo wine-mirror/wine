@@ -610,6 +610,33 @@ static void test_comments(void)
                     "  65,6e,61,74,69,6f,6e,00,00\n\n");
     todo_wine verify_reg(hkey, "Multi-Line2", REG_MULTI_SZ, "Line concat", 12, 0);
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line3\"=hex(7):4c,69,6e,\\;comment\n"
+                    "  65,20,\\;comment\n"
+                    "  63,6f,6e,\\;comment\n"
+                    "  63,61,74,\\;comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg(hkey, "Multi-Line3", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line4\"=hex(7):4c,69,6e,\\;#comment\n"
+                    "  65,20,\\;#comment\n"
+                    "  63,6f,6e,\\;#comment\n"
+                    "  63,61,74,\\;#comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n");
+    todo_wine verify_reg(hkey, "Multi-Line4", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Multi-Line5\"=hex(7):4c,69,6e,\\;comment\n"
+                    "  65,20,\\;comment\n"
+                    "  63,6f,6e,\\;comment\n"
+                    "  63,61,74,\\#comment\n"
+                    "  65,6e,61,74,69,6f,6e,00,00\n\n");
+    verify_reg_nonexist(hkey, "Multi-Line5");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
