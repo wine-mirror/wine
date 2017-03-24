@@ -64,9 +64,21 @@ typedef struct {
 #define call_Context_dtor(this, flags) CALL_VTBL_FUNC(this, 20, \
         Context*, (Context*, unsigned int), (this, flags))
 
+union allocator_cache_entry {
+    struct _free {
+        int depth;
+        union allocator_cache_entry *next;
+    } free;
+    struct _alloc {
+        int bucket;
+        char mem[1];
+    } alloc;
+};
+
 typedef struct {
     Context context;
     unsigned int id;
+    union allocator_cache_entry *allocator_cache[8];
 } ExternalContextBase;
 extern const vtable_ptr MSVCRT_ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
@@ -205,6 +217,16 @@ MSVCRT_bool __thiscall ExternalContextBase_IsSynchronouslyBlocked(const External
 
 static void ExternalContextBase_dtor(ExternalContextBase *this)
 {
+    union allocator_cache_entry *next, *cur;
+    int i;
+
+    /* TODO: move the allocator cache to scheduler so it can be reused */
+    for(i=0; i<sizeof(this->allocator_cache)/sizeof(this->allocator_cache[0]); i++) {
+        for(cur = this->allocator_cache[i]; cur; cur=next) {
+            next = cur->free.next;
+            MSVCRT_operator_delete(cur);
+        }
+    }
 }
 
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_vector_dtor, 8)
@@ -230,8 +252,72 @@ Context* __thiscall ExternalContextBase_vector_dtor(ExternalContextBase *this, u
 static void ExternalContextBase_ctor(ExternalContextBase *this)
 {
     TRACE("(%p)->()\n", this);
+
     this->context.vtable = &MSVCRT_ExternalContextBase_vtable;
     this->id = InterlockedIncrement(&context_id);
+    memset(this->allocator_cache, 0, sizeof(this->allocator_cache));
+}
+
+/* ?Alloc@Concurrency@@YAPAXI@Z */
+/* ?Alloc@Concurrency@@YAPEAX_K@Z */
+void * CDECL Concurrency_Alloc(MSVCRT_size_t size)
+{
+    ExternalContextBase *context = (ExternalContextBase*)get_current_context();
+    union allocator_cache_entry *p;
+
+    size += FIELD_OFFSET(union allocator_cache_entry, alloc.mem);
+    if (size < sizeof(*p))
+        size = sizeof(*p);
+
+    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+        p = MSVCRT_operator_new(size);
+        p->alloc.bucket = -1;
+    }else {
+        int i;
+
+        C_ASSERT(sizeof(union allocator_cache_entry) <= 1 << 4);
+        for(i=0; i<sizeof(context->allocator_cache)/sizeof(context->allocator_cache[0]); i++)
+            if (1 << (i+4) >= size) break;
+
+        if(i==sizeof(context->allocator_cache)/sizeof(context->allocator_cache[0])) {
+            p = MSVCRT_operator_new(size);
+            p->alloc.bucket = -1;
+        }else if (context->allocator_cache[i]) {
+            p = context->allocator_cache[i];
+            context->allocator_cache[i] = p->free.next;
+            p->alloc.bucket = i;
+        }else {
+            p = MSVCRT_operator_new(1 << (i+4));
+            p->alloc.bucket = i;
+        }
+    }
+
+    TRACE("(%ld) returning %p\n", size, p->alloc.mem);
+    return p->alloc.mem;
+}
+
+/* ?Free@Concurrency@@YAXPAX@Z */
+/* ?Free@Concurrency@@YAXPEAX@Z */
+void CDECL Concurrency_Free(void* mem)
+{
+    union allocator_cache_entry *p = (union allocator_cache_entry*)((char*)mem-FIELD_OFFSET(union allocator_cache_entry, alloc.mem));
+    ExternalContextBase *context = (ExternalContextBase*)get_current_context();
+    int bucket = p->alloc.bucket;
+
+    TRACE("(%p)\n", mem);
+
+    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+        MSVCRT_operator_delete(p);
+    }else {
+        if(bucket >= 0 && bucket < sizeof(context->allocator_cache)/sizeof(context->allocator_cache[0]) &&
+            (!context->allocator_cache[bucket] || context->allocator_cache[bucket]->free.depth < 20)) {
+            p->free.next = context->allocator_cache[bucket];
+            p->free.depth = p->free.next ? p->free.next->free.depth+1 : 0;
+            context->allocator_cache[bucket] = p;
+        }else {
+            MSVCRT_operator_delete(p);
+        }
+    }
 }
 
 extern const vtable_ptr MSVCRT_type_info_vtable;

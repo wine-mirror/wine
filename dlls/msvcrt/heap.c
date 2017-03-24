@@ -864,20 +864,3 @@ void msvcrt_destroy_heap(void)
     if(sb_heap)
         HeapDestroy(sb_heap);
 }
-
-/* ?Alloc@Concurrency@@YAPAXI@Z */
-/* ?Alloc@Concurrency@@YAPEAX_K@Z */
-void * CDECL Concurrency_Alloc(MSVCRT_size_t size)
-{
-    void *p = MSVCRT_malloc(size);
-    FIXME("(%ld) returning %p\n", size, p);
-    return p;
-}
-
-/* ?Free@Concurrency@@YAXPAX@Z */
-/* ?Free@Concurrency@@YAXPEAX@Z */
-void CDECL Concurrency_Free(void* mem)
-{
-    FIXME("(%p) stub\n", mem);
-    MSVCRT_free(mem);
-}
