@@ -771,11 +771,10 @@ cleanup:
 
 static void test_query_value_ex(void)
 {
-    DWORD ret;
-    DWORD size;
-    DWORD type;
+    DWORD ret, size, type;
     BYTE buffer[10];
-    
+
+    size = sizeof(buffer);
     ret = RegQueryValueExA(hkey_main, "TP1_SZ", NULL, &type, NULL, &size);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
     ok(size == strlen(sTestpath1) + 1, "(%d,%d)\n", (DWORD)strlen(sTestpath1) + 1, size);
@@ -1832,7 +1831,7 @@ static void test_reg_query_info(void)
     ok(classbufferW[0] == 0x5555, "classbufferW[0] = 0x%x\n", classbufferW[0]);
 
     /* empty key */
-    sdlen = 0;
+    sdlen = classlen =0;
     ret = RegQueryInfoKeyA(subkey, NULL, &classlen, NULL, &subkeys, &maxsubkeylen, &maxclasslen, &values, &maxvaluenamelen, &maxvaluelen, &sdlen, &lastwrite);
     ok(ret == ERROR_SUCCESS, "ret = %d\n", ret);
     ok(classlen == strlen(subkey_class), "classlen = %u\n", classlen);
@@ -1846,7 +1845,7 @@ static void test_reg_query_info(void)
     ok(lastwrite.dwLowDateTime != 0, "lastwrite.dwLowDateTime = %u\n", lastwrite.dwLowDateTime);
     ok(lastwrite.dwHighDateTime != 0, "lastwrite.dwHighDateTime = %u\n", lastwrite.dwHighDateTime);
 
-    sdlen = 0;
+    sdlen = classlen = 0;
     ret = RegQueryInfoKeyW(subkey, NULL, &classlen, NULL, &subkeys, &maxsubkeylen, &maxclasslen, &values, &maxvaluenamelen, &maxvaluelen, &sdlen, &lastwrite);
     ok(ret == ERROR_SUCCESS, "ret = %d\n", ret);
     ok(classlen == strlen(subkey_class), "classlen = %u\n", classlen);
@@ -1867,7 +1866,7 @@ static void test_reg_query_info(void)
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
 
     /* with subkey & default value */
-    sdlen = 0;
+    sdlen = classlen = 0;
     ret = RegQueryInfoKeyA(subkey, NULL, &classlen, NULL, &subkeys, &maxsubkeylen, &maxclasslen, &values, &maxvaluenamelen, &maxvaluelen, &sdlen, &lastwrite);
     ok(ret == ERROR_SUCCESS, "ret = %d\n", ret);
     ok(classlen == strlen(subkey_class), "classlen = %u\n", classlen);
@@ -1881,7 +1880,7 @@ static void test_reg_query_info(void)
     ok(lastwrite.dwLowDateTime != 0, "lastwrite.dwLowDateTime = %u\n", lastwrite.dwLowDateTime);
     ok(lastwrite.dwHighDateTime != 0, "lastwrite.dwHighDateTime = %u\n", lastwrite.dwHighDateTime);
 
-    sdlen = 0;
+    sdlen = classlen = 0;
     ret = RegQueryInfoKeyW(subkey, NULL, &classlen, NULL, &subkeys, &maxsubkeylen, &maxclasslen, &values, &maxvaluenamelen, &maxvaluelen, &sdlen, &lastwrite);
     ok(ret == ERROR_SUCCESS, "ret = %d\n", ret);
     ok(classlen == strlen(subkey_class), "classlen = %u\n", classlen);
@@ -1902,12 +1901,14 @@ static void test_reg_query_info(void)
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
 
     /* with named value */
+    classlen = 0;
     ret = RegQueryInfoKeyA(subkey, NULL, &classlen, NULL, &subkeys, &maxsubkeylen, &maxclasslen, &values, &maxvaluenamelen, &maxvaluelen, &sdlen, &lastwrite);
     ok(ret == ERROR_SUCCESS, "ret = %d\n", ret);
     ok(values == 3, "values = %u\n", values);
     ok(maxvaluenamelen == strlen("value one"), "maxvaluenamelen = %u\n", maxvaluenamelen);
     ok(maxvaluelen == sizeof("second value data") * sizeof(WCHAR), "maxvaluelen = %u\n", maxvaluelen);
 
+    classlen = 0;
     ret = RegQueryInfoKeyW(subkey, NULL, &classlen, NULL, &subkeys, &maxsubkeylen, &maxclasslen, &values, &maxvaluenamelen, &maxvaluelen, &sdlen, &lastwrite);
     ok(ret == ERROR_SUCCESS, "ret = %d\n", ret);
     ok(values == 3, "values = %u\n", values);
