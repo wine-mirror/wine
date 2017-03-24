@@ -82,6 +82,7 @@ Optional support libraries:
   64-bit Wine (or a mixed 32-bit and 64-bit Wine setup), see
   http://wiki.winehq.org/Wine64 for details.
 
+
 4. COMPILATION
 
 To build Wine, do:
@@ -97,6 +98,7 @@ Windows source code under Unix.
 To see compile configuration options, do ./configure --help.
 
 For more information, see https://wiki.winehq.org/Building_Wine
+
 
 5. SETUP
 
