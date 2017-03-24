@@ -3414,10 +3414,10 @@ void find_gs_compile_args(const struct wined3d_state *state, const struct wined3
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         BOOL position_transformed, struct ps_compile_args *args, const struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_texture *texture;
-    UINT i;
+    unsigned int i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
     if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context, state, state->fb))
@@ -3520,33 +3520,40 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         }
     }
 
-    for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
-    {
-        if (!shader->reg_maps.resource_info[i].type)
-            continue;
-
-        texture = state->textures[i];
-        if (!texture)
-        {
-            args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
-            continue;
-        }
-        if (can_use_texture_swizzle(gl_info, texture->resource.format))
-            args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
-        else
-            args->color_fixup[i] = texture->resource.format->color_fixup;
-
-        if (texture->resource.format_flags & WINED3DFMT_FLAG_SHADOW)
-            args->shadow |= 1u << i;
-
-        /* Flag samplers that need NP2 texcoord fixup. */
-        if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
-            args->np2_fixup |= (1u << i);
-    }
-
-    /* In SM4+ we use dcl_sampler in order to determine if we should use shadow sampler. */
     if (shader->reg_maps.shader_version.major >= 4)
+    {
+        /* In SM4+ we use dcl_sampler in order to determine if we should use shadow sampler. */
         args->shadow = 0;
+        for (i = 0 ; i < MAX_FRAGMENT_SAMPLERS; ++i)
+            args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
+        args->np2_fixup = 0;
+    }
+    else
+    {
+        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+        {
+            if (!shader->reg_maps.resource_info[i].type)
+                continue;
+
+            texture = state->textures[i];
+            if (!texture)
+            {
+                args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
+                continue;
+            }
+            if (can_use_texture_swizzle(gl_info, texture->resource.format))
+                args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
+            else
+                args->color_fixup[i] = texture->resource.format->color_fixup;
+
+            if (texture->resource.format_flags & WINED3DFMT_FLAG_SHADOW)
+                args->shadow |= 1u << i;
+
+            /* Flag samplers that need NP2 texcoord fixup. */
+            if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
+                args->np2_fixup |= (1u << i);
+        }
+    }
 
     if (shader->reg_maps.shader_version.major >= 3)
     {
