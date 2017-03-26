@@ -319,7 +319,7 @@
 329 stdcall VarCyMulI8(int64 int64 ptr)
 330 stdcall VarDateFromUdate(ptr long ptr)
 331 stdcall VarUdateFromDate(double long ptr)
-332 stub GetAltMonthNames
+332 stdcall GetAltMonthNames(long ptr)
 333 stdcall VarI8FromUI1(long long)
 334 stdcall VarI8FromI2(long long)
 335 stdcall VarI8FromR4(float long)
