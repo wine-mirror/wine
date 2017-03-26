@@ -2591,35 +2591,6 @@ static HRESULT ffp_blit_alloc(struct wined3d_device *device) { return WINED3D_OK
 /* Context activation is done by the caller. */
 static void ffp_blit_free(struct wined3d_device *device) { }
 
-/* Context activation is done by the caller. */
-static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface,
-        const struct wined3d_color_key *color_key)
-{
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    gl_info->gl_ops.gl.p_glEnable(surface->container->target);
-    checkGLcall("glEnable(target)");
-
-    return WINED3D_OK;
-}
-
-/* Context activation is done by the caller. */
-static void ffp_blit_unset(const struct wined3d_gl_info *gl_info)
-{
-    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
-    checkGLcall("glDisable(GL_TEXTURE_2D)");
-    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-    }
-    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-    }
-}
-
 static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
         const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
@@ -2769,7 +2740,8 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
         context_invalidate_state(context, STATE_FRAMEBUFFER);
     }
 
-    ffp_blit_set(device->blit_priv, context, src_surface, NULL);
+    gl_info->gl_ops.gl.p_glEnable(src_texture->target);
+    checkGLcall("glEnable(target)");
 
     if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST || color_key)
     {
@@ -2799,7 +2771,18 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
     }
 
     /* Leave the OpenGL state valid for blitting. */
-    ffp_blit_unset(gl_info);
+    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
+    checkGLcall("glDisable(GL_TEXTURE_2D)");
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+    }
+    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
+        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
+    }
 
     if (wined3d_settings.strict_draw_ordering
             || (dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture))
@@ -2810,11 +2793,10 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
             (old_color_key_flags & WINED3D_CKEY_SRC_BLT) ? &old_blt_key : NULL);
 }
 
-const struct blit_shader ffp_blit =  {
+const struct blit_shader ffp_blit =
+{
     ffp_blit_alloc,
     ffp_blit_free,
-    ffp_blit_set,
-    ffp_blit_unset,
     ffp_blit_supported,
     ffp_blit_color_fill,
     ffp_blit_depth_fill,
@@ -2828,18 +2810,6 @@ static HRESULT cpu_blit_alloc(struct wined3d_device *device)
 
 /* Context activation is done by the caller. */
 static void cpu_blit_free(struct wined3d_device *device)
-{
-}
-
-/* Context activation is done by the caller. */
-static HRESULT cpu_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface,
-        const struct wined3d_color_key *color_key)
-{
-    return WINED3D_OK;
-}
-
-/* Context activation is done by the caller. */
-static void cpu_blit_unset(const struct wined3d_gl_info *gl_info)
 {
 }
 
@@ -3464,11 +3434,10 @@ static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
     ERR("Blit method not implemented by cpu_blit.\n");
 }
 
-const struct blit_shader cpu_blit =  {
+const struct blit_shader cpu_blit =
+{
     cpu_blit_alloc,
     cpu_blit_free,
-    cpu_blit_set,
-    cpu_blit_unset,
     cpu_blit_supported,
     cpu_blit_color_fill,
     cpu_blit_depth_fill,
