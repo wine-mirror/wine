@@ -966,6 +966,7 @@ enable_api_ms_win_core_sysinfo_l1_2_1
 enable_api_ms_win_core_threadpool_l1_1_0
 enable_api_ms_win_core_threadpool_l1_2_0
 enable_api_ms_win_core_threadpool_legacy_l1_1_0
+enable_api_ms_win_core_threadpool_private_l1_1_0
 enable_api_ms_win_core_timezone_l1_1_0
 enable_api_ms_win_core_toolhelp_l1_1_0
 enable_api_ms_win_core_url_l1_1_0
@@ -17701,6 +17702,7 @@ wine_fn_config_dll api-ms-win-core-sysinfo-l1-2-1 enable_api_ms_win_core_sysinfo
 wine_fn_config_dll api-ms-win-core-threadpool-l1-1-0 enable_api_ms_win_core_threadpool_l1_1_0
 wine_fn_config_dll api-ms-win-core-threadpool-l1-2-0 enable_api_ms_win_core_threadpool_l1_2_0
 wine_fn_config_dll api-ms-win-core-threadpool-legacy-l1-1-0 enable_api_ms_win_core_threadpool_legacy_l1_1_0
+wine_fn_config_dll api-ms-win-core-threadpool-private-l1-1-0 enable_api_ms_win_core_threadpool_private_l1_1_0
 wine_fn_config_dll api-ms-win-core-timezone-l1-1-0 enable_api_ms_win_core_timezone_l1_1_0
 wine_fn_config_dll api-ms-win-core-toolhelp-l1-1-0 enable_api_ms_win_core_toolhelp_l1_1_0
 wine_fn_config_dll api-ms-win-core-url-l1-1-0 enable_api_ms_win_core_url_l1_1_0
