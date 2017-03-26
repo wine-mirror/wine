@@ -49,6 +49,13 @@ typedef struct
     IXMLDOMNode *node;
 } xsltemplate;
 
+enum output_type
+{
+    PROCESSOR_OUTPUT_NOT_SET,
+    PROCESSOR_OUTPUT_STREAM,        /* IStream or ISequentialStream */
+    PROCESSOR_OUTPUT_PERSISTSTREAM, /* IPersistStream or IPersistStreamInit */
+};
+
 typedef struct
 {
     DispatchEx dispex;
@@ -58,8 +65,14 @@ typedef struct
     xsltemplate *stylesheet;
     IXMLDOMNode *input;
 
-    IStream     *output;
-    BSTR         outstr;
+    union
+    {
+        IUnknown *unk;
+        ISequentialStream *stream;
+        IPersistStream *persiststream;
+    } output;
+    enum output_type output_type;
+    BSTR outstr;
 
     struct xslprocessor_params params;
 } xslprocessor;
@@ -318,7 +331,8 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
         struct xslprocessor_par *par, *par2;
 
         if (This->input) IXMLDOMNode_Release(This->input);
-        if (This->output) IStream_Release(This->output);
+        if (This->output.unk)
+            IUnknown_Release(This->output.unk);
         SysFreeString(This->outstr);
 
         LIST_FOR_EACH_ENTRY_SAFE(par, par2, &This->params.list, struct xslprocessor_par, entry)
@@ -457,34 +471,53 @@ static HRESULT WINAPI xslprocessor_get_startModeURI(
 
 static HRESULT WINAPI xslprocessor_put_output(
     IXSLProcessor *iface,
-    VARIANT output)
+    VARIANT var)
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
-    IStream *stream;
-    HRESULT hr;
+    enum output_type output_type = PROCESSOR_OUTPUT_NOT_SET;
+    IUnknown *output = NULL;
+    HRESULT hr = S_OK;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_variant(&output));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&var));
 
-    switch (V_VT(&output))
+    switch (V_VT(&var))
     {
-      case VT_EMPTY:
-        stream = NULL;
-        hr = S_OK;
+    case VT_EMPTY:
         break;
-      case VT_UNKNOWN:
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&output), &IID_IStream, (void**)&stream);
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        if (!V_UNKNOWN(&var))
+            break;
+
+        output_type = PROCESSOR_OUTPUT_STREAM;
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_IStream, (void **)&output);
         if (FAILED(hr))
-            WARN("failed to get IStream from output, 0x%08x\n", hr);
+            hr = IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_ISequentialStream, (void **)&output);
+        /* FIXME: try IResponse */
+        if (FAILED(hr))
+        {
+            output_type = PROCESSOR_OUTPUT_PERSISTSTREAM;
+            hr = IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_IPersistStream, (void **)&output);
+        }
+        if (FAILED(hr))
+            hr = IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_IPersistStreamInit, (void **)&output);
+        if (FAILED(hr))
+        {
+            output_type = PROCESSOR_OUTPUT_NOT_SET;
+            WARN("failed to get output interface, 0x%08x\n", hr);
+        }
         break;
-      default:
-        FIXME("output type %d not handled\n", V_VT(&output));
+    default:
+        FIXME("output type %d not handled\n", V_VT(&var));
         hr = E_FAIL;
     }
 
     if (hr == S_OK)
     {
-        if (This->output) IStream_Release(This->output);
-        This->output = stream;
+        if (This->output.unk)
+            IUnknown_Release(This->output.unk);
+        This->output.unk = output;
+        This->output_type = output_type;
     }
 
     return hr;
@@ -500,11 +533,11 @@ static HRESULT WINAPI xslprocessor_get_output(
 
     if (!output) return E_INVALIDARG;
 
-    if (This->output)
+    if (This->output.unk)
     {
         V_VT(output) = VT_UNKNOWN;
-        V_UNKNOWN(output) = (IUnknown*)This->output;
-        IStream_AddRef(This->output);
+        V_UNKNOWN(output) = This->output.unk;
+        IUnknown_AddRef(This->output.unk);
     }
     else if (This->outstr)
     {
@@ -523,6 +556,7 @@ static HRESULT WINAPI xslprocessor_transform(
 {
 #ifdef HAVE_LIBXML2
     xslprocessor *This = impl_from_IXSLProcessor( iface );
+    ISequentialStream *stream = NULL;
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, ret);
@@ -530,7 +564,31 @@ static HRESULT WINAPI xslprocessor_transform(
     if (!ret) return E_INVALIDARG;
 
     SysFreeString(This->outstr);
-    hr = node_transform_node_params(get_node_obj(This->input), This->stylesheet->node, &This->outstr, This->output, &This->params);
+
+    if (This->output_type == PROCESSOR_OUTPUT_STREAM)
+    {
+        stream = This->output.stream;
+        ISequentialStream_AddRef(stream);
+    }
+    else if (This->output_type == PROCESSOR_OUTPUT_PERSISTSTREAM)
+        CreateStreamOnHGlobal(NULL, TRUE, (IStream **)&stream);
+
+    hr = node_transform_node_params(get_node_obj(This->input), This->stylesheet->node,
+            &This->outstr, stream, &This->params);
+    if (SUCCEEDED(hr) && This->output_type == PROCESSOR_OUTPUT_PERSISTSTREAM)
+    {
+        IStream *src = (IStream *)stream;
+        LARGE_INTEGER zero;
+
+        /* for IPersistStream* output seekable stream is used */
+        zero.QuadPart = 0;
+        IStream_Seek(src, zero, STREAM_SEEK_SET, NULL);
+        hr = IPersistStream_Load(This->output.persiststream, src);
+    }
+
+    if (stream)
+        ISequentialStream_Release(stream);
+
     *ret = hr == S_OK ? VARIANT_TRUE : VARIANT_FALSE;
     return hr;
 #else
@@ -709,7 +767,8 @@ HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
     This->IXSLProcessor_iface.lpVtbl = &XSLProcessorVtbl;
     This->ref = 1;
     This->input = NULL;
-    This->output = NULL;
+    This->output.unk = NULL;
+    This->output_type = PROCESSOR_OUTPUT_NOT_SET;
     This->outstr = NULL;
     list_init(&This->params.list);
     This->params.count = 0;

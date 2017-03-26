@@ -8496,14 +8496,15 @@ static void test_get_xml(void)
 
 static void test_xsltemplate(void)
 {
+    IXMLDOMDocument *doc, *doc2, *doc3;
     IXSLTemplate *template;
     IXSLProcessor *processor;
-    IXMLDOMDocument *doc, *doc2;
     IStream *stream;
     VARIANT_BOOL b;
     HRESULT hr;
     ULONG ref1, ref2;
     VARIANT v;
+    BSTR str;
 
     if (!is_clsid_supported(&CLSID_XSLTemplate, &IID_IXSLTemplate)) return;
     template = create_xsltemplate(&IID_IXSLTemplate);
@@ -8583,6 +8584,16 @@ todo_wine {
     hr = IXSLProcessor_put_output(processor, v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = NULL;
+    hr = IXSLProcessor_put_output(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_DISPATCH(&v) = NULL;
+    hr = IXSLProcessor_put_output(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     EXPECT_REF(stream, 1);
@@ -8619,7 +8630,7 @@ todo_wine {
     /* no output interface set, check output */
     doc2 = create_document(&IID_IXMLDOMDocument);
 
-    b = VARIANT_TRUE;
+    b = VARIANT_FALSE;
     hr = IXMLDOMDocument_loadXML( doc2, _bstr_("<a>test</a>"), &b );
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok( b == VARIANT_TRUE, "got %d\n", b);
@@ -8637,10 +8648,47 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
     ok(*V_BSTR(&v) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
-    IXMLDOMDocument_Release(doc2);
     VariantClear(&v);
 
+    /* transform to document */
+    b = VARIANT_FALSE;
+    hr = IXMLDOMDocument_loadXML(doc2, _bstr_(szTransformXML), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)doc2;
+    hr = IXSLProcessor_put_input(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    doc3 = create_document(&IID_IXMLDOMDocument);
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)doc3;
+    hr = IXSLProcessor_put_output(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc3, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!*str, "Expected empty document\n");
+    SysFreeString(str);
+
+    hr = IXSLProcessor_transform(processor, &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IXSLProcessor_get_output(processor, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "got type %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    hr = IXMLDOMDocument_get_xml(doc3, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!!*str, "Expected document\n");
+    SysFreeString(str);
+
     IXSLProcessor_Release(processor);
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMDocument_Release(doc3);
 
     /* drop reference */
     hr = IXSLTemplate_putref_stylesheet(template, NULL);
