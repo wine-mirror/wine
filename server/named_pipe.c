@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1998 Alexandre Julliard
  * Copyright (C) 2001 Mike McCormack
+ * Copyright 2016 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,9 +18,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * TODO:
- *   message mode
  */
 
 #include "config.h"
@@ -691,15 +689,25 @@ static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int b
 static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
 {
     struct pipe_message *message;
-    data_size_t avail = 0;
 
-    LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
+    if (pipe_end->flags & NAMED_PIPE_MESSAGE_STREAM_READ)
     {
-        avail += message->iosb->in_size - message->read_pos;
-        if (avail >= iosb->out_size) break;
+        message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
+        iosb->out_size = min( iosb->out_size, message->iosb->in_size - message->read_pos );
+        iosb->status = message->read_pos + iosb->out_size < message->iosb->in_size
+            ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
     }
-    iosb->out_size = min( iosb->out_size, avail );
-    iosb->status = STATUS_SUCCESS;
+    else
+    {
+        data_size_t avail = 0;
+        LIST_FOR_EACH_ENTRY( message, &pipe_end->message_queue, struct pipe_message, entry )
+        {
+            avail += message->iosb->in_size - message->read_pos;
+            if (avail >= iosb->out_size) break;
+        }
+        iosb->out_size = min( iosb->out_size, avail );
+        iosb->status = STATUS_SUCCESS;
+    }
 
     message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
     if (!message->read_pos && message->iosb->in_size == iosb->out_size) /* fast path */
