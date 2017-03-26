@@ -978,8 +978,8 @@ HRESULT WINAPI SHCreateStreamOnFileA(LPCSTR,DWORD,struct IStream**);
 HRESULT WINAPI SHCreateStreamOnFileW(LPCWSTR,DWORD,struct IStream**);
 #define SHCreateStreamOnFile WINELIB_NAME_AW(SHCreateStreamOnFile)
 
+struct IStream * WINAPI SHCreateMemStream(const BYTE*,UINT);
 HRESULT WINAPI SHCreateStreamOnFileEx(LPCWSTR,DWORD,DWORD,BOOL,struct IStream*,struct IStream**);
-
 HRESULT WINAPI SHCreateStreamWrapper(LPBYTE,DWORD,DWORD,struct IStream**);
 
 #endif /* NO_SHLWAPI_STREAM */
