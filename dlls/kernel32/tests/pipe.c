@@ -2853,6 +2853,9 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
     trace("testing %s, %s server->client writes...\n",
           msg_mode ? "message mode" : "byte mode", msg_read_mode ? "message read" : "byte read");
     test_blocking_rw(server, client, 5000, msg_mode, msg_read_mode);
+    trace("testing %s, %s client->server writes...\n",
+          msg_mode ? "message mode" : "byte mode", msg_read_mode ? "message read" : "byte read");
+    test_blocking_rw(client, server, 6000, msg_mode, msg_read_mode);
 
     CloseHandle(client);
     CloseHandle(server);
@@ -2869,18 +2872,22 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
     /* close server with pending writes */
     create_overlapped_pipe(create_flags, &client, &server);
     overlapped_write_async(client, buf, 7000, &overlapped);
+    flush = test_flush_async(client, ERROR_BROKEN_PIPE);
     CloseHandle(server);
     test_overlapped_failure(client, &overlapped, ERROR_BROKEN_PIPE);
+    test_flush_done(flush);
     CloseHandle(client);
 
     /* disconnect with pending writes */
     create_overlapped_pipe(create_flags, &client, &server);
     overlapped_write_async(client, buf, 7000, &overlapped);
     overlapped_write_async(server, buf, 7000, &overlapped2);
+    flush = test_flush_async(client, ERROR_PIPE_NOT_CONNECTED);
     res = DisconnectNamedPipe(server);
     ok(res, "DisconnectNamedPipe failed: %u\n", GetLastError());
     test_overlapped_failure(client, &overlapped, ERROR_PIPE_NOT_CONNECTED);
     test_overlapped_failure(client, &overlapped2, ERROR_PIPE_NOT_CONNECTED);
+    test_flush_done(flush);
     CloseHandle(server);
     CloseHandle(client);
 }

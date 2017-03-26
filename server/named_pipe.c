@@ -656,6 +656,9 @@ static obj_handle_t pipe_end_flush( struct pipe_end *pipe_end, struct async *asy
 {
     obj_handle_t handle = 0;
 
+    if (use_server_io( pipe_end ) && (!pipe_end->connection || list_empty( &pipe_end->connection->message_queue )))
+        return 0;
+
     if (!fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT )) return 0;
 
     if (!blocking || (handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 )))
@@ -682,8 +685,9 @@ static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int b
 
 static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int blocking )
 {
-    /* FIXME: what do we have to do for this? */
-    return 0;
+    struct pipe_end *pipe_end = get_fd_user( fd );
+    /* FIXME: Support byte mode. */
+    return use_server_io( pipe_end ) ? pipe_end_flush( pipe_end, async, blocking ) : 0;
 }
 
 static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
