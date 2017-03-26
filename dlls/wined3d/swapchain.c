@@ -368,23 +368,14 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
     {
         struct wined3d_device *device = swapchain->device;
         struct wined3d_context *context2;
-        RECT r;
-
-        context2 = context_acquire(device, texture, 0);
-        context_apply_blit_state(context2, device);
-
-        r = *dst_rect;
-        surface_translate_drawable_coords(back_buffer, swapchain->win_handle, &r);
 
         if (is_complex_fixup(texture->resource.format->color_fixup))
             filter = WINED3D_TEXF_NONE;
 
-        context_apply_fbo_state_blit(context2, GL_FRAMEBUFFER, back_buffer, NULL, WINED3D_LOCATION_DRAWABLE);
-        context_set_draw_buffer(context, GL_BACK);
+        context2 = context_acquire(device, texture, 0);
 
-        device->blitter->set_shader(device->blit_priv, context2, back_buffer, NULL);
-        draw_textured_quad(back_buffer, context2, src_rect, &r, filter);
-        device->blitter->unset_shader(context->gl_info);
+        device->blitter->blit_surface(device, WINED3D_BLIT_OP_COLOR_BLIT, context2, back_buffer,
+                src_rect, back_buffer, WINED3D_LOCATION_DRAWABLE, dst_rect, NULL, filter);
         checkGLcall("Swapchain present blit(manual)\n");
 
         context_release(context2);
