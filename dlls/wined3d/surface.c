@@ -547,9 +547,9 @@ static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const
 {
     struct wined3d_resource *resource = &surface->container->resource;
     struct wined3d_device *device = resource->device;
+    const struct wined3d_blitter_ops *blitter;
     struct wined3d_rendertarget_view *view;
     struct wined3d_view_desc view_desc;
-    const struct blit_shader *blitter;
     HRESULT hr;
 
     if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info,
@@ -2105,9 +2105,9 @@ HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const st
 {
     struct wined3d_resource *resource = &s->container->resource;
     struct wined3d_device *device = resource->device;
+    const struct wined3d_blitter_ops *blitter;
     struct wined3d_rendertarget_view *view;
     struct wined3d_view_desc view_desc;
-    const struct blit_shader *blitter;
     HRESULT hr;
 
     if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info,
@@ -2793,7 +2793,7 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
             (old_color_key_flags & WINED3D_CKEY_SRC_BLT) ? &old_blt_key : NULL);
 }
 
-const struct blit_shader ffp_blit =
+const struct wined3d_blitter_ops ffp_blit =
 {
     ffp_blit_alloc,
     ffp_blit_free,
@@ -3434,7 +3434,7 @@ static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
     ERR("Blit method not implemented by cpu_blit.\n");
 }
 
-const struct blit_shader cpu_blit =
+const struct wined3d_blitter_ops cpu_blit =
 {
     cpu_blit_alloc,
     cpu_blit_free,
@@ -3592,7 +3592,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     else
     {
         struct wined3d_texture_sub_resource *src_sub_resource, *dst_sub_resource;
-        const struct blit_shader *blitter;
+        const struct wined3d_blitter_ops *blitter;
 
         dst_sub_resource = surface_get_sub_resource(dst_surface);
         src_sub_resource = src_texture ? &src_texture->sub_resources[src_sub_resource_idx] : NULL;

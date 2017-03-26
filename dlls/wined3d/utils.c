@@ -5851,12 +5851,12 @@ int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info,
+const struct wined3d_blitter_ops *wined3d_select_blitter(const struct wined3d_gl_info *gl_info,
         const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
-    static const struct blit_shader * const blitters[] =
+    static const struct wined3d_blitter_ops * const blitters[] =
     {
         &arbfp_blit,
         &ffp_blit,

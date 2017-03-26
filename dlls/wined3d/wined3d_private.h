@@ -1862,9 +1862,7 @@ enum wined3d_blit_op
     WINED3D_BLIT_OP_DEPTH_BLIT,
 };
 
-/* Shaders for color conversions in blits. Do not do blit operations while
- * already under the GL lock. */
-struct blit_shader
+struct wined3d_blitter_ops
 {
     HRESULT (*alloc_private)(struct wined3d_device *device);
     void (*free_private)(struct wined3d_device *device);
@@ -1882,12 +1880,12 @@ struct blit_shader
             const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter);
 };
 
-extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;
-extern const struct blit_shader arbfp_blit DECLSPEC_HIDDEN;
-extern const struct blit_shader cpu_blit DECLSPEC_HIDDEN;
+extern const struct wined3d_blitter_ops arbfp_blit DECLSPEC_HIDDEN;
+extern const struct wined3d_blitter_ops ffp_blit DECLSPEC_HIDDEN;
+extern const struct wined3d_blitter_ops cpu_blit DECLSPEC_HIDDEN;
 
 BOOL wined3d_clip_blit(const RECT *clip_rect, RECT *clipped, RECT *other) DECLSPEC_HIDDEN;
-const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info,
+const struct wined3d_blitter_ops *wined3d_select_blitter(const struct wined3d_gl_info *gl_info,
         const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
@@ -2358,7 +2356,7 @@ struct wined3d_adapter
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct fragment_pipeline *fragment_pipe;
     const struct wined3d_shader_backend_ops *shader_backend;
-    const struct blit_shader *blitter;
+    const struct wined3d_blitter_ops *blitter;
 };
 
 struct wined3d_caps_gl_ctx
@@ -2625,7 +2623,7 @@ struct wined3d_device
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
-    const struct blit_shader *blitter;
+    const struct wined3d_blitter_ops *blitter;
 
     BYTE vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
     BYTE bCursorVisible : 1;

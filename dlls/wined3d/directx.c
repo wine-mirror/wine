@@ -2597,7 +2597,7 @@ static const struct wined3d_shader_backend_ops *select_shader_backend(const stru
     return &none_shader_backend;
 }
 
-static const struct blit_shader *select_blit_implementation(const struct wined3d_gl_info *gl_info,
+static const struct wined3d_blitter_ops *select_blit_implementation(const struct wined3d_gl_info *gl_info,
         const struct wined3d_shader_backend_ops *shader_backend_ops)
 {
     if ((shader_backend_ops == &glsl_shader_backend

@@ -7885,7 +7885,7 @@ static HRESULT arbfp_blit_depth_fill(struct wined3d_device *device, struct wined
     return WINED3DERR_INVALIDCALL;
 }
 
-const struct blit_shader arbfp_blit =
+const struct wined3d_blitter_ops arbfp_blit =
 {
     arbfp_blit_alloc,
     arbfp_blit_free,

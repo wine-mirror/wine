@@ -4158,7 +4158,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
         struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
         const struct wined3d_color *color, float depth, DWORD stencil)
 {
-    const struct blit_shader *blitter;
+    const struct wined3d_blitter_ops *blitter;
     struct wined3d_resource *resource;
     enum wined3d_blit_op blit_op;
     RECT r;
