@@ -258,6 +258,7 @@ my @dll_groups =
  [
   "kernelbase",
   "api-ms-win-core-quirks-l1-1-0",
+  "api-ms-win-security-grouppolicy-l1-1-0",
  ],
  [
   "ole32",
