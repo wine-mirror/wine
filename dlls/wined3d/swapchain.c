@@ -450,7 +450,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 
         /* Blit the logo into the upper left corner of the drawable. */
         wined3d_texture_blt(back_buffer, 0, &rect, logo_texture, 0, &rect,
-                WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
+                WINED3D_BLT_SRC_CKEY, NULL, WINED3D_TEXF_POINT);
     }
 
     if (swapchain->device->bCursorVisible && swapchain->device->cursor_texture
