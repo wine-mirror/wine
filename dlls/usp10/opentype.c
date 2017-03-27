@@ -2504,7 +2504,7 @@ static void GSUB_initialize_script_cache(ScriptCache *psc)
         const GSUB_Header* header = (const GSUB_Header*)psc->GSUB_Table;
         script = (const OT_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
         psc->script_count = GET_BE_WORD(script->ScriptCount);
-        TRACE("initializing %i scripts in this font\n",psc->script_count);
+        TRACE("initializing %li scripts in this font\n",psc->script_count);
         if (psc->script_count)
         {
             psc->scripts = heap_alloc_zero(psc->script_count * sizeof(*psc->scripts));
@@ -2537,7 +2537,7 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
     if (!psc->script_count)
     {
         psc->script_count = count;
-        TRACE("initializing %i scripts in this font\n",psc->script_count);
+        TRACE("initializing %li scripts in this font\n",psc->script_count);
         if (psc->script_count)
         {
             psc->scripts = heap_alloc_zero(psc->script_count * sizeof(*psc->scripts));
@@ -2558,10 +2558,15 @@ static void GPOS_expand_script_cache(ScriptCache *psc)
 
             if (!(loaded_script = usp10_script_cache_get_script(psc, tag)))
             {
-                psc->script_count++;
-                psc->scripts = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        psc->scripts, psc->script_count * sizeof(*psc->scripts));
-                loaded_script = &psc->scripts[psc->script_count - 1];
+                if (!usp10_array_reserve((void **)&psc->scripts, &psc->scripts_size,
+                        psc->script_count + 1, sizeof(*psc->scripts)))
+                {
+                    ERR("Failed grow scripts array.\n");
+                    return;
+                }
+
+                loaded_script = &psc->scripts[psc->script_count];
+                ++psc->script_count;
                 loaded_script->tag = tag;
             }
             loaded_script->gpos_table = (const BYTE *)script + offset;
