@@ -6561,8 +6561,16 @@ static DWORD CALLBACK enablewindow_thread(LPVOID arg)
     return 0;
 }
 
+static LRESULT CALLBACK enable_window_procA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_CANCELMODE)
+        return 0;
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
 static void test_EnableWindow(void)
 {
+    WNDCLASSA cls;
     HWND hwnd;
     HANDLE hthread;
     DWORD tid;
@@ -6603,6 +6611,24 @@ static void test_EnableWindow(void)
     ok(0 == GetCapture(), "GetCapture() = %p\n", GetCapture());
 
     CloseHandle(hthread);
+    DestroyWindow(hwnd);
+
+    /* test preventing release of capture */
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = enable_window_procA;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.lpszClassName = "EnableWindowClass";
+    ok(RegisterClassA(&cls), "RegisterClass failed\n");
+
+    hwnd = CreateWindowExA(0, "EnableWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                           0, 0, 100, 100, 0, 0, 0, NULL);
+    assert(hwnd);
+    SetFocus(hwnd);
+    SetCapture(hwnd);
+
+    EnableWindow(hwnd, FALSE);
+    check_wnd_state(hwnd, hwnd, 0, hwnd);
+
     DestroyWindow(hwnd);
 }
 
