@@ -330,6 +330,7 @@ typedef enum {
     ContextPriority,
     SchedulingProtocol,
     DynamicProgressFeedback,
+    WinRTInitialization,
     last_policy_id
 } PolicyElementKey;
 
@@ -345,8 +346,47 @@ DEFINE_THISCALL_WRAPPER(SchedulerPolicy_SetPolicyValue, 12)
 unsigned int __thiscall SchedulerPolicy_SetPolicyValue(SchedulerPolicy *this,
         PolicyElementKey policy, unsigned int val)
 {
-    FIXME("(%p %d %d) stub\n", this, policy, val);
-    return 0;
+    unsigned int ret;
+
+    TRACE("(%p %d %d)\n", this, policy, val);
+
+    if (policy == MinConcurrency)
+        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "MinConcurrency");
+    if (policy == MaxConcurrency)
+        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "MaxConcurrency");
+    if (policy < SchedulerKind || policy >= last_policy_id)
+        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "Invalid policy");
+
+    switch(policy) {
+    case SchedulerKind:
+        if (val)
+            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "SchedulerKind");
+        break;
+    case TargetOversubscriptionFactor:
+        if (!val)
+            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE,
+                    0, "TargetOversubscriptionFactor");
+        break;
+    case ContextPriority:
+        if (((int)val < -7 /* THREAD_PRIORITY_REALTIME_LOWEST */
+                    || val > 6 /* THREAD_PRIORITY_REALTIME_HIGHEST */)
+            && val != THREAD_PRIORITY_IDLE && val != THREAD_PRIORITY_TIME_CRITICAL
+            && val != INHERIT_THREAD_PRIORITY)
+            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "ContextPriority");
+        break;
+    case SchedulingProtocol:
+    case DynamicProgressFeedback:
+    case WinRTInitialization:
+        if (val != 0 && val != 1)
+            throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "SchedulingProtocol");
+        break;
+    default:
+        break;
+    }
+
+    ret = this->policy_container->policies[policy];
+    this->policy_container->policies[policy] = val;
+    return ret;
 }
 
 /* ?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QAEXII@Z */
@@ -355,7 +395,15 @@ DEFINE_THISCALL_WRAPPER(SchedulerPolicy_SetConcurrencyLimits, 12)
 void __thiscall SchedulerPolicy_SetConcurrencyLimits(SchedulerPolicy *this,
         unsigned int min_concurrency, unsigned int max_concurrency)
 {
-    FIXME("(%p %d %d) stub\n", this, min_concurrency, max_concurrency);
+    TRACE("(%p %d %d)\n", this, min_concurrency, max_concurrency);
+
+    if (min_concurrency > max_concurrency)
+        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_THREAD_SPECIFICATION, 0, NULL);
+    if (!max_concurrency)
+        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_VALUE, 0, "MaxConcurrency");
+
+    this->policy_container->policies[MinConcurrency] = min_concurrency;
+    this->policy_container->policies[MaxConcurrency] = max_concurrency;
 }
 
 /* ?GetPolicyValue@SchedulerPolicy@Concurrency@@QBEIW4PolicyElementKey@2@@Z */
@@ -364,8 +412,11 @@ DEFINE_THISCALL_WRAPPER(SchedulerPolicy_GetPolicyValue, 8)
 unsigned int __thiscall SchedulerPolicy_GetPolicyValue(
         const SchedulerPolicy *this, PolicyElementKey policy)
 {
-    FIXME("(%p %d) stub\n", this, policy);
-    return 0;
+    TRACE("(%p %d)\n", this, policy);
+
+    if (policy < SchedulerKind || policy >= last_policy_id)
+        throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "Invalid policy");
+    return this->policy_container->policies[policy];
 }
 
 /* ??0SchedulerPolicy@Concurrency@@QAE@XZ */
@@ -373,17 +424,54 @@ unsigned int __thiscall SchedulerPolicy_GetPolicyValue(
 DEFINE_THISCALL_WRAPPER(SchedulerPolicy_ctor, 4)
 SchedulerPolicy* __thiscall SchedulerPolicy_ctor(SchedulerPolicy *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+
+    this->policy_container = MSVCRT_operator_new(sizeof(*this->policy_container));
+    /* TODO: default values can probably be affected by CurrentScheduler */
+    this->policy_container->policies[SchedulerKind] = 0;
+    this->policy_container->policies[MaxConcurrency] = -1;
+    this->policy_container->policies[MinConcurrency] = 1;
+    this->policy_container->policies[TargetOversubscriptionFactor] = 1;
+    this->policy_container->policies[LocalContextCacheSize] = 8;
+    this->policy_container->policies[ContextStackSize] = 0;
+    this->policy_container->policies[ContextPriority] = THREAD_PRIORITY_NORMAL;
+    this->policy_container->policies[SchedulingProtocol] = 0;
+    this->policy_container->policies[DynamicProgressFeedback] = 1;
+    return this;
 }
 
 /* ??0SchedulerPolicy@Concurrency@@QAA@IZZ */
 /* ??0SchedulerPolicy@Concurrency@@QEAA@_KZZ */
+/* TODO: don't leak policy_container on exception */
 SchedulerPolicy* __cdecl SchedulerPolicy_ctor_policies(
         SchedulerPolicy *this, MSVCRT_size_t n, ...)
 {
-    FIXME("(%p %ld) stub\n", this, n);
-    return NULL;
+    unsigned int min_concurrency, max_concurrency;
+    __ms_va_list valist;
+    MSVCRT_size_t i;
+
+    TRACE("(%p %ld)\n", this, n);
+
+    SchedulerPolicy_ctor(this);
+    min_concurrency = this->policy_container->policies[MinConcurrency];
+    max_concurrency = this->policy_container->policies[MaxConcurrency];
+
+    __ms_va_start(valist, n);
+    for(i=0; i<n; i++) {
+        PolicyElementKey policy = va_arg(valist, PolicyElementKey);
+        unsigned int val = va_arg(valist, unsigned int);
+
+        if(policy == MinConcurrency)
+            min_concurrency = val;
+        else if(policy == MaxConcurrency)
+            max_concurrency = val;
+        else
+            SchedulerPolicy_SetPolicyValue(this, policy, val);
+    }
+    __ms_va_end(valist);
+
+    SchedulerPolicy_SetConcurrencyLimits(this, min_concurrency, max_concurrency);
+    return this;
 }
 
 /* ??4SchedulerPolicy@Concurrency@@QAEAAV01@ABV01@@Z */
@@ -392,8 +480,10 @@ DEFINE_THISCALL_WRAPPER(SchedulerPolicy_op_assign, 8)
 SchedulerPolicy* __thiscall SchedulerPolicy_op_assign(
         SchedulerPolicy *this, const SchedulerPolicy *rhs)
 {
-    FIXME("(%p %p) stub\n", this, rhs);
-    return NULL;
+    TRACE("(%p %p)\n", this, rhs);
+    memcpy(this->policy_container->policies, rhs->policy_container->policies,
+            sizeof(this->policy_container->policies));
+    return this;
 }
 
 /* ??0SchedulerPolicy@Concurrency@@QAE@ABV01@@Z */
@@ -402,8 +492,9 @@ DEFINE_THISCALL_WRAPPER(SchedulerPolicy_copy_ctor, 8)
 SchedulerPolicy* __thiscall SchedulerPolicy_copy_ctor(
         SchedulerPolicy *this, const SchedulerPolicy *rhs)
 {
-    FIXME("(%p %p) stub\n", this, rhs);
-    return NULL;
+    TRACE("(%p %p)\n", this, rhs);
+    SchedulerPolicy_ctor(this);
+    return SchedulerPolicy_op_assign(this, rhs);
 }
 
 /* ??1SchedulerPolicy@Concurrency@@QAE@XZ */
@@ -411,7 +502,8 @@ SchedulerPolicy* __thiscall SchedulerPolicy_copy_ctor(
 DEFINE_THISCALL_WRAPPER(SchedulerPolicy_dtor, 4)
 void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    MSVCRT_operator_delete(this->policy_container);
 }
 
 extern const vtable_ptr MSVCRT_type_info_vtable;

@@ -1411,4 +1411,6 @@ static inline BOOL heap_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
 }
+
+#define INHERIT_THREAD_PRIORITY 0xF000
 #endif /* __WINE_MSVCRT_H */
