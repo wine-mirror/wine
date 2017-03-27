@@ -3288,6 +3288,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
         if( menu ) menu->bTimeToHide = FALSE;
     }
 
+    SetLastError( ERROR_SUCCESS );
     /* The return value is only used by TrackPopupMenu */
     if (!(wFlags & TPM_RETURNCMD)) return TRUE;
     if (executedMenuId == -1) executedMenuId = 0;
