@@ -2152,23 +2152,23 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 
     TRACE("( %p, %d )\n", hwnd, enable);
 
-    retvalue = !IsWindowEnabled( hwnd );
-
-    if (enable && retvalue)
+    if (enable)
     {
-        WIN_SetStyle( hwnd, 0, WS_DISABLED );
-        SendMessageW( hwnd, WM_ENABLE, TRUE, 0 );
+        retvalue = (WIN_SetStyle( hwnd, 0, WS_DISABLED ) & WS_DISABLED) != 0;
+        if (retvalue) SendMessageW( hwnd, WM_ENABLE, TRUE, 0 );
     }
-    else if (!enable && !retvalue)
+    else
     {
-        SendMessageW( hwnd, WM_CANCELMODE, 0, 0);
+        SendMessageW( hwnd, WM_CANCELMODE, 0, 0 );
 
-        WIN_SetStyle( hwnd, WS_DISABLED, 0 );
+        retvalue = (WIN_SetStyle( hwnd, WS_DISABLED, 0 ) & WS_DISABLED) != 0;
+        if (!retvalue)
+        {
+            if (hwnd == GetFocus())
+                SetFocus( 0 ); /* A disabled window can't have the focus */
 
-        if (hwnd == GetFocus())
-            SetFocus( 0 );  /* A disabled window can't have the focus */
-
-        SendMessageW( hwnd, WM_ENABLE, FALSE, 0 );
+            SendMessageW( hwnd, WM_ENABLE, FALSE, 0 );
+        }
     }
     return retvalue;
 }

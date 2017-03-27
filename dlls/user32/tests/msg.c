@@ -1796,8 +1796,21 @@ static const struct message WmEnableWindowSeq_1[] =
 
 static const struct message WmEnableWindowSeq_2[] =
 {
+    { WM_CANCELMODE, sent|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message WmEnableWindowSeq_3[] =
+{
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_ENABLE, sent|wparam|lparam, TRUE, 0 },
+    { 0 }
+};
+
+static const struct message WmEnableWindowSeq_4[] =
+{
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 
@@ -5484,8 +5497,14 @@ static void test_messages(void)
     EnableWindow(hparent, FALSE);
     ok_sequence(WmEnableWindowSeq_1, "EnableWindow(FALSE)", FALSE);
 
+    EnableWindow(hparent, FALSE);
+    ok_sequence(WmEnableWindowSeq_2, "EnableWindow(FALSE)", FALSE);
+
     EnableWindow(hparent, TRUE);
-    ok_sequence(WmEnableWindowSeq_2, "EnableWindow(TRUE)", FALSE);
+    ok_sequence(WmEnableWindowSeq_3, "EnableWindow(TRUE)", FALSE);
+
+    EnableWindow(hparent, TRUE);
+    ok_sequence(WmEnableWindowSeq_4, "EnableWindow(TRUE)", FALSE);
 
     flush_events();
     flush_sequence();
