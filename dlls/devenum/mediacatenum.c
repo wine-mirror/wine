@@ -528,9 +528,36 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_Enum(IMoniker *iface, BOOL fForwa
 
 static HRESULT WINAPI DEVENUM_IMediaCatMoniker_IsEqual(IMoniker *iface, IMoniker *pmkOtherMoniker)
 {
-    FIXME("(%p)->(%p): stub\n", iface, pmkOtherMoniker);
+    CLSID clsid;
+    LPOLESTR this_name, other_name;
+    IBindCtx *bind;
+    HRESULT res;
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pmkOtherMoniker);
+
+    if (!pmkOtherMoniker)
+        return E_INVALIDARG;
+
+    IMoniker_GetClassID(pmkOtherMoniker, &clsid);
+    if (!IsEqualCLSID(&clsid, &CLSID_CDeviceMoniker))
+        return S_FALSE;
+
+    res = CreateBindCtx(0, &bind);
+    if (FAILED(res))
+       return res;
+
+    res = S_FALSE;
+    if (SUCCEEDED(IMoniker_GetDisplayName(iface, bind, NULL, &this_name)) &&
+        SUCCEEDED(IMoniker_GetDisplayName(pmkOtherMoniker, bind, NULL, &other_name)))
+    {
+        int result = lstrcmpiW(this_name, other_name);
+        CoTaskMemFree(this_name);
+        CoTaskMemFree(other_name);
+        if (!result)
+            res = S_OK;
+    }
+    IBindCtx_Release(bind);
+    return res;
 }
 
 static HRESULT WINAPI DEVENUM_IMediaCatMoniker_Hash(IMoniker *iface, DWORD *pdwHash)
