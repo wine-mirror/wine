@@ -37,6 +37,7 @@
 #include "dispex.h"
 #include "objsafe.h"
 #include "initguid.h"
+#include "asptlb.h"
 
 #include "wine/test.h"
 
@@ -348,6 +349,288 @@ static const IStreamVtbl StreamVtbl = {
 };
 
 static IStream savestream = { &StreamVtbl };
+
+static HRESULT WINAPI response_QI(IResponse *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(&IID_IResponse, riid) ||
+            IsEqualIID(&IID_IDispatch, riid) ||
+            IsEqualIID(&IID_IUnknown, riid))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    if (!IsEqualIID(&IID_IStream, riid) && !IsEqualIID(&IID_ISequentialStream, riid))
+todo_wine
+        ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI response_AddRef(IResponse *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI response_Release(IResponse *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI response_GetTypeInfoCount(IResponse *iface, UINT *count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_GetTypeInfo(IResponse *iface, UINT ti, LCID lcid, ITypeInfo **tinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_GetIDsOfNames(IResponse *iface, REFIID riid, LPOLESTR *names,
+        UINT cnames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_Invoke(IResponse *iface, DISPID dispid, REFIID riid, LCID lcid,
+    WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *ei, UINT *argerr)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_Buffer(IResponse *iface, VARIANT_BOOL *fIsBuffering)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_Buffer(IResponse *iface, VARIANT_BOOL fIsBuffering)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_ContentType(IResponse *iface, BSTR *pbstrContentTypeRet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_ContentType(IResponse *iface, BSTR bstrContentType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_Expires(IResponse *iface, VARIANT *pvarExpiresMinutesRet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_Expires(IResponse *iface, LONG lExpiresMinutes)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_ExpiresAbsolute(IResponse *iface, VARIANT *pvarExpiresRet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_ExpiresAbsolute(IResponse *iface, DATE dtExpires)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_Cookies(IResponse *iface, IRequestDictionary **ppCookies)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_Status(IResponse *iface, BSTR *pbstrStatusRet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_Status(IResponse *iface, BSTR bstrStatus)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_Add(IResponse *iface, BSTR bstrHeaderValue, BSTR bstrHeaderName)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_AddHeader(IResponse *iface, BSTR bstrHeaderName, BSTR bstrHeaderValue)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_AppendToLog(IResponse *iface, BSTR bstrLogEntry)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_BinaryWrite(IResponse *iface, VARIANT input)
+{
+    ok(V_VT(&input) == (VT_ARRAY | VT_UI1), "got wrong input type %x\n", V_VT(&input));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_Clear(IResponse *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_End(IResponse *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_Flush(IResponse *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_Redirect(IResponse *iface, BSTR bstrURL)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_Write(IResponse *iface, VARIANT varText)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_WriteBlock(IResponse *iface, short iBlockNumber)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_IsClientConnected(IResponse *iface, VARIANT_BOOL *pfIsClientConnected)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_CharSet(IResponse *iface, BSTR *pbstrCharSetRet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_CharSet(IResponse *iface, BSTR bstrCharSet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_Pics(IResponse *iface, BSTR bstrHeaderValue)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_CacheControl(IResponse *iface, BSTR *pbstrCacheControl)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_CacheControl(IResponse *iface, BSTR bstrCacheControl)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_CodePage(IResponse *iface, LONG *plvar)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_CodePage(IResponse *iface, LONG codepage)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_get_LCID(IResponse *iface, LONG *lcid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI response_put_LCID(IResponse *iface, LONG lcid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IResponseVtbl testresponsevtbl =
+{
+    response_QI,
+    response_AddRef,
+    response_Release,
+    response_GetTypeInfoCount,
+    response_GetTypeInfo,
+    response_GetIDsOfNames,
+    response_Invoke,
+    response_get_Buffer,
+    response_put_Buffer,
+    response_get_ContentType,
+    response_put_ContentType,
+    response_get_Expires,
+    response_put_Expires,
+    response_get_ExpiresAbsolute,
+    response_put_ExpiresAbsolute,
+    response_get_Cookies,
+    response_get_Status,
+    response_put_Status,
+    response_Add,
+    response_AddHeader,
+    response_AppendToLog,
+    response_BinaryWrite,
+    response_Clear,
+    response_End,
+    response_Flush,
+    response_Redirect,
+    response_Write,
+    response_WriteBlock,
+    response_IsClientConnected,
+    response_get_CharSet,
+    response_put_CharSet,
+    response_Pics,
+    response_get_CacheControl,
+    response_put_CacheControl,
+    response_get_CodePage,
+    response_put_CodePage,
+    response_get_LCID,
+    response_put_LCID,
+};
+
+static IResponse testresponse = { &testresponsevtbl };
 
 #define EXPECT_CHILDREN(node) _expect_children((IXMLDOMNode*)node, __LINE__)
 static void _expect_children(IXMLDOMNode *node, int line)
@@ -8685,6 +8968,20 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!!*str, "Expected document\n");
     SysFreeString(str);
+
+    /* transform to IResponse */
+    V_VT(&v) = VT_EMPTY;
+    hr = IXSLProcessor_put_output(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)&testresponse;
+    hr = IXSLProcessor_put_output(processor, v);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXSLProcessor_transform(processor, &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IXSLProcessor_Release(processor);
     IXMLDOMDocument_Release(doc2);
