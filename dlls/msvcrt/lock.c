@@ -1026,7 +1026,7 @@ void __thiscall reader_writer_lock_lock(reader_writer_lock *this)
     TRACE("(%p)\n", this);
 
     if (this->thread_id == GetCurrentThreadId())
-        FIXME("throw improper_lock exception\n");
+        throw_improper_lock("Already locked");
 
     last = InterlockedExchangePointer((void**)&this->writer_tail, &q);
     if (last) {
@@ -1057,7 +1057,7 @@ void __thiscall reader_writer_lock_lock_read(reader_writer_lock *this)
     TRACE("(%p)\n", this);
 
     if (this->thread_id == GetCurrentThreadId())
-        FIXME("throw improper_lock exception\n");
+        throw_improper_lock("Already locked as writer");
 
     do {
         q.next = this->reader_head;
@@ -1095,7 +1095,7 @@ MSVCRT_bool __thiscall reader_writer_lock_try_lock(reader_writer_lock *this)
     TRACE("(%p)\n", this);
 
     if (this->thread_id == GetCurrentThreadId())
-        FIXME("throw improper_lock exception\n");
+        return FALSE;
 
     if (InterlockedCompareExchangePointer((void**)&this->writer_tail, &q, NULL))
         return FALSE;

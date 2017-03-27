@@ -737,6 +737,44 @@ void __thiscall MSVCRT_scheduler_resource_allocation_error_dtor(
     TRACE("(%p)\n", this);
     MSVCRT_exception_dtor(&this->e);
 }
+
+typedef exception improper_lock;
+extern const vtable_ptr MSVCRT_improper_lock_vtable;
+
+/* ??0improper_lock@Concurrency@@QAE@PBD@Z */
+/* ??0improper_lock@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(improper_lock_ctor_str, 8)
+improper_lock* __thiscall improper_lock_ctor_str(improper_lock *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    MSVCRT_exception_ctor(this, &str);
+    this->vtable = &MSVCRT_improper_lock_vtable;
+    return this;
+}
+
+/* ??0improper_lock@Concurrency@@QAE@XZ */
+/* ??0improper_lock@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(improper_lock_ctor, 4)
+improper_lock* __thiscall improper_lock_ctor(improper_lock *this)
+{
+    return improper_lock_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_improper_lock_copy_ctor,8)
+improper_lock * __thiscall MSVCRT_improper_lock_copy_ctor(improper_lock * _this, const improper_lock * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    MSVCRT_exception_copy_ctor(_this, rhs);
+    _this->vtable = &MSVCRT_improper_lock_vtable;
+    return _this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_improper_lock_dtor,4)
+void __thiscall MSVCRT_improper_lock_dtor(improper_lock * _this)
+{
+    TRACE("(%p)\n", _this);
+    MSVCRT_exception_dtor(_this);
+}
 #endif
 
 #ifndef __GNUC__
@@ -769,6 +807,9 @@ __ASM_VTABLE(__non_rtti_object,
 __ASM_VTABLE(scheduler_resource_allocation_error,
         VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(improper_lock,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
 #endif
 
 #ifndef __GNUC__
@@ -792,6 +833,7 @@ DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exce
 #if _MSVCR_VER >= 100
 DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &exception_rtti_base_descriptor,
         ".?AVscheduler_resource_allocation_error@Concurrency@@")
+DEFINE_RTTI_DATA1(improper_lock, 0, &exception_rtti_base_descriptor, ".?AVimproper_lock@Concurrency@@" )
 #endif
 
 DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
@@ -803,6 +845,7 @@ DEFINE_EXCEPTION_TYPE_INFO( bad_alloc, 1, &exception_cxx_type_info, NULL )
 #endif
 #if _MSVCR_VER >= 100
 DEFINE_EXCEPTION_TYPE_INFO(scheduler_resource_allocation_error, 1, &exception_cxx_type_info, NULL)
+DEFINE_EXCEPTION_TYPE_INFO(improper_lock, 1, &exception_cxx_type_info, NULL)
 #endif
 
 void msvcrt_init_exception(void *base)
@@ -819,6 +862,7 @@ void msvcrt_init_exception(void *base)
     init___non_rtti_object_rtti(base);
 #if _MSVCR_VER >= 100
     init_scheduler_resource_allocation_error_rtti(base);
+    init_improper_lock_rtti(base);
 #endif
 
     init_exception_cxx(base);
@@ -830,6 +874,7 @@ void msvcrt_init_exception(void *base)
 #endif
 #if _MSVCR_VER >= 100
     init_scheduler_resource_allocation_error_cxx(base);
+    init_improper_lock_cxx(base);
 #endif
 #endif
 }
@@ -849,6 +894,13 @@ void throw_scheduler_resource_allocation_error(const char *str, HRESULT hr)
     scheduler_resource_allocation_error e;
     scheduler_resource_allocation_error_ctor_name(&e, str, hr);
     _CxxThrowException(&e.e, &scheduler_resource_allocation_error_exception_type);
+}
+
+void throw_improper_lock(const char *str)
+{
+    improper_lock e;
+    improper_lock_ctor_str(&e, str);
+    _CxxThrowException(&e, &improper_lock_exception_type);
 }
 #endif
 

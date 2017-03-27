@@ -74,10 +74,10 @@
 @ cdecl -arch=win64 ??0exception@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCRT_exception_copy_ctor
 @ thiscall -arch=i386 ??0exception@std@@QAE@XZ(ptr) MSVCRT_exception_default_ctor
 @ cdecl -arch=win64 ??0exception@std@@QEAA@XZ(ptr) MSVCRT_exception_default_ctor
-@ stub -arch=win32 ??0improper_lock@Concurrency@@QAE@PBD@Z
-@ stub -arch=win64 ??0improper_lock@Concurrency@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0improper_lock@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0improper_lock@Concurrency@@QEAA@XZ
+@ thiscall -arch=i386 ??0improper_lock@Concurrency@@QAE@PBD@Z(ptr str) improper_lock_ctor_str
+@ cdecl -arch=win64 ??0improper_lock@Concurrency@@QEAA@PEBD@Z(ptr str) improper_lock_ctor_str
+@ thiscall -arch=i386 ??0improper_lock@Concurrency@@QAE@XZ(ptr) improper_lock_ctor
+@ cdecl -arch=win64 ??0improper_lock@Concurrency@@QEAA@XZ(ptr) improper_lock_ctor
 @ stub -arch=win32 ??0improper_scheduler_attach@Concurrency@@QAE@PBD@Z
 @ stub -arch=win64 ??0improper_scheduler_attach@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=win32 ??0improper_scheduler_attach@Concurrency@@QAE@XZ
