@@ -2829,10 +2829,10 @@ static void GSUB_initialize_feature_cache(const void *table, LoadedLanguage *lan
 
 static void GPOS_expand_feature_cache(const void *table, LoadedLanguage *language)
 {
-    int i, count;
     const OT_LangSys *lang = language->gpos_table;
     const GPOS_Header *header = (const GPOS_Header *)table;
     const OT_FeatureList *feature_list;
+    unsigned int i, j, count;
 
     if (!lang)
         return;
@@ -2846,63 +2846,31 @@ static void GPOS_expand_feature_cache(const void *table, LoadedLanguage *languag
         return;
 
     if (!language->feature_count)
-    {
-        language->feature_count = count;
-
-        if (language->feature_count)
-        {
-            language->features = heap_alloc(language->feature_count * sizeof(*language->features));
-
-            for (i = 0; i < language->feature_count; i++)
-            {
-                LoadedFeature *loaded_feature = &language->features[i];
-                const OT_Feature *feature;
-                int j;
-                int index = GET_BE_WORD(lang->FeatureIndex[i]);
-
-                loaded_feature->tag = MS_MAKE_TAG(feature_list->FeatureRecord[index].FeatureTag[0],
-                        feature_list->FeatureRecord[index].FeatureTag[1],
-                        feature_list->FeatureRecord[index].FeatureTag[2],
-                        feature_list->FeatureRecord[index].FeatureTag[3]);
-                loaded_feature->feature = ((const BYTE *)feature_list
-                        + GET_BE_WORD(feature_list->FeatureRecord[index].Feature));
-                feature = loaded_feature->feature;
-                loaded_feature->lookup_count = GET_BE_WORD(feature->LookupCount);
-                loaded_feature->lookups = heap_alloc(loaded_feature->lookup_count * sizeof(*loaded_feature->lookups));
-                for (j = 0; j < loaded_feature->lookup_count; ++j)
-                    loaded_feature->lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
-                loaded_feature->tableType = FEATURE_GPOS_TABLE;
-            }
-        }
-    }
+        language->features = heap_alloc(count * sizeof(*language->features));
     else
+        language->features = HeapReAlloc(GetProcessHeap(), 0, language->features,
+                (language->feature_count + count) * sizeof(*language->features));
+
+    for (i = 0; i < count; ++i)
     {
-        language->features = HeapReAlloc(GetProcessHeap(),0,language->features, sizeof(LoadedFeature)*(language->feature_count + count));
+        const OT_FeatureRecord *record;
+        LoadedFeature *loaded_feature;
+        const OT_Feature *feature;
 
-        for (i = 0; i < count; i++)
-        {
-            LoadedFeature *loaded_feature;
-            const OT_Feature *feature;
-            int j;
-            int index = GET_BE_WORD(lang->FeatureIndex[i]);
-            int idx = language->feature_count + i;
+        record = &feature_list->FeatureRecord[GET_BE_WORD(lang->FeatureIndex[i])];
+        feature = (const OT_Feature *)((const BYTE *)feature_list + GET_BE_WORD(record->Feature));
 
-            loaded_feature = &language->features[idx];
-            loaded_feature->tag = MS_MAKE_TAG(feature_list->FeatureRecord[index].FeatureTag[0],
-                    feature_list->FeatureRecord[index].FeatureTag[1],
-                    feature_list->FeatureRecord[index].FeatureTag[2],
-                    feature_list->FeatureRecord[index].FeatureTag[3]);
-            loaded_feature->feature = ((const BYTE *)feature_list
-                    + GET_BE_WORD(feature_list->FeatureRecord[index].Feature));
-            feature = loaded_feature->feature;
-            loaded_feature->lookup_count = GET_BE_WORD(feature->LookupCount);
-            loaded_feature->lookups = heap_alloc(loaded_feature->lookup_count * sizeof(*loaded_feature->lookups));
-            for (j = 0; j < loaded_feature->lookup_count; ++j)
-                loaded_feature->lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
-            loaded_feature->tableType = FEATURE_GPOS_TABLE;
-        }
-        language->feature_count += count;
+        loaded_feature = &language->features[language->feature_count + i];
+        loaded_feature->tag = MS_MAKE_TAG(record->FeatureTag[0], record->FeatureTag[1],
+                record->FeatureTag[2], record->FeatureTag[3]);
+        loaded_feature->tableType = FEATURE_GPOS_TABLE;
+        loaded_feature->feature = feature;
+        loaded_feature->lookup_count = GET_BE_WORD(feature->LookupCount);
+        loaded_feature->lookups = heap_alloc(loaded_feature->lookup_count * sizeof(*loaded_feature->lookups));
+        for (j = 0; j < loaded_feature->lookup_count; ++j)
+            loaded_feature->lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
     }
+    language->feature_count += count;
 }
 
 static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language)
