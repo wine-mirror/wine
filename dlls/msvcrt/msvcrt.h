@@ -288,6 +288,7 @@ typedef enum {
 #if _MSVCR_VER >= 100
     EXCEPTION_SCHEDULER_RESOURCE_ALLOCATION_ERROR,
     EXCEPTION_IMPROPER_LOCK,
+    EXCEPTION_INVALID_SCHEDULER_POLICY_KEY,
 #endif
 } exception_type;
 void throw_exception(exception_type, HRESULT, const char*) DECLSPEC_HIDDEN;

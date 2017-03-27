@@ -775,6 +775,48 @@ void __thiscall MSVCRT_improper_lock_dtor(improper_lock * _this)
     TRACE("(%p)\n", _this);
     MSVCRT_exception_dtor(_this);
 }
+
+typedef exception invalid_scheduler_policy_key;
+extern const vtable_ptr MSVCRT_invalid_scheduler_policy_key_vtable;
+
+/* ??0invalid_scheduler_policy_key@Concurrency@@QAE@PBD@Z */
+/* ??0invalid_scheduler_policy_key@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_key_ctor_str, 8)
+invalid_scheduler_policy_key* __thiscall invalid_scheduler_policy_key_ctor_str(
+        invalid_scheduler_policy_key *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    MSVCRT_exception_ctor(this, &str);
+    this->vtable = &MSVCRT_invalid_scheduler_policy_key_vtable;
+    return this;
+}
+
+/* ??0invalid_scheduler_policy_key@Concurrency@@QAE@XZ */
+/* ??0invalid_scheduler_policy_key@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_key_ctor, 4)
+invalid_scheduler_policy_key* __thiscall invalid_scheduler_policy_key_ctor(
+        invalid_scheduler_policy_key *this)
+{
+    return invalid_scheduler_policy_key_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_invalid_scheduler_policy_key_copy_ctor,8)
+invalid_scheduler_policy_key * __thiscall MSVCRT_invalid_scheduler_policy_key_copy_ctor(
+        invalid_scheduler_policy_key * _this, const invalid_scheduler_policy_key * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    MSVCRT_exception_copy_ctor(_this, rhs);
+    _this->vtable = &MSVCRT_invalid_scheduler_policy_key_vtable;
+    return _this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_invalid_scheduler_policy_key_dtor,4)
+void __thiscall MSVCRT_invalid_scheduler_policy_key_dtor(
+        invalid_scheduler_policy_key * _this)
+{
+    TRACE("(%p)\n", _this);
+    MSVCRT_exception_dtor(_this);
+}
 #endif
 
 #ifndef __GNUC__
@@ -810,6 +852,9 @@ __ASM_VTABLE(scheduler_resource_allocation_error,
 __ASM_VTABLE(improper_lock,
         VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(invalid_scheduler_policy_key,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
 #endif
 
 #ifndef __GNUC__
@@ -834,6 +879,8 @@ DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exce
 DEFINE_RTTI_DATA1(scheduler_resource_allocation_error, 0, &exception_rtti_base_descriptor,
         ".?AVscheduler_resource_allocation_error@Concurrency@@")
 DEFINE_RTTI_DATA1(improper_lock, 0, &exception_rtti_base_descriptor, ".?AVimproper_lock@Concurrency@@" )
+DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &exception_rtti_base_descriptor,
+        ".?AVinvalid_scheduler_policy_key@Concurrency@@" )
 #endif
 
 DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
@@ -846,6 +893,7 @@ DEFINE_EXCEPTION_TYPE_INFO( bad_alloc, 1, &exception_cxx_type_info, NULL )
 #if _MSVCR_VER >= 100
 DEFINE_EXCEPTION_TYPE_INFO(scheduler_resource_allocation_error, 1, &exception_cxx_type_info, NULL)
 DEFINE_EXCEPTION_TYPE_INFO(improper_lock, 1, &exception_cxx_type_info, NULL)
+DEFINE_EXCEPTION_TYPE_INFO(invalid_scheduler_policy_key, 1, &exception_cxx_type_info, NULL)
 #endif
 
 void msvcrt_init_exception(void *base)
@@ -863,6 +911,7 @@ void msvcrt_init_exception(void *base)
 #if _MSVCR_VER >= 100
     init_scheduler_resource_allocation_error_rtti(base);
     init_improper_lock_rtti(base);
+    init_invalid_scheduler_policy_key_rtti(base);
 #endif
 
     init_exception_cxx(base);
@@ -875,6 +924,7 @@ void msvcrt_init_exception(void *base)
 #if _MSVCR_VER >= 100
     init_scheduler_resource_allocation_error_cxx(base);
     init_improper_lock_cxx(base);
+    init_invalid_scheduler_policy_key_cxx(base);
 #endif
 #endif
 }
@@ -898,6 +948,11 @@ void throw_exception(exception_type et, HRESULT hr, const char *str)
         improper_lock e;
         improper_lock_ctor_str(&e, str);
         _CxxThrowException(&e, &improper_lock_exception_type);
+    }
+    case EXCEPTION_INVALID_SCHEDULER_POLICY_KEY: {
+        invalid_scheduler_policy_key e;
+        invalid_scheduler_policy_key_ctor_str(&e, str);
+        _CxxThrowException(&e, &invalid_scheduler_policy_key_exception_type);
     }
 #endif
     }
