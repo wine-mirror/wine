@@ -366,10 +366,8 @@ void __thiscall critical_section_lock(critical_section *this)
 
     TRACE("(%p)\n", this);
 
-    if(this->unk_thread_id == GetCurrentThreadId()) {
-        FIXME("throw exception\n");
-        return;
-    }
+    if(this->unk_thread_id == GetCurrentThreadId())
+        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
 
     memset(&q, 0, sizeof(q));
     last = InterlockedExchangePointer(&this->tail, &q);
@@ -394,10 +392,8 @@ MSVCRT_bool __thiscall critical_section_try_lock(critical_section *this)
 
     TRACE("(%p)\n", this);
 
-    if(this->unk_thread_id == GetCurrentThreadId()) {
-        FIXME("throw exception\n");
+    if(this->unk_thread_id == GetCurrentThreadId())
         return FALSE;
-    }
 
     memset(&q, 0, sizeof(q));
     if(!InterlockedCompareExchangePointer(&this->tail, &q, NULL)) {
@@ -466,10 +462,8 @@ MSVCRT_bool __thiscall critical_section_try_lock_for(
 
     TRACE("(%p %d)\n", this, timeout);
 
-    if(this->unk_thread_id == GetCurrentThreadId()) {
-        FIXME("throw exception\n");
-        return FALSE;
-    }
+    if(this->unk_thread_id == GetCurrentThreadId())
+        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
 
     if(!(q = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*q))))
         return critical_section_try_lock(this);
