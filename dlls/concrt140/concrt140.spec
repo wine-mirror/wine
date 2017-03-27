@@ -108,10 +108,10 @@
 @ cdecl -arch=win64 ??0invalid_scheduler_policy_key@Concurrency@@QEAA@PEBD@Z(ptr str) msvcr120.??0invalid_scheduler_policy_key@Concurrency@@QEAA@PEBD@Z
 @ thiscall -arch=i386 ??0invalid_scheduler_policy_key@Concurrency@@QAE@XZ(ptr) msvcr120.??0invalid_scheduler_policy_key@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??0invalid_scheduler_policy_key@Concurrency@@QEAA@XZ(ptr) msvcr120.??0invalid_scheduler_policy_key@Concurrency@@QEAA@XZ
-@ stub -arch=i386 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@PBD@Z
-@ stub -arch=win64 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@XZ
+@ thiscall -arch=i386 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@PBD@Z(ptr str) msvcr120.??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@PBD@Z
+@ cdecl -arch=win64 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@PEBD@Z(ptr str) msvcr120.??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@PEBD@Z
+@ thiscall -arch=i386 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@XZ(ptr) msvcr120.??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@XZ(ptr) msvcr120.??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@XZ
 @ thiscall -arch=i386 ??0invalid_scheduler_policy_value@Concurrency@@QAE@PBD@Z(ptr str) msvcr120.??0invalid_scheduler_policy_value@Concurrency@@QAE@PBD@Z
 @ cdecl -arch=win64 ??0invalid_scheduler_policy_value@Concurrency@@QEAA@PEBD@Z(ptr str) msvcr120.??0invalid_scheduler_policy_value@Concurrency@@QEAA@PEBD@Z
 @ thiscall -arch=i386 ??0invalid_scheduler_policy_value@Concurrency@@QAE@XZ(ptr) msvcr120.??0invalid_scheduler_policy_value@Concurrency@@QAE@XZ

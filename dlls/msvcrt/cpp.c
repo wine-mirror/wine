@@ -859,6 +859,48 @@ void __thiscall MSVCRT_invalid_scheduler_policy_value_dtor(
     TRACE("(%p)\n", _this);
     MSVCRT_exception_dtor(_this);
 }
+
+typedef exception invalid_scheduler_policy_thread_specification;
+extern const vtable_ptr MSVCRT_invalid_scheduler_policy_thread_specification_vtable;
+
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@PBD@Z */
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_thread_specification_ctor_str, 8)
+invalid_scheduler_policy_thread_specification* __thiscall invalid_scheduler_policy_thread_specification_ctor_str(
+        invalid_scheduler_policy_thread_specification *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    MSVCRT_exception_ctor(this, &str);
+    this->vtable = &MSVCRT_invalid_scheduler_policy_thread_specification_vtable;
+    return this;
+}
+
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QAE@XZ */
+/* ??0invalid_scheduler_policy_thread_specification@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(invalid_scheduler_policy_thread_specification_ctor, 4)
+invalid_scheduler_policy_thread_specification* __thiscall invalid_scheduler_policy_thread_specification_ctor(
+        invalid_scheduler_policy_thread_specification *this)
+{
+    return invalid_scheduler_policy_thread_specification_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_invalid_scheduler_policy_thread_specification_copy_ctor,8)
+invalid_scheduler_policy_thread_specification * __thiscall MSVCRT_invalid_scheduler_policy_thread_specification_copy_ctor(
+        invalid_scheduler_policy_thread_specification * _this, const invalid_scheduler_policy_thread_specification * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    MSVCRT_exception_copy_ctor(_this, rhs);
+    _this->vtable = &MSVCRT_invalid_scheduler_policy_thread_specification_vtable;
+    return _this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_invalid_scheduler_policy_thread_specification_dtor,4)
+void __thiscall MSVCRT_invalid_scheduler_policy_thread_specification_dtor(
+        invalid_scheduler_policy_thread_specification * _this)
+{
+    TRACE("(%p)\n", _this);
+    MSVCRT_exception_dtor(_this);
+}
 #endif
 
 #ifndef __GNUC__
@@ -900,6 +942,9 @@ __ASM_VTABLE(invalid_scheduler_policy_key,
 __ASM_VTABLE(invalid_scheduler_policy_value,
         VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(invalid_scheduler_policy_thread_specification,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
 #endif
 
 #ifndef __GNUC__
@@ -928,6 +973,8 @@ DEFINE_RTTI_DATA1(invalid_scheduler_policy_key, 0, &exception_rtti_base_descript
         ".?AVinvalid_scheduler_policy_key@Concurrency@@" )
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_value, 0, &exception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_value@Concurrency@@" )
+DEFINE_RTTI_DATA1(invalid_scheduler_policy_thread_specification, 0, &exception_rtti_base_descriptor,
+        ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@" )
 #endif
 
 DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
@@ -942,6 +989,7 @@ DEFINE_EXCEPTION_TYPE_INFO(scheduler_resource_allocation_error, 1, &exception_cx
 DEFINE_EXCEPTION_TYPE_INFO(improper_lock, 1, &exception_cxx_type_info, NULL)
 DEFINE_EXCEPTION_TYPE_INFO(invalid_scheduler_policy_key, 1, &exception_cxx_type_info, NULL)
 DEFINE_EXCEPTION_TYPE_INFO(invalid_scheduler_policy_value, 1, &exception_cxx_type_info, NULL)
+DEFINE_EXCEPTION_TYPE_INFO(invalid_scheduler_policy_thread_specification, 1, &exception_cxx_type_info, NULL)
 #endif
 
 void msvcrt_init_exception(void *base)
@@ -961,6 +1009,7 @@ void msvcrt_init_exception(void *base)
     init_improper_lock_rtti(base);
     init_invalid_scheduler_policy_key_rtti(base);
     init_invalid_scheduler_policy_value_rtti(base);
+    init_invalid_scheduler_policy_thread_specification_rtti(base);
 #endif
 
     init_exception_cxx(base);
@@ -975,6 +1024,7 @@ void msvcrt_init_exception(void *base)
     init_improper_lock_cxx(base);
     init_invalid_scheduler_policy_key_cxx(base);
     init_invalid_scheduler_policy_value_cxx(base);
+    init_invalid_scheduler_policy_thread_specification_cxx(base);
 #endif
 #endif
 }
@@ -1008,6 +1058,11 @@ void throw_exception(exception_type et, HRESULT hr, const char *str)
         invalid_scheduler_policy_value e;
         invalid_scheduler_policy_value_ctor_str(&e, str);
         _CxxThrowException(&e, &invalid_scheduler_policy_value_exception_type);
+    }
+    case EXCEPTION_INVALID_SCHEDULER_POLICY_THREAD_SPECIFICATION: {
+        invalid_scheduler_policy_thread_specification e;
+        invalid_scheduler_policy_thread_specification_ctor_str(&e, str);
+        _CxxThrowException(&e, &invalid_scheduler_policy_thread_specification_exception_type);
     }
 #endif
     }
