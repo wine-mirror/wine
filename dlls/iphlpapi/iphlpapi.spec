@@ -148,7 +148,7 @@
 @ stdcall GetUdpTable( ptr ptr long )
 @ stub GetUdpTableFromStack
 @ stdcall GetUnicastIpAddressEntry( ptr )
-#@ stub GetUnicastIpAddressTable
+@ stdcall GetUnicastIpAddressTable(long ptr)
 @ stdcall GetUniDirectionalAdapterInfo( ptr ptr )
 @ stdcall Icmp6CreateFile()
 #@ stub Icmp6ParseReplies

@@ -76,6 +76,7 @@ static DWORD (WINAPI *pGetUdpTable)(PMIB_UDPTABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetPerAdapterInfo)(ULONG,PIP_PER_ADAPTER_INFO,PULONG);
 static DWORD (WINAPI *pGetAdaptersAddresses)(ULONG,ULONG,PVOID,PIP_ADAPTER_ADDRESSES,PULONG);
 static DWORD (WINAPI *pGetUnicastIpAddressEntry)(MIB_UNICASTIPADDRESS_ROW*);
+static DWORD (WINAPI *pGetUnicastIpAddressTable)(ADDRESS_FAMILY,MIB_UNICASTIPADDRESS_TABLE**);
 static DWORD (WINAPI *pNotifyAddrChange)(PHANDLE,LPOVERLAPPED);
 static BOOL  (WINAPI *pCancelIPChangeNotify)(LPOVERLAPPED);
 static DWORD (WINAPI *pGetExtendedTcpTable)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CLASS,ULONG);
@@ -125,6 +126,7 @@ static void loadIPHlpApi(void)
     pGetPerAdapterInfo = (void *)GetProcAddress(hLibrary, "GetPerAdapterInfo");
     pGetAdaptersAddresses = (void *)GetProcAddress(hLibrary, "GetAdaptersAddresses");
     pGetUnicastIpAddressEntry = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressEntry");
+    pGetUnicastIpAddressTable = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressTable");
     pNotifyAddrChange = (void *)GetProcAddress(hLibrary, "NotifyAddrChange");
     pCancelIPChangeNotify = (void *)GetProcAddress(hLibrary, "CancelIPChangeNotify");
     pGetExtendedTcpTable = (void *)GetProcAddress(hLibrary, "GetExtendedTcpTable");
@@ -2095,6 +2097,59 @@ static void test_GetUnicastIpAddressEntry(void)
     HeapFree(GetProcessHeap(), 0, ptr);
 }
 
+static void test_GetUnicastIpAddressTable(void)
+{
+    MIB_UNICASTIPADDRESS_TABLE *table;
+    DWORD ret;
+    ULONG i;
+
+    if (!pGetUnicastIpAddressTable)
+    {
+        win_skip( "GetUnicastIpAddressTable not available\n" );
+        return;
+    }
+
+    ret = pGetUnicastIpAddressTable(AF_UNSPEC, NULL);
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    ret = pGetUnicastIpAddressTable(AF_BAN, &table);
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    ret = pGetUnicastIpAddressTable(AF_INET, &table);
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    trace("GetUnicastIpAddressTable(AF_INET): NumEntries %u\n", table->NumEntries);
+    pFreeMibTable(table);
+
+    ret = pGetUnicastIpAddressTable(AF_INET6, &table);
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    trace("GetUnicastIpAddressTable(AF_INET6): NumEntries %u\n", table->NumEntries);
+    pFreeMibTable(table);
+
+    ret = pGetUnicastIpAddressTable(AF_UNSPEC, &table);
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    trace("GetUnicastIpAddressTable(AF_UNSPEC): NumEntries %u\n", table->NumEntries);
+    for (i = 0; i < table->NumEntries && winetest_debug > 1; i++)
+    {
+        trace("Index %u:\n", i);
+        trace("Address.si_family:               %u\n", table->Table[i].Address.si_family);
+        trace("InterfaceLuid.Info.Reserved:     %u\n", table->Table[i].InterfaceLuid.Info.Reserved);
+        trace("InterfaceLuid.Info.NetLuidIndex: %u\n", table->Table[i].InterfaceLuid.Info.NetLuidIndex);
+        trace("InterfaceLuid.Info.IfType:       %u\n", table->Table[i].InterfaceLuid.Info.IfType);
+        trace("InterfaceIndex:                  %u\n", table->Table[i].InterfaceIndex);
+        trace("PrefixOrigin:                    %u\n", table->Table[i].PrefixOrigin);
+        trace("SuffixOrigin:                    %u\n", table->Table[i].SuffixOrigin);
+        trace("ValidLifetime:                   %u seconds\n", table->Table[i].ValidLifetime);
+        trace("PreferredLifetime:               %u seconds\n", table->Table[i].PreferredLifetime);
+        trace("OnLinkPrefixLength:              %u\n", table->Table[i].OnLinkPrefixLength);
+        trace("SkipAsSource:                    %u\n", table->Table[i].SkipAsSource);
+        trace("DadState:                        %u\n", table->Table[i].DadState);
+        trace("ScopeId.Value:                   %u\n", table->Table[i].ScopeId.Value);
+        trace("CreationTimeStamp:               %08x%08x\n", table->Table[i].CreationTimeStamp.HighPart, table->Table[i].CreationTimeStamp.LowPart);
+    }
+
+    pFreeMibTable(table);
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2120,6 +2175,7 @@ START_TEST(iphlpapi)
     test_GetIfEntry2();
     test_GetIfTable2();
     test_GetUnicastIpAddressEntry();
+    test_GetUnicastIpAddressTable();
     freeIPHlpApi();
   }
 }

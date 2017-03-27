@@ -2534,6 +2534,84 @@ DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW *row)
     return ret;
 }
 
+DWORD WINAPI GetUnicastIpAddressTable(ADDRESS_FAMILY family, MIB_UNICASTIPADDRESS_TABLE **table)
+{
+    IP_ADAPTER_ADDRESSES *aa, *ptr;
+    MIB_UNICASTIPADDRESS_TABLE *data;
+    DWORD ret, count = 0;
+    ULONG size, flags;
+
+    TRACE("%u, %p\n", family, table);
+
+    if (!table || (family != WS_AF_INET && family != WS_AF_INET6 && family != WS_AF_UNSPEC))
+        return ERROR_INVALID_PARAMETER;
+
+    flags = GAA_FLAG_SKIP_ANYCAST |
+            GAA_FLAG_SKIP_MULTICAST |
+            GAA_FLAG_SKIP_DNS_SERVER |
+            GAA_FLAG_SKIP_FRIENDLY_NAME;
+
+    ret = GetAdaptersAddresses(family, flags, NULL, NULL, &size);
+    if (ret != ERROR_BUFFER_OVERFLOW)
+        return ret;
+    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, size)))
+        return ERROR_OUTOFMEMORY;
+    if ((ret = GetAdaptersAddresses(family, flags, NULL, ptr, &size)))
+    {
+        HeapFree(GetProcessHeap(), 0, ptr);
+        return ret;
+    }
+
+    for (aa = ptr; aa; aa = aa->Next)
+    {
+        IP_ADAPTER_UNICAST_ADDRESS *ua = aa->FirstUnicastAddress;
+        while (ua)
+        {
+            count++;
+            ua = ua->Next;
+        }
+    }
+
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) + (count - 1) * sizeof(data->Table[0]))))
+    {
+        HeapFree(GetProcessHeap(), 0, ptr);
+        return ERROR_OUTOFMEMORY;
+    }
+
+    data->NumEntries = 0;
+    for (aa = ptr; aa; aa = aa->Next)
+    {
+        IP_ADAPTER_UNICAST_ADDRESS *ua = aa->FirstUnicastAddress;
+        while (ua)
+        {
+            MIB_UNICASTIPADDRESS_ROW *row = &data->Table[data->NumEntries];
+            memcpy(&row->Address, ua->Address.lpSockaddr, ua->Address.iSockaddrLength);
+            memcpy(&row->InterfaceLuid, &aa->Luid, sizeof(aa->Luid));
+            row->InterfaceIndex     = aa->u.s.IfIndex;
+            row->PrefixOrigin       = ua->PrefixOrigin;
+            row->SuffixOrigin       = ua->SuffixOrigin;
+            row->ValidLifetime      = ua->ValidLifetime;
+            row->PreferredLifetime  = ua->PreferredLifetime;
+            row->OnLinkPrefixLength = ua->OnLinkPrefixLength;
+            row->SkipAsSource       = 0;
+            row->DadState           = ua->DadState;
+            if (row->Address.si_family == WS_AF_INET6)
+                row->ScopeId.u.Value  = row->Address.Ipv6.sin6_scope_id;
+            else
+                row->ScopeId.u.Value  = 0;
+            NtQuerySystemTime(&row->CreationTimeStamp);
+
+            data->NumEntries++;
+            ua = ua->Next;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, ptr);
+
+    *table = data;
+    return ret;
+}
+
 /******************************************************************
  *    GetUniDirectionalAdapterInfo (IPHLPAPI.@)
  *
