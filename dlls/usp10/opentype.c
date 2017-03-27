@@ -2610,6 +2610,19 @@ HRESULT OpenType_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, 
     return rc;
 }
 
+static LoadedLanguage *usp10_script_get_language(LoadedScript *script, OPENTYPE_TAG tag)
+{
+    size_t i;
+
+    for (i = 0; i < script->language_count; ++i)
+    {
+        if (script->languages[i].tag == tag)
+            return &script->languages[i];
+    }
+
+    return NULL;
+}
+
 static void GSUB_initialize_language_cache(LoadedScript *script)
 {
     int i;
@@ -2646,6 +2659,7 @@ static void GPOS_expand_language_cache(LoadedScript *script)
 {
     int count;
     const OT_Script* table = script->gpos_table;
+    LoadedLanguage *language;
     DWORD offset;
 
     if (!table)
@@ -2678,27 +2692,21 @@ static void GPOS_expand_language_cache(LoadedScript *script)
     }
     else if (count)
     {
-        int i,j;
+        int i;
         for (i = 0; i < count; i++)
         {
             int offset = GET_BE_WORD(table->LangSysRecord[i].LangSys);
             OPENTYPE_TAG tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0], table->LangSysRecord[i].LangSysTag[1], table->LangSysRecord[i].LangSysTag[2], table->LangSysRecord[i].LangSysTag[3]);
 
-            for (j = 0; j < script->language_count; j++)
-            {
-                if (script->languages[j].tag == tag)
-                {
-                    script->languages[j].gpos_table = ((const BYTE*)table + offset);
-                    break;
-                }
-            }
-            if (j == script->language_count)
+            if (!(language = usp10_script_get_language(script, tag)))
             {
                 script->language_count++;
-                script->languages = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,script->languages, sizeof(LoadedLanguage) * script->language_count);
-                script->languages[j].tag = tag;
-                script->languages[j].gpos_table = ((const BYTE*)table + offset);
+                script->languages = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                        script->languages, script->language_count * sizeof(*script->languages));
+                language = &script->languages[script->language_count - 1];
+                language->tag = tag;
             }
+            language->gpos_table = (const BYTE *)table + offset;
         }
     }
 }
@@ -2919,16 +2927,7 @@ HRESULT OpenType_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, O
     if ((script->default_language.gsub_table || script->default_language.gpos_table) && script->default_language.tag == language_tag)
         language = &script->default_language;
     else
-    {
-        for (i = 0; i < script->language_count; i++)
-        {
-            if (script->languages[i].tag == language_tag)
-            {
-                language = &script->languages[i];
-                break;
-            }
-        }
-    }
+        language = usp10_script_get_language(script, language_tag);
 
     if (!language)
     {
