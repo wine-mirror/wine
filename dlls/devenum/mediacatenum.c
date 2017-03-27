@@ -596,14 +596,14 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_GetDisplayName(IMoniker *iface, I
     MediaCatMoniker *This = impl_from_IMoniker(iface);
     WCHAR wszBuffer[MAX_PATH];
     static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
-    LONG received = sizeof(wszFriendlyName);
+    DWORD received = sizeof(wszBuffer);
 
     TRACE("(%p)->(%p, %p, %p)\n", iface, pbc, pmkToLeft, ppszDisplayName);
 
     *ppszDisplayName = NULL;
 
     /* FIXME: should this be the weird stuff we have to parse in IParseDisplayName? */
-    if (RegQueryValueW(This->hkey, wszFriendlyName, wszBuffer, &received) == ERROR_SUCCESS)
+    if (RegQueryValueExW(This->hkey, wszFriendlyName, NULL, NULL, (LPBYTE)wszBuffer, &received) == ERROR_SUCCESS)
     {
         *ppszDisplayName = CoTaskMemAlloc(received);
         strcpyW(*ppszDisplayName, wszBuffer);
