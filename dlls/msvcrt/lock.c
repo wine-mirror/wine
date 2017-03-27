@@ -763,7 +763,7 @@ int __cdecl event_wait_for_multiple(event **events, MSVCRT_size_t count, MSVCRT_
 
     wait = heap_alloc(FIELD_OFFSET(thread_wait, entries[count]));
     if(!wait)
-        throw_bad_alloc("bad allocation");
+        throw_exception(EXCEPTION_BAD_ALLOC, 0, "bad allocation");
     ret = evt_wait(wait, events, count, wait_all, timeout);
     heap_free(wait);
 
@@ -846,7 +846,7 @@ MSVCRT_bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
     TRACE("(%p %p %d)\n", this, cs, timeout);
 
     if(!(q = HeapAlloc(GetProcessHeap(), 0, sizeof(cv_queue)))) {
-        throw_bad_alloc("bad allocation");
+        throw_exception(EXCEPTION_BAD_ALLOC, 0, "bad allocation");
     }
 
     critical_section_lock(&this->lock);
@@ -1026,7 +1026,7 @@ void __thiscall reader_writer_lock_lock(reader_writer_lock *this)
     TRACE("(%p)\n", this);
 
     if (this->thread_id == GetCurrentThreadId())
-        throw_improper_lock("Already locked");
+        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked");
 
     last = InterlockedExchangePointer((void**)&this->writer_tail, &q);
     if (last) {
@@ -1057,7 +1057,7 @@ void __thiscall reader_writer_lock_lock_read(reader_writer_lock *this)
     TRACE("(%p)\n", this);
 
     if (this->thread_id == GetCurrentThreadId())
-        throw_improper_lock("Already locked as writer");
+        throw_exception(EXCEPTION_IMPROPER_LOCK, 0, "Already locked as writer");
 
     do {
         q.next = this->reader_head;

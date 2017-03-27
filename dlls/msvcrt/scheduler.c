@@ -99,8 +99,8 @@ static Context* get_current_context(void)
     if (context_tls_index == TLS_OUT_OF_INDEXES) {
         int tls_index = TlsAlloc();
         if (tls_index == TLS_OUT_OF_INDEXES) {
-            throw_scheduler_resource_allocation_error(NULL,
-                    HRESULT_FROM_WIN32(GetLastError()));
+            throw_exception(EXCEPTION_SCHEDULER_RESOURCE_ALLOCATION_ERROR,
+                    HRESULT_FROM_WIN32(GetLastError()), NULL);
             return NULL;
         }
 

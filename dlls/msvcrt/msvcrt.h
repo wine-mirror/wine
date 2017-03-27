@@ -283,11 +283,14 @@ extern WORD MSVCRT__ctype [257];
 
 void msvcrt_set_errno(int) DECLSPEC_HIDDEN;
 #if _MSVCR_VER >= 80
-void throw_bad_alloc(const char*) DECLSPEC_HIDDEN;
-#endif
+typedef enum {
+    EXCEPTION_BAD_ALLOC,
 #if _MSVCR_VER >= 100
-void throw_scheduler_resource_allocation_error(const char*, HRESULT) DECLSPEC_HIDDEN;
-void throw_improper_lock(const char*) DECLSPEC_HIDDEN;
+    EXCEPTION_SCHEDULER_RESOURCE_ALLOCATION_ERROR,
+    EXCEPTION_IMPROPER_LOCK,
+#endif
+} exception_type;
+void throw_exception(exception_type, HRESULT, const char*) DECLSPEC_HIDDEN;
 #endif
 
 void __cdecl _purecall(void);

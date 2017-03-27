@@ -880,27 +880,27 @@ void msvcrt_init_exception(void *base)
 }
 
 #if _MSVCR_VER >= 80
-void throw_bad_alloc(const char *str)
+void throw_exception(exception_type et, HRESULT hr, const char *str)
 {
-    bad_alloc e;
-    bad_alloc_ctor(&e, &str);
-    _CxxThrowException(&e, &bad_alloc_exception_type);
-}
-#endif
-
+    switch(et) {
+    case EXCEPTION_BAD_ALLOC: {
+        bad_alloc e;
+        bad_alloc_ctor(&e, &str);
+        _CxxThrowException(&e, &bad_alloc_exception_type);
+    }
 #if _MSVCR_VER >= 100
-void throw_scheduler_resource_allocation_error(const char *str, HRESULT hr)
-{
-    scheduler_resource_allocation_error e;
-    scheduler_resource_allocation_error_ctor_name(&e, str, hr);
-    _CxxThrowException(&e.e, &scheduler_resource_allocation_error_exception_type);
-}
-
-void throw_improper_lock(const char *str)
-{
-    improper_lock e;
-    improper_lock_ctor_str(&e, str);
-    _CxxThrowException(&e, &improper_lock_exception_type);
+    case EXCEPTION_SCHEDULER_RESOURCE_ALLOCATION_ERROR: {
+        scheduler_resource_allocation_error e;
+        scheduler_resource_allocation_error_ctor_name(&e, str, hr);
+        _CxxThrowException(&e.e, &scheduler_resource_allocation_error_exception_type);
+    }
+    case EXCEPTION_IMPROPER_LOCK: {
+        improper_lock e;
+        improper_lock_ctor_str(&e, str);
+        _CxxThrowException(&e, &improper_lock_exception_type);
+    }
+#endif
+    }
 }
 #endif
 
