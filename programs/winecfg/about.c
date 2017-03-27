@@ -171,6 +171,7 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case IDC_ABT_PANEL_TEXT:
         case IDC_ABT_LICENSE_TEXT:
         case IDC_ABT_WEB_LINK:
+            SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
             return (INT_PTR)CreateSolidBrush(GetSysColor(COLOR_WINDOW));
         }
         break;
