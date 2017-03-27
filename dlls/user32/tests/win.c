@@ -6554,6 +6554,58 @@ static void test_ShowWindow(void)
     ok(!IsWindow(hwnd), "window should not exist\n");
 }
 
+static DWORD CALLBACK enablewindow_thread(LPVOID arg)
+{
+    HWND hwnd = arg;
+    EnableWindow(hwnd, FALSE);
+    return 0;
+}
+
+static void test_EnableWindow(void)
+{
+    HWND hwnd;
+    HANDLE hthread;
+    DWORD tid;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "MainWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                           0, 0, 100, 100, 0, 0, 0, NULL);
+    assert(hwnd);
+    ok(IsWindowEnabled(hwnd), "window should be enabled\n");
+    SetFocus(hwnd);
+    SetCapture(hwnd);
+
+    EnableWindow(hwnd, FALSE);
+    check_wnd_state(hwnd, hwnd, 0, 0);
+    ok(!IsWindowEnabled(hwnd), "window should not be enabled\n");
+
+    SetFocus(hwnd);
+    SetCapture(hwnd);
+    check_wnd_state(hwnd, hwnd, 0, hwnd);
+
+    EnableWindow(hwnd, TRUE);
+    SetFocus(hwnd);
+    check_wnd_state(hwnd, hwnd, hwnd, hwnd);
+    ok(IsWindowEnabled(hwnd), "window should be enabled\n");
+
+    /* test disabling from thread */
+    hthread = CreateThread(NULL, 0, enablewindow_thread, hwnd, 0, &tid);
+
+    while (MsgWaitForMultipleObjects(1, &hthread, FALSE, INFINITE, QS_SENDMESSAGE) != WAIT_OBJECT_0)
+    {
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE))
+            DispatchMessageA(&msg);
+    }
+
+    ok(!IsWindowEnabled(hwnd), "window should not be enabled\n");
+    todo_wine
+        check_active_state(hwnd, hwnd, hwnd);
+    ok(0 == GetCapture(), "GetCapture() = %p\n", GetCapture());
+
+    CloseHandle(hthread);
+    DestroyWindow(hwnd);
+}
+
 static DWORD CALLBACK gettext_msg_thread( LPVOID arg )
 {
     HWND hwnd = arg;
@@ -9778,6 +9830,7 @@ START_TEST(win)
     test_SetWindowLong();
     test_set_window_style();
     test_ShowWindow();
+    test_EnableWindow();
     test_gettext();
     test_GetUpdateRect();
     test_Expose();
