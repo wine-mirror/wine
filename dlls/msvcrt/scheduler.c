@@ -320,6 +320,100 @@ void CDECL Concurrency_Free(void* mem)
     }
 }
 
+typedef enum {
+    SchedulerKind,
+    MaxConcurrency,
+    MinConcurrency,
+    TargetOversubscriptionFactor,
+    LocalContextCacheSize,
+    ContextStackSize,
+    ContextPriority,
+    SchedulingProtocol,
+    DynamicProgressFeedback,
+    last_policy_id
+} PolicyElementKey;
+
+typedef struct {
+    struct _policy_container {
+        unsigned int policies[last_policy_id];
+    } *policy_container;
+} SchedulerPolicy;
+
+/* ?SetPolicyValue@SchedulerPolicy@Concurrency@@QAEIW4PolicyElementKey@2@I@Z */
+/* ?SetPolicyValue@SchedulerPolicy@Concurrency@@QEAAIW4PolicyElementKey@2@I@Z */
+DEFINE_THISCALL_WRAPPER(SchedulerPolicy_SetPolicyValue, 12)
+unsigned int __thiscall SchedulerPolicy_SetPolicyValue(SchedulerPolicy *this,
+        PolicyElementKey policy, unsigned int val)
+{
+    FIXME("(%p %d %d) stub\n", this, policy, val);
+    return 0;
+}
+
+/* ?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QAEXII@Z */
+/* ?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QEAAXII@Z */
+DEFINE_THISCALL_WRAPPER(SchedulerPolicy_SetConcurrencyLimits, 12)
+void __thiscall SchedulerPolicy_SetConcurrencyLimits(SchedulerPolicy *this,
+        unsigned int min_concurrency, unsigned int max_concurrency)
+{
+    FIXME("(%p %d %d) stub\n", this, min_concurrency, max_concurrency);
+}
+
+/* ?GetPolicyValue@SchedulerPolicy@Concurrency@@QBEIW4PolicyElementKey@2@@Z */
+/* ?GetPolicyValue@SchedulerPolicy@Concurrency@@QEBAIW4PolicyElementKey@2@@Z */
+DEFINE_THISCALL_WRAPPER(SchedulerPolicy_GetPolicyValue, 8)
+unsigned int __thiscall SchedulerPolicy_GetPolicyValue(
+        const SchedulerPolicy *this, PolicyElementKey policy)
+{
+    FIXME("(%p %d) stub\n", this, policy);
+    return 0;
+}
+
+/* ??0SchedulerPolicy@Concurrency@@QAE@XZ */
+/* ??0SchedulerPolicy@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(SchedulerPolicy_ctor, 4)
+SchedulerPolicy* __thiscall SchedulerPolicy_ctor(SchedulerPolicy *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??0SchedulerPolicy@Concurrency@@QAA@IZZ */
+/* ??0SchedulerPolicy@Concurrency@@QEAA@_KZZ */
+SchedulerPolicy* __cdecl SchedulerPolicy_ctor_policies(
+        SchedulerPolicy *this, MSVCRT_size_t n, ...)
+{
+    FIXME("(%p %ld) stub\n", this, n);
+    return NULL;
+}
+
+/* ??4SchedulerPolicy@Concurrency@@QAEAAV01@ABV01@@Z */
+/* ??4SchedulerPolicy@Concurrency@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(SchedulerPolicy_op_assign, 8)
+SchedulerPolicy* __thiscall SchedulerPolicy_op_assign(
+        SchedulerPolicy *this, const SchedulerPolicy *rhs)
+{
+    FIXME("(%p %p) stub\n", this, rhs);
+    return NULL;
+}
+
+/* ??0SchedulerPolicy@Concurrency@@QAE@ABV01@@Z */
+/* ??0SchedulerPolicy@Concurrency@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(SchedulerPolicy_copy_ctor, 8)
+SchedulerPolicy* __thiscall SchedulerPolicy_copy_ctor(
+        SchedulerPolicy *this, const SchedulerPolicy *rhs)
+{
+    FIXME("(%p %p) stub\n", this, rhs);
+    return NULL;
+}
+
+/* ??1SchedulerPolicy@Concurrency@@QAE@XZ */
+/* ??1SchedulerPolicy@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(SchedulerPolicy_dtor, 4)
+void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
 extern const vtable_ptr MSVCRT_type_info_vtable;
 DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")
 DEFINE_RTTI_DATA1(ContextBase, 0, &Context_rtti_base_descriptor, ".?AVContextBase@details@Concurrency@@")
