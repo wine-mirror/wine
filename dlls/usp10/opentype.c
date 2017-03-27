@@ -2646,7 +2646,7 @@ static void GSUB_initialize_language_cache(LoadedScript *script)
 
         if (script->language_count)
         {
-            TRACE("Deflang %p, LangCount %i\n",script->default_language.gsub_table, script->language_count);
+            TRACE("Deflang %p, LangCount %li\n",script->default_language.gsub_table, script->language_count);
 
             script->languages = heap_alloc_zero(script->language_count * sizeof(*script->languages));
 
@@ -2705,10 +2705,15 @@ static void GPOS_expand_language_cache(LoadedScript *script)
 
             if (!(language = usp10_script_get_language(script, tag)))
             {
-                script->language_count++;
-                script->languages = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        script->languages, script->language_count * sizeof(*script->languages));
-                language = &script->languages[script->language_count - 1];
+                if (!usp10_array_reserve((void **)&script->languages, &script->languages_size,
+                        script->language_count + 1, sizeof(*script->languages)))
+                {
+                    ERR("Failed grow languages array.\n");
+                    return;
+                }
+
+                language = &script->languages[script->language_count];
+                ++script->language_count;
                 language->tag = tag;
             }
             language->gpos_table = (const BYTE *)table + offset;

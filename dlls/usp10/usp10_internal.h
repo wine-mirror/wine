@@ -164,8 +164,9 @@ typedef struct {
     const void *gpos_table;
     LoadedLanguage default_language;
     BOOL languages_initialized;
-    INT language_count;
     LoadedLanguage *languages;
+    SIZE_T languages_size;
+    SIZE_T language_count;
 } LoadedScript;
 
 typedef struct {
