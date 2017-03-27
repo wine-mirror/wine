@@ -36,6 +36,9 @@
 
 #include "msxml_private.h"
 
+#include "initguid.h"
+#include "asptlb.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
@@ -54,6 +57,7 @@ enum output_type
     PROCESSOR_OUTPUT_NOT_SET,
     PROCESSOR_OUTPUT_STREAM,        /* IStream or ISequentialStream */
     PROCESSOR_OUTPUT_PERSISTSTREAM, /* IPersistStream or IPersistStreamInit */
+    PROCESSOR_OUTPUT_RESPONSE,      /* IResponse */
 };
 
 typedef struct
@@ -70,6 +74,7 @@ typedef struct
         IUnknown *unk;
         ISequentialStream *stream;
         IPersistStream *persiststream;
+        IResponse *response;
     } output;
     enum output_type output_type;
     BSTR outstr;
@@ -493,7 +498,11 @@ static HRESULT WINAPI xslprocessor_put_output(
         hr = IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_IStream, (void **)&output);
         if (FAILED(hr))
             hr = IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_ISequentialStream, (void **)&output);
-        /* FIXME: try IResponse */
+        if (FAILED(hr))
+        {
+            output_type = PROCESSOR_OUTPUT_RESPONSE;
+            hr = IUnknown_QueryInterface(V_UNKNOWN(&var), &IID_IResponse, (void **)&output);
+        }
         if (FAILED(hr))
         {
             output_type = PROCESSOR_OUTPUT_PERSISTSTREAM;
@@ -570,20 +579,67 @@ static HRESULT WINAPI xslprocessor_transform(
         stream = This->output.stream;
         ISequentialStream_AddRef(stream);
     }
-    else if (This->output_type == PROCESSOR_OUTPUT_PERSISTSTREAM)
+    else if (This->output_type == PROCESSOR_OUTPUT_PERSISTSTREAM ||
+            This->output_type == PROCESSOR_OUTPUT_RESPONSE)
+    {
         CreateStreamOnHGlobal(NULL, TRUE, (IStream **)&stream);
+    }
 
     hr = node_transform_node_params(get_node_obj(This->input), This->stylesheet->node,
             &This->outstr, stream, &This->params);
-    if (SUCCEEDED(hr) && This->output_type == PROCESSOR_OUTPUT_PERSISTSTREAM)
+    if (SUCCEEDED(hr))
     {
         IStream *src = (IStream *)stream;
-        LARGE_INTEGER zero;
 
-        /* for IPersistStream* output seekable stream is used */
-        zero.QuadPart = 0;
-        IStream_Seek(src, zero, STREAM_SEEK_SET, NULL);
-        hr = IPersistStream_Load(This->output.persiststream, src);
+        switch (This->output_type)
+        {
+        case PROCESSOR_OUTPUT_PERSISTSTREAM:
+        {
+            LARGE_INTEGER zero;
+
+            /* for IPersistStream* output seekable stream is used */
+            zero.QuadPart = 0;
+            IStream_Seek(src, zero, STREAM_SEEK_SET, NULL);
+            hr = IPersistStream_Load(This->output.persiststream, src);
+            break;
+        }
+        case PROCESSOR_OUTPUT_RESPONSE:
+        {
+            SAFEARRAYBOUND bound;
+            SAFEARRAY *array;
+            HGLOBAL hglobal;
+            VARIANT bin;
+            DWORD size;
+            void *dest;
+
+            GetHGlobalFromStream(src, &hglobal);
+            size = GlobalSize(hglobal);
+
+            bound.lLbound = 0;
+            bound.cElements = size;
+            if (!(array = SafeArrayCreate(VT_UI1, 1, &bound)))
+                break;
+
+            V_VT(&bin) = VT_ARRAY | VT_UI1;
+            V_ARRAY(&bin) = array;
+
+            hr = SafeArrayAccessData(array, &dest);
+            if (hr == S_OK)
+            {
+                void *data = GlobalLock(hglobal);
+                memcpy(dest, data, size);
+                GlobalUnlock(hglobal);
+                SafeArrayUnaccessData(array);
+
+                IResponse_BinaryWrite(This->output.response, bin);
+            }
+
+            VariantClear(&bin);
+            break;
+        }
+        default:
+            ;
+        }
     }
 
     if (stream)

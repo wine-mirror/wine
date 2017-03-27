@@ -361,7 +361,6 @@ static HRESULT WINAPI response_QI(IResponse *iface, REFIID riid, void **obj)
     }
 
     if (!IsEqualIID(&IID_IStream, riid) && !IsEqualIID(&IID_ISequentialStream, riid))
-todo_wine
         ok(0, "unexpected call\n");
     return E_NOINTERFACE;
 }
@@ -488,7 +487,25 @@ static HRESULT WINAPI response_AppendToLog(IResponse *iface, BSTR bstrLogEntry)
 
 static HRESULT WINAPI response_BinaryWrite(IResponse *iface, VARIANT input)
 {
+    HRESULT hr;
+    LONG bound;
+    UINT dim;
+
     ok(V_VT(&input) == (VT_ARRAY | VT_UI1), "got wrong input type %x\n", V_VT(&input));
+
+    dim = SafeArrayGetDim(V_ARRAY(&input));
+    ok(dim == 1, "got wrong array dimensions %u\n", dim);
+
+    bound = 1;
+    hr = SafeArrayGetLBound(V_ARRAY(&input), 1, &bound);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(bound == 0, "wrong array low bound %d\n", bound);
+
+    bound = 0;
+    hr = SafeArrayGetUBound(V_ARRAY(&input), 1, &bound);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(bound > 0, "wrong array high bound %d\n", bound);
+
     return E_NOTIMPL;
 }
 
@@ -8977,11 +8994,12 @@ todo_wine {
     V_VT(&v) = VT_UNKNOWN;
     V_UNKNOWN(&v) = (IUnknown *)&testresponse;
     hr = IXSLProcessor_put_output(processor, v);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    b = VARIANT_FALSE;
     hr = IXSLProcessor_transform(processor, &b);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %x\n", b);
 
     IXSLProcessor_Release(processor);
     IXMLDOMDocument_Release(doc2);
