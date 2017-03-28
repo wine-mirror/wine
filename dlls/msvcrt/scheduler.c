@@ -111,6 +111,7 @@ typedef struct {
 typedef struct {
     Scheduler scheduler;
     unsigned int id;
+    unsigned int virt_proc_no;
     SchedulerPolicy policy;
 } ThreadScheduler;
 extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
@@ -528,8 +529,8 @@ unsigned int __thiscall ThreadScheduler_Id(const ThreadScheduler *this)
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_GetNumberOfVirtualProcessors, 4)
 unsigned int __thiscall ThreadScheduler_GetNumberOfVirtualProcessors(const ThreadScheduler *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->virt_proc_no;
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_GetPolicy, 8)
@@ -631,11 +632,18 @@ Scheduler* __thiscall ThreadScheduler_vector_dtor(ThreadScheduler *this, unsigne
 static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
         const SchedulerPolicy *policy)
 {
+    SYSTEM_INFO si;
+
     TRACE("(%p)->()\n", this);
 
     this->scheduler.vtable = &MSVCRT_ThreadScheduler_vtable;
     this->id = InterlockedIncrement(&scheduler_id);
     SchedulerPolicy_copy_ctor(&this->policy, policy);
+
+    GetSystemInfo(&si);
+    this->virt_proc_no = SchedulerPolicy_GetPolicyValue(&this->policy, MaxConcurrency);
+    if(this->virt_proc_no > si.dwNumberOfProcessors)
+        this->virt_proc_no = si.dwNumberOfProcessors;
     return this;
 }
 
