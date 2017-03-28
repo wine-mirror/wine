@@ -83,6 +83,15 @@ typedef struct {
 extern const vtable_ptr MSVCRT_ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
 
+typedef struct {
+    const vtable_ptr *vtable;
+} Scheduler;
+
+typedef struct {
+    Scheduler scheduler;
+} ThreadScheduler;
+extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
+
 static int context_tls_index = TLS_OUT_OF_INDEXES;
 
 static Context* try_get_current_context(void)
@@ -506,16 +515,134 @@ void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
     MSVCRT_operator_delete(this->policy_container);
 }
 
-typedef struct {
-    const vtable_ptr *vtable;
-} Scheduler;
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_Id, 4)
+unsigned int __thiscall ThreadScheduler_Id(const ThreadScheduler *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_GetNumberOfVirtualProcessors, 4)
+unsigned int __thiscall ThreadScheduler_GetNumberOfVirtualProcessors(const ThreadScheduler *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_GetPolicy, 8)
+SchedulerPolicy* __thiscall ThreadScheduler_GetPolicy(
+        const ThreadScheduler *this, SchedulerPolicy *ret)
+{
+    FIXME("(%p %p) stub\n", this, ret);
+    return NULL;
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_Reference, 4)
+unsigned int __thiscall ThreadScheduler_Reference(ThreadScheduler *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_Release, 4)
+unsigned int __thiscall ThreadScheduler_Release(ThreadScheduler *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_RegisterShutdownEvent, 8)
+void __thiscall ThreadScheduler_RegisterShutdownEvent(ThreadScheduler *this, HANDLE event)
+{
+    FIXME("(%p %p) stub\n", this, event);
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_Attach, 4)
+void __thiscall ThreadScheduler_Attach(ThreadScheduler *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_CreateScheduleGroup_loc, 8)
+/*ScheduleGroup*/void* __thiscall ThreadScheduler_CreateScheduleGroup_loc(
+        ThreadScheduler *this, /*location*/void *placement)
+{
+    FIXME("(%p %p) stub\n", this, placement);
+    return NULL;
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_CreateScheduleGroup, 4)
+/*ScheduleGroup*/void* __thiscall ThreadScheduler_CreateScheduleGroup(ThreadScheduler *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_ScheduleTask_loc, 16)
+void __thiscall ThreadScheduler_ScheduleTask_loc(ThreadScheduler *this,
+        void (__cdecl *proc)(void*), void* data, /*location*/void *placement)
+{
+    FIXME("(%p %p %p %p) stub\n", this, proc, data, placement);
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_ScheduleTask, 12)
+void __thiscall ThreadScheduler_ScheduleTask(ThreadScheduler *this,
+        void (__cdecl *proc)(void*), void* data)
+{
+    FIXME("(%p %p %p) stub\n", this, proc, data);
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_IsAvailableLocation, 8)
+MSVCRT_bool __thiscall ThreadScheduler_IsAvailableLocation(
+        const ThreadScheduler *this, const /*location*/void *placement)
+{
+    FIXME("(%p %p) stub\n", this, placement);
+    return FALSE;
+}
+
+static void ThreadScheduler_dtor(ThreadScheduler *this)
+{
+}
+
+DEFINE_THISCALL_WRAPPER(ThreadScheduler_vector_dtor, 8)
+Scheduler* __thiscall ThreadScheduler_vector_dtor(ThreadScheduler *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            ThreadScheduler_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        ThreadScheduler_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return &this->scheduler;
+}
+
+static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
+        const SchedulerPolicy *policy)
+{
+    TRACE("(%p)->()\n", this);
+
+    this->scheduler.vtable = &MSVCRT_ThreadScheduler_vtable;
+    return this;
+}
 
 /* ?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z */
 /* ?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z */
 Scheduler* __cdecl Scheduler_Create(const SchedulerPolicy *policy)
 {
-    FIXME("(%p) stub\n", policy);
-    return NULL;
+    ThreadScheduler *ret;
+
+    TRACE("(%p)\n", policy);
+
+    ret = MSVCRT_operator_new(sizeof(*ret));
+    return &ThreadScheduler_ctor(ret, policy)->scheduler;
 }
 
 /* ?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ */
@@ -536,6 +663,10 @@ DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")
 DEFINE_RTTI_DATA1(ContextBase, 0, &Context_rtti_base_descriptor, ".?AVContextBase@details@Concurrency@@")
 DEFINE_RTTI_DATA2(ExternalContextBase, 0, &ContextBase_rtti_base_descriptor,
         &Context_rtti_base_descriptor, ".?AVExternalContextBase@details@Concurrency@@")
+DEFINE_RTTI_DATA0(Scheduler, 0, ".?AVScheduler@Concurrency@@")
+DEFINE_RTTI_DATA1(SchedulerBase, 0, &Scheduler_rtti_base_descriptor, ".?AVSchedulerBase@details@Concurrency@@")
+DEFINE_RTTI_DATA2(ThreadScheduler, 0, &SchedulerBase_rtti_base_descriptor,
+        &Scheduler_rtti_base_descriptor, ".?AVThreadScheduler@details@Concurrency@@")
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -547,6 +678,20 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ExternalContextBase_Unblock)
             VTABLE_ADD_FUNC(ExternalContextBase_IsSynchronouslyBlocked)
             VTABLE_ADD_FUNC(ExternalContextBase_vector_dtor));
+    __ASM_VTABLE(ThreadScheduler,
+            VTABLE_ADD_FUNC(ThreadScheduler_vector_dtor)
+            VTABLE_ADD_FUNC(ThreadScheduler_Id)
+            VTABLE_ADD_FUNC(ThreadScheduler_GetNumberOfVirtualProcessors)
+            VTABLE_ADD_FUNC(ThreadScheduler_GetPolicy)
+            VTABLE_ADD_FUNC(ThreadScheduler_Reference)
+            VTABLE_ADD_FUNC(ThreadScheduler_Release)
+            VTABLE_ADD_FUNC(ThreadScheduler_RegisterShutdownEvent)
+            VTABLE_ADD_FUNC(ThreadScheduler_Attach)
+            VTABLE_ADD_FUNC(ThreadScheduler_CreateScheduleGroup_loc)
+            VTABLE_ADD_FUNC(ThreadScheduler_CreateScheduleGroup)
+            VTABLE_ADD_FUNC(ThreadScheduler_ScheduleTask_loc)
+            VTABLE_ADD_FUNC(ThreadScheduler_ScheduleTask)
+            VTABLE_ADD_FUNC(ThreadScheduler_IsAvailableLocation));
 #ifndef __GNUC__
 }
 #endif
@@ -557,6 +702,9 @@ void msvcrt_init_scheduler(void *base)
     init_Context_rtti(base);
     init_ContextBase_rtti(base);
     init_ExternalContextBase_rtti(base);
+    init_Scheduler_rtti(base);
+    init_SchedulerBase_rtti(base);
+    init_ThreadScheduler_rtti(base);
 #endif
 }
 
