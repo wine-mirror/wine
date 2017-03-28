@@ -4173,6 +4173,16 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
         SetRect(&r, 0, 0, view->width, view->height);
         rect = &r;
     }
+    else
+    {
+        struct wined3d_box b = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
+        struct wined3d_texture *texture = texture_from_resource(view->resource);
+        HRESULT hr;
+
+        if (FAILED(hr = wined3d_texture_check_box_dimensions(texture,
+                view->sub_resource_idx % texture->level_count, &b)))
+            return hr;
+    }
 
     if (flags & WINED3DCLEAR_TARGET)
         blit_op = WINED3D_BLIT_OP_COLOR_FILL;
