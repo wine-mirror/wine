@@ -97,6 +97,7 @@ typedef struct {
     BOOL        bScrolling;   /* Scroll arrows are active */
     UINT        nScrollPos;   /* Current scroll position */
     UINT        nTotalHeight; /* Total height of menu items inside menu */
+    RECT        items_rect;   /* Rectangle within which the items lie.  Excludes margins and scroll arrows */
     /* ------------ MENUINFO members ------ */
     DWORD	dwStyle;	/* Extended menu style */
     UINT	cyMax;		/* max height of the whole menu, 0 is screen height */
@@ -1170,26 +1171,27 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     HDC hdc;
     UINT start, i;
     BOOL textandbmp = FALSE;
-    int orgX, orgY, maxX, maxTab, maxTabWidth, maxHeight;
+    int orgX, orgY, maxTab, maxTabWidth, maxHeight;
 
     lppop->Width = lppop->Height = 0;
+    SetRect(&lppop->items_rect, MENU_MARGIN, MENU_MARGIN, MENU_MARGIN, MENU_MARGIN);
+
     if (lppop->nItems == 0) return;
     hdc = GetDC( 0 );
 
     SelectObject( hdc, get_menu_font(FALSE));
 
     start = 0;
-    maxX = MENU_MARGIN;
 
     lppop->textOffset = 0;
 
     while (start < lppop->nItems)
     {
 	lpitem = &lppop->items[start];
-	orgX = maxX;
+	orgX = lppop->items_rect.right;
         if( lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))
             orgX += MENU_COL_SPACE; 
-	orgY = MENU_MARGIN;
+	orgY = lppop->items_rect.top;
 
 	maxTab = maxTabWidth = 0;
 	  /* Parse items until column break or end of menu */
@@ -1199,7 +1201,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
 	    MENU_CalcItemSize( hdc, lpitem, lppop->hwndOwner, orgX, orgY, FALSE, lppop );
-	    maxX = max( maxX, lpitem->rect.right );
+	    lppop->items_rect.right = max( lppop->items_rect.right, lpitem->rect.right );
 	    orgY = lpitem->rect.bottom;
 	    if (IS_STRING_ITEM(lpitem->fType) && lpitem->xTab)
 	    {
@@ -1210,18 +1212,17 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 	}
 
 	  /* Finish the column (set all items to the largest width found) */
-	maxX = max( maxX, maxTab + maxTabWidth );
+	lppop->items_rect.right = max( lppop->items_rect.right, maxTab + maxTabWidth );
 	for (lpitem = &lppop->items[start]; start < i; start++, lpitem++)
 	{
-	    lpitem->rect.right = maxX;
+	    lpitem->rect.right = lppop->items_rect.right;
 	    if (IS_STRING_ITEM(lpitem->fType) && lpitem->xTab)
 		lpitem->xTab = maxTab;
 
 	}
-	lppop->Height = max( lppop->Height, orgY );
+	lppop->items_rect.bottom = max( lppop->items_rect.bottom, orgY );
     }
 
-    lppop->Width  = maxX;
     /* if none of the items have both text and bitmap then
      * the text and bitmaps are all aligned on the left. If there is at
      * least one item with both text and bitmap then bitmaps are
@@ -1230,8 +1231,8 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     if( !textandbmp) lppop->textOffset = 0;
 
     /* space for 3d border */
-    lppop->Height += MENU_MARGIN;
-    lppop->Width += MENU_MARGIN;
+    lppop->Height = lppop->items_rect.bottom + MENU_MARGIN;
+    lppop->Width = lppop->items_rect.right + MENU_MARGIN;
 
     /* Adjust popup height if it exceeds maximum */
     maxHeight = MENU_GetMaxPopupHeight(lppop);
@@ -1239,6 +1240,8 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     if (lppop->Height >= maxHeight)
     {
         lppop->Height = maxHeight;
+        lppop->items_rect.top += get_scroll_arrow_height(lppop);
+        lppop->items_rect.bottom = lppop->Height - MENU_MARGIN - get_scroll_arrow_height(lppop);
         lppop->bScrolling = TRUE;
     }
     else
@@ -1307,6 +1310,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 
     lprect->bottom = maxY;
     lppop->Height = lprect->bottom - lprect->top;
+    lppop->items_rect = *lprect;
 
     /* Flush right all items between the MF_RIGHTJUSTIFY and */
     /* the last item (if several lines, only move the last line) */
@@ -1937,32 +1941,22 @@ MENU_EnsureMenuItemVisible(LPPOPUPMENU lppop, UINT wIndex, HDC hdc)
     if (lppop->bScrolling)
     {
         MENUITEM *item = &lppop->items[wIndex];
-        UINT nMaxHeight = MENU_GetMaxPopupHeight(lppop);
         UINT nOldPos = lppop->nScrollPos;
-        RECT rc;
-        UINT arrow_bitmap_height;
-        BITMAP bmp;
-        
-        GetClientRect(lppop->hWnd, &rc);
+        const RECT *rc = &lppop->items_rect;
+        UINT scroll_height = rc->bottom - rc->top;
 
-        GetObjectW(get_down_arrow_bitmap(), sizeof(bmp), &bmp);
-        arrow_bitmap_height = bmp.bmHeight;
-
-        rc.top += arrow_bitmap_height;
-        rc.bottom -= arrow_bitmap_height + MENU_MARGIN;
-       
-        nMaxHeight -= GetSystemMetrics(SM_CYBORDER) + 2 * arrow_bitmap_height;
-        if (item->rect.bottom > lppop->nScrollPos + nMaxHeight)
+        /* NB the item rects include the MENU_MARGIN offset (so the first rect has
+           top == MENU_TOP_MARGIN) */
+        if (item->rect.bottom - MENU_MARGIN > lppop->nScrollPos + scroll_height)
         {
-            
-            lppop->nScrollPos = item->rect.bottom - nMaxHeight;
-            ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, &rc, &rc);
+            lppop->nScrollPos = item->rect.bottom - MENU_MARGIN - scroll_height;
+            ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, rc, rc);
             MENU_DrawScrollArrows(lppop, hdc);
         }
         else if (item->rect.top - MENU_MARGIN < lppop->nScrollPos)
         {
             lppop->nScrollPos = item->rect.top - MENU_MARGIN;
-            ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, &rc, &rc);
+            ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, rc, rc);
             MENU_DrawScrollArrows(lppop, hdc);
         }
     }
