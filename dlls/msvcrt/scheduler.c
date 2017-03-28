@@ -110,6 +110,7 @@ typedef struct {
 
 typedef struct {
     Scheduler scheduler;
+    LONG ref;
     unsigned int id;
     unsigned int virt_proc_no;
     SchedulerPolicy policy;
@@ -519,6 +520,12 @@ void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
     MSVCRT_operator_delete(this->policy_container);
 }
 
+static void ThreadScheduler_dtor(ThreadScheduler *this)
+{
+    if(this->ref != 0) WARN("ref = %d\n", this->ref);
+    SchedulerPolicy_dtor(&this->policy);
+}
+
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Id, 4)
 unsigned int __thiscall ThreadScheduler_Id(const ThreadScheduler *this)
 {
@@ -544,15 +551,22 @@ SchedulerPolicy* __thiscall ThreadScheduler_GetPolicy(
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Reference, 4)
 unsigned int __thiscall ThreadScheduler_Reference(ThreadScheduler *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return InterlockedIncrement(&this->ref);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Release, 4)
 unsigned int __thiscall ThreadScheduler_Release(ThreadScheduler *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    unsigned int ret = InterlockedDecrement(&this->ref);
+
+    TRACE("(%p)\n", this);
+
+    if(!ret) {
+        ThreadScheduler_dtor(this);
+        MSVCRT_operator_delete(this);
+    }
+    return ret;
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_RegisterShutdownEvent, 8)
@@ -604,11 +618,6 @@ MSVCRT_bool __thiscall ThreadScheduler_IsAvailableLocation(
     return FALSE;
 }
 
-static void ThreadScheduler_dtor(ThreadScheduler *this)
-{
-    SchedulerPolicy_dtor(&this->policy);
-}
-
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_vector_dtor, 8)
 Scheduler* __thiscall ThreadScheduler_vector_dtor(ThreadScheduler *this, unsigned int flags)
 {
@@ -637,6 +646,7 @@ static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
     TRACE("(%p)->()\n", this);
 
     this->scheduler.vtable = &MSVCRT_ThreadScheduler_vtable;
+    this->ref = 1;
     this->id = InterlockedIncrement(&scheduler_id);
     SchedulerPolicy_copy_ctor(&this->policy, policy);
 
