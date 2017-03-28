@@ -746,16 +746,36 @@ static void append_transform_feedback_varying(const char **varyings, unsigned in
     ++(*varying_count);
 }
 
+static void append_transform_feedback_skip_components(const char **varyings,
+        unsigned int *varying_count, char **strings, unsigned int *strings_length,
+        struct wined3d_string_buffer *buffer, unsigned int component_count)
+{
+    unsigned int j;
+
+    for (j = 0; j < component_count / 4; ++j)
+    {
+        string_buffer_sprintf(buffer, "gl_SkipComponents4");
+        append_transform_feedback_varying(varyings, varying_count, strings, strings_length, buffer);
+    }
+    if (component_count % 4)
+    {
+        string_buffer_sprintf(buffer, "gl_SkipComponents%u", component_count % 4);
+        append_transform_feedback_varying(varyings, varying_count, strings, strings_length, buffer);
+    }
+}
+
 static void shader_glsl_generate_transform_feedback_varyings(const struct wined3d_stream_output_desc *so_desc,
         struct wined3d_string_buffer *buffer, const char **varyings, unsigned int *varying_count,
         char *strings, unsigned int *strings_length)
 {
-    unsigned int i, j, buffer_idx, count, length, highest_output_slot;
+    unsigned int i, buffer_idx, count, length, highest_output_slot, stride;
 
     count = length = 0;
     highest_output_slot = 0;
     for (buffer_idx = 0; buffer_idx < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++buffer_idx)
     {
+        stride = 0;
+
         for (i = 0; i < so_desc->element_count; ++i)
         {
             const struct wined3d_stream_output_element *e = &so_desc->elements[i];
@@ -770,18 +790,12 @@ static void shader_glsl_generate_transform_feedback_varyings(const struct wined3
                 continue;
             }
 
+            stride += e->component_count;
+
             if (e->register_idx == WINED3D_STREAM_OUTPUT_GAP)
             {
-                for (j = 0; j < e->component_count / 4; ++j)
-                {
-                    string_buffer_sprintf(buffer, "gl_SkipComponents4");
-                    append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
-                }
-                if (e->component_count % 4)
-                {
-                    string_buffer_sprintf(buffer, "gl_SkipComponents%u", e->component_count % 4);
-                    append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
-                }
+                append_transform_feedback_skip_components(varyings, &count,
+                        &strings, &length, buffer, e->component_count);
                 continue;
             }
 
@@ -793,6 +807,14 @@ static void shader_glsl_generate_transform_feedback_varyings(const struct wined3
 
             string_buffer_sprintf(buffer, "ps_link[%u]", e->register_idx);
             append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+        }
+
+        if (buffer_idx < so_desc->buffer_stride_count
+                && stride < so_desc->buffer_strides[buffer_idx] / 4)
+        {
+            unsigned int component_count = so_desc->buffer_strides[buffer_idx] / 4 - stride;
+            append_transform_feedback_skip_components(varyings, &count,
+                    &strings, &length, buffer, component_count);
         }
 
         if (highest_output_slot <= buffer_idx)
@@ -823,9 +845,6 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context *co
         FIXME("ARB_transform_feedback3 not supported by OpenGL implementation.\n");
         return;
     }
-
-    if (so_desc->buffer_stride_count)
-        FIXME("Ignoring buffer strides.\n");
 
     buffer = string_buffer_get(&priv->string_buffers);
 
