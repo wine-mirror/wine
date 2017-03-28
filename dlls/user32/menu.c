@@ -404,6 +404,14 @@ static HBITMAP get_up_arrow_inactive_bitmap(void)
     return arrow_bitmap;
 }
 
+static inline UINT get_scroll_arrow_height(const POPUPMENU *menu)
+{
+    BITMAP bmp;
+
+    GetObjectW(get_up_arrow_bitmap(), sizeof(bmp), &bmp);
+    return bmp.bmHeight;
+}
+
 /***********************************************************************
  *           MENU_CopySysPopup
  *
@@ -699,13 +707,10 @@ MENU_AdjustMenuItemRect(const POPUPMENU *menu, LPRECT rect)
 {
     if (menu->bScrolling)
     {
-        UINT arrow_bitmap_height;
-        BITMAP bmp;
+        UINT arrow_height;
 
-        GetObjectW(get_up_arrow_bitmap(), sizeof(bmp), &bmp);
-        arrow_bitmap_height = bmp.bmHeight;
-        rect->top += arrow_bitmap_height - menu->nScrollPos;
-        rect->bottom += arrow_bitmap_height - menu->nScrollPos;
+        arrow_height = get_scroll_arrow_height( menu );
+        OffsetRect( rect, 0, arrow_height - menu->nScrollPos );
     }
 }
 
