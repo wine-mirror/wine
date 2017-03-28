@@ -133,9 +133,8 @@ typedef struct
   /* Space between 2 columns */
 #define MENU_COL_SPACE 4
 
-  /*  top and bottom margins for popup menus */
-#define MENU_TOP_MARGIN 3
-#define MENU_BOTTOM_MARGIN 2
+  /* Margins for popup menus */
+#define MENU_MARGIN 3
 
 /* maximum allowed depth of any branch in the menu tree.
  * This value is slightly larger than in windows (25) to
@@ -1175,7 +1174,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     SelectObject( hdc, get_menu_font(FALSE));
 
     start = 0;
-    maxX = 2 + 1;
+    maxX = MENU_MARGIN;
 
     lppop->textOffset = 0;
 
@@ -1185,7 +1184,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 	orgX = maxX;
         if( lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))
             orgX += MENU_COL_SPACE; 
-	orgY = MENU_TOP_MARGIN;
+	orgY = MENU_MARGIN;
 
 	maxTab = maxTabWidth = 0;
 	  /* Parse items until column break or end of menu */
@@ -1226,12 +1225,12 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     if( !textandbmp) lppop->textOffset = 0;
 
     /* space for 3d border */
-    lppop->Height += MENU_BOTTOM_MARGIN;
-    lppop->Width += 2;
+    lppop->Height += MENU_MARGIN;
+    lppop->Width += MENU_MARGIN;
 
     /* Adjust popup height if it exceeds maximum */
     maxHeight = MENU_GetMaxPopupHeight(lppop);
-    lppop->nTotalHeight = lppop->Height - MENU_TOP_MARGIN;
+    lppop->nTotalHeight = lppop->Height - MENU_MARGIN;
     if (lppop->Height >= maxHeight)
     {
         lppop->Height = maxHeight;
@@ -1856,7 +1855,6 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
                               INT x, INT y, INT xanchor, INT yanchor )
 {
     POPUPMENU *menu;
-    INT width, height;
     POINT pt;
     HMONITOR monitor;
     MONITORINFO info;
@@ -1876,9 +1874,6 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
 
     /* adjust popup menu pos so that it fits within the desktop */
 
-    width = menu->Width + GetSystemMetrics(SM_CXBORDER);
-    height = menu->Height + GetSystemMetrics(SM_CYBORDER);
-
     /* FIXME: should use item rect */
     pt.x = x;
     pt.y = y;
@@ -1889,29 +1884,29 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     if (flags & TPM_LAYOUTRTL)
         flags ^= TPM_RIGHTALIGN;
 
-    if( flags & TPM_RIGHTALIGN ) x -= width;
-    if( flags & TPM_CENTERALIGN ) x -= width / 2;
+    if( flags & TPM_RIGHTALIGN ) x -= menu->Width;
+    if( flags & TPM_CENTERALIGN ) x -= menu->Width / 2;
 
-    if( flags & TPM_BOTTOMALIGN ) y -= height;
-    if( flags & TPM_VCENTERALIGN ) y -= height / 2;
+    if( flags & TPM_BOTTOMALIGN ) y -= menu->Height;
+    if( flags & TPM_VCENTERALIGN ) y -= menu->Height / 2;
 
-    if( x + width > info.rcWork.right)
+    if( x + menu->Width > info.rcWork.right)
     {
-        if( xanchor && x >= width - xanchor )
-            x -= width - xanchor;
+        if( xanchor && x >= menu->Width - xanchor )
+            x -= menu->Width - xanchor;
 
-        if( x + width > info.rcWork.right)
-            x = info.rcWork.right - width;
+        if( x + menu->Width > info.rcWork.right)
+            x = info.rcWork.right - menu->Width;
     }
     if( x < info.rcWork.left ) x = info.rcWork.left;
 
-    if( y + height > info.rcWork.bottom)
+    if( y + menu->Height > info.rcWork.bottom)
     {
-        if( yanchor && y >= height + yanchor )
-            y -= height + yanchor;
+        if( yanchor && y >= menu->Height + yanchor )
+            y -= menu->Height + yanchor;
 
-        if( y + height > info.rcWork.bottom)
-            y = info.rcWork.bottom - height;
+        if( y + menu->Height > info.rcWork.bottom)
+            y = info.rcWork.bottom - menu->Height;
     }
     if( y < info.rcWork.top ) y = info.rcWork.top;
 
@@ -1921,7 +1916,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     }
     /* Display the window */
 
-    SetWindowPos( menu->hWnd, HWND_TOPMOST, x, y, width, height,
+    SetWindowPos( menu->hWnd, HWND_TOPMOST, x, y, menu->Width, menu->Height,
                   SWP_SHOWWINDOW | SWP_NOACTIVATE );
     UpdateWindow( menu->hWnd );
     return TRUE;
@@ -1949,7 +1944,7 @@ MENU_EnsureMenuItemVisible(LPPOPUPMENU lppop, UINT wIndex, HDC hdc)
         arrow_bitmap_height = bmp.bmHeight;
 
         rc.top += arrow_bitmap_height;
-        rc.bottom -= arrow_bitmap_height + MENU_BOTTOM_MARGIN;
+        rc.bottom -= arrow_bitmap_height + MENU_MARGIN;
        
         nMaxHeight -= GetSystemMetrics(SM_CYBORDER) + 2 * arrow_bitmap_height;
         if (item->rect.bottom > lppop->nScrollPos + nMaxHeight)
@@ -1959,9 +1954,9 @@ MENU_EnsureMenuItemVisible(LPPOPUPMENU lppop, UINT wIndex, HDC hdc)
             ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, &rc, &rc);
             MENU_DrawScrollArrows(lppop, hdc);
         }
-        else if (item->rect.top - MENU_TOP_MARGIN < lppop->nScrollPos)
+        else if (item->rect.top - MENU_MARGIN < lppop->nScrollPos)
         {
-            lppop->nScrollPos = item->rect.top - MENU_TOP_MARGIN;
+            lppop->nScrollPos = item->rect.top - MENU_MARGIN;
             ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, &rc, &rc);
             MENU_DrawScrollArrows(lppop, hdc);
         }
@@ -2379,10 +2374,9 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
                 rect.left += GetSystemMetrics(SM_CXBORDER);
 	    else
                 rect.left += rc.right - GetSystemMetrics(SM_CXBORDER);
-	    rect.top += rc.top - MENU_TOP_MARGIN;
+	    rect.top += rc.top - MENU_MARGIN;
 	    rect.right = rc.left - rc.right + GetSystemMetrics(SM_CXBORDER);
-	    rect.bottom = rc.top - rc.bottom - MENU_TOP_MARGIN
-	                  - MENU_BOTTOM_MARGIN - GetSystemMetrics(SM_CYBORDER);
+	    rect.bottom = rc.top - rc.bottom - 2 * MENU_MARGIN;
 	}
 	else
 	{
