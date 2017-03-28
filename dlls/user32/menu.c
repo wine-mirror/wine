@@ -5105,35 +5105,26 @@ BOOL WINAPI CheckMenuRadioItem(HMENU hMenu,
  *                 always on the upper left side of the application.
  *
  */
-BOOL WINAPI GetMenuItemRect (HWND hwnd, HMENU hMenu, UINT uItem,
-				 LPRECT rect)
+BOOL WINAPI GetMenuItemRect(HWND hwnd, HMENU hMenu, UINT uItem, RECT *rect)
 {
-     POPUPMENU *itemMenu;
+     POPUPMENU *menu;
      MENUITEM *item;
-     HWND referenceHwnd;
 
      TRACE("(%p,%p,%d,%p)\n", hwnd, hMenu, uItem, rect);
 
      item = MENU_FindItem (&hMenu, &uItem, MF_BYPOSITION);
-     referenceHwnd = hwnd;
-
-     if(!hwnd)
-     {
-	 itemMenu = MENU_GetMenu(hMenu);
-	 if (itemMenu == NULL)
-	     return FALSE;
-
-	 if(itemMenu->hWnd == 0)
-	     return FALSE;
-	 referenceHwnd = itemMenu->hWnd;
-     }
-
      if ((rect == NULL) || (item == NULL))
-	 return FALSE;
+         return FALSE;
+
+     menu = MENU_GetMenu(hMenu);
+     if (!menu) return FALSE;
+
+     if (!hwnd) hwnd = menu->hWnd;
+     if (!hwnd) return FALSE;
 
      *rect = item->rect;
 
-     MapWindowPoints(referenceHwnd, 0, (LPPOINT)rect, 2);
+     MapWindowPoints(hwnd, 0, (POINT *)rect, 2);
 
      return TRUE;
 }
