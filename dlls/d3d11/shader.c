@@ -1190,6 +1190,7 @@ static const struct wined3d_parent_ops d3d_geometry_shader_wined3d_parent_ops =
 
 static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_output_element *elements,
         const D3D11_SO_DECLARATION_ENTRY *entries, unsigned int entry_count,
+        const unsigned int *buffer_strides, unsigned int buffer_stride_count,
         const struct wined3d_shader_signature *os)
 {
     unsigned int i, j, mask;
@@ -1297,6 +1298,7 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
 
     for (i = 0; i < D3D11_SO_STREAM_COUNT; ++i)
     {
+        unsigned int current_stride[D3D11_SO_BUFFER_SLOT_COUNT] = {0};
         BOOL has_element[D3D11_SO_BUFFER_SLOT_COUNT] = {FALSE};
         BOOL is_used[D3D11_SO_BUFFER_SLOT_COUNT] = {FALSE};
 
@@ -1306,6 +1308,7 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
 
             if (e->stream_idx != i)
                 continue;
+            current_stride[e->output_slot] += 4 * e->component_count;
             is_used[e->output_slot] = TRUE;
             if (e->register_idx != WINED3D_STREAM_OUTPUT_GAP)
                 has_element[e->output_slot] = TRUE;
@@ -1317,6 +1320,19 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
             {
                 WARN("Stream %u, output slot %u contains only gaps.\n", i, j);
                 return E_INVALIDARG;
+            }
+            if (buffer_stride_count && is_used[j])
+            {
+                if (buffer_stride_count <= j)
+                {
+                    WARN("Buffer strides are required for all buffer slots.\n");
+                    return E_INVALIDARG;
+                }
+                if (buffer_strides[j] < current_stride[j] || buffer_strides[j] % 4)
+                {
+                    WARN("Invalid stride %u for buffer slot %u.\n", buffer_strides[j], j);
+                    return E_INVALIDARG;
+                }
             }
         }
     }
@@ -1376,7 +1392,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
             return E_OUTOFMEMORY;
         }
         if (FAILED(hr = wined3d_so_elements_from_d3d11_so_entries(so_desc.elements,
-                so_entries, so_entry_count, &desc.output_signature)))
+                so_entries, so_entry_count, buffer_strides, buffer_stride_count, &desc.output_signature)))
         {
             HeapFree(GetProcessHeap(), 0, so_desc.elements);
             shader_free_signature(&desc.input_signature);
