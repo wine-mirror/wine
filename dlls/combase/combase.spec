@@ -138,8 +138,8 @@
 @ stdcall CoRegisterMallocSpy(ptr) ole32.CoRegisterMallocSpy
 @ stdcall CoRegisterMessageFilter(ptr ptr) ole32.CoRegisterMessageFilter
 @ stdcall CoRegisterPSClsid(ptr ptr) ole32.CoRegisterPSClsid
-@ stub CoRegisterSurrogate
-@ stub CoRegisterSurrogateEx
+@ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
+@ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
 @ stdcall CoReleaseMarshalData(ptr) ole32.CoReleaseMarshalData
 @ stdcall CoReleaseServerProcess() ole32.CoReleaseServerProcess
 @ stdcall CoResumeClassObjects() ole32.CoResumeClassObjects

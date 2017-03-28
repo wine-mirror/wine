@@ -22,7 +22,7 @@
 @ stdcall CoRegisterInitializeSpy(ptr ptr) ole32.CoRegisterInitializeSpy
 @ stdcall CoRegisterMallocSpy(ptr) ole32.CoRegisterMallocSpy
 @ stdcall CoRegisterMessageFilter(ptr ptr) ole32.CoRegisterMessageFilter
-@ stub CoRegisterSurrogateEx
+@ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
 @ stub CoRetireServer
 @ stdcall CoRevokeInitializeSpy(int64) ole32.CoRevokeInitializeSpy
 @ stdcall CoRevokeMallocSpy() ole32.CoRevokeMallocSpy

@@ -49,7 +49,7 @@
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr) ole32.CoQueryProxyBlanket
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr) ole32.CoRegisterClassObject
 @ stdcall CoRegisterPSClsid(ptr ptr) ole32.CoRegisterPSClsid
-@ stub CoRegisterSurrogate
+@ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
 @ stdcall CoReleaseMarshalData(ptr) ole32.CoReleaseMarshalData
 @ stdcall CoReleaseServerProcess() ole32.CoReleaseServerProcess
 @ stdcall CoResumeClassObjects() ole32.CoResumeClassObjects

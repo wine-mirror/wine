@@ -5074,6 +5074,26 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
     return info->apt ? S_OK : CO_E_NOTINITIALIZED;
 }
 
+/***********************************************************************
+ *           CoRegisterSurrogate [OLE32.@]
+ */
+HRESULT WINAPI CoRegisterSurrogate(ISurrogate *surrogate)
+{
+    FIXME("(%p): stub\n", surrogate);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           CoRegisterSurrogateEx [OLE32.@]
+ */
+HRESULT WINAPI CoRegisterSurrogateEx(REFGUID guid, void *reserved)
+{
+    FIXME("(%s %p): stub\n", debugstr_guid(guid), reserved);
+
+    return E_NOTIMPL;
+}
+
 typedef struct {
     IGlobalOptions IGlobalOptions_iface;
     LONG ref;
