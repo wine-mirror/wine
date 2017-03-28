@@ -34,6 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 static int context_id = -1;
+static int scheduler_id = -1;
 
 #ifdef __i386__
 
@@ -109,6 +110,7 @@ typedef struct {
 
 typedef struct {
     Scheduler scheduler;
+    unsigned int id;
     SchedulerPolicy policy;
 } ThreadScheduler;
 extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
@@ -519,8 +521,8 @@ void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Id, 4)
 unsigned int __thiscall ThreadScheduler_Id(const ThreadScheduler *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->id;
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_GetNumberOfVirtualProcessors, 4)
@@ -632,6 +634,7 @@ static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
     TRACE("(%p)->()\n", this);
 
     this->scheduler.vtable = &MSVCRT_ThreadScheduler_vtable;
+    this->id = InterlockedIncrement(&scheduler_id);
     SchedulerPolicy_copy_ctor(&this->policy, policy);
     return this;
 }
