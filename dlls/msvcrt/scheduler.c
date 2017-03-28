@@ -506,6 +506,31 @@ void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
     MSVCRT_operator_delete(this->policy_container);
 }
 
+typedef struct {
+    const vtable_ptr *vtable;
+} Scheduler;
+
+/* ?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z */
+/* ?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z */
+Scheduler* __cdecl Scheduler_Create(const SchedulerPolicy *policy)
+{
+    FIXME("(%p) stub\n", policy);
+    return NULL;
+}
+
+/* ?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ */
+void __cdecl Scheduler_ResetDefaultSchedulerPolicy(void)
+{
+    FIXME("() stub\n");
+}
+
+/* ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z */
+/* ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z */
+void __cdecl Scheduler_SetDefaultSchedulerPolicy(const SchedulerPolicy *policy)
+{
+    FIXME("(%p) stub\n", policy);
+}
+
 extern const vtable_ptr MSVCRT_type_info_vtable;
 DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")
 DEFINE_RTTI_DATA1(ContextBase, 0, &Context_rtti_base_descriptor, ".?AVContextBase@details@Concurrency@@")

@@ -226,8 +226,8 @@
 # extern ?ContextEventGuid@Concurrency@@3U_GUID@@B
 @ stub -arch=win32 ?Create@CurrentScheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z
 @ stub -arch=win64 ?Create@CurrentScheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z
-@ stub -arch=win32 ?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z
-@ stub -arch=win64 ?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z
+@ cdecl -arch=win32 ?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z(ptr) msvcr120.?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z
+@ cdecl -arch=win64 ?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z(ptr) msvcr120.?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z
 @ stub -arch=win32 ?CreateResourceManager@Concurrency@@YAPAUIResourceManager@1@XZ
 @ stub -arch=win64 ?CreateResourceManager@Concurrency@@YAPEAUIResourceManager@1@XZ
 @ stub -arch=win32 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z
@@ -274,7 +274,7 @@
 # extern ?PPLParallelInvokeEventGuid@Concurrency@@3U_GUID@@B
 @ stub -arch=win32 ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPAX@Z
 @ stub -arch=win64 ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPEAX@Z
-@ stub ?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ
+@ cdecl ?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ() msvcr120.?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ
 # extern ?ResourceManagerEventGuid@Concurrency@@3U_GUID@@B
 # extern ?ScheduleGroupEventGuid@Concurrency@@3U_GUID@@B
 @ cdecl ?ScheduleGroupId@Context@Concurrency@@SAIXZ() msvcr120.?ScheduleGroupId@Context@Concurrency@@SAIXZ
@@ -285,8 +285,8 @@
 # extern ?SchedulerEventGuid@Concurrency@@3U_GUID@@B
 @ thiscall -arch=i386 ?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QAEXII@Z(ptr long long) msvcr120.?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QAEXII@Z
 @ cdecl -arch=win64 ?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QEAAXII@Z(ptr long long) msvcr120.?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QEAAXII@Z
-@ stub -arch=win32 ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z
-@ stub -arch=win64 ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z
+@ cdecl -arch=win32 ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z(ptr) msvcr120.?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z
+@ cdecl -arch=win64 ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z(ptr) msvcr120.?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z
 @ thiscall -arch=i386 ?SetPolicyValue@SchedulerPolicy@Concurrency@@QAEIW4PolicyElementKey@2@I@Z(ptr long long) msvcr120.?SetPolicyValue@SchedulerPolicy@Concurrency@@QAEIW4PolicyElementKey@2@I@Z
 @ cdecl -arch=win64 ?SetPolicyValue@SchedulerPolicy@Concurrency@@QEAAIW4PolicyElementKey@2@I@Z(ptr long long) msvcr120.?SetPolicyValue@SchedulerPolicy@Concurrency@@QEAAIW4PolicyElementKey@2@I@Z
 # extern ?VirtualProcessorEventGuid@Concurrency@@3U_GUID@@B
