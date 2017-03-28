@@ -2807,6 +2807,34 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     test_flush_done(flush_thread);
 }
 
+static void child_process_write_pipe(HANDLE pipe)
+{
+    OVERLAPPED overlapped;
+    char buf[10000];
+
+    memset(buf, 'x', sizeof(buf));
+    overlapped_write_async(pipe, buf, sizeof(buf), &overlapped);
+
+    /* sleep until parent process terminates this process */
+    Sleep(INFINITE);
+}
+
+static HANDLE create_writepipe_process(HANDLE pipe)
+{
+    STARTUPINFOA si = { sizeof(si) };
+    PROCESS_INFORMATION info;
+    char **argv, buf[MAX_PATH];
+    BOOL res;
+
+    winetest_get_mainargs(&argv);
+    sprintf(buf, "\"%s\" pipe writepipe %lx", argv[0], (UINT_PTR)pipe);
+    res = CreateProcessA(NULL, buf, NULL, NULL, TRUE, 0L, NULL, NULL, &si, &info);
+    ok(res, "CreateProcess failed: %u\n", GetLastError());
+    CloseHandle(info.hThread);
+
+    return info.hProcess;
+}
+
 static void create_overlapped_pipe(DWORD mode, HANDLE *client, HANDLE *server)
 {
     SECURITY_ATTRIBUTES sec_attr = { sizeof(sec_attr), NULL, TRUE };
@@ -2826,7 +2854,7 @@ static void create_overlapped_pipe(DWORD mode, HANDLE *client, HANDLE *server)
     test_not_signaled(*server);
     test_not_signaled(overlapped.hEvent);
 
-    *client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    *client = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, &sec_attr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
     ok(*server != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
 
     res = SetNamedPipeHandleState(*client, &read_mode, NULL, NULL);
@@ -2841,6 +2869,8 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
 {
     OVERLAPPED overlapped, overlapped2;
     HANDLE server, client, flush;
+    DWORD read_bytes;
+    HANDLE process;
     char buf[60000];
     BOOL res;
 
@@ -2890,10 +2920,32 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
     test_flush_done(flush);
     CloseHandle(server);
     CloseHandle(client);
+
+    /* terminate process with pending write */
+    create_overlapped_pipe(create_flags, &client, &server);
+    process = create_writepipe_process(client);
+    /* succesfully read part of write that is pending in child process */
+    res = ReadFile(server, buf, 10, &read_bytes, NULL);
+    if(!msg_read_mode)
+        ok(res, "ReadFile failed: %u\n", GetLastError());
+    else
+        ok(!res && GetLastError() == ERROR_MORE_DATA, "ReadFile returned: %x %u\n", res, GetLastError());
+    ok(read_bytes == 10, "read_bytes = %u\n", read_bytes);
+    TerminateProcess(process, 0);
+    winetest_wait_child_process(process);
+    /* after terminating process, there is no pending write and pipe buffer is empty */
+    overlapped_read_async(server, buf, 10, &overlapped);
+    overlapped_write_sync(client, buf, 1);
+    test_overlapped_result(server, &overlapped, 1, FALSE);
+    CloseHandle(process);
+    CloseHandle(server);
+    CloseHandle(client);
 }
 
 START_TEST(pipe)
 {
+    char **argv;
+    int argc;
     HMODULE hmod;
 
     hmod = GetModuleHandleA("advapi32.dll");
@@ -2901,6 +2953,16 @@ START_TEST(pipe)
     hmod = GetModuleHandleA("kernel32.dll");
     pQueueUserAPC = (void *) GetProcAddress(hmod, "QueueUserAPC");
     pCancelIoEx = (void *) GetProcAddress(hmod, "CancelIoEx");
+
+    argc = winetest_get_mainargs(&argv);
+
+    if (argc > 3 && !strcmp(argv[2], "writepipe"))
+    {
+        UINT_PTR handle;
+        sscanf(argv[3], "%lx", &handle);
+        child_process_write_pipe((HANDLE)handle);
+        return;
+    }
 
     if (test_DisconnectNamedPipe())
         return;
