@@ -35,6 +35,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 /* Define the default light parameters as specified by MSDN. */
 const struct wined3d_light WINED3D_default_light =
@@ -547,23 +548,16 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     HRESULT hr;
     HDC dcb = NULL, dcs = NULL;
 
-    hbm = LoadImageA(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-    if(hbm)
+    if (!(hbm = LoadImageA(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION)))
     {
-        GetObjectA(hbm, sizeof(BITMAP), &bm);
-        dcb = CreateCompatibleDC(NULL);
-        if(!dcb) goto out;
-        SelectObject(dcb, hbm);
+        ERR_(winediag)("Failed to load logo %s.\n", wine_dbgstr_a(filename));
+        return;
     }
-    else
-    {
-        /* Create a 32x32 white surface to indicate that wined3d is used, but the specified image
-         * couldn't be loaded
-         */
-        memset(&bm, 0, sizeof(bm));
-        bm.bmWidth = 32;
-        bm.bmHeight = 32;
-    }
+    GetObjectA(hbm, sizeof(BITMAP), &bm);
+
+    if (!(dcb = CreateCompatibleDC(NULL)))
+        goto out;
+    SelectObject(dcb, hbm);
 
     desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     desc.format = WINED3DFMT_B5G6R5_UNORM;
@@ -583,27 +577,18 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
         goto out;
     }
 
-    if (dcb)
+    if (FAILED(hr = wined3d_texture_get_dc(device->logo_texture, 0, &dcs)))
     {
-        if (FAILED(hr = wined3d_texture_get_dc(device->logo_texture, 0, &dcs)))
-            goto out;
-        BitBlt(dcs, 0, 0, bm.bmWidth, bm.bmHeight, dcb, 0, 0, SRCCOPY);
-        wined3d_texture_release_dc(device->logo_texture, 0, dcs);
-
-        color_key.color_space_low_value = 0;
-        color_key.color_space_high_value = 0;
-        wined3d_texture_set_color_key(device->logo_texture, WINED3D_CKEY_SRC_BLT, &color_key);
+        wined3d_texture_decref(device->logo_texture);
+        device->logo_texture = NULL;
+        goto out;
     }
-    else
-    {
-        const struct wined3d_color c = {1.0f, 1.0f, 1.0f, 1.0f};
-        const RECT rect = {0, 0, desc.width, desc.height};
-        struct wined3d_surface *surface;
+    BitBlt(dcs, 0, 0, bm.bmWidth, bm.bmHeight, dcb, 0, 0, SRCCOPY);
+    wined3d_texture_release_dc(device->logo_texture, 0, dcs);
 
-        /* Fill the surface with a white color to show that wined3d is there */
-        surface = device->logo_texture->sub_resources[0].u.surface;
-        surface_color_fill(surface, &rect, &c);
-    }
+    color_key.color_space_low_value = 0;
+    color_key.color_space_high_value = 0;
+    wined3d_texture_set_color_key(device->logo_texture, WINED3D_CKEY_SRC_BLT, &color_key);
 
 out:
     if (dcb) DeleteDC(dcb);
