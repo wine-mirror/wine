@@ -182,6 +182,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_swizzle",              ARB_TEXTURE_SWIZZLE           },
     {"GL_ARB_texture_view",                 ARB_TEXTURE_VIEW              },
     {"GL_ARB_timer_query",                  ARB_TIMER_QUERY               },
+    {"GL_ARB_transform_feedback2",          ARB_TRANSFORM_FEEDBACK2       },
     {"GL_ARB_uniform_buffer_object",        ARB_UNIFORM_BUFFER_OBJECT     },
     {"GL_ARB_vertex_array_bgra",            ARB_VERTEX_ARRAY_BGRA         },
     {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND              },
@@ -2868,6 +2869,14 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     /* GL_ARB_timer_query */
     USE_GL_FUNC(glQueryCounter)
     USE_GL_FUNC(glGetQueryObjectui64v)
+    /* GL_ARB_transform_feedback2 */
+    USE_GL_FUNC(glBindTransformFeedback);
+    USE_GL_FUNC(glDeleteTransformFeedbacks);
+    USE_GL_FUNC(glDrawTransformFeedback);
+    USE_GL_FUNC(glGenTransformFeedbacks);
+    USE_GL_FUNC(glIsTransformFeedback);
+    USE_GL_FUNC(glPauseTransformFeedback);
+    USE_GL_FUNC(glResumeTransformFeedback);
     /* GL_ARB_uniform_buffer_object */
     USE_GL_FUNC(glBindBufferBase)
     USE_GL_FUNC(glBindBufferRange)
@@ -3814,6 +3823,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
         {ARB_GPU_SHADER5,                  MAKEDWORD_VERSION(4, 0)},
         {ARB_TEXTURE_CUBE_MAP_ARRAY,       MAKEDWORD_VERSION(4, 0)},
+        {ARB_TRANSFORM_FEEDBACK2,          MAKEDWORD_VERSION(4, 0)},
 
         {ARB_ES2_COMPATIBILITY,            MAKEDWORD_VERSION(4, 1)},
         {ARB_VIEWPORT_ARRAY,               MAKEDWORD_VERSION(4, 1)},
