@@ -52,6 +52,26 @@ DEFINE_VTBL_WRAPPER(20);
 
 #endif
 
+typedef enum {
+    SchedulerKind,
+    MaxConcurrency,
+    MinConcurrency,
+    TargetOversubscriptionFactor,
+    LocalContextCacheSize,
+    ContextStackSize,
+    ContextPriority,
+    SchedulingProtocol,
+    DynamicProgressFeedback,
+    WinRTInitialization,
+    last_policy_id
+} PolicyElementKey;
+
+typedef struct {
+    struct _policy_container {
+        unsigned int policies[last_policy_id];
+    } *policy_container;
+} SchedulerPolicy;
+
 typedef struct {
     const vtable_ptr *vtable;
 } Context;
@@ -89,6 +109,7 @@ typedef struct {
 
 typedef struct {
     Scheduler scheduler;
+    SchedulerPolicy policy;
 } ThreadScheduler;
 extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
 
@@ -329,26 +350,6 @@ void CDECL Concurrency_Free(void* mem)
     }
 }
 
-typedef enum {
-    SchedulerKind,
-    MaxConcurrency,
-    MinConcurrency,
-    TargetOversubscriptionFactor,
-    LocalContextCacheSize,
-    ContextStackSize,
-    ContextPriority,
-    SchedulingProtocol,
-    DynamicProgressFeedback,
-    WinRTInitialization,
-    last_policy_id
-} PolicyElementKey;
-
-typedef struct {
-    struct _policy_container {
-        unsigned int policies[last_policy_id];
-    } *policy_container;
-} SchedulerPolicy;
-
 /* ?SetPolicyValue@SchedulerPolicy@Concurrency@@QAEIW4PolicyElementKey@2@I@Z */
 /* ?SetPolicyValue@SchedulerPolicy@Concurrency@@QEAAIW4PolicyElementKey@2@I@Z */
 DEFINE_THISCALL_WRAPPER(SchedulerPolicy_SetPolicyValue, 12)
@@ -533,8 +534,8 @@ DEFINE_THISCALL_WRAPPER(ThreadScheduler_GetPolicy, 8)
 SchedulerPolicy* __thiscall ThreadScheduler_GetPolicy(
         const ThreadScheduler *this, SchedulerPolicy *ret)
 {
-    FIXME("(%p %p) stub\n", this, ret);
-    return NULL;
+    TRACE("(%p %p)\n", this, ret);
+    return SchedulerPolicy_copy_ctor(ret, &this->policy);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Reference, 4)
@@ -602,6 +603,7 @@ MSVCRT_bool __thiscall ThreadScheduler_IsAvailableLocation(
 
 static void ThreadScheduler_dtor(ThreadScheduler *this)
 {
+    SchedulerPolicy_dtor(&this->policy);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_vector_dtor, 8)
@@ -630,6 +632,7 @@ static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
     TRACE("(%p)->()\n", this);
 
     this->scheduler.vtable = &MSVCRT_ThreadScheduler_vtable;
+    SchedulerPolicy_copy_ctor(&this->policy, policy);
     return this;
 }
 
