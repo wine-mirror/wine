@@ -2,7 +2,7 @@
 @ stub QuirkGetData2
 @ stub QuirkIsEnabled
 @ stub QuirkIsEnabled2
-@ stub QuirkIsEnabled3
+@ stdcall QuirkIsEnabled3(ptr ptr) kernelbase.QuirkIsEnabled3
 @ stub QuirkIsEnabledForPackage
 @ stub QuirkIsEnabledForPackage2
 @ stub QuirkIsEnabledForProcess
