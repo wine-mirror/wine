@@ -875,7 +875,7 @@ static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encod
     {
         HRESULT hr = readerinput_growraw(readerinput);
         if (FAILED(hr)) return hr;
-        if (buffer->written <= 3) return MX_E_INPUTEND;
+        if (buffer->written < 3) return MX_E_INPUTEND;
     }
 
     ptrW = (WCHAR *)buffer->data;

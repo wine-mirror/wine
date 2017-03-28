@@ -1447,7 +1447,6 @@ static void test_read_element(void)
     static const UINT depths[] = { 0, 1, 2, 2, 2, 3, 2, 1 };
     IXmlReader *reader;
     XmlNodeType type;
-    IStream *stream;
     unsigned int i;
     UINT depth;
     HRESULT hr;
@@ -1457,9 +1456,7 @@ static void test_read_element(void)
 
     while (test->xml)
     {
-        stream = create_stream_on_data(test->xml, strlen(test->xml)+1);
-        hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
-        ok(hr == S_OK, "got %08x\n", hr);
+        set_input_string(reader, test->xml);
 
         type = XmlNodeType_None;
         hr = IXmlReader_Read(reader, &type);
@@ -1494,7 +1491,6 @@ static void test_read_element(void)
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
         }
 
-        IStream_Release(stream);
         test++;
     }
 
