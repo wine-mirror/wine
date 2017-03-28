@@ -727,6 +727,133 @@ static void shader_glsl_load_program_resources(const struct wined3d_context *con
     shader_glsl_load_samplers(context, priv, program_id, reg_maps);
 }
 
+static void append_transform_feedback_varying(const char **varyings, unsigned int *varying_count,
+        char **strings, unsigned int *strings_length, struct wined3d_string_buffer *buffer)
+{
+    if (varyings && *strings)
+    {
+        char *ptr = *strings;
+
+        varyings[*varying_count] = ptr;
+
+        memcpy(ptr, buffer->buffer, buffer->content_size + 1);
+        ptr += buffer->content_size + 1;
+
+        *strings = ptr;
+    }
+
+    *strings_length += buffer->content_size + 1;
+    ++(*varying_count);
+}
+
+static void shader_glsl_generate_transform_feedback_varyings(const struct wined3d_stream_output_desc *so_desc,
+        struct wined3d_string_buffer *buffer, const char **varyings, unsigned int *varying_count,
+        char *strings, unsigned int *strings_length)
+{
+    unsigned int i, j, buffer_idx, count, length, highest_output_slot;
+
+    count = length = 0;
+    highest_output_slot = 0;
+    for (buffer_idx = 0; buffer_idx < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++buffer_idx)
+    {
+        for (i = 0; i < so_desc->element_count; ++i)
+        {
+            const struct wined3d_stream_output_element *e = &so_desc->elements[i];
+
+            highest_output_slot = max(highest_output_slot, e->output_slot);
+            if (e->output_slot != buffer_idx)
+                continue;
+
+            if (e->stream_idx)
+            {
+                FIXME("Unhandled stream %u.\n", e->stream_idx);
+                continue;
+            }
+
+            if (e->register_idx == WINED3D_STREAM_OUTPUT_GAP)
+            {
+                for (j = 0; j < e->component_count / 4; ++j)
+                {
+                    string_buffer_sprintf(buffer, "gl_SkipComponents4");
+                    append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+                }
+                if (e->component_count % 4)
+                {
+                    string_buffer_sprintf(buffer, "gl_SkipComponents%u", e->component_count % 4);
+                    append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+                }
+                continue;
+            }
+
+            if (e->component_idx || e->component_count != 4)
+            {
+                FIXME("Unsupported component range %u-%u.\n", e->component_idx, e->component_count);
+                continue;
+            }
+
+            string_buffer_sprintf(buffer, "ps_link[%u]", e->register_idx);
+            append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+        }
+
+        if (highest_output_slot <= buffer_idx)
+            break;
+
+        string_buffer_sprintf(buffer, "gl_NextBuffer");
+        append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+    }
+
+    if (varying_count)
+        *varying_count = count;
+    if (strings_length)
+        *strings_length = length;
+}
+
+static void shader_glsl_init_transform_feedback(const struct wined3d_context *context,
+        struct shader_glsl_priv *priv, GLuint program_id, const struct wined3d_shader *shader)
+{
+    const struct wined3d_stream_output_desc *so_desc = &shader->u.gs.so_desc;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_string_buffer *buffer;
+    unsigned int count, length;
+    const char **varyings;
+    char *strings;
+
+    if (!gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
+    {
+        FIXME("ARB_transform_feedback3 not supported by OpenGL implementation.\n");
+        return;
+    }
+
+    if (so_desc->buffer_stride_count)
+        FIXME("Ignoring buffer strides.\n");
+
+    buffer = string_buffer_get(&priv->string_buffers);
+
+    shader_glsl_generate_transform_feedback_varyings(so_desc, buffer, NULL, &count, NULL, &length);
+
+    if (!(varyings = wined3d_calloc(count, sizeof(*varyings))))
+    {
+        ERR("Out of memory.\n");
+        string_buffer_release(&priv->string_buffers, buffer);
+        return;
+    }
+    if (!(strings = wined3d_calloc(length, sizeof(*strings))))
+    {
+        ERR("Out of memory.\n");
+        HeapFree(GetProcessHeap(), 0, varyings);
+        string_buffer_release(&priv->string_buffers, buffer);
+        return;
+    }
+
+    shader_glsl_generate_transform_feedback_varyings(so_desc, buffer, varyings, NULL, strings, NULL);
+    GL_EXTCALL(glTransformFeedbackVaryings(program_id, count, varyings, GL_INTERLEAVED_ATTRIBS));
+    checkGLcall("glTransformFeedbackVaryings");
+
+    HeapFree(GetProcessHeap(), 0, varyings);
+    HeapFree(GetProcessHeap(), 0, strings);
+    string_buffer_release(&priv->string_buffers, buffer);
+}
+
 /* Context activation is done by the caller. */
 static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, const struct wined3d_vec4 *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
@@ -8994,6 +9121,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             checkGLcall("glProgramParameteriARB");
         }
 
+        shader_glsl_init_transform_feedback(context, priv, program_id, gshader);
+
         list_add_head(&gshader->linked_programs, &entry->gs.shader_entry);
     }
 
@@ -9588,7 +9717,8 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
             && gl_info->supported[ARB_SHADER_ATOMIC_COUNTERS]
             && gl_info->supported[ARB_SHADER_IMAGE_LOAD_STORE]
             && gl_info->supported[ARB_SHADER_IMAGE_SIZE]
-            && gl_info->supported[ARB_SHADING_LANGUAGE_PACKING])
+            && gl_info->supported[ARB_SHADING_LANGUAGE_PACKING]
+            && gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
         shader_model = 5;
     else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50) && gl_info->supported[WINED3D_GL_VERSION_3_2]
             && gl_info->supported[ARB_SHADER_BIT_ENCODING] && gl_info->supported[ARB_SAMPLER_OBJECTS]

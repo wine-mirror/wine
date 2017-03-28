@@ -3610,6 +3610,8 @@ struct wined3d_geometry_shader
     enum wined3d_primitive_type input_type;
     enum wined3d_primitive_type output_type;
     UINT vertices_out;
+
+    struct wined3d_stream_output_desc so_desc;
 };
 
 struct wined3d_pixel_shader

@@ -2813,6 +2813,9 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
 static void shader_cleanup(struct wined3d_shader *shader)
 {
+    if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
+        HeapFree(GetProcessHeap(), 0, shader->u.gs.so_desc.elements);
+
     HeapFree(GetProcessHeap(), 0, shader->output_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->signature_strings);
@@ -3399,9 +3402,27 @@ static HRESULT hull_shader_init(struct wined3d_shader *shader, struct wined3d_de
 }
 
 static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
-        const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
+        const struct wined3d_shader_desc *desc, const struct wined3d_stream_output_desc *so_desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    return shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_GEOMETRY, parent, parent_ops);
+    HRESULT hr;
+
+    if (FAILED(hr = shader_init(shader, device, desc, 0, WINED3D_SHADER_TYPE_GEOMETRY, parent, parent_ops)))
+        return hr;
+
+    if (so_desc)
+    {
+        struct wined3d_stream_output_desc *d = &shader->u.gs.so_desc;
+        *d = *so_desc;
+        if (!(d->elements = wined3d_calloc(so_desc->element_count, sizeof(*d->elements))))
+        {
+            shader_cleanup(shader);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(d->elements, so_desc->elements, so_desc->element_count * sizeof(*d->elements));
+    }
+
+    return WINED3D_OK;
 }
 
 void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
@@ -3797,13 +3818,10 @@ HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const stru
     TRACE("device %p, desc %p, so_desc %p, parent %p, parent_ops %p, shader %p.\n",
             device, desc, so_desc, parent, parent_ops, shader);
 
-    if (so_desc)
-        FIXME("Stream output not supported.\n");
-
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = geometry_shader_init(object, device, desc, parent, parent_ops)))
+    if (FAILED(hr = geometry_shader_init(object, device, desc, so_desc, parent, parent_ops)))
     {
         WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
