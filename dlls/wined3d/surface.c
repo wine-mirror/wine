@@ -1454,64 +1454,6 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     return dst_texture;
 }
 
-static HRESULT _Blt_ColorFill(BYTE *buf, unsigned int width, unsigned int height,
-        unsigned int bpp, UINT pitch, DWORD color)
-{
-    BYTE *first;
-    unsigned int x, y;
-
-    /* Do first row */
-
-#define COLORFILL_ROW(type) \
-do { \
-    type *d = (type *)buf; \
-    for (x = 0; x < width; ++x) \
-        d[x] = (type)color; \
-} while(0)
-
-    switch (bpp)
-    {
-        case 1:
-            COLORFILL_ROW(BYTE);
-            break;
-
-        case 2:
-            COLORFILL_ROW(WORD);
-            break;
-
-        case 3:
-        {
-            BYTE *d = buf;
-            for (x = 0; x < width; ++x, d += 3)
-            {
-                d[0] = (color      ) & 0xff;
-                d[1] = (color >>  8) & 0xff;
-                d[2] = (color >> 16) & 0xff;
-            }
-            break;
-        }
-        case 4:
-            COLORFILL_ROW(DWORD);
-            break;
-
-        default:
-            FIXME("Color fill not implemented for bpp %u!\n", bpp * 8);
-            return WINED3DERR_NOTAVAILABLE;
-    }
-
-#undef COLORFILL_ROW
-
-    /* Now copy first row. */
-    first = buf;
-    for (y = 1; y < height; ++y)
-    {
-        buf += pitch;
-        memcpy(buf, first, width * bpp);
-    }
-
-    return WINED3D_OK;
-}
-
 static void read_from_framebuffer(struct wined3d_surface *surface,
         struct wined3d_context *old_ctx, DWORD dst_location)
 {
@@ -3032,13 +2974,6 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         goto release;
     }
 
-    /* First, all the 'source-less' blits */
-    if (flags & (WINED3D_BLT_COLOR_FILL | WINED3D_BLT_DEPTH_FILL))
-    {
-        hr = _Blt_ColorFill(dbuf, dst_width, dst_height, bpp, dst_map.row_pitch, fx->fill_color);
-        flags &= ~(WINED3D_BLT_COLOR_FILL | WINED3D_BLT_DEPTH_FILL);
-    }
-
     /* Now the 'with source' blits. */
     if (src_texture)
     {
@@ -3393,16 +3328,89 @@ release:
     return hr;
 }
 
+static HRESULT surface_cpu_blt_colour_fill(struct wined3d_texture *texture, unsigned int sub_resource_idx,
+        const struct wined3d_box *box, DWORD c)
+{
+    struct wined3d_resource *resource = &texture->resource;
+    unsigned int x, y, w, h, bpp;
+    struct wined3d_map_desc map;
+    BYTE *row;
+
+    TRACE("texture %p, sub_resource_idx %u, box %s, colour 0x%08x.\n",
+            texture, sub_resource_idx, debug_box(box), c);
+
+    if (resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
+    {
+        FIXME("Not implemented for format %s.\n", debug_d3dformat(resource->format->id));
+        return E_NOTIMPL;
+    }
+
+    bpp = resource->format->byte_count;
+    w = box->right - box->left;
+    h = box->bottom - box->top;
+
+    wined3d_resource_map(resource, sub_resource_idx, &map, box, 0);
+
+    switch (bpp)
+    {
+        case 1:
+            for (x = 0; x < w; ++x)
+            {
+                ((BYTE *)map.data)[x] = c;
+            }
+            break;
+
+        case 2:
+            for (x = 0; x < w; ++x)
+            {
+                ((WORD *)map.data)[x] = c;
+            }
+            break;
+
+        case 3:
+        {
+            row = map.data;
+            for (x = 0; x < w; ++x, row += 3)
+            {
+                row[0] = (c      ) & 0xff;
+                row[1] = (c >>  8) & 0xff;
+                row[2] = (c >> 16) & 0xff;
+            }
+            break;
+        }
+        case 4:
+            for (x = 0; x < w; ++x)
+            {
+                ((DWORD *)map.data)[x] = c;
+            }
+            break;
+
+        default:
+            FIXME("Not implemented for bpp %u.\n", bpp);
+            wined3d_resource_unmap(resource, sub_resource_idx);
+            return WINED3DERR_NOTAVAILABLE;
+    }
+
+    row = map.data;
+    for (y = 1; y < h; ++y)
+    {
+        row += map.row_pitch;
+        memcpy(row, map.data, w * bpp);
+    }
+    wined3d_resource_unmap(resource, sub_resource_idx);
+
+    return WINED3D_OK;
+}
+
 static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
         const RECT *rect, const struct wined3d_color *color)
 {
     const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
-    static const struct wined3d_box src_box;
-    struct wined3d_blt_fx fx;
+    DWORD c;
 
-    fx.fill_color = wined3d_format_convert_from_float(view->format, color);
-    return surface_cpu_blt(texture_from_resource(view->resource), view->sub_resource_idx,
-            &box, NULL, 0, &src_box, WINED3D_BLT_COLOR_FILL, &fx, WINED3D_TEXF_POINT);
+    c = wined3d_format_convert_from_float(view->format, color);
+    return surface_cpu_blt_colour_fill(texture_from_resource(view->resource),
+            view->sub_resource_idx, &box, c);
 }
 
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
@@ -3411,8 +3419,7 @@ static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
 {
     const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
     struct wined3d_color color = {depth, 0.0f, 0.0f, 0.0f};
-    static const struct wined3d_box src_box;
-    struct wined3d_blt_fx fx;
+    DWORD c;
 
     if (clear_flags != WINED3DCLEAR_ZBUFFER)
     {
@@ -3420,9 +3427,9 @@ static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    fx.fill_color = wined3d_format_convert_from_float(view->format, &color);
-    return surface_cpu_blt(texture_from_resource(view->resource), view->sub_resource_idx,
-            &box, NULL, 0, &src_box, WINED3D_BLT_DEPTH_FILL, &fx, WINED3D_TEXF_POINT);
+    c = wined3d_format_convert_from_float(view->format, &color);
+    return surface_cpu_blt_colour_fill(texture_from_resource(view->resource),
+            view->sub_resource_idx, &box, c);
 }
 
 static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
@@ -3742,6 +3749,8 @@ fallback:
         return WINED3D_OK;
 
 cpu:
+    if (flags & (WINED3D_BLT_COLOR_FILL | WINED3D_BLT_DEPTH_FILL))
+        return surface_cpu_blt_colour_fill(dst_texture, dst_sub_resource_idx, &dst_box, fx->fill_color);
     return surface_cpu_blt(dst_texture, dst_sub_resource_idx, &dst_box,
             src_texture, src_sub_resource_idx, &src_box, flags, fx, filter);
 }
