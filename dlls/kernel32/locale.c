@@ -54,6 +54,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define LOCALE_LOCALEINFOFLAGSMASK (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP|\
                                     LOCALE_RETURN_NUMBER|LOCALE_RETURN_GENITIVE_NAMES)
+#define MB_FLAGSMASK (MB_PRECOMPOSED|MB_COMPOSITE|MB_USEGLYPHCHARS|MB_ERR_INVALID_CHARS)
+#define WC_FLAGSMASK (WC_DISCARDNS|WC_SEPCHARS|WC_DEFAULTCHAR|WC_ERR_INVALID_CHARS|\
+                      WC_COMPOSITECHECK|WC_NO_BEST_FIT_CHARS)
 
 /* current code pages */
 static const union cptable *ansi_cptable;
@@ -2422,12 +2425,22 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 #endif
         /* fall through */
     case CP_UTF8:
+        if (flags & ~MB_FLAGSMASK)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
         ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
         break;
     default:
         if (!(table = get_codepage_table( page )))
         {
             SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        if (flags & ~MB_FLAGSMASK)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
             return 0;
         }
         ret = wine_cp_mbstowcs( table, flags, src, srclen, dst, dstlen );
@@ -2653,12 +2666,22 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
+        if (flags & ~WC_FLAGSMASK)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
         ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
         break;
     default:
         if (!(table = get_codepage_table( page )))
         {
             SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        if (flags & ~WC_FLAGSMASK)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
             return 0;
         }
         ret = wine_cp_wcstombs( table, flags, src, srclen, dst, dstlen,
