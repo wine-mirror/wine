@@ -1205,6 +1205,22 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
                 f->Stream, debugstr_a(f->SemanticName), f->SemanticIndex,
                 f->StartComponent, f->ComponentCount, f->OutputSlot);
 
+        if (f->Stream >= D3D11_SO_STREAM_COUNT)
+        {
+            WARN("Invalid stream %u.\n", f->Stream);
+            return E_INVALIDARG;
+        }
+        if (f->Stream)
+        {
+            FIXME("Streams not implemented yet.\n");
+            return E_INVALIDARG;
+        }
+        if (f->OutputSlot >= D3D11_SO_BUFFER_SLOT_COUNT)
+        {
+            WARN("Invalid output slot %u.\n", f->OutputSlot);
+            return E_INVALIDARG;
+        }
+
         e->stream_idx = f->Stream;
         e->component_idx = f->StartComponent;
         e->component_count = f->ComponentCount;
@@ -1212,11 +1228,22 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
 
         if (!f->SemanticName)
         {
+            if (f->SemanticIndex)
+            {
+                WARN("Invalid semantic idx %u for stream output gap.\n", f->SemanticIndex);
+                return E_INVALIDARG;
+            }
+            if (e->component_idx || !e->component_count)
+            {
+                WARN("Invalid stream output gap %u-%u.\n", e->component_idx, e->component_count);
+                return E_INVALIDARG;
+            }
+
             e->register_idx = WINED3D_STREAM_OUTPUT_GAP;
         }
         else if ((output = shader_find_signature_element(os, f->SemanticName, f->SemanticIndex)))
         {
-            if (e->component_idx > 3 || e->component_count > 4
+            if (e->component_idx > 3 || e->component_count > 4 || !e->component_count
                     || e->component_idx + e->component_count > 4)
             {
                 WARN("Invalid component range %u-%u.\n", e->component_idx, e->component_count);
@@ -1248,6 +1275,52 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
         }
     }
 
+    for (i = 0; i < entry_count; ++i)
+    {
+        const struct wined3d_stream_output_element *e1 = &elements[i];
+        if (e1->register_idx == WINED3D_STREAM_OUTPUT_GAP)
+            continue;
+
+        for (j = i + 1; j < entry_count; ++j)
+        {
+            const struct wined3d_stream_output_element *e2 = &elements[j];
+
+            if (e1->register_idx == e2->register_idx
+                    && e1->component_idx < e2->component_idx + e2->component_count
+                    && e1->component_idx + e1->component_count > e2->component_idx)
+            {
+                WARN("Stream output elements %u and %u overlap.\n", i, j);
+                return E_INVALIDARG;
+            }
+        }
+    }
+
+    for (i = 0; i < D3D11_SO_STREAM_COUNT; ++i)
+    {
+        BOOL has_element[D3D11_SO_BUFFER_SLOT_COUNT] = {FALSE};
+        BOOL is_used[D3D11_SO_BUFFER_SLOT_COUNT] = {FALSE};
+
+        for (j = 0; j < entry_count; ++j)
+        {
+            const struct wined3d_stream_output_element *e = &elements[j];
+
+            if (e->stream_idx != i)
+                continue;
+            is_used[e->output_slot] = TRUE;
+            if (e->register_idx != WINED3D_STREAM_OUTPUT_GAP)
+                has_element[e->output_slot] = TRUE;
+        }
+
+        for (j = 0; j < D3D11_SO_BUFFER_SLOT_COUNT; ++j)
+        {
+            if (is_used[j] && !has_element[j])
+            {
+                WARN("Stream %u, output slot %u contains only gaps.\n", i, j);
+                return E_INVALIDARG;
+            }
+        }
+    }
+
     return S_OK;
 }
 
@@ -1266,6 +1339,16 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
     {
         WARN("Entry count %u is greater than %u.\n",
                 so_entry_count, D3D11_SO_STREAM_COUNT * D3D11_SO_OUTPUT_COMPONENT_COUNT);
+        return E_INVALIDARG;
+    }
+    if (so_entries && !so_entry_count)
+    {
+        WARN("Invalid SO entry count %u.\n", so_entry_count);
+        return E_INVALIDARG;
+    }
+    if (rasterizer_stream != D3D11_SO_NO_RASTERIZED_STREAM && rasterizer_stream >= D3D11_SO_STREAM_COUNT)
+    {
+        WARN("Invalid rasterizer stream %u.\n", rasterizer_stream);
         return E_INVALIDARG;
     }
 

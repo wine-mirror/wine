@@ -2498,7 +2498,10 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateGeometryShaderWithStreamOutp
 
     if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
             so_entries, entry_count, buffer_strides, strides_count, rasterizer_stream, &object)))
+    {
+        *shader = NULL;
         return hr;
+    }
 
     *shader = &object->ID3D11GeometryShader_iface;
 
