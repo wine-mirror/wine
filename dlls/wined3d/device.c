@@ -4751,6 +4751,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->update_state = &device->state;
 
         device_init_swapchain_state(device, swapchain);
+        if (wined3d_settings.logo)
+            device_load_logo(device, wined3d_settings.logo);
     }
     else if (device->back_buffer_view)
     {
