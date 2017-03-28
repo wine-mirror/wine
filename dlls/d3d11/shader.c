@@ -1192,13 +1192,13 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
         const D3D11_SO_DECLARATION_ENTRY *entries, unsigned int entry_count,
         const struct wined3d_shader_signature *os)
 {
-    unsigned int i;
+    unsigned int i, j, mask;
 
     for (i = 0; i < entry_count; ++i)
     {
         struct wined3d_stream_output_element *e = &elements[i];
         const D3D11_SO_DECLARATION_ENTRY *f = &entries[i];
-        struct wined3d_shader_signature_element *element;
+        struct wined3d_shader_signature_element *output;
 
         TRACE("Stream: %u, semantic: %s, semantic idx: %u, start component: %u, "
                 "component count %u, output slot %u.\n",
@@ -1214,10 +1214,32 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
         {
             e->register_idx = WINED3D_STREAM_OUTPUT_GAP;
         }
-        else if ((element = shader_find_signature_element(os, f->SemanticName, f->SemanticIndex)))
+        else if ((output = shader_find_signature_element(os, f->SemanticName, f->SemanticIndex)))
         {
-            e->register_idx = element->register_idx;
-            TRACE("Register idx: %u.\n", e->register_idx);
+            if (e->component_idx > 3 || e->component_count > 4
+                    || e->component_idx + e->component_count > 4)
+            {
+                WARN("Invalid component range %u-%u.\n", e->component_idx, e->component_count);
+                return E_INVALIDARG;
+            }
+
+            for (j = 0; j < 4; ++j)
+            {
+                if ((1u << j) & output->mask)
+                    break;
+            }
+            e->component_idx += j;
+            mask = ((1u << e->component_count) - 1) << e->component_idx;
+            if ((output->mask & 0xff & mask) != mask)
+            {
+                WARN("Invalid component range %u-%u (mask %#x), output mask %#x.\n",
+                        e->component_idx, e->component_count, mask, output->mask & 0xff);
+                return E_INVALIDARG;
+            }
+
+            e->register_idx = output->register_idx;
+            TRACE("Register idx: %u, register component idx %u, register mask %#x.\n",
+                    e->register_idx, e->component_idx, mask);
         }
         else
         {
