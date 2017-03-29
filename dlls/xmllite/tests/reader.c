@@ -248,6 +248,14 @@ static void _read_node(unsigned line, IXmlReader *reader, XmlNodeType expected_t
     ok_(__FILE__,line)(type == expected_type, "read type %d, expected %d\n", type, expected_type);
 }
 
+#define next_attribute(a) _next_attribute(__LINE__,a)
+static void _next_attribute(unsigned line, IXmlReader *reader)
+{
+    HRESULT hr;
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    ok_(__FILE__,line)(hr == S_OK, "MoveToNextAttribute returned %08x\n", hr);
+}
+
 static void test_read_state(IXmlReader *reader, XmlReadState expected,
     XmlReadState exp_broken, int line)
 {
@@ -803,8 +811,7 @@ static void test_read_xmldeclaration(void)
     ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
 
     /* check attributes */
-    hr = IXmlReader_MoveToNextAttribute(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
+    next_attribute(reader);
 
     TEST_DEPTH(reader, 1);
 
@@ -816,10 +823,8 @@ static void test_read_xmldeclaration(void)
     TEST_READER_POSITION2(reader, 1, 7, ~0u, 55);
 
     /* try to move from last attribute */
-    hr = IXmlReader_MoveToNextAttribute(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
-    hr = IXmlReader_MoveToNextAttribute(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
+    next_attribute(reader);
+    next_attribute(reader);
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_FALSE, "got %08x\n", hr);
 
@@ -910,8 +915,7 @@ todo_wine {
     ok(!lstrcmpW(val, xmlW), "got %s\n", wine_dbgstr_w(val));
 
     /* check attributes */
-    hr = IXmlReader_MoveToNextAttribute(reader);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+    next_attribute(reader);
 
     type = -1;
     hr = IXmlReader_GetNodeType(reader, &type);
@@ -1281,8 +1285,7 @@ static void test_read_public_dtd(void)
     ok(len == lstrlenW(pubvalW), "got %u\n", len);
     ok(!lstrcmpW(str, pubvalW), "got %s\n", wine_dbgstr_w(str));
 
-    hr = IXmlReader_MoveToNextAttribute(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
+    next_attribute(reader);
 
     type = XmlNodeType_None;
     hr = IXmlReader_GetNodeType(reader, &type);
@@ -2143,8 +2146,7 @@ static void test_prefix(void)
             wine_dbgstr_w(expected));
         free_str(expected);
 
-        hr = IXmlReader_MoveToNextAttribute(reader);
-        ok(hr == S_OK, "MoveToNextAttribute() failed, %#x.\n", hr);
+        next_attribute(reader);
 
         hr = IXmlReader_GetNodeType(reader, &type);
         ok(hr == S_OK, "GetNodeType() failed, %#x.\n", hr);
@@ -2593,12 +2595,10 @@ static void test_reader_position(void)
     ok(type == XmlNodeType_Element, "got type %d\n", type);
     TEST_READER_POSITION2(reader, 1, 2, ~0u, 34);
 
-    hr = IXmlReader_MoveToNextAttribute(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
+    next_attribute(reader);
     TEST_READER_POSITION2(reader, 1, 6, ~0u, 34);
 
-    hr = IXmlReader_MoveToNextAttribute(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
+    next_attribute(reader);
     TEST_READER_POSITION2(reader, 1, 24, ~0u, 34);
 
     hr = IXmlReader_MoveToElement(reader);
