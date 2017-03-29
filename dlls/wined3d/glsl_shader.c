@@ -840,6 +840,9 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context *co
     const char **varyings;
     char *strings;
 
+    if (!so_desc->element_count)
+        return;
+
     if (!gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
     {
         FIXME("ARB_transform_feedback3 not supported by OpenGL implementation.\n");
