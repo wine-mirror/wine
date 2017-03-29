@@ -333,6 +333,20 @@ static const WCHAR *_reader_namespace(unsigned line, IXmlReader *reader, const c
     return str;
 }
 
+#define reader_qname(a,b) _reader_qname(a,b,__LINE__)
+static const WCHAR *_reader_qname(IXmlReader *reader, const char *expect, unsigned line)
+{
+    const WCHAR *str = (void*)0xdeadbeef;
+    ULONG len = 0xdeadbeef;
+    HRESULT hr;
+
+    hr = IXmlReader_GetQualifiedName(reader, &str, &len);
+    ok_(__FILE__,line)(hr == S_OK, "GetQualifiedName returned %08x\n", hr);
+    ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
+    ok_(__FILE__,line)(!strcmp_wa(str, expect), "name = %s\n", wine_dbgstr_w(str));
+    return str;
+}
+
 typedef struct _testinput
 {
     IUnknown IUnknown_iface;
@@ -810,7 +824,6 @@ static void test_reader_depth(IXmlReader *reader, UINT depth, UINT brk, int line
 
 static void test_read_xmldeclaration(void)
 {
-    static const WCHAR xmlW[] = {'x','m','l',0};
     static const struct
     {
         WCHAR name[12];
@@ -956,10 +969,7 @@ todo_wine {
     reader_value(reader, "");
     reader_name(reader, "xml");
 
-    val = NULL;
-    hr = IXmlReader_GetQualifiedName(reader, &val, NULL);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(val, xmlW), "got %s\n", wine_dbgstr_w(val));
+    reader_qname(reader, "xml");
 
     /* check attributes */
     next_attribute(reader);
@@ -1067,7 +1077,6 @@ static void test_read_comment(void)
         if (hr == S_OK)
         {
             const WCHAR *str;
-            UINT len;
 
             ok(type == XmlNodeType_Comment, "got %d for %s\n", type, test->xml);
 
@@ -1078,12 +1087,7 @@ static void test_read_comment(void)
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetQualifiedName(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == 0, "got %u\n", len);
-            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+            reader_qname(reader, "");
 
             str = NULL;
             hr = IXmlReader_GetQualifiedName(reader, &str, NULL);
