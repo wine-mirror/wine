@@ -1105,6 +1105,43 @@ static void test_WsReadBody(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsResetMessage(void)
+{
+    WS_MESSAGE *msg;
+    WS_MESSAGE_STATE state;
+    WS_ENVELOPE_VERSION env_version;
+    WS_ADDRESSING_VERSION addr_version;
+    HRESULT hr;
+
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_1, WS_ADDRESSING_VERSION_0_9, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg,  WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetMessage( msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_MESSAGE_STATE_EMPTY, "got %u\n", state );
+
+    env_version = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ENVELOPE_VERSION, &env_version,
+                               sizeof(env_version), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( env_version == WS_ENVELOPE_VERSION_SOAP_1_1, "got %u\n", env_version );
+
+    addr_version = 0xdeadbeef;
+    hr = WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_ADDRESSING_VERSION, &addr_version,
+                               sizeof(addr_version), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( addr_version == WS_ADDRESSING_VERSION_0_9, "got %u\n", addr_version );
+
+    WsFreeMessage( msg );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -1123,4 +1160,5 @@ START_TEST(msg)
     test_WsReadEnvelopeStart();
     test_WsReadEnvelopeEnd();
     test_WsReadBody();
+    test_WsResetMessage();
 }

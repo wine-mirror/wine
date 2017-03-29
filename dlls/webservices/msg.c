@@ -123,15 +123,44 @@ static void free_header( struct header *header )
     heap_free( header );
 }
 
-static void free_msg( struct msg *msg )
+static void reset_msg( struct msg *msg )
 {
     ULONG i;
 
+    msg->state         = WS_MESSAGE_STATE_EMPTY;
+    msg->init          = 0;
+    UuidCreate( &msg->id );
+    msg->is_addressed  = FALSE;
+    heap_free( msg->addr.chars );
+    msg->addr.chars    = NULL;
+    msg->addr.length   = 0;
+
+    heap_free( msg->action.chars );
+    msg->action.chars  = NULL;
+    msg->action.length = 0;
+
+    WsResetHeap( msg->heap, NULL );
+    msg->buf           = NULL; /* allocated on msg->heap */
+    msg->writer_body   = NULL; /* owned by caller */
+    msg->reader_body   = NULL; /* owned by caller */
+
+    for (i = 0; i < msg->header_count; i++)
+    {
+        free_header( msg->header[i] );
+        msg->header[i] = NULL;
+    }
+    msg->header_count  = 0;
+
+    memset( &msg->ctx_send, 0, sizeof(msg->ctx_send) );
+    memset( &msg->ctx_receive, 0, sizeof(msg->ctx_receive) );
+}
+
+static void free_msg( struct msg *msg )
+{
+    reset_msg( msg );
+
     WsFreeWriter( msg->writer );
     WsFreeHeap( msg->heap );
-    heap_free( msg->addr.chars );
-    heap_free( msg->action.chars );
-    for (i = 0; i < msg->header_count; i++) free_header( msg->header[i] );
     heap_free( msg->header );
 
     msg->cs.DebugInfo->Spare[0] = 0;
@@ -243,6 +272,32 @@ void WINAPI WsFreeMessage( WS_MESSAGE *handle )
 
     LeaveCriticalSection( &msg->cs );
     free_msg( msg );
+}
+
+/**************************************************************************
+ *          WsResetMessage		[webservices.@]
+ */
+HRESULT WINAPI WsResetMessage( WS_MESSAGE *handle, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    reset_msg( msg );
+
+    LeaveCriticalSection( &msg->cs );
+    return S_OK;
 }
 
 /**************************************************************************
