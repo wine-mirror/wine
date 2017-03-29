@@ -232,7 +232,7 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
                                      ULONG size, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -247,7 +247,16 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
         return E_INVALIDARG;
     }
 
-    hr = prop_get( channel->prop, channel->prop_count, id, buf, size );
+    switch (id)
+    {
+    case WS_CHANNEL_PROPERTY_CHANNEL_TYPE:
+        if (!buf || size != sizeof(channel->type)) hr = E_INVALIDARG;
+        else *(WS_CHANNEL_TYPE *)buf = channel->type;
+        break;
+
+    default:
+        hr = prop_get( channel->prop, channel->prop_count, id, buf, size );
+    }
 
     LeaveCriticalSection( &channel->cs );
     return hr;
