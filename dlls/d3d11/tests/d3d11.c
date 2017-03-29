@@ -16011,6 +16011,151 @@ float4 main(struct ps_data ps_input) : SV_Target
     release_test_context(&test_context);
 }
 
+static void test_stream_output_resume(void)
+{
+    struct d3d11_test_context test_context;
+    ID3D11Buffer *cb, *so_buffer, *buffer;
+    unsigned int i, j, idx, offset;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11GeometryShader *gs;
+    const struct vec4 *data;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const DWORD gs_code[] =
+    {
+#if 0
+        float4 constant;
+
+        struct vertex
+        {
+            float4 position : SV_POSITION;
+        };
+
+        struct element
+        {
+            float4 position : SV_POSITION;
+            float4 so_output : so_output;
+        };
+
+        [maxvertexcount(3)]
+        void main(triangle vertex input[3], inout PointStream<element> output)
+        {
+            element o;
+            o.so_output = constant;
+            o.position = input[0].position;
+            output.Append(o);
+            o.position = input[1].position;
+            output.Append(o);
+            o.position = input[2].position;
+            output.Append(o);
+        }
+#endif
+        0x43425844, 0x4c16e500, 0xa0dc6126, 0x261156f3, 0xf01eedc8, 0x00000001, 0x000001b8, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000b8, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x00000050, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x505f5653, 0x5449534f, 0x004e4f49, 0x6f5f6f73, 0x75707475, 0xabab0074, 0x52444853, 0x000000f8,
+        0x00020040, 0x0000003e, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x05000061, 0x002010f2,
+        0x00000003, 0x00000000, 0x00000001, 0x0100185d, 0x0100085c, 0x04000067, 0x001020f2, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x0200005e, 0x00000003, 0x06000036, 0x001020f2,
+        0x00000000, 0x00201e46, 0x00000000, 0x00000000, 0x06000036, 0x001020f2, 0x00000001, 0x00208e46,
+        0x00000000, 0x00000000, 0x01000013, 0x06000036, 0x001020f2, 0x00000000, 0x00201e46, 0x00000001,
+        0x00000000, 0x06000036, 0x001020f2, 0x00000001, 0x00208e46, 0x00000000, 0x00000000, 0x01000013,
+        0x06000036, 0x001020f2, 0x00000000, 0x00201e46, 0x00000002, 0x00000000, 0x06000036, 0x001020f2,
+        0x00000001, 0x00208e46, 0x00000000, 0x00000000, 0x01000013, 0x0100003e,
+    };
+    static const D3D11_SO_DECLARATION_ENTRY so_declaration[] =
+    {
+        {0, "so_output", 0, 0, 4, 0},
+    };
+    static const struct vec4 constants[] =
+    {
+        {0.5f, 0.250f, 0.0f, 0.0f},
+        {0.0f, 0.125f, 0.0f, 1.0f},
+        {1.0f, 1.000f, 1.0f, 0.0f}
+    };
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
+            so_declaration, ARRAY_SIZE(so_declaration), NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constants[0]), &constants[0]);
+    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
+
+    ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+    ID3D11DeviceContext_GSSetConstantBuffers(context, 0, 1, &cb);
+
+    offset = 0;
+    ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &white.x);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    draw_color_quad(&test_context, &red);
+    todo_wine check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constants[1], 0, 0);
+    ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+    draw_color_quad(&test_context, &red);
+    todo_wine check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
+
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constants[2], 0, 0);
+    ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+    draw_color_quad(&test_context, &white);
+    todo_wine check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
+
+    ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    buffer = NULL;
+    ID3D11DeviceContext_SOSetTargets(context, 1, &buffer, &offset);
+    ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
+    draw_color_quad(&test_context, &white);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    idx = 0;
+    get_buffer_readback(so_buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(constants); ++i)
+    {
+        for (j = 0; j < 6; ++j) /* 2 triangles */
+        {
+            data = get_readback_vec4(&rb, idx++, 0);
+            todo_wine
+            ok(compare_vec4(data, &constants[i], 0),
+                    "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u (%u, %u).\n",
+                    data->x, data->y, data->z, data->w, idx, i, j);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11Buffer_Release(cb);
+    ID3D11Buffer_Release(so_buffer);
+    ID3D11GeometryShader_Release(gs);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -16093,4 +16238,5 @@ START_TEST(d3d11)
     test_compute_shader_registers();
     test_tgsm();
     test_geometry_shader();
+    test_stream_output_resume();
 }
