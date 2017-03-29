@@ -252,47 +252,6 @@ void WINAPI WsFreeWriter( WS_XML_WRITER *handle )
     free_writer( writer );
 }
 
-#define XML_BUFFER_INITIAL_ALLOCATED_SIZE 256
-static struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap )
-{
-    struct xmlbuf *ret;
-
-    if (!(ret = ws_alloc( heap, sizeof(*ret) ))) return NULL;
-    if (!(ret->ptr = ws_alloc( heap, XML_BUFFER_INITIAL_ALLOCATED_SIZE )))
-    {
-        ws_free( heap, ret, sizeof(*ret) );
-        return NULL;
-    }
-    ret->heap           = heap;
-    ret->size_allocated = XML_BUFFER_INITIAL_ALLOCATED_SIZE;
-    ret->size           = 0;
-    return ret;
-}
-
-static void free_xmlbuf( struct xmlbuf *xmlbuf )
-{
-    if (!xmlbuf) return;
-    ws_free( xmlbuf->heap, xmlbuf->ptr, xmlbuf->size_allocated );
-    ws_free( xmlbuf->heap, xmlbuf, sizeof(*xmlbuf) );
-}
-
-/**************************************************************************
- *          WsCreateXmlBuffer		[webservices.@]
- */
-HRESULT WINAPI WsCreateXmlBuffer( WS_HEAP *heap, const WS_XML_BUFFER_PROPERTY *properties,
-                                  ULONG count, WS_XML_BUFFER **handle, WS_ERROR *error )
-{
-    struct xmlbuf *xmlbuf;
-
-    if (!heap || !handle) return E_INVALIDARG;
-    if (count) FIXME( "properties not implemented\n" );
-
-    if (!(xmlbuf = alloc_xmlbuf( heap ))) return WS_E_QUOTA_EXCEEDED;
-
-    *handle = (WS_XML_BUFFER *)xmlbuf;
-    return S_OK;
-}
-
 /**************************************************************************
  *          WsGetWriterProperty		[webservices.@]
  */

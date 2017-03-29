@@ -5,6 +5,7 @@ IMPORTS   = winhttp rpcrt4 user32
 C_SRCS = \
 	channel.c \
 	error.c \
+	heap.c \
 	msg.c \
 	proxy.c \
 	reader.c \
