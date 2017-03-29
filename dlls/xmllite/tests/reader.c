@@ -234,6 +234,20 @@ static void _set_input_string(unsigned line, IXmlReader *reader, const char *xml
     IStream_Release(stream);
 }
 
+#define read_node(a,b) _read_node(__LINE__,a,b)
+static void _read_node(unsigned line, IXmlReader *reader, XmlNodeType expected_type)
+{
+    XmlNodeType type;
+    HRESULT hr;
+
+    hr = IXmlReader_Read(reader, &type);
+    if (expected_type == XmlNodeType_None)
+        ok_(__FILE__,line)(hr == S_FALSE, "Read returned %08x, expected S_FALSE\n", hr);
+    else
+        ok_(__FILE__,line)(hr == S_OK, "Read returned %08x\n", hr);
+    ok_(__FILE__,line)(type == expected_type, "read type %d, expected %d\n", type, expected_type);
+}
+
 static void test_read_state(IXmlReader *reader, XmlReadState expected,
     XmlReadState exp_broken, int line)
 {
@@ -776,11 +790,8 @@ static void test_read_xmldeclaration(void)
 
     TEST_READER_POSITION(reader, 0, 0);
 
-    type = -1;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(type == XmlNodeType_XmlDeclaration,
-                     "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
+    read_node(reader, XmlNodeType_XmlDeclaration);
+
     /* new version 1.2.x and 1.3.x properly update position for <?xml ?> */
     TEST_READER_POSITION2(reader, 1, 3, ~0u, 55);
 
@@ -873,10 +884,7 @@ todo_wine {
     hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
 
-    type = -1;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-    ok(type == XmlNodeType_XmlDeclaration, "expected XmlDeclaration, got %s\n", type_to_str(type));
+    read_node(reader, XmlNodeType_XmlDeclaration);
     TEST_READER_POSITION2(reader, 1, 3, ~0u, 21);
     TEST_READER_STATE(reader, XmlReadState_Interactive);
 
@@ -915,10 +923,7 @@ todo_wine {
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_FALSE, "expected S_FALSE, got %08x\n", hr);
 
-    type = -1;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-    ok(type == XmlNodeType_Element, "expected Element, got %s\n", type_to_str(type));
+    read_node(reader, XmlNodeType_Element);
     TEST_READER_POSITION2(reader, 1, 23, ~0u, 40);
     TEST_READER_STATE(reader, XmlReadState_Interactive);
 
@@ -1193,7 +1198,6 @@ static void test_read_full(void)
     struct nodes_test *test = &misc_test;
     IXmlReader *reader;
     const WCHAR *value;
-    XmlNodeType type;
     ULONG len;
     HRESULT hr;
     int i;
@@ -1204,16 +1208,9 @@ static void test_read_full(void)
     set_input_string(reader, test->xml);
 
     i = 0;
-    type = ~0u;
     do
     {
-        hr = IXmlReader_Read(reader, &type);
-        if (test->nodes[i].type != XmlNodeType_None)
-            ok(hr == S_OK, "Read returned %08x\n", hr);
-        else
-            ok(hr == S_FALSE, "Read returned %08x\n", hr);
-
-        ok(type == test->nodes[i].type, "%d: got wrong type %d, expected %d\n", i, type, test->nodes[i].type);
+        read_node(reader, test->nodes[i].type);
 
         len = 0xdeadbeef;
         hr = IXmlReader_GetValue(reader, &value, &len);
@@ -1255,10 +1252,7 @@ static void test_read_public_dtd(void)
     hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got 0x%8x\n", hr);
-    ok(type == XmlNodeType_DocumentType, "got type %d\n", type);
+    read_node(reader, XmlNodeType_DocumentType);
 
     count = 0;
     hr = IXmlReader_GetAttributeCount(reader, &count);
@@ -1358,10 +1352,7 @@ static void test_read_system_dtd(void)
     hr = IXmlReader_SetInput(reader, (IUnknown*)stream);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got 0x%8x\n", hr);
-    ok(type == XmlNodeType_DocumentType, "got type %d\n", type);
+    read_node(reader, XmlNodeType_DocumentType);
 
     count = 0;
     hr = IXmlReader_GetAttributeCount(reader, &count);
@@ -1409,10 +1400,8 @@ todo_wine {
     ok(len == lstrlenW(dtdnameW), "got %u\n", len);
     ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
 }
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got 0x%8x\n", hr);
-    ok(type == XmlNodeType_Comment, "got type %d\n", type);
+
+    read_node(reader, XmlNodeType_Comment);
 
     IStream_Release(stream);
     IXmlReader_Release(reader);
@@ -1589,10 +1578,7 @@ static void test_read_element(void)
     /* start/end tag mismatch */
     set_input_string(reader, "<a></b>");
 
-    type = XmlNodeType_None;
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_Element, "got %d\n", type);
+    read_node(reader, XmlNodeType_Element);
 
     type = XmlNodeType_Element;
     hr = IXmlReader_Read(reader, &type);
