@@ -205,21 +205,18 @@ static DWORD getDataType(LPWSTR *lpValue, DWORD* parse_type)
     struct data_type { const WCHAR *tag; int len; int type; int parse_type; };
 
     static const WCHAR quote[] = {'"'};
-    static const WCHAR str[] = {'s','t','r',':','"'};
-    static const WCHAR str2[] = {'s','t','r','(','2',')',':','"'};
     static const WCHAR hex[] = {'h','e','x',':'};
     static const WCHAR dword[] = {'d','w','o','r','d',':'};
     static const WCHAR hexp[] = {'h','e','x','('};
 
-    static const struct data_type data_types[] = {                   /* actual type */  /* type to assume for parsing */
-                { quote,       1,   REG_SZ,              REG_SZ },
-                { str,         5,   REG_SZ,              REG_SZ },
-                { str2,        8,   REG_EXPAND_SZ,       REG_SZ },
-                { hex,         4,   REG_BINARY,          REG_BINARY },
-                { dword,       6,   REG_DWORD,           REG_DWORD },
-                { hexp,        4,   -1,                  REG_BINARY },
-                { NULL,        0,    0,                  0 }
-            };
+    static const struct data_type data_types[] = {
+    /*    tag    len  type         parse type    */
+        { quote,  1,  REG_SZ,      REG_SZ },
+        { hex,    4,  REG_BINARY,  REG_BINARY },
+        { dword,  6,  REG_DWORD,   REG_DWORD },
+        { hexp,   4,  -1,          REG_BINARY }, /* REG_NONE, REG_EXPAND_SZ, REG_MULTI_SZ */
+        { NULL,   0,  0,           0 }
+    };
 
     const struct data_type *ptr;
     int type;
