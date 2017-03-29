@@ -2775,12 +2775,6 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if ((dst_format_flags & WINED3DFMT_FLAG_BLOCKS) && (flags & WINED3D_BLT_COLOR_FILL))
-    {
-        WARN("Color fill not supported on block-based formats.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if ((src_format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
             != (dst_format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
             && !(flags & WINED3D_BLT_DEPTH_FILL))
