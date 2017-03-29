@@ -1,0 +1,6 @@
+MODULE    = wsdapi.dll
+IMPORTLIB = wsdapi
+IMPORTS   = kernel32
+
+C_SRCS = \
+	main.c
