@@ -171,11 +171,6 @@ static HRESULT create_msg( WS_ENVELOPE_VERSION env_version, WS_ADDRESSING_VERSIO
         free_msg( msg );
         return hr;
     }
-    if ((hr = WsCreateXmlBuffer( msg->heap, NULL, 0, &msg->buf, NULL )) != S_OK)
-    {
-        free_msg( msg );
-        return hr;
-    }
 
     UuidCreate( &msg->id );
     msg->version_env  = env_version;
