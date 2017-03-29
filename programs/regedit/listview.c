@@ -138,7 +138,7 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
     item.pszText = Name ? Name : LPSTR_TEXTCALLBACKW;
     item.cchTextMax = Name ? lstrlenW(item.pszText) : 0;
     if (bHighlight) {
-        item.stateMask = item.state = LVIS_FOCUSED | LVIS_SELECTED;
+        item.stateMask = item.state = LVIS_FOCUSED;
     }
     switch (dwValType)
     {
