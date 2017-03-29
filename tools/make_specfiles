@@ -313,6 +313,7 @@ my @dll_groups =
  [
   "winmm",
   "api-ms-win-mm-misc-l1-1-1",
+  "api-ms-win-mm-mme-l1-1-0",
  ],
  [
   "msvcrt",
