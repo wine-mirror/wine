@@ -2495,6 +2495,117 @@ static void test_reader_position(void)
     IXmlReader_Release(reader);
 }
 
+static void test_string_pointers(void)
+{
+    const WCHAR *ns, *nsq, *empty, *xmlns_ns, *xmlns_name, *name, *p, *q, *xml, *ptr;
+    IXmlReader *reader;
+    HRESULT hr;
+
+    hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL);
+    ok(hr == S_OK, "S_OK, got %08x\n", hr);
+
+    set_input_string(reader, "<elem xmlns=\"myns\">myns<elem2 /></elem>");
+
+    read_node(reader, XmlNodeType_Element);
+    empty = reader_value(reader, "");
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    name = reader_name(reader, "elem");
+    ok(name == reader_qname(reader, "elem"), "name != qname\n");
+    ns = reader_namespace(reader, "myns");
+
+    next_attribute(reader);
+    ptr = reader_value(reader, "myns");
+    if (ns != ptr)
+    {
+        win_skip("attr value is different than namespace pointer, assuming old xmllite\n");
+        IXmlReader_Release(reader);
+        return;
+    }
+    ok(ns == ptr, "ns != value\n");
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    xmlns_ns = reader_namespace(reader, "http://www.w3.org/2000/xmlns/");
+    xmlns_name = reader_name(reader, "xmlns");
+    ok(xmlns_name == reader_qname(reader, "xmlns"), "xmlns_name != qname\n");
+
+    read_node(reader, XmlNodeType_Text);
+    ok(ns != reader_value(reader, "myns"), "ns == value\n");
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
+    ok(empty == reader_name(reader, ""), "empty != name\n");
+    ok(empty == reader_qname(reader, ""), "empty != qname\n");
+
+    read_node(reader, XmlNodeType_Element);
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    ok(ns == reader_namespace(reader, "myns"), "empty != namespace\n");
+
+    read_node(reader, XmlNodeType_EndElement);
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    ok(name == reader_name(reader, "elem"), "empty != name\n");
+    ok(name == reader_qname(reader, "elem"), "empty != qname\n");
+    ok(ns == reader_namespace(reader, "myns"), "empty != namespace\n");
+
+    set_input_string(reader, "<elem xmlns:p=\"myns\" xmlns:q=\"mynsq\"><p:elem2 q:attr=\"\"></p:elem2></elem>");
+
+    read_node(reader, XmlNodeType_Element);
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    name = reader_name(reader, "elem");
+    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
+
+    next_attribute(reader);
+    ns = reader_value(reader, "myns");
+    ok(xmlns_name == reader_prefix(reader, "xmlns"), "xmlns_name != prefix\n");
+    p = reader_name(reader, "p");
+    ok(xmlns_ns == reader_namespace(reader, "http://www.w3.org/2000/xmlns/"), "xmlns_ns != namespace\n");
+
+    next_attribute(reader);
+    nsq = reader_value(reader, "mynsq");
+    ok(xmlns_name == reader_prefix(reader, "xmlns"), "xmlns_name != prefix\n");
+    q = reader_name(reader, "q");
+    ok(xmlns_ns == reader_namespace(reader, "http://www.w3.org/2000/xmlns/"), "xmlns_ns != namespace\n");
+
+    read_node(reader, XmlNodeType_Element);
+    ptr = reader_prefix(reader, "p"); todo_wine ok(p == ptr, "p != prefix\n");
+    ok(ns == reader_namespace(reader, "myns"), "empty != namespace\n");
+    name = reader_qname(reader, "p:elem2");
+
+    next_attribute(reader);
+    ok(empty != reader_value(reader, ""), "empty == value\n");
+    ptr = reader_prefix(reader, "q"); todo_wine ok(q == ptr, "q != prefix\n");
+    ok(nsq == reader_namespace(reader, "mynsq"), "nsq != namespace\n");
+
+    read_node(reader, XmlNodeType_EndElement);
+    ptr = reader_qname(reader, "p:elem2"); todo_wine ok(name != ptr, "q == qname\n");
+
+    set_input_string(reader, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
+
+    read_node(reader, XmlNodeType_XmlDeclaration);
+    ok(empty == reader_value(reader, ""), "empty != value\n");
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    xml = reader_name(reader, "xml");
+    ptr = reader_qname(reader, "xml"); todo_wine ok(xml == ptr, "xml != qname\n");
+    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
+
+    next_attribute(reader);
+    ok(empty == reader_prefix(reader, ""), "empty != prefix\n");
+    ok(empty == reader_namespace(reader, ""), "empty != namespace\n");
+
+    set_input_string(reader, "<elem xmlns:p=\"myns\"><p:elem2 attr=\"\" /></elem>");
+
+    read_node(reader, XmlNodeType_Element);
+    next_attribute(reader);
+    read_value_char(reader, 'm');
+    IXmlReader_GetValue(reader, &p, NULL);
+    todo_wine
+    ok(!strcmp_wa(p, "yns"), "value = %s\n", wine_dbgstr_w(p));
+
+    read_node(reader, XmlNodeType_Element);
+    ns = reader_namespace(reader, "myns");
+    todo_wine
+    ok(ns+1 == p, "ns+1 != p\n");
+
+    IXmlReader_Release(reader);
+}
+
 START_TEST(reader)
 {
     test_reader_create();
@@ -2521,4 +2632,5 @@ START_TEST(reader)
     test_endoffile();
     test_max_element_depth();
     test_reader_position();
+    test_string_pointers();
 }
