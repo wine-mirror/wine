@@ -347,6 +347,19 @@ static const WCHAR *_reader_qname(IXmlReader *reader, const char *expect, unsign
     return str;
 }
 
+#define read_value_char(a,b) _read_value_char(a,b,__LINE__)
+static void _read_value_char(IXmlReader *reader, WCHAR expected_char, unsigned line)
+{
+    WCHAR c = 0xffff;
+    UINT count = 0;
+    HRESULT hr;
+
+    hr = IXmlReader_ReadValueChunk(reader, &c, 1, &count);
+    ok_(__FILE__,line)(hr == S_OK, "got %08x\n", hr);
+    ok_(__FILE__,line)(count == 1, "got %u\n", c);
+    ok_(__FILE__,line)(c == expected_char, "got %x\n", c);
+}
+
 typedef struct _testinput
 {
     IUnknown IUnknown_iface;
@@ -1611,19 +1624,8 @@ static void test_readvaluechunk(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Comment, "type = %u\n", type);
 
-    c = 0;
-    b = 0;
-    hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(c == 1, "got %u\n", c);
-    ok(b == ' ', "got %x\n", b);
-
-    c = 0;
-    b = 0xffff;
-    hr = IXmlReader_ReadValueChunk(reader, &b, 1, &c);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(c == 1, "got %u\n", c);
-    ok(b == 'c', "got %x\n", b);
+    read_value_char(reader, ' ');
+    read_value_char(reader, 'c');
 
     /* portion read as chunk is skipped from resulting node value */
     reader_value(reader, "omment1 ");
@@ -1644,9 +1646,7 @@ static void test_readvaluechunk(void)
     reader_value(reader, "omment1 ");
 
     /* read comment2 */
-    hr = IXmlReader_Read(reader, &type);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(type == XmlNodeType_Comment, "type = %u\n", type);
+    read_node(reader, XmlNodeType_Comment);
 
     c = 0xdeadbeef;
     hr = IXmlReader_ReadValueChunk(reader, buf, 0, &c);
