@@ -3258,28 +3258,28 @@ release:
     return hr;
 }
 
-static HRESULT surface_cpu_blt_colour_fill(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        const struct wined3d_box *box, DWORD c)
+static HRESULT surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
+        const struct wined3d_box *box, const struct wined3d_color *colour)
 {
-    struct wined3d_resource *resource = &texture->resource;
     unsigned int x, y, w, h, bpp;
     struct wined3d_map_desc map;
     BYTE *row;
+    DWORD c;
 
-    TRACE("texture %p, sub_resource_idx %u, box %s, colour 0x%08x.\n",
-            texture, sub_resource_idx, debug_box(box), c);
+    TRACE("view %p, box %s, colour %s.\n", view, debug_box(box), debug_color(colour));
 
-    if (resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
+    if (view->format_flags & WINED3DFMT_FLAG_BLOCKS)
     {
-        FIXME("Not implemented for format %s.\n", debug_d3dformat(resource->format->id));
+        FIXME("Not implemented for format %s.\n", debug_d3dformat(view->format->id));
         return E_NOTIMPL;
     }
 
-    bpp = resource->format->byte_count;
+    c = wined3d_format_convert_from_float(view->format, colour);
+    bpp = view->format->byte_count;
     w = box->right - box->left;
     h = box->bottom - box->top;
 
-    wined3d_resource_map(resource, sub_resource_idx, &map, box, 0);
+    wined3d_resource_map(view->resource, view->sub_resource_idx, &map, box, 0);
 
     switch (bpp)
     {
@@ -3317,7 +3317,7 @@ static HRESULT surface_cpu_blt_colour_fill(struct wined3d_texture *texture, unsi
 
         default:
             FIXME("Not implemented for bpp %u.\n", bpp);
-            wined3d_resource_unmap(resource, sub_resource_idx);
+            wined3d_resource_unmap(view->resource, view->sub_resource_idx);
             return WINED3DERR_NOTAVAILABLE;
     }
 
@@ -3327,7 +3327,7 @@ static HRESULT surface_cpu_blt_colour_fill(struct wined3d_texture *texture, unsi
         row += map.row_pitch;
         memcpy(row, map.data, w * bpp);
     }
-    wined3d_resource_unmap(resource, sub_resource_idx);
+    wined3d_resource_unmap(view->resource, view->sub_resource_idx);
 
     return WINED3D_OK;
 }
@@ -3336,11 +3336,8 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
         const RECT *rect, const struct wined3d_color *color)
 {
     const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
-    DWORD c;
 
-    c = wined3d_format_convert_from_float(view->format, color);
-    return surface_cpu_blt_colour_fill(texture_from_resource(view->resource),
-            view->sub_resource_idx, &box, c);
+    return surface_cpu_blt_colour_fill(view, &box, color);
 }
 
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
@@ -3349,7 +3346,6 @@ static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
 {
     const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
     struct wined3d_color color = {depth, 0.0f, 0.0f, 0.0f};
-    DWORD c;
 
     if (clear_flags != WINED3DCLEAR_ZBUFFER)
     {
@@ -3357,9 +3353,7 @@ static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    c = wined3d_format_convert_from_float(view->format, &color);
-    return surface_cpu_blt_colour_fill(texture_from_resource(view->resource),
-            view->sub_resource_idx, &box, c);
+    return surface_cpu_blt_colour_fill(view, &box, &color);
 }
 
 static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
