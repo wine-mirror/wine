@@ -193,6 +193,8 @@ static BYTE* convertHexCSVToHex(WCHAR *str, DWORD *size)
     return data;
 }
 
+#define REG_UNKNOWN_TYPE 99
+
 /******************************************************************************
  * This function returns the HKEY associated with the data type encoded in the
  * value.  It modifies the input parameter (key value) in order to skip this
@@ -242,8 +244,8 @@ static DWORD getDataType(LPWSTR *lpValue, DWORD* parse_type)
         }
         return type;
     }
-    *parse_type=REG_NONE;
-    return REG_NONE;
+    *parse_type = REG_UNKNOWN_TYPE;
+    return REG_UNKNOWN_TYPE;
 }
 
 /******************************************************************************
@@ -343,6 +345,7 @@ static const WCHAR type_dword[] = {'R','E','G','_','D','W','O','R','D',0};
 static const WCHAR type_dword_le[] = {'R','E','G','_','D','W','O','R','D','_','L','I','T','T','L','E','_','E','N','D','I','A','N',0};
 static const WCHAR type_dword_be[] = {'R','E','G','_','D','W','O','R','D','_','B','I','G','_','E','N','D','I','A','N',0};
 static const WCHAR type_multi_sz[] = {'R','E','G','_','M','U','L','T','I','_','S','Z',0};
+static const WCHAR unknown_type[] = {'U','n','k','n','o','w','n',' ','T','y','p','e',0};
 
 static const struct
 {
@@ -359,6 +362,7 @@ type_rels[] =
     {REG_DWORD_LITTLE_ENDIAN, type_dword_le},
     {REG_DWORD_BIG_ENDIAN, type_dword_be},
     {REG_MULTI_SZ, type_multi_sz},
+    {REG_UNKNOWN_TYPE, unknown_type}
 };
 
 static const WCHAR *reg_type_to_wchar(DWORD type)
