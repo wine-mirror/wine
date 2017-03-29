@@ -710,7 +710,7 @@ static const struct message property_sheet_seq[] = {
 
 static void save_message(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, INT receiver)
 {
-    struct message msg;
+    struct message msg = { 0 };
 
     if (message < WM_USER &&
         message != WM_GETICON &&

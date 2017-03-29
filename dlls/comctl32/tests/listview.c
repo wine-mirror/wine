@@ -707,8 +707,8 @@ static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
 {
     WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
+    struct message msg = { 0 };
     LRESULT ret;
-    struct message msg;
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -741,15 +741,14 @@ static LRESULT WINAPI editbox_subclass_proc(HWND hwnd, UINT message, WPARAM wPar
 {
     WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     static LONG defwndproc_counter = 0;
+    struct message msg = { 0 };
     LRESULT ret;
-    struct message msg;
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    msg.id = 0;
 
     /* all we need is sizing */
     if (message == WM_WINDOWPOSCHANGING ||

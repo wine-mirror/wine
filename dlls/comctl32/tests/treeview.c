@@ -383,15 +383,14 @@ static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LP
 {
     static LONG defwndproc_counter = 0;
     LRESULT ret;
-    struct message msg;
     WNDPROC lpOldProc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    struct message msg = { 0 };
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    msg.id = 0;
     add_message(sequences, TREEVIEW_SEQ_INDEX, &msg);
 
     defwndproc_counter++;

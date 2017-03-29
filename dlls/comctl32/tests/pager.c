@@ -142,13 +142,12 @@ static HWND create_parent_window(void)
 static LRESULT WINAPI pager_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
-    struct message msg;
+    struct message msg = { 0 };
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    msg.id     = 0;
     add_message(sequences, PAGER_SEQ_INDEX, &msg);
     return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
 }
