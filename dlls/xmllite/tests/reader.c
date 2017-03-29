@@ -319,6 +319,20 @@ static const WCHAR *_reader_prefix(unsigned line, IXmlReader *reader, const char
     return str;
 }
 
+#define reader_namespace(a,b) _reader_namespace(__LINE__,a,b)
+static const WCHAR *_reader_namespace(unsigned line, IXmlReader *reader, const char *expect)
+{
+    const WCHAR *str = (void*)0xdeadbeef;
+    ULONG len = 0xdeadbeef;
+    HRESULT hr;
+
+    hr = IXmlReader_GetNamespaceUri(reader, &str, &len);
+    ok_(__FILE__,line)(hr == S_OK, "GetNamespaceUri returned %08x\n", hr);
+    ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
+    ok_(__FILE__,line)(!strcmp_wa(str, expect), "namespace = %s\n", wine_dbgstr_w(str));
+    return str;
+}
+
 typedef struct _testinput
 {
     IUnknown IUnknown_iface;
@@ -2086,9 +2100,8 @@ static void test_namespaceuri(void)
 
         type = ~0u;
         while (IXmlReader_Read(reader, &type) == S_OK) {
-            const WCHAR *uri, *local, *qname;
+            const WCHAR *local, *qname;
             UINT length, length2;
-            WCHAR *uriW;
 
             ok(type == XmlNodeType_Element ||
                     type == XmlNodeType_Text ||
@@ -2123,14 +2136,7 @@ static void test_namespaceuri(void)
                 ok(length2 > 0, "Unexpected qualified name length\n");
             }
 
-            uri = NULL;
-            hr = IXmlReader_GetNamespaceUri(reader, &uri, NULL);
-            ok(hr == S_OK, "S_OK, got %08x\n", hr);
-            ok(uri != NULL, "Unexpected NULL uri pointer\n");
-
-            uriW = a2w(uri_tests[i].uri[j]);
-            ok(!lstrcmpW(uriW, uri), "%s: uri %s\n", wine_dbgstr_w(local), wine_dbgstr_w(uri));
-            free_str(uriW);
+            reader_namespace(reader, uri_tests[i].uri[j]);
 
             j++;
         }
