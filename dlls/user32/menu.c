@@ -76,7 +76,8 @@ typedef struct {
     LPWSTR dwTypeData;		/* depends on fMask */
     HBITMAP hbmpItem;		/* bitmap */
     /* ----------- Wine stuff ----------- */
-    RECT      rect;		/* Item area (relative to menu window) */
+    RECT      rect;             /* Item area (relative to the items_rect).
+                                 * See MENU_AdjustMenuItemRect(). */
     UINT      xTab;		/* X position of text after Tab */
     SIZE   bmpsize;             /* size needed for the HBMMENU_CALLBACK
                                  * bitmap */ 
@@ -706,13 +707,9 @@ static void MENU_FreeItemData( MENUITEM* item )
 static void
 MENU_AdjustMenuItemRect(const POPUPMENU *menu, LPRECT rect)
 {
-    if (menu->bScrolling)
-    {
-        UINT arrow_height;
+    INT scroll_offset = menu->bScrolling ? menu->nScrollPos : 0;
 
-        arrow_height = get_scroll_arrow_height( menu );
-        OffsetRect( rect, 0, arrow_height - menu->nScrollPos );
-    }
+    OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
 }
 
 
@@ -1174,7 +1171,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     int orgX, orgY, maxTab, maxTabWidth, maxHeight;
 
     lppop->Width = lppop->Height = 0;
-    SetRect(&lppop->items_rect, MENU_MARGIN, MENU_MARGIN, MENU_MARGIN, MENU_MARGIN);
+    SetRectEmpty(&lppop->items_rect);
 
     if (lppop->nItems == 0) return;
     hdc = GetDC( 0 );
@@ -1230,7 +1227,8 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
      * of the bitmaps */
     if( !textandbmp) lppop->textOffset = 0;
 
-    /* space for 3d border */
+    /* space for the border */
+    OffsetRect(&lppop->items_rect, MENU_MARGIN, MENU_MARGIN);
     lppop->Height = lppop->items_rect.bottom + MENU_MARGIN;
     lppop->Width = lppop->items_rect.right + MENU_MARGIN;
 
@@ -1267,22 +1265,22 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 {
     MENUITEM *lpitem;
     UINT start, i, helpPos;
-    int orgX, orgY, maxY;
+    int orgX, orgY;
 
     if ((lprect == NULL) || (lppop == NULL)) return;
     if (lppop->nItems == 0) return;
     TRACE("lprect %p %s\n", lprect, wine_dbgstr_rect( lprect));
-    lppop->Width  = lprect->right - lprect->left;
-    lppop->Height = 0;
-    maxY = lprect->top+1;
+    /* Start with a 1 pixel top border.
+       This corresponds to the difference between SM_CYMENU and SM_CYMENUSIZE. */
+    SetRect(&lppop->items_rect, 0, 0, lprect->right - lprect->left, 1);
     start = 0;
     helpPos = ~0U;
     lppop->textOffset = 0;
     while (start < lppop->nItems)
     {
 	lpitem = &lppop->items[start];
-	orgX = lprect->left;
-	orgY = maxY;
+	orgX = lppop->items_rect.left;
+	orgY = lppop->items_rect.bottom;
 
 	  /* Parse items until line break or end of menu */
 	for (i = start; i < lppop->nItems; i++, lpitem++)
@@ -1295,29 +1293,30 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 	    debug_print_menuitem ("  item: ", lpitem, "");
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, TRUE, lppop );
 
-	    if (lpitem->rect.right > lprect->right)
+	    if (lpitem->rect.right > lppop->items_rect.right)
 	    {
 		if (i != start) break;
-		else lpitem->rect.right = lprect->right;
+		else lpitem->rect.right = lppop->items_rect.right;
 	    }
-	    maxY = max( maxY, lpitem->rect.bottom );
+	    lppop->items_rect.bottom = max( lppop->items_rect.bottom, lpitem->rect.bottom );
 	    orgX = lpitem->rect.right;
 	}
 
 	  /* Finish the line (set all items to the largest height found) */
-	while (start < i) lppop->items[start++].rect.bottom = maxY;
+	while (start < i) lppop->items[start++].rect.bottom = lppop->items_rect.bottom;
     }
 
-    lprect->bottom = maxY;
-    lppop->Height = lprect->bottom - lprect->top;
-    lppop->items_rect = *lprect;
+    OffsetRect(&lppop->items_rect, lprect->left, lprect->top);
+    lppop->Width = lppop->items_rect.right - lppop->items_rect.left;
+    lppop->Height = lppop->items_rect.bottom - lppop->items_rect.top;
+    lprect->bottom = lppop->items_rect.bottom;
 
     /* Flush right all items between the MF_RIGHTJUSTIFY and */
     /* the last item (if several lines, only move the last line) */
     if (helpPos == ~0U) return;
     lpitem = &lppop->items[lppop->nItems-1];
     orgY = lpitem->rect.top;
-    orgX = lprect->right;
+    orgX = lprect->right - lprect->left;
     for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--) {
         if (lpitem->rect.top != orgY) break;	/* Other line */
         if (lpitem->rect.right >= orgX) break;	/* Too far right already */
@@ -1945,17 +1944,15 @@ MENU_EnsureMenuItemVisible(LPPOPUPMENU lppop, UINT wIndex, HDC hdc)
         const RECT *rc = &lppop->items_rect;
         UINT scroll_height = rc->bottom - rc->top;
 
-        /* NB the item rects include the MENU_MARGIN offset (so the first rect has
-           top == MENU_TOP_MARGIN) */
-        if (item->rect.bottom - MENU_MARGIN > lppop->nScrollPos + scroll_height)
+        if (item->rect.bottom > lppop->nScrollPos + scroll_height)
         {
-            lppop->nScrollPos = item->rect.bottom - MENU_MARGIN - scroll_height;
+            lppop->nScrollPos = item->rect.bottom - scroll_height;
             ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, rc, rc);
             MENU_DrawScrollArrows(lppop, hdc);
         }
-        else if (item->rect.top - MENU_MARGIN < lppop->nScrollPos)
+        else if (item->rect.top < lppop->nScrollPos)
         {
-            lppop->nScrollPos = item->rect.top - MENU_MARGIN;
+            lppop->nScrollPos = item->rect.top;
             ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, rc, rc);
             MENU_DrawScrollArrows(lppop, hdc);
         }
@@ -2360,32 +2357,32 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
     }
     else
     {
+        RECT item_rect = item->rect;
+
+        MENU_AdjustMenuItemRect(menu, &item_rect);
         GetWindowRect( menu->hWnd, &rect );
+
 	if (menu->wFlags & MF_POPUP)
 	{
-            RECT rc = item->rect;
-
-            MENU_AdjustMenuItemRect(menu, &rc);
-
 	    /* The first item in the popup menu has to be at the
 	       same y position as the focused menu item */
             if (wFlags & TPM_LAYOUTRTL)
                 rect.left += GetSystemMetrics(SM_CXBORDER);
 	    else
-                rect.left += rc.right - GetSystemMetrics(SM_CXBORDER);
-	    rect.top += rc.top - MENU_MARGIN;
-	    rect.right = rc.left - rc.right + GetSystemMetrics(SM_CXBORDER);
-	    rect.bottom = rc.top - rc.bottom - 2 * MENU_MARGIN;
+                rect.left += item_rect.right - GetSystemMetrics(SM_CXBORDER);
+	    rect.top += item_rect.top - MENU_MARGIN;
+	    rect.right = item_rect.left - item_rect.right + GetSystemMetrics(SM_CXBORDER);
+	    rect.bottom = item_rect.top - item_rect.bottom - 2 * MENU_MARGIN;
 	}
 	else
 	{
             if (wFlags & TPM_LAYOUTRTL)
-                rect.left = rect.right - item->rect.left;
+                rect.left = rect.right - item_rect.left;
 	    else
-                rect.left += item->rect.left;
-	    rect.top += item->rect.bottom;
-	    rect.right = item->rect.right - item->rect.left;
-	    rect.bottom = item->rect.bottom - item->rect.top;
+                rect.left += item_rect.left;
+	    rect.top += item_rect.bottom;
+	    rect.right = item_rect.right - item_rect.left;
+	    rect.bottom = item_rect.bottom - item_rect.top;
 	}
     }
 
@@ -5118,6 +5115,7 @@ BOOL WINAPI GetMenuItemRect(HWND hwnd, HMENU hMenu, UINT uItem, RECT *rect)
 
      *rect = item->rect;
 
+     OffsetRect(rect, menu->items_rect.left, menu->items_rect.top);
      MapWindowPoints(hwnd, 0, (POINT *)rect, 2);
 
      return TRUE;
