@@ -182,6 +182,7 @@ IDL_SRCS = \
 	wmsdkidl.idl \
 	wpcapi.idl \
 	wsdbase.idl \
+	wsdxml.idl \
 	wtypes.idl \
 	wuapi.idl \
 	xapo.idl \
