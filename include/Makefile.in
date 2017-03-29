@@ -689,6 +689,7 @@ HEADER_SRCS = \
 	ws2ipdef.h \
 	ws2spi.h \
 	ws2tcpip.h \
+	wsdapi.h \
 	wsdtypes.h \
 	wsdxmldom.h \
 	wshisotp.h \
