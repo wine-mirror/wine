@@ -543,41 +543,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
-static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const RECT *rect, float depth)
-{
-    struct wined3d_resource *resource = &surface->container->resource;
-    struct wined3d_device *device = resource->device;
-    const struct wined3d_blitter_ops *blitter;
-    struct wined3d_rendertarget_view *view;
-    struct wined3d_view_desc view_desc;
-    HRESULT hr;
-
-    if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info,
-            WINED3D_BLIT_OP_DEPTH_FILL, NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format)))
-    {
-        FIXME("No blitter is capable of performing the requested depth fill operation.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    view_desc.format_id = resource->format->id;
-    view_desc.flags = 0;
-    view_desc.u.texture.level_idx = surface->texture_level;
-    view_desc.u.texture.level_count = 1;
-    view_desc.u.texture.layer_idx = surface->texture_layer;
-    view_desc.u.texture.layer_count = 1;
-    if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc,
-            resource, NULL, &wined3d_null_parent_ops, &view)))
-    {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-        return hr;
-    }
-
-    hr = blitter->depth_fill(device, view, rect, WINED3DCLEAR_ZBUFFER, depth, 0);
-    wined3d_rendertarget_view_decref(view);
-
-    return hr;
-}
-
 static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect)
 {
@@ -3423,11 +3388,11 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
     struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
-    struct wined3d_texture *src_texture = NULL;
-    unsigned int src_sub_resource_idx = 0;
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
 
@@ -3435,7 +3400,6 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             | WINED3D_BLT_SRC_CKEY
             | WINED3D_BLT_SRC_CKEY_OVERRIDE
             | WINED3D_BLT_WAIT
-            | WINED3D_BLT_DEPTH_FILL
             | WINED3D_BLT_DO_NOT_WAIT
             | WINED3D_BLT_ALPHA_TEST;
 
@@ -3447,19 +3411,12 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     if (fx)
     {
         TRACE("fx %#x.\n", fx->fx);
-        TRACE("fill_color 0x%08x.\n", fx->fill_color);
         TRACE("dst_color_key {0x%08x, 0x%08x}.\n",
                 fx->dst_color_key.color_space_low_value,
                 fx->dst_color_key.color_space_high_value);
         TRACE("src_color_key {0x%08x, 0x%08x}.\n",
                 fx->src_color_key.color_space_low_value,
                 fx->src_color_key.color_space_high_value);
-    }
-
-    if (src_surface)
-    {
-        src_texture = src_surface->container;
-        src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
     }
 
     if (!fx || !(fx->fx))
@@ -3509,11 +3466,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         goto fallback;
     }
 
-    if (src_texture)
-        src_swapchain = src_texture->swapchain;
-    else
-        src_swapchain = NULL;
-
+    src_swapchain = src_texture->swapchain;
     dst_swapchain = dst_texture->swapchain;
 
     /* This isn't strictly needed. FBO blits for example could deal with
@@ -3527,38 +3480,20 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         goto fallback;
     }
 
-    scale = src_texture
-            && (src_rect->right - src_rect->left != dst_rect->right - dst_rect->left
-            || src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top);
-    convert = src_texture && src_texture->resource.format->id != dst_texture->resource.format->id;
+    scale = src_rect->right - src_rect->left != dst_rect->right - dst_rect->left
+            || src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top;
+    convert = src_texture->resource.format->id != dst_texture->resource.format->id;
 
     dst_ds_flags = dst_texture->resource.format_flags
             & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
-    if (src_texture)
-        src_ds_flags = src_texture->resource.format_flags
-                & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
-    else
-        src_ds_flags = 0;
+    src_ds_flags = src_texture->resource.format_flags
+            & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
 
     if (src_ds_flags || dst_ds_flags)
     {
-        if (flags & WINED3D_BLT_DEPTH_FILL)
-        {
-            struct wined3d_color color;
-
-            TRACE("Depth fill.\n");
-
-            if (!wined3d_format_convert_color_to_float(dst_texture->resource.format, NULL, fx->fill_color, &color))
-                return WINED3DERR_INVALIDCALL;
-
-            if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, dst_rect, color.r)))
-                return WINED3D_OK;
-        }
-        else if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_texture->resource.draw_binding,
+        if (SUCCEEDED(wined3d_surface_depth_blt(src_surface, src_texture->resource.draw_binding,
                 src_rect, dst_surface, dst_texture->resource.draw_binding, dst_rect)))
-        {
             return WINED3D_OK;
-        }
     }
     else
     {
@@ -3695,8 +3630,6 @@ fallback:
         return WINED3D_OK;
 
 cpu:
-    if (flags & WINED3D_BLT_DEPTH_FILL)
-        return surface_cpu_blt_colour_fill(dst_texture, dst_sub_resource_idx, &dst_box, fx->fill_color);
     return surface_cpu_blt(dst_texture, dst_sub_resource_idx, &dst_box,
             src_texture, src_sub_resource_idx, &src_box, flags, fx, filter);
 }

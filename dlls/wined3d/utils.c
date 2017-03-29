@@ -5042,65 +5042,6 @@ static float color_to_float(DWORD color, DWORD size, DWORD offset)
     return (float)color / (float)mask;
 }
 
-BOOL wined3d_format_convert_color_to_float(const struct wined3d_format *format,
-        const struct wined3d_palette *palette, DWORD color, struct wined3d_color *float_color)
-{
-    switch (format->id)
-    {
-        case WINED3DFMT_B8G8R8_UNORM:
-        case WINED3DFMT_B8G8R8A8_UNORM:
-        case WINED3DFMT_B8G8R8X8_UNORM:
-        case WINED3DFMT_B5G6R5_UNORM:
-        case WINED3DFMT_B5G5R5X1_UNORM:
-        case WINED3DFMT_B5G5R5A1_UNORM:
-        case WINED3DFMT_B4G4R4A4_UNORM:
-        case WINED3DFMT_B2G3R3_UNORM:
-        case WINED3DFMT_R8_UNORM:
-        case WINED3DFMT_A8_UNORM:
-        case WINED3DFMT_B2G3R3A8_UNORM:
-        case WINED3DFMT_B4G4R4X4_UNORM:
-        case WINED3DFMT_R10G10B10A2_UNORM:
-        case WINED3DFMT_R10G10B10A2_SNORM:
-        case WINED3DFMT_R8G8B8A8_UNORM:
-        case WINED3DFMT_R8G8B8X8_UNORM:
-        case WINED3DFMT_R16G16_UNORM:
-        case WINED3DFMT_B10G10R10A2_UNORM:
-            float_color->r = color_to_float(color, format->red_size, format->red_offset);
-            float_color->g = color_to_float(color, format->green_size, format->green_offset);
-            float_color->b = color_to_float(color, format->blue_size, format->blue_offset);
-            float_color->a = color_to_float(color, format->alpha_size, format->alpha_offset);
-            return TRUE;
-
-        case WINED3DFMT_P8_UINT:
-            if (palette)
-            {
-                float_color->r = palette->colors[color].rgbRed / 255.0f;
-                float_color->g = palette->colors[color].rgbGreen / 255.0f;
-                float_color->b = palette->colors[color].rgbBlue / 255.0f;
-            }
-            else
-            {
-                float_color->r = 0.0f;
-                float_color->g = 0.0f;
-                float_color->b = 0.0f;
-            }
-            float_color->a = color / 255.0f;
-            return TRUE;
-
-        case WINED3DFMT_S1_UINT_D15_UNORM:
-        case WINED3DFMT_D16_UNORM:
-        case WINED3DFMT_D24_UNORM_S8_UINT:
-        case WINED3DFMT_X8D24_UNORM:
-        case WINED3DFMT_D32_UNORM:
-            float_color->r = color_to_float(color, format->depth_size, 0);
-            return TRUE;
-
-        default:
-            ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->id));
-            return FALSE;
-    }
-}
-
 void wined3d_format_get_float_color_key(const struct wined3d_format *format,
         const struct wined3d_color_key *key, struct wined3d_color *float_colors)
 {
