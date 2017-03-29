@@ -305,6 +305,20 @@ static const WCHAR *_reader_name(unsigned line, IXmlReader *reader, const char *
     return str;
 }
 
+#define reader_prefix(a,b) _reader_prefix(__LINE__,a,b)
+static const WCHAR *_reader_prefix(unsigned line, IXmlReader *reader, const char *expect)
+{
+    const WCHAR *str = (void*)0xdeadbeef;
+    ULONG len = 0xdeadbeef;
+    HRESULT hr;
+
+    hr = IXmlReader_GetPrefix(reader, &str, &len);
+    ok_(__FILE__,line)(hr == S_OK, "GetPrefix returned %08x\n", hr);
+    ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
+    ok_(__FILE__,line)(!strcmp_wa(str, expect), "prefix = %s\n", wine_dbgstr_w(str));
+    return str;
+}
+
 typedef struct _testinput
 {
     IUnknown IUnknown_iface;
@@ -1982,9 +1996,7 @@ static void test_prefix(void)
     ok(hr == S_OK, "S_OK, got %08x\n", hr);
 
     for (i = 0; i < sizeof(prefix_tests)/sizeof(prefix_tests[0]); i++) {
-        const WCHAR *prefix;
         XmlNodeType type;
-        WCHAR *expected;
         IStream *stream;
 
         stream = create_stream_on_data(prefix_tests[i].xml, strlen(prefix_tests[i].xml) + 1);
@@ -1995,12 +2007,7 @@ static void test_prefix(void)
         ok(hr == S_OK, "Read() failed, %#x\n", hr);
         ok(type == XmlNodeType_Element, "Unexpected node type %d.\n", type);
 
-        expected = a2w(prefix_tests[i].prefix1);
-        hr = IXmlReader_GetPrefix(reader, &prefix, NULL);
-        ok(hr == S_OK, "GetPrefix() failed, %#x.\n", hr);
-        ok(!lstrcmpW(prefix, expected), "Unexpected prefix %s, expected %s.\n", wine_dbgstr_w(prefix),
-            wine_dbgstr_w(expected));
-        free_str(expected);
+        reader_prefix(reader, prefix_tests[i].prefix1);
 
         hr = IXmlReader_MoveToFirstAttribute(reader);
         ok(hr == S_OK, "MoveToFirstAttribute() failed, %#x.\n", hr);
@@ -2009,12 +2016,7 @@ static void test_prefix(void)
         ok(hr == S_OK, "GetNodeType() failed, %#x.\n", hr);
         ok(type == XmlNodeType_Attribute, "Unexpected node type %d.\n", type);
 
-        expected = a2w(prefix_tests[i].prefix2);
-        hr = IXmlReader_GetPrefix(reader, &prefix, NULL);
-        ok(hr == S_OK, "GetPrefix() failed, %#x.\n", hr);
-        ok(!lstrcmpW(prefix, expected), "Unexpected prefix %s, expected %s.\n", wine_dbgstr_w(prefix),
-            wine_dbgstr_w(expected));
-        free_str(expected);
+        reader_prefix(reader, prefix_tests[i].prefix2);
 
         next_attribute(reader);
 
@@ -2022,23 +2024,13 @@ static void test_prefix(void)
         ok(hr == S_OK, "GetNodeType() failed, %#x.\n", hr);
         ok(type == XmlNodeType_Attribute, "Unexpected node type %d.\n", type);
 
-        expected = a2w(prefix_tests[i].prefix3);
-        hr = IXmlReader_GetPrefix(reader, &prefix, NULL);
-        ok(hr == S_OK, "GetPrefix() failed, %#x.\n", hr);
-        ok(!lstrcmpW(prefix, expected), "Unexpected prefix %s, expected %s.\n", wine_dbgstr_w(prefix),
-            wine_dbgstr_w(expected));
-        free_str(expected);
+        reader_prefix(reader, prefix_tests[i].prefix3);
 
         /* back to the element, check prefix */
         hr = IXmlReader_MoveToElement(reader);
         ok(hr == S_OK, "MoveToElement() failed, %#x.\n", hr);
 
-        expected = a2w(prefix_tests[i].prefix1);
-        hr = IXmlReader_GetPrefix(reader, &prefix, NULL);
-        ok(hr == S_OK, "GetPrefix() failed, %#x.\n", hr);
-        ok(!lstrcmpW(prefix, expected), "Unexpected prefix %s, expected %s.\n", wine_dbgstr_w(prefix),
-            wine_dbgstr_w(expected));
-        free_str(expected);
+        reader_prefix(reader, prefix_tests[i].prefix1);
 
         IStream_Release(stream);
     }
