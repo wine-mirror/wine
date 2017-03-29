@@ -1004,14 +1004,6 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
 
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x.\n", buffer, offset, size, data, flags);
 
-    /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001 multitexture
-     * fill rate test seems to depend on this. When we map a buffer with
-     * GL_MAP_INVALIDATE_BUFFER_BIT, the driver is free to discard the
-     * previous contents of the buffer. The r600g driver only does this when
-     * the buffer is currently in use, while the proprietary NVIDIA driver
-     * appears to do this unconditionally. */
-    if (buffer->flags & WINED3D_BUFFER_DISCARD)
-        flags &= ~WINED3D_MAP_DISCARD;
     count = ++buffer->resource.map_count;
 
     if (buffer->buffer_object)
@@ -1063,6 +1055,16 @@ static HRESULT wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UI
             if (count == 1)
             {
                 buffer_bind(buffer, context);
+
+                /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001
+                 * multitexture fill rate test seems to depend on this. When
+                 * we map a buffer with GL_MAP_INVALIDATE_BUFFER_BIT, the
+                 * driver is free to discard the previous contents of the
+                 * buffer. The r600g driver only does this when the buffer is
+                 * currently in use, while the proprietary NVIDIA driver
+                 * appears to do this unconditionally. */
+                if (buffer->flags & WINED3D_BUFFER_DISCARD)
+                    flags &= ~WINED3D_MAP_DISCARD;
 
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
                 {
