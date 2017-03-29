@@ -291,6 +291,20 @@ static const WCHAR *_reader_value(unsigned line, IXmlReader *reader, const char 
     return str;
 }
 
+#define reader_name(a,b) _reader_name(__LINE__,a,b)
+static const WCHAR *_reader_name(unsigned line, IXmlReader *reader, const char *expect)
+{
+    const WCHAR *str = (void*)0xdeadbeef;
+    ULONG len = 0xdeadbeef;
+    HRESULT hr;
+
+    hr = IXmlReader_GetLocalName(reader, &str, &len);
+    ok_(__FILE__,line)(hr == S_OK, "GetLocalName returned %08x\n", hr);
+    ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
+    ok_(__FILE__,line)(!strcmp_wa(str, expect), "name = %s\n", wine_dbgstr_w(str));
+    return str;
+}
+
 typedef struct _testinput
 {
     IUnknown IUnknown_iface;
@@ -769,7 +783,6 @@ static void test_reader_depth(IXmlReader *reader, UINT depth, UINT brk, int line
 static void test_read_xmldeclaration(void)
 {
     static const WCHAR xmlW[] = {'x','m','l',0};
-    static const WCHAR RegistrationInfoW[] = {'R','e','g','i','s','t','r','a','t','i','o','n','I','n','f','o',0};
     static const struct
     {
         WCHAR name[12];
@@ -913,11 +926,7 @@ todo_wine {
     ok(!ret, "element should not be empty\n");
 
     reader_value(reader, "");
-
-    val = NULL;
-    hr = IXmlReader_GetLocalName(reader, &val, NULL);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(val, xmlW), "got %s\n", wine_dbgstr_w(val));
+    reader_name(reader, "xml");
 
     val = NULL;
     hr = IXmlReader_GetQualifiedName(reader, &val, NULL);
@@ -949,10 +958,7 @@ todo_wine {
     ok(ret, "element should be empty\n");
 
     reader_value(reader, "");
-
-    hr = IXmlReader_GetLocalName(reader, &val, NULL);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(val, RegistrationInfoW), "got %s\n", wine_dbgstr_w(val));
+    reader_name(reader, "RegistrationInfo");
 
     type = -1;
     hr = IXmlReader_Read(reader, &type);
@@ -1037,12 +1043,7 @@ static void test_read_comment(void)
 
             ok(type == XmlNodeType_Comment, "got %d for %s\n", type, test->xml);
 
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetLocalName(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == 0, "got %u\n", len);
-            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+            reader_name(reader, "");
 
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, NULL);
@@ -1114,14 +1115,7 @@ static void test_read_pi(void)
 
             ok(type == XmlNodeType_ProcessingInstruction, "got %d for %s\n", type, test->xml);
 
-            len = 0;
-            str = NULL;
-            hr = IXmlReader_GetLocalName(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            reader_name(reader, test->name);
 
             len = 0;
             str = NULL;
@@ -1218,8 +1212,6 @@ static const char test_public_dtd[] =
 static void test_read_public_dtd(void)
 {
     static const WCHAR dtdnameW[] = {'t','e','s','t','d','t','d',0};
-    static const WCHAR sysW[] = {'S','Y','S','T','E','M',0};
-    static const WCHAR pubW[] = {'P','U','B','L','I','C',0};
     IXmlReader *reader;
     const WCHAR *str;
     XmlNodeType type;
@@ -1252,13 +1244,7 @@ static void test_read_public_dtd(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetLocalName(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(len == lstrlenW(pubW), "got %u\n", len);
-    ok(!lstrcmpW(str, pubW), "got %s\n", wine_dbgstr_w(str));
-
+    reader_name(reader, "PUBLIC");
     reader_value(reader, "pubid");
 
     next_attribute(reader);
@@ -1268,13 +1254,7 @@ static void test_read_public_dtd(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetLocalName(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(len == lstrlenW(sysW), "got %u\n", len);
-    ok(!lstrcmpW(str, sysW), "got %s\n", wine_dbgstr_w(str));
-
+    reader_name(reader, "SYSTEM");
     reader_value(reader, "externalid uri");
 
     hr = IXmlReader_MoveToElement(reader);
@@ -1307,7 +1287,6 @@ static const char test_system_dtd[] =
 static void test_read_system_dtd(void)
 {
     static const WCHAR dtdnameW[] = {'t','e','s','t','d','t','d',0};
-    static const WCHAR sysW[] = {'S','Y','S','T','E','M',0};
     IXmlReader *reader;
     const WCHAR *str;
     XmlNodeType type;
@@ -1340,13 +1319,7 @@ static void test_read_system_dtd(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(type == XmlNodeType_Attribute, "got %d\n", type);
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetLocalName(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(len == lstrlenW(sysW), "got %u\n", len);
-    ok(!lstrcmpW(str, sysW), "got %s\n", wine_dbgstr_w(str));
-
+    reader_name(reader, "SYSTEM");
     reader_value(reader, "externalid uri");
 
     hr = IXmlReader_MoveToElement(reader);
@@ -1727,12 +1700,7 @@ static void test_read_cdata(void)
 
             ok(type == XmlNodeType_CDATA, "got %d for %s\n", type, test->xml);
 
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetLocalName(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == 0, "got %u\n", len);
-            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+            reader_name(reader, "");
 
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, NULL);
@@ -1805,12 +1773,7 @@ static void test_read_text(void)
 
             ok(type == XmlNodeType_Text, "got %d for %s\n", type, test->xml);
 
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetLocalName(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == 0, "got %u\n", len);
-            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+            reader_name(reader, "");
 
             str = NULL;
             hr = IXmlReader_GetLocalName(reader, &str, NULL);
@@ -1948,14 +1911,7 @@ static void test_read_attribute(void)
             hr = IXmlReader_MoveToFirstAttribute(reader);
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetLocalName(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->name), "got %u\n", len);
-            str_exp = a2w(test->name);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            reader_name(reader, test->name);
 
             len = 1;
             str = NULL;
