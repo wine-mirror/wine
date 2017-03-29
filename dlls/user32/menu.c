@@ -1339,7 +1339,6 @@ MENU_DrawScrollArrows(const POPUPMENU *lppop, HDC hdc)
     HBITMAP hOrigBitmap;
     UINT arrow_bitmap_width, arrow_bitmap_height;
     BITMAP bmp;
-    RECT rect;
 
     GetObjectW(get_down_arrow_bitmap(), sizeof(bmp), &bmp);
     arrow_bitmap_width = bmp.bmWidth;
@@ -1350,13 +1349,8 @@ MENU_DrawScrollArrows(const POPUPMENU *lppop, HDC hdc)
         hOrigBitmap = SelectObject(hdcMem, get_up_arrow_bitmap());
     else
         hOrigBitmap = SelectObject(hdcMem, get_up_arrow_inactive_bitmap());
-    SetRect(&rect, 0, 0, lppop->Width, arrow_bitmap_height);
-    FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENU));
     BitBlt(hdc, (lppop->Width - arrow_bitmap_width) / 2, 0,
            arrow_bitmap_width, arrow_bitmap_height, hdcMem, 0, 0, SRCCOPY);
-    rect.top = lppop->Height - arrow_bitmap_height;
-    rect.bottom = lppop->Height;
-    FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENU));
     if (lppop->nScrollPos < lppop->nTotalHeight - (MENU_GetMaxPopupHeight(lppop) - 2 * arrow_bitmap_height))
         SelectObject(hdcMem, get_down_arrow_bitmap());
     else
