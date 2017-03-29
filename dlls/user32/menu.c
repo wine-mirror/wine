@@ -362,56 +362,9 @@ static HBITMAP get_arrow_bitmap(void)
     return arrow_bitmap;
 }
 
-/***********************************************************************
- *           get_down_arrow_bitmap
- */
-static HBITMAP get_down_arrow_bitmap(void)
-{
-    static HBITMAP arrow_bitmap;
-
-    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_DNARROW));
-    return arrow_bitmap;
-}
-
-/***********************************************************************
- *           get_down_arrow_inactive_bitmap
- */
-static HBITMAP get_down_arrow_inactive_bitmap(void)
-{
-    static HBITMAP arrow_bitmap;
-
-    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_DNARROWI));
-    return arrow_bitmap;
-}
-
-/***********************************************************************
- *           get_up_arrow_bitmap
- */
-static HBITMAP get_up_arrow_bitmap(void)
-{
-    static HBITMAP arrow_bitmap;
-
-    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_UPARROW));
-    return arrow_bitmap;
-}
-
-/***********************************************************************
- *           get_up_arrow_inactive_bitmap
- */
-static HBITMAP get_up_arrow_inactive_bitmap(void)
-{
-    static HBITMAP arrow_bitmap;
-
-    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_UPARROWI));
-    return arrow_bitmap;
-}
-
 static inline UINT get_scroll_arrow_height(const POPUPMENU *menu)
 {
-    BITMAP bmp;
-
-    GetObjectW(get_up_arrow_bitmap(), sizeof(bmp), &bmp);
-    return bmp.bmHeight;
+    return menucharsize.cy + 4;
 }
 
 /***********************************************************************
@@ -1227,6 +1180,8 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
      * of the bitmaps */
     if( !textandbmp) lppop->textOffset = 0;
 
+    lppop->nTotalHeight = lppop->items_rect.bottom;
+
     /* space for the border */
     OffsetRect(&lppop->items_rect, MENU_MARGIN, MENU_MARGIN);
     lppop->Height = lppop->items_rect.bottom + MENU_MARGIN;
@@ -1234,12 +1189,12 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 
     /* Adjust popup height if it exceeds maximum */
     maxHeight = MENU_GetMaxPopupHeight(lppop);
-    lppop->nTotalHeight = lppop->Height - MENU_MARGIN;
     if (lppop->Height >= maxHeight)
     {
         lppop->Height = maxHeight;
-        lppop->items_rect.top += get_scroll_arrow_height(lppop);
-        lppop->items_rect.bottom = lppop->Height - MENU_MARGIN - get_scroll_arrow_height(lppop);
+        /* When the scroll arrows are present, don't add the top/bottom margin as well */
+        lppop->items_rect.top += get_scroll_arrow_height(lppop) - MENU_MARGIN;
+        lppop->items_rect.bottom = lppop->Height - get_scroll_arrow_height(lppop);
         lppop->bScrolling = TRUE;
     }
     else
@@ -1326,6 +1281,42 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
     }
 }
 
+static void draw_scroll_arrow(HDC hdc, int x, int top, int height, BOOL up, BOOL enabled)
+{
+    RECT rect, light_rect;
+    HBRUSH brush = GetSysColorBrush( enabled ? COLOR_BTNTEXT : COLOR_BTNSHADOW );
+    HBRUSH light = GetSysColorBrush( COLOR_3DLIGHT );
+
+    if (!up)
+    {
+        top = top + height;
+        if (!enabled)
+        {
+            SetRect( &rect, x + 1, top, x + 2, top + 1);
+            FillRect( hdc, &rect, light );
+        }
+        top--;
+    }
+
+    SetRect( &rect, x, top, x + 1, top + 1);
+    while (height--)
+    {
+        FillRect( hdc, &rect, brush );
+        if (!enabled && !up && height)
+        {
+            SetRect( &light_rect, rect.right, rect.top, rect.right + 2, rect.bottom );
+            FillRect( hdc, &light_rect, light );
+        }
+        InflateRect( &rect, 1, 0 );
+        OffsetRect( &rect, 0, up ? 1 : -1 );
+    }
+
+    if (!enabled && up)
+    {
+        rect.left += 2;
+        FillRect( hdc, &rect, light );
+    }
+}
 
 /***********************************************************************
  *           MENU_DrawScrollArrows
@@ -1333,33 +1324,16 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
  * Draw scroll arrows.
  */
 static void
-MENU_DrawScrollArrows(const POPUPMENU *lppop, HDC hdc)
+MENU_DrawScrollArrows(const POPUPMENU *menu, HDC hdc)
 {
-    HDC hdcMem = CreateCompatibleDC(hdc);
-    HBITMAP hOrigBitmap;
-    UINT arrow_bitmap_width, arrow_bitmap_height;
-    BITMAP bmp;
+    UINT full_height = get_scroll_arrow_height( menu );
+    UINT arrow_height = full_height / 3;
+    BOOL at_end = menu->nScrollPos + menu->items_rect.bottom - menu->items_rect.top == menu->nTotalHeight;
 
-    GetObjectW(get_down_arrow_bitmap(), sizeof(bmp), &bmp);
-    arrow_bitmap_width = bmp.bmWidth;
-    arrow_bitmap_height = bmp.bmHeight;
-
-    
-    if (lppop->nScrollPos)
-        hOrigBitmap = SelectObject(hdcMem, get_up_arrow_bitmap());
-    else
-        hOrigBitmap = SelectObject(hdcMem, get_up_arrow_inactive_bitmap());
-    BitBlt(hdc, (lppop->Width - arrow_bitmap_width) / 2, 0,
-           arrow_bitmap_width, arrow_bitmap_height, hdcMem, 0, 0, SRCCOPY);
-    if (lppop->nScrollPos < lppop->nTotalHeight - (MENU_GetMaxPopupHeight(lppop) - 2 * arrow_bitmap_height))
-        SelectObject(hdcMem, get_down_arrow_bitmap());
-    else
-        SelectObject(hdcMem, get_down_arrow_inactive_bitmap());
-    BitBlt(hdc, (lppop->Width - arrow_bitmap_width) / 2,
-           lppop->Height - arrow_bitmap_height,
-           arrow_bitmap_width, arrow_bitmap_height, hdcMem, 0, 0, SRCCOPY);
-    SelectObject(hdcMem, hOrigBitmap);
-    DeleteDC(hdcMem);
+    draw_scroll_arrow( hdc, menu->Width / 3, arrow_height, arrow_height,
+                       TRUE, menu->nScrollPos != 0);
+    draw_scroll_arrow( hdc, menu->Width / 3, menu->Height - 2 * arrow_height, arrow_height,
+                       FALSE, !at_end );
 }
 
 
@@ -1957,13 +1931,30 @@ MENU_EnsureMenuItemVisible(LPPOPUPMENU lppop, UINT wIndex, HDC hdc)
         {
             lppop->nScrollPos = item->rect.bottom - scroll_height;
             ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, rc, rc);
-            MENU_DrawScrollArrows(lppop, hdc);
         }
         else if (item->rect.top < lppop->nScrollPos)
         {
             lppop->nScrollPos = item->rect.top;
             ScrollWindow(lppop->hWnd, 0, nOldPos - lppop->nScrollPos, rc, rc);
-            MENU_DrawScrollArrows(lppop, hdc);
+        }
+
+        /* Invalidate the scroll arrows if necessary */
+        if (nOldPos != lppop->nScrollPos)
+        {
+            RECT arrow_rect = lppop->items_rect;
+            if (nOldPos == 0 || lppop->nScrollPos == 0)
+            {
+                arrow_rect.top = 0;
+                arrow_rect.bottom = lppop->items_rect.top;
+                InvalidateRect(lppop->hWnd, &arrow_rect, FALSE);
+            }
+            if (nOldPos + scroll_height == lppop->nTotalHeight ||
+                lppop->nScrollPos + scroll_height == lppop->nTotalHeight)
+            {
+                arrow_rect.top = lppop->items_rect.bottom;
+                arrow_rect.bottom = lppop->Height;
+                InvalidateRect(lppop->hWnd, &arrow_rect, FALSE);
+            }
         }
     }
 }
