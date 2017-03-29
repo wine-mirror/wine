@@ -925,6 +925,8 @@ static void wined3d_cs_exec_set_stream_output(struct wined3d_cs *cs, const void 
         InterlockedIncrement(&op->buffer->resource.bind_count);
     if (prev)
         InterlockedDecrement(&prev->resource.bind_count);
+
+    device_invalidate_state(cs->device, STATE_STREAM_OUTPUT);
 }
 
 void wined3d_cs_emit_set_stream_output(struct wined3d_cs *cs, UINT stream_idx,

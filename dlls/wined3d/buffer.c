@@ -176,6 +176,8 @@ static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, const st
             device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL));
             device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE));
         }
+        if (buffer->bind_flags & WINED3D_BIND_STREAM_OUTPUT)
+            device_invalidate_state(resource->device, STATE_STREAM_OUTPUT);
     }
 
     if (buffer->query)

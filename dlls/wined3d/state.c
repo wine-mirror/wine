@@ -4930,7 +4930,7 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
         buffer = state->cb[shader_type][i];
         GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, buffer ? buffer->buffer_object : 0));
     }
-    checkGLcall("glBindBufferBase");
+    checkGLcall("bind constant buffers");
 }
 
 static void state_cb_warn(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -4974,6 +4974,40 @@ static void state_uav_warn(struct wined3d_context *context, const struct wined3d
     WARN("ARB_image_load_store is not supported by OpenGL implementation.\n");
 }
 
+static void state_so(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_buffer *buffer;
+    unsigned int offset, size, i;
+
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+
+    for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
+    {
+        if (!(buffer = state->stream_output[i].buffer))
+        {
+            GL_EXTCALL(glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, i, 0));
+            continue;
+        }
+
+        offset = state->stream_output[i].offset;
+        if (offset == ~0u)
+        {
+            FIXME("Appending to stream output buffers not implemented.\n");
+            offset = 0;
+        }
+        size = buffer->resource.size - offset;
+        GL_EXTCALL(glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i,
+                buffer->buffer_object, offset, size));
+    }
+    checkGLcall("bind transform feedback buffers");
+}
+
+static void state_so_warn(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    WARN("Transform feedback not supported.\n");
+}
+
 const struct StateEntryTemplate misc_state_template[] =
 {
     { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  state_cb,           }, ARB_UNIFORM_BUFFER_OBJECT       },
@@ -4990,6 +5024,8 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_COMPUTE_SHADER_RESOURCE_BINDING,              { STATE_COMPUTE_SHADER_RESOURCE_BINDING,              state_cs_resource_binding}, WINED3D_GL_EXT_NONE        },
     { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        state_cs_uav_binding}, ARB_SHADER_IMAGE_LOAD_STORE     },
     { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        { STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,        state_uav_warn      }, WINED3D_GL_EXT_NONE             },
+    { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so,           }, WINED3D_GL_VERSION_3_2          },
+    { STATE_STREAM_OUTPUT,                                { STATE_STREAM_OUTPUT,                                state_so_warn,      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          state_blend         }, WINED3D_GL_EXT_NONE             },
