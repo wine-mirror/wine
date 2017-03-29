@@ -2679,15 +2679,34 @@ static void reader_clear_ns(xmlreader *reader)
     struct ns *ns, *ns2;
 
     LIST_FOR_EACH_ENTRY_SAFE(ns, ns2, &reader->ns, struct ns, entry) {
+        list_remove(&ns->entry);
         reader_free_strvalued(reader, &ns->prefix);
         reader_free_strvalued(reader, &ns->uri);
         reader_free(reader, ns);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(ns, ns2, &reader->nsdef, struct ns, entry) {
+        list_remove(&ns->entry);
         reader_free_strvalued(reader, &ns->uri);
         reader_free(reader, ns);
     }
+}
+
+static void reader_reset_parser(xmlreader *reader)
+{
+    reader->position.line_number = 0;
+    reader->position.line_position = 0;
+
+    reader_clear_elements(reader);
+    reader_clear_attrs(reader);
+    reader_clear_ns(reader);
+    reader_free_strvalues(reader);
+
+    reader->depth = 0;
+    reader->nodetype = XmlNodeType_None;
+    reader->resumestate = XmlReadResumeState_Initial;
+    memset(reader->resume, 0, sizeof(reader->resume));
+    reader->is_empty_element = FALSE;
 }
 
 static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
@@ -2700,13 +2719,10 @@ static ULONG WINAPI xmlreader_Release(IXmlReader *iface)
     if (ref == 0)
     {
         IMalloc *imalloc = This->imalloc;
+        reader_reset_parser(This);
         if (This->input) IUnknown_Release(&This->input->IXmlReaderInput_iface);
         if (This->resolver) IXmlResolver_Release(This->resolver);
         if (This->mlang) IUnknown_Release(This->mlang);
-        reader_clear_attrs(This);
-        reader_clear_ns(This);
-        reader_clear_elements(This);
-        reader_free_strvalues(This);
         reader_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
     }
@@ -2729,13 +2745,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
         This->input = NULL;
     }
 
-    This->position.line_number = 0;
-    This->position.line_position = 0;
-    reader_clear_elements(This);
-    This->depth = 0;
-    This->nodetype = XmlNodeType_None;
-    This->resumestate = XmlReadResumeState_Initial;
-    memset(This->resume, 0, sizeof(This->resume));
+    reader_reset_parser(This);
 
     /* just reset current input */
     if (!input)
@@ -2776,7 +2786,6 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
         This->state = XmlReadState_Initial;
         This->instate = XmlReadInState_Initial;
     }
-
     return hr;
 }
 
