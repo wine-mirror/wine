@@ -277,6 +277,20 @@ static void test_read_state(IXmlReader *reader, XmlReadState expected,
 #define TEST_READER_STATE(reader, state) test_read_state(reader, state, -1, __LINE__)
 #define TEST_READER_STATE2(reader, state, brk) test_read_state(reader, state, brk, __LINE__)
 
+#define reader_value(a,b) _reader_value(__LINE__,a,b)
+static const WCHAR *_reader_value(unsigned line, IXmlReader *reader, const char *expect)
+{
+    const WCHAR *str = (void*)0xdeadbeef;
+    ULONG len = 0xdeadbeef;
+    HRESULT hr;
+
+    hr = IXmlReader_GetValue(reader, &str, &len);
+    ok_(__FILE__,line)(hr == S_OK, "GetValue returned %08x\n", hr);
+    ok_(__FILE__,line)(len == lstrlenW(str), "len = %u\n", len);
+    ok_(__FILE__,line)(!strcmp_wa(str, expect), "value = %s\n", wine_dbgstr_w(str));
+    return str;
+}
+
 typedef struct _testinput
 {
     IUnknown IUnknown_iface;
@@ -806,9 +820,7 @@ static void test_read_xmldeclaration(void)
     TEST_DEPTH(reader, 0);
     TEST_READER_STATE(reader, XmlReadState_Interactive);
 
-    hr = IXmlReader_GetValue(reader, &val, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+    reader_value(reader, "");
 
     /* check attributes */
     next_attribute(reader);
@@ -900,9 +912,7 @@ todo_wine {
     ret = IXmlReader_IsEmptyElement(reader);
     ok(!ret, "element should not be empty\n");
 
-    hr = IXmlReader_GetValue(reader, &val, NULL);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-    ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+    reader_value(reader, "");
 
     val = NULL;
     hr = IXmlReader_GetLocalName(reader, &val, NULL);
@@ -938,9 +948,7 @@ todo_wine {
     ret = IXmlReader_IsEmptyElement(reader);
     ok(ret, "element should be empty\n");
 
-    hr = IXmlReader_GetValue(reader, &val, NULL);
-    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-    ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+    reader_value(reader, "");
 
     hr = IXmlReader_GetLocalName(reader, &val, NULL);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
@@ -1025,7 +1033,6 @@ static void test_read_comment(void)
         if (hr == S_OK)
         {
             const WCHAR *str;
-            WCHAR *str_exp;
             UINT len;
 
             ok(type == XmlNodeType_Comment, "got %d for %s\n", type, test->xml);
@@ -1055,14 +1062,7 @@ static void test_read_comment(void)
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             /* value */
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetValue(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->value), "got %u\n", len);
-            str_exp = a2w(test->value);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            reader_value(reader, test->value);
         }
 
         test++;
@@ -1133,14 +1133,7 @@ static void test_read_pi(void)
             free_str(str_exp);
 
             /* value */
-            len = !strlen(test->value);
-            str = NULL;
-            hr = IXmlReader_GetValue(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->value), "got %u\n", len);
-            str_exp = a2w(test->value);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            reader_value(reader, test->value);
         }
 
         test++;
@@ -1201,8 +1194,6 @@ static void test_read_full(void)
 {
     struct nodes_test *test = &misc_test;
     IXmlReader *reader;
-    const WCHAR *value;
-    ULONG len;
     HRESULT hr;
     int i;
 
@@ -1215,15 +1206,7 @@ static void test_read_full(void)
     do
     {
         read_node(reader, test->nodes[i].type);
-
-        len = 0xdeadbeef;
-        hr = IXmlReader_GetValue(reader, &value, &len);
-        ok(hr == S_OK, "GetValue failed: %08x\n", hr);
-        if (test->nodes[i].value)
-        {
-            ok(!strcmp_wa(value, test->nodes[i].value), "value = %s\n", wine_dbgstr_w(value));
-            ok(len == strlen(test->nodes[i].value), "len = %u\n", len);
-        }
+        reader_value(reader, test->nodes[i].value);
     } while(test->nodes[i++].type != XmlNodeType_None);
 
     IXmlReader_Release(reader);
@@ -1234,8 +1217,6 @@ static const char test_public_dtd[] =
 
 static void test_read_public_dtd(void)
 {
-    static const WCHAR sysvalW[] = {'e','x','t','e','r','n','a','l','i','d',' ','u','r','i',0};
-    static const WCHAR pubvalW[] = {'p','u','b','i','d',0};
     static const WCHAR dtdnameW[] = {'t','e','s','t','d','t','d',0};
     static const WCHAR sysW[] = {'S','Y','S','T','E','M',0};
     static const WCHAR pubW[] = {'P','U','B','L','I','C',0};
@@ -1278,12 +1259,7 @@ static void test_read_public_dtd(void)
     ok(len == lstrlenW(pubW), "got %u\n", len);
     ok(!lstrcmpW(str, pubW), "got %s\n", wine_dbgstr_w(str));
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetValue(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(len == lstrlenW(pubvalW), "got %u\n", len);
-    ok(!lstrcmpW(str, pubvalW), "got %s\n", wine_dbgstr_w(str));
+    reader_value(reader, "pubid");
 
     next_attribute(reader);
 
@@ -1299,12 +1275,7 @@ static void test_read_public_dtd(void)
     ok(len == lstrlenW(sysW), "got %u\n", len);
     ok(!lstrcmpW(str, sysW), "got %s\n", wine_dbgstr_w(str));
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetValue(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(len == lstrlenW(sysvalW), "got %u\n", len);
-    ok(!lstrcmpW(str, sysvalW), "got %s\n", wine_dbgstr_w(str));
+    reader_value(reader, "externalid uri");
 
     hr = IXmlReader_MoveToElement(reader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1335,7 +1306,6 @@ static const char test_system_dtd[] =
 
 static void test_read_system_dtd(void)
 {
-    static const WCHAR sysvalW[] = {'e','x','t','e','r','n','a','l','i','d',' ','u','r','i',0};
     static const WCHAR dtdnameW[] = {'t','e','s','t','d','t','d',0};
     static const WCHAR sysW[] = {'S','Y','S','T','E','M',0};
     IXmlReader *reader;
@@ -1377,12 +1347,7 @@ static void test_read_system_dtd(void)
     ok(len == lstrlenW(sysW), "got %u\n", len);
     ok(!lstrcmpW(str, sysW), "got %s\n", wine_dbgstr_w(str));
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetValue(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(len == lstrlenW(sysvalW), "got %u\n", len);
-    ok(!lstrcmpW(str, sysvalW), "got %s\n", wine_dbgstr_w(str));
+    reader_value(reader, "externalid uri");
 
     hr = IXmlReader_MoveToElement(reader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1475,12 +1440,7 @@ static void test_read_element(void)
             free_str(str_exp);
 
             /* value */
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetValue(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == 0, "got %u\n", len);
-            ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
+            reader_value(reader, "");
         }
 
         test++;
@@ -1548,8 +1508,7 @@ static void test_read_element(void)
             {
                 const WCHAR *value;
 
-                hr = IXmlReader_GetValue(reader, &value, NULL);
-                ok(*value == 0, "Unexpected value %s\n", wine_dbgstr_w(value));
+                reader_value(reader, "");
 
                 hr = IXmlReader_MoveToFirstAttribute(reader);
                 ok(hr == S_OK, "got %08x\n", hr);
@@ -1565,8 +1524,7 @@ static void test_read_element(void)
                 hr = IXmlReader_MoveToElement(reader);
                 ok(hr == S_OK, "got %08x\n", hr);
 
-                hr = IXmlReader_GetValue(reader, &value, NULL);
-                ok(*value == 0, "Unexpected value %s\n", wine_dbgstr_w(value));
+                reader_value(reader, "");
 
                 depth = 123;
                 hr = IXmlReader_GetDepth(reader, &depth);
@@ -1634,7 +1592,6 @@ static void test_readvaluechunk(void)
 {
     IXmlReader *reader;
     XmlNodeType type;
-    const WCHAR *value;
     WCHAR buf[64];
     WCHAR b;
     HRESULT hr;
@@ -1664,10 +1621,7 @@ static void test_readvaluechunk(void)
     ok(b == 'c', "got %x\n", b);
 
     /* portion read as chunk is skipped from resulting node value */
-    value = NULL;
-    hr = IXmlReader_GetValue(reader, &value, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(!strcmp_wa(value, "omment1 "), "got %s\n", wine_dbgstr_w(value));
+    reader_value(reader, "omment1 ");
 
     /* once value is returned/allocated it's not possible to read by chunk */
     c = 0;
@@ -1682,10 +1636,7 @@ static void test_readvaluechunk(void)
     ok(hr == S_OK, "got %08x\n", hr);
     ok(!c, "c = %u\n", c);
 
-    value = NULL;
-    hr = IXmlReader_GetValue(reader, &value, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(!strcmp_wa(value, "omment1 "), "got %s\n", wine_dbgstr_w(value));
+    reader_value(reader, "omment1 ");
 
     /* read comment2 */
     hr = IXmlReader_Read(reader, &type);
@@ -1713,10 +1664,7 @@ static void test_readvaluechunk(void)
     ok(!c, "got %u\n", c);
 
     /* portion read as chunk is skipped from resulting node value */
-    value = NULL;
-    hr = IXmlReader_GetValue(reader, &value, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(!*value, "got %s\n", wine_dbgstr_w(value));
+    reader_value(reader, "");
 
     /* once value is returned/allocated it's not possible to read by chunk */
     c = 0xdeadbeef;
@@ -1726,10 +1674,7 @@ static void test_readvaluechunk(void)
     ok(c == 0, "got %u\n", c);
     ok(b == 0xffff, "got %x\n", b);
 
-    value = NULL;
-    hr = IXmlReader_GetValue(reader, &value, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(!*value, "got %s\n", wine_dbgstr_w(value));
+    reader_value(reader, "");
 
     IXmlReader_Release(reader);
 }
@@ -1778,7 +1723,6 @@ static void test_read_cdata(void)
         if (hr == S_OK)
         {
             const WCHAR *str;
-            WCHAR *str_exp;
             UINT len;
 
             ok(type == XmlNodeType_CDATA, "got %d for %s\n", type, test->xml);
@@ -1808,18 +1752,7 @@ static void test_read_cdata(void)
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             /* value */
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetValue(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-
-            str_exp = a2w(test->value);
-            todo_wine_if (test->todo)
-            {
-                ok(len == strlen(test->value), "got %u\n", len);
-                ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            }
-            free_str(str_exp);
+            reader_value(reader, test->value);
         }
 
         IStream_Release(stream);
@@ -1868,7 +1801,6 @@ static void test_read_text(void)
         if (hr == S_OK)
         {
             const WCHAR *str;
-            WCHAR *str_exp;
             UINT len;
 
             ok(type == XmlNodeType_Text, "got %d for %s\n", type, test->xml);
@@ -1898,18 +1830,7 @@ static void test_read_text(void)
             ok(*str == 0, "got %s\n", wine_dbgstr_w(str));
 
             /* value */
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetValue(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-
-            str_exp = a2w(test->value);
-            todo_wine_if (test->todo)
-            {
-                ok(len == strlen(test->value), "got %u\n", len);
-                ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            }
-            free_str(str_exp);
+            reader_value(reader, test->value);
         }
 
         IStream_Release(stream);
@@ -2046,14 +1967,7 @@ static void test_read_attribute(void)
             free_str(str_exp);
 
             /* value */
-            len = 1;
-            str = NULL;
-            hr = IXmlReader_GetValue(reader, &str, &len);
-            ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(len == strlen(test->value), "got %u\n", len);
-            str_exp = a2w(test->value);
-            ok(!lstrcmpW(str, str_exp), "got %s\n", wine_dbgstr_w(str));
-            free_str(str_exp);
+            reader_value(reader, test->value);
         }
 
         IStream_Release(stream);
