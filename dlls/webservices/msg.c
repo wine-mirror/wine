@@ -457,24 +457,24 @@ static HRESULT get_addr_namespace( WS_ADDRESSING_VERSION ver, WS_XML_STRING *str
 
 static const WS_XML_STRING *get_header_name( WS_HEADER_TYPE type )
 {
-    static const WS_XML_STRING action = {6, (BYTE *)"Action"}, to = {2, (BYTE *)"To"};
-    static const WS_XML_STRING msgid = {9, (BYTE *)"MessageID"}, relto = {9, (BYTE *)"RelatesTo"};
-    static const WS_XML_STRING from = {4, (BYTE *)"From"}, replyto = {7, (BYTE *)"ReplyTo"};
-    static const WS_XML_STRING faultto = {7, (BYTE *)"FaultTo"};
-
-    switch (type)
+    static const WS_XML_STRING headers[] =
     {
-    case WS_ACTION_HEADER:      return &action;
-    case WS_TO_HEADER:          return &to;
-    case WS_MESSAGE_ID_HEADER:  return &msgid;
-    case WS_RELATES_TO_HEADER:  return &relto;
-    case WS_FROM_HEADER:        return &from;
-    case WS_REPLY_TO_HEADER:    return &replyto;
-    case WS_FAULT_TO_HEADER:    return &faultto;
-    default:
+        {6, (BYTE *)"Action"},
+        {2, (BYTE *)"To"},
+        {9, (BYTE *)"MessageID"},
+        {9, (BYTE *)"RelatesTo"},
+        {4, (BYTE *)"From"},
+        {7, (BYTE *)"ReplyTo"},
+        {7, (BYTE *)"FaultTo"},
+    };
+
+    if (type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER)
+    {
         ERR( "unknown type %u\n", type );
         return NULL;
     }
+
+    return &headers[type - 1];
 }
 
 static HRESULT write_headers( struct msg *msg, const WS_XML_STRING *ns_env, const WS_XML_STRING *ns_addr,
