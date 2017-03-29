@@ -840,6 +840,43 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( apc_count == 1, "apc not called\n" );
 
+    /* now partial read with data ready */
+    apc_count = 0;
+    U(iosb).Status = 0xdeadbabe;
+    iosb.Information = 0xdeadbeef;
+    ResetEvent( event );
+    ret = WriteFile( write, buffer, 2, &written, NULL );
+    ok(ret && written == 2, "WriteFile error %d\n", GetLastError());
+    status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
+    if (pipe_type & PIPE_READMODE_MESSAGE)
+    {
+        ok( status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", status );
+        ok( U(iosb).Status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", U(iosb).Status );
+    }
+    else
+    {
+        ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
+        ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
+    }
+    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( is_signaled( event ), "event is not signaled\n" );
+    ok( !apc_count, "apc was called\n" );
+    SleepEx( 1, FALSE ); /* non-alertable sleep */
+    ok( !apc_count, "apc was called\n" );
+    SleepEx( 1, TRUE ); /* alertable sleep */
+    ok( apc_count == 1, "apc not called\n" );
+    apc_count = 0;
+    status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
+    ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
+    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
+    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( is_signaled( event ), "event is not signaled\n" );
+    ok( !apc_count, "apc was called\n" );
+    SleepEx( 1, FALSE ); /* non-alertable sleep */
+    ok( !apc_count, "apc was called\n" );
+    SleepEx( 1, TRUE ); /* alertable sleep */
+    ok( apc_count == 1, "apc not called\n" );
+
     /* try read with no data */
     apc_count = 0;
     U(iosb).Status = 0xdeadbabe;
@@ -872,6 +909,19 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
     ok( !is_signaled( event ), "event is signaled\n" );
+    ok( !apc_count, "apc was called\n" );
+    SleepEx( 1, TRUE ); /* alertable sleep */
+    ok( !apc_count, "apc was called\n" );
+    CloseHandle( read );
+
+    /* read from disconnected pipe, with invalid event handle */
+    apc_count = 0;
+    U(iosb).Status = 0xdeadbabe;
+    iosb.Information = 0xdeadbeef;
+    status = NtReadFile( read, (HANDLE)0xdeadbeef, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
+    ok( status == STATUS_INVALID_HANDLE, "wrong status %x\n", status );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( !apc_count, "apc was called\n" );
