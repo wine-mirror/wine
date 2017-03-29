@@ -3738,7 +3738,7 @@ static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device1 *iface,
                 buffer ? buffer->wined3d_buffer : NULL, offsets[i]);
     }
 
-    for (i = count; i < 4; ++i)
+    for (i = count; i < D3D10_SO_BUFFER_SLOT_COUNT; ++i)
     {
         wined3d_device_set_stream_output(device->wined3d_device, i, NULL, 0);
     }
