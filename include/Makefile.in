@@ -181,6 +181,7 @@ IDL_SRCS = \
 	wmsbuffer.idl \
 	wmsdkidl.idl \
 	wpcapi.idl \
+	wsdbase.idl \
 	wtypes.idl \
 	wuapi.idl \
 	xapo.idl \
