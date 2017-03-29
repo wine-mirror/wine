@@ -1402,6 +1402,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     UINT arrow_bitmap_width = 0, arrow_bitmap_height = 0;
     POPUPMENU *menu = MENU_GetMenu(hmenu);
     RECT bmprc;
+    HRGN old_clip = NULL, clip;
 
     debug_print_menuitem("MENU_DrawMenuItem: ", lpitem, "");
 
@@ -1450,6 +1451,16 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     rect = lpitem->rect;
     MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &rect);
 
+    old_clip = CreateRectRgn( 0, 0, 0, 0 );
+    if (GetClipRgn( hdc, old_clip ) <= 0)
+    {
+        DeleteObject( old_clip );
+        old_clip = NULL;
+    }
+    clip = CreateRectRgnIndirect( &menu->items_rect );
+    ExtSelectClipRgn( hdc, clip, RGN_AND );
+    DeleteObject( clip );
+
     if (lpitem->fType & MF_OWNERDRAW)
     {
         /*
@@ -1489,10 +1500,10 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         if (lpitem->fType & MF_POPUP)
             draw_popup_arrow( hdc, rect, arrow_bitmap_width,
                     arrow_bitmap_height);
-        return;
+        goto done;
     }
 
-    if (menuBar && (lpitem->fType & MF_SEPARATOR)) return;
+    if (menuBar && (lpitem->fType & MF_SEPARATOR)) goto done;
 
     if (lpitem->fState & MF_HILITE)
     {
@@ -1554,7 +1565,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         }
         else
             DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
-        return;
+        goto done;
     }
 
 	/* helper lines for debugging */
@@ -1736,6 +1747,10 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	if (hfontOld)
 	    SelectObject (hdc, hfontOld);
     }
+
+done:
+    ExtSelectClipRgn( hdc, old_clip, RGN_COPY );
+    if (old_clip) DeleteObject( old_clip );
 }
 
 
