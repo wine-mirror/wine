@@ -726,19 +726,39 @@ static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
 
 #define PIPENAME "\\\\.\\pipe\\ntdll_tests_pipe.c"
 
-static BOOL create_pipe_pair( HANDLE *read, HANDLE *write, ULONG flags, ULONG size )
+static BOOL create_pipe_pair( HANDLE *read, HANDLE *write, ULONG flags, ULONG type, ULONG size )
 {
-    *read = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_INBOUND | flags, PIPE_TYPE_BYTE | PIPE_WAIT,
-                            1, size, size, NMPWAIT_USE_DEFAULT_WAIT, NULL);
-    ok(*read != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    const BOOL server_reader = flags & PIPE_ACCESS_INBOUND;
+    HANDLE client, server;
 
-    *write = CreateFileA(PIPENAME, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(*write != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError());
+    server = CreateNamedPipeA(PIPENAME, flags, PIPE_WAIT | type,
+                              1, size, size, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
+    client = CreateFileA(PIPENAME, server_reader ? GENERIC_WRITE : GENERIC_READ | FILE_WRITE_ATTRIBUTES, 0,
+                         NULL, OPEN_EXISTING, flags & FILE_FLAG_OVERLAPPED, 0);
+    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError());
+
+    if(server_reader)
+    {
+        *read = server;
+        *write = client;
+    }
+    else
+    {
+        if(type & PIPE_READMODE_MESSAGE)
+        {
+            DWORD read_mode = PIPE_READMODE_MESSAGE;
+            ok(SetNamedPipeHandleState(client, &read_mode, NULL, NULL), "Change mode\n");
+        }
+
+        *read = client;
+        *write = server;
+    }
     return TRUE;
 }
 
-static void test_pipe_read(void)
+static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
 {
     IO_STATUS_BLOCK iosb, iosb2;
     HANDLE handle, read, write;
@@ -749,7 +769,7 @@ static void test_pipe_read(void)
     BOOL ret;
     NTSTATUS status;
 
-    if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED, 4096 )) return;
+    if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED | pipe_flags, pipe_type, 4096 )) return;
 
     /* try read with no data */
     U(iosb).Status = 0xdeadbabe;
@@ -872,7 +892,7 @@ static void test_pipe_read(void)
     ok( !apc_count, "apc was called\n" );
 
     /* disconnect while async read is in progress */
-    if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED, 4096 )) return;
+    if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED | pipe_flags, pipe_type, 4096 )) return;
     apc_count = 0;
     U(iosb).Status = 0xdeadbabe;
     iosb.Information = 0xdeadbeef;
@@ -884,6 +904,7 @@ static void test_pipe_read(void)
     ok( !apc_count, "apc was called\n" );
     CloseHandle( write );
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
+    todo_wine_if(!(pipe_type & PIPE_TYPE_MESSAGE) && (pipe_flags & PIPE_ACCESS_OUTBOUND))
     ok( U(iosb).Status == STATUS_PIPE_BROKEN, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
@@ -892,7 +913,7 @@ static void test_pipe_read(void)
     ok( apc_count == 1, "apc was not called\n" );
     CloseHandle( read );
 
-    if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED, 4096 )) return;
+    if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED | pipe_flags, pipe_type, 4096 )) return;
     ret = DuplicateHandle(GetCurrentProcess(), read, GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
     ok(ret, "Failed to duplicate handle: %d\n", GetLastError());
 
@@ -947,7 +968,7 @@ static void test_pipe_read(void)
     if (pNtCancelIoFileEx)
     {
         /* Basic Cancel Ex */
-        if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED, 4096 )) return;
+        if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED | pipe_flags, pipe_type, 4096 )) return;
 
         apc_count = 0;
         U(iosb).Status = 0xdeadbabe;
@@ -1030,6 +1051,16 @@ START_TEST(pipe)
     trace("starting cancelio tests\n");
     test_cancelio();
 
-    trace("starting read tests\n");
-    test_pipe_read();
+    trace("starting byte read in byte mode client -> server\n");
+    read_pipe_test(PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE);
+    trace("starting byte read in message mode client -> server\n");
+    read_pipe_test(PIPE_ACCESS_INBOUND, PIPE_TYPE_MESSAGE);
+    trace("starting message read in message mode client -> server\n");
+    read_pipe_test(PIPE_ACCESS_INBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
+    trace("starting byte read in byte mode server -> client\n");
+    read_pipe_test(PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE);
+    trace("starting byte read in message mode server -> client\n");
+    read_pipe_test(PIPE_ACCESS_OUTBOUND, PIPE_TYPE_MESSAGE);
+    trace("starting message read in message mode server -> client\n");
+    read_pipe_test(PIPE_ACCESS_OUTBOUND, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
 }
