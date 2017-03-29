@@ -634,6 +634,11 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         if (state->streams[i].buffer)
             wined3d_resource_release(&state->streams[i].buffer->resource);
     }
+    for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
+    {
+        if (state->stream_output[i].buffer)
+            wined3d_resource_release(&state->stream_output[i].buffer->resource);
+    }
     for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
     {
         if (state->textures[i])
@@ -674,6 +679,11 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, int base
     {
         if (state->streams[i].buffer)
             wined3d_resource_acquire(&state->streams[i].buffer->resource);
+    }
+    for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
+    {
+        if (state->stream_output[i].buffer)
+            wined3d_resource_acquire(&state->stream_output[i].buffer->resource);
     }
     for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
     {
