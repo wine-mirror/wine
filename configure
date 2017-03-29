@@ -1018,6 +1018,7 @@ enable_api_ms_win_eventing_consumer_l1_1_0
 enable_api_ms_win_eventing_controller_l1_1_0
 enable_api_ms_win_eventing_provider_l1_1_0
 enable_api_ms_win_eventlog_legacy_l1_1_0
+enable_api_ms_win_mm_misc_l1_1_1
 enable_api_ms_win_ntuser_dc_access_l1_1_0
 enable_api_ms_win_power_base_l1_1_0
 enable_api_ms_win_power_setting_l1_1_0
@@ -17756,6 +17757,7 @@ wine_fn_config_dll api-ms-win-eventing-consumer-l1-1-0 enable_api_ms_win_eventin
 wine_fn_config_dll api-ms-win-eventing-controller-l1-1-0 enable_api_ms_win_eventing_controller_l1_1_0
 wine_fn_config_dll api-ms-win-eventing-provider-l1-1-0 enable_api_ms_win_eventing_provider_l1_1_0
 wine_fn_config_dll api-ms-win-eventlog-legacy-l1-1-0 enable_api_ms_win_eventlog_legacy_l1_1_0
+wine_fn_config_dll api-ms-win-mm-misc-l1-1-1 enable_api_ms_win_mm_misc_l1_1_1
 wine_fn_config_dll api-ms-win-ntuser-dc-access-l1-1-0 enable_api_ms_win_ntuser_dc_access_l1_1_0
 wine_fn_config_dll api-ms-win-power-base-l1-1-0 enable_api_ms_win_power_base_l1_1_0
 wine_fn_config_dll api-ms-win-power-setting-l1-1-0 enable_api_ms_win_power_setting_l1_1_0

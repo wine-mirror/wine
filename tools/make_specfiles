@@ -311,6 +311,10 @@ my @dll_groups =
   "api-ms-win-downlevel-version-l1-1-0",
  ],
  [
+  "winmm",
+  "api-ms-win-mm-misc-l1-1-1",
+ ],
+ [
   "msvcrt",
   "ntdll",
   "ntoskrnl.exe",
