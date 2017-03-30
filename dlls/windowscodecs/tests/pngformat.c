@@ -306,7 +306,7 @@ static IWICBitmapDecoder *create_decoder(const void *image_data, UINT image_size
 
     zero.QuadPart = 0;
     IStream_Seek (stream, zero, STREAM_SEEK_CUR, &pos);
-    todo_wine ok(pos.QuadPart < image_size, "seek beyond the end of stream: %x%08x >= %x\n",
+    ok(pos.QuadPart < image_size, "seek beyond the end of stream: %x%08x >= %x\n",
        (UINT)(pos.QuadPart >> 32), (UINT)pos.QuadPart, image_size);
 
     refcount = IStream_Release(stream);
