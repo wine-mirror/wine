@@ -132,6 +132,16 @@ extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
 
 static int context_tls_index = TLS_OUT_OF_INDEXES;
 
+static CRITICAL_SECTION default_scheduler_cs;
+static CRITICAL_SECTION_DEBUG default_scheduler_cs_debug =
+{
+    0, 0, &default_scheduler_cs,
+    { &default_scheduler_cs_debug.ProcessLocksList, &default_scheduler_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": default_scheduler_cs") }
+};
+static CRITICAL_SECTION default_scheduler_cs = { &default_scheduler_cs_debug, -1, 0, 0, 0, 0 };
+static SchedulerPolicy default_scheduler_policy;
+
 static Context* try_get_current_context(void)
 {
     if (context_tls_index == TLS_OUT_OF_INDEXES)
@@ -745,14 +755,27 @@ Scheduler* __cdecl Scheduler_Create(const SchedulerPolicy *policy)
 /* ?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ */
 void __cdecl Scheduler_ResetDefaultSchedulerPolicy(void)
 {
-    FIXME("() stub\n");
+    TRACE("()\n");
+
+    EnterCriticalSection(&default_scheduler_cs);
+    if(default_scheduler_policy.policy_container)
+        SchedulerPolicy_dtor(&default_scheduler_policy);
+    SchedulerPolicy_ctor(&default_scheduler_policy);
+    LeaveCriticalSection(&default_scheduler_cs);
 }
 
 /* ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z */
 /* ?SetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z */
 void __cdecl Scheduler_SetDefaultSchedulerPolicy(const SchedulerPolicy *policy)
 {
-    FIXME("(%p) stub\n", policy);
+    TRACE("(%p)\n", policy);
+
+    EnterCriticalSection(&default_scheduler_cs);
+    if(!default_scheduler_policy.policy_container)
+        SchedulerPolicy_copy_ctor(&default_scheduler_policy, policy);
+    else
+        SchedulerPolicy_op_assign(&default_scheduler_policy, policy);
+    LeaveCriticalSection(&default_scheduler_cs);
 }
 
 /* ?Create@CurrentScheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z */
@@ -902,6 +925,8 @@ void msvcrt_free_scheduler(void)
 {
     if (context_tls_index != TLS_OUT_OF_INDEXES)
         TlsFree(context_tls_index);
+    if(default_scheduler_policy.policy_container)
+        SchedulerPolicy_dtor(&default_scheduler_policy);
 }
 
 void msvcrt_free_scheduler_thread(void)
