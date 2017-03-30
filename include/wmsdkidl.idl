@@ -183,6 +183,13 @@ typedef enum tagWMT_OFFSET_FORMAT
     WMT_OFFSET_FORMAT_100NS_APPROXIMATE
 } WMT_OFFSET_FORMAT;
 
+typedef enum WMT_CODEC_INFO_TYPE
+{
+    WMT_CODECINFO_AUDIO   = 0,
+    WMT_CODECINFO_VIDEO   = 1,
+    WMT_CODECINFO_UNKNOWN = 0xFFFFFFFF,
+} WMT_CODEC_INFO_TYPE;
+
 typedef LPCWSTR LPCWSTR_WMSDK_TYPE_SAFE;
 
 [
@@ -1015,6 +1022,157 @@ interface IWMWriterAdvanced3 : IWMWriterAdvanced2
 
     HRESULT SetNonBlocking();
 }
+
+[
+    object,
+    uuid(96406bda-2b2b-11d3-b36b-00c04f6108ff),
+    pointer_default(unique),
+    local
+]
+interface IWMHeaderInfo : IUnknown
+{
+    HRESULT GetAttributeCount(
+        [in] WORD stream_num,
+        [out] WORD *attributes );
+
+    HRESULT GetAttributeByIndex(
+        [in] WORD index,
+        [in, out] WORD *stream_num,
+        [out, size_is( *name_len )] WCHAR *name,
+        [in, out] WORD *name_len,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out, size_is( *length )] BYTE *value,
+        [in, out] WORD *length );
+
+    HRESULT GetAttributeByName(
+        [in, out] WORD *stream_num,
+        [in] LPCWSTR name,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out, size_is( *length )] BYTE *value,
+        [in, out] WORD *length );
+
+    HRESULT SetAttribute(
+        [in] WORD stream_num,
+        [in] LPCWSTR name,
+        [in] WMT_ATTR_DATATYPE type,
+        [in, size_is( length )] const BYTE *value,
+        [in] WORD length );
+
+    HRESULT GetMarkerCount(
+        [out] WORD *markers );
+
+    HRESULT GetMarker(
+        [in] WORD index,
+        [out, size_is( *marker_len )] WCHAR *marker_name,
+        [in, out] WORD *marker_len,
+        [out] QWORD *marker_time );
+
+    HRESULT AddMarker(
+        [in] LPCWSTR_WMSDK_TYPE_SAFE marker_name,
+        [in] QWORD marker_time );
+
+    HRESULT RemoveMarker(
+        [in] WORD index );
+
+    HRESULT GetScriptCount(
+        [out] WORD *scripts );
+
+    HRESULT GetScript(
+        [in] WORD index,
+        [out, size_is( *type_len )] WCHAR *type,
+        [in, out] WORD *type_len,
+        [out, size_is( *command_len )] WCHAR *command,
+        [in, out] WORD *command_len,
+        [out] QWORD *script_time );
+
+    HRESULT AddScript(
+        [in] LPCWSTR_WMSDK_TYPE_SAFE type,
+        [in] LPCWSTR_WMSDK_TYPE_SAFE command,
+        [in] QWORD script_time );
+
+    HRESULT RemoveScript(
+        [in] WORD index );
+};
+
+[
+    object,
+    uuid(15cf9781-454e-482e-b393-85fae487a810),
+    pointer_default(unique),
+    local
+]
+interface IWMHeaderInfo2 : IWMHeaderInfo
+{
+    HRESULT GetCodecInfoCount(
+        [out] DWORD *codec_infos );
+
+    HRESULT GetCodecInfo(
+        [in] DWORD   index,
+        [in, out] WORD *name_len,
+        [out, size_is( *name_len )] WCHAR *name,
+        [in, out] WORD *description_len,
+        [out, size_is( *description_len )] WCHAR *description,
+        [out] WMT_CODEC_INFO_TYPE *codec_type,
+        [in, out] WORD *codec_info_cnt,
+        [out, size_is( *codec_info_cnt )] BYTE *codec_info );
+};
+
+[
+    object,
+    uuid(15cc68e3-27cc-4ecd-b222-3f5d02d80bd5),
+    pointer_default(unique),
+    local
+]
+interface IWMHeaderInfo3 : IWMHeaderInfo2
+{
+    HRESULT GetAttributeCountEx(
+        [in] WORD stream_num,
+        [out] WORD *attributes );
+
+    HRESULT GetAttributeIndices(
+        [in] WORD stream_num,
+        [in] LPCWSTR name,
+        [in] WORD *lang_index,
+        [out, size_is( *count )] WORD *indices,
+        [in, out] WORD *count );
+
+   HRESULT GetAttributeByIndexEx(
+        [in] WORD stream_num,
+        [in] WORD index,
+        [out, size_is( *name_len )] LPWSTR name,
+        [in, out] WORD *name_len,
+        [out] WMT_ATTR_DATATYPE *type,
+        [out] WORD *lang_index,
+        [out, size_is( *data_len )] BYTE *value,
+        [in, out] DWORD *data_len );
+
+    HRESULT ModifyAttribute(
+        [in] WORD stream_num,
+        [in] WORD index,
+        [in] WMT_ATTR_DATATYPE type,
+        [in] WORD lang_index,
+        [in, size_is( length )] const BYTE *value,
+        [in] DWORD length );
+
+    HRESULT AddAttribute(
+        [in] WORD stream_num,
+        [in] LPCWSTR name,
+        [out] WORD *index,
+        [in] WMT_ATTR_DATATYPE type,
+        [in] WORD lang_index,
+        [in, size_is( length )] const BYTE *value,
+        [in] DWORD length );
+
+    HRESULT DeleteAttribute(
+        [in] WORD stream_num,
+        [in] WORD index );
+
+    HRESULT AddCodecInfo(
+        [in] LPCWSTR_WMSDK_TYPE_SAFE name,
+        [in] LPCWSTR_WMSDK_TYPE_SAFE description,
+        [in] WMT_CODEC_INFO_TYPE codec_type,
+        [in] WORD codec_info_cnt,
+        [in, size_is( codec_info_cnt )] BYTE *codec_info );
+};
 
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
 cpp_quote("HRESULT WINAPI WMCreateReader(IUnknown*,DWORD,IWMReader**);")
