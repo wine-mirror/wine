@@ -84,10 +84,10 @@
 @ cdecl -arch=win64 ??0improper_scheduler_attach@Concurrency@@QEAA@PEBD@Z(ptr str) msvcr120.??0improper_scheduler_attach@Concurrency@@QEAA@PEBD@Z
 @ thiscall -arch=i386 ??0improper_scheduler_attach@Concurrency@@QAE@XZ(ptr) msvcr120.??0improper_scheduler_attach@Concurrency@@QAE@XZ
 @ cdecl -arch=win64 ??0improper_scheduler_attach@Concurrency@@QEAA@XZ(ptr) msvcr120.??0improper_scheduler_attach@Concurrency@@QEAA@XZ
-@ stub -arch=i386 ??0improper_scheduler_detach@Concurrency@@QAE@PBD@Z
-@ stub -arch=win64 ??0improper_scheduler_detach@Concurrency@@QEAA@PEBD@Z
-@ stub -arch=i386 ??0improper_scheduler_detach@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0improper_scheduler_detach@Concurrency@@QEAA@XZ
+@ thiscall -arch=i386 ??0improper_scheduler_detach@Concurrency@@QAE@PBD@Z(ptr str) msvcr120.??0improper_scheduler_detach@Concurrency@@QAE@PBD@Z
+@ cdecl -arch=win64 ??0improper_scheduler_detach@Concurrency@@QEAA@PEBD@Z(ptr str) msvcr120.??0improper_scheduler_detach@Concurrency@@QEAA@PEBD@Z
+@ thiscall -arch=i386 ??0improper_scheduler_detach@Concurrency@@QAE@XZ(ptr) msvcr120.??0improper_scheduler_detach@Concurrency@@QAE@XZ
+@ cdecl -arch=win64 ??0improper_scheduler_detach@Concurrency@@QEAA@XZ(ptr) msvcr120.??0improper_scheduler_detach@Concurrency@@QEAA@XZ
 @ stub -arch=i386 ??0improper_scheduler_reference@Concurrency@@QAE@PBD@Z
 @ stub -arch=win64 ??0improper_scheduler_reference@Concurrency@@QEAA@PEBD@Z
 @ stub -arch=i386 ??0improper_scheduler_reference@Concurrency@@QAE@XZ
