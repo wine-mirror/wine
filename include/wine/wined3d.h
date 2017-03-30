@@ -1518,6 +1518,7 @@ enum wined3d_shader_byte_code_format
 
 #define WINED3D_MAX_STREAM_OUTPUT_BUFFERS                       4
 #define WINED3D_STREAM_OUTPUT_GAP                               0xffffffff
+#define WINED3D_NO_RASTERIZER_STREAM                            0xffffffff
 
 #define WINED3D_VIEW_BUFFER_RAW                                 0x00000001
 #define WINED3D_VIEW_BUFFER_APPEND                              0x00000002

@@ -419,6 +419,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
         unsigned int start_instance, unsigned int instance_count, BOOL indexed)
 {
+    BOOL emulation = FALSE, rasterizer_discard = FALSE;
     const struct wined3d_fb_state *fb = state->fb;
     const struct wined3d_stream_info *stream_info;
     struct wined3d_event_query *ib_query = NULL;
@@ -428,7 +429,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     struct wined3d_context *context;
     unsigned int i, idx_size = 0;
     const void *idx_data = NULL;
-    BOOL emulation = FALSE;
 
     if (!index_count)
         return;
@@ -569,6 +569,13 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         const struct wined3d_shader *shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
         GLenum primitive_mode = gl_primitive_type_from_d3d(shader->u.gs.output_type);
 
+        if (shader->u.gs.so_desc.rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM)
+        {
+            glEnable(GL_RASTERIZER_DISCARD);
+            checkGLcall("enable rasterizer discard");
+            rasterizer_discard = TRUE;
+        }
+
         GL_EXTCALL(glBeginTransformFeedback(primitive_mode));
         checkGLcall("glBeginTransformFeedback");
         context->transform_feedback_active = 1;
@@ -585,6 +592,12 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     {
         GL_EXTCALL(glMemoryBarrier(GL_ALL_BARRIER_BITS));
         checkGLcall("glMemoryBarrier");
+    }
+
+    if (rasterizer_discard)
+    {
+        glDisable(GL_RASTERIZER_DISCARD);
+        checkGLcall("disable rasterizer discard");
     }
 
     if (ib_query)

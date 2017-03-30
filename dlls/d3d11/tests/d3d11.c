@@ -16833,7 +16833,7 @@ static void test_stream_output_resume(void)
     check_texture_color(test_context.backbuffer, 0xffffffff, 0);
 
     draw_color_quad(&test_context, &red);
-    todo_wine check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
 
     ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
     draw_color_quad(&test_context, &green);
@@ -16842,7 +16842,7 @@ static void test_stream_output_resume(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constants[1], 0, 0);
     ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
     draw_color_quad(&test_context, &red);
-    todo_wine check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
     ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
     draw_color_quad(&test_context, &red);
@@ -16851,7 +16851,7 @@ static void test_stream_output_resume(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constants[2], 0, 0);
     ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
     draw_color_quad(&test_context, &white);
-    todo_wine check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
 
     ID3D11DeviceContext_GSSetShader(context, NULL, NULL, 0);
     draw_color_quad(&test_context, &green);
