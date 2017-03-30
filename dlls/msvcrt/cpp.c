@@ -901,6 +901,48 @@ void __thiscall MSVCRT_invalid_scheduler_policy_thread_specification_dtor(
     TRACE("(%p)\n", _this);
     MSVCRT_exception_dtor(_this);
 }
+
+typedef exception improper_scheduler_attach;
+extern const vtable_ptr MSVCRT_improper_scheduler_attach_vtable;
+
+/* ??0improper_scheduler_attach@Concurrency@@QAE@PBD@Z */
+/* ??0improper_scheduler_attach@Concurrency@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(improper_scheduler_attach_ctor_str, 8)
+improper_scheduler_attach* __thiscall improper_scheduler_attach_ctor_str(
+        improper_scheduler_attach *this, const char *str)
+{
+    TRACE("(%p %p)\n", this, str);
+    MSVCRT_exception_ctor(this, &str);
+    this->vtable = &MSVCRT_improper_scheduler_attach_vtable;
+    return this;
+}
+
+/* ??0improper_scheduler_attach@Concurrency@@QAE@XZ */
+/* ??0improper_scheduler_attach@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(improper_scheduler_attach_ctor, 4)
+improper_scheduler_attach* __thiscall improper_scheduler_attach_ctor(
+        improper_scheduler_attach *this)
+{
+    return improper_scheduler_attach_ctor_str(this, NULL);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_improper_scheduler_attach_copy_ctor,8)
+improper_scheduler_attach * __thiscall MSVCRT_improper_scheduler_attach_copy_ctor(
+        improper_scheduler_attach * _this, const improper_scheduler_attach * rhs)
+{
+    TRACE("(%p %p)\n", _this, rhs);
+    MSVCRT_exception_copy_ctor(_this, rhs);
+    _this->vtable = &MSVCRT_improper_scheduler_attach_vtable;
+    return _this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCRT_improper_scheduler_attach_dtor,4)
+void __thiscall MSVCRT_improper_scheduler_attach_dtor(
+        improper_scheduler_attach * _this)
+{
+    TRACE("(%p)\n", _this);
+    MSVCRT_exception_dtor(_this);
+}
 #endif
 
 #ifndef __GNUC__
@@ -945,6 +987,9 @@ __ASM_VTABLE(invalid_scheduler_policy_value,
 __ASM_VTABLE(invalid_scheduler_policy_thread_specification,
         VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
+__ASM_VTABLE(improper_scheduler_attach,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
 #endif
 
 #ifndef __GNUC__
@@ -975,6 +1020,8 @@ DEFINE_RTTI_DATA1(invalid_scheduler_policy_value, 0, &exception_rtti_base_descri
         ".?AVinvalid_scheduler_policy_value@Concurrency@@" )
 DEFINE_RTTI_DATA1(invalid_scheduler_policy_thread_specification, 0, &exception_rtti_base_descriptor,
         ".?AVinvalid_scheduler_policy_thread_specification@Concurrency@@" )
+DEFINE_RTTI_DATA1(improper_scheduler_attach, 0, &exception_rtti_base_descriptor,
+        ".?AVimproper_scheduler_attach@Concurrency@@" )
 #endif
 
 DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
@@ -990,6 +1037,7 @@ DEFINE_EXCEPTION_TYPE_INFO(improper_lock, 1, &exception_cxx_type_info, NULL)
 DEFINE_EXCEPTION_TYPE_INFO(invalid_scheduler_policy_key, 1, &exception_cxx_type_info, NULL)
 DEFINE_EXCEPTION_TYPE_INFO(invalid_scheduler_policy_value, 1, &exception_cxx_type_info, NULL)
 DEFINE_EXCEPTION_TYPE_INFO(invalid_scheduler_policy_thread_specification, 1, &exception_cxx_type_info, NULL)
+DEFINE_EXCEPTION_TYPE_INFO(improper_scheduler_attach, 1, &exception_cxx_type_info, NULL)
 #endif
 
 void msvcrt_init_exception(void *base)
@@ -1010,6 +1058,7 @@ void msvcrt_init_exception(void *base)
     init_invalid_scheduler_policy_key_rtti(base);
     init_invalid_scheduler_policy_value_rtti(base);
     init_invalid_scheduler_policy_thread_specification_rtti(base);
+    init_improper_scheduler_attach_rtti(base);
 #endif
 
     init_exception_cxx(base);
@@ -1025,6 +1074,7 @@ void msvcrt_init_exception(void *base)
     init_invalid_scheduler_policy_key_cxx(base);
     init_invalid_scheduler_policy_value_cxx(base);
     init_invalid_scheduler_policy_thread_specification_cxx(base);
+    init_improper_scheduler_attach_cxx(base);
 #endif
 #endif
 }
@@ -1063,6 +1113,11 @@ void throw_exception(exception_type et, HRESULT hr, const char *str)
         invalid_scheduler_policy_thread_specification e;
         invalid_scheduler_policy_thread_specification_ctor_str(&e, str);
         _CxxThrowException(&e, &invalid_scheduler_policy_thread_specification_exception_type);
+    }
+    case EXCEPTION_IMPROPER_SCHEDULER_ATTACH: {
+        improper_scheduler_attach e;
+        improper_scheduler_attach_ctor_str(&e, str);
+        _CxxThrowException(&e, &improper_scheduler_attach_exception_type);
     }
 #endif
     }
