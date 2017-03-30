@@ -275,6 +275,7 @@ static void test_writer_create(void)
 static void test_writeroutput(void)
 {
     static const WCHAR utf16W[] = {'u','t','f','-','1','6',0};
+    static const WCHAR usasciiW[] = {'u','s','-','a','s','c','i','i',0};
     IXmlWriterOutput *output;
     IUnknown *unk;
     HRESULT hr;
@@ -311,6 +312,12 @@ todo_wine
     ok(unk != NULL, "got %p\n", unk);
     /* releasing 'unk' crashes on native */
     IUnknown_Release(output);
+    IUnknown_Release(output);
+
+    /* create with us-ascii */
+    output = NULL;
+    hr = CreateXmlWriterOutputWithEncodingName(&testoutput, NULL, usasciiW, &output);
+    ok(hr == S_OK, "got %08x\n", hr);
     IUnknown_Release(output);
 }
 

@@ -64,6 +64,7 @@ static inline void m_free(IMalloc *imalloc, void *mem)
 
 typedef enum
 {
+    XmlEncoding_USASCII,
     XmlEncoding_UTF16,
     XmlEncoding_UTF8,
     XmlEncoding_Unknown

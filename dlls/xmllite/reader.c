@@ -84,6 +84,7 @@ typedef enum
     StringValue_Last
 } XmlReaderStringValue;
 
+static const WCHAR usasciiW[] = {'U','S','-','A','S','C','I','I',0};
 static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR utf8W[] = {'U','T','F','-','8',0};
 
@@ -154,8 +155,9 @@ struct xml_encoding_data
 };
 
 static const struct xml_encoding_data xml_encoding_map[] = {
+    { usasciiW, XmlEncoding_USASCII, 20127 },
     { utf16W, XmlEncoding_UTF16, ~0 },
-    { utf8W,  XmlEncoding_UTF8,  CP_UTF8 }
+    { utf8W,  XmlEncoding_UTF8,  CP_UTF8 },
 };
 
 const WCHAR *get_encoding_name(xml_encoding encoding)
@@ -734,7 +736,7 @@ xml_encoding parse_encoding_name(const WCHAR *name, int len)
     if (!name) return XmlEncoding_Unknown;
 
     min = 0;
-    max = sizeof(xml_encoding_map)/sizeof(struct xml_encoding_data) - 1;
+    max = sizeof(xml_encoding_map)/sizeof(xml_encoding_map[0]) - 1;
 
     while (min <= max)
     {
