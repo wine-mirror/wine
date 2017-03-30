@@ -96,17 +96,24 @@ union allocator_cache_entry {
     } alloc;
 };
 
+struct scheduler_list {
+    struct Scheduler *scheduler;
+    struct scheduler_list *next;
+};
+
 typedef struct {
     Context context;
+    struct scheduler_list scheduler;
     unsigned int id;
     union allocator_cache_entry *allocator_cache[8];
 } ExternalContextBase;
 extern const vtable_ptr MSVCRT_ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
 
-typedef struct {
+typedef struct Scheduler {
     const vtable_ptr *vtable;
 } Scheduler;
+#define call_Scheduler_Release(this) CALL_VTBL_FUNC(this, 20, unsigned int, (Scheduler*), (this))
 
 typedef struct {
     Scheduler scheduler;
@@ -255,6 +262,7 @@ MSVCRT_bool __thiscall ExternalContextBase_IsSynchronouslyBlocked(const External
 
 static void ExternalContextBase_dtor(ExternalContextBase *this)
 {
+    struct scheduler_list *scheduler_cur, *scheduler_next;
     union allocator_cache_entry *next, *cur;
     int i;
 
@@ -263,6 +271,16 @@ static void ExternalContextBase_dtor(ExternalContextBase *this)
         for(cur = this->allocator_cache[i]; cur; cur=next) {
             next = cur->free.next;
             MSVCRT_operator_delete(cur);
+        }
+    }
+
+    if (this->scheduler.scheduler) {
+        call_Scheduler_Release(this->scheduler.scheduler);
+
+        for(scheduler_cur=this->scheduler.next; scheduler_cur; scheduler_cur=scheduler_next) {
+            scheduler_next = scheduler_cur->next;
+            call_Scheduler_Release(scheduler_cur->scheduler);
+            MSVCRT_operator_delete(scheduler_cur);
         }
     }
 }
@@ -291,9 +309,9 @@ static void ExternalContextBase_ctor(ExternalContextBase *this)
 {
     TRACE("(%p)->()\n", this);
 
+    memset(this, 0, sizeof(*this));
     this->context.vtable = &MSVCRT_ExternalContextBase_vtable;
     this->id = InterlockedIncrement(&context_id);
-    memset(this->allocator_cache, 0, sizeof(this->allocator_cache));
 }
 
 /* ?Alloc@Concurrency@@YAPAXI@Z */
@@ -607,7 +625,25 @@ void __thiscall ThreadScheduler_RegisterShutdownEvent(ThreadScheduler *this, HAN
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Attach, 4)
 void __thiscall ThreadScheduler_Attach(ThreadScheduler *this)
 {
-    FIXME("(%p) stub\n", this);
+    ExternalContextBase *context = (ExternalContextBase*)get_current_context();
+
+    TRACE("(%p)\n", this);
+
+    if(context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+        ERR("unknown context set\n");
+        return;
+    }
+
+    if(context->scheduler.scheduler == &this->scheduler)
+        throw_exception(EXCEPTION_IMPROPER_SCHEDULER_ATTACH, 0, NULL);
+
+    if(context->scheduler.scheduler) {
+        struct scheduler_list *l = MSVCRT_operator_new(sizeof(*l));
+        *l = context->scheduler;
+        context->scheduler.next = l;
+    }
+    context->scheduler.scheduler = &this->scheduler;
+    ThreadScheduler_Reference(this);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_CreateScheduleGroup_loc, 8)
