@@ -1159,7 +1159,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     MENUITEM *lpitem;
     HDC hdc;
     UINT start, i;
-    BOOL textandbmp = FALSE;
+    BOOL textandbmp = FALSE, multi_col = FALSE;
     int orgX, orgY, maxTab, maxTabWidth, maxHeight;
 
     lppop->Width = lppop->Height = 0;
@@ -1186,8 +1186,11 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 	  /* Parse items until column break or end of menu */
 	for (i = start; i < lppop->nItems; i++, lpitem++)
 	{
-	    if ((i != start) &&
-		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
+            if (lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))
+            {
+                multi_col = TRUE;
+                if (i != start) break;
+            }
 
 	    MENU_CalcItemSize( hdc, lpitem, lppop->hwndOwner, orgX, orgY, FALSE, lppop );
 	    lppop->items_rect.right = max( lppop->items_rect.right, lpitem->rect.right );
@@ -1231,10 +1234,13 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     if (lppop->Height >= maxHeight)
     {
         lppop->Height = maxHeight;
+        lppop->bScrolling = !multi_col;
         /* When the scroll arrows are present, don't add the top/bottom margin as well */
-        lppop->items_rect.top += get_scroll_arrow_height(lppop) - MENU_MARGIN;
-        lppop->items_rect.bottom = lppop->Height - get_scroll_arrow_height(lppop);
-        lppop->bScrolling = TRUE;
+        if (lppop->bScrolling)
+        {
+            lppop->items_rect.top = get_scroll_arrow_height(lppop);
+            lppop->items_rect.bottom = lppop->Height - get_scroll_arrow_height(lppop);
+        }
     }
     else
     {
