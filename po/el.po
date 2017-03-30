@@ -7542,7 +7542,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr ""
 
-#: oledlg.rc:48
+#: oledlg.rc:48 regedit.rc:397
 #, fuzzy
 msgid "Unknown Type"
 msgstr "&Περιεχόμενα"

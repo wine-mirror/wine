@@ -7560,7 +7560,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "Wstawia zawartość schowka do dokumentu."
 
-#: oledlg.rc:48
+#: oledlg.rc:48 regedit.rc:397
 msgid "Unknown Type"
 msgstr "Nieznany typ"
 

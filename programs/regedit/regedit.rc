@@ -393,6 +393,7 @@ STRINGTABLE
     STRING_INCORRECT_REG_CLASS, "regedit: Incorrect registry class specification in '%1'.\n"
     STRING_REG_KEY_NOT_FOUND, "regedit: Unable to export '%1'. The specified registry key was not found.\n"
     STRING_DELETE_REG_CLASS_FAILED, "regedit: Unable to delete the registry class '%1'.\n"
+    STRING_UNKNOWN_TYPE, "Unknown Type"
 }
 
 /* define language neutral resources */

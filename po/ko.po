@@ -7596,7 +7596,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "당신의 문서에 클립보드의 내용 삽입하기."
 
-#: oledlg.rc:48
+#: oledlg.rc:48 regedit.rc:397
 msgid "Unknown Type"
 msgstr "알수 없는 형식"
 

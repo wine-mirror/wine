@@ -7874,7 +7874,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "Умеће садржај из оставе у документ."
 
-#: oledlg.rc:48
+#: oledlg.rc:48 regedit.rc:397
 msgid "Unknown Type"
 msgstr "Непозната врста"
 

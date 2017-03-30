@@ -7562,7 +7562,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "Insereix el contingut del porta-retalls al vostre document."
 
-#: oledlg.rc:48
+#: oledlg.rc:48 regedit.rc:397
 msgid "Unknown Type"
 msgstr "Tipus desconegut"
 

@@ -7665,7 +7665,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "Indsætter indholdet fra udklipsholderen ind i dokumentet."
 
-#: oledlg.rc:48
+#: oledlg.rc:48 regedit.rc:397
 msgid "Unknown Type"
 msgstr "Ukendt type"
 

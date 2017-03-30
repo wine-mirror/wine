@@ -345,7 +345,6 @@ static const WCHAR type_dword[] = {'R','E','G','_','D','W','O','R','D',0};
 static const WCHAR type_dword_le[] = {'R','E','G','_','D','W','O','R','D','_','L','I','T','T','L','E','_','E','N','D','I','A','N',0};
 static const WCHAR type_dword_be[] = {'R','E','G','_','D','W','O','R','D','_','B','I','G','_','E','N','D','I','A','N',0};
 static const WCHAR type_multi_sz[] = {'R','E','G','_','M','U','L','T','I','_','S','Z',0};
-static const WCHAR unknown_type[] = {'U','n','k','n','o','w','n',' ','T','y','p','e',0};
 
 static const struct
 {
@@ -362,7 +361,6 @@ type_rels[] =
     {REG_DWORD_LITTLE_ENDIAN, type_dword_le},
     {REG_DWORD_BIG_ENDIAN, type_dword_be},
     {REG_MULTI_SZ, type_multi_sz},
-    {REG_UNKNOWN_TYPE, unknown_type}
 };
 
 static const WCHAR *reg_type_to_wchar(DWORD type)
@@ -437,7 +435,15 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
     }
     else                                /* unknown format */
     {
-        output_message(STRING_UNKNOWN_DATA_FORMAT, reg_type_to_wchar(dwDataType));
+        if (dwDataType == REG_UNKNOWN_TYPE)
+        {
+            WCHAR buf[32];
+            LoadStringW(GetModuleHandleW(NULL), STRING_UNKNOWN_TYPE, buf, ARRAY_SIZE(buf));
+            output_message(STRING_UNKNOWN_DATA_FORMAT, buf);
+        }
+        else
+            output_message(STRING_UNKNOWN_DATA_FORMAT, reg_type_to_wchar(dwDataType));
+
         return ERROR_INVALID_DATA;
     }
 
