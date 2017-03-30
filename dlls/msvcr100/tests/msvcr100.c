@@ -82,6 +82,7 @@ struct thiscall_thunk
 
 static ULONG_PTR (WINAPI *call_thiscall_func1)( void *func, void *this );
 static ULONG_PTR (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+static ULONG_PTR (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a, const void *b );
 
 static void init_thiscall_thunk(void)
 {
@@ -94,16 +95,19 @@ static void init_thiscall_thunk(void)
     thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
     call_thiscall_func1 = (void *)thunk;
     call_thiscall_func2 = (void *)thunk;
+    call_thiscall_func3 = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
 #define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),(const void*)(b))
 
 #else
 
 #define init_thiscall_thunk()
 #define call_func1(func,_this) func(_this)
 #define call_func2(func,_this,a) func(_this,a)
+#define call_func3(func,_this,a,b) func(_this,a,b)
 
 #endif /* __i386__ */
 
@@ -145,6 +149,28 @@ typedef struct {
 typedef struct {
     void *vtable;
 } Context;
+
+typedef struct {
+    void *policy_container;
+} SchedulerPolicy;
+
+struct SchedulerVtbl;
+typedef struct {
+    struct SchedulerVtbl *vtable;
+} Scheduler;
+
+struct SchedulerVtbl {
+    Scheduler* (__thiscall *vector_dor)(Scheduler*);
+    unsigned int (__thiscall *Id)(Scheduler*);
+    unsigned int (__thiscall *GetNumberOfVirtualProcessors)(Scheduler*);
+    SchedulerPolicy* (__thiscall *GetPolicy)(Scheduler*);
+    unsigned int (__thiscall *Reference)(Scheduler*);
+    unsigned int (__thiscall *Release)(Scheduler*);
+    void (__thiscall *RegisterShutdownEvent)(Scheduler*,HANDLE);
+    void (__thiscall *Attach)(Scheduler*);
+    /* CreateScheduleGroup */
+    /* ScheduleTask */
+};
 
 static int* (__cdecl *p_errno)(void);
 static int (__cdecl *p_wmemcpy_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
@@ -194,7 +220,14 @@ static size_t (__thiscall *p_event_wait)(event*, unsigned int);
 static int (__cdecl *p_event_wait_for_multiple)(event**, size_t, MSVCRT_bool, unsigned int);
 
 static Context* (__cdecl *p_Context_CurrentContext)(void);
-unsigned int (__cdecl *p_Context_Id)(void);
+static unsigned int (__cdecl *p_Context_Id)(void);
+static SchedulerPolicy* (__thiscall *p_SchedulerPolicy_ctor)(SchedulerPolicy*);
+static void (__thiscall *p_SchedulerPolicy_SetConcurrencyLimits)(SchedulerPolicy*, unsigned int, unsigned int);
+static void (__thiscall *p_SchedulerPolicy_dtor)(SchedulerPolicy*);
+static Scheduler* (__cdecl *p_Scheduler_Create)(SchedulerPolicy*);
+static Scheduler* (__cdecl *p_CurrentScheduler_Get)(void);
+static void (__cdecl *p_CurrentScheduler_Detach)(void);
+static unsigned int (__cdecl *p_CurrentScheduler_Id)(void);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -229,6 +262,8 @@ static BOOL init(void)
     SET(p_atoi, "atoi");
 
     SET(p_Context_Id, "?Id@Context@Concurrency@@SAIXZ");
+    SET(p_CurrentScheduler_Detach, "?Detach@CurrentScheduler@Concurrency@@SAXXZ");
+    SET(p_CurrentScheduler_Id, "?Id@CurrentScheduler@Concurrency@@SAIXZ");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QEAA@P6AXXZ@Z");
@@ -266,6 +301,11 @@ static BOOL init(void)
         SET(p_event_wait_for_multiple, "?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z");
 
         SET(p_Context_CurrentContext, "?CurrentContext@Context@Concurrency@@SAPEAV12@XZ");
+        SET(p_SchedulerPolicy_ctor, "??0SchedulerPolicy@Concurrency@@QEAA@XZ");
+        SET(p_SchedulerPolicy_SetConcurrencyLimits, "?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QEAAXII@Z");
+        SET(p_SchedulerPolicy_dtor, "??1SchedulerPolicy@Concurrency@@QEAA@XZ");
+        SET(p_Scheduler_Create, "?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z");
+        SET(p_CurrentScheduler_Get, "?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ");
     } else {
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QAE@P6AXXZ@Z");
         SET(pSpinWait_dtor, "??_F?$_SpinWait@$00@details@Concurrency@@QAEXXZ");
@@ -302,6 +342,11 @@ static BOOL init(void)
         SET(p_event_wait_for_multiple, "?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z");
 
         SET(p_Context_CurrentContext, "?CurrentContext@Context@Concurrency@@SAPAV12@XZ");
+        SET(p_SchedulerPolicy_ctor, "??0SchedulerPolicy@Concurrency@@QAE@XZ");
+        SET(p_SchedulerPolicy_SetConcurrencyLimits, "?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QAEXII@Z");
+        SET(p_SchedulerPolicy_dtor, "??1SchedulerPolicy@Concurrency@@QAE@XZ");
+        SET(p_Scheduler_Create, "?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z");
+        SET(p_CurrentScheduler_Get, "?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ");
     }
 
     init_thiscall_thunk();
@@ -888,12 +933,46 @@ static void test_ExternalContextBase(void)
     WaitForSingleObject(thread, INFINITE);
 }
 
+static void test_Scheduler(void)
+{
+    Scheduler *scheduler, *current_scheduler;
+    SchedulerPolicy policy;
+    unsigned int i;
+
+    call_func1(p_SchedulerPolicy_ctor, &policy);
+    scheduler = p_Scheduler_Create(&policy);
+    ok(scheduler != NULL, "Scheduler::Create() = NULL\n");
+
+    call_func1(scheduler->vtable->Attach, scheduler);
+    current_scheduler = p_CurrentScheduler_Get();
+    ok(current_scheduler == scheduler, "CurrentScheduler::Get() = %p, expected %p\n",
+            current_scheduler, scheduler);
+    p_CurrentScheduler_Detach();
+
+    current_scheduler = p_CurrentScheduler_Get();
+    ok(current_scheduler != scheduler, "scheduler has not changed after detach\n");
+    call_func1(scheduler->vtable->Release, scheduler);
+
+    i = p_CurrentScheduler_Id();
+    ok(!i, "CurrentScheduler::Id() = %u\n", i);
+
+    call_func3(p_SchedulerPolicy_SetConcurrencyLimits, &policy, 1, 1);
+    scheduler = p_Scheduler_Create(&policy);
+    ok(scheduler != NULL, "Scheduler::Create() = NULL\n");
+
+    i = call_func1(scheduler->vtable->GetNumberOfVirtualProcessors, scheduler);
+    ok(i == 1, "Scheduler::GetNumberOfVirtualProcessors() = %u\n", i);
+    call_func1(scheduler->vtable->Release, scheduler);
+    call_func1(p_SchedulerPolicy_dtor, &policy);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
         return;
 
     test_ExternalContextBase();
+    test_Scheduler();
     test_wmemcpy_s();
     test_wmemmove_s();
     test_fread_s();
