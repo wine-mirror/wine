@@ -7787,7 +7787,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
 }
 
 static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, struct wined3d_context *context,
-        struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {

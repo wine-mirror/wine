@@ -1880,11 +1880,12 @@ struct wined3d_blitter_ops
     HRESULT (*depth_fill)(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
             const RECT *rect, DWORD clear_flags, float depth, DWORD stencil);
     void (*blit_surface)(struct wined3d_device *device, enum wined3d_blit_op op, struct wined3d_context *context,
-            struct wined3d_surface *src_surface, const RECT *src_rect,
+            struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
             struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
             const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter);
 };
 
+extern const struct wined3d_blitter_ops fbo_blitter_ops DECLSPEC_HIDDEN;
 extern const struct wined3d_blitter_ops arbfp_blit DECLSPEC_HIDDEN;
 extern const struct wined3d_blitter_ops ffp_blit DECLSPEC_HIDDEN;
 extern const struct wined3d_blitter_ops cpu_blit DECLSPEC_HIDDEN;

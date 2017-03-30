@@ -5801,6 +5801,7 @@ const struct wined3d_blitter_ops *wined3d_select_blitter(const struct wined3d_gl
 {
     static const struct wined3d_blitter_ops * const blitters[] =
     {
+        &fbo_blitter_ops,
         &arbfp_blit,
         &ffp_blit,
         &cpu_blit,
