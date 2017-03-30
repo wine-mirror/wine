@@ -144,17 +144,13 @@ static void buffer_bind(struct wined3d_buffer *buffer, struct wined3d_context *c
 }
 
 /* Context activation is done by the caller. */
-static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, const struct wined3d_context *context)
+static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_resource *resource = &buffer->resource;
 
     if (!buffer->buffer_object)
         return;
-
-    GL_EXTCALL(glDeleteBuffers(1, &buffer->buffer_object));
-    checkGLcall("glDeleteBuffers");
-    buffer->buffer_object = 0;
 
     /* The stream source state handler might have read the memory of the
      * vertex buffer already and got the memory in the vbo which is not
@@ -177,8 +173,24 @@ static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, const st
             device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE));
         }
         if (buffer->bind_flags & WINED3D_BIND_STREAM_OUTPUT)
+        {
             device_invalidate_state(resource->device, STATE_STREAM_OUTPUT);
+            if (context->transform_feedback_active)
+            {
+                /* We have to make sure that transform feedback is not active
+                 * when deleting a potentially bound transform feedback buffer.
+                 * This may happen when the device is being destroyed. */
+                WARN("Deleting buffer object for buffer %p, disabling transform feedback.\n", buffer);
+                GL_EXTCALL(glEndTransformFeedback());
+                checkGLcall("glEndTransformFeedback");
+                context->transform_feedback_active = 0;
+            }
+        }
     }
+
+    GL_EXTCALL(glDeleteBuffers(1, &buffer->buffer_object));
+    checkGLcall("glDeleteBuffers");
+    buffer->buffer_object = 0;
 
     if (buffer->query)
     {

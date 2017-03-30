@@ -11489,7 +11489,6 @@ static void test_index_buffer_offset(void)
     for (i = 0; i < ARRAY_SIZE(expected_data); ++i)
     {
         data = get_readback_vec4(&rb, i, 0);
-        todo_wine
         ok(compare_vec4(data, &expected_data[i], 0)
                 || broken(is_nvidia_device(device) && !(i % 2) && compare_vec4(data, &broken_result, 0)),
                 "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u.\n",

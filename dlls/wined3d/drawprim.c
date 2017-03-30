@@ -406,6 +406,14 @@ static void remove_vbos(struct wined3d_context *context,
     }
 }
 
+static BOOL use_transform_feedback(const struct wined3d_state *state)
+{
+    const struct wined3d_shader *shader;
+    if (!(shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY]))
+        return FALSE;
+    return shader->u.gs.so_desc.element_count;
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
         int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
@@ -438,6 +446,13 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         return;
     }
     gl_info = context->gl_info;
+
+    if (context->transform_feedback_active && !use_transform_feedback(state))
+    {
+        GL_EXTCALL(glEndTransformFeedback());
+        checkGLcall("glEndTransformFeedback");
+        context->transform_feedback_active = 0;
+    }
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
@@ -547,6 +562,16 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
             remove_vbos(context, state, &si_emulated);
             stream_info = &si_emulated;
         }
+    }
+
+    if (use_transform_feedback(state) && !context->transform_feedback_active)
+    {
+        const struct wined3d_shader *shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
+        GLenum primitive_mode = gl_primitive_type_from_d3d(shader->u.gs.output_type);
+
+        GL_EXTCALL(glBeginTransformFeedback(primitive_mode));
+        checkGLcall("glBeginTransformFeedback");
+        context->transform_feedback_active = 1;
     }
 
     if (context->use_immediate_mode_draw || emulation)

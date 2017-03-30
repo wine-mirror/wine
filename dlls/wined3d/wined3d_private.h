@@ -1689,7 +1689,8 @@ struct wined3d_context
     DWORD update_compute_unordered_access_view_bindings : 1;
     DWORD uses_uavs : 1;
     DWORD destroy_delayed : 1;
-    DWORD padding : 9;
+    DWORD transform_feedback_active : 1;
+    DWORD padding : 8;
     DWORD last_swizzle_map; /* MAX_ATTRIBS, 16 */
     DWORD shader_update_mask;
     DWORD constant_update_mask;

@@ -4982,6 +4982,13 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
+    if (context->transform_feedback_active)
+    {
+        GL_EXTCALL(glEndTransformFeedback());
+        checkGLcall("glEndTransformFeedback");
+        context->transform_feedback_active = 0;
+    }
+
     for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
     {
         if (!(buffer = state->stream_output[i].buffer))
