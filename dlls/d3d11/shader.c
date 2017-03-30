@@ -1191,7 +1191,7 @@ static const struct wined3d_parent_ops d3d_geometry_shader_wined3d_parent_ops =
 static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_output_element *elements,
         const D3D11_SO_DECLARATION_ENTRY *entries, unsigned int entry_count,
         const unsigned int *buffer_strides, unsigned int buffer_stride_count,
-        const struct wined3d_shader_signature *os)
+        const struct wined3d_shader_signature *os, D3D_FEATURE_LEVEL feature_level)
 {
     unsigned int i, j, mask;
 
@@ -1209,6 +1209,11 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
         if (f->Stream >= D3D11_SO_STREAM_COUNT)
         {
             WARN("Invalid stream %u.\n", f->Stream);
+            return E_INVALIDARG;
+        }
+        if (f->Stream && feature_level < D3D_FEATURE_LEVEL_11_0)
+        {
+            WARN("Invalid stream %u for feature level %#x.\n", f->Stream, feature_level);
             return E_INVALIDARG;
         }
         if (f->Stream)
@@ -1299,8 +1304,8 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
     for (i = 0; i < D3D11_SO_STREAM_COUNT; ++i)
     {
         unsigned int current_stride[D3D11_SO_BUFFER_SLOT_COUNT] = {0};
-        BOOL has_element[D3D11_SO_BUFFER_SLOT_COUNT] = {FALSE};
-        BOOL is_used[D3D11_SO_BUFFER_SLOT_COUNT] = {FALSE};
+        unsigned int element_count[D3D11_SO_BUFFER_SLOT_COUNT] = {0};
+        unsigned int gap_count[D3D11_SO_BUFFER_SLOT_COUNT] = {0};
 
         for (j = 0; j < entry_count; ++j)
         {
@@ -1309,19 +1314,21 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
             if (e->stream_idx != i)
                 continue;
             current_stride[e->output_slot] += 4 * e->component_count;
-            is_used[e->output_slot] = TRUE;
-            if (e->register_idx != WINED3D_STREAM_OUTPUT_GAP)
-                has_element[e->output_slot] = TRUE;
+            ++element_count[e->output_slot];
+            if (e->register_idx == WINED3D_STREAM_OUTPUT_GAP)
+                ++gap_count[e->output_slot];
         }
 
         for (j = 0; j < D3D11_SO_BUFFER_SLOT_COUNT; ++j)
         {
-            if (is_used[j] && !has_element[j])
+            if (!element_count[j])
+                continue;
+            if (element_count[j] == gap_count[j])
             {
                 WARN("Stream %u, output slot %u contains only gaps.\n", i, j);
                 return E_INVALIDARG;
             }
-            if (buffer_stride_count && is_used[j])
+            if (buffer_stride_count)
             {
                 if (buffer_stride_count <= j)
                 {
@@ -1331,6 +1338,18 @@ static HRESULT wined3d_so_elements_from_d3d11_so_entries(struct wined3d_stream_o
                 if (buffer_strides[j] < current_stride[j] || buffer_strides[j] % 4)
                 {
                     WARN("Invalid stride %u for buffer slot %u.\n", buffer_strides[j], j);
+                    return E_INVALIDARG;
+                }
+            }
+        }
+
+        if (!i && feature_level < D3D_FEATURE_LEVEL_11_0 && element_count[0] != entry_count)
+        {
+            for (j = 0; j < ARRAY_SIZE(element_count); ++j)
+            {
+                if (element_count[j] > 1)
+                {
+                    WARN("Only one element per output slot is allowed.\n");
                     return E_INVALIDARG;
                 }
             }
@@ -1367,6 +1386,21 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
         WARN("Invalid rasterizer stream %u.\n", rasterizer_stream);
         return E_INVALIDARG;
     }
+    if (device->feature_level < D3D_FEATURE_LEVEL_11_0)
+    {
+        if (rasterizer_stream)
+        {
+            WARN("Invalid rasterizer stream %u for feature level %#x.\n",
+                    rasterizer_stream, device->feature_level);
+            return E_INVALIDARG;
+        }
+        if (buffer_stride_count && buffer_stride_count != 1)
+        {
+            WARN("Invalid buffer stride count %u for feature level %#x.\n",
+                    buffer_stride_count, device->feature_level);
+            return E_INVALIDARG;
+        }
+    }
 
     if (FAILED(hr = shader_extract_from_dxbc(byte_code, byte_code_length, &desc, device->feature_level)))
     {
@@ -1392,7 +1426,8 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
             return E_OUTOFMEMORY;
         }
         if (FAILED(hr = wined3d_so_elements_from_d3d11_so_entries(so_desc.elements,
-                so_entries, so_entry_count, buffer_strides, buffer_stride_count, &desc.output_signature)))
+                so_entries, so_entry_count, buffer_strides, buffer_stride_count,
+                &desc.output_signature, device->feature_level)))
         {
             HeapFree(GetProcessHeap(), 0, so_desc.elements);
             shader_free_signature(&desc.input_signature);
