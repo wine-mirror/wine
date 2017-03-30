@@ -18483,7 +18483,8 @@ wine_fn_config_dll wmiutils enable_wmiutils clean
 wine_fn_config_test dlls/wmiutils/tests wmiutils_test
 wine_fn_config_dll wmp enable_wmp clean
 wine_fn_config_test dlls/wmp/tests wmp_test
-wine_fn_config_dll wmvcore enable_wmvcore
+wine_fn_config_dll wmvcore enable_wmvcore implib
+wine_fn_config_test dlls/wmvcore/tests wmvcore_test
 wine_fn_config_dll wnaspi32 enable_wnaspi32 implib
 wine_fn_config_dll wow32 enable_win16 implib
 wine_fn_config_dll wpc enable_wpc clean
