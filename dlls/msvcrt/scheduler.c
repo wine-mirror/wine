@@ -971,11 +971,18 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ThreadScheduler_Release)
             VTABLE_ADD_FUNC(ThreadScheduler_RegisterShutdownEvent)
             VTABLE_ADD_FUNC(ThreadScheduler_Attach)
+#if _MSVCR_VER > 100
             VTABLE_ADD_FUNC(ThreadScheduler_CreateScheduleGroup_loc)
+#endif
             VTABLE_ADD_FUNC(ThreadScheduler_CreateScheduleGroup)
+#if _MSVCR_VER > 100
             VTABLE_ADD_FUNC(ThreadScheduler_ScheduleTask_loc)
+#endif
             VTABLE_ADD_FUNC(ThreadScheduler_ScheduleTask)
-            VTABLE_ADD_FUNC(ThreadScheduler_IsAvailableLocation));
+#if _MSVCR_VER > 100
+            VTABLE_ADD_FUNC(ThreadScheduler_IsAvailableLocation)
+#endif
+            );
 #ifndef __GNUC__
 }
 #endif
