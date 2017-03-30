@@ -774,11 +774,12 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 
     /* Find the metadata chunks in the file. */
     seek.QuadPart = 8;
-    hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, &chunk_start);
-    if (FAILED(hr)) goto end;
 
     do
     {
+        hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, &chunk_start);
+        if (FAILED(hr)) goto end;
+
         hr = read_png_chunk(pIStream, chunk_type, NULL, &chunk_size);
         if (FAILED(hr)) goto end;
 
@@ -816,8 +817,6 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         }
 
         seek.QuadPart = chunk_start.QuadPart + chunk_size + 12; /* skip data and CRC */
-        hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, &chunk_start);
-        if (FAILED(hr)) goto end;
     } while (memcmp(chunk_type, "IEND", 4));
 
     This->stream = pIStream;
