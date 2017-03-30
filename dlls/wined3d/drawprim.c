@@ -448,11 +448,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     gl_info = context->gl_info;
 
     if (context->transform_feedback_active && !use_transform_feedback(state))
-    {
-        GL_EXTCALL(glEndTransformFeedback());
-        checkGLcall("glEndTransformFeedback");
-        context->transform_feedback_active = 0;
-    }
+        context_end_transform_feedback(context);
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
@@ -564,7 +560,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         }
     }
 
-    if (use_transform_feedback(state) && !context->transform_feedback_active)
+    if (use_transform_feedback(state))
     {
         const struct wined3d_shader *shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
         GLenum primitive_mode = gl_primitive_type_from_d3d(shader->u.gs.output_type);
@@ -576,9 +572,18 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
             rasterizer_discard = TRUE;
         }
 
-        GL_EXTCALL(glBeginTransformFeedback(primitive_mode));
-        checkGLcall("glBeginTransformFeedback");
-        context->transform_feedback_active = 1;
+        if (context->transform_feedback_paused)
+        {
+            GL_EXTCALL(glResumeTransformFeedback());
+            checkGLcall("glResumeTransformFeedback");
+            context->transform_feedback_paused = 0;
+        }
+        else if (!context->transform_feedback_active)
+        {
+            GL_EXTCALL(glBeginTransformFeedback(primitive_mode));
+            checkGLcall("glBeginTransformFeedback");
+            context->transform_feedback_active = 1;
+        }
     }
 
     if (context->use_immediate_mode_draw || emulation)
@@ -592,6 +597,20 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     {
         GL_EXTCALL(glMemoryBarrier(GL_ALL_BARRIER_BITS));
         checkGLcall("glMemoryBarrier");
+    }
+
+    if (context->transform_feedback_active)
+    {
+        if (gl_info->supported[ARB_TRANSFORM_FEEDBACK2])
+        {
+            GL_EXTCALL(glPauseTransformFeedback());
+            checkGLcall("glPauseTransformFeedback");
+            context->transform_feedback_paused = 1;
+        }
+        else
+        {
+            WARN("Cannot pause transform feedback operations.\n");
+        }
     }
 
     if (rasterizer_discard)

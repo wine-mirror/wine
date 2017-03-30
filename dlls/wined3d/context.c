@@ -3687,6 +3687,18 @@ void context_apply_compute_state(struct wined3d_context *context,
     context->last_was_blit = FALSE;
 }
 
+void context_end_transform_feedback(struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    if (context->transform_feedback_active)
+    {
+        GL_EXTCALL(glEndTransformFeedback());
+        checkGLcall("glEndTransformFeedback");
+        context->transform_feedback_active = 0;
+        context->transform_feedback_paused = 0;
+    }
+}
+
 static void context_setup_target(struct wined3d_context *context,
         struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {

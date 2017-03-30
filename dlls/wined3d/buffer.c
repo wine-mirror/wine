@@ -181,9 +181,7 @@ static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, struct w
                  * when deleting a potentially bound transform feedback buffer.
                  * This may happen when the device is being destroyed. */
                 WARN("Deleting buffer object for buffer %p, disabling transform feedback.\n", buffer);
-                GL_EXTCALL(glEndTransformFeedback());
-                checkGLcall("glEndTransformFeedback");
-                context->transform_feedback_active = 0;
+                context_end_transform_feedback(context);
             }
         }
     }
