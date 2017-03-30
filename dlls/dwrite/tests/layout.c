@@ -1626,7 +1626,7 @@ static void test_Draw(void)
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draw_seq, "draw test", TRUE);
+    ok_sequence(sequences, RENDERER_ID, draw_seq, "draw test", FALSE);
     IDWriteTextLayout_Release(layout);
 
     /* with reduced width DrawGlyphRun() is called for every line */
@@ -4987,7 +4987,7 @@ todo_wine
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0f, 0.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, drawunderline4_seq, "draw underline test 4", TRUE);
+    ok_sequence(sequences, RENDERER_ID, drawunderline4_seq, "draw underline test 4", FALSE);
 
     IDWriteTextLayout_Release(layout);
 

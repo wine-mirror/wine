@@ -1269,10 +1269,9 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     run->line = line;
 
     if (r->u.regular.run.glyphCount) {
-        /* trim from the left */
+        /* Trim leading and trailing clusters. */
         run->glyphcount = r->u.regular.run.glyphCount - r->u.regular.clustermap[start];
-        /* trim from the right */
-        if (start + length < r->u.regular.descr.stringLength - 1)
+        if (start + length < r->u.regular.descr.stringLength)
             run->glyphcount -= r->u.regular.run.glyphCount - r->u.regular.clustermap[start + length];
     }
     else
