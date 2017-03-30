@@ -7520,8 +7520,7 @@ static GLuint gen_yuv_shader(const struct wined3d_gl_info *gl_info, const struct
 }
 
 /* Context activation is done by the caller. */
-static GLuint arbfp_gen_plain_shader(struct arbfp_blit_priv *priv,
-        const struct wined3d_gl_info *gl_info, const struct arbfp_blit_type *type)
+static GLuint arbfp_gen_plain_shader(const struct wined3d_gl_info *gl_info, const struct arbfp_blit_type *type)
 {
     GLuint shader;
     struct wined3d_string_buffer buffer;
@@ -7641,7 +7640,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
             case COMPLEX_FIXUP_NONE:
                 if (!is_identity_fixup(texture->resource.format->color_fixup))
                     FIXME("Implement support for sign or swizzle fixups.\n");
-                shader = arbfp_gen_plain_shader(priv, gl_info, &type);
+                shader = arbfp_gen_plain_shader(gl_info, &type);
                 break;
 
             case COMPLEX_FIXUP_P8:
