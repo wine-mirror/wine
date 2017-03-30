@@ -802,7 +802,30 @@ void __cdecl CurrentScheduler_Create(const SchedulerPolicy *policy)
 /* ?Detach@CurrentScheduler@Concurrency@@SAXXZ */
 void __cdecl CurrentScheduler_Detach(void)
 {
-    FIXME("() stub\n");
+    ExternalContextBase *context = (ExternalContextBase*)try_get_current_context();
+
+    TRACE("()\n");
+
+    if(!context)
+        throw_exception(EXCEPTION_IMPROPER_SCHEDULER_DETACH, 0, NULL);
+
+    if(context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+        ERR("unknown context set\n");
+        return;
+    }
+
+    if(!context->scheduler.next)
+        throw_exception(EXCEPTION_IMPROPER_SCHEDULER_DETACH, 0, NULL);
+
+    call_Scheduler_Release(context->scheduler.scheduler);
+    if(!context->scheduler.next) {
+        context->scheduler.scheduler = NULL;
+    }else {
+        struct scheduler_list *entry = context->scheduler.next;
+        context->scheduler.scheduler = entry->scheduler;
+        context->scheduler.next = entry->next;
+        MSVCRT_operator_delete(entry);
+    }
 }
 
 static void create_default_scheduler(void)
