@@ -310,6 +310,7 @@ struct drawcall_entry {
     enum drawcall_kind kind;
     WCHAR string[10]; /* only meaningful for DrawGlyphRun() */
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+    UINT32 glyphcount; /* only meaningful for DrawGlyphRun() */
 };
 
 struct drawcall_sequence
@@ -409,6 +410,28 @@ static void ok_sequence_(struct drawcall_sequence **seq, int sequence_index,
             else
                 ok_(file, line) (cmp == 0, "%s: glyphrun string %s was expected, but got %s instead\n",
                     context, wine_dbgstr_w(expected->string), wine_dbgstr_w(actual->string));
+
+            cmp = lstrcmpW(expected->locale, actual->locale);
+            if (cmp != 0 && todo) {
+                failcount++;
+            todo_wine
+                ok_(file, line) (0, "%s: glyph run locale %s was expected, but got %s instead\n",
+                    context, wine_dbgstr_w(expected->locale), wine_dbgstr_w(actual->locale));
+            }
+            else
+                ok_(file, line) (cmp == 0, "%s: glyph run locale %s was expected, but got %s instead\n",
+                    context, wine_dbgstr_w(expected->locale), wine_dbgstr_w(actual->locale));
+
+            if (expected->glyphcount != actual->glyphcount && todo) {
+                failcount++;
+            todo_wine
+                ok_(file, line) (0, "%s: wrong glyph count, %u was expected, but got %u instead\n",
+                    context, expected->glyphcount, actual->glyphcount);
+            }
+            else
+                ok_(file, line) (expected->glyphcount == actual->glyphcount,
+                    "%s: wrong glyph count, %u was expected, but got %u instead\n",
+                    context, expected->glyphcount, actual->glyphcount);
         }
         else if ((expected->kind & DRAW_KINDS_MASK) == DRAW_UNDERLINE) {
             int cmp = lstrcmpW(expected->locale, actual->locale);
@@ -579,6 +602,8 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     entry.kind = DRAW_GLYPHRUN;
     if (effect)
         entry.kind |= DRAW_EFFECT;
+    lstrcpyW(entry.locale, descr->localeName);
+    entry.glyphcount = run->glyphCount;
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
 }
@@ -1173,7 +1198,7 @@ static void test_GetLocaleName(void)
 }
 
 static const struct drawcall_entry drawellipsis_seq[] = {
-    { DRAW_GLYPHRUN, {0x2026, 0} },
+    { DRAW_GLYPHRUN, {0x2026, 0}, {'e','n','-','u','s',0}, 1 },
     { DRAW_LAST_KIND }
 };
 
@@ -1488,10 +1513,10 @@ static void test_SetInlineObject(void)
 /* drawing calls sequence doesn't depend on run order, instead all runs are
    drawn first, inline objects next and then underline/strikes */
 static const struct drawcall_entry draw_seq[] = {
-    { DRAW_GLYPHRUN, {'s',0}     },
-    { DRAW_GLYPHRUN, {'r','i',0} },
-    { DRAW_GLYPHRUN|DRAW_EFFECT, {'n',0} },
-    { DRAW_GLYPHRUN, {'g',0}     },
+    { DRAW_GLYPHRUN, {'s',0}, {'r','u',0}, 1 },
+    { DRAW_GLYPHRUN, {'r','i',0}, {'r','u',0}, 2 },
+    { DRAW_GLYPHRUN|DRAW_EFFECT, {'n',0}, {'r','u',0}, 1 },
+    { DRAW_GLYPHRUN, {'g',0}, {'r','u',0}, 1 },
     { DRAW_INLINE },
     { DRAW_UNDERLINE, {0}, {'r','u',0} },
     { DRAW_STRIKETHROUGH },
@@ -1499,32 +1524,32 @@ static const struct drawcall_entry draw_seq[] = {
 };
 
 static const struct drawcall_entry draw_seq2[] = {
-    { DRAW_GLYPHRUN, {'s',0} },
-    { DRAW_GLYPHRUN, {'t',0} },
-    { DRAW_GLYPHRUN, {'r',0} },
-    { DRAW_GLYPHRUN, {'i',0} },
-    { DRAW_GLYPHRUN, {'n',0} },
-    { DRAW_GLYPHRUN, {'g',0} },
+    { DRAW_GLYPHRUN, {'s',0}, {'r','u',0}, 1 },
+    { DRAW_GLYPHRUN, {'t',0}, {'r','u',0}, 1 },
+    { DRAW_GLYPHRUN, {'r',0}, {'r','u',0}, 1 },
+    { DRAW_GLYPHRUN, {'i',0}, {'r','u',0}, 1 },
+    { DRAW_GLYPHRUN, {'n',0}, {'r','u',0}, 1 },
+    { DRAW_GLYPHRUN, {'g',0}, {'r','u',0}, 1 },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry draw_seq3[] = {
-    { DRAW_GLYPHRUN, {0x202a,0x202c,0} },
-    { DRAW_GLYPHRUN, {'a','b',0} },
+    { DRAW_GLYPHRUN, {0x202a,0x202c,0}, {'r','u',0}, 0 },
+    { DRAW_GLYPHRUN, {'a','b',0}, {'r','u',0}, 2 },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry draw_seq4[] = {
-    { DRAW_GLYPHRUN, {'s','t','r',0} },
-    { DRAW_GLYPHRUN, {'i','n','g',0} },
+    { DRAW_GLYPHRUN, {'s','t','r',0}, {'r','u',0}, 3 },
+    { DRAW_GLYPHRUN, {'i','n','g',0}, {'r','u',0}, 3  },
     { DRAW_STRIKETHROUGH },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry draw_seq5[] = {
-    { DRAW_GLYPHRUN, {'s','t',0} },
-    { DRAW_GLYPHRUN, {'r','i',0} },
-    { DRAW_GLYPHRUN, {'n','g',0} },
+    { DRAW_GLYPHRUN, {'s','t',0}, {'r','u',0}, 2 },
+    { DRAW_GLYPHRUN, {'r','i',0}, {'r','u',0}, 2 },
+    { DRAW_GLYPHRUN, {'n','g',0}, {'r','u',0}, 2 },
     { DRAW_STRIKETHROUGH },
     { DRAW_LAST_KIND }
 };
@@ -1534,15 +1559,15 @@ static const struct drawcall_entry empty_seq[] = {
 };
 
 static const struct drawcall_entry draw_single_run_seq[] = {
-    { DRAW_GLYPHRUN, {'s','t','r','i','n','g',0} },
+    { DRAW_GLYPHRUN, {'s','t','r','i','n','g',0}, {'r','u',0}, 6 },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry draw_reordered_run_seq[] = {
-    { DRAW_GLYPHRUN, {'1','2','3','-','5','2',0} },
-    { DRAW_GLYPHRUN, {0x64a,0x64f,0x633,0x627,0x648,0x650,0x64a,0} },
-    { DRAW_GLYPHRUN, {'7','1',0} },
-    { DRAW_GLYPHRUN, {'.',0} },
+    { DRAW_GLYPHRUN, {'1','2','3','-','5','2',0}, {'r','u',0}, 6 },
+    { DRAW_GLYPHRUN, {0x64a,0x64f,0x633,0x627,0x648,0x650,0x64a,0}, {'r','u',0}, 7 },
+    { DRAW_GLYPHRUN, {'7','1',0}, {'r','u',0}, 2 },
+    { DRAW_GLYPHRUN, {'.',0}, {'r','u',0}, 1 },
     { DRAW_LAST_KIND }
 };
 
@@ -1601,7 +1626,7 @@ static void test_Draw(void)
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draw_seq, "draw test", FALSE);
+    ok_sequence(sequences, RENDERER_ID, draw_seq, "draw test", TRUE);
     IDWriteTextLayout_Release(layout);
 
     /* with reduced width DrawGlyphRun() is called for every line */
@@ -3185,14 +3210,14 @@ static void test_SetFlowDirection(void)
 }
 
 static const struct drawcall_entry draweffect_seq[] = {
-    { DRAW_GLYPHRUN|DRAW_EFFECT, {'a','e',0x0300,0} },
-    { DRAW_GLYPHRUN, {'d',0} },
+    { DRAW_GLYPHRUN|DRAW_EFFECT, {'a','e',0x0300,0}, {'e','n','-','u','s',0}, 2 },
+    { DRAW_GLYPHRUN, {'d',0}, {'e','n','-','u','s',0}, 1 },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry draweffect2_seq[] = {
-    { DRAW_GLYPHRUN|DRAW_EFFECT, {'a','e',0} },
-    { DRAW_GLYPHRUN, {'c','d',0} },
+    { DRAW_GLYPHRUN|DRAW_EFFECT, {'a','e',0}, {'e','n','-','u','s',0}, 2 },
+    { DRAW_GLYPHRUN, {'c','d',0}, {'e','n','-','u','s',0}, 2 },
     { DRAW_LAST_KIND }
 };
 
@@ -4837,30 +4862,30 @@ static void test_SetOpticalAlignment(void)
 }
 
 static const struct drawcall_entry drawunderline_seq[] = {
-    { DRAW_GLYPHRUN, {'a','e',0x0300,0} }, /* reported runs can't mix different underline values */
-    { DRAW_GLYPHRUN, {'d',0} },
+    { DRAW_GLYPHRUN, {'a','e',0x0300,0}, {'e','n','-','u','s',0}, 2 }, /* reported runs can't mix different underline values */
+    { DRAW_GLYPHRUN, {'d',0}, {'e','n','-','u','s',0}, 1 },
     { DRAW_UNDERLINE, {0}, {'e','n','-','u','s',0} },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry drawunderline2_seq[] = {
-    { DRAW_GLYPHRUN, {'a',0} },
-    { DRAW_GLYPHRUN, {'e',0} },
+    { DRAW_GLYPHRUN, {'a',0}, {'e','n','-','u','s',0}, 1 },
+    { DRAW_GLYPHRUN, {'e',0}, {'e','n','-','u','s',0}, 1 },
     { DRAW_UNDERLINE, {0}, {'e','n','-','u','s',0} },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry drawunderline3_seq[] = {
-    { DRAW_GLYPHRUN, {'a',0} },
-    { DRAW_GLYPHRUN, {'e',0} },
+    { DRAW_GLYPHRUN, {'a',0}, {'e','n','-','c','a',0}, 1 },
+    { DRAW_GLYPHRUN, {'e',0}, {'e','n','-','u','s',0}, 1 },
     { DRAW_UNDERLINE, {0}, {'e','n','-','c','a',0} },
     { DRAW_UNDERLINE, {0}, {'e','n','-','u','s',0} },
     { DRAW_LAST_KIND }
 };
 
 static const struct drawcall_entry drawunderline4_seq[] = {
-    { DRAW_GLYPHRUN, {'a',0} },
-    { DRAW_GLYPHRUN, {'e',0} },
+    { DRAW_GLYPHRUN, {'a',0}, {'e','n','-','u','s',0}, 1 },
+    { DRAW_GLYPHRUN, {'e',0}, {'e','n','-','u','s',0}, 1 },
     { DRAW_UNDERLINE, {0}, {'e','n','-','u','s',0} },
     { DRAW_STRIKETHROUGH },
     { DRAW_LAST_KIND }
@@ -4962,7 +4987,7 @@ todo_wine
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0f, 0.0f);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, drawunderline4_seq, "draw underline test 4", FALSE);
+    ok_sequence(sequences, RENDERER_ID, drawunderline4_seq, "draw underline test 4", TRUE);
 
     IDWriteTextLayout_Release(layout);
 
