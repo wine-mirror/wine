@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "wincodec.h"
 #include "wine/test.h"
+#include "shlwapi.h"
 
 /* 1x1 pixel PNG image */
 static const char png_no_color_profile[] = {
@@ -277,8 +278,6 @@ static IWICImagingFactory *factory;
 
 static IWICBitmapDecoder *create_decoder(const void *image_data, UINT image_size)
 {
-    HGLOBAL hmem;
-    BYTE *data;
     HRESULT hr;
     IWICBitmapDecoder *decoder = NULL;
     IStream *stream;
@@ -287,13 +286,8 @@ static IWICBitmapDecoder *create_decoder(const void *image_data, UINT image_size
     ULARGE_INTEGER pos;
     LARGE_INTEGER zero;
 
-    hmem = GlobalAlloc(0, image_size);
-    data = GlobalLock(hmem);
-    memcpy(data, image_data, image_size);
-    GlobalUnlock(hmem);
-
-    hr = CreateStreamOnHGlobal(hmem, TRUE, &stream);
-    ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
+    stream = SHCreateMemStream (image_data, image_size);
+    ok(stream != NULL, "SHCreateMemStream error\n");
 
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
     ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);

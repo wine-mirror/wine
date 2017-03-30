@@ -1,5 +1,5 @@
 TESTDLL   = windowscodecs.dll
-IMPORTS   = windowscodecs oleaut32 ole32 user32 gdi32
+IMPORTS   = windowscodecs oleaut32 ole32 user32 gdi32 shlwapi
 
 C_SRCS = \
 	bitmap.c \
