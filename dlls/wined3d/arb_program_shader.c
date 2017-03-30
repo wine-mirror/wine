@@ -7396,8 +7396,7 @@ static void upload_palette(const struct wined3d_texture *texture, struct wined3d
 }
 
 /* Context activation is done by the caller. */
-static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_gl_info *gl_info,
-        const struct arbfp_blit_type *type)
+static GLuint gen_yuv_shader(const struct wined3d_gl_info *gl_info, const struct arbfp_blit_type *type)
 {
     GLuint shader;
     struct wined3d_string_buffer buffer;
@@ -7653,7 +7652,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
             case COMPLEX_FIXUP_UYVY:
             case COMPLEX_FIXUP_YV12:
             case COMPLEX_FIXUP_NV12:
-                shader = gen_yuv_shader(priv, gl_info, &type);
+                shader = gen_yuv_shader(gl_info, &type);
                 break;
         }
 
