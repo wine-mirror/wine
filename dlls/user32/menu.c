@@ -665,6 +665,14 @@ MENU_AdjustMenuItemRect(const POPUPMENU *menu, LPRECT rect)
     OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
 }
 
+enum hittest
+{
+    ht_nowhere,     /* outside the menu */
+    ht_border,      /* anywhere that's not an item or a scroll arrow */
+    ht_item,        /* a menu item */
+    ht_scroll_up,   /* scroll up arrow */
+    ht_scroll_down  /* scroll down arrow */
+};
 
 /***********************************************************************
  *           MENU_FindItemByCoords
@@ -672,30 +680,61 @@ MENU_AdjustMenuItemRect(const POPUPMENU *menu, LPRECT rect)
  * Find the item at the specified coordinates (screen coords). Does
  * not work for child windows and therefore should not be called for
  * an arbitrary system menu.
+ *
+ * Returns a hittest code.  *pos will contain the position of the
+ * item or NO_SELECTED_ITEM.  If the hittest code is ht_scroll_up
+ * or ht_scroll_down then *pos will contain the position of the
+ * item that's just outside the items_rect - ie, the one that would
+ * be scrolled completely into view.
  */
-static MENUITEM *MENU_FindItemByCoords( const POPUPMENU *menu,
-					POINT pt, UINT *pos )
+static enum hittest MENU_FindItemByCoords( const POPUPMENU *menu, POINT pt, UINT *pos )
 {
     MENUITEM *item;
     UINT i;
     RECT rect;
+    enum hittest ht = ht_border;
 
-    if (!GetWindowRect(menu->hWnd, &rect)) return NULL;
+    *pos = NO_SELECTED_ITEM;
+
+    if (!GetWindowRect(menu->hWnd, &rect) || !PtInRect(&rect, pt))
+        return ht_nowhere;
+
     if (GetWindowLongW( menu->hWnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) pt.x = rect.right - 1 - pt.x;
     else pt.x -= rect.left;
     pt.y -= rect.top;
+
+    if (!PtInRect(&menu->items_rect, pt))
+    {
+        if (!menu->bScrolling || pt.x < menu->items_rect.left || pt.x >= menu->items_rect.right)
+            return ht_border;
+
+        /* On a scroll arrow.  Update pt so that it points to the item just outside items_rect */
+        if (pt.y < menu->items_rect.top)
+        {
+            ht = ht_scroll_up;
+            pt.y = menu->items_rect.top - 1;
+        }
+        else
+        {
+            ht = ht_scroll_down;
+            pt.y = menu->items_rect.bottom;
+        }
+    }
+
     item = menu->items;
     for (i = 0; i < menu->nItems; i++, item++)
     {
         rect = item->rect;
         MENU_AdjustMenuItemRect(menu, &rect);
-	if (PtInRect(&rect, pt))
-	{
-	    if (pos) *pos = i;
-	    return item;
-	}
+        if (PtInRect(&rect, pt))
+        {
+            *pos = i;
+            if (ht != ht_scroll_up && ht != ht_scroll_down) ht = ht_item;
+            break;
+        }
     }
-    return NULL;
+
+    return ht;
 }
 
 
@@ -2549,29 +2588,28 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 
     if (hPtMenu)
     {
-	UINT id = 0;
-	POPUPMENU *ptmenu = MENU_GetMenu( hPtMenu );
-	MENUITEM *item;
+        UINT pos;
+        POPUPMENU *ptmenu = MENU_GetMenu( hPtMenu );
+        enum hittest ht = ht_nowhere;
 
-	if( IS_SYSTEM_MENU(ptmenu) )
-	    item = ptmenu->items;
-	else
-	    item = MENU_FindItemByCoords( ptmenu, pmt->pt, &id );
+        if( IS_SYSTEM_MENU(ptmenu) )
+            pos = 0;
+        else
+            ht = MENU_FindItemByCoords( ptmenu, pmt->pt, &pos );
 
-	if( item )
-	{
-	    if( ptmenu->FocusedItem != id )
-		MENU_SwitchTracking( pmt, hPtMenu, id, wFlags );
+        if (pos != NO_SELECTED_ITEM)
+        {
+            if (ptmenu->FocusedItem != pos)
+                MENU_SwitchTracking( pmt, hPtMenu, pos, wFlags );
 
-	    /* If the popup menu is not already "popped" */
-	    if(!(item->fState & MF_MOUSESELECT ))
-	    {
-		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE, wFlags );
-	    }
+            /* If the popup menu is not already "popped" */
+            if (!(ptmenu->items[pos].fState & MF_MOUSESELECT))
+                pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE, wFlags );
+        }
 
-	    return TRUE;
-	}
-	/* Else the click was on the menu bar, finish the tracking */
+        /* A click on an item or anywhere on a popup keeps tracking going */
+        if (ht == ht_item || ((ptmenu->wFlags & MF_POPUP) && ht != ht_nowhere))
+            return TRUE;
     }
     return FALSE;
 }
@@ -2590,20 +2628,19 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 
     if (hPtMenu)
     {
-	UINT id = 0;
+	UINT pos;
 	POPUPMENU *ptmenu = MENU_GetMenu( hPtMenu );
-	MENUITEM *item;
 
         if( IS_SYSTEM_MENU(ptmenu) )
-            item = ptmenu->items;
-        else
-            item = MENU_FindItemByCoords( ptmenu, pmt->pt, &id );
+            pos = 0;
+        else if (MENU_FindItemByCoords( ptmenu, pmt->pt, &pos ) != ht_item)
+            pos = NO_SELECTED_ITEM;
 
-	if( item && (ptmenu->FocusedItem == id ))
+        if (pos != NO_SELECTED_ITEM && (ptmenu->FocusedItem == pos))
 	{
-            debug_print_menuitem ("FocusedItem: ", item, "");
+            debug_print_menuitem ("FocusedItem: ", &ptmenu->items[pos], "");
 
-	    if( !(item->fType & MF_POPUP) )
+	    if (!(ptmenu->items[pos].fType & MF_POPUP))
 	    {
 	        INT executedMenuId = MENU_ExecFocusedItem( pmt, hPtMenu, wFlags);
                 if (executedMenuId == -1 || executedMenuId == -2) return -1;
@@ -2638,8 +2675,8 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 	ptmenu = MENU_GetMenu( hPtMenu );
         if( IS_SYSTEM_MENU(ptmenu) )
 	    id = 0;
-        else
-            MENU_FindItemByCoords( ptmenu, pmt->pt, &id );
+        else if (MENU_FindItemByCoords( ptmenu, pmt->pt, &id ) != ht_item)
+            id = NO_SELECTED_ITEM;
     }
 
     if( id == NO_SELECTED_ITEM )
@@ -2650,8 +2687,8 @@ static BOOL MENU_MouseMove( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
     }
     else if( ptmenu->FocusedItem != id )
     {
-	    MENU_SwitchTracking( pmt, hPtMenu, id, wFlags );
-	    pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hPtMenu, FALSE, wFlags);
+        MENU_SwitchTracking( pmt, hPtMenu, id, wFlags );
+        pmt->hCurrentMenu = MENU_ShowSubPopup(pmt->hOwnerWnd, hPtMenu, FALSE, wFlags);
     }
     return TRUE;
 }
@@ -5254,7 +5291,7 @@ INT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
 
     /*FIXME: Do we have to handle hWnd here? */
     if (!menu) return -1;
-    if (!MENU_FindItemByCoords(menu, ptScreen, &pos)) return -1;
+    if (MENU_FindItemByCoords( menu, ptScreen, &pos ) != ht_item) return -1;
     return pos;
 }
 
