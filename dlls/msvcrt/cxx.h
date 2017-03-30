@@ -267,6 +267,7 @@ typedef struct
 extern void *vtbl_wrapper_0;
 extern void *vtbl_wrapper_4;
 extern void *vtbl_wrapper_8;
+extern void *vtbl_wrapper_16;
 extern void *vtbl_wrapper_20;
 extern void *vtbl_wrapper_28;
 

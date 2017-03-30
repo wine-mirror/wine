@@ -49,6 +49,7 @@ static int scheduler_id = -1;
 DEFINE_VTBL_WRAPPER(0);
 DEFINE_VTBL_WRAPPER(4);
 DEFINE_VTBL_WRAPPER(8);
+DEFINE_VTBL_WRAPPER(16);
 DEFINE_VTBL_WRAPPER(20);
 DEFINE_VTBL_WRAPPER(28);
 
@@ -114,6 +115,7 @@ static void ExternalContextBase_ctor(ExternalContextBase*);
 typedef struct Scheduler {
     const vtable_ptr *vtable;
 } Scheduler;
+#define call_Scheduler_Reference(this) CALL_VTBL_FUNC(this, 16, unsigned int, (Scheduler*), (this))
 #define call_Scheduler_Release(this) CALL_VTBL_FUNC(this, 20, unsigned int, (Scheduler*), (this))
 #define call_Scheduler_Attach(this) CALL_VTBL_FUNC(this, 28, void, (Scheduler*), (this))
 
@@ -142,6 +144,8 @@ static CRITICAL_SECTION_DEBUG default_scheduler_cs_debug =
 static CRITICAL_SECTION default_scheduler_cs = { &default_scheduler_cs_debug, -1, 0, 0, 0, 0 };
 static SchedulerPolicy default_scheduler_policy;
 static ThreadScheduler *default_scheduler;
+
+static void create_default_scheduler(void);
 
 static Context* try_get_current_context(void)
 {
@@ -325,6 +329,10 @@ static void ExternalContextBase_ctor(ExternalContextBase *this)
     memset(this, 0, sizeof(*this));
     this->context.vtable = &MSVCRT_ExternalContextBase_vtable;
     this->id = InterlockedIncrement(&context_id);
+
+    create_default_scheduler();
+    this->scheduler.scheduler = &default_scheduler->scheduler;
+    call_Scheduler_Reference(&default_scheduler->scheduler);
 }
 
 /* ?Alloc@Concurrency@@YAPAXI@Z */
@@ -834,7 +842,7 @@ Scheduler* __cdecl CurrentScheduler_Get(void)
 
     create_default_scheduler();
     context->scheduler.scheduler = &default_scheduler->scheduler;
-    ThreadScheduler_Reference(default_scheduler);
+    call_Scheduler_Reference(&default_scheduler->scheduler);
     return &default_scheduler->scheduler;
 }
 
