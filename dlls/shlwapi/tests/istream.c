@@ -28,15 +28,6 @@
 #include "objbase.h"
 #include "shlwapi.h"
 
-
-/* Function pointers for the SHCreateStreamOnFile functions */
-static HMODULE hShlwapi;
-static HRESULT (WINAPI *pSHCreateStreamOnFileA)(LPCSTR file, DWORD mode, IStream **stream);
-static HRESULT (WINAPI *pSHCreateStreamOnFileW)(LPCWSTR file, DWORD mode, IStream **stream);
-static HRESULT (WINAPI *pSHCreateStreamOnFileEx)(LPCWSTR file, DWORD mode, DWORD attributes, BOOL create, IStream *template, IStream **stream);
-
-static BOOL is_win2000_IE5 = FALSE;
-
 static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
 {
     HRESULT ret;
@@ -80,20 +71,9 @@ static void test_IStream_invalid_operations(IStream * stream, DWORD mode)
     {
         ok(ret == STG_E_ACCESSDENIED /* XP */ || broken(ret == S_OK) /* Win2000 + IE5 */,
            "expected STG_E_ACCESSDENIED, got 0x%08x\n", ret);
-        if (ret == S_OK)
-            is_win2000_IE5 = TRUE;
     }
     else
         ok(ret == S_OK, "expected S_OK, got 0x%08x\n", ret);
-
-    /* IStream::Write calls below hang under Win2000 + IE5, Win2000 + IE6 SP1
-     * and newer Windows versions pass these tests.
-     */
-    if (is_win2000_IE5)
-    {
-        win_skip("broken IStream::Write implementation (win2000)\n");
-        return;
-    }
 
     strcpy(data, "Hello");
     ret = stream->lpVtbl->Write(stream, data, 5, NULL);
@@ -284,7 +264,7 @@ static void test_SHCreateStreamOnFileA(DWORD mode, DWORD stgm)
     /* invalid arguments */
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(NULL, mode | stgm, &stream);
+    ret = SHCreateStreamOnFileA(NULL, mode | stgm, &stream);
     if (ret == E_INVALIDARG) /* Win98 SE */ {
         win_skip("Not supported\n");
         return;
@@ -298,34 +278,34 @@ static void test_SHCreateStreamOnFileA(DWORD mode, DWORD stgm)
 
 if (0) /* This test crashes on WinXP SP2 */
 {
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | stgm, NULL);
+    ret = SHCreateStreamOnFileA(test_file, mode | stgm, NULL);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileA: expected E_INVALIDARG, got 0x%08x\n", ret);
 }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_CONVERT | stgm, &stream);
+    ret = SHCreateStreamOnFileA(test_file, mode | STGM_CONVERT | stgm, &stream);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileA: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_DELETEONRELEASE | stgm, &stream);
+    ret = SHCreateStreamOnFileA(test_file, mode | STGM_DELETEONRELEASE | stgm, &stream);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileA: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_TRANSACTED | stgm, &stream);
+    ret = SHCreateStreamOnFileA(test_file, mode | STGM_TRANSACTED | stgm, &stream);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileA: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
     /* file does not exist */
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
+    ret = SHCreateStreamOnFileA(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
     ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "SHCreateStreamOnFileA: expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_CREATE | stgm, &stream);
+    ret = SHCreateStreamOnFileA(test_file, mode | STGM_CREATE | stgm, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileA: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
@@ -341,7 +321,7 @@ if (0) /* This test crashes on WinXP SP2 */
     /* file exists */
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
+    ret = SHCreateStreamOnFileA(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileA: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
@@ -353,7 +333,7 @@ if (0) /* This test crashes on WinXP SP2 */
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_CREATE | stgm, &stream);
+    ret = SHCreateStreamOnFileA(test_file, mode | STGM_CREATE | stgm, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileA: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileA: expected a valid IStream object, got NULL\n");
 
@@ -395,7 +375,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
     {
         /* Crashes on NT4 */
         stream = NULL;
-        ret = (*pSHCreateStreamOnFileW)(NULL, mode | stgm, &stream);
+        ret = SHCreateStreamOnFileW(NULL, mode | stgm, &stream);
         ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* XP */
            ret == E_INVALIDARG /* Vista */,
           "SHCreateStreamOnFileW: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) or E_INVALIDARG, got 0x%08x\n", ret);
@@ -405,29 +385,29 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
     if (0)
     {
         /* This test crashes on WinXP SP2 */
-            ret = (*pSHCreateStreamOnFileW)(test_file, mode | stgm, NULL);
+            ret = SHCreateStreamOnFileW(test_file, mode | stgm, NULL);
             ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_CONVERT | stgm, &stream);
+    ret = SHCreateStreamOnFileW(test_file, mode | STGM_CONVERT | stgm, &stream);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_DELETEONRELEASE | stgm, &stream);
+    ret = SHCreateStreamOnFileW(test_file, mode | STGM_DELETEONRELEASE | stgm, &stream);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_TRANSACTED | stgm, &stream);
+    ret = SHCreateStreamOnFileW(test_file, mode | STGM_TRANSACTED | stgm, &stream);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileW: expected E_INVALIDARG, got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
 
     /* file does not exist */
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
+    ret = SHCreateStreamOnFileW(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
     if (ret == E_INVALIDARG) /* Win98 SE */ {
         win_skip("Not supported\n");
         return;
@@ -437,7 +417,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
     ok(stream == NULL, "SHCreateStreamOnFileW: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_CREATE | stgm, &stream);
+    ret = SHCreateStreamOnFileW(test_file, mode | STGM_CREATE | stgm, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileW: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
@@ -453,7 +433,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
     /* file exists */
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
+    ret = SHCreateStreamOnFileW(test_file, mode | STGM_FAILIFTHERE | stgm, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileW: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
@@ -465,7 +445,7 @@ static void test_SHCreateStreamOnFileW(DWORD mode, DWORD stgm)
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileW)(test_file, mode | STGM_CREATE | stgm, &stream);
+    ret = SHCreateStreamOnFileW(test_file, mode | STGM_CREATE | stgm, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileW: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileW: expected a valid IStream object, got NULL\n");
 
@@ -510,7 +490,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     {
         /* Crashes on NT4 */
         stream = NULL;
-        ret = (*pSHCreateStreamOnFileEx)(NULL, mode, 0, FALSE, NULL, &stream);
+        ret = SHCreateStreamOnFileEx(NULL, mode, 0, FALSE, NULL, &stream);
         ok(ret == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || /* XP */
            ret == E_INVALIDARG /* Vista */,
           "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) or E_INVALIDARG, got 0x%08x\n", ret);
@@ -518,11 +498,11 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, template, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode, 0, FALSE, template, &stream);
     if (ret == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)) {
         win_skip("File probably locked by Anti-Virus/Spam software, trying again\n");
         Sleep(1000);
-        ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, template, &stream);
+        ret = SHCreateStreamOnFileEx(test_file, mode, 0, FALSE, template, &stream);
     }
     ok( ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
         ret == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER),
@@ -534,14 +514,14 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     if (0)
     {
         /* This test crashes on WinXP SP2 */
-        ret = (*pSHCreateStreamOnFileEx)(test_file, mode, 0, FALSE, NULL, NULL);
+        ret = SHCreateStreamOnFileEx(test_file, mode, 0, FALSE, NULL, NULL);
         ok(ret == E_INVALIDARG, "SHCreateStreamOnFileEx: expected E_INVALIDARG, got 0x%08x\n", ret);
     }
 
     /* file does not exist */
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
     if ((stgm & STGM_TRANSACTED) == STGM_TRANSACTED && mode == STGM_READ) {
         ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* XP */ || ret == E_INVALIDARG /* Vista */,
           "SHCreateStreamOnFileEx: expected E_INVALIDARG or HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got 0x%08x\n", ret);
@@ -559,7 +539,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
     /* not supported on win9x */
     if (broken(ret == HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER) && stream == NULL)) {
         skip("Not supported\n");
@@ -582,11 +562,11 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
     if (ret == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)) {
         win_skip("File probably locked by Anti-Virus/Spam software, trying again\n");
         Sleep(1000);
-        ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
+        ret = SHCreateStreamOnFileEx(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
     }
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
@@ -603,11 +583,11 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
     if (ret == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)) {
         win_skip("File probably locked by Anti-Virus/Spam software, trying again\n");
         Sleep(1000);
-        ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
+        ret = SHCreateStreamOnFileEx(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
     }
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
@@ -624,7 +604,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     /* file exists */
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_FAILIFTHERE | stgm, 0, FALSE, NULL, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
@@ -636,12 +616,12 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_FAILIFTHERE | stgm, 0, TRUE, NULL, &stream);
     ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), "SHCreateStreamOnFileEx: expected HRESULT_FROM_WIN32(ERROR_FILE_EXISTS), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileEx: expected a NULL IStream object, got %p\n", stream);
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_CREATE | stgm, 0, FALSE, NULL, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
@@ -653,7 +633,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
     }
 
     stream = NULL;
-    ret = (*pSHCreateStreamOnFileEx)(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
+    ret = SHCreateStreamOnFileEx(test_file, mode | STGM_CREATE | stgm, 0, TRUE, NULL, &stream);
     ok(ret == S_OK, "SHCreateStreamOnFileEx: expected S_OK, got 0x%08x\n", ret);
     ok(stream != NULL, "SHCreateStreamOnFileEx: expected a valid IStream object, got NULL\n");
 
@@ -686,7 +666,7 @@ static void test_SHCreateStreamOnFileEx_CopyTo(void)
     GetTempFileNameW(tmpPath, prefix, 0, srcFileName);
     GetTempFileNameW(tmpPath, prefix, 0, dstFileName);
 
-    ret = pSHCreateStreamOnFileEx(srcFileName, STGM_CREATE | STGM_READWRITE | STGM_DELETEONRELEASE, FILE_ATTRIBUTE_TEMPORARY, FALSE, NULL, &src);
+    ret = SHCreateStreamOnFileEx(srcFileName, STGM_CREATE | STGM_READWRITE | STGM_DELETEONRELEASE, FILE_ATTRIBUTE_TEMPORARY, FALSE, NULL, &src);
     ok(SUCCEEDED(ret), "SHCreateStreamOnFileEx failed with ret=0x%08x\n", ret);
 
     written.QuadPart = 0;
@@ -697,7 +677,7 @@ static void test_SHCreateStreamOnFileEx_CopyTo(void)
     ret = IStream_Seek(src, distance, STREAM_SEEK_SET, &written);
     ok(SUCCEEDED(ret), "ISequentialStream_Seek failed with ret=0x%08x\n", ret);
 
-    ret = pSHCreateStreamOnFileEx(dstFileName, STGM_CREATE | STGM_READWRITE | STGM_DELETEONRELEASE, FILE_ATTRIBUTE_TEMPORARY, FALSE, NULL, &dst);
+    ret = SHCreateStreamOnFileEx(dstFileName, STGM_CREATE | STGM_READWRITE | STGM_DELETEONRELEASE, FILE_ATTRIBUTE_TEMPORARY, FALSE, NULL, &dst);
     ok(SUCCEEDED(ret), "SHCreateStreamOnFileEx failed with ret=0x%08x\n", ret);
 
     /* Test using a count larger than the source file, so that the Read operation will fall short */
@@ -744,35 +724,15 @@ START_TEST(istream)
 
     int i, j, k;
 
-    hShlwapi = LoadLibraryA("shlwapi.dll");
-
-    pSHCreateStreamOnFileA = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileA");
-    pSHCreateStreamOnFileW = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileW");
-    pSHCreateStreamOnFileEx = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileEx");
-
-    if (!pSHCreateStreamOnFileA)
-        skip("SHCreateStreamOnFileA not found.\n");
-
-    if (!pSHCreateStreamOnFileW)
-        skip("SHCreateStreamOnFileW not found.\n");
-
-    if (!pSHCreateStreamOnFileEx)
-        skip("SHCreateStreamOnFileEx not found.\n");
-
     for (i = 0; i != sizeof(stgm_access)/sizeof(stgm_access[0]); i++) {
         for (j = 0; j != sizeof(stgm_sharing)/sizeof(stgm_sharing[0]); j ++) {
-            if (pSHCreateStreamOnFileA)
-                test_SHCreateStreamOnFileA(stgm_access[i], stgm_sharing[j]);
+            test_SHCreateStreamOnFileA(stgm_access[i], stgm_sharing[j]);
+            test_SHCreateStreamOnFileW(stgm_access[i], stgm_sharing[j]);
 
-            if (pSHCreateStreamOnFileW)
-                test_SHCreateStreamOnFileW(stgm_access[i], stgm_sharing[j]);
-
-            if (pSHCreateStreamOnFileEx) {
-                for (k = 0; k != sizeof(stgm_flags)/sizeof(stgm_flags[0]); k++)
-                    test_SHCreateStreamOnFileEx(stgm_access[i], stgm_sharing[j] | stgm_flags[k]);
-            }
+            for (k = 0; k != sizeof(stgm_flags)/sizeof(stgm_flags[0]); k++)
+                test_SHCreateStreamOnFileEx(stgm_access[i], stgm_sharing[j] | stgm_flags[k]);
         }
     }
 
-    if (pSHCreateStreamOnFileEx) test_SHCreateStreamOnFileEx_CopyTo();
+    test_SHCreateStreamOnFileEx_CopyTo();
 }
