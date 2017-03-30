@@ -50,6 +50,7 @@ DEFINE_VTBL_WRAPPER(0);
 DEFINE_VTBL_WRAPPER(4);
 DEFINE_VTBL_WRAPPER(8);
 DEFINE_VTBL_WRAPPER(20);
+DEFINE_VTBL_WRAPPER(28);
 
 #endif
 
@@ -114,6 +115,7 @@ typedef struct Scheduler {
     const vtable_ptr *vtable;
 } Scheduler;
 #define call_Scheduler_Release(this) CALL_VTBL_FUNC(this, 20, unsigned int, (Scheduler*), (this))
+#define call_Scheduler_Attach(this) CALL_VTBL_FUNC(this, 28, void, (Scheduler*), (this))
 
 typedef struct {
     Scheduler scheduler;
@@ -757,7 +759,12 @@ void __cdecl Scheduler_SetDefaultSchedulerPolicy(const SchedulerPolicy *policy)
 /* ?Create@CurrentScheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z */
 void __cdecl CurrentScheduler_Create(const SchedulerPolicy *policy)
 {
-    FIXME("(%p) stub\n", policy);
+    Scheduler *scheduler;
+
+    TRACE("(%p)\n", policy);
+
+    scheduler = Scheduler_Create(policy);
+    call_Scheduler_Attach(scheduler);
 }
 
 /* ?Detach@CurrentScheduler@Concurrency@@SAXXZ */
