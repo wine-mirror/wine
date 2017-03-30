@@ -167,6 +167,7 @@ struct dwrite_glyphrunanalysis {
     LONG ref;
 
     DWRITE_RENDERING_MODE1 rendering_mode;
+    DWRITE_TEXTURE_TYPE texture_type; /* derived from rendering mode specified on creation */
     DWRITE_GLYPH_RUN run; /* glyphAdvances and glyphOffsets are not used */
     DWRITE_MATRIX m;
     FLOAT ppdip;
@@ -4874,8 +4875,7 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnal
         return E_INVALIDARG;
     }
 
-    if ((type == DWRITE_TEXTURE_ALIASED_1x1 && This->rendering_mode != DWRITE_RENDERING_MODE1_ALIASED) ||
-        (type == DWRITE_TEXTURE_CLEARTYPE_3x1 && This->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED)) {
+    if (type != This->texture_type) {
         memset(bounds, 0, sizeof(*bounds));
         return S_OK;
     }
@@ -5059,24 +5059,9 @@ static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysi
     if (size < required)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    /* validate requested texture type with rendering mode */
-    switch (This->rendering_mode)
-    {
-    case DWRITE_RENDERING_MODE1_ALIASED:
-        if (type != DWRITE_TEXTURE_ALIASED_1x1)
-            return DWRITE_E_UNSUPPORTEDOPERATION;
-        break;
-    case DWRITE_RENDERING_MODE1_GDI_CLASSIC:
-    case DWRITE_RENDERING_MODE1_GDI_NATURAL:
-    case DWRITE_RENDERING_MODE1_NATURAL:
-    case DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC:
-    case DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED:
-        if (type != DWRITE_TEXTURE_CLEARTYPE_3x1)
-            return DWRITE_E_UNSUPPORTEDOPERATION;
-        break;
-    default:
-        ;
-    }
+    /* validate requested texture type */
+    if (This->texture_type != type)
+        return DWRITE_E_UNSUPPORTEDOPERATION;
 
     memset(bitmap, 0, size);
     glyphrunanalysis_get_texturebounds(This, &runbounds);
@@ -5197,6 +5182,12 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
     analysis->ref = 1;
     analysis->rendering_mode = desc->rendering_mode;
+
+    if (desc->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED)
+        analysis->texture_type = DWRITE_TEXTURE_ALIASED_1x1;
+    else
+        analysis->texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
+
     analysis->flags = 0;
     analysis->bitmap = NULL;
     analysis->ppdip = desc->ppdip;
