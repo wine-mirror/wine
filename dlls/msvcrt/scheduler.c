@@ -115,6 +115,7 @@ static void ExternalContextBase_ctor(ExternalContextBase*);
 typedef struct Scheduler {
     const vtable_ptr *vtable;
 } Scheduler;
+#define call_Scheduler_Id(this) CALL_VTBL_FUNC(this, 4, unsigned int, (const Scheduler*), (this))
 #define call_Scheduler_Reference(this) CALL_VTBL_FUNC(this, 16, unsigned int, (Scheduler*), (this))
 #define call_Scheduler_Release(this) CALL_VTBL_FUNC(this, 20, unsigned int, (Scheduler*), (this))
 #define call_Scheduler_Attach(this) CALL_VTBL_FUNC(this, 28, void, (Scheduler*), (this))
@@ -902,8 +903,13 @@ SchedulerPolicy* __cdecl CurrentScheduler_GetPolicy(SchedulerPolicy *policy)
 /* ?Id@CurrentScheduler@Concurrency@@SAIXZ */
 unsigned int __cdecl CurrentScheduler_Id(void)
 {
-    FIXME("() stub\n");
-    return 0;
+    Context *context = try_get_current_context();
+
+    TRACE("()\n");
+
+    if(!context)
+        return -1;
+    return call_Scheduler_Id(CurrentScheduler_Get());
 }
 
 /* ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z */
