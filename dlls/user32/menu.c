@@ -1136,31 +1136,18 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
     TRACE("%s\n", wine_dbgstr_rect( &lpitem->rect));
 }
 
-
-/***********************************************************************
- *           MENU_GetMaxPopupHeight
- */
-static UINT
-MENU_GetMaxPopupHeight(const POPUPMENU *lppop)
-{
-    if (lppop->cyMax)
-        return lppop->cyMax;
-    return GetSystemMetrics(SM_CYSCREEN) - GetSystemMetrics(SM_CYBORDER);
-}
-
-
 /***********************************************************************
  *           MENU_PopupMenuCalcSize
  *
  * Calculate the size of a popup menu.
  */
-static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
+static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, UINT max_height )
 {
     MENUITEM *lpitem;
     HDC hdc;
     UINT start, i;
     BOOL textandbmp = FALSE, multi_col = FALSE;
-    int orgX, orgY, maxTab, maxTabWidth, maxHeight;
+    int orgX, orgY, maxTab, maxTabWidth;
 
     lppop->Width = lppop->Height = 0;
     SetRectEmpty(&lppop->items_rect);
@@ -1230,10 +1217,9 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     lppop->Width = lppop->items_rect.right + MENU_MARGIN;
 
     /* Adjust popup height if it exceeds maximum */
-    maxHeight = MENU_GetMaxPopupHeight(lppop);
-    if (lppop->Height >= maxHeight)
+    if (lppop->Height >= max_height)
     {
-        lppop->Height = maxHeight;
+        lppop->Height = max_height;
         lppop->bScrolling = !multi_col;
         /* When the scroll arrows are present, don't add the top/bottom margin as well */
         if (lppop->bScrolling)
@@ -1894,6 +1880,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     POINT pt;
     HMONITOR monitor;
     MONITORINFO info;
+    UINT max_height;
 
     TRACE("owner=%p hmenu=%p id=0x%04x x=0x%04x y=0x%04x xa=0x%04x ya=0x%04x\n",
           hwndOwner, hmenu, id, x, y, xanchor, yanchor);
@@ -1906,9 +1893,6 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     }
 
     menu->nScrollPos = 0;
-    MENU_PopupMenuCalcSize( menu );
-
-    /* adjust popup menu pos so that it fits within the desktop */
 
     /* FIXME: should use item rect */
     pt.x = x;
@@ -1916,6 +1900,14 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     monitor = MonitorFromPoint( pt, MONITOR_DEFAULTTONEAREST );
     info.cbSize = sizeof(info);
     GetMonitorInfoW( monitor, &info );
+
+    max_height = info.rcWork.bottom - info.rcWork.top;
+    if (menu->cyMax)
+        max_height = min( max_height, menu->cyMax );
+
+    MENU_PopupMenuCalcSize( menu, max_height );
+
+    /* adjust popup menu pos so that it fits within the desktop */
 
     if (flags & TPM_LAYOUTRTL)
         flags ^= TPM_RIGHTALIGN;
