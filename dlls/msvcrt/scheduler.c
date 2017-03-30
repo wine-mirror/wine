@@ -141,6 +141,7 @@ static CRITICAL_SECTION_DEBUG default_scheduler_cs_debug =
 };
 static CRITICAL_SECTION default_scheduler_cs = { &default_scheduler_cs_debug, -1, 0, 0, 0, 0 };
 static SchedulerPolicy default_scheduler_policy;
+static ThreadScheduler *default_scheduler;
 
 static Context* try_get_current_context(void)
 {
@@ -796,12 +797,45 @@ void __cdecl CurrentScheduler_Detach(void)
     FIXME("() stub\n");
 }
 
+static void create_default_scheduler(void)
+{
+    if(default_scheduler)
+        return;
+
+    EnterCriticalSection(&default_scheduler_cs);
+    if(!default_scheduler) {
+        ThreadScheduler *scheduler;
+
+        if(!default_scheduler_policy.policy_container)
+            SchedulerPolicy_ctor(&default_scheduler_policy);
+
+        scheduler = MSVCRT_operator_new(sizeof(*scheduler));
+        ThreadScheduler_ctor(scheduler, &default_scheduler_policy);
+        default_scheduler = scheduler;
+    }
+    LeaveCriticalSection(&default_scheduler_cs);
+}
+
 /* ?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ */
 /* ?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ */
 Scheduler* __cdecl CurrentScheduler_Get(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    ExternalContextBase *context = (ExternalContextBase*)get_current_context();
+
+    TRACE("()\n");
+
+    if(context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+        ERR("unknown context set\n");
+        return NULL;
+    }
+
+    if(context->scheduler.scheduler)
+        return context->scheduler.scheduler;
+
+    create_default_scheduler();
+    context->scheduler.scheduler = &default_scheduler->scheduler;
+    ThreadScheduler_Reference(default_scheduler);
+    return &default_scheduler->scheduler;
 }
 
 /* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z */
@@ -927,6 +961,10 @@ void msvcrt_free_scheduler(void)
         TlsFree(context_tls_index);
     if(default_scheduler_policy.policy_container)
         SchedulerPolicy_dtor(&default_scheduler_policy);
+    if(default_scheduler) {
+        ThreadScheduler_dtor(default_scheduler);
+        MSVCRT_operator_delete(default_scheduler);
+    }
 }
 
 void msvcrt_free_scheduler_thread(void)
