@@ -16040,6 +16040,8 @@ static void check_invalid_so_desc_(unsigned int line, ID3D11Device *device,
             entry, entry_count, strides, stride_count, rasterizer_stream, NULL, &gs);
     ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     ok_(__FILE__, line)(!gs, "Got unexpected geometry shader %p.\n", gs);
+    if (SUCCEEDED(hr))
+        ID3D11GeometryShader_Release(gs);
 }
 
 static void test_stream_output(void)
@@ -16483,6 +16485,261 @@ static void test_stream_output(void)
     release_test_context(&test_context);
 }
 
+static void test_fl10_stream_output_desc(void)
+{
+    UINT stride[D3D11_SO_BUFFER_SLOT_COUNT];
+    struct d3d11_test_context test_context;
+    unsigned int i, count;
+    ID3D11Device *device;
+
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_10_0;
+    static const DWORD vs_code[] =
+    {
+#if 0
+        struct data
+        {
+            float4 position : SV_Position;
+            float4 attrib1 : ATTRIB1;
+            float3 attrib2 : attrib2;
+            float2 attrib3 : ATTriB3;
+            float  attrib4 : ATTRIB4;
+        };
+
+        void main(in data i, out data o)
+        {
+            o = i;
+        }
+#endif
+        0x43425844, 0x3f5b621f, 0x8f390786, 0x7235c8d6, 0xc1181ad3, 0x00000001, 0x00000278, 0x00000003,
+        0x0000002c, 0x000000d8, 0x00000184, 0x4e475349, 0x000000a4, 0x00000005, 0x00000008, 0x00000080,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x0000008c, 0x00000001, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x00000093, 0x00000002, 0x00000000, 0x00000003, 0x00000002,
+        0x00000707, 0x0000009a, 0x00000003, 0x00000000, 0x00000003, 0x00000003, 0x00000303, 0x0000008c,
+        0x00000004, 0x00000000, 0x00000003, 0x00000004, 0x00000101, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x52545441, 0x61004249, 0x69727474, 0x54410062, 0x42697254, 0xababab00, 0x4e47534f, 0x000000a4,
+        0x00000005, 0x00000008, 0x00000080, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f,
+        0x0000008c, 0x00000001, 0x00000000, 0x00000003, 0x00000001, 0x0000000f, 0x00000093, 0x00000002,
+        0x00000000, 0x00000003, 0x00000002, 0x00000807, 0x0000009a, 0x00000003, 0x00000000, 0x00000003,
+        0x00000003, 0x00000c03, 0x0000008c, 0x00000004, 0x00000000, 0x00000003, 0x00000003, 0x00000b04,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x52545441, 0x61004249, 0x69727474, 0x54410062, 0x42697254,
+        0xababab00, 0x52444853, 0x000000ec, 0x00010040, 0x0000003b, 0x0300005f, 0x001010f2, 0x00000000,
+        0x0300005f, 0x001010f2, 0x00000001, 0x0300005f, 0x00101072, 0x00000002, 0x0300005f, 0x00101032,
+        0x00000003, 0x0300005f, 0x00101012, 0x00000004, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000001, 0x03000065, 0x00102072, 0x00000002, 0x03000065, 0x00102032,
+        0x00000003, 0x03000065, 0x00102042, 0x00000003, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46,
+        0x00000000, 0x05000036, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001, 0x05000036, 0x00102072,
+        0x00000002, 0x00101246, 0x00000002, 0x05000036, 0x00102032, 0x00000003, 0x00101046, 0x00000003,
+        0x05000036, 0x00102042, 0x00000003, 0x0010100a, 0x00000004, 0x0100003e,
+    };
+    static const DWORD gs_code[] =
+    {
+#if 0
+        struct data
+        {
+            float4 position : SV_Position;
+            float4 attrib1 : ATTRIB1;
+            float3 attrib2 : attrib2;
+            float2 attrib3 : ATTriB3;
+            float  attrib4 : ATTRIB4;
+        };
+
+        [maxvertexcount(1)]
+        void main(point data i[1], inout PointStream<data> o)
+        {
+            o.Append(i[0]);
+        }
+#endif
+        0x43425844, 0x59c61884, 0x3eef167b, 0x82618c33, 0x243cb630, 0x00000001, 0x000002a0, 0x00000003,
+        0x0000002c, 0x000000d8, 0x00000184, 0x4e475349, 0x000000a4, 0x00000005, 0x00000008, 0x00000080,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x0000008c, 0x00000001, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x00000093, 0x00000002, 0x00000000, 0x00000003, 0x00000002,
+        0x00000707, 0x0000009a, 0x00000003, 0x00000000, 0x00000003, 0x00000003, 0x00000303, 0x0000008c,
+        0x00000004, 0x00000000, 0x00000003, 0x00000003, 0x00000404, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x52545441, 0x61004249, 0x69727474, 0x54410062, 0x42697254, 0xababab00, 0x4e47534f, 0x000000a4,
+        0x00000005, 0x00000008, 0x00000080, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f,
+        0x0000008c, 0x00000001, 0x00000000, 0x00000003, 0x00000001, 0x0000000f, 0x00000093, 0x00000002,
+        0x00000000, 0x00000003, 0x00000002, 0x00000807, 0x0000009a, 0x00000003, 0x00000000, 0x00000003,
+        0x00000003, 0x00000c03, 0x0000008c, 0x00000004, 0x00000000, 0x00000003, 0x00000003, 0x00000b04,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x52545441, 0x61004249, 0x69727474, 0x54410062, 0x42697254,
+        0xababab00, 0x52444853, 0x00000114, 0x00020040, 0x00000045, 0x05000061, 0x002010f2, 0x00000001,
+        0x00000000, 0x00000001, 0x0400005f, 0x002010f2, 0x00000001, 0x00000001, 0x0400005f, 0x00201072,
+        0x00000001, 0x00000002, 0x0400005f, 0x00201032, 0x00000001, 0x00000003, 0x0400005f, 0x00201042,
+        0x00000001, 0x00000003, 0x0100085d, 0x0100085c, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000001, 0x03000065, 0x00102072, 0x00000002, 0x03000065, 0x00102032,
+        0x00000003, 0x03000065, 0x00102042, 0x00000003, 0x0200005e, 0x00000001, 0x06000036, 0x001020f2,
+        0x00000000, 0x00201e46, 0x00000000, 0x00000000, 0x06000036, 0x001020f2, 0x00000001, 0x00201e46,
+        0x00000000, 0x00000001, 0x06000036, 0x00102072, 0x00000002, 0x00201246, 0x00000000, 0x00000002,
+        0x06000036, 0x00102072, 0x00000003, 0x00201246, 0x00000000, 0x00000003, 0x01000013, 0x0100003e,
+    };
+    static const D3D11_SO_DECLARATION_ENTRY so_declaration[] =
+    {
+        {0, "SV_Position", 0, 0, 4, 0},
+    };
+    static const D3D11_SO_DECLARATION_ENTRY invalid_gap_declaration[] =
+    {
+        {0, "SV_Position", 0, 0, 4, 0},
+        {0, NULL,          0, 0, 0, 0},
+    };
+    static const D3D11_SO_DECLARATION_ENTRY valid_so_declarations[][12] =
+    {
+        /* Gaps */
+        {
+            {0, "SV_POSITION", 0, 0, 4, 0},
+            {0, NULL,          0, 0, 8, 0},
+            {0, "ATTRIB",      1, 0, 4, 0},
+        },
+        {
+            {0, "SV_POSITION", 0, 0, 4, 0},
+            {0, NULL,          0, 0, 4, 0},
+            {0, NULL,          0, 0, 4, 0},
+            {0, "ATTRIB",      1, 0, 4, 0},
+        },
+        /* OutputSlot */
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, "attrib",      2, 0, 3, 0},
+            {0, "attrib",      3, 0, 2, 0},
+            {0, "attrib",      4, 0, 1, 0},
+        },
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, "attrib",      2, 0, 3, 1},
+            {0, "attrib",      3, 0, 2, 2},
+            {0, "attrib",      4, 0, 1, 3},
+        },
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, "attrib",      2, 0, 3, 3},
+        },
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, "attrib",      2, 0, 3, 0},
+            {0, "attrib",      3, 0, 2, 0},
+            {0, NULL,          0, 0, 1, 0},
+            {0, "attrib",      4, 0, 1, 0},
+        },
+        /* Multiple occurrences of the same output */
+        {
+            {0, "ATTRIB",      1, 0, 2, 0},
+            {0, "ATTRIB",      1, 2, 2, 1},
+        },
+        {
+            {0, "ATTRIB",      1, 0, 1, 0},
+            {0, "ATTRIB",      1, 1, 3, 0},
+        },
+    };
+    static const D3D11_SO_DECLARATION_ENTRY invalid_so_declarations[][12] =
+    {
+        /* OutputSlot */
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, NULL,          0, 0, 4, 0},
+            {0, "attrib",      4, 0, 1, 3},
+        },
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, NULL,          0, 0, 4, 0},
+            {0, NULL,          0, 0, 4, 0},
+            {0, "attrib",      4, 0, 1, 3},
+        },
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, "attrib",      2, 0, 3, 0},
+            {0, "attrib",      3, 0, 2, 0},
+            {0, "attrib",      4, 0, 1, 1},
+        },
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, "attrib",      2, 0, 3, 0},
+            {0, "attrib",      3, 0, 2, 3},
+            {0, NULL,          0, 0, 1, 3},
+            {0, "attrib",      4, 0, 1, 3},
+        },
+        {
+            {0, "attrib",      1, 0, 4, 0},
+            {0, "attrib",      1, 0, 3, 1},
+            {0, "attrib",      1, 0, 2, 2},
+            {0, "attrib",      1, 0, 1, 3},
+            {0, NULL,          0, 0, 3, 3},
+        },
+    };
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+
+    for (i = 0; i < ARRAY_SIZE(stride); ++i)
+        stride[i] = 64;
+
+    check_so_desc(device, gs_code, sizeof(gs_code), NULL, 0, NULL, 0, 0);
+    todo_wine check_invalid_so_desc(device, gs_code, sizeof(gs_code), NULL, 0, stride, 1, 0);
+    check_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration), NULL, 0, 0);
+    check_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration), stride, 1, 0);
+
+    todo_wine
+    check_so_desc(device, vs_code, sizeof(vs_code), so_declaration, ARRAY_SIZE(so_declaration), NULL, 0, 0);
+    todo_wine
+    check_so_desc(device, vs_code, sizeof(vs_code), so_declaration, ARRAY_SIZE(so_declaration), stride, 1, 0);
+
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, 0, stride, 1, 0);
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code),
+            invalid_gap_declaration, ARRAY_SIZE(invalid_gap_declaration), stride, 1, 0);
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code),
+            invalid_gap_declaration, ARRAY_SIZE(invalid_gap_declaration), NULL, 0, 0);
+
+    check_invalid_so_desc(device, vs_code, sizeof(vs_code), so_declaration, 0, NULL, 0, 0);
+    check_invalid_so_desc(device, vs_code, sizeof(vs_code), NULL, 0, NULL, 0, 0);
+
+    for (i = 0; i < ARRAY_SIZE(valid_so_declarations); ++i)
+    {
+        for (count = 0; count < ARRAY_SIZE(valid_so_declarations[i]); ++count)
+        {
+            const D3D11_SO_DECLARATION_ENTRY *e = &valid_so_declarations[i][count];
+            if (!e->Stream && !e->SemanticName && !e->SemanticIndex && !e->ComponentCount)
+                break;
+        }
+
+        check_so_desc(device, gs_code, sizeof(gs_code), valid_so_declarations[i], count, NULL, 0, 0);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(invalid_so_declarations); ++i)
+    {
+        for (count = 0; count < ARRAY_SIZE(invalid_so_declarations[i]); ++count)
+        {
+            const D3D11_SO_DECLARATION_ENTRY *e = &invalid_so_declarations[i][count];
+            if (!e->Stream && !e->SemanticName && !e->SemanticIndex && !e->ComponentCount)
+                break;
+        }
+
+        check_invalid_so_desc(device, gs_code, sizeof(gs_code), invalid_so_declarations[i], count,
+                stride, 1, 0);
+        check_invalid_so_desc(device, gs_code, sizeof(gs_code), invalid_so_declarations[i], count,
+                stride, 2, 0);
+        check_invalid_so_desc(device, gs_code, sizeof(gs_code), invalid_so_declarations[i], count,
+                stride, 3, 0);
+        check_invalid_so_desc(device, gs_code, sizeof(gs_code), invalid_so_declarations[i], count,
+                stride, 4, 0);
+    }
+
+    /* Buffer strides */
+    stride[1] = 63;
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
+            &stride[1], 1, 0);
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
+            stride, 2, 0);
+
+    /* Rasterizer stream */
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
+            NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM);
+    for (i = 1; i < D3D11_SO_STREAM_COUNT; ++i)
+        check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
+                NULL, 0, i);
+    check_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration), NULL, 0, 0);
+
+    release_test_context(&test_context);
+}
+
 static void test_stream_output_resume(void)
 {
     struct d3d11_test_context test_context;
@@ -16711,5 +16968,6 @@ START_TEST(d3d11)
     test_tgsm();
     test_geometry_shader();
     test_stream_output();
+    test_fl10_stream_output_desc();
     test_stream_output_resume();
 }
