@@ -753,6 +753,94 @@ void __cdecl Scheduler_SetDefaultSchedulerPolicy(const SchedulerPolicy *policy)
     FIXME("(%p) stub\n", policy);
 }
 
+/* ?Create@CurrentScheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z */
+/* ?Create@CurrentScheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z */
+void __cdecl CurrentScheduler_Create(const SchedulerPolicy *policy)
+{
+    FIXME("(%p) stub\n", policy);
+}
+
+/* ?Detach@CurrentScheduler@Concurrency@@SAXXZ */
+void __cdecl CurrentScheduler_Detach(void)
+{
+    FIXME("() stub\n");
+}
+
+/* ?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ */
+/* ?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ */
+Scheduler* __cdecl CurrentScheduler_Get(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}
+
+/* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z */
+/* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@AEAVlocation@2@@Z */
+/*ScheduleGroup*/void* __cdecl CurrentScheduler_CreateScheduleGroup_loc(/*location*/void *placement)
+{
+    FIXME("(%p) stub\n", placement);
+    return NULL;
+}
+
+/* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@XZ */
+/* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@XZ */
+/*ScheduleGroup*/void* __cdecl CurrentScheduler_CreateScheduleGroup(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}
+
+/* ?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ */
+unsigned int __cdecl CurrentScheduler_GetNumberOfVirtualProcessors(void)
+{
+    FIXME("() stub\n");
+    return 0;
+}
+
+/* ?GetPolicy@CurrentScheduler@Concurrency@@SA?AVSchedulerPolicy@2@XZ */
+SchedulerPolicy* __cdecl CurrentScheduler_GetPolicy(SchedulerPolicy *policy)
+{
+    FIXME("(%p) stub\n", policy);
+    return NULL;
+}
+
+/* ?Id@CurrentScheduler@Concurrency@@SAIXZ */
+unsigned int __cdecl CurrentScheduler_Id(void)
+{
+    FIXME("() stub\n");
+    return 0;
+}
+
+/* ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z */
+/* ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NAEBVlocation@2@@Z */
+MSVCRT_bool __cdecl CurrentScheduler_IsAvailableLocation(const /*location*/void *placement)
+{
+    FIXME("(%p) stub\n", placement);
+    return 0;
+}
+
+/* ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPAX@Z */
+/* ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPEAX@Z */
+void __cdecl CurrentScheduler_RegisterShutdownEvent(HANDLE event)
+{
+    FIXME("(%p) stub\n", event);
+}
+
+/* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0AAVlocation@2@@Z */
+/* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0AEAVlocation@2@@Z */
+void __cdecl CurrentScheduler_ScheduleTask_loc(void (__cdecl *proc)(void*),
+        void *data, /*location*/void *placement)
+{
+    FIXME("(%p %p %p) stub\n", proc, data, placement);
+}
+
+/* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0@Z */
+/* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0@Z */
+void __cdecl CurrentScheduler_ScheduleTask(void (__cdecl *proc)(void*), void *data)
+{
+    FIXME("(%p %p) stub\n", proc, data);
+}
+
 extern const vtable_ptr MSVCRT_type_info_vtable;
 DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")
 DEFINE_RTTI_DATA1(ContextBase, 0, &Context_rtti_base_descriptor, ".?AVContextBase@details@Concurrency@@")

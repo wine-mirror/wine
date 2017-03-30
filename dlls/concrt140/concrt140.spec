@@ -224,29 +224,29 @@
 # extern ?ConcRTEventGuid@Concurrency@@3U_GUID@@B
 # extern ?ConcRT_ProviderGuid@Concurrency@@3U_GUID@@B
 # extern ?ContextEventGuid@Concurrency@@3U_GUID@@B
-@ stub -arch=win32 ?Create@CurrentScheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z
-@ stub -arch=win64 ?Create@CurrentScheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z
+@ cdecl -arch=win32 ?Create@CurrentScheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z(ptr) msvcr120.?Create@CurrentScheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z
+@ cdecl -arch=win64 ?Create@CurrentScheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z(ptr) msvcr120.?Create@CurrentScheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z
 @ cdecl -arch=win32 ?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z(ptr) msvcr120.?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z
 @ cdecl -arch=win64 ?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z(ptr) msvcr120.?Create@Scheduler@Concurrency@@SAPEAV12@AEBVSchedulerPolicy@2@@Z
 @ stub -arch=win32 ?CreateResourceManager@Concurrency@@YAPAUIResourceManager@1@XZ
 @ stub -arch=win64 ?CreateResourceManager@Concurrency@@YAPEAUIResourceManager@1@XZ
-@ stub -arch=win32 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z
-@ stub -arch=win64 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@AEAVlocation@2@@Z
-@ stub -arch=win32 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@XZ
-@ stub -arch=win64 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@XZ
+@ cdecl -arch=win32 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z(ptr) msvcr120.?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z
+@ cdecl -arch=win64 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@AEAVlocation@2@@Z(ptr) msvcr120.?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@AEAVlocation@2@@Z
+@ cdecl -arch=win32 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@XZ() msvcr120.?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@XZ
+@ cdecl -arch=win64 ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@XZ() msvcr120.?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@XZ
 @ cdecl -arch=win32 ?CurrentContext@Context@Concurrency@@SAPAV12@XZ() msvcr120.?CurrentContext@Context@Concurrency@@SAPAV12@XZ
 @ cdecl -arch=win64 ?CurrentContext@Context@Concurrency@@SAPEAV12@XZ() msvcr120.?CurrentContext@Context@Concurrency@@SAPEAV12@XZ
-@ stub ?Detach@CurrentScheduler@Concurrency@@SAXXZ
+@ cdecl ?Detach@CurrentScheduler@Concurrency@@SAXXZ() msvcr120.?Detach@CurrentScheduler@Concurrency@@SAXXZ
 @ stub ?DisableTracing@Concurrency@@YAJXZ
 @ stub ?EnableTracing@Concurrency@@YAJXZ
 @ cdecl -arch=win32 ?Free@Concurrency@@YAXPAX@Z(ptr) msvcr120.?Free@Concurrency@@YAXPAX@Z
 @ cdecl -arch=win64 ?Free@Concurrency@@YAXPEAX@Z(ptr) msvcr120.?Free@Concurrency@@YAXPEAX@Z
-@ stub -arch=win32 ?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ
-@ stub -arch=win64 ?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ
+@ cdecl -arch=win32 ?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ() msvcr120.?Get@CurrentScheduler@Concurrency@@SAPAVScheduler@2@XZ
+@ cdecl -arch=win64 ?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ() msvcr120.?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ
 @ stub ?GetExecutionContextId@Concurrency@@YAIXZ
-@ stub ?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ
+@ cdecl ?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ() msvcr120.?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ
 @ stub ?GetOSVersion@Concurrency@@YA?AW4OSVersion@IResourceManager@1@XZ
-@ stub ?GetPolicy@CurrentScheduler@Concurrency@@SA?AVSchedulerPolicy@2@XZ
+@ cdecl ?GetPolicy@CurrentScheduler@Concurrency@@SA?AVSchedulerPolicy@2@XZ(ptr) msvcr120.?GetPolicy@CurrentScheduler@Concurrency@@SA?AVSchedulerPolicy@2@XZ
 @ thiscall -arch=i386 ?GetPolicyValue@SchedulerPolicy@Concurrency@@QBEIW4PolicyElementKey@2@@Z(ptr long) msvcr120.?GetPolicyValue@SchedulerPolicy@Concurrency@@QBEIW4PolicyElementKey@2@@Z
 @ cdecl -arch=win64 ?GetPolicyValue@SchedulerPolicy@Concurrency@@QEBAIW4PolicyElementKey@2@@Z(ptr long) msvcr120.?GetPolicyValue@SchedulerPolicy@Concurrency@@QEBAIW4PolicyElementKey@2@@Z
 @ stub ?GetProcessorCount@Concurrency@@YAIXZ
@@ -255,9 +255,9 @@
 @ stub -arch=win32 ?GetSharedTimerQueue@details@Concurrency@@YAPAXXZ
 @ stub -arch=win64 ?GetSharedTimerQueue@details@Concurrency@@YAPEAXXZ
 @ cdecl ?Id@Context@Concurrency@@SAIXZ() msvcr120.?Id@Context@Concurrency@@SAIXZ
-@ stub ?Id@CurrentScheduler@Concurrency@@SAIXZ
-@ stub -arch=win32 ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z
-@ stub -arch=win64 ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NAEBVlocation@2@@Z
+@ cdecl ?Id@CurrentScheduler@Concurrency@@SAIXZ() msvcr120.?Id@CurrentScheduler@Concurrency@@SAIXZ
+@ cdecl -arch=win32 ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z(ptr) msvcr120.?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z
+@ cdecl -arch=win64 ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NAEBVlocation@2@@Z(ptr) msvcr120.?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NAEBVlocation@2@@Z
 @ cdecl ?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ() msvcr120.?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ
 # extern ?LockEventGuid@Concurrency@@3U_GUID@@B
 @ stub -arch=win32 ?Log2@details@Concurrency@@YAKI@Z
@@ -272,16 +272,16 @@
 # extern ?PPLParallelForEventGuid@Concurrency@@3U_GUID@@B
 # extern ?PPLParallelForeachEventGuid@Concurrency@@3U_GUID@@B
 # extern ?PPLParallelInvokeEventGuid@Concurrency@@3U_GUID@@B
-@ stub -arch=win32 ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPAX@Z
-@ stub -arch=win64 ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPEAX@Z
+@ cdecl -arch=win32 ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPAX@Z(long) msvcr120.?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPAX@Z
+@ cdecl -arch=win64 ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPEAX@Z(long) msvcr120.?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPEAX@Z
 @ cdecl ?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ() msvcr120.?ResetDefaultSchedulerPolicy@Scheduler@Concurrency@@SAXXZ
 # extern ?ResourceManagerEventGuid@Concurrency@@3U_GUID@@B
 # extern ?ScheduleGroupEventGuid@Concurrency@@3U_GUID@@B
 @ cdecl ?ScheduleGroupId@Context@Concurrency@@SAIXZ() msvcr120.?ScheduleGroupId@Context@Concurrency@@SAIXZ
-@ stub -arch=win32 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0@Z
-@ stub -arch=win64 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0@Z
-@ stub -arch=win32 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0AAVlocation@2@@Z
-@ stub -arch=win64 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0AEAVlocation@2@@Z
+@ cdecl -arch=win32 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0@Z(ptr ptr) msvcr120.?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0@Z
+@ cdecl -arch=win64 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0@Z(ptr ptr) msvcr120.?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0@Z
+@ cdecl -arch=win32 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0AAVlocation@2@@Z(ptr ptr ptr) msvcr120.?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0AAVlocation@2@@Z
+@ cdecl -arch=win64 ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0AEAVlocation@2@@Z(ptr ptr ptr) msvcr120.?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0AEAVlocation@2@@Z
 # extern ?SchedulerEventGuid@Concurrency@@3U_GUID@@B
 @ thiscall -arch=i386 ?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QAEXII@Z(ptr long long) msvcr120.?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QAEXII@Z
 @ cdecl -arch=win64 ?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QEAAXII@Z(ptr long long) msvcr120.?SetConcurrencyLimits@SchedulerPolicy@Concurrency@@QEAAXII@Z
