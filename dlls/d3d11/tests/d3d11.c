@@ -16870,7 +16870,6 @@ static void test_stream_output_resume(void)
         for (j = 0; j < 6; ++j) /* 2 triangles */
         {
             data = get_readback_vec4(&rb, idx++, 0);
-            todo_wine
             ok(compare_vec4(data, &constants[i], 0),
                     "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u (%u, %u).\n",
                     data->x, data->y, data->z, data->w, idx, i, j);

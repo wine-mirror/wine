@@ -414,6 +414,27 @@ static BOOL use_transform_feedback(const struct wined3d_state *state)
     return shader->u.gs.so_desc.element_count;
 }
 
+static void context_pause_transform_feedback(struct wined3d_context *context, BOOL force)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (!context->transform_feedback_active || context->transform_feedback_paused)
+        return;
+
+    if (gl_info->supported[ARB_TRANSFORM_FEEDBACK2])
+    {
+        GL_EXTCALL(glPauseTransformFeedback());
+        checkGLcall("glPauseTransformFeedback");
+        context->transform_feedback_paused = 1;
+        return;
+    }
+
+    WARN("Cannot pause transform feedback operations.\n");
+
+    if (force)
+        context_end_transform_feedback(context);
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
         int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
@@ -447,8 +468,8 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     }
     gl_info = context->gl_info;
 
-    if (context->transform_feedback_active && !use_transform_feedback(state))
-        context_end_transform_feedback(context);
+    if (!use_transform_feedback(state))
+        context_pause_transform_feedback(context, TRUE);
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
@@ -599,19 +620,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         checkGLcall("glMemoryBarrier");
     }
 
-    if (context->transform_feedback_active)
-    {
-        if (gl_info->supported[ARB_TRANSFORM_FEEDBACK2])
-        {
-            GL_EXTCALL(glPauseTransformFeedback());
-            checkGLcall("glPauseTransformFeedback");
-            context->transform_feedback_paused = 1;
-        }
-        else
-        {
-            WARN("Cannot pause transform feedback operations.\n");
-        }
-    }
+    context_pause_transform_feedback(context, FALSE);
 
     if (rasterizer_discard)
     {
