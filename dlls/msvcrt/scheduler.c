@@ -114,6 +114,10 @@ typedef struct {
     unsigned int id;
     unsigned int virt_proc_no;
     SchedulerPolicy policy;
+    int shutdown_count;
+    int shutdown_size;
+    HANDLE *shutdown_events;
+    CRITICAL_SECTION cs;
 } ThreadScheduler;
 extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
 
@@ -522,8 +526,17 @@ void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
 
 static void ThreadScheduler_dtor(ThreadScheduler *this)
 {
+    int i;
+
     if(this->ref != 0) WARN("ref = %d\n", this->ref);
     SchedulerPolicy_dtor(&this->policy);
+
+    for(i=0; i<this->shutdown_count; i++)
+        SetEvent(this->shutdown_events[i]);
+    MSVCRT_operator_delete(this->shutdown_events);
+
+    this->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&this->cs);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Id, 4)
@@ -572,7 +585,23 @@ unsigned int __thiscall ThreadScheduler_Release(ThreadScheduler *this)
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_RegisterShutdownEvent, 8)
 void __thiscall ThreadScheduler_RegisterShutdownEvent(ThreadScheduler *this, HANDLE event)
 {
-    FIXME("(%p %p) stub\n", this, event);
+    HANDLE *shutdown_events;
+    int size;
+
+    TRACE("(%p %p)\n", this, event);
+
+    EnterCriticalSection(&this->cs);
+
+    size = this->shutdown_size ? this->shutdown_size * 2 : 1;
+    shutdown_events = MSVCRT_operator_new(size * sizeof(*shutdown_events));
+    memcpy(shutdown_events, this->shutdown_events,
+            this->shutdown_count * sizeof(*shutdown_events));
+    MSVCRT_operator_delete(this->shutdown_events);
+    this->shutdown_size = size;
+    this->shutdown_events = shutdown_events;
+    this->shutdown_events[this->shutdown_count++] = event;
+
+    LeaveCriticalSection(&this->cs);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_Attach, 4)
@@ -654,6 +683,12 @@ static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
     this->virt_proc_no = SchedulerPolicy_GetPolicyValue(&this->policy, MaxConcurrency);
     if(this->virt_proc_no > si.dwNumberOfProcessors)
         this->virt_proc_no = si.dwNumberOfProcessors;
+
+    this->shutdown_count = this->shutdown_size = 0;
+    this->shutdown_events = NULL;
+
+    InitializeCriticalSection(&this->cs);
+    this->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ThreadScheduler");
     return this;
 }
 
