@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "windef.h"
 #include "winbase.h"
 #include "initguid.h"
@@ -286,6 +287,7 @@ typedef struct
     struct list nsdef;
     struct list ns;
     struct list elements;
+    int chunk_read_off;
     strval strvalues[StringValue_Last];
     UINT depth;
     UINT max_depth;
@@ -2536,7 +2538,10 @@ static HRESULT reader_parse_nextnode(xmlreader *reader)
     HRESULT hr;
 
     if (!is_reader_pending(reader))
+    {
+        reader->chunk_read_off = 0;
         reader_clear_attrs(reader);
+    }
 
     /* When moving from EndElement or empty element, pop its own namespace definitions */
     switch (nodetype)
@@ -2934,6 +2939,7 @@ static HRESULT reader_move_to_first_attribute(xmlreader *reader)
         reader_inc_depth(reader);
 
     reader->attr = LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry);
+    reader->chunk_read_off = 0;
     reader_set_strvalue(reader, StringValue_Prefix, &reader->attr->prefix);
     reader_set_strvalue(reader, StringValue_QualifiedName, &reader->attr->qname);
     reader_set_strvalue(reader, StringValue_Value, &reader->attr->value);
@@ -2966,6 +2972,7 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
     if (next)
     {
         This->attr = LIST_ENTRY(next, struct attribute, entry);
+        This->chunk_read_off = 0;
         reader_set_strvalue(This, StringValue_Prefix, &This->attr->prefix);
         reader_set_strvalue(This, StringValue_QualifiedName, &This->attr->qname);
         reader_set_strvalue(This, StringValue_Value, &This->attr->value);
@@ -3007,6 +3014,7 @@ static HRESULT WINAPI xmlreader_MoveToElement(IXmlReader* iface)
             reader_set_strvalue(This, StringValue_QualifiedName, &element->qname);
         }
     }
+    This->chunk_read_off = 0;
     reader_set_strvalue(This, StringValue_Value, &strval_empty);
 
     return S_OK;
@@ -3274,17 +3282,54 @@ static HRESULT WINAPI xmlreader_GetPrefix(IXmlReader* iface, const WCHAR **ret, 
     return S_OK;
 }
 
+static const strval *reader_get_value(xmlreader *reader, BOOL ensure_allocated)
+{
+    strval *val;
+
+    switch (reader_get_nodetype(reader))
+    {
+    case XmlNodeType_XmlDeclaration:
+    case XmlNodeType_EndElement:
+    case XmlNodeType_None:
+        return &strval_empty;
+    case XmlNodeType_Attribute:
+        /* For namespace definition attributes return values from namespace list */
+        if (reader->attr->flags & (ATTRIBUTE_NS_DEFINITION | ATTRIBUTE_DEFAULT_NS_DEFINITION))
+        {
+            struct ns *ns;
+
+            if (!(ns = reader_lookup_ns(reader, &reader->attr->localname)))
+                ns = reader_lookup_nsdef(reader);
+
+            return &ns->uri;
+        }
+        break;
+    default:
+        break;
+    }
+
+    val = &reader->strvalues[StringValue_Value];
+    if (!val->str && ensure_allocated)
+    {
+        WCHAR *ptr = reader_alloc(reader, (val->len+1)*sizeof(WCHAR));
+        if (!ptr) return NULL;
+        memcpy(ptr, reader_get_strptr(reader, val), val->len*sizeof(WCHAR));
+        ptr[val->len] = 0;
+        val->str = ptr;
+    }
+
+    return val;
+}
+
 static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value, UINT *len)
 {
     xmlreader *reader = impl_from_IXmlReader(iface);
-    strval *val = &reader->strvalues[StringValue_Value];
-    UINT length;
+    const strval *val = &reader->strvalues[StringValue_Value];
+    UINT off;
 
     TRACE("(%p)->(%p %p)\n", reader, value, len);
 
     *value = NULL;
-    if (!len)
-        len = &length;
 
     if ((reader->nodetype == XmlNodeType_Comment && !val->str && !val->len) || is_reader_pending(reader))
     {
@@ -3298,64 +3343,40 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value,
         if (is_reader_pending(reader)) return E_PENDING;
     }
 
-    switch (reader_get_nodetype(reader))
-    {
-    case XmlNodeType_XmlDeclaration:
-    case XmlNodeType_EndElement:
-    case XmlNodeType_None:
-        *value = emptyW;
-        *len = 0;
-        break;
-    case XmlNodeType_Attribute:
-        {
-            /* For namespace definition attributes return values from namespace list */
-            if (reader->attr->flags & (ATTRIBUTE_NS_DEFINITION | ATTRIBUTE_DEFAULT_NS_DEFINITION))
-            {
-                struct ns *ns;
+    val = reader_get_value(reader, TRUE);
+    if (!val)
+        return E_OUTOFMEMORY;
 
-                if (!(ns = reader_lookup_ns(reader, &reader->attr->localname)))
-                    ns = reader_lookup_nsdef(reader);
-
-                *value = ns->uri.str;
-                *len = ns->uri.len;
-                break;
-            }
-        }
-        /* fallthrough */
-    default:
-        if (!val->str)
-        {
-            WCHAR *ptr = reader_alloc(reader, (val->len+1)*sizeof(WCHAR));
-            if (!ptr) return E_OUTOFMEMORY;
-            memcpy(ptr, reader_get_strptr(reader, val), val->len*sizeof(WCHAR));
-            ptr[val->len] = 0;
-            val->str = ptr;
-        }
-        *value = val->str;
-        *len = val->len;
-        break;
-    }
-
+    off = abs(reader->chunk_read_off);
+    assert(off <= val->len);
+    *value = val->str + off;
+    if (len) *len = val->len - off;
+    reader->chunk_read_off = -off;
     return S_OK;
 }
 
 static HRESULT WINAPI xmlreader_ReadValueChunk(IXmlReader* iface, WCHAR *buffer, UINT chunk_size, UINT *read)
 {
     xmlreader *reader = impl_from_IXmlReader(iface);
-    strval *val = &reader->strvalues[StringValue_Value];
-    UINT len;
+    const strval *val;
+    UINT len = 0;
 
     TRACE("(%p)->(%p %u %p)\n", reader, buffer, chunk_size, read);
 
-    /* Value is already allocated, chunked reads are not possible. */
-    len = !val->str && val->len ? min(chunk_size, val->len) : 0;
+    val = reader_get_value(reader, FALSE);
+
+    /* If value is already read by GetValue, chunk_read_off is negative and chunked reads are not possible. */
+    if (reader->chunk_read_off >= 0)
+    {
+        assert(reader->chunk_read_off <= val->len);
+        len = min(val->len - reader->chunk_read_off, chunk_size);
+    }
     if (read) *read = len;
 
     if (len)
     {
-        memcpy(buffer, reader_get_ptr2(reader, val->start), len*sizeof(WCHAR));
-        val->start += len;
-        val->len -= len;
+        memcpy(buffer, reader_get_strptr(reader, val) + reader->chunk_read_off, len*sizeof(WCHAR));
+        reader->chunk_read_off += len;
     }
 
     return len || !chunk_size ? S_OK : S_FALSE;
@@ -3601,6 +3622,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     list_init(&reader->elements);
     reader->max_depth = 256;
 
+    reader->chunk_read_off = 0;
     for (i = 0; i < StringValue_Last; i++)
         reader->strvalues[i] = strval_empty;
 

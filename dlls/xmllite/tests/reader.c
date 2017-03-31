@@ -2581,12 +2581,10 @@ static void test_string_pointers(void)
     next_attribute(reader);
     read_value_char(reader, 'm');
     IXmlReader_GetValue(reader, &p, NULL);
-    todo_wine
     ok(!strcmp_wa(p, "yns"), "value = %s\n", wine_dbgstr_w(p));
 
     read_node(reader, XmlNodeType_Element);
     ns = reader_namespace(reader, "myns");
-    todo_wine
     ok(ns+1 == p, "ns+1 != p\n");
 
     set_input_string(reader, "<elem attr=\"value\"></elem>");
