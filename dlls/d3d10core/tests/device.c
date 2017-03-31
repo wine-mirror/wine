@@ -9946,8 +9946,7 @@ static void test_index_buffer_offset(void)
     hr = ID3D10Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
             so_declaration, sizeof(so_declaration) / sizeof(*so_declaration),
             stride, &gs);
-    todo_wine ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
-    if (FAILED(hr)) goto cleanup;
+    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -9992,7 +9991,6 @@ static void test_index_buffer_offset(void)
     ID3D10Buffer_Release(vb);
     ID3D10VertexShader_Release(vs);
     ID3D10GeometryShader_Release(gs);
-cleanup:
     ID3D10InputLayout_Release(input_layout);
     release_test_context(&test_context);
 }
