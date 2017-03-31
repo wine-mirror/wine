@@ -23,6 +23,10 @@
 #include "wine/test.h"
 #include <limits.h>
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
 #define BITS_NNAN 0xffc00000
 #define BITS_NAN  0x7fc00000
 #define BITS_NINF 0xff800000
@@ -9942,10 +9946,8 @@ static void test_index_buffer_offset(void)
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
-    stride = 32;
     hr = ID3D10Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
-            so_declaration, sizeof(so_declaration) / sizeof(*so_declaration),
-            stride, &gs);
+            so_declaration, sizeof(so_declaration) / sizeof(*so_declaration), 32, &gs);
     ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
@@ -11761,6 +11763,147 @@ float4 main(struct ps_data ps_input) : SV_Target
     release_test_context(&test_context);
 }
 
+static void test_stream_output_resume(void)
+{
+    struct d3d10core_test_context test_context;
+    ID3D10Buffer *cb, *so_buffer, *buffer;
+    unsigned int i, j, idx, offset;
+    struct resource_readback rb;
+    ID3D10GeometryShader *gs;
+    const struct vec4 *data;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    static const DWORD gs_code[] =
+    {
+#if 0
+        float4 constant;
+
+        struct vertex
+        {
+            float4 position : SV_POSITION;
+        };
+
+        struct element
+        {
+            float4 position : SV_POSITION;
+            float4 so_output : so_output;
+        };
+
+        [maxvertexcount(3)]
+        void main(triangle vertex input[3], inout TriangleStream<element> output)
+        {
+            element o;
+            o.so_output = constant;
+            o.position = input[0].position;
+            output.Append(o);
+            o.position = input[1].position;
+            output.Append(o);
+            o.position = input[2].position;
+            output.Append(o);
+        }
+#endif
+        0x43425844, 0x76f5793f, 0x08760f12, 0xb730b512, 0x3728e75c, 0x00000001, 0x000001b8, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000b8, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x00000050, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x505f5653, 0x5449534f, 0x004e4f49, 0x6f5f6f73, 0x75707475, 0xabab0074, 0x52444853, 0x000000f8,
+        0x00020040, 0x0000003e, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x05000061, 0x002010f2,
+        0x00000003, 0x00000000, 0x00000001, 0x0100185d, 0x0100285c, 0x04000067, 0x001020f2, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x0200005e, 0x00000003, 0x06000036, 0x001020f2,
+        0x00000000, 0x00201e46, 0x00000000, 0x00000000, 0x06000036, 0x001020f2, 0x00000001, 0x00208e46,
+        0x00000000, 0x00000000, 0x01000013, 0x06000036, 0x001020f2, 0x00000000, 0x00201e46, 0x00000001,
+        0x00000000, 0x06000036, 0x001020f2, 0x00000001, 0x00208e46, 0x00000000, 0x00000000, 0x01000013,
+        0x06000036, 0x001020f2, 0x00000000, 0x00201e46, 0x00000002, 0x00000000, 0x06000036, 0x001020f2,
+        0x00000001, 0x00208e46, 0x00000000, 0x00000000, 0x01000013, 0x0100003e,
+    };
+    static const D3D10_SO_DECLARATION_ENTRY so_declaration[] =
+    {
+        {"so_output", 0, 0, 4, 0},
+    };
+    static const struct vec4 constants[] =
+    {
+        {0.5f, 0.250f, 0.0f, 0.0f},
+        {0.0f, 0.125f, 0.0f, 1.0f},
+        {1.0f, 1.000f, 1.0f, 0.0f}
+    };
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    hr = ID3D10Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
+            so_declaration, ARRAY_SIZE(so_declaration), 16, &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(constants[0]), &constants[0]);
+    so_buffer = create_buffer(device, D3D10_BIND_STREAM_OUTPUT, 1024, NULL);
+
+    ID3D10Device_GSSetShader(device, gs);
+    ID3D10Device_GSSetConstantBuffers(device, 0, 1, &cb);
+
+    offset = 0;
+    ID3D10Device_SOSetTargets(device, 1, &so_buffer, &offset);
+
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, &white.x);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
+
+    ID3D10Device_GSSetShader(device, NULL);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constants[1], 0, 0);
+    ID3D10Device_GSSetShader(device, gs);
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
+
+    ID3D10Device_GSSetShader(device, NULL);
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
+
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constants[2], 0, 0);
+    ID3D10Device_GSSetShader(device, gs);
+    draw_color_quad(&test_context, &white);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    ID3D10Device_GSSetShader(device, NULL);
+    draw_color_quad(&test_context, &green);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    buffer = NULL;
+    ID3D10Device_SOSetTargets(device, 1, &buffer, &offset);
+    ID3D10Device_GSSetShader(device, NULL);
+    draw_color_quad(&test_context, &white);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    idx = 0;
+    get_buffer_readback(so_buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(constants); ++i)
+    {
+        for (j = 0; j < 6; ++j) /* 2 triangles */
+        {
+            data = get_readback_vec4(&rb, idx++, 0);
+            ok(compare_vec4(data, &constants[i], 0),
+                    "Got unexpected result {%.8e, %.8e, %.8e, %.8e} at %u (%u, %u).\n",
+                    data->x, data->y, data->z, data->w, idx, i, j);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D10Buffer_Release(cb);
+    ID3D10Buffer_Release(so_buffer);
+    ID3D10GeometryShader_Release(gs);
+    release_test_context(&test_context);
+}
+
 START_TEST(device)
 {
     test_feature_level();
@@ -11826,4 +11969,5 @@ START_TEST(device)
     test_render_target_device_mismatch();
     test_buffer_srv();
     test_geometry_shader();
+    test_stream_output_resume();
 }
