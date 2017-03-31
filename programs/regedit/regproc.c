@@ -52,7 +52,6 @@ static HKEY reg_class_keys[] = {
 
 /* return values */
 #define NOT_ENOUGH_MEMORY     1
-#define IO_ERROR              2
 
 /* processing macros */
 
