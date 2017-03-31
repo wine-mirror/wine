@@ -1306,6 +1306,15 @@ PTP_WAIT CDECL MSVCP__crtCreateThreadpoolWait(PTP_WAIT_CALLBACK callback,
 }
 
 /*********************************************************************
+ *  __crtCloseThreadpoolWait (MSVCP140.@)
+ */
+VOID CDECL MSVCP__crtCloseThreadpoolWait(TP_WAIT *wait)
+{
+    TRACE("(%p)\n", wait);
+    CloseThreadpoolWait(wait);
+}
+
+/*********************************************************************
  *  __crtSetThreadpoolWait (MSVCP140.@)
  */
 VOID CDECL MSVCP__crtSetThreadpoolWait(TP_WAIT *wait, HANDLE handle, FILETIME *due_time)

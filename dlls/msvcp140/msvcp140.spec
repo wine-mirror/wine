@@ -3753,7 +3753,7 @@
 @ cdecl -ret64 _Xtime_get_ticks() _Xtime_get_ticks
 @ stub __Wcrtomb_lk
 @ cdecl __crtCloseThreadpoolTimer(ptr) MSVCP__crtCloseThreadpoolTimer
-@ stub __crtCloseThreadpoolWait
+@ cdecl __crtCloseThreadpoolWait(ptr) MSVCP__crtCloseThreadpoolWait
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA
 @ stub __crtCompareStringEx
 @ cdecl __crtCompareStringW(long long wstr long wstr long) msvcrt.__crtCompareStringW
