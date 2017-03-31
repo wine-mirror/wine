@@ -1392,8 +1392,8 @@ static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_bitmap_width,
  *
  * Draw a single menu item.
  */
-static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, MENUITEM *lpitem,
-			       UINT height, BOOL menuBar, UINT odaction )
+static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc,
+                               MENUITEM *lpitem, BOOL menuBar, UINT odaction )
 {
     RECT rect;
     BOOL flat_menu = FALSE;
@@ -1534,7 +1534,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
         rc.left -= MENU_COL_SPACE / 2 + 1;
         rc.top = 3;
-        rc.bottom = height - 3;
+        rc.bottom = menu->Height - 3;
         if (flat_menu)
         {
             oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
@@ -1791,15 +1791,15 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
             {
                 TRACE("hmenu %p Style %08x\n", hmenu, menu->dwStyle);
                 /* draw menu items */
-                if( menu->nItems)
+                if (menu->nItems)
                 {
                     MENUITEM *item;
                     UINT u;
 
                     item = menu->items;
-                    for( u = menu->nItems; u > 0; u--, item++)
+                    for (u = menu->nItems; u > 0; u--, item++)
                         MENU_DrawMenuItem( hwnd, hmenu, menu->hwndOwner, hdc,
-                                item, menu->Height, FALSE, ODA_DRAWENTIRE );
+                                           item, FALSE, ODA_DRAWENTIRE );
                 }
                 /* draw scroll arrows */
                 if (menu->bScrolling)
@@ -2024,10 +2024,9 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
       /* Clear previous highlighted item */
     if (lppop->FocusedItem != NO_SELECTED_ITEM)
     {
-	lppop->items[lppop->FocusedItem].fState &= ~(MF_HILITE|MF_MOUSESELECT);
-	MENU_DrawMenuItem(lppop->hWnd, hmenu, hwndOwner, hdc,&lppop->items[lppop->FocusedItem],
-                          lppop->Height, !(lppop->wFlags & MF_POPUP),
-			  ODA_SELECT );
+        lppop->items[lppop->FocusedItem].fState &= ~(MF_HILITE|MF_MOUSESELECT);
+        MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc, &lppop->items[lppop->FocusedItem],
+                           !(lppop->wFlags & MF_POPUP), ODA_SELECT );
     }
 
       /* Highlight new item (if any) */
@@ -2037,9 +2036,8 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
         if(!(lppop->items[wIndex].fType & MF_SEPARATOR)) {
             lppop->items[wIndex].fState |= MF_HILITE;
             MENU_EnsureMenuItemVisible(lppop, wIndex, hdc);
-            MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc,
-                    &lppop->items[wIndex], lppop->Height,
-                    !(lppop->wFlags & MF_POPUP), ODA_SELECT );
+            MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc, &lppop->items[wIndex],
+                               !(lppop->wFlags & MF_POPUP), ODA_SELECT );
         }
         if (sendMenuSelect)
         {
@@ -2372,11 +2370,11 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
         SelectObject( hdc, get_menu_font(FALSE));
 
         item->fState |= MF_HILITE;
-        MENU_DrawMenuItem( menu->hWnd, hmenu, hwndOwner, hdc, item, menu->Height, !(menu->wFlags & MF_POPUP), ODA_DRAWENTIRE );
-	ReleaseDC( menu->hWnd, hdc );
+        MENU_DrawMenuItem( menu->hWnd, hmenu, hwndOwner, hdc, item, !(menu->wFlags & MF_POPUP), ODA_DRAWENTIRE );
+        ReleaseDC( menu->hWnd, hdc );
     }
     if (!item->rect.top && !item->rect.left && !item->rect.bottom && !item->rect.right)
-      item->rect = rect;
+        item->rect = rect;
 
     item->fState |= MF_MOUSESELECT;
 
@@ -4466,10 +4464,8 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
     }
 
     for (i = 0; i < lppop->nItems; i++)
-    {
-        MENU_DrawMenuItem( hwnd, hMenu, hwnd,
-                           hDC, &lppop->items[i], lppop->Height, TRUE, ODA_DRAWENTIRE );
-    }
+        MENU_DrawMenuItem( hwnd, hMenu, hwnd, hDC, &lppop->items[i], TRUE, ODA_DRAWENTIRE );
+
     retvalue = lppop->Height;
 
 END:
