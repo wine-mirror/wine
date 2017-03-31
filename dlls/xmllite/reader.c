@@ -391,11 +391,22 @@ static inline WCHAR *readerinput_strdupW(xmlreaderinput *input, const WCHAR *str
     return ret;
 }
 
+/* This one frees stored string value if needed */
+static void reader_free_strvalued(xmlreader *reader, strval *v)
+{
+    if (v->str != strval_empty.str)
+    {
+        reader_free(reader, v->str);
+        *v = strval_empty;
+    }
+}
+
 static void reader_clear_attrs(xmlreader *reader)
 {
     struct attribute *attr, *attr2;
     LIST_FOR_EACH_ENTRY_SAFE(attr, attr2, &reader->attrs, struct attribute, entry)
     {
+        reader_free_strvalued(reader, &attr->localname);
         reader_free(reader, attr);
     }
     list_init(&reader->attrs);
@@ -409,15 +420,22 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localn
     strval *value, const struct reader_position *position, unsigned int flags)
 {
     struct attribute *attr;
+    HRESULT hr;
 
     attr = reader_alloc(reader, sizeof(*attr));
     if (!attr) return E_OUTOFMEMORY;
+
+    hr = reader_strvaldup(reader, localname, &attr->localname);
+    if (hr != S_OK)
+    {
+        reader_free(reader, attr);
+        return hr;
+    }
 
     if (prefix)
         attr->prefix = *prefix;
     else
         memset(&attr->prefix, 0, sizeof(attr->prefix));
-    attr->localname = *localname;
     attr->qname = qname ? *qname : *localname;
     attr->value = *value;
     attr->position = *position;
@@ -435,16 +453,6 @@ static struct element *reader_get_element(xmlreader *reader)
         return &reader->empty_element;
 
     return LIST_ENTRY(list_head(&reader->elements), struct element, entry);
-}
-
-/* This one frees stored string value if needed */
-static void reader_free_strvalued(xmlreader *reader, strval *v)
-{
-    if (v->str != strval_empty.str)
-    {
-        reader_free(reader, v->str);
-        *v = strval_empty;
-    }
 }
 
 static inline void reader_init_strvalue(UINT start, UINT len, strval *v)
@@ -2927,7 +2935,6 @@ static HRESULT reader_move_to_first_attribute(xmlreader *reader)
 
     reader->attr = LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry);
     reader_set_strvalue(reader, StringValue_Prefix, &reader->attr->prefix);
-    reader_set_strvalue(reader, StringValue_LocalName, &reader->attr->localname);
     reader_set_strvalue(reader, StringValue_QualifiedName, &reader->attr->qname);
     reader_set_strvalue(reader, StringValue_Value, &reader->attr->value);
 
@@ -2960,7 +2967,6 @@ static HRESULT WINAPI xmlreader_MoveToNextAttribute(IXmlReader* iface)
     {
         This->attr = LIST_ENTRY(next, struct attribute, entry);
         reader_set_strvalue(This, StringValue_Prefix, &This->attr->prefix);
-        reader_set_strvalue(This, StringValue_LocalName, &This->attr->localname);
         reader_set_strvalue(This, StringValue_QualifiedName, &This->attr->qname);
         reader_set_strvalue(This, StringValue_Value, &This->attr->value);
     }
@@ -3053,8 +3059,8 @@ static HRESULT WINAPI xmlreader_GetQualifiedName(IXmlReader* iface, LPCWSTR *nam
         }
         else
         {
-            *name = This->strvalues[StringValue_LocalName].str;
-            *len = This->strvalues[StringValue_LocalName].len;
+            *name = attribute->localname.str;
+            *len = attribute->localname.len;
         }
         break;
     default:
@@ -3111,10 +3117,9 @@ static HRESULT WINAPI xmlreader_GetNamespaceUri(IXmlReader* iface, const WCHAR *
                 '2','0','0','0','/','x','m','l','n','s','/',0};
             static const WCHAR xml_uriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/',
                 'X','M','L','/','1','9','9','8','/','n','a','m','e','s','p','a','c','e',0};
-            const strval *local = &This->strvalues[StringValue_LocalName];
 
             /* check for reserved prefixes first */
-            if ((strval_eq(This, prefix, &strval_empty) && strval_eq(This, local, &strval_xmlns)) ||
+            if ((strval_eq(This, prefix, &strval_empty) && strval_eq(This, &This->attr->localname, &strval_xmlns)) ||
                     strval_eq(This, prefix, &strval_xmlns))
             {
                 *uri = xmlns_uriW;
@@ -3208,8 +3213,8 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
         }
         else
         {
-            *name = This->strvalues[StringValue_LocalName].str;
-            *len = This->strvalues[StringValue_LocalName].len;
+            *name = This->attr->localname.str;
+            *len = This->attr->localname.len;
         }
         break;
     default:
@@ -3303,14 +3308,12 @@ static HRESULT WINAPI xmlreader_GetValue(IXmlReader* iface, const WCHAR **value,
         break;
     case XmlNodeType_Attribute:
         {
-            const strval *local = &reader->strvalues[StringValue_LocalName];
-
             /* For namespace definition attributes return values from namespace list */
             if (reader->attr->flags & (ATTRIBUTE_NS_DEFINITION | ATTRIBUTE_DEFAULT_NS_DEFINITION))
             {
                 struct ns *ns;
 
-                if (!(ns = reader_lookup_ns(reader, local)))
+                if (!(ns = reader_lookup_ns(reader, &reader->attr->localname)))
                     ns = reader_lookup_nsdef(reader);
 
                 *value = ns->uri.str;

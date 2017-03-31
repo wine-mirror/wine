@@ -1310,15 +1310,8 @@ static void test_read_public_dtd(void)
     reader_value(reader, "externalid uri");
 
     move_to_element(reader);
+    reader_name(reader, "testdtd");
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetLocalName(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
-    ok(len == lstrlenW(dtdnameW), "got %u\n", len);
-    ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
-}
     len = 0;
     str = NULL;
     hr = IXmlReader_GetQualifiedName(reader, &str, &len);
@@ -1374,15 +1367,8 @@ static void test_read_system_dtd(void)
     reader_value(reader, "externalid uri");
 
     move_to_element(reader);
+    reader_name(reader, "testdtd");
 
-    len = 0;
-    str = NULL;
-    hr = IXmlReader_GetLocalName(reader, &str, &len);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
-    ok(len == lstrlenW(dtdnameW), "got %u\n", len);
-    ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
-}
     len = 0;
     str = NULL;
     hr = IXmlReader_GetQualifiedName(reader, &str, &len);
@@ -2602,6 +2588,16 @@ static void test_string_pointers(void)
     ns = reader_namespace(reader, "myns");
     todo_wine
     ok(ns+1 == p, "ns+1 != p\n");
+
+    set_input_string(reader, "<elem attr=\"value\"></elem>");
+
+    read_node(reader, XmlNodeType_Element);
+    next_attribute(reader);
+    name = reader_name(reader, "attr");
+
+    move_to_element(reader);
+    next_attribute(reader);
+    ok(name == reader_name(reader, "attr"), "attr pointer changed\n");
 
     IXmlReader_Release(reader);
 }
