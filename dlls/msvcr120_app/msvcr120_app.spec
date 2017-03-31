@@ -895,7 +895,7 @@
 @ stub __crtIsPackagedApp
 @ cdecl __crtLCMapStringA(long long str long ptr long long long) msvcr120.__crtLCMapStringA
 @ cdecl __crtLCMapStringW(long long wstr long ptr long long long) msvcr120.__crtLCMapStringW
-@ stub __crtSleep
+@ cdecl __crtSleep(long) msvcr120.__crtSleep
 @ stub __crtWaitForWinRTThreadExit
 @ cdecl __daylight() msvcr120.__daylight
 @ cdecl __dllonexit(ptr ptr ptr) msvcr120.__dllonexit

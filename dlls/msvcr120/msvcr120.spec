@@ -919,7 +919,7 @@
 @ stub -arch=i386,win64 __crtSetThreadStackGuarantee
 @ cdecl __crtSetUnhandledExceptionFilter(ptr) MSVCR110__crtSetUnhandledExceptionFilter
 @ cdecl -arch=i386,win64 __crtTerminateProcess(long) MSVCR110__crtTerminateProcess
-@ stub __crtSleep
+@ cdecl __crtSleep(long) MSVCRT__crtSleep
 @ cdecl -arch=i386,win64 __crtUnhandledException(ptr) MSVCRT__crtUnhandledException
 @ cdecl __daylight() MSVCRT___p__daylight
 @ cdecl __dllonexit(ptr ptr ptr)

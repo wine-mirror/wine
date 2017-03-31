@@ -542,3 +542,12 @@ LONG CDECL MSVCRT__crtUnhandledException(EXCEPTION_POINTERS *ep)
     SetUnhandledExceptionFilter(NULL);
     return UnhandledExceptionFilter(ep);
 }
+
+/*********************************************************************
+ *		__crtSleep (MSVCR120.@)
+ */
+void CDECL MSVCRT__crtSleep(DWORD timeout)
+{
+  TRACE("(%u)\n", timeout);
+  Sleep(timeout);
+}
