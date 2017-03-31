@@ -1077,8 +1077,7 @@ static void draw_quad_(unsigned int line, struct d3d10core_test_context *context
 
     if (!context->input_layout)
     {
-        hr = ID3D10Device_CreateInputLayout(device, default_layout_desc,
-                sizeof(default_layout_desc) / sizeof(*default_layout_desc),
+        hr = ID3D10Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
                 default_vs_code, sizeof(default_vs_code), &context->input_layout);
         ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -1433,7 +1432,7 @@ static void test_create_texture2d(void)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     desc.SampleDesc.Count = 1;
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         desc.ArraySize = tests[i].array_size;
         desc.Format = tests[i].format;
@@ -1520,7 +1519,7 @@ static void test_texture2d_interfaces(void)
         return;
     }
 
-    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
         const struct test *current = &desc_conversion_tests[i];
         D3D11_TEXTURE2D_DESC d3d11_desc;
@@ -1692,7 +1691,7 @@ static void test_create_texture3d(void)
     ID3D10Texture3D_Release(texture);
 
     desc.MipLevels = 1;
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         desc.Format = tests[i].format;
         desc.BindFlags = tests[i].bind_flags;
@@ -1778,7 +1777,7 @@ static void test_create_buffer(void)
         return;
     }
 
-    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
         const struct test *current = &desc_conversion_tests[i];
         D3D11_BUFFER_DESC d3d11_desc;
@@ -1985,7 +1984,7 @@ static void test_create_depthstencil_view(void)
     ID3D10DepthStencilView_Release(dsview);
     ID3D10Texture2D_Release(texture);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         D3D10_DEPTH_STENCIL_VIEW_DESC *current_desc;
 
@@ -2025,7 +2024,7 @@ static void test_create_depthstencil_view(void)
         ID3D10Texture2D_Release(texture);
     }
 
-    for (i = 0; i < sizeof(invalid_desc_tests) / sizeof(*invalid_desc_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(invalid_desc_tests); ++i)
     {
         texture_desc.MipLevels = invalid_desc_tests[i].texture.miplevel_count;
         texture_desc.ArraySize = invalid_desc_tests[i].texture.array_size;
@@ -2334,7 +2333,7 @@ static void test_create_rendertarget_view(void)
     texture3d_desc.CPUAccessFlags = 0;
     texture3d_desc.MiscFlags = 0;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         D3D10_RENDER_TARGET_VIEW_DESC *current_desc;
 
@@ -2388,7 +2387,7 @@ static void test_create_rendertarget_view(void)
         ID3D10Resource_Release(texture);
     }
 
-    for (i = 0; i < sizeof(invalid_desc_tests) / sizeof(*invalid_desc_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(invalid_desc_tests); ++i)
     {
         assert(invalid_desc_tests[i].texture.dimension == D3D10_RTV_DIMENSION_TEXTURE2D
                 || invalid_desc_tests[i].texture.dimension == D3D10_RTV_DIMENSION_TEXTURE3D);
@@ -2510,7 +2509,7 @@ static void test_render_target_views(void)
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, texture_desc.Width * texture_desc.Height * 4);
     ok(!!data, "Failed to allocate memory.\n");
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         const struct test *test = &tests[i];
         unsigned int sub_resource_count;
@@ -2540,7 +2539,7 @@ static void test_render_target_views(void)
         draw_color_quad(&test_context, &red);
 
         sub_resource_count = texture_desc.MipLevels * texture_desc.ArraySize;
-        assert(sub_resource_count <= sizeof(test->expected_colors) / sizeof(*test->expected_colors));
+        assert(sub_resource_count <= ARRAY_SIZE(test->expected_colors));
         for (j = 0; j < sub_resource_count; ++j)
             check_texture_sub_resource_color(texture, j, NULL, test->expected_colors[j], 1);
 
@@ -2750,7 +2749,7 @@ static void test_create_shader_resource_view(void)
     texture3d_desc.CPUAccessFlags = 0;
     texture3d_desc.MiscFlags = 0;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         D3D10_SHADER_RESOURCE_VIEW_DESC *current_desc;
 
@@ -2812,7 +2811,7 @@ static void test_create_shader_resource_view(void)
         ID3D10Resource_Release(texture);
     }
 
-    for (i = 0; i < sizeof(invalid_desc_tests) / sizeof(*invalid_desc_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(invalid_desc_tests); ++i)
     {
         assert(invalid_desc_tests[i].texture.dimension == D3D10_SRV_DIMENSION_TEXTURE2D
                 || invalid_desc_tests[i].texture.dimension == D3D10_SRV_DIMENSION_TEXTURE3D);
@@ -3214,7 +3213,7 @@ static void test_create_sampler_state(void)
         goto done;
     }
 
-    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
         const struct test *current = &desc_conversion_tests[i];
         D3D11_SAMPLER_DESC d3d11_desc, expected_desc;
@@ -3685,7 +3684,7 @@ static void test_create_query(void)
     hr = ID3D10Device_CreatePredicate(device, NULL, &predicate);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         query_desc.Query = tests[i].query;
         query_desc.MiscFlags = 0;
@@ -4503,7 +4502,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
     hr = ID3D10Device_CreatePixelShader(device, simple_ps, sizeof(simple_ps), &ps);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             simple_vs, sizeof(simple_vs), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -5127,7 +5126,7 @@ static void test_blend(void)
 
     device = test_context.device;
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -5931,7 +5930,7 @@ static void test_texture(void)
     texture = NULL;
     current_ps = NULL;
     current_texture = NULL;
-    for (i = 0; i < sizeof(texture_tests) / sizeof(*texture_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(texture_tests); ++i)
     {
         const struct texture_test *test = &texture_tests[i];
 
@@ -6048,7 +6047,7 @@ static void test_texture(void)
     texture = NULL;
     current_ps = NULL;
     current_texture = NULL;
-    for (i = 0; i < sizeof(srv_tests) / sizeof(*srv_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(srv_tests); ++i)
     {
         const struct srv_test *test = &srv_tests[i];
 
@@ -6244,7 +6243,7 @@ static void test_cube_maps(void)
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
     ID3D10Device_PSSetShader(device, ps);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         const struct test *test = &tests[i];
 
@@ -6287,7 +6286,7 @@ static void test_cube_maps(void)
         sub_resource_count = texture_desc.MipLevels * texture_desc.ArraySize;
         for (sub_resource_idx = 0; sub_resource_idx < sub_resource_count; ++sub_resource_idx)
         {
-            for (j = 0; j < sizeof(data) / sizeof(*data); ++j)
+            for (j = 0; j < ARRAY_SIZE(data); ++j)
                 data[j] = sub_resource_idx;
             ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, sub_resource_idx, NULL,
                     data, texture_desc.Width * sizeof(*data), 0);
@@ -6532,7 +6531,7 @@ static void test_depth_stencil_sampling(void)
             &ps_depth_stencil);
     ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         texture_desc.Format = tests[i].typeless_format;
         texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE | D3D10_BIND_DEPTH_STENCIL;
@@ -6766,7 +6765,7 @@ static void test_multiple_render_targets(void)
         return;
     }
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -6784,7 +6783,7 @@ static void test_multiple_render_targets(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    for (i = 0; i < sizeof(rt) / sizeof(*rt); ++i)
+    for (i = 0; i < ARRAY_SIZE(rt); ++i)
     {
         hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &rt[i]);
         ok(SUCCEEDED(hr), "Failed to create texture %u, hr %#x.\n", i, hr);
@@ -6815,7 +6814,7 @@ static void test_multiple_render_targets(void)
     vp.MaxDepth = 1.0f;
     ID3D10Device_RSSetViewports(device, 1, &vp);
 
-    for (i = 0; i < sizeof(rtv) / sizeof(*rtv); ++i)
+    for (i = 0; i < ARRAY_SIZE(rtv); ++i)
         ID3D10Device_ClearRenderTargetView(device, rtv[i], red);
 
     ID3D10Device_Draw(device, 4, 0);
@@ -6829,9 +6828,9 @@ static void test_multiple_render_targets(void)
     ID3D10PixelShader_Release(ps);
     ID3D10VertexShader_Release(vs);
     ID3D10InputLayout_Release(input_layout);
-    for (i = 0; i < sizeof(rtv) / sizeof(*rtv); ++i)
+    for (i = 0; i < ARRAY_SIZE(rtv); ++i)
         ID3D10RenderTargetView_Release(rtv[i]);
-    for (i = 0; i < sizeof(rt) / sizeof(*rt); ++i)
+    for (i = 0; i < ARRAY_SIZE(rt); ++i)
         ID3D10Texture2D_Release(rt[i]);
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -7178,7 +7177,7 @@ static void test_il_append_aligned(void)
 
     device = test_context.device;
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -7997,7 +7996,7 @@ float4 main(const ps_in v) : SV_TARGET
 
     device = test_context.device;
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -8020,7 +8019,7 @@ float4 main(const ps_in v) : SV_TARGET
     ID3D10Device_VSSetConstantBuffers(device, 1, 1, &colors_cb);
     ID3D10Device_PSSetShader(device, ps);
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, white);
 
@@ -8092,7 +8091,7 @@ static void test_swapchain_formats(void)
     if (SUCCEEDED(hr))
         IDXGISwapChain_Release(swapchain);
 
-    for (i = 0; i < sizeof(display_format_support) / sizeof(*display_format_support); ++i)
+    for (i = 0; i < ARRAY_SIZE(display_format_support); ++i)
     {
         if (display_format_support[i].optional)
             continue;
@@ -8322,7 +8321,7 @@ static void test_swapchain_flip(void)
 
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
     ID3D10Device_IASetInputLayout(device, input_layout);
@@ -8942,7 +8941,7 @@ static void test_sm4_if_instruction(void)
     cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(bits), NULL);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
 
-    for (i = 0; i < sizeof(bit_patterns) / sizeof(*bit_patterns); ++i)
+    for (i = 0; i < ARRAY_SIZE(bit_patterns); ++i)
     {
         *bits = bit_patterns[i];
         ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, bits, 0, 0);
@@ -9106,12 +9105,11 @@ static void test_create_input_layout(void)
         return;
     }
 
-    for (i = 0; i < sizeof(vertex_formats) / sizeof(*vertex_formats); ++i)
+    for (i = 0; i < ARRAY_SIZE(vertex_formats); ++i)
     {
         layout_desc->Format = vertex_formats[i];
-        hr = ID3D10Device_CreateInputLayout(device, layout_desc,
-                sizeof(layout_desc) / sizeof(*layout_desc), vs_code, sizeof(vs_code),
-                &input_layout);
+        hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+                vs_code, sizeof(vs_code), &input_layout);
         ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n",
                 vertex_formats[i], hr);
         ID3D10InputLayout_Release(input_layout);
@@ -9371,8 +9369,7 @@ static void test_input_assembler(void)
     {
         input_layout_desc[1].Format = layout_formats[i];
         input_layout[i] = NULL;
-        hr = ID3D10Device_CreateInputLayout(device, input_layout_desc,
-                sizeof(input_layout_desc) / sizeof(*input_layout_desc),
+        hr = ID3D10Device_CreateInputLayout(device, input_layout_desc, ARRAY_SIZE(input_layout_desc),
                 vs_float_code, sizeof(vs_float_code), &input_layout[i]);
         todo_wine_if(input_layout_desc[1].Format == DXGI_FORMAT_R10G10B10A2_UINT)
         ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n", layout_formats[i], hr);
@@ -9406,7 +9403,7 @@ static void test_input_assembler(void)
     ID3D10Device_PSSetShader(device, ps);
     ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         D3D10_BOX box = {0, 0, 0, 1, 1, 1};
 
@@ -9638,7 +9635,7 @@ static void test_immediate_constant_buffer(void)
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
     ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
 
-    for (i = 0; i < sizeof(expected_result) / sizeof(*expected_result); ++i)
+    for (i = 0; i < ARRAY_SIZE(expected_result); ++i)
     {
         *index = i;
         ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, index, 0, 0);
@@ -9805,7 +9802,7 @@ static void test_uint_shader_instructions(void)
 
     ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = ID3D10Device_CreatePixelShader(device, tests[i].ps->code, tests[i].ps->size, &ps);
         ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
@@ -9942,12 +9939,12 @@ static void test_index_buffer_offset(void)
 
     device = test_context.device;
 
-    hr = ID3D10Device_CreateInputLayout(device, input_desc, sizeof(input_desc) / sizeof(*input_desc),
+    hr = ID3D10Device_CreateInputLayout(device, input_desc, ARRAY_SIZE(input_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
     hr = ID3D10Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
-            so_declaration, sizeof(so_declaration) / sizeof(*so_declaration), 32, &gs);
+            so_declaration, ARRAY_SIZE(so_declaration), 32, &gs);
     ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &vs);
@@ -9979,7 +9976,7 @@ static void test_index_buffer_offset(void)
     ID3D10Device_DrawIndexed(device, 4, 0, 0);
 
     get_buffer_readback(so_buffer, &rb);
-    for (i = 0; i < sizeof(expected_data) / sizeof(*expected_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(expected_data); ++i)
     {
         data = get_readback_vec4(&rb, i, 0);
         ok(compare_vec4(data, &expected_data[i], 0),
@@ -10081,7 +10078,7 @@ static void test_face_culling(void)
     rasterizer_desc.MultisampleEnable = FALSE;
     rasterizer_desc.AntialiasedLineEnable = FALSE;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         rasterizer_desc.CullMode = tests[i].cull_mode;
         rasterizer_desc.FrontCounterClockwise = tests[i].front_ccw;
@@ -10292,12 +10289,10 @@ static void test_required_format_support(void)
         return;
     }
 
-    check_format_support(format_support, index_buffers,
-            sizeof(index_buffers) / sizeof(*index_buffers),
+    check_format_support(format_support, index_buffers, ARRAY_SIZE(index_buffers),
             D3D10_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
 
-    check_format_support(format_support, display_format_support,
-            sizeof(display_format_support) / sizeof(*display_format_support),
+    check_format_support(format_support, display_format_support, ARRAY_SIZE(display_format_support),
             D3D10_FORMAT_SUPPORT_DISPLAY, "display");
 
     refcount = ID3D10Device_Release(device);
@@ -10402,7 +10397,7 @@ float4 main(struct ps_data ps_input) : SV_Target
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -10941,8 +10936,7 @@ static void test_primitive_restart(void)
     ib16 = create_buffer(device, D3D10_BIND_INDEX_BUFFER, sizeof(indices16), indices16);
     ib32 = create_buffer(device, D3D10_BIND_INDEX_BUFFER, sizeof(indices32), indices32);
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc,
-            sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
@@ -11227,7 +11221,7 @@ static void test_resinfo_instruction(void)
 
     ps = NULL;
     current_ps = NULL;
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         const struct test *test = &tests[i];
 
@@ -11471,7 +11465,7 @@ static void test_buffer_srv(void)
     srv = NULL;
     buffer = NULL;
     current_buffer = NULL;
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         const struct test *test = &tests[i];
 
@@ -11703,7 +11697,7 @@ float4 main(struct ps_data ps_input) : SV_Target
 
     device = test_context.device;
 
-    hr = ID3D10Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+    hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
 
