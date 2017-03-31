@@ -766,7 +766,7 @@ static void append_transform_feedback_skip_components(const char **varyings,
 
 static void shader_glsl_generate_transform_feedback_varyings(const struct wined3d_stream_output_desc *so_desc,
         struct wined3d_string_buffer *buffer, const char **varyings, unsigned int *varying_count,
-        char *strings, unsigned int *strings_length)
+        char *strings, unsigned int *strings_length, GLenum buffer_mode)
 {
     unsigned int i, buffer_idx, count, length, highest_output_slot, stride;
 
@@ -820,8 +820,11 @@ static void shader_glsl_generate_transform_feedback_varyings(const struct wined3
         if (highest_output_slot <= buffer_idx)
             break;
 
-        string_buffer_sprintf(buffer, "gl_NextBuffer");
-        append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+        if (buffer_mode == GL_INTERLEAVED_ATTRIBS)
+        {
+            string_buffer_sprintf(buffer, "gl_NextBuffer");
+            append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
+        }
     }
 
     if (varying_count)
@@ -836,22 +839,58 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context *co
     const struct wined3d_stream_output_desc *so_desc = &shader->u.gs.so_desc;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_string_buffer *buffer;
-    unsigned int count, length;
+    unsigned int i, count, length;
     const char **varyings;
     char *strings;
+    GLenum mode;
 
     if (!so_desc->element_count)
         return;
 
-    if (!gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
+    if (gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
     {
-        FIXME("ARB_transform_feedback3 not supported by OpenGL implementation.\n");
-        return;
+        mode = GL_INTERLEAVED_ATTRIBS;
+    }
+    else
+    {
+        unsigned int element_count[WINED3D_MAX_STREAM_OUTPUT_BUFFERS] = {0};
+
+        for (i = 0; i < so_desc->element_count; ++i)
+        {
+            if (so_desc->elements[i].register_idx == WINED3D_STREAM_OUTPUT_GAP)
+            {
+                FIXME("ARB_transform_feedback3 is needed for stream output gaps.\n");
+                return;
+            }
+            ++element_count[so_desc->elements[i].output_slot];
+        }
+
+        if (element_count[0] == so_desc->element_count)
+        {
+            mode = GL_INTERLEAVED_ATTRIBS;
+        }
+        else
+        {
+            mode = GL_SEPARATE_ATTRIBS;
+            for (i = 0; i < ARRAY_SIZE(element_count); ++i)
+            {
+                if (element_count[i] != 1)
+                    break;
+            }
+            for (; i < ARRAY_SIZE(element_count); ++i)
+            {
+                if (element_count[i])
+                {
+                    FIXME("Only single element per buffer is allowed in separate mode.\n");
+                    return;
+                }
+            }
+        }
     }
 
     buffer = string_buffer_get(&priv->string_buffers);
 
-    shader_glsl_generate_transform_feedback_varyings(so_desc, buffer, NULL, &count, NULL, &length);
+    shader_glsl_generate_transform_feedback_varyings(so_desc, buffer, NULL, &count, NULL, &length, mode);
 
     if (!(varyings = wined3d_calloc(count, sizeof(*varyings))))
     {
@@ -867,8 +906,8 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context *co
         return;
     }
 
-    shader_glsl_generate_transform_feedback_varyings(so_desc, buffer, varyings, NULL, strings, NULL);
-    GL_EXTCALL(glTransformFeedbackVaryings(program_id, count, varyings, GL_INTERLEAVED_ATTRIBS));
+    shader_glsl_generate_transform_feedback_varyings(so_desc, buffer, varyings, NULL, strings, NULL, mode);
+    GL_EXTCALL(glTransformFeedbackVaryings(program_id, count, varyings, mode));
     checkGLcall("glTransformFeedbackVaryings");
 
     HeapFree(GetProcessHeap(), 0, varyings);
