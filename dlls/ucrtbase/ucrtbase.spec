@@ -2289,13 +2289,13 @@
 @ stub feclearexcept
 @ cdecl fegetenv(ptr) MSVCRT_fegetenv
 @ stub fegetexceptflag
-@ stub fegetround
+@ cdecl fegetround() MSVCRT_fegetround
 @ stub feholdexcept
 @ cdecl feof(ptr) MSVCRT_feof
 @ cdecl ferror(ptr) MSVCRT_ferror
 @ cdecl fesetenv(ptr) MSVCRT_fesetenv
 @ stub fesetexceptflag
-@ stub fesetround
+@ cdecl fesetround(long) MSVCRT_fesetround
 @ stub fetestexcept
 @ cdecl fflush(ptr) MSVCRT_fflush
 @ cdecl fgetc(ptr) MSVCRT_fgetc

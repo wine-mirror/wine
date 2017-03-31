@@ -1232,6 +1232,25 @@ int CDECL __fpe_flt_rounds(void)
 }
 
 /*********************************************************************
+ *		fegetround (MSVCR120.@)
+ */
+int CDECL MSVCRT_fegetround(void)
+{
+    return _controlfp(0, 0) & MSVCRT__RC_CHOP;
+}
+
+/*********************************************************************
+ *		fesetround (MSVCR120.@)
+ */
+int CDECL MSVCRT_fesetround(int round_mode)
+{
+    if (round_mode & (~MSVCRT__RC_CHOP))
+        return 1;
+    _controlfp(round_mode, MSVCRT__RC_CHOP);
+    return 0;
+}
+
+/*********************************************************************
  *		_copysign (MSVCRT.@)
  */
 double CDECL MSVCRT__copysign(double num, double sign)
