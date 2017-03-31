@@ -2832,13 +2832,17 @@ static void _initialize_feature_cache(ScriptCache *psc, LoadedLanguage *language
     if (language->features_initialized)
         return;
 
-    feature_list = (const OT_FeatureList *)((const BYTE *)gsub_header + GET_BE_WORD(gsub_header->FeatureList));
     if ((lang = language->gsub_table))
+    {
+        feature_list = (const OT_FeatureList *)((const BYTE *)gsub_header + GET_BE_WORD(gsub_header->FeatureList));
         usp10_language_add_feature_list(language, FEATURE_GSUB_TABLE, lang, feature_list);
+    }
 
-    feature_list = (const OT_FeatureList *)((const BYTE *)gpos_header + GET_BE_WORD(gpos_header->FeatureList));
     if ((lang = language->gpos_table))
+    {
+        feature_list = (const OT_FeatureList *)((const BYTE *)gpos_header + GET_BE_WORD(gpos_header->FeatureList));
         usp10_language_add_feature_list(language, FEATURE_GPOS_TABLE, lang, feature_list);
+    }
 
     language->features_initialized = TRUE;
 }
