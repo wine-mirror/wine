@@ -2483,7 +2483,7 @@ static void test_reader_position(void)
 
 static void test_string_pointers(void)
 {
-    const WCHAR *ns, *nsq, *empty, *xmlns_ns, *xmlns_name, *name, *p, *q, *xml, *ptr;
+    const WCHAR *ns, *nsq, *empty, *xmlns_ns, *xmlns_name, *name, *p, *q, *xml, *ptr, *value;
     IXmlReader *reader;
     HRESULT hr;
 
@@ -2592,10 +2592,12 @@ static void test_string_pointers(void)
     read_node(reader, XmlNodeType_Element);
     next_attribute(reader);
     name = reader_name(reader, "attr");
+    value = reader_value(reader, "value");
 
     move_to_element(reader);
     next_attribute(reader);
     ok(name == reader_name(reader, "attr"), "attr pointer changed\n");
+    ok(value == reader_value(reader, "value"), "value pointer changed\n");
 
     IXmlReader_Release(reader);
 }

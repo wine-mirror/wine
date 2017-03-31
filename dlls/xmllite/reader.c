@@ -409,6 +409,7 @@ static void reader_clear_attrs(xmlreader *reader)
     LIST_FOR_EACH_ENTRY_SAFE(attr, attr2, &reader->attrs, struct attribute, entry)
     {
         reader_free_strvalued(reader, &attr->localname);
+        reader_free_strvalued(reader, &attr->value);
         reader_free(reader, attr);
     }
     list_init(&reader->attrs);
@@ -428,6 +429,12 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localn
     if (!attr) return E_OUTOFMEMORY;
 
     hr = reader_strvaldup(reader, localname, &attr->localname);
+    if (hr == S_OK)
+    {
+        hr = reader_strvaldup(reader, value, &attr->value);
+        if (hr != S_OK)
+            reader_free_strvalued(reader, &attr->value);
+    }
     if (hr != S_OK)
     {
         reader_free(reader, attr);
@@ -439,7 +446,6 @@ static HRESULT reader_add_attr(xmlreader *reader, strval *prefix, strval *localn
     else
         memset(&attr->prefix, 0, sizeof(attr->prefix));
     attr->qname = qname ? *qname : *localname;
-    attr->value = *value;
     attr->position = *position;
     attr->flags = flags;
     list_add_tail(&reader->attrs, &attr->entry);
@@ -3303,7 +3309,7 @@ static const strval *reader_get_value(xmlreader *reader, BOOL ensure_allocated)
 
             return &ns->uri;
         }
-        break;
+        return &reader->attr->value;
     default:
         break;
     }
