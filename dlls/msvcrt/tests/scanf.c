@@ -251,6 +251,10 @@ static void test_sscanf( void )
     ok(ret == 2, "got %d\n", ret);
     ok(!strcmp(buffer, "test"), "buf %s\n", buffer);
     ok(!strcmp(buffer1, "value\xda"), "buf %s\n", buffer1);
+
+    ret = sscanf("\x81test", "\x81%s", buffer);
+    ok(ret == 1, "got %d\n", ret);
+    ok(!strcmp(buffer, "test"), "buf = %s\n", buffer);
 }
 
 static void test_sscanf_s(void)

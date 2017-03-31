@@ -699,7 +699,7 @@ _FUNCTION_ {
 	 * a matching non-white-space character. */
         else {
             /* check for character match */
-            if (nch == *format) {
+            if (nch == (unsigned char)*format) {
 		nch = _GETC_(file);
             } else break;
         }
