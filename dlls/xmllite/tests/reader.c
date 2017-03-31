@@ -2550,13 +2550,13 @@ static void test_string_pointers(void)
     ok(xmlns_ns == reader_namespace(reader, "http://www.w3.org/2000/xmlns/"), "xmlns_ns != namespace\n");
 
     read_node(reader, XmlNodeType_Element);
-    ptr = reader_prefix(reader, "p"); todo_wine ok(p == ptr, "p != prefix\n");
+    ok(p == reader_prefix(reader, "p"), "p != prefix\n");
     ok(ns == reader_namespace(reader, "myns"), "empty != namespace\n");
     name = reader_qname(reader, "p:elem2");
 
     next_attribute(reader);
     ok(empty != reader_value(reader, ""), "empty == value\n");
-    ptr = reader_prefix(reader, "q"); todo_wine ok(q == ptr, "q != prefix\n");
+    ok(q == reader_prefix(reader, "q"), "q != prefix\n");
     ok(nsq == reader_namespace(reader, "mynsq"), "nsq != namespace\n");
 
     read_node(reader, XmlNodeType_EndElement);

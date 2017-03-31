@@ -3225,6 +3225,12 @@ static HRESULT WINAPI xmlreader_GetLocalName(IXmlReader* iface, LPCWSTR *name, U
             *name = xmlnsW;
             *len = 5;
         }
+        else if (This->attr->flags & ATTRIBUTE_NS_DEFINITION)
+        {
+            const struct ns *ns = reader_lookup_ns(This, &This->attr->localname);
+            *name = ns->prefix.str;
+            *len = ns->prefix.len;
+        }
         else
         {
             *name = This->attr->localname.str;
