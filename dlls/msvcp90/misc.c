@@ -1263,6 +1263,14 @@ DWORD CDECL MSVCP__crtGetCurrentProcessorNumber(void)
 }
 
 /*********************************************************************
+ *  __crtFlushProcessWriteBuffers (MSVCP140.@)
+ */
+VOID CDECL MSVCP__crtFlushProcessWriteBuffers(void)
+{
+    return FlushProcessWriteBuffers();
+}
+
+/*********************************************************************
  *  __crtCreateSemaphoreExW (MSVCP140.@)
  */
 HANDLE CDECL MSVCP__crtCreateSemaphoreExW(

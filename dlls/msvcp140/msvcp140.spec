@@ -3762,7 +3762,7 @@
 @ stub __crtCreateSymbolicLinkW
 @ cdecl __crtCreateThreadpoolTimer(ptr ptr ptr) MSVCP__crtCreateThreadpoolTimer
 @ cdecl __crtCreateThreadpoolWait(ptr ptr ptr) MSVCP__crtCreateThreadpoolWait
-@ stub __crtFlushProcessWriteBuffers
+@ cdecl __crtFlushProcessWriteBuffers() MSVCP__crtFlushProcessWriteBuffers
 @ cdecl __crtFreeLibraryWhenCallbackReturns(ptr ptr) MSVCP__crtFreeLibraryWhenCallbackReturns
 @ cdecl __crtGetCurrentProcessorNumber() MSVCP__crtGetCurrentProcessorNumber
 @ stub __crtGetFileInformationByHandleEx
