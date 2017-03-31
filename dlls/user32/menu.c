@@ -1395,11 +1395,10 @@ static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_bitmap_width,
 static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC hdc,
                                MENUITEM *lpitem, BOOL menuBar, UINT odaction )
 {
-    RECT rect;
+    RECT rect, bmprc;
     BOOL flat_menu = FALSE;
     int bkgnd;
     UINT arrow_bitmap_width = 0, arrow_bitmap_height = 0;
-    RECT bmprc;
     HRGN old_clip = NULL, clip;
 
     debug_print_menuitem("MENU_DrawMenuItem: ", lpitem, "");
@@ -1551,8 +1550,7 @@ static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC h
         HPEN oldPen;
         RECT rc = rect;
 
-        rc.left++;
-        rc.right--;
+        InflateRect( &rc, -1, 0 );
         rc.top = ( rc.top + rc.bottom) / 2;
         if (flat_menu)
         {
@@ -1601,7 +1599,6 @@ static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC h
     {
         HBITMAP bm;
         INT y = rect.top + rect.bottom;
-        RECT rc = rect;
         BOOL checked = FALSE;
         UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
         UINT check_bitmap_height = GetSystemMetrics( SM_CYMENUCHECK );
@@ -1619,7 +1616,7 @@ static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC h
                 HDC hdcMem = CreateCompatibleDC( hdc );
 
                 SelectObject( hdcMem, bm );
-                BitBlt( hdc, rc.left, (y - check_bitmap_height) / 2,
+                BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
                         check_bitmap_width, check_bitmap_height,
                         hdcMem, 0, 0, SRCCOPY );
                 DeleteDC( hdcMem );
@@ -1637,7 +1634,7 @@ static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC h
                 DrawFrameControl( hdcMem, &r, DFC_MENU,
                         (lpitem->fType & MFT_RADIOCHECK) ?
                         DFCS_MENUBULLET : DFCS_MENUCHECK );
-                BitBlt( hdc, rc.left, (y - r.bottom) / 2, r.right, r.bottom,
+                BitBlt( hdc, rect.left, (y - r.bottom) / 2, r.right, r.bottom,
                         hdcMem, 0, 0, SRCCOPY );
                 DeleteDC( hdcMem );
                 DeleteObject( bm );
