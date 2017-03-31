@@ -1,17 +1,18 @@
-The Wine development release 2.4 is now available.
+The Wine development release 2.5 is now available.
 
 What's new in this release (see below for details):
-  - Built-in implementation of cryptographic hashes.
-  - Mono engine updated with upstream fixes.
-  - More Direct3D command stream work.
-  - Simulated bold and italic in DirectWrite.
-  - Improvements to the XML reader.
+  - Support for message-mode named pipes.
+  - Translation of version resources through po files.
+  - Transform feedback support in Direct3D.
+  - Scheduler classes in C++ runtime.
+  - Better scrolling in popup menus.
+  - More improvements to the XML reader.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/2.x/wine-2.4.tar.xz
-  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.4.tar.xz
+  http://dl.winehq.org/wine/source/2.x/wine-2.5.tar.xz
+  http://mirrors.ibiblio.org/wine/source/2.x/wine-2.5.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -27,382 +28,428 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 2.4 (total 32):
+Bugs fixed in 2.5 (total 30):
 
-  10858  BlueByte Game Channel fails to install
-  14371  cleanup undefined members in vartest
-  29133  Gómez PEER fails to update
-  30378  Xuzhou network client crashes at start
-  33987  Secret Files 3 demo shows only some parts of background in ConfigTool
-  36599  winhttp/tests/winhttp.c: test_secure_connection() fails under valgrind
-  36600  valgrind shows a possible leak in winhttp/tests/winhttp.c
-  36608  valgrind shows a definite leak in xmllite/tests/writer.c
-  37436  Aliens vs. Predator (2010, Steam) crashes when loading save game
-  38793  Lotus Smartsuite 3.1 installer reports insufficient disk space
-  39685  Multiple applications crash on startup, need unimplemented function msvcr120.dll.??0event@Concurrency@@QAE@XZ (Rollcage Redux v1.3.8, ARC client, Playstation Now)
-  40798  ACDSee Pro 9 (64-bit) needs msvcr120.dll.??0event@Concurrency@@QEAA@XZ
-  40910  The Next BIG Thing can't save the game (needs native xmllite)
-  41340  Unhandled page fault for Polaris Office Installer
-  41472  kolotibablo needs ntoskrnl.exe.KeAcquireInStackQueuedSpinLock
-  41684  unimplemented function uiautomationcore.dll.UiaClientsAreListening called in 32-bit code
-  41832  Galactic Civ 3 - ships are not visible
-  41951  Unimplemented function bcrypt.dll.BCryptDuplicateHash prevents DOOM from running
-  42209  Native Instruments Native Access 1.0.25 (R37) crashes on unimplemented function concrt140.dll.??1_ReentrantBlockingLock@details@Concurrency@@QAE@XZ
-  42239  Kontact 5.6 needs api-ms-win-crt-time-l1-1-0.dll._Wcsftime
-  42450  Unimplemented copy from WINED3D_LOCATION_TEXTURE_RGB to WINED3D_LOCATION_TEXTURE_SRGB for depth/stencil buffers.
-  42510  InternetOpenUrl does not send query parameters for HTTPS urls
-  42557  NVIDIA GeForce GT 525M detected as GeForce GTX 470
-  42559  Adobe Reader DC: No longer installs (Unimplemented function msi.dll.MsiGetComponentPathExW)
-  42575  Multiple applications need msvcp140.dll.?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z
-  42576  Poedit crashes on start on unimplemented function msvcp140.dll.?_Reset@_ContextCallback@details@Concurrency@@AAEXXZ
-  42578  WSAStringToAddress fails to parse IP v6 addresses with port number
-  42586  Adobe Reader DC crashes on startup (needs GetCurrentPackageFullName stub)
-  42603  Steep (Ubisoft) needs iphlpapi.dll.NotifyUnicastIpAddressChange
-  42625  Flushing file (int 0x21, ah=0x68) fails with access denied error in 16-bit code (affects QuickBooks 5.0)
-  42639  Unhandled exception: page fault on read access to 0x00000000 in 32-bit code (0x7eff5a34)
-  42641  winetricks ie8_kb2936068 installer fails with error
+  17195  Multiple applications and games need support for named pipe message mode (NamedPipe datagrams need to be _really_ datagrams)
+  23302  Not standard background color in Wine configuration
+  32925  WinUAE 2.5.1 beta crashes on unimplemented function KERNEL32.dll.GetVolumeInformationByHandleW
+  33899  Mouse moves screen in fullscreen.
+  34676  Gas Guzzlers Combat Carnage Demo needs msvcp100.dll.?is_current_task_group_canceling@Concurrency@@YA_NXZ
+  37402  WideCharToMultiByte is supposed to reject invalid flags
+  37887  SteuerSparErklärung 2015: crashes when importing a receipt on unimplemented function msvcr120.dll.?_Trace_ppl_function@Concurrency@@YAXABU_GUID@@EW4ConcRT_EventType@1@@Z
+  38526  QTravel, part of Qstarz PC Suite (Q2000) v3.x crashes on startup
+  40328  Rayman 3 Crashes loading 2nd level.
+  40465  The sting demo is mainly black
+  40480  Skyrim crashes with "wined3d_texture_load Failed to load location (srgb 0)."
+  40789  Rayman 3 Crashes on first lv.
+  41213  Elder Scrolls Online requires more than 16 samplers in pixel shaders with D3D11 renderer
+  41757  Natsuiro Asagao Residence (demo): fails to detect Japanese environment.
+  42017  Silence d3d11_immediate_context_OMSetBlendState  spam at console
+  42050  wine-mono 4.6.4 System.argumentException (APB Reloaded)
+  42271  Final Fantasy X needs msvcr110.dll.__crtUnhandledException
+  42621  Unimplemented function msvcr120.dll.?_Trace_ppl_function@Concurrency@@YAXAEBU_GUID@@EW4ConcRT_EventType@1@@Z
+  42626  unimplemented function msvcr110.dll.__crtUnhandledException
+  42629  Galactic Civilization 3 fails to run
+  42656  ACDSee Pro 10 needs msvcp140.dll.?_Schedule_chore@details@Concurrency@@YAHPEAU_Threadpool_chore@12@@Z
+  42657  ACDSee Pro 9 needs msvcr120.dll.?Alloc@Concurrency@@YAPEAX_K@Z
+  42658  Playstation Now needs msvcr120.dll.?Alloc@Concurrency@@YAPAXI@Z
+  42665  Mafia III launcher fails to start (needs uiautomationcore.dll.UiaLookupId)
+  42670  Mafia III launcher fails to start (needs uiautomationcore.dll.UiaGetReservedMixedAttributeValue)
+  42671  Mafia III launcher fails to start (needs uiautomationcore.dll.UiaGetReservedNotSupportedValue)
+  42684  Steep (Ubisoft) needs iphlpapi.dll. GetUnicastIpAddressTable
+  42688  Native Acces crashes on unimplemented msvcp140.dll.?__ExceptionPtrCompare@@YA_NPBX0@Z
+  42700  Mafia III stops after launching (needs api-ms-win-core-quirks-l1-1-0.dll.QuirkIsEnabled3)
+  42703  Excel 2010 does not work: unimplemented function oleaut32.dll.GetAltMonthNames
 
 ----------------------------------------------------------------
 
-Changes since 2.3:
+Changes since 2.4:
 
-Akihiro Sagawa (2):
-      iexplore: Follow translation version info to detect native IE.
-      Use CP 1200 (Unicode) for Win32/Win64 version info.
+Akihiro Sagawa (7):
+      regsvr32: Use neutral language for the version resource.
+      explorer: Use neutral language for the version resource.
+      winemac.drv: Use neutral language for the version resource.
+      wrc: Add support for translating version info through po files.
+      version/tests: Check the translation resource before testing.
+      version: Add support for FILE_VER_GET_LOCALISED flag.
+      kernel32: Add localized version resource.
 
-Alex Henrie (1):
-      crypt32/tests: Print an error if CertOpenStore fails.
+Alex Henrie (5):
+      ntdll: Don't report false memory statistics for other processes.
+      ntdll: Implement ProcessVmCounters for Linux.
+      kernel32: Simplify Linux implementation of GlobalMemoryStatusEx.
+      winecfg: Paint text on About tab with the right background color.
+      kernel32: Check for invalid flags in codepage conversion functions.
 
-Alexandre Julliard (6):
-      gdi32: Add more helper functions for RGB to pixel conversions.
-      gdi32: Fix color conversion when blitting to 1-bpp by matching pixels instead of color values.
-      gdi32: Add support for DIBINDEX colors in 1-bpp blits.
-      gdi32: Map the black and white entries to the DIB color table after dithering.
-      gdi32/tests: Remove workarounds for old Windows versions in the DIB tests.
-      user32/tests: Re-enable a test about window positions.
+Alexandre Julliard (1):
+      po: Regenerate the po files.
 
-Alistair Leslie-Hughes (10):
-      dplayx: Skip over unknown DataTypes guids in EnumAddressTypes.
-      dplayx/tests: Free IDirectPlayLobby objects.
-      include: Add msstkppg.h.
-      ole32/tests: Stop crash on XP.
-      oledb32: Ignore IRunnableObject in IDataSourceLocator_QueryInterface.
-      dpnet/tests: Stop thread test from failing.
-      odbccp32: Implement SQLInstallDriverEx.
-      oledb32: Support DBTYPE_NUMERIC in IDataConvert GetConversionSize.
-      dpnet/tests: Show that async handlers are per object.
-      dpnet/tests: Add EnumHosts synchronous tests.
+Alistair Leslie-Hughes (5):
+      odbccp32: Implement SQLRemoveDriver/SQLRemoveDriverW.
+      include/lmserver.h: Add missing SV_TYPE_* defines.
+      oledb32/tests: Add convert to DBTYPE_NUMERIC tests.
+      ole32: Add CoRegisterSurrogate/Ex stubs.
+      dpnet: Share message handler between IDirectPlay8ThreadPool objects.
 
-Andrew Wesie (1):
-      ntdll: Save rdi and rsi in raise_func_trampoline.
+Andrey Gusev (12):
+      uiautomationcore: Add UiaLookupId stub.
+      uiautomationcore: Add UiaGetReservedMixedAttributeValue stub.
+      uiautomationcore: Add UiaGetReservedNotSupportedValue stub.
+      api-ms-win-security-systemfunctions-l1-1-0: Add dll.
+      api-ms-win-core-winrt-roparameterizediid-l1-1-0: Add dll.
+      api-ms-win-core-quirks-l1-1-0: Add dll.
+      api-ms-win-core-threadpool-private-l1-1-0: Add dll.
+      api-ms-win-security-grouppolicy-l1-1-0: Add dll.
+      api-ms-win-core-registry-l2-1-0: Add dll.
+      kernelbase: Add QuirkIsEnabled3 stub.
+      api-ms-win-mm-misc-l1-1-1: Add dll.
+      api-ms-win-mm-mme-l1-1-0: Add dll.
 
-André Hentschel (3):
-      iphlpapi: Add stub for NotifyUnicastIpAddressChange.
-      iphlpapi: Flesh out NotifyIpInterfaceChange arguments.
-      opencl: Fix some spec file entries.
+André Hentschel (1):
+      iphlpapi: Implement GetUnicastIpAddressTable.
+
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
 
 Austin English (4):
-      ntoskrnl.exe: Add KeAcquireInStackQueuedSpinLock stub.
-      ntoskrnl.exe: Add KeWaitForMultipleObjects stub.
-      dhcpcsvc: Add DhcpCApiInitialize and DhcpCApiCleanup stubs.
-      setupapi: Add SetupDiEnumDriverInfoA/W stubs.
+      kernel32: Add GetVolumeInformationByHandleW stub.
+      kernelbase: Sync spec file to Windows 10.
+      advapi32: Sync spec file to Windows 10.
+      d3d10: Sync spec file to Windows 10.
 
-Bruno Jesus (9):
-      mciavi32: Trace MCIAVI_CreateWindow.
-      mciavi32: Implement MCI_BREAK.
-      winmm: Dispatch MCI_BREAK to the driver.
-      wininet: Forward InternetGetConnectedState to Ex function.
-      include: Add missing connection check flags to wininet.h.
-      iphlpapi/tests: Test route type and protocol in GetIpForwardTable.
-      wininet/test: Improve tests for InternetGetConnectedStateEx.
-      kernel32/tests: Add 64bit number tests for FormatMessage[A|W].
-      wined3d: Recognize GeForce 940M.
+Bas Weelinck (1):
+      start: Ignore multiple quoted arguments as title.
 
-Daniel Lehman (2):
-      msvcrt: Add Concurrency::event stubs.
-      msxml3: Don't QI for IPersistStream in internal_parse.
+Can Taşan (3):
+      po: Turkish translation update.
+      wine.desktop: Add Turkish translation.
+      kernel32: Add Unicode character for Turkish lira.
 
-Fabian Maurer (1):
-      comctl32/taskdialog: Move TaskDialogIndirect and its tests into own source files.
+Daniel Lehman (6):
+      msvcrt: Add _Trace_ppl_function stub.
+      msvcrt: Implement Concurrency::event.
+      msvcrt100/tests: Add tests for concurrency::event.
+      msvcrt: Call unwind handlers on intermediate frames during virtual unwind.
+      mshtml: Decrement refcount in nsWeakReference::Release (Valgrind).
+      msxml3/tests: Free ready state BSTR (Valgrind).
 
-François Gouget (6):
-      ddraw/tests: Spelling fixes in comments and an ok() message.
-      ntdll/tests: A spelling fix in an ok() message.
-      scrobj: Make scriptlet_typelib_CreateInstance() static.
-      schedsvc/tests: Add the current process id to the test summary line.
-      advapi32/tests: Trace the display name if CreateService() unexpectedly succeeds.
-      ddraw: Make ddraw_destroy_swapchain() static.
+François Gouget (5):
+      wined3d: Fix a trailing new-line in an ERR() message.
+      ddraw: Make ddraw_surface_release_iface() static.
+      readme: Note that Wine may also use Mac APIs.
+      readme: Adjust a couple of section separators.
+      readme: Update and rewrap the French translation.
 
-Hans Leidekker (8):
-      webservices: Implement WS_HEAP_PROPERTY_REQUESTED_SIZE and WS_HEAP_PROPERTY_ACTUAL_SIZE.
-      webservices: Protect messages with a critical section.
-      webservices: Protect channels with a critical section.
-      webservices: Protect proxies with a critical section.
-      webservices: Protect writers with a critical section.
-      webservices: Protect errors with a critical section.
-      webservices: Protect heaps with a critical section.
-      webservices: Protect readers with a critical section.
+Gijs Vermeulen (3):
+      msvcrt: Add stub for Concurrency::Alloc.
+      msvcrt: Add stub for Concurrency::Free.
+      msvcp100: Add stub for Concurrency::is_current_task_group_canceling.
 
-Henri Verbeet (30):
-      wined3d: Map buffers in wined3d_device_process_vertices().
-      wined3d: Explicitly pass d3d_info and gl_info to context_stream_info_from_declaration().
-      wined3d: Send sub-resource update calls through the command stream.
-      wined3d: Check rectangle alignment in wined3d_surface_blt().
-      wined3d: Merge wined3d_texture_check_block_align() into wined3d_texture_check_box_dimensions().
-      usp10/tests: Add a latn shaping test with ligatures.
-      usp10/tests: Add a ligature and diacritic to the syrc shaping test.
-      usp10: Take the script direction into account when applying OpenType features.
-      usp10: Properly determine the glyph run direction when shaping Script_Arabic.
-      usp10/tests: Add shaping tests for fLogicalOrder and fRTL.
-      wined3d: Use wined3d_texture_blt() in surface_upload_from_surface().
-      wined3d: Validate blit parameters in wined3d_texture_blt().
-      wined3d: Send blits through the command stream.
-      wined3d: Send sub-resource copy calls through the command stream.
-      wined3d: Send resource copy calls through the command stream.
-      wined3d: Abort on invalid instructions in shader_generate_main().
-      wined3d: Abort on invalid instructions in shader_get_registers_used().
-      usp10: Do not fall back to presentation form B if the contextual feature exists in ContextualShape_Arabic().
-      usp10: Introduce an enumeration for script types.
-      usp10: Use bsearch() to lookup the script range in get_char_script().
-      wined3d: Validate instruction lengths in shader_sm4_read_instruction() (AFL).
-      wined3d: Don't read modifiers for opcodes with "read_opcode_func" set (AFL).
-      usp10: Use heap_alloc_zero() instead of HeapAlloc() with HEAP_ZERO_MEMORY.
-      usp10: Use heap_alloc() instead of HeapAlloc().
-      usp10: Use heap_free() instead of HeapFree().
-      wined3d: Avoid device_invalidate_state() in wined3d_texture_set_lod().
-      wined3d: Create and destroy surface DCs through the CS.
-      wined3d: Pass a context to blit_shader.blit_surface().
-      wined3d: Only copy source/destination rectangles when needed in arbfp_blit_surface().
-      wined3d: Modify resource locations in wined3d_surface_blt() instead of the blitters.
+Hans Leidekker (15):
+      odbccp32/tests: RegGetValueA is not available on Windows XP.
+      mpr/tests: Try other drive letters if J: is already assigned.
+      winhttp: Fix a memory leak in insert_header (Valgrind).
+      wbemprox: Also free data for tables that don't have a fill function (Valgrind).
+      advpack: Don't trace the contents of an output buffer (Valgrind).
+      advapi32/tests: Fix a memory leak (Valgrind).
+      advapi32/tests: Initialize input parameters (Valgrind).
+      msi: Avoid zero size allocations (Valgrind).
+      webservices: No longer prefer native.
+      webservices: Use a table in get_header_name.
+      webservices: Move error support to a separate file.
+      webservices: Move heap support to a separate file.
+      webservices: Implement WS_CHANNEL_PROPERTY_CHANNEL_TYPE.
+      webservices: Don't allocate an XML buffer until it is needed.
+      webservices: Implement WsResetMessage.
 
-Hugh McMaster (1):
-      regedit/tests: Add some line concatenation tests.
+Henri Verbeet (50):
+      usp10/tests: Explicitly skip tests when required fonts are not available.
+      usp10: Pass const metrics to GPOS_convert_design_units_to_device().
+      usp10: Make the script cache parameter to GPOS_apply_MarkToBase() const.
+      usp10: Make the script cache parameter to get_opentype_script() const.
+      usp10: Avoid LPOUTLINETEXTMETRICW.
+      wined3d: Inline surface_blt_to_drawable() into ffp_blit_blit_surface().
+      wined3d: Get rid of the (now) redundant "alpha_test" parameter to surface_blt_to_drawable().
+      wined3d: Use blit_shader.blit_surface() in surface_blt_to_drawable().
+      wined3d: Merge surface_blt_to_drawable() into surface_load_drawable().
+      wined3d: Check for GL_FRONT before GL_BACK in wined3d_texture_get_gl_buffer().
+      wordpad: Fall back to the default position if the saved position is off-screen.
+      usp10: Avoid LPPOINT.
+      usp10: Avoid LPWORD.
+      usp10: Avoid LPBYTE.
+      usp10: Avoid LPCWSTR.
+      wined3d: Do not return GL_COLOR_ATTACHMENT0 for the back-buffer in wined3d_texture_get_gl_buffer().
+      wined3d: Properly handle back-buffers in surface_translate_drawable_coords().
+      wined3d: Properly handle back-buffers in context_get_rt_size().
+      wined3d: Use draw_textured_quad() in swapchain_blit().
+      wined3d: Pass the destination location to blit_shader.blit_surface().
+      winex11: Use GLX_OML_sync_control to synchronise buffer swaps with X11DRV_FLUSH_GL_DRAWABLE requests.
+      usp10: Avoid LPWSTR.
+      usp10: Avoid LPCVOID.
+      usp10: Avoid LPVOID.
+      usp10: Introduce a helper function to lookup a script in the script cache.
+      wined3d: Use blit_shader.blit_surface() in swapchain_blit().
+      wined3d: Get rid of the redundant context_acquire() call in swapchain_blit().
+      wined3d: Get rid of blit_shader.set_shader() and blit_shader.unset_shader().
+      wined3d: Rename struct blit_shader to struct wined3d_blitter_ops.
+      wined3d: Use WINED3D_BLT_SRC_CKEY to present the logo texture.
+      usp10: Introduce a helper function to lookup a language in a LoadedScript structure.
+      usp10: Double the scripts array size when growing it in GPOS_expand_script_cache().
+      usp10: Double the languages array size when growing it in GPOS_expand_language_cache().
+      usp10: Get rid of some code duplication in GPOS_expand_feature_cache().
+      usp10: Get rid of the code duplication between GSUB_initialize_feature_cache() and GPOS_expand_feature_cache().
+      wined3d: Create the logo texture with WINED3D_TEXTURE_CREATE_GET_DC.
+      wined3d: Recreate the logo texture if needed in wined3d_device_reset().
+      wined3d: Just print a message if loading the logo bitmap failed.
+      wined3d: Introduce a separate function for doing colour fills in the CPU blitter.
+      wined3d: Validate the rectangle in wined3d_device_clear_rendertarget_view().
+      wined3d: Only drop WINED3D_MAP_DISCARD right before mapping the buffer object in wined3d_buffer_map().
+      ddraw: Implement depth/colour fills on top of wined3d_device_clear_rendertarget_view().
+      wined3d: Remove WINED3D_BLT_COLOR_FILL support from wined3d_texture_blit().
+      wined3d: Remove WINED3D_BLT_DEPTH_FILL support from wined3d_texture_blit().
+      wined3d: Pass a wined3d_rendertarget_view to surface_cpu_blt_colour_fill().
+      wined3d: Get rid of the unused "priv" parameter to gen_p8_shader().
+      wined3d: Get rid of the unused "priv" parameter to gen_yuv_shader().
+      wined3d: Get rid of the unused "priv" argument to arbfp_gen_plain_shader().
+      wined3d: Make the FBO blitter a proper blitter.
+      wined3d: Use the blitter interface in swapchain_blit().
 
-Huw D. M. Davies (5):
-      wined3d: Zero-initialize count.
-      gdi32/tests: Combine the matching macros into a single function.
-      shell32/tests: Return early if the shell folder creation fails in order to avoid a compiler warning.
-      shell32/tests: Ignore the compressed attribute.
-      krnl386.exe16: Fix mask values.
+Hugh McMaster (14):
+      comctl32/tests: Move the WineTest subkey in toolbar.c into HKEY_CURRENT_USER\Software\Wine.
+      regedit: Re-implement processRegLinesW().
+      regedit/tests: Add missing ok() check after RegOpenKeyExA().
+      regedit: Parse UTF-16 file header for validation.
+      regedit: Re-implement processRegLinesA().
+      regedit: Return success or failure from import functions.
+      regedit: Accept various forms of "REGEDIT" with trailing characters.
+      regedit/tests: Add mixed line concatenation and comment tests.
+      reg/tests: Add mixed line concatenation and comment tests.
+      regedit: Remove data types that cannot be imported and clean-up data_types array.
+      regedit: Do not use REG_NONE as the default data type on import error.
+      regedit: Do not select/highlight a listview item on refresh.
+      regedit: Make "Unknown Type" translatable.
+      regedit: Remove unused #define.
 
-Jacek Caban (15):
-      ntdll: Don't modify LockCount in RtlLeaveCriticalSection if section is not acquired.
-      wininet: Propagate WSAEWOULDBLOCK result from content decoding reads.
-      wininet: Pass blocking mode to HTTPREQ_Read.
-      wininet: Propagate WSAEWOULDBLOCK from read_http_stream.
-      wininet: Rewrite asynchronous read to try to fill whole buffer and not buffer additional data unless requested.
-      wininet: Rewrite InternetReadFileEx for http protocol to make use of non-blocking reads.
-      wininet: Reimplemented InternetQueryDataAvailable on top of async_read.
-      wininet: Merge InternetReadFile and InternetReadFileEx implementations.
-      wininet: Get rid of no longer needed BLOCKING_WAITALL.
-      wininet: Get rid of no longer needed blocking_mode_t.
-      wininet/tests: Added more HTTP read tests.
-      wininet: Always use non-blocking reads in HTTP_ReceiveRequestData.
-      wininet: Get rid of no longer needed get_avail_data from data stream implementations.
-      rpcrt4: Get rid of manual_listen_count and use binary state instead.
-      rpcrt4/tests: Added more server listening tests.
+Huw D. M. Davies (19):
+      kernel32/tests: Always retrieve the output mode.
+      winedbg: Return after raising an exception.
+      msi/tests: Clean up the registry in the correct order.
+      user32: Explicitly set last error to ERROR_SUCCESS.
+      user32: Rationalize the popup menu margin calculation.
+      user32: Add a helper to retrieve the height of the scroll arrows.
+      user32: Simplify GetMenuItemRect().
+      user32: Add an items rect to the header and use it to fix scrolling down.
+      user32: Store the item rects as relative to the items_rect.
+      user32: Clip painting to the items_rect.
+      user32: Don't fill the background when drawing the scroll arrows.
+      user32: Scale the scroll arrows with the menu's font size.
+      user32: Don't finish tracking when the menu borders or scroll arrows are clicked.
+      user32: Disable scrolling for multi-column menus.
+      user32: Limit the menu height to that of the work area.
+      user32: Remove the height parameter from MENU_DrawMenuItem().
+      user32: Pass a POPUPMENU ptr to MENU_DrawMenuItem().
+      user32: Simplify the use of rectangles.
+      user32: Don't bother drawing an item if it's outside the items_rect.
 
-Jactry Zeng (1):
-      devenum: Implement IMoniker::GetClassID().
+Jacek Caban (46):
+      xmllite: Return WC_E_SYNTAX if there is unexpected data in the end of the stream.
+      xmllite: Fixed buffer handling in reader_parse_reference.
+      server: Store connected pipe_end in pipe_end struct.
+      server: Store buffer size in pipe_end.
+      server: Introduce server-side I/O mode for named pipes.
+      server: Use no_fd_queue_async for named pipe ends in server I/O mode.
+      xmllite: Fixed ReadValueChunk implementation.
+      xmllite: Replace crln in input buffer with nl.
+      xmllite: Return empty value for end element and none nodes.
+      xmllite/tests: Added more value tests.
+      server: Introduce pipe message queue.
+      server: Implement disconnecting message queue.
+      server Introduce write queue for server-side named pipe I/O.
+      server: Implement server-side named pipe write.
+      server: Added server-side FSCTL_PIPE_PEEK implementation.
+      server Introduce read queue for server-side named pipe I/O.
+      server: Implement server-side named pipe read.
+      server: Don't release client fd in do_disconnect for pipes in server-side I/O mode.
+      server: Use server-side I/O for message mode named pipes.
+      kernel32/tests: Added more named pipe tests.
+      server: Added support for message mode named pipe reads.
+      server: Added support for flushing client pipe.
+      kernel32/tests: Added tests of pipe write cancelled on process termintation.
+      ntdll/tests: Moved pipe read tests to pipe.c.
+      xmllite/tests: Added set_input_string helper.
+      xmllite: Don't fail in readerinput_detectencoding if input buffer has 3 bytes.
+      ntdll/tests: Run read tests in all modes and directions.
+      ntdll/tests: Added tests of partial reads and reads with invalid wait handle.
+      xmllite/tests: Added read_node helper.
+      xmllite/tests: Added next_attribute helper.
+      xmllite/tests: Added reader_value helper.
+      xmllite/tests: Added reader_name helper.
+      xmllite/tests: Added reader_prefix helper.
+      xmllite/tests: Added reader_namespace helper.
+      xmllite/tests: Added reader_qname helper.
+      xmllite/tests: Added read_value_char helper.
+      xmllite: Clear all parser values in SetInput.
+      xmllite/tests: Added tests for returned string pointers.
+      kernel32: Use default buffer size in CreatePipe if 0 was passed.
+      usp10: Check if corresponding headers are present before accessing their feature lists in _initialize_feature_cache.
+      xmllite: Don't use StringValue_LocalName for element nodes.
+      xmllite/tests: Added move_to_element helper.
+      xmllite: Store allocated copy of local name in attribute struct and use that instead of StringValue_LocalName.
+      xmllite: Allow reading from allocated strings in ReadValueChunk.
+      xmllite: Allocate value in reader_add_attr.
+      xmllite: Return local name stored in namespace for prefixed namespace attribute values.
 
-Julian Rüger (3):
-      po: Update German translation.
-      readme: Update German translation.
-      readme: Fix typo in German translation.
+Jactry Zeng (2):
+      devenum: Use RegQueryValueExW instead of RegQueryValueW.
+      devenum: Implement IMoniker::IsEqual().
 
-Józef Kucia (52):
-      wined3d: Bind unordered access views even if they are not used by current shaders.
-      d3d11/tests: Add test for UAV counters.
-      d3d11/tests: Use 256-byte aligned offsets for bufinfo test.
-      wined3d: Implement SM5 bufinfo instruction.
-      d3d11: Print FIXME() about ignoring initial UAV count values only when necessary.
-      d3d11/tests: Accept additional value as expected result in test_tgsm().
-      oledb32/tests: Do not use pointer to freed memory (Coverity).
-      wined3d: Introduce wined3d_device_get_compute_shader().
-      d3d11: Implement d3d11_immediate_context_CSGetShader().
-      wined3d: Introduce wined3d_device_get_cs_cb().
-      d3d11: Implement d3d11_immediate_context_CSGetConstantBuffers().
-      wined3d: Introduce wined3d_device_get_cs_resource_view().
-      d3d11: Implement d3d11_immediate_context_CSGetShaderResources().
-      wined3d: Introduce wined3d_device_get_cs_sampler().
-      d3d11: Implement d3d11_immediate_context_CSGetSamplers().
-      wined3d: Introduce wined3d_device_get_constant_buffer() helper function.
-      wined3d: Introduce wined3d_device_get_shader_resource_view() helper function.
-      wined3d: Introduce wined3d_device_get_sampler() helper function.
-      wined3d: Make sure that "tgsm_count" is not decreased while adding TGSM declarations.
-      wined3d: Fix parsing of SM5 "_opc" flag.
-      wined3d: Add FIXME() messages for unhandled shader bytecode UAV flags.
-      wined3d: Create dummy cube array textures.
-      wined3d: Avoid FIXME() message for unhandled cube map arrays.
-      d3d11/tests: Add test for cube maps.
-      wined3d: Add support for seamless cube map filtering.
-      d3d11: Fix typo in TRACE() message.
-      d3d11/tests: Add test for unbinding shader resource view.
-      wined3d: Recognize SM4 umul opcode.
-      wined3d: Implement SM4 umul instruction.
-      wined3d: Recognize SM4 dcl_index_range opcode.
-      d3d10core/tests: Add test for cube maps.
-      d3d10core/tests: Add test for unbinding shader resource view.
-      d3d11/tests: Fix render target format in test_resinfo_instruction().
-      d3d10core/tests: Fix render target format in test_resinfo_instruction().
-      wined3d: Simplify computation of "num_textures_used" in ATI fragment pipeline.
-      wined3d: Get rid of incorrect usage of "tex_unit_map".
-      wined3d: Move legacy texture image unit range allocation to wined3d_gl_limits_get_texture_unit_range().
-      wined3d: Introduce shader_glsl_load_program_resources() helper function.
-      wined3d: Use layout qualifiers to bind GLSL images.
-      wined3d: Use layout qualifiers to bind GLSL uniform blocks.
-      wined3d: Do not use texture unit mapping for SM4+ shaders.
-      wined3d: Allow using more than MAX_COMBINED_SAMPLERS texture image units.
-      wined3d: Introduce context_get_tex_unit_mapping() helper function.
-      wined3d: Use layout qualifiers to bind GLSL samplers.
-      wined3d: Add support for samplers in geometry shaders.
-      d3d9/tests: Add test for vertex textures.
-      wined3d: Use context_get_tex_unit_mapping() in context_bind_shader_resources().
-      wined3d: Get rid of redundant WARN() from context_load_shader_resources().
-      d3d11/tests: Add basic test for texturing on feature level 9.
-      wined3d: Store GL sampler limits as array.
-      wined3d: Recompute sampler count before allocating sampler range for compute shaders.
-      wined3d: Fix off-by-one error in wined3d_gl_limits_get_texture_unit_range().
+Józef Kucia (50):
+      wined3d: Make wined3d samplers usable when ARB_sampler_objects is not available.
+      wined3d: Create wined3d sampler for default sampler.
+      wined3d: Create wined3d sampler for NULL sampler.
+      wined3d: Introduce wined3d_sampler_bind() helper function.
+      wined3d: Use wined3d samplers unconditionally for applying legacy sampler states.
+      wined3d: Make wined3d samplers responsible for setting texture base level.
+      wined3d: Abort state application when there is problem with newly created sampler object.
+      wined3d: Remove irrelevant comment.
+      d3d11: Avoid spurious FIXME messages about unhandled DXBC chunks.
+      d3d11: Make extracting input signature more robust.
+      d3d11: Avoid magic number in d3d10_device_SOSetTargets().
+      wined3d: Do not generate FFP fragment shader when SM4 vertex shader is active.
+      d3d11: Downgrade unknown DWORD FIXMEs() to WARN() messages.
+      wined3d: Load core GL transform feedback functions.
+      wined3d: Handle stream output buffer bind flag.
+      wined3d: Generate geometry shader outputs when NULL pixel shader is used.
+      wined3d: Introduce wined3d_stream_output_desc.
+      d3d11: Factor out shader_find_signature_element() function.
+      d3d11: Implement d3d11_device_CreateGeometryShaderWithStreamOutput().
+      d3d11: Use ARRAY_SIZE() macro.
+      wined3d: Do not compute color/NP2 fixup PS compile arguments for SM4+.
+      wined3d: Allow creating shader resource views for cube map and rectangle textures.
+      d3d10core/tests: Introduce get_resource_data() helper function.
+      d3d11/tests: Introduce get_resource_data() helper function.
+      d3d11: Try to avoid spurious blend state FIXMEs().
+      d3d11: Correctly handle multiple stream output elements for single output register.
+      d3d11: Validate stream output description.
+      wined3d: Add ARB_transform_feedback2 extension.
+      wined3d: Add ARB_transform_feedback3 extension.
+      wined3d: Specify geometry shader outputs to record in stream output buffers.
+      d3d11: Validate stream output buffer strides.
+      wined3d: Consider buffer strides when generating transform feedback varyings.
+      wined3d: Exit early in shader_glsl_init_transform_feedback() if stream output is disabled.
+      wined3d: Acquire stream output buffers for draw calls.
+      wined3d: Bind transform feedback buffers.
+      d3d11: Replace another magic number with D3D10_SO_BUFFER_SLOT_COUNT.
+      d3d11/tests: Use ARRAY_SIZE() macro.
+      d3d11/tests: Add test for resuming stream output.
+      d3d11: Validate stream output descriptions for feature level < 11_0.
+      d3d11/tests: Add test for stream output descriptions.
+      d3d11/tests: Add test for feature level 10 stream output descriptions.
+      wined3d: Enable transform feedback if geometry shader with stream output is active.
+      wined3d: Add support for rasterizer discard.
+      wined3d: Pause transform feedback between draw calls.
+      wined3d: Resume transform feedback after geometry shader switch.
+      wined3d: Support simple stream output descriptions when ARB_TRANSFORM_FEEDBACK3 is not available.
+      d3d11: Implement d3d10_device_CreateGeometryShaderWithStreamOutput().
+      wined3d: Fix transform feedback primitive mode.
+      d3d10core/tests: Add test for resuming stream output.
+      d3d10core/tests: Use ARRAY_SIZE() macro.
 
-Ken Thomases (2):
-      winemac: Discard key repeat events after a modifier key has been pressed.
-      wineps.drv: Set the AP_D_InputSlot CUPS option if no input slot is specified.
+Marcus Meissner (1):
+      kernel32/tests: Fixed incorrect buffer sizes.
 
-Louis Lenders (1):
-      kernel32: Add stub for GetCurrentPackageFullName.
+Matteo Bruni (4):
+      d3dx9: Override d3dx9_get_param_value_ptr() return value only on array overflow.
+      d3d10core/tests: Add a geometry shader test.
+      d3d11/tests: Add a geometry shader test.
+      wined3d: Get rid of the point sprite coordinate origin warning.
 
-Mark Jansen (1):
-      msi: Use the correct type when calculating feature cost.
+Michael Stefaniuc (1):
+      include: Use offsetof() instead of open coding it.
 
-Matteo Bruni (15):
-      ddraw: Keep a ddraw object reference in d3d7 vertex buffers.
-      d3d9/tests: Skip test_vshader_input() if PS 3.0 isn't supported.
-      d3d9/tests: Fix pixel shader version check in test_pointsize().
-      ddraw/tests: Add a ddraw4 vertex buffer refcount test.
-      ddraw/tests: Add a ddraw7 vertex buffer refcount test.
-      wined3d: Don't advertise unsupported shader versions.
-      d3d9/tests: Skip UpdateTexture tests if texture filtering isn't supported.
-      wined3d: Use the MAX_TEXTURES define in a few more places.
-      d3d9/tests: Ignore test_vshader_input() "no color attribute" test result on WARP.
-      wined3d: Fix the TRACE in wined3d_texture_remove_buffer_object().
-      d3d9/tests: Fix test_updatetexture() on GPUs not supporting WINED3DFMT_R32_FLOAT.
-      ddraw: Take user clip planes into account in d3d7 ComputeSphereVisibility().
-      ddraw/tests: Cleanup and extend d3d7 ComputeSphereVisibility() tests.
-      ddraw: Fix d3d6 version of ComputeSphereVisibility().
-      ddraw/tests: Port test_compute_sphere_visibility() to ddraw4.
-
-Michael Müller (8):
-      kernel32: Add stub for GetCurrentPackageFamilyName.
-      cabinet: Set index of folder in FDICopy callback.
-      bcrypt: Add builtin HMAC implementation.
-      bcrypt: Use builtin MD5/SHA1 implementation.
-      bcrypt: Add a builtin sha256 implementation.
-      bcrypt: Add a builtin sha384/sha512 implementation.
-      bcrypt: Always use builtin hash implementation.
-      bcrypt: Implement BCryptDuplicateHash.
-
-Nikolay Sivov (49):
-      xmllite/reader: Improve input stream encoding detection.
-      xmllite/reader: Always return node type from Read().
-      xmllite/reader: Reset node type to XmlNodeType_None on EOF.
-      xmllite/reader: Implement IsEOF().
-      xmllite/reader: Improve the way nesting level returned by GetDepth() is updated.
-      d3d9: Remove reference to IWineD3DDevice.
-      ddraw: Remove referenced to IWineD3D* interfaces.
-      xmllite/reader: Return proper name for xml declaration PI.
-      xmllite/reader: Return empty value for elements.
-      xmllite/reader: Fix prefix returned after moving back to element.
-      xmllite/reader: Return qualified names for attributes.
-      xmllite/reader: Enforce maximum element depth limit.
-      gdi32/tests: Test that otmfsType field is cleaned up from reserved bits.
-      gdi32: Cleanup otmfsType bit mask from reserved bits.
-      xmllite/tests: A couple of newline normalization tests for text nodes.
-      xmllite/reader: Fix GetValue() for comments.
-      xmllite/reader: Return empty string for namespace uri for some nodes.
-      xmllite/reader: Return local element names from the stack, instead of input buffer.
-      xmllite/reader: Return qualified element names from the stack, instead of input buffer.
-      xmllite/tests: Fix a memory leak (Valgrind).
-      xmllite/reader: Return prefixes from namespace stack.
-      xmllite/tests: Some tests for reader position.
-      xmllite/reader: Remove redundant parameter.
-      xmllite/reader: Improve returned reader position for elements and attributes.
-      xmllite/reader: Fix reader position returned for xml declaration node.
-      xmllite/reader: Return static empty string as xml declaration node value.
-      xmllite/reader: Explicitly return empty static string as local name for nodes without names.
-      xmllite/reader: Explicitly return empty string as qualified name for some node types.
-      xmllite/reader: Return correct error for multiple colons in qualified name.
-      xmllite/reader: Fix position methods return values in closed reader state.
-      xmllite/reader: Improve line number updating when switching to the next line.
-      xmllite/reader: Improve returned position for whitespace text nodes.
-      wlanapi/tests: Always free interface list (Valgrind).
-      comdlg32: Take nMaxFile into account when converting A->W.
-      xmllite/reader: Enter error state on parsing error.
-      xmllite/reader: Reset reader nesting depth on error.
-      dwrite: Added support for oblique simulation in bitmap rendering mode.
-      inetcomm/tests: Fix test stream leak (Valgrind).
-      msctf/tests: Fix test object leak (Valgrind).
-      schedsvc: Fix xml buffer leak (Valgrind).
-      usp10/tests: Fix a buffer leak (Valgrind).
-      dwrite: Added support for bold simulation.
-      dwrite: Use version neutral variable name.
-      dwrite: Fix a typo to actually return kerning pair adjustments.
-      msxml3/tests: A bit more tests for IPersist* interfaces.
-      msxml3/saxreader: Handle NULL interface input in parse().
-      xmllite/reader: Always return local name from element structure.
-      xmllite/reader: For elements without a prefix return same string for both local and qualified names.
-      xmllite/reader: Return same string for local and qualified names for attributes when appropriate.
-
-Owen Rudge (2):
-      gdiplus: Check for null in GdipGetFontHeight.
-      gdiplus/tests: Add tests for invalid parameter handling for GdipGetFontHeight.
+Nikolay Sivov (16):
+      xmllite/tests: Added missing return value check (Coverity).
+      dwrite/tests: Initial test for HasKerningPairs().
+      scrrun/tests: Skip some tests if drive is not ready.
+      comctl32/taskdialog: Initial implementation of a minimal task dialog.
+      dwrite: Handle allocation failure for main run bitmap.
+      readme: Update Russian translation.
+      msxml3: Support IPersistStream* as IXSLProcessor output.
+      include: Fix IRequestDictionary and IResponse definition.
+      oleaut32: Implement GetAltMonthNames().
+      msxml3/tests: Added a test for IResponse processor output.
+      msxml3: Added support for setting IResponse as xsl processor output.
+      comctl32/tests: Fully initialize message tests data.
+      dwrite: Simplify requested texture type validation in IDWriteGlyphRunAnalysis.
+      dwrite: Allocate glyph buffer once per run rendering pass.
+      dwrite/tests: Test glyph count for each DrawGlyphRun().
+      dwrite: Fix off by one error in glyph count adjustment.
 
 Paul Gofman (4):
-      d3dx9/tests: Add test for out of bounds array selector in effect.
-      d3dx9: Set dirty flag on parameter change.
-      d3dx9/tests: Extend test effect and add checks to test_effect_preshader().
-      d3dx9/tests: Factor out op results test helper function from test_effect_preshader().
+      d3dx9: Don't apply unmodified states in CommitChanges().
+      d3dx9/tests: Factor out vertex shader constants check helper function from test_effect_preshader().
+      d3dx9/tests: Add test for CommitChanges().
+      d3dx9: Fix a warning output in preshader.
 
-Pierre Schweitzer (1):
-      iphlpapi: Flags in IP_ADAPTER_ADDRESSES_LH can be used as a bit field.
+Piotr Caban (43):
+      msvcrt: Optimize Concurrency::event implementation.
+      concrt140: Add missing i386 spec file entries.
+      msvcp140: Add {_Schedule,_Reschedule,_Release}_chore implementation.
+      user32: Don't call IsChild with NULL window in EnableWindow.
+      msvcrt: Add Context class static functions stubs.
+      msvcrt: Add ExternalContextBase class stub.
+      msvcrt: Add ExternalContextBase::GetId implementation.
+      msvcrt/tests: Add Context::Id tests.
+      msvcrt: Add scheduler_resource_allocation_error class implementation.
+      msvcrt: Move bad_alloc vtable definition into __asm_dummy_vtables function.
+      msvcrt: Throw throw_scheduler_resource_allocation_error on Context tls index allocation error.
+      msvcp100: Improve is_current_task_group_canceling function stub.
+      msvcrt: Add __ExceptionPtrCompare implementation.
+      msvcrt: Implement caching in Concurrency::Alloc.
+      msvcrt: Add improper_lock class implementation.
+      msvcrt: Add SchedulerPolicy class stub.
+      msvcrt: Add helper for exception throwing.
+      msvcrt: Add invalid_scheduler_policy_key class implementation.
+      msvcrt: Add invalid_scheduler_policy_value class implementation.
+      msvcrt: Add invalid_scheduler_policy_thread_specification class implementation.
+      msvcrt: Add SchedulerPolicy class implementation.
+      msvcrt: Throw improper_lock exception in critical_section::lock and try_lock_for.
+      msvcrt: Add Scheduler class stub.
+      msvcrt: Add Scheduler::Create implementation.
+      msvcrt: Add ThreadScheduler::GetPolicy implementation.
+      msvcrt: Add ThreadScheduler::Id implementation.
+      msvcrt: Add ThreadScheduler::GetNumberOfVirtualProcessors implementation.
+      msvcrt: Add ThreadScheduler::Release implementation.
+      msvcrt: Add ThreadScheduler::RegisterShutdownEvent implementation.
+      msvcrt: Add improper_scheduler_attach class implementation.
+      msvcrt: Add ThreadScheduler::Attach implementation.
+      msvcrt: Add CurrentScheduler class stub.
+      msvcrt: Add CurrentScheduler::Create implementation.
+      msvcrt: Add Scheduler::SetDefaultSchedulerPolicy implementation.
+      msvcrt: Add CurrentScheduler::Get implementation.
+      msvcrt: Add improper_scheduler_detach class implementation.
+      msvcrt: Attach context to default scheduler on creation.
+      msvcrt: Add CurrentScheduler::Detach implementation.
+      msvcrt: Add CurrentScheduler::Id implementation.
+      msvcr100: Fix ThreadScheduler virtual table.
+      msvcrt/tests: Add initial Scheduler tests.
+      msvcrt: Fix handling of unsigned chars in scanf format.
+      msvcr120: Add fesetround implementation.
 
-Piotr Caban (11):
-      msvcp140: Add _ContextCallback implementation.
-      msvcp140: Add _ContextCallback tests.
-      msvcp140: Add __crtCreateThreadpoolTimer implementation.
-      msvcp140: Add __crtSetThreadpoolTimer implementation.
-      msvcp140: Add __crtCreateThreadpoolWait implementation.
-      msvcp140: Add __crtSetThreadpoolWait implementation.
-      msvcr: Add _Wcsftime implementation.
-      msvcr: Fix strftime spec file entry.
-      msvcp140: Add _TaskEventLogger class implementation.
-      msvcp140/tests: Add _TaskEventLogger tests.
-      msvcr: Add __crtUnhandledException implementation.
+Viktor Semykin (1):
+      shlwapi: Add SHCreateMemStream shlwapi.h.
 
-Sebastian Lackner (18):
-      ntdll: Use FD_CLOEXEC instead of hardcoded values.
-      ntoskrnl.exe: Add KeReleaseInStackQueuedSpinLock stub.
-      ntdll: Implement FileAccessInformation class in NtQueryInformationFile.
-      rasapi32: Set *lpcDevices in RasEnumDevicesA.
-      include: Avoid typedef for tls_data.
-      webservices: Unlock critical section before returning.
-      webservices: Don't set is_addressed when an error occurred.
-      webservices: Return the correct HRESULT on error.
-      webservices: Fix uninitialized variable in WsWriteArray.
-      server: Explicitly mark memory as undefined in mem_alloc wrapper.
-      schedsvc: Simplify and standardize the heap_xxx() declarations.
-      bcrypt: Unify the object length handling.
-      bcrypt: Return error when requesting BCRYPT_HASH_LENGTH for unsupported object.
-      bcrypt/tests: Move common tests to a helper function.
-      bcrypt/tests: Add basic tests for BCryptDuplicateHash.
-      bcrypt: Remove a FIXME which no longer applies.
-      vcomp/tests: Use ULL macro to define 64-bit constants.
-      krnl386.exe16: Ignore access denied error when flushing file.
+Vitaly Lipatov (2):
+      include: Add PERF_DATA_BLOCK struct definition.
+      advapi32/tests: Add test prototype for RegQueryValueEx HKEY_PERFORMANCE_DATA.
 
-Stefan Dösinger (1):
-      ddraw/tests: Rewrite SrcColorKey32BlitTest.
+Zebediah Figura (3):
+      user32/tests: Add tests for EnableWindow().
+      user32: Don't call ReleaseCapture() in EnableWindow().
+      user32: Always send WM_CANCELMODE when disabling a window.
 
-Vincent Povirk (1):
-      mscoree: Update Wine Mono to 4.7.0.
+Zhenbo Li (1):
+      quartz: Remove an unnecessary if.
 
 --
 Alexandre Julliard
