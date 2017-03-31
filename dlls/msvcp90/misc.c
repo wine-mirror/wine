@@ -1255,6 +1255,14 @@ ULONGLONG CDECL MSVCP__crtGetTickCount64(void)
 }
 
 /*********************************************************************
+ *  __crtGetCurrentProcessorNumber (MSVCP140.@)
+ */
+DWORD CDECL MSVCP__crtGetCurrentProcessorNumber(void)
+{
+    return GetCurrentProcessorNumber();
+}
+
+/*********************************************************************
  *  __crtCreateSemaphoreExW (MSVCP140.@)
  */
 HANDLE CDECL MSVCP__crtCreateSemaphoreExW(
