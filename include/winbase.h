@@ -2636,6 +2636,7 @@ WINBASEAPI DWORD       WINAPI WaitForMultipleObjects(DWORD,const HANDLE*,BOOL,DW
 WINBASEAPI DWORD       WINAPI WaitForMultipleObjectsEx(DWORD,const HANDLE*,BOOL,DWORD,BOOL);
 WINBASEAPI DWORD       WINAPI WaitForSingleObject(HANDLE,DWORD);
 WINBASEAPI DWORD       WINAPI WaitForSingleObjectEx(HANDLE,DWORD,BOOL);
+WINBASEAPI VOID        WINAPI WaitForThreadpoolTimerCallbacks(PTP_TIMER,BOOL);
 WINBASEAPI BOOL        WINAPI WaitNamedPipeA(LPCSTR,DWORD);
 WINBASEAPI BOOL        WINAPI WaitNamedPipeW(LPCWSTR,DWORD);
 #define                       WaitNamedPipe WINELIB_NAME_AW(WaitNamedPipe)

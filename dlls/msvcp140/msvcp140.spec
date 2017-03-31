@@ -3778,6 +3778,6 @@
 @ stub __crtSetFileInformationByHandle
 @ cdecl __crtSetThreadpoolTimer(ptr ptr long long) MSVCP__crtSetThreadpoolTimer
 @ cdecl __crtSetThreadpoolWait(ptr long ptr) MSVCP__crtSetThreadpoolWait
-@ stub __crtWaitForThreadpoolTimerCallbacks
+@ cdecl __crtWaitForThreadpoolTimerCallbacks(ptr long) MSVCP__crtWaitForThreadpoolTimerCallbacks
 @ stub __set_stl_sync_api_mode
 @ cdecl xtime_get(ptr long) xtime_get
