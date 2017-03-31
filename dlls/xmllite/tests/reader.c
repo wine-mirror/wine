@@ -256,6 +256,14 @@ static void _next_attribute(unsigned line, IXmlReader *reader)
     ok_(__FILE__,line)(hr == S_OK, "MoveToNextAttribute returned %08x\n", hr);
 }
 
+#define move_to_element(a) _move_to_element(__LINE__,a)
+static void _move_to_element(unsigned line, IXmlReader *reader)
+{
+    HRESULT hr;
+    hr = IXmlReader_MoveToElement(reader);
+    ok_(__FILE__,line)(hr == S_OK, "MoveToElement failed: %08x\n", hr);
+}
+
 static void test_read_state(IXmlReader *reader, XmlReadState expected,
     XmlReadState exp_broken, int line)
 {
@@ -943,8 +951,7 @@ static void test_read_xmldeclaration(void)
 
     TEST_DEPTH(reader, 1);
 
-    hr = IXmlReader_MoveToElement(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
+    move_to_element(reader);
     TEST_READER_POSITION2(reader, 1, 3, ~0u, 55);
 
     type = XmlNodeType_None;
@@ -1302,8 +1309,7 @@ static void test_read_public_dtd(void)
     reader_name(reader, "SYSTEM");
     reader_value(reader, "externalid uri");
 
-    hr = IXmlReader_MoveToElement(reader);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    move_to_element(reader);
 
     len = 0;
     str = NULL;
@@ -1367,8 +1373,7 @@ static void test_read_system_dtd(void)
     reader_name(reader, "SYSTEM");
     reader_value(reader, "externalid uri");
 
-    hr = IXmlReader_MoveToElement(reader);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    move_to_element(reader);
 
     len = 0;
     str = NULL;
@@ -1539,9 +1544,7 @@ static void test_read_element(void)
                 ok(hr == S_OK, "got %08x\n", hr);
                 ok(depth == depths[i] + 1, "%u: got depth %u, expected %u\n", i, depth, depths[i] + 1);
 
-                hr = IXmlReader_MoveToElement(reader);
-                ok(hr == S_OK, "got %08x\n", hr);
-
+                move_to_element(reader);
                 reader_value(reader, "");
 
                 depth = 123;
@@ -2045,9 +2048,7 @@ static void test_prefix(void)
         reader_prefix(reader, prefix_tests[i].prefix3);
 
         /* back to the element, check prefix */
-        hr = IXmlReader_MoveToElement(reader);
-        ok(hr == S_OK, "MoveToElement() failed, %#x.\n", hr);
-
+        move_to_element(reader);
         reader_prefix(reader, prefix_tests[i].prefix1);
 
         IStream_Release(stream);
@@ -2473,8 +2474,7 @@ static void test_reader_position(void)
     next_attribute(reader);
     TEST_READER_POSITION2(reader, 1, 24, ~0u, 34);
 
-    hr = IXmlReader_MoveToElement(reader);
-    ok(hr == S_OK, "got %08x\n", hr);
+    move_to_element(reader);
     TEST_READER_POSITION2(reader, 1, 2, ~0u, 34);
 
     hr = IXmlReader_Read(reader, &type);
