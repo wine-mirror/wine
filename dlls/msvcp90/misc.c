@@ -1277,6 +1277,15 @@ PTP_TIMER CDECL MSVCP__crtCreateThreadpoolTimer(PTP_TIMER_CALLBACK callback,
 }
 
 /*********************************************************************
+ *  __crtCloseThreadpoolTimer (MSVCP140.@)
+ */
+VOID CDECL MSVCP__crtCloseThreadpoolTimer(TP_TIMER *timer)
+{
+    TRACE("(%p)\n", timer);
+    CloseThreadpoolTimer(timer);
+}
+
+/*********************************************************************
  *  __crtSetThreadpoolTimer (MSVCP140.@)
  */
 VOID CDECL MSVCP__crtSetThreadpoolTimer(TP_TIMER *timer,

@@ -3752,7 +3752,7 @@
 @ cdecl _Xtime_diff_to_millis2(ptr ptr) _Xtime_diff_to_millis2
 @ cdecl -ret64 _Xtime_get_ticks() _Xtime_get_ticks
 @ stub __Wcrtomb_lk
-@ stub __crtCloseThreadpoolTimer
+@ cdecl __crtCloseThreadpoolTimer(ptr) MSVCP__crtCloseThreadpoolTimer
 @ stub __crtCloseThreadpoolWait
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA
 @ stub __crtCompareStringEx
