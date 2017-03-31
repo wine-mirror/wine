@@ -57,7 +57,7 @@ const struct wined3d_light WINED3D_default_light =
  * actually have the same values in GL and D3D. */
 GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
 {
-    switch(primitive_type)
+    switch (primitive_type)
     {
         case WINED3D_PT_POINTLIST:
             return GL_POINTS;
@@ -90,7 +90,7 @@ GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
             return GL_TRIANGLE_STRIP_ADJACENCY_ARB;
 
         default:
-            FIXME("Unhandled primitive type %s\n", debug_d3dprimitivetype(primitive_type));
+            FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(primitive_type));
         case WINED3D_PT_UNDEFINED:
             return ~0u;
     }
@@ -98,7 +98,7 @@ GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
 
 static enum wined3d_primitive_type d3d_primitive_type_from_gl(GLenum primitive_type)
 {
-    switch(primitive_type)
+    switch (primitive_type)
     {
         case GL_POINTS:
             return WINED3D_PT_POINTLIST;
@@ -131,7 +131,7 @@ static enum wined3d_primitive_type d3d_primitive_type_from_gl(GLenum primitive_t
             return WINED3D_PT_TRIANGLESTRIP_ADJ;
 
         default:
-            FIXME("Unhandled primitive type %s\n", debug_d3dprimitivetype(primitive_type));
+            FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(primitive_type));
         case ~0u:
             return WINED3D_PT_UNDEFINED;
     }

@@ -435,6 +435,32 @@ static void context_pause_transform_feedback(struct wined3d_context *context, BO
         context_end_transform_feedback(context);
 }
 
+static GLenum gl_tfb_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
+{
+    GLenum gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
+    switch (gl_primitive_type)
+    {
+        case GL_POINTS:
+            return GL_POINTS;
+
+        case GL_LINE_STRIP:
+        case GL_LINE_STRIP_ADJACENCY:
+        case GL_LINES_ADJACENCY:
+        case GL_LINES:
+            return GL_LINES;
+
+        case GL_TRIANGLE_FAN:
+        case GL_TRIANGLE_STRIP:
+        case GL_TRIANGLE_STRIP_ADJACENCY:
+        case GL_TRIANGLES_ADJACENCY:
+        case GL_TRIANGLES:
+            return GL_TRIANGLES;
+
+        default:
+            return gl_primitive_type;
+    }
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
         int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
@@ -584,7 +610,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     if (use_transform_feedback(state))
     {
         const struct wined3d_shader *shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
-        GLenum primitive_mode = gl_primitive_type_from_d3d(shader->u.gs.output_type);
 
         if (shader->u.gs.so_desc.rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM)
         {
@@ -601,7 +626,8 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         }
         else if (!context->transform_feedback_active)
         {
-            GL_EXTCALL(glBeginTransformFeedback(primitive_mode));
+            GLenum mode = gl_tfb_primitive_type_from_d3d(shader->u.gs.output_type);
+            GL_EXTCALL(glBeginTransformFeedback(mode));
             checkGLcall("glBeginTransformFeedback");
             context->transform_feedback_active = 1;
         }
