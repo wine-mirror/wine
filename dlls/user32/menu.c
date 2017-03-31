@@ -1417,6 +1417,12 @@ static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC h
 	return;
     }
 
+    TRACE( "rect=%s\n", wine_dbgstr_rect( &lpitem->rect ) );
+    rect = lpitem->rect;
+    MENU_AdjustMenuItemRect( menu, &rect );
+    if (!IntersectRect( &bmprc, &rect, &menu->items_rect )) /* bmprc is used as a dummy */
+        return;
+
     SystemParametersInfoW (SPI_GETFLATMENU, 0, &flat_menu, 0);
     bkgnd = (menuBar && flat_menu) ? COLOR_MENUBAR : COLOR_MENU;
   
@@ -1443,10 +1449,6 @@ static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC h
 	    SetTextColor( hdc, GetSysColor( COLOR_MENUTEXT ) );
 	SetBkColor( hdc, GetSysColor( bkgnd ) );
     }
-
-    TRACE("rect=%s\n", wine_dbgstr_rect( &lpitem->rect));
-    rect = lpitem->rect;
-    MENU_AdjustMenuItemRect(menu, &rect);
 
     old_clip = CreateRectRgn( 0, 0, 0, 0 );
     if (GetClipRgn( hdc, old_clip ) <= 0)
