@@ -90,11 +90,11 @@
 @ stub feclearexcept
 @ cdecl fegetenv(ptr) ucrtbase.fegetenv
 @ stub fegetexceptflag
-@ stub fegetround
+@ cdecl fegetround() ucrtbase.fegetround
 @ stub feholdexcept
 @ cdecl fesetenv(ptr) ucrtbase.fesetenv
 @ stub fesetexceptflag
-@ stub fesetround
+@ cdecl fesetround(long) ucrtbase.fesetround
 @ stub fetestexcept
 @ cdecl perror(str) ucrtbase.perror
 @ stub quick_exit
