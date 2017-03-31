@@ -854,7 +854,7 @@ static void MENU_GetBitmapItemSize( MENUITEM *lpitem, SIZE *size,
  * Draw a bitmap item.
  */
 static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect,
-                    HMENU hmenu, HWND hwndOwner, UINT odaction, BOOL menuBar)
+                                 POPUPMENU *menu, HWND hwndOwner, UINT odaction )
 {
     BITMAP bm;
     DWORD rop;
@@ -921,7 +921,7 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect,
                 drawItem.itemState |= (lpitem->fState & MF_DISABLED)?ODS_DISABLED:0;
                 drawItem.itemState |= (lpitem->fState & MF_GRAYED)?ODS_GRAYED|ODS_DISABLED:0;
                 drawItem.itemState |= (lpitem->fState & MF_HILITE)?ODS_SELECTED:0;
-                drawItem.hwndItem = (HWND)hmenu;
+                drawItem.hwndItem = (HWND)menu->obj.handle;
                 drawItem.hDC = hdc;
                 drawItem.itemData = lpitem->dwItemData;
                 drawItem.rcItem = *rect;
@@ -1392,14 +1392,13 @@ static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_bitmap_width,
  *
  * Draw a single menu item.
  */
-static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc,
+static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC hdc,
                                MENUITEM *lpitem, BOOL menuBar, UINT odaction )
 {
     RECT rect;
     BOOL flat_menu = FALSE;
     int bkgnd;
     UINT arrow_bitmap_width = 0, arrow_bitmap_height = 0;
-    POPUPMENU *menu = MENU_GetMenu(hmenu);
     RECT bmprc;
     HRGN old_clip = NULL, clip;
 
@@ -1448,7 +1447,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc,
 
     TRACE("rect=%s\n", wine_dbgstr_rect( &lpitem->rect));
     rect = lpitem->rect;
-    MENU_AdjustMenuItemRect(MENU_GetMenu(hmenu), &rect);
+    MENU_AdjustMenuItemRect(menu, &rect);
 
     old_clip = CreateRectRgn( 0, 0, 0, 0 );
     if (GetClipRgn( hdc, old_clip ) <= 0)
@@ -1483,7 +1482,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc,
         if (lpitem->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED|ODS_DISABLED;
         if (lpitem->fState & MF_HILITE)  dis.itemState |= ODS_SELECTED;
         dis.itemAction = odaction; /* ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS; */
-        dis.hwndItem   = (HWND)hmenu;
+        dis.hwndItem   = (HWND)menu->obj.handle;
         dis.hDC        = hdc;
         dis.rcItem     = rect;
         TRACE("Ownerdraw: owner=%p itemID=%d, itemState=%d, itemAction=%d, "
@@ -1611,7 +1610,8 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc,
          * FIXME:
          * Custom checkmark bitmaps are monochrome but not always 1bpp.
          */
-        if( !(menu->dwStyle & MNS_NOCHECK)) {
+        if (!(menu->dwStyle & MNS_NOCHECK))
+        {
             bm = (lpitem->fState & MF_CHECKED) ? lpitem->hCheckBit :
                 lpitem->hUnCheckBit;
             if (bm)  /* we have a custom bitmap */
@@ -1644,13 +1644,12 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc,
                 checked = TRUE;
             }
         }
-        if( lpitem->hbmpItem &&
-                !( checked && (menu->dwStyle & MNS_CHECKORBMP))) {
+        if (lpitem->hbmpItem && !(checked && (menu->dwStyle & MNS_CHECKORBMP)))
+        {
             POINT origorg;
             /* some applications make this assumption on the DC's origin */
             SetViewportOrgEx( hdc, rect.left, rect.top, &origorg);
-            MENU_DrawBitmapItem(hdc, lpitem, &bmprc, hmenu, hwndOwner,
-                    odaction, FALSE);
+            MENU_DrawBitmapItem( hdc, lpitem, &bmprc, menu, hwndOwner, odaction );
             SetViewportOrgEx( hdc, origorg.x, origorg.y, NULL);
         }
 	/* Draw the popup-menu arrow */
@@ -1662,13 +1661,12 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc,
             rect.left += check_bitmap_width;
 	rect.right -= arrow_bitmap_width;
     }
-    else if( lpitem->hbmpItem)
+    else if (lpitem->hbmpItem)
     {   /* Draw the bitmap */
         POINT origorg;
-        
+
         SetViewportOrgEx( hdc, rect.left, rect.top, &origorg);
-        MENU_DrawBitmapItem( hdc, lpitem, &bmprc, hmenu, hwndOwner,
-                odaction, menuBar);
+        MENU_DrawBitmapItem( hdc, lpitem, &bmprc, menu, hwndOwner, odaction );
         SetViewportOrgEx( hdc, origorg.x, origorg.y, NULL);
     }
     /* process text if present */
@@ -1798,7 +1796,7 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 
                     item = menu->items;
                     for (u = menu->nItems; u > 0; u--, item++)
-                        MENU_DrawMenuItem( hwnd, hmenu, menu->hwndOwner, hdc,
+                        MENU_DrawMenuItem( hwnd, menu, menu->hwndOwner, hdc,
                                            item, FALSE, ODA_DRAWENTIRE );
                 }
                 /* draw scroll arrows */
@@ -2025,7 +2023,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
     if (lppop->FocusedItem != NO_SELECTED_ITEM)
     {
         lppop->items[lppop->FocusedItem].fState &= ~(MF_HILITE|MF_MOUSESELECT);
-        MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc, &lppop->items[lppop->FocusedItem],
+        MENU_DrawMenuItem( lppop->hWnd, lppop, hwndOwner, hdc, &lppop->items[lppop->FocusedItem],
                            !(lppop->wFlags & MF_POPUP), ODA_SELECT );
     }
 
@@ -2036,7 +2034,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
         if(!(lppop->items[wIndex].fType & MF_SEPARATOR)) {
             lppop->items[wIndex].fState |= MF_HILITE;
             MENU_EnsureMenuItemVisible(lppop, wIndex, hdc);
-            MENU_DrawMenuItem( lppop->hWnd, hmenu, hwndOwner, hdc, &lppop->items[wIndex],
+            MENU_DrawMenuItem( lppop->hWnd, lppop, hwndOwner, hdc, &lppop->items[wIndex],
                                !(lppop->wFlags & MF_POPUP), ODA_SELECT );
         }
         if (sendMenuSelect)
@@ -2370,7 +2368,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
         SelectObject( hdc, get_menu_font(FALSE));
 
         item->fState |= MF_HILITE;
-        MENU_DrawMenuItem( menu->hWnd, hmenu, hwndOwner, hdc, item, !(menu->wFlags & MF_POPUP), ODA_DRAWENTIRE );
+        MENU_DrawMenuItem( menu->hWnd, menu, hwndOwner, hdc, item, !(menu->wFlags & MF_POPUP), ODA_DRAWENTIRE );
         ReleaseDC( menu->hWnd, hdc );
     }
     if (!item->rect.top && !item->rect.left && !item->rect.bottom && !item->rect.right)
@@ -4464,7 +4462,7 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
     }
 
     for (i = 0; i < lppop->nItems; i++)
-        MENU_DrawMenuItem( hwnd, hMenu, hwnd, hDC, &lppop->items[i], TRUE, ODA_DRAWENTIRE );
+        MENU_DrawMenuItem( hwnd, lppop, hwnd, hDC, &lppop->items[i], TRUE, ODA_DRAWENTIRE );
 
     retvalue = lppop->Height;
 
