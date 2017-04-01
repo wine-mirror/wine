@@ -3019,6 +3019,9 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 
     TRACE("(%s,%d,0x%x)\n", debugstr_wn(chars, len), len, flag);
 
+    if (!chars || len < 0)
+        return E_INVALIDARG;
+
     for (i = 0; i < len; i+=consumed)
     {
         if (i >= len)

@@ -3911,6 +3911,68 @@ static void test_ScriptGetLogicalWidths(void)
     }
 }
 
+static void test_ScriptIsComplex(void)
+{
+    static const WCHAR testW[] = {0x202a,'1',0x202c,0};
+    static const WCHAR test2W[] = {'1',0};
+    static const struct complex_test
+    {
+        const WCHAR *text;
+        DWORD flags;
+        HRESULT hr;
+        BOOL todo;
+    } complex_tests[] =
+    {
+        { test2W, SIC_ASCIIDIGIT, S_OK },
+        { test2W, SIC_COMPLEX, S_FALSE },
+        { test2W, SIC_COMPLEX | SIC_ASCIIDIGIT, S_OK },
+        { testW, SIC_NEUTRAL | SIC_COMPLEX, S_OK },
+        { testW, SIC_NEUTRAL, S_FALSE, TRUE },
+        { testW, SIC_COMPLEX, S_OK },
+        { testW, 0, S_FALSE },
+    };
+    unsigned int i;
+    HRESULT hr;
+
+    hr = ScriptIsComplex(NULL, 0, 0);
+    ok(hr == E_INVALIDARG || broken(hr == S_FALSE) /* winxp/vista */, "got 0x%08x\n", hr);
+
+    if (hr == E_INVALIDARG)
+    {
+        hr = ScriptIsComplex(NULL, 1, 0);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    }
+
+    hr = ScriptIsComplex(test2W, -1, SIC_ASCIIDIGIT);
+    ok(hr == E_INVALIDARG || broken(hr == S_FALSE) /* winxp/vista */, "got 0x%08x\n", hr);
+
+    hr = ScriptIsComplex(test2W, 0, SIC_ASCIIDIGIT);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    for (i = 0; i < sizeof(complex_tests)/sizeof(complex_tests[0]); i++)
+    {
+        hr = ScriptIsComplex(complex_tests[i].text, lstrlenW(complex_tests[i].text), complex_tests[i].flags);
+    todo_wine_if(complex_tests[i].todo)
+        ok(hr == complex_tests[i].hr, "%u: got %#x, expected %#x, flags %#x\n", i, hr, complex_tests[i].hr,
+            complex_tests[i].flags);
+    }
+
+    hr = ScriptIsComplex(test2W, 1, ~0u);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ScriptIsComplex(testW, 3, 0);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+
+    hr = ScriptIsComplex(testW, 3, SIC_NEUTRAL | SIC_COMPLEX);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ScriptIsComplex(testW, 3, SIC_COMPLEX);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ScriptIsComplex(test2W, 1, SIC_COMPLEX);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -3965,6 +4027,8 @@ START_TEST(usp10)
 
     test_ScriptGetFontFunctions(hdc);
     test_ScriptGetLogicalWidths();
+
+    test_ScriptIsComplex();
 
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
