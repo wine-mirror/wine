@@ -412,7 +412,7 @@ static void test_SQLGetPrivateProfileStringW(void)
     }
 }
 
-void test_SQLInstallDriverEx(void)
+static void test_SQLInstallDriverEx(void)
 {
     char path[MAX_PATH];
     char syspath[MAX_PATH];
