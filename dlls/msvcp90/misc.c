@@ -1332,6 +1332,15 @@ VOID CDECL MSVCP__crtSetThreadpoolWait(TP_WAIT *wait, HANDLE handle, FILETIME *d
     return SetThreadpoolWait(wait, handle, due_time);
 }
 
+/*********************************************************************
+ *  __crtFreeLibraryWhenCallbackReturns (MSVCP140.@)
+ */
+VOID CDECL MSVCP__crtFreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE instance, HMODULE mod)
+{
+    TRACE("(%p %p)\n", instance, mod);
+    FreeLibraryWhenCallbackReturns(instance, mod);
+}
+
 /* ?_Execute_once@std@@YAHAAUonce_flag@1@P6GHPAX1PAPAX@Z1@Z */
 /* ?_Execute_once@std@@YAHAEAUonce_flag@1@P6AHPEAX1PEAPEAX@Z1@Z */
 BOOL __cdecl _Execute_once(INIT_ONCE *flag, PINIT_ONCE_FN func, void *param)
