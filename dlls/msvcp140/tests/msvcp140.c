@@ -410,7 +410,7 @@ static void test__TaskEventLogger(void)
     ok(logger.started, "logger.started = FALSE\n");
 }
 
-void __cdecl chore_callback(void *arg)
+static void __cdecl chore_callback(void *arg)
 {
     HANDLE event = arg;
     SetEvent(event);
