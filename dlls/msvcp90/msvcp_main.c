@@ -209,14 +209,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             init_exception(hinstDLL);
             init_locale(hinstDLL);
             init_io(hinstDLL);
+#if _MSVCP_VER >= 100
             init_misc(hinstDLL);
+#endif
             break;
         case DLL_PROCESS_DETACH:
             if (lpvReserved) break;
             free_io();
             free_locale();
             free_lockit();
+#if _MSVCP_VER >= 100
             free_misc();
+#endif
             break;
     }
 

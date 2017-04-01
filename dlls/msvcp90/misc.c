@@ -1364,6 +1364,7 @@ BOOL __cdecl _Execute_once(INIT_ONCE *flag, PINIT_ONCE_FN func, void *param)
     return InitOnceExecuteOnce(flag, func, param, NULL);
 }
 
+#if _MSVCP_VER >= 100
 void init_misc(void *base)
 {
 #ifdef __x86_64__
@@ -1393,6 +1394,7 @@ void free_misc(void)
     HeapFree(GetProcessHeap(), 0, broadcast_at_thread_exit.to_broadcast);
 #endif
 }
+#endif
 
 #if _MSVCP_VER >= 140
 LONGLONG __cdecl _Query_perf_counter(void)
