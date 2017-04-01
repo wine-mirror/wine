@@ -2933,7 +2933,7 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
     /* terminate process with pending write */
     create_overlapped_pipe(create_flags, &client, &server);
     process = create_writepipe_process(client);
-    /* succesfully read part of write that is pending in child process */
+    /* successfully read part of write that is pending in child process */
     res = ReadFile(server, buf, 10, &read_bytes, NULL);
     if(!msg_read_mode)
         ok(res, "ReadFile failed: %u\n", GetLastError());
