@@ -132,13 +132,16 @@ static LPWSTR get_path_component(LPCWSTR *lplpKeyName) {
 HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
     TVITEMEXW tvi;
     WCHAR buf[261]; /* tree view has 260 character limitation on item name */
-    HTREEITEM hItem, hOldItem;
+    HTREEITEM hRoot, hItem, hOldItem;
+    BOOL valid_path;
 
     buf[260] = '\0';
-    hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+    hRoot = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+    hItem = hRoot;
     SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
     hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hItem);
     hOldItem = hItem;
+    valid_path = FALSE;
     while(1) {
         LPWSTR lpItemName = get_path_component(&lpKeyName);
 
@@ -150,6 +153,7 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
                 tvi.cchTextMax = 260;
                 SendMessageW(hwndTV, TVM_GETITEMW, 0, (LPARAM) &tvi);
                 if (!lstrcmpiW(tvi.pszText, lpItemName)) {
+                     valid_path = TRUE;
                      SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
                      if (!lpKeyName)
                      {
@@ -164,10 +168,10 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
             }
             HeapFree(GetProcessHeap(), 0, lpItemName);
             if (!hItem)
-                return hOldItem;
+                return valid_path ? hOldItem : hRoot;
         }
         else
-            return hItem;
+            return valid_path ? hItem : hRoot;
     }
 }
 
