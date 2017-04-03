@@ -159,6 +159,10 @@ typedef struct {
 } ThreadScheduler;
 extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
 
+typedef struct {
+    Scheduler *scheduler;
+} _Scheduler;
+
 static int context_tls_index = TLS_OUT_OF_INDEXES;
 
 static CRITICAL_SECTION default_scheduler_cs;
@@ -996,6 +1000,52 @@ void __cdecl CurrentScheduler_ScheduleTask(void (__cdecl *proc)(void*), void *da
 {
     TRACE("(%p %p)\n", proc, data);
     call_Scheduler_ScheduleTask(get_current_scheduler(), proc, data);
+}
+
+/* ??0_Scheduler@details@Concurrency@@QAE@PAVScheduler@2@@Z */
+/* ??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z */
+DEFINE_THISCALL_WRAPPER(_Scheduler_ctor_sched, 8)
+_Scheduler* __thiscall _Scheduler_ctor_sched(_Scheduler *this, Scheduler *scheduler)
+{
+    TRACE("(%p %p)\n", this, scheduler);
+
+    this->scheduler = scheduler;
+    return this;
+}
+
+/* ??_F_Scheduler@details@Concurrency@@QAEXXZ */
+/* ??_F_Scheduler@details@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Scheduler_ctor, 4)
+_Scheduler* __thiscall _Scheduler_ctor(_Scheduler *this)
+{
+    return _Scheduler_ctor_sched(this, NULL);
+}
+
+/* ?_GetScheduler@_Scheduler@details@Concurrency@@QAEPAVScheduler@3@XZ */
+/* ?_GetScheduler@_Scheduler@details@Concurrency@@QEAAPEAVScheduler@3@XZ */
+DEFINE_THISCALL_WRAPPER(_Scheduler__GetScheduler, 4)
+Scheduler* __thiscall _Scheduler__GetScheduler(_Scheduler *this)
+{
+    TRACE("(%p)\n", this);
+    return this->scheduler;
+}
+
+/* ?_Reference@_Scheduler@details@Concurrency@@QAEIXZ */
+/* ?_Reference@_Scheduler@details@Concurrency@@QEAAIXZ */
+DEFINE_THISCALL_WRAPPER(_Scheduler__Reference, 4)
+unsigned int __thiscall _Scheduler__Reference(_Scheduler *this)
+{
+    TRACE("(%p)\n", this);
+    return call_Scheduler_Reference(this->scheduler);
+}
+
+/* ?_Release@_Scheduler@details@Concurrency@@QAEIXZ */
+/* ?_Release@_Scheduler@details@Concurrency@@QEAAIXZ */
+DEFINE_THISCALL_WRAPPER(_Scheduler__Release, 4)
+unsigned int __thiscall _Scheduler__Release(_Scheduler *this)
+{
+    TRACE("(%p)\n", this);
+    return call_Scheduler_Release(this->scheduler);
 }
 
 extern const vtable_ptr MSVCRT_type_info_vtable;

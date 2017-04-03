@@ -47,9 +47,9 @@
 @ stub -arch=arm ??0_ReentrantPPLLock@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??0_ReentrantPPLLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0_ReentrantPPLLock@details@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0_Scheduler@details@Concurrency@@QAA@PAVScheduler@2@@Z
-@ stub -arch=i386 ??0_Scheduler@details@Concurrency@@QAE@PAVScheduler@2@@Z
-@ stub -arch=win64 ??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z
+@ cdecl -arch=arm ??0_Scheduler@details@Concurrency@@QAA@PAVScheduler@2@@Z(ptr ptr) _Scheduler_ctor_sched
+@ thiscall -arch=i386 ??0_Scheduler@details@Concurrency@@QAE@PAVScheduler@2@@Z(ptr ptr) _Scheduler_ctor_sched
+@ cdecl -arch=win64 ??0_Scheduler@details@Concurrency@@QEAA@PEAVScheduler@2@@Z(ptr ptr) _Scheduler_ctor_sched
 @ stub -arch=arm ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAA@AAV123@@Z
 @ stub -arch=i386 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QAE@AAV123@@Z
 @ stub -arch=win64 ??0_Scoped_lock@_NonReentrantPPLLock@details@Concurrency@@QEAA@AEAV123@@Z
@@ -379,9 +379,9 @@
 @ stub -arch=arm ??_F_Context@details@Concurrency@@QAAXXZ
 @ stub -arch=i386 ??_F_Context@details@Concurrency@@QAEXXZ
 @ stub -arch=win64 ??_F_Context@details@Concurrency@@QEAAXXZ
-@ stub -arch=arm ??_F_Scheduler@details@Concurrency@@QAAXXZ
-@ stub -arch=i386 ??_F_Scheduler@details@Concurrency@@QAEXXZ
-@ stub -arch=win64 ??_F_Scheduler@details@Concurrency@@QEAAXXZ
+@ cdecl -arch=arm ??_F_Scheduler@details@Concurrency@@QAAXXZ(ptr) _Scheduler_ctor
+@ thiscall -arch=i386 ??_F_Scheduler@details@Concurrency@@QAEXXZ(ptr) _Scheduler_ctor
+@ cdecl -arch=win64 ??_F_Scheduler@details@Concurrency@@QEAAXXZ(ptr) _Scheduler_ctor
 @ cdecl -arch=arm ??_Fbad_cast@std@@QAAXXZ(ptr) MSVCRT_bad_cast_default_ctor
 @ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) MSVCRT_bad_cast_default_ctor
 @ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) MSVCRT_bad_cast_default_ctor
@@ -530,9 +530,9 @@
 @ stub -arch=win32 ?_GetCurrentInlineDepth@_StackGuard@details@Concurrency@@CAAAIXZ
 @ stub -arch=win64 ?_GetCurrentInlineDepth@_StackGuard@details@Concurrency@@CAAEA_KXZ
 @ stub ?_GetNumberOfVirtualProcessors@_CurrentScheduler@details@Concurrency@@SAIXZ
-@ stub -arch=arm ?_GetScheduler@_Scheduler@details@Concurrency@@QAAPAVScheduler@3@XZ
-@ stub -arch=i386 ?_GetScheduler@_Scheduler@details@Concurrency@@QAEPAVScheduler@3@XZ
-@ stub -arch=win64 ?_GetScheduler@_Scheduler@details@Concurrency@@QEAAPEAVScheduler@3@XZ
+@ cdecl -arch=arm ?_GetScheduler@_Scheduler@details@Concurrency@@QAAPAVScheduler@3@XZ(ptr) _Scheduler__GetScheduler
+@ thiscall -arch=i386 ?_GetScheduler@_Scheduler@details@Concurrency@@QAEPAVScheduler@3@XZ(ptr) _Scheduler__GetScheduler
+@ cdecl -arch=win64 ?_GetScheduler@_Scheduler@details@Concurrency@@QEAAPEAVScheduler@3@XZ(ptr) _Scheduler__GetScheduler
 @ stub ?_Id@_CurrentScheduler@details@Concurrency@@SAIXZ
 @ stub -arch=arm ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?_IsCanceling@_StructuredTaskCollection@details@Concurrency@@QAE_NXZ
@@ -556,9 +556,9 @@
 @ thiscall -arch=i386 ?_NumberOfSpins@?$_SpinWait@$0A@@details@Concurrency@@IAEKXZ(ptr) SpinWait__NumberOfSpins
 @ cdecl -arch=win64 ?_NumberOfSpins@?$_SpinWait@$0A@@details@Concurrency@@IEAAKXZ(ptr) SpinWait__NumberOfSpins
 @ stub ?_Oversubscribe@_Context@details@Concurrency@@SAX_N@Z
-@ stub -arch=arm ?_Reference@_Scheduler@details@Concurrency@@QAAIXZ
-@ stub -arch=i386 ?_Reference@_Scheduler@details@Concurrency@@QAEIXZ
-@ stub -arch=win64 ?_Reference@_Scheduler@details@Concurrency@@QEAAIXZ
+@ cdecl -arch=arm ?_Reference@_Scheduler@details@Concurrency@@QAAIXZ(ptr) _Scheduler__Reference
+@ thiscall -arch=i386 ?_Reference@_Scheduler@details@Concurrency@@QAEIXZ(ptr) _Scheduler__Reference
+@ cdecl -arch=win64 ?_Reference@_Scheduler@details@Concurrency@@QEAAIXZ(ptr) _Scheduler__Reference
 @ cdecl -arch=arm ?_Release@_NonReentrantBlockingLock@details@Concurrency@@QAAXXZ(ptr) _ReentrantBlockingLock__Release
 @ thiscall -arch=i386 ?_Release@_NonReentrantBlockingLock@details@Concurrency@@QAEXXZ(ptr) _ReentrantBlockingLock__Release
 @ cdecl -arch=win64 ?_Release@_NonReentrantBlockingLock@details@Concurrency@@QEAAXXZ(ptr) _ReentrantBlockingLock__Release
@@ -574,9 +574,9 @@
 @ stub -arch=arm ?_Release@_ReentrantPPLLock@details@Concurrency@@QAAXXZ
 @ stub -arch=i386 ?_Release@_ReentrantPPLLock@details@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?_Release@_ReentrantPPLLock@details@Concurrency@@QEAAXXZ
-@ stub -arch=arm ?_Release@_Scheduler@details@Concurrency@@QAAIXZ
-@ stub -arch=i386 ?_Release@_Scheduler@details@Concurrency@@QAEIXZ
-@ stub -arch=win64 ?_Release@_Scheduler@details@Concurrency@@QEAAIXZ
+@ cdecl -arch=arm ?_Release@_Scheduler@details@Concurrency@@QAAIXZ(ptr) _Scheduler__Release
+@ thiscall -arch=i386 ?_Release@_Scheduler@details@Concurrency@@QAEIXZ(ptr) _Scheduler__Release
+@ cdecl -arch=win64 ?_Release@_Scheduler@details@Concurrency@@QEAAIXZ(ptr) _Scheduler__Release
 @ stub -arch=arm ?_ReleaseRead@_ReaderWriterLock@details@Concurrency@@QAAXXZ
 @ stub -arch=i386 ?_ReleaseRead@_ReaderWriterLock@details@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?_ReleaseRead@_ReaderWriterLock@details@Concurrency@@QEAAXXZ
