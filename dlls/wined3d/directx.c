@@ -5126,13 +5126,11 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
-        const struct wined3d_format *adapter_format,
-        const struct wined3d_format *check_format, BOOL no3d)
+static BOOL wined3d_check_surface_capability(const struct wined3d_format *format, BOOL no3d)
 {
     if (no3d)
     {
-        switch (check_format->id)
+        switch (format->id)
         {
             case WINED3DFMT_B8G8R8_UNORM:
                 TRACE("[FAILED] - Not enumerated on Windows.\n");
@@ -5162,21 +5160,7 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
         }
     }
 
-    /* All formats that are supported for textures are supported for surfaces
-     * as well. */
-    if (check_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE)
-        return TRUE;
-    /* All depth stencil formats are supported on surfaces */
-    if (CheckDepthStencilCapability(adapter, adapter_format, check_format, WINED3D_GL_RES_TYPE_TEX_2D))
-        return TRUE;
-    if (CheckDepthStencilCapability(adapter, adapter_format, check_format, WINED3D_GL_RES_TYPE_RB))
-        return TRUE;
-
-    /* If opengl can't process the format natively, the blitter may be able to convert it */
-    if (adapter->blitter->blit_supported(&adapter->gl_info, &adapter->d3d_info,
-            WINED3D_BLIT_OP_COLOR_BLIT,
-            NULL, WINED3D_POOL_DEFAULT, 0, check_format,
-            NULL, WINED3D_POOL_DEFAULT, 0, adapter_format))
+    if (format->glInternal)
     {
         TRACE("[OK]\n");
         return TRUE;
@@ -5227,7 +5211,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                 allowed_usage |= WINED3DUSAGE_QUERY_SRGBWRITE;
             if (!(usage & WINED3DUSAGE_TEXTURE))
             {
-                if (!CheckSurfaceCapability(adapter, adapter_format, format, wined3d->flags & WINED3D_NO3D))
+                if (!wined3d_check_surface_capability(format, wined3d->flags & WINED3D_NO3D))
                 {
                     TRACE("[FAILED] - Not supported for plain surfaces.\n");
                     return WINED3DERR_NOTAVAILABLE;
