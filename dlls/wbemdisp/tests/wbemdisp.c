@@ -260,6 +260,8 @@ static void test_locator(void)
     ISWbemServices *services;
     ISWbemObjectSet *object_set;
     IEnumVARIANT *enum_var;
+    ISWbemObject *object;
+    ISWbemPropertySet *prop_set;
     VARIANT var;
 
     hr = CoCreateInstance( &CLSID_SWbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_ISWbemLocator, (void **)&locator );
@@ -293,7 +295,15 @@ static void test_locator(void)
     ok( id == 21, "got %d\n", id );
     SysFreeString( props_bstr );
 
+    hr = IDispatch_QueryInterface( V_DISPATCH(&var), &IID_ISWbemObject, (void**)&object );
+    ok( hr == S_OK, "got %x\n", hr );
     VariantClear( &var );
+
+    hr = ISWbemObject_get_Properties_( object, &prop_set );
+    ok( hr == S_OK, "got %x\n", hr );
+
+    ISWbemPropertySet_Release( prop_set );
+    ISWbemObject_Release( object );
     IEnumVARIANT_Release( enum_var );
     ISWbemObjectSet_Release( object_set );
     ISWbemServices_Release( services );
