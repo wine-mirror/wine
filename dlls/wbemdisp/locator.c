@@ -319,6 +319,265 @@ static HRESULT WINAPI object_Put_(
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI object_PutAsync_(
+    ISWbemObject *iface,
+    IDispatch *objWbemSink,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_Delete_(
+    ISWbemObject *iface,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_DeleteAsync_(
+    ISWbemObject *iface,
+    IDispatch *objWbemSink,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_Instances_(
+    ISWbemObject *iface,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_InstancesAsync_(
+    ISWbemObject *iface,
+    IDispatch *objWbemSink,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_Subclasses_(
+    ISWbemObject *iface,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_SubclassesAsync_(
+    ISWbemObject *iface,
+    IDispatch *objWbemSink,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_Associators_(
+    ISWbemObject *iface,
+    BSTR strAssocClass,
+    BSTR strResultClass,
+    BSTR strResultRole,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredAssocQualifier,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_AssociatorsAsync_(
+    ISWbemObject *iface,
+    IDispatch *objWbemSink,
+    BSTR strAssocClass,
+    BSTR strResultClass,
+    BSTR strResultRole,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredAssocQualifier,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_References_(
+    ISWbemObject *iface,
+    BSTR strResultClass,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObjectSet **objWbemObjectSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_ReferencesAsync_(
+    ISWbemObject *iface,
+    IDispatch *objWbemSink,
+    BSTR strResultClass,
+    BSTR strRole,
+    VARIANT_BOOL bClassesOnly,
+    VARIANT_BOOL bSchemaOnly,
+    BSTR strRequiredQualifier,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_ExecMethod_(
+    ISWbemObject *iface,
+    BSTR strMethodName,
+    IDispatch *objWbemInParameters,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    ISWbemObject **objWbemOutParameters )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_ExecMethodAsync_(
+    ISWbemObject *iface,
+    IDispatch *objWbemSink,
+    BSTR strMethodName,
+    IDispatch *objWbemInParameters,
+    LONG iFlags,
+    IDispatch *objWbemNamedValueSet,
+    IDispatch *objWbemAsyncContext )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_Clone_(
+    ISWbemObject *iface,
+    ISWbemObject **objWbemObject )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_GetObjectText_(
+    ISWbemObject *iface,
+    LONG iFlags,
+    BSTR *strObjectText )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_SpawnDerivedClass_(
+    ISWbemObject *iface,
+    LONG iFlags,
+    ISWbemObject **objWbemObject )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_SpawnInstance_(
+    ISWbemObject *iface,
+    LONG iFlags,
+    ISWbemObject **objWbemObject )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_CompareTo_(
+    ISWbemObject *iface,
+    IDispatch *objWbemObject,
+    LONG iFlags,
+    VARIANT_BOOL *bResult )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_get_Qualifiers_(
+    ISWbemObject *iface,
+    ISWbemQualifierSet **objWbemQualifierSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_get_Properties_(
+    ISWbemObject *iface,
+    ISWbemPropertySet **objWbemPropertySet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_get_Methods_(
+    ISWbemObject *iface,
+    ISWbemMethodSet **objWbemMethodSet )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_get_Derivation_(
+    ISWbemObject *iface,
+    VARIANT *strClassNameArray )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_get_Path_(
+    ISWbemObject *iface,
+    ISWbemObjectPath **objWbemObjectPath )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_get_Security_(
+    ISWbemObject *iface,
+    ISWbemSecurity **objWbemSecurity )
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+
 static const ISWbemObjectVtbl object_vtbl =
 {
     object_QueryInterface,
@@ -328,7 +587,31 @@ static const ISWbemObjectVtbl object_vtbl =
     object_GetTypeInfo,
     object_GetIDsOfNames,
     object_Invoke,
-    object_Put_
+    object_Put_,
+    object_PutAsync_,
+    object_Delete_,
+    object_DeleteAsync_,
+    object_Instances_,
+    object_InstancesAsync_,
+    object_Subclasses_,
+    object_SubclassesAsync_,
+    object_Associators_,
+    object_AssociatorsAsync_,
+    object_References_,
+    object_ReferencesAsync_,
+    object_ExecMethod_,
+    object_ExecMethodAsync_,
+    object_Clone_,
+    object_GetObjectText_,
+    object_SpawnDerivedClass_,
+    object_SpawnInstance_,
+    object_CompareTo_,
+    object_get_Qualifiers_,
+    object_get_Properties_,
+    object_get_Methods_,
+    object_get_Derivation_,
+    object_get_Path_,
+    object_get_Security_
 };
 
 static HRESULT SWbemObject_create( IWbemClassObject *wbem_object, ISWbemObject **obj )
