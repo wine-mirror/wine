@@ -5203,6 +5203,7 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
 
     analysis->flags = 0;
     analysis->bitmap = NULL;
+    analysis->max_glyph_bitmap_size = 0;
     analysis->ppdip = desc->ppdip;
     analysis->origin.x = desc->origin_x * desc->ppdip;
     analysis->origin.y = desc->origin_y * desc->ppdip;
