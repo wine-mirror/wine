@@ -128,6 +128,9 @@ struct file_id
     BYTE ObjectId[16];
 };
 
+#define HASH_MAP_SIZE 32
+static LIST_ENTRY hash_table[HASH_MAP_SIZE];
+
 /* internal representation of loaded modules */
 typedef struct _wine_modref
 {
@@ -598,6 +601,15 @@ static int base_address_compare( const void *key, const RTL_BALANCED_NODE *entry
     if (base < (char *)mod->DllBase) return -1;
     if (base > (char *)mod->DllBase) return 1;
     return 0;
+}
+
+/* compute basename hash */
+static ULONG hash_basename( const UNICODE_STRING *basename )
+{
+    ULONG hash = 0;
+
+    RtlHashUnicodeString( basename, TRUE, HASH_STRING_ALGORITHM_DEFAULT, &hash );
+    return hash % HASH_MAP_SIZE;
 }
 
 /*************************************************************************
@@ -1596,6 +1608,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
                    &wm->ldr.InLoadOrderLinks);
     InsertTailList(&NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList,
                    &wm->ldr.InMemoryOrderLinks);
+    InsertTailList(&hash_table[hash_basename( &wm->ldr.BaseDllName )], &wm->ldr.HashLinks);
     if (rtl_rb_tree_put( &base_address_index_tree, wm->ldr.DllBase, &wm->ldr.BaseAddressIndexNode, base_address_compare ))
         ERR( "rtl_rb_tree_put failed.\n" );
     /* wait until init is called for inserting into InInitializationOrderModuleList */
@@ -2296,6 +2309,7 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
             /* the module has only be inserted in the load & memory order lists */
             RemoveEntryList(&wm->ldr.InLoadOrderLinks);
             RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
+            RemoveEntryList(&wm->ldr.HashLinks);
             RtlRbRemoveNode( &base_address_index_tree, &wm->ldr.BaseAddressIndexNode );
 
             /* FIXME: there are several more dangling references
@@ -3966,6 +3980,7 @@ static void free_modref( WINE_MODREF *wm )
 
     RemoveEntryList(&wm->ldr.InLoadOrderLinks);
     RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
+    RemoveEntryList(&wm->ldr.HashLinks);
     RtlRbRemoveNode( &base_address_index_tree, &wm->ldr.BaseAddressIndexNode );
     if (wm->ldr.InInitializationOrderLinks.Flink)
         RemoveEntryList(&wm->ldr.InInitializationOrderLinks);
@@ -4387,6 +4402,7 @@ void loader_init( CONTEXT *context, void **entry )
         ANSI_STRING ctrl_routine = RTL_CONSTANT_STRING( "CtrlRoutine" );
         WINE_MODREF *kernel32;
         PEB *peb = NtCurrentTeb()->Peb;
+        unsigned int i;
 
         peb->LdrData            = &ldr;
         peb->FastPebLock        = &peb_lock;
@@ -4404,6 +4420,9 @@ void loader_init( CONTEXT *context, void **entry )
 
         if (!(tls_dirs = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, tls_module_count * sizeof(*tls_dirs) )))
             NtTerminateProcess( GetCurrentProcess(), STATUS_NO_MEMORY );
+
+        for (i = 0; i < HASH_MAP_SIZE; i++)
+            InitializeListHead( &hash_table[i] );
 
         init_user_process_params();
         load_global_options();
