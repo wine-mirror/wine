@@ -163,6 +163,10 @@ typedef struct {
     Scheduler *scheduler;
 } _Scheduler;
 
+typedef struct {
+    char empty;
+} _CurrentScheduler;
+
 static int context_tls_index = TLS_OUT_OF_INDEXES;
 
 static CRITICAL_SECTION default_scheduler_cs;
@@ -1046,6 +1050,35 @@ unsigned int __thiscall _Scheduler__Release(_Scheduler *this)
 {
     TRACE("(%p)\n", this);
     return call_Scheduler_Release(this->scheduler);
+}
+
+/* ?_Get@_CurrentScheduler@details@Concurrency@@SA?AV_Scheduler@23@XZ */
+_Scheduler* __cdecl _CurrentScheduler__Get(_Scheduler *ret)
+{
+    TRACE("()\n");
+    return _Scheduler_ctor_sched(ret, get_current_scheduler());
+}
+
+/* ?_GetNumberOfVirtualProcessors@_CurrentScheduler@details@Concurrency@@SAIXZ */
+unsigned int __cdecl _CurrentScheduler__GetNumberOfVirtualProcessors(void)
+{
+    TRACE("()\n");
+    return CurrentScheduler_GetNumberOfVirtualProcessors();
+}
+
+/* ?_Id@_CurrentScheduler@details@Concurrency@@SAIXZ */
+unsigned int __cdecl _CurrentScheduler__Id(void)
+{
+    TRACE("()\n");
+    return CurrentScheduler_Id();
+}
+
+/* ?_ScheduleTask@_CurrentScheduler@details@Concurrency@@SAXP6AXPAX@Z0@Z */
+/* ?_ScheduleTask@_CurrentScheduler@details@Concurrency@@SAXP6AXPEAX@Z0@Z */
+void __cdecl _CurrentScheduler__ScheduleTask(void (__cdecl *proc)(void*), void *data)
+{
+    TRACE("(%p %p)\n", proc, data);
+    CurrentScheduler_ScheduleTask(proc, data);
 }
 
 extern const vtable_ptr MSVCRT_type_info_vtable;
