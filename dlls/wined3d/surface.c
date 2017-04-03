@@ -2712,10 +2712,19 @@ static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info,
         const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
-    if (blit_op == WINED3D_BLIT_OP_COLOR_FILL || blit_op == WINED3D_BLIT_OP_DEPTH_FILL)
-        return TRUE;
+    switch (blit_op)
+    {
+        case WINED3D_BLIT_OP_COLOR_BLIT:
+        case WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST:
+        case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
+        case WINED3D_BLIT_OP_COLOR_FILL:
+        case WINED3D_BLIT_OP_DEPTH_FILL:
+        case WINED3D_BLIT_OP_DEPTH_BLIT:
+            return TRUE;
 
-    return FALSE;
+        default:
+            return FALSE;
+    }
 }
 
 static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
@@ -3378,8 +3387,30 @@ static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_bl
         const RECT *src_rect, struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
-    /* FIXME: Remove error returns from surface_blt_cpu. */
-    ERR("Blit method not implemented by cpu_blit.\n");
+    struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
+    struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
+    unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
+    unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
+    struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_texture *src_texture = src_surface->container;
+    struct wined3d_blt_fx fx;
+    DWORD flags = 0;
+
+    memset(&fx, 0, sizeof(fx));
+    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
+    {
+        flags |= WINED3D_BLT_ALPHA_TEST;
+    }
+    else if (op == WINED3D_BLIT_OP_COLOR_BLIT_CKEY)
+    {
+        flags |= WINED3D_BLT_SRC_CKEY_OVERRIDE | WINED3D_BLT_FX;
+        fx.src_color_key = *color_key;
+    }
+
+    if (FAILED(surface_cpu_blt(dst_texture, dst_sub_resource_idx, &dst_box,
+            src_texture, src_sub_resource_idx, &src_box, flags, &fx, filter)))
+        ERR("Failed to blit.\n");
+    wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, dst_location);
 }
 
 const struct wined3d_blitter_ops cpu_blit =
