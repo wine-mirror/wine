@@ -2580,8 +2580,7 @@ static void test_string_pointers(void)
     read_node(reader, XmlNodeType_Element);
     next_attribute(reader);
     read_value_char(reader, 'm');
-    IXmlReader_GetValue(reader, &p, NULL);
-    ok(!strcmp_wa(p, "yns"), "value = %s\n", wine_dbgstr_w(p));
+    p = reader_value(reader, "yns");
 
     read_node(reader, XmlNodeType_Element);
     ns = reader_namespace(reader, "myns");
