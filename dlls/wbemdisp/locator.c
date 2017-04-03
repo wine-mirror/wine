@@ -209,10 +209,13 @@ static HRESULT WINAPI property_Invoke( ISWbemProperty *iface, DISPID member, REF
     return hr;
 }
 
-static HRESULT WINAPI property_get_Value( ISWbemProperty *iface, VARIANT *varValue )
+static HRESULT WINAPI property_get_Value( ISWbemProperty *iface, VARIANT *value )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct property *property = impl_from_ISWbemProperty( iface );
+
+    TRACE( "%p %p\n", property, value );
+
+    return IWbemClassObject_Get( property->object, property->name, 0, value, NULL, NULL );
 }
 
 static HRESULT WINAPI property_put_Value( ISWbemProperty *iface, VARIANT *varValue )

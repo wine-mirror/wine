@@ -313,6 +313,11 @@ static void test_locator(void)
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( procid_bstr );
 
+    hr = ISWbemProperty_get_Value( prop, &var );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( V_VT(&var) == VT_BSTR, "got %x\n", V_VT(&var) );
+    VariantClear( &var );
+
     ISWbemProperty_Release( prop );
     ISWbemPropertySet_Release( prop_set );
     ISWbemObject_Release( object );
