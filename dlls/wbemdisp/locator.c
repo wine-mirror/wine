@@ -300,9 +300,23 @@ static HRESULT WINAPI object_Invoke(
 {
     struct object *object = impl_from_ISWbemObject( iface );
     BSTR name;
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
     TRACE( "%p, %x, %s, %u, %x, %p, %p, %p, %p\n", object, member, debugstr_guid(riid),
            lcid, flags, params, result, excep_info, arg_err );
+
+    if (member <= DISPID_BASE)
+    {
+        hr = get_typeinfo( ISWbemObject_tid, &typeinfo );
+        if (SUCCEEDED(hr))
+        {
+            hr = ITypeInfo_Invoke( typeinfo, &object->ISWbemObject_iface, member, flags,
+                                   params, result, excep_info, arg_err );
+            ITypeInfo_Release( typeinfo );
+        }
+        return hr;
+    }
 
     if (flags != (DISPATCH_METHOD|DISPATCH_PROPERTYGET))
     {
