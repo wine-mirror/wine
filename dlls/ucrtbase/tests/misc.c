@@ -90,6 +90,8 @@ static int (CDECL *p__isctype)(int,int);
 static int (CDECL *p_isblank)(int);
 static int (CDECL *p__isblank_l)(int,_locale_t);
 static int (CDECL *p__iswctype_l)(int,int,_locale_t);
+static int (CDECL *p_iswblank)(int);
+static int (CDECL *p__iswblank_l)(wint_t,_locale_t);
 
 static void test__initialize_onexit_table(void)
 {
@@ -388,6 +390,8 @@ static BOOL init(void)
     p_isblank = (void*)GetProcAddress(module, "isblank");
     p__isblank_l = (void*)GetProcAddress(module, "_isblank_l");
     p__iswctype_l = (void*)GetProcAddress(module, "_iswctype_l");
+    p_iswblank = (void*)GetProcAddress(module, "iswblank");
+    p__iswblank_l = (void*)GetProcAddress(module, "_iswblank_l");
 
     return TRUE;
 }
@@ -493,9 +497,13 @@ static void test_isblank(void)
                 todo_wine ok(!p__iswctype_l(c, _BLANK, NULL), "tab shouldn't be blank\n");
             else
                 ok(p__iswctype_l(c, _BLANK, NULL), "%d should be blank\n", c);
+            ok(p_iswblank(c), "%d should be blank\n", c);
+            ok(p__iswblank_l(c, NULL), "%d should be blank\n", c);
         } else {
             todo_wine_if(c == 0xa0) {
                 ok(!p__iswctype_l(c, _BLANK, NULL), "%d shouldn't be blank\n", c);
+                ok(!p_iswblank(c), "%d shouldn't be blank\n", c);
+                ok(!p__iswblank_l(c, NULL), "%d shouldn't be blank\n", c);
             }
         }
     }

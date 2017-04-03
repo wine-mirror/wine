@@ -1234,7 +1234,7 @@
 @ cdecl _isupper_l(long ptr) msvcr120._isupper_l
 @ stub _iswalnum_l
 @ cdecl _iswalpha_l(long ptr) msvcr120._iswalpha_l
-@ stub _iswblank_l
+@ cdecl _iswblank_l(long ptr) msvcr120._iswblank_l
 @ stub _iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
@@ -1891,7 +1891,7 @@
 @ cdecl iswalnum(long) msvcr120.iswalnum
 @ cdecl iswalpha(long) msvcr120.iswalpha
 @ cdecl iswascii(long) msvcr120.iswascii
-@ stub iswblank
+@ cdecl iswblank(long) msvcr120.iswblank
 @ cdecl iswcntrl(long) msvcr120.iswcntrl
 @ cdecl iswctype(long long) msvcr120.iswctype
 @ cdecl iswdigit(long) msvcr120.iswdigit

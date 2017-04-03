@@ -508,7 +508,7 @@
 @ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
 @ stub _iswalnum_l
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
-@ stub _iswblank_l
+@ cdecl _iswblank_l(long ptr) MSVCRT__iswblank_l
 @ stub _iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
@@ -2362,7 +2362,7 @@
 @ cdecl iswalnum(long) MSVCRT_iswalnum
 @ cdecl iswalpha(long) ntdll.iswalpha
 @ cdecl iswascii(long) MSVCRT_iswascii
-@ stub iswblank
+@ cdecl iswblank(long) MSVCRT_iswblank
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
 @ cdecl iswctype(long long) ntdll.iswctype
 @ cdecl iswdigit(long) MSVCRT_iswdigit

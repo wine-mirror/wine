@@ -21,7 +21,7 @@
 @ cdecl _isupper_l(long ptr) ucrtbase._isupper_l
 @ stub _iswalnum_l
 @ cdecl _iswalpha_l(long ptr) ucrtbase._iswalpha_l
-@ stub _iswblank_l
+@ cdecl _iswblank_l(long ptr) ucrtbase._iswblank_l
 @ stub _iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
@@ -113,7 +113,7 @@
 @ cdecl iswalnum(long) ucrtbase.iswalnum
 @ cdecl iswalpha(long) ucrtbase.iswalpha
 @ cdecl iswascii(long) ucrtbase.iswascii
-@ stub iswblank
+@ cdecl iswblank(long) ucrtbase.iswblank
 @ cdecl iswcntrl(long) ucrtbase.iswcntrl
 @ cdecl iswctype(long long) ucrtbase.iswctype
 @ cdecl iswdigit(long) ucrtbase.iswdigit
