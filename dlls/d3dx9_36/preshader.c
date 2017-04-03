@@ -599,7 +599,7 @@ static void dump_ins(struct d3dx_regstore *rs, const struct d3dx_pres_ins *ins)
 {
     unsigned int i;
 
-    TRACE("    %s ", pres_op_info[ins->op].mnem);
+    TRACE("%s ", pres_op_info[ins->op].mnem);
     dump_arg(rs, &ins->output, pres_op_info[ins->op].func_all_comps ? 1 : ins->component_count);
     for (i = 0; i < pres_op_info[ins->op].input_count; ++i)
     {
@@ -611,11 +611,24 @@ static void dump_ins(struct d3dx_regstore *rs, const struct d3dx_pres_ins *ins)
 
 static void dump_preshader(struct d3dx_preshader *pres)
 {
-    unsigned int i;
+    unsigned int i, immediate_count = pres->regs.table_sizes[PRES_REGTAB_IMMED];
+    const double *immediates = pres->regs.tables[PRES_REGTAB_IMMED];
 
+    if (immediate_count)
+        TRACE("// Immediates:\n");
+    for (i = 0; i < immediate_count; ++i)
+    {
+        if (!(i % 4))
+            TRACE("// ");
+        TRACE("%.8e", immediates[i]);
+        if (i % 4 == 3)
+            TRACE("\n");
+        else
+            TRACE(", ");
+    }
     TRACE("// Preshader registers:\n");
     dump_registers(&pres->inputs);
-    TRACE("    preshader\n");
+    TRACE("preshader\n");
     for (i = 0; i < pres->ins_count; ++i)
         dump_ins(&pres->regs, &pres->ins[i]);
 }
