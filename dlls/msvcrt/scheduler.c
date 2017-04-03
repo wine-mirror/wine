@@ -471,7 +471,7 @@ unsigned int __thiscall SchedulerPolicy_SetPolicyValue(SchedulerPolicy *this,
         throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "MinConcurrency");
     if (policy == MaxConcurrency)
         throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "MaxConcurrency");
-    if (policy < SchedulerKind || policy >= last_policy_id)
+    if (policy >= last_policy_id)
         throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "Invalid policy");
 
     switch(policy) {
@@ -531,7 +531,7 @@ unsigned int __thiscall SchedulerPolicy_GetPolicyValue(
 {
     TRACE("(%p %d)\n", this, policy);
 
-    if (policy < SchedulerKind || policy >= last_policy_id)
+    if (policy >= last_policy_id)
         throw_exception(EXCEPTION_INVALID_SCHEDULER_POLICY_KEY, 0, "Invalid policy");
     return this->policy_container->policies[policy];
 }
