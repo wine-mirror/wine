@@ -748,6 +748,7 @@ static char *get_lineA(FILE *fp)
             next = line;
             continue;
         }
+        while (*line == ' ' || *line == '\t') line++;
         if (*line == ';' || *line == '#')
         {
             line = next;
@@ -859,6 +860,7 @@ static WCHAR *get_lineW(FILE *fp)
             next = line;
             continue;
         }
+        while (*line == ' ' || *line == '\t') line++;
         if (*line == ';' || *line == '#')
         {
             line = next;
