@@ -49,9 +49,16 @@ static int scheduler_id = -1;
 DEFINE_VTBL_WRAPPER(0);
 DEFINE_VTBL_WRAPPER(4);
 DEFINE_VTBL_WRAPPER(8);
+DEFINE_VTBL_WRAPPER(12);
 DEFINE_VTBL_WRAPPER(16);
 DEFINE_VTBL_WRAPPER(20);
+DEFINE_VTBL_WRAPPER(24);
 DEFINE_VTBL_WRAPPER(28);
+DEFINE_VTBL_WRAPPER(32);
+DEFINE_VTBL_WRAPPER(36);
+DEFINE_VTBL_WRAPPER(40);
+DEFINE_VTBL_WRAPPER(44);
+DEFINE_VTBL_WRAPPER(48);
 
 #endif
 
@@ -117,9 +124,27 @@ typedef struct Scheduler {
 } Scheduler;
 #define call_Scheduler_Id(this) CALL_VTBL_FUNC(this, 4, unsigned int, (const Scheduler*), (this))
 #define call_Scheduler_GetNumberOfVirtualProcessors(this) CALL_VTBL_FUNC(this, 8, unsigned int, (const Scheduler*), (this))
+#define call_Scheduler_GetPolicy(this,policy) CALL_VTBL_FUNC(this, 12, \
+        SchedulerPolicy*, (Scheduler*,SchedulerPolicy*), (this,policy))
 #define call_Scheduler_Reference(this) CALL_VTBL_FUNC(this, 16, unsigned int, (Scheduler*), (this))
 #define call_Scheduler_Release(this) CALL_VTBL_FUNC(this, 20, unsigned int, (Scheduler*), (this))
+#define call_Scheduler_RegisterShutdownEvent(this,event) CALL_VTBL_FUNC(this, 24, void, (Scheduler*,HANDLE), (this,event))
 #define call_Scheduler_Attach(this) CALL_VTBL_FUNC(this, 28, void, (Scheduler*), (this))
+#if _MSVCR_VER > 100
+#define call_Scheduler_CreateScheduleGroup_loc(this,placement) CALL_VTBL_FUNC(this, 32, \
+        /*ScheduleGroup*/void*, (Scheduler*,/*location*/void*), (this,placement))
+#define call_Scheduler_CreateScheduleGroup(this) CALL_VTBL_FUNC(this, 36, /*ScheduleGroup*/void*, (Scheduler*), (this))
+#define call_Scheduler_ScheduleTask_loc(this,proc,data,placement) CALL_VTBL_FUNC(this, 40, \
+        void, (Scheduler*,void (__cdecl*)(void*),void*,/*location*/void*), (this,proc,data,placement))
+#define call_Scheduler_ScheduleTask(this,proc,data) CALL_VTBL_FUNC(this, 44, \
+        void, (Scheduler*,void (__cdecl*)(void*),void*), (this,proc,data))
+#define call_Scheduler_IsAvailableLocation(this,placement) CALL_VTBL_FUNC(this, 48, \
+        MSVCRT_bool, (Scheduler*,const /*location*/void*), (this,placement))
+#else
+#define call_Scheduler_CreateScheduleGroup(this) CALL_VTBL_FUNC(this, 32, /*ScheduleGroup*/void*, (Scheduler*), (this))
+#define call_Scheduler_ScheduleTask(this,proc,data) CALL_VTBL_FUNC(this, 36, \
+        void, (Scheduler*,void (__cdecl*)(void*),void*), (this,proc,data))
+#endif
 
 typedef struct {
     Scheduler scheduler;
@@ -882,27 +907,31 @@ Scheduler* __cdecl CurrentScheduler_Get(void)
     return get_current_scheduler();
 }
 
+#if _MSVCR_VER > 100
 /* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z */
 /* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@AEAVlocation@2@@Z */
 /*ScheduleGroup*/void* __cdecl CurrentScheduler_CreateScheduleGroup_loc(/*location*/void *placement)
 {
-    FIXME("(%p) stub\n", placement);
-    return NULL;
+    TRACE("(%p)\n", placement);
+    return call_Scheduler_CreateScheduleGroup_loc(get_current_scheduler(), placement);
 }
+#endif
 
 /* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@XZ */
 /* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPEAVScheduleGroup@2@XZ */
 /*ScheduleGroup*/void* __cdecl CurrentScheduler_CreateScheduleGroup(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    TRACE("()\n");
+    return call_Scheduler_CreateScheduleGroup(get_current_scheduler());
 }
 
 /* ?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ */
 unsigned int __cdecl CurrentScheduler_GetNumberOfVirtualProcessors(void)
 {
     Scheduler *scheduler = try_get_current_scheduler();
+
     TRACE("()\n");
+
     if(!scheduler)
         return -1;
     return call_Scheduler_GetNumberOfVirtualProcessors(scheduler);
@@ -911,50 +940,62 @@ unsigned int __cdecl CurrentScheduler_GetNumberOfVirtualProcessors(void)
 /* ?GetPolicy@CurrentScheduler@Concurrency@@SA?AVSchedulerPolicy@2@XZ */
 SchedulerPolicy* __cdecl CurrentScheduler_GetPolicy(SchedulerPolicy *policy)
 {
-    FIXME("(%p) stub\n", policy);
-    return NULL;
+    TRACE("(%p)\n", policy);
+    return call_Scheduler_GetPolicy(get_current_scheduler(), policy);
 }
 
 /* ?Id@CurrentScheduler@Concurrency@@SAIXZ */
 unsigned int __cdecl CurrentScheduler_Id(void)
 {
-    Context *context = try_get_current_context();
+    Scheduler *scheduler = try_get_current_scheduler();
 
     TRACE("()\n");
 
-    if(!context)
+    if(!scheduler)
         return -1;
-    return call_Scheduler_Id(CurrentScheduler_Get());
+    return call_Scheduler_Id(scheduler);
 }
 
+#if _MSVCR_VER > 100
 /* ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z */
 /* ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NAEBVlocation@2@@Z */
 MSVCRT_bool __cdecl CurrentScheduler_IsAvailableLocation(const /*location*/void *placement)
 {
-    FIXME("(%p) stub\n", placement);
-    return 0;
+    Scheduler *scheduler = try_get_current_scheduler();
+
+    TRACE("(%p)\n", placement);
+
+    if(!scheduler)
+        return FALSE;
+    return call_Scheduler_IsAvailableLocation(scheduler, placement);
 }
+#endif
 
 /* ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPAX@Z */
 /* ?RegisterShutdownEvent@CurrentScheduler@Concurrency@@SAXPEAX@Z */
 void __cdecl CurrentScheduler_RegisterShutdownEvent(HANDLE event)
 {
-    FIXME("(%p) stub\n", event);
+    TRACE("(%p)\n", event);
+    call_Scheduler_RegisterShutdownEvent(get_current_scheduler(), event);
 }
 
+#if _MSVCR_VER > 100
 /* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0AAVlocation@2@@Z */
 /* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0AEAVlocation@2@@Z */
 void __cdecl CurrentScheduler_ScheduleTask_loc(void (__cdecl *proc)(void*),
         void *data, /*location*/void *placement)
 {
-    FIXME("(%p %p %p) stub\n", proc, data, placement);
+    TRACE("(%p %p %p)\n", proc, data, placement);
+    call_Scheduler_ScheduleTask_loc(get_current_scheduler(), proc, data, placement);
 }
+#endif
 
 /* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPAX@Z0@Z */
 /* ?ScheduleTask@CurrentScheduler@Concurrency@@SAXP6AXPEAX@Z0@Z */
 void __cdecl CurrentScheduler_ScheduleTask(void (__cdecl *proc)(void*), void *data)
 {
-    FIXME("(%p %p) stub\n", proc, data);
+    TRACE("(%p %p)\n", proc, data);
+    call_Scheduler_ScheduleTask(get_current_scheduler(), proc, data);
 }
 
 extern const vtable_ptr MSVCRT_type_info_vtable;
