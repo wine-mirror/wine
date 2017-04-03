@@ -28,6 +28,8 @@
 DEFINE_GUID(CLSID_WINMGMTS,0x172bddf8,0xceea,0x11d1,0x8b,0x05,0x00,0x60,0x08,0x06,0xd9,0xb6);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+static const LCID english = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+
 static void test_ParseDisplayName(void)
 {
     static const WCHAR biosW[] = {'W','i','n','3','2','_','B','i','o','s',0};
@@ -58,7 +60,6 @@ static void test_ParseDisplayName(void)
         { name3, S_OK, &IID_ISWbemObject, sizeof(name3)/sizeof(name3[0]) - 1 },
         { name4, S_OK, &IID_ISWbemObject, sizeof(name4)/sizeof(name4[0]) - 1 }
     };
-    LCID english = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
     IParseDisplayName *displayname;
     IBindCtx *ctx;
     IMoniker *moniker;
@@ -243,15 +244,60 @@ static void test_ParseDisplayName(void)
     IParseDisplayName_Release( displayname );
 }
 
+static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+static const WCHAR root[] = {'r','o','o','t','\\','C','I','M','V','2',0};
+static const WCHAR query[] = {'S','e','l','e','c','t',' ','P','r','o','c','e','s','s','o','r','I','d',' ','f','r','o','m',
+                              ' ','W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR lang[] = {'W','Q','L',0};
+static const WCHAR props[] = {'P','r','o','p','e','r','t','i','e','s','_',0};
+
 static void test_locator(void)
 {
-    IUnknown *locator;
     HRESULT hr;
+    DISPID id;
+    BSTR host_bstr, root_bstr, query_bstr, lang_bstr, props_bstr;
+    ISWbemLocator *locator;
+    ISWbemServices *services;
+    ISWbemObjectSet *object_set;
+    IEnumVARIANT *enum_var;
+    VARIANT var;
 
-    hr = CoCreateInstance( &CLSID_SWbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&locator );
+    hr = CoCreateInstance( &CLSID_SWbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_ISWbemLocator, (void **)&locator );
     ok( hr == S_OK, "got %x\n", hr );
 
-    IUnknown_Release( locator );
+    host_bstr = SysAllocString(localhost);
+    root_bstr = SysAllocString(root);
+    hr = ISWbemLocator_ConnectServer( locator, host_bstr, root_bstr, NULL, NULL, NULL, NULL, 0, NULL, &services);
+    ok( hr == S_OK, "got %x\n", hr );
+    SysFreeString( root_bstr );
+    SysFreeString( host_bstr );
+
+    query_bstr = SysAllocString(query);
+    lang_bstr = SysAllocString(lang);
+    hr = ISWbemServices_ExecQuery( services, query_bstr, lang_bstr, wbemFlagForwardOnly, NULL, &object_set);
+    ok( hr == S_OK, "got %x\n", hr );
+    SysFreeString( lang_bstr );
+    SysFreeString( query_bstr );
+
+    hr = ISWbemObjectSet_get__NewEnum( object_set, (IUnknown**)&enum_var );
+    ok( hr == S_OK, "got %x\n", hr );
+
+    VariantInit( &var );
+    hr = IEnumVARIANT_Next( enum_var, 1, &var, NULL );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( V_VT(&var) == VT_DISPATCH, "got %x\n", V_VT(&var));
+
+    props_bstr = SysAllocString( props );
+    hr = IDispatch_GetIDsOfNames( V_DISPATCH(&var), &IID_NULL, &props_bstr, 1, english, &id );
+    ok( hr == S_OK, "got %x\n", hr );
+    ok( id == 21, "got %d\n", id );
+    SysFreeString( props_bstr );
+
+    VariantClear( &var );
+    IEnumVARIANT_Release( enum_var );
+    ISWbemObjectSet_Release( object_set );
+    ISWbemServices_Release( services );
+    ISWbemLocator_Release( locator );
 }
 
 START_TEST(wbemdisp)

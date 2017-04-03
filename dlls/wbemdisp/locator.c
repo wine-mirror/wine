@@ -188,8 +188,6 @@ static HRESULT WINAPI object_GetTypeInfo(
     return E_NOTIMPL;
 }
 
-#define DISPID_BASE 0x1800000
-
 static HRESULT init_members( struct object *object )
 {
     LONG bound, i;
@@ -254,6 +252,7 @@ static HRESULT WINAPI object_GetIDsOfNames(
     struct object *object = impl_from_ISWbemObject( iface );
     HRESULT hr;
     UINT i;
+    ITypeInfo *typeinfo;
 
     TRACE( "%p, %s, %p, %u, %u, %p\n", object, debugstr_guid(riid), names, count, lcid, dispid );
 
@@ -261,6 +260,14 @@ static HRESULT WINAPI object_GetIDsOfNames(
 
     hr = init_members( object );
     if (FAILED( hr )) return hr;
+
+    hr = get_typeinfo( ISWbemObject_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, names, count, dispid );
+        ITypeInfo_Release( typeinfo );
+    }
+    if (SUCCEEDED(hr)) return hr;
 
     for (i = 0; i < count; i++)
     {
