@@ -7868,18 +7868,10 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
         context->gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 }
 
-static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, const struct wined3d_color *color)
+static void arbfp_blit_clear(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+        const RECT *rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
-    FIXME("Color filling not implemented by arbfp_blit\n");
-    return WINED3DERR_INVALIDCALL;
-}
-
-static HRESULT arbfp_blit_depth_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, DWORD clear_flags, float depth, DWORD stencil)
-{
-    FIXME("Depth/stencil filling not implemented by arbfp_blit.\n");
-    return WINED3DERR_INVALIDCALL;
+    ERR("This blitter does not implement clears.\n");
 }
 
 const struct wined3d_blitter_ops arbfp_blit =
@@ -7887,7 +7879,6 @@ const struct wined3d_blitter_ops arbfp_blit =
     arbfp_blit_alloc,
     arbfp_blit_free,
     arbfp_blit_supported,
-    arbfp_blit_color_fill,
-    arbfp_blit_depth_fill,
+    arbfp_blit_clear,
     arbfp_blit_surface,
 };

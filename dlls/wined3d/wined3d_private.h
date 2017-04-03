@@ -1875,10 +1875,8 @@ struct wined3d_blitter_ops
             const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
             const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
             const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format);
-    HRESULT (*color_fill)(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-            const RECT *rect, const struct wined3d_color *color);
-    HRESULT (*depth_fill)(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-            const RECT *rect, DWORD clear_flags, float depth, DWORD stencil);
+    void (*blitter_clear)(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+            const RECT *rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil);
     void (*blit_surface)(struct wined3d_device *device, enum wined3d_blit_op op, struct wined3d_context *context,
             struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
             struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,

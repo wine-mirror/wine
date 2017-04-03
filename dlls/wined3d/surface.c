@@ -2450,18 +2450,10 @@ static void fbo_blitter_free(struct wined3d_device *device)
 {
 }
 
-static HRESULT fbo_blitter_colour_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, const struct wined3d_color *colour)
+static void fbo_blitter_clear(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+        const RECT *rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
-    ERR("This blitter does not implement colour fills.\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT fbo_blitter_depth_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, DWORD clear_flags, float depth, DWORD stencil)
-{
-    ERR("This blitter does not implement depth/stencil fills.\n");
-    return E_NOTIMPL;
+    ERR("This blitter does not implement clears.\n");
 }
 
 static void fbo_blitter_blit(struct wined3d_device *device, enum wined3d_blit_op op,
@@ -2492,8 +2484,7 @@ const struct wined3d_blitter_ops fbo_blitter_ops =
     fbo_blitter_alloc,
     fbo_blitter_free,
     fbo_blitter_supported,
-    fbo_blitter_colour_fill,
-    fbo_blitter_depth_fill,
+    fbo_blitter_clear,
     fbo_blitter_blit,
 };
 
@@ -2574,27 +2565,21 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
     }
 }
 
-static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, const struct wined3d_color *color)
+static void ffp_blit_clear(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+        const RECT *rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     const RECT draw_rect = {0, 0, view->width, view->height};
     struct wined3d_fb_state fb = {&view, NULL};
 
-    device_clear_render_targets(device, 1, &fb, 1, rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
+    if (flags != WINED3DCLEAR_TARGET)
+    {
+        struct wined3d_fb_state fb = {NULL, view};
 
-    return WINED3D_OK;
-}
+        device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, flags, NULL, depth, stencil);
+        return;
+    }
 
-static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD clear_flags,
-        float depth, DWORD stencil)
-{
-    const RECT draw_rect = {0, 0, view->width, view->height};
-    struct wined3d_fb_state fb = {NULL, view};
-
-    device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, clear_flags, NULL, depth, stencil);
-
-    return WINED3D_OK;
+    device_clear_render_targets(device, 1, &fb, 1, rect, &draw_rect, flags, colour, 0.0f, 0);
 }
 
 static void ffp_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
@@ -2708,8 +2693,7 @@ const struct wined3d_blitter_ops ffp_blit =
     ffp_blit_alloc,
     ffp_blit_free,
     ffp_blit_supported,
-    ffp_blit_color_fill,
-    ffp_blit_depth_fill,
+    ffp_blit_clear,
     ffp_blit_blit_surface,
 };
 
@@ -3296,7 +3280,7 @@ release:
     return hr;
 }
 
-static HRESULT surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
+static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         const struct wined3d_box *box, const struct wined3d_color *colour)
 {
     unsigned int x, y, w, h, bpp;
@@ -3309,7 +3293,7 @@ static HRESULT surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *vie
     if (view->format_flags & WINED3DFMT_FLAG_BLOCKS)
     {
         FIXME("Not implemented for format %s.\n", debug_d3dformat(view->format->id));
-        return E_NOTIMPL;
+        return;
     }
 
     c = wined3d_format_convert_from_float(view->format, colour);
@@ -3356,7 +3340,7 @@ static HRESULT surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *vie
         default:
             FIXME("Not implemented for bpp %u.\n", bpp);
             wined3d_resource_unmap(view->resource, view->sub_resource_idx);
-            return WINED3DERR_NOTAVAILABLE;
+            return;
     }
 
     row = map.data;
@@ -3366,32 +3350,27 @@ static HRESULT surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *vie
         memcpy(row, map.data, w * bpp);
     }
     wined3d_resource_unmap(view->resource, view->sub_resource_idx);
-
-    return WINED3D_OK;
 }
 
-static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, const struct wined3d_color *color)
+static void cpu_blit_clear(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+        const RECT *rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
+    struct wined3d_color c = {depth, 0.0f, 0.0f, 0.0f};
 
-    return surface_cpu_blt_colour_fill(view, &box, color);
-}
-
-static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view,  const RECT *rect, DWORD clear_flags,
-        float depth, DWORD stencil)
-{
-    const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
-    struct wined3d_color color = {depth, 0.0f, 0.0f, 0.0f};
-
-    if (clear_flags != WINED3DCLEAR_ZBUFFER)
+    if (flags == WINED3DCLEAR_TARGET)
     {
-        FIXME("clear_flags %#x not implemented.\n", clear_flags);
-        return WINED3DERR_INVALIDCALL;
+        surface_cpu_blt_colour_fill(view, &box, colour);
+        return;
     }
 
-    return surface_cpu_blt_colour_fill(view, &box, &color);
+    if (flags == WINED3DCLEAR_ZBUFFER)
+    {
+        surface_cpu_blt_colour_fill(view, &box, &c);
+        return;
+    }
+
+    FIXME("flags %#x not implemented.\n", flags);
 }
 
 static void cpu_blit_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op,
@@ -3408,8 +3387,7 @@ const struct wined3d_blitter_ops cpu_blit =
     cpu_blit_alloc,
     cpu_blit_free,
     cpu_blit_supported,
-    cpu_blit_color_fill,
-    cpu_blit_depth_fill,
+    cpu_blit_clear,
     cpu_blit_blit_surface,
 };
 
