@@ -1858,6 +1858,14 @@ INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
+ *		_iswctype_l (MSVCRT.@)
+ */
+INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__locale_t locale )
+{
+    return (get_char_typeW(wc) & 0xffff) & type;
+}
+
+/*********************************************************************
  *		wcscpy_s (MSVCRT.@)
  */
 INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, const  MSVCRT_wchar_t *wcSrc)

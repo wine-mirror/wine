@@ -1238,7 +1238,7 @@
 @ stub _iswcntrl_l
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
-@ stub _iswctype_l
+@ cdecl _iswctype_l(long long ptr) msvcr120._iswctype_l
 @ cdecl _iswdigit_l(long ptr) msvcr120._iswdigit_l
 @ stub _iswgraph_l
 @ stub _iswlower_l
