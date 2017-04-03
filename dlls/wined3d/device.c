@@ -4197,9 +4197,11 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
     }
 
     if (blit_op == WINED3D_BLIT_OP_COLOR_FILL)
-        return blitter->color_fill(device, view, rect, color);
+        blitter->color_fill(device, view, rect, color);
     else
-        return blitter->depth_fill(device, view, rect, flags, depth, stencil);
+        blitter->depth_fill(device, view, rect, flags, depth, stencil);
+
+    return WINED3D_OK;
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,

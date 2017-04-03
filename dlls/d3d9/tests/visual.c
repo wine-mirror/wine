@@ -1310,8 +1310,7 @@ static void color_fill_test(void)
         enum
         {
             CHECK_FILL_VALUE = 0x1,
-            TODO_FILL_RETURN = 0x2,
-            BLOCKS           = 0x4,
+            BLOCKS           = 0x2,
         } flags;
         DWORD fill_value;
     }
@@ -1337,7 +1336,7 @@ static void color_fill_test(void)
          * result on Wine.
          * {D3DFMT_YUY2,     "D3DFMT_YUY2",     BLOCKS,                              0},
          * {D3DFMT_UYVY,     "D3DFMT_UYVY",     BLOCKS,                              0}, */
-        {D3DFMT_DXT1,     "D3DFMT_DXT1",     BLOCKS | TODO_FILL_RETURN,           0},
+        {D3DFMT_DXT1,     "D3DFMT_DXT1",     BLOCKS,                              0x00000000},
         /* Vendor-specific formats like ATI2N are a non-issue here since they're not
          * supported as offscreen plain surfaces and do not support D3DUSAGE_RENDERTARGET
          * when created as texture. */
@@ -1447,18 +1446,16 @@ static void color_fill_test(void)
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
 
         hr = IDirect3DDevice9_ColorFill(device, surface, NULL, 0xdeadbeef);
-        todo_wine_if (formats[i].flags & TODO_FILL_RETURN)
-            ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
 
         hr = IDirect3DDevice9_ColorFill(device, surface, &rect, 0xdeadbeef);
-        todo_wine_if (formats[i].flags & TODO_FILL_RETURN)
-            ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
 
         if (SUCCEEDED(hr))
         {
             hr = IDirect3DDevice9_ColorFill(device, surface, &rect2, 0xdeadbeef);
             if (formats[i].flags & BLOCKS)
-                todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, fmt=%s.\n", hr, formats[i].name);
+                ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, fmt=%s.\n", hr, formats[i].name);
             else
                 ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
         }
