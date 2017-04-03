@@ -7,7 +7,7 @@
 @ stub __wcsncnt
 @ cdecl _isalnum_l(long ptr) ucrtbase._isalnum_l
 @ cdecl _isalpha_l(long ptr) ucrtbase._isalpha_l
-@ stub _isblank_l
+@ cdecl _isblank_l(long ptr) ucrtbase._isblank_l
 @ cdecl _iscntrl_l(long ptr) ucrtbase._iscntrl_l
 @ cdecl _isctype(long long) ucrtbase._isctype
 @ cdecl _isctype_l(long long ptr) ucrtbase._isctype_l
@@ -100,7 +100,7 @@
 @ cdecl is_wctype(long long) ucrtbase.is_wctype
 @ cdecl isalnum(long) ucrtbase.isalnum
 @ cdecl isalpha(long) ucrtbase.isalpha
-@ stub isblank
+@ cdecl isblank(long) ucrtbase.isblank
 @ cdecl iscntrl(long) ucrtbase.iscntrl
 @ cdecl isdigit(long) ucrtbase.isdigit
 @ cdecl isgraph(long) ucrtbase.isgraph

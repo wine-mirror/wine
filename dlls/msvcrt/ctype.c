@@ -293,6 +293,22 @@ int CDECL MSVCRT_isxdigit(int c)
 }
 
 /*********************************************************************
+ *		_isblank_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__isblank_l(int c, MSVCRT__locale_t locale)
+{
+  return c == '\t' || MSVCRT__isctype_l( c, MSVCRT__BLANK, locale );
+}
+
+/*********************************************************************
+ *		isblank (MSVCRT.@)
+ */
+int CDECL MSVCRT_isblank(int c)
+{
+  return c == '\t' || MSVCRT__isctype( c, MSVCRT__BLANK );
+}
+
+/*********************************************************************
  *		__isascii (MSVCRT.@)
  */
 int CDECL MSVCRT___isascii(int c)

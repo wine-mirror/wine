@@ -86,6 +86,9 @@ static char* (CDECL *p__get_narrow_winmain_command_line)(void);
 static int (CDECL *p_sopen_dispatch)(const char *, int, int, int, int *, int);
 static int (CDECL *p_sopen_s)(int *, const char *, int, int, int);
 static MSVCRT_lldiv_t (CDECL *p_lldiv)(LONGLONG,LONGLONG);
+static int (CDECL *p__isctype)(int,int);
+static int (CDECL *p_isblank)(int);
+static int (CDECL *p__isblank_l)(int,_locale_t);
 
 static void test__initialize_onexit_table(void)
 {
@@ -380,6 +383,9 @@ static BOOL init(void)
     p_sopen_dispatch = (void*)GetProcAddress(module, "_sopen_dispatch");
     p_sopen_s = (void*)GetProcAddress(module, "_sopen_s");
     p_lldiv = (void*)GetProcAddress(module, "lldiv");
+    p__isctype = (void*)GetProcAddress(module, "_isctype");
+    p_isblank = (void*)GetProcAddress(module, "isblank");
+    p__isblank_l = (void*)GetProcAddress(module, "_isblank_l");
 
     return TRUE;
 }
@@ -460,6 +466,26 @@ static void test_lldiv(void)
     ok(r.rem == 0x222, "rem = %x%08x\n", (INT32)(r.rem >> 32), (UINT32)r.rem);
 }
 
+static void test_isblank(void)
+{
+    int c;
+
+    for(c = 0; c <= 0xff; c++) {
+        if(c == '\t' || c == ' ') {
+            if(c == '\t')
+                ok(!p__isctype(c, _BLANK), "tab shouldn't be blank\n");
+            else
+                ok(p__isctype(c, _BLANK), "space should be blank\n");
+            ok(p_isblank(c), "%d should be blank\n", c);
+            ok(p__isblank_l(c, NULL), "%d should be blank\n", c);
+        } else {
+            ok(!p__isctype(c, _BLANK), "%d shouldn't be blank\n", c);
+            ok(!p_isblank(c), "%d shouldn't be blank\n", c);
+            ok(!p__isblank_l(c, NULL), "%d shouldn't be blank\n", c);
+        }
+    }
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -483,4 +509,5 @@ START_TEST(misc)
     test__sopen_dispatch();
     test__sopen_s();
     test_lldiv();
+    test_isblank();
 }

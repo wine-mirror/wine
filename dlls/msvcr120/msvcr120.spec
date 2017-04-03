@@ -1291,7 +1291,7 @@
 @ cdecl _isalnum_l(long ptr) MSVCRT__isalnum_l
 @ cdecl _isalpha_l(long ptr) MSVCRT__isalpha_l
 @ cdecl _isatty(long) MSVCRT__isatty
-@ stub _isblank_l
+@ cdecl _isblank_l(long ptr) MSVCRT__isblank_l
 @ cdecl _iscntrl_l(long ptr) MSVCRT__iscntrl_l
 @ cdecl _isctype(long long) MSVCRT__isctype
 @ cdecl _isctype_l(long long ptr) MSVCRT__isctype_l
@@ -2215,7 +2215,7 @@
 @ cdecl is_wctype(long long) ntdll.iswctype
 @ cdecl isalnum(long) MSVCRT_isalnum
 @ cdecl isalpha(long) MSVCRT_isalpha
-@ stub isblank
+@ cdecl isblank(long) MSVCRT_isblank
 @ cdecl iscntrl(long) MSVCRT_iscntrl
 @ cdecl isdigit(long) MSVCRT_isdigit
 @ cdecl isgraph(long) MSVCRT_isgraph

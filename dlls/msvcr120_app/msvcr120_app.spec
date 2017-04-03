@@ -1194,7 +1194,7 @@
 @ cdecl _isalnum_l(long ptr) msvcr120._isalnum_l
 @ cdecl _isalpha_l(long ptr) msvcr120._isalpha_l
 @ cdecl _isatty(long) msvcr120._isatty
-@ stub _isblank_l
+@ cdecl _isblank_l(long ptr) msvcr120._isblank_l
 @ cdecl _iscntrl_l(long ptr) msvcr120._iscntrl_l
 @ cdecl _isctype(long long) msvcr120._isctype
 @ cdecl _isctype_l(long long ptr) msvcr120._isctype_l
@@ -1878,7 +1878,7 @@
 @ stub imaxdiv
 @ cdecl isalnum(long) msvcr120.isalnum
 @ cdecl isalpha(long) msvcr120.isalpha
-@ stub isblank
+@ cdecl isblank(long) msvcr120.isblank
 @ cdecl iscntrl(long) msvcr120.iscntrl
 @ cdecl isdigit(long) msvcr120.isdigit
 @ cdecl isgraph(long) msvcr120.isgraph
