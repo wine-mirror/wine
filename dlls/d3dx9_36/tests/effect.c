@@ -5041,6 +5041,274 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+static void test_effect_preshader_relative_addressing(IDirect3DDevice9 *device)
+{
+    static const struct
+    {
+        D3DXVECTOR4 opvect2;
+        D3DXVECTOR4 g_ivect;
+        unsigned int expected[4];
+    }
+    test_out_of_bounds_index[] =
+    {
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {101.0f, 101.0f, 101.0f, 101.0f}, {0, 0x42ca0000, 0x3f800000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {3333.0f, 1094.0f, 2222.0f, 3333.0f},
+                {0x447ac000, 0x45505000, 0x3f800000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {3333.0f, 1094.0f, 2222.0f, 1.0f},
+                {0x447ac000, 0x3f800000, 0x447a8000, 0x453b9000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {1.0f, 1094.0f, 2222.0f, 3333.0f},
+                {0x447ac000, 0x45505000, 0x3f800000, 0x453ba000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {1111.0f, 1094.0f, 2222.0f, 1111.0f},
+                {0x447ac000, 0x448ae000, 0, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {1111.0f, 1094.0f, 2222.0f, 3333.0f},
+                {0x447ac000, 0x45505000, 0x3f800000, 0}},
+        {{-1111.0f, 1094.0f, -2222.0f, -3333.0f}, {4.0f, 3.0f, 2.0f, 1.0f},
+                {0x447ac000, 0x40800000, 0x447a8000, 0x453b9000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-1.0f, -1.0f, -1.0f, -1.0f}, {0, 0xbf800000, 0, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-2.0f, -2.0f, -2.0f, -2.0f}, {0, 0xc0000000, 0x459c4800, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-3.0f, -3.0f, -3.0f, -3.0f}, {0, 0xc0400000, 0x453b9000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-4.0f, -4.0f, -4.0f, -4.0f}, {0, 0xc0800000, 0x44fa2000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-5.0f, -5.0f, -5.0f, -5.0f}, {0, 0xc0a00000, 0x459c5000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-6.0f, -6.0f, -6.0f, -6.0f}, {0, 0xc0c00000, 0x453ba000, 0xc1400000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-7.0f, -7.0f, -7.0f, -7.0f}, {0, 0xc0e00000, 0x44fa4000, 0x40400000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-8.0f, -8.0f, -8.0f, -8.0f}, {0, 0xc1000000, 0, 0x44fa6000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-9.0f, -9.0f, -9.0f, -9.0f}, {0, 0xc1100000, 0, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-10.0f, -10.0f, -10.0f, -10.0f}, {0, 0xc1200000, 0xc1200000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-11.0f, -11.0f, -11.0f, -11.0f}, {0, 0xc1300000, 0x3f800000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-12.0f, -12.0f, -12.0f, -12.0f}, {0, 0xc1400000, 0x447a4000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {5.0f, 5.0f, 5.0f, 5.0f}, {0, 0x40a00000, 0x3f800000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-1111.0f, 1094.0f, -2222.0f, -3333.0f},
+                {0x447ac000, 0xc5505000, 0x459c5000, 0x40000000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-3333.0f, 1094.0f, -2222.0f, -1111.0f},
+                {0x447ac000, 0xc48ae000, 0x44fa4000, 0x3f800000}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-3333.0f, 1094.0f, -2222.0f, -3333.0f},
+                {0x447ac000, 0xc5505000, 0x459c5000, 0}},
+        {{1.0f, 2.0f, 3.0f, 4.0f}, {-1111.0f, 1094.0f, -2222.0f, -1111.0f},
+                {0x447ac000, 0xc48ae000, 0x44fa4000, 0x40400000}},
+    };
+    static const struct
+    {
+        unsigned int zw[2];
+    }
+    expected_light_specular[] =
+    {
+        {{0, 0x44fa2000}},
+        {{0x447a8000, 0x453b9000}},
+        {{0x40000000, 0x459c4800}},
+        {{0xbf800000, 0}},
+        {{0x447a4000, 0}},
+        {{0x3f800000, 0}},
+        {{0xbf800000, 0}},
+        {{0, 0}},
+        {{0, 0x447a4000}},
+        {{0x44fa4000, 0x3f800000}},
+        {{0x453ba000, 0xbf800000}},
+        {{0x459c5000, 0}},
+        {{0x44fa2000, 0}},
+        {{0x453b9000, 0}},
+        {{0x459c4800, 0}},
+        {{0, 0}},
+    };
+    static const struct
+    {
+        int index_value;
+        unsigned int expected[4];
+    }
+    test_index_to_immediate_table[] =
+    {
+        {-1000000, {0, 0x40800000, 0x45bbd800, 0x41300000}},
+        {-1001, {0x448d4000, 0x41300000, 0, 0}},
+        {-32, {0x448d4000, 0x40800000, 0, 0}},
+        {-31, {0x45843000, 0x41400000, 0, 0}},
+        {-30, {0x46a64000, 0x41400000, 0x447a4000, 0x3f800000}},
+        {-29, {0, 0x447a4000, 0x447a8000, 0x40000000}},
+        {-28, {0, 0, 0x447ac000, 0x40400000}},
+        {-27, {0, 0x3f800000, 0, 0}},
+        {-26, {0, 0x41100000, 0x45bbd800, 0x41300000}},
+        {-25, {0, 0x41300000, 0, 0}},
+        {-24, {0, 0x41600000, 0, 0}},
+        {-23, {0, 0, 0, 0}},
+        {-22, {0, 0, 0, 0}},
+        {-21, {0, 0x40a00000, 0, 0}},
+        {-20, {0, 0x41500000, 0, 0}},
+        {-19, {0, 0x41500000, 0, 0}},
+        {-18, {0, 0xc1900000, 0, 0}},
+        {-17, {0, 0, 0, 0}},
+        {-16, {0, 0x40800000, 0, 0}},
+        {-15, {0, 0x41400000, 0, 0}},
+        {-14, {0, 0x41400000, 0, 0}},
+        {-13, {0, 0x447a4000, 0x447a4000, 0x3f800000}},
+        {-12, {0, 0, 0, 0}},
+        {-11, {0, 0x3f800000, 0, 0}},
+        {-10, {0, 0x41100000, 0, 0}},
+        {-9, {0, 0x41300000, 0, 0}},
+        {-8, {0, 0x41600000, 0, 0}},
+        {-7, {0, 0, 0, 0}},
+        {-6, {0, 0, 0, 0}},
+        {-5, {0, 0x40a00000, 0, 0}},
+        {-4, {0, 0x41500000, 0, 0}},
+        {-3, {0, 0x41500000, 0, 0}},
+        {-2, {0, 0xc0000000, 0, 0}},
+        {-1, {0, 0, 0, 0}},
+        {0, {0x45052000, 0x40800000, 0x447a4000, 0x3f800000}},
+        {1, {0x467e6000, 0x41400000, 0x447a8000, 0x40000000}},
+        {2, {0, 0x41400000, 0x447ac000, 0x40400000}},
+        {3, {0, 0x447a4000, 0, 0}},
+        {4, {0, 0, 0x45bbd800, 0x41300000}},
+        {5, {0, 0x3f800000, 0, 0}},
+        {6, {0, 0x41100000, 0, 0}},
+        {7, {0, 0x41300000, 0, 0}},
+        {8, {0, 0x41600000, 0, 0}},
+        {9, {0, 0, 0, 0}},
+        {10, {0, 0, 0, 0}},
+        {11, {0, 0x40a00000, 0, 0}},
+        {12, {0, 0x41500000, 0, 0}},
+        {13, {0, 0x41500000, 0, 0}},
+        {14, {0, 0x41600000, 0, 0}},
+        {15, {0, 0, 0, 0}},
+        {16, {0, 0x40800000, 0, 0}},
+        {17, {0x45052000, 0x41400000, 0x447a4000, 0x3f800000}},
+        {18, {0x467e6000, 0x41400000, 0x447a8000, 0x40000000}},
+        {19, {0, 0x447a4000, 0x447ac000, 0x40400000}},
+        {20, {0, 0, 0, 0}},
+        {21, {0, 0x3f800000, 0x45bbd800, 0x41300000}},
+        {22, {0, 0x41100000, 0, 0}},
+        {23, {0, 0x41300000, 0, 0}},
+        {24, {0, 0x41600000, 0, 0}},
+        {25, {0, 0, 0, 0}},
+        {26, {0, 0, 0, 0}},
+        {27, {0, 0x40a00000, 0, 0}},
+        {28, {0, 0x41500000, 0, 0}},
+        {29, {0, 0x41500000, 0, 0}},
+        {30, {0, 0x41f00000, 0, 0}},
+        {31, {0, 0, 0, 0}},
+        {1001, {0, 0, 0, 0}},
+        {1000000, {0, 0x40800000, 0, 0}},
+    };
+    static const D3DLIGHT9 light_filler = {D3DLIGHT_POINT, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f},
+            {1.0f, 1.0f, 1.0f, 1.0f}};
+    unsigned int j, passes_count;
+    const unsigned int *expected;
+    const float *expected_float;
+    ID3DXEffect *effect;
+    D3DXVECTOR4 fvect;
+    D3DLIGHT9 light;
+    const float *v;
+    HRESULT hr;
+    int i;
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = 1001.0f; fvect.y = 1002.0f; fvect.z = 1003.0f; fvect.w = 1004.0f;
+    hr = effect->lpVtbl->SetVector(effect, "opvect1", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = 2001.0f; fvect.y = 2002.0f; fvect.z = 2003.0f; fvect.w = 2004.0f;
+    hr = effect->lpVtbl->SetVector(effect, "g_Selector[0]", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = 3001.0f; fvect.y = 3002.0f; fvect.z = 3003.0f; fvect.w = 3004.0f;
+    hr = effect->lpVtbl->SetVector(effect, "g_Selector[1]", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    v = &light.Specular.r;
+    for (i = 0; i < ARRAY_SIZE(test_out_of_bounds_index); ++i)
+    {
+        hr = effect->lpVtbl->SetVector(effect, "opvect2", &test_out_of_bounds_index[i].opvect2);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        hr = effect->lpVtbl->SetVector(effect, "g_iVect", &test_out_of_bounds_index[i].g_ivect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetLight(device, 1, &light_filler);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        hr = effect->lpVtbl->CommitChanges(effect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        hr = IDirect3DDevice9_GetLight(device, 1, &light);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        expected = test_out_of_bounds_index[i].expected;
+        expected_float = (const float *)expected;
+
+        for (j = 0; j < 4; ++j)
+        {
+            ok(compare_float(v[j], expected_float[j], 0),
+                    "Test %d, component %u, expected %#x (%g), got %#x (%g).\n",
+                    i, j, expected[j], expected_float[j], ((const unsigned int *)v)[j], v[j]);
+        }
+    }
+
+    hr = effect->lpVtbl->SetVector(effect, "opvect2", &test_out_of_bounds_index[7].opvect2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetVector(effect, "g_iVect", &test_out_of_bounds_index[7].g_ivect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetLight(device, 1, &light_filler);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect = test_out_of_bounds_index[7].g_ivect;
+    v = &light.Specular.b;
+    for (i = -100; i < 100; ++i)
+    {
+        fvect.w = i;
+        hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        hr = effect->lpVtbl->CommitChanges(effect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        hr = IDirect3DDevice9_GetLight(device, 1, &light);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        expected = expected_light_specular[(unsigned int)i % ARRAY_SIZE(expected_light_specular)].zw;
+        expected_float = (const float *)expected;
+
+        for (j = 0; j < 2; ++j)
+        {
+            ok(compare_float(v[j], expected_float[j], 0),
+                    "i %d, component %u, expected %#x (%g), got %#x (%g).\n",
+                    i, j + 2, expected[j], expected_float[j], ((const unsigned int *)v)[j], v[j]);
+        }
+    }
+
+    v = &light.Specular.r;
+    for (i = 0; i < ARRAY_SIZE(test_index_to_immediate_table); ++i)
+    {
+        fvect.x = fvect.y = fvect.z = fvect.w = test_index_to_immediate_table[i].index_value;
+        hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        hr = effect->lpVtbl->CommitChanges(effect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        hr = IDirect3DDevice9_GetLight(device, 2, &light);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        expected = test_index_to_immediate_table[i].expected;
+        expected_float = (const float *)expected;
+
+        for (j = 0; j < 4; ++j)
+        {
+            ok(compare_float(v[j], expected_float[j], 0),
+                    "Test %d, component %u, expected %#x (%g), got %#x (%g).\n",
+                    i, j, expected[j], expected_float[j], ((const unsigned int *)v)[j], v[j]);
+        }
+    }
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -5086,6 +5354,7 @@ START_TEST(effect)
     test_effect_isparameterused(device);
     test_effect_out_of_bounds_selector(device);
     test_effect_commitchanges(device);
+    test_effect_preshader_relative_addressing(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
