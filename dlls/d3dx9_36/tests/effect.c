@@ -3971,7 +3971,7 @@ test_effect_preshader_op_expected[] =
     {"prec",   {FALSE, FALSE,  TRUE, FALSE}, {0x2b8cbccc, 0x2c0cbccc, 0xac531800, 0x00000000}},
 
     {"dotswiz", {FALSE, FALSE, FALSE, FALSE}, {0xc00ccccd, 0xc0d33334, 0xc10ccccd, 0}},
-    {"reladdr", { TRUE,  TRUE,  TRUE,  TRUE}, {0xc00ccccd, 0x40000000, 0x41a00000, 0x41500000}},
+    {"reladdr", {FALSE, FALSE, FALSE, FALSE}, {0xc00ccccd, 0x40000000, 0x41a00000, 0x41500000}},
 };
 
 enum expected_state_update
@@ -4207,7 +4207,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
@@ -4375,7 +4375,7 @@ static void test_preshader_op(IDirect3DDevice9 *device, const DWORD *sample_effe
     }
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetLight(device, blob_position[test->args_count].result_index, &light);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4674,7 +4674,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(check_op_parameters); ++i)
     {
@@ -4692,7 +4692,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
         hr = effect->lpVtbl->SetValue(effect, param, &fvect, sizeof(fvect));
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
         test_effect_preshader_op_results(device, check_op_parameters[i].state_updated,
                 check_op_parameters[i].param_name);
@@ -4710,7 +4710,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
         hr = effect->lpVtbl->SetValue(effect, param, buffer, sizeof(buffer));
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
         test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[i].const_updated_mask,
                 check_vconsts_parameters[i].param_name);
@@ -4723,7 +4723,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetVectorArray(effect, param, &fvect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[0].const_updated_mask,
                 check_vconsts_parameters[0].param_name);
 
@@ -4735,7 +4735,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetFloat(effect, param, 92.0f);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -4748,7 +4748,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, &fvect.x, sizeof(fvect.x));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[10].const_updated_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -4759,7 +4759,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetFloatArray(effect, param, &fvect.x, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[10].const_updated_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -4771,7 +4771,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetInt(effect, param, 93);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -4782,7 +4782,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetVector(effect, param, &fvect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[1].const_updated_mask,
                 check_vconsts_parameters[1].param_name);
 
@@ -4797,7 +4797,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, &fvect.x, sizeof(float));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[7].const_updated_mask,
                 check_vconsts_parameters[7].param_name);
 
@@ -4822,7 +4822,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, &fvect, sizeof(float) * 3);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &value);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(value == 0, "Unexpected fog density %g.\n", *(float *)&value);
@@ -4861,7 +4861,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, &fvect.x, sizeof(float));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &value);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(*(float *)&value == 9999.0f, "Unexpected fog density %g.\n", *(float *)&value);
@@ -4897,7 +4897,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_clear_vconsts(device);
 
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4918,7 +4918,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
@@ -4928,7 +4928,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(!!vshader, "Got NULL vshader.\n");
@@ -4945,7 +4945,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    todo_wine ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_preshader_compare_vconsts(device, NULL, NULL);
 
     hr = effect->lpVtbl->EndPass(effect);
