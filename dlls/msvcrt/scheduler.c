@@ -116,6 +116,7 @@ typedef struct Scheduler {
     const vtable_ptr *vtable;
 } Scheduler;
 #define call_Scheduler_Id(this) CALL_VTBL_FUNC(this, 4, unsigned int, (const Scheduler*), (this))
+#define call_Scheduler_GetNumberOfVirtualProcessors(this) CALL_VTBL_FUNC(this, 8, unsigned int, (const Scheduler*), (this))
 #define call_Scheduler_Reference(this) CALL_VTBL_FUNC(this, 16, unsigned int, (Scheduler*), (this))
 #define call_Scheduler_Release(this) CALL_VTBL_FUNC(this, 20, unsigned int, (Scheduler*), (this))
 #define call_Scheduler_Attach(this) CALL_VTBL_FUNC(this, 28, void, (Scheduler*), (this))
@@ -181,6 +182,20 @@ static Context* get_current_context(void)
     return ret;
 }
 
+static Scheduler* try_get_current_scheduler(void)
+{
+    ExternalContextBase *context = (ExternalContextBase*)try_get_current_context();
+
+    if (!context)
+        return NULL;
+
+    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+        ERR("unknown context set\n");
+        return NULL;
+    }
+    return context->scheduler.scheduler;
+}
+
 /* ?CurrentContext@Context@Concurrency@@SAPAV12@XZ */
 /* ?CurrentContext@Context@Concurrency@@SAPEAV12@XZ */
 Context* __cdecl Context_CurrentContext(void)
@@ -240,7 +255,7 @@ unsigned int __cdecl Context_ScheduleGroupId(void)
 unsigned int __cdecl Context_VirtualProcessorId(void)
 {
     Context *ctx = try_get_current_context();
-    FIXME("()\n");
+    TRACE("()\n");
     return ctx ? call_Context_GetVirtualProcessorId(ctx) : -1;
 }
 
@@ -889,8 +904,11 @@ Scheduler* __cdecl CurrentScheduler_Get(void)
 /* ?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ */
 unsigned int __cdecl CurrentScheduler_GetNumberOfVirtualProcessors(void)
 {
-    FIXME("() stub\n");
-    return 0;
+    Scheduler *scheduler = try_get_current_scheduler();
+    TRACE("()\n");
+    if(!scheduler)
+        return -1;
+    return call_Scheduler_GetNumberOfVirtualProcessors(scheduler);
 }
 
 /* ?GetPolicy@CurrentScheduler@Concurrency@@SA?AVSchedulerPolicy@2@XZ */
