@@ -68,11 +68,11 @@
 #undef _EOF_
 #define _EOF_ 0
 #ifdef STRING_LEN
-#ifdef WIDE_CHAR
+#ifdef WIDE_SCANF
 #define _GETC_(file) (consumed==length ? '\0' : (consumed++, *file++))
-#else /* WIDE_CHAR */
+#else /* WIDE_SCANF */
 #define _GETC_(file) (consumed==length ? '\0' : (consumed++, (unsigned char)*file++))
-#endif /* WIDE_CHAR */
+#endif /* WIDE_SCANF */
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #define _LOCK_FILE_(file) do {} while(0)
 #define _UNLOCK_FILE_(file) do {} while(0)
@@ -90,11 +90,11 @@
 #endif /* SECURE */
 #endif /* WIDE_SCANF */
 #else /* STRING_LEN */
-#ifdef WIDE_CHAR
+#ifdef WIDE_SCANF
 #define _GETC_(file) (consumed++, *file++)
-#else /* WIDE_CHAR */
+#else /* WIDE_SCANF */
 #define _GETC_(file) (consumed++, (unsigned char)*file++)
-#endif /* WIDE_CHAR */
+#endif /* WIDE_SCANF */
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #define _LOCK_FILE_(file) do {} while(0)
 #define _UNLOCK_FILE_(file) do {} while(0)
@@ -685,7 +685,7 @@ _FUNCTION_ {
 		 * use %%." */
                 while ((nch!=_EOF_) && _ISSPACE_(nch))
                     nch = _GETC_(file);
-                if (nch==*format) {
+                if ((_CHAR_)nch == *format) {
                     suppress = 1; /* whoops no field to be read */
                     st = 1; /* but we got what we expected */
                     nch = _GETC_(file);
@@ -699,7 +699,7 @@ _FUNCTION_ {
 	 * a matching non-white-space character. */
         else {
             /* check for character match */
-            if (nch == (unsigned char)*format) {
+            if ((_CHAR_)nch == *format) {
 		nch = _GETC_(file);
             } else break;
         }
