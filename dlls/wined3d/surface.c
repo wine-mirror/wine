@@ -3405,6 +3405,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
+    DWORD dst_location;
 
     static const DWORD simple_blit = WINED3D_BLT_ASYNC
             | WINED3D_BLT_SRC_CKEY
@@ -3511,17 +3512,19 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 src_rect, src_texture->resource.usage, src_texture->resource.pool, src_texture->resource.format,
                 dst_rect, dst_texture->resource.usage, dst_texture->resource.pool, dst_texture->resource.format)))
         {
+            if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+                dst_location = dst_texture->resource.map_binding;
+            else
+                dst_location = dst_texture->resource.draw_binding;
+
             context = context_acquire(device, dst_texture, dst_sub_resource_idx);
             blitter->blit_surface(device, WINED3D_BLIT_OP_DEPTH_BLIT, context,
                     src_surface, src_texture->resource.draw_binding, src_rect,
-                    dst_surface, dst_texture->resource.draw_binding, dst_rect,
-                    NULL, filter);
+                    dst_surface, dst_location, dst_rect, NULL, filter);
             context_release(context);
 
-            wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx,
-                    dst_texture->resource.draw_binding);
-            wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx,
-                    ~dst_texture->resource.draw_binding);
+            wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_location);
+            wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_location);
 
             return WINED3D_OK;
         }
@@ -3620,17 +3623,19 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         {
             struct wined3d_context *context;
 
+            if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+                dst_location = dst_texture->resource.map_binding;
+            else
+                dst_location = dst_texture->resource.draw_binding;
+
             context = context_acquire(device, dst_texture, dst_sub_resource_idx);
             blitter->blit_surface(device, blit_op, context,
                     src_surface, src_texture->resource.draw_binding, src_rect,
-                    dst_surface, dst_texture->resource.draw_binding, dst_rect,
-                    colour_key, filter);
+                    dst_surface, dst_location, dst_rect, colour_key, filter);
             context_release(context);
 
-            wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx,
-                    dst_texture->resource.draw_binding);
-            wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx,
-                    ~dst_texture->resource.draw_binding);
+            wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_location);
+            wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_location);
 
             return WINED3D_OK;
         }
