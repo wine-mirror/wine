@@ -23,6 +23,7 @@
 #include "initguid.h"
 #include "objidl.h"
 #include "wbemdisp.h"
+#include "wbemcli.h"
 #include "wine/test.h"
 
 DEFINE_GUID(CLSID_WINMGMTS,0x172bddf8,0xceea,0x11d1,0x8b,0x05,0x00,0x60,0x08,0x06,0xd9,0xb6);
@@ -250,18 +251,20 @@ static const WCHAR query[] = {'S','e','l','e','c','t',' ','P','r','o','c','e','s
                               ' ','W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR lang[] = {'W','Q','L',0};
 static const WCHAR props[] = {'P','r','o','p','e','r','t','i','e','s','_',0};
+static const WCHAR procid[] = {'P','r','o','c','e','s','s','o','r','I','d',0};
 
 static void test_locator(void)
 {
     HRESULT hr;
     DISPID id;
-    BSTR host_bstr, root_bstr, query_bstr, lang_bstr, props_bstr;
+    BSTR host_bstr, root_bstr, query_bstr, lang_bstr, props_bstr, procid_bstr;
     ISWbemLocator *locator;
     ISWbemServices *services;
     ISWbemObjectSet *object_set;
     IEnumVARIANT *enum_var;
     ISWbemObject *object;
     ISWbemPropertySet *prop_set;
+    ISWbemProperty *prop;
     VARIANT var;
 
     hr = CoCreateInstance( &CLSID_SWbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_ISWbemLocator, (void **)&locator );
@@ -293,7 +296,6 @@ static void test_locator(void)
     hr = IDispatch_GetIDsOfNames( V_DISPATCH(&var), &IID_NULL, &props_bstr, 1, english, &id );
     ok( hr == S_OK, "got %x\n", hr );
     ok( id == 21, "got %d\n", id );
-    SysFreeString( props_bstr );
 
     hr = IDispatch_QueryInterface( V_DISPATCH(&var), &IID_ISWbemObject, (void**)&object );
     ok( hr == S_OK, "got %x\n", hr );
@@ -302,6 +304,16 @@ static void test_locator(void)
     hr = ISWbemObject_get_Properties_( object, &prop_set );
     ok( hr == S_OK, "got %x\n", hr );
 
+    hr = ISWbemPropertySet_Item( prop_set, props_bstr, 0, &prop );
+    ok( hr == WBEM_E_NOT_FOUND, "got %x\n", hr );
+    SysFreeString( props_bstr );
+
+    procid_bstr = SysAllocString( procid );
+    hr = ISWbemPropertySet_Item( prop_set, procid_bstr, 0, &prop );
+    ok( hr == S_OK, "got %x\n", hr );
+    SysFreeString( procid_bstr );
+
+    ISWbemProperty_Release( prop );
     ISWbemPropertySet_Release( prop_set );
     ISWbemObject_Release( object );
     IEnumVARIANT_Release( enum_var );
