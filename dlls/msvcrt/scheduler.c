@@ -196,6 +196,17 @@ static Scheduler* try_get_current_scheduler(void)
     return context->scheduler.scheduler;
 }
 
+static Scheduler* get_current_scheduler(void)
+{
+    ExternalContextBase *context = (ExternalContextBase*)get_current_context();
+
+    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+        ERR("unknown context set\n");
+        return NULL;
+    }
+    return context->scheduler.scheduler;
+}
+
 /* ?CurrentContext@Context@Concurrency@@SAPAV12@XZ */
 /* ?CurrentContext@Context@Concurrency@@SAPEAV12@XZ */
 Context* __cdecl Context_CurrentContext(void)
@@ -867,22 +878,8 @@ static void create_default_scheduler(void)
 /* ?Get@CurrentScheduler@Concurrency@@SAPEAVScheduler@2@XZ */
 Scheduler* __cdecl CurrentScheduler_Get(void)
 {
-    ExternalContextBase *context = (ExternalContextBase*)get_current_context();
-
     TRACE("()\n");
-
-    if(context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
-        ERR("unknown context set\n");
-        return NULL;
-    }
-
-    if(context->scheduler.scheduler)
-        return context->scheduler.scheduler;
-
-    create_default_scheduler();
-    context->scheduler.scheduler = &default_scheduler->scheduler;
-    call_Scheduler_Reference(&default_scheduler->scheduler);
-    return &default_scheduler->scheduler;
+    return get_current_scheduler();
 }
 
 /* ?CreateScheduleGroup@CurrentScheduler@Concurrency@@SAPAVScheduleGroup@2@AAVlocation@2@@Z */
