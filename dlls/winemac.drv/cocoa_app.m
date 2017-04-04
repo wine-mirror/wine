@@ -1973,6 +1973,17 @@ static NSString* WineLocalizedString(unsigned int stringID)
             [self handleScrollWheel:anEvent];
             ret = mouseCaptureWindow != nil;
         }
+        else if (type == NSKeyDown)
+        {
+            // -[NSApplication sendEvent:] seems to consume presses of the Help
+            // key (Insert key on PC keyboards), so we have to bypass it and
+            // send the event directly to the window.
+            if (anEvent.keyCode == kVK_Help)
+            {
+                [anEvent.window sendEvent:anEvent];
+                ret = TRUE;
+            }
+        }
         else if (type == NSKeyUp)
         {
             uint16_t keyCode = [anEvent keyCode];
