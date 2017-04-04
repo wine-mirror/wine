@@ -16520,6 +16520,9 @@ static void test_stream_output(void)
     stride[1] = 1;
     check_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
             stride, 2, D3D11_SO_NO_RASTERIZED_STREAM);
+    stride[0] = 0;
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
+            stride, 1, D3D11_SO_NO_RASTERIZED_STREAM);
 
     /* Rasterizer stream */
     for (i = 0; i < D3D11_SO_STREAM_COUNT; ++i)
@@ -16773,6 +16776,9 @@ static void test_fl10_stream_output_desc(void)
             &stride[1], 1, 0);
     check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
             stride, 2, 0);
+    stride[0] = 0;
+    check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
+            stride, 1, 0);
 
     /* Rasterizer stream */
     check_invalid_so_desc(device, gs_code, sizeof(gs_code), so_declaration, ARRAY_SIZE(so_declaration),
