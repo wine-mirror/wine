@@ -4148,7 +4148,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
         const struct wined3d_color *color, float depth, DWORD stencil)
 {
     struct wined3d_resource *resource;
-    RECT r;
+    RECT draw_rect, r;
 
     TRACE("device %p, view %p, rect %s, flags %#x, color %s, depth %.8e, stencil %u.\n",
             device, view, wine_dbgstr_rect(rect), flags, debug_color(color), depth, stencil);
@@ -4185,15 +4185,18 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
             return hr;
     }
 
+    SetRect(&draw_rect, 0, 0, view->width, view->height);
     if (flags == WINED3DCLEAR_TARGET)
     {
         struct wined3d_fb_state fb = {&view, NULL};
-        device->blitter->ops->blitter_clear(device->blitter, device, 1, &fb, rect, flags, color, depth, stencil);
+        device->blitter->ops->blitter_clear(device->blitter, device, 1, &fb,
+                rect, &draw_rect, flags, color, depth, stencil);
     }
     else
     {
         struct wined3d_fb_state fb = {NULL, view};
-        device->blitter->ops->blitter_clear(device->blitter, device, 0, &fb, rect, flags, color, depth, stencil);
+        device->blitter->ops->blitter_clear(device->blitter, device, 0, &fb,
+                rect, &draw_rect, flags, color, depth, stencil);
     }
 
     return WINED3D_OK;

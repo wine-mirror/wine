@@ -2449,13 +2449,14 @@ static void fbo_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 }
 
 static void fbo_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *rect,
-        DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *clear_rect,
+        const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_blitter *next;
 
     if ((next = blitter->next))
-        next->ops->blitter_clear(next, device, rt_count, fb, rect, flags, colour, depth, stencil);
+        next->ops->blitter_clear(next, device, rt_count, fb,
+                clear_rect, draw_rect, flags, colour, depth, stencil);
 }
 
 static void fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
@@ -2585,11 +2586,10 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
 }
 
 static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *rect,
-        DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *clear_rect,
+        const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
-    struct wined3d_rendertarget_view *view = rt_count ? fb->render_targets[0] : fb->depth_stencil;
-    const RECT draw_rect = {0, 0, view->width, view->height};
+    struct wined3d_rendertarget_view *view;
     struct wined3d_resource *resource;
     struct wined3d_blitter *next;
     unsigned int i;
@@ -2627,12 +2627,14 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
             goto next;
     }
 
-    device_clear_render_targets(device, rt_count, fb, 1, rect, &draw_rect, flags, colour, depth, stencil);
+    device_clear_render_targets(device, rt_count, fb, 1,
+            clear_rect, draw_rect, flags, colour, depth, stencil);
     return;
 
 next:
     if ((next = blitter->next))
-        next->ops->blitter_clear(next, device, rt_count, fb, rect, flags, colour, depth, stencil);
+        next->ops->blitter_clear(next, device, rt_count, fb,
+                clear_rect, draw_rect, flags, colour, depth, stencil);
 }
 
 static void ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
@@ -3423,13 +3425,23 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
 }
 
 static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *rect,
-        DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *clear_rect,
+        const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
-    const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
     struct wined3d_color c = {depth, 0.0f, 0.0f, 0.0f};
     struct wined3d_rendertarget_view *view;
+    struct wined3d_box box;
     unsigned int i;
+
+    box.left = max(clear_rect->left, draw_rect->left);
+    box.top = max(clear_rect->top, draw_rect->top);
+    box.right = min(clear_rect->right, draw_rect->right);
+    box.bottom = min(clear_rect->bottom, draw_rect->bottom);
+    box.front = 0;
+    box.back = 1;
+
+    if (box.left >= box.right || box.top >= box.bottom)
+        return;
 
     if (flags & WINED3DCLEAR_TARGET)
     {
