@@ -2449,14 +2449,14 @@ static void fbo_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 }
 
 static void fbo_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *clear_rect,
+        unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_blitter *next;
 
     if ((next = blitter->next))
-        next->ops->blitter_clear(next, device, rt_count, fb,
-                clear_rect, draw_rect, flags, colour, depth, stencil);
+        next->ops->blitter_clear(next, device, rt_count, fb, rect_count,
+                clear_rects, draw_rect, flags, colour, depth, stencil);
 }
 
 static void fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
@@ -2586,7 +2586,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
 }
 
 static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *clear_rect,
+        unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_rendertarget_view *view;
@@ -2627,14 +2627,14 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
             goto next;
     }
 
-    device_clear_render_targets(device, rt_count, fb, 1,
-            clear_rect, draw_rect, flags, colour, depth, stencil);
+    device_clear_render_targets(device, rt_count, fb, rect_count,
+            clear_rects, draw_rect, flags, colour, depth, stencil);
     return;
 
 next:
     if ((next = blitter->next))
-        next->ops->blitter_clear(next, device, rt_count, fb,
-                clear_rect, draw_rect, flags, colour, depth, stencil);
+        next->ops->blitter_clear(next, device, rt_count, fb, rect_count,
+                clear_rects, draw_rect, flags, colour, depth, stencil);
 }
 
 static void ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
@@ -3425,35 +3425,44 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
 }
 
 static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *clear_rect,
+        unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_color c = {depth, 0.0f, 0.0f, 0.0f};
     struct wined3d_rendertarget_view *view;
     struct wined3d_box box;
-    unsigned int i;
+    unsigned int i, j;
 
-    box.left = max(clear_rect->left, draw_rect->left);
-    box.top = max(clear_rect->top, draw_rect->top);
-    box.right = min(clear_rect->right, draw_rect->right);
-    box.bottom = min(clear_rect->bottom, draw_rect->bottom);
-    box.front = 0;
-    box.back = 1;
-
-    if (box.left >= box.right || box.top >= box.bottom)
-        return;
-
-    if (flags & WINED3DCLEAR_TARGET)
+    if (!rect_count)
     {
-        for (i = 0; i < rt_count; ++i)
-        {
-            if ((view = fb->render_targets[i]))
-                surface_cpu_blt_colour_fill(view, &box, colour);
-        }
+        rect_count = 1;
+        clear_rects = draw_rect;
     }
 
-    if ((flags & WINED3DCLEAR_ZBUFFER) && (view = fb->depth_stencil))
-        surface_cpu_blt_colour_fill(view, &box, &c);
+    for (i = 0; i < rect_count; ++i)
+    {
+        box.left = max(clear_rects[i].left, draw_rect->left);
+        box.top = max(clear_rects[i].top, draw_rect->top);
+        box.right = min(clear_rects[i].right, draw_rect->right);
+        box.bottom = min(clear_rects[i].bottom, draw_rect->bottom);
+        box.front = 0;
+        box.back = 1;
+
+        if (box.left >= box.right || box.top >= box.bottom)
+            continue;
+
+        if (flags & WINED3DCLEAR_TARGET)
+        {
+            for (j = 0; j < rt_count; ++j)
+            {
+                if ((view = fb->render_targets[j]))
+                    surface_cpu_blt_colour_fill(view, &box, colour);
+            }
+        }
+
+        if ((flags & WINED3DCLEAR_ZBUFFER) && (view = fb->depth_stencil))
+            surface_cpu_blt_colour_fill(view, &box, &c);
+    }
 
     if (flags & ~(WINED3DCLEAR_TARGET | WINED3DCLEAR_ZBUFFER))
         FIXME("flags %#x not implemented.\n", flags);

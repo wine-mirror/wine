@@ -7877,14 +7877,14 @@ static void arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
 }
 
 static void arbfp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *clear_rect,
+        unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_blitter *next;
 
     if ((next = blitter->next))
-        next->ops->blitter_clear(next, device, rt_count, fb,
-                clear_rect, draw_rect, flags, colour, depth, stencil);
+        next->ops->blitter_clear(next, device, rt_count, fb, rect_count,
+                clear_rects, draw_rect, flags, colour, depth, stencil);
 }
 
 static const struct wined3d_blitter_ops arbfp_blitter_ops =
