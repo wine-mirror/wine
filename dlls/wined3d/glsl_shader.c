@@ -4164,6 +4164,7 @@ static void shader_glsl_bitwise_op(const struct wined3d_shader_instruction *ins)
     switch (ins->handler_idx)
     {
         case WINED3DSIH_BFI:  instruction = "bitfieldInsert";  break;
+        case WINED3DSIH_IBFE: instruction = "bitfieldExtract"; break;
         case WINED3DSIH_UBFE: instruction = "bitfieldExtract"; break;
         default:
             ERR("Unhandled opcode %#x.\n", ins->handler_idx);
@@ -9963,7 +9964,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_HS_FORK_PHASE                    */ NULL,
     /* WINED3DSIH_HS_JOIN_PHASE                    */ NULL,
     /* WINED3DSIH_IADD                             */ shader_glsl_binop,
-    /* WINED3DSIH_IBFE                             */ NULL,
+    /* WINED3DSIH_IBFE                             */ shader_glsl_bitwise_op,
     /* WINED3DSIH_IEQ                              */ shader_glsl_relop,
     /* WINED3DSIH_IF                               */ shader_glsl_if,
     /* WINED3DSIH_IFC                              */ shader_glsl_ifc,
