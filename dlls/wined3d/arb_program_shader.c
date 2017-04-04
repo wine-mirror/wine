@@ -6879,8 +6879,9 @@ struct arbfp_blit_desc
 #define ARBFP_BLIT_PARAM_COLOR_KEY_LOW 1
 #define ARBFP_BLIT_PARAM_COLOR_KEY_HIGH 2
 
-struct arbfp_blit_priv
+struct wined3d_arbfp_blitter
 {
+    struct wined3d_blitter blitter;
     struct wine_rb_tree shaders;
     GLuint palette_texture;
 };
@@ -6894,44 +6895,39 @@ static int arbfp_blit_type_compare(const void *key, const struct wine_rb_entry *
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_free_blit_shader(struct wine_rb_entry *entry, void *context)
+static void arbfp_free_blit_shader(struct wine_rb_entry *entry, void *ctx)
 {
-    const struct wined3d_gl_info *gl_info = context;
     struct arbfp_blit_desc *entry_arb = WINE_RB_ENTRY_VALUE(entry, struct arbfp_blit_desc, entry);
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+
+    context = ctx;
+    gl_info = context->gl_info;
 
     GL_EXTCALL(glDeleteProgramsARB(1, &entry_arb->shader));
     checkGLcall("glDeleteProgramsARB(1, &entry_arb->shader)");
     HeapFree(GetProcessHeap(), 0, entry_arb);
 }
 
-static HRESULT arbfp_blit_alloc(struct wined3d_device *device)
-{
-    struct arbfp_blit_priv *priv;
-
-    if (!(priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv))))
-        return E_OUTOFMEMORY;
-
-    wine_rb_init(&priv->shaders, arbfp_blit_type_compare);
-
-    device->blit_priv = priv;
-
-    return WINED3D_OK;
-}
-
 /* Context activation is done by the caller. */
-static void arbfp_blit_free(struct wined3d_device *device)
+static void arbfp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct arbfp_blit_priv *priv = device->blit_priv;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_arbfp_blitter *arbfp_blitter;
+    struct wined3d_blitter *next;
 
-    wine_rb_destroy(&priv->shaders, arbfp_free_blit_shader, &device->adapter->gl_info);
+    if ((next = blitter->next))
+        next->ops->blitter_destroy(next, context);
+
+    arbfp_blitter = CONTAINING_RECORD(blitter, struct wined3d_arbfp_blitter, blitter);
+
+    wine_rb_destroy(&arbfp_blitter->shaders, arbfp_free_blit_shader, context);
     checkGLcall("Delete blit programs");
 
-    if (priv->palette_texture)
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &priv->palette_texture);
+    if (arbfp_blitter->palette_texture)
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &arbfp_blitter->palette_texture);
 
-    HeapFree(GetProcessHeap(), 0, device->blit_priv);
-    device->blit_priv = NULL;
+    HeapFree(GetProcessHeap(), 0, arbfp_blitter);
 }
 
 static BOOL gen_planar_yuv_read(struct wined3d_string_buffer *buffer, const struct arbfp_blit_type *type,
@@ -7358,18 +7354,17 @@ static GLuint gen_p8_shader(const struct wined3d_gl_info *gl_info, const struct 
 }
 
 /* Context activation is done by the caller. */
-static void upload_palette(const struct wined3d_texture *texture, struct wined3d_context *context)
+static void upload_palette(struct wined3d_arbfp_blitter *blitter,
+        const struct wined3d_texture *texture, struct wined3d_context *context)
 {
     const struct wined3d_palette *palette = texture->swapchain ? texture->swapchain->palette : NULL;
-    struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct arbfp_blit_priv *priv = device->blit_priv;
 
-    if (!priv->palette_texture)
-        gl_info->gl_ops.gl.p_glGenTextures(1, &priv->palette_texture);
+    if (!blitter->palette_texture)
+        gl_info->gl_ops.gl.p_glGenTextures(1, &blitter->palette_texture);
 
     GL_EXTCALL(glActiveTexture(GL_TEXTURE1));
-    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, priv->palette_texture);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, blitter->palette_texture);
 
     gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
@@ -7573,11 +7568,10 @@ static GLuint arbfp_gen_plain_shader(const struct wined3d_gl_info *gl_info, cons
 }
 
 /* Context activation is done by the caller. */
-static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface,
-        const struct wined3d_color_key *color_key)
+static HRESULT arbfp_blit_set(struct wined3d_arbfp_blitter *blitter, struct wined3d_context *context,
+        const struct wined3d_surface *surface, const struct wined3d_color_key *color_key)
 {
     const struct wined3d_texture *texture = surface->container;
-    struct arbfp_blit_priv *priv = blit_priv;
     enum complex_fixup fixup;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wine_rb_entry *entry;
@@ -7627,8 +7621,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     type.use_color_key = !!color_key;
     type.padding = 0;
 
-    entry = wine_rb_get(&priv->shaders, &type);
-    if (entry)
+    if ((entry = wine_rb_get(&blitter->shaders, &type)))
     {
         desc = WINE_RB_ENTRY_VALUE(entry, struct arbfp_blit_desc, entry);
         shader = desc->shader;
@@ -7667,7 +7660,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
 
         desc->type = type;
         desc->shader = shader;
-        if (wine_rb_put(&priv->shaders, &desc->type, &desc->entry) == -1)
+        if (wine_rb_put(&blitter->shaders, &desc->type, &desc->entry) == -1)
         {
 err_out:
             ERR("Out of memory\n");
@@ -7681,7 +7674,7 @@ err_out:
     }
 
     if (fixup == COMPLEX_FIXUP_P8)
-        upload_palette(texture, context);
+        upload_palette(blitter, texture, context);
 
     gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
     checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
@@ -7711,8 +7704,8 @@ static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
 
 static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
         const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
-        const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
-        const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
+        enum wined3d_pool src_pool, const struct wined3d_format *src_format,
+        enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
 {
     enum complex_fixup src_fixup;
     BOOL decompress;
@@ -7786,15 +7779,30 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
     }
 }
 
-static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, struct wined3d_context *context,
-        struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
+static void arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
+        struct wined3d_context *context, struct wined3d_surface *src_surface, DWORD src_location,
+        const RECT *src_rect, struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
+    struct wined3d_device *device = dst_texture->resource.device;
+    struct wined3d_arbfp_blitter *arbfp_blitter;
     struct wined3d_color_key alpha_test_key;
+    struct wined3d_blitter *next;
     RECT s, d;
+
+    if (!arbfp_blit_supported(&device->adapter->gl_info, &device->adapter->d3d_info, op,
+            src_texture->resource.pool, src_texture->resource.format,
+            dst_texture->resource.pool, dst_texture->resource.format))
+    {
+        if ((next = blitter->next))
+            next->ops->blitter_blit(next, op, context, src_surface, src_location,
+                    src_rect, dst_surface, dst_location, dst_rect, color_key, filter);
+        return;
+    }
+
+    arbfp_blitter = CONTAINING_RECORD(blitter, struct wined3d_arbfp_blitter, blitter);
 
     /* Now load the surface */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
@@ -7855,7 +7863,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
         color_key = &alpha_test_key;
     }
 
-    arbfp_blit_set(device->blit_priv, context, src_surface, color_key);
+    arbfp_blit_set(arbfp_blitter, context, src_surface, color_key);
 
     /* Draw a textured quad */
     draw_textured_quad(src_surface, context, src_rect, dst_rect, filter);
@@ -7868,17 +7876,46 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
         context->gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 }
 
-static void arbfp_blit_clear(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-        const RECT *rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+static void arbfp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
+        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
+        const struct wined3d_color *colour, float depth, DWORD stencil)
 {
-    ERR("This blitter does not implement clears.\n");
+    struct wined3d_blitter *next;
+
+    if ((next = blitter->next))
+        next->ops->blitter_clear(next, device, view, rect, flags, colour, depth, stencil);
 }
 
-const struct wined3d_blitter_ops arbfp_blit =
+static const struct wined3d_blitter_ops arbfp_blitter_ops =
 {
-    arbfp_blit_alloc,
-    arbfp_blit_free,
-    arbfp_blit_supported,
-    arbfp_blit_clear,
-    arbfp_blit_surface,
+    arbfp_blitter_destroy,
+    arbfp_blitter_clear,
+    arbfp_blitter_blit,
 };
+
+void wined3d_arbfp_blitter_create(struct wined3d_blitter **next, const struct wined3d_device *device)
+{
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_arbfp_blitter *blitter;
+
+    if (device->shader_backend != &arb_program_shader_backend
+            && device->shader_backend != &glsl_shader_backend)
+        return;
+
+    if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        return;
+
+    if (!(blitter = HeapAlloc(GetProcessHeap(), 0, sizeof(*blitter))))
+    {
+        ERR("Failed to allocate blitter.\n");
+        return;
+    }
+
+    TRACE("Created blitter %p.\n", blitter);
+
+    blitter->blitter.ops = &arbfp_blitter_ops;
+    blitter->blitter.next = *next;
+    wine_rb_init(&blitter->shaders, arbfp_blit_type_compare);
+    blitter->palette_texture = 0;
+    *next = &blitter->blitter;
+}

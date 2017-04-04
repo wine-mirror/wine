@@ -5794,37 +5794,6 @@ int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-const struct wined3d_blitter_ops *wined3d_select_blitter(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
-        const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
-        const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
-{
-    static const struct wined3d_blitter_ops * const blitters[] =
-    {
-        &fbo_blitter_ops,
-        &arbfp_blit,
-        &ffp_blit,
-        &cpu_blit,
-    };
-    unsigned int i;
-
-    TRACE("gl_info %p, d3d_info %p, blit_op %#x, src_rect %s, src_usage %s, src_pool %s, src_format %s, "
-            "dst_rect %s, dst_usage %s, dst_pool %s, dst_format %s.\n", gl_info, d3d_info, blit_op,
-            wine_dbgstr_rect(src_rect), debug_d3dusage(src_usage), debug_d3dpool(src_pool),
-            src_format ? debug_d3dformat(src_format->id) : "(null)", wine_dbgstr_rect(dst_rect),
-            debug_d3dusage(dst_usage), debug_d3dpool(dst_pool), debug_d3dformat(dst_format->id));
-
-    for (i = 0; i < sizeof(blitters) / sizeof(*blitters); ++i)
-    {
-        if (blitters[i]->blit_supported(gl_info, d3d_info, blit_op,
-                src_rect, src_usage, src_pool, src_format,
-                dst_rect, dst_usage, dst_pool, dst_format))
-            return blitters[i];
-    }
-
-    return NULL;
-}
-
 void wined3d_get_draw_rect(const struct wined3d_state *state, RECT *rect)
 {
     const struct wined3d_viewport *vp = &state->viewport;

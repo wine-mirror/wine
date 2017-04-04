@@ -306,21 +306,11 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
     struct wined3d_texture *texture = swapchain->back_buffers[0];
     struct wined3d_surface *back_buffer = texture->sub_resources[0].u.surface;
     struct wined3d_device *device = swapchain->device;
-    const struct wined3d_blitter_ops *blitter;
     enum wined3d_texture_filter_type filter;
     DWORD location;
 
     TRACE("swapchain %p, context %p, src_rect %s, dst_rect %s.\n",
             swapchain, context, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect));
-
-    if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info,
-            &device->adapter->d3d_info, WINED3D_BLIT_OP_COLOR_BLIT,
-            src_rect, texture->resource.usage, texture->resource.pool, texture->resource.format,
-            dst_rect, texture->resource.usage, texture->resource.pool, texture->resource.format)))
-    {
-        FIXME("No blitter supports the requested blit.\n");
-        return;
-    }
 
     if ((src_rect->right - src_rect->left == dst_rect->right - dst_rect->left
             && src_rect->bottom - src_rect->top == dst_rect->bottom - dst_rect->top)
@@ -334,8 +324,8 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         location = WINED3D_LOCATION_RB_RESOLVED;
 
     wined3d_texture_validate_location(texture, 0, WINED3D_LOCATION_DRAWABLE);
-    blitter->blit_surface(device, WINED3D_BLIT_OP_COLOR_BLIT, context, back_buffer, location,
-            src_rect, back_buffer, WINED3D_LOCATION_DRAWABLE, dst_rect, NULL, filter);
+    device->blitter->ops->blitter_blit(device->blitter, WINED3D_BLIT_OP_COLOR_BLIT, context, back_buffer,
+            location, src_rect, back_buffer, WINED3D_LOCATION_DRAWABLE, dst_rect, NULL, filter);
     wined3d_texture_invalidate_location(texture, 0, WINED3D_LOCATION_DRAWABLE);
 }
 

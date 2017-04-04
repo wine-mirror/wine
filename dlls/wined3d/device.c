@@ -979,7 +979,7 @@ static void wined3d_device_delete_opengl_contexts_cs(void *object)
     }
 
     context = context_acquire(device, NULL, 0);
-    device->blitter->free_private(device);
+    device->blitter->ops->blitter_destroy(device->blitter, context);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, context);
     destroy_default_samplers(device, context);
@@ -1014,12 +1014,15 @@ static void wined3d_device_create_primary_opengl_context_cs(void *object)
         return;
     }
 
-    if (FAILED(hr = device->blitter->alloc_private(device)))
+    if (!(device->blitter = wined3d_cpu_blitter_create()))
     {
-        ERR("Failed to allocate blitter private data, hr %#x.\n", hr);
+        ERR("Failed to create CPU blitter.\n");
         device->shader_backend->shader_free_private(device);
         return;
     }
+    wined3d_ffp_blitter_create(&device->blitter, &device->adapter->gl_info);
+    wined3d_arbfp_blitter_create(&device->blitter, device);
+    wined3d_fbo_blitter_create(&device->blitter, &device->adapter->gl_info);
 
     swapchain = device->swapchains[0];
     target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;
@@ -4144,9 +4147,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
         struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
         const struct wined3d_color *color, float depth, DWORD stencil)
 {
-    const struct wined3d_blitter_ops *blitter;
     struct wined3d_resource *resource;
-    enum wined3d_blit_op blit_op;
     RECT r;
 
     TRACE("device %p, view %p, rect %s, flags %#x, color %s, depth %.8e, stencil %u.\n",
@@ -4184,19 +4185,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
             return hr;
     }
 
-    if (flags & WINED3DCLEAR_TARGET)
-        blit_op = WINED3D_BLIT_OP_COLOR_FILL;
-    else
-        blit_op = WINED3D_BLIT_OP_DEPTH_FILL;
-
-    if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info,
-            blit_op, NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format)))
-    {
-        FIXME("No blitter is capable of performing the requested fill operation.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    blitter->blitter_clear(device, view, rect, flags, color, depth, stencil);
+    device->blitter->ops->blitter_clear(device->blitter, device, view, rect, flags, color, depth, stencil);
 
     return WINED3D_OK;
 }
@@ -4980,8 +4969,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         wined3d_decref(device->wined3d);
         return hr;
     }
-
-    device->blitter = adapter->blitter;
 
     state_init(&device->state, &device->fb, &adapter->gl_info,
             &adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);

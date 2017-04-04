@@ -1867,33 +1867,33 @@ enum wined3d_blit_op
     WINED3D_BLIT_OP_DEPTH_BLIT,
 };
 
+struct wined3d_blitter
+{
+    const struct wined3d_blitter_ops *ops;
+    struct wined3d_blitter *next;
+};
+
 struct wined3d_blitter_ops
 {
-    HRESULT (*alloc_private)(struct wined3d_device *device);
-    void (*free_private)(struct wined3d_device *device);
-    BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info,
-            const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
-            const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
-            const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format);
-    void (*blitter_clear)(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
-            const RECT *rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil);
-    void (*blit_surface)(struct wined3d_device *device, enum wined3d_blit_op op, struct wined3d_context *context,
+    void (*blitter_destroy)(struct wined3d_blitter *blitter, struct wined3d_context *context);
+    void (*blitter_clear)(struct wined3d_blitter *blitter, struct wined3d_device *device,
+            struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
+            const struct wined3d_color *colour, float depth, DWORD stencil);
+    void (*blitter_blit)(struct wined3d_blitter *blitter, enum wined3d_blit_op op, struct wined3d_context *context,
             struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
             struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
             const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter);
 };
 
-extern const struct wined3d_blitter_ops fbo_blitter_ops DECLSPEC_HIDDEN;
-extern const struct wined3d_blitter_ops arbfp_blit DECLSPEC_HIDDEN;
-extern const struct wined3d_blitter_ops ffp_blit DECLSPEC_HIDDEN;
-extern const struct wined3d_blitter_ops cpu_blit DECLSPEC_HIDDEN;
+void wined3d_arbfp_blitter_create(struct wined3d_blitter **next,
+        const struct wined3d_device *device) DECLSPEC_HIDDEN;
+struct wined3d_blitter *wined3d_cpu_blitter_create(void) DECLSPEC_HIDDEN;
+void wined3d_fbo_blitter_create(struct wined3d_blitter **next,
+        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+void wined3d_ffp_blitter_create(struct wined3d_blitter **next,
+        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 
 BOOL wined3d_clip_blit(const RECT *clip_rect, RECT *clipped, RECT *other) DECLSPEC_HIDDEN;
-const struct wined3d_blitter_ops *wined3d_select_blitter(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
-        const RECT *src_rect, DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
-        const RECT *dst_rect, DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
-        DECLSPEC_HIDDEN;
 
 struct wined3d_context *context_acquire(const struct wined3d_device *device,
         struct wined3d_texture *texture, unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
@@ -2361,7 +2361,6 @@ struct wined3d_adapter
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct fragment_pipeline *fragment_pipe;
     const struct wined3d_shader_backend_ops *shader_backend;
-    const struct wined3d_blitter_ops *blitter;
 };
 
 struct wined3d_caps_gl_ctx
@@ -2624,11 +2623,10 @@ struct wined3d_device
     void *shader_priv;
     void *fragment_priv;
     void *vertex_priv;
-    void *blit_priv;
     struct StateEntry StateTable[STATE_HIGHEST + 1];
     /* Array of functions for states which are handled by more than one pipeline part */
     APPLYSTATEFUNC *multistate_funcs[STATE_HIGHEST + 1];
-    const struct wined3d_blitter_ops *blitter;
+    struct wined3d_blitter *blitter;
 
     BYTE vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
     BYTE bCursorVisible : 1;

@@ -2599,16 +2599,6 @@ static const struct wined3d_shader_backend_ops *select_shader_backend(const stru
     return &none_shader_backend;
 }
 
-static const struct wined3d_blitter_ops *select_blit_implementation(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_shader_backend_ops *shader_backend_ops)
-{
-    if ((shader_backend_ops == &glsl_shader_backend
-            || shader_backend_ops == &arb_program_shader_backend)
-            && gl_info->supported[ARB_FRAGMENT_PROGRAM])
-        return &arbfp_blit;
-    return &ffp_blit;
-}
-
 static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *extensions,
         const struct wined3d_extension_map *map, UINT entry_count)
 {
@@ -4169,7 +4159,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     adapter->shader_backend = select_shader_backend(gl_info);
     adapter->vertex_pipe = select_vertex_implementation(gl_info, adapter->shader_backend);
     adapter->fragment_pipe = select_fragment_implementation(gl_info, adapter->shader_backend);
-    adapter->blitter = select_blit_implementation(gl_info, adapter->shader_backend);
 
     adapter->shader_backend->shader_get_caps(gl_info, &shader_caps);
     adapter->d3d_info.vs_clipping = shader_caps.wined3d_caps & WINED3D_SHADER_CAP_VS_CLIPPING;
@@ -6567,7 +6556,6 @@ static BOOL wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordi
     adapter->vertex_pipe = &none_vertex_pipe;
     adapter->fragment_pipe = &none_fragment_pipe;
     adapter->shader_backend = &none_shader_backend;
-    adapter->blitter = &cpu_blit;
 
     display_device.cb = sizeof(display_device);
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
