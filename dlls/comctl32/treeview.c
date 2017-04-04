@@ -4347,7 +4347,12 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     ht.pt.x = (short)LOWORD(lParam);
     ht.pt.y = (short)HIWORD(lParam);
 
-    TREEVIEW_HitTest(infoPtr, &ht);
+    if (TREEVIEW_HitTest(infoPtr, &ht))
+    {
+        infoPtr->focusedItem = ht.hItem;
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->selectedItem);
+    }
 
     if (TREEVIEW_TrackMouse(infoPtr, ht.pt))
     {
@@ -4366,6 +4371,13 @@ TREEVIEW_RButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	    SendMessageW(infoPtr->hwndNotify, WM_CONTEXTMENU,
 		(WPARAM)infoPtr->hwnd, (LPARAM)GetMessagePos());
 	}
+    }
+
+    if (ht.hItem)
+    {
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
+        infoPtr->focusedItem = infoPtr->selectedItem;
+        TREEVIEW_InvalidateItem(infoPtr, infoPtr->focusedItem);
     }
 
     return 0;
