@@ -25,6 +25,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
 #define INITIAL_CLIP_STACK_SIZE 4
 
+static const D2D1_MATRIX_3X2_F identity =
+{
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+};
+
 struct d2d_draw_text_layout_ctx
 {
     ID2D1Brush *brush;
@@ -1060,6 +1067,7 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
         float ppd, DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode)
 {
+    D2D1_MATRIX_3X2_F prev_transform, *transform;
     ID2D1RectangleGeometry *geometry = NULL;
     ID2D1BitmapBrush *opacity_brush = NULL;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
@@ -1082,8 +1090,9 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
         return;
     }
 
-    hr = IDWriteFactory_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, ppd, NULL,
-            rendering_mode, measuring_mode, baseline_origin.x, baseline_origin.y, &analysis);
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(dwrite_factory, glyph_run, ppd,
+            (DWRITE_MATRIX *)&render_target->drawing_state.transform, rendering_mode, measuring_mode,
+            baseline_origin.x, baseline_origin.y, &analysis);
     IDWriteFactory_Release(dwrite_factory);
     if (FAILED(hr))
     {
@@ -1159,8 +1168,12 @@ static void d2d_rt_draw_glyph_run_bitmap(struct d2d_d3d_render_target *render_ta
         goto done;
     }
 
+    transform = &render_target->drawing_state.transform;
+    prev_transform = *transform;
+    *transform = identity;
     d2d_rt_fill_geometry(render_target, unsafe_impl_from_ID2D1Geometry((ID2D1Geometry *)geometry),
             unsafe_impl_from_ID2D1Brush(brush), unsafe_impl_from_ID2D1Brush((ID2D1Brush *)opacity_brush));
+    *transform = prev_transform;
 
 done:
     if (geometry)
@@ -2409,12 +2422,6 @@ static HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_t
         { 1.0f, -1.0f},
     };
     static const UINT16 indices[] = {0, 1, 2, 2, 1, 3};
-    static const D2D1_MATRIX_3X2_F identity =
-    {
-        1.0f, 0.0f,
-        0.0f, 1.0f,
-        0.0f, 0.0f,
-    };
     float dpi_x, dpi_y;
 
     dpi_x = desc->dpiX;
