@@ -686,8 +686,8 @@
 @ stub -arch=win64 ?_ValidateWrite@@YAHPEAXI@Z
 @ cdecl ?_Value@_SpinCount@details@Concurrency@@SAIXZ() SpinCount__Value
 @ stub ?_Yield@_Context@details@Concurrency@@SAXXZ
-@ stub -arch=win32 ?__ExceptionPtrAssign@@YAXPAXPBX@Z
-@ stub -arch=win64 ?__ExceptionPtrAssign@@YAXPEAXPEBX@Z
+@ cdecl -arch=win32 ?__ExceptionPtrAssign@@YAXPAXPBX@Z(ptr ptr) __ExceptionPtrAssign
+@ cdecl -arch=win64 ?__ExceptionPtrAssign@@YAXPEAXPEBX@Z(ptr ptr) __ExceptionPtrAssign
 @ cdecl -arch=win32 ?__ExceptionPtrCompare@@YA_NPBX0@Z(ptr ptr) __ExceptionPtrCompare
 @ cdecl -arch=win64 ?__ExceptionPtrCompare@@YA_NPEBX0@Z(ptr ptr) __ExceptionPtrCompare
 @ cdecl -arch=win32 ?__ExceptionPtrCopy@@YAXPAXPBX@Z(ptr ptr) __ExceptionPtrCopy
