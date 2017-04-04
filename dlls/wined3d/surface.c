@@ -3503,12 +3503,15 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
     unsigned int dst_sub_resource_idx = surface_get_sub_resource_idx(dst_surface);
     unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);
+    struct wined3d_texture_sub_resource *src_sub_resource, *dst_sub_resource;
     struct wined3d_texture *dst_texture = dst_surface->container;
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
+    const struct wined3d_color_key *colour_key = NULL;
     DWORD src_ds_flags, dst_ds_flags;
     struct wined3d_context *context;
+    enum wined3d_blit_op blit_op;
     BOOL scale, convert;
     DWORD dst_location;
 
@@ -3625,109 +3628,103 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
         return WINED3D_OK;
     }
-    else
+
+    TRACE("Colour blit.\n");
+
+    dst_sub_resource = &dst_texture->sub_resources[dst_sub_resource_idx];
+    src_sub_resource = &src_texture->sub_resources[src_sub_resource_idx];
+
+    /* In principle this would apply to depth blits as well, but we don't
+     * implement those in the CPU blitter at the moment. */
+    if ((dst_sub_resource->locations & dst_texture->resource.map_binding)
+            && (src_sub_resource->locations & src_texture->resource.map_binding))
     {
-        struct wined3d_texture_sub_resource *src_sub_resource, *dst_sub_resource;
-        enum wined3d_blit_op blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
-        const struct wined3d_color_key *colour_key = NULL;
+        if (scale)
+            TRACE("Not doing sysmem blit because of scaling.\n");
+        else if (convert)
+            TRACE("Not doing sysmem blit because of format conversion.\n");
+        else
+            goto cpu;
+    }
 
-        TRACE("Colour blit.\n");
+    blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
+    if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
+    {
+        colour_key = &fx->src_color_key;
+        blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
+    }
+    else if (flags & WINED3D_BLT_SRC_CKEY)
+    {
+        colour_key = &src_texture->async.src_blt_color_key;
+        blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
+    }
+    else if (flags & WINED3D_BLT_ALPHA_TEST)
+    {
+        blit_op = WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST;
+    }
+    else if ((src_sub_resource->locations & WINED3D_LOCATION_SYSMEM)
+            && !(dst_sub_resource->locations & WINED3D_LOCATION_SYSMEM))
+    {
+        /* Upload */
+        if (scale)
+            TRACE("Not doing upload because of scaling.\n");
+        else if (convert)
+            TRACE("Not doing upload because of format conversion.\n");
+        else
+        {
+            POINT dst_point = {dst_rect->left, dst_rect->top};
 
-        dst_sub_resource = surface_get_sub_resource(dst_surface);
-        src_sub_resource = &src_texture->sub_resources[src_sub_resource_idx];
-
-        /* In principle this would apply to depth blits as well, but we don't
-         * implement those in the CPU blitter at the moment. */
-        if ((dst_sub_resource->locations & dst_texture->resource.map_binding)
-                && (src_sub_resource->locations & src_texture->resource.map_binding))
-        {
-            if (scale)
-                TRACE("Not doing sysmem blit because of scaling.\n");
-            else if (convert)
-                TRACE("Not doing sysmem blit because of format conversion.\n");
-            else
-                goto cpu;
-        }
-
-        if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
-        {
-            colour_key = &fx->src_color_key;
-            blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
-        }
-        else if (flags & WINED3D_BLT_SRC_CKEY)
-        {
-            colour_key = &src_texture->async.src_blt_color_key;
-            blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
-        }
-        else if (flags & WINED3D_BLT_ALPHA_TEST)
-        {
-            blit_op = WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST;
-        }
-        else if ((src_sub_resource->locations & WINED3D_LOCATION_SYSMEM)
-                && !(dst_sub_resource->locations & WINED3D_LOCATION_SYSMEM))
-        {
-            /* Upload */
-            if (scale)
-                TRACE("Not doing upload because of scaling.\n");
-            else if (convert)
-                TRACE("Not doing upload because of format conversion.\n");
-            else
+            if (SUCCEEDED(surface_upload_from_surface(dst_surface, &dst_point, src_surface, src_rect)))
             {
-                POINT dst_point = {dst_rect->left, dst_rect->top};
-
-                if (SUCCEEDED(surface_upload_from_surface(dst_surface, &dst_point, src_surface, src_rect)))
+                if (!wined3d_resource_is_offscreen(&dst_texture->resource))
                 {
-                    if (!wined3d_resource_is_offscreen(&dst_texture->resource))
-                    {
-                        context = context_acquire(device,
-                                dst_texture, dst_sub_resource_idx);
-                        wined3d_texture_load_location(dst_texture, dst_sub_resource_idx,
-                                context, dst_texture->resource.draw_binding);
-                        context_release(context);
-                    }
-                    return WINED3D_OK;
+                    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
+                    wined3d_texture_load_location(dst_texture, dst_sub_resource_idx,
+                            context, dst_texture->resource.draw_binding);
+                    context_release(context);
                 }
+                return WINED3D_OK;
             }
         }
-        else if (dst_swapchain && dst_swapchain->back_buffers
-                && dst_texture == dst_swapchain->front_buffer
-                && src_texture == dst_swapchain->back_buffers[0])
-        {
-            /* Use present for back -> front blits. The idea behind this is
-             * that present is potentially faster than a blit, in particular
-             * when FBO blits aren't available. Some ddraw applications like
-             * Half-Life and Prince of Persia 3D use Blt() from the backbuffer
-             * to the frontbuffer instead of doing a Flip(). D3d8 and d3d9
-             * applications can't blit directly to the frontbuffer. */
-            enum wined3d_swap_effect swap_effect = dst_swapchain->desc.swap_effect;
+    }
+    else if (dst_swapchain && dst_swapchain->back_buffers
+            && dst_texture == dst_swapchain->front_buffer
+            && src_texture == dst_swapchain->back_buffers[0])
+    {
+        /* Use present for back -> front blits. The idea behind this is that
+         * present is potentially faster than a blit, in particular when FBO
+         * blits aren't available. Some ddraw applications like Half-Life and
+         * Prince of Persia 3D use Blt() from the backbuffer to the
+         * frontbuffer instead of doing a Flip(). D3d8 and d3d9 applications
+         * can't blit directly to the frontbuffer. */
+        enum wined3d_swap_effect swap_effect = dst_swapchain->desc.swap_effect;
 
-            TRACE("Using present for backbuffer -> frontbuffer blit.\n");
+        TRACE("Using present for backbuffer -> frontbuffer blit.\n");
 
-            /* Set the swap effect to COPY, we don't want the backbuffer to
-             * become undefined. */
-            dst_swapchain->desc.swap_effect = WINED3D_SWAP_EFFECT_COPY;
-            wined3d_swapchain_present(dst_swapchain, NULL, NULL, dst_swapchain->win_handle, 0);
-            dst_swapchain->desc.swap_effect = swap_effect;
-
-            return WINED3D_OK;
-        }
-
-        if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
-            dst_location = dst_texture->resource.map_binding;
-        else
-            dst_location = dst_texture->resource.draw_binding;
-
-        context = context_acquire(device, dst_texture, dst_sub_resource_idx);
-        device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
-                src_surface, src_texture->resource.draw_binding, src_rect,
-                dst_surface, dst_location, dst_rect, colour_key, filter);
-        context_release(context);
-
-        wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_location);
-        wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_location);
+        /* Set the swap effect to COPY, we don't want the backbuffer to become
+         * undefined. */
+        dst_swapchain->desc.swap_effect = WINED3D_SWAP_EFFECT_COPY;
+        wined3d_swapchain_present(dst_swapchain, NULL, NULL, dst_swapchain->win_handle, 0);
+        dst_swapchain->desc.swap_effect = swap_effect;
 
         return WINED3D_OK;
     }
+
+    if (dst_texture->resource.pool == WINED3D_POOL_SYSTEM_MEM)
+        dst_location = dst_texture->resource.map_binding;
+    else
+        dst_location = dst_texture->resource.draw_binding;
+
+    context = context_acquire(device, dst_texture, dst_sub_resource_idx);
+    device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
+            src_surface, src_texture->resource.draw_binding, src_rect,
+            dst_surface, dst_location, dst_rect, colour_key, filter);
+    context_release(context);
+
+    wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, dst_location);
+    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~dst_location);
+
+    return WINED3D_OK;
 
 fallback:
     /* Special cases for render targets. */
