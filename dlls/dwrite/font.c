@@ -170,7 +170,6 @@ struct dwrite_glyphrunanalysis {
     DWRITE_TEXTURE_TYPE texture_type; /* derived from rendering mode specified on creation */
     DWRITE_GLYPH_RUN run; /* glyphAdvances and glyphOffsets are not used */
     DWRITE_MATRIX m;
-    FLOAT ppdip;
     UINT16 *glyphs;
     D2D_POINT_2F *origins;
 
@@ -4820,7 +4819,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
     glyph_bitmap.fontface = fontface;
-    glyph_bitmap.emsize = analysis->run.fontEmSize * analysis->ppdip;
+    glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
         glyph_bitmap.m = &analysis->m;
@@ -4912,7 +4911,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
     glyph_bitmap.fontface = fontface;
-    glyph_bitmap.emsize = analysis->run.fontEmSize * analysis->ppdip;
+    glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
     glyph_bitmap.type = analysis->texture_type;
     if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
@@ -5140,9 +5139,9 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     analysis->flags = 0;
     analysis->bitmap = NULL;
     analysis->max_glyph_bitmap_size = 0;
-    analysis->ppdip = desc->ppdip;
     SetRectEmpty(&analysis->bounds);
     analysis->run = *desc->run;
+    analysis->run.fontEmSize *= desc->ppdip;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
     analysis->glyphs = heap_alloc(desc->run->glyphCount * sizeof(*analysis->glyphs));
     analysis->origins = heap_alloc(desc->run->glyphCount * sizeof(*analysis->origins));
