@@ -691,9 +691,8 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
                 if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
                     embolden_glyph(glyph_copy, bitmap->emsize);
 
-                if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE)
-                    pFT_Glyph_Transform(glyph_copy, &m, NULL);
-
+                /* Includes oblique and user transform. */
+                pFT_Glyph_Transform(glyph_copy, &m, NULL);
                 pFT_Glyph_Get_CBox(glyph_copy, FT_GLYPH_BBOX_PIXELS, &bbox);
                 pFT_Done_Glyph(glyph_copy);
             }
@@ -851,8 +850,8 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
                 if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
                     embolden_glyph(glyph_copy, bitmap->emsize);
 
-                if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE)
-                    pFT_Glyph_Transform(glyph_copy, &m, NULL);
+                /* Includes oblique and user transform. */
+                pFT_Glyph_Transform(glyph_copy, &m, NULL);
                 glyph = glyph_copy;
             }
         }
