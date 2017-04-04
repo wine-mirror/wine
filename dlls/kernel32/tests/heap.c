@@ -118,6 +118,13 @@ static void test_heap(void)
     HeapFree(GetProcessHeap(), 0, mem);
     mem = HeapAlloc(GetProcessHeap(), 0, ~(SIZE_T)0);
     ok(mem == NULL, "memory allocated for size ~0\n");
+    mem = HeapAlloc(GetProcessHeap(), 0, 17);
+    msecond = HeapReAlloc(GetProcessHeap(), 0, mem, 0);
+    ok(msecond != NULL, "HeapReAlloc(0) should have succeeded\n");
+    size = HeapSize(GetProcessHeap(), 0, msecond);
+    ok(size == 0 || broken(size == 1) /* some vista and win7 */,
+       "HeapSize should have returned 0 instead of %lu\n", size);
+    HeapFree(GetProcessHeap(), 0, msecond);
 
     /* large blocks must be 16-byte aligned */
     mem = HeapAlloc(GetProcessHeap(), 0, 512 * 1024);
