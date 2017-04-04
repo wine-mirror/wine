@@ -4185,7 +4185,16 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
             return hr;
     }
 
-    device->blitter->ops->blitter_clear(device->blitter, device, view, rect, flags, color, depth, stencil);
+    if (flags == WINED3DCLEAR_TARGET)
+    {
+        struct wined3d_fb_state fb = {&view, NULL};
+        device->blitter->ops->blitter_clear(device->blitter, device, 1, &fb, rect, flags, color, depth, stencil);
+    }
+    else
+    {
+        struct wined3d_fb_state fb = {NULL, view};
+        device->blitter->ops->blitter_clear(device->blitter, device, 0, &fb, rect, flags, color, depth, stencil);
+    }
 
     return WINED3D_OK;
 }

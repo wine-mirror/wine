@@ -2449,13 +2449,13 @@ static void fbo_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 }
 
 static void fbo_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
-        const struct wined3d_color *colour, float depth, DWORD stencil)
+        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *rect,
+        DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_blitter *next;
 
     if ((next = blitter->next))
-        next->ops->blitter_clear(next, device, view, rect, flags, colour, depth, stencil);
+        next->ops->blitter_clear(next, device, rt_count, fb, rect, flags, colour, depth, stencil);
 }
 
 static void fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
@@ -2585,45 +2585,54 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
 }
 
 static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
-        const struct wined3d_color *colour, float depth, DWORD stencil)
+        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *rect,
+        DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
+    struct wined3d_rendertarget_view *view = rt_count ? fb->render_targets[0] : fb->depth_stencil;
     const RECT draw_rect = {0, 0, view->width, view->height};
-    struct wined3d_resource *resource = view->resource;
-    struct wined3d_fb_state fb = {&view, NULL};
+    struct wined3d_resource *resource;
     struct wined3d_blitter *next;
+    unsigned int i;
 
-    if (resource->pool == WINED3D_POOL_SYSTEM_MEM)
-        goto next;
-
-    if (flags != WINED3DCLEAR_TARGET)
+    if (flags & WINED3DCLEAR_TARGET)
     {
-        struct wined3d_fb_state fb = {NULL, view};
+        for (i = 0; i < rt_count; ++i)
+        {
+            if (!(view = fb->render_targets[i]))
+                continue;
 
-        device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, flags, NULL, depth, stencil);
-        return;
+            resource = view->resource;
+            if (resource->pool == WINED3D_POOL_SYSTEM_MEM)
+                goto next;
+
+            if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+            {
+                if (!((view->format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
+                        || (resource->usage & WINED3DUSAGE_RENDERTARGET)))
+                    goto next;
+            }
+            else if (!(resource->usage & WINED3DUSAGE_RENDERTARGET))
+            {
+                goto next;
+            }
+
+            /* FIXME: We should reject colour fills on formats with fixups,
+             * but this would break P8 colour fills for example. */
+        }
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
-        if (!((view->format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
-                || (resource->usage & WINED3DUSAGE_RENDERTARGET)))
+        if (fb->depth_stencil && fb->depth_stencil->resource->pool == WINED3D_POOL_SYSTEM_MEM)
             goto next;
     }
-    else if (!(resource->usage & WINED3DUSAGE_RENDERTARGET))
-    {
-        goto next;
-    }
 
-    /* FIXME: We should reject colour fills on formats with fixups, but this
-     * would break P8 colour fills for example. */
-
-    device_clear_render_targets(device, 1, &fb, 1, rect, &draw_rect, flags, colour, 0.0f, 0);
+    device_clear_render_targets(device, rt_count, fb, 1, rect, &draw_rect, flags, colour, depth, stencil);
     return;
 
 next:
     if ((next = blitter->next))
-        next->ops->blitter_clear(next, device, view, rect, flags, colour, depth, stencil);
+        next->ops->blitter_clear(next, device, rt_count, fb, rect, flags, colour, depth, stencil);
 }
 
 static void ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
@@ -3414,25 +3423,28 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
 }
 
 static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
-        const struct wined3d_color *colour, float depth, DWORD stencil)
+        unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *rect,
+        DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     const struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
     struct wined3d_color c = {depth, 0.0f, 0.0f, 0.0f};
+    struct wined3d_rendertarget_view *view;
+    unsigned int i;
 
-    if (flags == WINED3DCLEAR_TARGET)
+    if (flags & WINED3DCLEAR_TARGET)
     {
-        surface_cpu_blt_colour_fill(view, &box, colour);
-        return;
+        for (i = 0; i < rt_count; ++i)
+        {
+            if ((view = fb->render_targets[i]))
+                surface_cpu_blt_colour_fill(view, &box, colour);
+        }
     }
 
-    if (flags == WINED3DCLEAR_ZBUFFER)
-    {
+    if ((flags & WINED3DCLEAR_ZBUFFER) && (view = fb->depth_stencil))
         surface_cpu_blt_colour_fill(view, &box, &c);
-        return;
-    }
 
-    FIXME("flags %#x not implemented.\n", flags);
+    if (flags & ~(WINED3DCLEAR_TARGET | WINED3DCLEAR_ZBUFFER))
+        FIXME("flags %#x not implemented.\n", flags);
 }
 
 static void cpu_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,

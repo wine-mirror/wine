@@ -1877,8 +1877,8 @@ struct wined3d_blitter_ops
 {
     void (*blitter_destroy)(struct wined3d_blitter *blitter, struct wined3d_context *context);
     void (*blitter_clear)(struct wined3d_blitter *blitter, struct wined3d_device *device,
-            struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
-            const struct wined3d_color *colour, float depth, DWORD stencil);
+            unsigned int rt_count, const struct wined3d_fb_state *fb, const RECT *rect,
+            DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil);
     void (*blitter_blit)(struct wined3d_blitter *blitter, enum wined3d_blit_op op, struct wined3d_context *context,
             struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
             struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect,
