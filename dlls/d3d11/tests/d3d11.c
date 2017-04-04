@@ -11064,6 +11064,24 @@ static void test_uint_shader_instructions(void)
         0x0f00008c, 0x001020f2, 0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x00208556, 0x00000000,
         0x00000000, 0x00208aa6, 0x00000000, 0x00000000, 0x00208ff6, 0x00000000, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_ibfe_code[] =
+    {
+#if 0
+        ps_5_0
+        dcl_globalFlags refactoringAllowed
+        dcl_constantbuffer cb0[1], immediateIndexed
+        dcl_output o0.xyzw
+        ibfe o0.xyzw, cb0[0].xxxx, cb0[0].yyyy, cb0[0].zzzz
+        ret
+#endif
+        0x43425844, 0x4b2225f7, 0xd0860f66, 0xe38775bb, 0x6d23d1d2, 0x00000001, 0x000000d4, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x0000005c, 0x00000050, 0x00000017,
+        0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x0c00008b, 0x001020f2, 0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x00208556, 0x00000000,
+        0x00000000, 0x00208aa6, 0x00000000, 0x00000000, 0x0100003e,
+    };
     static const DWORD ps_ubfe_code[] =
     {
 #if 0
@@ -11206,6 +11224,7 @@ static void test_uint_shader_instructions(void)
         0x00000000, 0x0600003b, 0x00102052, 0x00000000, 0x00208106, 0x00000000, 0x00000000, 0x0100003e,
     };
     static const struct shader ps_bfi = {ps_bfi_code, sizeof(ps_bfi_code), D3D_FEATURE_LEVEL_11_0};
+    static const struct shader ps_ibfe = {ps_ibfe_code, sizeof(ps_ibfe_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_ubfe = {ps_ubfe_code, sizeof(ps_ubfe_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_bfrev = {ps_bfrev_code, sizeof(ps_bfrev_code), D3D_FEATURE_LEVEL_11_0};
     static const struct shader ps_bits = {ps_bits_code, sizeof(ps_bits_code), D3D_FEATURE_LEVEL_11_0};
@@ -11240,6 +11259,33 @@ static void test_uint_shader_instructions(void)
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    0}, {         0,          0,          0,          0}},
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    1}, {         1,          1,          1,          1}},
         {&ps_bfi, {~0x1fu, ~0x1fu,  ~0u,    2}, {         2,          2,          2,          2}},
+
+        {&ps_ibfe, { 0,  4, 0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, { 0,  4, 0xffffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, { 0,  4, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, { 4,  0, 0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, { 4,  0, 0xfffffffa}, {0xfffffffa, 0xfffffffa, 0xfffffffa, 0xfffffffa}},
+        {&ps_ibfe, { 4,  0, 0x7ffffffc}, {0xfffffffc, 0xfffffffc, 0xfffffffc, 0xfffffffc}},
+        {&ps_ibfe, { 4,  4, 0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, { 4,  4, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, { 4,  4, 0xffffff1f}, {0x00000001, 0x00000001, 0x00000001, 0x00000001}},
+        {&ps_ibfe, { 4,  4, 0x7fffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {23,  8, 0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, {23,  8, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {23,  8, 0x7fffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {30,  1, 0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
+        {&ps_ibfe, {30,  1, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {30,  1, 0x7fffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {15, 15, 0x7fffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {15, 15, 0x3fffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {15, 15, 0x1fffffff}, {0x00003fff, 0x00003fff, 0x00003fff, 0x00003fff}},
+        {&ps_ibfe, {15, 15, 0xffff00ff}, {0xfffffffe, 0xfffffffe, 0xfffffffe, 0xfffffffe}},
+        {&ps_ibfe, {16, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {16, 15, 0x3fffffff}, {0x00007fff, 0x00007fff, 0x00007fff, 0x00007fff}},
+        {&ps_ibfe, {20, 15, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {31, 31, 0xffffffff}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {31, 31, 0x80000000}, {0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff}},
+        {&ps_ibfe, {31, 31, 0x7fffffff}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
 
         {&ps_ubfe, {0x00000000}, {0x00000000, 0x00000000, 0x00000000, 0x00000000}},
         {&ps_ubfe, {0xffffffff}, {0x0000000f, 0x007fffff, 0x0000007f, 0x3fffffff}},
