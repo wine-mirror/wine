@@ -560,6 +560,29 @@ static struct ws2_async_io *alloc_async_io( DWORD size )
     return HeapAlloc( GetProcessHeap(), 0, size );
 }
 
+typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc, void **arg );
+
+static NTSTATUS register_async( int type, HANDLE handle, async_callback_t callback, void *arg, HANDLE event,
+                                PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( register_async )
+    {
+        req->type           = type;
+        req->async.handle   = wine_server_obj_handle( handle );
+        req->async.callback = wine_server_client_ptr( callback );
+        req->async.iosb     = wine_server_client_ptr( io );
+        req->async.arg      = wine_server_client_ptr( arg );
+        req->async.event    = wine_server_obj_handle( event );
+        req->async.cvalue   = wine_server_client_ptr( apc ? 0 : apc_context );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return status;
+}
+
 /****************************************************************/
 
 /* ----------------------------------- internal data */
@@ -2500,17 +2523,8 @@ static NTSTATUS WS2_async_accept( void *user, IO_STATUS_BLOCK *iosb,
     if (!wsa->read)
         goto finish;
 
-    SERVER_START_REQ( register_async )
-    {
-        req->type           = ASYNC_TYPE_READ;
-        req->async.handle   = wine_server_obj_handle( wsa->accept_socket );
-        req->async.event    = wine_server_obj_handle( wsa->user_overlapped->hEvent );
-        req->async.callback = wine_server_client_ptr( WS2_async_accept_recv );
-        req->async.iosb     = wine_server_client_ptr( iosb );
-        req->async.arg      = wine_server_client_ptr( wsa );
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
+    status = register_async( ASYNC_TYPE_READ, wsa->accept_socket, WS2_async_accept_recv, wsa,
+                             wsa->user_overlapped->hEvent, NULL, NULL, iosb);
 
     if (status != STATUS_PENDING)
         goto finish;
@@ -2709,18 +2723,7 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
     wsa->hSocket = SOCKET2HANDLE(s);
     wsa->type    = type;
 
-    SERVER_START_REQ( register_async )
-    {
-        req->type   = type;
-        req->async.handle   = wine_server_obj_handle( wsa->hSocket );
-        req->async.callback = wine_server_client_ptr( WS2_async_shutdown );
-        req->async.iosb     = wine_server_client_ptr( &wsa->iosb );
-        req->async.arg      = wine_server_client_ptr( wsa );
-        req->async.cvalue   = 0;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
+    status = register_async( type, wsa->hSocket, WS2_async_shutdown, wsa, 0, NULL, NULL, &wsa->iosb );
     if (status != STATUS_PENDING)
     {
         HeapFree( GetProcessHeap(), 0, wsa );
@@ -2869,18 +2872,8 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
         wsa->read->iovec[0].iov_len  = wsa->data_len;
     }
 
-    SERVER_START_REQ( register_async )
-    {
-        req->type           = ASYNC_TYPE_READ;
-        req->async.handle   = wine_server_obj_handle( SOCKET2HANDLE(listener) );
-        req->async.event    = wine_server_obj_handle( overlapped->hEvent );
-        req->async.callback = wine_server_client_ptr( WS2_async_accept );
-        req->async.iosb     = wine_server_client_ptr( overlapped );
-        req->async.arg      = wine_server_client_ptr( wsa );
-        req->async.cvalue   = wsa->cvalue;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
+    status = register_async( ASYNC_TYPE_READ, SOCKET2HANDLE(listener), WS2_async_accept, wsa,
+                             overlapped->hEvent, NULL, (void *)wsa->cvalue, (IO_STATUS_BLOCK *)overlapped );
 
     if(status != STATUS_PENDING)
     {
@@ -3143,18 +3136,8 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD
         wsa->offset.u.HighPart = overlapped->u.s.OffsetHigh;
         iosb->u.Status = STATUS_PENDING;
         iosb->Information = 0;
-        SERVER_START_REQ( register_async )
-        {
-            req->type           = ASYNC_TYPE_WRITE;
-            req->async.handle   = wine_server_obj_handle( SOCKET2HANDLE(s) );
-            req->async.event    = wine_server_obj_handle( overlapped->hEvent );
-            req->async.callback = wine_server_client_ptr( WS2_async_transmitfile );
-            req->async.iosb     = wine_server_client_ptr( iosb );
-            req->async.arg      = wine_server_client_ptr( wsa );
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-
+        status = register_async( ASYNC_TYPE_WRITE, SOCKET2HANDLE(s), WS2_async_transmitfile, wsa,
+                                 overlapped->hEvent, NULL, NULL, iosb );
         if(status != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
         release_sock_fd( s, fd );
         WSASetLastError( NtStatusToWSAError(status) );
