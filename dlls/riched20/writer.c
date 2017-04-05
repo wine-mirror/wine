@@ -769,14 +769,14 @@ ME_StreamOutRTFCharProps(ME_OutStream *pStream, CHARFORMAT2W *fmt)
   }
 
   if ((old_fmt->dwEffects ^ fmt->dwEffects) & CFE_AUTOBACKCOLOR ||
-      old_fmt->crBackColor != fmt->crBackColor)
+      (!(fmt->dwEffects & CFE_AUTOBACKCOLOR) && old_fmt->crBackColor != fmt->crBackColor))
   {
       if (fmt->dwEffects & CFE_AUTOBACKCOLOR) i = 0;
       else find_color_in_colortbl( pStream, fmt->crBackColor, &i );
       sprintf(props + strlen(props), "\\cb%u", i);
   }
   if ((old_fmt->dwEffects ^ fmt->dwEffects) & CFE_AUTOCOLOR ||
-      old_fmt->crTextColor != fmt->crTextColor)
+      (!(fmt->dwEffects & CFE_AUTOCOLOR) && old_fmt->crTextColor != fmt->crTextColor))
   {
       if (fmt->dwEffects & CFE_AUTOCOLOR) i = 0;
       else find_color_in_colortbl( pStream, fmt->crTextColor, &i );
