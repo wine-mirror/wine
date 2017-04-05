@@ -2226,7 +2226,7 @@ static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, 
         }
         else if (GET_BE_WORD(backtrack->PosFormat) == 3)
         {
-            WORD backtrack_count, input_count, lookahead_count;
+            WORD backtrack_count, input_count, lookahead_count, positioning_count;
             int k;
             const GPOS_ChainContextPosFormat3_2 *input;
             const GPOS_ChainContextPosFormat3_3 *lookahead;
@@ -2286,20 +2286,19 @@ static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, 
                 continue;
             TRACE("Matched LookAhead\n");
 
-            if (GET_BE_WORD(positioning->PosCount))
-            {
-                for (k = 0; k < GET_BE_WORD(positioning->PosCount); ++k)
-                {
-                    int lookupIndex = GET_BE_WORD(positioning->PosLookupRecord[k].LookupListIndex);
-                    int SequenceIndex = GET_BE_WORD(positioning->PosLookupRecord[k].SequenceIndex) * write_dir;
+            if (!(positioning_count = GET_BE_WORD(positioning->PosCount)))
+                return 1;
 
-                    TRACE("Position: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
-                    GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookupIndex,
-                            glyphs, glyph_index + SequenceIndex, glyph_count, goffset);
-                }
-                return input_count + lookahead_count;
+            for (k = 0; k < positioning_count; ++k)
+            {
+                WORD lookup_index = GET_BE_WORD(positioning->PosLookupRecord[k].LookupListIndex);
+                WORD sequence_index = GET_BE_WORD(positioning->PosLookupRecord[k].SequenceIndex) * write_dir;
+
+                TRACE("Position: %u -> %u %u.\n", k, sequence_index, lookup_index);
+                GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookup_index,
+                        glyphs, glyph_index + sequence_index, glyph_count, goffset);
             }
-            else return 1;
+            return input_count + lookahead_count;
         }
         else
             FIXME("Unhandled Chaining Contextual Positioning Format %#x.\n", GET_BE_WORD(backtrack->PosFormat));
