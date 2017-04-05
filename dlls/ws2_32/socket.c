@@ -7792,18 +7792,12 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 iosb->u.Status = STATUS_PENDING;
                 iosb->Information = 0;
 
-                SERVER_START_REQ( register_async )
-                {
-                    req->type           = ASYNC_TYPE_READ;
-                    req->async.handle   = wine_server_obj_handle( wsa->hSocket );
-                    req->async.callback = wine_server_client_ptr( WS2_async_recv );
-                    req->async.iosb     = wine_server_client_ptr( iosb );
-                    req->async.arg      = wine_server_client_ptr( wsa );
-                    req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
-                    req->async.cvalue   = cvalue;
-                    err = wine_server_call( req );
-                }
-                SERVER_END_REQ;
+                if (wsa->completion_func)
+                    err = register_async( ASYNC_TYPE_READ, wsa->hSocket, WS2_async_recv, wsa, NULL,
+                                          ws2_async_apc, wsa, iosb );
+                else
+                    err = register_async( ASYNC_TYPE_READ, wsa->hSocket, WS2_async_recv, wsa, lpOverlapped->hEvent,
+                                          NULL, (void *)cvalue, iosb );
 
                 if (err != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
                 SetLastError(NtStatusToWSAError( err ));
