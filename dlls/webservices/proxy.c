@@ -70,9 +70,17 @@ static struct proxy *alloc_proxy(void)
     return ret;
 }
 
+static void reset_proxy( struct proxy *proxy )
+{
+    WsResetChannel( proxy->channel, NULL );
+    proxy->state = WS_SERVICE_PROXY_STATE_CREATED;
+}
+
 static void free_proxy( struct proxy *proxy )
 {
+    reset_proxy( proxy );
     WsFreeChannel( proxy->channel );
+
     proxy->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &proxy->cs );
     heap_free( proxy );
@@ -189,6 +197,38 @@ HRESULT WINAPI WsCreateServiceProxyFromTemplate( WS_CHANNEL_TYPE channel_type,
 
     if ((hr = create_proxy( channel, properties, count, handle )) != S_OK) WsFreeChannel( channel );
     return hr;
+}
+
+/**************************************************************************
+ *          WsResetServiceProxy		[webservices.@]
+ */
+HRESULT WINAPI WsResetServiceProxy( WS_SERVICE_PROXY *handle, WS_ERROR *error )
+{
+    struct proxy *proxy = (struct proxy *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!proxy) return E_INVALIDARG;
+
+    EnterCriticalSection( &proxy->cs );
+
+    if (proxy->magic != PROXY_MAGIC)
+    {
+        LeaveCriticalSection( &proxy->cs );
+        return E_INVALIDARG;
+    }
+
+    if (proxy->state != WS_SERVICE_PROXY_STATE_CREATED && proxy->state != WS_SERVICE_PROXY_STATE_CLOSED)
+    {
+        LeaveCriticalSection( &proxy->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    reset_proxy( proxy );
+
+    LeaveCriticalSection( &proxy->cs );
+    return S_OK;
 }
 
 /**************************************************************************

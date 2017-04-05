@@ -185,6 +185,49 @@ static void test_WsOpenServiceProxy(void)
     WsFreeServiceProxy( proxy );
 }
 
+static void test_WsResetServiceProxy(void)
+{
+    WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/'};
+    HRESULT hr;
+    WS_SERVICE_PROXY *proxy;
+    WS_ENDPOINT_ADDRESS addr;
+    WS_SERVICE_PROXY_STATE state;
+
+    hr = WsCreateServiceProxy( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, NULL,
+                               0, NULL, 0, &proxy, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetServiceProxy( proxy, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
+
+    memset( &addr, 0, sizeof(addr) );
+    addr.url.length = sizeof(url)/sizeof(url[0]);
+    addr.url.chars  = url;
+    hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetServiceProxy( proxy, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCloseServiceProxy( proxy , NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetServiceProxy( proxy, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
+
+    WsFreeServiceProxy( proxy );
+}
+
 static HRESULT create_channel( int port, WS_CHANNEL **ret )
 {
     static const WCHAR fmt[] =
@@ -680,6 +723,7 @@ START_TEST(proxy)
     test_WsCreateServiceProxy();
     test_WsCreateServiceProxyFromTemplate();
     test_WsOpenServiceProxy();
+    test_WsResetServiceProxy();
 
     info.port  = 7533;
     info.event = CreateEventW( NULL, 0, 0, NULL );

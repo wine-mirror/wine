@@ -140,7 +140,7 @@
 @ stdcall WsResetMessage(ptr ptr)
 @ stub WsResetMetadata
 @ stub WsResetServiceHost
-@ stub WsResetServiceProxy
+@ stdcall WsResetServiceProxy(ptr ptr)
 @ stub WsRevokeSecurityContext
 @ stub WsSendFaultMessageForError
 @ stdcall WsSendMessage(ptr ptr ptr long ptr long ptr ptr)
