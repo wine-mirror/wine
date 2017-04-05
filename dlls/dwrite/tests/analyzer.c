@@ -2282,42 +2282,36 @@ static const struct bidi_test bidi_tests[] = {
       DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
       { 2, 2, 0, 0 },
       { 0, 0, 0, 0 },
-      TRUE
     },
     {
       { 'a', LRE, PDF, 'b', 0 },
       DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
       { 0, 2, 2, 0 },
       { 0, 0, 0, 0 },
-      TRUE
     },
     {
       { RLE, PDF, 'a', 'b', 0 },
       DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
       { 1, 1, 0, 0 },
       { 0, 0, 0, 0 },
-      TRUE
     },
     {
       { 'a', RLE, PDF, 'b', 0 },
       DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
       { 0, 1, 1, 0 },
       { 0, 0, 0, 0 },
-      TRUE
     },
     {
       { 'a', RLE, PDF, 'b', 0 },
       DWRITE_READING_DIRECTION_RIGHT_TO_LEFT,
       { 1, 3, 3, 1 },
       { 2, 2, 2, 2 },
-      TRUE
     },
     {
       { LRE, PDF, 'a', 'b', 0 },
       DWRITE_READING_DIRECTION_RIGHT_TO_LEFT,
       { 2, 2, 1, 1 },
       { 1, 1, 2, 2 },
-      TRUE
     },
     {
       { PDF, 'a', 'b', 0 },

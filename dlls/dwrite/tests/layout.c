@@ -1648,7 +1648,7 @@ todo_wine
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draw_seq3, "draw test 3", TRUE);
+    ok_sequence(sequences, RENDERER_ID, draw_seq3, "draw test 3", FALSE);
     IDWriteTextLayout_Release(layout);
 
     /* strikethrough splits ranges from renderer point of view, but doesn't break
