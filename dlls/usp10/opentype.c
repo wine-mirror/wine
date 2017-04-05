@@ -2226,56 +2226,53 @@ static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, 
         }
         else if (GET_BE_WORD(backtrack->PosFormat) == 3)
         {
+            WORD backtrack_count, input_count, lookahead_count;
             int k;
-            int indexGlyphs;
             const GPOS_ChainContextPosFormat3_2 *input;
             const GPOS_ChainContextPosFormat3_3 *lookahead;
             const GPOS_ChainContextPosFormat3_4 *positioning;
 
             TRACE("  subtype 3 (Coverage-based Chaining Context Glyph Positioning)\n");
 
-            for (k = 0; k < GET_BE_WORD(backtrack->BacktrackGlyphCount); ++k)
+            backtrack_count = GET_BE_WORD(backtrack->BacktrackGlyphCount);
+            input = (const GPOS_ChainContextPosFormat3_2 *)&backtrack->Coverage[backtrack_count];
+            input_count = GET_BE_WORD(input->InputGlyphCount);
+            lookahead = (const GPOS_ChainContextPosFormat3_3 *)&input->Coverage[input_count];
+            lookahead_count = GET_BE_WORD(lookahead->LookaheadGlyphCount);
+            positioning = (const GPOS_ChainContextPosFormat3_4 *)&lookahead->Coverage[lookahead_count];
+
+            for (k = 0; k < backtrack_count; ++k)
             {
                 offset = GET_BE_WORD(backtrack->Coverage[k]);
                 if (GSUB_is_glyph_covered((const BYTE *)backtrack + offset,
                         glyphs[glyph_index + (dirBacktrack * (k + 1))]) == -1)
                     break;
             }
-            if (k != GET_BE_WORD(backtrack->BacktrackGlyphCount))
+            if (k != backtrack_count)
                 continue;
             TRACE("Matched Backtrack\n");
 
-            input = (const GPOS_ChainContextPosFormat3_2 *)((BYTE *)backtrack +
-                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_1, Coverage[GET_BE_WORD(backtrack->BacktrackGlyphCount)]));
-
-            indexGlyphs = GET_BE_WORD(input->InputGlyphCount);
-            for (k = 0; k < indexGlyphs; k++)
+            for (k = 0; k < input_count; ++k)
             {
                 offset = GET_BE_WORD(input->Coverage[k]);
                 if (GSUB_is_glyph_covered((const BYTE *)backtrack + offset,
                         glyphs[glyph_index + (write_dir * k)]) == -1)
                     break;
             }
-            if (k != indexGlyphs)
+            if (k != input_count)
                 continue;
             TRACE("Matched IndexGlyphs\n");
 
-            lookahead = (const GPOS_ChainContextPosFormat3_3 *)((BYTE *)input +
-                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_2, Coverage[GET_BE_WORD(input->InputGlyphCount)]));
-
-            for (k = 0; k < GET_BE_WORD(lookahead->LookaheadGlyphCount); ++k)
+            for (k = 0; k < lookahead_count; ++k)
             {
                 offset = GET_BE_WORD(lookahead->Coverage[k]);
                 if (GSUB_is_glyph_covered((const BYTE *)backtrack + offset,
-                        glyphs[glyph_index + (dirLookahead * (indexGlyphs + k))]) == -1)
+                        glyphs[glyph_index + (dirLookahead * (input_count + k))]) == -1)
                     break;
             }
-            if (k != GET_BE_WORD(lookahead->LookaheadGlyphCount))
+            if (k != lookahead_count)
                 continue;
             TRACE("Matched LookAhead\n");
-
-            positioning = (const GPOS_ChainContextPosFormat3_4 *)((BYTE *)lookahead +
-                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_3, Coverage[GET_BE_WORD(lookahead->LookaheadGlyphCount)]));
 
             if (GET_BE_WORD(positioning->PosCount))
             {
@@ -2288,7 +2285,7 @@ static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, 
                     GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookupIndex,
                             glyphs, glyph_index + SequenceIndex, glyph_count, goffset);
                 }
-                return indexGlyphs + GET_BE_WORD(lookahead->LookaheadGlyphCount);
+                return input_count + lookahead_count;
             }
             else return 1;
         }
