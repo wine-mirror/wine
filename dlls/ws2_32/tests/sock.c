@@ -6656,6 +6656,13 @@ static DWORD WINAPI recv_thread(LPVOID arg)
     return 0;
 }
 
+static int completion_called;
+
+static void WINAPI io_completion(DWORD error, DWORD transferred, WSAOVERLAPPED *overlapped, DWORD flags)
+{
+    completion_called++;
+}
+
 static void test_WSARecv(void)
 {
     SOCKET src, dest, server = INVALID_SOCKET;
@@ -6668,7 +6675,7 @@ static void test_WSARecv(void)
     int iret, len;
     DWORD dwret;
     BOOL bret;
-    HANDLE thread;
+    HANDLE thread, event = NULL, io_port;
 
     tcp_socketpair(&src, &dest);
     if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
@@ -6732,9 +6739,9 @@ static void test_WSARecv(void)
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
 
     bufs[0].len = sizeof(buf);
-    ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ov.hEvent = event = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
-    if (!ov.hEvent)
+    if (!event)
         goto end;
 
     ling.l_onoff = 1;
@@ -6795,6 +6802,34 @@ static void test_WSARecv(void)
     WaitForSingleObject(thread, 3000);
     CloseHandle(thread);
 
+    memset(&ov, 0, sizeof(ov));
+    ov.hEvent = event;
+    ResetEvent(event);
+    iret = WSARecv(dest, bufs, 1, NULL, &flags, &ov, io_completion);
+    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
+    send(src, "test message", sizeof("test message"), 0);
+
+    completion_called = 0;
+    dwret = SleepEx(1000, TRUE);
+    ok(dwret == WAIT_IO_COMPLETION, "got %u\n", dwret);
+    ok(completion_called == 1, "completion not called\n");
+
+    dwret = WaitForSingleObject(event, 1);
+    ok(dwret == WAIT_TIMEOUT, "got %u\n", dwret);
+
+    io_port = CreateIoCompletionPort( (HANDLE)dest, NULL, 0, 0 );
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+
+    /* Using completion function on socket associated with completion port is not allowed. */
+    memset(&ov, 0, sizeof(ov));
+    completion_called = 0;
+    iret = WSARecv(dest, bufs, 1, NULL, &flags, &ov, io_completion);
+    todo_wine
+    ok(iret == SOCKET_ERROR && GetLastError() == WSAEINVAL, "WSARecv failed - %d error %d\n", iret, GetLastError());
+    ok(!completion_called, "completion called\n");
+
+    CloseHandle(io_port);
+
 end:
     if (server != INVALID_SOCKET)
         closesocket(server);
@@ -6802,8 +6837,8 @@ end:
         closesocket(dest);
     if (src != INVALID_SOCKET)
         closesocket(src);
-    if (ov.hEvent)
-        WSACloseEvent(ov.hEvent);
+    if (event)
+        WSACloseEvent(event);
 }
 
 #define POLL_CLEAR() ix = 0
