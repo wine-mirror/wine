@@ -3592,19 +3592,8 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
             wsa->iovec[0].iov_base = sendBuf;
             wsa->iovec[0].iov_len  = sendBufLen;
 
-            SERVER_START_REQ( register_async )
-            {
-                req->type           = ASYNC_TYPE_WRITE;
-                req->async.handle   = wine_server_obj_handle( wsa->hSocket );
-                req->async.callback = wine_server_client_ptr( WS2_async_send );
-                req->async.iosb     = wine_server_client_ptr( iosb );
-                req->async.arg      = wine_server_client_ptr( wsa );
-                req->async.event    = wine_server_obj_handle( ov->hEvent );
-                req->async.cvalue   = cvalue;
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-
+            status = register_async( ASYNC_TYPE_WRITE, wsa->hSocket, WS2_async_send, wsa, ov->hEvent,
+                                      NULL, (void *)cvalue, iosb );
             if (status != STATUS_PENDING) HeapFree(GetProcessHeap(), 0, wsa);
 
             /* If the connect already failed */
@@ -5609,18 +5598,12 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             iosb->u.Status = STATUS_PENDING;
             iosb->Information = n == -1 ? 0 : n;
 
-            SERVER_START_REQ( register_async )
-            {
-                req->type           = ASYNC_TYPE_WRITE;
-                req->async.handle   = wine_server_obj_handle( wsa->hSocket );
-                req->async.callback = wine_server_client_ptr( WS2_async_send );
-                req->async.iosb     = wine_server_client_ptr( iosb );
-                req->async.arg      = wine_server_client_ptr( wsa );
-                req->async.event    = wine_server_obj_handle( lpCompletionRoutine ? 0 : lpOverlapped->hEvent );
-                req->async.cvalue   = cvalue;
-                err = wine_server_call( req );
-            }
-            SERVER_END_REQ;
+            if (wsa->completion_func)
+                err = register_async( ASYNC_TYPE_WRITE, wsa->hSocket, WS2_async_send, wsa, NULL,
+                                         ws2_async_apc, wsa, iosb );
+            else
+                err = register_async( ASYNC_TYPE_WRITE, wsa->hSocket, WS2_async_send, wsa, lpOverlapped->hEvent,
+                                      NULL, (void *)cvalue, iosb );
 
             /* Enable the event only after starting the async. The server will deliver it as soon as
                the async is done. */
