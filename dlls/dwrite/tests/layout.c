@@ -1636,6 +1636,10 @@ static void test_Draw(void)
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq2, "draw test 2", TRUE);
+    hr = IDWriteTextLayout_GetMetrics(layout, &tm);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(tm.lineCount == 6, "got %u\n", tm.lineCount);
     IDWriteTextLayout_Release(layout);
 
     /* string with control characters */
