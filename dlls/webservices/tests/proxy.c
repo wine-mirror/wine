@@ -95,7 +95,7 @@ static void test_WsCreateServiceProxy(void)
     HRESULT hr;
     WS_SERVICE_PROXY *proxy;
     WS_SERVICE_PROXY_STATE state;
-    ULONG size, value;
+    ULONG value;
 
     hr = WsCreateServiceProxy( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, NULL,
                                0, NULL, 0, NULL, NULL );
@@ -109,13 +109,11 @@ static void test_WsCreateServiceProxy(void)
 
     /* write-only property */
     value = 0xdeadbeef;
-    size = sizeof(value);
-    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_CALL_TIMEOUT, &value, size, NULL );
+    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_CALL_TIMEOUT, &value, sizeof(value), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     state = 0xdeadbeef;
-    size = sizeof(state);
-    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_STATE, &state, size, NULL );
+    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_STATE, &state, sizeof(state), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
 
@@ -151,6 +149,7 @@ static void test_WsOpenServiceProxy(void)
     WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/'};
     HRESULT hr;
     WS_SERVICE_PROXY *proxy;
+    WS_SERVICE_PROXY_STATE state;
     WS_HTTP_POLICY_DESCRIPTION policy;
     WS_ENDPOINT_ADDRESS addr;
 
@@ -159,16 +158,29 @@ static void test_WsOpenServiceProxy(void)
                                            NULL, 0, &policy, sizeof(policy), &proxy, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    state = 0xdeadbeef;
+    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
+
+    memset( &addr, 0, sizeof(addr) );
     addr.url.length = sizeof(url)/sizeof(url[0]);
     addr.url.chars  = url;
-    addr.headers    = NULL;
-    addr.extensions = NULL;
-    addr.identity   = NULL;
     hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    state = 0xdeadbeef;
+    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_SERVICE_PROXY_STATE_OPEN, "got %u\n", state );
+
     hr = WsCloseServiceProxy( proxy , NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetServiceProxyProperty( proxy, WS_PROXY_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_SERVICE_PROXY_STATE_CLOSED, "got %u\n", state );
 
     WsFreeServiceProxy( proxy );
 }
@@ -197,11 +209,9 @@ static HRESULT create_channel( int port, WS_CHANNEL **ret )
     hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, prop, 2, NULL, &channel, NULL );
     if (hr != S_OK) return hr;
 
+    memset( &addr, 0, sizeof(addr) );
     addr.url.length = wsprintfW( buf, fmt, port );
     addr.url.chars  = buf;
-    addr.headers    = NULL;
-    addr.extensions = NULL;
-    addr.identity   = NULL;
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     if (hr == S_OK) *ret = channel;
     else WsFreeChannel( channel );
@@ -335,11 +345,9 @@ static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
                                0, prop, sizeof(prop)/sizeof(prop[0]), &proxy, NULL );
     if (hr != S_OK) return hr;
 
+    memset( &addr, 0, sizeof(addr) );
     addr.url.length = wsprintfW( url, fmt, port );
     addr.url.chars  = url;
-    addr.headers    = NULL;
-    addr.extensions = NULL;
-    addr.identity   = NULL;
     hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
     if (hr == S_OK) *ret = proxy;
     else WsFreeServiceProxy( proxy );

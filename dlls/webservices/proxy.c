@@ -43,11 +43,12 @@ static const struct prop_desc proxy_props[] =
 
 struct proxy
 {
-    ULONG             magic;
-    CRITICAL_SECTION  cs;
-    WS_CHANNEL       *channel;
-    ULONG             prop_count;
-    struct prop       prop[sizeof(proxy_props)/sizeof(proxy_props[0])];
+    ULONG                   magic;
+    CRITICAL_SECTION        cs;
+    WS_SERVICE_PROXY_STATE  state;
+    WS_CHANNEL             *channel;
+    ULONG                   prop_count;
+    struct prop             prop[sizeof(proxy_props)/sizeof(proxy_props[0])];
 };
 
 #define PROXY_MAGIC (('P' << 24) | ('R' << 16) | ('O' << 8) | 'X')
@@ -222,7 +223,7 @@ HRESULT WINAPI WsGetServiceProxyProperty( WS_SERVICE_PROXY *handle, WS_PROXY_PRO
                                           void *buf, ULONG size, WS_ERROR *error )
 {
     struct proxy *proxy = (struct proxy *)handle;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -237,7 +238,16 @@ HRESULT WINAPI WsGetServiceProxyProperty( WS_SERVICE_PROXY *handle, WS_PROXY_PRO
         return E_INVALIDARG;
     }
 
-    hr = prop_get( proxy->prop, proxy->prop_count, id, buf, size );
+    switch (id)
+    {
+    case WS_PROXY_PROPERTY_STATE:
+        if (!buf || size != sizeof(proxy->state)) hr = E_INVALIDARG;
+        else *(WS_SERVICE_PROXY_STATE *)buf = proxy->state;
+        break;
+
+    default:
+        hr = prop_get( proxy->prop, proxy->prop_count, id, buf, size );
+    }
 
     LeaveCriticalSection( &proxy->cs );
     return hr;
@@ -266,7 +276,8 @@ HRESULT WINAPI WsOpenServiceProxy( WS_SERVICE_PROXY *handle, const WS_ENDPOINT_A
         return E_INVALIDARG;
     }
 
-    hr = WsOpenChannel( proxy->channel, endpoint, NULL, NULL );
+    if ((hr = WsOpenChannel( proxy->channel, endpoint, NULL, NULL )) == S_OK)
+        proxy->state = WS_SERVICE_PROXY_STATE_OPEN;
 
     LeaveCriticalSection( &proxy->cs );
     return hr;
@@ -294,7 +305,8 @@ HRESULT WINAPI WsCloseServiceProxy( WS_SERVICE_PROXY *handle, const WS_ASYNC_CON
         return E_INVALIDARG;
     }
 
-    hr = WsCloseChannel( proxy->channel, NULL, NULL );
+    if ((hr = WsCloseChannel( proxy->channel, NULL, NULL )) == S_OK)
+        proxy->state = WS_SERVICE_PROXY_STATE_CLOSED;
 
     LeaveCriticalSection( &proxy->cs );
     return hr;
