@@ -81,6 +81,9 @@ struct wined3d_cs_clear
 {
     enum wined3d_cs_op opcode;
     DWORD flags;
+    unsigned int rt_count;
+    struct wined3d_fb_state *fb;
+    RECT draw_rect;
     struct wined3d_color color;
     float depth;
     DWORD stencil;
@@ -420,24 +423,25 @@ static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
 
     device = cs->device;
     wined3d_get_draw_rect(state, &draw_rect);
-    device->blitter->ops->blitter_clear(device->blitter, device, device->adapter->gl_info.limits.buffers,
-            state->fb, op->rect_count, op->rects, &draw_rect, op->flags, &op->color, op->depth, op->stencil);
+    device->blitter->ops->blitter_clear(device->blitter, device, op->rt_count, op->fb,
+            op->rect_count, op->rects, &op->draw_rect, op->flags, &op->color, op->depth, op->stencil);
 
     if (op->flags & WINED3DCLEAR_TARGET)
     {
-        for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
+        for (i = 0; i < op->rt_count; ++i)
         {
-            if (state->fb->render_targets[i])
-                wined3d_resource_release(state->fb->render_targets[i]->resource);
+            if (op->fb->render_targets[i])
+                wined3d_resource_release(op->fb->render_targets[i]->resource);
         }
     }
     if (op->flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
-        wined3d_resource_release(state->fb->depth_stencil->resource);
+        wined3d_resource_release(op->fb->depth_stencil->resource);
 }
 
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
+    unsigned int rt_count = cs->device->adapter->gl_info.limits.buffers;
     const struct wined3d_state *state = &cs->device->state;
     struct wined3d_cs_clear *op;
     unsigned int i;
@@ -445,6 +449,9 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     op = cs->ops->require_space(cs, FIELD_OFFSET(struct wined3d_cs_clear, rects[rect_count]));
     op->opcode = WINED3D_CS_OP_CLEAR;
     op->flags = flags;
+    op->rt_count = rt_count;
+    op->fb = &cs->fb;
+    wined3d_get_draw_rect(state, &op->draw_rect);
     op->color = *color;
     op->depth = depth;
     op->stencil = stencil;
@@ -453,7 +460,7 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
 
     if (flags & WINED3DCLEAR_TARGET)
     {
-        for (i = 0; i < cs->device->adapter->gl_info.limits.buffers; ++i)
+        for (i = 0; i < rt_count; ++i)
         {
             if (state->fb->render_targets[i])
                 wined3d_resource_acquire(state->fb->render_targets[i]->resource);
@@ -461,6 +468,47 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     }
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
         wined3d_resource_acquire(state->fb->depth_stencil->resource);
+
+    cs->ops->submit(cs);
+}
+
+void wined3d_cs_emit_clear_rendertarget_view(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view,
+        const RECT *rect, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
+{
+    struct wined3d_cs_clear *op;
+    struct
+    {
+        struct wined3d_rendertarget_view *rt;
+        struct wined3d_fb_state fb;
+    } *extra;
+
+    op = cs->ops->require_space(cs, FIELD_OFFSET(struct wined3d_cs_clear, rects[1]) + sizeof(*extra));
+    extra = (void *)&op->rects[1];
+    extra->fb.render_targets = &extra->rt;
+    op->fb = &extra->fb;
+
+    op->opcode = WINED3D_CS_OP_CLEAR;
+    op->flags = flags;
+    if (flags & WINED3DCLEAR_TARGET)
+    {
+        op->rt_count = 1;
+        op->fb->render_targets[0] = view;
+        op->fb->depth_stencil = NULL;
+        op->color = *color;
+    }
+    else
+    {
+        op->rt_count = 0;
+        op->fb->render_targets[0] = NULL;
+        op->fb->depth_stencil = view;
+        op->depth = depth;
+        op->stencil = stencil;
+    }
+    SetRect(&op->draw_rect, 0, 0, view->width, view->height);
+    op->rect_count = 1;
+    op->rects[0] = *rect;
+
+    wined3d_resource_acquire(view->resource);
 
     cs->ops->submit(cs);
 }
