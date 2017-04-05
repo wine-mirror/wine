@@ -34,6 +34,16 @@
 static IDWriteFactory *factory;
 static const WCHAR test_fontfile[] = {'w','i','n','e','_','t','e','s','t','_','f','o','n','t','.','t','t','f',0};
 
+#define LRE 0x202a
+#define RLE 0x202b
+#define PDF 0x202c
+#define LRO 0x202d
+#define RLO 0x202e
+#define LRI 0x2066
+#define RLI 0x2067
+#define FSI 0x2068
+#define PDI 0x2069
+
 enum analysis_kind {
     ScriptAnalysis,
     LastKind
@@ -894,14 +904,14 @@ static struct sa_test sa_tests[] = {
     },
     {
       /* LRE/PDF */
-      {0x202a,0x202c,'a','b','c','\r',0}, 3,
+      {LRE,PDF,'a','b','c','\r',0}, 3,
           { { 0, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL },
             { 2, 3, DWRITE_SCRIPT_SHAPES_DEFAULT   },
             { 5, 1, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
     },
     {
       /* LRE/PDF and other visual and non-visual codes from Common script range */
-      {0x202a,0x202c,'r','!',0x200b,'\r',0}, 3,
+      {LRE,PDF,'r','!',0x200b,'\r',0}, 3,
           { { 0, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL },
             { 2, 2, DWRITE_SCRIPT_SHAPES_DEFAULT   },
             { 4, 2, DWRITE_SCRIPT_SHAPES_NO_VISUAL } }
@@ -2227,6 +2237,7 @@ struct bidi_test
     DWRITE_READING_DIRECTION direction;
     UINT8 explicit[BIDI_LEVELS_COUNT];
     UINT8 resolved[BIDI_LEVELS_COUNT];
+    BOOL todo;
 };
 
 static const struct bidi_test bidi_tests[] = {
@@ -2267,14 +2278,132 @@ static const struct bidi_test bidi_tests[] = {
       { 0, 0, 0 }
     },
     {
+      { LRE, PDF, 'a', 'b', 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 2, 2, 0, 0 },
+      { 0, 0, 0, 0 },
+      TRUE
+    },
+    {
+      { 'a', LRE, PDF, 'b', 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 2, 2, 0 },
+      { 0, 0, 0, 0 },
+      TRUE
+    },
+    {
+      { RLE, PDF, 'a', 'b', 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 1, 1, 0, 0 },
+      { 0, 0, 0, 0 },
+      TRUE
+    },
+    {
+      { 'a', RLE, PDF, 'b', 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 1, 1, 0 },
+      { 0, 0, 0, 0 },
+      TRUE
+    },
+    {
+      { 'a', RLE, PDF, 'b', 0 },
+      DWRITE_READING_DIRECTION_RIGHT_TO_LEFT,
+      { 1, 3, 3, 1 },
+      { 2, 2, 2, 2 },
+      TRUE
+    },
+    {
+      { LRE, PDF, 'a', 'b', 0 },
+      DWRITE_READING_DIRECTION_RIGHT_TO_LEFT,
+      { 2, 2, 1, 1 },
+      { 1, 1, 2, 2 },
+      TRUE
+    },
+    {
+      { PDF, 'a', 'b', 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 0, 0, 0 },
+      { 0, 0, 0, 0 }
+    },
+    {
+      { LRE, 'a', 'b', PDF, 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 2, 2, 2, 2 },
+      { 0, 2, 2, 2 },
+      TRUE
+    },
+    {
+      { LRI, 'a', 'b', PDI, 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 0, 0, 0 },
+      { 0, 0, 0, 0 },
+      TRUE
+    },
+    {
+      { RLI, 'a', 'b', PDI, 0 },
+      DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+      { 0, 0, 0, 0 },
+      { 0, 0, 0, 0 },
+      TRUE
+    },
+    {
       { 0 }
     }
 };
 
-static void compare_bidi_levels(const struct bidi_test *test, UINT32 len, UINT8 *explicit, UINT8 *resolved)
+static void compare_bidi_levels(unsigned int seq, const struct bidi_test *test, UINT32 len, UINT8 *explicit, UINT8 *resolved)
 {
-    ok(!memcmp(explicit, test->explicit, len), "wrong explicit levels\n");
-    ok(!memcmp(resolved, test->resolved, len), "wrong resolved levels\n");
+    unsigned int i, failcount = 0;
+    BOOL match;
+
+    match = !memcmp(explicit, test->explicit, len);
+    if (!match) {
+        if (test->todo) {
+            failcount++;
+        todo_wine
+            ok(0, "test %u: %s wrong explicit levels:\n", seq, wine_dbgstr_w(test->text));
+        }
+        else
+            ok(0, "test %u: %s wrong explicit levels:\n", seq, wine_dbgstr_w(test->text));
+
+        for (i = 0; i < len; i++) {
+            if (test->explicit[i] != explicit[i]) {
+               if (test->todo) {
+                   failcount++;
+               todo_wine
+                   ok(0, "\tat %u, explicit level %u, expected %u\n", i, explicit[i], test->explicit[i]);
+               }
+               else
+                   ok(0, "\tat %u, explicit level %u, expected %u\n", i, explicit[i], test->explicit[i]);
+            }
+        }
+    }
+
+    match = !memcmp(resolved, test->resolved, len);
+    if (!match) {
+        if (test->todo) {
+            failcount++;
+        todo_wine
+            ok(0, "test %u: %s wrong resolved levels:\n", seq, wine_dbgstr_w(test->text));
+        }
+        else
+            ok(0, "test %u: %s wrong resolved levels:\n", seq, wine_dbgstr_w(test->text));
+
+        for (i = 0; i < len; i++) {
+            if (test->resolved[i] != resolved[i]) {
+               if (test->todo) {
+                   failcount++;
+               todo_wine
+                   ok(0, "\tat %u, resolved level %u, expected %u\n", i, resolved[i], test->resolved[i]);
+               }
+               else
+                   ok(0, "\tat %u, resolved level %u, expected %u\n", i, resolved[i], test->resolved[i]);
+            }
+        }
+    }
+
+    todo_wine_if(test->todo && failcount == 0)
+        ok(1, "test %u: marked as \"todo_wine\" but succeeds\n", seq);
 }
 
 static void test_AnalyzeBidi(void)
@@ -2307,7 +2436,7 @@ static void test_AnalyzeBidi(void)
         hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &analysissource.IDWriteTextAnalysisSource_iface, 0,
             len, &analysissink);
         ok(hr == S_OK, "%u: got 0x%08x\n", i, hr);
-        compare_bidi_levels(ptr, len, g_explicit_levels, g_resolved_levels);
+        compare_bidi_levels(i, ptr, len, g_explicit_levels, g_resolved_levels);
 
         i++;
         ptr++;
