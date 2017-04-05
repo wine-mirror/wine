@@ -2216,6 +2216,29 @@ static void test_color_table(UINT ilc)
     ImageList_Destroy(himl);
 }
 
+static void test_copy(void)
+{
+    HIMAGELIST dst, src;
+    BOOL ret;
+    int count;
+
+    dst = ImageList_Create(5, 11, ILC_COLOR, 1, 1);
+    count = ImageList_GetImageCount(dst);
+    ok(!count, "ImageList not empty.\n");
+    src = createImageList(7, 13);
+    count = ImageList_GetImageCount(src);
+    ok(count > 2, "Tests need an ImageList with more than 2 images\n");
+
+    /* ImageList_Copy() cannot copy between two ImageLists */
+    ret = ImageList_Copy(dst, 0, src, 2, ILCF_MOVE);
+    ok(!ret, "ImageList_Copy() should have returned FALSE\n");
+    count = ImageList_GetImageCount(dst);
+    ok(count == 0, "Expected no image in dst ImageList, got %d\n", count);
+
+    ImageList_Destroy(dst);
+    ImageList_Destroy(src);
+}
+
 static void test_IImageList_Clone(void)
 {
     IImageList *imgl, *imgl2;
@@ -2366,6 +2389,7 @@ START_TEST(imagelist)
     test_iconsize();
     test_color_table(ILC_COLOR4);
     test_color_table(ILC_COLOR8);
+    test_copy();
 
     FreeLibrary(hComCtl32);
 
