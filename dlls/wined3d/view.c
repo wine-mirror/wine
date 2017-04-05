@@ -359,8 +359,8 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
         /* The drawable size of an onscreen drawable is the surface size.
          * (Actually: The window size, but the surface is created in window
          * size.) */
-        *width = context->current_rt.texture->resource.width;
-        *height = context->current_rt.texture->resource.height;
+        *width = texture->resource.width;
+        *height = texture->resource.height;
     }
     else if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
@@ -374,13 +374,12 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
     }
     else
     {
-        struct wined3d_surface *rt;
+        unsigned int level_idx = view->sub_resource_idx % texture->level_count;
 
         /* The drawable size of an FBO target is the OpenGL texture size,
          * which is the power of two size. */
-        rt = context->current_rt.texture->sub_resources[context->current_rt.sub_resource_idx].u.surface;
-        *width = wined3d_texture_get_level_pow2_width(rt->container, rt->texture_level);
-        *height = wined3d_texture_get_level_pow2_height(rt->container, rt->texture_level);
+        *width = wined3d_texture_get_level_pow2_width(texture, level_idx);
+        *height = wined3d_texture_get_level_pow2_height(texture, level_idx);
     }
 }
 
