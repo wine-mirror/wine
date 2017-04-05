@@ -2396,6 +2396,195 @@ static void test_TVS_FULLROWSELECT(void)
     DestroyWindow(hwnd);
 }
 
+static void get_item_names_string(HWND hwnd, HTREEITEM item, char *str)
+{
+    TVITEMA tvitem = { 0 };
+    HTREEITEM child;
+    char name[16];
+
+    if (!item)
+    {
+        item = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+        str[0] = 0;
+    }
+
+    child = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)item);
+
+    tvitem.mask = TVIF_TEXT;
+    tvitem.hItem = item;
+    tvitem.pszText = name;
+    tvitem.cchTextMax = sizeof(name);
+    SendMessageA(hwnd, TVM_GETITEMA, 0, (LPARAM)&tvitem);
+    strcat(str, tvitem.pszText);
+
+    while (child != NULL)
+    {
+        get_item_names_string(hwnd, child, str);
+        child = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)child);
+    }
+}
+
+static void fill_treeview_sort_test(HWND hwnd)
+{
+    static const char *itemnames[] =
+    {
+        "root", "Wasp", "Caribou", "Vacuum",
+        "Ocelot", "Newspaper", "Litter bin"
+    };
+
+    HTREEITEM root, children[2];
+    TVINSERTSTRUCTA ins;
+    unsigned i = 0;
+
+    SendMessageA(hwnd, TVM_DELETEITEM, 0, 0);
+
+    /* root, two children, with two children each */
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = (char *)itemnames[i++];
+    root = (HTREEITEM)SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    ins.hParent = root;
+    ins.hInsertAfter = TVI_LAST;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = (char *)itemnames[i++];
+    children[0] = (HTREEITEM)SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    U(ins).item.pszText = (char *)itemnames[i++];
+    children[1] = (HTREEITEM)SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    ins.hParent = children[0];
+    U(ins).item.pszText = (char *)itemnames[i++];
+    SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    U(ins).item.pszText = (char *)itemnames[i++];
+    SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    ins.hParent = children[1];
+    U(ins).item.pszText = (char *)itemnames[i++];
+    SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    U(ins).item.pszText = (char *)itemnames[i++];
+    SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+}
+
+static void test_TVM_SORTCHILDREN(void)
+{
+    static const char *initial_order = "rootWaspVacuumOcelotCaribouNewspaperLitter bin";
+    static const char *sorted_order = "rootCaribouNewspaperLitter binWaspVacuumOcelot";
+    TVINSERTSTRUCTA ins;
+    char buff[256];
+    HTREEITEM root;
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = create_treeview_control(0);
+
+    /* call on empty tree */
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, 0);
+    ok(!ret, "Unexpected ret value %d\n", ret);
+
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, (LPARAM)TVI_ROOT);
+    ok(!ret, "Unexpected ret value %d\n", ret);
+
+    /* add only root, sort from it */
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = (char *)"root";
+    root = (HTREEITEM)SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+    ok(root != NULL, "Expected root node\n");
+
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, (LPARAM)root);
+    ok(!ret, "Unexpected ret value %d\n", ret);
+
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, TRUE, (LPARAM)root);
+    ok(!ret, "Unexpected ret value %d\n", ret);
+
+    /* root, two children, with two children each */
+    fill_treeview_sort_test(hwnd);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, initial_order), "Wrong initial order %s, expected %s\n", buff, initial_order);
+
+    /* with NULL item nothing is sorted */
+    fill_treeview_sort_test(hwnd);
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, 0);
+todo_wine
+    ok(ret, "Unexpected ret value %d\n", ret);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, initial_order);
+
+    /* TVI_ROOT as item */
+    fill_treeview_sort_test(hwnd);
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, (LPARAM)TVI_ROOT);
+todo_wine
+    ok(ret, "Unexpected ret value %d\n", ret);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, initial_order);
+
+    /* zero WPARAM, item is specified */
+    fill_treeview_sort_test(hwnd);
+    root = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+    ok(root != NULL, "Failed to get root item\n");
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, 0, (LPARAM)root);
+    ok(ret, "Unexpected ret value %d\n", ret);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, sorted_order), "Wrong sorted order %s, expected %s\n", buff, sorted_order);
+
+    /* non-zero WPARAM, NULL item */
+    fill_treeview_sort_test(hwnd);
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, TRUE, 0);
+todo_wine
+    ok(ret, "Unexpected ret value %d\n", ret);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, sorted_order);
+
+    /* TVI_ROOT as item */
+    fill_treeview_sort_test(hwnd);
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, TRUE, (LPARAM)TVI_ROOT);
+todo_wine
+    ok(ret, "Unexpected ret value %d\n", ret);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, initial_order), "Wrong sorted order %s, expected %s\n", buff, sorted_order);
+
+    /* non-zero WPARAM, item is specified */
+    fill_treeview_sort_test(hwnd);
+    root = (HTREEITEM)SendMessageA(hwnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+    ok(root != NULL, "Failed to get root item\n");
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, TRUE, (LPARAM)root);
+    ok(ret, "Unexpected ret value %d\n", ret);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, sorted_order), "Wrong sorted order %s, expected %s\n", buff, sorted_order);
+
+    /* case insensitive comparison */
+    SendMessageA(hwnd, TVM_DELETEITEM, 0, 0);
+
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = (char *)"root";
+    root = (HTREEITEM)SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+    ok(root != NULL, "Expected root node\n");
+
+    ins.hParent = root;
+    ins.hInsertAfter = TVI_LAST;
+    U(ins).item.pszText = (char *)"I1";
+    SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    ins.hParent = root;
+    ins.hInsertAfter = TVI_LAST;
+    U(ins).item.pszText = (char *)"i1";
+    SendMessageA(hwnd, TVM_INSERTITEMA, 0, (LPARAM)&ins);
+
+    ret = SendMessageA(hwnd, TVM_SORTCHILDREN, TRUE, (LPARAM)root);
+    ok(ret, "Unexpected ret value %d\n", ret);
+    get_item_names_string(hwnd, NULL, buff);
+    ok(!strcmp(buff, "rootI1i1"), "Wrong sorted order %s\n", buff);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -2472,6 +2661,7 @@ START_TEST(treeview)
     test_customdraw();
     test_WM_KEYDOWN();
     test_TVS_FULLROWSELECT();
+    test_TVM_SORTCHILDREN();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
