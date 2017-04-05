@@ -1524,7 +1524,9 @@ static HRESULT WINAPI dwritetextanalyzer1_GetScriptProperties(IDWriteTextAnalyze
 
 static inline BOOL is_char_from_simple_script(WCHAR c)
 {
-    if (IS_HIGH_SURROGATE(c) || IS_LOW_SURROGATE(c))
+    if (IS_HIGH_SURROGATE(c) || IS_LOW_SURROGATE(c) ||
+            /* LRM, RLM, LRE, RLE, PDF, LRO, RLO */
+            c == 0x200e || c == 0x200f || (c >= 0x202a && c <= 0x202e))
         return FALSE;
     else {
         UINT16 script = get_char_script(c);

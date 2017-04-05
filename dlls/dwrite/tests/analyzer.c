@@ -1197,7 +1197,13 @@ static const struct textcomplexity_test textcomplexity_tests[] = {
     { {0x610,0x610,'C','D',0}, 2, FALSE, 2 },
     { {0xd800,'A','B',0},      1, FALSE, 1 },
     { {0xd800,'A','B',0},      2, FALSE, 1 },
-    { {0xdc00,'A','B',0},      2, FALSE, 1 }
+    { {0xdc00,'A','B',0},      2, FALSE, 1 },
+    { {0x202a,'A',0x202c,0},   3, FALSE, 1 },
+    { {0x200e,'A',0},          2, FALSE, 1 },
+    { {0x200f,'A',0},          2, FALSE, 1 },
+    { {0x202d,'A',0},          2, FALSE, 1 },
+    { {0x202e,'A',0},          2, FALSE, 1 },
+
 };
 
 static void test_GetTextComplexity(void)
