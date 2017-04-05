@@ -69,7 +69,7 @@
 @ stub WsGetHeader
 @ stub WsGetHeaderAttributes
 @ stdcall WsGetHeapProperty(ptr long ptr long ptr)
-@ stub WsGetListenerProperty
+@ stdcall WsGetListenerProperty(ptr long ptr long ptr)
 @ stub WsGetMappedHeader
 @ stdcall WsGetMessageProperty(ptr long ptr long ptr)
 @ stub WsGetMetadataEndpoints
@@ -152,7 +152,7 @@
 @ stdcall WsSetHeader(ptr long long long ptr long ptr)
 @ stdcall WsSetInput(ptr ptr ptr ptr long ptr)
 @ stdcall WsSetInputToBuffer(ptr ptr ptr long ptr)
-@ stub WsSetListenerProperty
+@ stdcall WsSetListenerProperty(ptr long ptr long ptr)
 @ stdcall WsSetMessageProperty(ptr long ptr long ptr)
 @ stdcall WsSetOutput(ptr ptr ptr ptr long ptr)
 @ stdcall WsSetOutputToBuffer(ptr ptr ptr long ptr)

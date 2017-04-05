@@ -172,3 +172,78 @@ void WINAPI WsFreeListener( WS_LISTENER *handle )
     LeaveCriticalSection( &listener->cs );
     free_listener( listener );
 }
+
+/**************************************************************************
+ *          WsGetListenerProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetListenerProperty( WS_LISTENER *handle, WS_LISTENER_PROPERTY_ID id, void *buf,
+                                      ULONG size, WS_ERROR *error )
+{
+    struct listener *listener = (struct listener *)handle;
+    HRESULT hr = S_OK;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!listener) return E_INVALIDARG;
+
+    EnterCriticalSection( &listener->cs );
+
+    if (listener->magic != LISTENER_MAGIC)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return E_INVALIDARG;
+    }
+
+    switch (id)
+    {
+    case WS_LISTENER_PROPERTY_STATE:
+        if (!buf || size != sizeof(listener->state)) hr = E_INVALIDARG;
+        else *(WS_LISTENER_STATE *)buf = listener->state;
+        break;
+
+    case WS_LISTENER_PROPERTY_CHANNEL_TYPE:
+        if (!buf || size != sizeof(listener->type)) hr = E_INVALIDARG;
+        else *(WS_CHANNEL_TYPE *)buf = listener->type;
+        break;
+
+    case WS_LISTENER_PROPERTY_CHANNEL_BINDING:
+        if (!buf || size != sizeof(listener->binding)) hr = E_INVALIDARG;
+        else *(WS_CHANNEL_BINDING *)buf = listener->binding;
+        break;
+
+    default:
+        hr = prop_get( listener->prop, listener->prop_count, id, buf, size );
+    }
+
+    LeaveCriticalSection( &listener->cs );
+    return hr;
+}
+
+/**************************************************************************
+ *          WsSetListenerProperty		[webservices.@]
+ */
+HRESULT WINAPI WsSetListenerProperty( WS_LISTENER *handle, WS_LISTENER_PROPERTY_ID id, const void *value,
+                                      ULONG size, WS_ERROR *error )
+{
+    struct listener *listener = (struct listener *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %u %p %u\n", handle, id, value, size );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!listener) return E_INVALIDARG;
+
+    EnterCriticalSection( &listener->cs );
+
+    if (listener->magic != LISTENER_MAGIC)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = prop_set( listener->prop, listener->prop_count, id, value, size );
+
+    LeaveCriticalSection( &listener->cs );
+    return hr;
+}
