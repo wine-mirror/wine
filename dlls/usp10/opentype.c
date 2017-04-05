@@ -2206,91 +2206,94 @@ static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, 
     for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
     {
         int offset;
-        const GPOS_ChainContextPosFormat3_1 *ccpf3 = (GPOS_ChainContextPosFormat3_1 *)GPOS_get_subtable(look, j);
+        const GPOS_ChainContextPosFormat3_1 *backtrack = (GPOS_ChainContextPosFormat3_1 *)GPOS_get_subtable(look, j);
         int dirLookahead = write_dir;
         int dirBacktrack = -1 * write_dir;
 
-        if (GET_BE_WORD(ccpf3->PosFormat) == 1)
+        if (GET_BE_WORD(backtrack->PosFormat) == 1)
         {
             static int once;
             if (!once++)
                 FIXME("  TODO: subtype 1 (Simple Chaining Context Glyph Positioning)\n");
             continue;
         }
-        else if (GET_BE_WORD(ccpf3->PosFormat) == 2)
+        else if (GET_BE_WORD(backtrack->PosFormat) == 2)
         {
             static int once;
             if (!once++)
                 FIXME("  TODO: subtype 2 (Class-based Chaining Context Glyph Positioning)\n");
             continue;
         }
-        else if (GET_BE_WORD(ccpf3->PosFormat) == 3)
+        else if (GET_BE_WORD(backtrack->PosFormat) == 3)
         {
             int k;
             int indexGlyphs;
-            const GPOS_ChainContextPosFormat3_2 *ccpf3_2;
-            const GPOS_ChainContextPosFormat3_3 *ccpf3_3;
-            const GPOS_ChainContextPosFormat3_4 *ccpf3_4;
+            const GPOS_ChainContextPosFormat3_2 *input;
+            const GPOS_ChainContextPosFormat3_3 *lookahead;
+            const GPOS_ChainContextPosFormat3_4 *positioning;
 
             TRACE("  subtype 3 (Coverage-based Chaining Context Glyph Positioning)\n");
 
-            for (k = 0; k < GET_BE_WORD(ccpf3->BacktrackGlyphCount); k++)
+            for (k = 0; k < GET_BE_WORD(backtrack->BacktrackGlyphCount); ++k)
             {
-                offset = GET_BE_WORD(ccpf3->Coverage[k]);
-                if (GSUB_is_glyph_covered((const BYTE*)ccpf3+offset, glyphs[glyph_index + (dirBacktrack * (k+1))]) == -1)
+                offset = GET_BE_WORD(backtrack->Coverage[k]);
+                if (GSUB_is_glyph_covered((const BYTE *)backtrack + offset,
+                        glyphs[glyph_index + (dirBacktrack * (k + 1))]) == -1)
                     break;
             }
-            if (k != GET_BE_WORD(ccpf3->BacktrackGlyphCount))
+            if (k != GET_BE_WORD(backtrack->BacktrackGlyphCount))
                 continue;
             TRACE("Matched Backtrack\n");
 
-            ccpf3_2 = (const GPOS_ChainContextPosFormat3_2*)((BYTE *)ccpf3 +
-                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_1, Coverage[GET_BE_WORD(ccpf3->BacktrackGlyphCount)]));
+            input = (const GPOS_ChainContextPosFormat3_2 *)((BYTE *)backtrack +
+                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_1, Coverage[GET_BE_WORD(backtrack->BacktrackGlyphCount)]));
 
-            indexGlyphs = GET_BE_WORD(ccpf3_2->InputGlyphCount);
+            indexGlyphs = GET_BE_WORD(input->InputGlyphCount);
             for (k = 0; k < indexGlyphs; k++)
             {
-                offset = GET_BE_WORD(ccpf3_2->Coverage[k]);
-                if (GSUB_is_glyph_covered((const BYTE*)ccpf3+offset, glyphs[glyph_index + (write_dir * k)]) == -1)
+                offset = GET_BE_WORD(input->Coverage[k]);
+                if (GSUB_is_glyph_covered((const BYTE *)backtrack + offset,
+                        glyphs[glyph_index + (write_dir * k)]) == -1)
                     break;
             }
             if (k != indexGlyphs)
                 continue;
             TRACE("Matched IndexGlyphs\n");
 
-            ccpf3_3 = (const GPOS_ChainContextPosFormat3_3*)((BYTE *)ccpf3_2 +
-                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_2, Coverage[GET_BE_WORD(ccpf3_2->InputGlyphCount)]));
+            lookahead = (const GPOS_ChainContextPosFormat3_3 *)((BYTE *)input +
+                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_2, Coverage[GET_BE_WORD(input->InputGlyphCount)]));
 
-            for (k = 0; k < GET_BE_WORD(ccpf3_3->LookaheadGlyphCount); k++)
+            for (k = 0; k < GET_BE_WORD(lookahead->LookaheadGlyphCount); ++k)
             {
-                offset = GET_BE_WORD(ccpf3_3->Coverage[k]);
-                if (GSUB_is_glyph_covered((const BYTE*)ccpf3+offset, glyphs[glyph_index + (dirLookahead * (indexGlyphs + k))]) == -1)
+                offset = GET_BE_WORD(lookahead->Coverage[k]);
+                if (GSUB_is_glyph_covered((const BYTE *)backtrack + offset,
+                        glyphs[glyph_index + (dirLookahead * (indexGlyphs + k))]) == -1)
                     break;
             }
-            if (k != GET_BE_WORD(ccpf3_3->LookaheadGlyphCount))
+            if (k != GET_BE_WORD(lookahead->LookaheadGlyphCount))
                 continue;
             TRACE("Matched LookAhead\n");
 
-            ccpf3_4 = (const GPOS_ChainContextPosFormat3_4*)((BYTE *)ccpf3_3 +
-                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_3, Coverage[GET_BE_WORD(ccpf3_3->LookaheadGlyphCount)]));
+            positioning = (const GPOS_ChainContextPosFormat3_4 *)((BYTE *)lookahead +
+                    FIELD_OFFSET(GPOS_ChainContextPosFormat3_3, Coverage[GET_BE_WORD(lookahead->LookaheadGlyphCount)]));
 
-            if (GET_BE_WORD(ccpf3_4->PosCount))
+            if (GET_BE_WORD(positioning->PosCount))
             {
-                for (k = 0; k < GET_BE_WORD(ccpf3_4->PosCount); k++)
+                for (k = 0; k < GET_BE_WORD(positioning->PosCount); ++k)
                 {
-                    int lookupIndex = GET_BE_WORD(ccpf3_4->PosLookupRecord[k].LookupListIndex);
-                    int SequenceIndex = GET_BE_WORD(ccpf3_4->PosLookupRecord[k].SequenceIndex) * write_dir;
+                    int lookupIndex = GET_BE_WORD(positioning->PosLookupRecord[k].LookupListIndex);
+                    int SequenceIndex = GET_BE_WORD(positioning->PosLookupRecord[k].SequenceIndex) * write_dir;
 
                     TRACE("Position: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
                     GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookupIndex,
                             glyphs, glyph_index + SequenceIndex, glyph_count, goffset);
                 }
-                return indexGlyphs + GET_BE_WORD(ccpf3_3->LookaheadGlyphCount);
+                return indexGlyphs + GET_BE_WORD(lookahead->LookaheadGlyphCount);
             }
             else return 1;
         }
         else
-            FIXME("Unhandled Chaining Contextual Positioning Format %i\n",GET_BE_WORD(ccpf3->PosFormat));
+            FIXME("Unhandled Chaining Contextual Positioning Format %#x.\n", GET_BE_WORD(backtrack->PosFormat));
     }
     return 1;
 }
