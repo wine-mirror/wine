@@ -2235,10 +2235,22 @@ static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, 
             TRACE("  subtype 3 (Coverage-based Chaining Context Glyph Positioning)\n");
 
             backtrack_count = GET_BE_WORD(backtrack->BacktrackGlyphCount);
+            k = glyph_index + dirBacktrack * backtrack_count;
+            if (k < 0 || k >= glyph_count)
+                continue;
+
             input = (const GPOS_ChainContextPosFormat3_2 *)&backtrack->Coverage[backtrack_count];
             input_count = GET_BE_WORD(input->InputGlyphCount);
+            k = glyph_index + write_dir * (input_count - 1);
+            if (k < 0 || k >= glyph_count)
+                continue;
+
             lookahead = (const GPOS_ChainContextPosFormat3_3 *)&input->Coverage[input_count];
             lookahead_count = GET_BE_WORD(lookahead->LookaheadGlyphCount);
+            k = glyph_index + dirLookahead * (input_count + lookahead_count - 1);
+            if (k < 0 || k >= glyph_count)
+                continue;
+
             positioning = (const GPOS_ChainContextPosFormat3_4 *)&lookahead->Coverage[lookahead_count];
 
             for (k = 0; k < backtrack_count; ++k)
