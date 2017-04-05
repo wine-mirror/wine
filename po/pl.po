@@ -2,13 +2,13 @@
 #
 # Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011, 2012, 2013, 2014.
 # Adam "Saibamen" Stachowicz <saibamenppl@gmail.com>, 2015.
-# Marcin Mikołajczak <m4sk1n@vivaldi.net>, 2017.
+# Marcin Mikołajczak <marcin123407@vivaldi.net>, 2017.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-26 13:58+0100\n"
+"PO-Revision-Date: 2017-04-05 21:48+0200\n"
 "Last-Translator: Marcin Mikołajczak <marcin123407@vivaldi.net>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -3719,7 +3719,7 @@ msgstr "Oczekiwany obiekt tablicowy"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "DLL jądra WINE"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -9389,9 +9389,8 @@ msgid "Confidentiality Required"
 msgstr "Wymagana poufność"
 
 #: wldap32.rc:46
-#, fuzzy
 msgid "SASL Bind in Progress"
-msgstr "Zamykanie w toku.\n"
+msgstr "Dowiązanie SASL nie powiodło się"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -12232,9 +12231,8 @@ msgid "Displays program information, version number and copyright"
 msgstr "Wyświetla informacje o programie, numerze wersji i prawach autorskich"
 
 #: regedit.rc:181
-#, fuzzy
 msgid "Unable to query the registry value '%1'."
-msgstr "Błąd: Błąd dostępu do zdalnej maszyny\n"
+msgstr "Nie można odnaleźć wartości rejestru '%1'."
 
 #: regedit.rc:182
 msgid "Unable to edit registry keys of this type (%1!u!)."
@@ -12265,9 +12263,8 @@ msgid "New Value #%d"
 msgstr "Nowa wartość #%d"
 
 #: regedit.rc:180
-#, fuzzy
 msgid "Unable to query the registry key '%1'."
-msgstr "Błąd: Błąd dostępu do zdalnej maszyny\n"
+msgstr "Nie można odnaleźć klucza rejestru '%1'."
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
@@ -12282,10 +12279,10 @@ msgid "Confirm Key Delete"
 msgstr "Potwierdź usunięcie klucza"
 
 #: regedit.rc:188
-#, fuzzy
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "Czy jesteś pewien, że chcesz usunąć '%1'?"
+msgstr ""
+"Czy na pewno chcesz usunąć klucz rejestru '%1' i wszystkie jego pochodne?"
 
 #: regsvr32.rc:32
 msgid ""
