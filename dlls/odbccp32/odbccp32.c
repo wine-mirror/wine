@@ -41,6 +41,7 @@ static const WCHAR drivers_key[] = {'S','o','f','t','w','a','r','e','\\','O','D'
 static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C',0};
 static const WCHAR odbcini[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','O','D','B','C','I','N','S','T','.','I','N','I','\\',0};
 static const WCHAR odbcdrivers[] = {'O','D','B','C',' ','D','r','i','v','e','r','s',0};
+static const WCHAR odbctranslators[] = {'O','D','B','C',' ','T','r','a','n','s','l','a','t','o','r','s',0};
 
 /* This config mode is known to be process-wide.
  * MSDN documentation suggests that the value is hidden somewhere in the registry but I haven't found it yet.
@@ -636,6 +637,7 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
     static const WCHAR slash[] = {'\\', 0};
     static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
     static const WCHAR setupW[] = {'S','e','t','u','p',0};
+    static const WCHAR translator[] = {'T','r','a','n','s','l','a','t','o','r',0};
     HKEY hkey, hkeydriver;
 
     if (RegCreateKeyW(HKEY_LOCAL_MACHINE, odbcini, &hkey) == ERROR_SUCCESS)
@@ -684,8 +686,9 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                     divider++;
                     TRACE("Writing pair %s,%s\n", debugstr_w(entry), debugstr_w(divider));
 
-                    /* Driver and Setup entries use the system path unless a path is specified. */
-                    if(lstrcmpiW(driverW, entry) == 0 || lstrcmpiW(setupW, entry) == 0)
+                    /* Driver, Setup, Translator entries use the system path unless a path is specified. */
+                    if(lstrcmpiW(driverW, entry) == 0 || lstrcmpiW(setupW, entry) == 0 ||
+                       lstrcmpiW(translator, entry) == 0)
                     {
                         len = lstrlenW(path) + lstrlenW(slash) + lstrlenW(divider) + 1;
                         value = heap_alloc(len * sizeof(WCHAR));
@@ -976,7 +979,6 @@ BOOL WINAPI SQLInstallTranslatorExW(LPCWSTR lpszTranslator, LPCWSTR lpszPathIn,
                WORD fRequest, LPDWORD lpdwUsageCount)
 {
     UINT len;
-    LPCWSTR p;
     WCHAR path[MAX_PATH];
 
     clear_errors();
@@ -984,10 +986,9 @@ BOOL WINAPI SQLInstallTranslatorExW(LPCWSTR lpszTranslator, LPCWSTR lpszPathIn,
           debugstr_w(lpszPathIn), lpszPathOut, cbPathOutMax, pcbPathOut,
           fRequest, lpdwUsageCount);
 
-    for (p = lpszTranslator; *p; p += lstrlenW(p) + 1)
-        TRACE("%s\n", debugstr_w(p));
+    write_registry_values(odbctranslators, lpszTranslator, lpszPathIn, path, lpdwUsageCount);
 
-    len = GetSystemDirectoryW(path, MAX_PATH);
+    len = lstrlenW(path);
 
     if (pcbPathOut)
         *pcbPathOut = len;
