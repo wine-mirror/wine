@@ -68,27 +68,28 @@ void wined3d_event_query_destroy(struct wined3d_event_query *query)
 static enum wined3d_event_query_result wined3d_event_query_test(const struct wined3d_event_query *query,
         const struct wined3d_device *device, DWORD flags)
 {
-    struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
     enum wined3d_event_query_result ret;
+    struct wined3d_context *context;
     BOOL fence_result;
 
     TRACE("query %p, device %p, flags %#x.\n", query, device, flags);
 
     if (!query->context)
     {
-        TRACE("Query not started\n");
+        TRACE("Query not started.\n");
         return WINED3D_EVENT_QUERY_NOT_STARTED;
     }
 
-    if (!query->context->gl_info->supported[ARB_SYNC] && query->context->tid != GetCurrentThreadId())
+    if (!(context = context_reacquire(device, query->context)))
     {
-        WARN("Event query tested from wrong thread\n");
-        return WINED3D_EVENT_QUERY_WRONG_THREAD;
+        if (!query->context->gl_info->supported[ARB_SYNC])
+        {
+            WARN("Event query tested from wrong thread.\n");
+            return WINED3D_EVENT_QUERY_WRONG_THREAD;
+        }
+        context = context_acquire(device, NULL, 0);
     }
-
-    context = context_acquire(device, query->context->current_rt.texture,
-            query->context->current_rt.sub_resource_idx);
     gl_info = context->gl_info;
 
     if (gl_info->supported[ARB_SYNC])
@@ -141,30 +142,32 @@ static enum wined3d_event_query_result wined3d_event_query_test(const struct win
 enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_event_query *query,
         const struct wined3d_device *device)
 {
-    struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
     enum wined3d_event_query_result ret;
+    struct wined3d_context *context;
 
     TRACE("query %p, device %p.\n", query, device);
 
     if (!query->context)
     {
-        TRACE("Query not started\n");
+        TRACE("Query not started.\n");
         return WINED3D_EVENT_QUERY_NOT_STARTED;
     }
     gl_info = query->context->gl_info;
 
-    if (query->context->tid != GetCurrentThreadId() && !gl_info->supported[ARB_SYNC])
+    if (!(context = context_reacquire(device, query->context)))
     {
         /* A glFinish does not reliably wait for draws in other contexts. The caller has
          * to find its own way to cope with the thread switch
          */
-        WARN("Event query finished from wrong thread\n");
-        return WINED3D_EVENT_QUERY_WRONG_THREAD;
+        if (!gl_info->supported[ARB_SYNC])
+        {
+            WARN("Event query finished from wrong thread.\n");
+            return WINED3D_EVENT_QUERY_WRONG_THREAD;
+        }
+        context = context_acquire(device, NULL, 0);
     }
-
-    context = context_acquire(device, query->context->current_rt.texture,
-            query->context->current_rt.sub_resource_idx);
+    gl_info = context->gl_info;
 
     if (gl_info->supported[ARB_SYNC])
     {
@@ -216,24 +219,21 @@ void wined3d_event_query_issue(struct wined3d_event_query *query, const struct w
 
     if (query->context)
     {
-        if (!query->context->gl_info->supported[ARB_SYNC] && query->context->tid != GetCurrentThreadId())
+        if (!(context = context_reacquire(device, query->context))
+                && !query->context->gl_info->supported[ARB_SYNC])
         {
             context_free_event_query(query);
             context = context_acquire(device, NULL, 0);
             context_alloc_event_query(context, query);
         }
-        else
-        {
-            context = context_acquire(device, query->context->current_rt.texture,
-                    query->context->current_rt.sub_resource_idx);
-        }
+        if (!context)
+            context = context_acquire(device, NULL, 0);
     }
     else
     {
         context = context_acquire(device, NULL, 0);
         context_alloc_event_query(context, query);
     }
-
     gl_info = context->gl_info;
 
     if (gl_info->supported[ARB_SYNC])
@@ -378,15 +378,12 @@ static BOOL wined3d_occlusion_query_ops_poll(struct wined3d_query *query, DWORD 
 
     TRACE("query %p, flags %#x.\n", query, flags);
 
-    if (oq->context->tid != GetCurrentThreadId())
+    if (!(context = context_reacquire(device, oq->context)))
     {
         FIXME("%p Wrong thread, returning 1.\n", query);
         oq->samples = 1;
         return TRUE;
     }
-
-    context = context_acquire(device, oq->context->current_rt.texture,
-            oq->context->current_rt.sub_resource_idx);
     gl_info = context->gl_info;
 
     GL_EXTCALL(glGetQueryObjectuiv(oq->id, GL_QUERY_RESULT_AVAILABLE, &available));
@@ -494,28 +491,24 @@ static void wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DWORD
     {
         if (query->state == QUERY_BUILDING)
         {
-            if (oq->context->tid != GetCurrentThreadId())
+            if ((context = context_reacquire(device, oq->context)))
             {
-                FIXME("Wrong thread, can't restart query.\n");
-
-                context_free_occlusion_query(oq);
-                context = context_acquire(query->device, NULL, 0);
-                context_alloc_occlusion_query(context, oq);
+                GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
+                checkGLcall("glEndQuery()");
             }
             else
             {
-                context = context_acquire(device, oq->context->current_rt.texture,
-                        oq->context->current_rt.sub_resource_idx);
-
-                GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
-                checkGLcall("glEndQuery()");
+                FIXME("Wrong thread, can't restart query.\n");
+                context_free_occlusion_query(oq);
+                context = context_acquire(device, NULL, 0);
+                context_alloc_occlusion_query(context, oq);
             }
         }
         else
         {
             if (oq->context)
                 context_free_occlusion_query(oq);
-            context = context_acquire(query->device, NULL, 0);
+            context = context_acquire(device, NULL, 0);
             context_alloc_occlusion_query(context, oq);
         }
 
@@ -531,19 +524,16 @@ static void wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DWORD
          * so avoid generating an error. */
         if (query->state == QUERY_BUILDING)
         {
-            if (oq->context->tid != GetCurrentThreadId())
+            if ((context = context_reacquire(device, oq->context)))
             {
-                FIXME("Wrong thread, can't end query.\n");
-            }
-            else
-            {
-                context = context_acquire(device, oq->context->current_rt.texture,
-                        oq->context->current_rt.sub_resource_idx);
-
                 GL_EXTCALL(glEndQuery(GL_SAMPLES_PASSED));
                 checkGLcall("glEndQuery()");
 
                 context_release(context);
+            }
+            else
+            {
+                FIXME("Wrong thread, can't end query.\n");
             }
         }
     }
@@ -560,15 +550,12 @@ static BOOL wined3d_timestamp_query_ops_poll(struct wined3d_query *query, DWORD 
 
     TRACE("query %p, flags %#x.\n", query, flags);
 
-    if (tq->context->tid != GetCurrentThreadId())
+    if (!(context = context_reacquire(device, tq->context)))
     {
         FIXME("%p Wrong thread, returning 1.\n", query);
         tq->timestamp = 1;
         return TRUE;
     }
-
-    context = context_acquire(device, tq->context->current_rt.texture,
-            tq->context->current_rt.sub_resource_idx);
     gl_info = context->gl_info;
 
     GL_EXTCALL(glGetQueryObjectuiv(tq->id, GL_QUERY_RESULT_AVAILABLE, &available));

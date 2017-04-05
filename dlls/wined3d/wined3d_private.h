@@ -1933,6 +1933,8 @@ void context_gl_resource_released(struct wined3d_device *device,
         GLuint name, BOOL rb_namespace) DECLSPEC_HIDDEN;
 void context_invalidate_compute_state(struct wined3d_context *context, DWORD state_id) DECLSPEC_HIDDEN;
 void context_invalidate_state(struct wined3d_context *context, DWORD state_id) DECLSPEC_HIDDEN;
+struct wined3d_context *context_reacquire(const struct wined3d_device *device,
+        struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_release(struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_resource_released(const struct wined3d_device *device,
         struct wined3d_resource *resource, enum wined3d_resource_type type) DECLSPEC_HIDDEN;
