@@ -133,7 +133,7 @@
 @ stub WsRemoveNode
 @ stub WsRequestReply
 @ stub WsRequestSecurityToken
-@ stub WsResetChannel
+@ stdcall WsResetChannel(ptr ptr)
 @ stdcall WsResetError(ptr)
 @ stdcall WsResetHeap(ptr ptr)
 @ stub WsResetListener

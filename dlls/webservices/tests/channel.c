@@ -103,8 +103,68 @@ static void test_WsOpenChannel(void)
     WsFreeChannel( channel );
 }
 
+static void test_WsResetChannel(void)
+{
+    WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t'};
+    HRESULT hr;
+    WS_CHANNEL *channel;
+    WS_CHANNEL_STATE state;
+    WS_CHANNEL_TYPE type;
+    WS_ENDPOINT_ADDRESS addr;
+    ULONG size, timeout;
+
+    hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetChannel( channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    timeout = 5000;
+    size = sizeof(timeout);
+    hr = WsSetChannelProperty( channel, WS_CHANNEL_PROPERTY_RESOLVE_TIMEOUT, &timeout, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    addr.url.length = sizeof(url)/sizeof(url[0]);
+    addr.url.chars  = url;
+    addr.headers    = NULL;
+    addr.extensions = NULL;
+    addr.identity   = NULL;
+    hr = WsOpenChannel( channel, &addr, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetChannel( channel, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCloseChannel( channel, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetChannel( channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    size = sizeof(state);
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_CHANNEL_STATE_CREATED, "got %u\n", state );
+
+    type = 0xdeadbeef;
+    size = sizeof(type);
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_CHANNEL_TYPE, &type, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( type == WS_CHANNEL_TYPE_REQUEST, "got %u\n", type );
+
+    timeout = 0xdeadbeef;
+    size = sizeof(timeout);
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_RESOLVE_TIMEOUT, &timeout, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( timeout == 5000, "got %u\n", timeout );
+
+    WsFreeChannel( channel );
+}
+
 START_TEST(channel)
 {
     test_WsCreateChannel();
     test_WsOpenChannel();
+    test_WsResetChannel();
 }

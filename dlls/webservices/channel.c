@@ -121,14 +121,27 @@ static struct channel *alloc_channel(void)
     return ret;
 }
 
+static void reset_channel( struct channel *channel )
+{
+    channel->state           = WS_CHANNEL_STATE_CREATED;
+    heap_free( channel->addr.url.chars );
+    channel->addr.url.chars  = NULL;
+    channel->addr.url.length = 0;
+
+    WinHttpCloseHandle( channel->http_request );
+    channel->http_request    = NULL;
+    WinHttpCloseHandle( channel->http_connect );
+    channel->http_connect    = NULL;
+    WinHttpCloseHandle( channel->http_session );
+    channel->http_session    = NULL;
+}
+
 static void free_channel( struct channel *channel )
 {
+    reset_channel( channel );
+
     WsFreeWriter( channel->writer );
     WsFreeReader( channel->reader );
-    WinHttpCloseHandle( channel->http_request );
-    WinHttpCloseHandle( channel->http_connect );
-    WinHttpCloseHandle( channel->http_session );
-    heap_free( channel->addr.url.chars );
 
     channel->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &channel->cs );
@@ -223,6 +236,38 @@ void WINAPI WsFreeChannel( WS_CHANNEL *handle )
 
     LeaveCriticalSection( &channel->cs );
     free_channel( channel );
+}
+
+/**************************************************************************
+ *          WsResetChannel		[webservices.@]
+ */
+HRESULT WINAPI WsResetChannel( WS_CHANNEL *handle, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!channel) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if (channel->state != WS_CHANNEL_STATE_CREATED && channel->state != WS_CHANNEL_STATE_CLOSED)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    reset_channel( channel );
+
+    LeaveCriticalSection( &channel->cs );
+    return S_OK;
 }
 
 /**************************************************************************
@@ -343,17 +388,7 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
 
 static HRESULT close_channel( struct channel *channel )
 {
-    WinHttpCloseHandle( channel->http_request );
-    channel->http_request = NULL;
-    WinHttpCloseHandle( channel->http_connect );
-    channel->http_connect = NULL;
-    WinHttpCloseHandle( channel->http_session );
-    channel->http_session = NULL;
-
-    heap_free( channel->addr.url.chars );
-    channel->addr.url.chars  = NULL;
-    channel->addr.url.length = 0;
-
+    reset_channel( channel );
     channel->state = WS_CHANNEL_STATE_CLOSED;
     return S_OK;
 }
