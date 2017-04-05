@@ -214,27 +214,17 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
 
 void wined3d_event_query_issue(struct wined3d_event_query *query, const struct wined3d_device *device)
 {
+    struct wined3d_context *context = NULL;
     const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
 
-    if (query->context)
-    {
-        if (!(context = context_reacquire(device, query->context))
-                && !query->context->gl_info->supported[ARB_SYNC])
-        {
-            context_free_event_query(query);
-            context = context_acquire(device, NULL, 0);
-            context_alloc_event_query(context, query);
-        }
-        if (!context)
-            context = context_acquire(device, NULL, 0);
-    }
-    else
-    {
+    if (query->context && !(context = context_reacquire(device, query->context))
+            && !query->context->gl_info->supported[ARB_SYNC])
+        context_free_event_query(query);
+    if (!context)
         context = context_acquire(device, NULL, 0);
-        context_alloc_event_query(context, query);
-    }
     gl_info = context->gl_info;
+    if (!query->context)
+        context_alloc_event_query(context, query);
 
     if (gl_info->supported[ARB_SYNC])
     {
