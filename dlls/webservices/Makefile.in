@@ -6,6 +6,7 @@ C_SRCS = \
 	channel.c \
 	error.c \
 	heap.c \
+	listener.c \
 	msg.c \
 	proxy.c \
 	reader.c \
