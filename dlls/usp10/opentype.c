@@ -1281,8 +1281,8 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
 
             for (i = 0; i < count; i++)
             {
+                WORD backtrack_count, input_count, lookahead_count;
                 int k;
-                int indexGlyphs;
                 const GSUB_ChainSubClassRule_1 *backtrack;
                 const GSUB_ChainSubClassRule_2 *input;
                 const GSUB_ChainSubClassRule_3 *lookahead;
@@ -1290,49 +1290,46 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
 
                 offset = GET_BE_WORD(csc->ChainSubClassRule[i]);
                 backtrack = (const GSUB_ChainSubClassRule_1 *)((BYTE *)csc + offset);
+                backtrack_count = GET_BE_WORD(backtrack->BacktrackGlyphCount);
+                input = (const GSUB_ChainSubClassRule_2 *)&backtrack->Backtrack[backtrack_count];
+                input_count = GET_BE_WORD(input->InputGlyphCount) - 1;
+                lookahead = (const GSUB_ChainSubClassRule_3 *)&input->Input[input_count];
+                lookahead_count = GET_BE_WORD(lookahead->LookaheadGlyphCount);
+                substitute = (const GSUB_ChainSubClassRule_4 *)&lookahead->LookAhead[lookahead_count];
 
-                for (k = 0; k < GET_BE_WORD(backtrack->BacktrackGlyphCount); ++k)
+                for (k = 0; k < backtrack_count; ++k)
                 {
                     WORD target_class = GET_BE_WORD(backtrack->Backtrack[k]);
                     WORD glyph_class = OT_get_glyph_class(backtrack_class_table, glyphs[glyph_index + (dirBacktrack * (k+1))]);
                     if (target_class != glyph_class)
                         break;
                 }
-                if (k != GET_BE_WORD(backtrack->BacktrackGlyphCount))
+                if (k != backtrack_count)
                     continue;
                 TRACE("Matched Backtrack\n");
 
-                input = (const GSUB_ChainSubClassRule_2 *)((BYTE *)backtrack +
-                    FIELD_OFFSET(GSUB_ChainSubClassRule_1, Backtrack[GET_BE_WORD(backtrack->BacktrackGlyphCount)]));
-
-                indexGlyphs = GET_BE_WORD(input->InputGlyphCount);
-                for (k = 0; k < indexGlyphs - 1; k++)
+                for (k = 0; k < input_count; ++k)
                 {
                     WORD target_class = GET_BE_WORD(input->Input[k]);
                     WORD glyph_class = OT_get_glyph_class(input_class_table, glyphs[glyph_index + (write_dir * (k+1))]);
                     if (target_class != glyph_class)
                         break;
                 }
-                if (k != indexGlyphs-1)
+                if (k != input_count)
                     continue;
                 TRACE("Matched IndexGlyphs\n");
 
-                lookahead = (const GSUB_ChainSubClassRule_3 *)((BYTE *)input +
-                        FIELD_OFFSET(GSUB_ChainSubClassRule_2, Input[GET_BE_WORD(input->InputGlyphCount) - 1]));
-
-                for (k = 0; k < GET_BE_WORD(lookahead->LookaheadGlyphCount); ++k)
+                for (k = 0; k < lookahead_count; ++k)
                 {
                     WORD target_class = GET_BE_WORD(lookahead->LookAhead[k]);
-                    WORD glyph_class = OT_get_glyph_class(lookahead_class_table, glyphs[glyph_index + (dirLookahead * (indexGlyphs+k))]);
+                    WORD glyph_class = OT_get_glyph_class(lookahead_class_table,
+                            glyphs[glyph_index + (dirLookahead * (input_count + k + 1))]);
                     if (target_class != glyph_class)
                         break;
                 }
-                if (k != GET_BE_WORD(lookahead->LookaheadGlyphCount))
+                if (k != lookahead_count)
                     continue;
                 TRACE("Matched LookAhead\n");
-
-                substitute = (const GSUB_ChainSubClassRule_4 *)((BYTE *)lookahead +
-                        FIELD_OFFSET(GSUB_ChainSubClassRule_3, LookAhead[GET_BE_WORD(lookahead->LookaheadGlyphCount)]));
 
                 if (GET_BE_WORD(substitute->SubstCount))
                 {
@@ -1356,60 +1353,56 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
         }
         else if (GET_BE_WORD(ccsf1->SubstFormat) == 3)
         {
+            WORD backtrack_count, input_count, lookahead_count;
             int k;
-            int indexGlyphs;
             const GSUB_ChainContextSubstFormat3_1 *backtrack;
             const GSUB_ChainContextSubstFormat3_2 *input;
             const GSUB_ChainContextSubstFormat3_3 *lookahead;
             const GSUB_ChainContextSubstFormat3_4 *substitute;
             int newIndex = glyph_index;
 
-            backtrack = (const GSUB_ChainContextSubstFormat3_1 *)ccsf1;
-
             TRACE("  subtype 3 (Coverage-based Chaining Context Glyph Substitution)\n");
 
-            for (k = 0; k < GET_BE_WORD(backtrack->BacktrackGlyphCount); ++k)
+            backtrack = (const GSUB_ChainContextSubstFormat3_1 *)ccsf1;
+            backtrack_count = GET_BE_WORD(backtrack->BacktrackGlyphCount);
+            input = (const GSUB_ChainContextSubstFormat3_2 *)&backtrack->Coverage[backtrack_count];
+            input_count = GET_BE_WORD(input->InputGlyphCount);
+            lookahead = (const GSUB_ChainContextSubstFormat3_3 *)&input->Coverage[input_count];
+            lookahead_count = GET_BE_WORD(lookahead->LookaheadGlyphCount);
+            substitute = (const GSUB_ChainContextSubstFormat3_4 *)&lookahead->Coverage[lookahead_count];
+
+            for (k = 0; k < backtrack_count; ++k)
             {
                 offset = GET_BE_WORD(backtrack->Coverage[k]);
                 if (GSUB_is_glyph_covered((const BYTE *)ccsf1 + offset,
                         glyphs[glyph_index + (dirBacktrack * (k + 1))]) == -1)
                     break;
             }
-            if (k != GET_BE_WORD(backtrack->BacktrackGlyphCount))
+            if (k != backtrack_count)
                 continue;
             TRACE("Matched Backtrack\n");
 
-            input = (const GSUB_ChainContextSubstFormat3_2 *)((BYTE *)ccsf1 +
-                    FIELD_OFFSET(GSUB_ChainContextSubstFormat3_1, Coverage[GET_BE_WORD(backtrack->BacktrackGlyphCount)]));
-
-            indexGlyphs = GET_BE_WORD(input->InputGlyphCount);
-            for (k = 0; k < indexGlyphs; k++)
+            for (k = 0; k < input_count; ++k)
             {
                 offset = GET_BE_WORD(input->Coverage[k]);
                 if (GSUB_is_glyph_covered((const BYTE *)ccsf1 + offset,
                         glyphs[glyph_index + (write_dir * k)]) == -1)
                     break;
             }
-            if (k != indexGlyphs)
+            if (k != input_count)
                 continue;
             TRACE("Matched IndexGlyphs\n");
 
-            lookahead = (const GSUB_ChainContextSubstFormat3_3 *)((BYTE *)input +
-                    FIELD_OFFSET(GSUB_ChainContextSubstFormat3_2, Coverage[GET_BE_WORD(input->InputGlyphCount)]));
-
-            for (k = 0; k < GET_BE_WORD(lookahead->LookaheadGlyphCount); ++k)
+            for (k = 0; k < lookahead_count; ++k)
             {
                 offset = GET_BE_WORD(lookahead->Coverage[k]);
                 if (GSUB_is_glyph_covered((const BYTE *)ccsf1 + offset,
-                        glyphs[glyph_index + (dirLookahead * (indexGlyphs + k))]) == -1)
+                        glyphs[glyph_index + (dirLookahead * (input_count + k))]) == -1)
                     break;
             }
-            if (k != GET_BE_WORD(lookahead->LookaheadGlyphCount))
+            if (k != lookahead_count)
                 continue;
             TRACE("Matched LookAhead\n");
-
-            substitute = (const GSUB_ChainContextSubstFormat3_4 *)((BYTE *)lookahead +
-                    FIELD_OFFSET(GSUB_ChainContextSubstFormat3_3, Coverage[GET_BE_WORD(lookahead->LookaheadGlyphCount)]));
 
             if (GET_BE_WORD(substitute->SubstCount))
             {
