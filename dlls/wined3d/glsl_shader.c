@@ -2396,8 +2396,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_CUBE:
                 if (shadow_sampler)
-                    FIXME("Unsupported Cube shadow sampler.\n");
-                sampler_type = "samplerCube";
+                    sampler_type = "samplerCubeShadow";
+                else
+                    sampler_type = "samplerCube";
                 break;
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY:
@@ -2409,8 +2410,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_CUBEARRAY:
                 if (shadow_sampler)
-                    FIXME("Unsupported Cube array shadow sampler.\n");
-                sampler_type = "samplerCubeArray";
+                    sampler_type = "samplerCubeArrayShadow";
+                else
+                    sampler_type = "samplerCubeArray";
                 break;
 
             default:
