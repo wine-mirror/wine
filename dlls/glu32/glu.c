@@ -90,6 +90,7 @@ static void  (*p_gluEndTrim)( GLUnurbs* nurb );
 static const GLubyte * (*p_gluErrorString)( GLenum error );
 static void  (*p_gluGetNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat* data );
 static const GLubyte * (*p_gluGetString)( GLenum name );
+static void  (*p_gluGetTessProperty)( GLUtesselator* tess, GLenum which, GLdouble* data );
 static void  (*p_gluLoadSamplingMatrices)( GLUnurbs* nurb, const GLfloat *model, const GLfloat *perspective, const GLint *view );
 static void  (*p_gluLookAt)( GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ );
 static GLUnurbs* (*p_gluNewNurbsRenderer)(void);
@@ -149,6 +150,7 @@ static BOOL load_libglu(void)
     LOAD_FUNCPTR(gluErrorString);
     LOAD_FUNCPTR(gluGetNurbsProperty);
     LOAD_FUNCPTR(gluGetString);
+    LOAD_FUNCPTR(gluGetTessProperty);
     LOAD_FUNCPTR(gluLoadSamplingMatrices);
     LOAD_FUNCPTR(gluLookAt);
     LOAD_FUNCPTR(gluNewNurbsRenderer);
@@ -716,6 +718,13 @@ void WINAPI wine_gluTessVertex( wine_GLUtesselator *tess, GLdouble coords[3], vo
     p_gluTessVertex( tess->tess, coords, data );
 }
 
+/***********************************************************************
+ *		gluGetTessProperty (GLU32.@)
+ */
+void WINAPI wine_gluGetTessProperty( wine_GLUtesselator *tess, GLenum which, GLdouble *value )
+{
+    p_gluGetTessProperty( tess->tess, which, value );
+}
 
 /***********************************************************************
  *		gluTessProperty (GLU32.@)

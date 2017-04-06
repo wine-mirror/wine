@@ -18,7 +18,7 @@
 @ stub gluErrorUnicodeStringEXT
 @ stdcall gluGetNurbsProperty(ptr long ptr) wine_gluGetNurbsProperty
 @ stdcall gluGetString(long) wine_gluGetString
-@ stub gluGetTessProperty
+@ stdcall gluGetTessProperty(ptr long ptr) wine_gluGetTessProperty
 @ stdcall gluLoadSamplingMatrices(ptr ptr ptr ptr) wine_gluLoadSamplingMatrices
 @ stdcall gluLookAt(double double double double double double double double double) wine_gluLookAt
 @ stdcall gluNewNurbsRenderer() wine_gluNewNurbsRenderer
