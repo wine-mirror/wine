@@ -1412,6 +1412,9 @@
 /* Define to the soname of the libGL library. */
 #undef SONAME_LIBGL
 
+/* Define to the soname of the libGLU library. */
+#undef SONAME_LIBGLU
+
 /* Define to the soname of the libgnutls library. */
 #undef SONAME_LIBGNUTLS
 

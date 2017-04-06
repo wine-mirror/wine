@@ -10783,14 +10783,14 @@ _ACEOF
 fi
         if test "x$with_glu" != "xno"
         then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gluLookAt in -lGLU" >&5
-$as_echo_n "checking for gluLookAt in -lGLU... " >&6; }
-if ${ac_cv_lib_GLU_gluLookAt+:} false; then :
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lGLU" >&5
+$as_echo_n "checking for -lGLU... " >&6; }
+if ${ac_cv_lib_soname_GLU+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
+  ac_check_soname_save_LIBS=$LIBS
 LIBS="-lGLU $OPENGL_LIBS $X_LIBS -lm $X_EXTRA_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -10809,21 +10809,34 @@ return gluLookAt ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_GLU_gluLookAt=yes
-else
-  ac_cv_lib_GLU_gluLookAt=no
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_GLU=`$ac_cv_path_LDD conftest.exe | grep "GLU" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_GLU=`$OTOOL -L conftest$ac_exeext | grep "libGLU\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libGLU\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_GLU=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libGLU\\.$LIBEXT" | sed -e "s/^.*\\[\\(libGLU\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_GLU:+false} :; then :
+  ac_cv_lib_soname_GLU=`$LDD conftest$ac_exeext | grep "libGLU\\.$LIBEXT" | sed -e "s/^.*\(libGLU\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+  LIBS=$ac_check_soname_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_GLU_gluLookAt" >&5
-$as_echo "$ac_cv_lib_GLU_gluLookAt" >&6; }
-if test "x$ac_cv_lib_GLU_gluLookAt" = xyes; then :
-  :
-fi
+if ${ac_cv_lib_soname_GLU:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
 
-            if test "x$ac_cv_lib_GLU_gluLookAt" != xyes; then :
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_GLU" >&5
+$as_echo "$ac_cv_lib_soname_GLU" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBGLU "$ac_cv_lib_soname_GLU"
+_ACEOF
+
+
+fi
+            if test "x$ac_cv_lib_soname_GLU" = "x"; then :
   case "x$with_glu" in
   x)   as_fn_append wine_notices "|libGLU ${notice_platform}development files not found, GLU won't be supported." ;;
   xno) ;;
@@ -10928,7 +10941,7 @@ esac
 enable_winex11_drv=${enable_winex11_drv:-no}
 fi
 
-test "x$ac_cv_lib_GLU_gluLookAt" != xyes && enable_glu32=${enable_glu32:-no}
+test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
 
 if test "$ac_cv_header_CL_cl_h" = "yes"
 then

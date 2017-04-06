@@ -1,5 +1,6 @@
 /*
  * Copyright 2001 Marcus Meissner
+ * Copyright 2017 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,11 +17,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
 
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(glu);
@@ -63,300 +68,389 @@ typedef struct {
 #define GLU_TESS_EDGE_FLAG_DATA 100110
 #define GLU_TESS_COMBINE_DATA   100111
 
+static int  (*p_gluBeginCurve)(void *arg0);
+static int  (*p_gluBeginSurface)(void *arg0);
+static int  (*p_gluBeginTrim)(void *arg0);
+static int  (*p_gluBuild1DMipmaps)(int arg0,int arg1,int arg2,int arg3,int arg4,void *arg5);
+static int  (*p_gluBuild2DMipmaps)(int arg0,int arg1,int arg2,int arg3,int arg4,int arg5,void *arg6);
+static int  (*p_gluCylinder)(void *arg0,double arg1,double arg2,double arg3,int arg4,int arg5);
+static int  (*p_gluDeleteNurbsRenderer)(void *arg0);
+static int  (*p_gluDeleteQuadric)(void *arg0);
+static void (*p_gluDeleteTess)(void *);
+static int  (*p_gluDisk)(void *arg0,double arg1,double arg2,int arg3,int arg4);
+static int  (*p_gluEndCurve)(void *arg0);
+static int  (*p_gluEndSurface)(void *arg0);
+static int  (*p_gluEndTrim)(void *arg0);
+static int  (*p_gluErrorString)(int arg0);
+static int  (*p_gluGetNurbsProperty)(void *arg0,int arg1,void *arg2);
+static int  (*p_gluGetString)(int arg0);
+static int  (*p_gluLoadSamplingMatrices)(void *arg0,void *arg1,void *arg2,void *arg3);
+static int  (*p_gluLookAt)(double arg0,double arg1,double arg2,double arg3,double arg4,double arg5,double arg6,double arg7,double arg8);
+static int  (*p_gluNewNurbsRenderer)(void);
+static int  (*p_gluNewQuadric)(void);
+static void*(*p_gluNewTess)(void);
+static int  (*p_gluNurbsCallback)(void *arg0,int arg1,void *arg2);
+static int  (*p_gluNurbsCurve)(void *arg0,int arg1,void *arg2,int arg3,void *arg4,int arg5,int arg6);
+static int  (*p_gluNurbsProperty)(void *arg0,int arg1,int arg2);
+static int  (*p_gluNurbsSurface)(void *arg0,int arg1,void *arg2,int arg3,void *arg4,int arg5,int arg6,void *arg7,int arg8,int arg9,int arg10);
+static int  (*p_gluOrtho2D)(double arg0,double arg1,double arg2,double arg3);
+static int  (*p_gluPartialDisk)(void *arg0,double arg1,double arg2,int arg3,int arg4,double arg5,double arg6);
+static int  (*p_gluPerspective)(double arg0,double arg1,double arg2,double arg3);
+static int  (*p_gluPickMatrix)(double arg0,double arg1,double arg2,double arg3,void *arg4);
+static int  (*p_gluProject)(double arg0,double arg1,double arg2,void *arg3,void *arg4,void *arg5,void *arg6,void *arg7,void *arg8);
+static int  (*p_gluPwlCurve)(void *arg0,int arg1,void *arg2,int arg3,int arg4);
+static int  (*p_gluQuadricCallback)(void *arg0,int arg1,void *arg2);
+static int  (*p_gluQuadricDrawStyle)(void *arg0,int arg1);
+static int  (*p_gluQuadricNormals)(void *arg0,int arg1);
+static int  (*p_gluQuadricOrientation)(void *arg0,int arg1);
+static int  (*p_gluQuadricTexture)(void *arg0,int arg1);
+static int  (*p_gluScaleImage)(int arg0,int arg1,int arg2,int arg3,void *arg4,int arg5,int arg6,int arg7,void *arg8);
+static int  (*p_gluSphere)(void *arg0,double arg1,int arg2,int arg3);
+static void (*p_gluTessBeginContour)(void *);
+static void (*p_gluTessBeginPolygon)(void *, void *);
+static void (*p_gluTessCallback)(void *,int,void *);
+static void (*p_gluTessEndContour)(void *);
+static void (*p_gluTessEndPolygon)(void *);
+static void (*p_gluTessNormal)(void *, double, double, double);
+static void (*p_gluTessProperty)(void *, int, double);
+static void (*p_gluTessVertex)(void *, void *, void *);
+static int  (*p_gluUnProject)(double arg0,double arg1,double arg2,void *arg3,void *arg4,void *arg5,void *arg6,void *arg7,void *arg8);
+
+static BOOL load_libglu(void)
+{
+    char error[256];
+    void *handle = wine_dlopen( SONAME_LIBGLU, RTLD_NOW, error, sizeof(error) );
+
+    if (!handle)
+    {
+        ERR( "Failed to load %s: %s\n", SONAME_LIBGLU, error );
+        return FALSE;
+    }
+#define LOAD_FUNCPTR(f) if (!(p_##f = wine_dlsym( handle, #f, NULL, 0 ))) { ERR( "Can't find %s in %s\n", #f, SONAME_LIBGLU ); return FALSE; }
+    LOAD_FUNCPTR(gluBeginCurve);
+    LOAD_FUNCPTR(gluBeginSurface);
+    LOAD_FUNCPTR(gluBeginTrim);
+    LOAD_FUNCPTR(gluBuild1DMipmaps);
+    LOAD_FUNCPTR(gluBuild2DMipmaps);
+    LOAD_FUNCPTR(gluCylinder);
+    LOAD_FUNCPTR(gluDeleteNurbsRenderer);
+    LOAD_FUNCPTR(gluDeleteQuadric);
+    LOAD_FUNCPTR(gluDeleteTess);
+    LOAD_FUNCPTR(gluDisk);
+    LOAD_FUNCPTR(gluEndCurve);
+    LOAD_FUNCPTR(gluEndSurface);
+    LOAD_FUNCPTR(gluEndTrim);
+    LOAD_FUNCPTR(gluErrorString);
+    LOAD_FUNCPTR(gluGetNurbsProperty);
+    LOAD_FUNCPTR(gluGetString);
+    LOAD_FUNCPTR(gluLoadSamplingMatrices);
+    LOAD_FUNCPTR(gluLookAt);
+    LOAD_FUNCPTR(gluNewNurbsRenderer);
+    LOAD_FUNCPTR(gluNewQuadric);
+    LOAD_FUNCPTR(gluNewTess);
+    LOAD_FUNCPTR(gluNurbsCallback);
+    LOAD_FUNCPTR(gluNurbsCurve);
+    LOAD_FUNCPTR(gluNurbsProperty);
+    LOAD_FUNCPTR(gluNurbsSurface);
+    LOAD_FUNCPTR(gluOrtho2D);
+    LOAD_FUNCPTR(gluPartialDisk);
+    LOAD_FUNCPTR(gluPerspective);
+    LOAD_FUNCPTR(gluPickMatrix);
+    LOAD_FUNCPTR(gluProject);
+    LOAD_FUNCPTR(gluPwlCurve);
+    LOAD_FUNCPTR(gluQuadricCallback);
+    LOAD_FUNCPTR(gluQuadricDrawStyle);
+    LOAD_FUNCPTR(gluQuadricNormals);
+    LOAD_FUNCPTR(gluQuadricOrientation);
+    LOAD_FUNCPTR(gluQuadricTexture);
+    LOAD_FUNCPTR(gluScaleImage);
+    LOAD_FUNCPTR(gluSphere);
+    LOAD_FUNCPTR(gluTessBeginContour);
+    LOAD_FUNCPTR(gluTessBeginPolygon);
+    LOAD_FUNCPTR(gluTessCallback);
+    LOAD_FUNCPTR(gluTessEndContour);
+    LOAD_FUNCPTR(gluTessEndPolygon);
+    LOAD_FUNCPTR(gluTessNormal);
+    LOAD_FUNCPTR(gluTessProperty);
+    LOAD_FUNCPTR(gluTessVertex);
+    LOAD_FUNCPTR(gluUnProject);
+#undef LOAD_FUNCPTR
+    TRACE( "loaded %s\n", SONAME_LIBGLU );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+        return load_libglu();
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *		gluLookAt (GLU32.@)
  */
-extern int gluLookAt(double arg0,double arg1,double arg2,double arg3,double arg4,double arg5,double arg6,double arg7,double arg8);
 int WINAPI wine_gluLookAt(double arg0,double arg1,double arg2,double arg3,double arg4,double arg5,double arg6,double arg7,double arg8) {
-	return gluLookAt(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+	return p_gluLookAt(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
 /***********************************************************************
  *		gluOrtho2D (GLU32.@)
  */
-extern int gluOrtho2D(double arg0,double arg1,double arg2,double arg3);
 int WINAPI wine_gluOrtho2D(double arg0,double arg1,double arg2,double arg3) {
-	return gluOrtho2D(arg0,arg1,arg2,arg3);
+	return p_gluOrtho2D(arg0,arg1,arg2,arg3);
 }
 
 /***********************************************************************
  *		gluPerspective (GLU32.@)
  */
-extern int gluPerspective(double arg0,double arg1,double arg2,double arg3);
 int WINAPI wine_gluPerspective(double arg0,double arg1,double arg2,double arg3) {
-	return gluPerspective(arg0,arg1,arg2,arg3);
+	return p_gluPerspective(arg0,arg1,arg2,arg3);
 }
 
 /***********************************************************************
  *		gluPickMatrix (GLU32.@)
  */
-extern int gluPickMatrix(double arg0,double arg1,double arg2,double arg3,void *arg4);
 int WINAPI wine_gluPickMatrix(double arg0,double arg1,double arg2,double arg3,void *arg4) {
-	return gluPickMatrix(arg0,arg1,arg2,arg3,arg4);
+	return p_gluPickMatrix(arg0,arg1,arg2,arg3,arg4);
 }
 
 /***********************************************************************
  *		gluProject (GLU32.@)
  */
-extern int gluProject(double arg0,double arg1,double arg2,void *arg3,void *arg4,void *arg5,void *arg6,void *arg7,void *arg8);
 int WINAPI wine_gluProject(double arg0,double arg1,double arg2,void *arg3,void *arg4,void *arg5,void *arg6,void *arg7,void *arg8) {
-	return gluProject(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+	return p_gluProject(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
 /***********************************************************************
  *		gluUnProject (GLU32.@)
  */
-extern int gluUnProject(double arg0,double arg1,double arg2,void *arg3,void *arg4,void *arg5,void *arg6,void *arg7,void *arg8);
 int WINAPI wine_gluUnProject(double arg0,double arg1,double arg2,void *arg3,void *arg4,void *arg5,void *arg6,void *arg7,void *arg8) {
-	return gluUnProject(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+	return p_gluUnProject(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
 /***********************************************************************
  *		gluErrorString (GLU32.@)
  */
-extern int gluErrorString(int arg0);
 int WINAPI wine_gluErrorString(int arg0) {
-	return gluErrorString(arg0);
+	return p_gluErrorString(arg0);
 }
 
 /***********************************************************************
  *		gluScaleImage (GLU32.@)
  */
-extern int gluScaleImage(int arg0,int arg1,int arg2,int arg3,void *arg4,int arg5,int arg6,int arg7,void *arg8);
 int WINAPI wine_gluScaleImage(int arg0,int arg1,int arg2,int arg3,void *arg4,int arg5,int arg6,int arg7,void *arg8) {
-	return gluScaleImage(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+	return p_gluScaleImage(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
 /***********************************************************************
  *		gluBuild1DMipmaps (GLU32.@)
  */
-extern int gluBuild1DMipmaps(int arg0,int arg1,int arg2,int arg3,int arg4,void *arg5);
 int WINAPI wine_gluBuild1DMipmaps(int arg0,int arg1,int arg2,int arg3,int arg4,void *arg5) {
-	return gluBuild1DMipmaps(arg0,arg1,arg2,arg3,arg4,arg5);
+	return p_gluBuild1DMipmaps(arg0,arg1,arg2,arg3,arg4,arg5);
 }
 
 /***********************************************************************
  *		gluBuild2DMipmaps (GLU32.@)
  */
-extern int gluBuild2DMipmaps(int arg0,int arg1,int arg2,int arg3,int arg4,int arg5,void *arg6);
 int WINAPI wine_gluBuild2DMipmaps(int arg0,int arg1,int arg2,int arg3,int arg4,int arg5,void *arg6) {
-	return gluBuild2DMipmaps(arg0,arg1,arg2,arg3,arg4,arg5,arg6);
+	return p_gluBuild2DMipmaps(arg0,arg1,arg2,arg3,arg4,arg5,arg6);
 }
 
 /***********************************************************************
  *		gluNewQuadric (GLU32.@)
  */
-extern int gluNewQuadric(void);
 int WINAPI wine_gluNewQuadric(void) {
-	return gluNewQuadric();
+	return p_gluNewQuadric();
 }
 
 /***********************************************************************
  *		gluDeleteQuadric (GLU32.@)
  */
-extern int gluDeleteQuadric(void *arg0);
 int WINAPI wine_gluDeleteQuadric(void *arg0) {
-	return gluDeleteQuadric(arg0);
+	return p_gluDeleteQuadric(arg0);
 }
 
 /***********************************************************************
  *		gluQuadricDrawStyle (GLU32.@)
  */
-extern int gluQuadricDrawStyle(void *arg0,int arg1);
 int WINAPI wine_gluQuadricDrawStyle(void *arg0,int arg1) {
-	return gluQuadricDrawStyle(arg0,arg1);
+	return p_gluQuadricDrawStyle(arg0,arg1);
 }
 
 /***********************************************************************
  *		gluQuadricOrientation (GLU32.@)
  */
-extern int gluQuadricOrientation(void *arg0,int arg1);
 int WINAPI wine_gluQuadricOrientation(void *arg0,int arg1) {
-	return gluQuadricOrientation(arg0,arg1);
+	return p_gluQuadricOrientation(arg0,arg1);
 }
 
 /***********************************************************************
  *		gluQuadricNormals (GLU32.@)
  */
-extern int gluQuadricNormals(void *arg0,int arg1);
 int WINAPI wine_gluQuadricNormals(void *arg0,int arg1) {
-	return gluQuadricNormals(arg0,arg1);
+	return p_gluQuadricNormals(arg0,arg1);
 }
 
 /***********************************************************************
  *		gluQuadricTexture (GLU32.@)
  */
-extern int gluQuadricTexture(void *arg0,int arg1);
 int WINAPI wine_gluQuadricTexture(void *arg0,int arg1) {
-	return gluQuadricTexture(arg0,arg1);
+	return p_gluQuadricTexture(arg0,arg1);
 }
 
 /***********************************************************************
  *		gluQuadricCallback (GLU32.@)
  */
-extern int gluQuadricCallback(void *arg0,int arg1,void *arg2);
 int WINAPI wine_gluQuadricCallback(void *arg0,int arg1,void *arg2) {
-	return gluQuadricCallback(arg0,arg1,arg2);
+	return p_gluQuadricCallback(arg0,arg1,arg2);
 }
 
 /***********************************************************************
  *		gluCylinder (GLU32.@)
  */
-extern int gluCylinder(void *arg0,double arg1,double arg2,double arg3,int arg4,int arg5);
 int WINAPI wine_gluCylinder(void *arg0,double arg1,double arg2,double arg3,int arg4,int arg5) {
-	return gluCylinder(arg0,arg1,arg2,arg3,arg4,arg5);
+	return p_gluCylinder(arg0,arg1,arg2,arg3,arg4,arg5);
 }
 
 /***********************************************************************
  *		gluSphere (GLU32.@)
  */
-extern int gluSphere(void *arg0,double arg1,int arg2,int arg3);
 int WINAPI wine_gluSphere(void *arg0,double arg1,int arg2,int arg3) {
-	return gluSphere(arg0,arg1,arg2,arg3);
+	return p_gluSphere(arg0,arg1,arg2,arg3);
 }
 
 /***********************************************************************
  *		gluDisk (GLU32.@)
  */
-extern int gluDisk(void *arg0,double arg1,double arg2,int arg3,int arg4);
 int WINAPI wine_gluDisk(void *arg0,double arg1,double arg2,int arg3,int arg4) {
-	return gluDisk(arg0,arg1,arg2,arg3,arg4);
+	return p_gluDisk(arg0,arg1,arg2,arg3,arg4);
 }
 
 /***********************************************************************
  *		gluPartialDisk (GLU32.@)
  */
-extern int gluPartialDisk(void *arg0,double arg1,double arg2,int arg3,int arg4,double arg5,double arg6);
 int WINAPI wine_gluPartialDisk(void *arg0,double arg1,double arg2,int arg3,int arg4,double arg5,double arg6) {
-	return gluPartialDisk(arg0,arg1,arg2,arg3,arg4,arg5,arg6);
+	return p_gluPartialDisk(arg0,arg1,arg2,arg3,arg4,arg5,arg6);
 }
 
 /***********************************************************************
  *		gluNewNurbsRenderer (GLU32.@)
  */
-extern int gluNewNurbsRenderer(void);
 int WINAPI wine_gluNewNurbsRenderer(void) {
-	return gluNewNurbsRenderer();
+	return p_gluNewNurbsRenderer();
 }
 
 /***********************************************************************
  *		gluDeleteNurbsRenderer (GLU32.@)
  */
-extern int gluDeleteNurbsRenderer(void *arg0);
 int WINAPI wine_gluDeleteNurbsRenderer(void *arg0) {
-	return gluDeleteNurbsRenderer(arg0);
+	return p_gluDeleteNurbsRenderer(arg0);
 }
 
 /***********************************************************************
  *		gluLoadSamplingMatrices (GLU32.@)
  */
-extern int gluLoadSamplingMatrices(void *arg0,void *arg1,void *arg2,void *arg3);
 int WINAPI wine_gluLoadSamplingMatrices(void *arg0,void *arg1,void *arg2,void *arg3) {
-	return gluLoadSamplingMatrices(arg0,arg1,arg2,arg3);
+	return p_gluLoadSamplingMatrices(arg0,arg1,arg2,arg3);
 }
 
 /***********************************************************************
  *		gluNurbsProperty (GLU32.@)
  */
-extern int gluNurbsProperty(void *arg0,int arg1,int arg2);
 int WINAPI wine_gluNurbsProperty(void *arg0,int arg1,int arg2) {
-	return gluNurbsProperty(arg0,arg1,arg2);
+	return p_gluNurbsProperty(arg0,arg1,arg2);
 }
 
 /***********************************************************************
  *		gluGetNurbsProperty (GLU32.@)
  */
-extern int gluGetNurbsProperty(void *arg0,int arg1,void *arg2);
 int WINAPI wine_gluGetNurbsProperty(void *arg0,int arg1,void *arg2) {
-	return gluGetNurbsProperty(arg0,arg1,arg2);
+	return p_gluGetNurbsProperty(arg0,arg1,arg2);
 }
 
 /***********************************************************************
  *		gluBeginCurve (GLU32.@)
  */
-extern int gluBeginCurve(void *arg0);
 int WINAPI wine_gluBeginCurve(void *arg0) {
-	return gluBeginCurve(arg0);
+	return p_gluBeginCurve(arg0);
 }
 
 /***********************************************************************
  *		gluEndCurve (GLU32.@)
  */
-extern int gluEndCurve(void *arg0);
 int WINAPI wine_gluEndCurve(void *arg0) {
-	return gluEndCurve(arg0);
+	return p_gluEndCurve(arg0);
 }
 
 /***********************************************************************
  *		gluNurbsCurve (GLU32.@)
  */
-extern int gluNurbsCurve(void *arg0,int arg1,void *arg2,int arg3,void *arg4,int arg5,int arg6);
 int WINAPI wine_gluNurbsCurve(void *arg0,int arg1,void *arg2,int arg3,void *arg4,int arg5,int arg6) {
-	return gluNurbsCurve(arg0,arg1,arg2,arg3,arg4,arg5,arg6);
+	return p_gluNurbsCurve(arg0,arg1,arg2,arg3,arg4,arg5,arg6);
 }
 
 /***********************************************************************
  *		gluBeginSurface (GLU32.@)
  */
-extern int gluBeginSurface(void *arg0);
 int WINAPI wine_gluBeginSurface(void *arg0) {
-	return gluBeginSurface(arg0);
+	return p_gluBeginSurface(arg0);
 }
 
 /***********************************************************************
  *		gluEndSurface (GLU32.@)
  */
-extern int gluEndSurface(void *arg0);
 int WINAPI wine_gluEndSurface(void *arg0) {
-	return gluEndSurface(arg0);
+	return p_gluEndSurface(arg0);
 }
 
 /***********************************************************************
  *		gluNurbsSurface (GLU32.@)
  */
-extern int gluNurbsSurface(void *arg0,int arg1,void *arg2,int arg3,void *arg4,int arg5,int arg6,void *arg7,int arg8,int arg9,int arg10);
 int WINAPI wine_gluNurbsSurface(void *arg0,int arg1,void *arg2,int arg3,void *arg4,int arg5,int arg6,void *arg7,int arg8,int arg9,int arg10) {
-	return gluNurbsSurface(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10);
+	return p_gluNurbsSurface(arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10);
 }
 
 /***********************************************************************
  *		gluBeginTrim (GLU32.@)
  */
-extern int gluBeginTrim(void *arg0);
 int WINAPI wine_gluBeginTrim(void *arg0) {
-	return gluBeginTrim(arg0);
+	return p_gluBeginTrim(arg0);
 }
 
 /***********************************************************************
  *		gluEndTrim (GLU32.@)
  */
-extern int gluEndTrim(void *arg0);
 int WINAPI wine_gluEndTrim(void *arg0) {
-	return gluEndTrim(arg0);
+	return p_gluEndTrim(arg0);
 }
 
 /***********************************************************************
  *		gluPwlCurve (GLU32.@)
  */
-extern int gluPwlCurve(void *arg0,int arg1,void *arg2,int arg3,int arg4);
 int WINAPI wine_gluPwlCurve(void *arg0,int arg1,void *arg2,int arg3,int arg4) {
-	return gluPwlCurve(arg0,arg1,arg2,arg3,arg4);
+	return p_gluPwlCurve(arg0,arg1,arg2,arg3,arg4);
 }
 
 /***********************************************************************
  *		gluNurbsCallback (GLU32.@)
  */
-extern int gluNurbsCallback(void *arg0,int arg1,void *arg2);
 int WINAPI wine_gluNurbsCallback(void *arg0,int arg1,void *arg2) {
-	return gluNurbsCallback(arg0,arg1,arg2);
+	return p_gluNurbsCallback(arg0,arg1,arg2);
 }
 
 /***********************************************************************
  *		gluGetString (GLU32.@)
  */
-extern int gluGetString(int arg0);
 int WINAPI wine_gluGetString(int arg0) {
-	return gluGetString(arg0);
+	return p_gluGetString(arg0);
 }
 
 /***********************************************************************
@@ -367,9 +461,6 @@ wine_gluCheckExtension( const char *extName, void *extString ) {
     return 0;
 }
 
-extern void *gluNewTess(void);
-extern void gluDeleteTess(void *);
-
 /***********************************************************************
  *		gluNewTess (GLU32.@)
  */
@@ -378,12 +469,12 @@ void * WINAPI wine_gluNewTess(void)
     void *tess;
     wine_tess_t *ret;
 
-    if((tess = gluNewTess()) == NULL)
+    if((tess = p_gluNewTess()) == NULL)
        return NULL;
 
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
     if(!ret) {
-        gluDeleteTess(tess);
+        p_gluDeleteTess(tess);
         return NULL;
     }
     ret->tess = tess;
@@ -396,7 +487,7 @@ void * WINAPI wine_gluNewTess(void)
 void WINAPI wine_gluDeleteTess(void *tess)
 {
     wine_tess_t *wine_tess = tess;
-    gluDeleteTess(wine_tess->tess);
+    p_gluDeleteTess(wine_tess->tess);
     HeapFree(GetProcessHeap(), 0, wine_tess);
     return;
 }
@@ -404,23 +495,21 @@ void WINAPI wine_gluDeleteTess(void *tess)
 /***********************************************************************
  *		gluTessBeginPolygon (GLU32.@)
  */
-extern void gluTessBeginPolygon(void *, void *);
 void WINAPI wine_gluTessBeginPolygon(void *tess, void *polygon_data)
 {
     wine_tess_t *wine_tess = tess;
     wine_tess->polygon_data = polygon_data;
 
-    gluTessBeginPolygon(wine_tess->tess, wine_tess);
+    p_gluTessBeginPolygon(wine_tess->tess, wine_tess);
 }
 
 /***********************************************************************
  *		gluTessEndPolygon (GLU32.@)
  */
-extern void gluTessEndPolygon(void *);
 void WINAPI wine_gluTessEndPolygon(void *tess)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessEndPolygon(wine_tess->tess);
+    p_gluTessEndPolygon(wine_tess->tess);
 }
 
 
@@ -477,7 +566,6 @@ static void wine_glu_tess_combine_data(double *coords, void *vertex_data, float 
 /***********************************************************************
  *		gluTessCallback (GLU32.@)
  */
-extern void gluTessCallback(void *,int,void *);
 void WINAPI wine_gluTessCallback(void *tess,int which,void *fn)
 {
     wine_tess_t *wine_tess = tess;
@@ -540,58 +628,53 @@ void WINAPI wine_gluTessCallback(void *tess,int which,void *fn)
         ERR("Unknown callback %d\n", which);
         break;
     }
-    gluTessCallback(wine_tess->tess, which, fn);
+    p_gluTessCallback(wine_tess->tess, which, fn);
 }
 
 /***********************************************************************
  *		gluTessBeginContour (GLU32.@)
  */
-extern void gluTessBeginContour(void *);
 void WINAPI wine_gluTessBeginContour(void *tess)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessBeginContour(wine_tess->tess);
+    p_gluTessBeginContour(wine_tess->tess);
 }
 
 /***********************************************************************
  *		gluTessEndContour (GLU32.@)
  */
-extern void gluTessEndContour(void *);
 void WINAPI wine_gluTessEndContour(void *tess)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessEndContour(wine_tess->tess);
+    p_gluTessEndContour(wine_tess->tess);
 }
 
 /***********************************************************************
  *		gluTessVertex (GLU32.@)
  */
-extern void gluTessVertex(void *, void *, void *);
 void WINAPI wine_gluTessVertex(void *tess,void *arg1,void *arg2)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessVertex(wine_tess->tess, arg1, arg2);
+    p_gluTessVertex(wine_tess->tess, arg1, arg2);
 }
 
 
 /***********************************************************************
  *		gluTessProperty (GLU32.@)
  */
-extern void gluTessProperty(void *, int, double);
 void WINAPI wine_gluTessProperty(void *tess, int arg1, double arg2)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessProperty(wine_tess->tess, arg1, arg2);
+    p_gluTessProperty(wine_tess->tess, arg1, arg2);
 }
 
 /***********************************************************************
  *		gluTessNormal (GLU32.@)
  */
-extern void gluTessNormal(void *, double, double, double);
 void WINAPI wine_gluTessNormal(void *tess, double arg1, double arg2, double arg3)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessNormal(wine_tess->tess, arg1, arg2, arg3);
+    p_gluTessNormal(wine_tess->tess, arg1, arg2, arg3);
 }
 
 /***********************************************************************
@@ -601,8 +684,8 @@ void WINAPI wine_gluBeginPolygon(void *tess)
 {
     wine_tess_t *wine_tess = tess;
     wine_tess->polygon_data = NULL;
-    gluTessBeginPolygon(wine_tess->tess, wine_tess);
-    gluTessBeginContour(wine_tess->tess);
+    p_gluTessBeginPolygon(wine_tess->tess, wine_tess);
+    p_gluTessBeginContour(wine_tess->tess);
 }
 
 /***********************************************************************
@@ -611,8 +694,8 @@ void WINAPI wine_gluBeginPolygon(void *tess)
 void WINAPI wine_gluEndPolygon(void *tess)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessEndContour(wine_tess->tess);
-    gluTessEndPolygon(wine_tess->tess);
+    p_gluTessEndContour(wine_tess->tess);
+    p_gluTessEndPolygon(wine_tess->tess);
 }
 
 /***********************************************************************
@@ -621,6 +704,6 @@ void WINAPI wine_gluEndPolygon(void *tess)
 void WINAPI wine_gluNextContour(void *tess, int arg1)
 {
     wine_tess_t *wine_tess = tess;
-    gluTessEndContour(wine_tess->tess);
-    gluTessBeginContour(wine_tess->tess);
+    p_gluTessEndContour(wine_tess->tess);
+    p_gluTessBeginContour(wine_tess->tess);
 }
