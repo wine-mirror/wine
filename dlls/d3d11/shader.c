@@ -201,6 +201,7 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
     {
         UINT name_offset;
 
+        e[i].stream_idx = 0;
         read_dword(&ptr, &name_offset);
         if (!(e[i].semantic_name = shader_get_string(data, data_size, name_offset)))
         {

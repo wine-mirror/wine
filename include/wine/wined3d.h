@@ -1953,10 +1953,11 @@ struct wined3d_sampler_desc
 struct wined3d_shader_signature_element
 {
     const char *semantic_name;
-    UINT semantic_idx;
+    unsigned int semantic_idx;
+    unsigned int stream_idx;
     enum wined3d_sysval_semantic sysval_semantic;
     enum wined3d_component_type component_type;
-    UINT register_idx;
+    unsigned int register_idx;
     DWORD mask;
 };
 

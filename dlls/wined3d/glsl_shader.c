@@ -6647,6 +6647,9 @@ static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
         if (!(reg_maps_out->output_registers & (1u << output->register_idx)))
             continue;
 
+        if (output->stream_idx)
+            continue;
+
         if (output->register_idx >= input_count)
             continue;
 
@@ -6700,6 +6703,9 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
         const struct wined3d_shader_signature_element *output = &output_signature->elements[i];
 
         if (!(reg_maps_out->output_registers & (1u << output->register_idx)))
+            continue;
+
+        if (output->stream_idx)
             continue;
 
         semantic_name = output->semantic_name;
