@@ -36,7 +36,7 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
         FIXME("Multiple input signatures.\n");
         shader_free_signature(is);
     }
-    return shader_parse_signature(data, data_size, is);
+    return shader_parse_signature(tag, data, data_size, is);
 }
 
 static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEMENT_DESC *element_descs,
@@ -77,7 +77,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         e->usage = 0;
         e->usage_idx = 0;
 
-        if ((element = shader_find_signature_element(&is, f->SemanticName, f->SemanticIndex)))
+        if ((element = shader_find_signature_element(&is, f->SemanticName, f->SemanticIndex, 0)))
             e->output_slot = element->register_idx;
         else
             WARN("Unused input element %u.\n", i);
