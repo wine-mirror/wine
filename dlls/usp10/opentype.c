@@ -1291,10 +1291,22 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
                 offset = GET_BE_WORD(csc->ChainSubClassRule[i]);
                 backtrack = (const GSUB_ChainSubClassRule_1 *)((BYTE *)csc + offset);
                 backtrack_count = GET_BE_WORD(backtrack->BacktrackGlyphCount);
+                k = glyph_index + dirBacktrack * backtrack_count;
+                if (k < 0 || k >= *glyph_count)
+                    continue;
+
                 input = (const GSUB_ChainSubClassRule_2 *)&backtrack->Backtrack[backtrack_count];
                 input_count = GET_BE_WORD(input->InputGlyphCount) - 1;
+                k = glyph_index + write_dir * input_count;
+                if (k < 0 || k >= *glyph_count)
+                    continue;
+
                 lookahead = (const GSUB_ChainSubClassRule_3 *)&input->Input[input_count];
                 lookahead_count = GET_BE_WORD(lookahead->LookaheadGlyphCount);
+                k = glyph_index + dirLookahead * (input_count + lookahead_count);
+                if (k < 0 || k >= *glyph_count)
+                    continue;
+
                 substitute = (const GSUB_ChainSubClassRule_4 *)&lookahead->LookAhead[lookahead_count];
 
                 for (k = 0; k < backtrack_count; ++k)
@@ -1365,10 +1377,22 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
 
             backtrack = (const GSUB_ChainContextSubstFormat3_1 *)ccsf1;
             backtrack_count = GET_BE_WORD(backtrack->BacktrackGlyphCount);
+            k = glyph_index + dirBacktrack * backtrack_count;
+            if (k < 0 || k >= *glyph_count)
+                continue;
+
             input = (const GSUB_ChainContextSubstFormat3_2 *)&backtrack->Coverage[backtrack_count];
             input_count = GET_BE_WORD(input->InputGlyphCount);
+            k = glyph_index + write_dir * (input_count - 1);
+            if (k < 0 || k >= *glyph_count)
+                continue;
+
             lookahead = (const GSUB_ChainContextSubstFormat3_3 *)&input->Coverage[input_count];
             lookahead_count = GET_BE_WORD(lookahead->LookaheadGlyphCount);
+            k = glyph_index + dirLookahead * (input_count + lookahead_count - 1);
+            if (k < 0 || k >= *glyph_count)
+                continue;
+
             substitute = (const GSUB_ChainContextSubstFormat3_4 *)&lookahead->Coverage[lookahead_count];
 
             for (k = 0; k < backtrack_count; ++k)
