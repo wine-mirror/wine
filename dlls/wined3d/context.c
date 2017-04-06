@@ -126,7 +126,6 @@ static void context_attach_gl_texture_fbo(struct wined3d_context *context,
     if (!resource)
     {
         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, attachment, GL_TEXTURE_2D, 0, 0);
-        checkGLcall("glFramebufferTexture2D()");
     }
     else if (resource->target == GL_TEXTURE_2D_ARRAY)
     {
@@ -138,14 +137,24 @@ static void context_attach_gl_texture_fbo(struct wined3d_context *context,
 
         gl_info->fbo_ops.glFramebufferTextureLayer(fbo_target, attachment,
                 resource->object, resource->level, resource->layer);
-        checkGLcall("glFramebufferTextureLayer()");
+    }
+    else if (resource->target == GL_TEXTURE_3D)
+    {
+        if (!gl_info->fbo_ops.glFramebufferTexture)
+        {
+            FIXME("OpenGL implementation doesn't support glFramebufferTexture().\n");
+            return;
+        }
+
+        gl_info->fbo_ops.glFramebufferTexture(fbo_target, attachment,
+                resource->object, resource->level);
     }
     else
     {
         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, attachment,
                 resource->target, resource->object, resource->level);
-        checkGLcall("glFramebufferTexture2D()");
     }
+    checkGLcall("attach texture to fbo");
 }
 
 /* Context activation is done by the caller. */
@@ -374,88 +383,93 @@ static inline DWORD context_generate_rt_mask_from_resource(struct wined3d_resour
     return (1u << 31) | wined3d_texture_get_gl_buffer(texture_from_resource(resource));
 }
 
-static inline void context_set_fbo_key_for_surface(const struct wined3d_context *context,
-        struct wined3d_fbo_entry_key *key, UINT idx, struct wined3d_surface *surface,
+static inline void context_set_fbo_key_for_render_target(const struct wined3d_context *context,
+        struct wined3d_fbo_entry_key *key, unsigned int idx, struct wined3d_rendertarget_info *render_target,
         DWORD location)
 {
-    if (!surface || surface->container->resource.format->id == WINED3DFMT_NULL)
+    unsigned int sub_resource_idx = render_target->sub_resource_idx;
+    struct wined3d_resource *resource = render_target->resource;
+    struct wined3d_texture *texture;
+
+    if (!resource || resource->format->id == WINED3DFMT_NULL || resource->type == WINED3D_RTYPE_BUFFER)
     {
+        if (resource && resource->type == WINED3D_RTYPE_BUFFER)
+            FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
         key->objects[idx].object = 0;
         key->objects[idx].target = 0;
         key->objects[idx].level = key->objects[idx].layer = 0;
+        return;
     }
-    else if (surface->current_renderbuffer)
+
+    texture = wined3d_texture_from_resource(resource);
+    if (resource->type == WINED3D_RTYPE_TEXTURE_2D)
     {
-        key->objects[idx].object = surface->current_renderbuffer->id;
-        key->objects[idx].target = 0;
-        key->objects[idx].level = key->objects[idx].layer = 0;
-        key->rb_namespace |= 1 << idx;
+        struct wined3d_surface *surface = texture->sub_resources[sub_resource_idx].u.surface;
+
+        if (surface->current_renderbuffer)
+        {
+            key->objects[idx].object = surface->current_renderbuffer->id;
+            key->objects[idx].target = 0;
+            key->objects[idx].level = key->objects[idx].layer = 0;
+            key->rb_namespace |= 1 << idx;
+            return;
+        }
+
+        key->objects[idx].target = surface->texture_target;
+        key->objects[idx].level = surface->texture_level;
+        key->objects[idx].layer = surface->texture_layer;
     }
     else
     {
-        switch (location)
-        {
-            case WINED3D_LOCATION_TEXTURE_RGB:
-                key->objects[idx].object = surface_get_texture_name(surface, context, FALSE);
-                key->objects[idx].target = surface->texture_target;
-                key->objects[idx].level = surface->texture_level;
-                key->objects[idx].layer = surface->texture_layer;
-                break;
+        key->objects[idx].target = texture->target;
+        key->objects[idx].level = sub_resource_idx % texture->level_count;
+        key->objects[idx].layer = 0;
+    }
 
-            case WINED3D_LOCATION_TEXTURE_SRGB:
-                key->objects[idx].object = surface_get_texture_name(surface, context, TRUE);
-                key->objects[idx].target = surface->texture_target;
-                key->objects[idx].level = surface->texture_level;
-                key->objects[idx].layer = surface->texture_layer;
-                break;
+    switch (location)
+    {
+        case WINED3D_LOCATION_TEXTURE_RGB:
+            key->objects[idx].object = wined3d_texture_get_texture_name(texture, context, FALSE);
+            break;
 
-            case WINED3D_LOCATION_RB_MULTISAMPLE:
-                key->objects[idx].object = surface->container->rb_multisample;
-                key->objects[idx].target = 0;
-                key->objects[idx].level = key->objects[idx].layer = 0;
-                key->rb_namespace |= 1 << idx;
-                break;
+        case WINED3D_LOCATION_TEXTURE_SRGB:
+            key->objects[idx].object = wined3d_texture_get_texture_name(texture, context, TRUE);
+            break;
 
-            case WINED3D_LOCATION_RB_RESOLVED:
-                key->objects[idx].object = surface->container->rb_resolved;
-                key->objects[idx].target = 0;
-                key->objects[idx].level = key->objects[idx].layer = 0;
-                key->rb_namespace |= 1 << idx;
-                break;
-        }
+        case WINED3D_LOCATION_RB_MULTISAMPLE:
+            key->objects[idx].object = texture->rb_multisample;
+            key->objects[idx].target = 0;
+            key->objects[idx].level = key->objects[idx].layer = 0;
+            key->rb_namespace |= 1 << idx;
+            break;
+
+        case WINED3D_LOCATION_RB_RESOLVED:
+            key->objects[idx].object = texture->rb_resolved;
+            key->objects[idx].target = 0;
+            key->objects[idx].level = key->objects[idx].layer = 0;
+            key->rb_namespace |= 1 << idx;
+            break;
     }
 }
 
 static void context_generate_fbo_key(const struct wined3d_context *context,
         struct wined3d_fbo_entry_key *key, struct wined3d_rendertarget_info *render_targets,
-        struct wined3d_surface *depth_stencil, DWORD color_location,
+        struct wined3d_surface *depth_stencil_surface, DWORD color_location,
         DWORD ds_location)
 {
+    struct wined3d_rendertarget_info depth_stencil = {0};
     unsigned int i;
 
     key->rb_namespace = 0;
-    context_set_fbo_key_for_surface(context, key, 0, depth_stencil, ds_location);
+    if (depth_stencil_surface)
+    {
+        depth_stencil.resource = &depth_stencil_surface->container->resource;
+        depth_stencil.sub_resource_idx = surface_get_sub_resource_idx(depth_stencil_surface);
+    }
+    context_set_fbo_key_for_render_target(context, key, 0, &depth_stencil, ds_location);
 
     for (i = 0; i < context->gl_info->limits.buffers; ++i)
-    {
-        struct wined3d_surface *surface = NULL;
-        struct wined3d_resource *resource;
-
-        if ((resource = render_targets[i].resource))
-        {
-            if (resource->type == WINED3D_RTYPE_TEXTURE_2D)
-            {
-                struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
-                surface = texture->sub_resources[render_targets[i].sub_resource_idx].u.surface;
-            }
-            else
-            {
-                FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
-            }
-        }
-
-        context_set_fbo_key_for_surface(context, key, i + 1, surface, color_location);
-    }
+        context_set_fbo_key_for_render_target(context, key, i + 1, &render_targets[i], color_location);
 }
 
 static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *context,

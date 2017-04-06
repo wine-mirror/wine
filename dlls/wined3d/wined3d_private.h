@@ -2261,6 +2261,8 @@ struct wined3d_fbo_ops
     void (WINE_GLAPI *glDeleteFramebuffers)(GLsizei n, const GLuint *framebuffers);
     void (WINE_GLAPI *glGenFramebuffers)(GLsizei n, GLuint *framebuffers);
     GLenum (WINE_GLAPI *glCheckFramebufferStatus)(GLenum target);
+    void (WINE_GLAPI *glFramebufferTexture)(GLenum target, GLenum attachment,
+            GLuint texture, GLint level);
     void (WINE_GLAPI *glFramebufferTexture1D)(GLenum target, GLenum attachment,
             GLenum textarget, GLuint texture, GLint level);
     void (WINE_GLAPI *glFramebufferTexture2D)(GLenum target, GLenum attachment,
@@ -3980,11 +3982,11 @@ static inline BOOL needs_srgb_write(const struct wined3d_context *context,
             && fb->render_targets[0] && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
 }
 
-static inline GLuint surface_get_texture_name(const struct wined3d_surface *surface,
+static inline GLuint wined3d_texture_get_texture_name(const struct wined3d_texture *texture,
         const struct wined3d_context *context, BOOL srgb)
 {
-    return srgb && needs_separate_srgb_gl_texture(context, surface->container)
-            ? surface->container->texture_srgb.name : surface->container->texture_rgb.name;
+    return srgb && needs_separate_srgb_gl_texture(context, texture)
+            ? texture->texture_srgb.name : texture->texture_rgb.name;
 }
 
 static inline BOOL can_use_texture_swizzle(const struct wined3d_gl_info *gl_info, const struct wined3d_format *format)

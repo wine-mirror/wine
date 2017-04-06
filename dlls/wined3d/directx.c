@@ -2713,6 +2713,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glDeleteFramebuffers)
     USE_GL_FUNC(glDeleteRenderbuffers)
     USE_GL_FUNC(glFramebufferRenderbuffer)
+    USE_GL_FUNC(glFramebufferTexture)
     USE_GL_FUNC(glFramebufferTexture1D)
     USE_GL_FUNC(glFramebufferTexture2D)
     USE_GL_FUNC(glFramebufferTexture3D)
@@ -3202,6 +3203,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glEnableVertexAttribArray)  /* OpenGL 2.0 */
     USE_GL_FUNC(glEndQuery)                 /* OpenGL 1.5 */
     USE_GL_FUNC(glEndTransformFeedback)     /* OpenGL 3.0 */
+    USE_GL_FUNC(glFramebufferTexture)       /* OpenGL 3.2 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGenQueries)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGenVertexArrays)          /* OpenGL 3.0 */
@@ -3331,6 +3333,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glEnablei, glEnableIndexedEXT);
     MAP_GL_FUNCTION(glEnableVertexAttribArray, glEnableVertexAttribArrayARB);
     MAP_GL_FUNCTION(glEndQuery, glEndQueryARB);
+    MAP_GL_FUNCTION(glFramebufferTexture, glFramebufferTextureARB);
     MAP_GL_FUNCTION(glGenBuffers, glGenBuffersARB);
     MAP_GL_FUNCTION(glGenQueries, glGenQueriesARB);
     MAP_GL_FUNCTION(glGetActiveUniform, glGetActiveUniformARB);
@@ -4221,6 +4224,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
                 = gl_info->gl_ops.ext.p_glGetFramebufferAttachmentParameteriv;
         gl_info->fbo_ops.glBlitFramebuffer = gl_info->gl_ops.ext.p_glBlitFramebuffer;
         gl_info->fbo_ops.glGenerateMipmap = gl_info->gl_ops.ext.p_glGenerateMipmap;
+        gl_info->fbo_ops.glFramebufferTexture = gl_info->gl_ops.ext.p_glFramebufferTexture;
     }
     else
     {
@@ -4253,6 +4257,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
         if (gl_info->supported[ARB_GEOMETRY_SHADER4])
         {
+            gl_info->fbo_ops.glFramebufferTexture = gl_info->gl_ops.ext.p_glFramebufferTextureARB;
             gl_info->fbo_ops.glFramebufferTextureLayer = gl_info->gl_ops.ext.p_glFramebufferTextureLayerARB;
         }
         if (gl_info->supported[EXT_FRAMEBUFFER_BLIT])
