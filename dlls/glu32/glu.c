@@ -74,6 +74,9 @@ typedef struct {
 #define GLU_TESS_EDGE_FLAG_DATA 100110
 #define GLU_TESS_COMBINE_DATA   100111
 
+#define GLU_VERSION    100800
+#define GLU_EXTENSIONS 100801
+
 #define GLU_INVALID_ENUM            100900
 #define GLU_INVALID_VALUE           100901
 #define GLU_OUT_OF_MEMORY           100902
@@ -97,7 +100,6 @@ static void  (*p_gluEndSurface)( GLUnurbs* nurb );
 static void  (*p_gluEndTrim)( GLUnurbs* nurb );
 static const GLubyte * (*p_gluErrorString)( GLenum error );
 static void  (*p_gluGetNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat* data );
-static const GLubyte * (*p_gluGetString)( GLenum name );
 static void  (*p_gluGetTessProperty)( GLUtesselator* tess, GLenum which, GLdouble* data );
 static void  (*p_gluLoadSamplingMatrices)( GLUnurbs* nurb, const GLfloat *model, const GLfloat *perspective, const GLint *view );
 static void  (*p_gluLookAt)( GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ );
@@ -510,8 +512,12 @@ void WINAPI wine_gluNurbsCallback( GLUnurbs *nobj, GLenum which, void (CALLBACK 
  */
 const GLubyte * WINAPI wine_gluGetString( GLenum name )
 {
-    if (!LOAD_FUNCPTR( gluGetString )) return NULL;
-    return p_gluGetString( name );
+    switch (name)
+    {
+    case GLU_VERSION: return (const GLubyte *)"1.2.2.0 Microsoft Corporation"; /* sic */
+    case GLU_EXTENSIONS: return (const GLubyte *)"";
+    }
+    return NULL;
 }
 
 /***********************************************************************
