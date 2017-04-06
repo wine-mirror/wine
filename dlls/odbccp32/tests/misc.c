@@ -530,13 +530,22 @@ void test_SQLInstallTranslatorEx(void)
 
     cnt = 100;
     ret = SQLRemoveTranslator("WINE ODBC Translator", &cnt);
-    todo_wine ok(ret, "SQLRemoveTranslator failed\n");
-    todo_wine ok(cnt == 0, "SQLRemoveTranslator failed %d\n", cnt);
+    ok(ret, "SQLRemoveTranslator failed\n");
+    ok(cnt == 0, "SQLRemoveTranslator failed %d\n", cnt);
 
     cnt = 100;
     ret = SQLRemoveTranslator("WINE ODBC Translator Path", &cnt);
-    todo_wine ok(ret, "SQLRemoveTranslator failed\n");
-    todo_wine ok(cnt == 0, "SQLRemoveTranslator failed %d\n", cnt);
+    ok(ret, "SQLRemoveTranslator failed\n");
+    ok(cnt == 0, "SQLRemoveTranslator failed %d\n", cnt);
+
+    cnt = 100;
+    ret = SQLRemoveTranslator("WINE ODBC Translator NonExist", &cnt);
+    ok(!ret, "SQLRemoveTranslator succeeded\n");
+    ok(cnt == 100, "SQLRemoveTranslator succeeded %d\n", cnt);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    ok(sql_ret && error_code == ODBC_ERROR_COMPONENT_NOT_FOUND,
+        "SQLInstallTranslatorEx failed %d, %u\n", sql_ret, error_code);
+
 }
 
 START_TEST(misc)

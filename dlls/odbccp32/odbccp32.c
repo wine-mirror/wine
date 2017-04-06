@@ -1229,20 +1229,84 @@ BOOL WINAPI SQLRemoveDSNFromIni(LPCSTR lpszDSN)
     return FALSE;
 }
 
-BOOL WINAPI SQLRemoveTranslatorW(LPCWSTR lpszTranslator, LPDWORD lpdwUsageCount)
+BOOL WINAPI SQLRemoveTranslatorW(const WCHAR *translator, DWORD *usage_count)
 {
+    HKEY hkey;
+    DWORD usagecount = 1;
+    BOOL ret = TRUE;
+
     clear_errors();
-    FIXME("%s %p\n", debugstr_w(lpszTranslator), lpdwUsageCount);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%s %p\n", debugstr_w(translator), usage_count);
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, odbcini, &hkey) == ERROR_SUCCESS)
+    {
+        HKEY hkeydriver;
+
+        if (RegOpenKeyW(hkey, translator, &hkeydriver) == ERROR_SUCCESS)
+        {
+            DWORD size, type;
+            DWORD count;
+
+            size = sizeof(usagecount);
+            RegGetValueA(hkeydriver, NULL, "UsageCount", RRF_RT_DWORD, &type, &usagecount, &size);
+            TRACE("Usage count %d\n", usagecount);
+            count = usagecount - 1;
+            if (count)
+            {
+                 if (RegSetValueExA(hkeydriver, "UsageCount", 0, REG_DWORD, (BYTE*)&count, sizeof(count)) != ERROR_SUCCESS)
+                    ERR("Failed to write registry UsageCount key\n");
+            }
+
+            RegCloseKey(hkeydriver);
+        }
+
+        if (usagecount)
+            usagecount--;
+
+        if (!usagecount)
+        {
+            if(RegDeleteKeyW(hkey, translator) != ERROR_SUCCESS)
+            {
+                push_error(ODBC_ERROR_COMPONENT_NOT_FOUND, odbc_error_component_not_found);
+                WARN("Failed to delete registry key: %s\n", debugstr_w(translator));
+                ret = FALSE;
+            }
+
+            if (ret && RegOpenKeyW(hkey, odbctranslators, &hkeydriver) == ERROR_SUCCESS)
+            {
+                if(RegDeleteValueW(hkeydriver, translator) != ERROR_SUCCESS)
+                {
+                    push_error(ODBC_ERROR_COMPONENT_NOT_FOUND, odbc_error_component_not_found);
+                    WARN("Failed to delete registry key: %s\n", debugstr_w(translator));
+                    ret = FALSE;
+                }
+
+                RegCloseKey(hkeydriver);
+            }
+        }
+
+        RegCloseKey(hkey);
+    }
+
+    if (ret && usage_count)
+        *usage_count = usagecount;
+
+    return ret;
 }
 
 BOOL WINAPI SQLRemoveTranslator(LPCSTR lpszTranslator, LPDWORD lpdwUsageCount)
 {
+    WCHAR *translator;
+    BOOL ret;
+
     clear_errors();
-    FIXME("%s %p\n", debugstr_a(lpszTranslator), lpdwUsageCount);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("%s %p\n", debugstr_a(lpszTranslator), lpdwUsageCount);
+
+    translator = SQLInstall_strdup(lpszTranslator);
+    ret =  SQLRemoveTranslatorW(translator, lpdwUsageCount);
+
+    HeapFree(GetProcessHeap(), 0, translator);
+    return ret;
 }
 
 BOOL WINAPI SQLSetConfigMode(UWORD wConfigMode)
