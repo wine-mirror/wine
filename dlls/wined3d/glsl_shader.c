@@ -6444,6 +6444,14 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
                         "uintBitsToFloat(gl_FrontFacing ? 0xffffffffu : 0u), 0.0, 0.0, 0.0);\n",
                         input->register_idx);
             }
+            else if (input->sysval_semantic == WINED3D_SV_RENDER_TARGET_ARRAY_INDEX && !semantic_idx)
+            {
+                if (gl_info->supported[ARB_FRAGMENT_LAYER_VIEWPORT])
+                    shader_addline(buffer, "ps_in[%u]%s = intBitsToFloat(gl_Layer);\n",
+                            input->register_idx, reg_mask);
+                else
+                    FIXME("ARB_fragment_layer_viewport is not supported.\n");
+            }
             else
             {
                 if (input->sysval_semantic)
@@ -7051,6 +7059,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         shader_addline(buffer, "#extension GL_ARB_derivative_control : enable\n");
     if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
         shader_addline(buffer, "#extension GL_ARB_fragment_coord_conventions : enable\n");
+    if (gl_info->supported[ARB_FRAGMENT_LAYER_VIEWPORT])
+        shader_addline(buffer, "#extension GL_ARB_fragment_layer_viewport : enable\n");
     if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
     /* The spec says that it doesn't have to be explicitly enabled, but the
