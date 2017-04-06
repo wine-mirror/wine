@@ -175,19 +175,6 @@ static void surface_get_blt_info(GLenum target, const RECT *rect, GLsizei w, GLs
     }
 }
 
-static void surface_get_rect(const struct wined3d_surface *surface, const RECT *rect_in, RECT *rect_out)
-{
-    if (rect_in)
-        *rect_out = *rect_in;
-    else
-    {
-        const struct wined3d_texture *texture = surface->container;
-
-        SetRect(rect_out, 0, 0, wined3d_texture_get_level_width(texture, surface->texture_level),
-                wined3d_texture_get_level_height(texture, surface->texture_level));
-    }
-}
-
 /* Context activation is done by the caller. */
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter)
@@ -2204,7 +2191,8 @@ static BOOL surface_load_drawable(struct wined3d_surface *surface,
     else
         restore_rt = NULL;
 
-    surface_get_rect(surface, NULL, &r);
+    SetRect(&r, 0, 0, wined3d_texture_get_level_width(texture, surface->texture_level),
+            wined3d_texture_get_level_height(texture, surface->texture_level));
     wined3d_texture_load_location(texture, sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
     device->blitter->ops->blitter_blit(device->blitter, WINED3D_BLIT_OP_COLOR_BLIT, context,
             surface, WINED3D_LOCATION_TEXTURE_RGB, &r,
