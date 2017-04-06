@@ -8389,7 +8389,10 @@ static DWORD get_font_unicode_ranges(FT_Face face, GLYPHSET *gs)
         }
     }
     else
-        FIXME("encoding %u not supported\n", face->charmap->encoding);
+    {
+        DWORD encoding = RtlUlongByteSwap(face->charmap->encoding);
+        FIXME("encoding %s not supported\n", debugstr_an((char *)&encoding, 4));
+    }
 
     return num_ranges;
 }
@@ -8701,9 +8704,10 @@ static DWORD freetype_GetKerningPairs( PHYSDEV dev, DWORD cPairs, KERNINGPAIR *k
     }
     else
     {
+        DWORD encoding = RtlUlongByteSwap(font->ft_face->charmap->encoding);
         ULONG n;
 
-        FIXME("encoding %u not supported\n", font->ft_face->charmap->encoding);
+        FIXME("encoding %s not supported\n", debugstr_an((char *)&encoding, 4));
         for (n = 0; n <= 65535; n++)
             glyph_to_char[n] = (USHORT)n;
     }
