@@ -3,4 +3,5 @@ IMPORTLIB = wsdapi
 IMPORTS   = kernel32
 
 C_SRCS = \
+	discovery.c \
 	main.c

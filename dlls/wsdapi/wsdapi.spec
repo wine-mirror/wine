@@ -17,7 +17,7 @@
 @ stub WSDCreateDiscoveryProvider2
 @ stub WSDCreateDiscoveryProvider
 @ stub WSDCreateDiscoveryPublisher2
-@ stub WSDCreateDiscoveryPublisher
+@ stdcall WSDCreateDiscoveryPublisher(ptr ptr)
 @ stub WSDCreateHttpAddress
 @ stub WSDCreateHttpMessageParameters
 @ stub WSDCreateHttpTransport
