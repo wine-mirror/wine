@@ -1311,7 +1311,7 @@ static DWORD auth_scheme_from_header( WCHAR *header )
 
 static BOOL query_auth_schemes( request_t *request, DWORD level, LPDWORD supported, LPDWORD first )
 {
-    DWORD index = 0;
+    DWORD index = 0, supported_schemes = 0, first_scheme = 0;
     BOOL ret = FALSE;
 
     for (;;)
@@ -1332,14 +1332,18 @@ static BOOL query_auth_schemes( request_t *request, DWORD level, LPDWORD support
         }
         scheme = auth_scheme_from_header( buffer );
         heap_free( buffer );
-        if (!scheme) break;
+        if (!scheme) continue;
 
-        if (first && index == 1)
-            *first = *supported = scheme;
-        else
-            *supported |= scheme;
+        if (!first_scheme) first_scheme = scheme;
+        supported_schemes |= scheme;
 
         ret = TRUE;
+    }
+
+    if (ret)
+    {
+        *supported = supported_schemes;
+        *first = first_scheme;
     }
     return ret;
 }

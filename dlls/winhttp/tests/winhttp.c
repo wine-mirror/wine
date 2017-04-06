@@ -2523,7 +2523,7 @@ static void test_multi_authentication(int port)
     static const WCHAR multiauthW[] = {'/','m','u','l','t','i','a','u','t','h',0};
     static const WCHAR getW[] = {'G','E','T',0};
     HINTERNET ses, con, req;
-    DWORD supported = 10, first = 9, target = 8;
+    DWORD supported, first, target;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
@@ -2542,11 +2542,12 @@ static void test_multi_authentication(int port)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "expected success\n");
 
+    supported = first = target = 0xdeadbeef;
     ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
-    todo_wine ok(ret, "expected success\n");
-    todo_wine ok(supported == (WINHTTP_AUTH_SCHEME_BASIC | WINHTTP_AUTH_SCHEME_NTLM), "got %x\n", supported);
-    todo_wine ok(target == WINHTTP_AUTH_TARGET_SERVER, "got %x\n", target);
-    todo_wine ok(first == 1, "got %x\n", first);
+    ok(ret, "expected success\n");
+    ok(supported == (WINHTTP_AUTH_SCHEME_BASIC | WINHTTP_AUTH_SCHEME_NTLM), "got %x\n", supported);
+    ok(target == WINHTTP_AUTH_TARGET_SERVER, "got %x\n", target);
+    ok(first == WINHTTP_AUTH_SCHEME_BASIC, "got %x\n", first);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
