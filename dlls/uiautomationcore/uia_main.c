@@ -74,3 +74,13 @@ int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid)
     FIXME("(%d, %s) stub!\n", type, debugstr_guid(guid));
     return 1;
 }
+
+/***********************************************************************
+ *          UiaReturnRawElementProvider (uiautomationcore.@)
+ */
+LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wParam,
+        LPARAM lParam, IRawElementProviderSimple *elprov)
+{
+    FIXME("(%p, %lx, %lx, %p) stub!\n", hwnd, wParam, lParam, elprov);
+    return 0;
+}

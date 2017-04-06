@@ -83,7 +83,7 @@
 @ stub UiaRaiseStructureChangedEvent
 @ stub UiaRegisterProviderCallback
 @ stub UiaRemoveEvent
-@ stub UiaReturnRawElementProvider
+@ stdcall UiaReturnRawElementProvider(long long long ptr)
 @ stub UiaSetFocus
 @ stub UiaTextRangeRelease
 @ stub ValuePattern_SetValue
