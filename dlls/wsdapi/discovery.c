@@ -36,6 +36,7 @@ typedef struct IWSDiscoveryPublisherImpl {
     IWSDiscoveryPublisher IWSDiscoveryPublisher_iface;
     LONG                  ref;
     IWSDXMLContext        *xmlContext;
+    DWORD                 addressFamily;
 } IWSDiscoveryPublisherImpl;
 
 static inline IWSDiscoveryPublisherImpl *impl_from_IWSDiscoveryPublisher(IWSDiscoveryPublisher *iface)
@@ -101,8 +102,25 @@ static ULONG WINAPI IWSDiscoveryPublisherImpl_Release(IWSDiscoveryPublisher *ifa
 
 static HRESULT WINAPI IWSDiscoveryPublisherImpl_SetAddressFamily(IWSDiscoveryPublisher *This, DWORD dwAddressFamily)
 {
-    FIXME("(%p, %d)\n", This, dwAddressFamily);
-    return E_NOTIMPL;
+    IWSDiscoveryPublisherImpl *impl = impl_from_IWSDiscoveryPublisher(This);
+
+    TRACE("(%p, %d)\n", This, dwAddressFamily);
+
+    /* Has the address family already been set? */
+    if (impl->addressFamily != 0)
+    {
+        return STG_E_INVALIDFUNCTION;
+    }
+
+    if ((dwAddressFamily == WSDAPI_ADDRESSFAMILY_IPV4) || (dwAddressFamily == WSDAPI_ADDRESSFAMILY_IPV6) ||
+        (dwAddressFamily == (WSDAPI_ADDRESSFAMILY_IPV4 | WSDAPI_ADDRESSFAMILY_IPV6)))
+    {
+        /* TODO: Check that the address family is supported by the system */
+        impl->addressFamily = dwAddressFamily;
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI IWSDiscoveryPublisherImpl_RegisterNotificationSink(IWSDiscoveryPublisher *This, IWSDiscoveryPublisherNotify *pSink)

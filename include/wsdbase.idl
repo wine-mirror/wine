@@ -18,6 +18,9 @@
 
 import "objidl.idl";
 
+cpp_quote("#define WSDAPI_ADDRESSFAMILY_IPV4 1")
+cpp_quote("#define WSDAPI_ADDRESSFAMILY_IPV6 2")
+
 interface IWSDAddress;
 interface IWSDMessageParameters;
 
