@@ -1237,7 +1237,6 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
         }
         else if (GET_BE_WORD(ccsf1->SubstFormat) == 2)
         {
-            int newIndex = glyph_index;
             WORD offset, count;
             const void *backtrack_class_table;
             const void *input_class_table;
@@ -1281,12 +1280,13 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
 
             for (i = 0; i < count; i++)
             {
-                WORD backtrack_count, input_count, lookahead_count;
+                WORD backtrack_count, input_count, lookahead_count, substitute_count;
                 int k;
                 const GSUB_ChainSubClassRule_1 *backtrack;
                 const GSUB_ChainSubClassRule_2 *input;
                 const GSUB_ChainSubClassRule_3 *lookahead;
                 const GSUB_ChainSubClassRule_4 *substitute;
+                int new_index = GSUB_E_NOGLYPH;
 
                 offset = GET_BE_WORD(csc->ChainSubClassRule[i]);
                 backtrack = (const GSUB_ChainSubClassRule_1 *)((BYTE *)csc + offset);
@@ -1343,35 +1343,30 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
                     continue;
                 TRACE("Matched LookAhead\n");
 
-                if (GET_BE_WORD(substitute->SubstCount))
+                substitute_count = GET_BE_WORD(substitute->SubstCount);
+                for (k = 0; k < substitute_count; ++k)
                 {
-                    for (k = 0; k < GET_BE_WORD(substitute->SubstCount); ++k)
-                    {
-                        int lookupIndex = GET_BE_WORD(substitute->SubstLookupRecord[k].LookupListIndex);
-                        int SequenceIndex = GET_BE_WORD(substitute->SubstLookupRecord[k].SequenceIndex) * write_dir;
+                    WORD lookup_index = GET_BE_WORD(substitute->SubstLookupRecord[k].LookupListIndex);
+                    WORD sequence_index = GET_BE_WORD(substitute->SubstLookupRecord[k].SequenceIndex) * write_dir;
 
-                        TRACE("SUBST: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
-                        newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
-                        if (newIndex == GSUB_E_NOGLYPH)
-                        {
-                            ERR("Chain failed to generate a glyph\n");
-                            continue;
-                        }
-                    }
-                    return newIndex;
+                    TRACE("SUBST: %u -> %u %u.\n", k, sequence_index, lookup_index);
+                    new_index = GSUB_apply_lookup(lookup, lookup_index, glyphs,
+                            glyph_index + sequence_index, write_dir, glyph_count);
+                    if (new_index == GSUB_E_NOGLYPH)
+                        ERR("Chain failed to generate a glyph.\n");
                 }
-                else return GSUB_E_NOGLYPH;
+                return new_index;
             }
         }
         else if (GET_BE_WORD(ccsf1->SubstFormat) == 3)
         {
-            WORD backtrack_count, input_count, lookahead_count;
+            WORD backtrack_count, input_count, lookahead_count, substitution_count;
             int k;
             const GSUB_ChainContextSubstFormat3_1 *backtrack;
             const GSUB_ChainContextSubstFormat3_2 *input;
             const GSUB_ChainContextSubstFormat3_3 *lookahead;
             const GSUB_ChainContextSubstFormat3_4 *substitute;
-            int newIndex = glyph_index;
+            int new_index = GSUB_E_NOGLYPH;
 
             TRACE("  subtype 3 (Coverage-based Chaining Context Glyph Substitution)\n");
 
@@ -1428,24 +1423,19 @@ static INT GSUB_apply_ChainContextSubst(const OT_LookupList* lookup, const OT_Lo
                 continue;
             TRACE("Matched LookAhead\n");
 
-            if (GET_BE_WORD(substitute->SubstCount))
+            substitution_count = GET_BE_WORD(substitute->SubstCount);
+            for (k = 0; k < substitution_count; ++k)
             {
-                for (k = 0; k < GET_BE_WORD(substitute->SubstCount); ++k)
-                {
-                    int lookupIndex = GET_BE_WORD(substitute->SubstLookupRecord[k].LookupListIndex);
-                    int SequenceIndex = GET_BE_WORD(substitute->SubstLookupRecord[k].SequenceIndex) * write_dir;
+                WORD lookup_index = GET_BE_WORD(substitute->SubstLookupRecord[k].LookupListIndex);
+                WORD sequence_index = GET_BE_WORD(substitute->SubstLookupRecord[k].SequenceIndex) * write_dir;
 
-                    TRACE("SUBST: %i -> %i %i\n",k, SequenceIndex, lookupIndex);
-                    newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
-                    if (newIndex == GSUB_E_NOGLYPH)
-                    {
-                        ERR("Chain failed to generate a glyph\n");
-                        continue;
-                    }
-                }
-                return newIndex;
+                TRACE("SUBST: %u -> %u %u.\n", k, sequence_index, lookup_index);
+                new_index = GSUB_apply_lookup(lookup, lookup_index, glyphs,
+                        glyph_index + sequence_index, write_dir, glyph_count);
+                if (new_index == GSUB_E_NOGLYPH)
+                    ERR("Chain failed to generate a glyph.\n");
             }
-            else return GSUB_E_NOGLYPH;
+            return new_index;
         }
     }
     return GSUB_E_NOGLYPH;
