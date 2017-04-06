@@ -1632,6 +1632,12 @@ struct wined3d_timestamp_query
 void context_alloc_timestamp_query(struct wined3d_context *context, struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 void context_free_timestamp_query(struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 
+struct wined3d_rendertarget_info
+{
+    struct wined3d_resource *resource;
+    unsigned int sub_resource_idx;
+};
+
 #define MAX_GL_FRAGMENT_SAMPLERS 32
 
 struct wined3d_context
@@ -1728,7 +1734,7 @@ struct wined3d_context
     struct fbo_entry        *current_fbo;
     GLuint                  fbo_read_binding;
     GLuint                  fbo_draw_binding;
-    struct wined3d_surface **blit_targets;
+    struct wined3d_rendertarget_info *blit_targets;
     struct wined3d_fbo_entry_key *fbo_key;
     GLenum *draw_buffers;
     DWORD draw_buffers_mask; /* Enabled draw buffers, 31 max. */
@@ -1857,6 +1863,8 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
         const struct wined3d_gl_info *gl_info, const struct wined3d_d3d_info *d3d_info,
         const struct wined3d_vertex_pipe_ops *vertex, const struct fragment_pipeline *fragment,
         const struct StateEntryTemplate *misc) DECLSPEC_HIDDEN;
+
+struct wined3d_surface;
 
 enum wined3d_blit_op
 {
@@ -3064,7 +3072,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
 BOOL surface_load_location(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
-        const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
+        const struct wined3d_rendertarget_info *rt) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect) DECLSPEC_HIDDEN;

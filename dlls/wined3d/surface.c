@@ -980,18 +980,29 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
  * render target dimensions. With FBOs, the dimensions have to be an exact match. */
 /* TODO: We should synchronize the renderbuffer's content with the texture's content. */
 /* Context activation is done by the caller. */
-void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const struct wined3d_surface *rt)
+void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, const struct wined3d_rendertarget_info *rt)
 {
     const struct wined3d_gl_info *gl_info = &surface->container->resource.device->adapter->gl_info;
     struct wined3d_renderbuffer_entry *entry;
-    GLuint renderbuffer = 0;
     unsigned int src_width, src_height;
     unsigned int width, height;
+    GLuint renderbuffer = 0;
 
-    if (rt && rt->container->resource.format->id != WINED3DFMT_NULL)
+    if (rt && rt->resource->format->id != WINED3DFMT_NULL)
     {
-        width = wined3d_texture_get_level_pow2_width(rt->container, rt->texture_level);
-        height = wined3d_texture_get_level_pow2_height(rt->container, rt->texture_level);
+        struct wined3d_texture *texture;
+        unsigned int level;
+
+        if (rt->resource->type == WINED3D_RTYPE_BUFFER)
+        {
+            FIXME("Unsupported resource type %s.\n", debug_d3dresourcetype(rt->resource->type));
+            return;
+        }
+        texture = wined3d_texture_from_resource(rt->resource);
+        level = rt->sub_resource_idx % texture->level_count;
+
+        width = wined3d_texture_get_level_pow2_width(texture, level);
+        height = wined3d_texture_get_level_pow2_height(texture, level);
     }
     else
     {
