@@ -245,14 +245,7 @@ static HRESULT WINAPI d3d9_surface_LockRect(IDirect3DSurface9 *iface,
             iface, locked_rect, wine_dbgstr_rect(rect), flags);
 
     if (rect)
-    {
-        box.left = rect->left;
-        box.top = rect->top;
-        box.right = rect->right;
-        box.bottom = rect->bottom;
-        box.front = 0;
-        box.back = 1;
-    }
+        wined3d_box_set(&box, rect->left, rect->top, rect->right, rect->bottom, 0, 1);
 
     wined3d_mutex_lock();
     hr = wined3d_resource_map(wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx,

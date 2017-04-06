@@ -985,12 +985,7 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
             wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
-        box.left = rect->left;
-        box.top = rect->top;
-        box.right = rect->right;
-        box.bottom = rect->bottom;
-        box.front = 0;
-        box.back = 1;
+        wined3d_box_set(&box, rect->left, rect->top, rect->right, rect->bottom, 0, 1);
     }
 
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)

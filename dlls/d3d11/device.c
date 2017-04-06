@@ -976,14 +976,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion(ID3D
             src_resource, src_subresource_idx, src_box);
 
     if (src_box)
-    {
-        wined3d_src_box.left = src_box->left;
-        wined3d_src_box.top = src_box->top;
-        wined3d_src_box.front = src_box->front;
-        wined3d_src_box.right = src_box->right;
-        wined3d_src_box.bottom = src_box->bottom;
-        wined3d_src_box.back = src_box->back;
-    }
+        wined3d_box_set(&wined3d_src_box, src_box->left, src_box->top,
+                src_box->right, src_box->bottom, src_box->front, src_box->back);
 
     wined3d_dst_resource = wined3d_resource_from_d3d11_resource(dst_resource);
     wined3d_src_resource = wined3d_resource_from_d3d11_resource(src_resource);
@@ -1020,14 +1014,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_UpdateSubresource(ID3D11De
             iface, resource, subresource_idx, box, data, row_pitch, depth_pitch);
 
     if (box)
-    {
-        wined3d_box.left = box->left;
-        wined3d_box.top = box->top;
-        wined3d_box.front = box->front;
-        wined3d_box.right = box->right;
-        wined3d_box.bottom = box->bottom;
-        wined3d_box.back = box->back;
-    }
+        wined3d_box_set(&wined3d_box, box->left, box->top, box->right, box->bottom, box->front, box->back);
 
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
     wined3d_mutex_lock();
@@ -3820,14 +3807,8 @@ static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device1 *
             src_resource, src_subresource_idx, src_box);
 
     if (src_box)
-    {
-        wined3d_src_box.left = src_box->left;
-        wined3d_src_box.top = src_box->top;
-        wined3d_src_box.front = src_box->front;
-        wined3d_src_box.right = src_box->right;
-        wined3d_src_box.bottom = src_box->bottom;
-        wined3d_src_box.back = src_box->back;
-    }
+        wined3d_box_set(&wined3d_src_box, src_box->left, src_box->top,
+                src_box->right, src_box->bottom, src_box->front, src_box->back);
 
     wined3d_dst_resource = wined3d_resource_from_d3d10_resource(dst_resource);
     wined3d_src_resource = wined3d_resource_from_d3d10_resource(src_resource);

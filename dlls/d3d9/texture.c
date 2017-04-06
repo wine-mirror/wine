@@ -382,12 +382,7 @@ static HRESULT WINAPI d3d9_texture_2d_AddDirtyRect(IDirect3DTexture9 *iface, con
     {
         struct wined3d_box dirty_region;
 
-        dirty_region.left = dirty_rect->left;
-        dirty_region.top = dirty_rect->top;
-        dirty_region.right = dirty_rect->right;
-        dirty_region.bottom = dirty_rect->bottom;
-        dirty_region.front = 0;
-        dirty_region.back = 1;
+        wined3d_box_set(&dirty_region, dirty_rect->left, dirty_rect->top, dirty_rect->right, dirty_rect->bottom, 0, 1);
         hr = wined3d_texture_add_dirty_region(texture->wined3d_texture, 0, &dirty_region);
     }
     wined3d_mutex_unlock();
@@ -797,12 +792,7 @@ static HRESULT  WINAPI d3d9_texture_cube_AddDirtyRect(IDirect3DCubeTexture9 *ifa
     {
         struct wined3d_box dirty_region;
 
-        dirty_region.left = dirty_rect->left;
-        dirty_region.top = dirty_rect->top;
-        dirty_region.right = dirty_rect->right;
-        dirty_region.bottom = dirty_rect->bottom;
-        dirty_region.front = 0;
-        dirty_region.back = 1;
+        wined3d_box_set(&dirty_region, dirty_rect->left, dirty_rect->top, dirty_rect->right, dirty_rect->bottom, 0, 1);
         hr = wined3d_texture_add_dirty_region(texture->wined3d_texture, face, &dirty_region);
     }
     wined3d_mutex_unlock();

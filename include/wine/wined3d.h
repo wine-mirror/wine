@@ -2659,4 +2659,15 @@ static inline unsigned int wined3d_log2i(unsigned int x)
 #endif
 }
 
+static inline void wined3d_box_set(struct wined3d_box *box, unsigned int left, unsigned int top,
+        unsigned int right, unsigned int bottom, unsigned int front, unsigned int back)
+{
+    box->left = left;
+    box->top = top;
+    box->right = right;
+    box->bottom = bottom;
+    box->front = front;
+    box->back = back;
+}
+
 #endif /* __WINE_WINED3D_H */

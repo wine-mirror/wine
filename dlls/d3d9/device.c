@@ -1402,14 +1402,7 @@ static HRESULT WINAPI d3d9_device_UpdateSurface(IDirect3DDevice9Ex *iface,
             iface, src_surface, src_rect, dst_surface, dst_point);
 
     if (src_rect)
-    {
-        src_box.left = src_rect->left;
-        src_box.top = src_rect->top;
-        src_box.right = src_rect->right;
-        src_box.bottom = src_rect->bottom;
-        src_box.front = 0;
-        src_box.back = 1;
-    }
+        wined3d_box_set(&src_box, src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1);
 
     wined3d_mutex_lock();
     hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,

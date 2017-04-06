@@ -3876,13 +3876,7 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
 
     if (dst_resource->type == WINED3D_RTYPE_BUFFER)
     {
-        box.left = 0;
-        box.top = 0;
-        box.right = src_resource->size;
-        box.bottom = 1;
-        box.front = 0;
-        box.back = 1;
-
+        wined3d_box_set(&box, 0, 0, src_resource->size, 1, 0, 1);
         wined3d_cs_emit_blt_sub_resource(device->cs, dst_resource, 0, &box,
                 src_resource, 0, &box, 0, NULL, WINED3D_TEXF_POINT);
         return;
@@ -3908,13 +3902,10 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
 
     for (i = 0; i < dst_texture->level_count; ++i)
     {
-        box.left = 0;
-        box.top = 0;
-        box.right = wined3d_texture_get_level_width(dst_texture, i);
-        box.bottom = wined3d_texture_get_level_height(dst_texture, i);
-        box.front = 0;
-        box.back = wined3d_texture_get_level_depth(dst_texture, i);
-
+        wined3d_box_set(&box, 0, 0,
+                wined3d_texture_get_level_width(dst_texture, i),
+                wined3d_texture_get_level_height(dst_texture, i),
+                0, wined3d_texture_get_level_depth(dst_texture, i));
         for (j = 0; j < dst_texture->layer_count; ++j)
         {
             unsigned int idx = j * dst_texture->level_count + i;
@@ -3975,12 +3966,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
 
         if (!src_box)
         {
-            b.left = 0;
-            b.top = 0;
-            b.right = src_resource->size;
-            b.bottom = 1;
-            b.front = 0;
-            b.back = 1;
+            wined3d_box_set(&b, 0, 0, src_resource->size, 1, 0, 1);
             src_box = &b;
         }
         else if ((src_box->left >= src_box->right
@@ -3999,12 +3985,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
             return WINED3DERR_INVALIDCALL;
         }
 
-        dst_box.left = dst_x;
-        dst_box.top = 0;
-        dst_box.right = dst_x + (src_box->right - src_box->left);
-        dst_box.bottom = 1;
-        dst_box.front = 0;
-        dst_box.back = 1;
+        wined3d_box_set(&dst_box, dst_x, 0, dst_x + (src_box->right - src_box->left), 1, 0, 1);
     }
     else if (dst_resource->type == WINED3D_RTYPE_TEXTURE_2D)
     {
@@ -4038,13 +4019,8 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
 
         if (!src_box)
         {
-
-            b.left = 0;
-            b.top = 0;
-            b.right = wined3d_texture_get_level_width(src_texture, src_level);
-            b.bottom = wined3d_texture_get_level_height(src_texture, src_level);
-            b.front = 0;
-            b.back = 1;
+            wined3d_box_set(&b, 0, 0, wined3d_texture_get_level_width(src_texture, src_level),
+                    wined3d_texture_get_level_height(src_texture, src_level), 0, 1);
             src_box = &b;
         }
         else if (FAILED(wined3d_texture_check_box_dimensions(src_texture, src_level, src_box)))
@@ -4053,12 +4029,8 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
             return WINED3DERR_INVALIDCALL;
         }
 
-        dst_box.left = dst_x;
-        dst_box.top = dst_y;
-        dst_box.right = dst_x + (src_box->right - src_box->left);
-        dst_box.bottom = dst_y + (src_box->bottom - src_box->top);
-        dst_box.front = 0;
-        dst_box.back = 1;
+        wined3d_box_set(&dst_box, dst_x, dst_y, dst_x + (src_box->right - src_box->left),
+                dst_y + (src_box->bottom - src_box->top), 0, 1);
         if (FAILED(wined3d_texture_check_box_dimensions(dst_texture,
                 dst_sub_resource_idx % dst_texture->level_count, &dst_box)))
         {
@@ -4124,12 +4096,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
 
     if (!box)
     {
-        b.left = 0;
-        b.top = 0;
-        b.right = width;
-        b.bottom = height;
-        b.front = 0;
-        b.back = depth;
+        wined3d_box_set(&b, 0, 0, width, height, 0, depth);
         box = &b;
     }
     else if (box->left >= box->right || box->right > width
