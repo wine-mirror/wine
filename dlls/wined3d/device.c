@@ -3599,6 +3599,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     enum wined3d_resource_type type;
     HRESULT hr;
     struct wined3d_context *context;
+    RECT r;
 
     TRACE("device %p, src_texture %p, dst_texture %p.\n", device, src_texture, dst_texture);
 
@@ -3670,8 +3671,26 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
             {
                 for (j = 0; j < level_count; ++j)
                 {
-                    src_surface = src_texture->sub_resources[i * src_levels + j + src_skip_levels].u.surface;
-                    dst_surface = dst_texture->sub_resources[i * dst_levels + j].u.surface;
+                    unsigned int src_sub_resource_idx = i * src_levels + j + src_skip_levels;
+                    unsigned int dst_sub_resource_idx = i * dst_levels + j;
+
+                    /* Use wined3d_texture_blt() instead of uploading directly if we need conversion. */
+                    if (dst_texture->resource.format->convert
+                            || wined3d_format_get_color_key_conversion(dst_texture, FALSE))
+                    {
+                        SetRect(&r, 0, 0, wined3d_texture_get_level_width(dst_texture, j),
+                                wined3d_texture_get_level_height(dst_texture, j));
+                        if (FAILED(hr = wined3d_texture_blt(dst_texture, dst_sub_resource_idx, &r,
+                                src_texture, src_sub_resource_idx, &r, 0, NULL, WINED3D_TEXF_POINT)))
+                        {
+                            WARN("Failed to update surface, hr %#x.\n", hr);
+                            return hr;
+                        }
+                        continue;
+                    }
+
+                    src_surface = src_texture->sub_resources[src_sub_resource_idx].u.surface;
+                    dst_surface = dst_texture->sub_resources[dst_sub_resource_idx].u.surface;
                     if (FAILED(hr = surface_upload_from_surface(dst_surface, NULL, src_surface, NULL)))
                     {
                         WARN("Failed to update surface, hr %#x.\n", hr);

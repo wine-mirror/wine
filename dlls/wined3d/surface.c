@@ -930,11 +930,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Use wined3d_texture_blt() instead of uploading directly if we need conversion. */
-    if (dst_format->convert || wined3d_format_get_color_key_conversion(dst_texture, FALSE))
-        return wined3d_texture_blt(dst_texture, dst_sub_resource_idx, &dst_rect,
-                src_texture, src_sub_resource_idx, src_rect, 0, NULL, WINED3D_TEXF_POINT);
-
     context = context_acquire(dst_texture->resource.device, NULL, 0);
     gl_info = context->gl_info;
 
