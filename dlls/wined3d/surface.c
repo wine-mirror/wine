@@ -874,8 +874,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     struct wined3d_texture *src_texture = src_surface->container;
     struct wined3d_texture *dst_texture = dst_surface->container;
     unsigned int src_row_pitch, src_slice_pitch;
-    const struct wined3d_format *src_format;
-    const struct wined3d_format *dst_format;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_bo_address data;
@@ -886,15 +884,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     TRACE("dst_surface %p, dst_point %s, src_surface %p, src_rect %s.\n",
             dst_surface, wine_dbgstr_point(dst_point),
             src_surface, wine_dbgstr_rect(src_rect));
-
-    src_format = src_texture->resource.format;
-    dst_format = dst_texture->resource.format;
-
-    if (src_format->id != dst_format->id)
-    {
-        WARN("Source and destination surfaces should have the same format.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     if (!dst_point)
     {
@@ -947,7 +936,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
             src_texture->sub_resources[src_sub_resource_idx].locations);
     wined3d_texture_get_pitch(src_texture, src_surface->texture_level, &src_row_pitch, &src_slice_pitch);
 
-    wined3d_surface_upload_data(dst_surface, gl_info, src_format, src_rect,
+    wined3d_surface_upload_data(dst_surface, gl_info, src_texture->resource.format, src_rect,
             src_row_pitch, dst_point, FALSE, wined3d_const_bo_address(&data));
 
     context_release(context);

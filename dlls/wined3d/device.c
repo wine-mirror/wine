@@ -3551,12 +3551,6 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
     TRACE("device %p, src_texture %p, src_level %u, dst_texture %p, level_count %u.\n",
             device, src_texture, src_level, dst_texture, level_count);
 
-    if (src_texture->resource.format != dst_texture->resource.format)
-    {
-        WARN("Source and destination formats do not match.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (wined3d_texture_get_level_width(src_texture, src_level) != dst_texture->resource.width
             || wined3d_texture_get_level_height(src_texture, src_level) != dst_texture->resource.height
             || wined3d_texture_get_level_depth(src_texture, src_level) != dst_texture->resource.depth)
@@ -3633,6 +3627,12 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     if (layer_count != dst_texture->layer_count)
     {
         WARN("Source and destination have different layer counts.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (src_texture->resource.format != dst_texture->resource.format)
+    {
+        WARN("Source and destination formats do not match.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
