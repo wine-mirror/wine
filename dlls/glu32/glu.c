@@ -74,6 +74,9 @@ typedef struct {
 #define GLU_TESS_EDGE_FLAG_DATA 100110
 #define GLU_TESS_COMBINE_DATA   100111
 
+#define GLU_TRUE  GL_TRUE
+#define GLU_FALSE GL_FALSE
+
 static void  (*p_gluBeginCurve)( GLUnurbs* nurb );
 static void  (*p_gluBeginSurface)( GLUnurbs* nurb );
 static void  (*p_gluBeginTrim)( GLUnurbs* nurb );
@@ -523,7 +526,17 @@ const GLubyte * WINAPI wine_gluGetString( GLenum name )
  */
 GLboolean WINAPI wine_gluCheckExtension( const GLubyte *extName, const GLubyte *extString )
 {
-    return 0;
+    const char *list = (const char *)extString;
+    const char *ext = (const char *)extName;
+    size_t len = strlen( ext );
+
+    while (list)
+    {
+        while (*list == ' ') list++;
+        if (!strncmp( list, ext, len ) && (!list[len] || list[len] == ' ')) return GLU_TRUE;
+        list = strchr( list, ' ' );
+    }
+    return GLU_FALSE;
 }
 
 /***********************************************************************
