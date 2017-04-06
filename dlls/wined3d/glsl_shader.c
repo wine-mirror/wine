@@ -6724,6 +6724,11 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
             shader_addline(buffer, "gl_PointSize = clamp(shader_out[%u].%c, "
                     "ffp_point.size_min, ffp_point.size_max);\n", output->register_idx, reg_mask[1]);
         }
+        else if (output->sysval_semantic == WINED3D_SV_RENDER_TARGET_ARRAY_INDEX && !semantic_idx)
+        {
+            shader_addline(buffer, "gl_Layer = floatBitsToInt(shader_out[%u])%s;\n",
+                    output->register_idx, reg_mask);
+        }
         else if (output->sysval_semantic)
         {
             FIXME("Unhandled sysval semantic %#x.\n", output->sysval_semantic);
