@@ -74,6 +74,11 @@ typedef struct {
 #define GLU_TESS_EDGE_FLAG_DATA 100110
 #define GLU_TESS_COMBINE_DATA   100111
 
+#define GLU_INVALID_ENUM            100900
+#define GLU_INVALID_VALUE           100901
+#define GLU_OUT_OF_MEMORY           100902
+#define GLU_INCOMPATIBLE_GL_VERSION 100903
+
 #define GLU_TRUE  GL_TRUE
 #define GLU_FALSE GL_FALSE
 
@@ -126,84 +131,35 @@ static void  (*p_gluTessProperty)( GLUtesselator* tess, GLenum which, GLdouble d
 static void  (*p_gluTessVertex)( GLUtesselator* tess, GLdouble *location, GLvoid* data );
 static GLint (*p_gluUnProject)( GLdouble winX, GLdouble winY, GLdouble winZ, const GLdouble *model, const GLdouble *proj, const GLint *view, GLdouble* objX, GLdouble* objY, GLdouble* objZ );
 
-static BOOL load_libglu(void)
+static void *libglu_handle;
+static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+static BOOL WINAPI load_libglu( INIT_ONCE *once, void *param, void **context )
 {
+#ifdef SONAME_LIBGLU
     char error[256];
-    void *handle = wine_dlopen( SONAME_LIBGLU, RTLD_NOW, error, sizeof(error) );
 
-    if (!handle)
-    {
+    if ((libglu_handle = wine_dlopen( SONAME_LIBGLU, RTLD_NOW, error, sizeof(error) )))
+        TRACE( "loaded %s\n", SONAME_LIBGLU );
+    else
         ERR( "Failed to load %s: %s\n", SONAME_LIBGLU, error );
-        return FALSE;
-    }
-#define LOAD_FUNCPTR(f) if (!(p_##f = wine_dlsym( handle, #f, NULL, 0 ))) { ERR( "Can't find %s in %s\n", #f, SONAME_LIBGLU ); return FALSE; }
-    LOAD_FUNCPTR(gluBeginCurve);
-    LOAD_FUNCPTR(gluBeginSurface);
-    LOAD_FUNCPTR(gluBeginTrim);
-    LOAD_FUNCPTR(gluBuild1DMipmaps);
-    LOAD_FUNCPTR(gluBuild2DMipmaps);
-    LOAD_FUNCPTR(gluCylinder);
-    LOAD_FUNCPTR(gluDeleteNurbsRenderer);
-    LOAD_FUNCPTR(gluDeleteQuadric);
-    LOAD_FUNCPTR(gluDeleteTess);
-    LOAD_FUNCPTR(gluDisk);
-    LOAD_FUNCPTR(gluEndCurve);
-    LOAD_FUNCPTR(gluEndSurface);
-    LOAD_FUNCPTR(gluEndTrim);
-    LOAD_FUNCPTR(gluErrorString);
-    LOAD_FUNCPTR(gluGetNurbsProperty);
-    LOAD_FUNCPTR(gluGetString);
-    LOAD_FUNCPTR(gluGetTessProperty);
-    LOAD_FUNCPTR(gluLoadSamplingMatrices);
-    LOAD_FUNCPTR(gluLookAt);
-    LOAD_FUNCPTR(gluNewNurbsRenderer);
-    LOAD_FUNCPTR(gluNewQuadric);
-    LOAD_FUNCPTR(gluNewTess);
-    LOAD_FUNCPTR(gluNurbsCallback);
-    LOAD_FUNCPTR(gluNurbsCurve);
-    LOAD_FUNCPTR(gluNurbsProperty);
-    LOAD_FUNCPTR(gluNurbsSurface);
-    LOAD_FUNCPTR(gluOrtho2D);
-    LOAD_FUNCPTR(gluPartialDisk);
-    LOAD_FUNCPTR(gluPerspective);
-    LOAD_FUNCPTR(gluPickMatrix);
-    LOAD_FUNCPTR(gluProject);
-    LOAD_FUNCPTR(gluPwlCurve);
-    LOAD_FUNCPTR(gluQuadricCallback);
-    LOAD_FUNCPTR(gluQuadricDrawStyle);
-    LOAD_FUNCPTR(gluQuadricNormals);
-    LOAD_FUNCPTR(gluQuadricOrientation);
-    LOAD_FUNCPTR(gluQuadricTexture);
-    LOAD_FUNCPTR(gluScaleImage);
-    LOAD_FUNCPTR(gluSphere);
-    LOAD_FUNCPTR(gluTessBeginContour);
-    LOAD_FUNCPTR(gluTessBeginPolygon);
-    LOAD_FUNCPTR(gluTessCallback);
-    LOAD_FUNCPTR(gluTessEndContour);
-    LOAD_FUNCPTR(gluTessEndPolygon);
-    LOAD_FUNCPTR(gluTessNormal);
-    LOAD_FUNCPTR(gluTessProperty);
-    LOAD_FUNCPTR(gluTessVertex);
-    LOAD_FUNCPTR(gluUnProject);
-#undef LOAD_FUNCPTR
-    TRACE( "loaded %s\n", SONAME_LIBGLU );
-    return TRUE;
+#else
+    ERR( "libGLU is needed but support was not included at build time\n" );
+#endif
+    return libglu_handle != NULL;
 }
 
-
-/***********************************************************************
- *		DllMain
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+static void *load_glufunc( const char *name )
 {
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-        return load_libglu();
-    }
-    return TRUE;
+    void *ret;
+
+    if (!InitOnceExecuteOnce( &init_once, load_libglu, NULL, NULL )) return NULL;
+    if (!(ret = wine_dlsym( libglu_handle, name, NULL, 0 ))) ERR( "Can't find %s\n", name );
+    return ret;
 }
+
+#define LOAD_FUNCPTR(f) (p_##f || (p_##f = load_glufunc( #f )))
+
 
 /***********************************************************************
  *		gluLookAt (GLU32.@)
@@ -212,6 +168,7 @@ void WINAPI wine_gluLookAt( GLdouble eyex, GLdouble eyey, GLdouble eyez,
                             GLdouble centerx, GLdouble centery, GLdouble centerz,
                             GLdouble upx, GLdouble upy, GLdouble upz )
 {
+    if (!LOAD_FUNCPTR( gluLookAt )) return;
     p_gluLookAt( eyex, eyey, eyez, centerx, centery, centerz, upx, upy, upz );
 }
 
@@ -220,6 +177,7 @@ void WINAPI wine_gluLookAt( GLdouble eyex, GLdouble eyey, GLdouble eyez,
  */
 void WINAPI wine_gluOrtho2D( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top )
 {
+    if (!LOAD_FUNCPTR( gluOrtho2D )) return;
     p_gluOrtho2D( left, right, bottom, top );
 }
 
@@ -228,6 +186,7 @@ void WINAPI wine_gluOrtho2D( GLdouble left, GLdouble right, GLdouble bottom, GLd
  */
 void WINAPI wine_gluPerspective( GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar )
 {
+    if (!LOAD_FUNCPTR( gluPerspective )) return;
     p_gluPerspective( fovy, aspect, zNear, zFar );
 }
 
@@ -236,6 +195,7 @@ void WINAPI wine_gluPerspective( GLdouble fovy, GLdouble aspect, GLdouble zNear,
  */
 void WINAPI wine_gluPickMatrix( GLdouble x, GLdouble y, GLdouble width, GLdouble height, GLint viewport[4])
 {
+    if (!LOAD_FUNCPTR( gluPickMatrix )) return;
     p_gluPickMatrix( x, y, width, height, viewport );
 }
 
@@ -246,6 +206,7 @@ int WINAPI wine_gluProject( GLdouble objx, GLdouble objy, GLdouble objz, const G
                             const GLdouble projMatrix[16], const GLint viewport[4],
                             GLdouble *winx, GLdouble *winy, GLdouble *winz )
 {
+    if (!LOAD_FUNCPTR( gluProject )) return GLU_FALSE;
     return p_gluProject( objx, objy, objz, modelMatrix, projMatrix, viewport, winx, winy, winz );
 }
 
@@ -256,6 +217,7 @@ int WINAPI wine_gluUnProject( GLdouble winx, GLdouble winy, GLdouble winz, const
                               const GLdouble projMatrix[16], const GLint viewport[4],
                               GLdouble *objx, GLdouble *objy, GLdouble *objz )
 {
+    if (!LOAD_FUNCPTR( gluUnProject )) return GLU_FALSE;
     return p_gluUnProject( winx, winy, winz, modelMatrix, projMatrix, viewport, objx, objy, objz );
 }
 
@@ -264,6 +226,7 @@ int WINAPI wine_gluUnProject( GLdouble winx, GLdouble winy, GLdouble winz, const
  */
 const GLubyte * WINAPI wine_gluErrorString( GLenum errCode )
 {
+    if (!LOAD_FUNCPTR( gluErrorString )) return (const GLubyte *)"unknown error";
     return p_gluErrorString( errCode );
 }
 
@@ -273,6 +236,7 @@ const GLubyte * WINAPI wine_gluErrorString( GLenum errCode )
 int WINAPI wine_gluScaleImage( GLenum format, GLint widthin, GLint heightin, GLenum typein, const void *datain,
                                GLint widthout, GLint heightout, GLenum typeout, void *dataout )
 {
+    if (!LOAD_FUNCPTR( gluScaleImage )) return GLU_OUT_OF_MEMORY;
     return p_gluScaleImage( format, widthin, heightin, typein, datain,
                             widthout, heightout, typeout, dataout );
 }
@@ -283,6 +247,7 @@ int WINAPI wine_gluScaleImage( GLenum format, GLint widthin, GLint heightin, GLe
 int WINAPI wine_gluBuild1DMipmaps( GLenum target, GLint components, GLint width,
                                    GLenum format, GLenum type, const void *data )
 {
+    if (!LOAD_FUNCPTR( gluBuild1DMipmaps )) return GLU_OUT_OF_MEMORY;
     return p_gluBuild1DMipmaps( target, components, width, format, type, data );
 }
 
@@ -292,6 +257,7 @@ int WINAPI wine_gluBuild1DMipmaps( GLenum target, GLint components, GLint width,
 int WINAPI wine_gluBuild2DMipmaps( GLenum target, GLint components, GLint width, GLint height,
                                    GLenum format, GLenum type, const void *data )
 {
+    if (!LOAD_FUNCPTR( gluBuild2DMipmaps )) return GLU_OUT_OF_MEMORY;
     return p_gluBuild2DMipmaps( target, components, width, height, format, type, data );
 }
 
@@ -300,6 +266,7 @@ int WINAPI wine_gluBuild2DMipmaps( GLenum target, GLint components, GLint width,
  */
 GLUquadric * WINAPI wine_gluNewQuadric(void)
 {
+    if (!LOAD_FUNCPTR( gluNewQuadric )) return NULL;
     return p_gluNewQuadric();
 }
 
@@ -308,6 +275,7 @@ GLUquadric * WINAPI wine_gluNewQuadric(void)
  */
 void WINAPI wine_gluDeleteQuadric( GLUquadric *state )
 {
+    if (!LOAD_FUNCPTR( gluDeleteQuadric )) return;
     p_gluDeleteQuadric( state );
 }
 
@@ -316,6 +284,7 @@ void WINAPI wine_gluDeleteQuadric( GLUquadric *state )
  */
 void WINAPI wine_gluQuadricDrawStyle( GLUquadric *quadObject, GLenum drawStyle )
 {
+    if (!LOAD_FUNCPTR( gluQuadricDrawStyle )) return;
     p_gluQuadricDrawStyle( quadObject, drawStyle );
 }
 
@@ -324,6 +293,7 @@ void WINAPI wine_gluQuadricDrawStyle( GLUquadric *quadObject, GLenum drawStyle )
  */
 void WINAPI wine_gluQuadricOrientation( GLUquadric *quadObject, GLenum orientation )
 {
+    if (!LOAD_FUNCPTR( gluQuadricOrientation )) return;
     p_gluQuadricOrientation( quadObject, orientation );
 }
 
@@ -332,6 +302,7 @@ void WINAPI wine_gluQuadricOrientation( GLUquadric *quadObject, GLenum orientati
  */
 void WINAPI wine_gluQuadricNormals( GLUquadric *quadObject, GLenum normals )
 {
+    if (!LOAD_FUNCPTR( gluQuadricNormals )) return;
     p_gluQuadricNormals( quadObject, normals );
 }
 
@@ -340,6 +311,7 @@ void WINAPI wine_gluQuadricNormals( GLUquadric *quadObject, GLenum normals )
  */
 void WINAPI wine_gluQuadricTexture( GLUquadric *quadObject, GLboolean textureCoords )
 {
+    if (!LOAD_FUNCPTR( gluQuadricTexture )) return;
     p_gluQuadricTexture( quadObject, textureCoords );
 }
 
@@ -348,6 +320,7 @@ void WINAPI wine_gluQuadricTexture( GLUquadric *quadObject, GLboolean textureCoo
  */
 void WINAPI wine_gluQuadricCallback( GLUquadric *qobj, GLenum which, void (CALLBACK *fn)(void) )
 {
+    if (!LOAD_FUNCPTR( gluQuadricCallback )) return;
     /* FIXME: callback calling convention */
     p_gluQuadricCallback( qobj, which, (_GLUfuncptr)fn );
 }
@@ -358,6 +331,7 @@ void WINAPI wine_gluQuadricCallback( GLUquadric *qobj, GLenum which, void (CALLB
 void WINAPI wine_gluCylinder( GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
                               GLdouble height, GLint slices, GLint stacks )
 {
+    if (!LOAD_FUNCPTR( gluCylinder )) return;
     p_gluCylinder( qobj, baseRadius, topRadius, height, slices, stacks );
 }
 
@@ -366,6 +340,7 @@ void WINAPI wine_gluCylinder( GLUquadric *qobj, GLdouble baseRadius, GLdouble to
  */
 void WINAPI wine_gluSphere( GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks )
 {
+    if (!LOAD_FUNCPTR( gluSphere )) return;
     p_gluSphere( qobj, radius, slices, stacks );
 }
 
@@ -375,6 +350,7 @@ void WINAPI wine_gluSphere( GLUquadric *qobj, GLdouble radius, GLint slices, GLi
 void WINAPI wine_gluDisk( GLUquadric *qobj, GLdouble innerRadius, GLdouble outerRadius,
                           GLint slices, GLint loops )
 {
+    if (!LOAD_FUNCPTR( gluDisk )) return;
     p_gluDisk( qobj, innerRadius, outerRadius, slices, loops );
 }
 
@@ -384,6 +360,7 @@ void WINAPI wine_gluDisk( GLUquadric *qobj, GLdouble innerRadius, GLdouble outer
 void WINAPI wine_gluPartialDisk( GLUquadric *qobj, GLdouble innerRadius, GLdouble outerRadius,
                                  GLint slices, GLint loops, GLdouble startAngle, GLdouble sweepAngle )
 {
+    if (!LOAD_FUNCPTR( gluPartialDisk )) return;
     p_gluPartialDisk( qobj, innerRadius, outerRadius, slices, loops, startAngle, sweepAngle );
 }
 
@@ -392,6 +369,7 @@ void WINAPI wine_gluPartialDisk( GLUquadric *qobj, GLdouble innerRadius, GLdoubl
  */
 GLUnurbs * WINAPI wine_gluNewNurbsRenderer(void)
 {
+    if (!LOAD_FUNCPTR( gluNewNurbsRenderer )) return NULL;
     return p_gluNewNurbsRenderer();
 }
 
@@ -400,6 +378,7 @@ GLUnurbs * WINAPI wine_gluNewNurbsRenderer(void)
  */
 void WINAPI wine_gluDeleteNurbsRenderer( GLUnurbs *nobj )
 {
+    if (!LOAD_FUNCPTR( gluDeleteNurbsRenderer )) return;
     p_gluDeleteNurbsRenderer( nobj );
 }
 
@@ -409,6 +388,7 @@ void WINAPI wine_gluDeleteNurbsRenderer( GLUnurbs *nobj )
 void WINAPI wine_gluLoadSamplingMatrices( GLUnurbs *nobj, const GLfloat modelMatrix[16],
                                           const GLfloat projMatrix[16], const GLint viewport[4] )
 {
+    if (!LOAD_FUNCPTR( gluLoadSamplingMatrices )) return;
     p_gluLoadSamplingMatrices( nobj, modelMatrix, projMatrix, viewport );
 }
 
@@ -417,6 +397,7 @@ void WINAPI wine_gluLoadSamplingMatrices( GLUnurbs *nobj, const GLfloat modelMat
  */
 void WINAPI wine_gluNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat value )
 {
+    if (!LOAD_FUNCPTR( gluNurbsProperty )) return;
     p_gluNurbsProperty( nobj, property, value );
 }
 
@@ -425,6 +406,7 @@ void WINAPI wine_gluNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat valu
  */
 void WINAPI wine_gluGetNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat *value )
 {
+    if (!LOAD_FUNCPTR( gluGetNurbsProperty )) return;
     p_gluGetNurbsProperty( nobj, property, value );
 }
 
@@ -433,6 +415,7 @@ void WINAPI wine_gluGetNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat *
  */
 void WINAPI wine_gluBeginCurve( GLUnurbs *nobj )
 {
+    if (!LOAD_FUNCPTR( gluBeginCurve )) return;
     p_gluBeginCurve( nobj );
 }
 
@@ -441,6 +424,7 @@ void WINAPI wine_gluBeginCurve( GLUnurbs *nobj )
  */
 void WINAPI wine_gluEndCurve( GLUnurbs *nobj )
 {
+    if (!LOAD_FUNCPTR( gluEndCurve )) return;
     p_gluEndCurve( nobj );
 }
 
@@ -450,6 +434,7 @@ void WINAPI wine_gluEndCurve( GLUnurbs *nobj )
 void WINAPI wine_gluNurbsCurve( GLUnurbs *nobj, GLint nknots, GLfloat *knot,
                                 GLint stride, GLfloat *ctlarray, GLint order, GLenum type )
 {
+    if (!LOAD_FUNCPTR( gluNurbsCurve )) return;
     p_gluNurbsCurve( nobj, nknots, knot, stride, ctlarray, order, type );
 }
 
@@ -458,6 +443,7 @@ void WINAPI wine_gluNurbsCurve( GLUnurbs *nobj, GLint nknots, GLfloat *knot,
  */
 void WINAPI wine_gluBeginSurface( GLUnurbs *nobj )
 {
+    if (!LOAD_FUNCPTR( gluBeginSurface )) return;
     p_gluBeginSurface( nobj );
 }
 
@@ -466,6 +452,7 @@ void WINAPI wine_gluBeginSurface( GLUnurbs *nobj )
  */
 void WINAPI wine_gluEndSurface( GLUnurbs *nobj )
 {
+    if (!LOAD_FUNCPTR( gluEndSurface )) return;
     p_gluEndSurface( nobj );
 }
 
@@ -476,6 +463,7 @@ void WINAPI wine_gluNurbsSurface( GLUnurbs *nobj, GLint sknot_count, float *skno
                                   GLfloat *tknot, GLint s_stride, GLint t_stride, GLfloat *ctlarray,
                                   GLint sorder, GLint torder, GLenum type )
 {
+    if (!LOAD_FUNCPTR( gluNurbsSurface )) return;
     p_gluNurbsSurface( nobj, sknot_count, sknot, tknot_count, tknot,
                        s_stride, t_stride, ctlarray, sorder, torder, type );
 }
@@ -485,6 +473,7 @@ void WINAPI wine_gluNurbsSurface( GLUnurbs *nobj, GLint sknot_count, float *skno
  */
 void WINAPI wine_gluBeginTrim( GLUnurbs *nobj )
 {
+    if (!LOAD_FUNCPTR( gluBeginTrim )) return;
     p_gluBeginTrim( nobj );
 }
 
@@ -493,6 +482,7 @@ void WINAPI wine_gluBeginTrim( GLUnurbs *nobj )
  */
 void WINAPI wine_gluEndTrim( GLUnurbs *nobj )
 {
+    if (!LOAD_FUNCPTR( gluEndTrim )) return;
     p_gluEndTrim( nobj );
 }
 
@@ -501,6 +491,7 @@ void WINAPI wine_gluEndTrim( GLUnurbs *nobj )
  */
 void WINAPI wine_gluPwlCurve( GLUnurbs *nobj, GLint count, GLfloat *array, GLint stride, GLenum type )
 {
+    if (!LOAD_FUNCPTR( gluPwlCurve )) return;
     p_gluPwlCurve( nobj, count, array, stride, type );
 }
 
@@ -509,6 +500,7 @@ void WINAPI wine_gluPwlCurve( GLUnurbs *nobj, GLint count, GLfloat *array, GLint
  */
 void WINAPI wine_gluNurbsCallback( GLUnurbs *nobj, GLenum which, void (CALLBACK *fn)(void) )
 {
+    if (!LOAD_FUNCPTR( gluNurbsCallback )) return;
     /* FIXME: callback calling convention */
     p_gluNurbsCallback( nobj, which, (_GLUfuncptr)fn );
 }
@@ -518,6 +510,7 @@ void WINAPI wine_gluNurbsCallback( GLUnurbs *nobj, GLenum which, void (CALLBACK 
  */
 const GLubyte * WINAPI wine_gluGetString( GLenum name )
 {
+    if (!LOAD_FUNCPTR( gluGetString )) return NULL;
     return p_gluGetString( name );
 }
 
@@ -547,6 +540,8 @@ wine_GLUtesselator * WINAPI wine_gluNewTess(void)
     void *tess;
     wine_GLUtesselator *ret;
 
+    if (!LOAD_FUNCPTR( gluNewTess ) || !LOAD_FUNCPTR( gluDeleteTess )) return NULL;
+
     if((tess = p_gluNewTess()) == NULL)
        return NULL;
 
@@ -564,9 +559,9 @@ wine_GLUtesselator * WINAPI wine_gluNewTess(void)
  */
 void WINAPI wine_gluDeleteTess( wine_GLUtesselator *wine_tess )
 {
+    if (!LOAD_FUNCPTR( gluDeleteTess )) return;
     p_gluDeleteTess(wine_tess->tess);
     HeapFree(GetProcessHeap(), 0, wine_tess);
-    return;
 }
 
 /***********************************************************************
@@ -574,8 +569,8 @@ void WINAPI wine_gluDeleteTess( wine_GLUtesselator *wine_tess )
  */
 void WINAPI wine_gluTessBeginPolygon( wine_GLUtesselator *wine_tess, void *polygon_data )
 {
+    if (!LOAD_FUNCPTR( gluTessBeginPolygon )) return;
     wine_tess->polygon_data = polygon_data;
-
     p_gluTessBeginPolygon(wine_tess->tess, wine_tess);
 }
 
@@ -584,6 +579,7 @@ void WINAPI wine_gluTessBeginPolygon( wine_GLUtesselator *wine_tess, void *polyg
  */
 void WINAPI wine_gluTessEndPolygon( wine_GLUtesselator *wine_tess )
 {
+    if (!LOAD_FUNCPTR( gluTessEndPolygon )) return;
     p_gluTessEndPolygon(wine_tess->tess);
 }
 
@@ -645,6 +641,7 @@ void WINAPI wine_gluTessCallback( wine_GLUtesselator *tess, GLenum which, void (
 {
     void *new_fn;
 
+    if (!LOAD_FUNCPTR( gluTessCallback )) return;
     switch(which) {
     case GLU_TESS_BEGIN:
         tess->cb_tess_begin = (void *)fn;
@@ -712,6 +709,7 @@ void WINAPI wine_gluTessCallback( wine_GLUtesselator *tess, GLenum which, void (
  */
 void WINAPI wine_gluTessBeginContour( wine_GLUtesselator *tess )
 {
+    if (!LOAD_FUNCPTR( gluTessBeginContour )) return;
     p_gluTessBeginContour(tess->tess);
 }
 
@@ -720,6 +718,7 @@ void WINAPI wine_gluTessBeginContour( wine_GLUtesselator *tess )
  */
 void WINAPI wine_gluTessEndContour( wine_GLUtesselator *tess )
 {
+    if (!LOAD_FUNCPTR( gluTessEndContour )) return;
     p_gluTessEndContour(tess->tess);
 }
 
@@ -728,6 +727,7 @@ void WINAPI wine_gluTessEndContour( wine_GLUtesselator *tess )
  */
 void WINAPI wine_gluTessVertex( wine_GLUtesselator *tess, GLdouble coords[3], void *data )
 {
+    if (!LOAD_FUNCPTR( gluTessVertex )) return;
     p_gluTessVertex( tess->tess, coords, data );
 }
 
@@ -736,6 +736,7 @@ void WINAPI wine_gluTessVertex( wine_GLUtesselator *tess, GLdouble coords[3], vo
  */
 void WINAPI wine_gluGetTessProperty( wine_GLUtesselator *tess, GLenum which, GLdouble *value )
 {
+    if (!LOAD_FUNCPTR( gluGetTessProperty )) return;
     p_gluGetTessProperty( tess->tess, which, value );
 }
 
@@ -744,6 +745,7 @@ void WINAPI wine_gluGetTessProperty( wine_GLUtesselator *tess, GLenum which, GLd
  */
 void WINAPI wine_gluTessProperty( wine_GLUtesselator *tess, GLenum which, GLdouble value )
 {
+    if (!LOAD_FUNCPTR( gluTessProperty )) return;
     p_gluTessProperty( tess->tess, which, value );
 }
 
@@ -752,6 +754,7 @@ void WINAPI wine_gluTessProperty( wine_GLUtesselator *tess, GLenum which, GLdoub
  */
 void WINAPI wine_gluTessNormal( wine_GLUtesselator *tess, GLdouble x, GLdouble y, GLdouble z )
 {
+    if (!LOAD_FUNCPTR( gluTessNormal )) return;
     p_gluTessNormal( tess->tess, x, y, z );
 }
 
@@ -760,6 +763,7 @@ void WINAPI wine_gluTessNormal( wine_GLUtesselator *tess, GLdouble x, GLdouble y
  */
 void WINAPI wine_gluBeginPolygon( wine_GLUtesselator *tess )
 {
+    if (!LOAD_FUNCPTR( gluTessBeginPolygon ) || !LOAD_FUNCPTR( gluTessBeginContour )) return;
     tess->polygon_data = NULL;
     p_gluTessBeginPolygon(tess->tess, tess);
     p_gluTessBeginContour(tess->tess);
@@ -770,6 +774,7 @@ void WINAPI wine_gluBeginPolygon( wine_GLUtesselator *tess )
  */
 void WINAPI wine_gluEndPolygon( wine_GLUtesselator *tess )
 {
+    if (!LOAD_FUNCPTR( gluTessEndPolygon ) || !LOAD_FUNCPTR( gluTessEndContour )) return;
     p_gluTessEndContour(tess->tess);
     p_gluTessEndPolygon(tess->tess);
 }
@@ -779,6 +784,7 @@ void WINAPI wine_gluEndPolygon( wine_GLUtesselator *tess )
  */
 void WINAPI wine_gluNextContour( wine_GLUtesselator *tess, GLenum type )
 {
+    if (!LOAD_FUNCPTR( gluTessEndContour ) || !LOAD_FUNCPTR( gluTessBeginContour )) return;
     p_gluTessEndContour(tess->tess);
     p_gluTessBeginContour(tess->tess);
 }

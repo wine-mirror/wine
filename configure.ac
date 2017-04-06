@@ -1167,8 +1167,6 @@ without X support, which probably isn't what you want. You will need
 to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.],
 [enable_winex11_drv])
 
-test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
-
 dnl **** Check for OpenCL ****
 if test "$ac_cv_header_CL_cl_h" = "yes"
 then

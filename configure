@@ -10941,8 +10941,6 @@ esac
 enable_winex11_drv=${enable_winex11_drv:-no}
 fi
 
-test "x$ac_cv_lib_soname_GLU" = "x" && enable_glu32=${enable_glu32:-no}
-
 if test "$ac_cv_header_CL_cl_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformInfo in -lOpenCL" >&5
