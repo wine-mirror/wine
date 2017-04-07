@@ -3553,7 +3553,7 @@ static void context_bind_unordered_access_views(struct wined3d_context *context,
         else if (view->resource->type != WINED3D_RTYPE_BUFFER)
         {
             struct wined3d_texture *texture = texture_from_resource(view->resource);
-            texture_name = wined3d_texture_get_gl_texture(texture, FALSE)->name;
+            texture_name = wined3d_texture_get_texture_name(texture, context, FALSE);
             level = view->desc.u.texture.level_idx;
         }
         else
