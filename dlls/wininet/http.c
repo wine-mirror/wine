@@ -466,10 +466,10 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
             }
             res = gzip_stream->parent_stream->vtbl->read(gzip_stream->parent_stream, req, gzip_stream->buf+gzip_stream->buf_size,
                     sizeof(gzip_stream->buf)-gzip_stream->buf_size, &current_read, allow_blocking);
-            gzip_stream->buf_size += current_read;
             if(res != ERROR_SUCCESS)
                 break;
 
+            gzip_stream->buf_size += current_read;
             if(!current_read) {
                 WARN("unexpected end of data\n");
                 gzip_stream->end_of_data = TRUE;
