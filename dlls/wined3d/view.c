@@ -347,9 +347,8 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
 
     if (view->resource->type != WINED3D_RTYPE_TEXTURE_2D)
     {
-        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(view->resource->type));
-        *width = 0;
-        *height = 0;
+        *width = view->width;
+        *height = view->height;
         return;
     }
 
