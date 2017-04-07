@@ -7325,6 +7325,23 @@ static void test_td_elem(IHTMLDocument2 *doc, IHTMLElement *div)
     ok(hres == S_OK, "get_rowSpan failed: %08x\n", hres);
     ok(lval == 2, "rowSpan = %d\n", lval);
 
+    hres = IHTMLTableCell_get_colSpan(cell, &lval);
+    ok(hres == S_OK, "get_rowSpan failed: %08x\n", hres);
+    ok(lval == 1, "rowSpan = %d\n", lval);
+
+    hres = IHTMLTableCell_put_colSpan(cell, -1);
+    ok(hres == E_INVALIDARG, "put_rowSpan failed: %08x\n", hres);
+
+    hres = IHTMLTableCell_put_colSpan(cell, 0);
+    ok(hres == E_INVALIDARG, "put_rowSpan failed: %08x\n", hres);
+
+    hres = IHTMLTableCell_put_colSpan(cell, 2);
+    ok(hres == S_OK, "put_rowSpan failed: %08x\n", hres);
+
+    hres = IHTMLTableCell_get_colSpan(cell, &lval);
+    ok(hres == S_OK, "get_rowSpan failed: %08x\n", hres);
+    ok(lval == 2, "rowSpan = %d\n", lval);
+
     IHTMLTableCell_Release(cell);
 }
 
