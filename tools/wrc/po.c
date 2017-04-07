@@ -917,6 +917,21 @@ static ver_block_t *get_version_langcharset_block( ver_block_t *block )
     return NULL;
 }
 
+static int version_value_needs_translation( const ver_value_t *val )
+{
+    int ret;
+    char *key;
+
+    if (val->type != val_str) return 0;
+    if (!(key = convert_msgid_ascii( val->key, 0 ))) return 0;
+
+    /* most values contain version numbers or file names, only translate a few specific ones */
+    ret = (!strcasecmp( key, "FileDescription" ) || !strcasecmp( key, "ProductName" ));
+
+    free( key );
+    return ret;
+}
+
 static void add_pot_versioninfo( po_file_t po, const resource_t *res )
 {
     ver_value_t *val;
@@ -924,7 +939,8 @@ static void add_pot_versioninfo( po_file_t po, const resource_t *res )
 
     if (!langcharset) return;
     for (val = langcharset->values; val; val = val->next)
-        add_po_string( po, val->value.str, NULL, NULL );
+        if (version_value_needs_translation( val ))
+            add_po_string( po, val->value.str, NULL, NULL );
 }
 
 static void add_po_versioninfo( const resource_t *english, const resource_t *res )
