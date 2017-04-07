@@ -2749,6 +2749,7 @@ struct wined3d_resource
     LONG ref;
     LONG bind_count;
     LONG map_count;
+    LONG access_count;
     struct wined3d_device *device;
     enum wined3d_resource_type type;
     enum wined3d_gl_resource_type gl_type;
@@ -2759,20 +2760,20 @@ struct wined3d_resource
     DWORD usage;
     enum wined3d_pool pool;
     DWORD access_flags;
-    DWORD draw_binding;
-    DWORD map_binding;
+    WORD draw_binding;
+    WORD map_binding;
     UINT width;
     UINT height;
     UINT depth;
     UINT size;
     DWORD priority;
     void *heap_memory;
-    struct list resource_list_entry;
-    LONG access_count;
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
     const struct wined3d_resource_ops *resource_ops;
+
+    struct list resource_list_entry;
 };
 
 static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
