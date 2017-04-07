@@ -210,6 +210,13 @@ static const struct my_option option_table[] = {
   {"--help",NONE, 0, do_usage,    "--help          Display this help message"},
   {"-h",    NONE, 0, do_usage,    "-h              Synonym for --help"},
   {"-?",    NONE, 0, do_usage,    "-?              Synonym for --help"},
+  {"dump",  DUMP, 0, do_dump,     "dump <file>     Dump the contents of 'file' (dll, exe, lib...)"},
+  {"-C",    DUMP, 0, do_symdmngl, "-C              Turn on symbol demangling"},
+  {"-f",    DUMP, 0, do_dumphead, "-f              Dump file header information"},
+  {"-G",    DUMP, 0, do_rawdebug, "-G              Dump raw debug information"},
+  {"-j",    DUMP, 1, do_dumpsect, "-j <sect_name>  Dump only the content of section 'sect_name' (import, export, debug, resource, tls, loadcfg, clr, reloc, except)"},
+  {"-t",    DUMP, 0, do_symtable, "-t              Dump symbol table"},
+  {"-x",    DUMP, 0, do_dumpall,  "-x              Dump everything"},
   {"sym",   DMGL, 0, do_demangle, "sym <sym>       Demangle C++ symbol <sym> and exit"},
   {"spec",  SPEC, 0, do_spec,     "spec <dll>      Use 'dll' for input file and generate implementation code"},
   {"-I",    SPEC, 1, do_include,  "-I <dir>        Look for prototypes in 'dir' (implies -c)"},
@@ -224,13 +231,6 @@ static const struct my_option option_table[] = {
   {"-S",    SPEC, 1, do_symfile,  "-S <symfile>    Search only prototype names found in 'symfile'"},
   {"-q",    SPEC, 0, do_quiet,    "-q              Don't show progress (quiet)."},
   {"-v",    SPEC, 0, do_verbose,  "-v              Show lots of detail while working (verbose)."},
-  {"dump",  DUMP, 0, do_dump,     "dump <file>     Dump the contents of 'file' (dll, exe, lib...)"},
-  {"-C",    DUMP, 0, do_symdmngl, "-C              Turn on symbol demangling"},
-  {"-f",    DUMP, 0, do_dumphead, "-f              Dump file header information"},
-  {"-G",    DUMP, 0, do_rawdebug, "-G              Dump raw debug information"},
-  {"-j",    DUMP, 1, do_dumpsect, "-j <sect_name>  Dump only the content of section 'sect_name' (import, export, debug, resource, tls, loadcfg, clr, reloc, except)"},
-  {"-t",    DUMP, 0, do_symtable, "-t              Dump symbol table"},
-  {"-x",    DUMP, 0, do_dumpall,  "-x              Dump everything"},
   {NULL,    NONE, 0, NULL,        NULL}
 };
 
