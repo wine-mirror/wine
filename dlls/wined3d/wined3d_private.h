@@ -3341,19 +3341,19 @@ struct wined3d_buffer
     GLenum buffer_type_hint;
     unsigned int bind_flags;
     DWORD flags;
+    DWORD locations;
     void *map_ptr;
 
     struct wined3d_map_range *maps;
     SIZE_T maps_size, modified_areas;
-    DWORD locations;
     struct wined3d_event_query *query;
 
     /* conversion stuff */
     UINT decl_change_count, full_conversion_count;
     UINT draw_count;
     UINT stride;                                            /* 0 if no conversion */
-    UINT conversion_stride;                                 /* 0 if no shifted conversion */
     enum wined3d_buffer_conversion_type *conversion_map;    /* NULL if no conversion */
+    UINT conversion_stride;                                 /* 0 if no shifted conversion */
 };
 
 static inline struct wined3d_buffer *buffer_from_resource(struct wined3d_resource *resource)
