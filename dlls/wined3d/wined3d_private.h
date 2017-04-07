@@ -1140,13 +1140,13 @@ struct wined3d_shader_instruction
     const struct wined3d_shader_context *ctx;
     enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
     DWORD flags;
-    BOOL coissue;
-    const struct wined3d_shader_src_param *predicate;
-    UINT dst_count;
+    unsigned int dst_count;
+    unsigned int src_count;
     const struct wined3d_shader_dst_param *dst;
-    UINT src_count;
     const struct wined3d_shader_src_param *src;
     struct wined3d_shader_texel_offset texel_offset;
+    BOOL coissue;
+    const struct wined3d_shader_src_param *predicate;
     union
     {
         struct wined3d_shader_semantic semantic;
