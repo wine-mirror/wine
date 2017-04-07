@@ -344,6 +344,16 @@ interface IDWriteFontSetBuilder : IUnknown
 [
     local,
     object,
+    uuid(3ff7715f-3cdc-4dc6-9b72-ec5621dccafd)
+]
+interface IDWriteFontSetBuilder1 : IDWriteFontSetBuilder
+{
+    HRESULT AddFontFile(IDWriteFontFile *file);
+}
+
+[
+    local,
+    object,
     uuid(9a1b41c3-d3bb-466a-87fc-fe67556a3b65)
 ]
 interface IDWriteFactory3 : IDWriteFactory2
@@ -497,4 +507,98 @@ interface IDWriteFactory4 : IDWriteFactory3
         D2D1_POINT_2F baseline_origin,
         DWRITE_MATRIX const *transform,
         D2D1_POINT_2F *origins);
+}
+
+[
+    local,
+    object,
+    uuid(ce25f8fd-863b-4d13-9651-c1f88dc73fe2)
+]
+interface IDWriteAsyncResult : IUnknown
+{
+    HANDLE GetWaitHandle();
+    HRESULT GetResult();
+}
+
+typedef struct DWRITE_FILE_FRAGMENT
+{
+    UINT64 fileOffset;
+    UINT64 fragmentSize;
+} DWRITE_FILE_FRAGMENT;
+
+[
+    local,
+    object,
+    uuid(4db3757a-2c72-4ed9-b2b6-1ababe1aff9c)
+]
+interface IDWriteRemoteFontFileStream : IDWriteFontFileStream
+{
+    HRESULT GetLocalFileSize(UINT64 *size);
+    HRESULT GetFileFragmentLocality(UINT64 offset, UINT64 size, BOOL *is_local, UINT64 *partial_size);
+    DWRITE_LOCALITY GetLocality();
+    HRESULT BeginDownload(
+        GUID const *operation_id,
+        DWRITE_FILE_FRAGMENT const *fragments,
+        UINT32 fragment_count,
+        IDWriteAsyncResult **async_result);
+}
+
+typedef enum DWRITE_CONTAINER_TYPE
+{
+    DWRITE_CONTAINER_TYPE_UNKNOWN,
+    DWRITE_CONTAINER_TYPE_WOFF,
+    DWRITE_CONTAINER_TYPE_WOFF2,
+} DWRITE_CONTAINER_TYPE;
+
+[
+    local,
+    object,
+    uuid(68648c83-6ede-46c0-ab46-20083a887fde)
+]
+interface IDWriteRemoteFontFileLoader : IDWriteFontFileLoader
+{
+    HRESULT CreateRemoteStreamFromKey(void const *key, UINT32 key_size, IDWriteRemoteFontFileStream **stream);
+    HRESULT GetLocalityFromKey(void const *key, UINT32 key_size, DWRITE_LOCALITY *locality);
+    HRESULT CreateFontFileReferenceFromUrl(
+        IDWriteFactory *factory,
+        WCHAR const *base_url,
+        WCHAR const *file_url,
+        IDWriteFontFile **fontfile);
+}
+
+[
+    local,
+    object,
+    uuid(dc102f47-a12d-4b1c-822d-9e117e33043f)
+]
+interface IDWriteInMemoryFontFileLoader : IDWriteFontFileLoader
+{
+    HRESULT CreateInMemoryFontFileReference(
+        IDWriteFactory *factory,
+        void const *data,
+        UINT32 data_size,
+        IUnknown *owner,
+        IDWriteFontFile **fontfile);
+    UINT32 GetFileCount();
+}
+
+[
+    local,
+    object,
+    uuid(958db99a-be2a-4f09-af7d-65189803d1d3)
+]
+interface IDWriteFactory5 : IDWriteFactory4
+{
+    HRESULT CreateFontSetBuilder(IDWriteFontSetBuilder1 **fontset_builder);
+    HRESULT CreateInMemoryFontFileLoader(IDWriteFontFileLoader **loader);
+    HRESULT CreateHttpFontFileLoader(
+        WCHAR const *referrer_url,
+        WCHAR const *extra_headers,
+        IDWriteRemoteFontFileLoader **loader);
+    DWRITE_CONTAINER_TYPE AnalyzeContainerType(void const *data, UINT32 data_size);
+    HRESULT UnpackFontFile(
+        DWRITE_CONTAINER_TYPE container_type,
+        void const *data,
+        UINT32 data_size,
+        IDWriteFontFileStream **stream);
 }
