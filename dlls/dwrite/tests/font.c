@@ -6858,6 +6858,70 @@ static void test_HasKerningPairs(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_ComputeGlyphOrigins(void)
+{
+    IDWriteFactory4 *factory4;
+    IDWriteFactory *factory;
+    DWRITE_GLYPH_RUN run;
+    HRESULT hr;
+    D2D1_POINT_2F origins[2];
+    D2D1_POINT_2F baseline_origin;
+    UINT16 glyphs[2];
+    FLOAT advances[2];
+    DWRITE_MATRIX m;
+
+    factory = create_factory();
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory4, (void **)&factory4);
+    IDWriteFactory_Release(factory);
+    if (FAILED(hr)) {
+        win_skip("ComputeGlyphOrigins() is not supported.\n");
+        return;
+    }
+
+    advances[0] = 10.0f;
+    advances[1] = 20.0f;
+
+    run.fontFace = NULL;
+    run.fontEmSize = 16.0f;
+    run.glyphCount = 2;
+    run.glyphIndices = glyphs;
+    run.glyphAdvances = advances;
+    run.glyphOffsets = NULL;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    baseline_origin.x = 123.0f;
+    baseline_origin.y = 321.0f;
+
+    memset(origins, 0, sizeof(origins));
+    hr = IDWriteFactory4_ComputeGlyphOrigins_(factory4, &run, baseline_origin, origins);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(origins[0].x == 123.0f && origins[0].y == 321.0f, "origins[0] %f,%f\n", origins[0].x, origins[0].y);
+    ok(origins[1].x == 133.0f && origins[1].y == 321.0f, "origins[1] %f,%f\n", origins[1].x, origins[1].y);
+
+    memset(origins, 0, sizeof(origins));
+    hr = IDWriteFactory4_ComputeGlyphOrigins(factory4, &run, DWRITE_MEASURING_MODE_NATURAL, baseline_origin,
+        NULL, origins);
+    ok(origins[0].x == 123.0f && origins[0].y == 321.0f, "origins[0] %f,%f\n", origins[0].x, origins[0].y);
+    ok(origins[1].x == 133.0f && origins[1].y == 321.0f, "origins[1] %f,%f\n", origins[1].x, origins[1].y);
+
+    /* transform is not applied to returned origins */
+    m.m11 = 2.0f;
+    m.m12 = 0.0f;
+    m.m21 = 0.0f;
+    m.m22 = 1.0f;
+    m.dx = 0.0f;
+    m.dy = 0.0f;
+
+    memset(origins, 0, sizeof(origins));
+    hr = IDWriteFactory4_ComputeGlyphOrigins(factory4, &run, DWRITE_MEASURING_MODE_NATURAL, baseline_origin,
+        &m, origins);
+    ok(origins[0].x == 123.0f && origins[0].y == 321.0f, "origins[0] %f,%f\n", origins[0].x, origins[0].y);
+    ok(origins[1].x == 133.0f && origins[1].y == 321.0f, "origins[1] %f,%f\n", origins[1].x, origins[1].y);
+
+    IDWriteFactory4_Release(factory4);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -6917,6 +6981,7 @@ START_TEST(font)
     test_font_properties();
     test_HasVerticalGlyphVariants();
     test_HasKerningPairs();
+    test_ComputeGlyphOrigins();
 
     IDWriteFactory_Release(factory);
 }

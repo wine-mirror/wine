@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1438,14 +1439,86 @@ static HRESULT WINAPI dwritefactory4_TranslateColorGlyphRun(IDWriteFactory4 *ifa
     return E_NOTIMPL;
 }
 
+static HRESULT compute_glyph_origins(DWRITE_GLYPH_RUN const *run, DWRITE_MEASURING_MODE measuring_mode,
+    D2D1_POINT_2F baseline_origin, DWRITE_MATRIX const *transform,  D2D1_POINT_2F *origins)
+{
+    IDWriteFontFace1 *fontface1 = NULL;
+    DWRITE_FONT_METRICS metrics;
+    FLOAT rtl_factor;
+    UINT32 i;
+
+    rtl_factor = run->bidiLevel & 1 ? -1.0f : 1.0f;
+
+    if (run->fontFace) {
+        IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
+        IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace1, (void **)&fontface1);
+    }
+
+    for (i = 0; i < run->glyphCount; i++) {
+        FLOAT advance;
+
+        /* Use nominal advances if not provided by caller. */
+        if (run->glyphAdvances)
+            advance = rtl_factor * run->glyphAdvances[i];
+        else {
+            INT32 a;
+
+            advance = 0.0f;
+            switch (measuring_mode)
+            {
+            case DWRITE_MEASURING_MODE_NATURAL:
+                if (SUCCEEDED(IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, run->glyphIndices + i, &a,
+                        run->isSideways)))
+                    advance = rtl_factor * get_scaled_advance_width(a, run->fontEmSize, &metrics);
+                break;
+            case DWRITE_MEASURING_MODE_GDI_CLASSIC:
+            case DWRITE_MEASURING_MODE_GDI_NATURAL:
+                if (SUCCEEDED(IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, run->fontEmSize,
+                        1.0f, transform, measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL,
+                        run->isSideways, 1, run->glyphIndices + i, &a)))
+                    advance = rtl_factor * floorf(a * run->fontEmSize / metrics.designUnitsPerEm + 0.5f);
+                break;
+            default:
+                ;
+            }
+        }
+
+        origins[i] = baseline_origin;
+
+        /* Apply offsets. */
+        if (run->glyphOffsets) {
+            FLOAT advanceoffset = rtl_factor * run->glyphOffsets[i].advanceOffset;
+            FLOAT ascenderoffset = -run->glyphOffsets[i].ascenderOffset;
+
+            if (run->isSideways) {
+                origins[i].x += ascenderoffset;
+                origins[i].y += advanceoffset;
+            }
+            else {
+                origins[i].x += advanceoffset;
+                origins[i].y += ascenderoffset;
+            }
+        }
+
+        if (run->isSideways)
+            baseline_origin.y += advance;
+        else
+            baseline_origin.x += advance;
+    }
+
+    if (fontface1)
+        IDWriteFontFace1_Release(fontface1);
+    return S_OK;
+}
+
 static HRESULT WINAPI dwritefactory4_ComputeGlyphOrigins_(IDWriteFactory4 *iface, DWRITE_GLYPH_RUN const *run,
     D2D1_POINT_2F baseline_origin, D2D1_POINT_2F *origins)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory4(iface);
 
-    FIXME("(%p)->(%p %p): stub\n", This, run, origins);
+    TRACE("(%p)->(%p (%f,%f) %p)\n", This, run, baseline_origin.x, baseline_origin.y, origins);
 
-    return E_NOTIMPL;
+    return compute_glyph_origins(run, DWRITE_MEASURING_MODE_NATURAL, baseline_origin, NULL, origins);
 }
 
 static HRESULT WINAPI dwritefactory4_ComputeGlyphOrigins(IDWriteFactory4 *iface, DWRITE_GLYPH_RUN const *run,
@@ -1454,9 +1527,10 @@ static HRESULT WINAPI dwritefactory4_ComputeGlyphOrigins(IDWriteFactory4 *iface,
 {
     struct dwritefactory *This = impl_from_IDWriteFactory4(iface);
 
-    FIXME("(%p)->(%p %d %p %p): stub\n", This, run, measuring_mode, transform, origins);
+    TRACE("(%p)->(%p %d (%f,%f) %p %p)\n", This, run, measuring_mode, baseline_origin.x, baseline_origin.y,
+        transform, origins);
 
-    return E_NOTIMPL;
+    return compute_glyph_origins(run, measuring_mode, baseline_origin, transform, origins);
 }
 
 static const struct IDWriteFactory4Vtbl dwritefactoryvtbl = {
