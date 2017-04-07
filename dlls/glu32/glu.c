@@ -32,6 +32,67 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(glu);
 
+static const struct { GLuint err; const char *str; } errors[] =
+{
+    { GL_NO_ERROR, "no error" },
+    { GL_INVALID_ENUM, "invalid enumerant" },
+    { GL_INVALID_VALUE, "invalid value" },
+    { GL_INVALID_OPERATION, "invalid operation" },
+    { GL_STACK_OVERFLOW, "stack overflow" },
+    { GL_STACK_UNDERFLOW, "stack underflow" },
+    { GL_OUT_OF_MEMORY, "out of memory" },
+    { GL_TABLE_TOO_LARGE, "table too large" },
+    { GL_INVALID_FRAMEBUFFER_OPERATION_EXT, "invalid framebuffer operation" },
+    { GLU_INVALID_ENUM, "invalid enumerant" },
+    { GLU_INVALID_VALUE, "invalid value" },
+    { GLU_OUT_OF_MEMORY, "out of memory" },
+    { GLU_INCOMPATIBLE_GL_VERSION, "incompatible gl version" },
+    { GLU_TESS_ERROR1, "gluTessBeginPolygon() must precede a gluTessEndPolygon()" },
+    { GLU_TESS_ERROR2, "gluTessBeginContour() must precede a gluTessEndContour()" },
+    { GLU_TESS_ERROR3, "gluTessEndPolygon() must follow a gluTessBeginPolygon()" },
+    { GLU_TESS_ERROR4, "gluTessEndContour() must follow a gluTessBeginContour()" },
+    { GLU_TESS_ERROR5, "a coordinate is too large" },
+    { GLU_TESS_ERROR6, "need combine callback" },
+    { GLU_NURBS_ERROR1, "spline order un-supported" },
+    { GLU_NURBS_ERROR2, "too few knots" },
+    { GLU_NURBS_ERROR3, "valid knot range is empty" },
+    { GLU_NURBS_ERROR4, "decreasing knot sequence knot" },
+    { GLU_NURBS_ERROR5, "knot multiplicity greater than order of spline" },
+    { GLU_NURBS_ERROR6, "gluEndCurve() must follow gluBeginCurve()" },
+    { GLU_NURBS_ERROR7, "gluBeginCurve() must precede gluEndCurve()" },
+    { GLU_NURBS_ERROR8, "missing or extra geometric data" },
+    { GLU_NURBS_ERROR9, "can't draw piecewise linear trimming curves" },
+    { GLU_NURBS_ERROR10, "missing or extra domain data" },
+    { GLU_NURBS_ERROR11, "missing or extra domain data" },
+    { GLU_NURBS_ERROR12, "gluEndTrim() must precede gluEndSurface()" },
+    { GLU_NURBS_ERROR13, "gluBeginSurface() must precede gluEndSurface()" },
+    { GLU_NURBS_ERROR14, "curve of improper type passed as trim curve" },
+    { GLU_NURBS_ERROR15, "gluBeginSurface() must precede gluBeginTrim()" },
+    { GLU_NURBS_ERROR16, "gluEndTrim() must follow gluBeginTrim()" },
+    { GLU_NURBS_ERROR17, "gluBeginTrim() must precede gluEndTrim()" },
+    { GLU_NURBS_ERROR18, "invalid or missing trim curve" },
+    { GLU_NURBS_ERROR19, "gluBeginTrim() must precede gluPwlCurve()" },
+    { GLU_NURBS_ERROR20, "piecewise linear trimming curve referenced twice" },
+    { GLU_NURBS_ERROR21, "piecewise linear trimming curve and nurbs curve mixed" },
+    { GLU_NURBS_ERROR22, "improper usage of trim data type" },
+    { GLU_NURBS_ERROR23, "nurbs curve referenced twice" },
+    { GLU_NURBS_ERROR24, "nurbs curve and piecewise linear trimming curve mixed" },
+    { GLU_NURBS_ERROR25, "nurbs surface referenced twice" },
+    { GLU_NURBS_ERROR26, "invalid property" },
+    { GLU_NURBS_ERROR27, "gluEndSurface() must follow gluBeginSurface()" },
+    { GLU_NURBS_ERROR28, "intersecting or misoriented trim curves" },
+    { GLU_NURBS_ERROR29, "intersecting trim curves" },
+    { GLU_NURBS_ERROR30, "UNUSED" },
+    { GLU_NURBS_ERROR31, "unconnected trim curves" },
+    { GLU_NURBS_ERROR32, "unknown knot error" },
+    { GLU_NURBS_ERROR33, "negative vertex count encountered" },
+    { GLU_NURBS_ERROR34, "negative byte-stride encountered" },
+    { GLU_NURBS_ERROR35, "unknown type descriptor" },
+    { GLU_NURBS_ERROR36, "null control point reference" },
+    { GLU_NURBS_ERROR37, "duplicate point on piecewise linear trimming curve" },
+};
+#define NB_ERRORS (sizeof(errors) / sizeof(errors[0]))
+
 typedef void (*_GLUfuncptr)(void);
 
 /* The only non-trivial bit of this is the *Tess* functions.  Here we
@@ -72,7 +133,6 @@ static void  (*p_gluDisk)( GLUquadric* quad, GLdouble inner, GLdouble outer, GLi
 static void  (*p_gluEndCurve)( GLUnurbs* nurb );
 static void  (*p_gluEndSurface)( GLUnurbs* nurb );
 static void  (*p_gluEndTrim)( GLUnurbs* nurb );
-static const GLubyte * (*p_gluErrorString)( GLenum error );
 static void  (*p_gluGetNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat* data );
 static void  (*p_gluGetTessProperty)( GLUtesselator* tess, GLenum which, GLdouble* data );
 static void  (*p_gluLoadSamplingMatrices)( GLUnurbs* nurb, const GLfloat *model, const GLfloat *perspective, const GLint *view );
@@ -202,8 +262,12 @@ int WINAPI wine_gluUnProject( GLdouble winx, GLdouble winy, GLdouble winz, const
  */
 const GLubyte * WINAPI wine_gluErrorString( GLenum errCode )
 {
-    if (!LOAD_FUNCPTR( gluErrorString )) return (const GLubyte *)"unknown error";
-    return p_gluErrorString( errCode );
+    unsigned int i;
+
+    for (i = 0; i < NB_ERRORS; i++)
+        if (errors[i].err == errCode) return (const GLubyte *)errors[i].str;
+
+    return NULL;
 }
 
 /***********************************************************************
