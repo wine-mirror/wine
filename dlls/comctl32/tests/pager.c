@@ -27,9 +27,10 @@
 #define NUM_MSG_SEQUENCES   1
 #define PAGER_SEQ_INDEX     0
 
-static HWND parent_wnd, child1_wnd;
+static HWND parent_wnd, child1_wnd, child2_wnd;
 
 #define CHILD1_ID 1
+#define CHILD2_ID 2
 
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 
@@ -42,10 +43,28 @@ static const struct message set_child_seq[] = {
     { WM_NOTIFY, sent|id|parent, 0, 0, PGN_CALCSIZE },
     { WM_WINDOWPOSCHANGED, sent },
     { WM_WINDOWPOSCHANGING, sent|id, 0, 0, CHILD1_ID },
-    { WM_NCCALCSIZE, sent|wparam|id, TRUE, 0, CHILD1_ID },
+    { WM_NCCALCSIZE, sent|wparam|id|optional, TRUE, 0, CHILD1_ID },
     { WM_CHILDACTIVATE, sent|id, 0, 0, CHILD1_ID },
     { WM_WINDOWPOSCHANGED, sent|id, 0, 0, CHILD1_ID },
-    { WM_SIZE, sent|id|defwinproc, 0, 0, CHILD1_ID },
+    { WM_SIZE, sent|id|defwinproc|optional, 0, 0, CHILD1_ID },
+    { 0 }
+};
+
+/* This differs from the above message list only in the child window that is
+ * expected to receive the child messages. No message is sent to the old child.
+ * Also child 2 is hidden while child 1 is visible. The pager does not make the
+ * hidden child visible. */
+static const struct message switch_child_seq[] = {
+    { PGM_SETCHILD, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_NCCALCSIZE, sent|wparam, TRUE },
+    { WM_NOTIFY, sent|id|parent, 0, 0, PGN_CALCSIZE },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, CHILD2_ID },
+    { WM_NCCALCSIZE, sent|wparam|id, TRUE, 0, CHILD2_ID },
+    { WM_CHILDACTIVATE, sent|id, 0, 0, CHILD2_ID },
+    { WM_WINDOWPOSCHANGED, sent|id, 0, 0, CHILD2_ID },
+    { WM_SIZE, sent|id|defwinproc, 0, 0, CHILD2_ID },
     { 0 }
 };
 
@@ -201,6 +220,8 @@ static LRESULT WINAPI child_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
     if (hwnd == child1_wnd)
         msg.id = CHILD1_ID;
+    else if (hwnd == child2_wnd)
+        msg.id = CHILD2_ID;
     else
         msg.id = 0;
 
@@ -246,6 +267,8 @@ static void test_pager(void)
 
     child1_wnd = CreateWindowA( "Pager test child class", "button", WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 300, 300,
                            pager, 0, GetModuleHandleA(0), 0 );
+    child2_wnd = CreateWindowA("Pager test child class", "button", WS_CHILD | WS_BORDER, 0, 0, 300, 300,
+        pager, 0, GetModuleHandleA(0), 0);
 
     flush_sequences( sequences, NUM_MSG_SEQUENCES );
     SendMessageA( pager, PGM_SETCHILD, 0, (LPARAM)child1_wnd );
@@ -253,6 +276,21 @@ static void test_pager(void)
     GetWindowRect( pager, &rect );
     ok( rect.right - rect.left == 100 && rect.bottom - rect.top == 100,
         "pager resized %dx%d\n", rect.right - rect.left, rect.bottom - rect.top );
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SendMessageA(pager, PGM_SETCHILD, 0, (LPARAM)child2_wnd);
+    ok_sequence(sequences, PAGER_SEQ_INDEX, switch_child_seq, "switch to invisible child", TRUE);
+    GetWindowRect(pager, &rect);
+    ok(rect.right - rect.left == 100 && rect.bottom - rect.top == 100,
+        "pager resized %dx%d\n", rect.right - rect.left, rect.bottom - rect.top);
+    todo_wine ok(!IsWindowVisible(child2_wnd), "Child window 2 is visible\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SendMessageA(pager, PGM_SETCHILD, 0, (LPARAM)child1_wnd);
+    ok_sequence(sequences, PAGER_SEQ_INDEX, set_child_seq, "switch to visible child", TRUE);
+    GetWindowRect(pager, &rect);
+    ok(rect.right - rect.left == 100 && rect.bottom - rect.top == 100,
+        "pager resized %dx%d\n", rect.right - rect.left, rect.bottom - rect.top);
 
     flush_sequences( sequences, NUM_MSG_SEQUENCES );
     SendMessageA( pager, PGM_SETPOS, 0, 10 );
