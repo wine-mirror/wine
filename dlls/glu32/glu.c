@@ -26,14 +26,12 @@
 #include "winbase.h"
 
 #include "wine/wgl.h"
+#include "wine/glu.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(glu);
 
-typedef struct GLUnurbs GLUnurbs;
-typedef struct GLUquadric GLUquadric;
-typedef struct GLUtesselator GLUtesselator;
 typedef void (*_GLUfuncptr)(void);
 
 /* The only non-trivial bit of this is the *Tess* functions.  Here we
@@ -60,30 +58,6 @@ typedef struct {
     void (CALLBACK *cb_tess_combine)(double *, void *, float *, void **);
     void (CALLBACK *cb_tess_combine_data)(double *, void *, float *, void **, void *);
 } wine_GLUtesselator;
-
-#define GLU_TESS_BEGIN          100100
-#define GLU_TESS_VERTEX         100101
-#define GLU_TESS_END            100102
-#define GLU_TESS_ERROR          100103
-#define GLU_TESS_EDGE_FLAG      100104
-#define GLU_TESS_COMBINE        100105
-#define GLU_TESS_BEGIN_DATA     100106
-#define GLU_TESS_VERTEX_DATA    100107
-#define GLU_TESS_END_DATA       100108
-#define GLU_TESS_ERROR_DATA     100109
-#define GLU_TESS_EDGE_FLAG_DATA 100110
-#define GLU_TESS_COMBINE_DATA   100111
-
-#define GLU_VERSION    100800
-#define GLU_EXTENSIONS 100801
-
-#define GLU_INVALID_ENUM            100900
-#define GLU_INVALID_VALUE           100901
-#define GLU_OUT_OF_MEMORY           100902
-#define GLU_INCOMPATIBLE_GL_VERSION 100903
-
-#define GLU_TRUE  GL_TRUE
-#define GLU_FALSE GL_FALSE
 
 static void  (*p_gluBeginCurve)( GLUnurbs* nurb );
 static void  (*p_gluBeginSurface)( GLUnurbs* nurb );

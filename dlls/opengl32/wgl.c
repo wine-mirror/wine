@@ -38,6 +38,7 @@
 #include "wine/wglext.h"
 #include "wine/gdi_driver.h"
 #include "wine/wgl_driver.h"
+#include "wine/glu.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
@@ -1394,24 +1395,19 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
     return wglUseFontBitmaps_common( hdc, first, count, listBase, TRUE );
 }
 
-/* FIXME: should probably have a glu.h header */
-
-typedef struct GLUtesselator GLUtesselator;
 typedef void (WINAPI *_GLUfuncptr)(void);
 
-#define GLU_TESS_BEGIN  100100
-#define GLU_TESS_VERTEX 100101
-#define GLU_TESS_END    100102
-
-static GLUtesselator * (WINAPI *pgluNewTess)(void);
-static void (WINAPI *pgluDeleteTess)(GLUtesselator *tess);
-static void (WINAPI *pgluTessNormal)(GLUtesselator *tess, GLdouble x, GLdouble y, GLdouble z);
-static void (WINAPI *pgluTessBeginPolygon)(GLUtesselator *tess, void *polygon_data);
-static void (WINAPI *pgluTessEndPolygon)(GLUtesselator *tess);
-static void (WINAPI *pgluTessCallback)(GLUtesselator *tess, GLenum which, _GLUfuncptr fn);
-static void (WINAPI *pgluTessBeginContour)(GLUtesselator *tess);
-static void (WINAPI *pgluTessEndContour)(GLUtesselator *tess);
-static void (WINAPI *pgluTessVertex)(GLUtesselator *tess, GLdouble *location, GLvoid* data);
+#define DECL_FUNCPTR(f) static typeof(f) *p##f
+DECL_FUNCPTR(gluNewTess);
+DECL_FUNCPTR(gluDeleteTess);
+DECL_FUNCPTR(gluTessNormal);
+DECL_FUNCPTR(gluTessBeginPolygon);
+DECL_FUNCPTR(gluTessEndPolygon);
+DECL_FUNCPTR(gluTessCallback);
+DECL_FUNCPTR(gluTessBeginContour);
+DECL_FUNCPTR(gluTessEndContour);
+DECL_FUNCPTR(gluTessVertex);
+#undef DECL_FUNCPTR
 
 static HMODULE load_libglu(void)
 {
