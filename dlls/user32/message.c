@@ -1867,9 +1867,9 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return (LRESULT)SetParent( hwnd, (HWND)wparam );
     case WM_WINE_SETWINDOWLONG:
         return WIN_SetWindowLong( hwnd, (short)LOWORD(wparam), HIWORD(wparam), lparam, TRUE );
-    case WM_WINE_ENABLEWINDOW:
+    case WM_WINE_SETSTYLE:
         if (is_desktop_window( hwnd )) return 0;
-        return EnableWindow( hwnd, wparam );
+        return WIN_SetStyle(hwnd, wparam, lparam);
     case WM_WINE_SETACTIVEWINDOW:
         if (is_desktop_window( hwnd )) return 0;
         if (!wparam && GetForegroundWindow() == hwnd) return 0;

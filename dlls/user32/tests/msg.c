@@ -16316,8 +16316,8 @@ static DWORD WINAPI SendMessage_thread_2(void *param)
     PostMessageA(wnd_event->hwnd, WM_USER+1, 0, 0);
 
     /* this leads to sending an internal message under Wine */
-    trace("thread: call EnableWindow\n");
-    EnableWindow(wnd_event->hwnd, TRUE);
+    trace("thread: call SetParent\n");
+    SetParent(wnd_event->hwnd, wnd_event->hwnd);
 
     trace("thread: call SendMessage\n");
     SendMessageA(wnd_event->hwnd, WM_USER+2, 0, 0);

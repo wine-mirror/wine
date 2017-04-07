@@ -768,8 +768,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
-            ERR( "cannot set style %x/%x on other process window %p\n",
-                 set_bits, clear_bits, hwnd );
+            return SendMessageW(hwnd, WM_WINE_SETSTYLE, set_bits, clear_bits);
         return 0;
     }
     style.styleOld = win->dwStyle;
@@ -2137,18 +2136,12 @@ HWND WINAPI GetDesktopWindow(void)
 BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 {
     BOOL retvalue;
-    HWND full_handle;
 
     if (is_broadcast(hwnd))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-
-    if (!(full_handle = WIN_IsCurrentThread( hwnd )))
-        return SendMessageW( hwnd, WM_WINE_ENABLEWINDOW, enable, 0 );
-
-    hwnd = full_handle;
 
     TRACE("( %p, %d )\n", hwnd, enable);
 
