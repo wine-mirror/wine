@@ -2368,52 +2368,62 @@ static void test_D3DXVec_Array(void)
 
 static void test_D3DXFloat_Array(void)
 {
-    static const float z = 0.0f;
-    /* Compilers set different sign bits on 0.0 / 0.0, pick the right ones for NaN and -NaN */
-    float tmpnan = 0.0f/z;
-    float nnan = copysignf(1, tmpnan) < 0.0f ? tmpnan : -tmpnan;
-    float nan = -nnan;
     unsigned int i;
     void *out = NULL;
     D3DXFLOAT16 half;
     FLOAT single;
+
+    /* Input floats through bit patterns because compilers do not generate reliable INF and NaN values. */
+    union convert
+    {
+        DWORD d;
+        FLOAT f;
+    };
+
     struct
     {
-        FLOAT single_in;
+        union convert single_in;
 
         /* half_ver2 occurs on WXPPROSP3 (32 bit math), WVISTAADM (32/64 bit math), W7PRO (32 bit math) */
         WORD half_ver1, half_ver2;
 
         /* single_out_ver2 confirms that half -> single conversion is consistent across platforms */
-        FLOAT single_out_ver1, single_out_ver2;
-    } testdata[] = {
-        { 80000.0f, 0x7c00, 0x7ce2, 65536.0f, 80000.0f },
-        { 65503.0f, 0x7bff, 0x7bff, 65504.0f, 65504.0f },
-        { 65504.0f, 0x7bff, 0x7bff, 65504.0f, 65504.0f },
-        { 65520.0f, 0x7bff, 0x7c00, 65504.0f, 65536.0f },
-        { 65521.0f, 0x7c00, 0x7c00, 65536.0f, 65536.0f },
-        { 65534.0f, 0x7c00, 0x7c00, 65536.0f, 65536.0f },
-        { 65535.0f, 0x7c00, 0x7c00, 65535.0f, 65536.0f },
-        { 65536.0f, 0x7c00, 0x7c00, 65536.0f, 65536.0f },
-        { -80000.0f, 0xfc00, 0xfce2, -65536.0f, -80000.0f },
-        { -65503.0f, 0xfbff, 0xfbff, -65504.0f, -65504.0f },
-        { -65504.0f, 0xfbff, 0xfbff, -65504.0f, -65504.0f },
-        { -65520.0f, 0xfbff, 0xfc00, -65504.0f, -65536.0f },
-        { -65521.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
-        { -65534.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
-        { -65535.0f, 0xfc00, 0xfc00, -65535.0f, -65536.0f },
-        { -65536.0f, 0xfc00, 0xfc00, -65536.0f, -65536.0f },
-        { 1.0f/z, 0x7c00, 0x7fff, 65536.0f, 131008.0f },
-        { -1.0f/z, 0xffff, 0xffff, -131008.0f, -131008.0f },
-        { nan, 0x7fff, 0xffff, 131008.0f, -131008.0f },
-        { nnan, 0xffff, 0xffff, -131008.0f, -131008.0f },
-        { 0.0f, 0x0, 0x0, 0.0f, 0.0f },
-        { -0.0f, 0x8000, 0x8000, 0.0f, 0.0f },
-        { 2.9809595e-08f, 0x0, 0x0, 0.0f, 0.0f },
-        { -2.9809595e-08f, 0x8000, 0x8000, -0.0f, -0.0f },
-        { 2.9809598e-08f, 0x1, 0x0, 5.96046e-08f, 5.96046e-08f },
-        { -2.9809598e-08f, 0x8001, 0x8000, -5.96046e-08f, -5.96046e-08f },
-        { 8.9406967e-08f, 0x2, 0x1, 1.19209e-07f,  5.96046e-008 }
+        union convert single_out_ver1, single_out_ver2;
+    }
+    testdata[] =
+    {
+        { { 0x479c4000 }, 0x7c00, 0x7ce2, { 0x47800000 }, { 0x479c4000 } }, /* 80000.0f */
+        { { 0x477fdf00 }, 0x7bff, 0x7bff, { 0x477fe000 }, { 0x477fe000 } }, /* 65503.0f */
+        { { 0x477fe000 }, 0x7bff, 0x7bff, { 0x477fe000 }, { 0x477fe000 } }, /* 65504.0f */
+        { { 0x477ff000 }, 0x7bff, 0x7c00, { 0x477fe000 }, { 0x47800000 } }, /* 65520.0f */
+        { { 0x477ff100 }, 0x7c00, 0x7c00, { 0x47800000 }, { 0x47800000 } }, /* 65521.0f */
+
+        { { 0x477ffe00 }, 0x7c00, 0x7c00, { 0x47800000 }, { 0x47800000 } }, /* 65534.0f */
+        { { 0x477fff00 }, 0x7c00, 0x7c00, { 0x477fff00 }, { 0x47800000 } }, /* 65535.0f */
+        { { 0x47800000 }, 0x7c00, 0x7c00, { 0x47800000 }, { 0x47800000 } }, /* 65536.0f */
+        { { 0xc79c4000 }, 0xfc00, 0xfce2, { 0xc7800000 }, { 0xc79c4000 } }, /* -80000.0f */
+        { { 0xc77fdf00 }, 0xfbff, 0xfbff, { 0xc77fe000 }, { 0xc77fe000 } }, /* -65503.0f */
+
+        { { 0xc77fe000 }, 0xfbff, 0xfbff, { 0xc77fe000 }, { 0xc77fe000 } }, /* -65504.0f */
+        { { 0xc77ff000 }, 0xfbff, 0xfc00, { 0xc77fe000 }, { 0xc7800000 } }, /* -65520.0f */
+        { { 0xc77ff100 }, 0xfc00, 0xfc00, { 0xc7800000 }, { 0xc7800000 } }, /* -65521.0f */
+        { { 0xc77ffe00 }, 0xfc00, 0xfc00, { 0xc7800000 }, { 0xc7800000 } }, /* -65534.0f */
+        { { 0xc77fff00 }, 0xfc00, 0xfc00, { 0xc77fff00 }, { 0xc7800000 } }, /* -65535.0f */
+
+        { { 0xc7800000 }, 0xfc00, 0xfc00, { 0xc7800000 }, { 0xc7800000 } }, /* -65536.0f */
+        { { 0x7f800000 }, 0x7c00, 0x7fff, { 0x47800000 }, { 0x47ffe000 } }, /* INF */
+        { { 0xff800000 }, 0xffff, 0xffff, { 0xc7ffe000 }, { 0xc7ffe000 } }, /* -INF */
+        { { 0x7fc00000 }, 0x7fff, 0xffff, { 0x47ffe000 }, { 0xc7ffe000 } }, /* NaN */
+        { { 0xffc00000 }, 0xffff, 0xffff, { 0xc7ffe000 }, { 0xc7ffe000 } }, /* -NaN */
+
+        { { 0x00000000 }, 0x0000, 0x0000, { 0x00000000 }, { 0x00000000 } }, /* 0.0f */
+        { { 0x80000000 }, 0x8000, 0x8000, { 0x00000000 }, { 0x00000000 } }, /* -0.0f */
+        { { 0x330007ff }, 0x0000, 0x0000, { 0x00000000 }, { 0x00000000 } }, /* 2.9809595e-08f */
+        { { 0xb30007ff }, 0x8000, 0x8000, { 0x80000000 }, { 0x80000000 } }, /* -2.9809595e-08f */
+        { { 0x33000800 }, 0x0001, 0x0000, { 0x337ffff3 }, { 0x337ffff3 } }, /* 2.9809598e-08f */
+
+        { { 0xb3000800 }, 0x8001, 0x8000, { 0xb37ffff3 } ,{ 0xb37ffff3 } }, /* -2.9809598e-08f */
+        { { 0x33c00000 }, 0x0002, 0x0001, { 0x33ffffd7 }, { 0x337ffff3 } }, /* 8.9406967e-08f */
     };
 
     /* exception on NULL out or in parameter */
@@ -2425,7 +2435,7 @@ static void test_D3DXFloat_Array(void)
 
     for (i = 0; i < sizeof(testdata)/sizeof(testdata[0]); i++)
     {
-        out = D3DXFloat32To16Array(&half, &testdata[i].single_in, 1);
+        out = D3DXFloat32To16Array(&half, &testdata[i].single_in.f, 1);
         ok(out == &half, "Got %p, expected %p.\n", out, &half);
         ok(half.value == testdata[i].half_ver1 || half.value == testdata[i].half_ver2,
            "Got %x, expected %x or %x for index %d.\n", half.value, testdata[i].half_ver1,
@@ -2433,13 +2443,13 @@ static void test_D3DXFloat_Array(void)
 
         out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&testdata[i].half_ver1, 1);
         ok(out == &single, "Got %p, expected %p.\n", out, &single);
-        ok(relative_error(single, testdata[i].single_out_ver1) < admitted_error,
-           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver1, i);
+        ok(relative_error(single, testdata[i].single_out_ver1.f) < admitted_error,
+           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver1.f, i);
 
         out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&testdata[i].half_ver2, 1);
         ok(out == &single, "Got %p, expected %p.\n", out, &single);
-        ok(relative_error(single, testdata[i].single_out_ver2) < admitted_error,
-           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver2, i);
+        ok(relative_error(single, testdata[i].single_out_ver2.f) < admitted_error,
+           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver2.f, i);
     }
 }
 
