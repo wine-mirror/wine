@@ -15,7 +15,7 @@
 @ stdcall gluEndSurface(ptr) wine_gluEndSurface
 @ stdcall gluEndTrim(ptr) wine_gluEndTrim
 @ stdcall gluErrorString(long) wine_gluErrorString
-@ stub gluErrorUnicodeStringEXT
+@ stdcall gluErrorUnicodeStringEXT(long) wine_gluErrorUnicodeStringEXT
 @ stdcall gluGetNurbsProperty(ptr long ptr) wine_gluGetNurbsProperty
 @ stdcall gluGetString(long) wine_gluGetString
 @ stdcall gluGetTessProperty(ptr long ptr) wine_gluGetTessProperty

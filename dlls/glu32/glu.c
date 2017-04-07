@@ -271,6 +271,24 @@ const GLubyte * WINAPI wine_gluErrorString( GLenum errCode )
 }
 
 /***********************************************************************
+ *		gluErrorUnicodeStringEXT (GLU32.@)
+ */
+const WCHAR * WINAPI wine_gluErrorUnicodeStringEXT( GLenum errCode )
+{
+    static WCHAR errorsW[NB_ERRORS][64];
+    unsigned int i, j;
+
+    for (i = 0; i < NB_ERRORS; i++)
+    {
+        if (errors[i].err != errCode) continue;
+        if (!errorsW[i][0])  /* errors use only ASCII, do a simple mapping */
+            for (j = 0; errors[i].str[j]; j++) errorsW[i][j] = (WCHAR)errors[i].str[j];
+        return errorsW[i];
+    }
+    return NULL;
+}
+
+/***********************************************************************
  *		gluScaleImage (GLU32.@)
  */
 int WINAPI wine_gluScaleImage( GLenum format, GLint widthin, GLint heightin, GLenum typein, const void *datain,
