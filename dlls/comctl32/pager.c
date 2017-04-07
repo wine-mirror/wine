@@ -248,10 +248,9 @@ PAGER_PositionChildWnd(PAGER_INFO* infoPtr)
             TRACE("[%p] SWP %dx%d at (%d,%d)\n", infoPtr->hwndSelf,
                          infoPtr->nWidth, infoPtr->nHeight,
                          -nPos, 0);
-            SetWindowPos(infoPtr->hwndChild, 0,
+            SetWindowPos(infoPtr->hwndChild, HWND_TOP,
                          -nPos, 0,
-                         infoPtr->nWidth, infoPtr->nHeight,
-                         SWP_NOZORDER);
+                         infoPtr->nWidth, infoPtr->nHeight, 0);
         }
         else
         {
@@ -262,10 +261,9 @@ PAGER_PositionChildWnd(PAGER_INFO* infoPtr)
             TRACE("[%p] SWP %dx%d at (%d,%d)\n", infoPtr->hwndSelf,
                          infoPtr->nWidth, infoPtr->nHeight,
                          0, -nPos);
-            SetWindowPos(infoPtr->hwndChild, 0,
+            SetWindowPos(infoPtr->hwndChild, HWND_TOP,
                          0, -nPos,
-                         infoPtr->nWidth, infoPtr->nHeight,
-                         SWP_NOZORDER);
+                         infoPtr->nWidth, infoPtr->nHeight, 0);
         }
 
         InvalidateRect(infoPtr->hwndChild, NULL, TRUE);
@@ -480,11 +478,6 @@ PAGER_SetChild (PAGER_INFO* infoPtr, HWND hwndChild)
 
         SetWindowPos(infoPtr->hwndSelf, 0, 0, 0, 0, 0,
                      SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-
-        /* position child within the page scroller */
-        SetWindowPos(infoPtr->hwndChild, HWND_TOP,
-                     0,0,0,0,
-                     SWP_SHOWWINDOW | SWP_NOSIZE);  /* native is 0 */
 
         infoPtr->nPos = -1;
         PAGER_SetPos(infoPtr, 0, FALSE);

@@ -283,7 +283,7 @@ static void test_pager(void)
     GetWindowRect(pager, &rect);
     ok(rect.right - rect.left == 100 && rect.bottom - rect.top == 100,
         "pager resized %dx%d\n", rect.right - rect.left, rect.bottom - rect.top);
-    todo_wine ok(!IsWindowVisible(child2_wnd), "Child window 2 is visible\n");
+    ok(!IsWindowVisible(child2_wnd), "Child window 2 is visible\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SendMessageA(pager, PGM_SETCHILD, 0, (LPARAM)child1_wnd);
