@@ -27,7 +27,9 @@
 #define NUM_MSG_SEQUENCES   1
 #define PAGER_SEQ_INDEX     0
 
-static HWND parent_wnd;
+static HWND parent_wnd, child1_wnd;
+
+#define CHILD1_ID 1
 
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 
@@ -39,6 +41,11 @@ static const struct message set_child_seq[] = {
     { WM_NCCALCSIZE, sent|wparam, TRUE },
     { WM_NOTIFY, sent|id|parent, 0, 0, PGN_CALCSIZE },
     { WM_WINDOWPOSCHANGED, sent },
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, CHILD1_ID },
+    { WM_NCCALCSIZE, sent|wparam|id, TRUE, 0, CHILD1_ID },
+    { WM_CHILDACTIVATE, sent|id, 0, 0, CHILD1_ID },
+    { WM_WINDOWPOSCHANGED, sent|id, 0, 0, CHILD1_ID },
+    { WM_SIZE, sent|id|defwinproc, 0, 0, CHILD1_ID },
     { 0 }
 };
 
@@ -49,7 +56,20 @@ static const struct message set_pos_seq[] = {
     { WM_NOTIFY, sent|id|parent, 0, 0, PGN_CALCSIZE },
     { WM_WINDOWPOSCHANGED, sent },
     { WM_MOVE, sent|optional },
+    /* The WM_SIZE handler sends WM_WINDOWPOSCHANGING, WM_CHILDACTIVATE
+     * and WM_WINDOWPOSCHANGED (which sends WM_MOVE) to the child.
+     * Another WM_WINDOWPOSCHANGING is sent afterwards.
+     *
+     * The 2nd WM_WINDOWPOSCHANGING is unconditional, but the comparison
+     * function is too simple to roll back an accepted message, so we have
+     * to mark the 2nd message optional. */
     { WM_SIZE, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|id, 0, 0, CHILD1_ID }, /* Actually optional. */
+    { WM_CHILDACTIVATE, sent|id, 0, 0, CHILD1_ID }, /* Actually optional. */
+    { WM_WINDOWPOSCHANGED, sent|id|optional, TRUE, 0, CHILD1_ID},
+    { WM_MOVE, sent|id|optional|defwinproc, 0, 0, CHILD1_ID },
+    { WM_WINDOWPOSCHANGING, sent|id|optional, 0, 0, CHILD1_ID }, /* Actually not optional. */
+    { WM_CHILDACTIVATE, sent|id|optional, 0, 0, CHILD1_ID }, /* Actually not optional. */
     { 0 }
 };
 
@@ -166,9 +186,53 @@ static HWND create_pager_control( DWORD style )
     return hwnd;
 }
 
+static LRESULT WINAPI child_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg;
+    static LONG defwndproc_counter;
+    LRESULT ret;
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+
+    if (hwnd == child1_wnd)
+        msg.id = CHILD1_ID;
+    else
+        msg.id = 0;
+
+    add_message(sequences, PAGER_SEQ_INDEX, &msg);
+
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static BOOL register_child_wnd_class(void)
+{
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = child_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "Pager test child class";
+    return RegisterClassA(&cls);
+}
+
 static void test_pager(void)
 {
-    HWND pager, child;
+    HWND pager;
     RECT rect, rect2;
 
     pager = create_pager_control( PGS_HORZ );
@@ -177,11 +241,14 @@ static void test_pager(void)
         win_skip( "Pager control not supported\n" );
         return;
     }
-    child = CreateWindowA( "BUTTON", "button", WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 300, 300,
+
+    register_child_wnd_class();
+
+    child1_wnd = CreateWindowA( "Pager test child class", "button", WS_CHILD | WS_BORDER | WS_VISIBLE, 0, 0, 300, 300,
                            pager, 0, GetModuleHandleA(0), 0 );
 
     flush_sequences( sequences, NUM_MSG_SEQUENCES );
-    SendMessageA( pager, PGM_SETCHILD, 0, (LPARAM)child );
+    SendMessageA( pager, PGM_SETCHILD, 0, (LPARAM)child1_wnd );
     ok_sequence(sequences, PAGER_SEQ_INDEX, set_child_seq, "set child", TRUE);
     GetWindowRect( pager, &rect );
     ok( rect.right - rect.left == 100 && rect.bottom - rect.top == 100,
