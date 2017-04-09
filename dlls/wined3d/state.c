@@ -448,22 +448,9 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_format *rt_format;
-    BOOL enable_blend, enable_line_smooth;
     GLenum src_blend, dst_blend;
     unsigned int rt_fmt_flags;
-
-    enable_line_smooth = state->render_states[WINED3D_RS_EDGEANTIALIAS]
-            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE];
-    if (enable_line_smooth)
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_LINE_SMOOTH);
-        checkGLcall("glEnable(GL_LINE_SMOOTH)");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_LINE_SMOOTH);
-        checkGLcall("glDisable(GL_LINE_SMOOTH)");
-    }
+    BOOL enable_blend;
 
     enable_blend = state->fb->render_targets[0] && state->render_states[WINED3D_RS_ALPHABLENDENABLE];
     if (enable_blend)
@@ -478,33 +465,19 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
             enable_blend = FALSE;
     }
 
-    if (enable_blend)
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
-        checkGLcall("glEnable(GL_BLEND)");
-    }
-    else
+    if (!enable_blend)
     {
         gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
         checkGLcall("glDisable(GL_BLEND)");
-        if (enable_line_smooth)
-            WARN("LINE/EDGEANTIALIAS enabled with disabled blending.\n");
         return;
     }
+
+    gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
+    checkGLcall("glEnable(GL_BLEND)");
 
     gl_blend_from_d3d(&src_blend, &dst_blend,
             state->render_states[WINED3D_RS_SRCBLEND],
             state->render_states[WINED3D_RS_DESTBLEND], rt_format);
-
-    /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
-     * blending parameters to work. */
-    if (enable_line_smooth)
-    {
-        if (src_blend != GL_SRC_ALPHA)
-            WARN("LINE/EDGEANTIALIAS enabled, but unexpected src blending param.\n");
-        if (dst_blend != GL_ONE_MINUS_SRC_ALPHA && dst_blend != GL_ONE)
-            WARN("LINE/EDGEANTIALIAS enabled, but unexpected dst blending param.\n");
-    }
 
     /* Re-apply BLENDOP(ALPHA) because of a possible SEPARATEALPHABLENDENABLE change */
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_BLENDOP)))
@@ -1664,6 +1637,23 @@ static void state_msaa(struct wined3d_context *context, const struct wined3d_sta
     {
         gl_info->gl_ops.gl.p_glDisable(GL_MULTISAMPLE_ARB);
         checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
+    }
+}
+
+static void state_line_antialias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (state->render_states[WINED3D_RS_EDGEANTIALIAS]
+            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE])
+    {
+        gl_info->gl_ops.gl.p_glEnable(GL_LINE_SMOOTH);
+        checkGLcall("glEnable(GL_LINE_SMOOTH)");
+    }
+    else
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_LINE_SMOOTH);
+        checkGLcall("glDisable(GL_LINE_SMOOTH)");
     }
 }
 
@@ -5031,8 +5021,8 @@ const struct StateEntryTemplate misc_state_template[] =
     { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          state_blend         }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE),     { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             state_line_antialias}, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE),     { STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE),     state_line_antialias}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SRCBLENDALPHA),             { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
