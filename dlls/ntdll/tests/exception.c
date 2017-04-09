@@ -1991,6 +1991,11 @@ static void test___C_specific_handler(void)
 
 #if defined(__i386__) || defined(__x86_64__)
 
+static DWORD WINAPI dummy_thread(void *arg)
+{
+    return 0;
+}
+
 static void test_debug_registers(void)
 {
     static const struct
@@ -2004,6 +2009,7 @@ static void test_debug_registers(void)
     };
     NTSTATUS status;
     CONTEXT ctx;
+    HANDLE thread;
     int i;
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
@@ -2032,6 +2038,30 @@ static void test_debug_registers(void)
         ok((ctx.Dr6 &  0xf00f) == tests[i].dr6, "test %d: expected %lx, got %lx\n", i, tests[i].dr6, (DWORD_PTR)ctx.Dr6);
         ok((ctx.Dr7 & ~0xdc00) == tests[i].dr7, "test %d: expected %lx, got %lx\n", i, tests[i].dr7, (DWORD_PTR)ctx.Dr7);
     }
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    ctx.Dr0 = 0xffffffff;
+    ctx.Dr1 = 0xffffffff;
+    ctx.Dr2 = 0xffffffff;
+    ctx.Dr3 = 0xffffffff;
+    ctx.Dr6 = 0xffffffff;
+    ctx.Dr7 = 0x00000400;
+    status = pNtSetContextThread(GetCurrentThread(), &ctx);
+    ok(status == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", status);
+    thread = CreateThread(NULL, 0, dummy_thread, NULL, CREATE_SUSPENDED, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "CreateThread failed with %d\n", GetLastError());
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    status = pNtGetContextThread(thread, &ctx);
+    ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", status);
+    ok(!ctx.Dr0, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr0);
+    ok(!ctx.Dr1, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr1);
+    ok(!ctx.Dr2, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr2);
+    ok(!ctx.Dr3, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr3);
+    todo_wine ok(!ctx.Dr6, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr6);
+    todo_wine ok(!ctx.Dr7, "expected 0, got %lx\n", (DWORD_PTR)ctx.Dr7);
+    TerminateThread(thread, 0);
+    CloseHandle(thread);
 }
 
 static DWORD outputdebugstring_exceptions;
