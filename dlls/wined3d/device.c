@@ -3542,11 +3542,10 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
         struct wined3d_texture *src_texture, unsigned int src_level,
         struct wined3d_texture *dst_texture, unsigned int level_count)
 {
-    struct wined3d_const_bo_address data;
+    unsigned int row_pitch, slice_pitch, i;
+    HRESULT hr = WINED3DERR_INVALIDCALL;
     struct wined3d_context *context;
-    struct wined3d_map_desc src;
-    HRESULT hr = WINED3D_OK;
-    unsigned int i;
+    struct wined3d_bo_address data;
 
     TRACE("device %p, src_texture %p, src_level %u, dst_texture %p, level_count %u.\n",
             device, src_texture, src_level, dst_texture, level_count);
@@ -3559,19 +3558,19 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
 
     for (i = 0; i < level_count; ++i)
     {
-        if (FAILED(hr = wined3d_resource_map(&src_texture->resource,
-                src_level + i, &src, NULL, WINED3D_MAP_READONLY)))
+        if (!wined3d_texture_load_location(src_texture, src_level + i,
+                context, src_texture->resource.map_binding))
             goto done;
 
-        data.buffer_object = 0;
-        data.addr = src.data;
-        wined3d_texture_upload_data(dst_texture, i, context, NULL, &data, src.row_pitch, src.slice_pitch);
+        wined3d_texture_get_memory(src_texture, src_level + i, &data, src_texture->resource.map_binding);
+        wined3d_texture_get_pitch(src_texture, src_level + i, &row_pitch, &slice_pitch);
+
+        wined3d_texture_upload_data(dst_texture, i, context, NULL,
+                wined3d_const_bo_address(&data), row_pitch, slice_pitch);
         wined3d_texture_invalidate_location(dst_texture, i, ~WINED3D_LOCATION_TEXTURE_RGB);
-
-        if (FAILED(hr = wined3d_resource_unmap(&src_texture->resource, src_level + i)))
-            goto done;
     }
 
+    hr = WINED3D_OK;
 done:
     context_release(context);
     return hr;
