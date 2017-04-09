@@ -61,6 +61,13 @@ BOOL WINAPI D3DX11CheckVersion(UINT d3dsdkversion, UINT d3dxsdkversion)
     return FALSE;
 }
 
+HRESULT WINAPI D3DX11FilterTexture(ID3D11DeviceContext *context, ID3D11Resource *texture, UINT src_level, UINT filter)
+{
+    FIXME("context %p, texture %p, src_level %u, filter %#x stub!\n", context, texture, src_level, filter);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX11ThreadPump *pump,
         D3DX11_IMAGE_INFO *img_info, HRESULT *hresult)
 {
