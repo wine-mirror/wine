@@ -3551,14 +3551,6 @@ static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
     TRACE("device %p, src_texture %p, src_level %u, dst_texture %p, level_count %u.\n",
             device, src_texture, src_level, dst_texture, level_count);
 
-    if (wined3d_texture_get_level_width(src_texture, src_level) != dst_texture->resource.width
-            || wined3d_texture_get_level_height(src_texture, src_level) != dst_texture->resource.height
-            || wined3d_texture_get_level_depth(src_texture, src_level) != dst_texture->resource.depth)
-    {
-        WARN("Source and destination dimensions do not match.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     context = context_acquire(device, NULL, 0);
 
     /* Only a prepare, since we're uploading entire volumes. */
@@ -3650,6 +3642,14 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     {
         src_size >>= 1;
         ++src_skip_levels;
+    }
+
+    if (wined3d_texture_get_level_width(src_texture, src_skip_levels) != dst_texture->resource.width
+            || wined3d_texture_get_level_height(src_texture, src_skip_levels) != dst_texture->resource.height
+            || wined3d_texture_get_level_depth(src_texture, src_skip_levels) != dst_texture->resource.depth)
+    {
+        WARN("Source and destination dimensions do not match.\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
     /* Make sure that the destination texture is loaded. */
