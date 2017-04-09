@@ -3538,52 +3538,16 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
             start_idx, index_count, start_instance, instance_count, TRUE);
 }
 
-static HRESULT wined3d_device_update_texture_3d(struct wined3d_device *device,
-        struct wined3d_texture *src_texture, unsigned int src_level,
-        struct wined3d_texture *dst_texture, unsigned int level_count)
-{
-    unsigned int row_pitch, slice_pitch, i;
-    HRESULT hr = WINED3DERR_INVALIDCALL;
-    struct wined3d_context *context;
-    struct wined3d_bo_address data;
-
-    TRACE("device %p, src_texture %p, src_level %u, dst_texture %p, level_count %u.\n",
-            device, src_texture, src_level, dst_texture, level_count);
-
-    context = context_acquire(device, NULL, 0);
-
-    /* Only a prepare, since we're uploading entire volumes. */
-    wined3d_texture_prepare_texture(dst_texture, context, FALSE);
-    wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
-
-    for (i = 0; i < level_count; ++i)
-    {
-        if (!wined3d_texture_load_location(src_texture, src_level + i,
-                context, src_texture->resource.map_binding))
-            goto done;
-
-        wined3d_texture_get_memory(src_texture, src_level + i, &data, src_texture->resource.map_binding);
-        wined3d_texture_get_pitch(src_texture, src_level + i, &row_pitch, &slice_pitch);
-
-        wined3d_texture_upload_data(dst_texture, i, context, NULL,
-                wined3d_const_bo_address(&data), row_pitch, slice_pitch);
-        wined3d_texture_invalidate_location(dst_texture, i, ~WINED3D_LOCATION_TEXTURE_RGB);
-    }
-
-    hr = WINED3D_OK;
-done:
-    context_release(context);
-    return hr;
-}
-
 HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture)
 {
     unsigned int src_size, dst_size, src_skip_levels = 0;
     unsigned int layer_count, level_count, i, j;
+    unsigned int row_pitch, slice_pitch;
     enum wined3d_resource_type type;
-    HRESULT hr;
     struct wined3d_context *context;
+    struct wined3d_bo_address data;
+    HRESULT hr;
     RECT r;
 
     TRACE("device %p, src_texture %p, dst_texture %p.\n", device, src_texture, dst_texture);
@@ -3701,10 +3665,33 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         }
 
         case WINED3D_RTYPE_TEXTURE_3D:
-            if (FAILED(hr = wined3d_device_update_texture_3d(device,
-                    src_texture, src_skip_levels, dst_texture, level_count)))
-                WARN("Failed to update 3D texture, hr %#x.\n", hr);
-            return hr;
+            context = context_acquire(device, NULL, 0);
+
+            /* Only a prepare, since we're uploading entire volumes. */
+            wined3d_texture_prepare_texture(dst_texture, context, FALSE);
+            wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
+
+            for (j = 0; j < level_count; ++j)
+            {
+                if (!wined3d_texture_load_location(src_texture, src_skip_levels + j,
+                        context, src_texture->resource.map_binding))
+                {
+                    WARN("Failed to load source sub-resource %u into %s.\n", src_skip_levels + j,
+                            wined3d_debug_location(src_texture->resource.map_binding));
+                    context_release(context);
+                    return WINED3DERR_INVALIDCALL;
+                }
+
+                wined3d_texture_get_memory(src_texture, src_skip_levels + j, &data, src_texture->resource.map_binding);
+                wined3d_texture_get_pitch(src_texture, src_skip_levels + j, &row_pitch, &slice_pitch);
+
+                wined3d_texture_upload_data(dst_texture, j, context, NULL,
+                        wined3d_const_bo_address(&data), row_pitch, slice_pitch);
+                wined3d_texture_invalidate_location(dst_texture, j, ~WINED3D_LOCATION_TEXTURE_RGB);
+            }
+
+            context_release(context);
+            return WINED3D_OK;
 
         default:
             FIXME("Unsupported texture type %#x.\n", type);
