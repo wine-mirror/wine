@@ -299,6 +299,7 @@ static HRESULT WINAPI SinkEnumPins_Clone(IEnumPins *iface, IEnumPins **ppEnum)
     if (clone == NULL)
         return E_OUTOFMEMORY;
     clone->index = This->index;
+    *ppEnum = &clone->IEnumPins_iface;
     return S_OK;
 }
 
@@ -971,6 +972,7 @@ static HRESULT WINAPI SourceEnumPins_Clone(IEnumPins *iface, IEnumPins **ppEnum)
     if (clone == NULL)
         return E_OUTOFMEMORY;
     clone->index = This->index;
+    *ppEnum = &clone->IEnumPins_iface;
     return S_OK;
 }
 
@@ -1087,6 +1089,7 @@ static HRESULT WINAPI SourceEnumMediaTypes_Clone(IEnumMediaTypes *iface, IEnumMe
     if (clone == NULL)
         return E_OUTOFMEMORY;
     clone->index = This->index;
+    *ppEnum = &clone->IEnumMediaTypes_iface;
     return S_OK;
 }
 
