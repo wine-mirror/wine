@@ -5673,7 +5673,6 @@ static void test_effect_state_manager(IDirect3DDevice9 *device)
 
         hr = IDirect3DDevice9_GetLight(device, i, &light);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
-        todo_wine
         ok(!memcmp(&light, &light_filler, sizeof(light)), "Light %u mismatch.\n", i);
     }
 
