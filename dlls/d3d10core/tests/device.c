@@ -8457,7 +8457,9 @@ static void test_clear_render_target_view(void)
         check_texture_color(texture, expected_color, 1);
     }
     else
-        win_skip("D3D11 is not available, skipping test.\n");
+    {
+        win_skip("D3D11 is not available.\n");
+    }
 
     ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
     check_texture_color(srgb_texture, expected_srgb_color, 1);
@@ -8494,7 +8496,7 @@ static void test_clear_render_target_view(void)
         {
             BOOL broken_device = is_warp_device(device) || is_nvidia_device(device);
             DWORD color = get_readback_color(&rb, 80 + i * 160, 60 + j * 120);
-            todo_wine ok(compare_color(color, expected_srgb_color, 1)
+            ok(compare_color(color, expected_srgb_color, 1)
                     || broken(compare_color(color, expected_color, 1) && broken_device),
                     "Got unexpected color 0x%08x.\n", color);
         }

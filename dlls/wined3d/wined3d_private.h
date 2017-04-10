@@ -1632,8 +1632,15 @@ struct wined3d_timestamp_query
 void context_alloc_timestamp_query(struct wined3d_context *context, struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 void context_free_timestamp_query(struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 
+struct wined3d_gl_view
+{
+    GLenum target;
+    GLuint name;
+};
+
 struct wined3d_rendertarget_info
 {
+    struct wined3d_gl_view gl_view;
     struct wined3d_resource *resource;
     unsigned int sub_resource_idx;
 };
@@ -3374,12 +3381,6 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
         struct wined3d_buffer *src_buffer, unsigned int src_offset, unsigned int size) DECLSPEC_HIDDEN;
 void wined3d_buffer_upload_data(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_box *box, const void *data) DECLSPEC_HIDDEN;
-
-struct wined3d_gl_view
-{
-    GLenum target;
-    GLuint name;
-};
 
 struct wined3d_rendertarget_view
 {

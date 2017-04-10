@@ -34,6 +34,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_synchronous);
 
 #define WINED3D_MAX_FBO_ENTRIES 64
+#define WINED3D_ALL_LAYERS (~0u)
 
 static DWORD wined3d_context_tls_idx;
 
@@ -127,6 +128,17 @@ static void context_attach_gl_texture_fbo(struct wined3d_context *context,
     {
         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, attachment, GL_TEXTURE_2D, 0, 0);
     }
+    else if (resource->layer == WINED3D_ALL_LAYERS)
+    {
+        if (!gl_info->fbo_ops.glFramebufferTexture)
+        {
+            FIXME("OpenGL implementation doesn't support glFramebufferTexture().\n");
+            return;
+        }
+
+        gl_info->fbo_ops.glFramebufferTexture(fbo_target, attachment,
+                resource->object, resource->level);
+    }
     else if (resource->target == GL_TEXTURE_2D_ARRAY)
     {
         if (!gl_info->fbo_ops.glFramebufferTextureLayer)
@@ -137,17 +149,6 @@ static void context_attach_gl_texture_fbo(struct wined3d_context *context,
 
         gl_info->fbo_ops.glFramebufferTextureLayer(fbo_target, attachment,
                 resource->object, resource->level, resource->layer);
-    }
-    else if (resource->target == GL_TEXTURE_3D)
-    {
-        if (!gl_info->fbo_ops.glFramebufferTexture)
-        {
-            FIXME("OpenGL implementation doesn't support glFramebufferTexture().\n");
-            return;
-        }
-
-        gl_info->fbo_ops.glFramebufferTexture(fbo_target, attachment,
-                resource->object, resource->level);
     }
     else
     {
@@ -401,6 +402,15 @@ static inline void context_set_fbo_key_for_render_target(const struct wined3d_co
         return;
     }
 
+    if (render_target->gl_view.name)
+    {
+        key->objects[idx].object = render_target->gl_view.name;
+        key->objects[idx].target = render_target->gl_view.target;
+        key->objects[idx].level = 0;
+        key->objects[idx].layer = WINED3D_ALL_LAYERS;
+        return;
+    }
+
     texture = wined3d_texture_from_resource(resource);
     if (resource->type == WINED3D_RTYPE_TEXTURE_2D)
     {
@@ -423,7 +433,7 @@ static inline void context_set_fbo_key_for_render_target(const struct wined3d_co
     {
         key->objects[idx].target = texture->target;
         key->objects[idx].level = sub_resource_idx % texture->level_count;
-        key->objects[idx].layer = 0;
+        key->objects[idx].layer = WINED3D_ALL_LAYERS;
     }
 
     switch (location)
@@ -457,7 +467,7 @@ static void context_generate_fbo_key(const struct wined3d_context *context,
         struct wined3d_surface *depth_stencil_surface, DWORD color_location,
         DWORD ds_location)
 {
-    struct wined3d_rendertarget_info depth_stencil = {0};
+    struct wined3d_rendertarget_info depth_stencil = {{0}};
     unsigned int i;
 
     key->rb_namespace = 0;
@@ -2732,6 +2742,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
                 {
                     if (rts[i])
                     {
+                        context->blit_targets[i].gl_view = rts[i]->gl_view;
                         context->blit_targets[i].resource = rts[i]->resource;
                         context->blit_targets[i].sub_resource_idx = rts[i]->sub_resource_idx;
                     }
@@ -2865,6 +2876,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
             {
                 if (fb->render_targets[i])
                 {
+                    context->blit_targets[i].gl_view = fb->render_targets[i]->gl_view;
                     context->blit_targets[i].resource = fb->render_targets[i]->resource;
                     context->blit_targets[i].sub_resource_idx = fb->render_targets[i]->sub_resource_idx;
                 }

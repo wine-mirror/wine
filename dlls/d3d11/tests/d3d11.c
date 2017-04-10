@@ -8958,7 +8958,7 @@ static void test_clear_render_target_view(void)
         {
             BOOL broken_device = is_warp_device(device) || is_nvidia_device(device);
             DWORD color = get_readback_color(&rb, 80 + i * 160, 60 + j * 120);
-            todo_wine ok(compare_color(color, expected_srgb_color, 1)
+            ok(compare_color(color, expected_srgb_color, 1)
                     || broken(compare_color(color, expected_color, 1) && broken_device),
                     "Got unexpected color 0x%08x.\n", color);
         }
