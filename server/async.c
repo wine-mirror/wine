@@ -180,14 +180,13 @@ void async_terminate( struct async *async, unsigned int status )
     async->status = status;
     if (async->iosb && async->iosb->status == STATUS_PENDING) async->iosb->status = status;
 
-    if (async->data.callback)
+    if (async->data.user)
     {
         apc_call_t data;
 
         memset( &data, 0, sizeof(data) );
         data.type            = APC_ASYNC_IO;
-        data.async_io.func   = async->data.callback;
-        data.async_io.user   = async->data.arg;
+        data.async_io.user   = async->data.user;
         data.async_io.sb     = async->data.iosb;
         data.async_io.status = status;
         thread_queue_apc( async->thread, &async->obj, &data );
@@ -328,8 +327,8 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         async->status = status;
         if (status == STATUS_MORE_PROCESSING_REQUIRED) return;  /* don't report the completion */
 
-        if (async->queue && async->data.cvalue)
-            add_async_completion( async->queue, async->data.cvalue, status, total );
+        if (async->queue && !async->data.apc && async->data.apc_context)
+            add_async_completion( async->queue, async->data.apc_context, status, total );
         if (apc)
         {
             apc_call_t data;
@@ -504,7 +503,7 @@ DECL_HANDLER(get_async_result)
     struct async *async;
 
     LIST_FOR_EACH_ENTRY( async, &current->process->asyncs, struct async, process_entry )
-        if (async->data.arg == req->user_arg)
+        if (async->data.user == req->user_arg)
         {
             iosb = async->iosb;
             break;

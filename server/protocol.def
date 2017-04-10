@@ -268,10 +268,10 @@ typedef struct
 {
     obj_handle_t    handle;        /* object to perform I/O on */
     obj_handle_t    event;         /* event to signal when done */
-    client_ptr_t    callback;      /* client-side callback to call upon end of async */
     client_ptr_t    iosb;          /* I/O status block in client addr space */
-    client_ptr_t    arg;           /* opaque user data to pass to callback */
-    apc_param_t     cvalue;        /* completion value to use for completion events */
+    client_ptr_t    user;          /* opaque user data containing callback pointer and async-specific data */
+    client_ptr_t    apc;           /* user APC to call */
+    apc_param_t     apc_context;   /* user APC context or completion value */
 } async_data_t;
 
 /* structures for extra message data */
@@ -479,7 +479,6 @@ typedef union
     {
         enum apc_type    type;     /* APC_ASYNC_IO */
         unsigned int     status;   /* I/O status */
-        client_ptr_t     func;     /* unsigned int (*func)(void*, void*, unsigned int, void**, void**); */
         client_ptr_t     user;     /* user pointer */
         client_ptr_t     sb;       /* status block */
     } async_io;

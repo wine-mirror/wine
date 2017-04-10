@@ -422,12 +422,12 @@ static async_data_t server_async( HANDLE handle, struct async_fileio *user, HAND
                                   PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
 {
     async_data_t async;
-    async.handle   = wine_server_obj_handle( handle );
-    async.callback = wine_server_client_ptr( user ? user->callback : 0 );
-    async.arg      = wine_server_client_ptr( user );
-    async.iosb     = wine_server_client_ptr( io );
-    async.event    = wine_server_obj_handle( event );
-    async.cvalue   = wine_server_client_ptr( apc ? 0 : apc_context );
+    async.handle      = wine_server_obj_handle( handle );
+    async.user        = wine_server_client_ptr( user );
+    async.iosb        = wine_server_client_ptr( io );
+    async.event       = wine_server_obj_handle( event );
+    async.apc         = wine_server_client_ptr( apc );
+    async.apc_context = wine_server_client_ptr( apc_context );
     return async;
 }
 

@@ -572,13 +572,13 @@ static NTSTATUS register_async( int type, HANDLE handle, struct ws2_async_io *as
 
     SERVER_START_REQ( register_async )
     {
-        req->type           = type;
-        req->async.handle   = wine_server_obj_handle( handle );
-        req->async.callback = wine_server_client_ptr( async->callback );
-        req->async.arg      = wine_server_client_ptr( async );
-        req->async.iosb     = wine_server_client_ptr( io );
-        req->async.event    = wine_server_obj_handle( event );
-        req->async.cvalue   = wine_server_client_ptr( apc ? 0 : apc_context );
+        req->type              = type;
+        req->async.handle      = wine_server_obj_handle( handle );
+        req->async.user        = wine_server_client_ptr( async );
+        req->async.iosb        = wine_server_client_ptr( io );
+        req->async.event       = wine_server_obj_handle( event );
+        req->async.apc         = wine_server_client_ptr( apc );
+        req->async.apc_context = wine_server_client_ptr( apc_context );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
