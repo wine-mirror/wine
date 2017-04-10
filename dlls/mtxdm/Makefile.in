@@ -1,0 +1,5 @@
+MODULE    = mtxdm.dll
+IMPORTS   = uuid ole32
+
+C_SRCS = \
+	mtxdm_main.c

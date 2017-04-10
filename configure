@@ -1332,6 +1332,7 @@ enable_msxml2
 enable_msxml3
 enable_msxml4
 enable_msxml6
+enable_mtxdm
 enable_ncrypt
 enable_nddeapi
 enable_ndis_sys
@@ -18213,6 +18214,7 @@ wine_fn_config_dll msxml3 enable_msxml3 clean
 wine_fn_config_test dlls/msxml3/tests msxml3_test clean
 wine_fn_config_dll msxml4 enable_msxml4 clean
 wine_fn_config_dll msxml6 enable_msxml6 clean
+wine_fn_config_dll mtxdm enable_mtxdm
 wine_fn_config_dll ncrypt enable_ncrypt
 wine_fn_config_dll nddeapi enable_nddeapi implib
 wine_fn_config_dll ndis.sys enable_ndis_sys
