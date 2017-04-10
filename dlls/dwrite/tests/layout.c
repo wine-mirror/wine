@@ -602,6 +602,7 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     entry.kind = DRAW_GLYPHRUN;
     if (effect)
         entry.kind |= DRAW_EFFECT;
+    ok(lstrlenW(descr->localeName) < LOCALE_NAME_MAX_LENGTH, "unexpectedly long locale name\n");
     lstrcpyW(entry.locale, descr->localeName);
     entry.glyphcount = run->glyphCount;
     add_call(sequences, RENDERER_ID, &entry);
