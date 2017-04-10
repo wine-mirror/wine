@@ -117,8 +117,6 @@ static const BYTE signedCTLWithCTLInnerContent[] = {
 0x8e,0xe7,0x5f,0x76,0x2b,0xd1,0x6a,0x82,0xb3,0x30,0x25,0x61,0xf6,0x25,0x23,
 0x57,0x6c,0x0b,0x47,0xb8 };
 
-
-static BOOL (WINAPI *pCertAddStoreToCollection)(HCERTSTORE,HCERTSTORE,DWORD,DWORD);
 static BOOL (WINAPI *pCertControlStore)(HCERTSTORE,DWORD,DWORD,void const*);
 static PCCRL_CONTEXT (WINAPI *pCertEnumCRLsInStore)(HCERTSTORE,PCCRL_CONTEXT);
 static BOOL (WINAPI *pCertEnumSystemStore)(DWORD,void*,void*,PFN_CERT_ENUM_SYSTEM_STORE);
@@ -503,11 +501,6 @@ static void testStoresInCollection(void)
                        WineTestRW2_W[]= { 'W','i','n','e','T','e','s','t','_','R','W','2',0 };
     BOOL ret;
 
-    if (!pCertAddStoreToCollection)
-    {
-        win_skip("CertAddStoreToCollection() is not available\n");
-        return;
-    }
     collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
         CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(collection != NULL, "Failed to init collection store, last error %x\n", GetLastError());
@@ -646,12 +639,6 @@ static void testCollectionStore(void)
     WCHAR filename[MAX_PATH];
     HANDLE file;
 
-    if (!pCertAddStoreToCollection)
-    {
-        win_skip("CertAddStoreToCollection() is not available\n");
-        return;
-    }
-
     collection = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
 
@@ -668,7 +655,7 @@ static void testCollectionStore(void)
      bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
     /* Add the memory store to the collection, without allowing adding */
-    ret = pCertAddStoreToCollection(collection, store1, 0, 0);
+    ret = CertAddStoreToCollection(collection, store1, 0, 0);
     ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
     /* Verify the cert is in the collection */
     context = CertEnumCertificatesInStore(collection, NULL);
@@ -688,7 +675,7 @@ static void testCollectionStore(void)
     store2 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     /* Try adding a store to a non-collection store */
-    ret = pCertAddStoreToCollection(store1, store2,
+    ret = CertAddStoreToCollection(store1, store2,
      CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08x\n", GetLastError());
@@ -698,7 +685,7 @@ static void testCollectionStore(void)
      CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
      */
     /* This "succeeds"... */
-    ret = pCertAddStoreToCollection(collection, 0,
+    ret = CertAddStoreToCollection(collection, 0,
      CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
     /* while this crashes.
@@ -707,7 +694,7 @@ static void testCollectionStore(void)
      */
 
     /* Add it to the collection, this time allowing adding */
-    ret = pCertAddStoreToCollection(collection, store2,
+    ret = CertAddStoreToCollection(collection, store2,
      CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
     /* Check that adding to the collection is allowed */
@@ -775,7 +762,7 @@ static void testCollectionStore(void)
     /* Adding a collection to a collection is legal */
     collection2 = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    ret = pCertAddStoreToCollection(collection2, collection,
+    ret = CertAddStoreToCollection(collection2, collection,
      CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
     /* check the contents of collection2 */
@@ -835,11 +822,9 @@ static void testCollectionStore(void)
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(collection != 0, "CertOpenStore failed: %08x\n", GetLastError());
 
-    ret = pCertAddStoreToCollection(collection, store1,
-     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ret = CertAddStoreToCollection(collection, store1, CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
-    ret = pCertAddStoreToCollection(collection, store2,
-     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    ret = CertAddStoreToCollection(collection, store2, CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
 
     /* Check that the collection has two copies of the same cert */
@@ -948,8 +933,7 @@ static void testCollectionStore(void)
     ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
     CertDeleteCertificateFromStore(context);
 
-    pCertAddStoreToCollection(collection, store1,
-     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    CertAddStoreToCollection(collection, store1, CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
 
     ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
      bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, &context);
@@ -976,7 +960,7 @@ static void testCollectionStore(void)
      */
     store1 = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
-    pCertAddStoreToCollection(collection, store1, 0, 0);
+    CertAddStoreToCollection(collection, store1, 0, 0);
     SetLastError(0xdeadbeef);
     ret = pCertControlStore(collection, 0, CERT_STORE_CTRL_COMMIT, NULL);
     ok(!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
@@ -1000,8 +984,7 @@ static void testCollectionStore(void)
      CERT_FILE_STORE_COMMIT_ENABLE_FLAG, file);
     ok(store1 != NULL, "CertOpenStore failed: %08x\n", GetLastError());
     CloseHandle(file);
-    pCertAddStoreToCollection(collection, store1,
-     CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
+    CertAddStoreToCollection(collection, store1, CERT_PHYSICAL_STORE_ADD_ENABLE_FLAG, 0);
     CertCloseStore(store1, 0);
 
     ret = CertAddEncodedCertificateToStore(collection, X509_ASN_ENCODING,
@@ -1364,12 +1347,8 @@ static void testSystemRegStore(void)
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     if (memStore)
     {
-        if (pCertAddStoreToCollection)
-        {
-            BOOL ret = pCertAddStoreToCollection(store, memStore, 0, 0);
-            ok(!ret && GetLastError() == E_INVALIDARG,
-               "Expected E_INVALIDARG, got %08x\n", GetLastError());
-        }
+        BOOL ret = CertAddStoreToCollection(store, memStore, 0, 0);
+        ok(!ret && GetLastError() == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", GetLastError());
         CertCloseStore(memStore, 0);
     }
     CertCloseStore(store, 0);
@@ -1458,12 +1437,9 @@ static void testSystemStore(void)
         /* Check that it's a collection store */
         if (memStore)
         {
-            if (pCertAddStoreToCollection)
-            {
-                BOOL ret = pCertAddStoreToCollection(store, memStore, 0, 0);
-                /* FIXME: this'll fail on NT4, but what error will it give? */
-                ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
-            }
+            BOOL ret = CertAddStoreToCollection(store, memStore, 0, 0);
+            /* FIXME: this'll fail on NT4, but what error will it give? */
+            ok(ret, "CertAddStoreToCollection failed: %08x\n", GetLastError());
             CertCloseStore(memStore, 0);
         }
         CertCloseStore(store, 0);
@@ -3169,7 +3145,6 @@ START_TEST(store)
     HMODULE hdll;
 
     hdll = GetModuleHandleA("Crypt32.dll");
-    pCertAddStoreToCollection = (void*)GetProcAddress(hdll, "CertAddStoreToCollection");
     pCertControlStore = (void*)GetProcAddress(hdll, "CertControlStore");
     pCertEnumCRLsInStore = (void*)GetProcAddress(hdll, "CertEnumCRLsInStore");
     pCertEnumSystemStore = (void*)GetProcAddress(hdll, "CertEnumSystemStore");
