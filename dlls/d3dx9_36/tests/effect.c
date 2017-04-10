@@ -5309,6 +5309,381 @@ static void test_effect_preshader_relative_addressing(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+struct test_state_manager_update
+{
+    unsigned int state_op;
+    DWORD param1;
+    DWORD param2;
+};
+
+struct test_manager
+{
+    ID3DXEffectStateManager ID3DXEffectStateManager_iface;
+    LONG ref;
+
+    IDirect3DDevice9 *device;
+    struct test_state_manager_update *update_record;
+    unsigned int update_record_count;
+    unsigned int update_record_size;
+};
+
+#define INITIAL_UPDATE_RECORD_SIZE 64
+
+static struct test_manager *impl_from_ID3DXEffectStateManager(ID3DXEffectStateManager *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_manager, ID3DXEffectStateManager_iface);
+}
+
+static void free_test_effect_state_manager(struct test_manager *state_manager)
+{
+    HeapFree(GetProcessHeap(), 0, state_manager->update_record);
+    state_manager->update_record = NULL;
+
+    IDirect3DDevice9_Release(state_manager->device);
+}
+
+static ULONG WINAPI test_manager_AddRef(ID3DXEffectStateManager *iface)
+{
+    struct test_manager *state_manager = impl_from_ID3DXEffectStateManager(iface);
+
+    return InterlockedIncrement(&state_manager->ref);
+}
+
+static ULONG WINAPI test_manager_Release(ID3DXEffectStateManager *iface)
+{
+    struct test_manager *state_manager = impl_from_ID3DXEffectStateManager(iface);
+    ULONG ref = InterlockedDecrement(&state_manager->ref);
+
+    if (!ref)
+    {
+        free_test_effect_state_manager(state_manager);
+        HeapFree(GetProcessHeap(), 0, state_manager);
+    }
+    return ref;
+}
+
+static HRESULT test_process_set_state(ID3DXEffectStateManager *iface,
+    unsigned int state_op, DWORD param1, DWORD param2)
+{
+    struct test_manager *state_manager = impl_from_ID3DXEffectStateManager(iface);
+
+    if (state_manager->update_record_count == state_manager->update_record_size)
+    {
+        if (!state_manager->update_record_size)
+        {
+            state_manager->update_record_size = INITIAL_UPDATE_RECORD_SIZE;
+            state_manager->update_record = HeapAlloc(GetProcessHeap(), 0,
+                    sizeof(*state_manager->update_record) * state_manager->update_record_size);
+        }
+        else
+        {
+            state_manager->update_record_size *= 2;
+            state_manager->update_record = HeapReAlloc(GetProcessHeap(), 0, state_manager->update_record,
+                    sizeof(*state_manager->update_record) * state_manager->update_record_size);
+        }
+    }
+    state_manager->update_record[state_manager->update_record_count].state_op = state_op;
+    state_manager->update_record[state_manager->update_record_count].param1 = param1;
+    state_manager->update_record[state_manager->update_record_count].param2 = param2;
+    ++state_manager->update_record_count;
+    return D3D_OK;
+}
+
+static HRESULT WINAPI test_manager_SetTransform(ID3DXEffectStateManager *iface,
+        D3DTRANSFORMSTATETYPE state, const D3DMATRIX *matrix)
+{
+    return test_process_set_state(iface, 0, state, 0);
+}
+
+static HRESULT WINAPI test_manager_SetMaterial(ID3DXEffectStateManager *iface,
+        const D3DMATERIAL9 *material)
+{
+    return test_process_set_state(iface, 1, 0, 0);
+}
+
+static HRESULT WINAPI test_manager_SetLight(ID3DXEffectStateManager *iface,
+        DWORD index, const D3DLIGHT9 *light)
+{
+    struct test_manager *state_manager = impl_from_ID3DXEffectStateManager(iface);
+
+    IDirect3DDevice9_SetLight(state_manager->device, index, light);
+    return test_process_set_state(iface, 2, index, 0);
+}
+
+static HRESULT WINAPI test_manager_LightEnable(ID3DXEffectStateManager *iface,
+        DWORD index, BOOL enable)
+{
+    struct test_manager *state_manager = impl_from_ID3DXEffectStateManager(iface);
+
+    IDirect3DDevice9_LightEnable(state_manager->device, index, enable);
+    return test_process_set_state(iface, 3, index, 0);
+}
+
+static HRESULT WINAPI test_manager_SetRenderState(ID3DXEffectStateManager *iface,
+        D3DRENDERSTATETYPE state, DWORD value)
+{
+    return test_process_set_state(iface, 4, state, 0);
+}
+
+static HRESULT WINAPI test_manager_SetTexture(ID3DXEffectStateManager *iface,
+        DWORD stage, struct IDirect3DBaseTexture9 *texture)
+{
+    return test_process_set_state(iface, 5, stage, 0);
+}
+
+static HRESULT WINAPI test_manager_SetTextureStageState(ID3DXEffectStateManager *iface,
+        DWORD stage, D3DTEXTURESTAGESTATETYPE type, DWORD value)
+{
+    return test_process_set_state(iface, 6, stage, type);
+}
+
+static HRESULT WINAPI test_manager_SetSamplerState(ID3DXEffectStateManager *iface,
+        DWORD sampler, D3DSAMPLERSTATETYPE type, DWORD value)
+{
+    return test_process_set_state(iface, 7, sampler, type);
+}
+
+static HRESULT WINAPI test_manager_SetNPatchMode(ID3DXEffectStateManager *iface,
+        FLOAT num_segments)
+{
+    return test_process_set_state(iface, 8, 0, 0);
+}
+
+static HRESULT WINAPI test_manager_SetFVF(ID3DXEffectStateManager *iface,
+        DWORD format)
+{
+    return test_process_set_state(iface, 9, 0, 0);
+}
+
+static HRESULT WINAPI test_manager_SetVertexShader(ID3DXEffectStateManager *iface,
+        struct IDirect3DVertexShader9 *shader)
+{
+    return test_process_set_state(iface, 10, 0, 0);
+}
+
+static HRESULT WINAPI test_manager_SetVertexShaderConstantF(ID3DXEffectStateManager *iface,
+        UINT register_index, const FLOAT *constant_data, UINT register_count)
+{
+    return test_process_set_state(iface, 11, register_index, register_count);
+}
+
+static HRESULT WINAPI test_manager_SetVertexShaderConstantI(ID3DXEffectStateManager *iface,
+        UINT register_index, const INT *constant_data, UINT register_count)
+{
+    return test_process_set_state(iface, 12, register_index, register_count);
+}
+
+static HRESULT WINAPI test_manager_SetVertexShaderConstantB(ID3DXEffectStateManager *iface,
+        UINT register_index, const BOOL *constant_data, UINT register_count)
+{
+    return test_process_set_state(iface, 13, register_index, register_count);
+}
+
+static HRESULT WINAPI test_manager_SetPixelShader(ID3DXEffectStateManager *iface,
+        struct IDirect3DPixelShader9 *shader)
+{
+    return test_process_set_state(iface, 14, 0, 0);
+}
+
+static HRESULT WINAPI test_manager_SetPixelShaderConstantF(ID3DXEffectStateManager *iface,
+        UINT register_index, const FLOAT *constant_data, UINT register_count)
+{
+    return test_process_set_state(iface, 15, register_index, register_count);
+}
+
+static HRESULT WINAPI test_manager_SetPixelShaderConstantI(ID3DXEffectStateManager *iface,
+        UINT register_index, const INT *constant_data, UINT register_count)
+{
+    return test_process_set_state(iface, 16, register_index, register_count);
+}
+
+static HRESULT WINAPI test_manager_SetPixelShaderConstantB(ID3DXEffectStateManager *iface,
+        UINT register_index, const BOOL *constant_data, UINT register_count)
+{
+    return test_process_set_state(iface, 17, register_index, register_count);
+}
+
+static void test_effect_state_manager_init(struct test_manager *state_manager,
+        IDirect3DDevice9 *device)
+{
+    static const struct ID3DXEffectStateManagerVtbl test_ID3DXEffectStateManager_Vtbl =
+    {
+        /*** IUnknown methods ***/
+        NULL,
+        test_manager_AddRef,
+        test_manager_Release,
+        /*** ID3DXEffectStateManager methods ***/
+        test_manager_SetTransform,
+        test_manager_SetMaterial,
+        test_manager_SetLight,
+        test_manager_LightEnable,
+        test_manager_SetRenderState,
+        test_manager_SetTexture,
+        test_manager_SetTextureStageState,
+        test_manager_SetSamplerState,
+        test_manager_SetNPatchMode,
+        test_manager_SetFVF,
+        test_manager_SetVertexShader,
+        test_manager_SetVertexShaderConstantF,
+        test_manager_SetVertexShaderConstantI,
+        test_manager_SetVertexShaderConstantB,
+        test_manager_SetPixelShader,
+        test_manager_SetPixelShaderConstantF,
+        test_manager_SetPixelShaderConstantI,
+        test_manager_SetPixelShaderConstantB,
+    };
+
+    state_manager->ID3DXEffectStateManager_iface.lpVtbl = &test_ID3DXEffectStateManager_Vtbl;
+    state_manager->ref = 1;
+
+    IDirect3DDevice9_AddRef(device);
+    state_manager->device = device;
+}
+
+static const char *test_effect_state_manager_state_names[] =
+{
+    "SetTransform",
+    "SetMaterial",
+    "SetLight",
+    "LightEnable",
+    "SetRenderState",
+    "SetTexture",
+    "SetTextureStageState",
+    "SetSamplerState",
+    "SetNPatchMode",
+    "SetFVF",
+    "SetVertexShader",
+    "SetVertexShaderConstantF",
+    "SetVertexShaderConstantI",
+    "SetVertexShaderConstantB",
+    "SetPixelShader",
+    "SetPixelShaderConstantF",
+    "SetPixelShaderConstantI",
+    "SetPixelShaderConstantB",
+};
+
+static int compare_update_record(const void *a, const void *b)
+{
+    const struct test_state_manager_update *r1 = (const struct test_state_manager_update *)a;
+    const struct test_state_manager_update *r2 = (const struct test_state_manager_update *)b;
+
+    if (r1->state_op != r2->state_op)
+        return r1->state_op - r2->state_op;
+    if (r1->param1 != r2->param1)
+        return r1->param1 - r2->param1;
+    return r1->param2 - r2->param2;
+}
+
+static void test_effect_state_manager(IDirect3DDevice9 *device)
+{
+    static const struct test_state_manager_update expected_updates[] =
+    {
+        {2, 0, 0},
+        {2, 1, 0},
+        {2, 2, 0},
+        {2, 3, 0},
+        {2, 4, 0},
+        {2, 5, 0},
+        {2, 6, 0},
+        {2, 7, 0},
+        {3, 0, 0},
+        {3, 1, 0},
+        {3, 2, 0},
+        {3, 3, 0},
+        {3, 4, 0},
+        {3, 5, 0},
+        {3, 6, 0},
+        {3, 7, 0},
+        {4, 28, 0},
+        {4, 36, 0},
+        {4, 38, 0},
+        {4, 158, 0},
+        {4, 159, 0},
+        {5, 0, 0},
+        {5, 257, 0},
+        {7, 0, 5},
+        {7, 0, 6},
+        {7, 257, 5},
+        {7, 257, 6},
+        {10, 0, 0},
+        {11, 0, 34},
+        {14, 0, 0},
+        {15, 0, 14},
+        {16, 0, 1},
+        {17, 0, 5},
+    };
+    static D3DLIGHT9 light_filler =
+            {D3DLIGHT_DIRECTIONAL, {0.5f, 0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f, 0.5f}};
+    struct test_manager *state_manager;
+    unsigned int passes_count, i, n;
+    ID3DXEffect *effect;
+    ULONG refcount;
+    HRESULT hr;
+
+    state_manager = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*state_manager));
+    test_effect_state_manager_init(state_manager, device);
+
+    for (i = 0; i < 8; ++i)
+    {
+        hr = IDirect3DDevice9_SetLight(device, i, &light_filler);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    }
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->SetStateManager(effect, &state_manager->ID3DXEffectStateManager_iface);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect->lpVtbl->Release(effect);
+
+    qsort(state_manager->update_record, state_manager->update_record_count,
+            sizeof(*state_manager->update_record), compare_update_record);
+
+    todo_wine
+    ok(ARRAY_SIZE(expected_updates) == state_manager->update_record_count,
+            "Got %u update records.\n", state_manager->update_record_count);
+    n = min(ARRAY_SIZE(expected_updates), state_manager->update_record_count);
+    for (i = 0; i < n; ++i)
+    {
+        todo_wine
+        ok(!memcmp(&expected_updates[i], &state_manager->update_record[i],
+                sizeof(expected_updates[i])),
+                "Update record mismatch, expected %s, %u, %u, got %s, %u, %u.\n",
+                test_effect_state_manager_state_names[expected_updates[i].state_op],
+                expected_updates[i].param1, expected_updates[i].param2,
+                test_effect_state_manager_state_names[state_manager->update_record[i].state_op],
+                state_manager->update_record[i].param1, state_manager->update_record[i].param2);
+    }
+
+    for (i = 0; i < 8; ++i)
+    {
+        D3DLIGHT9 light;
+
+        hr = IDirect3DDevice9_GetLight(device, i, &light);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        todo_wine
+        ok(!memcmp(&light, &light_filler, sizeof(light)), "Light %u mismatch.\n", i);
+    }
+
+    refcount = state_manager->ID3DXEffectStateManager_iface.lpVtbl->Release(
+            &state_manager->ID3DXEffectStateManager_iface);
+    ok(!refcount, "State manager was not properly freed, refcount %u.\n", refcount);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -5355,6 +5730,7 @@ START_TEST(effect)
     test_effect_out_of_bounds_selector(device);
     test_effect_commitchanges(device);
     test_effect_preshader_relative_addressing(device);
+    test_effect_state_manager(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
