@@ -139,7 +139,7 @@ static void context_attach_gl_texture_fbo(struct wined3d_context *context,
         gl_info->fbo_ops.glFramebufferTexture(fbo_target, attachment,
                 resource->object, resource->level);
     }
-    else if (resource->target == GL_TEXTURE_2D_ARRAY)
+    else if (resource->target == GL_TEXTURE_2D_ARRAY || resource->target == GL_TEXTURE_3D)
     {
         if (!gl_info->fbo_ops.glFramebufferTextureLayer)
         {
@@ -433,8 +433,10 @@ static inline void context_set_fbo_key_for_render_target(const struct wined3d_co
     {
         key->objects[idx].target = texture->target;
         key->objects[idx].level = sub_resource_idx % texture->level_count;
-        key->objects[idx].layer = WINED3D_ALL_LAYERS;
+        key->objects[idx].layer = sub_resource_idx / texture->level_count;
     }
+    if (render_target->layer_count != 1)
+        key->objects[idx].layer = WINED3D_ALL_LAYERS;
 
     switch (location)
     {
@@ -475,6 +477,7 @@ static void context_generate_fbo_key(const struct wined3d_context *context,
     {
         depth_stencil.resource = &depth_stencil_surface->container->resource;
         depth_stencil.sub_resource_idx = surface_get_sub_resource_idx(depth_stencil_surface);
+        depth_stencil.layer_count = 1;
     }
     context_set_fbo_key_for_render_target(context, key, 0, &depth_stencil, ds_location);
 
@@ -738,6 +741,7 @@ void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target
     {
         context->blit_targets[0].resource = &render_target->container->resource;
         context->blit_targets[0].sub_resource_idx = surface_get_sub_resource_idx(render_target);
+        context->blit_targets[0].layer_count = 1;
     }
     context_apply_fbo_state(context, target, context->blit_targets, depth_stencil, location, location);
 }
@@ -2745,6 +2749,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
                         context->blit_targets[i].gl_view = rts[i]->gl_view;
                         context->blit_targets[i].resource = rts[i]->resource;
                         context->blit_targets[i].sub_resource_idx = rts[i]->sub_resource_idx;
+                        context->blit_targets[i].layer_count = rts[i]->layer_count;
                     }
                     if (rts[i] && rts[i]->format->id != WINED3DFMT_NULL)
                         rt_mask |= (1u << i);
@@ -2879,6 +2884,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
                     context->blit_targets[i].gl_view = fb->render_targets[i]->gl_view;
                     context->blit_targets[i].resource = fb->render_targets[i]->resource;
                     context->blit_targets[i].sub_resource_idx = fb->render_targets[i]->sub_resource_idx;
+                    context->blit_targets[i].layer_count = fb->render_targets[i]->layer_count;
                 }
             }
             context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets,

@@ -419,7 +419,7 @@ static void wined3d_render_target_view_cs_init(void *object)
             depth_or_layer_count = texture->layer_count;
 
         if (resource->format->id != view->format->id
-                || (desc->u.texture.layer_count != 1 && desc->u.texture.layer_count != depth_or_layer_count))
+                || (view->layer_count != 1 && view->layer_count != depth_or_layer_count))
         {
             if (resource->format->gl_view_class != view->format->gl_view_class)
             {
@@ -454,9 +454,9 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         view->sub_resource_idx = 0;
+        view->layer_count = 1;
         view->width = desc->u.buffer.count;
         view->height = 1;
-        view->depth = 1;
     }
     else
     {
@@ -465,9 +465,9 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
         view->sub_resource_idx = desc->u.texture.level_idx;
         if (resource->type != WINED3D_RTYPE_TEXTURE_3D)
             view->sub_resource_idx += desc->u.texture.layer_idx * texture->level_count;
+        view->layer_count = desc->u.texture.layer_count;
         view->width = wined3d_texture_get_level_width(texture, desc->u.texture.level_idx);
         view->height = wined3d_texture_get_level_height(texture, desc->u.texture.level_idx);
-        view->depth = desc->u.texture.layer_count;
     }
 
     wined3d_resource_incref(view->resource = resource);

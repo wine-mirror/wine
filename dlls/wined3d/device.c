@@ -4129,7 +4129,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (view->depth > 1)
+    if (view->layer_count > 1)
     {
         FIXME("Layered clears not implemented.\n");
         return WINED3DERR_INVALIDCALL;

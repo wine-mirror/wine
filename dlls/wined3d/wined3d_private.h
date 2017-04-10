@@ -1643,6 +1643,7 @@ struct wined3d_rendertarget_info
     struct wined3d_gl_view gl_view;
     struct wined3d_resource *resource;
     unsigned int sub_resource_idx;
+    unsigned int layer_count;
 };
 
 #define MAX_GL_FRAGMENT_SAMPLERS 32
@@ -3394,10 +3395,10 @@ struct wined3d_rendertarget_view
     const struct wined3d_format *format;
     unsigned int format_flags;
     unsigned int sub_resource_idx;
+    unsigned int layer_count;
 
     unsigned int width;
     unsigned int height;
-    unsigned int depth;
 
     struct wined3d_view_desc desc;
 };
