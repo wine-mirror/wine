@@ -174,7 +174,9 @@ struct ID3DXEffectImpl
     DWORD flags;
 
     D3DLIGHT9 current_light[8];
+    BOOL light_updated[8];
     D3DMATERIAL9 current_material;
+    BOOL material_updated;
 };
 
 struct ID3DXEffectCompilerImpl
@@ -2740,7 +2742,7 @@ static void d3dx9_set_material_parameter(enum MATERIAL_TYPE op, D3DMATERIAL9 *ma
     }
 }
 
-static HRESULT d3dx_set_shader_const_state(IDirect3DDevice9 *device, enum SHADER_CONSTANT_TYPE op, UINT index,
+static HRESULT d3dx_set_shader_const_state(struct ID3DXEffectImpl *effect, enum SHADER_CONSTANT_TYPE op, UINT index,
         struct d3dx_parameter *param, void *value_ptr)
 {
     static const struct
@@ -2781,17 +2783,17 @@ static HRESULT d3dx_set_shader_const_state(IDirect3DDevice9 *device, enum SHADER
     switch (op)
     {
         case SCT_VSFLOAT:
-            return IDirect3DDevice9_SetVertexShaderConstantF(device, index, (const float *)value_ptr, element_count);
+            return SET_D3D_STATE(effect, SetVertexShaderConstantF, index, (const float *)value_ptr, element_count);
         case SCT_VSBOOL:
-            return IDirect3DDevice9_SetVertexShaderConstantB(device, index, (const BOOL *)value_ptr, element_count);
+            return SET_D3D_STATE(effect, SetVertexShaderConstantB, index, (const BOOL *)value_ptr, element_count);
         case SCT_VSINT:
-            return IDirect3DDevice9_SetVertexShaderConstantI(device, index, (const int *)value_ptr, element_count);
+            return SET_D3D_STATE(effect, SetVertexShaderConstantI, index, (const int *)value_ptr, element_count);
         case SCT_PSFLOAT:
-            return IDirect3DDevice9_SetPixelShaderConstantF(device, index, (const float *)value_ptr, element_count);
+            return SET_D3D_STATE(effect, SetPixelShaderConstantF, index, (const float *)value_ptr, element_count);
         case SCT_PSBOOL:
-            return IDirect3DDevice9_SetPixelShaderConstantB(device, index, (const BOOL *)value_ptr, element_count);
+            return SET_D3D_STATE(effect, SetPixelShaderConstantB, index, (const BOOL *)value_ptr, element_count);
         case SCT_PSINT:
-            return IDirect3DDevice9_SetPixelShaderConstantI(device, index, (const int *)value_ptr, element_count);
+            return SET_D3D_STATE(effect, SetPixelShaderConstantI, index, (const int *)value_ptr, element_count);
     }
     return D3D_OK;
 }
@@ -2802,7 +2804,6 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
 static HRESULT d3dx_set_shader_constants(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
         struct d3dx_parameter *param, BOOL vs, BOOL update_all)
 {
-    IDirect3DDevice9 *device = effect->device;
     HRESULT hr, ret;
     struct d3dx_parameter **params;
     D3DXCONSTANT_DESC *cdesc;
@@ -2814,7 +2815,8 @@ static HRESULT d3dx_set_shader_constants(struct ID3DXEffectImpl *effect, struct 
         FIXME("param_eval structure is null.\n");
         return D3DERR_INVALIDCALL;
     }
-    if (FAILED(hr = d3dx_param_eval_set_shader_constants(device, param->param_eval, update_all)))
+    if (FAILED(hr = d3dx_param_eval_set_shader_constants(effect->manager, effect->device,
+            param->param_eval, update_all)))
         return hr;
     params = param->param_eval->shader_inputs.inputs_param;
     cdesc = param->param_eval->shader_inputs.inputs;
@@ -2843,7 +2845,6 @@ static HRESULT d3dx_set_shader_constants(struct ID3DXEffectImpl *effect, struct 
 static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
         struct d3dx_state *state, unsigned int parent_index, BOOL update_all)
 {
-    IDirect3DDevice9 *device = effect->device;
     struct d3dx_parameter *param;
     void *param_value;
     BOOL param_dirty;
@@ -2878,10 +2879,10 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
         case SC_RENDERSTATE:
             TRACE("%s, operation %u, value %u.\n", state_table[state->operation].name,
                     state_table[state->operation].op, *(DWORD *)param_value);
-            return IDirect3DDevice9_SetRenderState(device, state_table[state->operation].op, *(DWORD *)param_value);
+            return SET_D3D_STATE(effect, SetRenderState, state_table[state->operation].op, *(DWORD *)param_value);
         case SC_FVF:
             TRACE("%s, value %#x.\n", state_table[state->operation].name, *(DWORD *)param_value);
-            return IDirect3DDevice9_SetFVF(device, *(DWORD *)param_value);
+            return SET_D3D_STATE(effect, SetFVF, *(DWORD *)param_value);
         case SC_TEXTURE:
         {
             UINT unit;
@@ -2889,12 +2890,12 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
             unit = parent_index == ~0u ? state->index : parent_index;
             TRACE("%s, unit %u, value %p.\n", state_table[state->operation].name, unit,
                     *(IDirect3DBaseTexture9 **)param_value);
-            return IDirect3DDevice9_SetTexture(device, unit, *(IDirect3DBaseTexture9 **)param_value);
+            return SET_D3D_STATE(effect, SetTexture, unit, *(IDirect3DBaseTexture9 **)param_value);
         }
         case SC_TEXTURESTAGE:
             TRACE("%s, stage %u, value %u.\n", state_table[state->operation].name, state->index, *(DWORD *)param_value);
-            return IDirect3DDevice9_SetTextureStageState(device, state->index,
-                    state_table[state->operation].op, *(DWORD *)param_value);
+            return SET_D3D_STATE(effect, SetTextureStageState, state->index,
+                        state_table[state->operation].op, *(DWORD *)param_value);
         case SC_SETSAMPLER:
         {
             struct d3dx_sampler *sampler;
@@ -2918,13 +2919,13 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
 
             sampler = parent_index == ~0u ? state->index : parent_index;
             TRACE("%s, sampler %u, value %u.\n", state_table[state->operation].name, sampler, *(DWORD *)param_value);
-            return IDirect3DDevice9_SetSamplerState(device, sampler, state_table[state->operation].op,
+            return SET_D3D_STATE(effect, SetSamplerState, sampler, state_table[state->operation].op,
                     *(DWORD *)param_value);
         }
         case SC_VERTEXSHADER:
             TRACE("%s, shader %p.\n", state_table[state->operation].name, *(IDirect3DVertexShader9 **)param_value);
             if ((update_all || param_dirty)
-                    && FAILED(hr = IDirect3DDevice9_SetVertexShader(device,
+                    && FAILED(hr = SET_D3D_STATE(effect, SetVertexShader,
                     *(IDirect3DVertexShader9 **)param_value)))
                 ERR("Could not set vertex shader, hr %#x.\n", hr);
             else if (*(IDirect3DVertexShader9 **)param_value)
@@ -2933,7 +2934,7 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
         case SC_PIXELSHADER:
             TRACE("%s, shader %p.\n", state_table[state->operation].name, *(IDirect3DPixelShader9 **)param_value);
             if ((update_all || param_dirty)
-                    && FAILED(hr = IDirect3DDevice9_SetPixelShader(device,
+                    && FAILED(hr = SET_D3D_STATE(effect, SetPixelShader,
                     *(IDirect3DPixelShader9 **)param_value)))
                 ERR("Could not set pixel shader, hr %#x.\n", hr);
             else if (*(IDirect3DPixelShader9 **)param_value)
@@ -2941,18 +2942,19 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
             return hr;
         case SC_TRANSFORM:
             TRACE("%s, state %u.\n", state_table[state->operation].name, state->index);
-            return IDirect3DDevice9_SetTransform(device, state_table[state->operation].op + state->index,
+            return SET_D3D_STATE(effect, SetTransform, state_table[state->operation].op + state->index,
                     (D3DMATRIX *)param_value);
         case SC_LIGHTENABLE:
             TRACE("%s, index %u, value %u.\n", state_table[state->operation].name, state->index, *(BOOL *)param_value);
-            return IDirect3DDevice9_LightEnable(device, state->index, *(BOOL *)param_value);
+            return SET_D3D_STATE(effect, LightEnable, state->index, *(BOOL *)param_value);
         case SC_LIGHT:
         {
             TRACE("%s, index %u, op %u.\n", state_table[state->operation].name, state->index,
                     state_table[state->operation].op);
             d3dx9_set_light_parameter(state_table[state->operation].op,
                     &effect->current_light[state->index], param_value);
-            return IDirect3DDevice9_SetLight(device, state->index, &effect->current_light[state->index]);
+            effect->light_updated[state->index] = TRUE;
+            return D3D_OK;
         }
         case SC_MATERIAL:
         {
@@ -2960,15 +2962,16 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
                     state_table[state->operation].op);
             d3dx9_set_material_parameter(state_table[state->operation].op,
                     &effect->current_material, param_value);
-            return IDirect3DDevice9_SetMaterial(device, &effect->current_material);
+            effect->material_updated = TRUE;
+            return D3D_OK;
         }
         case SC_NPATCHMODE:
             TRACE("%s, nsegments %f.\n", state_table[state->operation].name, *(float *)param_value);
-            return IDirect3DDevice9_SetNPatchMode(device, *(float *)param_value);
+            return SET_D3D_STATE(effect, SetNPatchMode, *(float *)param_value);
         case SC_SHADERCONST:
             TRACE("%s, index %u, op %u.\n", state_table[state->operation].name, state->index,
                 state_table[state->operation].op);
-            return d3dx_set_shader_const_state(device, state_table[state->operation].op, state->index,
+            return d3dx_set_shader_const_state(effect, state_table[state->operation].op, state->index,
                 param, param_value);
         default:
             FIXME("%s not handled.\n", state_table[state->operation].name);
@@ -2981,20 +2984,38 @@ static HRESULT d3dx9_apply_pass_states(struct ID3DXEffectImpl *effect, struct d3
 {
     unsigned int i;
     HRESULT ret;
+    HRESULT hr;
 
     TRACE("effect %p, pass %p, state_count %u.\n", effect, pass, pass->state_count);
 
     ret = D3D_OK;
-    for (i = 0; i < pass->state_count; i++)
+    for (i = 0; i < pass->state_count; ++i)
     {
-        HRESULT hr;
-
         if (FAILED(hr = d3dx9_apply_state(effect, pass, &pass->states[i], ~0u, update_all)))
         {
             WARN("Error applying state, hr %#x.\n", hr);
             ret = hr;
         }
     }
+    for (i = 0; i < ARRAY_SIZE(effect->current_light); ++i)
+    {
+        if (effect->light_updated[i]
+                && FAILED(hr = SET_D3D_STATE(effect, SetLight, i, &effect->current_light[i])))
+        {
+            WARN("Error setting light, hr %#x.\n", hr);
+            ret = hr;
+        }
+        effect->light_updated[i] = FALSE;
+    }
+
+    if (effect->material_updated
+            && FAILED(hr = SET_D3D_STATE(effect, SetMaterial, &effect->current_material)))
+    {
+        WARN("Error setting material, hr %#x.\n", hr);
+        ret = hr;
+    }
+    effect->material_updated = FALSE;
+
     clear_dirty_params(&effect->base_effect);
     return ret;
 }

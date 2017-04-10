@@ -1302,8 +1302,8 @@ HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx
     return D3D_OK;
 }
 
-static HRESULT set_shader_constants_device(struct IDirect3DDevice9 *device, struct d3dx_regstore *rs,
-        D3DXPARAMETER_TYPE type, enum pres_reg_tables table)
+static HRESULT set_shader_constants_device(ID3DXEffectStateManager *manager, struct IDirect3DDevice9 *device,
+        struct d3dx_regstore *rs, D3DXPARAMETER_TYPE type, enum pres_reg_tables table)
 {
     unsigned int start, count;
     void *ptr;
@@ -1328,13 +1328,13 @@ static HRESULT set_shader_constants_device(struct IDirect3DDevice9 *device, stru
             switch(table)
             {
                 case PRES_REGTAB_OCONST:
-                    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, start, (const float *)ptr, count);
+                    hr = SET_D3D_STATE_(manager, device, SetVertexShaderConstantF, start, (const float *)ptr, count);
                     break;
                 case PRES_REGTAB_OICONST:
-                    hr = IDirect3DDevice9_SetVertexShaderConstantI(device, start, (const int *)ptr, count);
+                    hr = SET_D3D_STATE_(manager, device, SetVertexShaderConstantI, start, (const int *)ptr, count);
                     break;
                 case PRES_REGTAB_OBCONST:
-                    hr = IDirect3DDevice9_SetVertexShaderConstantB(device, start, (const BOOL *)ptr, count);
+                    hr = SET_D3D_STATE_(manager, device, SetVertexShaderConstantB, start, (const BOOL *)ptr, count);
                     break;
                 default:
                     FIXME("Unexpected register table %u.\n", table);
@@ -1346,13 +1346,13 @@ static HRESULT set_shader_constants_device(struct IDirect3DDevice9 *device, stru
             switch(table)
             {
                 case PRES_REGTAB_OCONST:
-                    hr = IDirect3DDevice9_SetPixelShaderConstantF(device, start, (const float *)ptr, count);
+                    hr = SET_D3D_STATE_(manager, device, SetPixelShaderConstantF, start, (const float *)ptr, count);
                     break;
                 case PRES_REGTAB_OICONST:
-                    hr = IDirect3DDevice9_SetPixelShaderConstantI(device, start, (const int *)ptr, count);
+                    hr = SET_D3D_STATE_(manager, device, SetPixelShaderConstantI, start, (const int *)ptr, count);
                     break;
                 case PRES_REGTAB_OBCONST:
-                    hr = IDirect3DDevice9_SetPixelShaderConstantB(device, start, (const BOOL *)ptr, count);
+                    hr = SET_D3D_STATE_(manager, device, SetPixelShaderConstantB, start, (const BOOL *)ptr, count);
                     break;
                 default:
                     FIXME("Unexpected register table %u.\n", table);
@@ -1376,8 +1376,8 @@ static HRESULT set_shader_constants_device(struct IDirect3DDevice9 *device, stru
     return result;
 }
 
-HRESULT d3dx_param_eval_set_shader_constants(struct IDirect3DDevice9 *device, struct d3dx_param_eval *peval,
-        BOOL update_all)
+HRESULT d3dx_param_eval_set_shader_constants(ID3DXEffectStateManager *manager, struct IDirect3DDevice9 *device,
+        struct d3dx_param_eval *peval, BOOL update_all)
 {
     static const enum pres_reg_tables set_tables[] =
             {PRES_REGTAB_OCONST, PRES_REGTAB_OICONST, PRES_REGTAB_OBCONST};
@@ -1399,7 +1399,7 @@ HRESULT d3dx_param_eval_set_shader_constants(struct IDirect3DDevice9 *device, st
     result = D3D_OK;
     for (i = 0; i < ARRAY_SIZE(set_tables); ++i)
     {
-        if (FAILED(hr = set_shader_constants_device(device, rs, peval->param_type, set_tables[i])))
+        if (FAILED(hr = set_shader_constants_device(manager, device, rs, peval->param_type, set_tables[i])))
             result = hr;
     }
     return result;

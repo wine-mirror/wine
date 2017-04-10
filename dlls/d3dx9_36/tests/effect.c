@@ -5653,13 +5653,11 @@ static void test_effect_state_manager(IDirect3DDevice9 *device)
     qsort(state_manager->update_record, state_manager->update_record_count,
             sizeof(*state_manager->update_record), compare_update_record);
 
-    todo_wine
     ok(ARRAY_SIZE(expected_updates) == state_manager->update_record_count,
             "Got %u update records.\n", state_manager->update_record_count);
     n = min(ARRAY_SIZE(expected_updates), state_manager->update_record_count);
     for (i = 0; i < n; ++i)
     {
-        todo_wine
         ok(!memcmp(&expected_updates[i], &state_manager->update_record[i],
                 sizeof(expected_updates[i])),
                 "Update record mismatch, expected %s, %u, %u, got %s, %u, %u.\n",
