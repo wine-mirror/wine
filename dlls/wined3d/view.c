@@ -70,7 +70,7 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
     return texture->target;
 }
 
-static const struct wined3d_format *validate_shader_resource_view(const struct wined3d_view_desc *desc,
+static const struct wined3d_format *validate_resource_view(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, BOOL mip_slice)
 {
     const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
@@ -386,20 +386,13 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    const struct wined3d_gl_info *gl_info = &resource->device->adapter->gl_info;
-
     view->refcount = 1;
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    view->format = wined3d_get_format(gl_info, desc->format_id, resource->usage);
-    view->format_flags = view->format->flags[resource->gl_type];
-
-    if (wined3d_format_is_typeless(view->format))
-    {
-        WARN("Trying to create view for typeless format %s.\n", debug_d3dformat(view->format->id));
+    if (!(view->format = validate_resource_view(desc, resource, TRUE)))
         return E_INVALIDARG;
-    }
+    view->format_flags = view->format->flags[resource->gl_type];
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
@@ -412,19 +405,6 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     else
     {
         struct wined3d_texture *texture = texture_from_resource(resource);
-        unsigned int depth_or_layer_count;
-
-        if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
-            depth_or_layer_count = wined3d_texture_get_level_depth(texture, desc->u.texture.level_idx);
-        else
-            depth_or_layer_count = texture->layer_count;
-
-        if (desc->u.texture.level_idx >= texture->level_count
-                || desc->u.texture.level_count != 1
-                || desc->u.texture.layer_idx >= depth_or_layer_count
-                || !desc->u.texture.layer_count
-                || desc->u.texture.layer_count > depth_or_layer_count - desc->u.texture.layer_idx)
-            return E_INVALIDARG;
 
         view->sub_resource_idx = desc->u.texture.level_idx;
         if (resource->type != WINED3D_RTYPE_TEXTURE_3D)
@@ -600,7 +580,7 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    if (!(view->format = validate_shader_resource_view(desc, resource, FALSE)))
+    if (!(view->format = validate_resource_view(desc, resource, FALSE)))
         return E_INVALIDARG;
     view->desc = *desc;
 
@@ -797,7 +777,7 @@ static HRESULT wined3d_unordered_access_view_init(struct wined3d_unordered_acces
     view->parent = parent;
     view->parent_ops = parent_ops;
 
-    if (!(view->format = validate_shader_resource_view(desc, resource, TRUE)))
+    if (!(view->format = validate_resource_view(desc, resource, TRUE)))
         return E_INVALIDARG;
     view->desc = *desc;
 
