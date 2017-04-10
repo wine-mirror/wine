@@ -570,9 +570,8 @@ static HRESULT WINAPI xslprocessor_transform(
 
     TRACE("(%p)->(%p)\n", This, ret);
 
-    if (!ret) return E_INVALIDARG;
-
-    SysFreeString(This->outstr);
+    if (!ret)
+        return E_INVALIDARG;
 
     if (This->output_type == PROCESSOR_OUTPUT_STREAM)
     {
@@ -582,8 +581,11 @@ static HRESULT WINAPI xslprocessor_transform(
     else if (This->output_type == PROCESSOR_OUTPUT_PERSISTSTREAM ||
             This->output_type == PROCESSOR_OUTPUT_RESPONSE)
     {
-        CreateStreamOnHGlobal(NULL, TRUE, (IStream **)&stream);
+        if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, (IStream **)&stream)))
+            return hr;
     }
+
+    SysFreeString(This->outstr);
 
     hr = node_transform_node_params(get_node_obj(This->input), This->stylesheet->node,
             &This->outstr, stream, &This->params);
@@ -612,7 +614,8 @@ static HRESULT WINAPI xslprocessor_transform(
             DWORD size;
             void *dest;
 
-            GetHGlobalFromStream(src, &hglobal);
+            if (FAILED(hr = GetHGlobalFromStream(src, &hglobal)))
+                break;
             size = GlobalSize(hglobal);
 
             bound.lLbound = 0;
