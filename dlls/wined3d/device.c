@@ -3887,12 +3887,6 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         return;
     }
 
-    if (dst_resource->type != WINED3D_RTYPE_TEXTURE_2D)
-    {
-        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(dst_resource->type));
-        return;
-    }
-
     dst_texture = texture_from_resource(dst_resource);
     src_texture = texture_from_resource(src_resource);
 
