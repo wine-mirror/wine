@@ -859,13 +859,6 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
     }
 }
 
-static BOOL wined3d_surface_check_rect_dimensions(struct wined3d_surface *surface, const RECT *rect)
-{
-    struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
-
-    return SUCCEEDED(wined3d_texture_check_box_dimensions(surface->container, surface->texture_level, &box));
-}
-
 static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect)
 {
@@ -878,24 +871,10 @@ static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, 
     struct wined3d_context *context;
     struct wined3d_bo_address data;
     UINT update_w, update_h;
-    RECT r;
 
     TRACE("dst_surface %p, dst_point %s, src_surface %p, src_rect %s.\n",
             dst_surface, wine_dbgstr_point(dst_point),
             src_surface, wine_dbgstr_rect(src_rect));
-
-    if (!src_rect)
-    {
-        SetRect(&r, 0, 0, wined3d_texture_get_level_width(src_texture, src_surface->texture_level),
-                wined3d_texture_get_level_height(src_texture, src_surface->texture_level));
-        src_rect = &r;
-    }
-
-    if (!wined3d_surface_check_rect_dimensions(src_surface, src_rect))
-    {
-        WARN("Source rectangle not block-aligned.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     context = context_acquire(dst_texture->resource.device, NULL, 0);
     gl_info = context->gl_info;
