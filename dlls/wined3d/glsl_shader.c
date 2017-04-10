@@ -6440,9 +6440,8 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
             }
             else if (input->sysval_semantic == WINED3D_SV_IS_FRONT_FACE)
             {
-                shader_addline(buffer, "ps_in[%u] = vec4("
-                        "uintBitsToFloat(gl_FrontFacing ? 0xffffffffu : 0u), 0.0, 0.0, 0.0);\n",
-                        input->register_idx);
+                shader_addline(buffer, "ps_in[%u]%s = uintBitsToFloat(gl_FrontFacing ? 0xffffffffu : 0u);\n",
+                        input->register_idx, reg_mask);
             }
             else if (input->sysval_semantic == WINED3D_SV_RENDER_TARGET_ARRAY_INDEX && !semantic_idx)
             {
