@@ -260,7 +260,7 @@ static HMODULE load_config_driver(const WCHAR *driver)
     DWORD size = 0, type;
     HKEY hkey;
 
-    if ((ret = RegOpenKeyW(HKEY_CURRENT_USER, odbcini, &hkey)) == ERROR_SUCCESS)
+    if ((ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, odbcini, &hkey)) == ERROR_SUCCESS)
     {
         HKEY hkeydriver;
 
