@@ -878,24 +878,11 @@ static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, 
     struct wined3d_context *context;
     struct wined3d_bo_address data;
     UINT update_w, update_h;
-    RECT r, dst_rect;
-    POINT p;
+    RECT r;
 
     TRACE("dst_surface %p, dst_point %s, src_surface %p, src_rect %s.\n",
             dst_surface, wine_dbgstr_point(dst_point),
             src_surface, wine_dbgstr_rect(src_rect));
-
-    if (!dst_point)
-    {
-        p.x = 0;
-        p.y = 0;
-        dst_point = &p;
-    }
-    else if (dst_point->x < 0 || dst_point->y < 0)
-    {
-        WARN("Invalid destination point.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     if (!src_rect)
     {
@@ -910,21 +897,14 @@ static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, 
         return WINED3DERR_INVALIDCALL;
     }
 
-    update_w = src_rect->right - src_rect->left;
-    update_h = src_rect->bottom - src_rect->top;
-    SetRect(&dst_rect, dst_point->x, dst_point->y, dst_point->x + update_w, dst_point->y + update_h);
-    if (!wined3d_surface_check_rect_dimensions(dst_surface, &dst_rect))
-    {
-        WARN("Destination rectangle not block-aligned.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     context = context_acquire(dst_texture->resource.device, NULL, 0);
     gl_info = context->gl_info;
 
     /* Only load the surface for partial updates. For newly allocated texture
      * the texture wouldn't be the current location, and we'd upload zeroes
      * just to overwrite them again. */
+    update_w = src_rect->right - src_rect->left;
+    update_h = src_rect->bottom - src_rect->top;
     if (update_w == wined3d_texture_get_level_width(dst_texture, dst_surface->texture_level)
             && update_h == wined3d_texture_get_level_height(dst_texture, dst_surface->texture_level))
         wined3d_texture_prepare_texture(dst_texture, context, FALSE);
