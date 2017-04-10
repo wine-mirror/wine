@@ -346,7 +346,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
  *                  Asynchronous file I/O                              *
  */
 
-typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc, void **arg );
+typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
 
 struct async_fileio
 {
@@ -432,7 +432,7 @@ static async_data_t server_async( HANDLE handle, struct async_fileio *user, HAND
 }
 
 /* callback for irp async I/O completion */
-static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc, void **arg )
+static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
 {
     struct async_irp *async = user;
     ULONG information = 0;
@@ -452,8 +452,6 @@ static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status
     {
         io->u.Status = status;
         io->Information = information;
-        *apc = async->io.apc;
-        *arg = async->io.apc_arg;
         release_fileio( &async->io );
     }
     return status;
@@ -511,8 +509,7 @@ NTSTATUS FILE_GetNtStatus(void)
 /***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb,
-                                       NTSTATUS status, void **apc, void **arg )
+static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct async_fileio_read *fileio = user;
     int fd, needs_close, result;
@@ -558,8 +555,6 @@ static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb,
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        *apc = fileio->io.apc;
-        *arg = fileio->io.apc_arg;
         release_fileio( &fileio->io );
     }
     return status;
@@ -1118,8 +1113,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
 /***********************************************************************
  *             FILE_AsyncWriteService      (INTERNAL)
  */
-static NTSTATUS FILE_AsyncWriteService( void *user, IO_STATUS_BLOCK *iosb,
-                                        NTSTATUS status, void **apc, void **arg )
+static NTSTATUS FILE_AsyncWriteService( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct async_fileio_write *fileio = user;
     int result, fd, needs_close;
@@ -1161,8 +1155,6 @@ static NTSTATUS FILE_AsyncWriteService( void *user, IO_STATUS_BLOCK *iosb,
     {
         iosb->u.Status = status;
         iosb->Information = fileio->already;
-        *apc = fileio->io.apc;
-        *arg = fileio->io.apc_arg;
         release_fileio( &fileio->io );
     }
     return status;
@@ -1843,8 +1835,7 @@ struct read_changes_fileio
     char                data[1];
 };
 
-static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb,
-                                  NTSTATUS status, void **apc, void **arg )
+static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct read_changes_fileio *fileio = user;
     int size = 0;
@@ -1914,8 +1905,6 @@ static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb,
     {
         iosb->u.Status = status;
         iosb->Information = size;
-        *apc = fileio->io.apc;
-        *arg = fileio->io.apc_arg;
         release_fileio( &fileio->io );
     }
     return status;

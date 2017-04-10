@@ -470,7 +470,7 @@ static inline const char *debugstr_optval(const char *optval, int optlenval)
  * Async IO declarations
  ****************************************************************/
 
-typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc, void **arg );
+typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
 
 struct ws2_async_io
 {
@@ -2399,8 +2399,7 @@ static int WS2_recv( int fd, struct ws2_async *wsa, int flags )
  *
  * Handler for overlapped recv() operations.
  */
-static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb,
-                                NTSTATUS status, void **apc, void **arg )
+static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct ws2_async *wsa = user;
     int result = 0, fd;
@@ -2437,12 +2436,7 @@ static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb,
     {
         iosb->u.Status = status;
         iosb->Information = result;
-        if (wsa->completion_func)
-        {
-            *apc = ws2_async_apc;
-            *arg = wsa;
-        }
-        else
+        if (!wsa->completion_func)
             release_async_io( &wsa->io );
     }
     return status;
@@ -2454,13 +2448,11 @@ static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb,
  * This function is used to finish the read part of an accept request. It is
  * needed to place the completion on the correct socket (listener).
  */
-static NTSTATUS WS2_async_accept_recv( void *user, IO_STATUS_BLOCK *iosb,
-                                       NTSTATUS status, void **apc, void **arg )
+static NTSTATUS WS2_async_accept_recv( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
-    void *junk;
     struct ws2_accept_async *wsa = user;
 
-    status = WS2_async_recv( wsa->read, iosb, status, &junk, &junk );
+    status = WS2_async_recv( wsa->read, iosb, status );
     if (status == STATUS_PENDING)
         return status;
 
@@ -2476,8 +2468,7 @@ static NTSTATUS WS2_async_accept_recv( void *user, IO_STATUS_BLOCK *iosb,
  *
  * This is the function called to satisfy the AcceptEx callback
  */
-static NTSTATUS WS2_async_accept( void *user, IO_STATUS_BLOCK *iosb,
-                                  NTSTATUS status, void **apc, void **arg )
+static NTSTATUS WS2_async_accept( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct ws2_accept_async *wsa = user;
     int len;
@@ -2621,8 +2612,7 @@ static int WS2_send( int fd, struct ws2_async *wsa, int flags )
  *
  * Handler for overlapped send() operations.
  */
-static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb,
-                                NTSTATUS status, void **apc, void **arg )
+static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct ws2_async *wsa = user;
     int result = 0, fd;
@@ -2665,12 +2655,7 @@ static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb,
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        if (wsa->completion_func)
-        {
-            *apc = ws2_async_apc;
-            *arg = wsa;
-        }
-        else
+        if (!wsa->completion_func)
             release_async_io( &wsa->io );
     }
     return status;
@@ -2681,8 +2666,7 @@ static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb,
  *
  * Handler for shutdown() operations on overlapped sockets.
  */
-static NTSTATUS WS2_async_shutdown( void *user, IO_STATUS_BLOCK *iosb,
-                                    NTSTATUS status, void **apc, void **arg )
+static NTSTATUS WS2_async_shutdown( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct ws2_async_shutdown *wsa = user;
     int fd, err = 1;
@@ -3040,8 +3024,7 @@ static NTSTATUS WS2_transmitfile_base( int fd, struct ws2_transmitfile_async *ws
  *
  * Asynchronous callback for overlapped TransmitFile operations.
  */
-static NTSTATUS WS2_async_transmitfile( void *user, IO_STATUS_BLOCK *iosb,
-                                        NTSTATUS status, void **apc, void **arg )
+static NTSTATUS WS2_async_transmitfile( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct ws2_transmitfile_async *wsa = user;
     int fd;
