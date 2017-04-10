@@ -3375,6 +3375,12 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
 void wined3d_buffer_upload_data(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_box *box, const void *data) DECLSPEC_HIDDEN;
 
+struct wined3d_gl_view
+{
+    GLenum target;
+    GLuint name;
+};
+
 struct wined3d_rendertarget_view
 {
     LONG refcount;
@@ -3383,14 +3389,16 @@ struct wined3d_rendertarget_view
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
 
+    struct wined3d_gl_view gl_view;
     const struct wined3d_format *format;
     unsigned int format_flags;
     unsigned int sub_resource_idx;
-    unsigned int buffer_offset;
 
     unsigned int width;
     unsigned int height;
     unsigned int depth;
+
+    struct wined3d_view_desc desc;
 };
 
 static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
@@ -3409,12 +3417,6 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
 void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarget_view *view,
         const struct wined3d_context *context, unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
 
-struct wined3d_gl_view
-{
-    GLenum target;
-    GLuint name;
-};
-
 struct wined3d_shader_resource_view
 {
     LONG refcount;
@@ -3423,10 +3425,10 @@ struct wined3d_shader_resource_view
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
 
-    const struct wined3d_format *format;
-    struct wined3d_view_desc desc;
-
     struct wined3d_gl_view gl_view;
+    const struct wined3d_format *format;
+
+    struct wined3d_view_desc desc;
 };
 
 void wined3d_shader_resource_view_bind(struct wined3d_shader_resource_view *view, unsigned int unit,
@@ -3440,11 +3442,11 @@ struct wined3d_unordered_access_view
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
 
-    const struct wined3d_format *format;
-    struct wined3d_view_desc desc;
-
     struct wined3d_gl_view gl_view;
+    const struct wined3d_format *format;
     GLuint counter_bo;
+
+    struct wined3d_view_desc desc;
 };
 
 void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_access_view *view,

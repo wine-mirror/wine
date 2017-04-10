@@ -281,7 +281,23 @@ ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *v
 
 static void wined3d_rendertarget_view_destroy_object(void *object)
 {
-    HeapFree(GetProcessHeap(), 0, object);
+    struct wined3d_rendertarget_view *view = object;
+    struct wined3d_device *device = view->resource->device;
+
+    if (view->gl_view.name)
+    {
+        const struct wined3d_gl_info *gl_info;
+        struct wined3d_context *context;
+
+        context = context_acquire(device, NULL, 0);
+        gl_info = context->gl_info;
+        context_gl_resource_released(device, view->gl_view.name, FALSE);
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->gl_view.name);
+        checkGLcall("glDeleteTextures");
+        context_release(context);
+    }
+
+    HeapFree(GetProcessHeap(), 0, view);
 }
 
 ULONG CDECL wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *view)
@@ -382,6 +398,46 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
     }
 }
 
+static void wined3d_render_target_view_cs_init(void *object)
+{
+    struct wined3d_rendertarget_view *view = object;
+    struct wined3d_resource *resource = view->resource;
+    const struct wined3d_view_desc *desc = &view->desc;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Not implemented for resources %s.\n", debug_d3dresourcetype(resource->type));
+    }
+    else
+    {
+        struct wined3d_texture *texture = texture_from_resource(resource);
+        unsigned int depth_or_layer_count;
+
+        if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
+            depth_or_layer_count = wined3d_texture_get_level_depth(texture, desc->u.texture.level_idx);
+        else
+            depth_or_layer_count = texture->layer_count;
+
+        if (resource->format->id != view->format->id
+                || (desc->u.texture.layer_count != 1 && desc->u.texture.layer_count != depth_or_layer_count))
+        {
+            if (resource->format->gl_view_class != view->format->gl_view_class)
+            {
+                FIXME("Render target view not supported, resource format %s, view format %s.\n",
+                        debug_d3dformat(resource->format->id), debug_d3dformat(view->format->id));
+                return;
+            }
+            if (texture->swapchain && texture->swapchain->desc.backbuffer_count > 1)
+            {
+                FIXME("Swapchain views not supported.\n");
+                return;
+            }
+
+            create_texture_view(&view->gl_view, texture->target, desc, texture, view->format);
+        }
+    }
+}
+
 static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -393,11 +449,11 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     if (!(view->format = validate_resource_view(desc, resource, TRUE)))
         return E_INVALIDARG;
     view->format_flags = view->format->flags[resource->gl_type];
+    view->desc = *desc;
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         view->sub_resource_idx = 0;
-        view->buffer_offset = desc->u.buffer.start_idx;
         view->width = desc->u.buffer.count;
         view->height = 1;
         view->depth = 1;
@@ -409,12 +465,14 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
         view->sub_resource_idx = desc->u.texture.level_idx;
         if (resource->type != WINED3D_RTYPE_TEXTURE_3D)
             view->sub_resource_idx += desc->u.texture.layer_idx * texture->level_count;
-        view->buffer_offset = 0;
         view->width = wined3d_texture_get_level_width(texture, desc->u.texture.level_idx);
         view->height = wined3d_texture_get_level_height(texture, desc->u.texture.level_idx);
         view->depth = desc->u.texture.layer_count;
     }
+
     wined3d_resource_incref(view->resource = resource);
+
+    wined3d_cs_init_object(resource->device->cs, wined3d_render_target_view_cs_init, view);
 
     return WINED3D_OK;
 }
