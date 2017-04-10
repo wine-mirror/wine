@@ -356,11 +356,13 @@ static void test_ProgIDFromCLSID(void)
         CoTaskMemFree(progid);
 
         /* classes without default progid, progid list is not used */
+        progid = (void *)0xdeadbeef;
         hr = ProgIDFromCLSID(&IID_Testiface5, &progid);
-        ok(hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", hr);
+        ok(hr == REGDB_E_CLASSNOTREG && progid == NULL, "got 0x%08x, progid %p\n", hr, progid);
 
+        progid = (void *)0xdeadbeef;
         hr = ProgIDFromCLSID(&IID_Testiface6, &progid);
-        ok(hr == REGDB_E_CLASSNOTREG, "got 0x%08x\n", hr);
+        ok(hr == REGDB_E_CLASSNOTREG && progid == NULL, "got 0x%08x, progid %p\n", hr, progid);
 
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
