@@ -866,7 +866,7 @@ static BOOL wined3d_surface_check_rect_dimensions(struct wined3d_surface *surfac
     return SUCCEEDED(wined3d_texture_check_box_dimensions(surface->container, surface->texture_level, &box));
 }
 
-HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
+static HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect)
 {
     unsigned int src_sub_resource_idx = surface_get_sub_resource_idx(src_surface);

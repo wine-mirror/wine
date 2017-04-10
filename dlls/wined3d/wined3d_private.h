@@ -3085,8 +3085,6 @@ BOOL surface_load_location(struct wined3d_surface *surface,
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_rendertarget_info *rt) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
-HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
-        struct wined3d_surface *src_surface, const RECT *src_rect) DECLSPEC_HIDDEN;
 void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
         BOOL srgb, const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;

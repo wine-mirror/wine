@@ -3542,6 +3542,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture)
 {
     unsigned int src_size, dst_size, src_skip_levels = 0;
+    unsigned int src_level_count, dst_level_count;
     unsigned int layer_count, level_count, i, j;
     unsigned int row_pitch, slice_pitch;
     enum wined3d_resource_type type;
@@ -3591,8 +3592,9 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    level_count = min(wined3d_texture_get_level_count(src_texture),
-            wined3d_texture_get_level_count(dst_texture));
+    src_level_count = src_texture->level_count;
+    dst_level_count = dst_texture->level_count;
+    level_count = min(src_level_count, dst_level_count);
 
     src_size = max(src_texture->resource.width, src_texture->resource.height);
     dst_size = max(dst_texture->resource.width, dst_texture->resource.height);
@@ -3615,88 +3617,60 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Make sure that the destination texture is loaded. */
     context = context_acquire(device, NULL, 0);
+
+    /* Make sure that the destination texture is loaded. */
     wined3d_texture_load(dst_texture, context, FALSE);
-    context_release(context);
+
+    /* Only a prepare, since we're uploading entire sub-resources. */
+    wined3d_texture_prepare_texture(dst_texture, context, FALSE);
+    wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
 
     /* Update every surface level of the texture. */
-    switch (type)
+    for (i = 0; i < level_count; ++i)
     {
-        case WINED3D_RTYPE_TEXTURE_2D:
+        for (j = 0; j < layer_count; ++j)
         {
-            unsigned int src_levels = src_texture->level_count;
-            unsigned int dst_levels = dst_texture->level_count;
-            struct wined3d_surface *src_surface;
-            struct wined3d_surface *dst_surface;
+            unsigned int src_sub_resource_idx = j * src_level_count + i + src_skip_levels;
+            unsigned int dst_sub_resource_idx = j * dst_level_count + i;
 
-            for (i = 0; i < layer_count; ++i)
+            /* Use wined3d_texture_blt() instead of uploading directly if we need conversion. */
+            if (dst_texture->resource.format->convert
+                    || wined3d_format_get_color_key_conversion(dst_texture, FALSE))
             {
-                for (j = 0; j < level_count; ++j)
+                SetRect(&r, 0, 0, wined3d_texture_get_level_width(dst_texture, i),
+                        wined3d_texture_get_level_height(dst_texture, i));
+                if (FAILED(hr = wined3d_texture_blt(dst_texture, dst_sub_resource_idx, &r,
+                        src_texture, src_sub_resource_idx, &r, 0, NULL, WINED3D_TEXF_POINT)))
                 {
-                    unsigned int src_sub_resource_idx = i * src_levels + j + src_skip_levels;
-                    unsigned int dst_sub_resource_idx = i * dst_levels + j;
-
-                    /* Use wined3d_texture_blt() instead of uploading directly if we need conversion. */
-                    if (dst_texture->resource.format->convert
-                            || wined3d_format_get_color_key_conversion(dst_texture, FALSE))
-                    {
-                        SetRect(&r, 0, 0, wined3d_texture_get_level_width(dst_texture, j),
-                                wined3d_texture_get_level_height(dst_texture, j));
-                        if (FAILED(hr = wined3d_texture_blt(dst_texture, dst_sub_resource_idx, &r,
-                                src_texture, src_sub_resource_idx, &r, 0, NULL, WINED3D_TEXF_POINT)))
-                        {
-                            WARN("Failed to update surface, hr %#x.\n", hr);
-                            return hr;
-                        }
-                        continue;
-                    }
-
-                    src_surface = src_texture->sub_resources[src_sub_resource_idx].u.surface;
-                    dst_surface = dst_texture->sub_resources[dst_sub_resource_idx].u.surface;
-                    if (FAILED(hr = surface_upload_from_surface(dst_surface, NULL, src_surface, NULL)))
-                    {
-                        WARN("Failed to update surface, hr %#x.\n", hr);
-                        return hr;
-                    }
-                }
-            }
-            return WINED3D_OK;
-        }
-
-        case WINED3D_RTYPE_TEXTURE_3D:
-            context = context_acquire(device, NULL, 0);
-
-            /* Only a prepare, since we're uploading entire volumes. */
-            wined3d_texture_prepare_texture(dst_texture, context, FALSE);
-            wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
-
-            for (j = 0; j < level_count; ++j)
-            {
-                if (!wined3d_texture_load_location(src_texture, src_skip_levels + j,
-                        context, src_texture->resource.map_binding))
-                {
-                    WARN("Failed to load source sub-resource %u into %s.\n", src_skip_levels + j,
-                            wined3d_debug_location(src_texture->resource.map_binding));
+                    WARN("Failed to update surface, hr %#x.\n", hr);
                     context_release(context);
-                    return WINED3DERR_INVALIDCALL;
+                    return hr;
                 }
-
-                wined3d_texture_get_memory(src_texture, src_skip_levels + j, &data, src_texture->resource.map_binding);
-                wined3d_texture_get_pitch(src_texture, src_skip_levels + j, &row_pitch, &slice_pitch);
-
-                wined3d_texture_upload_data(dst_texture, j, context, NULL,
-                        wined3d_const_bo_address(&data), row_pitch, slice_pitch);
-                wined3d_texture_invalidate_location(dst_texture, j, ~WINED3D_LOCATION_TEXTURE_RGB);
+                continue;
             }
 
-            context_release(context);
-            return WINED3D_OK;
+            if (!wined3d_texture_load_location(src_texture, src_sub_resource_idx,
+                    context, src_texture->resource.map_binding))
+            {
+                WARN("Failed to load source sub-resource %u into %s.\n", src_sub_resource_idx,
+                        wined3d_debug_location(src_texture->resource.map_binding));
+                context_release(context);
+                return WINED3DERR_INVALIDCALL;
+            }
 
-        default:
-            FIXME("Unsupported texture type %#x.\n", type);
-            return WINED3DERR_INVALIDCALL;
+            wined3d_texture_get_memory(src_texture, src_sub_resource_idx, &data, src_texture->resource.map_binding);
+            wined3d_texture_get_pitch(src_texture, src_skip_levels + i, &row_pitch, &slice_pitch);
+
+            wined3d_texture_upload_data(dst_texture, dst_sub_resource_idx, context, NULL,
+                    wined3d_const_bo_address(&data), row_pitch, slice_pitch);
+            wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
+        }
     }
+
+    context_release(context);
+
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes)
