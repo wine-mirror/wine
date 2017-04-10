@@ -346,8 +346,11 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
  *                  Asynchronous file I/O                              *
  */
 
+typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status, void **apc, void **arg );
+
 struct async_fileio
 {
+    async_callback_t    *callback; /* must be the first field */
     struct async_fileio *next;
     HANDLE               handle;
     PIO_APC_ROUTINE      apc;
@@ -391,7 +394,8 @@ static void release_fileio( struct async_fileio *io )
     }
 }
 
-static struct async_fileio *alloc_fileio( DWORD size, HANDLE handle, PIO_APC_ROUTINE apc, void *arg )
+static struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle,
+                                          PIO_APC_ROUTINE apc, void *arg )
 {
     /* first free remaining previous fileinfos */
 
@@ -406,9 +410,10 @@ static struct async_fileio *alloc_fileio( DWORD size, HANDLE handle, PIO_APC_ROU
 
     if ((io = RtlAllocateHeap( GetProcessHeap(), 0, size )))
     {
-        io->handle  = handle;
-        io->apc     = apc;
-        io->apc_arg = arg;
+        io->callback = callback;
+        io->handle   = handle;
+        io->apc      = apc;
+        io->apc_arg  = arg;
     }
     return io;
 }
@@ -558,7 +563,7 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
     ULONG options;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_context;
 
-    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), handle, apc, apc_context )))
+    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle, apc, apc_context )))
         return STATUS_NO_MEMORY;
 
     async->event   = event;
@@ -605,7 +610,7 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
     ULONG options;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_context;
 
-    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), handle, apc, apc_context )))
+    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle, apc, apc_context )))
         return STATUS_NO_MEMORY;
 
     async->event   = event;
@@ -783,7 +788,7 @@ static NTSTATUS register_async_file_read( HANDLE handle, HANDLE event,
     struct async_fileio_read *fileio;
     NTSTATUS status;
 
-    if (!(fileio = (struct async_fileio_read *)alloc_fileio( sizeof(*fileio), handle, apc, apc_user )))
+    if (!(fileio = (struct async_fileio_read *)alloc_fileio( sizeof(*fileio), FILE_AsyncReadService, handle, apc, apc_user )))
         return STATUS_NO_MEMORY;
 
     fileio->already = already;
@@ -1345,7 +1350,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         {
             struct async_fileio_write *fileio;
 
-            fileio = (struct async_fileio_write *)alloc_fileio( sizeof(*fileio), hFile, apc, apc_user );
+            fileio = (struct async_fileio_write *)alloc_fileio( sizeof(*fileio), FILE_AsyncWriteService, hFile, apc, apc_user );
             if (!fileio)
             {
                 status = STATUS_NO_MEMORY;
@@ -1539,7 +1544,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     ULONG options;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_context;
 
-    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), handle, apc, apc_context )))
+    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle, apc, apc_context )))
         return STATUS_NO_MEMORY;
     async->event   = event;
     async->buffer  = out_buffer;
@@ -1961,7 +1966,7 @@ NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_AP
     if (filter == 0 || (filter & ~FILE_NOTIFY_ALL)) return STATUS_INVALID_PARAMETER;
 
     fileio = (struct read_changes_fileio *)alloc_fileio( offsetof(struct read_changes_fileio, data[size]),
-                                                         handle, apc, apc_context );
+                                                         read_changes_apc, handle, apc, apc_context );
     if (!fileio) return STATUS_NO_MEMORY;
 
     fileio->buffer      = buffer;
