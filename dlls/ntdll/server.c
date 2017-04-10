@@ -410,11 +410,7 @@ static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
         result->type = call->type;
         result->async_io.status = (*user)( user, iosb, call->async_io.status, &apc, &arg );
         if (result->async_io.status != STATUS_PENDING)
-        {
             result->async_io.total = iosb->Information;
-            result->async_io.apc   = wine_server_client_ptr( apc );
-            result->async_io.arg   = wine_server_client_ptr( arg );
-        }
         break;
     }
     case APC_VIRTUAL_ALLOC:
