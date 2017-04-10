@@ -1958,6 +1958,7 @@ void RPC_Stop(void)
 {
     RpcMgmtStopServerListening(NULL);
     RpcServerUnregisterIf(svcctl_v2_0_s_ifspec, NULL, TRUE);
+    RpcMgmtWaitServerListen();
 
     CloseThreadpoolCleanupGroupMembers(cleanup_group, TRUE, NULL);
     CloseThreadpoolCleanupGroup(cleanup_group);
