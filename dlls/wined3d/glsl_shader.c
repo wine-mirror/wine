@@ -3434,6 +3434,18 @@ static BOOL shader_glsl_has_core_grad(const struct wined3d_gl_info *gl_info,
     return shader_glsl_get_version(gl_info, version) >= 130 || gl_info->supported[EXT_GPU_SHADER4];
 }
 
+static void shader_glsl_get_coord_size(enum wined3d_shader_resource_type resource_type,
+        unsigned int *coord_size, unsigned int *deriv_size)
+{
+    const BOOL is_array = resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY
+            || resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY;
+
+    *coord_size = resource_type_info[resource_type].coord_size;
+    *deriv_size = *coord_size;
+    if (is_array)
+        --(*deriv_size);
+}
+
 static void shader_glsl_get_sample_function(const struct wined3d_shader_context *ctx,
         DWORD resource_idx, DWORD sampler_idx, DWORD flags, struct glsl_sample_function *sample_function)
 {
@@ -3450,7 +3462,6 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     BOOL offset = flags & WINED3D_GLSL_SAMPLE_OFFSET;
     const char *base = "texture", *type_part = "", *suffix = "";
     unsigned int coord_size, deriv_size;
-    BOOL array;
 
     sample_function->data_type = ctx->reg_maps->resource_info[resource_idx].data_type;
 
@@ -3459,8 +3470,6 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         ERR("Unexpected resource type %#x.\n", resource_type);
         resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
     }
-    array = resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY
-            || resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY;
 
     /* Note that there's no such thing as a projected cube texture. */
     if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
@@ -3500,12 +3509,9 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     string_buffer_sprintf(sample_function->name, "%s%s%s%s%s%s", base, type_part, projected ? "Proj" : "",
             lod ? "Lod" : grad ? "Grad" : "", offset ? "Offset" : "", suffix);
 
-    coord_size = resource_type_info[resource_type].coord_size;
-    deriv_size = coord_size;
+    shader_glsl_get_coord_size(resource_type, &coord_size, &deriv_size);
     if (shadow)
         ++coord_size;
-    if (array)
-        --deriv_size;
     sample_function->offset_size = offset ? deriv_size : 0;
     sample_function->coord_mask = (1u << coord_size) - 1;
     sample_function->deriv_mask = (1u << deriv_size) - 1;
@@ -5918,6 +5924,58 @@ static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
 
+static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
+{
+    const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
+    const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
+    const struct wined3d_shader_resource_info *resource_info;
+    unsigned int resource_idx, sampler_idx, sampler_bind_idx;
+    struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    unsigned int coord_size, offset_size;
+    struct glsl_src_param coord_param;
+    char dst_swizzle[6];
+    BOOL has_offset;
+
+    if (!gl_info->supported[ARB_TEXTURE_GATHER])
+    {
+        FIXME("OpenGL implementation does not support textureGather.\n");
+        return;
+    }
+
+    has_offset = wined3d_shader_instruction_has_texel_offset(ins);
+
+    resource_idx = ins->src[1].reg.idx[0].offset;
+    sampler_idx = ins->src[2].reg.idx[0].offset;
+    sampler_bind_idx = shader_glsl_find_sampler(&reg_maps->sampler_map, resource_idx, sampler_idx);
+
+    if (!(resource_info = shader_glsl_get_resource_info(ins, &ins->src[1].reg)))
+        return;
+
+    if (resource_info->type >= ARRAY_SIZE(resource_type_info))
+    {
+        ERR("Unexpected resource type %#x.\n", resource_info->type);
+        return;
+    }
+    shader_glsl_get_coord_size(resource_info->type, &coord_size, &offset_size);
+
+    shader_glsl_swizzle_to_str(ins->src[1].swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
+    shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], resource_info->data_type);
+
+    shader_glsl_add_src_param(ins, &ins->src[0], (1u << coord_size) - 1, &coord_param);
+
+    shader_addline(buffer, "textureGather%s(%s_sampler%u, %s",
+            has_offset ? "Offset" : "", prefix, sampler_bind_idx, coord_param.param_str);
+    if (has_offset)
+    {
+        int offset_immdata[4] = {ins->texel_offset.u, ins->texel_offset.v, ins->texel_offset.w};
+        shader_addline(buffer, ", ");
+        shader_glsl_append_imm_ivec(buffer, offset_immdata, offset_size);
+    }
+
+    shader_addline(buffer, ")%s);\n", dst_swizzle);
+}
+
 static void shader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
 {
     /* FIXME: Make this work for more than just 2D textures */
@@ -7004,6 +7062,8 @@ static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
         shader_addline(buffer, "#extension GL_ARB_shading_language_packing : enable\n");
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP_ARRAY])
         shader_addline(buffer, "#extension GL_ARB_texture_cube_map_array : enable\n");
+    if (gl_info->supported[ARB_TEXTURE_GATHER])
+        shader_addline(buffer, "#extension GL_ARB_texture_gather : enable\n");
     if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
         shader_addline(buffer, "#extension GL_ARB_texture_query_levels : enable\n");
     if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
@@ -9979,7 +10039,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_FRC                              */ shader_glsl_map2gl,
     /* WINED3DSIH_FTOI                             */ shader_glsl_to_int,
     /* WINED3DSIH_FTOU                             */ shader_glsl_to_uint,
-    /* WINED3DSIH_GATHER4                          */ NULL,
+    /* WINED3DSIH_GATHER4                          */ shader_glsl_gather4,
     /* WINED3DSIH_GATHER4_C                        */ NULL,
     /* WINED3DSIH_GE                               */ shader_glsl_relop,
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ NULL,
