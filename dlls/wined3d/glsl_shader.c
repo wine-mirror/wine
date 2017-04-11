@@ -5405,7 +5405,7 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
     {
         shader_glsl_add_src_param(ins, &ins->src[0], coord_mask, &offset);
         string_buffer_sprintf(address, "%s", offset.param_str);
-        if (reg_maps->uav_resource_info[resource_idx].flags & WINED3D_VIEW_BUFFER_RAW)
+        if (is_tgsm || (reg_maps->uav_resource_info[resource_idx].flags & WINED3D_VIEW_BUFFER_RAW))
             shader_addline(address, "/ 4");
     }
 
