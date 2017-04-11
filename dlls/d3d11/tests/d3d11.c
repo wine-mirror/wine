@@ -16970,6 +16970,323 @@ static void test_stream_output_resume(void)
     release_test_context(&test_context);
 }
 
+static void test_gather(void)
+{
+    struct
+    {
+        int width, height;
+        int offset_x, offset_y;
+    } constant;
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11ShaderResourceView *srv;
+    ID3D11Texture2D *texture, *rt;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    struct resource_readback rb;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int x, y;
+    ID3D11Buffer *cb;
+    HRESULT hr;
+
+    static const DWORD gather4_code[] =
+    {
+#if 0
+        SamplerState s;
+        Texture2D<float4> t;
+
+        int2 size;
+
+        float4 main(float4 position : SV_Position) : SV_Target
+        {
+            return t.Gather(s, position.xy / size);
+        }
+#endif
+        0x43425844, 0xca1ee692, 0xb122f477, 0x8c467d38, 0x0f5a233a, 0x00000001, 0x00000154, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000b8, 0x00000041,
+        0x0000002e, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005a, 0x00106000,
+        0x00000000, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0600002b, 0x00100032,
+        0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x0700000e, 0x00100032, 0x00000000, 0x00101046,
+        0x00000000, 0x00100046, 0x00000000, 0x0900006d, 0x001020f2, 0x00000000, 0x00100046, 0x00000000,
+        0x00107e46, 0x00000000, 0x0010600a, 0x00000000, 0x0100003e,
+    };
+    static const DWORD gather4_offset_code[] =
+    {
+#if 0
+        SamplerState s;
+        Texture2D<float4> t;
+
+        int2 size;
+
+        float4 main(float4 position : SV_Position) : SV_Target
+        {
+            return t.Gather(s, position.xy / size, int2(1, 1));
+        }
+#endif
+        0x43425844, 0xe5ab2216, 0x90748ece, 0x7ccf2123, 0x4edbba7c, 0x00000001, 0x00000158, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000bc, 0x00000041,
+        0x0000002f, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005a, 0x00106000,
+        0x00000000, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0600002b, 0x00100032,
+        0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x0700000e, 0x00100032, 0x00000000, 0x00101046,
+        0x00000000, 0x00100046, 0x00000000, 0x8a00006d, 0x00002201, 0x001020f2, 0x00000000, 0x00100046,
+        0x00000000, 0x00107e46, 0x00000000, 0x0010600a, 0x00000000, 0x0100003e,
+    };
+    static const DWORD gather4_green_code[] =
+    {
+#if 0
+        SamplerState s;
+        Texture2D<float4> t;
+
+        int2 size;
+
+        float4 main(float4 position : SV_Position) : SV_Target
+        {
+            return t.GatherGreen(s, position.xy / size);
+        }
+#endif
+        0x43425844, 0x2b0ad2d9, 0x8ad30b52, 0xc418477f, 0xe5211693, 0x00000001, 0x0000015c, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x000000c0, 0x00000050,
+        0x00000030, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005a, 0x00106000,
+        0x00000000, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0600002b, 0x00100032,
+        0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x0700000e, 0x00100032, 0x00000000, 0x00101046,
+        0x00000000, 0x00100046, 0x00000000, 0x8b00006d, 0x800000c2, 0x00155543, 0x001020f2, 0x00000000,
+        0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x0010601a, 0x00000000, 0x0100003e,
+    };
+    static const DWORD gather4_po_code[] =
+    {
+#if 0
+        SamplerState s;
+        Texture2D<float4> t;
+
+        int2 size;
+        int2 offset;
+
+        float4 main(float4 position : SV_Position) : SV_Target
+        {
+            return t.Gather(s, position.xy / size, offset);
+        }
+#endif
+        0x43425844, 0xe19bdd35, 0x44514fb3, 0xfaa8727f, 0xc1092da0, 0x00000001, 0x00000168, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x58454853, 0x000000cc, 0x00000050,
+        0x00000033, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005a, 0x00106000,
+        0x00000000, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0600002b, 0x00100032,
+        0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x0700000e, 0x00100032, 0x00000000, 0x00101046,
+        0x00000000, 0x00100046, 0x00000000, 0x8e00007f, 0x800000c2, 0x00155543, 0x001020f2, 0x00000000,
+        0x00100046, 0x00000000, 0x00208ae6, 0x00000000, 0x00000000, 0x00107e46, 0x00000000, 0x0010600a,
+        0x00000000, 0x0100003e,
+    };
+    static const struct vec4 texture_data[] =
+    {
+        {0.0f, 0.0f}, {1.0f, 1.0f}, {2.0f, 2.0f}, {3.0f, 3.0f},
+        {4.0f, 0.1f}, {5.0f, 1.1f}, {6.0f, 2.1f}, {7.0f, 3.1f},
+        {8.0f, 0.2f}, {9.0f, 1.2f}, {0.5f, 2.2f}, {1.5f, 3.2f},
+        {2.5f, 0.3f}, {3.5f, 1.3f}, {4.5f, 2.3f}, {5.5f, 3.3f},
+    };
+    static const struct vec4 expected_gather4[] =
+    {
+        {4.0f, 5.0f, 1.0f, 0.0f}, {5.0f, 6.0f, 2.0f, 1.0f}, {6.0f, 7.0f, 3.0f, 2.0f}, {7.0f, 7.0f, 3.0f, 3.0f},
+        {8.0f, 9.0f, 5.0f, 4.0f}, {9.0f, 0.5f, 6.0f, 5.0f}, {0.5f, 1.5f, 7.0f, 6.0f}, {1.5f, 1.5f, 7.0f, 7.0f},
+        {2.5f, 3.5f, 9.0f, 8.0f}, {3.5f, 4.5f, 0.5f, 9.0f}, {4.5f, 5.5f, 1.5f, 0.5f}, {5.5f, 5.5f, 1.5f, 1.5f},
+        {2.5f, 3.5f, 3.5f, 2.5f}, {3.5f, 4.5f, 4.5f, 3.5f}, {4.5f, 5.5f, 5.5f, 4.5f}, {5.5f, 5.5f, 5.5f, 5.5f},
+    };
+    static const struct vec4 expected_gather4_offset[] =
+    {
+        {9.0f, 0.5f, 6.0f, 5.0f}, {0.5f, 1.5f, 7.0f, 6.0f}, {1.5f, 1.5f, 7.0f, 7.0f}, {1.5f, 1.5f, 7.0f, 7.0f},
+        {3.5f, 4.5f, 0.5f, 9.0f}, {4.5f, 5.5f, 1.5f, 0.5f}, {5.5f, 5.5f, 1.5f, 1.5f}, {5.5f, 5.5f, 1.5f, 1.5f},
+        {3.5f, 4.5f, 4.5f, 3.5f}, {4.5f, 5.5f, 5.5f, 4.5f}, {5.5f, 5.5f, 5.5f, 5.5f}, {5.5f, 5.5f, 5.5f, 5.5f},
+        {3.5f, 4.5f, 4.5f, 3.5f}, {4.5f, 5.5f, 5.5f, 4.5f}, {5.5f, 5.5f, 5.5f, 5.5f}, {5.5f, 5.5f, 5.5f, 5.5f},
+    };
+    static const struct vec4 expected_gather4_green[] =
+    {
+        {0.1f, 1.1f, 1.0f, 0.0f}, {1.1f, 2.1f, 2.0f, 1.0f}, {2.1f, 3.1f, 3.0f, 2.0f}, {3.1f, 3.1f, 3.0f, 3.0f},
+        {0.2f, 1.2f, 1.1f, 0.1f}, {1.2f, 2.2f, 2.1f, 1.1f}, {2.2f, 3.2f, 3.1f, 2.1f}, {3.2f, 3.2f, 3.1f, 3.1f},
+        {0.3f, 1.3f, 1.2f, 0.2f}, {1.3f, 2.3f, 2.2f, 1.2f}, {2.3f, 3.3f, 3.2f, 2.2f}, {3.3f, 3.3f, 3.2f, 3.2f},
+        {0.3f, 1.3f, 1.3f, 0.3f}, {1.3f, 2.3f, 2.3f, 1.3f}, {2.3f, 3.3f, 3.3f, 2.3f}, {3.3f, 3.3f, 3.3f, 3.3f},
+    };
+    static const struct vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const D3D11_SUBRESOURCE_DATA resource_data = {&texture_data, sizeof(texture_data) / 4};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    if (ID3D11Device_GetFeatureLevel(device) < D3D_FEATURE_LEVEL_10_1)
+    {
+        skip("Shader model 4.1 required for gather4 instruction.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    texture_desc.Width = 4;
+    texture_desc.Height = 4;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    ok(SUCCEEDED(hr), "Fialed to create shader resource view, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+
+    constant.width = texture_desc.Width;
+    constant.height = texture_desc.Height;
+    constant.offset_x = 1;
+    constant.offset_y = 1;
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+
+    hr = ID3D11Device_CreatePixelShader(device, gather4_code, sizeof(gather4_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    draw_quad(&test_context);
+    get_texture_readback(rt, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            const struct vec4 *expected = &expected_gather4[y * texture_desc.Width + x];
+            const struct vec4 *got = get_readback_vec4(&rb, x, y);
+            ok(compare_vec4(got, expected, 0),
+                    "Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                    got->x, got->y, got->z, got->w, expected->x, expected->y, expected->z, expected->w);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11PixelShader_Release(ps);
+    hr = ID3D11Device_CreatePixelShader(device, gather4_offset_code, sizeof(gather4_offset_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    draw_quad(&test_context);
+    get_texture_readback(rt, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            const struct vec4 *expected = &expected_gather4_offset[y * texture_desc.Width + x];
+            const struct vec4 *got = get_readback_vec4(&rb, x, y);
+            ok(compare_vec4(got, expected, 0),
+                    "Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                    got->x, got->y, got->z, got->w, expected->x, expected->y, expected->z, expected->w);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11PixelShader_Release(ps);
+
+    if (ID3D11Device_GetFeatureLevel(device) < D3D_FEATURE_LEVEL_11_0)
+    {
+        skip("Shader model 5 required for GatherGreen()/gather4_po.\n");
+        goto done;
+    }
+
+    hr = ID3D11Device_CreatePixelShader(device, gather4_green_code, sizeof(gather4_green_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    draw_quad(&test_context);
+    get_texture_readback(rt, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            const struct vec4 *expected = &expected_gather4_green[y * texture_desc.Width + x];
+            const struct vec4 *got = get_readback_vec4(&rb, x, y);
+            ok(compare_vec4(got, expected, 0),
+                    "Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                    got->x, got->y, got->z, got->w, expected->x, expected->y, expected->z, expected->w);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11PixelShader_Release(ps);
+    hr = ID3D11Device_CreatePixelShader(device, gather4_po_code, sizeof(gather4_po_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    draw_quad(&test_context);
+    get_texture_readback(rt, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            const struct vec4 *expected = &expected_gather4_offset[y * texture_desc.Width + x];
+            const struct vec4 *got = get_readback_vec4(&rb, x, y);
+            ok(compare_vec4(got, expected, 0),
+                    "Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                    got->x, got->y, got->z, got->w, expected->x, expected->y, expected->z, expected->w);
+        }
+    }
+    release_resource_readback(&rb);
+
+    constant.offset_x = 0;
+    constant.offset_y = 0;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    draw_quad(&test_context);
+    get_texture_readback(rt, 0, &rb);
+    for (y = 0; y < texture_desc.Height; ++y)
+    {
+        for (x = 0; x < texture_desc.Width; ++x)
+        {
+            const struct vec4 *expected = &expected_gather4[y * texture_desc.Width + x];
+            const struct vec4 *got = get_readback_vec4(&rb, x, y);
+            ok(compare_vec4(got, expected, 0),
+                    "Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                    got->x, got->y, got->z, got->w, expected->x, expected->y, expected->z, expected->w);
+        }
+    }
+    release_resource_readback(&rb);
+
+    ID3D11PixelShader_Release(ps);
+
+done:
+    ID3D11Buffer_Release(cb);
+    ID3D11Texture2D_Release(rt);
+    ID3D11Texture2D_Release(texture);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11ShaderResourceView_Release(srv);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -17055,4 +17372,5 @@ START_TEST(d3d11)
     test_stream_output();
     test_fl10_stream_output_desc();
     test_stream_output_resume();
+    test_gather();
 }
