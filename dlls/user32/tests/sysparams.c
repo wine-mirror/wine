@@ -41,7 +41,7 @@
 static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
 
 static BOOL strict;
-static int dpi;
+static int dpi, real_dpi;
 static BOOL iswin9x;
 static HDC hdc;
 
@@ -164,6 +164,19 @@ static int change_last_param;
 static int last_bpp;
 static BOOL displaychange_ok = FALSE, displaychange_test_active = FALSE;
 static HANDLE displaychange_sem = 0;
+
+static int get_real_dpi(void)
+{
+    HKEY key;
+    DWORD value = USER_DEFAULT_SCREEN_DPI, size = sizeof(value);
+
+    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Control Panel\\Desktop", &key))
+    {
+        RegQueryValueExA(key, "LogPixels", NULL, NULL, (BYTE *)&value, &size);
+        RegCloseKey(key);
+    }
+    return value;
+}
 
 static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam,
                                               LPARAM lParam )
@@ -1475,12 +1488,14 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
        the caption font height is higher than the CaptionHeight field,
        the latter is adjusted accordingly. To be able to restore these setting
        accurately be restore the raw values. */
-    Ncmorig.iCaptionWidth = metricfromreg( SPI_METRIC_REGKEY, SPI_CAPTIONWIDTH_VALNAME, dpi);
+    Ncmorig.iCaptionWidth = metricfromreg( SPI_METRIC_REGKEY, SPI_CAPTIONWIDTH_VALNAME, real_dpi);
     Ncmorig.iCaptionHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_CAPTIONHEIGHT_VALNAME, dpi);
     Ncmorig.iSmCaptionHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_SMCAPTIONHEIGHT_VALNAME, dpi);
     Ncmorig.iMenuHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_MENUHEIGHT_VALNAME, dpi);
     /* test registry entries */
     TEST_NONCLIENTMETRICS_REG( Ncmorig)
+    Ncmorig.lfCaptionFont.lfHeight = MulDiv( Ncmorig.lfCaptionFont.lfHeight, real_dpi, dpi );
+
     /* make small changes */
     Ncmnew = Ncmstart;
     Ncmnew.iBorderWidth += 1;
@@ -2933,6 +2948,8 @@ START_TEST(sysparams)
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
     dpi = GetDeviceCaps( hdc, LOGPIXELSY);
+    real_dpi = get_real_dpi();
+    trace("dpi %d real_dpi %d\n", dpi, real_dpi);
     iswin9x = GetVersion() & 0x80000000;
 
     /* This test requires interactivity, if we don't have it, give up */
