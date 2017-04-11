@@ -5898,8 +5898,8 @@ static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
     struct glsl_src_param coord_param, compare_param;
     struct glsl_sample_function sample_function;
     const char *lod_param = NULL;
+    unsigned int coord_size;
     DWORD flags = 0;
-    UINT coord_size;
 
     if (ins->handler_idx == WINED3DSIH_SAMPLE_C_LZ)
     {
@@ -5932,8 +5932,8 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_resource_info *resource_info;
     unsigned int resource_idx, sampler_idx, sampler_bind_idx;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
+    struct glsl_src_param coord_param, compare_param;
     unsigned int coord_size, offset_size;
-    struct glsl_src_param coord_param;
     char dst_swizzle[6];
     BOOL has_offset;
 
@@ -5966,6 +5966,11 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
 
     shader_addline(buffer, "textureGather%s(%s_sampler%u, %s",
             has_offset ? "Offset" : "", prefix, sampler_bind_idx, coord_param.param_str);
+    if (ins->handler_idx == WINED3DSIH_GATHER4_C)
+    {
+        shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &compare_param);
+        shader_addline(buffer, ", %s", compare_param.param_str);
+    }
     if (has_offset)
     {
         int offset_immdata[4] = {ins->texel_offset.u, ins->texel_offset.v, ins->texel_offset.w};
@@ -10040,7 +10045,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_FTOI                             */ shader_glsl_to_int,
     /* WINED3DSIH_FTOU                             */ shader_glsl_to_uint,
     /* WINED3DSIH_GATHER4                          */ shader_glsl_gather4,
-    /* WINED3DSIH_GATHER4_C                        */ NULL,
+    /* WINED3DSIH_GATHER4_C                        */ shader_glsl_gather4,
     /* WINED3DSIH_GE                               */ shader_glsl_relop,
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ NULL,
     /* WINED3DSIH_HS_DECLS                         */ shader_glsl_nop,

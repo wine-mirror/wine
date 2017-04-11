@@ -1449,6 +1449,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 --cur_loop_depth;
             }
             else if (ins.handler_idx == WINED3DSIH_GATHER4
+                    || ins.handler_idx == WINED3DSIH_GATHER4_C
                     || ins.handler_idx == WINED3DSIH_SAMPLE
                     || ins.handler_idx == WINED3DSIH_SAMPLE_B
                     || ins.handler_idx == WINED3DSIH_SAMPLE_C
