@@ -884,7 +884,7 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
 static BOOL dotest_spi_iconhorizontalspacing( INT curr_val)
 {
     BOOL rc;
-    INT spacing, regval;
+    INT spacing, regval, min_val = MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI );
     ICONMETRICSA im;
 
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, curr_val, 0,
@@ -892,7 +892,7 @@ static BOOL dotest_spi_iconhorizontalspacing( INT curr_val)
     if (!test_error_msg(rc,"SPI_ICONHORIZONTALSPACING")) return FALSE;
     ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
     test_change_message( SPI_ICONHORIZONTALSPACING, 0 );
-    if( curr_val < 32) curr_val = 32;
+    curr_val = max( curr_val, min_val );
     /* The registry keys depend on the Windows version and the values too
      * let's test (works on win95,ME,NT4,2k,XP)
      */
@@ -1053,7 +1053,7 @@ static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
 static BOOL dotest_spi_iconverticalspacing( INT curr_val)
 {
     BOOL rc;
-    INT spacing, regval;
+    INT spacing, regval, min_val = MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI );
     ICONMETRICSA im;
 
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, curr_val, 0,
@@ -1061,7 +1061,7 @@ static BOOL dotest_spi_iconverticalspacing( INT curr_val)
     if (!test_error_msg(rc,"SPI_ICONVERTICALSPACING")) return FALSE;
     ok(rc, "SystemParametersInfoA: rc=%d err=%d\n", rc, GetLastError());
     test_change_message( SPI_ICONVERTICALSPACING, 0 );
-    if( curr_val < 32) curr_val = 32;
+    curr_val = max( curr_val, min_val );
     /* The registry keys depend on the Windows version and the values too
      * let's test (works on win95,ME,NT4,2k,XP)
      */
