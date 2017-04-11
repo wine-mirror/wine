@@ -530,7 +530,7 @@ static void test_invalid_import(void)
                     "\"Test14a\"=dword:0x123\n"
                     "\"Test14b\"=dword:123 456\n"
                     "\"Test14c\"=dword:1234 5678\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Test14a");
+    verify_reg_nonexist(hkey, "Test14a");
     verify_reg_nonexist(hkey, "Test14b");
     verify_reg_nonexist(hkey, "Test14c");
 
@@ -577,7 +577,7 @@ static void test_comments(void)
     todo_wine verify_reg(hkey, "Wine4", REG_SZ, "Value 2", 8, 0);
     verify_reg_nonexist(hkey, "Wine5");
     dword = 0x2040608;
-    todo_wine verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -637,7 +637,7 @@ static void test_comments(void)
     verify_reg_nonexist(hkey, "Wine22");
     verify_reg_nonexist(hkey, "Wine23");
     dword = 0x00000004;
-    todo_wine verify_reg(hkey, "Wine24", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine24", REG_DWORD, &dword, sizeof(dword), 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -646,8 +646,8 @@ static void test_comments(void)
                     "\"Wine25c\"=dword:1234#5678\n"
                     "\"Wine25d\"=dword:1234 #5678\n\n");
     dword = 0x1234;
-    todo_wine verify_reg(hkey, "Wine25a", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg(hkey, "Wine25b", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine25a", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine25b", REG_DWORD, &dword, sizeof(dword), 0);
     verify_reg_nonexist(hkey, "Wine25c");
     verify_reg_nonexist(hkey, "Wine25d");
 
@@ -809,8 +809,8 @@ static void test_import_with_whitespace(void)
                     "\"Wine9a\"=dword:  00000008\n"
                     "\"Wine9b\"=dword:\t\t00000008\n\n");
     dword = 0x00000008;
-    todo_wine verify_reg(hkey, "Wine9a", REG_DWORD, &dword, sizeof(dword), 0);
-    todo_wine verify_reg(hkey, "Wine9b", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine9a", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine9b", REG_DWORD, &dword, sizeof(dword), 0);
 
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);

@@ -146,15 +146,31 @@ static char* GetMultiByteStringN(const WCHAR* strW, int chars, DWORD* len)
  */
 static BOOL convertHexToDWord(WCHAR* str, DWORD *dw)
 {
-    char buf[9];
-    char dummy;
+    WCHAR *p, *end;
+    int count = 0;
 
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, 9, NULL, NULL);
-    if (lstrlenW(str) > 8 || sscanf(buf, "%x%c", dw, &dummy) != 1) {
-        output_message(STRING_INVALID_HEX);
-        return FALSE;
+    while (*str == ' ' || *str == '\t') str++;
+    if (!*str) goto error;
+
+    p = str;
+    while (isxdigitW(*p))
+    {
+        count++;
+        p++;
     }
+    if (count > 8) goto error;
+
+    end = p;
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p && *p != ';') goto error;
+
+    *end = 0;
+    *dw = strtoulW(str, &end, 16);
     return TRUE;
+
+error:
+    output_message(STRING_INVALID_HEX);
+    return FALSE;
 }
 
 /******************************************************************************
