@@ -1424,7 +1424,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
 #define test_reg_font( KEY, VAL, LF) \
 {   LOGFONTA lfreg;\
     lffromreg( KEY, VAL, &lfreg);\
-    ok( (lfreg.lfHeight < 0 ? (LF).lfHeight == lfreg.lfHeight :\
+    ok( (lfreg.lfHeight < 0 ? (LF).lfHeight == MulDiv( lfreg.lfHeight, dpi, real_dpi ) : \
                 MulDiv( -(LF).lfHeight , 72, dpi) == lfreg.lfHeight )&&\
         (LF).lfWidth == lfreg.lfWidth &&\
         (LF).lfWeight == lfreg.lfWeight &&\
