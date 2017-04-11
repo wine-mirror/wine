@@ -536,11 +536,11 @@ static IXmlResolver testresolver = { &resolvervtbl };
 static void test_reader_create(void)
 {
     IXmlResolver *resolver;
-    HRESULT hr;
+    IUnknown *input, *unk;
     IXmlReader *reader;
-    IUnknown *input;
     DtdProcessing dtd;
     XmlNodeType nodetype;
+    HRESULT hr;
 
     /* crashes native */
     if (0)
@@ -548,6 +548,21 @@ static void test_reader_create(void)
         CreateXmlReader(&IID_IXmlReader, NULL, NULL);
         CreateXmlReader(NULL, (void**)&reader, NULL);
     }
+
+    hr = CreateXmlReader(&IID_IStream, (void **)&unk, NULL);
+    ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+
+    hr = CreateXmlReader(&IID_IUnknown, (void **)&unk, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IXmlReader, (void **)&reader);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(unk == (IUnknown *)reader, "unexpected interface\n");
+    IXmlReader_Release(reader);
+    IUnknown_Release(unk);
+
+    hr = CreateXmlReader(&IID_IUnknown, (void **)&reader, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    IXmlReader_Release(reader);
 
     hr = CreateXmlReader(&IID_IXmlReader, (void**)&reader, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);

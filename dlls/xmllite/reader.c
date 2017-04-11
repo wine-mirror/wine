@@ -3603,15 +3603,10 @@ static const struct IUnknownVtbl xmlreaderinputvtbl =
 HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
 {
     xmlreader *reader;
+    HRESULT hr;
     int i;
 
     TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), obj, imalloc);
-
-    if (!IsEqualGUID(riid, &IID_IXmlReader))
-    {
-        ERR("Unexpected IID requested -> (%s)\n", wine_dbgstr_guid(riid));
-        return E_FAIL;
-    }
 
     if (imalloc)
         reader = IMalloc_Alloc(imalloc, sizeof(*reader));
@@ -3640,11 +3635,12 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     for (i = 0; i < StringValue_Last; i++)
         reader->strvalues[i] = strval_empty;
 
-    *obj = &reader->IXmlReader_iface;
+    hr = IXmlReader_QueryInterface(&reader->IXmlReader_iface, riid, obj);
+    IXmlReader_Release(&reader->IXmlReader_iface);
 
-    TRACE("returning iface %p\n", *obj);
+    TRACE("returning iface %p, hr %#x\n", *obj, hr);
 
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
