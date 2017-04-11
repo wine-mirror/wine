@@ -510,11 +510,13 @@ static void test_invalid_import(void)
                     "\"Test12a\"=dword:\n"
                     "\"Test12b\"=dword:hello\n"
                     "\"Test12c\"=dword:123456789\n"
-                    "\"Test12d\"=dword:012345678\n\n");
+                    "\"Test12d\"=dword:012345678\n"
+                    "\"Test12e\"=dword:000000001\n\n");
     verify_reg_nonexist(hkey, "Test12a");
     verify_reg_nonexist(hkey, "Test12b");
     verify_reg_nonexist(hkey, "Test12c");
     verify_reg_nonexist(hkey, "Test12d");
+    verify_reg_nonexist(hkey, "Test12e");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -531,6 +533,13 @@ static void test_invalid_import(void)
     todo_wine verify_reg_nonexist(hkey, "Test14a");
     verify_reg_nonexist(hkey, "Test14b");
     verify_reg_nonexist(hkey, "Test14c");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test15a\"=\"foo\"bar\"\n"
+                    "\"Test15b\"=\"foo\"\"bar\"\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Test15a");
+    todo_wine verify_reg_nonexist(hkey, "Test15b");
 
     RegCloseKey(hkey);
 
