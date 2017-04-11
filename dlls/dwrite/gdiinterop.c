@@ -52,6 +52,12 @@ struct rendertarget {
     struct dib_data dib;
 };
 
+struct gdiinterop {
+    IDWriteGdiInterop1 IDWriteGdiInterop1_iface;
+    LONG ref;
+    IDWriteFactory4 *factory;
+};
+
 static inline int get_dib_stride(int width, int bpp)
 {
     return ((width * bpp + 31) >> 3) & ~3;
@@ -598,15 +604,24 @@ static HRESULT WINAPI gdiinterop_QueryInterface(IDWriteGdiInterop1 *iface, REFII
 static ULONG WINAPI gdiinterop_AddRef(IDWriteGdiInterop1 *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-    TRACE("(%p)\n", This);
-    return IDWriteFactory4_AddRef(This->factory);
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop1 *iface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-    TRACE("(%p)\n", This);
-    return IDWriteFactory4_Release(This->factory);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref) {
+        factory_detach_gdiinterop(This->factory, iface);
+        heap_free(This);
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface,
@@ -890,10 +905,19 @@ static const struct IDWriteGdiInterop1Vtbl gdiinteropvtbl = {
     gdiinterop1_GetMatchingFontsByLOGFONT
 };
 
-void gdiinterop_init(struct gdiinterop *interop, IDWriteFactory4 *factory)
+HRESULT create_gdiinterop(IDWriteFactory4 *factory, IDWriteGdiInterop1 **ret)
 {
+    struct gdiinterop *interop;
+
+    *ret = NULL;
+
+    if (!(interop = heap_alloc(sizeof(*interop))))
+        return E_OUTOFMEMORY;
+
     interop->IDWriteGdiInterop1_iface.lpVtbl = &gdiinteropvtbl;
-    /* Interop is a part of a factory, sharing its refcount.
-       GetGdiInterop() will AddRef() on every call. */
-    interop->factory = factory;
+    interop->ref = 1;
+    IDWriteFactory4_AddRef(interop->factory = factory);
+
+    *ret = &interop->IDWriteGdiInterop1_iface;
+    return S_OK;
 }
