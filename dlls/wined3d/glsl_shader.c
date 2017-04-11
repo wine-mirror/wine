@@ -5928,9 +5928,9 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    unsigned int resource_idx, sampler_idx, sampler_bind_idx, component_idx;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     const struct wined3d_shader_resource_info *resource_info;
-    unsigned int resource_idx, sampler_idx, sampler_bind_idx;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param coord_param, compare_param;
     unsigned int coord_size, offset_size;
@@ -5947,6 +5947,7 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
 
     resource_idx = ins->src[1].reg.idx[0].offset;
     sampler_idx = ins->src[2].reg.idx[0].offset;
+    component_idx = shader_glsl_swizzle_get_component(ins->src[2].swizzle, 0);
     sampler_bind_idx = shader_glsl_find_sampler(&reg_maps->sampler_map, resource_idx, sampler_idx);
 
     if (!(resource_info = shader_glsl_get_resource_info(ins, &ins->src[1].reg)))
@@ -5977,6 +5978,8 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, ", ");
         shader_glsl_append_imm_ivec(buffer, offset_immdata, offset_size);
     }
+    if (component_idx)
+        shader_addline(buffer, ", %u", component_idx);
 
     shader_addline(buffer, ")%s);\n", dst_swizzle);
 }
