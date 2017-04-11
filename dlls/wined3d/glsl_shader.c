@@ -9788,7 +9788,7 @@ static void shader_glsl_init_context_state(struct wined3d_context *context)
 
 static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
-    UINT shader_model;
+    unsigned int shader_model;
 
     /* FIXME: Check for the specific extensions required for SM5 support
      * (ARB_compute_shader, ARB_tessellation_shader, ARB_gpu_shader5, ...) as
@@ -9802,6 +9802,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
             && gl_info->supported[ARB_SHADER_IMAGE_LOAD_STORE]
             && gl_info->supported[ARB_SHADER_IMAGE_SIZE]
             && gl_info->supported[ARB_SHADING_LANGUAGE_PACKING]
+            && gl_info->supported[ARB_TEXTURE_GATHER]
             && gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
         shader_model = 5;
     else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50) && gl_info->supported[WINED3D_GL_VERSION_3_2]
