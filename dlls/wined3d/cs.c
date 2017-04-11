@@ -65,6 +65,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_UNMAP,
     WINED3D_CS_OP_BLT_SUB_RESOURCE,
     WINED3D_CS_OP_UPDATE_SUB_RESOURCE,
+    WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION,
 };
 
 struct wined3d_cs_present
@@ -370,6 +371,13 @@ struct wined3d_cs_update_sub_resource
     unsigned int sub_resource_idx;
     struct wined3d_box box;
     struct wined3d_sub_resource_data data;
+};
+
+struct wined3d_cs_add_dirty_texture_region
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_texture *texture;
+    unsigned int layer;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -1957,6 +1965,42 @@ void wined3d_cs_emit_update_sub_resource(struct wined3d_cs *cs, struct wined3d_r
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_add_dirty_texture_region(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_add_dirty_texture_region *op = data;
+    struct wined3d_texture *texture = op->texture;
+    unsigned int sub_resource_idx, i;
+    struct wined3d_context *context;
+
+    context = context_acquire(cs->device, NULL, 0);
+    sub_resource_idx = op->layer * texture->level_count;
+    for (i = 0; i < texture->level_count; ++i, ++sub_resource_idx)
+    {
+        if (wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding))
+            wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
+        else
+            ERR("Failed to load location %s.\n", wined3d_debug_location(texture->resource.map_binding));
+    }
+    context_release(context);
+
+    wined3d_resource_release(&texture->resource);
+}
+
+void wined3d_cs_emit_add_dirty_texture_region(struct wined3d_cs *cs,
+        struct wined3d_texture *texture, unsigned int layer)
+{
+    struct wined3d_cs_add_dirty_texture_region *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION;
+    op->texture = texture;
+    op->layer = layer;
+
+    wined3d_resource_acquire(&texture->resource);
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                    */ wined3d_cs_exec_present,
@@ -1998,6 +2042,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_UNMAP                      */ wined3d_cs_exec_unmap,
     /* WINED3D_CS_OP_BLT_SUB_RESOURCE           */ wined3d_cs_exec_blt_sub_resource,
     /* WINED3D_CS_OP_UPDATE_SUB_RESOURCE        */ wined3d_cs_exec_update_sub_resource,
+    /* WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION   */ wined3d_cs_exec_add_dirty_texture_region,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

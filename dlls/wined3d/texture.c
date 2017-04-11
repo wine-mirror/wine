@@ -1639,9 +1639,6 @@ static struct wined3d_texture_sub_resource *wined3d_texture_get_sub_resource(str
 HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region)
 {
-    unsigned int sub_resource_idx, i;
-    struct wined3d_context *context;
-
     TRACE("texture %p, layer %u, dirty_region %s.\n", texture, layer, debug_box(dirty_region));
 
     if (layer >= texture->layer_count)
@@ -1653,19 +1650,7 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     if (dirty_region)
         FIXME("Ignoring dirty_region %s.\n", debug_box(dirty_region));
 
-    context = context_acquire(texture->resource.device, NULL, 0);
-    sub_resource_idx = layer * texture->level_count;
-    for (i = 0; i < texture->level_count; ++i, ++sub_resource_idx)
-    {
-        if (!wined3d_texture_load_location(texture, sub_resource_idx, context, texture->resource.map_binding))
-        {
-            ERR("Failed to load location %s.\n", wined3d_debug_location(texture->resource.map_binding));
-            context_release(context);
-            return E_OUTOFMEMORY;
-        }
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~texture->resource.map_binding);
-    }
-    context_release(context);
+    wined3d_cs_emit_add_dirty_texture_region(texture->resource.device->cs, texture, layer);
 
     return WINED3D_OK;
 }
