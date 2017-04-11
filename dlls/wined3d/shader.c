@@ -3073,6 +3073,13 @@ ULONG CDECL wined3d_shader_incref(struct wined3d_shader *shader)
     return refcount;
 }
 
+static void wined3d_shader_init_object(void *object)
+{
+    struct wined3d_shader *shader = object;
+
+    list_add_head(&shader->device->shaders, &shader->shader_list_entry);
+}
+
 static void wined3d_shader_destroy_object(void *object)
 {
     shader_cleanup(object);
@@ -3327,7 +3334,7 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     list_init(&shader->constantsI);
     shader->lconst_inf_or_nan = FALSE;
     list_init(&shader->reg_maps.indexable_temps);
-    list_add_head(&device->shaders, &shader->shader_list_entry);
+    list_init(&shader->shader_list_entry);
 
     byte_code_size = desc->byte_code_size;
     if (byte_code_size == ~(size_t)0)
@@ -3366,9 +3373,12 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     {
         WARN("Failed to set function, hr %#x.\n", hr);
         shader_cleanup(shader);
+        return hr;
     }
 
     shader->load_local_constsF = shader->lconst_inf_or_nan;
+
+    wined3d_cs_init_object(shader->device->cs, wined3d_shader_init_object, shader);
 
     return hr;
 }
@@ -3429,7 +3439,7 @@ static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3
         *d = *so_desc;
         if (!(d->elements = wined3d_calloc(so_desc->element_count, sizeof(*d->elements))))
         {
-            shader_cleanup(shader);
+            wined3d_cs_destroy_object(shader->device->cs, wined3d_shader_destroy_object, shader);
             return E_OUTOFMEMORY;
         }
         memcpy(d->elements, so_desc->elements, so_desc->element_count * sizeof(*d->elements));
