@@ -215,6 +215,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_REP                              */ "rep",
     /* WINED3DSIH_RESINFO                          */ "resinfo",
     /* WINED3DSIH_RET                              */ "ret",
+    /* WINED3DSIH_RETP                             */ "retp",
     /* WINED3DSIH_ROUND_NE                         */ "round_ne",
     /* WINED3DSIH_ROUND_NI                         */ "round_ni",
     /* WINED3DSIH_ROUND_PI                         */ "round_pi",
@@ -2739,7 +2740,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             shader_addline(&buffer, "%s", shader_opcode_names[ins.handler_idx]);
 
             if (ins.handler_idx == WINED3DSIH_BREAKP
-                    || ins.handler_idx == WINED3DSIH_IF)
+                    || ins.handler_idx == WINED3DSIH_IF
+                    || ins.handler_idx == WINED3DSIH_RETP)
             {
                 switch (ins.flags)
                 {

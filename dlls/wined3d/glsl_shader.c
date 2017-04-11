@@ -5014,13 +5014,23 @@ static void shader_glsl_breakc(const struct wined3d_shader_instruction *ins)
             src0_param.param_str, shader_glsl_get_rel_op(ins->flags), src1_param.param_str);
 }
 
-static void shader_glsl_breakp(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_conditional_op(const struct wined3d_shader_instruction *ins)
 {
     const char *condition = (ins->flags == WINED3D_SHADER_CONDITIONAL_OP_NZ) ? "bool" : "!bool";
     struct glsl_src_param src_param;
+    const char *op;
+
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_BREAKP: op = "break"; break;
+        case WINED3DSIH_RETP: op = "return"; break;
+        default:
+            ERR("Unhandled opcode %#x.\n", ins->handler_idx);
+            return;
+    }
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
-    shader_addline(ins->ctx->buffer, "if (%s(%s)) break;\n", condition, src_param.param_str);
+    shader_addline(ins->ctx->buffer, "if (%s(%s)) %s;\n", condition, src_param.param_str, op);
 }
 
 static void shader_glsl_continue(const struct wined3d_shader_instruction *ins)
@@ -9968,7 +9978,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_BFREV                            */ shader_glsl_map2gl,
     /* WINED3DSIH_BREAK                            */ shader_glsl_break,
     /* WINED3DSIH_BREAKC                           */ shader_glsl_breakc,
-    /* WINED3DSIH_BREAKP                           */ shader_glsl_breakp,
+    /* WINED3DSIH_BREAKP                           */ shader_glsl_conditional_op,
     /* WINED3DSIH_BUFINFO                          */ shader_glsl_bufinfo,
     /* WINED3DSIH_CALL                             */ shader_glsl_call,
     /* WINED3DSIH_CALLNZ                           */ shader_glsl_callnz,
@@ -10126,6 +10136,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_REP                              */ shader_glsl_rep,
     /* WINED3DSIH_RESINFO                          */ shader_glsl_resinfo,
     /* WINED3DSIH_RET                              */ shader_glsl_ret,
+    /* WINED3DSIH_RETP                             */ shader_glsl_conditional_op,
     /* WINED3DSIH_ROUND_NE                         */ shader_glsl_map2gl,
     /* WINED3DSIH_ROUND_NI                         */ shader_glsl_map2gl,
     /* WINED3DSIH_ROUND_PI                         */ shader_glsl_map2gl,
