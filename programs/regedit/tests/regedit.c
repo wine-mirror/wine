@@ -280,6 +280,15 @@ static void test_basic_import(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine8a\"=dword:1\n"
+                    "\"Wine8b\"=dword:4444\n\n");
+    dword = 0x1;
+    verify_reg(hkey, "Wine8a", REG_DWORD, &dword, sizeof(dword), 0);
+    dword = 0x4444;
+    verify_reg(hkey, "Wine8b", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"double\\\"quote\"=\"valid \\\"or\\\" not\"\n"
                     "\"single'quote\"=dword:00000008\n\n");
     verify_reg(hkey, "double\"quote", REG_SZ, "valid \"or\" not", 15, 0);
@@ -496,6 +505,33 @@ static void test_invalid_import(void)
                     "  ,63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n\n");
     todo_wine verify_reg_nonexist(hkey, "Multi-Line4");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test12a\"=dword:\n"
+                    "\"Test12b\"=dword:hello\n"
+                    "\"Test12c\"=dword:123456789\n"
+                    "\"Test12d\"=dword:012345678\n\n");
+    verify_reg_nonexist(hkey, "Test12a");
+    verify_reg_nonexist(hkey, "Test12b");
+    verify_reg_nonexist(hkey, "Test12c");
+    verify_reg_nonexist(hkey, "Test12d");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test13a\"=dword:12345678abc\n"
+                    "\"Test13b\"=dword:12345678 abc\n\n");
+    verify_reg_nonexist(hkey, "Test13a");
+    verify_reg_nonexist(hkey, "Test13b");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test14a\"=dword:0x123\n"
+                    "\"Test14b\"=dword:123 456\n"
+                    "\"Test14c\"=dword:1234 5678\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Test14a");
+    verify_reg_nonexist(hkey, "Test14b");
+    verify_reg_nonexist(hkey, "Test14c");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -593,6 +629,18 @@ static void test_comments(void)
     verify_reg_nonexist(hkey, "Wine23");
     dword = 0x00000004;
     todo_wine verify_reg(hkey, "Wine24", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine25a\"=dword:1234;5678\n"
+                    "\"Wine25b\"=dword:1234 ;5678\n"
+                    "\"Wine25c\"=dword:1234#5678\n"
+                    "\"Wine25d\"=dword:1234 #5678\n\n");
+    dword = 0x1234;
+    todo_wine verify_reg(hkey, "Wine25a", REG_DWORD, &dword, sizeof(dword), 0);
+    todo_wine verify_reg(hkey, "Wine25b", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg_nonexist(hkey, "Wine25c");
+    verify_reg_nonexist(hkey, "Wine25d");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -746,6 +794,14 @@ static void test_import_with_whitespace(void)
                     "\"Wine8b\"=\"Trailing tabs and spaces\"\t  \t\n\n");
     verify_reg(hkey, "Wine8a", REG_SZ, "Trailing spaces", 16, 0);
     verify_reg(hkey, "Wine8b", REG_SZ, "Trailing tabs and spaces", 25, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine9a\"=dword:  00000008\n"
+                    "\"Wine9b\"=dword:\t\t00000008\n\n");
+    dword = 0x00000008;
+    todo_wine verify_reg(hkey, "Wine9a", REG_DWORD, &dword, sizeof(dword), 0);
+    todo_wine verify_reg(hkey, "Wine9b", REG_DWORD, &dword, sizeof(dword), 0);
 
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
