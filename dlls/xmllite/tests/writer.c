@@ -237,6 +237,7 @@ static void test_writer_create(void)
     HRESULT hr;
     IXmlWriter *writer;
     LONG_PTR value;
+    IUnknown *unk;
 
     /* crashes native */
     if (0)
@@ -244,6 +245,17 @@ static void test_writer_create(void)
         CreateXmlWriter(&IID_IXmlWriter, NULL, NULL);
         CreateXmlWriter(NULL, (void**)&writer, NULL);
     }
+
+    hr = CreateXmlWriter(&IID_IStream, (void **)&unk, NULL);
+    ok(hr == E_NOINTERFACE, "got %08x\n", hr);
+
+    hr = CreateXmlWriter(&IID_IUnknown, (void **)&unk, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IXmlWriter, (void **)&writer);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(unk == (IUnknown *)writer, "unexpected interface pointer\n");
+    IUnknown_Release(unk);
+    IXmlWriter_Release(writer);
 
     hr = CreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);

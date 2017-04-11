@@ -458,10 +458,16 @@ static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, v
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IXmlWriter))
+    if (IsEqualGUID(riid, &IID_IXmlWriter) ||
+        IsEqualGUID(riid, &IID_IUnknown))
     {
         *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s is not supported\n", debugstr_guid(riid));
+        *ppvObject = NULL;
+        return E_NOINTERFACE;
     }
 
     IXmlWriter_AddRef(iface);
@@ -1393,14 +1399,9 @@ static const struct IUnknownVtbl xmlwriteroutputvtbl =
 HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
 {
     xmlwriter *writer;
+    HRESULT hr;
 
     TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), obj, imalloc);
-
-    if (!IsEqualGUID(riid, &IID_IXmlWriter))
-    {
-        ERR("Unexpected IID requested -> (%s)\n", wine_dbgstr_guid(riid));
-        return E_FAIL;
-    }
 
     if (imalloc)
         writer = IMalloc_Alloc(imalloc, sizeof(*writer));
@@ -1423,11 +1424,12 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
     writer->starttagopen = FALSE;
     list_init(&writer->elements);
 
-    *obj = &writer->IXmlWriter_iface;
+    hr = IXmlWriter_QueryInterface(&writer->IXmlWriter_iface, riid, obj);
+    IXmlWriter_Release(&writer->IXmlWriter_iface);
 
-    TRACE("returning iface %p\n", *obj);
+    TRACE("returning iface %p, hr %#x\n", *obj, hr);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT create_writer_output(IUnknown *stream, IMalloc *imalloc, xml_encoding encoding,
