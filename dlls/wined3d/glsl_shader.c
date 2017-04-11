@@ -5926,13 +5926,13 @@ static void shader_glsl_sample_c(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
 {
+    unsigned int resource_param_idx, resource_idx, sampler_idx, sampler_bind_idx, component_idx;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
-    unsigned int resource_idx, sampler_idx, sampler_bind_idx, component_idx;
+    struct glsl_src_param coord_param, compare_param, offset_param;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     const struct wined3d_shader_resource_info *resource_info;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
-    struct glsl_src_param coord_param, compare_param;
     unsigned int coord_size, offset_size;
     char dst_swizzle[6];
     BOOL has_offset;
@@ -5943,14 +5943,16 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
         return;
     }
 
-    has_offset = wined3d_shader_instruction_has_texel_offset(ins);
+    has_offset = ins->handler_idx == WINED3DSIH_GATHER4_PO
+            || wined3d_shader_instruction_has_texel_offset(ins);
 
-    resource_idx = ins->src[1].reg.idx[0].offset;
-    sampler_idx = ins->src[2].reg.idx[0].offset;
-    component_idx = shader_glsl_swizzle_get_component(ins->src[2].swizzle, 0);
+    resource_param_idx = ins->handler_idx == WINED3DSIH_GATHER4_PO ? 2 : 1;
+    resource_idx = ins->src[resource_param_idx].reg.idx[0].offset;
+    sampler_idx = ins->src[resource_param_idx + 1].reg.idx[0].offset;
+    component_idx = shader_glsl_swizzle_get_component(ins->src[resource_param_idx + 1].swizzle, 0);
     sampler_bind_idx = shader_glsl_find_sampler(&reg_maps->sampler_map, resource_idx, sampler_idx);
 
-    if (!(resource_info = shader_glsl_get_resource_info(ins, &ins->src[1].reg)))
+    if (!(resource_info = shader_glsl_get_resource_info(ins, &ins->src[resource_param_idx].reg)))
         return;
 
     if (resource_info->type >= ARRAY_SIZE(resource_type_info))
@@ -5960,7 +5962,7 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
     }
     shader_glsl_get_coord_size(resource_info->type, &coord_size, &offset_size);
 
-    shader_glsl_swizzle_to_str(ins->src[1].swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
+    shader_glsl_swizzle_to_str(ins->src[resource_param_idx].swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
     shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], resource_info->data_type);
 
     shader_glsl_add_src_param(ins, &ins->src[0], (1u << coord_size) - 1, &coord_param);
@@ -5972,7 +5974,12 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
         shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &compare_param);
         shader_addline(buffer, ", %s", compare_param.param_str);
     }
-    if (has_offset)
+    if (ins->handler_idx == WINED3DSIH_GATHER4_PO)
+    {
+        shader_glsl_add_src_param(ins, &ins->src[1], (1u << offset_size) - 1, &offset_param);
+        shader_addline(buffer, ", %s", offset_param.param_str);
+    }
+    else if (has_offset)
     {
         int offset_immdata[4] = {ins->texel_offset.u, ins->texel_offset.v, ins->texel_offset.w};
         shader_addline(buffer, ", ");
@@ -10049,6 +10056,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_FTOU                             */ shader_glsl_to_uint,
     /* WINED3DSIH_GATHER4                          */ shader_glsl_gather4,
     /* WINED3DSIH_GATHER4_C                        */ shader_glsl_gather4,
+    /* WINED3DSIH_GATHER4_PO                       */ shader_glsl_gather4,
     /* WINED3DSIH_GE                               */ shader_glsl_relop,
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ NULL,
     /* WINED3DSIH_HS_DECLS                         */ shader_glsl_nop,

@@ -145,6 +145,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_FTOU                             */ "ftou",
     /* WINED3DSIH_GATHER4                          */ "gather4",
     /* WINED3DSIH_GATHER4_C                        */ "gather4_c",
+    /* WINED3DSIH_GATHER4_PO                       */ "gather4_po",
     /* WINED3DSIH_GE                               */ "ge",
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ "hs_control_point_phase",
     /* WINED3DSIH_HS_DECLS                         */ "hs_decls",
@@ -1459,6 +1460,11 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             {
                 shader_record_sample(reg_maps, ins.src[1].reg.idx[0].offset,
                         ins.src[2].reg.idx[0].offset, reg_maps->sampler_map.count);
+            }
+            else if (ins.handler_idx == WINED3DSIH_GATHER4_PO)
+            {
+                shader_record_sample(reg_maps, ins.src[2].reg.idx[0].offset,
+                        ins.src[3].reg.idx[0].offset, reg_maps->sampler_map.count);
             }
             else if (ins.handler_idx == WINED3DSIH_BUFINFO && ins.src[0].reg.type == WINED3DSPR_RESOURCE)
             {
