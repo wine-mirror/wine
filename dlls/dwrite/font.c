@@ -2408,6 +2408,7 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
         if (found_font)
             break;
     }
+    IDWriteFontFile_Release(file);
 
     if (!found_font)
         return DWRITE_E_NOFONT;
