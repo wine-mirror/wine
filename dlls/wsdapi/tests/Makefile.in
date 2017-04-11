@@ -1,0 +1,5 @@
+TESTDLL   = wsdapi.dll
+IMPORTS   = wsdapi ole32 user32
+
+C_SRCS = \
+	discovery.c

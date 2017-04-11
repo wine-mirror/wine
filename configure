@@ -18493,6 +18493,7 @@ wine_fn_config_dll wpcap enable_wpcap
 wine_fn_config_dll ws2_32 enable_ws2_32 implib
 wine_fn_config_test dlls/ws2_32/tests ws2_32_test
 wine_fn_config_dll wsdapi enable_wsdapi implib
+wine_fn_config_test dlls/wsdapi/tests wsdapi_test
 wine_fn_config_dll wshom.ocx enable_wshom_ocx clean
 wine_fn_config_test dlls/wshom.ocx/tests wshom.ocx_test clean
 wine_fn_config_dll wsnmp32 enable_wsnmp32 implib
