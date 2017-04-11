@@ -2845,12 +2845,12 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     struct wined3d_texture *converted_texture = NULL;
     unsigned int src_fmt_flags, dst_fmt_flags;
     struct wined3d_map_desc dst_map, src_map;
-    const BYTE *sbase = NULL;
+    unsigned int x, sx, xinc, y, sy, yinc;
     HRESULT hr = WINED3D_OK;
     BOOL same_sub_resource;
+    const BYTE *sbase;
     const BYTE *sbuf;
     BYTE *dbuf;
-    int x, y;
 
     TRACE("dst_texture %p, dst_sub_resource_idx %u, dst_box %s, src_texture %p, "
             "src_sub_resource_idx %u, src_box %s, flags %#x, fx %p, filter %s.\n",
@@ -2872,28 +2872,20 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         same_sub_resource = FALSE;
         dst_format = dst_texture->resource.format;
         dst_fmt_flags = dst_texture->resource.format_flags;
-        if (src_texture)
+        if (dst_texture->resource.format->id != src_texture->resource.format->id)
         {
-            if (dst_texture->resource.format->id != src_texture->resource.format->id)
+            if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format)))
             {
-                if (!(converted_texture = surface_convert_format(src_texture, src_sub_resource_idx, dst_format)))
-                {
-                    FIXME("Cannot convert %s to %s.\n", debug_d3dformat(src_texture->resource.format->id),
-                            debug_d3dformat(dst_texture->resource.format->id));
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                src_texture = converted_texture;
-                src_sub_resource_idx = 0;
+                FIXME("Cannot convert %s to %s.\n", debug_d3dformat(src_texture->resource.format->id),
+                        debug_d3dformat(dst_texture->resource.format->id));
+                return WINED3DERR_NOTAVAILABLE;
             }
-            wined3d_resource_map(&src_texture->resource, src_sub_resource_idx, &src_map, NULL, WINED3D_MAP_READONLY);
-            src_format = src_texture->resource.format;
-            src_fmt_flags = src_texture->resource.format_flags;
+            src_texture = converted_texture;
+            src_sub_resource_idx = 0;
         }
-        else
-        {
-            src_format = dst_format;
-            src_fmt_flags = dst_fmt_flags;
-        }
+        wined3d_resource_map(&src_texture->resource, src_sub_resource_idx, &src_map, NULL, WINED3D_MAP_READONLY);
+        src_format = src_texture->resource.format;
+        src_fmt_flags = src_texture->resource.format_flags;
 
         wined3d_resource_map(&dst_texture->resource, dst_sub_resource_idx, &dst_map, dst_box, 0);
     }
@@ -2905,10 +2897,9 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     dst_width = dst_box->right - dst_box->left;
     row_byte_count = dst_width * bpp;
 
-    if (src_texture)
-        sbase = (BYTE *)src_map.data
-                + ((src_box->top / src_format->block_height) * src_map.row_pitch)
-                + ((src_box->left / src_format->block_width) * src_format->block_byte_count);
+    sbase = (BYTE *)src_map.data
+            + ((src_box->top / src_format->block_height) * src_map.row_pitch)
+            + ((src_box->left / src_format->block_width) * src_format->block_byte_count);
     if (same_sub_resource)
         dbuf = (BYTE *)dst_map.data
                 + ((dst_box->top / dst_format->block_height) * dst_map.row_pitch)
@@ -2940,94 +2931,89 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         goto release;
     }
 
-    /* Now the 'with source' blits. */
-    if (src_texture)
+    if (filter != WINED3D_TEXF_NONE && filter != WINED3D_TEXF_POINT
+            && (src_width != dst_width || src_height != dst_height))
     {
-        int sx, xinc, sy, yinc;
+        /* Can happen when d3d9 apps do a StretchRect() call which isn't handled in GL. */
+        FIXME("Filter %s not supported in software blit.\n", debug_d3dtexturefiltertype(filter));
+    }
 
-        if (filter != WINED3D_TEXF_NONE && filter != WINED3D_TEXF_POINT
-                && (src_width != dst_width || src_height != dst_height))
+    xinc = (src_width << 16) / dst_width;
+    yinc = (src_height << 16) / dst_height;
+
+    if (!flags)
+    {
+        /* No effects, we can cheat here. */
+        if (dst_width == src_width)
         {
-            /* Can happen when d3d9 apps do a StretchRect() call which isn't handled in GL. */
-            FIXME("Filter %s not supported in software blit.\n", debug_d3dtexturefiltertype(filter));
-        }
-
-        xinc = (src_width << 16) / dst_width;
-        yinc = (src_height << 16) / dst_height;
-
-        if (!flags)
-        {
-            /* No effects, we can cheat here. */
-            if (dst_width == src_width)
+            if (dst_height == src_height)
             {
-                if (dst_height == src_height)
-                {
-                    /* No stretching in either direction. This needs to be as
-                     * fast as possible. */
-                    sbuf = sbase;
+                /* No stretching in either direction. This needs to be as fast
+                 * as possible. */
+                sbuf = sbase;
 
-                    /* Check for overlapping surfaces. */
-                    if (!same_sub_resource || dst_box->top < src_box->top
-                            || dst_box->right <= src_box->left || src_box->right <= dst_box->left)
+                /* Check for overlapping surfaces. */
+                if (!same_sub_resource || dst_box->top < src_box->top
+                        || dst_box->right <= src_box->left || src_box->right <= dst_box->left)
+                {
+                    /* No overlap, or dst above src, so copy from top downwards. */
+                    for (y = 0; y < dst_height; ++y)
                     {
-                        /* No overlap, or dst above src, so copy from top downwards. */
-                        for (y = 0; y < dst_height; ++y)
-                        {
-                            memcpy(dbuf, sbuf, row_byte_count);
-                            sbuf += src_map.row_pitch;
-                            dbuf += dst_map.row_pitch;
-                        }
+                        memcpy(dbuf, sbuf, row_byte_count);
+                        sbuf += src_map.row_pitch;
+                        dbuf += dst_map.row_pitch;
                     }
-                    else if (dst_box->top > src_box->top)
+                }
+                else if (dst_box->top > src_box->top)
+                {
+                    /* Copy from bottom upwards. */
+                    sbuf += src_map.row_pitch * dst_height;
+                    dbuf += dst_map.row_pitch * dst_height;
+                    for (y = 0; y < dst_height; ++y)
                     {
-                        /* Copy from bottom upwards. */
-                        sbuf += src_map.row_pitch * dst_height;
-                        dbuf += dst_map.row_pitch * dst_height;
-                        for (y = 0; y < dst_height; ++y)
-                        {
-                            sbuf -= src_map.row_pitch;
-                            dbuf -= dst_map.row_pitch;
-                            memcpy(dbuf, sbuf, row_byte_count);
-                        }
-                    }
-                    else
-                    {
-                        /* Src and dst overlapping on the same line, use memmove. */
-                        for (y = 0; y < dst_height; ++y)
-                        {
-                            memmove(dbuf, sbuf, row_byte_count);
-                            sbuf += src_map.row_pitch;
-                            dbuf += dst_map.row_pitch;
-                        }
+                        sbuf -= src_map.row_pitch;
+                        dbuf -= dst_map.row_pitch;
+                        memcpy(dbuf, sbuf, row_byte_count);
                     }
                 }
                 else
                 {
-                    /* Stretching in y direction only. */
-                    for (y = sy = 0; y < dst_height; ++y, sy += yinc)
+                    /* Src and dst overlapping on the same line, use memmove. */
+                    for (y = 0; y < dst_height; ++y)
                     {
-                        sbuf = sbase + (sy >> 16) * src_map.row_pitch;
-                        memcpy(dbuf, sbuf, row_byte_count);
+                        memmove(dbuf, sbuf, row_byte_count);
+                        sbuf += src_map.row_pitch;
                         dbuf += dst_map.row_pitch;
                     }
                 }
             }
             else
             {
-                /* Stretching in X direction. */
-                int last_sy = -1;
+                /* Stretching in y direction only. */
                 for (y = sy = 0; y < dst_height; ++y, sy += yinc)
                 {
                     sbuf = sbase + (sy >> 16) * src_map.row_pitch;
+                    memcpy(dbuf, sbuf, row_byte_count);
+                    dbuf += dst_map.row_pitch;
+                }
+            }
+        }
+        else
+        {
+            /* Stretching in X direction. */
+            unsigned int last_sy = ~0u;
+            for (y = sy = 0; y < dst_height; ++y, sy += yinc)
+            {
+                sbuf = sbase + (sy >> 16) * src_map.row_pitch;
 
-                    if ((sy >> 16) == (last_sy >> 16))
-                    {
-                        /* This source row is the same as last source row -
-                         * Copy the already stretched row. */
-                        memcpy(dbuf, dbuf - dst_map.row_pitch, row_byte_count);
-                    }
-                    else
-                    {
+                if ((sy >> 16) == (last_sy >> 16))
+                {
+                    /* This source row is the same as last source row -
+                     * Copy the already stretched row. */
+                    memcpy(dbuf, dbuf - dst_map.row_pitch, row_byte_count);
+                }
+                else
+                {
 #define STRETCH_ROW(type) \
 do { \
     const type *s = (const type *)sbuf; \
@@ -3036,176 +3022,174 @@ do { \
         d[x] = s[sx >> 16]; \
 } while(0)
 
-                        switch(bpp)
+                    switch(bpp)
+                    {
+                        case 1:
+                            STRETCH_ROW(BYTE);
+                            break;
+                        case 2:
+                            STRETCH_ROW(WORD);
+                            break;
+                        case 4:
+                            STRETCH_ROW(DWORD);
+                            break;
+                        case 3:
                         {
-                            case 1:
-                                STRETCH_ROW(BYTE);
-                                break;
-                            case 2:
-                                STRETCH_ROW(WORD);
-                                break;
-                            case 4:
-                                STRETCH_ROW(DWORD);
-                                break;
-                            case 3:
+                            const BYTE *s;
+                            BYTE *d = dbuf;
+                            for (x = sx = 0; x < dst_width; x++, sx+= xinc)
                             {
-                                const BYTE *s;
-                                BYTE *d = dbuf;
-                                for (x = sx = 0; x < dst_width; x++, sx+= xinc)
-                                {
-                                    DWORD pixel;
+                                DWORD pixel;
 
-                                    s = sbuf + 3 * (sx >> 16);
-                                    pixel = s[0] | (s[1] << 8) | (s[2] << 16);
-                                    d[0] = (pixel      ) & 0xff;
-                                    d[1] = (pixel >>  8) & 0xff;
-                                    d[2] = (pixel >> 16) & 0xff;
-                                    d += 3;
-                                }
-                                break;
+                                s = sbuf + 3 * (sx >> 16);
+                                pixel = s[0] | (s[1] << 8) | (s[2] << 16);
+                                d[0] = (pixel      ) & 0xff;
+                                d[1] = (pixel >>  8) & 0xff;
+                                d[2] = (pixel >> 16) & 0xff;
+                                d += 3;
                             }
-                            default:
-                                FIXME("Stretched blit not implemented for bpp %u!\n", bpp * 8);
-                                hr = WINED3DERR_NOTAVAILABLE;
-                                goto error;
+                            break;
                         }
-#undef STRETCH_ROW
+                        default:
+                            FIXME("Stretched blit not implemented for bpp %u.\n", bpp * 8);
+                            hr = WINED3DERR_NOTAVAILABLE;
+                            goto error;
                     }
-                    dbuf += dst_map.row_pitch;
-                    last_sy = sy;
+#undef STRETCH_ROW
                 }
+                dbuf += dst_map.row_pitch;
+                last_sy = sy;
             }
         }
-        else
+    }
+    else
+    {
+        LONG dstyinc = dst_map.row_pitch, dstxinc = bpp;
+        DWORD keylow = 0xffffffff, keyhigh = 0, keymask = 0xffffffff;
+        DWORD destkeylow = 0x0, destkeyhigh = 0xffffffff, destkeymask = 0xffffffff;
+        if (flags & (WINED3D_BLT_SRC_CKEY | WINED3D_BLT_DST_CKEY
+                | WINED3D_BLT_SRC_CKEY_OVERRIDE | WINED3D_BLT_DST_CKEY_OVERRIDE))
         {
-            LONG dstyinc = dst_map.row_pitch, dstxinc = bpp;
-            DWORD keylow = 0xffffffff, keyhigh = 0, keymask = 0xffffffff;
-            DWORD destkeylow = 0x0, destkeyhigh = 0xffffffff, destkeymask = 0xffffffff;
-            if (flags & (WINED3D_BLT_SRC_CKEY | WINED3D_BLT_DST_CKEY
-                    | WINED3D_BLT_SRC_CKEY_OVERRIDE | WINED3D_BLT_DST_CKEY_OVERRIDE))
+            /* The color keying flags are checked for correctness in ddraw. */
+            if (flags & WINED3D_BLT_SRC_CKEY)
             {
-                /* The color keying flags are checked for correctness in ddraw */
-                if (flags & WINED3D_BLT_SRC_CKEY)
-                {
-                    keylow  = src_texture->async.src_blt_color_key.color_space_low_value;
-                    keyhigh = src_texture->async.src_blt_color_key.color_space_high_value;
-                }
-                else if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
-                {
-                    keylow = fx->src_color_key.color_space_low_value;
-                    keyhigh = fx->src_color_key.color_space_high_value;
-                }
-
-                if (flags & WINED3D_BLT_DST_CKEY)
-                {
-                    /* Destination color keys are taken from the source surface! */
-                    destkeylow = src_texture->async.dst_blt_color_key.color_space_low_value;
-                    destkeyhigh = src_texture->async.dst_blt_color_key.color_space_high_value;
-                }
-                else if (flags & WINED3D_BLT_DST_CKEY_OVERRIDE)
-                {
-                    destkeylow = fx->dst_color_key.color_space_low_value;
-                    destkeyhigh = fx->dst_color_key.color_space_high_value;
-                }
-
-                if (bpp == 1)
-                {
-                    keymask = 0xff;
-                }
-                else
-                {
-                    DWORD masks[3];
-                    get_color_masks(src_format, masks);
-                    keymask = masks[0]
-                            | masks[1]
-                            | masks[2];
-                }
-                flags &= ~(WINED3D_BLT_SRC_CKEY | WINED3D_BLT_DST_CKEY
-                        | WINED3D_BLT_SRC_CKEY_OVERRIDE | WINED3D_BLT_DST_CKEY_OVERRIDE);
+                keylow  = src_texture->async.src_blt_color_key.color_space_low_value;
+                keyhigh = src_texture->async.src_blt_color_key.color_space_high_value;
+            }
+            else if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
+            {
+                keylow = fx->src_color_key.color_space_low_value;
+                keyhigh = fx->src_color_key.color_space_high_value;
             }
 
-            if (flags & WINED3D_BLT_FX)
+            if (flags & WINED3D_BLT_DST_CKEY)
             {
-                BYTE *dTopLeft, *dTopRight, *dBottomLeft, *dBottomRight, *tmp;
-                LONG tmpxy;
-                dTopLeft     = dbuf;
-                dTopRight    = dbuf + ((dst_width - 1) * bpp);
-                dBottomLeft  = dTopLeft + ((dst_height - 1) * dst_map.row_pitch);
-                dBottomRight = dBottomLeft + ((dst_width - 1) * bpp);
-
-                if (fx->fx & WINEDDBLTFX_ARITHSTRETCHY)
-                {
-                    /* I don't think we need to do anything about this flag */
-                    WARN("Nothing done for WINEDDBLTFX_ARITHSTRETCHY.\n");
-                }
-                if (fx->fx & WINEDDBLTFX_MIRRORLEFTRIGHT)
-                {
-                    tmp          = dTopRight;
-                    dTopRight    = dTopLeft;
-                    dTopLeft     = tmp;
-                    tmp          = dBottomRight;
-                    dBottomRight = dBottomLeft;
-                    dBottomLeft  = tmp;
-                    dstxinc = dstxinc * -1;
-                }
-                if (fx->fx & WINEDDBLTFX_MIRRORUPDOWN)
-                {
-                    tmp          = dTopLeft;
-                    dTopLeft     = dBottomLeft;
-                    dBottomLeft  = tmp;
-                    tmp          = dTopRight;
-                    dTopRight    = dBottomRight;
-                    dBottomRight = tmp;
-                    dstyinc = dstyinc * -1;
-                }
-                if (fx->fx & WINEDDBLTFX_NOTEARING)
-                {
-                    /* I don't think we need to do anything about this flag */
-                    WARN("Nothing done for WINEDDBLTFX_NOTEARING.\n");
-                }
-                if (fx->fx & WINEDDBLTFX_ROTATE180)
-                {
-                    tmp          = dBottomRight;
-                    dBottomRight = dTopLeft;
-                    dTopLeft     = tmp;
-                    tmp          = dBottomLeft;
-                    dBottomLeft  = dTopRight;
-                    dTopRight    = tmp;
-                    dstxinc = dstxinc * -1;
-                    dstyinc = dstyinc * -1;
-                }
-                if (fx->fx & WINEDDBLTFX_ROTATE270)
-                {
-                    tmp          = dTopLeft;
-                    dTopLeft     = dBottomLeft;
-                    dBottomLeft  = dBottomRight;
-                    dBottomRight = dTopRight;
-                    dTopRight    = tmp;
-                    tmpxy   = dstxinc;
-                    dstxinc = dstyinc;
-                    dstyinc = tmpxy;
-                    dstxinc = dstxinc * -1;
-                }
-                if (fx->fx & WINEDDBLTFX_ROTATE90)
-                {
-                    tmp          = dTopLeft;
-                    dTopLeft     = dTopRight;
-                    dTopRight    = dBottomRight;
-                    dBottomRight = dBottomLeft;
-                    dBottomLeft  = tmp;
-                    tmpxy   = dstxinc;
-                    dstxinc = dstyinc;
-                    dstyinc = tmpxy;
-                    dstyinc = dstyinc * -1;
-                }
-                if (fx->fx & WINEDDBLTFX_ZBUFFERBASEDEST)
-                {
-                    /* I don't think we need to do anything about this flag */
-                    WARN("Nothing done for WINEDDBLTFX_ZBUFFERBASEDEST.\n");
-                }
-                dbuf = dTopLeft;
-                flags &= ~(WINED3D_BLT_FX);
+                /* Destination color keys are taken from the source surface! */
+                destkeylow = src_texture->async.dst_blt_color_key.color_space_low_value;
+                destkeyhigh = src_texture->async.dst_blt_color_key.color_space_high_value;
             }
+            else if (flags & WINED3D_BLT_DST_CKEY_OVERRIDE)
+            {
+                destkeylow = fx->dst_color_key.color_space_low_value;
+                destkeyhigh = fx->dst_color_key.color_space_high_value;
+            }
+
+            if (bpp == 1)
+            {
+                keymask = 0xff;
+            }
+            else
+            {
+                DWORD masks[3];
+                get_color_masks(src_format, masks);
+                keymask = masks[0] | masks[1] | masks[2];
+            }
+            flags &= ~(WINED3D_BLT_SRC_CKEY | WINED3D_BLT_DST_CKEY
+                    | WINED3D_BLT_SRC_CKEY_OVERRIDE | WINED3D_BLT_DST_CKEY_OVERRIDE);
+        }
+
+        if (flags & WINED3D_BLT_FX)
+        {
+            BYTE *dTopLeft, *dTopRight, *dBottomLeft, *dBottomRight, *tmp;
+            LONG tmpxy;
+            dTopLeft     = dbuf;
+            dTopRight    = dbuf + ((dst_width - 1) * bpp);
+            dBottomLeft  = dTopLeft + ((dst_height - 1) * dst_map.row_pitch);
+            dBottomRight = dBottomLeft + ((dst_width - 1) * bpp);
+
+            if (fx->fx & WINEDDBLTFX_ARITHSTRETCHY)
+            {
+                /* I don't think we need to do anything about this flag. */
+                WARN("Nothing done for WINEDDBLTFX_ARITHSTRETCHY.\n");
+            }
+            if (fx->fx & WINEDDBLTFX_MIRRORLEFTRIGHT)
+            {
+                tmp          = dTopRight;
+                dTopRight    = dTopLeft;
+                dTopLeft     = tmp;
+                tmp          = dBottomRight;
+                dBottomRight = dBottomLeft;
+                dBottomLeft  = tmp;
+                dstxinc = dstxinc * -1;
+            }
+            if (fx->fx & WINEDDBLTFX_MIRRORUPDOWN)
+            {
+                tmp          = dTopLeft;
+                dTopLeft     = dBottomLeft;
+                dBottomLeft  = tmp;
+                tmp          = dTopRight;
+                dTopRight    = dBottomRight;
+                dBottomRight = tmp;
+                dstyinc = dstyinc * -1;
+            }
+            if (fx->fx & WINEDDBLTFX_NOTEARING)
+            {
+                /* I don't think we need to do anything about this flag. */
+                WARN("Nothing done for WINEDDBLTFX_NOTEARING.\n");
+            }
+            if (fx->fx & WINEDDBLTFX_ROTATE180)
+            {
+                tmp          = dBottomRight;
+                dBottomRight = dTopLeft;
+                dTopLeft     = tmp;
+                tmp          = dBottomLeft;
+                dBottomLeft  = dTopRight;
+                dTopRight    = tmp;
+                dstxinc = dstxinc * -1;
+                dstyinc = dstyinc * -1;
+            }
+            if (fx->fx & WINEDDBLTFX_ROTATE270)
+            {
+                tmp          = dTopLeft;
+                dTopLeft     = dBottomLeft;
+                dBottomLeft  = dBottomRight;
+                dBottomRight = dTopRight;
+                dTopRight    = tmp;
+                tmpxy   = dstxinc;
+                dstxinc = dstyinc;
+                dstyinc = tmpxy;
+                dstxinc = dstxinc * -1;
+            }
+            if (fx->fx & WINEDDBLTFX_ROTATE90)
+            {
+                tmp          = dTopLeft;
+                dTopLeft     = dTopRight;
+                dTopRight    = dBottomRight;
+                dBottomRight = dBottomLeft;
+                dBottomLeft  = tmp;
+                tmpxy   = dstxinc;
+                dstxinc = dstyinc;
+                dstyinc = tmpxy;
+                dstyinc = dstyinc * -1;
+            }
+            if (fx->fx & WINEDDBLTFX_ZBUFFERBASEDEST)
+            {
+                /* I don't think we need to do anything about this flag. */
+                WARN("Nothing done for WINEDDBLTFX_ZBUFFERBASEDEST.\n");
+            }
+            dbuf = dTopLeft;
+            flags &= ~(WINED3D_BLT_FX);
+        }
 
 #define COPY_COLORKEY_FX(type) \
 do { \
@@ -3229,51 +3213,50 @@ do { \
     } \
 } while(0)
 
-            switch (bpp)
+        switch (bpp)
+        {
+            case 1:
+                COPY_COLORKEY_FX(BYTE);
+                break;
+            case 2:
+                COPY_COLORKEY_FX(WORD);
+                break;
+            case 4:
+                COPY_COLORKEY_FX(DWORD);
+                break;
+            case 3:
             {
-                case 1:
-                    COPY_COLORKEY_FX(BYTE);
-                    break;
-                case 2:
-                    COPY_COLORKEY_FX(WORD);
-                    break;
-                case 4:
-                    COPY_COLORKEY_FX(DWORD);
-                    break;
-                case 3:
+                const BYTE *s;
+                BYTE *d = dbuf, *dx;
+                for (y = sy = 0; y < dst_height; ++y, sy += yinc)
                 {
-                    const BYTE *s;
-                    BYTE *d = dbuf, *dx;
-                    for (y = sy = 0; y < dst_height; ++y, sy += yinc)
+                    sbuf = sbase + (sy >> 16) * src_map.row_pitch;
+                    dx = d;
+                    for (x = sx = 0; x < dst_width; ++x, sx+= xinc)
                     {
-                        sbuf = sbase + (sy >> 16) * src_map.row_pitch;
-                        dx = d;
-                        for (x = sx = 0; x < dst_width; ++x, sx+= xinc)
+                        DWORD pixel, dpixel = 0;
+                        s = sbuf + 3 * (sx>>16);
+                        pixel = s[0] | (s[1] << 8) | (s[2] << 16);
+                        dpixel = dx[0] | (dx[1] << 8 ) | (dx[2] << 16);
+                        if (((pixel & keymask) < keylow || (pixel & keymask) > keyhigh)
+                                && ((dpixel & keymask) >= destkeylow || (dpixel & keymask) <= keyhigh))
                         {
-                            DWORD pixel, dpixel = 0;
-                            s = sbuf + 3 * (sx>>16);
-                            pixel = s[0] | (s[1] << 8) | (s[2] << 16);
-                            dpixel = dx[0] | (dx[1] << 8 ) | (dx[2] << 16);
-                            if (((pixel & keymask) < keylow || (pixel & keymask) > keyhigh)
-                                    && ((dpixel & keymask) >= destkeylow || (dpixel & keymask) <= keyhigh))
-                            {
-                                dx[0] = (pixel      ) & 0xff;
-                                dx[1] = (pixel >>  8) & 0xff;
-                                dx[2] = (pixel >> 16) & 0xff;
-                            }
-                            dx += dstxinc;
+                            dx[0] = (pixel      ) & 0xff;
+                            dx[1] = (pixel >>  8) & 0xff;
+                            dx[2] = (pixel >> 16) & 0xff;
                         }
-                        d += dstyinc;
+                        dx += dstxinc;
                     }
-                    break;
+                    d += dstyinc;
                 }
-                default:
-                    FIXME("%s color-keyed blit not implemented for bpp %u!\n",
-                          (flags & WINED3D_BLT_SRC_CKEY) ? "Source" : "Destination", bpp * 8);
-                    hr = WINED3DERR_NOTAVAILABLE;
-                    goto error;
-#undef COPY_COLORKEY_FX
+                break;
             }
+            default:
+                FIXME("%s color-keyed blit not implemented for bpp %u.\n",
+                      (flags & WINED3D_BLT_SRC_CKEY) ? "Source" : "Destination", bpp * 8);
+                hr = WINED3DERR_NOTAVAILABLE;
+                goto error;
+#undef COPY_COLORKEY_FX
         }
     }
 
@@ -3283,7 +3266,7 @@ error:
 
 release:
     wined3d_resource_unmap(&dst_texture->resource, dst_sub_resource_idx);
-    if (src_texture && !same_sub_resource)
+    if (!same_sub_resource)
         wined3d_resource_unmap(&src_texture->resource, src_sub_resource_idx);
     if (converted_texture)
         wined3d_texture_decref(converted_texture);
