@@ -2945,9 +2945,6 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     {
         int sx, xinc, sy, yinc;
 
-        if (!dst_width || !dst_height) /* Hmm... stupid program? */
-            goto release;
-
         if (filter != WINED3D_TEXF_NONE && filter != WINED3D_TEXF_POINT
                 && (src_width != dst_width || src_height != dst_height))
         {
