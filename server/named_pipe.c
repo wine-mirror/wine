@@ -162,7 +162,7 @@ static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
 static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
-static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int blocking );
+static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async );
 static enum server_fd_type pipe_server_get_fd_type( struct fd *fd );
 static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -206,7 +206,7 @@ static void pipe_client_dump( struct object *obj, int verbose );
 static int pipe_client_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
-static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int blocking );
+static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async );
 static obj_handle_t pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static enum server_fd_type pipe_client_get_fd_type( struct fd *fd );
 
@@ -650,7 +650,7 @@ static void check_flushed( void *arg )
     }
 }
 
-static obj_handle_t pipe_end_flush( struct pipe_end *pipe_end, struct async *async, int blocking )
+static obj_handle_t pipe_end_flush( struct pipe_end *pipe_end, struct async *async )
 {
     obj_handle_t handle = 0;
 
@@ -659,12 +659,12 @@ static obj_handle_t pipe_end_flush( struct pipe_end *pipe_end, struct async *asy
 
     if (!fd_queue_async( pipe_end->fd, async, ASYNC_TYPE_WAIT )) return 0;
 
-    if (!blocking || (handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 )))
+    if (!async_is_blocking( async ) || (handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 )))
         set_error( STATUS_PENDING );
     return handle;
 }
 
-static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int blocking )
+static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async )
 {
     struct pipe_server *server = get_fd_user( fd );
     obj_handle_t handle;
@@ -673,7 +673,7 @@ static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int b
 
     if (!pipe_data_remaining( server )) return 0;
 
-    handle = pipe_end_flush( &server->pipe_end, async, blocking );
+    handle = pipe_end_flush( &server->pipe_end, async );
 
     /* there's no unix way to be alerted when a pipe becomes empty, so resort to polling */
     if (handle && !use_server_io( &server->pipe_end ) && !server->flush_poll)
@@ -681,11 +681,11 @@ static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async, int b
     return handle;
 }
 
-static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async, int blocking )
+static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
     /* FIXME: Support byte mode. */
-    return use_server_io( pipe_end ) ? pipe_end_flush( pipe_end, async, blocking ) : 0;
+    return use_server_io( pipe_end ) ? pipe_end_flush( pipe_end, async ) : 0;
 }
 
 static void message_queue_read( struct pipe_end *pipe_end, struct iosb *iosb )
