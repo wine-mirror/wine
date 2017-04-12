@@ -1252,9 +1252,13 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     const struct wined3d_format *src_format = src_texture->resource.format;
     struct wined3d_device *device = src_texture->resource.device;
     const struct d3dfmt_converter_desc *conv = NULL;
+    const struct wined3d_gl_info *gl_info = NULL;
+    unsigned int src_row_pitch, src_slice_pitch;
+    struct wined3d_context *context = NULL;
     struct wined3d_texture *dst_texture;
+    struct wined3d_bo_address src_data;
     struct wined3d_resource_desc desc;
-    struct wined3d_map_desc src_map;
+    DWORD map_binding;
 
     if (!(conv = find_converter(src_format->id, dst_format->id)) && (!device->d3d_initialized
             || !is_identity_fixup(src_format->color_fixup) || src_format->convert
@@ -1285,54 +1289,60 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
         return NULL;
     }
 
-    memset(&src_map, 0, sizeof(src_map));
-    if (FAILED(wined3d_resource_map(&src_texture->resource, sub_resource_idx,
-            &src_map, NULL, WINED3D_MAP_READONLY)))
+    if (device->d3d_initialized)
     {
-        ERR("Failed to map the source texture.\n");
-        wined3d_texture_decref(dst_texture);
-        return NULL;
+        context = context_acquire(device, NULL, 0);
+        gl_info = context->gl_info;
     }
+
+    map_binding = src_texture->resource.map_binding;
+    if (!wined3d_texture_load_location(src_texture, sub_resource_idx, context, map_binding))
+        ERR("Failed to load the source sub-resource into %s.\n", wined3d_debug_location(map_binding));
+    wined3d_texture_get_pitch(src_texture, texture_level, &src_row_pitch, &src_slice_pitch);
+    wined3d_texture_get_memory(src_texture, sub_resource_idx, &src_data, map_binding);
+
     if (conv)
     {
-        struct wined3d_map_desc dst_map;
+        unsigned int dst_row_pitch, dst_slice_pitch;
+        struct wined3d_bo_address dst_data;
+        const BYTE *src;
+        BYTE *dst;
 
-        memset(&dst_map, 0, sizeof(dst_map));
-        if (FAILED(wined3d_resource_map(&dst_texture->resource, 0, &dst_map, NULL, 0)))
-        {
-            ERR("Failed to map the destination texture.\n");
-            wined3d_resource_unmap(&src_texture->resource, sub_resource_idx);
-            wined3d_texture_decref(dst_texture);
-            return NULL;
-        }
+        map_binding = dst_texture->resource.map_binding;
+        if (!wined3d_texture_load_location(dst_texture, 0, context, map_binding))
+            ERR("Failed to load the destination sub-resource into %s.\n", wined3d_debug_location(map_binding));
+        wined3d_texture_get_pitch(dst_texture, 0, &dst_row_pitch, &dst_slice_pitch);
+        wined3d_texture_get_memory(dst_texture, 0, &dst_data, map_binding);
 
-        conv->convert(src_map.data, dst_map.data, src_map.row_pitch, dst_map.row_pitch, desc.width, desc.height);
+        src = wined3d_texture_map_bo_address(&src_data, src_texture->sub_resources[sub_resource_idx].size,
+                gl_info, GL_PIXEL_UNPACK_BUFFER, 0);
+        dst = wined3d_texture_map_bo_address(&dst_data, dst_texture->sub_resources[0].size,
+                gl_info, GL_PIXEL_UNPACK_BUFFER, 0);
 
-        wined3d_resource_unmap(&dst_texture->resource, 0);
+        conv->convert(src, dst, src_row_pitch, dst_row_pitch, desc.width, desc.height);
+
+        wined3d_texture_invalidate_location(dst_texture, 0, ~map_binding);
+        wined3d_texture_unmap_bo_address(&dst_data, gl_info, GL_PIXEL_UNPACK_BUFFER);
+        wined3d_texture_unmap_bo_address(&src_data, gl_info, GL_PIXEL_UNPACK_BUFFER);
     }
     else
     {
-        struct wined3d_bo_address data = {0, src_map.data};
         RECT src_rect = {0, 0, desc.width, desc.height};
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_context *context;
         POINT dst_point = {0, 0};
 
         TRACE("Using upload conversion.\n");
-        context = context_acquire(device, NULL, 0);
-        gl_info = context->gl_info;
 
         wined3d_texture_prepare_texture(dst_texture, context, FALSE);
         wined3d_texture_bind_and_dirtify(dst_texture, context, FALSE);
         wined3d_surface_upload_data(dst_texture->sub_resources[0].u.surface, gl_info, src_format,
-                &src_rect, src_map.row_pitch, &dst_point, FALSE, wined3d_const_bo_address(&data));
-
-        context_release(context);
+                &src_rect, src_row_pitch, &dst_point, FALSE, wined3d_const_bo_address(&src_data));
 
         wined3d_texture_validate_location(dst_texture, 0, WINED3D_LOCATION_TEXTURE_RGB);
         wined3d_texture_invalidate_location(dst_texture, 0, ~WINED3D_LOCATION_TEXTURE_RGB);
     }
-    wined3d_resource_unmap(&src_texture->resource, sub_resource_idx);
+
+    if (context)
+        context_release(context);
 
     return dst_texture;
 }
