@@ -2553,18 +2553,15 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "} ffp_point;\n");
         }
 
-        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
-        {
-            if (vs_args->clip_enabled)
-                shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
+        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && vs_args->clip_enabled)
+            shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
 
-            if (version->major < 3)
-            {
-                declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_diffuse;\n");
-                declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_specular;\n");
-                declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
-                declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
-            }
+        if (!needs_legacy_glsl_syntax(gl_info) && version->major < 3)
+        {
+            declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_diffuse;\n");
+            declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_specular;\n");
+            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
+            declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
         }
 
         if (version->major < 4)
@@ -2595,7 +2592,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "    float scale;\n");
             shader_addline(buffer, "} ffp_fog;\n");
 
-            if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+            if (needs_legacy_glsl_syntax(gl_info))
             {
                 if (glsl_is_color_reg_read(shader, 0))
                     shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
@@ -2897,7 +2894,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                      * OS X doesn't see the NOP operation there. */
                     if (idx)
                     {
-                        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT]
+                        if (needs_legacy_glsl_syntax(gl_info)
                                 && shader->u.ps.declared_in_count > in_count)
                         {
                             sprintf(register_name,
@@ -2912,7 +2909,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                     }
                     else
                     {
-                        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT]
+                        if (needs_legacy_glsl_syntax(gl_info)
                                 && shader->u.ps.declared_in_count > in_count)
                         {
                             sprintf(register_name, "((%s) > %u ? (%s) > %u ? gl_SecondaryColor : gl_Color : %s_in[%s])",
@@ -6555,7 +6552,7 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
             else if (args->vp_mode == pretransformed && args->texcoords_initialized & (1u << semantic_idx))
                 shader_addline(buffer, "ps_in[%u]%s = %s[%u]%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask,
-                        gl_info->supported[WINED3D_GL_LEGACY_CONTEXT]
+                        needs_legacy_glsl_syntax(gl_info)
                         ? "gl_TexCoord" : "ffp_varying_texcoord", semantic_idx, reg_mask);
             else
                 shader_addline(buffer, "ps_in[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
@@ -6631,10 +6628,9 @@ static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
         const struct wined3d_shader_reg_maps *reg_maps_out, const char *out_array_name)
 {
     struct wined3d_string_buffer *destination = string_buffer_get(&priv->string_buffers);
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     unsigned int in_count = vec4_varyings(3, gl_info);
-    unsigned int max_varyings = legacy_context ? in_count + 2 : in_count;
+    unsigned int max_varyings = needs_legacy_glsl_syntax(gl_info) ? in_count + 2 : in_count;
     DWORD in_idx, *set = NULL;
     unsigned int i, j;
     char reg_mask[6];
@@ -6842,14 +6838,14 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
         const struct wined3d_shader *vs, const struct wined3d_shader *ps,
         BOOL per_vertex_point_size, BOOL flatshading, const struct wined3d_gl_info *gl_info)
 {
-    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
-    GLuint ret;
+    const BOOL legacy_syntax = needs_legacy_glsl_syntax(gl_info);
     DWORD ps_major = ps ? ps->reg_maps.shader_version.major : 0;
-    unsigned int i;
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const char *semantic_name;
     UINT semantic_idx;
     char reg_mask[6];
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+    unsigned int i;
+    GLuint ret;
 
     string_buffer_clear(buffer);
 
@@ -6868,7 +6864,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
         DWORD colors_written_mask[2] = {0};
         DWORD texcoords_written_mask[MAX_TEXTURES] = {0};
 
-        if (!legacy_context)
+        if (!legacy_syntax)
         {
             declare_out_varying(gl_info, buffer, flatshading, "vec4 ffp_varying_diffuse;\n");
             declare_out_varying(gl_info, buffer, flatshading, "vec4 ffp_varying_specular;\n");
@@ -6893,7 +6889,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 
             if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR) && semantic_idx < 2)
             {
-                if (legacy_context)
+                if (legacy_syntax)
                     shader_addline(buffer, "gl_Front%sColor%s = shader_out[%u]%s;\n",
                             semantic_idx ? "Secondary" : "", reg_mask, output->register_idx, reg_mask);
                 else
@@ -6912,7 +6908,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
                 if (semantic_idx < MAX_TEXTURES)
                 {
                     shader_addline(buffer, "%s[%u]%s = shader_out[%u]%s;\n",
-                            legacy_context ? "gl_TexCoord" : "ffp_varying_texcoord",
+                            legacy_syntax ? "gl_TexCoord" : "ffp_varying_texcoord",
                             semantic_idx, reg_mask, output->register_idx, reg_mask);
                     texcoords_written_mask[semantic_idx] = write_mask;
                 }
@@ -6925,7 +6921,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
                 shader_addline(buffer, "%s = clamp(shader_out[%u].%c, 0.0, 1.0);\n",
-                        legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord",
+                        legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord",
                         output->register_idx, reg_mask[1]);
             }
         }
@@ -6937,11 +6933,11 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
                 shader_glsl_write_mask_to_str(~colors_written_mask[i] & WINED3DSP_WRITEMASK_ALL, reg_mask);
                 if (!i)
                     shader_addline(buffer, "%s%s = vec4(1.0)%s;\n",
-                            legacy_context ? "gl_FrontColor" : "ffp_varying_diffuse",
+                            legacy_syntax ? "gl_FrontColor" : "ffp_varying_diffuse",
                             reg_mask, reg_mask);
                 else
                     shader_addline(buffer, "%s%s = vec4(0.0)%s;\n",
-                            legacy_context ? "gl_FrontSecondaryColor" : "ffp_varying_specular",
+                            legacy_syntax ? "gl_FrontSecondaryColor" : "ffp_varying_specular",
                             reg_mask, reg_mask);
             }
         }
@@ -6958,7 +6954,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 
                 shader_glsl_write_mask_to_str(~texcoords_written_mask[i] & WINED3DSP_WRITEMASK_ALL, reg_mask);
                 shader_addline(buffer, "%s[%u]%s = vec4(0.0)%s;\n",
-                        legacy_context ? "gl_TexCoord" : "ffp_varying_texcoord", i, reg_mask, reg_mask);
+                        legacy_syntax ? "gl_TexCoord" : "ffp_varying_texcoord", i, reg_mask, reg_mask);
             }
         }
     }
@@ -7131,8 +7127,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const BOOL legacy_syntax = needs_legacy_glsl_syntax(gl_info);
     struct shader_glsl_ctx_priv priv_ctx;
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
     GLuint shader_id;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
@@ -7196,7 +7192,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         unsigned int i;
         WORD map = reg_maps->texcoord;
 
-        if (legacy_context)
+        if (legacy_syntax)
         {
             if (glsl_is_color_reg_read(shader, 0))
                 shader_addline(buffer, "ffp_varying_diffuse = gl_Color;\n");
@@ -7212,14 +7208,14 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
                     shader_addline(buffer, "ffp_texcoord[%u] = vec4(gl_PointCoord.xy, 0.0, 0.0);\n", i);
                 else if (args->texcoords_initialized & (1u << i))
                     shader_addline(buffer, "ffp_texcoord[%u] = %s[%u];\n", i,
-                            legacy_context ? "gl_TexCoord" : "ffp_varying_texcoord", i);
+                            legacy_syntax ? "gl_TexCoord" : "ffp_varying_texcoord", i);
                 else
                     shader_addline(buffer, "ffp_texcoord[%u] = vec4(0.0);\n", i);
                 shader_addline(buffer, "vec4 T%u = ffp_texcoord[%u];\n", i, i);
             }
         }
 
-        if (legacy_context)
+        if (legacy_syntax)
             shader_addline(buffer, "ffp_varying_fogcoord = gl_FogFragCoord;\n");
     }
 
@@ -7249,7 +7245,7 @@ static void shader_glsl_generate_vs_epilogue(const struct wined3d_gl_info *gl_in
         const struct vs_compile_args *args)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+    const BOOL legacy_syntax = needs_legacy_glsl_syntax(gl_info);
     unsigned int i;
 
     /* Unpack outputs. */
@@ -7264,16 +7260,16 @@ static void shader_glsl_generate_vs_epilogue(const struct wined3d_gl_info *gl_in
     {
         if (args->fog_src == VS_FOG_Z)
             shader_addline(buffer, "%s = gl_Position.z;\n",
-                    legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+                    legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
         else if (!reg_maps->fog)
             shader_addline(buffer, "%s = 0.0;\n",
-                    legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+                    legacy_syntax ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
     }
 
     /* We always store the clipplanes without y inversion. */
     if (args->clip_enabled)
     {
-        if (legacy_context)
+        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
             shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
         else
             for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
@@ -7884,12 +7880,12 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
         {"vec4", "ffp_attrib_diffuse"},         /* WINED3D_FFP_DIFFUSE */
         {"vec4", "ffp_attrib_specular"},        /* WINED3D_FFP_SPECULAR */
     };
+    const BOOL legacy_syntax = needs_legacy_glsl_syntax(gl_info);
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
+    BOOL output_legacy_fogcoord = legacy_syntax;
     BOOL legacy_lighting = priv->legacy_lighting;
     GLuint shader_obj;
     unsigned int i;
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
-    BOOL output_legacy_fogcoord = legacy_context;
 
     string_buffer_clear(buffer);
 
@@ -7949,7 +7945,10 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
         shader_addline(buffer, "} ffp_point;\n");
     }
 
-    if (legacy_context)
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && settings->clipping)
+        shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
+
+    if (legacy_syntax)
     {
         shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
         shader_addline(buffer, "vec4 ffp_varying_specular;\n");
@@ -7958,9 +7957,6 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     }
     else
     {
-        if (settings->clipping)
-            shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
-
         declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_diffuse;\n");
         declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_specular;\n");
         declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
@@ -8032,7 +8028,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     }
 
     shader_glsl_ffp_vertex_lighting(buffer, settings, legacy_lighting);
-    if (legacy_context)
+    if (legacy_syntax)
     {
         shader_addline(buffer, "gl_FrontColor = ffp_varying_diffuse;\n");
         shader_addline(buffer, "gl_FrontSecondaryColor = ffp_varying_specular;\n");
@@ -8045,7 +8041,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
-        BOOL output_legacy_texcoord = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+        BOOL output_legacy_texcoord = legacy_syntax;
 
         switch (settings->texgen[i] & 0xffff0000)
         {
@@ -8395,7 +8391,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     BYTE lum_map = 0, bump_map = 0, tex_map = 0, tss_const_map = 0;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+    const BOOL legacy_syntax = needs_legacy_glsl_syntax(gl_info);
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     UINT lowest_disabled_stage;
     GLuint shader_id;
@@ -8563,7 +8559,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     if (alpha_test_func != WINED3D_CMP_ALWAYS)
         shader_addline(buffer, "uniform float alpha_test_ref;\n");
 
-    if (legacy_context)
+    if (legacy_syntax)
     {
         shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
         shader_addline(buffer, "vec4 ffp_varying_specular;\n");
@@ -8582,7 +8578,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
 
     shader_addline(buffer, "void main()\n{\n");
 
-    if (legacy_context)
+    if (legacy_syntax)
     {
         shader_addline(buffer, "ffp_varying_diffuse = gl_Color;\n");
         shader_addline(buffer, "ffp_varying_specular = gl_SecondaryColor;\n");
@@ -8596,13 +8592,13 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
                 shader_addline(buffer, "ffp_texcoord[%u] = vec4(gl_PointCoord.xy, 0.0, 0.0);\n", stage);
             else if (settings->texcoords_initialized & (1u << stage))
                 shader_addline(buffer, "ffp_texcoord[%u] = %s[%u];\n",
-                        stage, legacy_context ? "gl_TexCoord" : "ffp_varying_texcoord", stage);
+                        stage, legacy_syntax ? "gl_TexCoord" : "ffp_varying_texcoord", stage);
             else
                 shader_addline(buffer, "ffp_texcoord[%u] = vec4(0.0);\n", stage);
         }
     }
 
-    if (legacy_context && settings->fog != WINED3D_FFP_PS_FOG_OFF)
+    if (legacy_syntax && settings->fog != WINED3D_FFP_PS_FOG_OFF)
         shader_addline(buffer, "ffp_varying_fogcoord = gl_FogFragCoord;\n");
 
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
@@ -8695,7 +8691,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
                 coord_mask = "xyzw";
                 break;
         }
-        if (!needs_legacy_glsl_syntax(gl_info))
+        if (!legacy_syntax)
             texture_function = proj ? "textureProj" : "texture";
 
         if (stage > 0
@@ -9335,7 +9331,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
             pshader ? pshader->limits->constant_float : 0);
     checkGLcall("Find glsl program uniform locations");
 
-    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    if (needs_legacy_glsl_syntax(gl_info))
     {
         if (pshader && pshader->reg_maps.shader_version.major >= 3
                 && pshader->u.ps.declared_in_count > vec4_varyings(3, gl_info))
@@ -9570,7 +9566,7 @@ static void shader_glsl_disable(void *shader_priv, struct wined3d_context *conte
     priv->vertex_pipe->vp_enable(gl_info, FALSE);
     priv->fragment_pipe->enable_extension(gl_info, FALSE);
 
-    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
+    if (needs_legacy_glsl_syntax(gl_info) && gl_info->supported[ARB_COLOR_BUFFER_FLOAT])
     {
         ctx_data->vertex_color_clamp = GL_FIXED_ONLY_ARB;
         GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FIXED_ONLY_ARB));
@@ -10264,7 +10260,7 @@ static void glsl_vertex_pipe_vp_enable(const struct wined3d_gl_info *gl_info, BO
 static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
 {
     caps->xyzrhw = TRUE;
-    caps->emulated_flatshading = !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+    caps->emulated_flatshading = !needs_legacy_glsl_syntax(gl_info);
     caps->ffp_generic_attributes = TRUE;
     caps->max_active_lights = MAX_ACTIVE_LIGHTS;
     caps->max_vertex_blend_matrices = MAX_VERTEX_BLENDS;
@@ -10743,8 +10739,8 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_SAMPLER(7),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
     {STATE_SAMPLER(7),                                           {STATE_SAMPLER(7),                                           glsl_vertex_pipe_texmatrix_np2}, WINED3D_GL_EXT_NONE   },
     {STATE_POINT_ENABLE,                                         {STATE_POINT_ENABLE,                                         glsl_vertex_pipe_shader}, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_nop   },  WINED3D_GL_LEGACY_CONTEXT   },
-    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_shademode}, WINED3D_GL_EXT_NONE       },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_shademode}, WINED3D_GLSL_130          },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_nop   }, WINED3D_GL_EXT_NONE          },
     {0 /* Terminate */,                                          {0,                                                          NULL                   }, WINED3D_GL_EXT_NONE          },
 };
 
@@ -11100,8 +11096,8 @@ static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
     {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                   {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_POINT_ENABLE,                                        {STATE_POINT_ENABLE,                                         glsl_fragment_pipe_shader              }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         state_shademode                        }, WINED3D_GL_LEGACY_CONTEXT},
-    {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_fragment_pipe_shademode           }, WINED3D_GL_EXT_NONE },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_fragment_pipe_shademode           }, WINED3D_GLSL_130    },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         state_shademode                        }, WINED3D_GL_EXT_NONE },
     {0 /* Terminate */,                                         {0,                                                          0                                      }, WINED3D_GL_EXT_NONE },
 };
 

@@ -202,6 +202,7 @@ enum wined3d_gl_extension
     WINED3D_GL_VERSION_2_0,
     WINED3D_GL_VERSION_3_2,
     WINED3D_GL_VERSION_4_3,
+    WINED3D_GLSL_130,
 
     WINED3D_GL_EXT_COUNT,
 };
