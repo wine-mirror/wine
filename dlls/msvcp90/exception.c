@@ -206,7 +206,7 @@ const char* __thiscall MSVCP_exception_what(exception * this)
     return this->name ? this->name : "Unknown exception";
 }
 
-#ifdef _MSVCIRT
+#if _MSVCP_VER >= 80
 DEFINE_RTTI_DATA0(exception, 0, ".?AVexception@std@@")
 #else
 DEFINE_RTTI_DATA0(exception, 0, ".?AVexception@@")
@@ -409,7 +409,7 @@ const char* __thiscall MSVCP_logic_error_what(logic_error *this)
 #endif
 }
 
-#ifdef _MSVCIRT
+#if _MSVCP_VER >= 80
 DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_error@std@@")
 #else
 DEFINE_RTTI_DATA1(logic_error, 0, &exception_rtti_base_descriptor, ".?AVlogic_error@@")
