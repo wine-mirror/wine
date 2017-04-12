@@ -1313,6 +1313,49 @@ static void test_import(void)
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"TestNoBeginQuote\"=Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "TestNoBeginQuote");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"TestNoEndQuote\"=\"Asdffdsa\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "TestNoEndQuote");
+
+    test_import_str("REGEDIT4\n\n"
+                   "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                   "\"TestNoQuotes\"=Asdffdsa\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "TestNoQuotes");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "NameNoBeginQuote\"=\"Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "NameNoBeginQuote");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"NameNoEndQuote=\"Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "NameNoEndQuote");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "NameNoQuotes=\"Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "NameNoQuotes");
+
+    test_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                "\"MixedQuotes=Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "MixedQuotes");
+    todo_wine verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"double\\\"quote\"=\"valid \\\"or\\\" not\"\n"
                     "\"single'quote\"=dword:00000008\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
@@ -1772,6 +1815,49 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine39b", REG_SZ, "Value2", 7, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine39c");
     todo_wine verify_reg_nonexist(hkey, "Wine39d");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"TestNoBeginQuote\"=Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "TestNoBeginQuote");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"TestNoEndQuote\"=\"Asdffdsa\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "TestNoEndQuote");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"TestNoQuotes\"=Asdffdsa\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "TestNoQuotes");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "NameNoBeginQuote\"=\"Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "NameNoBeginQuote");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"NameNoEndQuote=\"Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "NameNoEndQuote");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "NameNoQuotes=\"Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "NameNoQuotes");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                 "\"MixedQuotes=Asdffdsa\"\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "MixedQuotes");
+    todo_wine verify_reg_nonexist(hkey, "MixedQuotes=Asdffdsa");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
