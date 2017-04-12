@@ -57,6 +57,7 @@ static void resource_check_usage(DWORD usage)
             | WINED3DUSAGE_AUTOGENMIPMAP
             | WINED3DUSAGE_STATICDECL
             | WINED3DUSAGE_OVERLAY
+            | WINED3DUSAGE_PRIVATE
             | WINED3DUSAGE_LEGACY_CUBEMAP
             | WINED3DUSAGE_TEXTURE;
 
@@ -216,19 +217,22 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         resource->heap_memory = NULL;
     }
 
-    /* Check that we have enough video ram left */
-    if (pool == WINED3D_POOL_DEFAULT && device->wined3d->flags & WINED3D_VIDMEM_ACCOUNTING)
+    if (!(usage & WINED3DUSAGE_PRIVATE))
     {
-        if (size > wined3d_device_get_available_texture_mem(device))
+        /* Check that we have enough video ram left */
+        if (pool == WINED3D_POOL_DEFAULT && device->wined3d->flags & WINED3D_VIDMEM_ACCOUNTING)
         {
-            ERR("Out of adapter memory\n");
-            wined3d_resource_free_sysmem(resource);
-            return WINED3DERR_OUTOFVIDEOMEMORY;
+            if (size > wined3d_device_get_available_texture_mem(device))
+            {
+                ERR("Out of adapter memory\n");
+                wined3d_resource_free_sysmem(resource);
+                return WINED3DERR_OUTOFVIDEOMEMORY;
+            }
+            adapter_adjust_memory(device->adapter, size);
         }
-        adapter_adjust_memory(device->adapter, size);
-    }
 
-    device_resource_add(device, resource);
+        device_resource_add(device, resource);
+    }
 
     return WINED3D_OK;
 }
@@ -248,13 +252,16 @@ void resource_cleanup(struct wined3d_resource *resource)
 
     TRACE("Cleaning up resource %p.\n", resource);
 
-    if (resource->pool == WINED3D_POOL_DEFAULT && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
+    if (!(resource->usage & WINED3DUSAGE_PRIVATE))
     {
-        TRACE("Decrementing device memory pool by %u.\n", resource->size);
-        adapter_adjust_memory(resource->device->adapter, (INT64)0 - resource->size);
-    }
+        if (resource->pool == WINED3D_POOL_DEFAULT && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
+        {
+            TRACE("Decrementing device memory pool by %u.\n", resource->size);
+            adapter_adjust_memory(resource->device->adapter, (INT64)0 - resource->size);
+        }
 
-    device_resource_released(resource->device, resource);
+        device_resource_released(resource->device, resource);
+    }
     wined3d_resource_acquire(resource);
     wined3d_cs_destroy_object(resource->device->cs, wined3d_resource_destroy_object, resource);
 }

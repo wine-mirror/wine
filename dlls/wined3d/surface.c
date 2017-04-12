@@ -1271,7 +1271,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     desc.format = dst_format->id;
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
-    desc.usage = 0;
+    desc.usage = WINED3DUSAGE_PRIVATE;
     desc.pool = WINED3D_POOL_SCRATCH;
     desc.width = wined3d_texture_get_level_width(src_texture, texture_level);
     desc.height = wined3d_texture_get_level_height(src_texture, texture_level);
