@@ -52,7 +52,7 @@ struct fd_ops
     /* get file information */
     enum server_fd_type (*get_fd_type)(struct fd *fd);
     /* perform a read on the file */
-    obj_handle_t (*read)(struct fd *, struct async *, int, file_pos_t );
+    obj_handle_t (*read)(struct fd *, struct async *, file_pos_t );
     /* perform a write on the file */
     obj_handle_t (*write)(struct fd *, struct async *, int, file_pos_t );
     /* flush the object buffers */
@@ -100,7 +100,7 @@ extern void default_poll_event( struct fd *fd, int event );
 extern int fd_queue_async( struct fd *fd, struct async *async, int type );
 extern void fd_async_wake_up( struct fd *fd, int type, unsigned int status );
 extern void fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern obj_handle_t no_fd_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
+extern obj_handle_t no_fd_read( struct fd *fd, struct async *async, file_pos_t pos );
 extern obj_handle_t no_fd_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
 extern obj_handle_t no_fd_flush( struct fd *fd, struct async *async, int blocking );
 extern obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );

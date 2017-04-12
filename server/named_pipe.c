@@ -153,7 +153,7 @@ static const struct object_ops named_pipe_ops =
 };
 
 /* common server and client pipe end functions */
-static obj_handle_t pipe_end_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
+static obj_handle_t pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static obj_handle_t pipe_end_write( struct fd *fd, struct async *async_data, int blocking, file_pos_t pos );
 static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void pipe_end_reselect_async( struct fd *fd, struct async_queue *queue );
@@ -811,12 +811,12 @@ static void reselect_write_queue( struct pipe_end *pipe_end )
     reselect_read_queue( reader );
 }
 
-static obj_handle_t pipe_end_read( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
+static obj_handle_t pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct pipe_end *pipe_end = get_fd_user( fd );
     obj_handle_t handle = 0;
 
-    if (!use_server_io( pipe_end )) return no_fd_read( fd, async, blocking, pos );
+    if (!use_server_io( pipe_end )) return no_fd_read( fd, async, pos );
 
     if (!pipe_end->connection && list_empty( &pipe_end->message_queue ))
     {
@@ -831,7 +831,7 @@ static obj_handle_t pipe_end_read( struct fd *fd, struct async *async, int block
     reselect_read_queue( pipe_end );
     set_error( STATUS_PENDING );
 
-    if (!blocking)
+    if (!async_is_blocking( async ))
     {
         struct iosb *iosb;
         iosb = async_get_iosb( async );
