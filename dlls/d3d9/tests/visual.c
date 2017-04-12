@@ -20442,6 +20442,8 @@ static void test_uninitialized_varyings(void)
         0x02000001, 0x800f0800, 0xb0e40000,                                     /* mov oC0, t0                    */
         0x0000ffff
     };
+#if 0
+    /* This has been left here for documentation purposes. It is referenced in disabled tests in the table below. */
     static const DWORD ps3_diffuse_code[] =
     {
         0xffff0300,                                                             /* ps_3_0                         */
@@ -20449,6 +20451,7 @@ static void test_uninitialized_varyings(void)
         0x02000001, 0x800f0800, 0x90e40000,                                     /* mov oC0, v0                    */
         0x0000ffff
     };
+#endif
     static const DWORD ps3_specular_code[] =
     {
         0xffff0300,                                                             /* ps_3_0                         */
@@ -20472,7 +20475,6 @@ static void test_uninitialized_varyings(void)
         D3DCOLOR expected;
         BOOL allow_zero_alpha;
         BOOL partial;
-        BOOL allow_zero;
         BOOL broken_warp;
     }
     /* On AMD specular color is generally initialized to 0x00000000 and texcoords to 0xff000000
@@ -20488,14 +20490,22 @@ static void test_uninitialized_varyings(void)
         {                  0,             NULL, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff000000, TRUE},
         {                  0,             NULL, D3DPS_VERSION(2, 0), ps2_texcoord_code, 0xff000000, TRUE},
         {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1),  ps1_diffuse_code, 0xffffffff},
-        {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff000000, TRUE,  FALSE, FALSE, TRUE},
+        {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff000000, TRUE,  FALSE, TRUE},
         {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff000000, TRUE},
         {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0),  ps2_diffuse_code, 0xffffffff},
-        {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0), ps2_specular_code, 0xff000000, TRUE,  FALSE, FALSE, TRUE},
+        {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0), ps2_specular_code, 0xff000000, TRUE,  FALSE, TRUE},
         {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0), ps2_texcoord_code, 0xff000000, TRUE},
-        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0),  ps3_diffuse_code, 0xffffffff, FALSE, FALSE, TRUE},
-        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_specular_code, 0xff000000, TRUE,  FALSE, FALSE, TRUE},
-        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_texcoord_code, 0xff000000, TRUE,  FALSE, FALSE, TRUE},
+        /* This test shows a lot of combinations of alpha and color that involve 1.0 and 0.0. Disable it.
+         *
+         * AMD r500 sets alpha = 1.0, color = 0.0. Nvidia sets alpha = 1.0, color = 1.0. r600 Sets Alpha = 0.0,
+         * color = 0.0. So far no combination with Alpha = 0.0, color = 1.0 has been found though.
+         * {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0),  ps3_diffuse_code, 0xffffffff, FALSE, FALSE},
+         *
+         * The same issues apply to the partially initialized COLOR0 varying, in addition to unreliable results
+         * with partially initialized varyings in general.
+         * {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0),  ps3_diffuse_code, 0xff7fffff, TRUE,  TRUE}, */
+        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_specular_code, 0xff000000, TRUE,  FALSE, TRUE},
+        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_texcoord_code, 0xff000000, TRUE,  FALSE, TRUE},
         {D3DVS_VERSION(1, 1), vs1_partial_code,                   0,              NULL, 0xff7fffff, FALSE, TRUE},
         {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1),  ps1_diffuse_code, 0xff7fffff, FALSE, TRUE},
         {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff7f0000, TRUE,  TRUE},
@@ -20503,8 +20513,6 @@ static void test_uninitialized_varyings(void)
         {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0),  ps2_diffuse_code, 0xff7fffff, FALSE, TRUE},
         {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0), ps2_specular_code, 0xff7f0000, TRUE,  TRUE},
         {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0), ps2_texcoord_code, 0xff7f0000, TRUE,  TRUE},
-        /* Fails on Radeon HD 2600 with 0x008000ff aka nonsensical color. */
-        /* {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0),  ps3_diffuse_code, 0xff7fffff, TRUE,  TRUE}, */
         {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0), ps3_specular_code, 0x007f0000, FALSE, TRUE},
         {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0), ps3_texcoord_code, 0xff7f0000, TRUE,  TRUE},
     };
@@ -20612,7 +20620,7 @@ static void test_uninitialized_varyings(void)
         color = get_readback_color(&rb, 320, 240);
         ok(color_match(color, tests[i].expected, 1)
                 || (tests[i].allow_zero_alpha && color_match(color, tests[i].expected & 0x00ffffff, 1))
-                || (tests[i].allow_zero && !color) || (broken(warp && tests[i].broken_warp))
+                || (broken(warp && tests[i].broken_warp))
                 || broken(tests[i].partial && color_match(color & 0x00ff0000, tests[i].expected & 0x00ff0000, 1)),
                 "Got unexpected color 0x%08x, case %u.\n", color, i);
         release_surface_readback(&rb);
