@@ -2553,15 +2553,18 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "} ffp_point;\n");
         }
 
-        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && vs_args->clip_enabled)
-            shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
-
-        if (!needs_legacy_glsl_syntax(gl_info) && version->major < 3)
+        if (!needs_legacy_glsl_syntax(gl_info))
         {
-            declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_diffuse;\n");
-            declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_specular;\n");
-            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
-            declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+            if (vs_args->clip_enabled)
+                shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
+
+            if (version->major < 3)
+            {
+                declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_diffuse;\n");
+                declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_specular;\n");
+                declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
+                declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+            }
         }
 
         if (version->major < 4)
@@ -7269,7 +7272,7 @@ static void shader_glsl_generate_vs_epilogue(const struct wined3d_gl_info *gl_in
     /* We always store the clipplanes without y inversion. */
     if (args->clip_enabled)
     {
-        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        if (legacy_syntax)
             shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
         else
             for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
@@ -7945,9 +7948,6 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
         shader_addline(buffer, "} ffp_point;\n");
     }
 
-    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && settings->clipping)
-        shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
-
     if (legacy_syntax)
     {
         shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
@@ -7957,6 +7957,9 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     }
     else
     {
+        if (settings->clipping)
+            shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
+
         declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_diffuse;\n");
         declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_specular;\n");
         declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
@@ -8001,7 +8004,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
         shader_addline(buffer, "gl_Position = ffp_projection_matrix * ec_pos;\n");
         if (settings->clipping)
         {
-            if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+            if (legacy_syntax)
                 shader_addline(buffer, "gl_ClipVertex = ec_pos;\n");
             else
                 for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
@@ -10341,7 +10344,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL normal = !!(context->stream_info.use_map & (1u << WINED3D_FFP_NORMAL));
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+    const BOOL legacy_clip_planes = needs_legacy_glsl_syntax(gl_info);
     BOOL transformed = context->stream_info.position_transformed;
     BOOL wasrhw = context->last_was_rhw;
     unsigned int i;
@@ -10361,7 +10364,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     {
         if (context->last_was_vshader)
         {
-            if (legacy_context)
+            if (legacy_clip_planes)
                 for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
                     clipplane(context, state, STATE_CLIPPLANE(i));
             else
@@ -10387,7 +10390,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         if (!context->last_was_vshader)
         {
             /* Vertex shader clipping ignores the view matrix. Update all clip planes. */
-            if (legacy_context)
+            if (legacy_clip_planes)
                 for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
                     clipplane(context, state, STATE_CLIPPLANE(i));
             else
@@ -10447,7 +10450,7 @@ static void glsl_vertex_pipe_view(struct wined3d_context *context, const struct 
             | WINED3D_SHADER_CONST_FFP_LIGHTS
             | WINED3D_SHADER_CONST_FFP_VERTEXBLEND;
 
-    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    if (needs_legacy_glsl_syntax(gl_info))
     {
         for (k = 0; k < gl_info->limits.user_clip_distances; ++k)
         {
@@ -10574,70 +10577,70 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_MATERIAL,                                             {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_vertex_pipe_material}, WINED3D_GL_EXT_NONE        },
     /* Clip planes */
-    {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(1),                                         {STATE_CLIPPLANE(1),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(1),                                         {STATE_CLIPPLANE(1),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(2),                                         {STATE_CLIPPLANE(2),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(2),                                         {STATE_CLIPPLANE(2),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(3),                                         {STATE_CLIPPLANE(3),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(3),                                         {STATE_CLIPPLANE(3),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(4),                                         {STATE_CLIPPLANE(4),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(4),                                         {STATE_CLIPPLANE(4),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(5),                                         {STATE_CLIPPLANE(5),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(5),                                         {STATE_CLIPPLANE(5),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(6),                                         {STATE_CLIPPLANE(6),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(6),                                         {STATE_CLIPPLANE(6),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(7),                                         {STATE_CLIPPLANE(7),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(7),                                         {STATE_CLIPPLANE(7),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(8),                                         {STATE_CLIPPLANE(8),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(8),                                         {STATE_CLIPPLANE(8),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(9),                                         {STATE_CLIPPLANE(9),                                         clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(9),                                         {STATE_CLIPPLANE(9),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(10),                                        {STATE_CLIPPLANE(10),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(10),                                        {STATE_CLIPPLANE(10),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(11),                                        {STATE_CLIPPLANE(11),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(11),                                        {STATE_CLIPPLANE(11),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(12),                                        {STATE_CLIPPLANE(12),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(12),                                        {STATE_CLIPPLANE(12),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(13),                                        {STATE_CLIPPLANE(13),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(13),                                        {STATE_CLIPPLANE(13),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(14),                                        {STATE_CLIPPLANE(14),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(14),                                        {STATE_CLIPPLANE(14),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(15),                                        {STATE_CLIPPLANE(15),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(15),                                        {STATE_CLIPPLANE(15),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(16),                                        {STATE_CLIPPLANE(16),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(16),                                        {STATE_CLIPPLANE(16),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(17),                                        {STATE_CLIPPLANE(17),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(17),                                        {STATE_CLIPPLANE(17),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(18),                                        {STATE_CLIPPLANE(18),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(18),                                        {STATE_CLIPPLANE(18),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(19),                                        {STATE_CLIPPLANE(19),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(19),                                        {STATE_CLIPPLANE(19),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(20),                                        {STATE_CLIPPLANE(20),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(20),                                        {STATE_CLIPPLANE(20),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(21),                                        {STATE_CLIPPLANE(21),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(21),                                        {STATE_CLIPPLANE(21),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(22),                                        {STATE_CLIPPLANE(22),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(22),                                        {STATE_CLIPPLANE(22),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(23),                                        {STATE_CLIPPLANE(23),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(23),                                        {STATE_CLIPPLANE(23),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(24),                                        {STATE_CLIPPLANE(24),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(24),                                        {STATE_CLIPPLANE(24),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(25),                                        {STATE_CLIPPLANE(25),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(25),                                        {STATE_CLIPPLANE(25),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(26),                                        {STATE_CLIPPLANE(26),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(26),                                        {STATE_CLIPPLANE(26),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(27),                                        {STATE_CLIPPLANE(27),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(27),                                        {STATE_CLIPPLANE(27),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(28),                                        {STATE_CLIPPLANE(28),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(28),                                        {STATE_CLIPPLANE(28),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(29),                                        {STATE_CLIPPLANE(29),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(29),                                        {STATE_CLIPPLANE(29),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(30),                                        {STATE_CLIPPLANE(30),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(30),                                        {STATE_CLIPPLANE(30),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
-    {STATE_CLIPPLANE(31),                                        {STATE_CLIPPLANE(31),                                        clipplane              }, WINED3D_GL_LEGACY_CONTEXT    },
-    {STATE_CLIPPLANE(31),                                        {STATE_CLIPPLANE(31),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GL_EXT_NONE      },
+    {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(1),                                         {STATE_CLIPPLANE(1),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(1),                                         {STATE_CLIPPLANE(1),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(2),                                         {STATE_CLIPPLANE(2),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(2),                                         {STATE_CLIPPLANE(2),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(3),                                         {STATE_CLIPPLANE(3),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(3),                                         {STATE_CLIPPLANE(3),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(4),                                         {STATE_CLIPPLANE(4),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(4),                                         {STATE_CLIPPLANE(4),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(5),                                         {STATE_CLIPPLANE(5),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(5),                                         {STATE_CLIPPLANE(5),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(6),                                         {STATE_CLIPPLANE(6),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(6),                                         {STATE_CLIPPLANE(6),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(7),                                         {STATE_CLIPPLANE(7),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(7),                                         {STATE_CLIPPLANE(7),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(8),                                         {STATE_CLIPPLANE(8),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(8),                                         {STATE_CLIPPLANE(8),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(9),                                         {STATE_CLIPPLANE(9),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(9),                                         {STATE_CLIPPLANE(9),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(10),                                        {STATE_CLIPPLANE(10),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(10),                                        {STATE_CLIPPLANE(10),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(11),                                        {STATE_CLIPPLANE(11),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(11),                                        {STATE_CLIPPLANE(11),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(12),                                        {STATE_CLIPPLANE(12),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(12),                                        {STATE_CLIPPLANE(12),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(13),                                        {STATE_CLIPPLANE(13),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(13),                                        {STATE_CLIPPLANE(13),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(14),                                        {STATE_CLIPPLANE(14),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(14),                                        {STATE_CLIPPLANE(14),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(15),                                        {STATE_CLIPPLANE(15),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(15),                                        {STATE_CLIPPLANE(15),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(16),                                        {STATE_CLIPPLANE(16),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(16),                                        {STATE_CLIPPLANE(16),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(17),                                        {STATE_CLIPPLANE(17),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(17),                                        {STATE_CLIPPLANE(17),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(18),                                        {STATE_CLIPPLANE(18),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(18),                                        {STATE_CLIPPLANE(18),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(19),                                        {STATE_CLIPPLANE(19),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(19),                                        {STATE_CLIPPLANE(19),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(20),                                        {STATE_CLIPPLANE(20),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(20),                                        {STATE_CLIPPLANE(20),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(21),                                        {STATE_CLIPPLANE(21),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(21),                                        {STATE_CLIPPLANE(21),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(22),                                        {STATE_CLIPPLANE(22),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(22),                                        {STATE_CLIPPLANE(22),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(23),                                        {STATE_CLIPPLANE(23),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(23),                                        {STATE_CLIPPLANE(23),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(24),                                        {STATE_CLIPPLANE(24),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(24),                                        {STATE_CLIPPLANE(24),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(25),                                        {STATE_CLIPPLANE(25),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(25),                                        {STATE_CLIPPLANE(25),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(26),                                        {STATE_CLIPPLANE(26),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(26),                                        {STATE_CLIPPLANE(26),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(27),                                        {STATE_CLIPPLANE(27),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(27),                                        {STATE_CLIPPLANE(27),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(28),                                        {STATE_CLIPPLANE(28),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(28),                                        {STATE_CLIPPLANE(28),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(29),                                        {STATE_CLIPPLANE(29),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(29),                                        {STATE_CLIPPLANE(29),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(30),                                        {STATE_CLIPPLANE(30),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(30),                                        {STATE_CLIPPLANE(30),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
+    {STATE_CLIPPLANE(31),                                        {STATE_CLIPPLANE(31),                                        glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
+    {STATE_CLIPPLANE(31),                                        {STATE_CLIPPLANE(31),                                        clipplane              }, WINED3D_GL_EXT_NONE          },
     /* Lights */
     {STATE_LIGHT_TYPE,                                           {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_ACTIVELIGHT(0),                                       {STATE_ACTIVELIGHT(0),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
