@@ -2676,7 +2676,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "uniform float alpha_test_ref;\n");
 
         if (!needs_legacy_glsl_syntax(gl_info))
+        {
+            if (shader_glsl_use_explicit_attrib_location(gl_info))
+                shader_addline(buffer, "layout(location = 0) ");
             shader_addline(buffer, "out vec4 ps_out[%u];\n", gl_info->limits.buffers);
+        }
 
         if (shader->limits->constant_float + extra_constants_needed >= gl_info->limits.glsl_ps_float_constants)
             FIXME("Insufficient uniforms to run this shader.\n");
@@ -7141,6 +7145,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DERIVATIVE_CONTROL])
         shader_addline(buffer, "#extension GL_ARB_derivative_control : enable\n");
+    if (shader_glsl_use_explicit_attrib_location(gl_info))
+        shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
     if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
         shader_addline(buffer, "#extension GL_ARB_fragment_coord_conventions : enable\n");
     if (gl_info->supported[ARB_FRAGMENT_LAYER_VIEWPORT])
@@ -7297,7 +7303,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DRAW_INSTANCED])
         shader_addline(buffer, "#extension GL_ARB_draw_instanced : enable\n");
-    if (gl_info->supported[ARB_EXPLICIT_ATTRIB_LOCATION])
+    if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
@@ -8461,13 +8467,19 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
 
     shader_glsl_add_version_declaration(buffer, gl_info, NULL);
 
+    if (shader_glsl_use_explicit_attrib_location(gl_info))
+        shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
     if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
         shader_addline(buffer, "#extension GL_ARB_shading_language_420pack : enable\n");
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
 
     if (!needs_legacy_glsl_syntax(gl_info))
+    {
+        if (shader_glsl_use_explicit_attrib_location(gl_info))
+            shader_addline(buffer, "layout(location = 0) ");
         shader_addline(buffer, "out vec4 ps_out[1];\n");
+    }
 
     shader_addline(buffer, "vec4 tmp0, tmp1;\n");
     shader_addline(buffer, "vec4 ret;\n");
