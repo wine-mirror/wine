@@ -485,8 +485,8 @@ static void surface_blt_fbo(const struct wined3d_device *device,
 }
 
 static BOOL fbo_blitter_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
-        DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
-        DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
+        DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format, DWORD src_location,
+        DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format, DWORD dst_location)
 {
     if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
         return FALSE;
@@ -504,9 +504,8 @@ static BOOL fbo_blitter_supported(const struct wined3d_gl_info *gl_info, enum wi
             if (!((dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
                     || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
                 return FALSE;
-            if (!(src_format->id == dst_format->id
-                    || (is_identity_fixup(src_format->color_fixup)
-                    && is_identity_fixup(dst_format->color_fixup))))
+            if ((src_format->id != dst_format->id || dst_location == WINED3D_LOCATION_DRAWABLE)
+                    && (!is_identity_fixup(src_format->color_fixup) || !is_identity_fixup(dst_format->color_fixup)))
                 return FALSE;
             break;
 
@@ -2184,8 +2183,10 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
     if (!depth && sub_resource->locations & (WINED3D_LOCATION_TEXTURE_SRGB | WINED3D_LOCATION_TEXTURE_RGB)
             && (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
             && fbo_blitter_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                    texture->resource.usage, texture->resource.pool, texture->resource.format,
-                    texture->resource.usage, texture->resource.pool, texture->resource.format))
+                    texture->resource.usage, texture->resource.pool,
+                    texture->resource.format, WINED3D_LOCATION_TEXTURE_RGB,
+                    texture->resource.usage, texture->resource.pool,
+                    texture->resource.format, WINED3D_LOCATION_TEXTURE_SRGB))
     {
         if (srgb)
             surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_RGB,
@@ -2198,17 +2199,17 @@ static BOOL surface_load_texture(struct wined3d_surface *surface,
     }
 
     if (!depth && sub_resource->locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED)
-            && (!srgb || (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
-            && fbo_blitter_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
-                    texture->resource.usage, texture->resource.pool, texture->resource.format,
-                    texture->resource.usage, texture->resource.pool, texture->resource.format))
+            && (!srgb || (texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)))
     {
         DWORD src_location = sub_resource->locations & WINED3D_LOCATION_RB_RESOLVED ?
                 WINED3D_LOCATION_RB_RESOLVED : WINED3D_LOCATION_RB_MULTISAMPLE;
         DWORD dst_location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
 
-        surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, src_location,
-                &src_rect, surface, dst_location, &src_rect);
+        if (fbo_blitter_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+                texture->resource.usage, texture->resource.pool, texture->resource.format, src_location,
+                texture->resource.usage, texture->resource.pool, texture->resource.format, dst_location))
+            surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, src_location,
+                    &src_rect, surface, dst_location, &src_rect);
 
         return TRUE;
     }
@@ -2412,8 +2413,8 @@ static void fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
     struct wined3d_blitter *next;
 
     if (!fbo_blitter_supported(&device->adapter->gl_info, op,
-            src_resource->usage, src_resource->pool, src_resource->format,
-            src_resource->usage, dst_resource->pool, dst_resource->format))
+            src_resource->usage, src_resource->pool, src_resource->format, src_location,
+            src_resource->usage, dst_resource->pool, dst_resource->format, dst_location))
     {
         if ((next = blitter->next))
             next->ops->blitter_blit(next, op, context, src_surface, src_location,

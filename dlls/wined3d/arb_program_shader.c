@@ -7707,8 +7707,8 @@ static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
 
 static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
         const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
-        enum wined3d_pool src_pool, const struct wined3d_format *src_format,
-        enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
+        enum wined3d_pool src_pool, const struct wined3d_format *src_format, DWORD src_location,
+        enum wined3d_pool dst_pool, const struct wined3d_format *dst_format, DWORD dst_location)
 {
     enum complex_fixup src_fixup;
     BOOL decompress;
@@ -7746,7 +7746,8 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
         dump_color_fixup_desc(src_format->color_fixup);
     }
 
-    if (!is_identity_fixup(dst_format->color_fixup))
+    if (!is_identity_fixup(dst_format->color_fixup)
+            && (dst_format->id != src_format->id || dst_location != WINED3D_LOCATION_DRAWABLE))
     {
         TRACE("Destination fixups are not supported\n");
         return FALSE;
@@ -7796,8 +7797,8 @@ static void arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
     RECT s, d;
 
     if (!arbfp_blit_supported(&device->adapter->gl_info, &device->adapter->d3d_info, op,
-            src_texture->resource.pool, src_texture->resource.format,
-            dst_texture->resource.pool, dst_texture->resource.format))
+            src_texture->resource.pool, src_texture->resource.format, src_location,
+            dst_texture->resource.pool, dst_texture->resource.format, dst_location))
     {
         if ((next = blitter->next))
             next->ops->blitter_blit(next, op, context, src_surface, src_location,
