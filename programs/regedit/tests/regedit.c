@@ -238,6 +238,11 @@ static void test_basic_import(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Empty string\"=\"\"\n\n");
+    verify_reg(hkey, "Empty string", REG_SZ, "", 1, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Line1\"=\"Value1\"\n\n"
                     "\"Line2\"=\"Value2\"\n\n\n"
                     "\"Line3\"=\"Value3\"\n\n\n\n"
@@ -541,6 +546,17 @@ static void test_invalid_import(void)
     todo_wine verify_reg_nonexist(hkey, "Test15a");
     todo_wine verify_reg_nonexist(hkey, "Test15b");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test16a\"=\n"
+                    "\"Test16b\"=\\\"\n"
+                    "\"Test16c\"=\\\"Value\\\"\n"
+                    "\"Test16d\"=\\\"Value\"\n\n");
+    verify_reg_nonexist(hkey, "Test16a");
+    verify_reg_nonexist(hkey, "Test16b");
+    verify_reg_nonexist(hkey, "Test16c");
+    verify_reg_nonexist(hkey, "Test16d");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
@@ -650,6 +666,17 @@ static void test_comments(void)
     verify_reg(hkey, "Wine25b", REG_DWORD, &dword, sizeof(dword), 0);
     verify_reg_nonexist(hkey, "Wine25c");
     verify_reg_nonexist(hkey, "Wine25d");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine26a\"=\"Value1\"  ;comment\n"
+                    "\"Wine26b\"=\"Value2\"\t\t;comment\n"
+                    "\"Wine26c\"=\"Value3\"  #comment\n"
+                    "\"Wine26d\"=\"Value4\"\t\t#comment\n\n");
+    todo_wine verify_reg(hkey, "Wine26a", REG_SZ, "Value1", 7, 0);
+    todo_wine verify_reg(hkey, "Wine26b", REG_SZ, "Value2", 7, 0);
+    verify_reg_nonexist(hkey, "Wine26c");
+    verify_reg_nonexist(hkey, "Wine26d");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
