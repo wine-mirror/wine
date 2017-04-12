@@ -30,6 +30,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_CLEAR,
     WINED3D_CS_OP_DISPATCH,
     WINED3D_CS_OP_DRAW,
+    WINED3D_CS_OP_FLUSH,
     WINED3D_CS_OP_SET_PREDICATION,
     WINED3D_CS_OP_SET_VIEWPORT,
     WINED3D_CS_OP_SET_SCISSOR_RECT,
@@ -110,6 +111,11 @@ struct wined3d_cs_draw
     unsigned int start_instance;
     unsigned int instance_count;
     BOOL indexed;
+};
+
+struct wined3d_cs_flush
+{
+    enum wined3d_cs_op opcode;
 };
 
 struct wined3d_cs_set_predication
@@ -755,6 +761,25 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, int base
     acquire_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     acquire_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
+
+    cs->ops->submit(cs);
+}
+
+static void wined3d_cs_exec_flush(struct wined3d_cs *cs, const void *data)
+{
+    struct wined3d_context *context;
+
+    context = context_acquire(cs->device, NULL, 0);
+    context->gl_info->gl_ops.gl.p_glFlush();
+    context_release(context);
+}
+
+void wined3d_cs_emit_flush(struct wined3d_cs *cs)
+{
+    struct wined3d_cs_flush *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_FLUSH;
 
     cs->ops->submit(cs);
 }
@@ -2007,6 +2032,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_CLEAR                      */ wined3d_cs_exec_clear,
     /* WINED3D_CS_OP_DISPATCH                   */ wined3d_cs_exec_dispatch,
     /* WINED3D_CS_OP_DRAW                       */ wined3d_cs_exec_draw,
+    /* WINED3D_CS_OP_FLUSH                      */ wined3d_cs_exec_flush,
     /* WINED3D_CS_OP_SET_PREDICATION            */ wined3d_cs_exec_set_predication,
     /* WINED3D_CS_OP_SET_VIEWPORT               */ wined3d_cs_exec_set_viewport,
     /* WINED3D_CS_OP_SET_SCISSOR_RECT           */ wined3d_cs_exec_set_scissor_rect,

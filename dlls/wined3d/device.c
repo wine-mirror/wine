@@ -3374,8 +3374,6 @@ HRESULT CDECL wined3d_device_begin_scene(struct wined3d_device *device)
 
 HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
 {
-    struct wined3d_context *context;
-
     TRACE("device %p.\n", device);
 
     if (!device->inScene)
@@ -3384,12 +3382,7 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
         return WINED3DERR_INVALIDCALL;
     }
 
-    context = context_acquire(device, NULL, 0);
-    /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
-    context->gl_info->gl_ops.gl.p_glFlush();
-    /* No checkGLcall here to avoid locking the lock just for checking a call that hardly ever
-     * fails. */
-    context_release(context);
+    wined3d_cs_emit_flush(device->cs);
 
     device->inScene = FALSE;
     return WINED3D_OK;
