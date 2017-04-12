@@ -334,7 +334,7 @@ static inline void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
 static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
                                     DISPATCHER_CONTEXT *dispatch,
                                     const cxx_function_descr *descr,
-                                    cxx_exception_type *info)
+                                    cxx_exception_type *info, ULONG64 orig_frame)
 {
     ULONG64 exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
     int trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
@@ -343,37 +343,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
     EXCEPTION_RECORD catch_record;
     CONTEXT context;
     UINT i, j;
-    ULONG64 orig_frame = frame, throw_base;
-    DWORD throw_func_off;
-    void *throw_func;
     INT *unwind_help;
-
-    /* update orig_frame if it's a nested exception */
-    throw_func_off = RtlLookupFunctionEntry(dispatch->ControlPc, &throw_base, NULL)->BeginAddress;
-    throw_func = rva_to_ptr(throw_func_off, throw_base);
-    TRACE("reconstructed handler pointer: %p\n", throw_func);
-    for (i=descr->tryblock_count; i>0; i--)
-    {
-        const tryblock_info *tryblock = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
-        tryblock = &tryblock[i-1];
-
-        if (trylevel>tryblock->end_level && trylevel<=tryblock->catch_level)
-        {
-            for (j=0; j<tryblock->catchblock_count; j++)
-            {
-                /* TODO: is it possible to have the same handler for multiple catch blocks? */
-                const catchblock_info *catchblock = rva_to_ptr(tryblock->catchblock, dispatch->ImageBase);
-                catchblock = &catchblock[j];
-
-                if (rva_to_ptr(catchblock->handler, dispatch->ImageBase) == throw_func)
-                {
-                    TRACE("nested exception detected\n");
-                    orig_frame = *(ULONG64*)rva_to_ptr(catchblock->frame, frame);
-                    TRACE("setting orig_frame to %lx\n", orig_frame);
-                }
-            }
-        }
-    }
 
     for (i=descr->tryblock_count; i>0; i--)
     {
@@ -457,12 +427,45 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
                                const cxx_function_descr *descr)
 {
+    int trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
+            descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
     cxx_exception_type *exc_type;
+    ULONG64 orig_frame = frame;
+    ULONG64 throw_base;
+    DWORD throw_func_off;
+    void *throw_func;
+    UINT i, j;
 
     if (descr->magic<CXX_FRAME_MAGIC_VC6 || descr->magic>CXX_FRAME_MAGIC_VC8)
     {
         FIXME("unhandled frame magic %x\n", descr->magic);
         return ExceptionContinueSearch;
+    }
+
+    /* update orig_frame if it's a nested exception */
+    throw_func_off = RtlLookupFunctionEntry(dispatch->ControlPc, &throw_base, NULL)->BeginAddress;
+    throw_func = rva_to_ptr(throw_func_off, throw_base);
+    TRACE("reconstructed handler pointer: %p\n", throw_func);
+    for (i=descr->tryblock_count; i>0; i--)
+    {
+        const tryblock_info *tryblock = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
+        tryblock = &tryblock[i-1];
+
+        if (trylevel>tryblock->end_level && trylevel<=tryblock->catch_level)
+        {
+            for (j=0; j<tryblock->catchblock_count; j++)
+            {
+                const catchblock_info *catchblock = rva_to_ptr(tryblock->catchblock, dispatch->ImageBase);
+                catchblock = &catchblock[j];
+
+                if (rva_to_ptr(catchblock->handler, dispatch->ImageBase) == throw_func)
+                {
+                    TRACE("nested exception detected\n");
+                    orig_frame = *(ULONG64*)rva_to_ptr(catchblock->frame, frame);
+                    TRACE("setting orig_frame to %lx\n", orig_frame);
+                }
+            }
+        }
     }
 
     if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
@@ -476,13 +479,13 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
             if (rec->ExceptionFlags & EH_TARGET_UNWIND)
             {
-                ULONG64 orig_frame = rec->ExceptionInformation[1];
                 const cxx_function_descr *orig_descr = (void*)rec->ExceptionInformation[2];
                 int end_level = rec->ExceptionInformation[3];
+                orig_frame = rec->ExceptionInformation[1];
 
                 cxx_local_unwind(orig_frame, dispatch, orig_descr, end_level);
             }
-            else
+            else if(frame == orig_frame)
                 cxx_local_unwind(frame, dispatch, descr, -1);
 
             /* FIXME: we should only unregister frames registered by call_catch_block here */
@@ -499,7 +502,8 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
             return ExceptionContinueSearch;
         }
 
-        cxx_local_unwind(frame, dispatch, descr, -1);
+        if (frame == orig_frame)
+            cxx_local_unwind(frame, dispatch, descr, -1);
         return ExceptionContinueSearch;
     }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
@@ -545,7 +549,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         }
     }
 
-    find_catch_block(rec, frame, dispatch, descr, exc_type);
+    find_catch_block(rec, frame, dispatch, descr, exc_type, orig_frame);
     return ExceptionContinueSearch;
 }
 
