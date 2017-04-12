@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 enum wined3d_cs_op
 {
+    WINED3D_CS_OP_NOP,
     WINED3D_CS_OP_PRESENT,
     WINED3D_CS_OP_CLEAR,
     WINED3D_CS_OP_DISPATCH,
@@ -57,6 +58,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_MATERIAL,
     WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
+    WINED3D_CS_OP_PUSH_CONSTANTS,
     WINED3D_CS_OP_RESET_STATE,
     WINED3D_CS_OP_CALLBACK,
     WINED3D_CS_OP_QUERY_ISSUE,
@@ -67,6 +69,18 @@ enum wined3d_cs_op
     WINED3D_CS_OP_BLT_SUB_RESOURCE,
     WINED3D_CS_OP_UPDATE_SUB_RESOURCE,
     WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION,
+    WINED3D_CS_OP_STOP,
+};
+
+struct wined3d_cs_packet
+{
+    size_t size;
+    BYTE data[1];
+};
+
+struct wined3d_cs_nop
+{
+    enum wined3d_cs_op opcode;
 };
 
 struct wined3d_cs_present
@@ -306,6 +320,15 @@ struct wined3d_cs_set_light_enable
     BOOL enable;
 };
 
+struct wined3d_cs_push_constants
+{
+    enum wined3d_cs_op opcode;
+    enum wined3d_push_constants type;
+    unsigned int start_idx;
+    unsigned int count;
+    BYTE constants[1];
+};
+
 struct wined3d_cs_reset_state
 {
     enum wined3d_cs_op opcode;
@@ -385,6 +408,15 @@ struct wined3d_cs_add_dirty_texture_region
     struct wined3d_texture *texture;
     unsigned int layer;
 };
+
+struct wined3d_cs_stop
+{
+    enum wined3d_cs_op opcode;
+};
+
+static void wined3d_cs_exec_nop(struct wined3d_cs *cs, const void *data)
+{
+}
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 {
@@ -1598,6 +1630,73 @@ void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, unsigned int idx, B
     cs->ops->submit(cs);
 }
 
+static const struct
+{
+    size_t offset;
+    size_t size;
+    DWORD mask;
+}
+wined3d_cs_push_constant_info[] =
+{
+    /* WINED3D_PUSH_CONSTANTS_VS_F */
+    {FIELD_OFFSET(struct wined3d_state, vs_consts_f), sizeof(struct wined3d_vec4),  WINED3D_SHADER_CONST_VS_F},
+    /* WINED3D_PUSH_CONSTANTS_PS_F */
+    {FIELD_OFFSET(struct wined3d_state, ps_consts_f), sizeof(struct wined3d_vec4),  WINED3D_SHADER_CONST_PS_F},
+    /* WINED3D_PUSH_CONSTANTS_VS_I */
+    {FIELD_OFFSET(struct wined3d_state, vs_consts_i), sizeof(struct wined3d_ivec4), WINED3D_SHADER_CONST_VS_I},
+    /* WINED3D_PUSH_CONSTANTS_PS_I */
+    {FIELD_OFFSET(struct wined3d_state, ps_consts_i), sizeof(struct wined3d_ivec4), WINED3D_SHADER_CONST_PS_I},
+    /* WINED3D_PUSH_CONSTANTS_VS_B */
+    {FIELD_OFFSET(struct wined3d_state, vs_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_VS_B},
+    /* WINED3D_PUSH_CONSTANTS_PS_B */
+    {FIELD_OFFSET(struct wined3d_state, ps_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_PS_B},
+};
+
+static void wined3d_cs_st_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
+        unsigned int start_idx, unsigned int count, const void *constants)
+{
+    struct wined3d_device *device = cs->device;
+    unsigned int context_count;
+    unsigned int i;
+    size_t offset;
+
+    if (p == WINED3D_PUSH_CONSTANTS_VS_F)
+        device->shader_backend->shader_update_float_vertex_constants(device, start_idx, count);
+    else if (p == WINED3D_PUSH_CONSTANTS_PS_F)
+        device->shader_backend->shader_update_float_pixel_constants(device, start_idx, count);
+
+    offset = wined3d_cs_push_constant_info[p].offset + start_idx * wined3d_cs_push_constant_info[p].size;
+    memcpy((BYTE *)&cs->state + offset, constants, count * wined3d_cs_push_constant_info[p].size);
+    for (i = 0, context_count = device->context_count; i < context_count; ++i)
+    {
+        device->contexts[i]->constant_update_mask |= wined3d_cs_push_constant_info[p].mask;
+    }
+}
+
+static void wined3d_cs_exec_push_constants(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_push_constants *op = data;
+
+    wined3d_cs_st_push_constants(cs, op->type, op->start_idx, op->count, op->constants);
+}
+
+static void wined3d_cs_mt_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
+        unsigned int start_idx, unsigned int count, const void *constants)
+{
+    struct wined3d_cs_push_constants *op;
+    size_t size;
+
+    size = count * wined3d_cs_push_constant_info[p].size;
+    op = cs->ops->require_space(cs, FIELD_OFFSET(struct wined3d_cs_push_constants, constants[size]));
+    op->opcode = WINED3D_CS_OP_PUSH_CONSTANTS;
+    op->type = p;
+    op->start_idx = start_idx;
+    op->count = count;
+    memcpy(op->constants, constants, size);
+
+    cs->ops->submit(cs);
+}
+
 static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 {
     struct wined3d_adapter *adapter = cs->device->adapter;
@@ -1651,8 +1750,39 @@ static void wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_query_issue *op = data;
     struct wined3d_query *query = op->query;
+    BOOL poll;
 
-    query->query_ops->query_issue(query, op->flags);
+    poll = query->query_ops->query_issue(query, op->flags);
+
+    if (!cs->thread)
+        return;
+
+    if (poll && list_empty(&query->poll_list_entry))
+    {
+        list_add_tail(&cs->query_poll_list, &query->poll_list_entry);
+        return;
+    }
+
+    /* This can happen if occlusion queries are restarted. This discards the
+     * old result, since polling it could result in a GL error. */
+    if ((op->flags & WINED3DISSUE_BEGIN) && !poll && !list_empty(&query->poll_list_entry))
+    {
+        list_remove(&query->poll_list_entry);
+        list_init(&query->poll_list_entry);
+        InterlockedIncrement(&query->counter_retrieved);
+        return;
+    }
+
+    /* This can happen when an occlusion query is ended without being started,
+     * in which case we don't want to poll, but still have to counter-balance
+     * the increment of the main counter.
+     *
+     * This can also happen if an event query is re-issued before the first
+     * fence was reached. In this case the query is already in the list and
+     * the poll function will check the new fence. We have to counter-balance
+     * the discarded increment. */
+    if (op->flags & WINED3DISSUE_END)
+        InterlockedIncrement(&query->counter_retrieved);
 }
 
 void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *query, DWORD flags)
@@ -2026,8 +2156,19 @@ void wined3d_cs_emit_add_dirty_texture_region(struct wined3d_cs *cs,
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_emit_stop(struct wined3d_cs *cs)
+{
+    struct wined3d_cs_stop *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_STOP;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
+    /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
     /* WINED3D_CS_OP_PRESENT                    */ wined3d_cs_exec_present,
     /* WINED3D_CS_OP_CLEAR                      */ wined3d_cs_exec_clear,
     /* WINED3D_CS_OP_DISPATCH                   */ wined3d_cs_exec_dispatch,
@@ -2059,6 +2200,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
     /* WINED3D_CS_OP_SET_LIGHT                  */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
+    /* WINED3D_CS_OP_PUSH_CONSTANTS             */ wined3d_cs_exec_push_constants,
     /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
     /* WINED3D_CS_OP_CALLBACK                   */ wined3d_cs_exec_callback,
     /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
@@ -2107,55 +2249,15 @@ static void wined3d_cs_st_submit(struct wined3d_cs *cs)
     cs->start = cs->end;
 
     opcode = *(const enum wined3d_cs_op *)&data[start];
-    wined3d_cs_op_handlers[opcode](cs, &data[start]);
+    if (opcode >= WINED3D_CS_OP_STOP)
+        ERR("Invalid opcode %#x.\n", opcode);
+    else
+        wined3d_cs_op_handlers[opcode](cs, &data[start]);
 
     if (cs->data == data)
         cs->start = cs->end = start;
     else if (!start)
         HeapFree(GetProcessHeap(), 0, data);
-}
-
-static void wined3d_cs_st_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
-        unsigned int start_idx, unsigned int count, const void *constants)
-{
-    struct wined3d_device *device = cs->device;
-    unsigned int context_count;
-    unsigned int i;
-    size_t offset;
-
-    static const struct
-    {
-        size_t offset;
-        size_t size;
-        DWORD mask;
-    }
-    push_constant_info[] =
-    {
-        /* WINED3D_PUSH_CONSTANTS_VS_F */
-        {FIELD_OFFSET(struct wined3d_state, vs_consts_f), sizeof(struct wined3d_vec4),  WINED3D_SHADER_CONST_VS_F},
-        /* WINED3D_PUSH_CONSTANTS_PS_F */
-        {FIELD_OFFSET(struct wined3d_state, ps_consts_f), sizeof(struct wined3d_vec4),  WINED3D_SHADER_CONST_PS_F},
-        /* WINED3D_PUSH_CONSTANTS_VS_I */
-        {FIELD_OFFSET(struct wined3d_state, vs_consts_i), sizeof(struct wined3d_ivec4), WINED3D_SHADER_CONST_VS_I},
-        /* WINED3D_PUSH_CONSTANTS_PS_I */
-        {FIELD_OFFSET(struct wined3d_state, ps_consts_i), sizeof(struct wined3d_ivec4), WINED3D_SHADER_CONST_PS_I},
-        /* WINED3D_PUSH_CONSTANTS_VS_B */
-        {FIELD_OFFSET(struct wined3d_state, vs_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_VS_B},
-        /* WINED3D_PUSH_CONSTANTS_PS_B */
-        {FIELD_OFFSET(struct wined3d_state, ps_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_PS_B},
-    };
-
-    if (p == WINED3D_PUSH_CONSTANTS_VS_F)
-        device->shader_backend->shader_update_float_vertex_constants(device, start_idx, count);
-    else if (p == WINED3D_PUSH_CONSTANTS_PS_F)
-        device->shader_backend->shader_update_float_pixel_constants(device, start_idx, count);
-
-    offset = push_constant_info[p].offset + start_idx * push_constant_info[p].size;
-    memcpy((BYTE *)&cs->state + offset, constants, count * push_constant_info[p].size);
-    for (i = 0, context_count = device->context_count; i < context_count; ++i)
-    {
-        device->contexts[i]->constant_update_mask |= push_constant_info[p].mask;
-    }
 }
 
 static const struct wined3d_cs_ops wined3d_cs_st_ops =
@@ -2165,6 +2267,193 @@ static const struct wined3d_cs_ops wined3d_cs_st_ops =
     wined3d_cs_st_push_constants,
 };
 
+static BOOL wined3d_cs_queue_is_empty(const struct wined3d_cs_queue *queue)
+{
+    return *(volatile LONG *)&queue->head == queue->tail;
+}
+
+static void wined3d_cs_mt_submit(struct wined3d_cs *cs)
+{
+    struct wined3d_cs_queue *queue = &cs->queue;
+    struct wined3d_cs_packet *packet;
+    size_t packet_size;
+
+    if (cs->thread_id == GetCurrentThreadId())
+        return wined3d_cs_st_submit(cs);
+
+    packet = (struct wined3d_cs_packet *)&queue->data[queue->head];
+    packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
+    InterlockedExchange(&queue->head, (queue->head + packet_size) & (WINED3D_CS_QUEUE_SIZE - 1));
+
+    if (InterlockedCompareExchange(&cs->waiting_for_event, FALSE, TRUE))
+        SetEvent(cs->event);
+
+    while (!wined3d_cs_queue_is_empty(queue))
+        wined3d_pause();
+}
+
+static void *wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size)
+{
+    struct wined3d_cs_queue *queue = &cs->queue;
+    size_t queue_size = ARRAY_SIZE(queue->data);
+    size_t header_size, packet_size, remaining;
+    struct wined3d_cs_packet *packet;
+
+    if (cs->thread_id == GetCurrentThreadId())
+        return wined3d_cs_st_require_space(cs, size);
+
+    header_size = FIELD_OFFSET(struct wined3d_cs_packet, data[0]);
+    size = (size + header_size - 1) & ~(header_size - 1);
+    packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[size]);
+    if (packet_size >= WINED3D_CS_QUEUE_SIZE)
+    {
+        ERR("Packet size %lu >= queue size %u.\n",
+                (unsigned long)packet_size, WINED3D_CS_QUEUE_SIZE);
+        return NULL;
+    }
+
+    remaining = queue_size - queue->head;
+    if (remaining < packet_size)
+    {
+        size_t nop_size = remaining - header_size;
+        struct wined3d_cs_nop *nop;
+
+        TRACE("Inserting a nop for %lu + %lu bytes.\n",
+                (unsigned long)header_size, (unsigned long)nop_size);
+
+        nop = wined3d_cs_mt_require_space(cs, nop_size);
+        if (nop_size)
+            nop->opcode = WINED3D_CS_OP_NOP;
+
+        wined3d_cs_mt_submit(cs);
+        assert(!queue->head);
+    }
+
+    for (;;)
+    {
+        LONG tail = *(volatile LONG *)&queue->tail;
+        LONG head = queue->head;
+        LONG new_pos;
+
+        /* Empty. */
+        if (head == tail)
+            break;
+        new_pos = (head + packet_size) & (WINED3D_CS_QUEUE_SIZE - 1);
+        /* Head ahead of tail. We checked the remaining size above, so we only
+         * need to make sure we don't make head equal to tail. */
+        if (head > tail && (new_pos != tail))
+            break;
+        /* Tail ahead of head. Make sure the new head is before the tail as
+         * well. Note that new_pos is 0 when it's at the end of the queue. */
+        if (new_pos < tail && new_pos)
+            break;
+
+        TRACE("Waiting for free space. Head %u, tail %u, packet size %lu.\n",
+                head, tail, (unsigned long)packet_size);
+    }
+
+    packet = (struct wined3d_cs_packet *)&queue->data[queue->head];
+    packet->size = size;
+    return packet->data;
+}
+
+static const struct wined3d_cs_ops wined3d_cs_mt_ops =
+{
+    wined3d_cs_mt_require_space,
+    wined3d_cs_mt_submit,
+    wined3d_cs_mt_push_constants,
+};
+
+static void poll_queries(struct wined3d_cs *cs)
+{
+    struct wined3d_query *query, *cursor;
+
+    LIST_FOR_EACH_ENTRY_SAFE(query, cursor, &cs->query_poll_list, struct wined3d_query, poll_list_entry)
+    {
+        if (!query->query_ops->query_poll(query, 0))
+            continue;
+
+        list_remove(&query->poll_list_entry);
+        list_init(&query->poll_list_entry);
+        InterlockedIncrement(&query->counter_retrieved);
+    }
+}
+
+static void wined3d_cs_wait_event(struct wined3d_cs *cs)
+{
+    InterlockedExchange(&cs->waiting_for_event, TRUE);
+
+    /* The main thread might have enqueued a command and blocked on it after
+     * the CS thread decided to enter wined3d_cs_wait_event(), but before
+     * "waiting_for_event" was set.
+     *
+     * Likewise, we can race with the main thread when resetting
+     * "waiting_for_event", in which case we would need to call
+     * WaitForSingleObject() because the main thread called SetEvent(). */
+    if (!wined3d_cs_queue_is_empty(&cs->queue)
+            && InterlockedCompareExchange(&cs->waiting_for_event, FALSE, TRUE))
+        return;
+
+    WaitForSingleObject(cs->event, INFINITE);
+}
+
+static DWORD WINAPI wined3d_cs_run(void *ctx)
+{
+    struct wined3d_cs_packet *packet;
+    struct wined3d_cs_queue *queue;
+    unsigned int spin_count = 0;
+    struct wined3d_cs *cs = ctx;
+    enum wined3d_cs_op opcode;
+    unsigned int poll = 0;
+    LONG tail;
+
+    TRACE("Started.\n");
+
+    queue = &cs->queue;
+    list_init(&cs->query_poll_list);
+    cs->thread_id = GetCurrentThreadId();
+    for (;;)
+    {
+        if (++poll == WINED3D_CS_QUERY_POLL_INTERVAL)
+        {
+            poll_queries(cs);
+            poll = 0;
+        }
+
+        if (wined3d_cs_queue_is_empty(queue))
+        {
+            if (++spin_count >= WINED3D_CS_SPIN_COUNT && list_empty(&cs->query_poll_list))
+                wined3d_cs_wait_event(cs);
+            continue;
+        }
+        spin_count = 0;
+
+        tail = queue->tail;
+        packet = (struct wined3d_cs_packet *)&queue->data[tail];
+        if (packet->size)
+        {
+            opcode = *(const enum wined3d_cs_op *)packet->data;
+
+            if (opcode >= WINED3D_CS_OP_STOP)
+            {
+                if (opcode > WINED3D_CS_OP_STOP)
+                    ERR("Invalid opcode %#x.\n", opcode);
+                break;
+            }
+
+            wined3d_cs_op_handlers[opcode](cs, packet->data);
+        }
+
+        tail += FIELD_OFFSET(struct wined3d_cs_packet, data[packet->size]);
+        tail &= (WINED3D_CS_QUEUE_SIZE - 1);
+        InterlockedExchange(&queue->tail, tail);
+    }
+
+    queue->tail = queue->head = 0;
+    TRACE("Stopped.\n");
+    return 0;
+}
+
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -2172,6 +2461,9 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
 
     if (!(cs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cs))))
         return NULL;
+
+    cs->ops = &wined3d_cs_st_ops;
+    cs->device = device;
 
     if (!(cs->fb.render_targets = wined3d_calloc(gl_info->limits.buffers, sizeof(*cs->fb.render_targets))))
     {
@@ -2182,19 +2474,38 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     state_init(&cs->state, &cs->fb, gl_info, &device->adapter->d3d_info,
             WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 
-    cs->ops = &wined3d_cs_st_ops;
-    cs->device = device;
-
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
     if (!(cs->data = HeapAlloc(GetProcessHeap(), 0, cs->data_size)))
+        goto fail;
+
+    if (wined3d_settings.cs_multithreaded
+            && !RtlIsCriticalSectionLockedByThread(NtCurrentTeb()->Peb->LoaderLock))
     {
-        state_cleanup(&cs->state);
-        HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
-        HeapFree(GetProcessHeap(), 0, cs);
-        return NULL;
+        cs->ops = &wined3d_cs_mt_ops;
+
+        if (!(cs->event = CreateEventW(NULL, FALSE, FALSE, NULL)))
+        {
+            ERR("Failed to create command stream event.\n");
+            HeapFree(GetProcessHeap(), 0, cs->data);
+            goto fail;
+        }
+
+        if (!(cs->thread = CreateThread(NULL, 0, wined3d_cs_run, cs, 0, NULL)))
+        {
+            ERR("Failed to create wined3d command stream thread.\n");
+            CloseHandle(cs->event);
+            HeapFree(GetProcessHeap(), 0, cs->data);
+            goto fail;
+        }
     }
 
     return cs;
+
+fail:
+    state_cleanup(&cs->state);
+    HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
+    HeapFree(GetProcessHeap(), 0, cs);
+    return NULL;
 }
 
 void wined3d_cs_destroy(struct wined3d_cs *cs)
@@ -2202,5 +2513,14 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
     state_cleanup(&cs->state);
     HeapFree(GetProcessHeap(), 0, cs->fb.render_targets);
     HeapFree(GetProcessHeap(), 0, cs->data);
+
+    if (cs->thread)
+    {
+        wined3d_cs_emit_stop(cs);
+        CloseHandle(cs->thread);
+        if (!CloseHandle(cs->event))
+            ERR("Closing event failed.\n");
+    }
+
     HeapFree(GetProcessHeap(), 0, cs);
 }

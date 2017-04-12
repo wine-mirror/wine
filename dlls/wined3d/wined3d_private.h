@@ -31,6 +31,7 @@
 #define WINE_GLAPI
 #endif
 
+#include <assert.h>
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
@@ -361,6 +362,13 @@ static inline unsigned int wined3d_popcount(unsigned int x)
 #endif
 }
 
+static inline void wined3d_pause(void)
+{
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    __asm__ __volatile__( "rep;nop" : : : "memory" );
+#endif
+}
+
 #define ORM_BACKBUFFER  0
 #define ORM_FBO         1
 
@@ -371,6 +379,7 @@ static inline unsigned int wined3d_popcount(unsigned int x)
  * values in wined3d_main.c as well. */
 struct wined3d_settings
 {
+    unsigned int cs_multithreaded;
     DWORD max_gl_version;
     BOOL glslRequested;
     int offscreen_rendering_mode;
@@ -1564,7 +1573,7 @@ enum wined3d_query_state
 struct wined3d_query_ops
 {
     BOOL (*query_poll)(struct wined3d_query *query, DWORD flags);
-    void (*query_issue)(struct wined3d_query *query, DWORD flags);
+    BOOL (*query_issue)(struct wined3d_query *query, DWORD flags);
 };
 
 struct wined3d_query
@@ -1578,6 +1587,9 @@ struct wined3d_query
     const void *data;
     DWORD data_size;
     const struct wined3d_query_ops *query_ops;
+
+    LONG counter_main, counter_retrieved;
+    struct list poll_list_entry;
 };
 
 union wined3d_gl_query_object
@@ -1619,6 +1631,7 @@ struct wined3d_occlusion_query
     GLuint id;
     struct wined3d_context *context;
     UINT64 samples;
+    BOOL started;
 };
 
 struct wined3d_timestamp_query
@@ -2806,11 +2819,6 @@ static inline void wined3d_resource_release(struct wined3d_resource *resource)
     InterlockedDecrement(&resource->access_count);
 }
 
-static inline void wined3d_resource_wait_idle(struct wined3d_resource *resource)
-{
-    while (InterlockedCompareExchange(&resource->access_count, 0, 0));
-}
-
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         enum wined3d_resource_type type, const struct wined3d_format *format,
@@ -3220,6 +3228,16 @@ enum wined3d_push_constants
     WINED3D_PUSH_CONSTANTS_PS_B,
 };
 
+#define WINED3D_CS_QUERY_POLL_INTERVAL  10u
+#define WINED3D_CS_QUEUE_SIZE           0x100000u
+#define WINED3D_CS_SPIN_COUNT           10000000u
+
+struct wined3d_cs_queue
+{
+    LONG head, tail;
+    BYTE data[WINED3D_CS_QUEUE_SIZE];
+};
+
 struct wined3d_cs_ops
 {
     void *(*require_space)(struct wined3d_cs *cs, size_t size);
@@ -3234,9 +3252,16 @@ struct wined3d_cs
     struct wined3d_device *device;
     struct wined3d_fb_state fb;
     struct wined3d_state state;
+    HANDLE thread;
+    DWORD thread_id;
 
+    struct wined3d_cs_queue queue;
     size_t data_size, start, end;
     void *data;
+    struct list query_poll_list;
+
+    HANDLE event;
+    BOOL waiting_for_event;
 };
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HIDDEN;
@@ -3325,6 +3350,17 @@ static inline void wined3d_cs_push_constants(struct wined3d_cs *cs, enum wined3d
         unsigned int start_idx, unsigned int count, const void *constants)
 {
     cs->ops->push_constants(cs, p, start_idx, count, constants);
+}
+
+static inline void wined3d_resource_wait_idle(struct wined3d_resource *resource)
+{
+    const struct wined3d_cs *cs = resource->device->cs;
+
+    if (!cs->thread || cs->thread_id == GetCurrentThreadId())
+        return;
+
+    while (InterlockedCompareExchange(&resource->access_count, 0, 0))
+        wined3d_pause();
 }
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
@@ -4010,6 +4046,17 @@ static inline struct wined3d_surface *context_get_rt_surface(const struct wined3
     if (!texture)
         return NULL;
     return texture->sub_resources[context->current_rt.sub_resource_idx].u.surface;
+}
+
+static inline void wined3d_from_cs(struct wined3d_cs *cs)
+{
+    if (cs->thread)
+        assert(cs->thread_id == GetCurrentThreadId());
+}
+
+static inline void wined3d_not_from_cs(struct wined3d_cs *cs)
+{
+    assert(cs->thread_id != GetCurrentThreadId());
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

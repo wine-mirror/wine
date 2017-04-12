@@ -1704,6 +1704,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     TRACE("swapchain %p, target %p, window %p.\n", swapchain, target, swapchain->win_handle);
 
+    wined3d_from_cs(device->cs);
+
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
     if (!ret)
         return NULL;
@@ -2105,6 +2107,8 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
     BOOL destroy;
 
     TRACE("Destroying ctx %p\n", context);
+
+    wined3d_from_cs(device->cs);
 
     /* We delay destroying a context when it is active. The context_release()
      * function invokes context_destroy() again while leaving the last level. */
@@ -3840,6 +3844,8 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device,
     struct wined3d_context *context;
 
     TRACE("device %p, texture %p, sub_resource_idx %u.\n", device, texture, sub_resource_idx);
+
+    wined3d_from_cs(device->cs);
 
     if (current_context && current_context->destroyed)
         current_context = NULL;

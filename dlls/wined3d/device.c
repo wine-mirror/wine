@@ -4715,12 +4715,16 @@ void device_resource_add(struct wined3d_device *device, struct wined3d_resource 
 {
     TRACE("device %p, resource %p.\n", device, resource);
 
+    wined3d_not_from_cs(device->cs);
+
     list_add_head(&device->resources, &resource->resource_list_entry);
 }
 
 static void device_resource_remove(struct wined3d_device *device, struct wined3d_resource *resource)
 {
     TRACE("device %p, resource %p.\n", device, resource);
+
+    wined3d_not_from_cs(device->cs);
 
     list_remove(&resource->resource_list_entry);
 }
@@ -4895,6 +4899,8 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
     DWORD idx;
     BYTE shift;
     UINT i;
+
+    wined3d_from_cs(device->cs);
 
     if (STATE_IS_COMPUTE(state))
     {
