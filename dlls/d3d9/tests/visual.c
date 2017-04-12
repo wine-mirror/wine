@@ -11560,6 +11560,7 @@ static void stream_test(void)
         WORD strVertex; /* specify which stream to use 0-2*/
         WORD strColor;
         WORD strInstance;
+        DWORD explicit_zero_freq;
     }
     testcases[]=
     {
@@ -11574,17 +11575,23 @@ static void stream_test(void)
         {3, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0, 1, 2}, /*  8 */
         {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 0, 2}, /*  9 */
         {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 2, 1}, /* 10 */
-        {4, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 3, 1}, /* 11 */
-        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 2, 0, 1}, /* 12 */
-        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 2, 3}, /* 13 */
-#if 0
-        /* This draws one instance on some machines, no instance on others. */
-        {0, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /* 14 */
-        /* This case is handled in a stand alone test,
-         * SetStreamSourceFreq(0, (D3DSTREAMSOURCE_INSTANCEDATA | 1)) has to
-         * return D3DERR_INVALIDCALL. */
-        {4, 4, 1, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 1, 0}, /* 15 */
-#endif
+        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 2, 0, 1}, /* 11 */
+
+        /* The number of instances is read from stream zero, even if stream zero is not
+         * in use. Exact behavior of this corner case depends on the presence or absence
+         * of D3DSTREAMSOURCE_INDEXEDDATA. r500 GPUs need D3DSTREAMSOURCE_INDEXEDDATA
+         * to be present, otherwise they disable instancing and behave like in a non-
+         * instanced draw. Nvidia drivers do not show different behavior with or without
+         * D3DSTREAMSOURCE_INDEXEDDATA. Note however that setting the value to 0 is not
+         * allowed by the d3d runtime.
+         *
+         * The meaning of (D3DSTREAMSOURCE_INDEXEDDATA | 0) is driver dependent. r500
+         * will fall back to non-instanced drawing. Geforce 7 will draw 1 instance.
+         * Geforce 8+ will draw nothing. */
+        {3, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 3, 1, 1}, /* 12 */
+        {4, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0x00ffffff, 2, 3, 1, 2}, /* 13 */
+        {1, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 2, 3, 1, 3}, /* 14 */
+        {0, 0, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 2, 3, 1, 4}, /* 15 */
     };
     static const DWORD shader_code[] =
     {
@@ -11597,6 +11604,9 @@ static void stream_test(void)
         0x00000001, 0xd00f0000, 0x90e40001,             /* mov oD0, v1 */
         0x0000ffff
     };
+    /* Note that this set of coordinates and instancepos[] have an implicit
+     * w = 1.0, which is added to w = 2.0, so the perspective divide divides
+     * x, y and z by 2. */
     static const float quad[][3] =
     {
         {-0.5f, -0.5f,  1.1f}, /*0 */
@@ -11764,6 +11774,15 @@ static void stream_test(void)
 
         hr = IDirect3DDevice9_SetVertexDeclaration(device, pDecl);
         ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+
+        /* If stream 0 is unused, set the stream frequency regardless to show
+         * that the number if instances is read from it. */
+        if (act.strVertex && act.strColor && act.strInstance)
+        {
+            hr = IDirect3DDevice9_SetStreamSourceFreq(device, 0,
+                    D3DSTREAMSOURCE_INDEXEDDATA | act.explicit_zero_freq);
+            ok(SUCCEEDED(hr), "Failed to set stream source frequency, hr %#x.\n", hr);
+        }
 
         hr = IDirect3DDevice9_SetStreamSourceFreq(device, act.strVertex,
                 (D3DSTREAMSOURCE_INDEXEDDATA | act.idxVertex));
