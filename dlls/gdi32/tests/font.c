@@ -6637,6 +6637,48 @@ static void test_bitmap_font_glyph_index(void)
     DeleteDC(hdc);
 }
 
+static void test_GetCharWidthI(void)
+{
+    static const char *teststr = "wine ";
+    HFONT hfont, prev_hfont;
+    WORD glyphs[5];
+    INT widths[5];
+    LOGFONTA lf;
+    ABC abc[5];
+    int len, i;
+    DWORD nb;
+    BOOL ret;
+    HDC hdc;
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = -20;
+
+    hdc = GetDC(0);
+
+    hfont = CreateFontIndirectA(&lf);
+    prev_hfont = SelectObject(hdc, hfont);
+
+    len = strlen(teststr);
+    nb = GetGlyphIndicesA(hdc, teststr, len, glyphs, 0);
+    ok(nb == len, "\n");
+
+    memset(abc, 0xcc, sizeof(abc));
+    ret = GetCharABCWidthsI(hdc, 0, len, glyphs, abc);
+    ok(ret, "GetCharABCWidthsI failed\n");
+
+    memset(widths, 0xcc, sizeof(widths));
+    ret = GetCharWidthI(hdc, 0, len, glyphs, widths);
+    ok(ret, "GetCharWidthI failed\n");
+
+    for (i = 0; i < len; i++)
+        ok(widths[i] == abc[i].abcA + abc[i].abcB + abc[i].abcC, "%u, glyph %u, got width %d\n",
+            i, glyphs[i], widths[i]);
+
+    DeleteObject(SelectObject(hdc, prev_hfont));
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -6699,6 +6741,7 @@ START_TEST(font)
     test_GetCharWidth32();
     test_fake_bold_font();
     test_bitmap_font_glyph_index();
+    test_GetCharWidthI();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.

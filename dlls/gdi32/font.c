@@ -3809,7 +3809,7 @@ BOOL WINAPI GetCharWidthI(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPINT 
     }
 
     for (i = 0; i < count; i++)
-        buffer[i] = abc->abcA + abc->abcB + abc->abcC;
+        buffer[i] = abc[i].abcA + abc[i].abcB + abc[i].abcC;
 
     HeapFree(GetProcessHeap(), 0, abc);
     return TRUE;
