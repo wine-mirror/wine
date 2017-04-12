@@ -2179,14 +2179,14 @@ obj_handle_t no_fd_flush( struct fd *fd, struct async *async, int blocking )
 }
 
 /* default ioctl() routine */
-obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async, int blocking )
+obj_handle_t no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
 }
 
 /* default ioctl() routine */
-obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async, int blocking )
+obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     switch(code)
     {
@@ -2501,7 +2501,7 @@ DECL_HANDLER(ioctl)
     {
         if ((async = create_async( current, &req->async, iosb )))
         {
-            reply->wait    = fd->fd_ops->ioctl( fd, req->code, async, req->blocking );
+            reply->wait    = fd->fd_ops->ioctl( fd, req->code, async );
             reply->options = fd->options;
             release_object( async );
         }
