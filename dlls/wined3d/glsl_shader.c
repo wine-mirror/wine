@@ -357,7 +357,7 @@ static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_inf
     if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT]
             || (version && version->type == WINED3D_SHADER_TYPE_COMPUTE))
         return 150;
-    else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30) && version && version->major >= 4)
+    else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30))
         return 130;
     else
         return 120;
@@ -2017,7 +2017,7 @@ static unsigned int vec4_varyings(DWORD shader_major, const struct wined3d_gl_in
 
 static BOOL needs_legacy_glsl_syntax(const struct wined3d_gl_info *gl_info)
 {
-    return gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+    return gl_info->glsl_version < MAKEDWORD_VERSION(1, 30);
 }
 
 static BOOL shader_glsl_use_explicit_attrib_location(const struct wined3d_gl_info *gl_info)
