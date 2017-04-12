@@ -20471,37 +20471,42 @@ static void test_uninitialized_varyings(void)
         const DWORD *ps;
         D3DCOLOR expected;
         BOOL allow_zero_alpha;
+        BOOL partial;
         BOOL allow_zero;
         BOOL broken_warp;
     }
     /* On AMD specular color is generally initialized to 0x00000000 and texcoords to 0xff000000
-     * while on Nvidia it's the opposite. Just allow both. */
+     * while on Nvidia it's the opposite. Just allow both.
+     *
+     * Partially initialized varyings reliably handle the component that has been initialized.
+     * The uninitialized components generally follow the rule above, with some exceptions on
+     * radeon cards. r500 and r600 GPUs have been found to set uninitialized components to 0.0,
+     * 0.5 and 1.0 without a sensible pattern. */
     tests[] =
     {
         {D3DVS_VERSION(1, 1),         vs1_code,                   0,              NULL, 0xffffffff},
         {                  0,             NULL, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff000000, TRUE},
         {                  0,             NULL, D3DPS_VERSION(2, 0), ps2_texcoord_code, 0xff000000, TRUE},
         {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1),  ps1_diffuse_code, 0xffffffff},
-        {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff000000, TRUE,  FALSE, TRUE},
+        {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff000000, TRUE,  FALSE, FALSE, TRUE},
         {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff000000, TRUE},
         {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0),  ps2_diffuse_code, 0xffffffff},
-        {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0), ps2_specular_code, 0xff000000, TRUE,  FALSE, TRUE},
+        {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0), ps2_specular_code, 0xff000000, TRUE,  FALSE, FALSE, TRUE},
         {D3DVS_VERSION(2, 0),         vs2_code, D3DPS_VERSION(2, 0), ps2_texcoord_code, 0xff000000, TRUE},
-        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0),  ps3_diffuse_code, 0xffffffff, FALSE, TRUE},
-        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_specular_code, 0x00000000, FALSE, FALSE, TRUE},
-        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_texcoord_code, 0x00000000, FALSE, FALSE, TRUE},
-        {D3DVS_VERSION(1, 1), vs1_partial_code,                   0,              NULL, 0xff7fffff, FALSE, FALSE, TRUE},
-        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1),  ps1_diffuse_code, 0xff7fffff, FALSE, FALSE, TRUE},
-        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff7f0000, TRUE},
-        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff7f0000, TRUE},
-        {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0),  ps2_diffuse_code, 0xff7fffff, FALSE, FALSE, TRUE},
-        {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0), ps2_specular_code, 0xff7f0000, TRUE},
-        {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0), ps2_texcoord_code, 0xff7f0000, TRUE},
+        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0),  ps3_diffuse_code, 0xffffffff, FALSE, FALSE, TRUE},
+        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_specular_code, 0x00000000, FALSE, FALSE, FALSE, TRUE},
+        {D3DVS_VERSION(3, 0),         vs3_code, D3DPS_VERSION(3, 0), ps3_texcoord_code, 0x00000000, FALSE, FALSE, FALSE, TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code,                   0,              NULL, 0xff7fffff, FALSE, TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1),  ps1_diffuse_code, 0xff7fffff, FALSE, TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff7f0000, TRUE,  TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff7f0000, TRUE,  TRUE},
+        {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0),  ps2_diffuse_code, 0xff7fffff, FALSE, TRUE},
+        {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0), ps2_specular_code, 0xff7f0000, TRUE,  TRUE},
+        {D3DVS_VERSION(2, 0), vs2_partial_code, D3DPS_VERSION(2, 0), ps2_texcoord_code, 0xff7f0000, TRUE,  TRUE},
         /* Fails on Radeon HD 2600 with 0x008000ff aka nonsensical color. */
-        /* {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0), ps3_diffuse_code, 0xff7fffff, TRUE}, */
-        /* Randomly fails on Radeon HD 2600. */
-        /* {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0), ps3_specular_code, 0x007f0000}, */
-        {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0), ps3_texcoord_code, 0xff7f0000, TRUE},
+        /* {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0),  ps3_diffuse_code, 0xff7fffff, TRUE,  TRUE}, */
+        {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0), ps3_specular_code, 0x007f0000, FALSE, TRUE},
+        {D3DVS_VERSION(3, 0), vs3_partial_code, D3DPS_VERSION(3, 0), ps3_texcoord_code, 0xff7f0000, TRUE,  TRUE},
     };
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
@@ -20607,7 +20612,8 @@ static void test_uninitialized_varyings(void)
         color = get_readback_color(&rb, 320, 240);
         ok(color_match(color, tests[i].expected, 1)
                 || (tests[i].allow_zero_alpha && color_match(color, tests[i].expected & 0x00ffffff, 1))
-                || (tests[i].allow_zero && !color) || (broken(warp && tests[i].broken_warp)),
+                || (tests[i].allow_zero && !color) || (broken(warp && tests[i].broken_warp))
+                || broken(tests[i].partial && color_match(color & 0x00ff0000, tests[i].expected & 0x00ff0000, 1)),
                 "Got unexpected color 0x%08x, case %u.\n", color, i);
         release_surface_readback(&rb);
 
