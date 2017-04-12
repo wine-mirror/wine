@@ -175,7 +175,7 @@ static int device_file_close_handle( struct object *obj, struct process *process
 static void device_file_destroy( struct object *obj );
 static enum server_fd_type device_file_get_fd_type( struct fd *fd );
 static obj_handle_t device_file_read( struct fd *fd, struct async *async, file_pos_t pos );
-static obj_handle_t device_file_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos );
+static obj_handle_t device_file_write( struct fd *fd, struct async *async, file_pos_t pos );
 static obj_handle_t device_file_flush( struct fd *fd, struct async *async, int blocking );
 static obj_handle_t device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -505,7 +505,7 @@ static obj_handle_t device_file_read( struct fd *fd, struct async *async, file_p
     return handle;
 }
 
-static obj_handle_t device_file_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
+static obj_handle_t device_file_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     struct device_file *file = get_fd_user( fd );
     struct irp_call *irp;

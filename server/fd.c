@@ -2165,7 +2165,7 @@ obj_handle_t no_fd_read( struct fd *fd, struct async *async, file_pos_t pos )
 }
 
 /* default write() routine */
-obj_handle_t no_fd_write( struct fd *fd, struct async *async, int blocking, file_pos_t pos )
+obj_handle_t no_fd_write( struct fd *fd, struct async *async, file_pos_t pos )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
@@ -2478,7 +2478,7 @@ DECL_HANDLER(write)
         async = create_async( current, &req->async, iosb );
         if (async)
         {
-            reply->wait    = fd->fd_ops->write( fd, async, req->blocking, req->pos );
+            reply->wait    = fd->fd_ops->write( fd, async, req->pos );
             reply->options = fd->options;
             release_object( async );
         }
