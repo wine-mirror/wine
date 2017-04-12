@@ -2612,13 +2612,13 @@ static void test_large_data_authentication(int port)
     ok(ret, "expected success %d\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
-    todo_wine ok(ret, "expected success\n");
+    ok(ret, "expected success\n");
 
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL,
                               &status, &size, NULL);
-    todo_wine ok(ret, "expected success\n");
-    todo_wine ok(status == HTTP_STATUS_OK, "got %d\n", status);
+    ok(ret, "expected success\n");
+    ok(status == HTTP_STATUS_OK, "got %d\n", status);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
