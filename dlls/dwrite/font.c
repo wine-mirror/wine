@@ -4875,12 +4875,12 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnal
     TRACE("(%p)->(%d %p)\n", This, type, bounds);
 
     if ((UINT32)type > DWRITE_TEXTURE_CLEARTYPE_3x1) {
-        memset(bounds, 0, sizeof(*bounds));
+        SetRectEmpty(bounds);
         return E_INVALIDARG;
     }
 
     if (type != This->texture_type) {
-        memset(bounds, 0, sizeof(*bounds));
+        SetRectEmpty(bounds);
         return S_OK;
     }
 

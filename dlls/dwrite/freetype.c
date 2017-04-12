@@ -986,12 +986,12 @@ INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace4 *fontface, UINT16 le
 
 void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
-    memset(&bitmap->bbox, 0, sizeof(bitmap->bbox));
+    SetRectEmpty(&bitmap->bbox);
 }
 
 void freetype_get_design_glyph_bbox(IDWriteFontFace4 *fontface, UINT16 unitsperEm, UINT16 glyph, RECT *bbox)
 {
-    memset(bbox, 0, sizeof(*bbox));
+    SetRectEmpty(bbox);
 }
 
 BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
