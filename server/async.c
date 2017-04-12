@@ -472,6 +472,11 @@ struct iosb *async_get_iosb( struct async *async )
     return async->iosb ? (struct iosb *)grab_object( async->iosb ) : NULL;
 }
 
+int async_is_blocking( struct async *async )
+{
+    return !async->event && !async->data.apc && !async->data.apc_context;
+}
+
 /* find the first pending async in queue */
 struct async *find_pending_async( struct async_queue *queue )
 {
