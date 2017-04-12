@@ -3172,6 +3172,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glBeginTransformFeedback)   /* OpenGL 3.0 */
     USE_GL_FUNC(glBindAttribLocation)       /* OpenGL 2.0 */
     USE_GL_FUNC(glBindBuffer)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glBindFragDataLocation)     /* OpenGL 3.0 */
     USE_GL_FUNC(glBindVertexArray)          /* OpenGL 3.0 */
     USE_GL_FUNC(glBlendColor)               /* OpenGL 1.4 */
     USE_GL_FUNC(glBlendEquation)            /* OpenGL 1.4 */
@@ -3305,6 +3306,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glBeginQuery, glBeginQueryARB);
     MAP_GL_FUNCTION(glBindAttribLocation, glBindAttribLocationARB);
     MAP_GL_FUNCTION(glBindBuffer, glBindBufferARB);
+    MAP_GL_FUNCTION(glBindFragDataLocation, glBindFragDataLocationEXT);
     MAP_GL_FUNCTION(glBlendColor, glBlendColorEXT);
     MAP_GL_FUNCTION(glBlendEquation, glBlendEquationEXT);
     MAP_GL_FUNCTION(glBlendEquationSeparate, glBlendEquationSeparateEXT);

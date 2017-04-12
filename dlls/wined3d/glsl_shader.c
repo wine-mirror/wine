@@ -9254,7 +9254,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     {
         /* Bind vertex attributes to a corresponding index number to match
          * the same index numbers as ARB_vertex_programs (makes loading
-         * vertex attributes simpler).  With this method, we can use the
+         * vertex attributes simpler). With this method, we can use the
          * exact same code to load the attributes later for both ARB and
          * GLSL shaders.
          *
@@ -9279,6 +9279,12 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         }
         checkGLcall("glBindAttribLocation");
         string_buffer_release(&priv->string_buffers, tmp_name);
+
+        if (!needs_legacy_glsl_syntax(gl_info))
+        {
+            GL_EXTCALL(glBindFragDataLocation(program_id, 0, "ps_out"));
+            checkGLcall("glBindFragDataLocation");
+        }
     }
 
     if (gshader)
