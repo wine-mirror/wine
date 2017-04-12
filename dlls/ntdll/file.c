@@ -574,9 +574,8 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
 
     SERVER_START_REQ( read )
     {
-        req->blocking = !apc && !event && !apc_context;
-        req->async    = server_async( handle, &async->io, event, apc, apc_context, io );
-        req->pos      = offset ? offset->QuadPart : 0;
+        req->async = server_async( handle, &async->io, event, apc, apc_context, io );
+        req->pos   = offset ? offset->QuadPart : 0;
         wine_server_set_reply( req, buffer, size );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
@@ -615,9 +614,8 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
 
     SERVER_START_REQ( write )
     {
-        req->blocking = !apc && !event && !apc_context;
-        req->async    = server_async( handle, &async->io, event, apc, apc_context, io );
-        req->pos      = offset ? offset->QuadPart : 0;
+        req->async = server_async( handle, &async->io, event, apc, apc_context, io );
+        req->pos   = offset ? offset->QuadPart : 0;
         wine_server_add_data( req, buffer, size );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
@@ -1528,9 +1526,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
 
     SERVER_START_REQ( ioctl )
     {
-        req->code     = code;
-        req->blocking = !apc && !event && !apc_context;
-        req->async    = server_async( handle, &async->io, event, apc, apc_context, io );
+        req->code  = code;
+        req->async = server_async( handle, &async->io, event, apc, apc_context, io );
         wine_server_add_data( req, in_buffer, in_size );
         if ((code & 3) != METHOD_BUFFERED)
             wine_server_add_data( req, out_buffer, out_size );
@@ -3414,8 +3411,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
     {
         SERVER_START_REQ( flush )
         {
-            req->blocking = 1;  /* always blocking */
-            req->async    = server_async( hFile, NULL, NULL, NULL, NULL, IoStatusBlock );
+            req->async = server_async( hFile, NULL, NULL, NULL, NULL, IoStatusBlock );
             ret = wine_server_call( req );
             hEvent = wine_server_ptr_handle( reply->event );
         }

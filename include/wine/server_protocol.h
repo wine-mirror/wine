@@ -1507,7 +1507,7 @@ struct get_directory_cache_entry_reply
 struct flush_request
 {
     struct request_header __header;
-    int            blocking;
+    char __pad_12[4];
     async_data_t   async;
 };
 struct flush_reply
@@ -3239,7 +3239,7 @@ struct get_async_result_reply
 struct read_request
 {
     struct request_header __header;
-    int            blocking;
+    char __pad_12[4];
     async_data_t   async;
     file_pos_t     pos;
 };
@@ -3256,7 +3256,7 @@ struct read_reply
 struct write_request
 {
     struct request_header __header;
-    int            blocking;
+    char __pad_12[4];
     async_data_t   async;
     file_pos_t     pos;
     /* VARARG(data,bytes); */
@@ -3277,9 +3277,7 @@ struct ioctl_request
     struct request_header __header;
     ioctl_code_t   code;
     async_data_t   async;
-    int            blocking;
     /* VARARG(in_data,bytes); */
-    char __pad_60[4];
 };
 struct ioctl_reply
 {
@@ -6409,6 +6407,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 526
+#define SERVER_PROTOCOL_VERSION 527
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

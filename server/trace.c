@@ -1776,8 +1776,7 @@ static void dump_get_directory_cache_entry_reply( const struct get_directory_cac
 
 static void dump_flush_request( const struct flush_request *req )
 {
-    fprintf( stderr, " blocking=%d", req->blocking );
-    dump_async_data( ", async=", &req->async );
+    dump_async_data( " async=", &req->async );
 }
 
 static void dump_flush_reply( const struct flush_reply *req )
@@ -2880,8 +2879,7 @@ static void dump_get_async_result_reply( const struct get_async_result_reply *re
 
 static void dump_read_request( const struct read_request *req )
 {
-    fprintf( stderr, " blocking=%d", req->blocking );
-    dump_async_data( ", async=", &req->async );
+    dump_async_data( " async=", &req->async );
     dump_uint64( ", pos=", &req->pos );
 }
 
@@ -2894,8 +2892,7 @@ static void dump_read_reply( const struct read_reply *req )
 
 static void dump_write_request( const struct write_request *req )
 {
-    fprintf( stderr, " blocking=%d", req->blocking );
-    dump_async_data( ", async=", &req->async );
+    dump_async_data( " async=", &req->async );
     dump_uint64( ", pos=", &req->pos );
     dump_varargs_bytes( ", data=", cur_size );
 }
@@ -2911,7 +2908,6 @@ static void dump_ioctl_request( const struct ioctl_request *req )
 {
     dump_ioctl_code( " code=", &req->code );
     dump_async_data( ", async=", &req->async );
-    fprintf( stderr, ", blocking=%d", req->blocking );
     dump_varargs_bytes( ", in_data=", cur_size );
 }
 

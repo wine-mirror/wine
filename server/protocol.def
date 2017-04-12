@@ -1242,7 +1242,6 @@ enum server_fd_type
 
 /* Flush a file buffers */
 @REQ(flush)
-    int            blocking;    /* whether it's a blocking flush */
     async_data_t   async;       /* async I/O parameters */
 @REPLY
     obj_handle_t event;         /* event set when finished */
@@ -2358,7 +2357,6 @@ enum message_type
 
 /* Perform a read on a file object */
 @REQ(read)
-    int            blocking;      /* whether it's a blocking read */
     async_data_t   async;         /* async I/O parameters */
     file_pos_t     pos;           /* read position */
 @REPLY
@@ -2370,7 +2368,6 @@ enum message_type
 
 /* Perform a write on a file object */
 @REQ(write)
-    int            blocking;      /* whether it's a blocking write */
     async_data_t   async;         /* async I/O parameters */
     file_pos_t     pos;           /* write position */
     VARARG(data,bytes);           /* write data */
@@ -2385,7 +2382,6 @@ enum message_type
 @REQ(ioctl)
     ioctl_code_t   code;          /* ioctl code */
     async_data_t   async;         /* async I/O parameters */
-    int            blocking;      /* whether it's a blocking ioctl */
     VARARG(in_data,bytes);        /* ioctl input data */
 @REPLY
     obj_handle_t   wait;          /* handle to wait on for blocking ioctl */
