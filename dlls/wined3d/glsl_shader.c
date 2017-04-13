@@ -115,7 +115,8 @@ struct constant_heap
 };
 
 /* GLSL shader private data */
-struct shader_glsl_priv {
+struct shader_glsl_priv
+{
     struct wined3d_string_buffer shader_buffer;
     struct wined3d_string_buffer_list string_buffers;
     struct wine_rb_tree program_lookup;
@@ -7658,46 +7659,6 @@ static GLuint find_glsl_geometry_shader(const struct wined3d_context *context,
     return ret;
 }
 
-static GLuint find_glsl_compute_shader(const struct wined3d_context *context,
-        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
-        struct wined3d_shader *shader)
-{
-    struct glsl_cs_compiled_shader *gl_shaders;
-    struct glsl_shader_private *shader_data;
-    GLuint ret;
-
-    if (!shader->backend_data)
-    {
-        if (!(shader->backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data))))
-        {
-            ERR("Failed to allocate backend data.\n");
-            return 0;
-        }
-    }
-    shader_data = shader->backend_data;
-    gl_shaders = shader_data->gl_shaders.cs;
-
-    /* No shader variants are used for compute shaders. */
-    if (shader_data->num_gl_shaders)
-        return gl_shaders[0].id;
-
-    TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
-
-    if (!(shader_data->gl_shaders.cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_shaders))))
-    {
-        ERR("Failed to allocate GL shader array.\n");
-        return 0;
-    }
-    shader_data->shader_array_size = 1;
-    gl_shaders = shader_data->gl_shaders.cs;
-
-    string_buffer_clear(buffer);
-    ret = shader_glsl_generate_compute_shader(context, buffer, string_buffers, shader);
-    gl_shaders[shader_data->num_gl_shaders++].id = ret;
-
-    return ret;
-}
-
 static const char *shader_glsl_ffp_mcs(enum wined3d_material_color_source mcs, const char *material)
 {
     switch (mcs)
@@ -9013,56 +8974,63 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
     string_buffer_release(&priv->string_buffers, name);
 }
 
-/* Context activation is done by the caller. */
-static void set_glsl_compute_shader_program(const struct wined3d_context *context,
-        const struct wined3d_state *state, struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
+static HRESULT shader_glsl_compile_compute_shader(struct shader_glsl_priv *priv,
+        const struct wined3d_context *context, struct wined3d_shader *shader)
 {
+    struct glsl_context_data *ctx_data = context->shader_backend_data;
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct glsl_shader_prog_link *entry = NULL;
-    struct wined3d_shader *shader;
-    struct glsl_program_key key;
-    GLuint program_id, cs_id;
-
-    if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_COMPUTE)))
-        return;
-
-    if (!(shader = state->shader[WINED3D_SHADER_TYPE_COMPUTE]))
-    {
-        WARN("Compute shader is NULL.\n");
-        ctx_data->glsl_program = NULL;
-        return;
-    }
-
-    cs_id = find_glsl_compute_shader(context, &priv->shader_buffer, &priv->string_buffers, shader);
-    memset(&key, 0, sizeof(key));
-    key.cs_id = cs_id;
-    if ((entry = get_glsl_program_entry(priv, &key)))
-    {
-        ctx_data->glsl_program = entry;
-        return;
-    }
-
-    program_id = GL_EXTCALL(glCreateProgram());
-    TRACE("Created new GLSL shader program %u.\n", program_id);
+    struct glsl_cs_compiled_shader *gl_shaders;
+    struct glsl_shader_private *shader_data;
+    struct glsl_shader_prog_link *entry;
+    GLuint shader_id, program_id;
 
     if (!(entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry))))
     {
         ERR("Out of memory.\n");
-        return;
+        return E_OUTOFMEMORY;
     }
+
+    if (!(shader->backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data))))
+    {
+        ERR("Failed to allocate backend data.\n");
+        HeapFree(GetProcessHeap(), 0, entry);
+        return E_OUTOFMEMORY;
+    }
+    shader_data = shader->backend_data;
+    gl_shaders = shader_data->gl_shaders.cs;
+
+    if (!(shader_data->gl_shaders.cs = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_shaders))))
+    {
+        ERR("Failed to allocate GL shader array.\n");
+        HeapFree(GetProcessHeap(), 0, entry);
+        HeapFree(GetProcessHeap(), 0, shader->backend_data);
+        shader->backend_data = NULL;
+        return E_OUTOFMEMORY;
+    }
+    shader_data->shader_array_size = 1;
+    gl_shaders = shader_data->gl_shaders.cs;
+
+    TRACE("Compiling compute shader %p.\n", shader);
+
+    string_buffer_clear(buffer);
+    shader_id = shader_glsl_generate_compute_shader(context, buffer, &priv->string_buffers, shader);
+    gl_shaders[shader_data->num_gl_shaders++].id = shader_id;
+
+    program_id = GL_EXTCALL(glCreateProgram());
+    TRACE("Created new GLSL shader program %u.\n", program_id);
+
     entry->id = program_id;
     entry->vs.id = 0;
     entry->gs.id = 0;
     entry->ps.id = 0;
-    entry->cs.id = cs_id;
+    entry->cs.id = shader_id;
     entry->constant_version = 0;
     entry->ps.np2_fixup_info = NULL;
     add_glsl_program_entry(priv, entry);
 
-    ctx_data->glsl_program = entry;
-
-    TRACE("Attaching GLSL shader object %u to program %u.\n", cs_id, program_id);
-    GL_EXTCALL(glAttachShader(program_id, cs_id));
+    TRACE("Attaching GLSL shader object %u to program %u.\n", shader_id, program_id);
+    GL_EXTCALL(glAttachShader(program_id, shader_id));
     checkGLcall("glAttachShader");
 
     list_add_head(&shader->linked_programs, &entry->cs.shader_entry);
@@ -9077,6 +9045,55 @@ static void set_glsl_compute_shader_program(const struct wined3d_context *contex
     shader_glsl_load_images(gl_info, priv, program_id, &shader->reg_maps);
 
     entry->constant_update_mask = 0;
+
+    GL_EXTCALL(glUseProgram(ctx_data->glsl_program ? ctx_data->glsl_program->id : 0));
+    checkGLcall("glUseProgram");
+    return WINED3D_OK;
+}
+
+static GLuint find_glsl_compute_shader(const struct wined3d_context *context,
+        struct shader_glsl_priv *priv, struct wined3d_shader *shader)
+{
+    struct glsl_shader_private *shader_data;
+
+    if (!shader->backend_data)
+    {
+        WARN("Failed to find GLSL program for compute shader %p.\n", shader);
+        if (FAILED(shader_glsl_compile_compute_shader(priv, context, shader)))
+        {
+            ERR("Failed to compile compute shader %p.\n", shader);
+            return 0;
+        }
+    }
+    shader_data = shader->backend_data;
+    return shader_data->gl_shaders.cs[0].id;
+}
+
+/* Context activation is done by the caller. */
+static void set_glsl_compute_shader_program(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
+{
+    struct glsl_shader_prog_link *entry;
+    struct wined3d_shader *shader;
+    struct glsl_program_key key;
+    GLuint cs_id;
+
+    if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_COMPUTE)))
+        return;
+
+    if (!(shader = state->shader[WINED3D_SHADER_TYPE_COMPUTE]))
+    {
+        WARN("Compute shader is NULL.\n");
+        ctx_data->glsl_program = NULL;
+        return;
+    }
+
+    cs_id = find_glsl_compute_shader(context, priv, shader);
+    memset(&key, 0, sizeof(key));
+    key.cs_id = cs_id;
+    if (!(entry = get_glsl_program_entry(priv, &key)))
+        ERR("Failed to find GLSL program for compute shader %p.\n", shader);
+    ctx_data->glsl_program = entry;
 }
 
 /* Context activation is done by the caller. */
@@ -9460,6 +9477,15 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
 static void shader_glsl_precompile(void *shader_priv, struct wined3d_shader *shader)
 {
+    struct wined3d_device *device = shader->device;
+    struct wined3d_context *context;
+
+    if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
+    {
+        context = context_acquire(device, NULL, 0);
+        shader_glsl_compile_compute_shader(shader_priv, context, shader);
+        context_release(context);
+    }
 }
 
 /* Context activation is done by the caller. */
