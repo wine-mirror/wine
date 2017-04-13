@@ -2204,9 +2204,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_shader_indexable_temp *idx_temp_reg;
     unsigned int uniform_block_base, uniform_block_count;
-    unsigned int i, extra_constants_needed = 0;
     const struct wined3d_shader_lconst *lconst;
     const char *prefix;
+    unsigned int i;
     DWORD map;
 
     prefix = shader_glsl_get_prefix(version->type);
@@ -2499,40 +2499,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     i, prefix, i);
     }
 
-    /* Declare uniforms for NP2 texcoord fixup:
-     * This is NOT done inside the loop that declares the texture samplers
-     * since the NP2 fixup code is currently only used for the GeforceFX
-     * series and when forcing the ARB_npot extension off. Modern cards just
-     * skip the code anyway, so put it inside a separate loop. */
-    if (version->type == WINED3D_SHADER_TYPE_PIXEL && ps_args->np2_fixup)
-    {
-        struct ps_np2fixup_info *fixup = ctx_priv->cur_np2fixup_info;
-        UINT cur = 0;
-
-        /* NP2/RECT textures in OpenGL use texcoords in the range [0,width]x[0,height]
-         * while D3D has them in the (normalized) [0,1]x[0,1] range.
-         * samplerNP2Fixup stores texture dimensions and is updated through
-         * shader_glsl_load_np2fixup_constants when the sampler changes. */
-
-        for (i = 0; i < shader->limits->sampler; ++i)
-        {
-            if (!reg_maps->resource_info[i].type || !(ps_args->np2_fixup & (1u << i)))
-                continue;
-
-            if (reg_maps->resource_info[i].type != WINED3D_SHADER_RESOURCE_TEXTURE_2D)
-            {
-                FIXME("Non-2D texture is flagged for NP2 texcoord fixup.\n");
-                continue;
-            }
-
-            fixup->idx[i] = cur++;
-        }
-
-        fixup->num_consts = (cur + 1) >> 1;
-        fixup->active = ps_args->np2_fixup;
-        shader_addline(buffer, "uniform vec4 %s_samplerNP2Fixup[%u];\n", prefix, fixup->num_consts);
-    }
-
     /* Declare address variables */
     for (i = 0, map = reg_maps->address; map; map >>= 1, ++i)
     {
@@ -2583,107 +2549,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     glsl_primitive_type_from_d3d(shader->u.gs.output_type), shader->u.gs.vertices_out);
             shader_addline(buffer, "in vs_gs_iface { vec4 gs_in[%u]; } gs_in[];\n", shader->limits->packed_input);
         }
-    }
-    else if (version->type == WINED3D_SHADER_TYPE_PIXEL)
-    {
-        if (version->major < 3 || ps_args->vp_mode != vertexshader)
-        {
-            shader_addline(buffer, "uniform struct\n{\n");
-            shader_addline(buffer, "    vec4 color;\n");
-            shader_addline(buffer, "    float density;\n");
-            shader_addline(buffer, "    float end;\n");
-            shader_addline(buffer, "    float scale;\n");
-            shader_addline(buffer, "} ffp_fog;\n");
-
-            if (needs_legacy_glsl_syntax(gl_info))
-            {
-                if (glsl_is_color_reg_read(shader, 0))
-                    shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
-                if (glsl_is_color_reg_read(shader, 1))
-                    shader_addline(buffer, "vec4 ffp_varying_specular;\n");
-                shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
-                shader_addline(buffer, "float ffp_varying_fogcoord;\n");
-            }
-            else
-            {
-                if (glsl_is_color_reg_read(shader, 0))
-                    declare_in_varying(gl_info, buffer, ps_args->flatshading, "vec4 ffp_varying_diffuse;\n");
-                if (glsl_is_color_reg_read(shader, 1))
-                    declare_in_varying(gl_info, buffer, ps_args->flatshading, "vec4 ffp_varying_specular;\n");
-                declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
-                shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
-                declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
-            }
-        }
-
-        if (version->major >= 3)
-        {
-            UINT in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
-
-            if (ps_args->vp_mode == vertexshader)
-                declare_in_varying(gl_info, buffer, FALSE, "vec4 %s_link[%u];\n", prefix, in_count);
-            shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
-        }
-
-        for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
-        {
-            if (!(map & 1))
-                continue;
-
-            shader_addline(buffer, "uniform mat2 bumpenv_mat%u;\n", i);
-
-            if (reg_maps->luminanceparams & (1u << i))
-            {
-                shader_addline(buffer, "uniform float bumpenv_lum_scale%u;\n", i);
-                shader_addline(buffer, "uniform float bumpenv_lum_offset%u;\n", i);
-                extra_constants_needed++;
-            }
-
-            extra_constants_needed++;
-        }
-
-        if (ps_args->srgb_correction)
-        {
-            shader_addline(buffer, "const vec4 srgb_const0 = ");
-            shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const0);
-            shader_addline(buffer, ";\n");
-            shader_addline(buffer, "const vec4 srgb_const1 = ");
-            shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const1);
-            shader_addline(buffer, ";\n");
-        }
-        if (reg_maps->vpos || reg_maps->usesdsy)
-        {
-            if (reg_maps->usesdsy || !gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
-            {
-                ++extra_constants_needed;
-                shader_addline(buffer, "uniform vec4 ycorrection;\n");
-            }
-            if (reg_maps->vpos)
-            {
-                if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
-                {
-                    if (context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
-                        shader_addline(buffer, "layout(%spixel_center_integer) in vec4 gl_FragCoord;\n",
-                                ps_args->render_offscreen ? "" : "origin_upper_left, ");
-                    else if (!ps_args->render_offscreen)
-                        shader_addline(buffer, "layout(origin_upper_left) in vec4 gl_FragCoord;\n");
-                }
-                shader_addline(buffer, "vec4 vpos;\n");
-            }
-        }
-
-        if (ps_args->alpha_test_func + 1 != WINED3D_CMP_ALWAYS)
-            shader_addline(buffer, "uniform float alpha_test_ref;\n");
-
-        if (!needs_legacy_glsl_syntax(gl_info))
-        {
-            if (shader_glsl_use_explicit_attrib_location(gl_info))
-                shader_addline(buffer, "layout(location = 0) ");
-            shader_addline(buffer, "out vec4 ps_out[%u];\n", gl_info->limits.buffers);
-        }
-
-        if (shader->limits->constant_float + extra_constants_needed >= gl_info->limits.glsl_ps_float_constants)
-            FIXME("Insufficient uniforms to run this shader.\n");
     }
 
     /* Declare output register temporaries */
@@ -7129,10 +6994,14 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         const struct ps_compile_args *args, struct ps_np2fixup_info *np2fixup_info)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    const struct wined3d_shader_version *version = &reg_maps->shader_version;
+    const char *prefix = shader_glsl_get_prefix(version->type);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const BOOL legacy_syntax = needs_legacy_glsl_syntax(gl_info);
+    unsigned int i, extra_constants_needed = 0;
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
+    DWORD map;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_ps_args = args;
@@ -7159,6 +7028,139 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    /* Declare uniforms for NP2 texcoord fixup:
+     * This is NOT done inside the loop that declares the texture samplers
+     * since the NP2 fixup code is currently only used for the GeforceFX
+     * series and when forcing the ARB_npot extension off. Modern cards just
+     * skip the code anyway, so put it inside a separate loop. */
+    if (args->np2_fixup)
+    {
+        struct ps_np2fixup_info *fixup = priv_ctx.cur_np2fixup_info;
+        unsigned int cur = 0;
+
+        /* NP2/RECT textures in OpenGL use texcoords in the range [0,width]x[0,height]
+         * while D3D has them in the (normalized) [0,1]x[0,1] range.
+         * samplerNP2Fixup stores texture dimensions and is updated through
+         * shader_glsl_load_np2fixup_constants when the sampler changes. */
+
+        for (i = 0; i < shader->limits->sampler; ++i)
+        {
+            if (!reg_maps->resource_info[i].type || !(args->np2_fixup & (1u << i)))
+                continue;
+
+            if (reg_maps->resource_info[i].type != WINED3D_SHADER_RESOURCE_TEXTURE_2D)
+            {
+                FIXME("Non-2D texture is flagged for NP2 texcoord fixup.\n");
+                continue;
+            }
+
+            fixup->idx[i] = cur++;
+        }
+
+        fixup->num_consts = (cur + 1) >> 1;
+        fixup->active = args->np2_fixup;
+        shader_addline(buffer, "uniform vec4 %s_samplerNP2Fixup[%u];\n", prefix, fixup->num_consts);
+    }
+
+    if (version->major < 3 || args->vp_mode != vertexshader)
+    {
+        shader_addline(buffer, "uniform struct\n{\n");
+        shader_addline(buffer, "    vec4 color;\n");
+        shader_addline(buffer, "    float density;\n");
+        shader_addline(buffer, "    float end;\n");
+        shader_addline(buffer, "    float scale;\n");
+        shader_addline(buffer, "} ffp_fog;\n");
+
+        if (needs_legacy_glsl_syntax(gl_info))
+        {
+            if (glsl_is_color_reg_read(shader, 0))
+                shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
+            if (glsl_is_color_reg_read(shader, 1))
+                shader_addline(buffer, "vec4 ffp_varying_specular;\n");
+            shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
+            shader_addline(buffer, "float ffp_varying_fogcoord;\n");
+        }
+        else
+        {
+            if (glsl_is_color_reg_read(shader, 0))
+                declare_in_varying(gl_info, buffer, args->flatshading, "vec4 ffp_varying_diffuse;\n");
+            if (glsl_is_color_reg_read(shader, 1))
+                declare_in_varying(gl_info, buffer, args->flatshading, "vec4 ffp_varying_specular;\n");
+            declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
+            shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
+            declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+        }
+    }
+
+    if (version->major >= 3)
+    {
+        unsigned int in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
+
+        if (args->vp_mode == vertexshader)
+            declare_in_varying(gl_info, buffer, FALSE, "vec4 %s_link[%u];\n", prefix, in_count);
+        shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
+    }
+
+    for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
+    {
+        if (!(map & 1))
+            continue;
+
+        shader_addline(buffer, "uniform mat2 bumpenv_mat%u;\n", i);
+
+        if (reg_maps->luminanceparams & (1u << i))
+        {
+            shader_addline(buffer, "uniform float bumpenv_lum_scale%u;\n", i);
+            shader_addline(buffer, "uniform float bumpenv_lum_offset%u;\n", i);
+            extra_constants_needed++;
+        }
+
+        extra_constants_needed++;
+    }
+
+    if (args->srgb_correction)
+    {
+        shader_addline(buffer, "const vec4 srgb_const0 = ");
+        shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const0);
+        shader_addline(buffer, ";\n");
+        shader_addline(buffer, "const vec4 srgb_const1 = ");
+        shader_glsl_append_imm_vec4(buffer, wined3d_srgb_const1);
+        shader_addline(buffer, ";\n");
+    }
+    if (reg_maps->vpos || reg_maps->usesdsy)
+    {
+        if (reg_maps->usesdsy || !gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+        {
+            ++extra_constants_needed;
+            shader_addline(buffer, "uniform vec4 ycorrection;\n");
+        }
+        if (reg_maps->vpos)
+        {
+            if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+            {
+                if (context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
+                    shader_addline(buffer, "layout(%spixel_center_integer) in vec4 gl_FragCoord;\n",
+                            args->render_offscreen ? "" : "origin_upper_left, ");
+                else if (!args->render_offscreen)
+                    shader_addline(buffer, "layout(origin_upper_left) in vec4 gl_FragCoord;\n");
+            }
+            shader_addline(buffer, "vec4 vpos;\n");
+        }
+    }
+
+    if (args->alpha_test_func + 1 != WINED3D_CMP_ALWAYS)
+        shader_addline(buffer, "uniform float alpha_test_ref;\n");
+
+    if (!needs_legacy_glsl_syntax(gl_info))
+    {
+        if (shader_glsl_use_explicit_attrib_location(gl_info))
+            shader_addline(buffer, "layout(location = 0) ");
+        shader_addline(buffer, "out vec4 ps_out[%u];\n", gl_info->limits.buffers);
+    }
+
+    if (shader->limits->constant_float + extra_constants_needed >= gl_info->limits.glsl_ps_float_constants)
+        FIXME("Insufficient uniforms to run this shader.\n");
 
     shader_addline(buffer, "void main()\n{\n");
 
