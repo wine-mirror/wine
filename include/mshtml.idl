@@ -9794,6 +9794,24 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLAnchorElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f248-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLAnchorElement
+{
+    [default]         dispinterface DispHTMLAnchorElement;
+ /* [source, default] dispinterface HTMLAnchorEvents; */
+ /* [source]          dispinterface HTMLAnchorEvents2; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLAnchorElement;
+ /* interface IHTMLAnchorElement2; */
+ /* interface IHTMLAnchorElement3; */
+}
+
+/*****************************************************************************
  *    IHTMLAreaElement interface
  */
 [

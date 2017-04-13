@@ -35,13 +35,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLAnchorElement {
     HTMLElement element;
 
     IHTMLAnchorElement IHTMLAnchorElement_iface;
 
     nsIDOMHTMLAnchorElement *nsanchor;
-} HTMLAnchorElement;
+};
 
 static HRESULT navigate_href_new_window(HTMLElement *element, nsAString *href_str, const WCHAR *target)
 {
