@@ -7680,6 +7680,26 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLLinkElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f277-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLLinkElement
+{
+    [default]         dispinterface DispHTMLLinkElement;
+ /* [source, default] dispinterface HTMLLinkElementEvents; */
+ /* [source]          dispinterface HTMLLinkElementEvents2; */
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLLinkElement;
+    interface IHTMLLinkElement2;
+    interface IHTMLLinkElement3;
+    interface IHTMLLinkElement4;
+ /* interface IHTMLLinkElement5; */
+}
+
+/*****************************************************************************
  *    IHTMLTxtRange interface
  */
 [

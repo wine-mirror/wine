@@ -33,12 +33,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLLinkElement {
     HTMLElement element;
     IHTMLLinkElement IHTMLLinkElement_iface;
 
     nsIDOMHTMLLinkElement *nslink;
-} HTMLLinkElement;
+};
 
 static inline HTMLLinkElement *impl_from_IHTMLLinkElement(IHTMLLinkElement *iface)
 {
