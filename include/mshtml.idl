@@ -6912,6 +6912,19 @@ interface IHTMLDatabinding : IDispatch
     [propget, id(DISPID_IHTMLDATABINDING_DATAFORMATAS)] \
     BSTR dataFormatAs()
 
+#define WINE_HTMLELEMENT_INTERFACES             \
+    interface IHTMLElement;                     \
+    interface IHTMLElement2;                    \
+    interface IHTMLElement3;                    \
+    interface IHTMLElement4;                    \
+    interface IHTMLUniqueName;                  \
+    interface IHTMLDOMNode;                     \
+    interface IHTMLDOMNode2;                    \
+ /* interface IHTMLElement5; */                 \
+    interface IHTMLElement6;                    \
+    interface IHTMLDOMConstructor               \
+ /* interface IHTMLElement7 */
+
 #define WINE_HTMLELEMENT_DISPINTERFACE_DECL     \
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;       \
     WINE_IHTMLELEMENT2_DISPINTERFACE_DECL;      \
@@ -6922,6 +6935,21 @@ interface IHTMLDatabinding : IDispatch
     WINE_IHTMLELEMENT5_DISPINTERFACE_DECL;      \
     WINE_IHTMLELEMENT6_DISPINTERFACE_DECL;      \
     WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL
+
+#define WINE_HTMLDATAELEMENT_INTERFACES         \
+    interface IHTMLElement;                     \
+    interface IHTMLElement2;                    \
+    interface IHTMLElement3;                    \
+    interface IHTMLElement4;                    \
+    interface IHTMLUniqueName;                  \
+    interface IHTMLDOMNode;                     \
+    interface IHTMLDOMNode2;                    \
+    interface IHTMLDatabinding;                 \
+ /* interface IHTMLElement5; */                 \
+    interface IHTMLElement6;                    \
+    interface IElementSelector;                 \
+    interface IHTMLDOMConstructor               \
+ /* interface IHTMLElement7 */
 
 #define WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL \
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;       \
@@ -8474,15 +8502,12 @@ coclass HTMLFormElement
     [default]           dispinterface DispHTMLFormElement;
     [source, default]   dispinterface HTMLFormElementEvents;
     [source]            dispinterface HTMLFormElementEvents2;
-                        interface IHTMLElement;
-                        interface IHTMLElement2;
-                        interface IHTMLElement3;
-                        interface IHTMLElement4;
-                        interface IHTMLUniqueName;
-                        interface IHTMLDOMNode;
-                        interface IHTMLDOMNode2;
-                        interface IHTMLDOMConstructor;
-                        interface IHTMLFormElement;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLFormElement;
+ /* interface IHTMLFormElement2; */
+ /* interface IHTMLFormElement3; */
+ /* interface IHTMLSubmitData; */
+ /* interface IHTMLFormElement4; */
 }
 
 /*****************************************************************************
@@ -9394,17 +9419,14 @@ coclass HTMLBody
     [default]           dispinterface DispHTMLBody;
     [source, default]   dispinterface HTMLTextContainerEvents;
     [source]            dispinterface HTMLTextContainerEvents2;
-                        interface IHTMLElement;
-                        interface IHTMLElement2;
-                        interface IHTMLElement3;
-                        interface IHTMLElement4;
-                        interface IHTMLUniqueName;
-                        interface IHTMLDOMNode;
-                        interface IHTMLDOMNode2;
-                        interface IHTMLControlElement;
-                        interface IHTMLTextContainer;
-                        interface IHTMLBodyElement;
-                        interface IHTMLBodyElement2;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLTextContainer;
+    interface IHTMLBodyElement;
+    interface IHTMLBodyElement2;
+ /* interface IHTMLBodyElement3; */
+ /* interface IHTMLBodyElement4; */
+ /* interface IHTMLBodyElement5; */
 }
 
 /*****************************************************************************
@@ -10489,16 +10511,10 @@ coclass HTMLOptionElement
     [default]           dispinterface DispHTMLOptionElement;
     [source, default]   dispinterface HTMLElementEvents;
     [source]            dispinterface HTMLElementEvents2;
-                        interface IHTMLElement;
-                        interface IHTMLElement2;
-                        interface IHTMLElement3;
-                        interface IHTMLElement4;
-                        interface IHTMLUniqueName;
-                        interface IHTMLDOMNode;
-                        interface IHTMLDOMNode2;
-                        interface IHTMLDatabinding;
-                        interface IHTMLOptionElement;
-                        interface IHTMLOptionElement3;
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLOptionElement;
+    interface IHTMLOptionElement3;
+ /* interface IHTMLOptionElement4; */
 }
 
 /*****************************************************************************
@@ -16884,15 +16900,10 @@ coclass HTMLCommentElement
     [default]           dispinterface DispHTMLCommentElement;
     [source, default]   dispinterface HTMLElementEvents;
     [source]            dispinterface HTMLElementEvents2;
-                        interface IHTMLElement;
-                        interface IHTMLElement2;
-                        interface IHTMLElement3;
-                        interface IHTMLElement4;
-                        interface IHTMLUniqueName;
-                        interface IHTMLDOMNode;
-                        interface IHTMLDOMNode2;
-                        interface IHTMLCommentElement;
-                        interface IHTMLCommentElement2;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLCommentElement;
+    interface IHTMLCommentElement2;
+ /* interface IHTMLCommentElement3; */
 }
 
 /*****************************************************************************
@@ -17525,18 +17536,12 @@ coclass HTMLTable
     [default]           dispinterface DispHTMLTable;
     [source, default]   dispinterface HTMLTableEvents;
     [source]            dispinterface HTMLTableEvents2;
-                        interface IHTMLElement;
-                        interface IHTMLElement2;
-                        interface IHTMLElement3;
-                        interface IHTMLElement4;
-                        interface IHTMLUniqueName;
-                        interface IHTMLDOMNode;
-                        interface IHTMLDOMNode2;
-                        interface IHTMLDatabinding;
-                        interface IHTMLControlElement;
-                        interface IHTMLTable;
-                        interface IHTMLTable2;
-                        interface IHTMLTable3;
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLTable;
+    interface IHTMLTable2;
+    interface IHTMLTable3;
+ /* interface IHTMLTable4; */
 }
 
 [
