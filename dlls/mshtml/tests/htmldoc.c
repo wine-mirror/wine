@@ -45,6 +45,7 @@
 #include "tlogstg.h"
 #include "exdispid.h"
 #include "mshtml_test.h"
+#include "mscoree.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);

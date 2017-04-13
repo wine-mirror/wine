@@ -36,6 +36,7 @@
 #include "objsafe.h"
 #include "htiface.h"
 #include "tlogstg.h"
+#include "mscoree.h"
 
 static INT (WINAPI *pLCIDToLocaleName)(LCID,LPWSTR,INT,DWORD);
 static LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
@@ -686,32 +687,40 @@ static void _test_disp_value(unsigned line, IUnknown *unk, const char *val)
     VariantClear(&var);
 }
 
-#define test_disp(u,id,v) _test_disp(__LINE__,u,id,v)
-static void _test_disp(unsigned line, IUnknown *unk, const IID *diid, const char *val)
-{
-    IID iid;
-
-    if(_test_get_dispid(line, unk, &iid))
-        ok_(__FILE__,line) (IsEqualGUID(&iid, diid), "unexpected guid %s\n", wine_dbgstr_guid(&iid));
-
-    if(val)
-        _test_disp_value(line, unk, val);
-}
-
 #define test_disp2(u,id,id2,v) _test_disp2(__LINE__,u,id,id2,v)
 static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID *diid2, const char *val)
 {
+    IUnknown *u;
     IID iid;
+    HRESULT hres;
 
     if(_test_get_dispid(line, unk, &iid))
-        ok_(__FILE__,line) (IsEqualGUID(&iid, diid) || broken(IsEqualGUID(&iid, diid2)),
+        ok_(__FILE__,line) (IsEqualGUID(&iid, diid) || broken(diid2 && IsEqualGUID(&iid, diid2)),
                 "unexpected guid %s\n", wine_dbgstr_guid(&iid));
+
+    if(!IsEqualGUID(diid, &DIID_DispHTMLWindow2) && !IsEqualGUID(diid, &DIID_DispHTMLLocation)) {
+        u = (void*)0xdeadbeef;
+        hres = IUnknown_QueryInterface(unk, &IID_IMarshal, (void**)&u);
+        ok_(__FILE__,line)(hres == E_NOINTERFACE, "Got IMarshal iface\n");
+        ok_(__FILE__,line)(!u, "u = %p\n", u);
+    }
+
+    u = (void*)0xdeadbeef;
+    hres = IUnknown_QueryInterface(unk, &IID_IManagedObject, (void**)&u);
+    ok_(__FILE__,line)(hres == E_NOINTERFACE, "Got IManagedObject iface\n");
+    ok_(__FILE__,line)(!u, "u = %p\n", u);
 
     if(val)
         _test_disp_value(line, unk, val);
 }
 
-#define test_class_info(u) _test_class_info(__LINE__,u)
+#define test_disp(u,id,v) _test_disp(__LINE__,u,id,v)
+static void _test_disp(unsigned line, IUnknown *unk, const IID *diid, const char *val)
+{
+    return _test_disp2(line, unk, diid, NULL, val);
+}
+
+#define test_class_info(id) _test_class_info(__LINE__,id)
 static void _test_class_info(unsigned line, IUnknown *unk)
 {
     IProvideClassInfo *classinfo;
