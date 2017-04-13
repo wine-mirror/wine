@@ -8921,6 +8921,27 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLImg coclass
+ */
+[
+    noncreatable,
+    uuid(3050f241-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLImg
+{
+    [default]         dispinterface DispHTMLImg;
+ /* [source, default] dispinterface HTMLImgEvents; */
+ /* [source]          dispinterface HTMLImgEvents2; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLImgElement;
+ /* interface IHTMLImgElement2; */
+ /* interface IHTMLImgElement3; */
+ /* interface IHTMLImgElement4; */
+ /* interface IHTMLMSImgElement; */
+}
+
+/*****************************************************************************
  *    IHTMLXMLHttpRequest interface
  */
 [
