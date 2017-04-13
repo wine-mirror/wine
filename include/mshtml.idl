@@ -7008,6 +7008,22 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLGenericElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f4b8-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLGenericElement
+{
+    [default]         dispinterface DispHTMLGenericElement;
+    [source, default] dispinterface HTMLElementEvents;
+    [source]          dispinterface HTMLElementEvents2;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLGenericElement;
+}
+
+/*****************************************************************************
  *    IHTMLStyleSheetRule interface
  */
 [
