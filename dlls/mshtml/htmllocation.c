@@ -87,6 +87,10 @@ static HRESULT WINAPI HTMLLocation_QueryInterface(IHTMLLocation *iface, REFIID r
         *ppv = &This->IHTMLLocation_iface;
     }else if(IsEqualGUID(&IID_IHTMLLocation, riid)) {
         *ppv = &This->IHTMLLocation_iface;
+    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
+        *ppv = NULL;
+        FIXME("(%p)->(IID_IMarshal %p)\n", This, ppv);
+        return E_NOINTERFACE;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {

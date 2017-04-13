@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mscoree.h"
 
 #include "wine/debug.h"
 
@@ -1674,6 +1675,10 @@ BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_IDispatchJS, riid))
         *ppv = NULL;
     else if(IsEqualGUID(&IID_UndocumentedScriptIface, riid))
+        *ppv = NULL;
+    else if(IsEqualGUID(&IID_IMarshal, riid))
+        *ppv = NULL;
+    else if(IsEqualGUID(&IID_IManagedObject, riid))
         *ppv = NULL;
     else
         return FALSE;

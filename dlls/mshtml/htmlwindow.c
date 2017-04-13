@@ -184,6 +184,10 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
         *ppv = &This->ITravelLogClient_iface;
     }else if(IsEqualGUID(&IID_IObjectIdentity, riid)) {
         *ppv = &This->IObjectIdentity_iface;
+    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
+        *ppv = NULL;
+        FIXME("(%p)->(IID_IMarshal %p)\n", This, ppv);
+        return E_NOINTERFACE;
     }else if(dispex_query_interface(&This->inner_window->event_target.dispex, riid, ppv)) {
         assert(!*ppv);
         return E_NOINTERFACE;

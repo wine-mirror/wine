@@ -4572,9 +4572,6 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_IPersistPropertyBag, riid)) {
         TRACE("(%p)->(IID_IPersistPropertyBag %p) returning NULL\n", This, ppv);
         *ppv = NULL;
-    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
-        TRACE("(%p)->(IID_IMarshal %p) returning NULL\n", This, ppv);
-        *ppv = NULL;
     }else if(IsEqualGUID(&IID_IExternalConnection, riid)) {
         TRACE("(%p)->(IID_IExternalConnection %p) returning NULL\n", This, ppv);
         *ppv = NULL;
