@@ -9134,6 +9134,23 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLXMLHttpRequest
+ */
+[
+    noncreatable,
+    uuid(3051040b-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLXMLHttpRequest
+{
+    [default]         dispinterface DispHTMLXMLHttpRequest;
+ /* [source, default] dispinterface HTMLXMLHttpRequestEvents; */
+    interface IHTMLXMLHttpRequest;
+    interface IHTMLXMLHttpRequest2;
+    interface IHTMLDOMConstructor;
+    interface IEventTarget;
+}
+
+/*****************************************************************************
  *    IHTMLControlElement interface
  */
 [

@@ -92,20 +92,18 @@ static HRESULT return_nscstr(nsresult nsres, nsACString *nscstr, BSTR *p)
     return S_OK;
 }
 
-typedef struct XMLHttpReqEventListener XMLHttpReqEventListener;
-
 typedef struct {
+    nsIDOMEventListener nsIDOMEventListener_iface;
+    LONG ref;
+    HTMLXMLHttpRequest *xhr;
+} XMLHttpReqEventListener;
+
+struct HTMLXMLHttpRequest {
     EventTarget event_target;
     IHTMLXMLHttpRequest IHTMLXMLHttpRequest_iface;
     LONG ref;
     nsIXMLHttpRequest *nsxhr;
     XMLHttpReqEventListener *event_listener;
-} HTMLXMLHttpRequest;
-
-struct XMLHttpReqEventListener {
-    nsIDOMEventListener nsIDOMEventListener_iface;
-    LONG ref;
-    HTMLXMLHttpRequest *xhr;
 };
 
 static void detach_xhr_event_listener(XMLHttpReqEventListener *event_listener)
