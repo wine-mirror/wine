@@ -9458,6 +9458,10 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     }
 }
 
+static void shader_glsl_precompile(void *shader_priv, struct wined3d_shader *shader)
+{
+}
+
 /* Context activation is done by the caller. */
 static void shader_glsl_select(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
@@ -10242,6 +10246,7 @@ static BOOL shader_glsl_has_ffp_proj_control(void *shader_priv)
 const struct wined3d_shader_backend_ops glsl_shader_backend =
 {
     shader_glsl_handle_instruction,
+    shader_glsl_precompile,
     shader_glsl_select,
     shader_glsl_select_compute,
     shader_glsl_disable,

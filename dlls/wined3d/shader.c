@@ -2852,6 +2852,7 @@ struct shader_none_priv
 };
 
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
+static void shader_none_precompile(void *shader_priv, struct wined3d_shader *shader) {}
 static void shader_none_select_compute(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state) {}
 static void shader_none_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count) {}
@@ -2974,6 +2975,7 @@ static BOOL shader_none_has_ffp_proj_control(void *shader_priv)
 const struct wined3d_shader_backend_ops none_shader_backend =
 {
     shader_none_handle_instruction,
+    shader_none_precompile,
     shader_none_select,
     shader_none_select_compute,
     shader_none_disable,
@@ -3076,8 +3078,11 @@ ULONG CDECL wined3d_shader_incref(struct wined3d_shader *shader)
 static void wined3d_shader_init_object(void *object)
 {
     struct wined3d_shader *shader = object;
+    struct wined3d_device *device = shader->device;
 
-    list_add_head(&shader->device->shaders, &shader->shader_list_entry);
+    list_add_head(&device->shaders, &shader->shader_list_entry);
+
+    device->shader_backend->shader_precompile(device->shader_priv, shader);
 }
 
 static void wined3d_shader_destroy_object(void *object)

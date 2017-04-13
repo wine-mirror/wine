@@ -5669,9 +5669,12 @@ static BOOL shader_arb_has_ffp_proj_control(void *shader_priv)
     return priv->ffp_proj_control;
 }
 
+static void shader_arb_precompile(void *shader_priv, struct wined3d_shader *shader) {}
+
 const struct wined3d_shader_backend_ops arb_program_shader_backend =
 {
     shader_arb_handle_instruction,
+    shader_arb_precompile,
     shader_arb_select,
     shader_arb_select_compute,
     shader_arb_disable,
