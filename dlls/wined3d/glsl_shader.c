@@ -2505,38 +2505,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         if (map & 1) shader_addline(buffer, "ivec4 A%u;\n", i);
     }
 
-    if (version->type == WINED3D_SHADER_TYPE_VERTEX)
-    {
-        for (i = 0; i < shader->input_signature.element_count; ++i)
-            shader_glsl_declare_generic_vertex_attribute(buffer, gl_info, &shader->input_signature.elements[i]);
-
-        if (vs_args->point_size && !vs_args->per_vertex_point_size)
-        {
-            shader_addline(buffer, "uniform struct\n{\n");
-            shader_addline(buffer, "    float size;\n");
-            shader_addline(buffer, "    float size_min;\n");
-            shader_addline(buffer, "    float size_max;\n");
-            shader_addline(buffer, "} ffp_point;\n");
-        }
-
-        if (!needs_legacy_glsl_syntax(gl_info))
-        {
-            if (vs_args->clip_enabled)
-                shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
-
-            if (version->major < 3)
-            {
-                declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_diffuse;\n");
-                declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_specular;\n");
-                declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
-                declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
-            }
-        }
-
-        if (version->major < 4)
-            shader_addline(buffer, "void setup_vs_output(in vec4[%u]);\n", shader->limits->packed_output);
-    }
-
     /* Declare output register temporaries */
     if (shader->limits->packed_output)
         shader_addline(buffer, "vec4 %s_out[%u];\n", prefix, shader->limits->packed_output);
@@ -7280,10 +7248,16 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 {
     struct wined3d_string_buffer_list *string_buffers = &priv->string_buffers;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    const struct wined3d_shader_version *version = &reg_maps->shader_version;
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
+    unsigned int i;
+
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.cur_vs_args = args;
+    priv_ctx.string_buffers = string_buffers;
 
     shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
 
@@ -7293,12 +7267,37 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
 
-    memset(&priv_ctx, 0, sizeof(priv_ctx));
-    priv_ctx.cur_vs_args = args;
-    priv_ctx.string_buffers = string_buffers;
-
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    for (i = 0; i < shader->input_signature.element_count; ++i)
+        shader_glsl_declare_generic_vertex_attribute(buffer, gl_info, &shader->input_signature.elements[i]);
+
+    if (args->point_size && !args->per_vertex_point_size)
+    {
+        shader_addline(buffer, "uniform struct\n{\n");
+        shader_addline(buffer, "    float size;\n");
+        shader_addline(buffer, "    float size_min;\n");
+        shader_addline(buffer, "    float size_max;\n");
+        shader_addline(buffer, "} ffp_point;\n");
+    }
+
+    if (!needs_legacy_glsl_syntax(gl_info))
+    {
+        if (args->clip_enabled)
+            shader_addline(buffer, "uniform vec4 clip_planes[%u];\n", gl_info->limits.user_clip_distances);
+
+        if (version->major < 3)
+        {
+            declare_out_varying(gl_info, buffer, args->flatshading, "vec4 ffp_varying_diffuse;\n");
+            declare_out_varying(gl_info, buffer, args->flatshading, "vec4 ffp_varying_specular;\n");
+            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
+            declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+        }
+    }
+
+    if (version->major < 4)
+        shader_addline(buffer, "void setup_vs_output(in vec4[%u]);\n", shader->limits->packed_output);
 
     if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL && !gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
