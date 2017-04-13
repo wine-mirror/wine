@@ -680,8 +680,8 @@
 @ stdcall RegRestoreKeyA(long str long)
 @ stdcall RegRestoreKeyW(long wstr long)
 @ stdcall RegSaveKeyA(long ptr ptr)
-# @ stub RegSaveKeyExA
-# @ stub RegSaveKeyExW
+@ stdcall RegSaveKeyExA(long str ptr long)
+@ stdcall RegSaveKeyExW(long wstr ptr long)
 @ stdcall RegSaveKeyW(long ptr ptr)
 @ stdcall RegSetKeySecurity(long long ptr)
 @ stdcall RegSetKeyValueA(long str str long ptr long)

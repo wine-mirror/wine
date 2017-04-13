@@ -31,8 +31,8 @@
 @ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) advapi32.RegQueryValueExW
 @ stdcall RegRestoreKeyA(long str long) advapi32.RegRestoreKeyA
 @ stdcall RegRestoreKeyW(long wstr long) advapi32.RegRestoreKeyW
-@ stub RegSaveKeyExA
-@ stub RegSaveKeyExW
+@ stdcall RegSaveKeyExA(long str ptr long) advapi32.RegSaveKeyExA
+@ stdcall RegSaveKeyExW(long wstr ptr long) advapi32.RegSaveKeyExW
 @ stdcall RegSetKeySecurity(long long ptr) advapi32.RegSetKeySecurity
 @ stdcall RegSetValueExA(long str long long ptr long) advapi32.RegSetValueExA
 @ stdcall RegSetValueExW(long wstr long long ptr long) advapi32.RegSetValueExW

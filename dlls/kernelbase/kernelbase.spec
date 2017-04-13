@@ -1307,8 +1307,8 @@
 @ stdcall -private RegQueryValueExW(long wstr ptr ptr ptr ptr) kernel32.RegQueryValueExW
 @ stdcall -private RegRestoreKeyA(long str long) kernel32.RegRestoreKeyA
 @ stdcall -private RegRestoreKeyW(long wstr long) kernel32.RegRestoreKeyW
-# @ stub RegSaveKeyExA
-# @ stub RegSaveKeyExW
+@ stdcall RegSaveKeyExA(long str ptr long) advapi32.RegSaveKeyExA
+@ stdcall RegSaveKeyExW(long wstr ptr long) advapi32.RegSaveKeyExW
 @ stdcall -private RegSetKeySecurity(long long ptr) kernel32.RegSetKeySecurity
 @ stdcall RegSetKeyValueA(long str str long ptr long) advapi32.RegSetKeyValueA
 @ stdcall RegSetKeyValueW(long wstr wstr long ptr long) advapi32.RegSetKeyValueW

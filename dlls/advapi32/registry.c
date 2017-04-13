@@ -2427,6 +2427,25 @@ LSTATUS WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
     return RegSaveKeyW(hkey, fileW->Buffer, sa);
 }
 
+/******************************************************************************
+ * RegSaveKeyExA  [ADVAPI32.@]
+ *
+ */
+LSTATUS WINAPI RegSaveKeyExA( HKEY hkey, LPCSTR file, SECURITY_ATTRIBUTES *sa, DWORD flags )
+{
+    FIXME( "(%p,%s,%p,%d) flags not handled\n", hkey, debugstr_a(file), sa, flags );
+    return RegSaveKeyA(hkey, file, sa);
+}
+
+/******************************************************************************
+ * RegSaveKeyExW  [ADVAPI32.@]
+ *
+ */
+LSTATUS WINAPI RegSaveKeyExW( HKEY hkey, LPCWSTR file, SECURITY_ATTRIBUTES *sa, DWORD flags )
+{
+    FIXME( "(%p,%s,%p,%d) flags not handled\n", hkey, debugstr_w(file), sa, flags );
+    return RegSaveKeyW(hkey, file, sa);
+}
 
 /******************************************************************************
  * RegRestoreKeyW [ADVAPI32.@]
