@@ -2536,20 +2536,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         if (version->major < 4)
             shader_addline(buffer, "void setup_vs_output(in vec4[%u]);\n", shader->limits->packed_output);
     }
-    else if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
-    {
-        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
-        {
-            shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits->packed_input);
-        }
-        else
-        {
-            shader_addline(buffer, "layout(%s) in;\n", glsl_primitive_type_from_d3d(shader->u.gs.input_type));
-            shader_addline(buffer, "layout(%s, max_vertices = %u) out;\n",
-                    glsl_primitive_type_from_d3d(shader->u.gs.output_type), shader->u.gs.vertices_out);
-            shader_addline(buffer, "in vs_gs_iface { vec4 gs_in[%u]; } gs_in[];\n", shader->limits->packed_input);
-        }
-    }
 
     /* Declare output register temporaries */
     if (shader->limits->packed_output)
@@ -7355,17 +7341,31 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
 
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.string_buffers = string_buffers;
+
     shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_GEOMETRY_SHADER4])
         shader_addline(buffer, "#extension GL_ARB_geometry_shader4 : enable\n");
 
-    memset(&priv_ctx, 0, sizeof(priv_ctx));
-    priv_ctx.string_buffers = string_buffers;
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    {
+        shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits->packed_input);
+    }
+    else
+    {
+        shader_addline(buffer, "layout(%s) in;\n", glsl_primitive_type_from_d3d(shader->u.gs.input_type));
+        shader_addline(buffer, "layout(%s, max_vertices = %u) out;\n",
+                glsl_primitive_type_from_d3d(shader->u.gs.output_type), shader->u.gs.vertices_out);
+        shader_addline(buffer, "in vs_gs_iface { vec4 gs_in[%u]; } gs_in[];\n", shader->limits->packed_input);
+    }
     if (!gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
+
     shader_glsl_generate_sm4_rasterizer_input_setup(priv, shader, args->output_count, gl_info);
     shader_addline(buffer, "void main()\n{\n");
     if (FAILED(shader_generate_main(shader, buffer, reg_maps, &priv_ctx)))
