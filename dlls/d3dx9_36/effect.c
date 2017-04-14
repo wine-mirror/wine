@@ -3011,6 +3011,30 @@ static HRESULT d3dx9_apply_pass_states(struct ID3DXEffectImpl *effect, struct d3
     return ret;
 }
 
+static BOOL is_same_parameter(void *param1_, struct d3dx_parameter *param2)
+{
+    struct d3dx_parameter *param1 = (struct d3dx_parameter *)param1_;
+    BOOL matches;
+    unsigned int i, member_count;
+
+    matches = !strcmp(param1->name, param2->name) && param1->class == param2->class
+            && param1->type == param2->type && param1->rows == param2->rows
+            && param1->columns == param2->columns && param1->element_count == param2->element_count
+            && param1->member_count == param2->member_count;
+
+    member_count = param1->element_count ? param1->element_count : param1->member_count;
+
+    if (!matches || !member_count)
+        return matches;
+
+    for (i = 0; i < member_count; ++i)
+    {
+        if (!is_same_parameter(&param1->members[i], &param2->members[i]))
+            return FALSE;
+    }
+    return TRUE;
+}
+
 static inline struct ID3DXEffectImpl *impl_from_ID3DXEffect(ID3DXEffect *iface)
 {
     return CONTAINING_RECORD(iface, struct ID3DXEffectImpl, ID3DXEffect_iface);
@@ -3733,11 +3757,6 @@ static BOOL walk_parameter_dep(struct d3dx_parameter *param, walk_parameter_dep_
     return FALSE;
 }
 
-static BOOL compare_param_ptr(void *param_comp, struct d3dx_parameter *param)
-{
-    return param_comp == param;
-}
-
 static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDLE parameter, D3DXHANDLE technique)
 {
     struct ID3DXEffectImpl *effect = impl_from_ID3DXEffect(iface);
@@ -3756,7 +3775,7 @@ static BOOL WINAPI ID3DXEffectImpl_IsParameterUsed(ID3DXEffect* iface, D3DXHANDL
         pass = &tech->passes[i];
         for (j = 0; j < pass->state_count; ++j)
         {
-            if (walk_state_dep(&pass->states[j], compare_param_ptr, param))
+            if (walk_state_dep(&pass->states[j], is_same_parameter, param))
             {
                 TRACE("Returning TRUE.\n");
                 return TRUE;

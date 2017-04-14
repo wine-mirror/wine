@@ -4532,12 +4532,10 @@ static void test_isparameterused_param_with_children_(unsigned int line, ID3DXEf
         param = effect->lpVtbl->GetParameterByName(effect, NULL, name);
     ok_(__FILE__, line)(!!param, "GetParameterByName failed for %s.\n", name);
 
-    todo_wine_if(effect2 && expected_result)
     ok_(__FILE__, line)(effect->lpVtbl->IsParameterUsed(effect, param, tech) == expected_result,
             "Unexpected IsParameterUsed() result for %s (referenced by handle).\n", name);
 
-    if (!effect2)
-        test_isparameterused_children(line, effect, tech, param);
+    test_isparameterused_children(line, effect, tech, param);
 }
 
 static void test_effect_isparameterused(IDirect3DDevice9 *device)
