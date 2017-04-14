@@ -125,11 +125,8 @@ static void  (*p_gluBeginSurface)( GLUnurbs* nurb );
 static void  (*p_gluBeginTrim)( GLUnurbs* nurb );
 static GLint (*p_gluBuild1DMipmaps)( GLenum target, GLint internalFormat, GLsizei width, GLenum format, GLenum type, const void *data );
 static GLint (*p_gluBuild2DMipmaps)( GLenum target, GLint internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *data );
-static void  (*p_gluCylinder)( GLUquadric* quad, GLdouble base, GLdouble top, GLdouble height, GLint slices, GLint stacks );
 static void  (*p_gluDeleteNurbsRenderer)( GLUnurbs* nurb );
-static void  (*p_gluDeleteQuadric)( GLUquadric* quad );
 static void  (*p_gluDeleteTess)( GLUtesselator* tess );
-static void  (*p_gluDisk)( GLUquadric* quad, GLdouble inner, GLdouble outer, GLint slices, GLint loops );
 static void  (*p_gluEndCurve)( GLUnurbs* nurb );
 static void  (*p_gluEndSurface)( GLUnurbs* nurb );
 static void  (*p_gluEndTrim)( GLUnurbs* nurb );
@@ -137,21 +134,13 @@ static void  (*p_gluGetNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat*
 static void  (*p_gluGetTessProperty)( GLUtesselator* tess, GLenum which, GLdouble* data );
 static void  (*p_gluLoadSamplingMatrices)( GLUnurbs* nurb, const GLfloat *model, const GLfloat *perspective, const GLint *view );
 static GLUnurbs* (*p_gluNewNurbsRenderer)(void);
-static GLUquadric* (*p_gluNewQuadric)(void);
 static GLUtesselator* (*p_gluNewTess)(void);
 static void  (*p_gluNurbsCallback)( GLUnurbs* nurb, GLenum which, _GLUfuncptr CallBackFunc );
 static void  (*p_gluNurbsCurve)( GLUnurbs* nurb, GLint knotCount, GLfloat *knots, GLint stride, GLfloat *control, GLint order, GLenum type );
 static void  (*p_gluNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat value );
 static void  (*p_gluNurbsSurface)( GLUnurbs* nurb, GLint sKnotCount, GLfloat* sKnots, GLint tKnotCount, GLfloat* tKnots, GLint sStride, GLint tStride, GLfloat* control, GLint sOrder, GLint tOrder, GLenum type );
-static void  (*p_gluPartialDisk)( GLUquadric* quad, GLdouble inner, GLdouble outer, GLint slices, GLint loops, GLdouble start, GLdouble sweep );
 static void  (*p_gluPwlCurve)( GLUnurbs* nurb, GLint count, GLfloat* data, GLint stride, GLenum type );
-static void  (*p_gluQuadricCallback)( GLUquadric* quad, GLenum which, _GLUfuncptr CallBackFunc );
-static void  (*p_gluQuadricDrawStyle)( GLUquadric* quad, GLenum draw );
-static void  (*p_gluQuadricNormals)( GLUquadric* quad, GLenum normal );
-static void  (*p_gluQuadricOrientation)( GLUquadric* quad, GLenum orientation );
-static void  (*p_gluQuadricTexture)( GLUquadric* quad, GLboolean texture );
 static GLint (*p_gluScaleImage)( GLenum format, GLsizei wIn, GLsizei hIn, GLenum typeIn, const void *dataIn, GLsizei wOut, GLsizei hOut, GLenum typeOut, GLvoid* dataOut );
-static void  (*p_gluSphere)( GLUquadric* quad, GLdouble radius, GLint slices, GLint stacks );
 static void  (*p_gluTessBeginContour)( GLUtesselator* tess );
 static void  (*p_gluTessBeginPolygon)( GLUtesselator* tess, GLvoid* data );
 static void  (*p_gluTessCallback)( GLUtesselator* tess, GLenum which, _GLUfuncptr CallBackFunc );
@@ -251,109 +240,6 @@ int WINAPI wine_gluBuild2DMipmaps( GLenum target, GLint components, GLint width,
 {
     if (!LOAD_FUNCPTR( gluBuild2DMipmaps )) return GLU_OUT_OF_MEMORY;
     return p_gluBuild2DMipmaps( target, components, width, height, format, type, data );
-}
-
-/***********************************************************************
- *		gluNewQuadric (GLU32.@)
- */
-GLUquadric * WINAPI wine_gluNewQuadric(void)
-{
-    if (!LOAD_FUNCPTR( gluNewQuadric )) return NULL;
-    return p_gluNewQuadric();
-}
-
-/***********************************************************************
- *		gluDeleteQuadric (GLU32.@)
- */
-void WINAPI wine_gluDeleteQuadric( GLUquadric *state )
-{
-    if (!LOAD_FUNCPTR( gluDeleteQuadric )) return;
-    p_gluDeleteQuadric( state );
-}
-
-/***********************************************************************
- *		gluQuadricDrawStyle (GLU32.@)
- */
-void WINAPI wine_gluQuadricDrawStyle( GLUquadric *quadObject, GLenum drawStyle )
-{
-    if (!LOAD_FUNCPTR( gluQuadricDrawStyle )) return;
-    p_gluQuadricDrawStyle( quadObject, drawStyle );
-}
-
-/***********************************************************************
- *		gluQuadricOrientation (GLU32.@)
- */
-void WINAPI wine_gluQuadricOrientation( GLUquadric *quadObject, GLenum orientation )
-{
-    if (!LOAD_FUNCPTR( gluQuadricOrientation )) return;
-    p_gluQuadricOrientation( quadObject, orientation );
-}
-
-/***********************************************************************
- *		gluQuadricNormals (GLU32.@)
- */
-void WINAPI wine_gluQuadricNormals( GLUquadric *quadObject, GLenum normals )
-{
-    if (!LOAD_FUNCPTR( gluQuadricNormals )) return;
-    p_gluQuadricNormals( quadObject, normals );
-}
-
-/***********************************************************************
- *		gluQuadricTexture (GLU32.@)
- */
-void WINAPI wine_gluQuadricTexture( GLUquadric *quadObject, GLboolean textureCoords )
-{
-    if (!LOAD_FUNCPTR( gluQuadricTexture )) return;
-    p_gluQuadricTexture( quadObject, textureCoords );
-}
-
-/***********************************************************************
- *		gluQuadricCallback (GLU32.@)
- */
-void WINAPI wine_gluQuadricCallback( GLUquadric *qobj, GLenum which, void (CALLBACK *fn)(void) )
-{
-    if (!LOAD_FUNCPTR( gluQuadricCallback )) return;
-    /* FIXME: callback calling convention */
-    p_gluQuadricCallback( qobj, which, (_GLUfuncptr)fn );
-}
-
-/***********************************************************************
- *		gluCylinder (GLU32.@)
- */
-void WINAPI wine_gluCylinder( GLUquadric *qobj, GLdouble baseRadius, GLdouble topRadius,
-                              GLdouble height, GLint slices, GLint stacks )
-{
-    if (!LOAD_FUNCPTR( gluCylinder )) return;
-    p_gluCylinder( qobj, baseRadius, topRadius, height, slices, stacks );
-}
-
-/***********************************************************************
- *		gluSphere (GLU32.@)
- */
-void WINAPI wine_gluSphere( GLUquadric *qobj, GLdouble radius, GLint slices, GLint stacks )
-{
-    if (!LOAD_FUNCPTR( gluSphere )) return;
-    p_gluSphere( qobj, radius, slices, stacks );
-}
-
-/***********************************************************************
- *		gluDisk (GLU32.@)
- */
-void WINAPI wine_gluDisk( GLUquadric *qobj, GLdouble innerRadius, GLdouble outerRadius,
-                          GLint slices, GLint loops )
-{
-    if (!LOAD_FUNCPTR( gluDisk )) return;
-    p_gluDisk( qobj, innerRadius, outerRadius, slices, loops );
-}
-
-/***********************************************************************
- *		gluPartialDisk (GLU32.@)
- */
-void WINAPI wine_gluPartialDisk( GLUquadric *qobj, GLdouble innerRadius, GLdouble outerRadius,
-                                 GLint slices, GLint loops, GLdouble startAngle, GLdouble sweepAngle )
-{
-    if (!LOAD_FUNCPTR( gluPartialDisk )) return;
-    p_gluPartialDisk( qobj, innerRadius, outerRadius, slices, loops, startAngle, sweepAngle );
 }
 
 /***********************************************************************

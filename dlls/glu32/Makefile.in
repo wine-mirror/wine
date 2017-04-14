@@ -4,4 +4,5 @@ IMPORTS   = opengl32
 
 C_SRCS = \
 	glu.c \
-	project.c
+	project.c \
+	quad.c
