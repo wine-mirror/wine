@@ -4494,7 +4494,8 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
                 &op_tests[i]);
 }
 
-static void test_isparameterused_children(ID3DXEffect *effect, D3DXHANDLE tech, D3DXHANDLE param)
+static void test_isparameterused_children(unsigned int line, ID3DXEffect *effect,
+        D3DXHANDLE tech, D3DXHANDLE param)
 {
     D3DXPARAMETER_DESC desc;
     D3DXHANDLE param_child;
@@ -4502,31 +4503,41 @@ static void test_isparameterused_children(ID3DXEffect *effect, D3DXHANDLE tech, 
     HRESULT hr;
 
     hr = effect->lpVtbl->GetParameterDesc(effect, param, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "GetParameterDesc failed, result %#x.\n", hr);
     child_count = desc.Elements ? desc.Elements : desc.StructMembers;
     for (i = 0; i < child_count; ++i)
     {
         param_child = desc.Elements ? effect->lpVtbl->GetParameterElement(effect, param, i)
                 : effect->lpVtbl->GetParameter(effect, param, i);
-        ok(!!param_child, "Failed getting child parameter %s[%u].\n", desc.Name, i);
-        ok(!effect->lpVtbl->IsParameterUsed(effect, param_child, tech),
+        ok_(__FILE__, line)(!!param_child, "Failed getting child parameter %s[%u].\n", desc.Name, i);
+        ok_(__FILE__, line)(!effect->lpVtbl->IsParameterUsed(effect, param_child, tech),
                 "Unexpected IsParameterUsed() result for %s[%u].\n", desc.Name, i);
-        test_isparameterused_children(effect, tech, param_child);
+        test_isparameterused_children(line, effect, tech, param_child);
     }
 }
 
-static void test_isparameterused_param_with_children(ID3DXEffect *effect, D3DXHANDLE tech, const char *name,
-        BOOL expected_result)
+#define test_isparameterused_param_with_children(args...) \
+        test_isparameterused_param_with_children_(__LINE__, args)
+static void test_isparameterused_param_with_children_(unsigned int line, ID3DXEffect *effect,
+        ID3DXEffect *effect2, D3DXHANDLE tech, const char *name, BOOL expected_result)
 {
     D3DXHANDLE param;
 
-    param = effect->lpVtbl->GetParameterByName(effect, NULL, name);
-    ok(!!param, "GetParameterByName failed for %s.\n", name);
+    ok_(__FILE__, line)(effect->lpVtbl->IsParameterUsed(effect, (D3DXHANDLE)name, tech)
+            == expected_result, "Unexpected IsParameterUsed() result for %s (referenced by name).\n", name);
 
-    ok(!effect->lpVtbl->IsParameterUsed(effect, param, tech) == !expected_result,
-            "Unexpected IsParameterUsed() result for %s.\n", name);
+    if (effect2)
+        param = effect2->lpVtbl->GetParameterByName(effect2, NULL, name);
+    else
+        param = effect->lpVtbl->GetParameterByName(effect, NULL, name);
+    ok_(__FILE__, line)(!!param, "GetParameterByName failed for %s.\n", name);
 
-    test_isparameterused_children(effect, tech, param);
+    todo_wine_if(effect2 && expected_result)
+    ok_(__FILE__, line)(effect->lpVtbl->IsParameterUsed(effect, param, tech) == expected_result,
+            "Unexpected IsParameterUsed() result for %s (referenced by handle).\n", name);
+
+    if (!effect2)
+        test_isparameterused_children(line, effect, tech, param);
 }
 
 static void test_effect_isparameterused(IDirect3DDevice9 *device)
@@ -4555,7 +4566,7 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
         {"ts2", TRUE},
         {"ts3", TRUE},
     };
-    ID3DXEffect *effect;
+    ID3DXEffect *effect, *effect2;
     HRESULT hr;
     D3DXHANDLE tech;
     unsigned int i;
@@ -4568,8 +4579,25 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
     ok(!!tech, "GetTechniqueByName failed.\n");
 
     for (i = 0; i < ARRAY_SIZE(check_parameters); ++i)
-        test_isparameterused_param_with_children(effect, tech, check_parameters[i].name,
+        test_isparameterused_param_with_children(effect, NULL, tech, check_parameters[i].name,
                 check_parameters[i].expected_result);
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect2, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(check_parameters); ++i)
+        test_isparameterused_param_with_children(effect, effect2, tech, check_parameters[i].name,
+                check_parameters[i].expected_result);
+
+    effect2->lpVtbl->Release(effect2);
+
+    hr = D3DXCreateEffect(device, test_effect_states_effect_blob, sizeof(test_effect_states_effect_blob),
+            NULL, NULL, 0, NULL, &effect2, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_isparameterused_param_with_children(effect, effect2, tech, "sampler1", TRUE);
+    effect2->lpVtbl->Release(effect2);
 
     effect->lpVtbl->Release(effect);
 }
@@ -5681,6 +5709,45 @@ static void test_effect_state_manager(IDirect3DDevice9 *device)
     ok(!refcount, "State manager was not properly freed, refcount %u.\n", refcount);
 }
 
+static void test_cross_effect_handle(IDirect3DDevice9 *device)
+{
+    ID3DXEffect *effect1, *effect2;
+    D3DXHANDLE param1, param2;
+    static int expected_ivect[4] = {28, 29, 30, 31};
+    int ivect[4];
+    HRESULT hr;
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect1, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect2, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ok(effect1 != effect2, "Got same effect unexpectedly.\n");
+
+    param1 = effect1->lpVtbl->GetParameterByName(effect1, NULL, "g_iVect");
+    ok(!!param1, "GetParameterByName failed.\n");
+
+    param2 = effect2->lpVtbl->GetParameterByName(effect2, NULL, "g_iVect");
+    ok(!!param2, "GetParameterByName failed.\n");
+
+    ok(param1 != param2, "Got same parameter handle unexpectedly.\n");
+
+    hr = effect2->lpVtbl->SetValue(effect2, param1, expected_ivect, sizeof(expected_ivect));
+    todo_wine
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect1->lpVtbl->GetValue(effect1, param1, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    todo_wine
+    ok(!memcmp(ivect, expected_ivect, sizeof(expected_ivect)), "Vector value mismatch.\n");
+
+    effect2->lpVtbl->Release(effect2);
+    effect1->lpVtbl->Release(effect1);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -5728,6 +5795,7 @@ START_TEST(effect)
     test_effect_commitchanges(device);
     test_effect_preshader_relative_addressing(device);
     test_effect_state_manager(device);
+    test_cross_effect_handle(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
