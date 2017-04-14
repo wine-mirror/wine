@@ -196,6 +196,7 @@ struct d3dx_param_eval
 
 struct d3dx_parameter
 {
+    char magic_string[4];
     char *name;
     char *semantic;
     void *data;
@@ -210,8 +211,6 @@ struct d3dx_parameter
     UINT bytes;
     DWORD runtime_flags;
     DWORD object_id;
-
-    D3DXHANDLE handle;
 
     struct d3dx_parameter *annotations;
     struct d3dx_parameter *members;

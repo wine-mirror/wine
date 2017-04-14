@@ -27,7 +27,7 @@
 #define INT_FLOAT_MULTI 255.0f
 #define INT_FLOAT_MULTI_INVERSE (1/INT_FLOAT_MULTI)
 
-#define INITIAL_PARAM_TABLE_SIZE 16
+static const char parameter_magic_string[4] = {'@', '!', '#', '\xFF'};
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -137,12 +137,6 @@ struct d3dx_technique
     struct IDirect3DStateBlock9 *saved_state;
 };
 
-struct param_table
-{
-    struct d3dx_parameter **table;
-    unsigned int count, size;
-};
-
 struct d3dx9_base_effect
 {
     struct ID3DXEffectImpl *effect;
@@ -154,8 +148,6 @@ struct d3dx9_base_effect
     struct d3dx_parameter *parameters;
     struct d3dx_technique *techniques;
     struct d3dx_object *objects;
-
-    struct param_table param_table;
 };
 
 struct ID3DXEffectImpl
@@ -419,17 +411,17 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
 
 static inline D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
 {
-    return parameter ? parameter->handle : NULL;
+    return (D3DXHANDLE)parameter;
 }
 
 static inline D3DXHANDLE get_technique_handle(struct d3dx_technique *technique)
 {
-    return (D3DXHANDLE) technique;
+    return (D3DXHANDLE)technique;
 }
 
 static inline D3DXHANDLE get_pass_handle(struct d3dx_pass *pass)
 {
-    return (D3DXHANDLE) pass;
+    return (D3DXHANDLE)pass;
 }
 
 static struct d3dx_technique *get_technique_by_name(struct d3dx9_base_effect *base, const char *name)
@@ -480,10 +472,11 @@ static struct d3dx_pass *get_valid_pass(struct d3dx9_base_effect *base, D3DXHAND
 
 static struct d3dx_parameter *get_valid_parameter(struct d3dx9_base_effect *base, D3DXHANDLE parameter)
 {
-    struct d3dx_parameter **handle_param = (struct d3dx_parameter **)parameter;
+    struct d3dx_parameter *handle_param = (struct d3dx_parameter *)parameter;
 
-    if (handle_param >= base->param_table.table && handle_param < base->param_table.table + base->param_table.count)
-        return *handle_param;
+    if (handle_param && !strncmp(handle_param->magic_string, parameter_magic_string,
+            sizeof(parameter_magic_string)))
+        return handle_param;
 
     return get_parameter_by_name(base, NULL, parameter);
 }
@@ -654,8 +647,6 @@ static void d3dx9_base_effect_cleanup(struct d3dx9_base_effect *base)
     unsigned int i;
 
     TRACE("base %p.\n", base);
-
-    HeapFree(GetProcessHeap(), 0, base->param_table.table);
 
     if (base->parameters)
     {
@@ -2573,7 +2564,7 @@ static HRESULT d3dx9_get_param_value_ptr(struct ID3DXEffectImpl *effect, struct 
         {
             unsigned int array_idx;
             static const struct d3dx_parameter array_idx_param =
-                {NULL, NULL, NULL, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 0, 0, 0, 0, sizeof(array_idx)};
+                {"", NULL, NULL, NULL, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 0, 0, 0, 0, sizeof(array_idx)};
             HRESULT hr;
             struct d3dx_parameter *ref_param, *selected_param;
 
@@ -5068,59 +5059,9 @@ static HRESULT d3dx9_copy_data(struct d3dx9_base_effect *base, unsigned int obje
     return D3D_OK;
 }
 
-static void add_param_to_table(struct d3dx9_base_effect *base, struct d3dx_parameter *param)
+static void param_set_magic_number(struct d3dx_parameter *param)
 {
-    struct param_table *table = &base->param_table;
-
-    if (table->count >= table->size)
-    {
-        unsigned int new_size;
-        struct d3dx_parameter **new_alloc;
-
-        if (!table->size)
-        {
-            new_size = INITIAL_PARAM_TABLE_SIZE;
-            new_alloc = HeapAlloc(GetProcessHeap(), 0, sizeof(*table->table) * new_size);
-            if (!new_alloc)
-            {
-                ERR("Out of memory.\n");
-                return;
-            }
-        }
-        else
-        {
-            new_size = table->size * 2;
-            new_alloc = HeapReAlloc(GetProcessHeap(), 0, table->table, sizeof(*table->table) * new_size);
-            if (!new_alloc)
-            {
-                ERR("Out of memory.\n");
-                return;
-            }
-        }
-        table->table = new_alloc;
-        table->size = new_size;
-    }
-
-    table->table[table->count++] = param;
-}
-
-static void sync_param_handles(struct d3dx9_base_effect *base)
-{
-    struct param_table *table = &base->param_table;
-    struct d3dx_parameter **new_alloc;
-    unsigned int i;
-
-    if (table->count)
-    {
-        new_alloc = HeapReAlloc(GetProcessHeap(), 0, table->table, sizeof(*table->table) * table->count);
-        if (new_alloc)
-            table->table = new_alloc;
-        else
-            ERR("Out of memory.\n");
-    }
-
-    for (i = 0; i < table->count; ++i)
-        table->table[i]->handle = (D3DXHANDLE)&table->table[i];
+    memcpy(param->magic_string, parameter_magic_string, sizeof(parameter_magic_string));
 }
 
 static HRESULT d3dx9_parse_effect_typedef(struct d3dx9_base_effect *base, struct d3dx_parameter *param,
@@ -5257,7 +5198,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx9_base_effect *base, struct
         {
             *ptr = save_ptr;
 
-            add_param_to_table(base, &param->members[i]);
+            param_set_magic_number(&param->members[i]);
             hr = d3dx9_parse_effect_typedef(base, &param->members[i], data, ptr, param, flags);
             if (hr != D3D_OK)
             {
@@ -5282,7 +5223,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx9_base_effect *base, struct
 
         for (i = 0; i < param->member_count; ++i)
         {
-            add_param_to_table(base, &param->members[i]);
+            param_set_magic_number(&param->members[i]);
             hr = d3dx9_parse_effect_typedef(base, &param->members[i], data, ptr, NULL, flags);
             if (hr != D3D_OK)
             {
@@ -5440,7 +5381,7 @@ static HRESULT d3dx9_parse_effect_parameter(struct d3dx9_base_effect *base, stru
 
         for (i = 0; i < param->annotation_count; ++i)
         {
-            add_param_to_table(base, &param->annotations[i]);
+            param_set_magic_number(&param->annotations[i]);
             hr = d3dx9_parse_effect_annotation(base, &param->annotations[i], data, ptr, objects);
             if (hr != D3D_OK)
             {
@@ -5502,7 +5443,7 @@ static HRESULT d3dx9_parse_effect_pass(struct d3dx9_base_effect *base, struct d3
 
         for (i = 0; i < pass->annotation_count; ++i)
         {
-            add_param_to_table(base, &pass->annotations[i]);
+            param_set_magic_number(&pass->annotations[i]);
             hr = d3dx9_parse_effect_annotation(base, &pass->annotations[i], data, ptr, objects);
             if (hr != D3D_OK)
             {
@@ -5598,7 +5539,7 @@ static HRESULT d3dx9_parse_effect_technique(struct d3dx9_base_effect *base, stru
 
         for (i = 0; i < technique->annotation_count; ++i)
         {
-            add_param_to_table(base, &technique->annotations[i]);
+            param_set_magic_number(&technique->annotations[i]);
             hr = d3dx9_parse_effect_annotation(base, &technique->annotations[i], data, ptr, objects);
             if (hr != D3D_OK)
             {
@@ -5963,7 +5904,7 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
 
         for (i = 0; i < base->parameter_count; ++i)
         {
-            add_param_to_table(base, &base->parameters[i]);
+            param_set_magic_number(&base->parameters[i]);
             hr = d3dx9_parse_effect_parameter(base, &base->parameters[i], data, &ptr, base->objects);
             if (hr != D3D_OK)
             {
@@ -5995,8 +5936,6 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
             }
         }
     }
-
-    sync_param_handles(base);
 
     read_dword(&ptr, &stringcount);
     TRACE("String count: %u\n", stringcount);

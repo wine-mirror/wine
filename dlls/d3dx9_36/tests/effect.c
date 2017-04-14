@@ -5735,13 +5735,11 @@ static void test_cross_effect_handle(IDirect3DDevice9 *device)
     ok(param1 != param2, "Got same parameter handle unexpectedly.\n");
 
     hr = effect2->lpVtbl->SetValue(effect2, param1, expected_ivect, sizeof(expected_ivect));
-    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect1->lpVtbl->GetValue(effect1, param1, ivect, sizeof(ivect));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    todo_wine
     ok(!memcmp(ivect, expected_ivect, sizeof(expected_ivect)), "Vector value mismatch.\n");
 
     effect2->lpVtbl->Release(effect2);
