@@ -1559,13 +1559,13 @@ HRESULT HTMLLabelElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     return S_OK;
 }
 
-typedef struct {
+struct HTMLButtonElement {
     HTMLElement element;
 
     IHTMLButtonElement IHTMLButtonElement_iface;
 
     nsIDOMHTMLButtonElement *nsbutton;
-} HTMLButtonElement;
+};
 
 static inline HTMLButtonElement *impl_from_IHTMLButtonElement(IHTMLButtonElement *iface)
 {

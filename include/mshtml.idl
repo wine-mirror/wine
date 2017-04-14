@@ -11460,6 +11460,25 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLButtonElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f2c6-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLButtonElement
+{
+    [default]         dispinterface DispHTMLButtonElement;
+ /* [source, default] dispinterface HTMLButtonElementEvents; */
+ /* [source]          dispinterface HTMLButtonElementEvents2; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLTextContainer;
+    interface IHTMLButtonElement;
+ /* interface IHTMLButtonElement2; */
+}
+
+/*****************************************************************************
  *    IHTMLHtmlElement interface
  */
 [
