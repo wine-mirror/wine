@@ -34,14 +34,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLInputElement {
     HTMLElement element;
 
     IHTMLInputElement IHTMLInputElement_iface;
     IHTMLInputTextElement IHTMLInputTextElement_iface;
 
     nsIDOMHTMLInputElement *nsinput;
-} HTMLInputElement;
+};
 
 static const WCHAR forW[] = {'f','o','r',0};
 

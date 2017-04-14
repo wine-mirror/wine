@@ -11148,6 +11148,35 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLInputElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f5d8-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLInputElement
+{
+    [default]         dispinterface DispHTMLInputElement;
+ /* [source, default] dispinterface HTMLInputTextElementEvents; */
+ /* [source]          dispinterface HTMLInputTextElementEvents2; */
+ /* [source]          dispinterface HTMLOptionButtonElementEvents; */
+ /* [source]          dispinterface HTMLButtonElementEvents; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLInputElement;
+ /* interface IHTMLInputElement2; */
+    interface IHTMLInputTextElement;
+ /* interface IHTMLInputTextElement2; */
+ /* interface IHTMLInputHiddenElement; */
+ /* interface IHTMLInputButtonElement; */
+ /* interface IHTMLInputFileElement; */
+ /* interface IHTMLOptionButtonElement; */
+ /* interface IHTMLInputImage; */
+ /* interface IHTMLInputElement3; */
+ /* interface IHTMLInputRangeElement; */
+}
+
+/*****************************************************************************
  *    IHTMLTextAreaElement interface
  */
 [
