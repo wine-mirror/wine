@@ -10373,6 +10373,27 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLSelectElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f245-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLSelectElement
+{
+    [default]         dispinterface DispHTMLSelectElement;
+ /* [source, default] dispinterface HTMLSelectElementEvents; */
+ /* [source]          dispinterface HTMLSelectElementEvents2; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLSelectElement;
+ /* interface IHTMLSelectElement2; */
+ /* interface IHTMLSelectElement4; */
+ /* interface IHTMLSelectElement5; */
+ /* interface IHTMLSelectElement6; */
+}
+
+/*****************************************************************************
  *    IHTMLSelectionObject interface
  */
 [
