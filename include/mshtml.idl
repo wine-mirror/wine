@@ -11691,6 +11691,23 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLHeadElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f493-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLHeadElement
+{
+    [default]         dispinterface DispHTMLHeadElement;
+    [source, default] dispinterface HTMLElementEvents;
+    [source]          dispinterface HTMLElementEvents2;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLHeadElement;
+    interface IHTMLHeadElement2;
+}
+
+/*****************************************************************************
  *    DispHTMLTitleElement interface
  */
 [

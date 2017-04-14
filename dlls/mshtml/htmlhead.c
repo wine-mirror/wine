@@ -374,11 +374,11 @@ HRESULT HTMLHtmlElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem,
     return S_OK;
 }
 
-typedef struct {
+struct HTMLHeadElement {
     HTMLElement element;
 
     IHTMLHeadElement IHTMLHeadElement_iface;
-} HTMLHeadElement;
+};
 
 static inline HTMLHeadElement *impl_from_IHTMLHeadElement(IHTMLHeadElement *iface)
 {
