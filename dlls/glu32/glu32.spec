@@ -20,7 +20,7 @@
 @ stdcall gluGetString(long) wine_gluGetString
 @ stdcall gluGetTessProperty(ptr long ptr) wine_gluGetTessProperty
 @ stdcall gluLoadSamplingMatrices(ptr ptr ptr ptr) wine_gluLoadSamplingMatrices
-@ stdcall gluLookAt(double double double double double double double double double) wine_gluLookAt
+@ stdcall gluLookAt(double double double double double double double double double)
 @ stdcall gluNewNurbsRenderer() wine_gluNewNurbsRenderer
 @ stdcall gluNewQuadric() wine_gluNewQuadric
 @ stdcall gluNewTess() wine_gluNewTess
@@ -29,11 +29,11 @@
 @ stdcall gluNurbsCurve(ptr long ptr long ptr long long) wine_gluNurbsCurve
 @ stdcall gluNurbsProperty(ptr long long) wine_gluNurbsProperty
 @ stdcall gluNurbsSurface(ptr long ptr long ptr long long ptr long long long) wine_gluNurbsSurface
-@ stdcall gluOrtho2D(double double double double) wine_gluOrtho2D
+@ stdcall gluOrtho2D(double double double double)
 @ stdcall gluPartialDisk(ptr double double long long double double) wine_gluPartialDisk
-@ stdcall gluPerspective(double double double double) wine_gluPerspective
-@ stdcall gluPickMatrix(double double double double ptr) wine_gluPickMatrix
-@ stdcall gluProject(double double double ptr ptr ptr ptr ptr ptr) wine_gluProject
+@ stdcall gluPerspective(double double double double)
+@ stdcall gluPickMatrix(double double double double ptr)
+@ stdcall gluProject(double double double ptr ptr ptr ptr ptr ptr)
 @ stdcall gluPwlCurve(ptr long ptr long long) wine_gluPwlCurve
 @ stdcall gluQuadricCallback(ptr long ptr) wine_gluQuadricCallback
 @ stdcall gluQuadricDrawStyle(ptr long) wine_gluQuadricDrawStyle
@@ -50,4 +50,4 @@
 @ stdcall gluTessNormal(ptr double double double) wine_gluTessNormal
 @ stdcall gluTessProperty(ptr long double) wine_gluTessProperty
 @ stdcall gluTessVertex(ptr ptr ptr) wine_gluTessVertex
-@ stdcall gluUnProject(double double double ptr ptr ptr ptr ptr ptr) wine_gluUnProject
+@ stdcall gluUnProject(double double double ptr ptr ptr ptr ptr ptr)

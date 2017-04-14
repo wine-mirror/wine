@@ -1,5 +1,7 @@
 MODULE    = glu32.dll
 IMPORTLIB = glu32
+IMPORTS   = opengl32
 
 C_SRCS = \
-	glu.c
+	glu.c \
+	project.c

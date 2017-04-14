@@ -136,7 +136,6 @@ static void  (*p_gluEndTrim)( GLUnurbs* nurb );
 static void  (*p_gluGetNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat* data );
 static void  (*p_gluGetTessProperty)( GLUtesselator* tess, GLenum which, GLdouble* data );
 static void  (*p_gluLoadSamplingMatrices)( GLUnurbs* nurb, const GLfloat *model, const GLfloat *perspective, const GLint *view );
-static void  (*p_gluLookAt)( GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ );
 static GLUnurbs* (*p_gluNewNurbsRenderer)(void);
 static GLUquadric* (*p_gluNewQuadric)(void);
 static GLUtesselator* (*p_gluNewTess)(void);
@@ -144,11 +143,7 @@ static void  (*p_gluNurbsCallback)( GLUnurbs* nurb, GLenum which, _GLUfuncptr Ca
 static void  (*p_gluNurbsCurve)( GLUnurbs* nurb, GLint knotCount, GLfloat *knots, GLint stride, GLfloat *control, GLint order, GLenum type );
 static void  (*p_gluNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat value );
 static void  (*p_gluNurbsSurface)( GLUnurbs* nurb, GLint sKnotCount, GLfloat* sKnots, GLint tKnotCount, GLfloat* tKnots, GLint sStride, GLint tStride, GLfloat* control, GLint sOrder, GLint tOrder, GLenum type );
-static void  (*p_gluOrtho2D)( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top );
 static void  (*p_gluPartialDisk)( GLUquadric* quad, GLdouble inner, GLdouble outer, GLint slices, GLint loops, GLdouble start, GLdouble sweep );
-static void  (*p_gluPerspective)( GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar );
-static void  (*p_gluPickMatrix)( GLdouble x, GLdouble y, GLdouble delX, GLdouble delY, GLint *viewport );
-static GLint (*p_gluProject)( GLdouble objX, GLdouble objY, GLdouble objZ, const GLdouble *model, const GLdouble *proj, const GLint *view, GLdouble* winX, GLdouble* winY, GLdouble* winZ );
 static void  (*p_gluPwlCurve)( GLUnurbs* nurb, GLint count, GLfloat* data, GLint stride, GLenum type );
 static void  (*p_gluQuadricCallback)( GLUquadric* quad, GLenum which, _GLUfuncptr CallBackFunc );
 static void  (*p_gluQuadricDrawStyle)( GLUquadric* quad, GLenum draw );
@@ -165,7 +160,6 @@ static void  (*p_gluTessEndPolygon)( GLUtesselator* tess );
 static void  (*p_gluTessNormal)( GLUtesselator* tess, GLdouble valueX, GLdouble valueY, GLdouble valueZ );
 static void  (*p_gluTessProperty)( GLUtesselator* tess, GLenum which, GLdouble data );
 static void  (*p_gluTessVertex)( GLUtesselator* tess, GLdouble *location, GLvoid* data );
-static GLint (*p_gluUnProject)( GLdouble winX, GLdouble winY, GLdouble winZ, const GLdouble *model, const GLdouble *proj, const GLint *view, GLdouble* objX, GLdouble* objY, GLdouble* objZ );
 
 static void *libglu_handle;
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
@@ -196,66 +190,6 @@ static void *load_glufunc( const char *name )
 
 #define LOAD_FUNCPTR(f) (p_##f || (p_##f = load_glufunc( #f )))
 
-
-/***********************************************************************
- *		gluLookAt (GLU32.@)
- */
-void WINAPI wine_gluLookAt( GLdouble eyex, GLdouble eyey, GLdouble eyez,
-                            GLdouble centerx, GLdouble centery, GLdouble centerz,
-                            GLdouble upx, GLdouble upy, GLdouble upz )
-{
-    if (!LOAD_FUNCPTR( gluLookAt )) return;
-    p_gluLookAt( eyex, eyey, eyez, centerx, centery, centerz, upx, upy, upz );
-}
-
-/***********************************************************************
- *		gluOrtho2D (GLU32.@)
- */
-void WINAPI wine_gluOrtho2D( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top )
-{
-    if (!LOAD_FUNCPTR( gluOrtho2D )) return;
-    p_gluOrtho2D( left, right, bottom, top );
-}
-
-/***********************************************************************
- *		gluPerspective (GLU32.@)
- */
-void WINAPI wine_gluPerspective( GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar )
-{
-    if (!LOAD_FUNCPTR( gluPerspective )) return;
-    p_gluPerspective( fovy, aspect, zNear, zFar );
-}
-
-/***********************************************************************
- *		gluPickMatrix (GLU32.@)
- */
-void WINAPI wine_gluPickMatrix( GLdouble x, GLdouble y, GLdouble width, GLdouble height, GLint viewport[4])
-{
-    if (!LOAD_FUNCPTR( gluPickMatrix )) return;
-    p_gluPickMatrix( x, y, width, height, viewport );
-}
-
-/***********************************************************************
- *		gluProject (GLU32.@)
- */
-int WINAPI wine_gluProject( GLdouble objx, GLdouble objy, GLdouble objz, const GLdouble modelMatrix[16],
-                            const GLdouble projMatrix[16], const GLint viewport[4],
-                            GLdouble *winx, GLdouble *winy, GLdouble *winz )
-{
-    if (!LOAD_FUNCPTR( gluProject )) return GLU_FALSE;
-    return p_gluProject( objx, objy, objz, modelMatrix, projMatrix, viewport, winx, winy, winz );
-}
-
-/***********************************************************************
- *		gluUnProject (GLU32.@)
- */
-int WINAPI wine_gluUnProject( GLdouble winx, GLdouble winy, GLdouble winz, const GLdouble modelMatrix[16],
-                              const GLdouble projMatrix[16], const GLint viewport[4],
-                              GLdouble *objx, GLdouble *objy, GLdouble *objz )
-{
-    if (!LOAD_FUNCPTR( gluUnProject )) return GLU_FALSE;
-    return p_gluUnProject( winx, winy, winz, modelMatrix, projMatrix, viewport, objx, objy, objz );
-}
 
 /***********************************************************************
  *		gluErrorString (GLU32.@)
