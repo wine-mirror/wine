@@ -191,11 +191,11 @@ HRESULT HTMLTitleElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     return S_OK;
 }
 
-typedef struct {
+struct HTMLHtmlElement {
     HTMLElement element;
 
     IHTMLHtmlElement IHTMLHtmlElement_iface;
-} HTMLHtmlElement;
+};
 
 static inline HTMLHtmlElement *impl_from_IHTMLHtmlElement(IHTMLHtmlElement *iface)
 {
