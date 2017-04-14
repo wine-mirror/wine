@@ -11353,6 +11353,27 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLTextAreaElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f2ac-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLTextAreaElement
+{
+    [default]         dispinterface DispHTMLTextAreaElement;
+ /* [source, default] dispinterface HTMLInputTextElementEvents; */
+ /* [source]          dispinterface HTMLInputTextElementEvents2; */
+    [source]          dispinterface HTMLTextContainerEvents;
+    [source]          dispinterface HTMLTextContainerEvents2;
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLTextContainer;
+    interface IHTMLTextAreaElement;
+ /* interface IHTMLTextAreaElement2; */
+}
+
+/*****************************************************************************
  *    IHTMLButtonElement interface
  */
 [

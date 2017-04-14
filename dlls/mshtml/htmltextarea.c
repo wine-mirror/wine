@@ -32,13 +32,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLTextAreaElement {
     HTMLElement element;
 
     IHTMLTextAreaElement IHTMLTextAreaElement_iface;
 
     nsIDOMHTMLTextAreaElement *nstextarea;
-} HTMLTextAreaElement;
+};
 
 static inline HTMLTextAreaElement *impl_from_IHTMLTextAreaElement(IHTMLTextAreaElement *iface)
 {
