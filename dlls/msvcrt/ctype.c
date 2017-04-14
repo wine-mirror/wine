@@ -468,3 +468,33 @@ int CDECL MSVCRT__tolower(int c)
 {
     return c + 0x20;  /* sic */
 }
+
+/*********************************************************************
+ *              wctype (MSVCR120.@)
+ */
+unsigned short __cdecl wctype(const char *property)
+{
+    static const struct {
+        const char *name;
+        unsigned short mask;
+    } properties[] = {
+        { "alnum", MSVCRT__DIGIT|MSVCRT__ALPHA },
+        { "alpha", MSVCRT__ALPHA },
+        { "cntrl", MSVCRT__CONTROL },
+        { "digit", MSVCRT__DIGIT },
+        { "graph", MSVCRT__DIGIT|MSVCRT__PUNCT|MSVCRT__ALPHA },
+        { "lower", MSVCRT__LOWER },
+        { "print", MSVCRT__DIGIT|MSVCRT__PUNCT|MSVCRT__BLANK|MSVCRT__ALPHA },
+        { "punct", MSVCRT__PUNCT },
+        { "space", MSVCRT__SPACE },
+        { "upper", MSVCRT__UPPER },
+        { "xdigit", MSVCRT__HEX }
+    };
+    unsigned int i;
+
+    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++)
+        if(!strcmp(property, properties[i].name))
+            return properties[i].mask;
+
+    return 0;
+}

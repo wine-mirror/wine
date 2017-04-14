@@ -2149,7 +2149,7 @@
 @ cdecl wctomb(ptr long) msvcr120.wctomb
 @ cdecl wctomb_s(ptr ptr long long) msvcr120.wctomb_s
 @ stub wctrans
-@ stub wctype
+@ cdecl wctype(str) msvcr120.wctype
 @ cdecl wmemcpy_s(ptr long ptr long) msvcr120.wmemcpy_s
 @ cdecl wmemmove_s(ptr long ptr long) msvcr120.wmemmove_s
 @ varargs wprintf(wstr) msvcr120.wprintf
