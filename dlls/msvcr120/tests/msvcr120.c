@@ -182,6 +182,7 @@ static int (CDECL *p_fegetenv)(fenv_t*);
 static int (CDECL *p__clearfp)(void);
 static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
 static void (__cdecl *p_free_locale)(_locale_t);
+static unsigned short (__cdecl *p_wctype)(const char*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -236,6 +237,7 @@ static BOOL init(void)
     p_errno = (void*)GetProcAddress(module, "_errno");
     p_wcreate_locale = (void*)GetProcAddress(module, "_wcreate_locale");
     p_free_locale = (void*)GetProcAddress(module, "_free_locale");
+    SET(p_wctype, "wctype");
     SET(p_fegetenv, "fegetenv");
     SET(p__clearfp, "_clearfp");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
@@ -880,6 +882,35 @@ static void test__Condition_variable(void)
     CloseHandle(thread_initialized);
 }
 
+static void test_wctype(void)
+{
+    static const struct {
+        const char *name;
+        unsigned short mask;
+    } properties[] = {
+        { "alnum",  0x107 },
+        { "alpha",  0x103 },
+        { "cntrl",  0x020 },
+        { "digit",  0x004 },
+        { "graph",  0x117 },
+        { "lower",  0x002 },
+        { "print",  0x157 },
+        { "punct",  0x010 },
+        { "space",  0x008 },
+        { "upper",  0x001 },
+        { "xdigit", 0x080 },
+        { "ALNUM",  0x000 },
+        { "Alnum",  0x000 },
+        { "",  0x000 }
+    };
+    int i, ret;
+
+    for(i=0; i<sizeof(properties)/sizeof(properties[0]); i++) {
+        ret = p_wctype(properties[i].name);
+        ok(properties[i].mask == ret, "%d - Expected %x, got %x\n", i, properties[i].mask, ret);
+    }
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -896,4 +927,5 @@ START_TEST(msvcr120)
     test_fegetenv();
     test__wcreate_locale();
     test__Condition_variable();
+    test_wctype();
 }

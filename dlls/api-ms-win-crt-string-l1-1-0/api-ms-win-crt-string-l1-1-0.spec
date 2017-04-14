@@ -173,6 +173,6 @@
 @ cdecl wcstok(wstr wstr) ucrtbase.wcstok
 @ cdecl wcstok_s(ptr wstr ptr) ucrtbase.wcstok_s
 @ cdecl wcsxfrm(ptr wstr long) ucrtbase.wcsxfrm
-@ stub wctype
+@ cdecl wctype(str) ucrtbase.wctype
 @ cdecl wmemcpy_s(ptr long ptr long) ucrtbase.wmemcpy_s
 @ cdecl wmemmove_s(ptr long ptr long) ucrtbase.wmemmove_s
