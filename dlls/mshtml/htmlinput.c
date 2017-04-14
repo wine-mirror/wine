@@ -1371,11 +1371,11 @@ HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem
     return S_OK;
 }
 
-typedef struct {
+struct HTMLLabelElement {
     HTMLElement element;
 
     IHTMLLabelElement IHTMLLabelElement_iface;
-} HTMLLabelElement;
+};
 
 static inline HTMLLabelElement *impl_from_IHTMLLabelElement(IHTMLLabelElement *iface)
 {

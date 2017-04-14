@@ -10101,6 +10101,23 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLLabelElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f32b-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLLabelElement
+{
+    [default]         dispinterface DispHTMLLabelElement;
+ /* [source, default] dispinterface HTMLLabelEvents; */
+ /* [source]          dispinterface HTMLLabelEvents2; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLLabelElement;
+    interface IHTMLLabelElement2;
+}
+
+/*****************************************************************************
  *    IHTMLElementCollection interface
  */
 [
