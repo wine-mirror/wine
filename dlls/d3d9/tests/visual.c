@@ -8090,8 +8090,14 @@ static void test_vshader_input(void)
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
+        /* WARP and r500 return a color from a previous draw. In case of WARP it is the last draw, which happens to
+         * be the one with quad4_color above. AMD's r500 uses the last D3DCOLOR attribute, which is the one from
+         * quad3_color.
+         *
+         * Newer AMD cards and Nvidia return zero. */
         color = getPixelColor(device, 160, 360);
-        ok(color_match(color, 0x00000000, 1) || broken(warp),
+        ok(color_match(color, 0x00000000, 1) || broken(color_match(color, 0x00ff8040, 1))
+                || broken(color_match(color, 0x00ffff00, 1) && warp),
                 "Got unexpected color 0x%08x for no color attribute test.\n", color);
 
         IDirect3DDevice9_SetVertexShader(device, NULL);
