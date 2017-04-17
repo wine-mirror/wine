@@ -2195,12 +2195,21 @@ static unsigned int GPOS_apply_ContextPos(const ScriptCache *script_cache, const
 
                     for (l = 0; l < GET_BE_WORD(pr->PosCount); l++)
                     {
-                        int lookupIndex = GET_BE_WORD(pr_2->PosLookupRecord[l].LookupListIndex);
-                        int SequenceIndex = GET_BE_WORD(pr_2->PosLookupRecord[l].SequenceIndex) * write_dir;
+                        unsigned int lookup_index = GET_BE_WORD(pr_2->PosLookupRecord[l].LookupListIndex);
+                        unsigned int sequence_index = GET_BE_WORD(pr_2->PosLookupRecord[l].SequenceIndex);
 
-                        TRACE("Position: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
-                        GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookupIndex,
-                                glyphs, glyph_index + SequenceIndex, glyph_count, goffset);
+                        g = glyph_index + write_dir * sequence_index;
+                        if (g >= glyph_count)
+                        {
+                            WARN("Invalid sequence index %u (glyph index %u, write dir %d).\n",
+                                    sequence_index, glyph_index, write_dir);
+                            continue;
+                        }
+
+                        TRACE("Position: %u -> %u %u.\n", l, sequence_index, lookup_index);
+
+                        GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance,
+                                lookup, lookup_index, glyphs, g, glyph_count, goffset);
                     }
                     return 1;
                 }
