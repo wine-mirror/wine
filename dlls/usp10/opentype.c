@@ -2191,8 +2191,7 @@ static unsigned int GPOS_apply_ContextPos(const ScriptCache *script_cache, const
                     }
 
                     TRACE("Rule matches\n");
-                    pr_2 = (const GPOS_PosClassRule_2*)((const BYTE*)pr+
-                        FIELD_OFFSET(GPOS_PosClassRule_1, Class[g_count-1]));
+                    pr_2 = (const GPOS_PosClassRule_2 *)&pr->Class[g_count - 1];
 
                     for (l = 0; l < GET_BE_WORD(pr->PosCount); l++)
                     {
