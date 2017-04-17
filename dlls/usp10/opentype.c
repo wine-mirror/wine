@@ -2301,12 +2301,20 @@ static unsigned int GPOS_apply_ChainContextPos(const ScriptCache *script_cache, 
 
             for (k = 0; k < positioning_count; ++k)
             {
-                WORD lookup_index = GET_BE_WORD(positioning->PosLookupRecord[k].LookupListIndex);
-                WORD sequence_index = GET_BE_WORD(positioning->PosLookupRecord[k].SequenceIndex) * write_dir;
+                unsigned int lookup_index = GET_BE_WORD(positioning->PosLookupRecord[k].LookupListIndex);
+                unsigned int sequence_index = GET_BE_WORD(positioning->PosLookupRecord[k].SequenceIndex);
+                unsigned int g = glyph_index + write_dir * sequence_index;
+
+                if (g >= glyph_count)
+                {
+                    WARN("Skipping invalid sequence index %u (glyph index %u, write dir %d).\n",
+                            sequence_index, glyph_index, write_dir);
+                    continue;
+                }
 
                 TRACE("Position: %u -> %u %u.\n", k, sequence_index, lookup_index);
                 GPOS_apply_lookup(script_cache, otm, logfont, analysis, advance, lookup, lookup_index,
-                        glyphs, glyph_index + sequence_index, glyph_count, goffset);
+                        glyphs, g, glyph_count, goffset);
             }
             return input_count + lookahead_count;
         }
