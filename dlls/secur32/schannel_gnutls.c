@@ -343,10 +343,9 @@ static ALG_ID schannel_get_kx_algid(int kx)
     case GNUTLS_KX_DHE_DSS:
     case GNUTLS_KX_DHE_RSA: return CALG_DH_EPHEM;
     case GNUTLS_KX_ANON_ECDH: return CALG_ECDH;
-    /* MSDN mentions CALG_ECDH_EPHEM, but doesn't appear in the Windows SDK. */
     case GNUTLS_KX_ECDHE_RSA:
-    case GNUTLS_KX_ECDHE_PSK: return CALG_ECDH;
-    case GNUTLS_KX_ECDHE_ECDSA: return CALG_ECDSA;
+    case GNUTLS_KX_ECDHE_PSK:
+    case GNUTLS_KX_ECDHE_ECDSA: return CALG_ECDH_EPHEM;
     default:
         FIXME("unknown algorithm %d\n", kx);
         return 0;
