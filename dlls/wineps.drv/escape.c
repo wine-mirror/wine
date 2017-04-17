@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"
+#include "winuser.h"
 #include "winreg.h"
 #include "psdrv.h"
 #include "wine/debug.h"
@@ -139,17 +140,11 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
         RECT *r = out_data;
 	if(!physDev->job.banding) {
 	    physDev->job.banding = TRUE;
-            r->left   = 0;
-            r->top    = 0;
-            r->right  = physDev->horzRes;
-            r->bottom = physDev->vertRes;
+            SetRect(r, 0, 0, physDev->horzRes, physDev->vertRes);
             TRACE("NEXTBAND returning %s\n", wine_dbgstr_rect(r));
 	    return 1;
 	}
-        r->left   = 0;
-        r->top    = 0;
-        r->right  = 0;
-        r->bottom = 0;
+        SetRectEmpty(r);
 	TRACE("NEXTBAND rect to 0,0 - 0,0\n" );
 	physDev->job.banding = FALSE;
         return EndPage( dev->hdc );

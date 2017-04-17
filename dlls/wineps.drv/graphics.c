@@ -29,6 +29,9 @@
 #if !defined(PI)
 # define PI M_PI
 #endif
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 
@@ -103,10 +106,7 @@ BOOL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
-    rect.left = left;
-    rect.top = top;
-    rect.right = right;
-    rect.bottom = bottom;
+    SetRect(&rect, left, top, right, bottom);
     LPtoDP( dev->hdc, (POINT *)&rect, 2 );
 
     /* Windows does something truly hacky here.  If we're in passthrough mode
@@ -140,14 +140,8 @@ BOOL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 {
     RECT rect[2];
 
-    rect[0].left   = left;
-    rect[0].top    = top;
-    rect[0].right  = right;
-    rect[0].bottom = bottom;
-    rect[1].left   = 0;
-    rect[1].top    = 0;
-    rect[1].right  = ell_width;
-    rect[1].bottom = ell_height;
+    SetRect(&rect[0], left, top, right, bottom);
+    SetRect(&rect[1], 0, 0, ell_width, ell_height);
     LPtoDP( dev->hdc, (POINT *)rect, 4 );
 
     left   = rect[0].left;
@@ -200,10 +194,7 @@ static BOOL PSDRV_DrawArc( PHYSDEV dev, INT left, INT top,
     RECT rect;
     POINT start, end;
 
-    rect.left = left;
-    rect.top = top;
-    rect.right = right;
-    rect.bottom = bottom;
+    SetRect(&rect, left, top, right, bottom);
     LPtoDP( dev->hdc, (POINT *)&rect, 2 );
     start.x = xstart;
     start.y = ystart;
@@ -290,10 +281,7 @@ BOOL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 
     TRACE("%d %d - %d %d\n", left, top, right, bottom);
 
-    rect.left   = left;
-    rect.top    = top;
-    rect.right  = right;
-    rect.bottom = bottom;
+    SetRect(&rect, left, top, right, bottom);
     LPtoDP( dev->hdc, (POINT *)&rect, 2 );
 
     x = (rect.left + rect.right) / 2;

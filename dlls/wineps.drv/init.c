@@ -33,6 +33,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "winuser.h"
 #include "psdrv.h"
 #include "winspool.h"
 #include "wine/library.h"
@@ -284,22 +285,15 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 
 	if(&page->entry == &physDev->pi->ppd->PageSizes) {
 	    FIXME("Can't find page\n");
-	    physDev->ImageableArea.left = 0;
-	    physDev->ImageableArea.right = 0;
-	    physDev->ImageableArea.bottom = 0;
-	    physDev->ImageableArea.top = 0;
+            SetRectEmpty(&physDev->ImageableArea);
 	    physDev->PageSize.cx = 0;
 	    physDev->PageSize.cy = 0;
 	} else if(page->ImageableArea) {
 	  /* physDev sizes in device units; ppd sizes in 1/72" */
-	    physDev->ImageableArea.left = page->ImageableArea->llx *
-	      physDev->logPixelsX / 72;
-	    physDev->ImageableArea.right = page->ImageableArea->urx *
-	      physDev->logPixelsX / 72;
-	    physDev->ImageableArea.bottom = page->ImageableArea->lly *
-	      physDev->logPixelsY / 72;
-	    physDev->ImageableArea.top = page->ImageableArea->ury *
-	      physDev->logPixelsY / 72;
+            SetRect(&physDev->ImageableArea, page->ImageableArea->llx * physDev->logPixelsX / 72,
+                    page->ImageableArea->ury * physDev->logPixelsY / 72,
+                    page->ImageableArea->urx * physDev->logPixelsX / 72,
+                    page->ImageableArea->lly * physDev->logPixelsY / 72);
 	    physDev->PageSize.cx = page->PaperDimension->x *
 	      physDev->logPixelsX / 72;
 	    physDev->PageSize.cy = page->PaperDimension->y *
@@ -323,10 +317,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	  physDev->logPixelsY / 254;
     } else {
         FIXME("Odd dmFields %x\n", physDev->Devmode->dmPublic.dmFields);
-	physDev->ImageableArea.left = 0;
-	physDev->ImageableArea.right = 0;
-	physDev->ImageableArea.bottom = 0;
-	physDev->ImageableArea.top = 0;
+        SetRectEmpty(&physDev->ImageableArea);
 	physDev->PageSize.cx = 0;
 	physDev->PageSize.cy = 0;
     }
