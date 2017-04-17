@@ -283,6 +283,9 @@ static void set_last_key(HWND hwndTV)
     }
 }
 
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+
 /*******************************************************************************
  *
  *  FUNCTION: ChildWndProc(HWND, unsigned, WORD, LONG)
@@ -359,6 +362,12 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             draw_splitbar(hWnd, last_split);
         break;
 
+    case WM_CONTEXTMENU: {
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+        TrackPopupMenu(GetSubMenu(hPopupMenus, PM_NEW), TPM_RIGHTBUTTON, x, y, 0, hFrameWnd, NULL);
+    }
+
     case WM_KEYDOWN:
         if (wParam == VK_ESCAPE)
             if (GetCapture() == hWnd) {
@@ -410,13 +419,6 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	    case NM_SETFOCUS:
 		g_pChildWnd->nFocusPanel = 0;
 		break;
-            case NM_RCLICK: {
-		POINT pt;
-                GetCursorPos(&pt);
-		TrackPopupMenu(GetSubMenu(hPopupMenus, PM_NEW),
-			       TPM_RIGHTBUTTON, pt.x, pt.y, 0, hFrameWnd, NULL);
-		break;
-            }
             case TVN_BEGINLABELEDITW: {
                 HKEY hRootKey;
                 LPWSTR path;
