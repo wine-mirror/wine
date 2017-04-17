@@ -7185,7 +7185,8 @@ static void pretransformed_varying_test(void)
         const DWORD *shader_code;
         DWORD color;
         BOOL todo;
-        BOOL broken_warp;
+        BOOL broken;
+        DWORD broken_color;
     }
     tests[] =
     {
@@ -7200,7 +7201,8 @@ static void pretransformed_varying_test(void)
         {"depth",           depth_code,           0x00cccccc, TRUE },
         {"specular",        specular_code,        0x004488ff, FALSE},
         {"texcoord1",       texcoord1_code,       0x00000000, FALSE},
-        {"texcoord1 alpha", texcoord1_alpha_code, 0x00000000, FALSE, TRUE},
+        /* texcoord .w is 1.0 on r500 and WARP. See also test_uninitialized_varyings(). */
+        {"texcoord1 alpha", texcoord1_alpha_code, 0x00000000, FALSE, TRUE, 0x00ffffff},
     };
     /* Declare a monster vertex type :-) */
     static const D3DVERTEXELEMENT9 decl_elements[] = {
@@ -7287,7 +7289,6 @@ static void pretransformed_varying_test(void)
            0x224488ff, /* Nothing special */
         },
     };
-    D3DADAPTER_IDENTIFIER9 identifier;
     IDirect3DVertexDeclaration9 *decl;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
@@ -7297,7 +7298,6 @@ static void pretransformed_varying_test(void)
     DWORD color;
     HWND window;
     HRESULT hr;
-    BOOL warp;
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -7316,10 +7316,6 @@ static void pretransformed_varying_test(void)
         IDirect3DDevice9_Release(device);
         goto done;
     }
-
-    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
-    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
-    warp = adapter_is_warp(&identifier);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -7356,7 +7352,8 @@ static void pretransformed_varying_test(void)
                     "Test %s returned color 0x%08x, expected 0x%08x (todo).\n",
                     tests[i].name, color, tests[i].color);
         else
-            ok(color_match(color, tests[i].color, 1) || broken(warp && tests[i].broken_warp),
+            ok(color_match(color, tests[i].color, 1)
+                    || broken(color_match(color, tests[i].broken_color, 1) && tests[i].broken),
                     "Test %s returned color 0x%08x, expected 0x%08x.\n",
                     tests[i].name, color, tests[i].color);
 
