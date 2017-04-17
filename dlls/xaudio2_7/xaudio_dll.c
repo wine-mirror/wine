@@ -1593,7 +1593,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     IMMDevice *dev;
     HRESULT hr;
     WAVEFORMATEX *fmt;
-    ALCint attrs[7];
+    ALCint attrs[11];
     REFERENCE_TIME period, bufdur;
 
     TRACE("(%p)->(%p, %u, %u, 0x%x, %s, %p, 0x%x)\n", This,
@@ -1743,11 +1743,20 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
     }
+
     attrs[2] = ALC_FREQUENCY;
     attrs[3] = inputSampleRate;
+
     attrs[4] = ALC_FORMAT_TYPE_SOFT;
     attrs[5] = al_get_loopback_format(&This->fmt);
-    attrs[6] = 0;
+
+    /* some games create very many sources */
+    attrs[6] = ALC_STEREO_SOURCES;
+    attrs[7] = 1024;
+    attrs[8] = ALC_MONO_SOURCES;
+    attrs[9] = 1024;
+
+    attrs[10] = 0;
 
     if(!attrs[5]){
         WARN("OpenAL can't output samples in this format\n");
