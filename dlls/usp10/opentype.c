@@ -2166,12 +2166,18 @@ static unsigned int GPOS_apply_ContextPos(const ScriptCache *script_cache, const
                 {
                     const GPOS_PosClassRule_1 *pr;
                     const GPOS_PosClassRule_2 *pr_2;
+                    unsigned int g;
                     int g_count, l;
 
                     offset = GET_BE_WORD(pcs->PosClassRule[k]);
                     pr = (const GPOS_PosClassRule_1*)((const BYTE*)pcs+offset);
                     g_count = GET_BE_WORD(pr->GlyphCount);
                     TRACE("PosClassRule has %i glyphs classes\n",g_count);
+
+                    g = glyph_index + write_dir * (g_count - 1);
+                    if (g >= glyph_count)
+                        continue;
+
                     for (l = 0; l < g_count-1; l++)
                     {
                         int g_class = OT_get_glyph_class(glyph_class_table, glyphs[glyph_index + (write_dir * (l+1))]);
