@@ -3462,6 +3462,8 @@ void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *v
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view *view,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view,
+        DWORD location) DECLSPEC_HIDDEN;
 
 struct wined3d_shader_resource_view
 {

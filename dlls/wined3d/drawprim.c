@@ -543,7 +543,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(dsv);
         DWORD location = context->render_offscreen ? ds->container->resource.draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        wined3d_texture_validate_location(ds->container, dsv->sub_resource_idx, location);
+        wined3d_rendertarget_view_validate_location(dsv, location);
         wined3d_texture_invalidate_location(ds->container, dsv->sub_resource_idx, ~location);
     }
 
