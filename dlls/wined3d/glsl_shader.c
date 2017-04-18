@@ -352,11 +352,9 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
     }
 }
 
-static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_shader_version *version)
+static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_info)
 {
-    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT]
-            || (version && version->type == WINED3D_SHADER_TYPE_COMPUTE))
+    if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50))
         return 150;
     else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30))
         return 130;
@@ -365,9 +363,9 @@ static unsigned int shader_glsl_get_version(const struct wined3d_gl_info *gl_inf
 }
 
 static void shader_glsl_add_version_declaration(struct wined3d_string_buffer *buffer,
-        const struct wined3d_gl_info *gl_info, const struct wined3d_shader_version *version)
+        const struct wined3d_gl_info *gl_info)
 {
-    unsigned int glsl_version = shader_glsl_get_version(gl_info, version);
+    unsigned int glsl_version = shader_glsl_get_version(gl_info);
     if (glsl_version >= 150 && gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
         shader_addline(buffer, "#version %u compatibility\n", glsl_version);
     else
@@ -3252,10 +3250,9 @@ static const char *shader_glsl_get_rel_op(enum wined3d_shader_rel_op op)
     }
 }
 
-static BOOL shader_glsl_has_core_grad(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_shader_version *version)
+static BOOL shader_glsl_has_core_grad(const struct wined3d_gl_info *gl_info)
 {
-    return shader_glsl_get_version(gl_info, version) >= 130 || gl_info->supported[EXT_GPU_SHADER4];
+    return shader_glsl_get_version(gl_info) >= 130 || gl_info->supported[EXT_GPU_SHADER4];
 }
 
 static void shader_glsl_get_coord_size(enum wined3d_shader_resource_type resource_type,
@@ -3310,7 +3307,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         if (!type_part[0] && resource_type != WINED3D_SHADER_RESOURCE_TEXTURE_CUBEARRAY)
             FIXME("Unhandled resource type %#x.\n", resource_type);
 
-        if (!lod && grad && !shader_glsl_has_core_grad(gl_info, &ctx->shader->reg_maps.shader_version))
+        if (!lod && grad && !shader_glsl_has_core_grad(gl_info))
         {
             if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
                 suffix = "ARB";
@@ -3786,10 +3783,9 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
     }
     else if (ins->handler_idx == WINED3DSIH_MOVA)
     {
-        const struct wined3d_shader_version *version = &ins->ctx->shader->reg_maps.shader_version;
         unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
 
-        if (shader_glsl_get_version(gl_info, version) >= 130 || gl_info->supported[EXT_GPU_SHADER4])
+        if (shader_glsl_get_version(gl_info) >= 130 || gl_info->supported[EXT_GPU_SHADER4])
         {
             if (mask_size > 1)
                 shader_addline(buffer, "ivec%d(round(%s)));\n", mask_size, src0_param.param_str);
@@ -5006,10 +5002,9 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
 
-    if (!shader_glsl_has_core_grad(gl_info, &ins->ctx->shader->reg_maps.shader_version)
-            && !gl_info->supported[ARB_SHADER_TEXTURE_LOD])
+    if (!shader_glsl_has_core_grad(gl_info) && !gl_info->supported[ARB_SHADER_TEXTURE_LOD])
     {
-        FIXME("texldd used, but not supported by hardware. Falling back to regular tex\n");
+        FIXME("texldd used, but not supported by hardware. Falling back to regular tex.\n");
         shader_glsl_tex(ins);
         return;
     }
@@ -5042,7 +5037,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
 
-    if (shader_version->type == WINED3D_SHADER_TYPE_PIXEL && !shader_glsl_has_core_grad(gl_info, shader_version)
+    if (shader_version->type == WINED3D_SHADER_TYPE_PIXEL && !shader_glsl_has_core_grad(gl_info)
             && !gl_info->supported[ARB_SHADER_TEXTURE_LOD])
     {
         /* Plain GLSL only supports Lod sampling functions in vertex shaders.
@@ -6672,7 +6667,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 
     string_buffer_clear(buffer);
 
-    shader_glsl_add_version_declaration(buffer, gl_info, &vs->reg_maps.shader_version);
+    shader_glsl_add_version_declaration(buffer, gl_info);
 
     if (per_vertex_point_size)
     {
@@ -6963,7 +6958,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     priv_ctx.cur_np2fixup_info = np2fixup_info;
     priv_ctx.string_buffers = string_buffers;
 
-    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
+    shader_glsl_add_version_declaration(buffer, gl_info);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DERIVATIVE_CONTROL])
@@ -7260,7 +7255,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     priv_ctx.cur_vs_args = args;
     priv_ctx.string_buffers = string_buffers;
 
-    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
+    shader_glsl_add_version_declaration(buffer, gl_info);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_DRAW_INSTANCED])
@@ -7344,7 +7339,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.string_buffers = string_buffers;
 
-    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
+    shader_glsl_add_version_declaration(buffer, gl_info);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_GEOMETRY_SHADER4])
@@ -7414,14 +7409,15 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *
     GLuint shader_id;
     unsigned int i;
 
-    shader_glsl_add_version_declaration(buffer, gl_info, &reg_maps->shader_version);
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.string_buffers = string_buffers;
+
+    shader_glsl_add_version_declaration(buffer, gl_info);
 
     shader_glsl_enable_extensions(buffer, gl_info);
     if (gl_info->supported[ARB_COMPUTE_SHADER])
         shader_addline(buffer, "#extension GL_ARB_compute_shader : enable\n");
 
-    memset(&priv_ctx, 0, sizeof(priv_ctx));
-    priv_ctx.string_buffers = string_buffers;
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
     for (i = 0; i < reg_maps->tgsm_count; ++i)
@@ -7854,7 +7850,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     string_buffer_clear(buffer);
 
-    shader_glsl_add_version_declaration(buffer, gl_info, NULL);
+    shader_glsl_add_version_declaration(buffer, gl_info);
 
     if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
@@ -8426,7 +8422,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     }
     lowest_disabled_stage = stage;
 
-    shader_glsl_add_version_declaration(buffer, gl_info, NULL);
+    shader_glsl_add_version_declaration(buffer, gl_info);
 
     if (shader_glsl_use_explicit_attrib_location(gl_info))
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
@@ -9944,7 +9940,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
         shader_model = 4;
     /* Support for texldd and texldl instructions in pixel shaders is required
      * for SM3. */
-    else if (shader_glsl_has_core_grad(gl_info, NULL) || gl_info->supported[ARB_SHADER_TEXTURE_LOD])
+    else if (shader_glsl_has_core_grad(gl_info) || gl_info->supported[ARB_SHADER_TEXTURE_LOD])
         shader_model = 3;
     else
         shader_model = 2;
