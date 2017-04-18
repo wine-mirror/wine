@@ -1561,6 +1561,8 @@ void CDECL macdrv_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha
     if (data)
     {
         data->layered = TRUE;
+        data->ulw_layered = FALSE;
+        if (data->surface) set_surface_use_alpha(data->surface, FALSE);
         if (data->cocoa_window)
         {
             sync_window_opacity(data, key, alpha, FALSE, flags);

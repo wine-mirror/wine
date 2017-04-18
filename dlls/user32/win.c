@@ -3749,7 +3749,11 @@ BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
     }
     SERVER_END_REQ;
 
-    if (ret) USER_Driver->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
+    if (ret)
+    {
+        USER_Driver->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
+        update_window_state( hwnd );
+    }
 
     return ret;
 }

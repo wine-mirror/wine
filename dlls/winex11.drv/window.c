@@ -2535,6 +2535,8 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
 
     if (data)
     {
+        set_window_visual( data, &default_visual );
+
         if (data->whole_window)
             sync_window_opacity( data->display, data->whole_window, key, alpha, flags );
         if (data->surface)
