@@ -7317,7 +7317,7 @@ static void test_hwnd_message(void)
 
 static void test_layered_window(void)
 {
-    HWND hwnd;
+    HWND hwnd, child;
     COLORREF key = 0;
     BYTE alpha = 0;
     DWORD flags = 0;
@@ -7326,6 +7326,7 @@ static void test_layered_window(void)
     HDC hdc;
     HBITMAP hbm;
     BOOL ret;
+    MSG msg;
 
     if (!pGetLayeredWindowAttributes || !pSetLayeredWindowAttributes || !pUpdateLayeredWindow)
     {
@@ -7464,6 +7465,40 @@ static void test_layered_window(void)
     ok( key == 0 || key == 0x222222, "wrong color key %x\n", key );
     ok( alpha == 0 || alpha == 55, "wrong alpha %u\n", alpha );
     ok( flags == 0, "wrong flags %x\n", flags );
+
+    /* test layered window with WS_CLIPCHILDREN flag */
+    SetWindowLongA( hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) | WS_CLIPCHILDREN );
+    SetWindowLongA( hwnd, GWL_EXSTYLE, GetWindowLongA(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED );
+    SetWindowLongA( hwnd, GWL_EXSTYLE, GetWindowLongA(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
+    child = CreateWindowExA( 0, "button", "button", WS_VISIBLE | WS_CHILD,
+            0, 0, 50, 50, hwnd, 0, 0, NULL );
+    ok( child != NULL, "CreateWindowEx error %u\n", GetLastError() );
+    ShowWindow( hwnd, SW_SHOW );
+
+    ret = pSetLayeredWindowAttributes( hwnd, 0, 255, LWA_ALPHA );
+    ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        DispatchMessageA(&msg);
+
+        if (msg.message == WM_PAINT && msg.hwnd == child)
+            break;
+    }
+
+    SetWindowLongA( hwnd, GWL_EXSTYLE, GetWindowLongA(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED );
+    SetWindowLongA( hwnd, GWL_EXSTYLE, GetWindowLongA(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
+
+    ret = pSetLayeredWindowAttributes( hwnd, 0, 255, LWA_ALPHA );
+    ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        DispatchMessageA(&msg);
+
+        if (msg.message == WM_PAINT && msg.hwnd == child)
+            break;
+    }
 
     DestroyWindow( hwnd );
     DeleteDC( hdc );
