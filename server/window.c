@@ -2833,7 +2833,7 @@ DECL_HANDLER(set_window_layered_info)
         win->layered_flags = req->flags;
         win->is_layered    = 1;
         /* repaint since we know now it's not going to use UpdateLayeredWindow */
-        if (!was_layered) redraw_window( win, 0, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+        if (!was_layered) redraw_window( win, 0, 1, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     }
     else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
 }
