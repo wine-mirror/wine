@@ -507,7 +507,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         rt = wined3d_texture_from_resource(rtv->resource);
         if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
         {
-            wined3d_texture_load_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
+            wined3d_rendertarget_view_load_location(rtv, context, rtv->resource->draw_binding);
             wined3d_texture_invalidate_location(rt, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
         }
         else
@@ -527,7 +527,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(dsv);
 
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
-            wined3d_texture_load_location(ds->container, dsv->sub_resource_idx, context, location);
+            wined3d_rendertarget_view_load_location(dsv, context, location);
         else
             wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
     }
