@@ -499,16 +499,13 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        struct wined3d_texture *rt;
-
         if (!(rtv = fb->render_targets[i]) || rtv->format->id == WINED3DFMT_NULL)
             continue;
 
-        rt = wined3d_texture_from_resource(rtv->resource);
         if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
         {
             wined3d_rendertarget_view_load_location(rtv, context, rtv->resource->draw_binding);
-            wined3d_texture_invalidate_location(rt, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
+            wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);
         }
         else
         {
@@ -540,11 +537,10 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     if (dsv && state->render_states[WINED3D_RS_ZWRITEENABLE])
     {
-        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(dsv);
-        DWORD location = context->render_offscreen ? ds->container->resource.draw_binding : WINED3D_LOCATION_DRAWABLE;
+        DWORD location = context->render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
         wined3d_rendertarget_view_validate_location(dsv, location);
-        wined3d_texture_invalidate_location(ds->container, dsv->sub_resource_idx, ~location);
+        wined3d_rendertarget_view_invalidate_location(dsv, ~location);
     }
 
     stream_info = &context->stream_info;
