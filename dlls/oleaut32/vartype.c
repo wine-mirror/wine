@@ -129,7 +129,7 @@ static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut,
   if (SUCCEEDED(hRet))
   {
     /* Convert the property to the requested type */
-    V_VT(&dstVar) = VT_EMPTY;
+    VariantInit(&dstVar);
     hRet = VariantChangeTypeEx(&dstVar, &srcVar, lcid, dwFlags, vt);
     VariantClear(&srcVar);
 
