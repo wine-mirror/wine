@@ -292,7 +292,7 @@ static DWORD schannel_get_protocol(gnutls_protocol_t proto)
     }
 }
 
-static ALG_ID schannel_get_cipher_algid(int cipher)
+static ALG_ID schannel_get_cipher_algid(gnutls_cipher_algorithm_t cipher)
 {
     switch (cipher)
     {
@@ -314,7 +314,7 @@ static ALG_ID schannel_get_cipher_algid(int cipher)
     }
 }
 
-static ALG_ID schannel_get_mac_algid(gnutls_mac_algorithm_t mac)
+static ALG_ID schannel_get_mac_algid(gnutls_mac_algorithm_t mac, gnutls_cipher_algorithm_t cipher)
 {
     switch (mac)
     {
@@ -326,8 +326,19 @@ static ALG_ID schannel_get_mac_algid(gnutls_mac_algorithm_t mac)
     case GNUTLS_MAC_SHA256: return CALG_SHA_256;
     case GNUTLS_MAC_SHA384: return CALG_SHA_384;
     case GNUTLS_MAC_SHA512: return CALG_SHA_512;
+    case GNUTLS_MAC_AEAD:
+        /* When using AEAD (such as GCM), we return PRF algorithm instead
+           which is defined in RFC 5289. */
+        switch (cipher)
+        {
+        case GNUTLS_CIPHER_AES_128_GCM: return CALG_SHA_256;
+        case GNUTLS_CIPHER_AES_256_GCM: return CALG_SHA_384;
+        default:
+            break;
+        }
+        /* fall through */
     default:
-        FIXME("unknown algorithm %d\n", mac);
+        FIXME("unknown algorithm %d, cipher %d\n", mac, cipher);
         return 0;
     }
 }
@@ -375,7 +386,7 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
     info->dwProtocol = schannel_get_protocol(proto);
     info->aiCipher = schannel_get_cipher_algid(alg);
     info->dwCipherStrength = pgnutls_cipher_get_key_size(alg) * 8;
-    info->aiHash = schannel_get_mac_algid(mac);
+    info->aiHash = schannel_get_mac_algid(mac, alg);
     info->dwHashStrength = pgnutls_mac_get_key_size(mac) * 8;
     info->aiExch = schannel_get_kx_algid(kx);
     /* FIXME: info->dwExchStrength? */
