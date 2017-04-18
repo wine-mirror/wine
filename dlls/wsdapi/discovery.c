@@ -26,17 +26,25 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "objbase.h"
 #include "guiddef.h"
 #include "wsdapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
 
+struct notificationSink
+{
+    struct list entry;
+    IWSDiscoveryPublisherNotify *notificationSink;
+};
+
 typedef struct IWSDiscoveryPublisherImpl {
     IWSDiscoveryPublisher IWSDiscoveryPublisher_iface;
     LONG                  ref;
     IWSDXMLContext        *xmlContext;
     DWORD                 addressFamily;
+    struct list           notificationSinks;
 } IWSDiscoveryPublisherImpl;
 
 static inline IWSDiscoveryPublisherImpl *impl_from_IWSDiscoveryPublisher(IWSDiscoveryPublisher *iface)
@@ -86,6 +94,7 @@ static ULONG WINAPI IWSDiscoveryPublisherImpl_Release(IWSDiscoveryPublisher *ifa
 {
     IWSDiscoveryPublisherImpl *This = impl_from_IWSDiscoveryPublisher(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+    struct notificationSink *sink, *cursor;
 
     TRACE("(%p) ref=%d\n", This, ref);
 
@@ -95,6 +104,15 @@ static ULONG WINAPI IWSDiscoveryPublisherImpl_Release(IWSDiscoveryPublisher *ifa
         {
             IWSDXMLContext_Release(This->xmlContext);
         }
+
+        LIST_FOR_EACH_ENTRY_SAFE(sink, cursor, &This->notificationSinks, struct notificationSink, entry)
+        {
+            IWSDiscoveryPublisherNotify_Release(sink->notificationSink);
+            list_remove(&sink->entry);
+            HeapFree(GetProcessHeap(), 0, sink);
+        }
+
+        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return ref;
@@ -125,14 +143,57 @@ static HRESULT WINAPI IWSDiscoveryPublisherImpl_SetAddressFamily(IWSDiscoveryPub
 
 static HRESULT WINAPI IWSDiscoveryPublisherImpl_RegisterNotificationSink(IWSDiscoveryPublisher *This, IWSDiscoveryPublisherNotify *pSink)
 {
-    FIXME("(%p, %p)\n", This, pSink);
-    return E_NOTIMPL;
+    IWSDiscoveryPublisherImpl *impl = impl_from_IWSDiscoveryPublisher(This);
+    struct notificationSink *sink;
+
+    TRACE("(%p, %p)\n", This, pSink);
+
+    if (pSink == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+    sink = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sink));
+
+    if (!sink)
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    sink->notificationSink = pSink;
+    IWSDiscoveryPublisherNotify_AddRef(pSink);
+
+    list_add_tail(&impl->notificationSinks, &sink->entry);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDiscoveryPublisherImpl_UnRegisterNotificationSink(IWSDiscoveryPublisher *This, IWSDiscoveryPublisherNotify *pSink)
 {
-    FIXME("(%p, %p)\n", This, pSink);
-    return E_NOTIMPL;
+    IWSDiscoveryPublisherImpl *impl = impl_from_IWSDiscoveryPublisher(This);
+    struct notificationSink *sink;
+
+    TRACE("(%p, %p)\n", This, pSink);
+
+    if (pSink == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+    LIST_FOR_EACH_ENTRY(sink, &impl->notificationSinks, struct notificationSink, entry)
+    {
+        if (sink->notificationSink == pSink)
+        {
+            IWSDiscoveryPublisherNotify_Release(pSink);
+            list_remove(&sink->entry);
+            HeapFree(GetProcessHeap(), 0, sink);
+
+            return S_OK;
+        }
+    }
+
+    /* Notification sink is not registered */
+    return E_FAIL;
 }
 
 static HRESULT WINAPI IWSDiscoveryPublisherImpl_Publish(IWSDiscoveryPublisher *This, LPCWSTR pszId, ULONGLONG ullMetadataVersion, ULONGLONG ullInstanceId,
@@ -305,6 +366,8 @@ HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscover
     {
         IWSDXMLContext_AddRef(pContext);
     }
+
+    list_init(&obj->notificationSinks);
 
     *ppPublisher = &obj->IWSDiscoveryPublisher_iface;
     TRACE("Returning iface %p\n", *ppPublisher);
