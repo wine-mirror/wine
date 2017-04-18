@@ -398,6 +398,25 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
     }
 }
 
+void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view *view,
+        struct wined3d_context *context, DWORD location)
+{
+    struct wined3d_resource *resource = view->resource;
+    unsigned int i, sub_resource_idx;
+    struct wined3d_texture *texture;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Not implemented for resources %s.\n", debug_d3dresourcetype(resource->type));
+        return;
+    }
+
+    texture = texture_from_resource(resource);
+    sub_resource_idx = view->sub_resource_idx;
+    for (i = 0; i < view->layer_count; ++i, sub_resource_idx += texture->level_count)
+        wined3d_texture_prepare_location(texture, sub_resource_idx, context, location);
+}
+
 void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *view,
         struct wined3d_context *context, DWORD location)
 {

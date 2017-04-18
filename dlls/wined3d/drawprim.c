@@ -512,7 +512,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         }
         else
         {
-            wined3d_texture_prepare_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
+            wined3d_rendertarget_view_prepare_location(rtv, context, rtv->resource->draw_binding);
         }
     }
 
@@ -524,12 +524,11 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
         DWORD location = context->render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
-        struct wined3d_surface *ds = wined3d_rendertarget_view_get_surface(dsv);
 
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
             wined3d_rendertarget_view_load_location(dsv, context, location);
         else
-            wined3d_texture_prepare_location(ds->container, dsv->sub_resource_idx, context, location);
+            wined3d_rendertarget_view_prepare_location(dsv, context, location);
     }
 
     if (!context_apply_draw_state(context, device, state))
