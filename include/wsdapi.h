@@ -19,31 +19,10 @@
 #ifndef WSDAPI_H
 #define WSDAPI_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct IWSDMessageParameters IWSDMessageParameters;
-
-typedef struct _WSD_URI_LIST WSD_URI_LIST;
-typedef struct _WSD_NAME_LIST WSD_NAME_LIST;
-
-typedef struct _WSDXML_NAME WSDXML_NAME;
-typedef struct _WSDXML_ELEMENT WSDXML_ELEMENT;
-typedef struct _WSDXML_NODE WSDXML_NODE;
-typedef struct _WSDXML_ATTRIBUTE WSDXML_ATTRIBUTE;
-typedef struct _WSDXML_PREFIX_MAPPING WSDXML_PREFIX_MAPPING;
-typedef struct _WSDXML_ELEMENT_LIST WSDXML_ELEMENT_LIST;
-typedef struct _WSDXML_TYPE WSDXML_TYPE;
-
-#ifdef __cplusplus
-}
-#endif
-
-#include <wsdtypes.h>
 #include <wsdbase.h>
-#include <wsdxmldom.h>
 #include <wsdxml.h>
+#include <wsdxmldom.h>
+#include <wsdtypes.h>
 #include <wsddisco.h>
 
 #endif
