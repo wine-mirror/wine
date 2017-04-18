@@ -134,10 +134,7 @@ static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut,
     VariantClear(&srcVar);
 
     if (SUCCEEDED(hRet))
-    {
       VARIANT_CopyData(&dstVar, vt, pOut);
-      VariantClear(&srcVar);
-    }
   }
   else
     hRet = DISP_E_TYPEMISMATCH;
