@@ -7263,6 +7263,125 @@ static void test_object_lifetime(void)
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+static void test_inmemory_file_loader(void)
+{
+    IDWriteFontFileLoader *loader, *loader2;
+    IDWriteInMemoryFontFileLoader *inmemory;
+    IDWriteFontFile *file, *file2;
+    IDWriteFontFileStream *stream;
+    IDWriteFontFace *fontface;
+    IDWriteFactory5 *factory5;
+    IDWriteFactory *factory;
+    const void *key, *data;
+    UINT32 count, key_size;
+    UINT64 file_size;
+    void *context;
+    HRESULT hr;
+    ULONG ref;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory5, (void **)&factory5);
+    IDWriteFactory_Release(factory);
+    if (FAILED(hr)) {
+        skip("CreateInMemoryFontFileLoader is not supported\n");
+        return;
+    }
+
+    fontface = create_fontface((IDWriteFactory *)factory5);
+    hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader2);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(loader != loader2, "unexpected pointer\n");
+    IDWriteFontFileLoader_Release(loader2);
+
+    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&inmemory);
+    ok(hr == S_OK, "got %#x\n", hr);
+    IDWriteFontFileLoader_Release(loader);
+
+    /* Use whole font blob to construct in-memory file. */
+    count = 1;
+    hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteFontFile_GetLoader(file, &loader);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, key, key_size, &stream);
+    ok(hr == S_OK, "got %#x\n", hr);
+    IDWriteFontFileLoader_Release(loader);
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteFontFileStream_GetFileSize(stream, &file_size);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, &data, 0, file_size, &context);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
+        file_size, NULL, &file);
+    ok(hr == E_INVALIDARG, "got %#x\n", hr);
+
+    hr = IDWriteFactory5_RegisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
+        file_size, NULL, &file);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
+        file_size, NULL, &file2);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(file2 != file, "got unexpected file\n");
+
+    /* Check in-memory reference key format. */
+    hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    ok(key && *(DWORD*)key == 1, "got wrong ref key\n");
+    ok(key_size == 4, "ref key size %u\n", key_size);
+
+    hr = IDWriteFontFile_GetReferenceKey(file2, &key, &key_size);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    ok(key && *(DWORD*)key == 2, "got wrong ref key\n");
+    ok(key_size == 4, "ref key size %u\n", key_size);
+
+    /* Release file and index 1, create new one to see if index is reused. */
+    IDWriteFontFile_Release(file);
+
+    hr = IDWriteInMemoryFontFileLoader_CreateInMemoryFontFileReference(inmemory, (IDWriteFactory *)factory5, data,
+        file_size, NULL, &file);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(file2 != file, "got unexpected file\n");
+
+    hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    ok(key && *(DWORD*)key == 3, "got wrong ref key\n");
+    ok(key_size == 4, "ref key size %u\n", key_size);
+
+    IDWriteFontFile_Release(file);
+    IDWriteFontFile_Release(file2);
+
+    hr = IDWriteFactory5_UnregisterFontFileLoader(factory5, (IDWriteFontFileLoader *)inmemory);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+    IDWriteFontFileStream_Release(stream);
+
+    IDWriteInMemoryFontFileLoader_Release(inmemory);
+
+    IDWriteFontFace_Release(fontface);
+    ref = IDWriteFactory5_Release(factory5);
+    ok(ref == 0, "factory not released, %u\n", ref);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -7324,6 +7443,7 @@ START_TEST(font)
     test_HasVerticalGlyphVariants();
     test_HasKerningPairs();
     test_ComputeGlyphOrigins();
+    test_inmemory_file_loader();
 
     IDWriteFactory_Release(factory);
 }
