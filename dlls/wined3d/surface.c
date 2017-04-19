@@ -2538,6 +2538,22 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
     }
 }
 
+static BOOL ffp_blitter_use_cpu_clear(struct wined3d_rendertarget_view *view)
+{
+    struct wined3d_resource *resource;
+    struct wined3d_texture *texture;
+
+    resource = view->resource;
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+        return FALSE;
+
+    texture = texture_from_resource(resource);
+    if (!(texture->flags & WINED3D_TEXTURE_PIN_SYSMEM))
+        return FALSE;
+
+    return texture->sub_resources[view->sub_resource_idx].locations & resource->map_binding;
+}
+
 static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
         unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
@@ -2556,6 +2572,10 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
 
             resource = view->resource;
             if (resource->pool == WINED3D_POOL_SYSTEM_MEM)
+                goto next;
+
+            if (!(flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
+                    && ffp_blitter_use_cpu_clear(view))
                 goto next;
 
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
