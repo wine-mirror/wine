@@ -1075,26 +1075,26 @@ done:
     return rc;
 }
 
-static LPWSTR msi_reg_get_value(HKEY hkey, LPCWSTR name, DWORD *type)
+static WCHAR *reg_get_value( HKEY hkey, const WCHAR *name, DWORD *type )
 {
-    DWORD dval;
     LONG res;
-    WCHAR temp[20];
 
-    static const WCHAR format[] = {'%','d',0};
+    if ((res = RegQueryValueExW( hkey, name, NULL, type, NULL, NULL )) != ERROR_SUCCESS) return NULL;
 
-    res = RegQueryValueExW(hkey, name, NULL, type, NULL, NULL);
-    if (res != ERROR_SUCCESS)
-        return NULL;
+    if (*type == REG_SZ) return msi_reg_get_val_str( hkey, name );
+    if (*type == REG_DWORD)
+    {
+        static const WCHAR fmt[] = {'%','u',0};
+        WCHAR temp[11];
+        DWORD val;
 
-    if (*type == REG_SZ)
-        return msi_reg_get_val_str(hkey, name);
+        if (!msi_reg_get_val_dword( hkey, name, &val )) return NULL;
+        sprintfW( temp, fmt, val );
+        return strdupW( temp );
+    }
 
-    if (!msi_reg_get_val_dword(hkey, name, &dval))
-        return NULL;
-
-    sprintfW(temp, format, dval);
-    return strdupW(temp);
+    ERR( "unhandled value type %u\n", *type );
+    return NULL;
 }
 
 static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
@@ -1168,7 +1168,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         else if (!strcmpW( szAttribute, INSTALLPROPERTY_VERSIONSTRINGW ))
             szAttribute = display_version;
 
-        val = msi_reg_get_value(userdata, szAttribute, &type);
+        val = reg_get_value(userdata, szAttribute, &type);
         if (!val)
             val = empty;
         RegCloseKey(userdata);
@@ -1202,7 +1202,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
                 goto done;
             }
 
-            val = msi_reg_get_value(source, szAttribute, &type);
+            val = reg_get_value(source, szAttribute, &type);
             if (!val)
                 val = empty;
 
@@ -1210,7 +1210,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         }
         else
         {
-            val = msi_reg_get_value(prodkey, szAttribute, &type);
+            val = reg_get_value(prodkey, szAttribute, &type);
             if (!val)
                 val = empty;
         }
@@ -1492,7 +1492,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
         !strcmpW( szProperty, INSTALLPROPERTY_REGOWNERW ) ||
         !strcmpW( szProperty, INSTALLPROPERTY_INSTANCETYPEW ))
     {
-        val = msi_reg_get_value(props, package, &type);
+        val = reg_get_value(props, package, &type);
         if (!val)
         {
             if (prod || classes)
@@ -1508,7 +1508,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
         else if (!strcmpW( szProperty, INSTALLPROPERTY_VERSIONSTRINGW ))
             szProperty = displayversion;
 
-        val = msi_reg_get_value(props, szProperty, &type);
+        val = reg_get_value(props, szProperty, &type);
         if (!val)
             val = strdupW(szEmpty);
 
@@ -1533,7 +1533,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
         else if (dwContext == MSIINSTALLCONTEXT_MACHINE)
             hkey = classes;
 
-        val = msi_reg_get_value(hkey, szProperty, &type);
+        val = reg_get_value(hkey, szProperty, &type);
         if (!val)
             val = strdupW(szEmpty);
 
@@ -1545,7 +1545,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
         {
             if (props)
             {
-                val = msi_reg_get_value(props, package, &type);
+                val = reg_get_value(props, package, &type);
                 if (!val)
                     goto done;
 
@@ -1558,7 +1558,7 @@ UINT WINAPI MsiGetProductInfoExW(LPCWSTR szProductCode, LPCWSTR szUserSid,
             r = msi_copy_outval(val, szValue, pcchValue);
             goto done;
         }
-        else if (props && (val = msi_reg_get_value(props, package, &type)))
+        else if (props && (val = reg_get_value(props, package, &type)))
         {
             msi_free(val);
             val = strdupW(five);
@@ -1674,7 +1674,7 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
     HKEY udpatch = 0, datakey = 0;
     HKEY prodpatches = 0;
     UINT r = ERROR_UNKNOWN_PRODUCT;
-    DWORD len;
+    DWORD len, type;
     LONG res;
 
     TRACE("(%s, %s, %s, %d, %s, %p, %p)\n", debugstr_w(szPatchCode),
@@ -1766,7 +1766,7 @@ UINT WINAPI MsiGetPatchInfoExW(LPCWSTR szPatchCode, LPCWSTR szProductCode,
         }
     }
 
-    val = msi_reg_get_val_str(datakey, szProperty);
+    val = reg_get_value(datakey, szProperty, &type);
     if (!val)
         val = strdupW(szEmpty);
 
