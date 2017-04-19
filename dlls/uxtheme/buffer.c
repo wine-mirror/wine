@@ -105,7 +105,7 @@ HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
     switch (format)
     {
     case BPBF_COMPATIBLEBITMAP:
-        hbm = CreateCompatibleBitmap(buffer->memorydc, rect->right - rect->left, rect->bottom - rect->top);
+        hbm = CreateCompatibleBitmap(targetdc, rect->right - rect->left, rect->bottom - rect->top);
         buffer->bits = NULL;
         break;
     case BPBF_DIB:
