@@ -1858,6 +1858,7 @@ static void test_GetClusterMetrics(void)
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     static const WCHAR str4W[] = {'a',' ',0};
+    static const WCHAR str6W[] = {'a',' ','b',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
     DWRITE_CLUSTER_METRICS metrics[22];
     DWRITE_TEXT_METRICS text_metrics;
@@ -2251,6 +2252,25 @@ todo_wine
     ok(count == 1, "got %u\n", count);
     ok(line.length == 4, "got %u\n", line.length);
     ok(line.isTrimmed, "got %d\n", line.isTrimmed);
+
+    IDWriteTextLayout_Release(layout);
+
+    /* NO_WRAP, check cluster wrapping attribute. */
+    hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_NO_WRAP);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, str6W, lstrlenW(str6W), format, 1000.0f, 200.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 3, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 3, "got %u\n", count);
+
+    ok(metrics[0].canWrapLineAfter == 0, "got %d\n", metrics[0].canWrapLineAfter);
+    ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
+    ok(metrics[2].canWrapLineAfter == 1, "got %d\n", metrics[2].canWrapLineAfter);
 
     IDWriteTextLayout_Release(layout);
 
