@@ -3345,8 +3345,14 @@ release:
 static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         const struct wined3d_box *box, const struct wined3d_color *colour)
 {
+    struct wined3d_device *device = view->resource->device;
+    const struct wined3d_gl_info *gl_info = NULL;
+    struct wined3d_context *context = NULL;
+    struct wined3d_texture *texture;
+    struct wined3d_bo_address data;
     unsigned int x, y, w, h, bpp;
     struct wined3d_map_desc map;
+    DWORD map_binding;
     BYTE *row;
     DWORD c;
 
@@ -3358,12 +3364,37 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         return;
     }
 
+    if (view->resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Not implemented for buffers.\n");
+        return;
+    }
+
+    if (device->d3d_initialized)
+    {
+        context = context_acquire(device, NULL, 0);
+        gl_info = context->gl_info;
+    }
+
     c = wined3d_format_convert_from_float(view->format, colour);
     bpp = view->format->byte_count;
     w = box->right - box->left;
     h = box->bottom - box->top;
 
-    wined3d_resource_map(view->resource, view->sub_resource_idx, &map, box, 0);
+    texture = texture_from_resource(view->resource);
+    map_binding = texture->resource.map_binding;
+    if (!wined3d_texture_load_location(texture, view->sub_resource_idx, context, map_binding))
+        ERR("Failed to load the sub-resource into %s.\n", wined3d_debug_location(map_binding));
+    wined3d_texture_invalidate_location(texture, view->sub_resource_idx, ~map_binding);
+    wined3d_texture_get_pitch(texture, view->sub_resource_idx % texture->level_count,
+            &map.row_pitch, &map.slice_pitch);
+    wined3d_texture_get_memory(texture, view->sub_resource_idx, &data, map_binding);
+    map.data = wined3d_texture_map_bo_address(&data, texture->sub_resources[view->sub_resource_idx].size,
+            gl_info, GL_PIXEL_UNPACK_BUFFER, 0);
+    map.data = (BYTE *)map.data
+            + (box->front * map.slice_pitch)
+            + ((box->top / view->format->block_height) * map.row_pitch)
+            + ((box->left / view->format->block_width) * view->format->block_byte_count);
 
     switch (bpp)
     {
@@ -3411,7 +3442,10 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         row += map.row_pitch;
         memcpy(row, map.data, w * bpp);
     }
-    wined3d_resource_unmap(view->resource, view->sub_resource_idx);
+
+    wined3d_texture_unmap_bo_address(&data, gl_info, GL_PIXEL_UNPACK_BUFFER);
+    if (context)
+        context_release(context);
 }
 
 static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
