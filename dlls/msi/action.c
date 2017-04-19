@@ -4431,7 +4431,16 @@ static UINT msi_publish_patches( MSIPACKAGE *package )
         if (res != ERROR_SUCCESS)
             goto done;
 
-        res = RegSetValueExW( patch_key, szState, 0, REG_DWORD, (const BYTE *)&patch->state, sizeof(patch->state) );
+        res = RegSetValueExW( patch_key, szState, 0, REG_DWORD, (const BYTE *)&patch->state,
+                              sizeof(patch->state) );
+        if (res != ERROR_SUCCESS)
+        {
+            RegCloseKey( patch_key );
+            goto done;
+        }
+
+        res = RegSetValueExW( patch_key, szUninstallable, 0, REG_DWORD, (const BYTE *)&patch->uninstallable,
+                              sizeof(patch->uninstallable) );
         RegCloseKey( patch_key );
         if (res != ERROR_SUCCESS)
             goto done;
