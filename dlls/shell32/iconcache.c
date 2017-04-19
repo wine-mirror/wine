@@ -305,10 +305,12 @@ static INT SIC_IconAppend (LPCWSTR sSourceFile, INT dwSourceIndex, HICON hSmallI
  *  gets small/big icon by number from a file
  */
 static INT SIC_LoadIcon (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags)
-{	HICON	hiconLarge=0;
+{
+	HICON	hiconLarge=0;
 	HICON	hiconSmall=0;
 	HICON 	hiconLargeShortcut;
 	HICON	hiconSmallShortcut;
+        int ret;
 
         PrivateExtractIconsW( sSourceFile, dwSourceIndex, GetSystemMetrics(SM_CXICON),
                               GetSystemMetrics(SM_CYICON), &hiconLarge, 0, 1, 0 );
@@ -327,6 +329,8 @@ static INT SIC_LoadIcon (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags)
 	  hiconSmallShortcut = SIC_OverlayShortcutImage(hiconSmall, FALSE);
 	  if (NULL != hiconLargeShortcut && NULL != hiconSmallShortcut)
 	  {
+            DestroyIcon( hiconLarge );
+            DestroyIcon( hiconSmall );
 	    hiconLarge = hiconLargeShortcut;
 	    hiconSmall = hiconSmallShortcut;
 	  }
@@ -339,8 +343,12 @@ static INT SIC_LoadIcon (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags)
 	  }
 	}
 
-	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge, dwFlags);
+        ret = SIC_IconAppend( sSourceFile, dwSourceIndex, hiconSmall, hiconLarge, dwFlags );
+        DestroyIcon( hiconLarge );
+        DestroyIcon( hiconSmall );
+        return ret;
 }
+
 /*****************************************************************************
  * SIC_Initialize			[internal]
  */
