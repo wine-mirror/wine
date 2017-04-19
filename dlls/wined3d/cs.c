@@ -2451,7 +2451,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
 
     queue->tail = queue->head = 0;
     TRACE("Stopped.\n");
-    return 0;
+    FreeLibraryAndExitThread(cs->wined3d_module, 0);
 }
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
@@ -2490,9 +2490,19 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
             goto fail;
         }
 
+        if (!(GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                (const WCHAR *)wined3d_cs_run, &cs->wined3d_module)))
+        {
+            ERR("Failed to get wined3d module handle.\n");
+            CloseHandle(cs->event);
+            HeapFree(GetProcessHeap(), 0, cs->data);
+            goto fail;
+        }
+
         if (!(cs->thread = CreateThread(NULL, 0, wined3d_cs_run, cs, 0, NULL)))
         {
             ERR("Failed to create wined3d command stream thread.\n");
+            FreeLibrary(cs->wined3d_module);
             CloseHandle(cs->event);
             HeapFree(GetProcessHeap(), 0, cs->data);
             goto fail;

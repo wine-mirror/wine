@@ -3253,6 +3253,7 @@ struct wined3d_cs
     struct wined3d_device *device;
     struct wined3d_fb_state fb;
     struct wined3d_state state;
+    HMODULE wined3d_module;
     HANDLE thread;
     DWORD thread_id;
 
