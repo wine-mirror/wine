@@ -496,9 +496,9 @@ static ALG_ID schan_get_kx_algid(const struct cipher_suite* c)
     case schan_kx_DHE_RSA:          return CALG_DH_EPHEM;
     case schan_kx_ECDH_anon:
     case schan_kx_ECDH_ECDSA:
-    case schan_kx_ECDH_RSA:
+    case schan_kx_ECDH_RSA:         return CALG_ECDH;
     case schan_kx_ECDHE_ECDSA:
-    case schan_kx_ECDHE_RSA:        return CALG_ECDH;
+    case schan_kx_ECDHE_RSA:        return CALG_ECDH_EPHEM;
     case schan_kx_NULL:             return 0;
     case schan_kx_RSA:
     case schan_kx_RSA_EXPORT:       return CALG_RSA_KEYX;
