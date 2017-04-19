@@ -1934,14 +1934,14 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
         {
             FIXME("Flags %#x not implemented for %s resources.\n",
                     op->flags, debug_d3dresourcetype(op->dst_resource->type));
-            return;
+            goto error;
         }
 
         if (op->src_resource->format != op->dst_resource->format)
         {
             FIXME("Format conversion not implemented for %s resources.\n",
                     debug_d3dresourcetype(op->dst_resource->type));
-            return;
+            goto error;
         }
 
         update_w = op->dst_box.right - op->dst_box.left;
@@ -1953,14 +1953,14 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
         {
             FIXME("Stretching not implemented for %s resources.\n",
                     debug_d3dresourcetype(op->dst_resource->type));
-            return;
+            goto error;
         }
 
         if (op->src_box.left || op->src_box.top || op->src_box.front)
         {
             FIXME("Source box %s not supported for %s resources.\n",
                     debug_box(&op->src_box), debug_d3dresourcetype(op->dst_resource->type));
-            return;
+            goto error;
         }
 
         dst_texture = texture_from_resource(op->dst_resource);
@@ -1974,7 +1974,7 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
             ERR("Failed to load source sub-resource into %s.\n",
                     wined3d_debug_location(src_texture->resource.map_binding));
             context_release(context);
-            return;
+            goto error;
         }
 
         level = op->dst_sub_resource_idx % dst_texture->level_count;
@@ -1989,7 +1989,7 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
         {
             ERR("Failed to load destination sub-resource.\n");
             context_release(context);
-            return;
+            goto error;
         }
 
         wined3d_texture_get_memory(src_texture, op->src_sub_resource_idx, &addr, src_texture->resource.map_binding);
@@ -2009,6 +2009,7 @@ static void wined3d_cs_exec_blt_sub_resource(struct wined3d_cs *cs, const void *
         FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(op->dst_resource->type));
     }
 
+error:
     if (op->src_resource)
         wined3d_resource_release(op->src_resource);
     wined3d_resource_release(op->dst_resource);
