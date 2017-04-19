@@ -12675,7 +12675,22 @@ static void test_MsiGetPatchInfoEx(void)
                             MSIINSTALLCONTEXT_USERMANAGED,
                             INSTALLPROPERTY_PATCHSTATEA, val, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmpA(val, "1"), "Expected \"1\", got \"%s\"\n", val);
+    ok(!lstrcmpA(val, "1"), "Expected \"1\", got \"%s\"\n", val);
+    ok(size == 1, "Expected 1, got %d\n", size);
+
+    size = 1;
+    res = RegSetValueExA(hpatch, "Uninstallable", 0, REG_DWORD,
+                         (const BYTE *)&size, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* Uninstallable value exists */
+    size = MAX_PATH;
+    lstrcpyA(val, "apple");
+    r = pMsiGetPatchInfoExA(patchcode, prodcode, usersid,
+                            MSIINSTALLCONTEXT_USERMANAGED,
+                            INSTALLPROPERTY_UNINSTALLABLEA, val, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(val, "1"), "Expected \"1\", got \"%s\"\n", val);
     ok(size == 1, "Expected 1, got %d\n", size);
 
     res = RegSetValueExA(hpatch, "DisplayName", 0, REG_SZ,
