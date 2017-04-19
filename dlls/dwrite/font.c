@@ -5135,6 +5135,7 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     IDWriteFontFace1 *fontface1;
     D2D_POINT_2F origin;
     FLOAT rtl_factor;
+    HRESULT hr;
     UINT32 i;
 
     *ret = NULL;
@@ -5196,7 +5197,8 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     memcpy(analysis->glyphs, desc->run->glyphIndices, desc->run->glyphCount*sizeof(*desc->run->glyphIndices));
 
     IDWriteFontFace_GetMetrics(desc->run->fontFace, &metrics);
-    IDWriteFontFace_QueryInterface(desc->run->fontFace, &IID_IDWriteFontFace1, (void **)&fontface1);
+    if (FAILED(hr = IDWriteFontFace_QueryInterface(desc->run->fontFace, &IID_IDWriteFontFace1, (void **)&fontface1)))
+        WARN("Failed to get IDWriteFontFace1, %#x.\n", hr);
 
     origin.x = desc->origin_x * desc->ppdip;
     origin.y = desc->origin_y * desc->ppdip;

@@ -1449,13 +1449,15 @@ static HRESULT compute_glyph_origins(DWRITE_GLYPH_RUN const *run, DWRITE_MEASURI
     IDWriteFontFace1 *fontface1 = NULL;
     DWRITE_FONT_METRICS metrics;
     FLOAT rtl_factor;
+    HRESULT hr;
     UINT32 i;
 
     rtl_factor = run->bidiLevel & 1 ? -1.0f : 1.0f;
 
     if (run->fontFace) {
         IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
-        IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace1, (void **)&fontface1);
+        if (FAILED(hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace1, (void **)&fontface1)))
+            WARN("Failed to get IDWriteFontFace1, %#x.\n", hr);
     }
 
     for (i = 0; i < run->glyphCount; i++) {
