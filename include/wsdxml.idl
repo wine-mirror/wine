@@ -18,14 +18,7 @@
 
 import "oaidl.idl";
 import "ocidl.idl";
-
-typedef struct _WSDXML_NAMESPACE WSDXML_NAMESPACE;
-typedef struct _WSDXML_NAME WSDXML_NAME;
-typedef struct _WSDXML_TYPE WSDXML_TYPE;
-typedef struct _WSDXML_ELEMENT WSDXML_ELEMENT;
-
-typedef const WSDXML_NAMESPACE *PCWSDXML_NAMESPACE;
-typedef const WSDXML_TYPE *PCWSDXML_TYPE;
+import "wsdxmldom.h";
 
 interface IWSDXMLContext;
 
