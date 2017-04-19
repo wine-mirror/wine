@@ -135,12 +135,7 @@ void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD loc
 /* Context activation is done by the caller. */
 static void buffer_bind(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER)
-        context_invalidate_state(context, STATE_INDEXBUFFER);
-
-    GL_EXTCALL(glBindBuffer(buffer->buffer_type_hint, buffer->buffer_object));
+    context_bind_bo(context, buffer->buffer_type_hint, buffer->buffer_object);
 }
 
 /* Context activation is done by the caller. */

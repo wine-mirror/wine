@@ -2510,6 +2510,16 @@ void context_active_texture(struct wined3d_context *context, const struct wined3
     context->active_texture = unit;
 }
 
+void context_bind_bo(struct wined3d_context *context, GLenum binding, GLuint name)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (binding == GL_ELEMENT_ARRAY_BUFFER)
+        context_invalidate_state(context, STATE_INDEXBUFFER);
+
+    GL_EXTCALL(glBindBuffer(binding, name));
+}
+
 void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint name)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
