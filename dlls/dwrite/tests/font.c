@@ -1,7 +1,7 @@
 /*
  *    Font related tests
  *
- * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -3344,6 +3344,7 @@ static void test_CreateFontFaceFromHdc(void)
     IDWriteFactory *factory;
     HFONT hfont, oldhfont;
     LOGFONTW logfont;
+    LOGFONTA lf;
     HRESULT hr;
     HDC hdc;
 
@@ -3353,9 +3354,15 @@ static void test_CreateFontFaceFromHdc(void)
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* Invalid HDC. */
     fontface = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, NULL, &fontface);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(fontface == NULL, "got %p\n", fontface);
+
+    fontface = (void *)0xdeadbeef;
+    hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, (HDC)0xdeadbeef, &fontface);
+    ok(hr == E_FAIL, "got 0x%08x\n", hr);
     ok(fontface == NULL, "got %p\n", fontface);
 
     memset(&logfont, 0, sizeof(logfont));
@@ -3373,6 +3380,21 @@ static void test_CreateFontFaceFromHdc(void)
     hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, hdc, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IDWriteFontFace_Release(fontface);
+    DeleteObject(SelectObject(hdc, oldhfont));
+
+    /* Select bitmap font MS Sans Serif, format that's not supported by DirectWrite. */
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = -12;
+    strcpy(lf.lfFaceName, "MS Sans Serif");
+
+    hfont = CreateFontIndirectA(&lf);
+    oldhfont = SelectObject(hdc, hfont);
+
+    fontface = (void *)0xdeadbeef;
+    hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, hdc, &fontface);
+    ok(hr == DWRITE_E_FILEFORMAT || broken(hr == E_FAIL) /* Vista */, "got 0x%08x\n", hr);
+    ok(fontface == NULL, "got %p\n", fontface);
+
     DeleteObject(SelectObject(hdc, oldhfont));
     DeleteDC(hdc);
 
