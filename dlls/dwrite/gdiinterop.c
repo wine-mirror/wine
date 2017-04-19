@@ -761,14 +761,15 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
 
     is_supported = FALSE;
     hr = IDWriteFontFile_Analyze(file, &is_supported, &filetype, &facetype, &facenum);
-    if (FAILED(hr) || !is_supported) {
-        IDWriteFontFile_Release(file);
-        return hr;
+    if (SUCCEEDED(hr)) {
+        if (is_supported)
+            /* Simulations flags values match DWRITE_FONT_SIMULATIONS */
+            hr = IDWriteFactory4_CreateFontFace(This->factory, facetype, 1, &file, info.face_index,
+                    info.simulations, fontface);
+        else
+            hr = DWRITE_E_FILEFORMAT;
     }
 
-    /* Simulations flags values match DWRITE_FONT_SIMULATIONS */
-    hr = IDWriteFactory4_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, info.simulations,
-        fontface);
     IDWriteFontFile_Release(file);
     return hr;
 }
