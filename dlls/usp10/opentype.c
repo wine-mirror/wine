@@ -1125,11 +1125,19 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
 
                     for (l = 0; l < GET_BE_WORD(sr->SubstCount); l++)
                     {
-                        int lookupIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].LookupListIndex);
-                        int SequenceIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].SequenceIndex) * write_dir;
+                        unsigned int lookup_index = GET_BE_WORD(sr_2->SubstLookupRecord[l].LookupListIndex);
+                        unsigned int sequence_index = GET_BE_WORD(sr_2->SubstLookupRecord[l].SequenceIndex);
 
-                        TRACE("   SUBST: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
-                        newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
+                        g = glyph_index + write_dir * sequence_index;
+                        if (g >= *glyph_count)
+                        {
+                            WARN("Invalid sequence index %u (glyph index %u, write dir %d).\n",
+                                    sequence_index, glyph_index, write_dir);
+                            continue;
+                        }
+
+                        TRACE("   SUBST: %u -> %u %u.\n", l, sequence_index, lookup_index);
+                        newIndex = GSUB_apply_lookup(lookup, lookup_index, glyphs, g, write_dir, glyph_count);
                         if (newIndex == GSUB_E_NOGLYPH)
                         {
                             ERR("   Chain failed to generate a glyph\n");
@@ -1204,11 +1212,19 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
 
                     for (l = 0; l < GET_BE_WORD(sr->SubstCount); l++)
                     {
-                        int lookupIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].LookupListIndex);
-                        int SequenceIndex = GET_BE_WORD(sr_2->SubstLookupRecord[l].SequenceIndex) * write_dir;
+                        unsigned int lookup_index = GET_BE_WORD(sr_2->SubstLookupRecord[l].LookupListIndex);
+                        unsigned int sequence_index = GET_BE_WORD(sr_2->SubstLookupRecord[l].SequenceIndex);
 
-                        TRACE("   SUBST: %i -> %i %i\n",l, SequenceIndex, lookupIndex);
-                        newIndex = GSUB_apply_lookup(lookup, lookupIndex, glyphs, glyph_index + SequenceIndex, write_dir, glyph_count);
+                        g = glyph_index + write_dir * sequence_index;
+                        if (g >= *glyph_count)
+                        {
+                            WARN("Invalid sequence index %u (glyph index %u, write dir %d).\n",
+                                    sequence_index, glyph_index, write_dir);
+                            continue;
+                        }
+
+                        TRACE("   SUBST: %u -> %u %u.\n", l, sequence_index, lookup_index);
+                        newIndex = GSUB_apply_lookup(lookup, lookup_index, glyphs, g, write_dir, glyph_count);
                         if (newIndex == GSUB_E_NOGLYPH)
                         {
                             ERR("   Chain failed to generate a glyph\n");
