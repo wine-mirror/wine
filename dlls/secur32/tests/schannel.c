@@ -684,6 +684,7 @@ static void test_communication(void)
     SecPkgCredentials_NamesA names;
     SecPkgContext_StreamSizes sizes;
     SecPkgContext_ConnectionInfo conn_info;
+    SecPkgContext_KeyInfoA key_info;
     CERT_CONTEXT *cert;
 
     SecBufferDesc buffers[2];
@@ -921,6 +922,18 @@ todo_wine
     if(status == SEC_E_OK) {
         ok(conn_info.dwCipherStrength >= 128, "conn_info.dwCipherStrength = %d\n", conn_info.dwCipherStrength);
         ok(conn_info.dwHashStrength >= 128, "conn_info.dwHashStrength = %d\n", conn_info.dwHashStrength);
+    }
+
+    status = pQueryContextAttributesA(&context, SECPKG_ATTR_KEY_INFO, &key_info);
+    todo_wine ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_KEY_INFO) failed: %08x\n", status);
+    if(status == SEC_E_OK) {
+        ok(broken(key_info.SignatureAlgorithm == 0 /* WinXP,2003 */) ||
+           key_info.SignatureAlgorithm == CALG_RSA_SIGN,
+           "key_info.SignatureAlgorithm = %04x\n", key_info.SignatureAlgorithm);
+        ok(broken(key_info.SignatureAlgorithm == 0 /* WinXP,2003 */) ||
+           !strcmp(key_info.sSignatureAlgorithmName, "RSA"),
+           "key_info.sSignatureAlgorithmName = %s\n", key_info.sSignatureAlgorithmName);
+        ok(key_info.KeySize >= 128, "key_info.KeySize = %d\n", key_info.KeySize);
     }
 
     status = pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
