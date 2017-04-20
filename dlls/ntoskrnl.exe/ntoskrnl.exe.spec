@@ -441,7 +441,7 @@
 @ stub IoRemoveShareAccess
 @ stub IoReportDetectedDevice
 @ stub IoReportHalResourceUsage
-@ stub IoReportResourceForDetection
+@ stdcall IoReportResourceForDetection(ptr ptr long ptr ptr long ptr)
 @ stdcall IoReportResourceUsage(ptr ptr ptr long ptr ptr long long ptr)
 @ stub IoReportTargetDeviceChange
 @ stub IoReportTargetDeviceChangeAsynchronous
