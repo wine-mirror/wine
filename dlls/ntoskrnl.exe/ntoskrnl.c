@@ -1455,12 +1455,13 @@ VOID WINAPI IoUnregisterShutdownNotification( PDEVICE_OBJECT obj )
 /***********************************************************************
  *           IoReportResourceUsage    (NTOSKRNL.EXE.@)
  */
-NTSTATUS WINAPI IoReportResourceUsage(PUNICODE_STRING name, PDRIVER_OBJECT drv_obj, PCM_RESOURCE_LIST drv_list,
-                                      ULONG drv_size, PDRIVER_OBJECT dev_obj, PCM_RESOURCE_LIST dev_list,
-                                      ULONG dev_size, BOOLEAN overwrite, PBOOLEAN detected)
+NTSTATUS WINAPI IoReportResourceUsage( UNICODE_STRING *name, DRIVER_OBJECT *drv_obj, CM_RESOURCE_LIST *drv_list,
+                                       ULONG drv_size, DRIVER_OBJECT *dev_obj, CM_RESOURCE_LIST *dev_list,
+                                       ULONG dev_size, BOOLEAN overwrite, BOOLEAN *conflict )
 {
     FIXME( "(%s, %p, %p, %u, %p, %p, %u, %d, %p): stub\n", debugstr_us(name),
-           drv_obj, drv_list, drv_size, dev_obj, dev_list, dev_size, overwrite, detected );
+           drv_obj, drv_list, drv_size, dev_obj, dev_list, dev_size, overwrite, conflict );
+
     return STATUS_NOT_IMPLEMENTED;
 }
 
