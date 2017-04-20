@@ -557,6 +557,14 @@ void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint pro
     print_glsl_info_log(gl_info, program, TRUE);
 }
 
+static BOOL shader_glsl_use_layout_qualifier(const struct wined3d_gl_info *gl_info)
+{
+    /* Layout qualifiers were introduced in GLSL 1.40. The Nvidia Legacy GPU
+     * driver (series 340.xx) doesn't parse layout qualifiers in older GLSL
+     * versions. */
+    return shader_glsl_get_version(gl_info) >= 140;
+}
+
 static BOOL shader_glsl_use_layout_binding_qualifier(const struct wined3d_gl_info *gl_info)
 {
     return !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && gl_info->supported[ARB_SHADING_LANGUAGE_420PACK];
@@ -2021,7 +2029,8 @@ static BOOL needs_legacy_glsl_syntax(const struct wined3d_gl_info *gl_info)
 
 static BOOL shader_glsl_use_explicit_attrib_location(const struct wined3d_gl_info *gl_info)
 {
-    return !needs_legacy_glsl_syntax(gl_info) && gl_info->supported[ARB_EXPLICIT_ATTRIB_LOCATION];
+    return gl_info->supported[ARB_EXPLICIT_ATTRIB_LOCATION]
+            && shader_glsl_use_layout_qualifier(gl_info) && !needs_legacy_glsl_syntax(gl_info);
 }
 
 static const char *get_attribute_keyword(const struct wined3d_gl_info *gl_info)
