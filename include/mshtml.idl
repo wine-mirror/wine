@@ -19603,6 +19603,29 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLIFrame coclass
+ */
+[
+    noncreatable,
+    uuid(3050f316-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLIFrame
+{
+    [default]         dispinterface DispHTMLIFrame;
+ /* [source, default] dispinterface HTMLControlElementEvents; */
+ /* [source]          dispinterface HTMLControlElementEvents2; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLFrameBase;
+    interface IHTMLFrameBase2;
+ /* interface IHTMLFrameBase3; */
+    interface IHTMLIFrameElement;
+    interface IHTMLIFrameElement2;
+    interface IHTMLIFrameElement3;
+ /* interface IGetSVGDocument; */
+}
+
+/*****************************************************************************
  *    IHTMLStyleElement interface
  */
 [

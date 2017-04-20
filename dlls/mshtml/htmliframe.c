@@ -31,12 +31,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLIFrame {
     HTMLFrameBase framebase;
     IHTMLIFrameElement IHTMLIFrameElement_iface;
     IHTMLIFrameElement2 IHTMLIFrameElement2_iface;
     IHTMLIFrameElement3 IHTMLIFrameElement3_iface;
-} HTMLIFrame;
+};
 
 static inline HTMLIFrame *impl_from_IHTMLIFrameElement(IHTMLIFrameElement *iface)
 {
