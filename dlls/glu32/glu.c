@@ -123,8 +123,6 @@ typedef struct {
 static void  (*p_gluBeginCurve)( GLUnurbs* nurb );
 static void  (*p_gluBeginSurface)( GLUnurbs* nurb );
 static void  (*p_gluBeginTrim)( GLUnurbs* nurb );
-static GLint (*p_gluBuild1DMipmaps)( GLenum target, GLint internalFormat, GLsizei width, GLenum format, GLenum type, const void *data );
-static GLint (*p_gluBuild2DMipmaps)( GLenum target, GLint internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *data );
 static void  (*p_gluDeleteNurbsRenderer)( GLUnurbs* nurb );
 static void  (*p_gluDeleteTess)( GLUtesselator* tess );
 static void  (*p_gluEndCurve)( GLUnurbs* nurb );
@@ -140,7 +138,6 @@ static void  (*p_gluNurbsCurve)( GLUnurbs* nurb, GLint knotCount, GLfloat *knots
 static void  (*p_gluNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat value );
 static void  (*p_gluNurbsSurface)( GLUnurbs* nurb, GLint sKnotCount, GLfloat* sKnots, GLint tKnotCount, GLfloat* tKnots, GLint sStride, GLint tStride, GLfloat* control, GLint sOrder, GLint tOrder, GLenum type );
 static void  (*p_gluPwlCurve)( GLUnurbs* nurb, GLint count, GLfloat* data, GLint stride, GLenum type );
-static GLint (*p_gluScaleImage)( GLenum format, GLsizei wIn, GLsizei hIn, GLenum typeIn, const void *dataIn, GLsizei wOut, GLsizei hOut, GLenum typeOut, GLvoid* dataOut );
 static void  (*p_gluTessBeginContour)( GLUtesselator* tess );
 static void  (*p_gluTessBeginPolygon)( GLUtesselator* tess, GLvoid* data );
 static void  (*p_gluTessCallback)( GLUtesselator* tess, GLenum which, _GLUfuncptr CallBackFunc );
@@ -209,37 +206,6 @@ const WCHAR * WINAPI wine_gluErrorUnicodeStringEXT( GLenum errCode )
         return errorsW[i];
     }
     return NULL;
-}
-
-/***********************************************************************
- *		gluScaleImage (GLU32.@)
- */
-int WINAPI wine_gluScaleImage( GLenum format, GLint widthin, GLint heightin, GLenum typein, const void *datain,
-                               GLint widthout, GLint heightout, GLenum typeout, void *dataout )
-{
-    if (!LOAD_FUNCPTR( gluScaleImage )) return GLU_OUT_OF_MEMORY;
-    return p_gluScaleImage( format, widthin, heightin, typein, datain,
-                            widthout, heightout, typeout, dataout );
-}
-
-/***********************************************************************
- *		gluBuild1DMipmaps (GLU32.@)
- */
-int WINAPI wine_gluBuild1DMipmaps( GLenum target, GLint components, GLint width,
-                                   GLenum format, GLenum type, const void *data )
-{
-    if (!LOAD_FUNCPTR( gluBuild1DMipmaps )) return GLU_OUT_OF_MEMORY;
-    return p_gluBuild1DMipmaps( target, components, width, format, type, data );
-}
-
-/***********************************************************************
- *		gluBuild2DMipmaps (GLU32.@)
- */
-int WINAPI wine_gluBuild2DMipmaps( GLenum target, GLint components, GLint width, GLint height,
-                                   GLenum format, GLenum type, const void *data )
-{
-    if (!LOAD_FUNCPTR( gluBuild2DMipmaps )) return GLU_OUT_OF_MEMORY;
-    return p_gluBuild2DMipmaps( target, components, width, height, format, type, data );
 }
 
 /***********************************************************************

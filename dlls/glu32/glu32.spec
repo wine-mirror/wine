@@ -2,8 +2,8 @@
 @ stdcall gluBeginPolygon(ptr) wine_gluBeginPolygon
 @ stdcall gluBeginSurface(ptr) wine_gluBeginSurface
 @ stdcall gluBeginTrim(ptr) wine_gluBeginTrim
-@ stdcall gluBuild1DMipmaps(long long long long long ptr) wine_gluBuild1DMipmaps
-@ stdcall gluBuild2DMipmaps(long long long long long long ptr) wine_gluBuild2DMipmaps
+@ stdcall gluBuild1DMipmaps(long long long long long ptr)
+@ stdcall gluBuild2DMipmaps(long long long long long long ptr)
 @ stdcall gluCheckExtension(str ptr) wine_gluCheckExtension
 @ stdcall gluCylinder(ptr double double double long long)
 @ stdcall gluDeleteNurbsRenderer(ptr) wine_gluDeleteNurbsRenderer
@@ -40,7 +40,7 @@
 @ stdcall gluQuadricNormals(ptr long)
 @ stdcall gluQuadricOrientation(ptr long)
 @ stdcall gluQuadricTexture(ptr long)
-@ stdcall gluScaleImage(long long long long ptr long long long ptr) wine_gluScaleImage
+@ stdcall gluScaleImage(long long long long ptr long long long ptr)
 @ stdcall gluSphere(ptr double long long)
 @ stdcall gluTessBeginContour(ptr) wine_gluTessBeginContour
 @ stdcall gluTessBeginPolygon(ptr ptr) wine_gluTessBeginPolygon
