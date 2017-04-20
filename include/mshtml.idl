@@ -19721,6 +19721,23 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLStyleElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f37d-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLStyleElement
+{
+    [default]         dispinterface DispHTMLStyleElement;
+ /* [source, default] dispinterface HTMLStyleElementEvents; */
+ /* [source]          dispinterface HTMLStyleElementEvents2; */
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLStyleElement;
+ /* interface IHTMLStyleElement2; */
+}
+
+/*****************************************************************************
  *    IHTMLStorage interface
  */
 [
