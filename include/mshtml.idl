@@ -11832,6 +11832,22 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLUnknownElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f268-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLUnknownElement
+{
+    [default]         dispinterface DispHTMLUnknownElement;
+    [source, default] dispinterface HTMLElementEvents;
+    [source]          dispinterface HTMLElementEvents2;
+    WINE_HTMLELEMENT_INTERFACES;
+ /* interface IHTMLUnknownElement; */
+}
+
+/*****************************************************************************
  *    IOmHistory interface
  */
 [
@@ -13591,6 +13607,30 @@ methods:
     void msWriteProfilerMark([in] BSTR bstrProfilerMarkName);
 
     WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
+}
+
+/*****************************************************************************
+ *    HTMLWindow2 coclass
+ */
+[
+    noncreatable,
+    uuid(d48a6ec6-6a4a-11cf-94a7-444553540000)
+]
+coclass HTMLWindow2
+{
+    [default]         dispinterface DispHTMLWindow2;
+    [source, default] dispinterface HTMLWindowEvents;
+    [source]          dispinterface HTMLWindowEvents2;
+ /* [source]          dispinterface HTMLWindowEvents3; */
+    interface IHTMLWindow2;
+    interface IHTMLWindow3;
+    interface IHTMLWindow4;
+    interface IHTMLWindow5;
+    interface IHTMLWindow6;
+ /* interface IHTMLWindow7; */
+ /* interface IHTMLWindow8; */
+    interface IHTMLDOMConstructor;
+    interface IEventTarget;
 }
 
 /*****************************************************************************
