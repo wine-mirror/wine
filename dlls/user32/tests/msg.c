@@ -14438,12 +14438,30 @@ static void test_defwinproc(void)
     INT x, y;
     LRESULT res;
     struct rbuttonup_thread_data data;
+    char buffA[64];
     HANDLE thread;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "test_defwndproc",
             WS_VISIBLE | WS_CAPTION | WS_OVERLAPPEDWINDOW, 0,0,500,100,0,0,0, NULL);
     assert(hwnd);
     flush_events();
+
+    buffA[0] = 0;
+    GetWindowTextA(hwnd, buffA, sizeof(buffA)/sizeof(*buffA));
+    ok(!strcmp(buffA, "test_defwndproc"), "unexpected window text, %s\n", buffA);
+
+    /* Zero high word of the lParam */
+    res = DefWindowProcA(hwnd, WM_SETTEXT, 0, 0x1234);
+    ok(res == 0, "WM_SETTEXT was expected to fail, %ld\n", res);
+
+    GetWindowTextA(hwnd, buffA, sizeof(buffA)/sizeof(*buffA));
+    ok(!strcmp(buffA, "test_defwndproc"), "unexpected window text, %s\n", buffA);
+
+    res = DefWindowProcW(hwnd, WM_SETTEXT, 0, 0x1234);
+    ok(res == 0, "WM_SETTEXT was expected to fail, %ld\n", res);
+
+    GetWindowTextA(hwnd, buffA, sizeof(buffA)/sizeof(*buffA));
+    ok(!strcmp(buffA, "test_defwndproc"), "unexpected window text, %s\n", buffA);
 
     GetCursorPos(&pos);
     GetWindowRect(hwnd, &rect);

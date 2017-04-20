@@ -83,16 +83,21 @@ static void DEFWND_HandleWindowPosChanged( HWND hwnd, const WINDOWPOS *winpos )
  *
  * Set the window text.
  */
-static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
+static LRESULT DEFWND_SetTextA( HWND hwnd, LPCSTR text )
 {
     int count;
     WCHAR *textW;
     WND *wndPtr;
 
+    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
+     * may have child window IDs instead of window name */
+    if (text && IS_INTRESOURCE(text))
+        return 0;
+
     if (!text) text = "";
     count = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
 
-    if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
     if ((textW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
     {
         HeapFree(GetProcessHeap(), 0, wndPtr->text);
@@ -111,6 +116,8 @@ static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
     WIN_ReleasePtr( wndPtr );
 
     USER_Driver->pSetWindowText( hwnd, textW );
+
+    return 1;
 }
 
 /***********************************************************************
@@ -118,16 +125,21 @@ static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
  *
  * Set the window text.
  */
-static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
+static LRESULT DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
 {
     static const WCHAR empty_string[] = {0};
     WND *wndPtr;
     int count;
 
+    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
+     * may have child window IDs instead of window name */
+    if (text && IS_INTRESOURCE(text))
+        return 0;
+
     if (!text) text = empty_string;
     count = strlenW(text) + 1;
 
-    if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
     HeapFree(GetProcessHeap(), 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
     {
@@ -146,6 +158,8 @@ static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
     WIN_ReleasePtr( wndPtr );
 
     USER_Driver->pSetWindowText( hwnd, text );
+
+    return 1;
 }
 
 /***********************************************************************
@@ -783,10 +797,8 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         if (lParam)
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
-            /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
-             * may have child window IDs instead of window name */
-            if (!IS_INTRESOURCE(cs->lpszName))
-                DEFWND_SetTextA( hwnd, cs->lpszName );
+
+            DEFWND_SetTextA( hwnd, cs->lpszName );
             result = 1;
 
             if(cs->style & (WS_HSCROLL | WS_VSCROLL))
@@ -822,7 +834,8 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_SETTEXT:
-        DEFWND_SetTextA( hwnd, (LPCSTR)lParam );
+        if (!DEFWND_SetTextA( hwnd, (LPCSTR)lParam ))
+            break;
         if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
             NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         result = 1; /* success. FIXME: check text length */
@@ -933,10 +946,8 @@ LRESULT WINAPI DefWindowProcW(
         if (lParam)
         {
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
-            /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
-             * may have child window IDs instead of window name */
-            if (!IS_INTRESOURCE(cs->lpszName))
-                DEFWND_SetTextW( hwnd, cs->lpszName );
+
+            DEFWND_SetTextW( hwnd, cs->lpszName );
             result = 1;
 
             if(cs->style & (WS_HSCROLL | WS_VSCROLL))
@@ -969,7 +980,8 @@ LRESULT WINAPI DefWindowProcW(
         break;
 
     case WM_SETTEXT:
-        DEFWND_SetTextW( hwnd, (LPCWSTR)lParam );
+        if (!DEFWND_SetTextW( hwnd, (LPCWSTR)lParam ))
+            break;
         if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
             NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         result = 1; /* success. FIXME: check text length */
