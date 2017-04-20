@@ -519,6 +519,13 @@ cpp_quote("#define DBPROPVAL_OS_CLIENTCURSOR           __MSABI_LONG(0x00000004)"
 cpp_quote("#define DBPROPVAL_OS_ENABLEALL              __MSABI_LONG(0xffffffff)")
 cpp_quote("#define DBPROPVAL_BI_CROSSROWSET            __MSABI_LONG(0x00000001)")
 
+cpp_quote("#define DB_MODE_READ                        0x01")
+cpp_quote("#define DB_MODE_WRITE                       0x02")
+cpp_quote("#define DB_MODE_READWRITE                   0x03")
+cpp_quote("#define DB_MODE_SHARE_DENY_READ             0x04")
+cpp_quote("#define DB_MODE_SHARE_DENY_WRITE            0x08")
+cpp_quote("#define DB_MODE_SHARE_EXCLUSIVE             0x0c")
+cpp_quote("#define DB_MODE_SHARE_DENY_NONE             0x10")
 
 typedef struct tagDBCOLUMNACCESS
 {
