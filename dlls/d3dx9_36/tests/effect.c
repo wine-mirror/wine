@@ -5744,6 +5744,373 @@ static void test_cross_effect_handle(IDirect3DDevice9 *device)
     effect1->lpVtbl->Release(effect1);
 }
 
+#if 0
+struct test_struct
+{
+    float3 v1_2;
+    float fv_2;
+    float4 v2_2;
+};
+
+shared float arr2[1];
+shared test_struct ts2[2] = {{{0, 0, 0}, 0, {0, 0, 0, 0}}, {{1, 2, 3}, 4, {5, 6, 7, 8}}};
+
+struct VS_OUTPUT
+{
+    float4 Position   : POSITION;
+};
+
+VS_OUTPUT RenderSceneVS(float4 vPos : POSITION)
+{
+    VS_OUTPUT Output;
+
+    Output.Position = arr2[0] * vPos;
+    return Output;
+}
+
+shared vertexshader vs_arr2[2] = {compile vs_3_0 RenderSceneVS(), NULL};
+
+technique tech0
+{
+    pass p0
+    {
+        FogEnable = TRUE;
+        FogDensity = arr2[0];
+        PointScale_A = ts2[0].fv_2;
+        VertexShader = vs_arr2[0];
+    }
+
+    pass p1
+    {
+        VertexShader = vs_arr2[1];
+    }
+}
+#endif
+static const DWORD test_effect_shared_parameters_blob[] =
+{
+    0xfeff0901, 0x000001dc, 0x00000000, 0x00000003, 0x00000000, 0x00000024, 0x00000000, 0x00000001,
+    0x00000001, 0x00000001, 0x00000000, 0x00000005, 0x32727261, 0x00000000, 0x00000000, 0x00000005,
+    0x000000dc, 0x00000000, 0x00000002, 0x00000003, 0x00000003, 0x00000001, 0x000000e4, 0x00000000,
+    0x00000000, 0x00000003, 0x00000001, 0x00000003, 0x00000000, 0x000000f0, 0x00000000, 0x00000000,
+    0x00000001, 0x00000001, 0x00000003, 0x00000001, 0x000000fc, 0x00000000, 0x00000000, 0x00000004,
+    0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x3f800000, 0x40000000, 0x40400000, 0x40800000, 0x40a00000, 0x40c00000, 0x40e00000,
+    0x41000000, 0x00000004, 0x00327374, 0x00000005, 0x325f3176, 0x00000000, 0x00000005, 0x325f7666,
+    0x00000000, 0x00000005, 0x325f3276, 0x00000000, 0x00000010, 0x00000004, 0x00000124, 0x00000000,
+    0x00000002, 0x00000001, 0x00000002, 0x00000008, 0x615f7376, 0x00327272, 0x00000001, 0x00000002,
+    0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000003,
+    0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000003,
+    0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000003, 0x00000010,
+    0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00003070, 0x00000004, 0x00000010,
+    0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00003170, 0x00000006, 0x68636574,
+    0x00000030, 0x00000003, 0x00000001, 0x00000006, 0x00000005, 0x00000004, 0x00000020, 0x00000001,
+    0x00000000, 0x00000030, 0x0000009c, 0x00000001, 0x00000000, 0x00000108, 0x0000011c, 0x00000001,
+    0x00000000, 0x000001d0, 0x00000000, 0x00000002, 0x000001a8, 0x00000000, 0x00000004, 0x0000000e,
+    0x00000000, 0x00000134, 0x00000130, 0x00000014, 0x00000000, 0x00000154, 0x00000150, 0x00000041,
+    0x00000000, 0x00000174, 0x00000170, 0x00000092, 0x00000000, 0x00000194, 0x00000190, 0x000001c8,
+    0x00000000, 0x00000001, 0x00000092, 0x00000000, 0x000001b4, 0x000001b0, 0x00000002, 0x00000004,
+    0x00000001, 0x000000c8, 0xfffe0300, 0x0025fffe, 0x42415443, 0x0000001c, 0x0000005f, 0xfffe0300,
+    0x00000001, 0x0000001c, 0x00000000, 0x00000058, 0x00000030, 0x00000002, 0x00000001, 0x00000038,
+    0x00000048, 0x32727261, 0xababab00, 0x00030000, 0x00010001, 0x00000001, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x335f7376, 0x4d00305f, 0x6f726369, 0x74666f73, 0x29522820,
+    0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235,
+    0x00313131, 0x0200001f, 0x80000000, 0x900f0000, 0x0200001f, 0x80000000, 0xe00f0000, 0x03000005,
+    0xe00f0000, 0xa0000000, 0x90e40000, 0x0000ffff, 0x00000002, 0x00000000, 0x00000000, 0x00000001,
+    0xffffffff, 0x00000000, 0x00000001, 0x0000000b, 0x615f7376, 0x5b327272, 0x00005d31, 0x00000000,
+    0x00000000, 0xffffffff, 0x00000003, 0x00000001, 0x0000000b, 0x615f7376, 0x5b327272, 0x00005d30,
+    0x00000000, 0x00000000, 0xffffffff, 0x00000002, 0x00000000, 0x00000188, 0x46580200, 0x004ffffe,
+    0x42415443, 0x0000001c, 0x00000107, 0x46580200, 0x00000001, 0x0000001c, 0x20000100, 0x00000104,
+    0x00000030, 0x00000002, 0x00000002, 0x00000094, 0x000000a4, 0x00327374, 0x325f3176, 0xababab00,
+    0x00030001, 0x00030001, 0x00000001, 0x00000000, 0x325f7666, 0xababab00, 0x00030000, 0x00010001,
+    0x00000001, 0x00000000, 0x325f3276, 0xababab00, 0x00030001, 0x00040001, 0x00000001, 0x00000000,
+    0x00000034, 0x0000003c, 0x0000004c, 0x00000054, 0x00000064, 0x0000006c, 0x00000005, 0x00080001,
+    0x00030002, 0x0000007c, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x40000000,
+    0x40400000, 0x00000000, 0x40800000, 0x00000000, 0x00000000, 0x00000000, 0x40a00000, 0x40c00000,
+    0x40e00000, 0x41000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c,
+    0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe,
+    0x54494c43, 0x00000000, 0x000cfffe, 0x434c5846, 0x00000001, 0x10000001, 0x00000001, 0x00000000,
+    0x00000002, 0x00000004, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+    0x00000000, 0x00000000, 0xffffffff, 0x00000001, 0x00000000, 0x000000dc, 0x46580200, 0x0024fffe,
+    0x42415443, 0x0000001c, 0x0000005b, 0x46580200, 0x00000001, 0x0000001c, 0x20000100, 0x00000058,
+    0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000048, 0x32727261, 0xababab00, 0x00030000,
+    0x00010001, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x4d007874,
+    0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970,
+    0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000, 0x000cfffe,
+    0x434c5846, 0x00000001, 0x10000001, 0x00000001, 0x00000000, 0x00000002, 0x00000000, 0x00000000,
+    0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+};
+
+#define test_effect_shared_vs_arr_compare_helper(args...) \
+        test_effect_shared_vs_arr_compare_helper_(__LINE__, args)
+static void test_effect_shared_vs_arr_compare_helper_(unsigned int line, ID3DXEffect *effect,
+        D3DXHANDLE param_child, struct IDirect3DVertexShader9 *vshader1, unsigned int element,
+        BOOL todo)
+{
+    struct IDirect3DVertexShader9 *vshader2;
+    D3DXHANDLE param_child2;
+    HRESULT hr;
+
+    param_child2 = effect->lpVtbl->GetParameterElement(effect, "vs_arr2", element);
+    ok_(__FILE__, line)(!!param_child2, "GetParameterElement failed.\n");
+    ok_(__FILE__, line)(param_child != param_child2, "Got same parameter handle unexpectedly.\n");
+    hr = effect->lpVtbl->GetVertexShader(effect, param_child2, &vshader2);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(vshader1 == vshader2, "Shared shader interface pointers differ.\n");
+    if (vshader2)
+        IDirect3DVertexShader9_Release(vshader2);
+}
+
+#define test_effect_shared_parameters_compare_vconst(args...) \
+        test_effect_shared_parameters_compare_vconst_(__LINE__, args)
+static void test_effect_shared_parameters_compare_vconst_(unsigned int line, IDirect3DDevice9 *device,
+        unsigned int index, const D3DXVECTOR4 *expected_fvect, BOOL todo)
+{
+    D3DXVECTOR4 fvect;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_GetVertexShaderConstantF(device, index, &fvect.x, 1);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(!memcmp(&fvect, expected_fvect, sizeof(fvect)),
+            "Unexpected constant value %g, %g, %g, %g.\n", fvect.x, fvect.y, fvect.z, fvect.w);
+}
+
+static void test_effect_shared_parameters(IDirect3DDevice9 *device)
+{
+    ID3DXEffect *effect1, *effect2, *effect3, *effect4;
+    ID3DXEffectPool *pool;
+    HRESULT hr;
+    D3DXHANDLE param, param_child, param2, param_child2;
+    unsigned int i, passes_count;
+    ULONG refcount;
+    D3DXVECTOR4 fvect;
+    float fval[2];
+
+    hr = D3DXCreateEffectPool(&pool);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, pool, &effect2, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    effect2->lpVtbl->SetFloat(effect2, "arr2[0]", 28.0f);
+    effect2->lpVtbl->Release(effect2);
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, pool, &effect2, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    effect2->lpVtbl->GetFloat(effect2, "arr2[0]", &fvect.x);
+    ok(fvect.x == 92.0f, "Unexpected parameter value %g.\n", fvect.x);
+    effect2->lpVtbl->SetFloat(effect2, "arr2[0]", 28.0f);
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, pool, &effect1, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect1->lpVtbl->GetFloat(effect1, "arr2[0]", &fvect.x);
+    todo_wine
+    ok(fvect.x == 28.0f, "Unexpected parameter value %g.\n", fvect.x);
+
+    hr = D3DXCreateEffect(device, test_effect_shared_parameters_blob, sizeof(test_effect_shared_parameters_blob),
+            NULL, NULL, 0, pool, &effect3, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = D3DXCreateEffect(device, test_effect_shared_parameters_blob, sizeof(test_effect_shared_parameters_blob),
+            NULL, NULL, 0, pool, &effect4, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect2->lpVtbl->SetFloat(effect2, "arr2[0]", 3.0f);
+    effect2->lpVtbl->SetFloat(effect2, "ts2[0].fv", 3.0f);
+
+    effect3->lpVtbl->GetFloat(effect3, "arr2[0]", &fvect.x);
+    ok(fvect.x == 0.0f, "Unexpected parameter value %g.\n", fvect.x);
+    effect4->lpVtbl->SetFloat(effect4, "arr2[0]", 28.0f);
+    effect3->lpVtbl->GetFloat(effect3, "arr2[0]", &fvect.x);
+    todo_wine
+    ok(fvect.x == 28.0f, "Unexpected parameter value %g.\n", fvect.x);
+    effect1->lpVtbl->GetFloat(effect1, "arr2[0]", &fvect.x);
+    todo_wine
+    ok(fvect.x == 3.0f, "Unexpected parameter value %g.\n", fvect.x);
+
+    param = effect3->lpVtbl->GetParameterByName(effect3, NULL, "ts2[0].fv_2");
+    ok(!!param, "GetParameterByName failed.\n");
+    effect3->lpVtbl->GetFloat(effect3, param, &fvect.x);
+    ok(fvect.x == 0.0f, "Unexpected parameter value %g.\n", fvect.x);
+
+    hr = effect3->lpVtbl->Begin(effect3, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    if (0)
+    {
+    /*  Native d3dx crashes in BeginPass(). This is the case of shader array declared shared
+     *  but initialized with different shaders using different parameters. */
+    hr = effect3->lpVtbl->BeginPass(effect3, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect3->lpVtbl->EndPass(effect3);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    }
+
+    test_effect_preshader_clear_vconsts(device);
+    fvect.x = fvect.y = fvect.z = fvect.w = 28.0f;
+    hr = effect2->lpVtbl->SetVector(effect2, "g_Pos1", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect1->lpVtbl->SetVector(effect1, "g_Pos1", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect3->lpVtbl->BeginPass(effect3, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fvect.x, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    todo_wine
+    ok(fvect.x == 0.0f && fvect.y == 0.0f && fvect.z == 0.0f && fvect.w == 0.0f,
+            "Unexpected vector %g, %g, %g, %g.\n", fvect.x, fvect.y, fvect.z, fvect.w);
+
+    hr = effect3->lpVtbl->EndPass(effect3);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect3->lpVtbl->End(effect3);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    for (i = 0; i < 2; ++i)
+    {
+        struct IDirect3DVertexShader9 *vshader1;
+
+        param_child = effect1->lpVtbl->GetParameterElement(effect1, "vs_arr2", i);
+        ok(!!param_child, "GetParameterElement failed.\n");
+        hr = effect1->lpVtbl->GetVertexShader(effect1, param_child, &vshader1);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        test_effect_shared_vs_arr_compare_helper(effect2, param_child, vshader1, i, TRUE);
+        test_effect_shared_vs_arr_compare_helper(effect3, param_child, vshader1, i, TRUE);
+        test_effect_shared_vs_arr_compare_helper(effect4, param_child, vshader1, i, TRUE);
+        IDirect3DVertexShader9_Release(vshader1);
+    }
+
+    effect3->lpVtbl->Release(effect3);
+    effect4->lpVtbl->Release(effect4);
+
+    fval[0] = 1.0f;
+    hr = effect1->lpVtbl->SetFloatArray(effect1, "arr1", fval, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    fval[0] = 0.0f;
+    hr = effect2->lpVtbl->GetFloatArray(effect2, "arr1", fval, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(fval[0] == 91.0f, "Unexpected value %g.\n", fval[0]);
+
+    param = effect1->lpVtbl->GetParameterByName(effect1, NULL, "arr2");
+    ok(!!param, "GetParameterByName failed.\n");
+    param2 = effect2->lpVtbl->GetParameterByName(effect2, NULL, "arr2");
+    ok(!!param, "GetParameterByName failed.\n");
+    ok(param != param2, "Got same parameter handle unexpectedly.\n");
+    param_child = effect1->lpVtbl->GetParameterElement(effect1, param, 0);
+    ok(!!param_child, "GetParameterElement failed.\n");
+    param_child2 = effect1->lpVtbl->GetParameterElement(effect2, param2, 0);
+    ok(!!param_child2, "GetParameterElement failed.\n");
+    ok(param_child != param_child2, "Got same parameter handle unexpectedly.\n");
+
+    fval[0] = 33.0f;
+    hr = effect1->lpVtbl->SetFloatArray(effect1, "arr2", fval, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    fval[0] = 0.0f;
+    hr = effect1->lpVtbl->GetFloatArray(effect1, "arr2", fval, 2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(fval[0] == 33.0f && fval[1] == 93.0f, "Unexpected values %g, %g.\n", fval[0], fval[1]);
+    fval[0] = 0.0f;
+    hr = effect2->lpVtbl->GetFloatArray(effect2, "arr2", fval, 2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    todo_wine
+    ok(fval[0] == 33.0f && fval[1] == 93.0f, "Unexpected values %g, %g.\n", fval[0], fval[1]);
+
+    hr = effect1->lpVtbl->Begin(effect1, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect2->lpVtbl->Begin(effect2, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect1->lpVtbl->BeginPass(effect1, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = 1.0f;
+    fvect.y = fvect.z = fvect.w = 0.0f;
+    test_effect_shared_parameters_compare_vconst(device, 32, &fvect, FALSE);
+
+    hr = effect1->lpVtbl->BeginPass(effect2, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = 91.0f;
+    test_effect_shared_parameters_compare_vconst(device, 32, &fvect, FALSE);
+    fvect.x = 33.0f;
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, TRUE);
+
+    fval[0] = 28.0f;
+    fval[1] = -1.0f;
+    hr = effect1->lpVtbl->SetFloatArray(effect1, "arr2", fval, 2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_preshader_clear_vconsts(device);
+
+    hr = effect1->lpVtbl->CommitChanges(effect1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = 28.0f;
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, FALSE);
+    fvect.x = -1.0f;
+    test_effect_shared_parameters_compare_vconst(device, 30, &fvect, FALSE);
+
+    test_effect_preshader_clear_vconsts(device);
+
+    hr = effect1->lpVtbl->CommitChanges(effect1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect_filler, FALSE);
+    test_effect_shared_parameters_compare_vconst(device, 30, &fvect_filler, FALSE);
+
+    hr = effect2->lpVtbl->CommitChanges(effect2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = 28.0f;
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, TRUE);
+    fvect.x = -1.0f;
+    test_effect_shared_parameters_compare_vconst(device, 30, &fvect, TRUE);
+
+    fval[0] = -2.0f;
+    hr = effect2->lpVtbl->SetFloat(effect2, "arr2[0]", fval[0]);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect1->lpVtbl->CommitChanges(effect1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    fvect.x = -2.0f;
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, TRUE);
+    fvect.x = -1.0f;
+    test_effect_shared_parameters_compare_vconst(device, 30, &fvect, TRUE);
+
+    fvect.x = fvect.y = fvect.z = fvect.w = 1111.0f;
+    hr = effect2->lpVtbl->SetVector(effect2, "g_Pos1", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect1->lpVtbl->CommitChanges(effect1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    test_effect_shared_parameters_compare_vconst(device, 31, &fvect_filler, FALSE);
+
+    hr = effect1->lpVtbl->CommitChanges(effect2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    test_effect_shared_parameters_compare_vconst(device, 31, &fvect, FALSE);
+
+    hr = effect1->lpVtbl->End(effect1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect2->lpVtbl->End(effect2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    effect1->lpVtbl->Release(effect1);
+    effect2->lpVtbl->Release(effect2);
+
+    refcount = pool->lpVtbl->Release(pool);
+    ok(!refcount, "Effect pool was not properly freed, refcount %u.\n", refcount);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -5792,6 +6159,7 @@ START_TEST(effect)
     test_effect_preshader_relative_addressing(device);
     test_effect_state_manager(device);
     test_cross_effect_handle(device);
+    test_effect_shared_parameters(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
