@@ -2318,9 +2318,10 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     {
         if (reg_maps->cb_sizes[i])
         {
+            shader_addline(buffer, "layout(std140");
             if (shader_glsl_use_layout_binding_qualifier(gl_info))
-                shader_addline(buffer, "layout(binding = %u)\n", uniform_block_base + i);
-            shader_addline(buffer, "layout(std140) uniform block_%s_cb%u { vec4 %s_cb%u[%u]; };\n",
+                shader_addline(buffer, ", binding = %u", uniform_block_base + i);
+            shader_addline(buffer, ") uniform block_%s_cb%u { vec4 %s_cb%u[%u]; };\n",
                     prefix, i, prefix, i, reg_maps->cb_sizes[i]);
         }
     }
