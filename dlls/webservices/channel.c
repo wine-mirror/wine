@@ -98,6 +98,9 @@ struct channel
     HINTERNET               http_session;
     HINTERNET               http_connect;
     HINTERNET               http_request;
+    char                   *read_buf;
+    ULONG                   read_buflen;
+    ULONG                   read_size;
     ULONG                   prop_count;
     struct prop             prop[sizeof(channel_props)/sizeof(channel_props[0])];
 };
@@ -134,6 +137,8 @@ static void reset_channel( struct channel *channel )
     channel->http_connect    = NULL;
     WinHttpCloseHandle( channel->http_session );
     channel->http_session    = NULL;
+
+    channel->read_size       = 0;
 }
 
 static void free_channel( struct channel *channel )
@@ -142,6 +147,8 @@ static void free_channel( struct channel *channel )
 
     WsFreeWriter( channel->writer );
     WsFreeReader( channel->reader );
+
+    heap_free( channel->read_buf );
 
     channel->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &channel->cs );
@@ -629,57 +636,72 @@ done:
     return hr;
 }
 
-#define INITIAL_READ_BUFFER_SIZE 4096
-static HRESULT receive_message( struct channel *channel, ULONG max_len, char **ret, ULONG *ret_len )
+static HRESULT resize_read_buffer( struct channel *channel, ULONG size )
 {
-    DWORD len, bytes_read, offset = 0, size = INITIAL_READ_BUFFER_SIZE;
-    char *buf;
+    if (!channel->read_buf)
+    {
+        if (!(channel->read_buf = heap_alloc( size ))) return E_OUTOFMEMORY;
+        channel->read_buflen = size;
+        return S_OK;
+    }
+    if (channel->read_buflen < size)
+    {
+        char *tmp;
+        ULONG new_size = max( size, channel->read_buflen * 2 );
+        if (!(tmp = heap_realloc( channel->read_buf, new_size ))) return E_OUTOFMEMORY;
+        channel->read_buf = tmp;
+        channel->read_buflen = new_size;
+    }
+    return S_OK;
+}
 
-    if (!(buf = heap_alloc( size ))) return E_OUTOFMEMORY;
-    *ret_len = 0;
+#define INITIAL_READ_BUFFER_SIZE 4096
+static HRESULT receive_message( struct channel *channel )
+{
+    DWORD len, max_len, bytes_read, offset = 0, size = INITIAL_READ_BUFFER_SIZE;
+    HRESULT hr;
+
+    prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
+              &max_len, sizeof(max_len) );
+
+    if ((hr = resize_read_buffer( channel, size )) != S_OK) return hr;
+    channel->read_size = 0;
+
     for (;;)
     {
         if (!WinHttpQueryDataAvailable( channel->http_request, &len ))
         {
-            heap_free( buf );
             return HRESULT_FROM_WIN32( GetLastError() );
         }
         if (!len) break;
-        if (*ret_len + len > max_len)
+        if (channel->read_size + len > max_len) return WS_E_QUOTA_EXCEEDED;
+        if ((hr = resize_read_buffer( channel, channel->read_size + len )) != S_OK) return hr;
+
+        if (!WinHttpReadData( channel->http_request, channel->read_buf + offset, len, &bytes_read ))
         {
-            heap_free( buf );
-            return WS_E_QUOTA_EXCEEDED;
-        }
-        if (*ret_len + len > size)
-        {
-            char *tmp;
-            DWORD new_size = max( *ret_len + len, size * 2 );
-            if (!(tmp = heap_realloc( buf, new_size )))
-            {
-                heap_free( buf );
-                return E_OUTOFMEMORY;
-            }
-            buf = tmp;
-            size = new_size;
-        }
-        if (!WinHttpReadData( channel->http_request, buf + offset, len, &bytes_read ))
-        {
-            heap_free( buf );
             return HRESULT_FROM_WIN32( GetLastError() );
         }
         if (!bytes_read) break;
-        *ret_len += bytes_read;
+        channel->read_size += bytes_read;
         offset += bytes_read;
     }
-
-    *ret = buf;
     return S_OK;
 }
 
-HRESULT channel_receive_message( WS_CHANNEL *handle, char **buf, ULONG *len )
+static HRESULT set_input( WS_XML_READER *reader, char *data, ULONG size )
+{
+    WS_XML_READER_TEXT_ENCODING text = {{WS_XML_READER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
+    WS_XML_READER_BUFFER_INPUT buf;
+
+    buf.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
+    buf.encodedData     = data;
+    buf.encodedDataSize = size;
+    return WsSetInput( reader, &text.encoding, &buf.input, NULL, 0, NULL );
+}
+
+HRESULT channel_receive_message( WS_CHANNEL *handle )
 {
     struct channel *channel = (struct channel *)handle;
-    ULONG max_len;
     HRESULT hr;
 
     EnterCriticalSection( &channel->cs );
@@ -690,22 +712,31 @@ HRESULT channel_receive_message( WS_CHANNEL *handle, char **buf, ULONG *len )
         return E_INVALIDARG;
     }
 
-    WsGetChannelProperty( handle, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE, &max_len, sizeof(max_len), NULL );
-    hr = receive_message( channel, max_len, buf, len );
+    if ((hr = receive_message( channel )) != S_OK) goto done;
+    if (!channel->reader && (hr = WsCreateReader( NULL, 0, &channel->reader, NULL )) != S_OK) goto done;
+    if ((hr = set_input( channel->reader, channel->read_buf, channel->read_size )) != S_OK) goto done;
 
+done:
     LeaveCriticalSection( &channel->cs );
     return hr;
 }
 
-HRESULT set_input( WS_XML_READER *reader, char *data, ULONG size )
+HRESULT channel_get_reader( WS_CHANNEL *handle, WS_XML_READER **reader )
 {
-    WS_XML_READER_TEXT_ENCODING text = {{WS_XML_READER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
-    WS_XML_READER_BUFFER_INPUT buf;
+    struct channel *channel = (struct channel *)handle;
 
-    buf.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
-    buf.encodedData     = data;
-    buf.encodedDataSize = size;
-    return WsSetInput( reader, &text.encoding, &buf.input, NULL, 0, NULL );
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    *reader = channel->reader;
+
+    LeaveCriticalSection( &channel->cs );
+    return S_OK;
 }
 
 static HRESULT read_message( WS_MESSAGE *handle, WS_XML_READER *reader, const WS_ELEMENT_DESCRIPTION *desc,
@@ -725,8 +756,6 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
                                  void *value, ULONG size, ULONG *index, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
-    char *buf = NULL;
-    ULONG len;
     HRESULT hr;
 
     TRACE( "%p %p %p %u %08x %08x %p %p %u %p %p %p\n", handle, msg, desc, count, option, read_option, heap,
@@ -751,23 +780,20 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
 
     if (!channel || !msg || !desc || !count) return E_INVALIDARG;
 
-    if ((hr = channel_receive_message( handle, &buf, &len )) != S_OK) return hr;
-
     EnterCriticalSection( &channel->cs );
 
     if (channel->magic != CHANNEL_MAGIC)
     {
-        heap_free( buf );
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
 
+    if ((hr = receive_message( channel )) != S_OK) goto done;
     if (!channel->reader && (hr = WsCreateReader( NULL, 0, &channel->reader, NULL )) != S_OK) goto done;
-    if ((hr = set_input( channel->reader, buf, len )) != S_OK) goto done;
+    if ((hr = set_input( channel->reader, channel->read_buf, channel->read_size )) != S_OK) goto done;
     hr = read_message( msg, channel->reader, desc[0]->bodyElementDescription, read_option, heap, value, size );
 
 done:
-    heap_free( buf );
     LeaveCriticalSection( &channel->cs );
     return hr;
 }

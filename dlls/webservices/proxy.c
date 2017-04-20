@@ -433,20 +433,12 @@ static HRESULT receive_message( WS_CHANNEL *channel, WS_MESSAGE *msg, WS_MESSAGE
                                 WS_PARAMETER_DESCRIPTION *params, ULONG count, WS_HEAP *heap, const void **args )
 {
     WS_XML_READER *reader;
-    char *buf;
-    ULONG len;
     HRESULT hr;
 
     if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
-    if ((hr = channel_receive_message( channel, &buf, &len )) != S_OK) return hr;
-    if ((hr = WsCreateReader( NULL, 0, &reader, NULL )) != S_OK) goto done;
-    if ((hr = set_input( reader, buf, len )) != S_OK) goto done;
-    hr = read_message( msg, reader, heap, desc->bodyElementDescription, params, count, args );
-
-done:
-    WsFreeReader( reader );
-    heap_free( buf);
-    return hr;
+    if ((hr = channel_receive_message( channel )) != S_OK) return hr;
+    if ((hr = channel_get_reader( channel, &reader )) != S_OK) return hr;
+    return read_message( msg, reader, heap, desc->bodyElementDescription, params, count, args );
 }
 
 static HRESULT create_input_message( WS_CHANNEL *channel, const WS_CALL_PROPERTY *properties,

@@ -43,7 +43,6 @@ WS_TYPE map_value_type( WS_VALUE_TYPE ) DECLSPEC_HIDDEN;
 BOOL set_fpword( unsigned short, unsigned short * ) DECLSPEC_HIDDEN;
 void restore_fpword( unsigned short ) DECLSPEC_HIDDEN;
 HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
-HRESULT set_input( WS_XML_READER *, char *, ULONG ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;
 
 #define INVALID_PARAMETER_INDEX 0xffff
@@ -119,7 +118,8 @@ void message_do_receive_callback( WS_MESSAGE * ) DECLSPEC_HIDDEN;
 HRESULT message_insert_http_headers( WS_MESSAGE *, HINTERNET ) DECLSPEC_HIDDEN;
 
 HRESULT channel_send_message( WS_CHANNEL *, WS_MESSAGE * ) DECLSPEC_HIDDEN;
-HRESULT channel_receive_message( WS_CHANNEL *, char **, ULONG * ) DECLSPEC_HIDDEN;
+HRESULT channel_receive_message( WS_CHANNEL * ) DECLSPEC_HIDDEN;
+HRESULT channel_get_reader( WS_CHANNEL *, WS_XML_READER ** ) DECLSPEC_HIDDEN;
 
 #define TICKS_PER_SEC       10000000
 #define TICKS_PER_MIN       (60 * (ULONGLONG)TICKS_PER_SEC)
