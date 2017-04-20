@@ -2581,6 +2581,48 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
     }
 }
 
+void *context_map_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *data, size_t size, GLenum binding, DWORD flags)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    BYTE *memory;
+
+    if (!data->buffer_object)
+        return data->addr;
+
+    context_bind_bo(context, binding, data->buffer_object);
+
+    if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+    {
+        GLbitfield map_flags = wined3d_resource_gl_map_flags(flags) & ~GL_MAP_FLUSH_EXPLICIT_BIT;
+        memory = GL_EXTCALL(glMapBufferRange(binding, (INT_PTR)data->addr, size, map_flags));
+    }
+    else
+    {
+        memory = GL_EXTCALL(glMapBuffer(binding, wined3d_resource_gl_legacy_map_flags(flags)));
+        memory += (INT_PTR)data->addr;
+    }
+
+    context_bind_bo(context, binding, 0);
+    checkGLcall("Map buffer object");
+
+    return memory;
+}
+
+void context_unmap_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *data, GLenum binding)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (!data->buffer_object)
+        return;
+
+    context_bind_bo(context, binding, data->buffer_object);
+    GL_EXTCALL(glUnmapBuffer(binding));
+    context_bind_bo(context, binding, 0);
+    checkGLcall("Unmap buffer object");
+}
+
 static void context_set_render_offscreen(struct wined3d_context *context, BOOL offscreen)
 {
     if (context->render_offscreen == offscreen) return;
