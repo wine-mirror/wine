@@ -128,6 +128,7 @@
 @ cdecl wined3d_device_set_gs_cb(ptr long ptr)
 @ cdecl wined3d_device_set_gs_resource_view(ptr long ptr)
 @ cdecl wined3d_device_set_gs_sampler(ptr long ptr)
+@ cdecl wined3d_device_set_hull_shader(ptr ptr)
 @ cdecl wined3d_device_set_index_buffer(ptr ptr long long)
 @ cdecl wined3d_device_set_light(ptr long ptr)
 @ cdecl wined3d_device_set_light_enable(ptr long long)
