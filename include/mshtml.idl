@@ -16676,6 +16676,25 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLEmbed coclass
+ */
+[
+    noncreatable,
+    uuid(3050f25d-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLEmbed
+{
+    [default]         dispinterface DispHTMLEmbed;
+ /* [source, default] dispinterface HTMLControlElementEvents; */
+ /* [source]          dispinterface HTMLControlElementEvents2; */
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLEmbedElement;
+ /* interface IHTMLEmbedElement2; */
+ /* interface IGetSVGDocument; */
+}
+
+/*****************************************************************************
  *    IHTMLCommentElement interface
  */
 [
