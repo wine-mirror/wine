@@ -18472,6 +18472,26 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLTableCell coclass
+ */
+[
+    noncreatable,
+    uuid(3050f246-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLTableCell
+{
+    [default]         dispinterface DispHTMLTableCell;
+    [source, default] dispinterface HTMLTextContainerEvents;
+    [source]          dispinterface HTMLTextContainerEvents2;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLTextContainer;
+    interface IHTMLTableCell;
+ /* interface IHTMLTableCell2; */
+ /* interface IHTMLTableCell3; */
+}
+
+/*****************************************************************************
  *    IHTMLScriptElement interface
  */
 [
