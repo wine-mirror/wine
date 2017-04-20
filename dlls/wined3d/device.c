@@ -2695,6 +2695,13 @@ void CDECL wined3d_device_set_domain_shader(struct wined3d_device *device, struc
         wined3d_shader_decref(prev);
 }
 
+struct wined3d_shader * CDECL wined3d_device_get_domain_shader(const struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return device->state.shader[WINED3D_SHADER_TYPE_DOMAIN];
+}
+
 void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     struct wined3d_shader *prev = device->update_state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
