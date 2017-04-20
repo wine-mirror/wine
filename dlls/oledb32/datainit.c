@@ -289,7 +289,55 @@ struct dbproperty {
     DBPROPID id;
     DBPROPOPTIONS options;
     VARTYPE type;
+    HRESULT (*convert_dbproperty)(const WCHAR *src, VARIANT *dest);
 };
+
+struct mode_propval
+{
+    const WCHAR *name;
+    DWORD value;
+};
+
+static int dbmodeprop_compare(const void *a, const void *b)
+{
+    const WCHAR *src = a;
+    const struct mode_propval *propval = b;
+    return strcmpiW(src, propval->name);
+}
+
+static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
+{
+    static const WCHAR readW[] = {'R','e','a','d',0};
+    static const WCHAR readwriteW[] = {'R','e','a','d','W','r','i','t','e',0};
+    static const WCHAR sharedenynoneW[] = {'S','h','a','r','e',' ','D','e','n','y',' ','N','o','n','e',0};
+    static const WCHAR sharedenyreadW[] = {'S','h','a','r','e',' ','D','e','n','y',' ','R','e','a','d',0};
+    static const WCHAR sharedenywriteW[] = {'S','h','a','r','e',' ','D','e','n','y',' ','W','r','i','t','e',0};
+    static const WCHAR shareexclusiveW[] = {'S','h','a','r','e',' ','E','x','c','l','u','s','i','v','e',0};
+    static const WCHAR writeW[] = {'W','r','i','t','e',0};
+
+    struct mode_propval mode_propvals[] =
+    {
+        { readW, DB_MODE_READ },
+        { readwriteW, DB_MODE_READWRITE },
+        { sharedenynoneW, DB_MODE_SHARE_DENY_NONE },
+        { sharedenyreadW, DB_MODE_SHARE_DENY_READ },
+        { sharedenywriteW, DB_MODE_SHARE_DENY_WRITE },
+        { shareexclusiveW, DB_MODE_SHARE_EXCLUSIVE },
+        { writeW, DB_MODE_WRITE },
+    };
+    struct mode_propval *prop;
+
+    if ((prop = bsearch(src, mode_propvals, sizeof(mode_propvals) / sizeof(*mode_propvals),
+        sizeof(struct mode_propval), dbmodeprop_compare)))
+    {
+        V_VT(dest) = VT_I4;
+        V_I4(dest) = prop->value;
+        TRACE("%s = %#x\n", debugstr_w(src), prop->value);
+        return S_OK;
+    }
+
+    return E_FAIL;
+}
 
 static const WCHAR asyncW[]  = {'A','s','y','n','c','h','r','o','n','o','u','s',' ','P','r','o','c','e','s','s','i','n','g',0};
 static const WCHAR bindW[]  = {'B','i','n','d',' ','F','l','a','g','s',0};
@@ -332,7 +380,7 @@ static const struct dbproperty dbproperties[] = {
     { locationW,   DBPROP_INIT_LOCATION,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
     { lockownerW,  DBPROP_INIT_LOCKOWNER,                  DBPROPOPTIONS_OPTIONAL, VT_BSTR },
     { maskpassW,   DBPROP_AUTH_MASK_PASSWORD,              DBPROPOPTIONS_OPTIONAL, VT_BOOL },
-    { modeW,       DBPROP_INIT_MODE,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { modeW,       DBPROP_INIT_MODE,                       DBPROPOPTIONS_OPTIONAL, VT_I4, convert_dbproperty_mode },
     { oledbservW,  DBPROP_INIT_OLEDBSERVICES,              DBPROPOPTIONS_OPTIONAL, VT_I4 },
     { passwordW,   DBPROP_AUTH_PASSWORD,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
     { persistEncW, DBPROP_AUTH_PERSIST_ENCRYPTED,          DBPROPOPTIONS_OPTIONAL, VT_BOOL },
@@ -418,7 +466,10 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
         else
             delim = strchrW(eq, ';');
 
-        value = SysAllocStringLen(eq, delim ? delim - eq : -1);
+        if (delim)
+            value = SysAllocStringLen(eq, delim - eq);
+        else
+            value = SysAllocString(eq);
 
         /* skip semicolon if present */
         if (delim)
@@ -534,6 +585,9 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
 
         VariantInit(&dest);
         hr = VariantChangeType(&dest, &src, 0, descr->type);
+        if (FAILED(hr) && descr->convert_dbproperty)
+            hr = descr->convert_dbproperty(pair->value, &dest);
+
         if (FAILED(hr))
         {
             ERR("failed to init property %s value as type %d\n", debugstr_w(pair->name), descr->type);

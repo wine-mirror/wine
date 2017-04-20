@@ -500,6 +500,15 @@ static void test_initializationstring(void)
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
     static const WCHAR initstring_sqloledb[] = {'P','r','o','v','i','d','e','r','=','S','Q','L','O','L','E','D','B','.','1',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
+    static const WCHAR initstring_mode[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
+         'M','o','d','e','=','i','n','v','a','l','i','d',0};
+    static const WCHAR initstring_mode2[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
+         'M','o','d','e','=','W','r','i','t','e','R','e','a','d',0};
+    static const WCHAR initstring_mode3[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',
+         'M','o','d','e','=','R','e','a','d','W','R','I','T','E',0};
     IDataInitialize *datainit = NULL;
     IDBInitialize *dbinit;
     HRESULT hr;
@@ -535,6 +544,23 @@ static void test_initializationstring(void)
             dbinit = NULL;
             hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR*)initstring_msdasql2,
                 &IID_IDBInitialize, (IUnknown**)&dbinit);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            IDBInitialize_Release(dbinit);
+
+            /* Invalid Mode value */
+            dbinit = NULL;
+            hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode,
+                &IID_IDBInitialize, (IUnknown **)&dbinit);
+            ok(FAILED(hr), "got 0x%08x\n", hr);
+
+            dbinit = NULL;
+            hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode2,
+                &IID_IDBInitialize, (IUnknown **)&dbinit);
+            ok(FAILED(hr), "got 0x%08x\n", hr);
+
+            dbinit = NULL;
+            hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode3,
+                &IID_IDBInitialize, (IUnknown **)&dbinit);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             IDBInitialize_Release(dbinit);
         }
