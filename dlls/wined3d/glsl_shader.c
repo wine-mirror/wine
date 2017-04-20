@@ -567,7 +567,7 @@ static BOOL shader_glsl_use_layout_qualifier(const struct wined3d_gl_info *gl_in
 
 static BOOL shader_glsl_use_layout_binding_qualifier(const struct wined3d_gl_info *gl_info)
 {
-    return !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && gl_info->supported[ARB_SHADING_LANGUAGE_420PACK];
+    return gl_info->supported[ARB_SHADING_LANGUAGE_420PACK] && shader_glsl_use_layout_qualifier(gl_info);
 }
 
 static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info,
