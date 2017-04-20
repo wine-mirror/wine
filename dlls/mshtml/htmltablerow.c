@@ -32,13 +32,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLTableRow {
     HTMLElement element;
 
     IHTMLTableRow IHTMLTableRow_iface;
 
     nsIDOMHTMLTableRowElement *nsrow;
-} HTMLTableRow;
+};
 
 static inline HTMLTableRow *impl_from_IHTMLTableRow(IHTMLTableRow *iface)
 {
