@@ -2,7 +2,7 @@
  *    Font and collections
  *
  * Copyright 2011 Huw Davies
- * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -4212,23 +4212,32 @@ static const IDWriteFontFileVtbl dwritefontfilevtbl = {
     dwritefontfile_Analyze,
 };
 
-HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_key, UINT32 key_size, IDWriteFontFile **font_file)
+HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_key, UINT32 key_size,
+        IDWriteFontFile **ret)
 {
-    struct dwrite_fontfile *This;
+    struct dwrite_fontfile *file;
+    void *key;
 
-    This = heap_alloc(sizeof(struct dwrite_fontfile));
-    if (!This) return E_OUTOFMEMORY;
+    *ret = NULL;
 
-    This->IDWriteFontFile_iface.lpVtbl = &dwritefontfilevtbl;
-    This->ref = 1;
+    file = heap_alloc(sizeof(*file));
+    key = heap_alloc(key_size);
+    if (!file || !key) {
+        heap_free(file);
+        heap_free(key);
+        return E_OUTOFMEMORY;
+    }
+
+    file->IDWriteFontFile_iface.lpVtbl = &dwritefontfilevtbl;
+    file->ref = 1;
     IDWriteFontFileLoader_AddRef(loader);
-    This->loader = loader;
-    This->stream = NULL;
-    This->reference_key = heap_alloc(key_size);
-    memcpy(This->reference_key, reference_key, key_size);
-    This->key_size = key_size;
+    file->loader = loader;
+    file->stream = NULL;
+    file->reference_key = key;
+    memcpy(file->reference_key, reference_key, key_size);
+    file->key_size = key_size;
 
-    *font_file = &This->IDWriteFontFile_iface;
+    *ret = &file->IDWriteFontFile_iface;
 
     return S_OK;
 }
