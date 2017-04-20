@@ -1202,7 +1202,6 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     struct wined3d_device *device;
     BYTE *dst_ptr, *src_ptr;
     DWORD dst_location;
-    HRESULT hr;
 
     buffer_mark_used(dst_buffer);
     buffer_mark_used(src_buffer);
@@ -1213,7 +1212,10 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
     gl_info = context->gl_info;
 
     dst_location = wined3d_buffer_get_memory(dst_buffer, &dst, dst_buffer->locations);
+    dst.addr += dst_offset;
+
     wined3d_buffer_get_memory(src_buffer, &src, src_buffer->locations);
+    src.addr += src_offset;
 
     if (dst.buffer_object && src.buffer_object)
     {
@@ -1227,41 +1229,30 @@ HRESULT wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_
         }
         else
         {
-            if (FAILED(hr = wined3d_buffer_map(dst_buffer, dst_offset, size, &dst_ptr, 0)))
-            {
-                WARN("Failed to map dst_buffer, hr %#x.\n", hr);
-                context_release(context);
-                return WINED3DERR_INVALIDCALL;
-            }
-            if (FAILED(hr = wined3d_buffer_map(src_buffer, src_offset, size, &src_ptr, WINED3D_MAP_READONLY)))
-            {
-                WARN("Failed to map src_buffer, hr %#x.\n", hr);
-                wined3d_buffer_unmap(dst_buffer);
-                context_release(context);
-                return WINED3DERR_INVALIDCALL;
-            }
+            src_ptr = context_map_bo_address(context, &src, size, src_buffer->buffer_type_hint, WINED3D_MAP_READONLY);
+            dst_ptr = context_map_bo_address(context, &dst, size, dst_buffer->buffer_type_hint, 0);
 
             memcpy(dst_ptr, src_ptr, size);
 
-            wined3d_buffer_unmap(src_buffer);
-            wined3d_buffer_unmap(dst_buffer);
+            context_unmap_bo_address(context, &dst, dst_buffer->buffer_type_hint);
+            context_unmap_bo_address(context, &src, src_buffer->buffer_type_hint);
         }
     }
     else if (!dst.buffer_object && src.buffer_object)
     {
         buffer_bind(src_buffer, context);
-        GL_EXTCALL(glGetBufferSubData(src_buffer->buffer_type_hint, src_offset, size, dst.addr + dst_offset));
+        GL_EXTCALL(glGetBufferSubData(src_buffer->buffer_type_hint, src_offset, size, dst.addr));
         checkGLcall("buffer download");
     }
     else if (dst.buffer_object && !src.buffer_object)
     {
         buffer_bind(dst_buffer, context);
-        GL_EXTCALL(glBufferSubData(dst_buffer->buffer_type_hint, dst_offset, size, src.addr + src_offset));
+        GL_EXTCALL(glBufferSubData(dst_buffer->buffer_type_hint, dst_offset, size, src.addr));
         checkGLcall("buffer upload");
     }
     else
     {
-        memcpy(dst.addr + dst_offset, src.addr + src_offset, size);
+        memcpy(dst.addr, src.addr, size);
     }
 
     wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
