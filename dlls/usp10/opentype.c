@@ -1098,6 +1098,7 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
                 {
                     const GSUB_SubRule_1 *sr;
                     const GSUB_SubRule_2 *sr_2;
+                    unsigned int g;
                     int g_count, l;
                     int newIndex = glyph_index;
 
@@ -1105,6 +1106,11 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
                     sr = (const GSUB_SubRule_1*)((const BYTE*)srs+offset);
                     g_count = GET_BE_WORD(sr->GlyphCount);
                     TRACE("   SubRule has %i glyphs\n",g_count);
+
+                    g = glyph_index + write_dir * (g_count - 1);
+                    if (g >= *glyph_count)
+                        continue;
+
                     for (l = 0; l < g_count-1; l++)
                         if (glyphs[glyph_index + (write_dir * (l+1))] != GET_BE_WORD(sr->Input[l])) break;
 
@@ -1169,6 +1175,7 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
                 {
                     const GSUB_SubClassRule_1 *sr;
                     const GSUB_SubClassRule_2 *sr_2;
+                    unsigned int g;
                     int g_count, l;
                     int newIndex = glyph_index;
 
@@ -1176,6 +1183,11 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
                     sr = (const GSUB_SubClassRule_1*)((const BYTE*)scs+offset);
                     g_count = GET_BE_WORD(sr->GlyphCount);
                     TRACE("   SubClassRule has %i glyphs classes\n",g_count);
+
+                    g = glyph_index + write_dir * (g_count - 1);
+                    if (g >= *glyph_count)
+                        continue;
+
                     for (l = 0; l < g_count-1; l++)
                     {
                         int g_class = OT_get_glyph_class(glyph_class_table, glyphs[glyph_index + (write_dir * (l+1))]);
