@@ -4473,7 +4473,7 @@ static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo* iface,
 {
     HTMLDocument *This = impl_from_IProvideClassInfo(iface);
     TRACE("(%p)->(%p)\n", This, ppTI);
-    return get_htmldoc_classinfo(ppTI);
+    return get_class_typeinfo(&CLSID_HTMLDocument, ppTI);
 }
 
 static const IProvideClassInfoVtbl ProvideClassInfoVtbl = {
