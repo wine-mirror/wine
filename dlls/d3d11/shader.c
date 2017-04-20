@@ -984,6 +984,15 @@ HRESULT d3d11_domain_shader_create(struct d3d_device *device, const void *byte_c
     return S_OK;
 }
 
+struct d3d11_domain_shader *unsafe_impl_from_ID3D11DomainShader(ID3D11DomainShader *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_domain_shader_vtbl);
+
+    return impl_from_ID3D11DomainShader(iface);
+}
+
 /* ID3D11GeometryShader methods */
 
 static inline struct d3d_geometry_shader *impl_from_ID3D11GeometryShader(ID3D11GeometryShader *iface)
