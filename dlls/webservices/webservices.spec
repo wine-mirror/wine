@@ -14,7 +14,7 @@
 @ stdcall WsCall(ptr ptr ptr ptr ptr long ptr ptr)
 @ stub WsCheckMustUnderstandHeaders
 @ stdcall WsCloseChannel(ptr ptr ptr)
-@ stub WsCloseListener
+@ stdcall WsCloseListener(ptr ptr ptr)
 @ stub WsCloseServiceHost
 @ stdcall WsCloseServiceProxy(ptr ptr ptr)
 @ stub WsCombineUrl
@@ -96,7 +96,7 @@
 @ stdcall WsMoveReader(ptr long ptr ptr)
 @ stdcall WsMoveWriter(ptr long ptr ptr)
 @ stdcall WsOpenChannel(ptr ptr ptr ptr)
-@ stub WsOpenListener
+@ stdcall WsOpenListener(ptr ptr ptr ptr)
 @ stub WsOpenServiceHost
 @ stdcall WsOpenServiceProxy(ptr ptr ptr ptr)
 @ stub WsPullBytes

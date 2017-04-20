@@ -20,6 +20,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "ws2tcpip.h"
 #include "webservices.h"
 
 #include "wine/debug.h"
@@ -28,6 +29,23 @@
 #include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
+
+static BOOL winsock_loaded;
+
+static BOOL WINAPI winsock_startup( INIT_ONCE *once, void *param, void **ctx )
+{
+    int ret;
+    WSADATA data;
+    if (!(ret = WSAStartup( MAKEWORD(1,1), &data ))) winsock_loaded = TRUE;
+    else ERR( "WSAStartup failed: %d\n", ret );
+    return TRUE;
+}
+
+static void winsock_init(void)
+{
+    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce( &once, winsock_startup, NULL, NULL );
+}
 
 static const struct prop_desc listener_props[] =
 {
@@ -57,6 +75,7 @@ struct listener
     WS_CHANNEL_TYPE         type;
     WS_CHANNEL_BINDING      binding;
     WS_LISTENER_STATE       state;
+    SOCKET                  socket;
     ULONG                   prop_count;
     struct prop             prop[sizeof(listener_props)/sizeof(listener_props[0])];
 };
@@ -80,8 +99,16 @@ static struct listener *alloc_listener(void)
     return ret;
 }
 
+static void reset_listener( struct listener *listener )
+{
+    closesocket( listener->socket );
+    listener->socket = -1;
+    listener->state  = WS_LISTENER_STATE_CREATED;
+}
+
 static void free_listener( struct listener *listener )
 {
+    reset_listener( listener );
     listener->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &listener->cs );
     heap_free( listener );
@@ -109,6 +136,7 @@ static HRESULT create_listener( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding
 
     listener->type    = type;
     listener->binding = binding;
+    listener->socket  = -1;
 
     *ret = listener;
     return S_OK;
@@ -171,6 +199,165 @@ void WINAPI WsFreeListener( WS_LISTENER *handle )
 
     LeaveCriticalSection( &listener->cs );
     free_listener( listener );
+}
+
+static HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr *addr, int *addr_len )
+{
+    static const WCHAR fmtW[] = {'%','u',0};
+    WCHAR service[6];
+    ADDRINFOW *res, *info;
+    HRESULT hr = WS_E_ADDRESS_NOT_AVAILABLE;
+
+    *addr_len = 0;
+    sprintfW( service, fmtW, port );
+    if (GetAddrInfoW( host, service, NULL, &res )) return HRESULT_FROM_WIN32( WSAGetLastError() );
+
+    info = res;
+    while (info && info->ai_family != AF_INET && info->ai_family != AF_INET6) info = info->ai_next;
+    if (info)
+    {
+        memcpy( addr, info->ai_addr, info->ai_addrlen );
+        *addr_len = info->ai_addrlen;
+        hr = S_OK;
+    }
+
+    FreeAddrInfoW( res );
+    return hr;
+}
+
+static HRESULT parse_url( const WS_STRING *str, WCHAR **host, USHORT *port )
+{
+    WS_HEAP *heap;
+    WS_NETTCP_URL *url;
+    HRESULT hr;
+
+    if ((hr = WsCreateHeap( 1 << 8, 0, NULL, 0, &heap, NULL )) != S_OK) return hr;
+    if ((hr = WsDecodeUrl( str, 0, heap, (WS_URL **)&url, NULL )) != S_OK)
+    {
+        WsFreeHeap( heap );
+        return hr;
+    }
+
+    if (url->host.length == 1 && (url->host.chars[0] == '+' || url->host.chars[0] == '*')) *host = NULL;
+    else
+    {
+        if (!(*host = heap_alloc( (url->host.length + 1) * sizeof(WCHAR) )))
+        {
+            WsFreeHeap( heap );
+            return E_OUTOFMEMORY;
+        }
+        memcpy( *host, url->host.chars, url->host.length * sizeof(WCHAR) );
+        (*host)[url->host.length] = 0;
+    }
+    *port = url->port;
+
+    WsFreeHeap( heap );
+    return hr;
+}
+
+static HRESULT open_listener( struct listener *listener, const WS_STRING *url )
+{
+    struct sockaddr_storage storage;
+    struct sockaddr *addr = (struct sockaddr *)&storage;
+    int addr_len;
+    WCHAR *host;
+    USHORT port;
+    HRESULT hr;
+
+    if ((hr = parse_url( url, &host, &port )) != S_OK) return hr;
+
+    winsock_init();
+
+    hr = resolve_hostname( host, port, addr, &addr_len );
+    heap_free( host );
+    if (hr != S_OK) return hr;
+
+    if ((listener->socket = socket( addr->sa_family, SOCK_STREAM, 0 )) == -1)
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+
+    if (bind( listener->socket, addr, addr_len ) < 0)
+    {
+        closesocket( listener->socket );
+        listener->socket = -1;
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    }
+
+    if (listen( listener->socket, 0 ) < 0)
+    {
+        closesocket( listener->socket );
+        listener->socket = -1;
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    }
+
+    listener->state = WS_LISTENER_STATE_OPEN;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsOpenListener		[webservices.@]
+ */
+HRESULT WINAPI WsOpenListener( WS_LISTENER *handle, WS_STRING *url, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct listener *listener = (struct listener *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %s %p %p\n", handle, url ? debugstr_wn(url->chars, url->length) : "null", ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!listener || !url) return E_INVALIDARG;
+
+    EnterCriticalSection( &listener->cs );
+
+    if (listener->magic != LISTENER_MAGIC)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return E_INVALIDARG;
+    }
+
+    if (listener->state != WS_LISTENER_STATE_CREATED)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    hr = open_listener( listener, url );
+
+    LeaveCriticalSection( &listener->cs );
+    return hr;
+}
+
+static void close_listener( struct listener *listener )
+{
+    reset_listener( listener );
+    listener->state = WS_LISTENER_STATE_CLOSED;
+}
+
+/**************************************************************************
+ *          WsCloseListener		[webservices.@]
+ */
+HRESULT WINAPI WsCloseListener( WS_LISTENER *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+{
+    struct listener *listener = (struct listener *)handle;
+
+    TRACE( "%p %p %p\n", handle, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!listener) return E_INVALIDARG;
+
+    EnterCriticalSection( &listener->cs );
+
+    if (listener->magic != LISTENER_MAGIC)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return E_INVALIDARG;
+    }
+
+    close_listener( listener );
+
+    LeaveCriticalSection( &listener->cs );
+    return S_OK;
 }
 
 /**************************************************************************

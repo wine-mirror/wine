@@ -79,7 +79,83 @@ static void test_WsCreateListener(void)
     WsFreeListener( listener );
 }
 
+static void test_WsOpenListener(void)
+{
+    WCHAR str[] =
+        {'n','e','t','.','t','c','p',':','/','/','+',':','2','0','1','7','/','p','a','t','h'};
+    WCHAR str2[] =
+        {'n','e','t','.','t','c','p',':','/','/','l','o','c','a','l','h','o','s','t',':','2','0','1','7'};
+    WCHAR str3[] =
+        {'n','e','t','.','t','c','p',':','/','/','1','2','7','.','0','.','0','.','1',':','2','0','1','7'};
+    WS_STRING url;
+    WS_LISTENER *listener;
+    HRESULT hr;
+
+    hr = WsOpenListener( NULL, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCloseListener( listener, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    WsFreeListener( listener );
+
+    hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsOpenListener( listener, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    url.length = sizeof(str)/sizeof(str[0]);
+    url.chars  = str;
+    hr = WsOpenListener( NULL, &url, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsOpenListener( listener, &url, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsOpenListener( listener, &url, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCloseListener( listener, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    WsFreeListener( listener );
+
+    hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    url.length = sizeof(str2)/sizeof(str2[0]);
+    url.chars  = str2;
+    hr = WsOpenListener( listener, &url, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCloseListener( listener, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    WsFreeListener( listener );
+
+    hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    url.length = sizeof(str3)/sizeof(str3[0]);
+    url.chars  = str3;
+    hr = WsOpenListener( listener, &url, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCloseListener( listener, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCloseListener( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    WsFreeListener( listener );
+}
+
 START_TEST(listener)
 {
     test_WsCreateListener();
+    test_WsOpenListener();
 }
