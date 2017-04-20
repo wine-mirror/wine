@@ -788,6 +788,15 @@ HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_cod
     return S_OK;
 }
 
+struct d3d11_hull_shader *unsafe_impl_from_ID3D11HullShader(ID3D11HullShader *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_hull_shader_vtbl);
+
+    return impl_from_ID3D11HullShader(iface);
+}
+
 /* ID3D11DomainShader methods */
 
 static inline struct d3d11_domain_shader *impl_from_ID3D11DomainShader(ID3D11DomainShader *iface)

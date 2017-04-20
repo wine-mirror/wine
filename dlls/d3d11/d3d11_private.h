@@ -293,6 +293,7 @@ struct d3d11_hull_shader
 
 HRESULT d3d11_hull_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
         struct d3d11_hull_shader **shader) DECLSPEC_HIDDEN;
+struct d3d11_hull_shader *unsafe_impl_from_ID3D11HullShader(ID3D11HullShader *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11DomainShader */
 struct d3d11_domain_shader
