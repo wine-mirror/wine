@@ -1121,8 +1121,7 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
                     }
 
                     TRACE("   Rule matches\n");
-                    sr_2 = (const GSUB_SubRule_2*)((const BYTE*)sr+
-                        FIELD_OFFSET(GSUB_SubRule_1, Input[g_count-1]));
+                    sr_2 = (const GSUB_SubRule_2 *)&sr->Input[g_count - 1];
 
                     for (l = 0; l < GET_BE_WORD(sr->SubstCount); l++)
                     {
@@ -1201,8 +1200,7 @@ static INT GSUB_apply_ContextSubst(const OT_LookupList* lookup, const OT_LookupT
                     }
 
                     TRACE("   Rule matches\n");
-                    sr_2 = (const GSUB_SubClassRule_2*)((const BYTE*)sr+
-                        FIELD_OFFSET(GSUB_SubClassRule_1, Class[g_count-1]));
+                    sr_2 = (const GSUB_SubClassRule_2 *)&sr->Class[g_count - 1];
 
                     for (l = 0; l < GET_BE_WORD(sr->SubstCount); l++)
                     {
