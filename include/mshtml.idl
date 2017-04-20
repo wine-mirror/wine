@@ -19089,6 +19089,28 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLObjectElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f24e-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLObjectElement
+{
+    [default]         dispinterface DispHTMLObjectElement;
+ /* [source, default] dispinterface HTMLObjectElementEvents; */
+ /* [source]          dispinterface HTMLObjectElementEvents2; */
+    WINE_HTMLDATAELEMENT_INTERFACES;
+    interface IHTMLControlElement;
+    interface IHTMLObjectElement;
+    interface IHTMLObjectElement2;
+ /* interface IHTMLObjectElement3; */
+ /* interface IHTMLObjectElement4; */
+ /* interface IGetSVGDocument; */
+ /* interface IHTMLObjectElement5; */
+}
+
+/*****************************************************************************
  *    DispHTMLParamElement dispinterface
  */
 [

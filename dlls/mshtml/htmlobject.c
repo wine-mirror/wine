@@ -34,14 +34,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLObjectElement {
     HTMLPluginContainer plugin_container;
 
     IHTMLObjectElement IHTMLObjectElement_iface;
     IHTMLObjectElement2 IHTMLObjectElement2_iface;
 
     nsIDOMHTMLObjectElement *nsobject;
-} HTMLObjectElement;
+};
 
 static inline HTMLObjectElement *impl_from_IHTMLObjectElement(IHTMLObjectElement *iface)
 {
