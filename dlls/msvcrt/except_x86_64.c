@@ -331,6 +331,12 @@ static inline void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
     return ret_addr;
 }
 
+static inline BOOL cxx_is_consolidate(const EXCEPTION_RECORD *rec)
+{
+    return rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==6 &&
+           rec->ExceptionInformation[0]==(ULONG_PTR)call_catch_block;
+}
+
 static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
                                     DISPATCHER_CONTEXT *dispatch,
                                     const cxx_function_descr *descr,
@@ -442,6 +448,13 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         return ExceptionContinueSearch;
     }
 
+    if (descr->magic >= CXX_FRAME_MAGIC_VC8 &&
+        (descr->flags & FUNC_DESCR_SYNCHRONOUS) &&
+        (rec->ExceptionCode != CXX_EXCEPTION &&
+        !cxx_is_consolidate(rec) &&
+        rec->ExceptionCode != STATUS_LONGJUMP))
+        return ExceptionContinueSearch;  /* handle only c++ exceptions */
+
     /* update orig_frame if it's a nested exception */
     throw_func_off = RtlLookupFunctionEntry(dispatch->ControlPc, &throw_base, NULL)->BeginAddress;
     throw_func = rva_to_ptr(throw_func_off, throw_base);
@@ -470,8 +483,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
     if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
     {
-        if (rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==6 &&
-                rec->ExceptionInformation[0]==(ULONG_PTR)call_catch_block)
+        if (cxx_is_consolidate(rec))
         {
             EXCEPTION_RECORD *new_rec = (void*)rec->ExceptionInformation[4];
             thread_data_t *data = msvcrt_get_thread_data();

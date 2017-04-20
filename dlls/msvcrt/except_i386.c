@@ -96,8 +96,6 @@ typedef struct __cxx_function_descr
     UINT                 flags;          /* flags when magic >= VC8 */
 } cxx_function_descr;
 
-#define FUNC_DESCR_SYNCHRONOUS  1        /* synchronous exceptions only (built with /EHs) */
-
 typedef struct _SCOPETABLE
 {
   int previousTryLevel;

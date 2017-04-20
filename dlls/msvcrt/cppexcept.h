@@ -26,6 +26,8 @@
 #define CXX_FRAME_MAGIC_VC8 0x19930522
 #define CXX_EXCEPTION       0xe06d7363
 
+#define FUNC_DESCR_SYNCHRONOUS  1 /* synchronous exceptions only (built with /EHs and /EHsc) */
+
 typedef void (*vtable_ptr)(void);
 
 /* type_info object, see cpp.c for implementation */
