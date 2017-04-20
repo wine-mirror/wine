@@ -18635,6 +18635,25 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLScriptElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f28c-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLScriptElement
+{
+    [default]         dispinterface DispHTMLScriptElement;
+ /* [source, default] dispinterface HTMLScriptEvents; */
+ /* [source]          dispinterface HTMLScriptEvents2; */
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLScriptElement;
+    interface IHTMLScriptElement2;
+ /* interface IHTMLScriptElement3; */
+ /* interface IHTMLScriptElement4; */
+}
+
+/*****************************************************************************
  *    IHTMLObjectElement interface
  */
 [

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-typedef struct {
+struct HTMLScriptElement {
     HTMLElement element;
 
     IHTMLScriptElement IHTMLScriptElement_iface;
@@ -28,7 +28,7 @@ typedef struct {
     READYSTATE readystate;
     WCHAR *src_text; /* sctipt text downloaded from src */
     BSCallback *binding; /* weak reference to current binding */
-} HTMLScriptElement;
+};
 
 typedef struct {
     struct list entry;
