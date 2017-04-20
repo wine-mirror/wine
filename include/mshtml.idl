@@ -11728,6 +11728,22 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLTitleElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f284-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLTitleElement
+{
+    [default]         dispinterface DispHTMLTitleElement;
+    [source, default] dispinterface HTMLElementEvents;
+    [source]          dispinterface HTMLElementEvents2;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLTitleElement;
+}
+
+/*****************************************************************************
  *    DispHTMLMetaElement dispinterface
  */
 [

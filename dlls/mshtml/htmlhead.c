@@ -32,11 +32,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLTitleElement {
     HTMLElement element;
 
     IHTMLTitleElement IHTMLTitleElement_iface;
-} HTMLTitleElement;
+};
 
 static inline HTMLTitleElement *impl_from_IHTMLTitleElement(IHTMLTitleElement *iface)
 {
