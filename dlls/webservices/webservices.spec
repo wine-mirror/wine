@@ -136,7 +136,7 @@
 @ stdcall WsResetChannel(ptr ptr)
 @ stdcall WsResetError(ptr)
 @ stdcall WsResetHeap(ptr ptr)
-@ stub WsResetListener
+@ stdcall WsResetListener(ptr ptr)
 @ stdcall WsResetMessage(ptr ptr)
 @ stub WsResetMetadata
 @ stub WsResetServiceHost

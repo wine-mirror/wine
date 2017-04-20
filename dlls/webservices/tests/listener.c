@@ -190,9 +190,60 @@ static void test_WsCreateChannelForListener(void)
     WsFreeListener( listener );
 }
 
+static void test_WsResetListener(void)
+{
+    WCHAR str[] =
+        {'n','e','t','.','t','c','p',':','/','/','+',':','2','0','1','7','/','p','a','t','h'};
+    WS_STRING url = { sizeof(str)/sizeof(str[0]), str };
+    WS_LISTENER *listener;
+    WS_LISTENER_STATE state;
+    WS_LISTENER_PROPERTY prop;
+    ULONG size, timeout = 1000;
+    HRESULT hr;
+
+    hr = WsResetListener( NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    prop.id        = WS_LISTENER_PROPERTY_CONNECT_TIMEOUT;
+    prop.value     = &timeout;
+    prop.valueSize = sizeof(timeout);
+    hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, &prop, 1, NULL, &listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetListener( listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsOpenListener( listener, &url, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetListener( listener, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsCloseListener( listener, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsResetListener( listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    size = sizeof(state);
+    hr = WsGetListenerProperty( listener, WS_LISTENER_PROPERTY_STATE, &state, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_LISTENER_STATE_CREATED, "got %u\n", state );
+
+    timeout = 0xdeadbeef;
+    size = sizeof(timeout);
+    hr = WsGetListenerProperty( listener, WS_LISTENER_PROPERTY_CONNECT_TIMEOUT, &timeout, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( timeout == 1000, "got %u\n", timeout );
+
+    WsFreeListener( listener );
+}
+
 START_TEST(listener)
 {
     test_WsCreateListener();
     test_WsOpenListener();
     test_WsCreateChannelForListener();
+    test_WsResetListener();
 }

@@ -361,6 +361,38 @@ HRESULT WINAPI WsCloseListener( WS_LISTENER *handle, const WS_ASYNC_CONTEXT *ctx
 }
 
 /**************************************************************************
+ *          WsResetListener		[webservices.@]
+ */
+HRESULT WINAPI WsResetListener( WS_LISTENER *handle, WS_ERROR *error )
+{
+    struct listener *listener = (struct listener *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!listener) return E_INVALIDARG;
+
+    EnterCriticalSection( &listener->cs );
+
+    if (listener->magic != LISTENER_MAGIC)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return E_INVALIDARG;
+    }
+
+    if (listener->state != WS_LISTENER_STATE_CREATED && listener->state != WS_LISTENER_STATE_CLOSED)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    reset_listener( listener );
+
+    LeaveCriticalSection( &listener->cs );
+    return S_OK;
+}
+
+/**************************************************************************
  *          WsGetListenerProperty		[webservices.@]
  */
 HRESULT WINAPI WsGetListenerProperty( WS_LISTENER *handle, WS_LISTENER_PROPERTY_ID id, void *buf,
