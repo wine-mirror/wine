@@ -605,23 +605,29 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace4 *ifa
     return S_OK;
 }
 
-static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace4 *iface, UINT32 const *codepoints,
-    UINT32 count, UINT16 *glyph_indices)
+static HRESULT fontface_get_glyphs(struct dwrite_fontface *fontface, UINT32 const *codepoints,
+        UINT32 count, UINT16 *glyphs)
 {
-    struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
-
-    TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
-
-    if (!glyph_indices)
+    if (!glyphs)
         return E_INVALIDARG;
 
     if (!codepoints) {
-        memset(glyph_indices, 0, count*sizeof(UINT16));
+        memset(glyphs, 0, count * sizeof(*glyphs));
         return E_INVALIDARG;
     }
 
-    freetype_get_glyphs(iface, This->charmap, codepoints, count, glyph_indices);
+    freetype_get_glyphs(&fontface->IDWriteFontFace4_iface, fontface->charmap, codepoints, count, glyphs);
     return S_OK;
+}
+
+static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace4 *iface, UINT32 const *codepoints,
+    UINT32 count, UINT16 *glyphs)
+{
+    struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
+
+    TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyphs);
+
+    return fontface_get_glyphs(This, codepoints, count, glyphs);
 }
 
 static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace4 *iface, UINT32 table_tag,
@@ -1161,13 +1167,11 @@ static BOOL WINAPI dwritefontface3_HasCharacter(IDWriteFontFace4 *iface, UINT32 
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
     UINT16 index;
-    HRESULT hr;
 
     TRACE("(%p)->(0x%08x)\n", This, ch);
 
     index = 0;
-    hr = IDWriteFontFace4_GetGlyphIndices(iface, &ch, 1, &index);
-    if (FAILED(hr))
+    if (FAILED(fontface_get_glyphs(This, &ch, 1, &index)))
         return FALSE;
 
     return index != 0;
