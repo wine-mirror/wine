@@ -21,7 +21,7 @@
 @ stub WsCopyError
 @ stdcall WsCopyNode(ptr ptr ptr)
 @ stdcall WsCreateChannel(long long ptr long ptr ptr ptr)
-@ stub WsCreateChannelForListener
+@ stdcall WsCreateChannelForListener(ptr ptr long ptr ptr)
 @ stdcall WsCreateError(ptr long ptr)
 @ stub WsCreateFaultFromError
 @ stdcall WsCreateHeap(long long ptr long ptr ptr)

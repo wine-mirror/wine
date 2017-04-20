@@ -213,8 +213,35 @@ HRESULT WINAPI WsCreateChannel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding
         return E_NOTIMPL;
     }
 
-    if ((hr = create_channel( type, binding, properties, count, &channel )) != S_OK)
-        return hr;
+    if ((hr = create_channel( type, binding, properties, count, &channel )) != S_OK) return hr;
+
+    *handle = (WS_CHANNEL *)channel;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsCreateChannelForListener		[webservices.@]
+ */
+HRESULT WINAPI WsCreateChannelForListener( WS_LISTENER *listener_handle, const WS_CHANNEL_PROPERTY *properties,
+                                           ULONG count, WS_CHANNEL **handle, WS_ERROR *error )
+{
+    struct channel *channel;
+    WS_CHANNEL_TYPE type;
+    WS_CHANNEL_BINDING binding;
+    HRESULT hr;
+
+    TRACE( "%p %p %u %p %p\n", listener_handle, properties, count, handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!listener_handle || !handle) return E_INVALIDARG;
+
+    if ((hr = WsGetListenerProperty( listener_handle, WS_LISTENER_PROPERTY_CHANNEL_TYPE, &type,
+                                     sizeof(type), NULL )) != S_OK) return hr;
+
+    if ((hr = WsGetListenerProperty( listener_handle, WS_LISTENER_PROPERTY_CHANNEL_BINDING, &binding,
+                                     sizeof(binding), NULL )) != S_OK) return hr;
+
+    if ((hr = create_channel( type, binding, properties, count, &channel )) != S_OK) return hr;
 
     *handle = (WS_CHANNEL *)channel;
     return S_OK;
@@ -393,11 +420,10 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
     return hr;
 }
 
-static HRESULT close_channel( struct channel *channel )
+static void close_channel( struct channel *channel )
 {
     reset_channel( channel );
     channel->state = WS_CHANNEL_STATE_CLOSED;
-    return S_OK;
 }
 
 /**************************************************************************
@@ -406,7 +432,6 @@ static HRESULT close_channel( struct channel *channel )
 HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
-    HRESULT hr;
 
     TRACE( "%p %p %p\n", handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -422,10 +447,10 @@ HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, 
         return E_INVALIDARG;
     }
 
-    hr = close_channel( channel );
+    close_channel( channel );
 
     LeaveCriticalSection( &channel->cs );
-    return hr;
+    return S_OK;
 }
 
 static HRESULT parse_url( const WCHAR *url, ULONG len, URL_COMPONENTS *uc )

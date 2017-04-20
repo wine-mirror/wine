@@ -154,8 +154,45 @@ static void test_WsOpenListener(void)
     WsFreeListener( listener );
 }
 
+static void test_WsCreateChannelForListener(void)
+{
+    WS_LISTENER *listener;
+    WS_CHANNEL *channel;
+    WS_CHANNEL_TYPE type;
+    WS_CHANNEL_STATE state;
+    HRESULT hr;
+
+    hr = WsCreateChannelForListener( NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateChannelForListener( NULL, NULL, 0, &channel, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    channel = NULL;
+    hr = WsCreateChannelForListener( listener, NULL, 0, &channel, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( channel != NULL, "channel not set\n" );
+
+    type = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_CHANNEL_TYPE, &type, sizeof(type), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( type == WS_CHANNEL_TYPE_DUPLEX_SESSION, "got %u\n", type );
+
+    state = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_CHANNEL_STATE_CREATED, "got %u\n", state );
+
+    WsFreeChannel( channel );
+    WsFreeListener( listener );
+}
+
 START_TEST(listener)
 {
     test_WsCreateListener();
     test_WsOpenListener();
+    test_WsCreateChannelForListener();
 }
