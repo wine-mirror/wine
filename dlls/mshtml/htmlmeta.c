@@ -31,11 +31,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
+struct HTMLMetaElement {
     HTMLElement element;
 
     IHTMLMetaElement IHTMLMetaElement_iface;
-} HTMLMetaElement;
+};
 
 static inline HTMLMetaElement *impl_from_IHTMLMetaElement(IHTMLMetaElement *iface)
 {

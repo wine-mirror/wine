@@ -11800,6 +11800,24 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLMetaElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f275-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLMetaElement
+{
+    [default]         dispinterface DispHTMLMetaElement;
+    [source, default] dispinterface HTMLElementEvents;
+    [source]          dispinterface HTMLElementEvents2;
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLMetaElement;
+    interface IHTMLMetaElement2;
+    interface IHTMLMetaElement3;
+}
+
+/*****************************************************************************
  *    DispHTMLUnknownElement dispinterface
  */
 [
