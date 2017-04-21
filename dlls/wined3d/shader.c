@@ -2122,6 +2122,10 @@ static void shader_dump_register(struct wined3d_string_buffer *buffer,
             shader_addline(buffer, "oMask");
             break;
 
+        case WINED3DSPR_GSINSTID:
+            shader_addline(buffer, "vGSInstanceID");
+            break;
+
         default:
             shader_addline(buffer, "<unhandled_rtype(%#x)>", reg->type);
             break;

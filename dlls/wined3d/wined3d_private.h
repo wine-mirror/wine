@@ -490,6 +490,7 @@ enum wined3d_shader_register_type
     WINED3DSPR_FUNCTIONPOINTER,
     WINED3DSPR_COVERAGE,
     WINED3DSPR_SAMPLEMASK,
+    WINED3DSPR_GSINSTID,
 };
 
 enum wined3d_data_type
