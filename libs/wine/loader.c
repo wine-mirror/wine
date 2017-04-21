@@ -887,7 +887,16 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
 
     java_object = (*env)->NewGlobalRef( env, obj );
 
+#ifdef __i386__
+    {
+        unsigned short java_fs = wine_get_fs();
+        wine_set_fs( 0 );
+        wine_init( argc, argv, error, sizeof(error) );
+        wine_set_fs( java_fs );
+    }
+#else
     wine_init( argc, argv, error, sizeof(error) );
+#endif
     return (*env)->NewStringUTF( env, error );
 }
 
