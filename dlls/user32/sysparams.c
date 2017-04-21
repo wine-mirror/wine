@@ -548,7 +548,7 @@ static DWORD load_entry( struct sysparam_entry *entry, void *data, DWORD size )
         if (RegQueryValueExW( base_key, entry->regval + 1, NULL, &type, data, &count )) count = 0;
     }
     /* make sure strings are null-terminated */
-    if (size && count == size && type == REG_SZ) ((WCHAR *)data)[count - 1] = 0;
+    if (size && count == size && type == REG_SZ) ((WCHAR *)data)[count / sizeof(WCHAR) - 1] = 0;
     entry->loaded = TRUE;
     return count;
 }
