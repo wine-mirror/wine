@@ -1159,6 +1159,8 @@ static void test_ExtractIcon(void)
     char path[MAX_PATH];
     HANDLE file;
     int r;
+    ICONINFO info;
+    BITMAP bm;
 
     /* specified instance handle */
     hicon = ExtractIconA(GetModuleHandleA("shell32.dll"), NULL, 0);
@@ -1214,6 +1216,10 @@ if (0)
     /* existing index */
     hicon = ExtractIconW(NULL, shell32W, 0);
     ok(hicon != NULL && HandleToLong(hicon) != -1, "Got icon %p\n", hicon);
+    GetIconInfo(hicon, &info);
+    GetObjectW(info.hbmColor, sizeof(bm), &bm);
+    ok(bm.bmWidth == GetSystemMetrics(SM_CXICON), "got %d\n", bm.bmWidth);
+    ok(bm.bmHeight == GetSystemMetrics(SM_CYICON), "got %d\n", bm.bmHeight);
     DestroyIcon(hicon);
 
     /* returns number of resources */
