@@ -184,6 +184,12 @@ static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID rii
         *ppv = &This->ITravelLogClient_iface;
     }else if(IsEqualGUID(&IID_IObjectIdentity, riid)) {
         *ppv = &This->IObjectIdentity_iface;
+    }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
+        *ppv = &This->IProvideMultipleClassInfo_iface;
+    }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
+        *ppv = &This->IProvideMultipleClassInfo_iface;
+    }else if(IsEqualGUID(&IID_IProvideMultipleClassInfo, riid)) {
+        *ppv = &This->IProvideMultipleClassInfo_iface;
     }else if(IsEqualGUID(&IID_IMarshal, riid)) {
         *ppv = NULL;
         FIXME("(%p)->(IID_IMarshal %p)\n", This, ppv);
@@ -2463,6 +2469,70 @@ static const IObjectIdentityVtbl ObjectIdentityVtbl = {
     ObjectIdentity_IsEqualObject
 };
 
+static inline HTMLWindow *impl_from_IProvideMultipleClassInfo(IProvideMultipleClassInfo *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLWindow, IProvideMultipleClassInfo_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideMultipleClassInfo *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IHTMLWindow2_QueryInterface(&This->IHTMLWindow2_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProvideClassInfo_AddRef(IProvideMultipleClassInfo *iface)
+{
+    HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IHTMLWindow2_AddRef(&This->IHTMLWindow2_iface);
+}
+
+static ULONG WINAPI ProvideClassInfo_Release(IProvideMultipleClassInfo *iface)
+{
+    HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideMultipleClassInfo *iface, ITypeInfo **ppTI)
+{
+    HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
+    TRACE("(%p)->(%p)\n", This, ppTI);
+    return get_class_typeinfo(&CLSID_HTMLWindow2, ppTI);
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideMultipleClassInfo *iface, DWORD dwGuidKind, GUID *pGUID)
+{
+    HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%u %p)\n", This, dwGuidKind, pGUID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProvideMultipleClassInfo_GetMultiTypeInfoCount(IProvideMultipleClassInfo *iface, ULONG *pcti)
+{
+    HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%p)\n", This, pcti);
+    *pcti = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI ProvideMultipleClassInfo_GetInfoOfIndex(IProvideMultipleClassInfo *iface, ULONG iti,
+        DWORD dwFlags, ITypeInfo **pptiCoClass, DWORD *pdwTIFlags, ULONG *pcdispidReserved, IID *piidPrimary, IID *piidSource)
+{
+    HTMLWindow *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%u %x %p %p %p %p %p)\n", This, iti, dwFlags, pptiCoClass, pdwTIFlags, pcdispidReserved, piidPrimary, piidSource);
+    return E_NOTIMPL;
+}
+
+static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl = {
+    ProvideClassInfo_QueryInterface,
+    ProvideClassInfo_AddRef,
+    ProvideClassInfo_Release,
+    ProvideClassInfo_GetClassInfo,
+    ProvideClassInfo2_GetGUID,
+    ProvideMultipleClassInfo_GetMultiTypeInfoCount,
+    ProvideMultipleClassInfo_GetInfoOfIndex
+};
+
 static inline HTMLWindow *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLWindow, IDispatchEx_iface);
@@ -3004,6 +3074,7 @@ static void *alloc_window(size_t size)
     window->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     window->ITravelLogClient_iface.lpVtbl = &TravelLogClientVtbl;
     window->IObjectIdentity_iface.lpVtbl = &ObjectIdentityVtbl;
+    window->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
     window->ref = 1;
 
     return window;

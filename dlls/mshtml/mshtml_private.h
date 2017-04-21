@@ -431,6 +431,7 @@ struct HTMLWindow {
     IServiceProvider   IServiceProvider_iface;
     ITravelLogClient   ITravelLogClient_iface;
     IObjectIdentity    IObjectIdentity_iface;
+    IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
 
     LONG ref;
 
