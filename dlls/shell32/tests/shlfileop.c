@@ -317,6 +317,40 @@ static void test_get_file_info(void)
     ok(shfi.iIcon != 0xdeadbeef, "iIcon was expected to change\n");
 }
 
+static void check_icon_size( HICON icon, DWORD flags )
+{
+    ICONINFO info;
+    BITMAP bm;
+    SIZE list_size, metrics_size;
+    IImageList *list;
+
+    GetIconInfo( icon, &info );
+    GetObjectW( info.hbmColor, sizeof(bm), &bm );
+
+    SHGetImageList( (flags & SHGFI_SMALLICON) ? SHIL_SMALL : SHIL_LARGE,
+                    &IID_IImageList, (void **)&list );
+    IImageList_GetIconSize( list, &list_size.cx, &list_size.cy );
+    IImageList_Release( list );
+
+    metrics_size.cx = GetSystemMetrics( (flags & SHGFI_SMALLICON) ? SM_CXSMICON : SM_CXICON );
+    metrics_size.cy = GetSystemMetrics( (flags & SHGFI_SMALLICON) ? SM_CYSMICON : SM_CYICON );
+
+
+    if (flags & SHGFI_SHELLICONSIZE)
+    {
+        todo_wine_if(list_size.cx != metrics_size.cx)
+        {
+            ok( bm.bmWidth == list_size.cx, "got %d expected %d\n", bm.bmWidth, list_size.cx );
+            ok( bm.bmHeight == list_size.cy, "got %d expected %d\n", bm.bmHeight, list_size.cy );
+        }
+    }
+    else
+    {
+        ok( bm.bmWidth == metrics_size.cx, "got %d expected %d\n", bm.bmWidth, metrics_size.cx );
+        ok( bm.bmHeight == metrics_size.cy, "got %d expected %d\n", bm.bmHeight, metrics_size.cy );
+    }
+}
+
 static void test_get_file_info_iconlist(void)
 {
     /* Test retrieving a handle to the system image list, and
@@ -400,8 +434,8 @@ static void test_get_file_info_iconlist(void)
 	    SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON);
     ok(hr != 0, " SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_SMALLICON Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
-    ok(shInfow.hIcon!=(HICON)0xcfcfcfcf && shInfow.hIcon!=0,"hIcon invalid\n");
-    if (shInfow.hIcon!=(HICON)0xcfcfcfcf) DestroyIcon(shInfow.hIcon);
+    check_icon_size( shInfow.hIcon, SHGFI_SMALLICON );
+    DestroyIcon(shInfow.hIcon);
     todo_wine ok(shInfow.dwAttributes==0,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
@@ -409,8 +443,8 @@ static void test_get_file_info_iconlist(void)
 	    SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON);
     ok(hr != 0, "SHGFI_ICON|SHGFI_USEFILEATTRIBUTES|SHGFI_PIDL|SHGFI_LARGEICON Failed\n");
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
-    ok(shInfow.hIcon!=(HICON)0xcfcfcfcf && shInfow.hIcon!=0,"hIcon invalid\n");
-    if (shInfow.hIcon != (HICON)0xcfcfcfcf) DestroyIcon(shInfow.hIcon);
+    check_icon_size( shInfow.hIcon, SHGFI_LARGEICON );
+    DestroyIcon( shInfow.hIcon );
     todo_wine ok(shInfow.dwAttributes==0,"dwAttributes not set\n");
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
@@ -509,15 +543,19 @@ static void test_get_file_info_iconlist(void)
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
     hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
-	    SHGFI_SYSICONINDEX|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_SHELLICONSIZE);
+	    SHGFI_SYSICONINDEX|SHGFI_PIDL|SHGFI_SMALLICON|SHGFI_SHELLICONSIZE|SHGFI_ICON);
     ok(hSysImageList == (HIMAGELIST)small_list, "got %p expect %p\n", hSysImageList, small_list);
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
+    check_icon_size( shInfow.hIcon, SHGFI_SMALLICON | SHGFI_SHELLICONSIZE );
+    DestroyIcon( shInfow.hIcon );
 
     memset(&shInfow, 0xcf, sizeof(shInfow));
     hSysImageList = (HIMAGELIST)pSHGetFileInfoW((const WCHAR *)pidList, 0, &shInfow, sizeof(shInfow),
-	    SHGFI_SYSICONINDEX|SHGFI_PIDL|SHGFI_SHELLICONSIZE);
+	    SHGFI_SYSICONINDEX|SHGFI_PIDL|SHGFI_SHELLICONSIZE|SHGFI_ICON);
     ok(hSysImageList == (HIMAGELIST)large_list, "got %p expect %p\n", hSysImageList, small_list);
     ok(shInfow.iIcon!=0xcfcfcfcf, "Icon Index Missing\n");
+    check_icon_size( shInfow.hIcon, SHGFI_LARGEICON | SHGFI_SHELLICONSIZE );
+    DestroyIcon( shInfow.hIcon );
 
     ILFree(pidList);
     IImageList_Release( small_list );
