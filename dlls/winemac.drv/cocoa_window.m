@@ -617,18 +617,14 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) viewDidHide
     {
         [super viewDidHide];
-        if ([self hasGLContext])
-            [self invalidateHasGLDescendant];
+        [self invalidateHasGLDescendant];
     }
 
     - (void) viewDidUnhide
     {
         [super viewDidUnhide];
-        if ([self hasGLContext])
-        {
-            [self updateGLContexts:YES];
-            [self invalidateHasGLDescendant];
-        }
+        [self updateGLContexts:YES];
+        [self invalidateHasGLDescendant];
     }
 
     - (void) completeText:(NSString*)text
