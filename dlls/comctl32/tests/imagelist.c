@@ -918,36 +918,34 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
     char *data;
     HRESULT hr;
 
-    trace("%s\n", comment);
-
     ret = ImageList_GetImageCount(himl);
-    ok(ret == cur, "expected image count %d got %d\n", cur, ret);
+    ok(ret == cur, "%s: expected image count %d got %d\n", comment, cur, ret);
 
     ret = ImageList_GetIconSize(himl, &cxx, &cyy);
     ok(ret, "ImageList_GetIconSize failed\n");
-    ok(cxx == cx, "wrong cx %d (expected %d)\n", cxx, cx);
-    ok(cyy == cy, "wrong cy %d (expected %d)\n", cyy, cy);
+    ok(cxx == cx, "%s: wrong cx %d (expected %d)\n", comment, cxx, cx);
+    ok(cyy == cy, "%s: wrong cy %d (expected %d)\n", comment, cyy, cy);
 
     init_memstream(&stream);
     ret = ImageList_Write(himl, &stream.IStream_iface);
-    ok(ret, "ImageList_Write failed\n");
+    ok(ret, "%s: ImageList_Write failed\n", comment);
 
     hr = GetHGlobalFromStream(stream.stream, &hglobal);
-    ok(hr == S_OK, "Failed to get hglobal, %#x\n", hr);
+    ok(hr == S_OK, "%s: Failed to get hglobal, %#x\n", comment, hr);
 
     IStream_Stat(stream.stream, &stat, STATFLAG_NONAME);
 
     data = GlobalLock(hglobal);
 
-    ok(data != 0, "ImageList_Write didn't write any data\n");
-    ok(stat.cbSize.LowPart > sizeof(ILHEAD), "ImageList_Write wrote not enough data\n");
+    ok(data != 0, "%s: ImageList_Write didn't write any data\n", comment);
+    ok(stat.cbSize.LowPart > sizeof(ILHEAD), "%s: ImageList_Write wrote not enough data\n", comment);
 
     check_ilhead_data(data, cx, cy, cur, max, grow, flags);
     size = check_bitmap_data(data + sizeof(ILHEAD), stat.cbSize.LowPart - sizeof(ILHEAD),
             width, height, flags & 0xfe, comment);
     if (size < stat.cbSize.LowPart - sizeof(ILHEAD))  /* mask is present */
     {
-        ok( flags & ILC_MASK, "extra data %u/%u but mask not expected\n", stat.cbSize.LowPart, size );
+        ok( flags & ILC_MASK, "%s: extra data %u/%u but mask not expected\n", comment, stat.cbSize.LowPart, size );
         check_bitmap_data(data + sizeof(ILHEAD) + size, stat.cbSize.LowPart - sizeof(ILHEAD) - size,
                           width, height, 1, comment);
     }
@@ -956,7 +954,7 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
     mv.QuadPart = 0;
     IStream_Seek(stream.stream, mv, STREAM_SEEK_SET, NULL);
     himl2 = ImageList_Read(&stream.IStream_iface);
-    ok(himl2 != NULL, "Failed to deserialize imagelist\n");
+    ok(himl2 != NULL, "%s: Failed to deserialize imagelist\n", comment);
     ImageList_Destroy(himl2);
 
     GlobalUnlock(hglobal);
