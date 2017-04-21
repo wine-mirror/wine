@@ -2551,6 +2551,214 @@ static void test_render_target_views(void)
     release_test_context(&test_context);
 }
 
+static void test_layered_rendering(void)
+{
+    struct
+    {
+        unsigned int layer_offset;
+        unsigned int draw_id;
+        unsigned int padding[2];
+    } constant;
+    struct d3d10core_test_context test_context;
+    D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
+    unsigned int i, sub_resource_count;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10RenderTargetView *rtv;
+    ID3D10Texture2D *texture;
+    ID3D10GeometryShader *gs;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    ID3D10Buffer *cb;
+    HRESULT hr;
+
+    static const DWORD gs_code[] =
+    {
+#if 0
+        uint layer_offset;
+
+        struct gs_in
+        {
+            float4 pos : SV_Position;
+        };
+
+        struct gs_out
+        {
+            float4 pos : SV_Position;
+            uint layer : SV_RenderTargetArrayIndex;
+        };
+
+        [maxvertexcount(12)]
+        void main(triangle gs_in vin[3], inout TriangleStream<gs_out> vout)
+        {
+            gs_out o;
+            for (uint instance_id = 0; instance_id < 4; ++instance_id)
+            {
+                o.layer = layer_offset + instance_id;
+                for (uint i = 0; i < 3; ++i)
+                {
+                    o.pos = vin[i].pos;
+                    vout.Append(o);
+                }
+                vout.RestartStrip();
+            }
+        }
+#endif
+        0x43425844, 0x7eabd7c5, 0x8af1468e, 0xd585cade, 0xfe0d761d, 0x00000001, 0x00000250, 0x00000003,
+        0x0000002c, 0x00000060, 0x000000c8, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x00000060, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000004, 0x00000001, 0x00000001, 0x00000e01,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x525f5653, 0x65646e65, 0x72615472, 0x41746567, 0x79617272,
+        0x65646e49, 0xabab0078, 0x52444853, 0x00000180, 0x00020040, 0x00000060, 0x04000059, 0x00208e46,
+        0x00000000, 0x00000001, 0x05000061, 0x002010f2, 0x00000003, 0x00000000, 0x00000001, 0x02000068,
+        0x00000001, 0x0100185d, 0x0100285c, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x04000067,
+        0x00102012, 0x00000001, 0x00000004, 0x0200005e, 0x0000000c, 0x05000036, 0x00100012, 0x00000000,
+        0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100022, 0x00000000, 0x0010000a, 0x00000000,
+        0x00004001, 0x00000004, 0x03040003, 0x0010001a, 0x00000000, 0x0800001e, 0x00100022, 0x00000000,
+        0x0020800a, 0x00000000, 0x00000000, 0x0010000a, 0x00000000, 0x05000036, 0x00100042, 0x00000000,
+        0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100082, 0x00000000, 0x0010002a, 0x00000000,
+        0x00004001, 0x00000003, 0x03040003, 0x0010003a, 0x00000000, 0x07000036, 0x001020f2, 0x00000000,
+        0x00a01e46, 0x0010002a, 0x00000000, 0x00000000, 0x05000036, 0x00102012, 0x00000001, 0x0010001a,
+        0x00000000, 0x01000013, 0x0700001e, 0x00100042, 0x00000000, 0x0010002a, 0x00000000, 0x00004001,
+        0x00000001, 0x01000016, 0x01000009, 0x0700001e, 0x00100012, 0x00000000, 0x0010000a, 0x00000000,
+        0x00004001, 0x00000001, 0x01000016, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        uint layer_offset;
+        uint draw_id;
+
+        float4 main(in float4 pos : SV_Position,
+                in uint layer : SV_RenderTargetArrayIndex) : SV_Target
+        {
+            return float4(layer, draw_id, 0, 0);
+        }
+#endif
+        0x43425844, 0x5fa6ae84, 0x3f893c81, 0xf15892d6, 0x142e2e6b, 0x00000001, 0x00000154, 0x00000003,
+        0x0000002c, 0x00000094, 0x000000c8, 0x4e475349, 0x00000060, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000004,
+        0x00000001, 0x00000001, 0x00000101, 0x505f5653, 0x7469736f, 0x006e6f69, 0x525f5653, 0x65646e65,
+        0x72615472, 0x41746567, 0x79617272, 0x65646e49, 0xabab0078, 0x4e47534f, 0x0000002c, 0x00000001,
+        0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653,
+        0x65677261, 0xabab0074, 0x52444853, 0x00000084, 0x00000040, 0x00000021, 0x04000059, 0x00208e46,
+        0x00000000, 0x00000001, 0x04000864, 0x00101012, 0x00000001, 0x00000004, 0x03000065, 0x001020f2,
+        0x00000000, 0x05000056, 0x00102012, 0x00000000, 0x0010100a, 0x00000001, 0x06000056, 0x00102022,
+        0x00000000, 0x0020801a, 0x00000000, 0x00000000, 0x08000036, 0x001020c2, 0x00000000, 0x00004002,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const struct vec4 expected_values[] =
+    {
+        {0.0f, 0.0f}, {0.0f, 3.0f}, {3.0f, 11.0f}, {1.0f, 0.0f}, {1.0f, 3.0f}, {3.0f, 10.0f},
+        {2.0f, 0.0f}, {2.0f, 3.0f}, {3.0f,  9.0f}, {4.0f, 2.0f}, {3.0f, 3.0f}, {3.0f,  8.0f},
+        {4.0f, 1.0f}, {4.0f, 3.0f}, {3.0f,  7.0f}, {5.0f, 1.0f}, {5.0f, 3.0f}, {3.0f,  6.0f},
+        {6.0f, 1.0f}, {6.0f, 3.0f}, {3.0f,  5.0f}, {7.0f, 1.0f}, {7.0f, 3.0f}, {3.0f,  4.0f},
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+
+    device = test_context.device;
+
+    memset(&constant, 0, sizeof(constant));
+    cb = create_buffer(device, D3D10_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
+    ID3D10Device_GSSetConstantBuffers(device, 0, 1, &cb);
+    ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
+
+    hr = ID3D10Device_CreateGeometryShader(device, gs_code, sizeof(gs_code), &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ID3D10Device_GSSetShader(device, gs);
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D10Device_PSSetShader(device, ps);
+
+    texture_desc.Width = 32;
+    texture_desc.Height = 32;
+    texture_desc.MipLevels = 3;
+    texture_desc.ArraySize = 8;
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+    constant.layer_offset = 0;
+    constant.draw_id = 0;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+    constant.layer_offset = 4;
+    constant.draw_id = 1;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+    ID3D10RenderTargetView_Release(rtv);
+
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DARRAY;
+    rtv_desc.Format = texture_desc.Format;
+    U(rtv_desc).Texture2DArray.MipSlice = 0;
+    U(rtv_desc).Texture2DArray.FirstArraySlice = 3;
+    U(rtv_desc).Texture2DArray.ArraySize = 1;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+    constant.layer_offset = 1;
+    constant.draw_id = 2;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+    ID3D10RenderTargetView_Release(rtv);
+
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DARRAY;
+    U(rtv_desc).Texture2DArray.MipSlice = 1;
+    U(rtv_desc).Texture2DArray.FirstArraySlice = 0;
+    U(rtv_desc).Texture2DArray.ArraySize = ~0u;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+    constant.layer_offset = 0;
+    constant.draw_id = 3;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+    constant.layer_offset = 4;
+    constant.draw_id = 3;
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+    draw_quad(&test_context);
+    ID3D10RenderTargetView_Release(rtv);
+
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DARRAY;
+    U(rtv_desc).Texture2DArray.MipSlice = 2;
+    U(rtv_desc).Texture2DArray.ArraySize = 1;
+    for (i = 0; i < texture_desc.ArraySize; ++i)
+    {
+        U(rtv_desc).Texture2DArray.FirstArraySlice = texture_desc.ArraySize - 1 - i;
+        hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv);
+        ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+        ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+        constant.layer_offset = 0;
+        constant.draw_id = 4 + i;
+        ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)cb, 0, NULL, &constant, 0, 0);
+        draw_quad(&test_context);
+        ID3D10RenderTargetView_Release(rtv);
+    }
+
+    sub_resource_count = texture_desc.MipLevels * texture_desc.ArraySize;
+    assert(ARRAY_SIZE(expected_values) == sub_resource_count);
+    for (i = 0; i < sub_resource_count; ++i)
+        check_texture_sub_resource_vec4(texture, i, NULL, &expected_values[i], 1);
+
+    ID3D10Texture2D_Release(texture);
+
+    ID3D10Buffer_Release(cb);
+    ID3D10GeometryShader_Release(gs);
+    ID3D10PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 static void test_create_shader_resource_view(void)
 {
     D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
@@ -12278,6 +12486,7 @@ START_TEST(device)
     test_depthstencil_view_interfaces();
     test_create_rendertarget_view();
     test_render_target_views();
+    test_layered_rendering();
     test_create_shader_resource_view();
     test_create_shader();
     test_create_sampler_state();
