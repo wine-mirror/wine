@@ -1,5 +1,5 @@
 @ stdcall gluBeginCurve(ptr) wine_gluBeginCurve
-@ stdcall gluBeginPolygon(ptr) wine_gluBeginPolygon
+@ stdcall gluBeginPolygon(ptr)
 @ stdcall gluBeginSurface(ptr) wine_gluBeginSurface
 @ stdcall gluBeginTrim(ptr) wine_gluBeginTrim
 @ stdcall gluBuild1DMipmaps(long long long long long ptr)
@@ -8,23 +8,23 @@
 @ stdcall gluCylinder(ptr double double double long long)
 @ stdcall gluDeleteNurbsRenderer(ptr) wine_gluDeleteNurbsRenderer
 @ stdcall gluDeleteQuadric(ptr)
-@ stdcall gluDeleteTess(ptr) wine_gluDeleteTess
+@ stdcall gluDeleteTess(ptr)
 @ stdcall gluDisk(ptr double double long long)
 @ stdcall gluEndCurve(ptr) wine_gluEndCurve
-@ stdcall gluEndPolygon(ptr) wine_gluEndPolygon
+@ stdcall gluEndPolygon(ptr)
 @ stdcall gluEndSurface(ptr) wine_gluEndSurface
 @ stdcall gluEndTrim(ptr) wine_gluEndTrim
 @ stdcall gluErrorString(long) wine_gluErrorString
 @ stdcall gluErrorUnicodeStringEXT(long) wine_gluErrorUnicodeStringEXT
 @ stdcall gluGetNurbsProperty(ptr long ptr) wine_gluGetNurbsProperty
 @ stdcall gluGetString(long) wine_gluGetString
-@ stdcall gluGetTessProperty(ptr long ptr) wine_gluGetTessProperty
+@ stdcall gluGetTessProperty(ptr long ptr)
 @ stdcall gluLoadSamplingMatrices(ptr ptr ptr ptr) wine_gluLoadSamplingMatrices
 @ stdcall gluLookAt(double double double double double double double double double)
 @ stdcall gluNewNurbsRenderer() wine_gluNewNurbsRenderer
 @ stdcall gluNewQuadric()
-@ stdcall gluNewTess() wine_gluNewTess
-@ stdcall gluNextContour(ptr long) wine_gluNextContour
+@ stdcall gluNewTess()
+@ stdcall gluNextContour(ptr long)
 @ stdcall gluNurbsCallback(ptr long ptr) wine_gluNurbsCallback
 @ stdcall gluNurbsCurve(ptr long ptr long ptr long long) wine_gluNurbsCurve
 @ stdcall gluNurbsProperty(ptr long long) wine_gluNurbsProperty
@@ -42,12 +42,12 @@
 @ stdcall gluQuadricTexture(ptr long)
 @ stdcall gluScaleImage(long long long long ptr long long long ptr)
 @ stdcall gluSphere(ptr double long long)
-@ stdcall gluTessBeginContour(ptr) wine_gluTessBeginContour
-@ stdcall gluTessBeginPolygon(ptr ptr) wine_gluTessBeginPolygon
-@ stdcall gluTessCallback(ptr long ptr) wine_gluTessCallback
-@ stdcall gluTessEndContour(ptr) wine_gluTessEndContour
-@ stdcall gluTessEndPolygon(ptr) wine_gluTessEndPolygon
-@ stdcall gluTessNormal(ptr double double double) wine_gluTessNormal
-@ stdcall gluTessProperty(ptr long double) wine_gluTessProperty
-@ stdcall gluTessVertex(ptr ptr ptr) wine_gluTessVertex
+@ stdcall gluTessBeginContour(ptr)
+@ stdcall gluTessBeginPolygon(ptr ptr)
+@ stdcall gluTessCallback(ptr long ptr)
+@ stdcall gluTessEndContour(ptr)
+@ stdcall gluTessEndPolygon(ptr)
+@ stdcall gluTessNormal(ptr double double double)
+@ stdcall gluTessProperty(ptr long double)
+@ stdcall gluTessVertex(ptr ptr ptr)
 @ stdcall gluUnProject(double double double ptr ptr ptr ptr ptr ptr)
