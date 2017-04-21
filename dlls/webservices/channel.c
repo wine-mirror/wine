@@ -21,13 +21,13 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "winsock2.h"
 #include "webservices.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "webservices_private.h"
+#include "sock.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
@@ -95,9 +95,20 @@ struct channel
     WS_ENDPOINT_ADDRESS     addr;
     WS_XML_WRITER          *writer;
     WS_XML_READER          *reader;
-    HINTERNET               http_session;
-    HINTERNET               http_connect;
-    HINTERNET               http_request;
+    WS_MESSAGE             *msg;
+    union
+    {
+        struct
+        {
+            HINTERNET session;
+            HINTERNET connect;
+            HINTERNET request;
+        } http;
+        struct
+        {
+            SOCKET socket;
+        } tcp;
+    } u;
     char                   *read_buf;
     ULONG                   read_buflen;
     ULONG                   read_size;
@@ -130,15 +141,27 @@ static void reset_channel( struct channel *channel )
     heap_free( channel->addr.url.chars );
     channel->addr.url.chars  = NULL;
     channel->addr.url.length = 0;
-
-    WinHttpCloseHandle( channel->http_request );
-    channel->http_request    = NULL;
-    WinHttpCloseHandle( channel->http_connect );
-    channel->http_connect    = NULL;
-    WinHttpCloseHandle( channel->http_session );
-    channel->http_session    = NULL;
-
+    channel->msg             = NULL;
     channel->read_size       = 0;
+
+    switch (channel->binding)
+    {
+    case WS_HTTP_CHANNEL_BINDING:
+        WinHttpCloseHandle( channel->u.http.request );
+        channel->u.http.request = NULL;
+        WinHttpCloseHandle( channel->u.http.connect );
+        channel->u.http.connect = NULL;
+        WinHttpCloseHandle( channel->u.http.session );
+        channel->u.http.session = NULL;
+        break;
+
+    case WS_TCP_CHANNEL_BINDING:
+        closesocket( channel->u.tcp.socket );
+        channel->u.tcp.socket = -1;
+        break;
+
+    default: break;
+    }
 }
 
 static void free_channel( struct channel *channel )
@@ -181,6 +204,15 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
     channel->type    = type;
     channel->binding = binding;
 
+    switch (channel->binding)
+    {
+    case WS_TCP_CHANNEL_BINDING:
+        channel->u.tcp.socket = -1;
+        break;
+
+    default: break;
+    }
+
     *ret = channel;
     return S_OK;
 }
@@ -202,12 +234,13 @@ HRESULT WINAPI WsCreateChannel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding
 
     if (!handle) return E_INVALIDARG;
 
-    if (type != WS_CHANNEL_TYPE_REQUEST)
+    if (type != WS_CHANNEL_TYPE_REQUEST && type != WS_CHANNEL_TYPE_DUPLEX &&
+        type != WS_CHANNEL_TYPE_DUPLEX_SESSION)
     {
         FIXME( "channel type %u not implemented\n", type );
         return E_NOTIMPL;
     }
-    if (binding != WS_HTTP_CHANNEL_BINDING)
+    if (binding != WS_HTTP_CHANNEL_BINDING && binding != WS_TCP_CHANNEL_BINDING)
     {
         FIXME( "channel binding %u not implemented\n", binding );
         return E_NOTIMPL;
@@ -453,7 +486,7 @@ HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, 
     return S_OK;
 }
 
-static HRESULT parse_url( const WCHAR *url, ULONG len, URL_COMPONENTS *uc )
+static HRESULT parse_http_url( const WCHAR *url, ULONG len, URL_COMPONENTS *uc )
 {
     HRESULT hr = E_OUTOFMEMORY;
     WCHAR *tmp;
@@ -494,7 +527,7 @@ error:
     return hr;
 }
 
-static HRESULT connect_channel( struct channel *channel, WS_MESSAGE *msg )
+static HRESULT connect_channel_http( struct channel *channel )
 {
     static const WCHAR agentW[] =
         {'M','S','-','W','e','b','S','e','r','v','i','c','e','s','/','1','.','0',0};
@@ -506,7 +539,9 @@ static HRESULT connect_channel( struct channel *channel, WS_MESSAGE *msg )
     DWORD flags = 0;
     HRESULT hr;
 
-    if ((hr = parse_url( channel->addr.url.chars, channel->addr.url.length, &uc )) != S_OK) return hr;
+    if (channel->u.http.request) return S_OK;
+
+    if ((hr = parse_http_url( channel->addr.url.chars, channel->addr.url.length, &uc )) != S_OK) return hr;
     if (!uc.dwExtraInfoLength) path = uc.lpszUrlPath;
     else if (!(path = heap_alloc( (uc.dwUrlPathLength + uc.dwExtraInfoLength + 1) * sizeof(WCHAR) )))
     {
@@ -527,8 +562,7 @@ static HRESULT connect_channel( struct channel *channel, WS_MESSAGE *msg )
         break;
 
     default:
-        FIXME( "scheme %u not supported\n", uc.nScheme );
-        hr = E_NOTIMPL;
+        hr = WS_E_INVALID_ENDPOINT_URL;
         goto done;
     }
 
@@ -548,11 +582,11 @@ static HRESULT connect_channel( struct channel *channel, WS_MESSAGE *msg )
         goto done;
     }
 
-    if ((hr = message_insert_http_headers( msg, req )) != S_OK) goto done;
+    if ((hr = message_insert_http_headers( channel->msg, req )) != S_OK) goto done;
 
-    channel->http_session = ses;
-    channel->http_connect = con;
-    channel->http_request = req;
+    channel->u.http.session = ses;
+    channel->u.http.connect = con;
+    channel->u.http.request = req;
 
 done:
     if (hr != S_OK)
@@ -568,11 +602,58 @@ done:
     return hr;
 }
 
-HRESULT set_output( WS_XML_WRITER *writer )
+static HRESULT connect_channel_tcp( struct channel *channel )
 {
-    WS_XML_WRITER_TEXT_ENCODING text = { {WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8 };
-    WS_XML_WRITER_BUFFER_OUTPUT buf = { {WS_XML_WRITER_OUTPUT_TYPE_BUFFER} };
-    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
+    struct sockaddr_storage storage;
+    struct sockaddr *addr = (struct sockaddr *)&storage;
+    int addr_len;
+    WS_URL_SCHEME_TYPE scheme;
+    WCHAR *host;
+    USHORT port;
+    HRESULT hr;
+
+    if (channel->u.tcp.socket != -1) return S_OK;
+
+    if ((hr = parse_url( &channel->addr.url, &scheme, &host, &port )) != S_OK) return hr;
+    if (scheme != WS_URL_NETTCP_SCHEME_TYPE)
+    {
+        heap_free( host );
+        return WS_E_INVALID_ENDPOINT_URL;
+    }
+
+    winsock_init();
+
+    hr = resolve_hostname( host, port, addr, &addr_len );
+    heap_free( host );
+    if (hr != S_OK) return hr;
+
+    if ((channel->u.tcp.socket = socket( addr->sa_family, SOCK_STREAM, 0 )) == -1)
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+
+    if (connect( channel->u.tcp.socket, addr, addr_len ) < 0)
+    {
+        closesocket( channel->u.tcp.socket );
+        channel->u.tcp.socket = -1;
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    }
+
+    return S_OK;
+}
+
+static HRESULT connect_channel( struct channel *channel )
+{
+    switch (channel->binding)
+    {
+    case WS_HTTP_CHANNEL_BINDING:
+        return connect_channel_http( channel );
+
+    case WS_TCP_CHANNEL_BINDING:
+        return connect_channel_tcp( channel );
+
+    default:
+        ERR( "unhandled binding %u\n", channel->binding );
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT write_message( WS_MESSAGE *handle, WS_XML_WRITER *writer, const WS_ELEMENT_DESCRIPTION *desc,
@@ -584,21 +665,52 @@ static HRESULT write_message( WS_MESSAGE *handle, WS_XML_WRITER *writer, const W
     return WsWriteEnvelopeEnd( handle, NULL );
 }
 
-static HRESULT send_message( struct channel *channel, BYTE *data, ULONG len )
+static HRESULT send_message_http( HANDLE request, BYTE *data, ULONG len )
 {
-    if (!WinHttpSendRequest( channel->http_request, NULL, 0, data, len, len, 0 ))
+    if (!WinHttpSendRequest( request, NULL, 0, data, len, len, 0 ))
         return HRESULT_FROM_WIN32( GetLastError() );
 
-    if (!WinHttpReceiveResponse( channel->http_request, NULL ))
+    if (!WinHttpReceiveResponse( request, NULL ))
         return HRESULT_FROM_WIN32( GetLastError() );
     return S_OK;
+}
+
+static HRESULT send_message_sock( SOCKET socket, BYTE *data, ULONG len )
+{
+    if (send( socket, (const char *)data, len, 0 ) < 0)
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    return S_OK;
+}
+
+static HRESULT send_message( struct channel *channel, WS_MESSAGE *msg )
+{
+    WS_XML_WRITER *writer;
+    WS_BYTES buf;
+    HRESULT hr;
+
+    channel->msg = msg;
+    if ((hr = connect_channel( channel )) != S_OK) return hr;
+
+    WsGetMessageProperty( channel->msg, WS_MESSAGE_PROPERTY_BODY_WRITER, &writer, sizeof(writer), NULL );
+    WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &buf, sizeof(buf), NULL );
+
+    switch (channel->binding)
+    {
+    case WS_HTTP_CHANNEL_BINDING:
+        return send_message_http( channel->u.http.request, buf.bytes, buf.length );
+
+    case WS_TCP_CHANNEL_BINDING:
+        return send_message_sock( channel->u.tcp.socket, buf.bytes, buf.length );
+
+    default:
+        ERR( "unhandled binding %u\n", channel->binding );
+        return E_NOTIMPL;
+    }
 }
 
 HRESULT channel_send_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
 {
     struct channel *channel = (struct channel *)handle;
-    WS_XML_WRITER *writer;
-    WS_BYTES buf;
     HRESULT hr;
 
     EnterCriticalSection( &channel->cs );
@@ -609,18 +721,24 @@ HRESULT channel_send_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
         return E_INVALIDARG;
     }
 
-    if ((hr = connect_channel( channel, msg )) != S_OK)
-    {
-        LeaveCriticalSection( &channel->cs );
-        return hr;
-    }
-
-    WsGetMessageProperty( msg, WS_MESSAGE_PROPERTY_BODY_WRITER, &writer, sizeof(writer), NULL );
-    WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &buf, sizeof(buf), NULL );
-    hr = send_message( channel, buf.bytes, buf.length );
+    hr = send_message( channel, msg );
 
     LeaveCriticalSection( &channel->cs );
     return hr;
+}
+
+HRESULT set_output( WS_XML_WRITER *writer )
+{
+    WS_XML_WRITER_TEXT_ENCODING text = { {WS_XML_WRITER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8 };
+    WS_XML_WRITER_BUFFER_OUTPUT buf = { {WS_XML_WRITER_OUTPUT_TYPE_BUFFER} };
+    return WsSetOutput( writer, &text.encoding, &buf.output, NULL, 0, NULL );
+}
+
+static HRESULT init_writer( struct channel *channel )
+{
+    HRESULT hr;
+    if (!channel->writer && (hr = WsCreateWriter( NULL, 0, &channel->writer, NULL )) != S_OK) return hr;
+    return set_output( channel->writer );
 }
 
 /**************************************************************************
@@ -651,13 +769,13 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
     if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) goto done;
     if ((hr = message_set_action( msg, desc->action )) != S_OK) goto done;
 
-    if (!channel->writer && (hr = WsCreateWriter( NULL, 0, &channel->writer, NULL )) != S_OK) goto done;
-    if ((hr = set_output( channel->writer )) != S_OK) goto done;
-    hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size );
+    if ((hr = init_writer( channel )) != S_OK) goto done;
+    if ((hr = write_message( msg, channel->writer, desc->bodyElementDescription, option, body, size )) != S_OK)
+        goto done;
+    hr = send_message( channel, msg );
 
 done:
     LeaveCriticalSection( &channel->cs );
-    if (hr == S_OK) hr = channel_send_message( handle, msg );
     return hr;
 }
 
@@ -680,39 +798,6 @@ static HRESULT resize_read_buffer( struct channel *channel, ULONG size )
     return S_OK;
 }
 
-#define INITIAL_READ_BUFFER_SIZE 4096
-static HRESULT receive_message( struct channel *channel )
-{
-    DWORD len, max_len, bytes_read, offset = 0, size = INITIAL_READ_BUFFER_SIZE;
-    HRESULT hr;
-
-    prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
-              &max_len, sizeof(max_len) );
-
-    if ((hr = resize_read_buffer( channel, size )) != S_OK) return hr;
-    channel->read_size = 0;
-
-    for (;;)
-    {
-        if (!WinHttpQueryDataAvailable( channel->http_request, &len ))
-        {
-            return HRESULT_FROM_WIN32( GetLastError() );
-        }
-        if (!len) break;
-        if (channel->read_size + len > max_len) return WS_E_QUOTA_EXCEEDED;
-        if ((hr = resize_read_buffer( channel, channel->read_size + len )) != S_OK) return hr;
-
-        if (!WinHttpReadData( channel->http_request, channel->read_buf + offset, len, &bytes_read ))
-        {
-            return HRESULT_FROM_WIN32( GetLastError() );
-        }
-        if (!bytes_read) break;
-        channel->read_size += bytes_read;
-        offset += bytes_read;
-    }
-    return S_OK;
-}
-
 static HRESULT set_input( WS_XML_READER *reader, char *data, ULONG size )
 {
     WS_XML_READER_TEXT_ENCODING text = {{WS_XML_READER_ENCODING_TYPE_TEXT}, WS_CHARSET_UTF8};
@@ -722,6 +807,88 @@ static HRESULT set_input( WS_XML_READER *reader, char *data, ULONG size )
     buf.encodedData     = data;
     buf.encodedDataSize = size;
     return WsSetInput( reader, &text.encoding, &buf.input, NULL, 0, NULL );
+}
+
+static HRESULT init_reader( struct channel *channel )
+{
+    HRESULT hr;
+    if (!channel->reader && (hr = WsCreateReader( NULL, 0, &channel->reader, NULL )) != S_OK) return hr;
+    return set_input( channel->reader, channel->read_buf, channel->read_size );
+}
+
+#define INITIAL_READ_BUFFER_SIZE 4096
+static HRESULT receive_message_http( struct channel *channel )
+{
+    DWORD len, bytes_read, offset = 0, size = INITIAL_READ_BUFFER_SIZE;
+    ULONG max_len;
+    HRESULT hr;
+
+    prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
+              &max_len, sizeof(max_len) );
+
+    if ((hr = resize_read_buffer( channel, size )) != S_OK) return hr;
+    channel->read_size = 0;
+    for (;;)
+    {
+        if (!WinHttpQueryDataAvailable( channel->u.http.request, &len ))
+        {
+            return HRESULT_FROM_WIN32( GetLastError() );
+        }
+        if (!len) break;
+        if (channel->read_size + len > max_len) return WS_E_QUOTA_EXCEEDED;
+        if ((hr = resize_read_buffer( channel, channel->read_size + len )) != S_OK) return hr;
+
+        if (!WinHttpReadData( channel->u.http.request, channel->read_buf + offset, len, &bytes_read ))
+        {
+            return HRESULT_FROM_WIN32( GetLastError() );
+        }
+        if (!bytes_read) break;
+        channel->read_size += bytes_read;
+        offset += bytes_read;
+    }
+
+    return init_reader( channel );
+}
+
+static HRESULT receive_message_sock( struct channel *channel, SOCKET socket )
+{
+    int bytes_read;
+    ULONG max_len;
+    HRESULT hr;
+
+    prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
+              &max_len, sizeof(max_len) );
+
+    if ((hr = resize_read_buffer( channel, max_len )) != S_OK) return hr;
+
+    channel->read_size = 0;
+    if ((bytes_read = recv( socket, channel->read_buf, max_len, 0 )) < 0)
+    {
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    }
+    channel->read_size = bytes_read;
+
+    return init_reader( channel );
+}
+
+static HRESULT receive_message( struct channel *channel )
+{
+    HRESULT hr;
+
+    if ((hr = connect_channel( channel )) != S_OK) return hr;
+
+    switch (channel->binding)
+    {
+    case WS_HTTP_CHANNEL_BINDING:
+        return receive_message_http( channel );
+
+    case WS_TCP_CHANNEL_BINDING:
+        return receive_message_sock( channel, channel->u.tcp.socket );
+
+    default:
+        ERR( "unhandled binding %u\n", channel->binding );
+        return E_NOTIMPL;
+    }
 }
 
 HRESULT channel_receive_message( WS_CHANNEL *handle )
@@ -737,11 +904,8 @@ HRESULT channel_receive_message( WS_CHANNEL *handle )
         return E_INVALIDARG;
     }
 
-    if ((hr = receive_message( channel )) != S_OK) goto done;
-    if (!channel->reader && (hr = WsCreateReader( NULL, 0, &channel->reader, NULL )) != S_OK) goto done;
-    if ((hr = set_input( channel->reader, channel->read_buf, channel->read_size )) != S_OK) goto done;
+    hr = receive_message( channel );
 
-done:
     LeaveCriticalSection( &channel->cs );
     return hr;
 }
@@ -814,8 +978,6 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
     }
 
     if ((hr = receive_message( channel )) != S_OK) goto done;
-    if (!channel->reader && (hr = WsCreateReader( NULL, 0, &channel->reader, NULL )) != S_OK) goto done;
-    if ((hr = set_input( channel->reader, channel->read_buf, channel->read_size )) != S_OK) goto done;
     hr = read_message( msg, channel->reader, desc[0]->bodyElementDescription, read_option, heap, value, size );
 
 done:

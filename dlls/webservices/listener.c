@@ -20,13 +20,13 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "ws2tcpip.h"
 #include "webservices.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "webservices_private.h"
+#include "sock.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
@@ -41,7 +41,7 @@ static BOOL WINAPI winsock_startup( INIT_ONCE *once, void *param, void **ctx )
     return TRUE;
 }
 
-static void winsock_init(void)
+void winsock_init(void)
 {
     static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
     InitOnceExecuteOnce( &once, winsock_startup, NULL, NULL );
@@ -201,7 +201,7 @@ void WINAPI WsFreeListener( WS_LISTENER *handle )
     free_listener( listener );
 }
 
-static HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr *addr, int *addr_len )
+HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr *addr, int *addr_len )
 {
     static const WCHAR fmtW[] = {'%','u',0};
     WCHAR service[6];
@@ -225,7 +225,7 @@ static HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr
     return hr;
 }
 
-static HRESULT parse_url( const WS_STRING *str, WCHAR **host, USHORT *port )
+HRESULT parse_url( const WS_STRING *str, WS_URL_SCHEME_TYPE *scheme, WCHAR **host, USHORT *port )
 {
     WS_HEAP *heap;
     WS_NETTCP_URL *url;
@@ -249,6 +249,7 @@ static HRESULT parse_url( const WS_STRING *str, WCHAR **host, USHORT *port )
         memcpy( *host, url->host.chars, url->host.length * sizeof(WCHAR) );
         (*host)[url->host.length] = 0;
     }
+    *scheme = url->url.scheme;
     *port = url->port;
 
     WsFreeHeap( heap );
@@ -260,11 +261,17 @@ static HRESULT open_listener( struct listener *listener, const WS_STRING *url )
     struct sockaddr_storage storage;
     struct sockaddr *addr = (struct sockaddr *)&storage;
     int addr_len;
+    WS_URL_SCHEME_TYPE scheme;
     WCHAR *host;
     USHORT port;
     HRESULT hr;
 
-    if ((hr = parse_url( url, &host, &port )) != S_OK) return hr;
+    if ((hr = parse_url( url, &scheme, &host, &port )) != S_OK) return hr;
+    if (scheme != WS_URL_NETTCP_SCHEME_TYPE)
+    {
+        heap_free( host );
+        return WS_E_INVALID_ENDPOINT_URL;
+    }
 
     winsock_init();
 
