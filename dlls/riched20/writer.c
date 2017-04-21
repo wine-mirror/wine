@@ -723,8 +723,10 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
       sprintf(props + strlen(props), "\\shading%d", fmt->wShadingWeight);
     if (fmt->wShadingStyle & 0xF)
       strcat(props, style[fmt->wShadingStyle & 0xF]);
-    sprintf(props + strlen(props), "\\cfpat%d\\cbpat%d",
-            (fmt->wShadingStyle >> 4) & 0xF, (fmt->wShadingStyle >> 8) & 0xF);
+    if ((fmt->wShadingStyle >> 4) & 0xf)
+      sprintf(props + strlen(props), "\\cfpat%d", (fmt->wShadingStyle >> 4) & 0xf);
+    if ((fmt->wShadingStyle >> 8) & 0xf)
+      sprintf(props + strlen(props), "\\cbpat%d", (fmt->wShadingStyle >> 8) & 0xf);
   }
   if (*props)
     strcat(props, " ");
