@@ -2033,6 +2033,11 @@ static BOOL shader_glsl_use_explicit_attrib_location(const struct wined3d_gl_inf
             && shader_glsl_use_layout_qualifier(gl_info) && !needs_legacy_glsl_syntax(gl_info);
 }
 
+static BOOL shader_glsl_has_core_gs(const struct wined3d_gl_info *gl_info)
+{
+    return shader_glsl_get_version(gl_info) >= 150;
+}
+
 static const char *get_attribute_keyword(const struct wined3d_gl_info *gl_info)
 {
     return needs_legacy_glsl_syntax(gl_info) ? "attribute" : "in";
@@ -2689,27 +2694,24 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
             if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
             {
+                const char *suffix = shader_glsl_has_core_gs(gl_info) ? ".gs_in" : "";
                 if (reg->idx[0].rel_addr)
                 {
                     if (reg->idx[1].rel_addr)
                         sprintf(register_name, "gs_in[%s + %u]%s[%s + %u]",
-                                rel_param0.param_str, reg->idx[0].offset,
-                                gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
+                                rel_param0.param_str, reg->idx[0].offset, suffix,
                                 rel_param1.param_str, reg->idx[1].offset);
                     else
                         sprintf(register_name, "gs_in[%s + %u]%s[%u]",
-                                rel_param0.param_str, reg->idx[0].offset,
-                                gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
+                                rel_param0.param_str, reg->idx[0].offset, suffix,
                                 reg->idx[1].offset);
                 }
                 else if (reg->idx[1].rel_addr)
                     sprintf(register_name, "gs_in[%u]%s[%s + %u]", reg->idx[0].offset,
-                            gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
-                            rel_param1.param_str, reg->idx[1].offset);
+                            suffix, rel_param1.param_str, reg->idx[1].offset);
                 else
-                    sprintf(register_name, "gs_in[%u]%s[%u]", reg->idx[0].offset,
-                            gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? "" : ".gs_in",
-                            reg->idx[1].offset);
+                    sprintf(register_name, "gs_in[%u]%s[%u]",
+                            reg->idx[0].offset, suffix, reg->idx[1].offset);
                 break;
             }
 
@@ -6597,17 +6599,17 @@ static void shader_glsl_generate_vs_gs_setup(struct shader_glsl_priv *priv,
         const struct wined3d_shader *vs, unsigned int input_count,
         const struct wined3d_gl_info *gl_info)
 {
-    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
+    const BOOL core_gs = shader_glsl_has_core_gs(gl_info);
 
-    if (legacy_context)
-        shader_addline(buffer, "varying out vec4 gs_in[%u];\n", input_count);
-    else
+    if (core_gs)
         shader_addline(buffer, "out vs_gs_iface { vec4 gs_in[%u]; } gs_in;\n", input_count);
+    else
+        shader_addline(buffer, "varying out vec4 gs_in[%u];\n", input_count);
     shader_addline(buffer, "void setup_vs_output(in vec4 shader_out[%u])\n{\n", vs->limits->packed_output);
 
     shader_glsl_setup_sm4_shader_output(priv, input_count, &vs->output_signature, &vs->reg_maps,
-            legacy_context ? "gs_in" : "gs_in.gs_in");
+            core_gs ? "gs_in.gs_in" : "gs_in");
 
     shader_addline(buffer, "}\n");
 }
@@ -7365,11 +7367,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
 
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
-    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
-    {
-        shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits->packed_input);
-    }
-    else
+    if (shader_glsl_has_core_gs(gl_info))
     {
         shader_addline(buffer, "layout(%s", glsl_primitive_type_from_d3d(shader->u.gs.input_type));
         if (shader->u.gs.instance_count > 1)
@@ -7378,6 +7376,10 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
         shader_addline(buffer, "layout(%s, max_vertices = %u) out;\n",
                 glsl_primitive_type_from_d3d(shader->u.gs.output_type), shader->u.gs.vertices_out);
         shader_addline(buffer, "in vs_gs_iface { vec4 gs_in[%u]; } gs_in[];\n", shader->limits->packed_input);
+    }
+    else
+    {
+        shader_addline(buffer, "varying in vec4 gs_in[][%u];\n", shader->limits->packed_input);
     }
     if (!gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
@@ -9327,7 +9329,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         GL_EXTCALL(glAttachShader(program_id, gs_id));
         checkGLcall("glAttachShader");
 
-        if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        if (!shader_glsl_has_core_gs(gl_info))
         {
             TRACE("input type %s, output type %s, vertices out %u.\n",
                     debug_d3dprimitivetype(gshader->u.gs.input_type),
