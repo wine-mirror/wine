@@ -207,8 +207,8 @@ static HWND create_pager_control( DWORD style )
 
 static LRESULT WINAPI child_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    struct message msg;
     static LONG defwndproc_counter;
+    struct message msg = { 0 };
     LRESULT ret;
 
     msg.message = message;
