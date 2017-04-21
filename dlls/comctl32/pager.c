@@ -271,7 +271,7 @@ PAGER_PositionChildWnd(PAGER_INFO* infoPtr)
 }
 
 static INT
-PAGER_GetScrollRange(PAGER_INFO* infoPtr)
+PAGER_GetScrollRange(PAGER_INFO* infoPtr, BOOL calc_size)
 {
     INT scrollRange = 0;
 
@@ -281,7 +281,8 @@ PAGER_GetScrollRange(PAGER_INFO* infoPtr)
         RECT wndRect;
         GetWindowRect(infoPtr->hwndSelf, &wndRect);
 
-        PAGER_CalcSize(infoPtr);
+        if (calc_size)
+            PAGER_CalcSize(infoPtr);
         if (infoPtr->dwStyle & PGS_HORZ)
         {
             wndSize = wndRect.right - wndRect.left;
@@ -362,9 +363,9 @@ PAGER_UpdateBtns(PAGER_INFO *infoPtr, INT scrollRange, BOOL hideGrayBtns)
 }
 
 static LRESULT
-PAGER_SetPos(PAGER_INFO* infoPtr, INT newPos, BOOL fromBtnPress)
+PAGER_SetPos(PAGER_INFO* infoPtr, INT newPos, BOOL fromBtnPress, BOOL calc_size)
 {
-    INT scrollRange = PAGER_GetScrollRange(infoPtr);
+    INT scrollRange = PAGER_GetScrollRange(infoPtr, calc_size);
     INT oldPos = infoPtr->nPos;
 
     if ((scrollRange <= 0) || (newPos < 0))
@@ -405,12 +406,12 @@ PAGER_RecalcSize(PAGER_INFO *infoPtr)
 
     if (infoPtr->hwndChild)
     {
-        INT scrollRange = PAGER_GetScrollRange(infoPtr);
+        INT scrollRange = PAGER_GetScrollRange(infoPtr, TRUE);
 
         if (scrollRange <= 0)
         {
             infoPtr->nPos = -1;
-            PAGER_SetPos(infoPtr, 0, FALSE);
+            PAGER_SetPos(infoPtr, 0, FALSE, TRUE);
         }
         else
             PAGER_PositionChildWnd(infoPtr);
@@ -480,7 +481,7 @@ PAGER_SetChild (PAGER_INFO* infoPtr, HWND hwndChild)
                      SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
         infoPtr->nPos = -1;
-        PAGER_SetPos(infoPtr, 0, FALSE);
+        PAGER_SetPos(infoPtr, 0, FALSE, FALSE);
     }
 
     return 0;
@@ -525,9 +526,9 @@ PAGER_Scroll(PAGER_INFO* infoPtr, INT dir)
             infoPtr->direction = dir;
 
             if (dir == PGF_SCROLLLEFT || dir == PGF_SCROLLUP)
-                PAGER_SetPos(infoPtr, infoPtr->nPos - nmpgScroll.iScroll, TRUE);
+                PAGER_SetPos(infoPtr, infoPtr->nPos - nmpgScroll.iScroll, TRUE, TRUE);
             else
-                PAGER_SetPos(infoPtr, infoPtr->nPos + nmpgScroll.iScroll, TRUE);
+                PAGER_SetPos(infoPtr, infoPtr->nPos + nmpgScroll.iScroll, TRUE, TRUE);
         }
         else
             infoPtr->direction = -1;
@@ -1047,7 +1048,7 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return PAGER_SetChild (infoPtr, (HWND)lParam);
 
         case PGM_SETPOS:
-            return PAGER_SetPos(infoPtr, (INT)lParam, FALSE);
+            return PAGER_SetPos(infoPtr, (INT)lParam, FALSE, TRUE);
 
         case WM_CREATE:
             return PAGER_Create (hwnd, (LPCREATESTRUCTW)lParam);
