@@ -515,7 +515,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         }
 
         if (frame == orig_frame)
-            cxx_local_unwind(frame, dispatch, descr, -1);
+            cxx_local_unwind(frame, dispatch, descr, rec->ExceptionFlags & EH_TARGET_UNWIND ? trylevel : -1);
         return ExceptionContinueSearch;
     }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
