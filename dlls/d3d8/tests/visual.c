@@ -4069,7 +4069,11 @@ static void shadow_test(void)
         for (j = 0; j < sizeof(expected_colors) / sizeof(*expected_colors); ++j)
         {
             D3DCOLOR color = get_readback_color(&rb, expected_colors[j].x, expected_colors[j].y);
-            ok(color_match(color, expected_colors[j].color, 0),
+            /* Geforce 7 on Windows returns 1.0 in alpha when the depth format is D24S8 or D24X8,
+             * whereas other GPUs (all AMD, newer Nvidia) return the same value they return in .rgb.
+             * Accept alpha mismatches as broken but make sure to check the color channels. */
+            ok(color_match(color, expected_colors[j].color, 0)
+                    || broken(color_match(color & 0x00ffffff, expected_colors[j].color & 0x00ffffff, 0)),
                     "Expected color 0x%08x at (%u, %u) for format %s, got 0x%08x.\n",
                     expected_colors[j].color, expected_colors[j].x, expected_colors[j].y,
                     formats[i].name, color);
