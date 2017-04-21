@@ -431,7 +431,11 @@ static IDirectDraw *create_ddraw(void)
 
 static IDirect3DDevice *create_device(IDirectDraw *ddraw, HWND window, DWORD coop_level)
 {
-    static const DWORD z_depths[] = {32, 24, 16};
+    /* Prefer 16 bit depth buffers because Nvidia gives us an unpadded D24 buffer if we ask
+     * for 24 bit and handles such buffers incorrectly in DDBLT_DEPTHFILL. AMD only supports
+     * 16 bit buffers in ddraw1/2. Stencil was added in ddraw4, so we cannot create a D24S8
+     * buffer here. */
+    static const DWORD z_depths[] = {16, 32, 24};
     IDirectDrawSurface *surface, *ds;
     IDirect3DDevice *device = NULL;
     DDSURFACEDESC surface_desc;
