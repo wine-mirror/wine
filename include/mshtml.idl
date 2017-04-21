@@ -10039,6 +10039,23 @@ methods:
 }
 
 /*****************************************************************************
+ *    HTMLAreaElement coclass
+ */
+[
+    noncreatable,
+    uuid(3050f283-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLAreaElement
+{
+    [default]         dispinterface DispHTMLAreaElement;
+ /* [source, default] dispinterface HTMLAreaEvents; */
+ /* [source]          dispinterface HTMLAreaEvents2; */
+    WINE_HTMLELEMENT_INTERFACES;
+    interface IHTMLAreaElement;
+ /* interface IHTMLAreaElement2; */
+}
+
+/*****************************************************************************
  *    IHTMLLabelElement interface
  */
 [
