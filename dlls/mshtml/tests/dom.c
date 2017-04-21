@@ -132,7 +132,8 @@ typedef enum {
     ET_NOSCRIPT,
     ET_LINK,
     ET_LABEL,
-    ET_BUTTON
+    ET_BUTTON,
+    ET_AREA
 } elem_type_t;
 
 static const IID * const none_iids[] = {
@@ -217,6 +218,13 @@ static const IID * const input_iids[] = {
 static const IID *const button_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLButtonElement,
+    &IID_IConnectionPointContainer,
+    NULL
+};
+
+static const IID *const area_iids[] = {
+    ELEM_IFACES,
+    &IID_IHTMLAreaElement,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -491,7 +499,8 @@ static const elem_type_info_t elem_type_infos[] = {
     {"NOSCRIPT",  elem_iids,        NULL /*&DIID_DispHTMLNoShowElement*/},
     {"LINK",      link_iids,        &DIID_DispHTMLLinkElement},
     {"LABEL",     label_iids,       &DIID_DispHTMLLabelElement},
-    {"BUTTON",    button_iids,      &DIID_DispHTMLButtonElement}
+    {"BUTTON",    button_iids,      &DIID_DispHTMLButtonElement},
+    {"AREA",      area_iids,        &DIID_DispHTMLAreaElement}
 };
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
@@ -1137,11 +1146,16 @@ static void _test_elem_tag(unsigned line, IUnknown *unk, const char *extag)
 #define test_elem_type(ifc,t) _test_elem_type(__LINE__,ifc,t)
 static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
 {
+    const char *expected_value = "[object]";
+
     _test_elem_tag(line, unk, elem_type_infos[type].tag);
     _test_ifaces(line, unk, elem_type_infos[type].iids);
 
-    if(elem_type_infos[type].dispiid && type != ET_A)
-        _test_disp(line, unk, elem_type_infos[type].dispiid, "[object]");
+    if(elem_type_infos[type].dispiid && type != ET_A) {
+        if(type == ET_AREA)
+            expected_value = NULL;
+        _test_disp(line, unk, elem_type_infos[type].dispiid, expected_value);
+    }
 }
 
 #define get_node_type(n) _get_node_type(__LINE__,n)
@@ -9287,6 +9301,13 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_elem_all((IUnknown*)div, NULL, 0);
         elem2 = test_elem_get_parent((IUnknown*)elem);
         ok(!elem2, "parent != NULL\n");
+        IHTMLElement_Release(elem);
+    }
+
+    test_elem_set_innerhtml((IUnknown*)div, "<map><area id=\"areaid\"></area></map>");
+    elem = get_elem_by_id(doc, "areaid", TRUE);
+    if(elem) {
+        test_elem_type((IUnknown*)elem, ET_AREA);
         IHTMLElement_Release(elem);
     }
 
