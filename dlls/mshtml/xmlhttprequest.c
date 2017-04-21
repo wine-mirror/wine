@@ -101,6 +101,7 @@ typedef struct {
 struct HTMLXMLHttpRequest {
     EventTarget event_target;
     IHTMLXMLHttpRequest IHTMLXMLHttpRequest_iface;
+    IProvideClassInfo2 IProvideClassInfo2_iface;
     LONG ref;
     nsIXMLHttpRequest *nsxhr;
     XMLHttpReqEventListener *event_listener;
@@ -218,6 +219,10 @@ static HRESULT WINAPI HTMLXMLHttpRequest_QueryInterface(IHTMLXMLHttpRequest *ifa
         *ppv = &This->IHTMLXMLHttpRequest_iface;
     }else if(IsEqualGUID(&IID_IHTMLXMLHttpRequest, riid)) {
         *ppv = &This->IHTMLXMLHttpRequest_iface;
+    }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
+        *ppv = &This->IProvideClassInfo2_iface;
+    }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
+        *ppv = &This->IProvideClassInfo2_iface;
     }else if(dispex_query_interface(&This->event_target.dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -682,6 +687,51 @@ static const IHTMLXMLHttpRequestVtbl HTMLXMLHttpRequestVtbl = {
     HTMLXMLHttpRequest_setRequestHeader
 };
 
+static inline HTMLXMLHttpRequest *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, IProvideClassInfo2_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideClassInfo2 *iface, REFIID riid, void **ppv)
+{
+    HTMLXMLHttpRequest *This = impl_from_IProvideClassInfo2(iface);
+    return IHTMLXMLHttpRequest_QueryInterface(&This->IHTMLXMLHttpRequest_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProvideClassInfo_AddRef(IProvideClassInfo2 *iface)
+{
+    HTMLXMLHttpRequest *This = impl_from_IProvideClassInfo2(iface);
+    return IHTMLXMLHttpRequest_AddRef(&This->IHTMLXMLHttpRequest_iface);
+}
+
+static ULONG WINAPI ProvideClassInfo_Release(IProvideClassInfo2 *iface)
+{
+    HTMLXMLHttpRequest *This = impl_from_IProvideClassInfo2(iface);
+    return IHTMLXMLHttpRequest_Release(&This->IHTMLXMLHttpRequest_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo2 *iface, ITypeInfo **ppTI)
+{
+    HTMLXMLHttpRequest *This = impl_from_IProvideClassInfo2(iface);
+    TRACE("(%p)->(%p)\n", This, ppTI);
+    return get_class_typeinfo(&CLSID_HTMLXMLHttpRequest, ppTI);
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideClassInfo2 *iface, DWORD dwGuidKind, GUID *pGUID)
+{
+    HTMLXMLHttpRequest *This = impl_from_IProvideClassInfo2(iface);
+    FIXME("(%p)->(%u %p)\n", This, dwGuidKind, pGUID);
+    return E_NOTIMPL;
+}
+
+static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {
+    ProvideClassInfo_QueryInterface,
+    ProvideClassInfo_AddRef,
+    ProvideClassInfo_Release,
+    ProvideClassInfo_GetClassInfo,
+    ProvideClassInfo2_GetGUID,
+};
+
 static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, event_target.dispex);
@@ -849,6 +899,7 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
     ret->nsxhr = nsxhr;
 
     ret->IHTMLXMLHttpRequest_iface.lpVtbl = &HTMLXMLHttpRequestVtbl;
+    ret->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
     init_event_target(&ret->event_target);
     init_dispex(&ret->event_target.dispex, (IUnknown*)&ret->IHTMLXMLHttpRequest_iface,
             &HTMLXMLHttpRequest_dispex);
