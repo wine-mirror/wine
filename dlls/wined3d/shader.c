@@ -74,6 +74,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_FUNCTION_BODY                */ "dcl_function_body",
     /* WINED3DSIH_DCL_FUNCTION_TABLE               */ "dcl_function_table",
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ "dcl_globalFlags",
+    /* WINED3DSIH_DCL_GS_INSTANCES                 */ "dcl_gs_instances",
     /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ "dcl_hs_fork_phase_instance_count",
     /* WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT */ "dcl_hs_join_phase_instance_count",
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ "dcl_hs_max_tessfactor",
@@ -1018,6 +1019,14 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 ERR("Invalid CB index %u.\n", reg->idx[0].offset);
             else
                 reg_maps->cb_sizes[reg->idx[0].offset] = reg->idx[1].offset;
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_GS_INSTANCES)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
+                shader->u.gs.instance_count = ins.declaration.count;
+            else
+                FIXME("Invalid instruction %#x for shader type %#x.\n",
+                        ins.handler_idx, shader_version.type);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER)
         {
@@ -2648,11 +2657,12 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 shader_addline(&buffer, ", comparisonMode");
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_TEMPS
-                || ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT
+                || ins.handler_idx == WINED3DSIH_DCL_GS_INSTANCES
                 || ins.handler_idx == WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT
                 || ins.handler_idx == WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT
                 || ins.handler_idx == WINED3DSIH_DCL_INPUT_CONTROL_POINT_COUNT
-                || ins.handler_idx == WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT)
+                || ins.handler_idx == WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT
+                || ins.handler_idx == WINED3DSIH_DCL_VERTICES_OUT)
         {
             shader_addline(&buffer, "%s %u", shader_opcode_names[ins.handler_idx], ins.declaration.count);
         }

@@ -700,6 +700,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_FUNCTION_BODY,
     WINED3DSIH_DCL_FUNCTION_TABLE,
     WINED3DSIH_DCL_GLOBAL_FLAGS,
+    WINED3DSIH_DCL_GS_INSTANCES,
     WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT,
     WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT,
     WINED3DSIH_DCL_HS_MAX_TESSFACTOR,
@@ -3681,7 +3682,8 @@ struct wined3d_geometry_shader
 {
     enum wined3d_primitive_type input_type;
     enum wined3d_primitive_type output_type;
-    UINT vertices_out;
+    unsigned int vertices_out;
+    unsigned int instance_count;
 
     struct wined3d_stream_output_desc so_desc;
 };

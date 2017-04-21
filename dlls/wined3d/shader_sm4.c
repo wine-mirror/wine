@@ -294,6 +294,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM5_OP_IMM_ATOMIC_UMAX                  = 0xbc,
     WINED3D_SM5_OP_IMM_ATOMIC_UMIN                  = 0xbd,
     WINED3D_SM5_OP_SYNC                             = 0xbe,
+    WINED3D_SM5_OP_DCL_GS_INSTANCES                 = 0xce,
 };
 
 enum wined3d_sm4_register_type
@@ -1053,6 +1054,8 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM5_OP_IMM_ATOMIC_UMIN,                  WINED3DSIH_IMM_ATOMIC_UMIN,                  "uU",   "iu"},
     {WINED3D_SM5_OP_SYNC,                             WINED3DSIH_SYNC,                             "",     "",
             shader_sm5_read_sync},
+    {WINED3D_SM5_OP_DCL_GS_INSTANCES,                 WINED3DSIH_DCL_GS_INSTANCES,                 "",     "",
+            shader_sm4_read_declaration_count},
 };
 
 static const enum wined3d_shader_register_type register_type_table[] =
