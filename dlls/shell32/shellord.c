@@ -2182,7 +2182,6 @@ HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
 {
     HIMAGELIST hLarge, hSmall;
     HIMAGELIST hNew;
-    HRESULT ret = E_FAIL;
 
     /* Wine currently only maintains large and small image lists */
     if ((iImageList != SHIL_LARGE) && (iImageList != SHIL_SMALL) && (iImageList != SHIL_SYSSMALL))
@@ -2192,16 +2191,9 @@ HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
     }
 
     Shell_GetImageLists(&hLarge, &hSmall);
-    hNew = ImageList_Duplicate(iImageList == SHIL_LARGE ? hLarge : hSmall);
+    hNew = (iImageList == SHIL_LARGE) ? hLarge : hSmall;
 
-    /* Get the interface for the new image list */
-    if (hNew)
-    {
-        ret = HIMAGELIST_QueryInterface(hNew, riid, ppv);
-        ImageList_Destroy(hNew);
-    }
-
-    return ret;
+    return HIMAGELIST_QueryInterface(hNew, riid, ppv);
 }
 
 /*************************************************************************

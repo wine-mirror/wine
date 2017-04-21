@@ -27,6 +27,7 @@
 #include "shobjidl.h"
 #include "shlobj.h"
 #include "shellapi.h"
+#include "commoncontrols.h"
 #include "wine/test.h"
 
 #include "shell32_test.h"
@@ -1303,6 +1304,44 @@ todo_wine {
     DestroyIcon(hicon);
 }
 
+static void test_SHGetImageList(void)
+{
+    HRESULT hr;
+    IImageList *list, *list2;
+    BOOL ret;
+    HIMAGELIST lg, sm;
+    ULONG start_refs, refs;
+
+    hr = SHGetImageList( SHIL_LARGE, &IID_IImageList, (void **)&list );
+    ok( hr == S_OK, "got %08x\n", hr );
+    start_refs = IImageList_AddRef( list );
+    IImageList_Release( list );
+
+    hr = SHGetImageList( SHIL_LARGE, &IID_IImageList, (void **)&list2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( list == list2, "lists differ\n" );
+    refs = IImageList_AddRef( list );
+    IImageList_Release( list );
+    ok( refs == start_refs + 1, "got %d, start_refs %d\n", refs, start_refs );
+    IImageList_Release( list2 );
+
+    hr = SHGetImageList( SHIL_SMALL, &IID_IImageList, (void **)&list2 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    ret = Shell_GetImageLists( &lg, &sm );
+    ok( ret, "got %d\n", ret );
+    ok( lg == (HIMAGELIST)list, "mismatch\n" );
+    ok( sm == (HIMAGELIST)list2, "mismatch\n" );
+
+    /* Shell_GetImageLists doesn't take a reference */
+    refs = IImageList_AddRef( list );
+    IImageList_Release( list );
+    ok( refs == start_refs, "got %d, start_refs %d\n", refs, start_refs );
+
+    IImageList_Release( list2 );
+    IImageList_Release( list );
+}
+
 START_TEST(shelllink)
 {
     HRESULT r;
@@ -1333,6 +1372,7 @@ START_TEST(shelllink)
     test_propertystore();
     test_ExtractIcon();
     test_ExtractAssociatedIcon();
+    test_SHGetImageList();
 
     CoUninitialize();
 }
