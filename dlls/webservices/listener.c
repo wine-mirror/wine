@@ -75,7 +75,13 @@ struct listener
     WS_CHANNEL_TYPE         type;
     WS_CHANNEL_BINDING      binding;
     WS_LISTENER_STATE       state;
-    SOCKET                  socket;
+    union
+    {
+        struct
+        {
+            SOCKET socket;
+        } tcp;
+    } u;
     ULONG                   prop_count;
     struct prop             prop[sizeof(listener_props)/sizeof(listener_props[0])];
 };
@@ -101,9 +107,17 @@ static struct listener *alloc_listener(void)
 
 static void reset_listener( struct listener *listener )
 {
-    closesocket( listener->socket );
-    listener->socket = -1;
-    listener->state  = WS_LISTENER_STATE_CREATED;
+    listener->state = WS_LISTENER_STATE_CREATED;
+
+    switch (listener->binding)
+    {
+    case WS_TCP_CHANNEL_BINDING:
+        closesocket( listener->u.tcp.socket );
+        listener->u.tcp.socket = -1;
+        break;
+
+    default: break;
+    }
 }
 
 static void free_listener( struct listener *listener )
@@ -136,7 +150,15 @@ static HRESULT create_listener( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding
 
     listener->type    = type;
     listener->binding = binding;
-    listener->socket  = -1;
+
+    switch (listener->binding)
+    {
+    case WS_TCP_CHANNEL_BINDING:
+        listener->u.tcp.socket = -1;
+        break;
+
+    default: break;
+    }
 
     *ret = listener;
     return S_OK;
@@ -256,7 +278,7 @@ HRESULT parse_url( const WS_STRING *str, WS_URL_SCHEME_TYPE *scheme, WCHAR **hos
     return hr;
 }
 
-static HRESULT open_listener( struct listener *listener, const WS_STRING *url )
+static HRESULT open_listener_tcp( struct listener *listener, const WS_STRING *url )
 {
     struct sockaddr_storage storage;
     struct sockaddr *addr = (struct sockaddr *)&storage;
@@ -279,25 +301,38 @@ static HRESULT open_listener( struct listener *listener, const WS_STRING *url )
     heap_free( host );
     if (hr != S_OK) return hr;
 
-    if ((listener->socket = socket( addr->sa_family, SOCK_STREAM, 0 )) == -1)
+    if ((listener->u.tcp.socket = socket( addr->sa_family, SOCK_STREAM, 0 )) == -1)
         return HRESULT_FROM_WIN32( WSAGetLastError() );
 
-    if (bind( listener->socket, addr, addr_len ) < 0)
+    if (bind( listener->u.tcp.socket, addr, addr_len ) < 0)
     {
-        closesocket( listener->socket );
-        listener->socket = -1;
+        closesocket( listener->u.tcp.socket );
+        listener->u.tcp.socket = -1;
         return HRESULT_FROM_WIN32( WSAGetLastError() );
     }
 
-    if (listen( listener->socket, 0 ) < 0)
+    if (listen( listener->u.tcp.socket, 0 ) < 0)
     {
-        closesocket( listener->socket );
-        listener->socket = -1;
+        closesocket( listener->u.tcp.socket );
+        listener->u.tcp.socket = -1;
         return HRESULT_FROM_WIN32( WSAGetLastError() );
     }
 
     listener->state = WS_LISTENER_STATE_OPEN;
     return S_OK;
+}
+
+static HRESULT open_listener( struct listener *listener, const WS_STRING *url )
+{
+    switch (listener->binding)
+    {
+    case WS_TCP_CHANNEL_BINDING:
+        return open_listener_tcp( listener, url );
+
+    default:
+        ERR( "unhandled binding %u\n", listener->binding );
+        return E_NOTIMPL;
+    }
 }
 
 /**************************************************************************
@@ -469,6 +504,51 @@ HRESULT WINAPI WsSetListenerProperty( WS_LISTENER *handle, WS_LISTENER_PROPERTY_
     }
 
     hr = prop_set( listener->prop, listener->prop_count, id, value, size );
+
+    LeaveCriticalSection( &listener->cs );
+    return hr;
+}
+
+/**************************************************************************
+ *          WsAcceptChannel		[webservices.@]
+ */
+HRESULT WINAPI WsAcceptChannel( WS_LISTENER *handle, WS_CHANNEL *channel_handle, const WS_ASYNC_CONTEXT *ctx,
+                                WS_ERROR *error )
+{
+    struct listener *listener = (struct listener *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %p\n", handle, channel_handle, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!listener || !channel_handle) return E_INVALIDARG;
+
+    EnterCriticalSection( &listener->cs );
+
+    if (listener->magic != LISTENER_MAGIC)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return E_INVALIDARG;
+    }
+
+    if (listener->state != WS_LISTENER_STATE_OPEN)
+    {
+        LeaveCriticalSection( &listener->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    switch (listener->binding)
+    {
+    case WS_TCP_CHANNEL_BINDING:
+        hr = channel_accept_tcp( listener->u.tcp.socket, channel_handle );
+        break;
+
+    default:
+        FIXME( "listener binding %u not supported\n", listener->binding );
+        hr = E_NOTIMPL;
+        break;
+    }
 
     LeaveCriticalSection( &listener->cs );
     return hr;

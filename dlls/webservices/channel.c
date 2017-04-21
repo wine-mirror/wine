@@ -1045,3 +1045,25 @@ done:
     LeaveCriticalSection( &channel->cs );
     return hr;
 }
+
+HRESULT channel_accept_tcp( SOCKET socket, WS_CHANNEL *handle )
+{
+    struct channel *channel = (struct channel *)handle;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((channel->u.tcp.socket = accept( socket, NULL, NULL )) == -1)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    }
+
+    LeaveCriticalSection( &channel->cs );
+    return S_OK;
+}
