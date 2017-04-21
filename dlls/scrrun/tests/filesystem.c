@@ -624,6 +624,7 @@ static void test_GetFile(void)
     HRESULT hr;
     HANDLE hf;
     BOOL ret;
+    DATE date;
 
     get_temp_path(NULL, pathW);
 
@@ -648,6 +649,14 @@ static void test_GetFile(void)
 
     hr = IFileSystem3_GetFile(fs3, path, &file);
     ok(hr == S_OK, "GetFile returned %x, expected S_OK\n", hr);
+
+    hr = IFile_get_DateLastModified(file, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    date = 0.0;
+    hr = IFile_get_DateLastModified(file, &date);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(date > 0.0, "got %f\n", date);
 
     hr = IFile_get_Path(file, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
