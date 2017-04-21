@@ -384,8 +384,10 @@ unsigned short wine_ldt_alloc_fs(void)
         global_fs_sel = wine_get_fs();
         if (global_fs_sel && is_gdt_sel(global_fs_sel)) return global_fs_sel;
 
+        memset( &ldt_info, 0, sizeof(ldt_info) );
         ldt_info.entry_number = -1;
-        fill_modify_ldt_struct( &ldt_info, &null_entry );
+        ldt_info.seg_32bit = 1;
+        ldt_info.usable = 1;
         if ((ret = set_thread_area( &ldt_info ) < 0))
         {
             global_fs_sel = 0;  /* don't try it again */
