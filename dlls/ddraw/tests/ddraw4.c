@@ -6142,6 +6142,29 @@ static void test_surface_discard(void)
     DestroyWindow(window);
 }
 
+static void fill_surface(IDirectDrawSurface4 *surface, D3DCOLOR color)
+{
+    DDSURFACEDESC2 surface_desc = {sizeof(surface_desc)};
+    HRESULT hr;
+    unsigned int x, y;
+    DWORD *ptr;
+
+    hr = IDirectDrawSurface4_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+
+    for (y = 0; y < surface_desc.dwHeight; ++y)
+    {
+        ptr = (DWORD *)((BYTE *)surface_desc.lpSurface + y * surface_desc.lPitch);
+        for (x = 0; x < surface_desc.dwWidth; ++x)
+        {
+            ptr[x] = color;
+        }
+    }
+
+    hr = IDirectDrawSurface4_Unlock(surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+}
+
 static void test_flip(void)
 {
     const DWORD placement = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
@@ -6155,7 +6178,6 @@ static void test_flip(void)
     D3DCOLOR color;
     ULONG refcount;
     HWND window;
-    DDBLTFX fx;
     HRESULT hr;
 
     static const struct
@@ -6308,17 +6330,12 @@ static void test_flip(void)
         hr = IDirectDrawSurface4_Flip(backbuffer3, NULL, DDFLIP_WAIT);
         ok(hr == DDERR_NOTFLIPPABLE, "%s: Got unexpected hr %#x.\n", test_data[i].name, hr);
 
-        memset(&fx, 0, sizeof(fx));
-        fx.dwSize = sizeof(fx);
-        U5(fx).dwFillColor = 0xffff0000;
-        hr = IDirectDrawSurface4_Blt(backbuffer1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
-        U5(fx).dwFillColor = 0xff00ff00;
-        hr = IDirectDrawSurface4_Blt(backbuffer2, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
-        U5(fx).dwFillColor = 0xff0000ff;
-        hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
+        /* The Nvidia Geforce 7 driver cannot do a color fill on a texture backbuffer after
+         * the backbuffer has been locked. Do it ourselves as a workaround. Unlike ddraw1
+         * and 2 GetSurfaceDesc does not cause issues in ddraw4 and ddraw7. */
+        fill_surface(backbuffer1, 0xffff0000);
+        fill_surface(backbuffer2, 0xff00ff00);
+        fill_surface(backbuffer3, 0xff0000ff);
 
         hr = IDirectDrawSurface4_Flip(frontbuffer, NULL, DDFLIP_WAIT);
         ok(SUCCEEDED(hr), "%s: Failed to flip, hr %#x.\n", test_data[i].name, hr);
@@ -6329,9 +6346,7 @@ static void test_flip(void)
                 "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
         color = get_surface_color(backbuffer2, 320, 240);
         ok(compare_color(color, 0x000000ff, 1), "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
-        U5(fx).dwFillColor = 0xffff0000;
-        hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
+        fill_surface(backbuffer3, 0xffff0000);
 
         hr = IDirectDrawSurface4_Flip(frontbuffer, NULL, DDFLIP_WAIT);
         ok(SUCCEEDED(hr), "%s: Failed to flip, hr %#x.\n", test_data[i].name, hr);
@@ -6340,9 +6355,7 @@ static void test_flip(void)
                 "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
         color = get_surface_color(backbuffer2, 320, 240);
         ok(compare_color(color, 0x00ff0000, 1), "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
-        U5(fx).dwFillColor = 0xff00ff00;
-        hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
+        fill_surface(backbuffer3, 0xff00ff00);
 
         hr = IDirectDrawSurface4_Flip(frontbuffer, NULL, DDFLIP_WAIT);
         ok(SUCCEEDED(hr), "%s: Failed to flip, hr %#x.\n", test_data[i].name, hr);
@@ -6351,9 +6364,7 @@ static void test_flip(void)
                 "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
         color = get_surface_color(backbuffer2, 320, 240);
         ok(compare_color(color, 0x0000ff00, 1), "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
-        U5(fx).dwFillColor = 0xff0000ff;
-        hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
+        fill_surface(backbuffer3, 0xff0000ff);
 
         hr = IDirectDrawSurface4_Flip(frontbuffer, backbuffer1, DDFLIP_WAIT);
         ok(SUCCEEDED(hr), "%s: Failed to flip, hr %#x.\n", test_data[i].name, hr);
@@ -6362,9 +6373,7 @@ static void test_flip(void)
                 "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
         color = get_surface_color(backbuffer3, 320, 240);
         ok(compare_color(color, 0x000000ff, 1), "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
-        U5(fx).dwFillColor = 0xffff0000;
-        hr = IDirectDrawSurface4_Blt(backbuffer1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
+        fill_surface(backbuffer1, 0xffff0000);
 
         hr = IDirectDrawSurface4_Flip(frontbuffer, backbuffer2, DDFLIP_WAIT);
         ok(SUCCEEDED(hr), "%s: Failed to flip, hr %#x.\n", test_data[i].name, hr);
@@ -6373,9 +6382,7 @@ static void test_flip(void)
         color = get_surface_color(backbuffer3, 320, 240);
         ok(compare_color(color, 0x000000ff, 1) || broken(sysmem_primary && compare_color(color, 0x00ff0000, 1)),
                 "%s: Got unexpected color 0x%08x.\n", test_data[i].name, color);
-        U5(fx).dwFillColor = 0xff00ff00;
-        hr = IDirectDrawSurface4_Blt(backbuffer2, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        ok(SUCCEEDED(hr), "%s: Failed to fill surface, hr %#x.\n", test_data[i].name, hr);
+        fill_surface(backbuffer2, 0xff00ff00);
 
         hr = IDirectDrawSurface4_Flip(frontbuffer, backbuffer3, DDFLIP_WAIT);
         ok(SUCCEEDED(hr), "%s: Failed to flip, hr %#x.\n", test_data[i].name, hr);
