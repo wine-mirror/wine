@@ -233,6 +233,7 @@ static void HTMLMetaElement_destructor(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLMetaElementImplVtbl = {
+    &CLSID_HTMLMetaElement,
     HTMLMetaElement_QI,
     HTMLMetaElement_destructor,
     HTMLElement_cpc,

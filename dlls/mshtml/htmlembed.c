@@ -251,6 +251,7 @@ static void HTMLEmbedElement_destructor(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLEmbedElementImplVtbl = {
+    &CLSID_HTMLEmbed,
     HTMLEmbedElement_QI,
     HTMLEmbedElement_destructor,
     HTMLElement_cpc,

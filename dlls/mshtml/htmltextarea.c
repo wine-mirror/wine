@@ -476,6 +476,7 @@ static void HTMLTextAreaElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLTextAreaElementImplVtbl = {
+    &CLSID_HTMLTextAreaElement,
     HTMLTextAreaElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

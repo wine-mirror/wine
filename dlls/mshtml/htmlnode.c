@@ -1200,6 +1200,7 @@ static HRESULT HTMLDOMNode_clone(HTMLDOMNode *This, nsIDOMNode *nsnode, HTMLDOMN
 static const cpc_entry_t HTMLDOMNode_cpc[] = {{NULL}};
 
 static const NodeImplVtbl HTMLDOMNodeImplVtbl = {
+    NULL,
     HTMLDOMNode_QI,
     HTMLDOMNode_destructor,
     HTMLDOMNode_cpc,

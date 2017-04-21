@@ -4859,8 +4859,8 @@ static ULONG WINAPI ProvideClassInfo_Release(IProvideMultipleClassInfo *iface)
 static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideMultipleClassInfo *iface, ITypeInfo **ppTI)
 {
     HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
-    FIXME("(%p)->(%p)\n", This, ppTI);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, ppTI);
+    return get_class_typeinfo(This->node.vtbl->clsid, ppTI);
 }
 
 static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideMultipleClassInfo *iface, DWORD dwGuidKind, GUID *pGUID)
@@ -5028,6 +5028,7 @@ const cpc_entry_t HTMLElement_cpc[] = {
 };
 
 static const NodeImplVtbl HTMLElementImplVtbl = {
+    &CLSID_HTMLUnknownElement,
     HTMLElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

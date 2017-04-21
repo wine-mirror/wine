@@ -422,6 +422,7 @@ static void HTMLLinkElement_unlink(HTMLDOMNode *iface)
     }
 }
 static const NodeImplVtbl HTMLLinkElementImplVtbl = {
+    &CLSID_HTMLLinkElement,
     HTMLLinkElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

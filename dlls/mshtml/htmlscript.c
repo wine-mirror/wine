@@ -430,6 +430,7 @@ static void HTMLScriptElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLScriptElementImplVtbl = {
+    &CLSID_HTMLScriptElement,
     HTMLScriptElement_QI,
     HTMLScriptElement_destructor,
     HTMLElement_cpc,

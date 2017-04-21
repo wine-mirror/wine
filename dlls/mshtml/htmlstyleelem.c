@@ -340,6 +340,7 @@ static void HTMLStyleElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
+    &CLSID_HTMLStyleElement,
     HTMLStyleElement_QI,
     HTMLStyleElement_destructor,
     HTMLElement_cpc,

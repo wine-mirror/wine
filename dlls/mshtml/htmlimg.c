@@ -707,6 +707,7 @@ static void HTMLImgElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLImgElementImplVtbl = {
+    &CLSID_HTMLImg,
     HTMLImgElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

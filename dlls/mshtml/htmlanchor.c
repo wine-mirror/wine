@@ -779,6 +779,7 @@ static void HTMLAnchorElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
+    &CLSID_HTMLAnchorElement,
     HTMLAnchorElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

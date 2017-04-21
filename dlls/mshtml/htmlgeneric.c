@@ -152,6 +152,7 @@ static void HTMLGenericElement_destructor(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLGenericElementImplVtbl = {
+    &CLSID_HTMLGenericElement,
     HTMLGenericElement_QI,
     HTMLGenericElement_destructor,
     HTMLElement_cpc,

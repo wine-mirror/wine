@@ -1317,6 +1317,7 @@ static void HTMLInputElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLInputElementImplVtbl = {
+    &CLSID_HTMLInputElement,
     HTMLInputElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,
@@ -1522,6 +1523,7 @@ static HRESULT HTMLLabelElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 }
 
 static const NodeImplVtbl HTMLLabelElementImplVtbl = {
+    &CLSID_HTMLLabelElement,
     HTMLLabelElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,
@@ -1861,6 +1863,7 @@ static void HTMLButtonElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLButtonElementImplVtbl = {
+    &CLSID_HTMLButtonElement,
     HTMLButtonElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

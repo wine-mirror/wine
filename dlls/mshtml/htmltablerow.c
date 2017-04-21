@@ -423,6 +423,7 @@ static void HTMLTableRow_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLTableRowImplVtbl = {
+    &CLSID_HTMLTableRow,
     HTMLTableRow_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

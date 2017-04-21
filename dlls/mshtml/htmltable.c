@@ -1042,6 +1042,7 @@ static const cpc_entry_t HTMLTable_cpc[] = {
 };
 
 static const NodeImplVtbl HTMLTableImplVtbl = {
+    &CLSID_HTMLTable,
     HTMLTable_QI,
     HTMLElement_destructor,
     HTMLTable_cpc,

@@ -461,6 +461,7 @@ static void HTMLTableCell_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLTableCellImplVtbl = {
+    &CLSID_HTMLTableCell,
     HTMLTableCell_QI,
     HTMLTableCell_destructor,
     HTMLElement_cpc,

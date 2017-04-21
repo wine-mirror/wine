@@ -184,6 +184,7 @@ static HRESULT HTMLCommentElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, 
 }
 
 static const NodeImplVtbl HTMLCommentElementImplVtbl = {
+    &CLSID_HTMLCommentElement,
     HTMLCommentElement_QI,
     HTMLCommentElement_destructor,
     HTMLElement_cpc,

@@ -435,6 +435,7 @@ fallback:
 }
 
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
+    &CLSID_HTMLAreaElement,
     HTMLAreaElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

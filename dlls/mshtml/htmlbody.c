@@ -857,6 +857,7 @@ static const cpc_entry_t HTMLBodyElement_cpc[] = {
 };
 
 static const NodeImplVtbl HTMLBodyElementImplVtbl = {
+    &CLSID_HTMLBody,
     HTMLBodyElement_QI,
     HTMLElement_destructor,
     HTMLBodyElement_cpc,

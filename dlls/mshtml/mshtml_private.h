@@ -690,6 +690,7 @@ struct NSContainer {
 };
 
 typedef struct {
+    const CLSID *clsid;
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
     void (*destructor)(HTMLDOMNode*);
     const cpc_entry_t *cpc_entries;

@@ -417,6 +417,7 @@ static void HTMLOptionElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLOptionElementImplVtbl = {
+    &CLSID_HTMLOptionElement,
     HTMLOptionElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

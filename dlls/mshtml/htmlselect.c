@@ -689,6 +689,7 @@ static void HTMLSelectElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLSelectElementImplVtbl = {
+    &CLSID_HTMLSelectElement,
     HTMLSelectElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,

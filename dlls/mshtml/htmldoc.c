@@ -4743,6 +4743,7 @@ static void HTMLDocumentNode_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLDocumentNodeImplVtbl = {
+    &CLSID_HTMLDocument,
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
     HTMLDocument_cpc,
@@ -4839,6 +4840,7 @@ static const dispex_static_data_vtbl_t HTMLDocumentNode_dispex_vtbl = {
 };
 
 static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
+    &CLSID_HTMLDocument,
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
     HTMLDocument_cpc,

@@ -154,6 +154,7 @@ static void HTMLTitleElement_destructor(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLTitleElementImplVtbl = {
+    &CLSID_HTMLTitleElement,
     HTMLTitleElement_QI,
     HTMLTitleElement_destructor,
     HTMLElement_cpc,
@@ -324,6 +325,7 @@ static BOOL HTMLHtmlElement_is_settable(HTMLDOMNode *iface, DISPID dispid)
 }
 
 static const NodeImplVtbl HTMLHtmlElementImplVtbl = {
+    &CLSID_HTMLHtmlElement,
     HTMLHtmlElement_QI,
     HTMLHtmlElement_destructor,
     HTMLElement_cpc,
@@ -497,6 +499,7 @@ static void HTMLHeadElement_destructor(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLHeadElementImplVtbl = {
+    &CLSID_HTMLHeadElement,
     HTMLHeadElement_QI,
     HTMLHeadElement_destructor,
     HTMLElement_cpc,

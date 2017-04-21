@@ -287,6 +287,7 @@ static void HTMLFrameElement_unlink(HTMLDOMNode *iface)
 }
 
 static const NodeImplVtbl HTMLFrameElementImplVtbl = {
+    &CLSID_HTMLFrameElement,
     HTMLFrameElement_QI,
     HTMLFrameElement_destructor,
     HTMLElement_cpc,
