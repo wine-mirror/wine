@@ -30,6 +30,7 @@
 typedef unsigned __int64 MFWORKITEM_KEY;
 
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
+HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
 HRESULT WINAPI MFGetTimerPeriodicity(DWORD *periodicity);
 HRESULT WINAPI MFLockPlatform(void);
 HRESULT WINAPI MFShutdown(void);

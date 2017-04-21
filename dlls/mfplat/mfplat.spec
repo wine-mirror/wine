@@ -39,7 +39,7 @@
 @ stub MFCreateAMMediaTypeFromMFMediaType
 @ stub MFCreateAlignedMemoryBuffer
 @ stub MFCreateAsyncResult
-@ stub MFCreateAttributes
+@ stdcall MFCreateAttributes(ptr long)
 @ stub MFCreateAudioMediaType
 @ stub MFCreateCollection
 @ stub MFCreateEventQueue
