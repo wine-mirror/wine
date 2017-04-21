@@ -2970,6 +2970,13 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 sprintf(register_name, "ivec2(gl_LocalInvocationIndex, 0)");
             break;
 
+        case WINED3DSPR_GSINSTID:
+            if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
+                sprintf(register_name, "gl_InvocationID");
+            else
+                sprintf(register_name, "ivec2(gl_InvocationID, 0)");
+            break;
+
         case WINED3DSPR_THREADID:
             sprintf(register_name, "ivec3(gl_GlobalInvocationID)");
             break;
@@ -3132,10 +3139,11 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
         case WINED3DSPR_PRIMID:
             param_data_type = WINED3D_DATA_UINT;
             break;
-        case WINED3DSPR_LOCALTHREADINDEX:
-        case WINED3DSPR_THREADID:
-        case WINED3DSPR_THREADGROUPID:
+        case WINED3DSPR_GSINSTID:
         case WINED3DSPR_LOCALTHREADID:
+        case WINED3DSPR_LOCALTHREADINDEX:
+        case WINED3DSPR_THREADGROUPID:
+        case WINED3DSPR_THREADID:
             param_data_type = WINED3D_DATA_INT;
             break;
         default:
@@ -7363,7 +7371,10 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     }
     else
     {
-        shader_addline(buffer, "layout(%s) in;\n", glsl_primitive_type_from_d3d(shader->u.gs.input_type));
+        shader_addline(buffer, "layout(%s", glsl_primitive_type_from_d3d(shader->u.gs.input_type));
+        if (shader->u.gs.instance_count > 1)
+            shader_addline(buffer, ", invocations = %u", shader->u.gs.instance_count);
+        shader_addline(buffer, ") in;\n");
         shader_addline(buffer, "layout(%s, max_vertices = %u) out;\n",
                 glsl_primitive_type_from_d3d(shader->u.gs.output_type), shader->u.gs.vertices_out);
         shader_addline(buffer, "in vs_gs_iface { vec4 gs_in[%u]; } gs_in[];\n", shader->limits->packed_input);
@@ -10049,7 +10060,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_FUNCTION_BODY                */ NULL,
     /* WINED3DSIH_DCL_FUNCTION_TABLE               */ NULL,
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ shader_glsl_nop,
-    /* WINED3DSIH_DCL_GS_INSTANCES                 */ NULL,
+    /* WINED3DSIH_DCL_GS_INSTANCES                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ NULL,
     /* WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT */ NULL,
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ NULL,
