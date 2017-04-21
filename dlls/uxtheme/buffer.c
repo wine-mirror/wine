@@ -39,12 +39,14 @@ struct paintbuffer
 {
     HDC targetdc;
     HDC memorydc;
+    HBITMAP bitmap;
     RECT rect;
     void *bits;
 };
 
 static void free_paintbuffer(struct paintbuffer *buffer)
 {
+    DeleteObject(buffer->bitmap);
     DeleteDC(buffer->memorydc);
     HeapFree(GetProcessHeap(), 0, buffer);
 }
@@ -83,7 +85,6 @@ HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
     char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *bmi = (BITMAPINFO *)bmibuf;
     struct paintbuffer *buffer;
-    HBITMAP hbm;
 
     TRACE("(%p %s %d %p %p)\n", targetdc, wine_dbgstr_rect(rect), format,
           params, retdc);
@@ -105,7 +106,7 @@ HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
     switch (format)
     {
     case BPBF_COMPATIBLEBITMAP:
-        hbm = CreateCompatibleBitmap(targetdc, rect->right - rect->left, rect->bottom - rect->top);
+        buffer->bitmap = CreateCompatibleBitmap(targetdc, rect->right - rect->left, rect->bottom - rect->top);
         buffer->bits = NULL;
         break;
     case BPBF_DIB:
@@ -120,22 +121,23 @@ HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
         bmi->bmiHeader.biBitCount = format == BPBF_TOPDOWNMONODIB ? 1 : 32;
         bmi->bmiHeader.biPlanes = 1;
         bmi->bmiHeader.biCompression = BI_RGB;
-        hbm = CreateDIBSection(buffer->memorydc, bmi, DIB_RGB_COLORS, &buffer->bits, NULL, 0);
+        buffer->bitmap = CreateDIBSection(buffer->memorydc, bmi, DIB_RGB_COLORS, &buffer->bits, NULL, 0);
         break;
     default:
         WARN("Unknown buffer format %d\n", format);
+        buffer->bitmap = NULL;
         free_paintbuffer(buffer);
         return NULL;
     }
 
-    if (!hbm)
+    if (!buffer->bitmap)
     {
         WARN("Failed to create buffer bitmap\n");
         free_paintbuffer(buffer);
         return NULL;
     }
 
-    DeleteObject(SelectObject(buffer->memorydc, hbm));
+    DeleteObject(SelectObject(buffer->memorydc, buffer->bitmap));
 
     *retdc = buffer->memorydc;
 
