@@ -242,6 +242,7 @@ struct dwrite_fontface {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
+    UINT32 glyph_image_formats;
 
     LOGFONTW lf;
 };
@@ -1278,8 +1279,10 @@ static HRESULT WINAPI dwritefontface4_GetGlyphImageFormats_(IDWriteFontFace4 *if
 static DWRITE_GLYPH_IMAGE_FORMATS WINAPI dwritefontface4_GetGlyphImageFormats(IDWriteFontFace4 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace4(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_GLYPH_IMAGE_FORMATS_NONE;
+
+    TRACE("(%p)\n", This);
+
+    return This->glyph_image_formats;
 }
 
 static HRESULT WINAPI dwritefontface4_GetGlyphImageData(IDWriteFontFace4 *iface, UINT16 glyph,
@@ -4345,6 +4348,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         fontface->flags |= FONTFACE_IS_MONOSPACED;
     if (opentype_has_vertical_variants(&fontface->IDWriteFontFace4_iface))
         fontface->flags |= FONTFACE_HAS_VERTICAL_VARIANTS;
+    fontface->glyph_image_formats = opentype_get_glyph_image_formats(&fontface->IDWriteFontFace4_iface);
 
     /* Font properties are reused from font object when 'normal' face creation path is used:
        collection -> family -> matching font -> fontface.

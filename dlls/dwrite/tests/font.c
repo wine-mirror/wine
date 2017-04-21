@@ -7504,7 +7504,6 @@ static void test_GetGlyphImageFormats(void)
             /* Mask describes font as a whole. */
             formats = IDWriteFontFace4_GetGlyphImageFormats(fontface4);
             expected_formats = get_face_glyph_image_formats(fontface4);
-        todo_wine
             ok(formats == expected_formats, "%s - %s, expected formats %#x, got formats %#x.\n",
                 wine_dbgstr_w(familynameW), wine_dbgstr_w(facenameW), expected_formats, formats);
 

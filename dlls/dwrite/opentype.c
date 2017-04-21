@@ -34,6 +34,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
 #define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
 #define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
+#define MS_GLYF_TAG DWRITE_MAKE_OPENTYPE_TAG('g','l','y','f')
+#define MS_CFF__TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F',' ')
+#define MS_COLR_TAG DWRITE_MAKE_OPENTYPE_TAG('C','O','L','R')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -2032,5 +2035,40 @@ BOOL opentype_has_vertical_variants(IDWriteFontFace4 *fontface)
 
     IDWriteFontFace4_ReleaseFontTable(fontface, context);
 
+    return ret;
+}
+
+static BOOL opentype_has_font_table(IDWriteFontFace4 *fontface, UINT32 tag)
+{
+    BOOL exists = FALSE;
+    const void *data;
+    void *context;
+    UINT32 size;
+    HRESULT hr;
+
+    hr = IDWriteFontFace4_TryGetFontTable(fontface, tag, &data, &size, &context, &exists);
+    if (FAILED(hr))
+        return FALSE;
+
+    if (exists)
+        IDWriteFontFace4_ReleaseFontTable(fontface, context);
+
+    return exists;
+}
+
+UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4 *fontface)
+{
+    UINT32 ret = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
+
+    if (opentype_has_font_table(fontface, MS_GLYF_TAG))
+        ret |= DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE;
+
+    if (opentype_has_font_table(fontface, MS_CFF__TAG))
+        ret |= DWRITE_GLYPH_IMAGE_FORMATS_CFF;
+
+    if (opentype_has_font_table(fontface, MS_COLR_TAG))
+        ret |= DWRITE_GLYPH_IMAGE_FORMATS_COLR;
+
+    /* TODO: handle SVG and bitmap data */
     return ret;
 }
