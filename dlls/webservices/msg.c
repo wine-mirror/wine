@@ -758,12 +758,21 @@ static BOOL match_current_element( WS_XML_READER *reader, const WS_XML_STRING *l
 static HRESULT read_envelope_start( WS_XML_READER *reader )
 {
     static const WS_XML_STRING envelope = {8, (BYTE *)"Envelope"}, body = {4, (BYTE *)"Body"};
+    static const WS_XML_STRING header = {6, (BYTE *)"Header"};
     HRESULT hr;
 
     if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
     if (!match_current_element( reader, &envelope )) return WS_E_INVALID_FORMAT;
-    /* FIXME: read headers */
     if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+    if (match_current_element( reader, &header ))
+    {
+        for (;;)
+        {
+            /* FIXME: store headers */
+            if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+            if (match_current_element( reader, &body )) break;
+        }
+    }
     if (!match_current_element( reader, &body )) return WS_E_INVALID_FORMAT;
     return WsReadNode( reader, NULL );
 }
