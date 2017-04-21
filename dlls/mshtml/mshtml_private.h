@@ -745,6 +745,7 @@ typedef struct {
     IHTMLElement6 IHTMLElement6_iface;
     IHTMLUniqueName IHTMLUniqueName_iface;
     IElementSelector IElementSelector_iface;
+    IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
 
     nsIDOMHTMLElement *nselem;
     HTMLStyle *style;

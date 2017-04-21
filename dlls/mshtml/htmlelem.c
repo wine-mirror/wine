@@ -4832,6 +4832,70 @@ static const IElementSelectorVtbl ElementSelectorVtbl = {
     ElementSelector_querySelectorAll
 };
 
+static inline HTMLElement *impl_from_IProvideMultipleClassInfo(IProvideMultipleClassInfo *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, IProvideMultipleClassInfo_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideMultipleClassInfo *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IHTMLElement_QueryInterface(&This->IHTMLElement_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProvideClassInfo_AddRef(IProvideMultipleClassInfo *iface)
+{
+    HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IHTMLElement_AddRef(&This->IHTMLElement_iface);
+}
+
+static ULONG WINAPI ProvideClassInfo_Release(IProvideMultipleClassInfo *iface)
+{
+    HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
+    return IHTMLElement_Release(&This->IHTMLElement_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideMultipleClassInfo *iface, ITypeInfo **ppTI)
+{
+    HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%p)\n", This, ppTI);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideMultipleClassInfo *iface, DWORD dwGuidKind, GUID *pGUID)
+{
+    HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%u %p)\n", This, dwGuidKind, pGUID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProvideMultipleClassInfo_GetMultiTypeInfoCount(IProvideMultipleClassInfo *iface, ULONG *pcti)
+{
+    HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%p)\n", This, pcti);
+    *pcti = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI ProvideMultipleClassInfo_GetInfoOfIndex(IProvideMultipleClassInfo *iface, ULONG iti,
+        DWORD dwFlags, ITypeInfo **pptiCoClass, DWORD *pdwTIFlags, ULONG *pcdispidReserved, IID *piidPrimary, IID *piidSource)
+{
+    HTMLElement *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%u %x %p %p %p %p %p)\n", This, iti, dwFlags, pptiCoClass, pdwTIFlags, pcdispidReserved, piidPrimary, piidSource);
+    return E_NOTIMPL;
+}
+
+static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl = {
+    ProvideClassInfo_QueryInterface,
+    ProvideClassInfo_AddRef,
+    ProvideClassInfo_Release,
+    ProvideClassInfo_GetClassInfo,
+    ProvideClassInfo2_GetGUID,
+    ProvideMultipleClassInfo_GetMultiTypeInfoCount,
+    ProvideMultipleClassInfo_GetInfoOfIndex
+};
+
 static inline HTMLElement *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLElement, node);
@@ -4861,6 +4925,12 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IElementSelector_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         *ppv = &This->cp_container.IConnectionPointContainer_iface;
+    }else if(IsEqualGUID(&IID_IProvideClassInfo, riid)) {
+        *ppv = &This->IProvideMultipleClassInfo_iface;
+    }else if(IsEqualGUID(&IID_IProvideClassInfo2, riid)) {
+        *ppv = &This->IProvideMultipleClassInfo_iface;
+    }else if(IsEqualGUID(&IID_IProvideMultipleClassInfo, riid)) {
+        *ppv = &This->IProvideMultipleClassInfo_iface;
     }else {
         return HTMLDOMNode_QI(&This->node, riid, ppv);
     }
@@ -5137,6 +5207,7 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     This->IHTMLElement6_iface.lpVtbl = &HTMLElement6Vtbl;
     This->IHTMLUniqueName_iface.lpVtbl = &HTMLUniqueNameVtbl;
     This->IElementSelector_iface.lpVtbl = &ElementSelectorVtbl;
+    This->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
 
     if(dispex_data && !dispex_data->vtbl)
         dispex_data->vtbl = &HTMLElement_dispex_vtbl;
