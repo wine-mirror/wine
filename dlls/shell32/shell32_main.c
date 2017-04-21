@@ -40,6 +40,7 @@
 #include "rpcproxy.h"
 #include "shlwapi.h"
 #include "propsys.h"
+#include "commoncontrols.h"
 
 #include "undocshell.h"
 #include "pidl.h"
@@ -730,6 +731,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                 ret = (DWORD_PTR)small_icons;
             else
                 ret = (DWORD_PTR)big_icons;
+            IImageList_AddRef((IImageList*)ret);
         }
     }
 
