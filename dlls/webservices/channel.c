@@ -1067,3 +1067,32 @@ HRESULT channel_accept_tcp( SOCKET socket, WS_CHANNEL *handle )
     LeaveCriticalSection( &channel->cs );
     return S_OK;
 }
+
+static HRESULT sock_wait( SOCKET socket )
+{
+    fd_set read;
+
+    FD_ZERO( &read );
+    FD_SET( socket, &read );
+    if (select( socket + 1, &read, NULL, NULL, NULL ) < 0) return HRESULT_FROM_WIN32( WSAGetLastError() );
+    return S_OK;
+}
+
+HRESULT channel_accept_udp( SOCKET socket, WS_CHANNEL *handle )
+{
+    struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((hr = sock_wait( socket )) == S_OK) channel->u.udp.socket = socket;
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
+}

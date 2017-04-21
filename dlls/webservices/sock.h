@@ -21,3 +21,4 @@
 void winsock_init(void) DECLSPEC_HIDDEN;
 HRESULT resolve_hostname( const WCHAR *, USHORT, struct sockaddr *, int * ) DECLSPEC_HIDDEN;
 HRESULT channel_accept_tcp( SOCKET, WS_CHANNEL * ) DECLSPEC_HIDDEN;
+HRESULT channel_accept_udp( SOCKET, WS_CHANNEL * ) DECLSPEC_HIDDEN;

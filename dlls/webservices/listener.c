@@ -81,6 +81,10 @@ struct listener
         {
             SOCKET socket;
         } tcp;
+        struct
+        {
+            SOCKET socket;
+        } udp;
     } u;
     ULONG                   prop_count;
     struct prop             prop[sizeof(listener_props)/sizeof(listener_props[0])];
@@ -114,6 +118,11 @@ static void reset_listener( struct listener *listener )
     case WS_TCP_CHANNEL_BINDING:
         closesocket( listener->u.tcp.socket );
         listener->u.tcp.socket = -1;
+        break;
+
+    case WS_UDP_CHANNEL_BINDING:
+        closesocket( listener->u.udp.socket );
+        listener->u.udp.socket = -1;
         break;
 
     default: break;
@@ -157,6 +166,10 @@ static HRESULT create_listener( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding
         listener->u.tcp.socket = -1;
         break;
 
+    case WS_UDP_CHANNEL_BINDING:
+        listener->u.udp.socket = -1;
+        break;
+
     default: break;
     }
 
@@ -181,12 +194,12 @@ HRESULT WINAPI WsCreateListener( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING bindin
 
     if (!handle) return E_INVALIDARG;
 
-    if (type != WS_CHANNEL_TYPE_DUPLEX_SESSION)
+    if (type != WS_CHANNEL_TYPE_DUPLEX_SESSION && type != WS_CHANNEL_TYPE_DUPLEX)
     {
         FIXME( "channel type %u not implemented\n", type );
         return E_NOTIMPL;
     }
-    if (binding != WS_TCP_CHANNEL_BINDING)
+    if (binding != WS_TCP_CHANNEL_BINDING && binding != WS_UDP_CHANNEL_BINDING)
     {
         FIXME( "channel binding %u not implemented\n", binding );
         return E_NOTIMPL;
@@ -322,12 +335,52 @@ static HRESULT open_listener_tcp( struct listener *listener, const WS_STRING *ur
     return S_OK;
 }
 
+static HRESULT open_listener_udp( struct listener *listener, const WS_STRING *url )
+{
+    struct sockaddr_storage storage;
+    struct sockaddr *addr = (struct sockaddr *)&storage;
+    int addr_len;
+    WS_URL_SCHEME_TYPE scheme;
+    WCHAR *host;
+    USHORT port;
+    HRESULT hr;
+
+    if ((hr = parse_url( url, &scheme, &host, &port )) != S_OK) return hr;
+    if (scheme != WS_URL_SOAPUDP_SCHEME_TYPE)
+    {
+        heap_free( host );
+        return WS_E_INVALID_ENDPOINT_URL;
+    }
+
+    winsock_init();
+
+    hr = resolve_hostname( host, port, addr, &addr_len );
+    heap_free( host );
+    if (hr != S_OK) return hr;
+
+    if ((listener->u.udp.socket = socket( addr->sa_family, SOCK_DGRAM, 0 )) == -1)
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+
+    if (bind( listener->u.udp.socket, addr, addr_len ) < 0)
+    {
+        closesocket( listener->u.udp.socket );
+        listener->u.udp.socket = -1;
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    }
+
+    listener->state = WS_LISTENER_STATE_OPEN;
+    return S_OK;
+}
+
 static HRESULT open_listener( struct listener *listener, const WS_STRING *url )
 {
     switch (listener->binding)
     {
     case WS_TCP_CHANNEL_BINDING:
         return open_listener_tcp( listener, url );
+
+    case WS_UDP_CHANNEL_BINDING:
+        return open_listener_udp( listener, url );
 
     default:
         ERR( "unhandled binding %u\n", listener->binding );
@@ -542,6 +595,12 @@ HRESULT WINAPI WsAcceptChannel( WS_LISTENER *handle, WS_CHANNEL *channel_handle,
     {
     case WS_TCP_CHANNEL_BINDING:
         hr = channel_accept_tcp( listener->u.tcp.socket, channel_handle );
+        break;
+
+    case WS_UDP_CHANNEL_BINDING:
+        /* hand over socket on success */
+        if ((hr = channel_accept_udp( listener->u.udp.socket, channel_handle )) == S_OK)
+            listener->u.udp.socket = -1;
         break;
 
     default:
