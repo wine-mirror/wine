@@ -4444,43 +4444,68 @@ static const IDispatchExVtbl DocDispatchExVtbl = {
     DocDispatchEx_GetNameSpaceParent
 };
 
-static inline HTMLDocument *impl_from_IProvideClassInfo(IProvideClassInfo *iface)
+static inline HTMLDocument *impl_from_IProvideMultipleClassInfo(IProvideMultipleClassInfo *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLDocument, IProvideClassInfo_iface);
+    return CONTAINING_RECORD(iface, HTMLDocument, IProvideMultipleClassInfo_iface);
 }
 
-static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideClassInfo *iface,
+static HRESULT WINAPI ProvideClassInfo_QueryInterface(IProvideMultipleClassInfo *iface,
         REFIID riid, void **ppv)
 {
-    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    HTMLDocument *This = impl_from_IProvideMultipleClassInfo(iface);
     return htmldoc_query_interface(This, riid, ppv);
 }
 
-static ULONG WINAPI ProvideClassInfo_AddRef(IProvideClassInfo *iface)
+static ULONG WINAPI ProvideClassInfo_AddRef(IProvideMultipleClassInfo *iface)
 {
-    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    HTMLDocument *This = impl_from_IProvideMultipleClassInfo(iface);
     return htmldoc_addref(This);
 }
 
-static ULONG WINAPI ProvideClassInfo_Release(IProvideClassInfo *iface)
+static ULONG WINAPI ProvideClassInfo_Release(IProvideMultipleClassInfo *iface)
 {
-    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    HTMLDocument *This = impl_from_IProvideMultipleClassInfo(iface);
     return htmldoc_release(This);
 }
 
-static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideClassInfo* iface,
-        ITypeInfo **ppTI)
+static HRESULT WINAPI ProvideClassInfo_GetClassInfo(IProvideMultipleClassInfo *iface, ITypeInfo **ppTI)
 {
-    HTMLDocument *This = impl_from_IProvideClassInfo(iface);
+    HTMLDocument *This = impl_from_IProvideMultipleClassInfo(iface);
     TRACE("(%p)->(%p)\n", This, ppTI);
     return get_class_typeinfo(&CLSID_HTMLDocument, ppTI);
 }
 
-static const IProvideClassInfoVtbl ProvideClassInfoVtbl = {
+static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideMultipleClassInfo *iface, DWORD dwGuidKind, GUID *pGUID)
+{
+    HTMLDocument *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%u %p)\n", This, dwGuidKind, pGUID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProvideMultipleClassInfo_GetMultiTypeInfoCount(IProvideMultipleClassInfo *iface, ULONG *pcti)
+{
+    HTMLDocument *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%p)\n", This, pcti);
+    *pcti = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI ProvideMultipleClassInfo_GetInfoOfIndex(IProvideMultipleClassInfo *iface, ULONG iti,
+        DWORD dwFlags, ITypeInfo **pptiCoClass, DWORD *pdwTIFlags, ULONG *pcdispidReserved, IID *piidPrimary, IID *piidSource)
+{
+    HTMLDocument *This = impl_from_IProvideMultipleClassInfo(iface);
+    FIXME("(%p)->(%u %x %p %p %p %p %p)\n", This, iti, dwFlags, pptiCoClass, pdwTIFlags, pcdispidReserved, piidPrimary, piidSource);
+    return E_NOTIMPL;
+}
+
+static const IProvideMultipleClassInfoVtbl ProvideMultipleClassInfoVtbl = {
     ProvideClassInfo_QueryInterface,
     ProvideClassInfo_AddRef,
     ProvideClassInfo_Release,
-    ProvideClassInfo_GetClassInfo
+    ProvideClassInfo_GetClassInfo,
+    ProvideClassInfo2_GetGUID,
+    ProvideMultipleClassInfo_GetMultiTypeInfoCount,
+    ProvideMultipleClassInfo_GetInfoOfIndex
 };
 
 static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
@@ -4562,7 +4587,11 @@ static BOOL htmldoc_qi(HTMLDocument *This, REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_IObjectSafety, riid))
         *ppv = &This->IObjectSafety_iface;
     else if(IsEqualGUID(&IID_IProvideClassInfo, riid))
-        *ppv = &This->IProvideClassInfo_iface;
+        *ppv = &This->IProvideMultipleClassInfo_iface;
+    else if(IsEqualGUID(&IID_IProvideClassInfo2, riid))
+        *ppv = &This->IProvideMultipleClassInfo_iface;
+    else if(IsEqualGUID(&IID_IProvideMultipleClassInfo, riid))
+        *ppv = &This->IProvideMultipleClassInfo_iface;
     else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
         *ppv = NULL;
@@ -4608,7 +4637,7 @@ static void init_doc(HTMLDocument *doc, IUnknown *outer, IDispatchEx *dispex)
     doc->IDispatchEx_iface.lpVtbl = &DocDispatchExVtbl;
     doc->IDocumentSelector_iface.lpVtbl = &DocumentSelectorVtbl;
     doc->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
-    doc->IProvideClassInfo_iface.lpVtbl = &ProvideClassInfoVtbl;
+    doc->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
 
     doc->outer_unk = outer;
     doc->dispex = dispex;

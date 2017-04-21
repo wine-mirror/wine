@@ -575,7 +575,7 @@ struct HTMLDocument {
     IObjectWithSite             IObjectWithSite_iface;
     IOleContainer               IOleContainer_iface;
     IObjectSafety               IObjectSafety_iface;
-    IProvideClassInfo           IProvideClassInfo_iface;
+    IProvideMultipleClassInfo   IProvideMultipleClassInfo_iface;
 
     IUnknown *outer_unk;
     IDispatchEx *dispex;

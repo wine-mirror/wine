@@ -615,6 +615,8 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IPersistStreamInit);
     X(IID_IPropertyNotifySink);
     X(IID_IProvideClassInfo);
+    X(IID_IProvideClassInfo2);
+    X(IID_IProvideMultipleClassInfo);
     X(IID_IServiceProvider);
     X(IID_ISupportErrorInfo);
     X(IID_ITargetContainer);
