@@ -20,6 +20,17 @@ import "objidl.idl";
 import "oaidl.idl";
 import "mfobjects.idl";
 
+enum
+{
+    MF_SOURCE_READER_INVALID_STREAM_INDEX = 0xffffffff,
+    MF_SOURCE_READER_ALL_STREAMS          = 0xfffffffe,
+    MF_SOURCE_READER_ANY_STREAM           = 0xfffffffe,
+    MF_SOURCE_READER_FIRST_AUDIO_STREAM   = 0xfffffffd,
+    MF_SOURCE_READER_FIRST_VIDEO_STREAM   = 0xfffffffc,
+    MF_SOURCE_READER_MEDIASOURCE          = 0xffffffff,
+    MF_SOURCE_READER_CURRENT_TYPE_INDEX   = 0xffffffff
+};
+
 interface IMFMediaSource;
 
 [
