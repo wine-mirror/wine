@@ -127,13 +127,20 @@ static DWORD get_config_key(HKEY defkey, HKEY appkey, const char *name, char *bu
     return ERROR_FILE_NOT_FOUND;
 }
 
-static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *name, DWORD *data)
+static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *name, DWORD *value)
 {
-    DWORD type;
-    DWORD size = sizeof(DWORD);
-    if (appkey && !RegQueryValueExA(appkey, name, 0, &type, (BYTE *)data, &size) && (type == REG_DWORD)) return 0;
-    if (defkey && !RegQueryValueExA(defkey, name, 0, &type, (BYTE *)data, &size) && (type == REG_DWORD)) return 0;
+    DWORD type, data, size;
+
+    size = sizeof(data);
+    if (appkey && !RegQueryValueExA(appkey, name, 0, &type, (BYTE *)&data, &size) && type == REG_DWORD) goto success;
+    size = sizeof(data);
+    if (defkey && !RegQueryValueExA(defkey, name, 0, &type, (BYTE *)&data, &size) && type == REG_DWORD) goto success;
+
     return ERROR_FILE_NOT_FOUND;
+
+success:
+    *value = data;
+    return 0;
 }
 
 static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
