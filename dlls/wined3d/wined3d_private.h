@@ -388,7 +388,6 @@ struct wined3d_settings
     /* Memory tracking and object counting. */
     UINT64 emulated_textureram;
     char *logo;
-    int allow_multisampling;
     unsigned int sample_count;
     BOOL strict_draw_ordering;
     BOOL check_float_constants;

@@ -3710,8 +3710,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
     else
         gl_info->limits.shininess = 128.0f;
 
-    if ((gl_info->supported[ARB_FRAMEBUFFER_OBJECT] || gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
-            && wined3d_settings.allow_multisampling)
+    if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT] || gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
     {
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_SAMPLES, &gl_max);
         gl_info->limits.samples = gl_max;
