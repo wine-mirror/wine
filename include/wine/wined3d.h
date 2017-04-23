@@ -1567,6 +1567,14 @@ struct wined3d_ivec4
     int w;
 };
 
+struct wined3d_uvec4
+{
+    unsigned int x;
+    unsigned int y;
+    unsigned int z;
+    unsigned int w;
+};
+
 struct wined3d_matrix
 {
     float _11, _12, _13, _14;
