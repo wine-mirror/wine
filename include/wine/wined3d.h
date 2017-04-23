@@ -1559,6 +1559,14 @@ struct wined3d_vec4
     float w;
 };
 
+struct wined3d_dvec4
+{
+    double x;
+    double y;
+    double z;
+    double w;
+};
+
 struct wined3d_ivec4
 {
     int x;

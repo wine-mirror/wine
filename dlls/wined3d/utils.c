@@ -4974,7 +4974,7 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
         struct wined3d_vec4 mul;
         struct wined3d_uvec4 shift;
     }
-    conv[] =
+    float_conv[] =
     {
         {WINED3DFMT_B8G8R8A8_UNORM,    {       255.0f,  255.0f,  255.0f, 255.0f}, {16,  8,  0, 24}},
         {WINED3DFMT_B8G8R8X8_UNORM,    {       255.0f,  255.0f,  255.0f, 255.0f}, {16,  8,  0, 24}},
@@ -4994,24 +4994,48 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
         {WINED3DFMT_P8_UINT,           {         0.0f,    0.0f,    0.0f, 255.0f}, { 0,  0,  0,  0}},
         {WINED3DFMT_S1_UINT_D15_UNORM, {     32767.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
         {WINED3DFMT_D16_UNORM,         {     65535.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
-        {WINED3DFMT_D24_UNORM_S8_UINT, {  16777215.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
-        {WINED3DFMT_X8D24_UNORM,       {  16777215.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
-        {WINED3DFMT_D32_UNORM,         {4294967295.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
+    };
+    static const struct
+    {
+        enum wined3d_format_id format_id;
+        struct wined3d_dvec4 mul;
+        struct wined3d_uvec4 shift;
+    }
+    double_conv[] =
+    {
+        {WINED3DFMT_D24_UNORM_S8_UINT, {  16777215.0, 0.0, 0.0, 0.0}, {0, 0, 0, 0}},
+        {WINED3DFMT_X8D24_UNORM,       {  16777215.0, 0.0, 0.0, 0.0}, {0, 0, 0, 0}},
+        {WINED3DFMT_D32_UNORM,         {4294967295.0, 0.0, 0.0, 0.0}, {0, 0, 0, 0}},
     };
     unsigned int i;
+    DWORD ret;
 
     TRACE("Converting color %s to format %s.\n", debug_color(color), debug_d3dformat(format->id));
 
-    for (i = 0; i < sizeof(conv) / sizeof(*conv); ++i)
+    for (i = 0; i < ARRAY_SIZE(float_conv); ++i)
     {
-        DWORD ret;
+        if (format->id != float_conv[i].format_id)
+            continue;
 
-        if (format->id != conv[i].format_id) continue;
+        ret = ((DWORD)((color->r * float_conv[i].mul.x) + 0.5f)) << float_conv[i].shift.x;
+        ret |= ((DWORD)((color->g * float_conv[i].mul.y) + 0.5f)) << float_conv[i].shift.y;
+        ret |= ((DWORD)((color->b * float_conv[i].mul.z) + 0.5f)) << float_conv[i].shift.z;
+        ret |= ((DWORD)((color->a * float_conv[i].mul.w) + 0.5f)) << float_conv[i].shift.w;
 
-        ret = ((DWORD)((color->r * conv[i].mul.x) + 0.5f)) << conv[i].shift.x;
-        ret |= ((DWORD)((color->g * conv[i].mul.y) + 0.5f)) << conv[i].shift.y;
-        ret |= ((DWORD)((color->b * conv[i].mul.z) + 0.5f)) << conv[i].shift.z;
-        ret |= ((DWORD)((color->a * conv[i].mul.w) + 0.5f)) << conv[i].shift.w;
+        TRACE("Returning 0x%08x.\n", ret);
+
+        return ret;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(double_conv); ++i)
+    {
+        if (format->id != double_conv[i].format_id)
+            continue;
+
+        ret = ((DWORD)((color->r * double_conv[i].mul.x) + 0.5)) << double_conv[i].shift.x;
+        ret |= ((DWORD)((color->g * double_conv[i].mul.y) + 0.5)) << double_conv[i].shift.y;
+        ret |= ((DWORD)((color->b * double_conv[i].mul.z) + 0.5)) << double_conv[i].shift.z;
+        ret |= ((DWORD)((color->a * double_conv[i].mul.w) + 0.5)) << double_conv[i].shift.w;
 
         TRACE("Returning 0x%08x.\n", ret);
 
