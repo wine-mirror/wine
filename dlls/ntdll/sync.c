@@ -645,6 +645,30 @@ NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS c
 
     switch (class)
     {
+    case JobObjectBasicAccountingInformation:
+        {
+            JOBOBJECT_BASIC_ACCOUNTING_INFORMATION *accounting;
+            if (len < sizeof(*accounting))
+                return STATUS_INFO_LENGTH_MISMATCH;
+
+            accounting = (JOBOBJECT_BASIC_ACCOUNTING_INFORMATION *)info;
+            memset(accounting, 0, sizeof(*accounting));
+            if (ret_len) *ret_len = sizeof(*accounting);
+            return STATUS_SUCCESS;
+        }
+
+    case JobObjectBasicProcessIdList:
+        {
+            JOBOBJECT_BASIC_PROCESS_ID_LIST *process;
+            if (len < sizeof(*process))
+                return STATUS_INFO_LENGTH_MISMATCH;
+
+            process = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)info;
+            memset(process, 0, sizeof(*process));
+            if (ret_len) *ret_len = sizeof(*process);
+            return STATUS_SUCCESS;
+        }
+
     case JobObjectExtendedLimitInformation:
         {
             JOBOBJECT_EXTENDED_LIMIT_INFORMATION *extended_limit;

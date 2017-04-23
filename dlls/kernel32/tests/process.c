@@ -2515,7 +2515,6 @@ static void test_QueryInformationJobObject(void)
     ret = QueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list,
                                     FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList), &ret_len);
     ok(!ret, "QueryInformationJobObject expected failure\n");
-    todo_wine
     expect_eq_d(ERROR_BAD_LENGTH, GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -2524,18 +2523,20 @@ static void test_QueryInformationJobObject(void)
     pid_list->NumberOfProcessIdsInList  = 42;
     ret = QueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list,
                                     FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[1]), &ret_len);
+    todo_wine
     ok(!ret, "QueryInformationJobObject expected failure\n");
     todo_wine
     expect_eq_d(ERROR_MORE_DATA, GetLastError());
     if (ret)
     {
+        todo_wine
         expect_eq_d(42, pid_list->NumberOfAssignedProcesses);
+        todo_wine
         expect_eq_d(42, pid_list->NumberOfProcessIdsInList);
     }
 
     memset(buf, 0, sizeof(buf));
     ret = pQueryInformationJobObject(job, JobObjectBasicProcessIdList, pid_list, sizeof(buf), &ret_len);
-    todo_wine
     ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
     if(ret)
     {
@@ -2545,12 +2546,17 @@ static void test_QueryInformationJobObject(void)
         {
             ULONG_PTR *list = pid_list->ProcessIdList;
 
+            todo_wine
             ok(ret_len == FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[2]),
                "QueryInformationJobObject returned ret_len=%u\n", ret_len);
 
+            todo_wine
             expect_eq_d(2, pid_list->NumberOfAssignedProcesses);
+            todo_wine
             expect_eq_d(2, pid_list->NumberOfProcessIdsInList);
+            todo_wine
             expect_eq_d(pi[0].dwProcessId, list[0]);
+            todo_wine
             expect_eq_d(pi[1].dwProcessId, list[1]);
         }
     }
