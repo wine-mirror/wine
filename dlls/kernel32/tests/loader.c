@@ -2991,9 +2991,12 @@ static void test_ResolveDelayLoadedAPI(void)
 
 static void test_InMemoryOrderModuleList(void)
 {
-    LIST_ENTRY *entry1, *mark1 = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-    LIST_ENTRY *entry2, *mark2 = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
+    PEB_LDR_DATA *ldr = NtCurrentTeb()->Peb->LdrData;
+    LIST_ENTRY *entry1, *mark1 = &ldr->InLoadOrderModuleList;
+    LIST_ENTRY *entry2, *mark2 = &ldr->InMemoryOrderModuleList;
     LDR_MODULE *module1, *module2;
+
+    ok(ldr->Initialized == TRUE, "expected TRUE, got %u\n", ldr->Initialized);
 
     for (entry1 = mark1->Flink, entry2 = mark2->Flink;
          entry1 != mark1 && entry2 != mark2;
