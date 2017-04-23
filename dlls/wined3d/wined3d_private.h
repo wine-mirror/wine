@@ -2032,6 +2032,7 @@ enum wined3d_pci_device
     CARD_NVIDIA_GEFORCE_GTX1060     = 0x1c03,
     CARD_NVIDIA_GEFORCE_GTX1070     = 0x1b81,
     CARD_NVIDIA_GEFORCE_GTX1080     = 0x1b80,
+    CARD_NVIDIA_TITANX_PASCAL       = 0x1b00,
 
     CARD_VMWARE_SVGA3D              = 0x0405,
 
