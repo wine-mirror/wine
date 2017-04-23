@@ -167,14 +167,23 @@ static IDirectDrawSurface7 *create_overlay(IDirectDraw7 *ddraw,
     return surface;
 }
 
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
 static DWORD WINAPI create_window_thread_proc(void *param)
 {
     struct create_window_thread_param *p = param;
     DWORD res;
     BOOL ret;
 
-    p->window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    p->window = create_window();
     ret = SetEvent(p->window_created);
     ok(ret, "SetEvent failed, last error %#x.\n", GetLastError());
 
@@ -473,8 +482,7 @@ static void test_process_vertices(void)
         1.0f,  0.0f, 0.0f, 1.0f,
     };
 
-    window = CreateWindowA("static", "d3d7_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -640,8 +648,7 @@ static void test_coop_level_create_device_window(void)
     IDirectDraw7 *ddraw;
     HRESULT hr;
 
-    focus_window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    focus_window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
 
@@ -942,8 +949,7 @@ static void test_coop_level_d3d_state(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1013,8 +1019,7 @@ static void test_surface_interface_mismatch(void)
     D3DCOLOR color;
     HWND window;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -1138,8 +1143,7 @@ static void test_depth_blit(void)
     DDBLTFX fx;
     HWND window;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1285,8 +1289,7 @@ static void test_texture_load_ckey(void)
     DDCOLORKEY ckey;
     IDirect3D7 *d3d;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1383,8 +1386,7 @@ static void test_zenable(void)
     UINT x, y;
     UINT i, j;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1475,8 +1477,7 @@ static void test_ck_rgba(void)
     HRESULT hr;
     UINT i;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1596,9 +1597,7 @@ static void test_ck_default(void)
     DDBLTFX fx;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1692,8 +1691,7 @@ static void test_ck_complex(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -1973,8 +1971,7 @@ static void test_surface_qi(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     /* Try to create a D3D device to see if the ddraw implementation supports
      * D3D. 64-bit ddraw in particular doesn't seem to support D3D, and
      * doesn't support e.g. the IDirect3DTexture interfaces. */
@@ -2059,8 +2056,7 @@ static void test_device_qi(void)
     IDirect3DDevice7 *device;
     HWND window;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -3401,9 +3397,7 @@ static void test_vb_discard(void)
     static const unsigned int vbsize = 16;
     unsigned int i;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -3466,10 +3460,8 @@ static void test_coop_level_multi_window(void)
     IDirectDraw7 *ddraw;
     HRESULT hr;
 
-    window1 = CreateWindowA("static", "ddraw_test1", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-    window2 = CreateWindowA("static", "ddraw_test2", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window1 = create_window();
+    window2 = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
 
@@ -3510,9 +3502,7 @@ static void test_draw_strided(void)
     HRESULT hr;
     D3DDRAWPRIMITIVESTRIDEDDATA strided;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -3666,8 +3656,7 @@ static void test_lighting(void)
     ULONG refcount;
     unsigned int i;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -3958,8 +3947,7 @@ static void test_specular_lighting(void)
     } *quad;
     WORD *indices;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -4073,8 +4061,7 @@ static void test_clear_rect_count(void)
     HRESULT hr;
     D3DRECT rect = {{0}, {0}, {640}, {480}};
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -4145,9 +4132,7 @@ static void test_coop_level_versions(void)
     IDirectDraw7 *ddraw7;
     DDSURFACEDESC ddsd;
 
-    window = CreateWindowA("static", "ddraw_test1", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     ddraw7 = create_ddraw();
     ok(!!ddraw7, "Failed to create a ddraw object.\n");
     /* Newly created ddraw objects restore the mode on ddraw2+::SetCooperativeLevel(NORMAL) */
@@ -4280,9 +4265,7 @@ static void test_fog_special(void)
     IDirect3DDevice7 *device;
     IDirectDrawSurface7 *rt;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -4475,9 +4458,7 @@ static void test_lighting_interface_versions(void)
         { D3DFVF_TLVERTEX,  tlquad,     TRUE,   TRUE,   D3DDP_DONOTLIGHT,   0x008080ff},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -4916,9 +4897,7 @@ static void test_block_formats_creation(void)
         {DDSD_LPSURFACE | DDSD_PITCH | DDSD_LINEARSIZE, SIZE_TYPE_SIZE,   0, DDERR_INVALIDPARAMS},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -5142,9 +5121,7 @@ static void test_unsupported_formats(void)
     };
     static const DWORD caps[] = {0, DDSCAPS_SYSTEMMEMORY, DDSCAPS_VIDEOMEMORY};
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -5405,8 +5382,7 @@ static void test_rt_caps(void)
         },
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -5654,8 +5630,7 @@ static void test_primary_caps(void)
         },
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
 
@@ -5813,8 +5788,7 @@ static void test_surface_lock(void)
         },
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -5945,9 +5919,7 @@ static void test_surface_discard(void)
     };
     unsigned int i;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -6068,8 +6040,7 @@ static void test_flip(void)
         {"TEXTURE",        DDSCAPS_TEXTURE},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
 
@@ -6360,8 +6331,7 @@ static void test_set_surface_desc(void)
         {DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY, 0, FALSE, "systemmemory primary"},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -6652,8 +6622,7 @@ static void test_user_memory_getdc(void)
     HDC dc;
     unsigned int x, y;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -6747,8 +6716,7 @@ static void test_sysmem_overlay(void)
     IDirectDrawSurface7 *surface;
     ULONG ref;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -6786,8 +6754,7 @@ static void test_primary_palette(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     if (FAILED(IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
@@ -6952,8 +6919,7 @@ static void test_surface_attachment(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -7208,8 +7174,7 @@ static void test_private_data(void)
         {0x9b,0x4b,0x89,0xd7,0xd1,0x12,0xe7,0x2b}
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -7610,8 +7575,7 @@ static void test_create_surface_pitch(void)
     };
     DWORD flags_mask = DDSD_PITCH | DDSD_LPSURFACE | DDSD_LINEARSIZE;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -7713,8 +7677,7 @@ static void test_mipmap(void)
         {0,                DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 32,  64, 0, DD_OK,               7},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -7798,8 +7761,7 @@ static void test_palette_complex(void)
     PALETTEENTRY palette_entries[256];
     unsigned int i;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -7934,8 +7896,7 @@ static void test_p8_blit(void)
     };
     D3DCOLOR color;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -8064,8 +8025,7 @@ static void test_material(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -8136,8 +8096,7 @@ static void test_palette_gdi(void)
     RGBQUAD rgbquad[255];
     static const RGBQUAD rgb_zero = {0, 0, 0, 0};
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -8440,8 +8399,7 @@ static void test_palette_alpha(void)
         {DDSCAPS_PRIMARYSURFACE, 0, FALSE, "primary"}
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     if (FAILED(IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
@@ -8585,9 +8543,7 @@ static void test_vb_writeonly(void)
         {640.0f,   0.0f, 0.0f, 1.0f},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -8854,8 +8810,7 @@ static void test_resource_priority(void)
         {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0, "sysmem offscreenplain", DDERR_INVALIDOBJECT, TRUE},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -8978,8 +8933,7 @@ static void test_surface_desc_lock(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -9072,9 +9026,7 @@ static void test_fog_interpolation(void)
     };
     D3DDEVICEDESC7 caps;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -9231,9 +9183,7 @@ static void test_negative_fixedfunction_fog(void)
     };
     D3DDEVICEDESC7 caps;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -9345,9 +9295,7 @@ static void test_table_fog_zw(void)
     };
     unsigned int i;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -9506,9 +9454,7 @@ static void test_signed_formats(void)
     unsigned int i, width, x, y;
     D3DDEVICEDESC7 device_desc;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -9798,9 +9744,7 @@ static void test_color_fill(void)
         {0xaa0029,      "0xaa0029",     DDERR_NORASTEROPHW} /* noop */
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -10193,8 +10137,7 @@ static void test_texcoordindex(void)
     D3DCOLOR color;
     DWORD *ptr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -10430,8 +10373,7 @@ static void test_colorkey_precision(void)
         },
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -10676,8 +10618,7 @@ static void test_range_colorkey(void)
     ULONG refcount;
     DDCOLORKEY ckey;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -10833,9 +10774,7 @@ static void test_shademode(void)
         {D3DPT_TRIANGLELIST,  D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -10965,8 +10904,7 @@ static void test_lockrect_invalid(void)
         {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, "managed texture", DD_OK},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -11089,8 +11027,7 @@ static void test_yv12_overlay(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -11212,8 +11149,7 @@ static void test_offscreen_overlay(void)
     HRESULT hr;
     HDC dc;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -11292,8 +11228,7 @@ static void test_overlay_rect(void)
     HWND window;
     HDC dc;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -11414,8 +11349,7 @@ static void test_blt(void)
         {{640,   0,   0, 480}, {  0,   0, 640, 480}, DDERR_INVALIDRECT}, /* Full surface, mirrored source. */
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -11488,9 +11422,7 @@ static void test_color_clamping(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -11620,8 +11552,7 @@ static void test_getdc(void)
                 {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000}}, FALSE},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -11922,9 +11853,7 @@ static void test_draw_primitive(void)
     HRESULT hr;
     void *data;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
-
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -12051,8 +11980,7 @@ static void test_edge_antialiasing_blending(void)
         {{ 1.0f,  1.0f, 0.1f}, 0xccff0000},
     };
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device.\n");
@@ -12500,8 +12428,7 @@ static void test_get_surface_from_dc(void)
     HRESULT hr;
     DWORD ret;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -12613,8 +12540,7 @@ static void test_ck_operation(void)
     DDCOLORKEY ckey;
     DDBLTFX fx;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -13080,8 +13006,7 @@ static void test_vb_refcount(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d7_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
@@ -13203,8 +13128,7 @@ static void test_compute_sphere_visibility(void)
     HWND window;
     HRESULT hr;
 
-    window = CreateWindowA("static", "d3d_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     if (!(device = create_device(window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
