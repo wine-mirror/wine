@@ -593,7 +593,7 @@
 # @ stub GetPackageContext
 # @ stub GetPackageFamilyName
 # @ stub GetPackageFamilyNameFromToken
-# @ stub GetPackageFullName
+@ stdcall GetPackageFullName(long ptr ptr) kernel32.GetPackageFullName
 # @ stub GetPackageFullNameFromToken
 # @ stub GetPackageId
 # @ stub GetPackageInfo

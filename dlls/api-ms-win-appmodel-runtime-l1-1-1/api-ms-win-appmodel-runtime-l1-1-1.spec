@@ -10,7 +10,7 @@
 @ stub GetCurrentPackagePath
 @ stub GetPackageApplicationIds
 @ stub GetPackageFamilyName
-@ stub GetPackageFullName
+@ stdcall GetPackageFullName(long ptr ptr) kernel32.GetPackageFullName
 @ stub GetPackageId
 @ stub GetPackageInfo
 @ stub GetPackagePath
