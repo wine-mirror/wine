@@ -99,7 +99,6 @@ static inline IAutoCompleteImpl *impl_from_IAutoCompleteDropDown(IAutoCompleteDr
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     IAutoCompleteImpl *This = GetPropW(hwnd, autocomplete_propertyW);
-    LPOLESTR strs;
     HRESULT hr;
     WCHAR hwndText[255];
     WCHAR *hwndQCText;
@@ -222,7 +221,9 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             IEnumString_Reset(This->enumstr);
             filled = FALSE;
             for(cpt = 0;;) {
+                LPOLESTR strs = NULL;
                 ULONG fetched;
+
                 hr = IEnumString_Next(This->enumstr, 1, &strs, &fetched);
                 if (hr != S_OK)
                     break;
@@ -235,8 +236,10 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
                         strcatW(buffW, &strs[len]);
                         SetWindowTextW(hwnd, buffW);
                         SendMessageW(hwnd, EM_SETSEL, len, strlenW(strs));
-                        if (!(This->options & ACO_AUTOSUGGEST))
+                        if (!(This->options & ACO_AUTOSUGGEST)) {
+                            CoTaskMemFree(strs);
                             break;
+                        }
                     }
 
                     if (This->options & ACO_AUTOSUGGEST) {
@@ -246,6 +249,8 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
                     filled = TRUE;
                 }
+
+                CoTaskMemFree(strs);
             }
 
             if (This->options & ACO_AUTOSUGGEST) {
