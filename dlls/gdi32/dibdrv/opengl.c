@@ -113,14 +113,6 @@ static BOOL init_opengl(void)
         return FALSE;
     }
 
-    for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
-    {
-        if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym( osmesa_handle, opengl_func_names[i], buffer, sizeof(buffer) )))
-        {
-            ERR( "%s not found in %s (%s), disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA, buffer );
-            goto failed;
-        }
-    }
 #define LOAD_FUNCPTR(f) do if (!(p##f = wine_dlsym( osmesa_handle, #f, buffer, sizeof(buffer) ))) \
     { \
         ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, buffer ); \
@@ -133,6 +125,15 @@ static BOOL init_opengl(void)
     LOAD_FUNCPTR(OSMesaMakeCurrent);
     LOAD_FUNCPTR(OSMesaPixelStore);
 #undef LOAD_FUNCPTR
+
+    for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
+    {
+        if (!(((void **)&opengl_funcs.gl)[i] = pOSMesaGetProcAddress( opengl_func_names[i] )))
+        {
+            ERR( "%s not found in %s, disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA );
+            goto failed;
+        }
+    }
 
     return TRUE;
 

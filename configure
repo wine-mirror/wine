@@ -10806,11 +10806,11 @@ LIBS="-lOSMesa $X_LIBS -lm $X_EXTRA_LIBS $LIBS"
 #ifdef __cplusplus
 extern "C"
 #endif
-char glAccum ();
+char OSMesaGetProcAddress ();
 int
 main ()
 {
-return glAccum ();
+return OSMesaGetProcAddress ();
   ;
   return 0;
 }
