@@ -10267,9 +10267,9 @@ static void test_create_input_layout(void)
     {
         {"POSITION", 0, DXGI_FORMAT_UNKNOWN, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
+    ULONG refcount, expected_refcount;
     ID3D11InputLayout *input_layout;
     ID3D11Device *device;
-    ULONG refcount;
     unsigned int i;
     HRESULT hr;
 
@@ -10314,11 +10314,15 @@ static void test_create_input_layout(void)
 
     for (i = 0; i < ARRAY_SIZE(vertex_formats); ++i)
     {
+        expected_refcount = get_refcount(device) + 1;
         layout_desc->Format = vertex_formats[i];
         hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
                 vs_code, sizeof(vs_code), &input_layout);
         ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n",
                 vertex_formats[i], hr);
+        refcount = get_refcount(device);
+        todo_wine ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n",
+                refcount, expected_refcount);
         ID3D11InputLayout_Release(input_layout);
     }
 
