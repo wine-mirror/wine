@@ -8959,10 +8959,10 @@ static void test_blt_z_alpha(void)
         ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#x.\n", i, hr);
 
         hr = IDirectDrawSurface_Blt(dst_surface, NULL, src_surface, NULL, blt_flags[i] | DDBLT_WAIT, &fx);
-        todo_wine ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#x.\n", i, hr);
 
         color = get_surface_color(dst_surface, 32, 32);
-        todo_wine ok(compare_color(color, 0x0000ff00, 0), "Test %u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, 0x0000ff00, 0), "Test %u: Got unexpected color 0x%08x.\n", i, color);
     }
 
     IDirectDrawSurface_Release(dst_surface);
