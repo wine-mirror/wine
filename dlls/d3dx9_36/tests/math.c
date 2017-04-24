@@ -29,8 +29,6 @@
 
 #define relative_error(exp, out) (fabsf(exp) < 1e-38f ? fabsf(exp - out) : fabsf(1.0f - (out) / (exp)))
 
-#define expect_color(expectedcolor,gotcolor) ok((relative_error(expectedcolor.r, gotcolor.r)<admitted_error)&&(relative_error(expectedcolor.g, gotcolor.g)<admitted_error)&&(relative_error(expectedcolor.b, gotcolor.b)<admitted_error)&&(relative_error(expectedcolor.a, gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
-
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -47,6 +45,14 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
+static BOOL compare_color(const D3DXCOLOR *c1, const D3DXCOLOR *c2, unsigned int ulps)
+{
+    return compare_float(c1->r, c2->r, ulps)
+            && compare_float(c1->g, c2->g, ulps)
+            && compare_float(c1->b, c2->b, ulps)
+            && compare_float(c1->a, c2->a, ulps);
+}
+
 static BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2, unsigned int ulps)
 {
     unsigned int i, j;
@@ -61,6 +67,15 @@ static BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2, unsigned 
     }
 
     return TRUE;
+}
+
+#define expect_color(expected, color, ulps) expect_color_(__LINE__, expected, color, ulps)
+static void expect_color_(unsigned int line, const D3DXCOLOR *expected, const D3DXCOLOR *color, unsigned int ulps)
+{
+    BOOL equal = compare_color(expected, color, ulps);
+    ok_(__FILE__, line)(equal,
+            "Got unexpected color {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+            color->r, color->g, color->b, color->a, expected->r, expected->g, expected->b, expected->a);
 }
 
 #define expect_matrix(expected, matrix, ulps) expect_matrix_(__LINE__, expected, matrix, ulps)
@@ -155,7 +170,7 @@ static void D3DXColorTest(void)
 /*_______________D3DXColorAdd________________*/
     expected.r = 0.9f; expected.g = 1.05f; expected.b = 0.99f, expected.a = 0.93f;
     D3DXColorAdd(&got,&color1,&color2);
-    expect_color(expected,got);
+    expect_color(&expected, &got, 1);
     /* Test the NULL case */
     funcpointer = D3DXColorAdd(&got,NULL,&color2);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -167,17 +182,17 @@ static void D3DXColorTest(void)
 /*_______________D3DXColorAdjustContrast______*/
     expected.r = 0.41f; expected.g = 0.575f; expected.b = 0.473f, expected.a = 0.93f;
     D3DXColorAdjustContrast(&got,&color,scale);
-    expect_color(expected,got);
+    expect_color(&expected, &got, 0);
 
 /*_______________D3DXColorAdjustSaturation______*/
     expected.r = 0.486028f; expected.g = 0.651028f; expected.b = 0.549028f, expected.a = 0.93f;
     D3DXColorAdjustSaturation(&got,&color,scale);
-    expect_color(expected,got);
+    expect_color(&expected, &got, 16);
 
 /*_______________D3DXColorLerp________________*/
     expected.r = 0.32f; expected.g = 0.69f; expected.b = 0.356f; expected.a = 0.897f;
     D3DXColorLerp(&got,&color,&color1,scale);
-    expect_color(expected,got);
+    expect_color(&expected, &got, 0);
     /* Test the NULL case */
     funcpointer = D3DXColorLerp(&got,NULL,&color1,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -189,7 +204,7 @@ static void D3DXColorTest(void)
 /*_______________D3DXColorModulate________________*/
     expected.r = 0.18f; expected.g = 0.275f; expected.b = 0.1748f; expected.a = 0.0902f;
     D3DXColorModulate(&got,&color1,&color2);
-    expect_color(expected,got);
+    expect_color(&expected, &got, 0);
     /* Test the NULL case */
     funcpointer = D3DXColorModulate(&got,NULL,&color2);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -201,17 +216,17 @@ static void D3DXColorTest(void)
 /*_______________D3DXColorNegative________________*/
     expected.r = 0.8f; expected.g = 0.25f; expected.b = 0.59f; expected.a = 0.93f;
     D3DXColorNegative(&got,&color);
-    expect_color(got,expected);
+    expect_color(&expected, &got, 1);
     /* Test the greater than 1 case */
     color1.r = 0.2f; color1.g = 1.75f; color1.b = 0.41f; color1.a = 0.93f;
     expected.r = 0.8f; expected.g = -0.75f; expected.b = 0.59f; expected.a = 0.93f;
     D3DXColorNegative(&got,&color1);
-    expect_color(got,expected);
+    expect_color(&expected, &got, 1);
     /* Test the negative case */
     color1.r = 0.2f; color1.g = -0.75f; color1.b = 0.41f; color1.a = 0.93f;
     expected.r = 0.8f; expected.g = 1.75f; expected.b = 0.59f; expected.a = 0.93f;
     D3DXColorNegative(&got,&color1);
-    expect_color(got,expected);
+    expect_color(&expected, &got, 1);
     /* Test the NULL case */
     funcpointer = D3DXColorNegative(&got,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -221,7 +236,7 @@ static void D3DXColorTest(void)
 /*_______________D3DXColorScale________________*/
     expected.r = 0.06f; expected.g = 0.225f; expected.b = 0.123f; expected.a = 0.279f;
     D3DXColorScale(&got,&color,scale);
-    expect_color(expected,got);
+    expect_color(&expected, &got, 1);
     /* Test the NULL case */
     funcpointer = D3DXColorScale(&got,NULL,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -231,7 +246,7 @@ static void D3DXColorTest(void)
 /*_______________D3DXColorSubtract_______________*/
     expected.r = -0.1f; expected.g = 0.25f; expected.b = -0.35f, expected.a = 0.82f;
     D3DXColorSubtract(&got,&color,&color2);
-    expect_color(expected,got);
+    expect_color(&expected, &got, 1);
     /* Test the NULL case */
     funcpointer = D3DXColorSubtract(&got,NULL,&color2);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
