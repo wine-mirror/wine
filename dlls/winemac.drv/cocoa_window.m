@@ -1673,7 +1673,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [parent grabDockIconSnapshotFromWindow:self force:NO];
 
         [self becameIneligibleParentOrChild];
-        if ([self isMiniaturized])
+        if ([self isMiniaturized] || [self styleMask] & NSFullScreenWindowMask)
         {
             fakingClose = TRUE;
             [self close];
