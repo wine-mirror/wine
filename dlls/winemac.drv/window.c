@@ -852,14 +852,59 @@ static struct macdrv_win_data *macdrv_create_win_data(HWND hwnd, const RECT *win
 }
 
 
+/**********************************************************************
+ *              is_owned_by
+ */
+static BOOL is_owned_by(HWND hwnd, HWND maybe_owner)
+{
+    while (1)
+    {
+        HWND hwnd2 = GetWindow(hwnd, GW_OWNER);
+        if (!hwnd2)
+            hwnd2 = GetAncestor(hwnd, GA_ROOT);
+        if (!hwnd2 || hwnd2 == hwnd)
+            break;
+        if (hwnd2 == maybe_owner)
+            return TRUE;
+        hwnd = hwnd2;
+    }
+
+    return FALSE;
+}
+
+
+/**********************************************************************
+ *              is_all_the_way_front
+ */
+static BOOL is_all_the_way_front(HWND hwnd)
+{
+    BOOL topmost = (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+    HWND prev = hwnd;
+
+    while ((prev = GetWindow(prev, GW_HWNDPREV)))
+    {
+        if (!topmost && (GetWindowLongW(prev, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0)
+            return TRUE;
+        if (!is_owned_by(prev, hwnd))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 /***********************************************************************
  *              set_focus
  */
-static void set_focus(HWND hwnd)
+static void set_focus(HWND hwnd, BOOL raise)
 {
     struct macdrv_win_data *data;
 
     if (!(hwnd = GetAncestor(hwnd, GA_ROOT))) return;
+
+    if (raise && hwnd == GetForegroundWindow() && hwnd != GetDesktopWindow() && !is_all_the_way_front(hwnd))
+        SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+
     if (!(data = get_win_data(hwnd))) return;
 
     if (data->cocoa_window && data->on_screen)
@@ -912,7 +957,7 @@ static void show_window(struct macdrv_win_data *data)
         info.cbSize = sizeof(info);
         if (GetGUIThreadInfo(GetWindowThreadProcessId(data->hwnd, NULL), &info) && info.hwndFocus &&
             (data->hwnd == info.hwndFocus || IsChild(data->hwnd, info.hwndFocus)))
-            set_focus(info.hwndFocus);
+            set_focus(info.hwndFocus, FALSE);
         if (activate)
             activate_on_focus_time = 0;
     }
@@ -1552,7 +1597,7 @@ void CDECL macdrv_SetFocus(HWND hwnd)
 
     if (!thread_data) return;
     thread_data->dead_key_state = 0;
-    set_focus(hwnd);
+    set_focus(hwnd, TRUE);
 }
 
 
