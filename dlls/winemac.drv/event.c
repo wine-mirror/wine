@@ -279,7 +279,7 @@ void macdrv_handle_event(const macdrv_event *event)
         macdrv_window_did_unminimize(hwnd);
         break;
     case WINDOW_DRAG_BEGIN:
-        macdrv_window_drag_begin(hwnd);
+        macdrv_window_drag_begin(hwnd, event);
         break;
     case WINDOW_DRAG_END:
         macdrv_window_drag_end(hwnd);

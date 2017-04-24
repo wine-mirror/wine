@@ -2236,9 +2236,10 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
                     if (draggingPhase == 2)
                     {
-                        macdrv_event* event = macdrv_create_event(WINDOW_DRAG_BEGIN, self);
-                        [queue postEvent:event];
-                        macdrv_release_event(event);
+                        macdrv_event* mevent = macdrv_create_event(WINDOW_DRAG_BEGIN, self);
+                        mevent->window_drag_begin.no_activate = [event wine_commandKeyDown];
+                        [queue postEvent:mevent];
+                        macdrv_release_event(mevent);
 
                         draggingPhase = 3;
                     }

@@ -2482,7 +2482,7 @@ void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
  *
  * Handler for WINDOW_DRAG_BEGIN events.
  */
-void macdrv_window_drag_begin(HWND hwnd)
+void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event)
 {
     DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
     struct macdrv_win_data *data;
@@ -2498,6 +2498,18 @@ void macdrv_window_drag_begin(HWND hwnd)
 
     data->being_dragged = TRUE;
     release_win_data(data);
+
+    if (!event->window_drag_begin.no_activate && can_activate_window(hwnd) && GetForegroundWindow() != hwnd)
+    {
+        /* ask whether the window wants to be activated */
+        LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE, (WPARAM)GetAncestor(hwnd, GA_ROOT),
+                                  MAKELONG(HTCAPTION, WM_LBUTTONDOWN));
+        if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
+        {
+            TRACE("setting foreground window to %p\n", hwnd);
+            SetForegroundWindow(hwnd);
+        }
+    }
 
     ClipCursor(NULL);
     SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);

@@ -2023,6 +2023,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
                     [self updateCursorClippingState];
 
                     event = macdrv_create_event(eventType, window);
+                    if (eventType == WINDOW_DRAG_BEGIN)
+                        event->window_drag_begin.no_activate = [NSEvent wine_commandKeyDown];
                     [window.queue postEvent:event];
                     macdrv_release_event(event);
                 }

@@ -376,6 +376,9 @@ typedef struct macdrv_event {
             macdrv_status_item  item;
         }                                           status_item_mouse_move;
         struct {
+            int no_activate;
+        }                                           window_drag_begin;
+        struct {
             CGRect  frame;
             int     fullscreen;
             int     in_resize;
