@@ -40,6 +40,26 @@ static NSString* const WineHotKeyCarbonRefKey   = @"hotKeyRef";
 static const OSType WineHotKeySignature = 'Wine';
 
 
+@implementation NSEvent (WineExtensions)
+
+    static BOOL wine_commandKeyDown(NSUInteger flags)
+    {
+        return ((flags & (NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask);
+    }
+
+    + (BOOL) wine_commandKeyDown
+    {
+        return wine_commandKeyDown([self modifierFlags]);
+    }
+
+    - (BOOL) wine_commandKeyDown
+    {
+        return wine_commandKeyDown([self modifierFlags]);
+    }
+
+@end
+
+
 @interface MacDrvEvent : NSObject
 {
 @public

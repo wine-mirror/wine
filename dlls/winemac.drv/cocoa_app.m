@@ -1653,7 +1653,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         if ([window isKindOfClass:[WineWindow class]] &&
             type == NSLeftMouseDown &&
-            (([theEvent modifierFlags] & (NSShiftKeyMask | NSControlKeyMask| NSAlternateKeyMask | NSCommandKeyMask)) != NSCommandKeyMask))
+            ![theEvent wine_commandKeyDown])
         {
             NSWindowButton windowButton;
 

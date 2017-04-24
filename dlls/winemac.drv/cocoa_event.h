@@ -28,6 +28,12 @@ enum {
 };
 
 
+@interface NSEvent (WineExtensions)
+    + (BOOL) wine_commandKeyDown;
+    - (BOOL) wine_commandKeyDown;
+@end
+
+
 @class WineWindow;
 
 
