@@ -32,6 +32,15 @@ static NSString* const WineAppWaitQueryResponseMode = @"WineAppWaitQueryResponse
 int macdrv_err_on;
 
 
+#if !defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
+@interface NSWindow (WineAutoTabbingExtensions)
+
+    + (void) setAllowsAutomaticWindowTabbing:(BOOL)allows;
+
+@end
+#endif
+
+
 /***********************************************************************
  *              WineLocalizedString
  *
@@ -124,6 +133,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
                                       [NSNumber numberWithBool:NO], @"ApplePressAndHoldEnabled",
                                       nil];
             [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
+
+            if ([NSWindow respondsToSelector:@selector(setAllowsAutomaticWindowTabbing:)])
+                [NSWindow setAllowsAutomaticWindowTabbing:NO];
         }
     }
 
