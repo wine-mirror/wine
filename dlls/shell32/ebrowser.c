@@ -782,7 +782,8 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
     {
         *ppvObject = &This->IExplorerBrowser_iface;
     }
-    else if(IsEqualIID(riid, &IID_IShellBrowser))
+    else if(IsEqualIID(riid, &IID_IShellBrowser) ||
+            IsEqualIID(riid, &IID_IOleWindow))
     {
         *ppvObject = &This->IShellBrowser_iface;
     }

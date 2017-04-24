@@ -575,7 +575,7 @@ static void test_QueryInterface(void)
     test_qinterface(IID_IUnknown, S_OK);
     test_qinterface(IID_IExplorerBrowser, S_OK);
     test_qinterface(IID_IShellBrowser, S_OK);
-    todo_wine test_qinterface(IID_IOleWindow, S_OK);
+    test_qinterface(IID_IOleWindow, S_OK);
     test_qinterface(IID_ICommDlgBrowser, S_OK);
     test_qinterface(IID_ICommDlgBrowser2, S_OK);
     test_qinterface(IID_ICommDlgBrowser3, S_OK);
