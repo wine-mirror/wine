@@ -371,10 +371,17 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
 {
     int v = 0;
 
+    static const WCHAR edgeW[] = {'e','d','g','e',0};
+
     if(p[0] != 'I' || p[1] != 'E' || p[2] != '=')
         return FALSE;
-
     p += 3;
+
+    if(!strcmpiW(p, edgeW)) {
+        *r = COMPAT_MODE_IE11;
+        return TRUE;
+    }
+
     while('0' <= *p && *p <= '9')
         v = v*10 + *(p++)-'0';
     if(*p || !v)
