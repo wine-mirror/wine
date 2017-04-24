@@ -434,7 +434,7 @@ interface IDirectXVideoDecoder : IUnknown
  */
 [
     object,
-    uuid(fc51a551-d5e7-11d9-af55-00054e43ff02),
+    uuid(fc51a552-d5e7-11d9-af55-00054e43ff02),
     local
 ]
 interface IDirectXVideoProcessorService : IDirectXVideoAccelerationService
