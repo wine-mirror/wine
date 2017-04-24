@@ -1614,6 +1614,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 [self checkWineDisplayLink];
                 needAdjustWindowLevels = TRUE;
             }
+            pendingOrderOut = FALSE;
 
             if ([self becameEligibleParentOrChild])
                 needAdjustWindowLevels = TRUE;
@@ -1648,6 +1649,21 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         WineApplicationController* controller = [WineApplicationController sharedController];
         BOOL wasVisible = [self isVisible];
         BOOL wasOnActiveSpace = [self isOnActiveSpace];
+
+        if (enteringFullScreen || exitingFullScreen)
+        {
+            pendingOrderOut = TRUE;
+            [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
+                                             event_mask_for_type(WINDOW_GOT_FOCUS) |
+                                             event_mask_for_type(WINDOW_LOST_FOCUS) |
+                                             event_mask_for_type(WINDOW_MAXIMIZE_REQUESTED) |
+                                             event_mask_for_type(WINDOW_MINIMIZE_REQUESTED) |
+                                             event_mask_for_type(WINDOW_RESTORE_REQUESTED)
+                                   forWindow:self];
+            return;
+        }
+
+        pendingOrderOut = FALSE;
 
         if ([self isMiniaturized])
             pendingMinimize = TRUE;
@@ -2707,6 +2723,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         enteringFullScreen = FALSE;
         enteredFullScreenTime = [[NSProcessInfo processInfo] systemUptime];
+        if (pendingOrderOut)
+            [self doOrderOut];
     }
 
     - (void) windowDidExitFullScreen:(NSNotification*)notification
@@ -2714,18 +2732,24 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         exitingFullScreen = FALSE;
         [self setFrameAndWineFrame:nonFullscreenFrame];
         [self windowDidResize:nil];
+        if (pendingOrderOut)
+            [self doOrderOut];
     }
 
     - (void) windowDidFailToEnterFullScreen:(NSWindow*)window
     {
         enteringFullScreen = FALSE;
         enteredFullScreenTime = 0;
+        if (pendingOrderOut)
+            [self doOrderOut];
     }
 
     - (void) windowDidFailToExitFullScreen:(NSWindow*)window
     {
         exitingFullScreen = FALSE;
         [self windowDidResize:nil];
+        if (pendingOrderOut)
+            [self doOrderOut];
     }
 
     - (void)windowDidMiniaturize:(NSNotification *)notification

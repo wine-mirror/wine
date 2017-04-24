@@ -33,6 +33,7 @@
     BOOL maximized;
     BOOL fullscreen;
     BOOL pendingMinimize;
+    BOOL pendingOrderOut;
     BOOL savedVisibleState;
     BOOL drawnSinceShown;
     WineWindow* latentParentWindow;
