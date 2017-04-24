@@ -962,6 +962,33 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
     return ret;
 }
 
+static void *get_alg_name(ALG_ID id, BOOL wide)
+{
+    static const struct {
+        ALG_ID alg_id;
+        const char* name;
+        const WCHAR nameW[8];
+    } alg_name_map[] = {
+        { CALG_ECDSA,      "ECDSA", {'E','C','D','S','A',0} },
+        { CALG_RSA_SIGN,   "RSA",   {'R','S','A',0} },
+        { CALG_DES,        "DES",   {'D','E','S',0} },
+        { CALG_RC2,        "RC2",   {'R','C','2',0} },
+        { CALG_3DES,       "3DES",  {'3','D','E','S',0} },
+        { CALG_AES_128,    "AES",   {'A','E','S',0} },
+        { CALG_AES_192,    "AES",   {'A','E','S',0} },
+        { CALG_AES_256,    "AES",   {'A','E','S',0} },
+        { CALG_RC4,        "RC4",   {'R','C','4',0} },
+    };
+    unsigned i;
+
+    for (i = 0; i < sizeof(alg_name_map)/sizeof(alg_name_map[0]); i++)
+        if (alg_name_map[i].alg_id == id)
+            return wide ? (void*)alg_name_map[i].nameW : (void*)alg_name_map[i].name;
+
+    FIXME("Unknown ALG_ID %04x\n", id);
+    return NULL;
+}
+
 static SECURITY_STATUS ensure_remote_cert(struct schan_context *ctx)
 {
     HCERTSTORE cert_store;
@@ -1014,6 +1041,21 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
                 stream_sizes->cbBlockSize = block_size;
             }
 
+            return status;
+        }
+        case SECPKG_ATTR_KEY_INFO:
+        {
+            SecPkgContext_ConnectionInfo conn_info;
+            SECURITY_STATUS status = schan_imp_get_connection_info(ctx->session, &conn_info);
+            if (status == SEC_E_OK)
+            {
+                SecPkgContext_KeyInfoW *info = buffer;
+                info->KeySize = conn_info.dwCipherStrength;
+                info->SignatureAlgorithm = schan_imp_get_key_signature_algorithm(ctx->session);
+                info->EncryptAlgorithm = conn_info.aiCipher;
+                info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, TRUE);
+                info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, TRUE);
+            }
             return status;
         }
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
@@ -1091,6 +1133,17 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
     {
         case SECPKG_ATTR_STREAM_SIZES:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        case SECPKG_ATTR_KEY_INFO:
+        {
+            SECURITY_STATUS status = schan_QueryContextAttributesW(context_handle, attribute, buffer);
+            if (status == SEC_E_OK)
+            {
+                SecPkgContext_KeyInfoA *info = buffer;
+                info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, FALSE);
+                info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, FALSE);
+            }
+            return status;
+        }
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
         case SECPKG_ATTR_CONNECTION_INFO:

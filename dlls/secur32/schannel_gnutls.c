@@ -383,6 +383,27 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
     return SEC_E_OK;
 }
 
+ALG_ID schan_imp_get_key_signature_algorithm(schan_imp_session session)
+{
+    gnutls_session_t s = (gnutls_session_t)session;
+    gnutls_kx_algorithm_t kx = pgnutls_kx_get(s);
+
+    TRACE("(%p)\n", session);
+
+    switch (kx)
+    {
+    case GNUTLS_KX_UNKNOWN: return 0;
+    case GNUTLS_KX_RSA:
+    case GNUTLS_KX_RSA_EXPORT:
+    case GNUTLS_KX_DHE_RSA:
+    case GNUTLS_KX_ECDHE_RSA: return CALG_RSA_SIGN;
+    case GNUTLS_KX_ECDHE_ECDSA: return CALG_ECDSA;
+    default:
+        FIXME("unknown algorithm %d\n", kx);
+        return 0;
+    }
+}
+
 SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session, HCERTSTORE store,
                                                        PCCERT_CONTEXT *ret)
 {

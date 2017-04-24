@@ -925,7 +925,7 @@ todo_wine
     }
 
     status = pQueryContextAttributesA(&context, SECPKG_ATTR_KEY_INFO, &key_info);
-    todo_wine ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_KEY_INFO) failed: %08x\n", status);
+    ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_KEY_INFO) failed: %08x\n", status);
     if(status == SEC_E_OK) {
         ok(broken(key_info.SignatureAlgorithm == 0 /* WinXP,2003 */) ||
            key_info.SignatureAlgorithm == CALG_RSA_SIGN,

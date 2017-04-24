@@ -252,6 +252,7 @@ extern void schan_imp_set_session_target(schan_imp_session session, const char *
 extern SECURITY_STATUS schan_imp_handshake(schan_imp_session session) DECLSPEC_HIDDEN;
 extern unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session) DECLSPEC_HIDDEN;
 extern unsigned int schan_imp_get_max_message_size(schan_imp_session session) DECLSPEC_HIDDEN;
+extern ALG_ID schan_imp_get_key_signature_algorithm(schan_imp_session session) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
                                                      SecPkgContext_ConnectionInfo *info) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session, HCERTSTORE,
