@@ -2898,6 +2898,14 @@ void CDECL wined3d_device_set_unordered_access_view(struct wined3d_device *devic
     wined3d_device_set_pipeline_unordered_access_view(device, WINED3D_PIPELINE_GRAPHICS, idx, uav);
 }
 
+struct wined3d_unordered_access_view * CDECL wined3d_device_get_unordered_access_view(
+        const struct wined3d_device *device, unsigned int idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    return wined3d_device_get_pipeline_unordered_access_view(device, WINED3D_PIPELINE_GRAPHICS, idx);
+}
+
 /* Context activation is done by the caller. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,

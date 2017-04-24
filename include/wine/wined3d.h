@@ -2268,6 +2268,8 @@ DWORD __cdecl wined3d_device_get_texture_stage_state(const struct wined3d_device
         UINT stage, enum wined3d_texture_stage_state state);
 void __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
         enum wined3d_transform_state state, struct wined3d_matrix *matrix);
+struct wined3d_unordered_access_view * __cdecl wined3d_device_get_unordered_access_view(
+        const struct wined3d_device *device, unsigned int idx);
 struct wined3d_vertex_declaration * __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device);
 struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_viewport(const struct wined3d_device *device, struct wined3d_viewport *viewport);

@@ -96,6 +96,7 @@
 @ cdecl wined3d_device_get_texture(ptr long)
 @ cdecl wined3d_device_get_texture_stage_state(ptr long long)
 @ cdecl wined3d_device_get_transform(ptr long ptr)
+@ cdecl wined3d_device_get_unordered_access_view(ptr long)
 @ cdecl wined3d_device_get_vertex_declaration(ptr)
 @ cdecl wined3d_device_get_vertex_shader(ptr)
 @ cdecl wined3d_device_get_viewport(ptr ptr)
