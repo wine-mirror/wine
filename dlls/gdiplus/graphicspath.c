@@ -142,6 +142,10 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
     mp[2].X = (mp[1].X + mp[3].X) / 2.0;
     mp[2].Y = (mp[1].Y + mp[3].Y) / 2.0;
 
+    if ((x2 == mp[0].X && y2 == mp[0].Y && x3 == mp[1].X && y3 == mp[1].Y) ||
+        (x2 == mp[3].X && y2 == mp[3].Y && x3 == mp[4].X && y3 == mp[4].Y))
+        return TRUE;
+
     pt = end->pt;
     pt_st = start->pt;
     /* check flatness as a half of distance between middle point and a linearized path */
