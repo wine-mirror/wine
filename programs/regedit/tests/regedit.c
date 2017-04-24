@@ -294,6 +294,23 @@ static void test_basic_import(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine9a\"=hex(2):4c,69,6e,65,00\n"
+                    "\"Wine9b\"=\"Value 1\"\n"
+                    "\"Wine9c\"=hex(2):4c,69,6e,65\\\n"
+                    "\"Wine9d\"=\"Value 2\"\n"
+                    "\"Wine9e\"=hex(2):4c,69,6e,65,\\\n"
+                    "\"Wine9f\"=\"Value 3\"\n"
+                    "\"Wine9g\"=\"Value 4\"\n\n");
+    verify_reg(hkey, "Wine9a", REG_EXPAND_SZ, "Line", 5, 0);
+    verify_reg(hkey, "Wine9b", REG_SZ, "Value 1", 8, 0);
+    verify_reg_nonexist(hkey, "Wine9c");
+    todo_wine verify_reg(hkey, "Wine9d", REG_SZ, "Value 2", 8, 0);
+    verify_reg_nonexist(hkey, "Wine9e");
+    verify_reg_nonexist(hkey, "Wine9f");
+    verify_reg(hkey, "Wine9g", REG_SZ, "Value 4", 8, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"double\\\"quote\"=\"valid \\\"or\\\" not\"\n"
                     "\"single'quote\"=dword:00000008\n\n");
     verify_reg(hkey, "double\"quote", REG_SZ, "valid \"or\" not", 15, 0);
@@ -838,6 +855,16 @@ static void test_import_with_whitespace(void)
     dword = 0x00000008;
     verify_reg(hkey, "Wine9a", REG_DWORD, &dword, sizeof(dword), 0);
     verify_reg(hkey, "Wine9b", REG_DWORD, &dword, sizeof(dword), 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "@  =  \"Test Value\"\n\n");
+    todo_wine verify_reg(hkey, "", REG_SZ, "Test Value", 11, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\t@\t=\tdword:\t00000008\t\n\n");
+    todo_wine verify_reg(hkey, "", REG_DWORD, &dword, sizeof(DWORD), 0);
 
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
