@@ -105,42 +105,43 @@ static ULONG WINAPI IExplorerBrowserEventsImpl_fnRelease(IExplorerBrowserEvents 
     return ref;
 }
 
-static BOOL create_combobox_item(IShellFolder *folder, LPCITEMIDLIST pidl, IImageList *icon_list, COMBOBOXEXITEMW *item)
+static BOOL create_combobox_item(IShellFolder *folder, LPCITEMIDLIST child_pidl, IImageList *icon_list, COMBOBOXEXITEMW *item)
 {
     STRRET strret;
     HRESULT hres;
-    IExtractIconW *extract_icon;
-    UINT reserved;
-    WCHAR icon_file[MAX_PATH];
-    INT icon_index;
-    UINT icon_flags;
-    HICON icon;
+    PIDLIST_ABSOLUTE parent_pidl, pidl;
+    SHFILEINFOW info;
+    IImageList *list;
+
     strret.uType=STRRET_WSTR;
-    hres = IShellFolder_GetDisplayNameOf(folder,pidl,SHGDN_FORADDRESSBAR,&strret);
+    hres = IShellFolder_GetDisplayNameOf( folder, child_pidl, SHGDN_FORADDRESSBAR, &strret );
     if(SUCCEEDED(hres))
-        hres = StrRetToStrW(&strret, pidl, &item->pszText);
+        hres = StrRetToStrW(&strret, child_pidl, &item->pszText);
     if(FAILED(hres))
     {
         WINE_WARN("Could not get name for pidl\n");
         return FALSE;
     }
-    hres = IShellFolder_GetUIObjectOf(folder,NULL,1,&pidl,&IID_IExtractIconW,
-                                      &reserved,(void**)&extract_icon);
-    if(SUCCEEDED(hres))
+
+    item->mask &= ~CBEIF_IMAGE;
+    hres = SHGetIDListFromObject( (IUnknown *)folder, &parent_pidl );
+    if (FAILED(hres)) return FALSE;
+
+    pidl = ILCombine( parent_pidl, child_pidl );
+    if (pidl)
     {
-        item->mask |= CBEIF_IMAGE;
-        IExtractIconW_GetIconLocation(extract_icon,GIL_FORSHELL,icon_file,
-                                      sizeof(icon_file)/sizeof(WCHAR),
-                                      &icon_index,&icon_flags);
-        IExtractIconW_Extract(extract_icon,icon_file,icon_index,NULL,&icon,20);
-        item->iImage = ImageList_AddIcon((HIMAGELIST)icon_list,icon);
-        IExtractIconW_Release(extract_icon);
+        list = (IImageList *)SHGetFileInfoW( (WCHAR *)pidl, 0, &info, sizeof(info),
+                                             SHGFI_PIDL | SHGFI_SMALLICON | SHGFI_SYSICONINDEX );
+        if (list)
+        {
+            IImageList_Release( list );
+            item->iImage = info.iIcon;
+            item->mask |= CBEIF_IMAGE;
+        }
+        ILFree( pidl );
     }
-    else
-    {
-        item->mask &= ~CBEIF_IMAGE;
-        WINE_WARN("Could not get an icon for %s\n",wine_dbgstr_w(item->pszText));
-    }
+    ILFree( parent_pidl );
+
     return TRUE;
 }
 
@@ -153,7 +154,6 @@ static void update_path_box(explorer_info *info)
     LPITEMIDLIST desktop_pidl;
     IEnumIDList *ids;
 
-    ImageList_Remove((HIMAGELIST)info->icon_list,-1);
     SendMessageW(info->path_box,CB_RESETCONTENT,0,0);
     SHGetDesktopFolder(&desktop);
     IShellFolder_QueryInterface(desktop,&IID_IPersistFolder2,(void**)&persist);
