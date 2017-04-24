@@ -3564,11 +3564,8 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     BOOL scale, convert;
     DWORD dst_location;
 
-    static const DWORD simple_blit = WINED3D_BLT_ASYNC
-            | WINED3D_BLT_SRC_CKEY
+    static const DWORD simple_blit = WINED3D_BLT_SRC_CKEY
             | WINED3D_BLT_SRC_CKEY_OVERRIDE
-            | WINED3D_BLT_WAIT
-            | WINED3D_BLT_DO_NOT_WAIT
             | WINED3D_BLT_ALPHA_TEST;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
@@ -3590,18 +3587,6 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     if (!fx || !(fx->fx))
         flags &= ~WINED3D_BLT_FX;
 
-    if (flags & WINED3D_BLT_WAIT)
-        flags &= ~WINED3D_BLT_WAIT;
-
-    if (flags & WINED3D_BLT_ASYNC)
-    {
-        static unsigned int once;
-
-        if (!once++)
-            FIXME("Can't handle WINED3D_BLT_ASYNC flag.\n");
-        flags &= ~WINED3D_BLT_ASYNC;
-    }
-
     /* WINED3D_BLT_DO_NOT_WAIT appeared in DX7. */
     if (flags & WINED3D_BLT_DO_NOT_WAIT)
     {
@@ -3609,8 +3594,9 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
         if (!once++)
             FIXME("Can't handle WINED3D_BLT_DO_NOT_WAIT flag.\n");
-        flags &= ~WINED3D_BLT_DO_NOT_WAIT;
     }
+
+    flags &= ~(WINED3D_BLT_SYNCHRONOUS | WINED3D_BLT_DO_NOT_WAIT | WINED3D_BLT_WAIT);
 
     if (!device->d3d_initialized)
     {

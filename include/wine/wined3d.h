@@ -1309,7 +1309,6 @@ enum wined3d_shader_byte_code_format
 /* add dwZBufferBaseDest to every source z value before compare */
 #define WINEDDBLTFX_ZBUFFERBASEDEST                             0x00000100
 
-#define WINED3D_BLT_ASYNC                                       0x00000200
 #define WINED3D_BLT_FX                                          0x00000800
 #define WINED3D_BLT_DST_CKEY                                    0x00002000
 #define WINED3D_BLT_DST_CKEY_OVERRIDE                           0x00004000
@@ -1317,8 +1316,9 @@ enum wined3d_shader_byte_code_format
 #define WINED3D_BLT_SRC_CKEY_OVERRIDE                           0x00010000
 #define WINED3D_BLT_WAIT                                        0x01000000
 #define WINED3D_BLT_DO_NOT_WAIT                                 0x08000000
+#define WINED3D_BLT_SYNCHRONOUS                                 0x40000000
 #define WINED3D_BLT_ALPHA_TEST                                  0x80000000
-#define WINED3D_BLT_MASK                                        0x0901ea00
+#define WINED3D_BLT_MASK                                        0x0901e800
 
 /* dwFlags for GetBltStatus */
 #define WINEDDGBS_CANBLT                                        0x00000001
