@@ -5949,16 +5949,14 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
 
     param = effect1->lpVtbl->GetParameterByName(effect1, NULL, "vs_arr2");
     ok(!!param, "GetParameterByName failed.\n");
+    todo_wine
     ok(!effect3->lpVtbl->IsParameterUsed(effect3, param, "tech0"),
             "Unexpected IsParameterUsed result.\n");
 
-    todo_wine
     ok(effect3->lpVtbl->IsParameterUsed(effect3, "vs_arr2", "tech0"),
             "Unexpected IsParameterUsed result.\n");
-    todo_wine
     ok(!effect3->lpVtbl->IsParameterUsed(effect3, "vs_arr2[0]", "tech0"),
             "Unexpected IsParameterUsed result.\n");
-    todo_wine
     ok(!effect3->lpVtbl->IsParameterUsed(effect3, "vs_arr2[1]", "tech0"),
             "Unexpected IsParameterUsed result.\n");
 

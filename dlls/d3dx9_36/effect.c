@@ -3728,6 +3728,7 @@ static BOOL walk_parameter_dep(struct d3dx_parameter *param, walk_parameter_dep_
     unsigned int i;
     unsigned int member_count;
 
+    param = param->top_level_param;
     if (param_func(data, param))
         return TRUE;
 
