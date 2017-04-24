@@ -978,7 +978,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             NSUInteger style = [self styleMask];
 
             if (behavior & NSWindowCollectionBehaviorParticipatesInCycle &&
-                style & NSResizableWindowMask && !(style & NSUtilityWindowMask) && !maximized)
+                style & NSResizableWindowMask && !(style & NSUtilityWindowMask) && !maximized &&
+                !(self.parentWindow || self.latentParentWindow))
             {
                 behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
                 behavior &= ~NSWindowCollectionBehaviorFullScreenAuxiliary;
@@ -1839,6 +1840,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [latentParentWindow removeChildWineWindow:self];
             if ([parent addChildWineWindow:self])
                 [[WineApplicationController sharedController] adjustWindowLevels];
+            [self adjustFullScreenBehavior:[self collectionBehavior]];
         }
     }
 
