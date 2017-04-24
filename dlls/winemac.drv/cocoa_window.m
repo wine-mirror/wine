@@ -1457,8 +1457,15 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         windowNumbers = [[[[self class] windowNumbersWithOptions:NSWindowNumberListAllSpaces] mutableCopy] autorelease];
         childWindowNumber = [NSNumber numberWithInteger:[child windowNumber]];
         [windowNumbers removeObject:childWindowNumber];
-        otherIndex = [windowNumbers indexOfObject:[NSNumber numberWithInteger:[other windowNumber]]];
-        [windowNumbers insertObject:childWindowNumber atIndex:otherIndex + (mode == NSWindowAbove ? 0 : 1)];
+        if (other)
+        {
+            otherIndex = [windowNumbers indexOfObject:[NSNumber numberWithInteger:[other windowNumber]]];
+            [windowNumbers insertObject:childWindowNumber atIndex:otherIndex + (mode == NSWindowAbove ? 0 : 1)];
+        }
+        else if (mode == NSWindowAbove)
+            [windowNumbers insertObject:childWindowNumber atIndex:0];
+        else
+            [windowNumbers addObject:childWindowNumber];
 
         // Get our child windows and sort them in the reverse of the desired
         // z-order (back-to-front).
@@ -1472,6 +1479,52 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self setChildWineWindows:children];
     }
 
+    // Search the ancestor windows of self and other to find a place where some ancestors are siblings of each other.
+    // There are three possible results in terms of the values of *ancestor and *ancestorOfOther on return:
+    //      (non-nil, non-nil)  there is a level in the window tree where the two windows have sibling ancestors
+    //                          if *ancestor has a parent Wine window, then it's the parent of the other ancestor, too
+    //                          otherwise, the two ancestors are each roots of disjoint window trees
+    //      (nil, non-nil)      the other window is a descendent of self and *ancestorOfOther is the direct child
+    //      (non-nil, nil)      self is a descendent of other and *ancestor is the direct child
+    - (void) getSiblingWindowsForWindow:(WineWindow*)other ancestor:(WineWindow**)ancestor ancestorOfOther:(WineWindow**)ancestorOfOther
+    {
+        NSMutableArray* otherAncestors = [NSMutableArray arrayWithObject:other];
+        WineWindow* child;
+        WineWindow* parent;
+        for (child = other;
+             (parent = (WineWindow*)child.parentWindow) && [parent isKindOfClass:[WineWindow class]];
+             child = parent)
+        {
+            if (parent == self)
+            {
+                *ancestor = nil;
+                *ancestorOfOther = child;
+                return;
+            }
+
+            [otherAncestors addObject:parent];
+        }
+
+        for (child = self;
+             (parent = (WineWindow*)child.parentWindow) && [parent isKindOfClass:[WineWindow class]];
+             child = parent)
+        {
+            NSUInteger index = [otherAncestors indexOfObjectIdenticalTo:parent];
+            if (index != NSNotFound)
+            {
+                *ancestor = child;
+                if (index == 0)
+                    *ancestorOfOther = nil;
+                else
+                    *ancestorOfOther = [otherAncestors objectAtIndex:index - 1];
+                return;
+            }
+        }
+
+        *ancestor = child;
+        *ancestorOfOther = otherAncestors.lastObject;;
+    }
+
     /* Returns whether or not the window was ordered in, which depends on if
        its frame intersects any screen. */
     - (void) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next activate:(BOOL)activate
@@ -1481,6 +1534,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         {
             BOOL needAdjustWindowLevels = FALSE;
             BOOL wasVisible;
+            WineWindow* parent;
+            WineWindow* child;
 
             [controller transformProcessToForeground];
             if ([NSApp isHidden])
@@ -1502,30 +1557,53 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
                 if (![self isOrdered:orderingMode relativeTo:other])
                 {
-                    WineWindow* parent = (WineWindow*)[self parentWindow];
-                    WineWindow* otherParent = (WineWindow*)[other parentWindow];
+                    WineWindow* ancestor;
+                    WineWindow* ancestorOfOther;
 
-                    // This window level may not be right for this window based
-                    // on floating-ness, fullscreen-ness, etc.  But we set it
-                    // temporarily to allow us to order the windows properly.
-                    // Then the levels get fixed by -adjustWindowLevels.
-                    if ([self level] != [other level])
-                        [self setLevel:[other level]];
-                    [self setAutodisplay:YES];
-                    [self orderWindow:orderingMode relativeTo:[other windowNumber]];
-                    [self checkWineDisplayLink];
+                    [self getSiblingWindowsForWindow:other ancestor:&ancestor ancestorOfOther:&ancestorOfOther];
+                    if (ancestor)
+                    {
+                        [self setAutodisplay:YES];
+                        if (ancestorOfOther)
+                        {
+                            // This window level may not be right for this window based
+                            // on floating-ness, fullscreen-ness, etc.  But we set it
+                            // temporarily to allow us to order the windows properly.
+                            // Then the levels get fixed by -adjustWindowLevels.
+                            if ([ancestor level] != [ancestorOfOther level])
+                                [ancestor setLevel:[ancestorOfOther level]];
 
-                    // The above call to -[NSWindow orderWindow:relativeTo:] won't
-                    // reorder windows which are both children of the same parent
-                    // relative to each other, so do that separately.
-                    if (parent && parent == otherParent)
-                        [parent order:orderingMode childWindow:self relativeTo:other];
+                            parent = (WineWindow*)ancestor.parentWindow;
+                            if ([parent isKindOfClass:[WineWindow class]])
+                                [parent order:orderingMode childWindow:ancestor relativeTo:ancestorOfOther];
+                            else
+                                [ancestor orderWindow:orderingMode relativeTo:[ancestorOfOther windowNumber]];
+                        }
 
-                    needAdjustWindowLevels = TRUE;
+                        for (child = self;
+                             (parent = (WineWindow*)child.parentWindow);
+                             child = parent)
+                        {
+                            if ([parent isKindOfClass:[WineWindow class]])
+                                [parent order:-orderingMode childWindow:child relativeTo:nil];
+                            if (parent == ancestor)
+                                break;
+                        }
+
+                        [self checkWineDisplayLink];
+                        needAdjustWindowLevels = TRUE;
+                    }
                 }
             }
             else
             {
+                for (child = self;
+                     (parent = (WineWindow*)child.parentWindow) && [parent isKindOfClass:[WineWindow class]];
+                     child = parent)
+                {
+                    [parent order:NSWindowAbove childWindow:child relativeTo:nil];
+                }
+
                 // Again, temporarily set level to make sure we can order to
                 // the right place.
                 next = [controller frontWineWindow];
