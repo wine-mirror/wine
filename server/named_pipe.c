@@ -153,6 +153,7 @@ static const struct object_ops named_pipe_ops =
 };
 
 /* common server and client pipe end functions */
+static enum server_fd_type pipe_end_get_fd_type( struct fd *fd );
 static obj_handle_t pipe_end_read( struct fd *fd, struct async *async, file_pos_t pos );
 static obj_handle_t pipe_end_write( struct fd *fd, struct async *async_data, file_pos_t pos );
 static void pipe_end_queue_async( struct fd *fd, struct async *async, int type, int count );
@@ -163,7 +164,6 @@ static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
 static obj_handle_t pipe_server_flush( struct fd *fd, struct async *async );
-static enum server_fd_type pipe_server_get_fd_type( struct fd *fd );
 static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct object_ops pipe_server_ops =
@@ -192,7 +192,7 @@ static const struct fd_ops pipe_server_fd_ops =
 {
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
-    pipe_server_get_fd_type,      /* get_fd_type */
+    pipe_end_get_fd_type,         /* get_fd_type */
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
     pipe_server_flush,            /* flush */
@@ -208,7 +208,6 @@ static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
 static obj_handle_t pipe_client_flush( struct fd *fd, struct async *async );
 static obj_handle_t pipe_client_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
-static enum server_fd_type pipe_client_get_fd_type( struct fd *fd );
 
 static const struct object_ops pipe_client_ops =
 {
@@ -236,7 +235,7 @@ static const struct fd_ops pipe_client_fd_ops =
 {
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
-    pipe_client_get_fd_type,      /* get_fd_type */
+    pipe_end_get_fd_type,         /* get_fd_type */
     pipe_end_read,                /* read */
     pipe_end_write,               /* write */
     pipe_client_flush,            /* flush */
@@ -917,12 +916,7 @@ static inline int is_overlapped( unsigned int options )
     return !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
 }
 
-static enum server_fd_type pipe_server_get_fd_type( struct fd *fd )
-{
-    return FD_TYPE_PIPE;
-}
-
-static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
+static enum server_fd_type pipe_end_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_PIPE;
 }
