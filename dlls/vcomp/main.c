@@ -1171,9 +1171,16 @@ void CDECL _vcomp_for_static_init(int first, int last, int step, int chunksize, 
     struct vcomp_team_data *team_data = thread_data->team;
     int num_threads = team_data ? team_data->num_threads : 1;
     int thread_num = thread_data->thread_num;
+    int no_begin, no_lastchunk;
 
     TRACE("(%d, %d, %d, %d, %p, %p, %p, %p, %p)\n",
           first, last, step, chunksize, loops, begin, end, next, lastchunk);
+
+    if (!begin)
+    {
+        begin = &no_begin;
+        lastchunk = &no_lastchunk;
+    }
 
     if (num_threads == 1 && chunksize != 1)
     {

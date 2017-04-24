@@ -1002,6 +1002,30 @@ static void CDECL for_static_cb(void)
         p_vcomp_for_static_end();
         p_vcomp_barrier();
 
+        loops = end = next = lastchunk = 0xdeadbeef;
+        p_vcomp_for_static_init(tests[i].first, tests[i].last, tests[i].step, tests[i].chunksize,
+                                &loops, NULL, &end, &next, &lastchunk);
+
+        if (broken_flags & VCOMP_FOR_STATIC_BROKEN_LOOP)
+        {
+            ok(loops == 0 || loops == 1, "test %d, thread %d/%d: expected loops == 0 or 1, got %u\n",
+               i, thread_num, num_threads, loops);
+        }
+        else
+        {
+            ok(loops == my_loops, "test %d, thread %d/%d: expected loops == %u, got %u\n",
+               i, thread_num, num_threads, my_loops, loops);
+            ok(end == my_end, "test %d, thread %d/%d: expected end == %d, got %d\n",
+               i, thread_num, num_threads, my_end, end);
+            ok(next == my_next || broken(broken_flags & VCOMP_FOR_STATIC_BROKEN_NEXT),
+               "test %d, thread %d/%d: expected next == %d, got %d\n", i, thread_num, num_threads, my_next, next);
+            ok(lastchunk == 0xdeadbeef, "test %d, thread %d/%d: expected lastchunk == 0xdeadbeef, got %d\n",
+               i, thread_num, num_threads, lastchunk);
+        }
+
+        p_vcomp_for_static_end();
+        p_vcomp_barrier();
+
         if (tests[i].first == tests[i].last) continue;
 
         my_loops = my_begin = my_end = my_next = my_lastchunk = 0xdeadbeef;
@@ -1028,6 +1052,30 @@ static void CDECL for_static_cb(void)
                "test %d, thread %d/%d: expected next == %d, got %d\n", i, thread_num, num_threads, my_next, next);
             ok(lastchunk == my_lastchunk, "test %d, thread %d/%d: expected lastchunk == %d, got %d\n",
                i, thread_num, num_threads, my_lastchunk, lastchunk);
+        }
+
+        p_vcomp_for_static_end();
+        p_vcomp_barrier();
+
+        loops = end = next = lastchunk = 0xdeadbeef;
+        p_vcomp_for_static_init(tests[i].last, tests[i].first, tests[i].step, tests[i].chunksize,
+                                &loops, NULL, &end, &next, &lastchunk);
+
+        if (broken_flags & VCOMP_FOR_STATIC_BROKEN_LOOP)
+        {
+            ok(loops == 0 || loops == 1, "test %d, thread %d/%d: expected loops == 0 or 1, got %u\n",
+               i, thread_num, num_threads, loops);
+        }
+        else
+        {
+            ok(loops == my_loops, "test %d, thread %d/%d: expected loops == %u, got %u\n",
+               i, thread_num, num_threads, my_loops, loops);
+            ok(end == my_end, "test %d, thread %d/%d: expected end == %d, got %d\n",
+               i, thread_num, num_threads, my_end, end);
+            ok(next == my_next || broken(broken_flags & VCOMP_FOR_STATIC_BROKEN_NEXT),
+               "test %d, thread %d/%d: expected next == %d, got %d\n", i, thread_num, num_threads, my_next, next);
+            ok(lastchunk == 0xdeadbeef, "test %d, thread %d/%d: expected lastchunk == 0xdeadbeef, got %d\n",
+               i, thread_num, num_threads, lastchunk);
         }
 
         p_vcomp_for_static_end();
