@@ -502,37 +502,8 @@ static void free_sampler(struct d3dx_sampler *sampler)
     HeapFree(GetProcessHeap(), 0, sampler->states);
 }
 
-static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child)
+static void free_parameter_data(struct d3dx_parameter *param, BOOL child)
 {
-    unsigned int i;
-
-    TRACE("Free parameter %p, name %s, type %s, child %s\n", param, param->name,
-            debug_d3dxparameter_type(param->type), child ? "yes" : "no");
-
-    if (param->param_eval)
-    {
-        d3dx_free_param_eval(param->param_eval);
-        param->param_eval = NULL;
-    }
-
-    if (param->annotations)
-    {
-        for (i = 0; i < param->annotation_count; ++i)
-            free_parameter(&param->annotations[i], FALSE, FALSE);
-        HeapFree(GetProcessHeap(), 0, param->annotations);
-        param->annotations = NULL;
-    }
-
-    if (param->members)
-    {
-        unsigned int count = param->element_count ? param->element_count : param->member_count;
-
-        for (i = 0; i < count; ++i)
-            free_parameter(&param->members[i], param->element_count != 0, TRUE);
-        HeapFree(GetProcessHeap(), 0, param->members);
-        param->members = NULL;
-    }
-
     if (param->class == D3DXPC_OBJECT && !param->element_count)
     {
         switch (param->type)
@@ -564,11 +535,37 @@ static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL chil
                 break;
         }
     }
-
     if (!child)
-    {
         HeapFree(GetProcessHeap(), 0, param->data);
+}
+
+static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child)
+{
+    unsigned int i;
+
+    TRACE("Free parameter %p, name %s, type %s, element %#x, child %#x.\n", param, param->name,
+            debug_d3dxparameter_type(param->type), element, child);
+
+    if (param->param_eval)
+        d3dx_free_param_eval(param->param_eval);
+
+    if (param->annotations)
+    {
+        for (i = 0; i < param->annotation_count; ++i)
+            free_parameter(&param->annotations[i], FALSE, FALSE);
+        HeapFree(GetProcessHeap(), 0, param->annotations);
     }
+
+    if (param->members)
+    {
+        unsigned int count = param->element_count ? param->element_count : param->member_count;
+
+        for (i = 0; i < count; ++i)
+            free_parameter(&param->members[i], param->element_count != 0, TRUE);
+        HeapFree(GetProcessHeap(), 0, param->members);
+    }
+
+    free_parameter_data(param, child);
 
     /* only the parent has to release name and semantic */
     if (!element)
