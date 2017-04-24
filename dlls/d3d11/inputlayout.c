@@ -151,9 +151,13 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_Release(ID3D11InputLayout *ifa
 
     if (!refcount)
     {
+        ID3D11Device *device = layout->device;
+
         wined3d_mutex_lock();
         wined3d_vertex_declaration_decref(layout->wined3d_decl);
         wined3d_mutex_unlock();
+
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -162,7 +166,11 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_Release(ID3D11InputLayout *ifa
 static void STDMETHODCALLTYPE d3d11_input_layout_GetDevice(ID3D11InputLayout *iface,
         ID3D11Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    ID3D11Device_AddRef(*device = layout->device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_input_layout_GetPrivateData(ID3D11InputLayout *iface,
@@ -249,7 +257,11 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_Release(ID3D10InputLayout *ifa
 
 static void STDMETHODCALLTYPE d3d10_input_layout_GetDevice(ID3D10InputLayout *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d_input_layout *layout = impl_from_ID3D10InputLayout(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    ID3D11Device_QueryInterface(layout->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_GetPrivateData(ID3D10InputLayout *iface,
@@ -343,6 +355,8 @@ static HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d
         return hr;
     }
     wined3d_mutex_unlock();
+
+    ID3D11Device_AddRef(layout->device = &device->ID3D11Device_iface);
 
     return S_OK;
 }

@@ -9325,7 +9325,7 @@ static void test_create_input_layout(void)
         ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n",
                 vertex_formats[i], hr);
         refcount = get_refcount(device);
-        todo_wine ok(refcount >= expected_refcount, "Got refcount %u, expected >= %u.\n",
+        ok(refcount >= expected_refcount, "Got refcount %u, expected >= %u.\n",
                 refcount, expected_refcount);
         ID3D10InputLayout_Release(input_layout);
     }

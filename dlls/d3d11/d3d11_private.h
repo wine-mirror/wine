@@ -254,6 +254,7 @@ struct d3d_input_layout
 
     struct wined3d_private_store private_store;
     struct wined3d_vertex_declaration *wined3d_decl;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_input_layout_create(struct d3d_device *device,
