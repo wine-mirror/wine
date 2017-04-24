@@ -9,7 +9,7 @@ HKCR
         '{645FF040-5081-101B-9F08-00AA002F954E}'
         {
             val LocalizedString = s '@%MODULE%,-8964'
-            DefaultIcon = s '@%MODULE%,-33'
+            DefaultIcon = s '%MODULE%,-33'
         }
         '{00021401-0000-0000-C000-000000000046}' { shellex { MayChangeDefaultMenu } }
     }
