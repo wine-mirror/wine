@@ -10990,6 +10990,105 @@ static void test_blt(void)
     DestroyWindow(window);
 }
 
+static void test_blt_z_alpha(void)
+{
+    DWORD blt_flags[] =
+    {
+        /* 0 */
+        DDBLT_ALPHADEST,
+        DDBLT_ALPHADESTCONSTOVERRIDE,
+        DDBLT_ALPHADESTNEG,
+        DDBLT_ALPHADESTSURFACEOVERRIDE,
+        DDBLT_ALPHAEDGEBLEND,
+        /* 5 */
+        DDBLT_ALPHASRC,
+        DDBLT_ALPHASRCCONSTOVERRIDE,
+        DDBLT_ALPHASRCNEG,
+        DDBLT_ALPHASRCSURFACEOVERRIDE,
+        DDBLT_ZBUFFER,
+        /* 10 */
+        DDBLT_ZBUFFERDESTCONSTOVERRIDE,
+        DDBLT_ZBUFFERDESTOVERRIDE,
+        DDBLT_ZBUFFERSRCCONSTOVERRIDE,
+        DDBLT_ZBUFFERSRCOVERRIDE,
+    };
+    IDirectDrawSurface4 *src_surface, *dst_surface;
+    DDSURFACEDESC2 surface_desc;
+    IDirectDraw4 *ddraw;
+    DDPIXELFORMAT pf;
+    ULONG refcount;
+    unsigned int i;
+    D3DCOLOR color;
+    HWND window;
+    HRESULT hr;
+    DDBLTFX fx;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&pf, 0, sizeof(pf));
+    pf.dwSize = sizeof(pf);
+    pf.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    U1(pf).dwRGBBitCount = 32;
+    U2(pf).dwRBitMask = 0x00ff0000;
+    U3(pf).dwGBitMask = 0x0000ff00;
+    U4(pf).dwBBitMask = 0x000000ff;
+    U5(pf).dwRGBAlphaBitMask = 0xff000000;
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    U4(surface_desc).ddpfPixelFormat = pf;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create source surface, hr %#x.\n", hr);
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &dst_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create destination surface, hr %#x.\n", hr);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.dwZBufferOpCode = D3DCMP_NEVER;
+    fx.dwZDestConstBitDepth = 32;
+    U1(fx).dwZDestConst = 0x11111111;
+    fx.dwZSrcConstBitDepth = 32;
+    U2(fx).dwZSrcConst = 0xeeeeeeee;
+    fx.dwAlphaEdgeBlendBitDepth = 8;
+    fx.dwAlphaEdgeBlend = 0x7f;
+    fx.dwAlphaDestConstBitDepth = 8;
+    U3(fx).dwAlphaDestConst = 0xdd;
+    fx.dwAlphaSrcConstBitDepth = 8;
+    U4(fx).dwAlphaSrcConst = 0x22;
+
+    for (i = 0; i < sizeof(blt_flags) / sizeof(*blt_flags); ++i)
+    {
+        fx.dwFillColor = 0x3300ff00;
+        hr = IDirectDrawSurface4_Blt(src_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+        ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        fx.dwFillColor = 0xccff0000;
+        hr = IDirectDrawSurface4_Blt(dst_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+        ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirectDrawSurface4_Blt(dst_surface, NULL, src_surface, NULL, blt_flags[i] | DDBLT_WAIT, &fx);
+        todo_wine ok(SUCCEEDED(hr), "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        color = get_surface_color(dst_surface, 32, 32);
+        todo_wine ok(compare_color(color, 0x0000ff00, 0), "Test %u: Got unexpected color 0x%08x.\n", i, color);
+    }
+
+    IDirectDrawSurface4_Release(dst_surface);
+    IDirectDrawSurface4_Release(src_surface);
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(!refcount, "DirectDraw has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_color_clamping(void)
 {
     static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
@@ -12873,6 +12972,7 @@ START_TEST(ddraw4)
     test_offscreen_overlay();
     test_overlay_rect();
     test_blt();
+    test_blt_z_alpha();
     test_color_clamping();
     test_getdc();
     test_draw_primitive();
