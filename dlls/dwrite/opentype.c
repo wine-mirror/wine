@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_GLYF_TAG DWRITE_MAKE_OPENTYPE_TAG('g','l','y','f')
 #define MS_CFF__TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F',' ')
 #define MS_COLR_TAG DWRITE_MAKE_OPENTYPE_TAG('C','O','L','R')
+#define MS_SVG__TAG DWRITE_MAKE_OPENTYPE_TAG('S','V','G',' ')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -2069,6 +2070,9 @@ UINT32 opentype_get_glyph_image_formats(IDWriteFontFace4 *fontface)
     if (opentype_has_font_table(fontface, MS_COLR_TAG))
         ret |= DWRITE_GLYPH_IMAGE_FORMATS_COLR;
 
-    /* TODO: handle SVG and bitmap data */
+    if (opentype_has_font_table(fontface, MS_SVG__TAG))
+        ret |= DWRITE_GLYPH_IMAGE_FORMATS_SVG;
+
+    /* TODO: handle embedded bitmaps tables */
     return ret;
 }
