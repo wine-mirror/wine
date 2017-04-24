@@ -1547,15 +1547,33 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *
     struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src_surface);
     struct wined3d_blt_fx wined3d_fx;
+    DWORD unsupported_flags;
     HRESULT hr = DD_OK;
     DDBLTFX rop_fx;
 
     TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p.\n",
             iface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect), flags, fx);
 
-    /* Check for validity of the flags here. WineD3D Has the software-opengl selection path and would have
-     * to check at 2 places, and sometimes do double checks. This also saves the call to wined3d :-)
-     */
+    unsupported_flags = DDBLT_ALPHADEST
+            | DDBLT_ALPHADESTCONSTOVERRIDE
+            | DDBLT_ALPHADESTNEG
+            | DDBLT_ALPHADESTSURFACEOVERRIDE
+            | DDBLT_ALPHAEDGEBLEND
+            | DDBLT_ALPHASRC
+            | DDBLT_ALPHASRCCONSTOVERRIDE
+            | DDBLT_ALPHASRCNEG
+            | DDBLT_ALPHASRCSURFACEOVERRIDE
+            | DDBLT_ZBUFFER
+            | DDBLT_ZBUFFERDESTCONSTOVERRIDE
+            | DDBLT_ZBUFFERDESTOVERRIDE
+            | DDBLT_ZBUFFERSRCCONSTOVERRIDE
+            | DDBLT_ZBUFFERSRCOVERRIDE;
+    if (flags & unsupported_flags)
+    {
+        WARN("Ignoring unsupported flags %#x.\n", flags & unsupported_flags);
+        flags &= ~unsupported_flags;
+    }
+
     if ((flags & DDBLT_KEYSRCOVERRIDE) && (!fx || flags & DDBLT_KEYSRC))
     {
         WARN("Invalid source color key parameters, returning DDERR_INVALIDPARAMS\n");
