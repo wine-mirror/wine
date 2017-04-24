@@ -1247,6 +1247,60 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [latentChildWindows removeObjectIdenticalTo:child];
     }
 
+    - (void) setChildWineWindows:(NSArray*)childWindows
+    {
+        NSArray* origChildren;
+        NSUInteger count, start, limit, i;
+
+        origChildren = self.childWineWindows;
+
+        // If the current and desired children arrays match up to a point, leave
+        // those matching children alone.
+        count = childWindows.count;
+        limit = MIN(origChildren.count, count);
+        for (start = 0; start < limit; start++)
+        {
+            if ([origChildren objectAtIndex:start] != [childWindows objectAtIndex:start])
+                break;
+        }
+
+        // Remove all of the child windows and re-add them back-to-front so they
+        // are in the desired order.
+        for (i = start; i < count; i++)
+        {
+            WineWindow* child = [childWindows objectAtIndex:i];
+            [self removeChildWindow:child];
+        }
+        for (i = start; i < count; i++)
+        {
+            WineWindow* child = [childWindows objectAtIndex:i];
+            [self addChildWindow:child ordered:NSWindowAbove];
+        }
+    }
+
+    static NSComparisonResult compare_windows_back_to_front(NSWindow* window1, NSWindow* window2, NSArray* windowNumbers)
+    {
+        NSNumber* window1Number = [NSNumber numberWithInteger:[window1 windowNumber]];
+        NSNumber* window2Number = [NSNumber numberWithInteger:[window2 windowNumber]];
+        NSUInteger index1 = [windowNumbers indexOfObject:window1Number];
+        NSUInteger index2 = [windowNumbers indexOfObject:window2Number];
+        if (index1 == NSNotFound)
+        {
+            if (index2 == NSNotFound)
+                return NSOrderedSame;
+            else
+                return NSOrderedAscending;
+        }
+        else if (index2 == NSNotFound)
+            return NSOrderedDescending;
+        else if (index1 < index2)
+            return NSOrderedDescending;
+        else if (index2 < index1)
+            return NSOrderedAscending;
+
+        return NSOrderedSame;
+    }
+
     - (BOOL) becameEligibleParentOrChild
     {
         BOOL reordered = FALSE;
@@ -1267,8 +1321,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         // again after actually making us visible.
         if ([self isVisible] && (count = [latentChildWindows count]))
         {
+            NSMutableArray* windowNumbers;
+            NSMutableArray* childWindows = [[self.childWineWindows mutableCopy] autorelease];
             NSMutableIndexSet* indexesToRemove = [NSMutableIndexSet indexSet];
             NSUInteger i;
+
+            windowNumbers = [[[[self class] windowNumbersWithOptions:NSWindowNumberListAllSpaces] mutableCopy] autorelease];
 
             for (i = 0; i < count; i++)
             {
@@ -1279,7 +1337,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     {
                         if ([self level] > [child level])
                             [child setLevel:[self level]];
-                        [self addChildWindow:child ordered:NSWindowAbove];
+                        [childWindows addObject:child];
                         child.latentParentWindow = nil;
                         reordered = TRUE;
                     }
@@ -1290,6 +1348,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             }
 
             [latentChildWindows removeObjectsAtIndexes:indexesToRemove];
+
+            [childWindows sortWithOptions:NSSortStable
+                          usingComparator:^NSComparisonResult(id obj1, id obj2){
+                return compare_windows_back_to_front(obj1, obj2, windowNumbers);
+            }];
+            [self setChildWineWindows:childWindows];
         }
 
         return reordered;
@@ -1384,7 +1448,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         NSMutableArray* windowNumbers;
         NSNumber* childWindowNumber;
-        NSUInteger otherIndex, limit;
+        NSUInteger otherIndex;
         NSArray* origChildren;
         NSMutableArray* children;
 
@@ -1402,43 +1466,10 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         children = [[origChildren mutableCopy] autorelease];
         [children sortWithOptions:NSSortStable
                   usingComparator:^NSComparisonResult(id obj1, id obj2){
-            NSNumber* window1Number = [NSNumber numberWithInteger:[obj1 windowNumber]];
-            NSNumber* window2Number = [NSNumber numberWithInteger:[obj2 windowNumber]];
-            NSUInteger index1 = [windowNumbers indexOfObject:window1Number];
-            NSUInteger index2 = [windowNumbers indexOfObject:window2Number];
-            if (index1 == NSNotFound)
-            {
-                if (index2 == NSNotFound)
-                    return NSOrderedSame;
-                else
-                    return NSOrderedAscending;
-            }
-            else if (index2 == NSNotFound)
-                return NSOrderedDescending;
-            else if (index1 < index2)
-                return NSOrderedDescending;
-            else if (index2 < index1)
-                return NSOrderedAscending;
-
-            return NSOrderedSame;
+            return compare_windows_back_to_front(obj1, obj2, windowNumbers);
         }];
 
-        // If the current and desired children arrays match up to a point, leave
-        // those matching children alone.
-        limit = MIN([origChildren count], [children count]);
-        for (otherIndex = 0; otherIndex < limit; otherIndex++)
-        {
-            if ([origChildren objectAtIndex:otherIndex] != [children objectAtIndex:otherIndex])
-                break;
-        }
-        [children removeObjectsInRange:NSMakeRange(0, otherIndex)];
-
-        // Remove all of the child windows and re-add them back-to-front so they
-        // are in the desired order.
-        for (other in children)
-            [self removeChildWindow:other];
-        for (other in children)
-            [self addChildWindow:other ordered:NSWindowAbove];
+        [self setChildWineWindows:children];
     }
 
     /* Returns whether or not the window was ordered in, which depends on if
