@@ -2208,6 +2208,8 @@ struct wined3d_buffer * __cdecl wined3d_device_get_cs_cb(const struct wined3d_de
 struct wined3d_shader_resource_view * __cdecl wined3d_device_get_cs_resource_view(const struct wined3d_device *device,
         unsigned int idx);
 struct wined3d_sampler * __cdecl wined3d_device_get_cs_sampler(const struct wined3d_device *device, unsigned int idx);
+struct wined3d_unordered_access_view * __cdecl wined3d_device_get_cs_uav(const struct wined3d_device *device,
+        unsigned int idx);
 struct wined3d_rendertarget_view * __cdecl wined3d_device_get_depth_stencil_view(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps);
 HRESULT __cdecl wined3d_device_get_display_mode(const struct wined3d_device *device, UINT swapchain_idx,
