@@ -1332,7 +1332,7 @@ static BOOL walk_parameter_tree(struct d3dx_parameter *param, walk_parameter_dep
 
 static void set_dirty(struct d3dx_parameter *param)
 {
-    *param->dirty_flag_ptr |= PARAMETER_FLAG_DIRTY;
+    param->top_level_param->runtime_flags |= PARAMETER_FLAG_DIRTY;
 }
 
 static void clear_dirty_params(struct d3dx9_base_effect *base)
@@ -1340,7 +1340,7 @@ static void clear_dirty_params(struct d3dx9_base_effect *base)
     unsigned int i;
 
     for (i = 0; i < base->parameter_count; ++i)
-        *base->parameters[i].dirty_flag_ptr &= ~PARAMETER_FLAG_DIRTY;
+        base->parameters[i].runtime_flags &= ~PARAMETER_FLAG_DIRTY;
 }
 
 static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
@@ -5878,9 +5878,9 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
     return hr;
 }
 
-static BOOL param_set_dirty_flag_ptr(void *dirty_flag_ptr, struct d3dx_parameter *param)
+static BOOL param_set_top_level_param(void *top_level_param, struct d3dx_parameter *param)
 {
-    param->dirty_flag_ptr = (DWORD *)dirty_flag_ptr;
+    param->top_level_param = top_level_param;
     return FALSE;
 }
 
@@ -5992,8 +5992,8 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
     }
 
     for (i = 0; i < base->parameter_count; ++i)
-        walk_parameter_tree(&base->parameters[i], param_set_dirty_flag_ptr,
-                &base->parameters[i].runtime_flags);
+        walk_parameter_tree(&base->parameters[i], param_set_top_level_param,
+                &base->parameters[i]);
     return D3D_OK;
 
 err_out:

@@ -218,12 +218,12 @@ struct d3dx_parameter
     struct d3dx_parameter *referenced_param;
     struct d3dx_param_eval *param_eval;
 
-    DWORD *dirty_flag_ptr;
+    struct d3dx_parameter *top_level_param;
 };
 
 static inline BOOL is_param_dirty(struct d3dx_parameter *param)
 {
-    return *param->dirty_flag_ptr & PARAMETER_FLAG_DIRTY;
+    return param->top_level_param->runtime_flags & PARAMETER_FLAG_DIRTY;
 }
 
 struct d3dx9_base_effect;
