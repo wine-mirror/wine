@@ -341,6 +341,11 @@ static const style_tbl_entry_t *lookup_style_tbl(const WCHAR *name)
     return NULL;
 }
 
+static inline compat_mode_t get_style_compat_mode(HTMLStyle *style)
+{
+    return style->elem && style->elem->node.doc ? style->elem->node.doc->document_mode : COMPAT_MODE_QUIRKS;
+}
+
 static LPWSTR fix_px_value(LPCWSTR val)
 {
     LPCWSTR ptr = val;
@@ -2681,10 +2686,15 @@ static void set_opacity(HTMLStyle *This, const WCHAR *val)
 
 static void update_filter(HTMLStyle *This)
 {
-    const WCHAR *ptr = This->elem->filter, *ptr2;
+    const WCHAR *ptr, *ptr2;
 
     static const WCHAR alphaW[] = {'a','l','p','h','a'};
 
+    if(get_style_compat_mode(This) >= COMPAT_MODE_IE10)
+        return;
+
+    ptr = This->elem->filter;
+    TRACE("%s\n", debugstr_w(ptr));
     if(!ptr) {
         set_opacity(This, emptyW);
         return;
