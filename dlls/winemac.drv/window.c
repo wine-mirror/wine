@@ -1053,6 +1053,21 @@ RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp)
 
 
 /***********************************************************************
+ *              sync_client_view_position
+ */
+static void sync_client_view_position(struct macdrv_win_data *data)
+{
+    if (data->cocoa_view != data->client_cocoa_view)
+    {
+        RECT rect = data->client_rect;
+        OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
+        macdrv_set_view_frame(data->client_cocoa_view, cgrect_from_rect(rect));
+        TRACE("win %p/%p client %s\n", data->hwnd, data->client_cocoa_view, wine_dbgstr_rect(&rect));
+    }
+}
+
+
+/***********************************************************************
  *              sync_window_position
  *
  * Synchronize the Mac window position with the Windows one
@@ -1098,13 +1113,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
             macdrv_set_view_frame(data->cocoa_view, frame);
     }
 
-    if (data->cocoa_view != data->client_cocoa_view)
-    {
-        RECT rect = data->client_rect;
-        OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
-        macdrv_set_view_frame(data->client_cocoa_view, cgrect_from_rect(rect));
-        TRACE("win %p/%p client %s\n", data->hwnd, data->client_cocoa_view, wine_dbgstr_rect(&rect));
-    }
+    sync_client_view_position(data);
 
     if (old_window_rect && old_whole_rect &&
         (IsRectEmpty(old_window_rect) != IsRectEmpty(&data->window_rect) ||
@@ -2097,10 +2106,15 @@ void CDECL macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     }
 
     /* check if we are currently processing an event relevant to this window */
-    if (!thread_data || !thread_data->current_event ||
-        !data->cocoa_window || thread_data->current_event->window != data->cocoa_window ||
-        (thread_data->current_event->type != WINDOW_FRAME_CHANGED &&
-         thread_data->current_event->type != WINDOW_DID_UNMINIMIZE))
+    if (thread_data && thread_data->current_event &&
+        data->cocoa_window && thread_data->current_event->window == data->cocoa_window &&
+        (thread_data->current_event->type == WINDOW_FRAME_CHANGED ||
+         thread_data->current_event->type == WINDOW_DID_UNMINIMIZE))
+    {
+        if (thread_data->current_event->type == WINDOW_FRAME_CHANGED)
+            sync_client_view_position(data);
+    }
+    else
     {
         sync_window_position(data, swp_flags, &old_window_rect, &old_whole_rect);
         if (data->cocoa_window)
