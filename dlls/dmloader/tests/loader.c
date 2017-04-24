@@ -143,7 +143,7 @@ static void test_COM(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicLoader, (IUnknown*)&dml8, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dml8);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicLoader create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -180,7 +180,7 @@ static void test_COM_container(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicContainer, (IUnknown*)&dmc, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicContainer, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmc);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicContainer create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);

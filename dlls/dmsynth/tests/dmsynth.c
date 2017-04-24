@@ -145,7 +145,7 @@ static void test_COM(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicSynth, (IUnknown*)&dms8, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicSynth, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dms8);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicSynth create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -193,7 +193,7 @@ static void test_COM_synthsink(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, (IUnknown*)&dmss, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicSynthSink, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmss);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicSynthSink create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);

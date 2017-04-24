@@ -48,7 +48,7 @@ static void test_COM(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicComposer, (IUnknown*)&dmc, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicComposer, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmc);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicComposer create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -86,7 +86,7 @@ static void test_COM_chordmap(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicChordMap, (IUnknown*)&dmcm, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicChordMap, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmcm);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicChordMap create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -134,7 +134,7 @@ static void test_COM_template(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicTemplate, (IUnknown*)&ps, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicTemplate, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&ps);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicTemplate create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -187,7 +187,7 @@ static void test_COM_track(void)
     for (i = 0; i < ARRAY_SIZE(class); i++) {
         /* COM aggregation */
         dmt8 = (IDirectMusicTrack8*)0xdeadbeef;
-        hr = CoCreateInstance(class[i].clsid, (IUnknown*)&dmt8, CLSCTX_INPROC_SERVER, &IID_IUnknown,
+        hr = CoCreateInstance(class[i].clsid, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER, &IID_IUnknown,
                 (void**)&dmt8);
         if (hr == REGDB_E_CLASSNOTREG) {
             win_skip("%s not registered\n", class[i].name);

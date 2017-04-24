@@ -104,7 +104,7 @@ static void test_COM_audiopathconfig(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicAudioPathConfig, (IUnknown*)&dmap, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicAudioPathConfig, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmap);
     if (hr == REGDB_E_CLASSNOTREG) {
         win_skip("DirectMusicAudioPathConfig not registered\n");
@@ -164,7 +164,7 @@ static void test_COM_graph(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicGraph, (IUnknown*)&dmg, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmg);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicGraph create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -217,7 +217,7 @@ static void test_COM_segment(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicSegment, (IUnknown*)&dms, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dms);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicSegment create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -268,7 +268,7 @@ static void test_COM_segmentstate(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicSegmentState, (IUnknown*)&dmss8, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectMusicSegmentState, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmss8);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicSegmentState8 create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
@@ -334,7 +334,7 @@ static void test_COM_track(void)
         trace("Testing %s\n", class[i].name);
         /* COM aggregation */
         dmt8 = (IDirectMusicTrack8*)0xdeadbeef;
-        hr = CoCreateInstance(class[i].clsid, (IUnknown*)&dmt8, CLSCTX_INPROC_SERVER, &IID_IUnknown,
+        hr = CoCreateInstance(class[i].clsid, (IUnknown *)0xdeadbeef, CLSCTX_INPROC_SERVER, &IID_IUnknown,
                 (void**)&dmt8);
         if (hr == REGDB_E_CLASSNOTREG) {
             win_skip("%s not registered\n", class[i].name);
