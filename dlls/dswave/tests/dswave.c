@@ -50,7 +50,7 @@ static void test_COM(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectSoundWave, (IUnknown*)&dmo, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectSoundWave, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dmo);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectSoundWave create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
