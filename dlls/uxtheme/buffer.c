@@ -137,6 +137,8 @@ HPAINTBUFFER WINAPI BeginBufferedPaint(HDC targetdc, const RECT *rect,
         return NULL;
     }
 
+    SetWindowOrgEx(buffer->memorydc, rect->left, rect->top, NULL);
+    IntersectClipRect(buffer->memorydc, rect->left, rect->top, rect->right, rect->bottom);
     DeleteObject(SelectObject(buffer->memorydc, buffer->bitmap));
 
     *retdc = buffer->memorydc;
@@ -160,7 +162,7 @@ HRESULT WINAPI EndBufferedPaint(HPAINTBUFFER bufferhandle, BOOL update)
     {
         if (!BitBlt(buffer->targetdc, buffer->rect.left, buffer->rect.top,
                 buffer->rect.right - buffer->rect.left, buffer->rect.bottom - buffer->rect.top,
-                buffer->memorydc, 0, 0, SRCCOPY))
+                buffer->memorydc, buffer->rect.left, buffer->rect.top, SRCCOPY))
         {
             WARN("BitBlt() failed\n");
         }

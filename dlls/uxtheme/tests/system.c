@@ -523,14 +523,42 @@ static void test_CloseThemeData(void)
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
 }
 
+static void test_buffer_dc_props(HDC hdc, const RECT *rect)
+{
+    static const XFORM ident = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+    XFORM xform;
+    POINT org;
+    RECT box;
+    BOOL ret;
+
+    ret = GetWorldTransform(hdc, &xform);
+    ok(ret, "Failed to get world transform\n");
+    ok(!memcmp(&xform, &ident, sizeof(xform)), "Unexpected world transform\n");
+
+    ret = GetViewportOrgEx(hdc, &org);
+    ok(ret, "Failed to get vport origin\n");
+    ok(org.x == 0 && org.y == 0, "Unexpected vport origin\n");
+
+    ret = GetWindowOrgEx(hdc, &org);
+    ok(ret, "Failed to get vport origin\n");
+    ok(org.x == rect->left && org.y == rect->top, "Unexpected window origin\n");
+
+    ret = GetClipBox(hdc, &box);
+    ok(ret, "Failed to get clip box\n");
+    ok(box.left == rect->left && box.top == rect->top, "Unexpected clip box\n");
+
+    ok(GetGraphicsMode(hdc) == GM_COMPATIBLE, "wrong graphics mode\n");
+}
+
 static void test_buffered_paint(void)
 {
+    HDC target, src, hdc, screen_dc;
     BP_PAINTPARAMS params = { 0 };
     BP_BUFFERFORMAT format;
-    HDC target, src, hdc;
     HPAINTBUFFER buffer;
     RECT rect, rect2;
     RGBQUAD *bits;
+    HBITMAP hbm;
     HRESULT hr;
     int row;
 
@@ -669,6 +697,31 @@ todo_wine
 
     hr = pGetBufferedPaintBits(NULL, NULL, &row);
     ok(hr == E_POINTER, "Unexpected return code %#x\n", hr);
+
+    screen_dc = GetDC(0);
+
+    hdc = CreateCompatibleDC(screen_dc);
+    ok(hdc != NULL, "Failed to create a DC\n");
+    hbm = CreateCompatibleBitmap(screen_dc, 64, 64);
+    ok(hbm != NULL, "Failed to create a bitmap\n");
+    SelectObject(hdc, hbm);
+
+    ReleaseDC(0, screen_dc);
+
+    SetRect(&rect, 1, 2, 34, 56);
+
+    buffer = pBeginBufferedPaint(hdc, &rect, BPBF_COMPATIBLEBITMAP, NULL, &src);
+    test_buffer_dc_props(src, &rect);
+    hr = pEndBufferedPaint(buffer, FALSE);
+    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
+
+    DeleteObject(hbm);
+    DeleteDC(hdc);
+
+    buffer = pBeginBufferedPaint(target, &rect, BPBF_COMPATIBLEBITMAP, NULL, &src);
+    test_buffer_dc_props(src, &rect);
+    hr = pEndBufferedPaint(buffer, FALSE);
+    ok(hr == S_OK, "Unexpected return code %#x\n", hr);
 
     /* access buffer bits */
     for (format = BPBF_COMPATIBLEBITMAP; format <= BPBF_TOPDOWNMONODIB; format++)
