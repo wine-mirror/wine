@@ -6554,8 +6554,8 @@ static void test_COM(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectPlay, (IUnknown*)&dp4, CLSCTX_INPROC_SERVER, &IID_IUnknown,
-            (void**)&dp4);
+    hr = CoCreateInstance(&CLSID_DirectPlay, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dp4);
     ok(hr == CLASS_E_NOAGGREGATION || broken(hr == E_INVALIDARG),
             "DirectPlay create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
     ok(!dp4 || dp4 == (IDirectPlay4*)0xdeadbeef, "dp4 = %p\n", dp4);
@@ -6641,7 +6641,7 @@ static void test_COM_dplobby(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectPlayLobby, (IUnknown*)&dpl, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectPlayLobby, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dpl);
     ok(hr == CLASS_E_NOAGGREGATION || broken(hr == E_INVALIDARG),
             "DirectPlayLobby create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
