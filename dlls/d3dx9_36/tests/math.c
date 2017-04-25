@@ -61,6 +61,14 @@ static BOOL compare_plane(const D3DXPLANE *p1, const D3DXPLANE *p2, unsigned int
             && compare_float(p1->d, p2->d, ulps);
 }
 
+static BOOL compare_quaternion(const D3DXQUATERNION *q1, const D3DXQUATERNION *q2, unsigned int ulps)
+{
+    return compare_float(q1->x, q2->x, ulps)
+            && compare_float(q1->y, q2->y, ulps)
+            && compare_float(q1->z, q2->z, ulps)
+            && compare_float(q1->w, q2->w, ulps);
+}
+
 static BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2, unsigned int ulps)
 {
     unsigned int i, j;
@@ -93,6 +101,17 @@ static void expect_plane_(unsigned int line, const D3DXPLANE *expected, const D3
     ok_(__FILE__, line)(equal,
             "Got unexpected plane {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
             plane->a, plane->b, plane->c, plane->d, expected->a, expected->b, expected->c, expected->d);
+}
+
+#define expect_quaternion(expected, quaternion, ulps) expect_quaternion_(__LINE__, expected, quaternion, ulps)
+static void expect_quaternion_(unsigned int line, const D3DXQUATERNION *expected,
+        const D3DXQUATERNION *quaternion, unsigned int ulps)
+{
+    BOOL equal = compare_quaternion(expected, quaternion, ulps);
+    ok_(__FILE__, line)(equal,
+            "Got unexpected quaternion {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+            quaternion->x, quaternion->y, quaternion->z, quaternion->w,
+            expected->x, expected->y, expected->z, expected->w);
 }
 
 #define expect_matrix(expected, matrix, ulps) expect_matrix_(__LINE__, expected, matrix, ulps)
@@ -727,12 +746,12 @@ static void D3DXQuaternionTest(void)
 /*_______________D3DXQuaternionBaryCentric________________________*/
     expectedquat.x = -867.444458; expectedquat.y = 87.851111f; expectedquat.z = -9.937778f; expectedquat.w = 3.235555f;
     D3DXQuaternionBaryCentric(&gotquat,&q,&r,&t,scale,scale2);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 1);
 
 /*_______________D3DXQuaternionConjugate________________*/
     expectedquat.x = -1.0f; expectedquat.y = -2.0f; expectedquat.z = -4.0f; expectedquat.w = 10.0f;
     D3DXQuaternionConjugate(&gotquat,&q);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
     /* Test the NULL case */
     funcpointer = D3DXQuaternionConjugate(&gotquat,NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -754,21 +773,21 @@ static void D3DXQuaternionTest(void)
 /*_______________D3DXQuaternionExp______________________________*/
     expectedquat.x = -0.216382f; expectedquat.y = -0.432764f; expectedquat.z = -0.8655270f; expectedquat.w = -0.129449f;
     D3DXQuaternionExp(&gotquat,&q);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 16);
     /* Test the null quaternion */
     expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 1.0f;
     D3DXQuaternionExp(&gotquat,&nul);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
     /* Test the case where the norm of the quaternion is <1 */
     Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w= 0.9f;
     expectedquat.x = 0.195366; expectedquat.y = 0.097683f; expectedquat.z = 0.293049f; expectedquat.w = 0.930813f;
     D3DXQuaternionExp(&gotquat,&Nq1);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
 
 /*_______________D3DXQuaternionIdentity________________*/
     expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 1.0f;
     D3DXQuaternionIdentity(&gotquat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
     /* Test the NULL case */
     funcpointer = D3DXQuaternionIdentity(NULL);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -776,11 +795,11 @@ static void D3DXQuaternionTest(void)
 /*_______________D3DXQuaternionInverse________________________*/
     expectedquat.x = -1.0f/121.0f; expectedquat.y = -2.0f/121.0f; expectedquat.z = -4.0f/121.0f; expectedquat.w = 10.0f/121.0f;
     D3DXQuaternionInverse(&gotquat,&q);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
 
     expectedquat.x = 1.0f; expectedquat.y = 2.0f; expectedquat.z = 4.0f; expectedquat.w = 10.0f;
     D3DXQuaternionInverse(&gotquat,&gotquat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 1);
 
 
 /*_______________D3DXQuaternionIsIdentity________________*/
@@ -817,54 +836,54 @@ static void D3DXQuaternionTest(void)
 /*_______________D3DXQuaternionLn______________________________*/
     expectedquat.x = 1.0f; expectedquat.y = 2.0f; expectedquat.z = 4.0f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&q);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
     expectedquat.x = -3.0f; expectedquat.y = 4.0f; expectedquat.z = -5.0f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&r);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
     Nq.x = 1.0f/11.0f; Nq.y = 2.0f/11.0f; Nq.z = 4.0f/11.0f; Nq.w=10.0f/11.0f;
     expectedquat.x = 0.093768f; expectedquat.y = 0.187536f; expectedquat.z = 0.375073f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&Nq);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 32);
     Nq.x = 0.0f; Nq.y = 0.0f; Nq.z = 0.0f; Nq.w = 1.0f;
     expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&Nq);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
     Nq.x = 5.4f; Nq.y = 1.2f; Nq.z = -0.3f; Nq.w = -0.3f;
     expectedquat.x = 10.616652f; expectedquat.y = 2.359256f; expectedquat.z = -0.589814f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&Nq);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 1);
     /* Test the case where the norm of the quaternion is <1 */
     Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w = 0.9f;
     expectedquat.x = 0.206945f; expectedquat.y = 0.103473f; expectedquat.z = 0.310418f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&Nq1);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 64);
     /* Test the case where the real part of the quaternion is -1.0f */
     Nq1.x = 0.2f; Nq1.y = 0.1f; Nq1.z = 0.3; Nq1.w = -1.0f;
     expectedquat.x = 0.2f; expectedquat.y = 0.1f; expectedquat.z = 0.3f; expectedquat.w = 0.0f;
     D3DXQuaternionLn(&gotquat,&Nq1);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
 
 /*_______________D3DXQuaternionMultiply________________________*/
     expectedquat.x = 3.0f; expectedquat.y = 61.0f; expectedquat.z = -32.0f; expectedquat.w = 85.0f;
     D3DXQuaternionMultiply(&gotquat,&q,&r);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
 
 /*_______________D3DXQuaternionNormalize________________________*/
     expectedquat.x = 1.0f/11.0f; expectedquat.y = 2.0f/11.0f; expectedquat.z = 4.0f/11.0f; expectedquat.w = 10.0f/11.0f;
     D3DXQuaternionNormalize(&gotquat,&q);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 1);
 
 /*_______________D3DXQuaternionRotationAxis___________________*/
     axis.x = 2.0f; axis.y = 7.0; axis.z = 13.0f;
     angle = D3DX_PI/3.0f;
     expectedquat.x = 0.067116; expectedquat.y = 0.234905f; expectedquat.z = 0.436251f; expectedquat.w = 0.866025f;
     D3DXQuaternionRotationAxis(&gotquat,&axis,angle);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 64);
  /* Test the nul quaternion */
     axis.x = 0.0f; axis.y = 0.0; axis.z = 0.0f;
     expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.866025f;
     D3DXQuaternionRotationAxis(&gotquat,&axis,angle);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
 
 /*_______________D3DXQuaternionRotationMatrix___________________*/
     /* test when the trace is >0 */
@@ -876,7 +895,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 2.368682f; expectedquat.y = 0.768221f; expectedquat.z = -0.384111f; expectedquat.w = 3.905125f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 16);
     /* test the case when the greater element is (2,2) */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -886,7 +905,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 1.233905f; expectedquat.y = -0.237290f; expectedquat.z = 5.267827f; expectedquat.w = -0.284747f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 64);
     /* test the case when the greater element is (1,1) */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -896,7 +915,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 0.651031f; expectedquat.y = 6.144103f; expectedquat.z = -0.203447f; expectedquat.w = 0.488273f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is near 0 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -906,7 +925,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 1.709495f; expectedquat.y = 2.339872f; expectedquat.z = -0.534217f; expectedquat.w = 1.282122f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 0.49 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -916,7 +935,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 1.724923f; expectedquat.y = 2.318944f; expectedquat.z = -0.539039f; expectedquat.w = 1.293692f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 0.51 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -926,7 +945,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 1.725726f; expectedquat.y = 2.317865f; expectedquat.z = -0.539289f; expectedquat.w = 1.294294f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 0.99 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -936,7 +955,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 1.745328f; expectedquat.y = 2.291833f; expectedquat.z = -0.545415f; expectedquat.w = 1.308996f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 1.0 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -946,7 +965,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 1.745743f; expectedquat.y = 2.291288f; expectedquat.z = -0.545545f; expectedquat.w = 1.309307f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 1.01 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -956,7 +975,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 18.408188f; expectedquat.y = 5.970223f; expectedquat.z = -2.985111f; expectedquat.w = 0.502494f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 1.5 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -966,7 +985,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 15.105186f; expectedquat.y = 4.898980f; expectedquat.z = -2.449490f; expectedquat.w = 0.612372f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
     /* test the case when the trace is 1.7 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -976,7 +995,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 14.188852f; expectedquat.y = 4.601790f; expectedquat.z = -2.300895f; expectedquat.w = 0.651920f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 1.99 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -986,7 +1005,7 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 13.114303f; expectedquat.y = 4.253287f; expectedquat.z = -2.126644f; expectedquat.w = 0.705337f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 4);
     /* test the case when the trace is 2.0 in a matrix which is not a rotation */
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -996,28 +1015,28 @@ static void D3DXQuaternionTest(void)
     U(mat).m[3][3] = 48.0f;
     expectedquat.x = 10.680980f; expectedquat.y = 3.464102f; expectedquat.z = -1.732051f; expectedquat.w = 0.866025f;
     D3DXQuaternionRotationMatrix(&gotquat,&mat);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 8);
 
 /*_______________D3DXQuaternionRotationYawPitchRoll__________*/
     expectedquat.x = 0.303261f; expectedquat.y = 0.262299f; expectedquat.z = 0.410073f; expectedquat.w = 0.819190f;
     D3DXQuaternionRotationYawPitchRoll(&gotquat,D3DX_PI/4.0f,D3DX_PI/11.0f,D3DX_PI/3.0f);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 16);
 
 /*_______________D3DXQuaternionSlerp________________________*/
     expectedquat.x = -0.2f; expectedquat.y = 2.6f; expectedquat.z = 1.3f; expectedquat.w = 9.1f;
     D3DXQuaternionSlerp(&gotquat,&q,&r,scale);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 4);
     expectedquat.x = 334.0f; expectedquat.y = -31.9f; expectedquat.z = 6.1f; expectedquat.w = 6.7f;
     D3DXQuaternionSlerp(&gotquat,&q,&t,scale);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 2);
     expectedquat.x = 0.239485f; expectedquat.y = 0.346580f; expectedquat.z = 0.453676f; expectedquat.w = 0.560772f;
     D3DXQuaternionSlerp(&gotquat,&smallq,&smallr,scale);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 32);
 
 /*_______________D3DXQuaternionSquad________________________*/
     expectedquat.x = -156.296f; expectedquat.y = 30.242f; expectedquat.z = -2.5022f; expectedquat.w = 7.3576f;
     D3DXQuaternionSquad(&gotquat,&q,&r,&t,&u,scale);
-    expect_vec4(expectedquat,gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 2);
 
 /*_______________D3DXQuaternionSquadSetup___________________*/
     r.x = 1.0f, r.y = 2.0f; r.z = 4.0f; r.w = 10.0f;
@@ -1026,47 +1045,47 @@ static void D3DXQuaternionTest(void)
     u.x = 91.0f; u.y = - 82.0f; u.z = 7.3f; u.w = -6.4f;
     D3DXQuaternionSquadSetup(&gotquat, &Nq, &Nq1, &r, &s, &t, &u);
     expectedquat.x = 7.121285f; expectedquat.y = 2.159964f; expectedquat.z = -3.855094f; expectedquat.w = 5.362844f;
-    expect_vec4(expectedquat, gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 2);
     expectedquat.x = -1113.492920f; expectedquat.y = 82.679260f; expectedquat.z = -6.696645f; expectedquat.w = -4.090050f;
-    expect_vec4(expectedquat, Nq);
+    expect_quaternion(&expectedquat, &Nq, 2);
     expectedquat.x = -1111.0f; expectedquat.y = 111.0f; expectedquat.z = -11.0f; expectedquat.w = 1.0f;
-    expect_vec4(expectedquat, Nq1);
+    expect_quaternion(&expectedquat, &Nq1, 0);
     gotquat = s;
     D3DXQuaternionSquadSetup(&gotquat, &Nq, &Nq1, &r, &gotquat, &t, &u);
     expectedquat.x = -1113.492920f; expectedquat.y = 82.679260f; expectedquat.z = -6.696645f; expectedquat.w = -4.090050f;
-    expect_vec4(expectedquat, Nq);
+    expect_quaternion(&expectedquat, &Nq, 2);
     Nq1 = u;
     D3DXQuaternionSquadSetup(&gotquat, &Nq, &Nq1, &r, &s, &t, &Nq1);
-    expect_vec4(expectedquat, Nq);
+    expect_quaternion(&expectedquat, &Nq, 2);
     r.x = 0.2f; r.y = 0.3f; r.z = 1.3f; r.w = -0.6f;
     s.x = -3.0f; s.y =-2.0f; s.z = 4.0f; s.w = 0.2f;
     t.x = 0.4f; t.y = 8.3f; t.z = -3.1f; t.w = -2.7f;
     u.x = 1.1f; u.y = -0.7f; u.z = 9.2f; u.w = 0.0f;
     D3DXQuaternionSquadSetup(&gotquat, &Nq, &Nq1, &r, &s, &u, &t);
     expectedquat.x = -4.139569f; expectedquat.y = -2.469115f; expectedquat.z = 2.364477f; expectedquat.w = 0.465494f;
-    expect_vec4(expectedquat, gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 16);
     expectedquat.x = 2.342533f; expectedquat.y = 2.365127f; expectedquat.z = 8.628538f; expectedquat.w = -0.898356f;
-    expect_vec4(expectedquat, Nq);
+    expect_quaternion(&expectedquat, &Nq, 16);
     expectedquat.x = 1.1f; expectedquat.y = -0.7f; expectedquat.z = 9.2f; expectedquat.w = 0.0f;
-    expect_vec4(expectedquat, Nq1);
+    expect_quaternion(&expectedquat, &Nq1, 0);
     D3DXQuaternionSquadSetup(&gotquat, &Nq, &Nq1, &r, &s, &t, &u);
     expectedquat.x = -3.754567f; expectedquat.y = -0.586085f; expectedquat.z = 3.815818f; expectedquat.w = -0.198150f;
-    expect_vec4(expectedquat, gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 32);
     expectedquat.x = 0.140773f; expectedquat.y = -8.737090f; expectedquat.z = -0.516593f; expectedquat.w = 3.053942f;
-    expect_vec4(expectedquat, Nq);
+    expect_quaternion(&expectedquat, &Nq, 16);
     expectedquat.x = -0.4f; expectedquat.y = -8.3f; expectedquat.z = 3.1f; expectedquat.w = 2.7f;
-    expect_vec4(expectedquat, Nq1);
+    expect_quaternion(&expectedquat, &Nq1, 0);
     r.x = -1.0f; r.y = 0.0f; r.z = 0.0f; r.w = 0.0f;
     s.x = 1.0f; s.y =0.0f; s.z = 0.0f; s.w = 0.0f;
     t.x = 1.0f; t.y = 0.0f; t.z = 0.0f; t.w = 0.0f;
     u.x = -1.0f; u.y = 0.0f; u.z = 0.0f; u.w = 0.0f;
     D3DXQuaternionSquadSetup(&gotquat, &Nq, &Nq1, &r, &s, &t, &u);
     expectedquat.x = 1.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
-    expect_vec4(expectedquat, gotquat);
+    expect_quaternion(&expectedquat, &gotquat, 0);
     expectedquat.x = 1.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
-    expect_vec4(expectedquat, Nq);
+    expect_quaternion(&expectedquat, &Nq, 0);
     expectedquat.x = 1.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
-    expect_vec4(expectedquat, Nq1);
+    expect_quaternion(&expectedquat, &Nq1, 0);
 
 /*_______________D3DXQuaternionToAxisAngle__________________*/
     Nq.x = 1.0f/22.0f; Nq.y = 2.0f/22.0f; Nq.z = 4.0f/22.0f; Nq.w = 10.0f/22.0f;
