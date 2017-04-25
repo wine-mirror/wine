@@ -113,7 +113,7 @@
 @ stub WsReadEndpointAddressExtension
 @ stdcall WsReadEnvelopeEnd(ptr ptr)
 @ stdcall WsReadEnvelopeStart(ptr ptr ptr ptr ptr)
-@ stub WsReadMessageEnd
+@ stdcall WsReadMessageEnd(ptr ptr ptr ptr)
 @ stdcall WsReadMessageStart(ptr ptr ptr ptr)
 @ stub WsReadMetadata
 @ stdcall WsReadNode(ptr ptr)
