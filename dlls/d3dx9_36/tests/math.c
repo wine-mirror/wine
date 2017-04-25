@@ -57,6 +57,14 @@ static BOOL compare_vec3(const D3DXVECTOR3 *v1, const D3DXVECTOR3 *v2, unsigned 
             && compare_float(v1->z, v2->z, ulps);
 }
 
+static BOOL compare_vec4(const D3DXVECTOR4 *v1, const D3DXVECTOR4 *v2, unsigned int ulps)
+{
+    return compare_float(v1->x, v2->x, ulps)
+            && compare_float(v1->y, v2->y, ulps)
+            && compare_float(v1->z, v2->z, ulps)
+            && compare_float(v1->w, v2->w, ulps);
+}
+
 static BOOL compare_color(const D3DXCOLOR *c1, const D3DXCOLOR *c2, unsigned int ulps)
 {
     return compare_float(c1->r, c2->r, ulps)
@@ -113,6 +121,15 @@ static void expect_vec3_(unsigned int line, const D3DXVECTOR3 *expected, const D
     ok_(__FILE__, line)(equal,
             "Got unexpected vector {%.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e}.\n",
             vector->x, vector->y, vector->z, expected->x, expected->y, expected->z);
+}
+
+#define expect_vec4(expected, vector, ulps) expect_vec4_(__LINE__, expected, vector, ulps)
+static void expect_vec4_(unsigned int line, const D3DXVECTOR4 *expected, const D3DXVECTOR4 *vector, unsigned int ulps)
+{
+    BOOL equal = compare_vec4(expected, vector, ulps);
+    ok_(__FILE__, line)(equal,
+            "Got unexpected vector {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+            vector->x, vector->y, vector->z, vector->w, expected->x, expected->y, expected->z, expected->w);
 }
 
 #define expect_color(expected, color, ulps) expect_color_(__LINE__, expected, color, ulps)
@@ -211,9 +228,6 @@ static void expect_matrix_(unsigned int line, const D3DXMATRIX *expected, const 
             exp[i].a, exp[i].b, exp[i].c, exp[i].d, \
             i); \
     }
-
-#define expect_vec4(expectedvec,gotvec) ok((relative_error(expectedvec.x, gotvec.x)<admitted_error)&&(relative_error(expectedvec.y, gotvec.y)<admitted_error)&&(relative_error(expectedvec.z, gotvec.z)<admitted_error)&&(relative_error(expectedvec.w, gotvec.w)<admitted_error),"Expected Vector= (%f, %f, %f, %f)\n , Got Vector= (%f, %f, %f, %f)\n", expectedvec.x, expectedvec.y, expectedvec.z, expectedvec.w, gotvec.x, gotvec.y, gotvec.z, gotvec.w);
-
 
 static void D3DXColorTest(void)
 {
@@ -1288,10 +1302,10 @@ static void D3DXVector2Test(void)
 /*_______________D3DXVec2Transform_______________________*/
     expectedtrans.x = 36.0f; expectedtrans.y = 44.0f; expectedtrans.z = 52.0f; expectedtrans.w = 60.0f;
     D3DXVec2Transform(&gottrans, &u, &mat);
-    expect_vec4(expectedtrans, gottrans);
+    expect_vec4(&expectedtrans, &gottrans, 0);
     gottrans.x = u.x; gottrans.y = u.y;
     D3DXVec2Transform(&gottrans, (D3DXVECTOR2 *)&gottrans, &mat);
-    expect_vec4(expectedtrans, gottrans);
+    expect_vec4(&expectedtrans, &gottrans, 0);
 
 /*_______________D3DXVec2TransformCoord_______________________*/
     expectedvec.x = 0.6f; expectedvec.y = 11.0f/15.0f;
@@ -1475,11 +1489,11 @@ static void D3DXVector3Test(void)
 /*_______________D3DXVec3Transform_______________________*/
     expectedtrans.x = 70.0f; expectedtrans.y = 88.0f; expectedtrans.z = 106.0f; expectedtrans.w = 124.0f;
     D3DXVec3Transform(&gottrans, &u, &mat);
-    expect_vec4(expectedtrans, gottrans);
+    expect_vec4(&expectedtrans, &gottrans, 0);
 
     gottrans.x = u.x; gottrans.y = u.y; gottrans.z = u.z;
     D3DXVec3Transform(&gottrans, (D3DXVECTOR3 *)&gottrans, &mat);
-    expect_vec4(expectedtrans, gottrans);
+    expect_vec4(&expectedtrans, &gottrans, 0);
 
 /*_______________D3DXVec3TransformCoord_______________________*/
     expectedvec.x = 70.0f/124.0f; expectedvec.y = 88.0f/124.0f; expectedvec.z = 106.0f/124.0f;
@@ -1568,7 +1582,7 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Add__________________________*/
     expectedvec.x = -2.0f; expectedvec.y = 6.0f; expectedvec.z = -1.0f; expectedvec.w = 17.0f;
     D3DXVec4Add(&gotvec,&u,&v);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
     /* Tests the case NULL */
     funcpointer = D3DXVec4Add(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -1578,17 +1592,17 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4BaryCentric____________________*/
     expectedvec.x = 8.0f; expectedvec.y = 26.0; expectedvec.z =  -44.0f; expectedvec.w = -41.0f;
     D3DXVec4BaryCentric(&gotvec,&u,&v,&w,coeff1,coeff2);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
 
 /*_______________D3DXVec4CatmullRom____________________*/
     expectedvec.x = 2754.625f; expectedvec.y = 2367.5625f; expectedvec.z = 1060.1875f; expectedvec.w = 131.3125f;
     D3DXVec4CatmullRom(&gotvec,&u,&v,&w,&x,scale);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
 
 /*_______________D3DXVec4Cross_________________________*/
     expectedvec.x = 390.0f; expectedvec.y = -393.0f; expectedvec.z = -316.0f; expectedvec.w = 166.0f;
     D3DXVec4Cross(&gotvec,&u,&v,&w);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
 
 /*_______________D3DXVec4Dot__________________________*/
     expected = 55.0f;
@@ -1605,7 +1619,7 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Hermite_________________________*/
     expectedvec.x = 1224.625f; expectedvec.y = 3461.625f; expectedvec.z = -4758.875f; expectedvec.w = -5781.5f;
     D3DXVec4Hermite(&gotvec,&u,&v,&w,&x,scale);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
 
 /*_______________D3DXVec4Length__________________________*/
    expected = 11.0f;
@@ -1628,7 +1642,7 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Lerp__________________________*/
     expectedvec.x = 27.0f; expectedvec.y = -11.0f; expectedvec.z = 62.5;  expectedvec.w = 29.5;
     D3DXVec4Lerp(&gotvec,&u,&v,scale);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
     /* Tests the case NULL */
     funcpointer = D3DXVec4Lerp(&gotvec,NULL,&v,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -1638,7 +1652,7 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Maximize__________________________*/
     expectedvec.x = 1.0f; expectedvec.y = 4.0f; expectedvec.z = 4.0f; expectedvec.w = 10.0;
     D3DXVec4Maximize(&gotvec,&u,&v);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
     /* Tests the case NULL */
     funcpointer = D3DXVec4Maximize(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -1648,7 +1662,7 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Minimize__________________________*/
     expectedvec.x = -3.0f; expectedvec.y = 2.0f; expectedvec.z = -5.0f; expectedvec.w = 7.0;
     D3DXVec4Minimize(&gotvec,&u,&v);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
     /* Tests the case NULL */
     funcpointer = D3DXVec4Minimize(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -1658,12 +1672,12 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Normalize_________________________*/
     expectedvec.x = 1.0f/11.0f; expectedvec.y = 2.0f/11.0f; expectedvec.z = 4.0f/11.0f; expectedvec.w = 10.0f/11.0f;
     D3DXVec4Normalize(&gotvec,&u);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 1);
 
 /*_______________D3DXVec4Scale____________________________*/
     expectedvec.x = -6.5f; expectedvec.y = -13.0f; expectedvec.z = -26.0f; expectedvec.w = -65.0f;
     D3DXVec4Scale(&gotvec,&u,scale);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
     /* Tests the case NULL */
     funcpointer = D3DXVec4Scale(&gotvec,NULL,scale);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -1673,7 +1687,7 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Subtract__________________________*/
     expectedvec.x = 4.0f; expectedvec.y = -2.0f; expectedvec.z = 9.0f; expectedvec.w = 3.0f;
     D3DXVec4Subtract(&gotvec,&u,&v);
-    expect_vec4(expectedvec,gotvec);
+    expect_vec4(&expectedvec, &gotvec, 0);
     /* Tests the case NULL */
     funcpointer = D3DXVec4Subtract(&gotvec,NULL,&v);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
@@ -1683,7 +1697,7 @@ static void D3DXVector4Test(void)
 /*_______________D3DXVec4Transform_______________________*/
     expectedtrans.x = 177.0f; expectedtrans.y = 194.0f; expectedtrans.z = 211.0f; expectedtrans.w = 228.0f;
     D3DXVec4Transform(&gottrans,&u,&mat);
-    expect_vec4(expectedtrans,gottrans);
+    expect_vec4(&expectedtrans, &gottrans, 0);
 }
 
 static void test_matrix_stack(void)
