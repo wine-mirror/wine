@@ -3210,9 +3210,9 @@ static void delete_external_font_keys(void)
                      &valuelen, &datalen, NULL, NULL);
     valuelen++; /* returned value doesn't include room for '\0' */
     valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
-    data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
+    data = HeapAlloc(GetProcessHeap(), 0, datalen);
 
-    dlen = datalen * sizeof(WCHAR);
+    dlen = datalen;
     vlen = valuelen;
     i = 0;
     while(RegEnumValueW(external_key, i++, valueW, &vlen, NULL, &type, data,
