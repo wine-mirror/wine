@@ -2678,6 +2678,13 @@ struct wined3d_shader * CDECL wined3d_device_get_hull_shader(const struct wined3
     return device->state.shader[WINED3D_SHADER_TYPE_HULL];
 }
 
+void CDECL wined3d_device_set_hs_cb(struct wined3d_device *device, unsigned int idx, struct wined3d_buffer *buffer)
+{
+    TRACE("device %p, idx %u, buffer %p.\n", device, idx, buffer);
+
+    wined3d_device_set_constant_buffer(device, WINED3D_SHADER_TYPE_HULL, idx, buffer);
+}
+
 void CDECL wined3d_device_set_domain_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     struct wined3d_shader *prev;
