@@ -560,8 +560,8 @@ static void test_invalid_import(void)
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test15a\"=\"foo\"bar\"\n"
                     "\"Test15b\"=\"foo\"\"bar\"\n\n");
-    todo_wine verify_reg_nonexist(hkey, "Test15a");
-    todo_wine verify_reg_nonexist(hkey, "Test15b");
+    verify_reg_nonexist(hkey, "Test15a");
+    verify_reg_nonexist(hkey, "Test15b");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -607,7 +607,7 @@ static void test_comments(void)
                     "\"Wine5\"=dword:01020304 #comment\n"
                     "\"Wine6\"=dword:02040608 ;comment\n\n");
     verify_reg_nonexist(hkey, "Wine3");
-    todo_wine verify_reg(hkey, "Wine4", REG_SZ, "Value 2", 8, 0);
+    verify_reg(hkey, "Wine4", REG_SZ, "Value 2", 8, 0);
     verify_reg_nonexist(hkey, "Wine5");
     dword = 0x2040608;
     verify_reg(hkey, "Wine6", REG_DWORD, &dword, sizeof(dword), 0);
@@ -639,9 +639,9 @@ static void test_comments(void)
     verify_reg_nonexist(hkey, "Comment2");
     verify_reg_nonexist(hkey, "Comment3");
     verify_reg_nonexist(hkey, "Comment4");
-    todo_wine verify_reg_nonexist(hkey, "Wine11");
+    verify_reg_nonexist(hkey, "Wine11");
     verify_reg_nonexist(hkey, "Comment5");
-    verify_reg(hkey, "Wine12", REG_SZ, "Value 7", 8, TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg(hkey, "Wine12", REG_SZ, "Value 7", 8, 0);
     verify_reg_nonexist(hkey, "Comment6");
 
     exec_import_str("REGEDIT4\n\n"
@@ -690,8 +690,8 @@ static void test_comments(void)
                     "\"Wine26b\"=\"Value2\"\t\t;comment\n"
                     "\"Wine26c\"=\"Value3\"  #comment\n"
                     "\"Wine26d\"=\"Value4\"\t\t#comment\n\n");
-    todo_wine verify_reg(hkey, "Wine26a", REG_SZ, "Value1", 7, 0);
-    todo_wine verify_reg(hkey, "Wine26b", REG_SZ, "Value2", 7, 0);
+    verify_reg(hkey, "Wine26a", REG_SZ, "Value1", 7, 0);
+    verify_reg(hkey, "Wine26b", REG_SZ, "Value2", 7, 0);
     verify_reg_nonexist(hkey, "Wine26c");
     verify_reg_nonexist(hkey, "Wine26d");
 

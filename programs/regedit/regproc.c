@@ -264,13 +264,19 @@ static DWORD getDataType(LPWSTR *lpValue, DWORD* parse_type)
 }
 
 /******************************************************************************
- * Replaces escape sequences with the characters.
+ * Replaces escape sequences with their character equivalents and
+ * null-terminates the string on the first non-escaped double quote.
+ *
+ * Assigns a pointer to the remaining unparsed data in the line.
+ * Returns TRUE or FALSE to indicate whether a closing double quote was found.
  */
-static int REGPROC_unescape_string(WCHAR* str)
+static BOOL REGPROC_unescape_string(WCHAR *str, WCHAR **unparsed)
 {
     int str_idx = 0;            /* current character under analysis */
     int val_idx = 0;            /* the last character of the unescaped string */
     int len = lstrlenW(str);
+    BOOL ret;
+
     for (str_idx = 0; str_idx < len; str_idx++, val_idx++) {
         if (str[str_idx] == '\\') {
             str_idx++;
@@ -293,12 +299,17 @@ static int REGPROC_unescape_string(WCHAR* str)
                 str[val_idx] = str[str_idx];
                 break;
             }
+        } else if (str[str_idx] == '"') {
+            break;
         } else {
             str[val_idx] = str[str_idx];
         }
     }
+
+    ret = (str[str_idx] == '"');
+    *unparsed = str + str_idx + 1;
     str[val_idx] = '\0';
-    return val_idx;
+    return ret;
 }
 
 static HKEY parseKeyName(LPWSTR lpKeyName, LPWSTR *lpKeyPath)
@@ -397,12 +408,14 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
 
     if (dwParseType == REG_SZ)          /* no conversion for string */
     {
-        dwLen = REGPROC_unescape_string(val_data);
-        if(!dwLen || val_data[dwLen-1] != '"')
+        WCHAR *line;
+        if (!REGPROC_unescape_string(val_data, &line))
             return ERROR_INVALID_DATA;
-        val_data[dwLen-1] = '\0'; /* remove last quotes */
+        while (*line == ' ' || *line == '\t') line++;
+        if (*line && *line != ';')
+            return ERROR_INVALID_DATA;
         lpbData = (BYTE*) val_data;
-        dwLen = dwLen * sizeof(WCHAR); /* size is in bytes */
+        dwLen = (lstrlenW(val_data) + 1) * sizeof(WCHAR); /* size is in bytes */
     }
     else if (dwParseType == REG_DWORD)  /* Convert the dword types */
     {
@@ -520,6 +533,7 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
 {
     WCHAR* val_name;                   /* registry value name   */
     WCHAR* val_data;                   /* registry value data   */
+    WCHAR* p;
     int line_idx = 0;                 /* current character under analysis */
     LONG res;
 
@@ -570,7 +584,7 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
     while (line_idx > 0 && isspaceW(val_data[line_idx-1])) line_idx--;
     val_data[line_idx] = '\0';
 
-    REGPROC_unescape_string(val_name);
+    REGPROC_unescape_string(val_name, &p);
     res = setValue(val_name, val_data, is_unicode);
     if ( res != ERROR_SUCCESS )
         output_message(STRING_SETVALUE_FAILED, val_name, currentKeyName);
