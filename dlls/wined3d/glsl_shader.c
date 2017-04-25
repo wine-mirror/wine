@@ -9917,6 +9917,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
             && gl_info->supported[ARB_SHADER_IMAGE_LOAD_STORE]
             && gl_info->supported[ARB_SHADER_IMAGE_SIZE]
             && gl_info->supported[ARB_SHADING_LANGUAGE_PACKING]
+            && gl_info->supported[ARB_TESSELLATION_SHADER]
             && gl_info->supported[ARB_TEXTURE_GATHER]
             && gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
         shader_model = 5;

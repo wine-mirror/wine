@@ -161,6 +161,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_shadow",                       ARB_SHADOW                    },
     {"GL_ARB_stencil_texturing",            ARB_STENCIL_TEXTURING         },
     {"GL_ARB_sync",                         ARB_SYNC                      },
+    {"GL_ARB_tessellation_shader",          ARB_TESSELLATION_SHADER       },
     {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP      },
     {"GL_ARB_texture_buffer_object",        ARB_TEXTURE_BUFFER_OBJECT     },
     {"GL_ARB_texture_buffer_range",         ARB_TEXTURE_BUFFER_RANGE      },
@@ -2846,6 +2847,9 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glGetSynciv)
     USE_GL_FUNC(glIsSync)
     USE_GL_FUNC(glWaitSync)
+    /* GL_ARB_tessellation_shader */
+    USE_GL_FUNC(glPatchParameteri)
+    USE_GL_FUNC(glPatchParameterfv)
     /* GL_ARB_texture_buffer_object */
     USE_GL_FUNC(glTexBufferARB)
     /* GL_ARB_texture_buffer_range */
@@ -3633,6 +3637,24 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
                     gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_VERTEX], gl_max);
         }
     }
+    if (gl_info->supported[ARB_TESSELLATION_SHADER])
+    {
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TESS_CONTROL_UNIFORM_BLOCKS, &gl_max);
+        gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_HULL] = min(gl_max, WINED3D_MAX_CBS);
+        TRACE("Max hull uniform blocks: %u (%d).\n",
+                gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_HULL], gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS, &gl_max);
+        gl_info->limits.samplers[WINED3D_SHADER_TYPE_HULL] = gl_max;
+        TRACE("Max hull samplers: %u.\n", gl_info->limits.samplers[WINED3D_SHADER_TYPE_HULL]);
+
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TESS_EVALUATION_UNIFORM_BLOCKS, &gl_max);
+        gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_DOMAIN] = min(gl_max, WINED3D_MAX_CBS);
+        TRACE("Max domain uniform blocks: %u (%d).\n",
+                gl_info->limits.uniform_blocks[WINED3D_SHADER_TYPE_DOMAIN], gl_max);
+        gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS, &gl_max);
+        gl_info->limits.samplers[WINED3D_SHADER_TYPE_DOMAIN] = gl_max;
+        TRACE("Max domain samplers: %u.\n", gl_info->limits.samplers[WINED3D_SHADER_TYPE_DOMAIN]);
+    }
     if ((!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] || gl_info->supported[ARB_GEOMETRY_SHADER4])
             && gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
     {
@@ -3831,6 +3853,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_VERTEX_TYPE_2_10_10_10_REV,   MAKEDWORD_VERSION(3, 3)},
 
         {ARB_GPU_SHADER5,                  MAKEDWORD_VERSION(4, 0)},
+        {ARB_TESSELLATION_SHADER,          MAKEDWORD_VERSION(4, 0)},
         {ARB_TEXTURE_CUBE_MAP_ARRAY,       MAKEDWORD_VERSION(4, 0)},
         {ARB_TEXTURE_GATHER,               MAKEDWORD_VERSION(4, 0)},
         {ARB_TRANSFORM_FEEDBACK2,          MAKEDWORD_VERSION(4, 0)},
