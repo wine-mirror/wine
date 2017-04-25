@@ -28,6 +28,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "shellapi.h"
+#include "commctrl.h"
+#include "commoncontrols.h"
 
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -318,7 +320,10 @@ static int get_icon(LPCITEMIDLIST lpi, UINT extra_flags)
 {
     SHFILEINFOW sfi;
     UINT flags = SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON;
-    SHGetFileInfoW((LPCWSTR)lpi, 0 ,&sfi, sizeof(SHFILEINFOW), flags | extra_flags);
+    IImageList *list;
+
+    list = (IImageList *)SHGetFileInfoW((LPCWSTR)lpi, 0 ,&sfi, sizeof(SHFILEINFOW), flags | extra_flags);
+    if (list) IImageList_Release(list);
     return sfi.iIcon;
 }
 
