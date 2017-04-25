@@ -128,6 +128,7 @@
 @ cdecl wined3d_device_set_depth_stencil_view(ptr ptr)
 @ cdecl wined3d_device_set_dialog_box_mode(ptr long)
 @ cdecl wined3d_device_set_domain_shader(ptr ptr)
+@ cdecl wined3d_device_set_ds_cb(ptr long ptr)
 @ cdecl wined3d_device_set_gamma_ramp(ptr long long ptr)
 @ cdecl wined3d_device_set_geometry_shader(ptr ptr)
 @ cdecl wined3d_device_set_gs_cb(ptr long ptr)
