@@ -301,50 +301,27 @@ static int REGPROC_unescape_string(WCHAR* str)
     return val_idx;
 }
 
-static BOOL parseKeyName(LPWSTR lpKeyName, HKEY *hKey, LPWSTR *lpKeyPath)
+static HKEY parseKeyName(LPWSTR lpKeyName, LPWSTR *lpKeyPath)
 {
-    WCHAR* lpSlash = NULL;
-    unsigned int i, len;
+    unsigned int i;
 
     if (lpKeyName == NULL)
-        return FALSE;
+        return 0;
 
-    for(i = 0; *(lpKeyName+i) != 0; i++)
+    *lpKeyPath = strchrW(lpKeyName, '\\');
+    if (*lpKeyPath) (*lpKeyPath)++;
+
+    for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++)
     {
-        if(*(lpKeyName+i) == '\\')
+        int len = lstrlenW(reg_class_namesW[i]);
+        if (!strncmpW(lpKeyName, reg_class_namesW[i], len) &&
+           (lpKeyName[len] == 0 || lpKeyName[len] == '\\'))
         {
-            lpSlash = lpKeyName+i;
-            break;
+            return reg_class_keys[i];
         }
     }
 
-    if (lpSlash)
-    {
-        len = lpSlash-lpKeyName;
-    }
-    else
-    {
-        len = lstrlenW(lpKeyName);
-        lpSlash = lpKeyName+len;
-    }
-    *hKey = NULL;
-
-    for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++) {
-        if (CompareStringW(LOCALE_USER_DEFAULT, 0, lpKeyName, len, reg_class_namesW[i], -1) == CSTR_EQUAL &&
-            len == lstrlenW(reg_class_namesW[i])) {
-            *hKey = reg_class_keys[i];
-            break;
-        }
-    }
-
-    if (*hKey == NULL)
-        return FALSE;
-
-
-    if (*lpSlash != '\0')
-        lpSlash++;
-    *lpKeyPath = lpSlash;
-    return TRUE;
+    return 0;
 }
 
 /* Globals used by the setValue() & co */
@@ -490,7 +467,7 @@ static LONG openKeyW(WCHAR* stdInput)
         return ERROR_INVALID_PARAMETER;
 
     /* Get the registry class */
-    if (!parseKeyName(stdInput, &keyClass, &keyPath))
+    if (!(keyClass = parseKeyName(stdInput, &keyPath)))
         return ERROR_INVALID_PARAMETER;
 
     res = RegCreateKeyExW(
@@ -1323,7 +1300,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
         lstrcpyW(reg_key_name_buf, reg_key_name);
 
         /* open the specified key */
-        if (!parseKeyName(reg_key_name, &reg_key_class, &branch_name)) {
+        if (!(reg_key_class = parseKeyName(reg_key_name, &branch_name))) {
             output_message(STRING_INCORRECT_REG_CLASS, reg_key_name);
             exit(1);
         }
@@ -1408,7 +1385,7 @@ void delete_registry_key(WCHAR *reg_key_name)
     if (!reg_key_name || !reg_key_name[0])
         return;
 
-    if (!parseKeyName(reg_key_name, &key_class, &key_name)) {
+    if (!(key_class = parseKeyName(reg_key_name, &key_name))) {
         output_message(STRING_INCORRECT_REG_CLASS, reg_key_name);
         exit(1);
     }
