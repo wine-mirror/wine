@@ -3372,7 +3372,6 @@ static void closestFit(GLenum target, GLint width, GLint height,
 			 internalFormat,
 			 widthAtLevelOne,heightAtLevelOne,0,format,type,NULL);
 	 } else
-#if defined(GL_ARB_texture_cube_map)
 	 if ((target == GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB) ||
 	     (target == GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB) ||
 	     (target == GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB) ||
@@ -3384,7 +3383,6 @@ static void closestFit(GLenum target, GLint width, GLint height,
 			  internalFormat,
 			  widthAtLevelOne,heightAtLevelOne,0,format,type,NULL);
 	 } else
-#endif /* GL_ARB_texture_cube_map */
 	 {
 	    assert(target == GL_TEXTURE_1D || target == GL_PROXY_TEXTURE_1D);
 	    proxyTarget = GL_PROXY_TEXTURE_1D;
