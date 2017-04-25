@@ -3389,8 +3389,7 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
                   0,
                   &sfi,
                   sizeof(sfi),
-                  SHGFI_DISPLAYNAME | SHGFI_SYSICONINDEX
-                  | SHGFI_PIDL | SHGFI_SMALLICON | SHGFI_ATTRIBUTES | SHGFI_ATTR_SPECIFIED);
+                  SHGFI_DISPLAYNAME | SHGFI_PIDL | SHGFI_ATTRIBUTES | SHGFI_ATTR_SPECIFIED);
 
   TRACE("-- Add %s attr=%08x\n", debugstr_w(sfi.szDisplayName), sfi.dwAttributes);
 
