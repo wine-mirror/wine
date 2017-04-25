@@ -568,7 +568,7 @@ static int grow_subkeys( struct key *key )
     }
     else
     {
-        nb_subkeys = MIN_VALUES;
+        nb_subkeys = MIN_SUBKEYS;
         if (!(new_subkeys = mem_alloc( nb_subkeys * sizeof(*new_subkeys) ))) return 0;
     }
     key->subkeys    = new_subkeys;
