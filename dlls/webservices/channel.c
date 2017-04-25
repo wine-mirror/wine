@@ -1046,6 +1046,38 @@ done:
     return hr;
 }
 
+/**************************************************************************
+ *          WsReadMessageStart		[webservices.@]
+ */
+HRESULT WINAPI WsReadMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_ASYNC_CONTEXT *ctx,
+                                   WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %p\n", handle, msg, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+    if (ctx) FIXME( "ignoring ctx parameter\n" );
+
+    if (!channel || !msg) return E_INVALIDARG;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((hr = receive_message( channel )) == S_OK)
+    {
+        hr = WsReadEnvelopeStart( msg, channel->reader, NULL, NULL, NULL );
+    }
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
+}
+
 HRESULT channel_accept_tcp( SOCKET socket, WS_CHANNEL *handle )
 {
     struct channel *channel = (struct channel *)handle;
