@@ -189,7 +189,7 @@ static void IDirectSound_tests(void)
        "failed: %08x\n", rc);
 
     /* COM aggregation */
-    rc=CoCreateInstance(&CLSID_DirectSound, (IUnknown*)&dso, CLSCTX_INPROC_SERVER,
+    rc=CoCreateInstance(&CLSID_DirectSound, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
                         &IID_IDirectSound, (void**)&dso);
     ok(rc==CLASS_E_NOAGGREGATION || broken(rc==DSERR_INVALIDPARAM),
        "DirectMusicPerformance create failed: %08x, expected CLASS_E_NOAGGREGATION\n", rc);

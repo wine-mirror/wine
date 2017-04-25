@@ -1132,7 +1132,7 @@ static void test_COM(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectSound8, (IUnknown*)&ds, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectSound8, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&ds8);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectSound create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);

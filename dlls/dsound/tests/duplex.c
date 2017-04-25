@@ -239,7 +239,7 @@ static void test_COM(void)
     HRESULT hr;
 
     /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectSoundFullDuplex, (IUnknown*)&dsfd, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_DirectSoundFullDuplex, (IUnknown*)0xdeadbeef, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&dsfd);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectSoundFullDuplex create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
