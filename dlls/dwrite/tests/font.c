@@ -46,6 +46,13 @@
 #define MS_CFF__TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F',' ')
 #define MS_COLR_TAG DWRITE_MAKE_OPENTYPE_TAG('C','O','L','R')
 #define MS_SVG__TAG DWRITE_MAKE_OPENTYPE_TAG('S','V','G',' ')
+#define MS_SBIX_TAG DWRITE_MAKE_OPENTYPE_TAG('s','b','i','x')
+#define MS_MAXP_TAG DWRITE_MAKE_OPENTYPE_TAG('m','a','x','p')
+
+/* 'sbix' formats */
+#define MS_PNG__TAG DWRITE_MAKE_OPENTYPE_TAG('p','n','g',' ')
+#define MS_JPG__TAG DWRITE_MAKE_OPENTYPE_TAG('j','p','g',' ')
+#define MS_TIFF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','i','f','f')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -301,6 +308,31 @@ typedef struct {
     WORD ExtensionLookupType;
     DWORD ExtensionOffset;
 } GSUB_ExtensionPosFormat1;
+
+typedef struct {
+    WORD version;
+    WORD flags;
+    DWORD numStrikes;
+    DWORD strikeOffset[1];
+} sbix_header;
+
+typedef struct {
+    WORD ppem;
+    WORD ppi;
+    DWORD glyphDataOffsets[1];
+} sbix_strike;
+
+typedef struct {
+    WORD originOffsetX;
+    WORD originOffsetY;
+    DWORD graphicType;
+    BYTE data[1];
+} sbix_glyph_data;
+
+typedef struct {
+    DWORD version;
+    WORD numGlyphs;
+} maxp;
 
 #include "poppack.h"
 
@@ -7424,6 +7456,70 @@ static BOOL face_has_table(IDWriteFontFace4 *fontface, UINT32 tag)
     return exists;
 }
 
+static DWORD get_sbix_formats(IDWriteFontFace4 *fontface)
+{
+    UINT32 size, s, num_strikes;
+    const sbix_header *header;
+    UINT16 g, num_glyphs;
+    BOOL exists = FALSE;
+    const maxp *maxp;
+    const void *data;
+    DWORD ret = 0;
+    void *context;
+    HRESULT hr;
+
+    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_MAXP_TAG, &data, &size, &context, &exists);
+    ok(hr == S_OK, "TryGetFontTable() failed, %#x\n", hr);
+    ok(exists, "Expected maxp table\n");
+
+    if (!exists)
+        return 0;
+
+    maxp = data;
+    num_glyphs = GET_BE_WORD(maxp->numGlyphs);
+
+    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_SBIX_TAG, &data, &size, &context, &exists);
+    ok(hr == S_OK, "TryGetFontTable() failed, %#x\n", hr);
+    ok(exists, "Expected sbix table\n");
+
+    header = data;
+    num_strikes = GET_BE_DWORD(header->numStrikes);
+
+    for (s = 0; s < num_strikes; s++) {
+        sbix_strike *strike = (sbix_strike *)((BYTE *)header + GET_BE_DWORD(header->strikeOffset[s]));
+
+        for (g = 0; g < num_glyphs; g++) {
+            DWORD offset = GET_BE_DWORD(strike->glyphDataOffsets[g]);
+            DWORD offset_next = GET_BE_DWORD(strike->glyphDataOffsets[g + 1]);
+            sbix_glyph_data *glyph_data;
+            DWORD format;
+
+            if (offset == offset_next)
+                continue;
+
+            glyph_data = (sbix_glyph_data *)((BYTE *)strike + offset);
+            switch (format = glyph_data->graphicType)
+            {
+            case MS_PNG__TAG:
+                ret |= DWRITE_GLYPH_IMAGE_FORMATS_PNG;
+                break;
+            case MS_JPG__TAG:
+                ret |= DWRITE_GLYPH_IMAGE_FORMATS_JPEG;
+                break;
+            case MS_TIFF_TAG:
+                ret |= DWRITE_GLYPH_IMAGE_FORMATS_TIFF;
+                break;
+            default:
+                ok(0, "unexpected format, %#x\n", GET_BE_DWORD(format));
+            }
+        }
+    }
+
+    IDWriteFontFace4_ReleaseFontTable(fontface, context);
+
+    return ret;
+}
+
 static DWORD get_face_glyph_image_formats(IDWriteFontFace4 *fontface)
 {
     DWORD ret = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
@@ -7439,6 +7535,9 @@ static DWORD get_face_glyph_image_formats(IDWriteFontFace4 *fontface)
 
     if (face_has_table(fontface, MS_SVG__TAG))
         ret |= DWRITE_GLYPH_IMAGE_FORMATS_SVG;
+
+    if (face_has_table(fontface, MS_SBIX_TAG))
+        ret |= get_sbix_formats(fontface);
 
     /* TODO: handle embedded bitmaps tables */
     return ret;
