@@ -2913,3 +2913,23 @@ BOOL WINAPI IsProcessDPIAware(void)
     FIXME( "stub!\n");
     return FALSE;
 }
+
+/**********************************************************************
+ *              GetAutoRotationState [USER32.@]
+ */
+BOOL WINAPI GetAutoRotationState( AR_STATE *state )
+{
+    FIXME("(%p): stub\n", state);
+    *state = AR_NOT_SUPPORTED;
+    return TRUE;
+}
+
+/**********************************************************************
+ *              GetDisplayAutoRotationPreferences [USER32.@]
+ */
+BOOL WINAPI GetDisplayAutoRotationPreferences( ORIENTATION_PREFERENCE *orientation )
+{
+    FIXME("(%p): stub\n", orientation);
+    *orientation = ORIENTATION_PREFERENCE_NONE;
+    return TRUE;
+}
