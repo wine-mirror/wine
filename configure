@@ -6888,6 +6888,7 @@ for ac_header in \
 	stropts.h \
 	sys/asoundlib.h \
 	sys/attr.h \
+	sys/auxv.h \
 	sys/cdio.h \
 	sys/elf32.h \
 	sys/epoll.h \
@@ -15302,6 +15303,7 @@ for ac_func in \
 	futimes \
 	futimesat \
 	getattrlist \
+	getauxval \
 	getopt_long_only \
 	getpwuid \
 	gettimeofday \

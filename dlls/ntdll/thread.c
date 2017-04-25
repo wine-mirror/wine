@@ -185,13 +185,56 @@ done:
     return status;
 }
 
-#ifdef __APPLE__
+#ifdef __linux__
+
+#ifdef HAVE_ELF_H
+# include <elf.h>
+#endif
+#ifdef HAVE_LINK_H
+# include <link.h>
+#endif
+#ifdef HAVE_SYS_AUXV_H
+# include <sys/auxv.h>
+#endif
+#ifndef HAVE_GETAUXVAL
+static unsigned long getauxval( unsigned long id )
+{
+    extern char **__wine_main_environ;
+    char **ptr = __wine_main_environ;
+    ElfW(auxv_t) *auxv;
+
+    while (*ptr) ptr++;
+    while (!*ptr) ptr++;
+    for (auxv = (ElfW(auxv_t) *)ptr; auxv->a_type; auxv++)
+        if (auxv->a_type == id) return auxv->a_un.a_val;
+    return 0;
+}
+#endif
+
+static ULONG_PTR get_image_addr(void)
+{
+    ULONG_PTR size, num, phdr_addr = getauxval( AT_PHDR );
+    ElfW(Phdr) *phdr;
+
+    if (!phdr_addr) return 0;
+    phdr = (ElfW(Phdr) *)phdr_addr;
+    size = getauxval( AT_PHENT );
+    num = getauxval( AT_PHNUM );
+    while (num--)
+    {
+        if (phdr->p_type == PT_PHDR) return phdr_addr - phdr->p_offset;
+        phdr = (ElfW(Phdr) *)((char *)phdr + size);
+    }
+    return 0;
+}
+
+#elif defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_error.h>
 
-static ULONG64 get_dyld_image_info_addr(void)
+static ULONG_PTR get_image_addr(void)
 {
-    ULONG64 ret = 0;
+    ULONG_PTR ret = 0;
 #ifdef TASK_DYLD_INFO
     struct task_dyld_info dyld_info;
     mach_msg_type_number_t size = TASK_DYLD_INFO_COUNT;
@@ -200,7 +243,13 @@ static ULONG64 get_dyld_image_info_addr(void)
 #endif
     return ret;
 }
-#endif  /* __APPLE__ */
+
+#else
+static ULONG_PTR get_image_addr(void)
+{
+    return 0;
+}
+#endif
 
 /***********************************************************************
  *           thread_init
@@ -219,9 +268,6 @@ HANDLE thread_init(void)
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
     static struct debug_info debug_info;  /* debug info for initial thread */
-#ifdef __APPLE__
-    ULONG64 dyld_image_info;
-#endif
 
     virtual_init();
 
@@ -270,20 +316,7 @@ HANDLE thread_init(void)
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
-#ifdef __APPLE__
-    dyld_image_info = get_dyld_image_info_addr();
-#ifdef __LP64__
-#ifdef WORDS_BIGENDIAN
-    peb->Reserved[1] = dyld_image_info & 0xFFFFFFFF;
-    peb->Reserved[0] = dyld_image_info >> 32;
-#else
-    peb->Reserved[0] = dyld_image_info & 0xFFFFFFFF;
-    peb->Reserved[1] = dyld_image_info >> 32;
-#endif
-#else
-    peb->Reserved[0] = dyld_image_info & 0xFFFFFFFF;
-#endif
-#endif
+    *(ULONG_PTR *)peb->Reserved = get_image_addr();
 
     /*
      * Starting with Vista, the first user to log on has session id 1.

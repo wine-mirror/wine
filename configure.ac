@@ -465,6 +465,7 @@ AC_CHECK_HEADERS(\
 	stropts.h \
 	sys/asoundlib.h \
 	sys/attr.h \
+	sys/auxv.h \
 	sys/cdio.h \
 	sys/elf32.h \
 	sys/epoll.h \
@@ -2012,6 +2013,7 @@ AC_CHECK_FUNCS(\
 	futimes \
 	futimesat \
 	getattrlist \
+	getauxval \
 	getopt_long_only \
 	getpwuid \
 	gettimeofday \
