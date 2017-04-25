@@ -88,11 +88,7 @@ static void test_COM(void)
     ULONG refcount;
     HRESULT hr;
 
-    /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicScript, (IUnknown*)&dms, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void**)&dms);
-    todo_wine ok(hr == E_POINTER, "DirectMusicScript create failed: %08x, expected E_POINTER\n", hr);
-    /* An invalid non-NULL pUnkOuter crashes newer Windows versions */
+    /* COM aggregation. An invalid non-NULL outer IUnknown crashes newer Windows versions */
     hr = CoCreateInstance(&CLSID_DirectMusicScript, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&unk_obj.inner_unk);
     ok(hr == CLASS_E_NOAGGREGATION,
@@ -137,15 +133,16 @@ static void test_COM_scripttrack(void)
     IDirectMusicTrack *dmt;
     IPersistStream *ps;
     IUnknown *unk;
+    struct unk_impl unk_obj = {{&unk_vtbl}, 19, NULL};
     ULONG refcount;
     HRESULT hr;
 
-    /* COM aggregation */
-    hr = CoCreateInstance(&CLSID_DirectMusicScriptTrack, (IUnknown*)&dmt, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void**)&dmt);
+    /* COM aggregation. An invalid non-NULL outer IUnknown crashes newer Windows versions */
+    hr = CoCreateInstance(&CLSID_DirectMusicScriptTrack, &unk_obj.IUnknown_iface,
+            CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk_obj.inner_unk);
     ok(hr == CLASS_E_NOAGGREGATION,
             "DirectMusicScriptTrack create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
-    ok(!dmt, "dmt = %p\n", dmt);
+    ok(!unk_obj.inner_unk, "unk_obj.inner_unk = %p\n", unk_obj.inner_unk);
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectMusicScriptTrack, NULL, CLSCTX_INPROC_SERVER,
