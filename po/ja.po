@@ -12103,6 +12103,12 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: レジストリ クラス '%1' を削除できません。\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "regedit: The line '%1' was not recognized.\n"
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "regedit: '%1' は認識できない行です。\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "レジストリ エディタを終了"

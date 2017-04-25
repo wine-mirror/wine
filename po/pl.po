@@ -12149,6 +12149,12 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Nie udało się usunąć klasy rejestru '%1'.\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "regedit: The line '%1' was not recognized.\n"
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "regedit: Nie rozpoznano linii '%1'.\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Kończy działanie edytora rejestru"

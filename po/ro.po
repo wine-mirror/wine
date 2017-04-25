@@ -12105,6 +12105,12 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Nu s-a putut șterge clasa de registru „%1”.\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "regedit: The line '%1' was not recognized.\n"
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "regedit: Linia „%1” nu a fost recunoscută.\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Închide editorul de registru"

@@ -12396,6 +12396,12 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Error: No se puede agregar claves al equipo remoto\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "No se ha especificado un comando."
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Sale del editor de registro"

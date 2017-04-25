@@ -12122,6 +12122,12 @@ msgstr "regedit: '%1' verilemiyor. Belirtilen kayıt anahtarı bulunamadı.\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: '%1' kayıt sınıfı silinemiyor.\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "regedit: The line '%1' was not recognized.\n"
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "regedit: '%1' satırı bilinmiyor.\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Kayıt düzenleyicisinden çıkar"

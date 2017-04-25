@@ -12265,6 +12265,12 @@ msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "沒有任何命令被指定。"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "結束註冊表編輯器"

@@ -531,63 +531,37 @@ static void closeKey(void)
  */
 static void processSetValue(WCHAR* line, BOOL is_unicode)
 {
-    WCHAR* val_name;                   /* registry value name   */
-    WCHAR* val_data;                   /* registry value data   */
-    WCHAR* p;
-    int line_idx = 0;                 /* current character under analysis */
+    WCHAR *val_name;
+    int len = 0;
     LONG res;
 
     /* get value name */
-    while ( isspaceW(line[line_idx]) ) line_idx++;
-    if (line[line_idx] == '@' && line[line_idx + 1] == '=') {
-        line[line_idx] = '\0';
-        val_name = line;
-        line_idx++;
-    } else if (line[line_idx] == '\"') {
-        line_idx++;
-        val_name = line + line_idx;
-        while (line[line_idx]) {
-            if (line[line_idx] == '\\')   /* skip escaped character */
-            {
-                line_idx += 2;
-            } else {
-                if (line[line_idx] == '\"') {
-                    line[line_idx] = '\0';
-                    line_idx++;
-                    break;
-                } else {
-                    line_idx++;
-                }
-            }
-        }
-        while ( isspaceW(line[line_idx]) ) line_idx++;
-        if (!line[line_idx]) {
-            output_message(STRING_UNEXPECTED_EOL, line);
-            return;
-        }
-        if (line[line_idx] != '=') {
-            line[line_idx] = '\"';
-            output_message(STRING_UNRECOGNIZED_LINE, line);
-            return;
-        }
+    val_name = line;
 
-    } else {
-        output_message(STRING_UNRECOGNIZED_LINE, line);
-        return;
-    }
-    line_idx++;                   /* skip the '=' character */
+    if (*line == '@')
+        *line++ = 0;
+    else if (!REGPROC_unescape_string(++val_name, &line))
+        goto error;
 
-    while ( isspaceW(line[line_idx]) ) line_idx++;
-    val_data = line + line_idx;
+    while (*line == ' ' || *line == '\t') line++;
+    if (*line != '=')
+        goto error;
+    line++;
+    while (*line == ' ' || *line == '\t') line++;
+
     /* trim trailing blanks */
-    line_idx = strlenW(val_data);
-    while (line_idx > 0 && isspaceW(val_data[line_idx-1])) line_idx--;
-    val_data[line_idx] = '\0';
+    len = strlenW(line);
+    while (len > 0 && (line[len - 1] == ' ' || line[len - 1] == '\t')) len--;
+    line[len] = 0;
 
-    REGPROC_unescape_string(val_name, &p);
-    res = setValue(val_name, val_data, is_unicode);
+    res = setValue(val_name, line, is_unicode);
     if ( res != ERROR_SUCCESS )
         output_message(STRING_SETVALUE_FAILED, val_name, currentKeyName);
+    return;
+
+error:
+    output_message(STRING_SETVALUE_FAILED, val_name, currentKeyName);
+    output_message(STRING_INVALID_LINE_SYNTAX);
 }
 
 /******************************************************************************

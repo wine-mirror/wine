@@ -859,12 +859,12 @@ static void test_import_with_whitespace(void)
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "@  =  \"Test Value\"\n\n");
-    todo_wine verify_reg(hkey, "", REG_SZ, "Test Value", 11, 0);
+    verify_reg(hkey, "", REG_SZ, "Test Value", 11, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\t@\t=\tdword:\t00000008\t\n\n");
-    todo_wine verify_reg(hkey, "", REG_DWORD, &dword, sizeof(DWORD), 0);
+    verify_reg(hkey, "", REG_DWORD, &dword, sizeof(DWORD), 0);
 
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);

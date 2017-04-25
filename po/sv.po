@@ -12009,6 +12009,12 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "reg: Kan inte få tillgång till fjärrmaskin\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "Inget kommando angavs."
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Avslutar Registereditorn"

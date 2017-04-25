@@ -12047,6 +12047,12 @@ msgstr "Chyba: Systém nemohl najít specifikovaný klíč registru nebo hodnotu
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "Nebyl zadán žádný příkaz."
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Ukončí editor registru"

@@ -12077,6 +12077,12 @@ msgstr "regedit: Ei voida viedä kohdetta '%1'. Rekisteriavainta ei löydy.\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Rekisteriluokkaa '%1' ei voida poistaa.\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "regedit: The line '%1' was not recognized.\n"
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "regedit: Riviä '%1' ei tunnisteta.\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Sulkee rekisterieditorin"

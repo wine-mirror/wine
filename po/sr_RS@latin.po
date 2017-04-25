@@ -12377,6 +12377,10 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Želite li da izbrišete ovih %1 stavki?"
 
+#: regedit.rc:398
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr ""
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr ""

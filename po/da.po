@@ -12317,6 +12317,12 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Fejl: Kunne ikke tilføje nøgler til fjern maskinen\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "Der blev ikke specificeret nogen kommando."
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "Afslutter Registreringsdatabase editor"

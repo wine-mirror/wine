@@ -11899,6 +11899,12 @@ msgstr "regedit: 无法导出 '%1'。未找到指定的注册表键。\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit：无法删除注册表类“%1”。\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "regedit: The line '%1' was not recognized.\n"
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "regedit: 行 '%1' 无法被识别。\n"
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "退出注册表编辑器"

@@ -12362,6 +12362,12 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Fout: Sleutels konden niet toegevoegd worden aan de remote machine\n"
 
+#: regedit.rc:398
+#, fuzzy
+#| msgid "No command was specified."
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr "Er was geen opdracht opgegeven."
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "De Register-editor afsluiten"

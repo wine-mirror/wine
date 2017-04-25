@@ -12128,6 +12128,10 @@ msgstr ""
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Error: Unable to add keys to remote machine\n"
 
+#: regedit.rc:398
+msgid "regedit: The line contains invalid syntax.\n"
+msgstr ""
+
 #: regedit.rc:163
 msgid "Quits the registry editor"
 msgstr "יציאה מעורך רישום המערכת"
