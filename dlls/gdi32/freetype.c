@@ -3183,9 +3183,10 @@ static void update_reg_entries(void)
 static void delete_external_font_keys(void)
 {
     HKEY winnt_key = 0, win9x_key = 0, external_key = 0;
-    DWORD dlen, vlen, datalen, valuelen, i, type;
+    DWORD dlen, plen, vlen, datalen, valuelen, i, type, path_type;
     LPWSTR valueW;
     LPVOID data;
+    BYTE *path;
 
     if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
                        0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL) != ERROR_SUCCESS) {
@@ -3211,19 +3212,28 @@ static void delete_external_font_keys(void)
     valuelen++; /* returned value doesn't include room for '\0' */
     valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
     data = HeapAlloc(GetProcessHeap(), 0, datalen);
+    path = HeapAlloc(GetProcessHeap(), 0, datalen);
 
     dlen = datalen;
     vlen = valuelen;
     i = 0;
     while(RegEnumValueW(external_key, i++, valueW, &vlen, NULL, &type, data,
                         &dlen) == ERROR_SUCCESS) {
+        plen = dlen;
+        if (RegQueryValueExW(winnt_key, valueW, 0, &path_type, path, &plen) == ERROR_SUCCESS &&
+            type == path_type && dlen == plen && !memcmp(data, path, plen))
+            RegDeleteValueW(winnt_key, valueW);
 
-        RegDeleteValueW(winnt_key, valueW);
-        RegDeleteValueW(win9x_key, valueW);
+        plen = dlen;
+        if (RegQueryValueExW(win9x_key, valueW, 0, &path_type, path, &plen) == ERROR_SUCCESS &&
+            type == path_type && dlen == plen && !memcmp(data, path, plen))
+            RegDeleteValueW(win9x_key, valueW);
+
         /* reset dlen and vlen */
         dlen = datalen;
         vlen = valuelen;
     }
+    HeapFree(GetProcessHeap(), 0, path);
     HeapFree(GetProcessHeap(), 0, data);
     HeapFree(GetProcessHeap(), 0, valueW);
 
