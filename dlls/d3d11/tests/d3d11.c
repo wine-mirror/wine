@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #define COBJMACROS
 #include "initguid.h"
-#include "d3d11.h"
+#include "d3d11_1.h"
 #include "wine/test.h"
 #include <limits.h>
 
@@ -5289,6 +5289,94 @@ static void test_private_data(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = ID3D11Device_Release(test_object);
     ok(!refcount, "Test object has %u references left.\n", refcount);
+}
+
+static void test_device_context_state(void)
+{
+    ID3DDeviceContextState *context_state, *previous_context_state;
+    ID3D11SamplerState *sampler, *tmp_sampler;
+    D3D11_SAMPLER_DESC sampler_desc;
+    D3D_FEATURE_LEVEL feature_level;
+    ID3D11DeviceContext1 *context;
+    ID3D11Device *d3d11_device;
+    ID3D11Device1 *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(d3d11_device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = ID3D11Device_QueryInterface(d3d11_device, &IID_ID3D11Device1, (void **)&device);
+    ID3D11Device_Release(d3d11_device);
+    if (FAILED(hr))
+    {
+        skip("ID3D11Device1 is not available.\n");
+        return;
+    }
+
+    feature_level = ID3D11Device1_GetFeatureLevel(device);
+    ID3D11Device1_GetImmediateContext1(device, &context);
+
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 0;
+    sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sampler_desc.BorderColor[0] = 0.0f;
+    sampler_desc.BorderColor[1] = 1.0f;
+    sampler_desc.BorderColor[2] = 0.0f;
+    sampler_desc.BorderColor[3] = 1.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = 16.0f;
+    hr = ID3D11Device1_CreateSamplerState(device, &sampler_desc, &sampler);
+    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+
+    ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &sampler);
+    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
+    ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
+    ID3D11SamplerState_Release(tmp_sampler);
+
+    feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
+            &IID_ID3D10Device, NULL, &context_state);
+    ok(SUCCEEDED(hr), "Failed to create device context state, hr %#x.\n", hr);
+    refcount = get_refcount(context_state);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+
+    /* Enable ID3D10Device behavior. */
+    previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
+    ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
+    refcount = ID3DDeviceContextState_Release(context_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &sampler);
+    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
+    ok(tmp_sampler == (ID3D11SamplerState *)0xdeadbeef, "Got unexpected sampler %p.\n", tmp_sampler);
+    ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &tmp_sampler);
+
+    ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
+    refcount = ID3DDeviceContextState_Release(context_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    refcount = ID3DDeviceContextState_Release(previous_context_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &sampler);
+    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
+    ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
+    ID3D11SamplerState_Release(tmp_sampler);
+
+    ID3D11SamplerState_Release(sampler);
+    ID3D11DeviceContext1_Release(context);
+    refcount = ID3D11Device1_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 static void test_blend(void)
@@ -17591,6 +17679,7 @@ START_TEST(d3d11)
     test_timestamp_query();
     test_device_removed_reason();
     test_private_data();
+    test_device_context_state();
     test_blend();
     test_texture();
     test_cube_maps();
