@@ -29,6 +29,7 @@
 
 #include "wine/debug.h"
 #include "undocshell.h"
+#include "commoncontrols.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shellapi.h"
@@ -282,7 +283,10 @@ static void InitializeTreeView( browse_info *info )
 static int GetIcon(LPCITEMIDLIST lpi, UINT uFlags)
 {
     SHFILEINFOW sfi;
-    SHGetFileInfoW((LPCWSTR)lpi, 0 ,&sfi, sizeof(SHFILEINFOW), uFlags);
+    IImageList *list;
+
+    list = (IImageList *)SHGetFileInfoW((LPCWSTR)lpi, 0 ,&sfi, sizeof(SHFILEINFOW), uFlags);
+    if (list) IImageList_Release(list);
     return sfi.iIcon;
 }
 
