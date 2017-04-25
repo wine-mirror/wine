@@ -53,6 +53,14 @@ static BOOL compare_color(const D3DXCOLOR *c1, const D3DXCOLOR *c2, unsigned int
             && compare_float(c1->a, c2->a, ulps);
 }
 
+static BOOL compare_plane(const D3DXPLANE *p1, const D3DXPLANE *p2, unsigned int ulps)
+{
+    return compare_float(p1->a, p2->a, ulps)
+            && compare_float(p1->b, p2->b, ulps)
+            && compare_float(p1->c, p2->c, ulps)
+            && compare_float(p1->d, p2->d, ulps);
+}
+
 static BOOL compare_matrix(const D3DXMATRIX *m1, const D3DXMATRIX *m2, unsigned int ulps)
 {
     unsigned int i, j;
@@ -76,6 +84,15 @@ static void expect_color_(unsigned int line, const D3DXCOLOR *expected, const D3
     ok_(__FILE__, line)(equal,
             "Got unexpected color {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
             color->r, color->g, color->b, color->a, expected->r, expected->g, expected->b, expected->a);
+}
+
+#define expect_plane(expected, plane, ulps) expect_plane_(__LINE__, expected, plane, ulps)
+static void expect_plane_(unsigned int line, const D3DXPLANE *expected, const D3DXPLANE *plane, unsigned int ulps)
+{
+    BOOL equal = compare_plane(expected, plane, ulps);
+    ok_(__FILE__, line)(equal,
+            "Got unexpected plane {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+            plane->a, plane->b, plane->c, plane->d, expected->a, expected->b, expected->c, expected->d);
 }
 
 #define expect_matrix(expected, matrix, ulps) expect_matrix_(__LINE__, expected, matrix, ulps)
@@ -145,8 +162,6 @@ static void expect_matrix_(unsigned int line, const D3DXMATRIX *expected, const 
             exp[i].a, exp[i].b, exp[i].c, exp[i].d, \
             i); \
     }
-
-#define expect_plane(expectedplane,gotplane) ok((relative_error(expectedplane.a, gotplane.a)<admitted_error)&&(relative_error(expectedplane.b, gotplane.b)<admitted_error)&&(relative_error(expectedplane.c, gotplane.c)<admitted_error)&&(relative_error(expectedplane.d, gotplane.d)<admitted_error),"Expected Plane= (%f, %f, %f, %f)\n , Got Plane= (%f, %f, %f, %f)\n", expectedplane.a, expectedplane.b, expectedplane.c, expectedplane.d, gotplane.a, gotplane.b, gotplane.c, gotplane.d);
 
 #define expect_vec(expectedvec,gotvec) ok((relative_error(expectedvec.x, gotvec.x)<admitted_error)&&(relative_error(expectedvec.y, gotvec.y)<admitted_error),"Expected Vector= (%f, %f)\n , Got Vector= (%f, %f)\n", expectedvec.x, expectedvec.y, gotvec.x, gotvec.y);
 
@@ -644,14 +659,14 @@ static void D3DXPlaneTest(void)
     vec2.x = 17.0f; vec2.y = 31.0f; vec2.z = 24.0f;
     expectedplane.a = 17.0f; expectedplane.b = 31.0f; expectedplane.c = 24.0f; expectedplane.d = -950.0f;
     D3DXPlaneFromPointNormal(&gotplane, &vec1, &vec2);
-    expect_plane(expectedplane, gotplane);
+    expect_plane(&expectedplane, &gotplane, 0);
     gotplane.a = vec2.x; gotplane.b = vec2.y; gotplane.c = vec2.z;
     D3DXPlaneFromPointNormal(&gotplane, &vec1, (D3DXVECTOR3 *)&gotplane);
-    expect_plane(expectedplane, gotplane);
+    expect_plane(&expectedplane, &gotplane, 0);
     gotplane.a = vec1.x; gotplane.b = vec1.y; gotplane.c = vec1.z;
     expectedplane.d = -1826.0f;
     D3DXPlaneFromPointNormal(&gotplane, (D3DXVECTOR3 *)&gotplane, &vec2);
-    expect_plane(expectedplane, gotplane);
+    expect_plane(&expectedplane, &gotplane, 0);
 
 /*_______________D3DXPlaneFromPoints_______*/
     vec1.x = 1.0f; vec1.y = 2.0f; vec1.z = 3.0f;
@@ -659,7 +674,7 @@ static void D3DXPlaneTest(void)
     vec3.x = 83.0f; vec3.y = 74.0f; vec3.z = 65.0f;
     expectedplane.a = 0.085914f; expectedplane.b = -0.704492f; expectedplane.c = 0.704492f; expectedplane.d = -0.790406f;
     D3DXPlaneFromPoints(&gotplane,&vec1,&vec2,&vec3);
-    expect_plane(expectedplane, gotplane);
+    expect_plane(&expectedplane, &gotplane, 64);
 
 /*_______________D3DXPlaneIntersectLine___________*/
     vec1.x = 9.0f; vec1.y = 6.0f; vec1.z = 3.0f;
@@ -677,16 +692,16 @@ static void D3DXPlaneTest(void)
 /*_______________D3DXPlaneNormalize______________*/
     expectedplane.a = -3.0f/sqrt(26.0f); expectedplane.b = -1.0f/sqrt(26.0f); expectedplane.c = 4.0f/sqrt(26.0f); expectedplane.d = 7.0/sqrt(26.0f);
     D3DXPlaneNormalize(&gotplane, &plane);
-    expect_plane(expectedplane, gotplane);
+    expect_plane(&expectedplane, &gotplane, 2);
     nulplane.a = 0.0; nulplane.b = 0.0f, nulplane.c = 0.0f; nulplane.d = 0.0f;
     expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
     D3DXPlaneNormalize(&gotplane, &nulplane);
-    expect_plane(expectedplane, gotplane);
+    expect_plane(&expectedplane, &gotplane, 0);
 
 /*_______________D3DXPlaneTransform____________*/
     expectedplane.a = 49.0f; expectedplane.b = -98.0f; expectedplane.c = 55.0f; expectedplane.d = -165.0f;
     D3DXPlaneTransform(&gotplane,&plane,&mat);
-    expect_plane(expectedplane, gotplane);
+    expect_plane(&expectedplane, &gotplane, 0);
 }
 
 static void D3DXQuaternionTest(void)
