@@ -188,6 +188,7 @@ struct layout_effective_run {
     UINT16 *clustermap;     /* effective clustermap, allocated separately, is not reused from nominal map */
     UINT32 line;            /* 0-based line index in line metrics array */
     BOOL underlined;        /* set if this run is underlined */
+    D2D1_RECT_F bbox;       /* ink run box, top == bottom means it wasn't estimated yet */
 };
 
 struct layout_effective_inline {
@@ -1249,6 +1250,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     run->start = start = layout->clusters[first_cluster].position;
     run->length = length;
     run->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
+    memset(&run->bbox, 0, sizeof(run->bbox));
 
     /* Check if run direction matches paragraph direction, if it doesn't adjust by
        run width */
@@ -3581,25 +3583,28 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
     D2D1_POINT_2F origin = { 0 };
     UINT32 i;
 
-    IDWriteFontFace_GetMetrics(glyph_run->fontFace, &font_metrics);
+    if (run->bbox.top == run->bbox.bottom) {
+        IDWriteFontFace_GetMetrics(glyph_run->fontFace, &font_metrics);
 
-    origin.x = run->origin.x + run->align_dx;
-    origin.y = run->origin.y;
-    for (i = 0; i < run->glyphcount; i++) {
-        D2D1_RECT_F glyph_bbox;
-        RECT design_bbox;
+        for (i = 0; i < run->glyphcount; i++) {
+            D2D1_RECT_F glyph_bbox;
+            RECT design_bbox;
 
-        freetype_get_design_glyph_bbox((IDWriteFontFace4 *)glyph_run->fontFace, font_metrics.designUnitsPerEm,
-                glyph_run->glyphIndices[i + start_glyph], &design_bbox);
+            freetype_get_design_glyph_bbox((IDWriteFontFace4 *)glyph_run->fontFace, font_metrics.designUnitsPerEm,
+                    glyph_run->glyphIndices[i + start_glyph], &design_bbox);
 
-        scale_glyph_bbox(&design_bbox, glyph_run->fontEmSize, font_metrics.designUnitsPerEm, &glyph_bbox);
-        d2d_rect_offset(&glyph_bbox, origin.x + glyph_run->glyphOffsets[i + start_glyph].advanceOffset,
-                origin.y + glyph_run->glyphOffsets[i + start_glyph].ascenderOffset);
-        d2d_rect_union(bbox, &glyph_bbox);
+            scale_glyph_bbox(&design_bbox, glyph_run->fontEmSize, font_metrics.designUnitsPerEm, &glyph_bbox);
+            d2d_rect_offset(&glyph_bbox, origin.x + glyph_run->glyphOffsets[i + start_glyph].advanceOffset,
+                    origin.y + glyph_run->glyphOffsets[i + start_glyph].ascenderOffset);
+            d2d_rect_union(&run->bbox, &glyph_bbox);
 
-        /* FIXME: take care of vertical/rtl */
-        origin.x += glyph_run->glyphAdvances[i + start_glyph];
+            /* FIXME: take care of vertical/rtl */
+            origin.x += glyph_run->glyphAdvances[i + start_glyph];
+       }
     }
+
+    *bbox = run->bbox;
+    d2d_rect_offset(bbox, run->origin.x + run->align_dx, run->origin.y);
 }
 
 static HRESULT WINAPI dwritetextlayout_GetOverhangMetrics(IDWriteTextLayout3 *iface,
@@ -4091,9 +4096,12 @@ static HRESULT WINAPI dwritetextformat_layout_SetTextAlignment(IDWriteTextFormat
     if (FAILED(hr))
         return hr;
 
-    /* if layout is not ready there's nothing to align */
-    if (changed && !(This->recompute & RECOMPUTE_LINES))
-        layout_apply_text_alignment(This);
+    if (changed) {
+        /* if layout is not ready there's nothing to align */
+        if (!(This->recompute & RECOMPUTE_LINES))
+            layout_apply_text_alignment(This);
+        This->recompute |= RECOMPUTE_OVERHANGS;
+    }
 
     return S_OK;
 }
@@ -4110,9 +4118,12 @@ static HRESULT WINAPI dwritetextformat_layout_SetParagraphAlignment(IDWriteTextF
     if (FAILED(hr))
         return hr;
 
-    /* if layout is not ready there's nothing to align */
-    if (changed && !(This->recompute & RECOMPUTE_LINES))
-        layout_apply_par_alignment(This);
+    if (changed) {
+        /* if layout is not ready there's nothing to align */
+        if (!(This->recompute & RECOMPUTE_LINES))
+            layout_apply_par_alignment(This);
+        This->recompute |= RECOMPUTE_OVERHANGS;
+    }
 
     return S_OK;
 }
