@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-03-22 23:05+0300\n"
+"PO-Revision-Date: 2017-04-26 09:05+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9383,7 +9383,7 @@ msgstr "Atributas ar reikšmė egzistuoja"
 
 #: wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr "Neteisinga sintaksė"
+msgstr "Netinkama sintaksė"
 
 #: wldap32.rc:64
 msgid "No Such Object"
@@ -12107,10 +12107,8 @@ msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Nepavyko pašalinti registro klasės „%1“.\n"
 
 #: regedit.rc:398
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: Eilutė „%1“ neatpažinta.\n"
+msgstr "regedit: Eilutėje yra netinkama sintaksė.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
