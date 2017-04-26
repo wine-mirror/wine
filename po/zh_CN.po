@@ -27,7 +27,7 @@ msgstr "要从软盘，光盘或硬盘安装新程序，请按'安装'。"
 
 #: appwiz.rc:62
 msgid "&Install..."
-msgstr "安装(&I)…"
+msgstr "安装(&I)..."
 
 #: appwiz.rc:65
 msgid ""
@@ -42,7 +42,7 @@ msgstr "技术支持信息(&S)"
 
 #: appwiz.rc:68 regedit.rc:45 regedit.rc:90
 msgid "&Modify..."
-msgstr "修改(&M)…"
+msgstr "修改(&M)..."
 
 #: appwiz.rc:69 appwiz.rc:45 cryptui.rc:346 msacm32.rc:40 winecfg.rc:200
 #: winecfg.rc:237 wordpad.rc:256
@@ -223,11 +223,11 @@ msgstr "修改或删除(&M)"
 
 #: appwiz.rc:51
 msgid "Downloading..."
-msgstr "正在下载…"
+msgstr "正在下载..."
 
 #: appwiz.rc:52
 msgid "Installing..."
-msgstr "正在安装…"
+msgstr "正在安装..."
 
 #: appwiz.rc:53
 msgid ""
@@ -245,7 +245,7 @@ msgstr "选择来源流(&C)："
 
 #: avifil32.rc:48 wordpad.rc:76
 msgid "&Options..."
-msgstr "选项(&O)…"
+msgstr "选项(&O)..."
 
 #: avifil32.rc:49
 msgid "&Interleave every"
@@ -289,7 +289,7 @@ msgstr "未压缩"
 
 #: browseui.rc:28
 msgid "Canceling..."
-msgstr "正在取消…"
+msgstr "正在取消..."
 
 #: comctl32.rc:62 winefile.rc:157
 msgid "Properties for %s"
@@ -427,7 +427,7 @@ msgstr "只读(&R)"
 
 #: comdlg32.rc:179
 msgid "Save As..."
-msgstr "另存为…"
+msgstr "另存为..."
 
 #: comdlg32.rc:192 comdlg32.rc:145
 msgid "Save As"
@@ -767,7 +767,7 @@ msgstr "下(&B)："
 
 #: comdlg32.rc:454
 msgid "P&rinter..."
-msgstr "打印机(&P)…"
+msgstr "打印机(&P)..."
 
 #: comdlg32.rc:462
 msgid "Look &in:"
@@ -803,7 +803,7 @@ msgstr "找不到文件"
 
 #: comdlg32.rc:33
 msgid "Please verify that the correct file name was given"
-msgstr "请检验是否给予正确的文件名称。"
+msgstr "请检验是否给予正确的文件名称"
 
 #: comdlg32.rc:34
 msgid ""
@@ -2069,7 +2069,7 @@ msgstr "通用"
 
 #: cryptui.rc:191
 msgid "&Install Certificate..."
-msgstr "安装证书(&I)…"
+msgstr "安装证书(&I)..."
 
 #: cryptui.rc:192
 msgid "Issuer &Statement"
@@ -2081,11 +2081,11 @@ msgstr "显示(&S)："
 
 #: cryptui.rc:205
 msgid "&Edit Properties..."
-msgstr "编辑属性(&E)…"
+msgstr "编辑属性(&E)..."
 
 #: cryptui.rc:206
 msgid "&Copy to File..."
-msgstr "复制文件(&C)…"
+msgstr "复制文件(&C)..."
 
 #: cryptui.rc:210
 msgid "Certification Path"
@@ -2137,7 +2137,7 @@ msgstr "仅启用此证书的如下用途(&O)："
 
 #: cryptui.rc:253
 msgid "Add &Purpose..."
-msgstr "添加用途(&P)…"
+msgstr "添加用途(&P)..."
 
 #: cryptui.rc:257
 msgid "Add Purpose"
@@ -2193,7 +2193,7 @@ msgstr "文件名(&F)："
 
 #: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
 msgid "B&rowse..."
-msgstr "浏览(&R)…"
+msgstr "浏览(&R)..."
 
 #: cryptui.rc:297
 msgid ""
@@ -2249,15 +2249,15 @@ msgstr "预期用途："
 
 #: cryptui.rc:344
 msgid "&Import..."
-msgstr "导入(&I)…"
+msgstr "导入(&I)..."
 
 #: cryptui.rc:345 regedit.rc:112
 msgid "&Export..."
-msgstr "导出(&E)…"
+msgstr "导出(&E)..."
 
 #: cryptui.rc:347
 msgid "&Advanced..."
-msgstr "高级(&A)…"
+msgstr "高级(&A)..."
 
 #: cryptui.rc:348
 msgid "Certificate intended purposes"
@@ -3089,7 +3089,7 @@ msgstr "刷新(&R)"
 
 #: hhctrl.rc:65 hhctrl.rc:80 winhlp32.rc:34
 msgid "&Print..."
-msgstr "打印(&P)…"
+msgstr "打印(&P)..."
 
 #: hhctrl.rc:76 hhctrl.rc:90 shdoclc.rc:49 shdoclc.rc:98 shdoclc.rc:120
 #: user32.rc:65
@@ -3204,19 +3204,19 @@ msgstr "窗口(&W)"
 
 #: ieframe.rc:34 view.rc:33 winhlp32.rc:32
 msgid "&Open..."
-msgstr "打开(&O)…"
+msgstr "打开(&O)..."
 
 #: ieframe.rc:36 notepad.rc:33 wordpad.rc:34
 msgid "Save &as..."
-msgstr "另存为(&A)…"
+msgstr "另存为(&A)..."
 
 #: ieframe.rc:38
 msgid "Print &format..."
-msgstr "打印格式(&F)…"
+msgstr "打印格式(&F)..."
 
 #: ieframe.rc:39
 msgid "Pr&int..."
-msgstr "打印(&I)…"
+msgstr "打印(&I)..."
 
 #: ieframe.rc:40 wordpad.rc:37
 msgid "Print previe&w"
@@ -3240,7 +3240,7 @@ msgstr "收藏夹(&F)"
 
 #: ieframe.rc:55 regedit.rc:76
 msgid "&Add to Favorites..."
-msgstr "添加到收藏夹(&A)…"
+msgstr "添加到收藏夹(&A)..."
 
 #: ieframe.rc:60
 msgid "&About Internet Explorer"
@@ -3265,7 +3265,7 @@ msgstr "首页"
 
 #: ieframe.rc:71 winhlp32.rc:69
 msgid "Print..."
-msgstr "打印…"
+msgstr "打印..."
 
 #: ieframe.rc:76
 msgid "Address"
@@ -3317,11 +3317,11 @@ msgstr "您可以删除缓存页面、cookies 以及其它数据。"
 
 #: inetcpl.rc:59
 msgid "Delete &files..."
-msgstr "删除文件(&F)…"
+msgstr "删除文件(&F)..."
 
 #: inetcpl.rc:60
 msgid "&Settings..."
-msgstr "设置(&S)…"
+msgstr "设置(&S)..."
 
 #: inetcpl.rc:68
 msgid "Delete browsing history"
@@ -3384,11 +3384,11 @@ msgstr "证书被用来进行个人身份验证，以及验证证书颁发机构
 
 #: inetcpl.rc:114
 msgid "Certificates..."
-msgstr "证书…"
+msgstr "证书..."
 
 #: inetcpl.rc:115
 msgid "Publishers..."
-msgstr "发布者…"
+msgstr "发布者..."
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -3646,7 +3646,7 @@ msgstr "期望得到 Array 对象"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "Wine kernel DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -6694,7 +6694,7 @@ msgstr "声音选择"
 
 #: msacm32.rc:39 winedbg.rc:76
 msgid "&Save As..."
-msgstr "保存为(&S)…"
+msgstr "保存为(&S)..."
 
 #: msacm32.rc:42
 msgid "&Format:"
@@ -6726,7 +6726,7 @@ msgstr "HTML 文件"
 
 #: mshtml.rc:29
 msgid "Downloading from %s..."
-msgstr "正在从 %s 下载…"
+msgstr "正在从 %s 下载..."
 
 #: mshtml.rc:28
 msgid "Done"
@@ -6850,7 +6850,7 @@ msgstr "压缩器(&C)："
 
 #: msvfw32.rc:42
 msgid "Con&figure..."
-msgstr "配置(&F)…"
+msgstr "配置(&F)..."
 
 #: msvfw32.rc:43
 msgid "&About"
@@ -7342,7 +7342,7 @@ msgstr "建立于文件"
 
 #: oledlg.rc:72
 msgid "&Add Control..."
-msgstr "添加控件(&A)…"
+msgstr "添加控件(&A)..."
 
 #: oledlg.rc:73
 msgid "Display As Icon"
@@ -7350,7 +7350,7 @@ msgstr "显示为图标"
 
 #: oledlg.rc:75 setupapi.rc:61
 msgid "Browse..."
-msgstr "浏览…"
+msgstr "浏览..."
 
 #: oledlg.rc:76
 msgid "File:"
@@ -7383,7 +7383,7 @@ msgstr "显示为图标(&D)"
 
 #: oledlg.rc:99
 msgid "Change &Icon..."
-msgstr "改变图标(&I)…"
+msgstr "改变图标(&I)..."
 
 #: oledlg.rc:28
 msgid "Insert a new %s object into your document"
@@ -7545,7 +7545,7 @@ msgstr "停止位"
 
 #: setupapi.rc:39
 msgid "Copying Files..."
-msgstr "复制文件…"
+msgstr "复制文件..."
 
 #: setupapi.rc:45
 msgid "Destination:"
@@ -7559,7 +7559,7 @@ msgstr "需要文件"
 msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
-msgstr "插入厂商的安装磁盘，然后确定下面选择了正确的驱动器。"
+msgstr "插入厂商的安装磁盘，然后确定下面选择了正确的驱动器"
 
 #: setupapi.rc:57
 msgid "Copy manufacturer's files from:"
@@ -7587,7 +7587,7 @@ msgstr "向前(&O)"
 
 #: shdoclc.rc:44
 msgid "&Save Background As..."
-msgstr "将背景存为(&S)…"
+msgstr "将背景存为(&S)..."
 
 #: shdoclc.rc:45
 msgid "Set As Back&ground"
@@ -7607,7 +7607,7 @@ msgstr "创建捷径(&T)"
 
 #: shdoclc.rc:53 shdoclc.rc:84 shdoclc.rc:137 shdoclc.rc:164 shdoclc.rc:188
 msgid "Add to &Favorites..."
-msgstr "添加到我的最爱(&F)…"
+msgstr "添加到我的最爱(&F)..."
 
 #: shdoclc.rc:56
 msgid "&Encoding"
@@ -7627,7 +7627,7 @@ msgstr "在新视窗打开链接(&N)"
 
 #: shdoclc.rc:68 shdoclc.rc:129 shdoclc.rc:151 shdoclc.rc:175
 msgid "Save Target &As..."
-msgstr "将目标存为(&A)…"
+msgstr "将目标存为(&A)..."
 
 #: shdoclc.rc:69 shdoclc.rc:130 shdoclc.rc:152 shdoclc.rc:176
 msgid "&Print Target"
@@ -7639,15 +7639,15 @@ msgstr "显示图片(&S)"
 
 #: shdoclc.rc:72 shdoclc.rc:179
 msgid "&Save Picture As..."
-msgstr "将图片存为(&A)…"
+msgstr "将图片存为(&A)..."
 
 #: shdoclc.rc:73
 msgid "&E-mail Picture..."
-msgstr "电邮图片(&E)…"
+msgstr "电邮图片(&E)..."
 
 #: shdoclc.rc:74
 msgid "Pr&int Picture..."
-msgstr "打印图片(&I)…"
+msgstr "打印图片(&I)..."
 
 #: shdoclc.rc:75
 msgid "&Go to My Pictures"
@@ -7659,7 +7659,7 @@ msgstr "设为背景(&G)"
 
 #: shdoclc.rc:77 shdoclc.rc:157 shdoclc.rc:181
 msgid "Set as &Desktop Item..."
-msgstr "设为桌面项目(&D)…"
+msgstr "设为桌面项目(&D)..."
 
 #: shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Copy Shor&tcut"
@@ -7715,7 +7715,7 @@ msgstr "剪下"
 
 #: shdoclc.rc:155
 msgid "&Save Video As..."
-msgstr "将视频存为(&V)…"
+msgstr "将视频存为(&V)..."
 
 #: shdoclc.rc:166 shdoclc.rc:190
 msgid "Play"
@@ -7999,7 +7999,7 @@ msgstr "打开(&O)："
 #: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
 #: winefile.rc:130
 msgid "&Browse..."
-msgstr "浏览(&B)…"
+msgstr "浏览(&B)..."
 
 #: shell32.rc:138 shell32.rc:142 winefile.rc:108
 msgid "Size"
@@ -8299,10 +8299,8 @@ msgid "Wine Control Panel"
 msgstr "Wine 控制面板"
 
 #: shell32.rc:195
-#, fuzzy
-#| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
-msgstr "无法显示运行文件对话框 (内部错误)"
+msgstr "无法显示运行对话框 (内部错误)"
 
 #: shell32.rc:196
 msgid "Unable to display Browse dialog box (internal error)"
@@ -8509,7 +8507,7 @@ msgstr "选择窗口"
 
 #: user32.rc:72
 msgid "&More Windows..."
-msgstr "更多窗口(&M)…"
+msgstr "更多窗口(&M)..."
 
 #: winemac.rc:33
 msgid "Hide %@"
@@ -9176,7 +9174,7 @@ msgstr "推举"
 
 #: wldap32.rc:43
 msgid "Administration Limit Exceeded"
-msgstr "超出管理限制。"
+msgstr "超出管理限制"
 
 #: wldap32.rc:44
 msgid "Unavailable Critical Extension"
@@ -9187,10 +9185,8 @@ msgid "Confidentiality Required"
 msgstr "需要保密性"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "正在关机。\n"
+msgstr "正在进行 SASL 绑定"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -9412,16 +9408,16 @@ msgstr ""
 "       [/S [/D]]\n"
 "\n"
 "说明:\n"
-"  +   设置一个属性\n"
-"  -   清除一个属性\n"
-"  R   只读属性\n"
-"  A   归档属性\n"
-"  S   系统文件属性\n"
-"  H   隐藏文件属性\n"
+"  +   设置一个属性。\n"
+"  -   清除一个属性。\n"
+"  R   只读属性。\n"
+"  A   归档属性。\n"
+"  S   系统文件属性。\n"
+"  H   隐藏文件属性。\n"
 "  [驱动器:][路径][文件名]\n"
-"      指定一个需要让 attrib 处理的文件\n"
-"  /S  处理当前目录和其所有子目录下的文件\n"
-"  /D  同时也处理目录的属性\n"
+"      指定一个需要让 attrib 处理的文件。\n"
+"  /S  处理当前目录和其所有子目录下的文件。\n"
+"  /D  同时也处理目录的属性。\n"
 
 #: clock.rc:32
 msgid "Ana&log"
@@ -9433,7 +9429,7 @@ msgstr "数字时钟(&T)"
 
 #: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
-msgstr "字体(&F)…"
+msgstr "字体(&F)..."
 
 #: clock.rc:37
 msgid "&Without Titlebar"
@@ -9865,7 +9861,7 @@ msgstr "VER 显示您正在运行的 cmd 的版本。\n"
 
 #: cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL 显示磁盘设备的卷标\n"
+msgstr "VOL 显示磁盘设备的卷标。\n"
 
 #: cmd.rc:263
 msgid ""
@@ -10065,7 +10061,7 @@ msgstr "覆盖 %1？"
 
 #: cmd.rc:359
 msgid "More..."
-msgstr "更多…"
+msgstr "更多..."
 
 #: cmd.rc:360
 msgid "Line in Batch processing possibly truncated. Using:\n"
@@ -10176,7 +10172,7 @@ msgstr "更多?"
 
 #: cmd.rc:387
 msgid "The input line is too long.\n"
-msgstr "输入过长\n"
+msgstr "输入过长。\n"
 
 #: cmd.rc:388
 msgid "Volume in drive %1!c! is %2\n"
@@ -10197,7 +10193,7 @@ msgstr " (是(Y)|否(N)|全部(A))"
 #: cmd.rc:392
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
-msgstr "无法将 \"%1\" 识别为内部或外部命令，或者批处理脚本\n"
+msgstr "无法将 \"%1\" 识别为内部或外部命令，或者批处理脚本。\n"
 
 #: cmd.rc:393
 msgid "Division by zero error.\n"
@@ -10209,7 +10205,7 @@ msgstr "期望一个操作数。\n"
 
 #: cmd.rc:395
 msgid "Expected an operator.\n"
-msgstr "期望一个操作符\n"
+msgstr "期望一个操作符。\n"
 
 #: cmd.rc:396
 msgid "Mismatch in parentheses.\n"
@@ -10241,7 +10237,7 @@ msgstr "起点"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
-msgstr "运行(&R)…"
+msgstr "运行(&R)..."
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
@@ -10263,7 +10259,7 @@ msgstr "用法：ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "错误: 指定的命令行选项未知或无效。\n"
+msgstr "错误: 指定的命令行选项未知或无效\n"
 
 #: ipconfig.rc:32
 msgid "%1 adapter %2\n"
@@ -10577,7 +10573,7 @@ msgstr "新建(&N)\tCtrl+N"
 
 #: notepad.rc:31 wordpad.rc:32
 msgid "&Open...\tCtrl+O"
-msgstr "打开(&O)…\tCtrl+O"
+msgstr "打开(&O)...\tCtrl+O"
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Save\tCtrl+S"
@@ -10585,15 +10581,15 @@ msgstr "保存(&S)\tCtrl+S"
 
 #: notepad.rc:35 regedit.rc:39 wordpad.rc:36
 msgid "&Print...\tCtrl+P"
-msgstr "打印(&P)…\tCtrl+P"
+msgstr "打印(&P)...\tCtrl+P"
 
 #: notepad.rc:36 wordpad.rc:38
 msgid "Page Se&tup..."
-msgstr "页面设置(&T)…"
+msgstr "页面设置(&T)..."
 
 #: notepad.rc:37
 msgid "P&rinter Setup..."
-msgstr "打印设置(&R)…"
+msgstr "打印设置(&R)..."
 
 #: notepad.rc:41 regedit.rc:43 wineconsole.rc:28 winhlp32.rc:39 wordpad.rc:42
 msgid "&Edit"
@@ -10634,7 +10630,7 @@ msgstr "自动换行(&W)"
 
 #: notepad.rc:56
 msgid "&Search...\tCtrl+F"
-msgstr "搜索(&S)…\tCtrl+F"
+msgstr "搜索(&S)...\tCtrl+F"
 
 #: notepad.rc:57
 msgid "&Search next\tF3"
@@ -10642,7 +10638,7 @@ msgstr "搜索下一个(&S)\tF3"
 
 #: notepad.rc:58 wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
-msgstr "替换(&R)…\tCtrl+H"
+msgstr "替换(&R)...\tCtrl+H"
 
 #: notepad.rc:61 progman.rc:56 regedit.rc:81 winefile.rc:83
 msgid "&Contents\tF1"
@@ -10807,11 +10803,11 @@ msgstr ""
 
 #: oleview.rc:32
 msgid "&Bind to file..."
-msgstr "文件绑定(&B)…"
+msgstr "文件绑定(&B)..."
 
 #: oleview.rc:33
 msgid "&View TypeLib..."
-msgstr "查看 &TypeLib…"
+msgstr "查看 &TypeLib..."
 
 #: oleview.rc:35
 msgid "&System Configuration"
@@ -10851,7 +10847,7 @@ msgstr "创建实例(&I)"
 
 #: oleview.rc:53
 msgid "Create Instance &On..."
-msgstr "创建实例于(&O)…"
+msgstr "创建实例于(&O)..."
 
 #: oleview.rc:54
 msgid "&Release Instance"
@@ -10891,7 +10887,7 @@ msgstr "关于 &OleView"
 
 #: oleview.rc:82
 msgid "&Save as..."
-msgstr "另存为(&S)…"
+msgstr "另存为(&S)..."
 
 #: oleview.rc:87
 msgid "&Group by type kind"
@@ -11140,7 +11136,7 @@ msgstr "按类别分组"
 
 #: progman.rc:33
 msgid "&New..."
-msgstr "新建(&N)…"
+msgstr "新建(&N)..."
 
 #: progman.rc:34
 msgid "O&pen\tEnter"
@@ -11148,11 +11144,11 @@ msgstr "打开(&O)\tEnter"
 
 #: progman.rc:35 winefile.rc:30
 msgid "&Move...\tF7"
-msgstr "移动(&M)…\tF7"
+msgstr "移动(&M)...\tF7"
 
 #: progman.rc:36 winefile.rc:31
 msgid "&Copy...\tF8"
-msgstr "复制(&C)…\tF8"
+msgstr "复制(&C)...\tF8"
 
 #: progman.rc:38
 msgid "&Properties\tAlt+Enter"
@@ -11160,7 +11156,7 @@ msgstr "属性(&P)\tAlt+Enter"
 
 #: progman.rc:40
 msgid "&Execute..."
-msgstr "执行(&E)…"
+msgstr "执行(&E)..."
 
 #: progman.rc:42
 msgid "E&xit Windows"
@@ -11264,7 +11260,7 @@ msgstr "启动后最小化(&M)"
 
 #: progman.rc:183
 msgid "Change &icon..."
-msgstr "修改图标(&I)…"
+msgstr "修改图标(&I)..."
 
 #: progman.rc:192
 msgid "Change Icon"
@@ -11405,7 +11401,7 @@ msgstr "reg: 无法访问远程设备\n"
 #: reg.rc:43
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
-msgstr "reg：系统无法找到指定的注册表键或值。\n"
+msgstr "reg：系统无法找到指定的注册表键或值\n"
 
 #: reg.rc:44
 msgid "reg: Unsupported registry data type [%1]\n"
@@ -11413,11 +11409,11 @@ msgstr "reg: 不受支持的数据类型 [%1]\n"
 
 #: reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "reg：选项 [/d] 后必须紧跟一个有效的整数。\n"
+msgstr "reg：选项 [/d] 后必须紧跟一个有效的整数\n"
 
 #: reg.rc:46
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "reg：选项 [/d] 后必须紧跟一个有效的十六进制值。\n"
+msgstr "reg：选项 [/d] 后必须紧跟一个有效的十六进制值\n"
 
 #: reg.rc:47
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
@@ -11449,7 +11445,7 @@ msgstr "您真的要删除注册表键 '%1' 吗?"
 
 #: reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg：选项 [/d] 后必须紧跟一个有效的字符串。\n"
+msgstr "reg：选项 [/d] 后必须紧跟一个有效的字符串\n"
 
 #: reg.rc:58
 msgid ""
@@ -11493,11 +11489,11 @@ msgstr "注册表(&R)"
 
 #: regedit.rc:36
 msgid "&Import Registry File..."
-msgstr "导入注册表文件(&I)…"
+msgstr "导入注册表文件(&I)..."
 
 #: regedit.rc:37
 msgid "&Export Registry File..."
-msgstr "导出注册表文件(&E)…"
+msgstr "导出注册表文件(&E)..."
 
 #: regedit.rc:49 regedit.rc:100
 msgid "&Key"
@@ -11533,7 +11529,7 @@ msgstr "复制键名(&C)"
 
 #: regedit.rc:63 regedit.rc:115 wordpad.rc:53
 msgid "&Find...\tCtrl+F"
-msgstr "查找(&F)…\tCtrl+F"
+msgstr "查找(&F)...\tCtrl+F"
 
 #: regedit.rc:64
 msgid "Find Ne&xt\tF3"
@@ -11549,7 +11545,7 @@ msgstr "调整分隔线(&L)"
 
 #: regedit.rc:77
 msgid "&Remove Favorite..."
-msgstr "删除收藏(&R)…"
+msgstr "删除收藏(&R)..."
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -11557,7 +11553,7 @@ msgstr "关于注册表编辑器(&A)"
 
 #: regedit.rc:91
 msgid "Modify Binary Data..."
-msgstr "修改二进制数据…"
+msgstr "修改二进制数据..."
 
 #: regedit.rc:234
 msgid "Export registry"
@@ -11697,65 +11693,53 @@ msgid "(unknown %d)"
 msgstr "(未知 %d)"
 
 #: regedit.rc:214
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法修改所选注册表值。"
 
 #: regedit.rc:215
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法创建新注册表键。"
 
 #: regedit.rc:216
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法创建新注册表值。"
 
 #: regedit.rc:217
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
+"无法重命名键 '%1'。\n"
+"该键名已存在。"
 
 #: regedit.rc:218
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
+"无法重命名值 '%1'。\n"
+"该值名已存在。"
 
 #: regedit.rc:219
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法删除所选注册表键。"
 
 #: regedit.rc:220
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法重命名所选注册表键。"
 
 #: regedit.rc:221
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法重命名所选注册表值。"
 
 #: regedit.rc:222
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "%1 所包含的键和值已被成功添加到注册表中。"
 
 #: regedit.rc:223
-#, fuzzy
-#| msgid ""
-#| "regedit: Unable to export '%1'. The specified registry key was not "
-#| "found.\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
-msgstr "regedit: 无法导出 '%1'。未找到指定的注册表键。\n"
+msgstr "无法导入 %1。该文件不是一个有效的注册表文件。"
 
 #: regedit.rc:375
 msgid ""
@@ -11818,7 +11802,7 @@ msgstr "regedit：无效或无法识别的开关 [%1]\n"
 
 #: regedit.rc:377
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "输入 \"regedit /?\" 来获得帮助\n"
+msgstr "输入 \"regedit /?\" 来获得帮助。\n"
 
 #: regedit.rc:378
 msgid "regedit: No filename was specified.\n"
@@ -11900,10 +11884,8 @@ msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit：无法删除注册表类“%1”。\n"
 
 #: regedit.rc:398
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: 行 '%1' 无法被识别。\n"
+msgstr "regedit: 该行包含无效字符。\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
@@ -11986,32 +11968,24 @@ msgid "Displays program information, version number and copyright"
 msgstr "显示程序信息、版本号及版权"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法打开注册表值 '%1'。"
 
 #: regedit.rc:182
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "不能编辑这类型的键 (%u)"
+msgstr "无法编辑该类型的键 (%1!u!)。"
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "值太大 (%u)"
+msgstr "该值太大 (%1!u!)。"
 
 #: regedit.rc:184
 msgid "Confirm Value Delete"
 msgstr "确认删除值"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "未找到字符串 '%s'"
+msgstr "搜索完毕。未找到字符串 '%1'。"
 
 #: regedit.rc:186
 msgid "Are you sure you want to delete these values?"
@@ -12026,10 +12000,8 @@ msgid "New Value #%d"
 msgstr "新值 #%d"
 
 #: regedit.rc:180
-#, fuzzy
-#| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "regedit: 无法打开注册表键 '%1'。\n"
+msgstr "无法打开注册表键 '%1'。"
 
 #: regedit.rc:152
 msgid "Adds a new multi-string value"
@@ -12040,17 +12012,13 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "把选定的注册表分支导出为文本文件"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "确认删除值"
+msgstr "确认删除键"
 
 #: regedit.rc:188
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "您真的要删除注册表键 '%1' 吗?"
+msgstr "您真的要删除注册表键 '%1' 及其包含的所有子键吗?"
 
 #: regsvr32.rc:32
 msgid ""
@@ -12206,7 +12174,7 @@ msgstr "错误：不允许结束本进程。\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr "新任务(&N)…"
+msgstr "新任务(&N)..."
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
@@ -12250,7 +12218,7 @@ msgstr "暂停(&P)"
 
 #: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr "选择列项(&S)…"
+msgstr "选择列项(&S)..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
@@ -12334,11 +12302,11 @@ msgstr "低于正常(&B)"
 
 #: taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "关联 CPU(&A)…"
+msgstr "关联 CPU(&A)..."
 
 #: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "编辑调试频道(&C)…"
+msgstr "编辑调试频道(&C)..."
 
 #: taskmgr.rc:338 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
@@ -12346,7 +12314,7 @@ msgstr "任务管理器"
 
 #: taskmgr.rc:351
 msgid "&New Task..."
-msgstr "新任务(&N)…"
+msgstr "新任务(&N)..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
@@ -13095,7 +13063,7 @@ msgstr ""
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "正在更新位于 %s 的 Wine 配置，请稍候……"
+msgstr "正在更新位于 %s 的 Wine 配置，请稍候..."
 
 #: winecfg.rc:141
 msgid ""
@@ -13204,7 +13172,7 @@ msgstr "已有的函数库顶替(&O)："
 
 #: winecfg.rc:199
 msgid "&Edit..."
-msgstr "编辑(&E)…"
+msgstr "编辑(&E)..."
 
 #: winecfg.rc:205
 msgid "Edit Override"
@@ -13266,7 +13234,7 @@ msgstr "设备(&V)："
 
 #: winecfg.rc:251
 msgid "Bro&wse..."
-msgstr "浏览(&W)…"
+msgstr "浏览(&W)..."
 
 #: winecfg.rc:253
 msgid "&Label:"
@@ -13326,7 +13294,7 @@ msgstr "主题(&T)："
 
 #: winecfg.rc:291
 msgid "&Install theme..."
-msgstr "安装主题(&I)…"
+msgstr "安装主题(&I)..."
 
 #: winecfg.rc:296
 msgid "It&em:"
@@ -13953,7 +13921,7 @@ msgstr "保存失败"
 
 #: winedbg.rc:44
 msgid "Loading detailed information, please wait..."
-msgstr "正在载入详细信息，请稍候……"
+msgstr "正在载入详细信息，请稍候..."
 
 #: winefile.rc:29
 msgid "&Open\tEnter"
@@ -13961,7 +13929,7 @@ msgstr "打开(&O)\tEnter"
 
 #: winefile.rc:33
 msgid "Re&name..."
-msgstr "改名(&N)…"
+msgstr "改名(&N)..."
 
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
@@ -13969,7 +13937,7 @@ msgstr "属性(&I)\tAlt+Enter"
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."
-msgstr "建立目录(&E)…"
+msgstr "建立目录(&E)..."
 
 #: winefile.rc:43
 msgid "&Disk"
@@ -13977,7 +13945,7 @@ msgstr "磁盘(&D)"
 
 #: winefile.rc:44
 msgid "Connect &Network Drive..."
-msgstr "连接网络驱动器(&N)…"
+msgstr "连接网络驱动器(&N)..."
 
 #: winefile.rc:45
 msgid "&Disconnect Network Drive"
@@ -14009,7 +13977,7 @@ msgstr "按日期排序(&D)"
 
 #: winefile.rc:59
 msgid "Filter by&..."
-msgstr "过滤标准&…"
+msgstr "过滤标准&..."
 
 #: winefile.rc:66
 msgid "&Drive Bar"
@@ -14186,7 +14154,7 @@ msgstr "专家(&E)"
 
 #: winemine.rc:45
 msgid "&Custom..."
-msgstr "自定义(&C)…"
+msgstr "自定义(&C)..."
 
 #: winemine.rc:47
 msgid "&Fastest Times"
@@ -14254,11 +14222,11 @@ msgstr "Copyright 2000 Joshua Thielen"
 
 #: winhlp32.rc:35
 msgid "Printer &setup..."
-msgstr "打印机设置(&S)…"
+msgstr "打印机设置(&S)..."
 
 #: winhlp32.rc:42
 msgid "&Annotate..."
-msgstr "注释(&A)…"
+msgstr "注释(&A)..."
 
 #: winhlp32.rc:44
 msgid "&Bookmark"
@@ -14266,7 +14234,7 @@ msgstr "书签(&B)"
 
 #: winhlp32.rc:45
 msgid "&Define..."
-msgstr "定义(&D)…"
+msgstr "定义(&D)..."
 
 #: winhlp32.rc:48
 msgid "Always on &top"
@@ -14298,7 +14266,7 @@ msgstr "关于 Wine 帮助(&I)"
 
 #: winhlp32.rc:67
 msgid "Annotation..."
-msgstr "注释…"
+msgstr "注释..."
 
 #: winhlp32.rc:68
 msgid "Copy"
@@ -14362,7 +14330,7 @@ msgstr "错误：PATH 语法无效\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
-msgstr "新建(&N)…\tCtrl+N"
+msgstr "新建(&N)...\tCtrl+N"
 
 #: wordpad.rc:45
 msgid "R&edo\tCtrl+Y"
@@ -14426,7 +14394,7 @@ msgstr "插入(&I)"
 
 #: wordpad.rc:80
 msgid "&Date and time..."
-msgstr "日期时间(&D)…"
+msgstr "日期时间(&D)..."
 
 #: wordpad.rc:82
 msgid "F&ormat"
@@ -14462,11 +14430,11 @@ msgstr "罗马数字 - 大写"
 
 #: wordpad.rc:94 wordpad.rc:117
 msgid "&Paragraph..."
-msgstr "段落(&P)…"
+msgstr "段落(&P)..."
 
 #: wordpad.rc:95
 msgid "&Tabs..."
-msgstr "制表位(&T)…"
+msgstr "制表位(&T)..."
 
 #: wordpad.rc:96
 msgid "Backgroun&d"
