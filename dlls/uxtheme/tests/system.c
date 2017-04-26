@@ -752,37 +752,16 @@ START_TEST(system)
 {
     init_funcs();
 
-    /* No real functional tests will be done (yet). The current tests
+    /* No real functional theme API tests will be done (yet). The current tests
      * only show input/return behaviour
      */
 
-    /* IsThemeActive, IsAppThemed and IsThemePartDefined*/
-    trace("Starting test_IsThemed()\n");
     test_IsThemed();
-
-    /* GetWindowTheme */
-    trace("Starting test_GetWindowTheme()\n");
     test_GetWindowTheme();
-
-    /* SetWindowTheme */
-    trace("Starting test_SetWindowTheme()\n");
     test_SetWindowTheme();
-
-    /* OpenThemeData, a bit more functional now */
-    trace("Starting test_OpenThemeData()\n");
     test_OpenThemeData();
-
-    /* OpenThemeDataEx */
-    trace("Starting test_OpenThemeDataEx()\n");
     test_OpenThemeDataEx();
-
-    /* GetCurrentThemeName */
-    trace("Starting test_GetCurrentThemeName()\n");
     test_GetCurrentThemeName();
-
-    /* CloseThemeData */
-    trace("Starting test_CloseThemeData()\n");
     test_CloseThemeData();
-
     test_buffered_paint();
 }
