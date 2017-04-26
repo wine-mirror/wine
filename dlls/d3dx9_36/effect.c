@@ -148,6 +148,8 @@ struct d3dx9_base_effect
     struct d3dx_parameter *parameters;
     struct d3dx_technique *techniques;
     struct d3dx_object *objects;
+
+    struct d3dx_effect_pool *pool;
 };
 
 struct ID3DXEffectImpl
@@ -169,6 +171,12 @@ struct ID3DXEffectImpl
     BOOL light_updated[8];
     D3DMATERIAL9 current_material;
     BOOL material_updated;
+};
+
+struct d3dx_effect_pool
+{
+    ID3DXEffectPool ID3DXEffectPool_iface;
+    LONG refcount;
 };
 
 struct ID3DXEffectCompilerImpl
@@ -3030,6 +3038,11 @@ static BOOL is_same_parameter(void *param1_, struct d3dx_parameter *param2)
             return FALSE;
     }
     return TRUE;
+}
+
+static inline struct d3dx_effect_pool *impl_from_ID3DXEffectPool(ID3DXEffectPool *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dx_effect_pool, ID3DXEffectPool_iface);
 }
 
 static inline struct ID3DXEffectImpl *impl_from_ID3DXEffect(ID3DXEffect *iface)
@@ -6029,16 +6042,17 @@ err_out:
 
 static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
         const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
-        UINT eflags, ID3DBlob **errors, struct ID3DXEffectImpl *effect)
+        UINT eflags, ID3DBlob **errors, struct ID3DXEffectImpl *effect, struct d3dx_effect_pool *pool)
 {
     DWORD tag, offset;
     const char *ptr = data;
     HRESULT hr;
     ID3DBlob *bytecode = NULL, *temp_errors = NULL;
 
-    TRACE("base %p, data %p, data_size %lu, effect %p\n", base, data, data_size, effect);
+    TRACE("base %p, data %p, data_size %lu, effect %p, pool %p.\n", base, data, data_size, effect, pool);
 
     base->effect = effect;
+    base->pool = pool;
 
     read_dword(&ptr, &tag);
     TRACE("Tag: %x\n", tag);
@@ -6111,20 +6125,25 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, struct IDirect3
         UINT eflags, ID3DBlob **error_messages, struct ID3DXEffectPool *pool)
 {
     HRESULT hr;
+    struct d3dx_effect_pool *pool_impl = NULL;
 
     TRACE("effect %p, device %p, data %p, data_size %lu, pool %p\n", effect, device, data, data_size, pool);
 
     effect->ID3DXEffect_iface.lpVtbl = &ID3DXEffect_Vtbl;
     effect->ref = 1;
 
-    if (pool) pool->lpVtbl->AddRef(pool);
+    if (pool)
+    {
+        pool->lpVtbl->AddRef(pool);
+        pool_impl = impl_from_ID3DXEffectPool(pool);
+    }
     effect->pool = pool;
 
     IDirect3DDevice9_AddRef(device);
     effect->device = device;
 
     if (FAILED(hr = d3dx9_base_effect_init(&effect->base_effect, data, data_size, defines, include,
-            eflags, error_messages, effect)))
+            eflags, error_messages, effect, pool_impl)))
     {
         FIXME("Failed to parse effect, hr %#x.\n", hr);
         free_effect(effect);
@@ -6211,7 +6230,7 @@ static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compil
     compiler->ref = 1;
 
     if (FAILED(hr = d3dx9_base_effect_init(&compiler->base_effect, data, data_size, defines,
-            include, eflags, error_messages, NULL)))
+            include, eflags, error_messages, NULL, NULL)))
     {
         FIXME("Failed to parse effect, hr %#x.\n", hr);
         free_effect_compiler(compiler);
@@ -6256,21 +6275,10 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, co
     return D3D_OK;
 }
 
-struct ID3DXEffectPoolImpl
-{
-    ID3DXEffectPool ID3DXEffectPool_iface;
-    LONG ref;
-};
-
-static inline struct ID3DXEffectPoolImpl *impl_from_ID3DXEffectPool(ID3DXEffectPool *iface)
-{
-    return CONTAINING_RECORD(iface, struct ID3DXEffectPoolImpl, ID3DXEffectPool_iface);
-}
-
 /*** IUnknown methods ***/
-static HRESULT WINAPI ID3DXEffectPoolImpl_QueryInterface(ID3DXEffectPool *iface, REFIID riid, void **object)
+static HRESULT WINAPI d3dx_effect_pool_QueryInterface(ID3DXEffectPool *iface, REFIID riid, void **object)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), object);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXEffectPool))
@@ -6285,41 +6293,47 @@ static HRESULT WINAPI ID3DXEffectPoolImpl_QueryInterface(ID3DXEffectPool *iface,
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ID3DXEffectPoolImpl_AddRef(ID3DXEffectPool *iface)
+static ULONG WINAPI d3dx_effect_pool_AddRef(ID3DXEffectPool *iface)
 {
-    struct ID3DXEffectPoolImpl *This = impl_from_ID3DXEffectPool(iface);
+    struct d3dx_effect_pool *pool = impl_from_ID3DXEffectPool(iface);
+    ULONG refcount = InterlockedIncrement(&pool->refcount);
 
-    TRACE("(%p)->(): AddRef from %u\n", This, This->ref);
+    TRACE("%p increasing refcount to %u.\n", pool, refcount);
 
-    return InterlockedIncrement(&This->ref);
+    return refcount;
 }
 
-static ULONG WINAPI ID3DXEffectPoolImpl_Release(ID3DXEffectPool *iface)
+static void free_effect_pool(struct d3dx_effect_pool *pool)
 {
-    struct ID3DXEffectPoolImpl *This = impl_from_ID3DXEffectPool(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    HeapFree(GetProcessHeap(), 0, pool);
+}
 
-    TRACE("(%p)->(): Release from %u\n", This, ref + 1);
+static ULONG WINAPI d3dx_effect_pool_Release(ID3DXEffectPool *iface)
+{
+    struct d3dx_effect_pool *pool = impl_from_ID3DXEffectPool(iface);
+    ULONG refcount = InterlockedDecrement(&pool->refcount);
 
-    if (!ref)
-        HeapFree(GetProcessHeap(), 0, This);
+    TRACE("%p decreasing refcount to %u.\n", pool, refcount);
 
-    return ref;
+    if (!refcount)
+        free_effect_pool(pool);
+
+    return refcount;
 }
 
 static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl =
 {
     /*** IUnknown methods ***/
-    ID3DXEffectPoolImpl_QueryInterface,
-    ID3DXEffectPoolImpl_AddRef,
-    ID3DXEffectPoolImpl_Release
+    d3dx_effect_pool_QueryInterface,
+    d3dx_effect_pool_AddRef,
+    d3dx_effect_pool_Release
 };
 
 HRESULT WINAPI D3DXCreateEffectPool(ID3DXEffectPool **pool)
 {
-    struct ID3DXEffectPoolImpl *object;
+    struct d3dx_effect_pool *object;
 
-    TRACE("(%p)\n", pool);
+    TRACE("pool %p.\n", pool);
 
     if (!pool)
         return D3DERR_INVALIDCALL;
@@ -6329,7 +6343,7 @@ HRESULT WINAPI D3DXCreateEffectPool(ID3DXEffectPool **pool)
         return E_OUTOFMEMORY;
 
     object->ID3DXEffectPool_iface.lpVtbl = &ID3DXEffectPool_Vtbl;
-    object->ref = 1;
+    object->refcount = 1;
 
     *pool = &object->ID3DXEffectPool_iface;
 
