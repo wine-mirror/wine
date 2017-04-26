@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-04-21 14:36+0300\n"
+"PO-Revision-Date: 2017-04-26 10:24+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -12101,10 +12101,8 @@ msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: не удалось удалить класс «%1».\n"
 
 #: regedit.rc:398
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: строка «%1» не распознана.\n"
+msgstr "regedit: некорректный формат строки.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
