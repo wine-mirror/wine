@@ -434,26 +434,6 @@ static void flush_dir_queue(void)
 }
 
 
-/***********************************************************************
- *           get_default_lpt_device
- *
- * Return the default device to use for parallel ports.
- */
-static char *get_default_lpt_device( int num )
-{
-    char *ret = NULL;
-
-    if (num < 1 || num > 256) return NULL;
-#ifdef linux
-    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/lp256") );
-    if (!ret) return NULL;
-    sprintf( ret, "/dev/lp%d", num - 1 );
-#else
-    FIXME( "no known default for device lpt%d\n", num );
-#endif
-    return ret;
-}
-
 #ifdef __ANDROID__
 
 static char *unescape_field( char *str )
@@ -2476,7 +2456,6 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
             dev[2] = 0;  /* remove last ':' to get the drive mount point symlink */
             new_name = get_default_drive_device( unix_name );
         }
-        else if (!strncmp( dev, "lpt", 3 )) new_name = get_default_lpt_device( atoi(dev + 3 ));
 
         if (!new_name) break;
 

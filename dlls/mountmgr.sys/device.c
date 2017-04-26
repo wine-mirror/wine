@@ -95,6 +95,7 @@ static struct list volumes_list = LIST_INIT(volumes_list);
 
 static DRIVER_OBJECT *harddisk_driver;
 static DRIVER_OBJECT *serial_driver;
+static DRIVER_OBJECT *parallel_driver;
 
 static CRITICAL_SECTION device_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -998,7 +999,10 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
                                 HKEY wine_ports_key, HKEY windows_ports_key )
 {
     static const WCHAR comW[] = {'C','O','M','%','u',0};
+    static const WCHAR lptW[] = {'L','P','T','%','u',0};
     static const WCHAR device_serialW[] = {'\\','D','e','v','i','c','e','\\','S','e','r','i','a','l','%','u',0};
+    static const WCHAR device_parallelW[] = {'\\','D','e','v','i','c','e','\\','P','a','r','a','l','l','e','l','%','u',0};
+    static const WCHAR dosdevices_lptW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','%','u',0};
     const WCHAR *dos_name_format, *nt_name_format, *reg_value_format;
     WCHAR dos_name[7], reg_value[256], nt_buffer[32];
     DWORD type, size;
@@ -1007,10 +1011,18 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
     DEVICE_OBJECT *dev_obj;
     NTSTATUS status;
 
-    dos_name_format = comW;
-    nt_name_format = device_serialW;
-    reg_value_format = comW;
-    /* TODO: support parallel ports */
+    if (driver == serial_driver)
+    {
+        dos_name_format = comW;
+        nt_name_format = device_serialW;
+        reg_value_format = comW;
+    }
+    else
+    {
+        dos_name_format = lptW;
+        nt_name_format = device_parallelW;
+        reg_value_format = dosdevices_lptW;
+    }
 
     sprintfW( dos_name, dos_name_format, n );
 
@@ -1065,9 +1077,19 @@ static void create_port_devices( DRIVER_OBJECT *driver )
         "",
 #endif
     };
+    static const char *parallel_search_paths[] = {
+#ifdef linux
+        "/dev/lp%u",
+#else
+        "",
+#endif
+    };
     static const WCHAR serialcomm_keyW[] = {'H','A','R','D','W','A','R','E','\\',
                                             'D','E','V','I','C','E','M','A','P','\\',
                                             'S','E','R','I','A','L','C','O','M','M',0};
+    static const WCHAR parallel_ports_keyW[] = {'H','A','R','D','W','A','R','E','\\',
+                                                'D','E','V','I','C','E','M','A','P','\\',
+                                                'P','A','R','A','L','L','E','L',' ','P','O','R','T','S',0};
     const char **search_paths;
     const WCHAR *windows_ports_key_name;
     char *dosdevices_path, *p;
@@ -1078,13 +1100,24 @@ static void create_port_devices( DRIVER_OBJECT *driver )
     if (!(dosdevices_path = get_dosdevices_path( &p )))
         return;
 
-    p[0] = 'c';
-    p[1] = 'o';
-    p[2] = 'm';
-    search_paths = serial_search_paths;
-    num_search_paths = sizeof(serial_search_paths)/sizeof(serial_search_paths[0]);
-    windows_ports_key_name = serialcomm_keyW;
-    /* TODO: support parallel ports */
+    if (driver == serial_driver)
+    {
+        p[0] = 'c';
+        p[1] = 'o';
+        p[2] = 'm';
+        search_paths = serial_search_paths;
+        num_search_paths = sizeof(serial_search_paths)/sizeof(serial_search_paths[0]);
+        windows_ports_key_name = serialcomm_keyW;
+    }
+    else
+    {
+        p[0] = 'l';
+        p[1] = 'p';
+        p[2] = 't';
+        search_paths = parallel_search_paths;
+        num_search_paths = sizeof(parallel_search_paths)/sizeof(parallel_search_paths[0]);
+        windows_ports_key_name = parallel_ports_keyW;
+    }
     p += 3;
 
     RegOpenKeyExW( HKEY_LOCAL_MACHINE, ports_keyW, 0, KEY_QUERY_VALUE, &wine_ports_key );
@@ -1130,6 +1163,17 @@ static void create_port_devices( DRIVER_OBJECT *driver )
 NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
     serial_driver = driver;
+    /* TODO: fill in driver->MajorFunction */
+
+    create_port_devices( driver );
+
+    return STATUS_SUCCESS;
+}
+
+/* driver entry point for the parallel port driver */
+NTSTATUS WINAPI parallel_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
+{
+    parallel_driver = driver;
     /* TODO: fill in driver->MajorFunction */
 
     create_port_devices( driver );
