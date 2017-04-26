@@ -6130,6 +6130,21 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     hr = effect2->lpVtbl->End(effect2);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
+    if (0)
+    {
+        refcount = pool->lpVtbl->Release(pool);
+        ok(refcount == 2, "Unexpected refcount %u.\n", refcount);
+
+        refcount = pool->lpVtbl->Release(pool);
+        ok(refcount == 1, "Unexpected refcount %u.\n", refcount);
+
+        refcount = pool->lpVtbl->Release(pool);
+        ok(!refcount, "Unexpected refcount %u.\n", refcount);
+
+        /* Native d3dx crashes in GetFloat(). */
+        effect2->lpVtbl->GetFloat(effect2, "arr2[0]", &fvect.x);
+    }
+
     effect1->lpVtbl->Release(effect1);
     effect2->lpVtbl->Release(effect2);
 
