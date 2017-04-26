@@ -5909,7 +5909,6 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     effect1->lpVtbl->GetFloat(effect1, "arr2[0]", &fvect.x);
-    todo_wine
     ok(fvect.x == 28.0f, "Unexpected parameter value %g.\n", fvect.x);
 
     hr = D3DXCreateEffect(device, test_effect_shared_parameters_blob, sizeof(test_effect_shared_parameters_blob),
@@ -5926,10 +5925,8 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     ok(fvect.x == 0.0f, "Unexpected parameter value %g.\n", fvect.x);
     effect4->lpVtbl->SetFloat(effect4, "arr2[0]", 28.0f);
     effect3->lpVtbl->GetFloat(effect3, "arr2[0]", &fvect.x);
-    todo_wine
     ok(fvect.x == 28.0f, "Unexpected parameter value %g.\n", fvect.x);
     effect1->lpVtbl->GetFloat(effect1, "arr2[0]", &fvect.x);
-    todo_wine
     ok(fvect.x == 3.0f, "Unexpected parameter value %g.\n", fvect.x);
 
     param = effect3->lpVtbl->GetParameterByName(effect3, NULL, "ts2[0].fv_2");
@@ -5985,6 +5982,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect3->lpVtbl->BeginPass(effect3, 1);
+    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fvect.x, 1);
@@ -6008,9 +6006,9 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
         hr = effect1->lpVtbl->GetVertexShader(effect1, param_child, &vshader1);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-        test_effect_shared_vs_arr_compare_helper(effect2, param_child, vshader1, i, TRUE);
-        test_effect_shared_vs_arr_compare_helper(effect3, param_child, vshader1, i, TRUE);
-        test_effect_shared_vs_arr_compare_helper(effect4, param_child, vshader1, i, TRUE);
+        test_effect_shared_vs_arr_compare_helper(effect2, param_child, vshader1, i, FALSE);
+        test_effect_shared_vs_arr_compare_helper(effect3, param_child, vshader1, i, FALSE);
+        test_effect_shared_vs_arr_compare_helper(effect4, param_child, vshader1, i, FALSE);
         IDirect3DVertexShader9_Release(vshader1);
     }
 
@@ -6046,7 +6044,6 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     fval[0] = 0.0f;
     hr = effect2->lpVtbl->GetFloatArray(effect2, "arr2", fval, 2);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    todo_wine
     ok(fval[0] == 33.0f && fval[1] == 93.0f, "Unexpected values %g, %g.\n", fval[0], fval[1]);
 
     hr = effect1->lpVtbl->Begin(effect1, &passes_count, 0);
@@ -6068,7 +6065,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     fvect.x = 91.0f;
     test_effect_shared_parameters_compare_vconst(device, 32, &fvect, FALSE);
     fvect.x = 33.0f;
-    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, TRUE);
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, FALSE);
 
     fval[0] = 28.0f;
     fval[1] = -1.0f;
@@ -6097,9 +6094,9 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     fvect.x = 28.0f;
-    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, TRUE);
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, FALSE);
     fvect.x = -1.0f;
-    test_effect_shared_parameters_compare_vconst(device, 30, &fvect, TRUE);
+    test_effect_shared_parameters_compare_vconst(device, 30, &fvect, FALSE);
 
     fval[0] = -2.0f;
     hr = effect2->lpVtbl->SetFloat(effect2, "arr2[0]", fval[0]);
@@ -6108,9 +6105,9 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     fvect.x = -2.0f;
-    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, TRUE);
+    test_effect_shared_parameters_compare_vconst(device, 29, &fvect, FALSE);
     fvect.x = -1.0f;
-    test_effect_shared_parameters_compare_vconst(device, 30, &fvect, TRUE);
+    test_effect_shared_parameters_compare_vconst(device, 30, &fvect, FALSE);
 
     fvect.x = fvect.y = fvect.z = fvect.w = 1111.0f;
     hr = effect2->lpVtbl->SetVector(effect2, "g_Pos1", &fvect);

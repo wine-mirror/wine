@@ -194,6 +194,8 @@ struct d3dx_param_eval
 
 #define PARAMETER_FLAG_DIRTY 0x1u
 
+struct d3dx_shared_data;
+
 struct d3dx_parameter
 {
     char magic_string[4];
@@ -215,10 +217,14 @@ struct d3dx_parameter
     struct d3dx_parameter *annotations;
     struct d3dx_parameter *members;
 
-    struct d3dx_parameter *referenced_param;
     struct d3dx_param_eval *param_eval;
 
     struct d3dx_parameter *top_level_param;
+    union
+    {
+        struct d3dx_parameter *referenced_param;
+        struct d3dx_shared_data *shared_data;
+    };
 };
 
 static inline BOOL is_param_dirty(struct d3dx_parameter *param)

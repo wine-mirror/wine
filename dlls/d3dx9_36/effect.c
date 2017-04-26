@@ -29,6 +29,10 @@
 
 static const char parameter_magic_string[4] = {'@', '!', '#', '\xFF'};
 
+#define PARAMETER_FLAG_SHARED 1
+
+#define INITIAL_POOL_SIZE 16
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 enum STATE_CLASS
@@ -173,10 +177,22 @@ struct ID3DXEffectImpl
     BOOL material_updated;
 };
 
+#define INITIAL_SHARED_DATA_SIZE 4
+
+struct d3dx_shared_data
+{
+    void *data;
+    struct d3dx_parameter **parameters;
+    unsigned int size, count;
+};
+
 struct d3dx_effect_pool
 {
     ID3DXEffectPool ID3DXEffectPool_iface;
     LONG refcount;
+
+    struct d3dx_shared_data *shared_data;
+    unsigned int size;
 };
 
 struct ID3DXEffectCompilerImpl
@@ -510,8 +526,12 @@ static void free_sampler(struct d3dx_sampler *sampler)
     HeapFree(GetProcessHeap(), 0, sampler->states);
 }
 
+static void d3dx_pool_release_shared_parameter(struct d3dx_parameter *param);
+
 static void free_parameter_data(struct d3dx_parameter *param, BOOL child)
 {
+    if (!param->data)
+        return;
     if (param->class == D3DXPC_OBJECT && !param->element_count)
     {
         switch (param->type)
@@ -563,6 +583,8 @@ static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL chil
             free_parameter(&param->annotations[i], FALSE, FALSE);
         HeapFree(GetProcessHeap(), 0, param->annotations);
     }
+
+    d3dx_pool_release_shared_parameter(param);
 
     if (param->members)
     {
@@ -1337,7 +1359,18 @@ static BOOL walk_parameter_tree(struct d3dx_parameter *param, walk_parameter_dep
 
 static void set_dirty(struct d3dx_parameter *param)
 {
-    param->top_level_param->runtime_flags |= PARAMETER_FLAG_DIRTY;
+    struct d3dx_shared_data *shared_data;
+    unsigned int i;
+
+    if ((shared_data = param->top_level_param->shared_data))
+    {
+        for (i = 0; i < shared_data->count; ++i)
+            shared_data->parameters[i]->runtime_flags |= PARAMETER_FLAG_DIRTY;
+    }
+    else
+    {
+        param->top_level_param->runtime_flags |= PARAMETER_FLAG_DIRTY;
+    }
 }
 
 static void clear_dirty_params(struct d3dx9_base_effect *base)
@@ -3016,6 +3049,23 @@ static HRESULT d3dx9_apply_pass_states(struct ID3DXEffectImpl *effect, struct d3
     return ret;
 }
 
+static void param_set_data_pointer(struct d3dx_parameter *param, unsigned char *data, BOOL child, BOOL free_data)
+{
+    unsigned char *member_data = data;
+    unsigned int i, count;
+
+    count = param->element_count ? param->element_count : param->member_count;
+    for (i = 0; i < count; ++i)
+    {
+        param_set_data_pointer(&param->members[i], member_data, TRUE, free_data);
+        if (data)
+            member_data += param->members[i].bytes;
+    }
+    if (free_data)
+        free_parameter_data(param, child);
+    param->data = data;
+}
+
 static BOOL is_same_parameter(void *param1_, struct d3dx_parameter *param2)
 {
     struct d3dx_parameter *param1 = (struct d3dx_parameter *)param1_;
@@ -3038,6 +3088,137 @@ static BOOL is_same_parameter(void *param1_, struct d3dx_parameter *param2)
             return FALSE;
     }
     return TRUE;
+}
+
+static HRESULT d3dx_pool_sync_shared_parameter(struct d3dx_effect_pool *pool, struct d3dx_parameter *param)
+{
+    unsigned int i, free_entry_index;
+    unsigned int new_size, new_count;
+
+    if (!(param->flags & PARAMETER_FLAG_SHARED) || !pool || is_param_type_sampler(param->type))
+        return D3D_OK;
+
+    free_entry_index = pool->size;
+    for (i = 0; i < pool->size; ++i)
+    {
+        if (!pool->shared_data[i].count)
+            free_entry_index = i;
+        else if (is_same_parameter(param, pool->shared_data[i].parameters[0]))
+            break;
+    }
+    if (i == pool->size)
+    {
+        i = free_entry_index;
+        if (i == pool->size)
+        {
+            struct d3dx_shared_data *new_alloc;
+
+            if (!pool->size)
+            {
+                new_size = INITIAL_POOL_SIZE;
+                new_alloc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                        sizeof(*pool->shared_data) * new_size);
+                if (!new_alloc)
+                {
+                    ERR("Out of memory.\n");
+                    return E_OUTOFMEMORY;
+                }
+            }
+            else
+            {
+                new_size = pool->size * 2;
+                new_alloc = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pool->shared_data,
+                        sizeof(*pool->shared_data) * new_size);
+                if (!new_alloc)
+                {
+                    ERR("Out of memory.\n");
+                    return E_OUTOFMEMORY;
+                }
+                if (new_alloc != pool->shared_data)
+                {
+                    unsigned int j, k;
+
+                    for (j = 0; j < pool->size; ++j)
+                        for (k = 0; k < new_alloc[j].count; ++k)
+                            new_alloc[j].parameters[k]->shared_data = &new_alloc[j];
+                }
+            }
+            pool->shared_data = new_alloc;
+            pool->size = new_size;
+        }
+        pool->shared_data[i].data = param->data;
+    }
+    else
+    {
+        param_set_data_pointer(param, pool->shared_data[i].data, FALSE, TRUE);
+    }
+    new_count = ++pool->shared_data[i].count;
+    if (new_count >= pool->shared_data[i].size)
+    {
+        if (!pool->shared_data[i].size)
+        {
+            new_size = INITIAL_SHARED_DATA_SIZE;
+            pool->shared_data[i].parameters = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    sizeof(*pool->shared_data[i].parameters) * INITIAL_SHARED_DATA_SIZE);
+        }
+        else
+        {
+            new_size = pool->shared_data[i].size * 2;
+            pool->shared_data[i].parameters = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    pool->shared_data[i].parameters,
+                    sizeof(*pool->shared_data[i].parameters) * new_size);
+        }
+        pool->shared_data[i].size = new_size;
+    }
+
+    param->shared_data = &pool->shared_data[i];
+    pool->shared_data[i].parameters[new_count - 1] = param;
+
+    TRACE("name %s, parameter idx %u, new refcount %u.\n", param->name, i,
+            new_count);
+
+    return D3D_OK;
+}
+
+static BOOL param_zero_data_func(void *dummy, struct d3dx_parameter *param)
+{
+    param->data = NULL;
+    return FALSE;
+}
+
+static void d3dx_pool_release_shared_parameter(struct d3dx_parameter *param)
+{
+    unsigned int new_count;
+
+    if (!(param->flags & PARAMETER_FLAG_SHARED) || !param->shared_data)
+        return;
+    new_count = --param->shared_data->count;
+
+    TRACE("param %p, param->shared_param %p, new_count %d.\n", param, param->shared_data, new_count);
+
+    if (new_count)
+    {
+        unsigned int i;
+
+        for (i = 0; i < new_count; ++i)
+        {
+            if (param->shared_data->parameters[i] == param)
+            {
+                memmove(&param->shared_data->parameters[i],
+                        &param->shared_data->parameters[i + 1],
+                        sizeof(param->shared_data->parameters[i]) * (new_count - i));
+                break;
+            }
+        }
+        walk_parameter_tree(param, param_zero_data_func, NULL);
+    }
+    else
+    {
+        HeapFree(GetProcessHeap(), 0, param->shared_data->parameters);
+        /* Zeroing table size is required as the entry in pool parameters table can be reused. */
+        param->shared_data->size = 0;
+        param->shared_data = NULL;
+    }
 }
 
 static inline struct d3dx_effect_pool *impl_from_ID3DXEffectPool(ID3DXEffectPool *iface)
@@ -6003,8 +6184,12 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
     }
 
     for (i = 0; i < base->parameter_count; ++i)
+    {
+        if (FAILED(hr = d3dx_pool_sync_shared_parameter(base->pool, &base->parameters[i])))
+            goto err_out;
         walk_parameter_tree(&base->parameters[i], param_set_top_level_param,
                 &base->parameters[i]);
+    }
     return D3D_OK;
 
 err_out:
@@ -6305,6 +6490,28 @@ static ULONG WINAPI d3dx_effect_pool_AddRef(ID3DXEffectPool *iface)
 
 static void free_effect_pool(struct d3dx_effect_pool *pool)
 {
+    unsigned int i;
+
+    for (i = 0; i < pool->size; ++i)
+    {
+        if (pool->shared_data[i].count)
+        {
+            unsigned int j;
+
+            WARN("Releasing pool with referenced parameters.\n");
+
+            param_set_data_pointer(pool->shared_data[i].parameters[0], NULL, FALSE, TRUE);
+            pool->shared_data[i].parameters[0]->shared_data = NULL;
+
+            for (j = 1; j < pool->shared_data[i].count; ++j)
+            {
+                walk_parameter_tree(pool->shared_data[i].parameters[j], param_zero_data_func, NULL);
+                pool->shared_data[i].parameters[j]->shared_data = NULL;
+            }
+            HeapFree(GetProcessHeap(), 0, pool->shared_data[i].parameters);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, pool->shared_data);
     HeapFree(GetProcessHeap(), 0, pool);
 }
 
