@@ -635,6 +635,14 @@ static ULONG STDMETHODCALLTYPE d3d11_hull_shader_AddRef(ID3D11HullShader *iface)
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
 
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(shader->device);
+        wined3d_mutex_lock();
+        wined3d_shader_incref(shader->wined3d_shader);
+        wined3d_mutex_unlock();
+    }
+
     return refcount;
 }
 
@@ -830,6 +838,14 @@ static ULONG STDMETHODCALLTYPE d3d11_domain_shader_AddRef(ID3D11DomainShader *if
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
+
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(shader->device);
+        wined3d_mutex_lock();
+        wined3d_shader_incref(shader->wined3d_shader);
+        wined3d_mutex_unlock();
+    }
 
     return refcount;
 }
@@ -1036,6 +1052,14 @@ static ULONG STDMETHODCALLTYPE d3d11_geometry_shader_AddRef(ID3D11GeometryShader
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
+
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(shader->device);
+        wined3d_mutex_lock();
+        wined3d_shader_incref(shader->wined3d_shader);
+        wined3d_mutex_unlock();
+    }
 
     return refcount;
 }
@@ -1889,6 +1913,14 @@ static ULONG STDMETHODCALLTYPE d3d11_compute_shader_AddRef(ID3D11ComputeShader *
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
+
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(shader->device);
+        wined3d_mutex_lock();
+        wined3d_shader_incref(shader->wined3d_shader);
+        wined3d_mutex_unlock();
+    }
 
     return refcount;
 }
