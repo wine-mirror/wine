@@ -1211,7 +1211,8 @@ HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_devic
     wined3d_desc.comparison_func = wined3d_cmp_func_from_d3d11(desc->ComparisonFunc);
     wined3d_desc.srgb_decode = TRUE;
 
-    if (FAILED(hr = wined3d_sampler_create(device->wined3d_device, &wined3d_desc, state, &state->wined3d_sampler)))
+    if (FAILED(hr = wined3d_sampler_create(device->wined3d_device, &wined3d_desc,
+            state, &d3d_null_wined3d_parent_ops, &state->wined3d_sampler)))
     {
         WARN("Failed to create wined3d sampler, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&state->private_store);

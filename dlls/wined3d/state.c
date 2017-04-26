@@ -3616,7 +3616,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         }
         else
         {
-            if (FAILED(wined3d_sampler_create(device, &desc, NULL, &sampler)))
+            if (FAILED(wined3d_sampler_create(device, &desc, NULL, &wined3d_null_parent_ops, &sampler)))
             {
                 ERR("Failed to create sampler.\n");
                 return;

@@ -57,7 +57,10 @@ ULONG CDECL wined3d_sampler_decref(struct wined3d_sampler *sampler)
     TRACE("%p decreasing refcount to %u.\n", sampler, refcount);
 
     if (!refcount)
+    {
+        sampler->parent_ops->wined3d_object_destroyed(sampler->parent);
         wined3d_cs_destroy_object(sampler->device->cs, wined3d_sampler_destroy_object, sampler);
+    }
 
     return refcount;
 }
@@ -112,11 +115,12 @@ static void wined3d_sampler_cs_init(void *object)
 }
 
 static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d_device *device,
-        const struct wined3d_sampler_desc *desc, void *parent)
+        const struct wined3d_sampler_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     sampler->refcount = 1;
     sampler->device = device;
     sampler->parent = parent;
+    sampler->parent_ops = parent_ops;
     sampler->desc = *desc;
 
     if (device->adapter->gl_info.supported[ARB_SAMPLER_OBJECTS])
@@ -124,7 +128,7 @@ static void wined3d_sampler_init(struct wined3d_sampler *sampler, struct wined3d
 }
 
 HRESULT CDECL wined3d_sampler_create(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
-        void *parent, struct wined3d_sampler **sampler)
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler)
 {
     struct wined3d_sampler *object;
 
@@ -143,7 +147,7 @@ HRESULT CDECL wined3d_sampler_create(struct wined3d_device *device, const struct
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    wined3d_sampler_init(object, device, desc, parent);
+    wined3d_sampler_init(object, device, desc, parent, parent_ops);
 
     TRACE("Created sampler %p.\n", object);
     *sampler = object;

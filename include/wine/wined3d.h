@@ -2531,7 +2531,7 @@ ULONG __cdecl wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view 
 void __cdecl wined3d_rendertarget_view_set_parent(struct wined3d_rendertarget_view *view, void *parent);
 
 HRESULT __cdecl wined3d_sampler_create(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
-        void *parent, struct wined3d_sampler **sampler);
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler);
 ULONG __cdecl wined3d_sampler_decref(struct wined3d_sampler *sampler);
 void * __cdecl wined3d_sampler_get_parent(const struct wined3d_sampler *sampler);
 ULONG __cdecl wined3d_sampler_incref(struct wined3d_sampler *sampler);

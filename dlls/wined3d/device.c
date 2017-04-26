@@ -786,7 +786,7 @@ static void create_default_samplers(struct wined3d_device *device, struct wined3
      * sampler object is used to emulate the direct resource access when there is no sampler state
      * to use.
      */
-    if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &device->default_sampler)))
+    if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &wined3d_null_parent_ops, &device->default_sampler)))
     {
         ERR("Failed to create default sampler, hr %#x.\n", hr);
         device->default_sampler = NULL;
@@ -799,7 +799,7 @@ static void create_default_samplers(struct wined3d_device *device, struct wined3
     desc.mag_filter = WINED3D_TEXF_LINEAR;
     desc.min_filter = WINED3D_TEXF_LINEAR;
     desc.mip_filter = WINED3D_TEXF_LINEAR;
-    if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &device->null_sampler)))
+    if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &wined3d_null_parent_ops, &device->null_sampler)))
     {
         ERR("Failed to create null sampler, hr %#x.\n", hr);
         device->null_sampler = NULL;

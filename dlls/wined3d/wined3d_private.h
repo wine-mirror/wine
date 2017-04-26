@@ -3110,10 +3110,11 @@ struct wined3d_sampler
 {
     struct wine_rb_entry entry;
     LONG refcount;
+    GLuint name;
     struct wined3d_device *device;
     void *parent;
+    const struct wined3d_parent_ops *parent_ops;
     struct wined3d_sampler_desc desc;
-    GLuint name;
 };
 
 void wined3d_sampler_bind(struct wined3d_sampler *sampler, unsigned int unit,
