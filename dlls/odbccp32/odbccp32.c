@@ -65,6 +65,7 @@ static const WCHAR odbc_error_invalid_param_string[] = {'I','n','v','a','l','i',
 static const WCHAR odbc_error_invalid_dsn[] = {'I','n','v','a','l','i','d',' ','D','S','N',0};
 static const WCHAR odbc_error_load_lib_failed[] = {'L','o','a','d',' ','L','i','b','r','a','r','y',' ','F','a','i','l','e','d',0};
 static const WCHAR odbc_error_request_failed[] = {'R','e','q','u','e','s','t',' ','F','a','i','l','e','d',0};
+static const WCHAR odbc_error_invalid_keyword[] = {'I','n','v','a','l','i','d',' ','k','e','y','w','o','r','d',' ','v','a','l','u','e',0};
 
 /* Push an error onto the error stack, taking care of ranges etc. */
 static void push_error(int code, LPCWSTR msg)
@@ -303,6 +304,64 @@ static HMODULE load_config_driver(const WCHAR *driver)
     return hmod;
 }
 
+static BOOL write_config_value(const WCHAR *driver, const WCHAR *args)
+{
+    long ret;
+    HKEY hkey, hkeydriver;
+    WCHAR *name = NULL;
+
+    if(!args)
+        return FALSE;
+
+    if((ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, odbcini, &hkey)) == ERROR_SUCCESS)
+    {
+        if((ret = RegOpenKeyW(hkey, driver, &hkeydriver)) == ERROR_SUCCESS)
+        {
+            WCHAR *divider, *value;
+
+            name = heap_alloc( (strlenW(args) + 1) * sizeof(WCHAR));
+            if(!name)
+            {
+                push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+                goto fail;
+            }
+            lstrcpyW(name, args);
+
+            divider = strchrW(name,'=');
+            if(!divider)
+            {
+                push_error(ODBC_ERROR_INVALID_KEYWORD_VALUE, odbc_error_invalid_keyword);
+                goto fail;
+            }
+
+            value = divider + 1;
+            *divider = '\0';
+
+            TRACE("Write pair: %s = %s\n", debugstr_w(name), debugstr_w(value));
+            if(RegSetValueExW(hkeydriver, name, 0, REG_SZ, (BYTE*)value,
+                               (strlenW(value)+1) * sizeof(WCHAR)) != ERROR_SUCCESS)
+                ERR("Failed to write registry installed key\n");
+            heap_free(name);
+
+            RegCloseKey(hkeydriver);
+        }
+
+        RegCloseKey(hkey);
+    }
+
+    if(ret != ERROR_SUCCESS)
+        push_error(ODBC_ERROR_COMPONENT_NOT_FOUND, odbc_error_component_not_found);
+
+    return ret == ERROR_SUCCESS;
+
+fail:
+    RegCloseKey(hkeydriver);
+    RegCloseKey(hkey);
+    heap_free(name);
+
+    return FALSE;
+}
+
 BOOL WINAPI SQLConfigDriverW(HWND hwnd, WORD request, LPCWSTR driver,
                LPCWSTR args, LPWSTR msg, WORD msgmax, WORD *msgout)
 {
@@ -313,6 +372,11 @@ BOOL WINAPI SQLConfigDriverW(HWND hwnd, WORD request, LPCWSTR driver,
     clear_errors();
     TRACE("(%p %d %s %s %p %d %p)\n", hwnd, request, debugstr_w(driver),
           debugstr_w(args), msg, msgmax, msgout);
+
+    if(request == ODBC_CONFIG_DRIVER)
+    {
+        return write_config_value(driver, args);
+    }
 
     hmod = load_config_driver(driver);
     if(!hmod)
@@ -343,6 +407,30 @@ BOOL WINAPI SQLConfigDriver(HWND hwnd, WORD request, LPCSTR driver,
           debugstr_a(args), msg, msgmax, msgout);
 
     driverW = heap_strdupAtoW(driver);
+    if(!driverW)
+    {
+        push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+        return FALSE;
+    }
+    if(request == ODBC_CONFIG_DRIVER)
+    {
+        BOOL ret = FALSE;
+        WCHAR *argsW = heap_strdupAtoW(args);
+        if(argsW)
+        {
+            ret = write_config_value(driverW, argsW);
+            HeapFree(GetProcessHeap(), 0, argsW);
+        }
+        else
+        {
+            push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+        }
+
+        HeapFree(GetProcessHeap(), 0, driverW);
+
+        return ret;
+    }
+
     hmod = load_config_driver(driverW);
     HeapFree(GetProcessHeap(), 0, driverW);
     if(!hmod)
