@@ -419,6 +419,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     static const WCHAR device_mountmgrW[] = {'\\','D','e','v','i','c','e','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0};
     static const WCHAR link_mountmgrW[] = {'\\','?','?','\\','M','o','u','n','t','P','o','i','n','t','M','a','n','a','g','e','r',0};
     static const WCHAR harddiskW[] = {'\\','D','r','i','v','e','r','\\','H','a','r','d','d','i','s','k',0};
+    static const WCHAR driver_serialW[] = {'\\','D','r','i','v','e','r','\\','S','e','r','i','a','l',0};
     static const WCHAR devicemapW[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P',0};
     static const WCHAR parallelW[] = {'P','A','R','A','L','L','E','L',' ','P','O','R','T','S',0};
     static const WCHAR serialW[] = {'S','E','R','I','A','L','C','O','M','M',0};
@@ -462,6 +463,9 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     initialize_dbus();
     initialize_diskarbitration();
+
+    RtlInitUnicodeString( &nameW, driver_serialW );
+    IoCreateDriver( &nameW, serial_driver_entry );
 
     return status;
 }
