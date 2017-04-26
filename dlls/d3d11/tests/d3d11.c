@@ -5314,6 +5314,9 @@ static void test_device_context_state(void)
         return;
     }
 
+    check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
+    check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
+
     feature_level = ID3D11Device1_GetFeatureLevel(device);
     ID3D11Device1_GetImmediateContext1(device, &context);
 
@@ -5334,7 +5337,7 @@ static void test_device_context_state(void)
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
 
     ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &sampler);
-    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    tmp_sampler = NULL;
     ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
     ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
     ID3D11SamplerState_Release(tmp_sampler);
@@ -5347,7 +5350,7 @@ static void test_device_context_state(void)
     ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     /* Enable ID3D10Device behavior. */
-    previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
+    previous_context_state = NULL;
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
     refcount = ID3DDeviceContextState_Release(context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
@@ -5358,17 +5361,34 @@ static void test_device_context_state(void)
     ok(tmp_sampler == (ID3D11SamplerState *)0xdeadbeef, "Got unexpected sampler %p.\n", tmp_sampler);
     ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &tmp_sampler);
 
+    check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
+    check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
+
     ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
     refcount = ID3DDeviceContextState_Release(context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
     refcount = ID3DDeviceContextState_Release(previous_context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
 
-    ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &sampler);
-    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    /* ID3DDeviceContextState retains the previous state. */
+    tmp_sampler = NULL;
     ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
     ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
     ID3D11SamplerState_Release(tmp_sampler);
+
+    tmp_sampler = NULL;
+    ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &tmp_sampler);
+    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
+    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &sampler);
+    tmp_sampler = NULL;
+    ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
+    ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
+    ID3D11SamplerState_Release(tmp_sampler);
+
+    check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
+    check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
     ID3D11SamplerState_Release(sampler);
     ID3D11DeviceContext1_Release(context);
