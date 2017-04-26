@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <float.h>
 #include <stdlib.h>
 #define COBJMACROS
 #include "initguid.h"
@@ -5289,6 +5290,70 @@ static void test_private_data(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = ID3D11Device_Release(test_object);
     ok(!refcount, "Test object has %u references left.\n", refcount);
+}
+
+static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
+{
+    ID3D11SamplerState *sampler, *tmp_sampler;
+    D3D11_SAMPLER_DESC sampler_desc;
+    struct device_desc device_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
+    }
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 0;
+    sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sampler_desc.BorderColor[0] = 0.0f;
+    sampler_desc.BorderColor[1] = 1.0f;
+    sampler_desc.BorderColor[2] = 0.0f;
+    sampler_desc.BorderColor[3] = 1.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = FLT_MAX;
+    hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
+    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &tmp_sampler);
+    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
+    ID3D11SamplerState_Release(tmp_sampler);
+
+    tmp_sampler = sampler;
+    refcount = get_refcount(sampler);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
+    refcount = ID3D11SamplerState_Release(sampler);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    sampler = NULL;
+    ID3D11DeviceContext_PSGetSamplers(context, 0, 1, &sampler);
+    ok(sampler == tmp_sampler, "Got sampler %p, expected %p.\n", sampler, tmp_sampler);
+    refcount = ID3D11SamplerState_Release(sampler);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &tmp_sampler);
+    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
+    refcount = ID3D11SamplerState_Release(tmp_sampler);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    ID3D11DeviceContext_Release(context);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 static void test_device_context_state(void)
@@ -17679,6 +17744,7 @@ START_TEST(d3d11)
     test_timestamp_query();
     test_device_removed_reason();
     test_private_data();
+    run_for_each_feature_level(test_state_refcounting);
     test_device_context_state();
     test_blend();
     test_texture();
