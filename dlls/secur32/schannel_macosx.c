@@ -916,8 +916,64 @@ unsigned int schan_imp_get_max_message_size(schan_imp_session session)
 
 ALG_ID schan_imp_get_key_signature_algorithm(schan_imp_session session)
 {
-    FIXME("(%p)\n", session);
-    return 0;
+    struct mac_session* s = (struct mac_session*)session;
+    SSLCipherSuite cipherSuite;
+    const struct cipher_suite* c;
+    int status;
+
+    TRACE("(%p/%p)\n", s, s->context);
+
+    status = SSLGetNegotiatedCipher(s->context, &cipherSuite);
+    if (status != noErr)
+    {
+        ERR("Failed to get session cipher suite: %d\n", status);
+        return 0;
+    }
+
+    c = get_cipher_suite(cipherSuite);
+    if (!c)
+    {
+        ERR("Unknown session cipher suite: %#x\n", (unsigned int)cipherSuite);
+        return 0;
+    }
+
+    switch (c->kx_alg)
+    {
+    case schan_kx_DH_DSS_EXPORT:
+    case schan_kx_DH_DSS:
+    case schan_kx_DHE_DSS_EXPORT:
+    case schan_kx_DHE_DSS:
+        return CALG_DSS_SIGN;
+
+    case schan_kx_DH_RSA_EXPORT:
+    case schan_kx_DH_RSA:
+    case schan_kx_DHE_RSA_EXPORT:
+    case schan_kx_DHE_RSA:
+    case schan_kx_ECDH_RSA:
+    case schan_kx_ECDHE_RSA:
+    case schan_kx_RSA_EXPORT:
+    case schan_kx_RSA:
+        return CALG_RSA_SIGN;
+
+    case schan_kx_ECDH_ECDSA:
+    case schan_kx_ECDHE_ECDSA:
+        return CALG_ECDSA;
+
+    case schan_kx_DH_anon_EXPORT:
+    case schan_kx_DH_anon:
+    case schan_kx_DHE_PSK:
+    case schan_kx_ECDH_anon:
+    case schan_kx_FORTEZZA_DMS:
+    case schan_kx_NULL:
+    case schan_kx_PSK:
+    case schan_kx_RSA_PSK:
+        FIXME("Don't know key signature algorithm for key exchange algorithm %d, returning 0\n", c->kx_alg);
+        return 0;
+
+    default:
+        FIXME("Unknown key exchange algorithm %d for cipher suite %#x, returning 0\n", c->kx_alg, (unsigned int)c->suite);
+        return 0;
+    }
 }
 
 SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
