@@ -425,11 +425,11 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
     unsigned int i;
     DWORD d;
 
-    FIXME("Skipping %u unknown DWORDs:\n", count);
+    WARN("Skipping %u unknown DWORDs:\n", count);
     for (i = 0; i < count; ++i)
     {
         read_dword(ptr, &d);
-        FIXME("\t0x%08x\n", d);
+        WARN("\t0x%08x\n", d);
     }
 }
 
