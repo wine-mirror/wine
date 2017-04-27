@@ -2578,8 +2578,8 @@ static HRESULT d3dx9_base_effect_set_array_range(struct d3dx9_base_effect *base,
     return E_NOTIMPL;
 }
 
-static HRESULT d3dx9_get_param_value_ptr(struct ID3DXEffectImpl *effect, struct d3dx_pass *pass,
-        struct d3dx_state *state, void **param_value, struct d3dx_parameter **out_param,
+static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_state *state,
+        void **param_value, struct d3dx_parameter **out_param,
         BOOL update_all, BOOL *param_dirty)
 {
     struct d3dx_parameter *param = &state->parameter;
@@ -2881,7 +2881,7 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
 
     TRACE("operation %u, index %u, type %u.\n", state->operation, state->index, state->type);
 
-    if (FAILED(hr = d3dx9_get_param_value_ptr(effect, pass, state, &param_value, &param,
+    if (FAILED(hr = d3dx9_get_param_value_ptr(pass, state, &param_value, &param,
             update_all, &param_dirty)))
     {
         if (hr == E_FAIL)
