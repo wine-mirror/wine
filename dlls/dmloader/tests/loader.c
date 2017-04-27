@@ -22,6 +22,8 @@
 #include "dmusici.h"
 #include "wine/test.h"
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 static unsigned char mp3file[] = "\xFF\xFB\x92\x04"; /* MP3 header */
 static unsigned char rifffile[8+4+8+16+8+256] = "RIFF\x24\x01\x00\x00WAVE" /* header: 4 ("WAVE") + (8 + 16) (format segment) + (8 + 256) (data segment) = 0x124 */
         "fmt \x10\x00\x00\x00\x01\x00\x20\x00\xAC\x44\x00\x00\x10\xB1\x02\x00\x04\x00\x10\x00" /* format segment: PCM, 2 chan, 44100 Hz, 16 bits */
@@ -39,6 +41,44 @@ static BOOL missing_dmloader(void)
         return FALSE;
     }
     return TRUE;
+}
+
+static void test_directory(void)
+{
+    IDirectMusicLoader8 *loader = NULL;
+    HRESULT hr;
+    WCHAR con[] = {'c', 'o', 'n'};
+    WCHAR path[MAX_PATH];
+    WCHAR invalid_path[] = {'/', 'i', 'n', 'v', 'a', 'l', 'i', 'd', ' ', 'p', 'a', 't', 'h', 0};
+
+    hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC, &IID_IDirectMusicLoader8,
+            (void**)&loader);
+    ok(hr == S_OK, "Couldn't create Loader %#x\n", hr);
+
+    /* ScanDirectory without a previous SetSearchDirectory isn't failing */
+    hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectMusicContainer, con, NULL);
+    ok(hr == S_FALSE, "ScanDirectory for \"con\" files failed with %#x\n", hr);
+
+    /* SetSearchDirectory with invalid path */
+    hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, invalid_path, 0);
+    ok(hr == DMUS_E_LOADER_BADPATH, "SetSearchDirectory failed with %#x\n", hr);
+
+    /* Two consecutive SetSearchDirectory with the same path */
+    GetTempPathW(ARRAY_SIZE(path), path);
+    hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
+    todo_wine ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    hr = IDirectMusicLoader_SetSearchDirectory(loader, &GUID_DirectMusicAllTypes, path, 0);
+    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
+    hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
+    ok(hr == S_OK, "SetSearchDirectory failed with %#x\n", hr);
+    hr = IDirectMusicLoader_SetSearchDirectory(loader, &CLSID_DirectSoundWave, path, 0);
+    ok(hr == S_FALSE, "Second SetSearchDirectory failed with %#x\n", hr);
+
+    /* NULL extension is not an error */
+    hr = IDirectMusicLoader_ScanDirectory(loader, &CLSID_DirectSoundWave, NULL, NULL);
+    ok(hr == S_FALSE, "ScanDirectory for \"wav\" files failed, received %#x\n", hr);
+
+    IDirectMusicLoader_Release(loader);
 }
 
 static void test_release_object(void)
@@ -295,6 +335,7 @@ START_TEST(loader)
         CoUninitialize();
         return;
     }
+    test_directory();
     test_release_object();
     test_simple_playing();
     test_COM();
