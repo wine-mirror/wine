@@ -180,14 +180,6 @@ static void expect_matrix_(unsigned int line, const D3DXMATRIX *expected, const 
             U(*expected).m[3][0], U(*expected).m[3][1], U(*expected).m[3][2], U(*expected).m[3][3]);
 }
 
-#define compare_translation(exp, got) \
-    ok(relative_error(exp.x, got.x) < admitted_error && \
-       relative_error(exp.y, got.y) < admitted_error && \
-       relative_error(exp.z, got.z) < admitted_error, \
-       "Expected translation = (%f, %f, %f), \
-        got translation = (%f, %f, %f)\n", \
-        exp.x, exp.y, exp.z, got.x, got.y, got.z)
-
 #define compare_vectors(exp, out) \
     for (i = 0; i < ARRAY_SIZE + 2; ++i) { \
         ok(relative_error(exp[i].x, out[i].x) < admitted_error && \
@@ -1924,7 +1916,7 @@ static void test_Matrix_Decompose(void)
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*_________*/
 
@@ -1961,7 +1953,7 @@ static void test_Matrix_Decompose(void)
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     expect_vec3(&exp_scale, &got_scale, 0);
     expect_quaternion(&exp_rotation, &got_rotation, 2);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*_____________*/
 
@@ -1998,7 +1990,7 @@ static void test_Matrix_Decompose(void)
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*_____________*/
 
@@ -2035,7 +2027,7 @@ static void test_Matrix_Decompose(void)
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*__________*/
 
@@ -2076,7 +2068,7 @@ static void test_Matrix_Decompose(void)
     equal |= compare_quaternion(&exp_rotation, &got_rotation, 2);
     ok(equal, "Got unexpected quaternion {%.8e, %.8e, %.8e, %.8e}.\n",
             got_rotation.x, got_rotation.y, got_rotation.z, got_rotation.w);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*__________*/
 
@@ -2113,7 +2105,7 @@ static void test_Matrix_Decompose(void)
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     expect_vec3(&exp_scale, &got_scale, 0);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*_____________*/
 
@@ -2150,7 +2142,7 @@ static void test_Matrix_Decompose(void)
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 2);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*_________*/
 
@@ -2187,7 +2179,7 @@ static void test_Matrix_Decompose(void)
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
     expect_vec3(&exp_scale, &got_scale, 0);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
-    compare_translation(exp_translation, got_translation);
+    expect_vec3(&exp_translation, &got_translation, 0);
 
 /*__________*/
 
