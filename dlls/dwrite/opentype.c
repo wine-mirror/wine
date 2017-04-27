@@ -1586,8 +1586,10 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
             continue;
         }
 
-        if (!(exists = opentype_decode_namerecord(header, storage_area, i, *strings)))
+        if (!opentype_decode_namerecord(header, storage_area, i, *strings))
             continue;
+
+        exists = TRUE;
     }
 
     if (!exists) {
