@@ -3993,16 +3993,11 @@ static void update_font_info(void)
     DWORD len, type;
     HKEY hkey = 0;
     UINT i, ansi_cp = 0, oem_cp = 0;
-    DWORD screen_dpi = 96, font_dpi = 0;
+    DWORD screen_dpi, font_dpi = 0;
     BOOL done = FALSE;
 
-    if (RegOpenKeyA(HKEY_LOCAL_MACHINE,
-                    "System\\CurrentControlSet\\Hardware Profiles\\Current\\Software\\Fonts",
-                    &hkey) == ERROR_SUCCESS)
-    {
-        reg_load_dword(hkey, logpixels, &screen_dpi);
-        RegCloseKey(hkey);
-    }
+    screen_dpi = get_dpi();
+    if (!screen_dpi) screen_dpi = 96;
 
     if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL) != ERROR_SUCCESS)
         return;

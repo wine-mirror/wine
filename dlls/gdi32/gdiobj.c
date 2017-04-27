@@ -597,45 +597,64 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
     return entry != NULL;
 }
 
+static const WCHAR dpi_key_name[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
+static const WCHAR def_dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
+
 /******************************************************************************
- *      get_dpi   (internal)
+ *              get_reg_dword
+ *
+ * Read a DWORD value from the registry
+ */
+static BOOL get_reg_dword(HKEY base, const WCHAR *key_name, const WCHAR *value_name, DWORD *value)
+{
+    HKEY key;
+    DWORD type, data, size = sizeof(data);
+    BOOL ret = FALSE;
+
+    if (RegOpenKeyW(base, key_name, &key) == ERROR_SUCCESS)
+    {
+        if (RegQueryValueExW(key, value_name, NULL, &type, (void *)&data, &size) == ERROR_SUCCESS &&
+            type == REG_DWORD)
+        {
+            *value = data;
+            ret = TRUE;
+        }
+        RegCloseKey(key);
+    }
+    return ret;
+}
+
+/******************************************************************************
+ *              get_dpi
  *
  * get the dpi from the registry
  */
-static int get_dpi( void )
+DWORD get_dpi(void)
 {
-    static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
-    static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
-    static int dpi = -1;
-    HKEY hkey;
+    DWORD dpi;
 
-    if (dpi != -1) return dpi;
-
-    if (RegOpenKeyW(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
-    {
-        DWORD type, size;
-        int new_dpi;
-
-        size = sizeof(new_dpi);
-        if (RegQueryValueExW(hkey, dpi_value_name, NULL, &type, (void *)&new_dpi, &size) == ERROR_SUCCESS)
-        {
-            if (type == REG_DWORD && new_dpi != 0)
-                dpi = new_dpi;
-        }
-        RegCloseKey(hkey);
-    }
-    if (dpi <= 0) dpi = 96;
-    return dpi;
+    if (get_reg_dword(HKEY_CURRENT_USER, dpi_key_name, dpi_value_name, &dpi))
+        return dpi;
+    if (get_reg_dword(HKEY_CURRENT_CONFIG, def_dpi_key_name, dpi_value_name, &dpi))
+        return dpi;
+    return 0;
 }
-
 
 static HFONT create_scaled_font( const LOGFONTW *deffont )
 {
     LOGFONTW lf;
     LONG height;
+    static DWORD dpi;
+
+    if (!dpi)
+    {
+        dpi = get_dpi();
+        if (!dpi) dpi = 96;
+    }
 
     lf = *deffont;
-    height = abs(lf.lfHeight) * get_dpi() / 96;
+    height = abs(lf.lfHeight) * dpi / 96;
     lf.lfHeight = deffont->lfHeight < 0 ? -height : height;
 
     return CreateFontIndirectW( &lf );
