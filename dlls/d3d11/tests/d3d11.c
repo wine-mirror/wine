@@ -5226,10 +5226,16 @@ static void test_private_data(void)
 
 static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
 {
+    ID3D11RasterizerState *rasterizer_state, *tmp_rasterizer_state;
     ID3D11SamplerState *sampler, *tmp_sampler;
+    ID3D11ShaderResourceView *srv, *tmp_srv;
+    ID3D11RenderTargetView *rtv, *tmp_rtv;
+    D3D11_RASTERIZER_DESC rasterizer_desc;
+    D3D11_TEXTURE2D_DESC texture_desc;
     D3D11_SAMPLER_DESC sampler_desc;
     struct device_desc device_desc;
     ID3D11DeviceContext *context;
+    ID3D11Texture2D *texture;
     ID3D11Device *device;
     ULONG refcount;
     HRESULT hr;
@@ -5244,18 +5250,12 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
 
     ID3D11Device_GetImmediateContext(device, &context);
 
+    /* ID3D11SamplerState */
+    memset(&sampler_desc, 0, sizeof(sampler_desc));
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampler_desc.MipLODBias = 0.0f;
-    sampler_desc.MaxAnisotropy = 0;
-    sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-    sampler_desc.BorderColor[0] = 0.0f;
-    sampler_desc.BorderColor[1] = 1.0f;
-    sampler_desc.BorderColor[2] = 0.0f;
-    sampler_desc.BorderColor[3] = 1.0f;
-    sampler_desc.MinLOD = 0.0f;
     sampler_desc.MaxLOD = FLT_MAX;
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
@@ -5281,6 +5281,63 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
     ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
     refcount = ID3D11SamplerState_Release(tmp_sampler);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    /* ID3D11RasterizerState */
+    memset(&rasterizer_desc, 0, sizeof(rasterizer_desc));
+    rasterizer_desc.FillMode = D3D11_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D11_CULL_BACK;
+    rasterizer_desc.DepthClipEnable = TRUE;
+    hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_RSSetState(context, rasterizer_state);
+    refcount = ID3D11RasterizerState_Release(rasterizer_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ID3D11DeviceContext_RSGetState(context, &tmp_rasterizer_state);
+    ok(tmp_rasterizer_state == rasterizer_state, "Got rasterizer state %p, expected %p.\n",
+            tmp_rasterizer_state, rasterizer_state);
+    refcount = ID3D11RasterizerState_Release(tmp_rasterizer_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    /* ID3D11ShaderResourceView */
+    memset(&texture_desc, 0, sizeof(texture_desc));
+    texture_desc.Width = 32;
+    texture_desc.Height = 32;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ID3D11Texture2D_Release(texture);
+
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+    refcount = ID3D11ShaderResourceView_Release(srv);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, 1, &tmp_srv);
+    ok(tmp_srv == srv, "Got SRV %p, expected %p.\n", tmp_srv, srv);
+    refcount = ID3D11ShaderResourceView_Release(tmp_srv);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    /* ID3D11RenderTargetView */
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D11Texture2D_Release(texture);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+    refcount = ID3D11RenderTargetView_Release(rtv);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ID3D11DeviceContext_OMGetRenderTargets(context, 1, &tmp_rtv, NULL);
+    ok(tmp_rtv == rtv, "Got RTV %p, expected %p.\n", tmp_rtv, rtv);
+    refcount = ID3D11RenderTargetView_Release(tmp_rtv);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
 
     ID3D11DeviceContext_Release(context);
