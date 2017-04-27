@@ -475,16 +475,23 @@ static BOOL validate_texture2d_desc(const D3D11_TEXTURE2D_DESC *desc)
     return TRUE;
 }
 
-static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_device *device,
-        const D3D11_TEXTURE2D_DESC *desc, const D3D11_SUBRESOURCE_DATA *data)
+HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DESC *desc,
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture2d **out)
 {
     struct wined3d_resource_desc wined3d_desc;
+    struct d3d_texture2d *texture;
     unsigned int levels;
     DWORD flags = 0;
     HRESULT hr;
 
     if (!validate_texture2d_desc(desc))
+    {
+        WARN("Failed to validate texture desc.\n");
         return E_INVALIDARG;
+    }
+
+    if (!(texture = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*texture))))
+        return E_OUTOFMEMORY;
 
     texture->ID3D11Texture2D_iface.lpVtbl = &d3d11_texture2d_vtbl;
     texture->ID3D10Texture2D_iface.lpVtbl = &d3d10_texture2d_vtbl;
@@ -518,6 +525,7 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&texture->private_store);
+        HeapFree(GetProcessHeap(), 0, texture);
         wined3d_mutex_unlock();
         if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)
             hr = E_INVALIDARG;
@@ -543,7 +551,7 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
         IWineDXGIDevice_Release(wine_device);
         if (FAILED(hr))
         {
-            ERR("Failed to create DXGI surface, returning %#x\n", hr);
+            ERR("Failed to create DXGI surface, returning %#.x\n", hr);
             texture->dxgi_surface = NULL;
             wined3d_texture_decref(texture->wined3d_texture);
             wined3d_mutex_unlock();
@@ -552,30 +560,10 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
     }
     wined3d_mutex_unlock();
 
-    texture->device = &device->ID3D11Device_iface;
-    ID3D11Device_AddRef(texture->device);
+    ID3D11Device_AddRef(texture->device = &device->ID3D11Device_iface);
 
-    return S_OK;
-}
-
-HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DESC *desc,
-        const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture2d **texture)
-{
-    struct d3d_texture2d *object;
-    HRESULT hr;
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d3d_texture2d_init(object, device, desc, data)))
-    {
-        WARN("Failed to initialize texture, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    TRACE("Created texture %p.\n", object);
-    *texture = object;
+    TRACE("Created texture %p.\n", texture);
+    *out = texture;
 
     return S_OK;
 }
