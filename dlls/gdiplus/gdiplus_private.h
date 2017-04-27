@@ -441,6 +441,8 @@ struct GpFont{
     Unit unit;
 };
 
+extern const struct GpStringFormat default_drawstring_format DECLSPEC_HIDDEN;
+
 struct GpStringFormat{
     INT attr;
     LANGID lang;
@@ -457,6 +459,9 @@ struct GpStringFormat{
     INT range_count;
     BOOL generic_typographic;
 };
+
+extern void init_generic_string_formats(void) DECLSPEC_HIDDEN;
+extern void free_generic_string_formats(void) DECLSPEC_HIDDEN;
 
 struct GpFontCollection{
     GpFontFamily **FontFamilies;

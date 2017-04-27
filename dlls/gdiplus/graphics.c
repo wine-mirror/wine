@@ -4909,7 +4909,6 @@ GpStatus gdip_format_string(HDC hdc,
     INT hotkeyprefix_count=0;
     INT hotkeyprefix_pos=0, hotkeyprefix_end_pos=0;
     BOOL seen_prefix = FALSE;
-    GpStringFormat *dyn_format=NULL;
 
     if(length == -1) length = lstrlenW(string);
 
@@ -4917,15 +4916,7 @@ GpStatus gdip_format_string(HDC hdc,
     if(!stringdup) return OutOfMemory;
 
     if (!format)
-    {
-        stat = GdipStringFormatGetGenericDefault(&dyn_format);
-        if (stat != Ok)
-        {
-            heap_free(stringdup);
-            return stat;
-        }
-        format = dyn_format;
-    }
+        format = &default_drawstring_format;
 
     nwidth = rect->Width;
     nheight = rect->Height;
@@ -5075,7 +5066,6 @@ GpStatus gdip_format_string(HDC hdc,
 
     heap_free(stringdup);
     heap_free(hotkeyprefix_offsets);
-    GdipDeleteStringFormat(dyn_format);
 
     return stat;
 }

@@ -140,7 +140,7 @@ static void test_digitsubstitution(void)
 
 static void test_getgenerictypographic(void)
 {
-    GpStringFormat *format;
+    GpStringFormat *format, *format2;
     GpStatus stat;
     INT flags;
     INT n;
@@ -155,6 +155,12 @@ static void test_getgenerictypographic(void)
     expect(InvalidParameter, stat);
 
     stat = GdipStringFormatGetGenericTypographic(&format);
+    expect(Ok, stat);
+
+    stat = GdipStringFormatGetGenericTypographic(&format2);
+    expect(Ok, stat);
+    ok(format == format2, "expected same format object\n");
+    stat = GdipDeleteStringFormat(format2);
     expect(Ok, stat);
 
     GdipGetStringFormatFlags(format, &flags);
@@ -174,6 +180,24 @@ static void test_getgenerictypographic(void)
     expect(StringDigitSubstituteUser, digitsub);
     expect(LANG_NEUTRAL, digitlang);
     expect(0, tabcount);
+
+    /* Change format parameters, release, get format object again. */
+    stat = GdipSetStringFormatFlags(format, StringFormatFlagsNoWrap);
+    expect(Ok, stat);
+
+    stat = GdipGetStringFormatFlags(format, &flags);
+    expect(Ok, stat);
+    expect(StringFormatFlagsNoWrap, flags);
+
+    stat = GdipDeleteStringFormat(format);
+    expect(Ok, stat);
+
+    stat = GdipStringFormatGetGenericTypographic(&format);
+    expect(Ok, stat);
+
+    stat = GdipGetStringFormatFlags(format, &flags);
+    expect(Ok, stat);
+    expect(StringFormatFlagsNoWrap, flags);
 
     stat = GdipDeleteStringFormat(format);
     expect(Ok, stat);
@@ -286,7 +310,7 @@ static void test_tabstops(void)
 
 static void test_getgenericdefault(void)
 {
-    GpStringFormat *format;
+    GpStringFormat *format, *format2;
     GpStatus stat;
 
     INT flags;
@@ -302,6 +326,12 @@ static void test_getgenericdefault(void)
     expect(InvalidParameter, stat);
 
     stat = GdipStringFormatGetGenericDefault(&format);
+    expect(Ok, stat);
+
+    stat = GdipStringFormatGetGenericDefault(&format2);
+    expect(Ok, stat);
+    ok(format == format2, "expected same format object\n");
+    stat = GdipDeleteStringFormat(format2);
     expect(Ok, stat);
 
     GdipGetStringFormatFlags(format, &flags);
@@ -320,6 +350,24 @@ static void test_getgenericdefault(void)
     expect(StringDigitSubstituteUser, digitsub);
     expect(LANG_NEUTRAL, digitlang);
     expect(0, tabcount);
+
+    /* Change default format parameters, release, get format object again. */
+    stat = GdipSetStringFormatFlags(format, StringFormatFlagsNoWrap);
+    expect(Ok, stat);
+
+    stat = GdipGetStringFormatFlags(format, &flags);
+    expect(Ok, stat);
+    expect(StringFormatFlagsNoWrap, flags);
+
+    stat = GdipDeleteStringFormat(format);
+    expect(Ok, stat);
+
+    stat = GdipStringFormatGetGenericDefault(&format);
+    expect(Ok, stat);
+
+    stat = GdipGetStringFormatFlags(format, &flags);
+    expect(Ok, stat);
+    expect(StringFormatFlagsNoWrap, flags);
 
     stat = GdipDeleteStringFormat(format);
     expect(Ok, stat);

@@ -32,6 +32,47 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+const GpStringFormat default_drawstring_format =
+{
+    0,
+    LANG_NEUTRAL,
+    LANG_NEUTRAL,
+    StringAlignmentNear,
+    StringTrimmingCharacter,
+    HotkeyPrefixNone,
+    StringAlignmentNear,
+    StringDigitSubstituteUser,
+    0,
+    0.0,
+    NULL,
+    NULL,
+    0,
+    FALSE
+};
+
+static GpStringFormat generic_default_format;
+static GpStringFormat generic_typographic_format;
+
+void init_generic_string_formats(void)
+{
+    memcpy(&generic_default_format, &default_drawstring_format, sizeof(generic_default_format));
+
+    memcpy(&generic_typographic_format, &default_drawstring_format, sizeof(generic_typographic_format));
+    generic_typographic_format.attr = StringFormatFlagsNoFitBlackBox | StringFormatFlagsLineLimit |
+        StringFormatFlagsNoClip;
+    generic_typographic_format.trimming = StringTrimmingNone;
+    generic_typographic_format.generic_typographic = TRUE;
+}
+
+void free_generic_string_formats(void)
+{
+    heap_free(generic_default_format.character_ranges);
+    heap_free(generic_default_format.tabs);
+
+    heap_free(generic_typographic_format.character_ranges);
+    heap_free(generic_typographic_format.tabs);
+}
+
 GpStatus WINGDIPAPI GdipCreateStringFormat(INT attr, LANGID lang,
     GpStringFormat **format)
 {
@@ -66,6 +107,9 @@ GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat *format)
     if(!format)
         return InvalidParameter;
 
+    if (format == &generic_default_format || format == &generic_typographic_format)
+        return Ok;
+
     heap_free(format->character_ranges);
     heap_free(format->tabs);
     heap_free(format);
@@ -75,17 +119,10 @@ GpStatus WINGDIPAPI GdipDeleteStringFormat(GpStringFormat *format)
 
 GpStatus WINGDIPAPI GdipStringFormatGetGenericDefault(GpStringFormat **format)
 {
-    GpStatus stat;
-
     if (!format)
         return InvalidParameter;
 
-    stat = GdipCreateStringFormat(0, LANG_NEUTRAL, format);
-    if(stat != Ok)
-        return stat;
-
-    (*format)->align     = StringAlignmentNear;
-    (*format)->vertalign = StringAlignmentNear;
+    *format = &generic_default_format;
 
     return Ok;
 }
@@ -370,24 +407,10 @@ GpStatus WINGDIPAPI GdipCloneStringFormat(GDIPCONST GpStringFormat *format, GpSt
 
 GpStatus WINGDIPAPI GdipStringFormatGetGenericTypographic(GpStringFormat **format)
 {
-    GpStatus stat;
-
     if(!format)
         return InvalidParameter;
 
-    stat = GdipCreateStringFormat(StringFormatFlagsNoFitBlackBox |
-                                  StringFormatFlagsLineLimit |
-                                  StringFormatFlagsNoClip, LANG_NEUTRAL, format);
-    if(stat != Ok)
-        return stat;
-
-    (*format)->digitlang = LANG_NEUTRAL;
-    (*format)->digitsub  = StringDigitSubstituteUser;
-    (*format)->trimming  = StringTrimmingNone;
-    (*format)->hkprefix  = HotkeyPrefixNone;
-    (*format)->align     = StringAlignmentNear;
-    (*format)->vertalign = StringAlignmentNear;
-    (*format)->generic_typographic = TRUE;
+    *format = &generic_typographic_format;
 
     TRACE("%p => %p\n", format, *format);
 
