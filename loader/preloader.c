@@ -291,30 +291,37 @@ static inline int wld_mprotect( const void *addr, size_t len, int prot )
     return SYSCALL_RET(ret);
 }
 
-static void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset )
-{
-    int ret;
-
-    struct
-    {
-        void        *addr;
-        unsigned int length;
-        unsigned int prot;
-        unsigned int flags;
-        unsigned int fd;
-        unsigned int offset;
-    } args;
-
-    args.addr   = start;
-    args.length = len;
-    args.prot   = prot;
-    args.flags  = flags;
-    args.fd     = fd;
-    args.offset = offset;
-    __asm__ __volatile__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
-                          : "=a" (ret) : "0" (90 /* SYS_mmap */), "q" (&args) : "memory" );
-    return (void *)SYSCALL_RET(ret);
-}
+void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, unsigned int offset );
+__ASM_GLOBAL_FUNC(wld_mmap,
+                  "\tpushl %ebp\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "\tpushl %ebx\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "\tpushl %esi\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "\tpushl %edi\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "\tmovl $192,%eax\n"      /* SYS_mmap2 */
+                  "\tmovl 20(%esp),%ebx\n"  /* start */
+                  "\tmovl 24(%esp),%ecx\n"  /* len */
+                  "\tmovl 28(%esp),%edx\n"  /* prot */
+                  "\tmovl 32(%esp),%esi\n"  /* flags */
+                  "\tmovl 36(%esp),%edi\n"  /* fd */
+                  "\tmovl 40(%esp),%ebp\n"  /* offset */
+                  "\tshrl $12,%ebp\n"
+                  "\tint $0x80\n"
+                  "\tcmpl $-4096,%eax\n"
+                  "\tjbe 1f\n"
+                  "\tmovl $-1,%eax\n"
+                  "1:\tpopl %edi\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                  "\tpopl %esi\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                  "\tpopl %ebx\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                  "\tpopl %ebp\n"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                  "\tret\n" )
 
 static inline uid_t wld_getuid(void)
 {
