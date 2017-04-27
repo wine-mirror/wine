@@ -2377,6 +2377,14 @@ static ULONG STDMETHODCALLTYPE d3d11_unordered_access_view_AddRef(ID3D11Unordere
 
     TRACE("%p increasing refcount to %u.\n", view, refcount);
 
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(view->device);
+        wined3d_mutex_lock();
+        wined3d_unordered_access_view_incref(view->wined3d_view);
+        wined3d_mutex_unlock();
+    }
+
     return refcount;
 }
 
@@ -2389,12 +2397,13 @@ static ULONG STDMETHODCALLTYPE d3d11_unordered_access_view_Release(ID3D11Unorder
 
     if (!refcount)
     {
+        ID3D11Device *device = view->device;
+
         wined3d_mutex_lock();
         wined3d_unordered_access_view_decref(view->wined3d_view);
-        ID3D11Device_Release(view->device);
-        wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, view);
+
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -2475,6 +2484,19 @@ static const struct ID3D11UnorderedAccessViewVtbl d3d11_unordered_access_view_vt
     d3d11_unordered_access_view_GetResource,
     /* ID3D11UnorderedAccessView methods */
     d3d11_unordered_access_view_GetDesc,
+};
+
+static void STDMETHODCALLTYPE d3d11_unordered_access_view_wined3d_object_destroyed(void *parent)
+{
+    struct d3d11_unordered_access_view *view = parent;
+
+    wined3d_private_store_cleanup(&view->private_store);
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d11_unordered_access_view_wined3d_parent_ops =
+{
+    d3d11_unordered_access_view_wined3d_object_destroyed,
 };
 
 static unsigned int wined3d_view_flags_from_d3d11_buffer_uav_flags(unsigned int d3d11_flags)
@@ -2577,7 +2599,7 @@ static HRESULT d3d11_unordered_access_view_init(struct d3d11_unordered_access_vi
     }
 
     if (FAILED(hr = wined3d_unordered_access_view_create(&wined3d_desc, wined3d_resource,
-            view, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
+            view, &d3d11_unordered_access_view_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
         WARN("Failed to create wined3d unordered access view, hr %#x.\n", hr);
