@@ -877,12 +877,13 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
         ID3D11RasterizerState *rasterizer_state)
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct d3d_rasterizer_state *rasterizer_state_impl;
     const D3D11_RASTERIZER_DESC *desc;
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
     wined3d_mutex_lock();
-    if (!(device->rasterizer_state = unsafe_impl_from_ID3D11RasterizerState(rasterizer_state)))
+    if (!(rasterizer_state_impl = unsafe_impl_from_ID3D11RasterizerState(rasterizer_state)))
     {
         wined3d_device_set_rasterizer_state(device->wined3d_device, NULL);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, WINED3D_FILL_SOLID);
@@ -894,9 +895,9 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
         return;
     }
 
-    wined3d_device_set_rasterizer_state(device->wined3d_device, device->rasterizer_state->wined3d_state);
+    wined3d_device_set_rasterizer_state(device->wined3d_device, rasterizer_state_impl->wined3d_state);
 
-    desc = &device->rasterizer_state->desc;
+    desc = &rasterizer_state_impl->desc;
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, desc->FillMode);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, desc->CullMode);
     /* OpenGL style depth bias. */
@@ -1949,11 +1950,22 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetState(ID3D11DeviceCon
         ID3D11RasterizerState **rasterizer_state)
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct d3d_rasterizer_state *rasterizer_state_impl;
+    struct wined3d_rasterizer_state *wined3d_state;
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
-    if ((*rasterizer_state = device->rasterizer_state ? &device->rasterizer_state->ID3D11RasterizerState_iface : NULL))
-        ID3D11RasterizerState_AddRef(*rasterizer_state);
+    wined3d_mutex_lock();
+    if ((wined3d_state = wined3d_device_get_rasterizer_state(device->wined3d_device)))
+    {
+        rasterizer_state_impl = wined3d_rasterizer_state_get_parent(wined3d_state);
+        ID3D11RasterizerState_AddRef(*rasterizer_state = &rasterizer_state_impl->ID3D11RasterizerState_iface);
+    }
+    else
+    {
+        *rasterizer_state = NULL;
+    }
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11DeviceContext *iface,
@@ -4612,11 +4624,22 @@ static void STDMETHODCALLTYPE d3d10_device_SOGetTargets(ID3D10Device1 *iface,
 static void STDMETHODCALLTYPE d3d10_device_RSGetState(ID3D10Device1 *iface, ID3D10RasterizerState **rasterizer_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
+    struct d3d_rasterizer_state *rasterizer_state_impl;
+    struct wined3d_rasterizer_state *wined3d_state;
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
-    if ((*rasterizer_state = device->rasterizer_state ? &device->rasterizer_state->ID3D10RasterizerState_iface : NULL))
-        ID3D10RasterizerState_AddRef(*rasterizer_state);
+    wined3d_mutex_lock();
+    if ((wined3d_state = wined3d_device_get_rasterizer_state(device->wined3d_device)))
+    {
+        rasterizer_state_impl = wined3d_rasterizer_state_get_parent(wined3d_state);
+        ID3D10RasterizerState_AddRef(*rasterizer_state = &rasterizer_state_impl->ID3D10RasterizerState_iface);
+    }
+    else
+    {
+        *rasterizer_state = NULL;
+    }
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device1 *iface,

@@ -521,7 +521,6 @@ struct d3d_device
     float blend_factor[4];
     struct d3d_depthstencil_state *depth_stencil_state;
     UINT stencil_ref;
-    struct d3d_rasterizer_state *rasterizer_state;
 };
 
 static inline struct d3d_device *impl_from_ID3D11Device(ID3D11Device *iface)
