@@ -1891,6 +1891,14 @@ static ULONG STDMETHODCALLTYPE d3d11_shader_resource_view_AddRef(ID3D11ShaderRes
 
     TRACE("%p increasing refcount to %u.\n", view, refcount);
 
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(view->device);
+        wined3d_mutex_lock();
+        wined3d_shader_resource_view_incref(view->wined3d_view);
+        wined3d_mutex_unlock();
+    }
+
     return refcount;
 }
 
@@ -1903,12 +1911,13 @@ static ULONG STDMETHODCALLTYPE d3d11_shader_resource_view_Release(ID3D11ShaderRe
 
     if (!refcount)
     {
+        ID3D11Device *device = view->device;
+
         wined3d_mutex_lock();
         wined3d_shader_resource_view_decref(view->wined3d_view);
-        ID3D11Device_Release(view->device);
-        wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, view);
+
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -2127,6 +2136,19 @@ static const struct ID3D10ShaderResourceView1Vtbl d3d10_shader_resource_view_vtb
     d3d10_shader_resource_view_GetDesc1,
 };
 
+static void STDMETHODCALLTYPE d3d_shader_resource_view_wined3d_object_destroyed(void *parent)
+{
+    struct d3d_shader_resource_view *view = parent;
+
+    wined3d_private_store_cleanup(&view->private_store);
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d_shader_resource_view_wined3d_parent_ops =
+{
+    d3d_shader_resource_view_wined3d_object_destroyed,
+};
+
 static unsigned int wined3d_view_flags_from_d3d11_bufferex_flags(unsigned int d3d11_flags)
 {
     unsigned int wined3d_flags = d3d11_flags & WINED3D_VIEW_BUFFER_RAW;
@@ -2267,7 +2289,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     }
 
     if (FAILED(hr = wined3d_shader_resource_view_create(&wined3d_desc, wined3d_resource,
-            view, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
+            view, &d3d_shader_resource_view_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
         WARN("Failed to create wined3d shader resource view, hr %#x.\n", hr);
