@@ -4415,12 +4415,13 @@ static void test_preshader_op(IDirect3DDevice9 *device, const DWORD *sample_effe
     {
         unsigned int pos;
         unsigned int result_index;
+        unsigned int ins_count;
     }
     blob_position[] =
     {
-        {0, 0},
-        {5549, 0},
-        {5400, 2}
+        {0, 0, 0},
+        {5549, 0, 4},
+        {5400, 2, 1}
     };
     DWORD *test_effect_blob;
     HRESULT hr;
@@ -4436,7 +4437,7 @@ static void test_preshader_op(IDirect3DDevice9 *device, const DWORD *sample_effe
 
     test_effect_blob = HeapAlloc(GetProcessHeap(), 0, sample_effect_blob_size);
     memcpy(test_effect_blob, sample_effect_blob, sample_effect_blob_size);
-    for (i = 0; i < 4; ++i)
+    for (i = 0; i < blob_position[test->args_count].ins_count; ++i)
         test_effect_blob[op_pos + i * op_step] = test->opcode;
 
     hr = D3DXCreateEffect(device, test_effect_blob, sample_effect_blob_size,
