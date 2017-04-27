@@ -63,11 +63,35 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION device_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
-static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+static const WCHAR dpi_key_name[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
+static const WCHAR def_dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
 static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
 
 static const struct gdi_dc_funcs macdrv_funcs;
 
+/******************************************************************************
+ *              get_reg_dword
+ *
+ * Read a DWORD value from the registry
+ */
+static BOOL get_reg_dword(HKEY base, const WCHAR *key_name, const WCHAR *value_name, DWORD *value)
+{
+    HKEY key;
+    DWORD type, data, size = sizeof(data);
+    BOOL ret = FALSE;
+
+    if (RegOpenKeyW(base, key_name, &key) == ERROR_SUCCESS)
+    {
+        if (RegQueryValueExW(key, value_name, NULL, &type, (void *)&data, &size) == ERROR_SUCCESS &&
+            type == REG_DWORD)
+        {
+            *value = data;
+            ret = TRUE;
+        }
+        RegCloseKey(key);
+    }
+    return ret;
+}
 
 /******************************************************************************
  *              get_dpi
@@ -76,24 +100,14 @@ static const struct gdi_dc_funcs macdrv_funcs;
  */
 static DWORD get_dpi(void)
 {
-    DWORD dpi = 0;
-    HKEY hkey;
+    DWORD dpi;
 
-    if (RegOpenKeyW(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
-    {
-        DWORD type, size, new_dpi;
-
-        size = sizeof(new_dpi);
-        if (RegQueryValueExW(hkey, dpi_value_name, NULL, &type, (void *)&new_dpi, &size) == ERROR_SUCCESS)
-        {
-            if (type == REG_DWORD && new_dpi != 0)
-                dpi = new_dpi;
-        }
-        RegCloseKey(hkey);
-    }
-    return dpi;
+    if (get_reg_dword(HKEY_CURRENT_USER, dpi_key_name, dpi_value_name, &dpi))
+        return dpi;
+    if (get_reg_dword(HKEY_CURRENT_CONFIG, def_dpi_key_name, dpi_value_name, &dpi))
+        return dpi;
+    return 0;
 }
-
 
 /***********************************************************************
  *              compute_desktop_rect
