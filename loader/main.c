@@ -113,7 +113,11 @@ static void check_command_line( int argc, char *argv[] )
 
 static int pre_exec(void)
 {
+#if defined(__i386__) || defined(__x86_64__)
+    return 1;  /* we have a preloader */
+#else
     return 0;  /* no exec needed */
+#endif
 }
 
 #elif defined(__linux__) && (defined(__i386__) || defined(__arm__))

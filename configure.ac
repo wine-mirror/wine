@@ -847,19 +847,17 @@ case $host_os in
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
+    LDEXECFLAGS="-Wl,-pie"
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
-                    [LDEXECFLAGS="-Wl,--export-dynamic"])
+                    [LDEXECFLAGS="$LDEXECFLAGS -Wl,--export-dynamic"])
     WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
                     [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
                      LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"],
         [WINE_TRY_CFLAGS([-fPIC -Wl,-R,\$ORIGIN/../lib],
                          [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
                           LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"])])
-
     WINE_TRY_CFLAGS([-Wl,--enable-new-dtags],
                     [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
-    WINE_TRY_CFLAGS([-Wl,-pie],
-                    [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,-pie"])
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
     AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so")
@@ -1967,7 +1965,6 @@ case $build_os in
 esac
 
 case $host_os in
-  linux-android*) ;;
   linux*)
     case $host_cpu in
       *i[[3456789]]86*|x86_64*)
