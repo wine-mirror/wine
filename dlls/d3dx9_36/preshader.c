@@ -758,9 +758,12 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
 
             if (pres->ins[i].inputs[j].index_reg.table == PRES_REGTAB_COUNT)
             {
+                unsigned int last_component_index = pres->ins[i].scalar_op && !j ? 0
+                        : pres->ins[i].component_count - 1;
+
                 table = pres->ins[i].inputs[j].reg.table;
                 reg_idx = get_reg_offset(table, pres->ins[i].inputs[j].reg.offset
-                        + pres->ins[i].component_count - 1);
+                        + last_component_index);
             }
             else
             {
