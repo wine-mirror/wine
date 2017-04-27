@@ -749,6 +749,7 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
 
     pres->regs.table_sizes[PRES_REGTAB_IMMED] = const_count;
 
+    update_table_sizes_consts(pres->regs.table_sizes, &pres->inputs);
     for (i = 0; i < pres->ins_count; ++i)
     {
         for (j = 0; j < pres_op_info[pres->ins[i].op].input_count; ++j)
@@ -770,13 +771,17 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
                 table = pres->ins[i].inputs[j].index_reg.table;
                 reg_idx = get_reg_offset(table, pres->ins[i].inputs[j].index_reg.offset);
             }
-            update_table_size(pres->regs.table_sizes, table, reg_idx);
+            if (reg_idx >= pres->regs.table_sizes[table])
+            {
+                FIXME("Out of bounds register index, i %u, j %u, table %u, reg_idx %u.",
+                        i, j, table, reg_idx);
+                return D3DXERR_INVALIDDATA;
+            }
         }
         update_table_size(pres->regs.table_sizes, pres->ins[i].output.reg.table,
                 get_reg_offset(pres->ins[i].output.reg.table,
                 pres->ins[i].output.reg.offset + pres->ins[i].component_count - 1));
     }
-    update_table_sizes_consts(pres->regs.table_sizes, &pres->inputs);
     if (FAILED(regstore_alloc_table(&pres->regs, PRES_REGTAB_IMMED)))
         return E_OUTOFMEMORY;
     regstore_set_values(&pres->regs, PRES_REGTAB_IMMED, dconst, 0, const_count);
