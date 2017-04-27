@@ -12101,10 +12101,8 @@ msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Kan ikke slette registerklassen \"%1\".\n"
 
 #: regedit.rc:398
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: Linjen \"%1\" ble ikke gjenkjent.\n"
+msgstr "regedit: Linjen inneholder ugyldig syntaks.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
