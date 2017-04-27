@@ -180,14 +180,6 @@ static void expect_matrix_(unsigned int line, const D3DXMATRIX *expected, const 
             U(*expected).m[3][0], U(*expected).m[3][1], U(*expected).m[3][2], U(*expected).m[3][3]);
 }
 
-#define compare_scale(exp, got) \
-    ok(relative_error(exp.x, got.x) < admitted_error && \
-       relative_error(exp.y, got.y) < admitted_error && \
-       relative_error(exp.z, got.z) < admitted_error, \
-       "Expected scale = (%f, %f, %f), \
-        got scale = (%f, %f, %f)\n", \
-        exp.x, exp.y, exp.z, got.x, got.y, got.z)
-
 #define compare_translation(exp, got) \
     ok(relative_error(exp.x, got.x) < admitted_error && \
        relative_error(exp.y, got.y) < admitted_error && \
@@ -1916,9 +1908,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] =  0.00000000e+00f;
     U(pm).m[3][3] =  1.00000000e+00f;
 
-    exp_scale.x = 1.0f;
-    exp_scale.y = 1.0f;
-    exp_scale.z = 1.0f;
+    exp_scale.x = 9.99999881e-01f;
+    exp_scale.y = 9.99999881e-01f;
+    exp_scale.z = 9.99999881e-01f;
 
     exp_rotation.x = 2.14862776e-08f;
     exp_rotation.y = 6.93519890e-01f;
@@ -1930,8 +1922,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 10.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
     compare_translation(exp_translation, got_translation);
 
@@ -1954,9 +1945,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] = 0.0f;
     U(pm).m[3][3] = 1.0f;
 
-    exp_scale.x = 3.0f;
-    exp_scale.y = 3.0f;
-    exp_scale.z = 3.0f;
+    exp_scale.x = 2.99999928e+00f;
+    exp_scale.y = 2.99999905e+00f;
+    exp_scale.z = 2.99999952e+00f;
 
     exp_rotation.x = 3.52180451e-01f;
     exp_rotation.y = 6.16315663e-01f;
@@ -1968,8 +1959,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 3.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 0);
     expect_quaternion(&exp_rotation, &got_rotation, 2);
     compare_translation(exp_translation, got_translation);
 
@@ -1992,9 +1982,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] = 0.0f;
     U(pm).m[3][3] = 1.0f;
 
-    exp_scale.x = 3.0f;
-    exp_scale.y = 3.0f;
-    exp_scale.z = 3.0f;
+    exp_scale.x = 2.99999976e+00f;
+    exp_scale.y = 3.00000000e+00f;
+    exp_scale.z = 2.99999976e+00f;
 
     exp_rotation.x = 0.00000000e+00f;
     exp_rotation.y = 3.09016883e-01f;
@@ -2006,8 +1996,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 5.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
     compare_translation(exp_translation, got_translation);
 
@@ -2030,9 +2019,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] =  0.00000000e+00f;
     U(pm).m[3][3] =  1.00000000e+00f;
 
-    exp_scale.x = 1.0f;
-    exp_scale.y = 1.0f;
-    exp_scale.z = 1.0f;
+    exp_scale.x = 9.99999881e-01f;
+    exp_scale.y = 9.99999881e-01f;
+    exp_scale.z = 9.99999881e-01f;
 
     exp_rotation.x = 2.14862776e-08f;
     exp_rotation.y = 6.93519890e-01f;
@@ -2044,8 +2033,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 10.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
     compare_translation(exp_translation, got_translation);
 
@@ -2068,9 +2056,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] =  0.00000000e+00f;
     U(pm).m[3][3] =  1.00000000e+00f;
 
-    exp_scale.x = 1.0f;
-    exp_scale.y = 2.0f;
-    exp_scale.z = 3.0f;
+    exp_scale.x = 9.99999583e-01f;
+    exp_scale.y = 1.99999940e+00f;
+    exp_scale.z = 2.99999928e+00f;
 
     exp_rotation.x = 1.07431388e-08f;
     exp_rotation.y = 6.93519890e-01f;
@@ -2082,8 +2070,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 10.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 1);
     equal = compare_quaternion(&exp_rotation, &got_rotation, 1);
     exp_rotation.x = 0.0f;
     equal |= compare_quaternion(&exp_rotation, &got_rotation, 2);
@@ -2110,9 +2097,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] = 0.0f;
     U(pm).m[3][3] = 1.0f;
 
-    exp_scale.x = 1.0f;
-    exp_scale.y = 1.0f;
-    exp_scale.z = 1.0f;
+    exp_scale.x = 9.99999940e-01f;
+    exp_scale.y = 1.00000012e+00f;
+    exp_scale.z = 1.00000012e+00f;
 
     exp_rotation.x = 9.05394852e-01f;
     exp_rotation.y = -3.23355347e-01f;
@@ -2124,8 +2111,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 10.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 0);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
     compare_translation(exp_translation, got_translation);
 
@@ -2148,9 +2134,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] = 0.0f;
     U(pm).m[3][3] = 1.0f;
 
-    exp_scale.x = 1.0f;
-    exp_scale.y = 1.0f;
-    exp_scale.z = 1.0f;
+    exp_scale.x = 9.99999940e-01f;
+    exp_scale.y = 9.99999940e-01f;
+    exp_scale.z = 9.99999881e-01f;
 
     exp_rotation.x = 7.03357518e-01f;
     exp_rotation.y = -5.86131275e-01f;
@@ -2162,8 +2148,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 10.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 1);
     expect_quaternion(&exp_rotation, &got_rotation, 2);
     compare_translation(exp_translation, got_translation);
 
@@ -2186,9 +2171,9 @@ static void test_Matrix_Decompose(void)
     U(pm).m[2][3] =  0.00000000e+00f;
     U(pm).m[3][3] =  1.00000000e+00f;
 
-    exp_scale.x = 15.0f;
-    exp_scale.y = 15.0f;
-    exp_scale.z = 15.0f;
+    exp_scale.x = 1.49999933e+01f;
+    exp_scale.y = 1.49999933e+01f;
+    exp_scale.z = 1.49999943e+01f;
 
     exp_rotation.x = 7.68714130e-01f;
     exp_rotation.y = 0.00000000e+00f;
@@ -2200,8 +2185,7 @@ static void test_Matrix_Decompose(void)
     exp_translation.z = 2.0f;
 
     D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-
-    compare_scale(exp_scale, got_scale);
+    expect_vec3(&exp_scale, &got_scale, 0);
     expect_quaternion(&exp_rotation, &got_rotation, 1);
     compare_translation(exp_translation, got_translation);
 
