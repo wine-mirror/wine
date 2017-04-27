@@ -649,6 +649,14 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_AddRef(ID3D11RasterizerSta
 
     TRACE("%p increasing refcount to %u.\n", state, refcount);
 
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(state->device);
+        wined3d_mutex_lock();
+        wined3d_rasterizer_state_incref(state->wined3d_state);
+        wined3d_mutex_unlock();
+    }
+
     return refcount;
 }
 
@@ -661,14 +669,13 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_Release(ID3D11RasterizerSt
 
     if (!refcount)
     {
-        struct d3d_device *device = impl_from_ID3D11Device(state->device);
+        ID3D11Device *device = state->device;
+
         wined3d_mutex_lock();
-        wine_rb_remove(&device->rasterizer_states, &state->entry);
         wined3d_rasterizer_state_decref(state->wined3d_state);
-        wined3d_private_store_cleanup(&state->private_store);
         wined3d_mutex_unlock();
-        ID3D11Device_Release(state->device);
-        HeapFree(GetProcessHeap(), 0, state);
+
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -847,6 +854,21 @@ static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
     d3d10_rasterizer_state_GetDesc,
 };
 
+static void STDMETHODCALLTYPE d3d_rasterizer_state_wined3d_object_destroyed(void *parent)
+{
+    struct d3d_rasterizer_state *state = parent;
+    struct d3d_device *device = impl_from_ID3D11Device(state->device);
+
+    wine_rb_remove(&device->rasterizer_states, &state->entry);
+    wined3d_private_store_cleanup(&state->private_store);
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d_rasterizer_state_wined3d_parent_ops =
+{
+    d3d_rasterizer_state_wined3d_object_destroyed,
+};
+
 HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
         const D3D11_RASTERIZER_DESC *desc)
 {
@@ -862,7 +884,7 @@ HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d
 
     wined3d_desc.front_ccw = desc->FrontCounterClockwise;
     if (FAILED(hr = wined3d_rasterizer_state_create(device->wined3d_device, &wined3d_desc,
-            state, &d3d_null_wined3d_parent_ops, &state->wined3d_state)))
+            state, &d3d_rasterizer_state_wined3d_parent_ops, &state->wined3d_state)))
     {
         WARN("Failed to create wined3d rasterizer state, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&state->private_store);
