@@ -513,18 +513,21 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_SetObject(IDirectMusicLoader8 *ifac
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoader8 *iface, REFGUID rguidClass, WCHAR *pwzPath, BOOL fClear)
+static HRESULT WINAPI IDirectMusicLoaderImpl_SetSearchDirectory(IDirectMusicLoader8 *iface,
+        REFGUID class, WCHAR *path, BOOL clear)
 {
-	IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
-	WCHAR wszCurrentPath[MAX_PATH];
-	TRACE("(%p, %s, %s, %d)\n", This, debugstr_dmguid(rguidClass), debugstr_w(pwzPath), fClear);
-	FIXME(": fClear ignored\n");
-	DMUSIC_GetLoaderSettings (iface, rguidClass, wszCurrentPath, NULL);
-	if (!strncmpW(wszCurrentPath, pwzPath, MAX_PATH)) {
-	  return S_FALSE;
-	}
-	/* FIXME: check if path is valid; else return DMUS_E_LOADER_BADPATH */
-	return DMUSIC_SetLoaderSettings (iface, rguidClass, pwzPath, NULL);
+    IDirectMusicLoaderImpl *This = impl_from_IDirectMusicLoader8(iface);
+    WCHAR current_path[MAX_PATH];
+
+    TRACE("(%p, %s, %s, %d)\n", This, debugstr_dmguid(class), debugstr_w(path), clear);
+    if (clear)
+        FIXME("clear flag ignored\n");
+
+    DMUSIC_GetLoaderSettings(iface, class, current_path, NULL);
+    if (!strncmpW(current_path, path, MAX_PATH))
+        return S_FALSE;
+
+    return DMUSIC_SetLoaderSettings(iface, class, path, NULL);
 }
 
 static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *iface, REFGUID rguidClass, WCHAR *pwzFileExtension, WCHAR *pwzScanFileName)
