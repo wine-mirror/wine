@@ -43,8 +43,6 @@ int Image_Open;
 int Image_Closed;
 int Image_Root;
 
-#define CX_ICON    16
-#define CY_ICON    16
 #define NUM_ICONS    3
 
 static BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state);
@@ -599,10 +597,11 @@ static BOOL InitTreeViewImageLists(HWND hwndTV)
 {
     HIMAGELIST himl;  /* handle to image list  */
     HICON hico;       /* handle to icon  */
+    INT cx = GetSystemMetrics(SM_CXSMICON);
+    INT cy = GetSystemMetrics(SM_CYSMICON);
 
     /* Create the image list.  */
-    if ((himl = ImageList_Create(CX_ICON, CY_ICON,
-                                 ILC_MASK, 0, NUM_ICONS)) == NULL)
+    if ((himl = ImageList_Create(cx, cy, ILC_MASK, 0, NUM_ICONS)) == NULL)
         return FALSE;
 
     /* Add the open file, closed file, and document bitmaps.  */
