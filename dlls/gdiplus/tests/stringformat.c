@@ -30,7 +30,7 @@ static void test_constructor(void)
     GpStringFormat *format;
     GpStatus stat;
     INT n, count;
-    StringAlignment align, valign;
+    StringAlignment align, line_align;
     StringTrimming trimming;
     StringDigitSubstitute digitsub;
     LANGID digitlang;
@@ -39,7 +39,7 @@ static void test_constructor(void)
     expect(Ok, stat);
 
     GdipGetStringFormatAlign(format, &align);
-    GdipGetStringFormatLineAlign(format, &valign);
+    GdipGetStringFormatLineAlign(format, &line_align);
     GdipGetStringFormatHotkeyPrefix(format, &n);
     GdipGetStringFormatTrimming(format, &trimming);
     GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
@@ -47,7 +47,7 @@ static void test_constructor(void)
 
     expect(HotkeyPrefixNone, n);
     expect(StringAlignmentNear, align);
-    expect(StringAlignmentNear, align);
+    expect(StringAlignmentNear, line_align);
     expect(StringTrimmingCharacter, trimming);
     expect(StringDigitSubstituteUser, digitsub);
     expect(LANG_NEUTRAL, digitlang);
@@ -144,7 +144,7 @@ static void test_getgenerictypographic(void)
     GpStatus stat;
     INT flags;
     INT n;
-    StringAlignment align, valign;
+    StringAlignment align, line_align;
     StringTrimming trimming;
     StringDigitSubstitute digitsub;
     LANGID digitlang;
@@ -159,7 +159,7 @@ static void test_getgenerictypographic(void)
 
     GdipGetStringFormatFlags(format, &flags);
     GdipGetStringFormatAlign(format, &align);
-    GdipGetStringFormatLineAlign(format, &valign);
+    GdipGetStringFormatLineAlign(format, &line_align);
     GdipGetStringFormatHotkeyPrefix(format, &n);
     GdipGetStringFormatTrimming(format, &trimming);
     GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
@@ -169,7 +169,7 @@ static void test_getgenerictypographic(void)
             flags);
     expect(HotkeyPrefixNone, n);
     expect(StringAlignmentNear, align);
-    expect(StringAlignmentNear, align);
+    expect(StringAlignmentNear, line_align);
     expect(StringTrimmingNone, trimming);
     expect(StringDigitSubstituteUser, digitsub);
     expect(LANG_NEUTRAL, digitlang);
@@ -291,7 +291,7 @@ static void test_getgenericdefault(void)
 
     INT flags;
     INT n;
-    StringAlignment align, valign;
+    StringAlignment align, line_align;
     StringTrimming trimming;
     StringDigitSubstitute digitsub;
     LANGID digitlang;
@@ -306,7 +306,7 @@ static void test_getgenericdefault(void)
 
     GdipGetStringFormatFlags(format, &flags);
     GdipGetStringFormatAlign(format, &align);
-    GdipGetStringFormatLineAlign(format, &valign);
+    GdipGetStringFormatLineAlign(format, &line_align);
     GdipGetStringFormatHotkeyPrefix(format, &n);
     GdipGetStringFormatTrimming(format, &trimming);
     GdipGetStringFormatDigitSubstitution(format, &digitlang, &digitsub);
@@ -315,7 +315,7 @@ static void test_getgenericdefault(void)
     expect(0, flags);
     expect(HotkeyPrefixNone, n);
     expect(StringAlignmentNear, align);
-    expect(StringAlignmentNear, align);
+    expect(StringAlignmentNear, line_align);
     expect(StringTrimmingCharacter, trimming);
     expect(StringDigitSubstituteUser, digitsub);
     expect(LANG_NEUTRAL, digitlang);
