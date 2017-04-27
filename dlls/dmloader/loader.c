@@ -536,12 +536,16 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_ScanDirectory(IDirectMusicLoader8 *
 	WCHAR wszSearchString[MAX_PATH];
 	WCHAR *p;
 	HRESULT result;
-	TRACE("(%p, %s, %p, %p)\n", This, debugstr_dmguid(rguidClass), pwzFileExtension, pwzScanFileName);
+        TRACE("(%p, %s, %s, %s)\n", This, debugstr_dmguid(rguidClass), debugstr_w(pwzFileExtension),
+                        debugstr_w(pwzScanFileName));
 	if (IsEqualGUID (rguidClass, &GUID_DirectMusicAllTypes) || !DMUSIC_IsValidLoadableClass(rguidClass)) {
 		ERR(": rguidClass invalid CLSID\n");
 		return REGDB_E_CLASSNOTREG;
 	}
-	
+
+        if (!pwzFileExtension)
+                return S_FALSE;
+
 	/* get search path for given class */
 	DMUSIC_GetLoaderSettings (iface, rguidClass, wszSearchString, NULL);
 	
