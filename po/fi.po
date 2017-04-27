@@ -3695,7 +3695,7 @@ msgstr "Odotettiin taulukkoa"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "Winen ydin-DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -12078,10 +12078,8 @@ msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Rekisteriluokkaa '%1' ei voida poistaa.\n"
 
 #: regedit.rc:398
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: Riviä '%1' ei tunnisteta.\n"
+msgstr "regedit: Rivin syntaksi on virheellinen.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
