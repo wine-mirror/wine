@@ -999,6 +999,14 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_AddRef(ID3D11DepthStencil
 
     TRACE("%p increasing refcount to %u.\n", view, refcount);
 
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(view->device);
+        wined3d_mutex_lock();
+        wined3d_rendertarget_view_incref(view->wined3d_view);
+        wined3d_mutex_unlock();
+    }
+
     return refcount;
 }
 
@@ -1011,12 +1019,13 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_Release(ID3D11DepthStenci
 
     if (!refcount)
     {
+        ID3D11Device *device = view->device;
+
         wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(view->wined3d_view);
-        ID3D11Device_Release(view->device);
-        wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, view);
+
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -1225,6 +1234,19 @@ static const struct ID3D10DepthStencilViewVtbl d3d10_depthstencil_view_vtbl =
     d3d10_depthstencil_view_GetDesc,
 };
 
+static void STDMETHODCALLTYPE d3d_depth_stencil_view_wined3d_object_destroyed(void *parent)
+{
+    struct d3d_depthstencil_view *view = parent;
+
+    wined3d_private_store_cleanup(&view->private_store);
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d_depth_stencil_view_wined3d_parent_ops =
+{
+    d3d_depth_stencil_view_wined3d_object_destroyed,
+};
+
 static void wined3d_depth_stencil_view_desc_from_d3d11(struct wined3d_view_desc *wined3d_desc,
         const D3D11_DEPTH_STENCIL_VIEW_DESC *desc)
 {
@@ -1318,7 +1340,7 @@ static HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, st
 
     wined3d_depth_stencil_view_desc_from_d3d11(&wined3d_desc, &view->desc);
     if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
-            view, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
+            view, &d3d_depth_stencil_view_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
