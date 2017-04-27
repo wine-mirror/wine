@@ -180,17 +180,24 @@ static void expect_matrix_(unsigned int line, const D3DXMATRIX *expected, const 
             U(*expected).m[3][0], U(*expected).m[3][1], U(*expected).m[3][2], U(*expected).m[3][3]);
 }
 
-#define compare_vectors(exp, out) \
-    for (i = 0; i < ARRAY_SIZE + 2; ++i) { \
-        ok(relative_error(exp[i].x, out[i].x) < admitted_error && \
-           relative_error(exp[i].y, out[i].y) < admitted_error && \
-           relative_error(exp[i].z, out[i].z) < admitted_error && \
-           relative_error(exp[i].w, out[i].w) < admitted_error, \
-            "Got (%f, %f, %f, %f), expected (%f, %f, %f, %f) for index %d.\n", \
-            out[i].x, out[i].y, out[i].z, out[i].w, \
-            exp[i].x, exp[i].y, exp[i].z, exp[i].w, \
-            i); \
+#define expect_vec4_array(count, expected, vector, ulps) expect_vec4_array_(__LINE__, count, expected, vector, ulps)
+static void expect_vec4_array_(unsigned int line, SIZE_T count, const D3DXVECTOR4 *expected,
+        const D3DXVECTOR4 *vector, unsigned int ulps)
+{
+    BOOL equal;
+    SIZE_T i;
+
+    for (i = 0; i < count; ++i)
+    {
+        equal = compare_vec4(&expected[i], &vector[i], ulps);
+        ok_(__FILE__, line)(equal,
+                "Got unexpected vector {%.8e, %.8e, %.8e, %.8e} at index %lu, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                vector[i].x, vector[i].y, vector[i].z, vector[i].w, i,
+                expected[i].x, expected[i].y, expected[i].z, expected[i].w);
+        if (!equal)
+            break;
     }
+}
 
 #define compare_planes(exp, out) \
     for (i = 0; i < ARRAY_SIZE + 2; ++i) { \
@@ -2348,13 +2355,14 @@ static void test_D3DXVec_Array(void)
     U(world).m[3][0] = -4.0f; U(world).m[3][1] = -3.0f; U(world).m[3][2] = -2.0f; U(world).m[3][3] = 27.0f;
 
     /* D3DXVec2TransformCoordArray */
-    exp_vec[1].x = 0.678571f; exp_vec[1].y = 0.785714f;
-    exp_vec[2].x = 0.653846f; exp_vec[2].y = 0.769231f;
-    exp_vec[3].x = 0.625f;    exp_vec[3].y = 0.75f;
-    exp_vec[4].x = 0.590909f; exp_vec[4].y = 8.0f/11.0f;
-    exp_vec[5].x = 0.55f;     exp_vec[5].y = 0.7f;
-    D3DXVec2TransformCoordArray((D3DXVECTOR2*)(out_vec + 1), sizeof(D3DXVECTOR4), (D3DXVECTOR2*)inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    exp_vec[1].x = 6.78571403e-01f; exp_vec[1].y = 7.85714269e-01f;
+    exp_vec[2].x = 6.53846204e-01f; exp_vec[2].y = 7.69230783e-01f;
+    exp_vec[3].x = 6.25000000e-01f; exp_vec[3].y = 7.50000000e-01f;
+    exp_vec[4].x = 5.90909123e-01f; exp_vec[4].y = 7.27272749e-01f;
+    exp_vec[5].x = 5.49999952e-01f; exp_vec[5].y = 6.99999928e-01f;
+    D3DXVec2TransformCoordArray((D3DXVECTOR2 *)&out_vec[1], sizeof(*out_vec),
+            (D3DXVECTOR2 *)inp_vec, sizeof(*inp_vec), &mat, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 1);
 
     /* D3DXVec2TransformNormalArray */
     exp_vec[1].x = 25.0f; exp_vec[1].y = 30.0f;
@@ -2362,17 +2370,19 @@ static void test_D3DXVec_Array(void)
     exp_vec[3].x = 17.0f; exp_vec[3].y = 22.0f;
     exp_vec[4].x = 13.0f; exp_vec[4].y = 18.0f;
     exp_vec[5].x =  9.0f; exp_vec[5].y = 14.0f;
-    D3DXVec2TransformNormalArray((D3DXVECTOR2*)(out_vec + 1), sizeof(D3DXVECTOR4), (D3DXVECTOR2*)inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    D3DXVec2TransformNormalArray((D3DXVECTOR2 *)&out_vec[1], sizeof(*out_vec),
+            (D3DXVECTOR2 *)inp_vec, sizeof(*inp_vec), &mat, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 0);
 
     /* D3DXVec3TransformCoordArray */
-    exp_vec[1].x = 0.678571f; exp_vec[1].y = 0.785714f;  exp_vec[1].z = 0.892857f;
-    exp_vec[2].x = 0.671875f; exp_vec[2].y = 0.78125f;   exp_vec[2].z = 0.890625f;
-    exp_vec[3].x = 6.0f/9.0f; exp_vec[3].y = 7.0f/9.0f;  exp_vec[3].z = 8.0f/9.0f;
-    exp_vec[4].x = 0.6625f;   exp_vec[4].y = 0.775f;     exp_vec[4].z = 0.8875f;
-    exp_vec[5].x = 0.659091f; exp_vec[5].y = 0.772727f;  exp_vec[5].z = 0.886364f;
-    D3DXVec3TransformCoordArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    exp_vec[1].x = 6.78571403e-01f; exp_vec[1].y = 7.85714269e-01f; exp_vec[1].z = 8.92857075e-01f;
+    exp_vec[2].x = 6.71874940e-01f; exp_vec[2].y = 7.81249940e-01f; exp_vec[2].z = 8.90624940e-01f;
+    exp_vec[3].x = 6.66666627e-01f; exp_vec[3].y = 7.77777731e-01f; exp_vec[3].z = 8.88888836e-01f;
+    exp_vec[4].x = 6.62499964e-01f; exp_vec[4].y = 7.74999976e-01f; exp_vec[4].z = 8.87499928e-01f;
+    exp_vec[5].x = 6.59090877e-01f; exp_vec[5].y = 7.72727251e-01f; exp_vec[5].z = 8.86363566e-01f;
+    D3DXVec3TransformCoordArray((D3DXVECTOR3 *)&out_vec[1], sizeof(*out_vec),
+            (D3DXVECTOR3 *)inp_vec, sizeof(*inp_vec), &mat, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 1);
 
     /* D3DXVec3TransformNormalArray */
     exp_vec[1].x = 25.0f; exp_vec[1].y = 30.0f; exp_vec[1].z = 35.0f;
@@ -2380,26 +2390,29 @@ static void test_D3DXVec_Array(void)
     exp_vec[3].x = 35.0f; exp_vec[3].y = 42.0f; exp_vec[3].z = 49.0f;
     exp_vec[4].x = 40.0f; exp_vec[4].y = 48.0f; exp_vec[4].z = 56.0f;
     exp_vec[5].x = 45.0f; exp_vec[5].y = 54.0f; exp_vec[5].z = 63.0f;
-    D3DXVec3TransformNormalArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    D3DXVec3TransformNormalArray((D3DXVECTOR3 *)&out_vec[1], sizeof(*out_vec),
+            (D3DXVECTOR3 *)inp_vec, sizeof(*inp_vec), &mat, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 0);
 
     /* D3DXVec3ProjectArray */
-    exp_vec[1].x = 1089.554199f; exp_vec[1].y = -226.590622f; exp_vec[1].z = 0.215273f;
-    exp_vec[2].x = 1068.903320f; exp_vec[2].y =  103.085129f; exp_vec[2].z = 0.183050f;
-    exp_vec[3].x = 1051.778931f; exp_vec[3].y =  376.462250f; exp_vec[3].z = 0.156329f;
-    exp_vec[4].x = 1037.348877f; exp_vec[4].y =  606.827393f; exp_vec[4].z = 0.133813f;
-    exp_vec[5].x = 1025.023560f; exp_vec[5].y =  803.591248f; exp_vec[5].z = 0.114581f;
-    D3DXVec3ProjectArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (const D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &viewport, &projection, &view, &world, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    exp_vec[1].x = 1.08955420e+03f; exp_vec[1].y = -2.26590622e+02f; exp_vec[1].z = 2.15272754e-01f;
+    exp_vec[2].x = 1.06890344e+03f; exp_vec[2].y =  1.03085144e+02f; exp_vec[2].z = 1.83049560e-01f;
+    exp_vec[3].x = 1.05177905e+03f; exp_vec[3].y =  3.76462280e+02f; exp_vec[3].z = 1.56329080e-01f;
+    exp_vec[4].x = 1.03734888e+03f; exp_vec[4].y =  6.06827393e+02f; exp_vec[4].z = 1.33812696e-01f;
+    exp_vec[5].x = 1.02502356e+03f; exp_vec[5].y =  8.03591248e+02f; exp_vec[5].z = 1.14580572e-01f;
+    D3DXVec3ProjectArray((D3DXVECTOR3 *)&out_vec[1], sizeof(*out_vec), (D3DXVECTOR3 *)inp_vec,
+            sizeof(*inp_vec), &viewport, &projection, &view, &world, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 8);
 
     /* D3DXVec3UnprojectArray */
-    exp_vec[1].x = -6.124031f; exp_vec[1].y = 3.225360f; exp_vec[1].z = 0.620571f;
-    exp_vec[2].x = -3.807109f; exp_vec[2].y = 2.046579f; exp_vec[2].z = 0.446894f;
-    exp_vec[3].x = -2.922839f; exp_vec[3].y = 1.596689f; exp_vec[3].z = 0.380609f;
-    exp_vec[4].x = -2.456225f; exp_vec[4].y = 1.359290f; exp_vec[4].z = 0.345632f;
-    exp_vec[5].x = -2.167897f; exp_vec[5].y = 1.212597f; exp_vec[5].z = 0.324019f;
-    D3DXVec3UnprojectArray((D3DXVECTOR3*)(out_vec + 1), sizeof(D3DXVECTOR4), (const D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &viewport, &projection, &view, &world, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    exp_vec[1].x = -6.12403107e+00f; exp_vec[1].y = 3.22536016e+00f; exp_vec[1].z = 6.20571136e-01f;
+    exp_vec[2].x = -3.80710936e+00f; exp_vec[2].y = 2.04657936e+00f; exp_vec[2].z = 4.46894377e-01f;
+    exp_vec[3].x = -2.92283988e+00f; exp_vec[3].y = 1.59668946e+00f; exp_vec[3].z = 3.80609393e-01f;
+    exp_vec[4].x = -2.45622563e+00f; exp_vec[4].y = 1.35928988e+00f; exp_vec[4].z = 3.45631927e-01f;
+    exp_vec[5].x = -2.16789746e+00f; exp_vec[5].y = 1.21259713e+00f; exp_vec[5].z = 3.24018806e-01f;
+    D3DXVec3UnprojectArray((D3DXVECTOR3 *)&out_vec[1], sizeof(*out_vec), (D3DXVECTOR3 *)inp_vec,
+            sizeof(*inp_vec), &viewport, &projection, &view, &world, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 4);
 
     /* D3DXVec2TransformArray */
     exp_vec[1].x = 38.0f; exp_vec[1].y = 44.0f; exp_vec[1].z = 50.0f; exp_vec[1].w = 56.0f;
@@ -2407,8 +2420,9 @@ static void test_D3DXVec_Array(void)
     exp_vec[3].x = 30.0f; exp_vec[3].y = 36.0f; exp_vec[3].z = 42.0f; exp_vec[3].w = 48.0f;
     exp_vec[4].x = 26.0f; exp_vec[4].y = 32.0f; exp_vec[4].z = 38.0f; exp_vec[4].w = 44.0f;
     exp_vec[5].x = 22.0f; exp_vec[5].y = 28.0f; exp_vec[5].z = 34.0f; exp_vec[5].w = 40.0f;
-    D3DXVec2TransformArray(out_vec + 1, sizeof(D3DXVECTOR4), (D3DXVECTOR2*)inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    D3DXVec2TransformArray(&out_vec[1], sizeof(*out_vec), (D3DXVECTOR2 *)inp_vec,
+            sizeof(*inp_vec), &mat, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 0);
 
     /* D3DXVec3TransformArray */
     exp_vec[1].x = 38.0f; exp_vec[1].y = 44.0f; exp_vec[1].z = 50.0f; exp_vec[1].w = 56.0f;
@@ -2416,8 +2430,9 @@ static void test_D3DXVec_Array(void)
     exp_vec[3].x = 48.0f; exp_vec[3].y = 56.0f; exp_vec[3].z = 64.0f; exp_vec[3].w = 72.0f;
     exp_vec[4].x = 53.0f; exp_vec[4].y = 62.0f; exp_vec[4].z = 71.0f; exp_vec[4].w = 80.0f;
     exp_vec[5].x = 58.0f; exp_vec[5].y = 68.0f; exp_vec[5].z = 78.0f; exp_vec[5].w = 88.0f;
-    D3DXVec3TransformArray(out_vec + 1, sizeof(D3DXVECTOR4), (D3DXVECTOR3*)inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    D3DXVec3TransformArray(&out_vec[1], sizeof(*out_vec), (D3DXVECTOR3 *)inp_vec,
+            sizeof(*inp_vec), &mat, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 0);
 
     /* D3DXVec4TransformArray */
     exp_vec[1].x = 90.0f; exp_vec[1].y = 100.0f; exp_vec[1].z = 110.0f; exp_vec[1].w = 120.0f;
@@ -2425,8 +2440,8 @@ static void test_D3DXVec_Array(void)
     exp_vec[3].x = 74.0f; exp_vec[3].y = 84.0f;  exp_vec[3].z = 94.0f;  exp_vec[3].w = 104.0f;
     exp_vec[4].x = 66.0f; exp_vec[4].y = 76.0f;  exp_vec[4].z = 86.0f;  exp_vec[4].w = 96.0f;
     exp_vec[5].x = 58.0f; exp_vec[5].y = 68.0f;  exp_vec[5].z = 78.0f;  exp_vec[5].w = 88.0f;
-    D3DXVec4TransformArray(out_vec + 1, sizeof(D3DXVECTOR4), inp_vec, sizeof(D3DXVECTOR4), &mat, ARRAY_SIZE);
-    compare_vectors(exp_vec, out_vec);
+    D3DXVec4TransformArray(&out_vec[1], sizeof(*out_vec), inp_vec, sizeof(*inp_vec), &mat, ARRAY_SIZE);
+    expect_vec4_array(ARRAY_SIZE + 2, exp_vec, out_vec, 0);
 
     /* D3DXPlaneTransformArray */
     exp_plane[1].a = 90.0f; exp_plane[1].b = 100.0f; exp_plane[1].c = 110.0f; exp_plane[1].d = 120.0f;
