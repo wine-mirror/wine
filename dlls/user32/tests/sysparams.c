@@ -165,17 +165,34 @@ static int last_bpp;
 static BOOL displaychange_ok = FALSE, displaychange_test_active = FALSE;
 static HANDLE displaychange_sem = 0;
 
-static int get_real_dpi(void)
+static BOOL get_reg_dword(HKEY base, const char *key_name, const char *value_name, DWORD *value)
 {
     HKEY key;
-    DWORD value = USER_DEFAULT_SCREEN_DPI, size = sizeof(value);
+    DWORD type, data, size = sizeof(data);
+    BOOL ret = FALSE;
 
-    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Control Panel\\Desktop", &key))
+    if (RegOpenKeyA(base, key_name, &key) == ERROR_SUCCESS)
     {
-        RegQueryValueExA(key, "LogPixels", NULL, NULL, (BYTE *)&value, &size);
+        if (RegQueryValueExA(key, value_name, NULL, &type, (void *)&data, &size) == ERROR_SUCCESS &&
+            type == REG_DWORD)
+        {
+            *value = data;
+            ret = TRUE;
+        }
         RegCloseKey(key);
     }
-    return value;
+    return ret;
+}
+
+static DWORD get_real_dpi(void)
+{
+    DWORD dpi;
+
+    if (get_reg_dword(HKEY_CURRENT_USER, "Control Panel\\Desktop", "LogPixels", &dpi))
+        return dpi;
+    if (get_reg_dword(HKEY_CURRENT_CONFIG, "Software\\Fonts", "LogPixels", &dpi))
+        return dpi;
+    return USER_DEFAULT_SCREEN_DPI;
 }
 
 static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam,
