@@ -43,7 +43,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define IDT_DPIEDIT 0x1234
 
-static const WCHAR logpixels_reg[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s','\\','C','u','r','r','e','n','t','\\','S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
+static const WCHAR logpixels_reg[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
+static const WCHAR def_logpixels_reg[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
 static const WCHAR logpixels[] = {'L','o','g','P','i','x','e','l','s',0};
 
 static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
@@ -236,7 +237,8 @@ static void on_fullscreen_grab_clicked(HWND dialog)
 static INT read_logpixels_reg(void)
 {
     DWORD dwLogPixels;
-    WCHAR *buf = get_reg_keyW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, NULL);
+    WCHAR *buf = get_reg_keyW(HKEY_CURRENT_USER, logpixels_reg, logpixels, NULL);
+    if (!buf) buf = get_reg_keyW(HKEY_CURRENT_CONFIG, def_logpixels_reg, logpixels, NULL);
     dwLogPixels = buf ? *buf : DEFDPI;
     HeapFree(GetProcessHeap(), 0, buf);
     return dwLogPixels;
@@ -296,7 +298,7 @@ static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
     if (dpi >= MINDPI && dpi <= MAXDPI)
     {
         SendDlgItemMessageW(hDlg, IDC_RES_TRACKBAR, TBM_SETPOS, TRUE, dpi);
-        set_reg_key_dwordW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, dpi);
+        set_reg_key_dwordW(HKEY_CURRENT_USER, logpixels_reg, logpixels, dpi);
     }
 
     updating_ui = FALSE;
@@ -416,7 +418,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
 		    SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, i, TRUE);
 		    update_font_preview(hDlg);
-		    set_reg_key_dwordW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, i);
+		    set_reg_key_dwordW(HKEY_CURRENT_USER, logpixels_reg, logpixels, i);
 		    break;
 		}
 	    }
