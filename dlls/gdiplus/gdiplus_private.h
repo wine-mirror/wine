@@ -450,7 +450,7 @@ struct GpStringFormat{
     StringAlignment align;
     StringTrimming trimming;
     HotkeyPrefix hkprefix;
-    StringAlignment vertalign;
+    StringAlignment line_align;
     StringDigitSubstitute digitsub;
     INT tabcount;
     REAL firsttab;

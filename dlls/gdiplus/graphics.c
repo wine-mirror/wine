@@ -5417,19 +5417,19 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
         /* Should be no need to explicitly test for StringAlignmentNear as
          * that is default behavior if no alignment is passed. */
-        if(format->vertalign != StringAlignmentNear){
+        if(format->line_align != StringAlignmentNear){
             RectF bounds, in_rect = *rect;
             in_rect.Height = 0.0; /* avoid height clipping */
             GdipMeasureString(graphics, string, length, font, &in_rect, format, &bounds, 0, 0);
 
             TRACE("bounds %s\n", debugstr_rectf(&bounds));
 
-            if(format->vertalign == StringAlignmentCenter)
+            if(format->line_align == StringAlignmentCenter)
                 offsety = (rect->Height - bounds.Height) / 2;
-            else if(format->vertalign == StringAlignmentFar)
+            else if(format->line_align == StringAlignmentFar)
                 offsety = (rect->Height - bounds.Height);
         }
-        TRACE("vertical align %d, offsety %f\n", format->vertalign, offsety);
+        TRACE("line align %d, offsety %f\n", format->line_align, offsety);
     }
 
     save_state = SaveDC(hdc);

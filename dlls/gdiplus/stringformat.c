@@ -178,7 +178,7 @@ GpStatus WINGDIPAPI GdipGetStringFormatLineAlign(GpStringFormat *format,
     if(!format || !align)
         return InvalidParameter;
 
-    *align = format->vertalign;
+    *align = format->line_align;
 
     return Ok;
 }
@@ -282,7 +282,7 @@ GpStatus WINGDIPAPI GdipSetStringFormatLineAlign(GpStringFormat *format,
     if(!format)
         return InvalidParameter;
 
-    format->vertalign = align;
+    format->line_align = align;
 
     return Ok;
 }
