@@ -199,18 +199,6 @@ static void expect_vec4_array_(unsigned int line, SIZE_T count, const D3DXVECTOR
     }
 }
 
-#define compare_planes(exp, out) \
-    for (i = 0; i < ARRAY_SIZE + 2; ++i) { \
-        ok(relative_error(exp[i].a, out[i].a) < admitted_error && \
-           relative_error(exp[i].b, out[i].b) < admitted_error && \
-           relative_error(exp[i].c, out[i].c) < admitted_error && \
-           relative_error(exp[i].d, out[i].d) < admitted_error, \
-            "Got (%f, %f, %f, %f), expected (%f, %f, %f, %f) for index %d.\n", \
-            out[i].a, out[i].b, out[i].c, out[i].d, \
-            exp[i].a, exp[i].b, exp[i].c, exp[i].d, \
-            i); \
-    }
-
 static void D3DXColorTest(void)
 {
     D3DXCOLOR color, color1, color2, expected, got;
@@ -2449,8 +2437,16 @@ static void test_D3DXVec_Array(void)
     exp_plane[3].a = 74.0f; exp_plane[3].b = 84.0f;  exp_plane[3].c = 94.0f;  exp_plane[3].d = 104.0f;
     exp_plane[4].a = 66.0f; exp_plane[4].b = 76.0f;  exp_plane[4].c = 86.0f;  exp_plane[4].d = 96.0f;
     exp_plane[5].a = 58.0f; exp_plane[5].b = 68.0f;  exp_plane[5].c = 78.0f;  exp_plane[5].d = 88.0f;
-    D3DXPlaneTransformArray(out_plane + 1, sizeof(D3DXPLANE), inp_plane, sizeof(D3DXPLANE), &mat, ARRAY_SIZE);
-    compare_planes(exp_plane, out_plane);
+    D3DXPlaneTransformArray(&out_plane[1], sizeof(*out_plane), inp_plane, sizeof(*inp_plane), &mat, ARRAY_SIZE);
+    for (i = 0; i < ARRAY_SIZE + 2; ++i)
+    {
+        BOOL equal = compare_plane(&exp_plane[i], &out_plane[i], 0);
+        ok(equal, "Got unexpected plane {%.8e, %.8e, %.8e, %.8e} at index %u, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                out_plane[i].a, out_plane[i].b, out_plane[i].c, out_plane[i].d, i,
+                exp_plane[i].a, exp_plane[i].b, exp_plane[i].c, exp_plane[i].d);
+        if (!equal)
+            break;
+    }
 }
 
 static void test_D3DXFloat_Array(void)
