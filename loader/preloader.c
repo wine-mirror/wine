@@ -127,6 +127,7 @@ static struct wine_preload_info preload_info[] =
 #undef DUMP_SEGMENTS
 #undef DUMP_AUX_INFO
 #undef DUMP_SYMS
+#undef DUMP_MAPS
 
 /* older systems may not define these */
 #ifndef PT_TLS
@@ -1271,6 +1272,17 @@ void* wld_start( void **stack )
 #ifdef DUMP_AUX_INFO
     wld_printf("new stack = %p\n", *stack);
     wld_printf("jumping to %p\n", (void *)ld_so_map.l_entry);
+#endif
+#ifdef DUMP_MAPS
+    {
+        char buffer[1024];
+        int len, fd = wld_open( "/proc/self/maps", O_RDONLY );
+        if (fd != -1)
+        {
+            while ((len = wld_read( fd, buffer, sizeof(buffer) )) > 0) wld_write( 2, buffer, len );
+            wld_close( fd );
+        }
+    }
 #endif
 
     return (void *)ld_so_map.l_entry;
