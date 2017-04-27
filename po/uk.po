@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-02-02 16:04+0200\n"
+"PO-Revision-Date: 2017-04-27 18:47+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -3711,7 +3711,7 @@ msgstr "Очікується об'єкт Array"
 
 #: ../../include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "Бібліотека ядра Wine"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
 msgid "Wine"
@@ -9436,10 +9436,8 @@ msgid "Confidentiality Required"
 msgstr "Потрібна конфіденційність"
 
 #: wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "Проводиться вимкнення системи.\n"
+msgstr "Проводиться прив'язка за допомогою SASL"
 
 #: wldap32.rc:48
 msgid "No Such Attribute"
@@ -9463,7 +9461,7 @@ msgstr "Властивість або значення існує"
 
 #: wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr "Неправильний синтакс"
+msgstr "Невірний синтаксис"
 
 #: wldap32.rc:64
 msgid "No Such Object"
@@ -12037,17 +12035,11 @@ msgstr "Неможливо перейменувати вибране значе�
 #: regedit.rc:222
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
-msgstr ""
+msgstr "Ключі та значення з '%1' були успішно додані до реєстру."
 
 #: regedit.rc:223
-#, fuzzy
-#| msgid ""
-#| "Unable to rename the key '%1'.\n"
-#| "The specified key name already exists."
 msgid "Unable to import %1. The specified file is not a valid registry file."
-msgstr ""
-"Неможливо перейменувати ключ '%1'.\n"
-"Вказаний ключ вже існує."
+msgstr "Неможливо імпортувати '%1'. Вказаний файл не є файлом реєстру."
 
 #: regedit.rc:375
 msgid ""
@@ -12198,10 +12190,8 @@ msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Неможливо видалити клас реєстру '%1'.\n"
 
 #: regedit.rc:398
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: Рядок '%1' не був розпізнаний.\n"
+msgstr "regedit: Рядок має невірний синтаксис.\n"
 
 #: regedit.rc:163
 msgid "Quits the registry editor"
@@ -12328,17 +12318,14 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "Експортує вибрану гілку реєстру до текстового файлу"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Підтвердження видалення значення"
+msgstr "Підтвердження видалення ключа"
 
 #: regedit.rc:188
-#, fuzzy
-#| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
-msgstr "Ви впевнені, що хочете видалити ключ реєстру '%1'?"
+msgstr ""
+"Ви впевнені, що хочете видалити ключ реєстру '%1' та всі його підрозділи?"
 
 #: regsvr32.rc:32
 msgid ""
