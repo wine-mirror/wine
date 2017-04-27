@@ -4366,10 +4366,13 @@ static void test_GetEudcFontCollection(void)
         return;
     }
 
+    EXPECT_REF(factory1, 1);
     hr = IDWriteFactory1_GetEudcFontCollection(factory1, &coll, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(factory1, 2);
     hr = IDWriteFactory1_GetEudcFontCollection(factory1, &coll2, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(factory1, 2);
     ok(coll == coll2, "got %p, %p\n", coll, coll2);
     IDWriteFontCollection_Release(coll);
     IDWriteFontCollection_Release(coll2);

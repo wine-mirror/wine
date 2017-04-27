@@ -4052,7 +4052,7 @@ static HRESULT eudc_collection_add_family(IDWriteFactory4 *factory, struct dwrit
     return hr;
 }
 
-HRESULT get_eudc_fontcollection(IDWriteFactory4 *factory, IDWriteFontCollection **ret)
+HRESULT get_eudc_fontcollection(IDWriteFactory4 *factory, IDWriteFontCollection1 **ret)
 {
     static const WCHAR eudckeyfmtW[] = {'E','U','D','C','\\','%','u',0};
     struct dwrite_fontcollection *collection;
@@ -4078,7 +4078,9 @@ HRESULT get_eudc_fontcollection(IDWriteFactory4 *factory, IDWriteFontCollection 
         return hr;
     }
 
-    *ret = (IDWriteFontCollection*)&collection->IDWriteFontCollection1_iface;
+    *ret = &collection->IDWriteFontCollection1_iface;
+    collection->factory = factory;
+    IDWriteFactory4_AddRef(factory);
 
     /* return empty collection if EUDC fonts are not configured */
     sprintfW(eudckeypathW, eudckeyfmtW, GetACP());

@@ -537,7 +537,7 @@ struct dwritefactory {
     LONG ref;
 
     IDWriteFontCollection1 *system_collection;
-    IDWriteFontCollection *eudc_collection;
+    IDWriteFontCollection1 *eudc_collection;
     IDWriteGdiInterop1 *gdiinterop;
     IDWriteFontFallback *fallback;
 
@@ -592,7 +592,7 @@ static void release_dwritefactory(struct dwritefactory *factory)
     if (factory->system_collection)
         IDWriteFontCollection1_Release(factory->system_collection);
     if (factory->eudc_collection)
-        IDWriteFontCollection_Release(factory->eudc_collection);
+        IDWriteFontCollection1_Release(factory->eudc_collection);
     if (factory->fallback)
         release_system_fontfallback(factory->fallback);
     heap_free(factory);
@@ -1201,13 +1201,12 @@ static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory4 *ifac
     if (check_for_updates)
         FIXME("checking for eudc updates not implemented\n");
 
-    if (!This->eudc_collection)
+    if (This->eudc_collection)
+        IDWriteFontCollection1_AddRef(This->eudc_collection);
+    else
         hr = get_eudc_fontcollection(iface, &This->eudc_collection);
 
-    if (SUCCEEDED(hr))
-        IDWriteFontCollection_AddRef(This->eudc_collection);
-
-    *collection = This->eudc_collection;
+    *collection = (IDWriteFontCollection*)This->eudc_collection;
 
     return hr;
 }
@@ -1665,6 +1664,8 @@ void factory_detach_fontcollection(IDWriteFactory4 *iface, IDWriteFontCollection
     struct dwritefactory *factory = impl_from_IDWriteFactory4(iface);
     if (factory->system_collection == collection)
         factory->system_collection = NULL;
+    if (factory->eudc_collection == collection)
+        factory->eudc_collection = NULL;
     IDWriteFactory4_Release(iface);
 }
 
