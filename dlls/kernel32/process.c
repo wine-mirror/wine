@@ -2186,15 +2186,21 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, L
     static const WCHAR argsW[] = {'%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
 
     BOOL ret;
-    LPWSTR new_cmd_line = HeapAlloc( GetProcessHeap(), 0,
-                                     (strlenW(filename) + strlenW(cmd_line) + 30) * sizeof(WCHAR) );
+    WCHAR buffer[MAX_PATH];
+    LPWSTR new_cmd_line;
+
+    if (!(ret = GetFullPathNameW(filename, MAX_PATH, buffer, NULL)))
+	return FALSE;
+
+    new_cmd_line = HeapAlloc(GetProcessHeap(), 0,
+			     (strlenW(buffer) + strlenW(cmd_line) + 30) * sizeof(WCHAR));
 
     if (!new_cmd_line)
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return FALSE;
     }
-    sprintfW( new_cmd_line, argsW, winevdmW, filename, cmd_line );
+    sprintfW(new_cmd_line, argsW, winevdmW, buffer, cmd_line);
     ret = create_process( 0, winevdmW, new_cmd_line, env, cur_dir, psa, tsa, inherit,
                           flags, startup, info, unixdir, binary_info, exec_only );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
