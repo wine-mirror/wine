@@ -2572,6 +2572,9 @@ struct wined3d_rasterizer_state
     LONG refcount;
     struct wined3d_rasterizer_state_desc desc;
 
+    void *parent;
+    const struct wined3d_parent_ops *parent_ops;
+
     struct wined3d_device *device;
 };
 

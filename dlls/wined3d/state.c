@@ -60,13 +60,24 @@ ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *sta
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
+    {
+        state->parent_ops->wined3d_object_destroyed(state->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_rasterizer_state_destroy_object, state);
+    }
 
     return refcount;
 }
 
+void * CDECL wined3d_rasterizer_state_get_parent(const struct wined3d_rasterizer_state *state)
+{
+    TRACE("rasterizer_state %p.\n", state);
+
+    return state->parent;
+}
+
 HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
-        const struct wined3d_rasterizer_state_desc *desc, struct wined3d_rasterizer_state **state)
+        const struct wined3d_rasterizer_state_desc *desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_rasterizer_state **state)
 {
     struct wined3d_rasterizer_state *object;
 
@@ -77,6 +88,8 @@ HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
 
     object->refcount = 1;
     object->desc = *desc;
+    object->parent = parent;
+    object->parent_ops = parent_ops;
     object->device = device;
 
     TRACE("Created rasterizer state %p.\n", object);

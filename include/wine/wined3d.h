@@ -2502,8 +2502,10 @@ static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_priv
 }
 
 HRESULT __cdecl wined3d_rasterizer_state_create(struct wined3d_device *device,
-        const struct wined3d_rasterizer_state_desc *desc, struct wined3d_rasterizer_state **state);
+        const struct wined3d_rasterizer_state_desc *desc, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_rasterizer_state **state);
 ULONG __cdecl wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state);
+void * __cdecl wined3d_rasterizer_state_get_parent(const struct wined3d_rasterizer_state *state);
 ULONG __cdecl wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *state);
 
 void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,

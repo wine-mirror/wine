@@ -861,8 +861,8 @@ HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d
     state->desc = *desc;
 
     wined3d_desc.front_ccw = desc->FrontCounterClockwise;
-    if (FAILED(hr = wined3d_rasterizer_state_create(device->wined3d_device,
-            &wined3d_desc, &state->wined3d_state)))
+    if (FAILED(hr = wined3d_rasterizer_state_create(device->wined3d_device, &wined3d_desc,
+            state, &d3d_null_wined3d_parent_ops, &state->wined3d_state)))
     {
         WARN("Failed to create wined3d rasterizer state, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&state->private_store);

@@ -201,8 +201,9 @@
 @ cdecl wined3d_query_incref(ptr)
 @ cdecl wined3d_query_issue(ptr long)
 
-@ cdecl wined3d_rasterizer_state_create(ptr ptr ptr)
+@ cdecl wined3d_rasterizer_state_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_rasterizer_state_decref(ptr)
+@ cdecl wined3d_rasterizer_state_get_parent(ptr)
 @ cdecl wined3d_rasterizer_state_incref(ptr)
 
 @ cdecl wined3d_resource_get_desc(ptr ptr)
