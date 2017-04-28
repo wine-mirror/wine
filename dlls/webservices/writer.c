@@ -1755,6 +1755,45 @@ HRESULT WINAPI WsWriteBytes( WS_XML_WRITER *handle, const void *bytes, ULONG cou
     return hr;
 }
 
+/**************************************************************************
+ *          WsWriteChars		[webservices.@]
+ */
+HRESULT WINAPI WsWriteChars( WS_XML_WRITER *handle, const WCHAR *chars, ULONG count, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_XML_UTF16_TEXT utf16;
+    HRESULT hr;
+
+    TRACE( "%p %s %u %p\n", handle, debugstr_wn(chars, count), count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+
+    EnterCriticalSection( &writer->cs );
+
+    if (writer->magic != WRITER_MAGIC)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return E_INVALIDARG;
+    }
+
+    if (!writer->output_type)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    utf16.text.textType = WS_XML_TEXT_TYPE_UTF16;
+    utf16.bytes         = (BYTE *)chars;
+    utf16.byteCount     = count * sizeof(WCHAR);
+
+    if (writer->state == WRITER_STATE_STARTATTRIBUTE) hr = write_set_attribute_value( writer, &utf16.text );
+    else hr = write_text_node( writer, &utf16.text );
+
+    LeaveCriticalSection( &writer->cs );
+    return hr;
+}
+
 static HRESULT write_type_text( struct writer *writer, WS_TYPE_MAPPING mapping, const WS_XML_TEXT *text )
 {
     switch (mapping)
