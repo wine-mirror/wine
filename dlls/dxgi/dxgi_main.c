@@ -111,7 +111,8 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
         hr = d3d11core_register_layers();
         if (FAILED(hr))
         {
-            ERR("Failed to register d3d11 layers, returning %#x\n", hr);
+            ERR("Failed to register d3d11 layers, returning %#x.\n", hr);
+            FreeLibrary(mod);
             wined3d_mutex_unlock();
             return hr;
         }
