@@ -62,6 +62,7 @@ WINE_DECLARE_DEBUG_CHANNEL(pid);
 #define ISOLATIONAWARE_MANIFEST_RESOURCE_ID ((ULONG_PTR)2)
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
+typedef void  (CALLBACK *LDRENUMPROC)(LDR_MODULE *, void *, BOOLEAN *);
 
 static BOOL process_detaching = FALSE;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
@@ -1391,6 +1392,34 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
         }
     }
     return STATUS_NO_MORE_ENTRIES;
+}
+
+/******************************************************************
+ *              LdrEnumerateLoadedModules (NTDLL.@)
+ */
+NTSTATUS WINAPI LdrEnumerateLoadedModules( void *unknown, LDRENUMPROC callback, void *context )
+{
+    LIST_ENTRY *mark, *entry;
+    LDR_MODULE *mod;
+    BOOLEAN stop = FALSE;
+
+    TRACE( "(%p, %p, %p)\n", unknown, callback, context );
+
+    if (unknown || !callback)
+        return STATUS_INVALID_PARAMETER;
+
+    RtlEnterCriticalSection( &loader_section );
+
+    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+    {
+        mod = CONTAINING_RECORD( entry, LDR_MODULE, InMemoryOrderModuleList );
+        callback( mod, context, &stop );
+        if (stop) break;
+    }
+
+    RtlLeaveCriticalSection( &loader_section );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************

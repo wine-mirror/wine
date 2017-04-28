@@ -2181,7 +2181,7 @@ static void test_LdrEnumerateLoadedModules(void)
 
     if (!pLdrEnumerateLoadedModules)
     {
-        skip("LdrEnumerateLoadedModules not available\n");
+        win_skip("LdrEnumerateLoadedModules not available\n");
         return;
     }
 
