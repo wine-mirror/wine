@@ -503,7 +503,7 @@ static struct d3dx_parameter *get_valid_parameter(struct d3dx9_base_effect *base
             sizeof(parameter_magic_string)))
         return handle_param;
 
-    return get_parameter_by_name(base, NULL, parameter);
+    return base->flags & D3DXFX_LARGEADDRESSAWARE ? NULL : get_parameter_by_name(base, NULL, parameter);
 }
 
 static void free_state(struct d3dx_state *state)
