@@ -2593,10 +2593,11 @@ static void test_D3DXSHAdd(void)
 
 static void test_D3DXSHDot(void)
 {
+    float a[49], b[49], got;
     unsigned int i;
-    FLOAT a[49], b[49], got;
-    const FLOAT expected[] =
-    { 0.5f, 0.5f, 25.0f, 262.5f, 1428.0f, 5362.0f, 15873.0f, 39812.0f, };
+    BOOL equal;
+
+    static const float expected[] = {0.5f, 0.5f, 25.0f, 262.5f, 1428.0f, 5362.5f, 15873.0f, 39812.5f};
 
     for (i = 0; i < 49; i++)
     {
@@ -2608,10 +2609,9 @@ static void test_D3DXSHDot(void)
     for (i = 0; i <= D3DXSH_MAXORDER + 1; i++)
     {
         got = D3DXSHDot(i, a, b);
-        ok(relative_error(got, expected[i]) < admitted_error, "order %d: expected %f, received %f\n", i, expected[i], got);
+        equal = compare_float(got, expected[i], 0);
+        ok(equal, "order %u: Got %.8e, expected %.8e.\n", i, got, expected[i]);
     }
-
-    return;
 }
 
 static void test_D3DXSHEvalConeLight(void)
