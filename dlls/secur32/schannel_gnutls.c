@@ -83,6 +83,8 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #define GNUTLS_CIPHER_AES_128_GCM 93
 #define GNUTLS_CIPHER_AES_256_GCM 94
 
+#define GNUTLS_MAC_AEAD 200
+
 #define GNUTLS_KX_ANON_ECDH     11
 #define GNUTLS_KX_ECDHE_RSA     12
 #define GNUTLS_KX_ECDHE_ECDSA   13
