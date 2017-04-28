@@ -302,11 +302,12 @@ static void D3DXColorTest(void)
 
 static void D3DXFresnelTest(void)
 {
-    FLOAT expected, got;
+    float fresnel;
+    BOOL equal;
 
-    expected = 0.089187;
-    got = D3DXFresnelTerm(0.5f,1.5);
-    ok(relative_error(got, expected) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    fresnel = D3DXFresnelTerm(0.5f, 1.5f);
+    equal = compare_float(fresnel, 8.91867056e-02f, 1);
+    ok(equal, "Got unexpected Fresnel term %.8e.\n", fresnel);
 }
 
 static void D3DXMatrixTest(void)
