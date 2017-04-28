@@ -154,6 +154,7 @@ struct d3dx9_base_effect
     struct d3dx_object *objects;
 
     struct d3dx_effect_pool *pool;
+    DWORD flags;
 };
 
 struct ID3DXEffectImpl
@@ -169,7 +170,7 @@ struct ID3DXEffectImpl
     struct d3dx_technique *active_technique;
     struct d3dx_pass *active_pass;
     BOOL started;
-    DWORD flags;
+    DWORD begin_flags;
 
     D3DLIGHT9 current_light[8];
     BOOL light_updated[8];
@@ -4019,7 +4020,7 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
 
         *passes = technique->pass_count;
         effect->started = TRUE;
-        effect->flags = flags;
+        effect->begin_flags = flags;
 
         return D3D_OK;
     }
@@ -4090,7 +4091,7 @@ static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect *iface)
     if (!effect->started)
         return D3D_OK;
 
-    if (effect->flags & D3DXFX_DONOTSAVESTATE)
+    if (effect->begin_flags & D3DXFX_DONOTSAVESTATE)
     {
         TRACE("State restoring disabled.\n");
     }
@@ -6238,6 +6239,7 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
 
     base->effect = effect;
     base->pool = pool;
+    base->flags = eflags;
 
     read_dword(&ptr, &tag);
     TRACE("Tag: %x\n", tag);
