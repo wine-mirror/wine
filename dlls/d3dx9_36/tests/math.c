@@ -2616,9 +2616,14 @@ static void test_D3DXSHDot(void)
 
 static void test_D3DXSHEvalConeLight(void)
 {
+    float bout[49], expected, gout[49], rout[49];
+    unsigned int j, l, order;
     D3DXVECTOR3 dir;
-    FLOAT bout[49], expected, gout[49], rout[49];
-    const FLOAT table[] = {
+    HRESULT hr;
+    BOOL equal;
+
+    static const float table[] =
+    {
     /* Red colour */
         1.604815f, -3.131381f, 7.202175f, -2.870432f, 6.759296f, -16.959688f,
         32.303082f, -15.546381f, -0.588878f, -5.902123f, 40.084042f, -77.423569f,
@@ -2661,12 +2666,14 @@ static void test_D3DXSHEvalConeLight(void)
         15.691326f, -26.775339f, 45.859665f, -24.544060f, -1.367048f, 4.013170f,
         -1.039392f, 8.582172f, -9.440103f, -117.862114f, 517.839600f, -820.820740f,
         1374.188232f, -752.419067f, -45.114819f, 153.427063f, -53.766754f, 5.478452f, };
-    struct
+    const struct
     {
-        FLOAT *red_received, *green_received, *blue_received;
-        const FLOAT *red_expected, *green_expected, *blue_expected;
-        FLOAT radius, roffset, goffset, boffset;
-    } test[] = {
+        float *red_received, *green_received, *blue_received;
+        const float *red_expected, *green_expected, *blue_expected;
+        float radius, roffset, goffset, boffset;
+    }
+    test[] =
+    {
         { rout, gout, bout, table, &table[72], &table[144], 0.5f, 1.01f, 1.02f, 1.03f, },
         { rout, gout, bout, &table[36], &table[108], &table[180], 1.6f, 1.01f, 1.02f, 1.03f, },
         { rout, rout, rout, &table[144], &table[144], &table[144], 0.5f, 1.03f, 1.03f, 1.03f, },
@@ -2676,9 +2683,8 @@ static void test_D3DXSHEvalConeLight(void)
     /* D3DXSHEvalConeLight accepts NULL green or blue colour. */
         { rout, NULL, bout, table, NULL, &table[144], 0.5f, 1.01f, 0.0f, 1.03f, },
         { rout, gout, NULL, table, &table[72], NULL, 0.5f, 1.01f, 1.02f, 0.0f, },
-        { rout, NULL, NULL, table, NULL, NULL, 0.5f, 1.01f, 0.0f, 0.0f, }, };
-    HRESULT hr;
-    unsigned int j, l, order;
+        { rout, NULL, NULL, table, NULL, NULL, 0.5f, 1.01f, 0.0f, 0.0f, },
+    };
 
     dir.x = 1.1f; dir.y = 1.2f; dir.z = 2.76f;
 
@@ -2704,8 +2710,9 @@ static void test_D3DXSHEvalConeLight(void)
                     expected = j + test[l].roffset;
                 else
                     expected = test[l].red_expected[j];
-                ok(relative_error(expected, test[l].red_received[j]) < admitted_error,
-                    "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].red_received[j]);
+                equal = compare_float(test[l].red_received[j], expected, 128);
+                ok(equal, "Red: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                        l, order, j, expected, test[l].red_received[j]);
 
                 if (test[l].green_received)
                 {
@@ -2713,8 +2720,9 @@ static void test_D3DXSHEvalConeLight(void)
                         expected = j + test[l].goffset;
                     else
                         expected = test[l].green_expected[j];
-                    ok(relative_error(expected, test[l].green_received[j]) < admitted_error,
-                        "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].green_received[j]);
+                    equal = compare_float(test[l].green_received[j], expected, 64);
+                    ok(equal, "Green: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                            l, order, j, expected, test[l].green_received[j]);
                 }
 
                 if (test[l].blue_received)
@@ -2723,8 +2731,9 @@ static void test_D3DXSHEvalConeLight(void)
                         expected = j + test[l].boffset;
                     else
                         expected = test[l].blue_expected[j];
-                    ok(relative_error(expected, test[l].blue_received[j]) < admitted_error,
-                        "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].blue_received[j]);
+                    equal = compare_float(test[l].blue_received[j], expected, 128);
+                    ok(equal, "Blue: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                            l, order, j, expected, test[l].blue_received[j]);
                 }
             }
         }
@@ -2751,17 +2760,17 @@ static void test_D3DXSHEvalConeLight(void)
 
         for (j = 0; j < 49; j++)
         {
-            expected = red[j];
-            ok(relative_error(expected, rout[j]) < admitted_error,
-                "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, rout[j]);
+            equal = compare_float(red[j], rout[j], 0);
+            ok(equal, "Red: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                    l, order, j, red[j], rout[j]);
 
-            expected = green[j];
-            ok(relative_error(expected, gout[j]) < admitted_error,
-                "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, gout[j]);
+            equal = compare_float(green[j], gout[j], 0);
+            ok(equal, "Green: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                    l, order, j, green[j], gout[j]);
 
-            expected = blue[j];
-            ok(relative_error(expected, bout[j]) < admitted_error,
-                "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, bout[j]);
+            equal = compare_float(blue[j], bout[j], 0);
+            ok(equal, "Blue: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                    l, order, j, blue[j], bout[j]);
         }
     }
 
