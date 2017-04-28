@@ -2459,14 +2459,14 @@ static void test_D3DXFloat_Array(void)
     unsigned int i;
     void *out = NULL;
     D3DXFLOAT16 half;
-    FLOAT single;
+    BOOL equal;
 
     /* Input floats through bit patterns because compilers do not generate reliable INF and NaN values. */
     union convert
     {
         DWORD d;
-        FLOAT f;
-    };
+        float f;
+    } single;
 
     struct
     {
@@ -2487,7 +2487,7 @@ static void test_D3DXFloat_Array(void)
         { { 0x477ff100 }, 0x7c00, 0x7c00, { 0x47800000 }, { 0x47800000 } }, /* 65521.0f */
 
         { { 0x477ffe00 }, 0x7c00, 0x7c00, { 0x47800000 }, { 0x47800000 } }, /* 65534.0f */
-        { { 0x477fff00 }, 0x7c00, 0x7c00, { 0x477fff00 }, { 0x47800000 } }, /* 65535.0f */
+        { { 0x477fff00 }, 0x7c00, 0x7c00, { 0x47800000 }, { 0x47800000 } }, /* 65535.0f */
         { { 0x47800000 }, 0x7c00, 0x7c00, { 0x47800000 }, { 0x47800000 } }, /* 65536.0f */
         { { 0xc79c4000 }, 0xfc00, 0xfce2, { 0xc7800000 }, { 0xc79c4000 } }, /* -80000.0f */
         { { 0xc77fdf00 }, 0xfbff, 0xfbff, { 0xc77fe000 }, { 0xc77fe000 } }, /* -65503.0f */
@@ -2496,7 +2496,7 @@ static void test_D3DXFloat_Array(void)
         { { 0xc77ff000 }, 0xfbff, 0xfc00, { 0xc77fe000 }, { 0xc7800000 } }, /* -65520.0f */
         { { 0xc77ff100 }, 0xfc00, 0xfc00, { 0xc7800000 }, { 0xc7800000 } }, /* -65521.0f */
         { { 0xc77ffe00 }, 0xfc00, 0xfc00, { 0xc7800000 }, { 0xc7800000 } }, /* -65534.0f */
-        { { 0xc77fff00 }, 0xfc00, 0xfc00, { 0xc77fff00 }, { 0xc7800000 } }, /* -65535.0f */
+        { { 0xc77fff00 }, 0xfc00, 0xfc00, { 0xc7800000 }, { 0xc7800000 } }, /* -65535.0f */
 
         { { 0xc7800000 }, 0xfc00, 0xfc00, { 0xc7800000 }, { 0xc7800000 } }, /* -65536.0f */
         { { 0x7f800000 }, 0x7c00, 0x7fff, { 0x47800000 }, { 0x47ffe000 } }, /* INF */
@@ -2505,21 +2505,21 @@ static void test_D3DXFloat_Array(void)
         { { 0xffc00000 }, 0xffff, 0xffff, { 0xc7ffe000 }, { 0xc7ffe000 } }, /* -NaN */
 
         { { 0x00000000 }, 0x0000, 0x0000, { 0x00000000 }, { 0x00000000 } }, /* 0.0f */
-        { { 0x80000000 }, 0x8000, 0x8000, { 0x00000000 }, { 0x00000000 } }, /* -0.0f */
+        { { 0x80000000 }, 0x8000, 0x8000, { 0x80000000 }, { 0x80000000 } }, /* -0.0f */
         { { 0x330007ff }, 0x0000, 0x0000, { 0x00000000 }, { 0x00000000 } }, /* 2.9809595e-08f */
         { { 0xb30007ff }, 0x8000, 0x8000, { 0x80000000 }, { 0x80000000 } }, /* -2.9809595e-08f */
-        { { 0x33000800 }, 0x0001, 0x0000, { 0x337ffff3 }, { 0x337ffff3 } }, /* 2.9809598e-08f */
+        { { 0x33000800 }, 0x0001, 0x0000, { 0x33800000 }, { 0x00000000 } }, /* 2.9809598e-08f */
 
-        { { 0xb3000800 }, 0x8001, 0x8000, { 0xb37ffff3 } ,{ 0xb37ffff3 } }, /* -2.9809598e-08f */
-        { { 0x33c00000 }, 0x0002, 0x0001, { 0x33ffffd7 }, { 0x337ffff3 } }, /* 8.9406967e-08f */
+        { { 0xb3000800 }, 0x8001, 0x8000, { 0xb3800000 }, { 0x80000000 } }, /* -2.9809598e-08f */
+        { { 0x33c00000 }, 0x0002, 0x0001, { 0x34000000 }, { 0x33800000 } }, /* 8.9406967e-08f */
     };
 
     /* exception on NULL out or in parameter */
-    out = D3DXFloat32To16Array(&half, &single, 0);
+    out = D3DXFloat32To16Array(&half, &single.f, 0);
     ok(out == &half, "Got %p, expected %p.\n", out, &half);
 
-    out = D3DXFloat16To32Array(&single, &half, 0);
-    ok(out == &single, "Got %p, expected %p.\n", out, &single);
+    out = D3DXFloat16To32Array(&single.f, &half, 0);
+    ok(out == &single.f, "Got %p, expected %p.\n", out, &single.f);
 
     for (i = 0; i < sizeof(testdata)/sizeof(testdata[0]); i++)
     {
@@ -2529,15 +2529,15 @@ static void test_D3DXFloat_Array(void)
            "Got %x, expected %x or %x for index %d.\n", half.value, testdata[i].half_ver1,
            testdata[i].half_ver2, i);
 
-        out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&testdata[i].half_ver1, 1);
-        ok(out == &single, "Got %p, expected %p.\n", out, &single);
-        ok(relative_error(single, testdata[i].single_out_ver1.f) < admitted_error,
-           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver1.f, i);
+        out = D3DXFloat16To32Array(&single.f, (D3DXFLOAT16 *)&testdata[i].half_ver1, 1);
+        ok(out == &single.f, "Got %p, expected %p.\n", out, &single.f);
+        equal = compare_float(single.f, testdata[i].single_out_ver1.f, 0);
+        ok(equal, "Got %#x, expected %#x at index %u.\n", single.d, testdata[i].single_out_ver1.d, i);
 
-        out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&testdata[i].half_ver2, 1);
-        ok(out == &single, "Got %p, expected %p.\n", out, &single);
-        ok(relative_error(single, testdata[i].single_out_ver2.f) < admitted_error,
-           "Got %g, expected %g for index %d.\n", single, testdata[i].single_out_ver2.f, i);
+        out = D3DXFloat16To32Array(&single.f, (D3DXFLOAT16 *)&testdata[i].half_ver2, 1);
+        ok(out == &single.f, "Got %p, expected %p.\n", out, &single.f);
+        equal = compare_float(single.f, testdata[i].single_out_ver2.f, 0);
+        ok(equal, "Got %#x, expected %#x at index %u.\n", single.d, testdata[i].single_out_ver2.d, i);
     }
 }
 
