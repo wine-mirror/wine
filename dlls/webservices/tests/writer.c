@@ -3036,6 +3036,84 @@ static void test_repeating_element(void)
     WsFreeWriter( writer );
 }
 
+static const WS_XML_STRING *init_xmlstring( const char *src, WS_XML_STRING *str )
+{
+    if (!src) return NULL;
+    str->length = strlen( src );
+    str->bytes  = (BYTE *)src;
+    return str;
+}
+
+static void test_WsWriteQualifiedName(void)
+{
+    WS_XML_STRING prefix = {1, (BYTE *)"p"}, localname = {1, (BYTE *)"t"}, ns = {2, (BYTE *)"ns"};
+    WS_XML_WRITER *writer;
+    HRESULT hr;
+    ULONG i;
+    static const struct
+    {
+        const char *prefix;
+        const char *localname;
+        const char *ns;
+        HRESULT     hr;
+        const char *result;
+    } tests[] =
+    {
+        { NULL, NULL, NULL, E_INVALIDARG, NULL },
+        { NULL, "t2", NULL, E_INVALIDARG, NULL },
+        { "p2", "t2", NULL, S_OK, "<p:t xmlns:p=\"ns\">p2:t2" },
+        { NULL, "t2", "ns2", WS_E_INVALID_FORMAT, NULL },
+        { NULL, "t2", "ns", S_OK, "<p:t xmlns:p=\"ns\">p:t2" },
+        { "p2", "t2", "ns2", S_OK, "<p:t xmlns:p=\"ns\">p2:t2" },
+        { "p2", "t2", "ns", S_OK, "<p:t xmlns:p=\"ns\">p2:t2" },
+        { "p", "t", NULL, S_OK, "<p:t xmlns:p=\"ns\">p:t" },
+        { NULL, "t", "ns", S_OK, "<p:t xmlns:p=\"ns\">p:t" },
+        { "p2", "", "", S_OK, "<p:t xmlns:p=\"ns\">p2:" },
+        { "p2", "", "ns2", S_OK, "<p:t xmlns:p=\"ns\">p2:" },
+        { "p2", "t2", "", S_OK, "<p:t xmlns:p=\"ns\">p2:t2" },
+        { "", "t2", "", S_OK, "<p:t xmlns:p=\"ns\">t2" },
+        { "", "", "ns2", S_OK, "<p:t xmlns:p=\"ns\">" },
+        { "", "", "", S_OK, "<p:t xmlns:p=\"ns\">" },
+    };
+
+    hr = WsWriteQualifiedName( NULL, NULL, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteQualifiedName( writer, NULL, NULL, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteQualifiedName( writer, NULL, NULL, NULL, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        WS_XML_STRING prefix2, localname2, ns2;
+        const WS_XML_STRING *prefix_ptr, *localname_ptr, *ns_ptr;
+
+        hr = set_output( writer );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        hr = WsWriteStartElement( writer, &prefix, &localname, &ns, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        prefix_ptr = init_xmlstring( tests[i].prefix, &prefix2 );
+        localname_ptr = init_xmlstring( tests[i].localname, &localname2 );
+        ns_ptr = init_xmlstring( tests[i].ns, &ns2 );
+
+        hr = WsWriteQualifiedName( writer, prefix_ptr, localname_ptr, ns_ptr, NULL );
+        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        if (tests[i].hr == S_OK && hr == S_OK) check_output( writer, tests[i].result, __LINE__ );
+    }
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -3069,4 +3147,5 @@ START_TEST(writer)
     test_write_option();
     test_datetime();
     test_repeating_element();
+    test_WsWriteQualifiedName();
 }

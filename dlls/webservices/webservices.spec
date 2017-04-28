@@ -180,7 +180,7 @@
 @ stdcall WsWriteMessageEnd(ptr ptr ptr ptr)
 @ stdcall WsWriteMessageStart(ptr ptr ptr ptr)
 @ stdcall WsWriteNode(ptr ptr ptr)
-@ stub WsWriteQualifiedName
+@ stdcall WsWriteQualifiedName(ptr ptr ptr ptr ptr)
 @ stdcall WsWriteStartAttribute(ptr ptr ptr ptr long ptr)
 @ stdcall WsWriteStartCData(ptr ptr)
 @ stdcall WsWriteStartElement(ptr ptr ptr ptr ptr)

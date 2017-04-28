@@ -2800,6 +2800,90 @@ HRESULT WINAPI WsWriteXmlnsAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
     return hr;
 }
 
+static HRESULT find_prefix( struct writer *writer, const WS_XML_STRING *ns, const WS_XML_STRING **prefix )
+{
+    const struct node *node;
+    for (node = writer->current; node_type( node ) == WS_XML_NODE_TYPE_ELEMENT; node = node->parent)
+    {
+        const WS_XML_ELEMENT_NODE *elem = &node->hdr;
+        ULONG i;
+        for (i = 0; i < elem->attributeCount; i++)
+        {
+            if (!elem->attributes[i]->isXmlNs) continue;
+            if (WsXmlStringEquals( elem->attributes[i]->ns, ns, NULL ) != S_OK) continue;
+            *prefix = elem->attributes[i]->prefix;
+            return S_OK;
+        }
+    }
+    return WS_E_INVALID_FORMAT;
+}
+
+static HRESULT write_qualified_name( struct writer *writer, const WS_XML_STRING *prefix,
+                                     const WS_XML_STRING *localname )
+{
+    HRESULT hr;
+    if (prefix->length)
+    {
+        if ((hr = write_grow_buffer( writer, prefix->length + localname->length + 1 )) != S_OK) return hr;
+        write_bytes( writer, prefix->bytes, prefix->length );
+        write_char( writer, ':' );
+    }
+    else if ((hr = write_grow_buffer( writer, localname->length )) != S_OK) return hr;
+    write_bytes( writer, localname->bytes, localname->length );
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsWriteQualifiedName		[webservices.@]
+ */
+HRESULT WINAPI WsWriteQualifiedName( WS_XML_WRITER *handle, const WS_XML_STRING *prefix,
+                                     const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                     WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %s %s %s %p\n", handle, debugstr_xmlstr(prefix), debugstr_xmlstr(localname),
+           debugstr_xmlstr(ns), error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+
+    EnterCriticalSection( &writer->cs );
+
+    if (writer->magic != WRITER_MAGIC)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return E_INVALIDARG;
+    }
+
+    if (!writer->output_type)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if (writer->state != WRITER_STATE_STARTELEMENT)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return WS_E_INVALID_FORMAT;
+    }
+
+    if (!localname || (!prefix && !ns))
+    {
+        LeaveCriticalSection( &writer->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((hr = write_flush( writer )) != S_OK) goto done;
+    if (!prefix && ((hr = find_prefix( writer, ns, &prefix )) != S_OK)) goto done;
+    hr = write_qualified_name( writer, prefix, localname );
+
+done:
+    LeaveCriticalSection( &writer->cs );
+    return hr;
+}
+
 static HRESULT write_move_to( struct writer *writer, WS_MOVE_TO move, BOOL *found )
 {
     BOOL success = FALSE;
