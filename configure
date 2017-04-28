@@ -723,6 +723,7 @@ SUBDIRS
 READELF
 OTOOL
 LDD
+WINELOADER_LDFLAGS
 LDEXECFLAGS
 LDRPATH_LOCAL
 LDRPATH_INSTALL
@@ -7346,6 +7347,8 @@ LDRPATH_LOCAL=""
 
 LDEXECFLAGS=""
 
+WINELOADER_LDFLAGS=""
+
 LIBEXT="so"
 DLLEXT=".so"
 IMPLIBEXT="def"
@@ -8135,7 +8138,7 @@ done
 
     APPKIT_LIBS="-framework AppKit"
 
-    LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-pagezero_size,0x1000,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
+    WINELOADER_LDFLAGS="-image_base 0x7bf00000 -Wl,-pagezero_size,0x1000,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-no_pie... " >&6; }
 if ${ac_cv_cflags__Wl__no_pie+:} false; then :
@@ -8159,7 +8162,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_pie" >&5
 $as_echo "$ac_cv_cflags__Wl__no_pie" >&6; }
 if test "x$ac_cv_cflags__Wl__no_pie" = xyes; then :
-  LDEXECFLAGS="-Wl,-no_pie $LDEXECFLAGS"
+  WINELOADER_LDFLAGS="-Wl,-no_pie $WINELOADER_LDFLAGS"
 fi
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
@@ -8377,7 +8380,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__Wl___export_dynamic" >&5
 $as_echo "$ac_cv_cflags__fPIC__Wl___export_dynamic" >&6; }
 if test "x$ac_cv_cflags__fPIC__Wl___export_dynamic" = xyes; then :
-  LDEXECFLAGS="$LDEXECFLAGS -Wl,--export-dynamic"
+  WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
     as_ac_var=`$as_echo "ac_cv_cflags_-fPIC -Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib" >&5
@@ -8472,7 +8475,6 @@ fi
 
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
-    LDEXECFLAGS=""
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we can build a GNU style ELF dll" >&5
 $as_echo_n "checking whether we can build a GNU style ELF dll... " >&6; }
 if ${ac_cv_c_dll_gnuelf+:} false; then :
@@ -8601,7 +8603,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__Wl___export_dynamic" >&5
 $as_echo "$ac_cv_cflags__fPIC__Wl___export_dynamic" >&6; }
 if test "x$ac_cv_cflags__fPIC__Wl___export_dynamic" = xyes; then :
-  LDEXECFLAGS="-Wl,--export-dynamic"
+  WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
 
       as_ac_var=`$as_echo "ac_cv_cflags_-fPIC -Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
@@ -8714,8 +8716,8 @@ fi
 $as_echo "$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&6; }
 if test "x$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" = xyes; then :
   case $host_os in
-                           freebsd* | kfreebsd*-gnu) LDEXECFLAGS="$LDEXECFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                           *) LDEXECFLAGS="$LDEXECFLAGS -Wl,-Ttext-segment=0x7c000000" ;;
+                           freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
+                           *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7c000000" ;;
                            esac
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x7c000400" >&5
@@ -8742,8 +8744,8 @@ fi
 $as_echo "$ac_cv_cflags__Wl___section_start__interp_0x7c000400" >&6; }
 if test "x$ac_cv_cflags__Wl___section_start__interp_0x7c000400" = xyes; then :
   case $host_os in
-                                              freebsd* | kfreebsd*-gnu) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                              *) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7c000400" ;;
+                                              freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
+                                              *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7c000400" ;;
                                            esac
 fi
                            # Extract the first word of "prelink", so it can be a program name with args.
@@ -8815,7 +8817,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__z_max_page_size_0x1000" >&5
 $as_echo "$ac_cv_cflags__Wl__z_max_page_size_0x1000" >&6; }
 if test "x$ac_cv_cflags__Wl__z_max_page_size_0x1000" = xyes; then :
-  LDEXECFLAGS="$LDEXECFLAGS -Wl,-z,max-page-size=0x1000"
+  WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-z,max-page-size=0x1000"
 fi
           ;;
       esac
