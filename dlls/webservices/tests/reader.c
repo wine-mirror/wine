@@ -4240,6 +4240,117 @@ static void test_WsReadCharsUtf8(void)
     WsFreeReader( reader );
 }
 
+static void test_WsReadQualifiedName(void)
+{
+    static const char utf8[] = {'<','a','>',0xc3,0xab,'<','/','a','>',0};
+    static const char localname_utf8[] = {0xc3,0xab,0};
+    WS_XML_STRING prefix, localname, ns;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    HRESULT hr;
+    BOOL found;
+    ULONG i;
+    static const struct
+    {
+        const char *str;
+        HRESULT     hr;
+        const char *prefix;
+        const char *localname;
+        const char *ns;
+    } tests[] =
+    {
+        { "<a></a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a> </a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a>:</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a>t</a>", S_OK, "", "t", "" },
+        { "<a>p:</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a>p:t</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a>:t</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a xmlns:p=\"ns\">p:t</a>", S_OK, "p", "t", "ns" },
+        { "<a xmlns:p=\"ns\">p:t:</a>", S_OK, "p", "t:", "ns" },
+        { "<a xmlns:p=\"ns\">p:</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a xmlns:p=\"ns\">:t</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a xmlns:p=\"ns\">:</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a xmlns:p=\"ns\">t</a>", S_OK, "", "t", "" },
+        { "<a xmlns:p=\"ns\"> </a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a xmlns:p=\"ns\"></a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a xmlns:p=\"ns\">p:t u</a>", S_OK, "p", "t u", "ns" },
+        { utf8, S_OK, "", localname_utf8, "" },
+        { "<a> t </a>", S_OK, "", "t", "" },
+        { "<a xmlns:p=\"ns\"> p:t</a>", S_OK, "p", "t", "ns" },
+        { "<a xmlns:p=\"ns\">p :t</a>", WS_E_INVALID_FORMAT, NULL, NULL, NULL },
+        { "<a xmlns:p=\"ns\">p: t</a>", S_OK, "p", " t", "ns" },
+    };
+
+    hr = WsReadQualifiedName( NULL, NULL, NULL, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadQualifiedName( reader, NULL, NULL, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadQualifiedName( reader, heap, NULL, NULL, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t/>", sizeof("<t/>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadQualifiedName( reader, heap, NULL, NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t/>", sizeof("<t/>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadQualifiedName( reader, heap, NULL, &localname, NULL, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        hr = set_input( reader, tests[i].str, strlen(tests[i].str) );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        hr = WsReadToStartElement( reader, NULL, NULL, &found, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        hr = WsReadStartElement( reader, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        prefix.length = localname.length = ns.length = 0xdeadbeef;
+        prefix.bytes = localname.bytes = ns.bytes = (BYTE *)0xdeadbeef;
+
+        hr = WsReadQualifiedName( reader, heap, &prefix, &localname, &ns, NULL );
+        ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
+        if (tests[i].hr == S_OK && hr == S_OK)
+        {
+            ok( prefix.length == strlen( tests[i].prefix ), "%u: got %u\n", i, prefix.length );
+            ok( !memcmp( prefix.bytes, tests[i].prefix, prefix.length ), "%u: wrong data\n", i );
+
+            ok( localname.length == strlen( tests[i].localname ), "%u: got %u\n", i, localname.length );
+            ok( !memcmp( localname.bytes, tests[i].localname, localname.length ), "%u: wrong data\n", i );
+
+            ok( ns.length == strlen( tests[i].ns ), "%u: got %u\n", i, ns.length );
+            ok( !memcmp( ns.bytes, tests[i].ns, ns.length ), "%u: wrong data\n", i );
+        }
+        else if (tests[i].hr != S_OK)
+        {
+            ok( prefix.length == 0xdeadbeef, "got %u\n", prefix.length );
+            ok( prefix.bytes == (BYTE *)0xdeadbeef, "got %p\n", prefix.bytes );
+
+            ok( localname.length == 0xdeadbeef, "got %u\n", localname.length );
+            ok( localname.bytes == (BYTE *)0xdeadbeef, "got %p\n", localname.bytes );
+
+            ok( ns.length == 0xdeadbeef, "got %u\n", ns.length );
+            ok( ns.bytes == (BYTE *)0xdeadbeef, "got %p\n", ns.bytes );
+        }
+    }
+
+    WsFreeHeap( heap );
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -4279,4 +4390,5 @@ START_TEST(reader)
     test_WsReadBytes();
     test_WsReadChars();
     test_WsReadCharsUtf8();
+    test_WsReadQualifiedName();
 }

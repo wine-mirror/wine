@@ -117,7 +117,7 @@
 @ stdcall WsReadMessageStart(ptr ptr ptr ptr)
 @ stub WsReadMetadata
 @ stdcall WsReadNode(ptr ptr)
-@ stub WsReadQualifiedName
+@ stdcall WsReadQualifiedName(ptr ptr ptr ptr ptr ptr)
 @ stdcall WsReadStartAttribute(ptr long ptr)
 @ stdcall WsReadStartElement(ptr ptr)
 @ stdcall WsReadToStartElement(ptr ptr ptr ptr ptr)
