@@ -2301,9 +2301,13 @@ static void test_field_options(void)
 
 static void test_WsWriteText(void)
 {
+    static const WCHAR testW[] = {'t','e','s','t'};
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"a"}, ns = {0, NULL};
     HRESULT hr;
     WS_XML_WRITER *writer;
     WS_XML_UTF8_TEXT utf8 = {{WS_XML_TEXT_TYPE_UTF8}};
+    WS_XML_UTF16_TEXT utf16 = {{WS_XML_TEXT_TYPE_UTF16}};
+    WS_XML_GUID_TEXT guid = {{WS_XML_TEXT_TYPE_GUID}};
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -2315,6 +2319,177 @@ static void test_WsWriteText(void)
     utf8.value.length = 4;
     hr = WsWriteText( writer, &utf8.text, NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* element, utf8 */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>test", __LINE__ );
+
+    utf8.value.bytes  = (BYTE *)"tset";
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>testtset", __LINE__ );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>testtset</t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* attribute, utf8 */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartAttribute( writer, NULL, &localname2, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    utf8.value.bytes  = (BYTE *)"test";
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteEndAttribute( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t a=\"tsettest\"/>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* element, utf16 */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    utf16.bytes     = (BYTE *)testW;
+    utf16.byteCount = sizeof(testW);
+    hr = WsWriteText( writer, &utf16.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>test", __LINE__ );
+
+    hr = WsWriteText( writer, &utf16.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>testtest", __LINE__ );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>testtest</t>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* attribute, utf16 */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartAttribute( writer, NULL, &localname2, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &utf16.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteText( writer, &utf16.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteEndAttribute( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t a=\"testtest\"/>", __LINE__ );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* element, guid */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &guid.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>00000000-0000-0000-0000-000000000000", __LINE__ );
+
+    hr = WsWriteText( writer, &guid.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000",
+                  __LINE__ );
+
+    /* continue with different text type */
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t>00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000test",
+                  __LINE__ );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* attribute, guid */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartAttribute( writer, NULL, &localname2, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &guid.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteText( writer, &guid.text, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* attribute, mix allowed text types */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartAttribute( writer, NULL, &localname2, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &utf16.text, NULL );
+    todo_wine ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* cdata */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartCData( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &utf8.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteText( writer, &guid.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndCData( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><![CDATA[test00000000-0000-0000-0000-000000000000]]></t>", __LINE__ );
 
     WsFreeWriter( writer );
 }
