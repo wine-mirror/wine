@@ -313,13 +313,13 @@ static void D3DXFresnelTest(void)
 static void D3DXMatrixTest(void)
 {
     D3DXMATRIX expectedmat, gotmat, mat, mat2, mat3;
+    BOOL expected, got, equal;
+    float angle, determinant;
     D3DXMATRIX *funcpointer;
     D3DXPLANE plane;
     D3DXQUATERNION q, r;
     D3DXVECTOR3 at, axis, eye, last;
     D3DXVECTOR4 light;
-    BOOL expected, got;
-    FLOAT angle, determinant, expectedfloat, gotfloat;
 
     U(mat).m[0][1] = 5.0f; U(mat).m[0][2] = 7.0f; U(mat).m[0][3] = 8.0f;
     U(mat).m[1][0] = 11.0f; U(mat).m[1][2] = 16.0f; U(mat).m[1][3] = 33.0f;
@@ -388,19 +388,19 @@ static void D3DXMatrixTest(void)
     expect_matrix(&expectedmat, &gotmat, 0);
 
 /*____________D3DXMatrixfDeterminant_____________*/
-    expectedfloat = -147888.0f;
-    gotfloat = D3DXMatrixDeterminant(&mat);
-    ok(relative_error(gotfloat, expectedfloat ) < admitted_error, "Expected: %f, Got: %f\n", expectedfloat, gotfloat);
+    determinant = D3DXMatrixDeterminant(&mat);
+    equal = compare_float(determinant, -147888.0f, 0);
+    ok(equal, "Got unexpected determinant %.8e.\n", determinant);
 
 /*____________D3DXMatrixInverse______________*/
     U(expectedmat).m[0][0] = 16067.0f/73944.0f; U(expectedmat).m[0][1] = -10165.0f/147888.0f; U(expectedmat).m[0][2] = -2729.0f/147888.0f; U(expectedmat).m[0][3] = -1631.0f/49296.0f;
     U(expectedmat).m[1][0] = -565.0f/36972.0f; U(expectedmat).m[1][1] = 2723.0f/73944.0f; U(expectedmat).m[1][2] = -1073.0f/73944.0f; U(expectedmat).m[1][3] = 289.0f/24648.0f;
     U(expectedmat).m[2][0] = -389.0f/2054.0f; U(expectedmat).m[2][1] = 337.0f/4108.0f; U(expectedmat).m[2][2] = 181.0f/4108.0f; U(expectedmat).m[2][3] = 317.0f/4108.0f;
     U(expectedmat).m[3][0] = 163.0f/5688.0f; U(expectedmat).m[3][1] = -101.0f/11376.0f; U(expectedmat).m[3][2] = -73.0f/11376.0f; U(expectedmat).m[3][3] = -127.0f/3792.0f;
-    expectedfloat = -147888.0f;
     D3DXMatrixInverse(&gotmat,&determinant,&mat);
     expect_matrix(&expectedmat, &gotmat, 1);
-    ok(relative_error( determinant, expectedfloat ) < admitted_error, "Expected: %f, Got: %f\n", expectedfloat, determinant);
+    equal = compare_float(determinant, -147888.0f, 0);
+    ok(equal, "Got unexpected determinant %.8e.\n", determinant);
     funcpointer = D3DXMatrixInverse(&gotmat,NULL,&mat2);
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
