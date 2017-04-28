@@ -195,7 +195,7 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
     }
 
     TRACE("Created device %p.\n", dxgi_device);
-    *device = dxgi_device;
+    *device = &dxgi_device->IWineDXGIDevice_iface;
 
     return S_OK;
 }
