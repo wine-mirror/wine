@@ -738,10 +738,10 @@ static void D3DXQuaternionTest(void)
 {
     D3DXMATRIX mat;
     D3DXQUATERNION expectedquat, gotquat, Nq, Nq1, nul, smallq, smallr, q, r, s, t, u;
+    BOOL expectedbool, gotbool, equal;
+    float angle, got, scale, scale2;
     LPD3DXQUATERNION funcpointer;
     D3DXVECTOR3 axis, expectedvec;
-    FLOAT angle, expected, got, scale, scale2;
-    BOOL expectedbool, gotbool;
 
     nul.x = 0.0f; nul.y = 0.0f; nul.z = 0.0f; nul.w = 0.0f;
     q.x = 1.0f, q.y = 2.0f; q.z = 4.0f; q.w = 10.0f;
@@ -770,16 +770,16 @@ static void D3DXQuaternionTest(void)
     ok(funcpointer == NULL, "Expected: %p, Got: %p\n", NULL, funcpointer);
 
 /*_______________D3DXQuaternionDot______________________*/
-    expected = 55.0f;
     got = D3DXQuaternionDot(&q,&r);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    equal = compare_float(got, 55.0f, 0);
+    ok(equal, "Got unexpected dot %.8e.\n", got);
     /* Tests the case NULL */
-    expected=0.0f;
     got = D3DXQuaternionDot(NULL,&r);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-    expected=0.0f;
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected dot %.8e.\n", got);
     got = D3DXQuaternionDot(NULL,NULL);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected dot %.8e.\n", got);
 
 /*_______________D3DXQuaternionExp______________________________*/
     expectedquat.x = -0.216382f; expectedquat.y = -0.432764f; expectedquat.z = -0.8655270f; expectedquat.w = -0.129449f;
@@ -827,22 +827,22 @@ static void D3DXQuaternionTest(void)
     ok(gotbool == FALSE, "Expected boolean: %d, Got boolean: %d\n", FALSE, gotbool);
 
 /*_______________D3DXQuaternionLength__________________________*/
-   expected = 11.0f;
-   got = D3DXQuaternionLength(&q);
-   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-   /* Tests the case NULL */
-    expected=0.0f;
+    got = D3DXQuaternionLength(&q);
+    equal = compare_float(got, 11.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
+    /* Tests the case NULL. */
     got = D3DXQuaternionLength(NULL);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
 
 /*_______________D3DXQuaternionLengthSq________________________*/
-    expected = 121.0f;
     got = D3DXQuaternionLengthSq(&q);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    equal = compare_float(got, 121.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
     /* Tests the case NULL */
-    expected=0.0f;
     got = D3DXQuaternionLengthSq(NULL);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
 
 /*_______________D3DXQuaternionLn______________________________*/
     expectedquat.x = 1.0f; expectedquat.y = 2.0f; expectedquat.z = 4.0f; expectedquat.w = 0.0f;
@@ -1101,25 +1101,26 @@ static void D3DXQuaternionTest(void)
 /*_______________D3DXQuaternionToAxisAngle__________________*/
     Nq.x = 1.0f/22.0f; Nq.y = 2.0f/22.0f; Nq.z = 4.0f/22.0f; Nq.w = 10.0f/22.0f;
     expectedvec.x = 1.0f/22.0f; expectedvec.y = 2.0f/22.0f; expectedvec.z = 4.0f/22.0f;
-    expected = 2.197869f;
     D3DXQuaternionToAxisAngle(&Nq,&axis,&angle);
     expect_vec3(&expectedvec, &axis, 0);
-    ok(relative_error(angle,  expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    equal = compare_float(angle, 2.197869f, 0);
+    ok(equal, "Got unexpected angle %.8e.\n", angle);
     /* Test if |w|>1.0f */
     expectedvec.x = 1.0f; expectedvec.y = 2.0f; expectedvec.z = 4.0f;
     D3DXQuaternionToAxisAngle(&q,&axis,&angle);
     expect_vec3(&expectedvec, &axis, 0);
     /* Test the null quaternion */
     expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
-    expected = 3.141593f;
     D3DXQuaternionToAxisAngle(&nul, &axis, &angle);
     expect_vec3(&expectedvec, &axis, 0);
-    ok(relative_error(angle, expected) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    equal = compare_float(angle, 3.14159274e+00f, 0);
+    ok(equal, "Got unexpected angle %.8e.\n", angle);
 
     D3DXQuaternionToAxisAngle(&nul, &axis, NULL);
     D3DXQuaternionToAxisAngle(&nul, NULL, &angle);
     expect_vec3(&expectedvec, &axis, 0);
-    ok(relative_error(angle, expected) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    equal = compare_float(angle, 3.14159274e+00f, 0);
+    ok(equal, "Got unexpected angle %.8e.\n", angle);
 }
 
 static void D3DXVector2Test(void)
