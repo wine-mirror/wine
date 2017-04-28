@@ -6150,6 +6150,39 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     ok(!refcount, "Effect pool was not properly freed, refcount %u.\n", refcount);
 }
 
+static void test_effect_large_address_aware_flag(IDirect3DDevice9 *device)
+{
+    ID3DXEffect *effect;
+    D3DXHANDLE param;
+    static int expected_ivect[4] = {28, 29, 30, 31};
+    int ivect[4];
+    HRESULT hr;
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, D3DXFX_LARGEADDRESSAWARE, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_iVect");
+    ok(!!param, "GetParameterByName failed.\n");
+
+    hr = effect->lpVtbl->SetValue(effect, param, expected_ivect, sizeof(expected_ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ok(!memcmp(ivect, expected_ivect, sizeof(expected_ivect)), "Vector value mismatch.\n");
+
+    if (0)
+    {
+        /* Native d3dx crashes in GetValue(). */
+        hr = effect->lpVtbl->GetValue(effect, "g_iVect", ivect, sizeof(ivect));
+        ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    }
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -6199,6 +6232,7 @@ START_TEST(effect)
     test_effect_state_manager(device);
     test_cross_effect_handle(device);
     test_effect_shared_parameters(device);
+    test_effect_large_address_aware_flag(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
