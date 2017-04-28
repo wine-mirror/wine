@@ -167,7 +167,7 @@
 @ stdcall WsWriteArray(ptr ptr ptr long ptr long long long ptr)
 @ stdcall WsWriteAttribute(ptr ptr long ptr long ptr)
 @ stdcall WsWriteBody(ptr ptr long ptr long ptr)
-@ stub WsWriteBytes
+@ stdcall WsWriteBytes(ptr ptr long ptr)
 @ stub WsWriteChars
 @ stub WsWriteCharsUtf8
 @ stdcall WsWriteElement(ptr ptr long ptr long ptr)

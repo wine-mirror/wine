@@ -1697,6 +1697,7 @@ HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_E
     HRESULT hr;
 
     TRACE( "%p %p %p\n", handle, text, error );
+    if (error) FIXME( "ignoring error parameter\n" );
 
     if (!writer || !text) return E_INVALIDARG;
 
@@ -1710,6 +1711,45 @@ HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_E
 
     if (writer->state == WRITER_STATE_STARTATTRIBUTE) hr = write_set_attribute_value( writer, text );
     else hr = write_text_node( writer, text );
+
+    LeaveCriticalSection( &writer->cs );
+    return hr;
+}
+
+/**************************************************************************
+ *          WsWriteBytes		[webservices.@]
+ */
+HRESULT WINAPI WsWriteBytes( WS_XML_WRITER *handle, const void *bytes, ULONG count, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_XML_BASE64_TEXT base64;
+    HRESULT hr;
+
+    TRACE( "%p %p %u %p\n", handle, bytes, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+
+    EnterCriticalSection( &writer->cs );
+
+    if (writer->magic != WRITER_MAGIC)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return E_INVALIDARG;
+    }
+
+    if (!writer->output_type)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    base64.text.textType = WS_XML_TEXT_TYPE_BASE64;
+    base64.bytes         = (BYTE *)bytes;
+    base64.length        = count;
+
+    if (writer->state == WRITER_STATE_STARTATTRIBUTE) hr = write_set_attribute_value( writer, &base64.text );
+    else hr = write_text_node( writer, &base64.text );
 
     LeaveCriticalSection( &writer->cs );
     return hr;
