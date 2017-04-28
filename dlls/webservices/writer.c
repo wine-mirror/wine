@@ -1794,6 +1794,45 @@ HRESULT WINAPI WsWriteChars( WS_XML_WRITER *handle, const WCHAR *chars, ULONG co
     return hr;
 }
 
+/**************************************************************************
+ *          WsWriteCharsUtf8		[webservices.@]
+ */
+HRESULT WINAPI WsWriteCharsUtf8( WS_XML_WRITER *handle, const BYTE *bytes, ULONG count, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_XML_UTF8_TEXT utf8;
+    HRESULT hr;
+
+    TRACE( "%p %s %u %p\n", handle, debugstr_an((const char *)bytes, count), count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+
+    EnterCriticalSection( &writer->cs );
+
+    if (writer->magic != WRITER_MAGIC)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return E_INVALIDARG;
+    }
+
+    if (!writer->output_type)
+    {
+        LeaveCriticalSection( &writer->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    utf8.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    utf8.value.bytes   = (BYTE *)bytes;
+    utf8.value.length  = count;
+
+    if (writer->state == WRITER_STATE_STARTATTRIBUTE) hr = write_set_attribute_value( writer, &utf8.text );
+    else hr = write_text_node( writer, &utf8.text );
+
+    LeaveCriticalSection( &writer->cs );
+    return hr;
+}
+
 static HRESULT write_type_text( struct writer *writer, WS_TYPE_MAPPING mapping, const WS_XML_TEXT *text )
 {
     switch (mapping)
