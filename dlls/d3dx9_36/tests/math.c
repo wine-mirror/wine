@@ -1128,8 +1128,9 @@ static void D3DXVector2Test(void)
     D3DXVECTOR2 expectedvec, gotvec, nul, u, v, w, x;
     LPD3DXVECTOR2 funcpointer;
     D3DXVECTOR4 expectedtrans, gottrans;
+    float coeff1, coeff2, got, scale;
     D3DXMATRIX mat;
-    FLOAT coeff1, coeff2, expected, got, scale;
+    BOOL equal;
 
     nul.x = 0.0f; nul.y = 0.0f;
     u.x = 3.0f; u.y = 4.0f;
@@ -1166,28 +1167,28 @@ static void D3DXVector2Test(void)
     expect_vec2(&expectedvec, &gotvec, 0);
 
 /*_______________D3DXVec2CCW__________________________*/
-   expected = 55.0f;
-   got = D3DXVec2CCW(&u,&v);
-   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-   /* Tests the case NULL */
-    expected=0.0f;
-    got = D3DXVec2CCW(NULL,&v);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-    expected=0.0f;
-    got = D3DXVec2CCW(NULL,NULL);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    got = D3DXVec2CCW(&u, &v);
+    equal = compare_float(got, 55.0f, 0);
+    ok(equal, "Got unexpected ccw %.8e.\n", got);
+    /* Tests the case NULL. */
+    got = D3DXVec2CCW(NULL, &v);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected ccw %.8e.\n", got);
+    got = D3DXVec2CCW(NULL, NULL);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected ccw %.8e.\n", got);
 
 /*_______________D3DXVec2Dot__________________________*/
-    expected = 15.0f;
-    got = D3DXVec2Dot(&u,&v);
-    ok(relative_error(got,  expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    got = D3DXVec2Dot(&u, &v);
+    equal = compare_float(got, 15.0f, 0);
+    ok(equal, "Got unexpected dot %.8e.\n", got);
     /* Tests the case NULL */
-    expected=0.0f;
-    got = D3DXVec2Dot(NULL,&v);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-    expected=0.0f;
-    got = D3DXVec2Dot(NULL,NULL);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    got = D3DXVec2Dot(NULL, &v);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected dot %.8e.\n", got);
+    got = D3DXVec2Dot(NULL, NULL);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected dot %.8e.\n", got);
 
 /*_______________D3DXVec2Hermite__________________________*/
     expectedvec.x = 2604.625f; expectedvec.y = -4533.0f;
@@ -1195,22 +1196,22 @@ static void D3DXVector2Test(void)
     expect_vec2(&expectedvec, &gotvec, 0);
 
 /*_______________D3DXVec2Length__________________________*/
-   expected = 5.0f;
-   got = D3DXVec2Length(&u);
-   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-   /* Tests the case NULL */
-    expected=0.0f;
+    got = D3DXVec2Length(&u);
+    equal = compare_float(got, 5.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
+    /* Tests the case NULL. */
     got = D3DXVec2Length(NULL);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
 
 /*_______________D3DXVec2LengthSq________________________*/
-   expected = 25.0f;
-   got = D3DXVec2LengthSq(&u);
-   ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
-   /* Tests the case NULL */
-    expected=0.0f;
+    got = D3DXVec2LengthSq(&u);
+    equal = compare_float(got, 25.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
+    /* Tests the case NULL. */
     got = D3DXVec2LengthSq(NULL);
-    ok(relative_error(got, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, got);
+    equal = compare_float(got, 0.0f, 0);
+    ok(equal, "Got unexpected length %.8e.\n", got);
 
 /*_______________D3DXVec2Lerp__________________________*/
     expectedvec.x = 68.0f; expectedvec.y = -28.5f;
