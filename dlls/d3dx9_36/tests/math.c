@@ -2543,9 +2543,12 @@ static void test_D3DXFloat_Array(void)
 
 static void test_D3DXSHAdd(void)
 {
-    UINT i, k;
-    FLOAT *ret = (FLOAT *)0xdeadbeef;
-    const FLOAT in1[50] =
+    float out[50] = {0.0f};
+    unsigned int i, k;
+    float *ret;
+    BOOL equal;
+
+    static const float in1[50] =
     {
         1.11f, 1.12f, 1.13f, 1.14f, 1.15f, 1.16f, 1.17f, 1.18f,
         1.19f, 1.20f, 1.21f, 1.22f, 1.23f, 1.24f, 1.25f, 1.26f,
@@ -2555,7 +2558,7 @@ static void test_D3DXSHAdd(void)
         1.51f, 1.52f, 1.53f, 1.54f, 1.55f, 1.56f, 1.57f, 1.58f,
         1.59f, 1.60f,
     };
-    const FLOAT in2[50] =
+    static const float in2[50] =
     {
         2.11f, 2.12f, 2.13f, 2.14f, 2.15f, 2.16f, 2.17f, 2.18f,
         2.19f, 2.20f, 2.21f, 2.22f, 2.23f, 2.24f, 2.25f, 2.26f,
@@ -2565,7 +2568,6 @@ static void test_D3DXSHAdd(void)
         2.51f, 2.52f, 2.53f, 2.54f, 2.55f, 2.56f, 2.57f, 2.58f,
         2.59f, 2.60f,
     };
-    FLOAT out[50] = {0.0f};
 
     /*
      * Order is not limited by D3DXSH_MINORDER and D3DXSH_MAXORDER!
@@ -2581,10 +2583,11 @@ static void test_D3DXSHAdd(void)
 
         for (i = 0; i < count; ++i)
         {
-            ok(relative_error(in1[i] + in2[i], out[i]) < admitted_error,
-                    "%u-%u: D3DXSHAdd() failed, got %f, expected %f\n", k, i, out[i], in1[i] + in2[i]);
+            equal = compare_float(in1[i] + in2[i], out[i], 0);
+            ok(equal, "%u-%u: Got %.8e, expected %.8e.\n", k, i, out[i], in1[i] + in2[i]);
         }
-        ok(relative_error(out[count], 0.0f) < admitted_error, "%u-%u: D3DXSHAdd() failed, got %f, expected 0.0\n", k, k * k, out[count]);
+        equal = compare_float(out[count], 0.0f, 0);
+        ok(equal, "%u-%u: Got %.8e, expected 0.0.\n", k, k * k, out[count]);
     }
 }
 
