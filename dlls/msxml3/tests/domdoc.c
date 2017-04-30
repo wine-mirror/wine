@@ -12086,6 +12086,7 @@ static void test_put_data(void)
               break;
            }
            default:
+              get_data = NULL;
               break;
        }
 
