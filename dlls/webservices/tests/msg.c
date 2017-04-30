@@ -165,7 +165,6 @@ static void test_WsInitializeMessage(void)
     WS_ADDRESSING_VERSION addr_version;
     BOOL addressed;
 
-    return;
     hr = WsInitializeMessage( NULL, WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
