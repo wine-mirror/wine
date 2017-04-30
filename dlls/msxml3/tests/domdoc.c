@@ -1542,7 +1542,7 @@ if (0)
     ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
     SysFreeString( str );
 
-    str = (BSTR)0x1;
+    str = (void *)0xdeadbeef;
     hr = IXMLDOMDocument_get_url(doc, &str);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(str == NULL, "got %p\n", str);
@@ -1621,7 +1621,7 @@ if (0)
     r = IXMLDOMDocument_get_nodeName( doc, NULL );
     ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
 
-    str = (BSTR)0xdeadbeef;
+    str = (void *)0xdeadbeef;
     r = IXMLDOMDocument_get_baseName( doc, &str );
     ok ( r == S_FALSE, "got 0x%08x\n", r);
     ok (str == NULL, "got %p\n", str);
@@ -1743,25 +1743,25 @@ if (0)
         ok(r == E_INVALIDARG, "ret %08x\n", r );
 
         /* test substringData - Invalid offset */
-        str = (BSTR)&szElement;
+        str = (void *)0xdeadbeef;
         r = IXMLDOMText_substringData(nodetext, -1, 4, &str);
         ok(r == E_INVALIDARG, "ret %08x\n", r );
         ok( str == NULL, "incorrect string\n");
 
         /* test substringData - Invalid offset */
-        str = (BSTR)&szElement;
+        str = (void *)0xdeadbeef;
         r = IXMLDOMText_substringData(nodetext, 30, 0, &str);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok( str == NULL, "incorrect string\n");
 
         /* test substringData - Invalid size */
-        str = (BSTR)&szElement;
+        str = (void *)0xdeadbeef;
         r = IXMLDOMText_substringData(nodetext, 0, -1, &str);
         ok(r == E_INVALIDARG, "ret %08x\n", r );
         ok( str == NULL, "incorrect string\n");
 
         /* test substringData - Invalid size */
-        str = (BSTR)&szElement;
+        str = (void *)0xdeadbeef;
         r = IXMLDOMText_substringData(nodetext, 2, 0, &str);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok( str == NULL, "incorrect string\n");
@@ -2016,7 +2016,7 @@ if (0)
     /* empty comment */
     r = IXMLDOMDocument_createComment(doc, _bstr_(""), &node_comment);
     ok( r == S_OK, "returns %08x\n", r );
-    str = (BSTR)0x1;
+    str = NULL;
     r = IXMLDOMComment_get_data(node_comment, &str);
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && SysStringLen(str) == 0, "expected empty string data\n");
@@ -2025,7 +2025,7 @@ if (0)
 
     r = IXMLDOMDocument_createComment(doc, NULL, &node_comment);
     ok( r == S_OK, "returns %08x\n", r );
-    str = (BSTR)0x1;
+    str = NULL;
     r = IXMLDOMComment_get_data(node_comment, &str);
     ok( r == S_OK, "returns %08x\n", r );
     ok( str && (SysStringLen(str) == 0), "expected empty string data\n");
@@ -2048,7 +2048,7 @@ if (0)
         ok(nodeChild == NULL, "pLastChild not NULL\n");
 
         /* baseName */
-        str = (BSTR)0xdeadbeef;
+        str = (void *)0xdeadbeef;
         r = IXMLDOMComment_get_baseName(node_comment, &str);
         ok(r == S_FALSE, "ret %08x\n", r );
         ok(str == NULL, "Expected NULL\n");
@@ -2095,7 +2095,7 @@ if (0)
         SysFreeString(str);
 
         /* test baseName */
-        str = (BSTR)0x1;
+        str = NULL;
         r = IXMLDOMProcessingInstruction_get_baseName(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );
         ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect nodeName string\n");
@@ -2424,7 +2424,7 @@ static void test_domnode( void )
             ok( r == S_OK, "getNamedItem returned wrong code\n");
             ok( type == NODE_TEXT, "node not text\n");
 
-            str = (BSTR) 1;
+            str = (void *)0xdeadbeef;
             r = IXMLDOMNode_get_baseName( next, &str );
             ok( r == S_FALSE, "get_baseName returned wrong code\n");
             ok( str == NULL, "basename was wrong\n");
@@ -5458,25 +5458,25 @@ static void test_xmlTypes(void)
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
                 /* test substringData - Invalid offset */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMComment_substringData(pComment, -1, 4, &str);
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
 
                 /* test substringData - Invalid offset */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMComment_substringData(pComment, 30, 0, &str);
                 ok(hr == S_FALSE, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
 
                 /* test substringData - Invalid size */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMComment_substringData(pComment, 0, -1, &str);
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
 
                 /* test substringData - Invalid size */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMComment_substringData(pComment, 2, 0, &str);
                 ok(hr == S_FALSE, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
@@ -5896,25 +5896,25 @@ static void test_xmlTypes(void)
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
                 /* test substringData - Invalid offset */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMCDATASection_substringData(pCDataSec, -1, 4, &str);
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
 
                 /* test substringData - Invalid offset */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMCDATASection_substringData(pCDataSec, 30, 0, &str);
                 ok(hr == S_FALSE, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
 
                 /* test substringData - Invalid size */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMCDATASection_substringData(pCDataSec, 0, -1, &str);
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
 
                 /* test substringData - Invalid size */
-                str = (BSTR)&szElement;
+                str = (void *)0xdeadbeef;
                 hr = IXMLDOMCDATASection_substringData(pCDataSec, 2, 0, &str);
                 ok(hr == S_FALSE, "ret %08x\n", hr );
                 ok( str == NULL, "incorrect string\n");
@@ -6636,7 +6636,7 @@ static void test_namespaces_basic(void)
     EXPECT_HR(hr, S_OK);
     ok(b == VARIANT_TRUE, "got %d\n", b);
 
-    str = (BSTR)0xdeadbeef;
+    str = (void *)0xdeadbeef;
     hr = IXMLDOMDocument_get_namespaceURI(doc, &str);
     EXPECT_HR(hr, S_FALSE);
     ok(str == NULL, "got %p\n", str);
@@ -10237,7 +10237,7 @@ static void test_load(void)
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(b == VARIANT_FALSE, "got %d\n", b);
 
-    bstr1 = (BSTR)0x1;
+    bstr1 = (void *)0xdeadbeef;
     hr = IXMLDOMDocument_get_url(doc, &bstr1);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(bstr1 == NULL, "got %p\n", bstr1);
@@ -12485,7 +12485,7 @@ static void test_url(void)
     hr = IXMLDOMDocument_get_url(doc, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    s = (BSTR)0x1;
+    s = (void *)0xdeadbeef;
     hr = IXMLDOMDocument_get_url(doc, &s);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(s == NULL, "got %s\n", wine_dbgstr_w(s));
