@@ -210,13 +210,13 @@ static void test_enum_service_providers(void)
         trace("Found adapter guid: %s\n", wine_dbgstr_guid(&serv_prov_info[i].guid));
     }
 
-    ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
-
     /* Invalid GUID */
     items = 88;
     hr = IDirectPlay8Client_EnumServiceProviders(client, &appguid, NULL, serv_prov_info, &size, &items, 0);
     ok(hr == DPNERR_DOESNOTEXIST, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
     ok(items == 88, "Found adapter %d\n", items);
+
+    HeapFree(GetProcessHeap(), 0, serv_prov_info);
 }
 
 static void test_enum_hosts(void)
@@ -613,14 +613,11 @@ static void test_enum_service_providers_peer(void)
 
     for (i=0;i<items;i++)
     {
-        trace("Found Service Provider: %s\n", wine_dbgstr_w(serv_prov_info->pwszName));
-        trace("Found guid: %s\n", wine_dbgstr_guid(&serv_prov_info->guid));
-
-        serv_prov_info++;
+        trace("Found Service Provider: %s\n", wine_dbgstr_w(serv_prov_info[i].pwszName));
+        trace("Found guid: %s\n", wine_dbgstr_guid(&serv_prov_info[i].guid));
     }
 
-    serv_prov_info -= items; /* set pointer back */
-    ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
+    HeapFree(GetProcessHeap(), 0, serv_prov_info);
 
     size = 0;
     items = 0;
@@ -638,20 +635,17 @@ static void test_enum_service_providers_peer(void)
 
     for (i=0;i<items;i++)
     {
-        trace("Found adapter: %s\n", wine_dbgstr_w(serv_prov_info->pwszName));
-        trace("Found adapter guid: %s\n", wine_dbgstr_guid(&serv_prov_info->guid));
-
-        serv_prov_info++;
+        trace("Found adapter: %s\n", wine_dbgstr_w(serv_prov_info[i].pwszName));
+        trace("Found adapter guid: %s\n", wine_dbgstr_guid(&serv_prov_info[i].guid));
     }
-
-    serv_prov_info -= items; /* set pointer back */
-    ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
 
     /* Invalid GUID */
     items = 88;
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, &appguid, NULL, serv_prov_info, &size, &items, 0);
     ok(hr == DPNERR_DOESNOTEXIST, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
     ok(items == 88, "Found adapter %d\n", items);
+
+    HeapFree(GetProcessHeap(), 0, serv_prov_info);
 }
 
 static void test_enum_hosts_peer(void)
