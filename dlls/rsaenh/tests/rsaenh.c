@@ -2642,7 +2642,7 @@ static void test_import_export(void)
     CryptDestroyKey(hPrivKey);
 
     result = !memcmp(exported_key, exported_key2, dwDataLen);
-    todo_wine ok(result, "unexpected value\n");
+    ok(result, "unexpected value\n");
     if (!result && winetest_debug > 1) {
         trace("Expected public key (%u):\n", dwDataLen);
         trace_hex(exported_key, dwDataLen);
