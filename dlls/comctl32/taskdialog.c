@@ -271,8 +271,7 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     title_size = (strlenW(titleW) + 1) * sizeof(WCHAR);
 
     size = sizeof(DLGTEMPLATE) + 2 * sizeof(WORD);
-    if (titleW)
-        size += title_size;
+    size += title_size;
     size += 2; /* font size */
 
     list_init(&desc.controls);
