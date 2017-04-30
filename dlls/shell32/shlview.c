@@ -3744,3 +3744,62 @@ IShellView *IShellView_Constructor(IShellFolder *folder)
     TRACE("(%p)->(%p)\n", sv, folder);
     return (IShellView*)&sv->IShellView3_iface;
 }
+
+/*************************************************************************
+ * SHCreateShellFolderView			[SHELL32.256]
+ *
+ * Create a new instance of the default Shell folder view object.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: error value
+ *
+ * NOTES
+ *  see IShellFolder::CreateViewObject
+ */
+HRESULT WINAPI SHCreateShellFolderView(const SFV_CREATE *desc, IShellView **shellview)
+{
+    TRACE("(%p, %p)\n", desc, shellview);
+
+    *shellview = NULL;
+
+    if (!desc || desc->cbSize != sizeof(*desc))
+        return E_INVALIDARG;
+
+    TRACE("sf=%p outer=%p callback=%p\n", desc->pshf, desc->psvOuter, desc->psfvcb);
+
+    if (!desc->pshf)
+        return E_UNEXPECTED;
+
+    *shellview = IShellView_Constructor(desc->pshf);
+    if (!*shellview)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+/*************************************************************************
+ * SHCreateShellFolderViewEx			[SHELL32.174]
+ *
+ * Create a new instance of the default Shell folder view object.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: error value
+ *
+ * NOTES
+ *  see IShellFolder::CreateViewObject
+ */
+HRESULT WINAPI SHCreateShellFolderViewEx(CSFV *desc, IShellView **shellview)
+{
+    TRACE("(%p, %p)\n", desc, shellview);
+
+    TRACE("sf=%p pidl=%p cb=%p mode=0x%08x parm=%p\n", desc->pshf, desc->pidl, desc->pfnCallback,
+        desc->fvm, desc->psvOuter);
+
+    *shellview = IShellView_Constructor(desc->pshf);
+    if (!*shellview)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}

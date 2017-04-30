@@ -1086,40 +1086,6 @@ void WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 }
 
 /*************************************************************************
- * SHCreateShellFolderViewEx			[SHELL32.174]
- *
- * Create a new instance of the default Shell folder view object.
- *
- * RETURNS
- *  Success: S_OK
- *  Failure: error value
- *
- * NOTES
- *  see IShellFolder::CreateViewObject
- */
-HRESULT WINAPI SHCreateShellFolderViewEx(
-	LPCSFV psvcbi,    /* [in] shelltemplate struct */
-	IShellView **ppv) /* [out] IShellView pointer */
-{
-	IShellView * psf;
-	HRESULT hRes;
-
-	TRACE("sf=%p pidl=%p cb=%p mode=0x%08x parm=%p\n",
-	  psvcbi->pshf, psvcbi->pidl, psvcbi->pfnCallback,
-	  psvcbi->fvm, psvcbi->psvOuter);
-
-	*ppv = NULL;
-	psf = IShellView_Constructor(psvcbi->pshf);
-
-	if (!psf)
-	  return E_OUTOFMEMORY;
-
-	hRes = IShellView_QueryInterface(psf, &IID_IShellView, (LPVOID *)ppv);
-	IShellView_Release(psf);
-
-	return hRes;
-}
-/*************************************************************************
  *  SHWinHelp					[SHELL32.127]
  *
  */
@@ -2194,40 +2160,4 @@ HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
     hNew = (iImageList == SHIL_LARGE) ? hLarge : hSmall;
 
     return HIMAGELIST_QueryInterface(hNew, riid, ppv);
-}
-
-/*************************************************************************
- * SHCreateShellFolderView			[SHELL32.256]
- *
- * Create a new instance of the default Shell folder view object.
- *
- * RETURNS
- *  Success: S_OK
- *  Failure: error value
- *
- * NOTES
- *  see IShellFolder::CreateViewObject
- */
-HRESULT WINAPI SHCreateShellFolderView(const SFV_CREATE *pcsfv,
-                        IShellView **ppsv)
-{
-	IShellView * psf;
-	HRESULT hRes;
-
-	*ppsv = NULL;
-	if (!pcsfv || pcsfv->cbSize != sizeof(*pcsfv))
-	  return E_INVALIDARG;
-
-	TRACE("sf=%p outer=%p callback=%p\n",
-	  pcsfv->pshf, pcsfv->psvOuter, pcsfv->psfvcb);
-
-	psf = IShellView_Constructor(pcsfv->pshf);
-
-	if (!psf)
-	  return E_OUTOFMEMORY;
-
-	hRes = IShellView_QueryInterface(psf, &IID_IShellView, (LPVOID *)ppsv);
-	IShellView_Release(psf);
-
-	return hRes;
 }

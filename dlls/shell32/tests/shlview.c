@@ -1331,6 +1331,126 @@ static void test_IOleCommandTarget(void)
     IShellFolder_Release(psf_desktop);
 }
 
+static void test_SHCreateShellFolderView(void)
+{
+    IShellFolder *desktop;
+    IShellView *psv;
+    SFV_CREATE sfvc;
+    ULONG refCount;
+    HRESULT hr;
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    if (0)
+    {
+        /* crash on win7 */
+        SHCreateShellFolderView(NULL, NULL);
+    }
+
+    psv = (void *)0xdeadbeef;
+    hr = SHCreateShellFolderView(NULL, &psv);
+    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+    ok(psv == NULL, "psv = %p\n", psv);
+
+    memset(&sfvc, 0, sizeof(sfvc));
+    psv = (void *)0xdeadbeef;
+    hr = SHCreateShellFolderView(&sfvc, &psv);
+    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+    ok(psv == NULL, "psv = %p\n", psv);
+
+    memset(&sfvc, 0, sizeof(sfvc));
+    sfvc.cbSize = sizeof(sfvc) - 1;
+    psv = (void *)0xdeadbeef;
+    hr = SHCreateShellFolderView(&sfvc, &psv);
+    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+    ok(psv == NULL, "psv = %p\n", psv);
+
+    memset(&sfvc, 0, sizeof(sfvc));
+    sfvc.cbSize = sizeof(sfvc) + 1;
+    psv = (void *)0xdeadbeef;
+    hr = SHCreateShellFolderView(&sfvc, &psv);
+    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+    ok(psv == NULL, "psv = %p\n", psv);
+
+if (0)
+{
+    /* Crashes on NULL 'pshf' on XP/2k3 */
+    memset(&sfvc, 0, sizeof(sfvc));
+    sfvc.cbSize = sizeof(sfvc);
+    psv = (void *)0xdeadbeef;
+    hr = SHCreateShellFolderView(&sfvc, &psv);
+    ok(hr == E_UNEXPECTED, "Got 0x%08x\n", hr);
+    ok(psv == NULL, "psv = %p\n", psv);
+}
+    memset(&sfvc, 0, sizeof(sfvc));
+    sfvc.cbSize = sizeof(sfvc) - 1;
+    sfvc.pshf = desktop;
+    psv = (void *)0xdeadbeef;
+    hr = SHCreateShellFolderView(&sfvc, &psv);
+    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+    ok(psv == NULL, "psv = %p\n", psv);
+
+    memset(&sfvc, 0, sizeof(sfvc));
+    sfvc.cbSize = sizeof(sfvc);
+    sfvc.pshf = desktop;
+    psv = NULL;
+    hr = SHCreateShellFolderView(&sfvc, &psv);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(psv != NULL, "psv = %p\n", psv);
+    refCount = IShellView_Release(psv);
+    ok(refCount == 0, "refCount = %u\n", refCount);
+
+    IShellFolder_Release(desktop);
+}
+
+static void test_SHCreateShellFolderViewEx(void)
+{
+    IShellFolder *desktop;
+    IShellView *psv;
+    ULONG refCount;
+    HRESULT hr;
+    CSFV csfv;
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    if (0)
+    {
+        /* crash on win7 */
+        SHCreateShellFolderViewEx(NULL, NULL);
+        SHCreateShellFolderViewEx(NULL, &psv);
+        SHCreateShellFolderViewEx(&csfv, NULL);
+    }
+
+    memset(&csfv, 0, sizeof(csfv));
+    csfv.pshf = desktop;
+    psv = NULL;
+    hr = SHCreateShellFolderViewEx(&csfv, &psv);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(psv != NULL, "psv = %p\n", psv);
+    if (psv)
+    {
+        refCount = IShellView_Release(psv);
+        ok(refCount == 0, "refCount = %u\n", refCount);
+    }
+
+    memset(&csfv, 0, sizeof(csfv));
+    csfv.cbSize = sizeof(csfv);
+    csfv.pshf = desktop;
+    psv = NULL;
+    hr = SHCreateShellFolderViewEx(&csfv, &psv);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(psv != NULL, "psv = %p\n", psv);
+    if (psv)
+    {
+        refCount = IShellView_Release(psv);
+        ok(refCount == 0, "refCount = %u\n", refCount);
+    }
+
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shlview)
 {
     OleInitialize(NULL);
@@ -1344,6 +1464,8 @@ START_TEST(shlview)
     test_IOleWindow();
     test_GetSetCurrentViewMode();
     test_IOleCommandTarget();
+    test_SHCreateShellFolderView();
+    test_SHCreateShellFolderViewEx();
 
     OleUninitialize();
 }
