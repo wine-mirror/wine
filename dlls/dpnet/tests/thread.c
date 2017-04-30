@@ -44,6 +44,7 @@ static HRESULT WINAPI DirectPlayThreadHandler(void *context, DWORD message_id, v
             cnt_complete++;
             if(cnt_complete >= 2)
                 SetEvent(enumevent);
+            break;
         default:
             trace("DirectPlayThreadHandler: 0x%08x\n", message_id);
     }
