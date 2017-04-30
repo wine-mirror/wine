@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CINTERFACE
 #define COBJMACROS
 #define NONAMELESSUNION
 
@@ -3774,6 +3775,14 @@ HRESULT WINAPI SHCreateShellFolderView(const SFV_CREATE *desc, IShellView **shel
     *shellview = IShellView_Constructor(desc->pshf);
     if (!*shellview)
         return E_OUTOFMEMORY;
+
+    if (desc->psfvcb)
+    {
+        IShellFolderView *view;
+        IShellView_QueryInterface(*shellview, &IID_IShellFolderView, (void **)&view);
+        IShellFolderView_SetCallback(view, desc->psfvcb, NULL);
+        IShellFolderView_Release(view);
+    }
 
     return S_OK;
 }
