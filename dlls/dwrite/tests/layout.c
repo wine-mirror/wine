@@ -617,7 +617,7 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
     IUnknown *effect)
 {
     struct renderer_context *ctxt = (struct renderer_context*)context;
-    struct drawcall_entry entry;
+    struct drawcall_entry entry = { 0 };
 
     if (ctxt)
         TEST_MEASURING_MODE(ctxt, underline->measuringMode);
@@ -656,7 +656,7 @@ static HRESULT WINAPI testrenderer_DrawStrikethrough(IDWriteTextRenderer *iface,
     IUnknown *effect)
 {
     struct renderer_context *ctxt = (struct renderer_context*)context;
-    struct drawcall_entry entry;
+    struct drawcall_entry entry = { 0 };
 
     if (ctxt)
         TEST_MEASURING_MODE(ctxt, strikethrough->measuringMode);
@@ -677,7 +677,7 @@ static HRESULT WINAPI testrenderer_DrawInlineObject(IDWriteTextRenderer *iface,
     BOOL is_rtl,
     IUnknown *effect)
 {
-    struct drawcall_entry entry;
+    struct drawcall_entry entry = { 0 };
     entry.kind = DRAW_INLINE;
     if (effect)
         entry.kind |= DRAW_EFFECT;
