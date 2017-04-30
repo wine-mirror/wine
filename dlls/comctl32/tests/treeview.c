@@ -1098,7 +1098,7 @@ static void test_get_set_unicodeformat(void)
 static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
-    struct message msg;
+    struct message msg = { 0 };
     LRESULT ret;
     RECT rect;
     HTREEITEM visibleItem;
@@ -1110,8 +1110,6 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
     msg.lParam = lParam;
     if (message == WM_NOTIFY && lParam)
         msg.id = ((NMHDR*)lParam)->code;
-    else
-        msg.id = 0;
 
     /* log system messages, except for painting */
     if (message < WM_USER &&
