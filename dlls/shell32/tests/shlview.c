@@ -633,12 +633,18 @@ static void test_CreateViewWindow(void)
     HRESULT hr;
     RECT r = {0};
     ULONG ref1, ref2;
+    IUnknown *unk;
 
     hr = SHGetDesktopFolder(&desktop);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
 
     hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&view);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    hr = IShellView_QueryInterface(view, &IID_CDefView, (void **)&unk);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(unk == (IUnknown *)view, "got %p\n", unk);
+    IUnknown_Release(unk);
 
 if (0)
 {
@@ -1335,6 +1341,7 @@ static void test_SHCreateShellFolderView(void)
     IShellView *psv;
     SFV_CREATE sfvc;
     ULONG refCount;
+    IUnknown *unk;
     HRESULT hr;
 
     hr = SHGetDesktopFolder(&desktop);
@@ -1396,6 +1403,12 @@ if (0)
     hr = SHCreateShellFolderView(&sfvc, &psv);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     ok(psv != NULL, "psv = %p\n", psv);
+
+    hr = IShellView_QueryInterface(psv, &IID_CDefView, (void **)&unk);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(unk == (IUnknown *)psv, "got %p\n", unk);
+    IUnknown_Release(unk);
+
     refCount = IShellView_Release(psv);
     ok(refCount == 0, "refCount = %u\n", refCount);
 
@@ -1407,6 +1420,7 @@ static void test_SHCreateShellFolderViewEx(void)
     IShellFolder *desktop;
     IShellView *psv;
     ULONG refCount;
+    IUnknown *unk;
     HRESULT hr;
     CSFV csfv;
 
@@ -1427,6 +1441,12 @@ static void test_SHCreateShellFolderViewEx(void)
     hr = SHCreateShellFolderViewEx(&csfv, &psv);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     ok(psv != NULL, "psv = %p\n", psv);
+
+    hr = IShellView_QueryInterface(psv, &IID_CDefView, (void **)&unk);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(unk == (IUnknown *)psv, "got %p\n", unk);
+    IUnknown_Release(unk);
+
     if (psv)
     {
         refCount = IShellView_Release(psv);

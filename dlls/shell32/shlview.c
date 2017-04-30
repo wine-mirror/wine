@@ -1713,7 +1713,8 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView3 *iface, REFIID rii
 	if(IsEqualIID(riid, &IID_IUnknown) ||
 	   IsEqualIID(riid, &IID_IShellView) ||
 	   IsEqualIID(riid, &IID_IShellView2) ||
-	   IsEqualIID(riid, &IID_IShellView3))
+	   IsEqualIID(riid, &IID_IShellView3) ||
+	   IsEqualIID(riid, &IID_CDefView))
 	{
 	  *ppvObj = &This->IShellView3_iface;
 	}
