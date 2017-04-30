@@ -1433,6 +1433,16 @@ static void test_SHCreateShellFolderViewEx(void)
         ok(refCount == 0, "refCount = %u\n", refCount);
     }
 
+if (0)
+{
+    /* Crashes on null shellfolder, on XP/2k3 */
+    memset(&csfv, 0, sizeof(csfv));
+    csfv.pshf = NULL;
+    psv = (void *)0xdeadbeef;
+    hr = SHCreateShellFolderViewEx(&csfv, &psv);
+    ok(hr == E_UNEXPECTED, "Got 0x%08x\n", hr);
+    ok(psv == NULL, "psv = %p\n", psv);
+}
     memset(&csfv, 0, sizeof(csfv));
     csfv.cbSize = sizeof(csfv);
     csfv.pshf = desktop;

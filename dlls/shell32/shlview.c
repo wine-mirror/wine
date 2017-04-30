@@ -3806,6 +3806,9 @@ HRESULT WINAPI SHCreateShellFolderViewEx(CSFV *desc, IShellView **shellview)
     TRACE("sf=%p pidl=%p cb=%p mode=0x%08x parm=%p\n", desc->pshf, desc->pidl, desc->pfnCallback,
         desc->fvm, desc->psvOuter);
 
+    if (!desc->pshf)
+        return E_UNEXPECTED;
+
     *shellview = IShellView_Constructor(desc->pshf);
     if (!*shellview)
         return E_OUTOFMEMORY;
