@@ -100,7 +100,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_TotalTime(LPDIRECTMUSICBUFFER iface
 static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER iface, REFERENCE_TIME ref_time, DWORD channel_group, DWORD channel_message)
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
-    DWORD new_write_pos = This->write_pos + sizeof(DMUS_EVENTHEADER) + sizeof(DWORD);
+    DWORD new_write_pos = This->write_pos + DMUS_EVENT_SIZE(sizeof(channel_message));
     DMUS_EVENTHEADER header;
 
     TRACE("(%p)->(0x%s, %u, 0x%x)\n", iface, wine_dbgstr_longlong(ref_time), channel_group, channel_message);
