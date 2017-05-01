@@ -1387,18 +1387,25 @@ static HRESULT pop_to_stat(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx)
 {
     unsigned stack_pop = 0;
     statement_ctx_t *iter;
+    HRESULT hres;
 
     for(iter = ctx->stat_ctx; iter != stat_ctx; iter = iter->next) {
         if(iter->using_scope && !push_instr(ctx, OP_pop_scope))
             return E_OUTOFMEMORY;
-        if(iter->using_except && !push_instr(ctx, OP_pop_except))
-            return E_OUTOFMEMORY;
+        if(iter->using_except) {
+            if(stack_pop) {
+                hres = push_instr_uint(ctx, OP_pop, stack_pop);
+                if(FAILED(hres))
+                    return hres;
+                stack_pop = 0;
+            }
+            if(!push_instr(ctx, OP_pop_except))
+                return E_OUTOFMEMORY;
+        }
         stack_pop += iter->stack_use;
     }
 
     if(stack_pop) {
-        HRESULT hres;
-
         hres = push_instr_uint(ctx, OP_pop, stack_pop);
         if(FAILED(hres))
             return hres;
