@@ -101,7 +101,7 @@ static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER 
 {
     IDirectMusicBufferImpl *This = impl_from_IDirectMusicBuffer(iface);
     DWORD new_write_pos = This->write_pos + DMUS_EVENT_SIZE(sizeof(channel_message));
-    DMUS_EVENTHEADER header;
+    DMUS_EVENTHEADER *header;
 
     TRACE("(%p)->(0x%s, %u, 0x%x)\n", iface, wine_dbgstr_longlong(ref_time), channel_group, channel_message);
 
@@ -119,13 +119,13 @@ static HRESULT WINAPI IDirectMusicBufferImpl_PackStructured(LPDIRECTMUSICBUFFER 
     if (!This->write_pos)
         This->start_time = ref_time;
 
-    header.cbEvent = 3; /* Midi message takes 4 bytes space but only 3 are relevant */
-    header.dwChannelGroup = channel_group;
-    header.rtDelta = ref_time - This->start_time;
-    header.dwFlags = DMUS_EVENT_STRUCTURED;
+    header = (DMUS_EVENTHEADER*)&This->data[This->write_pos];
+    header->cbEvent = 3; /* Midi message takes 4 bytes space but only 3 are relevant */
+    header->dwChannelGroup = channel_group;
+    header->rtDelta = ref_time - This->start_time;
+    header->dwFlags = DMUS_EVENT_STRUCTURED;
 
-    memcpy(This->data + This->write_pos, &header, sizeof(header));
-    *(DWORD*)(This->data + This->write_pos + sizeof(header)) = channel_message;
+    *(DWORD*)&header[1] = channel_message;
     This->write_pos = new_write_pos;
 
     return S_OK;
