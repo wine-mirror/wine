@@ -550,6 +550,7 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     if (!valBuf)
         goto done;
 
+    valSize = max_val_size;
     if (RegQueryValueExW(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) {
         AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0, !highlightValue);
     }
