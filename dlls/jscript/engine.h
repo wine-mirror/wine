@@ -35,6 +35,7 @@
     X(div,        1, 0,0)                  \
     X(double,     1, ARG_DBL,    0)        \
     X(end_finally,1, 0,0)                  \
+    X(enter_catch,1, ARG_BSTR,   0)        \
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
     X(forin,      0, ARG_ADDR,   0)        \

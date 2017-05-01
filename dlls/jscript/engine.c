@@ -968,6 +968,26 @@ static HRESULT interp_end_finally(script_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_enter_catch(script_ctx_t *ctx)
+{
+    const BSTR ident = get_op_bstr(ctx, 0);
+    jsdisp_t *scope_obj;
+    jsval_t v;
+    HRESULT hres;
+
+    hres = create_dispex(ctx, NULL, NULL, &scope_obj);
+    if(FAILED(hres))
+        return hres;
+
+    v = stack_pop(ctx);
+    hres = jsdisp_propput_name(scope_obj, ident, v);
+    jsval_release(v);
+    if(SUCCEEDED(hres))
+        hres = scope_push(ctx->call_ctx->scope, scope_obj, to_disp(scope_obj), &ctx->call_ctx->scope);
+    jsdisp_release(scope_obj);
+    return hres;
+}
+
 /* ECMA-262 3rd Edition    13 */
 static HRESULT interp_func(script_ctx_t *ctx)
 {
@@ -2655,6 +2675,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     }
 
     except_frame = frame->except_frame;
+    ident = except_frame->ident;
     frame->except_frame = except_frame->next;
 
     assert(except_frame->stack_top <= ctx->stack_top);
@@ -2664,37 +2685,20 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         scope_pop(&frame->scope);
 
     frame->ip = except_frame->catch_off;
+    if(ident) assert(frame->bytecode->instrs[frame->ip].op == OP_enter_catch);
 
     except_val = ctx->ei.val;
     ctx->ei.val = jsval_undefined();
     clear_ei(ctx);
 
-    ident = except_frame->ident;
     heap_free(except_frame);
 
-    if(ident) {
-        jsdisp_t *scope_obj;
+    hres = stack_push(ctx, except_val);
+    if(FAILED(hres))
+        return hres;
 
-        hres = create_dispex(ctx, NULL, NULL, &scope_obj);
-        if(SUCCEEDED(hres)) {
-            hres = jsdisp_propput_name(scope_obj, ident, except_val);
-            if(FAILED(hres))
-                jsdisp_release(scope_obj);
-        }
-        jsval_release(except_val);
-        if(FAILED(hres))
-            return hres;
-
-        hres = scope_push(frame->scope, scope_obj, to_disp(scope_obj), &frame->scope);
-        jsdisp_release(scope_obj);
-    }else {
-        hres = stack_push(ctx, except_val);
-        if(FAILED(hres))
-            return hres;
-
+    if(!ident)
         hres = stack_push(ctx, jsval_bool(FALSE));
-    }
-
     return hres;
 }
 

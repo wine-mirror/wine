@@ -1720,6 +1720,10 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
 
         instr_ptr(ctx, push_except)->u.arg[0].uint = ctx->code_off;
 
+        hres = push_instr_bstr(ctx, OP_enter_catch, ident);
+        if(FAILED(hres))
+            return hres;
+
         hres = compile_statement(ctx, &catch_ctx, stat->catch_block->statement);
         if(FAILED(hres))
             return hres;
