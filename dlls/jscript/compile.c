@@ -1383,22 +1383,20 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
     return S_OK;
 }
 
-static HRESULT pop_to_stat(compiler_ctx_t *ctx, BOOL var_stack, BOOL scope_stack, statement_ctx_t *stat_ctx)
+static HRESULT pop_to_stat(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx)
 {
     unsigned stack_pop = 0;
     statement_ctx_t *iter;
 
     for(iter = ctx->stat_ctx; iter != stat_ctx; iter = iter->next) {
-        if(scope_stack) {
-            if(iter->using_scope && !push_instr(ctx, OP_pop_scope))
-                return E_OUTOFMEMORY;
-            if(iter->using_except && !push_instr(ctx, OP_pop_except))
-                return E_OUTOFMEMORY;
-        }
+        if(iter->using_scope && !push_instr(ctx, OP_pop_scope))
+            return E_OUTOFMEMORY;
+        if(iter->using_except && !push_instr(ctx, OP_pop_except))
+            return E_OUTOFMEMORY;
         stack_pop += iter->stack_use;
     }
 
-    if(var_stack && stack_pop) {
+    if(stack_pop) {
         HRESULT hres;
 
         hres = push_instr_uint(ctx, OP_pop, stack_pop);
@@ -1455,7 +1453,7 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
         }
     }
 
-    hres = pop_to_stat(ctx, TRUE, TRUE, pop_ctx);
+    hres = pop_to_stat(ctx, pop_ctx);
     if(FAILED(hres))
         return hres;
 
@@ -1492,7 +1490,7 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
         }
     }
 
-    hres = pop_to_stat(ctx, TRUE, TRUE, pop_ctx->next);
+    hres = pop_to_stat(ctx, pop_ctx->next);
     if(FAILED(hres))
         return hres;
 
@@ -1509,10 +1507,6 @@ static HRESULT compile_return_statement(compiler_ctx_t *ctx, expression_statemen
         return JS_E_MISPLACED_RETURN;
     }
 
-    hres = pop_to_stat(ctx, TRUE, FALSE, NULL);
-    if(FAILED(hres))
-        return hres;
-
     if(stat->expr) {
         hres = compile_expression(ctx, stat->expr, TRUE);
         if(FAILED(hres))
@@ -1521,7 +1515,7 @@ static HRESULT compile_return_statement(compiler_ctx_t *ctx, expression_statemen
             return E_OUTOFMEMORY;
     }
 
-    hres = pop_to_stat(ctx, FALSE, TRUE, NULL);
+    hres = pop_to_stat(ctx, NULL);
     if(FAILED(hres))
         return hres;
 

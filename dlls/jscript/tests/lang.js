@@ -264,6 +264,8 @@ ok(tmp === 3, "tmp = " + tmp);
 eval("testRes(); testRes()");
 tmp = eval("3; if(false) {4;} else {};;;")
 ok(tmp === 3, "tmp = " + tmp);
+tmp = eval("try { 1; } finally { 2; }")
+ok(tmp === 2, "tmp = " + tmp);
 
 testNoRes();
 testRes() && testRes();
@@ -1594,6 +1596,15 @@ tmp = (function() {
     var ret = false;
     with({ret: true})
         return ret;
+})();
+ok(tmp, "tmp = " + tmp);
+
+tmp = (function() {
+    for(var iter in [1,2,3,4]) {
+        var ret = false;
+        with({ret: true})
+            return ret;
+    }
 })();
 ok(tmp, "tmp = " + tmp);
 
