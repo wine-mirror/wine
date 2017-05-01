@@ -41,7 +41,7 @@ struct _except_frame_t {
     unsigned stack_top;
     scope_chain_t *scope;
     unsigned catch_off;
-    BSTR ident;
+    unsigned finally_off;
 
     except_frame_t *next;
 };
@@ -897,8 +897,8 @@ static HRESULT interp_throw_type(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT interp_push_except(script_ctx_t *ctx)
 {
-    const unsigned arg1 = get_op_uint(ctx, 0);
-    const BSTR arg2 = get_op_bstr(ctx, 1);
+    const unsigned catch_off = get_op_uint(ctx, 0);
+    const unsigned finally_off = get_op_uint(ctx, 1);
     call_frame_t *frame = ctx->call_ctx;
     except_frame_t *except;
     unsigned stack_top;
@@ -907,7 +907,7 @@ static HRESULT interp_push_except(script_ctx_t *ctx)
 
     stack_top = ctx->stack_top;
 
-    if(!arg2) {
+    if(!catch_off) {
         HRESULT hres;
 
         hres = stack_push(ctx, jsval_bool(TRUE));
@@ -924,8 +924,8 @@ static HRESULT interp_push_except(script_ctx_t *ctx)
 
     except->stack_top = stack_top;
     except->scope = frame->scope;
-    except->catch_off = arg1;
-    except->ident = arg2;
+    except->catch_off = catch_off;
+    except->finally_off = finally_off;
     except->next = frame->except_frame;
     frame->except_frame = except;
     return S_OK;
@@ -2657,7 +2657,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     except_frame_t *except_frame;
     call_frame_t *frame;
     jsval_t except_val;
-    BSTR ident;
+    unsigned catch_off;
     HRESULT hres;
 
     for(frame = ctx->call_ctx; !frame->except_frame; frame = ctx->call_ctx) {
@@ -2675,7 +2675,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     }
 
     except_frame = frame->except_frame;
-    ident = except_frame->ident;
+    catch_off = except_frame->catch_off;
     frame->except_frame = except_frame->next;
 
     assert(except_frame->stack_top <= ctx->stack_top);
@@ -2684,8 +2684,8 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     while(except_frame->scope != frame->scope)
         scope_pop(&frame->scope);
 
-    frame->ip = except_frame->catch_off;
-    if(ident) assert(frame->bytecode->instrs[frame->ip].op == OP_enter_catch);
+    frame->ip = catch_off ? catch_off : except_frame->finally_off;
+    if(catch_off) assert(frame->bytecode->instrs[frame->ip].op == OP_enter_catch);
 
     except_val = ctx->ei.val;
     ctx->ei.val = jsval_undefined();
@@ -2697,7 +2697,7 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     if(FAILED(hres))
         return hres;
 
-    if(!ident)
+    if(!catch_off)
         hres = stack_push(ctx, jsval_bool(FALSE));
     return hres;
 }

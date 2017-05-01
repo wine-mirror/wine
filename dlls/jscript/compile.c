@@ -1690,7 +1690,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
 {
     statement_ctx_t try_ctx = {0, FALSE, TRUE}, catch_ctx = {0, TRUE, FALSE};
     statement_ctx_t finally_ctx = {2, FALSE, FALSE};
-    unsigned push_except;
+    unsigned push_except, finally_off = 0, catch_off = 0;
     BSTR ident;
     HRESULT hres;
 
@@ -1725,7 +1725,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         if(!jmp_finally)
             return E_OUTOFMEMORY;
 
-        instr_ptr(ctx, push_except)->u.arg[0].uint = ctx->code_off;
+        catch_off = ctx->code_off;
 
         hres = push_instr_bstr(ctx, OP_enter_catch, ident);
         if(FAILED(hres))
@@ -1744,6 +1744,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
     }
 
     if(stat->finally_statement) {
+        finally_off = ctx->code_off;
         hres = compile_statement(ctx, stat->catch_block ? NULL : &finally_ctx, stat->finally_statement);
         if(FAILED(hres))
             return hres;
@@ -1752,6 +1753,8 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
             return E_OUTOFMEMORY;
     }
 
+    instr_ptr(ctx, push_except)->u.arg[0].uint = catch_off;
+    instr_ptr(ctx, push_except)->u.arg[1].uint = finally_off;
     return S_OK;
 }
 

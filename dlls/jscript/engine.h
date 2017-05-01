@@ -72,7 +72,7 @@
     X(pop_scope,  1, 0,0)                  \
     X(postinc,    1, ARG_INT,    0)        \
     X(preinc,     1, ARG_INT,    0)        \
-    X(push_except,1, ARG_ADDR,   ARG_BSTR) \
+    X(push_except,1, ARG_ADDR,   ARG_UINT) \
     X(push_ret,   1, 0,0)                  \
     X(push_scope, 1, 0,0)                  \
     X(regexp,     1, ARG_STR,    ARG_UINT) \
