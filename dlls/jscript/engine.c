@@ -901,28 +901,14 @@ static HRESULT interp_push_except(script_ctx_t *ctx)
     const unsigned finally_off = get_op_uint(ctx, 1);
     call_frame_t *frame = ctx->call_ctx;
     except_frame_t *except;
-    unsigned stack_top;
 
     TRACE("\n");
-
-    stack_top = ctx->stack_top;
-
-    if(!catch_off) {
-        HRESULT hres;
-
-        hres = stack_push(ctx, jsval_bool(TRUE));
-        if(FAILED(hres))
-            return hres;
-        hres = stack_push(ctx, jsval_bool(TRUE));
-        if(FAILED(hres))
-            return hres;
-    }
 
     except = heap_alloc(sizeof(*except));
     if(!except)
         return E_OUTOFMEMORY;
 
-    except->stack_top = stack_top;
+    except->stack_top = ctx->stack_top;
     except->scope = frame->scope;
     except->catch_off = catch_off;
     except->finally_off = finally_off;
@@ -934,22 +920,41 @@ static HRESULT interp_push_except(script_ctx_t *ctx)
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT interp_pop_except(script_ctx_t *ctx)
 {
+    const unsigned ret_off = get_op_uint(ctx, 0);
     call_frame_t *frame = ctx->call_ctx;
     except_frame_t *except;
+    unsigned finally_off;
 
-    TRACE("\n");
+    TRACE("%u\n", ret_off);
 
     except = frame->except_frame;
     assert(except != NULL);
 
+    finally_off = except->finally_off;
     frame->except_frame = except->next;
     heap_free(except);
+
+    if(finally_off) {
+        HRESULT hres;
+
+        hres = stack_push(ctx, jsval_number(ret_off));
+        if(FAILED(hres))
+            return hres;
+        hres = stack_push(ctx, jsval_bool(TRUE));
+        if(FAILED(hres))
+            return hres;
+        frame->ip = finally_off;
+    }else {
+        frame->ip = ret_off;
+    }
+
     return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT interp_end_finally(script_ctx_t *ctx)
 {
+    call_frame_t *frame = ctx->call_ctx;
     jsval_t v;
 
     TRACE("\n");
@@ -964,7 +969,9 @@ static HRESULT interp_end_finally(script_ctx_t *ctx)
         return DISP_E_EXCEPTION;
     }
 
-    stack_pop(ctx);
+    v = stack_pop(ctx);
+    assert(is_number(v));
+    frame->ip = get_number(v);
     return S_OK;
 }
 
@@ -2676,7 +2683,6 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 
     except_frame = frame->except_frame;
     catch_off = except_frame->catch_off;
-    frame->except_frame = except_frame->next;
 
     assert(except_frame->stack_top <= ctx->stack_top);
     stack_popn(ctx, ctx->stack_top - except_frame->stack_top);
@@ -2691,7 +2697,13 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     ctx->ei.val = jsval_undefined();
     clear_ei(ctx);
 
-    heap_free(except_frame);
+    /* keep current except_frame if we're entering catch block with finally block associated */
+    if(catch_off && except_frame->finally_off) {
+        except_frame->catch_off = 0;
+    }else {
+        frame->except_frame = except_frame->next;
+        heap_free(except_frame);
+    }
 
     hres = stack_push(ctx, except_val);
     if(FAILED(hres))
