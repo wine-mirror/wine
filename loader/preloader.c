@@ -311,9 +311,16 @@ __ASM_GLOBAL_FUNC(wld_mmap,
                   "\tshrl $12,%ebp\n"
                   "\tint $0x80\n"
                   "\tcmpl $-4096,%eax\n"
-                  "\tjbe 1f\n"
-                  "\tmovl $-1,%eax\n"
-                  "1:\tpopl %edi\n"
+                  "\tjbe 2f\n"
+                  "\tcmpl $-38,%eax\n"      /* ENOSYS */
+                  "\tjne 1f\n"
+                  "\tmovl $90,%eax\n"       /* SYS_mmap */
+                  "\tleal 20(%esp),%ebx\n"
+                  "\tint $0x80\n"
+                  "\tcmpl $-4096,%eax\n"
+                  "\tjbe 2f\n"
+                  "1:\tmovl $-1,%eax\n"
+                  "2:\tpopl %edi\n"
                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                   "\tpopl %esi\n"
                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
