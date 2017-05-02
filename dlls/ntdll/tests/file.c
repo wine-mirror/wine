@@ -1023,6 +1023,7 @@ static void test_iocp_fileio(HANDLE h)
     {
         OVERLAPPED o = {0,};
         BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
+        int apc_count = 0;
         DWORD read;
         long count;
 
@@ -1051,6 +1052,60 @@ static void test_iocp_fileio(HANDLE h)
         }
         count = get_pending_msgs(h);
         ok( !count, "Unexpected msg count: %ld\n", count );
+
+        /* using APCs on handle with associated completion port is not allowed */
+        res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+        todo_wine
+        ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
+    }
+
+    CloseHandle( hPipeSrv );
+    CloseHandle( hPipeClt );
+
+    /* test associating a completion port with a handle after an async using APC is queued */
+    hPipeSrv = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 4, 1024, 1024, 1000, NULL );
+    ok( hPipeSrv != INVALID_HANDLE_VALUE, "Cannot create named pipe\n" );
+    if (hPipeSrv == INVALID_HANDLE_VALUE )
+        return;
+    hPipeClt = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( hPipeClt != INVALID_HANDLE_VALUE, "Cannot connect to pipe\n" );
+    if (hPipeClt != INVALID_HANDLE_VALUE)
+    {
+        BYTE send_buf[TEST_BUF_LEN], recv_buf[TEST_BUF_LEN];
+        int apc_count = 0;
+        DWORD read;
+        long count;
+
+        memset( send_buf, 0, TEST_BUF_LEN );
+        memset( recv_buf, 0xde, TEST_BUF_LEN );
+        count = get_pending_msgs(h);
+        ok( !count, "Unexpected msg count: %ld\n", count );
+
+        res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+        ok(res == STATUS_PENDING, "NtReadFile returned %x\n", res);
+
+        U(iosb).Status = 0xdeadbeef;
+        res = pNtSetInformationFile( hPipeSrv, &iosb, &fci, sizeof(fci), FileCompletionInformation );
+        ok( res == STATUS_SUCCESS, "NtSetInformationFile failed: %x\n", res );
+        ok( U(iosb).Status == STATUS_SUCCESS, "iosb.Status invalid: %x\n", U(iosb).Status );
+        count = get_pending_msgs(h);
+        ok( !count, "Unexpected msg count: %ld\n", count );
+
+        WriteFile( hPipeClt, send_buf, TEST_BUF_LEN, &read, NULL );
+
+        ok(!apc_count, "apc_count = %u\n", apc_count);
+        count = get_pending_msgs(h);
+        ok( !count, "Unexpected msg count: %ld\n", count );
+
+        SleepEx(1, TRUE); /* alertable sleep */
+        ok(apc_count == 1, "apc was not called\n");
+        count = get_pending_msgs(h);
+        ok( !count, "Unexpected msg count: %ld\n", count );
+
+        /* using APCs on handle with associated completion port is not allowed */
+        res = NtReadFile( hPipeSrv, NULL, apc, &apc_count, &iosb, recv_buf, sizeof(recv_buf), NULL, NULL );
+        todo_wine
+        ok(res == STATUS_INVALID_PARAMETER, "NtReadFile returned %x\n", res);
     }
 
     CloseHandle( hPipeSrv );
