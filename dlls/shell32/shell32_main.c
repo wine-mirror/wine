@@ -427,7 +427,6 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     IExtractIconW * pei = NULL;
     LPITEMIDLIST    pidlLast = NULL, pidl = NULL;
     HRESULT hr = S_OK;
-    BOOL IconNotYetLoaded=TRUE;
     UINT uGilFlags = 0;
 
     TRACE("%s fattr=0x%x sfi=%p(attr=0x%08x) size=0x%x flags=0x%x\n",
@@ -598,9 +597,6 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     if (flags & SHGFI_SELECTED)
         FIXME("set icon to selected, stub\n");
 
-    if (flags & SHGFI_SHELLICONSIZE)
-        FIXME("set icon to shell size, stub\n");
-
     /* get the iconlocation */
     if (SUCCEEDED(hr) && (flags & SHGFI_ICONLOCATION ))
     {
@@ -667,17 +663,16 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 
         if (flags & SHGFI_USEFILEATTRIBUTES && !(flags & SHGFI_PIDL))
         {
-            WCHAR sTemp [MAX_PATH];
-            WCHAR * szExt;
-            int icon_idx=0;
-
-            lstrcpynW(sTemp, szFullPath, MAX_PATH);
-
             if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 psfi->iIcon = SIC_GetIconIndex(swShell32Name, -IDI_SHELL_FOLDER, 0);
             else
             {
                 static const WCHAR p1W[] = {'%','1',0};
+                WCHAR sTemp[MAX_PATH];
+                WCHAR *szExt;
+                int icon_idx = 0;
+
+                lstrcpynW(sTemp, szFullPath, MAX_PATH);
 
                 psfi->iIcon = 0;
                 szExt = PathFindExtensionW(sTemp);
@@ -688,31 +683,9 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                     if (!lstrcmpW(p1W,sTemp))            /* icon is in the file */
                         strcpyW(sTemp, szFullPath);
 
-                    if (flags & SHGFI_SYSICONINDEX) 
-                    {
-                        psfi->iIcon = SIC_GetIconIndex(sTemp,icon_idx,0);
-                        if (psfi->iIcon == -1)
-                            psfi->iIcon = 0;
-                    }
-                    else 
-                    {
-                        UINT ret;
-                        if (flags & SHGFI_SMALLICON)
-                            ret = PrivateExtractIconsW( sTemp,icon_idx,
-                                GetSystemMetrics( SM_CXSMICON ),
-                                GetSystemMetrics( SM_CYSMICON ),
-                                &psfi->hIcon, 0, 1, 0);
-                        else
-                            ret = PrivateExtractIconsW( sTemp, icon_idx,
-                                GetSystemMetrics( SM_CXICON),
-                                GetSystemMetrics( SM_CYICON),
-                                &psfi->hIcon, 0, 1, 0);
-                        if (ret != 0 && ret != (UINT)-1)
-                        {
-                            IconNotYetLoaded=FALSE;
-                            psfi->iIcon = icon_idx;
-                        }
-                    }
+                    psfi->iIcon = SIC_GetIconIndex(sTemp, icon_idx, 0);
+                    if (psfi->iIcon == -1)
+                        psfi->iIcon = 0;
                 }
             }
         }
@@ -731,7 +704,37 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         }
         if (ret && (flags & SHGFI_ICON))
         {
-            hr = IImageList_GetIcon( icon_list, psfi->iIcon, ILD_NORMAL, &psfi->hIcon );
+            if (flags & SHGFI_SHELLICONSIZE)
+                hr = IImageList_GetIcon( icon_list, psfi->iIcon, ILD_NORMAL, &psfi->hIcon );
+            else
+            {
+                int width = GetSystemMetrics( (flags & SHGFI_SMALLICON) ? SM_CXSMICON : SM_CXICON );
+                int height = GetSystemMetrics( (flags & SHGFI_SMALLICON) ? SM_CYSMICON : SM_CYICON );
+                int list_width, list_height;
+
+                IImageList_GetIconSize( icon_list, &list_width, &list_height );
+                if (list_width == width && list_height == height)
+                    hr = IImageList_GetIcon( icon_list, psfi->iIcon, ILD_NORMAL, &psfi->hIcon );
+                else /* Use SHIL_SYSSMALL for SHFI_SMALLICONS when we implement it */
+                {
+                    WCHAR buf[MAX_PATH], *file = buf;
+                    DWORD size = sizeof(buf);
+                    int icon_idx;
+
+                    while ((hr = SIC_get_location( psfi->iIcon, file, &size, &icon_idx ) == E_NOT_SUFFICIENT_BUFFER))
+                    {
+                        if (file == buf) file = HeapAlloc( GetProcessHeap(), 0, size );
+                        else file = HeapReAlloc( GetProcessHeap(), 0, file, size );
+                        if (!file) break;
+                    }
+                    if (SUCCEEDED(hr))
+                    {
+                        ret = PrivateExtractIconsW( file, icon_idx, width, height, &psfi->hIcon, 0, 1, 0);
+                        if (ret == 0 || ret == (UINT)-1) hr = E_FAIL;
+                    }
+                    if (file != buf) HeapFree( GetProcessHeap(), 0, file );
+                }
+            }
         }
         IImageList_Release( icon_list );
     }

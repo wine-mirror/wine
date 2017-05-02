@@ -51,6 +51,7 @@ extern CLSID CLSID_ShellImageDataFactory;
 void SIC_Destroy(void) DECLSPEC_HIDDEN;
 BOOL PidlToSicIndex (IShellFolder * sh, LPCITEMIDLIST pidl, BOOL bBigIcon, UINT uFlags, int * pIndex) DECLSPEC_HIDDEN;
 INT SIC_GetIconIndex (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags ) DECLSPEC_HIDDEN;
+HRESULT SIC_get_location( int list_idx, WCHAR *file, DWORD *size, int *res_idx ) DECLSPEC_HIDDEN;
 
 /* Classes Root */
 BOOL HCR_MapTypeToValueW(LPCWSTR szExtension, LPWSTR szFileType, LONG len, BOOL bPrependDot) DECLSPEC_HIDDEN;

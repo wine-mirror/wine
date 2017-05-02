@@ -338,11 +338,8 @@ static void check_icon_size( HICON icon, DWORD flags )
 
     if (flags & SHGFI_SHELLICONSIZE)
     {
-        todo_wine_if(list_size.cx != metrics_size.cx)
-        {
-            ok( bm.bmWidth == list_size.cx, "got %d expected %d\n", bm.bmWidth, list_size.cx );
-            ok( bm.bmHeight == list_size.cy, "got %d expected %d\n", bm.bmHeight, list_size.cy );
-        }
+        ok( bm.bmWidth == list_size.cx, "got %d expected %d\n", bm.bmWidth, list_size.cx );
+        ok( bm.bmHeight == list_size.cy, "got %d expected %d\n", bm.bmHeight, list_size.cy );
     }
     else
     {

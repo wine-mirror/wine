@@ -78,6 +78,8 @@ static const WCHAR WindowMetrics[] = {'C','o','n','t','r','o','l',' ','P','a','n
                                       'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
 static const WCHAR ShellIconSize[] = {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
 
+#define SIC_COMPARE_LISTINDEX 1
+
 /*****************************************************************************
  * SIC_CompareEntries
  *
@@ -94,6 +96,10 @@ static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
 	 * loaded from, their resource index and the fact if they have a shortcut
 	 * icon overlay or not. 
 	 */
+
+        if (lparam & SIC_COMPARE_LISTINDEX)
+            return e1->dwListIndex != e2->dwListIndex;
+
 	if (e1->dwSourceIndex != e2->dwSourceIndex || /* first the faster one */
 	    (e1->dwFlags & GIL_FORSHORTCUT) != (e2->dwFlags & GIL_FORSHORTCUT)) 
 	  return 1;
@@ -102,6 +108,44 @@ static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
 	  return 1;
 
 	return 0;
+}
+
+/**************************************************************************************
+ *                      SIC_get_location
+ *
+ * Returns the source file and resource index of an icon with the given imagelist index
+ */
+HRESULT SIC_get_location( int list_idx, WCHAR *file, DWORD *size, int *res_idx )
+{
+    SIC_ENTRY seek, *found;
+    DWORD needed;
+    HRESULT hr = E_INVALIDARG;
+    int dpa_idx;
+
+    seek.dwListIndex = list_idx;
+
+    EnterCriticalSection( &SHELL32_SicCS );
+
+    dpa_idx = DPA_Search( sic_hdpa, &seek, 0, SIC_CompareEntries, SIC_COMPARE_LISTINDEX, 0 );
+    if (dpa_idx != -1)
+    {
+        found = (SIC_ENTRY *)DPA_GetPtr( sic_hdpa, dpa_idx );
+        needed = (strlenW( found->sSourceFile ) + 1) * sizeof(WCHAR);
+        if (needed <= *size)
+        {
+            memcpy( file, found->sSourceFile, needed );
+            *res_idx = found->dwSourceIndex;
+            hr = S_OK;
+        }
+        else
+        {
+            *size = needed;
+            hr = E_NOT_SUFFICIENT_BUFFER;
+        }
+    }
+    LeaveCriticalSection( &SHELL32_SicCS );
+
+    return hr;
 }
 
 /* declare SIC_LoadOverlayIcon() */
