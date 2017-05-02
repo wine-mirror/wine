@@ -301,7 +301,7 @@ static IExplorerBrowserEvents *make_explorer_events(explorer_info *info)
 
 static void make_explorer_window(IShellFolder* startFolder)
 {
-    RECT explorerRect;
+    RECT rect;
     HWND rebar,nav_toolbar;
     FOLDERSETTINGS fs;
     IExplorerBrowserEvents *events;
@@ -340,12 +340,9 @@ static void make_explorer_window(IShellFolder* startFolder)
 
     fs.ViewMode = FVM_DETAILS;
     fs.fFlags = FWF_AUTOARRANGE;
-    explorerRect.left = 0;
-    explorerRect.top = 0;
-    explorerRect.right = DEFAULT_WIDTH;
-    explorerRect.bottom = DEFAULT_HEIGHT;
 
-    IExplorerBrowser_Initialize(info->browser,info->main_window,&explorerRect,&fs);
+    SetRect(&rect, 0, 0, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    IExplorerBrowser_Initialize(info->browser,info->main_window,&rect,&fs);
     IExplorerBrowser_SetOptions(info->browser,EBO_SHOWFRAMES);
     SetWindowLongPtrW(info->main_window,EXPLORER_INFO_INDEX,(LONG_PTR)info);
 
@@ -392,9 +389,10 @@ static void make_explorer_window(IShellFolder* startFolder)
                                    WS_CHILD | WS_VISIBLE | CBS_DROPDOWN,
                                    0,0,DEFAULT_WIDTH,PATHBOX_HEIGHT,rebar,NULL,
                                    explorer_hInstance,NULL);
-    band_info.cyChild=PATHBOX_HEIGHT;
+    GetWindowRect(info->path_box, &rect);
+    band_info.cyChild = rect.bottom - rect.top;
     band_info.cx=0;
-    band_info.cyMinChild=PATHBOX_HEIGHT;
+    band_info.cyMinChild = rect.bottom - rect.top;
     band_info.cxMinChild=0;
     band_info.fMask|=RBBIM_TEXT;
     band_info.lpText=pathbox_label;
