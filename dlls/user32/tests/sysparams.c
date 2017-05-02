@@ -39,6 +39,8 @@
 #endif
 
 static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODEA, HWND, DWORD, LPVOID);
+static BOOL (WINAPI *pIsProcessDPIAware)(void);
+static BOOL (WINAPI *pSetProcessDPIAware)(void);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -2702,7 +2704,7 @@ static void test_GetSystemMetrics( void)
 
     HDC hdc = CreateICA( "Display", 0, 0, 0);
     UINT avcwCaption;
-    INT CaptionWidthfromreg;
+    INT CaptionWidthfromreg, smicon, broken_val;
     MINIMIZEDMETRICS minim;
     NONCLIENTMETRICSA ncm;
     SIZE screen;
@@ -2769,8 +2771,9 @@ static void test_GetSystemMetrics( void)
     ok_gsm( SM_CYDLGFRAME, 3);
     ok_gsm( SM_CYVTHUMB,  ncm.iScrollHeight);
     ok_gsm( SM_CXHTHUMB,  ncm.iScrollHeight);
-    /* SM_CXICON */
-    /* SM_CYICON */
+    /* These don't depend on the Shell Icon Size registry value */
+    ok_gsm( SM_CXICON, MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI ) );
+    ok_gsm( SM_CYICON, MulDiv( 32, dpi, USER_DEFAULT_SCREEN_DPI ) );
     /* SM_CXCURSOR */
     /* SM_CYCURSOR */
     ok_gsm( SM_CYMENU, ncm.iMenuHeight + 1);
@@ -2815,8 +2818,32 @@ static void test_GetSystemMetrics( void)
     /* sign-extension for iHorzGap/iVertGap is broken on Win9x */
     ok_gsm( SM_CXMINSPACING, GetSystemMetrics( SM_CXMINIMIZED) + (short)minim.iHorzGap );
     ok_gsm( SM_CYMINSPACING, GetSystemMetrics( SM_CYMINIMIZED) + (short)minim.iVertGap );
-    /* SM_CXSMICON */
-    /* SM_CYSMICON */
+
+    smicon = MulDiv( 16, dpi, USER_DEFAULT_SCREEN_DPI );
+    if (!pIsProcessDPIAware || pIsProcessDPIAware())
+        smicon = max( min( smicon, CaptionWidthfromreg - 2), 4 ) & ~1;
+    todo_wine_if( real_dpi == dpi && smicon != (MulDiv( 16, dpi, USER_DEFAULT_SCREEN_DPI) & ~1) )
+    {
+        broken_val = (min( ncm.iCaptionHeight, CaptionWidthfromreg ) - 2) & ~1;
+        broken_val = min( broken_val, 20 );
+
+        if (smicon == 4)
+        {
+            ok_gsm_2( SM_CXSMICON, smicon, 6 );
+            ok_gsm_2( SM_CYSMICON, smicon, 6 );
+        }
+        else if (smicon < broken_val)
+        {
+            ok_gsm_2( SM_CXSMICON, smicon, broken_val );
+            ok_gsm_2( SM_CYSMICON, smicon, broken_val );
+        }
+        else
+        {
+            ok_gsm( SM_CXSMICON, smicon );
+            ok_gsm( SM_CYSMICON, smicon );
+        }
+    }
+
     ok_gsm( SM_CYSMCAPTION, ncm.iSmCaptionHeight + 1);
     ok_gsm_3( SM_CXSMSIZE,
         ncm.iSmCaptionWidth, /* classic/standard windows style */
@@ -2960,7 +2987,9 @@ START_TEST(sysparams)
     HANDLE hInstance, hdll;
 
     hdll = GetModuleHandleA("user32.dll");
-    pChangeDisplaySettingsExA=(void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
+    pChangeDisplaySettingsExA = (void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
+    pIsProcessDPIAware = (void*)GetProcAddress(hdll, "IsProcessDPIAware");
+    pSetProcessDPIAware = (void*)GetProcAddress(hdll, "SetProcessDPIAware");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
