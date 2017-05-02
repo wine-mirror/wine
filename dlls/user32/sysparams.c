@@ -2910,10 +2910,9 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
 /***********************************************************************
  *              SetProcessDPIAware   (USER32.@)
  */
-BOOL WINAPI SetProcessDPIAware( VOID )
+BOOL WINAPI SetProcessDPIAware(void)
 {
-    FIXME( "stub!\n");
-
+    TRACE("\n");
     return TRUE;
 }
 
@@ -2922,8 +2921,8 @@ BOOL WINAPI SetProcessDPIAware( VOID )
  */
 BOOL WINAPI IsProcessDPIAware(void)
 {
-    FIXME( "stub!\n");
-    return FALSE;
+    TRACE("returning TRUE\n");
+    return TRUE;
 }
 
 /**********************************************************************

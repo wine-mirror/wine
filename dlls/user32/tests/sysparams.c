@@ -2976,6 +2976,26 @@ static void test_GetSysColorBrush(void)
         win_skip("COLOR_MENUBAR unsupported\n");
 }
 
+static void test_dpi_aware(void)
+{
+    BOOL ret;
+
+    if (!pIsProcessDPIAware)
+    {
+        win_skip("IsProcessDPIAware not available\n");
+        return;
+    }
+
+    ret = pSetProcessDPIAware();
+    ok(ret, "got %d\n", ret);
+
+    ret = pIsProcessDPIAware();
+    ok(ret, "got %d\n", ret);
+
+    dpi = real_dpi;
+    test_GetSystemMetrics();
+}
+
 START_TEST(sysparams)
 {
     int argc;
@@ -3040,4 +3060,5 @@ START_TEST(sysparams)
     }
     ReleaseDC( 0, hdc);
 
+    test_dpi_aware();
 }
