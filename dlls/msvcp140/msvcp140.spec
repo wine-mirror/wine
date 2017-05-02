@@ -3722,14 +3722,14 @@
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) _Thrd_create
 @ cdecl _Thrd_current() _Thrd_current
-@ cdecl _Thrd_detach(ptr) msvcp110._Thrd_detach
+@ cdecl _Thrd_detach(ptr) _Thrd_detach
 @ cdecl _Thrd_equal(ptr ptr) _Thrd_equal
 @ stub _Thrd_exit
 @ cdecl _Thrd_hardware_concurrency() _Thrd_hardware_concurrency
 @ cdecl _Thrd_id() _Thrd_id
 @ cdecl _Thrd_join(ptr long) _Thrd_join
 @ cdecl _Thrd_sleep(ptr) _Thrd_sleep
-@ cdecl _Thrd_start(ptr ptr ptr) msvcp110._Thrd_start
+@ cdecl _Thrd_start(ptr ptr ptr) _Thrd_start
 @ cdecl _Thrd_yield() _Thrd_yield
 @ stub _To_byte
 @ stub _To_wide
