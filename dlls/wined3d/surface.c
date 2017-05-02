@@ -2596,7 +2596,9 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
 
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
-        if (fb->depth_stencil && fb->depth_stencil->resource->pool == WINED3D_POOL_SYSTEM_MEM)
+        view = fb->depth_stencil;
+        if (view && (view->resource->pool == WINED3D_POOL_SYSTEM_MEM
+                || ffp_blitter_use_cpu_clear(view)))
             goto next;
     }
 
