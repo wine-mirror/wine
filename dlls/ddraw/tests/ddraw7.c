@@ -11374,21 +11374,28 @@ static void test_blt(void)
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
-    hr = IDirectDrawSurface_Blt(surface, NULL, surface, NULL, 0, NULL);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, surface, NULL, 0, NULL);
     ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
 
-    hr = IDirectDrawSurface_Blt(surface, NULL, rt, NULL, 0, NULL);
+    hr = IDirectDrawSurface7_Blt(surface, NULL, rt, NULL, 0, NULL);
     ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
 
     for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
     {
-        hr = IDirectDrawSurface_Blt(surface, &test_data[i].dst_rect,
+        hr = IDirectDrawSurface7_Blt(surface, &test_data[i].dst_rect,
                 surface, &test_data[i].src_rect, DDBLT_WAIT, NULL);
         ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
 
-        hr = IDirectDrawSurface_Blt(surface, &test_data[i].dst_rect,
+        hr = IDirectDrawSurface7_Blt(surface, &test_data[i].dst_rect,
                 rt, &test_data[i].src_rect, DDBLT_WAIT, NULL);
         ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
+
+        hr = IDirectDrawSurface7_Blt(surface, &test_data[i].dst_rect,
+                NULL, &test_data[i].src_rect, DDBLT_WAIT, NULL);
+        ok(hr == DDERR_INVALIDPARAMS, "Test %u: Got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirectDrawSurface7_Blt(surface, &test_data[i].dst_rect, NULL, NULL, DDBLT_WAIT, NULL);
+        ok(hr == DDERR_INVALIDPARAMS, "Test %u: Got unexpected hr %#x.\n", i, hr);
     }
 
     IDirectDrawSurface7_Release(surface);
