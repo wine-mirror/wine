@@ -1487,7 +1487,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (pvParam != NULL)
             ret = get_entry( &entry_ICONHORIZONTALSPACING, uiParam, pvParam );
         else
-            ret = set_entry( &entry_ICONHORIZONTALSPACING, max( 32, uiParam ), pvParam, fWinIni );
+        {
+            int min_val = 32;
+            if (IsProcessDPIAware())
+                min_val = MulDiv( min_val, get_display_dpi(), USER_DEFAULT_SCREEN_DPI );
+            ret = set_entry( &entry_ICONHORIZONTALSPACING, max( min_val, uiParam ), pvParam, fWinIni );
+        }
         break;
     case SPI_GETSCREENSAVETIMEOUT:
         ret = get_entry( &entry_SCREENSAVETIMEOUT, uiParam, pvParam );
@@ -1525,7 +1530,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (pvParam != NULL)
             ret = get_entry( &entry_ICONVERTICALSPACING, uiParam, pvParam );
         else
-            ret = set_entry( &entry_ICONVERTICALSPACING, max( 32, uiParam ), pvParam, fWinIni );
+        {
+            int min_val = 32;
+            if (IsProcessDPIAware())
+                min_val = MulDiv( min_val, get_display_dpi(), USER_DEFAULT_SCREEN_DPI );
+            ret = set_entry( &entry_ICONVERTICALSPACING, max( min_val, uiParam ), pvParam, fWinIni );
+        }
         break;
     case SPI_GETICONTITLEWRAP:
         ret = get_entry( &entry_ICONTITLEWRAP, uiParam, pvParam );
