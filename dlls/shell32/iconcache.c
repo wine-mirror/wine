@@ -73,6 +73,11 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION SHELL32_SicCS = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+
+static const WCHAR WindowMetrics[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
+                                      'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+static const WCHAR ShellIconSize[] = {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
+
 /*****************************************************************************
  * SIC_CompareEntries
  *
@@ -361,6 +366,24 @@ static INT SIC_LoadIcon (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags)
         return ret;
 }
 
+static int get_shell_icon_size(void)
+{
+    WCHAR buf[32];
+    DWORD value = 32, size = sizeof(buf), type;
+    HKEY key;
+
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, WindowMetrics, &key ))
+    {
+        if (!RegQueryValueExW( key, ShellIconSize, NULL, &type, (BYTE *)buf, &size ) && type == REG_SZ)
+        {
+            if (size == sizeof(buf)) buf[size / sizeof(WCHAR) - 1] = 0;
+            value = atoiW( buf );
+        }
+        RegCloseKey( key );
+    }
+    return value;
+}
+
 /*****************************************************************************
  * SIC_Initialize			[internal]
  */
@@ -370,12 +393,21 @@ static BOOL WINAPI SIC_Initialize( INIT_ONCE *once, void *param, void **context 
 	int		cx_small, cy_small;
 	int		cx_large, cy_large;
 
-	cx_small = GetSystemMetrics(SM_CXSMICON);
-	cy_small = GetSystemMetrics(SM_CYSMICON);
-	cx_large = GetSystemMetrics(SM_CXICON);
-	cy_large = GetSystemMetrics(SM_CYICON);
+        if (!IsProcessDPIAware())
+        {
+            cx_large = cy_large = get_shell_icon_size();
+            cx_small = GetSystemMetrics( SM_CXSMICON );
+            cy_small = GetSystemMetrics( SM_CYSMICON );
+        }
+        else
+        {
+            cx_large = GetSystemMetrics( SM_CXICON );
+            cy_large = GetSystemMetrics( SM_CYICON );
+            cx_small = cx_large / 2;
+            cy_small = cy_large / 2;
+        }
 
-	TRACE("\n");
+        TRACE("large %dx%d small %dx%d\n", cx_large, cy_large, cx_small, cx_small);
 
 	sic_hdpa = DPA_Create(16);
 

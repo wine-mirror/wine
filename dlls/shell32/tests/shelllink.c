@@ -44,6 +44,7 @@ static HRESULT (WINAPI *pSHGetStockIconInfo)(SHSTOCKICONID, UINT, SHSTOCKICONINF
 static DWORD (WINAPI *pGetLongPathNameA)(LPCSTR, LPSTR, DWORD);
 static DWORD (WINAPI *pGetShortPathNameA)(LPCSTR, LPSTR, DWORD);
 static UINT (WINAPI *pSHExtractIconsW)(LPCWSTR, int, int, int, HICON *, UINT *, UINT, UINT);
+static BOOL (WINAPI *pIsProcessDPIAware)(void);
 
 static const GUID _IID_IShellLinkDataList = {
     0x45e2b4ae, 0xb1c3, 0x11d0,
@@ -1304,6 +1305,21 @@ todo_wine {
     DestroyIcon(hicon);
 }
 
+static int get_shell_icon_size(void)
+{
+    char buf[10];
+    DWORD value = 32, size = sizeof(buf), type;
+    HKEY key;
+
+    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Control Panel\\Desktop\\WindowMetrics", &key ))
+    {
+        if (!RegQueryValueExA( key, "Shell Icon Size", NULL, &type, (BYTE *)buf, &size ) && type == REG_SZ)
+            value = atoi( buf );
+        RegCloseKey( key );
+    }
+    return value;
+}
+
 static void test_SHGetImageList(void)
 {
     HRESULT hr;
@@ -1311,6 +1327,8 @@ static void test_SHGetImageList(void)
     BOOL ret;
     HIMAGELIST lg, sm;
     ULONG start_refs, refs;
+    int i, width, height, expect;
+    BOOL dpi_aware = pIsProcessDPIAware && pIsProcessDPIAware();
 
     hr = SHGetImageList( SHIL_LARGE, &IID_IImageList, (void **)&list );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -1340,6 +1358,44 @@ static void test_SHGetImageList(void)
 
     IImageList_Release( list2 );
     IImageList_Release( list );
+
+    /* Test the icon sizes */
+    for (i = 0; i <= SHIL_LAST; i++)
+    {
+        hr = SHGetImageList( i, &IID_IImageList, (void **)&list );
+        todo_wine_if(i == SHIL_EXTRALARGE || i == SHIL_JUMBO)
+            ok( hr == S_OK ||
+                broken( i == SHIL_JUMBO && hr == E_INVALIDARG ), /* XP and 2003 */
+                "%d: got %08x\n", i, hr );
+        if (FAILED(hr)) continue;
+        IImageList_GetIconSize( list, &width, &height );
+        switch (i)
+        {
+        case SHIL_LARGE:
+            if (dpi_aware) expect = GetSystemMetrics( SM_CXICON );
+            else expect = get_shell_icon_size();
+            break;
+        case SHIL_SMALL:
+            if (dpi_aware) expect = GetSystemMetrics( SM_CXICON ) / 2;
+            else expect = GetSystemMetrics( SM_CXSMICON );
+            break;
+        case SHIL_EXTRALARGE:
+            expect = (GetSystemMetrics( SM_CXICON ) * 3) / 2;
+            break;
+        case SHIL_SYSSMALL:
+            expect = GetSystemMetrics( SM_CXSMICON );
+            break;
+        case SHIL_JUMBO:
+            expect = 256;
+            break;
+        }
+        todo_wine_if(i == SHIL_SYSSMALL && dpi_aware && expect != GetSystemMetrics( SM_CXICON ) / 2)
+        {
+            ok( width == expect, "%d: got %d expect %d\n", i, width, expect );
+            ok( height == expect, "%d: got %d expect %d\n", i, height, expect );
+        }
+        IImageList_Release( list );
+    }
 }
 
 START_TEST(shelllink)
@@ -1347,6 +1403,7 @@ START_TEST(shelllink)
     HRESULT r;
     HMODULE hmod = GetModuleHandleA("shell32.dll");
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE huser32 = GetModuleHandleA("user32.dll");
 
     pILFree = (void *)GetProcAddress(hmod, (LPSTR)155);
     pILIsEqual = (void *)GetProcAddress(hmod, (LPSTR)21);
@@ -1356,6 +1413,7 @@ START_TEST(shelllink)
     pGetLongPathNameA = (void *)GetProcAddress(hkernel32, "GetLongPathNameA");
     pGetShortPathNameA = (void *)GetProcAddress(hkernel32, "GetShortPathNameA");
     pSHExtractIconsW = (void *)GetProcAddress(hmod, "SHExtractIconsW");
+    pIsProcessDPIAware = (void *)GetProcAddress(huser32, "IsProcessDPIAware");
 
     r = CoInitialize(NULL);
     ok(r == S_OK, "CoInitialize failed (0x%08x)\n", r);
