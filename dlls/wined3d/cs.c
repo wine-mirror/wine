@@ -434,6 +434,8 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     {
         wined3d_resource_release(&swapchain->back_buffers[i]->resource);
     }
+
+    InterlockedDecrement(&cs->pending_presents);
 }
 
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain,
@@ -441,6 +443,7 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
 {
     struct wined3d_cs_present *op;
     unsigned int i;
+    LONG pending;
 
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_PRESENT;
@@ -450,6 +453,8 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     op->dst_rect = *dst_rect;
     op->flags = flags;
 
+    pending = InterlockedIncrement(&cs->pending_presents);
+
     wined3d_resource_acquire(&swapchain->front_buffer->resource);
     for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
     {
@@ -457,6 +462,15 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
     }
 
     cs->ops->submit(cs);
+
+    /* Limit input latency by limiting the number of presents that we can get
+     * ahead of the worker thread. We have a constant limit here, but
+     * IDXGIDevice1 allows tuning this. */
+    while (pending > 1)
+    {
+        wined3d_pause();
+        pending = InterlockedCompareExchange(&cs->pending_presents, 0, 0);
+    }
 }
 
 static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
@@ -1856,6 +1870,10 @@ HRESULT wined3d_cs_map(struct wined3d_cs *cs, struct wined3d_resource *resource,
     struct wined3d_cs_map *op;
     HRESULT hr;
 
+    /* Mapping resources from the worker thread isn't an issue by itself, but
+     * increasing the map count would be visible to applications. */
+    wined3d_not_from_cs(cs);
+
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_MAP;
     op->resource = resource;
@@ -1866,6 +1884,7 @@ HRESULT wined3d_cs_map(struct wined3d_cs *cs, struct wined3d_resource *resource,
     op->hr = &hr;
 
     cs->ops->submit(cs);
+    cs->ops->finish(cs);
 
     return hr;
 }
@@ -1883,6 +1902,8 @@ HRESULT wined3d_cs_unmap(struct wined3d_cs *cs, struct wined3d_resource *resourc
     struct wined3d_cs_unmap *op;
     HRESULT hr;
 
+    wined3d_not_from_cs(cs);
+
     op = cs->ops->require_space(cs, sizeof(*op));
     op->opcode = WINED3D_CS_OP_UNMAP;
     op->resource = resource;
@@ -1890,6 +1911,7 @@ HRESULT wined3d_cs_unmap(struct wined3d_cs *cs, struct wined3d_resource *resourc
     op->hr = &hr;
 
     cs->ops->submit(cs);
+    cs->ops->finish(cs);
 
     return hr;
 }
@@ -2040,6 +2062,8 @@ void wined3d_cs_emit_blt_sub_resource(struct wined3d_cs *cs, struct wined3d_reso
         wined3d_resource_acquire(src_resource);
 
     cs->ops->submit(cs);
+    if (flags & WINED3D_BLT_SYNCHRONOUS)
+        cs->ops->finish(cs);
 }
 
 static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const void *data)
@@ -2119,6 +2143,9 @@ void wined3d_cs_emit_update_sub_resource(struct wined3d_cs *cs, struct wined3d_r
     wined3d_resource_acquire(resource);
 
     cs->ops->submit(cs);
+    /* The data pointer may go away, so we need to wait until it is read.
+     * Copying the data may be faster if it's small. */
+    cs->ops->finish(cs);
 }
 
 static void wined3d_cs_exec_add_dirty_texture_region(struct wined3d_cs *cs, const void *data)
@@ -2165,6 +2192,7 @@ static void wined3d_cs_emit_stop(struct wined3d_cs *cs)
     op->opcode = WINED3D_CS_OP_STOP;
 
     cs->ops->submit(cs);
+    cs->ops->finish(cs);
 }
 
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
@@ -2261,10 +2289,15 @@ static void wined3d_cs_st_submit(struct wined3d_cs *cs)
         HeapFree(GetProcessHeap(), 0, data);
 }
 
+static void wined3d_cs_st_finish(struct wined3d_cs *cs)
+{
+}
+
 static const struct wined3d_cs_ops wined3d_cs_st_ops =
 {
     wined3d_cs_st_require_space,
     wined3d_cs_st_submit,
+    wined3d_cs_st_finish,
     wined3d_cs_st_push_constants,
 };
 
@@ -2288,9 +2321,6 @@ static void wined3d_cs_mt_submit(struct wined3d_cs *cs)
 
     if (InterlockedCompareExchange(&cs->waiting_for_event, FALSE, TRUE))
         SetEvent(cs->event);
-
-    while (!wined3d_cs_queue_is_empty(queue))
-        wined3d_pause();
 }
 
 static void *wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size)
@@ -2358,10 +2388,20 @@ static void *wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size)
     return packet->data;
 }
 
+static void wined3d_cs_mt_finish(struct wined3d_cs *cs)
+{
+    if (cs->thread_id == GetCurrentThreadId())
+        return wined3d_cs_st_finish(cs);
+
+    while (!wined3d_cs_queue_is_empty(&cs->queue))
+        wined3d_pause();
+}
+
 static const struct wined3d_cs_ops wined3d_cs_mt_ops =
 {
     wined3d_cs_mt_require_space,
     wined3d_cs_mt_submit,
+    wined3d_cs_mt_finish,
     wined3d_cs_mt_push_constants,
 };
 

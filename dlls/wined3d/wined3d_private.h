@@ -3250,6 +3250,7 @@ struct wined3d_cs_ops
 {
     void *(*require_space)(struct wined3d_cs *cs, size_t size);
     void (*submit)(struct wined3d_cs *cs);
+    void (*finish)(struct wined3d_cs *cs);
     void (*push_constants)(struct wined3d_cs *cs, enum wined3d_push_constants p,
             unsigned int start_idx, unsigned int count, const void *constants);
 };
@@ -3271,6 +3272,7 @@ struct wined3d_cs
 
     HANDLE event;
     BOOL waiting_for_event;
+    LONG pending_presents;
 };
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HIDDEN;
