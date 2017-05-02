@@ -3359,6 +3359,10 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         return;
     }
 
+    if (view->format->id != view->resource->format->id)
+        FIXME("View format %s doesn't match resource format %s.\n",
+                debug_d3dformat(view->format->id), debug_d3dformat(view->resource->format->id));
+
     if (view->resource->type == WINED3D_RTYPE_BUFFER)
     {
         FIXME("Not implemented for buffers.\n");
