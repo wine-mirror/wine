@@ -3125,7 +3125,9 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
         LONG l = RegQueryValueExA(devInfo->key, PropertyMap[Property].nameA,
                 NULL, PropertyRegDataType, PropertyBuffer, &size);
 
-        if (l == ERROR_MORE_DATA || !PropertyBufferSize)
+        if (l == ERROR_FILE_NOT_FOUND)
+            SetLastError(ERROR_INVALID_DATA);
+        else if (l == ERROR_MORE_DATA || !PropertyBufferSize)
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
         else if (!l)
             ret = TRUE;
@@ -3186,7 +3188,9 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyW(
         LONG l = RegQueryValueExW(devInfo->key, PropertyMap[Property].nameW,
                 NULL, PropertyRegDataType, PropertyBuffer, &size);
 
-        if (l == ERROR_MORE_DATA || !PropertyBufferSize)
+        if (l == ERROR_FILE_NOT_FOUND)
+            SetLastError(ERROR_INVALID_DATA);
+        else if (l == ERROR_MORE_DATA || !PropertyBufferSize)
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
         else if (!l)
             ret = TRUE;
