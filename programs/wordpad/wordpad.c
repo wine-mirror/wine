@@ -1813,8 +1813,15 @@ static LRESULT OnCreate( HWND hWnd )
     int nStdBitmaps = 0;
     REBARINFO rbi;
     REBARBANDINFOW rbb;
+    RECT rect;
+    HFONT font;
+    HDC hdc;
+    SIZE name_sz, size_sz;
+    int height;
     static const WCHAR wszRichEditDll[] = {'R','I','C','H','E','D','2','0','.','D','L','L','\0'};
     static const WCHAR wszRichEditText[] = {'R','i','c','h','E','d','i','t',' ','t','e','x','t','\0'};
+    static const WCHAR font_text[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0}; /* a long font name */
+    static const WCHAR size_text[] = {' ','0','0',0}; /* enough for two digits */
 
     CreateStatusWindowW(CCS_NODIVIDER|WS_CHILD|WS_VISIBLE, wszRichEditText, hWnd, IDC_STATUSBAR);
 
@@ -1856,6 +1863,13 @@ static LRESULT OnCreate( HWND hWnd )
     AddButton(hToolBarWnd, 0, ID_DATETIME);
 
     SendMessageW(hToolBarWnd, TB_AUTOSIZE, 0, 0);
+    height = HIWORD(SendMessageW(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
+
+    hFontListWnd = CreateWindowExW(0, WC_COMBOBOXEXW, NULL,
+                      WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN | CBS_SORT,
+                      0, 0, 200, 150, hReBarWnd, (HMENU)IDC_FONTLIST, hInstance, NULL);
+    GetWindowRect(hFontListWnd, &rect);
+    height = max(height, rect.bottom - rect.top);
 
     rbb.cbSize = REBARBANDINFOW_V6_SIZE;
     rbb.fMask = RBBIM_SIZE | RBBIM_CHILDSIZE | RBBIM_CHILD | RBBIM_STYLE | RBBIM_ID;
@@ -1863,17 +1877,20 @@ static LRESULT OnCreate( HWND hWnd )
     rbb.cx = 0;
     rbb.hwndChild = hToolBarWnd;
     rbb.cxMinChild = 0;
-    rbb.cyChild = rbb.cyMinChild = HIWORD(SendMessageW(hToolBarWnd, TB_GETBUTTONSIZE, 0, 0));
+    rbb.cyChild = rbb.cyMinChild = height;
     rbb.wID = BANDID_TOOLBAR;
 
     SendMessageW(hReBarWnd, RB_INSERTBANDW, -1, (LPARAM)&rbb);
 
-    hFontListWnd = CreateWindowExW(0, WC_COMBOBOXEXW, NULL,
-                      WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN | CBS_SORT,
-                      0, 0, 200, 150, hReBarWnd, (HMENU)IDC_FONTLIST, hInstance, NULL);
-
+    font = (HFONT)SendMessageW(hFontListWnd, WM_GETFONT, 0, 0);
+    hdc = GetDC(hFontListWnd);
+    font = SelectObject(hdc, font);
+    GetTextExtentPointW(hdc, font_text, sizeof(font_text) / sizeof(font_text[0]) - 1, &name_sz);
+    GetTextExtentPointW(hdc, size_text, sizeof(size_text) / sizeof(size_text[0]) - 1, &size_sz);
+    font = SelectObject(hdc, font);
+    ReleaseDC(hFontListWnd, hdc);
     rbb.hwndChild = hFontListWnd;
-    rbb.cx = 200;
+    rbb.cx = MulDiv(name_sz.cx, 3, 2) + height; /* height is space for the dropdown arrow */
     rbb.wID = BANDID_FONTLIST;
 
     SendMessageW(hReBarWnd, RB_INSERTBANDW, -1, (LPARAM)&rbb);
@@ -1883,7 +1900,7 @@ static LRESULT OnCreate( HWND hWnd )
                       0, 0, 50, 150, hReBarWnd, (HMENU)IDC_SIZELIST, hInstance, NULL);
 
     rbb.hwndChild = hSizeListWnd;
-    rbb.cx = 50;
+    rbb.cx = MulDiv(size_sz.cx, 3, 2) + height; /* height is space for the dropdown arrow */
     rbb.fStyle ^= RBBS_BREAK;
     rbb.wID = BANDID_SIZELIST;
 
