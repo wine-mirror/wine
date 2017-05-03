@@ -103,7 +103,99 @@ static void BuildAnyForSingleElement_tests(void)
     WSDFreeLinkedMemory(element);
 }
 
+static void AddChild_tests(void)
+{
+    WSDXML_ELEMENT *parent, *child1, *child2;
+    WSDXML_NAME parentName, child1Name, child2Name;
+    WSDXML_NAMESPACE ns;
+    WCHAR parentNameText[] = {'D','a','d',0};
+    WCHAR child1NameText[] = {'T','i','m',0};
+    WCHAR child2NameText[] = {'B','o','b',0};
+    static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
+    static const WCHAR prefix[] = {'t',0};
+    HRESULT hr;
+
+    /* Test invalid values */
+    hr = WSDXMLAddChild(NULL, NULL);
+    ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
+
+    hr = WSDXMLAddChild(parent, NULL);
+    ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
+
+    hr = WSDXMLAddChild(NULL, child1);
+    ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
+
+    /* Populate structures */
+    ns.Uri = uri;
+    ns.PreferredPrefix = prefix;
+
+    parentName.LocalName = parentNameText;
+    parentName.Space = &ns;
+
+    child1Name.LocalName = child1NameText;
+    child1Name.Space = &ns;
+
+    child2Name.LocalName = child2NameText;
+    child2Name.Space = &ns;
+
+    /* Create some elements */
+    hr = WSDXMLBuildAnyForSingleElement(&parentName, NULL, &parent);
+    ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
+
+    hr = WSDXMLBuildAnyForSingleElement(&child1Name, child1NameText, &child1);
+    ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
+
+    hr = WSDXMLBuildAnyForSingleElement(&child2Name, NULL, &child2);
+    ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
+
+    ok(parent->Node.Parent == NULL, "parent->Node.Parent == %p\n", parent->Node.Parent);
+    ok(parent->FirstChild == NULL, "parent->FirstChild == %p\n", parent->FirstChild);
+    ok(parent->Node.Next == NULL, "parent->Node.Next == %p\n", parent->Node.Next);
+    ok(child1->Node.Parent == NULL, "child1->Node.Parent == %p\n", child1->Node.Parent);
+    ok(child1->FirstChild != NULL, "child1->FirstChild == NULL\n");
+    ok(child1->FirstChild->Type == TextType, "child1->FirstChild.Type == %d\n", child1->FirstChild->Type);
+    ok(child1->Node.Next == NULL, "child1->Node.Next == %p\n", child1->Node.Next);
+
+    /* Add the child to the parent */
+    hr = WSDXMLAddChild(parent, child1);
+    ok(hr == S_OK, "WSDXMLAddChild failed with %08x\n", hr);
+
+    ok(parent->Node.Parent == NULL, "parent->Node.Parent == %p\n", parent->Node.Parent);
+    ok(parent->FirstChild == (WSDXML_NODE *)child1, "parent->FirstChild == %p\n", parent->FirstChild);
+    ok(parent->Node.Next == NULL, "parent->Node.Next == %p\n", parent->Node.Next);
+    ok(child1->Node.Parent == parent, "child1->Node.Parent == %p\n", child1->Node.Parent);
+    ok(child1->FirstChild != NULL, "child1->FirstChild == NULL\n");
+    ok(child1->FirstChild->Type == TextType, "child1->FirstChild.Type == %d\n", child1->FirstChild->Type);
+    ok(child1->Node.Next == NULL, "child1->Node.Next == %p\n", child1->Node.Next);
+
+    /* Try to set child1 as the child of child2, which already has a parent */
+    hr = WSDXMLAddChild(child2, child1);
+    ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
+
+    /* Try to set child2 as the child of child1, which has a text node as a child */
+    hr = WSDXMLAddChild(child2, child1);
+    ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
+
+    /* Add child2 as a child of parent */
+    hr = WSDXMLAddChild(parent, child2);
+    ok(hr == S_OK, "WSDXMLAddChild failed with %08x\n", hr);
+
+    ok(parent->Node.Parent == NULL, "parent->Node.Parent == %p\n", parent->Node.Parent);
+    ok(parent->FirstChild == (WSDXML_NODE *)child1, "parent->FirstChild == %p\n", parent->FirstChild);
+    ok(parent->Node.Next == NULL, "parent->Node.Next == %p\n", parent->Node.Next);
+    ok(child1->Node.Parent == parent, "child1->Node.Parent == %p\n", child1->Node.Parent);
+    ok(child1->FirstChild != NULL, "child1->FirstChild == NULL\n");
+    ok(child1->FirstChild->Type == TextType, "child1->FirstChild.Type == %d\n", child1->FirstChild->Type);
+    ok(child1->Node.Next == (WSDXML_NODE *)child2, "child1->Node.Next == %p\n", child1->Node.Next);
+    ok(child2->Node.Parent == parent, "child2->Node.Parent == %p\n", child2->Node.Parent);
+    ok(child2->FirstChild == NULL, "child2->FirstChild == %p\n", child2->FirstChild);
+    ok(child2->Node.Next == NULL, "child2->Node.Next == %p\n", child2->Node.Next);
+
+    WSDFreeLinkedMemory(parent);
+}
+
 START_TEST(xml)
 {
     BuildAnyForSingleElement_tests();
+    AddChild_tests();
 }
