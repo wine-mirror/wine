@@ -671,11 +671,14 @@ static enum reg_versions parse_file_header(WCHAR *s)
     return REG_VERSION_INVALID;
 }
 
-static char *get_lineA(FILE *fp)
+static WCHAR *get_lineA(FILE *fp)
 {
+    static WCHAR *lineW;
     static size_t size;
     static char *buf, *next;
     char *line;
+
+    HeapFree(GetProcessHeap(), 0, lineW);
 
     if (!fp) goto cleanup;
 
@@ -707,7 +710,8 @@ static char *get_lineA(FILE *fp)
             if (!(count = fread(buf + len, 1, size - len - 1, fp)))
             {
                 next = NULL;
-                return buf;
+                lineW = GetWideString(buf);
+                return lineW;
             }
             buf[len + count] = 0;
             next = buf;
@@ -730,10 +734,12 @@ static char *get_lineA(FILE *fp)
             line = next;
             continue;
         }
-        return line;
+        lineW = GetWideString(line);
+        return lineW;
     }
 
 cleanup:
+    lineW = NULL;
     if (size) HeapFree(GetProcessHeap(), 0, buf);
     size = 0;
     return NULL;
@@ -741,22 +747,19 @@ cleanup:
 
 static BOOL processRegLinesA(FILE *fp, char *two_chars)
 {
-    char *line, *header;
-    WCHAR *lineW;
+    WCHAR *line, *header;
     int reg_version;
 
     line = get_lineA(fp);
 
-    header = HeapAlloc(GetProcessHeap(), 0, strlen(line) + 3);
+    header = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(line) + 3) * sizeof(WCHAR));
     CHECK_ENOUGH_MEMORY(header);
-    strcpy(header, two_chars);
-    strcpy(header + 2, line);
+    header[0] = two_chars[0];
+    header[1] = two_chars[1];
+    lstrcpyW(header + 2, line);
 
-    lineW = GetWideString(header);
+    reg_version = parse_file_header(header);
     HeapFree(GetProcessHeap(), 0, header);
-
-    reg_version = parse_file_header(lineW);
-    HeapFree(GetProcessHeap(), 0, lineW);
     if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
     {
         get_lineA(NULL); /* Reset static variables */
@@ -765,14 +768,10 @@ static BOOL processRegLinesA(FILE *fp, char *two_chars)
 
     while ((line = get_lineA(fp)))
     {
-        lineW = GetWideString(line);
-
         if (reg_version == REG_VERSION_31)
-            processRegEntry31(lineW);
+            processRegEntry31(line);
         else
-            processRegEntry(lineW, FALSE);
-
-        HeapFree(GetProcessHeap(), 0, lineW);
+            processRegEntry(line, FALSE);
     }
 
     closeKey();
