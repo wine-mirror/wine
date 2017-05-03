@@ -68,36 +68,6 @@ enum fs_type
     FS_UDF       /* For reference [E] = Ecma-167.pdf, [U] = udf260.pdf */
 };
 
-/* read a Unix symlink; returned buffer must be freed by caller */
-static char *read_symlink( const char *path )
-{
-    char *buffer;
-    int ret, size = 128;
-
-    for (;;)
-    {
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size )))
-        {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            return 0;
-        }
-        ret = readlink( path, buffer, size );
-        if (ret == -1)
-        {
-            FILE_SetDosError();
-            HeapFree( GetProcessHeap(), 0, buffer );
-            return 0;
-        }
-        if (ret != size)
-        {
-            buffer[ret] = 0;
-            return buffer;
-        }
-        HeapFree( GetProcessHeap(), 0, buffer );
-        size *= 2;
-    }
-}
-
 /* get the path of a dos device symlink in the $WINEPREFIX/dosdevices directory */
 static char *get_dos_device_path( LPCWSTR name )
 {
@@ -1257,18 +1227,9 @@ BOOL WINAPI DefineDosDeviceA(DWORD flags, LPCSTR devname, LPCSTR targetpath)
  */
 DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
 {
-    static const WCHAR auxW[] = {'A','U','X',0};
-    static const WCHAR prnW[] = {'P','R','N',0};
-    static const WCHAR comW[] = {'C','O','M',0};
-    static const WCHAR lptW[] = {'L','P','T',0};
-    static const WCHAR com0W[] = {'\\','?','?','\\','C','O','M','0',0};
-    static const WCHAR com1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','C','O','M','1',0,0};
-    static const WCHAR lpt1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','1',0,0};
     static const WCHAR dosdevW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
 
     UNICODE_STRING nt_name;
-    ANSI_STRING unix_name;
-    WCHAR nt_buffer[10];
     NTSTATUS status;
 
     if (!bufsize)
@@ -1279,8 +1240,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
 
     if (devname)
     {
-        WCHAR *p, name[5];
-        char *path, *link;
+        WCHAR name[8];
         WCHAR *buffer;
         DWORD dosdev, ret = 0;
 
@@ -1300,72 +1260,13 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         strcatW( buffer, devname );
         status = read_nt_symlink( buffer, target, bufsize );
         HeapFree( GetProcessHeap(), 0, buffer );
-        if (!status)
-        {
-            ret = strlenW( target ) + 1;
-            goto done;
-        }
-        if (!dosdev)  /* not a special DOS device */
+        if (status)
         {
             SetLastError( RtlNtStatusToDosError(status) );
             return 0;
         }
-
-        /* FIXME: should read NT symlink for all devices */
-
-        if (!(path = get_dos_device_path( name ))) return 0;
-        link = read_symlink( path );
-        HeapFree( GetProcessHeap(), 0, path );
-
-        if (link)
-        {
-            ret = MultiByteToWideChar( CP_UNIXCP, 0, link, -1, target, bufsize );
-            HeapFree( GetProcessHeap(), 0, link );
-        }
-        else  /* look for device defaults */
-        {
-            if (!strcmpiW( name, auxW ))
-            {
-                if (bufsize >= sizeof(com1W)/sizeof(WCHAR))
-                {
-                    memcpy( target, com1W, sizeof(com1W) );
-                    ret = sizeof(com1W)/sizeof(WCHAR);
-                }
-                else SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                return ret;
-            }
-            if (!strcmpiW( name, prnW ))
-            {
-                if (bufsize >= sizeof(lpt1W)/sizeof(WCHAR))
-                {
-                    memcpy( target, lpt1W, sizeof(lpt1W) );
-                    ret = sizeof(lpt1W)/sizeof(WCHAR);
-                }
-                else SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                return ret;
-            }
-
-            nt_buffer[0] = '\\';
-            nt_buffer[1] = '?';
-            nt_buffer[2] = '?';
-            nt_buffer[3] = '\\';
-            strcpyW( nt_buffer + 4, name );
-            RtlInitUnicodeString( &nt_name, nt_buffer );
-            status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE );
-            if (status) SetLastError( RtlNtStatusToDosError(status) );
-            else
-            {
-                ret = MultiByteToWideChar( CP_UNIXCP, 0, unix_name.Buffer, -1, target, bufsize );
-                RtlFreeAnsiString( &unix_name );
-            }
-        }
-    done:
-        if (ret)
-        {
-            if (ret < bufsize) target[ret++] = 0;  /* add an extra null */
-            for (p = target; *p; p++) if (*p == '/') *p = '\\';
-        }
-
+        ret = strlenW( target ) + 1;
+        if (ret < bufsize) target[ret++] = 0;  /* add an extra null */
         return ret;
     }
     else  /* return a list of all devices */
@@ -1373,59 +1274,6 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         OBJECT_ATTRIBUTES attr;
         HANDLE handle;
         WCHAR *p = target;
-        int i;
-
-        if (bufsize <= (sizeof(auxW)+sizeof(prnW))/sizeof(WCHAR))
-        {
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            return 0;
-        }
-
-        /* FIXME: these should be NT symlinks too */
-
-        memcpy( p, auxW, sizeof(auxW) );
-        p += sizeof(auxW) / sizeof(WCHAR);
-        memcpy( p, prnW, sizeof(prnW) );
-        p += sizeof(prnW) / sizeof(WCHAR);
-
-        strcpyW( nt_buffer, com0W );
-        RtlInitUnicodeString( &nt_name, nt_buffer );
-
-        for (i = 1; i <= 9; i++)
-        {
-            nt_buffer[7] = '0' + i;
-            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE ))
-            {
-                RtlFreeAnsiString( &unix_name );
-                if (p + 5 >= target + bufsize)
-                {
-                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                    return 0;
-                }
-                strcpyW( p, comW );
-                p[3] = '0' + i;
-                p[4] = 0;
-                p += 5;
-            }
-        }
-        strcpyW( nt_buffer + 4, lptW );
-        for (i = 1; i <= 9; i++)
-        {
-            nt_buffer[7] = '0' + i;
-            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE ))
-            {
-                RtlFreeAnsiString( &unix_name );
-                if (p + 5 >= target + bufsize)
-                {
-                    SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                    return 0;
-                }
-                strcpyW( p, lptW );
-                p[3] = '0' + i;
-                p[4] = 0;
-                p += 5;
-            }
-        }
 
         RtlInitUnicodeString( &nt_name, dosdevW );
         nt_name.Length -= sizeof(WCHAR);  /* without trailing slash */
