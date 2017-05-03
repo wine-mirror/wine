@@ -2002,18 +2002,33 @@ streamsize __thiscall basic_streambuf_char_sputn(basic_streambuf_char *this, con
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_swap, 8)
 void __thiscall basic_streambuf_char_swap(basic_streambuf_char *this, basic_streambuf_char *r)
 {
-    basic_streambuf_char tmp;
+    char *wfirst, *wnext, *wlast, *rfirst, *rnext, *rlast;
+#if _MSVCP_VER < 70
+    locale loc;
+#else
+    locale *loc;
+#endif
 
     TRACE("(%p %p)\n", this, r);
 
     if(this == r)
         return;
 
-    tmp = *this;
-    *this = *r;
-    this->vtable = tmp.vtable;
-    tmp.vtable = r->vtable;
-    *r = tmp;
+    wfirst = *this->pwbuf;
+    wnext = *this->pwpos;
+    wlast = *this->pwpos + *this->pwsize;
+    rfirst = *this->prbuf;
+    rnext = *this->prpos;
+    rlast = *this->prpos + *this->prsize;
+    loc = this->loc;
+
+    basic_streambuf_char_setp_next(this, *r->pwbuf, *r->pwpos, *r->pwpos + *r->pwsize);
+    basic_streambuf_char_setg(this, *r->prbuf, *r->prpos, *r->prpos + *r->prsize);
+    this->loc = r->loc;
+
+    basic_streambuf_char_setp_next(r, wfirst, wnext, wlast);
+    basic_streambuf_char_setg(r, rfirst, rnext, rlast);
+    r->loc = loc;
 }
 
 /* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W00@Z */
@@ -2959,18 +2974,33 @@ streamsize __thiscall basic_streambuf_wchar_sputn(basic_streambuf_wchar *this, c
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_swap, 8)
 void __thiscall basic_streambuf_wchar_swap(basic_streambuf_wchar *this, basic_streambuf_wchar *r)
 {
-    basic_streambuf_wchar tmp;
+    wchar_t *wfirst, *wnext, *wlast, *rfirst, *rnext, *rlast;
+#if _MSVCP_VER < 70
+    locale loc;
+#else
+    locale *loc;
+#endif
 
     TRACE("(%p %p)\n", this, r);
 
     if(this == r)
         return;
 
-    tmp = *this;
-    *this = *r;
-    this->vtable = tmp.vtable;
-    tmp.vtable = r->vtable;
-    *r = tmp;
+    wfirst = *this->pwbuf;
+    wnext = *this->pwpos;
+    wlast = *this->pwpos + *this->pwsize;
+    rfirst = *this->prbuf;
+    rnext = *this->prpos;
+    rlast = *this->prpos + *this->prsize;
+    loc = this->loc;
+
+    basic_streambuf_wchar_setp_next(this, *r->pwbuf, *r->pwpos, *r->pwpos + *r->pwsize);
+    basic_streambuf_wchar_setg(this, *r->prbuf, *r->prpos, *r->prpos + *r->prsize);
+    this->loc = r->loc;
+
+    basic_streambuf_wchar_setp_next(r, wfirst, wnext, wlast);
+    basic_streambuf_wchar_setg(r, rfirst, rnext, rlast);
+    r->loc = loc;
 }
 
 /* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
