@@ -1001,12 +1001,21 @@ static REAL intersect_line_scanline(const GpPointF *p1, const GpPointF *p2, REAL
     return (p1->X - p2->X) * (p2->Y - y) / (p2->Y - p1->Y) + p2->X;
 }
 
-static BOOL brush_can_fill_path(GpBrush *brush)
+/* is_fill is TRUE if filling regions, FALSE for drawing primitives */
+static BOOL brush_can_fill_path(GpBrush *brush, BOOL is_fill)
 {
     switch (brush->bt)
     {
     case BrushTypeSolidColor:
-        return TRUE;
+    {
+        if (is_fill)
+            return TRUE;
+        else
+        {
+            /* cannot draw semi-transparent colors */
+            return (((GpSolidFill*)brush)->color & 0xff000000) == 0xff000000;
+        }
+    }
     case BrushTypeHatchFill:
     {
         GpHatch *hatch = (GpHatch*)brush;
@@ -3785,7 +3794,7 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
     if (path->pathdata.Count == 0)
         return Ok;
 
-    if (!graphics->hdc)
+    if (!graphics->hdc || !brush_can_fill_path(pen->brush, FALSE))
         retval = SOFTWARE_GdipDrawPath(graphics, pen, path);
     else
         retval = GDI32_GdipDrawPath(graphics, pen, path);
@@ -4035,7 +4044,7 @@ static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath 
     GpStatus retval;
     HRGN hrgn=NULL;
 
-    if(!graphics->hdc || !brush_can_fill_path(brush))
+    if(!graphics->hdc || !brush_can_fill_path(brush, TRUE))
         return NotImplemented;
 
     save_state = SaveDC(graphics->hdc);
@@ -4328,7 +4337,7 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     HRGN hrgn;
     RECT rc;
 
-    if(!graphics->hdc || !brush_can_fill_path(brush))
+    if(!graphics->hdc || !brush_can_fill_path(brush, TRUE))
         return NotImplemented;
 
     status = GdipGetRegionHRgn(region, graphics, &hrgn);
