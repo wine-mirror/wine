@@ -1121,7 +1121,8 @@ static void create_port_devices( DRIVER_OBJECT *driver )
     p += 3;
 
     RegOpenKeyExW( HKEY_LOCAL_MACHINE, ports_keyW, 0, KEY_QUERY_VALUE, &wine_ports_key );
-    RegOpenKeyExW( HKEY_LOCAL_MACHINE, windows_ports_key_name, 0, KEY_SET_VALUE, &windows_ports_key );
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, windows_ports_key_name, 0, NULL, REG_OPTION_VOLATILE,
+                     KEY_ALL_ACCESS, NULL, &windows_ports_key, NULL );
 
     /* remove old symlinks */
     for (n = 1; n <= MAX_PORTS; n++)

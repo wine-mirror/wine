@@ -421,14 +421,10 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     static const WCHAR harddiskW[] = {'\\','D','r','i','v','e','r','\\','H','a','r','d','d','i','s','k',0};
     static const WCHAR driver_serialW[] = {'\\','D','r','i','v','e','r','\\','S','e','r','i','a','l',0};
     static const WCHAR driver_parallelW[] = {'\\','D','r','i','v','e','r','\\','P','a','r','a','l','l','e','l',0};
-    static const WCHAR devicemapW[] = {'H','A','R','D','W','A','R','E','\\','D','E','V','I','C','E','M','A','P',0};
-    static const WCHAR parallelW[] = {'P','A','R','A','L','L','E','L',' ','P','O','R','T','S',0};
-    static const WCHAR serialW[] = {'S','E','R','I','A','L','C','O','M','M',0};
 
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
     NTSTATUS status;
-    HKEY hkey, devicemap_key;
 
     TRACE( "%s\n", debugstr_w(path->Buffer) );
 
@@ -446,18 +442,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, mounted_devicesW, 0, NULL,
                      REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &mount_key, NULL );
-
-    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, devicemapW, 0, NULL, REG_OPTION_VOLATILE,
-                          KEY_ALL_ACCESS, NULL, &devicemap_key, NULL ))
-    {
-        if (!RegCreateKeyExW( devicemap_key, parallelW, 0, NULL, REG_OPTION_VOLATILE,
-                              KEY_ALL_ACCESS, NULL, &hkey, NULL ))
-            RegCloseKey( hkey );
-        if (!RegCreateKeyExW( devicemap_key, serialW, 0, NULL, REG_OPTION_VOLATILE,
-                              KEY_ALL_ACCESS, NULL, &hkey, NULL ))
-            RegCloseKey( hkey );
-        RegCloseKey( devicemap_key );
-    }
 
     RtlInitUnicodeString( &nameW, harddiskW );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );
