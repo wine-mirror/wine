@@ -15284,7 +15284,6 @@ for ac_func in \
 	getpwuid \
 	gettimeofday \
 	getuid \
-	if_nameindex \
 	isnanf \
 	kqueue \
 	lstat \
@@ -16149,6 +16148,44 @@ _ACEOF
 
 fi
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for if_nameindex" >&5
+$as_echo_n "checking for if_nameindex... " >&6; }
+if ${wine_cv_have_if_nameindex+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif
+int
+main ()
+{
+struct if_nameindex *p = if_nameindex(); return p->if_index;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  wine_cv_have_if_nameindex=yes
+else
+  wine_cv_have_if_nameindex=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_if_nameindex" >&5
+$as_echo "$wine_cv_have_if_nameindex" >&6; }
+if test "$wine_cv_have_if_nameindex" = "yes"
+then
+
+$as_echo "#define HAVE_IF_NAMEINDEX 1" >>confdefs.h
+
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sigaddset" >&5
 $as_echo_n "checking for sigaddset... " >&6; }

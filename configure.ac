@@ -2015,7 +2015,6 @@ AC_CHECK_FUNCS(\
 	getpwuid \
 	gettimeofday \
 	getuid \
-	if_nameindex \
 	isnanf \
 	kqueue \
 	lstat \
@@ -2202,6 +2201,19 @@ AC_CHECK_MEMBERS([struct ff_effect.direction],,,
 [#ifdef HAVE_LINUX_INPUT_H
 #include <linux/input.h>
 #endif])
+
+AC_CACHE_CHECK([for if_nameindex],wine_cv_have_if_nameindex,
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif]],
+                              [[struct if_nameindex *p = if_nameindex(); return p->if_index;]])],[wine_cv_have_if_nameindex=yes],[wine_cv_have_if_nameindex=no]))
+if test "$wine_cv_have_if_nameindex" = "yes"
+then
+  AC_DEFINE(HAVE_IF_NAMEINDEX, 1, [Define to 1 if you have the `if_nameindex' function.])
+fi
 
 AC_CACHE_CHECK([for sigaddset],wine_cv_have_sigaddset,
                AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <signal.h>]], [[sigset_t set; sigaddset(&set,SIGTERM);]])],[wine_cv_have_sigaddset=yes],[wine_cv_have_sigaddset=no]))
