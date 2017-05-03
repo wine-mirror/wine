@@ -677,12 +677,7 @@ static char *get_lineA(FILE *fp)
     static char *buf, *next;
     char *line;
 
-    if (!fp)
-    {
-        if (size) HeapFree(GetProcessHeap(), 0, buf);
-        size = 0;
-        return NULL;
-    }
+    if (!fp) goto cleanup;
 
     if (!size)
     {
@@ -737,7 +732,9 @@ static char *get_lineA(FILE *fp)
         }
         return line;
     }
-    HeapFree(GetProcessHeap(), 0, buf);
+
+cleanup:
+    if (size) HeapFree(GetProcessHeap(), 0, buf);
     size = 0;
     return NULL;
 }
@@ -788,12 +785,7 @@ static WCHAR *get_lineW(FILE *fp)
     static WCHAR *buf, *next;
     WCHAR *line;
 
-    if (!fp)
-    {
-        if (size) HeapFree(GetProcessHeap(), 0, buf);
-        size = 0;
-        return NULL;
-    }
+    if (!fp) goto cleanup;
 
     if (!size)
     {
@@ -849,7 +841,9 @@ static WCHAR *get_lineW(FILE *fp)
         }
         return line;
     }
-    HeapFree( GetProcessHeap(), 0, buf );
+
+cleanup:
+    if (size) HeapFree(GetProcessHeap(), 0, buf);
     size = 0;
     return NULL;
 }
