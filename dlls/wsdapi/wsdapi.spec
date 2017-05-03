@@ -36,10 +36,10 @@
 @ stub WSDSetConfigurationOption
 @ stub WSDUriDecode
 @ stub WSDUriEncode
-@ stub WSDXMLAddChild
-@ stub WSDXMLAddSibling
-@ stub WSDXMLBuildAnyForSingleElement
-@ stub WSDXMLCleanupElement
+@ stdcall WSDXMLAddChild(ptr ptr)
+@ stdcall WSDXMLAddSibling(ptr ptr)
+@ stdcall WSDXMLBuildAnyForSingleElement(ptr ptr ptr)
+@ stdcall WSDXMLCleanupElement(ptr)
 @ stub WSDXMLCreateContext
 @ stub WSDXMLGetNameFromBuiltinNamespace
 @ stub WSDXMLGetValueFromAny

@@ -5,4 +5,5 @@ IMPORTS   = kernel32
 C_SRCS = \
 	discovery.c \
 	main.c \
-	memory.c
+	memory.c \
+	xml.c

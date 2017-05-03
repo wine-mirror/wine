@@ -24,4 +24,9 @@ void WINAPI WSDAttachLinkedMemory(void *pParent, void *pChild);
 void WINAPI WSDDetachLinkedMemory(void *pVoid);
 void WINAPI WSDFreeLinkedMemory(void *pVoid);
 
+HRESULT WINAPI WSDXMLAddChild(WSDXML_ELEMENT *pParent, WSDXML_ELEMENT *pChild);
+HRESULT WINAPI WSDXMLAddSibling(WSDXML_ELEMENT *pFirst, WSDXML_ELEMENT *pSecond);
+HRESULT WINAPI WSDXMLBuildAnyForSingleElement(WSDXML_NAME *pElementName, LPCWSTR pszText, WSDXML_ELEMENT **ppAny);
+HRESULT WINAPI WSDXMLCleanupElement(WSDXML_ELEMENT *pAny);
+
 #endif

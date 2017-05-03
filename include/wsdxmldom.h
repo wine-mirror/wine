@@ -26,6 +26,7 @@ typedef struct _WSDXML_PREFIX_MAPPING WSDXML_PREFIX_MAPPING;
 typedef struct _WSDXML_ATTRIBUTE WSDXML_ATTRIBUTE;
 typedef struct _WSDXML_NODE WSDXML_NODE;
 typedef struct _WSDXML_ELEMENT WSDXML_ELEMENT;
+typedef struct _WSDXML_TEXT WSDXML_TEXT;
 
 typedef const WSDXML_NAMESPACE *PCWSDXML_NAMESPACE;
 typedef const WSDXML_TYPE *PCWSDXML_TYPE;
@@ -85,6 +86,12 @@ struct _WSDXML_ELEMENT
     WSDXML_ATTRIBUTE *FirstAttribute;
     WSDXML_NODE *FirstChild;
     WSDXML_PREFIX_MAPPING *PrefixMappings;
+};
+
+struct _WSDXML_TEXT
+{
+    WSDXML_NODE Node;
+    WCHAR *Text;
 };
 
 #endif /* __WSDXMLDOM_H__ */
