@@ -3,4 +3,5 @@ IMPORTS   = wsdapi ole32 user32
 
 C_SRCS = \
 	discovery.c \
-	memory.c
+	memory.c \
+	xml.c
