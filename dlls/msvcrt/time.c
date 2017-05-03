@@ -1204,7 +1204,7 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
             MSVCRT__tzset();
             if(MSVCRT__get_tzname(&tmp, str+ret, max-ret, mstm->tm_isdst ? 1 : 0))
                 return 0;
-            ret += tmp;
+            ret += tmp-1;
             break;
         case 'U':
         case 'W':
