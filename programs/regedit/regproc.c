@@ -745,12 +745,12 @@ cleanup:
     return NULL;
 }
 
-static BOOL processRegLinesA(FILE *fp, char *two_chars)
+static BOOL processRegLinesA(FILE *fp, WCHAR *(*get_line)(FILE *), char *two_chars)
 {
     WCHAR *line, *header;
     int reg_version;
 
-    line = get_lineA(fp);
+    line = get_line(fp);
 
     header = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(line) + 3) * sizeof(WCHAR));
     CHECK_ENOUGH_MEMORY(header);
@@ -762,11 +762,11 @@ static BOOL processRegLinesA(FILE *fp, char *two_chars)
     HeapFree(GetProcessHeap(), 0, header);
     if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
     {
-        get_lineA(NULL); /* Reset static variables */
+        get_line(NULL); /* Reset static variables */
         return reg_version == REG_VERSION_FUZZY;
     }
 
-    while ((line = get_lineA(fp)))
+    while ((line = get_line(fp)))
     {
         if (reg_version == REG_VERSION_31)
             processRegEntry31(line);
@@ -847,20 +847,20 @@ cleanup:
     return NULL;
 }
 
-static BOOL processRegLinesW(FILE *fp)
+static BOOL processRegLinesW(FILE *fp, WCHAR *(*get_line)(FILE *))
 {
     WCHAR *line;
     int reg_version;
 
-    line = get_lineW(fp);
+    line = get_line(fp);
     reg_version = parse_file_header(line);
     if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
     {
-        get_lineW(NULL); /* Reset static variables */
+        get_line(NULL); /* Reset static variables */
         return reg_version == REG_VERSION_FUZZY;
     }
 
-    while ((line = get_lineW(fp)))
+    while ((line = get_line(fp)))
         processRegEntry(line, TRUE);
 
     closeKey();
@@ -1346,9 +1346,9 @@ BOOL import_registry_file(FILE* reg_file)
         return FALSE;
 
     if (s[0] == 0xff && s[1] == 0xfe)
-        return processRegLinesW(reg_file);
+        return processRegLinesW(reg_file, get_lineW);
     else
-        return processRegLinesA(reg_file, (char *)s);
+        return processRegLinesA(reg_file, get_lineA, (char *)s);
 }
 
 /******************************************************************************
