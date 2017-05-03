@@ -4,8 +4,8 @@
 @ stub WSDNotifyNetworkChange
 @ stub WSDRemoveFirewallCheck
 @ stub WSDXMLCompareNames
-@ stub WSDAllocateLinkedMemory
-@ stub WSDAttachLinkedMemory
+@ stdcall WSDAllocateLinkedMemory(ptr long)
+@ stdcall WSDAttachLinkedMemory(ptr ptr)
 @ stub WSDCompareEndpoints
 @ stub WSDCopyEndpoint
 @ stub WSDCreateDeviceHost2
@@ -26,8 +26,8 @@
 @ stub WSDCreateUdpAddress
 @ stub WSDCreateUdpMessageParameters
 @ stub WSDCreateUdpTransport
-@ stub WSDDetachLinkedMemory
-@ stub WSDFreeLinkedMemory
+@ stdcall WSDDetachLinkedMemory(ptr)
+@ stdcall WSDFreeLinkedMemory(ptr)
 @ stub WSDGenerateFault
 @ stub WSDGenerateFaultEx
 @ stub WSDGenerateRandomDelay

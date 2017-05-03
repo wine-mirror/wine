@@ -16,14 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef WSDAPI_H
-#define WSDAPI_H
+#ifndef WSDUTIL_H
+#define WSDUTIL_H
 
-#include <wsdbase.h>
-#include <wsdxml.h>
-#include <wsdxmldom.h>
-#include <wsdtypes.h>
-#include <wsddisco.h>
-#include <wsdutil.h>
+void * WINAPI WSDAllocateLinkedMemory(void *pParent, SIZE_T cbSize);
+void WINAPI WSDAttachLinkedMemory(void *pParent, void *pChild);
+void WINAPI WSDDetachLinkedMemory(void *pVoid);
+void WINAPI WSDFreeLinkedMemory(void *pVoid);
 
 #endif
