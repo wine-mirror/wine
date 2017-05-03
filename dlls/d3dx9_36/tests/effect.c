@@ -6209,6 +6209,88 @@ static void test_effect_large_address_aware_flag(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
+static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
+{
+    unsigned int passes_count;
+    ID3DXEffect *effect;
+    D3DXPASS_DESC desc;
+    D3DXVECTOR4 fvect;
+    D3DXHANDLE pass;
+    HRESULT hr;
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, 0, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    pass = effect->lpVtbl->GetPass(effect, "tech0", 1);
+    ok(!!pass, "GetPass() failed.\n");
+
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, TRUE);
+
+    fvect.x = fvect.y = fvect.w = 0.0f;
+    fvect.z = 0.0f;
+    hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(!desc.pPixelShaderFunction, "Unexpected non null desc.pPixelShaderFunction.\n");
+
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, TRUE);
+
+    fvect.z = 3.0f;
+    hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    todo_wine
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
+
+    /* Repeating call to confirm GetPassDesc() returns same error on the second call,
+     * as it is not the case sometimes for BeginPass() with out of bound access. */
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    todo_wine
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
+
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, TRUE);
+
+    fvect.z = 2.0f;
+    hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, TRUE);
+
+    effect->lpVtbl->Release(effect);
+
+    hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
+            NULL, NULL, D3DXFX_NOT_CLONEABLE, NULL, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    pass = effect->lpVtbl->GetPass(effect, "tech0", 1);
+    ok(!!pass, "GetPass() failed.\n");
+
+    hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
+    ok(!desc.pPixelShaderFunction, "Unexpected non null desc.pPixelShaderFunction.\n");
+
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     HWND wnd;
@@ -6259,6 +6341,7 @@ START_TEST(effect)
     test_cross_effect_handle(device);
     test_effect_shared_parameters(device);
     test_effect_large_address_aware_flag(device);
+    test_effect_get_pass_desc(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
