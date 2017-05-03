@@ -1000,14 +1000,17 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
 {
     static const WCHAR comW[] = {'C','O','M','%','u',0};
     static const WCHAR lptW[] = {'L','P','T','%','u',0};
+    static const WCHAR auxW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','A','U','X',0};
+    static const WCHAR prnW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','P','R','N',0};
     static const WCHAR device_serialW[] = {'\\','D','e','v','i','c','e','\\','S','e','r','i','a','l','%','u',0};
     static const WCHAR device_parallelW[] = {'\\','D','e','v','i','c','e','\\','P','a','r','a','l','l','e','l','%','u',0};
+    static const WCHAR dosdevices_comW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','C','O','M','%','u',0};
     static const WCHAR dosdevices_lptW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','%','u',0};
-    const WCHAR *dos_name_format, *nt_name_format, *reg_value_format;
-    WCHAR dos_name[7], reg_value[256], nt_buffer[32];
+    const WCHAR *dos_name_format, *nt_name_format, *reg_value_format, *symlink_format, *default_device;
+    WCHAR dos_name[7], reg_value[256], nt_buffer[32], symlink_buffer[32];
     DWORD type, size;
     char override_path[256];
-    UNICODE_STRING nt_name;
+    UNICODE_STRING nt_name, symlink_name, default_name;
     DEVICE_OBJECT *dev_obj;
     NTSTATUS status;
 
@@ -1016,12 +1019,16 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
         dos_name_format = comW;
         nt_name_format = device_serialW;
         reg_value_format = comW;
+        symlink_format = dosdevices_comW;
+        default_device = auxW;
     }
     else
     {
         dos_name_format = lptW;
         nt_name_format = device_parallelW;
         reg_value_format = dosdevices_lptW;
+        symlink_format = dosdevices_lptW;
+        default_device = prnW;
     }
 
     sprintfW( dos_name, dos_name_format, n );
@@ -1052,6 +1059,15 @@ static BOOL create_port_device( DRIVER_OBJECT *driver, int n, const char *unix_p
         FIXME( "IoCreateDevice %s got %x\n", debugstr_w(nt_name.Buffer), status );
         return FALSE;
     }
+    sprintfW( symlink_buffer, symlink_format, n );
+    RtlInitUnicodeString( &symlink_name, symlink_buffer );
+    IoCreateSymbolicLink( &symlink_name, &nt_name );
+    if (n == 1)
+    {
+        RtlInitUnicodeString( &default_name, default_device );
+        IoCreateSymbolicLink( &default_name, &symlink_name );
+    }
+
     /* TODO: store information about the Unix device in the NT device */
 
     /* create registry entry */
