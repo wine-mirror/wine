@@ -6227,7 +6227,7 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, TRUE);
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, FALSE);
 
     fvect.x = fvect.y = fvect.w = 0.0f;
     fvect.z = 0.0f;
@@ -6238,21 +6238,19 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(!desc.pPixelShaderFunction, "Unexpected non null desc.pPixelShaderFunction.\n");
 
-    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, TRUE);
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, FALSE);
 
     fvect.z = 3.0f;
     hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
     ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
 
     /* Repeating call to confirm GetPassDesc() returns same error on the second call,
      * as it is not the case sometimes for BeginPass() with out of bound access. */
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
     ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
 
@@ -6263,6 +6261,7 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
+    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, TRUE);
@@ -6271,7 +6270,7 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, TRUE);
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, FALSE);
 
     effect->lpVtbl->Release(effect);
 

@@ -1019,23 +1019,138 @@ static HRESULT d3dx9_base_effect_get_technique_desc(struct d3dx9_base_effect *ba
     return D3D_OK;
 }
 
-static HRESULT d3dx9_base_effect_get_pass_desc(struct d3dx9_base_effect *base,
-        D3DXHANDLE pass, D3DXPASS_DESC *desc)
+static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_state *state,
+        void **param_value, struct d3dx_parameter **out_param,
+        BOOL update_all, BOOL *param_dirty)
 {
-    struct d3dx_pass *p = get_valid_pass(base, pass);
+    struct d3dx_parameter *param = &state->parameter;
 
-    if (!desc || !p)
+    *param_value = NULL;
+    *out_param = NULL;
+    *param_dirty = FALSE;
+
+    switch (state->type)
+    {
+        case ST_PARAMETER:
+            param = param->referenced_param;
+            *param_dirty = is_param_dirty(param);
+            /* fallthrough */
+        case ST_CONSTANT:
+            *out_param = param;
+            *param_value = param->data;
+            return D3D_OK;
+        case ST_ARRAY_SELECTOR:
+        {
+            unsigned int array_idx;
+            static const struct d3dx_parameter array_idx_param =
+                {"", NULL, NULL, NULL, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 0, 0, 0, 0, sizeof(array_idx)};
+            HRESULT hr;
+            struct d3dx_parameter *ref_param, *selected_param;
+
+            if (!param->param_eval)
+            {
+                FIXME("Preshader structure is null.\n");
+                return D3DERR_INVALIDCALL;
+            }
+            if (update_all || is_param_eval_input_dirty(param->param_eval))
+            {
+                if (FAILED(hr = d3dx_evaluate_parameter(param->param_eval, &array_idx_param,
+                        &array_idx, update_all)))
+                    return hr;
+            }
+            else
+            {
+                array_idx = state->index;
+            }
+            ref_param = param->referenced_param;
+            TRACE("Array index %u, stored array index %u, element_count %u.\n", array_idx, state->index,
+                    ref_param->element_count);
+
+            if (array_idx >= ref_param->element_count)
+            {
+                WARN("Computed array index %u is larger than array size %u.\n",
+                        array_idx, ref_param->element_count);
+                return E_FAIL;
+            }
+            selected_param = &ref_param->members[array_idx];
+            *param_dirty = state->index != array_idx || is_param_dirty(selected_param);
+            state->index = array_idx;
+
+            *param_value = selected_param->data;
+            *out_param = selected_param;
+            return D3D_OK;
+        }
+        case ST_FXLC:
+            if (param->param_eval)
+            {
+                *out_param = param;
+                *param_value = param->data;
+                if (update_all || is_param_eval_input_dirty(param->param_eval))
+                {
+                    *param_dirty = TRUE;
+                    return d3dx_evaluate_parameter(param->param_eval, param, *param_value, update_all);
+                }
+                else
+                    return D3D_OK;
+            }
+            else
+            {
+                FIXME("No preshader for FXLC parameter.\n");
+                return D3DERR_INVALIDCALL;
+            }
+    }
+    return E_NOTIMPL;
+}
+
+static HRESULT d3dx9_base_effect_get_pass_desc(struct d3dx9_base_effect *base,
+        D3DXHANDLE pass_handle, D3DXPASS_DESC *desc)
+{
+    struct d3dx_pass *pass = get_valid_pass(base, pass_handle);
+    unsigned int i;
+
+    if (!desc || !pass)
     {
         WARN("Invalid argument specified.\n");
         return D3DERR_INVALIDCALL;
     }
 
-    desc->Name = p->name;
-    desc->Annotations = p->annotation_count;
+    desc->Name = pass->name;
+    desc->Annotations = pass->annotation_count;
 
-    FIXME("Pixel shader and vertex shader are not supported, yet.\n");
     desc->pVertexShaderFunction = NULL;
     desc->pPixelShaderFunction = NULL;
+
+    if (base->flags & D3DXFX_NOT_CLONEABLE)
+        return D3D_OK;
+
+    for (i = 0; i < pass->state_count; ++i)
+    {
+        struct d3dx_state *state = &pass->states[i];
+
+        if (state_table[state->operation].class == SC_VERTEXSHADER
+                || state_table[state->operation].class == SC_PIXELSHADER)
+        {
+            struct d3dx_parameter *param;
+            void *param_value;
+            BOOL param_dirty;
+            HRESULT hr;
+
+            if (FAILED(hr = d3dx9_get_param_value_ptr(pass, &pass->states[i], &param_value, &param,
+                    TRUE, &param_dirty)))
+                return hr;
+
+            if (!param->object_id)
+            {
+                FIXME("Zero object ID in shader parameter.\n");
+                return E_FAIL;
+            }
+
+            if (state_table[state->operation].class == SC_VERTEXSHADER)
+                desc->pVertexShaderFunction = base->objects[param->object_id].data;
+            else
+                desc->pPixelShaderFunction = base->objects[param->object_id].data;
+        }
+    }
 
     return D3D_OK;
 }
@@ -2576,89 +2691,6 @@ static HRESULT d3dx9_base_effect_set_array_range(struct d3dx9_base_effect *base,
 {
     FIXME("stub!\n");
 
-    return E_NOTIMPL;
-}
-
-static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_state *state,
-        void **param_value, struct d3dx_parameter **out_param,
-        BOOL update_all, BOOL *param_dirty)
-{
-    struct d3dx_parameter *param = &state->parameter;
-
-    *param_value = NULL;
-    *out_param = NULL;
-    *param_dirty = FALSE;
-
-    switch (state->type)
-    {
-        case ST_PARAMETER:
-            param = param->referenced_param;
-            *param_dirty = is_param_dirty(param);
-            /* fallthrough */
-        case ST_CONSTANT:
-            *out_param = param;
-            *param_value = param->data;
-            return D3D_OK;
-        case ST_ARRAY_SELECTOR:
-        {
-            unsigned int array_idx;
-            static const struct d3dx_parameter array_idx_param =
-                {"", NULL, NULL, NULL, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 0, 0, 0, 0, sizeof(array_idx)};
-            HRESULT hr;
-            struct d3dx_parameter *ref_param, *selected_param;
-
-            if (!param->param_eval)
-            {
-                FIXME("Preshader structure is null.\n");
-                return D3DERR_INVALIDCALL;
-            }
-            if (update_all || is_param_eval_input_dirty(param->param_eval))
-            {
-                if (FAILED(hr = d3dx_evaluate_parameter(param->param_eval, &array_idx_param,
-                        &array_idx, update_all)))
-                    return hr;
-            }
-            else
-            {
-                array_idx = state->index;
-            }
-            ref_param = param->referenced_param;
-            TRACE("Array index %u, stored array index %u, element_count %u.\n", array_idx, state->index,
-                    ref_param->element_count);
-
-            if (array_idx >= ref_param->element_count)
-            {
-                WARN("Computed array index %u is larger than array size %u.\n",
-                        array_idx, ref_param->element_count);
-                return E_FAIL;
-            }
-            selected_param = &ref_param->members[array_idx];
-            *param_dirty = state->index != array_idx || is_param_dirty(selected_param);
-            state->index = array_idx;
-
-            *param_value = selected_param->data;
-            *out_param = selected_param;
-            return D3D_OK;
-        }
-        case ST_FXLC:
-            if (param->param_eval)
-            {
-                *out_param = param;
-                *param_value = param->data;
-                if (update_all || is_param_eval_input_dirty(param->param_eval))
-                {
-                    *param_dirty = TRUE;
-                    return d3dx_evaluate_parameter(param->param_eval, param, *param_value, update_all);
-                }
-                else
-                    return D3D_OK;
-            }
-            else
-            {
-                FIXME("No preshader for FXLC parameter.\n");
-                return D3DERR_INVALIDCALL;
-            }
-    }
     return E_NOTIMPL;
 }
 
