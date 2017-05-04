@@ -1188,7 +1188,7 @@
 @ cdecl _initterm_e(ptr ptr) msvcr120._initterm_e
 @ cdecl _invalid_parameter(wstr wstr wstr long long) msvcr120._invalid_parameter
 @ cdecl _invalid_parameter_noinfo() msvcr120._invalid_parameter_noinfo
-@ stub _invalid_parameter_noinfo_noreturn
+@ cdecl _invalid_parameter_noinfo_noreturn() msvcr120._invalid_parameter_noinfo_noreturn
 @ stub _invoke_watson
 @ extern _iob msvcr120._iob
 @ cdecl _isalnum_l(long ptr) msvcr120._isalnum_l

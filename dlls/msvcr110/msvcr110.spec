@@ -1285,7 +1285,7 @@
 @ stub -arch=i386 _inpw(long)
 @ cdecl _invalid_parameter(wstr wstr wstr long long) MSVCRT__invalid_parameter
 @ cdecl _invalid_parameter_noinfo()
-@ stub _invalid_parameter_noinfo_noreturn
+@ cdecl _invalid_parameter_noinfo_noreturn()
 @ stub _invoke_watson
 @ extern _iob MSVCRT__iob
 @ cdecl _isalnum_l(long ptr) MSVCRT__isalnum_l

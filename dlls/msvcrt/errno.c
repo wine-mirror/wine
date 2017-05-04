@@ -487,6 +487,15 @@ void CDECL _invalid_parameter_noinfo(void)
 }
 
 /*********************************************************************
+ * _invalid_parameter_noinfo_noreturn (MSVCR100.@)
+ */
+void CDECL _invalid_parameter_noinfo_noreturn(void)
+{
+    MSVCRT__invalid_parameter( NULL, NULL, NULL, 0, 0 );
+    MSVCRT__exit( STATUS_INVALID_CRUNTIME_PARAMETER );
+}
+
+/*********************************************************************
  * _get_invalid_parameter_handler (MSVCR80.@)
  */
 MSVCRT_invalid_parameter_handler CDECL _get_invalid_parameter_handler(void)

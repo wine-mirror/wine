@@ -424,7 +424,7 @@
 @ cdecl _initterm(ptr ptr)
 @ cdecl _initterm_e(ptr ptr)
 @ cdecl _invalid_parameter_noinfo()
-@ stub _invalid_parameter_noinfo_noreturn
+@ cdecl _invalid_parameter_noinfo_noreturn()
 @ stub _invoke_watson
 @ stub _is_exception_typeof
 @ cdecl _isalnum_l(long ptr) MSVCRT__isalnum_l

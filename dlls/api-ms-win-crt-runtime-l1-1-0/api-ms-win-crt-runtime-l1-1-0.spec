@@ -57,7 +57,7 @@
 @ cdecl _initterm(ptr ptr) ucrtbase._initterm
 @ cdecl _initterm_e(ptr ptr) ucrtbase._initterm_e
 @ cdecl _invalid_parameter_noinfo() ucrtbase._invalid_parameter_noinfo
-@ stub _invalid_parameter_noinfo_noreturn
+@ cdecl _invalid_parameter_noinfo_noreturn() ucrtbase._invalid_parameter_noinfo_noreturn
 @ stub _invoke_watson
 @ stub _query_app_type
 @ cdecl _register_onexit_function(ptr ptr) ucrtbase._register_onexit_function
