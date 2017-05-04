@@ -3249,20 +3249,24 @@ static void test_D3DXSHMultiply2(void)
 
 static void test_D3DXSHMultiply3(void)
 {
+    float a[20], b[20], c[20];
     unsigned int i;
-    FLOAT a[20], b[20], c[20];
-    /* D3DXSHMultiply3 only modifies the first 9 elements of the array */
+    BOOL equal;
+
+    /* D3DXSHMultiply3() only modifies the first 9 elements of the array. */
     static const float expected[20] =
     {
-        7.813913f, 2.256058f, 5.9484005f, 4.970894f, 2.899858f, 3.598946f,
-        1.726572f, 5.573538f, 0.622063f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
-        14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f
+        7.81391382e+00f, 2.25605774e+00f, 5.94839954e+00f, 4.97089481e+00f, 2.89985824e+00f, 3.59894633e+00f,
+        1.72657156e+00f, 5.57353783e+00f, 6.22063160e-01f, 9.00000000e+00f, 1.00000000e+01f, 1.10000000e+01f,
+        1.20000000e+01f, 1.30000000e+01f, 1.40000000e+01f, 1.50000000e+01f, 1.60000000e+01f, 1.70000000e+01f,
+        1.80000000e+01f, 1.90000000e+01f,
     };
     static const float expected_aliased[20] =
     {
-        454.092499f,2.126404f, 5.570401f, 15.330379f, 22.796087f, 43.604126f,
-        4.273841f, 175.772034f, 237.672729f, 1.09f, 1.1f, 1.11f, 1.12f, 1.13f,
-        1.14f, 1.15f, 1.16f, 1.17f, 1.18f, 1.19f
+        4.54092499e+02f, 2.12640405e+00f, 5.57040071e+00f, 1.53303785e+01f, 2.27960873e+01f, 4.36041260e+01f,
+        4.27384138e+00f, 1.75772034e+02f, 2.37672729e+02f, 1.09000003e+00f, 1.10000002e+00f, 1.11000001e+00f,
+        1.12000000e+00f, 1.13000000e+00f, 1.13999999e+00f, 1.14999998e+00f, 1.15999997e+00f, 1.16999996e+00f,
+        1.17999995e+00f, 1.19000006e+00f,
     };
 
     for (i = 0; i < 20; i++)
@@ -3274,14 +3278,18 @@ static void test_D3DXSHMultiply3(void)
 
     D3DXSHMultiply3(c, a, b);
     for (i = 0; i < 20; i++)
-        ok(relative_error(c[i], expected[i]) < admitted_error,
-                "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
-    for (i = 0; i < 20; i++)
-        c[i] = a[i];
+    {
+        equal = compare_float(c[i], expected[i], 4);
+        ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected[i], c[i]);
+    }
+
+    memcpy(c, a, sizeof(c));
     D3DXSHMultiply3(c, c, b);
     for (i = 0; i < 20; i++)
-        ok(relative_error(c[i], expected_aliased[i]) < admitted_error,
-                "Expected[%d] = %f, received = %f\n", i, expected_aliased[i], c[i]);
+    {
+        equal = compare_float(c[i], expected_aliased[i], 32);
+        ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected_aliased[i], c[i]);
+    }
 }
 
 static void test_D3DXSHMultiply4(void)
