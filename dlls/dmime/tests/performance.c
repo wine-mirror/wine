@@ -31,13 +31,59 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(GUID_Bunk,0xFFFFFFFF,0xFFFF,0xFFFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF);
 
+static void create_performance(IDirectMusicPerformance8 **performance, IDirectMusic **dmusic,
+        IDirectSound **dsound, BOOL set_cooplevel)
+{
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance8, (void **)performance);
+    ok(hr == S_OK, "DirectMusicPerformance create failed: %08x\n", hr);
+    if (dmusic) {
+        hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8,
+                (void **)dmusic);
+        ok(hr == S_OK, "DirectMusic create failed: %08x\n", hr);
+    }
+    if (dsound) {
+        hr = DirectSoundCreate8(NULL, (IDirectSound8 **)dsound, NULL);
+        ok(hr == S_OK, "DirectSoundCreate failed: %08x\n", hr);
+        if (set_cooplevel) {
+            hr = IDirectSound_SetCooperativeLevel(*dsound, GetForegroundWindow(), DSSCL_PRIORITY);
+            ok(hr == S_OK, "SetCooperativeLevel failed: %08x\n", hr);
+        }
+    }
+}
+
+static void destroy_performance(IDirectMusicPerformance8 *performance, IDirectMusic *dmusic,
+        IDirectSound *dsound)
+{
+    HRESULT hr;
+
+    hr = IDirectMusicPerformance8_CloseDown(performance);
+    ok(hr == S_OK, "CloseDown failed: %08x\n", hr);
+    IDirectMusicPerformance8_Release(performance);
+    if (dmusic)
+        IDirectMusic_Release(dmusic);
+    if (dsound)
+        IDirectSound_Release(dsound);
+}
+
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 static HRESULT test_InitAudio(void)
 {
     IDirectMusicPerformance8 *performance;
+    IDirectMusic *dmusic;
     IDirectSound *dsound;
     IDirectMusicPort *port;
     IDirectMusicAudioPath *path;
     HRESULT hr;
+    ULONG ref;
 
     hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicPerformance8, (void **)&performance);
@@ -70,17 +116,81 @@ static HRESULT test_InitAudio(void)
 
     IDirectMusicPerformance8_Release(performance);
 
-    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IDirectMusicPerformance8, (void**)&performance);
-    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
-
+    /* Auto generated dmusic and dsound */
+    create_performance(&performance, NULL, NULL, FALSE);
     hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL, 0, 64, 0, NULL);
     ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    destroy_performance(performance, NULL, NULL);
 
-    hr = IDirectMusicPerformance8_CloseDown(performance);
-    ok(hr == S_OK, "CloseDown failed: %08x\n", hr);
+    /* dsound without SetCooperativeLevel() */
+    create_performance(&performance, NULL, &dsound, FALSE);
+    hr = IDirectMusicPerformance8_InitAudio(performance, NULL, &dsound, NULL, 0, 0, 0, NULL);
+    todo_wine ok(hr == DSERR_PRIOLEVELNEEDED, "InitAudio failed: %08x\n", hr);
+    destroy_performance(performance, NULL, dsound);
 
-    IDirectMusicPerformance8_Release(performance);
+    /* Using the wrong CLSID_DirectSound */
+    create_performance(&performance, NULL, NULL, FALSE);
+    hr = DirectSoundCreate(NULL, &dsound, NULL);
+    ok(hr == S_OK, "DirectSoundCreate failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_InitAudio(performance, NULL, &dsound, NULL, 0, 0, 0, NULL);
+    todo_wine ok(hr == E_NOINTERFACE, "InitAudio failed: %08x\n", hr);
+    destroy_performance(performance, NULL, dsound);
+
+    /* Init() works with just a CLSID_DirectSound */
+    create_performance(&performance, NULL, NULL, FALSE);
+    hr = DirectSoundCreate(NULL, &dsound, NULL);
+    ok(hr == S_OK, "DirectSoundCreate failed: %08x\n", hr);
+    hr = IDirectSound_SetCooperativeLevel(dsound, GetForegroundWindow(), DSSCL_PRIORITY);
+    ok(hr == S_OK, "SetCooperativeLevel failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_Init(performance, NULL, dsound, NULL);
+    ok(hr == S_OK, "Init failed: %08x\n", hr);
+    destroy_performance(performance, NULL, dsound);
+
+    /* Init() followed by InitAudio() */
+    create_performance(&performance, NULL, &dsound, TRUE);
+    hr = IDirectMusicPerformance8_Init(performance, NULL, dsound, NULL);
+    ok(hr == S_OK, "Init failed: %08x\n", hr);
+    hr = IDirectMusicPerformance8_InitAudio(performance, NULL, &dsound, NULL, 0, 0, 0, NULL);
+    ok(hr == DMUS_E_ALREADY_INITED, "InitAudio failed: %08x\n", hr);
+    destroy_performance(performance, NULL, dsound);
+
+    /* Provided dmusic and dsound */
+    create_performance(&performance, &dmusic, &dsound, TRUE);
+    hr = IDirectMusicPerformance8_InitAudio(performance, &dmusic, &dsound, NULL, 0, 64, 0, NULL);
+    ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    ref = get_refcount(dsound);
+    ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    ref = get_refcount(dmusic);
+    ok(ref == 2, "dmusic ref count got %d expected 2\n", ref);
+    destroy_performance(performance, dmusic, dsound);
+
+    /* Provided dmusic initialized with SetDirectSound */
+    create_performance(&performance, &dmusic, &dsound, TRUE);
+    IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
+    ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    hr = IDirectMusicPerformance8_InitAudio(performance, &dmusic, NULL, NULL, 0, 64, 0, NULL);
+    ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    ref = get_refcount(dmusic);
+    ok(ref == 2, "dmusic ref count got %d expected 2\n", ref);
+    destroy_performance(performance, dmusic, dsound);
+
+    /* Provided dmusic and dsound, dmusic initialized with SetDirectSound */
+    create_performance(&performance, &dmusic, &dsound, TRUE);
+    IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
+    ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    hr = IDirectMusicPerformance8_InitAudio(performance, &dmusic, &dsound, NULL, 0, 64, 0, NULL);
+    ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 3, "dsound ref count got %d expected 3\n", ref);
+    ref = get_refcount(dmusic);
+    ok(ref == 2, "dmusic ref count got %d expected 2\n", ref);
+    destroy_performance(performance, dmusic, dsound);
 
     return S_OK;
 }
