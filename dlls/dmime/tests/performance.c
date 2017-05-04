@@ -33,56 +33,54 @@ DEFINE_GUID(GUID_Bunk,0xFFFFFFFF,0xFFFF,0xFFFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xF
 
 static HRESULT test_InitAudio(void)
 {
-    IDirectMusicPerformance8 *idmusicperformance;
-    IDirectSound *pDirectSound;
-    IDirectMusicPort *pDirectMusicPort;
-    IDirectMusicAudioPath *pDirectMusicAudioPath;
+    IDirectMusicPerformance8 *performance;
+    IDirectSound *dsound;
+    IDirectMusicPort *port;
+    IDirectMusicAudioPath *path;
     HRESULT hr;
 
-    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL,
-            CLSCTX_INPROC_SERVER, &IID_IDirectMusicPerformance8, (LPVOID *)&idmusicperformance);
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance8, (void **)&performance);
     if (hr != S_OK) {
         skip("Cannot create DirectMusicPerformance object (%x)\n", hr);
         CoUninitialize();
         return hr;
     }
 
-    pDirectSound = NULL;
-    hr = IDirectMusicPerformance8_InitAudio(idmusicperformance ,NULL,
-        &pDirectSound, NULL, DMUS_APATH_SHARED_STEREOPLUSREVERB, 128, DMUS_AUDIOF_ALL, NULL);
+    dsound = NULL;
+    hr = IDirectMusicPerformance8_InitAudio(performance, NULL, &dsound, NULL,
+            DMUS_APATH_SHARED_STEREOPLUSREVERB, 128, DMUS_AUDIOF_ALL, NULL);
     if(hr != S_OK)
         return hr;
 
-    pDirectMusicPort = NULL;
-    hr = IDirectMusicPerformance8_PChannelInfo(idmusicperformance, 0, &pDirectMusicPort, NULL, NULL);
+    port = NULL;
+    hr = IDirectMusicPerformance8_PChannelInfo(performance, 0, &port, NULL, NULL);
     ok(hr == S_OK, "Failed to call PChannelInfo (%x)\n", hr);
-    ok(pDirectMusicPort != NULL, "IDirectMusicPort not set\n");
-    if (hr == S_OK && pDirectMusicPort != NULL)
-        IDirectMusicPort_Release(pDirectMusicPort);
+    ok(port != NULL, "IDirectMusicPort not set\n");
+    if (hr == S_OK && port != NULL)
+        IDirectMusicPort_Release(port);
 
-    hr = IDirectMusicPerformance8_GetDefaultAudioPath(idmusicperformance, &pDirectMusicAudioPath);
+    hr = IDirectMusicPerformance8_GetDefaultAudioPath(performance, &path);
     ok(hr == S_OK, "Failed to call GetDefaultAudioPath (%x)\n", hr);
     if (hr == S_OK)
-        IDirectMusicAudioPath_Release(pDirectMusicAudioPath);
+        IDirectMusicAudioPath_Release(path);
 
-    hr = IDirectMusicPerformance8_CloseDown(idmusicperformance);
+    hr = IDirectMusicPerformance8_CloseDown(performance);
     ok(hr == S_OK, "Failed to call CloseDown (%x)\n", hr);
 
-    IDirectMusicPerformance8_Release(idmusicperformance);
+    IDirectMusicPerformance8_Release(performance);
 
-    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL,
-            CLSCTX_INPROC_SERVER, &IID_IDirectMusicPerformance8,
-            (void**)&idmusicperformance);
+    hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicPerformance8, (void**)&performance);
     ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
 
-    hr = IDirectMusicPerformance8_InitAudio(idmusicperformance, NULL, NULL,
-            NULL, 0, 64, 0, NULL);
+    hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL, 0, 64, 0, NULL);
     ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
 
-    hr = IDirectMusicPerformance8_CloseDown(idmusicperformance);
+    hr = IDirectMusicPerformance8_CloseDown(performance);
     ok(hr == S_OK, "CloseDown failed: %08x\n", hr);
 
-    IDirectMusicPerformance8_Release(idmusicperformance);
+    IDirectMusicPerformance8_Release(performance);
 
     return S_OK;
 }
