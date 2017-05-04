@@ -2976,22 +2976,30 @@ static void test_D3DXSHEvalDirectionalLight(void)
 
 static void test_D3DXSHEvalHemisphereLight(void)
 {
+    float bout[49], expected, gout[49], rout[49];
+    unsigned int j, l, order;
     D3DXCOLOR bottom, top;
     D3DXVECTOR3 dir;
-    FLOAT bout[49], expected, gout[49], rout[49];
-    const FLOAT table[] = {
-    /* Red colour */
-      23.422981f, 15.859521f, -36.476898f, 14.537894f,
-    /* Green colour */
-      19.966694f, 6.096982f, -14.023058f, 5.588900f,
-    /* Blue colour */
-      24.566214f, 8.546826f, -19.657701f, 7.834591f, };
-    struct
+    HRESULT hr;
+    BOOL equal;
+
+    static const float table[] =
     {
-        FLOAT *red_received, *green_received, *blue_received;
-        const FLOAT *red_expected, *green_expected, *blue_expected;
-        const FLOAT roffset, goffset, boffset;
-    } test[] = {
+        /* Red colour. */
+        23.422981f, 15.859521f, -36.476898f, 14.537894f,
+        /* Green colour. */
+        19.966694f,  6.096982f, -14.023058f,  5.588900f,
+        /* Blue colour. */
+        24.566214f,  8.546826f, -19.657701f,  7.834591f,
+    };
+    const struct
+    {
+        float *red_received, *green_received, *blue_received;
+        const float *red_expected, *green_expected, *blue_expected;
+        const float roffset, goffset, boffset;
+    }
+    test[] =
+    {
         { rout, gout, bout, table, &table[4], &table[8], 1.01f, 1.02f, 1.03f, },
         { rout, rout, rout, &table[8], &table[8], &table[8], 1.03f, 1.03f, 1.03f, },
         { rout, rout, bout, &table[4], &table[4], &table[8], 1.02f, 1.02f, 1.03f, },
@@ -3000,9 +3008,8 @@ static void test_D3DXSHEvalHemisphereLight(void)
     /* D3DXSHEvalHemisphereLight accepts NULL green or blue colour. */
         { rout, NULL, bout, table, NULL, &table[8], 1.01f, 1.02f, 1.03f, },
         { rout, gout, NULL, table, &table[4], NULL, 1.01f, 1.02f, 1.03f, },
-        { rout, NULL, NULL, table, NULL, NULL, 1.01f, 1.02f, 1.03f, }, };
-    HRESULT hr;
-    unsigned int j, l, order;
+        { rout, NULL, NULL, table, NULL, NULL, 1.01f, 1.02f, 1.03f, },
+    };
 
     dir.x = 1.1f; dir.y = 1.2f; dir.z = 2.76f;
     top.r = 0.1f; top.g = 2.1f; top.b = 2.3f; top.a = 4.3f;
@@ -3031,8 +3038,9 @@ static void test_D3DXSHEvalHemisphereLight(void)
                      expected = 0.0f;
                 else
                     expected = test[l].roffset + j;
-                ok(relative_error(test[l].red_received[j], expected) < admitted_error,
-                    "Red: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].red_received[j]);
+                equal = compare_float(test[l].red_received[j], expected, 4);
+                ok(equal, "Red: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                        l, order, j, expected, test[l].red_received[j]);
 
                 if (test[l].green_received)
                 {
@@ -3042,8 +3050,9 @@ static void test_D3DXSHEvalHemisphereLight(void)
                          expected = 0.0f;
                     else
                          expected = test[l].goffset + j;
-                    ok(relative_error(expected, test[l].green_received[j]) < admitted_error,
-                        "Green: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].green_received[j]);
+                    equal = compare_float(expected, test[l].green_received[j], 4);
+                    ok(equal, "Green: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                            l, order, j, expected, test[l].green_received[j]);
                 }
 
                 if (test[l].blue_received)
@@ -3054,8 +3063,9 @@ static void test_D3DXSHEvalHemisphereLight(void)
                         expected = 0.0f;
                     else
                         expected = test[l].boffset + j;
-                    ok(relative_error(expected, test[l].blue_received[j]) < admitted_error,
-                        "Blue: case %u, order %u: expected[%u] = %f, received %f\n", l, order, j, expected, test[l].blue_received[j]);
+                    equal = compare_float(expected, test[l].blue_received[j], 4);
+                    ok(equal, "Blue: case %u, order %u: expected[%u] = %.8e, received %.8e.\n",
+                            l, order, j, expected, test[l].blue_received[j]);
                 }
             }
         }
