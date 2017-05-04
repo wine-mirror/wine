@@ -3220,13 +3220,17 @@ static void test_D3DXSHEvalSphericalLight(void)
 
 static void test_D3DXSHMultiply2(void)
 {
+    float a[20], b[20], c[20];
     unsigned int i;
-    FLOAT a[20], b[20], c[20];
-    /* D3DXSHMultiply2 only modifies the first 4 elements of the array */
-    const FLOAT expected[20] =
-    { 3.418594f, 1.698211f, 1.703853f, 1.709494f, 4.0f, 5.0f,
-      6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f,
-      14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f };
+    BOOL equal;
+
+    /* D3DXSHMultiply2() only modifies the first 4 elements of the array. */
+    static const float expected[20] =
+    {
+         3.41859412f,  1.69821072f,  1.70385253f,  1.70949447f,  4.0f,  5.0f,  6.0f,
+                7.0f,         8.0f,         9.0f,        10.0f, 11.0f, 12.0f, 13.0f,
+               14.0f,        15.0f,        16.0f,        17.0f, 18.0f, 19.0f,
+    };
 
     for (i = 0; i < 20; i++)
     {
@@ -3237,7 +3241,10 @@ static void test_D3DXSHMultiply2(void)
 
     D3DXSHMultiply2(c, a, b);
     for (i = 0; i < 20; i++)
-        ok(relative_error(c[i], expected[i]) < admitted_error, "Expected[%d] = %f, received = %f\n", i, expected[i], c[i]);
+    {
+        equal = compare_float(c[i], expected[i], 2);
+        ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected[i], c[i]);
+    }
 }
 
 static void test_D3DXSHMultiply3(void)
