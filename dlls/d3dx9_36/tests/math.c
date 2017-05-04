@@ -2785,16 +2785,20 @@ static void test_D3DXSHEvalConeLight(void)
 
 static void test_D3DXSHEvalDirection(void)
 {
+    float a[49], expected, *received_ptr;
     unsigned int i, order;
     D3DXVECTOR3 d;
-    FLOAT a[49], expected[49], *received_ptr;
-    const FLOAT table[36] =
-    { 0.282095f, -0.977205f, 1.465808f, -0.488603f, 2.185097f, -6.555291f,
-      8.200181f, -3.277646f, -1.638823f, 1.180087f, 17.343668f, -40.220032f,
-      47.020218f, -20.110016f, -13.007751f, 6.490479f, -15.020058f, 10.620785f,
-      117.325661f, -240.856750f, 271.657288f, -120.428375f, -87.994247f, 58.414314f,
-      -4.380850f, 24.942520f, -149.447693f, 78.278130f, 747.791748f, -1427.687866f,
-      1574.619141, -713.843933f, -560.843811f, 430.529724, -43.588909, -26.911665, };
+    BOOL equal;
+
+    static const float table[36] =
+    {
+         2.82094806e-01f, -9.77205038e-01f,  1.46580756e+00f, -4.88602519e-01f,  2.18509698e+00f, -6.55529118e+00f,
+         8.20018101e+00f, -3.27764559e-00f, -1.63882279e+00f,  1.18008721e+00f,  1.73436680e+01f, -4.02200317e+01f,
+         4.70202179e+01f, -2.01100159e+01f, -1.30077515e+01f,  6.49047947e+00f, -1.50200577e+01f,  1.06207848e+01f,
+         1.17325661e+02f, -2.40856750e+02f,  2.71657288e+02f, -1.20428375e+02f, -8.79942474e+01f,  5.84143143e+01f,
+        -4.38084984e+00f,  2.49425201e+01f, -1.49447693e+02f,  7.82781296e+01f,  7.47791748e+02f, -1.42768787e+03f,
+         1.57461914e+03f, -7.13843933e+02f, -5.60843811e+02f,  4.30529724e+02f, -4.35889091e+01f, -2.69116650e+01f,
+    };
 
     d.x = 1.0; d.y = 2.0f; d.z = 3.0f;
 
@@ -2808,13 +2812,17 @@ static void test_D3DXSHEvalDirection(void)
 
         for (i = 0; i < 49; i++)
         {
-            /* if the order is < D3DXSH_MINORDER or order > D3DXSH_MAXORDER or the index of the element is greater than order * order - 1, D3DXSHEvalDirection does not modify the output */
-            if ( (order < D3DXSH_MINORDER) || (order > D3DXSH_MAXORDER) || (i >= order * order) )
-                expected[i] = 1.5f + i;
+            /* if the order is < D3DXSH_MINORDER or order > D3DXSH_MAXORDER or
+             * the index of the element is greater than order * order - 1,
+             * D3DXSHEvalDirection() does not modify the output. */
+            if ((order < D3DXSH_MINORDER) || (order > D3DXSH_MAXORDER) || (i >= order * order))
+                expected = 1.5f + i;
             else
-                expected[i] = table[i];
+                expected = table[i];
 
-            ok(relative_error(a[i], expected[i]) < admitted_error, "order %u, index %u: expected %f, received %f\n", order, i, expected[i], a[i]);
+            equal = compare_float(a[i], expected, 2);
+            ok(equal, "order %u, index %u: Got unexpected result %.8e, expected %.8e.\n",
+                    order, i, a[i], expected);
         }
     }
 }
