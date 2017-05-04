@@ -37,7 +37,7 @@ extern "C" {
 
 /* Calling conventions definitions */
 
-#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__sparc64__) || defined(__aarch64__)) && !defined(_WIN64)
+#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
 #define _WIN64
 #endif
 
