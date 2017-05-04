@@ -3987,6 +3987,33 @@ static const DWORD test_effect_preshader_effect_blob[] =
 #define TEST_EFFECT_PRESHADER_VSHADER_POS 2710
 #define TEST_EFFECT_PRESHADER_VSHADER_LEN 13
 
+#define test_effect_preshader_compare_shader_bytecode(a, b, c, d) \
+        test_effect_preshader_compare_shader_bytecode_(__LINE__, a, b, c, d)
+static void test_effect_preshader_compare_shader_bytecode_(unsigned int line,
+        const DWORD *bytecode, unsigned int bytecode_size, int expected_shader_index, BOOL todo)
+{
+    unsigned int i = 0;
+
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(!!bytecode, "NULL shader bytecode.\n");
+
+    if (!bytecode)
+        return;
+
+    while (bytecode[i++] != 0x0000ffff)
+        ;
+
+    if (!bytecode_size)
+        bytecode_size = i * sizeof(*bytecode);
+    else
+        ok(i * sizeof(*bytecode) == bytecode_size, "Unexpected byte code size %u.\n", bytecode_size);
+
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(!memcmp(bytecode, &test_effect_preshader_effect_blob[TEST_EFFECT_PRESHADER_VSHADER_POS
+            + expected_shader_index * TEST_EFFECT_PRESHADER_VSHADER_LEN], bytecode_size),
+            "Incorrect shader selected.\n");
+}
+
 #define test_effect_preshader_compare_shader(a, b, c) \
         test_effect_preshader_compare_shader_(__LINE__, a, b, c)
 static void test_effect_preshader_compare_shader_(unsigned int line, IDirect3DDevice9 *device,
@@ -4013,10 +4040,9 @@ static void test_effect_preshader_compare_shader_(unsigned int line, IDirect3DDe
     hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
     ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    todo_wine_if(todo)
-    ok_(__FILE__, line)(!memcmp(byte_code, &test_effect_preshader_effect_blob[TEST_EFFECT_PRESHADER_VSHADER_POS
-            + expected_shader_index * TEST_EFFECT_PRESHADER_VSHADER_LEN], byte_code_size),
-            "Incorrect shader selected.\n");
+    test_effect_preshader_compare_shader_bytecode_(line, byte_code,
+            byte_code_size, expected_shader_index, todo);
+
     HeapFree(GetProcessHeap(), 0, byte_code);
     IDirect3DVertexShader9_Release(vshader);
  }
