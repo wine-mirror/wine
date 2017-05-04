@@ -256,10 +256,6 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init(IDirectMusicPerformance8
 	FIXME("(iface = %p, dmusic = %p, dsound = %p, hwnd = %p)\n", This, ppDirectMusic, pDirectSound, hWnd);
  	if (This->pDirectMusic || This->pDirectSound)
 	  return DMUS_E_ALREADY_INITED;
-	
-	if (NULL == hWnd) {
-	  hWnd = GetForegroundWindow();
-	}
 
 	if (NULL != pDirectSound) {
 	  This->pDirectSound = pDirectSound;
@@ -268,12 +264,9 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init(IDirectMusicPerformance8
 	  DirectSoundCreate8(NULL, (LPDIRECTSOUND8*) &This->pDirectSound, NULL);
 	  if (!This->pDirectSound) return DSERR_NODRIVER;
 
-	  if (NULL != hWnd) {
-	    IDirectSound8_SetCooperativeLevel(This->pDirectSound, hWnd, DSSCL_PRIORITY);
-	  } else {
-	    /* how to get the ForeGround window handle ? */
-            /*IDirectSound8_SetCooperativeLevel(This->pDirectSound, hWnd, DSSCL_PRIORITY);*/
-	  }
+          if (!hWnd)
+            hWnd = GetForegroundWindow();
+          IDirectSound_SetCooperativeLevel(This->pDirectSound, hWnd, DSSCL_PRIORITY);
 	}
 
 	if (NULL != ppDirectMusic && NULL != *ppDirectMusic) {
@@ -917,6 +910,9 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
           FIXME("return dsound(%p,%d)\n", dsound, hr);
 	  if (FAILED(hr) || !dsound)
 	    return DSERR_NODRIVER;
+          if (!hWnd)
+            hWnd = GetForegroundWindow();
+          IDirectSound_SetCooperativeLevel(dsound, hWnd, DSSCL_PRIORITY);
 	  if (ppDirectSound)
 	    *ppDirectSound = dsound;  
 	}
