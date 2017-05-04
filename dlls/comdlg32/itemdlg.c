@@ -856,7 +856,7 @@ static inline customctrl *get_cctrl(FileDialogImpl *This, DWORD ctlid)
 static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multiline)
 {
     LPWSTR text;
-    UINT len, final_width;
+    UINT len, final_width, dpi;
     UINT lines, final_height;
     SIZE size;
     RECT rc;
@@ -872,7 +872,11 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
 
     hdc = GetDC(hctrl);
     GetTextExtentPoint32W(hdc, text, lstrlenW(text), &size);
+    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     ReleaseDC(hctrl, hdc);
+
+    min_width = MulDiv(min_width, dpi, USER_DEFAULT_SCREEN_DPI);
+    max_width = MulDiv(max_width, dpi, USER_DEFAULT_SCREEN_DPI);
 
     if(len && multiline)
     {
