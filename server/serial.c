@@ -220,6 +220,16 @@ static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async
         else set_error( STATUS_BUFFER_TOO_SMALL );
         return 0;
 
+    case IOCTL_SERIAL_SET_WAIT_MASK:
+        if (get_req_data_size() >= sizeof(serial->eventmask))
+        {
+            serial->eventmask = *(unsigned int *)get_req_data();
+            serial->generation++;
+            fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
+        return 0;
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
@@ -328,14 +338,6 @@ DECL_HANDLER(set_serial_info)
         /* pending write */
         if (req->flags & SERIALINFO_PENDING_WRITE)
             serial->pending_write = 1;
-
-        /* event mask */
-        if (req->flags & SERIALINFO_SET_MASK)
-        {
-            serial->eventmask = req->eventmask;
-            serial->generation++;
-            fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
-        }
 
         release_object( serial );
     }

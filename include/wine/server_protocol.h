@@ -3164,13 +3164,12 @@ struct set_serial_info_request
     struct request_header __header;
     obj_handle_t handle;
     int          flags;
-    unsigned int eventmask;
+    char __pad_20[4];
 };
 struct set_serial_info_reply
 {
     struct reply_header __header;
 };
-#define SERIALINFO_SET_MASK      0x02
 #define SERIALINFO_PENDING_WRITE 0x04
 #define SERIALINFO_PENDING_WAIT  0x08
 
@@ -6396,6 +6395,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 529
+#define SERVER_PROTOCOL_VERSION 530
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

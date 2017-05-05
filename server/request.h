@@ -1559,7 +1559,6 @@ C_ASSERT( FIELD_OFFSET(struct get_serial_info_reply, pending_write) == 16 );
 C_ASSERT( sizeof(struct get_serial_info_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_serial_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_serial_info_request, flags) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_serial_info_request, eventmask) == 20 );
 C_ASSERT( sizeof(struct set_serial_info_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct register_async_request, type) == 12 );
 C_ASSERT( FIELD_OFFSET(struct register_async_request, async) == 16 );

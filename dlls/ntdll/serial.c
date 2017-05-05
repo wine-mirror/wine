@@ -771,21 +771,6 @@ static NTSTATUS set_special_chars(int fd, const SERIAL_CHARS* sc)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
-{
-    NTSTATUS status;
-
-    SERVER_START_REQ( set_serial_info )
-    {
-        req->handle    = wine_server_obj_handle( hDevice );
-        req->flags     = SERIALINFO_SET_MASK;
-        req->eventmask = mask;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return status;
-}
-
 /*
  * does not change IXOFF but simulates that IXOFF has been received:
  */
@@ -1126,6 +1111,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     {
     case IOCTL_SERIAL_GET_TIMEOUTS:
     case IOCTL_SERIAL_SET_TIMEOUTS:
+    case IOCTL_SERIAL_SET_WAIT_MASK:
         /* these are handled on the server side */
         return STATUS_NOT_SUPPORTED;
     }
@@ -1300,13 +1286,6 @@ static inline NTSTATUS io_control(HANDLE hDevice,
 #else
         status = STATUS_NOT_SUPPORTED;
 #endif
-        break;
-    case IOCTL_SERIAL_SET_WAIT_MASK:
-        if (lpInBuffer && nInBufferSize == sizeof(DWORD))
-        {
-            status = set_wait_mask(hDevice, *(DWORD*)lpInBuffer);
-        }
-        else status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_SET_XOFF:
         status = set_XOff(fd);
