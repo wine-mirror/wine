@@ -62,6 +62,7 @@
 @ cdecl wined3d_device_get_display_mode(ptr long ptr ptr)
 @ cdecl wined3d_device_get_domain_shader(ptr)
 @ cdecl wined3d_device_get_ds_cb(ptr long)
+@ cdecl wined3d_device_get_ds_resource_view(ptr long)
 @ cdecl wined3d_device_get_gamma_ramp(ptr long ptr)
 @ cdecl wined3d_device_get_geometry_shader(ptr)
 @ cdecl wined3d_device_get_gs_cb(ptr long)
