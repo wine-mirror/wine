@@ -815,16 +815,6 @@ ULONG WINAPI TraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER EventTra
 }
 
 /******************************************************************************
- * EventEnabled [ADVAPI32.@]
- *
- */
-BOOLEAN WINAPI EventEnabled( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor )
-{
-    FIXME("(%s, %p): stub\n", wine_dbgstr_longlong(handle), descriptor);
-    return FALSE;
-}
-
-/******************************************************************************
  * EventProviderEnabled [ADVAPI32.@]
  *
  */

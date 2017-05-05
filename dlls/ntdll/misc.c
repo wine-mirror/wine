@@ -457,3 +457,12 @@ ULONG WINAPI EtwUnregisterTraceGuids( TRACEHANDLE RegistrationHandle )
     FIXME("%s: stub\n", wine_dbgstr_longlong(RegistrationHandle));
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ *                  EtwEventEnabled (NTDLL.@)
+ */
+BOOLEAN WINAPI EtwEventEnabled( REGHANDLE handle, const EVENT_DESCRIPTOR *descriptor )
+{
+    FIXME("(%s, %p): stub\n", wine_dbgstr_longlong(handle), descriptor);
+    return FALSE;
+}
