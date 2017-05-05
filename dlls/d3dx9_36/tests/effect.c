@@ -2402,12 +2402,18 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
 static void test_effect_setvalue_object(IDirect3DDevice9 *device)
 {
-    ID3DXEffect *effect;
-    D3DXHANDLE parameter;
-    IDirect3DTexture9 *texture;
+    static const char expected_string[] = "test_string_1";
+    static const char expected_string2[] = "test_longer_string_2";
+    static const char *expected_string_array[] = {expected_string, expected_string2};
+    const char *string_array[ARRAY_SIZE(expected_string_array)];
+    const char *string, *string2;
     IDirect3DTexture9 *texture_set;
-    HRESULT hr;
+    IDirect3DTexture9 *texture;
+    D3DXHANDLE parameter;
+    ID3DXEffect *effect;
+    unsigned int i;
     ULONG count;
+    HRESULT hr;
 
     hr = D3DXCreateEffect(device, test_effect_parameter_value_blob_object,
             sizeof(test_effect_parameter_value_blob_object), NULL, NULL, 0, NULL, &effect, NULL);
@@ -2434,6 +2440,47 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
     count = IDirect3DTexture9_Release(texture);
     ok(!count, "Got reference count %u, expected 0.\n", count);
 
+    hr = effect->lpVtbl->SetString(effect, "s", expected_string);
+    todo_wine
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    string = NULL;
+    hr = effect->lpVtbl->GetString(effect, "s", &string);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetString(effect, "s", &string2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ok(string != expected_string, "String pointers are the same.\n");
+    ok(string == string2, "String pointers differ.\n");
+    todo_wine
+    ok(!strcmp(string, expected_string), "Unexpected string '%s'.\n", string);
+
+    string = expected_string2;
+    hr = effect->lpVtbl->SetValue(effect, "s", &string, sizeof(string) - 1);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetValue(effect, "s", &string, sizeof(string));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->SetValue(effect, "s", &string, sizeof(string) * 2);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    string = NULL;
+    hr = effect->lpVtbl->GetValue(effect, "s", &string, sizeof(string));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    ok(string != expected_string2, "String pointers are the same.\n");
+    todo_wine
+    ok(!strcmp(string, expected_string2), "Unexpected string '%s'.\n", string);
+
+    hr = effect->lpVtbl->SetValue(effect, "s_2", expected_string_array,
+            sizeof(expected_string_array));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->GetValue(effect, "s_2", string_array,
+            sizeof(string_array));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(expected_string_array); ++i)
+    {
+        todo_wine
+        ok(!strcmp(string_array[i], expected_string_array[i]), "Unexpected string '%s', i %u.\n",
+                string_array[i], i);
+    }
     effect->lpVtbl->Release(effect);
 }
 
