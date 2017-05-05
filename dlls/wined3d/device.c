@@ -2704,6 +2704,14 @@ void CDECL wined3d_device_set_hs_resource_view(struct wined3d_device *device,
     wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_HULL, idx, view);
 }
 
+struct wined3d_shader_resource_view * CDECL wined3d_device_get_hs_resource_view(const struct wined3d_device *device,
+        unsigned int idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_HULL, idx);
+}
+
 void CDECL wined3d_device_set_hs_sampler(struct wined3d_device *device,
         unsigned int idx, struct wined3d_sampler *sampler)
 {
