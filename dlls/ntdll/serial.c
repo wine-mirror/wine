@@ -390,26 +390,6 @@ static NTSTATUS get_status(int fd, SERIAL_STATUS* ss)
     return status;
 }
 
-static NTSTATUS get_timeouts(HANDLE handle, SERIAL_TIMEOUTS* st)
-{
-    NTSTATUS    status;
-    SERVER_START_REQ( get_serial_info )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        req->flags = 0;
-        if (!(status = wine_server_call( req )))
-        {
-            st->ReadIntervalTimeout         = reply->readinterval;
-            st->ReadTotalTimeoutMultiplier  = reply->readmult;
-            st->ReadTotalTimeoutConstant    = reply->readconst;
-            st->WriteTotalTimeoutMultiplier = reply->writemult;
-            st->WriteTotalTimeoutConstant   = reply->writeconst;
-        }
-    }
-    SERVER_END_REQ;
-    return status;
-}
-
 static void stop_waiting( HANDLE handle )
 {
     NTSTATUS status;
@@ -1245,14 +1225,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         else status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_GET_TIMEOUTS:
-        if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_TIMEOUTS))
-        {
-            if (!(status = get_timeouts(hDevice, lpOutBuffer)))
-                sz = sizeof(SERIAL_TIMEOUTS);
-        }
-        else
-            status = STATUS_INVALID_PARAMETER;
-        break;
+        return STATUS_NOT_SUPPORTED;
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {

@@ -50,6 +50,8 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "winioctl.h"
+#include "ddk/ntddser.h"
 
 #include "file.h"
 #include "handle.h"
@@ -61,6 +63,7 @@ static struct fd *serial_get_fd( struct object *obj );
 static void serial_destroy(struct object *obj);
 
 static enum server_fd_type serial_get_fd_type( struct fd *fd );
+static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void serial_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void serial_reselect_async( struct fd *fd, struct async_queue *queue );
 
@@ -118,7 +121,7 @@ static const struct fd_ops serial_fd_ops =
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */
     no_fd_flush,                  /* flush */
-    default_fd_ioctl,             /* ioctl */
+    serial_ioctl,                 /* ioctl */
     serial_queue_async,           /* queue_async */
     serial_reselect_async         /* reselect_async */
 };
@@ -181,6 +184,32 @@ static struct serial *get_serial_obj( struct process *process, obj_handle_t hand
 static enum server_fd_type serial_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_SERIAL;
+}
+
+static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+{
+    struct serial *serial = get_fd_user( fd );
+
+    switch (code)
+    {
+    case IOCTL_SERIAL_GET_TIMEOUTS:
+        if (get_reply_max_size() >= sizeof(SERIAL_TIMEOUTS))
+        {
+            SERIAL_TIMEOUTS *timeouts = set_reply_data_size( sizeof(*timeouts ));
+
+            timeouts->ReadIntervalTimeout = serial->readinterval;
+            timeouts->ReadTotalTimeoutConstant = serial->readconst;
+            timeouts->ReadTotalTimeoutMultiplier = serial->readmult;
+            timeouts->WriteTotalTimeoutConstant = serial->writeconst;
+            timeouts->WriteTotalTimeoutMultiplier = serial->writemult;
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
+        return 0;
+
+    default:
+        set_error( STATUS_NOT_SUPPORTED );
+        return 0;
+    }
 }
 
 static void serial_queue_async( struct fd *fd, struct async *async, int type, int count )
@@ -251,13 +280,6 @@ DECL_HANDLER(get_serial_info)
             }
             serial->pending_wait = 1;
         }
-
-        /* timeouts */
-        reply->readinterval = serial->readinterval;
-        reply->readconst    = serial->readconst;
-        reply->readmult     = serial->readmult;
-        reply->writeconst   = serial->writeconst;
-        reply->writemult    = serial->writemult;
 
         /* event mask */
         reply->eventmask    = serial->eventmask;

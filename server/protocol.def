@@ -2299,11 +2299,6 @@ enum message_type
     obj_handle_t handle;       /* handle to comm port */
     int          flags;
 @REPLY
-    unsigned int readinterval;
-    unsigned int readconst;
-    unsigned int readmult;
-    unsigned int writeconst;
-    unsigned int writemult;
     unsigned int eventmask;
     unsigned int cookie;
     unsigned int pending_write;

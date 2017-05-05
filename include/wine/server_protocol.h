@@ -3151,14 +3151,10 @@ struct get_serial_info_request
 struct get_serial_info_reply
 {
     struct reply_header __header;
-    unsigned int readinterval;
-    unsigned int readconst;
-    unsigned int readmult;
-    unsigned int writeconst;
-    unsigned int writemult;
     unsigned int eventmask;
     unsigned int cookie;
     unsigned int pending_write;
+    char __pad_20[4];
 };
 
 
@@ -6407,6 +6403,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 527
+#define SERVER_PROTOCOL_VERSION 528
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
