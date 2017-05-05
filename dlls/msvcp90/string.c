@@ -22,7 +22,6 @@
 
 #include "msvcp90.h"
 #include "stdio.h"
-#include "assert.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -1979,7 +1978,11 @@ char* __thiscall MSVCP_basic_string_char_operator_at(
 {
     TRACE("%p %lu\n", this, pos);
 
-    assert(this->size >= pos);
+#if _MSVCP_VER >= 80
+    if (this->size < pos)
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+#endif
+
     return basic_string_char_ptr(this)+pos;
 }
 
@@ -1991,7 +1994,11 @@ const char* __thiscall MSVCP_basic_string_char_const_operator_at(
 {
     TRACE("%p %lu\n", this, pos);
 
-    assert(this->size >= pos);
+#if _MSVCP_VER >= 80
+    if (this->size < pos)
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+#endif
+
     return basic_string_char_const_ptr(this)+pos;
 }
 
@@ -3951,7 +3958,11 @@ wchar_t* __thiscall MSVCP_basic_string_wchar_operator_at(
 {
     TRACE("%p %lu\n", this, pos);
 
-    assert(this->size >= pos);
+#if _MSVCP_VER >= 80
+    if (this->size < pos)
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+#endif
+
     return basic_string_wchar_ptr(this)+pos;
 }
 
@@ -3965,7 +3976,11 @@ const wchar_t* __thiscall MSVCP_basic_string_wchar_const_operator_at(
 {
     TRACE("%p %lu\n", this, pos);
 
-    assert(this->size >= pos);
+#if _MSVCP_VER >= 80
+    if (this->size < pos)
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+#endif
+
     return basic_string_wchar_const_ptr(this)+pos;
 }
 
