@@ -2441,7 +2441,6 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
     ok(!count, "Got reference count %u, expected 0.\n", count);
 
     hr = effect->lpVtbl->SetString(effect, "s", expected_string);
-    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     string = NULL;
     hr = effect->lpVtbl->GetString(effect, "s", &string);
@@ -2451,7 +2450,6 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
 
     ok(string != expected_string, "String pointers are the same.\n");
     ok(string == string2, "String pointers differ.\n");
-    todo_wine
     ok(!strcmp(string, expected_string), "Unexpected string '%s'.\n", string);
 
     string = expected_string2;
@@ -2466,7 +2464,6 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     ok(string != expected_string2, "String pointers are the same.\n");
-    todo_wine
     ok(!strcmp(string, expected_string2), "Unexpected string '%s'.\n", string);
 
     hr = effect->lpVtbl->SetValue(effect, "s_2", expected_string_array,
@@ -2477,7 +2474,6 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     for (i = 0; i < ARRAY_SIZE(expected_string_array); ++i)
     {
-        todo_wine
         ok(!strcmp(string_array[i], expected_string_array[i]), "Unexpected string '%s', i %u.\n",
                 string_array[i], i);
     }

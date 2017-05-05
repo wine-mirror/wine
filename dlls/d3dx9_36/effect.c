@@ -1497,10 +1497,24 @@ static void clear_dirty_params(struct d3dx9_base_effect *base)
         base->parameters[i].runtime_flags &= ~PARAMETER_FLAG_DIRTY;
 }
 
+static HRESULT set_string(char **param_data, const char *string)
+{
+    HeapFree(GetProcessHeap(), 0, *param_data);
+    *param_data = HeapAlloc(GetProcessHeap(), 0, strlen(string) + 1);
+    if (!*param_data)
+    {
+        ERR("Out of memory.\n");
+        return E_OUTOFMEMORY;
+    }
+    strcpy(*param_data, string);
+    return D3D_OK;
+}
+
 static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
         D3DXHANDLE parameter, const void *data, UINT bytes)
 {
     struct d3dx_parameter *param = get_valid_parameter(base, parameter);
+    unsigned int i;
 
     if (!param)
     {
@@ -1524,9 +1538,6 @@ static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
             case D3DXPT_TEXTURE2D:
             case D3DXPT_TEXTURE3D:
             case D3DXPT_TEXTURECUBE:
-            {
-                unsigned int i;
-
                 for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
                 {
                     IUnknown *unk = ((IUnknown **)data)[i];
@@ -1537,19 +1548,31 @@ static HRESULT d3dx9_base_effect_set_value(struct d3dx9_base_effect *base,
                     if (unk)
                         IUnknown_Release(unk);
                 }
-            }
             /* fallthrough */
             case D3DXPT_VOID:
             case D3DXPT_BOOL:
             case D3DXPT_INT:
             case D3DXPT_FLOAT:
-                TRACE("Copy %u bytes\n", param->bytes);
+                TRACE("Copy %u bytes.\n", param->bytes);
                 memcpy(param->data, data, param->bytes);
                 set_dirty(param);
                 break;
 
+            case D3DXPT_STRING:
+            {
+                HRESULT hr;
+
+                set_dirty(param);
+                for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
+                {
+                    if (FAILED(hr = set_string(&((char **)param->data)[i], ((const char **)data)[i])))
+                        return hr;
+                }
+                break;
+            }
+
             default:
-                FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(param->type));
                 break;
         }
 
@@ -2578,9 +2601,17 @@ static HRESULT d3dx9_base_effect_get_matrix_transpose_pointer_array(struct d3dx9
 static HRESULT d3dx9_base_effect_set_string(struct d3dx9_base_effect *base,
         D3DXHANDLE parameter, const char *string)
 {
-    FIXME("stub!\n");
+    struct d3dx_parameter *param = get_valid_parameter(base, parameter);
 
-    return E_NOTIMPL;
+    if (param && param->type == D3DXPT_STRING)
+    {
+        set_dirty(param);
+        return set_string(param->data, string);
+    }
+
+    WARN("Parameter not found.\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT d3dx9_base_effect_get_string(struct d3dx9_base_effect *base,
