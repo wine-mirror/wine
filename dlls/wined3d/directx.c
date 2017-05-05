@@ -1390,6 +1390,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1060,    "NVIDIA GeForce GTX 1060",          DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1070,    "NVIDIA GeForce GTX 1070",          DRIVER_NVIDIA_GEFORCE8,  8192},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1080,    "NVIDIA GeForce GTX 1080",          DRIVER_NVIDIA_GEFORCE8,  8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1080TI,  "NVIDIA GeForce GTX 1080 Ti",       DRIVER_NVIDIA_GEFORCE8,  11264},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_TITANX_PASCAL,      "NVIDIA TITAN X (Pascal)",          DRIVER_NVIDIA_GEFORCE8,  12288},
 
     /* AMD cards */
@@ -1876,6 +1877,7 @@ cards_nvidia_binary[] =
 {
     /* Direct 3D 11 */
     {"TITAN X (Pascal)",            CARD_NVIDIA_TITANX_PASCAL},     /* GeForce 1000 - highend */
+    {"GTX 1080 Ti",                 CARD_NVIDIA_GEFORCE_GTX1080TI}, /* GeForce 1000 - highend */
     {"GTX 1080",                    CARD_NVIDIA_GEFORCE_GTX1080},   /* GeForce 1000 - highend */
     {"GTX 1070",                    CARD_NVIDIA_GEFORCE_GTX1070},   /* GeForce 1000 - highend */
     {"GTX 1060",                    CARD_NVIDIA_GEFORCE_GTX1060},   /* GeForce 1000 - midend high */
