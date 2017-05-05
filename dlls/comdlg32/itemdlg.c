@@ -862,6 +862,7 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
     RECT rc;
     HDC hdc;
     WCHAR *c;
+    HFONT font;
 
     TRACE("\n");
 
@@ -871,7 +872,10 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
     SendMessageW(hctrl, WM_GETTEXT, len+1, (LPARAM)text);
 
     hdc = GetDC(hctrl);
+    font = (HFONT)SendMessageW(hctrl, WM_GETFONT, 0, 0);
+    font = SelectObject(hdc, font);
     GetTextExtentPoint32W(hdc, text, lstrlenW(text), &size);
+    SelectObject(hdc, font);
     ReleaseDC(hctrl, hdc);
 
     if(len && multiline)
