@@ -745,26 +745,9 @@ cleanup:
     return NULL;
 }
 
-static BOOL processRegLinesA(FILE *fp, WCHAR *(*get_line)(FILE *), char *two_chars)
+static BOOL processRegLinesA(FILE *fp, WCHAR *(*get_line)(FILE *), int reg_version)
 {
-    WCHAR *line, *header;
-    int reg_version;
-
-    line = get_line(fp);
-
-    header = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(line) + 3) * sizeof(WCHAR));
-    CHECK_ENOUGH_MEMORY(header);
-    header[0] = two_chars[0];
-    header[1] = two_chars[1];
-    lstrcpyW(header + 2, line);
-
-    reg_version = parse_file_header(header);
-    HeapFree(GetProcessHeap(), 0, header);
-    if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
-    {
-        get_line(NULL); /* Reset static variables */
-        return reg_version == REG_VERSION_FUZZY;
-    }
+    WCHAR *line;
 
     while ((line = get_line(fp)))
     {
@@ -850,15 +833,6 @@ cleanup:
 static BOOL processRegLinesW(FILE *fp, WCHAR *(*get_line)(FILE *))
 {
     WCHAR *line;
-    int reg_version;
-
-    line = get_line(fp);
-    reg_version = parse_file_header(line);
-    if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
-    {
-        get_line(NULL); /* Reset static variables */
-        return reg_version == REG_VERSION_FUZZY;
-    }
 
     while ((line = get_line(fp)))
         processRegEntry(line, TRUE);
@@ -1341,14 +1315,41 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
 BOOL import_registry_file(FILE* reg_file)
 {
     BYTE s[2];
+    BOOL is_unicode;
+    WCHAR *(*get_line)(FILE *);
+    WCHAR *line, *header;
+    int reg_version;
 
     if (!reg_file || (fread(s, 2, 1, reg_file) != 1))
         return FALSE;
 
-    if (s[0] == 0xff && s[1] == 0xfe)
+    is_unicode = (s[0] == 0xff && s[1] == 0xfe);
+    get_line = is_unicode ? get_lineW : get_lineA;
+
+    line = get_line(reg_file);
+
+    if (!is_unicode)
+    {
+        header = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(line) + 3) * sizeof(WCHAR));
+        CHECK_ENOUGH_MEMORY(header);
+        header[0] = s[0];
+        header[1] = s[1];
+        lstrcpyW(header + 2, line);
+        reg_version = parse_file_header(header);
+        HeapFree(GetProcessHeap(), 0, header);
+    }
+    else reg_version = parse_file_header(line);
+
+    if (reg_version == REG_VERSION_FUZZY || reg_version == REG_VERSION_INVALID)
+    {
+        get_line(NULL); /* Reset static variables */
+        return reg_version == REG_VERSION_FUZZY;
+    }
+
+    if (is_unicode)
         return processRegLinesW(reg_file, get_lineW);
     else
-        return processRegLinesA(reg_file, get_lineA, (char *)s);
+        return processRegLinesA(reg_file, get_lineA, reg_version);
 }
 
 /******************************************************************************
