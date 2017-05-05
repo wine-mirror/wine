@@ -1111,6 +1111,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     {
     case IOCTL_SERIAL_GET_TIMEOUTS:
     case IOCTL_SERIAL_SET_TIMEOUTS:
+    case IOCTL_SERIAL_GET_WAIT_MASK:
     case IOCTL_SERIAL_SET_WAIT_MASK:
         /* these are handled on the server side */
         return STATUS_NOT_SUPPORTED;
@@ -1194,15 +1195,6 @@ static inline NTSTATUS io_control(HANDLE hDevice,
                 sz = sizeof(DWORD);
         }
         else status = STATUS_INVALID_PARAMETER;
-        break;
-    case IOCTL_SERIAL_GET_WAIT_MASK:
-        if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
-        {
-            if (!(status = get_wait_mask(hDevice, lpOutBuffer, NULL, NULL, FALSE)))
-                sz = sizeof(DWORD);
-        }
-        else
-            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_IMMEDIATE_CHAR:
         if (lpInBuffer && nInBufferSize == sizeof(CHAR))

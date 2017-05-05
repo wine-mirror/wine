@@ -220,6 +220,13 @@ static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async
         else set_error( STATUS_BUFFER_TOO_SMALL );
         return 0;
 
+    case IOCTL_SERIAL_GET_WAIT_MASK:
+        if (get_reply_max_size() >= sizeof(serial->eventmask))
+            set_reply_data( &serial->eventmask, sizeof(serial->eventmask) );
+        else
+            set_error( STATUS_BUFFER_TOO_SMALL );
+        return 0;
+
     case IOCTL_SERIAL_SET_WAIT_MASK:
         if (get_req_data_size() >= sizeof(serial->eventmask))
         {

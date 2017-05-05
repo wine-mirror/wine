@@ -120,6 +120,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
         CASE(FSCTL_PIPE_PEEK);
         CASE(FSCTL_PIPE_WAIT);
         CASE(IOCTL_SERIAL_GET_TIMEOUTS);
+        CASE(IOCTL_SERIAL_GET_WAIT_MASK);
         CASE(IOCTL_SERIAL_SET_TIMEOUTS);
         CASE(IOCTL_SERIAL_SET_WAIT_MASK);
         CASE(WS_SIO_ADDRESS_LIST_CHANGE);
