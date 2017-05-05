@@ -2513,7 +2513,7 @@ static void test_D3DXFloat_Array(void)
     out = D3DXFloat16To32Array(&single.f, &half, 0);
     ok(out == &single.f, "Got %p, expected %p.\n", out, &single.f);
 
-    for (i = 0; i < sizeof(testdata)/sizeof(testdata[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(testdata); ++i)
     {
         out = D3DXFloat32To16Array(&half, &testdata[i].single_in.f, 1);
         ok(out == &half, "Got %p, expected %p.\n", out, &half);
