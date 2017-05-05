@@ -2591,7 +2591,7 @@ static void test_D3DXSHDot(void)
 
     static const float expected[] = {0.5f, 0.5f, 25.0f, 262.5f, 1428.0f, 5362.5f, 15873.0f, 39812.5f};
 
-    for (i = 0; i < 49; i++)
+    for (i = 0; i < ARRAY_SIZE(a); ++i)
     {
         a[i] = i + 1.0f;
         b[i] = i + 0.5f;
