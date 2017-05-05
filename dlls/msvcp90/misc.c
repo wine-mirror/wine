@@ -1632,3 +1632,16 @@ void __cdecl _Release_chore(_Threadpool_chore *chore)
     chore->work = NULL;
 }
 #endif
+
+#if _MSVCP_VER >= 110 && _MSVCP_VER <= 120
+typedef struct {
+    char dummy;
+} _Ph;
+
+/* ?_1@placeholders@std@@3V?$_Ph@$00@2@A */
+/* ?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A */
+_Ph _Ph_1 = {0}, _Ph_2 = {0}, _Ph_3 = {0}, _Ph_4 = {0}, _Ph_5 = {0};
+_Ph _Ph_6 = {0}, _Ph_7 = {0}, _Ph_8 = {0}, _Ph_9 = {0}, _Ph_10 = {0};
+_Ph _Ph_11 = {0}, _Ph_12 = {0}, _Ph_13 = {0}, _Ph_14 = {0}, _Ph_15 = {0};
+_Ph _Ph_16 = {0}, _Ph_17 = {0}, _Ph_18 = {0}, _Ph_19 = {0}, _Ph_20 = {0};
+#endif

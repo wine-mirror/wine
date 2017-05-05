@@ -1077,26 +1077,26 @@
 @ stub -arch=win64 ?NFS_Free@details@Concurrency@@YAXPEAX@Z
 @ stub -arch=win32 ?NFS_GetLineSize@details@Concurrency@@YAIXZ
 @ stub -arch=win64 ?NFS_GetLineSize@details@Concurrency@@YA_KXZ
-# extern ?_10@placeholders@std@@3V?$_Ph@$09@2@A
-# extern ?_11@placeholders@std@@3V?$_Ph@$0L@@2@A
-# extern ?_12@placeholders@std@@3V?$_Ph@$0M@@2@A
-# extern ?_13@placeholders@std@@3V?$_Ph@$0N@@2@A
-# extern ?_14@placeholders@std@@3V?$_Ph@$0O@@2@A
-# extern ?_15@placeholders@std@@3V?$_Ph@$0P@@2@A
-# extern ?_16@placeholders@std@@3V?$_Ph@$0BA@@2@A
-# extern ?_17@placeholders@std@@3V?$_Ph@$0BB@@2@A
-# extern ?_18@placeholders@std@@3V?$_Ph@$0BC@@2@A
-# extern ?_19@placeholders@std@@3V?$_Ph@$0BD@@2@A
-# extern ?_1@placeholders@std@@3V?$_Ph@$00@2@A
-# extern ?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A
-# extern ?_2@placeholders@std@@3V?$_Ph@$01@2@A
-# extern ?_3@placeholders@std@@3V?$_Ph@$02@2@A
-# extern ?_4@placeholders@std@@3V?$_Ph@$03@2@A
-# extern ?_5@placeholders@std@@3V?$_Ph@$04@2@A
-# extern ?_6@placeholders@std@@3V?$_Ph@$05@2@A
-# extern ?_7@placeholders@std@@3V?$_Ph@$06@2@A
-# extern ?_8@placeholders@std@@3V?$_Ph@$07@2@A
-# extern ?_9@placeholders@std@@3V?$_Ph@$08@2@A
+@ extern ?_10@placeholders@std@@3V?$_Ph@$09@2@A _Ph_10
+@ extern ?_11@placeholders@std@@3V?$_Ph@$0L@@2@A _Ph_11
+@ extern ?_12@placeholders@std@@3V?$_Ph@$0M@@2@A _Ph_12
+@ extern ?_13@placeholders@std@@3V?$_Ph@$0N@@2@A _Ph_13
+@ extern ?_14@placeholders@std@@3V?$_Ph@$0O@@2@A _Ph_14
+@ extern ?_15@placeholders@std@@3V?$_Ph@$0P@@2@A _Ph_15
+@ extern ?_16@placeholders@std@@3V?$_Ph@$0BA@@2@A _Ph_16
+@ extern ?_17@placeholders@std@@3V?$_Ph@$0BB@@2@A _Ph_17
+@ extern ?_18@placeholders@std@@3V?$_Ph@$0BC@@2@A _Ph_18
+@ extern ?_19@placeholders@std@@3V?$_Ph@$0BD@@2@A _Ph_19
+@ extern ?_1@placeholders@std@@3V?$_Ph@$00@2@A _Ph_1
+@ extern ?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A _Ph_20
+@ extern ?_2@placeholders@std@@3V?$_Ph@$01@2@A _Ph_2
+@ extern ?_3@placeholders@std@@3V?$_Ph@$02@2@A _Ph_3
+@ extern ?_4@placeholders@std@@3V?$_Ph@$03@2@A _Ph_4
+@ extern ?_5@placeholders@std@@3V?$_Ph@$04@2@A _Ph_5
+@ extern ?_6@placeholders@std@@3V?$_Ph@$05@2@A _Ph_6
+@ extern ?_7@placeholders@std@@3V?$_Ph@$06@2@A _Ph_7
+@ extern ?_8@placeholders@std@@3V?$_Ph@$07@2@A _Ph_8
+@ extern ?_9@placeholders@std@@3V?$_Ph@$08@2@A _Ph_9
 @ stub -arch=arm ?_Add_vtordisp1@?$basic_ios@DU?$char_traits@D@std@@@std@@UAAXXZ
 @ stub -arch=i386 ?_Add_vtordisp1@?$basic_ios@DU?$char_traits@D@std@@@std@@UAEXXZ
 @ stub -arch=win64 ?_Add_vtordisp1@?$basic_ios@DU?$char_traits@D@std@@@std@@UEAAXXZ

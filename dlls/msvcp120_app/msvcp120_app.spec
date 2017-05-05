@@ -1078,26 +1078,26 @@
 @ stub -arch=win64 ?NFS_Free@details@Concurrency@@YAXPEAX@Z
 @ stub -arch=win32 ?NFS_GetLineSize@details@Concurrency@@YAIXZ
 @ stub -arch=win64 ?NFS_GetLineSize@details@Concurrency@@YA_KXZ
-# extern ?_10@placeholders@std@@3V?$_Ph@$09@2@A
-# extern ?_11@placeholders@std@@3V?$_Ph@$0L@@2@A
-# extern ?_12@placeholders@std@@3V?$_Ph@$0M@@2@A
-# extern ?_13@placeholders@std@@3V?$_Ph@$0N@@2@A
-# extern ?_14@placeholders@std@@3V?$_Ph@$0O@@2@A
-# extern ?_15@placeholders@std@@3V?$_Ph@$0P@@2@A
-# extern ?_16@placeholders@std@@3V?$_Ph@$0BA@@2@A
-# extern ?_17@placeholders@std@@3V?$_Ph@$0BB@@2@A
-# extern ?_18@placeholders@std@@3V?$_Ph@$0BC@@2@A
-# extern ?_19@placeholders@std@@3V?$_Ph@$0BD@@2@A
-# extern ?_1@placeholders@std@@3V?$_Ph@$00@2@A
-# extern ?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A
-# extern ?_2@placeholders@std@@3V?$_Ph@$01@2@A
-# extern ?_3@placeholders@std@@3V?$_Ph@$02@2@A
-# extern ?_4@placeholders@std@@3V?$_Ph@$03@2@A
-# extern ?_5@placeholders@std@@3V?$_Ph@$04@2@A
-# extern ?_6@placeholders@std@@3V?$_Ph@$05@2@A
-# extern ?_7@placeholders@std@@3V?$_Ph@$06@2@A
-# extern ?_8@placeholders@std@@3V?$_Ph@$07@2@A
-# extern ?_9@placeholders@std@@3V?$_Ph@$08@2@A
+@ extern ?_10@placeholders@std@@3V?$_Ph@$09@2@A msvcp120.?_10@placeholders@std@@3V?$_Ph@$09@2@A
+@ extern ?_11@placeholders@std@@3V?$_Ph@$0L@@2@A msvcp120.?_11@placeholders@std@@3V?$_Ph@$0L@@2@A
+@ extern ?_12@placeholders@std@@3V?$_Ph@$0M@@2@A msvcp120.?_12@placeholders@std@@3V?$_Ph@$0M@@2@A
+@ extern ?_13@placeholders@std@@3V?$_Ph@$0N@@2@A msvcp120.?_13@placeholders@std@@3V?$_Ph@$0N@@2@A
+@ extern ?_14@placeholders@std@@3V?$_Ph@$0O@@2@A msvcp120.?_14@placeholders@std@@3V?$_Ph@$0O@@2@A
+@ extern ?_15@placeholders@std@@3V?$_Ph@$0P@@2@A msvcp120.?_15@placeholders@std@@3V?$_Ph@$0P@@2@A
+@ extern ?_16@placeholders@std@@3V?$_Ph@$0BA@@2@A msvcp120.?_16@placeholders@std@@3V?$_Ph@$0BA@@2@A
+@ extern ?_17@placeholders@std@@3V?$_Ph@$0BB@@2@A msvcp120.?_17@placeholders@std@@3V?$_Ph@$0BB@@2@A
+@ extern ?_18@placeholders@std@@3V?$_Ph@$0BC@@2@A msvcp120.?_18@placeholders@std@@3V?$_Ph@$0BC@@2@A
+@ extern ?_19@placeholders@std@@3V?$_Ph@$0BD@@2@A msvcp120.?_19@placeholders@std@@3V?$_Ph@$0BD@@2@A
+@ extern ?_1@placeholders@std@@3V?$_Ph@$00@2@A msvcp120.?_1@placeholders@std@@3V?$_Ph@$00@2@A
+@ extern ?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A msvcp120.?_20@placeholders@std@@3V?$_Ph@$0BE@@2@A
+@ extern ?_2@placeholders@std@@3V?$_Ph@$01@2@A msvcp120.?_2@placeholders@std@@3V?$_Ph@$01@2@A
+@ extern ?_3@placeholders@std@@3V?$_Ph@$02@2@A msvcp120.?_3@placeholders@std@@3V?$_Ph@$02@2@A
+@ extern ?_4@placeholders@std@@3V?$_Ph@$03@2@A msvcp120.?_4@placeholders@std@@3V?$_Ph@$03@2@A
+@ extern ?_5@placeholders@std@@3V?$_Ph@$04@2@A msvcp120.?_5@placeholders@std@@3V?$_Ph@$04@2@A
+@ extern ?_6@placeholders@std@@3V?$_Ph@$05@2@A msvcp120.?_6@placeholders@std@@3V?$_Ph@$05@2@A
+@ extern ?_7@placeholders@std@@3V?$_Ph@$06@2@A msvcp120.?_7@placeholders@std@@3V?$_Ph@$06@2@A
+@ extern ?_8@placeholders@std@@3V?$_Ph@$07@2@A msvcp120.?_8@placeholders@std@@3V?$_Ph@$07@2@A
+@ extern ?_9@placeholders@std@@3V?$_Ph@$08@2@A msvcp120.?_9@placeholders@std@@3V?$_Ph@$08@2@A
 @ cdecl -arch=arm ?_Addcats@_Locinfo@std@@QAAAAV12@HPBD@Z(ptr long str) msvcp120.?_Addcats@_Locinfo@std@@QAAAAV12@HPBD@Z
 @ thiscall -arch=i386 ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z(ptr long str) msvcp120.?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z
 @ cdecl -arch=win64 ?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z(ptr long str) msvcp120.?_Addcats@_Locinfo@std@@QEAAAEAV12@HPEBD@Z
