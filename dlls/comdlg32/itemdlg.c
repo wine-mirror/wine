@@ -136,7 +136,7 @@ typedef struct FileDialogImpl {
     LPWSTR custom_filenamelabel;
 
     UINT cctrl_width, cctrl_def_height, cctrls_cols;
-    UINT cctrl_indent;
+    UINT cctrl_indent, dpi_x, dpi_y;
     HWND cctrls_hwnd;
     struct list cctrls;
     UINT_PTR cctrl_next_dlgid;
@@ -856,7 +856,7 @@ static inline customctrl *get_cctrl(FileDialogImpl *This, DWORD ctlid)
 static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multiline)
 {
     LPWSTR text;
-    UINT len, final_width, dpi;
+    UINT len, final_width;
     UINT lines, final_height;
     SIZE size;
     RECT rc;
@@ -872,11 +872,7 @@ static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width, BOOL multili
 
     hdc = GetDC(hctrl);
     GetTextExtentPoint32W(hdc, text, lstrlenW(text), &size);
-    dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     ReleaseDC(hctrl, hdc);
-
-    min_width = MulDiv(min_width, dpi, USER_DEFAULT_SCREEN_DPI);
-    max_width = MulDiv(max_width, dpi, USER_DEFAULT_SCREEN_DPI);
 
     if(len && multiline)
     {
@@ -938,7 +934,7 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
 {
     RECT rc;
     UINT total_height;
-    UINT max_width;
+    UINT max_width, size;
     customctrl *sub_ctrl;
 
     switch(ctrl->type)
@@ -947,7 +943,8 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
     case IDLG_CCTRL_COMBOBOX:
     case IDLG_CCTRL_CHECKBUTTON:
     case IDLG_CCTRL_TEXT:
-        ctrl_resize(ctrl->hwnd, 160, 160, TRUE);
+        size = MulDiv(160, This->dpi_x, USER_DEFAULT_SCREEN_DPI);
+        ctrl_resize(ctrl->hwnd, size, size, TRUE);
         GetWindowRect(ctrl->hwnd, &rc);
         SetWindowPos(ctrl->wrapper_hwnd, NULL, 0, 0, rc.right-rc.left, rc.bottom-rc.top,
                      SWP_NOZORDER|SWP_NOMOVE);
@@ -989,7 +986,8 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
 
         LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
         {
-            ctrl_resize(item->hwnd, 160, 160, TRUE);
+            size = MulDiv(160, This->dpi_x, USER_DEFAULT_SCREEN_DPI);
+            ctrl_resize(item->hwnd, size, size, TRUE);
             SetWindowPos(item->hwnd, NULL, 0, total_height, 0, 0,
                          SWP_NOZORDER|SWP_NOSIZE);
 
@@ -1204,8 +1202,8 @@ static UINT ctrl_container_resize(FileDialogImpl *This, UINT container_width)
     UINT cur_col_pos, cur_row_pos;
     customctrl *ctrl;
     BOOL fits_height;
-    static const UINT cspacing = 90;    /* Columns are spaced with 90px */
-    static const UINT rspacing = 4;     /* Rows are spaced with 4 px. */
+    UINT cspacing = MulDiv(90, This->dpi_x, USER_DEFAULT_SCREEN_DPI);    /* Columns are spaced with 90px */
+    UINT rspacing = MulDiv(4, This->dpi_y, USER_DEFAULT_SCREEN_DPI);     /* Rows are spaced with 4 px. */
 
     /* Given the new width of the container, this function determines the
      * needed height of the container and places the controls according to
@@ -1484,19 +1482,11 @@ static LRESULT CALLBACK radiobuttonlist_proc(HWND hwnd, UINT message, WPARAM wpa
 static HRESULT init_custom_controls(FileDialogImpl *This)
 {
     WNDCLASSW wc;
+    HDC hdc;
     static const WCHAR ctrl_container_classname[] =
         {'i','d','l','g','_','c','o','n','t','a','i','n','e','r','_','p','a','n','e',0};
 
     InitCommonControlsEx(NULL);
-
-    This->cctrl_width = 160;      /* Controls have a fixed width */
-    This->cctrl_indent = 100;
-    This->cctrl_def_height = 23;
-    This->cctrls_cols = 0;
-
-    This->cctrl_next_dlgid = 0x2000;
-    list_init(&This->cctrls);
-    This->cctrl_active_vg = NULL;
 
     if( !GetClassInfoW(COMDLG32_hInstance, ctrl_container_classname, &wc) )
     {
@@ -1520,6 +1510,20 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
                                         COMDLG32_hInstance, This);
     if(!This->cctrls_hwnd)
         return E_FAIL;
+
+    hdc = GetDC(This->cctrls_hwnd);
+    This->dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    This->dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(This->cctrls_hwnd, hdc);
+
+    This->cctrl_width = MulDiv(160, This->dpi_x, USER_DEFAULT_SCREEN_DPI);      /* Controls have a fixed width */
+    This->cctrl_indent = MulDiv(100, This->dpi_x, USER_DEFAULT_SCREEN_DPI);
+    This->cctrl_def_height = MulDiv(23, This->dpi_y, USER_DEFAULT_SCREEN_DPI);
+    This->cctrls_cols = 0;
+
+    This->cctrl_next_dlgid = 0x2000;
+    list_init(&This->cctrls);
+    This->cctrl_active_vg = NULL;
 
     SetWindowLongW(This->cctrls_hwnd, GWL_STYLE, WS_TABSTOP);
 
@@ -1922,6 +1926,8 @@ static void update_control_text(FileDialogImpl *This)
     HWND hitem;
     LPCWSTR custom_okbutton;
     cctrl_item* item;
+    UINT min_width = MulDiv(50, This->dpi_x, USER_DEFAULT_SCREEN_DPI);
+    UINT max_width = MulDiv(250, This->dpi_x, USER_DEFAULT_SCREEN_DPI);
 
     if(This->custom_title)
         SetWindowTextW(This->dlg_hwnd, This->custom_title);
@@ -1935,21 +1941,21 @@ static void update_control_text(FileDialogImpl *This)
        (hitem = GetDlgItem(This->dlg_hwnd, IDOK)))
     {
         SetWindowTextW(hitem, custom_okbutton);
-        ctrl_resize(hitem, 50, 250, FALSE);
+        ctrl_resize(hitem, min_width, max_width, FALSE);
     }
 
     if(This->custom_cancelbutton &&
        (hitem = GetDlgItem(This->dlg_hwnd, IDCANCEL)))
     {
         SetWindowTextW(hitem, This->custom_cancelbutton);
-        ctrl_resize(hitem, 50, 250, FALSE);
+        ctrl_resize(hitem, min_width, max_width, FALSE);
     }
 
     if(This->custom_filenamelabel &&
        (hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAMESTATIC)))
     {
         SetWindowTextW(hitem, This->custom_filenamelabel);
-        ctrl_resize(hitem, 50, 250, FALSE);
+        ctrl_resize(hitem, min_width, max_width, FALSE);
     }
 }
 
