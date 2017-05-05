@@ -771,25 +771,6 @@ static NTSTATUS set_special_chars(int fd, const SERIAL_CHARS* sc)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS set_timeouts(HANDLE handle, const SERIAL_TIMEOUTS* st)
-{
-    NTSTATUS            status;
-
-    SERVER_START_REQ( set_serial_info )
-    {
-        req->handle       = wine_server_obj_handle( handle );
-        req->flags        = SERIALINFO_SET_TIMEOUTS;
-        req->readinterval = st->ReadIntervalTimeout ;
-        req->readmult     = st->ReadTotalTimeoutMultiplier ;
-        req->readconst    = st->ReadTotalTimeoutConstant ;
-        req->writemult    = st->WriteTotalTimeoutMultiplier ;
-        req->writeconst   = st->WriteTotalTimeoutConstant ;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return status;
-}
-
 static NTSTATUS set_wait_mask(HANDLE hDevice, DWORD mask)
 {
     NTSTATUS status;
@@ -1135,25 +1116,29 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     DWORD       sz = 0, access = FILE_READ_DATA;
     NTSTATUS    status = STATUS_SUCCESS;
     int         fd = -1, needs_close = 0;
+    enum server_fd_type type;
 
     TRACE("%p %s %p %d %p %d %p\n",
           hDevice, iocode2str(dwIoControlCode), lpInBuffer, nInBufferSize,
           lpOutBuffer, nOutBufferSize, piosb);
 
+    switch (dwIoControlCode)
+    {
+    case IOCTL_SERIAL_GET_TIMEOUTS:
+    case IOCTL_SERIAL_SET_TIMEOUTS:
+        /* these are handled on the server side */
+        return STATUS_NOT_SUPPORTED;
+    }
+
     piosb->Information = 0;
 
-    if (dwIoControlCode != IOCTL_SERIAL_GET_TIMEOUTS &&
-        dwIoControlCode != IOCTL_SERIAL_SET_TIMEOUTS)
+    if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, &type, NULL )))
+        goto error;
+    if (type != FD_TYPE_SERIAL)
     {
-        enum server_fd_type type;
-        if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, &type, NULL )))
-            goto error;
-        if (type != FD_TYPE_SERIAL)
-        {
-            if (needs_close) close( fd );
-            status = STATUS_OBJECT_TYPE_MISMATCH;
-            goto error;
-        }
+        if (needs_close) close( fd );
+        status = STATUS_OBJECT_TYPE_MISMATCH;
+        goto error;
     }
 
     switch (dwIoControlCode)
@@ -1224,8 +1209,6 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         }
         else status = STATUS_INVALID_PARAMETER;
         break;
-    case IOCTL_SERIAL_GET_TIMEOUTS:
-        return STATUS_NOT_SUPPORTED;
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
@@ -1317,12 +1300,6 @@ static inline NTSTATUS io_control(HANDLE hDevice,
 #else
         status = STATUS_NOT_SUPPORTED;
 #endif
-        break;
-    case IOCTL_SERIAL_SET_TIMEOUTS:
-        if (lpInBuffer && nInBufferSize == sizeof(SERIAL_TIMEOUTS))
-            status = set_timeouts(hDevice, lpInBuffer);
-        else
-            status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_SET_WAIT_MASK:
         if (lpInBuffer && nInBufferSize == sizeof(DWORD))

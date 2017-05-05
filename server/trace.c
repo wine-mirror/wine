@@ -120,6 +120,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
         CASE(FSCTL_PIPE_PEEK);
         CASE(FSCTL_PIPE_WAIT);
         CASE(IOCTL_SERIAL_GET_TIMEOUTS);
+        CASE(IOCTL_SERIAL_SET_TIMEOUTS);
         CASE(WS_SIO_ADDRESS_LIST_CHANGE);
         default: fprintf( stderr, "%s%08x", prefix, *code ); break;
 #undef CASE
@@ -2842,11 +2843,6 @@ static void dump_set_serial_info_request( const struct set_serial_info_request *
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", flags=%d", req->flags );
-    fprintf( stderr, ", readinterval=%08x", req->readinterval );
-    fprintf( stderr, ", readconst=%08x", req->readconst );
-    fprintf( stderr, ", readmult=%08x", req->readmult );
-    fprintf( stderr, ", writeconst=%08x", req->writeconst );
-    fprintf( stderr, ", writemult=%08x", req->writemult );
     fprintf( stderr, ", eventmask=%08x", req->eventmask );
 }
 

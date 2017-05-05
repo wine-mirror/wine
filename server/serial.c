@@ -206,6 +206,20 @@ static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async
         else set_error( STATUS_BUFFER_TOO_SMALL );
         return 0;
 
+    case IOCTL_SERIAL_SET_TIMEOUTS:
+        if (get_req_data_size() >= sizeof(SERIAL_TIMEOUTS))
+        {
+            const SERIAL_TIMEOUTS *timeouts = get_req_data();
+
+            serial->readinterval = timeouts->ReadIntervalTimeout;
+            serial->readconst    = timeouts->ReadTotalTimeoutConstant;
+            serial->readmult     = timeouts->ReadTotalTimeoutMultiplier;
+            serial->writeconst   = timeouts->WriteTotalTimeoutConstant;
+            serial->writemult    = timeouts->WriteTotalTimeoutMultiplier;
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
+        return 0;
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
@@ -309,16 +323,6 @@ DECL_HANDLER(set_serial_info)
                 return;
             }
             serial->pending_wait = 0;
-        }
-
-        /* timeouts */
-        if (req->flags & SERIALINFO_SET_TIMEOUTS)
-        {
-            serial->readinterval = req->readinterval;
-            serial->readconst    = req->readconst;
-            serial->readmult     = req->readmult;
-            serial->writeconst   = req->writeconst;
-            serial->writemult    = req->writemult;
         }
 
         /* pending write */
