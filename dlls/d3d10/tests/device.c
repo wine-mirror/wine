@@ -21,6 +21,28 @@
 #include "d3d10.h"
 #include "wine/test.h"
 
+static void test_create_device(void)
+{
+    ID3D10Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    if (FAILED(hr = D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
+    {
+        skip("Failed to create HAL device.\n");
+        return;
+    }
+    ID3D10Device_Release(device);
+
+    for (i = 0; i < 100; ++i)
+    {
+        if (i == D3D10_SDK_VERSION)
+            continue;
+        hr = D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, i, &device);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x for SDK version %#x.\n", hr, i);
+    }
+}
+
 static void test_stateblock_mask(void)
 {
     static const struct
@@ -181,5 +203,6 @@ static void test_stateblock_mask(void)
 
 START_TEST(device)
 {
+    test_create_device();
     test_stateblock_mask();
 }
