@@ -745,22 +745,6 @@ cleanup:
     return NULL;
 }
 
-static BOOL processRegLinesA(FILE *fp, WCHAR *(*get_line)(FILE *), int reg_version)
-{
-    WCHAR *line;
-
-    while ((line = get_line(fp)))
-    {
-        if (reg_version == REG_VERSION_31)
-            processRegEntry31(line);
-        else
-            processRegEntry(line, FALSE);
-    }
-
-    closeKey();
-    return TRUE;
-}
-
 static WCHAR *get_lineW(FILE *fp)
 {
     static size_t size;
@@ -828,17 +812,6 @@ cleanup:
     if (size) HeapFree(GetProcessHeap(), 0, buf);
     size = 0;
     return NULL;
-}
-
-static BOOL processRegLinesW(FILE *fp, WCHAR *(*get_line)(FILE *))
-{
-    WCHAR *line;
-
-    while ((line = get_line(fp)))
-        processRegEntry(line, TRUE);
-
-    closeKey();
-    return TRUE;
 }
 
 /******************************************************************************
@@ -1346,10 +1319,16 @@ BOOL import_registry_file(FILE* reg_file)
         return reg_version == REG_VERSION_FUZZY;
     }
 
-    if (is_unicode)
-        return processRegLinesW(reg_file, get_lineW);
-    else
-        return processRegLinesA(reg_file, get_lineA, reg_version);
+    while ((line = get_line(reg_file)))
+    {
+        if (reg_version == REG_VERSION_31)
+            processRegEntry31(line);
+        else
+            processRegEntry(line, is_unicode);
+    }
+
+    closeKey();
+    return TRUE;
 }
 
 /******************************************************************************
