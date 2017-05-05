@@ -25,10 +25,6 @@
 
 #define ARRAY_SIZE 5
 
-#define admitted_error 0.0001f
-
-#define relative_error(exp, out) (fabsf(exp) < 1e-38f ? fabsf(exp - out) : fabsf(1.0f - (out) / (exp)))
-
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -3590,8 +3586,9 @@ static void test_D3DXSHRotateZ(void)
 
 static void test_D3DXSHScale(void)
 {
+    float a[49], b[49], expected, *received_array;
     unsigned int i, order;
-    FLOAT a[49], b[49], expected, *received_array;
+    BOOL equal;
 
     for (i = 0; i < 49; i++)
     {
@@ -3611,7 +3608,8 @@ static void test_D3DXSHScale(void)
             /* D3DXSHScale does not modify the elements of the array after the order * order-th element */
             else
                 expected = a[i];
-            ok(relative_error(b[i], expected) < admitted_error, "order %d, element %d, expected %f, received %f\n", order, i, expected, b[i]);
+            equal = compare_float(b[i], expected, 0);
+            ok(equal, "order %u, element %u, expected %.8e, received %.8e.\n", order, i, expected, b[i]);
         }
     }
 }
