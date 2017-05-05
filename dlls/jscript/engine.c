@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
+WINE_DECLARE_DEBUG_CHANNEL(jscript_except);
 
 static const WCHAR booleanW[] = {'b','o','o','l','e','a','n',0};
 static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
@@ -2659,6 +2660,40 @@ static void pop_call_frame(script_ctx_t *ctx)
     heap_free(frame);
 }
 
+static void print_backtrace(script_ctx_t *ctx)
+{
+    unsigned depth = 0, i;
+    call_frame_t *frame;
+
+    for(frame = ctx->call_ctx; frame; frame = frame->prev_frame) {
+        TRACE_(jscript_except)("%u\t", depth);
+        depth++;
+
+        if(frame->this_obj && frame->this_obj != to_disp(ctx->global) && frame->this_obj != ctx->host_global)
+            TRACE_(jscript_except)("%p->", frame->this_obj);
+        TRACE_(jscript_except)("%s(", frame->function->name ? debugstr_w(frame->function->name) : "[unnamed]");
+        if(frame->base_scope && frame->base_scope->frame) {
+            for(i=0; i < frame->argc; i++) {
+                if(i < frame->function->param_cnt)
+                    TRACE_(jscript_except)("%s%s=%s", i ? ", " : "",
+                                           debugstr_w(frame->function->params[i]),
+                                           debugstr_jsval(ctx->stack[local_off(frame, -i-1)]));
+                else
+                    TRACE_(jscript_except)("%s%s", i ? ", " : "",
+                                           debugstr_jsval(ctx->stack[local_off(frame, -i-1)]));
+            }
+        }else {
+            TRACE_(jscript_except)("[detached frame]");
+        }
+        TRACE_(jscript_except)(")\n");
+
+        if(!(frame->flags & EXEC_RETURN_TO_INTERP)) {
+            TRACE_(jscript_except)("%u\t[native code]\n", depth);
+            depth++;
+        }
+    }
+}
+
 static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
 {
     except_frame_t *except_frame;
@@ -2666,6 +2701,30 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
     jsval_t except_val;
     unsigned catch_off;
     HRESULT hres;
+
+    TRACE("%08x\n", exception_hres);
+
+    if(TRACE_ON(jscript_except)) {
+        jsdisp_t *error_obj;
+        jsval_t msg;
+
+        static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
+
+        TRACE_(jscript_except)("Exception %08x %s", exception_hres, debugstr_jsval(ctx->ei.val));
+        if(jsval_type(ctx->ei.val) == JSV_OBJECT) {
+            error_obj = to_jsdisp(get_object(ctx->ei.val));
+            if(error_obj) {
+                hres = jsdisp_propget_name(error_obj, messageW, &msg);
+                if(SUCCEEDED(hres)) {
+                    TRACE_(jscript_except)(" (message %s)", debugstr_jsval(msg));
+                    jsval_release(msg);
+                }
+            }
+        }
+        TRACE_(jscript_except)(" in:\n");
+
+        print_backtrace(ctx);
+    }
 
     for(frame = ctx->call_ctx; !frame->except_frame; frame = ctx->call_ctx) {
         DWORD flags;
@@ -2727,8 +2786,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, jsval_t *r)
         op = frame->bytecode->instrs[frame->ip].op;
         hres = op_funcs[op](ctx);
         if(FAILED(hres)) {
-            TRACE("EXCEPTION %08x\n", hres);
-
             hres = unwind_exception(ctx, hres);
             if(FAILED(hres))
                 return hres;
