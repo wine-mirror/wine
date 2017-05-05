@@ -2796,13 +2796,13 @@ static void test_D3DXSHEvalDirection(void)
 
     for (order = 0; order <= D3DXSH_MAXORDER + 1; order++)
     {
-        for (i = 0; i < 49; i++)
+        for (i = 0; i < ARRAY_SIZE(a); ++i)
             a[i] = 1.5f + i;
 
         received_ptr = D3DXSHEvalDirection(a, order, &d);
         ok(received_ptr == a, "Expected %p, received %p\n", a, received_ptr);
 
-        for (i = 0; i < 49; i++)
+        for (i = 0; i < ARRAY_SIZE(a); ++i)
         {
             /* if the order is < D3DXSH_MINORDER or order > D3DXSH_MAXORDER or
              * the index of the element is greater than order * order - 1,
