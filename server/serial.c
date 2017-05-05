@@ -73,14 +73,7 @@ struct serial
     struct fd          *fd;
 
     struct timeout_user *read_timer;
-
-    /* timeout values */
-    unsigned int        readinterval;
-    unsigned int        readconst;
-    unsigned int        readmult;
-    unsigned int        writeconst;
-    unsigned int        writemult;
-
+    SERIAL_TIMEOUTS     timeouts;
     unsigned int        eventmask;
     unsigned int        generation; /* event mask change counter */
     unsigned int        pending_write : 1;
@@ -142,15 +135,11 @@ struct object *create_serial( struct fd *fd )
     if (!(serial = alloc_object( &serial_ops ))) return NULL;
 
     serial->read_timer   = NULL;
-    serial->readinterval = 0;
-    serial->readmult     = 0;
-    serial->readconst    = 0;
-    serial->writemult    = 0;
-    serial->writeconst   = 0;
     serial->eventmask    = 0;
     serial->generation   = 0;
     serial->pending_write = 0;
     serial->pending_wait = 0;
+    memset( &serial->timeouts, 0, sizeof(serial->timeouts) );
     serial->fd = (struct fd *)grab_object( fd );
     set_fd_user( fd, &serial_fd_ops, &serial->obj );
     return &serial->obj;
@@ -193,31 +182,17 @@ static obj_handle_t serial_ioctl( struct fd *fd, ioctl_code_t code, struct async
     switch (code)
     {
     case IOCTL_SERIAL_GET_TIMEOUTS:
-        if (get_reply_max_size() >= sizeof(SERIAL_TIMEOUTS))
-        {
-            SERIAL_TIMEOUTS *timeouts = set_reply_data_size( sizeof(*timeouts ));
-
-            timeouts->ReadIntervalTimeout = serial->readinterval;
-            timeouts->ReadTotalTimeoutConstant = serial->readconst;
-            timeouts->ReadTotalTimeoutMultiplier = serial->readmult;
-            timeouts->WriteTotalTimeoutConstant = serial->writeconst;
-            timeouts->WriteTotalTimeoutMultiplier = serial->writemult;
-        }
-        else set_error( STATUS_BUFFER_TOO_SMALL );
+        if (get_reply_max_size() >= sizeof(serial->timeouts))
+            set_reply_data( &serial->timeouts, sizeof(serial->timeouts ));
+        else
+            set_error( STATUS_BUFFER_TOO_SMALL );
         return 0;
 
     case IOCTL_SERIAL_SET_TIMEOUTS:
-        if (get_req_data_size() >= sizeof(SERIAL_TIMEOUTS))
-        {
-            const SERIAL_TIMEOUTS *timeouts = get_req_data();
-
-            serial->readinterval = timeouts->ReadIntervalTimeout;
-            serial->readconst    = timeouts->ReadTotalTimeoutConstant;
-            serial->readmult     = timeouts->ReadTotalTimeoutMultiplier;
-            serial->writeconst   = timeouts->WriteTotalTimeoutConstant;
-            serial->writemult    = timeouts->WriteTotalTimeoutMultiplier;
-        }
-        else set_error( STATUS_BUFFER_TOO_SMALL );
+        if (get_req_data_size() >= sizeof(serial->timeouts))
+            memcpy( &serial->timeouts, get_req_data(), sizeof(serial->timeouts) );
+        else
+            set_error( STATUS_BUFFER_TOO_SMALL );
         return 0;
 
     case IOCTL_SERIAL_GET_WAIT_MASK:
@@ -253,10 +228,12 @@ static void serial_queue_async( struct fd *fd, struct async *async, int type, in
     switch (type)
     {
     case ASYNC_TYPE_READ:
-        timeout = serial->readconst + (timeout_t)serial->readmult*count;
+        timeout = serial->timeouts.ReadTotalTimeoutConstant +
+            (timeout_t)serial->timeouts.ReadTotalTimeoutMultiplier * count;
         break;
     case ASYNC_TYPE_WRITE:
-        timeout = serial->writeconst + (timeout_t)serial->writemult*count;
+        timeout = serial->timeouts.WriteTotalTimeoutConstant +
+            (timeout_t)serial->timeouts.WriteTotalTimeoutMultiplier * count;
         break;
     }
 
@@ -287,9 +264,9 @@ static void serial_reselect_async( struct fd *fd, struct async_queue *queue )
             serial->read_timer = NULL;
         }
     }
-    else if (serial->readinterval && (default_fd_get_poll_events( fd ) & POLLIN))
+    else if (serial->timeouts.ReadIntervalTimeout && (default_fd_get_poll_events( fd ) & POLLIN))
     {
-        serial->read_timer = add_timeout_user( (timeout_t)serial->readinterval * -10000,
+        serial->read_timer = add_timeout_user( (timeout_t)serial->timeouts.ReadIntervalTimeout * -10000,
                                                serial_read_timeout, serial );
     }
     default_fd_reselect_async( fd, queue );
