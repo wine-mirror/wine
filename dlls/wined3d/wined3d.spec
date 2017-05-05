@@ -70,6 +70,7 @@
 @ cdecl wined3d_device_get_gs_sampler(ptr long)
 @ cdecl wined3d_device_get_hs_cb(ptr long)
 @ cdecl wined3d_device_get_hs_resource_view(ptr long)
+@ cdecl wined3d_device_get_hs_sampler(ptr long)
 @ cdecl wined3d_device_get_hull_shader(ptr)
 @ cdecl wined3d_device_get_index_buffer(ptr ptr ptr)
 @ cdecl wined3d_device_get_light(ptr long ptr)

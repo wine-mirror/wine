@@ -2720,6 +2720,13 @@ void CDECL wined3d_device_set_hs_sampler(struct wined3d_device *device,
     wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_HULL, idx, sampler);
 }
 
+struct wined3d_sampler * CDECL wined3d_device_get_hs_sampler(const struct wined3d_device *device, unsigned int idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_HULL, idx);
+}
+
 void CDECL wined3d_device_set_domain_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     struct wined3d_shader *prev;
