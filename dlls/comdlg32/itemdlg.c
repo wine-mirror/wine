@@ -1316,13 +1316,34 @@ static UINT ctrl_container_resize(FileDialogImpl *This, UINT container_width)
     return container_height;
 }
 
+static void ctrl_set_font(customctrl *ctrl, HFONT font)
+{
+    customctrl *sub_ctrl;
+    cctrl_item* item;
+
+    SendMessageW(ctrl->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+
+    LIST_FOR_EACH_ENTRY(sub_ctrl, &ctrl->sub_cctrls, customctrl, sub_cctrls_entry)
+    {
+        ctrl_set_font(sub_ctrl, font);
+    }
+
+    if (ctrl->type == IDLG_CCTRL_RADIOBUTTONLIST)
+    {
+        LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
+        {
+            SendMessageW(item->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+        }
+    }
+}
+
 static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
 {
     LONG wndstyle;
 
     if(parent)
     {
-        customctrl *ctrl, *sub_ctrl;
+        customctrl *ctrl;
         HFONT font;
 
         wndstyle = GetWindowLongW(This->cctrls_hwnd, GWL_STYLE);
@@ -1340,23 +1361,7 @@ static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
 
         LIST_FOR_EACH_ENTRY(ctrl, &This->cctrls, customctrl, entry)
         {
-            if(font) SendMessageW(ctrl->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
-
-            /* If this is a VisualGroup */
-            LIST_FOR_EACH_ENTRY(sub_ctrl, &ctrl->sub_cctrls, customctrl, sub_cctrls_entry)
-            {
-                if(font) SendMessageW(sub_ctrl->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
-            }
-
-            if (ctrl->type == IDLG_CCTRL_RADIOBUTTONLIST)
-            {
-                cctrl_item* item;
-                LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
-                {
-                    if (font) SendMessageW(item->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
-                }
-            }
-
+            if(font) ctrl_set_font(ctrl, font);
             customctrl_resize(This, ctrl);
         }
     }
