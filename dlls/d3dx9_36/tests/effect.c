@@ -6019,6 +6019,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
             "Unexpected vector %g, %g, %g, %g.\n", fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = effect3->lpVtbl->EndPass(effect3);
+    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect3->lpVtbl->End(effect3);

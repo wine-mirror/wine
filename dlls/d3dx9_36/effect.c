@@ -4071,10 +4071,14 @@ static HRESULT WINAPI ID3DXEffectImpl_BeginPass(ID3DXEffect *iface, UINT pass)
 
     if (technique && pass < technique->pass_count && !effect->active_pass)
     {
-        effect->active_pass = &technique->passes[pass];
+        HRESULT hr;
+
         memset(effect->current_light, 0, sizeof(effect->current_light));
         memset(&effect->current_material, 0, sizeof(effect->current_material));
-        return d3dx9_apply_pass_states(effect, effect->active_pass, TRUE);
+
+        if (SUCCEEDED(hr = d3dx9_apply_pass_states(effect, &technique->passes[pass], TRUE)))
+            effect->active_pass = &technique->passes[pass];
+        return hr;
     }
 
     WARN("Invalid argument supplied.\n");
