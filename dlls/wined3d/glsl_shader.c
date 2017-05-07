@@ -7720,6 +7720,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         {
             shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", idx, idx);
             shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
+            shader_addline(buffer, "if (dst.y > 0.0)\n{\n");
         }
         else
         {
@@ -7732,14 +7733,12 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", idx);
         if (!settings->normal)
         {
-            if (!legacy_lighting)
-                shader_addline(buffer, "}\n");
+            shader_addline(buffer, "}\n");
             continue;
         }
         shader_addline(buffer, "dir = normalize(dir);\n");
         shader_glsl_ffp_vertex_lighting_footer(buffer, settings, i);
-        if (!legacy_lighting)
-            shader_addline(buffer, "}\n");
+        shader_addline(buffer, "}\n");
     }
 
     for (i = 0; i < settings->spot_light_count; ++i, ++idx)
@@ -7752,6 +7751,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         {
             shader_addline(buffer, "dst.y = (ffp_light[%u].range - dst.y) / ffp_light[%u].range;\n", idx, idx);
             shader_addline(buffer, "dst.z = dst.y * dst.y;\n");
+            shader_addline(buffer, "if (dst.y > 0.0)\n{\n");
         }
         else
         {
@@ -7775,13 +7775,11 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         shader_addline(buffer, "ambient += ffp_light[%u].ambient.xyz * att;\n", idx);
         if (!settings->normal)
         {
-            if (!legacy_lighting)
-                shader_addline(buffer, "}\n");
+            shader_addline(buffer, "}\n");
             continue;
         }
         shader_glsl_ffp_vertex_lighting_footer(buffer, settings, i);
-        if (!legacy_lighting)
-            shader_addline(buffer, "}\n");
+        shader_addline(buffer, "}\n");
     }
 
     for (i = 0; i < settings->directional_light_count; ++i, ++idx)

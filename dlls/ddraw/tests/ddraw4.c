@@ -4156,6 +4156,17 @@ static void test_specular_lighting(void)
         100.0f,
         0.0f,
         1.0f, 0.0f, 0.0f,
+    },
+    point_far =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{0.0f}, {0.0f}, {0.1f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        1.0f,
+        0.0f,
+        1.0f, 0.0f, 0.0f,
     };
     static const struct expected_color
     {
@@ -4221,6 +4232,18 @@ static void test_specular_lighting(void)
         {160, 360, 0x00000000},
         {320, 360, 0x00000000},
         {480, 360, 0x00000000},
+    },
+    expected_point_far[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00ffffff},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
     };
     static const struct
     {
@@ -4246,6 +4269,8 @@ static void test_specular_lighting(void)
                 sizeof(expected_parallelpoint) / sizeof(expected_parallelpoint[0])},
         {&point_side, TRUE, 0.0f, expected_point_side,
                 sizeof(expected_point_side) / sizeof(expected_point_side[0])},
+        {&point_far, TRUE, 1.0f, expected_point_far,
+                sizeof(expected_point_far) / sizeof(expected_point_far[0])},
     };
     IDirect3D3 *d3d;
     IDirect3DDevice3 *device;
