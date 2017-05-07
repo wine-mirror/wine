@@ -2929,6 +2929,8 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
             {
                 FIXME("Cannot convert %s to %s.\n", debug_d3dformat(src_texture->resource.format->id),
                         debug_d3dformat(dst_texture->resource.format->id));
+                if (context)
+                    context_release(context);
                 return WINED3DERR_NOTAVAILABLE;
             }
             src_texture = converted_texture;
