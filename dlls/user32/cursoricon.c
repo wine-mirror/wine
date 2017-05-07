@@ -48,10 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
 WINE_DECLARE_DEBUG_CHANNEL(resource);
 
-static HDC screen_dc;
-
-static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
-
 static struct list icon_cache = LIST_INIT( icon_cache );
 
 /**********************************************************************
@@ -95,6 +91,17 @@ struct animated_cursoricon_object
     UINT                     num_steps;  /* number of sequence steps in the icon/cursor */
     HICON                    frames[1];  /* list of animated cursor frames */
 };
+
+static HDC get_screen_dc(void)
+{
+    static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
+    static HDC screen_dc;
+
+    if (!screen_dc)
+        screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
+
+    return screen_dc;
+}
 
 static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
 {
@@ -792,6 +799,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
     BOOL ret = FALSE;
     BOOL do_stretch;
     HICON hObj = 0;
+    HDC screen_dc;
     HDC hdc = 0;
     LONG bmi_width, bmi_height;
     WORD bpp;
@@ -855,8 +863,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
         hotspot.y = (hotspot.y * height) / (bmi_height / 2);
     }
 
-    if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
-    if (!screen_dc) return 0;
+    if (!(screen_dc = get_screen_dc())) return 0;
 
     if (!(bmi_copy = HeapAlloc( GetProcessHeap(), 0, max( size, FIELD_OFFSET( BITMAPINFO, bmiColors[2] )))))
         return 0;
@@ -2149,7 +2156,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         height = bmpXor.bmHeight;
         if (bmpXor.bmPlanes * bmpXor.bmBitsPixel != 1 || bmpAnd.bmPlanes * bmpAnd.bmBitsPixel != 1)
         {
-            color = CreateCompatibleBitmap( screen_dc, width, height );
+            color = CreateCompatibleBitmap( get_screen_dc(), width, height );
             mask = CreateBitmap( width, height, 1, 1, NULL );
         }
         else mask = CreateBitmap( width, height * 2, 1, 1, NULL );
@@ -2479,6 +2486,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     DWORD compr_dummy, offbits = 0;
     INT bm_type;
     HDC screen_mem_dc = NULL;
+    HDC screen_dc;
 
     if (!(loadflags & LR_LOADFROMFILE))
     {
@@ -2558,7 +2566,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
 
     if (new_height < 0) new_height = -new_height;
 
-    if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
+    screen_dc = get_screen_dc();
     if (!(screen_mem_dc = CreateCompatibleDC( screen_dc ))) goto end;
 
     bits = (char *)info + (offbits ? offbits : size);
@@ -2654,8 +2662,10 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
         depth = 1;
         if (!(loadflags & LR_MONOCHROME))
         {
-            if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
-            if (screen_dc) depth = GetDeviceCaps( screen_dc, BITSPIXEL );
+            HDC screen_dc;
+
+            if ((screen_dc = get_screen_dc()))
+                depth = GetDeviceCaps( screen_dc, BITSPIXEL );
         }
         return CURSORICON_Load(hinst, name, desiredx, desiredy, depth, (type == IMAGE_CURSOR), loadflags);
     }
@@ -2879,7 +2889,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
         {
             struct cursoricon_object *icon;
             HICON res = 0;
-            int depth = (flags & LR_MONOCHROME) ? 1 : GetDeviceCaps( screen_dc, BITSPIXEL );
+            int depth = (flags & LR_MONOCHROME) ? 1 : GetDeviceCaps( get_screen_dc(), BITSPIXEL );
 
             if (flags & LR_DEFAULTSIZE)
             {
