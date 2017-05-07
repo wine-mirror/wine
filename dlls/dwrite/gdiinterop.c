@@ -55,7 +55,7 @@ struct rendertarget {
 struct gdiinterop {
     IDWriteGdiInterop1 IDWriteGdiInterop1_iface;
     LONG ref;
-    IDWriteFactory4 *factory;
+    IDWriteFactory5 *factory;
 };
 
 static inline int get_dib_stride(int width, int bpp)
@@ -753,7 +753,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
         return E_FAIL;
     }
 
-    hr = IDWriteFactory4_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime,
+    hr = IDWriteFactory5_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime,
         &file);
     heap_free(fileinfo);
     if (FAILED(hr))
@@ -764,7 +764,7 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
     if (SUCCEEDED(hr)) {
         if (is_supported)
             /* Simulations flags values match DWRITE_FONT_SIMULATIONS */
-            hr = IDWriteFactory4_CreateFontFace(This->factory, facetype, 1, &file, info.face_index,
+            hr = IDWriteFactory5_CreateFontFace(This->factory, facetype, 1, &file, info.face_index,
                     info.simulations, fontface);
         else
             hr = DWRITE_E_FILEFORMAT;
@@ -801,7 +801,7 @@ static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *ifac
     if (collection)
         IDWriteFontCollection_AddRef(collection);
     else {
-        hr = IDWriteFactory4_GetSystemFontCollection(This->factory, FALSE, (IDWriteFontCollection1**)&collection, FALSE);
+        hr = IDWriteFactory5_GetSystemFontCollection(This->factory, FALSE, (IDWriteFontCollection1**)&collection, FALSE);
         if (FAILED(hr)) {
             ERR("failed to get system font collection: 0x%08x.\n", hr);
             return hr;
@@ -906,7 +906,7 @@ static const struct IDWriteGdiInterop1Vtbl gdiinteropvtbl = {
     gdiinterop1_GetMatchingFontsByLOGFONT
 };
 
-HRESULT create_gdiinterop(IDWriteFactory4 *factory, IDWriteGdiInterop1 **ret)
+HRESULT create_gdiinterop(IDWriteFactory5 *factory, IDWriteGdiInterop1 **ret)
 {
     struct gdiinterop *interop;
 
@@ -917,7 +917,7 @@ HRESULT create_gdiinterop(IDWriteFactory4 *factory, IDWriteGdiInterop1 **ret)
 
     interop->IDWriteGdiInterop1_iface.lpVtbl = &gdiinteropvtbl;
     interop->ref = 1;
-    IDWriteFactory4_AddRef(interop->factory = factory);
+    IDWriteFactory5_AddRef(interop->factory = factory);
 
     *ret = &interop->IDWriteGdiInterop1_iface;
     return S_OK;

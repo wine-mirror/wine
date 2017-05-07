@@ -7345,13 +7345,20 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory5, (void **)&factory5);
     IDWriteFactory_Release(factory);
     if (FAILED(hr)) {
-        skip("CreateInMemoryFontFileLoader is not supported\n");
+        win_skip("CreateInMemoryFontFileLoader is not supported\n");
+        return;
+    }
+
+    hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader);
+todo_wine
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    if (FAILED(hr)) {
+        IDWriteFactory5_Release(factory5);
         return;
     }
 
     fontface = create_fontface((IDWriteFactory *)factory5);
-    hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader);
-    ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory5, &loader2);
     ok(hr == S_OK, "got %#x\n", hr);

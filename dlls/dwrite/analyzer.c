@@ -205,7 +205,7 @@ static const struct fallback_mapping fontfallback_neutral_data[] = {
 
 struct dwrite_fontfallback {
     IDWriteFontFallback IDWriteFontFallback_iface;
-    IDWriteFactory4 *factory;
+    IDWriteFactory5 *factory;
     IDWriteFontCollection1 *systemcollection;
     const struct fallback_mapping *mappings;
     UINT32 count;
@@ -1830,14 +1830,14 @@ static ULONG WINAPI fontfallback_AddRef(IDWriteFontFallback *iface)
 {
     struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback(iface);
     TRACE("(%p)\n", fallback);
-    return IDWriteFactory4_AddRef(fallback->factory);
+    return IDWriteFactory5_AddRef(fallback->factory);
 }
 
 static ULONG WINAPI fontfallback_Release(IDWriteFontFallback *iface)
 {
     struct dwrite_fontfallback *fallback = impl_from_IDWriteFontFallback(iface);
     TRACE("(%p)\n", fallback);
-    return IDWriteFactory4_Release(fallback->factory);
+    return IDWriteFactory5_Release(fallback->factory);
 }
 
 static int compare_fallback_mapping(const void *a, const void *b)
@@ -2013,7 +2013,7 @@ static const IDWriteFontFallbackVtbl fontfallbackvtbl = {
     fontfallback_MapCharacters
 };
 
-HRESULT create_system_fontfallback(IDWriteFactory4 *factory, IDWriteFontFallback **ret)
+HRESULT create_system_fontfallback(IDWriteFactory5 *factory, IDWriteFontFallback **ret)
 {
     struct dwrite_fontfallback *fallback;
 
@@ -2027,7 +2027,7 @@ HRESULT create_system_fontfallback(IDWriteFactory4 *factory, IDWriteFontFallback
     fallback->factory = factory;
     fallback->mappings = fontfallback_neutral_data;
     fallback->count = sizeof(fontfallback_neutral_data)/sizeof(fontfallback_neutral_data[0]);
-    IDWriteFactory4_GetSystemFontCollection(fallback->factory, FALSE, &fallback->systemcollection, FALSE);
+    IDWriteFactory5_GetSystemFontCollection(fallback->factory, FALSE, &fallback->systemcollection, FALSE);
 
     *ret = &fallback->IDWriteFontFallback_iface;
     return S_OK;

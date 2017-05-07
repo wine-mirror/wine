@@ -242,7 +242,7 @@ struct dwrite_textlayout {
     IDWriteTextAnalysisSource1 IDWriteTextAnalysisSource1_iface;
     LONG ref;
 
-    IDWriteFactory4 *factory;
+    IDWriteFactory5 *factory;
 
     WCHAR *str;
     UINT32 len;
@@ -805,7 +805,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         IDWriteFontFallback_AddRef(fallback);
     }
     else {
-        hr = IDWriteFactory4_GetSystemFontFallback(layout->factory, &fallback);
+        hr = IDWriteFactory5_GetSystemFontFallback(layout->factory, &fallback);
         if (FAILED(hr))
             return hr;
     }
@@ -829,7 +829,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
                 IDWriteFontCollection_AddRef(collection);
             }
             else
-                IDWriteFactory4_GetSystemFontCollection(layout->factory, FALSE, (IDWriteFontCollection1**)&collection, FALSE);
+                IDWriteFactory5_GetSystemFontCollection(layout->factory, FALSE, (IDWriteFontCollection1 **)&collection, FALSE);
 
             hr = create_matching_font(collection, range->fontfamily, range->weight,
                 range->style, range->stretch, &font);
@@ -2778,7 +2778,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout3 *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref) {
-        IDWriteFactory4_Release(This->factory);
+        IDWriteFactory5_Release(This->factory);
         free_layout_ranges_list(This);
         free_layout_eruns(This);
         free_layout_runs(This);
@@ -4902,7 +4902,7 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     layout->transform = desc->transform ? *desc->transform : identity;
 
     layout->factory = desc->factory;
-    IDWriteFactory4_AddRef(layout->factory);
+    IDWriteFactory5_AddRef(layout->factory);
     list_add_head(&layout->ranges, &range->entry);
     list_add_head(&layout->strike_ranges, &strike->entry);
     list_add_head(&layout->underline_ranges, &underline->entry);
@@ -5068,7 +5068,7 @@ static inline BOOL is_flow_direction_vert(DWRITE_FLOW_DIRECTION direction)
            (direction == DWRITE_FLOW_DIRECTION_BOTTOM_TO_TOP);
 }
 
-HRESULT create_trimmingsign(IDWriteFactory4 *factory, IDWriteTextFormat *format, IDWriteInlineObject **sign)
+HRESULT create_trimmingsign(IDWriteFactory5 *factory, IDWriteTextFormat *format, IDWriteInlineObject **sign)
 {
     static const WCHAR ellipsisW = 0x2026;
     struct dwrite_trimmingsign *This;
@@ -5094,7 +5094,7 @@ HRESULT create_trimmingsign(IDWriteFactory4 *factory, IDWriteTextFormat *format,
     This->IDWriteInlineObject_iface.lpVtbl = &dwritetrimmingsignvtbl;
     This->ref = 1;
 
-    hr = IDWriteFactory4_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0f, 0.0f, &This->layout);
+    hr = IDWriteFactory5_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0f, 0.0f, &This->layout);
     if (FAILED(hr)) {
         heap_free(This);
         return hr;
