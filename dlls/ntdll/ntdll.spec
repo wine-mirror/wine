@@ -45,6 +45,7 @@
 @ stdcall EtwEventRegister(ptr ptr ptr ptr)
 @ stdcall EtwEventSetInformation(int64 long ptr long)
 @ stdcall EtwEventUnregister(int64)
+@ stdcall EtwEventWrite(int64 ptr long ptr)
 @ stdcall EtwRegisterTraceGuidsA(ptr ptr ptr long ptr str str ptr)
 @ stdcall EtwRegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr)
 @ stdcall EtwUnregisterTraceGuids(int64)

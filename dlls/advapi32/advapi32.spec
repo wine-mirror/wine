@@ -293,7 +293,7 @@
 @ stdcall EventRegister(ptr ptr ptr ptr) ntdll.EtwEventRegister
 @ stdcall EventSetInformation(int64 long ptr long) ntdll.EtwEventSetInformation
 @ stdcall EventUnregister(int64) ntdll.EtwEventUnregister
-@ stdcall EventWrite(int64 ptr long ptr)
+@ stdcall EventWrite(int64 ptr long ptr) ntdll.EtwEventWrite
 # @ stub EventWriteEndScenario
 # @ stub EventWriteEx
 # @ stub EventWriteStartScenario
