@@ -26,5 +26,5 @@
 #define MDI_IDC_LISTBOX         100
 #define IDS_MDI_MOREWINDOWS     13
 #define MSGBOX_IDICON           stc1
-#define MSGBOX_IDTEXT           100
+#define MSGBOX_IDTEXT           0xffff
 #define IDS_ERROR               2

@@ -1522,6 +1522,47 @@ static void test_timer_message(void)
     DialogBoxA(g_hinst, "RADIO_TEST_DIALOG", NULL, timer_message_dlg_proc);
 }
 
+static LRESULT CALLBACK msgbox_hook_proc(INT code, WPARAM wParam, LPARAM lParam)
+{
+    if (code == HCBT_ACTIVATE)
+    {
+        HWND msgbox = (HWND)wParam, msghwnd;
+        char text[64];
+
+        if (msgbox)
+        {
+            text[0] = 0;
+            GetWindowTextA(msgbox, text, sizeof(text));
+            ok(!strcmp(text, "MSGBOX caption"), "Unexpected window text \"%s\"\n", text);
+
+            msghwnd = GetDlgItem(msgbox, 0xffff);
+            ok(msghwnd != NULL, "Expected static control\n");
+
+            text[0] = 0;
+            GetWindowTextA(msghwnd, text, sizeof(text));
+            ok(!strcmp(text, "Text"), "Unexpected window text \"%s\"\n", text);
+
+            SendDlgItemMessageA(msgbox, IDCANCEL, WM_LBUTTONDOWN, 0, 0);
+            SendDlgItemMessageA(msgbox, IDCANCEL, WM_LBUTTONUP, 0, 0);
+        }
+    }
+
+    return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+static void test_MessageBox(void)
+{
+    HHOOK hook;
+    int ret;
+
+    hook = SetWindowsHookExA(WH_CBT, msgbox_hook_proc, NULL, GetCurrentThreadId());
+
+    ret = MessageBoxA(NULL, "Text", "MSGBOX caption", MB_OKCANCEL);
+    ok(ret == IDCANCEL, "got %d\n", ret);
+
+    UnhookWindowsHookEx(hook);
+}
+
 START_TEST(dialog)
 {
     g_hinst = GetModuleHandleA (0);
@@ -1539,4 +1580,5 @@ START_TEST(dialog)
     test_MessageBoxFontTest();
     test_SaveRestoreFocus();
     test_timer_message();
+    test_MessageBox();
 }

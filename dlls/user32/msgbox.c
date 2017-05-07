@@ -28,14 +28,11 @@
 #include "winternl.h"
 #include "dlgs.h"
 #include "user_private.h"
+#include "resources.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dialog);
 WINE_DECLARE_DEBUG_CHANNEL(msgbox);
-
-#define MSGBOX_IDICON stc1
-#define MSGBOX_IDTEXT 100
-#define IDS_ERROR     2
 
 struct ThreadWindows
 {
