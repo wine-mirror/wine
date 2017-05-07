@@ -634,6 +634,18 @@ static void test_specular_lighting(void)
         1.2f,
         0.0f,
         0.0f, 0.0f, 1.0f,
+    },
+    point_side =
+    {
+        D3DLIGHT_POINT,
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {1.0f, 1.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {-1.1f, 0.0f, 1.1f},
+        {0.0f, 0.0f, 0.0f},
+        100.0f,
+        0.0f,
+        0.0f, 0.0f, 1.0f,
     };
     static const struct expected_color
     {
@@ -723,30 +735,45 @@ static void test_specular_lighting(void)
         {160, 360, 0x00000000},
         {320, 360, 0x005a5a5a},
         {480, 360, 0x00000000},
+    },
+    expected_point_side[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00000000},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
     };
     static const struct
     {
         const D3DLIGHT9 *light;
         BOOL local_viewer;
+        float specular_power;
         const struct expected_color *expected;
         unsigned int expected_count;
     }
     tests[] =
     {
-        {&directional, FALSE, expected_directional,
+        {&directional, FALSE, 30.0f, expected_directional,
                 sizeof(expected_directional) / sizeof(expected_directional[0])},
-        {&directional, TRUE, expected_directional_local,
+        {&directional, TRUE, 30.0f, expected_directional_local,
                 sizeof(expected_directional_local) / sizeof(expected_directional_local[0])},
-        {&point, FALSE, expected_point,
+        {&point, FALSE, 30.0f, expected_point,
                 sizeof(expected_point) / sizeof(expected_point[0])},
-        {&point, TRUE, expected_point_local,
+        {&point, TRUE, 30.0f, expected_point_local,
                 sizeof(expected_point_local) / sizeof(expected_point_local[0])},
-        {&spot, FALSE, expected_spot,
+        {&spot, FALSE, 30.0f, expected_spot,
                 sizeof(expected_spot) / sizeof(expected_spot[0])},
-        {&spot, TRUE, expected_spot_local,
+        {&spot, TRUE, 30.0f, expected_spot_local,
                 sizeof(expected_spot_local) / sizeof(expected_spot_local[0])},
-        {&point_range, FALSE, expected_point_range,
+        {&point_range, FALSE, 30.0f, expected_point_range,
                 sizeof(expected_point_range) / sizeof(expected_point_range[0])},
+        {&point_side, TRUE, 0.0f, expected_point_side,
+                sizeof(expected_point_side) / sizeof(expected_point_side[0])},
     };
     IDirect3DDevice9 *device;
     D3DMATERIAL9 material;
@@ -815,15 +842,6 @@ static void test_specular_lighting(void)
     hr = IDirect3DDevice9_SetFVF(device, fvf);
     ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
 
-    memset(&material, 0, sizeof(material));
-    material.Specular.r = 1.0f;
-    material.Specular.g = 1.0f;
-    material.Specular.b = 1.0f;
-    material.Specular.a = 1.0f;
-    material.Power = 30.0f;
-    hr = IDirect3DDevice9_SetMaterial(device, &material);
-    ok(SUCCEEDED(hr), "Failed to set material, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_LightEnable(device, 0, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable light 0, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SPECULARENABLE, TRUE);
@@ -837,7 +855,16 @@ static void test_specular_lighting(void)
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LOCALVIEWER, tests[i].local_viewer);
         ok(SUCCEEDED(hr), "Failed to set local viewer state, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        memset(&material, 0, sizeof(material));
+        material.Specular.r = 1.0f;
+        material.Specular.g = 1.0f;
+        material.Specular.b = 1.0f;
+        material.Specular.a = 1.0f;
+        material.Power = tests[i].specular_power;
+        hr = IDirect3DDevice9_SetMaterial(device, &material);
+        ok(SUCCEEDED(hr), "Failed to set material, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
         ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
         hr = IDirect3DDevice9_BeginScene(device);

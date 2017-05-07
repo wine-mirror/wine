@@ -4145,6 +4145,17 @@ static void test_specular_lighting(void)
         {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
         {{0.5f}, {0.0f}, {-1.0f}},
         {{0.0f}, {0.0f}, {0.0f}},
+    },
+    point_side =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{-1.1f}, {0.0f}, {1.1f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        100.0f,
+        0.0f,
+        1.0f, 0.0f, 0.0f,
     };
     static const struct expected_color
     {
@@ -4198,11 +4209,24 @@ static void test_specular_lighting(void)
         {160, 360, 0x00050505},
         {320, 360, 0x002c2c2c},
         {480, 360, 0x006e6e6e},
+    },
+    expected_point_side[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00000000},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
     };
     static const struct
     {
         D3DLIGHT2 *light;
         BOOL local_viewer;
+        float specular_power;
         const struct expected_color *expected;
         unsigned int expected_count;
     }
@@ -4210,16 +4234,18 @@ static void test_specular_lighting(void)
     {
         /* D3DRENDERSTATE_LOCALVIEWER does not exist in D3D < 7 (the behavior is
          * the one you get on newer D3D versions with it set as TRUE). */
-        {&directional, FALSE, expected_directional,
+        {&directional, FALSE, 30.0f, expected_directional,
                 sizeof(expected_directional) / sizeof(expected_directional[0])},
-        {&directional, TRUE, expected_directional,
+        {&directional, TRUE, 30.0f, expected_directional,
                 sizeof(expected_directional) / sizeof(expected_directional[0])},
-        {&point, TRUE, expected_point,
+        {&point, TRUE, 30.0f, expected_point,
                 sizeof(expected_point) / sizeof(expected_point[0])},
-        {&spot, TRUE, expected_spot,
+        {&spot, TRUE, 30.0f, expected_spot,
                 sizeof(expected_spot) / sizeof(expected_spot[0])},
-        {&parallelpoint, TRUE, expected_parallelpoint,
+        {&parallelpoint, TRUE, 30.0f, expected_parallelpoint,
                 sizeof(expected_parallelpoint) / sizeof(expected_parallelpoint[0])},
+        {&point_side, TRUE, 0.0f, expected_point_side,
+                sizeof(expected_point_side) / sizeof(expected_point_side[0])},
     };
     IDirect3D3 *d3d;
     IDirect3DDevice3 *device;
@@ -4298,12 +4324,6 @@ static void test_specular_lighting(void)
     hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
 
-    material = create_specular_material(device, 1.0f, 1.0f, 1.0f, 1.0f, 30.0f);
-    hr = IDirect3DMaterial3_GetHandle(material, device, &mat_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
-    hr = IDirect3DDevice3_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
-    ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
-
     hr = IDirect3D3_CreateLight(d3d, &light, NULL);
     ok(SUCCEEDED(hr), "Failed to create a light object, hr %#x.\n", hr);
     hr = IDirect3DViewport3_AddLight(viewport, light);
@@ -4320,6 +4340,12 @@ static void test_specular_lighting(void)
 
         hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_LOCALVIEWER, tests[i].local_viewer);
         ok(SUCCEEDED(hr), "Failed to set local viewer state, hr %#x.\n", hr);
+
+        material = create_specular_material(device, 1.0f, 1.0f, 1.0f, 1.0f, tests[i].specular_power);
+        hr = IDirect3DMaterial3_GetHandle(material, device, &mat_handle);
+        ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+        hr = IDirect3DDevice3_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
+        ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
 
         hr = IDirect3DViewport3_Clear2(viewport, 1, &clear_rect, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
@@ -4342,12 +4368,13 @@ static void test_specular_lighting(void)
                     tests[i].expected[j].color, tests[i].expected[j].x,
                     tests[i].expected[j].y, color, i);
         }
+
+        destroy_material(material);
     }
 
     hr = IDirect3DViewport3_DeleteLight(viewport, light);
     ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
     IDirect3DLight_Release(light);
-    destroy_material(material);
     IDirect3DViewport3_Release(viewport);
     IDirectDrawSurface4_Release(rt);
     refcount = IDirect3DDevice3_Release(device);

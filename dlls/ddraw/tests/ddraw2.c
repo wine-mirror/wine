@@ -7090,6 +7090,17 @@ static void test_specular_lighting(void)
         {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
         {{0.5f}, {0.0f}, {-1.0f}},
         {{0.0f}, {0.0f}, {0.0f}},
+    },
+    point_side =
+    {
+        sizeof(D3DLIGHT2),
+        D3DLIGHT_POINT,
+        {{1.0f}, {1.0f}, {1.0f}, {0.0f}},
+        {{-1.1f}, {0.0f}, {1.1f}},
+        {{0.0f}, {0.0f}, {0.0f}},
+        100.0f,
+        0.0f,
+        1.0f, 0.0f, 0.0f,
     };
     static const struct expected_color
     {
@@ -7143,23 +7154,38 @@ static void test_specular_lighting(void)
         {160, 360, 0x00050505},
         {320, 360, 0x002c2c2c},
         {480, 360, 0x006e6e6e},
+    },
+    expected_point_side[] =
+    {
+        {160, 120, 0x00000000},
+        {320, 120, 0x00000000},
+        {480, 120, 0x00000000},
+        {160, 240, 0x00000000},
+        {320, 240, 0x00000000},
+        {480, 240, 0x00000000},
+        {160, 360, 0x00000000},
+        {320, 360, 0x00000000},
+        {480, 360, 0x00000000},
     };
     static const struct
     {
         D3DLIGHT2 *light;
+        float specular_power;
         const struct expected_color *expected;
         unsigned int expected_count;
     }
     tests[] =
     {
-        {&directional, expected_directional_local,
+        {&directional, 30.0f, expected_directional_local,
                 sizeof(expected_directional_local) / sizeof(expected_directional_local[0])},
-        {&point, expected_point_local,
+        {&point, 30.0f, expected_point_local,
                 sizeof(expected_point_local) / sizeof(expected_point_local[0])},
-        {&spot, expected_spot_local,
+        {&spot, 30.0f, expected_spot_local,
                 sizeof(expected_spot_local) / sizeof(expected_spot_local[0])},
-        {&parallelpoint, expected_parallelpoint,
+        {&parallelpoint, 30.0f, expected_parallelpoint,
                 sizeof(expected_parallelpoint) / sizeof(expected_parallelpoint[0])},
+        {&point_side, 0.0f, expected_point_side,
+                sizeof(expected_point_side) / sizeof(expected_point_side[0])},
     };
     IDirect3D2 *d3d;
     IDirect3DDevice2 *device;
@@ -7242,12 +7268,6 @@ static void test_specular_lighting(void)
     background_material = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
     viewport_set_background(device, viewport, background_material);
 
-    material = create_specular_material(device, 1.0f, 1.0f, 1.0f, 1.0f, 30.0f);
-    hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
-    hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
-    ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
-
     hr = IDirect3D2_CreateLight(d3d, &light, NULL);
     ok(SUCCEEDED(hr), "Failed to create a light object, hr %#x.\n", hr);
     hr = IDirect3DViewport2_AddLight(viewport, light);
@@ -7261,6 +7281,12 @@ static void test_specular_lighting(void)
         tests[i].light->dwFlags = D3DLIGHT_ACTIVE;
         hr = IDirect3DLight_SetLight(light, (D3DLIGHT *)tests[i].light);
         ok(SUCCEEDED(hr), "Failed to set light, hr %#x.\n", hr);
+
+        material = create_specular_material(device, 1.0f, 1.0f, 1.0f, 1.0f, tests[i].specular_power);
+        hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle);
+        ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
+        ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
 
         hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
         ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
@@ -7283,12 +7309,13 @@ static void test_specular_lighting(void)
                     tests[i].expected[j].color, tests[i].expected[j].x,
                     tests[i].expected[j].y, color, i);
         }
+
+        destroy_material(material);
     }
 
     hr = IDirect3DViewport2_DeleteLight(viewport, light);
     ok(SUCCEEDED(hr), "Failed to remove a light from the viewport, hr %#x.\n", hr);
     IDirect3DLight_Release(light);
-    destroy_material(material);
     destroy_material(background_material);
     destroy_viewport(device, viewport);
     IDirectDrawSurface2_Release(rt);
