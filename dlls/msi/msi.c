@@ -1595,6 +1595,22 @@ done:
     return r;
 }
 
+UINT WINAPI MsiGetPatchFileListA(LPCSTR szProductCode, LPCSTR szPatchList,
+                                 LPDWORD pcFiles, MSIHANDLE **pphFileRecords)
+{
+    FIXME("(%s, %s, %p, %p) stub!\n", debugstr_a(szProductCode),
+          debugstr_a(szPatchList), pcFiles, pphFileRecords);
+    return ERROR_FUNCTION_FAILED;
+}
+
+UINT WINAPI MsiGetPatchFileListW(LPCWSTR szProductCode, LPCWSTR szPatchList,
+                                 LPDWORD pcFiles, MSIHANDLE **pphFileRecords)
+{
+    FIXME("(%s, %s, %p, %p) stub!\n", debugstr_w(szProductCode),
+          debugstr_w(szPatchList), pcFiles, pphFileRecords);
+    return ERROR_FUNCTION_FAILED;
+}
+
 UINT WINAPI MsiGetPatchInfoExA(LPCSTR szPatchCode, LPCSTR szProductCode,
                                LPCSTR szUserSid, MSIINSTALLCONTEXT dwContext,
                                LPCSTR szProperty, LPSTR lpValue, DWORD *pcchValue)

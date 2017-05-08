@@ -275,8 +275,8 @@
 279 stdcall MsiMessageBoxExA(long str str long long long long)
 280 stdcall MsiMessageBoxExW(long wstr wstr long long long long)
 281 stdcall MsiSetExternalUIRecord(ptr long ptr ptr)
-282 stub MsiGetPatchFileListA
-283 stub MsiGetPatchFileListW
+282 stdcall MsiGetPatchFileListA(str str ptr ptr)
+283 stdcall MsiGetPatchFileListW(wstr wstr ptr ptr)
 284 stdcall MsiBeginTransactionA(str long ptr ptr)
 285 stdcall MsiBeginTransactionW(wstr long ptr ptr)
 286 stdcall MsiEndTransaction(long)
