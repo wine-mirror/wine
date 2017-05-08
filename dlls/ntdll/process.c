@@ -294,15 +294,29 @@ NTSTATUS WINAPI NtQueryInformationProcess(
             {
                 if (!ProcessInformation)
                     ret = STATUS_ACCESS_VIOLATION;
-                else if (!ProcessHandle)
-                    ret = STATUS_INVALID_HANDLE;
                 else
                 {
                     memset(&pvmi, 0 , sizeof(VM_COUNTERS));
                     if (ProcessHandle == GetCurrentProcess())
                         fill_VM_COUNTERS(&pvmi);
                     else
-                        FIXME("Need wineserver call to get VM counters for another process\n");
+                    {
+                        SERVER_START_REQ(get_process_vm_counters)
+                        {
+                            req->handle = wine_server_obj_handle( ProcessHandle );
+                            if (!(ret = wine_server_call( req )))
+                            {
+                                pvmi.PeakVirtualSize = reply->peak_virtual_size;
+                                pvmi.VirtualSize = reply->virtual_size;
+                                pvmi.PeakWorkingSetSize = reply->peak_working_set_size;
+                                pvmi.WorkingSetSize = reply->working_set_size;
+                                pvmi.PagefileUsage = reply->pagefile_usage;
+                                pvmi.PeakPagefileUsage = reply->peak_pagefile_usage;
+                            }
+                        }
+                        SERVER_END_REQ;
+                        if (ret) break;
+                    }
 
                     len = ProcessInformationLength;
                     if (len != FIELD_OFFSET(VM_COUNTERS,PrivatePageCount)) len = sizeof(VM_COUNTERS);

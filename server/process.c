@@ -1371,6 +1371,44 @@ DECL_HANDLER(get_process_info)
     }
 }
 
+/* retrieve information about a process memory usage */
+DECL_HANDLER(get_process_vm_counters)
+{
+    struct process *process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION );
+
+    if (!process) return;
+#ifdef linux
+    if (process->unix_pid != -1)
+    {
+        FILE *f;
+        char proc_path[32], line[256];
+        unsigned long value;
+
+        sprintf( proc_path, "/proc/%u/status", process->unix_pid );
+        if ((f = fopen( proc_path, "r" )))
+        {
+            while (fgets( line, sizeof(line), f ))
+            {
+                if (sscanf( line, "VmPeak: %lu", &value ))
+                    reply->peak_virtual_size = (mem_size_t)value * 1024;
+                else if (sscanf( line, "VmSize: %lu", &value ))
+                    reply->virtual_size = (mem_size_t)value * 1024;
+                else if (sscanf( line, "VmHWM: %lu", &value ))
+                    reply->peak_working_set_size = (mem_size_t)value * 1024;
+                else if (sscanf( line, "VmRSS: %lu", &value ))
+                    reply->working_set_size = (mem_size_t)value * 1024;
+                else if (sscanf( line, "VmSwap: %lu", &value ))
+                    reply->peak_pagefile_usage = reply->pagefile_usage = (mem_size_t)value * 1024;
+            }
+            fclose( f );
+        }
+        else set_error( STATUS_ACCESS_DENIED );
+    }
+    else set_error( STATUS_ACCESS_DENIED );
+#endif
+    release_object( process );
+}
+
 static void set_process_affinity( struct process *process, affinity_t affinity )
 {
     struct thread *thread;

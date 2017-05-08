@@ -1052,6 +1052,7 @@ static void test_query_process_vm(void)
     ULONG ReturnLength;
     VM_COUNTERS pvi;
     ULONG old_size = FIELD_OFFSET(VM_COUNTERS,PrivatePageCount);
+    HANDLE process;
 
     status = pNtQueryInformationProcess(NULL, ProcessVmCounters, NULL, sizeof(pvi), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
@@ -1079,6 +1080,27 @@ static void test_query_process_vm(void)
     /* Check if we have some return values */
     trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
     ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
+
+    process = OpenProcess(PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+    status = pNtQueryInformationProcess(process, ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_ACCESS_DENIED, "Expected STATUS_ACCESS_DENIED, got %08x\n", status);
+    CloseHandle(process);
+
+    process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
+    status = pNtQueryInformationProcess(process, ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_SUCCESS || broken(!process) /* XP */, "Expected STATUS_SUCCESS, got %08x\n", status);
+    CloseHandle(process);
+
+    memset(&pvi, 0, sizeof(pvi));
+    process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
+    status = pNtQueryInformationProcess(process, ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+
+    /* Check if we have some return values */
+    trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
+    ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
+
+    CloseHandle(process);
 }
 
 static void test_query_process_io(void)

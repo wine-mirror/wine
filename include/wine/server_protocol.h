@@ -885,6 +885,24 @@ struct get_process_info_reply
 
 
 
+struct get_process_vm_counters_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_process_vm_counters_reply
+{
+    struct reply_header __header;
+    mem_size_t peak_virtual_size;
+    mem_size_t virtual_size;
+    mem_size_t peak_working_set_size;
+    mem_size_t working_set_size;
+    mem_size_t pagefile_usage;
+    mem_size_t peak_pagefile_usage;
+};
+
+
+
 struct set_process_info_request
 {
     struct request_header __header;
@@ -5541,6 +5559,7 @@ enum request
     REQ_terminate_process,
     REQ_terminate_thread,
     REQ_get_process_info,
+    REQ_get_process_vm_counters,
     REQ_set_process_info,
     REQ_get_thread_info,
     REQ_get_thread_times,
@@ -5831,6 +5850,7 @@ union generic_request
     struct terminate_process_request terminate_process_request;
     struct terminate_thread_request terminate_thread_request;
     struct get_process_info_request get_process_info_request;
+    struct get_process_vm_counters_request get_process_vm_counters_request;
     struct set_process_info_request set_process_info_request;
     struct get_thread_info_request get_thread_info_request;
     struct get_thread_times_request get_thread_times_request;
@@ -6119,6 +6139,7 @@ union generic_reply
     struct terminate_process_reply terminate_process_reply;
     struct terminate_thread_reply terminate_thread_reply;
     struct get_process_info_reply get_process_info_reply;
+    struct get_process_vm_counters_reply get_process_vm_counters_reply;
     struct set_process_info_reply set_process_info_reply;
     struct get_thread_info_reply get_thread_info_reply;
     struct get_thread_times_reply get_thread_times_reply;
@@ -6395,6 +6416,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 530
+#define SERVER_PROTOCOL_VERSION 531
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

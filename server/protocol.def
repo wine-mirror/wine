@@ -845,6 +845,19 @@ struct rawinput_device
 @END
 
 
+/* Retrieve information about a process memory usage */
+@REQ(get_process_vm_counters)
+    obj_handle_t handle;                        /* process handle */
+@REPLY
+    mem_size_t peak_virtual_size;               /* peak virtual memory in bytes */
+    mem_size_t virtual_size;                    /* virtual memory in bytes */
+    mem_size_t peak_working_set_size;           /* peak real memory in bytes */
+    mem_size_t working_set_size;                /* real memory in bytes */
+    mem_size_t pagefile_usage;                  /* swapped-out memory in bytes */
+    mem_size_t peak_pagefile_usage;             /* peak swapped-out memory in bytes */
+@END
+
+
 /* Set a process information */
 @REQ(set_process_info)
     obj_handle_t handle;       /* process handle */

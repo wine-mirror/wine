@@ -121,6 +121,7 @@ DECL_HANDLER(init_thread);
 DECL_HANDLER(terminate_process);
 DECL_HANDLER(terminate_thread);
 DECL_HANDLER(get_process_info);
+DECL_HANDLER(get_process_vm_counters);
 DECL_HANDLER(set_process_info);
 DECL_HANDLER(get_thread_info);
 DECL_HANDLER(get_thread_times);
@@ -410,6 +411,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_terminate_process,
     (req_handler)req_terminate_thread,
     (req_handler)req_get_process_info,
+    (req_handler)req_get_process_vm_counters,
     (req_handler)req_set_process_info,
     (req_handler)req_get_thread_info,
     (req_handler)req_get_thread_times,
@@ -796,6 +798,15 @@ C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, cpu) == 56 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, debugger_present) == 60 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, debug_children) == 62 );
 C_ASSERT( sizeof(struct get_process_info_reply) == 64 );
+C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_request, handle) == 12 );
+C_ASSERT( sizeof(struct get_process_vm_counters_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_reply, peak_virtual_size) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_reply, virtual_size) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_reply, peak_working_set_size) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_reply, working_set_size) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_reply, pagefile_usage) == 40 );
+C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_reply, peak_pagefile_usage) == 48 );
+C_ASSERT( sizeof(struct get_process_vm_counters_reply) == 56 );
 C_ASSERT( FIELD_OFFSET(struct set_process_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_process_info_request, mask) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_process_info_request, priority) == 20 );
