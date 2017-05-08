@@ -29,21 +29,21 @@ enum pres_ops
 {
     PRESHADER_OP_NOP,
     PRESHADER_OP_MOV,
-    PRESHADER_OP_ADD,
-    PRESHADER_OP_MUL,
-    PRESHADER_OP_DOT,
     PRESHADER_OP_NEG,
     PRESHADER_OP_RCP,
-    PRESHADER_OP_LT,
     PRESHADER_OP_FRC,
-    PRESHADER_OP_MIN,
-    PRESHADER_OP_MAX,
-    PRESHADER_OP_GE,
-    PRESHADER_OP_CMP,
+    PRESHADER_OP_EXP,
+    PRESHADER_OP_RSQ,
     PRESHADER_OP_SIN,
     PRESHADER_OP_COS,
-    PRESHADER_OP_RSQ,
-    PRESHADER_OP_EXP,
+    PRESHADER_OP_MIN,
+    PRESHADER_OP_MAX,
+    PRESHADER_OP_LT,
+    PRESHADER_OP_GE,
+    PRESHADER_OP_ADD,
+    PRESHADER_OP_MUL,
+    PRESHADER_OP_CMP,
+    PRESHADER_OP_DOT,
     PRESHADER_OP_DOTSWIZ6,
     PRESHADER_OP_DOTSWIZ8,
 };
@@ -120,21 +120,21 @@ static const struct op_info pres_op_info[] =
 {
     {0x000, "nop", 0, 0, NULL    }, /* PRESHADER_OP_NOP */
     {0x100, "mov", 1, 0, pres_mov}, /* PRESHADER_OP_MOV */
-    {0x204, "add", 2, 0, pres_add}, /* PRESHADER_OP_ADD */
-    {0x205, "mul", 2, 0, pres_mul}, /* PRESHADER_OP_MUL */
-    {0x500, "dot", 2, 1, pres_dot}, /* PRESHADER_OP_DOT */
     {0x101, "neg", 1, 0, pres_neg}, /* PRESHADER_OP_NEG */
     {0x103, "rcp", 1, 0, pres_rcp}, /* PRESHADER_OP_RCP */
-    {0x202, "lt",  2, 0, pres_lt }, /* PRESHADER_OP_LT  */
     {0x104, "frc", 1, 0, pres_frc}, /* PRESHADER_OP_FRC */
-    {0x200, "min", 2, 0, pres_min}, /* PRESHADER_OP_MIN */
-    {0x201, "max", 2, 0, pres_max}, /* PRESHADER_OP_MAX */
-    {0x203, "ge",  2, 0, pres_ge }, /* PRESHADER_OP_GE  */
-    {0x300, "cmp", 3, 0, pres_cmp}, /* PRESHADER_OP_CMP */
+    {0x105, "exp", 1, 0, pres_exp}, /* PRESHADER_OP_EXP */
+    {0x107, "rsq", 1, 0, pres_rsq}, /* PRESHADER_OP_RSQ */
     {0x108, "sin", 1, 0, pres_sin}, /* PRESHADER_OP_SIN */
     {0x109, "cos", 1, 0, pres_cos}, /* PRESHADER_OP_COS */
-    {0x107, "rsq", 1, 0, pres_rsq}, /* PRESHADER_OP_RSQ */
-    {0x105, "exp", 1, 0, pres_exp}, /* PRESHADER_OP_EXP */
+    {0x200, "min", 2, 0, pres_min}, /* PRESHADER_OP_MIN */
+    {0x201, "max", 2, 0, pres_max}, /* PRESHADER_OP_MAX */
+    {0x202, "lt",  2, 0, pres_lt }, /* PRESHADER_OP_LT  */
+    {0x203, "ge",  2, 0, pres_ge }, /* PRESHADER_OP_GE  */
+    {0x204, "add", 2, 0, pres_add}, /* PRESHADER_OP_ADD */
+    {0x205, "mul", 2, 0, pres_mul}, /* PRESHADER_OP_MUL */
+    {0x300, "cmp", 3, 0, pres_cmp}, /* PRESHADER_OP_CMP */
+    {0x500, "dot", 2, 1, pres_dot}, /* PRESHADER_OP_DOT */
     {0x70e, "d3ds_dotswiz", 6, 0, pres_dotswiz6}, /* PRESHADER_OP_DOTSWIZ6 */
     {0x70e, "d3ds_dotswiz", 8, 0, pres_dotswiz8}, /* PRESHADER_OP_DOTSWIZ8 */
 };
