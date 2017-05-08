@@ -6791,8 +6791,9 @@ static void shader_glsl_generate_sm4_rasterizer_input_setup(struct shader_glsl_p
 {
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
 
+    input_count = min(vec4_varyings(4, gl_info), input_count);
     if (input_count)
-        declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", min(vec4_varyings(4, gl_info), input_count));
+        declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", input_count);
 
     shader_addline(buffer, "void setup_%s_output(in vec4 outputs[%u])\n{\n",
             shader_glsl_get_prefix(shader->reg_maps.shader_version.type), shader->limits->packed_output);
