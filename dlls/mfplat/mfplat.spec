@@ -134,7 +134,7 @@
 @ stdcall MFShutdown()
 @ stdcall MFStartup(long long)
 @ stub MFStreamDescriptorProtectMediaType
-@ stub MFTEnum
+@ stdcall MFTEnum(int128 long ptr ptr ptr ptr ptr)
 @ stub MFTEnumEx
 @ stub MFTGetInfo
 @ stdcall MFTRegister(int128 int128 wstr long long ptr long ptr ptr)
