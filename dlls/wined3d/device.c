@@ -2789,6 +2789,13 @@ void CDECL wined3d_device_set_ds_sampler(struct wined3d_device *device,
     wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_DOMAIN, idx, sampler);
 }
 
+struct wined3d_sampler * CDECL wined3d_device_get_ds_sampler(const struct wined3d_device *device, unsigned int idx)
+{
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_DOMAIN, idx);
+}
+
 void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     struct wined3d_shader *prev = device->update_state->shader[WINED3D_SHADER_TYPE_GEOMETRY];

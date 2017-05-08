@@ -2218,6 +2218,7 @@ struct wined3d_shader * __cdecl wined3d_device_get_domain_shader(const struct wi
 struct wined3d_buffer * __cdecl wined3d_device_get_ds_cb(const struct wined3d_device *device, unsigned int idx);
 struct wined3d_shader_resource_view * __cdecl wined3d_device_get_ds_resource_view(const struct wined3d_device *device,
         unsigned int idx);
+struct wined3d_sampler * __cdecl wined3d_device_get_ds_sampler(const struct wined3d_device *device, unsigned int idx);
 void __cdecl wined3d_device_get_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_gamma_ramp *ramp);
 struct wined3d_shader * __cdecl wined3d_device_get_geometry_shader(const struct wined3d_device *device);
