@@ -95,7 +95,7 @@ void WCMD_setshow_path (const WCHAR *args);
 void WCMD_setshow_prompt (void);
 void WCMD_setshow_time (void);
 void WCMD_shift (const WCHAR *args);
-void WCMD_start (const WCHAR *args);
+void WCMD_start (WCHAR *args);
 void WCMD_title (const WCHAR *);
 void WCMD_type (WCHAR *);
 void WCMD_verify (const WCHAR *args);

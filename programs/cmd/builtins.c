@@ -4311,10 +4311,15 @@ void WCMD_shift (const WCHAR *args) {
 /****************************************************************************
  * WCMD_start
  */
-void WCMD_start(const WCHAR *args)
+void WCMD_start(WCHAR *args)
 {
     static const WCHAR exeW[] = {'\\','c','o','m','m','a','n','d',
                                  '\\','s','t','a','r','t','.','e','x','e',0};
+    static const WCHAR startDelims[] = { ' ', '\t', '/', '\0' };
+    static const WCHAR prefixQuote[] = {'"','\\','"','\0'};
+    static const WCHAR postfixQuote[] = {'\\','"','"','\0'};
+    int argno;
+    int have_title;
     WCHAR file[MAX_PATH];
     WCHAR *cmdline;
     STARTUPINFOW st;
@@ -4322,10 +4327,90 @@ void WCMD_start(const WCHAR *args)
 
     GetWindowsDirectoryW( file, MAX_PATH );
     strcatW( file, exeW );
-    cmdline = heap_alloc( (strlenW(file) + strlenW(args) + 2) * sizeof(WCHAR) );
+    cmdline = heap_alloc( (strlenW(file) + strlenW(args) + 8) * sizeof(WCHAR) );
     strcpyW( cmdline, file );
     strcatW( cmdline, spaceW );
-    strcatW( cmdline, args );
+
+    /* The start built-in has some special command-line parsing properties
+     * which will be outlined here.
+     *
+     * both '\t' and ' ' are argument separators
+     * '/' has a special double role as both separator and switch prefix, e.g.
+     *
+     * > start /low/i
+     * or
+     * > start "title"/i
+     *
+     * are valid ways to pass multiple options to start. In the latter case
+     * '/i' is not a part of the title but parsed as a switch.
+     *
+     * However, '=', ';' and ',' are not separators:
+     * > start "deus"=ex,machina
+     *
+     * will in fact open a console titled 'deus=ex,machina'
+     *
+     * The title argument parsing code is only interested in quotes themselves,
+     * it does not respect escaping of any kind and all quotes are dropped
+     * from the resulting title, therefore:
+     *
+     * > start "\"" hello"/low
+     *
+     * actually opens a console titled '\ hello' with low priorities.
+     *
+     * To not break compatibility with wine programs relying on
+     * wine's separate 'start.exe', this program's peculiar console
+     * title parsing is actually implemented in 'cmd.exe' which is the
+     * application native Windows programs will use to invoke 'start'.
+     *
+     * WCMD_parameter_with_delims will take care of everything for us.
+     */
+    have_title = FALSE;
+    for (argno=0; ; argno++) {
+        WCHAR *thisArg, *argN;
+
+        argN = NULL;
+        thisArg = WCMD_parameter_with_delims(args, argno, &argN, FALSE, FALSE, startDelims);
+
+        /* No more parameters */
+        if (!argN)
+            break;
+
+        /* Found the title */
+        if (argN[0] == '"') {
+            TRACE("detected console title: %s\n", wine_dbgstr_w(thisArg));
+            have_title = TRUE;
+
+            /* Copy all of the cmdline processed */
+            memcpy(cmdline, args, sizeof(WCHAR) * (argN - args));
+            cmdline[argN - args] = '\0';
+
+            /* Add quoted title */
+            strcatW(cmdline, prefixQuote);
+            strcatW(cmdline, thisArg);
+            strcatW(cmdline, postfixQuote);
+
+            /* Concatenate remaining command-line */
+            thisArg = WCMD_parameter_with_delims(args, argno, &argN, TRUE, FALSE, startDelims);
+            strcatW(cmdline, argN + strlenW(thisArg));
+
+            break;
+        }
+
+        /* Skipping a regular argument? */
+        else if (argN != args && argN[-1] == '/') {
+            continue;
+
+        /* Not an argument nor the title, start of program arguments,
+         * stop looking for title.
+         */
+        } else
+            break;
+    }
+
+    /* build command-line if not built yet */
+    if (!have_title) {
+        strcatW( cmdline, args );
+    }
 
     memset( &st, 0, sizeof(STARTUPINFOW) );
     st.cb = sizeof(STARTUPINFOW);
