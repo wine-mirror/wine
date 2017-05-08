@@ -6815,38 +6815,27 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
     return ret;
 }
 
-static void shader_glsl_generate_sm4_rasterizer_input_setup(struct shader_glsl_priv *priv,
-        const struct wined3d_shader *shader, unsigned int input_count,
-        const struct wined3d_gl_info *gl_info)
-{
-    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
-
-    input_count = min(vec4_varyings(4, gl_info), input_count);
-    if (input_count)
-        shader_glsl_declare_shader_outputs(gl_info, buffer, input_count);
-
-    shader_addline(buffer, "void setup_%s_output(in vec4 outputs[%u])\n{\n",
-            shader_glsl_get_prefix(shader->reg_maps.shader_version.type), shader->limits->packed_output);
-
-    shader_glsl_setup_sm3_rasterizer_input(priv, gl_info, NULL, NULL,
-            NULL, input_count, &shader->output_signature, &shader->reg_maps, FALSE);
-
-    shader_addline(buffer, "}\n");
-}
-
 static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
         const struct wined3d_shader *shader, unsigned int input_count,
-        const struct wined3d_gl_info *gl_info)
+        const struct wined3d_gl_info *gl_info, BOOL rasterizer_setup)
 {
     const char *prefix = shader_glsl_get_prefix(shader->reg_maps.shader_version.type);
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
 
-    shader_addline(buffer, "out shader_in_out { vec4 reg[%u]; } shader_out;\n", input_count);
+    if (rasterizer_setup)
+        input_count = min(vec4_varyings(4, gl_info), input_count);
+
+    if (input_count)
+        shader_glsl_declare_shader_outputs(gl_info, buffer, input_count);
+
     shader_addline(buffer, "void setup_%s_output(in vec4 outputs[%u])\n{\n",
             prefix, shader->limits->packed_output);
 
-    shader_glsl_setup_sm4_shader_output(priv, input_count,
-            &shader->output_signature, &shader->reg_maps);
+    if (rasterizer_setup)
+        shader_glsl_setup_sm3_rasterizer_input(priv, gl_info, NULL, NULL,
+                NULL, input_count, &shader->output_signature, &shader->reg_maps, FALSE);
+    else
+        shader_glsl_setup_sm4_shader_output(priv, input_count, &shader->output_signature, &shader->reg_maps);
 
     shader_addline(buffer, "}\n");
 }
@@ -7337,12 +7326,8 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
 
     if (reg_maps->shader_version.major >= 4)
-    {
-        if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL)
-            shader_glsl_generate_sm4_rasterizer_input_setup(priv, shader, args->next_shader_input_count, gl_info);
-        else if (args->next_shader_type == WINED3D_SHADER_TYPE_GEOMETRY)
-            shader_glsl_generate_sm4_output_setup(priv, shader, args->next_shader_input_count, gl_info);
-    }
+        shader_glsl_generate_sm4_output_setup(priv, shader, args->next_shader_input_count,
+                gl_info, args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL);
 
     shader_addline(buffer, "void main()\n{\n");
 
@@ -7394,7 +7379,7 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context 
     if (!gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
 
-    shader_glsl_generate_sm4_rasterizer_input_setup(priv, shader, args->output_count, gl_info);
+    shader_glsl_generate_sm4_output_setup(priv, shader, args->output_count, gl_info, TRUE);
     shader_addline(buffer, "void main()\n{\n");
     if (FAILED(shader_generate_main(shader, buffer, reg_maps, &priv_ctx)))
         return 0;
