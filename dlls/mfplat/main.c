@@ -164,6 +164,44 @@ HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags
 }
 
 /***********************************************************************
+ *      MFTUnregister (mfplat.@)
+ */
+HRESULT WINAPI MFTUnregister(CLSID clsid)
+{
+    WCHAR buffer[64], category[MAX_PATH];
+    HKEY htransform, hcategory, htmp;
+    DWORD size = MAX_PATH;
+    DWORD index = 0;
+
+    TRACE("(%s)\n", debugstr_guid(&clsid));
+
+    GUIDToString(buffer, &clsid);
+
+    if (!RegOpenKeyW(HKEY_CLASSES_ROOT, transform_keyW, &htransform))
+    {
+        RegDeleteKeyW(htransform, buffer);
+        RegCloseKey(htransform);
+    }
+
+    if (!RegOpenKeyW(HKEY_CLASSES_ROOT, categories_keyW, &hcategory))
+    {
+        while (RegEnumKeyExW(hcategory, index, category, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+        {
+            if (!RegOpenKeyW(hcategory, category, &htmp))
+            {
+                RegDeleteKeyW(htmp, buffer);
+                RegCloseKey(htmp);
+            }
+            size = MAX_PATH;
+            index++;
+        }
+        RegCloseKey(hcategory);
+    }
+
+    return S_OK;
+}
+
+/***********************************************************************
  *      MFStartup (mfplat.@)
  */
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags)
