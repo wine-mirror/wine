@@ -23,14 +23,41 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "winreg.h"
 
 #include "initguid.h"
 #include "mfapi.h"
 #include "mferror.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+
+static const WCHAR transform_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
+                                 'T','r','a','n','s','f','o','r','m','s',0};
+static const WCHAR categories_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
+                                 'T','r','a','n','s','f','o','r','m','s','\\',
+                                 'C','a','t','e','g','o','r','i','e','s',0};
+static const WCHAR inputtypesW[]  = {'I','n','p','u','t','T','y','p','e','s',0};
+static const WCHAR outputtypesW[] = {'O','u','t','p','u','t','T','y','p','e','s',0};
+static const WCHAR szGUIDFmt[] =
+{
+    '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0',
+    '2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2',
+    'x','%','0','2','x','%','0','2','x','%','0','2','x',0
+};
+
+static WCHAR* GUIDToString(WCHAR *str, REFGUID guid)
+{
+    sprintfW(str, szGUIDFmt, guid->Data1, guid->Data2,
+        guid->Data3, guid->Data4[0], guid->Data4[1],
+        guid->Data4[2], guid->Data4[3], guid->Data4[4],
+        guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+
+    return str;
+}
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -44,6 +71,96 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+static HRESULT register_transform(CLSID *clsid, WCHAR *name,
+                                  UINT32 cinput, MFT_REGISTER_TYPE_INFO *input_types,
+                                  UINT32 coutput, MFT_REGISTER_TYPE_INFO *output_types)
+{
+    static const WCHAR reg_format[] = {'%','s','\\','%','s',0};
+    HKEY hclsid = 0;
+    WCHAR buffer[64];
+    DWORD size;
+    WCHAR str[250];
+
+    GUIDToString(buffer, clsid);
+    sprintfW(str, reg_format, transform_keyW, buffer);
+
+    if (RegCreateKeyW(HKEY_CLASSES_ROOT, str, &hclsid))
+        return E_FAIL;
+
+    size = (strlenW(name) + 1) * sizeof(WCHAR);
+    if (RegSetValueExW(hclsid, NULL, 0, REG_SZ, (BYTE *)name, size))
+        goto err;
+
+    if (cinput && input_types)
+    {
+        size = cinput * sizeof(MFT_REGISTER_TYPE_INFO);
+        if (RegSetValueExW(hclsid, inputtypesW, 0, REG_BINARY, (BYTE *)input_types, size))
+            goto err;
+    }
+
+    if (coutput && output_types)
+    {
+        size = coutput * sizeof(MFT_REGISTER_TYPE_INFO);
+        if (RegSetValueExW(hclsid, outputtypesW, 0, REG_BINARY, (BYTE *)output_types, size))
+            goto err;
+    }
+
+    RegCloseKey(hclsid);
+    return S_OK;
+
+err:
+    RegCloseKey(hclsid);
+    return E_FAIL;
+}
+
+static HRESULT register_category(CLSID *clsid, GUID *category)
+{
+    static const WCHAR reg_format[] = {'%','s','\\','%','s','\\','%','s',0};
+    HKEY htmp1;
+    WCHAR guid1[64], guid2[64];
+    WCHAR str[350];
+
+    GUIDToString(guid1, category);
+    GUIDToString(guid2, clsid);
+
+    sprintfW(str, reg_format, categories_keyW, guid1, guid2);
+
+    if (RegCreateKeyW(HKEY_CLASSES_ROOT, str, &htmp1))
+        return E_FAIL;
+
+    RegCloseKey(htmp1);
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFTRegister (mfplat.@)
+ */
+HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags, UINT32 cinput,
+                           MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
+                           MFT_REGISTER_TYPE_INFO *output_types, IMFAttributes *attributes)
+{
+    HRESULT hr;
+
+    TRACE("(%s, %s, %s, %x, %u, %p, %u, %p, %p)\n", debugstr_guid(&clsid), debugstr_guid(&category),
+                                                    debugstr_w(name), flags, cinput, input_types,
+                                                    coutput, output_types, attributes);
+
+    if (attributes)
+        FIXME("attributes not yet supported.\n");
+
+    if (flags)
+        FIXME("flags not yet supported.\n");
+
+    hr = register_transform(&clsid, name, cinput, input_types, coutput, output_types);
+    if(FAILED(hr))
+        ERR("Failed to write register transform\n");
+
+    if (SUCCEEDED(hr))
+        hr = register_category(&clsid, &category);
+
+    return hr;
 }
 
 /***********************************************************************
