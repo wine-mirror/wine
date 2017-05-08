@@ -808,7 +808,7 @@ static void shader_glsl_generate_transform_feedback_varyings(const struct wined3
                 continue;
             }
 
-            string_buffer_sprintf(buffer, "ps_link[%u]", e->register_idx);
+            string_buffer_sprintf(buffer, "shader_in_out.reg[%u]", e->register_idx);
             append_transform_feedback_varying(varyings, &count, &strings, &length, buffer);
         }
 
@@ -2029,6 +2029,11 @@ static BOOL shader_glsl_use_explicit_attrib_location(const struct wined3d_gl_inf
             && shader_glsl_use_layout_qualifier(gl_info) && !needs_legacy_glsl_syntax(gl_info);
 }
 
+static BOOL shader_glsl_use_interface_blocks(const struct wined3d_gl_info *gl_info)
+{
+    return shader_glsl_get_version(gl_info) >= 150;
+}
+
 static const char *get_attribute_keyword(const struct wined3d_gl_info *gl_info)
 {
     return needs_legacy_glsl_syntax(gl_info) ? "attribute" : "in";
@@ -2072,6 +2077,34 @@ static void PRINTF_ATTR(4, 5) declare_out_varying(const struct wined3d_gl_info *
         if (!string_buffer_resize(buffer, ret))
             return;
     }
+}
+
+static const char *shader_glsl_shader_input_name(const struct wined3d_gl_info *gl_info)
+{
+    return shader_glsl_use_interface_blocks(gl_info) ? "shader_in.reg" : "ps_link";
+}
+
+static const char *shader_glsl_shader_output_name(const struct wined3d_gl_info *gl_info)
+{
+    return shader_glsl_use_interface_blocks(gl_info) ? "shader_out.reg" : "ps_link";
+}
+
+static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_info,
+        struct wined3d_string_buffer *buffer, unsigned int element_count)
+{
+    if (shader_glsl_use_interface_blocks(gl_info))
+        shader_addline(buffer, "in shader_in_out { vec4 reg[%u]; } shader_in;\n", element_count);
+    else
+        declare_in_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", element_count);
+}
+
+static void shader_glsl_declare_shader_outputs(const struct wined3d_gl_info *gl_info,
+        struct wined3d_string_buffer *buffer, unsigned int element_count)
+{
+    if (shader_glsl_use_interface_blocks(gl_info))
+        shader_addline(buffer, "out shader_in_out { vec4 reg[%u]; } shader_out;\n", element_count);
+    else
+        declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", element_count);
 }
 
 static const char *get_fragment_output(const struct wined3d_gl_info *gl_info)
@@ -6367,8 +6400,9 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
             {
                 if (input->sysval_semantic)
                     FIXME("Unhandled sysval semantic %#x.\n", input->sysval_semantic);
-                shader_addline(buffer, "ps_in[%u]%s = ps_link[%u]%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = %s[%u]%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask,
+                        shader_glsl_shader_input_name(gl_info),
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask);
             }
         }
@@ -6453,9 +6487,10 @@ static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
         const struct wined3d_shader_signature *input_signature,
         const struct wined3d_shader_reg_maps *reg_maps_in,
         const struct wined3d_shader_signature *output_signature,
-        const struct wined3d_shader_reg_maps *reg_maps_out, const char *out_array_name)
+        const struct wined3d_shader_reg_maps *reg_maps_out)
 {
     struct wined3d_string_buffer *destination = string_buffer_get(&priv->string_buffers);
+    const char *out_array_name = shader_glsl_shader_output_name(gl_info);
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     unsigned int in_count = vec4_varyings(3, gl_info);
     unsigned int max_varyings = needs_legacy_glsl_syntax(gl_info) ? in_count + 2 : in_count;
@@ -6553,9 +6588,8 @@ static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
 
 static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
         unsigned int input_count, const struct wined3d_shader_signature *output_signature,
-        const struct wined3d_shader_reg_maps *reg_maps_out, const char *out_array_name)
+        const struct wined3d_shader_reg_maps *reg_maps_out)
 {
-    struct wined3d_string_buffer *destination = string_buffer_get(&priv->string_buffers);
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     char reg_mask[6];
     unsigned int i;
@@ -6573,15 +6607,11 @@ static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
         if (output->register_idx >= input_count)
             continue;
 
-        string_buffer_sprintf(destination, "%s[%u]", out_array_name, output->register_idx);
-
         shader_glsl_write_mask_to_str(output->mask, reg_mask);
 
-        shader_addline(buffer, "%s%s = outputs[%u]%s;\n",
-                destination->buffer, reg_mask, output->register_idx, reg_mask);
+        shader_addline(buffer, "shader_out.reg[%u]%s = outputs[%u]%s;\n",
+                output->register_idx, reg_mask, output->register_idx, reg_mask);
     }
-
-    string_buffer_release(&priv->string_buffers, destination);
 }
 
 static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv,
@@ -6636,9 +6666,9 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
     /* Then, setup the pixel shader input. */
     if (reg_maps_out->shader_version.major < 4)
         shader_glsl_setup_vs3_output(priv, gl_info, map, input_signature, reg_maps_in,
-                output_signature, reg_maps_out, "ps_link");
+                output_signature, reg_maps_out);
     else
-        shader_glsl_setup_sm4_shader_output(priv, input_count, output_signature, reg_maps_out, "ps_link");
+        shader_glsl_setup_sm4_shader_output(priv, input_count, output_signature, reg_maps_out);
 }
 
 /* Context activation is done by the caller. */
@@ -6768,9 +6798,9 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
     }
     else
     {
-        UINT in_count = min(vec4_varyings(ps_major, gl_info), ps->limits->packed_input);
+        unsigned int in_count = min(vec4_varyings(ps_major, gl_info), ps->limits->packed_input);
 
-        declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", in_count);
+        shader_glsl_declare_shader_outputs(gl_info, buffer, in_count);
         shader_addline(buffer, "void setup_vs_output(in vec4 outputs[%u])\n{\n", vs->limits->packed_output);
         shader_glsl_setup_sm3_rasterizer_input(priv, gl_info, ps->u.ps.input_reg_map, &ps->input_signature,
                 &ps->reg_maps, 0, &vs->output_signature, &vs->reg_maps, per_vertex_point_size);
@@ -6793,7 +6823,7 @@ static void shader_glsl_generate_sm4_rasterizer_input_setup(struct shader_glsl_p
 
     input_count = min(vec4_varyings(4, gl_info), input_count);
     if (input_count)
-        declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", input_count);
+        shader_glsl_declare_shader_outputs(gl_info, buffer, input_count);
 
     shader_addline(buffer, "void setup_%s_output(in vec4 outputs[%u])\n{\n",
             shader_glsl_get_prefix(shader->reg_maps.shader_version.type), shader->limits->packed_output);
@@ -6816,7 +6846,7 @@ static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
             prefix, shader->limits->packed_output);
 
     shader_glsl_setup_sm4_shader_output(priv, input_count,
-            &shader->output_signature, &shader->reg_maps, "shader_out.reg");
+            &shader->output_signature, &shader->reg_maps);
 
     shader_addline(buffer, "}\n");
 }
@@ -7056,7 +7086,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
         unsigned int in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
 
         if (args->vp_mode == vertexshader)
-            declare_in_varying(gl_info, buffer, FALSE, "vec4 %s_link[%u];\n", prefix, in_count);
+            shader_glsl_declare_shader_inputs(gl_info, buffer, in_count);
         shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
     }
 
