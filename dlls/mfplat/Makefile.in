@@ -1,4 +1,5 @@
 MODULE    = mfplat.dll
+IMPORTLIB = mfplat
 IMPORTS   = advapi32 ole32
 
 C_SRCS = \
