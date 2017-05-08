@@ -1882,11 +1882,39 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetRenderTargetsAndUnord
         UINT unordered_access_view_start_slot, UINT unordered_access_view_count,
         ID3D11UnorderedAccessView **unordered_access_views)
 {
-    FIXME("iface %p, render_target_view_count %u, render_target_views %p, depth_stencil_view %p, "
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct wined3d_unordered_access_view *wined3d_view;
+    struct d3d11_unordered_access_view *view_impl;
+    unsigned int i;
+
+    TRACE("iface %p, render_target_view_count %u, render_target_views %p, depth_stencil_view %p, "
             "unordered_access_view_start_slot %u, unordered_access_view_count %u, "
-            "unordered_access_views %p stub!\n",
+            "unordered_access_views %p.\n",
             iface, render_target_view_count, render_target_views, depth_stencil_view,
             unordered_access_view_start_slot, unordered_access_view_count, unordered_access_views);
+
+    if (render_target_views || depth_stencil_view)
+        d3d11_immediate_context_OMGetRenderTargets(iface, render_target_view_count,
+                render_target_views, depth_stencil_view);
+
+    if (unordered_access_views)
+    {
+        wined3d_mutex_lock();
+        for (i = 0; i < unordered_access_view_count; ++i)
+        {
+            if (!(wined3d_view = wined3d_device_get_unordered_access_view(device->wined3d_device,
+                    unordered_access_view_start_slot + i)))
+            {
+                unordered_access_views[i] = NULL;
+                continue;
+            }
+
+            view_impl = wined3d_unordered_access_view_get_parent(wined3d_view);
+            unordered_access_views[i] = &view_impl->ID3D11UnorderedAccessView_iface;
+            ID3D11UnorderedAccessView_AddRef(unordered_access_views[i]);
+        }
+        wined3d_mutex_unlock();
+    }
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetBlendState(ID3D11DeviceContext *iface,
