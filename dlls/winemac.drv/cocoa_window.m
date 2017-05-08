@@ -218,22 +218,26 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (void) addWindow:(WineWindow*)window
     {
+        BOOL needsStart;
         @synchronized(self) {
-            BOOL needsStart = !_windows.count;
+            needsStart = !_windows.count;
             [_windows addObject:window];
-            if (needsStart)
-                CVDisplayLinkStart(_link);
         }
+        if (needsStart)
+            CVDisplayLinkStart(_link);
     }
 
     - (void) removeWindow:(WineWindow*)window
     {
+        BOOL shouldStop = FALSE;
         @synchronized(self) {
             BOOL wasRunning = _windows.count > 0;
             [_windows removeObject:window];
             if (wasRunning && !_windows.count)
-                CVDisplayLinkStop(_link);
+                shouldStop = TRUE;
         }
+        if (shouldStop)
+            CVDisplayLinkStop(_link);
     }
 
     - (void) fire
