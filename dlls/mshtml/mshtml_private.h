@@ -318,7 +318,7 @@ void dispex_unlink(DispatchEx*) DECLSPEC_HIDDEN;
 void release_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**) DECLSPEC_HIDDEN;
 const dispex_static_data_vtbl_t *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
-void dispex_info_add_interface(dispex_data_t*,tid_t) DECLSPEC_HIDDEN;
+void dispex_info_add_interface(dispex_data_t*,tid_t,const DISPID*) DECLSPEC_HIDDEN;
 
 static inline void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *desc)
 {
@@ -760,7 +760,6 @@ typedef struct {
     IHTMLDOMNode_tid,       \
     IHTMLDOMNode2_tid,      \
     IHTMLElement_tid,       \
-    IHTMLElement2_tid,      \
     IHTMLElement3_tid,      \
     IHTMLElement4_tid,      \
     IHTMLUniqueName_tid

@@ -325,9 +325,10 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     }
 }
 
-static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp_typeinfo)
+static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp_typeinfo, const DISPID *blacklist_dispids)
 {
     unsigned i = 7; /* skip IDispatch functions */
+    const DISPID *blacklist_iter;
     ITypeInfo *typeinfo;
     FUNCDESC *funcdesc;
     HRESULT hres;
@@ -341,20 +342,29 @@ static HRESULT process_interface(dispex_data_t *data, tid_t tid, ITypeInfo *disp
         if(FAILED(hres))
             break;
 
-        TRACE("adding...\n");
+        if(blacklist_dispids) {
+            for(blacklist_iter = blacklist_dispids; *blacklist_iter != DISPID_UNKNOWN; blacklist_iter++) {
+                if(*blacklist_iter == funcdesc->memid)
+                    break;
+            }
+        }
 
-        add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo);
+        if(!blacklist_dispids || *blacklist_iter == DISPID_UNKNOWN) {
+            TRACE("adding...\n");
+            add_func_info(data, tid, funcdesc, disp_typeinfo ? disp_typeinfo : typeinfo);
+        }
+
         ITypeInfo_ReleaseFuncDesc(typeinfo, funcdesc);
     }
 
     return S_OK;
 }
 
-void dispex_info_add_interface(dispex_data_t *info, tid_t tid)
+void dispex_info_add_interface(dispex_data_t *info, tid_t tid, const DISPID *blacklist_dispids)
 {
     HRESULT hres;
 
-    hres = process_interface(info, tid, NULL);
+    hres = process_interface(info, tid, NULL, blacklist_dispids);
     if(FAILED(hres))
         ERR("process_interface failed: %08x\n", hres);
 }
@@ -406,7 +416,7 @@ static dispex_data_t *preprocess_dispex_data(const dispex_static_data_t *desc, c
         desc->init_info(data, compat_mode);
 
     for(tid = desc->iface_tids; *tid; tid++) {
-        hres = process_interface(data, *tid, dti);
+        hres = process_interface(data, *tid, dti, NULL);
         if(FAILED(hres))
             break;
     }

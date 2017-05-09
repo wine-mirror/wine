@@ -28,6 +28,7 @@ function test_elem_props() {
 
     var v = document.documentMode;
 
+    test_exposed("doScroll", v < 11);
     test_exposed("querySelectorAll", v >= 8);
 
     next_test();

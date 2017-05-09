@@ -3029,7 +3029,7 @@ static void HTMLWindow_bind_event(DispatchEx *dispex, int eid)
 
 static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
 {
-    dispex_info_add_interface(info, IHTMLWindow5_tid);
+    dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
 }
 
 static const dispex_static_data_vtbl_t HTMLWindow_dispex_vtbl = {
