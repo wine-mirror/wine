@@ -1583,12 +1583,18 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_IAGetVertexBuffers(ID3D11D
     wined3d_mutex_lock();
     for (i = 0; i < buffer_count; ++i)
     {
-        struct wined3d_buffer *wined3d_buffer;
+        struct wined3d_buffer *wined3d_buffer = NULL;
         struct d3d_buffer *buffer_impl;
 
         if (FAILED(wined3d_device_get_stream_source(device->wined3d_device, start_slot + i,
                 &wined3d_buffer, &offsets[i], &strides[i])))
-            ERR("Failed to get vertex buffer %u.\n", start_slot + i);
+        {
+            FIXME("Failed to get vertex buffer %u.\n", start_slot + i);
+            if (strides)
+                strides[i] = 0;
+            if (offsets)
+                offsets[i] = 0;
+        }
 
         if (!wined3d_buffer)
         {
@@ -4415,7 +4421,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetVertexBuffers(ID3D10Device1 *ifa
     wined3d_mutex_lock();
     for (i = 0; i < buffer_count; ++i)
     {
-        struct wined3d_buffer *wined3d_buffer;
+        struct wined3d_buffer *wined3d_buffer = NULL;
         struct d3d_buffer *buffer_impl;
 
         if (FAILED(wined3d_device_get_stream_source(device->wined3d_device, start_slot + i,
