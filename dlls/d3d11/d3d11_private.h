@@ -373,6 +373,7 @@ struct d3d11_class_linkage
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    ID3D11Device *device;
 };
 
 HRESULT d3d11_class_linkage_create(struct d3d_device *device,

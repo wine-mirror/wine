@@ -2127,8 +2127,12 @@ static ULONG STDMETHODCALLTYPE d3d11_class_linkage_Release(ID3D11ClassLinkage *i
 
     if (!refcount)
     {
+        ID3D11Device *device = class_linkage->device;
+
         wined3d_private_store_cleanup(&class_linkage->private_store);
         HeapFree(GetProcessHeap(), 0, class_linkage);
+
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -2137,7 +2141,11 @@ static ULONG STDMETHODCALLTYPE d3d11_class_linkage_Release(ID3D11ClassLinkage *i
 static void STDMETHODCALLTYPE d3d11_class_linkage_GetDevice(ID3D11ClassLinkage *iface,
         ID3D11Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    ID3D11Device_AddRef(*device = class_linkage->device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_class_linkage_GetPrivateData(ID3D11ClassLinkage *iface,
@@ -2217,6 +2225,8 @@ HRESULT d3d11_class_linkage_create(struct d3d_device *device, struct d3d11_class
     object->ID3D11ClassLinkage_iface.lpVtbl = &d3d11_class_linkage_vtbl;
     object->refcount = 1;
     wined3d_private_store_init(&object->private_store);
+
+    ID3D11Device_AddRef(object->device = &device->ID3D11Device_iface);
 
     TRACE("Created class linkage %p.\n", object);
     *class_linkage = object;
