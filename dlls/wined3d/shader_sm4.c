@@ -498,8 +498,8 @@ static void shader_sm4_read_shader_data(struct wined3d_shader_instruction *ins,
     type = (opcode_token & WINED3D_SM4_SHADER_DATA_TYPE_MASK) >> WINED3D_SM4_SHADER_DATA_TYPE_SHIFT;
     if (type != WINED3D_SM4_SHADER_DATA_IMMEDIATE_CONSTANT_BUFFER)
     {
-        FIXME("Unhandled shader data type %#x.\n", type);
-        ins->handler_idx = WINED3DSIH_TABLE_SIZE;
+        FIXME("Ignoring shader data type %#x.\n", type);
+        ins->handler_idx = WINED3DSIH_NOP;
         return;
     }
 
