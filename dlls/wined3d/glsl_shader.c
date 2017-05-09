@@ -9124,47 +9124,17 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         vs_list = &ctx_data->glsl_program->vs.shader_entry;
 
         if (use_vs(state))
-        {
             vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
-            gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
-
-            if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_GEOMETRY))
-                    && ctx_data->glsl_program->gs.id)
-            {
-                gs_id = ctx_data->glsl_program->gs.id;
-            }
-            else if (gshader)
-            {
-                struct gs_compile_args args;
-
-                find_gs_compile_args(state, gshader, &args);
-                gs_id = find_glsl_geometry_shader(context, priv, gshader, &args);
-            }
-        }
     }
     else if (use_vs(state))
     {
         struct vs_compile_args vs_compile_args;
 
         vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
-        gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
 
         find_vs_compile_args(state, vshader, context->stream_info.swizzle_map, &vs_compile_args, d3d_info);
         vs_id = find_glsl_vshader(context, priv, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
-
-        if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_GEOMETRY))
-                && ctx_data->glsl_program->gs.id)
-        {
-            gs_id = ctx_data->glsl_program->gs.id;
-        }
-        else if (gshader)
-        {
-            struct gs_compile_args gs_compile_args;
-
-            find_gs_compile_args(state, gshader, &gs_compile_args);
-            gs_id = find_glsl_geometry_shader(context, priv, gshader, &gs_compile_args);
-        }
     }
     else if (priv->vertex_pipe == &glsl_vertex_pipe)
     {
@@ -9175,6 +9145,19 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         ffp_shader = shader_glsl_find_ffp_vertex_shader(priv, gl_info, &settings);
         vs_id = ffp_shader->id;
         vs_list = &ffp_shader->linked_programs;
+    }
+
+    gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
+    if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_GEOMETRY)) && ctx_data->glsl_program)
+    {
+        gs_id = ctx_data->glsl_program->gs.id;
+    }
+    else if (gshader)
+    {
+        struct gs_compile_args args;
+
+        find_gs_compile_args(state, gshader, &args);
+        gs_id = find_glsl_geometry_shader(context, priv, gshader, &args);
     }
 
     if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL)) && ctx_data->glsl_program)
