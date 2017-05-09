@@ -388,6 +388,10 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
         return FALSE;
 
     switch(v){
+    case 5:
+    case 6:
+        *r = COMPAT_MODE_IE5;
+        break;
     case 7:
         *r = COMPAT_MODE_IE7;
         break;
@@ -401,7 +405,7 @@ static BOOL parse_ua_compatible(const WCHAR *p, compat_mode_t *r)
         *r = COMPAT_MODE_IE10;
         break;
     default:
-        *r = v < 7 ? COMPAT_MODE_QUIRKS : COMPAT_MODE_IE11;
+        *r = v < 5 ? COMPAT_MODE_QUIRKS : COMPAT_MODE_IE11;
     }
 
     return TRUE;

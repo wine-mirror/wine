@@ -2997,7 +2997,7 @@ static HRESULT WINAPI HTMLDocument5_get_compatMode(IHTMLDocument5 *iface, BSTR *
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(This->doc_node->document_mode == COMPAT_MODE_QUIRKS ? BackCompatW : CSS1CompatW);
+    *p = SysAllocString(This->doc_node->document_mode <= COMPAT_MODE_IE5 ? BackCompatW : CSS1CompatW);
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -3098,6 +3098,7 @@ static HRESULT WINAPI HTMLDocument6_get_documentMode(IHTMLDocument6 *iface, VARI
 
     static const int docmode_values[] = {
         5,  /* DOCMODE_QUIRKS */
+        5,  /* DOCMODE_IE5 */
         7,  /* DOCMODE_IE7 */
         8,  /* DOCMODE_IE8 */
         9,  /* DOCMODE_IE8 */
