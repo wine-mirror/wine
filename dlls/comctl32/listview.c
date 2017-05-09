@@ -7824,18 +7824,24 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
         HDPA hItem;
         ITEM_INFO *item_s;
         INT i = 0, cmpv;
+        WCHAR *textW;
+
+        textW = textdupTtoW(lpLVItem->pszText, isW);
 
         while (i < infoPtr->nItemCount)
         {
             hItem  = DPA_GetPtr( infoPtr->hdpaItems, i);
             item_s = DPA_GetPtr(hItem, 0);
 
-            cmpv = textcmpWT(item_s->hdr.pszText, lpLVItem->pszText, isW);
+            cmpv = textcmpWT(item_s->hdr.pszText, textW, TRUE);
             if (infoPtr->dwStyle & LVS_SORTDESCENDING) cmpv *= -1;
 
             if (cmpv >= 0) break;
             i++;
         }
+
+        textfreeT(textW, isW);
+
         nItem = i;
     }
     else
