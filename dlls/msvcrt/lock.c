@@ -1171,6 +1171,54 @@ void __thiscall reader_writer_lock_unlock(reader_writer_lock *this)
 }
 
 typedef struct {
+    reader_writer_lock *lock;
+} reader_writer_lock_scoped_lock;
+
+/* ??0scoped_lock@reader_writer_lock@Concurrency@@QAE@AAV12@@Z */
+/* ??0scoped_lock@reader_writer_lock@Concurrency@@QEAA@AEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_scoped_lock_ctor, 8)
+reader_writer_lock_scoped_lock* __thiscall reader_writer_lock_scoped_lock_ctor(
+        reader_writer_lock_scoped_lock *this, reader_writer_lock *lock)
+{
+    TRACE("(%p %p)\n", this, lock);
+
+    this->lock = lock;
+    reader_writer_lock_lock(lock);
+    return this;
+}
+
+/* ??1scoped_lock@reader_writer_lock@Concurrency@@QAE@XZ */
+/* ??1scoped_lock@reader_writer_lock@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_scoped_lock_dtor, 4)
+void __thiscall reader_writer_lock_scoped_lock_dtor(reader_writer_lock_scoped_lock *this)
+{
+    TRACE("(%p)\n", this);
+    reader_writer_lock_unlock(this->lock);
+}
+
+/* ??0scoped_lock_read@reader_writer_lock@Concurrency@@QAE@AAV12@@Z */
+/* ??0scoped_lock_read@reader_writer_lock@Concurrency@@QEAA@AEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_scoped_lock_read_ctor, 8)
+reader_writer_lock_scoped_lock* __thiscall reader_writer_lock_scoped_lock_read_ctor(
+        reader_writer_lock_scoped_lock *this, reader_writer_lock *lock)
+{
+    TRACE("(%p %p)\n", this, lock);
+
+    this->lock = lock;
+    reader_writer_lock_lock_read(lock);
+    return this;
+}
+
+/* ??1scoped_lock_read@reader_writer_lock@Concurrency@@QAE@XZ */
+/* ??1scoped_lock_read@reader_writer_lock@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(reader_writer_lock_scoped_lock_read_dtor, 4)
+void __thiscall reader_writer_lock_scoped_lock_read_dtor(reader_writer_lock_scoped_lock *this)
+{
+    TRACE("(%p)\n", this);
+    reader_writer_lock_unlock(this->lock);
+}
+
+typedef struct {
     CRITICAL_SECTION cs;
 } _ReentrantBlockingLock;
 
