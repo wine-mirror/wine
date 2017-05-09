@@ -244,6 +244,13 @@ typedef enum {
 #define COMPAT_MODE_CNT (COMPAT_MODE_IE11+1)
 #define COMPAT_MODE_NONE COMPAT_MODE_QUIRKS
 
+typedef struct {
+    unsigned document_mode;
+    unsigned ie_version;
+} compat_mode_info_t;
+
+extern const compat_mode_info_t compat_mode_info[COMPAT_MODE_CNT] DECLSPEC_HIDDEN;
+
 typedef struct dispex_data_t dispex_data_t;
 typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 

@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var compat_version;
+
 function test_elem_props() {
     var elem = document.documentElement;
 
@@ -35,17 +37,17 @@ function test_elem_props() {
 }
 
 function test_doc_mode() {
-    var opt = parseInt(document.location.search.substring(1));
+    compat_version = parseInt(document.location.search.substring(1));
 
-    trace("Testing document mode " + opt);
+    trace("Testing compatibility mode " + compat_version);
 
-    if(opt > document.documentMode) {
-        win_skip("Document mode not supported (expected " + opt + " got " + document.documentMode + ")");
+    if(compat_version > 6 && compat_version > document.documentMode) {
+        win_skip("Document mode not supported (expected " + compat_version + " got " + document.documentMode + ")");
         reportSuccess();
         return;
     }
 
-    ok(opt === document.documentMode, "documentMode = " + document.documentMode);
+    ok(Math.max(compat_version, 5) === document.documentMode, "documentMode = " + document.documentMode);
 
     if(document.documentMode > 5)
         ok(document.compatMode === "CSS1Compat", "document.compatMode = " + document.compatMode);
@@ -55,7 +57,44 @@ function test_doc_mode() {
     next_test();
 }
 
+function test_conditional_comments() {
+    var div = document.createElement("div");
+    document.body.appendChild(div);
+
+    function test_version(v) {
+        var version = compat_version ? compat_version : 7;
+
+        /* Uncomment and fix tests below once we support that. */
+        if(version >= 9)
+            return;
+
+        div.innerHTML = "<!--[if lte IE " + v + "]>true<![endif]-->";
+        ok(div.innerText === (version <= v ? "true" : ""),
+           "div.innerText = " + div.innerText + " for version (<=) " + v);
+
+        div.innerHTML = "<!--[if lt IE " + v + "]>true<![endif]-->";
+        ok(div.innerText === (version < v ? "true" : ""),
+           "div.innerText = " + div.innerText + " for version (<) " + v);
+
+        div.innerHTML = "<!--[if gte IE " + v + "]>true<![endif]-->";
+        ok(div.innerText === (version >= v ? "true" : ""),
+           "div.innerText = " + div.innerText + " for version (>=) " + v);
+
+        div.innerHTML = "<!--[if gt IE " + v + "]>true<![endif]-->";
+        ok(div.innerText === (version > v ? "true" : ""),
+           "div.innerText = " + div.innerText + " for version (>) " + v);
+    }
+
+    test_version(5);
+    test_version(6);
+    test_version(7);
+    test_version(8);
+
+    next_test();
+}
+
 var tests = [
     test_doc_mode,
-    test_elem_props
+    test_elem_props,
+    test_conditional_comments
 ];

@@ -3462,7 +3462,7 @@ static void run_js_tests(void)
     run_script_as_http_with_mode("navigation.js", NULL, NULL);
     run_script_as_http_with_mode("navigation.js", NULL, "11");
 
-    run_script_as_http_with_mode("documentmode.js", "?5", NULL);
+    run_script_as_http_with_mode("documentmode.js", "?0", NULL);
     run_script_as_http_with_mode("documentmode.js", "?5", "5");
     run_script_as_http_with_mode("documentmode.js", "?5", "6");
     run_script_as_http_with_mode("documentmode.js", "?7", "7");

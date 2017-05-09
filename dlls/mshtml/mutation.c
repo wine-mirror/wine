@@ -39,8 +39,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-#define IE_MAJOR_VERSION 7
-#define IE_MINOR_VERSION 0
+const compat_mode_info_t compat_mode_info[] = {
+    { 5, 7 },   /* DOCMODE_QUIRKS */
+    { 5, 5 },   /* DOCMODE_IE5 */
+    { 7, 7 },   /* DOCMODE_IE7 */
+    { 8, 8 },   /* DOCMODE_IE8 */
+    { 9, 9 },   /* DOCMODE_IE8 */
+    { 10, 10 }, /* DOCMODE_IE10 */
+    { 11, 11 }  /* DOCMODE_IE11 */
+};
 
 static const IID NS_ICONTENTUTILS_CID =
     {0x762C4AE7,0xB923,0x422F,{0xB9,0x7E,0xB9,0xBF,0xC1,0xEF,0x7B,0xF0}};
@@ -49,7 +56,7 @@ static nsIContentUtils *content_utils;
 
 static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *comment)
 {
-    int majorv = 0, minorv = 0;
+    unsigned majorv = 0, minorv = 0, compat_version;
     const PRUnichar *ptr, *end;
     PRUnichar *buf;
     DWORD len;
@@ -130,33 +137,35 @@ static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *
     if(memcmp(end, endifW, sizeof(endifW)))
         return NULL;
 
+    compat_version = compat_mode_info[doc->document_mode].ie_version;
+    if(compat_version > 8) {
+        /*
+         * Ideally we should handle higher versions, but right now it would cause more problems than it's worth.
+         * We should revisit that once more IE9 features are implemented, most notably new events APIs.
+         */
+        WARN("Using compat version 8\n");
+        compat_version = 8;
+    }
+
     switch(cmpt) {
     case CMP_EQ:
-        if(majorv == IE_MAJOR_VERSION && minorv == IE_MINOR_VERSION)
+        if(compat_version == majorv && !minorv)
             break;
         return NULL;
     case CMP_LT:
-        if(majorv > IE_MAJOR_VERSION)
-            break;
-        if(majorv == IE_MAJOR_VERSION && minorv > IE_MINOR_VERSION)
+        if(compat_version < majorv || (compat_version == majorv && minorv))
             break;
         return NULL;
     case CMP_LTE:
-        if(majorv > IE_MAJOR_VERSION)
-            break;
-        if(majorv == IE_MAJOR_VERSION && minorv >= IE_MINOR_VERSION)
+        if(compat_version <= majorv)
             break;
         return NULL;
     case CMP_GT:
-        if(majorv < IE_MAJOR_VERSION)
-            break;
-        if(majorv == IE_MAJOR_VERSION && minorv < IE_MINOR_VERSION)
+        if(compat_version > majorv)
             break;
         return NULL;
     case CMP_GTE:
-        if(majorv < IE_MAJOR_VERSION)
-            break;
-        if(majorv == IE_MAJOR_VERSION && minorv <= IE_MINOR_VERSION)
+        if(compat_version >= majorv || (compat_version == majorv && !minorv))
             break;
         return NULL;
     }
