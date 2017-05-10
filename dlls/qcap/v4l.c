@@ -799,12 +799,16 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
 
     sprintf(device, "/dev/video%i", card);
     TRACE("opening %s\n", device);
-    capBox->fd = video_open(device, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+#ifdef O_CLOEXEC
+    if ((capBox->fd = video_open(device, O_RDWR | O_NONBLOCK | O_CLOEXEC)) == -1 && errno == EINVAL)
+#endif
+        capBox->fd = video_open(device, O_RDWR | O_NONBLOCK);
     if (capBox->fd == -1)
     {
         WARN("open failed (%d)\n", errno);
         goto error;
     }
+    fcntl( capBox->fd, F_SETFD, FD_CLOEXEC );  /* in case O_CLOEXEC isn't supported */
 
     memset(&capa, 0, sizeof(capa));
 
