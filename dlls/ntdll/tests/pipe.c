@@ -724,6 +724,31 @@ static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
     ok( !reserved, "reserved is not 0: %x\n", reserved );
 }
 
+static void test_peek(HANDLE pipe)
+{
+    FILE_PIPE_PEEK_BUFFER buf;
+    IO_STATUS_BLOCK iosb;
+    HANDLE event = CreateEventA( NULL, TRUE, FALSE, NULL );
+    NTSTATUS status;
+
+    memset(&iosb, 0x55, sizeof(iosb));
+    status = NtFsControlFile(pipe, NULL, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0, &buf, sizeof(buf));
+    ok(!status || status == STATUS_PENDING, "NtFsControlFile failed: %x\n", status);
+    ok(!iosb.Status, "iosb.Status = %x\n", iosb.Status);
+    ok(buf.ReadDataAvailable == 1, "ReadDataAvailable = %u\n", buf.ReadDataAvailable);
+
+    ResetEvent(event);
+    memset(&iosb, 0x55, sizeof(iosb));
+    status = NtFsControlFile(pipe, event, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0, &buf, sizeof(buf));
+    ok(!status || status == STATUS_PENDING, "NtFsControlFile failed: %x\n", status);
+    ok(buf.ReadDataAvailable == 1, "ReadDataAvailable = %u\n", buf.ReadDataAvailable);
+    ok(!iosb.Status, "iosb.Status = %x\n", iosb.Status);
+    todo_wine
+    ok(is_signaled(event), "event is not signaled\n");
+
+    CloseHandle(event);
+}
+
 #define PIPENAME "\\\\.\\pipe\\ntdll_tests_pipe.c"
 
 static BOOL create_pipe_pair( HANDLE *read, HANDLE *write, ULONG flags, ULONG type, ULONG size )
@@ -829,6 +854,9 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     ResetEvent( event );
     ret = WriteFile( write, buffer, 1, &written, NULL );
     ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
+
+    test_peek(read);
+
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
     ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
     ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
