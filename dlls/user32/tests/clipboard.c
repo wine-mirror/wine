@@ -482,19 +482,19 @@ todo_wine
 
 static HGLOBAL create_textA(void)
 {
-    HGLOBAL h = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, 5);
+    HGLOBAL h = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, 10);
     char *p = GlobalLock(h);
-    strcpy(p, "test");
+    memcpy(p, "test\0\0\0\0\0", 10);
     GlobalUnlock(h);
     return h;
 }
 
 static HGLOBAL create_textW(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
-    HGLOBAL h = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, 5 * sizeof(WCHAR));
+    static const WCHAR testW[] = {'t','e','s','t',0,0,0,0,0,0};
+    HGLOBAL h = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, sizeof(testW));
     WCHAR *p = GlobalLock(h);
-    lstrcpyW(p, testW);
+    memcpy(p, testW, sizeof(testW));
     GlobalUnlock(h);
     return h;
 }
@@ -767,7 +767,9 @@ static void test_synthesized(void)
             ok(data != NULL ||
                broken( tests[i].format == CF_DIBV5 && cf == CF_DIB ), /* >= Vista */
                "%u: couldn't get data, cf %04x err %d\n", i, cf, GetLastError());
-            if (cf == CF_LOCALE)
+            switch (cf)
+            {
+            case CF_LOCALE:
             {
                 UINT *ptr = GlobalLock( data );
                 ok( GlobalSize( data ) == sizeof(*ptr), "%u: size %lu\n", i, GlobalSize( data ));
@@ -775,6 +777,15 @@ static void test_synthesized(void)
                     broken( *ptr == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT )),
                     "%u: CF_LOCALE %08x/%08x\n", i, *ptr, GetUserDefaultLCID() );
                 GlobalUnlock( data );
+                break;
+            }
+            case CF_TEXT:
+            case CF_OEMTEXT:
+                ok( GlobalSize( data ) == 10, "wrong len %ld\n", GlobalSize( data ));
+                break;
+            case CF_UNICODETEXT:
+                ok( GlobalSize( data ) == 10 * sizeof(WCHAR), "wrong len %ld\n", GlobalSize( data ));
+                break;
             }
         }
         if (!tests[i].expected[j])
