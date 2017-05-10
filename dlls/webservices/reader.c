@@ -2214,8 +2214,7 @@ HRESULT WINAPI WsReadQualifiedName( WS_XML_READER *handle, WS_HEAP *heap, WS_XML
     struct reader *reader = (struct reader *)handle;
     HRESULT hr;
 
-    TRACE( "%p %p %s %s %s %p\n", handle, heap, debugstr_xmlstr(prefix), debugstr_xmlstr(localname),
-           debugstr_xmlstr(ns), error );
+    TRACE( "%p %p %p %p %p %p\n", handle, heap, prefix, localname, ns, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!reader || !heap) return E_INVALIDARG;
