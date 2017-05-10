@@ -466,7 +466,7 @@ static obj_handle_t queue_irp( struct device_file *file, struct irp_call *irp, s
 {
     obj_handle_t handle = 0;
 
-    if (async_is_blocking( async ) && !(handle = alloc_handle( current->process, irp, SYNCHRONIZE, 0 ))) return 0;
+    if (async_is_blocking( async ) && !(handle = alloc_handle( current->process, async, SYNCHRONIZE, 0 ))) return 0;
 
     if (!fd_queue_async( file->fd, async, ASYNC_TYPE_WAIT ))
     {
