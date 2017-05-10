@@ -3620,7 +3620,8 @@ struct wined3d_query * CDECL wined3d_device_get_predication(struct wined3d_devic
 {
     TRACE("device %p, value %p.\n", device, value);
 
-    *value = device->state.predicate_value;
+    if (value)
+        *value = device->state.predicate_value;
     return device->state.predicate;
 }
 
