@@ -262,7 +262,7 @@ static void test_metadata_unknown(void)
     ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
-    load_stream((IUnknown*)reader, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionsDefault);
+    load_stream((IUnknown*)reader, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
     ok(hr == S_OK, "GetEnumerator failed, hr=%x\n", hr);
@@ -329,7 +329,7 @@ static void test_metadata_tEXt(void)
     ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
     ok(count == 0, "unexpected count %i\n", count);
 
-    load_stream((IUnknown*)reader, metadata_tEXt, sizeof(metadata_tEXt), WICPersistOptionsDefault);
+    load_stream((IUnknown*)reader, metadata_tEXt, sizeof(metadata_tEXt), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
@@ -440,7 +440,7 @@ static void test_metadata_gAMA(void)
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /*winxp*/, "CoCreateInstance failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
-    load_stream((IUnknown*)reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionsDefault);
+    load_stream((IUnknown*)reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%x\n", hr);
@@ -498,7 +498,7 @@ static void test_metadata_cHRM(void)
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /*winxp*/, "CoCreateInstance failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
-    load_stream((IUnknown*)reader, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionsDefault);
+    load_stream((IUnknown*)reader, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%x\n", hr);
@@ -792,9 +792,9 @@ static void test_metadata_IFD(void)
     GUID format;
     char *IFD_data_swapped;
 #ifdef WORDS_BIGENDIAN
-    DWORD persist_options = WICPersistOptionsBigEndian;
+    DWORD persist_options = WICPersistOptionBigEndian;
 #else
-    DWORD persist_options = WICPersistOptionsLittleEndian;
+    DWORD persist_options = WICPersistOptionLittleEndian;
 #endif
 
     hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
@@ -817,10 +817,10 @@ static void test_metadata_IFD(void)
     compare_metadata(reader, td, count);
 
     /* test IFD data with different endianness */
-    if (persist_options == WICPersistOptionsLittleEndian)
-        persist_options = WICPersistOptionsBigEndian;
+    if (persist_options == WICPersistOptionLittleEndian)
+        persist_options = WICPersistOptionBigEndian;
     else
-        persist_options = WICPersistOptionsLittleEndian;
+        persist_options = WICPersistOptionLittleEndian;
 
     IFD_data_swapped = HeapAlloc(GetProcessHeap(), 0, sizeof(IFD_data));
     memcpy(IFD_data_swapped, &IFD_data, sizeof(IFD_data));
@@ -964,22 +964,22 @@ static void test_create_reader(void)
     stream = create_stream(metadata_tEXt, sizeof(metadata_tEXt));
 
     hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-        NULL, NULL, WICPersistOptionsDefault,
+        NULL, NULL, WICPersistOptionDefault,
         stream, &reader);
     ok(hr == E_INVALIDARG, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
 
     hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-        &GUID_ContainerFormatPng, NULL, WICPersistOptionsDefault,
+        &GUID_ContainerFormatPng, NULL, WICPersistOptionDefault,
         NULL, &reader);
     ok(hr == E_INVALIDARG, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
 
     hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-        &GUID_ContainerFormatPng, NULL, WICPersistOptionsDefault,
+        &GUID_ContainerFormatPng, NULL, WICPersistOptionDefault,
         stream, NULL);
     ok(hr == E_INVALIDARG, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
 
     hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-        &GUID_ContainerFormatPng, NULL, WICPersistOptionsDefault,
+        &GUID_ContainerFormatPng, NULL, WICPersistOptionDefault,
         stream, &reader);
     ok(hr == S_OK, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
 
@@ -997,7 +997,7 @@ static void test_create_reader(void)
     }
 
     hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-        &GUID_ContainerFormatWmp, NULL, WICPersistOptionsDefault,
+        &GUID_ContainerFormatWmp, NULL, WICPersistOptionDefault,
         stream, &reader);
     ok(hr == S_OK, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
 

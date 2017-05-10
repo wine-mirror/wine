@@ -390,7 +390,7 @@ static HRESULT WINAPI MetadataHandler_Load(IWICPersistStream *iface,
 {
     MetadataHandler *This = impl_from_IWICPersistStream(iface);
     TRACE("(%p,%p)\n", iface, pStm);
-    return IWICPersistStream_LoadEx(&This->IWICPersistStream_iface, pStm, NULL, WICPersistOptionsDefault);
+    return IWICPersistStream_LoadEx(&This->IWICPersistStream_iface, pStm, NULL, WICPersistOptionDefault);
 }
 
 static HRESULT WINAPI MetadataHandler_Save(IWICPersistStream *iface,
@@ -1066,9 +1066,9 @@ static HRESULT LoadIfdMetadata(IStream *input, const GUID *preferred_vendor,
     TRACE("\n");
 
 #ifdef WORDS_BIGENDIAN
-    if (persist_options & WICPersistOptionsLittleEndian)
+    if (persist_options & WICPersistOptionLittleEndian)
 #else
-    if (persist_options & WICPersistOptionsBigEndian)
+    if (persist_options & WICPersistOptionBigEndian)
 #endif
         native_byte_order = FALSE;
 

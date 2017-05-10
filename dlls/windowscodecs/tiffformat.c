@@ -1301,11 +1301,11 @@ static HRESULT create_metadata_reader(TiffFrameDecode *This, IWICMetadataReader 
     {
         BOOL byte_swapped = pTIFFIsByteSwapped(This->parent->tiff);
 #ifdef WORDS_BIGENDIAN
-        DWORD persist_options = byte_swapped ? WICPersistOptionsLittleEndian : WICPersistOptionsBigEndian;
+        DWORD persist_options = byte_swapped ? WICPersistOptionLittleEndian : WICPersistOptionBigEndian;
 #else
-        DWORD persist_options = byte_swapped ? WICPersistOptionsBigEndian : WICPersistOptionsLittleEndian;
+        DWORD persist_options = byte_swapped ? WICPersistOptionBigEndian : WICPersistOptionLittleEndian;
 #endif
-        persist_options |= WICPersistOptionsNoCacheStream;
+        persist_options |= WICPersistOptionNoCacheStream;
         hr = IWICPersistStream_LoadEx(persist, This->parent->stream, NULL, persist_options);
         if (FAILED(hr))
             ERR("IWICPersistStream_LoadEx error %#x\n", hr);

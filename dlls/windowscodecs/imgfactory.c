@@ -1016,7 +1016,7 @@ start:
                         if (SUCCEEDED(hr))
                         {
                             hr = IWICPersistStream_LoadEx(wicpersiststream,
-                                stream, vendor, options & WICPersistOptionsMask);
+                                stream, vendor, options & WICPersistOptionMask);
 
                             IWICPersistStream_Release(wicpersiststream);
                         }
@@ -1060,7 +1060,7 @@ start:
 
             if (SUCCEEDED(hr))
             {
-                hr = IWICPersistStream_LoadEx(wicpersiststream, stream, NULL, options & WICPersistOptionsMask);
+                hr = IWICPersistStream_LoadEx(wicpersiststream, stream, NULL, options & WICPersistOptionMask);
 
                 IWICPersistStream_Release(wicpersiststream);
             }
