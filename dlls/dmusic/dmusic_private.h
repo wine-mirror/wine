@@ -71,7 +71,8 @@ typedef struct DMUSIC_PRIVATE_CHANNEL_GROUP_ {
 
 typedef struct port_info {
     DMUS_PORTCAPS caps;
-    HRESULT (*create)(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device);
+    HRESULT (*create)(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
+            DMUS_PORTCAPS *port_caps, IDirectMusicPort **port);
     ULONG device;
 } port_info;
 
@@ -157,9 +158,12 @@ struct IDirectMusicDownloadImpl {
 };
 
 /** Internal factory */
-extern HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateMidiOutPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device) DECLSPEC_HIDDEN;
-extern HRESULT DMUSIC_CreateMidiInPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device) DECLSPEC_HIDDEN;
+extern HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port) DECLSPEC_HIDDEN;
+extern HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port) DECLSPEC_HIDDEN;
+extern HRESULT midi_in_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IReferenceClockImpl implementation structure

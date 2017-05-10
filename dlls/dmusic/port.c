@@ -30,6 +30,7 @@ typedef struct SynthPortImpl {
     IDirectMusicThru IDirectMusicThru_iface;
     IKsControl IKsControl_iface;
     LONG ref;
+    IDirectMusic8Impl *parent;
     IDirectSound *pDirectSound;
     IReferenceClock *pLatencyClock;
     IDirectMusicSynth *synth;
@@ -763,16 +764,16 @@ static const IKsControlVtbl ikscontrol_vtbl = {
     IKsControlImpl_KsEvent
 };
 
-HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device)
+HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port)
 {
     SynthPortImpl *obj;
     HRESULT hr = E_FAIL;
     int i;
 
-    TRACE("(%s, %p, %p, %p, %p, %d)\n", debugstr_guid(guid), object, unkouter, port_params,
-            port_caps, device);
+    TRACE("(%p, %p, %p)\n", port_params, port_caps, port);
 
-    *object = NULL;
+    *port = NULL;
 
     obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SynthPortImpl));
     if (!obj)
@@ -782,7 +783,8 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
     obj->IDirectMusicPortDownload_iface.lpVtbl = &SynthPortImpl_DirectMusicPortDownload_Vtbl;
     obj->IDirectMusicThru_iface.lpVtbl = &SynthPortImpl_DirectMusicThru_Vtbl;
     obj->IKsControl_iface.lpVtbl = &ikscontrol_vtbl;
-    obj->ref = 0;  /* Will be inited by QueryInterface */
+    obj->ref = 1;
+    obj->parent = parent;
     obj->fActive = FALSE;
     obj->params = *port_params;
     obj->caps = *port_caps;
@@ -839,8 +841,10 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
         }
     }
 
-    if (SUCCEEDED(hr))
-        return IDirectMusicPort_QueryInterface((LPDIRECTMUSICPORT)obj, guid, object);
+    if (SUCCEEDED(hr)) {
+        *port = &obj->IDirectMusicPort_iface;
+        return S_OK;
+    }
 
     if (obj->synth)
         IDirectMusicSynth_Release(obj->synth);
@@ -853,18 +857,18 @@ HRESULT DMUSIC_CreateSynthPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkou
     return hr;
 }
 
-HRESULT DMUSIC_CreateMidiOutPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device)
+HRESULT midi_out_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port)
 {
-    TRACE("(%s, %p, %p, %p, %p, %d): stub\n", debugstr_guid(guid), object, unkouter, port_params,
-            port_caps, device);
+    FIXME("(%p, %p, %p): stub\n", port_params, port_caps, port);
 
     return E_NOTIMPL;
 }
 
-HRESULT DMUSIC_CreateMidiInPortImpl(LPCGUID guid, LPVOID *object, LPUNKNOWN unkouter, LPDMUS_PORTPARAMS port_params, LPDMUS_PORTCAPS port_caps, DWORD device)
+HRESULT midi_in_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_params,
+        DMUS_PORTCAPS *port_caps, IDirectMusicPort **port)
 {
-    TRACE("(%s, %p, %p, %p, %p, %d): stub\n", debugstr_guid(guid), object, unkouter, port_params,
-            port_caps, device);
+    FIXME("(%p, %p, %p): stub\n", port_params, port_caps, port);
 
     return E_NOTIMPL;
 }

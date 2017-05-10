@@ -153,7 +153,7 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort(LPDIRECTMUSIC8 iface, REFCLSI
 
     for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &port_caps); i++) {
         if (IsEqualCLSID(request_port, &port_caps.guidPort)) {
-            hr = This->system_ports[i].create(&IID_IDirectMusicPort, (LPVOID*)&new_port, (LPUNKNOWN)This, port_params, &port_caps, This->system_ports[i].device);
+            hr = This->system_ports[i].create(This, port_params, &port_caps, &new_port);
             if (FAILED(hr)) {
                  *port = NULL;
                  return hr;
@@ -379,7 +379,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
 
     /* Fill midi mapper port info */
     port->device = MIDI_MAPPER;
-    port->create = DMUSIC_CreateMidiOutPortImpl;
+    port->create = midi_out_port_create;
     midiOutGetDevCapsW(MIDI_MAPPER, &caps_out, sizeof(caps_out));
     strcpyW(port->caps.wszDescription, caps_out.szPname);
     strcatW(port->caps.wszDescription, emulated);
@@ -391,7 +391,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     for (i = 0; i < nb_midi_out; i++)
     {
         port->device = i;
-        port->create = DMUSIC_CreateMidiOutPortImpl;
+        port->create = midi_out_port_create;
         midiOutGetDevCapsW(i, &caps_out, sizeof(caps_out));
         strcpyW(port->caps.wszDescription, caps_out.szPname);
         strcatW(port->caps.wszDescription, emulated);
@@ -404,7 +404,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     for (i = 0; i < nb_midi_in; i++)
     {
         port->device = i;
-        port->create = DMUSIC_CreateMidiInPortImpl;
+        port->create = midi_in_port_create;
         midiInGetDevCapsW(i, &caps_in, sizeof(caps_in));
         strcpyW(port->caps.wszDescription, caps_in.szPname);
         strcatW(port->caps.wszDescription, emulated);
@@ -414,7 +414,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
     }
 
     /* Fill synth port info */
-    port->create = DMUSIC_CreateSynthPortImpl;
+    port->create = synth_port_create;
     hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth8, (void**)&synth);
     if (SUCCEEDED(hr))
     {
