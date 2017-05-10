@@ -31,11 +31,12 @@ typedef struct SynthPortImpl {
     IKsControl IKsControl_iface;
     LONG ref;
     IDirectMusic8Impl *parent;
-    IDirectSound *pDirectSound;
+    IDirectSound *dsound;
+    IDirectSoundBuffer *dsbuffer;
     IReferenceClock *pLatencyClock;
     IDirectMusicSynth *synth;
     IDirectMusicSynthSink *synth_sink;
-    BOOL fActive;
+    BOOL active;
     DMUS_PORTCAPS caps;
     DMUS_PORTPARAMS params;
     int nrofgroups;
@@ -198,6 +199,10 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPort_Release(LPDIRECTMUSICPORT ifa
         IDirectMusicSynth_Release(This->synth);
         IDirectMusicSynthSink_Release(This->synth_sink);
         IReferenceClock_Release(This->pLatencyClock);
+        if (This->dsbuffer)
+           IDirectSoundBuffer_Release(This->dsbuffer);
+        if (This->dsound)
+           IDirectSound_Release(This->dsound);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -437,7 +442,7 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_Activate(LPDIRECTMUSICPORT 
 
     TRACE("(%p/%p)->(%d)\n", iface, This, active);
 
-    This->fActive = active;
+    This->active = active;
 
     return S_OK;
 }
@@ -468,11 +473,33 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetChannelPriority(LPDIRECT
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_SetDirectSound(LPDIRECTMUSICPORT iface, LPDIRECTSOUND direct_sound, LPDIRECTSOUNDBUFFER direct_sound_buffer)
+static HRESULT WINAPI synth_dmport_SetDirectSound(IDirectMusicPort *iface, IDirectSound *dsound,
+        IDirectSoundBuffer *dsbuffer)
 {
     SynthPortImpl *This = impl_from_SynthPortImpl_IDirectMusicPort(iface);
 
-    FIXME("(%p/%p)->(%p, %p): stub\n", iface, This, direct_sound, direct_sound_buffer);
+    FIXME("(%p/%p)->(%p, %p): semi-stub\n", iface, This, dsound, dsbuffer);
+
+    if (This->active)
+        return DMUS_E_DSOUND_ALREADY_SET;
+
+    if (This->dsound) {
+        if (This->dsound != This->parent->dsound)
+            ERR("Not the same dsound in the port (%p) and parent dmusic (%p), expect trouble!\n",
+                    This->dsound, This->parent->dsound);
+        if (!IDirectSound_Release(This->parent->dsound))
+            This->parent->dsound = NULL;
+    }
+    if (This->dsbuffer)
+        IDirectSound_Release(This->dsbuffer);
+
+    This->dsound = dsound;
+    This->dsbuffer = dsbuffer;
+
+    if (This->dsound)
+        IDirectSound_AddRef(This->dsound);
+    if (This->dsbuffer)
+        IDirectSound_AddRef(This->dsbuffer);
 
     return S_OK;
 }
@@ -543,7 +570,7 @@ static const IDirectMusicPortVtbl SynthPortImpl_DirectMusicPort_Vtbl = {
     SynthPortImpl_IDirectMusicPort_Activate,
     SynthPortImpl_IDirectMusicPort_SetChannelPriority,
     SynthPortImpl_IDirectMusicPort_GetChannelPriority,
-    SynthPortImpl_IDirectMusicPort_SetDirectSound,
+    synth_dmport_SetDirectSound,
     SynthPortImpl_IDirectMusicPort_GetFormat
 };
 
@@ -785,7 +812,7 @@ HRESULT synth_port_create(IDirectMusic8Impl *parent, DMUS_PORTPARAMS *port_param
     obj->IKsControl_iface.lpVtbl = &ikscontrol_vtbl;
     obj->ref = 1;
     obj->parent = parent;
-    obj->fActive = FALSE;
+    obj->active = FALSE;
     obj->params = *port_params;
     obj->caps = *port_caps;
 
