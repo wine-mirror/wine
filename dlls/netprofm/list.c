@@ -18,6 +18,8 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include "config.h"
 #include <stdarg.h>
@@ -1693,7 +1695,7 @@ static void init_networks( struct list_manager *mgr )
         struct network *network;
         struct connection *connection;
 
-        id.Data1 = aa->IfIndex;
+        id.Data1 = aa->u.s.IfIndex;
 
         /* assume a one-to-one mapping between networks and connections */
         if (!(network = create_network( &id ))) goto done;
