@@ -927,12 +927,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11Devic
     if (!viewport_count)
         return;
 
-    if (viewports[0].TopLeftX != (UINT)viewports[0].TopLeftX
-            || viewports[0].TopLeftY != (UINT)viewports[0].TopLeftY
-            || viewports[0].Width != (UINT)viewports[0].Width
-            || viewports[0].Height != (UINT)viewports[0].Height)
-        FIXME("Floating-point viewports not implemented.\n");
-
     wined3d_vp.x = viewports[0].TopLeftX;
     wined3d_vp.y = viewports[0].TopLeftY;
     wined3d_vp.width = viewports[0].Width;

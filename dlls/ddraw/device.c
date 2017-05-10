@@ -5303,15 +5303,22 @@ static HRESULT WINAPI d3d_device7_Clear_FPUPreserve(IDirect3DDevice7 *iface, DWO
 static HRESULT d3d_device7_SetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *viewport)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    struct wined3d_viewport vp;
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
     if (!viewport)
         return DDERR_INVALIDPARAMS;
 
-    /* Note: D3DVIEWPORT7 is compatible with struct wined3d_viewport. */
+    vp.x = viewport->dwX;
+    vp.y = viewport->dwY;
+    vp.width = viewport->dwWidth;
+    vp.height = viewport->dwHeight;
+    vp.min_z = viewport->dvMinZ;
+    vp.max_z = viewport->dvMaxZ;
+
     wined3d_mutex_lock();
-    wined3d_device_set_viewport(device->wined3d_device, (struct wined3d_viewport *)viewport);
+    wined3d_device_set_viewport(device->wined3d_device, &vp);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -5352,16 +5359,23 @@ static HRESULT WINAPI d3d_device7_SetViewport_FPUPreserve(IDirect3DDevice7 *ifac
 static HRESULT d3d_device7_GetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *viewport)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
+    struct wined3d_viewport wined3d_viewport;
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
     if (!viewport)
         return DDERR_INVALIDPARAMS;
 
-    /* Note: D3DVIEWPORT7 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    wined3d_device_get_viewport(device->wined3d_device, (struct wined3d_viewport *)viewport);
+    wined3d_device_get_viewport(device->wined3d_device, &wined3d_viewport);
     wined3d_mutex_unlock();
+
+    viewport->dwX = wined3d_viewport.x;
+    viewport->dwY = wined3d_viewport.y;
+    viewport->dwWidth = wined3d_viewport.width;
+    viewport->dwHeight = wined3d_viewport.height;
+    viewport->dvMinZ = wined3d_viewport.min_z;
+    viewport->dvMaxZ = wined3d_viewport.max_z;
 
     return D3D_OK;
 }

@@ -1887,7 +1887,7 @@ INT CDECL wined3d_device_get_base_vertex_index(const struct wined3d_device *devi
 void CDECL wined3d_device_set_viewport(struct wined3d_device *device, const struct wined3d_viewport *viewport)
 {
     TRACE("device %p, viewport %p.\n", device, viewport);
-    TRACE("x %u, y %u, w %u, h %u, min_z %.8e, max_z %.8e.\n",
+    TRACE("x %.8e, y %.8e, w %.8e, h %.8e, min_z %.8e, max_z %.8e.\n",
           viewport->x, viewport->y, viewport->width, viewport->height, viewport->min_z, viewport->max_z);
 
     device->update_state->viewport = *viewport;
@@ -3082,7 +3082,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
     /* Get the viewport */
     wined3d_device_get_viewport(device, &vp);
-    TRACE("viewport  x %u, y %u, width %u, height %u, min_z %.8e, max_z %.8e.\n",
+    TRACE("viewport  x %.8e, y %.8e, width %.8e, height %.8e, min_z %.8e, max_z %.8e.\n",
           vp.x, vp.y, vp.width, vp.height, vp.min_z, vp.max_z);
 
     multiply_matrix(&mat,&view_mat,&world_mat);

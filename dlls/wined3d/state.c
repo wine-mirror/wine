@@ -4598,6 +4598,7 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_viewport vp = state->viewport;
     unsigned int width, height;
+    float y;
 
     if (target)
     {
@@ -4623,10 +4624,12 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     checkGLcall("glDepthRange");
     /* Note: GL requires lower left, DirectX supplies upper left. This is
      * reversed when using offscreen rendering. */
-    if (context->render_offscreen)
-        gl_info->gl_ops.gl.p_glViewport(vp.x, vp.y, vp.width, vp.height);
+    y = context->render_offscreen ? vp.y : height - (vp.y + vp.height);
+
+    if (gl_info->supported[ARB_VIEWPORT_ARRAY])
+        GL_EXTCALL(glViewportIndexedf(0, vp.x, y, vp.width, vp.height));
     else
-        gl_info->gl_ops.gl.p_glViewport(vp.x, (height - (vp.y + vp.height)), vp.width, vp.height);
+        gl_info->gl_ops.gl.p_glViewport(vp.x, y, vp.width, vp.height);
     checkGLcall("glViewport");
 }
 

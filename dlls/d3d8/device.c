@@ -1471,12 +1471,19 @@ static HRESULT WINAPI d3d8_device_MultiplyTransform(IDirect3DDevice8 *iface,
 static HRESULT WINAPI d3d8_device_SetViewport(IDirect3DDevice8 *iface, const D3DVIEWPORT8 *viewport)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
+    struct wined3d_viewport vp;
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
-    /* Note: D3DVIEWPORT8 is compatible with struct wined3d_viewport. */
+    vp.x = viewport->X;
+    vp.y = viewport->Y;
+    vp.width = viewport->Width;
+    vp.height = viewport->Height;
+    vp.min_z = viewport->MinZ;
+    vp.max_z = viewport->MaxZ;
+
     wined3d_mutex_lock();
-    wined3d_device_set_viewport(device->wined3d_device, (const struct wined3d_viewport *)viewport);
+    wined3d_device_set_viewport(device->wined3d_device, &vp);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -1485,13 +1492,20 @@ static HRESULT WINAPI d3d8_device_SetViewport(IDirect3DDevice8 *iface, const D3D
 static HRESULT WINAPI d3d8_device_GetViewport(IDirect3DDevice8 *iface, D3DVIEWPORT8 *viewport)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
+    struct wined3d_viewport wined3d_viewport;
 
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
-    /* Note: D3DVIEWPORT8 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    wined3d_device_get_viewport(device->wined3d_device, (struct wined3d_viewport *)viewport);
+    wined3d_device_get_viewport(device->wined3d_device, &wined3d_viewport);
     wined3d_mutex_unlock();
+
+    viewport->X = wined3d_viewport.x;
+    viewport->Y = wined3d_viewport.y;
+    viewport->Width = wined3d_viewport.width;
+    viewport->Height = wined3d_viewport.height;
+    viewport->MinZ = wined3d_viewport.min_z;
+    viewport->MaxZ = wined3d_viewport.max_z;
 
     return D3D_OK;
 }

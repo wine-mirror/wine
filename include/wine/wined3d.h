@@ -1619,10 +1619,10 @@ struct wined3d_material
 
 struct wined3d_viewport
 {
-    UINT x;
-    UINT y;
-    UINT width;
-    UINT height;
+    float x;
+    float y;
+    float width;
+    float height;
     float min_z;
     float max_z;
 };
