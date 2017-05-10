@@ -179,7 +179,7 @@ static void test_setdsound(void)
     hr = IDirectMusicPort_Activate(port, TRUE);
     ok(hr == S_OK, "Port Activate returned: %x\n", hr);
     ref = get_refcount(dsound);
-    todo_wine ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
+    ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
 
     /* Releasing dsound from dmusic */
     hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);
@@ -231,13 +231,13 @@ static void test_setdsound(void)
     hr = IDirectMusicPort_Activate(port, TRUE);
     ok(hr == S_OK, "Activate returned: %x\n", hr);
     ref = get_refcount(dsound);
-    todo_wine ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
+    ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
     ref = get_refcount(dsound2);
     ok(ref == 2, "dsound2 ref count got %d expected 2\n", ref);
     hr = IDirectMusicPort_Activate(port, TRUE);
-    todo_wine ok(hr == S_FALSE, "Activate returned: %x\n", hr);
+    ok(hr == S_FALSE, "Activate returned: %x\n", hr);
     ref = get_refcount(dsound);
-    todo_wine ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
+    ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
     ref = get_refcount(dsound2);
     ok(ref == 2, "dsound2 ref count got %d expected 2\n", ref);
 
@@ -247,13 +247,13 @@ static void test_setdsound(void)
     ref = get_refcount(dsound);
     ok(ref == 3, "dsound ref count got %d expected 3\n", ref);
     ref = get_refcount(dsound2);
-    todo_wine ok(ref == 1, "dsound2 ref count got %d expected 1\n", ref);
+    ok(ref == 1, "dsound2 ref count got %d expected 1\n", ref);
     hr = IDirectMusicPort_Activate(port, FALSE);
-    todo_wine ok(hr == S_FALSE, "Port Activate returned: %x\n", hr);
+    ok(hr == S_FALSE, "Port Activate returned: %x\n", hr);
     ref = get_refcount(dsound);
     ok(ref == 3, "dsound ref count got %d expected 3\n", ref);
     ref = get_refcount(dsound2);
-    todo_wine ok(ref == 1, "dsound2 ref count got %d expected 1\n", ref);
+    ok(ref == 1, "dsound2 ref count got %d expected 1\n", ref);
 
     IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);

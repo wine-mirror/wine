@@ -436,11 +436,29 @@ static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_GetNumChannelGroups(LPDIREC
     return S_OK;
 }
 
-static HRESULT WINAPI SynthPortImpl_IDirectMusicPort_Activate(LPDIRECTMUSICPORT iface, BOOL active)
+static HRESULT WINAPI synth_dmport_Activate(IDirectMusicPort *iface, BOOL active)
 {
     SynthPortImpl *This = impl_from_SynthPortImpl_IDirectMusicPort(iface);
 
-    TRACE("(%p/%p)->(%d)\n", iface, This, active);
+    FIXME("(%p/%p)->(%d): semi-stub\n", iface, This, active);
+
+    if (This->active == active)
+        return S_FALSE;
+
+    if (active) {
+        /* Acquire the dsound */
+        if (!This->dsound) {
+            IDirectSound_AddRef(This->parent->dsound);
+            This->dsound = This->parent->dsound;
+        }
+        IDirectSound_AddRef(This->dsound);
+    } else {
+        /* Release the dsound */
+        IDirectSound_Release(This->dsound);
+        IDirectSound_Release(This->parent->dsound);
+        if (This->dsound == This->parent->dsound)
+            This->dsound = NULL;
+    }
 
     This->active = active;
 
@@ -567,7 +585,7 @@ static const IDirectMusicPortVtbl SynthPortImpl_DirectMusicPort_Vtbl = {
     SynthPortImpl_IDirectMusicPort_DeviceIoControl,
     SynthPortImpl_IDirectMusicPort_SetNumChannelGroups,
     SynthPortImpl_IDirectMusicPort_GetNumChannelGroups,
-    SynthPortImpl_IDirectMusicPort_Activate,
+    synth_dmport_Activate,
     SynthPortImpl_IDirectMusicPort_SetChannelPriority,
     SynthPortImpl_IDirectMusicPort_GetChannelPriority,
     synth_dmport_SetDirectSound,
