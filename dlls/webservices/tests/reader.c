@@ -4351,6 +4351,58 @@ static void test_WsReadQualifiedName(void)
     WsFreeReader( reader );
 }
 
+static void test_WsReadAttribute(void)
+{
+    WS_XML_STRING localname = {1, (BYTE *)"a"}, ns = {0, NULL};
+    WS_XML_READER *reader;
+    WS_ATTRIBUTE_DESCRIPTION desc;
+    WS_HEAP *heap;
+    UINT32 *val;
+    BOOL found;
+    HRESULT hr;
+
+    hr = WsReadAttribute( NULL, NULL, 0, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadAttribute( reader, NULL, 0, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    desc.attributeLocalName = &localname;
+    desc.attributeNs        = &ns;
+    desc.type               = WS_UINT32_TYPE;
+    desc.typeDescription    = NULL;
+    hr = WsReadAttribute( reader, &desc, 0, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsReadAttribute( reader, &desc, WS_READ_REQUIRED_POINTER, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 8, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadAttribute( reader, &desc, WS_READ_REQUIRED_POINTER, heap, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsReadAttribute( reader, &desc, WS_READ_REQUIRED_POINTER, heap, &val, sizeof(val), NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<t a='1'>" );
+    hr = WsReadToStartElement( reader, NULL, NULL, &found, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    val = NULL;
+    hr = WsReadAttribute( reader, &desc, WS_READ_REQUIRED_POINTER, heap, &val, sizeof(val), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( val != NULL, "val not set\n" );
+    ok( *val == 1, "got %u\n", *val );
+
+    WsFreeHeap( heap );
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -4391,4 +4443,5 @@ START_TEST(reader)
     test_WsReadChars();
     test_WsReadCharsUtf8();
     test_WsReadQualifiedName();
+    test_WsReadAttribute();
 }

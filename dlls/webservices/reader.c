@@ -4423,6 +4423,42 @@ HRESULT WINAPI WsReadValue( WS_XML_READER *handle, WS_VALUE_TYPE value_type, voi
     return hr;
 }
 
+/**************************************************************************
+ *          WsReadAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsReadAttribute( WS_XML_READER *handle, const WS_ATTRIBUTE_DESCRIPTION *desc,
+                                WS_READ_OPTION option, WS_HEAP *heap, void *value, ULONG size,
+                                WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %u %p %p %u %p\n", handle, desc, option, heap, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !desc || !value) return E_INVALIDARG;
+
+    EnterCriticalSection( &reader->cs );
+
+    if (reader->magic != READER_MAGIC)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    if (!reader->input_type)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    hr = read_type( reader, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->attributeLocalName,
+                    desc->attributeNs, desc->typeDescription, option, heap, value, size );
+
+    LeaveCriticalSection( &reader->cs );
+    return hr;
+}
+
 static inline BOOL is_utf8( const unsigned char *data, ULONG size, ULONG *offset )
 {
     static const char bom[] = {0xef,0xbb,0xbf};

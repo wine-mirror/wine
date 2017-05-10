@@ -102,7 +102,7 @@
 @ stub WsPullBytes
 @ stub WsPushBytes
 @ stub WsReadArray
-@ stub WsReadAttribute
+@ stdcall WsReadAttribute(ptr ptr long ptr ptr long ptr)
 @ stdcall WsReadBody(ptr ptr long ptr ptr long ptr)
 @ stdcall WsReadBytes(ptr ptr long ptr ptr)
 @ stdcall WsReadChars(ptr ptr long ptr ptr)
