@@ -18,16 +18,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/debug.h"
-
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #define COBJMACROS
 
+#include <stdarg.h>
+#include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 
 #include "amstream_private.h"
 
 #include "ddstream.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
@@ -1021,11 +1024,11 @@ static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectD
         desc.dwWidth = 100;
         desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
         desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
-        desc.ddpfPixelFormat.dwRGBBitCount = 32;
-        desc.ddpfPixelFormat.dwRBitMask = 0xff0000;
-        desc.ddpfPixelFormat.dwGBitMask = 0x00ff00;
-        desc.ddpfPixelFormat.dwBBitMask = 0x0000ff;
-        desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+        desc.ddpfPixelFormat.u1.dwRGBBitCount = 32;
+        desc.ddpfPixelFormat.u2.dwRBitMask = 0xff0000;
+        desc.ddpfPixelFormat.u3.dwGBitMask = 0x00ff00;
+        desc.ddpfPixelFormat.u4.dwBBitMask = 0x0000ff;
+        desc.ddpfPixelFormat.u5.dwRGBAlphaBitMask = 0;
         desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY|DDSCAPS_OFFSCREENPLAIN;
         desc.lpSurface = NULL;
 
