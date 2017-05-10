@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 static void STDMETHODCALLTYPE d3d9_null_wined3d_object_destroyed(void *parent) {}
 
-static const struct wined3d_parent_ops d3d9_null_wined3d_parent_ops =
+const struct wined3d_parent_ops d3d9_null_wined3d_parent_ops =
 {
     d3d9_null_wined3d_object_destroyed,
 };

@@ -1583,6 +1583,7 @@ struct wined3d_query
     LONG ref;
 
     void *parent;
+    const struct wined3d_parent_ops *parent_ops;
     struct wined3d_device *device;
     enum wined3d_query_state state;
     enum wined3d_query_type type;

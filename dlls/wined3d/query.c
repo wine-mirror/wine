@@ -27,10 +27,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 static void wined3d_query_init(struct wined3d_query *query, struct wined3d_device *device,
         enum wined3d_query_type type, const void *data, DWORD data_size,
-        const struct wined3d_query_ops *query_ops, void *parent)
+        const struct wined3d_query_ops *query_ops, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     query->ref = 1;
     query->parent = parent;
+    query->parent_ops = parent_ops;
     query->device = device;
     query->state = QUERY_CREATED;
     query->type = type;
@@ -306,7 +307,10 @@ ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
     TRACE("%p decreasing refcount to %u.\n", query, refcount);
 
     if (!refcount)
+    {
+        query->parent_ops->wined3d_object_destroyed(query->parent);
         wined3d_cs_destroy_object(query->device->cs, wined3d_query_destroy_object, query);
+    }
 
     return refcount;
 }
@@ -640,12 +644,14 @@ static const struct wined3d_query_ops event_query_ops =
 };
 
 static HRESULT wined3d_event_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, void *parent, struct wined3d_query **query)
+        enum wined3d_query_type type, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_query **query)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_event_query *object;
 
-    TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
+    TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
+            device, type, parent, parent_ops, query);
 
     if (!wined3d_event_query_supported(gl_info))
     {
@@ -657,7 +663,7 @@ static HRESULT wined3d_event_query_create(struct wined3d_device *device,
         return E_OUTOFMEMORY;
 
     wined3d_query_init(&object->query, device, type, &object->signalled,
-            sizeof(object->signalled), &event_query_ops, parent);
+            sizeof(object->signalled), &event_query_ops, parent, parent_ops);
 
     TRACE("Created query %p.\n", object);
     *query = &object->query;
@@ -672,12 +678,14 @@ static const struct wined3d_query_ops occlusion_query_ops =
 };
 
 static HRESULT wined3d_occlusion_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, void *parent, struct wined3d_query **query)
+        enum wined3d_query_type type, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_query **query)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_occlusion_query *object;
 
-    TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
+    TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
+            device, type, parent, parent_ops, query);
 
     if (!gl_info->supported[ARB_OCCLUSION_QUERY])
     {
@@ -689,7 +697,7 @@ static HRESULT wined3d_occlusion_query_create(struct wined3d_device *device,
         return E_OUTOFMEMORY;
 
     wined3d_query_init(&object->query, device, type, &object->samples,
-            sizeof(object->samples), &occlusion_query_ops, parent);
+            sizeof(object->samples), &occlusion_query_ops, parent, parent_ops);
 
     TRACE("Created query %p.\n", object);
     *query = &object->query;
@@ -704,12 +712,14 @@ static const struct wined3d_query_ops timestamp_query_ops =
 };
 
 static HRESULT wined3d_timestamp_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, void *parent, struct wined3d_query **query)
+        enum wined3d_query_type type, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_query **query)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_timestamp_query *object;
 
-    TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
+    TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
+            device, type, parent, parent_ops, query);
 
     if (!gl_info->supported[ARB_TIMER_QUERY])
     {
@@ -721,7 +731,7 @@ static HRESULT wined3d_timestamp_query_create(struct wined3d_device *device,
         return E_OUTOFMEMORY;
 
     wined3d_query_init(&object->query, device, type, &object->timestamp,
-            sizeof(object->timestamp), &timestamp_query_ops, parent);
+            sizeof(object->timestamp), &timestamp_query_ops, parent, parent_ops);
 
     TRACE("Created query %p.\n", object);
     *query = &object->query;
@@ -736,12 +746,14 @@ static const struct wined3d_query_ops timestamp_disjoint_query_ops =
 };
 
 static HRESULT wined3d_timestamp_disjoint_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, void *parent, struct wined3d_query **query)
+        enum wined3d_query_type type, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_query **query)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_query *object;
 
-    TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
+    TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
+            device, type, parent, parent_ops, query);
 
     if (!gl_info->supported[ARB_TIMER_QUERY])
     {
@@ -757,14 +769,14 @@ static HRESULT wined3d_timestamp_disjoint_query_create(struct wined3d_device *de
         static const struct wined3d_query_data_timestamp_disjoint disjoint_data = {1000 * 1000 * 1000, FALSE};
 
         wined3d_query_init(object, device, type, &disjoint_data,
-                sizeof(disjoint_data), &timestamp_disjoint_query_ops, parent);
+                sizeof(disjoint_data), &timestamp_disjoint_query_ops, parent, parent_ops);
     }
     else
     {
         static const UINT64 freq = 1000 * 1000 * 1000;
 
         wined3d_query_init(object, device, type, &freq,
-                sizeof(freq), &timestamp_disjoint_query_ops, parent);
+                sizeof(freq), &timestamp_disjoint_query_ops, parent, parent_ops);
     }
 
     TRACE("Created query %p.\n", object);
@@ -773,25 +785,26 @@ static HRESULT wined3d_timestamp_disjoint_query_create(struct wined3d_device *de
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, void *parent, struct wined3d_query **query)
+HRESULT CDECL wined3d_query_create(struct wined3d_device *device, enum wined3d_query_type type,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query)
 {
-    TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
+    TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
+            device, type, parent, parent_ops, query);
 
     switch (type)
     {
         case WINED3D_QUERY_TYPE_EVENT:
-            return wined3d_event_query_create(device, type, parent, query);
+            return wined3d_event_query_create(device, type, parent, parent_ops, query);
 
         case WINED3D_QUERY_TYPE_OCCLUSION:
-            return wined3d_occlusion_query_create(device, type, parent, query);
+            return wined3d_occlusion_query_create(device, type, parent, parent_ops, query);
 
         case WINED3D_QUERY_TYPE_TIMESTAMP:
-            return wined3d_timestamp_query_create(device, type, parent, query);
+            return wined3d_timestamp_query_create(device, type, parent, parent_ops, query);
 
         case WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT:
         case WINED3D_QUERY_TYPE_TIMESTAMP_FREQ:
-            return wined3d_timestamp_disjoint_query_create(device, type, parent, query);
+            return wined3d_timestamp_disjoint_query_create(device, type, parent, parent_ops, query);
 
         default:
             FIXME("Unhandled query type %#x.\n", type);

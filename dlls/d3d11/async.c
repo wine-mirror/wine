@@ -71,6 +71,14 @@ static ULONG STDMETHODCALLTYPE d3d11_query_AddRef(ID3D11Query *iface)
 
     TRACE("%p increasing refcount to %u.\n", query, refcount);
 
+    if (refcount == 1)
+    {
+        ID3D11Device_AddRef(query->device);
+        wined3d_mutex_lock();
+        wined3d_query_incref(query->wined3d_query);
+        wined3d_mutex_unlock();
+    }
+
     return refcount;
 }
 
@@ -83,12 +91,13 @@ static ULONG STDMETHODCALLTYPE d3d11_query_Release(ID3D11Query *iface)
 
     if (!refcount)
     {
-        ID3D11Device_Release(query->device);
+        ID3D11Device *device = query->device;
+
         wined3d_mutex_lock();
         wined3d_query_decref(query->wined3d_query);
-        wined3d_private_store_cleanup(&query->private_store);
         wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, query);
+
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -168,6 +177,19 @@ static const struct ID3D11QueryVtbl d3d11_query_vtbl =
     d3d11_query_GetDataSize,
     /* ID3D11Query methods */
     d3d11_query_GetDesc,
+};
+
+static void STDMETHODCALLTYPE d3d_query_wined3d_object_destroyed(void *parent)
+{
+    struct d3d_query *query = parent;
+
+    wined3d_private_store_cleanup(&query->private_store);
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d_query_wined3d_parent_ops =
+{
+    d3d_query_wined3d_object_destroyed,
 };
 
 struct d3d_query *unsafe_impl_from_ID3D11Query(ID3D11Query *iface)
@@ -401,8 +423,8 @@ static HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device
     wined3d_mutex_lock();
     wined3d_private_store_init(&query->private_store);
 
-    if (FAILED(hr = wined3d_query_create(device->wined3d_device,
-            query_type_map[desc->Query], query, &query->wined3d_query)))
+    if (FAILED(hr = wined3d_query_create(device->wined3d_device, query_type_map[desc->Query],
+            query, &d3d_query_wined3d_parent_ops, &query->wined3d_query)))
     {
         WARN("Failed to create wined3d query, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&query->private_store);

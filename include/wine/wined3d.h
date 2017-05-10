@@ -2425,8 +2425,8 @@ ULONG __cdecl wined3d_palette_incref(struct wined3d_palette *palette);
 HRESULT __cdecl wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries);
 
-HRESULT __cdecl wined3d_query_create(struct wined3d_device *device,
-        enum wined3d_query_type type, void *parent, struct wined3d_query **query);
+HRESULT __cdecl wined3d_query_create(struct wined3d_device *device, enum wined3d_query_type type,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query);
 ULONG __cdecl wined3d_query_decref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_get_data(struct wined3d_query *query, void *data, UINT data_size, DWORD flags);
 UINT __cdecl wined3d_query_get_data_size(const struct wined3d_query *query);
