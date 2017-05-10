@@ -303,9 +303,7 @@ static void test_GetProcessMemoryInfo(void)
 
     SetLastError(0xdeadbeef);
     ret = pGetProcessMemoryInfo(hpSR, &pmc, sizeof(pmc));
-todo_wine
     ok(!ret, "GetProcessMemoryInfo should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "expected error=ERROR_ACCESS_DENIED but got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
