@@ -3090,6 +3090,7 @@ DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)
     row.dwIndex = luid->Info.NetLuidIndex;
     if ((ret = GetIfEntry( &row ))) return ret;
 
+    memset( guid, 0, sizeof(*guid) );
     guid->Data1 = luid->Info.NetLuidIndex;
     return NO_ERROR;
 }
