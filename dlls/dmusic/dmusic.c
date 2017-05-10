@@ -73,6 +73,8 @@ static ULONG WINAPI IDirectMusic8Impl_Release(LPDIRECTMUSIC8 iface)
 
     if (!ref) {
         IReferenceClock_Release(&This->master_clock->IReferenceClock_iface);
+        if (This->dsound)
+            IDirectSound_Release(This->dsound);
         HeapFree(GetProcessHeap(), 0, This->system_ports);
         HeapFree(GetProcessHeap(), 0, This->ports);
         HeapFree(GetProcessHeap(), 0, This);
@@ -271,11 +273,38 @@ static HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort(LPDIRECTMUSIC8 iface, LPG
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusic8Impl_SetDirectSound(LPDIRECTMUSIC8 iface, LPDIRECTSOUND dsound, HWND wnd)
+static HRESULT WINAPI IDirectMusic8Impl_SetDirectSound(IDirectMusic8 *iface, IDirectSound *dsound,
+        HWND hwnd)
 {
     IDirectMusic8Impl *This = impl_from_IDirectMusic8(iface);
+    HRESULT hr;
+    int i;
 
-    FIXME("(%p)->(%p, %p): stub\n", This, dsound, wnd);
+    TRACE("(%p)->(%p, %p)\n", This, dsound, hwnd);
+
+    for (i = 0; i < This->num_ports; i++)
+    {
+        hr = IDirectMusicPort_SetDirectSound(This->ports[i], NULL, NULL);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    if (This->dsound)
+        IDirectSound_Release(This->dsound);
+
+    if (!dsound) {
+        hr = DirectSoundCreate8(NULL, (IDirectSound8 **)&This->dsound, NULL);
+        if (FAILED(hr))
+            return hr;
+        hr = IDirectSound_SetCooperativeLevel(This->dsound, hwnd ? hwnd : GetForegroundWindow(),
+                DSSCL_PRIORITY);
+        if (FAILED(hr))
+            IDirectSound_Release(This->dsound);
+        return hr;
+    }
+
+    IDirectSound_AddRef(dsound);
+    This->dsound = dsound;
 
     return S_OK;
 }

@@ -1,5 +1,5 @@
 MODULE    = dmusic.dll
-IMPORTS   = dxguid uuid ole32 advapi32 winmm
+IMPORTS   = dxguid uuid ole32 advapi32 dsound user32 winmm
 
 C_SRCS = \
 	buffer.c \
