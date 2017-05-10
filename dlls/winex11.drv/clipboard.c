@@ -1293,28 +1293,6 @@ static BOOL export_enhmetafile( Display *display, Window win, Atom prop, Atom ta
 
 
 /**************************************************************************
- *		get_html_description_field
- *
- *  Find the value of a field in an HTML Format description.
- */
-static LPCSTR get_html_description_field(LPCSTR data, LPCSTR keyword)
-{
-    LPCSTR pos=data;
-
-    while (pos && *pos && *pos != '<')
-    {
-        if (memcmp(pos, keyword, strlen(keyword)) == 0)
-            return pos+strlen(keyword);
-
-        pos = strchr(pos, '\n');
-        if (pos) pos++;
-    }
-
-    return NULL;
-}
-
-
-/**************************************************************************
  *		export_text_html
  *
  *  Export HTML Format to text/html.
@@ -1323,36 +1301,27 @@ static LPCSTR get_html_description_field(LPCSTR data, LPCSTR keyword)
  */
 static BOOL export_text_html( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    LPCSTR data, field_value;
-    UINT fragmentstart, fragmentend;
+    const char *p, *data;
+    UINT start = 0, end = 0;
+    BOOL ret = TRUE;
 
-    data = GlobalLock( handle );
+    if (!(data = GlobalLock( handle ))) return FALSE;
 
-    /* read the important fields */
-    field_value = get_html_description_field(data, "StartFragment:");
-    if (!field_value)
+    p = data;
+    while (*p && *p != '<')
     {
-        ERR("Couldn't find StartFragment value\n");
-        goto failed;
+        if (!strncmp( p, "StartFragment:", 14 )) start = atoi( p + 14 );
+        else if (!strncmp( p, "EndFragment:", 12 )) end = atoi( p + 12 );
+        if (!(p = strpbrk( p, "\r\n" ))) break;
+        while (*p == '\r' || *p == '\n') p++;
     }
-    fragmentstart = atoi(field_value);
+    if (start && start < end && end <= GlobalSize( handle ))
+        put_property( display, win, prop, target, 8, data + start, end - start );
+    else
+        ret = FALSE;
 
-    field_value = get_html_description_field(data, "EndFragment:");
-    if (!field_value)
-    {
-        ERR("Couldn't find EndFragment value\n");
-        goto failed;
-    }
-    fragmentend = atoi(field_value);
-
-    /* export only the fragment */
-    put_property( display, win, prop, target, 8, &data[fragmentstart], fragmentend - fragmentstart );
     GlobalUnlock( handle );
-    return TRUE;
-
-failed:
-    GlobalUnlock( handle );
-    return FALSE;
+    return ret;
 }
 
 
