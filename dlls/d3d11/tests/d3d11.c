@@ -5227,11 +5227,13 @@ static void test_private_data(void)
 static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
 {
     ID3D11RasterizerState *rasterizer_state, *tmp_rasterizer_state;
+    ID3D11Predicate *predicate, *tmp_predicate;
     ID3D11SamplerState *sampler, *tmp_sampler;
     ID3D11ShaderResourceView *srv, *tmp_srv;
     ID3D11RenderTargetView *rtv, *tmp_rtv;
     D3D11_RASTERIZER_DESC rasterizer_desc;
     D3D11_TEXTURE2D_DESC texture_desc;
+    D3D11_QUERY_DESC predicate_desc;
     D3D11_SAMPLER_DESC sampler_desc;
     struct device_desc device_desc;
     ID3D11DeviceContext *context;
@@ -5339,6 +5341,23 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
     ok(tmp_rtv == rtv, "Got RTV %p, expected %p.\n", tmp_rtv, rtv);
     refcount = ID3D11RenderTargetView_Release(tmp_rtv);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    /* ID3D11Predicate */
+    if (feature_level >= D3D_FEATURE_LEVEL_10_0)
+    {
+        predicate_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
+        predicate_desc.MiscFlags = 0;
+        hr = ID3D11Device_CreatePredicate(device, &predicate_desc, &predicate);
+        ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+
+        ID3D11DeviceContext_SetPredication(context, predicate, TRUE);
+        refcount = ID3D11Predicate_Release(predicate);
+        ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+        ID3D11DeviceContext_GetPredication(context, &tmp_predicate, NULL);
+        ok(tmp_predicate == predicate, "Got predicate %p, expected %p.\n", tmp_predicate, predicate);
+        refcount = ID3D11Predicate_Release(tmp_predicate);
+        ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    }
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
