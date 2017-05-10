@@ -1130,7 +1130,7 @@ static char *string_from_unicode_text( UINT codepage, HANDLE handle, UINT *size 
             if (str[i] == '\r' && (i == len - 1 || str[i + 1] == '\n')) continue;
             str[j++] = str[i];
         }
-        if (j && !str[j - 1]) j--;  /* remove trailing null */
+        while (j && !str[j - 1]) j--;  /* remove trailing nulls */
         *size = j;
         TRACE( "returning %s\n", debugstr_an( str, j ));
     }
