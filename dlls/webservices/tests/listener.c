@@ -282,6 +282,9 @@ static DWORD CALLBACK listener_proc( void *arg )
     hr = WsAcceptChannel( listener, channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    hr = WsAcceptChannel( listener, channel, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 

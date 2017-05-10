@@ -1168,39 +1168,39 @@ HRESULT WINAPI WsWriteMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_
     return hr;
 }
 
-HRESULT channel_accept_tcp( SOCKET socket, WS_CHANNEL *handle )
+static HRESULT sock_accept( SOCKET socket, HANDLE wait, HANDLE cancel, SOCKET *ret )
 {
-    struct channel *channel = (struct channel *)handle;
+    HANDLE handles[] = { wait, cancel };
+    ULONG nonblocking = 0;
+    HRESULT hr = S_OK;
 
-    EnterCriticalSection( &channel->cs );
+    if (WSAEventSelect( socket, handles[0], FD_ACCEPT )) return HRESULT_FROM_WIN32( WSAGetLastError() );
 
-    if (channel->magic != CHANNEL_MAGIC)
+    switch (WSAWaitForMultipleEvents( 2, handles, FALSE, WSA_INFINITE, FALSE ))
     {
-        LeaveCriticalSection( &channel->cs );
-        return E_INVALIDARG;
+    case 0:
+        if ((*ret = accept( socket, NULL, NULL )) != -1)
+        {
+            WSAEventSelect( *ret, NULL, 0 );
+            ioctlsocket( *ret, FIONBIO, &nonblocking );
+            break;
+        }
+        hr = HRESULT_FROM_WIN32( WSAGetLastError() );
+        break;
+
+    case 1:
+        hr = WS_E_OPERATION_ABORTED;
+        break;
+
+    default:
+        hr = HRESULT_FROM_WIN32( WSAGetLastError() );
+        break;
     }
 
-    if ((channel->u.tcp.socket = accept( socket, NULL, NULL )) == -1)
-    {
-        LeaveCriticalSection( &channel->cs );
-        return HRESULT_FROM_WIN32( WSAGetLastError() );
-    }
-
-    LeaveCriticalSection( &channel->cs );
-    return S_OK;
+    return hr;
 }
 
-static HRESULT sock_wait( SOCKET socket )
-{
-    fd_set read;
-
-    FD_ZERO( &read );
-    FD_SET( socket, &read );
-    if (select( socket + 1, &read, NULL, NULL, NULL ) < 0) return HRESULT_FROM_WIN32( WSAGetLastError() );
-    return S_OK;
-}
-
-HRESULT channel_accept_udp( SOCKET socket, WS_CHANNEL *handle )
+HRESULT channel_accept_tcp( SOCKET socket, HANDLE wait, HANDLE cancel, WS_CHANNEL *handle )
 {
     struct channel *channel = (struct channel *)handle;
     HRESULT hr;
@@ -1213,7 +1213,54 @@ HRESULT channel_accept_udp( SOCKET socket, WS_CHANNEL *handle )
         return E_INVALIDARG;
     }
 
-    if ((hr = sock_wait( socket )) == S_OK) channel->u.udp.socket = socket;
+    hr = sock_accept( socket, wait, cancel, &channel->u.tcp.socket );
+
+    LeaveCriticalSection( &channel->cs );
+    return hr;
+}
+
+static HRESULT sock_wait( SOCKET socket, HANDLE wait, HANDLE cancel )
+{
+    HANDLE handles[] = { wait, cancel };
+    ULONG nonblocking = 0;
+    HRESULT hr;
+
+    if (WSAEventSelect( socket, handles[0], FD_READ )) return HRESULT_FROM_WIN32( WSAGetLastError() );
+
+    switch (WSAWaitForMultipleEvents( 2, handles, FALSE, WSA_INFINITE, FALSE ))
+    {
+    case 0:
+        hr = S_OK;
+        break;
+
+    case 1:
+        hr = WS_E_OPERATION_ABORTED;
+        break;
+
+    default:
+        hr = HRESULT_FROM_WIN32( WSAGetLastError() );
+        break;
+    }
+
+    WSAEventSelect( socket, NULL, 0 );
+    ioctlsocket( socket, FIONBIO, &nonblocking );
+    return hr;
+}
+
+HRESULT channel_accept_udp( SOCKET socket, HANDLE wait, HANDLE cancel, WS_CHANNEL *handle )
+{
+    struct channel *channel = (struct channel *)handle;
+    HRESULT hr;
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    if ((hr = sock_wait( socket, wait, cancel )) == S_OK) channel->u.udp.socket = socket;
 
     LeaveCriticalSection( &channel->cs );
     return hr;

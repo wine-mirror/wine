@@ -75,6 +75,9 @@ struct listener
     WS_CHANNEL_TYPE         type;
     WS_CHANNEL_BINDING      binding;
     WS_LISTENER_STATE       state;
+    HANDLE                  wait;
+    HANDLE                  cancel;
+    WS_CHANNEL             *channel;
     union
     {
         struct
@@ -100,7 +103,18 @@ static struct listener *alloc_listener(void)
 
     if (!(ret = heap_alloc_zero( size ))) return NULL;
 
-    ret->magic      = LISTENER_MAGIC;
+    ret->magic = LISTENER_MAGIC;
+    if (!(ret->wait = CreateEventW( NULL, FALSE, FALSE, NULL )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    if (!(ret->cancel = CreateEventW( NULL, FALSE, FALSE, NULL )))
+    {
+        CloseHandle( ret->wait );
+        heap_free( ret );
+        return NULL;
+    }
     InitializeCriticalSection( &ret->cs );
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": listener.cs");
 
@@ -112,6 +126,8 @@ static struct listener *alloc_listener(void)
 static void reset_listener( struct listener *listener )
 {
     listener->state = WS_LISTENER_STATE_CREATED;
+    SetEvent( listener->cancel );
+    listener->channel = NULL;
 
     switch (listener->binding)
     {
@@ -132,6 +148,10 @@ static void reset_listener( struct listener *listener )
 static void free_listener( struct listener *listener )
 {
     reset_listener( listener );
+
+    CloseHandle( listener->wait );
+    CloseHandle( listener->cancel );
+
     listener->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &listener->cs );
     heap_free( listener );
@@ -569,7 +589,8 @@ HRESULT WINAPI WsAcceptChannel( WS_LISTENER *handle, WS_CHANNEL *channel_handle,
                                 WS_ERROR *error )
 {
     struct listener *listener = (struct listener *)handle;
-    HRESULT hr;
+    HRESULT hr = E_NOTIMPL;
+    HANDLE wait, cancel;
 
     TRACE( "%p %p %p %p\n", handle, channel_handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -585,27 +606,34 @@ HRESULT WINAPI WsAcceptChannel( WS_LISTENER *handle, WS_CHANNEL *channel_handle,
         return E_INVALIDARG;
     }
 
-    if (listener->state != WS_LISTENER_STATE_OPEN)
+    if (listener->state != WS_LISTENER_STATE_OPEN || listener->channel)
     {
         LeaveCriticalSection( &listener->cs );
         return WS_E_INVALID_OPERATION;
     }
 
+    wait = listener->wait;
+    cancel = listener->cancel;
+    listener->channel = channel_handle;
+
     switch (listener->binding)
     {
     case WS_TCP_CHANNEL_BINDING:
-        hr = channel_accept_tcp( listener->u.tcp.socket, channel_handle );
-        break;
+    {
+        SOCKET socket = listener->u.tcp.socket;
 
+        LeaveCriticalSection( &listener->cs );
+        return channel_accept_tcp( socket, wait, cancel, channel_handle );
+    }
     case WS_UDP_CHANNEL_BINDING:
-        /* hand over socket on success */
-        if ((hr = channel_accept_udp( listener->u.udp.socket, channel_handle )) == S_OK)
-            listener->u.udp.socket = -1;
-        break;
+    {
+        SOCKET socket = listener->u.udp.socket;
 
+        LeaveCriticalSection( &listener->cs );
+        return channel_accept_udp( socket, wait, cancel, channel_handle );
+    }
     default:
         FIXME( "listener binding %u not supported\n", listener->binding );
-        hr = E_NOTIMPL;
         break;
     }
 
