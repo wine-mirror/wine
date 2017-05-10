@@ -17729,6 +17729,174 @@ done:
     release_test_context(&test_context);
 }
 
+static void test_fractional_viewports(void)
+{
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11InputLayout *input_layout;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11RenderTargetView *rtv;
+    ID3D11VertexShader *vs;
+    ID3D11PixelShader *ps;
+    unsigned int i, x, y;
+    ID3D11Device *device;
+    ID3D11Texture2D *rt;
+    UINT offset, stride;
+    D3D11_VIEWPORT vp;
+    ID3D11Buffer *vb;
+    HRESULT hr;
+
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const DWORD vs_code[] =
+    {
+#if 0
+        void main(in float4 in_position : POSITION,
+                in float2 in_texcoord : TEXCOORD,
+                out float4 position : SV_Position,
+                out float2 texcoord : TEXCOORD)
+        {
+            position = in_position;
+            texcoord = in_texcoord;
+        }
+#endif
+        0x43425844, 0x4df282ca, 0x85c8bbfc, 0xd44ad19f, 0x1158be97, 0x00000001, 0x00000148, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000d8, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000303, 0x49534f50, 0x4e4f4954, 0x58455400, 0x524f4f43, 0xabab0044,
+        0x4e47534f, 0x00000050, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x00000c03,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x43584554, 0x44524f4f, 0xababab00, 0x52444853, 0x00000068,
+        0x00010040, 0x0000001a, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x00101032, 0x00000001,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x00102032, 0x00000001, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x05000036, 0x00102032, 0x00000001, 0x00101046,
+        0x00000001, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float4 main(float4 position : SV_Position,
+                float2 texcoord : TEXCOORD) : SV_Target
+        {
+            return float4(position.xy, texcoord);
+        }
+#endif
+        0x43425844, 0xa15616bc, 0x6862ab1c, 0x28b915c0, 0xdb0df67c, 0x00000001, 0x0000011c, 0x00000003,
+        0x0000002c, 0x00000084, 0x000000b8, 0x4e475349, 0x00000050, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000303, 0x505f5653, 0x7469736f, 0x006e6f69, 0x43584554, 0x44524f4f,
+        0xababab00, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000005c,
+        0x00000040, 0x00000017, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03001062, 0x00101032,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036, 0x00102032, 0x00000000, 0x00101046,
+        0x00000000, 0x05000036, 0x001020c2, 0x00000000, 0x00101406, 0x00000001, 0x0100003e,
+    };
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const struct
+    {
+        struct vec2 position;
+        struct vec2 texcoord;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f}, {0.0f, 0.0f}},
+        {{-1.0f,  1.0f}, {0.0f, 1.0f}},
+        {{ 1.0f, -1.0f}, {1.0f, 0.0f}},
+        {{ 1.0f,  1.0f}, {1.0f, 1.0f}},
+    };
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const float viewport_offsets[] =
+    {
+        0.0f, 0.5f, 0.25f, 0.125f, 0.0625f, 0.03125f, 0.015625f, 0.0078125f, 0.00390625f,
+        1.0f / 128.0f, 63.0f / 128.0f,
+    };
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    texture_desc.Width = 4;
+    texture_desc.Height = 4;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+
+    ID3D11DeviceContext_IASetInputLayout(context, input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*quad);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, &stride, &offset);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    for (i = 0; i < ARRAY_SIZE(viewport_offsets); ++i)
+    {
+        vp.TopLeftX = viewport_offsets[i];
+        vp.TopLeftY = viewport_offsets[i];
+        vp.Width = texture_desc.Width;
+        vp.Height = texture_desc.Height;
+        vp.MinDepth = 0.0f;
+        vp.MaxDepth = 1.0f;
+        ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+        ID3D11DeviceContext_ClearRenderTargetView(context, rtv, white);
+        ID3D11DeviceContext_Draw(context, 4, 0);
+        get_texture_readback(rt, 0, &rb);
+        for (y = 0; y < texture_desc.Height; ++y)
+        {
+            for (x = 0; x < texture_desc.Width; ++x)
+            {
+                const struct vec4 *v = get_readback_vec4(&rb, x, y);
+                struct vec4 expected = {x + 0.5f, y + 0.5f,
+                        (x + 0.5f - viewport_offsets[i]) / texture_desc.Width,
+                        1.0f - (y + 0.5f - viewport_offsets[i]) / texture_desc.Height};
+                ok(compare_float(v->x, expected.x, 0) && compare_float(v->y, expected.y, 0),
+                        "Got fragcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
+                        v->x, v->y, expected.x, expected.y, x, y, viewport_offsets[i]);
+                todo_wine
+                ok(compare_float(v->z, expected.z, 2) && compare_float(v->w, expected.w, 2),
+                        "Got texcoord {%.8e, %.8e}, expected {%.8e, %.8e} at (%u, %u), offset %.8e.\n",
+                        v->z, v->w, expected.z, expected.w, x, y, viewport_offsets[i]);
+            }
+        }
+        release_resource_readback(&rb);
+    }
+
+    ID3D11InputLayout_Release(input_layout);
+    ID3D11Buffer_Release(vb);
+    ID3D11VertexShader_Release(vs);
+    ID3D11PixelShader_Release(ps);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture2D_Release(rt);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -17818,4 +17986,5 @@ START_TEST(d3d11)
     test_fl10_stream_output_desc();
     test_stream_output_resume();
     test_gather();
+    test_fractional_viewports();
 }
