@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
+
 #include <winsock2.h>
 #include <windows.h>
 #include <iphlpapi.h>
@@ -339,7 +341,7 @@ static void print_full_information(void)
                 print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
                 print_field(STRING_DESCRIPTION, p->Description);
                 print_field(STRING_PHYS_ADDR, physaddr_to_string(physaddr_buf, p->PhysicalAddress, p->PhysicalAddressLength));
-                print_field(STRING_DHCP_ENABLED, boolean_to_string(p->Flags & IP_ADAPTER_DHCP_ENABLED));
+                print_field(STRING_DHCP_ENABLED, boolean_to_string(p->u1.Flags & IP_ADAPTER_DHCP_ENABLED));
 
                 /* FIXME: Output autoconfiguration status. */
 
