@@ -1063,8 +1063,6 @@ static void quirk_broken_arb_fog(struct wined3d_gl_info *gl_info)
 
 static void quirk_broken_viewport_subpixel_bits(struct wined3d_gl_info *gl_info)
 {
-    TRACE("Disabling ARB_viewport_array.\n");
-    gl_info->supported[ARB_VIEWPORT_ARRAY] = FALSE;
     if (gl_info->supported[ARB_CLIP_CONTROL])
     {
         TRACE("Disabling ARB_clip_control.\n");
@@ -4137,8 +4135,11 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_VIEWPORT_SUBPIXEL_BITS, &subpixel_bits);
         TRACE("Viewport supports %d subpixel bits.\n", subpixel_bits);
-        if (subpixel_bits < 8)
-            gl_info->supported[ARB_VIEWPORT_ARRAY] = FALSE;
+        if (subpixel_bits < 8 && gl_info->supported[ARB_CLIP_CONTROL])
+        {
+            TRACE("Disabling ARB_clip_control because viewport subpixel bits < 8.\n");
+            gl_info->supported[ARB_CLIP_CONTROL] = FALSE;
+        }
     }
     if (gl_info->supported[ARB_CLIP_CONTROL] && !gl_info->supported[ARB_VIEWPORT_ARRAY])
     {
