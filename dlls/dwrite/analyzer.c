@@ -225,6 +225,8 @@ static inline struct dwrite_numbersubstitution *impl_from_IDWriteNumberSubstitut
     return CONTAINING_RECORD(iface, struct dwrite_numbersubstitution, IDWriteNumberSubstitution_iface);
 }
 
+static struct dwrite_numbersubstitution *unsafe_impl_from_IDWriteNumberSubstitution(IDWriteNumberSubstitution *iface);
+
 static inline struct dwrite_fontfallback *impl_from_IDWriteFontFallback(IDWriteFontFallback *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_fontfallback, IDWriteFontFallback_iface);
@@ -1022,6 +1024,75 @@ static UINT32 get_opentype_language(const WCHAR *locale)
     return language;
 }
 
+static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSubstitution *substitution, WCHAR *digits)
+{
+    struct dwrite_numbersubstitution *numbersubst = unsafe_impl_from_IDWriteNumberSubstitution(substitution);
+    DWRITE_NUMBER_SUBSTITUTION_METHOD method;
+    WCHAR isolang[9];
+    DWORD lctype;
+
+    if (!numbersubst)
+        return DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE;
+
+    lctype = numbersubst->ignore_user_override ? LOCALE_NOUSEROVERRIDE : 0;
+
+    if (numbersubst->method == DWRITE_NUMBER_SUBSTITUTION_METHOD_FROM_CULTURE) {
+        DWORD value;
+
+        method = DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE;
+        if (GetLocaleInfoEx(numbersubst->locale, lctype | LOCALE_IDIGITSUBSTITUTION | LOCALE_RETURN_NUMBER, (WCHAR *)&value, 2)) {
+            switch (value)
+            {
+            case 0:
+                method = DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL;
+                break;
+            case 2:
+                method = DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL;
+                break;
+            case 1:
+            default:
+                if (value != 1)
+                    WARN("Unknown IDIGITSUBSTITUTION value %u, locale %s.\n", value, debugstr_w(numbersubst->locale));
+            }
+        }
+        else
+            WARN("Failed to get IDIGITSUBSTITUTION for locale %s\n", debugstr_w(numbersubst->locale));
+    }
+    else
+        method = numbersubst->method;
+
+    digits[0] = 0;
+    switch (method)
+    {
+    case DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL:
+        GetLocaleInfoEx(numbersubst->locale, lctype | LOCALE_SNATIVEDIGITS, digits, sizeof(digits)/sizeof(digits[0]));
+        break;
+    case DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL:
+    case DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL:
+        if (GetLocaleInfoEx(numbersubst->locale, LOCALE_SISO639LANGNAME, isolang, sizeof(isolang)/sizeof(isolang[0]))) {
+             static const WCHAR arW[] = {'a','r',0};
+             static const WCHAR arabicW[] = {0x640,0x641,0x642,0x643,0x644,0x645,0x646,0x647,0x648,0x649,0};
+
+             /* For some Arabic locales Latin digits are returned for SNATIVEDIGITS */
+             if (!strcmpW(arW, isolang)) {
+                 strcpyW(digits, arabicW);
+                 break;
+             }
+        }
+        GetLocaleInfoEx(numbersubst->locale, lctype | LOCALE_SNATIVEDIGITS, digits, sizeof(digits)/sizeof(digits[0]));
+        break;
+    default:
+        ;
+    }
+
+    if (method != DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE && !*digits) {
+        WARN("Failed to get number substitutes for locale %s, method %d\n", debugstr_w(numbersubst->locale), method);
+        method = DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE;
+    }
+
+    return method;
+}
+
 static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT32 length, IDWriteFontFace* fontface, BOOL is_sideways,
     BOOL is_rtl, DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale,
@@ -1031,10 +1102,12 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     DWRITE_SHAPING_GLYPH_PROPERTIES* glyph_props, UINT32* actual_glyph_count)
 {
     const struct dwritescript_properties *scriptprops;
+    DWRITE_NUMBER_SUBSTITUTION_METHOD method;
     struct scriptshaping_context context;
     struct scriptshaping_cache *cache = NULL;
     BOOL update_cluster, need_vertical;
     IDWriteFontFace1 *fontface1;
+    WCHAR digits[11];
     WCHAR *string;
     UINT32 i, g;
     HRESULT hr = S_OK;
@@ -1050,8 +1123,11 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     if (max_glyph_count < length)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    if (substitution)
-        FIXME("number substitution is not supported.\n");
+    string = heap_alloc(sizeof(WCHAR)*length);
+    if (!string)
+        return E_OUTOFMEMORY;
+
+    method = get_number_substitutes(substitution, digits);
 
     for (i = 0; i < length; i++) {
         /* FIXME: set to better values */
@@ -1066,6 +1142,21 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         text_props[i].reserved = 0;
 
         clustermap[i] = i;
+
+        string[i] = text[i];
+        switch (method)
+        {
+        case DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL:
+            if (!is_rtl)
+                break;
+            /* fallthrough */
+        default:
+            if (string[i] >= '0' && string[i] <= '9')
+                string[i] = digits[string[i] - '0'];
+            break;
+        case DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE:
+            ;
+        }
     }
 
     for (; i < max_glyph_count; i++) {
@@ -1075,10 +1166,6 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         glyph_props[i].isZeroWidthSpace = 0;
         glyph_props[i].reserved = 0;
     }
-
-    string = heap_alloc(sizeof(WCHAR)*length);
-    if (!string)
-        return E_OUTOFMEMORY;
 
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
     if (FAILED(hr))
@@ -1090,16 +1177,11 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         UINT32 codepoint;
 
         if (!update_cluster) {
-            codepoint = decode_surrogate_pair(text, i, length);
-            if (!codepoint) {
-                codepoint = is_rtl ? bidi_get_mirrored_char(text[i]) : text[i];
-                string[i] = codepoint;
-            }
-            else {
-                string[i] = text[i];
-                string[i+1] = text[i+1];
+            codepoint = decode_surrogate_pair(string, i, length);
+            if (!codepoint)
+                codepoint = is_rtl ? bidi_get_mirrored_char(string[i]) : string[i];
+            else
                 update_cluster = TRUE;
-            }
 
             hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &glyph_indices[g]);
             if (FAILED(hr))
@@ -1777,6 +1859,13 @@ static const struct IDWriteNumberSubstitutionVtbl numbersubstitutionvtbl = {
     dwritenumbersubstitution_AddRef,
     dwritenumbersubstitution_Release
 };
+
+struct dwrite_numbersubstitution *unsafe_impl_from_IDWriteNumberSubstitution(IDWriteNumberSubstitution *iface)
+{
+    if (!iface || iface->lpVtbl != &numbersubstitutionvtbl)
+        return NULL;
+    return CONTAINING_RECORD(iface, struct dwrite_numbersubstitution, IDWriteNumberSubstitution_iface);
+}
 
 HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD method, const WCHAR *locale,
     BOOL ignore_user_override, IDWriteNumberSubstitution **ret)
