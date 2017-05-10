@@ -262,7 +262,7 @@ static BOOL match_type(const WCHAR *clsid_str, const WCHAR *type_str, MFT_REGIST
     if (RegQueryValueExW(hfilter, type_str, NULL, &reg_type, (LPBYTE)info, &size) != ERROR_SUCCESS)
         goto out;
 
-    for (i = 0; i < size / sizeof(MFT_REGISTER_TYPE_INFO) + 1; i++)
+    for (i = 0; i < size / sizeof(MFT_REGISTER_TYPE_INFO); i++)
     {
         if (IsEqualGUID(&info[i].guidMajorType, &type->guidMajorType) &&
             IsEqualGUID(&info[i].guidSubtype,   &type->guidSubtype))
