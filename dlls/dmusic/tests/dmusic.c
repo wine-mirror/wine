@@ -132,8 +132,15 @@ static void test_setdsound(void)
 {
     IDirectMusic *dmusic;
     IDirectSound *dsound, *dsound2;
+    DMUS_PORTPARAMS params;
+    IDirectMusicPort *port = NULL;
     HRESULT hr;
     ULONG ref;
+
+    params.dwSize = sizeof(params);
+    params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_AUDIOCHANNELS;
+    params.dwChannelGroups = 1;
+    params.dwAudioChannels = 2;
 
     /* Old dsound without SetCooperativeLevel() */
     hr = DirectSoundCreate(NULL, &dsound, NULL);
@@ -147,6 +154,9 @@ static void test_setdsound(void)
     ok(hr == S_OK, "DirectMusic create failed: %08x\n", hr);
     hr = IDirectMusic_SetDirectSound(dmusic, dsound, NULL);
     ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
+    hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &params, &port, NULL);
+    ok(hr == S_OK, "CreatePort returned: %x\n", hr);
+    IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);
     IDirectSound_Release(dsound);
 
@@ -162,8 +172,22 @@ static void test_setdsound(void)
     ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
     ref = get_refcount(dsound);
     todo_wine ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &params, &port, NULL);
+    ok(hr == S_OK, "CreatePort returned: %x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    hr = IDirectMusicPort_Activate(port, TRUE);
+    ok(hr == S_OK, "Port Activate returned: %x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
 
     /* Releasing dsound from dmusic */
+    hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);
+    todo_wine ok(hr == DMUS_E_DSOUND_ALREADY_SET, "SetDirectSound failed: %08x\n", hr);
+    hr = IDirectMusicPort_Activate(port, FALSE);
+    ok(hr == S_OK, "Port Activate returned: %x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
     hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);
     ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
     ref = get_refcount(dsound);
@@ -189,9 +213,51 @@ static void test_setdsound(void)
     ref = get_refcount(dsound2);
     todo_wine ok(ref == 2, "dsound2 ref count got %d expected 2\n", ref);
 
+    /* Replacing the dsound in the port */
+    hr = IDirectMusicPort_SetDirectSound(port, dsound, NULL);
+    ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    ref = get_refcount(dsound2);
+    todo_wine ok(ref == 2, "dsound2 ref count got %d expected 2\n", ref);
+    /* Setting the dsound again on the port will mess with the parent dmusic */
+    hr = IDirectMusicPort_SetDirectSound(port, dsound, NULL);
+    ok(hr == S_OK, "SetDirectSound failed: %08x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 3, "dsound ref count got %d expected 3\n", ref);
+    ref = get_refcount(dsound2);
+    ok(ref == 1, "dsound2 ref count got %d expected 1\n", ref);
+    IDirectSound_AddRef(dsound2); /* Crash prevention */
+    hr = IDirectMusicPort_Activate(port, TRUE);
+    ok(hr == S_OK, "Activate returned: %x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
+    ref = get_refcount(dsound2);
+    ok(ref == 2, "dsound2 ref count got %d expected 2\n", ref);
+    hr = IDirectMusicPort_Activate(port, TRUE);
+    todo_wine ok(hr == S_FALSE, "Activate returned: %x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
+    ref = get_refcount(dsound2);
+    ok(ref == 2, "dsound2 ref count got %d expected 2\n", ref);
+
+    /* Deactivating the port messes with the dsound refcount in the parent dmusic */
+    hr = IDirectMusicPort_Activate(port, FALSE);
+    ok(hr == S_OK, "Port Activate returned: %x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 3, "dsound ref count got %d expected 3\n", ref);
+    ref = get_refcount(dsound2);
+    todo_wine ok(ref == 1, "dsound2 ref count got %d expected 1\n", ref);
+    hr = IDirectMusicPort_Activate(port, FALSE);
+    todo_wine ok(hr == S_FALSE, "Port Activate returned: %x\n", hr);
+    ref = get_refcount(dsound);
+    todo_wine ok(ref == 3, "dsound ref count got %d expected 3\n", ref);
+    ref = get_refcount(dsound2);
+    todo_wine ok(ref == 1, "dsound2 ref count got %d expected 1\n", ref);
+
+    IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);
-    IDirectSound_Release(dsound);
-    IDirectSound_Release(dsound2);
+    while (IDirectSound_Release(dsound));
 }
 
 static void test_dmbuffer(void)
