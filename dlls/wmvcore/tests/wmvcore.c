@@ -66,6 +66,19 @@ static void test_wmreader_interfaces(void)
     IWMHeaderInfo2     *header2;
     IWMHeaderInfo3     *header3;
     IWMProfile         *profile;
+    IWMProfile2        *profile2;
+    IWMProfile3        *profile3;
+    IWMPacketSize      *packet;
+    IWMPacketSize2     *packet2;
+    IWMReaderAccelerator     *accel;
+    IWMReaderTimecode        *timecode;
+    IWMReaderNetworkConfig   *netconfig;
+    IWMReaderNetworkConfig2  *netconfig2;
+    IWMReaderStreamClock     *clock;
+    IWMReaderTypeNegotiation *negotiation;
+    IWMDRMReader       *drmreader;
+    IWMDRMReader2      *drmreader2;
+    IWMDRMReader3      *drmreader3;
 
     hr = WMCreateReader( NULL, 0, &reader );
     ok(hr == S_OK, "WMCreateReader failed 0x%08x\n", hr);
@@ -93,18 +106,77 @@ static void test_wmreader_interfaces(void)
     hr = IWMReader_QueryInterface(reader, &IID_IWMProfile, (void **)&profile);
     todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
 
+    hr = IWMReader_QueryInterface(reader, &IID_IWMProfile2, (void **)&profile2);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMProfile3, (void **)&profile3);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMPacketSize, (void **)&packet);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMPacketSize2, (void **)&packet2);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderAccelerator, (void **)&accel);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderTimecode, (void **)&timecode);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderNetworkConfig, (void **)&netconfig);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderNetworkConfig2, (void **)&netconfig2);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderStreamClock, (void **)&clock);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMReaderTypeNegotiation, (void **)&negotiation);
+    todo_wine ok(hr == S_OK, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMDRMReader, (void **)&drmreader);
+    ok(hr == E_NOINTERFACE, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMDRMReader2, (void **)&drmreader2);
+    ok(hr == E_NOINTERFACE, "Failed 0x%08x\n", hr);
+
+    hr = IWMReader_QueryInterface(reader, &IID_IWMDRMReader3, (void **)&drmreader3);
+    ok(hr == E_NOINTERFACE, "Failed 0x%08x\n", hr);
+
+    if(packet)
+        IWMPacketSize_Release(packet);
+    if(packet2)
+        IWMPacketSize2_Release(packet2);
     if(advanced)
         IWMReaderAdvanced_Release(advanced);
     if(advanced2)
         IWMReaderAdvanced2_Release(advanced2);
     if(profile)
         IWMProfile_Release(profile);
+    if(profile2)
+        IWMProfile2_Release(profile2);
+    if(profile3)
+        IWMProfile3_Release(profile3);
     if(header)
         IWMHeaderInfo_Release(header);
     if(header2)
         IWMHeaderInfo2_Release(header2);
     if(header3)
         IWMHeaderInfo3_Release(header3);
+    if(accel)
+        IWMReaderAccelerator_Release(accel);
+    if(timecode)
+        IWMReaderTimecode_Release(timecode);
+    if(netconfig)
+        IWMReaderNetworkConfig_Release(netconfig);
+    if(netconfig2)
+        IWMReaderNetworkConfig2_Release(netconfig2);
+    if(clock)
+        IWMReaderStreamClock_Release(clock);
+    if(negotiation)
+        IWMReaderTypeNegotiation_Release(negotiation);
 
     IWMReader_Release(reader);
 }
