@@ -298,8 +298,10 @@ static HRESULT WINAPI IDirectMusic8Impl_SetDirectSound(IDirectMusic8 *iface, IDi
             return hr;
         hr = IDirectSound_SetCooperativeLevel(This->dsound, hwnd ? hwnd : GetForegroundWindow(),
                 DSSCL_PRIORITY);
-        if (FAILED(hr))
+        if (FAILED(hr)) {
             IDirectSound_Release(This->dsound);
+            This->dsound = NULL;
+        }
         return hr;
     }
 
