@@ -110,12 +110,17 @@
     {
         macdrv_event* event;
         NSUInteger typeMask = NSEventMaskFromType([nsevent type]);
+        CGPoint point = CGEventGetLocation([nsevent CGEvent]);
+
+        point = cgpoint_win_from_mac(point);
 
         event = macdrv_create_event(STATUS_ITEM_MOUSE_BUTTON, nil);
         event->status_item_mouse_button.item = (macdrv_status_item)self;
         event->status_item_mouse_button.button = [nsevent buttonNumber];
         event->status_item_mouse_button.down = (typeMask & (NSLeftMouseDownMask | NSRightMouseDownMask | NSOtherMouseDownMask)) != 0;
         event->status_item_mouse_button.count = [nsevent clickCount];
+        event->status_item_mouse_button.x = floor(point.x);
+        event->status_item_mouse_button.y = floor(point.y);
         [queue postEvent:event];
         macdrv_release_event(event);
     }
@@ -164,8 +169,14 @@
     - (void) mouseMoved:(NSEvent*)nsevent
     {
         macdrv_event* event;
+        CGPoint point = CGEventGetLocation([nsevent CGEvent]);
+
+        point = cgpoint_win_from_mac(point);
+
         event = macdrv_create_event(STATUS_ITEM_MOUSE_MOVE, nil);
         event->status_item_mouse_move.item = (macdrv_status_item)self;
+        event->status_item_mouse_move.x = floor(point.x);
+        event->status_item_mouse_move.y = floor(point.y);
         [queue postEvent:event];
         macdrv_release_event(event);
     }

@@ -46,6 +46,7 @@ struct tray_icon
     WCHAR               tiptext[128];       /* tooltip text */
     DWORD               state;              /* state flags */
     macdrv_status_item  status_item;
+    UINT                version;
 };
 
 static struct list icon_list = LIST_INIT(icon_list);
@@ -263,6 +264,13 @@ int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
     case 0xdead:  /* Wine extension: owner window has died */
         cleanup_icons(data->hWnd);
         break;
+    case NIM_SETVERSION:
+        if ((icon = get_icon(data->hWnd, data->uID)))
+        {
+            icon->version = data->uVersion;
+            ret = TRUE;
+        }
+        break;
     default:
         FIXME("unhandled tray message: %u\n", msg);
         break;
@@ -270,6 +278,27 @@ int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
     return ret;
 }
 
+static BOOL notify_owner(struct tray_icon *icon, UINT msg, int x, int y)
+{
+    WPARAM wp = icon->id;
+    LPARAM lp = msg;
+
+    if (icon->version >= NOTIFY_VERSION_4)
+    {
+        wp = MAKEWPARAM(x, y);
+        lp = MAKELPARAM(msg, icon->id);
+    }
+
+    TRACE("posting msg 0x%04x to hwnd %p id 0x%x\n", msg, icon->owner, icon->id);
+    if (!PostMessageW(icon->owner, icon->callback_message, wp, lp) &&
+        (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
+    {
+        WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
+        delete_icon(icon);
+        return FALSE;
+    }
+    return TRUE;
+}
 
 /***********************************************************************
  *              macdrv_status_item_mouse_button
@@ -280,9 +309,10 @@ void macdrv_status_item_mouse_button(const macdrv_event *event)
 {
     struct tray_icon *icon;
 
-    TRACE("item %p button %d down %d count %d\n", event->status_item_mouse_button.item,
+    TRACE("item %p button %d down %d count %d pos %d,%d\n", event->status_item_mouse_button.item,
           event->status_item_mouse_button.button, event->status_item_mouse_button.down,
-          event->status_item_mouse_button.count);
+          event->status_item_mouse_button.count, event->status_item_mouse_button.x,
+          event->status_item_mouse_button.y);
 
     LIST_FOR_EACH_ENTRY(icon, &icon_list, struct tray_icon, entry)
     {
@@ -313,13 +343,15 @@ void macdrv_status_item_mouse_button(const macdrv_event *event)
                 return;
             }
 
-            TRACE("posting msg 0x%04x to hwnd %p id 0x%x\n", msg, icon->owner, icon->id);
-            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, msg) &&
-                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
-            {
-                WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
-                delete_icon(icon);
+            if (!notify_owner(icon, msg, event->status_item_mouse_button.x, event->status_item_mouse_button.y))
                 return;
+
+            if (icon->version)
+            {
+                if (msg == WM_LBUTTONUP)
+                    notify_owner(icon, NIN_SELECT, event->status_item_mouse_button.x, event->status_item_mouse_button.y);
+                else if (msg == WM_RBUTTONUP)
+                    notify_owner(icon, WM_CONTEXTMENU, event->status_item_mouse_button.x, event->status_item_mouse_button.y);
             }
 
             break;
@@ -337,20 +369,14 @@ void macdrv_status_item_mouse_move(const macdrv_event *event)
 {
     struct tray_icon *icon;
 
-    TRACE("item %p\n", event->status_item_mouse_move.item);
+    TRACE("item %p pos %d,%d\n", event->status_item_mouse_move.item,
+          event->status_item_mouse_move.x, event->status_item_mouse_move.y);
 
     LIST_FOR_EACH_ENTRY(icon, &icon_list, struct tray_icon, entry)
     {
         if (icon->status_item == event->status_item_mouse_move.item)
         {
-            if (!PostMessageW(icon->owner, icon->callback_message, icon->id, WM_MOUSEMOVE) &&
-                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
-            {
-                WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
-                delete_icon(icon);
-                return;
-            }
-
+            notify_owner(icon, WM_MOUSEMOVE, event->status_item_mouse_move.x, event->status_item_mouse_move.y);
             break;
         }
     }

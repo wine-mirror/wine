@@ -371,9 +371,13 @@ typedef struct macdrv_event {
             int                 button;
             int                 down;
             int                 count;
+            int                 x;
+            int                 y;
         }                                           status_item_mouse_button;
         struct {
             macdrv_status_item  item;
+            int                 x;
+            int                 y;
         }                                           status_item_mouse_move;
         struct {
             int no_activate;
