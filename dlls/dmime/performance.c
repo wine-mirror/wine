@@ -892,16 +892,29 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_RhythmToTime(IDirectMusicPerf
 
 /* IDirectMusicPerformance8 Interface part follow: */
 static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerformance8 *iface,
-        IDirectMusic **ppDirectMusic, IDirectSound **dsound, HWND hwnd,
+        IDirectMusic **dmusic, IDirectSound **dsound, HWND hwnd,
         DWORD dwDefaultPathType, DWORD dwPChannelCount, DWORD dwFlags, DMUS_AUDIOPARAMS* pParams)
 {
     IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
     HRESULT hr = S_OK;
 
-    TRACE("(%p, %p, %p, %p, %x, %u, %x, %p)\n", This, ppDirectMusic, dsound, hwnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
+    TRACE("(%p, %p, %p, %p, %x, %u, %x, %p)\n", This, dmusic, dsound, hwnd, dwDefaultPathType,
+            dwPChannelCount, dwFlags, pParams);
 
     if (This->dmusic)
         return DMUS_E_ALREADY_INITED;
+
+    if (!dmusic || !*dmusic) {
+        hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8,
+                (void **)&This->dmusic);
+        if (FAILED(hr))
+            return hr;
+        if (dmusic)
+            *dmusic = (IDirectMusic *)This->dmusic;
+    } else
+        This->dmusic = (IDirectMusic8 *)*dmusic;
+    if (dmusic)
+        IDirectMusic8_AddRef(This->dmusic);
 
     if (!dsound || !*dsound) {
         hr = DirectSoundCreate8(NULL, (IDirectSound8 **)&This->dsound, NULL);
@@ -913,12 +926,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
             *dsound = This->dsound;
     } else
         This->dsound = *dsound;
-
-    IDirectMusicPerformance8_Init(iface, ppDirectMusic, This->dsound, hwnd);
-
-    /* Init increases the ref count of the dsound object. Decrement it if the app doesn't want a pointer to the object. */
-    if (!dsound)
-        IDirectSound_Release(This->dsound);
+    if (dsound)
+        IDirectSound_AddRef(This->dsound);
 
 	/* as seen in msdn we need params init before audio path creation */
 	if (NULL != pParams) {
