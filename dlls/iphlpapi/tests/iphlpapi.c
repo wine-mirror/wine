@@ -1414,8 +1414,10 @@ static void test_GetAdaptersAddresses(void)
 
     for (aa = ptr; !ret && aa; aa = aa->Next)
     {
-        char temp[128];
+        char temp[128], buf[39];
         IP_ADAPTER_PREFIX *prefix;
+        DWORD status;
+        GUID guid;
 
         ok(S(U(*aa)).Length == sizeof(IP_ADAPTER_ADDRESSES_LH) ||
            S(U(*aa)).Length == sizeof(IP_ADAPTER_ADDRESSES_XP),
@@ -1524,6 +1526,17 @@ static void test_GetAdaptersAddresses(void)
         trace("Dhcpv6Iaid:            %u\n", aa->Dhcpv6Iaid);
         trace("FirstDnsSuffix:        %p\n", aa->FirstDnsSuffix);
         trace("\n");
+
+        if (pConvertInterfaceLuidToGuid)
+        {
+            status = pConvertInterfaceLuidToGuid(&aa->Luid, &guid);
+            ok(!status, "got %u\n", status);
+            sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                    guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
+                    guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
+                    guid.Data4[6], guid.Data4[7]);
+            ok(!strcasecmp(aa->AdapterName, buf), "expected '%s' got '%s'\n", aa->AdapterName, buf);
+        }
     }
     HeapFree(GetProcessHeap(), 0, ptr);
 }

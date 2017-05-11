@@ -978,7 +978,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     }
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
-    total_size += IF_NAMESIZE;
+    total_size += 39; /* "{00000000-0000-0000-0000-000000000000}" */
     total_size += IF_NAMESIZE * sizeof(WCHAR);
     if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
         total_size += IF_NAMESIZE * sizeof(WCHAR);
@@ -1009,10 +1009,11 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         aa->u.s.Length  = sizeof(IP_ADAPTER_ADDRESSES);
         aa->u.s.IfIndex = index;
 
-        getInterfaceNameByIndex(index, name);
-        memcpy(ptr, name, IF_NAMESIZE);
+        sprintf(ptr, "{%08x-0000-0000-0000-000000000000}", index);
         aa->AdapterName = ptr;
-        ptr += IF_NAMESIZE;
+        ptr += 39;
+
+        getInterfaceNameByIndex(index, name);
         if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
         {
             aa->FriendlyName = (WCHAR *)ptr;
