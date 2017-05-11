@@ -19,6 +19,8 @@
 #include <stdarg.h>
 #include <math.h>
 
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -947,7 +949,7 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
             bounds_rc.right = ceilf(metafile->auto_frame_max.X * x_scale);
             bounds_rc.bottom = ceilf(metafile->auto_frame_max.Y * y_scale);
 
-            gdi_bounds_rc = header.EmfHeader.rclBounds;
+            gdi_bounds_rc = header.u.EmfHeader.rclBounds;
             if (gdi_bounds_rc.right > gdi_bounds_rc.left && gdi_bounds_rc.bottom > gdi_bounds_rc.top)
             {
                 bounds_rc.left = min(bounds_rc.left, gdi_bounds_rc.left);
@@ -1913,7 +1915,7 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromEmf(HENHMETAFILE hemf,
     header->Y = gdip_round((REAL)emfheader.rclFrame.top / 2540.0 * header->DpiY);
     header->Width = gdip_round((REAL)(emfheader.rclFrame.right - emfheader.rclFrame.left) / 2540.0 * header->DpiX);
     header->Height = gdip_round((REAL)(emfheader.rclFrame.bottom - emfheader.rclFrame.top) / 2540.0 * header->DpiY);
-    header->EmfHeader = emfheader;
+    header->u.EmfHeader = emfheader;
 
     if (metafile_type == MetafileTypeEmfPlusDual || metafile_type == MetafileTypeEmfPlusOnly)
     {
@@ -2016,11 +2018,11 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     (*metafile)->image.frame_count = 1;
     (*metafile)->image.xres = header.DpiX;
     (*metafile)->image.yres = header.DpiY;
-    (*metafile)->bounds.X = (REAL)header.EmfHeader.rclFrame.left / 2540.0 * header.DpiX;
-    (*metafile)->bounds.Y = (REAL)header.EmfHeader.rclFrame.top / 2540.0 * header.DpiY;
-    (*metafile)->bounds.Width = (REAL)(header.EmfHeader.rclFrame.right - header.EmfHeader.rclFrame.left)
+    (*metafile)->bounds.X = (REAL)header.u.EmfHeader.rclFrame.left / 2540.0 * header.DpiX;
+    (*metafile)->bounds.Y = (REAL)header.u.EmfHeader.rclFrame.top / 2540.0 * header.DpiY;
+    (*metafile)->bounds.Width = (REAL)(header.u.EmfHeader.rclFrame.right - header.u.EmfHeader.rclFrame.left)
                                 / 2540.0 * header.DpiX;
-    (*metafile)->bounds.Height = (REAL)(header.EmfHeader.rclFrame.bottom - header.EmfHeader.rclFrame.top)
+    (*metafile)->bounds.Height = (REAL)(header.u.EmfHeader.rclFrame.bottom - header.u.EmfHeader.rclFrame.top)
                                  / 2540.0 * header.DpiY;
     (*metafile)->unit = UnitPixel;
     (*metafile)->metafile_type = header.Type;
