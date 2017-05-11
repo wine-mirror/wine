@@ -3671,7 +3671,8 @@ static void interface_bind_check(int fd, struct sockaddr_in *addr)
 #if !defined(IP_BOUND_IF) && !defined(LINUX_BOUND_IF)
     return;
 #else
-    int ifindex;
+    unsigned int ifindex;
+    int ret;
     socklen_t len;
 
     /* Check for IPv4, address 0.0.0.0 and UDP socket */
@@ -3680,15 +3681,14 @@ static void interface_bind_check(int fd, struct sockaddr_in *addr)
     if (_get_fd_type(fd) != SOCK_DGRAM)
         return;
 
-    ifindex = -1;
     len = sizeof(ifindex);
 #if defined(IP_BOUND_IF)
-    getsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &ifindex, &len);
+    ret = getsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &ifindex, &len);
 #elif defined(LINUX_BOUND_IF)
-    getsockopt(fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, &len);
-    if (ifindex > 0) ifindex = ntohl(ifindex);
+    ret = getsockopt(fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, &len);
+    if (!ret) ifindex = ntohl(ifindex);
 #endif
-    if (ifindex > 0)
+    if (!ret)
     {
         PIP_ADAPTER_INFO adapters, adapter;
         DWORD adap_size;
