@@ -58,6 +58,7 @@ IDL_SRCS = \
 	docobj.idl \
 	docobjectservice.idl \
 	downloadmgr.idl \
+	drmexternals.idl \
 	dwrite.idl \
 	dwrite_1.idl \
 	dwrite_2.idl \
@@ -177,6 +178,7 @@ IDL_SRCS = \
 	wine/svcctl.idl \
 	wine/winedxgi.idl \
 	winsxs.idl \
+	wmdrmsdk.idl \
 	wmiutils.idl \
 	wmp.idl \
 	wmsbuffer.idl \
