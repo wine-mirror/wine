@@ -1032,7 +1032,7 @@ static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_sta
     switch (state->type)
     {
         case ST_PARAMETER:
-            param = param->referenced_param;
+            param = param->u.referenced_param;
             *param_dirty = is_param_dirty(param);
             /* fallthrough */
         case ST_CONSTANT:
@@ -1062,7 +1062,7 @@ static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_sta
             {
                 array_idx = state->index;
             }
-            ref_param = param->referenced_param;
+            ref_param = param->u.referenced_param;
             TRACE("Array index %u, stored array index %u, element_count %u.\n", array_idx, state->index,
                     ref_param->element_count);
 
@@ -1478,7 +1478,7 @@ static void set_dirty(struct d3dx_parameter *param)
     struct d3dx_shared_data *shared_data;
     unsigned int i;
 
-    if ((shared_data = param->top_level_param->shared_data))
+    if ((shared_data = param->top_level_param->u.shared_data))
     {
         for (i = 0; i < shared_data->count; ++i)
             shared_data->parameters[i]->runtime_flags |= PARAMETER_FLAG_DIRTY;
@@ -3204,7 +3204,7 @@ static HRESULT d3dx_pool_sync_shared_parameter(struct d3dx_effect_pool *pool, st
 
                     for (j = 0; j < pool->size; ++j)
                         for (k = 0; k < new_alloc[j].count; ++k)
-                            new_alloc[j].parameters[k]->shared_data = &new_alloc[j];
+                            new_alloc[j].parameters[k]->u.shared_data = &new_alloc[j];
                 }
             }
             pool->shared_data = new_alloc;
@@ -3235,7 +3235,7 @@ static HRESULT d3dx_pool_sync_shared_parameter(struct d3dx_effect_pool *pool, st
         pool->shared_data[i].size = new_size;
     }
 
-    param->shared_data = &pool->shared_data[i];
+    param->u.shared_data = &pool->shared_data[i];
     pool->shared_data[i].parameters[new_count - 1] = param;
 
     TRACE("name %s, parameter idx %u, new refcount %u.\n", param->name, i,
@@ -3254,11 +3254,11 @@ static void d3dx_pool_release_shared_parameter(struct d3dx_parameter *param)
 {
     unsigned int new_count;
 
-    if (!(param->flags & PARAMETER_FLAG_SHARED) || !param->shared_data)
+    if (!(param->flags & PARAMETER_FLAG_SHARED) || !param->u.shared_data)
         return;
-    new_count = --param->shared_data->count;
+    new_count = --param->u.shared_data->count;
 
-    TRACE("param %p, param->shared_param %p, new_count %d.\n", param, param->shared_data, new_count);
+    TRACE("param %p, param->u.shared_data %p, new_count %d.\n", param, param->u.shared_data, new_count);
 
     if (new_count)
     {
@@ -3266,11 +3266,11 @@ static void d3dx_pool_release_shared_parameter(struct d3dx_parameter *param)
 
         for (i = 0; i < new_count; ++i)
         {
-            if (param->shared_data->parameters[i] == param)
+            if (param->u.shared_data->parameters[i] == param)
             {
-                memmove(&param->shared_data->parameters[i],
-                        &param->shared_data->parameters[i + 1],
-                        sizeof(param->shared_data->parameters[i]) * (new_count - i));
+                memmove(&param->u.shared_data->parameters[i],
+                        &param->u.shared_data->parameters[i + 1],
+                        sizeof(param->u.shared_data->parameters[i]) * (new_count - i));
                 break;
             }
         }
@@ -3278,10 +3278,10 @@ static void d3dx_pool_release_shared_parameter(struct d3dx_parameter *param)
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, param->shared_data->parameters);
+        HeapFree(GetProcessHeap(), 0, param->u.shared_data->parameters);
         /* Zeroing table size is required as the entry in pool parameters table can be reused. */
-        param->shared_data->size = 0;
-        param->shared_data = NULL;
+        param->u.shared_data->size = 0;
+        param->u.shared_data = NULL;
     }
 }
 
@@ -3971,7 +3971,7 @@ static BOOL walk_state_dep(struct d3dx_state *state, walk_parameter_dep_func par
     }
     else if (state->type == ST_ARRAY_SELECTOR || state->type == ST_PARAMETER)
     {
-        if (walk_parameter_dep(state->parameter.referenced_param, param_func, data))
+        if (walk_parameter_dep(state->parameter.u.referenced_param, param_func, data))
             return TRUE;
     }
     return walk_param_eval_dep(state->parameter.param_eval, param_func, data);
@@ -5929,10 +5929,10 @@ static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct
     TRACE("Parsing array entry selection state for parameter %p.\n", param);
 
     string_size = *(DWORD *)ptr;
-    param->referenced_param = get_parameter_by_name(base, NULL, ptr + 4);
-    if (param->referenced_param)
+    param->u.referenced_param = get_parameter_by_name(base, NULL, ptr + 4);
+    if (param->u.referenced_param)
     {
-        TRACE("Mapping to parameter %s.\n", debugstr_a(param->referenced_param->name));
+        TRACE("Mapping to parameter %s.\n", debugstr_a(param->u.referenced_param->name));
     }
     else
     {
@@ -5946,7 +5946,7 @@ static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct
     d3dx_create_param_eval(base, (DWORD *)(ptr + string_size) + 1, object->size - (string_size + sizeof(DWORD)),
             D3DXPT_INT, &param->param_eval);
     ret = D3D_OK;
-    param = param->referenced_param;
+    param = param->u.referenced_param;
     if (param->type == D3DXPT_VERTEXSHADER || param->type == D3DXPT_PIXELSHADER)
     {
         unsigned int i;
@@ -6101,10 +6101,10 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                 return hr;
 
             TRACE("Looking for parameter %s.\n", debugstr_a(object->data));
-            param->referenced_param = get_parameter_by_name(base, NULL, object->data);
-            if (param->referenced_param)
+            param->u.referenced_param = get_parameter_by_name(base, NULL, object->data);
+            if (param->u.referenced_param)
             {
-                struct d3dx_parameter *refpar = param->referenced_param;
+                struct d3dx_parameter *refpar = param->u.referenced_param;
 
                 TRACE("Mapping to parameter %p, having object id %u.\n", refpar, refpar->object_id);
                 if (refpar->type == D3DXPT_VERTEXSHADER || refpar->type == D3DXPT_PIXELSHADER)
@@ -6570,12 +6570,12 @@ static void free_effect_pool(struct d3dx_effect_pool *pool)
             WARN("Releasing pool with referenced parameters.\n");
 
             param_set_data_pointer(pool->shared_data[i].parameters[0], NULL, FALSE, TRUE);
-            pool->shared_data[i].parameters[0]->shared_data = NULL;
+            pool->shared_data[i].parameters[0]->u.shared_data = NULL;
 
             for (j = 1; j < pool->shared_data[i].count; ++j)
             {
                 walk_parameter_tree(pool->shared_data[i].parameters[j], param_zero_data_func, NULL);
-                pool->shared_data[i].parameters[j]->shared_data = NULL;
+                pool->shared_data[i].parameters[j]->u.shared_data = NULL;
             }
             HeapFree(GetProcessHeap(), 0, pool->shared_data[i].parameters);
         }

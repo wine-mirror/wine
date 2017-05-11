@@ -224,7 +224,7 @@ struct d3dx_parameter
     {
         struct d3dx_parameter *referenced_param;
         struct d3dx_shared_data *shared_data;
-    };
+    } u;
 };
 
 static inline BOOL is_param_dirty(struct d3dx_parameter *param)
