@@ -247,43 +247,12 @@ static ULONG WINAPI IDirectMusicPerformance8Impl_Release(IDirectMusicPerformance
 
 /* IDirectMusicPerformanceImpl IDirectMusicPerformance Interface part: */
 static HRESULT WINAPI IDirectMusicPerformance8Impl_Init(IDirectMusicPerformance8 *iface,
-        IDirectMusic **ppDirectMusic, IDirectSound *pDirectSound, HWND hWnd)
+        IDirectMusic **dmusic, IDirectSound *dsound, HWND hwnd)
 {
-        IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+    TRACE("(%p, %p, %p, %p)\n", iface, dmusic, dsound, hwnd);
 
-	FIXME("(iface = %p, dmusic = %p, dsound = %p, hwnd = %p)\n", This, ppDirectMusic, pDirectSound, hWnd);
-        if (This->dmusic)
-	  return DMUS_E_ALREADY_INITED;
-
-	if (NULL != pDirectSound) {
-          This->dsound = pDirectSound;
-          IDirectSound_AddRef(This->dsound);
-	} else {
-          DirectSoundCreate8(NULL, (IDirectSound8 **) &This->dsound, NULL);
-          if (!This->dsound) return DSERR_NODRIVER;
-
-          if (!hWnd)
-            hWnd = GetForegroundWindow();
-          IDirectSound_SetCooperativeLevel(This->dsound, hWnd, DSSCL_PRIORITY);
-	}
-
-	if (NULL != ppDirectMusic && NULL != *ppDirectMusic) {
-          /* app creates its own dmusic object and gives it to performance */
-          This->dmusic = (IDirectMusic8 *)*ppDirectMusic;
-          IDirectMusic8_AddRef(This->dmusic);
-	} else {
-        HRESULT hr;
-        /* App enables the performance to initialize itself and needs a pointer to object */
-        hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8, (void **)&This->dmusic);
-        if (FAILED(hr))
-            return hr;
-        if (ppDirectMusic) {
-            *ppDirectMusic = (IDirectMusic *)This->dmusic;
-            IDirectMusic8_AddRef((LPDIRECTMUSIC8)*ppDirectMusic);
-        }
-    }
-
-    return S_OK;
+    return IDirectMusicPerformance8_InitAudio(iface, dmusic, dsound ? &dsound : NULL, hwnd, 0, 0,
+            0, NULL);
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment(IDirectMusicPerformance8 *iface,
