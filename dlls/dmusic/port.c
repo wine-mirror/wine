@@ -720,18 +720,18 @@ static HRESULT WINAPI IKsControlImpl_KsProperty(IKsControl *iface, KSPROPERTY *p
         ULONG prop_len, void *data, ULONG data_len, ULONG *ret_len)
 {
     TRACE("(%p)->(%p, %u, %p, %u, %p)\n", iface, prop, prop_len, data, data_len, ret_len);
-    TRACE("prop = %s - %u - %u\n", debugstr_guid(&prop->Set), prop->Id, prop->Flags);
+    TRACE("prop = %s - %u - %u\n", debugstr_guid(&prop->u.s.Set), prop->u.s.Id, prop->u.s.Flags);
 
-    if (prop->Flags != KSPROPERTY_TYPE_GET)
+    if (prop->u.s.Flags != KSPROPERTY_TYPE_GET)
     {
-        FIXME("prop flags %u not yet supported\n", prop->Flags);
+        FIXME("prop flags %u not yet supported\n", prop->u.s.Flags);
         return S_FALSE;
     }
 
     if (data_len <  sizeof(DWORD))
         return E_NOT_SUFFICIENT_BUFFER;
 
-    FIXME("Unknown property %s\n", debugstr_guid(&prop->Set));
+    FIXME("Unknown property %s\n", debugstr_guid(&prop->u.s.Set));
     *(DWORD*)data = FALSE;
     *ret_len = sizeof(DWORD);
 
