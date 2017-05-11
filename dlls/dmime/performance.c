@@ -28,8 +28,7 @@ typedef struct IDirectMusicPerformance8Impl {
     IDirectMusic8 *dmusic;
     IDirectSound *dsound;
     IDirectMusicGraph *pToolGraph;
-    DMUS_AUDIOPARAMS pParams;
-    /* global parameters */
+    DMUS_AUDIOPARAMS params;
     BOOL fAutoDownload;
     char cMasterGrooveLevel;
     float fMasterTempo;
@@ -892,14 +891,14 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_RhythmToTime(IDirectMusicPerf
 
 /* IDirectMusicPerformance8 Interface part follow: */
 static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerformance8 *iface,
-        IDirectMusic **dmusic, IDirectSound **dsound, HWND hwnd,
-        DWORD dwDefaultPathType, DWORD dwPChannelCount, DWORD dwFlags, DMUS_AUDIOPARAMS* pParams)
+        IDirectMusic **dmusic, IDirectSound **dsound, HWND hwnd, DWORD default_path_type,
+        DWORD num_channels, DWORD flags, DMUS_AUDIOPARAMS *params)
 {
     IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
     HRESULT hr = S_OK;
 
-    TRACE("(%p, %p, %p, %p, %x, %u, %x, %p)\n", This, dmusic, dsound, hwnd, dwDefaultPathType,
-            dwPChannelCount, dwFlags, pParams);
+    TRACE("(%p, %p, %p, %p, %x, %u, %x, %p)\n", This, dmusic, dsound, hwnd, default_path_type,
+            num_channels, flags, params);
 
     if (This->dmusic)
         return DMUS_E_ALREADY_INITED;
@@ -929,26 +928,25 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
     if (dsound)
         IDirectSound_AddRef(This->dsound);
 
-	/* as seen in msdn we need params init before audio path creation */
-	if (NULL != pParams) {
-	  This->pParams = *pParams;
-	} else {
-	  /* TODO, how can i fill the struct as seen on msdn */
-	  memset(&This->pParams, 0, sizeof(DMUS_AUDIOPARAMS));
-	  This->pParams.dwSize = sizeof(DMUS_AUDIOPARAMS);
-	  This->pParams.fInitNow = FALSE;
-	  This->pParams.dwValidData = DMUS_AUDIOPARAMS_FEATURES | DMUS_AUDIOPARAMS_VOICES | DMUS_AUDIOPARAMS_SAMPLERATE | DMUS_AUDIOPARAMS_DEFAULTSYNTH;
-	  This->pParams.dwVoices = 64;
-	  This->pParams.dwSampleRate = (DWORD) 22.050; 
-	  This->pParams.dwFeatures = dwFlags;
-	  This->pParams.clsidDefaultSynth = CLSID_DirectMusicSynthSink;
-	}
-	if(dwDefaultPathType != 0)
-		hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, dwDefaultPathType, dwPChannelCount, FALSE, &This->pDefaultPath);
+    if (!params) {
+        This->params.dwSize = sizeof(DMUS_AUDIOPARAMS);
+        This->params.fInitNow = FALSE;
+        This->params.dwValidData = DMUS_AUDIOPARAMS_FEATURES | DMUS_AUDIOPARAMS_VOICES |
+                DMUS_AUDIOPARAMS_SAMPLERATE | DMUS_AUDIOPARAMS_DEFAULTSYNTH;
+        This->params.dwVoices = 64;
+        This->params.dwSampleRate = 22050;
+        This->params.dwFeatures = flags;
+        This->params.clsidDefaultSynth = CLSID_DirectMusicSynthSink;
+    } else
+        This->params = *params;
 
-	PostMessageToProcessMsgThread(This, PROCESSMSG_START);
+    if (default_path_type)
+        hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, default_path_type,
+                num_channels, FALSE, &This->pDefaultPath);
 
-	return hr;
+    PostMessageToProcessMsgThread(This, PROCESSMSG_START);
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegmentEx(IDirectMusicPerformance8 *iface,
