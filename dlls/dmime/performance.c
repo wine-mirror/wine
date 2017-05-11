@@ -25,8 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 typedef struct IDirectMusicPerformance8Impl {
     IDirectMusicPerformance8 IDirectMusicPerformance8_iface;
     LONG ref;
-    /* IDirectMusicPerformanceImpl fields */
-    IDirectMusic8 *pDirectMusic;
+    IDirectMusic8 *dmusic;
     IDirectSound *pDirectSound;
     IDirectMusicGraph *pToolGraph;
     DMUS_AUDIOPARAMS pParams;
@@ -254,7 +253,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init(IDirectMusicPerformance8
         IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 
 	FIXME("(iface = %p, dmusic = %p, dsound = %p, hwnd = %p)\n", This, ppDirectMusic, pDirectSound, hWnd);
- 	if (This->pDirectMusic || This->pDirectSound)
+        if (This->dmusic)
 	  return DMUS_E_ALREADY_INITED;
 
 	if (NULL != pDirectSound) {
@@ -271,16 +270,16 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init(IDirectMusicPerformance8
 
 	if (NULL != ppDirectMusic && NULL != *ppDirectMusic) {
           /* app creates its own dmusic object and gives it to performance */
-	  This->pDirectMusic = (IDirectMusic8*) *ppDirectMusic;
-	  IDirectMusic8_AddRef(This->pDirectMusic);
+          This->dmusic = (IDirectMusic8 *)*ppDirectMusic;
+          IDirectMusic8_AddRef(This->dmusic);
 	} else {
         HRESULT hr;
         /* App enables the performance to initialize itself and needs a pointer to object */
-        hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8, (void**)&This->pDirectMusic);
+        hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8, (void **)&This->dmusic);
         if (FAILED(hr))
             return hr;
         if (ppDirectMusic) {
-            *ppDirectMusic = (LPDIRECTMUSIC)This->pDirectMusic;
+            *ppDirectMusic = (IDirectMusic *)This->dmusic;
             IDirectMusic8_AddRef((LPDIRECTMUSIC8)*ppDirectMusic);
         }
     }
@@ -601,20 +600,21 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AddPort(IDirectMusicPerforman
 	HRESULT hr = E_FAIL;
 
 	FIXME("(%p, %p): stub\n", This, pPort);
-	if (!This->pDirectMusic || !This->pDirectSound) return DMUS_E_NOT_INIT;
+        if (!This->dmusic)
+          return DMUS_E_NOT_INIT;
 	if (NULL == pPort) {
 	  GUID port_guid;
 	  IDirectMusicPort* pDefaultPort = NULL;
 	  DMUS_PORTPARAMS params;
 	  int i, j;
-	  hr = IDirectMusic8_GetDefaultPort(This->pDirectMusic, &port_guid);
+          hr = IDirectMusic8_GetDefaultPort(This->dmusic, &port_guid);
 	  if (FAILED(hr)) return hr;
 	  ZeroMemory(&params, sizeof(params)); 
 	  params.dwSize = sizeof(params);
 	  params.dwValidParams = DMUS_PORTPARAMS_CHANNELGROUPS | DMUS_PORTPARAMS_SHARE;
 	  params.dwChannelGroups = 1;
 	  params.fShare = TRUE;
-	  hr = IDirectMusic8_CreatePort(This->pDirectMusic, &port_guid, &params, &pDefaultPort, NULL);
+          hr = IDirectMusic8_CreatePort(This->dmusic, &port_guid, &params, &pDefaultPort, NULL);
 	  if (FAILED(hr)) return hr;
 	  hr = IDirectMusicPort_Activate(pDefaultPort, TRUE);
 	  if (FAILED(hr)) { IDirectMusicPort_Release(pDefaultPort); return hr; }
@@ -698,8 +698,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_PChannelInfo(IDirectMusicPerf
 
     port_params.dwSize = sizeof(DMUS_PORTPARAMS8);
     port_params.dwValidParams = 0;
-    IDirectMusic8_GetDefaultPort(This->pDirectMusic, &default_port);
-    IDirectMusic8_CreatePort(This->pDirectMusic, &default_port, &port_params, port, NULL);
+    IDirectMusic8_GetDefaultPort(This->dmusic, &default_port);
+    IDirectMusic8_CreatePort(This->dmusic, &default_port, &port_params, port, NULL);
 
     return S_OK;
 }
@@ -832,11 +832,11 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CloseDown(IDirectMusicPerform
     IDirectSound_Release(This->pDirectSound);
     This->pDirectSound = NULL;
   }
-  if (NULL != This->pDirectMusic) {
-    IDirectMusic8_Release(This->pDirectMusic);
-    This->pDirectMusic = NULL;
-  }
-  return S_OK;
+    if (This->dmusic) {
+        IDirectMusic8_Release(This->dmusic);
+        This->dmusic = NULL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_GetResolvedTime(IDirectMusicPerformance8 *iface,
@@ -900,7 +900,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
 
 	FIXME("(%p, %p, %p, %p, %x, %u, %x, %p): to check\n", This, ppDirectMusic, ppDirectSound, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
 
-	if (This->pDirectMusic || This->pDirectSound)
+        if (This->dmusic)
 	  return DMUS_E_ALREADY_INITED;
 
 	if (NULL != ppDirectSound && NULL != *ppDirectSound) {
@@ -1203,7 +1203,6 @@ HRESULT WINAPI create_dmperformance(REFIID lpcGUID, void **ppobj)
 	}
         obj->IDirectMusicPerformance8_iface.lpVtbl = &DirectMusicPerformance8_Vtbl;
 	obj->ref = 0;  /* will be inited by QueryInterface */
-	obj->pDirectMusic = NULL;
 	obj->pDirectSound = NULL;
 	obj->pDefaultPath = NULL;
 	InitializeCriticalSection(&obj->safe);
