@@ -213,7 +213,7 @@ static void test_CreateNamedPipe(int pipemode)
     hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError());
 
-    ok(!WaitNamedPipeA(PIPENAME, 1000), "WaitNamedPipe succeeded\n");
+    ok(!WaitNamedPipeA(PIPENAME, 100), "WaitNamedPipe succeeded\n");
 
     ok(GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %u\n", GetLastError());
 
