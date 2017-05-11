@@ -820,14 +820,15 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AdjustTime(IDirectMusicPerfor
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_CloseDown(IDirectMusicPerformance8 *iface)
 {
-  IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 
-  FIXME("(%p): stub\n", This);
-  if (PostMessageToProcessMsgThread(This, PROCESSMSG_EXIT)) {
-    WaitForSingleObject(This->procThread, INFINITE);
-    This->procThreadTicStarted = FALSE;
-    CloseHandle(This->procThread);
-  }
+    FIXME("(%p): semi-stub\n", This);
+
+    if (PostMessageToProcessMsgThread(This, PROCESSMSG_EXIT)) {
+        WaitForSingleObject(This->procThread, INFINITE);
+        This->procThreadTicStarted = FALSE;
+        CloseHandle(This->procThread);
+    }
     if (This->dsound) {
         IDirectSound_Release(This->dsound);
         This->dsound = NULL;
