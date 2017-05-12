@@ -68,7 +68,7 @@ static void test_dmusic(void)
 
     /* No port can be created before SetDirectSound is called */
     hr = IDirectMusic_CreatePort(dmusic, &GUID_NULL, &port_params, &port, NULL);
-    todo_wine ok(hr == DMUS_E_DSOUND_NOT_SET, "IDirectMusic_CreatePort returned: %x\n", hr);
+    ok(hr == DMUS_E_DSOUND_NOT_SET, "IDirectMusic_CreatePort returned: %x\n", hr);
 
     hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);
     ok(hr == S_OK, "IDirectMusic_SetDirectSound returned: %x\n", hr);
