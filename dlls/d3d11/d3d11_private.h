@@ -48,6 +48,7 @@
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_OSG5 MAKE_TAG('O', 'S', 'G', '5')
+#define TAG_PCSG MAKE_TAG('P', 'C', 'S', 'G')
 #define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
 #define TAG_SHEX MAKE_TAG('S', 'H', 'E', 'X')
 #define TAG_AON9 MAKE_TAG('A', 'o', 'n', '9')

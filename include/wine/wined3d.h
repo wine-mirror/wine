@@ -1991,6 +1991,7 @@ struct wined3d_shader_desc
     enum wined3d_shader_byte_code_format format;
     struct wined3d_shader_signature input_signature;
     struct wined3d_shader_signature output_signature;
+    struct wined3d_shader_signature patch_constant_signature;
     unsigned int max_version;
 };
 

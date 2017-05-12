@@ -2843,6 +2843,7 @@ static void shader_cleanup(struct wined3d_shader *shader)
     if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
         HeapFree(GetProcessHeap(), 0, shader->u.gs.so_desc.elements);
 
+    HeapFree(GetProcessHeap(), 0, shader->patch_constant_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->output_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->signature_strings);
@@ -3251,6 +3252,25 @@ BOOL vshader_get_input(const struct wined3d_shader *shader,
     return FALSE;
 }
 
+static HRESULT shader_signature_calculate_strings_length(const struct wined3d_shader_signature *signature,
+        SIZE_T *total)
+{
+    struct wined3d_shader_signature_element *e;
+    unsigned int i;
+    SIZE_T len;
+
+    for (i = 0; i < signature->element_count; ++i)
+    {
+        e = &signature->elements[i];
+        len = strlen(e->semantic_name);
+        if (len >= ~(SIZE_T)0 - *total)
+            return E_OUTOFMEMORY;
+
+        *total += len + 1;
+    }
+    return WINED3D_OK;
+}
+
 static HRESULT shader_signature_copy(struct wined3d_shader_signature *dst,
         const struct wined3d_shader_signature *src, char **signature_strings)
 {
@@ -3288,10 +3308,8 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         const struct wined3d_shader_desc *desc, DWORD float_const_count, enum wined3d_shader_type type,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    struct wined3d_shader_signature_element *e;
     size_t byte_code_size;
-    SIZE_T total, len;
-    unsigned int i;
+    SIZE_T total;
     HRESULT hr;
     char *ptr;
 
@@ -3313,24 +3331,12 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     shader->parent_ops = parent_ops;
 
     total = 0;
-    for (i = 0; i < desc->input_signature.element_count; ++i)
-    {
-        e = &desc->input_signature.elements[i];
-        len = strlen(e->semantic_name);
-        if (len >= ~(SIZE_T)0 - total)
-            return E_OUTOFMEMORY;
-
-        total += len + 1;
-    }
-    for (i = 0; i < desc->output_signature.element_count; ++i)
-    {
-        e = &desc->output_signature.elements[i];
-        len = strlen(e->semantic_name);
-        if (len >= ~(SIZE_T)0 - total)
-            return E_OUTOFMEMORY;
-
-        total += len + 1;
-    }
+    if (FAILED(hr = shader_signature_calculate_strings_length(&desc->input_signature, &total)))
+        return hr;
+    if (FAILED(hr = shader_signature_calculate_strings_length(&desc->output_signature, &total)))
+        return hr;
+    if (FAILED(hr = shader_signature_calculate_strings_length(&desc->patch_constant_signature, &total)))
+        return hr;
     if (total && !(shader->signature_strings = HeapAlloc(GetProcessHeap(), 0, total)))
         return E_OUTOFMEMORY;
     ptr = shader->signature_strings;
@@ -3342,6 +3348,13 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
     }
     if (FAILED(hr = shader_signature_copy(&shader->output_signature, &desc->output_signature, &ptr)))
     {
+        HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
+        HeapFree(GetProcessHeap(), 0, shader->signature_strings);
+        return hr;
+    }
+    if (FAILED(hr = shader_signature_copy(&shader->patch_constant_signature, &desc->patch_constant_signature, &ptr)))
+    {
+        HeapFree(GetProcessHeap(), 0, shader->output_signature.elements);
         HeapFree(GetProcessHeap(), 0, shader->input_signature.elements);
         HeapFree(GetProcessHeap(), 0, shader->signature_strings);
         return hr;

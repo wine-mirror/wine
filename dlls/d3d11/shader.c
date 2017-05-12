@@ -77,6 +77,16 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
                 return hr;
             break;
 
+        case TAG_PCSG:
+            if (desc->patch_constant_signature.elements)
+            {
+                FIXME("Multiple patch constant signatures.\n");
+                break;
+            }
+            if (FAILED(hr = shader_parse_signature(tag, data, data_size, &desc->patch_constant_signature)))
+                return hr;
+            break;
+
         case TAG_SHDR:
         case TAG_SHEX:
             if (ctx->feature_level <= D3D_FEATURE_LEVEL_9_3)
@@ -134,8 +144,15 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
     return S_OK;
 }
 
-static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct wined3d_shader_desc *desc,
-        D3D_FEATURE_LEVEL feature_level)
+static void free_shader_desc(struct wined3d_shader_desc *desc)
+{
+    shader_free_signature(&desc->input_signature);
+    shader_free_signature(&desc->output_signature);
+    shader_free_signature(&desc->patch_constant_signature);
+}
+
+static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length,
+        struct wined3d_shader_desc *desc, D3D_FEATURE_LEVEL feature_level)
 {
     struct shader_handler_context ctx = {feature_level, desc};
     HRESULT hr;
@@ -144,6 +161,7 @@ static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, st
     desc->byte_code_size = 0;
     memset(&desc->input_signature, 0, sizeof(desc->input_signature));
     memset(&desc->output_signature, 0, sizeof(desc->output_signature));
+    memset(&desc->patch_constant_signature, 0, sizeof(desc->patch_constant_signature));
 
     hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, &ctx);
     if (!desc->byte_code)
@@ -152,8 +170,7 @@ static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, st
     if (FAILED(hr))
     {
         FIXME("Failed to parse shader, hr %#x.\n", hr);
-        shader_free_signature(&desc->input_signature);
-        shader_free_signature(&desc->output_signature);
+        free_shader_desc(desc);
     }
 
     return hr;
@@ -544,8 +561,7 @@ static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d
 
     hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
             &d3d_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader);
-    shader_free_signature(&desc.input_signature);
-    shader_free_signature(&desc.output_signature);
+    free_shader_desc(&desc);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
@@ -758,8 +774,7 @@ static HRESULT d3d11_hull_shader_init(struct d3d11_hull_shader *shader, struct d
 
     hr = wined3d_shader_create_hs(device->wined3d_device, &desc, shader,
             &d3d11_hull_shader_wined3d_parent_ops, &shader->wined3d_shader);
-    shader_free_signature(&desc.input_signature);
-    shader_free_signature(&desc.output_signature);
+    free_shader_desc(&desc);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d hull shader, hr %#x.\n", hr);
@@ -962,8 +977,7 @@ static HRESULT d3d11_domain_shader_init(struct d3d11_domain_shader *shader, stru
 
     hr = wined3d_shader_create_ds(device->wined3d_device, &desc, shader,
             &d3d11_domain_shader_wined3d_parent_ops, &shader->wined3d_shader);
-    shader_free_signature(&desc.input_signature);
-    shader_free_signature(&desc.output_signature);
+    free_shader_desc(&desc);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d domain shader, hr %#x.\n", hr);
@@ -1480,8 +1494,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
         if (!(so_desc.elements = d3d11_calloc(so_entry_count, sizeof(*so_desc.elements))))
         {
             ERR("Failed to allocate wined3d stream output element array memory.\n");
-            shader_free_signature(&desc.input_signature);
-            shader_free_signature(&desc.output_signature);
+            free_shader_desc(&desc);
             return E_OUTOFMEMORY;
         }
         if (FAILED(hr = wined3d_so_elements_from_d3d11_so_entries(so_desc.elements,
@@ -1489,8 +1502,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
                 &desc.output_signature, device->feature_level)))
         {
             HeapFree(GetProcessHeap(), 0, so_desc.elements);
-            shader_free_signature(&desc.input_signature);
-            shader_free_signature(&desc.output_signature);
+            free_shader_desc(&desc);
             return hr;
         }
     }
@@ -1504,8 +1516,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
     hr = wined3d_shader_create_gs(device->wined3d_device, &desc, so_entries ? &so_desc : NULL,
             shader, &d3d_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
     HeapFree(GetProcessHeap(), 0, so_desc.elements);
-    shader_free_signature(&desc.input_signature);
-    shader_free_signature(&desc.output_signature);
+    free_shader_desc(&desc);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d geometry shader, hr %#x.\n", hr);
@@ -1824,8 +1835,7 @@ static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d
 
     hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,
             &d3d_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader);
-    shader_free_signature(&desc.input_signature);
-    shader_free_signature(&desc.output_signature);
+    free_shader_desc(&desc);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);
@@ -2036,8 +2046,7 @@ static HRESULT d3d11_compute_shader_init(struct d3d11_compute_shader *shader, st
 
     hr = wined3d_shader_create_cs(device->wined3d_device, &desc, shader,
             &d3d11_compute_shader_wined3d_parent_ops, &shader->wined3d_shader);
-    shader_free_signature(&desc.input_signature);
-    shader_free_signature(&desc.output_signature);
+    free_shader_desc(&desc);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d compute shader, hr %#x.\n", hr);

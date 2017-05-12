@@ -3739,6 +3739,7 @@ struct wined3d_shader
 
     struct wined3d_shader_signature input_signature;
     struct wined3d_shader_signature output_signature;
+    struct wined3d_shader_signature patch_constant_signature;
     char *signature_strings;
 
     /* Pointer to the parent device */

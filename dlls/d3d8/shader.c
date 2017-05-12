@@ -121,6 +121,7 @@ HRESULT d3d8_vertex_shader_init(struct d3d8_vertex_shader *shader, struct d3d8_d
         desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM1;
         desc.input_signature.element_count = 0;
         desc.output_signature.element_count = 0;
+        desc.patch_constant_signature.element_count = 0;
         desc.max_version = 1;
 
         wined3d_mutex_lock();
@@ -172,6 +173,7 @@ HRESULT d3d8_pixel_shader_init(struct d3d8_pixel_shader *shader, struct d3d8_dev
     desc.format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM1;
     desc.input_signature.element_count = 0;
     desc.output_signature.element_count = 0;
+    desc.patch_constant_signature.element_count = 0;
     desc.max_version = 1;
 
     wined3d_mutex_lock();
