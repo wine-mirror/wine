@@ -4695,6 +4695,11 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
+    hr = effect->lpVtbl->BeginPass(effect, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
@@ -4703,13 +4708,51 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr))
         effect->lpVtbl->EndPass(effect);
 
+    /* Second try reports success and selects array element used previously.
+     * Probably array index is not recomputed and previous index value is used. */
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-
     test_effect_preshader_compare_shader(device, 2, TRUE);
 
+    /* Confirm that array element selected is the previous good one and does not depend
+     * on computed (out of bound) index value. */
+    ivect[2] = 1;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->CommitChanges(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    test_effect_preshader_compare_shader(device, 1, FALSE);
     hr = effect->lpVtbl->EndPass(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ivect[2] = 3;
+    hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    todo_wine
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    todo_wine
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    test_effect_preshader_compare_shader(device, 1, TRUE);
+
+    /* End and begin effect again to ensure it will not trigger array
+     * index recompute and error return from BeginPass. */
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->End(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = effect->lpVtbl->BeginPass(effect, 1);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    test_effect_preshader_compare_shader(device, 1, TRUE);
+    hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4730,7 +4773,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_compare_shader(device, 2, TRUE);
+    test_effect_preshader_compare_shader(device, 1, TRUE);
 
     hr = effect->lpVtbl->EndPass(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4773,7 +4816,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->CommitChanges(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_compare_shader(device, 1, FALSE);
+    test_effect_preshader_compare_shader(device, 1, TRUE);
 
     hr = effect->lpVtbl->EndPass(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
