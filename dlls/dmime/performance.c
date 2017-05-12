@@ -802,6 +802,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CloseDown(IDirectMusicPerform
         This->dsound = NULL;
     }
     if (This->dmusic) {
+        IDirectMusic_SetDirectSound(This->dmusic, NULL, NULL);
         IDirectMusic8_Release(This->dmusic);
         This->dmusic = NULL;
     }
@@ -895,6 +896,10 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
         IDirectSound_AddRef(This->dsound);
     }
 
+    hr = IDirectMusic8_SetDirectSound(This->dmusic, This->dsound, NULL);
+    if (FAILED(hr))
+        goto error;
+
     if (!params) {
         This->params.dwSize = sizeof(DMUS_AUDIOPARAMS);
         This->params.fInitNow = FALSE;
@@ -910,8 +915,10 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
     if (default_path_type) {
         hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, default_path_type,
                 num_channels, FALSE, &This->pDefaultPath);
-        if (FAILED(hr))
+        if (FAILED(hr)) {
+            IDirectMusic8_SetDirectSound(This->dmusic, NULL, NULL);
             goto error;
+        }
     }
 
     if (dsound && !*dsound) {
