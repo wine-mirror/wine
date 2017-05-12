@@ -250,23 +250,29 @@ static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_c
     context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 }
 
+static void get_buffer_view_range(const struct wined3d_buffer *buffer,
+        const struct wined3d_view_desc *desc, const struct wined3d_format *view_format,
+        unsigned int *offset, unsigned int *size)
+{
+    if (desc->format_id == WINED3DFMT_UNKNOWN)
+    {
+        *offset = desc->u.buffer.start_idx * buffer->desc.structure_byte_stride;
+        *size = desc->u.buffer.count * buffer->desc.structure_byte_stride;
+    }
+    else
+    {
+        *offset = desc->u.buffer.start_idx * view_format->byte_count;
+        *size = desc->u.buffer.count * view_format->byte_count;
+    }
+}
+
 static void create_buffer_view(struct wined3d_gl_view *view, struct wined3d_context *context,
         const struct wined3d_view_desc *desc, struct wined3d_buffer *buffer,
         const struct wined3d_format *view_format)
 {
     unsigned int offset, size;
 
-    if (desc->format_id == WINED3DFMT_UNKNOWN)
-    {
-        offset = desc->u.buffer.start_idx * buffer->desc.structure_byte_stride;
-        size = desc->u.buffer.count * buffer->desc.structure_byte_stride;
-    }
-    else
-    {
-        offset = desc->u.buffer.start_idx * view_format->byte_count;
-        size = desc->u.buffer.count * view_format->byte_count;
-    }
-
+    get_buffer_view_range(buffer, desc, view_format, &offset, &size);
     create_buffer_texture(view, context, buffer, view_format, offset, size);
 }
 
@@ -848,6 +854,47 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
         DWORD location)
 {
     wined3d_view_invalidate_location(view->resource, &view->desc, location);
+}
+
+void wined3d_unordered_access_view_clear_uint(struct wined3d_unordered_access_view *view,
+        const struct wined3d_uvec4 *clear_value, struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_format *format;
+    struct wined3d_resource *resource;
+    struct wined3d_buffer *buffer;
+    unsigned int offset, size;
+
+    resource = view->resource;
+    if (resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
+        return;
+    }
+
+    if (!gl_info->supported[ARB_CLEAR_BUFFER_OBJECT])
+    {
+        FIXME("OpenGL implementation does not support ARB_clear_buffer_object.\n");
+        return;
+    }
+
+    format = view->format;
+    if (format->id != WINED3DFMT_R32_UINT && format->id != WINED3DFMT_R32_SINT
+            && format->id != WINED3DFMT_R32G32B32A32_UINT
+            && format->id != WINED3DFMT_R32G32B32A32_SINT)
+    {
+        FIXME("Not implemented for format %s.\n", debug_d3dformat(format->id));
+        return;
+    }
+
+    buffer = buffer_from_resource(resource);
+    wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER);
+    wined3d_unordered_access_view_invalidate_location(view, ~WINED3D_LOCATION_BUFFER);
+
+    get_buffer_view_range(buffer, &view->desc, format, &offset, &size);
+    context_bind_bo(context, buffer->buffer_type_hint, buffer->buffer_object);
+    GL_EXTCALL(glClearBufferSubData(buffer->buffer_type_hint, format->glInternal,
+            offset, size, format->glFormat, format->glType, clear_value));
 }
 
 static void wined3d_unordered_access_view_cs_init(void *object)

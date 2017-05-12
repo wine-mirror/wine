@@ -3291,6 +3291,8 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_clear_rendertarget_view(struct wined3d_cs *cs, struct wined3d_rendertarget_view *view,
         const RECT *rect, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_clear_unordered_access_view_uint(struct wined3d_cs *cs,
+        struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
         unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_draw(struct wined3d_cs *cs, GLenum primitive_type, int base_vertex_idx,
@@ -3511,6 +3513,8 @@ struct wined3d_unordered_access_view
     struct wined3d_view_desc desc;
 };
 
+void wined3d_unordered_access_view_clear_uint(struct wined3d_unordered_access_view *view,
+        const struct wined3d_uvec4 *clear_value, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_access_view *view,
         DWORD location) DECLSPEC_HIDDEN;
 
@@ -3588,6 +3592,7 @@ const char *debug_fboattachment(GLenum attachment) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
 const char *debug_ivec4(const struct wined3d_ivec4 *v) DECLSPEC_HIDDEN;
+const char *debug_uvec4(const struct wined3d_uvec4 *v) DECLSPEC_HIDDEN;
 const char *debug_shader_type(enum wined3d_shader_type shader_type) DECLSPEC_HIDDEN;
 const char *debug_vec4(const struct wined3d_vec4 *v) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;

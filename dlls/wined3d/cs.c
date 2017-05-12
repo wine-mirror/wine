@@ -69,6 +69,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_BLT_SUB_RESOURCE,
     WINED3D_CS_OP_UPDATE_SUB_RESOURCE,
     WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION,
+    WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW,
     WINED3D_CS_OP_STOP,
 };
 
@@ -407,6 +408,13 @@ struct wined3d_cs_add_dirty_texture_region
     enum wined3d_cs_op opcode;
     struct wined3d_texture *texture;
     unsigned int layer;
+};
+
+struct wined3d_cs_clear_unordered_access_view
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_unordered_access_view *view;
+    struct wined3d_uvec4 clear_value;
 };
 
 struct wined3d_cs_stop
@@ -2184,6 +2192,34 @@ void wined3d_cs_emit_add_dirty_texture_region(struct wined3d_cs *cs,
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_clear_unordered_access_view(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_clear_unordered_access_view *op = data;
+    struct wined3d_unordered_access_view *view = op->view;
+    struct wined3d_context *context;
+
+    context = context_acquire(cs->device, NULL, 0);
+    wined3d_unordered_access_view_clear_uint(view, &op->clear_value, context);
+    context_release(context);
+
+    wined3d_resource_release(view->resource);
+}
+
+void wined3d_cs_emit_clear_unordered_access_view_uint(struct wined3d_cs *cs,
+        struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
+{
+    struct wined3d_cs_clear_unordered_access_view *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW;
+    op->view = view;
+    op->clear_value = *clear_value;
+
+    wined3d_resource_acquire(view->resource);
+
+    cs->ops->submit(cs);
+}
+
 static void wined3d_cs_emit_stop(struct wined3d_cs *cs)
 {
     struct wined3d_cs_stop *op;
@@ -2197,49 +2233,50 @@ static void wined3d_cs_emit_stop(struct wined3d_cs *cs)
 
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
-    /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
-    /* WINED3D_CS_OP_PRESENT                    */ wined3d_cs_exec_present,
-    /* WINED3D_CS_OP_CLEAR                      */ wined3d_cs_exec_clear,
-    /* WINED3D_CS_OP_DISPATCH                   */ wined3d_cs_exec_dispatch,
-    /* WINED3D_CS_OP_DRAW                       */ wined3d_cs_exec_draw,
-    /* WINED3D_CS_OP_FLUSH                      */ wined3d_cs_exec_flush,
-    /* WINED3D_CS_OP_SET_PREDICATION            */ wined3d_cs_exec_set_predication,
-    /* WINED3D_CS_OP_SET_VIEWPORT               */ wined3d_cs_exec_set_viewport,
-    /* WINED3D_CS_OP_SET_SCISSOR_RECT           */ wined3d_cs_exec_set_scissor_rect,
-    /* WINED3D_CS_OP_SET_RENDERTARGET_VIEW      */ wined3d_cs_exec_set_rendertarget_view,
-    /* WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW     */ wined3d_cs_exec_set_depth_stencil_view,
-    /* WINED3D_CS_OP_SET_VERTEX_DECLARATION     */ wined3d_cs_exec_set_vertex_declaration,
-    /* WINED3D_CS_OP_SET_STREAM_SOURCE          */ wined3d_cs_exec_set_stream_source,
-    /* WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ     */ wined3d_cs_exec_set_stream_source_freq,
-    /* WINED3D_CS_OP_SET_STREAM_OUTPUT          */ wined3d_cs_exec_set_stream_output,
-    /* WINED3D_CS_OP_SET_INDEX_BUFFER           */ wined3d_cs_exec_set_index_buffer,
-    /* WINED3D_CS_OP_SET_CONSTANT_BUFFER        */ wined3d_cs_exec_set_constant_buffer,
-    /* WINED3D_CS_OP_SET_TEXTURE                */ wined3d_cs_exec_set_texture,
-    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW   */ wined3d_cs_exec_set_shader_resource_view,
-    /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW  */ wined3d_cs_exec_set_unordered_access_view,
-    /* WINED3D_CS_OP_SET_SAMPLER                */ wined3d_cs_exec_set_sampler,
-    /* WINED3D_CS_OP_SET_SHADER                 */ wined3d_cs_exec_set_shader,
-    /* WINED3D_CS_OP_SET_RASTERIZER_STATE       */ wined3d_cs_exec_set_rasterizer_state,
-    /* WINED3D_CS_OP_SET_RENDER_STATE           */ wined3d_cs_exec_set_render_state,
-    /* WINED3D_CS_OP_SET_TEXTURE_STATE          */ wined3d_cs_exec_set_texture_state,
-    /* WINED3D_CS_OP_SET_SAMPLER_STATE          */ wined3d_cs_exec_set_sampler_state,
-    /* WINED3D_CS_OP_SET_TRANSFORM              */ wined3d_cs_exec_set_transform,
-    /* WINED3D_CS_OP_SET_CLIP_PLANE             */ wined3d_cs_exec_set_clip_plane,
-    /* WINED3D_CS_OP_SET_COLOR_KEY              */ wined3d_cs_exec_set_color_key,
-    /* WINED3D_CS_OP_SET_MATERIAL               */ wined3d_cs_exec_set_material,
-    /* WINED3D_CS_OP_SET_LIGHT                  */ wined3d_cs_exec_set_light,
-    /* WINED3D_CS_OP_SET_LIGHT_ENABLE           */ wined3d_cs_exec_set_light_enable,
-    /* WINED3D_CS_OP_PUSH_CONSTANTS             */ wined3d_cs_exec_push_constants,
-    /* WINED3D_CS_OP_RESET_STATE                */ wined3d_cs_exec_reset_state,
-    /* WINED3D_CS_OP_CALLBACK                   */ wined3d_cs_exec_callback,
-    /* WINED3D_CS_OP_QUERY_ISSUE                */ wined3d_cs_exec_query_issue,
-    /* WINED3D_CS_OP_PRELOAD_RESOURCE           */ wined3d_cs_exec_preload_resource,
-    /* WINED3D_CS_OP_UNLOAD_RESOURCE            */ wined3d_cs_exec_unload_resource,
-    /* WINED3D_CS_OP_MAP                        */ wined3d_cs_exec_map,
-    /* WINED3D_CS_OP_UNMAP                      */ wined3d_cs_exec_unmap,
-    /* WINED3D_CS_OP_BLT_SUB_RESOURCE           */ wined3d_cs_exec_blt_sub_resource,
-    /* WINED3D_CS_OP_UPDATE_SUB_RESOURCE        */ wined3d_cs_exec_update_sub_resource,
-    /* WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION   */ wined3d_cs_exec_add_dirty_texture_region,
+    /* WINED3D_CS_OP_NOP                         */ wined3d_cs_exec_nop,
+    /* WINED3D_CS_OP_PRESENT                     */ wined3d_cs_exec_present,
+    /* WINED3D_CS_OP_CLEAR                       */ wined3d_cs_exec_clear,
+    /* WINED3D_CS_OP_DISPATCH                    */ wined3d_cs_exec_dispatch,
+    /* WINED3D_CS_OP_DRAW                        */ wined3d_cs_exec_draw,
+    /* WINED3D_CS_OP_FLUSH                       */ wined3d_cs_exec_flush,
+    /* WINED3D_CS_OP_SET_PREDICATION             */ wined3d_cs_exec_set_predication,
+    /* WINED3D_CS_OP_SET_VIEWPORT                */ wined3d_cs_exec_set_viewport,
+    /* WINED3D_CS_OP_SET_SCISSOR_RECT            */ wined3d_cs_exec_set_scissor_rect,
+    /* WINED3D_CS_OP_SET_RENDERTARGET_VIEW       */ wined3d_cs_exec_set_rendertarget_view,
+    /* WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW      */ wined3d_cs_exec_set_depth_stencil_view,
+    /* WINED3D_CS_OP_SET_VERTEX_DECLARATION      */ wined3d_cs_exec_set_vertex_declaration,
+    /* WINED3D_CS_OP_SET_STREAM_SOURCE           */ wined3d_cs_exec_set_stream_source,
+    /* WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ      */ wined3d_cs_exec_set_stream_source_freq,
+    /* WINED3D_CS_OP_SET_STREAM_OUTPUT           */ wined3d_cs_exec_set_stream_output,
+    /* WINED3D_CS_OP_SET_INDEX_BUFFER            */ wined3d_cs_exec_set_index_buffer,
+    /* WINED3D_CS_OP_SET_CONSTANT_BUFFER         */ wined3d_cs_exec_set_constant_buffer,
+    /* WINED3D_CS_OP_SET_TEXTURE                 */ wined3d_cs_exec_set_texture,
+    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW    */ wined3d_cs_exec_set_shader_resource_view,
+    /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW   */ wined3d_cs_exec_set_unordered_access_view,
+    /* WINED3D_CS_OP_SET_SAMPLER                 */ wined3d_cs_exec_set_sampler,
+    /* WINED3D_CS_OP_SET_SHADER                  */ wined3d_cs_exec_set_shader,
+    /* WINED3D_CS_OP_SET_RASTERIZER_STATE        */ wined3d_cs_exec_set_rasterizer_state,
+    /* WINED3D_CS_OP_SET_RENDER_STATE            */ wined3d_cs_exec_set_render_state,
+    /* WINED3D_CS_OP_SET_TEXTURE_STATE           */ wined3d_cs_exec_set_texture_state,
+    /* WINED3D_CS_OP_SET_SAMPLER_STATE           */ wined3d_cs_exec_set_sampler_state,
+    /* WINED3D_CS_OP_SET_TRANSFORM               */ wined3d_cs_exec_set_transform,
+    /* WINED3D_CS_OP_SET_CLIP_PLANE              */ wined3d_cs_exec_set_clip_plane,
+    /* WINED3D_CS_OP_SET_COLOR_KEY               */ wined3d_cs_exec_set_color_key,
+    /* WINED3D_CS_OP_SET_MATERIAL                */ wined3d_cs_exec_set_material,
+    /* WINED3D_CS_OP_SET_LIGHT                   */ wined3d_cs_exec_set_light,
+    /* WINED3D_CS_OP_SET_LIGHT_ENABLE            */ wined3d_cs_exec_set_light_enable,
+    /* WINED3D_CS_OP_PUSH_CONSTANTS              */ wined3d_cs_exec_push_constants,
+    /* WINED3D_CS_OP_RESET_STATE                 */ wined3d_cs_exec_reset_state,
+    /* WINED3D_CS_OP_CALLBACK                    */ wined3d_cs_exec_callback,
+    /* WINED3D_CS_OP_QUERY_ISSUE                 */ wined3d_cs_exec_query_issue,
+    /* WINED3D_CS_OP_PRELOAD_RESOURCE            */ wined3d_cs_exec_preload_resource,
+    /* WINED3D_CS_OP_UNLOAD_RESOURCE             */ wined3d_cs_exec_unload_resource,
+    /* WINED3D_CS_OP_MAP                         */ wined3d_cs_exec_map,
+    /* WINED3D_CS_OP_UNMAP                       */ wined3d_cs_exec_unmap,
+    /* WINED3D_CS_OP_BLT_SUB_RESOURCE            */ wined3d_cs_exec_blt_sub_resource,
+    /* WINED3D_CS_OP_UPDATE_SUB_RESOURCE         */ wined3d_cs_exec_update_sub_resource,
+    /* WINED3D_CS_OP_ADD_DIRTY_TEXTURE_REGION    */ wined3d_cs_exec_add_dirty_texture_region,
+    /* WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW */ wined3d_cs_exec_clear_unordered_access_view,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

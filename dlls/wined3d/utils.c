@@ -3757,6 +3757,14 @@ const char *debug_ivec4(const struct wined3d_ivec4 *v)
             v->x, v->y, v->z, v->w);
 }
 
+const char *debug_uvec4(const struct wined3d_uvec4 *v)
+{
+    if (!v)
+        return "(null)";
+    return wine_dbg_sprintf("{%u, %u, %u, %u}",
+            v->x, v->y, v->z, v->w);
+}
+
 const char *debug_vec4(const struct wined3d_vec4 *v)
 {
     if (!v)
