@@ -574,7 +574,7 @@ static void testInitializeSecurityContextFlags(void)
 {
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
-    SspiData                client;
+    SspiData                client = {0};
     SEC_WINNT_AUTH_IDENTITY_A id;
     ULONG                   req_attr, ctxt_attr;
     TimeStamp               ttl;
@@ -794,7 +794,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
     BOOL                    first = TRUE;
-    SspiData                client, server;
+    SspiData                client = {0}, server = {0};
     SEC_WINNT_AUTH_IDENTITY_A id;
     SecPkgContext_Sizes     ctxt_sizes;
 
@@ -923,7 +923,7 @@ static void testSignSeal(void)
     SECURITY_STATUS         sec_status;
     PSecPkgInfoA            pkg_info = NULL;
     BOOL                    first = TRUE;
-    SspiData                client, server;
+    SspiData                client = {0}, server = {0};
     SEC_WINNT_AUTH_IDENTITY_A id;
     static char             sec_pkg_name[] = "NTLM";
     SecBufferDesc           crypt;
@@ -1350,8 +1350,8 @@ static void test_cred_multiple_use(void)
     SEC_WINNT_AUTH_IDENTITY_A id;
     PSecPkgInfoA            pkg_info = NULL;
     CredHandle              cred;
-    CtxtHandle              ctxt1;
-    CtxtHandle              ctxt2;
+    CtxtHandle              ctxt1 = {0};
+    CtxtHandle              ctxt2 = {0};
     SecBufferDesc           buffer_desc;
     SecBuffer               buffers[1];
     ULONG                   ctxt_attr;
@@ -1410,7 +1410,7 @@ static void test_null_auth_data(void)
     SECURITY_STATUS status;
     PSecPkgInfoA info;
     CredHandle cred;
-    CtxtHandle ctx;
+    CtxtHandle ctx = {0};
     SecBufferDesc buffer_desc;
     SecBuffer buffers[1];
     char user[256];
