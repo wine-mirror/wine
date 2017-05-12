@@ -877,25 +877,23 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
                 (void **)&This->dmusic);
         if (FAILED(hr))
             return hr;
-        if (dmusic)
-            *dmusic = (IDirectMusic *)This->dmusic;
-    } else
+    } else {
         This->dmusic = (IDirectMusic8 *)*dmusic;
-    if (dmusic)
         IDirectMusic8_AddRef(This->dmusic);
+    }
 
     if (!dsound || !*dsound) {
         hr = DirectSoundCreate8(NULL, (IDirectSound8 **)&This->dsound, NULL);
         if (FAILED(hr))
-            return hr;
-        IDirectSound_SetCooperativeLevel(This->dsound, hwnd ? hwnd : GetForegroundWindow(),
+            goto error;
+        hr = IDirectSound_SetCooperativeLevel(This->dsound, hwnd ? hwnd : GetForegroundWindow(),
                 DSSCL_PRIORITY);
-        if (dsound)
-            *dsound = This->dsound;
-    } else
+        if (FAILED(hr))
+            goto error;
+    } else {
         This->dsound = *dsound;
-    if (dsound)
         IDirectSound_AddRef(This->dsound);
+    }
 
     if (!params) {
         This->params.dwSize = sizeof(DMUS_AUDIOPARAMS);
@@ -909,12 +907,34 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_InitAudio(IDirectMusicPerform
     } else
         This->params = *params;
 
-    if (default_path_type)
+    if (default_path_type) {
         hr = IDirectMusicPerformance8_CreateStandardAudioPath(iface, default_path_type,
                 num_channels, FALSE, &This->pDefaultPath);
+        if (FAILED(hr))
+            goto error;
+    }
 
+    if (dsound && !*dsound) {
+        *dsound = This->dsound;
+        IDirectSound_AddRef(*dsound);
+    }
+    if (dmusic && !*dmusic) {
+        *dmusic = (IDirectMusic *)This->dmusic;
+        IDirectMusic_AddRef(*dmusic);
+    }
     PostMessageToProcessMsgThread(This, PROCESSMSG_START);
 
+    return S_OK;
+
+error:
+    if (This->dsound) {
+        IDirectSound_Release(This->dsound);
+        This->dsound = NULL;
+    }
+    if (This->dmusic) {
+        IDirectMusic8_Release(This->dmusic);
+        This->dmusic = NULL;
+    }
     return hr;
 }
 
