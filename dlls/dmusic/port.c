@@ -194,6 +194,7 @@ static ULONG WINAPI SynthPortImpl_IDirectMusicPort_Release(LPDIRECTMUSICPORT ifa
 
     if (!ref)
     {
+        dmusic_remove_port(This->parent, iface);
         IDirectMusicSynth_Activate(This->synth, FALSE);
         IDirectMusicSynth_Close(This->synth);
         IDirectMusicSynth_Release(This->synth);

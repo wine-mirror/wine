@@ -176,10 +176,16 @@ static void test_setdsound(void)
     ok(hr == S_OK, "CreatePort returned: %x\n", hr);
     ref = get_refcount(dsound);
     ok(ref == 2, "dsound ref count got %d expected 2\n", ref);
+    IDirectMusicPort_AddRef(port);
+    ref = IDirectMusicPort_Release(port);
+    ok(ref == 1, "port ref count got %d expected 1\n", ref);
     hr = IDirectMusicPort_Activate(port, TRUE);
     ok(hr == S_OK, "Port Activate returned: %x\n", hr);
     ref = get_refcount(dsound);
     ok(ref == 4, "dsound ref count got %d expected 4\n", ref);
+    IDirectMusicPort_AddRef(port);
+    ref = IDirectMusicPort_Release(port);
+    ok(ref == 1, "port ref count got %d expected 1\n", ref);
 
     /* Releasing dsound from dmusic */
     hr = IDirectMusic_SetDirectSound(dmusic, NULL, NULL);

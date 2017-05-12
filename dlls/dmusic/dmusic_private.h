@@ -229,6 +229,8 @@ static inline void DMUSIC_UnlockModule(void) { InterlockedDecrement( &DMUSIC_ref
 /*****************************************************************************
  * Misc.
  */
+void dmusic_remove_port(IDirectMusic8Impl *dmusic, IDirectMusicPort *port) DECLSPEC_HIDDEN;
+
 /* for simpler reading */
 typedef struct _DMUS_PRIVATE_CHUNK {
 	FOURCC fccID; /* FOURCC ID of the chunk */
