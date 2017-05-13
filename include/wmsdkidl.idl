@@ -20,8 +20,6 @@ import "oaidl.idl";
 import "wmsbuffer.idl";
 import "drmexternals.idl";
 
-typedef unsigned __int64 QWORD;
-
 typedef struct _WMMediaType
 {
     GUID majortype;
