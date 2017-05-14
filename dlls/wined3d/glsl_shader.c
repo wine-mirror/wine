@@ -4886,6 +4886,7 @@ static void shader_glsl_conditional_op(const struct wined3d_shader_instruction *
     switch (ins->handler_idx)
     {
         case WINED3DSIH_BREAKP: op = "break"; break;
+        case WINED3DSIH_CONTINUEP: op = "continue"; break;
         case WINED3DSIH_RETP: op = "return"; break;
         default:
             ERR("Unhandled opcode %#x.\n", ins->handler_idx);
@@ -10003,6 +10004,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_CMP                              */ shader_glsl_conditional_move,
     /* WINED3DSIH_CND                              */ shader_glsl_cnd,
     /* WINED3DSIH_CONTINUE                         */ shader_glsl_continue,
+    /* WINED3DSIH_CONTINUEP                        */ shader_glsl_conditional_op,
     /* WINED3DSIH_COUNTBITS                        */ shader_glsl_map2gl,
     /* WINED3DSIH_CRS                              */ shader_glsl_cross,
     /* WINED3DSIH_CUT                              */ shader_glsl_cut,
