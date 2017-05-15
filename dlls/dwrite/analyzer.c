@@ -31,6 +31,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 extern const unsigned short wine_linebreak_table[] DECLSPEC_HIDDEN;
 extern const unsigned short wine_scripts_table[] DECLSPEC_HIDDEN;
 
+/* Number of characters needed for LOCALE_SNATIVEDIGITS */
+#define NATIVE_DIGITS_LEN 11
+
 struct dwritescript_properties {
     DWRITE_SCRIPT_PROPERTIES props;
     UINT32 scripttag;    /* OpenType script tag */
@@ -1065,7 +1068,7 @@ static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSub
     switch (method)
     {
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL:
-        GetLocaleInfoEx(numbersubst->locale, lctype | LOCALE_SNATIVEDIGITS, digits, sizeof(digits)/sizeof(digits[0]));
+        GetLocaleInfoEx(numbersubst->locale, lctype | LOCALE_SNATIVEDIGITS, digits, NATIVE_DIGITS_LEN);
         break;
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL:
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL:
@@ -1079,7 +1082,7 @@ static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSub
                  break;
              }
         }
-        GetLocaleInfoEx(numbersubst->locale, lctype | LOCALE_SNATIVEDIGITS, digits, sizeof(digits)/sizeof(digits[0]));
+        GetLocaleInfoEx(numbersubst->locale, lctype | LOCALE_SNATIVEDIGITS, digits, NATIVE_DIGITS_LEN);
         break;
     default:
         ;
@@ -1106,8 +1109,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     struct scriptshaping_context context;
     struct scriptshaping_cache *cache = NULL;
     BOOL update_cluster, need_vertical;
+    WCHAR digits[NATIVE_DIGITS_LEN];
     IDWriteFontFace1 *fontface1;
-    WCHAR digits[11];
     WCHAR *string;
     UINT32 i, g;
     HRESULT hr = S_OK;
