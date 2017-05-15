@@ -7434,8 +7434,7 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context *
     shader_glsl_add_version_declaration(buffer, gl_info);
 
     shader_glsl_enable_extensions(buffer, gl_info);
-    if (gl_info->supported[ARB_COMPUTE_SHADER])
-        shader_addline(buffer, "#extension GL_ARB_compute_shader : enable\n");
+    shader_addline(buffer, "#extension GL_ARB_compute_shader : enable\n");
 
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
