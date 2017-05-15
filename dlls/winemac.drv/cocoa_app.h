@@ -116,7 +116,6 @@ enum {
 
     - (BOOL) waitUntilQueryDone:(int*)done timeout:(NSDate*)timeout processEvents:(BOOL)processEvents;
 
-    - (void) keyboardSelectionDidChange;
     - (void) noteKey:(uint16_t)keyCode pressed:(BOOL)pressed;
 
     - (void) window:(WineWindow*)window isBeingDragged:(BOOL)dragged;

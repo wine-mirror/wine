@@ -453,6 +453,15 @@ static NSString* WineLocalizedString(unsigned int stringID)
         }
     }
 
+    - (void) setKeyboardType:(CGEventSourceKeyboardType)newType
+    {
+        if (newType != keyboardType)
+        {
+            keyboardType = newType;
+            [self keyboardSelectionDidChange];
+        }
+    }
+
     - (void) enabledKeyboardInputSourcesChanged
     {
         macdrv_layout_list_needs_update = TRUE;

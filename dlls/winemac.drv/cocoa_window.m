@@ -1929,15 +1929,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         event->key.time_ms   = [controller ticksForEventTime:[theEvent timestamp]];
 
         if ((cgevent = [theEvent CGEvent]))
-        {
-            CGEventSourceKeyboardType keyboardType = CGEventGetIntegerValueField(cgevent,
-                                                        kCGKeyboardEventKeyboardType);
-            if (keyboardType != controller.keyboardType)
-            {
-                controller.keyboardType = keyboardType;
-                [controller keyboardSelectionDidChange];
-            }
-        }
+            controller.keyboardType = CGEventGetIntegerValueField(cgevent, kCGKeyboardEventKeyboardType);
 
         [queue postEvent:event];
 
