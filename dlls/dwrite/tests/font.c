@@ -5917,8 +5917,8 @@ static void test_GetRecommendedRenderingMode(void)
         mode1 = IDWriteRenderingParams3_GetRenderingMode1(params3);
         ok(mode1 == DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED, "got %d\n", mode1);
 
-        mode1 = IDWriteRenderingParams3_GetRenderingMode(params3);
-        ok(mode1 == DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC, "got %d\n", mode1);
+        mode = IDWriteRenderingParams3_GetRenderingMode(params3);
+        ok(mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, "got %d\n", mode);
 
         hr = IDWriteRenderingParams3_QueryInterface(params3, &IID_IDWriteRenderingParams, (void**)&params);
         ok(hr == S_OK, "got 0x%08x\n", hr);
