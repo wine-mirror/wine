@@ -1161,10 +1161,19 @@ else
     X_CFLAGS=""
     X_LIBS=""
 fi
-WINE_ERROR_WITH(x,[test "x$X_LIBS" = "x"],[X ${notice_platform}development files not found. Wine will be built
+
+if test "$enable_winemac_drv" = "no"
+then
+    WINE_ERROR_WITH(x,[test "x$X_LIBS" = "x"],
+[X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need
-to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.],
-[enable_winex11_drv])
+to install ${notice_platform}development packages of Xlib at the very least.],
+                    [enable_winex11_drv])
+else
+    WINE_NOTICE_WITH(x,[test "x$X_LIBS" = "x"],
+                     [X ${notice_platform}development files not found, the X11 driver won't be supported.],
+                     [enable_winex11_drv])
+fi
 
 dnl **** Check for OpenCL ****
 if test "$ac_cv_header_CL_cl_h" = "yes"

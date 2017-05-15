@@ -10910,15 +10910,29 @@ else
     X_CFLAGS=""
     X_LIBS=""
 fi
-if test "x$X_LIBS" = "x"; then :
+
+if test "$enable_winemac_drv" = "no"
+then
+    if test "x$X_LIBS" = "x"; then :
   case "x$with_x" in
   xno) ;;
   *)   as_fn_error $? "X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need
-to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.
+to install ${notice_platform}development packages of Xlib at the very least.
 Use the --without-x option if you really want this." "$LINENO" 5 ;;
 esac
 enable_winex11_drv=${enable_winex11_drv:-no}
+fi
+else
+    if test "x$X_LIBS" = "x"; then :
+  case "x$with_x" in
+  x)   as_fn_append wine_notices "|X ${notice_platform}development files not found, the X11 driver won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "X ${notice_platform}development files not found, the X11 driver won't be supported.
+This is an error since --with-x was requested." "$LINENO" 5 ;;
+esac
+enable_winex11_drv=${enable_winex11_drv:-no}
+fi
 fi
 
 if test "$ac_cv_header_CL_cl_h" = "yes"
