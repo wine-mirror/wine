@@ -4662,12 +4662,12 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
 
     if ((hr = init_reader( reader )) != S_OK) goto done;
 
-    charset = detect_charset( xmlbuf->ptr, xmlbuf->size, &offset );
+    charset = detect_charset( xmlbuf->bytes.bytes, xmlbuf->bytes.length, &offset );
     hr = prop_set( reader->prop, reader->prop_count, WS_XML_READER_PROPERTY_CHARSET, &charset,
                    sizeof(charset) );
     if (hr != S_OK) goto done;
 
-    set_input_buffer( reader, xmlbuf, (const unsigned char *)xmlbuf->ptr + offset, xmlbuf->size - offset );
+    set_input_buffer( reader, xmlbuf, xmlbuf->bytes.bytes + offset, xmlbuf->bytes.length - offset );
     if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) hr = E_OUTOFMEMORY;
     else read_insert_bof( reader, node );
 

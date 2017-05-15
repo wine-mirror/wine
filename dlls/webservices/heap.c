@@ -320,21 +320,21 @@ struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap )
     struct xmlbuf *ret;
 
     if (!(ret = ws_alloc( heap, sizeof(*ret) ))) return NULL;
-    if (!(ret->ptr = ws_alloc( heap, XML_BUFFER_INITIAL_ALLOCATED_SIZE )))
+    if (!(ret->bytes.bytes = ws_alloc( heap, XML_BUFFER_INITIAL_ALLOCATED_SIZE )))
     {
         ws_free( heap, ret, sizeof(*ret) );
         return NULL;
     }
-    ret->heap           = heap;
-    ret->size_allocated = XML_BUFFER_INITIAL_ALLOCATED_SIZE;
-    ret->size           = 0;
+    ret->heap         = heap;
+    ret->size         = XML_BUFFER_INITIAL_ALLOCATED_SIZE;
+    ret->bytes.length = 0;
     return ret;
 }
 
 void free_xmlbuf( struct xmlbuf *xmlbuf )
 {
     if (!xmlbuf) return;
-    ws_free( xmlbuf->heap, xmlbuf->ptr, xmlbuf->size_allocated );
+    ws_free( xmlbuf->heap, xmlbuf->bytes.bytes, xmlbuf->size );
     ws_free( xmlbuf->heap, xmlbuf, sizeof(*xmlbuf) );
 }
 

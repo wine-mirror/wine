@@ -288,8 +288,8 @@ HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERT
         if (size != sizeof(*bytes)) hr = E_INVALIDARG;
         else
         {
-            bytes->bytes  = writer->output_buf->ptr;
-            bytes->length = writer->output_buf->size;
+            bytes->bytes  = writer->output_buf->bytes.bytes;
+            bytes->length = writer->output_buf->bytes.length;
         }
         break;
     }
@@ -310,7 +310,7 @@ static void set_output_buffer( struct writer *writer, struct xmlbuf *xmlbuf )
     }
     writer->output_buf   = xmlbuf;
     writer->output_type  = WS_XML_WRITER_OUTPUT_TYPE_BUFFER;
-    writer->write_bufptr = xmlbuf->ptr;
+    writer->write_bufptr = xmlbuf->bytes.bytes;
     writer->write_pos    = 0;
 }
 
@@ -441,16 +441,16 @@ static HRESULT write_grow_buffer( struct writer *writer, ULONG size )
     SIZE_T new_size;
     void *tmp;
 
-    if (buf->size_allocated >= writer->write_pos + size)
+    if (buf->size >= writer->write_pos + size)
     {
-        buf->size = writer->write_pos + size;
+        buf->bytes.length = writer->write_pos + size;
         return S_OK;
     }
-    new_size = max( buf->size_allocated * 2, writer->write_pos + size );
-    if (!(tmp = ws_realloc( buf->heap, buf->ptr, buf->size_allocated, new_size ))) return WS_E_QUOTA_EXCEEDED;
-    writer->write_bufptr = buf->ptr = tmp;
-    buf->size_allocated = new_size;
-    buf->size = writer->write_pos + size;
+    new_size = max( buf->size * 2, writer->write_pos + size );
+    if (!(tmp = ws_realloc( buf->heap, buf->bytes.bytes, buf->size, new_size ))) return WS_E_QUOTA_EXCEEDED;
+    writer->write_bufptr = buf->bytes.bytes = tmp;
+    buf->size = new_size;
+    buf->bytes.length = writer->write_pos + size;
     return S_OK;
 }
 
@@ -2820,8 +2820,8 @@ HRESULT WINAPI WsWriteXmlBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer, W
     }
 
     if ((hr = write_flush( writer )) != S_OK) goto done;
-    if ((hr = write_grow_buffer( writer, xmlbuf->size )) != S_OK) goto done;
-    write_bytes( writer, xmlbuf->ptr, xmlbuf->size );
+    if ((hr = write_grow_buffer( writer, xmlbuf->bytes.length )) != S_OK) goto done;
+    write_bytes( writer, xmlbuf->bytes.bytes, xmlbuf->bytes.length );
 
 done:
     LeaveCriticalSection( &writer->cs );
@@ -2869,12 +2869,12 @@ HRESULT WINAPI WsWriteXmlBufferToBytes( WS_XML_WRITER *handle, WS_XML_BUFFER *bu
         if (hr != S_OK) goto done;
     }
 
-    if (!(buf = ws_alloc( heap, xmlbuf->size ))) hr = WS_E_QUOTA_EXCEEDED;
+    if (!(buf = ws_alloc( heap, xmlbuf->bytes.length ))) hr = WS_E_QUOTA_EXCEEDED;
     else
     {
-        memcpy( buf, xmlbuf->ptr, xmlbuf->size );
+        memcpy( buf, xmlbuf->bytes.bytes, xmlbuf->bytes.length );
         *bytes = buf;
-        *size = xmlbuf->size;
+        *size = xmlbuf->bytes.length;
     }
 
 done:

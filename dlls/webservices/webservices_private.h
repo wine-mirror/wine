@@ -21,8 +21,7 @@
 struct xmlbuf
 {
     WS_HEAP *heap;
-    void    *ptr;
-    SIZE_T   size_allocated;
+    WS_BYTES bytes;
     SIZE_T   size;
 };
 
