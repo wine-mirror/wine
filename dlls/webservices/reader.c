@@ -151,16 +151,28 @@ void destroy_nodes( struct node *node )
 static WS_XML_ATTRIBUTE *dup_attribute( const WS_XML_ATTRIBUTE *src )
 {
     WS_XML_ATTRIBUTE *dst;
-    const WS_XML_STRING *prefix = (src->prefix && src->prefix->length) ? src->prefix : NULL;
+    const WS_XML_STRING *prefix = src->prefix;
     const WS_XML_STRING *localname = src->localName;
     const WS_XML_STRING *ns = src->localName;
+    const WS_XML_TEXT *text = src->value;
 
     if (!(dst = heap_alloc( sizeof(*dst) ))) return NULL;
     dst->singleQuote = src->singleQuote;
     dst->isXmlNs     = src->isXmlNs;
-    if (prefix && !(dst->prefix = alloc_xml_string( prefix->bytes, prefix->length ))) goto error;
-    if (localname && !(dst->localName = alloc_xml_string( localname->bytes, localname->length ))) goto error;
-    if (ns && !(dst->ns = alloc_xml_string( ns->bytes, ns->length ))) goto error;
+
+    if (!prefix) dst->prefix = NULL;
+    else if (!(dst->prefix = alloc_xml_string( prefix->bytes, prefix->length ))) goto error;
+    if (!(dst->localName = alloc_xml_string( localname->bytes, localname->length ))) goto error;
+    if (!(dst->ns = alloc_xml_string( ns->bytes, ns->length ))) goto error;
+
+    if (text)
+    {
+        WS_XML_UTF8_TEXT *utf8;
+        const WS_XML_UTF8_TEXT *utf8_src = (const WS_XML_UTF8_TEXT *)text;
+        if (!(utf8 = alloc_utf8_text( utf8_src->value.bytes, utf8_src->value.length ))) goto error;
+        dst->value = &utf8->text;
+    }
+
     return dst;
 
 error:
@@ -223,7 +235,7 @@ static struct node *dup_text_node( const WS_XML_TEXT_NODE *src )
     if (src->text)
     {
         WS_XML_UTF8_TEXT *utf8;
-        const WS_XML_UTF8_TEXT *utf8_src = (WS_XML_UTF8_TEXT *)src->text;
+        const WS_XML_UTF8_TEXT *utf8_src = (const WS_XML_UTF8_TEXT *)src->text;
         if (!(utf8 = alloc_utf8_text( utf8_src->value.bytes, utf8_src->value.length )))
         {
             free_node( node );
