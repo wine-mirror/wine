@@ -44,7 +44,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_RESOURCE_TYPE_MASK          (0xfu << WINED3D_SM4_RESOURCE_TYPE_SHIFT)
 
 #define WINED3D_SM4_PRIMITIVE_TYPE_SHIFT        11
-#define WINED3D_SM4_PRIMITIVE_TYPE_MASK         (0x7u << WINED3D_SM4_PRIMITIVE_TYPE_SHIFT)
+#define WINED3D_SM4_PRIMITIVE_TYPE_MASK         (0x3fu << WINED3D_SM4_PRIMITIVE_TYPE_SHIFT)
 
 #define WINED3D_SM4_INDEX_TYPE_SHIFT            11
 #define WINED3D_SM4_INDEX_TYPE_MASK             (0x1u << WINED3D_SM4_INDEX_TYPE_SHIFT)
@@ -342,11 +342,43 @@ enum wined3d_sm4_output_primitive_type
 
 enum wined3d_sm4_input_primitive_type
 {
-    WINED3D_SM4_INPUT_PT_POINT          = 0x1,
-    WINED3D_SM4_INPUT_PT_LINE           = 0x2,
-    WINED3D_SM4_INPUT_PT_TRIANGLE       = 0x3,
-    WINED3D_SM4_INPUT_PT_LINEADJ        = 0x6,
-    WINED3D_SM4_INPUT_PT_TRIANGLEADJ    = 0x7,
+    WINED3D_SM4_INPUT_PT_POINT          = 0x01,
+    WINED3D_SM4_INPUT_PT_LINE           = 0x02,
+    WINED3D_SM4_INPUT_PT_TRIANGLE       = 0x03,
+    WINED3D_SM4_INPUT_PT_LINEADJ        = 0x06,
+    WINED3D_SM4_INPUT_PT_TRIANGLEADJ    = 0x07,
+    WINED3D_SM5_INPUT_PT_PATCH1         = 0x08,
+    WINED3D_SM5_INPUT_PT_PATCH2         = 0x09,
+    WINED3D_SM5_INPUT_PT_PATCH3         = 0x0a,
+    WINED3D_SM5_INPUT_PT_PATCH4         = 0x0b,
+    WINED3D_SM5_INPUT_PT_PATCH5         = 0x0c,
+    WINED3D_SM5_INPUT_PT_PATCH6         = 0x0d,
+    WINED3D_SM5_INPUT_PT_PATCH7         = 0x0e,
+    WINED3D_SM5_INPUT_PT_PATCH8         = 0x0f,
+    WINED3D_SM5_INPUT_PT_PATCH9         = 0x10,
+    WINED3D_SM5_INPUT_PT_PATCH10        = 0x11,
+    WINED3D_SM5_INPUT_PT_PATCH11        = 0x12,
+    WINED3D_SM5_INPUT_PT_PATCH12        = 0x13,
+    WINED3D_SM5_INPUT_PT_PATCH13        = 0x14,
+    WINED3D_SM5_INPUT_PT_PATCH14        = 0x15,
+    WINED3D_SM5_INPUT_PT_PATCH15        = 0x16,
+    WINED3D_SM5_INPUT_PT_PATCH16        = 0x17,
+    WINED3D_SM5_INPUT_PT_PATCH17        = 0x18,
+    WINED3D_SM5_INPUT_PT_PATCH18        = 0x19,
+    WINED3D_SM5_INPUT_PT_PATCH19        = 0x1a,
+    WINED3D_SM5_INPUT_PT_PATCH20        = 0x1b,
+    WINED3D_SM5_INPUT_PT_PATCH21        = 0x1c,
+    WINED3D_SM5_INPUT_PT_PATCH22        = 0x1d,
+    WINED3D_SM5_INPUT_PT_PATCH23        = 0x1e,
+    WINED3D_SM5_INPUT_PT_PATCH24        = 0x1f,
+    WINED3D_SM5_INPUT_PT_PATCH25        = 0x20,
+    WINED3D_SM5_INPUT_PT_PATCH26        = 0x21,
+    WINED3D_SM5_INPUT_PT_PATCH27        = 0x22,
+    WINED3D_SM5_INPUT_PT_PATCH28        = 0x23,
+    WINED3D_SM5_INPUT_PT_PATCH29        = 0x24,
+    WINED3D_SM5_INPUT_PT_PATCH30        = 0x25,
+    WINED3D_SM5_INPUT_PT_PATCH31        = 0x26,
+    WINED3D_SM5_INPUT_PT_PATCH32        = 0x27,
 };
 
 enum wined3d_sm4_swizzle_type
@@ -594,11 +626,11 @@ static void shader_sm4_read_dcl_output_topology(struct wined3d_shader_instructio
 
     primitive_type = (opcode_token & WINED3D_SM4_PRIMITIVE_TYPE_MASK) >> WINED3D_SM4_PRIMITIVE_TYPE_SHIFT;
     if (primitive_type >= ARRAY_SIZE(output_primitive_type_table))
-        ins->declaration.primitive_type = WINED3D_PT_UNDEFINED;
+        ins->declaration.primitive_type.type = WINED3D_PT_UNDEFINED;
     else
-        ins->declaration.primitive_type = output_primitive_type_table[primitive_type];
+        ins->declaration.primitive_type.type = output_primitive_type_table[primitive_type];
 
-    if (ins->declaration.primitive_type == WINED3D_PT_UNDEFINED)
+    if (ins->declaration.primitive_type.type == WINED3D_PT_UNDEFINED)
         FIXME("Unhandled output primitive type %#x.\n", primitive_type);
 }
 
@@ -609,12 +641,21 @@ static void shader_sm4_read_dcl_input_primitive(struct wined3d_shader_instructio
     enum wined3d_sm4_input_primitive_type primitive_type;
 
     primitive_type = (opcode_token & WINED3D_SM4_PRIMITIVE_TYPE_MASK) >> WINED3D_SM4_PRIMITIVE_TYPE_SHIFT;
-    if (primitive_type >= ARRAY_SIZE(input_primitive_type_table))
-        ins->declaration.primitive_type = WINED3D_PT_UNDEFINED;
+    if (WINED3D_SM5_INPUT_PT_PATCH1 <= primitive_type && primitive_type <= WINED3D_SM5_INPUT_PT_PATCH32)
+    {
+        ins->declaration.primitive_type.type = WINED3D_PT_PATCH;
+        ins->declaration.primitive_type.patch_vertex_count = primitive_type - WINED3D_SM5_INPUT_PT_PATCH1 + 1;
+    }
+    else if (primitive_type >= ARRAY_SIZE(input_primitive_type_table))
+    {
+        ins->declaration.primitive_type.type = WINED3D_PT_UNDEFINED;
+    }
     else
-        ins->declaration.primitive_type = input_primitive_type_table[primitive_type];
+    {
+        ins->declaration.primitive_type.type = input_primitive_type_table[primitive_type];
+    }
 
-    if (ins->declaration.primitive_type == WINED3D_PT_UNDEFINED)
+    if (ins->declaration.primitive_type.type == WINED3D_PT_UNDEFINED)
         FIXME("Unhandled input primitive type %#x.\n", primitive_type);
 }
 

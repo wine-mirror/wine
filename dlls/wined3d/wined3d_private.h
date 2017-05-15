@@ -1148,6 +1148,12 @@ struct wined3d_shader_texel_offset
     signed char u, v, w;
 };
 
+struct wined3d_shader_primitive_type
+{
+    enum wined3d_primitive_type type;
+    unsigned int patch_vertex_count;
+};
+
 struct wined3d_shader_instruction
 {
     const struct wined3d_shader_context *ctx;
@@ -1164,7 +1170,7 @@ struct wined3d_shader_instruction
     {
         struct wined3d_shader_semantic semantic;
         struct wined3d_shader_register_semantic register_semantic;
-        enum wined3d_primitive_type primitive_type;
+        struct wined3d_shader_primitive_type primitive_type;
         struct wined3d_shader_dst_param dst;
         struct wined3d_shader_src_param src;
         unsigned int count;

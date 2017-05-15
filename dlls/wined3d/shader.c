@@ -1048,7 +1048,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
-                shader->u.gs.input_type = ins.declaration.primitive_type;
+                shader->u.gs.input_type = ins.declaration.primitive_type.type;
             else
                 FIXME("Invalid instruction %#x for shader type %#x.\n",
                         ins.handler_idx, shader_version.type);
@@ -1056,7 +1056,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         else if (ins.handler_idx == WINED3DSIH_DCL_OUTPUT_TOPOLOGY)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
-                shader->u.gs.output_type = ins.declaration.primitive_type;
+                shader->u.gs.output_type = ins.declaration.primitive_type.type;
             else
                 FIXME("Invalid instruction %#x for shader type %#x.\n",
                         ins.handler_idx, shader_version.type);
@@ -2395,9 +2395,9 @@ static void shader_dump_ins_modifiers(struct wined3d_string_buffer *buffer,
 }
 
 static void shader_dump_primitive_type(struct wined3d_string_buffer *buffer,
-        enum wined3d_primitive_type primitive_type)
+        const struct wined3d_shader_primitive_type *primitive_type)
 {
-    switch (primitive_type)
+    switch (primitive_type->type)
     {
         case WINED3D_PT_UNDEFINED:
             shader_addline(buffer, "undefined");
@@ -2432,8 +2432,11 @@ static void shader_dump_primitive_type(struct wined3d_string_buffer *buffer,
         case WINED3D_PT_TRIANGLESTRIP_ADJ:
             shader_addline(buffer, "trianglestrip_adj");
             break;
+        case WINED3D_PT_PATCH:
+            shader_addline(buffer, "patch%u", primitive_type->patch_vertex_count);
+            break;
         default:
-            shader_addline(buffer, "<unrecognized_primitive_type %#x>", primitive_type);
+            shader_addline(buffer, "<unrecognized_primitive_type %#x>", primitive_type->type);
             break;
     }
 }
@@ -2631,7 +2634,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 || ins.handler_idx == WINED3DSIH_DCL_OUTPUT_TOPOLOGY)
         {
             shader_addline(&buffer, "%s ", shader_opcode_names[ins.handler_idx]);
-            shader_dump_primitive_type(&buffer, ins.declaration.primitive_type);
+            shader_dump_primitive_type(&buffer, &ins.declaration.primitive_type);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INTERFACE)
         {

@@ -72,6 +72,7 @@ enum wined3d_primitive_type
     WINED3D_PT_LINESTRIP_ADJ                = 11,
     WINED3D_PT_TRIANGLELIST_ADJ             = 12,
     WINED3D_PT_TRIANGLESTRIP_ADJ            = 13,
+    WINED3D_PT_PATCH                        = 14,
 };
 
 enum wined3d_device_type

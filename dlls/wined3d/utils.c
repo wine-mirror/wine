@@ -4102,9 +4102,10 @@ const char *debug_d3dprimitivetype(enum wined3d_primitive_type primitive_type)
         PRIM_TO_STR(WINED3D_PT_LINESTRIP_ADJ);
         PRIM_TO_STR(WINED3D_PT_TRIANGLELIST_ADJ);
         PRIM_TO_STR(WINED3D_PT_TRIANGLESTRIP_ADJ);
+        PRIM_TO_STR(WINED3D_PT_PATCH);
 #undef  PRIM_TO_STR
         default:
-            FIXME("Unrecognized %u primitive type!\n", primitive_type);
+            FIXME("Unrecognized primitive type %#x.\n", primitive_type);
             return "unrecognized";
     }
 }

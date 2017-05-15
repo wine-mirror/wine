@@ -89,6 +89,9 @@ GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
         case WINED3D_PT_TRIANGLESTRIP_ADJ:
             return GL_TRIANGLE_STRIP_ADJACENCY_ARB;
 
+        case WINED3D_PT_PATCH:
+            return GL_PATCHES;
+
         default:
             FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(primitive_type));
         case WINED3D_PT_UNDEFINED:
@@ -129,6 +132,9 @@ static enum wined3d_primitive_type d3d_primitive_type_from_gl(GLenum primitive_t
 
         case GL_TRIANGLE_STRIP_ADJACENCY_ARB:
             return WINED3D_PT_TRIANGLESTRIP_ADJ;
+
+        case GL_PATCHES:
+            return WINED3D_PT_PATCH;
 
         default:
             FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(primitive_type));
