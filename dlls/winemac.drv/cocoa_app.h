@@ -50,6 +50,8 @@ enum {
     NSMutableSet* triedWindows;
     unsigned long windowFocusSerial;
 
+    TISInputSourceRef lastKeyboardInputSource;
+    TISInputSourceRef lastKeyboardLayoutInputSource;
     CGEventSourceKeyboardType keyboardType;
     NSEvent* lastFlagsChanged;
     BOOL inputSourceIsInputMethod;
