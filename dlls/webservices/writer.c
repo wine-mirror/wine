@@ -518,12 +518,12 @@ static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
     /* ' prefix:attr="value"' */
 
     size = attr->localName->length + 4 /* ' =""' */;
-    if (prefix) size += prefix->length + 1 /* ':' */;
+    if (prefix && prefix->length) size += prefix->length + 1 /* ':' */;
     if (text) size += text->value.length;
     if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
 
     write_char( writer, ' ' );
-    if (prefix)
+    if (prefix && prefix->length)
     {
         write_bytes( writer, prefix->bytes, prefix->length );
         write_char( writer, ':' );
@@ -734,11 +734,11 @@ static HRESULT write_startelement( struct writer *writer )
     /* '<prefix:localname prefix:attr="value"... xmlns:prefix="ns"'... */
 
     size = elem->localName->length + 1 /* '<' */;
-    if (elem->prefix) size += elem->prefix->length + 1 /* ':' */;
+    if (elem->prefix && elem->prefix->length) size += elem->prefix->length + 1 /* ':' */;
     if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
 
     write_char( writer, '<' );
-    if (elem->prefix)
+    if (elem->prefix && elem->prefix->length)
     {
         write_bytes( writer, elem->prefix->bytes, elem->prefix->length );
         write_char( writer, ':' );
@@ -796,12 +796,12 @@ static HRESULT write_endelement( struct writer *writer, const WS_XML_ELEMENT_NOD
     /* '</prefix:localname>' */
 
     size = elem->localName->length + 3 /* '</>' */;
-    if (elem->prefix) size += elem->prefix->length + 1 /* ':' */;
+    if (elem->prefix && elem->prefix->length) size += elem->prefix->length + 1 /* ':' */;
     if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
 
     write_char( writer, '<' );
     write_char( writer, '/' );
-    if (elem->prefix)
+    if (elem->prefix && elem->prefix->length)
     {
         write_bytes( writer, elem->prefix->bytes, elem->prefix->length );
         write_char( writer, ':' );
