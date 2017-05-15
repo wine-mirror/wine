@@ -1969,6 +1969,7 @@ static void test_WsCopyNode(void)
     WS_XML_WRITER *writer;
     WS_XML_READER *reader;
     WS_XML_BUFFER *buffer;
+    WS_BUFFERS bufs;
     WS_HEAP *heap;
     HRESULT hr;
 
@@ -2049,19 +2050,22 @@ static void test_WsCopyNode(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
 
-    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    hr = set_output( writer );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsCopyNode( writer, reader, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    check_output_buffer( buffer, "<v/>", __LINE__ );
+    check_output( writer, "<v/>", __LINE__ );
 
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    memset( &bufs, 0, sizeof(bufs) );
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BUFFERS, &bufs, sizeof(bufs), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( bufs.bufferCount == 1, "got %u\n", bufs.bufferCount );
+    ok( bufs.buffers != NULL, "buffers not set\n" );
 
     WsFreeReader( reader );
     WsFreeWriter( writer );

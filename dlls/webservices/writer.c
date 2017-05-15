@@ -293,6 +293,19 @@ HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERT
         }
         break;
     }
+    case WS_XML_WRITER_PROPERTY_BUFFERS:
+        if (writer->output_buf->bytes.length)
+        {
+            WS_BUFFERS *buffers = buf;
+            if (size != sizeof(*buffers)) hr = E_INVALIDARG;
+            else
+            {
+                buffers->bufferCount = 1;
+                buffers->buffers     = &writer->output_buf->bytes;
+            }
+            break;
+        }
+        /* fall through */
     default:
         hr = prop_get( writer->prop, writer->prop_count, id, buf, size );
     }
