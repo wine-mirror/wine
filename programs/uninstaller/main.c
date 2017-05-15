@@ -228,6 +228,7 @@ static int FetchFromRootKey(HKEY root)
     for (i=0; RegEnumKeyExW( root, i, subKeyName, &sizeOfSubKeyName, NULL, NULL, NULL, NULL ) != ERROR_NO_MORE_ITEMS; ++i)
     {
         RegOpenKeyExW(root, subKeyName, 0, KEY_READ, &hkeyApp);
+        size = sizeof(value);
         if (!RegQueryValueExW(hkeyApp, SystemComponentW, NULL, &type, (LPBYTE)&value, &size) &&
             type == REG_DWORD && value == 1)
         {
