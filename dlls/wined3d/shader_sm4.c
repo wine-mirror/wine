@@ -593,15 +593,13 @@ static void shader_sm4_read_dcl_output_topology(struct wined3d_shader_instructio
     enum wined3d_sm4_output_primitive_type primitive_type;
 
     primitive_type = (opcode_token & WINED3D_SM4_PRIMITIVE_TYPE_MASK) >> WINED3D_SM4_PRIMITIVE_TYPE_SHIFT;
-    if (primitive_type >= sizeof(output_primitive_type_table) / sizeof(*output_primitive_type_table))
-    {
-        FIXME("Unhandled output primitive type %#x.\n", primitive_type);
+    if (primitive_type >= ARRAY_SIZE(output_primitive_type_table))
         ins->declaration.primitive_type = WINED3D_PT_UNDEFINED;
-    }
     else
-    {
         ins->declaration.primitive_type = output_primitive_type_table[primitive_type];
-    }
+
+    if (ins->declaration.primitive_type == WINED3D_PT_UNDEFINED)
+        FIXME("Unhandled output primitive type %#x.\n", primitive_type);
 }
 
 static void shader_sm4_read_dcl_input_primitive(struct wined3d_shader_instruction *ins,
@@ -611,15 +609,13 @@ static void shader_sm4_read_dcl_input_primitive(struct wined3d_shader_instructio
     enum wined3d_sm4_input_primitive_type primitive_type;
 
     primitive_type = (opcode_token & WINED3D_SM4_PRIMITIVE_TYPE_MASK) >> WINED3D_SM4_PRIMITIVE_TYPE_SHIFT;
-    if (primitive_type >= sizeof(input_primitive_type_table) / sizeof(*input_primitive_type_table))
-    {
-        FIXME("Unhandled input primitive type %#x.\n", primitive_type);
+    if (primitive_type >= ARRAY_SIZE(input_primitive_type_table))
         ins->declaration.primitive_type = WINED3D_PT_UNDEFINED;
-    }
     else
-    {
         ins->declaration.primitive_type = input_primitive_type_table[primitive_type];
-    }
+
+    if (ins->declaration.primitive_type == WINED3D_PT_UNDEFINED)
+        FIXME("Unhandled input primitive type %#x.\n", primitive_type);
 }
 
 static void shader_sm4_read_declaration_count(struct wined3d_shader_instruction *ins,
