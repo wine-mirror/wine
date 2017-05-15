@@ -1266,7 +1266,7 @@ then
 #include <gnutls/crypto.h>]], [[static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;]])],
                 [WINE_CHECK_SONAME(gnutls,gnutls_global_init,,[GNUTLS_CFLAGS=""],[$GNUTLS_LIBS],[[libgnutls\\(-deb0\\)\\{0,1\\}]])
                  WINE_CHECK_LIB_FUNCS(gnutls_hash,[$GNUTLS_LIBS],,
-                                      [WINE_NOTICE([libgnutls ${notice_platform}development files too old, no bcrypt hash support.])])])],
+                                      [WINE_NOTICE([libgnutls ${notice_platform}development files too old, bcrypt hashes won't be supported.])])])],
             [GNUTLS_CFLAGS=""])])
 fi
 WINE_WARNING_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
@@ -1481,7 +1481,7 @@ then
                  WINE_NOTICE([glib-2.0 pkgconfig configuration is for the wrong architecture, winegstreamer won't be built.])])])])
 fi
 WINE_NOTICE_WITH(gstreamer,[test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes ],
-                 [gstreamer-1.0 base plugins ${notice_platform}development files not found, gstreamer support disabled])
+                 [gstreamer-1.0 base plugins ${notice_platform}development files not found, GStreamer won't be supported.])
 test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
 dnl **** Check for ALSA 1.x ****
@@ -1657,7 +1657,7 @@ then
                       AC_DEFINE_UNQUOTED(HAVE_OPENAL,1,[Define to 1 if OpenAL is available])],,)
 fi
 WINE_NOTICE_WITH(openal,[test "x$ac_cv_lib_openal" != xyes],
-                 [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported],
+                 [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported.],
                  [enable_openal32])
 
 dnl **** Check for openal-soft ****
@@ -1672,7 +1672,7 @@ LPALCRENDERSAMPLESSOFT x;]])],[ac_cv_have_openalsoft=yes],[ac_cv_have_openalsoft
 fi
 if test "x$ac_cv_have_openalsoft" != xyes
 then
-    WINE_NOTICE([openal-soft ${notice_platform}development files not found (or too old), XAudio2 won't be supported])
+    WINE_NOTICE([openal-soft ${notice_platform}development files not found (or too old), XAudio2 won't be supported.])
     enable_x3daudio1_0=${enable_x3daudio1_0:-no}
     enable_x3daudio1_1=${enable_x3daudio1_1:-no}
     enable_x3daudio1_2=${enable_x3daudio1_2:-no}
