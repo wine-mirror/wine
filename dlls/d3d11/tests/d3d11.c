@@ -2507,7 +2507,6 @@ static void test_create_buffer(void)
     buffer = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, 1024, NULL);
     hr = check_interface(buffer, &IID_ID3D10Buffer, TRUE, TRUE); /* Not available on all Windows versions. */
     ID3D11Buffer_Release(buffer);
-
     if (FAILED(hr))
     {
         win_skip("Buffers do not implement ID3D10Buffer.\n");
@@ -4323,8 +4322,8 @@ static void test_create_blend_state(void)
     }
 
     /* Not available on all Windows versions. */
-    hr = check_interface(blend_state1, &IID_ID3D10BlendState, TRUE, TRUE);
-    hr = check_interface(blend_state1, &IID_ID3D10BlendState1, TRUE, TRUE);
+    check_interface(blend_state1, &IID_ID3D10BlendState, TRUE, TRUE);
+    check_interface(blend_state1, &IID_ID3D10BlendState1, TRUE, TRUE);
 
     refcount = ID3D11BlendState_Release(blend_state1);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
@@ -4434,7 +4433,7 @@ static void test_create_depthstencil_state(void)
     ID3D11Device_Release(tmp);
 
     /* Not available on all Windows versions. */
-    hr = check_interface(ds_state1, &IID_ID3D10DepthStencilState, TRUE, TRUE);
+    check_interface(ds_state1, &IID_ID3D10DepthStencilState, TRUE, TRUE);
 
     refcount = ID3D11DepthStencilState_Release(ds_state2);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
