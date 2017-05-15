@@ -9057,6 +9057,7 @@ static void test_completion_port(void)
     struct sockaddr_in bindAddress;
     GUID acceptExGuid = WSAID_ACCEPTEX;
     LPFN_ACCEPTEX pAcceptEx = NULL;
+    fd_set fds_recv;
 
     memset(buf, 0, sizeof(buf));
     previous_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
@@ -9171,6 +9172,167 @@ static void test_completion_port(void)
 
     if (dest != INVALID_SOCKET)
         closesocket(dest);
+
+    /* Test IOCP response on successful immediate read. */
+    tcp_socketpair(&src, &dest);
+    if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
+    {
+        skip("failed to create sockets\n");
+        goto end;
+    }
+
+    bufs.len = sizeof(buf);
+    bufs.buf = buf;
+    flags = 0;
+    SetLastError(0xdeadbeef);
+
+    iret = WSASend(src, &bufs, 1, &num_bytes, 0, &ov, NULL);
+    ok(!iret, "WSASend failed - %d, last error %u\n", iret, GetLastError());
+    ok(num_bytes == sizeof(buf), "Managed to send %d\n", num_bytes);
+
+    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    set_blocking(dest, FALSE);
+
+    FD_ZERO(&fds_recv);
+    FD_SET(dest, &fds_recv);
+    select(dest + 1, &fds_recv, NULL, NULL, NULL);
+
+    num_bytes = 0xdeadbeef;
+    flags = 0;
+
+    iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
+    ok(!iret, "WSARecv failed - %d, last error %u\n", iret, GetLastError());
+    ok(num_bytes == sizeof(buf), "Managed to read %d\n", num_bytes);
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
+    ok(bret == TRUE, "failed to get completion status %u\n", bret);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %d\n", GetLastError());
+    ok(key == 125, "Key is %lu\n", key);
+    ok(num_bytes == sizeof(buf), "Number of bytes transferred is %u\n", num_bytes);
+    ok(olp == &ov, "Overlapped structure is at %p\n", olp);
+
+    /* Test IOCP response on graceful shutdown. */
+    closesocket(src);
+
+    FD_ZERO(&fds_recv);
+    FD_SET(dest, &fds_recv);
+    select(dest + 1, &fds_recv, NULL, NULL, NULL);
+
+    num_bytes = 0xdeadbeef;
+    flags = 0;
+    memset(&ov, 0, sizeof(ov));
+
+    iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
+    ok(!iret, "WSARecv failed - %d, last error %u\n", iret, GetLastError());
+    ok(!num_bytes, "Managed to read %d\n", num_bytes);
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
+    ok(bret == TRUE, "failed to get completion status %u\n", bret);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %d\n", GetLastError());
+    ok(key == 125, "Key is %lu\n", key);
+    ok(!num_bytes, "Number of bytes transferred is %u\n", num_bytes);
+    ok(olp == &ov, "Overlapped structure is at %p\n", olp);
+
+    closesocket(src);
+    src = INVALID_SOCKET;
+    closesocket(dest);
+    dest = INVALID_SOCKET;
+
+    /* Test IOCP response on hard shutdown. This was the condition that triggered
+     * a crash in an actual app (bug 38980). */
+    tcp_socketpair(&src, &dest);
+    if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
+    {
+        skip("failed to create sockets\n");
+        goto end;
+    }
+
+    bufs.len = sizeof(buf);
+    bufs.buf = buf;
+    flags = 0;
+    memset(&ov, 0, sizeof(ov));
+
+    ling.l_onoff = 1;
+    ling.l_linger = 0;
+    iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
+    ok(!iret, "Failed to set linger %d\n", GetLastError());
+
+    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    set_blocking(dest, FALSE);
+
+    closesocket(src);
+    src = INVALID_SOCKET;
+
+    FD_ZERO(&fds_recv);
+    FD_SET(dest, &fds_recv);
+    select(dest + 1, &fds_recv, NULL, NULL, NULL);
+
+    num_bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+
+    /* Somehow a hard shutdown doesn't work on my Linux box. It seems SO_LINGER is ignored. */
+    iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
+    todo_wine ok(iret == SOCKET_ERROR, "WSARecv failed - %d\n", iret);
+    todo_wine ok(GetLastError() == WSAECONNRESET, "Last error was %d\n", GetLastError());
+    todo_wine ok(num_bytes == 0xdeadbeef, "Managed to read %d\n", num_bytes);
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
+    todo_wine ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
+    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    todo_wine ok(key == 0xdeadbeef, "Key is %lu\n", key);
+    todo_wine ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    todo_wine ok(!olp, "Overlapped structure is at %p\n", olp);
+
+    closesocket(dest);
+
+    /* Test reading from a non-connected socket, mostly because the above test is marked todo. */
+    dest = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(dest != INVALID_SOCKET, "socket() failed\n");
+
+    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+    set_blocking(dest, FALSE);
+
+    num_bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    memset(&ov, 0, sizeof(ov));
+
+    iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
+    ok(iret == SOCKET_ERROR, "WSARecv failed - %d\n", iret);
+    ok(GetLastError() == WSAENOTCONN, "Last error was %d\n", GetLastError());
+    ok(num_bytes == 0xdeadbeef, "Managed to read %d\n", num_bytes);
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
+    ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %lu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
+    ok(!olp, "Overlapped structure is at %p\n", olp);
+
+    num_bytes = 0xdeadbeef;
+    closesocket(dest);
 
     dest = socket(AF_INET, SOCK_STREAM, 0);
     if (dest == INVALID_SOCKET)

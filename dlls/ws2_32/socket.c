@@ -7786,9 +7786,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
             if (errno != EAGAIN)
             {
-                int loc_errno = errno;
                 err = wsaErrno();
-                if (cvalue) WS_AddCompletion( s, cvalue, sock_get_ntstatus(loc_errno), 0 );
                 goto error;
             }
         }
