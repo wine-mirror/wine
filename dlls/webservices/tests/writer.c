@@ -1940,6 +1940,7 @@ static void test_WsCopyNode(void)
 {
     WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"u"}, ns = {0, NULL};
     WS_XML_NODE_POSITION pos, pos2;
+    const WS_XML_NODE *node;
     WS_XML_WRITER *writer;
     WS_XML_READER *reader;
     WS_XML_BUFFER *buffer;
@@ -1997,6 +1998,10 @@ static void test_WsCopyNode(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( pos2.buffer == pos.buffer, "wrong buffer\n" );
     ok( pos2.node == pos.node, "wrong node\n" );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
 
     WsFreeReader( reader );
     WsFreeWriter( writer );

@@ -3427,6 +3427,8 @@ HRESULT WINAPI WsCopyNode( WS_XML_WRITER *handle, WS_XML_READER *reader, WS_ERRO
     if ((hr = write_tree( writer )) != S_OK) goto done;
     writer->current = current;
 
+    WsMoveReader( reader, WS_MOVE_TO_NEXT_NODE, NULL, NULL );
+
 done:
     LeaveCriticalSection( &writer->cs );
     return hr;
