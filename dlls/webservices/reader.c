@@ -407,25 +407,6 @@ static void clear_prefixes( struct prefix *prefixes, ULONG count )
     }
 }
 
-HRESULT copy_node( WS_XML_READER *handle, struct node **node )
-{
-    struct reader *reader = (struct reader *)handle;
-    HRESULT hr;
-
-    EnterCriticalSection( &reader->cs );
-
-    if (reader->magic != READER_MAGIC)
-    {
-        LeaveCriticalSection( &reader->cs );
-        return E_INVALIDARG;
-    }
-
-    hr = dup_tree( node, reader->current );
-
-    LeaveCriticalSection( &reader->cs );
-    return hr;
-}
-
 static HRESULT set_prefix( struct prefix *prefix, const WS_XML_STRING *str, const WS_XML_STRING *ns )
 {
     if (str)
@@ -1652,6 +1633,44 @@ static HRESULT read_node( struct reader *reader )
         else if (!read_cmp( reader, "/>", 2 ) || !read_cmp( reader, ">", 1 )) return read_startelement( reader );
         else return read_text( reader );
     }
+}
+
+HRESULT copy_node( WS_XML_READER *handle, struct node **node )
+{
+    struct reader *reader = (struct reader *)handle;
+    const struct list *ptr;
+    const struct node *start;
+    HRESULT hr;
+
+    EnterCriticalSection( &reader->cs );
+
+    if (reader->magic != READER_MAGIC)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    if (reader->current != reader->root) ptr = &reader->current->entry;
+    else /* copy whole tree */
+    {
+        if (!read_end_of_data( reader ))
+        {
+            for (;;)
+            {
+                if ((hr = read_node( reader )) != S_OK) goto done;
+                if (node_type( reader->current ) == WS_XML_NODE_TYPE_EOF) break;
+            }
+        }
+        ptr = list_head( &reader->root->children );
+    }
+
+    start = LIST_ENTRY( ptr, struct node, entry );
+    if (node_type( start ) == WS_XML_NODE_TYPE_EOF) hr = WS_E_INVALID_OPERATION;
+    else hr = dup_tree( node, start );
+
+done:
+    LeaveCriticalSection( &reader->cs );
+    return hr;
 }
 
 /**************************************************************************
