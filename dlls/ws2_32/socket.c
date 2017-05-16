@@ -6620,7 +6620,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
     result = getaddrinfo(node, servname, punixhints, &unixaires);
 
-    if (result && !strcmp(hostname, node))
+    if (result && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST)) && !strcmp(hostname, node))
     {
         /* If it didn't work it means the host name IP is not in /etc/hosts, try again
         * by sending a NULL host and avoid sending a NULL servname too because that

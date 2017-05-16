@@ -7425,6 +7425,14 @@ static void test_getaddrinfo(void)
     ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
     pfreeaddrinfo(result);
 
+    hint.ai_flags = AI_NUMERICHOST;
+    result = (void*)0xdeadbeef;
+    ret = pgetaddrinfo("localhost", "80", &hint, &result);
+    ok(ret == WSAHOST_NOT_FOUND, "getaddrinfo failed with %d\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected WSAHOST_NOT_FOUND, got %d\n", WSAGetLastError());
+    ok(!result, "result = %p\n", result);
+    hint.ai_flags = 0;
+
     /* try to get information from the computer name, result is the same
      * as if requesting with an empty host name. */
     ret = pgetaddrinfo(name, NULL, NULL, &result);
