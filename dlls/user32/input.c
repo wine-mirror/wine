@@ -285,6 +285,16 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
 
 
 /***********************************************************************
+ * GetPhysicalCursorPos (USER32.@)
+*/
+
+BOOL WINAPI GetPhysicalCursorPos(POINT *point)
+{
+    FIXME("(%p) semi-stub: forwarding to GetCursorPos\n", point);
+    return GetCursorPos(point);
+}
+
+/***********************************************************************
  *		SetCursorPos (USER32.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
@@ -310,6 +320,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
     return ret;
 }
 
+/***********************************************************************
+ * SetPhysicalCursorPos (USER32.@)
+*/
+
+BOOL WINAPI SetPhysicalCursorPos(INT x, INT y)
+{
+    FIXME("(%u %u) semi-stub: forwarding to SetCursorPos\n", x, y);
+    return SetCursorPos(x, y);
+}
 
 /**********************************************************************
  *		SetCapture (USER32.@)
