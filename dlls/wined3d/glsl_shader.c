@@ -2704,6 +2704,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_INPUT:
+        case WINED3DSPR_INCONTROLPOINT:
             if (version->type == WINED3D_SHADER_TYPE_VERTEX)
             {
                 struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
@@ -2716,7 +2717,9 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 break;
             }
 
-            if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
+            if (version->type == WINED3D_SHADER_TYPE_HULL
+                    || version->type == WINED3D_SHADER_TYPE_DOMAIN
+                    || version->type == WINED3D_SHADER_TYPE_GEOMETRY)
             {
                 if (reg->idx[0].rel_addr)
                 {
@@ -2978,7 +2981,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_PRIMID:
-            sprintf(register_name, "uint(gl_PrimitiveIDIn)");
+            if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
+                sprintf(register_name, "uint(gl_PrimitiveIDIn)");
+            else
+                sprintf(register_name, "uint(gl_PrimitiveID)");
             break;
 
         case WINED3DSPR_IDXTEMP:
@@ -2996,6 +3002,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_GSINSTID:
+        case WINED3DSPR_OUTPOINTID:
             if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
                 sprintf(register_name, "gl_InvocationID");
             else
@@ -3012,6 +3019,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_LOCALTHREADID:
             sprintf(register_name, "ivec3(gl_LocalInvocationID)");
+            break;
+
+        case WINED3DSPR_TESSCOORD:
+            sprintf(register_name, "gl_TessCoord");
             break;
 
         default:
@@ -3167,6 +3178,7 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
         case WINED3DSPR_GSINSTID:
         case WINED3DSPR_LOCALTHREADID:
         case WINED3DSPR_LOCALTHREADINDEX:
+        case WINED3DSPR_OUTPOINTID:
         case WINED3DSPR_THREADGROUPID:
         case WINED3DSPR_THREADID:
             param_data_type = WINED3D_DATA_INT;
