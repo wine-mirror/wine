@@ -2625,7 +2625,8 @@ void context_unmap_bo_address(struct wined3d_context *context,
 
 static void context_set_render_offscreen(struct wined3d_context *context, BOOL offscreen)
 {
-    if (context->render_offscreen == offscreen) return;
+    if (context->render_offscreen == offscreen)
+        return;
 
     context_invalidate_state(context, STATE_VIEWPORT);
     context_invalidate_state(context, STATE_SCISSORRECT);
@@ -2634,6 +2635,7 @@ static void context_set_render_offscreen(struct wined3d_context *context, BOOL o
         context_invalidate_state(context, STATE_FRONTFACE);
         context_invalidate_state(context, STATE_POINTSPRITECOORDORIGIN);
         context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
+        context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_DOMAIN));
     }
     if (context->gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
         context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));

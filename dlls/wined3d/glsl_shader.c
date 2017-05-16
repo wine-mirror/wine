@@ -177,6 +177,14 @@ struct glsl_vs_program
     GLint clip_planes_location;
 };
 
+struct glsl_ds_program
+{
+    struct list shader_entry;
+    GLuint id;
+
+    GLint pos_fixup_location;
+};
+
 struct glsl_gs_program
 {
     struct list shader_entry;
@@ -220,6 +228,7 @@ struct glsl_shader_prog_link
 {
     struct wine_rb_entry program_lookup_entry;
     struct glsl_vs_program vs;
+    struct glsl_ds_program ds;
     struct glsl_gs_program gs;
     struct glsl_ps_program ps;
     struct glsl_cs_program cs;
@@ -231,6 +240,7 @@ struct glsl_shader_prog_link
 struct glsl_program_key
 {
     GLuint vs_id;
+    GLuint ds_id;
     GLuint gs_id;
     GLuint ps_id;
     GLuint cs_id;
@@ -238,6 +248,7 @@ struct glsl_program_key
 
 struct shader_glsl_ctx_priv {
     const struct vs_compile_args    *cur_vs_args;
+    const struct ds_compile_args    *cur_ds_args;
     const struct ps_compile_args    *cur_ps_args;
     struct ps_np2fixup_info         *cur_np2fixup_info;
     struct wined3d_string_buffer_list *string_buffers;
@@ -262,6 +273,12 @@ struct glsl_vs_compiled_shader
     GLuint                          id;
 };
 
+struct glsl_ds_compiled_shader
+{
+    struct ds_compile_args args;
+    GLuint id;
+};
+
 struct glsl_gs_compiled_shader
 {
     struct gs_compile_args args;
@@ -278,11 +295,12 @@ struct glsl_shader_private
     union
     {
         struct glsl_vs_compiled_shader *vs;
+        struct glsl_ds_compiled_shader *ds;
         struct glsl_gs_compiled_shader *gs;
         struct glsl_ps_compiled_shader *ps;
         struct glsl_cs_compiled_shader *cs;
     } gl_shaders;
-    UINT num_gl_shaders, shader_array_size;
+    unsigned int num_gl_shaders, shader_array_size;
 };
 
 struct glsl_ffp_vertex_shader
@@ -1731,6 +1749,8 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         shader_get_position_fixup(context, state, position_fixup);
         if (state->shader[WINED3D_SHADER_TYPE_GEOMETRY])
             GL_EXTCALL(glUniform4fv(prog->gs.pos_fixup_location, 1, position_fixup));
+        else if (state->shader[WINED3D_SHADER_TYPE_DOMAIN])
+            GL_EXTCALL(glUniform4fv(prog->ds.pos_fixup_location, 1, position_fixup));
         else
             GL_EXTCALL(glUniform4fv(prog->vs.pos_fixup_location, 1, position_fixup));
         checkGLcall("glUniform4fv");
@@ -6458,6 +6478,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
     struct glsl_program_key key;
 
     key.vs_id = entry->vs.id;
+    key.ds_id = entry->ds.id;
     key.gs_id = entry->gs.id;
     key.ps_id = entry->ps.id;
     key.cs_id = entry->cs.id;
@@ -6486,6 +6507,8 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struc
     GL_EXTCALL(glDeleteProgram(entry->id));
     if (entry->vs.id)
         list_remove(&entry->vs.shader_entry);
+    if (entry->ds.id)
+        list_remove(&entry->ds.shader_entry);
     if (entry->gs.id)
         list_remove(&entry->gs.shader_entry);
     if (entry->ps.id)
@@ -7361,6 +7384,105 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     return shader_id;
 }
 
+static void shader_glsl_generate_ds_epilogue(const struct wined3d_gl_info *gl_info,
+        struct wined3d_string_buffer *buffer, const struct wined3d_shader *shader,
+        const struct ds_compile_args *args)
+{
+    shader_addline(buffer, "setup_ds_output(ds_out);\n");
+
+    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL && !gl_info->supported[ARB_CLIP_CONTROL])
+        shader_glsl_fixup_position(buffer);
+}
+
+static GLuint shader_glsl_generate_domain_shader(const struct wined3d_context *context,
+        struct shader_glsl_priv *priv, const struct wined3d_shader *shader, const struct ds_compile_args *args)
+{
+    struct wined3d_string_buffer_list *string_buffers = &priv->string_buffers;
+    const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct shader_glsl_ctx_priv priv_ctx;
+    GLuint shader_id;
+
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.cur_ds_args = args;
+    priv_ctx.string_buffers = string_buffers;
+
+    shader_glsl_add_version_declaration(buffer, gl_info);
+
+    shader_glsl_enable_extensions(buffer, gl_info);
+    shader_addline(buffer, "#extension GL_ARB_tessellation_shader : enable\n");
+
+    shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    shader_addline(buffer, "layout(");
+    switch (shader->u.ds.tessellator_domain)
+    {
+        case WINED3D_TESSELLATOR_DOMAIN_LINE:
+            shader_addline(buffer, "isolines");
+            break;
+        case WINED3D_TESSELLATOR_DOMAIN_QUAD:
+            shader_addline(buffer, "quads");
+            break;
+        case WINED3D_TESSELLATOR_DOMAIN_TRIANGLE:
+            shader_addline(buffer, "triangles");
+            break;
+    }
+    switch (args->tessellator_output_primitive)
+    {
+        case WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CW:
+            if (args->render_offscreen)
+                shader_addline(buffer, ", ccw");
+            else
+                shader_addline(buffer, ", cw");
+            break;
+        case WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CCW:
+            if (args->render_offscreen)
+                shader_addline(buffer, ", cw");
+            else
+                shader_addline(buffer, ", ccw");
+            break;
+        case WINED3D_TESSELLATOR_OUTPUT_POINT:
+            shader_addline(buffer, ", point_mode");
+            break;
+        case WINED3D_TESSELLATOR_OUTPUT_LINE:
+            break;
+    }
+    switch (args->tessellator_partitioning)
+    {
+        case WINED3D_TESSELLATOR_PARTITIONING_FRACTIONAL_ODD:
+            shader_addline(buffer, ", fractional_odd_spacing");
+            break;
+        case WINED3D_TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN:
+            shader_addline(buffer, ", fractional_even_spacing");
+            break;
+        case WINED3D_TESSELLATOR_PARTITIONING_INTEGER:
+        case WINED3D_TESSELLATOR_PARTITIONING_POW2:
+            shader_addline(buffer, ", equal_spacing");
+            break;
+    }
+    shader_addline(buffer, ") in;\n");
+
+    shader_addline(buffer, "in shader_in_out { vec4 reg[%u]; } shader_in[];\n", shader->limits->packed_input);
+
+    if (!gl_info->supported[ARB_CLIP_CONTROL])
+        shader_addline(buffer, "uniform vec4 pos_fixup;\n");
+
+    shader_glsl_generate_sm4_output_setup(priv, shader, args->output_count, gl_info, TRUE);
+    shader_addline(buffer, "void main()\n{\n");
+
+    if (FAILED(shader_generate_main(shader, buffer, reg_maps, &priv_ctx)))
+        return 0;
+
+    shader_addline(buffer, "}\n");
+
+    shader_id = GL_EXTCALL(glCreateShader(GL_TESS_EVALUATION_SHADER));
+    TRACE("Compiling shader object %u.\n", shader_id);
+    shader_glsl_compile(gl_info, shader_id, buffer->buffer);
+
+    return shader_id;
+}
+
 /* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context *context,
         struct shader_glsl_priv *priv, const struct wined3d_shader *shader, const struct gs_compile_args *args)
@@ -7409,15 +7531,19 @@ static void shader_glsl_generate_shader_epilogue(const struct wined3d_shader_con
 {
     const struct shader_glsl_ctx_priv *priv = ctx->backend_data;
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
+    struct wined3d_string_buffer *buffer = ctx->buffer;
     const struct wined3d_shader *shader = ctx->shader;
 
     switch (shader->reg_maps.shader_version.type)
     {
         case WINED3D_SHADER_TYPE_PIXEL:
-            shader_glsl_generate_ps_epilogue(gl_info, ctx->buffer, shader, priv->cur_ps_args);
+            shader_glsl_generate_ps_epilogue(gl_info, buffer, shader, priv->cur_ps_args);
             break;
         case WINED3D_SHADER_TYPE_VERTEX:
-            shader_glsl_generate_vs_epilogue(gl_info, ctx->buffer, shader, priv->cur_vs_args);
+            shader_glsl_generate_vs_epilogue(gl_info, buffer, shader, priv->cur_vs_args);
+            break;
+        case WINED3D_SHADER_TYPE_DOMAIN:
+            shader_glsl_generate_ds_epilogue(gl_info, buffer, shader, priv->cur_ds_args);
             break;
         case WINED3D_SHADER_TYPE_GEOMETRY:
         case WINED3D_SHADER_TYPE_COMPUTE:
@@ -7624,6 +7750,62 @@ static GLuint find_glsl_vshader(const struct wined3d_context *context, struct sh
 
     string_buffer_clear(&priv->shader_buffer);
     ret = shader_glsl_generate_vshader(context, priv, shader, args);
+    gl_shaders[shader_data->num_gl_shaders++].id = ret;
+
+    return ret;
+}
+
+static GLuint find_glsl_domain_shader(const struct wined3d_context *context,
+        struct shader_glsl_priv *priv, struct wined3d_shader *shader, const struct ds_compile_args *args)
+{
+    struct glsl_ds_compiled_shader *gl_shaders, *new_array;
+    struct glsl_shader_private *shader_data;
+    unsigned int i, new_size;
+    GLuint ret;
+
+    if (!shader->backend_data)
+    {
+        if (!(shader->backend_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data))))
+        {
+            ERR("Failed to allocate backend data.\n");
+            return 0;
+        }
+    }
+    shader_data = shader->backend_data;
+    gl_shaders = shader_data->gl_shaders.ds;
+
+    for (i = 0; i < shader_data->num_gl_shaders; ++i)
+    {
+        if (!memcmp(&gl_shaders[i].args, args, sizeof(*args)))
+            return gl_shaders[i].id;
+    }
+
+    TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
+
+    if (shader_data->num_gl_shaders)
+    {
+        new_size = shader_data->shader_array_size + 1;
+        new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders.ds,
+                new_size * sizeof(*new_array));
+    }
+    else
+    {
+        new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_array));
+        new_size = 1;
+    }
+
+    if (!new_array)
+    {
+        ERR("Failed to allocate GL shaders array.\n");
+        return 0;
+    }
+    shader_data->gl_shaders.ds = new_array;
+    shader_data->shader_array_size = new_size;
+    gl_shaders = new_array;
+
+    string_buffer_clear(&priv->shader_buffer);
+    ret = shader_glsl_generate_domain_shader(context, priv, shader, args);
+    gl_shaders[shader_data->num_gl_shaders].args = *args;
     gl_shaders[shader_data->num_gl_shaders++].id = ret;
 
     return ret;
@@ -8926,6 +9108,12 @@ static void shader_glsl_init_vs_uniform_locations(const struct wined3d_gl_info *
     string_buffer_release(&priv->string_buffers, name);
 }
 
+static void shader_glsl_init_ds_uniform_locations(const struct wined3d_gl_info *gl_info,
+        struct shader_glsl_priv *priv, GLuint program_id, struct glsl_ds_program *ds)
+{
+    ds->pos_fixup_location = GL_EXTCALL(glGetUniformLocation(program_id, "pos_fixup"));
+}
+
 static void shader_glsl_init_gs_uniform_locations(const struct wined3d_gl_info *gl_info,
         struct shader_glsl_priv *priv, GLuint program_id, struct glsl_gs_program *gs)
 {
@@ -9034,6 +9222,7 @@ static HRESULT shader_glsl_compile_compute_shader(struct shader_glsl_priv *priv,
 
     entry->id = program_id;
     entry->vs.id = 0;
+    entry->ds.id = 0;
     entry->gs.id = 0;
     entry->ps.id = 0;
     entry->cs.id = shader_id;
@@ -9116,14 +9305,15 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     const struct ps_np2fixup_info *np2fixup_info = NULL;
     struct glsl_shader_prog_link *entry = NULL;
+    struct wined3d_shader *dshader, *gshader;
     struct wined3d_shader *vshader = NULL;
-    struct wined3d_shader *gshader = NULL;
     struct wined3d_shader *pshader = NULL;
     GLuint reorder_shader_id = 0;
     struct glsl_program_key key;
     GLuint program_id;
     unsigned int i;
     GLuint vs_id = 0;
+    GLuint ds_id = 0;
     GLuint gs_id = 0;
     GLuint ps_id = 0;
     struct list *ps_list, *vs_list;
@@ -9157,6 +9347,19 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         ffp_shader = shader_glsl_find_ffp_vertex_shader(priv, gl_info, &settings);
         vs_id = ffp_shader->id;
         vs_list = &ffp_shader->linked_programs;
+    }
+
+    dshader = state->shader[WINED3D_SHADER_TYPE_DOMAIN];
+    if (!(context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_DOMAIN)) && ctx_data->glsl_program)
+    {
+        ds_id = ctx_data->glsl_program->ds.id;
+    }
+    else if (dshader)
+    {
+        struct ds_compile_args args;
+
+        find_ds_compile_args(state, dshader, &args, context);
+        ds_id = find_glsl_domain_shader(context, priv, dshader, &args);
     }
 
     gshader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
@@ -9202,10 +9405,11 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     }
 
     key.vs_id = vs_id;
+    key.ds_id = ds_id;
     key.gs_id = gs_id;
     key.ps_id = ps_id;
     key.cs_id = 0;
-    if ((!vs_id && !gs_id && !ps_id) || (entry = get_glsl_program_entry(priv, &key)))
+    if ((!vs_id && !ds_id && !gs_id && !ps_id) || (entry = get_glsl_program_entry(priv, &key)))
     {
         ctx_data->glsl_program = entry;
         return;
@@ -9219,6 +9423,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
     entry->id = program_id;
     entry->vs.id = vs_id;
+    entry->ds.id = ds_id;
     entry->gs.id = gs_id;
     entry->ps.id = ps_id;
     entry->cs.id = 0;
@@ -9299,6 +9504,15 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         }
     }
 
+    if (dshader)
+    {
+        TRACE("Attaching GLSL tessellation evaluation shader object %u to program %u.\n", ds_id, program_id);
+        GL_EXTCALL(glAttachShader(program_id, ds_id));
+        checkGLcall("glAttachShader");
+
+        list_add_head(&dshader->linked_programs, &entry->ds.shader_entry);
+    }
+
     if (gshader)
     {
         TRACE("Attaching GLSL geometry shader object %u to program %u.\n", gs_id, program_id);
@@ -9327,6 +9541,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
 
     shader_glsl_init_vs_uniform_locations(gl_info, priv, program_id, &entry->vs,
             vshader ? vshader->limits->constant_float : 0);
+    shader_glsl_init_ds_uniform_locations(gl_info, priv, program_id, &entry->ds);
     shader_glsl_init_gs_uniform_locations(gl_info, priv, program_id, &entry->gs);
     shader_glsl_init_ps_uniform_locations(gl_info, priv, program_id, &entry->ps,
             pshader ? pshader->limits->constant_float : 0);
@@ -9404,6 +9619,14 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
     if (entry->vs.pointsize_min_location != -1)
         entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
+
+    if (dshader)
+    {
+        if (entry->ds.pos_fixup_location != -1)
+            entry->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
+
+        shader_glsl_load_program_resources(context, priv, program_id, dshader);
+    }
 
     if (gshader)
     {
@@ -9677,6 +9900,28 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
                 break;
             }
 
+            case WINED3D_SHADER_TYPE_DOMAIN:
+            {
+                struct glsl_ds_compiled_shader *gl_shaders = shader_data->gl_shaders.ds;
+
+                for (i = 0; i < shader_data->num_gl_shaders; ++i)
+                {
+                    TRACE("Deleting domain shader %u.\n", gl_shaders[i].id);
+                    GL_EXTCALL(glDeleteShader(gl_shaders[i].id));
+                    checkGLcall("glDeleteShader");
+                }
+                HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders.ds);
+
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs,
+                        struct glsl_shader_prog_link, ds.shader_entry)
+                {
+                    shader_glsl_invalidate_contexts_program(device, entry);
+                    delete_glsl_program_entry(priv, gl_info, entry);
+                }
+
+                break;
+            }
+
             case WINED3D_SHADER_TYPE_GEOMETRY:
             {
                 struct glsl_gs_compiled_shader *gl_shaders = shader_data->gl_shaders.gs;
@@ -9747,6 +9992,9 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
 
     if (k->ps_id > prog->ps.id) return 1;
     else if (k->ps_id < prog->ps.id) return -1;
+
+    if (k->ds_id > prog->ds.id) return 1;
+    else if (k->ds_id < prog->ds.id) return -1;
 
     if (k->cs_id > prog->cs.id) return 1;
     else if (k->cs_id < prog->cs.id) return -1;
@@ -10050,9 +10298,9 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_SAMPLER                      */ shader_glsl_nop,
     /* WINED3DSIH_DCL_STREAM                       */ NULL,
     /* WINED3DSIH_DCL_TEMPS                        */ shader_glsl_nop,
-    /* WINED3DSIH_DCL_TESSELLATOR_DOMAIN           */ NULL,
-    /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ NULL,
-    /* WINED3DSIH_DCL_TESSELLATOR_PARTITIONING     */ NULL,
+    /* WINED3DSIH_DCL_TESSELLATOR_DOMAIN           */ shader_glsl_nop,
+    /* WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE */ shader_glsl_nop,
+    /* WINED3DSIH_DCL_TESSELLATOR_PARTITIONING     */ shader_glsl_nop,
     /* WINED3DSIH_DCL_TGSM_RAW                     */ shader_glsl_nop,
     /* WINED3DSIH_DCL_TGSM_STRUCTURED              */ shader_glsl_nop,
     /* WINED3DSIH_DCL_THREAD_GROUP                 */ shader_glsl_nop,
@@ -10426,10 +10674,21 @@ static void glsl_vertex_pipe_vs(struct wined3d_context *context,
         context_apply_state(context, state, STATE_VDECL);
 }
 
+static void glsl_vertex_pipe_hs(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    /*  In Direct3D tessellator options (e.g. output primitive type, primitive
+     *  winding) are defined in Hull Shaders, while in GLSL those are
+     *  specified in Tessellation Evaluation Shaders. */
+    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_DOMAIN;
+}
+
 static void glsl_vertex_pipe_geometry_shader(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->shader[WINED3D_SHADER_TYPE_VERTEX]
+    if (state->shader[WINED3D_SHADER_TYPE_DOMAIN])
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_DOMAIN;
+    else if (state->shader[WINED3D_SHADER_TYPE_VERTEX]
             && state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.shader_version.major >= 4)
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 }
@@ -10439,6 +10698,8 @@ static void glsl_vertex_pipe_pixel_shader(struct wined3d_context *context,
 {
     if (state->shader[WINED3D_SHADER_TYPE_GEOMETRY])
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_GEOMETRY;
+    else if (state->shader[WINED3D_SHADER_TYPE_DOMAIN])
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_DOMAIN;
     else if (state->shader[WINED3D_SHADER_TYPE_VERTEX]
             && state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.shader_version.major >= 4)
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
@@ -10587,6 +10848,7 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                glsl_vertex_pipe_vdecl }, WINED3D_GL_EXT_NONE          },
     {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   glsl_vertex_pipe_vs    }, WINED3D_GL_EXT_NONE          },
+    {STATE_SHADER(WINED3D_SHADER_TYPE_HULL),                     {STATE_SHADER(WINED3D_SHADER_TYPE_HULL),                     glsl_vertex_pipe_hs    }, WINED3D_GL_EXT_NONE          },
     {STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),                 {STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),                 glsl_vertex_pipe_geometry_shader}, WINED3D_GL_EXT_NONE },
     {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    glsl_vertex_pipe_pixel_shader}, WINED3D_GL_EXT_NONE    },
     {STATE_MATERIAL,                                             {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    NULL                   }, WINED3D_GL_EXT_NONE          },

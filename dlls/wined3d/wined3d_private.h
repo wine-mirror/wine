@@ -1329,6 +1329,15 @@ struct vs_compile_args
     unsigned int next_shader_input_count;
 };
 
+struct ds_compile_args
+{
+    enum wined3d_tessellator_output_primitive tessellator_output_primitive;
+    enum wined3d_tessellator_partitioning tessellator_partitioning;
+    unsigned int output_count : 16;
+    unsigned int next_shader_type : 3;
+    unsigned int render_offscreen : 1;
+};
+
 struct gs_compile_args
 {
     unsigned int output_count;
@@ -3698,6 +3707,17 @@ struct wined3d_vertex_shader
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
 };
 
+struct wined3d_domain_shader
+{
+    enum wined3d_tessellator_domain tessellator_domain;
+};
+
+struct wined3d_hull_shader
+{
+    enum wined3d_tessellator_output_primitive tessellator_output_primitive;
+    enum wined3d_tessellator_partitioning tessellator_partitioning;
+};
+
 struct wined3d_geometry_shader
 {
     enum wined3d_primitive_type input_type;
@@ -3761,6 +3781,8 @@ struct wined3d_shader
     union
     {
         struct wined3d_vertex_shader vs;
+        struct wined3d_domain_shader ds;
+        struct wined3d_hull_shader hs;
         struct wined3d_geometry_shader gs;
         struct wined3d_pixel_shader ps;
         struct wined3d_compute_shader cs;
@@ -3775,6 +3797,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         WORD swizzle_map, struct vs_compile_args *args,
         const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
+
+void find_ds_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
+        struct ds_compile_args *args, const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         struct gs_compile_args *args) DECLSPEC_HIDDEN;

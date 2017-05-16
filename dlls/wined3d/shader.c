@@ -1095,6 +1095,27 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         {
             reg_maps->temporary_count = ins.declaration.count;
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TESSELLATOR_DOMAIN)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_DOMAIN)
+                shader->u.ds.tessellator_domain = ins.declaration.tessellator_domain;
+            else if (shader_version.type != WINED3D_SHADER_TYPE_HULL)
+                FIXME("Invalid instruction %#x for shader type %#x.\n", ins.handler_idx, shader_version.type);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_HULL)
+                shader->u.hs.tessellator_output_primitive = ins.declaration.tessellator_output_primitive;
+            else
+                FIXME("Invalid instruction %#x for shader type %#x.\n", ins.handler_idx, shader_version.type);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_TESSELLATOR_PARTITIONING)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_HULL)
+                shader->u.hs.tessellator_partitioning = ins.declaration.tessellator_partitioning;
+            else
+                FIXME("Invalid instruction %#x for shader type %#x.\n", ins.handler_idx, shader_version.type);
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_TGSM_RAW)
         {
             if (FAILED(hr = shader_reg_maps_add_tgsm(reg_maps, ins.declaration.tgsm_raw.reg.reg.idx[0].offset,
@@ -3484,6 +3505,24 @@ static HRESULT geometry_shader_init(struct wined3d_shader *shader, struct wined3
     }
 
     return WINED3D_OK;
+}
+
+void find_ds_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
+        struct ds_compile_args *args, const struct wined3d_context *context)
+{
+    const struct wined3d_shader *hull_shader = state->shader[WINED3D_SHADER_TYPE_HULL];
+
+    args->tessellator_output_primitive = hull_shader->u.hs.tessellator_output_primitive;
+    args->tessellator_partitioning = hull_shader->u.hs.tessellator_partitioning;
+
+    args->output_count = state->shader[WINED3D_SHADER_TYPE_GEOMETRY] ?
+            state->shader[WINED3D_SHADER_TYPE_GEOMETRY]->limits->packed_input :
+            state->shader[WINED3D_SHADER_TYPE_PIXEL] ? state->shader[WINED3D_SHADER_TYPE_PIXEL]->limits->packed_input
+            : shader->limits->packed_output;
+    args->next_shader_type = state->shader[WINED3D_SHADER_TYPE_GEOMETRY] ? WINED3D_SHADER_TYPE_GEOMETRY
+            : WINED3D_SHADER_TYPE_PIXEL;
+
+    args->render_offscreen = context->render_offscreen;
 }
 
 void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
