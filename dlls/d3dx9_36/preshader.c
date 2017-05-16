@@ -265,21 +265,13 @@ static void regstore_free_tables(struct d3dx_regstore *rs)
     }
 }
 
-static void regstore_set_values(struct d3dx_regstore *rs, unsigned int table, void *data,
-        unsigned int start_offset, unsigned int count)
+static void regstore_set_modified_reg(struct d3dx_regstore *rs, unsigned int table,
+        unsigned int start, unsigned int end)
 {
-    unsigned int block_idx, start, end, start_block, end_block;
+    unsigned int block_idx, start_block, end_block;
 
-    if (!count)
-        return;
-
-    memcpy((BYTE *)rs->tables[table] + start_offset * table_info[table].component_size,
-            data, count * table_info[table].component_size);
-
-    start = get_reg_offset(table, start_offset);
     start_block = start / PRES_BITMASK_BLOCK_SIZE;
     start -= start_block * PRES_BITMASK_BLOCK_SIZE;
-    end = get_reg_offset(table, start_offset + count - 1);
     end_block = end / PRES_BITMASK_BLOCK_SIZE;
     end = (end_block + 1) * PRES_BITMASK_BLOCK_SIZE - 1 - end;
 
@@ -296,6 +288,27 @@ static void regstore_set_values(struct d3dx_regstore *rs, unsigned int table, vo
 
         rs->table_value_set[table][end_block] |= ~0u >> end;
     }
+}
+
+static void regstore_set_modified(struct d3dx_regstore *rs, unsigned int table,
+        unsigned int start_offset, unsigned int count)
+{
+    if (!count)
+        return;
+
+    regstore_set_modified_reg(rs, table, get_reg_offset(table, start_offset),
+            get_reg_offset(table, start_offset + count - 1));
+}
+
+static void regstore_set_values(struct d3dx_regstore *rs, unsigned int table, void *data,
+        unsigned int start_offset, unsigned int count)
+{
+    if (!count)
+        return;
+
+    memcpy((BYTE *)rs->tables[table] + start_offset * table_info[table].component_size,
+            data, count * table_info[table].component_size);
+    regstore_set_modified(rs, table, start_offset, count);
 }
 
 static unsigned int regstore_is_val_set_reg(struct d3dx_regstore *rs, unsigned int table, unsigned int reg_idx)
