@@ -818,6 +818,11 @@ static ULONG WINAPI CLRMetaHost_Release(ICLRMetaHost* iface)
     return 1;
 }
 
+static inline BOOL isDigit(WCHAR c)
+{
+    return c >= '0' && c <= '9';
+}
+
 static BOOL parse_runtime_version(LPCWSTR version, DWORD *major, DWORD *minor, DWORD *build)
 {
     *major = 0;
@@ -827,28 +832,28 @@ static BOOL parse_runtime_version(LPCWSTR version, DWORD *major, DWORD *minor, D
     if (version[0] == 'v' || version[0] == 'V')
     {
         version++;
-        if (!isdigit(*version))
+        if (!isDigit(*version))
             return FALSE;
 
-        while (isdigit(*version))
+        while (isDigit(*version))
             *major = *major * 10 + (*version++ - '0');
 
         if (*version == 0)
             return TRUE;
 
-        if (*version++ != '.' || !isdigit(*version))
+        if (*version++ != '.' || !isDigit(*version))
             return FALSE;
 
-        while (isdigit(*version))
+        while (isDigit(*version))
             *minor = *minor * 10 + (*version++ - '0');
 
         if (*version == 0)
             return TRUE;
 
-        if (*version++ != '.' || !isdigit(*version))
+        if (*version++ != '.' || !isDigit(*version))
             return FALSE;
 
-        while (isdigit(*version))
+        while (isDigit(*version))
             *build = *build * 10 + (*version++ - '0');
 
         return *version == 0;
