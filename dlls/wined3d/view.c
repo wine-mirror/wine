@@ -895,6 +895,7 @@ void wined3d_unordered_access_view_clear_uint(struct wined3d_unordered_access_vi
     context_bind_bo(context, buffer->buffer_type_hint, buffer->buffer_object);
     GL_EXTCALL(glClearBufferSubData(buffer->buffer_type_hint, format->glInternal,
             offset, size, format->glFormat, format->glType, clear_value));
+    checkGLcall("clear unordered access view");
 }
 
 static void wined3d_unordered_access_view_cs_init(void *object)
