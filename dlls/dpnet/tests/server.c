@@ -279,7 +279,7 @@ HRESULT set_firewall( enum firewall_op op )
     hr = INetFwPolicy_get_CurrentProfile( policy, &profile );
     if (hr != S_OK) goto done;
 
-    INetFwProfile_get_AuthorizedApplications( profile, &apps );
+    hr = INetFwProfile_get_AuthorizedApplications( profile, &apps );
     ok( hr == S_OK, "got %08x\n", hr );
     if (hr != S_OK) goto done;
 
