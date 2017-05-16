@@ -813,7 +813,7 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
 }
 
 void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code, unsigned int byte_code_size,
-        D3DXPARAMETER_TYPE type, struct d3dx_param_eval **peval_out)
+        D3DXPARAMETER_TYPE type, struct d3dx_param_eval **peval_out, ULONG64 *version_counter)
 {
     struct d3dx_param_eval *peval;
     unsigned int *ptr;
@@ -835,6 +835,8 @@ void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_co
     peval = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*peval));
     if (!peval)
         goto err_out;
+
+    peval->version_counter = version_counter;
 
     peval->param_type = type;
     switch (type)
@@ -934,7 +936,8 @@ void d3dx_free_param_eval(struct d3dx_param_eval *peval)
     HeapFree(GetProcessHeap(), 0, peval);
 }
 
-static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const_tab, BOOL update_all)
+static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const_tab,
+        BOOL update_all, ULONG64 new_update_version)
 {
     unsigned int const_idx;
 
@@ -949,7 +952,7 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
         BOOL transpose;
         unsigned int count;
 
-        if (!(update_all || is_param_dirty(param)))
+        if (!(update_all || is_param_dirty(param, const_tab->update_version)))
             continue;
 
         transpose = (const_set->constant_class == D3DXPC_MATRIX_COLUMNS && param->class == D3DXPC_MATRIX_ROWS)
@@ -1020,6 +1023,7 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
             }
         }
     }
+    const_tab->update_version = new_update_version;
 }
 
 #define INITIAL_CONST_SET_SIZE 16
@@ -1294,7 +1298,7 @@ static BOOL is_const_tab_input_dirty(struct d3dx_const_tab *ctab)
 
     for (i = 0; i < ctab->const_set_count; ++i)
     {
-        if (is_param_dirty(ctab->const_set[i].param))
+        if (is_param_dirty(ctab->const_set[i].param, ctab->update_version))
             return TRUE;
     }
     return FALSE;
@@ -1307,7 +1311,7 @@ BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval)
 }
 
 HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx_parameter *param,
-        void *param_value, BOOL update_all)
+        void *param_value)
 {
     HRESULT hr;
     unsigned int i;
@@ -1316,10 +1320,14 @@ HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx
 
     TRACE("peval %p, param %p, param_value %p.\n", peval, param, param_value);
 
-    set_constants(&peval->pres.regs, &peval->pres.inputs, update_all);
+    if (is_const_tab_input_dirty(&peval->pres.inputs))
+    {
+        set_constants(&peval->pres.regs, &peval->pres.inputs, FALSE,
+                next_update_version(peval->version_counter));
 
-    if (FAILED(hr = execute_preshader(&peval->pres)))
-        return hr;
+        if (FAILED(hr = execute_preshader(&peval->pres)))
+            return hr;
+    }
 
     elements_table = table_info[PRES_REGTAB_OCONST].reg_component_count
             * peval->pres.regs.table_sizes[PRES_REGTAB_OCONST];
@@ -1414,17 +1422,18 @@ HRESULT d3dx_param_eval_set_shader_constants(ID3DXEffectStateManager *manager, s
     struct d3dx_preshader *pres = &peval->pres;
     struct d3dx_regstore *rs = &pres->regs;
     unsigned int i;
+    ULONG64 new_update_version = next_update_version(peval->version_counter);
 
     TRACE("device %p, peval %p, param_type %u.\n", device, peval, peval->param_type);
 
     if (update_all || is_const_tab_input_dirty(&pres->inputs))
     {
-        set_constants(rs, &pres->inputs, update_all);
+        set_constants(rs, &pres->inputs, update_all, new_update_version);
         if (FAILED(hr = execute_preshader(pres)))
             return hr;
     }
 
-    set_constants(rs, &peval->shader_inputs, update_all);
+    set_constants(rs, &peval->shader_inputs, update_all, new_update_version);
     result = D3D_OK;
     for (i = 0; i < ARRAY_SIZE(set_tables); ++i)
     {

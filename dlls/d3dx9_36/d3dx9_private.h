@@ -163,6 +163,7 @@ struct d3dx_const_tab
     unsigned int const_set_size;
     struct d3dx_const_param_eval_output *const_set;
     const enum pres_reg_tables *regset2table;
+    ULONG64 update_version;
 };
 
 struct d3dx_regstore
@@ -190,9 +191,9 @@ struct d3dx_param_eval
 
     struct d3dx_preshader pres;
     struct d3dx_const_tab shader_inputs;
-};
 
-#define PARAMETER_FLAG_DIRTY 0x1u
+    ULONG64 *version_counter;
+};
 
 struct d3dx_shared_data;
 
@@ -211,8 +212,9 @@ struct d3dx_parameter
     UINT member_count;
     DWORD flags;
     UINT bytes;
-    DWORD runtime_flags;
     DWORD object_id;
+    ULONG64 update_version;
+    ULONG64 *version_counter;
 
     struct d3dx_parameter *annotations;
     struct d3dx_parameter *members;
@@ -227,12 +229,30 @@ struct d3dx_parameter
     } u;
 };
 
-static inline BOOL is_param_dirty(struct d3dx_parameter *param)
+struct d3dx_shared_data
 {
-    return param->top_level_param->runtime_flags & PARAMETER_FLAG_DIRTY;
-}
+    void *data;
+    struct d3dx_parameter **parameters;
+    unsigned int size, count;
+    ULONG64 update_version;
+};
 
 struct d3dx9_base_effect;
+
+static inline ULONG64 next_update_version(ULONG64 *version_counter)
+{
+    return ++*version_counter;
+}
+
+static inline BOOL is_param_dirty(struct d3dx_parameter *param, ULONG64 update_version)
+{
+    struct d3dx_shared_data *shared_data;
+
+    if ((shared_data = param->top_level_param->u.shared_data))
+        return update_version < shared_data->update_version;
+    else
+        return update_version < param->top_level_param->update_version;
+}
 
 struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
         struct d3dx_parameter *parameter, const char *name) DECLSPEC_HIDDEN;
@@ -242,10 +262,11 @@ struct d3dx_parameter *get_parameter_by_name(struct d3dx9_base_effect *base,
 #define SET_D3D_STATE(base_effect, args...) SET_D3D_STATE_(base_effect->manager, base_effect->device, args)
 
 void d3dx_create_param_eval(struct d3dx9_base_effect *base_effect, void *byte_code,
-        unsigned int byte_code_size, D3DXPARAMETER_TYPE type, struct d3dx_param_eval **peval) DECLSPEC_HIDDEN;
+        unsigned int byte_code_size, D3DXPARAMETER_TYPE type,
+        struct d3dx_param_eval **peval, ULONG64 *version_counter) DECLSPEC_HIDDEN;
 void d3dx_free_param_eval(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
 HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval,
-        const struct d3dx_parameter *param, void *param_value, BOOL update_all) DECLSPEC_HIDDEN;
+        const struct d3dx_parameter *param, void *param_value) DECLSPEC_HIDDEN;
 HRESULT d3dx_param_eval_set_shader_constants(ID3DXEffectStateManager *manager, struct IDirect3DDevice9 *device,
         struct d3dx_param_eval *peval, BOOL update_all) DECLSPEC_HIDDEN;
 BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
