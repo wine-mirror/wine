@@ -827,7 +827,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SOSetTargets(ID3D11DeviceC
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
 
         wined3d_device_set_stream_output(device->wined3d_device, i,
-                buffer ? buffer->wined3d_buffer : NULL, offsets[i]);
+                buffer ? buffer->wined3d_buffer : NULL, offsets ? offsets[i] : 0);
     }
     for (; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
     {
