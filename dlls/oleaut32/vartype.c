@@ -7676,7 +7676,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
       dp.dwCount++;
       strIn--;
     }
-    else if (isalpha(*strIn))
+    else if (isalphaW(*strIn))
     {
       BOOL bFound = FALSE;
 
