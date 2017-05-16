@@ -2,8 +2,7 @@ EXTRADEFS = -D_RPCRT4_ -DMSWMSG
 MODULE    = rpcrt4.dll
 IMPORTLIB = rpcrt4
 IMPORTS   = uuid advapi32
-DELAYIMPORTS = iphlpapi wininet secur32 user32
-EXTRALIBS = $(SOCKET_LIBS)
+DELAYIMPORTS = iphlpapi wininet secur32 user32 ws2_32
 
 C_SRCS = \
 	cproxy.c \
