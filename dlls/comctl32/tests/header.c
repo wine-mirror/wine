@@ -1560,7 +1560,6 @@ static void test_header_order (void)
     {
         hdi.lParam = i;
         SendMessageA(hWndHeader, HDM_INSERTITEMA, rand1[i], (LPARAM)&hdi);
-        rand();
     }
     check_order(ids1, ord1, 5, "insert without iOrder");
 
@@ -1570,7 +1569,6 @@ static void test_header_order (void)
         hdi.lParam = i + 5;
         hdi.iOrder = rand2[i];
         SendMessageA(hWndHeader, HDM_INSERTITEMA, rand3[i], (LPARAM)&hdi);
-        rand(); rand();
     }
     check_order(ids2, ord2, 10, "insert with order");
 
@@ -1579,7 +1577,6 @@ static void test_header_order (void)
     {
         hdi.iOrder = rand5[i];
         SendMessageA(hWndHeader, HDM_SETITEMA, rand4[i], (LPARAM)&hdi);
-        rand(); rand();
     }
     check_order(ids2, ord3, 10, "setitems changing order");
 
