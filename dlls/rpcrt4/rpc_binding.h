@@ -90,7 +90,7 @@ typedef struct _RpcConnection
   /* The active interface bound to server. */
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
   USHORT NextCallId;
-  struct _RpcConnection* Next;
+  struct list protseq_entry;
   struct _RpcBinding *server_binding;
 } RpcConnection;
 

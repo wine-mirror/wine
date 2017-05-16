@@ -254,8 +254,7 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
   I_RpcFree(pname);
 
   EnterCriticalSection(&protseq->cs);
-  Connection->Next = protseq->conn;
-  protseq->conn = Connection;
+  list_add_head(&protseq->connections, &Connection->protseq_entry);
   LeaveCriticalSection(&protseq->cs);
 
   return r;
@@ -316,8 +315,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
   I_RpcFree(pname);
 
   EnterCriticalSection(&protseq->cs);
-  Connection->Next = protseq->conn;
-  protseq->conn = Connection;
+  list_add_head(&protseq->connections, &Connection->protseq_entry);
   LeaveCriticalSection(&protseq->cs);
 
   return r;
@@ -662,12 +660,10 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     
     /* open and count connections */
     *count = 1;
-    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
-    while (conn) {
+    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
         rpcrt4_conn_listen_pipe(conn);
         if (conn->listen_thread)
             (*count)++;
-        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
     }
     
     /* make array of connections */
@@ -684,11 +680,9 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     
     objs[0] = npps->mgr_event;
     *count = 1;
-    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
-    while (conn) {
+    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
         if ((objs[*count] = conn->listen_thread))
             (*count)++;
-        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
     }
     LeaveCriticalSection(&protseq->cs);
     return objs;
@@ -704,7 +698,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
     HANDLE b_handle;
     HANDLE *objs = wait_array;
     DWORD res;
-    RpcConnection *cconn;
+    RpcConnection *cconn = NULL;
     RpcConnection_np *conn;
     
     if (!objs)
@@ -731,29 +725,24 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         b_handle = objs[res - WAIT_OBJECT_0];
         /* find which connection got a RPC */
         EnterCriticalSection(&protseq->cs);
-        conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
-        while (conn) {
-            if (b_handle == conn->listen_thread) break;
-            conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
+        LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
+            if (b_handle == conn->listen_thread) {
+                DWORD exit_code;
+                if (GetExitCodeThread(conn->listen_thread, &exit_code) && exit_code == RPC_S_OK)
+                    RPCRT4_SpawnConnection(&cconn, &conn->common);
+                CloseHandle(conn->listen_thread);
+                conn->listen_thread = 0;
+                break;
+            }
         }
-        cconn = NULL;
-        if (conn)
-        {
-            DWORD exit_code;
-            if (GetExitCodeThread(conn->listen_thread, &exit_code) && exit_code == RPC_S_OK)
-                RPCRT4_SpawnConnection(&cconn, &conn->common);
-            CloseHandle(conn->listen_thread);
-            conn->listen_thread = 0;
-        }
-        else
-            ERR("failed to locate connection for handle %p\n", b_handle);
         LeaveCriticalSection(&protseq->cs);
-        if (cconn)
+        if (!cconn)
         {
-            RPCRT4_new_client(cconn);
-            return 1;
+            ERR("failed to locate connection for handle %p\n", b_handle);
+            return -1;
         }
-        else return -1;
+        RPCRT4_new_client(cconn);
+        return 1;
     }
 }
 
@@ -1211,7 +1200,6 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     struct addrinfo *ai;
     struct addrinfo *ai_cur;
     struct addrinfo hints;
-    RpcConnection *first_connection = NULL;
 
     TRACE("(%p, %s)\n", protseq, endpoint);
 
@@ -1331,35 +1319,19 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
             continue;
         }
 
-        tcpc->common.Next = first_connection;
-        first_connection = &tcpc->common;
+        EnterCriticalSection(&protseq->cs);
+        list_add_tail(&protseq->connections, &tcpc->common.protseq_entry);
+        LeaveCriticalSection(&protseq->cs);
+
+        freeaddrinfo(ai);
 
         /* since IPv4 and IPv6 share the same port space, we only need one
          * successful bind to listen for both */
-        break;
-    }
-
-    freeaddrinfo(ai);
-
-    /* if at least one connection was created for an endpoint then
-     * return success */
-    if (first_connection)
-    {
-        RpcConnection *conn;
-
-        /* find last element in list */
-        for (conn = first_connection; conn->Next; conn = conn->Next)
-            ;
-
-        EnterCriticalSection(&protseq->cs);
-        conn->Next = protseq->conn;
-        protseq->conn = first_connection;
-        LeaveCriticalSection(&protseq->cs);
-        
         TRACE("listening on %s\n", endpoint);
         return RPC_S_OK;
     }
 
+    freeaddrinfo(ai);
     ERR("couldn't listen on port %s\n", endpoint);
     return status;
 }
@@ -1536,12 +1508,10 @@ static void *rpcrt4_protseq_sock_get_wait_array(RpcServerProtseq *protseq, void 
 
     /* open and count connections */
     *count = 1;
-    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_tcp, common);
-    while (conn)
+    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_tcp, common.protseq_entry)
     {
         if (conn->sock != -1)
             (*count)++;
-        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_tcp, common);
     }
 
     /* make array of connections */
@@ -1558,8 +1528,7 @@ static void *rpcrt4_protseq_sock_get_wait_array(RpcServerProtseq *protseq, void 
 
     objs[0] = sockps->mgr_event;
     *count = 1;
-    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_tcp, common);
-    while (conn)
+    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_tcp, common.protseq_entry)
     {
         if (conn->sock != -1)
         {
@@ -1572,7 +1541,6 @@ static void *rpcrt4_protseq_sock_get_wait_array(RpcServerProtseq *protseq, void 
                 (*count)++;
             }
         }
-        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_tcp, common);
     }
     LeaveCriticalSection(&protseq->cs);
     return objs;
@@ -1588,7 +1556,7 @@ static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq
     HANDLE b_handle;
     HANDLE *objs = wait_array;
     DWORD res;
-    RpcConnection *cconn;
+    RpcConnection *cconn = NULL;
     RpcConnection_tcp *conn;
 
     if (!objs)
@@ -1605,35 +1573,33 @@ static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq
 
     if (res == WAIT_OBJECT_0)
         return 0;
-    else if (res == WAIT_FAILED)
+    if (res == WAIT_FAILED)
     {
         ERR("wait failed with error %d\n", GetLastError());
         return -1;
     }
-    else
+
+    b_handle = objs[res - WAIT_OBJECT_0];
+
+    /* find which connection got a RPC */
+    EnterCriticalSection(&protseq->cs);
+    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_tcp, common.protseq_entry)
     {
-        b_handle = objs[res - WAIT_OBJECT_0];
-        /* find which connection got a RPC */
-        EnterCriticalSection(&protseq->cs);
-        conn = CONTAINING_RECORD(protseq->conn, RpcConnection_tcp, common);
-        while (conn)
+        if (b_handle == conn->sock_event)
         {
-            if (b_handle == conn->sock_event) break;
-            conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_tcp, common);
-        }
-        cconn = NULL;
-        if (conn)
             RPCRT4_SpawnConnection(&cconn, &conn->common);
-        else
-            ERR("failed to locate connection for handle %p\n", b_handle);
-        LeaveCriticalSection(&protseq->cs);
-        if (cconn)
-        {
-            RPCRT4_new_client(cconn);
-            return 1;
+            break;
         }
-        else return -1;
     }
+    LeaveCriticalSection(&protseq->cs);
+    if (!cconn)
+    {
+        ERR("failed to locate connection for handle %p\n", b_handle);
+        return -1;
+    }
+
+    RPCRT4_new_client(cconn);
+    return 1;
 }
 
 static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *tower_data,
@@ -3313,7 +3279,6 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
 
   NewConnection = ops->alloc();
   NewConnection->ref = 1;
-  NewConnection->Next = NULL;
   NewConnection->server_binding = NULL;
   NewConnection->server = server;
   NewConnection->ops = ops;
@@ -3337,6 +3302,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   NewConnection->QOS = QOS;
 
   list_init(&NewConnection->conn_pool_entry);
+  list_init(&NewConnection->protseq_entry);
   NewConnection->async_state = NULL;
 
   TRACE("connection: %p\n", NewConnection);
