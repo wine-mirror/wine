@@ -877,6 +877,13 @@ static void test_synthesized(void)
     DestroyWindow( hwnd );
 }
 
+static DWORD WINAPI clipboard_render_data_thread(void *param)
+{
+    HANDLE handle = SetClipboardData( CF_UNICODETEXT, create_textW() );
+    ok( handle != 0, "SetClipboardData failed: %d\n", GetLastError() );
+    return 0;
+}
+
 static CRITICAL_SECTION clipboard_cs;
 static HWND next_wnd;
 static UINT wm_drawclipboard;
@@ -885,6 +892,7 @@ static UINT wm_destroyclipboard;
 static UINT wm_renderformat;
 static UINT nb_formats;
 static BOOL cross_thread;
+static BOOL do_render_format;
 
 static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -917,6 +925,27 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
     case WM_RENDERFORMAT:
         ok( !wm_renderformat, "multiple WM_RENDERFORMAT %04x / %04lx\n", wm_renderformat, wp );
         wm_renderformat = wp;
+
+        if (do_render_format)
+        {
+            UINT seq, old_seq;
+            HANDLE handle;
+
+            old_seq = GetClipboardSequenceNumber();
+            handle = SetClipboardData( CF_TEXT, create_textA() );
+            ok( handle != 0, "SetClipboardData failed: %d\n", GetLastError() );
+            seq = GetClipboardSequenceNumber();
+            todo_wine ok( seq == old_seq, "sequence changed\n" );
+            old_seq = seq;
+
+            handle = CreateThread( NULL, 0, clipboard_render_data_thread, NULL, 0, NULL );
+            ok( handle != NULL, "CreateThread failed: %d\n", GetLastError() );
+            ok( WaitForSingleObject(handle, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+            CloseHandle( handle );
+            seq = GetClipboardSequenceNumber();
+            todo_wine ok( seq == old_seq, "sequence changed\n" );
+        }
+
         break;
     case WM_CLIPBOARDUPDATE:
         ok( msg_flags == ISMEX_NOSEND, "WM_CLIPBOARDUPDATE wrong flags %x\n", msg_flags );
@@ -949,6 +978,19 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
     }
 
     return DefWindowProcA(hwnd, msg, wp, lp);
+}
+
+static void get_clipboard_data_process(void)
+{
+    HANDLE data;
+    BOOL r;
+
+    r = OpenClipboard(0);
+    ok(r, "OpenClipboard failed: %d\n", GetLastError());
+    data = GetClipboardData( CF_UNICODETEXT );
+    ok( data != NULL, "GetClipboardData failed: %d\n", GetLastError());
+    r = CloseClipboard();
+    ok(r, "CloseClipboard failed: %d\n", GetLastError());
 }
 
 static DWORD WINAPI clipboard_thread(void *param)
@@ -1199,14 +1241,16 @@ static DWORD WINAPI clipboard_thread(void *param)
     fmt = SendMessageA( win, WM_USER+4, 0, 0 );
     ok( fmt == CF_UNICODETEXT, "WM_RENDERFORMAT received %04x\n", fmt );
 
+    do_render_format = TRUE;
     handle = GetClipboardData( CF_OEMTEXT );
-    ok( !handle, "got data for CF_OEMTEXT\n" );
+    ok( handle != NULL, "didn't get data for CF_OEMTEXT\n" );
     fmt = SendMessageA( win, WM_USER+4, 0, 0 );
     ok( fmt == CF_UNICODETEXT, "WM_RENDERFORMAT received %04x\n", fmt );
+    do_render_format = FALSE;
 
     SetClipboardData( CF_WAVE, 0 );
     seq = GetClipboardSequenceNumber();
-    ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
+    todo_wine ok( (int)(seq - old_seq) == 1, "sequence diff %d\n", seq - old_seq );
     old_seq = seq;
     if (!cross_thread)
     {
@@ -1462,6 +1506,31 @@ static DWORD WINAPI clipboard_thread(void *param)
     ok( count == 1 || broken(!pAddClipboardFormatListener), "WM_CLIPBOARDUPDATE not received\n" );
     fmt = SendMessageA( win, WM_USER+4, 0, 0 );
     ok( !fmt, "WM_RENDERFORMAT received\n" );
+
+    if (cross_thread)
+    {
+        r = OpenClipboard( win );
+        ok(r, "OpenClipboard failed: %d\n", GetLastError());
+        r = EmptyClipboard();
+        ok(r, "EmptyClipboard failed: %d\n", GetLastError());
+        SetClipboardData( CF_TEXT, 0 );
+        r = CloseClipboard();
+        ok(r, "CloseClipboard failed: %d\n", GetLastError());
+
+        do_render_format = TRUE;
+        old_seq = GetClipboardSequenceNumber();
+        run_process( "get_clipboard_data" );
+        seq = GetClipboardSequenceNumber();
+        todo_wine ok( seq == old_seq, "sequence changed\n" );
+        do_render_format = FALSE;
+
+        count = SendMessageA( win, WM_USER+1, 0, 0 );
+        todo_wine ok( count == 1, "WM_DRAWCLIPBOARD not received\n" );
+        count = SendMessageA( win, WM_USER+2, 0, 0 );
+        todo_wine ok( count == 1 || broken(!pAddClipboardFormatListener) /* < Vista */, "WM_CLIPBOARDUPDATE not received\n" );
+        fmt = SendMessageA( win, WM_USER+4, 0, 0 );
+        ok( fmt == CF_TEXT, "WM_RENDERFORMAT received\n" );
+    }
 
     r = PostMessageA(win, WM_USER, 0, 0);
     ok(r, "PostMessage failed: %d\n", GetLastError());
@@ -2389,6 +2458,11 @@ START_TEST(clipboard)
     if (argc == 4 && !strcmp( argv[2], "string_data" ))
     {
         test_string_data_process( atoi( argv[3] ));
+        return;
+    }
+    if (argc == 3 && !strcmp( argv[2], "get_clipboard_data" ))
+    {
+        get_clipboard_data_process( );
         return;
     }
 
