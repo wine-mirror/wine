@@ -597,7 +597,7 @@ static void test_synthesized(void)
     HGLOBAL h, htext;
     HENHMETAFILE emf;
     BOOL r;
-    UINT cf, i, j, count, rendered;
+    UINT cf, i, j, count, rendered, seq, old_seq;
     HANDLE data;
     HWND hwnd;
 
@@ -762,10 +762,14 @@ static void test_synthesized(void)
             ok(cf == tests[i].expected[j], "%u.%u: got %04x instead of %04x\n",
                i, j, cf, tests[i].expected[j] );
             if (cf != tests[i].expected[j]) break;
+            old_seq = GetClipboardSequenceNumber();
             data = GetClipboardData( cf );
             ok(data != NULL ||
                broken( tests[i].format == CF_DIBV5 && cf == CF_DIB ), /* >= Vista */
                "%u: couldn't get data, cf %04x err %d\n", i, cf, GetLastError());
+            seq = GetClipboardSequenceNumber();
+            todo_wine_if(cf != tests[i].format && cf != CF_LOCALE)
+                ok(seq == old_seq, "sequence changed (test %d %d)\n", i, cf);
             switch (cf)
             {
             case CF_LOCALE:
