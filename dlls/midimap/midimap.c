@@ -116,14 +116,15 @@ static BOOL	MIDIMAP_FindPort(const WCHAR* name, unsigned* dev)
 	    return TRUE;
     }
     /* try the form #nnn */
-    if (*name == '#' && isdigit(name[1]))
+    if (*name == '#' && name[1] >= '0' && name[1] <= '9')
     {
         const WCHAR*  ptr = name + 1;
         *dev = 0;
         do 
         {
             *dev = *dev * 10 + *ptr - '0';
-        } while (isdigit(*++ptr));
+            ptr++;
+        } while (*ptr >= '0' && *ptr <= '9');
 	if (*dev < numMidiOutPorts)
 	    return TRUE;
     }
