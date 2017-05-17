@@ -7465,10 +7465,11 @@ static GLuint shader_glsl_generate_domain_shader(const struct wined3d_context *c
 
     shader_addline(buffer, "in shader_in_out { vec4 reg[%u]; } shader_in[];\n", shader->limits->packed_input);
 
-    if (!gl_info->supported[ARB_CLIP_CONTROL])
+    if (args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL && !gl_info->supported[ARB_CLIP_CONTROL])
         shader_addline(buffer, "uniform vec4 pos_fixup;\n");
 
-    shader_glsl_generate_sm4_output_setup(priv, shader, args->output_count, gl_info, TRUE);
+    shader_glsl_generate_sm4_output_setup(priv, shader, args->output_count, gl_info,
+            args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL);
     shader_addline(buffer, "void main()\n{\n");
 
     if (FAILED(shader_generate_main(shader, buffer, reg_maps, &priv_ctx)))
