@@ -317,6 +317,28 @@ static void test_basic_import(void)
     dword = 0x00000008;
     verify_reg(hkey, "single'quote", REG_DWORD, &dword, sizeof(dword), 0);
 
+    /* Test hex data concatenation for REG_NONE */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine10a\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n"
+                    "\"Wine10b\"=hex(0):56,00,61,00,6c,00,\\\n"
+                    "  75,00,65,00,00,00\n"
+                    "\"Wine10h\"=hex(0):56,00,61,00,\\;comment\n"
+                    "  6c,00,75,00,\\\n"
+                    "  65,00,00,00\n"
+                    "\"Wine10i\"=hex(0):56,00,61,00,\\;comment\n"
+                    "  6c,00,75,00,\n"
+                    "  65,00,00,00\n"
+                    "\"Wine10j\"=hex(0):56,00,61,00,\\;comment\n"
+                    "  6c,00,75,00,;comment\n"
+                    "  65,00,00,00\n");
+    verify_reg(hkey, "Wine10a", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    verify_reg(hkey, "Wine10b", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    todo_wine verify_reg(hkey, "Wine10h", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    todo_wine verify_reg(hkey, "Wine10i", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
+    todo_wine verify_reg(hkey, "Wine10j", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
+
+    /* Test import with subkeys */
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey\"1]\n"
                     "\"Wine\\\\31\"=\"Test value\"\n\n");
@@ -606,6 +628,29 @@ static void test_invalid_import(void)
                     "Value\"\n\n");
     todo_wine verify_reg_nonexist(hkey, "Test18a");
     todo_wine verify_reg_nonexist(hkey, "Test18b");
+
+    /* Test hex data concatenation for REG_NONE */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test19a\"=hex(0):56,00,61,00,6c,00\\\n"
+                    ",75,00,65,00,00,00\n"
+                    "\"Test19b\"=hex(0):56,00,61,00,6c,00\\\n"
+                    "  ,75,00,65,00,00,00\n"
+                    "\"Test19c\"=hex(0):56,00,61,00,6c,00\\\n"
+                    "  75,00,65,00,00,00\n"
+                    "\"Test19d\"=hex(0):56,00,61,00,6c,00,7\\\n"
+                    "5,00,65,00,00,00\n"
+                    "\"Test19e\"=hex(0):56,00,61,00,6c,00,7\\\n"
+                    "  5,00,65,00,00,00\n"
+                    "\"Test19f\"=hex(0):56,00,61,00,\\;comment\n"
+                    "  6c,00,75,00,\\#comment\n"
+                    "  65,00,00,00\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Test19a");
+    todo_wine verify_reg_nonexist(hkey, "Test19b");
+    todo_wine verify_reg_nonexist(hkey, "Test19c");
+    todo_wine verify_reg_nonexist(hkey, "Test19d");
+    todo_wine verify_reg_nonexist(hkey, "Test19e");
+    verify_reg_nonexist(hkey, "Test19f");
 
     RegCloseKey(hkey);
 
