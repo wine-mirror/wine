@@ -1336,6 +1336,7 @@ struct ds_compile_args
     unsigned int output_count : 16;
     unsigned int next_shader_type : 3;
     unsigned int render_offscreen : 1;
+    unsigned int padding : 12;
 };
 
 struct gs_compile_args

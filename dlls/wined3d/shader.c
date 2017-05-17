@@ -3523,6 +3523,8 @@ void find_ds_compile_args(const struct wined3d_state *state, const struct wined3
             : WINED3D_SHADER_TYPE_PIXEL;
 
     args->render_offscreen = context->render_offscreen;
+
+    args->padding = 0;
 }
 
 void find_gs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
