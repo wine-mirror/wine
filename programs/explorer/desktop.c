@@ -903,6 +903,11 @@ static void set_desktop_window_title( HWND hwnd, const WCHAR *name )
     HeapFree( GetProcessHeap(), 0, window_titleW );
 }
 
+static inline BOOL is_whitespace(WCHAR c)
+{
+    return c == ' ' || c == '\t';
+}
+
 /* main desktop management function */
 void manage_desktop( WCHAR *arg )
 {
@@ -919,11 +924,11 @@ void manage_desktop( WCHAR *arg )
     BOOL enable_shell = FALSE;
 
     /* get the rest of the command line (if any) */
-    while (*p && !isspace(*p)) p++;
+    while (*p && !is_whitespace(*p)) p++;
     if (*p)
     {
         *p++ = 0;
-        while (*p && isspace(*p)) p++;
+        while (*p && is_whitespace(*p)) p++;
         if (*p) cmdline = p;
     }
 
