@@ -340,7 +340,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
                 data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
 					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
 
-		if (!data->cells) WINECON_Fatal("OOM\n");
+		if (!data->cells) WINECON_Fatal("OOM");
 		data->fnResizeScreenBuffer(data);
 		data->fnComputePositions(data);
 	    }
