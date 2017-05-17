@@ -1175,19 +1175,24 @@ static BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, 
     return TRUE;
 }
 
+static inline BOOL isSpace(WCHAR c)
+{
+    return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v';
+}
+
 static BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize) {
     LPCWSTR cur = lpStringStart;
     LPCWSTR start;
     LPCWSTR end;
 
-    while(cur < lpStringEnd && (isspace(*cur) || *cur == ',')) cur++;
+    while(cur < lpStringEnd && (isSpace(*cur) || *cur == ',')) cur++;
     if(cur >= lpStringEnd) {
         return FALSE;
     }
     start = cur;
     while(cur < lpStringEnd && *cur != ',') cur++;
     end = cur;
-    while(isspace(*end)) end--;
+    while(isSpace(*end)) end--;
 
     lstrcpynW(lpBuff, start, min(buffSize, end-start+1));
 
