@@ -189,6 +189,7 @@ static void test_basic_import(void)
     WCHAR wide_exp[] = {0x3041,'V','a','l','u','e',0};
     LONG lr;
     char buffer[8];
+    BYTE hex[8];
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
@@ -318,7 +319,7 @@ static void test_basic_import(void)
     dword = 0x00000008;
     verify_reg(hkey, "single'quote", REG_DWORD, &dword, sizeof(dword), 0);
 
-    /* Test hex data concatenation for REG_NONE and REG_EXPAND_SZ */
+    /* Test hex data concatenation for REG_NONE, REG_EXPAND_SZ and REG_BINARY */
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine10a\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n"
@@ -371,6 +372,28 @@ static void test_basic_import(void)
     todo_wine ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
     todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
     todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine12a\"=hex:11,22,33,44,55,66,77,88\n"
+                    "\"Wine12b\"=hex:11,22,33,44,\\\n"
+                    "  55,66,77,88\n"
+                    "\"Wine12c\"=hex:11,22,33,44,\\;comment\n"
+                    "  55,66,\\\n"
+                    "  77,88\n"
+                    "\"Wine12d\"=hex:11,22,33,44,\\;comment\n"
+                    "  55,66,\n"
+                    "  77,88\n"
+                    "\"Wine12e\"=hex:11,22,33,44,\\;comment\n"
+                    "  55,66,;comment\n"
+                    "  77,88\n");
+    hex[0] = 0x11; hex[1] = 0x22; hex[2] = 0x33; hex[3] = 0x44;
+    hex[4] = 0x55; hex[5] = 0x66; hex[6] = 0x77; hex[7] = 0x88;
+    verify_reg(hkey, "Wine12a", REG_BINARY, hex, sizeof(hex), 0);
+    verify_reg(hkey, "Wine12b", REG_BINARY, hex, sizeof(hex), 0);
+    todo_wine verify_reg(hkey, "Wine12c", REG_BINARY, hex, sizeof(hex), 0);
+    todo_wine verify_reg(hkey, "Wine12d", REG_BINARY, hex, 6, 0);
+    todo_wine verify_reg(hkey, "Wine12e", REG_BINARY, hex, 6, 0);
 
     /* Test import with subkeys */
     exec_import_str("REGEDIT4\n\n"
@@ -663,7 +686,7 @@ static void test_invalid_import(void)
     todo_wine verify_reg_nonexist(hkey, "Test18a");
     todo_wine verify_reg_nonexist(hkey, "Test18b");
 
-    /* Test hex data concatenation for REG_NONE and REG_EXPAND_SZ */
+    /* Test hex data concatenation for REG_NONE, REG_EXPAND_SZ and REG_BINARY */
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Test19a\"=hex(0):56,00,61,00,6c,00\\\n"
@@ -707,6 +730,28 @@ static void test_invalid_import(void)
     todo_wine verify_reg_nonexist(hkey, "Test20d");
     todo_wine verify_reg_nonexist(hkey, "Test20e");
     verify_reg_nonexist(hkey, "Test20f");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test21a\"=hex:11,22,33,44\\\n"
+                    ",55,66,77,88\n"
+                    "\"Test21b\"=hex:11,22,33,44\\\n"
+                    "  ,55,66,77,88\n"
+                    "\"Test21c\"=hex:11,22,33,44\\\n"
+                    "  55,66,77,88\n"
+                    "\"Test21d\"=hex:11,22,33,4\\\n"
+                    "4,55,66,77,88\n"
+                    "\"Test21e\"=hex:11,22,33,4\\\n"
+                    "  4,55,66,77,88\n"
+                    "\"Test21f\"=hex:11,22,33,\\;comment\n"
+                    "  44,55,66,\\#comment\n"
+                    "  77,88\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Test21a");
+    todo_wine verify_reg_nonexist(hkey, "Test21b");
+    verify_reg_nonexist(hkey, "Test21c");
+    todo_wine verify_reg_nonexist(hkey, "Test21d");
+    todo_wine verify_reg_nonexist(hkey, "Test21e");
+    verify_reg_nonexist(hkey, "Test21f");
 
     RegCloseKey(hkey);
 
