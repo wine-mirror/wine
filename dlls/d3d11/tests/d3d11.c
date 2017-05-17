@@ -7950,6 +7950,1259 @@ static void test_scissor(void)
     release_test_context(&test_context);
 }
 
+static void test_clear_state(void)
+{
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+#if 0
+    float4 main(float4 pos : POSITION) : POSITION
+    {
+        return pos;
+    }
+#endif
+    static const DWORD simple_vs[] =
+    {
+        0x43425844, 0x66689e7c, 0x643f0971, 0xb7f67ff4, 0xabc48688, 0x00000001, 0x000000d4, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x49534f50, 0x4e4f4954, 0xababab00, 0x52444853, 0x00000038, 0x00010040,
+        0x0000000e, 0x0300005f, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+#if 0
+    struct data
+    {
+        float4 position : SV_Position;
+    };
+
+    struct patch_constant_data
+    {
+        float edges[3] : SV_TessFactor;
+        float inside : SV_InsideTessFactor;
+    };
+
+    void patch_constant(InputPatch<data, 3> input, out patch_constant_data output)
+    {
+        output.edges[0] = output.edges[1] = output.edges[2] = 1.0f;
+        output.inside = 1.0f;
+    }
+
+    [domain("tri")]
+    [outputcontrolpoints(3)]
+    [partitioning("integer")]
+    [outputtopology("triangle_ccw")]
+    [patchconstantfunc("patch_constant")]
+    data hs_main(InputPatch<data, 3> input, uint i : SV_OutputControlPointID)
+    {
+        return input[i];
+    }
+
+    [domain("tri")]
+    void ds_main(patch_constant_data input,
+            float3 tess_coord : SV_DomainLocation,
+            const OutputPatch<data, 3> patch,
+            out data output)
+    {
+        output.position = tess_coord.x * patch[0].position
+                + tess_coord.y * patch[1].position
+                + tess_coord.z * patch[2].position;
+    }
+#endif
+    static const DWORD simple_hs[] =
+    {
+        0x43425844, 0x42b5df25, 0xfd8aa2b1, 0xbe5490cb, 0xb595f8b1, 0x00000001, 0x0000020c, 0x00000004,
+        0x00000030, 0x00000064, 0x00000098, 0x0000012c, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x7469736f,
+        0x006e6f69, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x47534350, 0x0000008c,
+        0x00000004, 0x00000008, 0x00000068, 0x00000000, 0x0000000d, 0x00000003, 0x00000000, 0x00000e01,
+        0x00000068, 0x00000001, 0x0000000d, 0x00000003, 0x00000001, 0x00000e01, 0x00000068, 0x00000002,
+        0x0000000d, 0x00000003, 0x00000002, 0x00000e01, 0x00000076, 0x00000000, 0x0000000e, 0x00000003,
+        0x00000003, 0x00000e01, 0x545f5653, 0x46737365, 0x6f746361, 0x56530072, 0x736e495f, 0x54656469,
+        0x46737365, 0x6f746361, 0xabab0072, 0x58454853, 0x000000d8, 0x00030050, 0x00000036, 0x01000071,
+        0x01001893, 0x01001894, 0x01001095, 0x01000896, 0x01002097, 0x0100086a, 0x01000073, 0x02000099,
+        0x00000003, 0x0200005f, 0x00017000, 0x04000067, 0x00102012, 0x00000000, 0x00000011, 0x04000067,
+        0x00102012, 0x00000001, 0x00000012, 0x04000067, 0x00102012, 0x00000002, 0x00000013, 0x02000068,
+        0x00000001, 0x0400005b, 0x00102012, 0x00000000, 0x00000003, 0x04000036, 0x00100012, 0x00000000,
+        0x0001700a, 0x06000036, 0x00902012, 0x0010000a, 0x00000000, 0x00004001, 0x3f800000, 0x0100003e,
+        0x01000073, 0x04000067, 0x00102012, 0x00000003, 0x00000014, 0x05000036, 0x00102012, 0x00000003,
+        0x00004001, 0x3f800000, 0x0100003e,
+    };
+    static const DWORD simple_ds[] =
+    {
+        0x43425844, 0xb7e35b82, 0x1b930ff2, 0x48d3a0f2, 0x375219ed, 0x00000001, 0x000001e0, 0x00000004,
+        0x00000030, 0x00000064, 0x000000f8, 0x0000012c, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x7469736f,
+        0x006e6f69, 0x47534350, 0x0000008c, 0x00000004, 0x00000008, 0x00000068, 0x00000000, 0x0000000d,
+        0x00000003, 0x00000000, 0x00000001, 0x00000068, 0x00000001, 0x0000000d, 0x00000003, 0x00000001,
+        0x00000001, 0x00000068, 0x00000002, 0x0000000d, 0x00000003, 0x00000002, 0x00000001, 0x00000076,
+        0x00000000, 0x0000000e, 0x00000003, 0x00000003, 0x00000001, 0x545f5653, 0x46737365, 0x6f746361,
+        0x56530072, 0x736e495f, 0x54656469, 0x46737365, 0x6f746361, 0xabab0072, 0x4e47534f, 0x0000002c,
+        0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f,
+        0x505f5653, 0x7469736f, 0x006e6f69, 0x58454853, 0x000000ac, 0x00040050, 0x0000002b, 0x01001893,
+        0x01001095, 0x0100086a, 0x0200005f, 0x0001c072, 0x0400005f, 0x002190f2, 0x00000003, 0x00000000,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x02000068, 0x00000001, 0x07000038, 0x001000f2,
+        0x00000000, 0x0001c556, 0x00219e46, 0x00000001, 0x00000000, 0x09000032, 0x001000f2, 0x00000000,
+        0x0001c006, 0x00219e46, 0x00000000, 0x00000000, 0x00100e46, 0x00000000, 0x09000032, 0x001020f2,
+        0x00000000, 0x0001caa6, 0x00219e46, 0x00000002, 0x00000000, 0x00100e46, 0x00000000, 0x0100003e,
+    };
+#if 0
+    struct gs_out
+    {
+        float4 pos : SV_POSITION;
+    };
+
+    [maxvertexcount(4)]
+    void main(point float4 vin[1] : POSITION, inout TriangleStream<gs_out> vout)
+    {
+        float offset = 0.1 * vin[0].w;
+        gs_out v;
+
+        v.pos = float4(vin[0].x - offset, vin[0].y - offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x - offset, vin[0].y + offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x + offset, vin[0].y - offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x + offset, vin[0].y + offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+    }
+#endif
+    static const DWORD simple_gs[] =
+    {
+        0x43425844, 0x000ee786, 0xc624c269, 0x885a5cbe, 0x444b3b1f, 0x00000001, 0x0000023c, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x000001a0, 0x00020040,
+        0x00000068, 0x0400005f, 0x002010f2, 0x00000001, 0x00000000, 0x02000068, 0x00000001, 0x0100085d,
+        0x0100285c, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x0200005e, 0x00000004, 0x0f000032,
+        0x00100032, 0x00000000, 0x80201ff6, 0x00000041, 0x00000000, 0x00000000, 0x00004002, 0x3dcccccd,
+        0x3dcccccd, 0x00000000, 0x00000000, 0x00201046, 0x00000000, 0x00000000, 0x05000036, 0x00102032,
+        0x00000000, 0x00100046, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000,
+        0x00000000, 0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0e000032,
+        0x00100052, 0x00000000, 0x00201ff6, 0x00000000, 0x00000000, 0x00004002, 0x3dcccccd, 0x00000000,
+        0x3dcccccd, 0x00000000, 0x00201106, 0x00000000, 0x00000000, 0x05000036, 0x00102022, 0x00000000,
+        0x0010002a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000, 0x00000000,
+        0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x05000036, 0x00102022,
+        0x00000000, 0x0010001a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000,
+        0x00000000, 0x01000013, 0x05000036, 0x00102032, 0x00000000, 0x00100086, 0x00000000, 0x06000036,
+        0x001020c2, 0x00000000, 0x00201ea6, 0x00000000, 0x00000000, 0x01000013, 0x0100003e,
+    };
+#if 0
+    float4 main(float4 color : COLOR) : SV_TARGET
+    {
+        return color;
+    }
+#endif
+    static const DWORD simple_ps[] =
+    {
+        0x43425844, 0x08c2b568, 0x17d33120, 0xb7d82948, 0x13a570fb, 0x00000001, 0x000000d0, 0x00000003,
+        0x0000002c, 0x0000005c, 0x00000090, 0x4e475349, 0x00000028, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x4f4c4f43, 0xabab0052, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
+        0x03001062, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+#if 0
+    [numthreads(1, 1, 1)]
+    void main() { }
+#endif
+    static const DWORD simple_cs[] =
+    {
+        0x43425844, 0x1acc3ad0, 0x71c7b057, 0xc72c4306, 0xf432cb57, 0x00000001, 0x00000074, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000020, 0x00050050, 0x00000008, 0x0100086a,
+        0x0400009b, 0x00000001, 0x00000001, 0x00000001, 0x0100003e,
+    };
+
+    D3D11_VIEWPORT tmp_viewport[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+    ID3D11ShaderResourceView *tmp_srv[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D11ShaderResourceView *srv[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D11RenderTargetView *tmp_rtv[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+    RECT tmp_rect[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+    ID3D11SamplerState *tmp_sampler[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+    ID3D11RenderTargetView *rtv[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+    ID3D11Texture2D *rt_texture[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+    ID3D11Buffer *cb[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
+    ID3D11Buffer *tmp_buffer[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D11SamplerState *sampler[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+    ID3D11UnorderedAccessView *tmp_uav[D3D11_PS_CS_UAV_REGISTER_COUNT];
+    ID3D11UnorderedAccessView *cs_uav[D3D11_PS_CS_UAV_REGISTER_COUNT];
+    ID3D11Buffer *buffer[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D11Buffer *cs_uav_buffer[D3D11_PS_CS_UAV_REGISTER_COUNT];
+    UINT offset[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    UINT stride[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
+    ID3D11Buffer *so_buffer[D3D11_SO_BUFFER_SLOT_COUNT];
+    ID3D11InputLayout *tmp_input_layout, *input_layout;
+    ID3D11DepthStencilState *tmp_ds_state, *ds_state;
+    ID3D11BlendState *tmp_blend_state, *blend_state;
+    ID3D11RasterizerState *tmp_rs_state, *rs_state;
+    ID3D11Predicate *tmp_predicate, *predicate;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    ID3D11DepthStencilView *tmp_dsv, *dsv;
+    ID3D11UnorderedAccessView *ps_uav;
+    D3D11_PRIMITIVE_TOPOLOGY topology;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11GeometryShader *tmp_gs, *gs;
+    ID3D11ComputeShader *tmp_cs, *cs;
+    D3D11_DEPTH_STENCIL_DESC ds_desc;
+    ID3D11VertexShader *tmp_vs, *vs;
+    ID3D11DomainShader *tmp_ds, *ds;
+    D3D11_SAMPLER_DESC sampler_desc;
+    D3D11_QUERY_DESC predicate_desc;
+    struct device_desc device_desc;
+    ID3D11PixelShader *tmp_ps, *ps;
+    ID3D11HullShader *tmp_hs, *hs;
+    D3D11_RASTERIZER_DESC rs_desc;
+    ID3D11DeviceContext *context;
+    D3D11_BLEND_DESC blend_desc;
+    ID3D11Texture2D *ds_texture;
+    ID3D11Buffer *ps_uav_buffer;
+    float blend_factor[4];
+    ID3D11Device *device;
+    BOOL predicate_value;
+    DXGI_FORMAT format;
+    UINT sample_mask;
+    UINT stencil_ref;
+    ULONG refcount;
+    UINT count, i;
+    HRESULT hr;
+
+    device_desc.feature_level = &feature_level;
+    device_desc.flags = 0;
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    /* Verify the initial state after device creation. */
+
+    ID3D11DeviceContext_VSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_VSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_VSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_VSGetShader(context, &tmp_vs, NULL, 0);
+    ok(!tmp_vs, "Got unexpected vertex shader %p.\n", tmp_vs);
+
+    ID3D11DeviceContext_HSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_HSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_HSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_HSGetShader(context, &tmp_hs, NULL, 0);
+    ok(!tmp_hs, "Got unexpected hull shader %p.\n", tmp_hs);
+
+    ID3D11DeviceContext_DSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_DSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_DSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_DSGetShader(context, &tmp_ds, NULL, 0);
+    ok(!tmp_ds, "Got unexpected domain shader %p.\n", tmp_ds);
+
+    ID3D11DeviceContext_GSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_GSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_GSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_GSGetShader(context, &tmp_gs, NULL, 0);
+    ok(!tmp_gs, "Got unexpected geometry shader %p.\n", tmp_gs);
+
+    ID3D11DeviceContext_PSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+            tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_PSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_PSGetShader(context, &tmp_ps, NULL, 0);
+    ok(!tmp_ps, "Got unexpected pixel shader %p.\n", tmp_ps);
+
+    ID3D11DeviceContext_CSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_CSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+            tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_CSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_CSGetShader(context, &tmp_cs, NULL, 0);
+    ok(!tmp_cs, "Got unexpected compute shader %p.\n", tmp_cs);
+    ID3D11DeviceContext_CSGetUnorderedAccessViews(context, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, tmp_uav);
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
+    {
+        ok(!tmp_uav[i], "Got unexpected unordered access view %p in slot %u.\n", tmp_uav[i], i);
+    }
+
+    ID3D11DeviceContext_IAGetVertexBuffers(context, 0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
+            tmp_buffer, stride, offset);
+    for (i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected vertex buffer %p in slot %u.\n", tmp_buffer[i], i);
+        ok(!stride[i], "Got unexpected stride %u in slot %u.\n", stride[i], i);
+        ok(!offset[i], "Got unexpected offset %u in slot %u.\n", offset[i], i);
+    }
+    ID3D11DeviceContext_IAGetIndexBuffer(context, tmp_buffer, &format, offset);
+    ok(!tmp_buffer[0], "Got unexpected index buffer %p.\n", tmp_buffer[0]);
+    ok(format == DXGI_FORMAT_UNKNOWN, "Got unexpected index buffer format %#x.\n", format);
+    ok(!offset[0], "Got unexpected index buffer offset %u.\n", offset[0]);
+    ID3D11DeviceContext_IAGetInputLayout(context, &tmp_input_layout);
+    ok(!tmp_input_layout, "Got unexpected input layout %p.\n", tmp_input_layout);
+    ID3D11DeviceContext_IAGetPrimitiveTopology(context, &topology);
+    ok(topology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED, "Got unexpected primitive topology %#x.\n", topology);
+
+    ID3D11DeviceContext_OMGetBlendState(context, &tmp_blend_state, blend_factor, &sample_mask);
+    ok(!tmp_blend_state, "Got unexpected blend state %p.\n", tmp_blend_state);
+    ok(blend_factor[0] == 1.0f && blend_factor[1] == 1.0f
+            && blend_factor[2] == 1.0f && blend_factor[3] == 1.0f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+    ok(sample_mask == D3D11_DEFAULT_SAMPLE_MASK, "Got unexpected sample mask %#x.\n", sample_mask);
+    ID3D11DeviceContext_OMGetDepthStencilState(context, &tmp_ds_state, &stencil_ref);
+    ok(!tmp_ds_state, "Got unexpected depth stencil state %p.\n", tmp_ds_state);
+    ok(!stencil_ref, "Got unexpected stencil ref %u.\n", stencil_ref);
+    ID3D11DeviceContext_OMGetRenderTargets(context, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, tmp_rtv, &tmp_dsv);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ok(!tmp_rtv[i], "Got unexpected render target view %p in slot %u.\n", tmp_rtv[i], i);
+    }
+    ok(!tmp_dsv, "Got unexpected depth stencil view %p.\n", tmp_dsv);
+    ID3D11DeviceContext_OMGetRenderTargetsAndUnorderedAccessViews(context,
+            D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, tmp_rtv, &tmp_dsv,
+            0, D3D11_PS_CS_UAV_REGISTER_COUNT, tmp_uav);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ok(!tmp_rtv[i], "Got unexpected render target view %p in slot %u.\n", tmp_rtv[i], i);
+    }
+    ok(!tmp_dsv, "Got unexpected depth stencil view %p.\n", tmp_dsv);
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
+    {
+        ok(!tmp_uav[i], "Got unexpected unordered access view %p in slot %u.\n", tmp_uav[i], i);
+    }
+
+    ID3D11DeviceContext_RSGetScissorRects(context, &count, NULL);
+    todo_wine ok(!count, "Got unexpected scissor rect count %u.\n", count);
+    memset(tmp_rect, 0x55, sizeof(tmp_rect));
+    count = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+    ID3D11DeviceContext_RSGetScissorRects(context, &count, tmp_rect);
+    for (i = 0; i < D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
+    {
+        ok(!tmp_rect[i].left && !tmp_rect[i].top && !tmp_rect[i].right && !tmp_rect[i].bottom,
+                "Got unexpected scissor rect %s in slot %u.\n", wine_dbgstr_rect(&tmp_rect[i]), i);
+    }
+    ID3D11DeviceContext_RSGetViewports(context, &count, NULL);
+    todo_wine ok(!count, "Got unexpected viewport count %u.\n", count);
+    memset(tmp_viewport, 0x55, sizeof(tmp_viewport));
+    count = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+    ID3D11DeviceContext_RSGetViewports(context, &count, tmp_viewport);
+    for (i = 0; i < D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
+    {
+        ok(!tmp_viewport[i].TopLeftX && !tmp_viewport[i].TopLeftY && !tmp_viewport[i].Width
+                && !tmp_viewport[i].Height && !tmp_viewport[i].MinDepth && !tmp_viewport[i].MaxDepth,
+                "Got unexpected viewport {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e} in slot %u.\n",
+                tmp_viewport[i].TopLeftX, tmp_viewport[i].TopLeftY, tmp_viewport[i].Width,
+                tmp_viewport[i].Height, tmp_viewport[i].MinDepth, tmp_viewport[i].MaxDepth, i);
+    }
+    ID3D11DeviceContext_RSGetState(context, &tmp_rs_state);
+    ok(!tmp_rs_state, "Got unexpected rasterizer state %p.\n", tmp_rs_state);
+
+    ID3D11DeviceContext_SOGetTargets(context, D3D11_SO_BUFFER_SLOT_COUNT, tmp_buffer);
+    for (i = 0; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected stream output %p in slot %u.\n", tmp_buffer[i], i);
+    }
+
+    ID3D11DeviceContext_GetPredication(context, &tmp_predicate, &predicate_value);
+    ok(!tmp_predicate, "Got unexpected predicate %p.\n", tmp_predicate);
+    ok(!predicate_value, "Got unexpected predicate value %#x.\n", predicate_value);
+
+    /* Create resources. */
+
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+        cb[i] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 1024, NULL);
+
+    for (i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        buffer[i] = create_buffer(device,
+                D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER | D3D11_BIND_SHADER_RESOURCE,
+                1024, NULL);
+
+        stride[i] = (i + 1) * 4;
+        offset[i] = (i + 1) * 16;
+    }
+
+    for (i = 0; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
+        so_buffer[i] = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
+
+    srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    U(srv_desc).Buffer.ElementOffset = 0;
+    U(srv_desc).Buffer.ElementWidth = 64;
+
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        hr = ID3D11Device_CreateShaderResourceView(device,
+                (ID3D11Resource *)buffer[i % D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT], &srv_desc, &srv[i]);
+        ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    }
+
+    uav_desc.Format = DXGI_FORMAT_R32_UINT;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    U(uav_desc).Buffer.FirstElement = 0;
+    U(uav_desc).Buffer.NumElements = 8;
+    U(uav_desc).Buffer.Flags = 0;
+
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
+    {
+        cs_uav_buffer[i] = create_buffer(device, D3D11_BIND_UNORDERED_ACCESS, 32, NULL);
+        hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)cs_uav_buffer[i],
+                &uav_desc, &cs_uav[i]);
+        ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    }
+
+    ps_uav_buffer = create_buffer(device, D3D11_BIND_UNORDERED_ACCESS, 32, NULL);
+    hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)ps_uav_buffer,
+            &uav_desc, &ps_uav);
+    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 16;
+    sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampler_desc.BorderColor[0] = 0.0f;
+    sampler_desc.BorderColor[1] = 0.0f;
+    sampler_desc.BorderColor[2] = 0.0f;
+    sampler_desc.BorderColor[3] = 0.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = 16.0f;
+
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        sampler_desc.MinLOD = (float)i;
+
+        hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler[i]);
+        ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    }
+
+    hr = ID3D11Device_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateHullShader(device, simple_hs, sizeof(simple_hs), NULL, &hs);
+    ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateDomainShader(device, simple_ds, sizeof(simple_ds), NULL, &ds);
+    ok(SUCCEEDED(hr), "Failed to create domain shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateGeometryShader(device, simple_gs, sizeof(simple_gs), NULL, &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreatePixelShader(device, simple_ps, sizeof(simple_ps), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateComputeShader(device, simple_cs, sizeof(simple_cs), NULL, &cs);
+    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            simple_vs, sizeof(simple_vs), &input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    memset(&blend_desc, 0, sizeof(blend_desc));
+    blend_desc.AlphaToCoverageEnable = FALSE;
+    blend_desc.IndependentBlendEnable = FALSE;
+    blend_desc.RenderTarget[0].BlendEnable = TRUE;
+    blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+    blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
+    blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+    hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
+    ds_desc.DepthEnable = TRUE;
+    ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    ds_desc.DepthFunc = D3D11_COMPARISON_LESS;
+    ds_desc.StencilEnable = FALSE;
+    ds_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+    ds_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+    ds_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    ds_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+    hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state);
+    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+
+    texture_desc.Width = 512;
+    texture_desc.Height = 512;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_texture[i]);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    }
+
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &ds_texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture[i], NULL, &rtv[i]);
+        ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    }
+
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)ds_texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depthstencil view, hr %#x.\n", hr);
+
+    for (i = 0; i < D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
+    {
+        SetRect(&tmp_rect[i], i, i * 2, i + 1, (i + 1) * 2);
+
+        tmp_viewport[i].TopLeftX = i * 3;
+        tmp_viewport[i].TopLeftY = i * 4;
+        tmp_viewport[i].Width = 3;
+        tmp_viewport[i].Height = 4;
+        tmp_viewport[i].MinDepth = i * 0.01f;
+        tmp_viewport[i].MaxDepth = (i + 1) * 0.01f;
+    }
+
+    rs_desc.FillMode = D3D11_FILL_SOLID;
+    rs_desc.CullMode = D3D11_CULL_BACK;
+    rs_desc.FrontCounterClockwise = FALSE;
+    rs_desc.DepthBias = 0;
+    rs_desc.DepthBiasClamp = 0.0f;
+    rs_desc.SlopeScaledDepthBias = 0.0f;
+    rs_desc.DepthClipEnable = TRUE;
+    rs_desc.ScissorEnable = FALSE;
+    rs_desc.MultisampleEnable = FALSE;
+    rs_desc.AntialiasedLineEnable = FALSE;
+
+    hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs_state);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    predicate_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
+    predicate_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreatePredicate(device, &predicate_desc, &predicate);
+    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+
+    /* Setup state. */
+
+    /* Some versions of Windows AMD drivers hang while the device is being
+     * released, if the total number of used resource slots exceeds some limit.
+     * Do not use all constant buffers slots in order to not trigger this
+     * driver bug. */
+    ID3D11DeviceContext_VSSetConstantBuffers(context, 0, 1, &cb[0]);
+    ID3D11DeviceContext_VSSetConstantBuffers(context, 7, 1, &cb[7]);
+    ID3D11DeviceContext_VSSetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srv);
+    ID3D11DeviceContext_VSSetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, sampler);
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+
+    ID3D11DeviceContext_HSSetConstantBuffers(context, 0, 1, &cb[0]);
+    ID3D11DeviceContext_HSSetConstantBuffers(context, 7, 1, &cb[7]);
+    ID3D11DeviceContext_HSSetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srv);
+    ID3D11DeviceContext_HSSetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, sampler);
+    ID3D11DeviceContext_HSSetShader(context, hs, NULL, 0);
+
+    ID3D11DeviceContext_DSSetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, cb);
+    ID3D11DeviceContext_DSSetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srv);
+    ID3D11DeviceContext_DSSetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, sampler);
+    ID3D11DeviceContext_DSSetShader(context, ds, NULL, 0);
+
+    ID3D11DeviceContext_GSSetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, cb);
+    ID3D11DeviceContext_GSSetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srv);
+    ID3D11DeviceContext_GSSetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, sampler);
+    ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, cb);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srv);
+    ID3D11DeviceContext_PSSetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, sampler);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    ID3D11DeviceContext_CSSetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, cb);
+    ID3D11DeviceContext_CSSetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srv);
+    ID3D11DeviceContext_CSSetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, sampler);
+    ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
+    ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, cs_uav, NULL);
+
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
+            buffer, stride, offset);
+    ID3D11DeviceContext_IASetIndexBuffer(context, buffer[0], DXGI_FORMAT_R32_UINT, offset[0]);
+    ID3D11DeviceContext_IASetInputLayout(context, input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+    blend_factor[0] = 0.1f;
+    blend_factor[1] = 0.2f;
+    blend_factor[2] = 0.3f;
+    blend_factor[3] = 0.4f;
+    ID3D11DeviceContext_OMSetBlendState(context, blend_state, blend_factor, 0xff00ff00);
+    ID3D11DeviceContext_OMSetDepthStencilState(context, ds_state, 3);
+    ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context,
+            D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - 1, rtv, dsv,
+            D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - 1, 1, &ps_uav, NULL);
+
+    ID3D11DeviceContext_RSSetScissorRects(context, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
+            tmp_rect);
+    ID3D11DeviceContext_RSSetViewports(context, D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
+            tmp_viewport);
+    ID3D11DeviceContext_RSSetState(context, rs_state);
+
+    ID3D11DeviceContext_SOSetTargets(context, D3D11_SO_BUFFER_SLOT_COUNT, so_buffer, offset);
+
+    ID3D11DeviceContext_SetPredication(context, predicate, TRUE);
+
+    /* Verify the set state. */
+
+    ID3D11DeviceContext_VSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ID3D11Buffer *expected_cb = i % 7 ? NULL : cb[i];
+        ok(tmp_buffer[i] == expected_cb, "Got unexpected constant buffer %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, expected_cb);
+        if (tmp_buffer[i])
+            ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+    ID3D11DeviceContext_VSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(tmp_srv[i] == srv[i], "Got unexpected shader resource view %p in slot %u, expected %p.\n",
+                tmp_srv[i], i, srv[i]);
+        ID3D11ShaderResourceView_Release(tmp_srv[i]);
+    }
+    ID3D11DeviceContext_VSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(tmp_sampler[i] == sampler[i], "Got unexpected sampler %p in slot %u, expected %p.\n",
+                tmp_sampler[i], i, sampler[i]);
+        ID3D11SamplerState_Release(tmp_sampler[i]);
+    }
+    ID3D11DeviceContext_VSGetShader(context, &tmp_vs, NULL, 0);
+    ok(tmp_vs == vs, "Got unexpected vertex shader %p, expected %p.\n", tmp_vs, vs);
+    ID3D11VertexShader_Release(tmp_vs);
+
+    ID3D11DeviceContext_HSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ID3D11Buffer *expected_cb = i % 7 ? NULL : cb[i];
+        ok(tmp_buffer[i] == expected_cb, "Got unexpected constant buffer %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, expected_cb);
+        if (tmp_buffer[i])
+            ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+    ID3D11DeviceContext_HSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(tmp_srv[i] == srv[i], "Got unexpected shader resource view %p in slot %u, expected %p.\n",
+                tmp_srv[i], i, srv[i]);
+        ID3D11ShaderResourceView_Release(tmp_srv[i]);
+    }
+    ID3D11DeviceContext_HSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(tmp_sampler[i] == sampler[i], "Got unexpected sampler %p in slot %u, expected %p.\n",
+                tmp_sampler[i], i, sampler[i]);
+        ID3D11SamplerState_Release(tmp_sampler[i]);
+    }
+    ID3D11DeviceContext_HSGetShader(context, &tmp_hs, NULL, 0);
+    ok(tmp_hs == hs, "Got unexpected hull shader %p, expected %p.\n", tmp_hs, hs);
+    ID3D11HullShader_Release(tmp_hs);
+
+    ID3D11DeviceContext_DSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(tmp_buffer[i] == cb[i], "Got unexpected constant buffer %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, cb[i]);
+        ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+    ID3D11DeviceContext_DSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(tmp_srv[i] == srv[i], "Got unexpected shader resource view %p in slot %u, expected %p.\n",
+                tmp_srv[i], i, srv[i]);
+        ID3D11ShaderResourceView_Release(tmp_srv[i]);
+    }
+    ID3D11DeviceContext_DSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(tmp_sampler[i] == sampler[i], "Got unexpected sampler %p in slot %u, expected %p.\n",
+                tmp_sampler[i], i, sampler[i]);
+        ID3D11SamplerState_Release(tmp_sampler[i]);
+    }
+    ID3D11DeviceContext_DSGetShader(context, &tmp_ds, NULL, 0);
+    ok(tmp_ds == ds, "Got unexpected domain shader %p, expected %p.\n", tmp_ds, ds);
+    ID3D11DomainShader_Release(tmp_ds);
+
+    ID3D11DeviceContext_GSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(tmp_buffer[i] == cb[i], "Got unexpected constant buffer %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, cb[i]);
+        ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+    ID3D11DeviceContext_GSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(tmp_srv[i] == srv[i], "Got unexpected shader resource view %p in slot %u, expected %p.\n",
+                tmp_srv[i], i, srv[i]);
+        ID3D11ShaderResourceView_Release(tmp_srv[i]);
+    }
+    ID3D11DeviceContext_GSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(tmp_sampler[i] == sampler[i], "Got unexpected sampler %p in slot %u, expected %p.\n",
+                tmp_sampler[i], i, sampler[i]);
+        ID3D11SamplerState_Release(tmp_sampler[i]);
+    }
+    ID3D11DeviceContext_GSGetShader(context, &tmp_gs, NULL, 0);
+    ok(tmp_gs == gs, "Got unexpected geometry shader %p, expected %p.\n", tmp_gs, gs);
+    ID3D11GeometryShader_Release(tmp_gs);
+
+    ID3D11DeviceContext_PSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(tmp_buffer[i] == cb[i], "Got unexpected constant buffer %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, cb[i]);
+        ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(tmp_srv[i] == srv[i], "Got unexpected shader resource view %p in slot %u, expected %p.\n",
+                tmp_srv[i], i, srv[i]);
+        ID3D11ShaderResourceView_Release(tmp_srv[i]);
+    }
+    ID3D11DeviceContext_PSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(tmp_sampler[i] == sampler[i], "Got unexpected sampler %p in slot %u, expected %p.\n",
+                tmp_sampler[i], i, sampler[i]);
+        ID3D11SamplerState_Release(tmp_sampler[i]);
+    }
+    ID3D11DeviceContext_PSGetShader(context, &tmp_ps, NULL, 0);
+    ok(tmp_ps == ps, "Got unexpected pixel shader %p, expected %p.\n", tmp_ps, ps);
+    ID3D11PixelShader_Release(tmp_ps);
+
+    ID3D11DeviceContext_CSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(tmp_buffer[i] == cb[i], "Got unexpected constant buffer %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, cb[i]);
+        ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+    ID3D11DeviceContext_CSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(tmp_srv[i] == srv[i], "Got unexpected shader resource view %p in slot %u, expected %p.\n",
+                tmp_srv[i], i, srv[i]);
+        ID3D11ShaderResourceView_Release(tmp_srv[i]);
+    }
+    ID3D11DeviceContext_CSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(tmp_sampler[i] == sampler[i], "Got unexpected sampler %p in slot %u, expected %p.\n",
+                tmp_sampler[i], i, sampler[i]);
+        ID3D11SamplerState_Release(tmp_sampler[i]);
+    }
+    ID3D11DeviceContext_CSGetShader(context, &tmp_cs, NULL, 0);
+    ok(tmp_cs == cs, "Got unexpected compute shader %p, expected %p.\n", tmp_cs, cs);
+    ID3D11ComputeShader_Release(tmp_cs);
+    ID3D11DeviceContext_CSGetUnorderedAccessViews(context, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, tmp_uav);
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
+    {
+        ok(tmp_uav[i] == cs_uav[i], "Got unexpected unordered access view %p in slot %u, expected %p.\n",
+                tmp_uav[i], i, cs_uav[i]);
+        ID3D11UnorderedAccessView_Release(tmp_uav[i]);
+    }
+
+    ID3D11DeviceContext_IAGetVertexBuffers(context, 0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
+            tmp_buffer, stride, offset);
+    for (i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        todo_wine_if(i >= D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT)
+        {
+        ok(tmp_buffer[i] == buffer[i], "Got unexpected vertex buffer %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, buffer[i]);
+        ok(stride[i] == (i + 1) * 4, "Got unexpected stride %u in slot %u.\n", stride[i], i);
+        ok(offset[i] == (i + 1) * 16, "Got unexpected offset %u in slot %u.\n", offset[i], i);
+        }
+        if (tmp_buffer[i])
+            ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+    ID3D11DeviceContext_IAGetIndexBuffer(context, tmp_buffer, &format, offset);
+    ok(tmp_buffer[0] == buffer[0], "Got unexpected index buffer %p, expected %p.\n", tmp_buffer[0], buffer[0]);
+    ID3D11Buffer_Release(tmp_buffer[0]);
+    ok(format == DXGI_FORMAT_R32_UINT, "Got unexpected index buffer format %#x.\n", format);
+    ok(offset[0] == 16, "Got unexpected index buffer offset %u.\n", offset[0]);
+    ID3D11DeviceContext_IAGetInputLayout(context, &tmp_input_layout);
+    ok(tmp_input_layout == input_layout, "Got unexpected input layout %p, expected %p.\n",
+            tmp_input_layout, input_layout);
+    ID3D11InputLayout_Release(tmp_input_layout);
+    ID3D11DeviceContext_IAGetPrimitiveTopology(context, &topology);
+    ok(topology == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, "Got unexpected primitive topology %#x.\n", topology);
+
+    ID3D11DeviceContext_OMGetBlendState(context, &tmp_blend_state, blend_factor, &sample_mask);
+    ok(tmp_blend_state == blend_state, "Got unexpected blend state %p, expected %p.\n", tmp_blend_state, blend_state);
+    ID3D11BlendState_Release(tmp_blend_state);
+    ok(blend_factor[0] == 0.1f && blend_factor[1] == 0.2f
+            && blend_factor[2] == 0.3f && blend_factor[3] == 0.4f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+    ok(sample_mask == 0xff00ff00, "Got unexpected sample mask %#x.\n", sample_mask);
+    ID3D11DeviceContext_OMGetDepthStencilState(context, &tmp_ds_state, &stencil_ref);
+    ok(tmp_ds_state == ds_state, "Got unexpected depth stencil state %p, expected %p.\n", tmp_ds_state, ds_state);
+    ID3D11DepthStencilState_Release(tmp_ds_state);
+    ok(stencil_ref == 3, "Got unexpected stencil ref %u.\n", stencil_ref);
+    ID3D11DeviceContext_OMGetRenderTargets(context, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, tmp_rtv, &tmp_dsv);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - 1; ++i)
+    {
+        ok(tmp_rtv[i] == rtv[i], "Got unexpected render target view %p in slot %u, expected %p.\n",
+                tmp_rtv[i], i, rtv[i]);
+        ID3D11RenderTargetView_Release(tmp_rtv[i]);
+    }
+    ok(!tmp_rtv[i], "Got unexpected render target view %p in slot %u.\n", tmp_rtv[i], i);
+    ok(tmp_dsv == dsv, "Got unexpected depth stencil view %p, expected %p.\n", tmp_dsv, dsv);
+    ID3D11DepthStencilView_Release(tmp_dsv);
+    ID3D11DeviceContext_OMGetRenderTargetsAndUnorderedAccessViews(context,
+            D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, tmp_rtv, &tmp_dsv,
+            0, D3D11_PS_CS_UAV_REGISTER_COUNT, tmp_uav);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT - 1; ++i)
+    {
+        ok(tmp_rtv[i] == rtv[i], "Got unexpected render target view %p in slot %u, expected %p.\n",
+                tmp_rtv[i], i, rtv[i]);
+        ID3D11RenderTargetView_Release(tmp_rtv[i]);
+    }
+    ok(!tmp_rtv[i], "Got unexpected render target view %p in slot %u.\n", tmp_rtv[i], i);
+    ok(tmp_dsv == dsv, "Got unexpected depth stencil view %p, expected %p.\n", tmp_dsv, dsv);
+    ID3D11DepthStencilView_Release(tmp_dsv);
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT - 1; ++i)
+    {
+        ok(!tmp_uav[i], "Got unexpected unordered access view %p in slot %u.\n", tmp_uav[i], i);
+    }
+    ok(tmp_uav[i] == ps_uav, "Got unexpected unordered access view %p in slot %u, expected %p.\n",
+            tmp_uav[i], i, ps_uav);
+    ID3D11UnorderedAccessView_Release(tmp_uav[i]);
+
+    ID3D11DeviceContext_RSGetScissorRects(context, &count, NULL);
+    todo_wine ok(count == D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
+            "Got unexpected scissor rect count %u.\n", count);
+    memset(tmp_rect, 0x55, sizeof(tmp_rect));
+    ID3D11DeviceContext_RSGetScissorRects(context, &count, tmp_rect);
+    for (i = 0; i < count; ++i)
+    {
+        ok(tmp_rect[i].left == i
+                && tmp_rect[i].top == i * 2
+                && tmp_rect[i].right == i + 1
+                && tmp_rect[i].bottom == (i + 1) * 2,
+                "Got unexpected scissor rect %s in slot %u.\n", wine_dbgstr_rect(&tmp_rect[i]), i);
+    }
+    ID3D11DeviceContext_RSGetViewports(context, &count, NULL);
+    todo_wine ok(count == D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE,
+            "Got unexpected viewport count %u.\n", count);
+    memset(tmp_viewport, 0x55, sizeof(tmp_viewport));
+    ID3D11DeviceContext_RSGetViewports(context, &count, tmp_viewport);
+    for (i = 0; i < count; ++i)
+    {
+        ok(tmp_viewport[i].TopLeftX == i * 3
+                && tmp_viewport[i].TopLeftY == i * 4
+                && tmp_viewport[i].Width == 3
+                && tmp_viewport[i].Height == 4
+                && compare_float(tmp_viewport[i].MinDepth, i * 0.01f, 16)
+                && compare_float(tmp_viewport[i].MaxDepth, (i + 1) * 0.01f, 16),
+                "Got unexpected viewport {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e} in slot %u.\n",
+                tmp_viewport[i].TopLeftX, tmp_viewport[i].TopLeftY, tmp_viewport[i].Width,
+                tmp_viewport[i].Height, tmp_viewport[i].MinDepth, tmp_viewport[i].MaxDepth, i);
+    }
+    ID3D11DeviceContext_RSGetState(context, &tmp_rs_state);
+    ok(tmp_rs_state == rs_state, "Got unexpected rasterizer state %p, expected %p.\n", tmp_rs_state, rs_state);
+    ID3D11RasterizerState_Release(tmp_rs_state);
+
+    ID3D11DeviceContext_SOGetTargets(context, D3D11_SO_BUFFER_SLOT_COUNT, tmp_buffer);
+    for (i = 0; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
+    {
+        ok(tmp_buffer[i] == so_buffer[i], "Got unexpected stream output %p in slot %u, expected %p.\n",
+                tmp_buffer[i], i, so_buffer[i]);
+        ID3D11Buffer_Release(tmp_buffer[i]);
+    }
+
+    ID3D11DeviceContext_GetPredication(context, &tmp_predicate, &predicate_value);
+    ok(tmp_predicate == predicate, "Got unexpected predicate %p, expected %p.\n", tmp_predicate, predicate);
+    ID3D11Predicate_Release(tmp_predicate);
+    ok(predicate_value, "Got unexpected predicate value %#x.\n", predicate_value);
+
+    /* Verify ClearState(). */
+
+    ID3D11DeviceContext_ClearState(context);
+
+    ID3D11DeviceContext_VSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_VSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_VSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_VSGetShader(context, &tmp_vs, NULL, 0);
+    ok(!tmp_vs, "Got unexpected vertex shader %p.\n", tmp_vs);
+
+    ID3D11DeviceContext_HSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_HSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_HSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_HSGetShader(context, &tmp_hs, NULL, 0);
+    ok(!tmp_hs, "Got unexpected hull shader %p.\n", tmp_hs);
+
+    ID3D11DeviceContext_DSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_DSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_DSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_DSGetShader(context, &tmp_ds, NULL, 0);
+    ok(!tmp_ds, "Got unexpected domain shader %p.\n", tmp_ds);
+
+    ID3D11DeviceContext_GSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_GSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_GSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_GSGetShader(context, &tmp_gs, NULL, 0);
+    ok(!tmp_gs, "Got unexpected geometry shader %p.\n", tmp_gs);
+
+    ID3D11DeviceContext_PSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_PSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_PSGetShader(context, &tmp_ps, NULL, 0);
+    ok(!tmp_ps, "Got unexpected pixel shader %p.\n", tmp_ps);
+
+    ID3D11DeviceContext_CSGetConstantBuffers(context, 0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT,
+            tmp_buffer);
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected constant buffer %p in slot %u.\n", tmp_buffer[i], i);
+    }
+    ID3D11DeviceContext_CSGetShaderResources(context, 0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT,
+            tmp_srv);
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_srv[i], "Got unexpected shader resource view %p in slot %u.\n", tmp_srv[i], i);
+    }
+    ID3D11DeviceContext_CSGetSamplers(context, 0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, tmp_sampler);
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_sampler[i], "Got unexpected sampler %p in slot %u.\n", tmp_sampler[i], i);
+    }
+    ID3D11DeviceContext_CSGetShader(context, &tmp_cs, NULL, 0);
+    ok(!tmp_cs, "Got unexpected compute shader %p.\n", tmp_cs);
+    ID3D11DeviceContext_CSGetUnorderedAccessViews(context, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, tmp_uav);
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
+    {
+        ok(!tmp_uav[i], "Got unexpected unordered access view %p in slot %u.\n", tmp_uav[i], i);
+    }
+
+    ID3D11DeviceContext_IAGetVertexBuffers(context, 0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT,
+            tmp_buffer, stride, offset);
+    for (i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected vertex buffer %p in slot %u.\n", tmp_buffer[i], i);
+        todo_wine_if(i < D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT)
+        {
+        ok(!stride[i], "Got unexpected stride %u in slot %u.\n", stride[i], i);
+        ok(!offset[i], "Got unexpected offset %u in slot %u.\n", offset[i], i);
+        }
+    }
+    ID3D11DeviceContext_IAGetIndexBuffer(context, tmp_buffer, &format, offset);
+    ok(!tmp_buffer[0], "Got unexpected index buffer %p.\n", tmp_buffer[0]);
+    ok(format == DXGI_FORMAT_UNKNOWN, "Got unexpected index buffer format %#x.\n", format);
+    ok(!offset[0], "Got unexpected index buffer offset %u.\n", offset[0]);
+    ID3D11DeviceContext_IAGetInputLayout(context, &tmp_input_layout);
+    ok(!tmp_input_layout, "Got unexpected input layout %p.\n", tmp_input_layout);
+    ID3D11DeviceContext_IAGetPrimitiveTopology(context, &topology);
+    ok(topology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED, "Got unexpected primitive topology %#x.\n", topology);
+
+    ID3D11DeviceContext_OMGetBlendState(context, &tmp_blend_state, blend_factor, &sample_mask);
+    ok(!tmp_blend_state, "Got unexpected blend state %p.\n", tmp_blend_state);
+    ok(blend_factor[0] == 1.0f && blend_factor[1] == 1.0f
+            && blend_factor[2] == 1.0f && blend_factor[3] == 1.0f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+    ok(sample_mask == D3D11_DEFAULT_SAMPLE_MASK, "Got unexpected sample mask %#x.\n", sample_mask);
+    ID3D11DeviceContext_OMGetDepthStencilState(context, &tmp_ds_state, &stencil_ref);
+    ok(!tmp_ds_state, "Got unexpected depth stencil state %p.\n", tmp_ds_state);
+    ok(!stencil_ref, "Got unexpected stencil ref %u.\n", stencil_ref);
+    ID3D11DeviceContext_OMGetRenderTargets(context, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, tmp_rtv, &tmp_dsv);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ok(!tmp_rtv[i], "Got unexpected render target view %p in slot %u.\n", tmp_rtv[i], i);
+    }
+    ok(!tmp_dsv, "Got unexpected depth stencil view %p.\n", tmp_dsv);
+    ID3D11DeviceContext_OMGetRenderTargetsAndUnorderedAccessViews(context,
+            D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, tmp_rtv, &tmp_dsv,
+            0, D3D11_PS_CS_UAV_REGISTER_COUNT, tmp_uav);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ok(!tmp_rtv[i], "Got unexpected render target view %p in slot %u.\n", tmp_rtv[i], i);
+    }
+    ok(!tmp_dsv, "Got unexpected depth stencil view %p.\n", tmp_dsv);
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
+    {
+        ok(!tmp_uav[i], "Got unexpected unordered access view %p in slot %u.\n", tmp_uav[i], i);
+    }
+
+    ID3D11DeviceContext_RSGetScissorRects(context, &count, NULL);
+    todo_wine ok(!count, "Got unexpected scissor rect count %u.\n", count);
+    memset(tmp_rect, 0x55, sizeof(tmp_rect));
+    count = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+    ID3D11DeviceContext_RSGetScissorRects(context, &count, tmp_rect);
+    for (i = 0; i < D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
+    {
+        todo_wine_if(!i)
+        ok(!tmp_rect[i].left && !tmp_rect[i].top && !tmp_rect[i].right && !tmp_rect[i].bottom,
+                "Got unexpected scissor rect %s in slot %u.\n",
+                wine_dbgstr_rect(&tmp_rect[i]), i);
+    }
+    ID3D11DeviceContext_RSGetViewports(context, &count, NULL);
+    todo_wine ok(!count, "Got unexpected viewport count %u.\n", count);
+    memset(tmp_viewport, 0x55, sizeof(tmp_viewport));
+    count = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+    ID3D11DeviceContext_RSGetViewports(context, &count, tmp_viewport);
+    for (i = 0; i < D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
+    {
+        todo_wine_if(!i)
+        ok(!tmp_viewport[i].TopLeftX && !tmp_viewport[i].TopLeftY && !tmp_viewport[i].Width
+                && !tmp_viewport[i].Height && !tmp_viewport[i].MinDepth && !tmp_viewport[i].MaxDepth,
+                "Got unexpected viewport {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e} in slot %u.\n",
+                tmp_viewport[i].TopLeftX, tmp_viewport[i].TopLeftY, tmp_viewport[i].Width,
+                tmp_viewport[i].Height, tmp_viewport[i].MinDepth, tmp_viewport[i].MaxDepth, i);
+    }
+    ID3D11DeviceContext_RSGetState(context, &tmp_rs_state);
+    ok(!tmp_rs_state, "Got unexpected rasterizer state %p.\n", tmp_rs_state);
+
+    ID3D11DeviceContext_SOGetTargets(context, D3D11_SO_BUFFER_SLOT_COUNT, tmp_buffer);
+    for (i = 0; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
+    {
+        ok(!tmp_buffer[i], "Got unexpected stream output %p in slot %u.\n", tmp_buffer[i], i);
+    }
+
+    ID3D11DeviceContext_GetPredication(context, &tmp_predicate, &predicate_value);
+    ok(!tmp_predicate, "Got unexpected predicate %p.\n", tmp_predicate);
+    ok(!predicate_value, "Got unexpected predicate value %#x.\n", predicate_value);
+
+    /* Cleanup. */
+
+    ID3D11Predicate_Release(predicate);
+    ID3D11RasterizerState_Release(rs_state);
+    ID3D11DepthStencilView_Release(dsv);
+    ID3D11Texture2D_Release(ds_texture);
+
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ID3D11RenderTargetView_Release(rtv[i]);
+        ID3D11Texture2D_Release(rt_texture[i]);
+    }
+
+    ID3D11DepthStencilState_Release(ds_state);
+    ID3D11BlendState_Release(blend_state);
+    ID3D11InputLayout_Release(input_layout);
+    ID3D11VertexShader_Release(vs);
+    ID3D11HullShader_Release(hs);
+    ID3D11DomainShader_Release(ds);
+    ID3D11GeometryShader_Release(gs);
+    ID3D11PixelShader_Release(ps);
+    ID3D11ComputeShader_Release(cs);
+
+    for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+    {
+        ID3D11SamplerState_Release(sampler[i]);
+    }
+
+    for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ID3D11ShaderResourceView_Release(srv[i]);
+    }
+
+    for (i = 0; i < D3D11_PS_CS_UAV_REGISTER_COUNT; ++i)
+    {
+        ID3D11UnorderedAccessView_Release(cs_uav[i]);
+        ID3D11Buffer_Release(cs_uav_buffer[i]);
+    }
+    ID3D11UnorderedAccessView_Release(ps_uav);
+    ID3D11Buffer_Release(ps_uav_buffer);
+
+    for (i = 0; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
+    {
+        ID3D11Buffer_Release(so_buffer[i]);
+    }
+
+    for (i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
+    {
+        ID3D11Buffer_Release(buffer[i]);
+    }
+
+    for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+    {
+        ID3D11Buffer_Release(cb[i]);
+    }
+
+    ID3D11DeviceContext_Release(context);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_il_append_aligned(void)
 {
     struct d3d11_test_context test_context;
@@ -18413,6 +19666,7 @@ START_TEST(d3d11)
     test_render_target_views();
     test_layered_rendering();
     test_scissor();
+    test_clear_state();
     test_il_append_aligned();
     test_fragment_coords();
     test_update_subresource();
