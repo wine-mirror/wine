@@ -598,6 +598,15 @@ static void test_invalid_import(void)
     verify_reg(hkey, "Test17b", REG_SZ, "Value 2", 8, 0);
     verify_reg_nonexist(hkey, "Test17c");
 
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test18a\"=dword:1234\\\n"
+                    "5678\n"
+                    "\"Test18b\"=\"Test \\\n"
+                    "Value\"\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Test18a");
+    todo_wine verify_reg_nonexist(hkey, "Test18b");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
