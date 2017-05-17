@@ -1397,9 +1397,12 @@ DECL_HANDLER(get_process_vm_counters)
                     reply->peak_working_set_size = (mem_size_t)value * 1024;
                 else if (sscanf( line, "VmRSS: %lu", &value ))
                     reply->working_set_size = (mem_size_t)value * 1024;
+                else if (sscanf( line, "RssAnon: %lu", &value ))
+                    reply->pagefile_usage += (mem_size_t)value * 1024;
                 else if (sscanf( line, "VmSwap: %lu", &value ))
-                    reply->peak_pagefile_usage = reply->pagefile_usage = (mem_size_t)value * 1024;
+                    reply->pagefile_usage += (mem_size_t)value * 1024;
             }
+            reply->peak_pagefile_usage = reply->pagefile_usage;
             fclose( f );
         }
         else set_error( STATUS_ACCESS_DENIED );

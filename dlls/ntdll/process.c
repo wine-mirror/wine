@@ -152,9 +152,12 @@ static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
             pvmi->PeakWorkingSetSize = (ULONG64)value * 1024;
         else if (sscanf(line, "VmRSS: %lu", &value))
             pvmi->WorkingSetSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "RssAnon: %lu", &value))
+            pvmi->PagefileUsage += (ULONG64)value * 1024;
         else if (sscanf(line, "VmSwap: %lu", &value))
-            pvmi->PeakPagefileUsage = pvmi->PagefileUsage = (ULONG64)value * 1024;
+            pvmi->PagefileUsage += (ULONG64)value * 1024;
     }
+    pvmi->PeakPagefileUsage = pvmi->PagefileUsage;
 
     fclose(f);
 }

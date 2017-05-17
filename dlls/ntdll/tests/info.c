@@ -1096,6 +1096,7 @@ static void test_query_process_vm(void)
     /* Check if we have some return values */
     dump_vm_counters("VM counters for GetCurrentProcess", &pvi);
     ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
+    ok( pvi.PagefileUsage > 0, "Expected a PagefileUsage > 0\n");
 
     process = OpenProcess(PROCESS_VM_READ, FALSE, GetCurrentProcessId());
     status = pNtQueryInformationProcess(process, ProcessVmCounters, &pvi, sizeof(pvi), NULL);
@@ -1115,6 +1116,7 @@ static void test_query_process_vm(void)
     /* Check if we have some return values */
     dump_vm_counters("VM counters for GetCurrentProcessId", &pvi);
     ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
+    ok( pvi.PagefileUsage > 0, "Expected a PagefileUsage > 0\n");
 
     CloseHandle(process);
 }

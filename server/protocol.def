@@ -853,8 +853,8 @@ struct rawinput_device
     mem_size_t virtual_size;                    /* virtual memory in bytes */
     mem_size_t peak_working_set_size;           /* peak real memory in bytes */
     mem_size_t working_set_size;                /* real memory in bytes */
-    mem_size_t pagefile_usage;                  /* swapped-out memory in bytes */
-    mem_size_t peak_pagefile_usage;             /* peak swapped-out memory in bytes */
+    mem_size_t pagefile_usage;                  /* commit charge in bytes */
+    mem_size_t peak_pagefile_usage;             /* peak commit charge in bytes */
 @END
 
 
