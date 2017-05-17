@@ -104,7 +104,11 @@ static double pres_log(double *args, int n)
     if (v == 0.0)
         return 0.0;
     else
+#ifdef HAVE_LOG2
         return log2(v);
+#else
+        return log(v) / log(2);
+#endif
 }
 
 #define PRES_OPCODE_MASK 0x7ff00000
