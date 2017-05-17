@@ -770,10 +770,9 @@ static BOOL test_import_wstr_(unsigned line, const char *file_contents, DWORD *r
 
 static void test_import(void)
 {
-    DWORD r, dword = 0x123;
-    char test1_reg[MAX_PATH], test2_reg[MAX_PATH];
-    char cmdline[MAX_PATH];
-    char test_string[] = "Test string";
+    DWORD r, dword = 0x123, type, size;
+    char test1_reg[MAX_PATH], test2_reg[MAX_PATH], cmdline[MAX_PATH];
+    char test_string[] = "Test string", buffer[8];
     HKEY hkey, subkey;
     LONG err;
 
@@ -1428,7 +1427,7 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine42b", REG_SZ, "Value 2", 8, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine42c");
 
-    /* Test hex data concatenation for REG_NONE */
+    /* Test hex data concatenation for REG_NONE and REG_EXPAND_SZ */
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                     "\"Wine43a\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n"
@@ -1468,6 +1467,60 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
     todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine43k");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine44a\"=hex(2):25,50,41,54,48,25,00\n"
+                    "\"Wine44b\"=hex(2):25,50,41,\\\n"
+                    "  54,48,25,00\n"
+                    "\"Wine44c\"=hex(2):25,50,41\\\n"
+                    ",54,48,25,00\n"
+                    "\"Wine44d\"=hex(2):25,50,41\\\n"
+                    "  ,54,48,25,00\n"
+                    "\"Wine44e\"=hex(2):25,50,41\\\n"
+                    "  54,48,25,00\n"
+                    "\"Wine44f\"=hex(2):25,50,4\\\n"
+                    "1,54,48,25,00\n"
+                    "\"Wine44g\"=hex(2):25,50,4\\\n"
+                    "  1,54,48,25,00\n"
+                    "\"Wine44h\"=hex(2):25,50,41,\\;comment\n"
+                    "  54,48,\\\n"
+                    "  25,00\n"
+                    "\"Wine44i\"=hex(2):25,50,41,\\;comment\n"
+                    "  54,48,\n"
+                    "  25,00\n"
+                    "\"Wine44j\"=hex(2):25,50,41,\\;comment\n"
+                    "  54,48,;comment\n"
+                    "  25,00\n"
+                    "\"Wine44k\"=hex(2):25,50,41,\\;comment\n"
+                    "  54,48,\\#comment\n"
+                    "  25,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine44a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine44b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine44c");
+    todo_wine verify_reg_nonexist(hkey, "Wine44d");
+    todo_wine verify_reg_nonexist(hkey, "Wine44e");
+    todo_wine verify_reg_nonexist(hkey, "Wine44f");
+    todo_wine verify_reg_nonexist(hkey, "Wine44g");
+    todo_wine verify_reg(hkey, "Wine44h", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    /* Wine44i */
+    size = sizeof(buffer);
+    err = RegQueryValueExA(hkey, "Wine44i", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
+    todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
+    todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+    /* Wine44j */
+    size = sizeof(buffer);
+    memset(buffer, '-', size);
+    err = RegQueryValueExA(hkey, "Wine44j", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
+    todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
+    todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+    /* Wine44k */
+    todo_wine verify_reg_nonexist(hkey, "Wine44k");
 
     /* Test import with subkeys */
     test_import_str("REGEDIT4\n\n"
@@ -2116,7 +2169,7 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine42b", REG_SZ, "Value 2", 8, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine42c");
 
-    /* Test hex data concatenation for REG_NONE */
+    /* Test hex data concatenation for REG_NONE and REG_EXPAND_SZ */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
                      "\"Wine43a\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n"
@@ -2156,6 +2209,60 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
     todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine43k");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine44a\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine44b\"=hex(2):25,00,50,00,41,00,\\\n"
+                     "  54,00,48,00,25,00,00,00\n"
+                     "\"Wine44c\"=hex(2):25,00,50,00,41,00\\\n"
+                     ",54,00,48,00,25,00,00,00\n"
+                     "\"Wine44d\"=hex(2):25,00,50,00,41,00\\\n"
+                     "  ,54,00,48,00,25,00,00,00\n"
+                     "\"Wine44e\"=hex(2):25,00,50,00,41,00\\\n"
+                     "  54,00,48,00,25,00,00,00\n"
+                     "\"Wine44f\"=hex(2):25,00,50,00,4\\\n"
+                     "1,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine44g\"=hex(2):25,00,50,00,4\\\n"
+                     "  1,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine44h\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00,\\\n"
+                     "  25,00,00,00\n"
+                     "\"Wine44i\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00\n"
+                     "  25,00,00,00\n"
+                     "\"Wine44j\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00;comment\n"
+                     "  25,00,00,00\n"
+                     "\"Wine44k\"=hex(2):25,00,50,00,41,00,\\;comment\n"
+                     "  54,00,48,00,\\#comment\n"
+                     "  25,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine44a", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine44b", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine44c");
+    todo_wine verify_reg_nonexist(hkey, "Wine44d");
+    todo_wine verify_reg_nonexist(hkey, "Wine44e");
+    todo_wine verify_reg_nonexist(hkey, "Wine44f");
+    todo_wine verify_reg_nonexist(hkey, "Wine44g");
+    todo_wine verify_reg(hkey, "Wine44h", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    /* Wine44i */
+    size = sizeof(buffer);
+    err = RegQueryValueExA(hkey, "Wine44i", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
+    todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
+    todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+    /* Wine44j */
+    size = sizeof(buffer);
+    memset(buffer, '-', size);
+    err = RegQueryValueExA(hkey, "Wine44j", NULL, &type, (BYTE *)&buffer, &size);
+    todo_wine ok(err == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", err);
+    todo_wine ok(type == REG_EXPAND_SZ, "got wrong type %u, expected %u\n", type, REG_EXPAND_SZ);
+    todo_wine ok(size == 6 || broken(size == 5) /* WinXP */, "got wrong size %u, expected 6\n", size);
+    todo_wine ok(memcmp(buffer, "%PATH", size) == 0, "got wrong data\n");
+    /* Wine44k */
+    todo_wine verify_reg_nonexist(hkey, "Wine44k");
 
     /* Test import with subkeys */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
