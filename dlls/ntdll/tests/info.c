@@ -1046,6 +1046,22 @@ static void test_query_process_basic(void)
     ok( pbi.UniqueProcessId > 0, "Expected a ProcessID > 0, got 0\n");
 }
 
+static void dump_vm_counters(const char *header, const VM_COUNTERS *pvi)
+{
+    trace("%s:\n", header);
+    trace("PeakVirtualSize           : %lu\n", pvi->PeakVirtualSize);
+    trace("VirtualSize               : %lu\n", pvi->VirtualSize);
+    trace("PageFaultCount            : %u\n",  pvi->PageFaultCount);
+    trace("PeakWorkingSetSize        : %lu\n", pvi->PeakWorkingSetSize);
+    trace("WorkingSetSize            : %lu\n", pvi->WorkingSetSize);
+    trace("QuotaPeakPagedPoolUsage   : %lu\n", pvi->QuotaPeakPagedPoolUsage);
+    trace("QuotaPagedPoolUsage       : %lu\n", pvi->QuotaPagedPoolUsage);
+    trace("QuotaPeakNonPagePoolUsage : %lu\n", pvi->QuotaPeakNonPagedPoolUsage);
+    trace("QuotaNonPagePoolUsage     : %lu\n", pvi->QuotaNonPagedPoolUsage);
+    trace("PagefileUsage             : %lu\n", pvi->PagefileUsage);
+    trace("PeakPagefileUsage         : %lu\n", pvi->PeakPagefileUsage);
+}
+
 static void test_query_process_vm(void)
 {
     NTSTATUS status;
@@ -1078,7 +1094,7 @@ static void test_query_process_vm(void)
     ok( ReturnLength == old_size || ReturnLength == sizeof(pvi), "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
-    trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
+    dump_vm_counters("VM counters for GetCurrentProcess", &pvi);
     ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
 
     process = OpenProcess(PROCESS_VM_READ, FALSE, GetCurrentProcessId());
@@ -1097,7 +1113,7 @@ static void test_query_process_vm(void)
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
 
     /* Check if we have some return values */
-    trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
+    dump_vm_counters("VM counters for GetCurrentProcessId", &pvi);
     ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
 
     CloseHandle(process);
