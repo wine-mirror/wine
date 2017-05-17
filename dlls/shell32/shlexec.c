@@ -62,6 +62,10 @@ static const WCHAR wszEmpty[] = {0};
 typedef UINT_PTR (*SHELL_ExecuteW32)(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    const SHELLEXECUTEINFOW *sei, LPSHELLEXECUTEINFOW sei_out);
 
+static inline BOOL isSpace(WCHAR c)
+{
+    return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v';
+}
 
 /***********************************************************************
  *	SHELL_ArgifyW [Internal]
@@ -135,7 +139,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                     }
                     else
                     {
-                        while(*args && !isspace(*args))
+                        while(*args && !isSpace(*args))
                         {
                             used++;
                             if (used < len)
@@ -144,7 +148,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                                 args++;
                         }
 
-                        while(isspace(*args))
+                        while(isSpace(*args))
                             ++args;
                     }
                     break;
