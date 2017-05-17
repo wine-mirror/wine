@@ -1171,7 +1171,7 @@ static void HandleCommandLine(LPWSTR cmdline)
 
     while (*cmdline)
     {
-        while (isspace(*cmdline)) cmdline++;
+        while (*cmdline == ' ' || *cmdline == '\t') cmdline++;
 
         if (*cmdline == '-' || *cmdline == '/')
         {
