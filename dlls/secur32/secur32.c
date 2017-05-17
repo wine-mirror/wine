@@ -593,8 +593,8 @@ static void SECUR32_initializeProviders(void)
                     ;
                 if (*comma == ',')
                     *comma = '\0';
-                for (; *ptr && isspace(*ptr) && ptr < securityPkgNames + size;
-                 ptr++)
+                for (; *ptr && isspaceW(*ptr) && ptr < securityPkgNames + size;
+                     ptr++)
                     ;
                 if (*ptr)
                     _tryLoadProvider(ptr);
