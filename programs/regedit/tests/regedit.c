@@ -403,7 +403,7 @@ static void test_basic_import_31(void)
 static void test_invalid_import(void)
 {
     LONG lr;
-    HKEY hkey;
+    HKEY hkey, subkey;
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
     ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
@@ -573,6 +573,30 @@ static void test_invalid_import(void)
     verify_reg_nonexist(hkey, "Test16b");
     verify_reg_nonexist(hkey, "Test16c");
     verify_reg_nonexist(hkey, "Test16d");
+
+    /* Test key name and value name concatenation */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\\n"
+                    "Subkey1]\n");
+    lr = RegOpenKeyExA(hkey, "Subkey1", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_FILE_NOT_FOUND, "got %d, expected 2\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\n"
+                    "\\Subkey2]\n");
+    lr = RegOpenKeyExA(hkey, "Subkey2", 0, KEY_READ, &subkey);
+    ok(lr == ERROR_FILE_NOT_FOUND, "got %d, expected 2\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Test\\\n"
+                    "17a\"=\"Value 1\"\n"
+                    "\"Test17b\"=\"Value 2\"\n"
+                    "\"Test\n"
+                    "\\17c\"=\"Value 3\"\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Test17a");
+    verify_reg(hkey, "Test17b", REG_SZ, "Value 2", 8, 0);
+    verify_reg_nonexist(hkey, "Test17c");
 
     RegCloseKey(hkey);
 
