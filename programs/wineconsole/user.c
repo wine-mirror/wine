@@ -559,7 +559,7 @@ static void     WCUSER_SetFontPmt(struct inner_data* data, const WCHAR* font,
         EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
         if (fc.done) return;
     }
-    WINECON_Fatal("Couldn't find a decent font, aborting\n");
+    WINECON_Fatal("Couldn't find a decent font, aborting");
 }
 
 /******************************************************************
