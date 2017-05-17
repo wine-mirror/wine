@@ -56,8 +56,7 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
     /* FIXME: could set up a mechanism to reuse the line between different
      * calls to this function
      */
-    if (!(line = HeapAlloc(GetProcessHeap(), 0, data->curcfg.sb_width * sizeof(WCHAR))))
-        WINECON_Fatal("OOM\n");
+    if (!(line = HeapAlloc(GetProcessHeap(), 0, data->curcfg.sb_width * sizeof(WCHAR)))) return;
     dx = HeapAlloc( GetProcessHeap(), 0, data->curcfg.sb_width * sizeof(*dx) );
 
     hOldFont = SelectObject(PRIVATE(data)->hMemDC, PRIVATE(data)->hFont);
@@ -169,7 +168,7 @@ static void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL 
 
 	    w16b = ((data->curcfg.cell_width + 15) & ~15) / 8;
 	    ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, w16b * data->curcfg.cell_height);
-	    if (!ptr) WINECON_Fatal("OOM");
+	    if (!ptr) return;
 	    nbl = max((data->curcfg.cell_height * size) / 100, 1);
 	    for (j = data->curcfg.cell_height - nbl; j < data->curcfg.cell_height; j++)
 	    {

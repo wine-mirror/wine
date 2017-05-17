@@ -76,7 +76,7 @@ static LPWSTR   WINECON_CreateKeyName(LPCWSTR kn)
     LPWSTR      ret = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(kn) + 1) * sizeof(WCHAR));
     LPWSTR      ptr = ret;
 
-    if (!ptr) WINECON_Fatal("OOM");
+    if (!ret) return NULL;
 
     do
     {
