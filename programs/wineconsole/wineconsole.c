@@ -655,11 +655,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
 
     GetStartupInfoW(&si);
 
-    if (pid == 0)
-    {
-        if (!si.lpTitle) WINECON_Fatal("Should have a title set");
-        appname = si.lpTitle;
-    }
+    if (pid == 0) appname = si.lpTitle;
 
     data->nCmdShow = nCmdShow;
     /* load settings */
@@ -729,7 +725,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         WINECON_GetServerConfig(data);
         data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                 data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
-        if (!data->cells) WINECON_Fatal("OOM\n");
+        if (!data->cells) goto error;
         data->fnResizeScreenBuffer(data);
         data->fnComputePositions(data);
         WINECON_SetConfig(data, &cfg);
