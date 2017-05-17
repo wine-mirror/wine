@@ -4295,7 +4295,7 @@ static BOOL HTTP_ParseDateAsAsctime(LPCWSTR value, FILETIME *ft)
     while (isspaceW(*ptr))
         ptr++;
 
-    for (monthPtr = month; !isspace(*ptr) &&
+    for (monthPtr = month; !isspaceW(*ptr) &&
          monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
          monthPtr++, ptr++)
         *monthPtr = *ptr;
@@ -4392,7 +4392,7 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
     while (isspaceW(*ptr))
         ptr++;
 
-    for (monthPtr = month; !isspace(*ptr) &&
+    for (monthPtr = month; !isspaceW(*ptr) &&
          monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
          monthPtr++, ptr++)
         *monthPtr = *ptr;
