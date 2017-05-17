@@ -1053,6 +1053,13 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 FIXME("Invalid instruction %#x for shader type %#x.\n",
                         ins.handler_idx, shader_version.type);
         }
+        else if (ins.handler_idx == WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT)
+        {
+            if (shader_version.type == WINED3D_SHADER_TYPE_HULL)
+                shader->u.hs.output_vertex_count = ins.declaration.count;
+            else
+                FIXME("Invalid instruction %#x for shader type %#x.\n", ins.handler_idx, shader_version.type);
+        }
         else if (ins.handler_idx == WINED3DSIH_DCL_OUTPUT_TOPOLOGY)
         {
             if (shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)

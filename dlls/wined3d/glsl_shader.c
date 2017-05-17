@@ -10290,7 +10290,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_INPUT_SIV                    */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INTERFACE                    */ NULL,
     /* WINED3DSIH_DCL_OUTPUT                       */ shader_glsl_nop,
-    /* WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT   */ NULL,
+    /* WINED3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT   */ shader_glsl_nop,
     /* WINED3DSIH_DCL_OUTPUT_SIV                   */ shader_glsl_nop,
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY              */ shader_glsl_nop,
     /* WINED3DSIH_DCL_RESOURCE_RAW                 */ shader_glsl_nop,

@@ -3708,15 +3708,16 @@ struct wined3d_vertex_shader
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
 };
 
+struct wined3d_hull_shader
+{
+    unsigned int output_vertex_count;
+    enum wined3d_tessellator_output_primitive tessellator_output_primitive;
+    enum wined3d_tessellator_partitioning tessellator_partitioning;
+};
+
 struct wined3d_domain_shader
 {
     enum wined3d_tessellator_domain tessellator_domain;
-};
-
-struct wined3d_hull_shader
-{
-    enum wined3d_tessellator_output_primitive tessellator_output_primitive;
-    enum wined3d_tessellator_partitioning tessellator_partitioning;
 };
 
 struct wined3d_geometry_shader
@@ -3782,8 +3783,8 @@ struct wined3d_shader
     union
     {
         struct wined3d_vertex_shader vs;
-        struct wined3d_domain_shader ds;
         struct wined3d_hull_shader hs;
+        struct wined3d_domain_shader ds;
         struct wined3d_geometry_shader gs;
         struct wined3d_pixel_shader ps;
         struct wined3d_compute_shader cs;
