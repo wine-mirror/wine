@@ -42,6 +42,7 @@
 #include "shellapi.h"
 #include "urlmon.h"
 #include "msi.h"
+#include "bcrypt.h"
 
 #include "appwiz.h"
 #include "res.h"
@@ -55,17 +56,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
 #ifdef __i386__
 #define ARCH_STRING "x86"
-#define GECKO_SHA "f9a937e9a46d47fda701d257e60601f22e7a4510"
+#define GECKO_SHA "3b8a361f5d63952d21caafd74e849a774994822fb96c5922b01d554f1677643a"
 #elif defined(__x86_64__)
 #define ARCH_STRING "x86_64"
-#define GECKO_SHA "8efa810b1ac83d59e0171d4347d21730560926da"
+#define GECKO_SHA "c565ea25e50ea953937d4ab01299e4306da4a556946327d253ea9b28357e4a7d"
 #else
 #define ARCH_STRING ""
 #define GECKO_SHA "???"
 #endif
 
 #define MONO_VERSION "4.7.0"
-#define MONO_SHA "ff05e1d2a93c3a07672cefc7a8f3a087d75828ac"
+#define MONO_SHA "7698474dd9cb9eb80796b5812dff37386ba97b78b21ca23b20079ca5ad6ca5a1"
 
 typedef struct {
     const char *version;
@@ -110,28 +111,16 @@ static WCHAR *msi_file;
 static WCHAR * (CDECL *p_wine_get_dos_file_name)(const char*);
 static const WCHAR kernel32_dllW[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
-
-/* SHA definitions are copied from advapi32. They aren't available in headers. */
-
-typedef struct {
-   ULONG Unknown[6];
-   ULONG State[5];
-   ULONG Count[2];
-   UCHAR Buffer[64];
-} SHA_CTX, *PSHA_CTX;
-
-void WINAPI A_SHAInit(PSHA_CTX);
-void WINAPI A_SHAUpdate(PSHA_CTX,const unsigned char*,UINT);
-void WINAPI A_SHAFinal(PSHA_CTX,PULONG);
-
 static BOOL sha_check(const WCHAR *file_name)
 {
     const unsigned char *file_map;
     HANDLE file, map;
-    ULONG sha[5];
-    char buf[2*sizeof(sha)+1];
-    SHA_CTX ctx;
     DWORD size, i;
+    BCRYPT_HASH_HANDLE hash = NULL;
+    BCRYPT_ALG_HANDLE alg = NULL;
+    UCHAR sha[32];
+    char buf[1024];
+    BOOL ret = FALSE;
 
     file = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
     if(file == INVALID_HANDLE_VALUE) {
@@ -151,21 +140,27 @@ static BOOL sha_check(const WCHAR *file_name)
     if(!file_map)
         return FALSE;
 
-    A_SHAInit(&ctx);
-    A_SHAUpdate(&ctx, file_map, size);
-    A_SHAFinal(&ctx, sha);
-
-    UnmapViewOfFile(file_map);
+    if(BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0))
+        goto end;
+    if(BCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0))
+        goto end;
+    if(BCryptHashData(hash, (UCHAR *)file_map, size, 0))
+        goto end;
+    if(BCryptFinishHash(hash, sha, sizeof(sha), 0))
+        goto end;
 
     for(i=0; i < sizeof(sha); i++)
-        sprintf(buf + i*2, "%02x", *((unsigned char*)sha+i));
+        sprintf(buf + i * 2, "%02x", sha[i]);
 
-    if(strcmp(buf, addon->sha)) {
+    ret = !strcmp(buf, addon->sha);
+    if(!ret)
         WARN("Got %s, expected %s\n", buf, addon->sha);
-        return FALSE;
-    }
 
-    return TRUE;
+end:
+    UnmapViewOfFile(file_map);
+    if(hash) BCryptDestroyHash(hash);
+    if(alg) BCryptCloseAlgorithmProvider(alg, 0);
+    return ret;
 }
 
 static void set_status(DWORD id)
