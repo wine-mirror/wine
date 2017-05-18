@@ -298,23 +298,76 @@ static BOOL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffe
 
 static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
-    switch (cap)  /* return meaningful values for some entries */
+    static int screen_dpi;
+    int bpp;
+
+    switch (cap)
     {
-    case HORZRES:     return 640;
-    case VERTRES:     return 480;
-    case BITSPIXEL:   return 1;
-    case PLANES:      return 1;
-    case NUMCOLORS:   return 2;
-    case ASPECTX:     return 36;
-    case ASPECTY:     return 36;
-    case ASPECTXY:    return 51;
-    case LOGPIXELSX:  return 72;
-    case LOGPIXELSY:  return 72;
-    case SIZEPALETTE: return 2;
-    case TEXTCAPS:    return (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
-                              TC_CR_ANY | TC_SF_X_YINDEP | TC_SA_DOUBLE | TC_SA_INTEGER |
-                              TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE | TC_VA_ABLE);
-    default:          return 0;
+    case DRIVERVERSION:   return 0x4000;
+    case TECHNOLOGY:      return DT_RASDISPLAY;
+    case HORZSIZE:        return MulDiv( GetDeviceCaps( dev->hdc, HORZRES ), 254,
+                                         GetDeviceCaps( dev->hdc, LOGPIXELSX ) * 10 );
+    case VERTSIZE:        return MulDiv( GetDeviceCaps( dev->hdc, VERTRES ), 254,
+                                         GetDeviceCaps( dev->hdc, LOGPIXELSY ) * 10 );
+    case HORZRES:         return 640;
+    case VERTRES:         return 480;
+    case BITSPIXEL:       return 32;
+    case PLANES:          return 1;
+    case NUMBRUSHES:      return -1;
+    case NUMPENS:         return -1;
+    case NUMMARKERS:      return 0;
+    case NUMFONTS:        return 0;
+    case PDEVICESIZE:     return 0;
+    case CURVECAPS:       return (CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES | CC_WIDE |
+                                  CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT);
+    case LINECAPS:        return (LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
+                                  LC_STYLED | LC_WIDESTYLED | LC_INTERIORS);
+    case POLYGONALCAPS:   return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON | PC_SCANLINE |
+                                  PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
+    case TEXTCAPS:        return (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
+                                  TC_CR_ANY | TC_SF_X_YINDEP | TC_SA_DOUBLE | TC_SA_INTEGER |
+                                  TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE | TC_VA_ABLE);
+    case CLIPCAPS:        return CP_RECTANGLE;
+    case RASTERCAPS:      return (RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT | RC_DI_BITMAP | RC_DIBTODEV |
+                                  RC_BIGFONT | RC_STRETCHBLT | RC_FLOODFILL | RC_STRETCHDIB | RC_DEVBITS |
+                                  (GetDeviceCaps( dev->hdc, SIZEPALETTE ) ? RC_PALETTE : 0));
+    case ASPECTX:         return 36;
+    case ASPECTY:         return 36;
+    case ASPECTXY:        return (int)(hypot( GetDeviceCaps( dev->hdc, ASPECTX ),
+                                              GetDeviceCaps( dev->hdc, ASPECTY )) + 0.5);
+    case CAPS1:           return 0;
+    case SIZEPALETTE:     return 0;
+    case NUMRESERVED:     return 20;
+    case PHYSICALWIDTH:   return 0;
+    case PHYSICALHEIGHT:  return 0;
+    case PHYSICALOFFSETX: return 0;
+    case PHYSICALOFFSETY: return 0;
+    case SCALINGFACTORX:  return 0;
+    case SCALINGFACTORY:  return 0;
+    case VREFRESH:        return 0;
+    case DESKTOPVERTRES:  return GetDeviceCaps( dev->hdc, VERTRES );
+    case DESKTOPHORZRES:  return GetDeviceCaps( dev->hdc, HORZRES );
+    case BLTALIGNMENT:    return 0;
+    case SHADEBLENDCAPS:  return 0;
+    case COLORMGMTCAPS:   return 0;
+    case LOGPIXELSX:
+    case LOGPIXELSY:
+        if (!screen_dpi && !(screen_dpi = get_dpi())) screen_dpi = 96;
+        return screen_dpi;
+    case NUMCOLORS:
+        bpp = GetDeviceCaps( dev->hdc, BITSPIXEL );
+        return (bpp > 8) ? -1 : (1 << bpp);
+    case COLORRES:
+        /* The observed correspondence between BITSPIXEL and COLORRES is:
+         * BITSPIXEL: 8  -> COLORRES: 18
+         * BITSPIXEL: 16 -> COLORRES: 16
+         * BITSPIXEL: 24 -> COLORRES: 24
+         * BITSPIXEL: 32 -> COLORRES: 24 */
+        bpp = GetDeviceCaps( dev->hdc, BITSPIXEL );
+        return (bpp <= 8) ? 18 : min( 24, bpp );
+    default:
+        FIXME("(%p): unsupported capability %d, will return 0\n", dev->hdc, cap );
+        return 0;
     }
 }
 
