@@ -3002,9 +3002,9 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_PRIMID:
             if (version->type == WINED3D_SHADER_TYPE_GEOMETRY)
-                sprintf(register_name, "uint(gl_PrimitiveIDIn)");
+                sprintf(register_name, "gl_PrimitiveIDIn");
             else
-                sprintf(register_name, "uint(gl_PrimitiveID)");
+                sprintf(register_name, "gl_PrimitiveID");
             break;
 
         case WINED3DSPR_IDXTEMP:
@@ -3192,13 +3192,11 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
         case WINED3DSPR_IMMCONST:
             param_data_type = data_type;
             break;
-        case WINED3DSPR_PRIMID:
-            param_data_type = WINED3D_DATA_UINT;
-            break;
         case WINED3DSPR_GSINSTID:
         case WINED3DSPR_LOCALTHREADID:
         case WINED3DSPR_LOCALTHREADINDEX:
         case WINED3DSPR_OUTPOINTID:
+        case WINED3DSPR_PRIMID:
         case WINED3DSPR_THREADGROUPID:
         case WINED3DSPR_THREADID:
             param_data_type = WINED3D_DATA_INT;
