@@ -54,8 +54,8 @@
 @ stub D3DKMTOpenResource
 @ stub D3DKMTOpenResource2
 @ stub D3DKMTOpenResourceFromNtHandle
-@ stub D3DKMTOpenSynchronizationObject
 @ stub D3DKMTOpenSyncObjectFromNtHandle
+@ stub D3DKMTOpenSynchronizationObject
 @ stub D3DKMTOutputDuplGetFrameInfo
 @ stub D3DKMTOutputDuplGetMetaData
 @ stub D3DKMTOutputDuplGetPointerShapeData
@@ -83,9 +83,9 @@
 @ stub D3DKMTSetQueuedLimit
 @ stub D3DKMTSetStereoEnabled
 @ stub D3DKMTSetVidPnSourceOwner
+@ stub D3DKMTShareObjects
 @ stub D3DKMTSharedPrimaryLockNotification
 @ stub D3DKMTSharedPrimaryUnLockNotification
-@ stub D3DKMTShareObjects
 @ stub D3DKMTSignalSynchronizationObject
 @ stub D3DKMTSignalSynchronizationObject2
 @ stub D3DKMTUnlock
