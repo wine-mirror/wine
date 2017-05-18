@@ -1972,6 +1972,8 @@ static void test_data_cache_dib_contents_stream(int num)
     STGMEDIUM med;
     CLSID cls;
     SIZEL sz;
+    BYTE *ptr;
+    BITMAPINFOHEADER expect_info;
 
     hr = CreateDataCache( NULL, &CLSID_Picture_Metafile, &IID_IUnknown, (void **)&unk );
     ok( SUCCEEDED(hr), "got %08x\n", hr );
@@ -1994,11 +1996,24 @@ static void test_data_cache_dib_contents_stream(int num)
 
     hr = IDataObject_GetData( data, &fmt, &med );
     ok( SUCCEEDED(hr), "got %08x\n", hr );
-    if (SUCCEEDED(hr))
+    ok( med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed );
+    ok( GlobalSize( U(med).hGlobal ) >= sizeof(dib) - sizeof(BITMAPFILEHEADER),
+        "got %lu\n", GlobalSize( U(med).hGlobal ) );
+    ptr = GlobalLock( U(med).hGlobal );
+
+    expect_info = *(BITMAPINFOHEADER *)(dib + sizeof(BITMAPFILEHEADER));
+    if (expect_info.biXPelsPerMeter == 0 || expect_info.biYPelsPerMeter == 0)
     {
-        ok( med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed );
-        ReleaseStgMedium( &med );
+        HDC hdc = GetDC( 0 );
+        expect_info.biXPelsPerMeter = MulDiv( GetDeviceCaps( hdc, LOGPIXELSX ), 10000, 254 );
+        expect_info.biYPelsPerMeter = MulDiv( GetDeviceCaps( hdc, LOGPIXELSY ), 10000, 254 );
+        ReleaseDC( 0, hdc );
     }
+    ok( !memcmp( ptr, &expect_info, sizeof(expect_info) ), "mismatch\n" );
+    ok( !memcmp( ptr + sizeof(expect_info), dib + sizeof(BITMAPFILEHEADER) + sizeof(expect_info),
+                 sizeof(dib) - sizeof(BITMAPFILEHEADER) - sizeof(expect_info) ), "mismatch\n" );
+    GlobalUnlock( U(med).hGlobal );
+    ReleaseStgMedium( &med );
 
     hr = IViewObject2_GetExtent( view, DVASPECT_CONTENT, -1, NULL, &sz );
     ok( SUCCEEDED(hr), "got %08x\n", hr );

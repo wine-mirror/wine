@@ -635,6 +635,7 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
     HGLOBAL hglobal;
     ULONG read, info_size, bi_size;
     BITMAPFILEHEADER file;
+    BITMAPINFOHEADER *info;
 
     if (cache_entry->stream_type != contents_stream)
     {
@@ -684,6 +685,18 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
 
     hr = IStream_Read( stm, (char *)dib + info_size, stat.cbSize.u.LowPart, &read );
     if (hr != S_OK || read != stat.cbSize.QuadPart) goto fail;
+
+    if (bi_size >= sizeof(*info))
+    {
+        info = (BITMAPINFOHEADER *)dib;
+        if (info->biXPelsPerMeter == 0 || info->biYPelsPerMeter == 0)
+        {
+            HDC hdc = GetDC( 0 );
+            info->biXPelsPerMeter = MulDiv( GetDeviceCaps( hdc, LOGPIXELSX ), 10000, 254 );
+            info->biYPelsPerMeter = MulDiv( GetDeviceCaps( hdc, LOGPIXELSY ), 10000, 254 );
+            ReleaseDC( 0, hdc );
+        }
+    }
 
     GlobalUnlock( hglobal );
 
