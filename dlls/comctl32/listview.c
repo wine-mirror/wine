@@ -2016,23 +2016,10 @@ static void LISTVIEW_UpdateHeaderSize(const LISTVIEW_INFO *infoPtr, INT nNewScro
         SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
-/***
- * DESCRIPTION:
- * Update the scrollbars. This functions should be called whenever
- * the content, size or view changes.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- *
- * RETURN:
- * None
- */
-static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
+static INT LISTVIEW_UpdateHScroll(LISTVIEW_INFO *infoPtr)
 {
-    SCROLLINFO horzInfo, vertInfo;
-    INT dx, dy;
-
-    if ((infoPtr->dwStyle & LVS_NOSCROLL) || !is_redrawing(infoPtr)) return;
+    SCROLLINFO horzInfo;
+    INT dx;
 
     ZeroMemory(&horzInfo, sizeof(SCROLLINFO));
     horzInfo.cbSize = sizeof(SCROLLINFO);
@@ -2084,10 +2071,22 @@ static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
     dx -= SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo, TRUE);
     TRACE("horzInfo=%s\n", debugscrollinfo(&horzInfo));
 
-    /* Setting the horizontal scroll can change the listview size
-     * (and potentially everything else) so we need to recompute
-     * everything again for the vertical scroll
-     */
+    /* Update the Header Control */
+    if (infoPtr->hwndHeader)
+    {
+	horzInfo.fMask = SIF_POS;
+	GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo);
+	LISTVIEW_UpdateHeaderSize(infoPtr, horzInfo.nPos);
+    }
+
+    LISTVIEW_UpdateSize(infoPtr);
+    return dx;
+}
+
+static INT LISTVIEW_UpdateVScroll(LISTVIEW_INFO *infoPtr)
+{
+    SCROLLINFO vertInfo;
+    INT dy;
 
     ZeroMemory(&vertInfo, sizeof(SCROLLINFO));
     vertInfo.cbSize = sizeof(SCROLLINFO);
@@ -2117,6 +2116,37 @@ static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
     dy -= SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &vertInfo, TRUE);
     TRACE("vertInfo=%s\n", debugscrollinfo(&vertInfo));
 
+    LISTVIEW_UpdateSize(infoPtr);
+    return dy;
+}
+
+/***
+ * DESCRIPTION:
+ * Update the scrollbars. This function should be called whenever
+ * the content, size or view changes.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ * None
+ */
+static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
+{
+    INT dx, dy, pass;
+
+    if ((infoPtr->dwStyle & LVS_NOSCROLL) || !is_redrawing(infoPtr)) return;
+
+    /* Setting the horizontal scroll can change the listview size
+     * (and potentially everything else) so we need to recompute
+     * everything again for the vertical scroll and vice-versa
+     */
+    for (dx = 0, dy = 0, pass = 0; pass <= 1; pass++)
+    {
+        dx += LISTVIEW_UpdateHScroll(infoPtr);
+        dy += LISTVIEW_UpdateVScroll(infoPtr);
+    }
+
     /* Change of the range may have changed the scroll pos. If so move the content */
     if (dx != 0 || dy != 0)
     {
@@ -2124,14 +2154,6 @@ static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
         listRect = infoPtr->rcList;
         ScrollWindowEx(infoPtr->hwndSelf, dx, dy, &listRect, &listRect, 0, 0,
             SW_ERASE | SW_INVALIDATE);
-    }
-
-    /* Update the Header Control */
-    if (infoPtr->hwndHeader)
-    {
-	horzInfo.fMask = SIF_POS;
-	GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &horzInfo);
-	LISTVIEW_UpdateHeaderSize(infoPtr, horzInfo.nPos);
     }
 }
 
