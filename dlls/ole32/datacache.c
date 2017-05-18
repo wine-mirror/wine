@@ -224,6 +224,35 @@ const char *debugstr_formatetc(const FORMATETC *formatetc)
         formatetc->lindex, formatetc->tymed);
 }
 
+/***********************************************************************
+ *           bitmap_info_size
+ *
+ * Return the size of the bitmap info structure including color table.
+ */
+int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
+{
+    unsigned int colors, size, masks = 0;
+
+    if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+    {
+        const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)info;
+        colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
+        return sizeof(BITMAPCOREHEADER) + colors *
+            ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
+    }
+    else  /* assume BITMAPINFOHEADER */
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (colors > 256) /* buffer overflow otherwise */
+            colors = 256;
+        if (!colors && (info->bmiHeader.biBitCount <= 8))
+            colors = 1 << info->bmiHeader.biBitCount;
+        if (info->bmiHeader.biCompression == BI_BITFIELDS) masks = 3;
+        size = max( info->bmiHeader.biSize, sizeof(BITMAPINFOHEADER) + masks * sizeof(DWORD) );
+        return size + colors * ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
+    }
+}
+
 static void DataCacheEntry_Destroy(DataCache *cache, DataCacheEntry *cache_entry)
 {
     list_remove(&cache_entry->entry);
@@ -604,7 +633,8 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
     STATSTG stat;
     void *dib;
     HGLOBAL hglobal;
-    ULONG read;
+    ULONG read, info_size, bi_size;
+    BITMAPFILEHEADER file;
 
     if (cache_entry->stream_type != contents_stream)
     {
@@ -615,24 +645,59 @@ static HRESULT load_dib( DataCacheEntry *cache_entry, IStream *stm )
     hr = IStream_Stat( stm, &stat, STATFLAG_NONAME );
     if (FAILED( hr )) return hr;
 
+    if (stat.cbSize.QuadPart < sizeof(file) + sizeof(DWORD)) return E_FAIL;
+    hr = IStream_Read( stm, &file, sizeof(file), &read );
+    if (hr != S_OK || read != sizeof(file)) return E_FAIL;
+    stat.cbSize.QuadPart -= sizeof(file);
+
     hglobal = GlobalAlloc( GMEM_MOVEABLE, stat.cbSize.u.LowPart );
     if (!hglobal) return E_OUTOFMEMORY;
     dib = GlobalLock( hglobal );
 
-    hr = IStream_Read( stm, dib, stat.cbSize.u.LowPart, &read );
-    GlobalUnlock( hglobal );
+    hr = IStream_Read( stm, dib, sizeof(DWORD), &read );
+    if (hr != S_OK || read != sizeof(DWORD)) goto fail;
+    bi_size = *(DWORD *)dib;
+    if (stat.cbSize.QuadPart < bi_size) goto fail;
 
-    if (hr != S_OK || read != stat.cbSize.u.LowPart)
+    hr = IStream_Read( stm, (char *)dib + sizeof(DWORD), bi_size - sizeof(DWORD), &read );
+    if (hr != S_OK || read != bi_size - sizeof(DWORD)) goto fail;
+
+    info_size = bitmap_info_size( dib, DIB_RGB_COLORS );
+    if (stat.cbSize.QuadPart < info_size) goto fail;
+    if (info_size > bi_size)
     {
-        GlobalFree( hglobal );
-        return E_FAIL;
+        hr = IStream_Read( stm, (char *)dib + bi_size, info_size - bi_size, &read );
+        if (hr != S_OK || read != info_size - bi_size) goto fail;
     }
+    stat.cbSize.QuadPart -= info_size;
+
+    if (file.bfOffBits)
+    {
+        LARGE_INTEGER skip;
+
+        skip.QuadPart = file.bfOffBits - sizeof(file) - info_size;
+        if (stat.cbSize.QuadPart < skip.QuadPart) goto fail;
+        hr = IStream_Seek( stm, skip, STREAM_SEEK_CUR, NULL );
+        if (hr != S_OK) goto fail;
+        stat.cbSize.QuadPart -= skip.QuadPart;
+    }
+
+    hr = IStream_Read( stm, (char *)dib + info_size, stat.cbSize.u.LowPart, &read );
+    if (hr != S_OK || read != stat.cbSize.QuadPart) goto fail;
+
+    GlobalUnlock( hglobal );
 
     cache_entry->data_cf = cache_entry->fmtetc.cfFormat;
     cache_entry->stgmedium.tymed = TYMED_HGLOBAL;
     cache_entry->stgmedium.u.hGlobal = hglobal;
 
     return S_OK;
+
+fail:
+    GlobalUnlock( hglobal );
+    GlobalFree( hglobal );
+    return E_FAIL;
+
 }
 
 /************************************************************************
@@ -1672,16 +1737,14 @@ static HRESULT WINAPI DataCache_Draw(
       }
       case CF_DIB:
       {
-          BITMAPFILEHEADER *file_head;
           BITMAPINFO *info;
           BYTE *bits;
 
           if ((cache_entry->stgmedium.tymed != TYMED_HGLOBAL) ||
-              !((file_head = GlobalLock( cache_entry->stgmedium.u.hGlobal ))))
+              !((info = GlobalLock( cache_entry->stgmedium.u.hGlobal ))))
               continue;
 
-          info = (BITMAPINFO *)(file_head + 1);
-          bits = (BYTE *) file_head + file_head->bfOffBits;
+          bits = (BYTE *) info + bitmap_info_size( info, DIB_RGB_COLORS );
           StretchDIBits( hdcDraw, lprcBounds->left, lprcBounds->top,
                          lprcBounds->right - lprcBounds->left, lprcBounds->bottom - lprcBounds->top,
                          0, 0, info->bmiHeader.biWidth, info->bmiHeader.biHeight,
@@ -1892,16 +1955,13 @@ static HRESULT WINAPI DataCache_GetExtent(
       }
       case CF_DIB:
       {
-          BITMAPFILEHEADER *file_head;
           BITMAPINFOHEADER *info;
           LONG x_pels_m, y_pels_m;
 
 
           if ((cache_entry->stgmedium.tymed != TYMED_HGLOBAL) ||
-              !((file_head = GlobalLock( cache_entry->stgmedium.u.hGlobal ))))
+              !((info = GlobalLock( cache_entry->stgmedium.u.hGlobal ))))
               continue;
-
-          info = (BITMAPINFOHEADER *)(file_head + 1);
 
           x_pels_m = info->biXPelsPerMeter;
           y_pels_m = info->biYPelsPerMeter;
