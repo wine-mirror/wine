@@ -102,7 +102,6 @@
 @ stdcall RegGetKeySecurity(long long ptr ptr) advapi32.RegGetKeySecurity
 @ stdcall RegGetValueA(long str str long ptr ptr ptr) advapi32.RegGetValueA
 @ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr) advapi32.RegGetValueW
-@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) advapi32.RegisterTraceGuidsW
 @ stub RegLoadAppKeyA
 @ stub RegLoadAppKeyW
 @ stdcall RegLoadKeyA(long str str) advapi32.RegLoadKeyA
@@ -127,6 +126,7 @@
 @ stdcall RegSetValueExW(long wstr long long ptr long) advapi32.RegSetValueExW
 @ stdcall RegUnLoadKeyA(long str) advapi32.RegUnLoadKeyA
 @ stdcall RegUnLoadKeyW(long wstr) advapi32.RegUnLoadKeyW
+@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) advapi32.RegisterTraceGuidsW
 @ stdcall RevertToSelf() advapi32.RevertToSelf
 @ stdcall SetAclInformation(ptr ptr long long) advapi32.SetAclInformation
 @ stdcall SetFileSecurityW(wstr long ptr) advapi32.SetFileSecurityW
