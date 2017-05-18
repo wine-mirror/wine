@@ -20,8 +20,8 @@
 @ stdcall CoImpersonateClient() ole32.CoImpersonateClient
 @ stdcall CoInitializeEx(ptr long) ole32.CoInitializeEx
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) ole32.CoInitializeSecurity
-@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) ole32.CoMarshalInterface
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr) ole32.CoMarshalInterThreadInterfaceInStream
+@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) ole32.CoMarshalInterface
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr) ole32.CoRegisterClassObject
 @ stdcall CoRegisterInitializeSpy(ptr ptr) ole32.CoRegisterInitializeSpy
 @ stdcall CoRegisterMessageFilter(ptr ptr) ole32.CoRegisterMessageFilter
