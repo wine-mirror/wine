@@ -1323,9 +1323,10 @@ static BOOL is_const_tab_input_dirty(struct d3dx_const_tab *ctab, ULONG64 update
 
     if (update_version == ULONG64_MAX)
         update_version = ctab->update_version;
-    for (i = 0; i < ctab->const_set_count; ++i)
+    for (i = 0; i < ctab->input_count; ++i)
     {
-        if (is_param_dirty(ctab->const_set[i].param, update_version))
+        if (ctab->inputs_param[i]
+                && is_param_dirty(ctab->inputs_param[i], update_version))
             return TRUE;
     }
     return FALSE;
