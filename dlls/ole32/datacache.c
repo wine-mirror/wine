@@ -322,7 +322,8 @@ static BOOL init_cache_entry(DataCacheEntry *entry, const FORMATETC *fmt, DWORD 
     return TRUE;
 }
 
-static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DataCacheEntry **cache_entry, BOOL load)
+static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DWORD advf,
+                                     DataCacheEntry **cache_entry, BOOL load)
 {
     HRESULT hr;
 
@@ -336,7 +337,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     if (!*cache_entry)
         return E_OUTOFMEMORY;
 
-    if (!init_cache_entry(*cache_entry, formatetc, 0, This->last_cache_id))
+    if (!init_cache_entry(*cache_entry, formatetc, advf, This->last_cache_id))
         goto fail;
 
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
@@ -1275,7 +1276,7 @@ static HRESULT add_cache_entry( DataCache *This, const FORMATETC *fmt, IStream *
 
     cache_entry = DataCache_GetEntryForFormatEtc( This, fmt );
     if (!cache_entry)
-        hr = DataCache_CreateEntry( This, fmt, &cache_entry, TRUE );
+        hr = DataCache_CreateEntry( This, fmt, 0, &cache_entry, TRUE );
     if (SUCCEEDED( hr ))
     {
         DataCacheEntry_DiscardData( cache_entry );
@@ -2023,12 +2024,11 @@ static HRESULT WINAPI DataCache_Cache(
         return CACHE_S_SAMECACHE;
     }
 
-    hr = DataCache_CreateEntry(This, pformatetc, &cache_entry, FALSE);
+    hr = DataCache_CreateEntry(This, pformatetc, advf, &cache_entry, FALSE);
 
     if (SUCCEEDED(hr))
     {
         *pdwConnection = cache_entry->id;
-        cache_entry->advise_flags = advf;
         setup_sink(This, cache_entry);
     }
 
