@@ -13,18 +13,6 @@
 @ stdcall LocalLock(long) kernel32.LocalLock
 @ stdcall LocalReAlloc(long long long) kernel32.LocalReAlloc
 @ stdcall LocalUnlock(long) kernel32.LocalUnlock
-@ stdcall lstrcmpA(str str) kernel32.lstrcmpA
-@ stdcall lstrcmpiA(str str) kernel32.lstrcmpiA
-@ stdcall lstrcmpi(str str) kernel32.lstrcmpi
-@ stdcall lstrcmpiW(wstr wstr) kernel32.lstrcmpiW
-@ stdcall lstrcmp(str str) kernel32.lstrcmp
-@ stdcall lstrcmpW(wstr wstr) kernel32.lstrcmpW
-@ stdcall lstrcpynA(ptr str long) kernel32.lstrcpynA
-@ stdcall lstrcpyn(ptr str long) kernel32.lstrcpyn
-@ stdcall lstrcpynW(ptr wstr long) kernel32.lstrcpynW
-@ stdcall lstrlenA(str) kernel32.lstrlenA
-@ stdcall lstrlen(str) kernel32.lstrlen
-@ stdcall lstrlenW(wstr) kernel32.lstrlenW
 @ stdcall NeedCurrentDirectoryForExePathA(str) kernel32.NeedCurrentDirectoryForExePathA
 @ stdcall NeedCurrentDirectoryForExePathW(wstr) kernel32.NeedCurrentDirectoryForExePathW
 @ stdcall PulseEvent(long) kernel32.PulseEvent
@@ -32,3 +20,15 @@
 @ stdcall Sleep(long) kernel32.Sleep
 @ stdcall Wow64DisableWow64FsRedirection(ptr) kernel32.Wow64DisableWow64FsRedirection
 @ stdcall Wow64RevertWow64FsRedirection(ptr) kernel32.Wow64RevertWow64FsRedirection
+@ stdcall lstrcmp(str str) kernel32.lstrcmp
+@ stdcall lstrcmpA(str str) kernel32.lstrcmpA
+@ stdcall lstrcmpW(wstr wstr) kernel32.lstrcmpW
+@ stdcall lstrcmpi(str str) kernel32.lstrcmpi
+@ stdcall lstrcmpiA(str str) kernel32.lstrcmpiA
+@ stdcall lstrcmpiW(wstr wstr) kernel32.lstrcmpiW
+@ stdcall lstrcpyn(ptr str long) kernel32.lstrcpyn
+@ stdcall lstrcpynA(ptr str long) kernel32.lstrcpynA
+@ stdcall lstrcpynW(ptr wstr long) kernel32.lstrcpynW
+@ stdcall lstrlen(str) kernel32.lstrlen
+@ stdcall lstrlenA(str) kernel32.lstrlenA
+@ stdcall lstrlenW(wstr) kernel32.lstrlenW
