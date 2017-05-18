@@ -831,6 +831,9 @@ static INT_PTR CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
     switch(msg)
     {
         case WM_INITDIALOG:
+            SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_SETEXTENDEDLISTVIEWSTYLE,
+                LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
+
             hImageList = ResetApplicationList(TRUE, hWnd, hImageList);
 
             if (!hImageList)
