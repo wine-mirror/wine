@@ -2949,3 +2949,27 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         else WINPOS_ShowIconTitle( hwnd, TRUE );
     }
 }
+
+/***********************************************************************
+ *		LogicalToPhysicalPoint (USER32.@)
+ */
+BOOL WINAPI LogicalToPhysicalPoint(HWND hwnd, POINT *point)
+{
+    static int once;
+
+    if (!once++)
+        FIXME("(%p %p) stub\n", hwnd, point);
+    return TRUE;
+}
+
+/***********************************************************************
+ *		PhysicalToLogicalPoint (USER32.@)
+ */
+BOOL WINAPI PhysicalToLogicalPoint(HWND hwnd, POINT *point)
+{
+    static int once;
+
+    if (!once++)
+        FIXME("(%p %p) stub\n", hwnd, point);
+    return TRUE;
+}
