@@ -3699,9 +3699,11 @@ int shader_addline(struct wined3d_string_buffer *buffer, const char *fmt, ...) P
 BOOL string_buffer_resize(struct wined3d_string_buffer *buffer, int rc) DECLSPEC_HIDDEN;
 int shader_vaddline(struct wined3d_string_buffer *buffer, const char *fmt, va_list args) DECLSPEC_HIDDEN;
 
-/* Vertex shader utility functions */
-BOOL vshader_get_input(const struct wined3d_shader *shader,
-        BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
+struct wined3d_shader_phase
+{
+    const DWORD *start;
+    const DWORD *end;
+};
 
 struct wined3d_vertex_shader
 {
@@ -3710,6 +3712,16 @@ struct wined3d_vertex_shader
 
 struct wined3d_hull_shader
 {
+    struct
+    {
+        struct wined3d_shader_phase *control_point;
+        unsigned int fork_count;
+        unsigned int join_count;
+        struct wined3d_shader_phase *fork;
+        SIZE_T fork_size;
+        struct wined3d_shader_phase *join;
+        SIZE_T join_size;
+    } phases;
     unsigned int output_vertex_count;
     enum wined3d_tessellator_output_primitive tessellator_output_primitive;
     enum wined3d_tessellator_partitioning tessellator_partitioning;
@@ -3796,6 +3808,8 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         BOOL position_transformed, struct ps_compile_args *args,
         const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
+BOOL vshader_get_input(const struct wined3d_shader *shader,
+        BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         WORD swizzle_map, struct vs_compile_args *args,
         const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;

@@ -900,6 +900,62 @@ static HRESULT shader_reg_maps_add_tgsm(struct wined3d_shader_reg_maps *reg_maps
     return S_OK;
 }
 
+static HRESULT shader_record_shader_phase(struct wined3d_shader *shader,
+        struct wined3d_shader_phase **current_phase, const struct wined3d_shader_instruction *ins,
+        const DWORD *current_instruction_ptr, const DWORD *previous_instruction_ptr)
+{
+    struct wined3d_shader_phase *phase;
+
+    if ((phase = *current_phase))
+    {
+        phase->end = previous_instruction_ptr;
+        *current_phase = NULL;
+    }
+
+    if (shader->reg_maps.shader_version.type != WINED3D_SHADER_TYPE_HULL)
+    {
+        ERR("Unexpected shader type %#x.\n", shader->reg_maps.shader_version.type);
+        return E_FAIL;
+    }
+
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_HS_CONTROL_POINT_PHASE:
+            if (shader->u.hs.phases.control_point)
+            {
+                FIXME("Multiple control point phases.\n");
+                HeapFree(GetProcessHeap(), 0, shader->u.hs.phases.control_point);
+            }
+            if (!(shader->u.hs.phases.control_point = HeapAlloc(GetProcessHeap(),
+                    HEAP_ZERO_MEMORY, sizeof(*shader->u.hs.phases.control_point))))
+                return E_OUTOFMEMORY;
+            phase = shader->u.hs.phases.control_point;
+            break;
+        case WINED3DSIH_HS_FORK_PHASE:
+            if (!wined3d_array_reserve((void **)&shader->u.hs.phases.fork,
+                    &shader->u.hs.phases.fork_size, shader->u.hs.phases.fork_count + 1,
+                    sizeof(*shader->u.hs.phases.fork)))
+                return E_OUTOFMEMORY;
+            phase = &shader->u.hs.phases.fork[shader->u.hs.phases.fork_count++];
+            break;
+        case WINED3DSIH_HS_JOIN_PHASE:
+            if (!wined3d_array_reserve((void **)&shader->u.hs.phases.join,
+                    &shader->u.hs.phases.join_size, shader->u.hs.phases.join_count + 1,
+                    sizeof(*shader->u.hs.phases.join)))
+                return E_OUTOFMEMORY;
+            phase = &shader->u.hs.phases.join[shader->u.hs.phases.join_count++];
+            break;
+        default:
+            ERR("Unexpected opcode %s.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
+            return E_FAIL;
+    }
+
+    phase->start = current_instruction_ptr;
+    *current_phase = phase;
+
+    return WINED3D_OK;
+}
+
 /* Note that this does not count the loop register as an address register. */
 static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const struct wined3d_shader_frontend *fe,
         struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_signature *input_signature,
@@ -908,9 +964,10 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     struct wined3d_shader_signature_element input_signature_elements[max(MAX_ATTRIBS, MAX_REG_INPUT)];
     struct wined3d_shader_signature_element output_signature_elements[MAX_REG_OUTPUT];
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
-    void *fe_data = shader->frontend_data;
     struct wined3d_shader_version shader_version;
-    const DWORD *ptr;
+    struct wined3d_shader_phase *phase = NULL;
+    const DWORD *ptr, *prev_ins, *current_ins;
+    void *fe_data = shader->frontend_data;
     unsigned int i;
     HRESULT hr;
 
@@ -921,6 +978,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     list_init(&reg_maps->indexable_temps);
 
     fe->shader_read_header(fe_data, &ptr, &shader_version);
+    prev_ins = current_ins = ptr;
     reg_maps->shader_version = shader_version;
 
     shader_set_limits(shader);
@@ -936,6 +994,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     {
         struct wined3d_shader_instruction ins;
 
+        current_ins = ptr;
         /* Fetch opcode. */
         fe->shader_read_instruction(fe_data, &ptr, &ins);
 
@@ -1238,6 +1297,14 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
 
             list_add_head(&shader->constantsB, &lconst->entry);
             reg_maps->local_bool_consts |= (1u << lconst->idx);
+        }
+        /* Handle shader phases. */
+        else if (ins.handler_idx == WINED3DSIH_HS_CONTROL_POINT_PHASE
+                || ins.handler_idx == WINED3DSIH_HS_FORK_PHASE
+                || ins.handler_idx == WINED3DSIH_HS_JOIN_PHASE)
+        {
+            if (FAILED(hr = shader_record_shader_phase(shader, &phase, &ins, current_ins, prev_ins)))
+                return hr;
         }
         /* For subroutine prototypes. */
         else if (ins.handler_idx == WINED3DSIH_LABEL)
@@ -1557,8 +1624,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 }
             }
         }
+
+        prev_ins = current_ins;
     }
     reg_maps->loop_depth = max_loop_depth;
+
+    if (phase)
+    {
+        phase->end = prev_ins;
+        phase = NULL;
+    }
 
     /* PS before 2.0 don't have explicit color outputs. Instead the value of
      * R0 is written to the render target. */
@@ -2873,8 +2948,16 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
 static void shader_cleanup(struct wined3d_shader *shader)
 {
-    if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
+    if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_HULL)
+    {
+        HeapFree(GetProcessHeap(), 0, shader->u.hs.phases.control_point);
+        HeapFree(GetProcessHeap(), 0, shader->u.hs.phases.fork);
+        HeapFree(GetProcessHeap(), 0, shader->u.hs.phases.join);
+    }
+    else if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
+    {
         HeapFree(GetProcessHeap(), 0, shader->u.gs.so_desc.elements);
+    }
 
     HeapFree(GetProcessHeap(), 0, shader->patch_constant_signature.elements);
     HeapFree(GetProcessHeap(), 0, shader->output_signature.elements);
