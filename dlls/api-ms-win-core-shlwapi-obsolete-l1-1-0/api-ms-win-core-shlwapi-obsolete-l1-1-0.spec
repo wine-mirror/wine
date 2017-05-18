@@ -1,5 +1,9 @@
 @ stdcall QISearch(long long long long) shlwapi.QISearch
 @ stdcall SHLoadIndirectString(wstr ptr long ptr) shlwapi.SHLoadIndirectString
+@ stdcall StrCSpnA(str str) shlwapi.StrCSpnA
+@ stdcall StrCSpnIA(str str) shlwapi.StrCSpnIA
+@ stdcall StrCSpnIW(wstr wstr) shlwapi.StrCSpnIW
+@ stdcall StrCSpnW(wstr wstr) shlwapi.StrCSpnW
 @ stdcall StrCatBuffA(str str long) shlwapi.StrCatBuffA
 @ stdcall StrCatBuffW(wstr wstr long) shlwapi.StrCatBuffW
 @ stdcall StrCatChainW(ptr long long wstr) shlwapi.StrCatChainW
@@ -27,10 +31,6 @@
 @ stdcall StrCpyNW(ptr wstr long) shlwapi.StrCpyNW
 @ stdcall StrCpyNXA(ptr str long) shlwapi.StrCpyNXA
 @ stdcall StrCpyNXW(ptr wstr long) shlwapi.StrCpyNXW
-@ stdcall StrCSpnA(str str) shlwapi.StrCSpnA
-@ stdcall StrCSpnIA(str str) shlwapi.StrCSpnIA
-@ stdcall StrCSpnIW(wstr wstr) shlwapi.StrCSpnIW
-@ stdcall StrCSpnW(wstr wstr) shlwapi.StrCSpnW
 @ stdcall StrDupA(str) shlwapi.StrDupA
 @ stdcall StrDupW(wstr) shlwapi.StrDupW
 @ stdcall StrIsIntlEqualA(long str str long) shlwapi.StrIsIntlEqualA
