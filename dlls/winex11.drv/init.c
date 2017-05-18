@@ -33,61 +33,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 Display *gdi_display;  /* display to use for all GDI functions */
 
-/* a few dynamic device caps */
-static int log_pixels_x;  /* pixels per logical inch in x direction */
-static int log_pixels_y;  /* pixels per logical inch in y direction */
 static int palette_size;
 
 static Pixmap stock_bitmap_pixmap;  /* phys bitmap for the default stock bitmap */
 
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
-static const WCHAR dpi_key_name[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\0'};
-static const WCHAR def_dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
-static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
-
 static const struct gdi_dc_funcs x11drv_funcs;
 static const struct gdi_dc_funcs *xrender_funcs;
-
-/******************************************************************************
- *              get_reg_dword
- *
- * Read a DWORD value from the registry
- */
-static BOOL get_reg_dword(HKEY base, const WCHAR *key_name, const WCHAR *value_name, DWORD *value)
-{
-    HKEY key;
-    DWORD type, data, size = sizeof(data);
-    BOOL ret = FALSE;
-
-    if (RegOpenKeyW(base, key_name, &key) == ERROR_SUCCESS)
-    {
-        if (RegQueryValueExW(key, value_name, NULL, &type, (void *)&data, &size) == ERROR_SUCCESS &&
-            type == REG_DWORD)
-        {
-            *value = data;
-            ret = TRUE;
-        }
-        RegCloseKey(key);
-    }
-    return ret;
-}
-
-/******************************************************************************
- *              get_dpi
- *
- * get the dpi from the registry
- */
-static DWORD get_dpi(void)
-{
-    DWORD dpi;
-
-    if (get_reg_dword(HKEY_CURRENT_USER, dpi_key_name, dpi_value_name, &dpi))
-        return dpi;
-    if (get_reg_dword(HKEY_CURRENT_CONFIG, def_dpi_key_name, dpi_value_name, &dpi))
-        return dpi;
-    return 0;
-}
 
 /**********************************************************************
  *	     device_init
@@ -105,11 +58,6 @@ static BOOL WINAPI device_init( INIT_ONCE *once, void *param, void **context )
     palette_size = X11DRV_PALETTE_Init();
 
     stock_bitmap_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
-
-    /* Initialize device caps */
-    log_pixels_x = log_pixels_y = get_dpi();
-    if (!log_pixels_x)
-        log_pixels_x = log_pixels_y = USER_DEFAULT_SCREEN_DPI;
 
     return TRUE;
 }
@@ -214,20 +162,6 @@ static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     switch(cap)
     {
-    case DRIVERVERSION:
-        return 0x300;
-    case TECHNOLOGY:
-        return DT_RASDISPLAY;
-    case HORZSIZE:
-    {
-        RECT primary_rect = get_primary_monitor_rect();
-        return MulDiv( primary_rect.right - primary_rect.left, 254, log_pixels_x * 10 );
-    }
-    case VERTSIZE:
-    {
-        RECT primary_rect = get_primary_monitor_rect();
-        return MulDiv( primary_rect.bottom - primary_rect.top, 254, log_pixels_y * 10 );
-    }
     case HORZRES:
     {
         RECT primary_rect = get_primary_monitor_rect();
@@ -250,80 +184,11 @@ static INT X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     }
     case BITSPIXEL:
         return screen_bpp;
-    case PLANES:
-        return 1;
-    case NUMBRUSHES:
-        return -1;
-    case NUMPENS:
-        return -1;
-    case NUMMARKERS:
-        return 0;
-    case NUMFONTS:
-        return 0;
-    case NUMCOLORS:
-        /* MSDN: Number of entries in the device's color table, if the device has
-         * a color depth of no more than 8 bits per pixel.For devices with greater
-         * color depths, -1 is returned. */
-        return (default_visual.depth > 8) ? -1 : (1 << default_visual.depth);
-    case PDEVICESIZE:
-        return sizeof(X11DRV_PDEVICE);
-    case CURVECAPS:
-        return (CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES | CC_WIDE |
-                CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT);
-    case LINECAPS:
-        return (LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
-                LC_STYLED | LC_WIDESTYLED | LC_INTERIORS);
-    case POLYGONALCAPS:
-        return (PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON | PC_SCANLINE |
-                PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS);
-    case TEXTCAPS:
-        return (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
-                TC_CR_ANY | TC_SF_X_YINDEP | TC_SA_DOUBLE | TC_SA_INTEGER |
-                TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE | TC_VA_ABLE);
-    case CLIPCAPS:
-        return CP_REGION;
-    case COLORRES:
-        /* The observed correspondence between BITSPIXEL and COLORRES is:
-         * BITSPIXEL: 8  -> COLORRES: 18
-         * BITSPIXEL: 16 -> COLORRES: 16
-         * BITSPIXEL: 24 -> COLORRES: 24
-         * BITSPIXEL: 32 -> COLORRES: 24 */
-        return (screen_bpp <= 8) ? 18 : min( 24, screen_bpp );
-    case RASTERCAPS:
-        return (RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 | RC_DI_BITMAP |
-                RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS |
-                (palette_size ? RC_PALETTE : 0));
-    case SHADEBLENDCAPS:
-        return (SB_GRAD_RECT | SB_GRAD_TRI | SB_CONST_ALPHA | SB_PIXEL_ALPHA);
-    case ASPECTX:
-    case ASPECTY:
-        return 36;
-    case ASPECTXY:
-        return 51;
-    case LOGPIXELSX:
-        return log_pixels_x;
-    case LOGPIXELSY:
-        return log_pixels_y;
-    case CAPS1:
-        FIXME("(%p): CAPS1 is unimplemented, will return 0\n", dev->hdc );
-        /* please see wingdi.h for the possible bit-flag values that need
-           to be returned. */
-        return 0;
     case SIZEPALETTE:
         return palette_size;
-    case NUMRESERVED:
-    case PHYSICALWIDTH:
-    case PHYSICALHEIGHT:
-    case PHYSICALOFFSETX:
-    case PHYSICALOFFSETY:
-    case SCALINGFACTORX:
-    case SCALINGFACTORY:
-    case VREFRESH:
-    case BLTALIGNMENT:
-        return 0;
     default:
-        FIXME("(%p): unsupported capability %d, will return 0\n", dev->hdc, cap );
-        return 0;
+        dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
+        return dev->funcs->pGetDeviceCaps( dev, cap );
     }
 }
 
