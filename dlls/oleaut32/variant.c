@@ -2503,18 +2503,11 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 {
     VARTYPE leftvt,rightvt,resultvt;
     HRESULT hres;
-    static WCHAR str_true[32];
-    static WCHAR str_false[32];
     static const WCHAR sz_empty[] = {'\0'};
     leftvt = V_VT(left);
     rightvt = V_VT(right);
 
     TRACE("%s,%s,%p)\n", debugstr_variant(left), debugstr_variant(right), out);
-
-    if (!str_true[0]) {
-        VARIANT_GetLocalisedText(LOCALE_USER_DEFAULT, IDS_FALSE, str_false);
-        VARIANT_GetLocalisedText(LOCALE_USER_DEFAULT, IDS_TRUE, str_true);
-    }
 
     /* when both left and right are NULL the result is NULL */
     if (leftvt == VT_NULL && rightvt == VT_NULL)
@@ -2596,24 +2589,15 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         /* Convert left side variant to string */
         if (leftvt != VT_BSTR)
         {
-            if (leftvt == VT_BOOL)
-            {
-                /* Bools are handled as localized True/False strings instead of 0/-1 as in MSDN */
-                V_VT(&bstrvar_left) = VT_BSTR;
-                if (V_BOOL(left))
-                    V_BSTR(&bstrvar_left) = SysAllocString(str_true);
-                else
-                    V_BSTR(&bstrvar_left) = SysAllocString(str_false);
-            }
             /* Fill with empty string for later concat with right side */
-            else if (leftvt == VT_NULL)
+            if (leftvt == VT_NULL)
             {
                 V_VT(&bstrvar_left) = VT_BSTR;
                 V_BSTR(&bstrvar_left) = SysAllocString(sz_empty);
             }
             else
             {
-                hres = VariantChangeTypeEx(&bstrvar_left,left,0,0,VT_BSTR);
+                hres = VariantChangeTypeEx(&bstrvar_left,left,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
                 if (hres != S_OK) {
                     VariantClear(&bstrvar_left);
                     VariantClear(&bstrvar_right);
@@ -2625,24 +2609,15 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         /* convert right side variant to string */
         if (rightvt != VT_BSTR)
         {
-            if (rightvt == VT_BOOL)
-            {
-                /* Bools are handled as localized True/False strings instead of 0/-1 as in MSDN */
-                V_VT(&bstrvar_right) = VT_BSTR;
-                if (V_BOOL(right))
-                    V_BSTR(&bstrvar_right) = SysAllocString(str_true);
-                else
-                    V_BSTR(&bstrvar_right) = SysAllocString(str_false);
-            }
             /* Fill with empty string for later concat with right side */
-            else if (rightvt == VT_NULL)
+            if (rightvt == VT_NULL)
             {
                 V_VT(&bstrvar_right) = VT_BSTR;
                 V_BSTR(&bstrvar_right) = SysAllocString(sz_empty);
             }
             else
             {
-                hres = VariantChangeTypeEx(&bstrvar_right,right,0,0,VT_BSTR);
+                hres = VariantChangeTypeEx(&bstrvar_right,right,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
                 if (hres != S_OK) {
                     VariantClear(&bstrvar_left);
                     VariantClear(&bstrvar_right);
