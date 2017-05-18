@@ -36,7 +36,7 @@
 @ stdcall IsWindow(long) user32.IsWindow
 @ stdcall IsWindowUnicode(long) user32.IsWindowUnicode
 @ stdcall IsWindowVisible(long) user32.IsWindowVisible
-@ stub LogicalToPhysicalPoint
+@ stdcall LogicalToPhysicalPoint(long ptr) user32.LogicalToPhysicalPoint
 @ stdcall MoveWindow(long long long long long long) user32.MoveWindow
 @ stdcall RemovePropW(long wstr) user32.RemovePropW
 @ stdcall SetForegroundWindow(long) user32.SetForegroundWindow
