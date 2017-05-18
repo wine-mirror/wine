@@ -352,13 +352,8 @@ static void regstore_set_double(struct d3dx_regstore *rs, unsigned int table, un
             1u << (reg_idx % PRES_BITMASK_BLOCK_SIZE);
 }
 
-static void regstore_reset_table(struct d3dx_regstore *rs, unsigned int table)
+static void regstore_reset_modified(struct d3dx_regstore *rs, unsigned int table)
 {
-    unsigned int size;
-
-    size = rs->table_sizes[table] * table_info[table].reg_component_count * table_info[table].component_size;
-
-    memset(rs->tables[table], 0, size);
     memset(rs->table_value_set[table], 0,
             sizeof(*rs->table_value_set[table]) *
             ((rs->table_sizes[table] + PRES_BITMASK_BLOCK_SIZE - 1) / PRES_BITMASK_BLOCK_SIZE));
@@ -950,7 +945,7 @@ void d3dx_free_param_eval(struct d3dx_param_eval *peval)
 }
 
 static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const_tab,
-        BOOL update_all, ULONG64 new_update_version)
+        ULONG64 new_update_version)
 {
     unsigned int const_idx;
 
@@ -965,7 +960,7 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
         BOOL transpose;
         unsigned int count;
 
-        if (!(update_all || is_param_dirty(param, const_tab->update_version)))
+        if (!is_param_dirty(param, const_tab->update_version))
             continue;
 
         transpose = (const_set->constant_class == D3DXPC_MATRIX_COLUMNS && param->class == D3DXPC_MATRIX_ROWS)
@@ -1305,6 +1300,23 @@ static HRESULT execute_preshader(struct d3dx_preshader *pres)
     return D3D_OK;
 }
 
+static void set_preshader_modified(struct d3dx_preshader *pres)
+{
+    unsigned int i;
+
+    for (i = 0; i < pres->ins_count; ++i)
+    {
+        const struct d3dx_pres_ins *ins = &pres->ins[i];
+        const struct d3dx_pres_reg *reg = &ins->output.reg;
+
+        if (reg->table == PRES_REGTAB_TEMP)
+            continue;
+
+        regstore_set_modified(&pres->regs, reg->table, reg->offset,
+                pres_op_info[ins->op].func_all_comps ? 1 : ins->component_count);
+    }
+}
+
 static BOOL is_const_tab_input_dirty(struct d3dx_const_tab *ctab, ULONG64 update_version)
 {
     unsigned int i;
@@ -1337,7 +1349,7 @@ HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx
 
     if (is_const_tab_input_dirty(&peval->pres.inputs, ULONG64_MAX))
     {
-        set_constants(&peval->pres.regs, &peval->pres.inputs, FALSE,
+        set_constants(&peval->pres.regs, &peval->pres.inputs,
                 next_update_version(peval->version_counter));
 
         if (FAILED(hr = execute_preshader(&peval->pres)))
@@ -1424,7 +1436,7 @@ static HRESULT set_shader_constants_device(ID3DXEffectStateManager *manager, str
         }
         start += count;
     }
-    regstore_reset_table(rs, table);
+    regstore_reset_modified(rs, table);
     return result;
 }
 
@@ -1438,22 +1450,50 @@ HRESULT d3dx_param_eval_set_shader_constants(ID3DXEffectStateManager *manager, s
     struct d3dx_regstore *rs = &pres->regs;
     unsigned int i;
     ULONG64 new_update_version = next_update_version(peval->version_counter);
+    BOOL update_device = update_all;
 
     TRACE("device %p, peval %p, param_type %u.\n", device, peval, peval->param_type);
 
-    if (update_all || is_const_tab_input_dirty(&pres->inputs, ULONG64_MAX))
+    if (is_const_tab_input_dirty(&pres->inputs, ULONG64_MAX))
     {
-        set_constants(rs, &pres->inputs, update_all, new_update_version);
+        set_constants(rs, &pres->inputs, new_update_version);
         if (FAILED(hr = execute_preshader(pres)))
             return hr;
+        update_device = TRUE;
     }
 
-    set_constants(rs, &peval->shader_inputs, update_all, new_update_version);
-    result = D3D_OK;
-    for (i = 0; i < ARRAY_SIZE(set_tables); ++i)
+    if (is_const_tab_input_dirty(&peval->shader_inputs, ULONG64_MAX))
     {
-        if (FAILED(hr = set_shader_constants_device(manager, device, rs, peval->param_type, set_tables[i])))
-            result = hr;
+        set_constants(rs, &peval->shader_inputs, new_update_version);
+        update_device = TRUE;
+    }
+    result = D3D_OK;
+
+    if (update_device)
+    {
+        if (update_all)
+        {
+            for (i = 0; i < peval->shader_inputs.input_count; ++i)
+            {
+                unsigned int table;
+
+                if (!peval->shader_inputs.inputs[i].RegisterCount)
+                    continue;
+                table = peval->shader_inputs.regset2table[peval->shader_inputs.inputs[i].RegisterSet];
+                if (table < PRES_REGTAB_COUNT)
+                    regstore_set_modified_reg(rs, table,
+                            peval->shader_inputs.inputs[i].RegisterIndex,
+                            peval->shader_inputs.inputs[i].RegisterIndex
+                            + peval->shader_inputs.inputs[i].RegisterCount - 1);
+            }
+            set_preshader_modified(pres);
+        }
+
+        for (i = 0; i < ARRAY_SIZE(set_tables); ++i)
+        {
+            if (FAILED(hr = set_shader_constants_device(manager, device, rs, peval->param_type, set_tables[i])))
+                result = hr;
+        }
     }
     return result;
 }
