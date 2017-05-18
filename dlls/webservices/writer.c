@@ -521,12 +521,11 @@ static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
 {
     WS_XML_UTF8_TEXT *text = (WS_XML_UTF8_TEXT *)attr->value;
     unsigned char quote = attr->singleQuote ? '\'' : '"';
-    const WS_XML_STRING *prefix;
+    const WS_XML_STRING *prefix = NULL;
     ULONG size;
     HRESULT hr;
 
     if (attr->prefix) prefix = attr->prefix;
-    else prefix = writer->current->hdr.prefix;
 
     /* ' prefix:attr="value"' */
 
@@ -930,7 +929,7 @@ static HRESULT write_add_attribute( struct writer *writer, const WS_XML_STRING *
 
     if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
 
-    if (!prefix) prefix = elem->prefix;
+    if (!prefix && ns->length > 0) prefix = elem->prefix;
 
     attr->singleQuote = !!single;
     if (prefix && !(attr->prefix = alloc_xml_string( prefix->bytes, prefix->length )))
