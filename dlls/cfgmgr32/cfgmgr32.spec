@@ -1,3 +1,4 @@
+@ stdcall CMP_WaitNoPendingInstallEvents(long) setupapi.CMP_WaitNoPendingInstallEvents
 @ stub CM_Add_Empty_Log_Conf
 @ stub CM_Add_Empty_Log_Conf_Ex
 @ stub CM_Add_IDA
@@ -181,4 +182,3 @@
 @ stub CM_Unregister_Device_InterfaceW
 @ stub CM_Unregister_Device_Interface_ExA
 @ stub CM_Unregister_Device_Interface_ExW
-@ stdcall CMP_WaitNoPendingInstallEvents(long) setupapi.CMP_WaitNoPendingInstallEvents
