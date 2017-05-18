@@ -1292,22 +1292,24 @@ static HRESULT execute_preshader(struct d3dx_preshader *pres)
     return D3D_OK;
 }
 
-static BOOL is_const_tab_input_dirty(struct d3dx_const_tab *ctab)
+static BOOL is_const_tab_input_dirty(struct d3dx_const_tab *ctab, ULONG64 update_version)
 {
     unsigned int i;
 
+    if (update_version == ULONG64_MAX)
+        update_version = ctab->update_version;
     for (i = 0; i < ctab->const_set_count; ++i)
     {
-        if (is_param_dirty(ctab->const_set[i].param, ctab->update_version))
+        if (is_param_dirty(ctab->const_set[i].param, update_version))
             return TRUE;
     }
     return FALSE;
 }
 
-BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval)
+BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval, ULONG64 update_version)
 {
-    return is_const_tab_input_dirty(&peval->pres.inputs)
-            || is_const_tab_input_dirty(&peval->shader_inputs);
+    return is_const_tab_input_dirty(&peval->pres.inputs, update_version)
+            || is_const_tab_input_dirty(&peval->shader_inputs, update_version);
 }
 
 HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx_parameter *param,
@@ -1320,7 +1322,7 @@ HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx
 
     TRACE("peval %p, param %p, param_value %p.\n", peval, param, param_value);
 
-    if (is_const_tab_input_dirty(&peval->pres.inputs))
+    if (is_const_tab_input_dirty(&peval->pres.inputs, ULONG64_MAX))
     {
         set_constants(&peval->pres.regs, &peval->pres.inputs, FALSE,
                 next_update_version(peval->version_counter));
@@ -1426,7 +1428,7 @@ HRESULT d3dx_param_eval_set_shader_constants(ID3DXEffectStateManager *manager, s
 
     TRACE("device %p, peval %p, param_type %u.\n", device, peval, peval->param_type);
 
-    if (update_all || is_const_tab_input_dirty(&pres->inputs))
+    if (update_all || is_const_tab_input_dirty(&pres->inputs, ULONG64_MAX))
     {
         set_constants(rs, &pres->inputs, update_all, new_update_version);
         if (FAILED(hr = execute_preshader(pres)))

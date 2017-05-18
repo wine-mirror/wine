@@ -1051,7 +1051,9 @@ static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_sta
                 FIXME("Preshader structure is null.\n");
                 return D3DERR_INVALIDCALL;
             }
-            if (update_all || is_param_eval_input_dirty(param->param_eval))
+            /* We override with the update_version of the pass because we want
+             * to force index recomputation and check for out of bounds. */
+            if (is_param_eval_input_dirty(param->param_eval, pass->update_version))
             {
                 if (FAILED(hr = d3dx_evaluate_parameter(param->param_eval, &array_idx_param, &array_idx)))
                     return hr;
@@ -1063,6 +1065,13 @@ static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_sta
             ref_param = param->u.referenced_param;
             TRACE("Array index %u, stored array index %u, element_count %u.\n", array_idx, state->index,
                     ref_param->element_count);
+            /* According to the tests, native d3dx handles the case of array index evaluated to -1
+             * in a specific way, always selecting first array element and not returning error. */
+            if (array_idx == ~0u)
+            {
+                WARN("Array index is -1, setting to 0.\n");
+                array_idx = 0;
+            }
 
             if (array_idx >= ref_param->element_count)
             {
@@ -1083,7 +1092,7 @@ static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_sta
             {
                 *out_param = param;
                 *param_value = param->data;
-                if (update_all || is_param_eval_input_dirty(param->param_eval))
+                if (update_all || is_param_eval_input_dirty(param->param_eval, ULONG64_MAX))
                 {
                     *param_dirty = TRUE;
                     return d3dx_evaluate_parameter(param->param_eval, param, *param_value);
@@ -1134,7 +1143,7 @@ static HRESULT d3dx9_base_effect_get_pass_desc(struct d3dx9_base_effect *base,
             HRESULT hr;
 
             if (FAILED(hr = d3dx9_get_param_value_ptr(pass, &pass->states[i], &param_value, &param,
-                    TRUE, &param_dirty)))
+                    FALSE, &param_dirty)))
                 return hr;
 
             if (!param->object_id)
@@ -2944,13 +2953,11 @@ static HRESULT d3dx9_apply_state(struct ID3DXEffectImpl *effect, struct d3dx_pas
     if (FAILED(hr = d3dx9_get_param_value_ptr(pass, state, &param_value, &param,
             update_all, &param_dirty)))
     {
-        if (hr == E_FAIL)
+        if (!update_all && hr == E_FAIL)
         {
-            /* Native d3dx9 returns D3D_OK from BeginPass or Commit involving
+            /* Native d3dx9 returns D3D_OK from CommitChanges() involving
              * out of bounds array access and does not touch the affected
-             * state, except for BeginPass when the out of bounds array index
-             * depends on dirty parameters. The latter case is supposed to
-             * return E_FAIL but is currently TODO. */
+             * states. */
             WARN("Returning D3D_OK on out of bounds array access.\n");
             return D3D_OK;
         }

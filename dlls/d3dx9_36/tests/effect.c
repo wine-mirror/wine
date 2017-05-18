@@ -4704,15 +4704,13 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    todo_wine ok(hr == E_FAIL, "Got result %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        effect->lpVtbl->EndPass(effect);
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
 
     /* Second try reports success and selects array element used previously.
      * Probably array index is not recomputed and previous index value is used. */
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_compare_shader(device, 2, TRUE);
+    test_effect_preshader_compare_shader(device, 2, FALSE);
 
     /* Confirm that array element selected is the previous good one and does not depend
      * on computed (out of bound) index value. */
@@ -4732,12 +4730,10 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    todo_wine
     ok(hr == E_FAIL, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_compare_shader(device, 1, TRUE);
+    test_effect_preshader_compare_shader(device, 1, FALSE);
 
     /* End and begin effect again to ensure it will not trigger array
      * index recompute and error return from BeginPass. */
@@ -4749,7 +4745,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    test_effect_preshader_compare_shader(device, 1, TRUE);
+    test_effect_preshader_compare_shader(device, 1, FALSE);
     hr = effect->lpVtbl->EndPass(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
@@ -4762,9 +4758,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    todo_wine ok(hr == E_FAIL, "Got result %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        hr = effect->lpVtbl->EndPass(effect);
+    ok(hr == E_FAIL, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4773,7 +4767,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_compare_shader(device, 1, TRUE);
+    test_effect_preshader_compare_shader(device, 1, FALSE);
 
     hr = effect->lpVtbl->EndPass(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4785,7 +4779,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->BeginPass(effect, 1);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_compare_shader(device, 0, TRUE);
+    test_effect_preshader_compare_shader(device, 0, FALSE);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -4816,7 +4810,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     hr = effect->lpVtbl->CommitChanges(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_compare_shader(device, 1, TRUE);
+    test_effect_preshader_compare_shader(device, 1, FALSE);
 
     hr = effect->lpVtbl->EndPass(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -6350,10 +6344,9 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    todo_wine
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, TRUE);
+    test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, FALSE);
 
     fvect.z = 2.0f;
     hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);

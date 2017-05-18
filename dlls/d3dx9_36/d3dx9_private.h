@@ -28,6 +28,8 @@
 #define COBJMACROS
 #include "d3dx9.h"
 
+#define ULONG64_MAX (~(ULONG64)0)
+
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
 
 struct vec4
@@ -269,6 +271,6 @@ HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval,
         const struct d3dx_parameter *param, void *param_value) DECLSPEC_HIDDEN;
 HRESULT d3dx_param_eval_set_shader_constants(ID3DXEffectStateManager *manager, struct IDirect3DDevice9 *device,
         struct d3dx_param_eval *peval, BOOL update_all) DECLSPEC_HIDDEN;
-BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval) DECLSPEC_HIDDEN;
+BOOL is_param_eval_input_dirty(struct d3dx_param_eval *peval, ULONG64 update_version) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DX9_PRIVATE_H */
