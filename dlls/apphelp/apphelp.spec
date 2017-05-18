@@ -17,6 +17,17 @@
 @ stub ApphelpQueryModuleDataEx
 @ stub ApphelpUpdateCacheEntry
 @ stub GetPermLayers
+@ stub SE_DllLoaded
+@ stub SE_DllUnloaded
+@ stub SE_GetHookAPIs
+@ stub SE_GetMaxShimCount
+@ stub SE_GetProcAddressLoad
+@ stub SE_GetShimCount
+@ stub SE_InstallAfterInit
+@ stub SE_InstallBeforeInit
+@ stub SE_IsShimDll
+@ stub SE_LdrEntryRemoved
+@ stub SE_ProcessDying
 @ stub SdbAddLayerTagRefToQuery
 @ stub SdbApphelpNotify
 @ stub SdbApphelpNotifyExSdbApphelpNotifyEx
@@ -48,6 +59,8 @@
 @ stub SdbFreeDatabaseInformation
 @ stub SdbFreeFileInfo
 @ stub SdbFreeFlagInfo
+@ stub SdbGUIDFromString
+@ stub SdbGUIDToString
 @ stub SdbGetAppCompatDataSize
 @ stdcall SdbGetAppPatchDir(long ptr long)
 @ stub SdbGetBinaryTagData
@@ -81,8 +94,6 @@
 @ stub SdbGetTagFromTagID
 @ stub SdbGrabMatchingInfo
 @ stub SdbGrabMatchingInfoEx
-@ stub SdbGUIDFromString
-@ stub SdbGUIDToString
 @ stdcall SdbInitDatabase(long wstr)
 @ stub SdbInitDatabaseEx
 @ stub SdbIsNullGUID
@@ -111,8 +122,8 @@
 @ stub SdbQueryReinstallUpgrade
 @ stub SdbReadApphelpData
 @ stub SdbReadApphelpDetailsData
-@ stub SdbReadBinaryTag
 @ stub SdbReadBYTETag
+@ stub SdbReadBinaryTag
 @ stub SdbReadDWORDTagRef
 @ stub SdbReadEntryInformation
 @ stub SdbReadMsiTransformInfo
@@ -140,9 +151,9 @@
 @ stub SdbTagIDToTagRef
 @ stub SdbTagToString
 @ stub SdbUnregisterDatabase
+@ stub SdbWriteBYTETag
 @ stub SdbWriteBinaryTag
 @ stub SdbWriteBinaryTagFromFile
-@ stub SdbWriteBYTETag
 @ stub SdbWriteDWORDTag
 @ stub SdbWriteNULLTag
 @ stub SdbWriteQWORDTag
@@ -150,17 +161,6 @@
 @ stub SdbWriteStringTag
 @ stub SdbWriteStringTagDirect
 @ stub SdbWriteWORDTag
-@ stub SE_DllLoaded
-@ stub SE_DllUnloaded
-@ stub SE_GetHookAPIs
-@ stub SE_GetMaxShimCount
-@ stub SE_GetProcAddressLoad
-@ stub SE_GetShimCount
-@ stub SE_InstallAfterInit
-@ stub SE_InstallBeforeInit
-@ stub SE_IsShimDll
-@ stub SE_LdrEntryRemoved
-@ stub SE_ProcessDying
 @ stub SetPermLayers
 @ stub ShimDbgPrint
 @ stub ShimDumpCache
