@@ -40,6 +40,6 @@
 @ stdcall WSDXMLAddSibling(ptr ptr)
 @ stdcall WSDXMLBuildAnyForSingleElement(ptr ptr ptr)
 @ stdcall WSDXMLCleanupElement(ptr)
-@ stub WSDXMLCreateContext
+@ stdcall WSDXMLCreateContext(ptr)
 @ stub WSDXMLGetNameFromBuiltinNamespace
 @ stub WSDXMLGetValueFromAny

@@ -213,3 +213,134 @@ HRESULT WINAPI WSDXMLCleanupElement(WSDXML_ELEMENT *pAny)
     WSDFreeLinkedMemory(pAny);
     return S_OK;
 }
+
+/* IWSDXMLContext implementation */
+
+typedef struct IWSDXMLContextImpl
+{
+    IWSDXMLContext IWSDXMLContext_iface;
+    LONG ref;
+} IWSDXMLContextImpl;
+
+static inline IWSDXMLContextImpl *impl_from_IWSDXMLContext(IWSDXMLContext *iface)
+{
+    return CONTAINING_RECORD(iface, IWSDXMLContextImpl, IWSDXMLContext_iface);
+}
+
+static HRESULT WINAPI IWSDXMLContextImpl_QueryInterface(IWSDXMLContext *iface, REFIID riid, void **ppv)
+{
+    IWSDXMLContextImpl *This = impl_from_IWSDXMLContext(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+    {
+        WARN("Invalid parameter\n");
+        return E_INVALIDARG;
+    }
+
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IWSDXMLContext))
+    {
+        *ppv = &This->IWSDXMLContext_iface;
+    }
+    else
+    {
+        WARN("Unknown IID %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI IWSDXMLContextImpl_AddRef(IWSDXMLContext *iface)
+{
+    IWSDXMLContextImpl *This = impl_from_IWSDXMLContext(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI IWSDXMLContextImpl_Release(IWSDXMLContext *iface)
+{
+    IWSDXMLContextImpl *This = impl_from_IWSDXMLContext(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (ref == 0)
+    {
+        WSDFreeLinkedMemory(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI IWSDXMLContextImpl_AddNamespace(IWSDXMLContext *iface, LPCWSTR pszUri, LPCWSTR pszSuggestedPrefix, WSDXML_NAMESPACE **ppNamespace)
+{
+    FIXME("(%p, %s, %s, %p)\n", iface, debugstr_w(pszUri), debugstr_w(pszSuggestedPrefix), ppNamespace);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IWSDXMLContextImpl_AddNameToNamespace(IWSDXMLContext *iface, LPCWSTR pszUri, LPCWSTR pszName, WSDXML_NAME **ppName)
+{
+    FIXME("(%p, %s, %s, %p)\n", iface, debugstr_w(pszUri), debugstr_w(pszName), ppName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IWSDXMLContextImpl_SetNamespaces(IWSDXMLContext *iface, const PCWSDXML_NAMESPACE *pNamespaces, WORD wNamespacesCount, BYTE bLayerNumber)
+{
+    FIXME("(%p, %p, %d, %d)\n", iface, pNamespaces, wNamespacesCount, bLayerNumber);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IWSDXMLContextImpl_SetTypes(IWSDXMLContext *iface, const PCWSDXML_TYPE *pTypes, DWORD dwTypesCount, BYTE bLayerNumber)
+{
+    FIXME("(%p, %p, %d, %d)\n", iface, pTypes, dwTypesCount, bLayerNumber);
+    return E_NOTIMPL;
+}
+
+static const IWSDXMLContextVtbl xmlcontext_vtbl =
+{
+    IWSDXMLContextImpl_QueryInterface,
+    IWSDXMLContextImpl_AddRef,
+    IWSDXMLContextImpl_Release,
+    IWSDXMLContextImpl_AddNamespace,
+    IWSDXMLContextImpl_AddNameToNamespace,
+    IWSDXMLContextImpl_SetNamespaces,
+    IWSDXMLContextImpl_SetTypes
+};
+
+HRESULT WINAPI WSDXMLCreateContext(IWSDXMLContext **ppContext)
+{
+    IWSDXMLContextImpl *obj;
+
+    TRACE("(%p)", ppContext);
+
+    if (ppContext == NULL)
+    {
+        WARN("Invalid parameter: ppContext == NULL\n");
+        return E_POINTER;
+    }
+
+    *ppContext = NULL;
+
+    obj = WSDAllocateLinkedMemory(NULL, sizeof(*obj));
+
+    if (!obj)
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    obj->IWSDXMLContext_iface.lpVtbl = &xmlcontext_vtbl;
+    obj->ref = 1;
+
+    *ppContext = &obj->IWSDXMLContext_iface;
+    TRACE("Returning iface %p\n", *ppContext);
+
+    return S_OK;
+}
