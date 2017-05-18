@@ -84,6 +84,10 @@
 @ stdcall SHRegQueryUSValueW( long wstr ptr ptr ptr long ptr long ) shlwapi.SHRegQueryUSValueW
 @ stdcall SHRegSetUSValueA( str str long ptr long long) shlwapi.SHRegSetUSValueA
 @ stdcall SHRegSetUSValueW( wstr wstr long ptr long long) shlwapi.SHRegSetUSValueW
+@ stdcall StrCSpnA(str str) shlwapi.StrCSpnA
+@ stdcall StrCSpnIA(str str) shlwapi.StrCSpnIA
+@ stdcall StrCSpnIW(wstr wstr) shlwapi.StrCSpnIW
+@ stdcall StrCSpnW(wstr wstr) shlwapi.StrCSpnW
 @ stdcall StrCatBuffA(str str long) shlwapi.StrCatBuffA
 @ stdcall StrCatBuffW(wstr wstr long) shlwapi.StrCatBuffW
 @ stdcall StrCatChainW(ptr long long wstr) shlwapi.StrCatChainW
@@ -109,10 +113,6 @@
 @ stdcall StrCmpNW(wstr wstr long) shlwapi.StrCmpNW
 @ stdcall StrCmpW(wstr wstr) shlwapi.StrCmpW
 @ stdcall StrCpyNW(ptr wstr long) shlwapi.StrCpyNW
-@ stdcall StrCSpnA(str str) shlwapi.StrCSpnA
-@ stdcall StrCSpnIA(str str) shlwapi.StrCSpnIA
-@ stdcall StrCSpnIW(wstr wstr) shlwapi.StrCSpnIW
-@ stdcall StrCSpnW(wstr wstr) shlwapi.StrCSpnW
 @ stdcall StrDupA(str) shlwapi.StrDupA
 @ stdcall StrDupW(wstr) shlwapi.StrDupW
 @ stdcall StrIsIntlEqualA(long str str long) shlwapi.StrIsIntlEqualA
