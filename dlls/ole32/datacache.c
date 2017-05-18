@@ -55,8 +55,9 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/unicode.h"
 #include "ole2.h"
+#include "compobj_private.h"
+#include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -228,7 +229,7 @@ static void DataCacheEntry_Destroy(DataCache *cache, DataCacheEntry *cache_entry
     list_remove(&cache_entry->entry);
     if (cache_entry->stream)
         IStream_Release(cache_entry->stream);
-    HeapFree(GetProcessHeap(), 0, cache_entry->fmtetc.ptd);
+    CoTaskMemFree(cache_entry->fmtetc.ptd);
     ReleaseStgMedium(&cache_entry->stgmedium);
     if(cache_entry->sink_id)
         IDataObject_DUnadvise(cache->running_object, cache_entry->sink_id);
@@ -299,6 +300,28 @@ static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed
     }
 }
 
+static BOOL init_cache_entry(DataCacheEntry *entry, const FORMATETC *fmt, DWORD advf,
+                             DWORD id)
+{
+    HRESULT hr;
+
+    hr = copy_formatetc(&entry->fmtetc, fmt);
+    if (FAILED(hr)) return FALSE;
+
+    entry->data_cf = 0;
+    entry->stgmedium.tymed = TYMED_NULL;
+    entry->stgmedium.pUnkForRelease = NULL;
+    entry->stream = NULL;
+    entry->stream_type = no_stream;
+    entry->id = id;
+    entry->dirty = TRUE;
+    entry->stream_number = -1;
+    entry->sink_id = 0;
+    entry->advise_flags = advf;
+
+    return TRUE;
+}
+
 static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DataCacheEntry **cache_entry, BOOL load)
 {
     HRESULT hr;
@@ -313,24 +336,17 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     if (!*cache_entry)
         return E_OUTOFMEMORY;
 
-    (*cache_entry)->fmtetc = *formatetc;
-    if (formatetc->ptd)
-    {
-        (*cache_entry)->fmtetc.ptd = HeapAlloc(GetProcessHeap(), 0, formatetc->ptd->tdSize);
-        memcpy((*cache_entry)->fmtetc.ptd, formatetc->ptd, formatetc->ptd->tdSize);
-    }
-    (*cache_entry)->data_cf = 0;
-    (*cache_entry)->stgmedium.tymed = TYMED_NULL;
-    (*cache_entry)->stgmedium.pUnkForRelease = NULL;
-    (*cache_entry)->stream = NULL;
-    (*cache_entry)->stream_type = no_stream;
-    (*cache_entry)->id = This->last_cache_id++;
-    (*cache_entry)->dirty = TRUE;
-    (*cache_entry)->stream_number = -1;
-    (*cache_entry)->sink_id = 0;
-    (*cache_entry)->advise_flags = 0;
+    if (!init_cache_entry(*cache_entry, formatetc, 0, This->last_cache_id))
+        goto fail;
+
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
+    This->last_cache_id++;
+
     return hr;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, *cache_entry);
+    return E_OUTOFMEMORY;
 }
 
 /************************************************************************
