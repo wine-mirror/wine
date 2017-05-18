@@ -3,6 +3,8 @@
 @ stdcall DriverCallback(long long long long long long long) winmm.DriverCallback
 @ stdcall DrvGetModuleHandle(long) winmm.DrvGetModuleHandle
 @ stdcall GetDriverModuleHandle(long) winmm.GetDriverModuleHandle
+@ stdcall OpenDriver(wstr wstr long) winmm.OpenDriver
+@ stdcall SendDriverMessage(long long long long) winmm.SendDriverMessage
 @ stub mmDrvInstall
 @ stdcall mmioAdvance(long ptr long) winmm.mmioAdvance
 @ stdcall mmioAscend(long ptr long) winmm.mmioAscend
@@ -25,6 +27,4 @@
 @ stdcall mmioStringToFOURCCA(str long) winmm.mmioStringToFOURCCA
 @ stdcall mmioStringToFOURCCW(wstr long) winmm.mmioStringToFOURCCW
 @ stdcall mmioWrite(long ptr long) winmm.mmioWrite
-@ stdcall OpenDriver(wstr wstr long) winmm.OpenDriver
-@ stdcall SendDriverMessage(long long long long) winmm.SendDriverMessage
 @ stub sndOpenSound
