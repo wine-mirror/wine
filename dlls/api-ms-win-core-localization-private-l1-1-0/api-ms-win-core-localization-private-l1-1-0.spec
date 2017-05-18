@@ -1,6 +1,3 @@
-@ stub _AddMUIStringToCache
-@ stub _GetMUIStringFromCache
-@ stub _OpenMuiStringCache
 @ stub GetCPFileNameFromRegistry
 @ stub LoadStringByReference
 @ stub NlsCheckPolicy
@@ -9,3 +6,6 @@
 @ stub NlsUpdateLocale
 @ stub NlsUpdateSystemLocale
 @ stub NlsWriteEtwEvent
+@ stub _AddMUIStringToCache
+@ stub _GetMUIStringFromCache
+@ stub _OpenMuiStringCache
