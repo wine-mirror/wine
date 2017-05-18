@@ -628,6 +628,12 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         }
     }
 
+    if (state->gl_primitive_type == GL_PATCHES)
+    {
+        GL_EXTCALL(glPatchParameteri(GL_PATCH_VERTICES, state->gl_patch_vertices));
+        checkGLcall("glPatchParameteri");
+    }
+
     if (context->use_immediate_mode_draw || emulation)
         draw_primitive_immediate_mode(context, state, stream_info, idx_data,
                 idx_size, base_vertex_idx, start_idx, index_count, instance_count);

@@ -166,6 +166,47 @@ const char *debug_float4(const float *values)
             values[0], values[1], values[2], values[3]);
 }
 
+void d3d11_primitive_topology_from_wined3d_primitive_type(enum wined3d_primitive_type primitive_type,
+        unsigned int patch_vertex_count, D3D11_PRIMITIVE_TOPOLOGY *topology)
+{
+    if (primitive_type <= WINED3D_PT_TRIANGLESTRIP_ADJ)
+    {
+        *topology = (D3D11_PRIMITIVE_TOPOLOGY)primitive_type;
+        return;
+    }
+
+    if (primitive_type == WINED3D_PT_PATCH)
+    {
+        *topology = D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST + patch_vertex_count - 1;
+        return;
+    }
+
+    *topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
+}
+
+void wined3d_primitive_type_from_d3d11_primitive_topology(D3D11_PRIMITIVE_TOPOLOGY topology,
+        enum wined3d_primitive_type *type, unsigned int *patch_vertex_count)
+{
+    if (topology <= D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ)
+    {
+        *type = (enum wined3d_primitive_type)topology;
+        *patch_vertex_count = 0;
+        return;
+    }
+
+    if (D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST <= topology
+            && topology <= D3D11_PRIMITIVE_TOPOLOGY_32_CONTROL_POINT_PATCHLIST)
+    {
+        *type = WINED3D_PT_PATCH;
+        *patch_vertex_count = topology - D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST + 1;
+        return;
+    }
+
+    WARN("Invalid primitive topology %#x.\n", topology);
+    *type = WINED3D_PT_UNDEFINED;
+    *patch_vertex_count = 0;
+}
+
 DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format)
 {
     switch(format)

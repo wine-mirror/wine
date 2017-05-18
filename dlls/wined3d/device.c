@@ -3641,29 +3641,34 @@ void CDECL wined3d_device_dispatch_compute(struct wined3d_device *device,
 }
 
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
-        enum wined3d_primitive_type primitive_type)
+        enum wined3d_primitive_type primitive_type, unsigned int patch_vertex_count)
 {
-    TRACE("device %p, primitive_type %s\n", device, debug_d3dprimitivetype(primitive_type));
+    TRACE("device %p, primitive_type %s, patch_vertex_count %u.\n",
+            device, debug_d3dprimitivetype(primitive_type), patch_vertex_count);
 
     device->state.gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
+    device->state.gl_patch_vertices = patch_vertex_count;
 }
 
 void CDECL wined3d_device_get_primitive_type(const struct wined3d_device *device,
-        enum wined3d_primitive_type *primitive_type)
+        enum wined3d_primitive_type *primitive_type, unsigned int *patch_vertex_count)
 {
-    TRACE("device %p, primitive_type %p\n", device, primitive_type);
+    TRACE("device %p, primitive_type %p, patch_vertex_count %p.\n",
+            device, primitive_type, patch_vertex_count);
 
     *primitive_type = d3d_primitive_type_from_gl(device->state.gl_primitive_type);
+    if (patch_vertex_count)
+        *patch_vertex_count = device->state.gl_patch_vertices;
 
-    TRACE("Returning %s\n", debug_d3dprimitivetype(*primitive_type));
+    TRACE("Returning %s.\n", debug_d3dprimitivetype(*primitive_type));
 }
 
 HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT start_vertex, UINT vertex_count)
 {
     TRACE("device %p, start_vertex %u, vertex_count %u.\n", device, start_vertex, vertex_count);
 
-    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type, 0,
-            start_vertex, vertex_count, 0, 0, FALSE);
+    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type, device->state.gl_patch_vertices,
+            0, start_vertex, vertex_count, 0, 0, FALSE);
 
     return WINED3D_OK;
 }
@@ -3674,8 +3679,8 @@ void CDECL wined3d_device_draw_primitive_instanced(struct wined3d_device *device
     TRACE("device %p, start_vertex %u, vertex_count %u, start_instance %u, instance_count %u.\n",
             device, start_vertex, vertex_count, start_instance, instance_count);
 
-    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type, 0,
-            start_vertex, vertex_count, start_instance, instance_count, FALSE);
+    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type, device->state.gl_patch_vertices,
+            0, start_vertex, vertex_count, start_instance, instance_count, FALSE);
 }
 
 HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count)
@@ -3692,7 +3697,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *devic
         return WINED3DERR_INVALIDCALL;
     }
 
-    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type,
+    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type, device->state.gl_patch_vertices,
             device->state.base_vertex_index, start_idx, index_count, 0, 0, TRUE);
 
     return WINED3D_OK;
@@ -3704,8 +3709,8 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
     TRACE("device %p, start_idx %u, index_count %u, start_instance %u, instance_count %u.\n",
             device, start_idx, index_count, start_instance, instance_count);
 
-    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type, device->state.base_vertex_index,
-            start_idx, index_count, start_instance, instance_count, TRUE);
+    wined3d_cs_emit_draw(device->cs, device->state.gl_primitive_type, device->state.gl_patch_vertices,
+            device->state.base_vertex_index, start_idx, index_count, start_instance, instance_count, TRUE);
 }
 
 HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,

@@ -88,7 +88,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
             case D3DOP_POINT:
             {
                 const D3DPOINT *p = (D3DPOINT *)instr;
-                wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_POINTLIST);
+                wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_POINTLIST, 0);
                 wined3d_device_set_stream_source(device->wined3d_device, 0,
                         buffer->dst_vertex_buffer, 0, sizeof(D3DTLVERTEX));
                 wined3d_device_set_vertex_declaration(device->wined3d_device,
@@ -103,7 +103,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 
             case D3DOP_LINE:
                 primitive_size = 2;
-                wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_LINELIST);
+                wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_LINELIST, 0);
                 /* Drop through. */
             case D3DOP_TRIANGLE:
             {
@@ -116,7 +116,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 
                 if (!primitive_size)
                 {
-                    wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_TRIANGLELIST);
+                    wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_TRIANGLELIST, 0);
                     primitive_size = 3;
                 }
 
