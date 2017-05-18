@@ -56,14 +56,14 @@ static void release_statdata(STATDATA *data)
 
 static HRESULT copy_statdata(STATDATA *dst, const STATDATA *src)
 {
-    *dst = *src;
-    if(src->formatetc.ptd)
-    {
-        dst->formatetc.ptd = CoTaskMemAlloc(src->formatetc.ptd->tdSize);
-        if(!dst->formatetc.ptd) return E_OUTOFMEMORY;
-        memcpy(dst->formatetc.ptd, src->formatetc.ptd, src->formatetc.ptd->tdSize);
-    }
-    if(dst->pAdvSink) IAdviseSink_AddRef(dst->pAdvSink);
+    HRESULT hr;
+
+    hr = copy_formatetc( &dst->formatetc, &src->formatetc );
+    if (FAILED(hr)) return hr;
+    dst->advf = src->advf;
+    dst->pAdvSink = src->pAdvSink;
+    if (dst->pAdvSink) IAdviseSink_AddRef( dst->pAdvSink );
+    dst->dwConnection = src->dwConnection;
     return S_OK;
 }
 

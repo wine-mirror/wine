@@ -334,4 +334,16 @@ static inline BOOL heap_free(void *mem)
     return HeapFree(GetProcessHeap(), 0, mem);
 }
 
+static inline HRESULT copy_formatetc(FORMATETC *dst, const FORMATETC *src)
+{
+    *dst = *src;
+    if (src->ptd)
+    {
+        dst->ptd = CoTaskMemAlloc( src->ptd->tdSize );
+        if (!dst->ptd) return E_OUTOFMEMORY;
+        memcpy( dst->ptd, src->ptd, src->ptd->tdSize );
+    }
+    return S_OK;
+}
+
 #endif /* __WINE_OLE_COMPOBJ_H */
