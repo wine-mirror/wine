@@ -1,3 +1,4 @@
+# 1000 stub ADVAPI32_1000
 @ stdcall A_SHAFinal(ptr ptr)
 @ stdcall A_SHAInit(ptr)
 @ stdcall A_SHAUpdate(ptr ptr long)
@@ -30,7 +31,6 @@
 # @ stub AddUsersToEncryptedFileEx
 @ stdcall AdjustTokenGroups(long long ptr long ptr ptr)
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
-# @ stub ADVAPI32_1000
 @ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
 @ stdcall AllocateLocallyUniqueId(ptr)
 @ stdcall AreAllAccessesGranted(long long)
@@ -318,6 +318,7 @@
 @ stdcall GetAuditedPermissionsFromAclW(ptr ptr ptr ptr)
 @ stdcall GetCurrentHwProfileA(ptr)
 @ stdcall GetCurrentHwProfileW(ptr)
+# @ stub GetDynamicTimeZoneInformationEffectiveYears
 @ stdcall GetEffectiveRightsFromAclA(ptr ptr ptr)
 @ stdcall GetEffectiveRightsFromAclW(ptr ptr ptr)
 # @ stub GetEncryptedFileMetadata
@@ -359,7 +360,6 @@
 @ stdcall GetSecurityInfo (long long long ptr ptr ptr ptr ptr)
 @ stdcall GetSecurityInfoExA (long long long str str ptr ptr ptr ptr)
 @ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr ptr ptr)
-# @ stub GetDynamicTimeZoneInformationEffectiveYears
 @ stdcall GetServiceDisplayNameA(ptr str ptr ptr)
 @ stdcall GetServiceDisplayNameW(ptr wstr ptr ptr)
 @ stdcall GetServiceKeyNameA(long str ptr ptr)
