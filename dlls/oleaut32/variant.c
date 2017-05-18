@@ -2617,17 +2617,6 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
                 if (hres != S_OK) {
                     VariantClear(&bstrvar_left);
                     VariantClear(&bstrvar_right);
-                    if (leftvt == VT_NULL && (rightvt == VT_EMPTY ||
-                        rightvt == VT_NULL || rightvt ==  VT_I2 ||
-                        rightvt == VT_I4 || rightvt == VT_R4 ||
-                        rightvt == VT_R8 || rightvt == VT_CY ||
-                        rightvt == VT_DATE || rightvt == VT_BSTR ||
-                        rightvt == VT_BOOL ||  rightvt == VT_DECIMAL ||
-                        rightvt == VT_I1 || rightvt == VT_UI1 ||
-                        rightvt == VT_UI2 || rightvt == VT_UI4 ||
-                        rightvt == VT_I8 || rightvt == VT_UI8 ||
-                        rightvt == VT_INT || rightvt == VT_UINT))
-                        return DISP_E_BADVARTYPE;
                     return hres;
                 }
             }
@@ -2657,17 +2646,6 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
                 if (hres != S_OK) {
                     VariantClear(&bstrvar_left);
                     VariantClear(&bstrvar_right);
-                    if (rightvt == VT_NULL && (leftvt == VT_EMPTY ||
-                        leftvt == VT_NULL || leftvt ==  VT_I2 ||
-                        leftvt == VT_I4 || leftvt == VT_R4 ||
-                        leftvt == VT_R8 || leftvt == VT_CY ||
-                        leftvt == VT_DATE || leftvt == VT_BSTR ||
-                        leftvt == VT_BOOL ||  leftvt == VT_DECIMAL ||
-                        leftvt == VT_I1 || leftvt == VT_UI1 ||
-                        leftvt == VT_UI2 || leftvt == VT_UI4 ||
-                        leftvt == VT_I8 || leftvt == VT_UI8 ||
-                        leftvt == VT_INT || leftvt == VT_UINT))
-                        return DISP_E_BADVARTYPE;
                     return hres;
                 }
             }
