@@ -1232,7 +1232,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
             output_message(STRING_INCORRECT_REG_CLASS, reg_key_name);
             exit(1);
         }
-        if (!branch_name[0]) {
+        if (!branch_name || !*branch_name) {
             /* no branch - registry class is specified */
             file = REGPROC_open_export_file(file_name, unicode);
             export_hkey(file, reg_key_class,
