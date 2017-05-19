@@ -31,6 +31,26 @@ enum
     MF_SOURCE_READER_CURRENT_TYPE_INDEX   = 0xffffffff
 };
 
+typedef struct _MF_SINK_WRITER_STATISTICS
+{
+    DWORD    cb;
+    LONGLONG llLastTimestampReceived;
+    LONGLONG llLastTimestampEncoded;
+    LONGLONG llLastTimestampProcessed;
+    LONGLONG llLastStreamTickReceived;
+    LONGLONG llLastSinkSampleRequest;
+    QWORD    qwNumSamplesReceived;
+    QWORD    qwNumSamplesEncoded;
+    QWORD    qwNumSamplesProcessed;
+    QWORD    qwNumStreamTicksReceived;
+    DWORD    dwByteCountQueued;
+    QWORD    qwByteCountProcessed;
+    DWORD    dwNumOutstandingSinkSampleRequests;
+    DWORD    dwAverageSampleRateReceived;
+    DWORD    dwAverageSampleRateEncoded;
+    DWORD    dwAverageSampleRateProcessed;
+} MF_SINK_WRITER_STATISTICS;
+
 interface IMFMediaSource;
 
 [
@@ -51,6 +71,26 @@ interface IMFSourceReader : IUnknown
     HRESULT Flush([in] DWORD index);
     HRESULT GetServiceForStream([in] DWORD index, [in] REFGUID service, [in] REFIID riid, [out] void **object);
     HRESULT GetPresentationAttribute([in] DWORD index, [in] REFGUID guid, [out] PROPVARIANT *attr);
+};
+
+[
+    object,
+    uuid(3137f1cd-fe5e-4805-a5d8-fb477448cb3d),
+    local
+]
+interface IMFSinkWriter : IUnknown
+{
+    HRESULT AddStream([in] IMFMediaType *type, [out] DWORD *index);
+    HRESULT SetInputMediaType([in] DWORD index, [in] IMFMediaType *type, [in] IMFAttributes *parameters);
+    HRESULT BeginWriting(void);
+    HRESULT WriteSample([in] DWORD index, [in] IMFSample *sample);
+    HRESULT SendStreamTick([in] DWORD index, [in] LONGLONG timestamp);
+    HRESULT PlaceMarker([in] DWORD index, [in] void *context);
+    HRESULT NotifyEndOfSegment([in] DWORD index);
+    HRESULT Flush([in] DWORD index);
+    HRESULT Finalize(void);
+    HRESULT GetServiceForStream([in] DWORD index, [in] REFGUID service, [in] REFIID riid, [out] void **object);
+    HRESULT GetStatistics([in] DWORD index, [out] MF_SINK_WRITER_STATISTICS *stats);
 };
 
 cpp_quote( "HRESULT WINAPI MFCreateSourceReaderFromMediaSource(IMFMediaSource *source, IMFAttributes *attributes," )
