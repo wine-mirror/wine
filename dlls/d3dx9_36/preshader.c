@@ -38,6 +38,7 @@ enum pres_ops
     PRESHADER_OP_SIN,
     PRESHADER_OP_COS,
     PRESHADER_OP_ASIN,
+    PRESHADER_OP_ACOS,
     PRESHADER_OP_MIN,
     PRESHADER_OP_MAX,
     PRESHADER_OP_LT,
@@ -127,6 +128,7 @@ static double pres_log(double *args, int n)
 #endif
 }
 static double pres_asin(double *args, int n) {return to_signed_nan(asin(args[0]));}
+static double pres_acos(double *args, int n) {return to_signed_nan(acos(args[0]));}
 
 #define PRES_OPCODE_MASK 0x7ff00000
 #define PRES_OPCODE_SHIFT 20
@@ -161,6 +163,7 @@ static const struct op_info pres_op_info[] =
     {0x108, "sin", 1, 0, pres_sin}, /* PRESHADER_OP_SIN */
     {0x109, "cos", 1, 0, pres_cos}, /* PRESHADER_OP_COS */
     {0x10a, "asin", 1, 0, pres_asin}, /* PRESHADER_OP_ASIN */
+    {0x10b, "acos", 1, 0, pres_acos}, /* PRESHADER_OP_ACOS */
     {0x200, "min", 2, 0, pres_min}, /* PRESHADER_OP_MIN */
     {0x201, "max", 2, 0, pres_max}, /* PRESHADER_OP_MAX */
     {0x202, "lt",  2, 0, pres_lt }, /* PRESHADER_OP_LT  */

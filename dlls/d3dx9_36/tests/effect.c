@@ -4558,6 +4558,8 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
                 {0.0f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
         {"asin", 0x10a00001, 1, {0xbe9c00ad, 0xffc00000, 0xffc00000, 0xffc00000},
                 {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
+        {"acos", 0x10b00001, 1, {0x3ff01006, 0xffc00000, 0xffc00000, 0xffc00000},
+                {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
         {"0 * INF", 0x20500004, 2, {0xffc00000, 0xffc00000, 0xc0d33334, 0x7f800000},
                 {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {INFINITY, INFINITY, 3.0f, 4.0f}},
     };
