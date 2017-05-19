@@ -4566,6 +4566,8 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
                 {-0.3f, 0.0f, -0.0f, NAN}, {0.0f, -0.0f, 0.0f, 1.0f}},
         {"atan2 test #2", 0x20600004, 2, {0xbfc90fdb, 0, 0xc0490fdb, 0},
                 {-0.3f, 0.0f, -0.0f, -0.0f}, {-0.0f, 0.0f, -0.0f, 1.0f}},
+        {"div", 0x20800004, 2, {0, 0, 0, 0},
+                {-0.3f, 0.0f, -2.2f, NAN}, {0.0f, -0.0f, -3.0f, 1.0f}},
         {"0 * INF", 0x20500004, 2, {0xffc00000, 0xffc00000, 0xc0d33334, 0x7f800000},
                 {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {INFINITY, INFINITY, 3.0f, 4.0f}},
     };
