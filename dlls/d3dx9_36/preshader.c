@@ -46,6 +46,7 @@ enum pres_ops
     PRESHADER_OP_GE,
     PRESHADER_OP_ADD,
     PRESHADER_OP_MUL,
+    PRESHADER_OP_ATAN2,
     PRESHADER_OP_CMP,
     PRESHADER_OP_DOT,
     PRESHADER_OP_DOTSWIZ6,
@@ -131,6 +132,7 @@ static double pres_log(double *args, int n)
 static double pres_asin(double *args, int n) {return to_signed_nan(asin(args[0]));}
 static double pres_acos(double *args, int n) {return to_signed_nan(acos(args[0]));}
 static double pres_atan(double *args, int n) {return atan(args[0]);}
+static double pres_atan2(double *args, int n) {return atan2(args[0], args[1]);}
 
 #define PRES_OPCODE_MASK 0x7ff00000
 #define PRES_OPCODE_SHIFT 20
@@ -173,6 +175,7 @@ static const struct op_info pres_op_info[] =
     {0x203, "ge",  2, 0, pres_ge }, /* PRESHADER_OP_GE  */
     {0x204, "add", 2, 0, pres_add}, /* PRESHADER_OP_ADD */
     {0x205, "mul", 2, 0, pres_mul}, /* PRESHADER_OP_MUL */
+    {0x206, "atan2", 2, 0, pres_atan2}, /* PRESHADER_OP_ATAN2 */
     {0x300, "cmp", 3, 0, pres_cmp}, /* PRESHADER_OP_CMP */
     {0x500, "dot", 2, 1, pres_dot}, /* PRESHADER_OP_DOT */
     {0x70e, "d3ds_dotswiz", 6, 0, pres_dotswiz6}, /* PRESHADER_OP_DOTSWIZ6 */
