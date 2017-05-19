@@ -259,7 +259,7 @@ static void test_task_continuation_context(void)
 {
     task_continuation_context tcc;
 
-    memset(&tcc, 0xdead, sizeof(tcc));
+    memset(&tcc, 0xff, sizeof(tcc));
     call_func1(p_task_continuation_context_ctor, &tcc);
     ok(!tcc.unk0, "tcc.unk0 != NULL (%p)\n", tcc.unk0);
     ok(!tcc.unk1, "tcc.unk1 != 0 (%x)\n", tcc.unk1);
