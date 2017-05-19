@@ -325,20 +325,20 @@ static void test_basic_import(void)
                     "\"Wine10a\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n"
                     "\"Wine10b\"=hex(0):56,00,61,00,6c,00,\\\n"
                     "  75,00,65,00,00,00\n"
-                    "\"Wine10h\"=hex(0):56,00,61,00,\\;comment\n"
+                    "\"Wine10c\"=hex(0):56,00,61,00,\\;comment\n"
                     "  6c,00,75,00,\\\n"
                     "  65,00,00,00\n"
-                    "\"Wine10i\"=hex(0):56,00,61,00,\\;comment\n"
+                    "\"Wine10d\"=hex(0):56,00,61,00,\\;comment\n"
                     "  6c,00,75,00,\n"
                     "  65,00,00,00\n"
-                    "\"Wine10j\"=hex(0):56,00,61,00,\\;comment\n"
+                    "\"Wine10e\"=hex(0):56,00,61,00,\\;comment\n"
                     "  6c,00,75,00,;comment\n"
                     "  65,00,00,00\n");
     verify_reg(hkey, "Wine10a", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
     verify_reg(hkey, "Wine10b", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg(hkey, "Wine10h", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg(hkey, "Wine10i", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
-    todo_wine verify_reg(hkey, "Wine10j", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
+    todo_wine verify_reg(hkey, "Wine10c", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+    todo_wine verify_reg(hkey, "Wine10d", REG_NONE, "V\0a\0l\0u", 8, 0);
+    todo_wine verify_reg(hkey, "Wine10e", REG_NONE, "V\0a\0l\0u", 8, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
