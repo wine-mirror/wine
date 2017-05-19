@@ -5122,6 +5122,10 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MAGFILTER, 0);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, 0);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
@@ -5139,6 +5143,12 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(value == 1, "Unexpected sampler 0 minfilter %u.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MAGFILTER, &value);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(value == 0, "Unexpected sampler 0 minfilter %u.\n", value);
+    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MINFILTER, &value);
+    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(value == 1, "Unexpected sampler 0 minfilter %u.\n", value);
+    hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MAGFILTER, &value);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     ok(value == 0, "Unexpected sampler 0 minfilter %u.\n", value);
 
