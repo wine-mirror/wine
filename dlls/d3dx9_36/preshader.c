@@ -37,6 +37,7 @@ enum pres_ops
     PRESHADER_OP_RSQ,
     PRESHADER_OP_SIN,
     PRESHADER_OP_COS,
+    PRESHADER_OP_ASIN,
     PRESHADER_OP_MIN,
     PRESHADER_OP_MAX,
     PRESHADER_OP_LT,
@@ -50,6 +51,21 @@ enum pres_ops
 };
 
 typedef double (*pres_op_func)(double *args, int n);
+
+static double to_signed_nan(double v)
+{
+    static const union
+    {
+        ULONG64 ulong64_value;
+        double double_value;
+    }
+    signed_nan =
+    {
+        0xfff8000000000000
+    };
+
+    return isnan(v) ? signed_nan.double_value : v;
+}
 
 static double pres_mov(double *args, int n) {return args[0];}
 static double pres_add(double *args, int n) {return args[0] + args[1];}
@@ -110,6 +126,7 @@ static double pres_log(double *args, int n)
         return log(v) / log(2);
 #endif
 }
+static double pres_asin(double *args, int n) {return to_signed_nan(asin(args[0]));}
 
 #define PRES_OPCODE_MASK 0x7ff00000
 #define PRES_OPCODE_SHIFT 20
@@ -143,6 +160,7 @@ static const struct op_info pres_op_info[] =
     {0x107, "rsq", 1, 0, pres_rsq}, /* PRESHADER_OP_RSQ */
     {0x108, "sin", 1, 0, pres_sin}, /* PRESHADER_OP_SIN */
     {0x109, "cos", 1, 0, pres_cos}, /* PRESHADER_OP_COS */
+    {0x10a, "asin", 1, 0, pres_asin}, /* PRESHADER_OP_ASIN */
     {0x200, "min", 2, 0, pres_min}, /* PRESHADER_OP_MIN */
     {0x201, "max", 2, 0, pres_max}, /* PRESHADER_OP_MAX */
     {0x202, "lt",  2, 0, pres_lt }, /* PRESHADER_OP_LT  */
