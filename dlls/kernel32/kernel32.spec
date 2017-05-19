@@ -540,7 +540,7 @@
 @ stdcall GenerateConsoleCtrlEvent(long long)
 @ stdcall -i386 -private Get16DLLAddress(long str) krnl386.exe16.Get16DLLAddress
 @ stdcall GetACP()
-# @ stub GetActiveProcessorCount
+@ stdcall GetActiveProcessorCount(long)
 @ stdcall GetActiveProcessorGroupCount()
 # @ stub GetApplicationRecoveryCallback
 # @ stub GetApplicationRestartSettings
