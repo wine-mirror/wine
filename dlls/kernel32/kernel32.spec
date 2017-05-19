@@ -541,7 +541,7 @@
 @ stdcall -i386 -private Get16DLLAddress(long str) krnl386.exe16.Get16DLLAddress
 @ stdcall GetACP()
 # @ stub GetActiveProcessorCount
-# @ stub GetActiveProcessorGroupCount
+@ stdcall GetActiveProcessorGroupCount()
 # @ stub GetApplicationRecoveryCallback
 # @ stub GetApplicationRestartSettings
 @ stdcall GetAtomNameA(long ptr long)

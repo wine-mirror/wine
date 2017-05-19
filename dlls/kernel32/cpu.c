@@ -303,3 +303,12 @@ SIZE_T WINAPI GetLargePageMinimum(void)
     FIXME("Not implemented on your platform/architecture.\n");
     return 0;
 }
+
+/***********************************************************************
+ *           GetActiveProcessorGroupCount (KERNEL32.@)
+ */
+WORD WINAPI GetActiveProcessorGroupCount(void)
+{
+    FIXME("semi-stub, always returning 1\n");
+    return 1;
+}
