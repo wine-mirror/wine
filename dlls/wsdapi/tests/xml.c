@@ -117,12 +117,6 @@ static void AddChild_tests(void)
     hr = WSDXMLAddChild(NULL, NULL);
     ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
 
-    hr = WSDXMLAddChild(parent, NULL);
-    ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
-
-    hr = WSDXMLAddChild(NULL, child1);
-    ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
-
     /* Populate structures */
     ns.Uri = uri;
     ns.PreferredPrefix = prefix;
@@ -206,12 +200,6 @@ static void AddSibling_tests(void)
 
     /* Test invalid values */
     hr = WSDXMLAddSibling(NULL, NULL);
-    ok(hr == E_INVALIDARG, "WSDXMLAddSibling failed with %08x\n", hr);
-
-    hr = WSDXMLAddSibling(child1, NULL);
-    ok(hr == E_INVALIDARG, "WSDXMLAddSibling failed with %08x\n", hr);
-
-    hr = WSDXMLAddSibling(NULL, child2);
     ok(hr == E_INVALIDARG, "WSDXMLAddSibling failed with %08x\n", hr);
 
     /* Populate structures */
