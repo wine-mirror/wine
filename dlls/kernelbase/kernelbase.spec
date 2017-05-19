@@ -1482,7 +1482,7 @@
 @ stdcall SetThreadErrorMode(long ptr) kernel32.SetThreadErrorMode
 @ stdcall SetThreadGroupAffinity(long ptr ptr) kernel32.SetThreadGroupAffinity
 @ stdcall SetThreadIdealProcessor(long long) kernel32.SetThreadIdealProcessor
-# @ stub SetThreadIdealProcessorEx
+@ stdcall SetThreadIdealProcessorEx(long ptr ptr) kernel32.SetThreadIdealProcessorEx
 # @ stub SetThreadInformation
 @ stdcall SetThreadLocale(long) kernel32.SetThreadLocale
 @ stdcall SetThreadPreferredUILanguages(long ptr ptr) kernel32.SetThreadPreferredUILanguages

@@ -47,7 +47,7 @@
 @ stub SetProcessMitigationPolicy
 @ stdcall SetProcessShutdownParameters(long long) kernel32.SetProcessShutdownParameters
 @ stdcall SetThreadContext(long ptr) kernel32.SetThreadContext
-@ stub SetThreadIdealProcessorEx
+@ stdcall SetThreadIdealProcessorEx(long ptr ptr) kernel32.SetThreadIdealProcessorEx
 @ stdcall SetThreadPriority(long long) kernel32.SetThreadPriority
 @ stdcall SetThreadPriorityBoost(long long) kernel32.SetThreadPriorityBoost
 @ stdcall SetThreadStackGuarantee(ptr) kernel32.SetThreadStackGuarantee
