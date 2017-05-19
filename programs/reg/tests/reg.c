@@ -1443,7 +1443,7 @@ static void test_import(void)
                     "\"Wine43f\"=hex(0):56,00,61,00,6c,00,7\\\n"
                     "5,00,65,00,00,00\n"
                     "\"Wine43g\"=hex(0):56,00,61,00,6c,00,7\\\n"
-                    "  5,00,65,00,00,00\\\n"
+                    "  5,00,65,00,00,00\n"
                     "\"Wine43h\"=hex(0):56,00,61,00,\\;comment\n"
                     "  6c,00,75,00,\\\n"
                     "  65,00,00,00\n"
@@ -1465,8 +1465,8 @@ static void test_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine43f");
     todo_wine verify_reg_nonexist(hkey, "Wine43g");
     todo_wine verify_reg(hkey, "Wine43h", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
-    todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
+    todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u", 8, 0);
+    todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u", 8, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine43k");
 
     test_import_str("REGEDIT4\n\n"
@@ -2227,7 +2227,7 @@ static void test_import(void)
                      "\"Wine43f\"=hex(0):56,00,61,00,6c,00,7\\\n"
                      "5,00,65,00,00,00\n"
                      "\"Wine43g\"=hex(0):56,00,61,00,6c,00,7\\\n"
-                     "  5,00,65,00,00,00\\\n"
+                     "  5,00,65,00,00,00\n"
                      "\"Wine43h\"=hex(0):56,00,61,00,\\;comment\n"
                      "  6c,00,75,00,\\\n"
                      "  65,00,00,00\n"
@@ -2249,8 +2249,8 @@ static void test_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine43f");
     todo_wine verify_reg_nonexist(hkey, "Wine43g");
     todo_wine verify_reg(hkey, "Wine43h", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
-    todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
-    todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u\0e\0\0", 8, 0);
+    todo_wine verify_reg(hkey, "Wine43i", REG_NONE, "V\0a\0l\0u", 8, 0);
+    todo_wine verify_reg(hkey, "Wine43j", REG_NONE, "V\0a\0l\0u", 8, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine43k");
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
