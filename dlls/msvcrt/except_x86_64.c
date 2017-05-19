@@ -108,6 +108,14 @@ typedef struct __cxx_function_descr
     UINT flags;
 } cxx_function_descr;
 
+typedef struct
+{
+    ULONG64 dest_frame;
+    ULONG64 orig_frame;
+    DISPATCHER_CONTEXT *dispatch;
+    const cxx_function_descr *descr;
+} se_translator_ctx;
+
 static inline void* rva_to_ptr(UINT rva, ULONG64 base)
 {
     return rva ? (void*)(base+rva) : NULL;
@@ -429,6 +437,26 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
     TRACE("no matching catch block found\n");
 }
 
+static LONG CALLBACK se_translation_filter(EXCEPTION_POINTERS *ep, void *c)
+{
+    se_translator_ctx *ctx = (se_translator_ctx *)c;
+    EXCEPTION_RECORD *rec = ep->ExceptionRecord;
+    cxx_exception_type *exc_type;
+
+    if (rec->ExceptionCode != CXX_EXCEPTION)
+    {
+        TRACE("non-c++ exception thrown in SEH handler: %x\n", rec->ExceptionCode);
+        MSVCRT_terminate();
+    }
+
+    exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
+    find_catch_block(rec, ctx->dest_frame, ctx->dispatch,
+                     ctx->descr, exc_type, ctx->orig_frame);
+
+    __DestructExceptionObject(rec);
+    return ExceptionContinueSearch;
+}
+
 static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
                                const cxx_function_descr *descr)
@@ -554,10 +582,22 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
         if (data->se_translator) {
             EXCEPTION_POINTERS except_ptrs;
+            se_translator_ctx ctx;
 
-            except_ptrs.ExceptionRecord = rec;
-            except_ptrs.ContextRecord = context;
-            data->se_translator(rec->ExceptionCode, &except_ptrs);
+            ctx.dest_frame = frame;
+            ctx.orig_frame = orig_frame;
+            ctx.dispatch   = dispatch;
+            ctx.descr      = descr;
+            __TRY
+            {
+                except_ptrs.ExceptionRecord = rec;
+                except_ptrs.ContextRecord = context;
+                data->se_translator(rec->ExceptionCode, &except_ptrs);
+            }
+            __EXCEPT_CTX(se_translation_filter, &ctx)
+            {
+            }
+            __ENDTRY
         }
     }
 
