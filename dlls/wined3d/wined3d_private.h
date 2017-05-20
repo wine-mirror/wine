@@ -1099,10 +1099,36 @@ struct wined3d_shader_semantic
     struct wined3d_shader_dst_param reg;
 };
 
+enum wined3d_shader_input_sysval_semantic
+{
+    WINED3D_SIV_POSITION                     = 1,
+    WINED3D_SIV_CLIP_DISTANCE                = 2,
+    WINED3D_SIV_CULL_DISTANCE                = 3,
+    WINED3D_SIV_RENDER_TARGET_ARRAY_INDEX    = 4,
+    WINED3D_SIV_VIEWPORT_ARRAY_INDEX         = 5,
+    WINED3D_SIV_VERTEX_ID                    = 6,
+    WINED3D_SIV_PRIMITIVE_ID                 = 7,
+    WINED3D_SIV_INSTANCE_ID                  = 8,
+    WINED3D_SIV_IS_FRONT_FACE                = 9,
+    WINED3D_SIV_SAMPLE_INDEX                 = 10,
+    WINED3D_SIV_QUAD_U0_TESS_FACTOR          = 11,
+    WINED3D_SIV_QUAD_V0_TESS_FACTOR          = 12,
+    WINED3D_SIV_QUAD_U1_TESS_FACTOR          = 13,
+    WINED3D_SIV_QUAD_V1_TESS_FACTOR          = 14,
+    WINED3D_SIV_QUAD_U_INNER_TESS_FACTOR     = 15,
+    WINED3D_SIV_QUAD_V_INNER_TESS_FACTOR     = 16,
+    WINED3D_SIV_TRIANGLE_U_TESS_FACTOR       = 17,
+    WINED3D_SIV_TRIANGLE_V_TESS_FACTOR       = 18,
+    WINED3D_SIV_TRIANGLE_W_TESS_FACTOR       = 19,
+    WINED3D_SIV_TRIANGLE_INNER_TESS_FACTOR   = 20,
+    WINED3D_SIV_LINE_DETAIL_TESS_FACTOR      = 21,
+    WINED3D_SIV_LINE_DENSITY_TESS_FACTOR     = 22,
+};
+
 struct wined3d_shader_register_semantic
 {
     struct wined3d_shader_dst_param reg;
-    enum wined3d_sysval_semantic sysval_semantic;
+    enum wined3d_shader_input_sysval_semantic sysval_semantic;
 };
 
 struct wined3d_shader_structured_resource
