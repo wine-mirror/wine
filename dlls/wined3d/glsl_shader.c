@@ -10676,10 +10676,13 @@ static void glsl_vertex_pipe_vs(struct wined3d_context *context,
 static void glsl_vertex_pipe_hs(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    /*  In Direct3D tessellator options (e.g. output primitive type, primitive
-     *  winding) are defined in Hull Shaders, while in GLSL those are
-     *  specified in Tessellation Evaluation Shaders. */
+    /* In Direct3D tessellator options (e.g. output primitive type, primitive
+     * winding) are defined in Hull Shaders, while in GLSL those are
+     * specified in Tessellation Evaluation Shaders. */
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_DOMAIN;
+
+    if (state->shader[WINED3D_SHADER_TYPE_VERTEX])
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 }
 
 static void glsl_vertex_pipe_geometry_shader(struct wined3d_context *context,
