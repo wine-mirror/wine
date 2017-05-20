@@ -3064,6 +3064,13 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             sprintf(register_name, "gl_TessCoord");
             break;
 
+        case WINED3DSPR_PATCHCONST:
+            if (version->type == WINED3D_SHADER_TYPE_HULL)
+                sprintf(register_name, "hs_out[%u]", reg->idx[0].offset);
+            else
+                sprintf(register_name, "vpc[%u]", reg->idx[0].offset);
+            break;
+
         default:
             FIXME("Unhandled register type %#x.\n", reg->type);
             sprintf(register_name, "unrecognized_register");
@@ -6899,6 +6906,79 @@ static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
     shader_addline(buffer, "}\n");
 }
 
+static void shader_glsl_generate_patch_constant_name(struct wined3d_string_buffer *buffer,
+        const struct wined3d_shader_signature_element *constant, unsigned int *user_constant_idx,
+        const char *reg_mask)
+{
+    if (!constant->sysval_semantic)
+    {
+        shader_addline(buffer, "user_patch_constant[%u]%s", (*user_constant_idx)++, reg_mask);
+        return;
+    }
+
+    switch (constant->sysval_semantic)
+    {
+        case WINED3D_SV_TESS_FACTOR_QUADEDGE:
+        case WINED3D_SV_TESS_FACTOR_TRIEDGE:
+        case WINED3D_SV_TESS_FACTOR_LINEDET:
+        case WINED3D_SV_TESS_FACTOR_LINEDEN:
+            shader_addline(buffer, "gl_TessLevelOuter[%u]", constant->semantic_idx);
+            break;
+        case WINED3D_SV_TESS_FACTOR_QUADINT:
+        case WINED3D_SV_TESS_FACTOR_TRIINT:
+            shader_addline(buffer, "gl_TessLevelInner[%u]", constant->semantic_idx);
+            break;
+        default:
+            FIXME("Unhandled sysval semantic %#x.\n", constant->sysval_semantic);
+            shader_addline(buffer, "vec4(0.0)%s", reg_mask);
+    }
+}
+
+static void shader_glsl_generate_patch_constant_setup(struct wined3d_string_buffer *buffer,
+        const struct wined3d_shader_signature *signature, BOOL input_setup)
+{
+    unsigned int i, register_count, user_constant_index, user_constant_count;
+
+    register_count = user_constant_count = 0;
+    for (i = 0; i < signature->element_count; ++i)
+    {
+        const struct wined3d_shader_signature_element *constant = &signature->elements[i];
+        register_count = max(constant->register_idx + 1, register_count);
+        if (!constant->sysval_semantic)
+            ++user_constant_count;
+    }
+
+    if (user_constant_count)
+        shader_addline(buffer, "patch %s vec4 user_patch_constant[%u];\n",
+                input_setup ? "in" : "out", user_constant_count);
+    if (input_setup)
+        shader_addline(buffer, "vec4 vpc[%u];\n", register_count);
+
+    shader_addline(buffer, "void setup_patch_constant_%s()\n{\n", input_setup ? "input" : "output");
+    for (i = 0, user_constant_index = 0; i < signature->element_count; ++i)
+    {
+        const struct wined3d_shader_signature_element *constant = &signature->elements[i];
+        char reg_mask[6];
+
+        shader_glsl_write_mask_to_str(constant->mask, reg_mask);
+
+        if (input_setup)
+            shader_addline(buffer, "vpc[%u]%s", constant->register_idx, reg_mask);
+        else
+            shader_glsl_generate_patch_constant_name(buffer, constant, &user_constant_index, reg_mask);
+
+        shader_addline(buffer, " = ");
+
+        if (input_setup)
+            shader_glsl_generate_patch_constant_name(buffer, constant, &user_constant_index, reg_mask);
+        else
+            shader_addline(buffer, "hs_out[%u]%s", constant->register_idx, reg_mask);
+
+        shader_addline(buffer, ";\n");
+    }
+    shader_addline(buffer, "}\n");
+}
+
 static void shader_glsl_generate_srgb_write_correction(struct wined3d_string_buffer *buffer,
         const struct wined3d_gl_info *gl_info)
 {
@@ -7481,6 +7561,8 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
     shader_addline(buffer, "in shader_in_out { vec4 reg[%u]; } shader_in[];\n", shader->limits->packed_input);
     shader_addline(buffer, "out shader_in_out { vec4 reg[%u]; } shader_out[];\n", shader->limits->packed_output);
 
+    shader_glsl_generate_patch_constant_setup(buffer, &shader->patch_constant_signature, FALSE);
+
     if (hs->phases.control_point)
     {
         shader_addline(buffer, "void setup_hs_output(in vec4 outputs[%u])\n{\n",
@@ -7525,6 +7607,7 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
         shader_glsl_generate_shader_phase_invocation(buffer, &hs->phases.fork[i], "fork", i);
     for (i = 0; i < hs->phases.join_count; ++i)
         shader_glsl_generate_shader_phase_invocation(buffer, &hs->phases.join[i], "join", i);
+    shader_addline(buffer, "setup_patch_constant_output();\n");
     shader_addline(buffer, "}\n");
 
     shader_id = GL_EXTCALL(glCreateShader(GL_TESS_CONTROL_SHADER));
@@ -7620,7 +7703,10 @@ static GLuint shader_glsl_generate_domain_shader(const struct wined3d_context *c
 
     shader_glsl_generate_sm4_output_setup(priv, shader, args->output_count, gl_info,
             args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL);
+    shader_glsl_generate_patch_constant_setup(buffer, &shader->patch_constant_signature, TRUE);
+
     shader_addline(buffer, "void main()\n{\n");
+    shader_addline(buffer, "setup_patch_constant_input();\n");
 
     if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, NULL, NULL)))
         return 0;
