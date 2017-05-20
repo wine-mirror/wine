@@ -2906,8 +2906,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
         case WINED3DSPR_TEXCRDOUT:
             /* Vertex shaders >= 3.0: WINED3DSPR_OUTPUT */
             if (reg->idx[0].rel_addr)
-                FIXME("VS3 output registers relative addressing.\n");
-            sprintf(register_name, "%s_out[%u]", prefix, reg->idx[0].offset);
+                sprintf(register_name, "%s_out[%s + %u]",
+                        prefix, rel_param0.param_str, reg->idx[0].offset);
+            else
+                sprintf(register_name, "%s_out[%u]", prefix, reg->idx[0].offset);
             break;
 
         case WINED3DSPR_MISCTYPE:

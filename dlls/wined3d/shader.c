@@ -1398,7 +1398,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             }
                             break;
 
-                        case WINED3DSPR_TEXCRDOUT:
+                        case WINED3DSPR_TEXCRDOUT: /* WINED3DSPR_OUTPUT */
                             if (shader_version.major >= 3)
                             {
                                 if (idx >= ARRAY_SIZE(reg_maps->u.output_registers_mask))
