@@ -1088,7 +1088,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 FIXME("Invalid instruction %#x for shader type %#x.\n",
                         ins.handler_idx, shader_version.type);
         }
-        else if (ins.handler_idx == WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT)
+        else if (ins.handler_idx == WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT
+                || ins.handler_idx == WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT)
         {
             if (phase)
                 phase->instance_count = ins.declaration.count;

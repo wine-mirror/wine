@@ -3056,6 +3056,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_FORKINSTID:
+        case WINED3DSPR_JOININSTID:
             sprintf(register_name, "phase_instance_id");
             break;
 
@@ -3212,6 +3213,7 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
             break;
         case WINED3DSPR_FORKINSTID:
         case WINED3DSPR_GSINSTID:
+        case WINED3DSPR_JOININSTID:
         case WINED3DSPR_LOCALTHREADID:
         case WINED3DSPR_LOCALTHREADINDEX:
         case WINED3DSPR_OUTPOINTID:
@@ -7510,11 +7512,9 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
 
     for (i = 0; i < hs->phases.join_count; ++i)
     {
-        phase = &hs->phases.join[i];
-        shader_addline(buffer, "void hs_join_phase%u()\n{\n", i);
-        if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, phase->start, phase->end)))
+        if (FAILED(shader_glsl_generate_shader_phase(shader, buffer, reg_maps, &priv_ctx,
+                &hs->phases.join[i], "join", i)))
             return 0;
-        shader_addline(buffer, "}\n");
     }
 
     shader_addline(buffer, "void main()\n{\n");
@@ -7524,10 +7524,7 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
     for (i = 0; i < hs->phases.fork_count; ++i)
         shader_glsl_generate_shader_phase_invocation(buffer, &hs->phases.fork[i], "fork", i);
     for (i = 0; i < hs->phases.join_count; ++i)
-    {
-        phase = &hs->phases.join[i];
-        shader_addline(buffer, "hs_join_phase%u();\n", i);
-    }
+        shader_glsl_generate_shader_phase_invocation(buffer, &hs->phases.join[i], "join", i);
     shader_addline(buffer, "}\n");
 
     shader_id = GL_EXTCALL(glCreateShader(GL_TESS_CONTROL_SHADER));
@@ -10522,7 +10519,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_GS_INSTANCES                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ shader_glsl_nop,
-    /* WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT */ NULL,
+    /* WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT */ shader_glsl_nop,
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ shader_glsl_nop,
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER    */ shader_glsl_nop,
     /* WINED3DSIH_DCL_INDEX_RANGE                  */ shader_glsl_nop,
