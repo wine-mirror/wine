@@ -6639,7 +6639,7 @@ static void shader_glsl_setup_vs3_output(struct shader_glsl_priv *priv,
 
 static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
         unsigned int input_count, const struct wined3d_shader_signature *output_signature,
-        const struct wined3d_shader_reg_maps *reg_maps_out)
+        const struct wined3d_shader_reg_maps *reg_maps_out, const char *output_variable_name)
 {
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     char reg_mask[6];
@@ -6660,8 +6660,8 @@ static void shader_glsl_setup_sm4_shader_output(struct shader_glsl_priv *priv,
 
         shader_glsl_write_mask_to_str(output->mask, reg_mask);
 
-        shader_addline(buffer, "shader_out.reg[%u]%s = outputs[%u]%s;\n",
-                output->register_idx, reg_mask, output->register_idx, reg_mask);
+        shader_addline(buffer, "%s.reg[%u]%s = outputs[%u]%s;\n",
+                output_variable_name, output->register_idx, reg_mask, output->register_idx, reg_mask);
     }
 }
 
@@ -6719,7 +6719,7 @@ static void shader_glsl_setup_sm3_rasterizer_input(struct shader_glsl_priv *priv
         shader_glsl_setup_vs3_output(priv, gl_info, map, input_signature, reg_maps_in,
                 output_signature, reg_maps_out);
     else
-        shader_glsl_setup_sm4_shader_output(priv, input_count, output_signature, reg_maps_out);
+        shader_glsl_setup_sm4_shader_output(priv, input_count, output_signature, reg_maps_out, "shader_out");
 }
 
 /* Context activation is done by the caller. */
@@ -6886,7 +6886,8 @@ static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
         shader_glsl_setup_sm3_rasterizer_input(priv, gl_info, NULL, NULL,
                 NULL, input_count, &shader->output_signature, &shader->reg_maps, FALSE);
     else
-        shader_glsl_setup_sm4_shader_output(priv, input_count, &shader->output_signature, &shader->reg_maps);
+        shader_glsl_setup_sm4_shader_output(priv, input_count, &shader->output_signature,
+                &shader->reg_maps, "shader_out");
 
     shader_addline(buffer, "}\n");
 }
@@ -7444,11 +7445,21 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
     shader_addline(buffer, "in shader_in_out { vec4 reg[%u]; } shader_in[];\n", shader->limits->packed_input);
     shader_addline(buffer, "out shader_in_out { vec4 reg[%u]; } shader_out[];\n", shader->limits->packed_output);
 
+    if (hs->phases.control_point)
+    {
+        shader_addline(buffer, "void setup_hs_output(in vec4 outputs[%u])\n{\n",
+                shader->limits->packed_output);
+        shader_glsl_setup_sm4_shader_output(priv, shader->limits->packed_output, &shader->output_signature,
+                &shader->reg_maps, "shader_out[gl_InvocationID]");
+        shader_addline(buffer, "}\n");
+    }
+
     shader_addline(buffer, "void hs_control_point_phase()\n{\n");
     if ((phase = hs->phases.control_point))
     {
         if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, phase->start, phase->end)))
             return 0;
+        shader_addline(buffer, "setup_hs_output(hs_out);\n");
     }
     else
     {
