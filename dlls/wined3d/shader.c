@@ -2418,10 +2418,10 @@ static void shader_dump_src_param(struct wined3d_string_buffer *buffer,
     }
 }
 
-/* Shared code in order to generate the bulk of the shader string.
- * NOTE: A description of how to parse tokens can be found on MSDN. */
-HRESULT shader_generate_main(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
-        const struct wined3d_shader_reg_maps *reg_maps, void *backend_ctx)
+/* Shared code in order to generate the bulk of the shader string. */
+HRESULT shader_generate_code(const struct wined3d_shader *shader, struct wined3d_string_buffer *buffer,
+        const struct wined3d_shader_reg_maps *reg_maps, void *backend_ctx,
+        const DWORD *start, const DWORD *end)
 {
     struct wined3d_device *device = shader->device;
     const struct wined3d_shader_frontend *fe = shader->frontend;
@@ -2449,8 +2449,10 @@ HRESULT shader_generate_main(const struct wined3d_shader *shader, struct wined3d
     ins.ctx = &ctx;
 
     fe->shader_read_header(fe_data, &ptr, &shader_version);
+    if (start)
+        ptr = start;
 
-    while (!fe->shader_is_end(fe_data, &ptr))
+    while (!fe->shader_is_end(fe_data, &ptr) && ptr != end)
     {
         /* Read opcode. */
         fe->shader_read_instruction(fe_data, &ptr, &ins);
