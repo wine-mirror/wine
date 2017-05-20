@@ -3970,7 +3970,7 @@ struct wined3d_context *context_reacquire(const struct wined3d_device *device,
 {
     struct wined3d_context *current_context;
 
-    if (context->tid != GetCurrentThreadId())
+    if (!context || context->tid != GetCurrentThreadId())
         return NULL;
 
     current_context = context_acquire(device, context->current_rt.texture,
