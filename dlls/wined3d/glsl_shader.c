@@ -3055,6 +3055,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             sprintf(register_name, "ivec3(gl_LocalInvocationID)");
             break;
 
+        case WINED3DSPR_FORKINSTID:
+            sprintf(register_name, "phase_instance_id");
+            break;
+
         case WINED3DSPR_TESSCOORD:
             sprintf(register_name, "gl_TessCoord");
             break;
@@ -3206,6 +3210,7 @@ static void shader_glsl_add_src_param_ext(const struct wined3d_shader_instructio
         case WINED3DSPR_IMMCONST:
             param_data_type = data_type;
             break;
+        case WINED3DSPR_FORKINSTID:
         case WINED3DSPR_GSINSTID:
         case WINED3DSPR_LOCALTHREADID:
         case WINED3DSPR_LOCALTHREADINDEX:
@@ -7417,6 +7422,35 @@ static void shader_glsl_generate_default_control_point_phase(const struct wined3
     }
 }
 
+static HRESULT shader_glsl_generate_shader_phase(const struct wined3d_shader *shader,
+        struct wined3d_string_buffer *buffer, const struct wined3d_shader_reg_maps *reg_maps,
+        struct shader_glsl_ctx_priv *priv_ctx, const struct wined3d_shader_phase *phase,
+        const char *phase_name, unsigned phase_idx)
+{
+    HRESULT hr;
+
+    shader_addline(buffer, "void hs_%s_phase%u(%s)\n{\n",
+            phase_name, phase_idx, phase->instance_count ? "int phase_instance_id" : "");
+    hr = shader_generate_code(shader, buffer, reg_maps, priv_ctx, phase->start, phase->end);
+    shader_addline(buffer, "}\n");
+    return hr;
+}
+
+static void shader_glsl_generate_shader_phase_invocation(struct wined3d_string_buffer *buffer,
+        const struct wined3d_shader_phase *phase, const char *phase_name, unsigned int phase_idx)
+{
+    if (phase->instance_count)
+    {
+        shader_addline(buffer, "for (int i = 0; i < %u; ++i)\n{\n", phase->instance_count);
+        shader_addline(buffer, "hs_%s_phase%u(i);\n", phase_name, phase_idx);
+        shader_addline(buffer, "}\n");
+    }
+    else
+    {
+        shader_addline(buffer, "hs_%s_phase%u();\n", phase_name, phase_idx);
+    }
+}
+
 static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *context,
         struct shader_glsl_priv *priv, const struct wined3d_shader *shader)
 {
@@ -7469,11 +7503,9 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
 
     for (i = 0; i < hs->phases.fork_count; ++i)
     {
-        phase = &hs->phases.fork[i];
-        shader_addline(buffer, "void hs_fork_phase%u()\n{\n", i);
-        if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, phase->start, phase->end)))
+        if (FAILED(shader_glsl_generate_shader_phase(shader, buffer, reg_maps, &priv_ctx,
+                &hs->phases.fork[i], "fork", i)))
             return 0;
-        shader_addline(buffer, "}\n");
     }
 
     for (i = 0; i < hs->phases.join_count; ++i)
@@ -7490,10 +7522,7 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
     if (hs->phases.fork_count || hs->phases.join_count)
         shader_addline(buffer, "barrier();\n");
     for (i = 0; i < hs->phases.fork_count; ++i)
-    {
-        phase = &hs->phases.fork[i];
-        shader_addline(buffer, "hs_fork_phase%u();\n", i);
-    }
+        shader_glsl_generate_shader_phase_invocation(buffer, &hs->phases.fork[i], "fork", i);
     for (i = 0; i < hs->phases.join_count; ++i)
     {
         phase = &hs->phases.join[i];
@@ -10492,7 +10521,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_DCL_FUNCTION_TABLE               */ NULL,
     /* WINED3DSIH_DCL_GLOBAL_FLAGS                 */ shader_glsl_nop,
     /* WINED3DSIH_DCL_GS_INSTANCES                 */ shader_glsl_nop,
-    /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ NULL,
+    /* WINED3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT */ shader_glsl_nop,
     /* WINED3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT */ NULL,
     /* WINED3DSIH_DCL_HS_MAX_TESSFACTOR            */ shader_glsl_nop,
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER    */ shader_glsl_nop,
