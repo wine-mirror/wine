@@ -1105,13 +1105,20 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INDEXABLE_TEMP)
         {
-            struct wined3d_shader_indexable_temp *reg;
+            if (phase)
+            {
+                FIXME("Indexable temporary registers not supported.\n");
+            }
+            else
+            {
+                struct wined3d_shader_indexable_temp *reg;
 
-            if (!(reg = HeapAlloc(GetProcessHeap(), 0, sizeof(*reg))))
-                return E_OUTOFMEMORY;
+                if (!(reg = HeapAlloc(GetProcessHeap(), 0, sizeof(*reg))))
+                    return E_OUTOFMEMORY;
 
-            *reg = ins.declaration.indexable_temp;
-            list_add_tail(&reg_maps->indexable_temps, &reg->entry);
+                *reg = ins.declaration.indexable_temp;
+                list_add_tail(&reg_maps->indexable_temps, &reg->entry);
+            }
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE)
         {
@@ -1168,7 +1175,10 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_TEMPS)
         {
-            reg_maps->temporary_count = ins.declaration.count;
+            if (phase)
+                phase->temporary_count = ins.declaration.count;
+            else
+                reg_maps->temporary_count = ins.declaration.count;
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_TESSELLATOR_DOMAIN)
         {

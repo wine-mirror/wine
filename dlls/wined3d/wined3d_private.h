@@ -3738,6 +3738,7 @@ struct wined3d_shader_phase
     const DWORD *start;
     const DWORD *end;
     unsigned int instance_count;
+    unsigned int temporary_count;
 };
 
 struct wined3d_vertex_shader

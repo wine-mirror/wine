@@ -7509,10 +7509,13 @@ static HRESULT shader_glsl_generate_shader_phase(const struct wined3d_shader *sh
         struct shader_glsl_ctx_priv *priv_ctx, const struct wined3d_shader_phase *phase,
         const char *phase_name, unsigned phase_idx)
 {
+    unsigned int i;
     HRESULT hr;
 
     shader_addline(buffer, "void hs_%s_phase%u(%s)\n{\n",
             phase_name, phase_idx, phase->instance_count ? "int phase_instance_id" : "");
+    for (i = 0; i < phase->temporary_count; ++i)
+        shader_addline(buffer, "vec4 R%u;\n", i);
     hr = shader_generate_code(shader, buffer, reg_maps, priv_ctx, phase->start, phase->end);
     shader_addline(buffer, "}\n");
     return hr;
