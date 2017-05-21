@@ -6392,6 +6392,8 @@ static INT LISTVIEW_FindItemW(const LISTVIEW_INFO *infoPtr, INT nStart,
 	lvItem.mask &= ~LVIF_TEXT;
     }
 
+    nItem = bNearest ? -1 : nStart + 1;
+
 again:
     for (; nItem < nLast; nItem++)
     {
