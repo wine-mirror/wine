@@ -149,6 +149,7 @@ static void test_CreateNamedPipe(int pipemode)
     DWORD written;
     DWORD readden;
     DWORD avail;
+    DWORD left;
     DWORD lpmode;
     BOOL ret;
 
@@ -240,8 +241,12 @@ static void test_CreateNamedPipe(int pipemode)
         memset(ibuf, 0, sizeof(ibuf));
         ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
         ok(written == sizeof(obuf), "write file len 1\n");
-        ok(PeekNamedPipe(hFile, NULL, 0, NULL, &readden, NULL), "Peek\n");
-        ok(readden == sizeof(obuf), "peek 1 got %d bytes\n", readden);
+        ok(PeekNamedPipe(hFile, NULL, 0, NULL, &avail, &left), "Peek\n");
+        ok(avail == sizeof(obuf), "peek 1 got %d bytes\n", avail);
+        if (pipemode == PIPE_TYPE_BYTE)
+            ok(left == 0, "peek 1 got %d bytes left\n", left);
+        else
+            ok(left == sizeof(obuf), "peek 1 got %d bytes left\n", left);
         ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
         ok(readden == sizeof(obuf), "read 1 got %d bytes\n", readden);
         ok(memcmp(obuf, ibuf, written) == 0, "content 1 check\n");
@@ -249,10 +254,18 @@ static void test_CreateNamedPipe(int pipemode)
         memset(ibuf, 0, sizeof(ibuf));
         ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
         ok(written == sizeof(obuf2), "write file len 2\n");
-        ok(PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL), "Peek\n");
-        ok(readden == sizeof(obuf2), "peek 2 got %d bytes\n", readden);
-        ok(PeekNamedPipe(hnp, (LPVOID)1, 0, NULL, &readden, NULL), "Peek\n");
-        ok(readden == sizeof(obuf2), "peek 2 got %d bytes\n", readden);
+        ok(PeekNamedPipe(hnp, NULL, 0, NULL, &avail, &left), "Peek\n");
+        ok(avail == sizeof(obuf2), "peek 2 got %d bytes\n", avail);
+        if (pipemode == PIPE_TYPE_BYTE)
+            ok(left == 0, "peek 2 got %d bytes left\n", left);
+        else
+            ok(left == sizeof(obuf2), "peek 2 got %d bytes left\n", left);
+        ok(PeekNamedPipe(hnp, (LPVOID)1, 0, NULL, &avail, &left), "Peek\n");
+        ok(avail == sizeof(obuf2), "peek 2 got %d bytes\n", avail);
+        if (pipemode == PIPE_TYPE_BYTE)
+            ok(left == 0, "peek 2 got %d bytes left\n", left);
+        else
+            ok(left == sizeof(obuf2), "peek 2 got %d bytes left\n", left);
         ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
         ok(readden == sizeof(obuf2), "read 2 got %d bytes\n", readden);
         ok(memcmp(obuf2, ibuf, written) == 0, "content 2 check\n");
@@ -261,6 +274,13 @@ static void test_CreateNamedPipe(int pipemode)
         memset(ibuf, 0, sizeof(ibuf));
         ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), "WriteFile\n");
         ok(written == sizeof(obuf2), "write file len\n");
+        ok(PeekNamedPipe(hFile, ibuf, 4, &readden, &avail, &left), "Peek\n");
+        ok(readden == 4, "peek got %d bytes\n", readden);
+        ok(avail == sizeof(obuf2), "peek got %d bytes available\n", avail);
+        if (pipemode == PIPE_TYPE_BYTE)
+            ok(left == -4, "peek got %d bytes left\n", left);
+        else
+            ok(left == sizeof(obuf2)-4, "peek got %d bytes left\n", left);
         ok(ReadFile(hFile, ibuf, 4, &readden, NULL), "ReadFile\n");
         ok(readden == 4, "read got %d bytes\n", readden);
         ok(ReadFile(hFile, ibuf + 4, sizeof(ibuf) - 4, &readden, NULL), "ReadFile\n");
@@ -270,12 +290,17 @@ static void test_CreateNamedPipe(int pipemode)
         memset(ibuf, 0, sizeof(ibuf));
         ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
         ok(written == sizeof(obuf), "write file len\n");
+        ok(PeekNamedPipe(hnp, ibuf, 4, &readden, &avail, &left), "Peek\n");
+        ok(readden == 4, "peek got %d bytes\n", readden);
+        ok(avail == sizeof(obuf), "peek got %d bytes available\n", avail);
         if (pipemode == PIPE_TYPE_BYTE)
         {
+            ok(left == -4, "peek got %d bytes left\n", left);
             ok(ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
         }
         else
         {
+            ok(left == sizeof(obuf)-4, "peek got %d bytes left\n", left);
             SetLastError(0xdeadbeef);
             ok(!ReadFile(hnp, ibuf, 4, &readden, NULL), "ReadFile\n");
             ok(GetLastError() == ERROR_MORE_DATA, "wrong error\n");
@@ -316,15 +341,24 @@ static void test_CreateNamedPipe(int pipemode)
         ok(written == sizeof(obuf), "write file len 3a\n");
         ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), " WriteFile3b\n");
         ok(written == sizeof(obuf2), "write file len 3b\n");
-        ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek3\n");
+        ok(PeekNamedPipe(hFile, ibuf, 4, &readden, &avail, &left), "Peek3\n");
+        ok(readden == 4, "peek3 got %d bytes\n", readden);
+        if (pipemode == PIPE_TYPE_BYTE)
+            ok(left == -4, "peek3 got %d bytes left\n", left);
+        else
+            ok(left == sizeof(obuf)-4, "peek3 got %d bytes left\n", left);
+        ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
+        ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, &left), "Peek3\n");
         if (pipemode == PIPE_TYPE_BYTE) {
             /* currently the Wine behavior depends on the kernel version */
             /* ok(readden == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes\n", readden); */
             if (readden != sizeof(obuf) + sizeof(obuf2)) todo_wine ok(0, "peek3 got %d bytes\n", readden);
+            ok(left == (DWORD) -(sizeof(obuf) + sizeof(obuf2)), "peek3 got %d bytes left\n", left);
         }
         else
         {
             ok(readden == sizeof(obuf), "peek3 got %d bytes\n", readden);
+            ok(left == 0, "peek3 got %d bytes left\n", left);
         }
         ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
         pbuf = ibuf;
@@ -346,15 +380,24 @@ static void test_CreateNamedPipe(int pipemode)
         ok(written == sizeof(obuf), "write file len 4a\n");
         ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), " WriteFile4b\n");
         ok(written == sizeof(obuf2), "write file len 4b\n");
-        ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek4\n");
+        ok(PeekNamedPipe(hnp, ibuf, 4, &readden, &avail, &left), "Peek3\n");
+        ok(readden == 4, "peek3 got %d bytes\n", readden);
+        if (pipemode == PIPE_TYPE_BYTE)
+            ok(left == -4, "peek3 got %d bytes left\n", left);
+        else
+            ok(left == sizeof(obuf)-4, "peek3 got %d bytes left\n", left);
+        ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
+        ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, &left), "Peek4\n");
         if (pipemode == PIPE_TYPE_BYTE) {
             /* currently the Wine behavior depends on the kernel version */
             /* ok(readden == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes\n", readden); */
             if (readden != sizeof(obuf) + sizeof(obuf2)) todo_wine ok(0, "peek4 got %d bytes\n", readden);
+            ok(left == (DWORD) -(sizeof(obuf) + sizeof(obuf2)), "peek4 got %d bytes left\n", left);
         }
         else
         {
             ok(readden == sizeof(obuf), "peek4 got %d bytes\n", readden);
+            ok(left == 0, "peek4 got %d bytes left\n", left);
         }
         ok(avail == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes available\n", avail);
         pbuf = ibuf;
@@ -392,10 +435,10 @@ static void test_CreateNamedPipe(int pipemode)
             ok(written == sizeof(obuf), "write file len 3a\n");
             ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), " WriteFile5b\n");
             ok(written == sizeof(obuf2), "write file len 3b\n");
-            ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek5\n");
+            ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, &left), "Peek5\n");
             ok(readden == sizeof(obuf), "peek5 got %d bytes\n", readden);
-
             ok(avail == sizeof(obuf) + sizeof(obuf2), "peek5 got %d bytes available\n", avail);
+            ok(left == 0, "peek5 got %d bytes left\n", left);
             pbuf = ibuf;
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 5a check\n");
             ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
