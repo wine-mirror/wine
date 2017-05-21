@@ -1911,26 +1911,21 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect)
 {
     struct wined3d_texture *texture = surface->container;
+    POINT offset = {0, 0};
     UINT drawable_height;
+    RECT windowsize;
 
-    if (texture->swapchain)
+    if (!texture->swapchain)
+        return;
+
+    if (texture == texture->swapchain->front_buffer)
     {
-        POINT offset = {0, 0};
-        RECT windowsize;
-
-        if (texture == texture->swapchain->front_buffer)
-        {
-            ScreenToClient(window, &offset);
-            OffsetRect(rect, offset.x, offset.y);
-        }
-
-        GetClientRect(window, &windowsize);
-        drawable_height = windowsize.bottom - windowsize.top;
+        ScreenToClient(window, &offset);
+        OffsetRect(rect, offset.x, offset.y);
     }
-    else
-    {
-        drawable_height = wined3d_texture_get_level_height(texture, surface->texture_level);
-    }
+
+    GetClientRect(window, &windowsize);
+    drawable_height = windowsize.bottom - windowsize.top;
 
     rect->top = drawable_height - rect->top;
     rect->bottom = drawable_height - rect->bottom;
