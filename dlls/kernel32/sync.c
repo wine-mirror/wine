@@ -1475,7 +1475,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
         ULONG read_size = io.Information - FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );
         if (lpcbAvail) *lpcbAvail = buffer->ReadDataAvailable;
         if (lpcbRead) *lpcbRead = read_size;
-        if (lpcbMessage) *lpcbMessage = 0;  /* FIXME */
+        if (lpcbMessage) *lpcbMessage = buffer->MessageLength - read_size;
         if (lpvBuffer) memcpy( lpvBuffer, buffer->Data, read_size );
     }
     else SetLastError( RtlNtStatusToDosError(status) );

@@ -927,6 +927,7 @@ static void pipe_end_peek( struct pipe_end *pipe_end )
     FILE_PIPE_PEEK_BUFFER *buffer;
     struct pipe_message *message;
     data_size_t avail = 0;
+    data_size_t message_length = 0;
 
     if (!use_server_io( pipe_end ))
     {
@@ -947,7 +948,8 @@ static void pipe_end_peek( struct pipe_end *pipe_end )
     if (avail)
     {
         message = LIST_ENTRY( list_head(&pipe_end->message_queue), struct pipe_message, entry );
-        reply_size = min( reply_size, message->iosb->in_size - message->read_pos );
+        message_length = message->iosb->in_size - message->read_pos;
+        reply_size = min( reply_size, message_length );
     }
     else reply_size = 0;
 
@@ -955,7 +957,7 @@ static void pipe_end_peek( struct pipe_end *pipe_end )
     buffer->NamedPipeState    = 0;  /* FIXME */
     buffer->ReadDataAvailable = avail;
     buffer->NumberOfMessages  = 0;  /* FIXME */
-    buffer->MessageLength     = 0;  /* FIXME */
+    buffer->MessageLength     = message_length;
     if (reply_size) memcpy( buffer->Data, (const char *)message->iosb->in_data + message->read_pos, reply_size );
 }
 
