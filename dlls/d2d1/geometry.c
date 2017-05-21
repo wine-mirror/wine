@@ -142,6 +142,18 @@ static void d2d_outline_vertex_set(struct d2d_outline_vertex *v, float x, float 
     d2d_point_set(&v->next, next_x, next_y);
 }
 
+static void d2d_bezier_outline_vertex_set(struct d2d_bezier_outline_vertex *b, const D2D1_POINT_2F *position,
+        const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2,
+        float prev_x, float prev_y, float next_x, float next_y)
+{
+    b->position = *position;
+    b->p0 = *p0;
+    b->p1 = *p1;
+    b->p2 = *p2;
+    d2d_point_set(&b->prev, prev_x, prev_y);
+    d2d_point_set(&b->next, next_x, next_y);
+}
+
 static void d2d_fp_two_sum(float *out, float a, float b)
 {
     float a_virt, a_round, b_virt, b_round;
@@ -360,6 +372,13 @@ static void d2d_point_scale(D2D1_POINT_2F *p, float scale)
 {
     p->x *= scale;
     p->y *= scale;
+}
+
+static void d2d_point_lerp(D2D1_POINT_2F *out,
+        const D2D1_POINT_2F *a, const D2D1_POINT_2F *b, float t)
+{
+    out->x = a->x * (1.0f - t) + b->x * t;
+    out->y = a->y * (1.0f - t) + b->y * t;
 }
 
 static float d2d_point_dot(const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1)
@@ -1842,6 +1861,70 @@ static BOOL d2d_geometry_outline_add_line_segment(struct d2d_geometry *geometry,
     return TRUE;
 }
 
+static BOOL d2d_geometry_outline_add_bezier_segment(struct d2d_geometry *geometry,
+        const D2D1_POINT_2F *p0, const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2)
+{
+    struct d2d_bezier_outline_vertex *b;
+    D2D1_POINT_2F r0, r1, r2;
+    D2D1_POINT_2F q0, q1, q2;
+    struct d2d_face *f;
+    size_t base_idx;
+
+    if (!d2d_array_reserve((void **)&geometry->outline.beziers, &geometry->outline.beziers_size,
+            geometry->outline.bezier_count + 7, sizeof(*geometry->outline.beziers)))
+    {
+        ERR("Failed to grow outline beziers array.\n");
+        return FALSE;
+    }
+    base_idx = geometry->outline.bezier_count;
+    b = &geometry->outline.beziers[base_idx];
+
+    if (!d2d_array_reserve((void **)&geometry->outline.bezier_faces, &geometry->outline.bezier_faces_size,
+            geometry->outline.bezier_face_count + 5, sizeof(*geometry->outline.bezier_faces)))
+    {
+        ERR("Failed to grow outline faces array.\n");
+        return FALSE;
+    }
+    f = &geometry->outline.bezier_faces[geometry->outline.bezier_face_count];
+
+    d2d_point_lerp(&q0, p0, p1, 0.5f);
+    d2d_point_lerp(&q1, p1, p2, 0.5f);
+    d2d_point_lerp(&q2, &q0, &q1, 0.5f);
+
+    d2d_point_subtract(&r0, &q0, p0);
+    d2d_point_subtract(&r1, &q1, &q0);
+    d2d_point_subtract(&r2, p2, &q1);
+
+    d2d_point_normalise(&r0);
+    d2d_point_normalise(&r1);
+    d2d_point_normalise(&r2);
+
+    if (d2d_point_ccw(p0, p1, p2) > 0.0f)
+    {
+        d2d_point_scale(&r0, -1.0f);
+        d2d_point_scale(&r1, -1.0f);
+        d2d_point_scale(&r2, -1.0f);
+    }
+
+    d2d_bezier_outline_vertex_set(&b[0],  p0, p0, p1, p2,  r0.x,  r0.y,  r0.x,  r0.y);
+    d2d_bezier_outline_vertex_set(&b[1],  p0, p0, p1, p2, -r0.x, -r0.y, -r0.x, -r0.y);
+    d2d_bezier_outline_vertex_set(&b[2], &q0, p0, p1, p2,  r0.x,  r0.y,  r1.x,  r1.y);
+    d2d_bezier_outline_vertex_set(&b[3], &q2, p0, p1, p2, -r1.x, -r1.y, -r1.x, -r1.y);
+    d2d_bezier_outline_vertex_set(&b[4], &q1, p0, p1, p2,  r1.x,  r1.y,  r2.x,  r2.y);
+    d2d_bezier_outline_vertex_set(&b[5],  p2, p0, p1, p2, -r2.x, -r2.y, -r2.x, -r2.y);
+    d2d_bezier_outline_vertex_set(&b[6],  p2, p0, p1, p2,  r2.x,  r2.y,  r2.x,  r2.y);
+    geometry->outline.bezier_count += 7;
+
+    d2d_face_set(&f[0], base_idx + 0, base_idx + 1, base_idx + 2);
+    d2d_face_set(&f[1], base_idx + 2, base_idx + 1, base_idx + 3);
+    d2d_face_set(&f[2], base_idx + 3, base_idx + 4, base_idx + 2);
+    d2d_face_set(&f[3], base_idx + 5, base_idx + 4, base_idx + 3);
+    d2d_face_set(&f[4], base_idx + 5, base_idx + 6, base_idx + 4);
+    geometry->outline.bezier_face_count += 5;
+
+    return TRUE;
+}
+
 static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
         struct d2d_figure *figure, D2D1_FIGURE_END figure_end)
 {
@@ -1894,6 +1977,21 @@ static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
             ERR("Failed to add line segment.\n");
             return FALSE;
         }
+        else if (type == D2D_VERTEX_TYPE_BEZIER)
+        {
+            const D2D1_POINT_2F *p2;
+
+            if (i == figure->vertex_count - 1)
+                p2 = &figure->vertices[0];
+            else
+                p2 = &figure->vertices[i + 1];
+
+            if (!d2d_geometry_outline_add_bezier_segment(geometry, p0, next, p2))
+            {
+                ERR("Failed to add bezier segment.\n");
+                return FALSE;
+            }
+        }
     }
 
     return TRUE;
@@ -1901,6 +1999,8 @@ static BOOL d2d_geometry_add_figure_outline(struct d2d_geometry *geometry,
 
 static void d2d_geometry_cleanup(struct d2d_geometry *geometry)
 {
+    HeapFree(GetProcessHeap(), 0, geometry->outline.bezier_faces);
+    HeapFree(GetProcessHeap(), 0, geometry->outline.beziers);
     HeapFree(GetProcessHeap(), 0, geometry->outline.faces);
     HeapFree(GetProcessHeap(), 0, geometry->outline.vertices);
     HeapFree(GetProcessHeap(), 0, geometry->fill.bezier_vertices);
@@ -2925,6 +3025,8 @@ static ULONG STDMETHODCALLTYPE d2d_transformed_geometry_Release(ID2D1Transformed
 
     if (!refcount)
     {
+        geometry->outline.bezier_faces = NULL;
+        geometry->outline.beziers = NULL;
         geometry->outline.faces = NULL;
         geometry->outline.vertices = NULL;
         geometry->fill.bezier_vertices = NULL;
