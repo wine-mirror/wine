@@ -78,7 +78,7 @@
 @ stub UiaNodeRelease
 @ stub UiaPatternRelease
 @ stub UiaRaiseAsyncContentLoadedEvent
-@ stub UiaRaiseAutomationEvent
+@ stdcall UiaRaiseAutomationEvent(ptr long)
 @ stub UiaRaiseAutomationPropertyChangedEvent
 @ stub UiaRaiseStructureChangedEvent
 @ stub UiaRegisterProviderCallback
