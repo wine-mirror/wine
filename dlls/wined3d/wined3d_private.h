@@ -3246,6 +3246,13 @@ void state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
         DWORD flags) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
+enum wined3d_cs_queue_id
+{
+    WINED3D_CS_QUEUE_DEFAULT = 0,
+    WINED3D_CS_QUEUE_MAP,
+    WINED3D_CS_QUEUE_COUNT,
+};
+
 enum wined3d_push_constants
 {
     WINED3D_PUSH_CONSTANTS_VS_F,
@@ -3268,9 +3275,9 @@ struct wined3d_cs_queue
 
 struct wined3d_cs_ops
 {
-    void *(*require_space)(struct wined3d_cs *cs, size_t size);
-    void (*submit)(struct wined3d_cs *cs);
-    void (*finish)(struct wined3d_cs *cs);
+    void *(*require_space)(struct wined3d_cs *cs, size_t size, enum wined3d_cs_queue_id queue_id);
+    void (*submit)(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id);
+    void (*finish)(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id);
     void (*push_constants)(struct wined3d_cs *cs, enum wined3d_push_constants p,
             unsigned int start_idx, unsigned int count, const void *constants);
 };
@@ -3285,7 +3292,7 @@ struct wined3d_cs
     HANDLE thread;
     DWORD thread_id;
 
-    struct wined3d_cs_queue queue;
+    struct wined3d_cs_queue queue[WINED3D_CS_QUEUE_COUNT];
     size_t data_size, start, end;
     void *data;
     struct list query_poll_list;

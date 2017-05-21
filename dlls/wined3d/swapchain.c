@@ -66,7 +66,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
     }
 
     wined3d_cs_destroy_object(swapchain->device->cs, wined3d_swapchain_destroy_object, swapchain);
-    swapchain->device->cs->ops->finish(swapchain->device->cs);
+    swapchain->device->cs->ops->finish(swapchain->device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
     /* Restore the screen resolution if we rendered in fullscreen.
      * This will restore the screen resolution to what it was before creating
@@ -116,7 +116,7 @@ ULONG CDECL wined3d_swapchain_decref(struct wined3d_swapchain *swapchain)
     {
         struct wined3d_device *device = swapchain->device;
 
-        device->cs->ops->finish(device->cs);
+        device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
         swapchain_cleanup(swapchain);
         swapchain->parent_ops->wined3d_object_destroyed(swapchain->parent);
@@ -901,7 +901,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         }
 
         wined3d_cs_init_object(device->cs, wined3d_swapchain_cs_init, swapchain);
-        device->cs->ops->finish(device->cs);
+        device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
         if (!swapchain->context[0])
         {
@@ -998,7 +998,7 @@ err:
     }
 
     wined3d_cs_destroy_object(swapchain->device->cs, wined3d_swapchain_destroy_object, swapchain);
-    swapchain->device->cs->ops->finish(device->cs);
+    swapchain->device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
     if (swapchain->front_buffer)
     {
@@ -1204,7 +1204,7 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
     if (buffer_count && buffer_count != swapchain->desc.backbuffer_count)
         FIXME("Cannot change the back buffer count yet.\n");
 
-    device->cs->ops->finish(device->cs);
+    device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
     if (!width || !height)
     {

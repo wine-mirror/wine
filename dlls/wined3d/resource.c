@@ -358,6 +358,7 @@ HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned i
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
     flags = wined3d_resource_sanitise_map_flags(resource, flags);
+    wined3d_resource_wait_idle(resource);
 
     return wined3d_cs_map(resource->device->cs, resource, sub_resource_idx, map_desc, box, flags);
 }

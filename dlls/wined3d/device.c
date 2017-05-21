@@ -1003,7 +1003,7 @@ static void wined3d_device_delete_opengl_contexts_cs(void *object)
 static void wined3d_device_delete_opengl_contexts(struct wined3d_device *device)
 {
     wined3d_cs_destroy_object(device->cs, wined3d_device_delete_opengl_contexts_cs, device);
-    device->cs->ops->finish(device->cs);
+    device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_device_create_primary_opengl_context_cs(void *object)
@@ -1042,7 +1042,7 @@ static void wined3d_device_create_primary_opengl_context_cs(void *object)
 static HRESULT wined3d_device_create_primary_opengl_context(struct wined3d_device *device)
 {
     wined3d_cs_init_object(device->cs, wined3d_device_create_primary_opengl_context_cs, device);
-    device->cs->ops->finish(device->cs);
+    device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
     if (!device->swapchains[0]->num_contexts)
         return E_FAIL;
 
@@ -1187,7 +1187,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     if (!device->d3d_initialized)
         return WINED3DERR_INVALIDCALL;
 
-    device->cs->ops->finish(device->cs);
+    device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
     if (device->logo_texture)
         wined3d_texture_decref(device->logo_texture);
@@ -4612,7 +4612,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     TRACE("device %p, swapchain_desc %p, mode %p, callback %p, reset_state %#x.\n",
             device, swapchain_desc, mode, callback, reset_state);
 
-    device->cs->ops->finish(device->cs);
+    device->cs->ops->finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
 
     if (!(swapchain = wined3d_device_get_swapchain(device, 0)))
     {
