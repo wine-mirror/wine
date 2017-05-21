@@ -6547,6 +6547,10 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, 
         return FALSE;
     }
 
+    if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
+        ERR_(winediag)("You are using the backbuffer for offscreen rendering. "
+                "This is unsupported, and will be removed in a future version.\n");
+
     wined3d_adapter_init_fb_cfgs(adapter, caps_gl_ctx.dc);
     /* We haven't found any suitable formats. This should only happen in
      * case of GDI software rendering, which is pretty useless anyway. */

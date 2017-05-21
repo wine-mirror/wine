@@ -231,19 +231,9 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.glslRequested = FALSE;
             }
         }
-        if ( !get_config_key( hkey, appkey, "OffscreenRenderingMode", buffer, size) )
-        {
-            if (!strcmp(buffer,"backbuffer"))
-            {
-                ERR_(winediag)("Using the backbuffer for offscreen rendering.\n");
-                wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
-            }
-            else if (!strcmp(buffer,"fbo"))
-            {
-                TRACE("Using FBOs for offscreen rendering\n");
-                wined3d_settings.offscreen_rendering_mode = ORM_FBO;
-            }
-        }
+        if (!get_config_key(hkey, appkey, "OffscreenRenderingMode", buffer, size)
+                && !strcmp(buffer,"backbuffer"))
+            wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
         if ( !get_config_key_dword( hkey, appkey, "VideoPciDeviceID", &tmpvalue) )
         {
             int pci_device_id = tmpvalue;
