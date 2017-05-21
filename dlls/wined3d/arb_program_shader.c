@@ -7767,6 +7767,12 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
      /* We only support YUV conversions. */
     if (!is_complex_fixup(src_format->color_fixup))
     {
+        if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
+        {
+            WARN("Claiming fixup support because of ORM_BACKBUFFER.\n");
+            return TRUE;
+        }
+
         TRACE("[FAILED]\n");
         return FALSE;
     }

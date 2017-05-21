@@ -2485,8 +2485,8 @@ static void ffp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 
 static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
         const struct wined3d_d3d_info *d3d_info, enum wined3d_blit_op blit_op,
-        DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format,
-        DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format)
+        DWORD src_usage, enum wined3d_pool src_pool, const struct wined3d_format *src_format, DWORD src_location,
+        DWORD dst_usage, enum wined3d_pool dst_pool, const struct wined3d_format *dst_format, DWORD dst_location)
 {
     BOOL decompress;
 
@@ -2521,8 +2521,16 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
             if (!is_identity_fixup(src_format->color_fixup)
                     || !is_identity_fixup(dst_format->color_fixup))
             {
-                TRACE("Fixups are not supported.\n");
-                return FALSE;
+                if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER
+                        && dst_format->id == src_format->id && dst_location == WINED3D_LOCATION_DRAWABLE)
+                {
+                    WARN("Claiming fixup support because of ORM_BACKBUFFER.\n");
+                }
+                else
+                {
+                    TRACE("Fixups are not supported.\n");
+                    return FALSE;
+                }
             }
 
             if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
@@ -2632,8 +2640,8 @@ static void ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
     device = dst_resource->device;
 
     if (!ffp_blit_supported(&device->adapter->gl_info, &device->adapter->d3d_info, op,
-            src_resource->usage, src_resource->pool, src_resource->format,
-            dst_resource->usage, dst_resource->pool, dst_resource->format))
+            src_resource->usage, src_resource->pool, src_resource->format, src_location,
+            dst_resource->usage, dst_resource->pool, dst_resource->format, dst_location))
     {
         if ((next = blitter->next))
             next->ops->blitter_blit(next, op, context, src_surface, src_location,
