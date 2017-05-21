@@ -5055,12 +5055,30 @@ static void test_finditem(void)
     fi.psz = f;
     r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
     expect(0, r);
+
+    fi.flags = LVFI_STRING | LVFI_PARTIAL;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+
+    fi.flags = LVFI_PARTIAL;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+
     /* partial string search, inserted text was "foo" */
     strcpy(f, "fo");
     fi.flags = LVFI_STRING | LVFI_PARTIAL;
     fi.psz = f;
     r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
     expect(0, r);
+
+    fi.flags = LVFI_STRING;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(-1, r);
+
+    fi.flags = LVFI_PARTIAL;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+
     /* partial string search, part after start char */
     strcpy(f, "oo");
     fi.flags = LVFI_STRING | LVFI_PARTIAL;
@@ -5091,9 +5109,19 @@ static void test_finditem(void)
     r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
     expect(-1, r);
 
+    strcpy(f, "o");
+    fi.flags = LVFI_SUBSTRING | LVFI_PARTIAL;
+    fi.psz = f;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(-1, r);
+
     strcpy(f, "f");
     fi.flags = LVFI_SUBSTRING | LVFI_STRING;
     fi.psz = f;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    expect(0, r);
+
+    fi.flags = LVFI_SUBSTRING | LVFI_PARTIAL;
     r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
     expect(0, r);
 
