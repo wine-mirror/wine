@@ -400,11 +400,16 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 	        LPNMLVDISPINFOW dispInfo = (LPNMLVDISPINFOW)lParam;
 		LPWSTR oldName = GetItemText(hWnd, dispInfo->item.iItem);
                 LONG ret;
+                LVITEMW item;
+
                 if (!oldName) return -1; /* cannot rename a default value */
 	        ret = RenameValue(hWnd, g_currentRootKey, g_currentPath, oldName, dispInfo->item.pszText);
 		if (ret)
                 {
                     RefreshListView(hWnd, g_currentRootKey, g_currentPath, dispInfo->item.pszText);
+                    item.state = LVIS_FOCUSED | LVIS_SELECTED;
+                    item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+                    SendMessageW(hWnd, LVM_SETITEMSTATE, dispInfo->item.iItem, (LPARAM)&item);
                 }
 		HeapFree(GetProcessHeap(), 0, oldName);
 		return 0;
