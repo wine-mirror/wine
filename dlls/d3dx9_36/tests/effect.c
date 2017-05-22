@@ -4466,116 +4466,290 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     effect->lpVtbl->Release(effect);
 }
 
-struct test_preshader_op_def
+/*
+ * fxc.exe /Tfx_2_0
+ */
+#if 0
+float4 opvect1;
+float4 opvect2;
+float4 opvect3;
+
+technique tech0
 {
-    const char *mnem;
-    unsigned int opcode;
-    unsigned int args_count;
-    unsigned int expected_result[4];
-    D3DXVECTOR4 fvect1, fvect2;
-    unsigned int ulps;
-    BOOL todo[4];
+    pass p0
+    {
+        LightEnable[0] = TRUE;
+        LightEnable[1] = TRUE;
+        LightEnable[2] = TRUE;
+        LightEnable[3] = TRUE;
+        LightEnable[4] = TRUE;
+        LightEnable[5] = TRUE;
+        LightEnable[6] = TRUE;
+        LightEnable[7] = TRUE;
+        LightType[0] = POINT;
+        LightType[1] = POINT;
+        LightType[2] = POINT;
+        LightType[3] = POINT;
+        LightType[4] = POINT;
+        LightType[5] = POINT;
+        LightType[6] = POINT;
+        LightType[7] = POINT;
+
+        LightDiffuse[0] = exp(opvect1);
+        LightDiffuse[1] = log(opvect1);
+        LightDiffuse[2] = asin(opvect1);
+        LightDiffuse[3] = acos(opvect1);
+        LightDiffuse[4] = atan(opvect1);
+        LightDiffuse[5] = atan2(opvect1, opvect2);
+        LightDiffuse[6] = opvect1 * opvect2;
+
+       /* Placeholder for 'div' instruction manually edited in binary blob. */
+        LightDiffuse[7] = opvect1 * opvect2;
+
+       /* Placeholder for 'cmp' instruction manually edited in binary blob. */
+        LightAmbient[0] = opvect1 + opvect2 + opvect3;
+    }
+}
+#endif
+static const DWORD test_effect_preshader_ops_blob[] =
+{
+    0xfeff0901, 0x0000044c, 0x00000000, 0x00000003, 0x00000001, 0x00000030, 0x00000000, 0x00000000,
+    0x00000004, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000008, 0x6576706f,
+    0x00317463, 0x00000003, 0x00000001, 0x00000068, 0x00000000, 0x00000000, 0x00000004, 0x00000001,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000008, 0x6576706f, 0x00327463, 0x00000003,
+    0x00000001, 0x000000a0, 0x00000000, 0x00000000, 0x00000004, 0x00000001, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000008, 0x6576706f, 0x00337463, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000004, 0x00000001,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00000002, 0x00000000, 0x00000000,
+    0x00000000, 0x00000004, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000003,
+    0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000004, 0x00000001, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000004,
+    0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00000002, 0x00000000,
+    0x00000000, 0x00000000, 0x00000004, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000004, 0x00000001, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000,
+    0x00000004, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
+    0x00000000, 0x00000000, 0x00000000, 0x00000004, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000003, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000004, 0x00000001,
+    0x00000003, 0x00003070, 0x00000006, 0x68636574, 0x00000030, 0x00000003, 0x00000001, 0x00000001,
+    0x00000001, 0x00000004, 0x00000020, 0x00000000, 0x00000000, 0x0000003c, 0x00000058, 0x00000000,
+    0x00000000, 0x00000074, 0x00000090, 0x00000000, 0x00000000, 0x00000440, 0x00000000, 0x00000001,
+    0x00000438, 0x00000000, 0x00000019, 0x00000091, 0x00000000, 0x000000b0, 0x000000ac, 0x00000091,
+    0x00000001, 0x000000d0, 0x000000cc, 0x00000091, 0x00000002, 0x000000f0, 0x000000ec, 0x00000091,
+    0x00000003, 0x00000110, 0x0000010c, 0x00000091, 0x00000004, 0x00000130, 0x0000012c, 0x00000091,
+    0x00000005, 0x00000150, 0x0000014c, 0x00000091, 0x00000006, 0x00000170, 0x0000016c, 0x00000091,
+    0x00000007, 0x00000190, 0x0000018c, 0x00000084, 0x00000000, 0x000001b0, 0x000001ac, 0x00000084,
+    0x00000001, 0x000001d0, 0x000001cc, 0x00000084, 0x00000002, 0x000001f0, 0x000001ec, 0x00000084,
+    0x00000003, 0x00000210, 0x0000020c, 0x00000084, 0x00000004, 0x00000230, 0x0000022c, 0x00000084,
+    0x00000005, 0x00000250, 0x0000024c, 0x00000084, 0x00000006, 0x00000270, 0x0000026c, 0x00000084,
+    0x00000007, 0x00000290, 0x0000028c, 0x00000085, 0x00000000, 0x000002bc, 0x000002ac, 0x00000085,
+    0x00000001, 0x000002e8, 0x000002d8, 0x00000085, 0x00000002, 0x00000314, 0x00000304, 0x00000085,
+    0x00000003, 0x00000340, 0x00000330, 0x00000085, 0x00000004, 0x0000036c, 0x0000035c, 0x00000085,
+    0x00000005, 0x00000398, 0x00000388, 0x00000085, 0x00000006, 0x000003c4, 0x000003b4, 0x00000085,
+    0x00000007, 0x000003f0, 0x000003e0, 0x00000087, 0x00000000, 0x0000041c, 0x0000040c, 0x00000000,
+    0x00000009, 0x00000000, 0x00000000, 0xffffffff, 0x00000018, 0x00000000, 0x0000016c, 0x46580200,
+    0x003afffe, 0x42415443, 0x0000001c, 0x000000b3, 0x46580200, 0x00000003, 0x0000001c, 0x20000100,
+    0x000000b0, 0x00000058, 0x00000002, 0x00000001, 0x00000060, 0x00000070, 0x00000080, 0x00010002,
+    0x00000001, 0x00000088, 0x00000070, 0x00000098, 0x00020002, 0x00000001, 0x000000a0, 0x00000070,
+    0x6576706f, 0x00317463, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x6576706f, 0x00327463, 0x00030001, 0x00040001, 0x00000001, 0x00000000,
+    0x6576706f, 0x00337463, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x4d007874, 0x6f726369,
+    0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
+    0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000,
+    /* FXLC for LightAmbient[0] start. */
+    0x001afffe, 0x434c5846,
+    0x00000001, /* Instruction count, set to 1. */
+    0x30000004, /* Operation code (bits 20-30) set to 'cmp' opcode 0x300. */
+    0x00000003, /* Input arguments count set to 3. */
+    /* Argument 1. */
+    0x00000000, /* Relative addressing flag. */
+    0x00000002, /* Register table ("c", float constants). */
+    0x00000000, /* Register offset. */
+    /* Argument 2. */
+    0x00000000, 0x00000002, 0x00000004,
+    /* Argument 3. */
+    0x00000000, 0x00000002, 0x00000008,
+    /* Output register. */
+    0x00000000, 0x00000004, 0x00000000,
+    /* End mark. */
+    0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+    /* Padding to match placeholder length. */
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    /* FXLC for LightAmbient[0] end. */
+    0x00000000, 0x00000000, 0xffffffff, 0x00000017, 0x00000000, 0x00000114,
+    0x46580200, 0x002ffffe, 0x42415443, 0x0000001c, 0x00000087, 0x46580200, 0x00000002, 0x0000001c,
+    0x20000100, 0x00000084, 0x00000044, 0x00000002, 0x00000001, 0x0000004c, 0x0000005c, 0x0000006c,
+    0x00010002, 0x00000001, 0x00000074, 0x0000005c, 0x6576706f, 0x00317463, 0x00030001, 0x00040001,
+    0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6576706f, 0x00327463,
+    0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820,
+    0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235,
+    0x00313131, 0x0002fffe, 0x54494c43, 0x00000000,
+    /* FXLC for LightDiffuse[7] start. */
+    0x000ffffe, 0x434c5846,
+    0x00000001, /* Instruction count. */
+    0x20800004, /* Operation code (bits 20-30) set to 'div' opcode 0x208. */
+    0x00000002, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000002, 0x00000004, 0x00000000,
+    0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+    /* FXLC for LightDiffuse[7] end. */
+    0x00000000, 0x00000000, 0xffffffff,
+    0x00000016, 0x00000000, 0x00000114, 0x46580200, 0x002ffffe, 0x42415443, 0x0000001c, 0x00000087,
+    0x46580200, 0x00000002, 0x0000001c, 0x20000100, 0x00000084, 0x00000044, 0x00000002, 0x00000001,
+    0x0000004c, 0x0000005c, 0x0000006c, 0x00010002, 0x00000001, 0x00000074, 0x0000005c, 0x6576706f,
+    0x00317463, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x6576706f, 0x00327463, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x4d007874,
+    0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970,
+    0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000, 0x000ffffe,
+    0x434c5846, 0x00000001, 0x20500004, 0x00000002, 0x00000000, 0x00000002, 0x00000000, 0x00000000,
+    0x00000002, 0x00000004, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+    0x00000000, 0x00000000, 0xffffffff, 0x00000015, 0x00000000, 0x00000114, 0x46580200, 0x002ffffe,
+    0x42415443, 0x0000001c, 0x00000087, 0x46580200, 0x00000002, 0x0000001c, 0x20000100, 0x00000084,
+    0x00000044, 0x00000002, 0x00000001, 0x0000004c, 0x0000005c, 0x0000006c, 0x00010002, 0x00000001,
+    0x00000074, 0x0000005c, 0x6576706f, 0x00317463, 0x00030001, 0x00040001, 0x00000001, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6576706f, 0x00327463, 0x00030001, 0x00040001,
+    0x00000001, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c,
+    0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe,
+    0x54494c43, 0x00000000, 0x000ffffe, 0x434c5846, 0x00000001, 0x20600004, 0x00000002, 0x00000000,
+    0x00000002, 0x00000000, 0x00000000, 0x00000002, 0x00000004, 0x00000000, 0x00000004, 0x00000000,
+    0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000000, 0x00000000, 0xffffffff, 0x00000014, 0x00000000,
+    0x000000dc, 0x46580200, 0x0024fffe, 0x42415443, 0x0000001c, 0x0000005b, 0x46580200, 0x00000001,
+    0x0000001c, 0x20000100, 0x00000058, 0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000048,
+    0x6576706f, 0x00317463, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c,
+    0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe,
+    0x54494c43, 0x00000000, 0x000cfffe, 0x434c5846, 0x00000001, 0x10c00004, 0x00000001, 0x00000000,
+    0x00000002, 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
+    0x00000000, 0x00000000, 0xffffffff, 0x00000013, 0x00000000, 0x000000dc, 0x46580200, 0x0024fffe,
+    0x42415443, 0x0000001c, 0x0000005b, 0x46580200, 0x00000001, 0x0000001c, 0x20000100, 0x00000058,
+    0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000048, 0x6576706f, 0x00317463, 0x00030001,
+    0x00040001, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x4d007874,
+    0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970,
+    0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000, 0x000cfffe,
+    0x434c5846, 0x00000001, 0x10b00004, 0x00000001, 0x00000000, 0x00000002, 0x00000000, 0x00000000,
+    0x00000004, 0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000000, 0x00000000, 0xffffffff,
+    0x00000012, 0x00000000, 0x000000dc, 0x46580200, 0x0024fffe, 0x42415443, 0x0000001c, 0x0000005b,
+    0x46580200, 0x00000001, 0x0000001c, 0x20000100, 0x00000058, 0x00000030, 0x00000002, 0x00000001,
+    0x00000038, 0x00000048, 0x6576706f, 0x00317463, 0x00030001, 0x00040001, 0x00000001, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820,
+    0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235,
+    0x00313131, 0x0002fffe, 0x54494c43, 0x00000000, 0x000cfffe, 0x434c5846, 0x00000001, 0x10a00004,
+    0x00000001, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0xf0f0f0f0,
+    0x0f0f0f0f, 0x0000ffff, 0x00000000, 0x00000000, 0xffffffff, 0x00000011, 0x00000000, 0x0000013c,
+    0x46580200, 0x0024fffe, 0x42415443, 0x0000001c, 0x0000005b, 0x46580200, 0x00000001, 0x0000001c,
+    0x20000100, 0x00000058, 0x00000030, 0x00000002, 0x00000001, 0x00000038, 0x00000048, 0x6576706f,
+    0x00317463, 0x00030001, 0x00040001, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x4d007874, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461,
+    0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43,
+    0x00000000, 0x0024fffe, 0x434c5846, 0x00000004, 0x10600001, 0x00000001, 0x00000000, 0x00000002,
+    0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x10600001, 0x00000001, 0x00000000, 0x00000002,
+    0x00000001, 0x00000000, 0x00000004, 0x00000001, 0x10600001, 0x00000001, 0x00000000, 0x00000002,
+    0x00000002, 0x00000000, 0x00000004, 0x00000002, 0x10600001, 0x00000001, 0x00000000, 0x00000002,
+    0x00000003, 0x00000000, 0x00000004, 0x00000003, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000000,
+    0x00000000, 0xffffffff, 0x00000010, 0x00000000, 0x0000013c, 0x46580200, 0x0024fffe, 0x42415443,
+    0x0000001c, 0x0000005b, 0x46580200, 0x00000001, 0x0000001c, 0x20000100, 0x00000058, 0x00000030,
+    0x00000002, 0x00000001, 0x00000038, 0x00000048, 0x6576706f, 0x00317463, 0x00030001, 0x00040001,
+    0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x4d007874, 0x6f726369,
+    0x74666f73, 0x29522820, 0x534c4820, 0x6853204c, 0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072,
+    0x392e3932, 0x332e3235, 0x00313131, 0x0002fffe, 0x54494c43, 0x00000000, 0x0024fffe, 0x434c5846,
+    0x00000004, 0x10500001, 0x00000001, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000004,
+    0x00000000, 0x10500001, 0x00000001, 0x00000000, 0x00000002, 0x00000001, 0x00000000, 0x00000004,
+    0x00000001, 0x10500001, 0x00000001, 0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x00000004,
+    0x00000002, 0x10500001, 0x00000001, 0x00000000, 0x00000002, 0x00000003, 0x00000000, 0x00000004,
+    0x00000003, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff,
 };
 
-static void test_preshader_op(IDirect3DDevice9 *device, const DWORD *sample_effect_blob,
-        unsigned int sample_effect_blob_size, const struct test_preshader_op_def *test)
+static void test_effect_preshader_ops(IDirect3DDevice9 *device)
 {
+    static D3DLIGHT9 light;
     static const struct
     {
-        unsigned int pos;
+        const char *mnem;
+        unsigned int expected_result[4];
         unsigned int result_index;
-        unsigned int ins_count;
+        float *result;
+        D3DXVECTOR4 opvect1, opvect2, opvect3;
+        unsigned int ulps;
+        BOOL todo[4];
     }
-    blob_position[] =
+    op_tests[] =
     {
-        {0, 0, 0},
-        {5549, 0, 4},
-        {5400, 2, 1}
+        {"exp", {0x3f800000, 0x3f800000, 0x3e5edc66, 0x7f800000}, 0, &light.Diffuse.r,
+                {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
+        {"log", {0, 0x40000000, 0x3f9199b7, 0x43000000}, 1, &light.Diffuse.r,
+                {0.0f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
+        {"asin", {0xbe9c00ad, 0xffc00000, 0xffc00000, 0xffc00000}, 2, &light.Diffuse.r,
+                {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
+        {"acos", {0x3ff01006, 0xffc00000, 0xffc00000, 0xffc00000}, 3, &light.Diffuse.r,
+                {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
+        {"atan", {0xbe9539d4, 0x3fa9b465, 0xbf927420, 0x3fc90fdb}, 4, &light.Diffuse.r,
+                {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
+        {"atan2 test #1", {0xbfc90fdb, 0x40490fdb, 0x80000000, 0x7fc00000}, 5, &light.Diffuse.r,
+                {-0.3f, 0.0f, -0.0f, NAN}, {0.0f, -0.0f, 0.0f, 1.0f}},
+        {"atan2 test #2", {0xbfc90fdb, 0, 0xc0490fdb, 0}, 5, &light.Diffuse.r,
+                {-0.3f, 0.0f, -0.0f, -0.0f}, {-0.0f, 0.0f, -0.0f, 1.0f}},
+        {"div", {0, 0, 0, 0}, 7, &light.Diffuse.r,
+                {-0.3f, 0.0f, -2.2f, NAN}, {0.0f, -0.0f, -3.0f, 1.0f}},
+        {"cmp", {0x40a00000, 0x40000000, 0x40400000, 0x41000000}, 0, &light.Ambient.r,
+                {-0.3f, 0.0f, 2.2f, NAN}, {1.0f, 2.0f, 3.0f, 4.0f}, {5.0f, 6.0f, 7.0f, 8.0f}},
+        {"0 * INF", {0xffc00000, 0xffc00000, 0xc0d33334, 0x7f800000}, 6, &light.Diffuse.r,
+                {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {INFINITY, INFINITY, 3.0f, 4.0f}},
     };
-    DWORD *test_effect_blob;
-    HRESULT hr;
+    unsigned int i, j, passes_count;
     ID3DXEffect *effect;
-    D3DLIGHT9 light;
-    unsigned int i, passes_count;
-    float *v;
-    unsigned int op_pos, op_step;
-    D3DXHANDLE param;
+    HRESULT hr;
 
-    op_step = 2 + (test->args_count + 1) * 3;
-    op_pos = blob_position[test->args_count].pos;
-
-    test_effect_blob = HeapAlloc(GetProcessHeap(), 0, sample_effect_blob_size);
-    memcpy(test_effect_blob, sample_effect_blob, sample_effect_blob_size);
-    for (i = 0; i < blob_position[test->args_count].ins_count; ++i)
-        test_effect_blob[op_pos + i * op_step] = test->opcode;
-
-    hr = D3DXCreateEffect(device, test_effect_blob, sample_effect_blob_size,
+    hr = D3DXCreateEffect(device, test_effect_preshader_ops_blob, sizeof(test_effect_preshader_ops_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-
-    param = effect->lpVtbl->GetParameterByName(effect, NULL, "opvect1");
-    ok(!!param, "GetParameterByName failed.\n");
-    hr = effect->lpVtbl->SetVector(effect, param, &test->fvect1);
-    ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
-
-    if (test->args_count > 1)
-    {
-        param = effect->lpVtbl->GetParameterByName(effect, NULL, "opvect2");
-        ok(!!param, "GetParameterByName failed.\n");
-        hr = effect->lpVtbl->SetVector(effect, param, &test->fvect2);
-        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
-    }
-
     hr = effect->lpVtbl->BeginPass(effect, 0);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
 
-    hr = IDirect3DDevice9_GetLight(device, blob_position[test->args_count].result_index, &light);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    v = &light.Diffuse.r;
-    for (i = 0; i < 4; ++i)
-        todo_wine_if(test->todo[i])
-        ok(compare_float(v[i], ((float *)test->expected_result)[i], test->ulps),
-                "Operation %s, component %u, expected %#x (%g), got %#x (%g).\n", test->mnem, i,
-                test->expected_result[i], ((float *)test->expected_result)[i], ((unsigned int *)v)[i], v[i]);
+    for (i = 0; i < ARRAY_SIZE(op_tests); ++i)
+    {
+        const float *result = op_tests[i].result;
+        const float *expected_float = (float *)op_tests[i].expected_result;
 
-    hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        hr = effect->lpVtbl->SetVector(effect, "opvect1", &op_tests[i].opvect1);
+        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+        hr = effect->lpVtbl->SetVector(effect, "opvect2", &op_tests[i].opvect2);
+        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+        hr = effect->lpVtbl->SetVector(effect, "opvect3", &op_tests[i].opvect3);
+        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+        hr = effect->lpVtbl->CommitChanges(effect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        hr = IDirect3DDevice9_GetLight(device, op_tests[i].result_index, &light);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        for (j = 0; j < 4; ++j)
+        {
+            todo_wine_if(op_tests[i].todo[j])
+            ok(compare_float(result[j], expected_float[j], op_tests[i].ulps),
+                    "Operation %s, component %u, expected %#x (%.8e), got %#x (%.8e).\n", op_tests[i].mnem,
+                    j, op_tests[i].expected_result[j], expected_float[j],
+                    ((unsigned int *)result)[j], result[j]);
+        }
+    }
+
     hr = effect->lpVtbl->End(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     effect->lpVtbl->Release(effect);
-    HeapFree(GetProcessHeap(), 0, test_effect_blob);
-}
-
-static void test_effect_preshader_ops(IDirect3DDevice9 *device)
-{
-    const struct test_preshader_op_def op_tests[] =
-    {
-        {"exp", 0x10500001, 1, {0x3f800000, 0x3f800000, 0x3e5edc66, 0x7f800000},
-                {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
-        {"log", 0x10600001, 1, {0, 0x40000000, 0x3f9199b7, 0x43000000},
-                {0.0f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
-        {"asin", 0x10a00001, 1, {0xbe9c00ad, 0xffc00000, 0xffc00000, 0xffc00000},
-                {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
-        {"acos", 0x10b00001, 1, {0x3ff01006, 0xffc00000, 0xffc00000, 0xffc00000},
-                {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
-        {"atan", 0x10c00001, 1, {0xbe9539d4, 0x3fa9b465, 0xbf927420, 0x3fc90fdb},
-                {-0.3f, 4.0f, -2.2f, 3.402823466e+38f}, {1.0f, 2.0f, -3.0f, 4.0f}},
-        {"atan2 test #1", 0x20600004, 2, {0xbfc90fdb, 0x40490fdb, 0x80000000, 0x7fc00000},
-                {-0.3f, 0.0f, -0.0f, NAN}, {0.0f, -0.0f, 0.0f, 1.0f}},
-        {"atan2 test #2", 0x20600004, 2, {0xbfc90fdb, 0, 0xc0490fdb, 0},
-                {-0.3f, 0.0f, -0.0f, -0.0f}, {-0.0f, 0.0f, -0.0f, 1.0f}},
-        {"div", 0x20800004, 2, {0, 0, 0, 0},
-                {-0.3f, 0.0f, -2.2f, NAN}, {0.0f, -0.0f, -3.0f, 1.0f}},
-        {"0 * INF", 0x20500004, 2, {0xffc00000, 0xffc00000, 0xc0d33334, 0x7f800000},
-                {0.0f, -0.0f, -2.2f, 3.402823466e+38f}, {INFINITY, INFINITY, 3.0f, 4.0f}},
-    };
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(op_tests); ++i)
-        test_preshader_op(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
-                &op_tests[i]);
 }
 
 static void test_isparameterused_children(unsigned int line, ID3DXEffect *effect,
