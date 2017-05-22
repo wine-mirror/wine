@@ -102,7 +102,7 @@ static double pres_ge(double *args, int n)  {return args[0] >= args[1] ? 1.0 : 0
 static double pres_frc(double *args, int n) {return args[0] - floor(args[0]);}
 static double pres_min(double *args, int n) {return fmin(args[0], args[1]);}
 static double pres_max(double *args, int n) {return fmax(args[0], args[1]);}
-static double pres_cmp(double *args, int n) {return args[0] < 0.0 ? args[2] : args[1];}
+static double pres_cmp(double *args, int n) {return args[0] >= 0.0 ? args[1] : args[2];}
 static double pres_sin(double *args, int n) {return sin(args[0]);}
 static double pres_cos(double *args, int n) {return cos(args[0]);}
 static double pres_rsq(double *args, int n)
