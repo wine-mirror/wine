@@ -409,24 +409,14 @@ static RPC_STATUS rpcrt4_ncalrpc_handoff(RpcConnection *old_conn, RpcConnection 
   return status;
 }
 
-static int rpcrt4_conn_np_read(RpcConnection *Connection,
-                        void *buffer, unsigned int count)
+static int rpcrt4_conn_np_read(RpcConnection *conn, void *buffer, unsigned int count)
 {
-  RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  IO_STATUS_BLOCK io_status;
-  char *buf = buffer;
-  unsigned int bytes_left = count;
-  NTSTATUS status;
+    RpcConnection_np *connection = (RpcConnection_np *) conn;
+    IO_STATUS_BLOCK io_status;
+    NTSTATUS status;
 
-  while (bytes_left)
-  {
-    status = NtReadFile(npc->pipe, NULL, NULL, NULL, &io_status, buf, bytes_left, NULL, NULL);
-    if (status && status != STATUS_BUFFER_OVERFLOW)
-      return -1;
-    bytes_left -= io_status.Information;
-    buf += io_status.Information;
-  }
-  return count;
+    status = NtReadFile(connection->pipe, NULL, NULL, NULL, &io_status, buffer, count, NULL, NULL);
+    return status && status != STATUS_BUFFER_OVERFLOW ? -1 : io_status.Information;
 }
 
 static int rpcrt4_conn_np_write(RpcConnection *conn, const void *buffer, unsigned int count)
