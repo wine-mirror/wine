@@ -75,6 +75,16 @@ static RpcConnection *rpcrt4_conn_np_alloc(void)
   return &npc->common;
 }
 
+static HANDLE get_np_event(void)
+{
+    return CreateEventW(NULL, TRUE, FALSE, NULL);
+}
+
+static void release_np_event(HANDLE event)
+{
+    CloseHandle(event);
+}
+
 static DWORD CALLBACK listen_thread(void *arg)
 {
   RpcConnection_np *npc = arg;
@@ -123,7 +133,7 @@ static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pnam
   RpcConnection_np *npc = (RpcConnection_np *) Connection;
   TRACE("listening on %s\n", pname);
 
-  npc->pipe = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX,
+  npc->pipe = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
                                PIPE_UNLIMITED_INSTANCES,
                                RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
@@ -175,7 +185,7 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
             dwFlags |= SECURITY_CONTEXT_TRACKING;
     }
     pipe = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                       OPEN_EXISTING, dwFlags, 0);
+                       OPEN_EXISTING, dwFlags | FILE_FLAG_OVERLAPPED, 0);
     if (pipe != INVALID_HANDLE_VALUE) break;
     err = GetLastError();
     if (err == ERROR_PIPE_BUSY) {
@@ -413,9 +423,20 @@ static int rpcrt4_conn_np_read(RpcConnection *conn, void *buffer, unsigned int c
 {
     RpcConnection_np *connection = (RpcConnection_np *) conn;
     IO_STATUS_BLOCK io_status;
+    HANDLE event;
     NTSTATUS status;
 
-    status = NtReadFile(connection->pipe, NULL, NULL, NULL, &io_status, buffer, count, NULL, NULL);
+    event = get_np_event();
+    if (!event)
+        return -1;
+
+    status = NtReadFile(connection->pipe, event, NULL, NULL, &io_status, buffer, count, NULL, NULL);
+    if (status == STATUS_PENDING)
+    {
+        WaitForSingleObject(event, INFINITE);
+        status = io_status.Status;
+    }
+    release_np_event(event);
     return status && status != STATUS_BUFFER_OVERFLOW ? -1 : io_status.Information;
 }
 
@@ -423,9 +444,20 @@ static int rpcrt4_conn_np_write(RpcConnection *conn, const void *buffer, unsigne
 {
     RpcConnection_np *connection = (RpcConnection_np *) conn;
     IO_STATUS_BLOCK io_status;
+    HANDLE event;
     NTSTATUS status;
 
-    status = NtWriteFile(connection->pipe, NULL, NULL, NULL, &io_status, buffer, count, NULL, NULL);
+    event = get_np_event();
+    if (!event)
+        return -1;
+
+    status = NtWriteFile(connection->pipe, event, NULL, NULL, &io_status, buffer, count, NULL, NULL);
+    if (status == STATUS_PENDING)
+    {
+        WaitForSingleObject(event, INFINITE);
+        status = io_status.Status;
+    }
+    release_np_event(event);
     if (status)
         return -1;
 
