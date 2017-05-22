@@ -38,6 +38,7 @@
 #include "winerror.h"
 #include "wininet.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "wine/unicode.h"
 
 #include "rpc.h"
@@ -63,10 +64,10 @@ static RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnecti
 
 typedef struct _RpcConnection_np
 {
-  RpcConnection common;
-  HANDLE pipe;
-  HANDLE listen_thread;
-  BOOL listening;
+    RpcConnection common;
+    HANDLE pipe;
+    HANDLE listen_event;
+    IO_STATUS_BLOCK io_status;
 } RpcConnection_np;
 
 static RpcConnection *rpcrt4_conn_np_alloc(void)
@@ -83,49 +84,6 @@ static HANDLE get_np_event(void)
 static void release_np_event(HANDLE event)
 {
     CloseHandle(event);
-}
-
-static DWORD CALLBACK listen_thread(void *arg)
-{
-  RpcConnection_np *npc = arg;
-  for (;;)
-  {
-      if (ConnectNamedPipe(npc->pipe, NULL))
-          return RPC_S_OK;
-
-      switch(GetLastError())
-      {
-      case ERROR_PIPE_CONNECTED:
-          return RPC_S_OK;
-      case ERROR_HANDLES_CLOSED:
-          /* connection closed during listen */
-          return RPC_S_NO_CONTEXT_AVAILABLE;
-      case ERROR_NO_DATA_DETECTED:
-          /* client has disconnected, retry */
-          DisconnectNamedPipe( npc->pipe );
-          break;
-      default:
-          npc->listening = FALSE;
-          WARN("Couldn't ConnectNamedPipe (error was %d)\n", GetLastError());
-          return RPC_S_OUT_OF_RESOURCES;
-      }
-  }
-}
-
-static RPC_STATUS rpcrt4_conn_listen_pipe(RpcConnection_np *npc)
-{
-  if (npc->listening)
-    return RPC_S_OK;
-
-  npc->listening = TRUE;
-  npc->listen_thread = CreateThread(NULL, 0, listen_thread, npc, 0, NULL);
-  if (!npc->listen_thread)
-  {
-      npc->listening = FALSE;
-      ERR("Couldn't create listen thread (error was %d)\n", GetLastError());
-      return RPC_S_OUT_OF_RESOURCES;
-  }
-  return RPC_S_OK;
 }
 
 static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pname)
@@ -333,14 +291,12 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
 
 static void rpcrt4_conn_np_handoff(RpcConnection_np *old_npc, RpcConnection_np *new_npc)
 {    
-  /* because of the way named pipes work, we'll transfer the connected pipe
-   * to the child, then reopen the server binding to continue listening */
+    /* because of the way named pipes work, we'll transfer the connected pipe
+     * to the child, then reopen the server binding to continue listening */
 
-  new_npc->pipe = old_npc->pipe;
-  new_npc->listen_thread = old_npc->listen_thread;
-  old_npc->pipe = 0;
-  old_npc->listen_thread = 0;
-  old_npc->listening = FALSE;
+    new_npc->pipe = old_npc->pipe;
+    old_npc->pipe = 0;
+    assert(!old_npc->listen_event);
 }
 
 static RPC_STATUS rpcrt4_ncacn_np_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
@@ -465,19 +421,21 @@ static int rpcrt4_conn_np_write(RpcConnection *conn, const void *buffer, unsigne
     return count;
 }
 
-static int rpcrt4_conn_np_close(RpcConnection *Connection)
+static int rpcrt4_conn_np_close(RpcConnection *conn)
 {
-  RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  if (npc->pipe) {
-    FlushFileBuffers(npc->pipe);
-    CloseHandle(npc->pipe);
-    npc->pipe = 0;
-  }
-  if (npc->listen_thread) {
-    CloseHandle(npc->listen_thread);
-    npc->listen_thread = 0;
-  }
-  return 0;
+    RpcConnection_np *connection = (RpcConnection_np *) conn;
+    if (connection->pipe)
+    {
+        FlushFileBuffers(connection->pipe);
+        CloseHandle(connection->pipe);
+        connection->pipe = 0;
+    }
+    if (connection->listen_event)
+    {
+        CloseHandle(connection->listen_event);
+        connection->listen_event = 0;
+    }
+    return 0;
 }
 
 static void rpcrt4_conn_np_cancel_call(RpcConnection *Connection)
@@ -677,9 +635,33 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     /* open and count connections */
     *count = 1;
     LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
-        rpcrt4_conn_listen_pipe(conn);
-        if (conn->listen_thread)
-            (*count)++;
+        if (!conn->listen_event)
+        {
+            NTSTATUS status;
+            HANDLE event;
+
+            event = get_np_event();
+            if (!event)
+                continue;
+
+            status = NtFsControlFile(conn->pipe, event, NULL, NULL, &conn->io_status, FSCTL_PIPE_LISTEN, NULL, 0, NULL, 0);
+            switch (status)
+            {
+            case STATUS_SUCCESS:
+            case STATUS_PIPE_CONNECTED:
+                conn->io_status.Status = status;
+                SetEvent(event);
+                break;
+            case STATUS_PENDING:
+                break;
+            default:
+                ERR("pipe listen error %x\n", status);
+                continue;
+            }
+
+            conn->listen_event = event;
+        }
+        (*count)++;
     }
     
     /* make array of connections */
@@ -697,8 +679,8 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     objs[0] = npps->mgr_event;
     *count = 1;
     LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
-        if ((objs[*count] = conn->listen_thread))
-            (*count)++;
+        if (conn->listen_event)
+            objs[(*count)++] = conn->listen_event;
     }
     LeaveCriticalSection(&protseq->cs);
     return objs;
@@ -741,13 +723,16 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         b_handle = objs[res - WAIT_OBJECT_0];
         /* find which connection got a RPC */
         EnterCriticalSection(&protseq->cs);
-        LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
-            if (b_handle == conn->listen_thread) {
-                DWORD exit_code;
-                if (GetExitCodeThread(conn->listen_thread, &exit_code) && exit_code == RPC_S_OK)
+        LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry)
+        {
+            if (b_handle == conn->listen_event)
+            {
+                release_np_event(conn->listen_event);
+                conn->listen_event = NULL;
+                if (conn->io_status.Status == STATUS_SUCCESS || conn->io_status.Status == STATUS_PIPE_CONNECTED)
                     RPCRT4_SpawnConnection(&cconn, &conn->common);
-                CloseHandle(conn->listen_thread);
-                conn->listen_thread = 0;
+                else
+                    ERR("listen failed %x\n", conn->io_status.Status);
                 break;
             }
         }
