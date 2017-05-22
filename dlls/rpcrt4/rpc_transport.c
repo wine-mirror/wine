@@ -68,6 +68,7 @@ typedef struct _RpcConnection_np
     HANDLE pipe;
     HANDLE listen_event;
     IO_STATUS_BLOCK io_status;
+    HANDLE event_cache;
 } RpcConnection_np;
 
 static RpcConnection *rpcrt4_conn_np_alloc(void)
@@ -76,14 +77,17 @@ static RpcConnection *rpcrt4_conn_np_alloc(void)
   return &npc->common;
 }
 
-static HANDLE get_np_event(void)
+static HANDLE get_np_event(RpcConnection_np *connection)
 {
-    return CreateEventW(NULL, TRUE, FALSE, NULL);
+    HANDLE event = InterlockedExchangePointer(&connection->event_cache, NULL);
+    return event ? event : CreateEventW(NULL, TRUE, FALSE, NULL);
 }
 
-static void release_np_event(HANDLE event)
+static void release_np_event(RpcConnection_np *connection, HANDLE event)
 {
-    CloseHandle(event);
+    event = InterlockedExchangePointer(&connection->event_cache, event);
+    if (event)
+        CloseHandle(event);
 }
 
 static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pname)
@@ -382,7 +386,7 @@ static int rpcrt4_conn_np_read(RpcConnection *conn, void *buffer, unsigned int c
     HANDLE event;
     NTSTATUS status;
 
-    event = get_np_event();
+    event = get_np_event(connection);
     if (!event)
         return -1;
 
@@ -392,7 +396,7 @@ static int rpcrt4_conn_np_read(RpcConnection *conn, void *buffer, unsigned int c
         WaitForSingleObject(event, INFINITE);
         status = io_status.Status;
     }
-    release_np_event(event);
+    release_np_event(connection, event);
     return status && status != STATUS_BUFFER_OVERFLOW ? -1 : io_status.Information;
 }
 
@@ -403,7 +407,7 @@ static int rpcrt4_conn_np_write(RpcConnection *conn, const void *buffer, unsigne
     HANDLE event;
     NTSTATUS status;
 
-    event = get_np_event();
+    event = get_np_event(connection);
     if (!event)
         return -1;
 
@@ -413,7 +417,7 @@ static int rpcrt4_conn_np_write(RpcConnection *conn, const void *buffer, unsigne
         WaitForSingleObject(event, INFINITE);
         status = io_status.Status;
     }
-    release_np_event(event);
+    release_np_event(connection, event);
     if (status)
         return -1;
 
@@ -434,6 +438,11 @@ static int rpcrt4_conn_np_close(RpcConnection *conn)
     {
         CloseHandle(connection->listen_event);
         connection->listen_event = 0;
+    }
+    if (connection->event_cache)
+    {
+        CloseHandle(connection->event_cache);
+        connection->event_cache = 0;
     }
     return 0;
 }
@@ -640,7 +649,7 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
             NTSTATUS status;
             HANDLE event;
 
-            event = get_np_event();
+            event = get_np_event(conn);
             if (!event)
                 continue;
 
@@ -727,7 +736,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         {
             if (b_handle == conn->listen_event)
             {
-                release_np_event(conn->listen_event);
+                release_np_event(conn, conn->listen_event);
                 conn->listen_event = NULL;
                 if (conn->io_status.Status == STATUS_SUCCESS || conn->io_status.Status == STATUS_PIPE_CONNECTED)
                     RPCRT4_SpawnConnection(&cconn, &conn->common);
