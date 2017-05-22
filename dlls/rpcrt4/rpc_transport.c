@@ -447,9 +447,10 @@ static int rpcrt4_conn_np_close(RpcConnection *conn)
     return 0;
 }
 
-static void rpcrt4_conn_np_cancel_call(RpcConnection *Connection)
+static void rpcrt4_conn_np_cancel_call(RpcConnection *conn)
 {
-    /* FIXME: implement when named pipe writes use overlapped I/O */
+    RpcConnection_np *connection = (RpcConnection_np *)conn;
+    CancelIoEx(connection->pipe, NULL);
 }
 
 static int rpcrt4_conn_np_wait_for_incoming_data(RpcConnection *Connection)
