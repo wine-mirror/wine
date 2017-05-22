@@ -38,7 +38,8 @@
 
 /* Pop-Up Menus */
 #define PM_TREEVIEW      0
-#define PM_MODIFY_VALUE  1
+#define PM_NEW_VALUE     1
+#define PM_MODIFY_VALUE  2
 
 /* HexEdit Class */
 #define HEM_SETDATA (WM_USER+0)

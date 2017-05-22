@@ -463,7 +463,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         break;
     case WM_CONTEXTMENU: {
         int cnt = SendMessageW(hWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
-        TrackPopupMenu(GetSubMenu(hPopupMenus, cnt == -1 ? PM_TREEVIEW : PM_MODIFY_VALUE),
+        TrackPopupMenu(GetSubMenu(hPopupMenus, cnt == -1 ? PM_NEW_VALUE : PM_MODIFY_VALUE),
                        TPM_RIGHTBUTTON, (short)LOWORD(lParam), (short)HIWORD(lParam),
                        0, hFrameWnd, NULL);
         break;

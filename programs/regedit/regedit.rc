@@ -106,6 +106,20 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
   END
+  /* PM_NEW_VALUE */
+  POPUP ""
+  BEGIN
+        POPUP "&New"
+        BEGIN
+            MENUITEM "&Key",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&String Value",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Multi-String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
+            MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
+        END
+  END
   /* PM_MODIFY_VALUE */
   POPUP ""
   BEGIN

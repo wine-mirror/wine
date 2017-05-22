@@ -43,7 +43,7 @@ msgstr ""
 msgid "&Support Information"
 msgstr "&Informații de asistență"
 
-#: appwiz.rc:68 regedit.rc:45 regedit.rc:113
+#: appwiz.rc:68 regedit.rc:45 regedit.rc:127
 msgid "&Modify..."
 msgstr "&Modifică..."
 
@@ -65,8 +65,8 @@ msgstr "Informații de asistență"
 #: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 user32.rc:83 user32.rc:98
 #: wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117
 #: oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124 progman.rc:142
-#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:265
-#: regedit.rc:276 regedit.rc:289 regedit.rc:305 regedit.rc:318 regedit.rc:331
+#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:279
+#: regedit.rc:290 regedit.rc:303 regedit.rc:319 regedit.rc:332 regedit.rc:345
 #: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
 #: winemine.rc:71 winemine.rc:81 winemine.rc:95 wordpad.rc:215 wordpad.rc:226
@@ -143,8 +143,8 @@ msgstr "&Instalează"
 #: shell32.rc:342 shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52
 #: wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175
 #: progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181
-#: progman.rc:200 progman.rc:217 regedit.rc:266 regedit.rc:277 regedit.rc:290
-#: regedit.rc:306 regedit.rc:319 regedit.rc:332 taskmgr.rc:443 taskmgr.rc:518
+#: progman.rc:200 progman.rc:217 regedit.rc:280 regedit.rc:291 regedit.rc:304
+#: regedit.rc:320 regedit.rc:333 regedit.rc:346 taskmgr.rc:443 taskmgr.rc:518
 #: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
 #: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:96
 #: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
@@ -192,7 +192,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ne specificat"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:127 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:141 winefile.rc:107
 msgid "Name"
 msgstr "Nume"
 
@@ -213,7 +213,7 @@ msgid "Programs (*.exe)"
 msgstr "Programe (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:202 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:216 winedbg.rc:42 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
 
@@ -389,7 +389,7 @@ msgstr "&Nu"
 msgid "&Retry"
 msgstr "R&eîncearcă"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:255 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:269 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Închide"
@@ -448,7 +448,7 @@ msgstr "Imprimantă:"
 msgid "Print range"
 msgstr "Interval tipărire"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:237
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:251
 msgid "&All"
 msgstr "To&ate"
 
@@ -618,7 +618,7 @@ msgstr "&Adaugă culori personalizate"
 msgid "&Define Custom Colors >>"
 msgstr "&Definește culori personalizate >>"
 
-#: comdlg32.rc:316 regedit.rc:244 regedit.rc:254
+#: comdlg32.rc:316 regedit.rc:258 regedit.rc:268
 msgid "Find"
 msgstr "Căutare"
 
@@ -3235,7 +3235,7 @@ msgstr "Codecul Cinepak Video"
 msgid "&File"
 msgstr "&Fișier"
 
-#: ieframe.rc:30 regedit.rc:47 regedit.rc:91
+#: ieframe.rc:30 regedit.rc:47 regedit.rc:91 regedit.rc:113
 msgid "&New"
 msgstr "&Nou"
 
@@ -7581,7 +7581,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "Inserează conținutul din clipboard în document."
 
-#: oledlg.rc:48 regedit.rc:399
+#: oledlg.rc:48 regedit.rc:413
 msgid "Unknown Type"
 msgstr "Tip necunoscut"
 
@@ -8042,7 +8042,7 @@ msgstr "Dec&upează"
 msgid "Create &Link"
 msgstr "Creează &link"
 
-#: shell32.rc:106 regedit.rc:117
+#: shell32.rc:106 regedit.rc:131
 msgid "&Rename"
 msgstr "&Redenumește"
 
@@ -8116,7 +8116,7 @@ msgstr "Navi&gare..."
 msgid "Size"
 msgstr "Mărime"
 
-#: shell32.rc:139 regedit.rc:128
+#: shell32.rc:139 regedit.rc:142
 msgid "Type"
 msgstr "Tip"
 
@@ -8157,7 +8157,7 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Birou"
 
-#: shell32.rc:157 regedit.rc:207
+#: shell32.rc:157 regedit.rc:221
 #, fuzzy
 msgid "My Computer"
 msgstr ""
@@ -8515,7 +8515,7 @@ msgstr "Licența Wine"
 msgid "Trash"
 msgstr "Gunoi"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:181 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:195 winecfg.rc:87 winefile.rc:97
 msgid "Error"
 msgstr "Eroare"
 
@@ -10831,7 +10831,7 @@ msgstr "&Copiază\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Lipește\tCtrl+V"
 
-#: notepad.rc:47 progman.rc:37 regedit.rc:58 regedit.rc:103 regedit.rc:116
+#: notepad.rc:47 progman.rc:37 regedit.rc:58 regedit.rc:103 regedit.rc:130
 #: winefile.rc:32
 msgid "&Delete\tDel"
 msgstr "&Șterge\tDel"
@@ -10906,7 +10906,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:341 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:355 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10926,7 +10926,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:342 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:356 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11651,11 +11651,11 @@ msgstr "Valoare de registru „%1” există deja. Doriți să o înlocuiți?"
 msgid "The registry operation was cancelled\n"
 msgstr "Operația pe registru a fost anulată\n"
 
-#: reg.rc:53 regedit.rc:208
+#: reg.rc:53 regedit.rc:222
 msgid "(Default)"
 msgstr "(Implicit)"
 
-#: reg.rc:54 regedit.rc:187
+#: reg.rc:54 regedit.rc:201
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Sigur doriți să ștergeți valoarea de registru „%1”?"
 
@@ -11703,7 +11703,7 @@ msgstr "Tastați \"REG /?\" pentru ajutor.\n"
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Tastați \"REG %1 /?\" pentru ajutor.\n"
 
-#: reg.rc:65 regedit.rc:209
+#: reg.rc:65 regedit.rc:223
 msgid "(value not set)"
 msgstr "(valoare nestabilită)"
 
@@ -11719,27 +11719,27 @@ msgstr "&Importare fișier registru..."
 msgid "&Export Registry File..."
 msgstr "&Exportare fișier registru..."
 
-#: regedit.rc:49 regedit.rc:93
+#: regedit.rc:49 regedit.rc:93 regedit.rc:115
 msgid "&Key"
 msgstr "Che&ie"
 
-#: regedit.rc:51 regedit.rc:95
+#: regedit.rc:51 regedit.rc:95 regedit.rc:117
 msgid "&String Value"
 msgstr "&Valoare șir"
 
-#: regedit.rc:52 regedit.rc:96
+#: regedit.rc:52 regedit.rc:96 regedit.rc:118
 msgid "&Binary Value"
 msgstr "Valoare &binară"
 
-#: regedit.rc:53 regedit.rc:97
+#: regedit.rc:53 regedit.rc:97 regedit.rc:119
 msgid "&DWORD Value"
 msgstr "Valoare &DWORD"
 
-#: regedit.rc:54 regedit.rc:98
+#: regedit.rc:54 regedit.rc:98 regedit.rc:120
 msgid "&Multi-String Value"
 msgstr "Valoare șir &multiplu"
 
-#: regedit.rc:55 regedit.rc:99
+#: regedit.rc:55 regedit.rc:99 regedit.rc:121
 msgid "&Expandable String Value"
 msgstr "&Valoare șir expandabil"
 
@@ -11775,203 +11775,203 @@ msgstr "Elimina&re favorită..."
 msgid "&About Registry Editor"
 msgstr "Des&pre editorul de registru"
 
-#: regedit.rc:114
+#: regedit.rc:128
 msgid "Modify Binary Data..."
 msgstr "Modifică date binare..."
 
-#: regedit.rc:236
+#: regedit.rc:250
 msgid "Export registry"
 msgstr "Exportă registrul"
 
-#: regedit.rc:238
+#: regedit.rc:252
 msgid "S&elected branch:"
 msgstr "Ramura s&electată:"
 
-#: regedit.rc:247
+#: regedit.rc:261
 msgid "Find:"
 msgstr "Caută:"
 
-#: regedit.rc:249
+#: regedit.rc:263
 msgid "Find in:"
 msgstr "Caută în:"
 
-#: regedit.rc:250
+#: regedit.rc:264
 msgid "Keys"
 msgstr "Chei"
 
-#: regedit.rc:251
+#: regedit.rc:265
 msgid "Value names"
 msgstr "Nume valori"
 
-#: regedit.rc:252
+#: regedit.rc:266
 msgid "Value content"
 msgstr "Conținut valori"
 
-#: regedit.rc:253
+#: regedit.rc:267
 msgid "Whole string only"
 msgstr "Doar șirul întreg"
 
-#: regedit.rc:260
+#: regedit.rc:274
 msgid "Add Favorite"
 msgstr "Adăugare favorită"
 
-#: regedit.rc:263 regedit.rc:274
+#: regedit.rc:277 regedit.rc:288
 msgid "Name:"
 msgstr "Nume:"
 
-#: regedit.rc:271
+#: regedit.rc:285
 msgid "Remove Favorite"
 msgstr "Eliminare favorită"
 
-#: regedit.rc:282
+#: regedit.rc:296
 msgid "Edit String"
 msgstr "Editare șir"
 
-#: regedit.rc:285 regedit.rc:298 regedit.rc:314 regedit.rc:327
+#: regedit.rc:299 regedit.rc:312 regedit.rc:328 regedit.rc:341
 msgid "Value name:"
 msgstr "Nume valoare:"
 
-#: regedit.rc:287 regedit.rc:300 regedit.rc:316 regedit.rc:329
+#: regedit.rc:301 regedit.rc:314 regedit.rc:330 regedit.rc:343
 msgid "Value data:"
 msgstr "Date valoare:"
 
-#: regedit.rc:295
+#: regedit.rc:309
 msgid "Edit DWORD"
 msgstr "Editare DWORD"
 
-#: regedit.rc:302
+#: regedit.rc:316
 msgid "Base"
 msgstr "Bază"
 
-#: regedit.rc:303
+#: regedit.rc:317
 msgid "Hexadecimal"
 msgstr "Hexazecimal"
 
-#: regedit.rc:304
+#: regedit.rc:318
 msgid "Decimal"
 msgstr "Zecimal"
 
-#: regedit.rc:311
+#: regedit.rc:325
 msgid "Edit Binary"
 msgstr "Editare binar"
 
-#: regedit.rc:324
+#: regedit.rc:338
 msgid "Edit Multi-String"
 msgstr "Editare șir multiplu"
 
-#: regedit.rc:139
+#: regedit.rc:153
 msgid "Contains commands for working with the whole registry"
 msgstr "Conține comenzi pentru lucrul cu întregul registru"
 
-#: regedit.rc:140
+#: regedit.rc:154
 msgid "Contains commands for editing values or keys"
 msgstr "Conține comenzi pentru editare de valori sau chei"
 
-#: regedit.rc:141
+#: regedit.rc:155
 msgid "Contains commands for customizing the registry window"
 msgstr "Conține comenzi pentru personalizarea ferestrei de registru"
 
-#: regedit.rc:142
+#: regedit.rc:156
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Conține comenzi pentru accesarea cheilor utilizate frecvent"
 
-#: regedit.rc:143
+#: regedit.rc:157
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Conține comenzi pentru afișare ajutor și informații despre editorul de "
 "registru"
 
-#: regedit.rc:144
+#: regedit.rc:158
 msgid "Contains commands for creating new keys or values"
 msgstr "Conține comenzi pentru crearea de chei sau valori noi"
 
-#: regedit.rc:129
+#: regedit.rc:143
 msgid "Data"
 msgstr "Date"
 
-#: regedit.rc:134
+#: regedit.rc:148
 msgid "Registry Editor"
 msgstr "Editor registru"
 
-#: regedit.rc:198
+#: regedit.rc:212
 msgid "Import Registry File"
 msgstr "Importă fișierul registru"
 
-#: regedit.rc:199
+#: regedit.rc:213
 msgid "Export Registry File"
 msgstr "Exportă fișierul registru"
 
-#: regedit.rc:200
+#: regedit.rc:214
 msgid "Registry files (*.reg)"
 msgstr "Fișiere de registru (*.reg)"
 
-#: regedit.rc:201
+#: regedit.rc:215
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Fișiere de registru Win9x/NT4 (REGEDIT4)"
 
-#: regedit.rc:210
+#: regedit.rc:224
 msgid "(cannot display value)"
 msgstr "(valoarea nu poate fi afișată)"
 
-#: regedit.rc:211
+#: regedit.rc:225
 msgid "(unknown %d)"
 msgstr "(%d necunoscut)"
 
-#: regedit.rc:216
+#: regedit.rc:230
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to modify the selected registry value."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:217
+#: regedit.rc:231
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry key."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:218
+#: regedit.rc:232
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to create a new registry value."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:219
+#: regedit.rc:233
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
 
-#: regedit.rc:220
+#: regedit.rc:234
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
 
-#: regedit.rc:221
+#: regedit.rc:235
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to delete the selected registry key."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:222
+#: regedit.rc:236
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry key."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:223
+#: regedit.rc:237
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to rename the selected registry value."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:224
+#: regedit.rc:238
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
 
-#: regedit.rc:225
+#: regedit.rc:239
 #, fuzzy
 #| msgid ""
 #| "regedit: Unable to export '%1'. The specified registry key was not "
@@ -11981,7 +11981,7 @@ msgstr ""
 "regedit: Nu sa putut exporta „%1”. Cheia de registru specificată nu a fost "
 "găsită.\n"
 
-#: regedit.rc:377
+#: regedit.rc:391
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12012,246 +12012,246 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
 
-#: regedit.rc:378
+#: regedit.rc:392
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: regedit.rc:379
+#: regedit.rc:393
 msgid "Type \"regedit /?\" for help.\n"
 msgstr "Tastați \"regedit /?\" pentru ajutor.\n"
 
-#: regedit.rc:380
+#: regedit.rc:394
 msgid "regedit: No filename was specified.\n"
 msgstr "regedit Nu a fost specificată nici un fișier.\n"
 
-#: regedit.rc:381
+#: regedit.rc:395
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: regedit.rc:382
+#: regedit.rc:396
 msgid "regedit: The file '%1' was not found.\n"
 msgstr "regedit: Fișierul „%1” nu a fost găsit.\n"
 
-#: regedit.rc:383
+#: regedit.rc:397
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "regedit: Nu s-a putut deschide fișierul „%1”.\n"
 
-#: regedit.rc:384
+#: regedit.rc:398
 msgid "regedit: Unhandled action.\n"
 msgstr "regedit: Acțiune negestionată.\n"
 
-#: regedit.rc:385
+#: regedit.rc:399
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr "regedit: Memorie insuficientă! (%1!S!, linia %2!u!)\n"
 
-#: regedit.rc:386
+#: regedit.rc:400
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "regedit: Valoare hexazecimală nevalidă.\n"
 
-#: regedit.rc:387
+#: regedit.rc:401
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: regedit.rc:388
+#: regedit.rc:402
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: regedit.rc:389
+#: regedit.rc:403
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
-#: regedit.rc:390
+#: regedit.rc:404
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "regedit: Sfârșit de linie neașteptat în „%1”.\n"
 
-#: regedit.rc:391
+#: regedit.rc:405
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "regedit: Linia „%1” nu a fost recunoscută.\n"
 
-#: regedit.rc:392
+#: regedit.rc:406
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "regedit: Nu s-a putut adăuga valoarea de registru „%1” la „%2”.\n"
 
-#: regedit.rc:393
+#: regedit.rc:407
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:394
+#: regedit.rc:408
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
-#: regedit.rc:395
+#: regedit.rc:409
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: regedit.rc:396
+#: regedit.rc:410
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:397
+#: regedit.rc:411
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
 "regedit: Nu sa putut exporta „%1”. Cheia de registru specificată nu a fost "
 "găsită.\n"
 
-#: regedit.rc:398
+#: regedit.rc:412
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Nu s-a putut șterge clasa de registru „%1”.\n"
 
-#: regedit.rc:400
+#: regedit.rc:414
 #, fuzzy
 #| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Linia „%1” nu a fost recunoscută.\n"
 
-#: regedit.rc:165
+#: regedit.rc:179
 msgid "Quits the registry editor"
 msgstr "Închide editorul de registru"
 
-#: regedit.rc:166
+#: regedit.rc:180
 msgid "Adds keys to the favorites list"
 msgstr "Adaugă chei în lista de favorite"
 
-#: regedit.rc:167
+#: regedit.rc:181
 msgid "Removes keys from the favorites list"
 msgstr "Elimină chei din lista de favorite"
 
-#: regedit.rc:168
+#: regedit.rc:182
 msgid "Shows or hides the status bar"
 msgstr "Afișează sau ascunde bara de stare"
 
-#: regedit.rc:169
+#: regedit.rc:183
 msgid "Change position of split between two panes"
 msgstr "Schimbă poziția separatorului între două panouri"
 
-#: regedit.rc:170
+#: regedit.rc:184
 msgid "Refreshes the window"
 msgstr "Actualizează fereastra"
 
-#: regedit.rc:171
+#: regedit.rc:185
 msgid "Deletes the selection"
 msgstr "Șterge selecția"
 
-#: regedit.rc:172
+#: regedit.rc:186
 msgid "Renames the selection"
 msgstr "Redenumește selecția"
 
-#: regedit.rc:173
+#: regedit.rc:187
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Copiază numele cheii selectate în clipboard"
 
-#: regedit.rc:174
+#: regedit.rc:188
 msgid "Finds a text string in a key, value or data"
 msgstr "Caută un șir text într-o cheie, valoare sau dată"
 
-#: regedit.rc:175
+#: regedit.rc:189
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Caută următoarea apariție a textului specificat în căutarea precedentă"
 
-#: regedit.rc:149
+#: regedit.rc:163
 msgid "Modifies the value's data"
 msgstr "Modifică datele valorii"
 
-#: regedit.rc:150
+#: regedit.rc:164
 msgid "Adds a new key"
 msgstr "Adaugă o nouă cheie"
 
-#: regedit.rc:151
+#: regedit.rc:165
 msgid "Adds a new string value"
 msgstr "Adaugă o nouă valoare de șir"
 
-#: regedit.rc:152
+#: regedit.rc:166
 msgid "Adds a new binary value"
 msgstr "Adaugă o nouă valoare de binar"
 
-#: regedit.rc:153
+#: regedit.rc:167
 msgid "Adds a new double word value"
 msgstr "Adaugă o nouă valoare de DWORD"
 
-#: regedit.rc:155
+#: regedit.rc:169
 msgid "Imports a text file into the registry"
 msgstr "Importă un fișier text în registru"
 
-#: regedit.rc:157
+#: regedit.rc:171
 msgid "Exports all or part of the registry to a text file"
 msgstr "Exportă întregul registru sau o parte ca fișier text"
 
-#: regedit.rc:158
+#: regedit.rc:172
 msgid "Prints all or part of the registry"
 msgstr "Imprimă întregul registru sau o parte"
 
-#: regedit.rc:160
+#: regedit.rc:174
 msgid "Displays program information, version number and copyright"
 msgstr "Afișează informații despre program, numărul versiunii și licența"
 
-#: regedit.rc:183
+#: regedit.rc:197
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry value '%1'."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:184
+#: regedit.rc:198
 #, fuzzy
 #| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Nu se pot edita chei de acest tip (%u)"
 
-#: regedit.rc:185
+#: regedit.rc:199
 #, fuzzy
 #| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
 msgstr "Valoarea este prea mare (%u)"
 
-#: regedit.rc:186
+#: regedit.rc:200
 msgid "Confirm Value Delete"
 msgstr "Confirmă ștergerea valorii"
 
-#: regedit.rc:193
+#: regedit.rc:207
 #, fuzzy
 #| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
 msgstr "Șirul de căutare „%s” nu a fost găsit"
 
-#: regedit.rc:188
+#: regedit.rc:202
 msgid "Are you sure you want to delete these values?"
 msgstr "Sigur doriți să ștergeți aceste valori?"
 
-#: regedit.rc:191
+#: regedit.rc:205
 msgid "New Key #%d"
 msgstr "Cheie nouă #%d"
 
-#: regedit.rc:192
+#: regedit.rc:206
 msgid "New Value #%d"
 msgstr "Valoare nouă #%d"
 
-#: regedit.rc:182
+#: regedit.rc:196
 #, fuzzy
 #| msgid "regedit: Unable to open the registry key '%1'.\n"
 msgid "Unable to query the registry key '%1'."
 msgstr "regedit: Nu s-a putut deschide cheia de registru „%1”.\n"
 
-#: regedit.rc:154
+#: regedit.rc:168
 msgid "Adds a new multi-string value"
 msgstr "Adaugă o nouă valoare de șir multiplu"
 
-#: regedit.rc:176
+#: regedit.rc:190
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Exportă ramura de registru selectată ca fișier text"
 
-#: regedit.rc:189
+#: regedit.rc:203
 #, fuzzy
 #| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
 msgstr "Confirmă ștergerea valorii"
 
-#: regedit.rc:190
+#: regedit.rc:204
 #, fuzzy
 #| msgid "Are you sure you want to delete the registry key '%1'?"
 msgid ""
