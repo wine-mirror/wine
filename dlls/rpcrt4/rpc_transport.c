@@ -429,24 +429,18 @@ static int rpcrt4_conn_np_read(RpcConnection *Connection,
   return count;
 }
 
-static int rpcrt4_conn_np_write(RpcConnection *Connection,
-                             const void *buffer, unsigned int count)
+static int rpcrt4_conn_np_write(RpcConnection *conn, const void *buffer, unsigned int count)
 {
-  RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  const char *buf = buffer;
-  BOOL ret = TRUE;
-  unsigned int bytes_left = count;
+    RpcConnection_np *connection = (RpcConnection_np *) conn;
+    IO_STATUS_BLOCK io_status;
+    NTSTATUS status;
 
-  while (bytes_left)
-  {
-    DWORD bytes_written;
-    ret = WriteFile(npc->pipe, buf, bytes_left, &bytes_written, NULL);
-    if (!ret || !bytes_written)
-        break;
-    bytes_left -= bytes_written;
-    buf += bytes_written;
-  }
-  return ret ? count : -1;
+    status = NtWriteFile(connection->pipe, NULL, NULL, NULL, &io_status, buffer, count, NULL, NULL);
+    if (status)
+        return -1;
+
+    assert(io_status.Information == count);
+    return count;
 }
 
 static int rpcrt4_conn_np_close(RpcConnection *Connection)
