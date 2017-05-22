@@ -3056,4 +3056,6 @@ START_TEST(pipe)
     test_readfileex_pending();
     test_overlapped_transport(TRUE, FALSE);
     test_overlapped_transport(TRUE, TRUE);
+    if (broken(1)) /* FIXME: Remove once Wine is ready. */
+        test_overlapped_transport(FALSE, FALSE);
 }
