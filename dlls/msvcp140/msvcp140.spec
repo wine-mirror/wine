@@ -3620,7 +3620,7 @@
 @ thiscall -ret64 -arch=i386 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAE_JPB_W_J@Z(ptr wstr int64) basic_streambuf_wchar_xsputn
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ stub _Chmod
-@ stub _Close_dir
+@ cdecl _Close_dir(ptr) tr2_sys__Close_dir
 @ cdecl _Cnd_broadcast(ptr)
 @ cdecl _Cnd_destroy(ptr)
 @ cdecl _Cnd_destroy_in_situ(ptr)
