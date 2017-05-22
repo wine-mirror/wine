@@ -5877,9 +5877,11 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
     }
 
     has_offset = ins->handler_idx == WINED3DSIH_GATHER4_PO
+            || ins->handler_idx == WINED3DSIH_GATHER4_PO_C
             || wined3d_shader_instruction_has_texel_offset(ins);
 
-    resource_param_idx = ins->handler_idx == WINED3DSIH_GATHER4_PO ? 2 : 1;
+    resource_param_idx =
+            (ins->handler_idx == WINED3DSIH_GATHER4_PO || ins->handler_idx == WINED3DSIH_GATHER4_PO_C) ? 2 : 1;
     resource_idx = ins->src[resource_param_idx].reg.idx[0].offset;
     sampler_idx = ins->src[resource_param_idx + 1].reg.idx[0].offset;
     component_idx = shader_glsl_swizzle_get_component(ins->src[resource_param_idx + 1].swizzle, 0);
@@ -5902,12 +5904,12 @@ static void shader_glsl_gather4(const struct wined3d_shader_instruction *ins)
 
     shader_addline(buffer, "textureGather%s(%s_sampler%u, %s",
             has_offset ? "Offset" : "", prefix, sampler_bind_idx, coord_param.param_str);
-    if (ins->handler_idx == WINED3DSIH_GATHER4_C)
+    if (ins->handler_idx == WINED3DSIH_GATHER4_C || ins->handler_idx == WINED3DSIH_GATHER4_PO_C)
     {
-        shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &compare_param);
+        shader_glsl_add_src_param(ins, &ins->src[resource_param_idx + 2], WINED3DSP_WRITEMASK_0, &compare_param);
         shader_addline(buffer, ", %s", compare_param.param_str);
     }
-    if (ins->handler_idx == WINED3DSIH_GATHER4_PO)
+    if (ins->handler_idx == WINED3DSIH_GATHER4_PO || ins->handler_idx == WINED3DSIH_GATHER4_PO_C)
     {
         shader_glsl_add_src_param(ins, &ins->src[1], (1u << offset_size) - 1, &offset_param);
         shader_addline(buffer, ", %s", offset_param.param_str);
@@ -10681,6 +10683,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_GATHER4                          */ shader_glsl_gather4,
     /* WINED3DSIH_GATHER4_C                        */ shader_glsl_gather4,
     /* WINED3DSIH_GATHER4_PO                       */ shader_glsl_gather4,
+    /* WINED3DSIH_GATHER4_PO_C                     */ shader_glsl_gather4,
     /* WINED3DSIH_GE                               */ shader_glsl_relop,
     /* WINED3DSIH_HS_CONTROL_POINT_PHASE           */ shader_glsl_nop,
     /* WINED3DSIH_HS_DECLS                         */ shader_glsl_nop,
