@@ -1713,8 +1713,8 @@
 @ cdecl ?_Random_device@std@@YAIXZ() _Random_device
 @ cdecl -arch=win32 ?_Read_dir@sys@tr2@std@@YAPADPADPAXAAW4file_type@123@@Z(ptr ptr ptr) tr2_sys__Read_dir
 @ cdecl -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEADPEADPEAXAEAW4file_type@123@@Z(ptr ptr ptr) tr2_sys__Read_dir
-@ stub -arch=win32 ?_Read_dir@sys@tr2@std@@YAPA_WPA_WPAXAAW4file_type@123@@Z
-@ stub -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEA_WPEA_WPEAXAEAW4file_type@123@@Z
+@ cdecl -arch=win32 ?_Read_dir@sys@tr2@std@@YAPA_WPA_WPAXAAW4file_type@123@@Z(ptr ptr ptr) tr2_sys__Read_dir_wchar
+@ cdecl -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEA_WPEA_WPEAXAEAW4file_type@123@@Z(ptr ptr ptr) tr2_sys__Read_dir_wchar
 @ cdecl -arch=arm ?_Release@_Pad@std@@QAAXXZ(ptr) _Pad__Release
 @ thiscall -arch=i386 ?_Release@_Pad@std@@QAEXXZ(ptr) _Pad__Release
 @ cdecl -arch=win64 ?_Release@_Pad@std@@QEAAXXZ(ptr) _Pad__Release

@@ -14962,27 +14962,41 @@ void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, e
     return handle;
 }
 
-/* ?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z */
-/* ?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z */
-char* __cdecl tr2_sys__Read_dir(char* target, void* handle, enum file_type* type)
+/* ??_Read_dir@sys@tr2@std@@YAPA_WPA_WPAXAAW4file_type@123@@Z */
+/* ??_Read_dir@sys@tr2@std@@YAPEA_WPEA_WPEAXAEAW4file_type@123@@Z */
+wchar_t* __cdecl tr2_sys__Read_dir_wchar(wchar_t* target, void* handle, enum file_type* type)
 {
-    WIN32_FIND_DATAA data;
+    WIN32_FIND_DATAW data;
+    static const wchar_t dot[] = {'.', 0};
+    static const wchar_t dotdot[] = {'.', '.', 0};
 
     TRACE("(%p %p %p)\n", target, handle, type);
 
     do {
-        if(!FindNextFileA(handle, &data)) {
+        if(!FindNextFileW(handle, &data)) {
             *type = status_unknown;
             *target = '\0';
             return target;
         }
-    } while(!strcmp(data.cFileName, ".") || !strcmp(data.cFileName, ".."));
+    } while(!wcscmp(data.cFileName, dot) || !wcscmp(data.cFileName, dotdot));
 
-    strcpy(target, data.cFileName);
+    wcscpy(target, data.cFileName);
     if(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         *type = directory_file;
     else
         *type = regular_file;
+    return target;
+}
+
+/* ?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z */
+/* ?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z */
+char* __cdecl tr2_sys__Read_dir(char* target, void* handle, enum file_type* type)
+{
+    wchar_t target_w[MAX_PATH];
+
+    tr2_sys__Read_dir_wchar(target_w, handle, type);
+    WideCharToMultiByte(CP_ACP, 0, target_w, -1, target, MAX_PATH, NULL, NULL);
+
     return target;
 }
 

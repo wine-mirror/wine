@@ -1674,8 +1674,8 @@
 @ cdecl ?_Random_device@std@@YAIXZ() msvcp120.?_Random_device@std@@YAIXZ
 @ cdecl -arch=win32 ?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z(ptr ptr ptr) msvcp120.?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z
 @ cdecl -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z(ptr ptr ptr) msvcp120.?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z
-@ stub -arch=win32 ?_Read_dir@sys@tr2@std@@YAPA_WAAY0BAE@_WPAXAAW4file_type@123@@Z
-@ stub -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEA_WAEAY0BAE@_WPEAXAEAW4file_type@123@@Z
+@ cdecl -arch=win32 ?_Read_dir@sys@tr2@std@@YAPA_WAAY0BAE@_WPAXAAW4file_type@123@@Z(ptr ptr ptr) msvcp120.?_Read_dir@sys@tr2@std@@YAPA_WAAY0BAE@_WPAXAAW4file_type@123@@Z
+@ cdecl -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEA_WAEAY0BAE@_WPEAXAEAW4file_type@123@@Z(ptr ptr ptr) msvcp120.?_Read_dir@sys@tr2@std@@YAPEA_WAEAY0BAE@_WPEAXAEAW4file_type@123@@Z
 @ cdecl -arch=arm ?_Release@_Pad@std@@QAAXXZ(ptr) msvcp120.?_Release@_Pad@std@@QAAXXZ
 @ thiscall -arch=i386 ?_Release@_Pad@std@@QAEXXZ(ptr) msvcp120.?_Release@_Pad@std@@QAEXXZ
 @ cdecl -arch=win64 ?_Release@_Pad@std@@QEAAXXZ(ptr) msvcp120.?_Release@_Pad@std@@QEAAXXZ

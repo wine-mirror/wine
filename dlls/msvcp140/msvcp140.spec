@@ -3692,7 +3692,7 @@
 @ cdecl _Open_dir(ptr wstr long long) tr2_sys__Open_dir_wchar
 @ cdecl -ret64 _Query_perf_counter()
 @ cdecl -ret64 _Query_perf_frequency()
-@ stub _Read_dir
+@ cdecl _Read_dir(ptr ptr ptr) tr2_sys__Read_dir_wchar
 @ stub _Remove_dir
 @ stub _Rename
 @ stub _Resize
