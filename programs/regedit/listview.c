@@ -109,8 +109,7 @@ static void MakeMULTISZDisplayable(LPWSTR multi)
 /*******************************************************************************
  * Local module support methods
  */
-static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
-    void* ValBuf, DWORD dwCount, BOOL bHighlight)
+static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType, void *ValBuf, DWORD dwCount)
 {
     LINE_INFO* linfo;
     LVITEMW item;
@@ -137,9 +136,7 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
     item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
     item.pszText = Name ? Name : LPSTR_TEXTCALLBACKW;
     item.cchTextMax = Name ? lstrlenW(item.pszText) : 0;
-    if (bHighlight) {
-        item.stateMask = item.state = LVIS_FOCUSED;
-    }
+
     switch (dwValType)
     {
     case REG_SZ:
@@ -552,20 +549,25 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
 
     valSize = max_val_size;
     if (RegQueryValueExW(hKey, NULL, NULL, &valType, valBuf, &valSize) == ERROR_FILE_NOT_FOUND) {
-        AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0, !highlightValue);
+        AddEntryToList(hwndLV, NULL, REG_SZ, NULL, 0);
     }
     for(index = 0; index < val_count; index++) {
-        BOOL bSelected = (valName == highlightValue); /* NOT a bug, we check for double NULL here */
         valNameLen = max_val_name_len;
         valSize = max_val_size;
 	valType = 0;
         errCode = RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
 	if (errCode != ERROR_SUCCESS) goto done;
         valBuf[valSize] = 0;
-        if (highlightValue && !lstrcmpW(valName, highlightValue))
-            bSelected = TRUE;
-        AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize, bSelected);
+        AddEntryToList(hwndLV, valName[0] ? valName : NULL, valType, valBuf, valSize);
     }
+
+    memset(&item, 0, sizeof(item));
+    if (!highlightValue)
+    {
+        item.state = item.stateMask = LVIS_FOCUSED;
+        SendMessageW(hwndLV, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    }
+
     SendMessageW(hwndLV, LVM_SORTITEMS, (WPARAM)hwndLV, (LPARAM)CompareFunc);
 
     g_currentRootKey = hKeyRoot;
