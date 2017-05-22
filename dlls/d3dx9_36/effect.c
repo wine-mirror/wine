@@ -1092,7 +1092,10 @@ static HRESULT d3dx9_get_param_value_ptr(struct d3dx_pass *pass, struct d3dx_sta
             {
                 *out_param = param;
                 *param_value = param->data;
-                if (update_all || is_param_eval_input_dirty(param->param_eval, ULONG64_MAX))
+                /* We check with the update_version of the pass because the
+                 * same preshader might be used by both the vertex and the
+                 * pixel shader (that can happen e.g. for sampler states). */
+                if (update_all || is_param_eval_input_dirty(param->param_eval, pass->update_version))
                 {
                     *param_dirty = TRUE;
                     return d3dx_evaluate_parameter(param->param_eval, param, *param_value);
