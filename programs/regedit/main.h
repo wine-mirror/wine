@@ -32,12 +32,13 @@
 
 #define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
 
-#define PM_MODIFYVALUE  0
-#define PM_NEW          1
-
 #define MAX_NEW_KEY_LEN 128
 
 #define WM_NOTIFY_REFLECT (WM_USER+1024)
+
+/* Pop-Up Menus */
+#define PM_TREEVIEW      0
+#define PM_MODIFY_VALUE  1
 
 /* HexEdit Class */
 #define HEM_SETDATA (WM_USER+0)

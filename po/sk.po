@@ -48,7 +48,7 @@ msgstr ""
 msgid "&Support Information"
 msgstr "&Informácie o podpore"
 
-#: appwiz.rc:68 regedit.rc:45 regedit.rc:90
+#: appwiz.rc:68 regedit.rc:45 regedit.rc:113
 msgid "&Modify..."
 msgstr "&Zmeniť..."
 
@@ -70,8 +70,8 @@ msgstr "Informácie o podpore"
 #: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 user32.rc:83 user32.rc:98
 #: wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117
 #: oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124 progman.rc:142
-#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:263
-#: regedit.rc:274 regedit.rc:287 regedit.rc:303 regedit.rc:316 regedit.rc:329
+#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:265
+#: regedit.rc:276 regedit.rc:289 regedit.rc:305 regedit.rc:318 regedit.rc:331
 #: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
 #: winemine.rc:71 winemine.rc:81 winemine.rc:95 wordpad.rc:215 wordpad.rc:226
@@ -155,8 +155,8 @@ msgstr "&Inštalovať"
 #: shell32.rc:342 shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52
 #: wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175
 #: progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181
-#: progman.rc:200 progman.rc:217 regedit.rc:264 regedit.rc:275 regedit.rc:288
-#: regedit.rc:304 regedit.rc:317 regedit.rc:330 taskmgr.rc:443 taskmgr.rc:518
+#: progman.rc:200 progman.rc:217 regedit.rc:266 regedit.rc:277 regedit.rc:290
+#: regedit.rc:306 regedit.rc:319 regedit.rc:332 taskmgr.rc:443 taskmgr.rc:518
 #: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
 #: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:96
 #: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
@@ -223,7 +223,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nešpecifikovaný"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:125 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:127 winefile.rc:107
 msgid "Name"
 msgstr "Názov"
 
@@ -244,7 +244,7 @@ msgid "Programs (*.exe)"
 msgstr "Programy (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:200 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:202 winedbg.rc:42 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Všetky súbory (*.*)"
 
@@ -420,7 +420,7 @@ msgstr "&Nie"
 msgid "&Retry"
 msgstr "&Skúsiť znova"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:253 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:255 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Zavrieť"
@@ -479,7 +479,7 @@ msgstr "Tlačiareň:"
 msgid "Print range"
 msgstr "Rozsah tlače"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:235
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:237
 msgid "&All"
 msgstr "Vytlačiť &všetko"
 
@@ -649,7 +649,7 @@ msgstr "Prid&ať medzi vlastné farby"
 msgid "&Define Custom Colors >>"
 msgstr "&Definovať vlastné farby >>"
 
-#: comdlg32.rc:316 regedit.rc:242 regedit.rc:252
+#: comdlg32.rc:316 regedit.rc:244 regedit.rc:254
 msgid "Find"
 msgstr "Hľadanie"
 
@@ -2277,7 +2277,7 @@ msgstr ""
 msgid "&Import..."
 msgstr "&Importovať..."
 
-#: cryptui.rc:345 regedit.rc:112
+#: cryptui.rc:345 regedit.rc:106
 msgid "&Export..."
 msgstr "&Exportovať..."
 
@@ -3202,7 +3202,7 @@ msgstr ""
 msgid "&File"
 msgstr "&Súbor"
 
-#: ieframe.rc:30 regedit.rc:47 regedit.rc:98
+#: ieframe.rc:30 regedit.rc:47 regedit.rc:91
 msgid "&New"
 msgstr "&Nový"
 
@@ -7551,7 +7551,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr ""
 
-#: oledlg.rc:48 regedit.rc:397
+#: oledlg.rc:48 regedit.rc:399
 msgid "Unknown Type"
 msgstr ""
 
@@ -8033,7 +8033,7 @@ msgstr ""
 msgid "Create &Link"
 msgstr ""
 
-#: shell32.rc:106 regedit.rc:94
+#: shell32.rc:106 regedit.rc:117
 msgid "&Rename"
 msgstr ""
 
@@ -8108,7 +8108,7 @@ msgstr ""
 msgid "Size"
 msgstr "Veľkosť"
 
-#: shell32.rc:139 regedit.rc:126
+#: shell32.rc:139 regedit.rc:128
 msgid "Type"
 msgstr "Typ"
 
@@ -8150,7 +8150,7 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Pracovná plocha"
 
-#: shell32.rc:157 regedit.rc:205
+#: shell32.rc:157 regedit.rc:207
 msgid "My Computer"
 msgstr "Tento počítač"
 
@@ -8475,7 +8475,7 @@ msgstr "Wine Pomoc"
 msgid "Trash"
 msgstr ""
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:179 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:181 winecfg.rc:87 winefile.rc:97
 msgid "Error"
 msgstr ""
 
@@ -10539,7 +10539,7 @@ msgstr "&Kopírovať\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Vložiť\tCtrl+V"
 
-#: notepad.rc:47 progman.rc:37 regedit.rc:58 regedit.rc:93 regedit.rc:109
+#: notepad.rc:47 progman.rc:37 regedit.rc:58 regedit.rc:103 regedit.rc:116
 #: winefile.rc:32
 msgid "&Delete\tDel"
 msgstr "&Zmazať\tDel"
@@ -10614,7 +10614,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:339 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:341 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10634,7 +10634,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:340 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:342 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11355,11 +11355,11 @@ msgstr ""
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
-#: reg.rc:53 regedit.rc:206
+#: reg.rc:53 regedit.rc:208
 msgid "(Default)"
 msgstr "(Predvolené)"
 
-#: reg.rc:54 regedit.rc:185
+#: reg.rc:54 regedit.rc:187
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -11415,7 +11415,7 @@ msgstr ""
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr ""
 
-#: reg.rc:65 regedit.rc:207
+#: reg.rc:65 regedit.rc:209
 msgid "(value not set)"
 msgstr ""
 
@@ -11431,39 +11431,39 @@ msgstr "&Importuj súbor registrov..."
 msgid "&Export Registry File..."
 msgstr "&Exportuj súbor registrov..."
 
-#: regedit.rc:49 regedit.rc:100
+#: regedit.rc:49 regedit.rc:93
 msgid "&Key"
 msgstr "&Kľúč"
 
-#: regedit.rc:51 regedit.rc:102
+#: regedit.rc:51 regedit.rc:95
 msgid "&String Value"
 msgstr "&Reťazcová hodnota"
 
-#: regedit.rc:52 regedit.rc:103
+#: regedit.rc:52 regedit.rc:96
 msgid "&Binary Value"
 msgstr "&Binárna hodnota"
 
-#: regedit.rc:53 regedit.rc:104
+#: regedit.rc:53 regedit.rc:97
 msgid "&DWORD Value"
 msgstr "&DWORD hodnota"
 
-#: regedit.rc:54 regedit.rc:105
+#: regedit.rc:54 regedit.rc:98
 msgid "&Multi-String Value"
 msgstr "&Viac reťazcová hodnota"
 
-#: regedit.rc:55 regedit.rc:106
+#: regedit.rc:55 regedit.rc:99
 msgid "&Expandable String Value"
 msgstr ""
 
-#: regedit.rc:59 regedit.rc:110
+#: regedit.rc:59 regedit.rc:104
 msgid "&Rename\tF2"
 msgstr ""
 
-#: regedit.rc:61 regedit.rc:113
+#: regedit.rc:61 regedit.rc:108
 msgid "&Copy Key Name"
 msgstr ""
 
-#: regedit.rc:63 regedit.rc:115 wordpad.rc:53
+#: regedit.rc:63 regedit.rc:101 wordpad.rc:53
 msgid "&Find...\tCtrl+F"
 msgstr "&Nájdi...\tCtrl+F"
 
@@ -11487,208 +11487,208 @@ msgstr "&Odstrániť obľúbené..."
 msgid "&About Registry Editor"
 msgstr "&O programe Registry Editor"
 
-#: regedit.rc:91
+#: regedit.rc:114
 msgid "Modify Binary Data..."
 msgstr ""
 
-#: regedit.rc:234
+#: regedit.rc:236
 msgid "Export registry"
 msgstr "Exportuj registry"
 
-#: regedit.rc:236
+#: regedit.rc:238
 msgid "S&elected branch:"
 msgstr ""
 
-#: regedit.rc:245
+#: regedit.rc:247
 msgid "Find:"
 msgstr "Hľadať:"
 
-#: regedit.rc:247
+#: regedit.rc:249
 msgid "Find in:"
 msgstr "Hľadať v:"
 
-#: regedit.rc:248
+#: regedit.rc:250
 msgid "Keys"
 msgstr "Kľúče"
 
-#: regedit.rc:249
+#: regedit.rc:251
 msgid "Value names"
 msgstr "Náov hodnoty"
 
-#: regedit.rc:250
+#: regedit.rc:252
 msgid "Value content"
 msgstr "Obsah hodnoty"
 
-#: regedit.rc:251
+#: regedit.rc:253
 msgid "Whole string only"
 msgstr "Len celý reťazec"
 
-#: regedit.rc:258
+#: regedit.rc:260
 msgid "Add Favorite"
 msgstr "Pridať obľúbené"
 
-#: regedit.rc:261 regedit.rc:272
+#: regedit.rc:263 regedit.rc:274
 msgid "Name:"
 msgstr "Súbor:"
 
-#: regedit.rc:269
+#: regedit.rc:271
 msgid "Remove Favorite"
 msgstr "Odstrániť obľúbené"
 
-#: regedit.rc:280
+#: regedit.rc:282
 msgid "Edit String"
 msgstr "Upraviť reťazec"
 
-#: regedit.rc:283 regedit.rc:296 regedit.rc:312 regedit.rc:325
+#: regedit.rc:285 regedit.rc:298 regedit.rc:314 regedit.rc:327
 msgid "Value name:"
 msgstr "Názov hodnoty:"
 
-#: regedit.rc:285 regedit.rc:298 regedit.rc:314 regedit.rc:327
+#: regedit.rc:287 regedit.rc:300 regedit.rc:316 regedit.rc:329
 msgid "Value data:"
 msgstr ""
 
-#: regedit.rc:293
+#: regedit.rc:295
 msgid "Edit DWORD"
 msgstr ""
 
-#: regedit.rc:300
+#: regedit.rc:302
 msgid "Base"
 msgstr ""
 
-#: regedit.rc:301
+#: regedit.rc:303
 msgid "Hexadecimal"
 msgstr ""
 
-#: regedit.rc:302
+#: regedit.rc:304
 msgid "Decimal"
 msgstr ""
 
-#: regedit.rc:309
+#: regedit.rc:311
 #, fuzzy
 msgid "Edit Binary"
 msgstr "&Upraviť"
 
-#: regedit.rc:322
+#: regedit.rc:324
 msgid "Edit Multi-String"
 msgstr ""
 
-#: regedit.rc:137
+#: regedit.rc:139
 msgid "Contains commands for working with the whole registry"
 msgstr ""
 
-#: regedit.rc:138
+#: regedit.rc:140
 msgid "Contains commands for editing values or keys"
 msgstr ""
 
-#: regedit.rc:139
+#: regedit.rc:141
 msgid "Contains commands for customizing the registry window"
 msgstr ""
 
-#: regedit.rc:140
+#: regedit.rc:142
 msgid "Contains commands for accessing frequently used keys"
 msgstr ""
 
-#: regedit.rc:141
+#: regedit.rc:143
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 
-#: regedit.rc:142
+#: regedit.rc:144
 msgid "Contains commands for creating new keys or values"
 msgstr ""
 
-#: regedit.rc:127
+#: regedit.rc:129
 msgid "Data"
 msgstr ""
 
-#: regedit.rc:132
+#: regedit.rc:134
 msgid "Registry Editor"
 msgstr "Editor registrov"
 
-#: regedit.rc:196
+#: regedit.rc:198
 msgid "Import Registry File"
 msgstr "Importuj súbor registrov"
 
-#: regedit.rc:197
+#: regedit.rc:199
 msgid "Export Registry File"
 msgstr "Exportuje súbor registrov"
 
-#: regedit.rc:198
+#: regedit.rc:200
 msgid "Registry files (*.reg)"
 msgstr "Súbory registrov (*.reg)"
 
-#: regedit.rc:199
+#: regedit.rc:201
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 súbory registrov (REGEDIT4)"
 
-#: regedit.rc:208
+#: regedit.rc:210
 msgid "(cannot display value)"
 msgstr "(nemôžem zobraziť hodnotu)"
 
-#: regedit.rc:209
+#: regedit.rc:211
 msgid "(unknown %d)"
 msgstr "(neznáme %d)"
 
-#: regedit.rc:214
+#: regedit.rc:216
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to modify the selected registry value."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:215
+#: regedit.rc:217
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to create a new registry key."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:216
+#: regedit.rc:218
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to create a new registry value."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:217
+#: regedit.rc:219
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
 
-#: regedit.rc:218
+#: regedit.rc:220
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
 
-#: regedit.rc:219
+#: regedit.rc:221
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to delete the selected registry key."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:220
+#: regedit.rc:222
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to rename the selected registry key."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:221
+#: regedit.rc:223
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to rename the selected registry value."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:222
+#: regedit.rc:224
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
 
-#: regedit.rc:223
+#: regedit.rc:225
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:375
+#: regedit.rc:377
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -11719,258 +11719,258 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
 
-#: regedit.rc:376
+#: regedit.rc:378
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: regedit.rc:377
+#: regedit.rc:379
 msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
-#: regedit.rc:378
+#: regedit.rc:380
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
 msgstr "Nebol špecifikovaný žiadny príkaz."
 
-#: regedit.rc:379
+#: regedit.rc:381
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: regedit.rc:380
+#: regedit.rc:382
 msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
-#: regedit.rc:381
+#: regedit.rc:383
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:382
+#: regedit.rc:384
 msgid "regedit: Unhandled action.\n"
 msgstr ""
 
-#: regedit.rc:383
+#: regedit.rc:385
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
-#: regedit.rc:384
+#: regedit.rc:386
 #, fuzzy
 #| msgid "Invalid name.\n"
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "Nesprávny názov.\n"
 
-#: regedit.rc:385
+#: regedit.rc:387
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: regedit.rc:386
+#: regedit.rc:388
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: regedit.rc:387
+#: regedit.rc:389
 #, fuzzy
 #| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Nepodporovaný typ.\n"
 
-#: regedit.rc:388
+#: regedit.rc:390
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:389
+#: regedit.rc:391
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "Nebol špecifikovaný žiadny príkaz."
 
-#: regedit.rc:390
+#: regedit.rc:392
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:391
+#: regedit.rc:393
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:392
+#: regedit.rc:394
 #, fuzzy
 #| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Nepodporovaný typ.\n"
 
-#: regedit.rc:393
+#: regedit.rc:395
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: regedit.rc:394
+#: regedit.rc:396
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:395
+#: regedit.rc:397
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
 
-#: regedit.rc:396
+#: regedit.rc:398
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:398
+#: regedit.rc:400
 #, fuzzy
 #| msgid "No command was specified."
 msgid "regedit: The line contains invalid syntax.\n"
 msgstr "Nebol špecifikovaný žiadny príkaz."
 
-#: regedit.rc:163
+#: regedit.rc:165
 msgid "Quits the registry editor"
 msgstr "Ukončí editor registrov"
 
-#: regedit.rc:164
+#: regedit.rc:166
 msgid "Adds keys to the favorites list"
 msgstr "Pridá kľúče k obľúbeným"
 
-#: regedit.rc:165
+#: regedit.rc:167
 msgid "Removes keys from the favorites list"
 msgstr "Odstráni kľúče z obľúbených"
 
-#: regedit.rc:166
+#: regedit.rc:168
 msgid "Shows or hides the status bar"
 msgstr "Ukáže alebo schová stavový riadok"
 
-#: regedit.rc:167
+#: regedit.rc:169
 msgid "Change position of split between two panes"
 msgstr ""
 
-#: regedit.rc:168
+#: regedit.rc:170
 msgid "Refreshes the window"
 msgstr "Obnoví okno"
 
-#: regedit.rc:169
+#: regedit.rc:171
 msgid "Deletes the selection"
 msgstr "Zmaže výber"
 
-#: regedit.rc:170
+#: regedit.rc:172
 msgid "Renames the selection"
 msgstr "Premenuje výber"
 
-#: regedit.rc:171
+#: regedit.rc:173
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Skopíruje názov zvoleného kľúča do schránky"
 
-#: regedit.rc:172
+#: regedit.rc:174
 msgid "Finds a text string in a key, value or data"
 msgstr ""
 
-#: regedit.rc:173
+#: regedit.rc:175
 msgid "Finds next occurrence of text specified in previous search"
 msgstr ""
 
-#: regedit.rc:147
+#: regedit.rc:149
 msgid "Modifies the value's data"
 msgstr ""
 
-#: regedit.rc:148
+#: regedit.rc:150
 msgid "Adds a new key"
 msgstr "Pridá nový kľúč"
 
-#: regedit.rc:149
+#: regedit.rc:151
 msgid "Adds a new string value"
 msgstr "Pridá novú textovú hodnotu"
 
-#: regedit.rc:150
+#: regedit.rc:152
 msgid "Adds a new binary value"
 msgstr "Pridá novú binárnu hodnotu"
 
-#: regedit.rc:151
+#: regedit.rc:153
 msgid "Adds a new double word value"
 msgstr "Pridá novú dvojslovnú hodnotu"
 
-#: regedit.rc:153
+#: regedit.rc:155
 msgid "Imports a text file into the registry"
 msgstr "Importovať textový súbor do registrov"
 
-#: regedit.rc:155
+#: regedit.rc:157
 msgid "Exports all or part of the registry to a text file"
 msgstr "Exportovať všetky alebo časť registrov do textového súboru"
 
-#: regedit.rc:156
+#: regedit.rc:158
 msgid "Prints all or part of the registry"
 msgstr "Vytlačiť všetky alebo časť registrov"
 
-#: regedit.rc:158
+#: regedit.rc:160
 msgid "Displays program information, version number and copyright"
 msgstr ""
 
-#: regedit.rc:181
+#: regedit.rc:183
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to query the registry value '%1'."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:182
+#: regedit.rc:184
 msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr ""
 
-#: regedit.rc:183
+#: regedit.rc:185
 #, fuzzy
 #| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
 msgstr "Hodnota je príliš veľká (%u)"
 
-#: regedit.rc:184
+#: regedit.rc:186
 msgid "Confirm Value Delete"
 msgstr "Potvrdenie zmazania hodnoty"
 
-#: regedit.rc:191
+#: regedit.rc:193
 #, fuzzy
 #| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
 msgstr "Hľadaný výraz '%s' nebol nájdený"
 
-#: regedit.rc:186
+#: regedit.rc:188
 msgid "Are you sure you want to delete these values?"
 msgstr "Ste si istý že chcete zmazať tieto hodnoty?"
 
-#: regedit.rc:189
+#: regedit.rc:191
 msgid "New Key #%d"
 msgstr "Nový kľúč #%d"
 
-#: regedit.rc:190
+#: regedit.rc:192
 msgid "New Value #%d"
 msgstr "Nová hodnota #%d"
 
-#: regedit.rc:180
+#: regedit.rc:182
 #, fuzzy
 #| msgid "Error: Unable to terminate process \"%1\".\n"
 msgid "Unable to query the registry key '%1'."
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
-#: regedit.rc:152
+#: regedit.rc:154
 msgid "Adds a new multi-string value"
 msgstr ""
 
-#: regedit.rc:174
+#: regedit.rc:176
 msgid "Exports selected branch of the registry to a text file"
 msgstr ""
 
-#: regedit.rc:187
+#: regedit.rc:189
 #, fuzzy
 #| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
 msgstr "Potvrdenie zmazania hodnoty"
 
-#: regedit.rc:188
+#: regedit.rc:190
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid ""

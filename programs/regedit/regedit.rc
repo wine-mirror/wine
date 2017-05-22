@@ -84,14 +84,7 @@ END
 
 IDR_POPUP_MENUS MENU
 BEGIN
-  POPUP ""
-  BEGIN
-	MENUITEM "&Modify...",                  ID_EDIT_MODIFY
-	MENUITEM "Modify Binary Data...",       ID_EDIT_MODIFY_BIN
-	MENUITEM SEPARATOR
-	MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
-	MENUITEM "&Rename",                     ID_EDIT_RENAME
-  END
+  /* PM_TREEVIEW */
   POPUP ""
   BEGIN
         POPUP "&New"
@@ -104,14 +97,23 @@ BEGIN
             MENUITEM "&Multi-String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
             MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
         END
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
         MENUITEM "&Rename\tF2",                 ID_EDIT_RENAME
         MENUITEM SEPARATOR
         MENUITEM "&Export...",                  ID_EDIT_EXPORT
-        MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND, GRAYED
+        MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
+  END
+  /* PM_MODIFY_VALUE */
+  POPUP ""
+  BEGIN
+	MENUITEM "&Modify...",                  ID_EDIT_MODIFY
+	MENUITEM "Modify Binary Data...",       ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
+	MENUITEM "&Rename",                     ID_EDIT_RENAME
   END
 END
 

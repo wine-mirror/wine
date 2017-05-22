@@ -378,7 +378,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         ScreenToClient(g_pChildWnd->hTreeWnd, &ht.pt);
         if (SendMessageW(g_pChildWnd->hTreeWnd, TVM_HITTEST, 0, (LPARAM)&ht)) {
             SendMessageW(g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM)ht.hItem);
-            TrackPopupMenu(GetSubMenu(hPopupMenus, PM_NEW), TPM_RIGHTBUTTON,
+            TrackPopupMenu(GetSubMenu(hPopupMenus, PM_TREEVIEW), TPM_RIGHTBUTTON,
                            pt.x, pt.y, 0, hFrameWnd, NULL);
         }
         break;
