@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "wine/test.h"
 
 #define PIPENAME "\\\\.\\PiPe\\tests_pipe.c"
@@ -2534,17 +2535,40 @@ todo_wine
     CloseHandle(event);
 }
 
-#define test_peek_pipe(a,b,c) _test_peek_pipe(__LINE__,a,b,c)
-static void _test_peek_pipe(unsigned line, HANDLE pipe, DWORD expected_read, DWORD expected_avail)
+#define test_peek_pipe(a,b,c,d) _test_peek_pipe(__LINE__,a,b,c,d)
+static void _test_peek_pipe(unsigned line, HANDLE pipe, DWORD expected_read, DWORD expected_avail, DWORD expected_message_length)
 {
-    DWORD bytes_read = 0xdeadbeed, avail = 0xdeadbeef;
+    DWORD bytes_read = 0xdeadbeed, avail = 0xdeadbeef, left = 0xdeadbeed;
     char buf[4000];
+    FILE_PIPE_PEEK_BUFFER *peek_buf = (void*)buf;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
     BOOL r;
 
-    r = PeekNamedPipe(pipe, buf, sizeof(buf), &bytes_read, &avail, NULL);
+    r = PeekNamedPipe(pipe, buf, sizeof(buf), &bytes_read, &avail, &left);
     ok_(__FILE__,line)(r, "PeekNamedPipe failed: %u\n", GetLastError());
     ok_(__FILE__,line)(bytes_read == expected_read, "bytes_read = %u, expected %u\n", bytes_read, expected_read);
     ok_(__FILE__,line)(avail == expected_avail, "avail = %u, expected %u\n", avail, expected_avail);
+    ok_(__FILE__,line)(left == expected_message_length - expected_read, "left = %d, expected %d\n",
+                       left, expected_message_length - expected_read);
+
+    status = NtFsControlFile(pipe, 0, NULL, NULL, &io, FSCTL_PIPE_PEEK, NULL, 0, buf, sizeof(buf));
+    ok_(__FILE__,line)(!status || status == STATUS_PENDING, "NtFsControlFile(FSCTL_PIPE_PEEK) failed: %x\n", status);
+    ok_(__FILE__,line)(io.Information == FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[expected_read]),
+                       "io.Information = %lu\n", io.Information);
+    ok_(__FILE__,line)(peek_buf->ReadDataAvailable == expected_avail, "ReadDataAvailable = %u, expected %u\n",
+                       peek_buf->ReadDataAvailable, expected_avail);
+    ok_(__FILE__,line)(peek_buf->MessageLength == expected_message_length, "MessageLength = %u, expected %u\n",
+                       peek_buf->MessageLength, expected_message_length);
+
+    if (expected_read)
+    {
+        r = PeekNamedPipe(pipe, buf, 1, &bytes_read, &avail, &left);
+        ok_(__FILE__,line)(r, "PeekNamedPipe failed: %u\n", GetLastError());
+        ok_(__FILE__,line)(bytes_read == 1, "bytes_read = %u, expected %u\n", bytes_read, expected_read);
+        ok_(__FILE__,line)(avail == expected_avail, "avail = %u, expected %u\n", avail, expected_avail);
+        ok_(__FILE__,line)(left == expected_message_length-1, "left = %d, expected %d\n", left, expected_message_length-1);
+    }
 }
 
 #define overlapped_read_sync(a,b,c,d,e) _overlapped_read_sync(__LINE__,a,b,c,d,e)
@@ -2728,7 +2752,7 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     /* test pending read with overlapped event */
     overlapped_read_async(reader, read_buf, 1000, &read_overlapped);
     test_flush_sync(writer);
-    test_peek_pipe(reader, 0, 0);
+    test_peek_pipe(reader, 0, 0, 0);
 
     /* write more data than needed for read */
     overlapped_write_sync(writer, buf, 4000);
@@ -2813,13 +2837,13 @@ static void test_blocking_rw(HANDLE writer, HANDLE reader, DWORD buf_size, BOOL 
     test_overlapped_result(reader, &read_overlapped2, 1, FALSE);
 
     overlapped_write_sync(writer, buf, 20);
-    test_peek_pipe(reader, 20, 20);
+    test_peek_pipe(reader, 20, 20, msg_mode ? 20 : 0);
     overlapped_write_sync(writer, buf, 15);
-    test_peek_pipe(reader, msg_mode ? 20 : 35, 35);
+    test_peek_pipe(reader, msg_mode ? 20 : 35, 35, msg_mode ? 20 : 0);
     overlapped_read_sync(reader, read_buf, 10, 10, msg_read);
-    test_peek_pipe(reader, msg_mode ? 10 : 25, 25);
+    test_peek_pipe(reader, msg_mode ? 10 : 25, 25, msg_mode ? 10 : 0);
     overlapped_read_sync(reader, read_buf, 10, 10, FALSE);
-    test_peek_pipe(reader, 15, 15);
+    test_peek_pipe(reader, 15, 15, msg_mode ? 15 : 0);
     overlapped_read_sync(reader, read_buf, 15, 15, FALSE);
 
     if(!pCancelIoEx) {
