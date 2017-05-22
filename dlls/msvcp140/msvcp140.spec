@@ -3689,7 +3689,7 @@
 @ stub _Mtxlock
 @ stub _Mtxunlock
 @ extern _Nan _Nan
-@ stub _Open_dir
+@ cdecl _Open_dir(ptr wstr long long) tr2_sys__Open_dir_wchar
 @ cdecl -ret64 _Query_perf_counter()
 @ cdecl -ret64 _Query_perf_frequency()
 @ stub _Read_dir

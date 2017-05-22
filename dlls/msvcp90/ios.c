@@ -26,7 +26,9 @@
 #include "msvcp90.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wine/debug.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 #define SECSPERDAY        86400
@@ -14893,29 +14895,32 @@ void __cdecl tr2_sys__Last_write_time_set(char const* path, __int64 newtime)
     CloseHandle(handle);
 }
 
-/* ?_Open_dir@sys@tr2@std@@YAPAXAAY0BAE@DPBDAAHAAW4file_type@123@@Z */
-/* ?_Open_dir@sys@tr2@std@@YAPEAXAEAY0BAE@DPEBDAEAHAEAW4file_type@123@@Z */
-void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, enum file_type* type)
+/* ??_Open_dir@sys@tr2@std@@YAPAXPA_WPB_WAAHAAW4file_type@123@@Z */
+/* ??_Open_dir@sys@tr2@std@@YAPEAXPEA_WPEB_WAEAHAEAW4file_type@123@@Z */
+void* __cdecl tr2_sys__Open_dir_wchar(wchar_t* target, wchar_t const* dest, int* err_code, enum file_type* type)
 {
     HANDLE handle;
-    WIN32_FIND_DATAA data;
-    char temppath[MAX_PATH];
+    WIN32_FIND_DATAW data;
+    wchar_t temppath[MAX_PATH];
+    static const wchar_t dot[] = {'.', 0};
+    static const wchar_t dotdot[] = {'.', '.', 0};
+    static const wchar_t asterisk[] = {'\\', '*', 0};
 
-    TRACE("(%p %s %p %p)\n", target, debugstr_a(dest), err_code, type);
-    if(strlen(dest) > MAX_PATH - 3) {
+    TRACE("(%p %s %p %p)\n", target, debugstr_w(dest), err_code, type);
+    if(wcslen(dest) > MAX_PATH - 3) {
         *err_code = ERROR_BAD_PATHNAME;
         return NULL;
     }
-    strcpy(temppath, dest);
-    strcat(temppath, "\\*");
+    wcscpy(temppath, dest);
+    wcscat(temppath, asterisk);
 
-    handle = FindFirstFileA(temppath, &data);
+    handle = FindFirstFileW(temppath, &data);
     if(handle == INVALID_HANDLE_VALUE) {
         *err_code = GetLastError();
         return NULL;
     }
-    while(!strcmp(data.cFileName, ".") || !strcmp(data.cFileName, "..")) {
-        if(!FindNextFileA(handle, &data)) {
+    while(!wcscmp(data.cFileName, dot) || !wcscmp(data.cFileName, dotdot)) {
+        if(!FindNextFileW(handle, &data)) {
             *err_code = ERROR_SUCCESS;
             *type = status_unknown;
             FindClose(handle);
@@ -14923,12 +14928,37 @@ void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, e
         }
     }
 
-    strcpy(target, data.cFileName);
+    wcscpy(target, data.cFileName);
     *err_code = ERROR_SUCCESS;
     if(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         *type = directory_file;
     else
         *type = regular_file;
+    return handle;
+}
+
+/* ?_Open_dir@sys@tr2@std@@YAPAXAAY0BAE@DPBDAAHAAW4file_type@123@@Z */
+/* ?_Open_dir@sys@tr2@std@@YAPEAXAEAY0BAE@DPEBDAEAHAEAW4file_type@123@@Z */
+void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, enum file_type* type)
+{
+    void *handle;
+    wchar_t target_w[MAX_PATH];
+    wchar_t dest_w[MAX_PATH];
+
+    TRACE("(%p %s %p %p)\n", target, debugstr_a(dest), err_code, type);
+
+    if (dest && !MultiByteToWideChar(CP_ACP, 0, dest, -1, dest_w, MAX_PATH))
+    {
+        WARN("Failed to convert input string.\n");
+        *err_code = ERROR_BAD_PATHNAME;
+        return NULL;
+    }
+
+    handle = tr2_sys__Open_dir_wchar(target_w, dest ? dest_w : NULL, err_code, type);
+
+    if (handle)
+        WideCharToMultiByte(CP_ACP, 0, target_w, -1, target, MAX_PATH, NULL, NULL);
+
     return handle;
 }
 
