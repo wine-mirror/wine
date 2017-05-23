@@ -71,19 +71,20 @@ enum writer_state
 
 struct writer
 {
-    ULONG                      magic;
-    CRITICAL_SECTION           cs;
-    ULONG                      write_pos;
-    unsigned char             *write_bufptr;
-    enum writer_state          state;
-    struct node               *root;
-    struct node               *current;
-    WS_XML_STRING             *current_ns;
-    WS_XML_WRITER_OUTPUT_TYPE  output_type;
-    struct xmlbuf             *output_buf;
-    WS_HEAP                   *output_heap;
-    ULONG                      prop_count;
-    struct prop                prop[sizeof(writer_props)/sizeof(writer_props[0])];
+    ULONG                        magic;
+    CRITICAL_SECTION             cs;
+    ULONG                        write_pos;
+    unsigned char               *write_bufptr;
+    enum writer_state            state;
+    struct node                 *root;
+    struct node                 *current;
+    WS_XML_STRING               *current_ns;
+    WS_XML_WRITER_ENCODING_TYPE  output_enc;
+    WS_XML_WRITER_OUTPUT_TYPE    output_type;
+    struct xmlbuf               *output_buf;
+    WS_HEAP                     *output_heap;
+    ULONG                        prop_count;
+    struct prop                  prop[sizeof(writer_props)/sizeof(writer_props[0])];
 };
 
 #define WRITER_MAGIC (('W' << 24) | ('R' << 16) | ('I' << 8) | 'T')
@@ -162,6 +163,7 @@ static HRESULT init_writer( struct writer *writer )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
     write_insert_eof( writer, node );
     writer->state        = WRITER_STATE_INITIAL;
+    writer->output_enc   = WS_XML_WRITER_ENCODING_TYPE_TEXT;
     return S_OK;
 }
 
@@ -372,6 +374,12 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
             hr = E_NOTIMPL;
             goto done;
         }
+        writer->output_enc = WS_XML_WRITER_ENCODING_TYPE_TEXT;
+        break;
+    }
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY:
+    {
+        writer->output_enc = WS_XML_WRITER_ENCODING_TYPE_BINARY;
         break;
     }
     default:
@@ -737,9 +745,9 @@ HRESULT WINAPI WsWriteEndAttribute( WS_XML_WRITER *handle, WS_ERROR *error )
     return S_OK;
 }
 
-static HRESULT write_startelement( struct writer *writer )
+static HRESULT write_startelement_text( struct writer *writer )
 {
-    WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
+    const WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     ULONG size, i;
     HRESULT hr;
 
@@ -774,6 +782,114 @@ static HRESULT write_startelement( struct writer *writer )
     return S_OK;
 }
 
+static enum record_type get_elem_record_type( const WS_XML_ELEMENT_NODE *elem )
+{
+    if (!elem->prefix || !elem->prefix->length) return RECORD_SHORT_ELEMENT;
+    if (elem->prefix->length == 1 && elem->prefix->bytes[0] >= 'a' && elem->prefix->bytes[0] <= 'z')
+    {
+        return RECORD_PREFIX_ELEMENT_A + elem->prefix->bytes[0] - 'a';
+    }
+    return RECORD_ELEMENT;
+};
+
+static HRESULT write_int31( struct writer *writer, ULONG len )
+{
+    HRESULT hr;
+
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    if (len < 0x80)
+    {
+        write_char( writer, len );
+        return S_OK;
+    }
+    write_char( writer, (len & 0x7f) | 0x80 );
+
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    if ((len >>= 7) < 0x80)
+    {
+        write_char( writer, len );
+        return S_OK;
+    }
+    write_char( writer, (len & 0x7f) | 0x80 );
+
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    if ((len >>= 7) < 0x80)
+    {
+        write_char( writer, len );
+        return S_OK;
+    }
+    write_char( writer, (len & 0x7f) | 0x80 );
+
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    if ((len >>= 7) < 0x80)
+    {
+        write_char( writer, len );
+        return S_OK;
+    }
+    write_char( writer, (len & 0x7f) | 0x80 );
+
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    if ((len >>= 7) < 0x08)
+    {
+        write_char( writer, len );
+        return S_OK;
+    }
+    return WS_E_INVALID_FORMAT;
+}
+
+static HRESULT write_string( struct writer *writer, const BYTE *bytes, ULONG len )
+{
+    HRESULT hr;
+    if ((hr = write_int31( writer, len )) != S_OK) return hr;
+    if ((hr = write_grow_buffer( writer, len )) != S_OK) return hr;
+    write_bytes( writer, bytes, len );
+    return S_OK;
+}
+
+static HRESULT write_startelement_bin( struct writer *writer )
+{
+    const WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
+    enum record_type type = get_elem_record_type( elem );
+    HRESULT hr;
+
+    if (type >= RECORD_PREFIX_ELEMENT_A && type <= RECORD_PREFIX_ELEMENT_Z)
+    {
+        if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+        write_char( writer, type );
+        return write_string( writer, elem->localName->bytes, elem->localName->length );
+    }
+
+    switch (type)
+    {
+    case RECORD_SHORT_ELEMENT:
+        if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+        write_char( writer, type );
+        return write_string( writer, elem->localName->bytes, elem->localName->length );
+
+    case RECORD_ELEMENT:
+        if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+        write_char( writer, type );
+        if ((hr = write_string( writer, elem->prefix->bytes, elem->prefix->length )) != S_OK) return hr;
+        return write_string( writer, elem->localName->bytes, elem->localName->length );
+
+    default:
+        FIXME( "unhandled record type %u\n", type );
+        return WS_E_NOT_SUPPORTED;
+    }
+}
+
+static HRESULT write_startelement( struct writer *writer )
+{
+    switch (writer->output_enc)
+    {
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:   return write_startelement_text( writer );
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY: return write_startelement_bin( writer );
+    default:
+        ERR( "unhandled encoding %u\n", writer->output_enc );
+        return WS_E_NOT_SUPPORTED;
+    }
+}
+
 static struct node *write_find_startelement( struct writer *writer )
 {
     struct node *node;
@@ -790,7 +906,7 @@ static inline BOOL is_empty_element( const struct node *node )
     return node_type( head ) == WS_XML_NODE_TYPE_END_ELEMENT;
 }
 
-static HRESULT write_endelement( struct writer *writer, const WS_XML_ELEMENT_NODE *elem )
+static HRESULT write_endelement_text( struct writer *writer, const WS_XML_ELEMENT_NODE *elem )
 {
     ULONG size;
     HRESULT hr;
@@ -821,6 +937,26 @@ static HRESULT write_endelement( struct writer *writer, const WS_XML_ELEMENT_NOD
     write_bytes( writer, elem->localName->bytes, elem->localName->length );
     write_char( writer, '>' );
     return S_OK;
+}
+
+static HRESULT write_endelement_bin( struct writer *writer )
+{
+    HRESULT hr;
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    write_char( writer, RECORD_ENDELEMENT );
+    return S_OK;
+}
+
+static HRESULT write_endelement( struct writer *writer, const WS_XML_ELEMENT_NODE *elem )
+{
+    switch (writer->output_enc)
+    {
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:   return write_endelement_text( writer, elem );
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY: return write_endelement_bin( writer );
+    default:
+        ERR( "unhandled encoding %u\n", writer->output_enc );
+        return WS_E_NOT_SUPPORTED;
+    }
 }
 
 static HRESULT write_close_element( struct writer *writer, struct node *node )
@@ -874,12 +1010,24 @@ HRESULT WINAPI WsWriteEndElement( WS_XML_WRITER *handle, WS_ERROR *error )
     return hr;
 }
 
-static HRESULT write_endstartelement( struct writer *writer )
+static HRESULT write_endstartelement_text( struct writer *writer )
 {
     HRESULT hr;
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
     write_char( writer, '>' );
     return S_OK;
+}
+
+static HRESULT write_endstartelement( struct writer *writer )
+{
+    switch (writer->output_enc)
+    {
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:   return write_endstartelement_text( writer );
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY: return S_OK;
+    default:
+        ERR( "unhandled encoding %u\n", writer->output_enc );
+        return WS_E_NOT_SUPPORTED;
+    }
 }
 
 /**************************************************************************

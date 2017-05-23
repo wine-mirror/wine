@@ -3420,6 +3420,51 @@ static void test_WsWriteCharsUtf8(void)
     WsFreeWriter( writer );
 }
 
+static void test_binary_encoding(void)
+{
+    static const char res[] = {0x40,0x01,'t',0x01,0};
+    WS_XML_WRITER_BINARY_ENCODING bin = {{WS_XML_WRITER_ENCODING_TYPE_BINARY}};
+    WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
+    static const char localname[] = "t", empty[] = "";
+    const WS_XML_STRING *prefix_ptr, *localname_ptr, *ns_ptr;
+    WS_XML_STRING str, str2, str3;
+    WS_XML_WRITER *writer;
+    HRESULT hr;
+    ULONG i;
+    static const struct
+    {
+        const char *prefix;
+        const char *localname;
+        const char *ns;
+        const char *result;
+    }
+    elem_tests[] =
+    {
+        { NULL, localname, empty, res },   /* short element */
+    };
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (i = 0; i < sizeof(elem_tests)/sizeof(elem_tests[0]); i++)
+    {
+        hr = WsSetOutput( writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        prefix_ptr = init_xmlstring( elem_tests[i].prefix, &str );
+        localname_ptr = init_xmlstring( elem_tests[i].localname, &str2 );
+        ns_ptr = init_xmlstring( elem_tests[i].ns, &str3 );
+
+        hr = WsWriteStartElement( writer, prefix_ptr, localname_ptr, ns_ptr, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        hr = WsWriteEndElement( writer, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        if (hr == S_OK) check_output( writer, elem_tests[i].result, __LINE__ );
+    }
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -3457,4 +3502,5 @@ START_TEST(writer)
     test_WsWriteBytes();
     test_WsWriteChars();
     test_WsWriteCharsUtf8();
+    test_binary_encoding();
 }
