@@ -159,7 +159,7 @@
 @ stdcall WsSetReaderPosition(ptr ptr ptr)
 @ stdcall WsSetWriterPosition(ptr ptr ptr)
 @ stub WsShutdownSessionChannel
-@ stub WsSkipNode
+@ stdcall WsSkipNode(ptr ptr)
 @ stub WsStartReaderCanonicalization
 @ stub WsStartWriterCanonicalization
 @ stub WsTrimXmlWhitespace

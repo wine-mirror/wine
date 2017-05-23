@@ -4403,6 +4403,65 @@ static void test_WsReadAttribute(void)
     WsFreeReader( reader );
 }
 
+static void test_WsSkipNode(void)
+{
+    const WS_XML_NODE *node;
+    WS_XML_READER *reader;
+    HRESULT hr;
+
+    hr = WsSkipNode( NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSkipNode( reader, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_input( reader, "<t><u></u></t>", sizeof("<t><u></u></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    /* BOF */
+    hr = WsSkipNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+
+    /* element */
+    hr = WsSkipNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    /* EOF */
+    hr = WsSkipNode( reader, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_input( reader, "<!--comment--><t></t>", sizeof("<!--comment--><t></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* non-element */
+    hr = WsSkipNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_COMMENT, "got %u\n", node->nodeType );
+
+    hr = WsSkipNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -4444,4 +4503,5 @@ START_TEST(reader)
     test_WsReadCharsUtf8();
     test_WsReadQualifiedName();
     test_WsReadAttribute();
+    test_WsSkipNode();
 }

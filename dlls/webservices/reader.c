@@ -1739,6 +1739,52 @@ HRESULT WINAPI WsReadNode( WS_XML_READER *handle, WS_ERROR *error )
     return hr;
 }
 
+static HRESULT skip_node( struct reader *reader )
+{
+    const struct node *parent;
+    HRESULT hr;
+
+    if (node_type( reader->current ) == WS_XML_NODE_TYPE_EOF) return WS_E_INVALID_OPERATION;
+    if (node_type( reader->current ) == WS_XML_NODE_TYPE_ELEMENT) parent = reader->current;
+    else parent = NULL;
+
+    for (;;)
+    {
+        if ((hr = read_node( reader ) != S_OK) || !parent) break;
+        if (node_type( reader->current ) != WS_XML_NODE_TYPE_END_ELEMENT) continue;
+        if (reader->current->parent == parent) return read_node( reader );
+    }
+
+    return hr;
+}
+
+/**************************************************************************
+ *          WsSkipNode		[webservices.@]
+ */
+HRESULT WINAPI WsSkipNode( WS_XML_READER *handle, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+
+    EnterCriticalSection( &reader->cs );
+
+    if (reader->magic != READER_MAGIC)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = skip_node( reader );
+
+    LeaveCriticalSection( &reader->cs );
+    return hr;
+}
+
 /**************************************************************************
  *          WsReadStartElement		[webservices.@]
  */
