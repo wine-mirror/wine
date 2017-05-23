@@ -226,7 +226,7 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
   I_RpcFree(pname);
 
   EnterCriticalSection(&protseq->cs);
-  list_add_head(&protseq->connections, &Connection->protseq_entry);
+  list_add_head(&protseq->listeners, &Connection->protseq_entry);
   LeaveCriticalSection(&protseq->cs);
 
   return r;
@@ -287,7 +287,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
   I_RpcFree(pname);
 
   EnterCriticalSection(&protseq->cs);
-  list_add_head(&protseq->connections, &Connection->protseq_entry);
+  list_add_head(&protseq->listeners, &Connection->protseq_entry);
   LeaveCriticalSection(&protseq->cs);
 
   return r;
@@ -644,7 +644,8 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     
     /* open and count connections */
     *count = 1;
-    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
+    LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection_np, common.protseq_entry)
+    {
         if (!conn->listen_event)
         {
             NTSTATUS status;
@@ -688,7 +689,8 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     
     objs[0] = npps->mgr_event;
     *count = 1;
-    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry) {
+    LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection_np, common.protseq_entry)
+    {
         if (conn->listen_event)
             objs[(*count)++] = conn->listen_event;
     }
@@ -733,7 +735,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         b_handle = objs[res - WAIT_OBJECT_0];
         /* find which connection got a RPC */
         EnterCriticalSection(&protseq->cs);
-        LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_np, common.protseq_entry)
+        LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection_np, common.protseq_entry)
         {
             if (b_handle == conn->listen_event)
             {
@@ -1320,7 +1322,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         }
 
         EnterCriticalSection(&protseq->cs);
-        list_add_tail(&protseq->connections, &tcpc->common.protseq_entry);
+        list_add_tail(&protseq->listeners, &tcpc->common.protseq_entry);
         LeaveCriticalSection(&protseq->cs);
 
         freeaddrinfo(ai);
@@ -1511,7 +1513,7 @@ static void *rpcrt4_protseq_sock_get_wait_array(RpcServerProtseq *protseq, void 
 
     /* open and count connections */
     *count = 1;
-    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_tcp, common.protseq_entry)
+    LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection_tcp, common.protseq_entry)
     {
         if (conn->sock != -1)
             (*count)++;
@@ -1531,7 +1533,7 @@ static void *rpcrt4_protseq_sock_get_wait_array(RpcServerProtseq *protseq, void 
 
     objs[0] = sockps->mgr_event;
     *count = 1;
-    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_tcp, common.protseq_entry)
+    LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection_tcp, common.protseq_entry)
     {
         if (conn->sock != -1)
         {
@@ -1586,7 +1588,7 @@ static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq
 
     /* find which connection got a RPC */
     EnterCriticalSection(&protseq->cs);
-    LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection_tcp, common.protseq_entry)
+    LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection_tcp, common.protseq_entry)
     {
         if (b_handle == conn->sock_event)
         {

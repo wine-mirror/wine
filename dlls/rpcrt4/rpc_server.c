@@ -670,7 +670,7 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
       /* cleanup */
       cps->ops->free_wait_array(cps, objs);
       EnterCriticalSection(&cps->cs);
-      LIST_FOR_EACH_ENTRY(conn, &cps->connections, RpcConnection, protseq_entry)
+      LIST_FOR_EACH_ENTRY(conn, &cps->listeners, RpcConnection, protseq_entry)
         RPCRT4_CloseConnection(conn);
       LeaveCriticalSection(&cps->cs);
 
@@ -804,7 +804,7 @@ static BOOL RPCRT4_protseq_is_endpoint_registered(RpcServerProtseq *protseq, con
   RpcConnection *conn;
   BOOL registered = FALSE;
   EnterCriticalSection(&protseq->cs);
-  LIST_FOR_EACH_ENTRY(conn, &protseq->connections, RpcConnection, protseq_entry) {
+  LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection, protseq_entry) {
     if (!endpoint || !strcmp(endpoint, conn->Endpoint)) {
       registered = TRUE;
       break;
@@ -860,7 +860,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   count = 0;
   LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
     EnterCriticalSection(&ps->cs);
-    LIST_FOR_EACH_ENTRY(conn, &ps->connections, RpcConnection, protseq_entry)
+    LIST_FOR_EACH_ENTRY(conn, &ps->listeners, RpcConnection, protseq_entry)
       count++;
     LeaveCriticalSection(&ps->cs);
   }
@@ -873,7 +873,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
     count = 0;
     LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
       EnterCriticalSection(&ps->cs);
-      LIST_FOR_EACH_ENTRY(conn, &ps->connections, RpcConnection, protseq_entry) {
+      LIST_FOR_EACH_ENTRY(conn, &ps->listeners, RpcConnection, protseq_entry) {
        RPCRT4_MakeBinding((RpcBinding**)&(*BindingVector)->BindingH[count],
                           conn);
        count++;
@@ -945,7 +945,7 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, const char *Protseq, RpcSe
   (*ps)->Protseq = RPCRT4_strdupA(Protseq);
   (*ps)->ops = ops;
   (*ps)->MaxCalls = 0;
-  list_init(&(*ps)->connections);
+  list_init(&(*ps)->listeners);
   InitializeCriticalSection(&(*ps)->cs);
   (*ps)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcServerProtseq.cs");
   (*ps)->is_listening = FALSE;
