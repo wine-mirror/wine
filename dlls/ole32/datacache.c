@@ -929,7 +929,7 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
 
 static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, STGMEDIUM *stgmedium)
 {
-    if (stgmedium->tymed == TYMED_NULL && cache_entry->stream)
+    if (cache_entry->stgmedium.tymed == TYMED_NULL && cache_entry->stream)
     {
         HRESULT hr = DataCacheEntry_LoadData(cache_entry);
         if (FAILED(hr))
