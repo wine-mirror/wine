@@ -5539,6 +5539,20 @@ static void test_query_support(void)
         }
     }
 
+    for (i = 0; i < 40; ++i)
+    {
+        if (D3DQUERYTYPE_VCACHE <= i && i <= D3DQUERYTYPE_MEMORYPRESSURE)
+            continue;
+
+        hr = IDirect3DDevice9_CreateQuery(device, i, NULL);
+        ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x for query %#x.\n", hr, i);
+
+        query = (IDirect3DQuery9 *)0xdeadbeef;
+        hr = IDirect3DDevice9_CreateQuery(device, i, &query);
+        ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x for query %#x.\n", hr, i);
+        ok(query == (IDirect3DQuery9 *)0xdeadbeef, "Got unexpected query %p.\n", query);
+    }
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D9_Release(d3d9);
