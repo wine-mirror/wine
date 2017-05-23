@@ -3423,9 +3423,12 @@ static void test_WsWriteCharsUtf8(void)
 static void test_binary_encoding(void)
 {
     static const char res[] = {0x40,0x01,'t',0x01,0};
+    static const char res2[] = {0x6d,0x01,'t',0x09,0x01,'p',0x02,'n','s',0x01,0};
+    static const char res3[] = {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x01,0};
     WS_XML_WRITER_BINARY_ENCODING bin = {{WS_XML_WRITER_ENCODING_TYPE_BINARY}};
     WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
-    static const char localname[] = "t", empty[] = "";
+    static const char prefix[] = "p", prefix2[] = "p2";
+    static const char localname[] = "t", empty[] = "", ns[] = "ns";
     const WS_XML_STRING *prefix_ptr, *localname_ptr, *ns_ptr;
     WS_XML_STRING str, str2, str3;
     WS_XML_WRITER *writer;
@@ -3441,6 +3444,8 @@ static void test_binary_encoding(void)
     elem_tests[] =
     {
         { NULL, localname, empty, res },   /* short element */
+        { prefix, localname, ns, res2 },   /* one character prefix element */
+        { prefix2, localname, ns, res3 },  /* element */
     };
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
