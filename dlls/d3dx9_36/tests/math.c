@@ -3237,7 +3237,7 @@ static void test_D3DXSHMultiply2(void)
                14.0f,        15.0f,        16.0f,        17.0f, 18.0f, 19.0f,
     };
 
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(a); ++i)
     {
         a[i] = 1.0f + i / 100.0f;
         b[i] = 3.0f - i / 100.0f;
@@ -3245,7 +3245,7 @@ static void test_D3DXSHMultiply2(void)
     }
 
     D3DXSHMultiply2(c, a, b);
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(expected); ++i)
     {
         equal = compare_float(c[i], expected[i], 2);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected[i], c[i]);
