@@ -1098,7 +1098,7 @@ static BOOL rpcrt4_sock_wait_for_send(RpcConnection_tcp *tcpc)
 static RpcConnection *rpcrt4_conn_tcp_alloc(void)
 {
   RpcConnection_tcp *tcpc;
-  tcpc = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcConnection_tcp));
+  tcpc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_tcp));
   if (tcpc == NULL)
     return NULL;
   tcpc->sock = -1;
@@ -1738,7 +1738,6 @@ static RpcConnection *rpcrt4_ncacn_http_alloc(void)
     httpc->cancel_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     httpc->async_data->refs = 1;
     httpc->async_data->inet_buffers.dwStructSize = sizeof(INTERNET_BUFFERSW);
-    httpc->async_data->inet_buffers.lpvBuffer = NULL;
     InitializeCriticalSection(&httpc->async_data->cs);
     httpc->async_data->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcHttpAsyncData.cs");
     return &httpc->common;
@@ -3284,7 +3283,6 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
 
   NewConnection = ops->alloc();
   NewConnection->ref = 1;
-  NewConnection->server_binding = NULL;
   NewConnection->server = server;
   NewConnection->ops = ops;
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
@@ -3292,23 +3290,17 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   NewConnection->NetworkOptions = RPCRT4_strdupW(NetworkOptions);
   NewConnection->CookieAuth = RPCRT4_strdupW(CookieAuth);
   NewConnection->MaxTransmissionSize = RPC_MAX_PACKET_SIZE;
-  memset(&NewConnection->ActiveInterface, 0, sizeof(NewConnection->ActiveInterface));
   NewConnection->NextCallId = 1;
 
   SecInvalidateHandle(&NewConnection->ctx);
-  memset(&NewConnection->exp, 0, sizeof(NewConnection->exp));
-  NewConnection->attr = 0;
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
   NewConnection->auth_context_id = InterlockedIncrement( &next_id );
-  NewConnection->encryption_auth_len = 0;
-  NewConnection->signature_auth_len = 0;
   if (QOS) RpcQualityOfService_AddRef(QOS);
   NewConnection->QOS = QOS;
 
   list_init(&NewConnection->conn_pool_entry);
   list_init(&NewConnection->protseq_entry);
-  NewConnection->async_state = NULL;
 
   TRACE("connection: %p\n", NewConnection);
   *Connection = NewConnection;
