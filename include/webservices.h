@@ -211,15 +211,45 @@ typedef enum {
     WS_CHARSET_UTF16BE
 } WS_CHARSET;
 
+typedef struct _WS_XML_DICTIONARY {
+    GUID                   guid;
+    struct _WS_XML_STRING *strings;
+    ULONG                  stringCount;
+    BOOL                   isConst;
+} WS_XML_DICTIONARY;
+
+typedef struct _WS_XML_STRING {
+    ULONG              length;
+    BYTE              *bytes;
+    WS_XML_DICTIONARY *dictionary;
+    ULONG              id;
+} WS_XML_STRING;
+
 typedef struct _WS_XML_READER_TEXT_ENCODING {
     WS_XML_READER_ENCODING encoding;
     WS_CHARSET charSet;
 } WS_XML_READER_TEXT_ENCODING;
 
+typedef struct _WS_XML_READER_BINARY_ENCODING {
+    WS_XML_READER_ENCODING encoding;
+    WS_XML_DICTIONARY *staticDictionary;
+    WS_XML_DICTIONARY *dynamicDictionary;
+} WS_XML_READER_BINARY_ENCODING;
+
 typedef struct _WS_XML_WRITER_TEXT_ENCODING {
     WS_XML_WRITER_ENCODING encoding;
     WS_CHARSET charSet;
 } WS_XML_WRITER_TEXT_ENCODING;
+
+typedef HRESULT (CALLBACK *WS_DYNAMIC_STRING_CALLBACK)
+    (void*, const WS_XML_STRING*, BOOL*, ULONG*, WS_ERROR*);
+
+typedef struct _WS_XML_WRITER_BINARY_ENCODING {
+    WS_XML_WRITER_ENCODING encoding;
+    WS_XML_DICTIONARY *staticDictionary;
+    WS_DYNAMIC_STRING_CALLBACK dynamicStringCallback;
+    void *dynamicStringCallbackState;
+} WS_XML_WRITER_BINARY_ENCODING;
 
 typedef enum {
     WS_XML_READER_INPUT_TYPE_BUFFER = 1,
@@ -273,20 +303,6 @@ typedef struct _WS_XML_READER_STREAM_INPUT {
     WS_READ_CALLBACK readCallback;
     void *readCallbackState;
 } WS_XML_READER_STREAM_INPUT;
-
-typedef struct _WS_XML_DICTIONARY {
-    GUID                   guid;
-    struct _WS_XML_STRING *strings;
-    ULONG                  stringCount;
-    BOOL                   isConst;
-} WS_XML_DICTIONARY;
-
-typedef struct _WS_XML_STRING {
-    ULONG              length;
-    BYTE              *bytes;
-    WS_XML_DICTIONARY *dictionary;
-    ULONG              id;
-} WS_XML_STRING;
 
 typedef enum {
     WS_ELEMENT_TYPE_MAPPING         = 1,
@@ -1568,6 +1584,7 @@ void WINAPI WsFreeReader(WS_XML_READER*);
 void WINAPI WsFreeServiceProxy(WS_SERVICE_PROXY*);
 void WINAPI WsFreeWriter(WS_XML_WRITER*);
 HRESULT WINAPI WsGetChannelProperty(WS_CHANNEL*, WS_CHANNEL_PROPERTY_ID, void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsGetDictionary(WS_ENCODING, WS_XML_DICTIONARY**, WS_ERROR*);
 HRESULT WINAPI WsGetErrorProperty(WS_ERROR*, WS_ERROR_PROPERTY_ID, void*, ULONG);
 HRESULT WINAPI WsGetErrorString(WS_ERROR*, ULONG, WS_STRING*);
 HRESULT WINAPI WsGetHeapProperty(WS_HEAP*, WS_HEAP_PROPERTY_ID, void*, ULONG, WS_ERROR*);
