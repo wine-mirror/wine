@@ -3007,7 +3007,7 @@ static void test_D3DXSHEvalHemisphereLight(void)
     top.r = 0.1f; top.g = 2.1f; top.b = 2.3f; top.a = 4.3f;
     bottom.r = 8.71f; bottom.g = 5.41f; bottom.b = 6.94f; bottom.a = 8.43f;
 
-    for (l = 0; l < sizeof(test) / sizeof(test[0]); l++)
+    for (l = 0; l < ARRAY_SIZE(test); ++l)
         for (order = D3DXSH_MINORDER; order <= D3DXSH_MAXORDER + 1; order++)
         {
             for (j = 0; j < 49; j++)
