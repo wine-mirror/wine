@@ -297,13 +297,21 @@ static void DataCache_Destroy(
 static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FORMATETC *formatetc)
 {
     DataCacheEntry *cache_entry;
+    FORMATETC fmt = *formatetc;
+
+    if (fmt.cfFormat == CF_BITMAP)
+    {
+        fmt.cfFormat = CF_DIB;
+        fmt.tymed = TYMED_HGLOBAL;
+    }
+
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
     {
         /* FIXME: also compare DVTARGETDEVICEs */
-        if ((!cache_entry->fmtetc.cfFormat || !formatetc->cfFormat || (formatetc->cfFormat == cache_entry->fmtetc.cfFormat)) &&
-            (formatetc->dwAspect == cache_entry->fmtetc.dwAspect) &&
-            (formatetc->lindex == cache_entry->fmtetc.lindex) &&
-            (!cache_entry->fmtetc.tymed || !formatetc->tymed || (formatetc->tymed == cache_entry->fmtetc.tymed)))
+        if ((!cache_entry->fmtetc.cfFormat || !fmt.cfFormat || (fmt.cfFormat == cache_entry->fmtetc.cfFormat)) &&
+            (fmt.dwAspect == cache_entry->fmtetc.dwAspect) &&
+            (fmt.lindex == cache_entry->fmtetc.lindex) &&
+            (!cache_entry->fmtetc.tymed || !fmt.tymed || (fmt.tymed == cache_entry->fmtetc.tymed)))
             return cache_entry;
     }
     return NULL;
@@ -901,11 +909,56 @@ static HRESULT copy_stg_medium(CLIPFORMAT cf, STGMEDIUM *dest_stgm,
     return S_OK;
 }
 
+static HGLOBAL synthesize_dib( HBITMAP bm )
+{
+    HDC hdc = GetDC( 0 );
+    BITMAPINFOHEADER header;
+    BITMAPINFO *bmi;
+    HGLOBAL ret = 0;
+    DWORD header_size;
+
+    memset( &header, 0, sizeof(header) );
+    header.biSize = sizeof(header);
+    if (!GetDIBits( hdc, bm, 0, 0, NULL, (BITMAPINFO *)&header, DIB_RGB_COLORS )) goto done;
+
+    header_size = bitmap_info_size( (BITMAPINFO *)&header, DIB_RGB_COLORS );
+    if (!(ret = GlobalAlloc( GMEM_MOVEABLE, header_size + header.biSizeImage ))) goto done;
+    bmi = GlobalLock( ret );
+    memset( bmi, 0, header_size );
+    memcpy( bmi, &header, header.biSize );
+    GetDIBits( hdc, bm, 0, abs(header.biHeight), (char *)bmi + header_size, bmi, DIB_RGB_COLORS );
+    GlobalUnlock( ret );
+
+done:
+    ReleaseDC( 0, hdc );
+    return ret;
+}
+
+static HBITMAP synthesize_bitmap( HGLOBAL dib )
+{
+    HBITMAP ret = 0;
+    BITMAPINFO *bmi;
+    HDC hdc = GetDC( 0 );
+
+    if ((bmi = GlobalLock( dib )))
+    {
+        /* FIXME: validate data size */
+        ret = CreateDIBitmap( hdc, &bmi->bmiHeader, CBM_INIT,
+                              (char *)bmi + bitmap_info_size( bmi, DIB_RGB_COLORS ),
+                              bmi, DIB_RGB_COLORS );
+        GlobalUnlock( dib );
+    }
+    ReleaseDC( 0, hdc );
+    return ret;
+}
+
 static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
                                       const FORMATETC *formatetc,
-                                      const STGMEDIUM *stgmedium,
+                                      STGMEDIUM *stgmedium,
                                       BOOL fRelease)
 {
+    STGMEDIUM dib_copy;
+
     if ((!cache_entry->fmtetc.cfFormat && !formatetc->cfFormat) ||
         (cache_entry->fmtetc.tymed == TYMED_NULL && formatetc->tymed == TYMED_NULL) ||
         stgmedium->tymed == TYMED_NULL)
@@ -917,6 +970,17 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
     cache_entry->dirty = TRUE;
     ReleaseStgMedium(&cache_entry->stgmedium);
     cache_entry->data_cf = cache_entry->fmtetc.cfFormat ? cache_entry->fmtetc.cfFormat : formatetc->cfFormat;
+
+    if (formatetc->cfFormat == CF_BITMAP)
+    {
+        dib_copy.tymed = TYMED_HGLOBAL;
+        dib_copy.u.hGlobal = synthesize_dib( stgmedium->u.hBitmap );
+        dib_copy.pUnkForRelease = NULL;
+        if (fRelease) ReleaseStgMedium(stgmedium);
+        stgmedium = &dib_copy;
+        fRelease = TRUE;
+    }
+
     if (fRelease)
     {
         cache_entry->stgmedium = *stgmedium;
@@ -927,7 +991,7 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *cache_entry,
                                &cache_entry->stgmedium, stgmedium);
 }
 
-static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, STGMEDIUM *stgmedium)
+static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, FORMATETC *fmt, STGMEDIUM *stgmedium)
 {
     if (cache_entry->stgmedium.tymed == TYMED_NULL && cache_entry->stream)
     {
@@ -937,6 +1001,14 @@ static HRESULT DataCacheEntry_GetData(DataCacheEntry *cache_entry, STGMEDIUM *st
     }
     if (cache_entry->stgmedium.tymed == TYMED_NULL)
         return OLE_E_BLANK;
+
+    if (fmt->cfFormat == CF_BITMAP)
+    {
+        stgmedium->tymed = TYMED_GDI;
+        stgmedium->u.hBitmap = synthesize_bitmap( cache_entry->stgmedium.u.hGlobal );
+        stgmedium->pUnkForRelease = NULL;
+        return S_OK;
+    }
     return copy_stg_medium(cache_entry->data_cf, stgmedium, &cache_entry->stgmedium);
 }
 
@@ -1109,7 +1181,7 @@ static HRESULT WINAPI DataCache_GetData(
     if (!cache_entry)
         return OLE_E_BLANK;
 
-    return DataCacheEntry_GetData(cache_entry, pmedium);
+    return DataCacheEntry_GetData(cache_entry, pformatetcIn, pmedium);
 }
 
 static HRESULT WINAPI DataCache_GetDataHere(

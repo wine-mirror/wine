@@ -1993,6 +1993,18 @@ static IStorage *create_storage( int num )
     return stg;
 }
 
+static HGLOBAL create_dib( void )
+{
+    HGLOBAL h;
+    void *ptr;
+
+    h = GlobalAlloc( GMEM_MOVEABLE, sizeof(dib) - sizeof(BITMAPFILEHEADER) );
+    ptr = GlobalLock( h );
+    memcpy( ptr, dib + sizeof(BITMAPFILEHEADER), sizeof(dib) - sizeof(BITMAPFILEHEADER) );
+    GlobalUnlock( h );
+    return h;
+}
+
 static void test_data_cache_dib_contents_stream(int num)
 {
     HRESULT hr;
@@ -2083,12 +2095,33 @@ static void test_data_cache_dib_contents_stream(int num)
     IUnknown_Release( unk );
 }
 
+static void check_bitmap_size( HBITMAP h, int cx, int cy )
+{
+    BITMAP bm;
+
+    GetObjectW( h, sizeof(bm), &bm );
+    ok( bm.bmWidth == cx, "got %d expect %d\n", bm.bmWidth, cx );
+    ok( bm.bmHeight == cy, "got %d expect %d\n", bm.bmHeight, cy );
+}
+
+static void check_dib_size( HGLOBAL h, int cx, int cy )
+{
+    BITMAPINFO *info;
+
+    info = GlobalLock( h );
+    ok( info->bmiHeader.biWidth == cx, "got %d expect %d\n", info->bmiHeader.biWidth, cx );
+    ok( info->bmiHeader.biHeight == cy, "got %d expect %d\n", info->bmiHeader.biHeight, cy );
+    GlobalUnlock( h );
+}
+
 static void test_data_cache_bitmap(void)
 {
     HRESULT hr;
     IOleCache2 *cache;
+    IDataObject *data;
     FORMATETC fmt;
     DWORD conn;
+    STGMEDIUM med;
     STATDATA expect[] =
     {
         {{ CF_DIB,          0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, 0, NULL, 0 },
@@ -2165,6 +2198,57 @@ static void test_data_cache_bitmap(void)
 
     check_enum_cache( cache, expect, 2 );
 
+    /* Try setting a 1x1 bitmap */
+    hr = IOleCache2_QueryInterface( cache, &IID_IDataObject, (void **) &data );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    med.tymed = TYMED_GDI;
+    U(med).hBitmap = CreateBitmap( 1, 1, 1, 1, NULL );
+    med.pUnkForRelease = NULL;
+
+    hr = IOleCache2_SetData( cache, &fmt, &med, TRUE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IDataObject_GetData( data, &fmt, &med );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( med.tymed == TYMED_GDI, "got %d\n", med.tymed );
+    check_bitmap_size( U(med).hBitmap, 1, 1 );
+    ReleaseStgMedium( &med );
+
+    fmt.cfFormat = CF_DIB;
+    fmt.tymed = TYMED_HGLOBAL;
+    hr = IDataObject_GetData( data, &fmt, &med );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( med.tymed == TYMED_HGLOBAL, "got %d\n", med.tymed );
+    check_dib_size( U(med).hGlobal, 1, 1 );
+    ReleaseStgMedium( &med );
+
+    /* Now set a 2x1 dib */
+    fmt.cfFormat = CF_DIB;
+    fmt.tymed = TYMED_HGLOBAL;
+    med.tymed = TYMED_HGLOBAL;
+    U(med).hGlobal = create_dib();
+
+    hr = IOleCache2_SetData( cache, &fmt, &med, TRUE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    fmt.cfFormat = CF_BITMAP;
+    fmt.tymed = TYMED_GDI;
+    hr = IDataObject_GetData( data, &fmt, &med );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( med.tymed == TYMED_GDI, "got %d\n", med.tymed );
+    check_bitmap_size( U(med).hBitmap, 2, 1 );
+    ReleaseStgMedium( &med );
+
+    fmt.cfFormat = CF_DIB;
+    fmt.tymed = TYMED_HGLOBAL;
+    hr = IDataObject_GetData( data, &fmt, &med );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( med.tymed == TYMED_HGLOBAL, "got %d\n", med.tymed );
+    check_dib_size( U(med).hGlobal, 2, 1 );
+    ReleaseStgMedium( &med );
+
+    IDataObject_Release( data );
     IOleCache2_Release( cache );
 }
 
