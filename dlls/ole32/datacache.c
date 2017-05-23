@@ -2079,6 +2079,7 @@ static HRESULT WINAPI DataCache_Cache(
     DataCache *This = impl_from_IOleCache2(iface);
     DataCacheEntry *cache_entry;
     HRESULT hr;
+    FORMATETC fmt_cpy;
 
     TRACE("(%p, 0x%x, %p)\n", pformatetc, advf, pdwConnection);
 
@@ -2087,9 +2088,16 @@ static HRESULT WINAPI DataCache_Cache(
 
     TRACE("pformatetc = %s\n", debugstr_formatetc(pformatetc));
 
+    fmt_cpy = *pformatetc; /* No need for a deep copy */
+    if (fmt_cpy.cfFormat == CF_BITMAP && fmt_cpy.tymed == TYMED_GDI)
+    {
+        fmt_cpy.cfFormat = CF_DIB;
+        fmt_cpy.tymed = TYMED_HGLOBAL;
+    }
+
     *pdwConnection = 0;
 
-    cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetc);
+    cache_entry = DataCache_GetEntryForFormatEtc(This, &fmt_cpy);
     if (cache_entry)
     {
         TRACE("found an existing cache entry\n");
@@ -2097,7 +2105,7 @@ static HRESULT WINAPI DataCache_Cache(
         return CACHE_S_SAMECACHE;
     }
 
-    hr = DataCache_CreateEntry(This, pformatetc, advf, &cache_entry, FALSE);
+    hr = DataCache_CreateEntry(This, &fmt_cpy, advf, &cache_entry, FALSE);
 
     if (SUCCEEDED(hr))
     {
@@ -2134,24 +2142,44 @@ static HRESULT WINAPI DataCache_EnumCache(IOleCache2 *iface,
 {
     DataCache *This = impl_from_IOleCache2( iface );
     DataCacheEntry *cache_entry;
-    int i = 0, count = list_count( &This->cache_list );
+    int i = 0, count = 0;
     STATDATA *data;
     HRESULT hr;
 
     TRACE( "(%p, %p)\n", This, enum_stat );
+
+    LIST_FOR_EACH_ENTRY( cache_entry, &This->cache_list, DataCacheEntry, entry )
+    {
+        count++;
+        if (cache_entry->fmtetc.cfFormat == CF_DIB)
+            count++;
+    }
 
     data = CoTaskMemAlloc( count * sizeof(*data) );
     if (!data) return E_OUTOFMEMORY;
 
     LIST_FOR_EACH_ENTRY( cache_entry, &This->cache_list, DataCacheEntry, entry )
     {
-        if (i == count) break;
+        if (i == count) goto fail;
         hr = copy_formatetc( &data[i].formatetc, &cache_entry->fmtetc );
         if (FAILED(hr)) goto fail;
         data[i].advf = cache_entry->advise_flags;
         data[i].pAdvSink = NULL;
         data[i].dwConnection = cache_entry->id;
         i++;
+
+        if (cache_entry->fmtetc.cfFormat == CF_DIB)
+        {
+            if (i == count) goto fail;
+            hr = copy_formatetc( &data[i].formatetc, &cache_entry->fmtetc );
+            if (FAILED(hr)) goto fail;
+            data[i].formatetc.cfFormat = CF_BITMAP;
+            data[i].formatetc.tymed = TYMED_GDI;
+            data[i].advf = cache_entry->advise_flags;
+            data[i].pAdvSink = NULL;
+            data[i].dwConnection = cache_entry->id;
+            i++;
+        }
     }
 
     hr = EnumSTATDATA_Construct( NULL, 0, i, data, FALSE, enum_stat );
