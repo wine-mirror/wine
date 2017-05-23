@@ -34,6 +34,7 @@ typedef struct _RpcServerProtseq
   UINT MaxCalls; /* RO */
   /* list of listening connections */
   struct list listeners; /* CS cs */
+  struct list connections; /* CS cs */
   CRITICAL_SECTION cs;
 
   /* is the server currently listening? */

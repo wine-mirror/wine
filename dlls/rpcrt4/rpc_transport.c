@@ -58,7 +58,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
-static RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection);
+static RpcConnection *rpcrt4_spawn_connection(RpcConnection *old_connection);
 
 /**** ncacn_np support ****/
 
@@ -744,7 +744,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
                 release_np_event(conn, conn->listen_event);
                 conn->listen_event = NULL;
                 if (conn->io_status.Status == STATUS_SUCCESS || conn->io_status.Status == STATUS_PIPE_CONNECTED)
-                    RPCRT4_SpawnConnection(&cconn, &conn->common);
+                    cconn = rpcrt4_spawn_connection(&conn->common);
                 else
                     ERR("listen failed %x\n", conn->io_status.Status);
                 break;
@@ -1595,7 +1595,7 @@ static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq
     {
         if (b_handle == conn->sock_event)
         {
-            RPCRT4_SpawnConnection(&cconn, &conn->common);
+            cconn = rpcrt4_spawn_connection(&conn->common);
             break;
         }
     }
@@ -3311,16 +3311,26 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   return RPC_S_OK;
 }
 
-static RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* OldConnection)
+static RpcConnection *rpcrt4_spawn_connection(RpcConnection *old_connection)
 {
-  RPC_STATUS err;
+    RpcConnection *connection;
+    RPC_STATUS err;
 
-  err = RPCRT4_CreateConnection(Connection, OldConnection->server, rpcrt4_conn_get_name(OldConnection),
-                                OldConnection->NetworkAddr, OldConnection->Endpoint, NULL,
-                                OldConnection->AuthInfo, OldConnection->QOS, OldConnection->CookieAuth);
-  if (err == RPC_S_OK)
-    rpcrt4_conn_handoff(OldConnection, *Connection);
-  return err;
+    err = RPCRT4_CreateConnection(&connection, old_connection->server, rpcrt4_conn_get_name(old_connection),
+                                  old_connection->NetworkAddr, old_connection->Endpoint, NULL,
+                                  old_connection->AuthInfo, old_connection->QOS, old_connection->CookieAuth);
+    if (err != RPC_S_OK)
+        return NULL;
+
+    rpcrt4_conn_handoff(old_connection, connection);
+    if (old_connection->protseq)
+    {
+        EnterCriticalSection(&old_connection->protseq->cs);
+        connection->protseq = old_connection->protseq;
+        list_add_tail(&old_connection->protseq->connections, &connection->protseq_entry);
+        LeaveCriticalSection(&old_connection->protseq->cs);
+    }
+    return connection;
 }
 
 RpcConnection *RPCRT4_GrabConnection( RpcConnection *conn )
