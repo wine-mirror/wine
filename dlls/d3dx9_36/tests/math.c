@@ -3160,7 +3160,7 @@ static void test_D3DXSHEvalSphericalLight(void)
 
     dir.x = 1.1f; dir.y = 1.2f; dir.z = 2.76f;
 
-    for (l = 0; l < sizeof(test) / sizeof(test[0]); l++)
+    for (l = 0; l < ARRAY_SIZE(test); ++l)
     {
         for (order = D3DXSH_MINORDER; order <= D3DXSH_MAXORDER; order++)
         {
