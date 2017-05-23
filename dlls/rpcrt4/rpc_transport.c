@@ -1093,17 +1093,6 @@ static BOOL rpcrt4_sock_wait_for_send(RpcConnection_tcp *tcpc)
   }
 }
 
-static void rpcrt4_sock_wait_cancel(RpcConnection_tcp *tcpc)
-{
-  SetEvent(tcpc->cancel_event);
-}
-
-static void rpcrt4_sock_wait_destroy(RpcConnection_tcp *tcpc)
-{
-  CloseHandle(tcpc->sock_event);
-  CloseHandle(tcpc->cancel_event);
-}
-
 static RpcConnection *rpcrt4_conn_tcp_alloc(void)
 {
   RpcConnection_tcp *tcpc;
@@ -1433,24 +1422,27 @@ static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
   return bytes_written;
 }
 
-static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
+static int rpcrt4_conn_tcp_close(RpcConnection *conn)
 {
-  RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
+    RpcConnection_tcp *connection = (RpcConnection_tcp *) conn;
 
-  TRACE("%d\n", tcpc->sock);
+    TRACE("%d\n", connection->sock);
 
-  if (tcpc->sock != -1)
-    closesocket(tcpc->sock);
-  tcpc->sock = -1;
-  rpcrt4_sock_wait_destroy(tcpc);
-  return 0;
+    if (connection->sock != -1)
+        closesocket(connection->sock);
+    connection->sock = -1;
+    CloseHandle(connection->sock_event);
+    CloseHandle(connection->cancel_event);
+    return 0;
 }
 
-static void rpcrt4_conn_tcp_cancel_call(RpcConnection *Connection)
+static void rpcrt4_conn_tcp_cancel_call(RpcConnection *conn)
 {
-    RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
-    TRACE("%p\n", Connection);
-    rpcrt4_sock_wait_cancel(tcpc);
+    RpcConnection_tcp *connection = (RpcConnection_tcp *) conn;
+
+    TRACE("%p\n", connection);
+
+    SetEvent(connection->cancel_event);
 }
 
 static RPC_STATUS rpcrt4_conn_tcp_is_server_listening(const char *endpoint)
