@@ -71,8 +71,6 @@ static HRESULT copy_statdata(STATDATA *dst, const STATDATA *src)
  *  EnumSTATDATA Implementation
  */
 
-static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data, IEnumSTATDATA **ppenum);
-
 typedef struct
 {
     IEnumSTATDATA IEnumSTATDATA_iface;
@@ -120,7 +118,7 @@ static ULONG WINAPI EnumSTATDATA_Release(IEnumSTATDATA *iface)
         for(i = 0; i < This->num_of_elems; i++)
             release_statdata(This->statdata + i);
         HeapFree(GetProcessHeap(), 0, This->statdata);
-        IUnknown_Release(This->holder);
+        if (This->holder) IUnknown_Release(This->holder);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return refs;
@@ -184,7 +182,8 @@ static HRESULT WINAPI EnumSTATDATA_Clone(IEnumSTATDATA *iface, IEnumSTATDATA **p
 {
     EnumSTATDATA *This = impl_from_IEnumSTATDATA(iface);
 
-    return EnumSTATDATA_Construct(This->holder, This->index, This->num_of_elems, This->statdata, ppenum);
+    return EnumSTATDATA_Construct(This->holder, This->index, This->num_of_elems, This->statdata,
+                                  TRUE, ppenum);
 }
 
 static const IEnumSTATDATAVtbl EnumSTATDATA_VTable =
@@ -198,8 +197,8 @@ static const IEnumSTATDATAVtbl EnumSTATDATA_VTable =
     EnumSTATDATA_Clone
 };
 
-static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data,
-                                      IEnumSTATDATA **ppenum)
+HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data,
+                               BOOL copy, IEnumSTATDATA **ppenum)
 {
     EnumSTATDATA *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     DWORD i, count;
@@ -210,25 +209,33 @@ static HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array
     This->ref = 1;
     This->index = index;
 
-    This->statdata = HeapAlloc(GetProcessHeap(), 0, array_len * sizeof(*This->statdata));
-    if(!This->statdata)
+    if (copy)
     {
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_OUTOFMEMORY;
-    }
-
-    for(i = 0, count = 0; i < array_len; i++)
-    {
-        if(data[i].pAdvSink)
+        This->statdata = HeapAlloc(GetProcessHeap(), 0, array_len * sizeof(*This->statdata));
+        if(!This->statdata)
         {
-            copy_statdata(This->statdata + count, data + i);
-            count++;
+            HeapFree(GetProcessHeap(), 0, This);
+            return E_OUTOFMEMORY;
         }
+
+        for(i = 0, count = 0; i < array_len; i++)
+        {
+            if(data[i].pAdvSink)
+            {
+                copy_statdata(This->statdata + count, data + i);
+                count++;
+            }
+        }
+    }
+    else
+    {
+        This->statdata = data;
+        count = array_len;
     }
 
     This->num_of_elems = count;
     This->holder = holder;
-    IUnknown_AddRef(holder);
+    if (holder) IUnknown_AddRef(holder);
     *ppenum = &This->IEnumSTATDATA_iface;
     return S_OK;
 }
@@ -403,7 +410,7 @@ static HRESULT WINAPI OleAdviseHolderImpl_EnumAdvise(IOleAdviseHolder *iface, IE
     TRACE("(%p)->(%p)\n", This, enum_advise);
 
     IOleAdviseHolder_QueryInterface(iface, &IID_IUnknown, (void**)&unk);
-    hr = EnumSTATDATA_Construct(unk, 0, This->max_cons, This->connections, enum_advise);
+    hr = EnumSTATDATA_Construct(unk, 0, This->max_cons, This->connections, TRUE, enum_advise);
     IUnknown_Release(unk);
     return hr;
 }
@@ -737,7 +744,7 @@ static HRESULT WINAPI DataAdviseHolder_EnumAdvise(IDataAdviseHolder *iface,
     TRACE("(%p)->(%p)\n", This, enum_advise);
 
     IDataAdviseHolder_QueryInterface(iface, &IID_IUnknown, (void**)&unk);
-    hr = EnumSTATDATA_Construct(unk, 0, This->maxCons, This->connections, enum_advise);
+    hr = EnumSTATDATA_Construct(unk, 0, This->maxCons, This->connections, TRUE, enum_advise);
     IUnknown_Release(unk);
     return hr;
 }

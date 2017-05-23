@@ -2129,12 +2129,38 @@ static HRESULT WINAPI DataCache_Uncache(
     return OLE_E_NOCONNECTION;
 }
 
-static HRESULT WINAPI DataCache_EnumCache(
-            IOleCache2*     iface,
-	    IEnumSTATDATA** ppenumSTATDATA)
+static HRESULT WINAPI DataCache_EnumCache(IOleCache2 *iface,
+                                          IEnumSTATDATA **enum_stat)
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IOleCache2( iface );
+    DataCacheEntry *cache_entry;
+    int i = 0, count = list_count( &This->cache_list );
+    STATDATA *data;
+    HRESULT hr;
+
+    TRACE( "(%p, %p)\n", This, enum_stat );
+
+    data = CoTaskMemAlloc( count * sizeof(*data) );
+    if (!data) return E_OUTOFMEMORY;
+
+    LIST_FOR_EACH_ENTRY( cache_entry, &This->cache_list, DataCacheEntry, entry )
+    {
+        if (i == count) break;
+        hr = copy_formatetc( &data[i].formatetc, &cache_entry->fmtetc );
+        if (FAILED(hr)) goto fail;
+        data[i].advf = cache_entry->advise_flags;
+        data[i].pAdvSink = NULL;
+        data[i].dwConnection = cache_entry->id;
+        i++;
+    }
+
+    hr = EnumSTATDATA_Construct( NULL, 0, i, data, FALSE, enum_stat );
+    if (SUCCEEDED(hr)) return hr;
+
+fail:
+    while (i--) CoTaskMemFree( data[i].formatetc.ptd );
+    CoTaskMemFree( data );
+    return hr;
 }
 
 static HRESULT WINAPI DataCache_InitCache(
