@@ -1786,35 +1786,6 @@ void OLEClipbrd_Initialize(void)
     }
 }
 
-/***********************************************************************
- * OLEClipbrd_UnInitialize()
- * Un-Initializes the OLE clipboard
- */
-void OLEClipbrd_UnInitialize(void)
-{
-    ole_clipbrd *clipbrd = theOleClipboard;
-
-    TRACE("()\n");
-
-    if ( clipbrd )
-    {
-        static const WCHAR ole32W[] = {'o','l','e','3','2',0};
-        HINSTANCE hinst = GetModuleHandleW(ole32W);
-
-        if ( clipbrd->window )
-        {
-            DestroyWindow(clipbrd->window);
-            UnregisterClassW( clipbrd_wndclass, hinst );
-        }
-
-        IStream_Release(clipbrd->marshal_data);
-        if (clipbrd->src_data) IDataObject_Release(clipbrd->src_data);
-        HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
-        HeapFree(GetProcessHeap(), 0, clipbrd);
-        theOleClipboard = NULL;
-    }
-}
-
 /*********************************************************************
  *          set_clipboard_formats
  *
@@ -2012,6 +1983,41 @@ static HRESULT set_src_dataobject(ole_clipbrd *clipbrd, IDataObject *data)
         hr = set_clipboard_formats(clipbrd, data);
     }
     return hr;
+}
+
+/***********************************************************************
+ * OLEClipbrd_UnInitialize()
+ * Un-Initializes the OLE clipboard
+ */
+void OLEClipbrd_UnInitialize(void)
+{
+    ole_clipbrd *clipbrd = theOleClipboard;
+
+    TRACE("()\n");
+
+    if ( clipbrd )
+    {
+        static const WCHAR ole32W[] = {'o','l','e','3','2',0};
+        HINSTANCE hinst = GetModuleHandleW(ole32W);
+
+        /* OleUninitialize() does not release the reference to the dataobject, so
+           take an additional reference here.  This reference is then leaked. */
+        if (clipbrd->src_data)
+        {
+            IDataObject_AddRef(clipbrd->src_data);
+            set_src_dataobject(clipbrd, NULL);
+        }
+
+        if ( clipbrd->window )
+        {
+            DestroyWindow(clipbrd->window);
+            UnregisterClassW( clipbrd_wndclass, hinst );
+        }
+
+        IStream_Release(clipbrd->marshal_data);
+        HeapFree(GetProcessHeap(), 0, clipbrd);
+        theOleClipboard = NULL;
+    }
 }
 
 /***********************************************************************
