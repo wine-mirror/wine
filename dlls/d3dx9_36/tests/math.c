@@ -3274,7 +3274,7 @@ static void test_D3DXSHMultiply3(void)
         1.17999995e+00f, 1.19000006e+00f,
     };
 
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(a); ++i)
     {
         a[i] = 1.0f + i / 100.0f;
         b[i] = 3.0f - i / 100.0f;
@@ -3282,7 +3282,7 @@ static void test_D3DXSHMultiply3(void)
     }
 
     D3DXSHMultiply3(c, a, b);
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(expected); ++i)
     {
         equal = compare_float(c[i], expected[i], 4);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected[i], c[i]);
@@ -3290,7 +3290,7 @@ static void test_D3DXSHMultiply3(void)
 
     memcpy(c, a, sizeof(c));
     D3DXSHMultiply3(c, c, b);
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(expected_aliased); ++i)
     {
         equal = compare_float(c[i], expected_aliased[i], 32);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected_aliased[i], c[i]);
