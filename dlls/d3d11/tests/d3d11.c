@@ -4833,6 +4833,48 @@ static void test_occlusion_query(void)
             "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     ID3D11Asynchronous_Release(query);
+
+    /* The following test exercises a code path in wined3d. A wined3d context
+     * associated with the query is destroyed when the swapchain is released. */
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    vp.Width = 64.0f;
+    vp.Height = 64.0f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+    ID3D11DeviceContext_Begin(context, query);
+    draw_color_quad(&test_context, &red);
+    ID3D11DeviceContext_End(context, query);
+
+    ID3D11RenderTargetView_Release(test_context.backbuffer_rtv);
+    ID3D11Texture2D_Release(test_context.backbuffer);
+    IDXGISwapChain_Release(test_context.swapchain);
+    test_context.swapchain = create_swapchain(device, test_context.window, NULL);
+    hr = IDXGISwapChain_GetBuffer(test_context.swapchain, 0, &IID_ID3D11Texture2D,
+            (void **)&test_context.backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)test_context.backbuffer,
+            NULL, &test_context.backbuffer_rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    /* This test occasionally succeeds with CSMT enabled because of a race condition. */
+if (0)
+    todo_wine ok(data.dword[0] == 0x1000 && !data.dword[1],
+            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+
+    ID3D11Asynchronous_Release(query);
     ID3D11RenderTargetView_Release(rtv);
     ID3D11Texture2D_Release(texture);
     release_test_context(&test_context);
