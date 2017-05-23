@@ -27,6 +27,8 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 struct vec3
 {
     float x, y, z;
@@ -335,7 +337,7 @@ static void test_get_declaration(void)
 
     /* First test only getting the number of elements. */
     element_count = 0x1337c0de;
-    expected_element_count = sizeof(simple_decl) / sizeof(*simple_decl);
+    expected_element_count = ARRAY_SIZE(simple_decl);
     hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, NULL, &element_count);
     ok(SUCCEEDED(hr), "Failed to get declaration, hr %#x.\n", hr);
     ok(element_count == expected_element_count, "Got unexpected element count %u, expected %u.\n",
@@ -649,7 +651,7 @@ static void test_fvf_decl_conversion(void)
         goto done;
     }
 
-    for (i = 0; i < sizeof(decl_to_fvf_tests) / sizeof(*decl_to_fvf_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(decl_to_fvf_tests); ++i)
     {
         DWORD fvf = 0xdeadbeef;
         HRESULT hr;
@@ -682,7 +684,7 @@ static void test_fvf_decl_conversion(void)
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, default_elements, &default_decl);
     ok(SUCCEEDED(hr), "Failed to create vertex declaration, hr %#x.\n", hr);
 
-    for (i = 0; i < sizeof(fvf_to_decl_tests) / sizeof(*fvf_to_decl_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(fvf_to_decl_tests); ++i)
     {
         /* Set a default declaration to make sure it is changed. */
         hr = IDirect3DDevice9_SetVertexDeclaration(device, default_decl);
@@ -865,7 +867,7 @@ static void test_vertex_declaration_alignment(void)
         goto done;
     }
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirect3DDevice9_CreateVertexDeclaration(device, test_data[i].elements, &declaration);
         ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
@@ -939,7 +941,7 @@ static void test_unused_declaration_type(void)
         goto done;
     }
 
-    for (i = 0; i < sizeof(test_elements) / sizeof(*test_elements); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_elements); ++i)
     {
         hr = IDirect3DDevice9_CreateVertexDeclaration(device, test_elements[i], &declaration);
         ok(hr == E_FAIL, "Test %u: Got unexpected hr %#x.\n", i, hr);
@@ -3198,13 +3200,13 @@ static void test_display_formats(void)
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
 
-    for (display = 0; display < sizeof(formats) / sizeof(*formats); ++display)
+    for (display = 0; display < ARRAY_SIZE(formats); ++display)
     {
         has_modes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, formats[display].format);
 
         for (windowed = 0; windowed <= 1; ++windowed)
         {
-            for (backbuffer = 0; backbuffer < sizeof(formats) / sizeof(*formats); ++backbuffer)
+            for (backbuffer = 0; backbuffer < ARRAY_SIZE(formats); ++backbuffer)
             {
                 should_pass = FALSE;
 
@@ -3263,7 +3265,8 @@ static void test_scissor_size(void)
     d3d9_ptr = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9_ptr, "Failed to create a D3D object.\n");
 
-    for(i=0; i<sizeof(scts)/sizeof(scts[0]); i++) {
+    for (i = 0; i < ARRAY_SIZE(scts); i++)
+    {
         IDirect3DDevice9 *device_ptr = 0;
         HRESULT hr;
         HWND hwnd = 0;
@@ -3313,7 +3316,8 @@ static void test_scissor_size(void)
                 "Scissorrect mismatch (%d, %d) should be (%u, %u)\n", scissorrect.right, scissorrect.bottom,
                 registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
-        if(device_ptr) {
+        if (device_ptr)
+        {
             ULONG ref;
 
             ref = IDirect3DDevice9_Release(device_ptr);
@@ -3682,7 +3686,7 @@ static void test_wndproc(void)
 
     memset(&devmode, 0, sizeof(devmode));
     devmode.dmSize = sizeof(devmode);
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
         devmode.dmPelsWidth = user32_width;
@@ -4539,7 +4543,7 @@ static void test_window_style(void)
     ok(!!d3d9, "Failed to create a D3D object.\n");
     SetRect(&fullscreen_rect, 0, 0, registry_mode.dmPelsWidth, registry_mode.dmPelsHeight);
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
                 0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
@@ -5378,7 +5382,7 @@ static void test_vb_lock_flags(void)
     hr = IDirect3DDevice9_CreateVertexBuffer(device, 1024, D3DUSAGE_DYNAMIC, 0, D3DPOOL_DEFAULT, &buffer, NULL);
     ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
 
-    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &data, test_data[i].flags);
         /* Windows XP always returns D3D_OK even with flags that don't make
@@ -5445,9 +5449,9 @@ static void test_vertex_buffer_alignment(void)
         return;
     }
 
-    for (i = 0; i < (sizeof(sizes) / sizeof(*sizes)); ++i)
+    for (i = 0; i < ARRAY_SIZE(sizes); ++i)
     {
-        for (j = 0; j < (sizeof(pools) / sizeof(*pools)); ++j)
+        for (j = 0; j < ARRAY_SIZE(pools); ++j)
         {
             hr = IDirect3DDevice9_CreateVertexBuffer(device, sizes[i], 0, 0, pools[j], &buffer, NULL);
             if (pools[j] == D3DPOOL_SCRATCH)
@@ -5515,7 +5519,7 @@ static void test_query_support(void)
         return;
     }
 
-    for (i = 0; i < sizeof(queries) / sizeof(*queries); ++i)
+    for (i = 0; i < ARRAY_SIZE(queries); ++i)
     {
         hr = IDirect3DDevice9_CreateQuery(device, queries[i], NULL);
         ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x for query %#x.\n", hr, queries[i]);
@@ -6936,7 +6940,7 @@ static void test_filter(void)
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
     ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
 
-    for (i = 0; i < (sizeof(tests) / sizeof(*tests)); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         if (tests[i].has_texture)
         {
@@ -7270,7 +7274,7 @@ static void test_lockrect_offset(void)
         return;
     }
 
-    for (i = 0; i < (sizeof(dxt_formats) / sizeof(*dxt_formats)); ++i)
+    for (i = 0; i < ARRAY_SIZE(dxt_formats); ++i)
     {
         if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 0, D3DRTYPE_TEXTURE, dxt_formats[i].format)))
@@ -7380,7 +7384,7 @@ static void test_lockrect_invalid(void)
         return;
     }
 
-    for (r = 0; r < sizeof(resources) / sizeof(*resources); ++r)
+    for (r = 0; r < ARRAY_SIZE(resources); ++r)
     {
         texture = NULL;
         cube_texture = NULL;
@@ -7427,7 +7431,7 @@ static void test_lockrect_invalid(void)
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(hr == expected_hr, "Got hr %#x, expected %#x, type %s.\n", hr, expected_hr, resources[r].name);
 
-        for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+        for (i = 0; i < ARRAY_SIZE(test_data); ++i)
         {
             unsigned int offset, expected_offset;
             const RECT *rect = &test_data[i].rect;
@@ -7827,7 +7831,7 @@ static void test_getdc(void)
         return;
     }
 
-    for (i = 0; i < (sizeof(testdata) / sizeof(*testdata)); ++i)
+    for (i = 0; i < ARRAY_SIZE(testdata); ++i)
     {
         texture = NULL;
         hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64,
@@ -8255,7 +8259,7 @@ static void test_surface_double_unlock(void)
         return;
     }
 
-    for (i = 0; i < (sizeof(pools) / sizeof(*pools)); ++i)
+    for (i = 0; i < ARRAY_SIZE(pools); ++i)
     {
         hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64,
                 D3DFMT_X8R8G8B8, pools[i], &surface, NULL);
@@ -8394,7 +8398,7 @@ static void test_surface_blocks(void)
         tex_pow2 = !(caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL);
     cube_pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2);
 
-    for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
         BOOL tex_support, cube_support, surface_support, format_known, dynamic_tex_support;
 
@@ -8430,7 +8434,7 @@ static void test_surface_blocks(void)
 
                 size_is_pow2 = !(w & (w - 1) || h & (h - 1));
 
-                for (j = 0; j < sizeof(create_tests) / sizeof(*create_tests); j++)
+                for (j = 0; j < ARRAY_SIZE(create_tests); j++)
                 {
                     BOOL support, pow2;
                     HRESULT expect_hr;
@@ -8530,7 +8534,7 @@ static void test_surface_blocks(void)
             surface_only = TRUE;
         }
 
-        for (j = 0; j < (sizeof(pools) / sizeof(*pools)); ++j)
+        for (j = 0; j < ARRAY_SIZE(pools); ++j)
         {
             switch (pools[j].pool)
             {
@@ -8622,7 +8626,7 @@ static void test_surface_blocks(void)
                 }
             }
 
-            for (k = 0; k < sizeof(invalid) / sizeof(*invalid); ++k)
+            for (k = 0; k < ARRAY_SIZE(invalid); ++k)
             {
                 hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &invalid[k], 0);
                 ok(FAILED(hr) == !pools[j].success, "Invalid lock %s(%#x), expected %s, format %s, pool %s, case %u.\n",
@@ -8708,7 +8712,7 @@ static void test_set_palette(void)
         return;
     }
 
-    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    for (i = 0; i < ARRAY_SIZE(pal); i++)
     {
         pal[i].peRed = i;
         pal[i].peGreen = i;
@@ -8720,7 +8724,7 @@ static void test_set_palette(void)
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
-    for (i = 0; i < sizeof(pal) / sizeof(*pal); i++)
+    for (i = 0; i < ARRAY_SIZE(pal); i++)
     {
         pal[i].peRed = i;
         pal[i].peGreen = i;
@@ -8953,7 +8957,7 @@ static void test_npot_textures(void)
     ok(cube_pow2 == tex_pow2, "Cube texture and 2d texture pow2 restrictions mismatch.\n");
     ok(vol_pow2 == tex_pow2, "Volume texture and 2d texture pow2 restrictions mismatch.\n");
 
-    for (i = 0; i < sizeof(pools) / sizeof(*pools); i++)
+    for (i = 0; i < ARRAY_SIZE(pools); i++)
     {
         for (levels = 0; levels <= 2; levels++)
         {
@@ -9052,7 +9056,7 @@ static void test_vidmem_accounting(void)
 
     vidmem_start = IDirect3DDevice9_GetAvailableTextureMem(device);
     memset(textures, 0, sizeof(textures));
-    for (i = 0; i < sizeof(textures) / sizeof(*textures) && SUCCEEDED(hr); i++)
+    for (i = 0; i < ARRAY_SIZE(textures); i++)
     {
         hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 1, D3DUSAGE_RENDERTARGET,
                 D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &textures[i], NULL);
@@ -9068,7 +9072,7 @@ static void test_vidmem_accounting(void)
     ok(diff > 1024 * 1024 * 2 * i, "Expected a video memory difference of at least %u MB, got %u MB.\n",
             2 * i, diff / 1024 / 1024);
 
-    for (i = 0; i < sizeof(textures) / sizeof(*textures); i++)
+    for (i = 0; i < ARRAY_SIZE(textures); i++)
     {
         if (textures[i])
             IDirect3DTexture9_Release(textures[i]);
@@ -9129,7 +9133,7 @@ static void test_volume_locking(void)
         goto out;
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 4, 1, tests[i].usage,
                 D3DFMT_A8R8G8B8, tests[i].pool, &texture, NULL);
@@ -9236,7 +9240,7 @@ static void test_update_volumetexture(void)
         goto out;
     }
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         DWORD src_usage = tests[i].src_pool == D3DPOOL_DEFAULT ? D3DUSAGE_DYNAMIC : 0;
         DWORD dst_usage = tests[i].dst_pool == D3DPOOL_DEFAULT ? D3DUSAGE_DYNAMIC : 0;
@@ -9277,7 +9281,7 @@ static void test_update_volumetexture(void)
         goto out;
     }
 
-    for (i = 0; i < sizeof(tests2) / sizeof(*tests2); i++)
+    for (i = 0; i < ARRAY_SIZE(tests2); i++)
     {
         hr = IDirect3DDevice9_CreateVolumeTexture(device,
                 tests2[i].src_size, tests2[i].src_size, tests2[i].src_size,
@@ -9448,7 +9452,7 @@ static void test_volume_blocks(void)
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
     pow2 = !!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2);
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
     {
         hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
                 0, D3DRTYPE_VOLUMETEXTURE, formats[i].fmt);
@@ -9470,7 +9474,7 @@ static void test_volume_blocks(void)
 
                     size_is_pow2 = !((w & (w - 1)) || (h & (h - 1)) || (d & (d - 1)));
 
-                    for (j = 0; j < sizeof(create_tests) / sizeof(*create_tests); j++)
+                    for (j = 0; j < ARRAY_SIZE(create_tests); j++)
                     {
                         BOOL may_succeed = FALSE;
 
@@ -9518,7 +9522,7 @@ static void test_volume_blocks(void)
         ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x.\n", hr);
 
         /* Test lockrect offset */
-        for (j = 0; j < sizeof(offset_tests) / sizeof(*offset_tests); j++)
+        for (j = 0; j < ARRAY_SIZE(offset_tests); j++)
         {
             unsigned int bytes_per_pixel;
             bytes_per_pixel = formats[i].block_size / (formats[i].block_width * formats[i].block_height);
@@ -9766,7 +9770,7 @@ static void test_lockbox_invalid(void)
     hr = IDirect3DVolumeTexture9_UnlockBox(texture, 0);
     ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#x.\n", hr);
 
-    for (i = 0; i < (sizeof(test_data) / sizeof(*test_data)); ++i)
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         unsigned int offset, expected_offset;
         const D3DBOX *box = &test_data[i].box;
@@ -10923,7 +10927,7 @@ static void test_resource_priority(void)
         return;
     }
 
-    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); i++)
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
         hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 0, 0, D3DFMT_X8R8G8B8,
                 test_data[i].pool, &texture, NULL);
@@ -11093,7 +11097,7 @@ static void test_swapchain_parameters(void)
     present_parameters_windowed.Windowed = TRUE;
     present_parameters_windowed.BackBufferCount = 1;
 
-    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         memset(&present_parameters, 0, sizeof(present_parameters));
         present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
@@ -11262,7 +11266,7 @@ static void test_miptree_layout(void)
         base_dimension = 256;
     }
 
-    for (format_idx = 0; format_idx < sizeof(formats) / sizeof(*formats); ++format_idx)
+    for (format_idx = 0; format_idx < ARRAY_SIZE(formats); ++format_idx)
     {
         if (FAILED(hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
                 D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, formats[format_idx].format)))
@@ -11271,7 +11275,7 @@ static void test_miptree_layout(void)
             continue;
         }
 
-        for (pool_idx = 0; pool_idx < sizeof(pools) / sizeof(*pools); ++pool_idx)
+        for (pool_idx = 0; pool_idx < ARRAY_SIZE(pools); ++pool_idx)
         {
             hr = IDirect3DDevice9_CreateTexture(device, base_dimension, base_dimension, 0, 0,
                     formats[format_idx].format, pools[pool_idx].pool, &texture_2d, NULL);
@@ -11308,7 +11312,7 @@ static void test_miptree_layout(void)
             continue;
         }
 
-        for (pool_idx = 0; pool_idx < sizeof(pools) / sizeof(*pools); ++pool_idx)
+        for (pool_idx = 0; pool_idx < ARRAY_SIZE(pools); ++pool_idx)
         {
             hr = IDirect3DDevice9_CreateCubeTexture(device, base_dimension, 0, 0,
                     formats[format_idx].format, pools[pool_idx].pool, &texture_cube, NULL);
