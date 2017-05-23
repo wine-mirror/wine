@@ -227,6 +227,7 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
 
   EnterCriticalSection(&protseq->cs);
   list_add_head(&protseq->listeners, &Connection->protseq_entry);
+  Connection->protseq = protseq;
   LeaveCriticalSection(&protseq->cs);
 
   return r;
@@ -288,6 +289,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
 
   EnterCriticalSection(&protseq->cs);
   list_add_head(&protseq->listeners, &Connection->protseq_entry);
+  Connection->protseq = protseq;
   LeaveCriticalSection(&protseq->cs);
 
   return r;
@@ -1323,6 +1325,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
 
         EnterCriticalSection(&protseq->cs);
         list_add_tail(&protseq->listeners, &tcpc->common.protseq_entry);
+        tcpc->common.protseq = protseq;
         LeaveCriticalSection(&protseq->cs);
 
         freeaddrinfo(ai);
@@ -3342,6 +3345,13 @@ RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection* Connection)
 
   /* server-only */
   if (Connection->server_binding) RPCRT4_ReleaseBinding(Connection->server_binding);
+
+  if (Connection->protseq)
+  {
+    EnterCriticalSection(&Connection->protseq->cs);
+    list_remove(&Connection->protseq_entry);
+    LeaveCriticalSection(&Connection->protseq->cs);
+  }
 
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;

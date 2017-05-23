@@ -91,6 +91,7 @@ typedef struct _RpcConnection
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
   USHORT NextCallId;
   struct list protseq_entry;
+  struct _RpcServerProtseq *protseq;
   struct _RpcBinding *server_binding;
 } RpcConnection;
 
