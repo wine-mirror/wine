@@ -615,15 +615,6 @@ HRESULT WINAPI WsGetPrefixFromNamespace( WS_XML_WRITER *handle, const WS_XML_STR
     return hr;
 }
 
-static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
-{
-    WS_XML_STRING *str;
-    if (!(str = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
-    heap_free( writer->current_ns );
-    writer->current_ns = str;
-    return S_OK;
-}
-
 static HRESULT write_namespace_attribute_text( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
     unsigned char quote = attr->singleQuote ? '\'' : '"';
@@ -747,8 +738,8 @@ static HRESULT write_namespace_attribute( struct writer *writer, const WS_XML_AT
     }
 }
 
-static HRESULT write_add_namespace_attribute( struct writer *writer, const WS_XML_STRING *prefix,
-                                              const WS_XML_STRING *ns, BOOL single )
+static HRESULT add_namespace_attribute( struct writer *writer, const WS_XML_STRING *prefix,
+                                        const WS_XML_STRING *ns, BOOL single )
 {
     WS_XML_ATTRIBUTE *attr;
     WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
@@ -803,17 +794,35 @@ static BOOL namespace_in_scope( const WS_XML_ELEMENT_NODE *elem, const WS_XML_ST
     return FALSE;
 }
 
-static HRESULT write_set_element_namespace( struct writer *writer )
+static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
+{
+    WS_XML_STRING *str;
+    if (!(str = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
+    heap_free( writer->current_ns );
+    writer->current_ns = str;
+    return S_OK;
+}
+
+static HRESULT set_namespaces( struct writer *writer )
 {
     WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     HRESULT hr;
+    ULONG i;
 
-    if (!elem->ns->length || namespace_in_scope( elem, elem->prefix, elem->ns )) return S_OK;
+    if (elem->ns->length && !namespace_in_scope( elem, elem->prefix, elem->ns ))
+    {
+        if ((hr = add_namespace_attribute( writer, elem->prefix, elem->ns, FALSE )) != S_OK) return hr;
+        if ((hr = set_current_namespace( writer, elem->ns )) != S_OK) return hr;
+    }
 
-    if ((hr = write_add_namespace_attribute( writer, elem->prefix, elem->ns, FALSE )) != S_OK)
-        return hr;
+    for (i = 0; i < elem->attributeCount; i++)
+    {
+        const WS_XML_ATTRIBUTE *attr = elem->attributes[i];
+        if (!attr->ns->length || namespace_in_scope( elem, attr->prefix, attr->ns )) continue;
+        if ((hr = add_namespace_attribute( writer, attr->prefix, attr->ns, FALSE )) != S_OK) return hr;
+    }
 
-    return set_current_namespace( writer, elem->ns );
+    return S_OK;
 }
 
 /**************************************************************************
@@ -1026,7 +1035,7 @@ static HRESULT write_endelement_node( struct writer *writer )
     if (!(node = write_find_startelement( writer ))) return WS_E_INVALID_FORMAT;
     if (writer->state == WRITER_STATE_STARTELEMENT)
     {
-        if ((hr = write_set_element_namespace( writer )) != S_OK) return hr;
+        if ((hr = set_namespaces( writer )) != S_OK) return hr;
         if ((hr = write_startelement( writer )) != S_OK) return hr;
     }
     if ((hr = write_close_element( writer, node )) != S_OK) return hr;
@@ -1109,7 +1118,7 @@ HRESULT WINAPI WsWriteEndStartElement( WS_XML_WRITER *handle, WS_ERROR *error )
         return WS_E_INVALID_OPERATION;
     }
 
-    if ((hr = write_set_element_namespace( writer )) != S_OK) goto done;
+    if ((hr = set_namespaces( writer )) != S_OK) goto done;
     if ((hr = write_startelement( writer )) != S_OK) goto done;
     if ((hr = write_endstartelement( writer )) != S_OK) goto done;
     writer->state = WRITER_STATE_ENDSTARTELEMENT;
@@ -1198,7 +1207,7 @@ static HRESULT write_flush( struct writer *writer )
     if (writer->state == WRITER_STATE_STARTELEMENT)
     {
         HRESULT hr;
-        if ((hr = write_set_element_namespace( writer )) != S_OK) return hr;
+        if ((hr = set_namespaces( writer )) != S_OK) return hr;
         if ((hr = write_startelement( writer )) != S_OK) return hr;
         if ((hr = write_endstartelement( writer )) != S_OK) return hr;
         writer->state = WRITER_STATE_ENDSTARTELEMENT;
@@ -2086,7 +2095,7 @@ static HRESULT write_add_nil_attribute( struct writer *writer )
 
     if ((hr = write_add_attribute( writer, &prefix, &localname, &ns, FALSE )) != S_OK) return hr;
     if ((hr = write_set_attribute_value( writer, &value.text )) != S_OK) return hr;
-    return write_add_namespace_attribute( writer, &prefix, &ns, FALSE );
+    return add_namespace_attribute( writer, &prefix, &ns, FALSE );
 }
 
 static HRESULT get_value_ptr( WS_WRITE_OPTION option, const void *value, ULONG size, ULONG expected_size,
@@ -3124,7 +3133,7 @@ HRESULT WINAPI WsWriteXmlnsAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
     }
 
     if (!namespace_in_scope( &writer->current->hdr, prefix, ns ))
-        hr = write_add_namespace_attribute( writer, prefix, ns, single );
+        hr = add_namespace_attribute( writer, prefix, ns, single );
 
     LeaveCriticalSection( &writer->cs );
     return hr;

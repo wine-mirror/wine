@@ -3470,6 +3470,32 @@ static void test_binary_encoding(void)
     WsFreeWriter( writer );
 }
 
+static void test_namespaces(void)
+{
+    WS_XML_STRING prefix = {1, (BYTE *)"p"}, prefix2 = {1, (BYTE *)"q"};
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, localname2 = {1, (BYTE *)"a"};
+    WS_XML_STRING ns = {1, (BYTE *)"n"}, ns2 = {1, (BYTE *)"o"};
+    WS_XML_WRITER *writer;
+    HRESULT hr;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, &prefix, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartAttribute( writer, &prefix2, &localname2, &ns2, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndAttribute( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<p:t q:a=\"\" xmlns:p=\"n\" xmlns:q=\"o\"/>", __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -3508,4 +3534,5 @@ START_TEST(writer)
     test_WsWriteChars();
     test_WsWriteCharsUtf8();
     test_binary_encoding();
+    test_namespaces();
 }
