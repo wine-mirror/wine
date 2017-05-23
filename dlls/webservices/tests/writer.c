@@ -3420,17 +3420,46 @@ static void test_WsWriteCharsUtf8(void)
     WsFreeWriter( writer );
 }
 
+static void check_output_bin( WS_XML_WRITER *writer, const char *expected, int len, unsigned int line )
+{
+    WS_BYTES bytes;
+    ULONG size = sizeof(bytes);
+    HRESULT hr;
+
+    memset( &bytes, 0, sizeof(bytes) );
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
+    ok( hr == S_OK, "%u: got %08x\n", line, hr );
+    ok( bytes.length == len, "%u: got %u expected %u\n", line, bytes.length, len );
+    if (bytes.length != len) return;
+    ok( !memcmp( bytes.bytes, expected, bytes.length ), "%u: got %s expected %s\n", line,
+        debugstr_bytes(bytes.bytes, bytes.length), debugstr_bytes((const BYTE *)expected, len) );
+}
+
 static void test_binary_encoding(void)
 {
-    static const char res[] = {0x40,0x01,'t',0x01,0};
-    static const char res2[] = {0x6d,0x01,'t',0x09,0x01,'p',0x02,'n','s',0x01,0};
-    static const char res3[] = {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x01,0};
+    static const char res[] =
+        {0x40,0x01,'t',0x01};
+    static const char res2[] =
+        {0x6d,0x01,'t',0x09,0x01,'p',0x02,'n','s',0x01};
+    static const char res3[] =
+        {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x01};
+    static const char res4[] =
+        {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x99,0x04,'t','e','s','t'};
+    static const char res100[] =
+        {0x40,0x01,'t',0x04,0x01,'t',0x98,0x00,0x01};
+    static const char res101[] =
+        {0x40,0x01,'t',0x35,0x01,'t',0x98,0x00,0x09,0x01,'p',0x02,'n','s',0x01};
+    static const char res102[] =
+        {0x40,0x01,'t',0x05,0x02,'p','2',0x01,'t',0x98,0x00,0x09,0x02,'p','2',0x02,'n','s',0x01};
+    static const char res103[] =
+        {0x40,0x01,'t',0x05,0x02,'p','2',0x01,'t',0x98,0x04,'t','e','s','t',0x09,0x02,'p','2',0x02,'n','s',0x01};
     WS_XML_WRITER_BINARY_ENCODING bin = {{WS_XML_WRITER_ENCODING_TYPE_BINARY}};
     WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
     static const char prefix[] = "p", prefix2[] = "p2";
-    static const char localname[] = "t", empty[] = "", ns[] = "ns";
+    static const char localname[] = "t", ns[] = "ns";
     const WS_XML_STRING *prefix_ptr, *localname_ptr, *ns_ptr;
-    WS_XML_STRING str, str2, str3;
+    WS_XML_STRING str, str2, str3, localname2 = {1, (BYTE *)"t"}, empty = {0, NULL};
+    WS_XML_UTF8_TEXT utf8 = {{WS_XML_TEXT_TYPE_UTF8}};
     WS_XML_WRITER *writer;
     HRESULT hr;
     ULONG i;
@@ -3439,13 +3468,32 @@ static void test_binary_encoding(void)
         const char *prefix;
         const char *localname;
         const char *ns;
+        const char *text;
         const char *result;
+        int         len_result;
     }
     elem_tests[] =
     {
-        { NULL, localname, empty, res },   /* short element */
-        { prefix, localname, ns, res2 },   /* one character prefix element */
-        { prefix2, localname, ns, res3 },  /* element */
+        { NULL, localname, "", NULL, res, sizeof(res) },            /* short element */
+        { prefix, localname, ns, NULL, res2, sizeof(res2) },        /* one character prefix element */
+        { prefix2, localname, ns, NULL, res3, sizeof(res3) },       /* element */
+        { prefix2, localname, ns, "test", res4, sizeof(res4) },     /* element with text */
+    };
+    static const struct
+    {
+        const char *prefix;
+        const char *localname;
+        const char *ns;
+        const char *value;
+        const char *result;
+        int         len_result;
+    }
+    attr_tests[] =
+    {
+        { NULL, localname, "", NULL, res100, sizeof(res100) },          /* short attribute */
+        { prefix, localname, ns, NULL, res101, sizeof(res101) },        /* one character prefix attribute */
+        { prefix2, localname, ns, NULL, res102, sizeof(res102) },       /* attribute */
+        { prefix2, localname, ns, "test", res103, sizeof(res103) },     /* attribute with value */
     };
 
     hr = WsCreateWriter( NULL, 0, &writer, NULL );
@@ -3462,9 +3510,43 @@ static void test_binary_encoding(void)
 
         hr = WsWriteStartElement( writer, prefix_ptr, localname_ptr, ns_ptr, NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        if (elem_tests[i].text)
+        {
+            utf8.value.length = strlen( elem_tests[i].text );
+            utf8.value.bytes  = (BYTE *)elem_tests[i].text;
+            hr = WsWriteText( writer, &utf8.text, NULL );
+            ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        }
         hr = WsWriteEndElement( writer, NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
-        if (hr == S_OK) check_output( writer, elem_tests[i].result, __LINE__ );
+        if (hr == S_OK) check_output_bin( writer, elem_tests[i].result, elem_tests[i].len_result, __LINE__ );
+    }
+
+    for (i = 0; i < sizeof(attr_tests)/sizeof(attr_tests[0]); i++)
+    {
+        hr = WsSetOutput( writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        prefix_ptr = init_xmlstring( attr_tests[i].prefix, &str );
+        localname_ptr = init_xmlstring( attr_tests[i].localname, &str2 );
+        ns_ptr = init_xmlstring( elem_tests[i].ns, &str3 );
+
+        hr = WsWriteStartElement( writer, NULL, &localname2, &empty, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        hr = WsWriteStartAttribute( writer, prefix_ptr, localname_ptr, ns_ptr, FALSE, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        if (attr_tests[i].value)
+        {
+            utf8.value.length = strlen( attr_tests[i].value );
+            utf8.value.bytes  = (BYTE *)attr_tests[i].value;
+            hr = WsWriteText( writer, &utf8.text, NULL );
+            ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        }
+        hr = WsWriteEndAttribute( writer, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        hr = WsWriteEndElement( writer, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+        if (hr == S_OK) check_output_bin( writer, attr_tests[i].result, attr_tests[i].len_result, __LINE__ );
     }
 
     WsFreeWriter( writer );
