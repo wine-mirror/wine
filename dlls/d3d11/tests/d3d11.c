@@ -1293,6 +1293,12 @@ static void draw_quad_(unsigned int line, struct d3d11_test_context *context)
     ID3D11DeviceContext_Draw(context->immediate_context, 4, 0);
 }
 
+static void set_quad_color(struct d3d11_test_context *context, const struct vec4 *color)
+{
+    ID3D11DeviceContext_UpdateSubresource(context->immediate_context,
+            (ID3D11Resource *)context->ps_cb, 0, NULL, color, 0, 0);
+}
+
 #define draw_color_quad(c, color) draw_color_quad_(__LINE__, c, color)
 static void draw_color_quad_(unsigned int line, struct d3d11_test_context *context, const struct vec4 *color)
 {
@@ -1334,8 +1340,7 @@ static void draw_color_quad_(unsigned int line, struct d3d11_test_context *conte
     ID3D11DeviceContext_PSSetShader(context->immediate_context, context->ps, NULL, 0);
     ID3D11DeviceContext_PSSetConstantBuffers(context->immediate_context, 0, 1, &context->ps_cb);
 
-    ID3D11DeviceContext_UpdateSubresource(context->immediate_context, (ID3D11Resource *)context->ps_cb, 0,
-            NULL, color, 0, 0);
+    set_quad_color(context, color);
 
     draw_quad_(line, context);
 }
@@ -18291,6 +18296,412 @@ float4 main(struct ps_data ps_input) : SV_Target
     release_test_context(&test_context);
 }
 
+struct triangle
+{
+    struct vec4 v[3];
+};
+
+#define check_triangles(buffer, triangles, count) check_triangles_(__LINE__, buffer, triangles, count)
+static void check_triangles_(unsigned int line, ID3D11Buffer *buffer,
+        const struct triangle *triangles, unsigned int triangle_count)
+{
+    const struct triangle *current, *expected;
+    struct resource_readback rb;
+    unsigned int i, j, offset;
+    BOOL all_match = TRUE;
+
+    get_buffer_readback(buffer, &rb);
+
+    for (i = 0; i < triangle_count; ++i)
+    {
+        current = get_readback_data(&rb, i, 0, sizeof(*current));
+        expected = &triangles[i];
+
+        offset = ~0u;
+        for (j = 0; j < ARRAY_SIZE(expected->v); ++j)
+        {
+            if (compare_vec4(&current->v[0], &expected->v[j], 0))
+            {
+                offset = j;
+                break;
+            }
+        }
+
+        if (offset == ~0u)
+        {
+            all_match = FALSE;
+            break;
+        }
+
+        for (j = 0; j < ARRAY_SIZE(expected->v); ++j)
+        {
+            if (!compare_vec4(&current->v[j], &expected->v[(j + offset) % 3], 0))
+            {
+                all_match = FALSE;
+                break;
+            }
+        }
+        if (!all_match)
+            break;
+    }
+
+    ok_(__FILE__, line)(all_match, "Triangle %u vertices {%.8e, %.8e, %.8e, %.8e}, "
+            "{%.8e, %.8e, %.8e, %.8e}, {%.8e, %.8e, %.8e, %.8e} "
+            "do not match {%.8e, %.8e, %.8e, %.8e}, {%.8e, %.8e, %.8e, %.8e}, "
+            "{%.8e, %.8e, %.8e, %.8e}.\n", i,
+            current->v[0].x, current->v[0].y, current->v[0].z, current->v[0].w,
+            current->v[1].x, current->v[1].y, current->v[1].z, current->v[1].w,
+            current->v[2].x, current->v[2].y, current->v[2].z, current->v[2].w,
+            expected->v[0].x, expected->v[0].y, expected->v[0].z, expected->v[0].w,
+            expected->v[1].x, expected->v[1].y, expected->v[1].z, expected->v[1].w,
+            expected->v[2].x, expected->v[2].y, expected->v[2].z, expected->v[2].w);
+
+    release_resource_readback(&rb);
+}
+
+static void test_quad_tessellation(void)
+{
+#if 0
+    struct point_data
+    {
+        float4 position : SV_POSITION;
+    };
+
+    struct patch_constant_data
+    {
+        float edges[4] : SV_TessFactor;
+        float inside[2] : SV_InsideTessFactor;
+    };
+
+    float4 tess_factors;
+    float2 inside_tess_factors;
+
+    patch_constant_data patch_constant(InputPatch<point_data, 4> input)
+    {
+        patch_constant_data output;
+
+        output.edges[0] = tess_factors.x;
+        output.edges[1] = tess_factors.y;
+        output.edges[2] = tess_factors.z;
+        output.edges[3] = tess_factors.w;
+        output.inside[0] = inside_tess_factors.x;
+        output.inside[1] = inside_tess_factors.y;
+
+        return output;
+    }
+
+    [domain("quad")]
+    [outputcontrolpoints(4)]
+    [outputtopology("triangle_ccw")]
+    [partitioning("integer")]
+    [patchconstantfunc("patch_constant")]
+    point_data hs_main(InputPatch<point_data, 4> input,
+            uint i : SV_OutputControlPointID)
+    {
+        return input[i];
+    }
+
+    [domain("quad")]
+    point_data ds_main(patch_constant_data input,
+            float2 tess_coord : SV_DomainLocation,
+            const OutputPatch<point_data, 4> patch)
+    {
+        point_data output;
+
+        float4 a = lerp(patch[0].position, patch[1].position, tess_coord.x);
+        float4 b = lerp(patch[2].position, patch[3].position, tess_coord.x);
+        output.position = lerp(a, b, tess_coord.y);
+
+        return output;
+    }
+#endif
+    static const DWORD hs_quad_ccw_code[] =
+    {
+        0x43425844, 0xdf8df700, 0x58b08fb1, 0xbd23d2c3, 0xcf884094, 0x00000001, 0x000002b8, 0x00000004,
+        0x00000030, 0x00000064, 0x00000098, 0x0000015c, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x5449534f,
+        0x004e4f49, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x47534350, 0x000000bc,
+        0x00000006, 0x00000008, 0x00000098, 0x00000000, 0x0000000b, 0x00000003, 0x00000000, 0x00000e01,
+        0x00000098, 0x00000001, 0x0000000b, 0x00000003, 0x00000001, 0x00000e01, 0x00000098, 0x00000002,
+        0x0000000b, 0x00000003, 0x00000002, 0x00000e01, 0x00000098, 0x00000003, 0x0000000b, 0x00000003,
+        0x00000003, 0x00000e01, 0x000000a6, 0x00000000, 0x0000000c, 0x00000003, 0x00000004, 0x00000e01,
+        0x000000a6, 0x00000001, 0x0000000c, 0x00000003, 0x00000005, 0x00000e01, 0x545f5653, 0x46737365,
+        0x6f746361, 0x56530072, 0x736e495f, 0x54656469, 0x46737365, 0x6f746361, 0xabab0072, 0x58454853,
+        0x00000154, 0x00030050, 0x00000055, 0x01000071, 0x01002093, 0x01002094, 0x01001895, 0x01000896,
+        0x01002097, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x01000073, 0x04000067,
+        0x00102012, 0x00000000, 0x0000000b, 0x06000036, 0x00102012, 0x00000000, 0x0020800a, 0x00000000,
+        0x00000000, 0x0100003e, 0x01000073, 0x04000067, 0x00102012, 0x00000001, 0x0000000c, 0x06000036,
+        0x00102012, 0x00000001, 0x0020801a, 0x00000000, 0x00000000, 0x0100003e, 0x01000073, 0x04000067,
+        0x00102012, 0x00000002, 0x0000000d, 0x06000036, 0x00102012, 0x00000002, 0x0020802a, 0x00000000,
+        0x00000000, 0x0100003e, 0x01000073, 0x04000067, 0x00102012, 0x00000003, 0x0000000e, 0x06000036,
+        0x00102012, 0x00000003, 0x0020803a, 0x00000000, 0x00000000, 0x0100003e, 0x01000073, 0x04000067,
+        0x00102012, 0x00000004, 0x0000000f, 0x06000036, 0x00102012, 0x00000004, 0x0020800a, 0x00000000,
+        0x00000001, 0x0100003e, 0x01000073, 0x04000067, 0x00102012, 0x00000005, 0x00000010, 0x06000036,
+        0x00102012, 0x00000005, 0x0020801a, 0x00000000, 0x00000001, 0x0100003e,
+    };
+    static const DWORD ds_quad_code[] =
+    {
+        0x43425844, 0xeb6b7631, 0x07f5469e, 0xed0cbf4a, 0x7158b3a6, 0x00000001, 0x00000284, 0x00000004,
+        0x00000030, 0x00000064, 0x00000128, 0x0000015c, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x5449534f,
+        0x004e4f49, 0x47534350, 0x000000bc, 0x00000006, 0x00000008, 0x00000098, 0x00000000, 0x0000000b,
+        0x00000003, 0x00000000, 0x00000001, 0x00000098, 0x00000001, 0x0000000b, 0x00000003, 0x00000001,
+        0x00000001, 0x00000098, 0x00000002, 0x0000000b, 0x00000003, 0x00000002, 0x00000001, 0x00000098,
+        0x00000003, 0x0000000b, 0x00000003, 0x00000003, 0x00000001, 0x000000a6, 0x00000000, 0x0000000c,
+        0x00000003, 0x00000004, 0x00000001, 0x000000a6, 0x00000001, 0x0000000c, 0x00000003, 0x00000005,
+        0x00000001, 0x545f5653, 0x46737365, 0x6f746361, 0x56530072, 0x736e495f, 0x54656469, 0x46737365,
+        0x6f746361, 0xabab0072, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000,
+        0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x58454853,
+        0x00000120, 0x00040050, 0x00000048, 0x01002093, 0x01001895, 0x0100086a, 0x0200005f, 0x0001c032,
+        0x0400005f, 0x002190f2, 0x00000004, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x02000068, 0x00000002, 0x0a000000, 0x001000f2, 0x00000000, 0x80219e46, 0x00000041, 0x00000002,
+        0x00000000, 0x00219e46, 0x00000003, 0x00000000, 0x09000032, 0x001000f2, 0x00000000, 0x0001c006,
+        0x00100e46, 0x00000000, 0x00219e46, 0x00000002, 0x00000000, 0x0a000000, 0x001000f2, 0x00000001,
+        0x80219e46, 0x00000041, 0x00000000, 0x00000000, 0x00219e46, 0x00000001, 0x00000000, 0x09000032,
+        0x001000f2, 0x00000001, 0x0001c006, 0x00100e46, 0x00000001, 0x00219e46, 0x00000000, 0x00000000,
+        0x08000000, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x80100e46, 0x00000041, 0x00000001,
+        0x08000032, 0x001020f2, 0x00000000, 0x0001c556, 0x00100e46, 0x00000000, 0x00100e46, 0x00000001,
+        0x0100003e,
+    };
+#if 0
+    ...
+    [outputtopology("triangle_cw")]
+    ...
+#endif
+    static const DWORD hs_quad_cw_code[] =
+    {
+        0x43425844, 0x1ab30cc8, 0x94174771, 0x61f4cdd0, 0xa287f62c, 0x00000001, 0x000002b8, 0x00000004,
+        0x00000030, 0x00000064, 0x00000098, 0x0000015c, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008,
+        0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x5449534f,
+        0x004e4f49, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x47534350, 0x000000bc,
+        0x00000006, 0x00000008, 0x00000098, 0x00000000, 0x0000000b, 0x00000003, 0x00000000, 0x00000e01,
+        0x00000098, 0x00000001, 0x0000000b, 0x00000003, 0x00000001, 0x00000e01, 0x00000098, 0x00000002,
+        0x0000000b, 0x00000003, 0x00000002, 0x00000e01, 0x00000098, 0x00000003, 0x0000000b, 0x00000003,
+        0x00000003, 0x00000e01, 0x000000a6, 0x00000000, 0x0000000c, 0x00000003, 0x00000004, 0x00000e01,
+        0x000000a6, 0x00000001, 0x0000000c, 0x00000003, 0x00000005, 0x00000e01, 0x545f5653, 0x46737365,
+        0x6f746361, 0x56530072, 0x736e495f, 0x54656469, 0x46737365, 0x6f746361, 0xabab0072, 0x58454853,
+        0x00000154, 0x00030050, 0x00000055, 0x01000071, 0x01002093, 0x01002094, 0x01001895, 0x01000896,
+        0x01001897, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000002, 0x01000073, 0x04000067,
+        0x00102012, 0x00000000, 0x0000000b, 0x06000036, 0x00102012, 0x00000000, 0x0020800a, 0x00000000,
+        0x00000000, 0x0100003e, 0x01000073, 0x04000067, 0x00102012, 0x00000001, 0x0000000c, 0x06000036,
+        0x00102012, 0x00000001, 0x0020801a, 0x00000000, 0x00000000, 0x0100003e, 0x01000073, 0x04000067,
+        0x00102012, 0x00000002, 0x0000000d, 0x06000036, 0x00102012, 0x00000002, 0x0020802a, 0x00000000,
+        0x00000000, 0x0100003e, 0x01000073, 0x04000067, 0x00102012, 0x00000003, 0x0000000e, 0x06000036,
+        0x00102012, 0x00000003, 0x0020803a, 0x00000000, 0x00000000, 0x0100003e, 0x01000073, 0x04000067,
+        0x00102012, 0x00000004, 0x0000000f, 0x06000036, 0x00102012, 0x00000004, 0x0020800a, 0x00000000,
+        0x00000001, 0x0100003e, 0x01000073, 0x04000067, 0x00102012, 0x00000005, 0x00000010, 0x06000036,
+        0x00102012, 0x00000005, 0x0020801a, 0x00000000, 0x00000001, 0x0100003e,
+    };
+#if 0
+    struct point_data
+    {
+        float4 pos : SV_POSITION;
+    };
+
+    [maxvertexcount(3)]
+    void main(triangle point_data vin[3], inout TriangleStream<point_data> vout)
+    {
+        for (uint i = 0; i < 3; ++i)
+            vout.Append(vin[i]);
+    }
+#endif
+    static const DWORD gs_code[] =
+    {
+        0x43425844, 0x8e49d18d, 0x6d08d6e5, 0xb7015628, 0xf9351fdd, 0x00000001, 0x00000164, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x000000c8, 0x00020040,
+        0x00000032, 0x05000061, 0x002010f2, 0x00000003, 0x00000000, 0x00000001, 0x02000068, 0x00000001,
+        0x0100185d, 0x0100285c, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x0200005e, 0x00000003,
+        0x05000036, 0x00100012, 0x00000000, 0x00004001, 0x00000000, 0x01000030, 0x07000050, 0x00100022,
+        0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000003, 0x03040003, 0x0010001a, 0x00000000,
+        0x07000036, 0x001020f2, 0x00000000, 0x00a01e46, 0x0010000a, 0x00000000, 0x00000000, 0x01000013,
+        0x0700001e, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000001, 0x01000016,
+        0x0100003e,
+    };
+    static const D3D11_SO_DECLARATION_ENTRY so_declaration[] =
+    {
+        {0, "SV_POSITION", 0, 0, 4, 0},
+    };
+    static const D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const BYTE zero_data[1024];
+    static const struct triangle expected_quad_ccw[] =
+    {
+        {{{-1.0f, -1.0f, 0.0f, 1.0f},
+          { 1.0f, -1.0f, 0.0f, 1.0f},
+          {-1.0f,  1.0f, 0.0f, 1.0f}}},
+        {{{-1.0f,  1.0f, 0.0f, 1.0f},
+          { 1.0f, -1.0f, 0.0f, 1.0f},
+          { 1.0f,  1.0f, 0.0f, 1.0f}}},
+        {{{ 0.0f,  0.0f, 0.0f, 0.0f},
+          { 0.0f,  0.0f, 0.0f, 0.0f},
+          { 0.0f,  0.0f, 0.0f, 0.0f}}},
+    };
+    static const struct triangle expected_quad_cw[] =
+    {
+        {{{-1.0f, -1.0f, 0.0f, 1.0f},
+          {-1.0f,  1.0f, 0.0f, 1.0f},
+          { 1.0f, -1.0f, 0.0f, 1.0f}}},
+        {{{-1.0f,  1.0f, 0.0f, 1.0f},
+          { 1.0f,  1.0f, 0.0f, 1.0f},
+          { 1.0f, -1.0f, 0.0f, 1.0f}}},
+        {{{ 0.0f,  0.0f, 0.0f, 0.0f},
+          { 0.0f,  0.0f, 0.0f, 0.0f},
+          { 0.0f,  0.0f, 0.0f, 0.0f}}},
+    };
+    struct
+    {
+        float tess_factors[4];
+        float inside_tess_factors[2];
+        DWORD padding[2];
+    } constant;
+
+    D3D11_QUERY_DATA_SO_STATISTICS so_statistics;
+    struct d3d11_test_context test_context;
+    ID3D11DeviceContext *context;
+    ID3D11Buffer *cb, *so_buffer;
+    D3D11_QUERY_DESC query_desc;
+    ID3D11Asynchronous *query;
+    ID3D11GeometryShader *gs;
+    ID3D11DomainShader *ds;
+    const UINT offset = 0;
+    ID3D11HullShader *hs;
+    ID3D11Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, &feature_level))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    draw_color_quad(&test_context, &white);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    set_quad_color(&test_context, &green);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+
+    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, sizeof(zero_data), zero_data);
+    hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
+            so_declaration, ARRAY_SIZE(so_declaration), NULL, 0, 0, NULL, &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+    ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
+
+    for (i = 0; i < ARRAY_SIZE(constant.tess_factors); ++i)
+        constant.tess_factors[i] = 1.0f;
+    for (i = 0; i < ARRAY_SIZE(constant.inside_tess_factors); ++i)
+        constant.inside_tess_factors[i] = 1.0f;
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
+    ID3D11DeviceContext_HSSetConstantBuffers(context, 0, 1, &cb);
+    hr = ID3D11Device_CreateHullShader(device, hs_quad_ccw_code, sizeof(hs_quad_ccw_code), NULL, &hs);
+    ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_HSSetShader(context, hs, NULL, 0);
+    hr = ID3D11Device_CreateDomainShader(device, ds_quad_code, sizeof(ds_quad_code), NULL, &ds);
+    ok(SUCCEEDED(hr), "Failed to create domain shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_DSSetShader(context, ds, NULL, 0);
+
+    ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+    ID3D11DeviceContext_SOSetTargets(context, 0, NULL, NULL);
+    check_triangles(so_buffer, expected_quad_ccw, ARRAY_SIZE(expected_quad_ccw));
+
+    ID3D11Buffer_Release(so_buffer);
+    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, sizeof(zero_data), zero_data);
+
+    ID3D11HullShader_Release(hs);
+    hr = ID3D11Device_CreateHullShader(device, hs_quad_cw_code, sizeof(hs_quad_cw_code), NULL, &hs);
+    ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+    ID3D11DeviceContext_HSSetShader(context, hs, NULL, 0);
+
+    ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+    ID3D11DeviceContext_SOSetTargets(context, 0, NULL, NULL);
+    check_triangles(so_buffer, expected_quad_cw, ARRAY_SIZE(expected_quad_cw));
+
+    ID3D11Buffer_Release(so_buffer);
+    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, sizeof(zero_data), zero_data);
+
+    ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
+    query_desc.Query = D3D11_QUERY_SO_STATISTICS_STREAM0;
+    query_desc.MiscFlags = 0;
+    query = NULL;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
+    todo_wine ok(hr == S_OK, "Failed to create query, hr %#x.\n", hr);
+    if (query)
+        ID3D11DeviceContext_Begin(context, query);
+
+    set_quad_color(&test_context, &white);
+    for (i = 0; i < ARRAY_SIZE(constant.tess_factors); ++i)
+        constant.tess_factors[i] = 2.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    set_quad_color(&test_context, &green);
+    constant.tess_factors[0] = 0.0f; /* A patch is discarded. */
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    check_texture_color(test_context.backbuffer, 0xffffffff, 0);
+
+    if (query)
+    {
+        ID3D11DeviceContext_End(context, query);
+        for (i = 0; i < 500; ++i)
+        {
+            if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+                break;
+            Sleep(10);
+        }
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(so_statistics.NumPrimitivesWritten == 8, "Got unexpected primitives written %u.\n",
+                (unsigned int)so_statistics.NumPrimitivesWritten);
+        ok(so_statistics.PrimitivesStorageNeeded == 8, "Got unexpected primitives storage needed %u.\n",
+                (unsigned int)so_statistics.PrimitivesStorageNeeded);
+        ID3D11DeviceContext_Begin(context, query);
+    }
+
+    constant.tess_factors[0] = 5.0f;
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
+    ID3D11DeviceContext_Draw(context, 4, 0);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    if (query)
+    {
+        ID3D11DeviceContext_End(context, query);
+        for (i = 0; i < 500; ++i)
+        {
+            if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+                break;
+            Sleep(10);
+        }
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(so_statistics.NumPrimitivesWritten == 11, "Got unexpected primitives written %u.\n",
+                (unsigned int)so_statistics.NumPrimitivesWritten);
+        ok(so_statistics.PrimitivesStorageNeeded == 11, "Got unexpected primitives storage needed %u.\n",
+                (unsigned int)so_statistics.PrimitivesStorageNeeded);
+        ID3D11Asynchronous_Release(query);
+    }
+
+    ID3D11Buffer_Release(so_buffer);
+    ID3D11GeometryShader_Release(gs);
+    ID3D11DomainShader_Release(ds);
+    ID3D11HullShader_Release(hs);
+    ID3D11Buffer_Release(cb);
+    release_test_context(&test_context);
+}
+
 #define check_so_desc(a, b, c, d, e, f, g, h) check_so_desc_(__LINE__, a, b, c, d, e, f, g, h)
 static void check_so_desc_(unsigned int line, ID3D11Device *device,
         const DWORD *code, size_t code_size, const D3D11_SO_DECLARATION_ENTRY *entry,
@@ -19963,6 +20374,7 @@ START_TEST(d3d11)
     test_compute_shader_registers();
     test_tgsm();
     test_geometry_shader();
+    test_quad_tessellation();
     test_stream_output();
     test_fl10_stream_output_desc();
     test_stream_output_resume();
