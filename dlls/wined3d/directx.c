@@ -4141,6 +4141,22 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         if (!counter_bits)
             gl_info->supported[ARB_TIMER_QUERY] = FALSE;
     }
+    if (gl_version >= MAKEDWORD_VERSION(3, 0))
+    {
+        GLint counter_bits;
+
+        gl_info->supported[WINED3D_GL_PRIMITIVE_QUERY] = TRUE;
+
+        GL_EXTCALL(glGetQueryiv(GL_PRIMITIVES_GENERATED, GL_QUERY_COUNTER_BITS, &counter_bits));
+        TRACE("Primitives query counter has %d bits.\n", counter_bits);
+        if (!counter_bits)
+            gl_info->supported[WINED3D_GL_PRIMITIVE_QUERY] = FALSE;
+
+        GL_EXTCALL(glGetQueryiv(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, GL_QUERY_COUNTER_BITS, &counter_bits));
+        TRACE("Transform feedback primitives query counter has %d bits.\n", counter_bits);
+        if (!counter_bits)
+            gl_info->supported[WINED3D_GL_PRIMITIVE_QUERY] = FALSE;
+    }
     if (gl_info->supported[ARB_VIEWPORT_ARRAY])
     {
         GLint subpixel_bits;

@@ -1695,6 +1695,32 @@ struct wined3d_timestamp_query
 void context_alloc_timestamp_query(struct wined3d_context *context, struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 void context_free_timestamp_query(struct wined3d_timestamp_query *query) DECLSPEC_HIDDEN;
 
+union wined3d_gl_so_statistics_query
+{
+    GLuint id[2];
+    struct
+    {
+        GLuint written;
+        GLuint generated;
+    } query;
+};
+
+struct wined3d_so_statistics_query
+{
+    struct wined3d_query query;
+
+    struct list entry;
+    union wined3d_gl_so_statistics_query u;
+    struct wined3d_context *context;
+    unsigned int stream_idx;
+    struct wined3d_query_data_so_statistics statistics;
+    BOOL started;
+};
+
+void context_alloc_so_statistics_query(struct wined3d_context *context,
+        struct wined3d_so_statistics_query *query) DECLSPEC_HIDDEN;
+void context_free_so_statistics_query(struct wined3d_so_statistics_query *query) DECLSPEC_HIDDEN;
+
 struct wined3d_gl_view
 {
     GLenum target;
@@ -1825,6 +1851,11 @@ struct wined3d_context
     SIZE_T free_timestamp_query_size;
     unsigned int free_timestamp_query_count;
     struct list timestamp_queries;
+
+    union wined3d_gl_so_statistics_query *free_so_statistics_queries;
+    SIZE_T free_so_statistics_query_size;
+    unsigned int free_so_statistics_query_count;
+    struct list so_statistics_queries;
 
     struct wined3d_stream_info stream_info;
 

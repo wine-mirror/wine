@@ -892,6 +892,47 @@ void context_free_timestamp_query(struct wined3d_timestamp_query *query)
     context->free_timestamp_queries[context->free_timestamp_query_count++] = query->id;
 }
 
+void context_alloc_so_statistics_query(struct wined3d_context *context,
+        struct wined3d_so_statistics_query *query)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (context->free_so_statistics_query_count)
+    {
+        query->u = context->free_so_statistics_queries[--context->free_so_statistics_query_count];
+    }
+    else
+    {
+        GL_EXTCALL(glGenQueries(ARRAY_SIZE(query->u.id), query->u.id));
+        checkGLcall("glGenQueries");
+
+        TRACE("Allocated SO statistics queries %u, %u in context %p.\n",
+                query->u.id[0], query->u.id[1], context);
+    }
+
+    query->context = context;
+    list_add_head(&context->so_statistics_queries, &query->entry);
+}
+
+void context_free_so_statistics_query(struct wined3d_so_statistics_query *query)
+{
+    struct wined3d_context *context = query->context;
+
+    list_remove(&query->entry);
+    query->context = NULL;
+
+    if (!wined3d_array_reserve((void **)&context->free_so_statistics_queries,
+            &context->free_so_statistics_query_size, context->free_so_statistics_query_count + 1,
+            sizeof(*context->free_so_statistics_queries)))
+    {
+        ERR("Failed to grow free list, leaking GL queries %u, %u in context %p.\n",
+                query->u.id[0], query->u.id[1], context);
+        return;
+    }
+
+    context->free_so_statistics_queries[context->free_so_statistics_query_count++] = query->u;
+}
+
 typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
 
 static void context_enum_fbo_entries(const struct wined3d_device *device,
@@ -1183,6 +1224,7 @@ static void context_update_window(struct wined3d_context *context)
 static void context_destroy_gl_resources(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_so_statistics_query *so_statistics_query;
     struct wined3d_timestamp_query *timestamp_query;
     struct wined3d_occlusion_query *occlusion_query;
     struct wined3d_event_query *event_query;
@@ -1198,6 +1240,14 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         restore_ctx = NULL;
     else if (context->valid)
         context_set_gl_context(context);
+
+    LIST_FOR_EACH_ENTRY(so_statistics_query, &context->so_statistics_queries,
+            struct wined3d_so_statistics_query, entry)
+    {
+        if (context->valid)
+            GL_EXTCALL(glDeleteQueries(ARRAY_SIZE(so_statistics_query->u.id), so_statistics_query->u.id));
+        so_statistics_query->context = NULL;
+    }
 
     LIST_FOR_EACH_ENTRY(timestamp_query, &context->timestamp_queries, struct wined3d_timestamp_query, entry)
     {
@@ -1244,6 +1294,15 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         if (context->dummy_arbfp_prog)
         {
             GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
+        }
+
+        if (gl_info->supported[WINED3D_GL_PRIMITIVE_QUERY])
+        {
+            for (i = 0; i < context->free_so_statistics_query_count; ++i)
+            {
+                union wined3d_gl_so_statistics_query *q = &context->free_so_statistics_queries[i];
+                GL_EXTCALL(glDeleteQueries(ARRAY_SIZE(q->id), q->id));
+            }
         }
 
         if (gl_info->supported[ARB_TIMER_QUERY])
@@ -1731,15 +1790,16 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (!(ret->free_occlusion_queries = wined3d_calloc(ret->free_occlusion_query_size,
             sizeof(*ret->free_occlusion_queries))))
         goto out;
-
     list_init(&ret->occlusion_queries);
 
     ret->free_event_query_size = 4;
     if (!(ret->free_event_queries = wined3d_calloc(ret->free_event_query_size,
             sizeof(*ret->free_event_queries))))
         goto out;
-
     list_init(&ret->event_queries);
+
+    list_init(&ret->so_statistics_queries);
+
     list_init(&ret->fbo_list);
     list_init(&ret->fbo_destroy_list);
 
