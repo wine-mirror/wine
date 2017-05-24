@@ -377,9 +377,11 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         ht.pt = pt;
         ScreenToClient(g_pChildWnd->hTreeWnd, &ht.pt);
         if (SendMessageW(g_pChildWnd->hTreeWnd, TVM_HITTEST, 0, (LPARAM)&ht)) {
+            HTREEITEM root;
             SendMessageW(g_pChildWnd->hTreeWnd, TVM_SELECTITEM, TVGN_CARET, (LPARAM)ht.hItem);
-            TrackPopupMenu(GetSubMenu(hPopupMenus, PM_TREEVIEW), TPM_RIGHTBUTTON,
-                           pt.x, pt.y, 0, hFrameWnd, NULL);
+            root = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+            TrackPopupMenu(GetSubMenu(hPopupMenus, ht.hItem == root ? PM_COMPUTER : PM_TREEVIEW),
+                           TPM_RIGHTBUTTON, pt.x, pt.y, 0, hFrameWnd, NULL);
         }
         break;
     }

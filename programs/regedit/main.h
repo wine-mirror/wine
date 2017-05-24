@@ -37,9 +37,10 @@
 #define WM_NOTIFY_REFLECT (WM_USER+1024)
 
 /* Pop-Up Menus */
-#define PM_TREEVIEW      0
-#define PM_NEW_VALUE     1
-#define PM_MODIFY_VALUE  2
+#define PM_COMPUTER      0
+#define PM_TREEVIEW      1
+#define PM_NEW_VALUE     2
+#define PM_MODIFY_VALUE  3
 
 /* HexEdit Class */
 #define HEM_SETDATA (WM_USER+0)

@@ -84,6 +84,13 @@ END
 
 IDR_POPUP_MENUS MENU
 BEGIN
+  /* PM_COMPUTER */
+  POPUP ""
+  BEGIN
+        MENUITEM "Expand",                      ID_TREE_EXPAND_COLLAPSE
+        MENUITEM SEPARATOR
+        MENUITEM "&Export...",                  ID_EDIT_EXPORT
+  END
   /* PM_TREEVIEW */
   POPUP ""
   BEGIN
