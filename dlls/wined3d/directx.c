@@ -33,7 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-#define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
 #define DEFAULT_REFRESH_RATE 0
 
 /* The driver names reflect the lowest GPU supported
@@ -4339,8 +4338,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
 
     if (!(gpu_description = query_gpu_description(gl_info, &vram_bytes)))
     {
-        static const struct gpu_description default_gpu_description =
-                {HW_VENDOR_NVIDIA, CARD_NVIDIA_RIVA_128, "Direct3D HAL", DRIVER_UNKNOWN, WINE_DEFAULT_VIDMEM};
         enum wined3d_pci_vendor vendor;
         enum wined3d_pci_device device;
 
@@ -4354,7 +4351,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         if (!(gpu_description = get_gpu_description(vendor, device)))
         {
             ERR("Card %04x:%04x not found in driver DB.\n", vendor, device);
-            gpu_description = &default_gpu_description;
+            return FALSE;
         }
     }
     fixup_extensions(gl_info, caps_gl_ctx, gl_renderer_str, gl_vendor,
