@@ -6813,6 +6813,15 @@ int WINAPI GetAddrInfoExW(const WCHAR *name, const WCHAR *servname, DWORD namesp
 }
 
 /***********************************************************************
+ *		GetAddrInfoExCancel     (WS2_32.@)
+ */
+int WINAPI GetAddrInfoExCancel(HANDLE *handle)
+{
+    FIXME("(%p)\n", handle);
+    return WSA_INVALID_HANDLE;
+}
+
+/***********************************************************************
  *		GetAddrInfoW		(WS2_32.@)
  */
 int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
