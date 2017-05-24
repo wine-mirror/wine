@@ -185,6 +185,12 @@ HRESULT query_init(struct d3d9_query *query, struct d3d9_device *device, D3DQUER
 {
     HRESULT hr;
 
+    if (type > D3DQUERYTYPE_MEMORYPRESSURE)
+    {
+        WARN("Invalid query type %#x.\n", type);
+        return D3DERR_NOTAVAILABLE;
+    }
+
     query->IDirect3DQuery9_iface.lpVtbl = &d3d9_query_vtbl;
     query->refcount = 1;
 
