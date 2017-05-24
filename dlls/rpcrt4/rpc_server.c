@@ -947,14 +947,10 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, const char *Protseq, RpcSe
   (*ps)->MaxCalls = MaxCalls;
   (*ps)->Protseq = RPCRT4_strdupA(Protseq);
   (*ps)->ops = ops;
-  (*ps)->MaxCalls = 0;
   list_init(&(*ps)->listeners);
   list_init(&(*ps)->connections);
   InitializeCriticalSection(&(*ps)->cs);
   (*ps)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcServerProtseq.cs");
-  (*ps)->is_listening = FALSE;
-  (*ps)->mgr_mutex = NULL;
-  (*ps)->server_ready_event = NULL;
 
   list_add_head(&protseqs, &(*ps)->entry);
 

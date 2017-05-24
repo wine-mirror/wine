@@ -642,7 +642,7 @@ typedef struct _RpcServerProtseq_np
 
 static RpcServerProtseq *rpcrt4_protseq_np_alloc(void)
 {
-    RpcServerProtseq_np *ps = HeapAlloc(GetProcessHeap(), 0, sizeof(*ps));
+    RpcServerProtseq_np *ps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ps));
     if (ps)
         ps->mgr_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     return &ps->common;
@@ -1507,7 +1507,7 @@ typedef struct _RpcServerProtseq_sock
 
 static RpcServerProtseq *rpcrt4_protseq_sock_alloc(void)
 {
-    RpcServerProtseq_sock *ps = HeapAlloc(GetProcessHeap(), 0, sizeof(*ps));
+    RpcServerProtseq_sock *ps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ps));
     if (ps)
     {
         static BOOL wsa_inited;
