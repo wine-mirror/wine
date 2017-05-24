@@ -57,6 +57,7 @@ struct clipboard
     unsigned int   lcid;             /* locale id to use for synthesizing text formats */
     unsigned int   seqno;            /* clipboard change sequence number */
     unsigned int   open_seqno;       /* sequence number at open time */
+    unsigned int   rendering;        /* format rendering recursion counter */
     struct list    formats;          /* list of data formats */
     unsigned int   format_count;     /* count of data formats */
     unsigned int   format_map;       /* existence bitmap for formats < CF_MAX */
@@ -366,6 +367,7 @@ DECL_HANDLER(open_clipboard)
     }
 
     if (!clipboard->open_thread) clipboard->open_seqno = clipboard->seqno; /* first open */
+    if (clipboard->open_thread != current) clipboard->rendering = 0;
     clipboard->open_win = win;
     clipboard->open_thread = current;
 
@@ -418,9 +420,10 @@ DECL_HANDLER(set_clipboard_data)
 
     free( format->data );
     format->from   = 0;
-    format->seqno  = clipboard->seqno++;
+    format->seqno  = clipboard->seqno;
     format->size   = get_req_data_size();
     format->data   = data;
+    if (!clipboard->rendering) clipboard->seqno++;
 
     if (req->format == CF_TEXT || req->format == CF_OEMTEXT || req->format == CF_UNICODETEXT)
         clipboard->lcid = req->lcid;
@@ -445,15 +448,30 @@ DECL_HANDLER(get_clipboard_data)
     if (!(format = get_format( clipboard, req->format )))
     {
         set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-        return;
+        goto done;
     }
     reply->from   = format->from;
     reply->total  = format->size;
     reply->seqno  = format->seqno;
-    if (!format->data && !format->from) reply->owner = clipboard->owner;
-    if (req->cached && req->seqno == format->seqno) return;  /* client-side cache still valid */
-    if (format->size <= get_reply_max_size()) set_reply_data( format->data, format->size );
-    else set_error( STATUS_BUFFER_OVERFLOW );
+    reply->owner  = clipboard->owner;
+
+    if (!format->data && req->render)  /* try rendering it client-side */
+    {
+        if (format->from || clipboard->owner) clipboard->rendering++;
+        return;
+    }
+
+    if (req->cached && req->seqno == format->seqno) goto done;  /* client-side cache still valid */
+
+    if (format->size > get_reply_max_size())
+    {
+        set_error( STATUS_BUFFER_OVERFLOW );
+        return;
+    }
+    set_reply_data( format->data, format->size );
+
+done:
+    if (!req->render) clipboard->rendering--;
 }
 
 

@@ -1047,6 +1047,7 @@ HANDLE WINAPI GetClipboardData( UINT format )
         SERVER_START_REQ( get_clipboard_data )
         {
             req->format = format;
+            req->render = render;
             if (cache)
             {
                 req->cached = 1;
@@ -1081,13 +1082,17 @@ HANDLE WINAPI GetClipboardData( UINT format )
         if (render)  /* try rendering it */
         {
             render = FALSE;
-            if (owner)
+            if (from)
+            {
+                render_synthesized_format( format, from );
+                continue;
+            }
+            else if (owner)
             {
                 TRACE( "%s sending WM_RENDERFORMAT to %p\n", debugstr_format( format ), owner );
                 SendMessageW( owner, WM_RENDERFORMAT, format, 0 );
                 continue;
             }
-            if (from) return render_synthesized_format( format, from );
         }
         TRACE( "%s returning 0\n", debugstr_format( format ));
         return 0;

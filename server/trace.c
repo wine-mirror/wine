@@ -3775,6 +3775,7 @@ static void dump_set_clipboard_data_reply( const struct set_clipboard_data_reply
 static void dump_get_clipboard_data_request( const struct get_clipboard_data_request *req )
 {
     fprintf( stderr, " format=%08x", req->format );
+    fprintf( stderr, ", render=%d", req->render );
     fprintf( stderr, ", cached=%d", req->cached );
     fprintf( stderr, ", seqno=%08x", req->seqno );
 }

@@ -3184,6 +3184,7 @@ enum caret_state
 /* Fetch a data format from the clipboard */
 @REQ(get_clipboard_data)
     unsigned int   format;         /* clipboard format of the data */
+    int            render;         /* will we try to render it if missing? */
     int            cached;         /* do we already have it in the client-side cache? */
     unsigned int   seqno;          /* sequence number for the data in the cache */
 @REPLY

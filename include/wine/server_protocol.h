@@ -4522,8 +4522,10 @@ struct get_clipboard_data_request
 {
     struct request_header __header;
     unsigned int   format;
+    int            render;
     int            cached;
     unsigned int   seqno;
+    char __pad_28[4];
 };
 struct get_clipboard_data_reply
 {
@@ -6416,6 +6418,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 531
+#define SERVER_PROTOCOL_VERSION 532
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
