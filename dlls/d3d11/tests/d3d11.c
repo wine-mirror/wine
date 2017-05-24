@@ -4602,13 +4602,13 @@ static void test_create_query(void)
         {D3D11_QUERY_OCCLUSION_PREDICATE,           D3D_FEATURE_LEVEL_10_0, TRUE,  TRUE,  FALSE},
         {D3D11_QUERY_SO_STATISTICS,                 D3D_FEATURE_LEVEL_10_0, FALSE, FALSE, TRUE},
         {D3D11_QUERY_SO_OVERFLOW_PREDICATE,         D3D_FEATURE_LEVEL_10_0, TRUE,  TRUE,  TRUE},
-        {D3D11_QUERY_SO_STATISTICS_STREAM0,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM0,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM0, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
-        {D3D11_QUERY_SO_STATISTICS_STREAM1,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM1,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM1, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
-        {D3D11_QUERY_SO_STATISTICS_STREAM2,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM2,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM2, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
-        {D3D11_QUERY_SO_STATISTICS_STREAM3,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, TRUE},
+        {D3D11_QUERY_SO_STATISTICS_STREAM3,         D3D_FEATURE_LEVEL_11_0, FALSE, FALSE, FALSE},
         {D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM3, D3D_FEATURE_LEVEL_11_0, TRUE,  FALSE, TRUE},
     };
 
@@ -18665,11 +18665,9 @@ static void test_quad_tessellation(void)
     ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
     query_desc.Query = D3D11_QUERY_SO_STATISTICS_STREAM0;
     query_desc.MiscFlags = 0;
-    query = NULL;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    todo_wine ok(hr == S_OK, "Failed to create query, hr %#x.\n", hr);
-    if (query)
-        ID3D11DeviceContext_Begin(context, query);
+    ok(hr == S_OK, "Failed to create query, hr %#x.\n", hr);
+    ID3D11DeviceContext_Begin(context, query);
 
     set_quad_color(&test_context, &white);
     for (i = 0; i < ARRAY_SIZE(constant.tess_factors); ++i)
@@ -18684,48 +18682,42 @@ static void test_quad_tessellation(void)
     ID3D11DeviceContext_Draw(context, 4, 0);
     check_texture_color(test_context.backbuffer, 0xffffffff, 0);
 
-    if (query)
+    ID3D11DeviceContext_End(context, query);
+    for (i = 0; i < 500; ++i)
     {
-        ID3D11DeviceContext_End(context, query);
-        for (i = 0; i < 500; ++i)
-        {
-            if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-                break;
-            Sleep(10);
-        }
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        ok(so_statistics.NumPrimitivesWritten == 8, "Got unexpected primitives written %u.\n",
-                (unsigned int)so_statistics.NumPrimitivesWritten);
-        ok(so_statistics.PrimitivesStorageNeeded == 8, "Got unexpected primitives storage needed %u.\n",
-                (unsigned int)so_statistics.PrimitivesStorageNeeded);
-        ID3D11DeviceContext_Begin(context, query);
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
     }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(so_statistics.NumPrimitivesWritten == 8, "Got unexpected primitives written %u.\n",
+            (unsigned int)so_statistics.NumPrimitivesWritten);
+    ok(so_statistics.PrimitivesStorageNeeded == 8, "Got unexpected primitives storage needed %u.\n",
+            (unsigned int)so_statistics.PrimitivesStorageNeeded);
+    ID3D11DeviceContext_Begin(context, query);
 
     constant.tess_factors[0] = 5.0f;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
     ID3D11DeviceContext_Draw(context, 4, 0);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
-    if (query)
+    ID3D11DeviceContext_End(context, query);
+    for (i = 0; i < 500; ++i)
     {
-        ID3D11DeviceContext_End(context, query);
-        for (i = 0; i < 500; ++i)
-        {
-            if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-                break;
-            Sleep(10);
-        }
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        ok(so_statistics.NumPrimitivesWritten == 11, "Got unexpected primitives written %u.\n",
-                (unsigned int)so_statistics.NumPrimitivesWritten);
-        ok(so_statistics.PrimitivesStorageNeeded == 11, "Got unexpected primitives storage needed %u.\n",
-                (unsigned int)so_statistics.PrimitivesStorageNeeded);
-        ID3D11Asynchronous_Release(query);
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
     }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(so_statistics.NumPrimitivesWritten == 11, "Got unexpected primitives written %u.\n",
+            (unsigned int)so_statistics.NumPrimitivesWritten);
+    ok(so_statistics.PrimitivesStorageNeeded == 11, "Got unexpected primitives storage needed %u.\n",
+            (unsigned int)so_statistics.PrimitivesStorageNeeded);
+    ID3D11Asynchronous_Release(query);
 
     ID3D11Buffer_Release(so_buffer);
     ID3D11GeometryShader_Release(gs);
