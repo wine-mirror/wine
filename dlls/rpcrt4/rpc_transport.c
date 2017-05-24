@@ -1461,7 +1461,8 @@ static int rpcrt4_conn_tcp_close(RpcConnection *conn)
 
 static void rpcrt4_conn_tcp_close_read(RpcConnection *conn)
 {
-    /* FIXME */
+    RpcConnection_tcp *connection = (RpcConnection_tcp *) conn;
+    shutdown(connection->sock, SD_RECEIVE);
 }
 
 static void rpcrt4_conn_tcp_cancel_call(RpcConnection *conn)
