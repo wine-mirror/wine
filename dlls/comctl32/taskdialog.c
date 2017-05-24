@@ -47,6 +47,7 @@ static const UINT DIALOG_BUTTON_WIDTH = 50;
 static const UINT DIALOG_BUTTON_HEIGHT = 14;
 
 static const UINT ID_MAIN_INSTRUCTION = 0xf000;
+static const UINT ID_CONTENT          = 0xf001;
 
 struct taskdialog_control
 {
@@ -134,7 +135,7 @@ static unsigned int taskdialog_add_control(struct taskdialog_template_desc *desc
     return ALIGNED_LENGTH(size, 3);
 }
 
-static unsigned int taskdialog_add_main_instruction(struct taskdialog_template_desc *desc)
+static unsigned int taskdialog_add_static_label(struct taskdialog_template_desc *desc, WORD id, const WCHAR *str)
 {
     RECT rect = { 0, 0, desc->dialog_width - DIALOG_SPACING * 2, 0}; /* padding left and right of the control */
     const WCHAR *textW = NULL;
@@ -142,21 +143,20 @@ static unsigned int taskdialog_add_main_instruction(struct taskdialog_template_d
     HFONT oldfont;
     HDC hdc;
 
-    if (!desc->taskconfig->pszMainInstruction)
+    if (!str)
         return 0;
 
-    if (IS_INTRESOURCE(desc->taskconfig->pszMainInstruction))
+    if (IS_INTRESOURCE(str))
     {
-        if (!(length = LoadStringW(desc->taskconfig->hInstance, (UINT_PTR)desc->taskconfig->pszMainInstruction,
-                (WCHAR *)&textW, 0)))
+        if (!(length = LoadStringW(desc->taskconfig->hInstance, (UINT_PTR)str, (WCHAR *)&textW, 0)))
         {
-            WARN("Failed to load main instruction text\n");
+            WARN("Failed to load static text %s, id %#x\n", debugstr_w(str), id);
             return 0;
         }
     }
     else
     {
-        textW = desc->taskconfig->pszMainInstruction;
+        textW = str;
         length = strlenW(textW);
     }
 
@@ -170,11 +170,21 @@ static unsigned int taskdialog_add_main_instruction(struct taskdialog_template_d
     SelectObject(hdc, oldfont);
     ReleaseDC(0, hdc);
 
-    size = taskdialog_add_control(desc, ID_MAIN_INSTRUCTION, WC_STATICW, desc->taskconfig->hInstance,
-            desc->taskconfig->pszMainInstruction, DIALOG_SPACING, desc->dialog_height,
-            rect.right, rect.bottom);
+    desc->dialog_height += DIALOG_SPACING;
+    size = taskdialog_add_control(desc, id, WC_STATICW, desc->taskconfig->hInstance, str, DIALOG_SPACING,
+            desc->dialog_height, rect.right, rect.bottom);
     desc->dialog_height += rect.bottom;
     return size;
+}
+
+static unsigned int taskdialog_add_main_instruction(struct taskdialog_template_desc *desc)
+{
+    return taskdialog_add_static_label(desc, ID_MAIN_INSTRUCTION, desc->taskconfig->pszMainInstruction);
+}
+
+static unsigned int taskdialog_add_content(struct taskdialog_template_desc *desc)
+{
+    return taskdialog_add_static_label(desc, ID_CONTENT, desc->taskconfig->pszContent);
 }
 
 static unsigned int taskdialog_add_common_buttons(struct taskdialog_template_desc *desc)
@@ -289,11 +299,12 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
 
     screen_width = taskdialog_get_reference_rect(&desc, &ref_rect);
 
-    desc.dialog_height = DIALOG_SPACING;
+    desc.dialog_height = 0;
     desc.dialog_width = max(taskconfig->cxWidth, DIALOG_MIN_WIDTH);
     desc.dialog_width = min(desc.dialog_width, screen_width);
 
     size += taskdialog_add_main_instruction(&desc);
+    size += taskdialog_add_content(&desc);
     size += taskdialog_add_common_buttons(&desc);
 
     template = Alloc(size);
