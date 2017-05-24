@@ -853,6 +853,7 @@ with_udev
 with_v4l
 with_xcomposite
 with_xcursor
+with_xfixes
 with_xinerama
 with_xinput
 with_xinput2
@@ -2363,6 +2364,7 @@ Optional Packages:
   --without-v4l           do not use v4l1 (v4l support)
   --without-xcomposite    do not use the Xcomposite extension
   --without-xcursor       do not use the Xcursor extension
+  --without-xfixes        do not use Xfixes for clipboard change notifications
   --without-xinerama      do not use Xinerama (multi-monitor support)
   --without-xinput        do not use the Xinput extension
   --without-xinput2       do not use the Xinput 2 extension
@@ -3654,6 +3656,12 @@ fi
 # Check whether --with-xcursor was given.
 if test "${with_xcursor+set}" = set; then :
   withval=$with_xcursor; if test "x$withval" = "xno"; then ac_cv_header_X11_Xcursor_Xcursor_h=no; fi
+fi
+
+
+# Check whether --with-xfixes was given.
+if test "${with_xfixes+set}" = set; then :
+  withval=$with_xfixes; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_Xfixes_h=no; fi
 fi
 
 
@@ -9834,6 +9842,7 @@ fi
                       X11/extensions/XInput2.h \
                       X11/extensions/XShm.h \
                       X11/extensions/Xcomposite.h \
+                      X11/extensions/Xfixes.h \
                       X11/extensions/Xinerama.h \
                       X11/extensions/Xrandr.h \
                       X11/extensions/Xrender.h \
@@ -10469,6 +10478,87 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   xno) ;;
   *)   as_fn_error $? "libxrandr ${notice_platform}development files not found, XRandr won't be supported.
 This is an error since --with-xrandr was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
+                if test "$ac_cv_header_X11_extensions_Xfixes_h" = "yes"
+        then
+                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <X11/Xlib.h>
+#include <X11/extensions/Xfixes.h>
+int
+main ()
+{
+static typeof(XFixesQueryVersion) * func; if (func) return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lXfixes" >&5
+$as_echo_n "checking for -lXfixes... " >&6; }
+if ${ac_cv_lib_soname_Xfixes+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lXfixes $X_LIBS $X_EXTRA_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XFixesQueryVersion ();
+int
+main ()
+{
+return XFixesQueryVersion ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_Xfixes=`$ac_cv_path_LDD conftest.exe | grep "Xfixes" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_Xfixes=`$OTOOL -L conftest$ac_exeext | grep "libXfixes\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libXfixes\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_Xfixes=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libXfixes\\.$LIBEXT" | sed -e "s/^.*\\[\\(libXfixes\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_Xfixes:+false} :; then :
+  ac_cv_lib_soname_Xfixes=`$LDD conftest$ac_exeext | grep "libXfixes\\.$LIBEXT" | sed -e "s/^.*\(libXfixes\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_Xfixes:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_Xfixes" >&5
+$as_echo "$ac_cv_lib_soname_Xfixes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBXFIXES "$ac_cv_lib_soname_Xfixes"
+_ACEOF
+
+
+fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+        fi
+        if test "x$ac_cv_lib_soname_Xfixes" = "x"; then :
+  case "x$with_xfixes" in
+  x)   as_fn_append wine_notices "|libxfixes ${notice_platform}development files not found, Xfixes won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libxfixes ${notice_platform}development files not found, Xfixes won't be supported.
+This is an error since --with-xfixes was requested." "$LINENO" 5 ;;
 esac
 
 fi
