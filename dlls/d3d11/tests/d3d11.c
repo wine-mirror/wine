@@ -18647,8 +18647,7 @@ static void test_quad_tessellation(void)
     ID3D11DeviceContext_SOSetTargets(context, 0, NULL, NULL);
     check_triangles(so_buffer, expected_quad_ccw, ARRAY_SIZE(expected_quad_ccw));
 
-    ID3D11Buffer_Release(so_buffer);
-    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, sizeof(zero_data), zero_data);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)so_buffer, 0, NULL, zero_data, 0, 0);
 
     ID3D11HullShader_Release(hs);
     hr = ID3D11Device_CreateHullShader(device, hs_quad_cw_code, sizeof(hs_quad_cw_code), NULL, &hs);
@@ -18661,8 +18660,7 @@ static void test_quad_tessellation(void)
     ID3D11DeviceContext_SOSetTargets(context, 0, NULL, NULL);
     check_triangles(so_buffer, expected_quad_cw, ARRAY_SIZE(expected_quad_cw));
 
-    ID3D11Buffer_Release(so_buffer);
-    so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, sizeof(zero_data), zero_data);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)so_buffer, 0, NULL, zero_data, 0, 0);
 
     ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
     query_desc.Query = D3D11_QUERY_SO_STATISTICS_STREAM0;
