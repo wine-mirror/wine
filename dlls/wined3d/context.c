@@ -3232,8 +3232,8 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
         *regnum = WINED3D_FFP_TEXCOORD0 + usage_idx;
     else
     {
-        FIXME("Unsupported input stream [usage=%s, usage_idx=%u].\n", debug_d3ddeclusage(usage), usage_idx);
-        *regnum = ~0U;
+        WARN("Unsupported input stream [usage=%s, usage_idx=%u].\n", debug_d3ddeclusage(usage), usage_idx);
+        *regnum = ~0u;
         return FALSE;
     }
 
