@@ -428,7 +428,10 @@ static GLenum gl_blend_factor(enum wined3d_blend factor, const struct wined3d_fo
         case WINED3D_BLEND_INVSRC1ALPHA:
             return GL_ONE_MINUS_SRC1_ALPHA;
         default:
-            FIXME("Unhandled blend factor %#x.\n", factor);
+            if (!factor)
+                WARN("Unhandled blend factor %#x.\n", factor);
+            else
+                FIXME("Unhandled blend factor %#x.\n", factor);
             return GL_NONE;
     }
 }
