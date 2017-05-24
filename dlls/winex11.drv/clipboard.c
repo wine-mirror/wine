@@ -78,12 +78,16 @@
 #include <time.h>
 #include <assert.h>
 
-#include "windef.h"
-#include "winbase.h"
+#include "x11drv.h"
+
+#ifdef HAVE_X11_EXTENSIONS_XFIXES_H
+#include <X11/extensions/Xfixes.h>
+#endif
+
 #include "shlobj.h"
 #include "shellapi.h"
 #include "shlwapi.h"
-#include "x11drv.h"
+#include "wine/library.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -196,6 +200,7 @@ static UINT rendered_formats;
 static ULONG64 last_clipboard_update;
 static struct clipboard_format **current_x11_formats;
 static unsigned int nb_current_x11_formats;
+static BOOL use_xfixes;
 
 Display *clipboard_display = NULL;
 
@@ -1866,7 +1871,8 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
     last_size = size;
     last_clipboard_update = GetTickCount64();
     CloseClipboard();
-    SetTimer( clipboard_hwnd, 1, SELECTION_UPDATE_DELAY, NULL );
+    if (!use_xfixes)
+        SetTimer( clipboard_hwnd, 1, SELECTION_UPDATE_DELAY, NULL );
     return TRUE;
 }
 
@@ -1878,6 +1884,7 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
  */
 BOOL update_clipboard( HWND hwnd )
 {
+    if (use_xfixes) return TRUE;
     if (hwnd != clipboard_hwnd) return TRUE;
     if (!is_clipboard_owner) return TRUE;
     if (GetTickCount64() - last_clipboard_update <= SELECTION_UPDATE_DELAY) return TRUE;
@@ -1947,6 +1954,75 @@ static BOOL wait_clipboard_mutex(void)
 
 
 /**************************************************************************
+ *              handle_selection_notify_event
+ *
+ * Called when x11 clipboard content changes
+ */
+static BOOL selection_notify_event( HWND hwnd, XEvent *event )
+{
+#ifdef SONAME_LIBXFIXES
+    XFixesSelectionNotifyEvent *req = (XFixesSelectionNotifyEvent*)event;
+
+    if (!is_clipboard_owner) return FALSE;
+    if (req->owner == selection_window) return FALSE;
+    request_selection_contents( req->display, TRUE );
+    return FALSE;
+#endif
+}
+
+/**************************************************************************
+ *		xfixes_init
+ *
+ * Initialize xfixes to receive clipboard update notifications
+ */
+static void xfixes_init(void)
+{
+#ifdef SONAME_LIBXFIXES
+    typeof(XFixesSelectSelectionInput) *pXFixesSelectSelectionInput;
+    typeof(XFixesQueryExtension) *pXFixesQueryExtension;
+    typeof(XFixesQueryVersion) *pXFixesQueryVersion;
+
+    int event_base, error_base;
+    int major = 3, minor = 0;
+    void *handle;
+
+    handle = wine_dlopen(SONAME_LIBXFIXES, RTLD_NOW, NULL, 0);
+    if (!handle) return;
+
+    pXFixesQueryExtension = wine_dlsym(handle, "XFixesQueryExtension", NULL, 0);
+    if (!pXFixesQueryExtension) return;
+    pXFixesQueryVersion = wine_dlsym(handle, "XFixesQueryVersion", NULL, 0);
+    if (!pXFixesQueryVersion) return;
+    pXFixesSelectSelectionInput = wine_dlsym(handle, "XFixesSelectSelectionInput", NULL, 0);
+    if (!pXFixesSelectSelectionInput) return;
+
+    if (!pXFixesQueryExtension(clipboard_display, &event_base, &error_base))
+        return;
+    pXFixesQueryVersion(clipboard_display, &major, &minor);
+    use_xfixes = (major >= 1);
+    if (!use_xfixes) return;
+
+    pXFixesSelectSelectionInput(clipboard_display, import_window, x11drv_atom(CLIPBOARD),
+            XFixesSetSelectionOwnerNotifyMask |
+            XFixesSelectionWindowDestroyNotifyMask |
+            XFixesSelectionClientCloseNotifyMask);
+    if (use_primary_selection)
+    {
+        pXFixesSelectSelectionInput(clipboard_display, import_window, XA_PRIMARY,
+                XFixesSetSelectionOwnerNotifyMask |
+                XFixesSelectionWindowDestroyNotifyMask |
+                XFixesSelectionClientCloseNotifyMask);
+    }
+    X11DRV_register_event_handler(event_base + XFixesSelectionNotify,
+            selection_notify_event, "XFixesSelectionNotify");
+    TRACE("xfixes succesully initialized\n");
+#else
+    WARN("xfixes not supported\n");
+#endif
+}
+
+
+/**************************************************************************
  *		clipboard_thread
  *
  * Thread running inside the desktop process to manage the clipboard
@@ -1991,6 +2067,8 @@ static DWORD WINAPI clipboard_thread( void *arg )
     register_builtin_formats();
     request_selection_contents( clipboard_display, TRUE );
 
+    xfixes_init();
+
     TRACE( "clipboard thread %04x running\n", GetCurrentThreadId() );
     while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
     return 0;
@@ -2006,6 +2084,7 @@ void CDECL X11DRV_UpdateClipboard(void)
     ULONG now;
     DWORD_PTR ret;
 
+    if (use_xfixes) return;
     if (GetCurrentThreadId() == clipboard_thread_id) return;
     now = GetTickCount();
     if ((int)(now - last_update) <= SELECTION_UPDATE_DELAY) return;
