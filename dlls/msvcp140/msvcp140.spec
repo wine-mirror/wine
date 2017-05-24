@@ -3670,7 +3670,7 @@
 @ stub _Link
 @ cdecl _Lock_shared_ptr_spin_lock()
 @ stub _Lstat
-@ stub _Make_dir
+@ cdecl _Make_dir(wstr) tr2_sys__Make_dir_wchar
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr) _Mbrtowc
 @ stub _Mtx_clear_owner
 @ cdecl _Mtx_current_owns(ptr) _Mtx_current_owns
