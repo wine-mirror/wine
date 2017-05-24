@@ -1447,11 +1447,8 @@ static void test_SHCreateShellFolderViewEx(void)
     ok(unk == (IUnknown *)psv, "got %p\n", unk);
     IUnknown_Release(unk);
 
-    if (psv)
-    {
-        refCount = IShellView_Release(psv);
-        ok(refCount == 0, "refCount = %u\n", refCount);
-    }
+    refCount = IShellView_Release(psv);
+    ok(refCount == 0, "refCount = %u\n", refCount);
 
 if (0)
 {
