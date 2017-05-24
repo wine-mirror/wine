@@ -449,6 +449,11 @@ static int rpcrt4_conn_np_close(RpcConnection *conn)
     return 0;
 }
 
+static void rpcrt4_conn_np_close_read(RpcConnection *conn)
+{
+    /* FIXME */
+}
+
 static void rpcrt4_conn_np_cancel_call(RpcConnection *conn)
 {
     RpcConnection_np *connection = (RpcConnection_np *)conn;
@@ -1439,6 +1444,11 @@ static int rpcrt4_conn_tcp_close(RpcConnection *conn)
     CloseHandle(connection->sock_event);
     CloseHandle(connection->cancel_event);
     return 0;
+}
+
+static void rpcrt4_conn_tcp_close_read(RpcConnection *conn)
+{
+    /* FIXME */
 }
 
 static void rpcrt4_conn_tcp_cancel_call(RpcConnection *conn)
@@ -3066,6 +3076,11 @@ static int rpcrt4_ncacn_http_close(RpcConnection *Connection)
   return 0;
 }
 
+static void rpcrt4_ncacn_http_close_read(RpcConnection *conn)
+{
+    rpcrt4_ncacn_http_close(conn); /* FIXME */
+}
+
 static void rpcrt4_ncacn_http_cancel_call(RpcConnection *Connection)
 {
   RpcConnection_http *httpc = (RpcConnection_http *) Connection;
@@ -3119,6 +3134,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
+    rpcrt4_conn_np_close_read,
     rpcrt4_conn_np_cancel_call,
     rpcrt4_ncacn_np_is_server_listening,
     rpcrt4_conn_np_wait_for_incoming_data,
@@ -3140,6 +3156,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
+    rpcrt4_conn_np_close_read,
     rpcrt4_conn_np_cancel_call,
     rpcrt4_ncalrpc_np_is_server_listening,
     rpcrt4_conn_np_wait_for_incoming_data,
@@ -3161,6 +3178,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_tcp_read,
     rpcrt4_conn_tcp_write,
     rpcrt4_conn_tcp_close,
+    rpcrt4_conn_tcp_close_read,
     rpcrt4_conn_tcp_cancel_call,
     rpcrt4_conn_tcp_is_server_listening,
     rpcrt4_conn_tcp_wait_for_incoming_data,
@@ -3182,6 +3200,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncacn_http_read,
     rpcrt4_ncacn_http_write,
     rpcrt4_ncacn_http_close,
+    rpcrt4_ncacn_http_close_read,
     rpcrt4_ncacn_http_cancel_call,
     rpcrt4_ncacn_http_is_server_listening,
     rpcrt4_ncacn_http_wait_for_incoming_data,

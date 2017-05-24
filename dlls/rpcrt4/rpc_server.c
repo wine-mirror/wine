@@ -669,9 +669,12 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
     {
       /* cleanup */
       cps->ops->free_wait_array(cps, objs);
+
       EnterCriticalSection(&cps->cs);
       LIST_FOR_EACH_ENTRY(conn, &cps->listeners, RpcConnection, protseq_entry)
         RPCRT4_CloseConnection(conn);
+      LIST_FOR_EACH_ENTRY(conn, &cps->connections, RpcConnection, protseq_entry)
+        rpcrt4_conn_close_read(conn);
       LeaveCriticalSection(&cps->cs);
 
       if (res == 0 && !std_listen)
