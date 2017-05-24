@@ -94,6 +94,8 @@ static DWORD (WINAPI *pConvertInterfaceLuidToNameA)(const NET_LUID*,char*,SIZE_T
 static DWORD (WINAPI *pConvertInterfaceNameToLuidA)(const char*,NET_LUID*);
 static DWORD (WINAPI *pConvertInterfaceNameToLuidW)(const WCHAR*,NET_LUID*);
 
+static NET_IFINDEX (WINAPI *pif_nametoindex)(const char*);
+
 static void loadIPHlpApi(void)
 {
   hLibrary = LoadLibraryA("iphlpapi.dll");
@@ -140,6 +142,7 @@ static void loadIPHlpApi(void)
     pConvertInterfaceLuidToNameW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceLuidToNameW");
     pConvertInterfaceNameToLuidA = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidA");
     pConvertInterfaceNameToLuidW = (void *)GetProcAddress(hLibrary, "ConvertInterfaceNameToLuidW");
+    pif_nametoindex = (void *)GetProcAddress(hLibrary, "if_nametoindex");
   }
 }
 
@@ -1742,7 +1745,7 @@ static void test_interface_identifier_conversion(void)
     SIZE_T len;
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
     char nameA[IF_MAX_STRING_SIZE + 1];
-    NET_IFINDEX index;
+    NET_IFINDEX index, index2;
 
     if (!pConvertInterfaceIndexToLuid)
     {
@@ -1901,6 +1904,24 @@ static void test_interface_identifier_conversion(void)
     ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
     ok( luid.Info.NetLuidIndex != 0xdead, "index not set\n" );
     ok( luid.Info.IfType == IF_TYPE_ETHERNET_CSMACD, "got %u\n", luid.Info.IfType );
+
+    /* if_nametoindex */
+    if (pif_nametoindex)
+    {
+        index2 = pif_nametoindex( NULL );
+        ok( !index2, "Got unexpected index %u\n", index2 );
+        index2 = pif_nametoindex( nameA );
+        ok( index2 == index, "Got index %u for %s, expected %u\n", index2, nameA, index );
+        /* Wargaming.net Game Center passes a GUID-like string. */
+        index2 = pif_nametoindex( "{00000001-0000-0000-0000-000000000000}" );
+        ok( !index2, "Got unexpected index %u\n", index2 );
+        index2 = pif_nametoindex( wine_dbgstr_guid( &guid ) );
+        ok( !index2, "Got unexpected index %u for input %s\n", index2, wine_dbgstr_guid( &guid ) );
+    }
+    else
+    {
+        skip("if_nametoindex not supported\n");
+    }
 }
 
 static void test_GetIfEntry2(void)

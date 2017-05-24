@@ -3104,3 +3104,17 @@ DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
     luid->Info.IfType       = row.dwType;
     return NO_ERROR;
 }
+
+/******************************************************************
+ *    if_nametoindex (IPHLPAPI.@)
+ */
+IF_INDEX WINAPI IPHLP_if_nametoindex(const char *name)
+{
+    IF_INDEX idx;
+
+    TRACE("(%s)\n", name);
+    if (getInterfaceIndexByName(name, &idx) == NO_ERROR)
+        return idx;
+
+    return 0;
+}
