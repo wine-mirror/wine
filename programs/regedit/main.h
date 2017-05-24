@@ -45,8 +45,6 @@
 #define HEM_SETDATA (WM_USER+0)
 #define HEM_GETDATA (WM_USER+1)
 
-extern HINSTANCE hInst;
-
 /******************************************************************************/
 
 enum OPTION_FLAGS {
