@@ -3956,6 +3956,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device,
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;
+    BOOL swapchain_texture;
 
     TRACE("device %p, texture %p, sub_resource_idx %u.\n", device, texture, sub_resource_idx);
 
@@ -3964,6 +3965,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device,
     if (current_context && current_context->destroyed)
         current_context = NULL;
 
+    swapchain_texture = texture && texture->swapchain;
     if (!texture)
     {
         if (current_context
@@ -3989,7 +3991,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device,
     {
         context = current_context;
     }
-    else if (texture->swapchain)
+    else if (swapchain_texture)
     {
         TRACE("Rendering onscreen.\n");
 
@@ -4010,7 +4012,8 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device,
     context_enter(context);
     context_update_window(context);
     context_setup_target(context, texture, sub_resource_idx);
-    if (!context->valid) return context;
+    if (!context->valid)
+        return context;
 
     if (context != current_context)
     {
