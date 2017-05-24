@@ -48,6 +48,7 @@ static int searchMask = SEARCH_KEYS | SEARCH_VALUES | SEARCH_CONTENT;
 static WCHAR FileNameBuffer[_MAX_PATH];
 static WCHAR FileTitleBuffer[_MAX_PATH];
 static WCHAR FilterBuffer[_MAX_PATH];
+static WCHAR expandW[32], collapseW[32];
 
 /*******************************************************************************
  * Local module support methods
@@ -102,6 +103,35 @@ static void OnExitMenuLoop(HWND hWnd)
     UpdateStatusBar();
 }
 
+static void update_expand_or_collapse_item(HWND hwndTV, HTREEITEM selection, HMENU hMenu)
+{
+    TVITEMW item;
+    MENUITEMINFOW info;
+
+    item.hItem = selection;
+    item.mask = TVIF_CHILDREN | TVIF_HANDLE | TVIF_STATE;
+    item.stateMask = TVIS_EXPANDED;
+    SendMessageW(hwndTV, TVM_GETITEMW, 0, (LPARAM)&item);
+
+    info.cbSize = sizeof(MENUITEMINFOW);
+    info.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_STATE;
+    info.fType = MFT_STRING;
+    info.fState = MFS_ENABLED;
+    info.dwTypeData = expandW;
+
+    if (!item.cChildren)
+    {
+        info.fState = MFS_GRAYED;
+        goto update;
+    }
+
+    if (item.state & TVIS_EXPANDED)
+        info.dwTypeData = collapseW;
+
+update:
+    SetMenuItemInfoW(hMenu, ID_TREE_EXPAND_COLLAPSE, FALSE, &info);
+}
+
 static void UpdateMenuItems(HMENU hMenu) {
     HWND hwndTV = g_pChildWnd->hTreeWnd;
     BOOL bAllowEdit = FALSE;
@@ -114,6 +144,8 @@ static void UpdateMenuItems(HMENU hMenu) {
     if (GetFocus() != hwndTV || (keyName && *keyName)) { /* can't modify root keys, but allow for their values */
         bAllowEdit = TRUE;
     }
+
+    update_expand_or_collapse_item(hwndTV, selection, hMenu);
     EnableMenuItem(hMenu, ID_EDIT_FIND, MF_ENABLED | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_EDIT_FINDNEXT, MF_ENABLED | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
@@ -847,8 +879,14 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             StartValueRename(g_pChildWnd->hListWnd);
         }
         HeapFree(GetProcessHeap(), 0, keyPath);
-    }
 	break;
+    }
+    case ID_TREE_EXPAND_COLLAPSE:
+    {
+        HTREEITEM selected = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_CARET, 0);
+        SendMessageW(g_pChildWnd->hTreeWnd, TVM_EXPAND, TVE_TOGGLE, (LPARAM)selected);
+        break;
+    }
     case ID_REGISTRY_PRINTERSETUP:
         /*PRINTDLG pd;*/
         /*PrintDlg(&pd);*/
@@ -953,6 +991,8 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         CreateWindowExW(0, szChildClass, captionW, WS_CHILD | WS_VISIBLE,
                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                         hWnd, NULL, hInst, 0);
+        LoadStringW(hInst, IDS_EXPAND, expandW, COUNT_OF(expandW));
+        LoadStringW(hInst, IDS_COLLAPSE, collapseW, COUNT_OF(collapseW));
         break;
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam))

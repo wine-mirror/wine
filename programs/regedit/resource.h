@@ -141,6 +141,9 @@
 #define ID_EDIT_NEW_EXPANDVALUE         33102
 #define IDS_DELETE_KEY_TITLE            33103
 #define IDS_DELETE_KEY_TEXT             33104
+#define ID_TREE_EXPAND_COLLAPSE         33105
+#define IDS_EXPAND                      33106
+#define IDS_COLLAPSE                    33107
 
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001
