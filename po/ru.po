@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-04-26 10:24+0300\n"
+"PO-Revision-Date: 2017-05-25 02:24+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -11764,11 +11764,8 @@ msgid "&About Registry Editor"
 msgstr "&О редакторе реестра"
 
 #: regedit.rc:91 regedit.rc:98 regedit.rc:229
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "expanded"
 msgid "Expand"
-msgstr "развернуто"
+msgstr "Развернуть"
 
 #: regedit.rc:136
 msgid "Modify Binary Data..."
@@ -12245,11 +12242,8 @@ msgid ""
 msgstr "Вы точно хотите удалить ключ реестра «%1» и все вложенные ключи?"
 
 #: regedit.rc:230
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "collapsed"
 msgid "Collapse"
-msgstr "свернуто"
+msgstr "Свернуть"
 
 #: regsvr32.rc:32
 msgid ""
