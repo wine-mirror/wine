@@ -69,6 +69,7 @@ typedef struct _RpcConnection_np
     HANDLE listen_event;
     IO_STATUS_BLOCK io_status;
     HANDLE event_cache;
+    BOOL read_closed;
 } RpcConnection_np;
 
 static RpcConnection *rpcrt4_conn_np_alloc(void)
@@ -384,7 +385,6 @@ static RPC_STATUS rpcrt4_ncalrpc_handoff(RpcConnection *old_conn, RpcConnection 
 static int rpcrt4_conn_np_read(RpcConnection *conn, void *buffer, unsigned int count)
 {
     RpcConnection_np *connection = (RpcConnection_np *) conn;
-    IO_STATUS_BLOCK io_status;
     HANDLE event;
     NTSTATUS status;
 
@@ -392,14 +392,23 @@ static int rpcrt4_conn_np_read(RpcConnection *conn, void *buffer, unsigned int c
     if (!event)
         return -1;
 
-    status = NtReadFile(connection->pipe, event, NULL, NULL, &io_status, buffer, count, NULL, NULL);
+    if (connection->read_closed)
+        status = STATUS_CANCELLED;
+    else
+        status = NtReadFile(connection->pipe, event, NULL, NULL, &connection->io_status, buffer, count, NULL, NULL);
     if (status == STATUS_PENDING)
     {
+        /* check read_closed again before waiting to avoid a race */
+        if (connection->read_closed)
+        {
+            IO_STATUS_BLOCK io_status;
+            NtCancelIoFileEx(connection->pipe, &connection->io_status, &io_status);
+        }
         WaitForSingleObject(event, INFINITE);
-        status = io_status.Status;
+        status = connection->io_status.Status;
     }
     release_np_event(connection, event);
-    return status && status != STATUS_BUFFER_OVERFLOW ? -1 : io_status.Information;
+    return status && status != STATUS_BUFFER_OVERFLOW ? -1 : connection->io_status.Information;
 }
 
 static int rpcrt4_conn_np_write(RpcConnection *conn, const void *buffer, unsigned int count)
@@ -451,7 +460,11 @@ static int rpcrt4_conn_np_close(RpcConnection *conn)
 
 static void rpcrt4_conn_np_close_read(RpcConnection *conn)
 {
-    /* FIXME */
+    RpcConnection_np *connection = (RpcConnection_np*)conn;
+    IO_STATUS_BLOCK io_status;
+
+    connection->read_closed = TRUE;
+    NtCancelIoFileEx(connection->pipe, &connection->io_status, &io_status);
 }
 
 static void rpcrt4_conn_np_cancel_call(RpcConnection *conn)
