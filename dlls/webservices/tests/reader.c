@@ -4516,6 +4516,14 @@ static void test_binary_encoding(void)
         {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x01};
     static const char res4[] =
         {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x99,0x04,'t','e','s','t'};
+    static const char res100[] =
+        {0x40,0x01,'t',0x04,0x01,'t',0x98,0x00,0x01};
+    static const char res101[] =
+        {0x40,0x01,'t',0x35,0x01,'t',0x98,0x00,0x09,0x01,'p',0x02,'n','s',0x01};
+    static const char res102[] =
+        {0x40,0x01,'t',0x05,0x02,'p','2',0x01,'t',0x98,0x00,0x09,0x02,'p','2',0x02,'n','s',0x01};
+    static const char res103[] =
+        {0x40,0x01,'t',0x05,0x02,'p','2',0x01,'t',0x98,0x04,'t','e','s','t',0x09,0x02,'p','2',0x02,'n','s',0x01};
     static const char res200[] =
         {0x02,0x07,'c','o','m','m','e','n','t'};
     const WS_XML_NODE *node;
@@ -4525,6 +4533,7 @@ static void test_binary_encoding(void)
     const WS_XML_UTF8_TEXT *utf8;
     const WS_XML_COMMENT_NODE *comment;
     WS_XML_READER *reader;
+    BOOL found;
     HRESULT hr;
 
     hr = WsCreateReader( NULL, 0, &reader, NULL );
@@ -4662,6 +4671,184 @@ static void test_binary_encoding(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
 
+    /* short attribute */
+    hr = set_input_bin( reader, res100, sizeof(res100) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( !elem->prefix->length, "got %u\n", elem->prefix->length );
+    ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( !elem->ns->length, "got %u\n", elem->ns->length );
+    ok( elem->ns->bytes != NULL, "bytes not set\n" );
+    ok( elem->attributeCount == 1, "got %u\n", elem->attributeCount );
+    ok( !elem->isEmpty, "empty\n" );
+    attr = elem->attributes[0];
+    ok( !attr->singleQuote, "single quote\n" );
+    ok( !attr->isXmlNs, "is xmlns\n" );
+    ok( !attr->prefix->length, "got %u\n", attr->prefix->length );
+    ok( attr->localName->length == 1, "got %u\n", attr->localName->length );
+    ok( !memcmp( attr->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( !attr->ns->length, "got %u\n", attr->ns->length );
+    ok( elem->ns->bytes != NULL, "bytes not set\n" );
+    ok( attr->value != NULL, "value not set\n" );
+    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
+    ok( !utf8->value.length, "got %u\n", utf8->value.length );
+    ok( utf8->value.bytes != NULL, "bytes not set\n" );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    /* single character prefix attribute */
+    hr = set_input_bin( reader, res101, sizeof(res101) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( !elem->prefix->length, "got %u\n", elem->prefix->length );
+    ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( !elem->ns->length, "got %u\n", elem->ns->length );
+    ok( elem->ns->bytes != NULL, "ns not set\n" );
+    ok( elem->attributeCount == 2, "got %u\n", elem->attributeCount );
+    ok( !elem->isEmpty, "empty\n" );
+    attr = elem->attributes[0];
+    ok( !attr->singleQuote, "single quote\n" );
+    ok( !attr->isXmlNs, "is xmlns\n" );
+    ok( attr->prefix->length == 1, "got %u\n", attr->prefix->length );
+    ok( !memcmp( attr->prefix->bytes, "p", 1 ), "wrong prefix\n" );
+    ok( attr->localName->length == 1, "got %u\n", attr->localName->length );
+    ok( !memcmp( attr->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+    ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
+    ok( attr->value != NULL, "value not set\n" );
+    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
+    ok( !utf8->value.length, "got %u\n", utf8->value.length );
+    ok( utf8->value.bytes != NULL, "bytes not set\n" );
+    attr = elem->attributes[1];
+    ok( !attr->singleQuote, "single quote\n" );
+    ok( attr->isXmlNs, "not xmlns\n" );
+    ok( attr->prefix->length == 1, "got %u\n", attr->prefix->length );
+    ok( !memcmp( attr->prefix->bytes, "p", 1 ), "wrong prefix\n" );
+    ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+    ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    /* attribute */
+    hr = set_input_bin( reader, res102, sizeof(res102) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( !elem->prefix->length, "got %u\n", elem->prefix->length );
+    ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( !elem->ns->length, "got %u\n", elem->ns->length );
+    ok( elem->ns->bytes != NULL, "ns not set\n" );
+    ok( elem->attributeCount == 2, "got %u\n", elem->attributeCount );
+    ok( !elem->isEmpty, "empty\n" );
+    attr = elem->attributes[0];
+    ok( !attr->singleQuote, "single quote\n" );
+    ok( !attr->isXmlNs, "is xmlns\n" );
+    ok( attr->prefix->length == 2, "got %u\n", attr->prefix->length );
+    ok( !memcmp( attr->prefix->bytes, "p2", 2 ), "wrong prefix\n" );
+    ok( attr->localName->length == 1, "got %u\n", attr->localName->length );
+    ok( !memcmp( attr->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+    ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
+    ok( attr->value != NULL, "value not set\n" );
+    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
+    ok( !utf8->value.length, "got %u\n", utf8->value.length );
+    ok( utf8->value.bytes != NULL, "bytes not set\n" );
+    attr = elem->attributes[1];
+    ok( !attr->singleQuote, "single quote\n" );
+    ok( attr->isXmlNs, "not xmlns\n" );
+    ok( attr->prefix->length == 2, "got %u\n", attr->prefix->length );
+    ok( !memcmp( attr->prefix->bytes, "p2", 2 ), "wrong prefix\n" );
+    ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+    ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    /* attribute with value */
+    hr = set_input_bin( reader, res103, sizeof(res103) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( !elem->prefix->length, "got %u\n", elem->prefix->length );
+    ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( !elem->ns->length, "got %u\n", elem->ns->length );
+    ok( elem->ns->bytes != NULL, "ns not set\n" );
+    ok( elem->attributeCount == 2, "got %u\n", elem->attributeCount );
+    ok( !elem->isEmpty, "empty\n" );
+    attr = elem->attributes[0];
+    ok( !attr->singleQuote, "single quote\n" );
+    ok( !attr->isXmlNs, "is xmlns\n" );
+    ok( attr->prefix->length == 2, "got %u\n", attr->prefix->length );
+    ok( !memcmp( attr->prefix->bytes, "p2", 2 ), "wrong prefix\n" );
+    ok( attr->localName->length == 1, "got %u\n", attr->localName->length );
+    ok( !memcmp( attr->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+    ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
+    ok( attr->value != NULL, "value not set\n" );
+    utf8 = (const WS_XML_UTF8_TEXT *)attr->value;
+    ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
+    ok( utf8->value.length == 4, "got %u\n", utf8->value.length );
+    ok( !memcmp( utf8->value.bytes, "test", 4 ), "wrong value\n" );
+    attr = elem->attributes[1];
+    ok( !attr->singleQuote, "single quote\n" );
+    ok( attr->isXmlNs, "not xmlns\n" );
+    ok( attr->prefix->length == 2, "got %u\n", attr->prefix->length );
+    ok( !memcmp( attr->prefix->bytes, "p2", 2 ), "wrong prefix\n" );
+    ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+    ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong namespace\n" );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
     /* comment */
     hr = set_input_bin( reader, res200, sizeof(res200) );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -4674,6 +4861,18 @@ static void test_binary_encoding(void)
     comment = (const WS_XML_COMMENT_NODE *)node;
     ok( comment->value.length == 7, "got %u\n", comment->value.length );
     ok( !memcmp( comment->value.bytes, "comment", 7 ), "wrong data\n" );
+
+    hr = set_input_bin( reader, res, sizeof(res) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    found = -1;
+    hr = WsReadToStartElement( reader, NULL, NULL, &found, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( found == TRUE, "got %d\n", found );
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadEndElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     WsFreeReader( reader );
 }
