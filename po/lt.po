@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-04-26 09:05+0300\n"
+"PO-Revision-Date: 2017-05-25 08:05+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -7256,12 +7256,12 @@ msgstr "numatytasis"
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr "išplėstas"
+msgstr "išskleistas"
 
 #: oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr "sutrauktas"
+msgstr "suskleistas"
 
 #: oleacc.rc:109
 msgctxt "object state"
@@ -11732,7 +11732,7 @@ msgstr "&Kelių eilučių reikšmė"
 
 #: regedit.rc:55 regedit.rc:107 regedit.rc:129
 msgid "&Expandable String Value"
-msgstr "&Išskleidžiama eilutės reikšmė"
+msgstr "&Išplečiama eilutės reikšmė"
 
 #: regedit.rc:59 regedit.rc:112
 msgid "&Rename\tF2"
@@ -11767,11 +11767,8 @@ msgid "&About Registry Editor"
 msgstr "&Apie Registro tvarkytuvę"
 
 #: regedit.rc:91 regedit.rc:98 regedit.rc:229
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "expanded"
 msgid "Expand"
-msgstr "išplėstas"
+msgstr "Išskleisti"
 
 #: regedit.rc:136
 msgid "Modify Binary Data..."
@@ -12251,11 +12248,8 @@ msgid ""
 msgstr "Ar tikrai norite pašalinti registro raktą „%1“ ir visus jo porakčius?"
 
 #: regedit.rc:230
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "collapsed"
 msgid "Collapse"
-msgstr "sutrauktas"
+msgstr "Suskleisti"
 
 #: regsvr32.rc:32
 msgid ""
