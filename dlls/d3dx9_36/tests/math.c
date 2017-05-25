@@ -3424,11 +3424,11 @@ static void test_D3DXSHRotate(void)
         else
             out_temp = in;
 
-        for (j = 0; j < 4; j++)
+        for (j = 0; j < ARRAY_SIZE(m); ++j)
         {
             for (order = 0; order <= D3DXSH_MAXORDER; order++)
             {
-                for (i = 0; i < 49; i++)
+                for (i = 0; i < ARRAY_SIZE(out); ++i)
                 {
                     out[i] = ( i + 1.0f ) * ( i + 1.0f );
                     in[i] = i + 1.01f;
@@ -3438,7 +3438,7 @@ static void test_D3DXSHRotate(void)
                 ok(received_ptr == out_temp, "Order %u, expected %p, received %p.\n",
                         order, out, received_ptr);
 
-                for (i = 0; i < 49; i++)
+                for (i = 0; i < ARRAY_SIZE(out); ++i)
                 {
                     if ((i > 0) && ((i >= order * order) || (order > D3DXSH_MAXORDER)))
                     {
