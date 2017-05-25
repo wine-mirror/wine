@@ -7235,7 +7235,7 @@ msgstr "vain luku"
 #: oleacc.rc:105
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "osoitettu"
+msgstr "pikajäljitetty"
 
 #: oleacc.rc:106
 msgctxt "object state"
@@ -7250,7 +7250,7 @@ msgstr "laajennettu"
 #: oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr "kutistettu"
+msgstr "tiivistetty"
 
 #: oleacc.rc:109
 msgctxt "object state"
@@ -7260,7 +7260,7 @@ msgstr "varattu"
 #: oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr "kelluva"
+msgstr "irrallinen"
 
 #: oleacc.rc:111
 msgctxt "object state"
@@ -7315,7 +7315,7 @@ msgstr "linkitetty"
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr "käyty"
+msgstr "läpikäyty"
 
 #: oleacc.rc:122
 msgctxt "object state"
@@ -11742,11 +11742,8 @@ msgid "&About Registry Editor"
 msgstr "&Tietoja rekisterieditorista"
 
 #: regedit.rc:91 regedit.rc:98 regedit.rc:229
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "expanded"
 msgid "Expand"
-msgstr "laajennettu"
+msgstr "Laajenna"
 
 #: regedit.rc:136
 msgid "Modify Binary Data..."
@@ -12222,11 +12219,8 @@ msgid ""
 msgstr "Haluatko varmasti tuhota rekisteriavaimen '%1' ja sen aliavaimet?"
 
 #: regedit.rc:230
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "collapsed"
 msgid "Collapse"
-msgstr "kutistettu"
+msgstr "Tiivistä"
 
 #: regsvr32.rc:32
 msgid ""
