@@ -2587,7 +2587,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         for (i = 0; i < reg_maps->temporary_count; ++i)
             shader_addline(buffer, "vec4 R%u;\n", i);
     }
-    else
+    else if (version->major < 4)
     {
         for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
         {
