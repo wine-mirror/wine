@@ -58,6 +58,7 @@ static DWORD (WINAPI *pGetIfEntry2)(PMIB_IF_ROW2);
 static DWORD (WINAPI *pGetFriendlyIfIndex)(DWORD);
 static DWORD (WINAPI *pGetIfTable)(PMIB_IFTABLE,PULONG,BOOL);
 static DWORD (WINAPI *pGetIfTable2)(PMIB_IF_TABLE2*);
+static DWORD (WINAPI *pGetIfTable2Ex)(MIB_IF_TABLE_LEVEL,PMIB_IF_TABLE2*);
 static DWORD (WINAPI *pGetIpForwardTable)(PMIB_IPFORWARDTABLE,PULONG,BOOL);
 static DWORD (WINAPI *pGetIpNetTable)(PMIB_IPNETTABLE,PULONG,BOOL);
 static DWORD (WINAPI *pGetInterfaceInfo)(PIP_INTERFACE_INFO,PULONG);
@@ -110,6 +111,7 @@ static void loadIPHlpApi(void)
     pGetFriendlyIfIndex = (void *)GetProcAddress(hLibrary, "GetFriendlyIfIndex");
     pGetIfTable = (void *)GetProcAddress(hLibrary, "GetIfTable");
     pGetIfTable2 = (void *)GetProcAddress(hLibrary, "GetIfTable2");
+    pGetIfTable2Ex = (void *)GetProcAddress(hLibrary, "GetIfTable2Ex");
     pGetIpForwardTable = (void *)GetProcAddress(hLibrary, "GetIpForwardTable");
     pGetIpNetTable = (void *)GetProcAddress(hLibrary, "GetIpNetTable");
     pGetInterfaceInfo = (void *)GetProcAddress(hLibrary, "GetInterfaceInfo");
@@ -2023,6 +2025,36 @@ static void test_GetIfTable2(void)
     pFreeMibTable( table );
 }
 
+static void test_GetIfTable2Ex(void)
+{
+    DWORD ret;
+    MIB_IF_TABLE2 *table;
+
+    if (!pGetIfTable2Ex)
+    {
+        win_skip( "GetIfTable2Ex not available\n" );
+        return;
+    }
+
+    table = NULL;
+    ret = pGetIfTable2Ex( MibIfTableNormal, &table );
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    ok( table != NULL, "table not set\n" );
+    pFreeMibTable( table );
+
+    table = NULL;
+    ret = pGetIfTable2Ex( MibIfTableRaw, &table );
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    ok( table != NULL, "table not set\n" );
+    pFreeMibTable( table );
+
+    table = NULL;
+    ret = pGetIfTable2Ex( 2, &table );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ok( !table, "table should not be set\n" );
+    pFreeMibTable( table );
+}
+
 static void test_GetUnicastIpAddressEntry(void)
 {
     IP_ADAPTER_ADDRESSES *aa, *ptr;
@@ -2208,6 +2240,7 @@ START_TEST(iphlpapi)
     test_interface_identifier_conversion();
     test_GetIfEntry2();
     test_GetIfTable2();
+    test_GetIfTable2Ex();
     test_GetUnicastIpAddressEntry();
     test_GetUnicastIpAddressTable();
     freeIPHlpApi();

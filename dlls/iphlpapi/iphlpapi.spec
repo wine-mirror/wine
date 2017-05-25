@@ -92,7 +92,7 @@
 #@ stub GetIfStackTable
 @ stdcall GetIfTable( ptr ptr long )
 @ stdcall GetIfTable2( ptr )
-#@ stub GetIfTable2Ex
+@ stdcall GetIfTable2Ex( long ptr )
 @ stub GetIfTableFromStack
 @ stub GetIgmpList
 @ stdcall GetInterfaceInfo( ptr ptr )

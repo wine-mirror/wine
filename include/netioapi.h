@@ -21,6 +21,12 @@
 
 #include <ntddndis.h>
 
+typedef enum _MIB_IF_TABLE_LEVEL
+{
+    MibIfTableNormal,
+    MibIfTableRaw
+} MIB_IF_TABLE_LEVEL, *PMIB_IF_TABLE_LEVEL;
+
 typedef enum _MIB_NOTIFICATION_TYPE
 {
     MibParameterNotification,

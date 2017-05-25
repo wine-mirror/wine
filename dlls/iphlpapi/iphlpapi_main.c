@@ -1852,17 +1852,21 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
 }
 
 /******************************************************************
- *    GetIfTable2 (IPHLPAPI.@)
+ *    GetIfTable2Ex (IPHLPAPI.@)
  */
-DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
+DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
 {
     DWORD i, nb_interfaces, size = sizeof(MIB_IF_TABLE2);
     InterfaceIndexTable *index_table;
     MIB_IF_TABLE2 *ret;
 
-    TRACE( "table %p\n", table );
+    TRACE( "level %u, table %p\n", level, table );
 
-    if (!table) return ERROR_INVALID_PARAMETER;
+    if (!table || level > MibIfTableRaw)
+        return ERROR_INVALID_PARAMETER;
+
+    if (level != MibIfTableNormal)
+        FIXME("level %u not fully supported\n", level);
 
     if ((nb_interfaces = get_interface_indices( FALSE, NULL )) > 1)
         size += (nb_interfaces - 1) * sizeof(MIB_IF_ROW2);
@@ -1887,6 +1891,15 @@ DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
     HeapFree( GetProcessHeap(), 0, index_table );
     *table = ret;
     return NO_ERROR;
+}
+
+/******************************************************************
+ *    GetIfTable2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
+{
+    TRACE( "table %p\n", table );
+    return GetIfTable2Ex(MibIfTableNormal, table);
 }
 
 /******************************************************************
