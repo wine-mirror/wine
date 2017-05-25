@@ -4495,6 +4495,57 @@ static void test_WsSkipNode(void)
     WsFreeReader( reader );
 }
 
+static HRESULT set_input_bin( WS_XML_READER *reader, const char *data, ULONG size )
+{
+    WS_XML_READER_BINARY_ENCODING bin = {{WS_XML_READER_ENCODING_TYPE_BINARY}};
+    WS_XML_READER_BUFFER_INPUT buf;
+
+    buf.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
+    buf.encodedData     = (void *)data;
+    buf.encodedDataSize = size;
+    return WsSetInput( reader, &bin.encoding, &buf.input, NULL, 0, NULL );
+}
+
+static void test_binary_encoding(void)
+{
+    static const char res[] =
+        {0x40,0x01,'t',0x01};
+    const WS_XML_NODE *node;
+    const WS_XML_ELEMENT_NODE *elem;
+    WS_XML_READER *reader;
+    HRESULT hr;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* short element */
+    hr = set_input_bin( reader, res, sizeof(res) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+    elem = (const WS_XML_ELEMENT_NODE *)node;
+    ok( !elem->prefix->length, "got %u\n", elem->prefix->length );
+    ok( elem->prefix->bytes == NULL, "bytes set\n" );
+    ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "t", 1 ), "wrong name\n" );
+    ok( !elem->ns->length, "got %u\n", elem->ns->length );
+    ok( elem->ns->bytes != NULL, "bytes not set\n" );
+    ok( !elem->attributeCount, "got %u\n", elem->attributeCount );
+    ok( !elem->isEmpty, "empty\n" );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -4537,4 +4588,5 @@ START_TEST(reader)
     test_WsReadQualifiedName();
     test_WsReadAttribute();
     test_WsSkipNode();
+    test_binary_encoding();
 }
