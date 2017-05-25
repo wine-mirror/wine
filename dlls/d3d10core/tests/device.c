@@ -1699,12 +1699,12 @@ static void test_create_texture3d(void)
 static void test_create_buffer(void)
 {
     ID3D11Buffer *d3d11_buffer;
+    HRESULT expected_hr, hr;
     D3D10_BUFFER_DESC desc;
     ID3D10Buffer *buffer;
     ID3D10Device *device;
     unsigned int i;
     ULONG refcount;
-    HRESULT hr;
 
     static const struct test
     {
@@ -1819,6 +1819,18 @@ static void test_create_buffer(void)
     todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         ID3D10Buffer_Release(buffer);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    for (i = 0; i <= 32; ++i)
+    {
+        desc.ByteWidth = i;
+        expected_hr = !i || i % 16 ? E_INVALIDARG : S_OK;
+        hr = ID3D10Device_CreateBuffer(device, &desc, NULL, &buffer);
+        ok(hr == expected_hr, "Got unexpected hr %#x for constant buffer size %u.\n", hr, i);
+        if (SUCCEEDED(hr))
+            ID3D10Buffer_Release(buffer);
+    }
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
