@@ -7582,6 +7582,8 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
     shader_addline(buffer, "void hs_control_point_phase()\n{\n");
     if ((phase = hs->phases.control_point))
     {
+        for (i = 0; i < phase->temporary_count; ++i)
+            shader_addline(buffer, "vec4 R%u;\n", i);
         if (FAILED(shader_generate_code(shader, buffer, reg_maps, &priv_ctx, phase->start, phase->end)))
             return 0;
         shader_addline(buffer, "setup_hs_output(hs_out);\n");
