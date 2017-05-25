@@ -2322,12 +2322,12 @@ static void test_texture3d_interfaces(void)
 static void test_create_buffer(void)
 {
     ID3D10Buffer *d3d10_buffer;
+    HRESULT expected_hr, hr;
     D3D11_BUFFER_DESC desc;
     ID3D11Buffer *buffer;
     ID3D11Device *device;
     unsigned int i;
     ULONG refcount;
-    HRESULT hr;
 
     static const struct test
     {
@@ -2531,7 +2531,6 @@ static void test_create_buffer(void)
         D3D11_BUFFER_DESC obtained_desc;
         D3D10_BUFFER_DESC d3d10_desc;
         ID3D10Device *d3d10_device;
-        HRESULT expected_hr;
 
         desc.ByteWidth = 1024;
         desc.Usage = D3D11_USAGE_DEFAULT;
@@ -2603,6 +2602,18 @@ static void test_create_buffer(void)
         if (d3d10_device) ID3D10Device_Release(d3d10_device);
 
         ID3D10Buffer_Release(d3d10_buffer);
+    }
+
+    memset(&desc, 0, sizeof(desc));
+    desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    for (i = 0; i <= 32; ++i)
+    {
+        desc.ByteWidth = i;
+        expected_hr = !i || i % 16 ? E_INVALIDARG : S_OK;
+        hr = ID3D11Device_CreateBuffer(device, &desc, NULL, &buffer);
+        ok(hr == expected_hr, "Got unexpected hr %#x for constant buffer size %u.\n", hr, i);
+        if (SUCCEEDED(hr))
+            ID3D11Buffer_Release(buffer);
     }
 
     refcount = ID3D11Device_Release(device);
