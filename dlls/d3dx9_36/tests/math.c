@@ -2898,7 +2898,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
 
     dir.x = 1.1f; dir.y= 1.2f; dir.z = 2.76f;
 
-    for (l = 0; l < sizeof( test ) / sizeof( test[0] ); l++)
+    for (l = 0; l < ARRAY_SIZE(test); ++l)
     {
         startindex = 0;
 
@@ -2908,7 +2908,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
             green_out = test[l].green_in;
             blue_out = test[l].blue_in;
 
-            for (j = 0; j < 49; j++)
+            for (j = 0; j < ARRAY_SIZE(rout); ++j)
             {
                 red_out[j] = 1.01f + j;
                 if ( green_out )
@@ -2920,7 +2920,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
             hr = D3DXSHEvalDirectionalLight(order, &dir, 1.7f, 2.6f, 3.5f, red_out, green_out, blue_out);
             ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
 
-            for (j = 0; j < 49; j++)
+            for (j = 0; j < ARRAY_SIZE(rout); ++j)
             {
                 if ( j >= order * order )
                     expected = j + test[l].roffset;
