@@ -3323,7 +3323,7 @@ static void test_D3DXSHMultiply4(void)
          1.80000007e+00f,  1.89999998e+00f,
     };
 
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(a); ++i)
     {
         a[i] = 1.0f + i / 100.0f;
         b[i] = 3.0f - i / 100.0f;
@@ -3331,30 +3331,30 @@ static void test_D3DXSHMultiply4(void)
     }
 
     D3DXSHMultiply4(c, a, b);
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(c); ++i)
     {
         equal = compare_float(c[i], expected[i], 16);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected[i], c[i]);
     }
 
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(b); ++i)
     {
         b[i] = 3.0f - i / 100.0f;
         c[i] = i;
     }
 
     D3DXSHMultiply4(c, c, b);
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(c); ++i)
     {
         equal = compare_float(c[i], expected[20 + i], 32);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected[20 + i], c[i]);
     }
 
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(c); ++i)
         c[i] = 0.1f * i;
 
     D3DXSHMultiply4(c, c, c);
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < ARRAY_SIZE(c); ++i)
     {
         equal = compare_float(c[i], expected[40 + i], 8);
         ok(equal, "Expected[%u] = %.8e, received = %.8e.\n", i, expected[40 + i], c[i]);
