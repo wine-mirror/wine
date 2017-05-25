@@ -7610,7 +7610,7 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context *con
 
     shader_addline(buffer, "void main()\n{\n");
     shader_addline(buffer, "hs_control_point_phase();\n");
-    if (hs->phases.fork_count || hs->phases.join_count)
+    if (reg_maps->vocp)
         shader_addline(buffer, "barrier();\n");
     for (i = 0; i < hs->phases.fork_count; ++i)
         shader_glsl_generate_shader_phase_invocation(buffer, &hs->phases.fork[i], "fork", i);

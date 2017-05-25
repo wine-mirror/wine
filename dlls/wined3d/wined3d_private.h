@@ -1012,7 +1012,8 @@ struct wined3d_shader_reg_maps
     WORD usescall       : 1;
     WORD usespow        : 1;
     WORD point_size     : 1;
-    WORD padding        : 2;
+    WORD vocp           : 1;
+    WORD padding        : 1;
 
     DWORD rt_mask; /* Used render targets, 32 max. */
 
