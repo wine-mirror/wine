@@ -1380,8 +1380,14 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
 
     if (!size)
     {
-        WARN("Size 0 requested, returning WINED3DERR_INVALIDCALL.\n");
-        return WINED3DERR_INVALIDCALL;
+        WARN("Size 0 requested, returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+
+    if (bind_flags & WINED3D_BIND_CONSTANT_BUFFER && size & (WINED3D_CONSTANT_BUFFER_ALIGNMENT - 1))
+    {
+        WARN("Size %#x is not suitably aligned for constant buffers.\n", size);
+        return E_INVALIDARG;
     }
 
     if (data && !data->data)

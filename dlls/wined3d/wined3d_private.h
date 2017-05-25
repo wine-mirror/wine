@@ -2894,6 +2894,7 @@ void wined3d_resource_update_draw_binding(struct wined3d_resource *resource) DEC
 
 /* Tests show that the start address of resources is 32 byte aligned */
 #define RESOURCE_ALIGNMENT 16
+#define WINED3D_CONSTANT_BUFFER_ALIGNMENT 16
 
 struct gl_texture
 {
