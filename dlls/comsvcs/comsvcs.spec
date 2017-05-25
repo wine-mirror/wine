@@ -1,4 +1,4 @@
-@ stub CosGetCallContext
+5 stub CosGetCallContext
 @ stub CoCreateActivity
 @ stub CoEnterServiceDomain
 @ stub CoLeaveServiceDomain
