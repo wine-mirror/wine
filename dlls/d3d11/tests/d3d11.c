@@ -1769,6 +1769,9 @@ static void test_create_texture2d(void)
                 FALSE, TRUE},
         {DXGI_FORMAT_D32_FLOAT,               1, D3D11_BIND_RENDER_TARGET,    0, FALSE, FALSE},
         {DXGI_FORMAT_D32_FLOAT,               1, D3D11_BIND_DEPTH_STENCIL,    0, TRUE,  FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,      1, D3D11_BIND_SHADER_RESOURCE,  0, TRUE,  FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,      1, D3D11_BIND_RENDER_TARGET,    0, FALSE, FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,      1, D3D11_BIND_DEPTH_STENCIL,    0, FALSE, FALSE},
     };
 
     if (!(device = create_device(NULL)))
