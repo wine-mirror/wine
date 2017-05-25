@@ -5737,6 +5737,13 @@ static void test_texture(void)
          40,  30,  20,  10,
         250, 210, 155, 190,
     };
+    static const DWORD r9g9b9e5_data[] =
+    {
+        0x80000100, 0x80020000, 0x84000000, 0x84000100,
+        0x78000100, 0x78020000, 0x7c000000, 0x78020100,
+        0x70000133, 0x70026600, 0x74cc0000, 0x74cc0133,
+        0x6800019a, 0x68033400, 0x6e680000, 0x6e6b359a,
+    };
     static const struct texture rgba_texture =
     {
         4, 4, 3, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -5780,6 +5787,8 @@ static void test_texture(void)
             {{r32_float, 4 * sizeof(*r32_float)}}};
     static const struct texture r32u_typeless = {4, 4, 1, 1, DXGI_FORMAT_R32_TYPELESS,
             {{r32_uint, 4 * sizeof(*r32_uint)}}};
+    static const struct texture r9g9b9e5_texture = {4, 4, 1, 1, DXGI_FORMAT_R9G9B9E5_SHAREDEXP,
+            {{r9g9b9e5_data, 4 * sizeof(*r9g9b9e5_data)}}};
     static const DWORD red_colors[] =
     {
         0xff0000ff, 0xff0000ff, 0xff0000ff, 0xff0000ff,
@@ -5871,6 +5880,13 @@ static void test_texture(void)
         0x01000028, 0x0100001e, 0x01000014, 0x0100000a,
         0x010000fa, 0x010000d2, 0x0100009b, 0x010000be,
     };
+    static const DWORD r9g9b9e5_colors[16] =
+    {
+        0xff0000ff, 0xff00ff00, 0xffff0000, 0xffff00ff,
+        0xff00007f, 0xff007f00, 0xff7f0000, 0xff007f7f,
+        0xff00004c, 0xff004c00, 0xff4c0000, 0xff4c004c,
+        0xff000033, 0xff003300, 0xff330000, 0xff333333,
+    };
     static const DWORD zero_colors[4 * 4] = {0};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
@@ -5906,6 +5922,7 @@ static void test_texture(void)
         {&ps_ld,              &bc1_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_ld,              &bc2_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
         {&ps_ld,              &bc3_texture_srgb, POINT,        0.0f, 0.0f,    0.0f,  0.0f, bc_colors},
+        {&ps_ld,              &r9g9b9e5_texture, POINT,        0.0f, 0.0f,    0.0f,  0.0f, r9g9b9e5_colors},
         {&ps_ld,              NULL,              POINT,        0.0f, 0.0f,    0.0f,  0.0f, zero_colors},
         {&ps_ld,              NULL,              POINT,        0.0f, 0.0f, MIP_MAX,  0.0f, zero_colors},
         {&ps_ld_sint8,        &sint8_texture,    POINT,        0.0f, 0.0f,    0.0f,  0.0f, sint8_colors},
@@ -5921,6 +5938,7 @@ static void test_texture(void)
         {&ps_sample,          &rgba_texture,     POINT,        8.0f, 0.0f, MIP_MAX,  0.0f, level_1_colors},
         {&ps_sample,          &srgb_texture,     POINT,        0.0f, 0.0f,    0.0f,  0.0f, srgb_colors},
         {&ps_sample,          &a8_texture,       POINT,        0.0f, 0.0f,    0.0f,  0.0f, a8_colors},
+        {&ps_sample,          &r9g9b9e5_texture, POINT,        0.0f, 0.0f,    0.0f,  0.0f, r9g9b9e5_colors},
         {&ps_sample,          NULL,              POINT,        0.0f, 0.0f,    0.0f,  0.0f, zero_colors},
         {&ps_sample,          NULL,              POINT,        0.0f, 0.0f, MIP_MAX,  0.0f, zero_colors},
         {&ps_sample_b,        &rgba_texture,     POINT,        0.0f, 0.0f, MIP_MAX,  0.0f, rgba_level_0},
