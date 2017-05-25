@@ -4516,11 +4516,14 @@ static void test_binary_encoding(void)
         {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x01};
     static const char res4[] =
         {0x41,0x02,'p','2',0x01,'t',0x09,0x02,'p','2',0x02,'n','s',0x99,0x04,'t','e','s','t'};
+    static const char res200[] =
+        {0x02,0x07,'c','o','m','m','e','n','t'};
     const WS_XML_NODE *node;
     const WS_XML_ELEMENT_NODE *elem;
     const WS_XML_ATTRIBUTE *attr;
     const WS_XML_TEXT_NODE *text;
     const WS_XML_UTF8_TEXT *utf8;
+    const WS_XML_COMMENT_NODE *comment;
     WS_XML_READER *reader;
     HRESULT hr;
 
@@ -4658,6 +4661,19 @@ static void test_binary_encoding(void)
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    /* comment */
+    hr = set_input_bin( reader, res200, sizeof(res200) );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_COMMENT, "got %u\n", node->nodeType );
+    comment = (const WS_XML_COMMENT_NODE *)node;
+    ok( comment->value.length == 7, "got %u\n", comment->value.length );
+    ok( !memcmp( comment->value.bytes, "comment", 7 ), "wrong data\n" );
 
     WsFreeReader( reader );
 }

@@ -1942,7 +1942,7 @@ static HRESULT read_endelement( struct reader *reader )
     }
 }
 
-static HRESULT read_comment( struct reader *reader )
+static HRESULT read_comment_text( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
@@ -1975,6 +1975,39 @@ static HRESULT read_comment( struct reader *reader )
         return E_OUTOFMEMORY;
     }
     memcpy( comment->value.bytes, start, len );
+    comment->value.length = len;
+
+    read_insert_node( reader, parent, node );
+    reader->state = READER_STATE_COMMENT;
+    return S_OK;
+}
+
+static HRESULT read_comment_bin( struct reader *reader )
+{
+    struct node *node, *parent;
+    WS_XML_COMMENT_NODE *comment;
+    unsigned char type;
+    ULONG len;
+    HRESULT hr;
+
+    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if (type != RECORD_COMMENT) return WS_E_INVALID_FORMAT;
+    if ((hr = read_int31( reader, &len )) != S_OK) return hr;
+
+    if (!(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return E_OUTOFMEMORY;
+    comment = (WS_XML_COMMENT_NODE *)node;
+    if (!(comment->value.bytes = heap_alloc( len )))
+    {
+        heap_free( node );
+        return E_OUTOFMEMORY;
+    }
+    if ((hr = read_bytes( reader, comment->value.bytes, len )) != S_OK)
+    {
+        free_node( node );
+        return E_OUTOFMEMORY;
+    }
     comment->value.length = len;
 
     read_insert_node( reader, parent, node );
@@ -2074,7 +2107,7 @@ static HRESULT read_node_text( struct reader *reader )
         }
         else if (!read_cmp( reader, "</", 2 )) return read_endelement_text( reader );
         else if (!read_cmp( reader, "<![CDATA[", 9 )) return read_startcdata( reader );
-        else if (!read_cmp( reader, "<!--", 4 )) return read_comment( reader );
+        else if (!read_cmp( reader, "<!--", 4 )) return read_comment_text( reader );
         else if (!read_cmp( reader, "<", 1 )) return read_element_text( reader );
         else if (!read_cmp( reader, "/>", 2 ) || !read_cmp( reader, ">", 1 )) return read_startelement_text( reader );
         else return read_text_text( reader );
@@ -2105,6 +2138,10 @@ static HRESULT read_node_bin( struct reader *reader )
     if (type == RECORD_ENDELEMENT)
     {
         return read_endelement_bin( reader );
+    }
+    else if (type == RECORD_COMMENT)
+    {
+        return read_comment_bin( reader );
     }
     else if (type >= RECORD_SHORT_ELEMENT && type <= RECORD_PREFIX_ELEMENT_Z)
     {
