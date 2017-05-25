@@ -1643,7 +1643,7 @@ error:
     return hr;
 }
 
-static HRESULT read_text( struct reader *reader )
+static HRESULT read_text_text( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
@@ -1685,9 +1685,58 @@ static HRESULT read_text( struct reader *reader )
     return S_OK;
 }
 
+static HRESULT read_text_bin( struct reader *reader )
+{
+    unsigned char type;
+    struct node *node, *parent;
+    WS_XML_TEXT_NODE *text;
+    WS_XML_UTF8_TEXT *utf8;
+    ULONG len;
+    HRESULT hr;
+
+    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if (!is_text_type( type )) return WS_E_INVALID_FORMAT;
+
+    switch (type)
+    {
+    case RECORD_CHARS8_TEXT_WITH_ENDELEMENT:
+    {
+        unsigned char len8;
+        if ((hr = read_byte( reader, &len8 )) != S_OK) return hr;
+        len = len8;
+        break;
+    }
+    default:
+        ERR( "unhandled record type %02x\n", type );
+        return WS_E_NOT_SUPPORTED;
+    }
+
+    if (!(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
+    text = (WS_XML_TEXT_NODE *)node;
+    if (!(utf8 = alloc_utf8_text( NULL, len )))
+    {
+        heap_free( node );
+        return E_OUTOFMEMORY;
+    }
+    if ((hr = read_bytes( reader, utf8->value.bytes, len )) != S_OK)
+    {
+        heap_free( utf8 );
+        heap_free( node );
+        return hr;
+    }
+    text->text = &utf8->text;
+
+    read_insert_node( reader, parent, node );
+    reader->state = READER_STATE_TEXT;
+    reader->text_conv_offset = 0;
+    return S_OK;
+}
+
 static HRESULT read_node_text( struct reader * );
 
-static HRESULT read_startelement( struct reader *reader )
+static HRESULT read_startelement_text( struct reader *reader )
 {
     read_skip_whitespace( reader );
     if (!read_cmp( reader, "/>", 2 ))
@@ -1706,7 +1755,27 @@ static HRESULT read_startelement( struct reader *reader )
     return WS_E_INVALID_FORMAT;
 }
 
-static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
+static HRESULT read_node_bin( struct reader * );
+
+static HRESULT read_startelement_bin( struct reader *reader )
+{
+    if (node_type( reader->current ) != WS_XML_NODE_TYPE_ELEMENT) return WS_E_INVALID_FORMAT;
+    return read_node_bin( reader );
+}
+
+static HRESULT read_startelement( struct reader *reader )
+{
+    switch (reader->input_enc)
+    {
+    case WS_XML_READER_ENCODING_TYPE_TEXT:   return read_startelement_text( reader );
+    case WS_XML_READER_ENCODING_TYPE_BINARY: return read_startelement_bin( reader );
+    default:
+        ERR( "unhandled encoding %u\n", reader->input_enc );
+        return WS_E_NOT_SUPPORTED;
+    }
+}
+
+static HRESULT read_to_startelement_text( struct reader *reader, BOOL *found )
 {
     HRESULT hr;
 
@@ -1734,6 +1803,39 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     }
 
     return hr;
+}
+
+static HRESULT read_to_startelement_bin( struct reader *reader, BOOL *found )
+{
+    HRESULT hr;
+
+    if (reader->state == READER_STATE_STARTELEMENT)
+    {
+        if (found) *found = TRUE;
+        return S_OK;
+    }
+
+    if ((hr = read_element_bin( reader )) == S_OK && found)
+    {
+        if (reader->state == READER_STATE_STARTELEMENT)
+            *found = TRUE;
+        else
+            *found = FALSE;
+    }
+
+    return hr;
+}
+
+static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
+{
+    switch (reader->input_enc)
+    {
+    case WS_XML_READER_ENCODING_TYPE_TEXT:   return read_to_startelement_text( reader, found );
+    case WS_XML_READER_ENCODING_TYPE_BINARY: return read_to_startelement_bin( reader, found );
+    default:
+        ERR( "unhandled encoding %u\n", reader->input_enc );
+        return WS_E_NOT_SUPPORTED;
+    }
 }
 
 static int cmp_name( const unsigned char *name1, ULONG len1, const unsigned char *name2, ULONG len2 )
@@ -1974,8 +2076,8 @@ static HRESULT read_node_text( struct reader *reader )
         else if (!read_cmp( reader, "<![CDATA[", 9 )) return read_startcdata( reader );
         else if (!read_cmp( reader, "<!--", 4 )) return read_comment( reader );
         else if (!read_cmp( reader, "<", 1 )) return read_element_text( reader );
-        else if (!read_cmp( reader, "/>", 2 ) || !read_cmp( reader, ">", 1 )) return read_startelement( reader );
-        else return read_text( reader );
+        else if (!read_cmp( reader, "/>", 2 ) || !read_cmp( reader, ">", 1 )) return read_startelement_text( reader );
+        else return read_text_text( reader );
     }
 }
 
@@ -2008,7 +2110,10 @@ static HRESULT read_node_bin( struct reader *reader )
     {
         return read_element_bin( reader );
     }
-
+    else if (type >= RECORD_ZERO_TEXT && type <= RECORD_QNAME_DICTIONARY_TEXT_WITH_ENDELEMENT)
+    {
+        return read_text_bin( reader );
+    }
     FIXME( "unhandled record type %02x\n", type );
     return WS_E_NOT_SUPPORTED;
 }
