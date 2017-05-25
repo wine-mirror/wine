@@ -155,6 +155,7 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, DWORD location)
 {
     struct wined3d_texture_sub_resource *sub_resource;
+    DWORD previous_locations;
 
     TRACE("texture %p, sub_resource_idx %u, location %s.\n",
             texture, sub_resource_idx, wined3d_debug_location(location));
@@ -163,8 +164,9 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
         wined3d_texture_set_dirty(texture);
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
+    previous_locations = sub_resource->locations;
     sub_resource->locations &= ~location;
-    if (sub_resource->locations == WINED3D_LOCATION_SYSMEM)
+    if (previous_locations != WINED3D_LOCATION_SYSMEM && sub_resource->locations == WINED3D_LOCATION_SYSMEM)
         ++texture->sysmem_count;
 
     TRACE("New locations flags are %s.\n", wined3d_debug_location(sub_resource->locations));
