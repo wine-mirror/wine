@@ -602,6 +602,7 @@ HEADER_SRCS = \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
+	sqlucode.h \
 	srrestoreptapi.h \
 	sspi.h \
 	sti.h \
