@@ -1221,6 +1221,11 @@ error:
     return hr;
 }
 
+static inline BOOL is_text_type( unsigned char type )
+{
+    return (type >= RECORD_ZERO_TEXT && type <= RECORD_QNAME_DICTIONARY_TEXT_WITH_ENDELEMENT);
+}
+
 static HRESULT read_int31( struct reader *reader, ULONG *len )
 {
     unsigned char byte;
@@ -1256,6 +1261,42 @@ static HRESULT read_string( struct reader *reader, WS_XML_STRING **str )
     if ((hr = read_bytes( reader, (*str)->bytes, len )) == S_OK) return S_OK;
     heap_free( *str );
     return hr;
+}
+
+static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE *attr )
+{
+    WS_XML_UTF8_TEXT *utf8 = NULL;
+    unsigned char type;
+    HRESULT hr;
+    ULONG len;
+
+    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if (!is_text_type( type )) return WS_E_INVALID_FORMAT;
+
+    switch (type)
+    {
+    case RECORD_CHARS8_TEXT:
+    {
+        unsigned char len8;
+        if ((hr = read_byte( reader, &len8 )) != S_OK) return hr;
+        len = len8;
+        break;
+    }
+    default:
+        ERR( "unhandled record type %02x\n", type );
+        return WS_E_NOT_SUPPORTED;
+    }
+
+    if (!(utf8 = alloc_utf8_text( NULL, len ))) return E_OUTOFMEMORY;
+    if (!len) utf8->value.bytes = (BYTE *)(utf8 + 1); /* quirk */
+    if ((hr = read_bytes( reader, utf8->value.bytes, len )) != S_OK)
+    {
+        heap_free( utf8 );
+        return hr;
+    }
+
+    attr->value = &utf8->text;
+    return S_OK;
 }
 
 static HRESULT read_attribute_text( struct reader *reader, WS_XML_ATTRIBUTE **ret )
@@ -1305,6 +1346,83 @@ static HRESULT read_attribute_text( struct reader *reader, WS_XML_ATTRIBUTE **re
     }
 
     if ((hr = read_attribute_value_text( reader, attr )) != S_OK) goto error;
+
+    *ret = attr;
+    return S_OK;
+
+error:
+    free_attribute( attr );
+    return hr;
+}
+
+static inline BOOL is_attribute_type( unsigned char type )
+{
+    return (type >= RECORD_SHORT_ATTRIBUTE && type <= RECORD_PREFIX_ATTRIBUTE_Z);
+}
+
+static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret )
+{
+    WS_XML_ATTRIBUTE *attr;
+    unsigned char type = 0;
+    HRESULT hr;
+
+    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if (!is_attribute_type( type )) return WS_E_INVALID_FORMAT;
+    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+
+    if (type >= RECORD_PREFIX_ATTRIBUTE_A && type <= RECORD_PREFIX_ATTRIBUTE_Z)
+    {
+        unsigned char ch = type - RECORD_PREFIX_ATTRIBUTE_A + 'a';
+        if (!(attr->prefix = alloc_xml_string( &ch, 1 )))
+        {
+            hr = E_OUTOFMEMORY;
+            goto error;
+        }
+        if ((hr = read_string( reader, &attr->localName )) != S_OK) goto error;
+        if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
+    }
+    else
+    {
+        switch (type)
+        {
+        case RECORD_SHORT_ATTRIBUTE:
+            if (!(attr->prefix = alloc_xml_string( NULL, 0 )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
+            if ((hr = read_string( reader, &attr->localName )) != S_OK) goto error;
+            if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
+            break;
+
+        case RECORD_ATTRIBUTE:
+            if ((hr = read_string( reader, &attr->prefix )) != S_OK) goto error;
+            if ((hr = read_string( reader, &attr->localName )) != S_OK) goto error;
+            if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
+            break;
+
+        case RECORD_SHORT_XMLNS_ATTRIBUTE:
+            if (!(attr->prefix = alloc_xml_string( NULL, 0 )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
+            if ((hr = read_string( reader, &attr->ns )) != S_OK) goto error;
+            attr->isXmlNs = 1;
+            break;
+
+        case RECORD_XMLNS_ATTRIBUTE:
+            if ((hr = read_string( reader, &attr->prefix )) != S_OK) goto error;
+            if ((hr = read_string( reader, &attr->ns )) != S_OK) goto error;
+            if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
+            attr->isXmlNs = 1;
+            break;
+
+        default:
+            ERR( "unhandled record type %02x\n", type );
+            return WS_E_NOT_SUPPORTED;
+        }
+    }
 
     *ret = attr;
     return S_OK;
@@ -1438,6 +1556,28 @@ static inline BOOL is_element_type( unsigned char type )
     return (type >= RECORD_SHORT_ELEMENT && type <= RECORD_PREFIX_ELEMENT_Z);
 }
 
+static HRESULT read_attributes_bin( struct reader *reader, WS_XML_ELEMENT_NODE *elem )
+{
+    WS_XML_ATTRIBUTE *attr;
+    unsigned char type;
+    HRESULT hr;
+
+    reader->current_attr = 0;
+    for (;;)
+    {
+        if ((hr = read_peek( reader, &type )) != S_OK) return hr;
+        if (!is_attribute_type( type )) break;
+        if ((hr = read_attribute_bin( reader, &attr )) != S_OK) return hr;
+        if ((hr = append_attribute( elem, attr )) != S_OK)
+        {
+            free_attribute( attr );
+            return hr;
+        }
+        reader->current_attr++;
+    }
+    return S_OK;
+}
+
 static HRESULT read_element_bin( struct reader *reader )
 {
     struct node *node = NULL, *parent;
@@ -1491,6 +1631,7 @@ static HRESULT read_element_bin( struct reader *reader )
         goto error;
     }
 
+    if ((hr = read_attributes_bin( reader, elem )) != S_OK) goto error;
     if ((hr = set_namespaces( reader, elem )) != S_OK) goto error;
 
     read_insert_node( reader, parent, node );
