@@ -3546,11 +3546,11 @@ static void test_D3DXSHRotateZ(void)
         else
             end = 48;
 
-        for (j = 0; j < 3; j++)
+        for (j = 0; j < ARRAY_SIZE(angle); ++j)
         {
             for (order = 0; order <= D3DXSH_MAXORDER + 1; order++)
             {
-                for (i = 0; i < 49; i++)
+                for (i = 0; i < ARRAY_SIZE(out); ++i)
                 {
                     out[i] = ( i + 1.0f ) * ( i + 1.0f );
                     in[i] = i + 1.01f;
