@@ -149,6 +149,8 @@ static const struct wined3d_format_channels formats[] =
     /* Unsure about them, could not find a Windows driver that supports them */
     {WINED3DFMT_R16,                       16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_AL16,                       0,  0,  0, 16,   0,  0,  0, 16,    4,   0,     0},
+    /* DirectX 10 HDR formats */
+    {WINED3DFMT_R9G9B9E5_SHAREDEXP,         0,  0,  0,  0,   0,  0,  0,  0,    4,   0,     0},
     /* Typeless */
     {WINED3DFMT_R32G32B32A32_TYPELESS,     32, 32, 32, 32,   0, 32, 64, 96,   16,   0,     0},
     {WINED3DFMT_R32G32B32_TYPELESS,        32, 32, 32,  0,   0, 32, 64,  0,   12,   0,     0},
@@ -1675,6 +1677,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_RGBA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FBO_ATTACHABLE,
             ARB_FRAMEBUFFER_OBJECT,     NULL},
+    /* DirectX 10 HDR formats */
+    {WINED3DFMT_R9G9B9E5_SHAREDEXP,     GL_RGB9_E5_EXT,                   GL_RGB9_E5_EXT,                            0,
+            GL_RGB,                     GL_UNSIGNED_INT_5_9_9_9_REV_EXT,  0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
+            EXT_TEXTURE_SHARED_EXPONENT, NULL},
 };
 
 struct wined3d_format_srgb_info
