@@ -3066,6 +3066,31 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             sprintf(register_name, "gl_TessCoord");
             break;
 
+        case WINED3DSPR_OUTCONTROLPOINT:
+            if (reg->idx[0].rel_addr)
+            {
+                if (reg->idx[1].rel_addr)
+                    sprintf(register_name, "shader_out[%s + %u].reg[%s + %u]",
+                            rel_param0.param_str, reg->idx[0].offset,
+                            rel_param1.param_str, reg->idx[1].offset);
+                else
+                    sprintf(register_name, "shader_out[%s + %u].reg[%u]",
+                            rel_param0.param_str, reg->idx[0].offset,
+                            reg->idx[1].offset);
+            }
+            else if (reg->idx[1].rel_addr)
+            {
+                sprintf(register_name, "shader_out[%u].reg[%s + %u]",
+                        reg->idx[0].offset, rel_param1.param_str,
+                        reg->idx[1].offset);
+            }
+            else
+            {
+                sprintf(register_name, "shader_out[%u].reg[%u]",
+                        reg->idx[0].offset, reg->idx[1].offset);
+            }
+            break;
+
         case WINED3DSPR_PATCHCONST:
             if (version->type == WINED3D_SHADER_TYPE_HULL)
                 sprintf(register_name, "hs_out[%u]", reg->idx[0].offset);
