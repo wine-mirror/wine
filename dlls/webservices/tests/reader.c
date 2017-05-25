@@ -439,14 +439,18 @@ static void test_WsSetInput(void)
     static char test21[] = {0,0};
     static char test22[] = {0,0,0};
     static char test23[] = {'<',0,'?',0,'x',0,'m',0,'l',0};
+    static char test24[] = {'<',0,'a',0,'>',0,'b',0,'<',0,'/',0,'>',0};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_XML_READER_PROPERTY prop;
     WS_XML_READER_TEXT_ENCODING enc;
     WS_XML_READER_BUFFER_INPUT input;
+    WS_XML_TEXT_NODE *text;
+    WS_XML_UTF8_TEXT *utf8;
     WS_CHARSET charset;
     const WS_XML_NODE *node;
     ULONG i, size, max_depth;
+    BOOL found;
     static const struct
     {
         void       *data;
@@ -552,6 +556,35 @@ static void test_WsSetInput(void)
     hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, size, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( max_depth == 16, "got %u\n", max_depth );
+
+    /* show that the reader converts text to UTF-8 */
+    enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
+    enc.charSet               = WS_CHARSET_UTF16LE;
+    input.encodedData     = (void *)test24;
+    input.encodedDataSize = sizeof(test24);
+    hr = WsSetInput( reader, &enc.encoding, &input.input, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    found = -1;
+    hr = WsReadToStartElement( reader, NULL, NULL, &found, NULL );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    if (hr == S_OK)
+    {
+        ok( found == TRUE, "got %d\n", found );
+
+        hr = WsReadStartElement( reader, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+
+        hr = WsGetReaderNode( reader, &node, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        text = (WS_XML_TEXT_NODE *)node;
+        ok( text->node.nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", text->node.nodeType );
+        ok( text->text != NULL, "text not set\n" );
+        utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        ok( text->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text->text->textType );
+        ok( utf8->value.length == 1, "got %u\n", utf8->value.length );
+        ok( utf8->value.bytes[0] == 'b', "wrong data\n" );
+    }
     WsFreeReader( reader );
 }
 
