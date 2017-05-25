@@ -3586,7 +3586,7 @@ static void test_D3DXSHScale(void)
     unsigned int i, order;
     BOOL equal;
 
-    for (i = 0; i < 49; i++)
+    for (i = 0; i < ARRAY_SIZE(a); ++i)
     {
         a[i] = i;
         b[i] = i;
@@ -3597,7 +3597,7 @@ static void test_D3DXSHScale(void)
         received_array = D3DXSHScale(b, order, a, 5.0f);
         ok(received_array == b, "Expected %p, received %p\n", b, received_array);
 
-        for (i = 0; i < 49; i++)
+        for (i = 0; i < ARRAY_SIZE(b); ++i)
         {
             if (i < order * order)
                 expected = 5.0f * a[i];
