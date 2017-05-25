@@ -3551,7 +3551,7 @@ static HRESULT write_add_comment_node( struct writer *writer, const WS_XML_STRIN
     return S_OK;
 }
 
-static HRESULT write_comment( struct writer *writer )
+static HRESULT write_comment_text( struct writer *writer )
 {
     const WS_XML_COMMENT_NODE *comment = (const WS_XML_COMMENT_NODE *)writer->current;
     HRESULT hr;
@@ -3561,6 +3561,28 @@ static HRESULT write_comment( struct writer *writer )
     write_bytes( writer, comment->value.bytes, comment->value.length );
     write_bytes( writer, (const BYTE *)"-->", 3 );
     return S_OK;
+}
+
+static HRESULT write_comment_bin( struct writer *writer )
+{
+    const WS_XML_COMMENT_NODE *comment = (const WS_XML_COMMENT_NODE *)writer->current;
+    HRESULT hr;
+
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    write_char( writer, RECORD_COMMENT );
+    return write_string( writer, comment->value.bytes, comment->value.length );
+}
+
+static HRESULT write_comment( struct writer *writer )
+{
+    switch (writer->output_enc)
+    {
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:   return write_comment_text( writer );
+    case WS_XML_WRITER_ENCODING_TYPE_BINARY: return write_comment_bin( writer );
+    default:
+        ERR( "unhandled encoding %u\n", writer->output_enc );
+        return WS_E_NOT_SUPPORTED;
+    }
 }
 
 static HRESULT write_comment_node( struct writer *writer, const WS_XML_STRING *value )

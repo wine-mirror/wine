@@ -3130,8 +3130,10 @@ static void test_repeating_element(void)
 static const WS_XML_STRING *init_xmlstring( const char *src, WS_XML_STRING *str )
 {
     if (!src) return NULL;
-    str->length = strlen( src );
-    str->bytes  = (BYTE *)src;
+    str->length     = strlen( src );
+    str->bytes      = (BYTE *)src;
+    str->dictionary = NULL;
+    str->id         = 0;
     return str;
 }
 
@@ -3453,6 +3455,8 @@ static void test_binary_encoding(void)
         {0x40,0x01,'t',0x05,0x02,'p','2',0x01,'t',0x98,0x00,0x09,0x02,'p','2',0x02,'n','s',0x01};
     static const char res103[] =
         {0x40,0x01,'t',0x05,0x02,'p','2',0x01,'t',0x98,0x04,'t','e','s','t',0x09,0x02,'p','2',0x02,'n','s',0x01};
+    static const char res200[] =
+        {0x02,0x07,'c','o','m','m','e','n','t'};
     WS_XML_WRITER_BINARY_ENCODING bin = {{WS_XML_WRITER_ENCODING_TYPE_BINARY}};
     WS_XML_WRITER_BUFFER_OUTPUT buf = {{WS_XML_WRITER_OUTPUT_TYPE_BUFFER}};
     static const char prefix[] = "p", prefix2[] = "p2";
@@ -3460,6 +3464,7 @@ static void test_binary_encoding(void)
     const WS_XML_STRING *prefix_ptr, *localname_ptr, *ns_ptr;
     WS_XML_STRING str, str2, str3, localname2 = {1, (BYTE *)"t"}, empty = {0, NULL};
     WS_XML_UTF8_TEXT utf8 = {{WS_XML_TEXT_TYPE_UTF8}};
+    WS_XML_COMMENT_NODE comment = {{WS_XML_NODE_TYPE_COMMENT}};
     WS_XML_WRITER *writer;
     HRESULT hr;
     ULONG i;
@@ -3548,6 +3553,15 @@ static void test_binary_encoding(void)
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
         if (hr == S_OK) check_output_bin( writer, attr_tests[i].result, attr_tests[i].len_result, __LINE__ );
     }
+
+    hr = WsSetOutput( writer, &bin.encoding, &buf.output, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    comment.value.bytes   = (BYTE *)"comment";
+    comment.value.length  = sizeof("comment") - 1;
+    hr = WsWriteNode( writer, &comment.node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (hr == S_OK) check_output_bin( writer, res200, sizeof(res200), __LINE__ );
 
     WsFreeWriter( writer );
 }
