@@ -5140,6 +5140,8 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     /* Filter out non-RT formats */
     if (!(check_format->flags[gl_type] & WINED3DFMT_FLAG_RENDERTARGET))
         return FALSE;
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+        return TRUE;
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
         const struct wined3d_pixel_format *cfgs = adapter->cfgs;
@@ -5168,12 +5170,6 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
                 return TRUE;
             }
         }
-    }
-    else if(wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        /* For now return TRUE for FBOs until we have some proper checks.
-         * Note that this function will only be called when the format is around for texturing. */
-        return TRUE;
     }
     return FALSE;
 }
