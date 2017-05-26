@@ -759,6 +759,55 @@ static void test_invalid_import(void)
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
 }
 
+static void test_invalid_import_31(void)
+{
+    HKEY hkey;
+    LONG lr;
+
+    lr = RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
+                         KEY_READ, NULL, &hkey, NULL);
+    ok(lr == ERROR_SUCCESS, "RegCreateKeyExA failed: %d\n", lr);
+
+    /* Test character validity at the start of the line */
+    exec_import_str("REGEDIT\r\n"
+                    " HKEY_CLASSES_ROOT\\" KEY_BASE " = Value1a\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    exec_import_str("REGEDIT\r\n"
+                    "  HKEY_CLASSES_ROOT\\" KEY_BASE " = Value1b\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    exec_import_str("REGEDIT\r\n"
+                    "\tHKEY_CLASSES_ROOT\\" KEY_BASE " = Value1c\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    exec_import_str("REGEDIT\r\n"
+                    ";HKEY_CLASSES_ROOT\\" KEY_BASE " = Value2a\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    exec_import_str("REGEDIT\r\n"
+                    "#HKEY_CLASSES_ROOT\\" KEY_BASE " = Value2b\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    /* Test case sensitivity */
+    exec_import_str("REGEDIT\r\n"
+                    "hkey_classes_root\\" KEY_BASE " = Value3a\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    exec_import_str("REGEDIT\r\n"
+                    "hKEY_CLASSES_ROOT\\" KEY_BASE " = Value3b\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    exec_import_str("REGEDIT\r\n"
+                    "Hkey_Classes_Root\\" KEY_BASE " = Value3c\r\n");
+    todo_wine verify_reg_nonexist(hkey, "");
+
+    RegCloseKey(hkey);
+
+    lr = RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+}
+
 static void test_comments(void)
 {
     LONG lr;
@@ -1077,6 +1126,7 @@ START_TEST(regedit)
     test_basic_import();
     test_basic_import_31();
     test_invalid_import();
+    test_invalid_import_31();
     test_comments();
     test_import_with_whitespace();
 }
