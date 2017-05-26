@@ -2605,7 +2605,7 @@ static void test_create_buffer(void)
     }
 
     memset(&desc, 0, sizeof(desc));
-    desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     for (i = 0; i <= 32; ++i)
     {
         desc.ByteWidth = i;
