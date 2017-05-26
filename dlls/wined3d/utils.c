@@ -3350,9 +3350,18 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         if (!(format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE))
             continue;
 
+        TRACE("Checking support for fixup:\n");
+        dump_color_fixup_desc(format->color_fixup);
         if (!adapter->shader_backend->shader_color_fixup_supported(format->color_fixup)
                 || !adapter->fragment_pipe->color_fixup_supported(format->color_fixup))
+        {
+            TRACE("[FAILED]\n");
             format_clear_flag(format, WINED3DFMT_FLAG_TEXTURE);
+        }
+        else
+        {
+            TRACE("[OK]\n");
+        }
     }
 
     /* GL_EXT_texture_compression_s3tc does not support 3D textures. Some Windows drivers

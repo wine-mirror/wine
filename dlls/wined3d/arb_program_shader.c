@@ -4977,21 +4977,8 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
 
 static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
 {
-    if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
-    {
-        TRACE("Checking support for color_fixup:\n");
-        dump_color_fixup_desc(fixup);
-    }
-
     /* We support everything except complex conversions. */
-    if (!is_complex_fixup(fixup))
-    {
-        TRACE("[OK]\n");
-        return TRUE;
-    }
-
-    TRACE("[FAILED]\n");
-    return FALSE;
+    return !is_complex_fixup(fixup);
 }
 
 static void shader_arb_add_instruction_modifiers(const struct wined3d_shader_instruction *ins) {

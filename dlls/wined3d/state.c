@@ -5845,21 +5845,8 @@ static DWORD ffp_fragment_get_emul_mask(const struct wined3d_gl_info *gl_info)
 
 static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
 {
-    if (TRACE_ON(d3d))
-    {
-        TRACE("Checking support for fixup:\n");
-        dump_color_fixup_desc(fixup);
-    }
-
     /* We only support identity conversions. */
-    if (is_identity_fixup(fixup))
-    {
-        TRACE("[OK]\n");
-        return TRUE;
-    }
-
-    TRACE("[FAILED]\n");
-    return FALSE;
+    return is_identity_fixup(fixup);
 }
 
 static BOOL ffp_none_context_alloc(struct wined3d_context *context)
