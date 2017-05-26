@@ -11224,6 +11224,16 @@ size_t __cdecl wcsrtombs(char *dst, const wchar_t **pstr, size_t n, mbstate_t *s
 }
 #endif
 
+int __cdecl _To_wide(const char *src, wchar_t *dst)
+{
+    TRACE("(%s %p)\n", debugstr_a(src), dst);
+
+    if (!src || !dst)
+        return 0;
+
+    return MultiByteToWideChar(CP_ACP, 0, src, -1, dst, MAX_PATH);
+}
+
 DEFINE_RTTI_DATA0(_Facet_base, 0, ".?AV_Facet_base@std@@")
 DEFINE_RTTI_DATA0(locale_facet, 0, ".?AVfacet@locale@std@@")
 DEFINE_RTTI_DATA1(locale__Locimp, 0, &locale_facet_rtti_base_descriptor, ".?AV_Locimp@locale@std@@")

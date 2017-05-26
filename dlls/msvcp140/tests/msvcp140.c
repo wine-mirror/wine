@@ -18,6 +18,10 @@
 
 #include <stdio.h>
 
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+
 #include "wine/test.h"
 #include "winbase.h"
 
@@ -148,6 +152,8 @@ static int (__cdecl *p__Schedule_chore)(_Threadpool_chore*);
 static int (__cdecl *p__Reschedule_chore)(const _Threadpool_chore*);
 static void (__cdecl *p__Release_chore)(_Threadpool_chore*);
 
+static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -208,6 +214,8 @@ static BOOL init(void)
         SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z");
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
     }
+
+    SET(p_To_wide, "_To_wide");
 
     init_thiscall_thunk();
     return TRUE;
@@ -461,6 +469,52 @@ static void test_chore(void)
     p__Release_chore(&chore);
 }
 
+static void test_to_wide(void)
+{
+     /* öäüß€Ÿ.A.B in cp1252, the two . are an undefined value and delete.
+      * With a different system codepage it will produce different results, so do not hardcode the
+      * expected output but convert it with MultiByteToWideChar. */
+    static const char special_input[] = {0xf6, 0xe4, 0xfc, 0xdf, 0x80, 0x9f, 0x81, 0x41, 0x7f, 0x42, 0};
+    static const char *tests[] = {"Testtest", special_input};
+    WCHAR dst[MAX_PATH + 4] = {'A', 'B', 'C', 0, 'X', 'X', 'X', 'X', 'X', 'X', 'X'};
+    WCHAR compare[MAX_PATH + 4] = {'A', 'B', 'C', 0, 'X', 'X', 'X', 'X', 'X', 'X', 'X'};
+    int ret, expected;
+    unsigned int i;
+    char longstr[MAX_PATH + 3];
+
+    ret = p_To_wide(NULL, NULL);
+    ok(!ret, "Got unexpected result %d\n", ret);
+    ret = p_To_wide(tests[0], NULL);
+    ok(!ret, "Got unexpected result %d\n", ret);
+    ret = p_To_wide(NULL, dst);
+    ok(!ret, "Got unexpected result %d\n", ret);
+    ok(!memcmp(dst, compare, sizeof(compare)), "Destination was modified: %s\n", wine_dbgstr_w(dst));
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        ret = p_To_wide(tests[i], dst);
+        expected = MultiByteToWideChar(CP_ACP, 0, tests[i], -1, compare, sizeof(compare) / sizeof(*compare));
+        ok(ret == expected,  "Got unexpected result %d, expected %d, test case %u\n", ret, expected, i);
+        ok(!memcmp(dst, compare, sizeof(compare)), "Got unexpected output %s, test case %u\n",
+                wine_dbgstr_w(dst), i);
+    }
+
+    /* Output length is limited to MAX_PATH.*/
+    for (i = MAX_PATH - 2; i < MAX_PATH + 2; ++i)
+    {
+        memset(longstr, 'A', sizeof(longstr));
+        longstr[i] = 0;
+        memset(dst, 0xff, sizeof(dst));
+        memset(compare, 0xff, sizeof(compare));
+
+        ret = p_To_wide(longstr, dst);
+        expected = MultiByteToWideChar(CP_ACP, 0, longstr, -1, compare, MAX_PATH);
+        ok(ret == expected,  "Got unexpected result %d, expected %d, length %u\n", ret, expected, i);
+        ok(!memcmp(dst, compare, sizeof(compare)), "Got unexpected output %s, length %u\n",
+                wine_dbgstr_w(dst), i);
+    }
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -470,5 +524,6 @@ START_TEST(msvcp140)
     test__ContextCallback();
     test__TaskEventLogger();
     test_chore();
+    test_to_wide();
     FreeLibrary(msvcp);
 }

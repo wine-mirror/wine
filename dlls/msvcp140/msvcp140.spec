@@ -3732,7 +3732,7 @@
 @ cdecl _Thrd_start(ptr ptr ptr) _Thrd_start
 @ cdecl _Thrd_yield() _Thrd_yield
 @ stub _To_byte
-@ stub _To_wide
+@ cdecl _To_wide(str ptr)
 @ cdecl _Tolower(long ptr) _Tolower
 @ cdecl _Toupper(long ptr) _Toupper
 @ cdecl _Towlower(long ptr) _Towlower
