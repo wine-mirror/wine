@@ -4012,8 +4012,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
     if (gl_version >= MAKEDWORD_VERSION(3, 2))
         gl_info->supported[WINED3D_GL_VERSION_3_2] = TRUE;
-    if (gl_version >= MAKEDWORD_VERSION(4, 3))
-        gl_info->supported[WINED3D_GL_VERSION_4_3] = TRUE;
 
     /* All the points are actually point sprites in core contexts, the APIs from
      * ARB_point_sprite are not supported anymore. */
