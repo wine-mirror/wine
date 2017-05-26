@@ -11758,11 +11758,8 @@ msgid "&About Registry Editor"
 msgstr "&Om Registerredigering"
 
 #: regedit.rc:91 regedit.rc:98 regedit.rc:229
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "expanded"
 msgid "Expand"
-msgstr "utvidet"
+msgstr "Utvid"
 
 #: regedit.rc:136
 msgid "Modify Binary Data..."
@@ -12245,11 +12242,8 @@ msgid ""
 msgstr "Vil du virkelig slette registernøkkel \"%1\" og alle dens undernøkler?"
 
 #: regedit.rc:230
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "collapsed"
 msgid "Collapse"
-msgstr "kollapset"
+msgstr "Kollaps"
 
 #: regsvr32.rc:32
 msgid ""
