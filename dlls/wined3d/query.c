@@ -66,12 +66,6 @@ BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info)
     return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
 }
 
-void wined3d_event_query_destroy(struct wined3d_event_query *query)
-{
-    if (query->context) context_free_event_query(query);
-    HeapFree(GetProcessHeap(), 0, query);
-}
-
 static enum wined3d_event_query_result wined3d_event_query_test(const struct wined3d_event_query *query,
         const struct wined3d_device *device, DWORD flags)
 {
@@ -274,45 +268,7 @@ static void wined3d_query_destroy_object(void *object)
      * deleting the query will obviously leak it, but that's still better
      * than potentially deleting a different query with the same id in this
      * context, and (still) leaking the actual query. */
-    if (query->type == WINED3D_QUERY_TYPE_EVENT)
-    {
-        wined3d_event_query_destroy(wined3d_event_query_from_query(query));
-    }
-    else if (query->type == WINED3D_QUERY_TYPE_OCCLUSION)
-    {
-        struct wined3d_occlusion_query *oq = wined3d_occlusion_query_from_query(query);
-
-        if (oq->context)
-            context_free_occlusion_query(oq);
-        HeapFree(GetProcessHeap(), 0, oq);
-    }
-    else if (query->type == WINED3D_QUERY_TYPE_TIMESTAMP)
-    {
-        struct wined3d_timestamp_query *tq = wined3d_timestamp_query_from_query(query);
-
-        if (tq->context)
-            context_free_timestamp_query(tq);
-        HeapFree(GetProcessHeap(), 0, tq);
-    }
-    else if (query->type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT
-            || query->type == WINED3D_QUERY_TYPE_TIMESTAMP_FREQ)
-    {
-        HeapFree(GetProcessHeap(), 0, query);
-    }
-    else if (query->type == WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM0
-            || query->type ==  WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM1
-            || query->type ==  WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM2
-            || query->type ==  WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM3)
-    {
-        struct wined3d_so_statistics_query *pq = wined3d_so_statistics_query_from_query(query);
-        if (pq->context)
-            context_free_so_statistics_query(pq);
-        HeapFree(GetProcessHeap(), 0, pq);
-    }
-    else
-    {
-        ERR("Query %p has invalid type %#x.\n", query, query->type);
-    }
+    query->query_ops->query_destroy(query);
 }
 
 ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
@@ -773,10 +729,20 @@ static BOOL wined3d_so_statistics_query_ops_issue(struct wined3d_query *query, D
     return poll;
 }
 
+static void wined3d_event_query_ops_destroy(struct wined3d_query *query)
+{
+    struct wined3d_event_query *event_query = wined3d_event_query_from_query(query);
+
+    if (event_query->context)
+        context_free_event_query(event_query);
+    HeapFree(GetProcessHeap(), 0, event_query);
+}
+
 static const struct wined3d_query_ops event_query_ops =
 {
     wined3d_event_query_ops_poll,
     wined3d_event_query_ops_issue,
+    wined3d_event_query_ops_destroy,
 };
 
 static HRESULT wined3d_event_query_create(struct wined3d_device *device,
@@ -807,10 +773,20 @@ static HRESULT wined3d_event_query_create(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
+static void wined3d_occlusion_query_ops_destroy(struct wined3d_query *query)
+{
+    struct wined3d_occlusion_query *oq = wined3d_occlusion_query_from_query(query);
+
+    if (oq->context)
+        context_free_occlusion_query(oq);
+    HeapFree(GetProcessHeap(), 0, oq);
+}
+
 static const struct wined3d_query_ops occlusion_query_ops =
 {
     wined3d_occlusion_query_ops_poll,
     wined3d_occlusion_query_ops_issue,
+    wined3d_occlusion_query_ops_destroy,
 };
 
 static HRESULT wined3d_occlusion_query_create(struct wined3d_device *device,
@@ -841,10 +817,20 @@ static HRESULT wined3d_occlusion_query_create(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
+static void wined3d_timestamp_query_ops_destroy(struct wined3d_query *query)
+{
+    struct wined3d_timestamp_query *tq = wined3d_timestamp_query_from_query(query);
+
+    if (tq->context)
+        context_free_timestamp_query(tq);
+    HeapFree(GetProcessHeap(), 0, tq);
+}
+
 static const struct wined3d_query_ops timestamp_query_ops =
 {
     wined3d_timestamp_query_ops_poll,
     wined3d_timestamp_query_ops_issue,
+    wined3d_timestamp_query_ops_destroy,
 };
 
 static HRESULT wined3d_timestamp_query_create(struct wined3d_device *device,
@@ -875,10 +861,16 @@ static HRESULT wined3d_timestamp_query_create(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
+static void wined3d_timestamp_disjoint_query_ops_destroy(struct wined3d_query *query)
+{
+    HeapFree(GetProcessHeap(), 0, query);
+}
+
 static const struct wined3d_query_ops timestamp_disjoint_query_ops =
 {
     wined3d_timestamp_disjoint_query_ops_poll,
     wined3d_timestamp_disjoint_query_ops_issue,
+    wined3d_timestamp_disjoint_query_ops_destroy,
 };
 
 static HRESULT wined3d_timestamp_disjoint_query_create(struct wined3d_device *device,
@@ -921,10 +913,20 @@ static HRESULT wined3d_timestamp_disjoint_query_create(struct wined3d_device *de
     return WINED3D_OK;
 }
 
+static void wined3d_so_statistics_query_ops_destroy(struct wined3d_query *query)
+{
+    struct wined3d_so_statistics_query *pq = wined3d_so_statistics_query_from_query(query);
+
+    if (pq->context)
+        context_free_so_statistics_query(pq);
+    HeapFree(GetProcessHeap(), 0, pq);
+}
+
 static const struct wined3d_query_ops so_statistics_query_ops =
 {
     wined3d_so_statistics_query_ops_poll,
     wined3d_so_statistics_query_ops_issue,
+    wined3d_so_statistics_query_ops_destroy,
 };
 
 static HRESULT wined3d_so_statistics_query_create(struct wined3d_device *device,

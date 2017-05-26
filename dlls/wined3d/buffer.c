@@ -187,7 +187,8 @@ static void buffer_destroy_buffer_object(struct wined3d_buffer *buffer, struct w
 
     if (buffer->query)
     {
-        wined3d_event_query_destroy(buffer->query);
+        struct wined3d_query *query = &buffer->query->query;
+        query->query_ops->query_destroy(query);
         buffer->query = NULL;
     }
     buffer->flags &= ~WINED3D_BUFFER_APPLESYNC;
@@ -827,7 +828,7 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
         return;
     }
 
-    if(!This->query)
+    if (!This->query)
     {
         TRACE("Creating event query for buffer %p\n", This);
 
@@ -850,7 +851,7 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
     }
     TRACE("Synchronizing buffer %p\n", This);
     ret = wined3d_event_query_finish(This->query, This->resource.device);
-    switch(ret)
+    switch (ret)
     {
         case WINED3D_EVENT_QUERY_NOT_STARTED:
         case WINED3D_EVENT_QUERY_OK:
@@ -867,9 +868,10 @@ static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const st
     }
 
 drop_query:
-    if(This->query)
+    if (This->query)
     {
-        wined3d_event_query_destroy(This->query);
+        struct wined3d_query *query = &This->query->query;
+        query->query_ops->query_destroy(query);
         This->query = NULL;
     }
 

@@ -1621,6 +1621,7 @@ struct wined3d_query_ops
 {
     BOOL (*query_poll)(struct wined3d_query *query, DWORD flags);
     BOOL (*query_issue)(struct wined3d_query *query, DWORD flags);
+    void (*query_destroy)(struct wined3d_query *query);
 };
 
 struct wined3d_query
@@ -1665,7 +1666,6 @@ enum wined3d_event_query_result
     WINED3D_EVENT_QUERY_ERROR
 };
 
-void wined3d_event_query_destroy(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_event_query *query,
         const struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_event_query_issue(struct wined3d_event_query *query, const struct wined3d_device *device) DECLSPEC_HIDDEN;
