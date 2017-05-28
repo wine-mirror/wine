@@ -1293,7 +1293,7 @@ TOOLBAR_CalcStrings (const TOOLBAR_INFO *infoPtr, LPSIZE lpSize)
     SelectObject (hdc, hOldFont);
     ReleaseDC (infoPtr->hwndSelf, hdc);
 
-    TRACE("max string size %d x %d!\n", lpSize->cx, lpSize->cy);
+    TRACE("max string size %d x %d\n", lpSize->cx, lpSize->cy);
 }
 
 /***********************************************************************
@@ -1808,13 +1808,13 @@ TOOLBAR_InternalHitTest (const TOOLBAR_INFO *infoPtr, const POINT *lpPt, BOOL *b
 
 	if (btnPtr->fsStyle & BTNS_SEP) {
 	    if (PtInRect (&btnPtr->rect, *lpPt)) {
-		TRACE(" ON SEPARATOR %d!\n", i);
+		TRACE(" ON SEPARATOR %d\n", i);
 		return -i;
 	    }
 	}
 	else {
 	    if (PtInRect (&btnPtr->rect, *lpPt)) {
-		TRACE(" ON BUTTON %d!\n", i);
+		TRACE(" ON BUTTON %d\n", i);
                 if (button)
                     *button = TRUE;
 		return i;
@@ -1822,7 +1822,7 @@ TOOLBAR_InternalHitTest (const TOOLBAR_INFO *infoPtr, const POINT *lpPt, BOOL *b
 	}
     }
 
-    TRACE(" NOWHERE!\n");
+    TRACE(" NOWHERE\n");
     return TOOLBAR_NOWHERE;
 }
 
@@ -2628,7 +2628,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                btnInfo = (PCUSTOMBUTTON)SendDlgItemMessageW (hwnd, wParam, LB_GETITEMDATA, lpdis->itemID, 0);
 		if (btnInfo == NULL)
 		{
-		    FIXME("btnInfo invalid!\n");
+		    FIXME("btnInfo invalid\n");
 		    return TRUE;
 		}
 
@@ -2837,7 +2837,7 @@ TOOLBAR_AddBitmap (TOOLBAR_INFO *infoPtr, INT count, const TBADDBITMAP *lpAddBmp
 	        return -1;
 	}
 
-	TRACE ("adding %d internal bitmaps!\n", info.nButtons);
+        TRACE ("adding %d internal bitmaps\n", info.nButtons);
 
 	/* Windows resize all the buttons to the size of a newly added standard image */
 	if (lpAddBmp->nID & 1)
@@ -2858,7 +2858,7 @@ TOOLBAR_AddBitmap (TOOLBAR_INFO *infoPtr, INT count, const TBADDBITMAP *lpAddBmp
 	info.nButtons = count;
 	info.hInst = lpAddBmp->hInst;
 	info.nID = lpAddBmp->nID;
-	TRACE("adding %d bitmaps!\n", info.nButtons);
+	TRACE("adding %d bitmaps\n", info.nButtons);
     }
     
     /* check if the bitmap is already loaded and compute iSumButtons */
@@ -2873,7 +2873,7 @@ TOOLBAR_AddBitmap (TOOLBAR_INFO *infoPtr, INT count, const TBADDBITMAP *lpAddBmp
 
     if (!infoPtr->cimlDef) {
 	/* create new default image list */
-	TRACE ("creating default image list!\n");
+        TRACE ("creating default image list\n");
 
         himlDef = ImageList_Create (infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
                                     ILC_COLOR32 | ILC_MASK, info.nButtons, 2);
@@ -2906,7 +2906,7 @@ TOOLBAR_AddBitmap (TOOLBAR_INFO *infoPtr, INT count, const TBADDBITMAP *lpAddBmp
 static LRESULT
 TOOLBAR_AddButtonsT(TOOLBAR_INFO *infoPtr, INT nAddButtons, const TBBUTTON* lpTbb, BOOL fUnicode)
 {
-    TRACE("adding %d buttons (unicode=%d)!\n", nAddButtons, fUnicode);
+    TRACE("adding %d buttons (unicode=%d)\n", nAddButtons, fUnicode);
 
     return TOOLBAR_InternalInsertButtonsT(infoPtr, -1, nAddButtons, lpTbb, fUnicode);
 }
@@ -3032,7 +3032,7 @@ TOOLBAR_AddStringA (TOOLBAR_INFO *infoPtr, HINSTANCE hInstance, LPARAM lParam)
 static LRESULT
 TOOLBAR_AutoSize (TOOLBAR_INFO *infoPtr)
 {
-    TRACE("auto sizing, style=%x!\n", infoPtr->dwStyle);
+    TRACE("auto sizing, style=%#x\n", infoPtr->dwStyle);
     TRACE("nRows: %d, infoPtr->nButtonHeight: %d\n", infoPtr->nRows, infoPtr->nButtonHeight);
 
     if (!(infoPtr->dwStyle & CCS_NORESIZE))
@@ -3229,7 +3229,7 @@ TOOLBAR_DeleteButton (TOOLBAR_INFO *infoPtr, INT nIndex)
     TOOLBAR_TooltipDelTool(infoPtr, &infoPtr->buttons[nIndex]);
 
     if (infoPtr->nNumButtons == 1) {
-	TRACE(" simple delete!\n");
+	TRACE(" simple delete\n");
         free_string( infoPtr->buttons );
 	Free (infoPtr->buttons);
 	infoPtr->buttons = NULL;
@@ -3237,7 +3237,7 @@ TOOLBAR_DeleteButton (TOOLBAR_INFO *infoPtr, INT nIndex)
     }
     else {
 	TBUTTON_INFO *oldButtons = infoPtr->buttons;
-        TRACE("complex delete! [nIndex=%d]\n", nIndex);
+        TRACE("complex delete [nIndex=%d]\n", nIndex);
 
 	infoPtr->nNumButtons--;
 	infoPtr->buttons = Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
@@ -4520,7 +4520,7 @@ TOOLBAR_SetCmdId (TOOLBAR_INFO *infoPtr, INT nIndex, INT nId)
 
     if (infoPtr->hwndToolTip) {
 
-	FIXME("change tool tip!\n");
+	FIXME("change tool tip\n");
 
     }
 
@@ -5155,7 +5155,7 @@ TOOLBAR_GetStringW (const TOOLBAR_INFO *infoPtr, WPARAM wParam, LPWSTR str)
 static LRESULT TOOLBAR_SetBoundingSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     SIZE * pSize = (SIZE*)lParam;
-    FIXME("hwnd=%p, wParam=0x%08lx, size.cx=%d, size.cy=%d stub!\n", hwnd, wParam, pSize->cx, pSize->cy);
+    FIXME("hwnd=%p, wParam=0x%08lx, size.cx=%d, size.cy=%d stub\n", hwnd, wParam, pSize->cx, pSize->cy);
     return 0;
 }
 
@@ -6387,7 +6387,7 @@ TOOLBAR_SetRedraw (TOOLBAR_INFO *infoPtr, WPARAM wParam)
 static LRESULT
 TOOLBAR_Size (TOOLBAR_INFO *infoPtr)
 {
-    TRACE("sizing toolbar!\n");
+    TRACE("sizing toolbar\n");
 
     if (infoPtr->dwExStyle & TBSTYLE_EX_HIDECLIPPEDBUTTONS)
     {
