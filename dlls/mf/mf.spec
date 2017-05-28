@@ -57,7 +57,7 @@
 @ stub MFCreateSequencerSource
 @ stub MFCreateSequencerSourceRemoteStream
 @ stub MFCreateSimpleTypeHandler
-@ stub MFCreateSourceResolver
+@ stdcall MFCreateSourceResolver(ptr) mfplat.MFCreateSourceResolver
 @ stub MFCreateStandardQualityManager
 @ stub MFCreateTopoLoader
 @ stub MFCreateTopology

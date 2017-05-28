@@ -58,7 +58,7 @@
 @ stub MFCreateSample
 @ stub MFCreateSocket
 @ stub MFCreateSocketListener
-@ stub MFCreateSourceResolver
+@ stdcall MFCreateSourceResolver(ptr)
 @ stub MFCreateStreamDescriptor
 @ stub MFCreateSystemTimeSource
 @ stub MFCreateSystemUnderlyingClock

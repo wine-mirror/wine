@@ -30,9 +30,12 @@
 
 #include "initguid.h"
 #include "mfapi.h"
+#include "mfidl.h"
 #include "mferror.h"
 
 #include "wine/test.h"
+
+static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
 
 DEFINE_GUID(MFT_CATEGORY_OTHER, 0x90175d57,0xb7ea,0x4901,0xae,0xb3,0x93,0x3a,0x87,0x47,0x75,0x6f);
 
@@ -154,12 +157,48 @@ if(0)
     ok(ret == S_OK || broken(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)), "got %x\n", ret);
 }
 
+static void test_source_resolver(void)
+{
+    IMFSourceResolver *resolver, *resolver2;
+    HRESULT hr;
+
+    if (!pMFCreateSourceResolver)
+    {
+        win_skip("MFCreateSourceResolver() not found\n");
+        return;
+    }
+
+    hr = pMFCreateSourceResolver(NULL);
+    ok(hr == E_POINTER, "got %#x\n", hr);
+
+    hr = pMFCreateSourceResolver(&resolver);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = pMFCreateSourceResolver(&resolver2);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(resolver != resolver2, "Expected new instance\n");
+
+    IMFSourceResolver_Release(resolver);
+    IMFSourceResolver_Release(resolver2);
+}
+
+static void init_functions(void)
+{
+    HMODULE mod = GetModuleHandleA("mfplat.dll");
+
+#define X(f) if (!(p##f = (void*)GetProcAddress(mod, #f))) return;
+    X(MFCreateSourceResolver);
+#undef X
+}
 
 START_TEST(mfplat)
 {
     CoInitialize(NULL);
 
+    init_functions();
+
     test_register();
+    test_source_resolver();
 
     CoUninitialize();
 }

@@ -29,6 +29,7 @@
 
 #include "initguid.h"
 #include "mfapi.h"
+#include "mfidl.h"
 #include "mferror.h"
 
 #include "wine/debug.h"
@@ -869,7 +870,7 @@ static const IMFAttributesVtbl mfattributes_vtbl =
 };
 
 /***********************************************************************
- *      MFMFCreateAttributes (mfplat.@)
+ *      MFCreateAttributes (mfplat.@)
  */
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size)
 {
@@ -885,5 +886,170 @@ HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size)
     object->IMFAttributes_iface.lpVtbl = &mfattributes_vtbl;
 
     *attributes = &object->IMFAttributes_iface;
+    return S_OK;
+}
+
+typedef struct _mfsourceresolver
+{
+    IMFSourceResolver IMFSourceResolver_iface;
+    LONG ref;
+} mfsourceresolver;
+
+static inline mfsourceresolver *impl_from_IMFSourceResolver(IMFSourceResolver *iface)
+{
+    return CONTAINING_RECORD(iface, mfsourceresolver, IMFSourceResolver_iface);
+}
+
+static HRESULT WINAPI mfsourceresolver_QueryInterface(IMFSourceResolver *iface, REFIID riid, void **obj)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    TRACE("(%p->(%s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFSourceResolver) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = &This->IMFSourceResolver_iface;
+    }
+    else
+    {
+        *obj = NULL;
+        FIXME("unsupported interface %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI mfsourceresolver_AddRef(IMFSourceResolver *iface)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI mfsourceresolver_Release(IMFSourceResolver *iface)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI mfsourceresolver_CreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
+    DWORD flags, IPropertyStore *props, MF_OBJECT_TYPE *obj_type, IUnknown **object)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    FIXME("(%p)->(%s, %#x, %p, %p, %p): stub\n", This, debugstr_w(url), flags, props, obj_type, object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfsourceresolver_CreateObjectFromByteStream(IMFSourceResolver *iface, IMFByteStream *stream,
+    const WCHAR *url, DWORD flags, IPropertyStore *props, MF_OBJECT_TYPE *obj_type, IUnknown **object)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    FIXME("(%p)->(%p, %s, %#x, %p, %p, %p): stub\n", This, stream, debugstr_w(url), flags, props, obj_type, object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfsourceresolver_BeginCreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
+    DWORD flags, IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback, IUnknown *unk_state)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    FIXME("(%p)->(%s, %#x, %p, %p, %p, %p): stub\n", This, debugstr_w(url), flags, props, cancel_cookie,
+        callback, unk_state);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfsourceresolver_EndCreateObjectFromURL(IMFSourceResolver *iface, IMFAsyncResult *result,
+    MF_OBJECT_TYPE *obj_type, IUnknown **object)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    FIXME("(%p)->(%p, %p, %p): stub\n", This, result, obj_type, object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfsourceresolver_BeginCreateObjectFromByteStream(IMFSourceResolver *iface, IMFByteStream *stream,
+    const WCHAR *url, DWORD flags, IPropertyStore *props, IUnknown **cancel_cookie, IMFAsyncCallback *callback,
+    IUnknown *unk_state)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    FIXME("(%p)->(%p, %s, %#x, %p, %p, %p, %p): stub\n", This, stream, debugstr_w(url), flags, props, cancel_cookie,
+        callback, unk_state);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfsourceresolver_EndCreateObjectFromByteStream(IMFSourceResolver *iface, IMFAsyncResult *result,
+    MF_OBJECT_TYPE *obj_type, IUnknown **object)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    FIXME("(%p)->(%p, %p, %p): stub\n", This, result, obj_type, object);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mfsourceresolver_CancelObjectCreation(IMFSourceResolver *iface, IUnknown *cancel_cookie)
+{
+    mfsourceresolver *This = impl_from_IMFSourceResolver(iface);
+
+    FIXME("(%p)->(%p): stub\n", This, cancel_cookie);
+
+    return E_NOTIMPL;
+}
+
+static const IMFSourceResolverVtbl mfsourceresolvervtbl =
+{
+   mfsourceresolver_QueryInterface,
+   mfsourceresolver_AddRef,
+   mfsourceresolver_Release,
+   mfsourceresolver_CreateObjectFromURL,
+   mfsourceresolver_CreateObjectFromByteStream,
+   mfsourceresolver_BeginCreateObjectFromURL,
+   mfsourceresolver_EndCreateObjectFromURL,
+   mfsourceresolver_BeginCreateObjectFromByteStream,
+   mfsourceresolver_EndCreateObjectFromByteStream,
+   mfsourceresolver_CancelObjectCreation,
+};
+
+/***********************************************************************
+ *      MFCreateSourceResolver (mfplat.@)
+ */
+HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver)
+{
+    mfsourceresolver *object;
+
+    TRACE("%p\n", resolver);
+
+    if (!resolver)
+        return E_POINTER;
+
+    object = HeapAlloc( GetProcessHeap(), 0, sizeof(*object) );
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFSourceResolver_iface.lpVtbl = &mfsourceresolvervtbl;
+    object->ref = 1;
+
+    *resolver = &object->IMFSourceResolver_iface;
     return S_OK;
 }
