@@ -38,6 +38,13 @@ typedef enum _MFCLOCK_STATE
     MFCLOCK_STATE_PAUSED
 } MFCLOCK_STATE;
 
+typedef enum MF_OBJECT_TYPE
+{
+    MF_OBJECT_MEDIASOURCE,
+    MF_OBJECT_BYTESTREAM,
+    MF_OBJECT_INVALID
+} MF_OBJECT_TYPE;
+
 typedef struct _MFCLOCK_PROPERTIES
 {
     unsigned __int64 qwCorrelationRate;
@@ -123,4 +130,35 @@ interface IMFMediaSession : IMFMediaEventGenerator
     HRESULT GetClock([out] IMFClock **clock);
     HRESULT GetSessionCapabilities([out] DWORD *caps);
     HRESULT GetFullTopology([in] DWORD flags, [in] TOPOID id, [out] IMFTopology **topology);
+}
+
+[
+    object,
+    uuid(fbe5a32d-a497-4b61-bb85-97b1a848a6e3)
+]
+interface IMFSourceResolver : IUnknown
+{
+    [local] HRESULT CreateObjectFromURL([in] const WCHAR *url, [in] DWORD flags, [in] IPropertyStore *props,
+            [out] MF_OBJECT_TYPE *obj_type, [out] IUnknown **object);
+    [local] HRESULT CreateObjectFromByteStream([in] IMFByteStream *stream, [in] const WCHAR *url, [in] DWORD flags,
+            [in] IPropertyStore *props, [out] MF_OBJECT_TYPE *obj_type, [out] IUnknown **object);
+    [local] HRESULT BeginCreateObjectFromURL([in] const WCHAR *url, [in] DWORD flags, [in] IPropertyStore *props,
+            [out] IUnknown **cancel_cookie, [in] IMFAsyncCallback *callback, [in] IUnknown *unk_state);
+    [call_as(BeginCreateObjectFromURL)] HRESULT RemoteBeginCreateObjectFromURL([in, string] const WCHAR *url,
+            [in] DWORD flags, [in] IPropertyStore *props, [in] IMFRemoteAsyncCallback *callback);
+    [local] HRESULT EndCreateObjectFromURL([in] IMFAsyncResult *result, [out] MF_OBJECT_TYPE *obj_type,
+            [out] IUnknown **object);
+    [call_as(EndCreateObjectFromURL)] HRESULT RemoteEndCreateObjectFromURL([in] IUnknown *result,
+            [out] MF_OBJECT_TYPE *obj_type, [out] IUnknown **object);
+    [local] HRESULT BeginCreateObjectFromByteStream([in] IMFByteStream *stream, [in] const WCHAR *url,
+            [in] DWORD flags, [in] IPropertyStore *props, [out] IUnknown **cancel_cookie,
+            [in] IMFAsyncCallback *callback, [in] IUnknown *unk_state);
+    [call_as(BeginCreateObjectFromByteStream)] HRESULT RemoteBeginCreateObjectFromByteStream([in] IMFByteStream *stream,
+            [in, unique] const WCHAR *url, [in] DWORD flags, [in, unique] IPropertyStore *props,
+            [in] IMFRemoteAsyncCallback *callback);
+    [local] HRESULT EndCreateObjectFromByteStream([in] IMFAsyncResult *result, [out] MF_OBJECT_TYPE *obj_type,
+            [out] IUnknown **object);
+    [call_as(EndCreateObjectFromByteStream)] HRESULT RemoteEndCreateObjectFromByteStream([in] IUnknown *result,
+            [out] MF_OBJECT_TYPE *obj_type, [out] IUnknown **object);
+    [local] HRESULT CanceObjectCreation([in] IUnknown *cancel_cookie);
 }
