@@ -472,8 +472,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 return 0; /* goto def; */
             }
         } else if ((int)wParam == LIST_WINDOW && g_pChildWnd != NULL) {
-            if (!SendMessageW(g_pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam))
-                goto def;
+            return SendMessageW(g_pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam);
         }
         break;
 
