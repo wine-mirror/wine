@@ -1954,21 +1954,21 @@ static BOOL wait_clipboard_mutex(void)
 
 
 /**************************************************************************
- *              handle_selection_notify_event
+ *              selection_notify_event
  *
  * Called when x11 clipboard content changes
  */
+#ifdef SONAME_LIBXFIXES
 static BOOL selection_notify_event( HWND hwnd, XEvent *event )
 {
-#ifdef SONAME_LIBXFIXES
     XFixesSelectionNotifyEvent *req = (XFixesSelectionNotifyEvent*)event;
 
     if (!is_clipboard_owner) return FALSE;
     if (req->owner == selection_window) return FALSE;
     request_selection_contents( req->display, TRUE );
     return FALSE;
-#endif
 }
+#endif
 
 /**************************************************************************
  *		xfixes_init
