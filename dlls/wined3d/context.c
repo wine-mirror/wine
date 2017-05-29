@@ -1336,6 +1336,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         checkGLcall("context cleanup");
     }
 
+    HeapFree(GetProcessHeap(), 0, context->free_so_statistics_queries);
     HeapFree(GetProcessHeap(), 0, context->free_timestamp_queries);
     HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, context->free_event_queries);
