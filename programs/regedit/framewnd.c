@@ -778,8 +778,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         LPCWSTR valueName = GetValueName(g_pChildWnd->hListWnd);
         WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-        if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
-            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, valueName);
+        ModifyValue(hWnd, hKeyRoot, keyPath, valueName);
         HeapFree(GetProcessHeap(), 0, keyPath);
         break;
     }

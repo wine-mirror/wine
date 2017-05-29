@@ -117,6 +117,7 @@ extern void SetupStatusBar(HWND hWnd, BOOL bResize);
 extern void UpdateStatusBar(void);
 
 /* listview.c */
+extern void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD size);
 extern int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount);
 extern HWND CreateListView(HWND hwndParent, UINT id);
 extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highlightValue);

@@ -373,6 +373,15 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
         error_code_messagebox(hwnd, IDS_UNSUPPORTED_TYPE, type);
     }
 
+    /* Update the listview item with the new data string */
+    if (result)
+    {
+        int index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
+                                 MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
+        stringValueData = read_value(hwnd, hKey, valueName, &type, &len);
+        format_value_data(g_pChildWnd->hListWnd, index, type, stringValueData, len);
+    }
+
 done:
     HeapFree(GetProcessHeap(), 0, stringValueData);
     stringValueData = NULL;

@@ -109,6 +109,54 @@ static void MakeMULTISZDisplayable(LPWSTR multi)
 /*******************************************************************************
  * Local module support methods
  */
+void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD size)
+{
+    switch (type)
+    {
+        case REG_SZ:
+        case REG_EXPAND_SZ:
+            ListView_SetItemTextW(hwndLV, index, 2, data ? data : g_szValueNotSet);
+            break;
+        case REG_DWORD:
+        case REG_DWORD_BIG_ENDIAN:
+        {
+            DWORD value = *(DWORD *)data;
+            WCHAR buf[64];
+            WCHAR format[] = {'0','x','%','0','8','x',' ','(','%','u',')',0};
+            if (type == REG_DWORD_BIG_ENDIAN)
+                value = RtlUlongByteSwap(value);
+            wsprintfW(buf, format, value, value);
+            ListView_SetItemTextW(hwndLV, index, 2, buf);
+            break;
+        }
+        case REG_BINARY:
+        case REG_NONE:
+        {
+            unsigned int i;
+            BYTE *pData = data;
+            WCHAR *strBinary = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR) * 3 + sizeof(WCHAR));
+            WCHAR format[] = {'%','0','2','X',' ',0};
+            for (i = 0; i < size; i++)
+                wsprintfW( strBinary + i*3, format, pData[i] );
+            strBinary[size * 3] = 0;
+            ListView_SetItemTextW(hwndLV, index, 2, strBinary);
+            HeapFree(GetProcessHeap(), 0, strBinary);
+            break;
+        }
+        case REG_MULTI_SZ:
+            MakeMULTISZDisplayable(data);
+            ListView_SetItemTextW(hwndLV, index, 2, data);
+            break;
+        default:
+        {
+            WCHAR szText[128];
+            LoadStringW(hInst, IDS_REGISTRY_VALUE_CANT_DISPLAY, szText, COUNT_OF(szText));
+            ListView_SetItemTextW(hwndLV, index, 2, szText);
+            break;
+        }
+    }
+}
+
 int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount)
 {
     LINE_INFO* linfo;
@@ -154,54 +202,8 @@ int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWOR
     item.iIndent = 0;
 #endif
 
-    index = ListView_InsertItemW(hwndLV, &item);
-    if (index != -1) {
-        switch (dwValType) {
-        case REG_SZ:
-        case REG_EXPAND_SZ:
-            if (ValBuf) {
-                ListView_SetItemTextW(hwndLV, index, 2, ValBuf);
-            } else {
-                ListView_SetItemTextW(hwndLV, index, 2, g_szValueNotSet);
-            }
-            break;
-        case REG_DWORD:
-        case REG_DWORD_BIG_ENDIAN: {
-                DWORD value = *(DWORD*)ValBuf;
-                WCHAR buf[64];
-                WCHAR format[] = {'0','x','%','0','8','x',' ','(','%','u',')',0};
-                if (dwValType == REG_DWORD_BIG_ENDIAN)
-                    value = RtlUlongByteSwap(value);
-                wsprintfW(buf, format, value, value);
-                ListView_SetItemTextW(hwndLV, index, 2, buf);
-            }
-            break;
-        case REG_BINARY:
-        case REG_NONE: {
-                unsigned int i;
-                LPBYTE pData = ValBuf;
-                LPWSTR strBinary = HeapAlloc(GetProcessHeap(), 0, dwCount * sizeof(WCHAR) * 3 + sizeof(WCHAR));
-                WCHAR format[] = {'%','0','2','X',' ',0};
-                for (i = 0; i < dwCount; i++)
-                    wsprintfW( strBinary + i*3, format, pData[i] );
-                strBinary[dwCount * 3] = 0;
-                ListView_SetItemTextW(hwndLV, index, 2, strBinary);
-                HeapFree(GetProcessHeap(), 0, strBinary);
-            }
-            break;
-        case REG_MULTI_SZ:
-            MakeMULTISZDisplayable(ValBuf);
-            ListView_SetItemTextW(hwndLV, index, 2, ValBuf);
-            break;
-        default:
-          {
-            WCHAR szText[128];
-            LoadStringW(hInst, IDS_REGISTRY_VALUE_CANT_DISPLAY, szText, COUNT_OF(szText));
-            ListView_SetItemTextW(hwndLV, index, 2, szText);
-            break;
-          }
-        }
-    }
+    if ((index = ListView_InsertItemW(hwndLV, &item)) != -1)
+        format_value_data(hwndLV, index, dwValType, ValBuf, dwCount);
     return index;
 }
 
