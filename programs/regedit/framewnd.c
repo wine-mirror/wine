@@ -699,8 +699,6 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HKEY hKeyRoot = 0;
     DWORD valueType;
-    int curIndex;
-    BOOL firstItem = TRUE;
 
     if (LOWORD(wParam) >= ID_FAVORITE_FIRST && LOWORD(wParam) <= ID_FAVORITE_LAST) {
         HKEY hKey;
@@ -744,29 +742,35 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             HeapFree(GetProcessHeap(), 0, keyPath);
         } else if (hWndDelete == g_pChildWnd->hListWnd) {
-        WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
-        curIndex = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
-        while(curIndex != -1) {
-            WCHAR* valueName = GetItemText(g_pChildWnd->hListWnd, curIndex);
+            unsigned int num_selected, index;
+            WCHAR *keyPath;
 
-            curIndex = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, curIndex, MAKELPARAM(LVNI_SELECTED, 0));
-            if(curIndex != -1 && firstItem) {
-                if (MessageBoxW(hWnd, MAKEINTRESOURCEW(IDS_DELETE_VALUE_TEXT_MULTIPLE),
-                                MAKEINTRESOURCEW(IDS_DELETE_VALUE_TITLE),
-                                MB_YESNO | MB_ICONEXCLAMATION) != IDYES)
+            if (!(num_selected = SendMessageW(g_pChildWnd->hListWnd, LVM_GETSELECTEDCOUNT, 0, 0L)))
+                break;
+
+            if (num_selected > 1)
+            {
+                if (messagebox(hWnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_VALUE_TITLE,
+                               IDS_DELETE_VALUE_TEXT_MULTIPLE) != IDYES)
                     break;
             }
 
-            if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueName, curIndex==-1 && firstItem))
+            keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+
+            index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
+            while (index != -1)
             {
+                WCHAR *valueName = GetItemText(g_pChildWnd->hListWnd, index);
+                if (!DeleteValue(hWnd, hKeyRoot, keyPath, valueName, num_selected == 1))
+                {
+                    HeapFree(GetProcessHeap(), 0, valueName);
+                    break;
+                }
                 HeapFree(GetProcessHeap(), 0, valueName);
-                break;
+                SendMessageW(g_pChildWnd->hListWnd, LVM_DELETEITEM, index, 0L);
+                index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
             }
-            firstItem = FALSE;
-            HeapFree(GetProcessHeap(), 0, valueName);
-        }
-        RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, NULL);
-        HeapFree(GetProcessHeap(), 0, keyPath);
+            HeapFree(GetProcessHeap(), 0, keyPath);
         } else if (IsChild(g_pChildWnd->hTreeWnd, hWndDelete) ||
                    IsChild(g_pChildWnd->hListWnd, hWndDelete)) {
             SendMessageW(hWndDelete, WM_KEYDOWN, VK_DELETE, 0);
