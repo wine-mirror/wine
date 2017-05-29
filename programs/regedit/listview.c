@@ -420,6 +420,9 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                 SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
             }
             break;
+        case NM_SETFOCUS:
+            g_pChildWnd->nFocusPanel = 1;
+            break;
         case NM_DBLCLK: {
                 NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
                 LVHITTESTINFO info;
