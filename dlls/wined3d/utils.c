@@ -1032,7 +1032,7 @@ const struct wined3d_color_key_conversion * wined3d_format_get_color_key_convers
 
     if (need_alpha_ck && (texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY))
     {
-        for (i = 0; i < sizeof(color_key_info) / sizeof(*color_key_info); ++i)
+        for (i = 0; i < ARRAY_SIZE(color_key_info); ++i)
         {
             if (color_key_info[i].src_format == format->id)
                 return &color_key_info[i].conversion;
