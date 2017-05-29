@@ -443,8 +443,9 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
     WCHAR newValue[256];
     DWORD valueDword = 0;
     BOOL result = FALSE;
-    int valueNum;
+    int valueNum, index;
     HKEY hKey;
+    LVITEMW item;
          
     lRet = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) {
@@ -470,6 +471,13 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
         error_code_messagebox(hwnd, IDS_CREATE_VALUE_FAILED);
 	goto done;
     }
+
+    /* Add the new item to the listview */
+    index = AddEntryToList(g_pChildWnd->hListWnd, valueName, valueType, (BYTE *)&valueDword, sizeof(DWORD));
+    item.state = LVIS_FOCUSED | LVIS_SELECTED;
+    item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+    SendMessageW(g_pChildWnd->hListWnd, LVM_SETITEMSTATE, index, (LPARAM)&item);
+
     result = TRUE;
 
 done:

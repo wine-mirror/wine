@@ -861,10 +861,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         WCHAR* keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
         WCHAR newKey[MAX_NEW_KEY_LEN];
-        if (CreateValue(hWnd, hKeyRoot, keyPath, valueType, newKey)) {
-            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath, newKey);
+        if (CreateValue(hWnd, hKeyRoot, keyPath, valueType, newKey))
             StartValueRename(g_pChildWnd->hListWnd);
-        }
         HeapFree(GetProcessHeap(), 0, keyPath);
     }
 	break;

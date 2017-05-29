@@ -109,7 +109,7 @@ static void MakeMULTISZDisplayable(LPWSTR multi)
 /*******************************************************************************
  * Local module support methods
  */
-static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType, void *ValBuf, DWORD dwCount)
+int AddEntryToList(HWND hwndLV, WCHAR *Name, DWORD dwValType, void *ValBuf, DWORD dwCount)
 {
     LINE_INFO* linfo;
     LVITEMW item;
@@ -202,6 +202,7 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType, void *ValB
           }
         }
     }
+    return index;
 }
 
 static BOOL InitListViewImageList(HWND hWndListView)
