@@ -474,7 +474,7 @@ DWORD WINAPI SetThreadIdealProcessor(
 /***********************************************************************
  *              SetThreadIdealProcessorEx (KERNEL32.@)
  */
-BOOL SetThreadIdealProcessorEx( HANDLE thread, PROCESSOR_NUMBER *ideal, PROCESSOR_NUMBER *previous )
+BOOL WINAPI SetThreadIdealProcessorEx( HANDLE thread, PROCESSOR_NUMBER *ideal, PROCESSOR_NUMBER *previous )
 {
     FIXME("(%p %p %p): stub\n", thread, ideal, previous);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
