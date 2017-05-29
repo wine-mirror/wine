@@ -8265,7 +8265,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
             continue;
         }
         shader_addline(buffer, "dir = normalize(dir);\n");
-        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, i);
+        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, idx);
         shader_addline(buffer, "}\n");
     }
 
@@ -8306,7 +8306,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
             shader_addline(buffer, "}\n");
             continue;
         }
-        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, i);
+        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, idx);
         shader_addline(buffer, "}\n");
     }
 
@@ -8317,7 +8317,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
             continue;
         shader_addline(buffer, "att = 1.0;\n");
         shader_addline(buffer, "dir = normalize(ffp_light[%u].direction.xyz);\n", idx);
-        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, i);
+        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, idx);
     }
 
     for (i = 0; i < settings->parallel_point_light_count; ++i, ++idx)
@@ -8327,7 +8327,7 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
             continue;
         shader_addline(buffer, "att = 1.0;\n");
         shader_addline(buffer, "dir = normalize(ffp_light[%u].position.xyz);\n", idx);
-        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, i);
+        shader_glsl_ffp_vertex_lighting_footer(buffer, settings, idx);
     }
 
     shader_addline(buffer, "ffp_varying_diffuse.xyz = %s.xyz * ambient + %s.xyz * diffuse + %s.xyz;\n",
