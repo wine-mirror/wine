@@ -2155,6 +2155,9 @@ static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d
         GL_EXTCALL(glBindAttribLocation(ctx->test_program_id, 0, "pos"));
         GL_EXTCALL(glBindAttribLocation(ctx->test_program_id, 1, "color"));
 
+        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+            GL_EXTCALL(glBindFragDataLocation(ctx->test_program_id, 0, "fragment_color"));
+
         GL_EXTCALL(glCompileShader(vs_id));
         print_glsl_info_log(gl_info, vs_id, FALSE);
         GL_EXTCALL(glCompileShader(fs_id));
