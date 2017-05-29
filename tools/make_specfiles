@@ -157,6 +157,10 @@ my @dll_groups =
   "api-ms-win-power-setting-l1-1-0",
  ],
  [
+  "ntdsapi",
+  "api-ms-win-security-activedirectoryclient-l1-1-0",
+ ],
+ [
   "kernel32",
   "api-ms-win-appmodel-identity-l1-1-0",
   "api-ms-win-appmodel-runtime-l1-1-1",
