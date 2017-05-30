@@ -566,19 +566,11 @@ static HRESULT write_attribute_text( struct writer *writer, const WS_XML_ATTRIBU
     return hr;
 }
 
-static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr )
-{
-    if (!attr->prefix || !attr->prefix->length) return RECORD_SHORT_ATTRIBUTE;
-    if (attr->prefix->length == 1 && attr->prefix->bytes[0] >= 'a' && attr->prefix->bytes[0] <= 'z')
-    {
-        return RECORD_PREFIX_ATTRIBUTE_A + attr->prefix->bytes[0] - 'a';
-    }
-    return RECORD_ATTRIBUTE;
-};
-
 static HRESULT write_int31( struct writer *writer, ULONG len )
 {
     HRESULT hr;
+
+    if (len > 0x7fffffff) return E_INVALIDARG;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
     if (len < 0x80)
@@ -630,6 +622,14 @@ static HRESULT write_string( struct writer *writer, const BYTE *bytes, ULONG len
     return S_OK;
 }
 
+static HRESULT write_dict_string( struct writer *writer, ULONG id )
+{
+    HRESULT hr;
+    if (id > 0x3fffffff) return E_INVALIDARG;
+    if ((hr = write_int31( writer, id << 1 )) != S_OK) return hr;
+    return S_OK;
+}
+
 static enum record_type get_text_record_type( const WS_XML_TEXT *text, BOOL attr )
 {
     const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
@@ -660,10 +660,26 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
         return S_OK;
 
     default:
-        ERR( "unhandled record type %u\n", type );
+        ERR( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
     }
 }
+
+static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr )
+{
+    if (!attr->prefix || !attr->prefix->length)
+    {
+        if (attr->localName->dictionary) return RECORD_SHORT_DICTIONARY_ATTRIBUTE;
+        return RECORD_SHORT_ATTRIBUTE;
+    }
+    if (attr->prefix->length == 1 && attr->prefix->bytes[0] >= 'a' && attr->prefix->bytes[0] <= 'z')
+    {
+        if (attr->localName->dictionary) return RECORD_PREFIX_DICTIONARY_ATTRIBUTE_A + attr->prefix->bytes[0] - 'a';
+        return RECORD_PREFIX_ATTRIBUTE_A + attr->prefix->bytes[0] - 'a';
+    }
+    if (attr->localName->dictionary) return RECORD_DICTIONARY_ATTRIBUTE;
+    return RECORD_ATTRIBUTE;
+};
 
 static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
@@ -678,6 +694,11 @@ static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUT
         if ((hr = write_string( writer, attr->localName->bytes, attr->localName->length )) != S_OK) return hr;
         return write_attribute_value_bin( writer, attr->value );
     }
+    if (type >= RECORD_PREFIX_DICTIONARY_ATTRIBUTE_A && type <= RECORD_PREFIX_DICTIONARY_ATTRIBUTE_Z)
+    {
+        if ((hr = write_dict_string( writer, attr->localName->id )) != S_OK) return hr;
+        return write_attribute_value_bin( writer, attr->value );
+    }
 
     switch (type)
     {
@@ -690,8 +711,17 @@ static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUT
         if ((hr = write_string( writer, attr->localName->bytes, attr->localName->length )) != S_OK) return hr;
         break;
 
+    case RECORD_SHORT_DICTIONARY_ATTRIBUTE:
+        if ((hr = write_dict_string( writer, attr->localName->id )) != S_OK) return hr;
+        break;
+
+    case RECORD_DICTIONARY_ATTRIBUTE:
+        if ((hr = write_string( writer, attr->prefix->bytes, attr->prefix->length )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, attr->localName->id )) != S_OK) return hr;
+        break;
+
     default:
-        ERR( "unhandled record type %u\n", type );
+        ERR( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
     }
 
@@ -789,7 +819,12 @@ static HRESULT write_namespace_attribute_text( struct writer *writer, const WS_X
 
 static enum record_type get_xmlns_record_type( const WS_XML_ATTRIBUTE *attr )
 {
-    if (!attr->prefix || !attr->prefix->length) return RECORD_SHORT_XMLNS_ATTRIBUTE;
+    if (!attr->prefix || !attr->prefix->length)
+    {
+        if (attr->ns->dictionary) return RECORD_SHORT_DICTIONARY_XMLNS_ATTRIBUTE;
+        return RECORD_SHORT_XMLNS_ATTRIBUTE;
+    }
+    if (attr->ns->dictionary) return RECORD_DICTIONARY_XMLNS_ATTRIBUTE;
     return RECORD_XMLNS_ATTRIBUTE;
 };
 
@@ -810,8 +845,15 @@ static HRESULT write_namespace_attribute_bin( struct writer *writer, const WS_XM
         if ((hr = write_string( writer, attr->prefix->bytes, attr->prefix->length )) != S_OK) return hr;
         break;
 
+    case RECORD_SHORT_DICTIONARY_XMLNS_ATTRIBUTE:
+        return write_dict_string( writer, attr->ns->id );
+
+    case RECORD_DICTIONARY_XMLNS_ATTRIBUTE:
+        if ((hr = write_string( writer, attr->prefix->bytes, attr->prefix->length )) != S_OK) return hr;
+        return write_dict_string( writer, attr->ns->id );
+
     default:
-        ERR( "unhandled record type %u\n", type );
+        ERR( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
     }
 
@@ -841,12 +883,12 @@ static HRESULT add_namespace_attribute( struct writer *writer, const WS_XML_STRI
 
     attr->singleQuote = !!single;
     attr->isXmlNs = 1;
-    if (prefix && !(attr->prefix = alloc_xml_string( prefix->bytes, prefix->length )))
+    if (prefix && !(attr->prefix = dup_xml_string( prefix )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
     }
-    if (!(attr->ns = alloc_xml_string( ns->bytes, ns->length )))
+    if (!(attr->ns = dup_xml_string( ns )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
@@ -889,7 +931,7 @@ static BOOL namespace_in_scope( const WS_XML_ELEMENT_NODE *elem, const WS_XML_ST
 static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
 {
     WS_XML_STRING *str;
-    if (!(str = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
+    if (!(str = dup_xml_string( ns ))) return E_OUTOFMEMORY;
     heap_free( writer->current_ns );
     writer->current_ns = str;
     return S_OK;
@@ -989,11 +1031,17 @@ static HRESULT write_startelement_text( struct writer *writer )
 
 static enum record_type get_elem_record_type( const WS_XML_ELEMENT_NODE *elem )
 {
-    if (!elem->prefix || !elem->prefix->length) return RECORD_SHORT_ELEMENT;
+    if (!elem->prefix || !elem->prefix->length)
+    {
+        if (elem->localName->dictionary) return RECORD_SHORT_DICTIONARY_ELEMENT;
+        return RECORD_SHORT_ELEMENT;
+    }
     if (elem->prefix->length == 1 && elem->prefix->bytes[0] >= 'a' && elem->prefix->bytes[0] <= 'z')
     {
+        if (elem->localName->dictionary) return RECORD_PREFIX_DICTIONARY_ELEMENT_A + elem->prefix->bytes[0] - 'a';
         return RECORD_PREFIX_ELEMENT_A + elem->prefix->bytes[0] - 'a';
     }
+    if (elem->localName->dictionary) return RECORD_DICTIONARY_ELEMENT;
     return RECORD_ELEMENT;
 };
 
@@ -1011,6 +1059,11 @@ static HRESULT write_startelement_bin( struct writer *writer )
         if ((hr = write_string( writer, elem->localName->bytes, elem->localName->length )) != S_OK) return hr;
         return write_attributes( writer, elem );
     }
+    if (type >= RECORD_PREFIX_DICTIONARY_ELEMENT_A && type <= RECORD_PREFIX_DICTIONARY_ELEMENT_Z)
+    {
+        if ((hr = write_dict_string( writer, elem->localName->id )) != S_OK) return hr;
+        return write_attributes( writer, elem );
+    }
 
     switch (type)
     {
@@ -1023,8 +1076,17 @@ static HRESULT write_startelement_bin( struct writer *writer )
         if ((hr = write_string( writer, elem->localName->bytes, elem->localName->length )) != S_OK) return hr;
         break;
 
+    case RECORD_SHORT_DICTIONARY_ELEMENT:
+        if ((hr = write_dict_string( writer, elem->localName->id )) != S_OK) return hr;
+        break;
+
+    case RECORD_DICTIONARY_ELEMENT:
+        if ((hr = write_string( writer, elem->prefix->bytes, elem->prefix->length )) != S_OK) return hr;
+        if ((hr = write_dict_string( writer, elem->localName->id )) != S_OK) return hr;
+        break;
+
     default:
-        ERR( "unhandled record type %u\n", type );
+        ERR( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
     }
 
@@ -1234,17 +1296,17 @@ static HRESULT write_add_attribute( struct writer *writer, const WS_XML_STRING *
     if (!prefix && ns->length) prefix = elem->prefix;
 
     attr->singleQuote = !!single;
-    if (prefix && !(attr->prefix = alloc_xml_string( prefix->bytes, prefix->length )))
+    if (prefix && !(attr->prefix = dup_xml_string( prefix )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
     }
-    if (!(attr->localName = alloc_xml_string( localname->bytes, localname->length )))
+    if (!(attr->localName = dup_xml_string( localname )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
     }
-    if (!(attr->ns = alloc_xml_string( ns->bytes, ns->length )))
+    if (!(attr->ns = dup_xml_string( ns )))
     {
         free_attribute( attr );
         return E_OUTOFMEMORY;
@@ -1439,17 +1501,17 @@ static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRIN
     if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return E_OUTOFMEMORY;
     elem = &node->hdr;
 
-    if (prefix && !(elem->prefix = alloc_xml_string( prefix->bytes, prefix->length )))
+    if (prefix && !(elem->prefix = dup_xml_string( prefix )))
     {
         free_node( node );
         return E_OUTOFMEMORY;
     }
-    if (!(elem->localName = alloc_xml_string( localname->bytes, localname->length )))
+    if (!(elem->localName = dup_xml_string( localname )))
     {
         free_node( node );
         return E_OUTOFMEMORY;
     }
-    if (!(elem->ns = alloc_xml_string( ns->bytes, ns->length )))
+    if (!(elem->ns = dup_xml_string( ns )))
     {
         free_node( node );
         return E_OUTOFMEMORY;
@@ -1999,7 +2061,7 @@ static HRESULT write_text_bin( struct writer *writer, const WS_XML_TEXT *text, U
         return S_OK;
 
     default:
-        FIXME( "unhandled record type %u\n", type );
+        FIXME( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
     }
 }

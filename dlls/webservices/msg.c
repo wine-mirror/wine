@@ -467,17 +467,21 @@ static HRESULT get_env_namespace( WS_ENVELOPE_VERSION ver, WS_XML_STRING *str )
     case WS_ENVELOPE_VERSION_SOAP_1_1:
         str->bytes  = (BYTE *)ns_env_1_1;
         str->length = sizeof(ns_env_1_1)/sizeof(ns_env_1_1[0]) - 1;
-        return S_OK;
+        break;
 
     case WS_ENVELOPE_VERSION_SOAP_1_2:
         str->bytes  = (BYTE *)ns_env_1_2;
         str->length = sizeof(ns_env_1_2)/sizeof(ns_env_1_2[0]) - 1;
-        return S_OK;
+        break;
 
     default:
         ERR( "unhandled envelope version %u\n", ver );
         return E_NOTIMPL;
     }
+
+    str->dictionary = NULL;
+    str->id         = 0;
+    return S_OK;
 }
 
 static HRESULT get_addr_namespace( WS_ADDRESSING_VERSION ver, WS_XML_STRING *str )
@@ -487,22 +491,26 @@ static HRESULT get_addr_namespace( WS_ADDRESSING_VERSION ver, WS_XML_STRING *str
     case WS_ADDRESSING_VERSION_0_9:
         str->bytes  = (BYTE *)ns_addr_0_9;
         str->length = sizeof(ns_addr_0_9)/sizeof(ns_addr_0_9[0]) - 1;
-        return S_OK;
+        break;
 
     case WS_ADDRESSING_VERSION_1_0:
         str->bytes  = (BYTE *)ns_addr_1_0;
         str->length = sizeof(ns_addr_1_0)/sizeof(ns_addr_1_0[0]) - 1;
-        return S_OK;
+        break;
 
     case WS_ADDRESSING_VERSION_TRANSPORT:
         str->bytes  = NULL;
         str->length = 0;
-        return S_OK;
+        break;
 
     default:
         ERR( "unhandled addressing version %u\n", ver );
         return E_NOTIMPL;
     }
+
+    str->dictionary = NULL;
+    str->id         = 0;
+    return S_OK;
 }
 
 static const WS_XML_STRING *get_header_name( WS_HEADER_TYPE type )

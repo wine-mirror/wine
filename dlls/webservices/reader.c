@@ -161,9 +161,9 @@ static WS_XML_ATTRIBUTE *dup_attribute( const WS_XML_ATTRIBUTE *src )
     dst->isXmlNs     = src->isXmlNs;
 
     if (!prefix) dst->prefix = NULL;
-    else if (!(dst->prefix = alloc_xml_string( prefix->bytes, prefix->length ))) goto error;
-    if (!(dst->localName = alloc_xml_string( localname->bytes, localname->length ))) goto error;
-    if (!(dst->ns = alloc_xml_string( ns->bytes, ns->length ))) goto error;
+    else if (!(dst->prefix = dup_xml_string( prefix ))) goto error;
+    if (!(dst->localName = dup_xml_string( localname ))) goto error;
+    if (!(dst->ns = dup_xml_string( ns ))) goto error;
 
     if (text)
     {
@@ -214,9 +214,9 @@ static struct node *dup_element_node( const WS_XML_ELEMENT_NODE *src )
     if (count && !(dst->attributes = dup_attributes( attrs, count ))) goto error;
     dst->attributeCount = count;
 
-    if (prefix && !(dst->prefix = alloc_xml_string( prefix->bytes, prefix->length ))) goto error;
-    if (localname && !(dst->localName = alloc_xml_string( localname->bytes, localname->length ))) goto error;
-    if (ns && !(dst->ns = alloc_xml_string( ns->bytes, ns->length ))) goto error;
+    if (prefix && !(dst->prefix = dup_xml_string( prefix ))) goto error;
+    if (localname && !(dst->localName = dup_xml_string( localname ))) goto error;
+    if (ns && !(dst->ns = dup_xml_string( ns ))) goto error;
     return node;
 
 error:
@@ -794,6 +794,20 @@ WS_XML_STRING *alloc_xml_string( const unsigned char *data, ULONG len )
     ret->dictionary = NULL;
     ret->id         = 0;
     if (data) memcpy( ret->bytes, data, len );
+    return ret;
+}
+
+WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
+{
+    WS_XML_STRING *ret;
+
+    if (!src->dictionary) return alloc_xml_string( src->bytes, src->length );
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    ret->length     = src->length;
+    ret->bytes      = src->bytes;
+    ret->dictionary = src->dictionary;
+    ret->id         = src->id;
     return ret;
 }
 
