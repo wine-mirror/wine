@@ -155,6 +155,7 @@ struct d3dx_const_param_eval_output
     unsigned int register_index;
     unsigned int register_count;
     BOOL direct_copy;
+    unsigned int element_count;
 };
 
 struct d3dx_const_tab
