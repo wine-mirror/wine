@@ -193,7 +193,8 @@ enum pres_value_type
     PRES_VT_FLOAT,
     PRES_VT_DOUBLE,
     PRES_VT_INT,
-    PRES_VT_BOOL
+    PRES_VT_BOOL,
+    PRES_VT_COUNT
 };
 
 static const struct
@@ -268,6 +269,22 @@ struct const_upload_info
     unsigned int major_count;
     unsigned int count;
 };
+
+static enum pres_value_type table_type_from_param_type(D3DXPARAMETER_TYPE type)
+{
+    switch (type)
+    {
+        case D3DXPT_FLOAT:
+            return PRES_VT_FLOAT;
+        case D3DXPT_INT:
+            return PRES_VT_INT;
+        case D3DXPT_BOOL:
+            return PRES_VT_BOOL;
+        default:
+            FIXME("Unsupported type %u.\n", type);
+            return PRES_VT_COUNT;
+    }
+}
 
 static unsigned int get_reg_offset(unsigned int table, unsigned int offset)
 {
@@ -392,6 +409,9 @@ static void regstore_set_double(struct d3dx_regstore *rs, unsigned int table, un
         case PRES_VT_DOUBLE: *(double *)p = v; break;
         case PRES_VT_INT   : *(int *)p = lrint(v); break;
         case PRES_VT_BOOL  : *(BOOL *)p = !!v; break;
+        default:
+            FIXME("Bad type %u.\n", table_info[table].type);
+            break;
     }
     reg_idx = get_reg_offset(table, offset);
     rs->table_value_set[table][reg_idx / PRES_BITMASK_BLOCK_SIZE] |=
@@ -1033,9 +1053,7 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
         get_const_upload_info(const_set, &info);
         start_offset = get_offset_reg(table, const_set->register_index);
 
-        if (((param->type == D3DXPT_FLOAT && table_type == PRES_VT_FLOAT)
-                || (param->type == D3DXPT_INT && table_type == PRES_VT_INT)
-                || (param->type == D3DXPT_BOOL && table_type == PRES_VT_BOOL))
+        if (table_type_from_param_type(param->type) == table_type
                 && !info.transpose && info.minor == info.major_stride
                 && info.count == get_offset_reg(table, const_set->register_count)
                 && info.count * sizeof(unsigned int) <= param->bytes)
