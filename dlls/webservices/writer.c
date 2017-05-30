@@ -83,6 +83,7 @@ struct writer
     WS_XML_WRITER_OUTPUT_TYPE    output_type;
     struct xmlbuf               *output_buf;
     WS_HEAP                     *output_heap;
+    WS_XML_DICTIONARY           *dict;
     ULONG                        prop_count;
     struct prop                  prop[sizeof(writer_props)/sizeof(writer_props[0])];
 };
@@ -109,7 +110,7 @@ static struct writer *alloc_writer(void)
 static void free_writer( struct writer *writer )
 {
     destroy_nodes( writer->root );
-    heap_free( writer->current_ns );
+    free_xml_string( writer->current_ns );
     WsFreeHeap( writer->output_heap );
 
     writer->cs.DebugInfo->Spare[0] = 0;
@@ -157,13 +158,14 @@ static HRESULT init_writer( struct writer *writer )
     writer->write_bufptr = NULL;
     destroy_nodes( writer->root );
     writer->root         = writer->current = NULL;
-    heap_free( writer->current_ns );
+    free_xml_string( writer->current_ns );
     writer->current_ns   = NULL;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
     write_insert_eof( writer, node );
     writer->state        = WRITER_STATE_INITIAL;
     writer->output_enc   = WS_XML_WRITER_ENCODING_TYPE_TEXT;
+    writer->dict         = NULL;
     return S_OK;
 }
 
@@ -379,7 +381,9 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
     }
     case WS_XML_WRITER_ENCODING_TYPE_BINARY:
     {
+        WS_XML_WRITER_BINARY_ENCODING *bin = (WS_XML_WRITER_BINARY_ENCODING *)encoding;
         writer->output_enc = WS_XML_WRITER_ENCODING_TYPE_BINARY;
+        writer->dict       = bin->staticDictionary;
         break;
     }
     default:
@@ -665,25 +669,26 @@ static HRESULT write_attribute_value_bin( struct writer *writer, const WS_XML_TE
     }
 }
 
-static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr )
+static enum record_type get_attr_record_type( const WS_XML_ATTRIBUTE *attr, BOOL use_dict )
 {
     if (!attr->prefix || !attr->prefix->length)
     {
-        if (attr->localName->dictionary) return RECORD_SHORT_DICTIONARY_ATTRIBUTE;
+        if (use_dict) return RECORD_SHORT_DICTIONARY_ATTRIBUTE;
         return RECORD_SHORT_ATTRIBUTE;
     }
     if (attr->prefix->length == 1 && attr->prefix->bytes[0] >= 'a' && attr->prefix->bytes[0] <= 'z')
     {
-        if (attr->localName->dictionary) return RECORD_PREFIX_DICTIONARY_ATTRIBUTE_A + attr->prefix->bytes[0] - 'a';
+        if (use_dict) return RECORD_PREFIX_DICTIONARY_ATTRIBUTE_A + attr->prefix->bytes[0] - 'a';
         return RECORD_PREFIX_ATTRIBUTE_A + attr->prefix->bytes[0] - 'a';
     }
-    if (attr->localName->dictionary) return RECORD_DICTIONARY_ATTRIBUTE;
+    if (use_dict) return RECORD_DICTIONARY_ATTRIBUTE;
     return RECORD_ATTRIBUTE;
 };
 
 static HRESULT write_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
-    enum record_type type = get_attr_record_type( attr );
+    BOOL use_dict = (writer->dict && attr->localName->dictionary == writer->dict);
+    enum record_type type = get_attr_record_type( attr, use_dict );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -817,20 +822,21 @@ static HRESULT write_namespace_attribute_text( struct writer *writer, const WS_X
     return S_OK;
 }
 
-static enum record_type get_xmlns_record_type( const WS_XML_ATTRIBUTE *attr )
+static enum record_type get_xmlns_record_type( const WS_XML_ATTRIBUTE *attr, BOOL use_dict )
 {
     if (!attr->prefix || !attr->prefix->length)
     {
-        if (attr->ns->dictionary) return RECORD_SHORT_DICTIONARY_XMLNS_ATTRIBUTE;
+        if (use_dict) return RECORD_SHORT_DICTIONARY_XMLNS_ATTRIBUTE;
         return RECORD_SHORT_XMLNS_ATTRIBUTE;
     }
-    if (attr->ns->dictionary) return RECORD_DICTIONARY_XMLNS_ATTRIBUTE;
+    if (use_dict) return RECORD_DICTIONARY_XMLNS_ATTRIBUTE;
     return RECORD_XMLNS_ATTRIBUTE;
 };
 
 static HRESULT write_namespace_attribute_bin( struct writer *writer, const WS_XML_ATTRIBUTE *attr )
 {
-    enum record_type type = get_xmlns_record_type( attr );
+    BOOL use_dict = (writer->dict && attr->ns->dictionary == writer->dict);
+    enum record_type type = get_xmlns_record_type( attr, use_dict );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
@@ -932,7 +938,7 @@ static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING
 {
     WS_XML_STRING *str;
     if (!(str = dup_xml_string( ns ))) return E_OUTOFMEMORY;
-    heap_free( writer->current_ns );
+    free_xml_string( writer->current_ns );
     writer->current_ns = str;
     return S_OK;
 }
@@ -1029,26 +1035,27 @@ static HRESULT write_startelement_text( struct writer *writer )
     return write_attributes( writer, elem );
 }
 
-static enum record_type get_elem_record_type( const WS_XML_ELEMENT_NODE *elem )
+static enum record_type get_elem_record_type( const WS_XML_ELEMENT_NODE *elem, BOOL use_dict )
 {
     if (!elem->prefix || !elem->prefix->length)
     {
-        if (elem->localName->dictionary) return RECORD_SHORT_DICTIONARY_ELEMENT;
+        if (use_dict) return RECORD_SHORT_DICTIONARY_ELEMENT;
         return RECORD_SHORT_ELEMENT;
     }
     if (elem->prefix->length == 1 && elem->prefix->bytes[0] >= 'a' && elem->prefix->bytes[0] <= 'z')
     {
-        if (elem->localName->dictionary) return RECORD_PREFIX_DICTIONARY_ELEMENT_A + elem->prefix->bytes[0] - 'a';
+        if (use_dict) return RECORD_PREFIX_DICTIONARY_ELEMENT_A + elem->prefix->bytes[0] - 'a';
         return RECORD_PREFIX_ELEMENT_A + elem->prefix->bytes[0] - 'a';
     }
-    if (elem->localName->dictionary) return RECORD_DICTIONARY_ELEMENT;
+    if (use_dict) return RECORD_DICTIONARY_ELEMENT;
     return RECORD_ELEMENT;
 };
 
 static HRESULT write_startelement_bin( struct writer *writer )
 {
     const WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
-    enum record_type type = get_elem_record_type( elem );
+    BOOL use_dict = (writer->dict && elem->localName->dictionary == writer->dict);
+    enum record_type type = get_elem_record_type( elem, use_dict );
     HRESULT hr;
 
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;

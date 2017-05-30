@@ -70,6 +70,202 @@ HRESULT prop_get( const struct prop *prop, ULONG count, ULONG id, void *buf, ULO
     return S_OK;
 }
 
+static CRITICAL_SECTION dict_cs;
+static CRITICAL_SECTION_DEBUG dict_cs_debug =
+{
+    0, 0, &dict_cs,
+    {&dict_cs_debug.ProcessLocksList,
+     &dict_cs_debug.ProcessLocksList},
+     0, 0, {(DWORD_PTR)(__FILE__ ": dict_cs")}
+};
+static CRITICAL_SECTION dict_cs = {&dict_cs_debug, -1, 0, 0, 0, 0};
+
+static ULONG dict_size, *dict_sorted;
+static WS_XML_DICTIONARY dict_builtin =
+{
+    {0x82704485,0x222a,0x4f7c,{0xb9,0x7b,0xe9,0xa4,0x62,0xa9,0x66,0x2b}}
+};
+
+static inline int cmp_string( const unsigned char *str, ULONG len, const unsigned char *str2, ULONG len2 )
+{
+    if (len < len2) return -1;
+    else if (len > len2) return 1;
+    while (len--)
+    {
+        if (*str == *str2) { str++; str2++; }
+        else return *str - *str2;
+    }
+    return 0;
+}
+
+/* return -1 and string id if found, sort index if not found */
+static int find_string( const unsigned char *data, ULONG len, ULONG *id )
+{
+    int i, c, min = 0, max = dict_builtin.stringCount - 1;
+    while (min <= max)
+    {
+        i = (min + max) / 2;
+        c = cmp_string( data, len,
+                        dict_builtin.strings[dict_sorted[i]].bytes,
+                        dict_builtin.strings[dict_sorted[i]].length );
+        if (c < 0)
+            max = i - 1;
+        else if (c > 0)
+            min = i + 1;
+        else
+        {
+            *id = dict_builtin.strings[dict_sorted[i]].id;
+            return -1;
+        }
+    }
+    return max + 1;
+}
+
+#define MIN_DICTIONARY_SIZE 256
+#define MAX_DICTIONARY_SIZE 2048
+
+static BOOL grow_dict( ULONG size )
+{
+    WS_XML_STRING *tmp;
+    ULONG new_size, *tmp_sorted;
+
+    if (dict_size >= dict_builtin.stringCount + size) return TRUE;
+    if (dict_size + size > MAX_DICTIONARY_SIZE) return FALSE;
+
+    if (!dict_builtin.strings)
+    {
+        new_size = max( MIN_DICTIONARY_SIZE, size );
+        if (!(dict_builtin.strings = heap_alloc( new_size * sizeof(WS_XML_STRING) ))) return FALSE;
+        if (!(dict_sorted = heap_alloc( new_size * sizeof(ULONG) )))
+        {
+            heap_free( dict_builtin.strings );
+            dict_builtin.strings = NULL;
+            return FALSE;
+        }
+        dict_size = new_size;
+        return TRUE;
+    }
+
+    new_size = max( dict_size * 2, size );
+    if (!(tmp = heap_realloc( dict_builtin.strings, new_size * sizeof(*tmp) ))) return FALSE;
+    dict_builtin.strings = tmp;
+    if (!(tmp_sorted = heap_realloc( dict_sorted, new_size * sizeof(*tmp_sorted) ))) return FALSE;
+    dict_sorted = tmp_sorted;
+
+    dict_size = new_size;
+    return TRUE;
+}
+
+static BOOL insert_string( unsigned char *data, ULONG len, int i, ULONG *ret_id )
+{
+    ULONG id = dict_builtin.stringCount;
+    if (!grow_dict( 1 )) return FALSE;
+    memmove( &dict_sorted[i] + 1, &dict_sorted[i], (dict_builtin.stringCount - i) * sizeof(WS_XML_STRING *) );
+    dict_sorted[i] = id;
+
+    dict_builtin.strings[id].length     = len;
+    dict_builtin.strings[id].bytes      = data;
+    dict_builtin.strings[id].dictionary = &dict_builtin;
+    dict_builtin.strings[id].id         = id;
+    dict_builtin.stringCount++;
+    *ret_id = id;
+    return TRUE;
+}
+
+static HRESULT add_xml_string( WS_XML_STRING *str )
+{
+    int index;
+    ULONG id;
+
+    if (str->dictionary) return S_OK;
+
+    EnterCriticalSection( &dict_cs );
+    if ((index = find_string( str->bytes, str->length, &id )) == -1)
+    {
+        heap_free( str->bytes );
+        *str = dict_builtin.strings[id];
+        LeaveCriticalSection( &dict_cs );
+        return S_OK;
+    }
+    if (insert_string( str->bytes, str->length, index, &id ))
+    {
+        *str = dict_builtin.strings[id];
+        LeaveCriticalSection( &dict_cs );
+        return S_OK;
+    }
+    LeaveCriticalSection( &dict_cs );
+    return WS_E_QUOTA_EXCEEDED;
+}
+
+WS_XML_STRING *alloc_xml_string( const unsigned char *data, ULONG len )
+{
+    WS_XML_STRING *ret;
+
+    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
+    if ((ret->length = len) && !(ret->bytes = heap_alloc( len )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    if (data)
+    {
+        memcpy( ret->bytes, data, len );
+        if (add_xml_string( ret ) != S_OK) WARN( "string not added to dictionary\n" );
+    }
+    return ret;
+}
+
+void free_xml_string( WS_XML_STRING *str )
+{
+    if (!str) return;
+    if (!str->dictionary) heap_free( str->bytes );
+    heap_free( str );
+}
+
+WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
+{
+    WS_XML_STRING *ret;
+    unsigned char *data;
+    int index;
+    ULONG id;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (src->dictionary)
+    {
+        *ret = *src;
+        return ret;
+    }
+
+    EnterCriticalSection( &dict_cs );
+    if ((index = find_string( src->bytes, src->length, &id )) == -1)
+    {
+        *ret = dict_builtin.strings[id];
+        LeaveCriticalSection( &dict_cs );
+        return ret;
+    }
+    if (!(data = heap_alloc( src->length )))
+    {
+        heap_free( ret );
+        LeaveCriticalSection( &dict_cs );
+        return NULL;
+    }
+    memcpy( data, src->bytes, src->length );
+    if (insert_string( data, src->length, index, &id ))
+    {
+        *ret = dict_builtin.strings[id];
+        LeaveCriticalSection( &dict_cs );
+        return ret;
+    }
+    LeaveCriticalSection( &dict_cs );
+
+    WARN( "string not added to dictionary\n" );
+    ret->length     = src->length;
+    ret->bytes      = data;
+    ret->dictionary = NULL;
+    ret->id         = 0;
+    return ret;
+}
+
 struct node *alloc_node( WS_XML_NODE_TYPE type )
 {
     struct node *ret;
@@ -84,9 +280,9 @@ struct node *alloc_node( WS_XML_NODE_TYPE type )
 void free_attribute( WS_XML_ATTRIBUTE *attr )
 {
     if (!attr) return;
-    heap_free( attr->prefix );
-    heap_free( attr->localName );
-    heap_free( attr->ns );
+    free_xml_string( attr->prefix );
+    free_xml_string( attr->localName );
+    free_xml_string( attr->ns );
     heap_free( attr->value );
     heap_free( attr );
 }
@@ -103,9 +299,9 @@ void free_node( struct node *node )
 
         for (i = 0; i < elem->attributeCount; i++) free_attribute( elem->attributes[i] );
         heap_free( elem->attributes );
-        heap_free( elem->prefix );
-        heap_free( elem->localName );
-        heap_free( elem->ns );
+        free_xml_string( elem->prefix );
+        free_xml_string( elem->localName );
+        free_xml_string( elem->ns );
         break;
     }
     case WS_XML_NODE_TYPE_TEXT:
@@ -351,8 +547,8 @@ enum reader_state
 
 struct prefix
 {
-    WS_XML_STRING str;
-    WS_XML_STRING ns;
+    WS_XML_STRING *str;
+    WS_XML_STRING *ns;
 };
 
 struct reader
@@ -411,13 +607,10 @@ static void clear_prefixes( struct prefix *prefixes, ULONG count )
     ULONG i;
     for (i = 0; i < count; i++)
     {
-        heap_free( prefixes[i].str.bytes );
-        prefixes[i].str.bytes  = NULL;
-        prefixes[i].str.length = 0;
-
-        heap_free( prefixes[i].ns.bytes );
-        prefixes[i].ns.bytes  = NULL;
-        prefixes[i].ns.length = 0;
+        free_xml_string( prefixes[i].str );
+        prefixes[i].str = NULL;
+        free_xml_string( prefixes[i].ns );
+        prefixes[i].ns  = NULL;
     }
 }
 
@@ -425,17 +618,11 @@ static HRESULT set_prefix( struct prefix *prefix, const WS_XML_STRING *str, cons
 {
     if (str)
     {
-        heap_free( prefix->str.bytes );
-        if (!(prefix->str.bytes = heap_alloc( str->length ))) return E_OUTOFMEMORY;
-        memcpy( prefix->str.bytes, str->bytes, str->length );
-        prefix->str.length = str->length;
+        free_xml_string( prefix->str );
+        if (!(prefix->str = dup_xml_string( str ))) return E_OUTOFMEMORY;
     }
-
-    heap_free( prefix->ns.bytes );
-    if (!(prefix->ns.bytes = heap_alloc( ns->length ))) return E_OUTOFMEMORY;
-    memcpy( prefix->ns.bytes, ns->bytes, ns->length );
-    prefix->ns.length = ns->length;
-
+    if (prefix->ns) free_xml_string( prefix->ns );
+    if (!(prefix->ns = dup_xml_string( ns ))) return E_OUTOFMEMORY;
     return S_OK;
 }
 
@@ -446,7 +633,7 @@ static HRESULT bind_prefix( struct reader *reader, const WS_XML_STRING *prefix, 
 
     for (i = 0; i < reader->nb_prefixes; i++)
     {
-        if (WsXmlStringEquals( prefix, &reader->prefixes[i].str, NULL ) == S_OK)
+        if (WsXmlStringEquals( prefix, reader->prefixes[i].str, NULL ) == S_OK)
             return set_prefix( &reader->prefixes[i], NULL, ns );
     }
     if (i >= reader->nb_prefixes_allocated)
@@ -457,7 +644,6 @@ static HRESULT bind_prefix( struct reader *reader, const WS_XML_STRING *prefix, 
         reader->prefixes = tmp;
         reader->nb_prefixes_allocated *= 2;
     }
-
     if ((hr = set_prefix( &reader->prefixes[i], prefix, ns )) != S_OK) return hr;
     reader->nb_prefixes++;
     return S_OK;
@@ -468,8 +654,8 @@ static const WS_XML_STRING *get_namespace( struct reader *reader, const WS_XML_S
     ULONG i;
     for (i = 0; i < reader->nb_prefixes; i++)
     {
-        if (WsXmlStringEquals( prefix, &reader->prefixes[i].str, NULL ) == S_OK)
-            return &reader->prefixes[i].ns;
+        if (WsXmlStringEquals( prefix, reader->prefixes[i].str, NULL ) == S_OK)
+            return reader->prefixes[i].ns;
     }
     return NULL;
 }
@@ -511,7 +697,9 @@ static void free_reader( struct reader *reader )
 
 static HRESULT init_reader( struct reader *reader )
 {
+    static const WS_XML_STRING empty = {0, NULL};
     struct node *node;
+    HRESULT hr;
 
     reader->state        = READER_STATE_INITIAL;
     destroy_nodes( reader->root );
@@ -519,10 +707,12 @@ static HRESULT init_reader( struct reader *reader )
     reader->current_attr = 0;
     clear_prefixes( reader->prefixes, reader->nb_prefixes );
     reader->nb_prefixes  = 1;
+    if ((hr = bind_prefix( reader, &empty, &empty )) != S_OK) return hr;
+
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
     read_insert_eof( reader, node );
     reader->input_enc    = WS_XML_READER_ENCODING_TYPE_TEXT;
-    reader->dict         = NULL;
+    reader->dict         = &dict_builtin;
     return S_OK;
 }
 
@@ -786,33 +976,6 @@ HRESULT WINAPI WsGetXmlAttribute( WS_XML_READER *handle, const WS_XML_STRING *at
     return E_NOTIMPL;
 }
 
-WS_XML_STRING *alloc_xml_string( const unsigned char *data, ULONG len )
-{
-    WS_XML_STRING *ret;
-
-    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
-    ret->length     = len;
-    ret->bytes      = len ? (BYTE *)(ret + 1) : NULL;
-    ret->dictionary = NULL;
-    ret->id         = 0;
-    if (data) memcpy( ret->bytes, data, len );
-    return ret;
-}
-
-WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
-{
-    WS_XML_STRING *ret;
-
-    if (!src->dictionary) return alloc_xml_string( src->bytes, src->length );
-
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
-    ret->length     = src->length;
-    ret->bytes      = src->bytes;
-    ret->dictionary = src->dictionary;
-    ret->id         = src->id;
-    return ret;
-}
-
 WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *data, ULONG len )
 {
     WS_XML_UTF8_TEXT *ret;
@@ -1036,7 +1199,7 @@ static HRESULT parse_name( const unsigned char *str, ULONG len, WS_XML_STRING **
     if (!(*prefix = alloc_xml_string( prefix_ptr, prefix_len ))) return E_OUTOFMEMORY;
     if (!(*localname = alloc_xml_string( localname_ptr, localname_len )))
     {
-        heap_free( *prefix );
+        free_xml_string( *prefix );
         *prefix = NULL;
         return E_OUTOFMEMORY;
     }
@@ -1274,8 +1437,12 @@ static HRESULT read_string( struct reader *reader, WS_XML_STRING **str )
     HRESULT hr;
     if ((hr = read_int31( reader, &len )) != S_OK) return hr;
     if (!(*str = alloc_xml_string( NULL, len ))) return E_OUTOFMEMORY;
-    if ((hr = read_bytes( reader, (*str)->bytes, len )) == S_OK) return S_OK;
-    heap_free( *str );
+    if ((hr = read_bytes( reader, (*str)->bytes, len )) == S_OK)
+    {
+        if (add_xml_string( *str ) != S_OK) WARN( "string not added to dictionary\n" );
+        return S_OK;
+    }
+    free_xml_string( *str );
     return hr;
 }
 
@@ -1350,11 +1517,11 @@ static HRESULT read_attribute_text( struct reader *reader, WS_XML_ATTRIBUTE **re
     if ((hr = parse_name( start, len, &prefix, &localname )) != S_OK) goto error;
     if (WsXmlStringEquals( prefix, &xmlns, NULL ) == S_OK)
     {
-        heap_free( prefix );
+        free_xml_string( prefix );
         attr->isXmlNs   = 1;
         if (!(attr->prefix = alloc_xml_string( localname->bytes, localname->length )))
         {
-            heap_free( localname );
+            free_xml_string( localname );
             hr = E_OUTOFMEMORY;
             goto error;
         }
@@ -1524,15 +1691,15 @@ static HRESULT set_namespaces( struct reader *reader, WS_XML_ELEMENT_NODE *elem 
     ULONG i;
 
     if (!(ns = get_namespace( reader, elem->prefix ))) return WS_E_INVALID_FORMAT;
-    if (!(elem->ns = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
-    if (!elem->ns->length) elem->ns->bytes = (BYTE *)(elem->ns + 1); /* quirk */
+    if (!(elem->ns = dup_xml_string( ns ))) return E_OUTOFMEMORY;
 
     for (i = 0; i < elem->attributeCount; i++)
     {
         WS_XML_ATTRIBUTE *attr = elem->attributes[i];
         if (attr->isXmlNs || WsXmlStringEquals( attr->prefix, &xml, NULL ) == S_OK) continue;
         if (!(ns = get_namespace( reader, attr->prefix ))) return WS_E_INVALID_FORMAT;
-        if (!(attr->ns = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
+        if (!(attr->ns = alloc_xml_string( NULL, ns->length  ))) return E_OUTOFMEMORY;
+        if (attr->ns->length) memcpy( attr->ns->bytes, ns->bytes, ns->length );
     }
     return S_OK;
 }
@@ -1990,8 +2157,8 @@ static HRESULT read_endelement_text( struct reader *reader )
 
     if ((hr = parse_name( start, len, &prefix, &localname )) != S_OK) return hr;
     parent = find_startelement( reader, prefix, localname );
-    heap_free( prefix );
-    heap_free( localname );
+    free_xml_string( prefix );
+    free_xml_string( localname );
     if (!parent) return WS_E_INVALID_FORMAT;
 
     reader->current = LIST_ENTRY( list_tail( &parent->children ), struct node, entry );

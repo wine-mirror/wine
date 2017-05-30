@@ -4554,7 +4554,7 @@ static void test_binary_encoding(void)
     ok( elem->prefix->bytes == NULL, "bytes set\n" );
     ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
     ok( !memcmp( elem->localName->bytes, "t", 1 ), "wrong name\n" );
-    todo_wine ok( elem->localName->dictionary != NULL, "dictionary not set\n" );
+    ok( elem->localName->dictionary != NULL, "dictionary not set\n" );
     ok( !elem->ns->length, "got %u\n", elem->ns->length );
     ok( elem->ns->bytes != NULL, "bytes not set\n" );
     ok( !elem->attributeCount, "got %u\n", elem->attributeCount );

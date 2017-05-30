@@ -119,7 +119,7 @@ static void free_header( struct header *header )
 {
     heap_free( header->name.bytes );
     heap_free( header->ns.bytes );
-    if (header->mapped) heap_free( header->u.text );
+    if (header->mapped) free_xml_string( header->u.text );
     heap_free( header );
 }
 
