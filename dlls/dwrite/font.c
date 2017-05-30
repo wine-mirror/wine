@@ -405,6 +405,11 @@ static inline void* get_fontface_colr(struct dwrite_fontface *fontface)
     return get_fontface_table(&fontface->IDWriteFontFace4_iface, MS_COLR_TAG, &fontface->colr);
 }
 
+static void addref_font_data(struct dwrite_font_data *data)
+{
+    InterlockedIncrement(&data->ref);
+}
+
 static void release_font_data(struct dwrite_font_data *data)
 {
     int i;
@@ -1762,7 +1767,7 @@ static HRESULT create_font(struct dwrite_fontfamily *family, UINT32 index, IDWri
     IDWriteFontFamily1_AddRef(&family->IDWriteFontFamily1_iface);
     This->data = family->data->fonts[index];
     This->style = This->data->style;
-    InterlockedIncrement(&This->data->ref);
+    addref_font_data(This->data);
 
     *font = &This->IDWriteFont3_iface;
 
@@ -2135,7 +2140,7 @@ static HRESULT WINAPI dwritefontfamily_GetMatchingFonts(IDWriteFontFamily1 *ifac
     for (i = 0; i < This->data->font_count; i++) {
         if (!func || func(This->data->fonts[i])) {
             fonts->fonts[fonts->font_count] = This->data->fonts[i];
-            InterlockedIncrement(&This->data->fonts[i]->ref);
+            addref_font_data(This->data->fonts[i]);
             fonts->font_count++;
         }
     }
@@ -3554,8 +3559,10 @@ static BOOL fontcollection_add_replacement(struct dwrite_fontcollection *collect
         struct dwrite_fontfamily_data *replacement = collection->family_data[i];
         WCHAR nameW[255];
 
-        for (i = 0; i < replacement->font_count; i++)
+        for (i = 0; i < replacement->font_count; i++) {
             fontfamily_add_font(target, replacement->fonts[i]);
+            addref_font_data(replacement->fonts[i]);
+        }
 
         fontcollection_add_family(collection, target);
         fontstrings_get_en_string(replacement->familyname, nameW, sizeof(nameW)/sizeof(WCHAR));
