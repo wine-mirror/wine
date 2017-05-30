@@ -413,24 +413,24 @@ static void XMLContext_AddNameToNamespace_tests(void)
 
     /* Test calling AddNameToNamespace with invalid arguments */
     hr = IWSDXMLContext_AddNameToNamespace(context, NULL, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
 
     hr = IWSDXMLContext_AddNameToNamespace(context, ns1Uri, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
 
     hr = IWSDXMLContext_AddNameToNamespace(context, NULL, name1Text, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
 
     /* Test calling AddNameToNamespace without the ppName parameter */
     hr = IWSDXMLContext_AddNameToNamespace(context, ns1Uri, name1Text, NULL);
-    todo_wine ok(hr == S_OK, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNameToNamespace failed with %08x\n", hr);
 
     /* Now retrieve the created name */
     hr = IWSDXMLContext_AddNameToNamespace(context, ns1Uri, name1Text, &name1);
-    todo_wine ok(hr == S_OK, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNameToNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(name1 != NULL, "name1 == NULL\n");
+    ok(name1 != NULL, "name1 == NULL\n");
 
     if (name1 != NULL)
     {
@@ -447,10 +447,10 @@ static void XMLContext_AddNameToNamespace_tests(void)
 
     /* Test calling AddNamespace with parameters that are too large */
     hr = IWSDXMLContext_AddNameToNamespace(context, largeText, name1Text, &name2);
-    todo_wine ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
 
     hr = IWSDXMLContext_AddNameToNamespace(context, ns1Uri, largeText, &name2);
-    todo_wine ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNameToNamespace failed with %08x\n", hr);
 
     /* Try creating a namespace explicitly */
     hr = IWSDXMLContext_AddNamespace(context, ns2Uri, prefix2, &ns2);
@@ -458,10 +458,10 @@ static void XMLContext_AddNameToNamespace_tests(void)
 
     /* Now add a name to it */
     hr = IWSDXMLContext_AddNameToNamespace(context, ns2Uri, name2Text, &name2);
-    todo_wine ok(hr == S_OK, "AddNameToNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNameToNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(name2 != NULL, "name2 == NULL\n");
+    ok(name2 != NULL, "name2 == NULL\n");
 
     if (name2 != NULL)
     {

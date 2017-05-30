@@ -270,6 +270,64 @@ static WSDXML_NAMESPACE *find_namespace(struct list *namespaces, LPCWSTR uri)
     return NULL;
 }
 
+static WSDXML_NAME *find_name(WSDXML_NAMESPACE *ns, LPCWSTR name)
+{
+    int i;
+
+    for (i = 0; i < ns->NamesCount; i++)
+    {
+        if (lstrcmpW(ns->Names[i].LocalName, name) == 0)
+        {
+            return &ns->Names[i];
+        }
+    }
+
+    return NULL;
+}
+
+static WSDXML_NAME *add_name(WSDXML_NAMESPACE *ns, LPCWSTR name)
+{
+    WSDXML_NAME *names;
+    WSDXML_NAME *newName;
+    int i;
+
+    names = WSDAllocateLinkedMemory(ns, sizeof(WSDXML_NAME) * (ns->NamesCount + 1));
+
+    if (names == NULL)
+    {
+        return NULL;
+    }
+
+    if (ns->NamesCount > 0)
+    {
+        /* Copy the existing names array over to the new allocation */
+        memcpy(names, ns->Names, sizeof(WSDXML_NAME) * ns->NamesCount);
+
+        for (i = 0; i < ns->NamesCount; i++)
+        {
+            /* Attach the local name memory to the new names allocation */
+            WSDAttachLinkedMemory(names, names[i].LocalName);
+        }
+
+        WSDFreeLinkedMemory(ns->Names);
+    }
+
+    ns->Names = names;
+
+    newName = &names[ns->NamesCount];
+
+    newName->LocalName = duplicate_string(names, name);
+    newName->Space = ns;
+
+    if (newName->LocalName == NULL)
+    {
+        return NULL;
+    }
+
+    ns->NamesCount++;
+    return newName;
+}
+
 static BOOL is_prefix_unique(struct list *namespaces, LPCWSTR prefix)
 {
     struct xmlNamespace *ns;
@@ -461,8 +519,59 @@ static HRESULT WINAPI IWSDXMLContextImpl_AddNamespace(IWSDXMLContext *iface, LPC
 
 static HRESULT WINAPI IWSDXMLContextImpl_AddNameToNamespace(IWSDXMLContext *iface, LPCWSTR pszUri, LPCWSTR pszName, WSDXML_NAME **ppName)
 {
-    FIXME("(%p, %s, %s, %p)\n", iface, debugstr_w(pszUri), debugstr_w(pszName), ppName);
-    return E_NOTIMPL;
+    IWSDXMLContextImpl *This = impl_from_IWSDXMLContext(iface);
+    WSDXML_NAMESPACE *ns;
+    WSDXML_NAME *name;
+
+    TRACE("(%p, %s, %s, %p)\n", This, debugstr_w(pszUri), debugstr_w(pszName), ppName);
+
+    if ((pszUri == NULL) || (pszName == NULL) || (lstrlenW(pszUri) > WSD_MAX_TEXT_LENGTH) || (lstrlenW(pszName) > WSD_MAX_TEXT_LENGTH))
+    {
+        return E_INVALIDARG;
+    }
+
+    ns = find_namespace(This->namespaces, pszUri);
+
+    if (ns == NULL)
+    {
+        /* The namespace doesn't exist, add it */
+        ns = add_namespace(This->namespaces, pszUri);
+
+        if (ns == NULL)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+        ns->PreferredPrefix = generate_namespace_prefix(This, ns, pszUri);
+        if (ns->PreferredPrefix == NULL)
+        {
+            return E_FAIL;
+        }
+    }
+
+    name = find_name(ns, pszName);
+
+    if (name == NULL)
+    {
+        name = add_name(ns, pszName);
+
+        if (name == NULL)
+        {
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    if (ppName != NULL)
+    {
+        *ppName = duplicate_name(NULL, name);
+
+        if (*ppName == NULL)
+        {
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDXMLContextImpl_SetNamespaces(IWSDXMLContext *iface, const PCWSDXML_NAMESPACE *pNamespaces, WORD wNamespacesCount, BYTE bLayerNumber)
