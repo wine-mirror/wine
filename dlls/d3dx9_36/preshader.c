@@ -260,6 +260,15 @@ struct d3dx_pres_ins
     struct d3dx_pres_operand output;
 };
 
+struct const_upload_info
+{
+    BOOL transpose;
+    unsigned int major, minor;
+    unsigned int major_stride;
+    unsigned int major_count;
+    unsigned int count;
+};
+
 static unsigned int get_reg_offset(unsigned int table, unsigned int offset)
 {
     return table == PRES_REGTAB_OBCONST ? offset : offset >> 2;
@@ -979,6 +988,30 @@ void d3dx_free_param_eval(struct d3dx_param_eval *peval)
     HeapFree(GetProcessHeap(), 0, peval);
 }
 
+static void get_const_upload_info(struct d3dx_const_param_eval_output *const_set,
+        struct const_upload_info *info)
+{
+    struct d3dx_parameter *param = const_set->param;
+    unsigned int table = const_set->table;
+
+    info->transpose = (const_set->constant_class == D3DXPC_MATRIX_COLUMNS && param->class == D3DXPC_MATRIX_ROWS)
+            || (param->class == D3DXPC_MATRIX_COLUMNS && const_set->constant_class == D3DXPC_MATRIX_ROWS);
+    if (const_set->constant_class == D3DXPC_MATRIX_COLUMNS)
+    {
+        info->major = param->columns;
+        info->minor = param->rows;
+    }
+    else
+    {
+        info->major = param->rows;
+        info->minor = param->columns;
+    }
+    info->major_stride = max(info->minor, get_offset_reg(table, 1));
+    info->major_count = min(info->major * info->major_stride,
+            get_offset_reg(table, const_set->register_count) + info->major_stride - 1) / info->major_stride;
+    info->count = info->major_count * info->minor;
+}
+
 static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const_tab,
         ULONG64 new_update_version)
 {
@@ -990,51 +1023,36 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
         unsigned int table = const_set->table;
         struct d3dx_parameter *param = const_set->param;
         enum pres_value_type table_type = table_info[table].type;
-        unsigned int i, j, n, start_offset;
-        unsigned int minor, major, major_stride, param_offset;
-        BOOL transpose;
-        unsigned int count;
+        unsigned int i, j, start_offset;
+        unsigned int param_offset;
+        struct const_upload_info info;
 
         if (!is_param_dirty(param, const_tab->update_version))
             continue;
 
-        transpose = (const_set->constant_class == D3DXPC_MATRIX_COLUMNS && param->class == D3DXPC_MATRIX_ROWS)
-                || (param->class == D3DXPC_MATRIX_COLUMNS && const_set->constant_class == D3DXPC_MATRIX_ROWS);
-        if (const_set->constant_class == D3DXPC_MATRIX_COLUMNS)
-        {
-            major = param->columns;
-            minor = param->rows;
-        }
-        else
-        {
-            major = param->rows;
-            minor = param->columns;
-        }
+        get_const_upload_info(const_set, &info);
         start_offset = get_offset_reg(table, const_set->register_index);
-        major_stride = max(minor, get_offset_reg(table, 1));
-        n = min(major * major_stride,
-                get_offset_reg(table, const_set->register_count) + major_stride - 1) / major_stride;
-        count = n * minor;
+
         if (((param->type == D3DXPT_FLOAT && table_type == PRES_VT_FLOAT)
                 || (param->type == D3DXPT_INT && table_type == PRES_VT_INT)
                 || (param->type == D3DXPT_BOOL && table_type == PRES_VT_BOOL))
-                && !transpose && minor == major_stride
-                && count == get_offset_reg(table, const_set->register_count)
-                && count * sizeof(unsigned int) <= param->bytes)
+                && !info.transpose && info.minor == info.major_stride
+                && info.count == get_offset_reg(table, const_set->register_count)
+                && info.count * sizeof(unsigned int) <= param->bytes)
         {
-            regstore_set_values(rs, table, param->data, start_offset, count);
+            regstore_set_values(rs, table, param->data, start_offset, info.count);
             continue;
         }
 
-        for (i = 0; i < n; ++i)
+        for (i = 0; i < info.major_count; ++i)
         {
-            for (j = 0; j < minor; ++j)
+            for (j = 0; j < info.minor; ++j)
             {
                 unsigned int out;
                 unsigned int *in;
                 unsigned int offset;
 
-                offset = start_offset + i * major_stride + j;
+                offset = start_offset + i * info.major_stride + j;
                 if (get_reg_offset(table, offset) >= rs->table_sizes[table])
                 {
                     if (table != PRES_REGTAB_OBCONST)
@@ -1042,10 +1060,10 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
                                 debugstr_a(param->name), i);
                     break;
                 }
-                if (transpose)
-                    param_offset = i + j * major;
+                if (info.transpose)
+                    param_offset = i + j * info.major;
                 else
-                    param_offset = i * minor + j;
+                    param_offset = i * info.minor + j;
                 if (param_offset * sizeof(unsigned int) >= param->bytes)
                 {
                     WARN("Parameter data is too short, name %s, component %u.\n", debugstr_a(param->name), i);
