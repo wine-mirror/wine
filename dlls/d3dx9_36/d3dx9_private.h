@@ -154,6 +154,7 @@ struct d3dx_const_param_eval_output
     enum D3DXPARAMETER_CLASS constant_class;
     unsigned int register_index;
     unsigned int register_count;
+    BOOL direct_copy;
 };
 
 struct d3dx_const_tab

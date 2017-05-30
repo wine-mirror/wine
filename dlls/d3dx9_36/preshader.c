@@ -1050,17 +1050,14 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
         if (!is_param_dirty(param, const_tab->update_version))
             continue;
 
-        get_const_upload_info(const_set, &info);
         start_offset = get_offset_reg(table, const_set->register_index);
-
-        if (table_type_from_param_type(param->type) == table_type
-                && !info.transpose && info.minor == info.major_stride
-                && info.count == get_offset_reg(table, const_set->register_count)
-                && info.count * sizeof(unsigned int) <= param->bytes)
+        if (const_set->direct_copy)
         {
-            regstore_set_values(rs, table, param->data, start_offset, info.count);
+            regstore_set_values(rs, table, param->data, start_offset,
+                    get_offset_reg(table, const_set->register_count));
             continue;
         }
+        get_const_upload_info(const_set, &info);
 
         for (i = 0; i < info.major_count; ++i)
         {
@@ -1149,6 +1146,8 @@ static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXC
     unsigned int const_count, param_count, i;
     BOOL get_element;
     struct d3dx_const_param_eval_output const_set;
+    struct const_upload_info info;
+    enum pres_value_type table_type;
     HRESULT hr;
 
     if (FAILED(get_ctab_constant_desc(ctab, hc, &desc)))
@@ -1225,6 +1224,17 @@ static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXC
         return D3DERR_INVALIDCALL;
     }
     const_set.register_count = desc.RegisterCount;
+    table_type = table_info[const_set.table].type;
+    get_const_upload_info(&const_set, &info);
+
+    if (table_type_from_param_type(param->type) == PRES_VT_COUNT)
+        return D3DERR_INVALIDCALL;
+
+    const_set.direct_copy = table_type_from_param_type(param->type) == table_type
+            && !info.transpose && info.minor == info.major_stride
+            && info.count == get_offset_reg(const_set.table, const_set.register_count)
+            && info.count * sizeof(unsigned int) <= param->bytes;
+
     if (FAILED(hr = append_const_set(const_tab, &const_set)))
         return hr;
 
