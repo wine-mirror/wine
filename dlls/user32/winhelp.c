@@ -80,6 +80,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand, ULONG_PTR dwD
     HWND                hDest;
     int                 size, dsize, nlen;
     WINHELP*            lpwh;
+    LRESULT             ret;
 
     hDest = FindWindowA("MS_WINHELP", NULL);
     if (!hDest) 
@@ -156,7 +157,9 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand, ULONG_PTR dwD
           lpwh->size, lpwh->command, lpwh->data,
           lpwh->ofsFilename ? (LPSTR)lpwh + lpwh->ofsFilename : "");
 
-    return SendMessageA(hDest, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+    ret = SendMessageA(hDest, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+    HeapFree(GetProcessHeap(), 0, lpwh);
+    return ret;
 }
 
 
