@@ -376,6 +376,7 @@ struct reader
     const unsigned char         *input_data;
     ULONG                        input_size;
     ULONG                        text_conv_offset;
+    WS_XML_DICTIONARY           *dict;
     ULONG                        prop_count;
     struct prop                  prop[sizeof(reader_props)/sizeof(reader_props[0])];
 };
@@ -521,6 +522,7 @@ static HRESULT init_reader( struct reader *reader )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
     read_insert_eof( reader, node );
     reader->input_enc    = WS_XML_READER_ENCODING_TYPE_TEXT;
+    reader->dict         = NULL;
     return S_OK;
 }
 
@@ -1277,6 +1279,17 @@ static HRESULT read_string( struct reader *reader, WS_XML_STRING **str )
     return hr;
 }
 
+static HRESULT read_dict_string( struct reader *reader, WS_XML_STRING **str )
+{
+    ULONG id;
+    HRESULT hr;
+    if ((hr = read_int31( reader, &id )) != S_OK) return hr;
+    if (!reader->dict || (id >>= 1) >= reader->dict->stringCount) return WS_E_INVALID_FORMAT;
+    if (!(*str = alloc_xml_string( NULL, 0 ))) return E_OUTOFMEMORY;
+    *(*str) = reader->dict->strings[id];
+    return S_OK;
+}
+
 static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE *attr )
 {
     WS_XML_UTF8_TEXT *utf8 = NULL;
@@ -1395,6 +1408,17 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
         if ((hr = read_string( reader, &attr->localName )) != S_OK) goto error;
         if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
     }
+    else if (type >= RECORD_PREFIX_DICTIONARY_ATTRIBUTE_A && type <= RECORD_PREFIX_DICTIONARY_ATTRIBUTE_Z)
+    {
+        unsigned char ch = type - RECORD_PREFIX_DICTIONARY_ATTRIBUTE_A + 'a';
+        if (!(attr->prefix = alloc_xml_string( &ch, 1 )))
+        {
+            hr = E_OUTOFMEMORY;
+            goto error;
+        }
+        if ((hr = read_dict_string( reader, &attr->localName )) != S_OK) goto error;
+        if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
+    }
     else
     {
         switch (type)
@@ -1415,6 +1439,22 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
             if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
             break;
 
+        case RECORD_SHORT_DICTIONARY_ATTRIBUTE:
+            if (!(attr->prefix = alloc_xml_string( NULL, 0 )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
+            if ((hr = read_dict_string( reader, &attr->localName )) != S_OK) goto error;
+            if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
+            break;
+
+        case RECORD_DICTIONARY_ATTRIBUTE:
+            if ((hr = read_string( reader, &attr->prefix )) != S_OK) goto error;
+            if ((hr = read_dict_string( reader, &attr->localName )) != S_OK) goto error;
+            if ((hr = read_attribute_value_bin( reader, attr )) != S_OK) goto error;
+            break;
+
         case RECORD_SHORT_XMLNS_ATTRIBUTE:
             if (!(attr->prefix = alloc_xml_string( NULL, 0 )))
             {
@@ -1422,12 +1462,31 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
                 goto error;
             }
             if ((hr = read_string( reader, &attr->ns )) != S_OK) goto error;
+            if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
             attr->isXmlNs = 1;
             break;
 
         case RECORD_XMLNS_ATTRIBUTE:
             if ((hr = read_string( reader, &attr->prefix )) != S_OK) goto error;
             if ((hr = read_string( reader, &attr->ns )) != S_OK) goto error;
+            if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
+            attr->isXmlNs = 1;
+            break;
+
+        case RECORD_SHORT_DICTIONARY_XMLNS_ATTRIBUTE:
+            if (!(attr->prefix = alloc_xml_string( NULL, 0 )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
+            if ((hr = read_dict_string( reader, &attr->ns )) != S_OK) goto error;
+            if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
+            attr->isXmlNs = 1;
+            break;
+
+        case RECORD_DICTIONARY_XMLNS_ATTRIBUTE:
+            if ((hr = read_string( reader, &attr->prefix )) != S_OK) goto error;
+            if ((hr = read_dict_string( reader, &attr->ns )) != S_OK) goto error;
             if ((hr = bind_prefix( reader, attr->prefix, attr->ns )) != S_OK) goto error;
             attr->isXmlNs = 1;
             break;
@@ -1615,6 +1674,16 @@ static HRESULT read_element_bin( struct reader *reader )
         }
         if ((hr = read_string( reader, &elem->localName )) != S_OK) goto error;
     }
+    else if (type >= RECORD_PREFIX_DICTIONARY_ELEMENT_A && type <= RECORD_PREFIX_DICTIONARY_ELEMENT_Z)
+    {
+        unsigned char ch = type - RECORD_PREFIX_DICTIONARY_ELEMENT_A + 'a';
+        if (!(elem->prefix = alloc_xml_string( &ch, 1 )))
+        {
+            hr = E_OUTOFMEMORY;
+            goto error;
+        }
+        if ((hr = read_dict_string( reader, &elem->localName )) != S_OK) goto error;
+    }
     else
     {
         switch (type)
@@ -1631,6 +1700,20 @@ static HRESULT read_element_bin( struct reader *reader )
         case RECORD_ELEMENT:
             if ((hr = read_string( reader, &elem->prefix )) != S_OK) goto error;
             if ((hr = read_string( reader, &elem->localName )) != S_OK) goto error;
+            break;
+
+        case RECORD_SHORT_DICTIONARY_ELEMENT:
+            if (!(elem->prefix = alloc_xml_string( NULL, 0 )))
+            {
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
+            if ((hr = read_dict_string( reader, &elem->localName )) != S_OK) goto error;
+            break;
+
+        case RECORD_DICTIONARY_ELEMENT:
+            if ((hr = read_string( reader, &elem->prefix )) != S_OK) goto error;
+            if ((hr = read_dict_string( reader, &elem->localName )) != S_OK) goto error;
             break;
 
         default:
@@ -5180,9 +5263,12 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
         break;
     }
     case WS_XML_READER_ENCODING_TYPE_BINARY:
+    {
+        WS_XML_READER_BINARY_ENCODING *bin = (WS_XML_READER_BINARY_ENCODING *)encoding;
         reader->input_enc = WS_XML_READER_ENCODING_TYPE_BINARY;
+        reader->dict      = bin->staticDictionary;
         break;
-
+    }
     default:
         FIXME( "encoding type %u not supported\n", encoding->encodingType );
         hr = E_NOTIMPL;
