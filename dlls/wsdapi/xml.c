@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "wsdapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
@@ -44,6 +45,29 @@ static LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value)
     return dup;
 }
 
+static WSDXML_NAMESPACE *duplicate_namespace(void *parentMemoryBlock, WSDXML_NAMESPACE *ns)
+{
+    WSDXML_NAMESPACE *newNs;
+
+    newNs = WSDAllocateLinkedMemory(parentMemoryBlock, sizeof(WSDXML_NAMESPACE));
+
+    if (newNs == NULL)
+    {
+        return NULL;
+    }
+
+    newNs->Encoding = ns->Encoding;
+
+    /* On Windows, both Names and NamesCount are set to null even if there are names present */
+    newNs->NamesCount = 0;
+    newNs->Names = NULL;
+
+    newNs->PreferredPrefix = duplicate_string(newNs, ns->PreferredPrefix);
+    newNs->Uri = duplicate_string(newNs, ns->Uri);
+
+    return newNs;
+}
+
 static WSDXML_NAME *duplicate_name(void *parentMemoryBlock, WSDXML_NAME *name)
 {
     WSDXML_NAME *dup;
@@ -55,7 +79,7 @@ static WSDXML_NAME *duplicate_name(void *parentMemoryBlock, WSDXML_NAME *name)
         return NULL;
     }
 
-    dup->Space = name->Space;
+    dup->Space = duplicate_namespace(dup, name->Space);
     dup->LocalName = duplicate_string(dup, name->LocalName);
 
     if (dup->LocalName == NULL)
@@ -216,11 +240,100 @@ HRESULT WINAPI WSDXMLCleanupElement(WSDXML_ELEMENT *pAny)
 
 /* IWSDXMLContext implementation */
 
+struct xmlNamespace
+{
+    struct list entry;
+    WSDXML_NAMESPACE *namespace;
+};
+
 typedef struct IWSDXMLContextImpl
 {
     IWSDXMLContext IWSDXMLContext_iface;
     LONG ref;
+
+    struct list *namespaces;
+    int nextUnknownPrefix;
 } IWSDXMLContextImpl;
+
+static WSDXML_NAMESPACE *find_namespace(struct list *namespaces, LPCWSTR uri)
+{
+    struct xmlNamespace *ns;
+
+    LIST_FOR_EACH_ENTRY(ns, namespaces, struct xmlNamespace, entry)
+    {
+        if (lstrcmpW(ns->namespace->Uri, uri) == 0)
+        {
+            return ns->namespace;
+        }
+    }
+
+    return NULL;
+}
+
+static BOOL is_prefix_unique(struct list *namespaces, LPCWSTR prefix)
+{
+    struct xmlNamespace *ns;
+
+    LIST_FOR_EACH_ENTRY(ns, namespaces, struct xmlNamespace, entry)
+    {
+        if (lstrcmpW(ns->namespace->PreferredPrefix, prefix) == 0)
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static LPWSTR generate_namespace_prefix(IWSDXMLContextImpl *impl, void *parentMemoryBlock, LPCWSTR uri)
+{
+    WCHAR formatString[] = { 'u','n','%','d', 0 };
+    WCHAR suggestedPrefix[7];
+
+    /* Find a unique prefix */
+    while (impl->nextUnknownPrefix < 1000)
+    {
+        wsprintfW(suggestedPrefix, formatString, impl->nextUnknownPrefix++);
+
+        /* For the unlikely event where somebody has explicitly created a prefix called 'unX', check it is unique */
+        if (is_prefix_unique(impl->namespaces, suggestedPrefix))
+        {
+            return duplicate_string(parentMemoryBlock, suggestedPrefix);
+        }
+    }
+
+    return NULL;
+}
+
+static WSDXML_NAMESPACE *add_namespace(struct list *namespaces, LPCWSTR uri)
+{
+    struct xmlNamespace *ns = WSDAllocateLinkedMemory(namespaces, sizeof(struct xmlNamespace));
+
+    if (ns == NULL)
+    {
+        return NULL;
+    }
+
+    ns->namespace = WSDAllocateLinkedMemory(ns, sizeof(WSDXML_NAMESPACE));
+
+    if (ns->namespace == NULL)
+    {
+        WSDFreeLinkedMemory(ns);
+        return NULL;
+    }
+
+    ZeroMemory(ns->namespace, sizeof(WSDXML_NAMESPACE));
+    ns->namespace->Uri = duplicate_string(ns->namespace, uri);
+
+    if (ns->namespace->Uri == NULL)
+    {
+        WSDFreeLinkedMemory(ns);
+        return NULL;
+    }
+
+    list_add_tail(namespaces, &ns->entry);
+    return ns->namespace;
+}
 
 static inline IWSDXMLContextImpl *impl_from_IWSDXMLContext(IWSDXMLContext *iface)
 {
@@ -282,8 +395,68 @@ static ULONG WINAPI IWSDXMLContextImpl_Release(IWSDXMLContext *iface)
 
 static HRESULT WINAPI IWSDXMLContextImpl_AddNamespace(IWSDXMLContext *iface, LPCWSTR pszUri, LPCWSTR pszSuggestedPrefix, WSDXML_NAMESPACE **ppNamespace)
 {
-    FIXME("(%p, %s, %s, %p)\n", iface, debugstr_w(pszUri), debugstr_w(pszSuggestedPrefix), ppNamespace);
-    return E_NOTIMPL;
+    IWSDXMLContextImpl *This = impl_from_IWSDXMLContext(iface);
+    WSDXML_NAMESPACE *ns;
+    LPCWSTR newPrefix = NULL;
+    BOOL setNewPrefix;
+
+    TRACE("(%p, %s, %s, %p)\n", This, debugstr_w(pszUri), debugstr_w(pszSuggestedPrefix), ppNamespace);
+
+    if ((pszUri == NULL) || (pszSuggestedPrefix == NULL) || (lstrlenW(pszUri) > WSD_MAX_TEXT_LENGTH) ||
+        (lstrlenW(pszSuggestedPrefix) > WSD_MAX_TEXT_LENGTH))
+    {
+        return E_INVALIDARG;
+    }
+
+    ns = find_namespace(This->namespaces, pszUri);
+
+    if (ns == NULL)
+    {
+        ns = add_namespace(This->namespaces, pszUri);
+
+        if (ns == NULL)
+        {
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    setNewPrefix = (ns->PreferredPrefix == NULL);
+
+    if ((ns->PreferredPrefix == NULL) || (lstrcmpW(ns->PreferredPrefix, pszSuggestedPrefix) != 0))
+    {
+        newPrefix = pszSuggestedPrefix;
+        setNewPrefix = TRUE;
+    }
+
+    if (setNewPrefix)
+    {
+        WSDFreeLinkedMemory((void *)ns->PreferredPrefix);
+
+        if ((newPrefix != NULL) && (is_prefix_unique(This->namespaces, newPrefix)))
+        {
+            ns->PreferredPrefix = duplicate_string(ns, newPrefix);
+        }
+        else
+        {
+            ns->PreferredPrefix = generate_namespace_prefix(This, ns, pszUri);
+            if (ns->PreferredPrefix == NULL)
+            {
+                return E_FAIL;
+            }
+        }
+    }
+
+    if (ppNamespace != NULL)
+    {
+        *ppNamespace = duplicate_namespace(NULL, ns);
+
+        if (*ppNamespace == NULL)
+        {
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWSDXMLContextImpl_AddNameToNamespace(IWSDXMLContext *iface, LPCWSTR pszUri, LPCWSTR pszName, WSDXML_NAME **ppName)
@@ -338,6 +511,16 @@ HRESULT WINAPI WSDXMLCreateContext(IWSDXMLContext **ppContext)
 
     obj->IWSDXMLContext_iface.lpVtbl = &xmlcontext_vtbl;
     obj->ref = 1;
+    obj->namespaces = WSDAllocateLinkedMemory(obj, sizeof(struct list));
+    obj->nextUnknownPrefix = 0;
+
+    if (obj->namespaces == NULL)
+    {
+        WSDFreeLinkedMemory(obj);
+        return E_OUTOFMEMORY;
+    }
+
+    list_init(obj->namespaces);
 
     *ppContext = &obj->IWSDXMLContext_iface;
     TRACE("Returning iface %p\n", *ppContext);

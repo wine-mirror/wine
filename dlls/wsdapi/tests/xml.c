@@ -64,7 +64,7 @@ static void BuildAnyForSingleElement_tests(void)
     ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
 
     ok(element->Name != &name, "element->Name has not been duplicated\n");
-    todo_wine ok(element->Name->Space != name.Space, "element->Name->Space has not been duplicated\n");
+    ok(element->Name->Space != name.Space, "element->Name->Space has not been duplicated\n");
     ok(element->Name->LocalName != name.LocalName, "element->LocalName has not been duplicated\n");
     ok(lstrcmpW(element->Name->LocalName, name.LocalName) == 0, "element->LocalName = %s, expected %s\n",
         wine_dbgstr_w(element->Name->LocalName), wine_dbgstr_w(name.LocalName));
@@ -80,7 +80,7 @@ static void BuildAnyForSingleElement_tests(void)
     ok(hr == S_OK, "BuildAnyForSingleElement failed with %08x\n", hr);
 
     ok(element->Name != &name, "element->Name has not been duplicated\n");
-    todo_wine ok(element->Name->Space != name.Space, "element->Name->Space has not been duplicated\n");
+    ok(element->Name->Space != name.Space, "element->Name->Space has not been duplicated\n");
     ok(element->Name->LocalName != name.LocalName, "element->LocalName has not been duplicated\n");
     ok(lstrcmpW(element->Name->LocalName, name.LocalName) == 0, "element->LocalName = %s, expected %s\n",
         wine_dbgstr_w(element->Name->LocalName), wine_dbgstr_w(name.LocalName));
@@ -290,24 +290,24 @@ static void XMLContext_AddNamespace_tests(void)
 
     /* Test calling AddNamespace with invalid arguments */
     hr = IWSDXMLContext_AddNamespace(context, NULL, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
 
     hr = IWSDXMLContext_AddNamespace(context, ns1Uri, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
 
     hr = IWSDXMLContext_AddNamespace(context, NULL, prefix1, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
 
     /* Test calling AddNamespace without the ppNamespace parameter */
     hr = IWSDXMLContext_AddNamespace(context, ns1Uri, prefix1, NULL);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Now retrieve the created namespace */
     hr = IWSDXMLContext_AddNamespace(context, ns1Uri, prefix1, &ns1);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(ns1 != NULL, "ns1 == NULL\n");
+    ok(ns1 != NULL, "ns1 == NULL\n");
 
     if (ns1 != NULL)
     {
@@ -321,20 +321,20 @@ static void XMLContext_AddNamespace_tests(void)
 
     /* Test calling AddNamespace with parameters that are too large */
     hr = IWSDXMLContext_AddNamespace(context, largeText, prefix2, &ns2);
-    todo_wine ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
 
     hr = IWSDXMLContext_AddNamespace(context, ns2Uri, largeText, &ns2);
-    todo_wine ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
 
     hr = IWSDXMLContext_AddNamespace(context, largeText, largeText, &ns2);
-    todo_wine ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
+    ok(hr == E_INVALIDARG, "AddNamespace failed with %08x\n", hr);
 
     /* Test calling AddNamespace with a conflicting prefix */
     hr = IWSDXMLContext_AddNamespace(context, ns2Uri, prefix1, &ns2);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(ns2 != NULL, "ns2 == NULL\n");
+    ok(ns2 != NULL, "ns2 == NULL\n");
 
     if (ns2 != NULL)
     {
@@ -351,10 +351,10 @@ static void XMLContext_AddNamespace_tests(void)
 
     /* Try explicitly creating a prefix called 'un1' */
     hr = IWSDXMLContext_AddNamespace(context, ns4Uri, unPrefix1, &ns2);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(ns2 != NULL, "ns2 == NULL\n");
+    ok(ns2 != NULL, "ns2 == NULL\n");
 
     if (ns2 != NULL)
     {
@@ -365,10 +365,10 @@ static void XMLContext_AddNamespace_tests(void)
 
     /* Test with one more conflicting prefix */
     hr = IWSDXMLContext_AddNamespace(context, ns3Uri, prefix1, &ns2);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(ns2 != NULL, "ns2 == NULL\n");
+    ok(ns2 != NULL, "ns2 == NULL\n");
 
     if (ns2 != NULL)
     {
@@ -379,10 +379,10 @@ static void XMLContext_AddNamespace_tests(void)
 
     /* Try renaming a prefix */
     hr = IWSDXMLContext_AddNamespace(context, ns3Uri, prefix2, &ns2);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(ns2 != NULL, "ns2 == NULL\n");
+    ok(ns2 != NULL, "ns2 == NULL\n");
 
     if (ns2 != NULL)
     {
@@ -454,7 +454,7 @@ static void XMLContext_AddNameToNamespace_tests(void)
 
     /* Try creating a namespace explicitly */
     hr = IWSDXMLContext_AddNamespace(context, ns2Uri, prefix2, &ns2);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Now add a name to it */
     hr = IWSDXMLContext_AddNameToNamespace(context, ns2Uri, name2Text, &name2);
@@ -483,10 +483,10 @@ static void XMLContext_AddNameToNamespace_tests(void)
 
     /* Now re-retrieve ns2 */
     hr = IWSDXMLContext_AddNamespace(context, ns2Uri, prefix2, &ns2);
-    todo_wine ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
+    ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
-    todo_wine ok(ns2 != NULL, "ns2 == NULL\n");
+    ok(ns2 != NULL, "ns2 == NULL\n");
 
     if (ns2 != NULL)
     {
