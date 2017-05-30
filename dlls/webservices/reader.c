@@ -86,6 +86,24 @@ static WS_XML_DICTIONARY dict_builtin =
     {0x82704485,0x222a,0x4f7c,{0xb9,0x7b,0xe9,0xa4,0x62,0xa9,0x66,0x2b}}
 };
 
+/**************************************************************************
+ *          WsGetDictionary		[webservices.@]
+ */
+HRESULT WINAPI WsGetDictionary( WS_ENCODING encoding, WS_XML_DICTIONARY **dict, WS_ERROR *error )
+{
+    TRACE( "%u %p %p\n", encoding, dict, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!dict) return E_INVALIDARG;
+
+    if (encoding == WS_ENCODING_XML_BINARY_1 || encoding == WS_ENCODING_XML_BINARY_SESSION_1)
+        *dict = &dict_builtin;
+    else
+        *dict = NULL;
+
+    return S_OK;
+}
+
 static inline int cmp_string( const unsigned char *str, ULONG len, const unsigned char *str2, ULONG len2 )
 {
     if (len < len2) return -1;

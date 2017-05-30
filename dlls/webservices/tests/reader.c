@@ -1183,6 +1183,7 @@ static void test_WsReadNode(void)
     static const char str17[] = "<!--comment-->";
     HRESULT hr;
     WS_XML_READER *reader;
+    WS_XML_DICTIONARY *dict;
     const WS_XML_NODE *node;
     unsigned int i;
     int found;
@@ -1333,6 +1334,21 @@ static void test_WsReadNode(void)
         ok( comment->value.length == 9, "got %u\n", comment->value.length );
         ok( !memcmp( comment->value.bytes, " comment ", 9 ), "wrong data\n" );
     }
+
+    dict = (WS_XML_DICTIONARY *)0xdeadbeef;
+    hr = WsGetDictionary( WS_ENCODING_XML_UTF8, &dict, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dict == NULL, "got %p\n", dict );
+
+    dict = (WS_XML_DICTIONARY *)0xdeadbeef;
+    hr = WsGetDictionary( WS_ENCODING_XML_BINARY_1, &dict, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dict != NULL, "dict not set\n" );
+
+    dict = (WS_XML_DICTIONARY *)0xdeadbeef;
+    hr = WsGetDictionary( WS_ENCODING_XML_BINARY_SESSION_1, &dict, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dict != NULL, "dict not set\n" );
 
     WsFreeReader( reader );
 }
@@ -4898,7 +4914,7 @@ static void test_dictionary(void)
     const WS_XML_ATTRIBUTE *attr;
     const WS_XML_UTF8_TEXT *utf8;
     WS_XML_STRING strings[6];
-    WS_XML_DICTIONARY dict;
+    WS_XML_DICTIONARY dict, *dict2;
     WS_XML_READER *reader;
     HRESULT hr;
 
@@ -5162,6 +5178,29 @@ static void test_dictionary(void)
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    hr = WsGetDictionary( 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetDictionary( WS_ENCODING_XML_UTF8, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    dict2 = (WS_XML_DICTIONARY *)0xdeadbeef;
+    hr = WsGetDictionary( WS_ENCODING_XML_UTF8, &dict2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dict2 == NULL, "got %p\n", dict2 );
+
+    dict2 = (WS_XML_DICTIONARY *)0xdeadbeef;
+    hr = WsGetDictionary( WS_ENCODING_XML_BINARY_1, &dict2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dict2 != NULL, "dict2 not set\n" );
+    ok( dict2 != &dict, "got %p\n", dict2 );
+
+    dict2 = (WS_XML_DICTIONARY *)0xdeadbeef;
+    hr = WsGetDictionary( WS_ENCODING_XML_BINARY_SESSION_1, &dict2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( dict2 != NULL, "dict2 not set\n" );
+    ok( dict2 != &dict, "got %p\n", dict2 );
 
     WsFreeReader( reader );
 }
