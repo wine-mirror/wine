@@ -36,10 +36,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class WineActivity extends Activity
 {
+    private native String wine_init( String[] cmdline, String[] env );
+
     private final String LOGTAG = "wine";
     private ProgressDialog progress_dialog;
 
@@ -50,13 +53,68 @@ public class WineActivity extends Activity
 
         requestWindowFeature( android.view.Window.FEATURE_NO_TITLE );
 
-        new Thread( new Runnable() { public void run() { loadWine(); }} ).start();
+        new Thread( new Runnable() { public void run() { loadWine( null ); }} ).start();
     }
 
-    private void loadWine()
+    private void loadWine( String cmdline )
     {
+        File bindir = new File( getFilesDir(), Build.CPU_ABI + "/bin" );
+        File libdir = new File( getFilesDir(), Build.CPU_ABI + "/lib" );
+        File prefix = new File( getFilesDir(), "prefix" );
+        File loader = new File( bindir, "wine" );
+        String locale = Locale.getDefault().getLanguage() + "_" +
+            Locale.getDefault().getCountry() + ".UTF-8";
+
         copyAssetFiles();
         runOnUiThread( new Runnable() { public void run() { progress_dialog.dismiss(); }});
+
+        HashMap<String,String> env = new HashMap<String,String>();
+        env.put( "WINELOADER", loader.toString() );
+        env.put( "WINEPREFIX", prefix.toString() );
+        env.put( "LD_LIBRARY_PATH", libdir.toString() );
+        env.put( "LC_ALL", locale );
+        env.put( "LANG", locale );
+
+        if (cmdline == null)
+        {
+            if (new File( prefix, "drive_c/winestart.cmd" ).exists()) cmdline = "c:\\winestart.cmd";
+            else cmdline = "wineconsole.exe";
+        }
+
+        String winedebug = readFileString( new File( prefix, "winedebug" ));
+        if (winedebug == null) winedebug = readFileString( new File( getFilesDir(), "winedebug" ));
+        if (winedebug != null)
+        {
+            File log = new File( getFilesDir(), "log" );
+            env.put( "WINEDEBUG", winedebug );
+            env.put( "WINEDEBUGLOG", log.toString() );
+            Log.i( LOGTAG, "logging to " + log.toString() );
+            log.delete();
+        }
+
+        System.load( libdir.toString() + "/libwine.so" );
+        prefix.mkdirs();
+
+        runWine( cmdline, env );
+    }
+
+    private final void runWine( String cmdline, HashMap<String,String> environ )
+    {
+        String[] env = new String[environ.size() * 2];
+        int j = 0;
+        for (Map.Entry<String,String> entry : environ.entrySet())
+        {
+            env[j++] = entry.getKey();
+            env[j++] = entry.getValue();
+        }
+
+        String[] cmd = { environ.get( "WINELOADER" ),
+                         "explorer.exe",
+                         "/desktop=shell,,android",
+                         cmdline };
+
+        String err = wine_init( cmd, env );
+        Log.e( LOGTAG, err );
     }
 
     private void createProgressDialog( final int max, final String message )
@@ -124,6 +182,17 @@ public class WineActivity extends Activity
             return readMapFromInputStream( getAssets().open( file ) );
         }
         catch( IOException e ) { return new HashMap<String,String>(); }
+    }
+
+    private final String readFileString( File file )
+    {
+        try
+        {
+            FileInputStream in = new FileInputStream( file );
+            BufferedReader reader = new BufferedReader( new InputStreamReader( in, "UTF-8" ));
+            return reader.readLine();
+        }
+        catch( IOException e ) { return null; }
     }
 
     private final void copyAssetFile( String src )
