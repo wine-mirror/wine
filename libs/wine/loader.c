@@ -877,6 +877,15 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
                                                                  "android_update_LD_LIBRARY_PATH" );
                     if (update_func) update_func( val );
                 }
+                else if (!strcmp( var, "WINEDEBUGLOG" ))
+                {
+                    int fd = open( val, O_WRONLY | O_CREAT | O_APPEND, 0666 );
+                    if (fd != -1)
+                    {
+                        dup2( fd, 2 );
+                        close( fd );
+                    }
+                }
                 (*env)->ReleaseStringUTFChars( env, val_obj, val );
             }
             else unsetenv( var );
