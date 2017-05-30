@@ -549,6 +549,7 @@ extern int macdrv_layout_list_needs_update DECLSPEC_HIDDEN;
 extern CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard) DECLSPEC_HIDDEN;
 extern CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type) DECLSPEC_HIDDEN;
 extern int macdrv_is_pasteboard_owner(macdrv_window w) DECLSPEC_HIDDEN;
+extern int macdrv_has_pasteboard_changed(void) DECLSPEC_HIDDEN;
 extern void macdrv_clear_pasteboard(macdrv_window w) DECLSPEC_HIDDEN;
 extern int macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, macdrv_window w) DECLSPEC_HIDDEN;
 

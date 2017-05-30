@@ -25,6 +25,7 @@
 
 
 static int owned_change_count = -1;
+static int change_count = -1;
 
 static NSArray* BitmapOutputTypes;
 static NSDictionary* BitmapOutputTypeMap;
@@ -52,6 +53,23 @@ int macdrv_is_pasteboard_owner(macdrv_window w)
     return ret;
 }
 
+/***********************************************************************
+ *              macdrv_has_pasteboard_changed
+ */
+int macdrv_has_pasteboard_changed(void)
+{
+    __block int new_change_count;
+    int ret;
+
+    OnMainThread(^{
+        NSPasteboard* pb = [NSPasteboard generalPasteboard];
+        new_change_count = [pb changeCount];
+    });
+
+    ret = (change_count != new_change_count);
+    change_count = new_change_count;
+    return ret;
+}
 
 /***********************************************************************
  *              macdrv_copy_pasteboard_types
