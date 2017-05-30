@@ -1,0 +1,81 @@
+/*
+ * Gradle build script for Wine
+ *
+ * Copyright 2017 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+apply plugin: 'com.android.application'
+
+buildscript
+{
+    repositories
+    {
+        jcenter()
+    }
+    dependencies
+    {
+        classpath "com.android.tools.build:gradle:2.2.1"
+    }
+}
+
+def add_icon_task( dir, scale ) {
+    return tasks.create( "createIcon-" + dir, Exec ) {
+        def outdir = new File( "res", "drawable-" + dir )
+        outputs.dir( outdir )
+        doFirst { outdir.mkdirs() }
+        def png = new File( outdir, "wine.png" )
+        def svg = new File( "@srcdir@", "wine.svg" )
+        inputs.file( svg )
+        outputs.file( png )
+        commandLine "rsvg-convert", "-z", scale, "-o", png, svg
+    }
+}
+
+tasks.whenTaskAdded { t ->
+      if (t.name.equals( "generateDebugResources" )) {
+          t.dependsOn add_icon_task( "ldpi", 0.75 )
+          t.dependsOn add_icon_task( "mdpi", 1 )
+          t.dependsOn add_icon_task( "hdpi", 1.5 )
+          t.dependsOn add_icon_task( "xhdpi", 2 )
+          t.dependsOn add_icon_task( "xxhdpi", 3 )
+          t.dependsOn add_icon_task( "xxxhdpi", 4 )
+      }
+}
+
+android
+{
+    compileSdkVersion 17
+    buildToolsVersion "25.0.3"
+
+    defaultConfig
+    {
+        applicationId "org.winehq.wine"
+        minSdkVersion 17
+        versionCode 1
+        versionName "@PACKAGE_VERSION@"
+        setProperty( "archivesBaseName", "wine" )
+    }
+
+    sourceSets
+    {
+        main.assets.srcDirs = [ "assets" ]
+        main.java.srcDirs = [ "@srcdir@" ]
+        main.java.excludes = [ "build" ]
+        main.res.srcDirs = [ "res" ]
+        main.manifest.srcFile "@srcdir@/AndroidManifest.xml"
+    }
+}

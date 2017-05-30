@@ -1,1 +1,11 @@
 MODULE  = wineandroid.drv
+
+IN_SRCS = \
+	build.gradle.in
+
+EXTRA_TARGETS = wine-debug.apk
+
+all: wine-debug.apk
+
+wine-debug.apk: build.gradle $(srcdir)/AndroidManifest.xml $(srcdir)/WineActivity.java $(srcdir)/wine.svg
+	gradle -q assembleDebug && mv build/outputs/apk/wine-debug.apk .

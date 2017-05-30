@@ -18575,7 +18575,7 @@ wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
 wine_fn_config_dll windowscodecsext enable_windowscodecsext implib
 wine_fn_config_test dlls/windowscodecsext/tests windowscodecsext_test
 wine_fn_config_dll winealsa.drv enable_winealsa_drv
-wine_fn_config_dll wineandroid.drv enable_wineandroid_drv
+wine_fn_config_dll wineandroid.drv enable_wineandroid_drv clean
 wine_fn_config_dll winebus.sys enable_winebus_sys
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
