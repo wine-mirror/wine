@@ -3,6 +3,7 @@ IMPORTLIB = wsdapi
 IMPORTS   = user32
 
 C_SRCS = \
+	address.c \
 	discovery.c \
 	main.c \
 	memory.c \

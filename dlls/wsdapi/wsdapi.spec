@@ -23,7 +23,7 @@
 @ stub WSDCreateHttpTransport
 @ stub WSDCreateMetadataAgent
 @ stub WSDCreateOutboundAttachment
-@ stub WSDCreateUdpAddress
+@ stdcall WSDCreateUdpAddress(ptr)
 @ stub WSDCreateUdpMessageParameters
 @ stub WSDCreateUdpTransport
 @ stdcall WSDDetachLinkedMemory(ptr)
