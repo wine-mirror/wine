@@ -851,6 +851,7 @@ case $host_os in
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDEXECFLAGS="-Wl,-pie"
+    enable_wineandroid_drv=${enable_wineandroid_drv:-yes}
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                     [WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
     WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
@@ -865,6 +866,16 @@ case $host_os in
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
     AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so")
     AC_SUBST(LIBWINE_LDFLAGS,["-shared -Wl,-soname,libwine.so"])
+
+    if test "x$exec_prefix" = xNONE
+    then
+      case $host_cpu in
+        *i[[3456]]86*) exec_prefix='${prefix}/x86' ;;
+        *x86_64*)      exec_prefix='${prefix}/x86_64' ;;
+        *arm*)         exec_prefix='${prefix}/armeabi-v7a' ;;
+        *aarch64*)     exec_prefix='${prefix}/arm64-v8a' ;;
+      esac
+    fi
     ;;
 
   *)
@@ -938,6 +949,7 @@ esac
 
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
+enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
@@ -1175,7 +1187,7 @@ else
     X_LIBS=""
 fi
 
-if test "$enable_winemac_drv" = "no"
+if test "$enable_wineandroid_drv$enable_winemac_drv" = "nono"
 then
     WINE_ERROR_WITH(x,[test "x$X_LIBS" = "x"],
 [X ${notice_platform}development files not found. Wine will be built
@@ -3507,6 +3519,7 @@ WINE_CONFIG_TEST(dlls/windowscodecs/tests)
 WINE_CONFIG_DLL(windowscodecsext,,[implib])
 WINE_CONFIG_TEST(dlls/windowscodecsext/tests)
 WINE_CONFIG_DLL(winealsa.drv)
+WINE_CONFIG_DLL(wineandroid.drv)
 WINE_CONFIG_DLL(winebus.sys)
 WINE_CONFIG_DLL(winecoreaudio.drv)
 WINE_CONFIG_LIB(winecrt0)

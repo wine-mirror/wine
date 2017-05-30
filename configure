@@ -1465,6 +1465,7 @@ enable_wimgapi
 enable_windowscodecs
 enable_windowscodecsext
 enable_winealsa_drv
+enable_wineandroid_drv
 enable_winebus_sys
 enable_winecoreaudio_drv
 enable_wined3d
@@ -8367,6 +8368,7 @@ fi
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDEXECFLAGS="-Wl,-pie"
+    enable_wineandroid_drv=${enable_wineandroid_drv:-yes}
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--export-dynamic" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -Wl,--export-dynamic... " >&6; }
 if ${ac_cv_cflags__fPIC__Wl___export_dynamic+:} false; then :
@@ -8481,6 +8483,16 @@ fi
 
     LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so"
 
+
+    if test "x$exec_prefix" = xNONE
+    then
+      case $host_cpu in
+        *i[3456]86*) exec_prefix='${prefix}/x86' ;;
+        *x86_64*)      exec_prefix='${prefix}/x86_64' ;;
+        *arm*)         exec_prefix='${prefix}/armeabi-v7a' ;;
+        *aarch64*)     exec_prefix='${prefix}/arm64-v8a' ;;
+      esac
+    fi
     ;;
 
   *)
@@ -8873,6 +8885,7 @@ esac
 
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
+enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
@@ -11002,7 +11015,7 @@ else
     X_LIBS=""
 fi
 
-if test "$enable_winemac_drv" = "no"
+if test "$enable_wineandroid_drv$enable_winemac_drv" = "nono"
 then
     if test "x$X_LIBS" = "x"; then :
   case "x$with_x" in
@@ -18562,6 +18575,7 @@ wine_fn_config_test dlls/windowscodecs/tests windowscodecs_test
 wine_fn_config_dll windowscodecsext enable_windowscodecsext implib
 wine_fn_config_test dlls/windowscodecsext/tests windowscodecsext_test
 wine_fn_config_dll winealsa.drv enable_winealsa_drv
+wine_fn_config_dll wineandroid.drv enable_wineandroid_drv
 wine_fn_config_dll winebus.sys enable_winebus_sys
 wine_fn_config_dll winecoreaudio.drv enable_winecoreaudio_drv
 wine_fn_config_lib winecrt0
