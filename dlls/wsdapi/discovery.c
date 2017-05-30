@@ -360,10 +360,18 @@ HRESULT WINAPI WSDCreateDiscoveryPublisher(IWSDXMLContext *pContext, IWSDiscover
 
     obj->IWSDiscoveryPublisher_iface.lpVtbl = &publisher_vtbl;
     obj->ref = 1;
-    obj->xmlContext = pContext;
 
-    if (pContext != NULL)
+    if (pContext == NULL)
     {
+        if (FAILED(WSDXMLCreateContext(&obj->xmlContext)))
+        {
+            WARN("Unable to create XML context\n");
+            return E_OUTOFMEMORY;
+        }
+    }
+    else
+    {
+        obj->xmlContext = pContext;
         IWSDXMLContext_AddRef(pContext);
     }
 

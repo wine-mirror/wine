@@ -162,6 +162,56 @@ static void CreateDiscoveryPublisher_tests(void)
     ok(ref == 0, "IWSDiscoveryPublisher_Release() has %d references, should have 0\n", ref);
 }
 
+static void CreateDiscoveryPublisher_XMLContext_tests(void)
+{
+    IWSDiscoveryPublisher *publisher = NULL;
+    IWSDXMLContext *xmlContext, *returnedContext;
+    HRESULT rc;
+    int ref;
+
+    /* Test creating an XML context and supplying it to WSDCreateDiscoveryPublisher */
+    rc = WSDXMLCreateContext(&xmlContext);
+    ok(rc == S_OK, "WSDXMLCreateContext failed: %08x\n", rc);
+
+    rc = WSDCreateDiscoveryPublisher(xmlContext, &publisher);
+    ok(rc == S_OK, "WSDCreateDiscoveryPublisher(xmlContext, &publisher) failed: %08x\n", rc);
+    ok(publisher != NULL, "WSDCreateDiscoveryPublisher(xmlContext, &publisher) failed: publisher == NULL\n");
+
+    rc = IWSDiscoveryPublisher_GetXMLContext(publisher, NULL);
+    ok(rc == E_INVALIDARG, "GetXMLContext returned unexpected value with NULL argument: %08x\n", rc);
+
+    rc = IWSDiscoveryPublisher_GetXMLContext(publisher, &returnedContext);
+    ok(rc == S_OK, "GetXMLContext failed: %08x\n", rc);
+
+    ok(xmlContext == returnedContext, "GetXMLContext returned unexpected value: returnedContext == %p\n", returnedContext);
+
+    ref = IWSDXMLContext_Release(returnedContext);
+    ok(ref == 2, "IWSDXMLContext_Release() has %d references, should have 2\n", ref);
+
+    ref = IWSDiscoveryPublisher_Release(publisher);
+    ok(ref == 0, "IWSDiscoveryPublisher_Release() has %d references, should have 0\n", ref);
+
+    ref = IWSDXMLContext_Release(returnedContext);
+    ok(ref == 0, "IWSDXMLContext_Release() has %d references, should have 0\n", ref);
+
+    /* Test using a default XML context */
+    publisher = NULL;
+    returnedContext = NULL;
+
+    rc = WSDCreateDiscoveryPublisher(NULL, &publisher);
+    ok(rc == S_OK, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: %08x\n", rc);
+    ok(publisher != NULL, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: publisher == NULL\n");
+
+    rc = IWSDiscoveryPublisher_GetXMLContext(publisher, &returnedContext);
+    ok(rc == S_OK, "GetXMLContext failed: %08x\n", rc);
+
+    ref = IWSDXMLContext_Release(returnedContext);
+    ok(ref == 1, "IWSDXMLContext_Release() has %d references, should have 1\n", ref);
+
+    ref = IWSDiscoveryPublisher_Release(publisher);
+    ok(ref == 0, "IWSDiscoveryPublisher_Release() has %d references, should have 0\n", ref);
+}
+
 static void Publish_tests(void)
 {
     IWSDiscoveryPublisher *publisher = NULL;
@@ -231,6 +281,7 @@ START_TEST(discovery)
     CoInitialize(NULL);
 
     CreateDiscoveryPublisher_tests();
+    CreateDiscoveryPublisher_XMLContext_tests();
     Publish_tests();
 
     CoUninitialize();
