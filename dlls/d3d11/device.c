@@ -3318,9 +3318,60 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource(ID3D11Device *i
 static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device *iface, DXGI_FORMAT format,
         UINT *format_support)
 {
-    FIXME("iface %p, format %u, format_support %p stub!\n", iface, format, format_support);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct wined3d_device_creation_parameters params;
+    enum wined3d_format_id wined3d_format;
+    struct wined3d *wined3d;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    static const const struct
+    {
+        enum wined3d_resource_type rtype;
+        unsigned int usage;
+        D3D11_FORMAT_SUPPORT flag;
+    }
+    flag_mapping[] =
+    {
+        {WINED3D_RTYPE_TEXTURE_2D, WINED3DUSAGE_TEXTURE,      D3D11_FORMAT_SUPPORT_TEXTURE2D},
+        {WINED3D_RTYPE_TEXTURE_3D, WINED3DUSAGE_TEXTURE,      D3D11_FORMAT_SUPPORT_TEXTURE3D},
+        {WINED3D_RTYPE_NONE,       WINED3DUSAGE_RENDERTARGET, D3D11_FORMAT_SUPPORT_RENDER_TARGET},
+        {WINED3D_RTYPE_NONE,       WINED3DUSAGE_DEPTHSTENCIL, D3D11_FORMAT_SUPPORT_DEPTH_STENCIL},
+    };
+    HRESULT hr;
+
+    FIXME("iface %p, format %u, format_support %p partial-stub!\n", iface, format, format_support);
+
+    wined3d_format = wined3dformat_from_dxgi_format(format);
+    if (format && !wined3d_format)
+    {
+        WARN("Invalid format %#x.\n", format);
+        *format_support = 0;
+        return E_FAIL;
+    }
+
+    *format_support = 0;
+
+    wined3d_mutex_lock();
+    wined3d = wined3d_device_get_wined3d(device->wined3d_device);
+    wined3d_device_get_creation_parameters(device->wined3d_device, &params);
+    for (i = 0; i < ARRAY_SIZE(flag_mapping); ++i)
+    {
+        hr = wined3d_check_device_format(wined3d, params.adapter_idx, params.device_type,
+                WINED3DFMT_UNKNOWN, flag_mapping[i].usage, flag_mapping[i].rtype, wined3d_format);
+        if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DOK_NOAUTOGEN)
+            continue;
+        if (hr != WINED3D_OK)
+        {
+            WARN("Failed to check device format support, hr %#x.\n", hr);
+            wined3d_mutex_unlock();
+            return E_FAIL;
+        }
+
+        *format_support |= flag_mapping[i].flag;
+    }
+    wined3d_mutex_unlock();
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CheckMultisampleQualityLevels(ID3D11Device *iface,
