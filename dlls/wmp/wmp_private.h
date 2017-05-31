@@ -36,6 +36,7 @@ struct WindowsMediaPlayer {
 
     IOleClientSite *client_site;
     HWND hwnd;
+    SIZEL extent;
 };
 
 void init_player_ifaces(WindowsMediaPlayer*) DECLSPEC_HIDDEN;

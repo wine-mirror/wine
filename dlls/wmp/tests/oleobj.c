@@ -857,6 +857,56 @@ static void test_QI(IUnknown *unk)
     IUnknown_Release(tmp);
 }
 
+static void test_extent(IOleObject *oleobj)
+{
+    SIZE expected, extent;
+    DWORD dpi_x;
+    DWORD dpi_y;
+    HDC hdc;
+    HRESULT hres;
+
+    /* default aspect ratio is 96dpi / 96dpi */
+    hdc = GetDC(0);
+    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+    if (dpi_x != 96 || dpi_y != 96)
+        trace("dpi: %d / %d\n", dpi_y, dpi_y);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    expected.cx = MulDiv(192, 2540, dpi_x);
+    expected.cy = MulDiv(192, 2540, dpi_y);
+    ok(extent.cx == expected.cx && extent.cy == expected.cy, "size = {%d %d} (expected %d %d)\n",
+       extent.cx, extent.cy, expected.cx, expected.cy );
+
+    extent.cx = 800;
+    extent.cy = 700;
+    hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 800 && extent.cy == 700, "size = {%d %d}\n", extent.cx, extent.cy);
+
+    hres = IOleObject_GetExtent(oleobj, 0, &extent);
+    ok(hres == E_FAIL, "GetExtent failed: %08x\n", hres);
+    hres = IOleObject_GetExtent(oleobj, 7, &extent);
+    ok(hres == E_FAIL, "GetExtent failed: %08x\n", hres);
+
+    extent.cx = 900;
+    extent.cy = 800;
+    hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &expected);
+    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
+
+    hres = IOleObject_SetExtent(oleobj, 0, &expected);
+    ok(hres == DV_E_DVASPECT, "SetExtent failed: %08x\n", hres);
+    hres = IOleObject_SetExtent(oleobj, 7, &expected);
+    ok(hres == DV_E_DVASPECT, "SetExtent failed: %08x\n", hres);
+}
+
 static void test_wmp(void)
 {
     IProvideClassInfo2 *class_info;
@@ -902,6 +952,7 @@ static void test_wmp(void)
     IProvideClassInfo2_Release(class_info);
 
     test_QI((IUnknown*)oleobj);
+    test_extent(oleobj);
 
     hres = IOleObject_GetMiscStatus(oleobj, DVASPECT_CONTENT, &misc_status);
     ok(hres == S_OK, "GetMiscStatus failed: %08x\n", hres);

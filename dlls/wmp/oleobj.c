@@ -457,15 +457,27 @@ static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfTyp
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
+
+    if(dwDrawAspect != DVASPECT_CONTENT)
+        return DV_E_DVASPECT;
+
+    This->extent = *psizel;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
+
+    if(dwDrawAspect != DVASPECT_CONTENT)
+        return E_FAIL;
+
+    *psizel = This->extent;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink, DWORD *pdwConnection)
@@ -905,6 +917,8 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
         REFIID riid, void **ppv)
 {
     WindowsMediaPlayer *wmp;
+    DWORD dpi_x, dpi_y;
+    HDC hdc;
     HRESULT hres;
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
@@ -923,6 +937,14 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
     wmp->ref = 1;
 
     init_player_ifaces(wmp);
+
+    hdc = GetDC(0);
+    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+
+    wmp->extent.cx = MulDiv(192, 2540, dpi_x);
+    wmp->extent.cy = MulDiv(192, 2540, dpi_y);
 
     hres = IOleObject_QueryInterface(&wmp->IOleObject_iface, riid, ppv);
     IOleObject_Release(&wmp->IOleObject_iface);
