@@ -3357,6 +3357,22 @@ static RpcConnection *rpcrt4_spawn_connection(RpcConnection *old_connection)
     return connection;
 }
 
+void rpcrt4_conn_release_and_wait(RpcConnection *connection)
+{
+    HANDLE event = NULL;
+
+    if (connection->ref > 1)
+        event = connection->wait_release = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    RPCRT4_ReleaseConnection(connection);
+
+    if(event)
+    {
+        WaitForSingleObject(event, INFINITE);
+        CloseHandle(event);
+    }
+}
+
 RpcConnection *RPCRT4_GrabConnection( RpcConnection *conn )
 {
     InterlockedIncrement( &conn->ref );
@@ -3386,6 +3402,8 @@ RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection* Connection)
     list_remove(&Connection->protseq_entry);
     LeaveCriticalSection(&Connection->protseq->cs);
   }
+
+  if (Connection->wait_release) SetEvent(Connection->wait_release);
 
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;

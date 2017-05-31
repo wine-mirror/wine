@@ -675,20 +675,38 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
       set_ready_event = TRUE;
   }
 
+  TRACE("closing connections\n");
+
   EnterCriticalSection(&cps->cs);
   LIST_FOR_EACH_ENTRY(conn, &cps->listeners, RpcConnection, protseq_entry)
     RPCRT4_CloseConnection(conn);
   LIST_FOR_EACH_ENTRY(conn, &cps->connections, RpcConnection, protseq_entry)
+  {
+    RPCRT4_GrabConnection(conn);
     rpcrt4_conn_close_read(conn);
+  }
   LeaveCriticalSection(&cps->cs);
 
   if (res == 0 && !std_listen)
       SetEvent(cps->server_ready_event);
 
+  TRACE("waiting for active connections to close\n");
+
+  EnterCriticalSection(&cps->cs);
+  while (!list_empty(&cps->connections))
+  {
+    conn = LIST_ENTRY(list_head(&cps->connections), RpcConnection, protseq_entry);
+    LeaveCriticalSection(&cps->cs);
+    rpcrt4_conn_release_and_wait(conn);
+    EnterCriticalSection(&cps->cs);
+  }
+  LeaveCriticalSection(&cps->cs);
+
   EnterCriticalSection(&listen_cs);
   CloseHandle(cps->server_thread);
   cps->server_thread = NULL;
   LeaveCriticalSection(&listen_cs);
+  TRACE("done\n");
   return 0;
 }
 
