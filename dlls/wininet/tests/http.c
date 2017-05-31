@@ -4561,6 +4561,11 @@ static void server_send_string(const char *msg)
     send(server_socket, msg, strlen(msg), 0);
 }
 
+static size_t server_read_data(char *buf, size_t buf_size)
+{
+    return recv(server_socket, buf, buf_size, 0);
+}
+
 static BOOL skip_receive_notification_tests;
 static DWORD received_response_size;
 
@@ -5152,6 +5157,98 @@ static void test_long_url(int port)
     close_request(&req);
 }
 
+static void test_redirect(int port)
+{
+    char buf[4000], *p, expect_url[INTERNET_MAX_URL_LENGTH];
+    INTERNET_BUFFERSW ib;
+    test_request_t req;
+    size_t size;
+
+    if(!is_ie7plus)
+        return;
+
+    skip_receive_notification_tests = TRUE;
+
+    memset(&ib, 0, sizeof(ib));
+    ib.dwStructSize = sizeof(ib);
+    ib.lpvBuffer = buf;
+
+    trace("Testing redirection...\n");
+
+    open_socket_request(port, &req);
+
+    SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+    SET_EXPECT(INTERNET_STATUS_REDIRECT);
+    SET_EXPECT(INTERNET_STATUS_SENDING_REQUEST);
+    SET_EXPECT(INTERNET_STATUS_REQUEST_SENT);
+
+    server_send_string("HTTP/1.1 302 Found\r\n"
+                       "Server: winetest\r\n"
+                       "Location: test_redirection\r\n"
+                       "Connection: keep-alive\r\n"
+                       "Content-Length: 0\r\n"
+                       "\r\n");
+
+    size = server_read_data(buf, sizeof(buf));
+    buf[size] = 0;
+    p = strstr(buf, "\r\n");
+    if(p) *p = 0;
+    ok(p && !strcmp(buf, "GET /test_redirection HTTP/1.1"), "unexpected request %s\n", buf);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+
+    sprintf(expect_url, "http://localhost:%u/test_redirection", port);
+    test_request_url(req.request, expect_url);
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    server_send_string("HTTP/1.1 200 OK\r\n"
+                       "Server: winetest\r\n"
+                       "Content-Length: 3\r\n"
+                       "\r\n"
+                       "xxx");
+
+    WaitForSingleObject(complete_event, INFINITE);
+
+    CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+    CHECK_NOTIFIED(INTERNET_STATUS_REDIRECT);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
+
+    test_status_code(req.request, 200);
+
+    close_connection();
+    close_async_handle(req.session, 2);
+
+    trace("Test redirect to non-http URL...\n");
+
+    open_socket_request(port, &req);
+
+    SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
+
+    server_send_string("HTTP/1.1 302 Found\r\n"
+                       "Server: winetest\r\n"
+                       "Location: test:non:http/url\r\n"
+                       "Connection: keep-alive\r\n"
+                       "Content-Length: 0\r\n"
+                       "\r\n");
+
+    WaitForSingleObject(complete_event, INFINITE);
+
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
+    ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
+
+    sprintf(expect_url, "http://localhost:%u/socket", port);
+    test_request_url(req.request, expect_url);
+    test_status_code(req.request, 302);
+
+    close_connection();
+    close_async_handle(req.session, 2);
+
+    skip_receive_notification_tests = FALSE;
+}
+
 static void test_remove_dot_segments(int port)
 {
     test_request_t req;
@@ -5218,6 +5315,7 @@ static void test_http_connection(void)
     test_http_read(si.port);
     test_connection_break(si.port);
     test_long_url(si.port);
+    test_redirect(si.port);
     test_remove_dot_segments(si.port);
 
     /* send the basic request again to shutdown the server thread */
