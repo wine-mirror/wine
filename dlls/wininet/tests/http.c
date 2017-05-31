@@ -109,7 +109,7 @@ static int expect[MAX_INTERNET_STATUS], optional[MAX_INTERNET_STATUS],
     wine_allow[MAX_INTERNET_STATUS], notified[MAX_INTERNET_STATUS];
 static const char *status_string[MAX_INTERNET_STATUS];
 
-static HANDLE hCompleteEvent, conn_close_event, conn_wait_event, server_req_rec_event;
+static HANDLE complete_event, conn_close_event, conn_wait_event, server_req_rec_event;
 static DWORD req_error;
 static BOOL is_ie7plus = TRUE;
 
@@ -193,6 +193,30 @@ static BOOL proxy_active(void)
     RegCloseKey(internet_settings);
 
     return proxy_enable != 0;
+}
+
+static void init_events(void)
+{
+    complete_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    conn_close_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    conn_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    server_req_rec_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+}
+
+static void free_events(void)
+{
+    CloseHandle(complete_event);
+    CloseHandle(conn_close_event);
+    CloseHandle(conn_wait_event);
+    CloseHandle(server_req_rec_event);
+}
+
+static void reset_events(void)
+{
+    ResetEvent(complete_event);
+    ResetEvent(conn_close_event);
+    ResetEvent(conn_wait_event);
+    ResetEvent(server_req_rec_event);
 }
 
 #define test_status_code(a,b) _test_status_code(__LINE__,a,b, FALSE)
@@ -419,7 +443,7 @@ static VOID WINAPI callback(
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(HINTERNET *)lpvStatusInformation, dwStatusInformationLength);
             if(!InterlockedDecrement(&close_handle_cnt))
-                SetEvent(hCompleteEvent);
+                SetEvent(complete_event);
             break;
         case INTERNET_STATUS_REQUEST_COMPLETE:
         {
@@ -433,7 +457,7 @@ static VOID WINAPI callback(
                 iar->dwResult,iar->dwError,dwStatusInformationLength);
             req_error = iar->dwError;
             if(!close_handle_cnt)
-                SetEvent(hCompleteEvent);
+                SetEvent(complete_event);
             break;
         }
         case INTERNET_STATUS_REDIRECT:
@@ -501,7 +525,7 @@ static DWORD _receive_simple_request(unsigned line, HINTERNET req, char *buf, si
     return read;
 }
 
-static void close_async_handle(HINTERNET handle, HANDLE complete_event, int handle_cnt)
+static void close_async_handle(HINTERNET handle, int handle_cnt)
 {
     BOOL res;
 
@@ -510,7 +534,7 @@ static void close_async_handle(HINTERNET handle, HANDLE complete_event, int hand
     SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, handle_cnt);
     res = InternetCloseHandle(handle);
     ok(res, "InternetCloseHandle failed: %u\n", GetLastError());
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, handle_cnt);
 }
 
@@ -524,9 +548,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-
     trace("Starting InternetReadFile test with flags 0x%x on url %s\n",flags,test->url);
+    reset_events();
 
     trace("InternetOpenA <--\n");
     hi = InternetOpenA((test->flags & TESTF_COMPRESSED) ? "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)" : "",
@@ -633,7 +656,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     trace("HttpSendRequestA <--\n");
 
     if (flags & INTERNET_FLAG_ASYNC) {
-        WaitForSingleObject(hCompleteEvent, INFINITE);
+        WaitForSingleObject(complete_event, INFINITE);
         ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
     }
     HeapFree(GetProcessHeap(), 0, post_data);
@@ -801,7 +824,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
                 /* on some tests, InternetQueryDataAvailable returns non-zero length and ERROR_IO_PENDING */
                 if(!(test->flags & TESTF_CHUNKED))
                     ok(!length, "InternetQueryDataAvailable returned ERROR_IO_PENDING and %u length\n", length);
-                WaitForSingleObject(hCompleteEvent, INFINITE);
+                WaitForSingleObject(complete_event, INFINITE);
                 exlen = length;
                 ok(exlen, "length = 0\n");
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
@@ -845,8 +868,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     }
 abort:
     trace("aborting\n");
-    close_async_handle(hi, hCompleteEvent, 2);
-    CloseHandle(hCompleteEvent);
+    close_async_handle(hi, 2);
     first_connection_to_test_url = FALSE;
 }
 
@@ -975,9 +997,8 @@ static void InternetReadFileExA_test(int flags)
     HINTERNET hi, hic = 0, hor = 0;
     INTERNET_BUFFERSA inetbuffers;
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-
     trace("Starting InternetReadFileExA test with flags 0x%x\n",flags);
+    reset_events();
 
     trace("InternetOpenA <--\n");
     hi = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, flags);
@@ -1056,7 +1077,7 @@ static void InternetReadFileExA_test(int flags)
     trace("HttpSendRequestA <--\n");
 
     if (!rc && (GetLastError() == ERROR_IO_PENDING)) {
-        WaitForSingleObject(hCompleteEvent, INFINITE);
+        WaitForSingleObject(complete_event, INFINITE);
         ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
     }
 
@@ -1149,7 +1170,7 @@ static void InternetReadFileExA_test(int flags)
                 ok(flags & INTERNET_FLAG_ASYNC,
                    "Should not get ERROR_IO_PENDING without INTERNET_FLAG_ASYNC\n");
                 CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
-                WaitForSingleObject(hCompleteEvent, INFINITE);
+                WaitForSingleObject(complete_event, INFINITE);
                 CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
                 CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
                 ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
@@ -1195,8 +1216,7 @@ static void InternetReadFileExA_test(int flags)
     trace("Finished. Read %d bytes\n", length);
 
 abort:
-    close_async_handle(hi, hCompleteEvent, 2);
-    CloseHandle(hCompleteEvent);
+    close_async_handle(hi, 2);
     first_connection_to_test_url = FALSE;
 }
 
@@ -1377,8 +1397,7 @@ static void test_cache_read(void)
     BYTE cache_headers[] = "HTTP/1.1 200 OK\r\n\r\n";
 
     trace("Testing cache read...\n");
-
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    reset_events();
 
     for(i = 0; i < sizeof(content); i++)
         content[i] = '0' + (i%10);
@@ -1447,7 +1466,7 @@ static void test_cache_read(void)
         ok(!memcmp(content, buf, sizeof(content)), "unexpected content\n");
     }
 
-    close_async_handle(session, hCompleteEvent, 2);
+    close_async_handle(session, 2);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -1459,8 +1478,6 @@ static void test_cache_read(void)
 
     res = DeleteUrlCacheEntryA(cache_only_url);
     ok(res, "DeleteUrlCacheEntryA failed: %u\n", GetLastError());
-
-    CloseHandle(hCompleteEvent);
 }
 
 static void test_http_cache(void)
@@ -2347,13 +2364,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
                     send(c, msg, sizeof msg-1, 0);
                 }
                 else send(c, notokmsg, sizeof notokmsg-1, 0);
-                WaitForSingleObject(hCompleteEvent, 5000);
+                WaitForSingleObject(complete_event, 5000);
             }
             else
             {
                 if (strstr(buffer, "Content-Length: 0")) send(c, msg, sizeof msg-1, 0);
                 else send(c, notokmsg, sizeof notokmsg-1, 0);
-                WaitForSingleObject(hCompleteEvent, 5000);
+                WaitForSingleObject(complete_event, 5000);
             }
         }
         if (strstr(buffer, "GET /test_premature_disconnect"))
@@ -3108,7 +3125,7 @@ static void test_connection_closing(int port)
     HINTERNET session, connection, req;
     DWORD res;
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    reset_events();
 
     session = InternetOpenA("", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
@@ -3140,7 +3157,7 @@ static void test_connection_closing(int port)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -3170,7 +3187,7 @@ static void test_connection_closing(int port)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
             "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -3200,7 +3217,7 @@ static void test_connection_closing(int port)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -3220,8 +3237,7 @@ static void test_connection_closing(int port)
     SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
     SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
 
-    close_async_handle(session, hCompleteEvent, 2);
-    CloseHandle(hCompleteEvent);
+    close_async_handle(session, 2);
 }
 
 static void test_successive_HttpSendRequest(int port)
@@ -3229,7 +3245,7 @@ static void test_successive_HttpSendRequest(int port)
     HINTERNET session, connection, req;
     DWORD res;
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    reset_events();
 
     session = InternetOpenA("", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
@@ -3259,7 +3275,7 @@ static void test_successive_HttpSendRequest(int port)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
             "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -3287,7 +3303,7 @@ static void test_successive_HttpSendRequest(int port)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -3305,8 +3321,7 @@ static void test_successive_HttpSendRequest(int port)
     SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
     SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
 
-    close_async_handle(session, hCompleteEvent, 2);
-    CloseHandle(hCompleteEvent);
+    close_async_handle(session, 2);
 }
 
 static void test_no_content(int port)
@@ -3316,7 +3331,7 @@ static void test_no_content(int port)
 
     trace("Testing 204 no content response...\n");
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    reset_events();
 
     session = InternetOpenA("", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
@@ -3349,7 +3364,7 @@ static void test_no_content(int port)
     res = HttpSendRequestA(req, NULL, -1, NULL, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -3361,8 +3376,7 @@ static void test_no_content(int port)
     CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
 
-    close_async_handle(session, hCompleteEvent, 2);
-    CloseHandle(hCompleteEvent);
+    close_async_handle(session, 2);
 
     /*
      * The connection should be closed before closing handle. This is true for most
@@ -3380,8 +3394,7 @@ static void test_conn_close(int port)
 
     trace("Testing connection close connection...\n");
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-    conn_close_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    reset_events();
 
     session = InternetOpenA("", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
@@ -3412,7 +3425,7 @@ static void test_conn_close(int port)
     res = HttpSendRequestA(req, NULL, -1, NULL, 0);
     ok(!res && (GetLastError() == ERROR_IO_PENDING),
        "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
@@ -3448,15 +3461,14 @@ static void test_conn_close(int port)
     SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
     SetEvent(conn_close_event);
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %u\n", req_error);
     CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
 
-    close_async_handle(session, hCompleteEvent, 2);
-    CloseHandle(hCompleteEvent);
+    close_async_handle(session, 2);
 }
 
 static void test_no_cache(int port)
@@ -4239,24 +4251,21 @@ static void test_request_content_length(int port)
     test_request_t req;
     BOOL ret;
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-
+    reset_events();
     open_simple_request(&req, "localhost", port, "POST", "/test_request_content_length");
 
     ret = HttpSendRequestA(req.request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
     test_status_code(req.request, 200);
 
-    SetEvent(hCompleteEvent);
+    SetEvent(complete_event);
 
     ret = HttpSendRequestA(req.request, NULL, 0, data, sizeof(data));
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
     test_status_code(req.request, 200);
 
-    SetEvent(hCompleteEvent);
-
+    SetEvent(complete_event);
     close_request(&req);
-    CloseHandle(hCompleteEvent);
 }
 
 static void test_accept_encoding(int port)
@@ -4363,8 +4372,7 @@ static void test_async_read(int port)
     DWORD res, count, bytes;
     BOOL ret;
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-    conn_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    reset_events();
 
     /* test asynchronous InternetReadFileEx */
     ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC );
@@ -4397,7 +4405,7 @@ static void test_async_read(int port)
     ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
     ok( !ret, "HttpSendRequestA unexpectedly succeeded\n" );
     ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
-    WaitForSingleObject( hCompleteEvent, INFINITE );
+    WaitForSingleObject( complete_event, INFINITE );
     ok( req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error );
 
     CLEAR_NOTIFIED( INTERNET_STATUS_COOKIE_SENT );
@@ -4434,11 +4442,11 @@ static void test_async_read(int port)
             SET_EXPECT( INTERNET_STATUS_REQUEST_COMPLETE );
             if (!pending_reads++)
             {
-                res = WaitForSingleObject( hCompleteEvent, 0 );
+                res = WaitForSingleObject( complete_event, 0 );
                 ok( res == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", res );
                 SetEvent( conn_wait_event );
             }
-            res = WaitForSingleObject( hCompleteEvent, INFINITE );
+            res = WaitForSingleObject( complete_event, INFINITE );
             ok( res == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", res );
             ok( req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error );
             todo_wine_if( pending_reads > 1 )
@@ -4454,7 +4462,7 @@ static void test_async_read(int port)
 
     ok( pending_reads == 1, "expected 1 pending read, got %u\n", pending_reads );
     ok( !strcmp(buffer, page1), "unexpected buffer content\n" );
-    close_async_handle( ses, hCompleteEvent, 2 );
+    close_async_handle( ses, 2 );
     ResetEvent( conn_wait_event );
 
     /* test asynchronous InternetReadFile */
@@ -4488,7 +4496,7 @@ static void test_async_read(int port)
     ret = HttpSendRequestA( req, NULL, 0, NULL, 0 );
     ok( !ret, "HttpSendRequestA unexpectedly succeeded\n" );
     ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
-    WaitForSingleObject( hCompleteEvent, INFINITE );
+    WaitForSingleObject( complete_event, INFINITE );
     ok( req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error );
 
     CLEAR_NOTIFIED( INTERNET_STATUS_COOKIE_SENT );
@@ -4522,11 +4530,11 @@ static void test_async_read(int port)
             SET_EXPECT( INTERNET_STATUS_REQUEST_COMPLETE );
             if (!pending_reads++)
             {
-                res = WaitForSingleObject( hCompleteEvent, 0 );
+                res = WaitForSingleObject( complete_event, 0 );
                 ok( res == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", res );
                 SetEvent( conn_wait_event );
             }
-            res = WaitForSingleObject( hCompleteEvent, INFINITE );
+            res = WaitForSingleObject( complete_event, INFINITE );
             ok( res == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", res );
             ok( req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error );
             todo_wine_if( pending_reads > 1 )
@@ -4542,10 +4550,7 @@ static void test_async_read(int port)
 
     ok( pending_reads == 1, "expected 1 pending read, got %u\n", pending_reads );
     ok( !strcmp(buffer, page1), "unexpected buffer content\n" );
-    close_async_handle( ses, hCompleteEvent, 2 );
-
-    CloseHandle( hCompleteEvent );
-    CloseHandle( conn_wait_event );
+    close_async_handle( ses, 2 );
 }
 
 static void server_send_string(const char *msg)
@@ -4576,6 +4581,8 @@ static void WINAPI readex_callback(HINTERNET handle, DWORD_PTR context, DWORD st
 static void open_read_test_request(int port, test_request_t *req, const char *response)
 {
     BOOL ret;
+
+    reset_events();
 
     req->session = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(req->session != NULL, "InternetOpenA failed\n");
@@ -4620,7 +4627,7 @@ static void open_read_test_request(int port, test_request_t *req, const char *re
     SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
 
     server_send_string(response);
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
 
     if(!skip_receive_notification_tests) {
         CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
@@ -4722,7 +4729,7 @@ static void _send_response_and_wait(unsigned line, const char *response, BOOL do
     if(do_close_connection)
         close_connection();
 
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
 
     if(!skip_receive_notification_tests)
         CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
@@ -4856,10 +4863,6 @@ static void test_http_read(int port)
     if(!is_ie7plus)
         return;
 
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-    conn_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    server_req_rec_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-
     memset(&ib, 0, sizeof(ib));
     ib.dwStructSize = sizeof(ib);
     ib.lpvBuffer = buf;
@@ -4881,7 +4884,7 @@ static void test_http_read(int port)
     readex_expect_async(req.request, IRF_ASYNC, &ib, sizeof(buf), "0");
     send_response_ex_and_wait("123", TRUE, &ib, "0123", 0, 4);
 
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
 
     trace("Testing InternetReadFileExW with no flags...\n");
 
@@ -4900,7 +4903,7 @@ static void test_http_read(int port)
     readex_expect_async(req.request, 0, &ib, sizeof(buf), "0");
     send_response_ex_and_wait("123", TRUE, &ib, "0123", 0, 4);
 
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
 
     trace("Testing InternetReadFile...\n");
 
@@ -4919,7 +4922,7 @@ static void test_http_read(int port)
     read_expect_async(req.request, buf, sizeof(buf), &read_size, "0");
     send_response_and_wait("123", TRUE, buf, &read_size, "0123", 4, 0, 4);
 
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
 
     trace("Testing InternetReadFileExW with IRF_NO_WAIT flag...\n");
 
@@ -4950,7 +4953,7 @@ static void test_http_read(int port)
     readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "12345", 0);
     readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "", TRUE);
 
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
 
     open_read_test_request(port, &req,
                            "HTTP/1.1 200 OK\r\n"
@@ -4977,7 +4980,7 @@ static void test_http_read(int port)
     readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "x", 0);
     readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "", 0);
 
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
 
     open_read_test_request(port, &req,
                            "HTTP/1.1 200 OK\r\n"
@@ -4991,7 +4994,7 @@ static void test_http_read(int port)
     send_response_ex_and_wait("0\r\n\r\n", TRUE, &ib, NULL, 0, 5);
     readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "", 0);
 
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
 
     open_read_test_request(port, &req,
                            "HTTP/1.1 200 OK\r\n"
@@ -5004,7 +5007,7 @@ static void test_http_read(int port)
 
     SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
     SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 
@@ -5025,7 +5028,7 @@ static void test_http_read(int port)
 
     SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
     SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
     todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     todo_wine CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 
@@ -5063,11 +5066,7 @@ static void test_http_read(int port)
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 
-    close_async_handle(req.session, hCompleteEvent, 2);
-
-    CloseHandle(hCompleteEvent);
-    CloseHandle(conn_wait_event);
-    CloseHandle(server_req_rec_event);
+    close_async_handle(req.session, 2);
 
     skip_receive_notification_tests = FALSE;
 }
@@ -5080,10 +5079,6 @@ static void test_connection_break(int port)
 
     if(!is_ie7plus)
         return;
-
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-    conn_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    server_req_rec_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     memset(&ib, 0, sizeof(ib));
     ib.dwStructSize = sizeof(ib);
@@ -5102,7 +5097,7 @@ static void test_connection_break(int port)
     close_connection();
     SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
     SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
-    close_async_handle(req.session, hCompleteEvent, 2);
+    close_async_handle(req.session, 2);
     CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 }
@@ -5345,8 +5340,7 @@ static void test_security_flags(void)
     BOOL res;
 
     trace("Testing security flags...\n");
-
-    hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    reset_events();
 
     ses = InternetOpenA("WineTest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(ses != NULL, "InternetOpen failed\n");
@@ -5372,8 +5366,7 @@ static void test_security_flags(void)
     if(!res && GetLastError() == ERROR_INVALID_PARAMETER) {
         win_skip("Incomplete security flags support, skipping\n");
 
-        close_async_handle(ses, hCompleteEvent, 2);
-        CloseHandle(hCompleteEvent);
+        close_async_handle(ses, 2);
         return;
     }
 
@@ -5412,7 +5405,7 @@ static void test_security_flags(void)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
 
     CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
@@ -5467,7 +5460,7 @@ static void test_security_flags(void)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_INTERNET_SEC_CERT_REV_FAILED || broken(req_error == ERROR_INTERNET_SEC_CERT_ERRORS),
        "req_error = %d\n", req_error);
 
@@ -5506,8 +5499,7 @@ static void test_security_flags(void)
     if(req_error != ERROR_INTERNET_SEC_CERT_REV_FAILED) {
         win_skip("Unexpected cert errors %u, skipping security flags tests\n", req_error);
 
-        close_async_handle(ses, hCompleteEvent, 3);
-        CloseHandle(hCompleteEvent);
+        close_async_handle(ses, 3);
         return;
     }
 
@@ -5534,7 +5526,7 @@ static void test_security_flags(void)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_INTERNET_SEC_CERT_ERRORS, "req_error = %d\n", req_error);
 
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -5571,7 +5563,7 @@ static void test_security_flags(void)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
 
     CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTING_TO_SERVER, 2);
@@ -5598,7 +5590,7 @@ static void test_security_flags(void)
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
     ok(size, "size = 0\n");
 
-    close_async_handle(ses, hCompleteEvent, 3);
+    close_async_handle(ses, 3);
 
     /* Collect all existing persistent connections */
     res = InternetSetOptionA(NULL, INTERNET_OPTION_SETTINGS_CHANGED, NULL, 0);
@@ -5644,7 +5636,7 @@ static void test_security_flags(void)
     res = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "HttpSendRequest failed: %u\n", GetLastError());
 
-    WaitForSingleObject(hCompleteEvent, INFINITE);
+    WaitForSingleObject(complete_event, INFINITE);
     ok(req_error == ERROR_SUCCESS, "req_error = %d\n", req_error);
 
     CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTING_TO_SERVER, 2);
@@ -5666,9 +5658,7 @@ static void test_security_flags(void)
     ok(res, "InternetReadFile failed: %u\n", GetLastError());
     ok(size, "size = 0\n");
 
-    close_async_handle(ses, hCompleteEvent, 2);
-
-    CloseHandle(hCompleteEvent);
+    close_async_handle(ses, 2);
 
     test_security_info("http://test.winehq.com/data/some_file.html?q", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
     test_security_info("file:///c:/dir/file.txt", ERROR_INTERNET_ITEM_NOT_FOUND, 0);
@@ -6646,6 +6636,7 @@ START_TEST(http)
         win_skip("IE6 found. It's too old for some tests.\n");
     }
 
+    init_events();
     init_status_tests();
     test_InternetCloseHandle();
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[0]);
@@ -6675,4 +6666,5 @@ START_TEST(http)
     test_connection_failure();
     test_default_service_port();
     test_concurrent_header_access();
+    free_events();
 }
