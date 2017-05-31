@@ -508,7 +508,7 @@ static const enum wined3d_data_type data_type_table[] =
     /* WINED3D_SM4_DATA_FLOAT */    WINED3D_DATA_FLOAT,
 };
 
-static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
+static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD **ptr, const DWORD *end,
         enum wined3d_data_type data_type, struct wined3d_shader_src_param *src_param);
 static BOOL shader_sm4_read_dst_param(struct wined3d_sm4_data *priv, const DWORD **ptr, const DWORD *end,
         enum wined3d_data_type data_type, struct wined3d_shader_dst_param *dst_param);
@@ -517,7 +517,7 @@ static void shader_sm4_read_conditional_op(struct wined3d_shader_instruction *in
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
 {
-    shader_sm4_read_src_param(priv, &tokens, WINED3D_DATA_UINT, &priv->src_param[0]);
+    shader_sm4_read_src_param(priv, &tokens, &tokens[token_count], WINED3D_DATA_UINT, &priv->src_param[0]);
     ins->flags = (opcode_token & WINED3D_SM4_CONDITIONAL_NZ) ?
             WINED3D_SHADER_CONDITIONAL_OP_NZ : WINED3D_SHADER_CONDITIONAL_OP_Z;
 }
@@ -596,7 +596,7 @@ static void shader_sm4_read_dcl_constant_buffer(struct wined3d_shader_instructio
         DWORD opcode, DWORD opcode_token, const DWORD *tokens, unsigned int token_count,
         struct wined3d_sm4_data *priv)
 {
-    shader_sm4_read_src_param(priv, &tokens, WINED3D_DATA_FLOAT, &ins->declaration.src);
+    shader_sm4_read_src_param(priv, &tokens, &tokens[token_count], WINED3D_DATA_FLOAT, &ins->declaration.src);
     if (opcode_token & WINED3D_SM4_INDEX_TYPE_MASK)
         ins->flags |= WINED3DSI_INDEXED_DYNAMIC;
 }
@@ -723,7 +723,7 @@ static void shader_sm5_read_fcall(struct wined3d_shader_instruction *ins,
         struct wined3d_sm4_data *priv)
 {
     priv->src_param[0].reg.u.fp_body_idx = *tokens++;
-    shader_sm4_read_src_param(priv, &tokens, WINED3D_DATA_OPAQUE, &priv->src_param[0]);
+    shader_sm4_read_src_param(priv, &tokens, &tokens[token_count], WINED3D_DATA_OPAQUE, &priv->src_param[0]);
 }
 
 static void shader_sm5_read_dcl_function_body(struct wined3d_shader_instruction *ins,
@@ -1337,7 +1337,7 @@ static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d
     *shader_version = priv->shader_version;
 }
 
-static BOOL shader_sm4_read_reg_idx(struct wined3d_sm4_data *priv, const DWORD **ptr,
+static BOOL shader_sm4_read_reg_idx(struct wined3d_sm4_data *priv, const DWORD **ptr, const DWORD *end,
         DWORD addressing, struct wined3d_shader_register_index *reg_idx)
 {
     if (addressing & WINED3D_SM4_ADDRESSING_RELATIVE)
@@ -1354,7 +1354,7 @@ static BOOL shader_sm4_read_reg_idx(struct wined3d_sm4_data *priv, const DWORD *
             reg_idx->offset = *(*ptr)++;
         else
             reg_idx->offset = 0;
-        shader_sm4_read_src_param(priv, ptr, WINED3D_DATA_INT, rel_addr);
+        shader_sm4_read_src_param(priv, ptr, end, WINED3D_DATA_INT, rel_addr);
     }
     else
     {
@@ -1365,7 +1365,7 @@ static BOOL shader_sm4_read_reg_idx(struct wined3d_sm4_data *priv, const DWORD *
     return TRUE;
 }
 
-static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
+static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **ptr, const DWORD *end,
         enum wined3d_data_type data_type, struct wined3d_shader_register *param,
         enum wined3d_shader_src_modifier *modifier)
 {
@@ -1422,7 +1422,7 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
     else
     {
         DWORD addressing = (token & WINED3D_SM4_ADDRESSING_MASK0) >> WINED3D_SM4_ADDRESSING_SHIFT0;
-        if (!(shader_sm4_read_reg_idx(priv, ptr, addressing, &param->idx[0])))
+        if (!(shader_sm4_read_reg_idx(priv, ptr, end, addressing, &param->idx[0])))
         {
             ERR("Failed to read register index.\n");
             return FALSE;
@@ -1434,7 +1434,7 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
     else
     {
         DWORD addressing = (token & WINED3D_SM4_ADDRESSING_MASK1) >> WINED3D_SM4_ADDRESSING_SHIFT1;
-        if (!(shader_sm4_read_reg_idx(priv, ptr, addressing, &param->idx[1])))
+        if (!(shader_sm4_read_reg_idx(priv, ptr, end, addressing, &param->idx[1])))
         {
             ERR("Failed to read register index.\n");
             return FALSE;
@@ -1474,12 +1474,19 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
     return TRUE;
 }
 
-static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD **ptr,
+static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD **ptr, const DWORD *end,
         enum wined3d_data_type data_type, struct wined3d_shader_src_param *src_param)
 {
-    DWORD token = **ptr;
+    DWORD token;
 
-    if (!shader_sm4_read_param(priv, ptr, data_type, &src_param->reg, &src_param->modifiers))
+    if (*ptr >= end)
+    {
+        WARN("Invalid ptr %p >= end %p.\n", *ptr, end);
+        return FALSE;
+    }
+    token = **ptr;
+
+    if (!shader_sm4_read_param(priv, ptr, end, data_type, &src_param->reg, &src_param->modifiers))
     {
         ERR("Failed to read parameter.\n");
         return FALSE;
@@ -1531,7 +1538,7 @@ static BOOL shader_sm4_read_dst_param(struct wined3d_sm4_data *priv, const DWORD
     }
     token = **ptr;
 
-    if (!shader_sm4_read_param(priv, ptr, data_type, &dst_param->reg, &modifier))
+    if (!shader_sm4_read_param(priv, ptr, end, data_type, &dst_param->reg, &modifier))
     {
         ERR("Failed to read parameter.\n");
         return FALSE;
@@ -1683,7 +1690,8 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
 
         for (i = 0; i < ins->src_count; ++i)
         {
-            if (!(shader_sm4_read_src_param(priv, &p, map_data_type(opcode_info->src_info[i]), &priv->src_param[i])))
+            if (!(shader_sm4_read_src_param(priv, &p, *ptr, map_data_type(opcode_info->src_info[i]),
+                    &priv->src_param[i])))
             {
                 ins->handler_idx = WINED3DSIH_TABLE_SIZE;
                 return;
