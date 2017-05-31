@@ -7925,11 +7925,28 @@ static void test_swapchain_parameters(void)
 
 static void test_check_device_format(void)
 {
+    D3DDEVTYPE device_type;
     IDirect3D8 *d3d;
     HRESULT hr;
 
     d3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
+
+    for (device_type = D3DDEVTYPE_HAL; device_type <= D3DDEVTYPE_SW; ++device_type)
+    {
+        hr = IDirect3D8_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_SURFACE, D3DFMT_A8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
+        hr = IDirect3D8_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
+        hr = IDirect3D8_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_SURFACE, D3DFMT_X8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
+        hr = IDirect3D8_CheckDeviceFormat(d3d, 0, device_type, D3DFMT_UNKNOWN,
+                0, D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x, device type %#x.\n", hr, device_type);
+    }
 
     hr = IDirect3D8_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
             0, D3DRTYPE_VERTEXBUFFER, D3DFMT_VERTEXDATA);
