@@ -400,7 +400,6 @@ static void test_VirtualAlloc(void)
     addr2 = NULL;
     status = pNtAllocateVirtualMemory(GetCurrentProcess(), &addr2, 22, &size,
                                       MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    todo_wine
     ok(status == STATUS_INVALID_PARAMETER_3, "NtAllocateVirtualMemory returned %08x\n", status);
     if (status == STATUS_SUCCESS) ok(VirtualFree(addr2, 0, MEM_RELEASE), "VirtualFree failed\n");
 
@@ -1168,7 +1167,6 @@ static void test_NtMapViewOfSection(void)
     ptr2 = NULL;
     size = 0;
     status = pNtMapViewOfSection( mapping, hProcess, &ptr2, 22, 0, &offset, &size, 1, 0, PAGE_READWRITE );
-    todo_wine
     ok( status == STATUS_INVALID_PARAMETER_4, "NtMapViewOfSection returned %x\n", status );
     if (status == STATUS_SUCCESS)
     {

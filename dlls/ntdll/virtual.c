@@ -279,6 +279,7 @@ static inline UINT_PTR get_mask( ULONG zero_bits )
 {
     if (!zero_bits) return 0xffff;  /* allocations are aligned to 64K by default */
     if (zero_bits < page_shift) zero_bits = page_shift;
+    if (zero_bits > 21) return 0;
     return (1 << zero_bits) - 1;
 }
 
@@ -1885,6 +1886,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     TRACE("%p %p %08lx %x %08x\n", process, *ret, size, type, protect );
 
     if (!size) return STATUS_INVALID_PARAMETER;
+    if (!mask) return STATUS_INVALID_PARAMETER_3;
 
     if (process != NtCurrentProcess())
     {
@@ -2550,7 +2552,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Check parameters */
 
-    if (*addr_ptr && zero_bits)
+    if ((*addr_ptr && zero_bits) || !mask)
         return STATUS_INVALID_PARAMETER_4;
 
 #ifndef _WIN64
