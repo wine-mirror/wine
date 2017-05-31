@@ -1,7 +1,13 @@
 MODULE  = wineandroid.drv
 
+C_SRCS = \
+	init.c
+
 IN_SRCS = \
 	build.gradle.in
+
+SVG_SRCS = \
+	wine.svg
 
 EXTRA_TARGETS = wine-debug.apk
 
