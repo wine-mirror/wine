@@ -2709,6 +2709,17 @@ static void shader_glsl_gen_modifier(enum wined3d_shader_src_modifier src_modifi
     }
 }
 
+static void shader_glsl_fixup_scalar_register_variable(char *register_name,
+        const char *glsl_variable, const struct wined3d_gl_info *gl_info)
+{
+    /* The ARB_shading_language_420pack extension allows swizzle operations on
+     * scalars. */
+    if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
+        sprintf(register_name, "%s", glsl_variable);
+    else
+        sprintf(register_name, "ivec2(%s, 0)", glsl_variable);
+}
+
 /** Writes the GLSL variable name that corresponds to the register that the
  * DX opcode parameter is trying to access */
 static void shader_glsl_get_register_name(const struct wined3d_shader_register *reg,
@@ -3031,18 +3042,14 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_LOCALTHREADINDEX:
-            if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
-                sprintf(register_name, "int(gl_LocalInvocationIndex)");
-            else
-                sprintf(register_name, "ivec2(gl_LocalInvocationIndex, 0)");
+            shader_glsl_fixup_scalar_register_variable(register_name,
+                    "int(gl_LocalInvocationIndex)", gl_info);
             break;
 
         case WINED3DSPR_GSINSTID:
         case WINED3DSPR_OUTPOINTID:
-            if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
-                sprintf(register_name, "gl_InvocationID");
-            else
-                sprintf(register_name, "ivec2(gl_InvocationID, 0)");
+            shader_glsl_fixup_scalar_register_variable(register_name,
+                    "gl_InvocationID", gl_info);
             break;
 
         case WINED3DSPR_THREADID:
@@ -3059,7 +3066,8 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_FORKINSTID:
         case WINED3DSPR_JOININSTID:
-            sprintf(register_name, "phase_instance_id");
+            shader_glsl_fixup_scalar_register_variable(register_name,
+                    "phase_instance_id", gl_info);
             break;
 
         case WINED3DSPR_TESSCOORD:
