@@ -287,6 +287,19 @@ static void _test_request_flags(unsigned line, HINTERNET req, DWORD exflags, BOO
         ok_(__FILE__,line)(flags == exflags, "flags = %x, expected %x\n", flags, exflags);
 }
 
+#define test_request_url(a,b) _test_request_url(__LINE__,a,b)
+static void _test_request_url(unsigned line, HINTERNET req, const char *expected_url)
+{
+    char buf[INTERNET_MAX_URL_LENGTH];
+    DWORD size = sizeof(buf);
+    BOOL res;
+
+    res = InternetQueryOptionA(req, INTERNET_OPTION_URL, buf, &size);
+    ok_(__FILE__,line)(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(size == strlen(expected_url), "size = %u\n", size);
+    ok_(__FILE__,line)(!strcmp(buf, expected_url), "unexpected URL %s, expected %s\n", buf, expected_url);
+}
+
 #define test_http_version(a) _test_http_version(__LINE__,a)
 static void _test_http_version(unsigned line, HINTERNET req)
 {
@@ -557,11 +570,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     if (hor == 0x0) goto abort;
 
     test_request_flags(hor, INTERNET_REQFLAG_NO_HEADERS);
-
-    length = sizeof(buffer);
-    res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
-    ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
-    ok(!strcmp(buffer, test->url), "Wrong URL %s, expected %s\n", buffer, test->url);
+    test_request_url(hor, test->url);
 
     length = sizeof(buffer);
     res = HttpQueryInfoA(hor, HTTP_QUERY_RAW_HEADERS, buffer, &length, 0x0);
@@ -722,10 +731,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     ok(wbuffer[length2+1] == 0x7777, "Expected 0x7777, got %04X\n", wbuffer[length2+1]);
     ok(length2 == length, "Value should not have changed: %d != %d\n", length2, length);
 
-    length = sizeof(buffer);
-    res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
-    ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
-    ok(!strcmp(buffer, test->redirected_url), "Wrong URL %s\n", buffer);
+    test_request_url(hor, test->redirected_url);
 
     index = 0;
     length = 0;
@@ -3023,11 +3029,7 @@ static void test_header_override(int port)
     ok(!ret, "HttpQueryInfo succeeded\n");
     ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "Expected error ERROR_HTTP_HEADER_NOT_FOUND, got %d\n", err);
 
-    size = sizeof(buffer) - 1;
-    memset(buffer, 0, sizeof(buffer));
-    ret = InternetQueryOptionA(req, INTERNET_OPTION_URL, buffer, &size);
-    ok(ret, "InternetQueryOption failed\n");
-    ok(!strcmp(full_url, buffer), "Expected %s, got %s\n", full_url, buffer);
+    test_request_url(req, full_url);
 
     ret = HttpAddRequestHeadersA(req, host_header_override, ~0u, HTTP_ADDREQ_FLAG_COALESCE);
     ok(ret, "HttpAddRequestHeaders failed\n");
@@ -3038,11 +3040,7 @@ static void test_header_override(int port)
     ret = HttpQueryInfoA(req, HTTP_QUERY_HOST | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, &count);
     ok(ret, "HttpQueryInfo failed\n");
 
-    size = sizeof(buffer) - 1;
-    memset(buffer, 0, sizeof(buffer));
-    ret = InternetQueryOptionA(req, INTERNET_OPTION_URL, buffer, &size);
-    ok(ret, "InternetQueryOption failed\n");
-    ok(!strcmp(full_url, buffer), "Expected %s, got %s\n", full_url, buffer);
+    test_request_url(req, full_url);
 
     ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
@@ -6436,7 +6434,7 @@ static void test_InternetCloseHandle(void)
     len = sizeof(flags);
     res = InternetQueryOptionA(closetest_req, INTERNET_OPTION_REQUEST_FLAGS, &flags, &len);
     ok(!res && GetLastError() == ERROR_INVALID_HANDLE,
-       "InternetQueryOptionA(%p INTERNET_OPTION_URL) failed: %x %u, expected TRUE ERROR_INVALID_HANDLE\n",
+       "InternetQueryOptionA(%p INTERNET_OPTION_REQUEST_FLAGS) failed: %x %u, expected TRUE ERROR_INVALID_HANDLE\n",
        closetest_req, res, GetLastError());
 }
 
