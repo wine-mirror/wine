@@ -1542,7 +1542,8 @@ RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT 
  */
 RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
 {
-  HANDLE event;
+  RpcServerProtseq *protseq;
+  HANDLE event, wait_thread;
 
   TRACE("()\n");
 
@@ -1558,6 +1559,28 @@ RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
   TRACE( "done waiting\n" );
 
   EnterCriticalSection(&listen_cs);
+  /* wait for server threads to finish */
+  while(1)
+  {
+      if (listen_count)
+          break;
+
+      wait_thread = NULL;
+      EnterCriticalSection(&server_cs);
+      LIST_FOR_EACH_ENTRY(protseq, &protseqs, RpcServerProtseq, entry)
+      {
+          if ((wait_thread = protseq->server_thread))
+              break;
+      }
+      LeaveCriticalSection(&server_cs);
+      if (!wait_thread)
+          break;
+
+      TRACE("waiting for thread %u\n", GetThreadId(wait_thread));
+      LeaveCriticalSection(&listen_cs);
+      WaitForSingleObject(wait_thread, INFINITE);
+      EnterCriticalSection(&listen_cs);
+  }
   if (listen_done_event == event)
   {
       listen_done_event = NULL;
