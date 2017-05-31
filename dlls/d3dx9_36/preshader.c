@@ -1226,6 +1226,11 @@ static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXC
     const_set.register_count = desc.RegisterCount;
     table_type = table_info[const_set.table].type;
     get_const_upload_info(&const_set, &info);
+    if (!info.count)
+    {
+        TRACE("%s has zero count, skipping.\n", debugstr_a(param->name));
+        return D3D_OK;
+    }
 
     if (table_type_from_param_type(param->type) == PRES_VT_COUNT)
         return D3DERR_INVALIDCALL;
