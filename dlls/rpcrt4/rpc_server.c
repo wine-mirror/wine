@@ -669,21 +669,26 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
     {
       /* cleanup */
       cps->ops->free_wait_array(cps, objs);
-
-      EnterCriticalSection(&cps->cs);
-      LIST_FOR_EACH_ENTRY(conn, &cps->listeners, RpcConnection, protseq_entry)
-        RPCRT4_CloseConnection(conn);
-      LIST_FOR_EACH_ENTRY(conn, &cps->connections, RpcConnection, protseq_entry)
-        rpcrt4_conn_close_read(conn);
-      LeaveCriticalSection(&cps->cs);
-
-      if (res == 0 && !std_listen)
-        SetEvent(cps->server_ready_event);
       break;
     }
     else if (res == 0)
       set_ready_event = TRUE;
   }
+
+  EnterCriticalSection(&cps->cs);
+  LIST_FOR_EACH_ENTRY(conn, &cps->listeners, RpcConnection, protseq_entry)
+    RPCRT4_CloseConnection(conn);
+  LIST_FOR_EACH_ENTRY(conn, &cps->connections, RpcConnection, protseq_entry)
+    rpcrt4_conn_close_read(conn);
+  LeaveCriticalSection(&cps->cs);
+
+  if (res == 0 && !std_listen)
+      SetEvent(cps->server_ready_event);
+
+  EnterCriticalSection(&listen_cs);
+  CloseHandle(cps->server_thread);
+  cps->server_thread = NULL;
+  LeaveCriticalSection(&listen_cs);
   return 0;
 }
 
@@ -707,21 +712,15 @@ static void RPCRT4_sync_with_server_thread(RpcServerProtseq *ps)
 static RPC_STATUS RPCRT4_start_listen_protseq(RpcServerProtseq *ps, BOOL auto_listen)
 {
   RPC_STATUS status = RPC_S_OK;
-  HANDLE server_thread;
 
   EnterCriticalSection(&listen_cs);
-  if (ps->is_listening) goto done;
+  if (ps->server_thread) goto done;
 
   if (!ps->mgr_mutex) ps->mgr_mutex = CreateMutexW(NULL, FALSE, NULL);
   if (!ps->server_ready_event) ps->server_ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-  server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, ps, 0, NULL);
-  if (!server_thread)
-  {
+  ps->server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, ps, 0, NULL);
+  if (!ps->server_thread)
     status = RPC_S_OUT_OF_RESOURCES;
-    goto done;
-  }
-  ps->is_listening = TRUE;
-  CloseHandle(server_thread);
 
 done:
   LeaveCriticalSection(&listen_cs);
