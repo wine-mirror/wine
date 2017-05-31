@@ -1370,8 +1370,14 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
         enum wined3d_shader_src_modifier *modifier)
 {
     enum wined3d_sm4_register_type register_type;
-    DWORD token = *(*ptr)++;
-    DWORD order;
+    DWORD token, order;
+
+    if (*ptr >= end)
+    {
+        WARN("Invalid ptr %p >= end %p.\n", *ptr, end);
+        return FALSE;
+    }
+    token = *(*ptr)++;
 
     register_type = (token & WINED3D_SM4_REGISTER_TYPE_MASK) >> WINED3D_SM4_REGISTER_TYPE_SHIFT;
     if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table)
@@ -1388,7 +1394,14 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
 
     if (token & WINED3D_SM4_REGISTER_MODIFIER)
     {
-        DWORD m = *(*ptr)++;
+        DWORD m;
+
+        if (*ptr >= end)
+        {
+            WARN("Invalid ptr %p >= end %p.\n", *ptr, end);
+            return FALSE;
+        }
+        m = *(*ptr)++;
 
         switch (m)
         {
@@ -1453,12 +1466,22 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
         {
             case WINED3D_SM4_IMMCONST_SCALAR:
                 param->immconst_type = WINED3D_IMMCONST_SCALAR;
+                if (end - *ptr < 1)
+                {
+                    WARN("Invalid ptr %p, end %p.\n", *ptr, end);
+                    return FALSE;
+                }
                 memcpy(param->u.immconst_data, *ptr, 1 * sizeof(DWORD));
                 *ptr += 1;
                 break;
 
             case WINED3D_SM4_IMMCONST_VEC4:
                 param->immconst_type = WINED3D_IMMCONST_VEC4;
+                if (end - *ptr < 4)
+                {
+                    WARN("Invalid ptr %p, end %p.\n", *ptr, end);
+                    return FALSE;
+                }
                 memcpy(param->u.immconst_data, *ptr, 4 * sizeof(DWORD));
                 *ptr += 4;
                 break;
