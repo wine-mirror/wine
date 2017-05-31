@@ -132,6 +132,25 @@ update:
     SetMenuItemInfoW(hMenu, ID_TREE_EXPAND_COLLAPSE, FALSE, &info);
 }
 
+static void update_delete_item(HMENU hMenu, WCHAR *keyName)
+{
+    unsigned int state = MF_ENABLED;
+
+    if (!g_pChildWnd->nFocusPanel)
+    {
+        if (!keyName || !*keyName)
+            state = MF_GRAYED;
+    }
+    else
+    {
+        if (SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
+                          MAKELPARAM(LVIS_FOCUSED | LVIS_SELECTED, 0)) == -1)
+            state = MF_GRAYED;
+    }
+
+    EnableMenuItem(hMenu, ID_EDIT_DELETE, state | MF_BYCOMMAND);
+}
+
 static void UpdateMenuItems(HMENU hMenu) {
     HWND hwndTV = g_pChildWnd->hTreeWnd;
     BOOL bAllowEdit = FALSE;
@@ -147,7 +166,7 @@ static void UpdateMenuItems(HMENU hMenu) {
 
     update_expand_or_collapse_item(hwndTV, selection, hMenu);
     EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
-    EnableMenuItem(hMenu, ID_EDIT_DELETE, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
+    update_delete_item(hMenu, keyName);
     EnableMenuItem(hMenu, ID_EDIT_RENAME, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_FAVORITES_ADDTOFAVORITES, (hRootKey ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_FAVORITES_REMOVEFAVORITE, 
