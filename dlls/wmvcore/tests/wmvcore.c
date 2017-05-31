@@ -22,6 +22,8 @@
 
 #include "wine/test.h"
 
+HRESULT WINAPI WMCreateWriterPriv(IWMWriter **writer);
+
 static void test_wmwriter_interfaces(void)
 {
     HRESULT hr;
@@ -197,6 +199,21 @@ void test_profile_manager_interfaces(void)
     IWMProfileManager_Release(profile);
 }
 
+static void test_WMCreateWriterPriv(void)
+{
+    IWMWriter *writer, *writer2;
+    HRESULT hr;
+
+    hr = WMCreateWriterPriv(&writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IWMWriter_QueryInterface(writer, &IID_IWMWriter, (void**)&writer2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IWMWriter_Release(writer);
+    IWMWriter_Release(writer2);
+}
+
 START_TEST(wmvcore)
 {
     HRESULT hr;
@@ -209,6 +226,7 @@ START_TEST(wmvcore)
     test_wmreader_interfaces();
     test_wmwriter_interfaces();
     test_profile_manager_interfaces();
+    test_WMCreateWriterPriv();
 
     CoUninitialize();
 }
