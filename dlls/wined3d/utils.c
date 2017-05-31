@@ -2122,7 +2122,7 @@ static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d
         for (i = 0; i < 4; ++i)
             gl_info->gl_ops.gl.p_glVertex3fv(&geometry[i].x);
         gl_info->gl_ops.gl.p_glEnd();
-        checkGLcall("Drawing a quad");
+        checkGLcall("draw quad");
         return;
     }
 
@@ -2137,17 +2137,19 @@ static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d
 
     if (!ctx->test_program_id)
     {
+        BOOL use_glsl_150 = gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50);
+
         ctx->test_program_id = GL_EXTCALL(glCreateProgram());
 
         vs_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
-        source[0] = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? vs_legacy_header : vs_core_header;
+        source[0] = use_glsl_150 ? vs_core_header : vs_legacy_header;
         source[1] = vs_body;
         GL_EXTCALL(glShaderSource(vs_id, 2, source, NULL));
         GL_EXTCALL(glAttachShader(ctx->test_program_id, vs_id));
         GL_EXTCALL(glDeleteShader(vs_id));
 
         fs_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
-        source[0] = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? fs_legacy : fs_core;
+        source[0] = use_glsl_150 ? fs_core : fs_legacy;
         GL_EXTCALL(glShaderSource(fs_id, 1, source, NULL));
         GL_EXTCALL(glAttachShader(ctx->test_program_id, fs_id));
         GL_EXTCALL(glDeleteShader(fs_id));
@@ -2155,7 +2157,7 @@ static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d
         GL_EXTCALL(glBindAttribLocation(ctx->test_program_id, 0, "pos"));
         GL_EXTCALL(glBindAttribLocation(ctx->test_program_id, 1, "color"));
 
-        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        if (use_glsl_150)
             GL_EXTCALL(glBindFragDataLocation(ctx->test_program_id, 0, "fragment_color"));
 
         GL_EXTCALL(glCompileShader(vs_id));
@@ -2172,7 +2174,7 @@ static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d
     GL_EXTCALL(glUseProgram(0));
     GL_EXTCALL(glDisableVertexAttribArray(0));
     GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    checkGLcall("Drawing a quad");
+    checkGLcall("draw quad");
 }
 
 /* Context activation is done by the caller. */
