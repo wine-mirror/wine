@@ -2048,6 +2048,24 @@ interface IGetBindHandle : IUnknown
             [out] HANDLE *pRetHandle);
 }
 
+/*****************************************************************************
+ * IBindCallbackRedirect interface
+ */
+[
+    local,
+    object,
+    uuid(11c81bc2-121e-4ed5-b9c4-b430bd54f2c0),
+    pointer_default(unique)
+]
+interface IBindCallbackRedirect : IUnknown
+{
+    typedef [unique] IBindCallbackRedirect *LPBINDCALLBACKREDIRECT;
+
+    HRESULT Redirect(
+        [in] LPCWSTR lpcUrl,
+        [out] VARIANT_BOOL *vbCancel);
+}
+
 cpp_quote("#define CONFIRMSAFETYACTION_LOADOBJECT  0x00000001")
 
 struct CONFIRMSAFETY
