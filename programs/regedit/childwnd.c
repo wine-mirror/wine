@@ -180,6 +180,7 @@ static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BO
         if (rootitem == hItem)
         {
             SendMessageW(hwndLV, LVM_DELETEALLITEMS, 0, 0);
+            UpdateStatusBar();
             return;
         }
 
