@@ -655,6 +655,8 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     *count = 1;
     LIST_FOR_EACH_ENTRY(conn, &protseq->listeners, RpcConnection_np, common.protseq_entry)
     {
+        if (!conn->pipe && rpcrt4_conn_create_pipe(&conn->common) != RPC_S_OK)
+            continue;
         if (!conn->listen_event)
         {
             NTSTATUS status;
