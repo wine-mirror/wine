@@ -59,8 +59,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND, GRAYED
-        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND
+        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT
     END
     POPUP "&View"
     BEGIN
@@ -105,7 +105,7 @@ BEGIN
             MENUITEM "&Multi-String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
             MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
         END
-        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND, GRAYED
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND
         MENUITEM SEPARATOR
         MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
         MENUITEM "&Rename\tF2",                 ID_EDIT_RENAME
