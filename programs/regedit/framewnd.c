@@ -154,6 +154,16 @@ static void update_delete_and_rename_items(HMENU hMenu, WCHAR *keyName)
     EnableMenuItem(hMenu, ID_EDIT_RENAME, state_r | MF_BYCOMMAND);
 }
 
+static void update_copy_keyname_item(HMENU hMenu, WCHAR *keyName)
+{
+    unsigned int state = MF_ENABLED;
+
+    if (!g_pChildWnd->nFocusPanel && !keyName)
+        state = MF_GRAYED;
+
+    EnableMenuItem(hMenu, ID_EDIT_COPYKEYNAME, state | MF_BYCOMMAND);
+}
+
 static void UpdateMenuItems(HMENU hMenu) {
     HWND hwndTV = g_pChildWnd->hTreeWnd;
     BOOL bAllowEdit = FALSE;
@@ -170,6 +180,7 @@ static void UpdateMenuItems(HMENU hMenu) {
     update_expand_or_collapse_item(hwndTV, selection, hMenu);
     EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     update_delete_and_rename_items(hMenu, keyName);
+    update_copy_keyname_item(hMenu, keyName);
     EnableMenuItem(hMenu, ID_FAVORITES_ADDTOFAVORITES, (hRootKey ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_FAVORITES_REMOVEFAVORITE, 
         (GetMenuItemCount(hMenu)>2 ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
