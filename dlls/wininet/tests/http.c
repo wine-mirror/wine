@@ -109,7 +109,7 @@ static int expect[MAX_INTERNET_STATUS], optional[MAX_INTERNET_STATUS],
     wine_allow[MAX_INTERNET_STATUS], notified[MAX_INTERNET_STATUS];
 static const char *status_string[MAX_INTERNET_STATUS];
 
-static HANDLE complete_event, conn_close_event, conn_wait_event, server_req_rec_event;
+static HANDLE complete_event, conn_close_event, conn_wait_event, server_req_rec_event, request_sent_event;
 static DWORD req_error;
 static BOOL is_ie7plus = TRUE;
 
@@ -201,6 +201,7 @@ static void init_events(void)
     conn_close_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     conn_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     server_req_rec_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    request_sent_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
 static void free_events(void)
@@ -209,6 +210,7 @@ static void free_events(void)
     CloseHandle(conn_close_event);
     CloseHandle(conn_wait_event);
     CloseHandle(server_req_rec_event);
+    CloseHandle(request_sent_event);
 }
 
 static void reset_events(void)
@@ -217,6 +219,7 @@ static void reset_events(void)
     ResetEvent(conn_close_event);
     ResetEvent(conn_wait_event);
     ResetEvent(server_req_rec_event);
+    ResetEvent(request_sent_event);
 }
 
 #define test_status_code(a,b) _test_status_code(__LINE__,a,b, FALSE)
@@ -4573,12 +4576,16 @@ static void WINAPI readex_callback(HINTERNET handle, DWORD_PTR context, DWORD st
             callback(handle, context, status, info, info_size);
         received_response_size = *(DWORD*)info;
         break;
+    case INTERNET_STATUS_REQUEST_SENT:
+        callback(handle, context, status, info, info_size);
+        SetEvent(request_sent_event);
+        break;
     default:
         callback(handle, context, status, info, info_size);
     }
 }
 
-static void open_read_test_request(int port, test_request_t *req, const char *response)
+static void open_socket_request(int port, test_request_t *req)
 {
     BOOL ret;
 
@@ -4613,12 +4620,22 @@ static void open_read_test_request(int port, test_request_t *req, const char *re
     ok(GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError());
 
     WaitForSingleObject(server_req_rec_event, INFINITE);
+    WaitForSingleObject(request_sent_event, INFINITE);
 
     CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
     CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_SENDING_REQUEST);
+    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
+}
+
+static void open_read_test_request(int port, test_request_t *req, const char *response)
+{
+    if(!skip_receive_notification_tests)
+        SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
+
+    open_socket_request(port, req);
 
     if(!skip_receive_notification_tests) {
         SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
@@ -4635,7 +4652,6 @@ static void open_read_test_request(int port, test_request_t *req, const char *re
         todo_wine
         ok(received_response_size == strlen(response), "received_response_size = %u\n", received_response_size);
     }
-    CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
     ok(req_error == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", req_error);
 }
