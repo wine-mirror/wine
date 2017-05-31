@@ -57,6 +57,24 @@ extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
 /* JNI entry points */
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height ) DECLSPEC_HIDDEN;
 
+enum event_type
+{
+    DESKTOP_CHANGED,
+};
+
+union event_data
+{
+    enum event_type type;
+    struct
+    {
+        enum event_type type;
+        unsigned int    width;
+        unsigned int    height;
+    } desktop;
+};
+
+int send_event( const union event_data *data );
+
 extern JavaVM *wine_get_java_vm(void);
 extern jobject wine_get_java_object(void);
 

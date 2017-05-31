@@ -44,6 +44,7 @@
 #include "wine/unicode.h"
 
 #include "android.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
@@ -133,6 +134,35 @@ static void release_win_data( struct android_win_data *data )
 }
 
 
+/* Handling of events coming from the Java side */
+
+struct java_event
+{
+    struct list      entry;
+    union event_data data;
+};
+
+static struct list event_queue = LIST_INIT( event_queue );
+static struct java_event *current_event;
+static int event_pipe[2];
+static DWORD desktop_tid;
+
+/***********************************************************************
+ *           send_event
+ */
+int send_event( const union event_data *data )
+{
+    int res;
+
+    if ((res = write( event_pipe[1], data, sizeof(*data) )) != sizeof(*data))
+    {
+        p__android_log_print( ANDROID_LOG_ERROR, "wine", "failed to send event" );
+        return -1;
+    }
+    return 0;
+}
+
+
 /***********************************************************************
  *           desktop_changed
  *
@@ -140,7 +170,145 @@ static void release_win_data( struct android_win_data *data )
  */
 void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height )
 {
+    union event_data data;
+
+    memset( &data, 0, sizeof(data) );
+    data.type = DESKTOP_CHANGED;
+    data.desktop.width = width;
+    data.desktop.height = height;
     p__android_log_print( ANDROID_LOG_INFO, "wine", "desktop_changed: %ux%u", width, height );
+    send_event( &data );
+}
+
+
+/***********************************************************************
+ *           init_event_queue
+ */
+static void init_event_queue(void)
+{
+    HANDLE handle;
+    int ret;
+
+    if (pipe2( event_pipe, O_CLOEXEC | O_NONBLOCK ) == -1)
+    {
+        ERR( "could not create data\n" );
+        ExitProcess(1);
+    }
+    if (wine_server_fd_to_handle( event_pipe[0], GENERIC_READ | SYNCHRONIZE, 0, &handle ))
+    {
+        ERR( "Can't allocate handle for event fd\n" );
+        ExitProcess(1);
+    }
+    SERVER_START_REQ( set_queue_fd )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (ret)
+    {
+        ERR( "Can't store handle for event fd %x\n", ret );
+        ExitProcess(1);
+    }
+    CloseHandle( handle );
+    desktop_tid = GetCurrentThreadId();
+}
+
+
+/***********************************************************************
+ *           pull_events
+ *
+ * Pull events from the event pipe and add them to the queue
+ */
+static void pull_events(void)
+{
+    struct java_event *event;
+    int res;
+
+    for (;;)
+    {
+        if (!(event = HeapAlloc( GetProcessHeap(), 0, sizeof(*event) ))) break;
+
+        res = read( event_pipe[0], &event->data, sizeof(event->data) );
+        if (res != sizeof(event->data)) break;
+        list_add_tail( &event_queue, &event->entry );
+    }
+    HeapFree( GetProcessHeap(), 0, event );
+}
+
+
+/***********************************************************************
+ *           process_events
+ */
+static int process_events( DWORD mask )
+{
+    struct java_event *event, *next, *previous;
+    unsigned int count = 0;
+
+    assert( GetCurrentThreadId() == desktop_tid );
+
+    pull_events();
+
+    previous = current_event;
+
+    LIST_FOR_EACH_ENTRY_SAFE( event, next, &event_queue, struct java_event, entry )
+    {
+        if (!(mask & QS_SENDMESSAGE)) continue;  /* skip it */
+
+        /* remove it first, in case we process events recursively */
+        list_remove( &event->entry );
+        current_event = event;
+
+        switch (event->data.type)
+        {
+        case DESKTOP_CHANGED:
+            TRACE( "DESKTOP_CHANGED %ux%u\n", event->data.desktop.width, event->data.desktop.height );
+            screen_width = event->data.desktop.width;
+            screen_height = event->data.desktop.height;
+            init_monitors( screen_width, screen_height );
+            SetWindowPos( GetDesktopWindow(), 0, 0, 0, screen_width, screen_height,
+                          SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
+            break;
+
+        default:
+            FIXME( "got event %u\n", event->data.type );
+        }
+        HeapFree( GetProcessHeap(), 0, event );
+        count++;
+    }
+    current_event = previous;
+    return count;
+}
+
+
+/***********************************************************************
+ *           ANDROID_MsgWaitForMultipleObjectsEx
+ */
+DWORD CDECL ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                                 DWORD timeout, DWORD mask, DWORD flags )
+{
+    if (GetCurrentThreadId() == desktop_tid)
+    {
+        /* don't process nested events */
+        if (current_event) mask = 0;
+        if (process_events( mask )) return count - 1;
+    }
+    return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
+                                     timeout, flags & MWMO_ALERTABLE );
+}
+
+/**********************************************************************
+ *           ANDROID_CreateWindow
+ */
+BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
+{
+    TRACE( "%p\n", hwnd );
+
+    if (hwnd == GetDesktopWindow())
+    {
+        init_event_queue();
+    }
+    return TRUE;
 }
 
 
