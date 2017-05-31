@@ -2,7 +2,8 @@ MODULE  = wineandroid.drv
 IMPORTS = user32 gdi32
 
 C_SRCS = \
-	init.c
+	init.c \
+	window.c
 
 IN_SRCS = \
 	build.gradle.in
