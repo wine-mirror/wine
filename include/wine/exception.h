@@ -81,7 +81,9 @@ extern "C" {
 
 #define __TRY __try
 #define __EXCEPT(func) __except((func)(GetExceptionInformation()))
+#define __EXCEPT_CTX(func, ctx) __except((func)(GetExceptionInformation(), ctx))
 #define __FINALLY(func) __finally { (func)(!AbnormalTermination()); }
+#define __FINALLY_CTX(func, ctx) __finally { (func)(!AbnormalTermination(), ctx); }
 #define __ENDTRY /*nothing*/
 #define __EXCEPT_PAGE_FAULT __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
 #define __EXCEPT_ALL __except(EXCEPTION_EXECUTE_HANDLER)
@@ -100,6 +102,10 @@ extern DWORD __wine_exception_handler( EXCEPTION_RECORD *record,
                                        EXCEPTION_REGISTRATION_RECORD *frame,
                                        CONTEXT *context,
                                        EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+extern DWORD __wine_exception_ctx_handler( EXCEPTION_RECORD *record,
+                                           EXCEPTION_REGISTRATION_RECORD *frame,
+                                           CONTEXT *context,
+                                           EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
 extern DWORD __wine_exception_handler_page_fault( EXCEPTION_RECORD *record,
                                                   EXCEPTION_REGISTRATION_RECORD *frame,
                                                   CONTEXT *context,
@@ -112,6 +118,10 @@ extern DWORD __wine_finally_handler( EXCEPTION_RECORD *record,
                                      EXCEPTION_REGISTRATION_RECORD *frame,
                                      CONTEXT *context,
                                      EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
+extern DWORD __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
+                                         EXCEPTION_REGISTRATION_RECORD *frame,
+                                         CONTEXT *context,
+                                         EXCEPTION_REGISTRATION_RECORD **pdispatcher ) DECLSPEC_HIDDEN;
 
 #define __TRY \
     do { __WINE_FRAME __f; \
@@ -127,6 +137,18 @@ extern DWORD __wine_finally_handler( EXCEPTION_RECORD *record,
          } else { \
              __f.frame.Handler = __wine_exception_handler; \
              __f.u.filter = (func); \
+             if (sigsetjmp( __f.jmp, 0 )) { \
+                 const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
+                 do {
+
+#define __EXCEPT_CTX(func, context) \
+             } while(0); \
+             __wine_pop_frame( &__f.frame ); \
+             break; \
+         } else { \
+             __f.frame.Handler = __wine_exception_ctx_handler; \
+             __f.u.filter_ctx = (func); \
+             __f.ctx = context; \
              if (sigsetjmp( __f.jmp, 0 )) { \
                  const __WINE_FRAME * const __eptr __attribute__((unused)) = &__f; \
                  do {
@@ -175,9 +197,25 @@ extern DWORD __wine_finally_handler( EXCEPTION_RECORD *record,
          } \
     } while (0);
 
+#define __FINALLY_CTX(func, context) \
+             } while(0); \
+             __wine_pop_frame( &__f.frame ); \
+             (func)(1, context); \
+             break; \
+         } else { \
+             __f.frame.Handler = __wine_finally_ctx_handler; \
+             __f.u.finally_func_ctx = (func); \
+             __f.ctx = context; \
+             __wine_push_frame( &__f.frame ); \
+             __first = 0; \
+         } \
+    } while (0);
+
 
 typedef LONG (CALLBACK *__WINE_FILTER)(PEXCEPTION_POINTERS);
+typedef LONG (CALLBACK *__WINE_FILTER_CTX)(PEXCEPTION_POINTERS, void*);
 typedef void (CALLBACK *__WINE_FINALLY)(BOOL);
+typedef void (CALLBACK *__WINE_FINALLY_CTX)(BOOL, void*);
 
 #define GetExceptionInformation() (__eptr)
 #define GetExceptionCode()        (__eptr->ExceptionRecord->ExceptionCode)
@@ -190,9 +228,12 @@ typedef struct __tagWINE_FRAME
     {
         /* exception data */
         __WINE_FILTER filter;
+        __WINE_FILTER_CTX filter_ctx;
         /* finally data */
         __WINE_FINALLY finally_func;
+        __WINE_FINALLY_CTX finally_func_ctx;
     } u;
+    void *ctx;
     sigjmp_buf jmp;
     /* hack to make GetExceptionCode() work in handler */
     DWORD ExceptionCode;

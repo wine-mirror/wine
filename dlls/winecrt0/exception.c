@@ -99,6 +99,31 @@ DWORD __wine_exception_handler( EXCEPTION_RECORD *record,
     unwind_frame( record, frame );
 }
 
+DWORD __wine_exception_ctx_handler( EXCEPTION_RECORD *record,
+                                    EXCEPTION_REGISTRATION_RECORD *frame,
+                                    CONTEXT *context,
+                                    EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+{
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
+    EXCEPTION_POINTERS ptrs;
+
+    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
+        return ExceptionContinueSearch;
+
+    ptrs.ExceptionRecord = record;
+    ptrs.ContextRecord = context;
+    switch(wine_frame->u.filter_ctx( &ptrs, wine_frame->ctx ))
+    {
+    case EXCEPTION_CONTINUE_SEARCH:
+        return ExceptionContinueSearch;
+    case EXCEPTION_CONTINUE_EXECUTION:
+        return ExceptionContinueExecution;
+    case EXCEPTION_EXECUTE_HANDLER:
+        break;
+    }
+    unwind_frame( record, frame );
+}
+
 DWORD __wine_exception_handler_page_fault( EXCEPTION_RECORD *record,
                                            EXCEPTION_REGISTRATION_RECORD *frame,
                                            CONTEXT *context,
@@ -130,6 +155,19 @@ DWORD __wine_finally_handler( EXCEPTION_RECORD *record,
     {
         __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
         wine_frame->u.finally_func( FALSE );
+    }
+    return ExceptionContinueSearch;
+}
+
+DWORD __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
+                                  EXCEPTION_REGISTRATION_RECORD *frame,
+                                  CONTEXT *context,
+                                  EXCEPTION_REGISTRATION_RECORD **pdispatcher )
+{
+    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    {
+        __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
+        wine_frame->u.finally_func_ctx( FALSE, wine_frame->ctx );
     }
     return ExceptionContinueSearch;
 }
