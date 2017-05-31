@@ -4368,7 +4368,7 @@ static void test_draw_geometry(void)
             "JAhbuQGAAcABesYBc84Ba9YBTvQBP4MCOIoCNI4CM5ACMZICL5QCLZYCK5kCKJsCJ54CI6MCHq8C"
             "EraSAQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 256,
+    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 512,
             "xWkCmwEFmAEJlQELlAENkgEOkQEPjwESjQETjAEVigELAQqJAQsCCogBCwQKhwEKBQqGAQoGCoYB"
             "CgcKhAEKCAqEAQoIC4IBCgoKggEKCgqBAQoMCoABCgwKfwoNCn8KDgp9Cg8KfQoPCnwKEQp7ChEK"
             "egoSCnoKEwp4ChQKeAoUCncLFQp2ChYKdgoWCnYKFwp2ChYKdgoWCncKFgp2ChYKdgoWCncKFQt2"
