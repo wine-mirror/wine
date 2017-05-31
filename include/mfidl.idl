@@ -164,3 +164,4 @@ interface IMFSourceResolver : IUnknown
 }
 
 cpp_quote("HRESULT WINAPI MFCreateSourceResolver(IMFSourceResolver **resolver);")
+cpp_quote("HRESULT WINAPI MFCreateTopology(IMFTopology **topology);")

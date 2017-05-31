@@ -1,4 +1,6 @@
 MODULE    = mf.dll
+IMPORTLIB = mf
 
 C_SRCS = \
-	main.c
+	main.c \
+	topology.c

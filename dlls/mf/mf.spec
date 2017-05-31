@@ -60,7 +60,7 @@
 @ stdcall MFCreateSourceResolver(ptr) mfplat.MFCreateSourceResolver
 @ stub MFCreateStandardQualityManager
 @ stub MFCreateTopoLoader
-@ stub MFCreateTopology
+@ stdcall MFCreateTopology(ptr)
 @ stub MFCreateTopologyNode
 @ stub MFCreateTranscodeProfile
 @ stub MFCreateTranscodeSinkActivate
