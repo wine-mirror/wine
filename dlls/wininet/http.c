@@ -3993,7 +3993,16 @@ static WCHAR *get_redirect_url(http_request_t *request)
         return NULL;
     }
 
+    urlComponents.dwSchemeLength = 1;
+    b = InternetCrackUrlW(redirect_url, url_length, 0, &urlComponents);
+    if(b && urlComponents.dwSchemeLength &&
+       urlComponents.nScheme != INTERNET_SCHEME_HTTP && urlComponents.nScheme != INTERNET_SCHEME_HTTPS) {
+        TRACE("redirect to non-http URL\n");
+        return NULL;
+    }
+
     urlComponents.lpszScheme = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
+    urlComponents.dwSchemeLength = 0;
     urlComponents.lpszHostName = request->server->name;
     urlComponents.nPort = request->server->port;
     urlComponents.lpszUserName = session->userName;
