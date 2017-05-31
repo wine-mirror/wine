@@ -765,7 +765,7 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
     HANDLE hDlgTmpl = 0;
     HWND hChildDlg = 0;
 
-    TRACE("\n");
+    TRACE("%p, %p\n", fodInfos, hwnd);
 
     /*
      * If OFN_ENABLETEMPLATEHANDLE is specified, the OPENFILENAME
@@ -1038,7 +1038,7 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam)
     if( !(fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)) return FALSE;
     /* get the new dialog rectangle */
     GetWindowRect( hwnd, &rc);
-    TRACE("Size from %d,%d to %d,%d\n", fodInfos->sizedlg.cx, fodInfos->sizedlg.cy,
+    TRACE("%p, size from %d,%d to %d,%d\n", hwnd, fodInfos->sizedlg.cx, fodInfos->sizedlg.cy,
             rc.right -rc.left, rc.bottom -rc.top);
     /* not initialized yet */
     if( (fodInfos->sizedlg.cx == 0 && fodInfos->sizedlg.cy == 0) ||
@@ -2763,7 +2763,7 @@ static LRESULT FILEDLG95_SHELL_Init(HWND hwnd)
 {
   FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwnd);
 
-  TRACE("\n");
+  TRACE("%p\n", hwnd);
 
   /*
    * Initialisation of the FileOpenDialogInfos structure
@@ -2900,7 +2900,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
   int nFilters = 0;  /* number of filters */
   int nFilterIndexCB;
 
-  TRACE("\n");
+  TRACE("%p\n", hwnd);
 
   if(fodInfos->customfilter)
   {
@@ -3133,7 +3133,7 @@ static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   TEXTMETRICW tm;
   LookInInfos *liInfos = MemAlloc(sizeof(LookInInfos));
 
-  TRACE("\n");
+  TRACE("%p\n", hwndCombo);
 
   liInfos->iMaxIndentation = 0;
 
@@ -3352,7 +3352,7 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
   SFOLDER *tmpFolder;
   LookInInfos *liInfos;
 
-  TRACE("%08x\n", iInsertId);
+  TRACE("%p, %p, %d\n", hwnd, pidl, iInsertId);
 
   if(!pidl)
     return -1;
@@ -3382,7 +3382,7 @@ static int FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId)
                   sizeof(sfi),
                   SHGFI_DISPLAYNAME | SHGFI_PIDL | SHGFI_ATTRIBUTES | SHGFI_ATTR_SPECIFIED);
 
-  TRACE("-- Add %s attr=%08x\n", debugstr_w(sfi.szDisplayName), sfi.dwAttributes);
+  TRACE("-- Add %s attr=0x%08x\n", debugstr_w(sfi.szDisplayName), sfi.dwAttributes);
 
   if((sfi.dwAttributes & SFGAO_FILESYSANCESTOR) || (sfi.dwAttributes & SFGAO_FILESYSTEM))
   {
@@ -3451,7 +3451,7 @@ int FILEDLG95_LOOKIN_SelectItem(HWND hwnd,LPITEMIDLIST pidl)
   int iItemPos;
   LookInInfos *liInfos;
 
-  TRACE("\n");
+  TRACE("%p, %p\n", hwnd, pidl);
 
   iItemPos = FILEDLG95_LOOKIN_SearchItem(hwnd,(WPARAM)pidl,SEARCH_PIDL);
 
@@ -4009,7 +4009,7 @@ static inline BOOL is_win16_looks(DWORD flags)
  */
 BOOL WINAPI GetOpenFileNameA(OPENFILENAMEA *ofn)
 {
-    TRACE("flags %08x\n", ofn->Flags);
+    TRACE("flags 0x%08x\n", ofn->Flags);
 
     if (!valid_struct_size( ofn->lStructSize ))
     {
@@ -4044,7 +4044,7 @@ BOOL WINAPI GetOpenFileNameA(OPENFILENAMEA *ofn)
  */
 BOOL WINAPI GetOpenFileNameW(OPENFILENAMEW *ofn)
 {
-    TRACE("flags %08x\n", ofn->Flags);
+    TRACE("flags 0x%08x\n", ofn->Flags);
 
     if (!valid_struct_size( ofn->lStructSize ))
     {
