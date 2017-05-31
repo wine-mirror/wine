@@ -853,38 +853,29 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
 LRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 {
     FileOpenDlgInfos *fodInfos = get_filedlg_infoptr(hwndParentDlg);
-    LRESULT hook_result = 0;
+    LRESULT hook_result;
+    OFNOTIFYW ofnNotify;
 
-    TRACE("%p 0x%04x\n",hwndParentDlg, uCode);
+    TRACE("%p %d\n", hwndParentDlg, uCode);
 
-    if(!fodInfos) return 0;
+    if (!fodInfos || !fodInfos->DlgInfos.hwndCustomDlg)
+        return 0;
 
-    if(fodInfos->DlgInfos.hwndCustomDlg)
-    {
-	TRACE("CALL NOTIFY for %x\n", uCode);
-        if(fodInfos->unicode)
-        {
-            OFNOTIFYW ofnNotify;
-            ofnNotify.hdr.hwndFrom=hwndParentDlg;
-            ofnNotify.hdr.idFrom=0;
-            ofnNotify.hdr.code = uCode;
-            ofnNotify.lpOFN = fodInfos->ofnInfos;
-            ofnNotify.pszFile = NULL;
-            hook_result = SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
-        }
-        else
-        {
-            OFNOTIFYA ofnNotify;
-            ofnNotify.hdr.hwndFrom=hwndParentDlg;
-            ofnNotify.hdr.idFrom=0;
-            ofnNotify.hdr.code = uCode;
-            ofnNotify.lpOFN = (LPOPENFILENAMEA)fodInfos->ofnInfos;
-            ofnNotify.pszFile = NULL;
-            hook_result = SendMessageA(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
-        }
-	TRACE("RET NOTIFY\n");
-    }
-    TRACE("Retval: 0x%08lx\n", hook_result);
+    TRACE("CALL NOTIFY for %d\n", uCode);
+
+    ofnNotify.hdr.hwndFrom = hwndParentDlg;
+    ofnNotify.hdr.idFrom = 0;
+    ofnNotify.hdr.code = uCode;
+    ofnNotify.lpOFN = fodInfos->ofnInfos;
+    ofnNotify.pszFile = NULL;
+
+    if (fodInfos->unicode)
+        hook_result = SendMessageW(fodInfos->DlgInfos.hwndCustomDlg, WM_NOTIFY, 0, (LPARAM)&ofnNotify);
+    else
+        hook_result = SendMessageA(fodInfos->DlgInfos.hwndCustomDlg, WM_NOTIFY, 0, (LPARAM)&ofnNotify);
+
+    TRACE("RET NOTIFY retval %#lx\n", hook_result);
+
     return hook_result;
 }
 
