@@ -67,6 +67,7 @@ typedef struct _RpcConnection_np
     RpcConnection common;
     HANDLE pipe;
     HANDLE listen_event;
+    char *listen_pipe;
     IO_STATUS_BLOCK io_status;
     HANDLE event_cache;
     BOOL read_closed;
@@ -91,26 +92,26 @@ static void release_np_event(RpcConnection_np *connection, HANDLE event)
         CloseHandle(event);
 }
 
-static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pname)
+static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *conn)
 {
-  RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  TRACE("listening on %s\n", pname);
+    RpcConnection_np *connection = (RpcConnection_np *) conn;
 
-  npc->pipe = CreateNamedPipeA(pname, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
-                               PIPE_UNLIMITED_INSTANCES,
-                               RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
-  if (npc->pipe == INVALID_HANDLE_VALUE) {
-    WARN("CreateNamedPipe failed with error %d\n", GetLastError());
-    if (GetLastError() == ERROR_FILE_EXISTS)
-      return RPC_S_DUPLICATE_ENDPOINT;
-    else
-      return RPC_S_CANT_CREATE_ENDPOINT;
-  }
+    TRACE("listening on %s\n", connection->listen_pipe);
 
-  /* Note: we don't call ConnectNamedPipe here because it must be done in the
-   * server thread as the thread must be alertable */
-  return RPC_S_OK;
+    connection->pipe = CreateNamedPipeA(connection->listen_pipe, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+                                        PIPE_UNLIMITED_INSTANCES,
+                                        RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
+    if (connection->pipe == INVALID_HANDLE_VALUE)
+    {
+        WARN("CreateNamedPipe failed with error %d\n", GetLastError());
+        if (GetLastError() == ERROR_FILE_EXISTS)
+            return RPC_S_DUPLICATE_ENDPOINT;
+        else
+            return RPC_S_CANT_CREATE_ENDPOINT;
+    }
+
+    return RPC_S_OK;
 }
 
 static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname, BOOL wait)
@@ -203,7 +204,6 @@ static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
 static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq, const char *endpoint)
 {
   RPC_STATUS r;
-  LPSTR pname;
   RpcConnection *Connection;
   char generated_endpoint[22];
 
@@ -222,9 +222,8 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
   if (r != RPC_S_OK)
       return r;
 
-  pname = ncalrpc_pipe_name(Connection->Endpoint);
-  r = rpcrt4_conn_create_pipe(Connection, pname);
-  I_RpcFree(pname);
+  ((RpcConnection_np*)Connection)->listen_pipe = ncalrpc_pipe_name(Connection->Endpoint);
+  r = rpcrt4_conn_create_pipe(Connection);
 
   EnterCriticalSection(&protseq->cs);
   list_add_head(&protseq->listeners, &Connection->protseq_entry);
@@ -265,7 +264,6 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
 static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protseq, const char *endpoint)
 {
   RPC_STATUS r;
-  LPSTR pname;
   RpcConnection *Connection;
   char generated_endpoint[26];
 
@@ -284,9 +282,8 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
   if (r != RPC_S_OK)
     return r;
 
-  pname = ncacn_pipe_name(Connection->Endpoint);
-  r = rpcrt4_conn_create_pipe(Connection, pname);
-  I_RpcFree(pname);
+  ((RpcConnection_np*)Connection)->listen_pipe = ncacn_pipe_name(Connection->Endpoint);
+  r = rpcrt4_conn_create_pipe(Connection);
 
   EnterCriticalSection(&protseq->cs);
   list_add_head(&protseq->listeners, &Connection->protseq_entry);
@@ -310,13 +307,9 @@ static RPC_STATUS rpcrt4_ncacn_np_handoff(RpcConnection *old_conn, RpcConnection
 {
   DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
   RPC_STATUS status;
-  LPSTR pname;
 
   rpcrt4_conn_np_handoff((RpcConnection_np *)old_conn, (RpcConnection_np *)new_conn);
-
-  pname = ncacn_pipe_name(old_conn->Endpoint);
-  status = rpcrt4_conn_create_pipe(old_conn, pname);
-  I_RpcFree(pname);
+  status = rpcrt4_conn_create_pipe(old_conn);
 
   /* Store the local computer name as the NetworkAddr for ncacn_np as long as
    * we don't support named pipes over the network. */
@@ -361,15 +354,11 @@ static RPC_STATUS rpcrt4_ncalrpc_handoff(RpcConnection *old_conn, RpcConnection 
 {
   DWORD len = MAX_COMPUTERNAME_LENGTH + 1;
   RPC_STATUS status;
-  LPSTR pname;
 
   TRACE("%s\n", old_conn->Endpoint);
 
   rpcrt4_conn_np_handoff((RpcConnection_np *)old_conn, (RpcConnection_np *)new_conn);
-
-  pname = ncalrpc_pipe_name(old_conn->Endpoint);
-  status = rpcrt4_conn_create_pipe(old_conn, pname);
-  I_RpcFree(pname);
+  status = rpcrt4_conn_create_pipe(old_conn);
 
   /* Store the local computer name as the NetworkAddr for ncalrpc. */
   new_conn->NetworkAddr = HeapAlloc(GetProcessHeap(), 0, len);
