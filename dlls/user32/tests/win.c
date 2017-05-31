@@ -1841,6 +1841,14 @@ static void test_MDI_child_stack(HWND mdi_client)
         "Broken MDI child stack:\nexpected: %p->%p->%p->%p, but got: %p->%p->%p->%p\n",
             child_4, child_2, child_1, child_3, stack[0], stack[1], stack[2], stack[3]);
 
+    trace("Minimize child %p\n", child_4);
+    ShowWindow(child_4, SW_MINIMIZE);
+
+    stack[0] = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
+    stack[1] = GetWindow(stack[0], GW_HWNDNEXT);
+    todo_wine ok(stack[0] == child_4, "Expected %p, got %p\n", child_4, stack[0]);
+    todo_wine ok(stack[1] == NULL, "Expected NULL, got %p\n", stack[1]);
+
     DestroyWindow(child_1);
     DestroyWindow(child_2);
     DestroyWindow(child_3);
