@@ -385,3 +385,71 @@ const struct gdi_dc_funcs * CDECL ANDROID_get_gdi_driver( unsigned int version )
     }
     return &android_drv_funcs;
 }
+
+
+static const JNINativeMethod methods[] =
+{
+    { "wine_desktop_changed", "(II)V", desktop_changed },
+};
+
+#define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
+#define LOAD_FUNCPTR(lib, func) do { \
+    if ((p##func = wine_dlsym( lib, #func, NULL, 0 )) == NULL) \
+        { ERR( "can't find symbol %s\n", #func); return; } \
+    } while(0)
+
+DECL_FUNCPTR( __android_log_print );
+
+static void load_android_libs(void)
+{
+    void *liblog;
+    char error[1024];
+
+    if (!(liblog = wine_dlopen( "liblog.so", RTLD_GLOBAL, error, sizeof(error) )))
+    {
+        ERR( "failed to load liblog.so: %s\n", error );
+        return;
+    }
+    LOAD_FUNCPTR( liblog, __android_log_print );
+}
+
+#undef DECL_FUNCPTR
+#undef LOAD_FUNCPTR
+
+static BOOL process_attach(void)
+{
+    jclass class;
+    jobject object = wine_get_java_object();
+    JNIEnv *jni_env;
+    JavaVM *java_vm;
+
+    if ((java_vm = wine_get_java_vm()))  /* running under Java */
+    {
+#ifdef __i386__
+        WORD old_fs = wine_get_fs();
+#endif
+        load_android_libs();
+        (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
+        class = (*jni_env)->GetObjectClass( jni_env, object );
+        (*jni_env)->RegisterNatives( jni_env, class, methods, sizeof(methods)/sizeof(methods[0]) );
+        (*jni_env)->DeleteLocalRef( jni_env, class );
+#ifdef __i386__
+        wine_set_fs( old_fs );  /* the Java VM hijacks %fs for its own purposes, restore it */
+#endif
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *       dll initialisation routine
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+        return process_attach();
+    }
+    return TRUE;
+}

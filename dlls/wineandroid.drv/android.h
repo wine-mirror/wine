@@ -25,12 +25,22 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <jni.h>
+#include <android/log.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/gdi_driver.h"
+
+
+/**************************************************************************
+ * Android interface
+ */
+
+#define DECL_FUNCPTR(f) extern typeof(f) * p##f DECLSPEC_HIDDEN
+DECL_FUNCPTR( __android_log_print );
+#undef DECL_FUNCPTR
 
 
 /**************************************************************************
@@ -43,6 +53,9 @@ extern RECT virtual_screen_rect DECLSPEC_HIDDEN;
 extern MONITORINFOEXW default_monitor DECLSPEC_HIDDEN;
 
 extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
+
+/* JNI entry points */
+extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height ) DECLSPEC_HIDDEN;
 
 extern JavaVM *wine_get_java_vm(void);
 extern jobject wine_get_java_object(void);

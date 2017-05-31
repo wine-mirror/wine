@@ -134,6 +134,17 @@ static void release_win_data( struct android_win_data *data )
 
 
 /***********************************************************************
+ *           desktop_changed
+ *
+ * JNI callback, runs in the context of the Java thread.
+ */
+void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height )
+{
+    p__android_log_print( ANDROID_LOG_INFO, "wine", "desktop_changed: %ux%u", width, height );
+}
+
+
+/***********************************************************************
  *           ANDROID_DestroyWindow
  */
 void CDECL ANDROID_DestroyWindow( HWND hwnd )
