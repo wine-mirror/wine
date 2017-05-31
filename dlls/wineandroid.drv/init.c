@@ -28,12 +28,29 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "wine/gdi_driver.h"
+#include "android.h"
+#include "wine/server.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
+
+unsigned int screen_width = 0;
+unsigned int screen_height = 0;
+RECT virtual_screen_rect = { 0, 0, 0, 0 };
+
+MONITORINFOEXW default_monitor =
+{
+    sizeof(default_monitor),    /* cbSize */
+    { 0, 0, 0, 0 },             /* rcMonitor */
+    { 0, 0, 0, 0 },             /* rcWork */
+    MONITORINFOF_PRIMARY,       /* dwFlags */
+    { '\\','\\','.','\\','D','I','S','P','L','A','Y','1',0 }   /* szDevice */
+};
+
+static const unsigned int screen_bpp = 32;  /* we don't support other modes */
+
+static int device_init_done;
 
 typedef struct
 {
@@ -42,12 +59,73 @@ typedef struct
 
 static const struct gdi_dc_funcs android_drv_funcs;
 
+
+/******************************************************************************
+ *           init_monitors
+ */
+void init_monitors( int width, int height )
+{
+    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    RECT rect;
+    HWND hwnd = FindWindowW( trayW, NULL );
+
+    virtual_screen_rect.right = width;
+    virtual_screen_rect.bottom = height;
+    default_monitor.rcMonitor = default_monitor.rcWork = virtual_screen_rect;
+
+    if (!hwnd || !IsWindowVisible( hwnd )) return;
+    if (!GetWindowRect( hwnd, &rect )) return;
+    if (rect.top) default_monitor.rcWork.bottom = rect.top;
+    else default_monitor.rcWork.top = rect.bottom;
+    TRACE( "found tray %p %s work area %s\n", hwnd,
+           wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &default_monitor.rcWork ));
+}
+
+
+/**********************************************************************
+ *	     fetch_display_metrics
+ */
+static void fetch_display_metrics(void)
+{
+    if (wine_get_java_vm()) return;  /* for Java threads it will be set when the top view is created */
+
+    SERVER_START_REQ( get_window_rectangles )
+    {
+        req->handle = wine_server_user_handle( GetDesktopWindow() );
+        req->relative = COORDS_CLIENT;
+        if (!wine_server_call( req ))
+        {
+            screen_width  = reply->window.right;
+            screen_height = reply->window.bottom;
+        }
+    }
+    SERVER_END_REQ;
+
+    init_monitors( screen_width, screen_height );
+    TRACE( "screen %ux%u\n", screen_width, screen_height );
+}
+
+
+/**********************************************************************
+ *           device_init
+ *
+ * Perform initializations needed upon creation of the first device.
+ */
+static void device_init(void)
+{
+    device_init_done = TRUE;
+    fetch_display_metrics();
+}
+
+
 /******************************************************************************
  *           create_android_physdev
  */
 static ANDROID_PDEVICE *create_android_physdev(void)
 {
     ANDROID_PDEVICE *physdev;
+
+    if (!device_init_done) device_init();
 
     if (!(physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) ))) return NULL;
     return physdev;
@@ -92,6 +170,76 @@ static BOOL ANDROID_DeleteDC( PHYSDEV dev )
 }
 
 
+/***********************************************************************
+ *           ANDROID_GetDeviceCaps
+ */
+static INT ANDROID_GetDeviceCaps( PHYSDEV dev, INT cap )
+{
+    switch(cap)
+    {
+    case HORZRES:        return screen_width;
+    case VERTRES:        return screen_height;
+    case DESKTOPHORZRES: return virtual_screen_rect.right - virtual_screen_rect.left;
+    case DESKTOPVERTRES: return virtual_screen_rect.bottom - virtual_screen_rect.top;
+    case BITSPIXEL:      return screen_bpp;
+    default:
+        dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
+        return dev->funcs->pGetDeviceCaps( dev, cap );
+    }
+}
+
+
+/***********************************************************************
+ *           ANDROID_GetMonitorInfo
+ */
+BOOL CDECL ANDROID_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
+{
+    if (handle != (HMONITOR)1)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    info->rcMonitor = default_monitor.rcMonitor;
+    info->rcWork = default_monitor.rcWork;
+    info->dwFlags = default_monitor.dwFlags;
+    if (info->cbSize >= sizeof(MONITORINFOEXW))
+        lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, default_monitor.szDevice );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           ANDROID_EnumDisplayMonitors
+ */
+BOOL CDECL ANDROID_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
+{
+    if (hdc)
+    {
+        POINT origin;
+        RECT limit, monrect;
+
+        if (!GetDCOrgEx( hdc, &origin )) return FALSE;
+        if (GetClipBox( hdc, &limit ) == ERROR) return FALSE;
+
+        if (rect && !IntersectRect( &limit, &limit, rect )) return TRUE;
+
+        monrect = default_monitor.rcMonitor;
+        OffsetRect( &monrect, -origin.x, -origin.y );
+        if (IntersectRect( &monrect, &monrect, &limit ))
+            if (!proc( (HMONITOR)1, hdc, &monrect, lp ))
+                return FALSE;
+    }
+    else
+    {
+        RECT unused;
+        if (!rect || IntersectRect( &unused, &default_monitor.rcMonitor, rect ))
+            if (!proc( (HMONITOR)1, 0, &default_monitor.rcMonitor, lp ))
+                return FALSE;
+    }
+    return TRUE;
+}
+
+
 static const struct gdi_dc_funcs android_drv_funcs =
 {
     NULL,                               /* pAbortDoc */
@@ -131,7 +279,7 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pGetCharABCWidths */
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */
-    NULL,                               /* pGetDeviceCaps */
+    ANDROID_GetDeviceCaps,              /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
     NULL,                               /* pGetFontRealizationInfo */

@@ -1,4 +1,5 @@
 MODULE  = wineandroid.drv
+IMPORTS = user32 gdi32
 
 C_SRCS = \
 	init.c
