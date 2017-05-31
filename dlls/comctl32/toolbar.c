@@ -6903,6 +6903,10 @@ static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIS
     /* Check if the entry already exists */
     c = TOOLBAR_GetImageListEntry(*pies, *cies, id);
 
+    /* Don't add new entry for NULL imagelist */
+    if (!c && !himl)
+        return NULL;
+
     /* If this is a new entry we must create it and insert into the array */
     if (!c)
     {
