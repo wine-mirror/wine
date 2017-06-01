@@ -158,7 +158,7 @@ static void update_copy_keyname_item(HMENU hMenu, WCHAR *keyName)
 {
     unsigned int state = MF_ENABLED;
 
-    if (!g_pChildWnd->nFocusPanel && !keyName)
+    if (!keyName)
         state = MF_GRAYED;
 
     EnableMenuItem(hMenu, ID_EDIT_COPYKEYNAME, state | MF_BYCOMMAND);
