@@ -305,6 +305,20 @@ static int wait_events( int timeout )
 }
 
 
+static WNDPROC desktop_orig_wndproc;
+
+static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch (msg)
+    {
+    case WM_PARENTNOTIFY:
+        if (LOWORD(wp) == WM_DESTROY) destroy_ioctl_window( (HWND)lp );
+        break;
+    }
+    return desktop_orig_wndproc( hwnd, msg, wp, lp );
+}
+
+
 /***********************************************************************
  *           ANDROID_MsgWaitForMultipleObjectsEx
  */
@@ -334,7 +348,8 @@ BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
 
         init_event_queue();
         start_android_device();
-
+        desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( hwnd, GWLP_WNDPROC,
+                                                           (LONG_PTR)desktop_wndproc_wrapper );
         if (!(data = alloc_win_data( hwnd ))) return FALSE;
         release_win_data( data );
     }
