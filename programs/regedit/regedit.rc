@@ -173,6 +173,7 @@ BEGIN
     ID_EDIT_NEW_BINARYVALUE "Adds a new binary value"
     ID_EDIT_NEW_DWORDVALUE  "Adds a new double word value"
     ID_EDIT_NEW_MULTI_STRINGVALUE "Adds a new multi-string value"
+    ID_EDIT_NEW_EXPANDVALUE "Adds a new expandable string value"
     ID_REGISTRY_IMPORTREGISTRYFILE "Imports a text file into the registry"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exports all or part of the registry to a text file"

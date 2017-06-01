@@ -66,8 +66,8 @@ msgstr "Støtteinformasjon"
 #: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 user32.rc:83 user32.rc:98
 #: wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117
 #: oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124 progman.rc:142
-#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:293
-#: regedit.rc:304 regedit.rc:317 regedit.rc:333 regedit.rc:346 regedit.rc:359
+#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:294
+#: regedit.rc:305 regedit.rc:318 regedit.rc:334 regedit.rc:347 regedit.rc:360
 #: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
 #: winemine.rc:71 winemine.rc:81 winemine.rc:95 wordpad.rc:215 wordpad.rc:226
@@ -149,8 +149,8 @@ msgstr "&Installer"
 #: shell32.rc:342 shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52
 #: wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175
 #: progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181
-#: progman.rc:200 progman.rc:217 regedit.rc:294 regedit.rc:305 regedit.rc:318
-#: regedit.rc:334 regedit.rc:347 regedit.rc:360 taskmgr.rc:443 taskmgr.rc:518
+#: progman.rc:200 progman.rc:217 regedit.rc:295 regedit.rc:306 regedit.rc:319
+#: regedit.rc:335 regedit.rc:348 regedit.rc:361 taskmgr.rc:443 taskmgr.rc:518
 #: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
 #: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:96
 #: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
@@ -224,7 +224,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:224 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Alle filer (*.*)"
 
@@ -400,7 +400,7 @@ msgstr "&Nei"
 msgid "&Retry"
 msgstr "P&røv igjen"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:283 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:284 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Lukk"
@@ -459,7 +459,7 @@ msgstr "Skriver:"
 msgid "Print range"
 msgstr "Utskriftsområde"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:265
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:266
 msgid "&All"
 msgstr "&Alt"
 
@@ -629,7 +629,7 @@ msgstr "Legg til i egendefinerte f&arger"
 msgid "&Define Custom Colors >>"
 msgstr "&Definer egendefinerte farger >>"
 
-#: comdlg32.rc:316 regedit.rc:272 regedit.rc:282
+#: comdlg32.rc:316 regedit.rc:273 regedit.rc:283
 msgid "Find"
 msgstr "Finn"
 
@@ -7543,7 +7543,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "Setter innholdet fra utklippstavlen inn i dokumentet."
 
-#: oledlg.rc:48 regedit.rc:427
+#: oledlg.rc:48 regedit.rc:428
 msgid "Unknown Type"
 msgstr "Ukjent type"
 
@@ -8119,7 +8119,7 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Skrivebord"
 
-#: shell32.rc:157 regedit.rc:235
+#: shell32.rc:157 regedit.rc:236
 msgid "My Computer"
 msgstr "Min datamaskin"
 
@@ -8464,7 +8464,7 @@ msgstr "Lisensbetingelser"
 msgid "Trash"
 msgstr "Papirkurv"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:203 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
 msgid "Error"
 msgstr "Feil"
 
@@ -10883,7 +10883,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:369 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:370 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10903,7 +10903,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:370 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:371 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11629,11 +11629,11 @@ msgstr "Registerverdien \"%1\" finnes fra før. Vil du erstatte den?"
 msgid "The registry operation was cancelled\n"
 msgstr "Register-operasjonen ble avbrutt\n"
 
-#: reg.rc:53 regedit.rc:236
+#: reg.rc:53 regedit.rc:237
 msgid "(Default)"
 msgstr "(Standard)"
 
-#: reg.rc:54 regedit.rc:209
+#: reg.rc:54 regedit.rc:210
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Virkelig slette registerverdien \"%1\"?"
 
@@ -11685,7 +11685,7 @@ msgstr "Skriv \"REG /?\" for hjelp.\n"
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Skriv \"REG %1 /?\" for hjelp.\n"
 
-#: reg.rc:65 regedit.rc:237
+#: reg.rc:65 regedit.rc:238
 msgid "(value not set)"
 msgstr "(verdi ikke oppgitt)"
 
@@ -11757,7 +11757,7 @@ msgstr "Fje&rn favoritt..."
 msgid "&About Registry Editor"
 msgstr "&Om Registerredigering"
 
-#: regedit.rc:91 regedit.rc:98 regedit.rc:229
+#: regedit.rc:91 regedit.rc:98 regedit.rc:230
 msgid "Expand"
 msgstr "Utvid"
 
@@ -11765,83 +11765,83 @@ msgstr "Utvid"
 msgid "Modify Binary Data..."
 msgstr "Endre binærdata..."
 
-#: regedit.rc:264
+#: regedit.rc:265
 msgid "Export registry"
 msgstr "Eksporter register"
 
-#: regedit.rc:266
+#: regedit.rc:267
 msgid "S&elected branch:"
 msgstr "&Merket del:"
 
-#: regedit.rc:275
+#: regedit.rc:276
 msgid "Find:"
 msgstr "Finn:"
 
-#: regedit.rc:277
+#: regedit.rc:278
 msgid "Find in:"
 msgstr "Finn i:"
 
-#: regedit.rc:278
+#: regedit.rc:279
 msgid "Keys"
 msgstr "Nøkler"
 
-#: regedit.rc:279
+#: regedit.rc:280
 msgid "Value names"
 msgstr "Verdinavn"
 
-#: regedit.rc:280
+#: regedit.rc:281
 msgid "Value content"
 msgstr "Verdiinnhold"
 
-#: regedit.rc:281
+#: regedit.rc:282
 msgid "Whole string only"
 msgstr "Kun hele strenger"
 
-#: regedit.rc:288
+#: regedit.rc:289
 msgid "Add Favorite"
 msgstr "Legg til favoritt"
 
-#: regedit.rc:291 regedit.rc:302
+#: regedit.rc:292 regedit.rc:303
 msgid "Name:"
 msgstr "Navn:"
 
-#: regedit.rc:299
+#: regedit.rc:300
 msgid "Remove Favorite"
 msgstr "Fjern favoritt"
 
-#: regedit.rc:310
+#: regedit.rc:311
 msgid "Edit String"
 msgstr "Rediger streng"
 
-#: regedit.rc:313 regedit.rc:326 regedit.rc:342 regedit.rc:355
+#: regedit.rc:314 regedit.rc:327 regedit.rc:343 regedit.rc:356
 msgid "Value name:"
 msgstr "Verdinavn:"
 
-#: regedit.rc:315 regedit.rc:328 regedit.rc:344 regedit.rc:357
+#: regedit.rc:316 regedit.rc:329 regedit.rc:345 regedit.rc:358
 msgid "Value data:"
 msgstr "Verdidata:"
 
-#: regedit.rc:323
+#: regedit.rc:324
 msgid "Edit DWORD"
 msgstr "Rediger DWORD"
 
-#: regedit.rc:330
+#: regedit.rc:331
 msgid "Base"
 msgstr "Base"
 
-#: regedit.rc:331
+#: regedit.rc:332
 msgid "Hexadecimal"
 msgstr "Heksadesimal"
 
-#: regedit.rc:332
+#: regedit.rc:333
 msgid "Decimal"
 msgstr "Desimal"
 
-#: regedit.rc:339
+#: regedit.rc:340
 msgid "Edit Binary"
 msgstr "Rediger binær"
 
-#: regedit.rc:352
+#: regedit.rc:353
 msgid "Edit Multi-String"
 msgstr "Rediger flerstreng"
 
@@ -11879,43 +11879,43 @@ msgstr "Data"
 msgid "Registry Editor"
 msgstr "Registerredigering"
 
-#: regedit.rc:220
+#: regedit.rc:221
 msgid "Import Registry File"
 msgstr "Importer registerfil"
 
-#: regedit.rc:221
+#: regedit.rc:222
 msgid "Export Registry File"
 msgstr "Eksporter registerfil"
 
-#: regedit.rc:222
+#: regedit.rc:223
 msgid "Registry files (*.reg)"
 msgstr "Registerfiler (*.reg)"
 
-#: regedit.rc:223
+#: regedit.rc:224
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x-/NT4-registerfiler (REGEDIT4)"
 
-#: regedit.rc:238
+#: regedit.rc:239
 msgid "(cannot display value)"
 msgstr "(kan ikke vise verdi)"
 
-#: regedit.rc:239
+#: regedit.rc:240
 msgid "(unknown %d)"
 msgstr "(ukjent %d)"
 
-#: regedit.rc:244
+#: regedit.rc:245
 msgid "Unable to modify the selected registry value."
 msgstr "Kan ikke modifisere den valgte registerverdien."
 
-#: regedit.rc:245
+#: regedit.rc:246
 msgid "Unable to create a new registry key."
 msgstr "Kan ikke opprette en ny registernøkkel."
 
-#: regedit.rc:246
+#: regedit.rc:247
 msgid "Unable to create a new registry value."
 msgstr "Kan ikke opprette en ny registerverdi."
 
-#: regedit.rc:247
+#: regedit.rc:248
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
@@ -11923,7 +11923,7 @@ msgstr ""
 "Kan ikke gi nytt navn til nøkkel \"%1\".\n"
 "Det spesifiserte nøkkelnavnet finnes allerede."
 
-#: regedit.rc:248
+#: regedit.rc:249
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
@@ -11931,29 +11931,29 @@ msgstr ""
 "Kan ikke gi nytt navn til verdien \"%1\".\n"
 "Det spesifiserte verdinavnet finnes allerede."
 
-#: regedit.rc:249
+#: regedit.rc:250
 msgid "Unable to delete the selected registry key."
 msgstr "Kan ikke slette den valgte registernøkkelen."
 
-#: regedit.rc:250
+#: regedit.rc:251
 msgid "Unable to rename the selected registry key."
 msgstr "Kan ikke gi nytt navn til den valgte registernøkkelen."
 
-#: regedit.rc:251
+#: regedit.rc:252
 msgid "Unable to rename the selected registry value."
 msgstr "Kan ikke gi nytt navn til den valgte registerverdien."
 
-#: regedit.rc:252
+#: regedit.rc:253
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr "Nøklene og verdiene i %1 ble vellykket lagt til registeret."
 
-#: regedit.rc:253
+#: regedit.rc:254
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
 "Kan ikke importere %1. Den spesifiserte filen er ikke en gyldig registerfil."
 
-#: regedit.rc:405
+#: regedit.rc:406
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12013,43 +12013,43 @@ msgstr ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
-#: regedit.rc:406
+#: regedit.rc:407
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr "regedit: Ugyldig eller ukjent bryter [%1]\n"
 
-#: regedit.rc:407
+#: regedit.rc:408
 msgid "Type \"regedit /?\" for help.\n"
 msgstr "Skriv \"regedit /?\" for hjelp.\n"
 
-#: regedit.rc:408
+#: regedit.rc:409
 msgid "regedit: No filename was specified.\n"
 msgstr "regedit: Intet filnavn ble oppgitt.\n"
 
-#: regedit.rc:409
+#: regedit.rc:410
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr "regedit: Ingen registernøkkel ble oppgitt for fjerning.\n"
 
-#: regedit.rc:410
+#: regedit.rc:411
 msgid "regedit: The file '%1' was not found.\n"
 msgstr "regedit: Filen \"%1\" ble ikke funnet.\n"
 
-#: regedit.rc:411
+#: regedit.rc:412
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "regedit: Kan ikke åpne filen \"%1\".\n"
 
-#: regedit.rc:412
+#: regedit.rc:413
 msgid "regedit: Unhandled action.\n"
 msgstr "regedit: Uhåndtert handling.\n"
 
-#: regedit.rc:413
+#: regedit.rc:414
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr "regedit: Ikke nok minne! (%1!S!, linje %2!u!)\n"
 
-#: regedit.rc:414
+#: regedit.rc:415
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "regedit: Ugyldig heksadesimal verdi.\n"
 
-#: regedit.rc:415
+#: regedit.rc:416
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
@@ -12057,98 +12057,98 @@ msgstr ""
 "regedit: Kan ikke konvertere heksadesimale data. En ugyldig verdi inntraff "
 "ved \"%1\".\n"
 
-#: regedit.rc:416
+#: regedit.rc:417
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Ukjent escape-sekvens [\\%1!c!]\n"
 
-#: regedit.rc:417
+#: regedit.rc:418
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "regedit: Registerdatatypen [%1] støttes ikke\n"
 
-#: regedit.rc:418
+#: regedit.rc:419
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "regedit: Uventet ende på linje i \"%1\".\n"
 
-#: regedit.rc:419
+#: regedit.rc:420
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "regedit: Linjen \"%1\" ble ikke gjenkjent.\n"
 
-#: regedit.rc:420
+#: regedit.rc:421
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "regedit: Kan ikke legge registerverdien \"%1\" til \"%2\".\n"
 
-#: regedit.rc:421
+#: regedit.rc:422
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Kan ikke åpne registernøkkelen \"%1\".\n"
 
-#: regedit.rc:422
+#: regedit.rc:423
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "regedit: Registerdatatypen [%1], funnet i \"%2\", støttes ikke.\n"
 
-#: regedit.rc:423
+#: regedit.rc:424
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: Registerverdien \"%1\" vil bli eksportert som binære data.\n"
 
-#: regedit.rc:424
+#: regedit.rc:425
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr "regedit: Feil registerklasse-spesifikasjon i \"%1\".\n"
 
-#: regedit.rc:425
+#: regedit.rc:426
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
 "regedit: Kan ikke eksportere \"%1\". Den spesifiserte registernøkkelen ble "
 "ikke funnet.\n"
 
-#: regedit.rc:426
+#: regedit.rc:427
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Kan ikke slette registerklassen \"%1\".\n"
 
-#: regedit.rc:428
+#: regedit.rc:429
 msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Linjen inneholder ugyldig syntaks.\n"
 
-#: regedit.rc:187
+#: regedit.rc:188
 msgid "Quits the registry editor"
 msgstr "Avslutter Registerredigering"
 
-#: regedit.rc:188
+#: regedit.rc:189
 msgid "Adds keys to the favorites list"
 msgstr "Legger nøkler til i favorittlisten"
 
-#: regedit.rc:189
+#: regedit.rc:190
 msgid "Removes keys from the favorites list"
 msgstr "Fjerner nøkler fra favorittlisten"
 
-#: regedit.rc:190
+#: regedit.rc:191
 msgid "Shows or hides the status bar"
 msgstr "Viser eller skjuler statuslinjen"
 
-#: regedit.rc:191
+#: regedit.rc:192
 msgid "Change position of split between two panes"
 msgstr "Endrer posisjonen til delingslinjen mellom to ruter"
 
-#: regedit.rc:192
+#: regedit.rc:193
 msgid "Refreshes the window"
 msgstr "Oppdaterer vinduet"
 
-#: regedit.rc:193
+#: regedit.rc:194
 msgid "Deletes the selection"
 msgstr "Sletter utvalget"
 
-#: regedit.rc:194
+#: regedit.rc:195
 msgid "Renames the selection"
 msgstr "Gir nytt navn til utvalget"
 
-#: regedit.rc:195
+#: regedit.rc:196
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Kopierer navnet på den valgte nøkkelen til utklippstavlen"
 
-#: regedit.rc:196
+#: regedit.rc:197
 msgid "Finds a text string in a key, value or data"
 msgstr "Finner en tekststreng i en nøkkel, verdi eller data"
 
-#: regedit.rc:197
+#: regedit.rc:198
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Finner neste treff til teksten spesifisert i forrige søk"
 
@@ -12172,55 +12172,55 @@ msgstr "Legger til en ny binærverdis"
 msgid "Adds a new double word value"
 msgstr "Legger til en ny dobbeltord-verdi"
 
-#: regedit.rc:177
+#: regedit.rc:178
 msgid "Imports a text file into the registry"
 msgstr "Importerer en tekstfil inn i registeret"
 
-#: regedit.rc:179
+#: regedit.rc:180
 msgid "Exports all or part of the registry to a text file"
 msgstr "Eksporterer hele eller deler av registeret til en tekstfil"
 
-#: regedit.rc:180
+#: regedit.rc:181
 msgid "Prints all or part of the registry"
 msgstr "Skriver ut hele eller deler av registeret"
 
-#: regedit.rc:182
+#: regedit.rc:183
 msgid "Displays program information, version number and copyright"
 msgstr "Viser programinformasjon, versjonnummer og opphavsrett"
 
-#: regedit.rc:205
+#: regedit.rc:206
 msgid "Unable to query the registry value '%1'."
 msgstr "Kan ikke forespørre registerverdien \"%1\"."
 
-#: regedit.rc:206
+#: regedit.rc:207
 msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Kan ikke redigere registernøkler av typen (%1!u!)."
 
-#: regedit.rc:207
+#: regedit.rc:208
 msgid "The value is too big (%1!u!)."
 msgstr "Verdien er for stor (%1!u!)."
 
-#: regedit.rc:208
+#: regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Bekreft sletting av verdi"
 
-#: regedit.rc:215
+#: regedit.rc:216
 msgid "Search complete. The string '%1' was not found."
 msgstr "Søk fullført. Fant ikke søkestrengen \"%1\"."
 
-#: regedit.rc:210
+#: regedit.rc:211
 msgid "Are you sure you want to delete these values?"
 msgstr "Virkelig slette disse verdiene?"
 
-#: regedit.rc:213
+#: regedit.rc:214
 msgid "New Key #%d"
 msgstr "Ny nøkkel #%d"
 
-#: regedit.rc:214
+#: regedit.rc:215
 msgid "New Value #%d"
 msgstr "Ny verdi #%d"
 
-#: regedit.rc:204
+#: regedit.rc:205
 msgid "Unable to query the registry key '%1'."
 msgstr "Kan ikke forespørre registernøkkelen \"%1\"."
 
@@ -12228,20 +12228,26 @@ msgstr "Kan ikke forespørre registernøkkelen \"%1\"."
 msgid "Adds a new multi-string value"
 msgstr "Legger til en ny flerstrengverdi"
 
-#: regedit.rc:198
+#: regedit.rc:199
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Eksporterer den valgte greinen av registeret til en tekstfil"
 
-#: regedit.rc:211
+#: regedit.rc:177
+#, fuzzy
+#| msgid "Adds a new string value"
+msgid "Adds a new expandable string value"
+msgstr "Legger til en ny strengverdi"
+
+#: regedit.rc:212
 msgid "Confirm Key Delete"
 msgstr "Bekreft sletting av nøkkel"
 
-#: regedit.rc:212
+#: regedit.rc:213
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
 msgstr "Vil du virkelig slette registernøkkel \"%1\" og alle dens undernøkler?"
 
-#: regedit.rc:230
+#: regedit.rc:231
 msgid "Collapse"
 msgstr "Kollaps"
 
