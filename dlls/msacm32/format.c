@@ -78,7 +78,8 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 		afd.pwfx = HeapAlloc(MSACM_hHeap, 0, paftd->cbFormatSize);
 		if (!afd.pwfx) return FALSE;
 		afd.pwfx->wFormatTag = paftd->dwFormatTag;
-		afd.pwfx->cbSize = paftd->cbFormatSize;
+		if (paftd->dwFormatTag != WAVE_FORMAT_PCM)
+		    afd.pwfx->cbSize = paftd->cbFormatSize - sizeof(WAVEFORMATEX);
 		afd.cbwfx = paftd->cbFormatSize;
 
 		for (i = 0; i < paftd->cStandardFormats; i++) {
