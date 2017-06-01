@@ -307,6 +307,7 @@ BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
     if (hwnd == GetDesktopWindow())
     {
         init_event_queue();
+        start_android_device();
     }
     return TRUE;
 }

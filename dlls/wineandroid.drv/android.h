@@ -44,6 +44,13 @@ DECL_FUNCPTR( __android_log_print );
 
 
 /**************************************************************************
+ * Android pseudo-device
+ */
+
+extern void start_android_device(void) DECLSPEC_HIDDEN;
+
+
+/**************************************************************************
  * USER driver
  */
 
