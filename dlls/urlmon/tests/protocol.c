@@ -1332,21 +1332,6 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
             memcpy(data, post_data, sizeof(post_data));
             U(pbindinfo->stgmedData).hGlobal = data;
         }else {
-            IStream *post_stream;
-            HGLOBAL data;
-            HRESULT hres;
-
-            if(0) {
-            /* Must be GMEM_FIXED, GMEM_MOVABLE does not work properly */
-            data = GlobalAlloc(GPTR, sizeof(post_data));
-            memcpy(data, post_data, sizeof(post_data));
-            U(pbindinfo->stgmedData).hGlobal = data;
-
-            hres = CreateStreamOnHGlobal(data, FALSE, &post_stream);
-            ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
-
-            U(pbindinfo->stgmedData).pstm =post_stream;/* &Stream; */
-            }
             U(pbindinfo->stgmedData).pstm = &Stream;
         }
     }
