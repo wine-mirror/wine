@@ -8287,7 +8287,7 @@ msgstr "&גזירה"
 msgid "Create &Link"
 msgstr "&יצירת קישור"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "&שינוי שם"
 
@@ -11755,7 +11755,7 @@ msgstr "ערך מ&רובה מחרוזות"
 msgid "&Expandable String Value"
 msgstr "ערך &מחרוזת מתרחבת"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "שי&נוי שם\tF2"
 
@@ -11892,8 +11892,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "מכיל פקודות לגישה למפתחות הנמצאים בשימוש תדיר"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr "מכיל פקודות להצגת עזרה ומידע על אודות עורך רישום המערכת"
 
 #: regedit.rc:166
@@ -12137,7 +12141,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr ""
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "יציאה מעורך רישום המערכת"
 
 #: regedit.rc:190
@@ -12153,7 +12159,9 @@ msgid "Shows or hides the status bar"
 msgstr "הצגה או הסתרה של שורת המצב"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "שינוי מיקום הפיצול בין שתי החלוניות"
 
 #: regedit.rc:194
@@ -12197,8 +12205,10 @@ msgid "Adds a new binary value"
 msgstr "הוספת ערך בינרי חדש"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "הוספת ערך חדש בגודל שני word"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "הוספת ערך בינרי חדש"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12211,6 +12221,12 @@ msgstr "יצוא כל רישום המערכת או רק חלק ממנו לקוב
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "הדפסת כל רישום המערכת או רק חלק ממנו"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "עורך רישום המערכת"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12273,7 +12289,9 @@ msgid "Adds a new multi-string value"
 msgstr "הוספת ערך מרובה מחרוזות חדש"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "יצוא הענף הנבחר מרישום המערכת לקובץ טקסט"
 
 #: regedit.rc:178

@@ -8048,7 +8048,7 @@ msgstr "ق&ص"
 msgid "Create &Link"
 msgstr "أنش&ئ اختصارًا"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "أعد التسمي&ة"
 
@@ -11982,7 +11982,7 @@ msgstr "القيمة متع&ددة السلاسل"
 msgid "&Expandable String Value"
 msgstr "القيمة المتسلسلة القا&بلة للمد"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "&إعادة التسمية\tF2"
 
@@ -12119,8 +12119,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "يحتوي على أوامر للولوج الترددي على المفاتيح المستعملة"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr "يحتوي على أوامر لعرض ملفات المساعدة و معلومات حول محرر السجل"
 
 #: regedit.rc:166
@@ -12369,7 +12373,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "لم يتم تحديد أي أمر."
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "إنهاء محرر السجل"
 
 #: regedit.rc:190
@@ -12385,7 +12391,9 @@ msgid "Shows or hides the status bar"
 msgstr "إظهار أو إخفاء شريط الحالة"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "تغيير موضع التقسيم بين اللوحتين"
 
 #: regedit.rc:194
@@ -12429,8 +12437,10 @@ msgid "Adds a new binary value"
 msgstr "أضف قيمة ثنائية جديدة"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "أضف قيمة DWORD جديدة"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "أضف قيمة ثنائية جديدة"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12443,6 +12453,12 @@ msgstr "تصدير جزء أو جميع أجزاء السجل إلى ملف نص
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "طباعة جزء أو جميع أجزاء السجل"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "محرر السجل"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12505,7 +12521,9 @@ msgid "Adds a new multi-string value"
 msgstr "إضافة قيمة جديدة متعددة السلاسل"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "تصدير الفرع المختار من السجل إلى ملف نصي"
 
 #: regedit.rc:178

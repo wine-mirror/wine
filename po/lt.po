@@ -8004,7 +8004,7 @@ msgstr "&Iškirpti"
 msgid "Create &Link"
 msgstr "Sukurti &nuorodą"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "&Pervadinti"
 
@@ -11734,7 +11734,7 @@ msgstr "&Kelių eilučių reikšmė"
 msgid "&Expandable String Value"
 msgstr "&Išplečiama eilutės reikšmė"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "&Pervadinti\tF2"
 
@@ -11871,8 +11871,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Pateikiamos komandos dažnai naudojamų raktų prieigai"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 "Pateikiamos komandos žinyno ir informacijos apie registro tvarkytuvę rodymui"
 
@@ -12115,7 +12119,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Eilutėje yra netinkama sintaksė.\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Išeina iš registro tvarkytuvės"
 
 #: regedit.rc:190
@@ -12131,7 +12137,9 @@ msgid "Shows or hides the status bar"
 msgstr "Parodo arba paslepia būsenos juostą"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "Pakeičia polangių skirtuko poziciją tarp polangių"
 
 #: regedit.rc:194
@@ -12175,8 +12183,10 @@ msgid "Adds a new binary value"
 msgstr "Prideda naują dvejetainę reikšmę"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Prideda naują dvigubojo žodžio reikšmę"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Prideda naują dvejetainę reikšmę"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12189,6 +12199,12 @@ msgstr "Eksportuoja visą ar dalį registro į tekstinį failą"
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Atspausdina visą ar dalį registro"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Registro tvarkytuvė"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12241,7 +12257,9 @@ msgid "Adds a new multi-string value"
 msgstr "Prideda naują kelių eilučių reikšmę"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "Eksportuoja pasirinktą registro šaką į tekstinį failą"
 
 #: regedit.rc:178

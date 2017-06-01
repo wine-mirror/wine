@@ -8025,7 +8025,7 @@ msgstr "Re&talla"
 msgid "Create &Link"
 msgstr "Crea en&llaç"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "Canvia el &nom"
 
@@ -11831,7 +11831,7 @@ msgstr "Valor de cadena &múltiple"
 msgid "&Expandable String Value"
 msgstr "Valor de cadena &expansible"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "Canvia el &nom\tF2"
 
@@ -11971,8 +11971,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Conté ordres per a accedir a les claus freqüentment utilitzades"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 "Conté ordres per a mostrar ajuda i informació quant a l'editor de registre"
 
@@ -12234,7 +12238,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: No s'ha reconegut la línia '%1'.\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Tanca l'editor de registre"
 
 #: regedit.rc:190
@@ -12250,7 +12256,9 @@ msgid "Shows or hides the status bar"
 msgstr "Mostra o amaga la barra d'estat"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "Canvia la posició de la divisió entre dos panells"
 
 #: regedit.rc:194
@@ -12294,8 +12302,10 @@ msgid "Adds a new binary value"
 msgstr "Afegeix un valor binari nou"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Afegeix un valor de paraula doble nou"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Afegeix un valor binari nou"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12308,6 +12318,12 @@ msgstr "Exporta tot o part del registre a un fitxer de text"
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Imprimeix tot o part del registre"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Editor de Registre"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12370,7 +12386,9 @@ msgid "Adds a new multi-string value"
 msgstr "Afegeix un valor de cadena múltiple nou"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "Exporta la branca seleccionada del registre a un fitxer de text"
 
 #: regedit.rc:178

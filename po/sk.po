@@ -8033,7 +8033,7 @@ msgstr ""
 msgid "Create &Link"
 msgstr ""
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr ""
 
@@ -11455,7 +11455,7 @@ msgstr "&Viac reťazcová hodnota"
 msgid "&Expandable String Value"
 msgstr ""
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr ""
 
@@ -11594,7 +11594,7 @@ msgstr ""
 
 #: regedit.rc:165
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 
 #: regedit.rc:166
@@ -11837,7 +11837,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "Nebol špecifikovaný žiadny príkaz."
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Ukončí editor registrov"
 
 #: regedit.rc:190
@@ -11853,7 +11855,7 @@ msgid "Shows or hides the status bar"
 msgstr "Ukáže alebo schová stavový riadok"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr ""
 
 #: regedit.rc:194
@@ -11897,8 +11899,10 @@ msgid "Adds a new binary value"
 msgstr "Pridá novú binárnu hodnotu"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Pridá novú dvojslovnú hodnotu"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Pridá novú binárnu hodnotu"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -11911,6 +11915,12 @@ msgstr "Exportovať všetky alebo časť registrov do textového súboru"
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Vytlačiť všetky alebo časť registrov"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Editor registrov"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -11969,8 +11979,10 @@ msgid "Adds a new multi-string value"
 msgstr ""
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
-msgstr ""
+#, fuzzy
+#| msgid "Exports all or part of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
+msgstr "Exportovať všetky alebo časť registrov do textového súboru"
 
 #: regedit.rc:178
 #, fuzzy

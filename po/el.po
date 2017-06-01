@@ -8008,7 +8008,7 @@ msgstr ""
 msgid "Create &Link"
 msgstr ""
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr ""
 
@@ -11379,7 +11379,7 @@ msgstr ""
 msgid "&Expandable String Value"
 msgstr ""
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr ""
 
@@ -11523,7 +11523,7 @@ msgstr ""
 
 #: regedit.rc:165
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 
 #: regedit.rc:166
@@ -11733,7 +11733,7 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr ""
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr ""
 
 #: regedit.rc:190
@@ -11750,7 +11750,7 @@ msgid "Shows or hides the status bar"
 msgstr ""
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr ""
 
 #: regedit.rc:194
@@ -11795,7 +11795,7 @@ msgid "Adds a new binary value"
 msgstr ""
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
+msgid "Adds a new 32-bit value"
 msgstr ""
 
 #: regedit.rc:179
@@ -11808,6 +11808,10 @@ msgstr ""
 
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
+msgstr ""
+
+#: regedit.rc:183
+msgid "Opens Registry Editor Help"
 msgstr ""
 
 #: regedit.rc:184
@@ -11859,7 +11863,7 @@ msgid "Adds a new multi-string value"
 msgstr ""
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr ""
 
 #: regedit.rc:178

@@ -8145,7 +8145,7 @@ msgstr "&Изрежи"
 msgid "Create &Link"
 msgstr "Създай &връзка"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "&Преименувай"
 
@@ -11594,7 +11594,7 @@ msgstr ""
 msgid "&Expandable String Value"
 msgstr "&Текстова стойност"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "Преи&менувай\tF2"
 
@@ -11735,8 +11735,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Съдържа команди за достъп до често използвани ключове"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr "Съдържа команди за извикване на помощ за редактора на регистъра"
 
 #: regedit.rc:166
@@ -11965,7 +11969,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr ""
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Излиза от редактора на системния регистър"
 
 #: regedit.rc:190
@@ -11981,7 +11987,9 @@ msgid "Shows or hides the status bar"
 msgstr "Показва или скрива лентата на състоянието"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr ""
 "Променя местоположението на разделителя между двете половини на редактора"
 
@@ -12026,8 +12034,10 @@ msgid "Adds a new binary value"
 msgstr "Добавя нова двоична стойност"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Добавя нова DWORD стойност"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Добавя нова двоична стойност"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12042,6 +12052,12 @@ msgstr ""
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Разпечатва целия или част от системния регистър"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Редактор на системния регистър"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12104,7 +12120,7 @@ msgstr "Добавя нова стойност от тип символен ни
 
 #: regedit.rc:200
 #, fuzzy
-msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr ""
 "Записва цялото или част от съдържанието на системния регистър във текстов "
 "файл"

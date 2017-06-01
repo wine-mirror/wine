@@ -7991,7 +7991,7 @@ msgstr "切り取り(&U)"
 msgid "Create &Link"
 msgstr "ショートカットの作成(&L)"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "名前の変更(&R)"
 
@@ -11718,7 +11718,7 @@ msgstr "複数文字列値(&M)"
 msgid "&Expandable String Value"
 msgstr "展開可能な文字列値(&E)"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "名前の変更(&R)\tF2"
 
@@ -11858,8 +11858,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "よく使うキーにアクセスするコマンド"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr "レジストリ エディタについてのヘルプや情報を表示するコマンド"
 
 #: regedit.rc:166
@@ -12117,7 +12121,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: '%1' は認識できない行です。\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "レジストリ エディタを終了"
 
 #: regedit.rc:190
@@ -12133,7 +12139,9 @@ msgid "Shows or hides the status bar"
 msgstr "ステータス バーを表示・隠す"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "ペイン間のしきりの位置を変更"
 
 #: regedit.rc:194
@@ -12177,8 +12185,10 @@ msgid "Adds a new binary value"
 msgstr "新しいバイナリ値を追加"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "新しい DWORD 値を追加"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "新しいバイナリ値を追加"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12191,6 +12201,12 @@ msgstr "レジストリの一部または全部をテキスト ファイルに�
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "レジストリの一部または全部を印刷"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "レジストリ エディタ"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12253,7 +12269,9 @@ msgid "Adds a new multi-string value"
 msgstr "新しい複数文字列値を追加"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "選択したレジストリ キー以下をテキスト ファイルに出力"
 
 #: regedit.rc:178

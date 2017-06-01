@@ -7913,7 +7913,7 @@ msgstr "Enmeti"
 msgid "Create &Link"
 msgstr "Krei &ligilon"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "Alinomi"
 
@@ -11286,7 +11286,7 @@ msgstr "&Plurĉena valoro"
 msgid "&Expandable String Value"
 msgstr "&Etendebla ĉena valora"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "&Alinomi\tF2"
 
@@ -11423,8 +11423,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Enhavas komandojn por atingi ofte uzatajn ŝlosilojn"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 "Enhavas komandojn por elmontri helpon kaj informojn pri registreja redaktilo"
 
@@ -11652,7 +11656,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr ""
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Eliras la registrejan redaktilon"
 
 #: regedit.rc:190
@@ -11668,7 +11674,9 @@ msgid "Shows or hides the status bar"
 msgstr "Montras aŭ kaŝas la statan linion"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "Ŝanĝi loko de dividilo inter du kadroj"
 
 #: regedit.rc:194
@@ -11712,8 +11720,10 @@ msgid "Adds a new binary value"
 msgstr ""
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr ""
+#, fuzzy
+#| msgid "Adds a new multi-string value"
+msgid "Adds a new 32-bit value"
+msgstr "Aldonis novan ĉenan valoron"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -11726,6 +11736,12 @@ msgstr ""
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Eligas ĉiujn aŭ parton el la tuta registrejo"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Registreja Redaktilo"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -11786,7 +11802,9 @@ msgid "Adds a new multi-string value"
 msgstr "Aldonis novan ĉenan valoron"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "Eksportas elektitan branĉon de la registrejo al tekstodosiero"
 
 #: regedit.rc:178

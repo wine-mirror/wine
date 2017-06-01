@@ -8021,7 +8021,7 @@ msgstr "Wy&tnij"
 msgid "Create &Link"
 msgstr "Utwórz &skrót"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "Z&mień nazwę"
 
@@ -11774,7 +11774,7 @@ msgstr "&Dana wielotekstowa (MULTISZ)"
 msgid "&Expandable String Value"
 msgstr "Wartość ciągu &rozwijalnego"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "Z&mień nazwę\tF2"
 
@@ -11914,8 +11914,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Zawiera polecenia dla dostępu do często używanych klawiszy"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr "Zawiera polecenia wyświetlające informacje o programie"
 
 #: regedit.rc:166
@@ -12163,7 +12167,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Nie rozpoznano linii '%1'.\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Kończy działanie edytora rejestru"
 
 #: regedit.rc:190
@@ -12179,7 +12185,9 @@ msgid "Shows or hides the status bar"
 msgstr "Pokazuje lub ukrywa pasek stanu"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "Zmienia pozycję podziału pomiędzy dwoma okienkami"
 
 #: regedit.rc:194
@@ -12224,8 +12232,10 @@ msgid "Adds a new binary value"
 msgstr "Dodaje nową wartość binarną"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Dodaje nową wartość DWORD"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Dodaje nową wartość binarną"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12238,6 +12248,12 @@ msgstr "Eksportuje część lub całość rejestru do pliku tekstowego"
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Drukuje całość lub część rejestru"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Edytor rejestru"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12290,7 +12306,9 @@ msgid "Adds a new multi-string value"
 msgstr "Dodaje nową wartość ciągu rozwijalnego"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "Eksportuje zaznaczoną gałąź rejestru do pliku tekstowego"
 
 #: regedit.rc:178

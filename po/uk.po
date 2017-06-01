@@ -8084,7 +8084,7 @@ msgstr "Ви&різати"
 msgid "Create &Link"
 msgstr "&Створити Посилання"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "Пере&йменувати"
 
@@ -11818,7 +11818,7 @@ msgstr "&Багаторядкове значення"
 msgid "&Expandable String Value"
 msgstr "&Розширюване Рядкове значення"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "&Перейменувати\tF2"
 
@@ -11955,8 +11955,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Містить команди для доступу до ключів, що часто використовуються"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 "Містить команди для відображення довідки та інформації про редактор реєстру"
 
@@ -12198,7 +12202,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Рядок має невірний синтаксис.\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Виходить з редактора реєстру"
 
 #: regedit.rc:190
@@ -12214,7 +12220,9 @@ msgid "Shows or hides the status bar"
 msgstr "Відображує або ховає рядок стану"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "Змінити позицію роздільника між двома панелями"
 
 #: regedit.rc:194
@@ -12258,8 +12266,10 @@ msgid "Adds a new binary value"
 msgstr "Додає нове двійкове значення"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Додає нове DWORD значення"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Додає нове двійкове значення"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12272,6 +12282,12 @@ msgstr "Експортує весь реєстр або його частину 
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Друкує весь реєстр або його частину"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Редактор реєстру"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12324,7 +12340,9 @@ msgid "Adds a new multi-string value"
 msgstr "Додає нове багаторядкове значення"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "Експортує вибрану гілку реєстру до текстового файлу"
 
 #: regedit.rc:178

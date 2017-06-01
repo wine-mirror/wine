@@ -8042,7 +8042,7 @@ msgstr "Dec&upează"
 msgid "Create &Link"
 msgstr "Creează &link"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "&Redenumește"
 
@@ -11743,7 +11743,7 @@ msgstr "Valoare șir &multiplu"
 msgid "&Expandable String Value"
 msgstr "&Valoare șir expandabil"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "&Redenumește\tF2"
 
@@ -11883,8 +11883,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Conține comenzi pentru accesarea cheilor utilizate frecvent"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 "Conține comenzi pentru afișare ajutor și informații despre editorul de "
 "registru"
@@ -12119,7 +12123,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Linia „%1” nu a fost recunoscută.\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Închide editorul de registru"
 
 #: regedit.rc:190
@@ -12135,7 +12141,9 @@ msgid "Shows or hides the status bar"
 msgstr "Afișează sau ascunde bara de stare"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "Schimbă poziția separatorului între două panouri"
 
 #: regedit.rc:194
@@ -12179,8 +12187,10 @@ msgid "Adds a new binary value"
 msgstr "Adaugă o nouă valoare de binar"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Adaugă o nouă valoare de DWORD"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Adaugă o nouă valoare de binar"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12193,6 +12203,12 @@ msgstr "Exportă întregul registru sau o parte ca fișier text"
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Imprimă întregul registru sau o parte"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Editor registru"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12255,7 +12271,9 @@ msgid "Adds a new multi-string value"
 msgstr "Adaugă o nouă valoare de șir multiplu"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "Exportă ramura de registru selectată ca fișier text"
 
 #: regedit.rc:178

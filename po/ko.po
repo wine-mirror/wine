@@ -8056,7 +8056,7 @@ msgstr "잘라내기(&U)"
 msgid "Create &Link"
 msgstr "링크 만들기(&L)"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "이름 바꾸기(&R)"
 
@@ -12004,7 +12004,7 @@ msgstr "다중 문자열 값(&M)"
 msgid "&Expandable String Value"
 msgstr "확장가능한 문자열 값(&E)"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "이름 바꾸기(&R)\tF2"
 
@@ -12141,8 +12141,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "자주 사용하는 키 접근하는 명령 포함"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr "레지스트리 편집기 정보와 도움말 보여주는 명령 포함"
 
 #: regedit.rc:166
@@ -12391,7 +12395,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "어떤 명령도 정의되지 않았습니다."
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "레지스트리 편집기 나가기"
 
 #: regedit.rc:190
@@ -12407,7 +12413,9 @@ msgid "Shows or hides the status bar"
 msgstr "상태바 보여주거나 숨기기"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "두 틀을 나누는 위치 바꾸기"
 
 #: regedit.rc:194
@@ -12451,8 +12459,10 @@ msgid "Adds a new binary value"
 msgstr "새 바이너리 값 더하기"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "새 더블 워드 값 더하기"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "새 바이너리 값 더하기"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12465,6 +12475,12 @@ msgstr "레지스트리의 전부나 일부분을 텍스트 파일로 내보내�
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "레지스트리 전부나 부분 인쇄하기"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "레지스트리 편집기"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12527,7 +12543,9 @@ msgid "Adds a new multi-string value"
 msgstr "새 다중 문자열 값 더하기"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
 
 #: regedit.rc:178

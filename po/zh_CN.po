@@ -7933,7 +7933,7 @@ msgstr "剪切(&U)"
 msgid "Create &Link"
 msgstr "创建快捷方式(&L)"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "重命名(&R)"
 
@@ -11519,7 +11519,7 @@ msgstr "多字符串值(&M)"
 msgid "&Expandable String Value"
 msgstr "可展开的字符串值(&E)"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "改名(&R)\tF2"
 
@@ -11659,8 +11659,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "用于记录常用键的全部命令"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr "注册表编辑器的帮助及关于信息"
 
 #: regedit.rc:166
@@ -11895,7 +11899,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: 该行包含无效字符。\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "退出注册表编辑器"
 
 #: regedit.rc:190
@@ -11911,7 +11917,9 @@ msgid "Shows or hides the status bar"
 msgstr "显示或隐藏状态栏"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "改变两个窗格之间的分隔线位置"
 
 #: regedit.rc:194
@@ -11955,8 +11963,10 @@ msgid "Adds a new binary value"
 msgstr "添加新二进制值"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "添加新整数值"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "添加新二进制值"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -11969,6 +11979,12 @@ msgstr "将注册表导出为文本文件"
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "打印注册表的全部或部分"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "注册表编辑器"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12021,7 +12037,9 @@ msgid "Adds a new multi-string value"
 msgstr "添加新多字符串值"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "把选定的注册表分支导出为文本文件"
 
 #: regedit.rc:178

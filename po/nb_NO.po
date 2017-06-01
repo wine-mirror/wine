@@ -8004,7 +8004,7 @@ msgstr "Klipp &ut"
 msgid "Create &Link"
 msgstr "&Opprett snarvei"
 
-#: shell32.rc:106 regedit.rc:139
+#: shell32.rc:106
 msgid "&Rename"
 msgstr "&Gi nytt navn"
 
@@ -11725,7 +11725,7 @@ msgstr "&Flerstrengverdi"
 msgid "&Expandable String Value"
 msgstr "Utvidbar str&engverdi"
 
-#: regedit.rc:59 regedit.rc:112
+#: regedit.rc:59 regedit.rc:112 regedit.rc:139
 msgid "&Rename\tF2"
 msgstr "&Gi nytt navn\tF2"
 
@@ -11862,8 +11862,12 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Inneholder kommandoer for å få tilgang til nøkler som brukes ofte"
 
 #: regedit.rc:165
+#, fuzzy
+#| msgid ""
+#| "Contains commands for displaying help and information about registry "
+#| "editor"
 msgid ""
-"Contains commands for displaying help and information about registry editor"
+"Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 "Inneholder kommandoer for å vise hjelp og informasjon om Registerredigering"
 
@@ -12109,7 +12113,9 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Linjen inneholder ugyldig syntaks.\n"
 
 #: regedit.rc:189
-msgid "Quits the registry editor"
+#, fuzzy
+#| msgid "Quits the registry editor"
+msgid "Quits the Registry Editor"
 msgstr "Avslutter Registerredigering"
 
 #: regedit.rc:190
@@ -12125,7 +12131,9 @@ msgid "Shows or hides the status bar"
 msgstr "Viser eller skjuler statuslinjen"
 
 #: regedit.rc:193
-msgid "Change position of split between two panes"
+#, fuzzy
+#| msgid "Change position of split between two panes"
+msgid "Changes the position of the split between two panes"
 msgstr "Endrer posisjonen til delingslinjen mellom to ruter"
 
 #: regedit.rc:194
@@ -12169,8 +12177,10 @@ msgid "Adds a new binary value"
 msgstr "Legger til en ny binærverdis"
 
 #: regedit.rc:176
-msgid "Adds a new double word value"
-msgstr "Legger til en ny dobbeltord-verdi"
+#, fuzzy
+#| msgid "Adds a new binary value"
+msgid "Adds a new 32-bit value"
+msgstr "Legger til en ny binærverdis"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12183,6 +12193,12 @@ msgstr "Eksporterer hele eller deler av registeret til en tekstfil"
 #: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Skriver ut hele eller deler av registeret"
+
+#: regedit.rc:183
+#, fuzzy
+#| msgid "Registry Editor"
+msgid "Opens Registry Editor Help"
+msgstr "Registerredigering"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12235,7 +12251,9 @@ msgid "Adds a new multi-string value"
 msgstr "Legger til en ny flerstrengverdi"
 
 #: regedit.rc:200
-msgid "Exports selected branch of the registry to a text file"
+#, fuzzy
+#| msgid "Exports selected branch of the registry to a text file"
+msgid "Exports the selected branch of the registry to a text file"
 msgstr "Eksporterer den valgte greinen av registeret til en tekstfil"
 
 #: regedit.rc:178
