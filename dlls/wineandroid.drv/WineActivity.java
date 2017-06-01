@@ -70,7 +70,6 @@ public class WineActivity extends Activity
             Locale.getDefault().getCountry() + ".UTF-8";
 
         copyAssetFiles();
-        runOnUiThread( new Runnable() { public void run() { progress_dialog.dismiss(); }});
 
         HashMap<String,String> env = new HashMap<String,String>();
         env.put( "WINELOADER", loader.toString() );
@@ -95,6 +94,8 @@ public class WineActivity extends Activity
             Log.i( LOGTAG, "logging to " + log.toString() );
             log.delete();
         }
+
+        createProgressDialog( 0, "Setting up the Windows environment..." );
 
         System.load( libdir.toString() + "/libwine.so" );
         prefix.mkdirs();

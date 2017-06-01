@@ -282,6 +282,28 @@ static int process_events( DWORD mask )
 
 
 /***********************************************************************
+ *           wait_events
+ */
+static int wait_events( int timeout )
+{
+    assert( GetCurrentThreadId() == desktop_tid );
+
+    for (;;)
+    {
+        struct pollfd pollfd;
+        int ret;
+
+        pollfd.fd = event_pipe[0];
+        pollfd.events = POLLIN | POLLHUP;
+        ret = poll( &pollfd, 1, timeout );
+        if (ret == -1 && errno == EINTR) continue;
+        if (ret && (pollfd.revents & (POLLHUP | POLLERR))) ret = -1;
+        return ret;
+    }
+}
+
+
+/***********************************************************************
  *           ANDROID_MsgWaitForMultipleObjectsEx
  */
 DWORD CDECL ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
@@ -410,4 +432,23 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 
     TRACE( "win %p window %s client %s style %08x flags %08x\n",
            hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect), new_style, swp_flags );
+}
+
+
+/***********************************************************************
+ *           ANDROID_create_desktop
+ */
+BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
+{
+    /* wait until we receive the surface changed event */
+    while (!screen_width)
+    {
+        if (wait_events( 2000 ) != 1)
+        {
+            ERR( "wait timed out\n" );
+            break;
+        }
+        process_events( QS_ALLINPUT );
+    }
+    return TRUE;
 }
