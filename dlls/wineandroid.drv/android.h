@@ -48,6 +48,8 @@ DECL_FUNCPTR( __android_log_print );
  */
 
 extern void start_android_device(void) DECLSPEC_HIDDEN;
+extern void create_ioctl_window( HWND hwnd ) DECLSPEC_HIDDEN;
+extern void destroy_ioctl_window( HWND hwnd ) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************

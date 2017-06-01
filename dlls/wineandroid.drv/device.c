@@ -48,6 +48,38 @@ static HANDLE stop_event;
 static HANDLE thread;
 static JNIEnv *jni_env;
 
+#define ANDROIDCONTROLTYPE  ((ULONG)'A')
+#define ANDROID_IOCTL(n) CTL_CODE(ANDROIDCONTROLTYPE, n, METHOD_BUFFERED, FILE_READ_ACCESS)
+
+enum android_ioctl
+{
+    IOCTL_CREATE_WINDOW,
+    IOCTL_DESTROY_WINDOW,
+    NB_IOCTLS
+};
+
+struct ioctl_header
+{
+    int  hwnd;
+};
+
+struct ioctl_android_create_window
+{
+    struct ioctl_header hdr;
+    int                 parent;
+};
+
+struct ioctl_android_destroy_window
+{
+    struct ioctl_header hdr;
+};
+
+
+static inline DWORD current_client_id(void)
+{
+    return HandleToUlong( PsGetCurrentProcessId() );
+}
+
 #ifdef __i386__  /* the Java VM uses %fs for its own purposes, so we need to wrap the calls */
 static WORD orig_fs, java_fs;
 static inline void wrap_java_call(void)   { wine_set_fs( java_fs ); }
@@ -56,6 +88,31 @@ static inline void unwrap_java_call(void) { wine_set_fs( orig_fs ); }
 static inline void wrap_java_call(void) { }
 static inline void unwrap_java_call(void) { }
 #endif  /* __i386__ */
+
+
+static int status_to_android_error( NTSTATUS status )
+{
+    switch (status)
+    {
+    case STATUS_SUCCESS:                return 0;
+    case STATUS_NO_MEMORY:              return -ENOMEM;
+    case STATUS_NOT_SUPPORTED:          return -ENOSYS;
+    case STATUS_INVALID_PARAMETER:      return -EINVAL;
+    case STATUS_BUFFER_OVERFLOW:        return -EINVAL;
+    case STATUS_INVALID_HANDLE:         return -ENOENT;
+    case STATUS_ACCESS_DENIED:          return -EPERM;
+    case STATUS_NO_SUCH_DEVICE:         return -ENODEV;
+    case STATUS_DUPLICATE_NAME:         return -EEXIST;
+    case STATUS_PIPE_DISCONNECTED:      return -EPIPE;
+    case STATUS_NO_MORE_FILES:          return -ENODATA;
+    case STATUS_IO_TIMEOUT:             return -ETIMEDOUT;
+    case STATUS_INVALID_DEVICE_REQUEST: return -EBADMSG;
+    case STATUS_DEVICE_NOT_READY:       return -EWOULDBLOCK;
+    default:
+        FIXME( "unmapped status %08x\n", status );
+        return -EINVAL;
+    }
+}
 
 static jobject load_java_method( jmethodID *method, const char *name, const char *args )
 {
@@ -90,13 +147,75 @@ static void create_desktop_window( HWND hwnd )
     unwrap_java_call();
 }
 
+static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    static jmethodID method;
+    jobject object;
+    struct ioctl_android_create_window *res = data;
+    DWORD pid = current_client_id();
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
+
+    if (!(object = load_java_method( &method, "createWindow", "(III)V" ))) return STATUS_NOT_SUPPORTED;
+
+    wrap_java_call();
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent, pid );
+    unwrap_java_call();
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    static jmethodID method;
+    jobject object;
+    struct ioctl_android_destroy_window *res = data;
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    TRACE( "hwnd %08x\n", res->hdr.hwnd );
+
+    if (!(object = load_java_method( &method, "destroyWindow", "(I)V" ))) return STATUS_NOT_SUPPORTED;
+
+    wrap_java_call();
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd );
+    unwrap_java_call();
+    return STATUS_SUCCESS;
+}
+
+typedef NTSTATUS (*ioctl_func)( void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
+static const ioctl_func ioctl_funcs[] =
+{
+    createWindow_ioctl,         /* IOCTL_CREATE_WINDOW */
+    destroyWindow_ioctl,        /* IOCTL_DESTROY_WINDOW */
+};
+
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    DWORD code = (irpsp->Parameters.DeviceIoControl.IoControlCode - ANDROID_IOCTL(0)) >> 2;
 
-    FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
-    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    if (code < NB_IOCTLS)
+    {
+        struct ioctl_header *header = irp->AssociatedIrp.SystemBuffer;
+        DWORD in_size = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+        ioctl_func func = ioctl_funcs[code];
 
+        if (in_size >= sizeof(*header))
+        {
+            irp->IoStatus.Information = 0;
+            irp->IoStatus.u.Status = func( irp->AssociatedIrp.SystemBuffer, in_size,
+                                           irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                           &irp->IoStatus.Information );
+        }
+        else irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+    }
+    else
+    {
+        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    }
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return STATUS_SUCCESS;
 }
@@ -169,4 +288,52 @@ void start_android_device(void)
     handles[1] = thread = CreateThread( NULL, 0, device_thread, handles[0], 0, NULL );
     WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
     CloseHandle( handles[0] );
+}
+
+
+/* Client-side ioctl support */
+
+
+static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void *out, DWORD *out_size )
+{
+    static const WCHAR deviceW[] = {'\\','\\','.','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
+    static HANDLE device;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    if (!device)
+    {
+        HANDLE file = CreateFileW( deviceW, GENERIC_READ,
+                                   FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+        if (file == INVALID_HANDLE_VALUE) return -ENOENT;
+        if (InterlockedCompareExchangePointer( &device, file, NULL )) CloseHandle( file );
+    }
+
+    status = NtDeviceIoControlFile( device, NULL, NULL, NULL, &iosb, ANDROID_IOCTL(code),
+                                    in, in_size, out, out_size ? *out_size : 0 );
+    if (status == STATUS_FILE_DELETED)
+    {
+        WARN( "parent process is gone\n" );
+        ExitProcess( 1 );
+    }
+    if (out_size) *out_size = iosb.Information;
+    return status_to_android_error( status );
+}
+
+void create_ioctl_window( HWND hwnd )
+{
+    struct ioctl_android_create_window req;
+    HWND parent = GetAncestor( hwnd, GA_PARENT );
+
+    req.hdr.hwnd = HandleToLong( hwnd );
+    req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
+    android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
+}
+
+void destroy_ioctl_window( HWND hwnd )
+{
+    struct ioctl_android_destroy_window req;
+
+    req.hdr.hwnd = HandleToLong( hwnd );
+    android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
 }

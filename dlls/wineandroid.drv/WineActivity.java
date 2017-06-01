@@ -269,6 +269,35 @@ public class WineActivity extends Activity
         }
     }
 
+    //
+    // Generic Wine window class
+    //
+
+    private HashMap<Integer,WineWindow> win_map = new HashMap<Integer,WineWindow>();
+
+    protected class WineWindow extends Object
+    {
+        protected int hwnd;
+
+        public WineWindow( int w, WineWindow parent )
+        {
+            Log.i( LOGTAG, String.format( "create hwnd %08x", w ));
+            hwnd = w;
+            win_map.put( w, this );
+        }
+
+        public void destroy()
+        {
+            Log.i( LOGTAG, String.format( "destroy hwnd %08x", hwnd ));
+            win_map.remove( this );
+        }
+
+        public int get_hwnd()
+        {
+            return hwnd;
+        }
+    }
+
     // The top-level desktop view group
 
     protected class TopView extends ViewGroup
@@ -297,6 +326,11 @@ public class WineActivity extends Activity
 
     protected TopView top_view;
 
+    protected WineWindow get_window( int hwnd )
+    {
+        return win_map.get( hwnd );
+    }
+
     // Entry points for the device driver
 
     public void create_desktop_window( int hwnd )
@@ -307,8 +341,30 @@ public class WineActivity extends Activity
         progress_dialog.dismiss();
     }
 
+    public void create_window( int hwnd, int parent, int pid )
+    {
+        WineWindow win = get_window( hwnd );
+        if (win == null) win = new WineWindow( hwnd, get_window( parent ));
+    }
+
+    public void destroy_window( int hwnd )
+    {
+        WineWindow win = get_window( hwnd );
+        if (win != null) win.destroy();
+    }
+
     public void createDesktopWindow( final int hwnd )
     {
         runOnUiThread( new Runnable() { public void run() { create_desktop_window( hwnd ); }} );
+    }
+
+    public void createWindow( final int hwnd, final int parent, final int pid )
+    {
+        runOnUiThread( new Runnable() { public void run() { create_window( hwnd, parent, pid ); }} );
+    }
+
+    public void destroyWindow( final int hwnd )
+    {
+        runOnUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
     }
 }

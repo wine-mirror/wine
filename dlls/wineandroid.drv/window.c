@@ -88,6 +88,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
         data->hwnd = hwnd;
+        create_ioctl_window( hwnd );
         EnterCriticalSection( &win_data_section );
         win_data_context[context_idx(hwnd)] = data;
     }
@@ -102,6 +103,7 @@ static void free_win_data( struct android_win_data *data )
 {
     win_data_context[context_idx( data->hwnd )] = NULL;
     LeaveCriticalSection( &win_data_section );
+    destroy_ioctl_window( data->hwnd );
     HeapFree( GetProcessHeap(), 0, data );
 }
 
@@ -328,8 +330,13 @@ BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
 
     if (hwnd == GetDesktopWindow())
     {
+        struct android_win_data *data;
+
         init_event_queue();
         start_android_device();
+
+        if (!(data = alloc_win_data( hwnd ))) return FALSE;
+        release_win_data( data );
     }
     return TRUE;
 }
