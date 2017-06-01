@@ -101,7 +101,12 @@ static ULONGLONG monotonic_counter(void)
 {
     struct timeval now;
 
-#ifdef HAVE_CLOCK_GETTIME
+#ifdef __APPLE__
+    static mach_timebase_info_data_t timebase;
+
+    if (!timebase.denom) mach_timebase_info( &timebase );
+    return mach_absolute_time() * timebase.numer / timebase.denom / 100;
+#elif defined(HAVE_CLOCK_GETTIME)
     struct timespec ts;
 #ifdef CLOCK_MONOTONIC_RAW
     if (!clock_gettime( CLOCK_MONOTONIC_RAW, &ts ))
@@ -109,11 +114,6 @@ static ULONGLONG monotonic_counter(void)
 #endif
     if (!clock_gettime( CLOCK_MONOTONIC, &ts ))
         return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
-#elif defined(__APPLE__)
-    static mach_timebase_info_data_t timebase;
-
-    if (!timebase.denom) mach_timebase_info( &timebase );
-    return mach_absolute_time() * timebase.numer / timebase.denom / 100;
 #endif
 
     gettimeofday( &now, 0 );
