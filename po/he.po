@@ -72,8 +72,8 @@ msgstr "פרטי תמיכה"
 #: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 user32.rc:83 user32.rc:98
 #: wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117
 #: oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124 progman.rc:142
-#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:294
-#: regedit.rc:305 regedit.rc:318 regedit.rc:334 regedit.rc:347 regedit.rc:360
+#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:295
+#: regedit.rc:306 regedit.rc:319 regedit.rc:335 regedit.rc:348 regedit.rc:361
 #: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
 #: winemine.rc:71 winemine.rc:81 winemine.rc:95 wordpad.rc:215 wordpad.rc:226
@@ -154,8 +154,8 @@ msgstr "ה&תקנה"
 #: shell32.rc:342 shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52
 #: wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175
 #: progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181
-#: progman.rc:200 progman.rc:217 regedit.rc:295 regedit.rc:306 regedit.rc:319
-#: regedit.rc:335 regedit.rc:348 regedit.rc:361 taskmgr.rc:443 taskmgr.rc:518
+#: progman.rc:200 progman.rc:217 regedit.rc:296 regedit.rc:307 regedit.rc:320
+#: regedit.rc:336 regedit.rc:349 regedit.rc:362 taskmgr.rc:443 taskmgr.rc:518
 #: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
 #: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:96
 #: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
@@ -232,7 +232,7 @@ msgid "Programs (*.exe)"
 msgstr "תכניות (‎*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:226 winedbg.rc:42 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
@@ -406,7 +406,7 @@ msgstr "&לא"
 msgid "&Retry"
 msgstr "&ניסיון חוזר"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:284 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:285 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "סגירה"
@@ -465,7 +465,7 @@ msgstr "מדפסת:"
 msgid "Print range"
 msgstr "טווח ההדפסה"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:266
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:267
 msgid "&All"
 msgstr "ה&כול"
 
@@ -637,7 +637,7 @@ msgstr "הו&ספה לצבעים המותאמים אישית"
 msgid "&Define Custom Colors >>"
 msgstr "הגדרת  צבעים &מותאמים אישית >>"
 
-#: comdlg32.rc:316 regedit.rc:273 regedit.rc:283
+#: comdlg32.rc:316 regedit.rc:274 regedit.rc:284
 msgid "Find"
 msgstr "חיפוש"
 
@@ -7824,7 +7824,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "הוספת תוכן לוח הגזירים למסמך שלך."
 
-#: oledlg.rc:48 regedit.rc:428
+#: oledlg.rc:48 regedit.rc:429
 msgid "Unknown Type"
 msgstr "סוג לא ידוע"
 
@@ -8404,7 +8404,7 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "שולחן העבודה"
 
-#: shell32.rc:157 regedit.rc:236
+#: shell32.rc:157 regedit.rc:237
 msgid "My Computer"
 msgstr "המחשב שלי"
 
@@ -8758,7 +8758,7 @@ msgstr "הרישיון של Wine"
 msgid "Trash"
 msgstr "אשפה"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:205 winecfg.rc:87 winefile.rc:97
 msgid "Error"
 msgstr "שגיאה"
 
@@ -10897,7 +10897,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:370 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:371 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10917,7 +10917,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:371 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:372 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr ""
@@ -11653,11 +11653,11 @@ msgstr ""
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
-#: reg.rc:53 regedit.rc:237
+#: reg.rc:53 regedit.rc:238
 msgid "(Default)"
 msgstr "(בררת המחדל)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54 regedit.rc:211
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -11715,7 +11715,7 @@ msgstr ""
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr ""
 
-#: reg.rc:65 regedit.rc:238
+#: reg.rc:65 regedit.rc:239
 msgid "(value not set)"
 msgstr "(לא הוגדר ערך)"
 
@@ -11787,7 +11787,7 @@ msgstr "ה&סרת מועדף..."
 msgid "&About Registry Editor"
 msgstr "על &אודות עורך רישום המערכת"
 
-#: regedit.rc:91 regedit.rc:98 regedit.rc:230
+#: regedit.rc:91 regedit.rc:98 regedit.rc:231
 msgid "Expand"
 msgstr ""
 
@@ -11795,83 +11795,83 @@ msgstr ""
 msgid "Modify Binary Data..."
 msgstr "שינוי נתונים בינריים..."
 
-#: regedit.rc:265
+#: regedit.rc:266
 msgid "Export registry"
 msgstr "יצוא רישומי מערכת"
 
-#: regedit.rc:267
+#: regedit.rc:268
 msgid "S&elected branch:"
 msgstr "ה&ענפים הנבחרים:"
 
-#: regedit.rc:276
+#: regedit.rc:277
 msgid "Find:"
 msgstr "חיפוש:"
 
-#: regedit.rc:278
+#: regedit.rc:279
 msgid "Find in:"
 msgstr "חיפוש תחת:"
 
-#: regedit.rc:279
+#: regedit.rc:280
 msgid "Keys"
 msgstr "מפתחות"
 
-#: regedit.rc:280
+#: regedit.rc:281
 msgid "Value names"
 msgstr "שמות ערכים"
 
-#: regedit.rc:281
+#: regedit.rc:282
 msgid "Value content"
 msgstr "תוכן הערכים"
 
-#: regedit.rc:282
+#: regedit.rc:283
 msgid "Whole string only"
 msgstr "מחרוזות שלמות בלבד"
 
-#: regedit.rc:289
+#: regedit.rc:290
 msgid "Add Favorite"
 msgstr "הוספה כמועדף"
 
-#: regedit.rc:292 regedit.rc:303
+#: regedit.rc:293 regedit.rc:304
 msgid "Name:"
 msgstr "שם:"
 
-#: regedit.rc:300
+#: regedit.rc:301
 msgid "Remove Favorite"
 msgstr "הסרת מועדף"
 
-#: regedit.rc:311
+#: regedit.rc:312
 msgid "Edit String"
 msgstr "עריכת מחרוזת"
 
-#: regedit.rc:314 regedit.rc:327 regedit.rc:343 regedit.rc:356
+#: regedit.rc:315 regedit.rc:328 regedit.rc:344 regedit.rc:357
 msgid "Value name:"
 msgstr "שם הערך:"
 
-#: regedit.rc:316 regedit.rc:329 regedit.rc:345 regedit.rc:358
+#: regedit.rc:317 regedit.rc:330 regedit.rc:346 regedit.rc:359
 msgid "Value data:"
 msgstr "נתוני הערך:"
 
-#: regedit.rc:324
+#: regedit.rc:325
 msgid "Edit DWORD"
 msgstr "עריכת DWORD"
 
-#: regedit.rc:331
+#: regedit.rc:332
 msgid "Base"
 msgstr "בסיס"
 
-#: regedit.rc:332
+#: regedit.rc:333
 msgid "Hexadecimal"
 msgstr "הקסדצימלי"
 
-#: regedit.rc:333
+#: regedit.rc:334
 msgid "Decimal"
 msgstr "עשרוני"
 
-#: regedit.rc:340
+#: regedit.rc:341
 msgid "Edit Binary"
 msgstr "עריכת נתון בינרי"
 
-#: regedit.rc:353
+#: regedit.rc:354
 msgid "Edit Multi-String"
 msgstr "עריכת מרובה מחרוזות"
 
@@ -11908,84 +11908,84 @@ msgstr "נתון"
 msgid "Registry Editor"
 msgstr "עורך רישום המערכת"
 
-#: regedit.rc:221
+#: regedit.rc:222
 msgid "Import Registry File"
 msgstr "יבוא קובץ רישום מערכת"
 
-#: regedit.rc:222
+#: regedit.rc:223
 msgid "Export Registry File"
 msgstr "יצוא קובץ רישום מערכת"
 
-#: regedit.rc:223
+#: regedit.rc:224
 msgid "Registry files (*.reg)"
 msgstr "קובצי רישום מערכת (‎*.reg)"
 
-#: regedit.rc:224
+#: regedit.rc:225
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "קובצי רישום מערכת של Win9x/NT4‏ (REGEDIT4)"
 
-#: regedit.rc:239
+#: regedit.rc:240
 msgid "(cannot display value)"
 msgstr "(לא ניתן להציג את הערך)"
 
-#: regedit.rc:240
+#: regedit.rc:241
 msgid "(unknown %d)"
 msgstr "(%d לא ידוע)"
 
-#: regedit.rc:245
+#: regedit.rc:246
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to modify the selected registry value."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:246
+#: regedit.rc:247
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry key."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:247
+#: regedit.rc:248
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry value."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:248
+#: regedit.rc:249
 msgid ""
 "Unable to rename the key '%1'.\n"
 "The specified key name already exists."
 msgstr ""
 
-#: regedit.rc:249
+#: regedit.rc:250
 msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
 
-#: regedit.rc:250
+#: regedit.rc:251
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to delete the selected registry key."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:251
+#: regedit.rc:252
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry key."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:252
+#: regedit.rc:253
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry value."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:253
+#: regedit.rc:254
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
 
-#: regedit.rc:254
+#: regedit.rc:255
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
@@ -11993,7 +11993,7 @@ msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
 "Error: The system was unable to find the specified registry key or value\n"
 
-#: regedit.rc:406
+#: regedit.rc:407
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12024,100 +12024,100 @@ msgid ""
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 msgstr ""
 
-#: regedit.rc:407
+#: regedit.rc:408
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr ""
 
-#: regedit.rc:408
+#: regedit.rc:409
 msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
-#: regedit.rc:409
+#: regedit.rc:410
 msgid "regedit: No filename was specified.\n"
 msgstr ""
 
-#: regedit.rc:410
+#: regedit.rc:411
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr ""
 
-#: regedit.rc:411
+#: regedit.rc:412
 msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
-#: regedit.rc:412
+#: regedit.rc:413
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:413
+#: regedit.rc:414
 #, fuzzy
 msgid "regedit: Unhandled action.\n"
 msgstr "אפשרות שגויה.\n"
 
-#: regedit.rc:414
+#: regedit.rc:415
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
-#: regedit.rc:415
+#: regedit.rc:416
 #, fuzzy
 #| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "Error: Invalid key name\n"
 
-#: regedit.rc:416
+#: regedit.rc:417
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
 
-#: regedit.rc:417
+#: regedit.rc:418
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: regedit.rc:418
+#: regedit.rc:419
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "Error: Command line not supported\n"
 
-#: regedit.rc:419
+#: regedit.rc:420
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:420
+#: regedit.rc:421
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr ""
 
-#: regedit.rc:421
+#: regedit.rc:422
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:422
+#: regedit.rc:423
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:423
+#: regedit.rc:424
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "Error: Command line not supported\n"
 
-#: regedit.rc:424
+#: regedit.rc:425
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
-#: regedit.rc:425
+#: regedit.rc:426
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr ""
 
-#: regedit.rc:426
+#: regedit.rc:427
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
@@ -12126,57 +12126,57 @@ msgid ""
 msgstr ""
 "Error: The system was unable to find the specified registry key or value\n"
 
-#: regedit.rc:427
+#: regedit.rc:428
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:429
+#: regedit.rc:430
 msgid "regedit: The line contains invalid syntax.\n"
 msgstr ""
 
-#: regedit.rc:188
+#: regedit.rc:189
 msgid "Quits the registry editor"
 msgstr "יציאה מעורך רישום המערכת"
 
-#: regedit.rc:189
+#: regedit.rc:190
 msgid "Adds keys to the favorites list"
 msgstr "הוספת מפתחות לרשימת המועדפים"
 
-#: regedit.rc:190
+#: regedit.rc:191
 msgid "Removes keys from the favorites list"
 msgstr "הסרת מפתחות מרשימת המועדפים"
 
-#: regedit.rc:191
+#: regedit.rc:192
 msgid "Shows or hides the status bar"
 msgstr "הצגה או הסתרה של שורת המצב"
 
-#: regedit.rc:192
+#: regedit.rc:193
 msgid "Change position of split between two panes"
 msgstr "שינוי מיקום הפיצול בין שתי החלוניות"
 
-#: regedit.rc:193
+#: regedit.rc:194
 msgid "Refreshes the window"
 msgstr "רענון החלון"
 
-#: regedit.rc:194
+#: regedit.rc:195
 msgid "Deletes the selection"
 msgstr "מחיקת הבחירה"
 
-#: regedit.rc:195
+#: regedit.rc:196
 msgid "Renames the selection"
 msgstr "שינוי שם הבחירה"
 
-#: regedit.rc:196
+#: regedit.rc:197
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "העתקת שם המפתח הנבחר ללוח הגזירים"
 
-#: regedit.rc:197
+#: regedit.rc:198
 msgid "Finds a text string in a key, value or data"
 msgstr "חיפוש מחרוזת טקסט בין מפתחות, ערכים ונתונים"
 
-#: regedit.rc:198
+#: regedit.rc:199
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "חיפוש המופע הבא של טקסט שצוין בחיפוש הקודם"
 
@@ -12184,112 +12184,118 @@ msgstr "חיפוש המופע הבא של טקסט שצוין בחיפוש הק�
 msgid "Modifies the value's data"
 msgstr "שינוי נתוני הערך"
 
-#: regedit.rc:172
+#: regedit.rc:173
 msgid "Adds a new key"
 msgstr "הוספת מפתח חדש"
 
-#: regedit.rc:173
+#: regedit.rc:174
 msgid "Adds a new string value"
 msgstr "הוספת ערך מחרוזת חדש"
 
-#: regedit.rc:174
+#: regedit.rc:175
 msgid "Adds a new binary value"
 msgstr "הוספת ערך בינרי חדש"
 
-#: regedit.rc:175
+#: regedit.rc:176
 msgid "Adds a new double word value"
 msgstr "הוספת ערך חדש בגודל שני word"
 
-#: regedit.rc:178
+#: regedit.rc:179
 msgid "Imports a text file into the registry"
 msgstr "יבוא קובץ טקסט לתוך רישום המערכת"
 
-#: regedit.rc:180
+#: regedit.rc:181
 msgid "Exports all or part of the registry to a text file"
 msgstr "יצוא כל רישום המערכת או רק חלק ממנו לקובץ טקסט"
 
-#: regedit.rc:181
+#: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "הדפסת כל רישום המערכת או רק חלק ממנו"
 
-#: regedit.rc:183
+#: regedit.rc:184
 msgid "Displays program information, version number and copyright"
 msgstr "הצגת פרטים על אודות התכנה, מספר הגרסה וזכויות יוצרים"
 
-#: regedit.rc:206
+#: regedit.rc:207
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry value '%1'."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:207
+#: regedit.rc:208
 #, fuzzy
 #| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "לא ניתן לערוך מפתחות מסוג זה (%u)"
 
-#: regedit.rc:208
+#: regedit.rc:209
 #, fuzzy
 #| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
 msgstr "הערך גדול מדי (%u)"
 
-#: regedit.rc:209
+#: regedit.rc:210
 msgid "Confirm Value Delete"
 msgstr "אישור מחיקת הערך"
 
-#: regedit.rc:216
+#: regedit.rc:217
 #, fuzzy
 #| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
 msgstr "מחרוזת החיפוש ׳%s׳ לא נמצאה"
 
-#: regedit.rc:211
+#: regedit.rc:212
 msgid "Are you sure you want to delete these values?"
 msgstr "האם ברצונך למחוק ערכים אלו?"
 
-#: regedit.rc:214
+#: regedit.rc:215
 msgid "New Key #%d"
 msgstr "מפתח חדש מס׳%d"
 
-#: regedit.rc:215
+#: regedit.rc:216
 msgid "New Value #%d"
 msgstr "ערך חדש מס׳ %d"
 
-#: regedit.rc:205
+#: regedit.rc:206
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry key '%1'."
 msgstr "Error: Unable to add keys to remote machine\n"
 
-#: regedit.rc:176
+#: regedit.rc:172
+#, fuzzy
+#| msgid "Modifies the value's data"
+msgid "Modifies the value's data in binary form"
+msgstr "שינוי נתוני הערך"
+
+#: regedit.rc:177
 msgid "Adds a new multi-string value"
 msgstr "הוספת ערך מרובה מחרוזות חדש"
 
-#: regedit.rc:199
+#: regedit.rc:200
 msgid "Exports selected branch of the registry to a text file"
 msgstr "יצוא הענף הנבחר מרישום המערכת לקובץ טקסט"
 
-#: regedit.rc:177
+#: regedit.rc:178
 #, fuzzy
 #| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
 msgstr "הוספת ערך מחרוזת חדש"
 
-#: regedit.rc:212
+#: regedit.rc:213
 #, fuzzy
 #| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
 msgstr "אישור מחיקת הערך"
 
-#: regedit.rc:213
+#: regedit.rc:214
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
 msgstr "האם אכן ברצונך למחוק את '%1'?"
 
-#: regedit.rc:231
+#: regedit.rc:232
 #, fuzzy
 #| msgid "C&ollate"
 msgid "Collapse"

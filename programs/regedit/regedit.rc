@@ -168,6 +168,7 @@ END
 STRINGTABLE
 BEGIN
     ID_EDIT_MODIFY          "Modifies the value's data"
+    ID_EDIT_MODIFY_BIN      "Modifies the value's data in binary form"
     ID_EDIT_NEW_KEY         "Adds a new key"
     ID_EDIT_NEW_STRINGVALUE "Adds a new string value"
     ID_EDIT_NEW_BINARYVALUE "Adds a new binary value"

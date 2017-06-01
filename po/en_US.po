@@ -65,8 +65,8 @@ msgstr "Support Information"
 #: shell32.rc:322 shell32.rc:341 shlwapi.rc:44 user32.rc:83 user32.rc:98
 #: wininet.rc:51 wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117
 #: oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124 progman.rc:142
-#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:294
-#: regedit.rc:305 regedit.rc:318 regedit.rc:334 regedit.rc:347 regedit.rc:360
+#: progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:295
+#: regedit.rc:306 regedit.rc:319 regedit.rc:335 regedit.rc:348 regedit.rc:361
 #: taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
 #: wineconsole.rc:135 winefile.rc:128 winefile.rc:151 winefile.rc:181
 #: winemine.rc:71 winemine.rc:81 winemine.rc:95 wordpad.rc:215 wordpad.rc:226
@@ -148,8 +148,8 @@ msgstr "&Install"
 #: shell32.rc:342 shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52
 #: wininet.rc:72 winspool.rc:43 notepad.rc:118 oleview.rc:162 oleview.rc:175
 #: progman.rc:107 progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181
-#: progman.rc:200 progman.rc:217 regedit.rc:295 regedit.rc:306 regedit.rc:319
-#: regedit.rc:335 regedit.rc:348 regedit.rc:361 taskmgr.rc:443 taskmgr.rc:518
+#: progman.rc:200 progman.rc:217 regedit.rc:296 regedit.rc:307 regedit.rc:320
+#: regedit.rc:336 regedit.rc:349 regedit.rc:362 taskmgr.rc:443 taskmgr.rc:518
 #: wineboot.rc:34 winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136
 #: winefile.rc:129 winefile.rc:152 winefile.rc:182 winemine.rc:96
 #: wordpad.rc:216 wordpad.rc:227 wordpad.rc:245 wordpad.rc:258
@@ -225,7 +225,7 @@ msgid "Programs (*.exe)"
 msgstr "Programs (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:225 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:226 winedbg.rc:42 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "All files (*.*)"
 
@@ -401,7 +401,7 @@ msgstr "&No"
 msgid "&Retry"
 msgstr "&Retry"
 
-#: comctl32.rc:31 cryptui.rc:230 regedit.rc:284 taskmgr.rc:434 winedbg.rc:60
+#: comctl32.rc:31 cryptui.rc:230 regedit.rc:285 taskmgr.rc:434 winedbg.rc:60
 #: winedbg.rc:75 wordpad.rc:180
 msgid "Close"
 msgstr "Close"
@@ -460,7 +460,7 @@ msgstr "Printer:"
 msgid "Print range"
 msgstr "Print range"
 
-#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:266
+#: comdlg32.rc:207 comdlg32.rc:384 regedit.rc:267
 msgid "&All"
 msgstr "&All"
 
@@ -630,7 +630,7 @@ msgstr "&Add to Custom Colors"
 msgid "&Define Custom Colors >>"
 msgstr "&Define Custom Colors >>"
 
-#: comdlg32.rc:316 regedit.rc:273 regedit.rc:283
+#: comdlg32.rc:316 regedit.rc:274 regedit.rc:284
 msgid "Find"
 msgstr "Find"
 
@@ -7539,7 +7539,7 @@ msgstr ""
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "Inserts the contents of the clipboard into your document."
 
-#: oledlg.rc:48 regedit.rc:428
+#: oledlg.rc:48 regedit.rc:429
 msgid "Unknown Type"
 msgstr "Unknown Type"
 
@@ -8115,7 +8115,7 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Desktop"
 
-#: shell32.rc:157 regedit.rc:236
+#: shell32.rc:157 regedit.rc:237
 msgid "My Computer"
 msgstr "My Computer"
 
@@ -8461,7 +8461,7 @@ msgstr "Wine License"
 msgid "Trash"
 msgstr "Trash"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:205 winecfg.rc:87 winefile.rc:97
 msgid "Error"
 msgstr "Error"
 
@@ -10887,7 +10887,7 @@ msgctxt "accelerator Copy"
 msgid "C"
 msgstr "C"
 
-#: notepad.rc:134 regedit.rc:370 wordpad.rc:287
+#: notepad.rc:134 regedit.rc:371 wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
@@ -10907,7 +10907,7 @@ msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: notepad.rc:138 regedit.rc:371 wordpad.rc:300
+#: notepad.rc:138 regedit.rc:372 wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr "P"
@@ -11634,11 +11634,11 @@ msgstr "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The registry operation was cancelled\n"
 msgstr "The registry operation was cancelled\n"
 
-#: reg.rc:53 regedit.rc:237
+#: reg.rc:53 regedit.rc:238
 msgid "(Default)"
 msgstr "(Default)"
 
-#: reg.rc:54 regedit.rc:210
+#: reg.rc:54 regedit.rc:211
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Are you sure you want to delete the registry value '%1'?"
 
@@ -11690,7 +11690,7 @@ msgstr "Type \"REG /?\" for help.\n"
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Type \"REG %1 /?\" for help.\n"
 
-#: reg.rc:65 regedit.rc:238
+#: reg.rc:65 regedit.rc:239
 msgid "(value not set)"
 msgstr "(value not set)"
 
@@ -11762,7 +11762,7 @@ msgstr "&Remove Favorite..."
 msgid "&About Registry Editor"
 msgstr "&About Registry Editor"
 
-#: regedit.rc:91 regedit.rc:98 regedit.rc:230
+#: regedit.rc:91 regedit.rc:98 regedit.rc:231
 msgid "Expand"
 msgstr "Expand"
 
@@ -11770,83 +11770,83 @@ msgstr "Expand"
 msgid "Modify Binary Data..."
 msgstr "Modify Binary Data..."
 
-#: regedit.rc:265
+#: regedit.rc:266
 msgid "Export registry"
 msgstr "Export registry"
 
-#: regedit.rc:267
+#: regedit.rc:268
 msgid "S&elected branch:"
 msgstr "S&elected branch:"
 
-#: regedit.rc:276
+#: regedit.rc:277
 msgid "Find:"
 msgstr "Find:"
 
-#: regedit.rc:278
+#: regedit.rc:279
 msgid "Find in:"
 msgstr "Find in:"
 
-#: regedit.rc:279
+#: regedit.rc:280
 msgid "Keys"
 msgstr "Keys"
 
-#: regedit.rc:280
+#: regedit.rc:281
 msgid "Value names"
 msgstr "Value names"
 
-#: regedit.rc:281
+#: regedit.rc:282
 msgid "Value content"
 msgstr "Value content"
 
-#: regedit.rc:282
+#: regedit.rc:283
 msgid "Whole string only"
 msgstr "Whole string only"
 
-#: regedit.rc:289
+#: regedit.rc:290
 msgid "Add Favorite"
 msgstr "Add Favorite"
 
-#: regedit.rc:292 regedit.rc:303
+#: regedit.rc:293 regedit.rc:304
 msgid "Name:"
 msgstr "Name:"
 
-#: regedit.rc:300
+#: regedit.rc:301
 msgid "Remove Favorite"
 msgstr "Remove Favorite"
 
-#: regedit.rc:311
+#: regedit.rc:312
 msgid "Edit String"
 msgstr "Edit String"
 
-#: regedit.rc:314 regedit.rc:327 regedit.rc:343 regedit.rc:356
+#: regedit.rc:315 regedit.rc:328 regedit.rc:344 regedit.rc:357
 msgid "Value name:"
 msgstr "Value name:"
 
-#: regedit.rc:316 regedit.rc:329 regedit.rc:345 regedit.rc:358
+#: regedit.rc:317 regedit.rc:330 regedit.rc:346 regedit.rc:359
 msgid "Value data:"
 msgstr "Value data:"
 
-#: regedit.rc:324
+#: regedit.rc:325
 msgid "Edit DWORD"
 msgstr "Edit DWORD"
 
-#: regedit.rc:331
+#: regedit.rc:332
 msgid "Base"
 msgstr "Base"
 
-#: regedit.rc:332
+#: regedit.rc:333
 msgid "Hexadecimal"
 msgstr "Hexadecimal"
 
-#: regedit.rc:333
+#: regedit.rc:334
 msgid "Decimal"
 msgstr "Decimal"
 
-#: regedit.rc:340
+#: regedit.rc:341
 msgid "Edit Binary"
 msgstr "Edit Binary"
 
-#: regedit.rc:353
+#: regedit.rc:354
 msgid "Edit Multi-String"
 msgstr "Edit Multi-String"
 
@@ -11884,81 +11884,81 @@ msgstr "Data"
 msgid "Registry Editor"
 msgstr "Registry Editor"
 
-#: regedit.rc:221
+#: regedit.rc:222
 msgid "Import Registry File"
 msgstr "Import Registry File"
 
-#: regedit.rc:222
+#: regedit.rc:223
 msgid "Export Registry File"
 msgstr "Export Registry File"
 
-#: regedit.rc:223
+#: regedit.rc:224
 msgid "Registry files (*.reg)"
 msgstr "Registry Files (*.reg)"
 
-#: regedit.rc:224
+#: regedit.rc:225
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 Registry Files (REGEDIT4)"
 
-#: regedit.rc:239
+#: regedit.rc:240
 msgid "(cannot display value)"
 msgstr "(cannot display value)"
 
-#: regedit.rc:240
+#: regedit.rc:241
 msgid "(unknown %d)"
 msgstr "(unknown %d)"
 
-#: regedit.rc:245
+#: regedit.rc:246
 msgid "Unable to modify the selected registry value."
 msgstr "Unable to modify the selected registry value."
 
-#: regedit.rc:246
+#: regedit.rc:247
 msgid "Unable to create a new registry key."
 msgstr "Unable to create a new registry key."
 
-#: regedit.rc:247
+#: regedit.rc:248
 msgid "Unable to create a new registry value."
 msgstr "Unable to create a new registry value."
 
-#: regedit.rc:248
-msgid ""
-"Unable to rename the key '%1'.\n"
-"The specified key name already exists."
-msgstr ""
-"Unable to rename the key '%1'.\n"
-"The specified key name already exists."
-
 #: regedit.rc:249
 msgid ""
+"Unable to rename the key '%1'.\n"
+"The specified key name already exists."
+msgstr ""
+"Unable to rename the key '%1'.\n"
+"The specified key name already exists."
+
+#: regedit.rc:250
+msgid ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 msgstr ""
 "Unable to rename the value '%1'.\n"
 "The specified value name already exists."
 
-#: regedit.rc:250
+#: regedit.rc:251
 msgid "Unable to delete the selected registry key."
 msgstr "Unable to delete the selected registry key."
 
-#: regedit.rc:251
+#: regedit.rc:252
 msgid "Unable to rename the selected registry key."
 msgstr "Unable to rename the selected registry key."
 
-#: regedit.rc:252
+#: regedit.rc:253
 msgid "Unable to rename the selected registry value."
 msgstr "Unable to rename the selected registry value."
 
-#: regedit.rc:253
+#: regedit.rc:254
 msgid ""
 "The keys and values contained in %1 were successfully added to the registry."
 msgstr ""
 "The keys and values contained in %1 were successfully added to the registry."
 
-#: regedit.rc:254
+#: regedit.rc:255
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr "Unable to import %1. The specified file is not a valid registry file."
 
-#: regedit.rc:406
+#: regedit.rc:407
 msgid ""
 "Usage:\n"
 "  regedit [options] [filename] [reg_key]\n"
@@ -12016,43 +12016,43 @@ msgstr ""
 "  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Error\\Path\"\n"
 
-#: regedit.rc:407
+#: regedit.rc:408
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
 msgstr "regedit: Invalid or unrecognized switch [%1]\n"
 
-#: regedit.rc:408
+#: regedit.rc:409
 msgid "Type \"regedit /?\" for help.\n"
 msgstr "Type \"regedit /?\" for help.\n"
 
-#: regedit.rc:409
+#: regedit.rc:410
 msgid "regedit: No filename was specified.\n"
 msgstr "regedit: No filename was specified.\n"
 
-#: regedit.rc:410
+#: regedit.rc:411
 msgid "regedit: No registry key was specified for removal.\n"
 msgstr "regedit: No registry key was specified for removal.\n"
 
-#: regedit.rc:411
+#: regedit.rc:412
 msgid "regedit: The file '%1' was not found.\n"
 msgstr "regedit: The file '%1' was not found.\n"
 
-#: regedit.rc:412
+#: regedit.rc:413
 msgid "regedit: Unable to open the file '%1'.\n"
 msgstr "regedit: Unable to open the file '%1'.\n"
 
-#: regedit.rc:413
+#: regedit.rc:414
 msgid "regedit: Unhandled action.\n"
 msgstr "regedit: Unhandled action.\n"
 
-#: regedit.rc:414
+#: regedit.rc:415
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 
-#: regedit.rc:415
+#: regedit.rc:416
 msgid "regedit: Invalid hexadecimal value.\n"
 msgstr "regedit: Invalid hexadecimal value.\n"
 
-#: regedit.rc:416
+#: regedit.rc:417
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
@@ -12060,97 +12060,97 @@ msgstr ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 
-#: regedit.rc:417
+#: regedit.rc:418
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 
-#: regedit.rc:418
+#: regedit.rc:419
 msgid "regedit: Unsupported registry data type [%1]\n"
 msgstr "regedit: Unsupported registry data type [%1]\n"
 
-#: regedit.rc:419
+#: regedit.rc:420
 msgid "regedit: Unexpected end of line in '%1'.\n"
 msgstr "regedit: Unexpected end of line in '%1'.\n"
 
-#: regedit.rc:420
+#: regedit.rc:421
 msgid "regedit: The line '%1' was not recognized.\n"
 msgstr "regedit: The line '%1' was not recognized.\n"
 
-#: regedit.rc:421
+#: regedit.rc:422
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
 msgstr "regedit: Unable to add the registry value '%1' to '%2'.\n"
 
-#: regedit.rc:422
+#: regedit.rc:423
 msgid "regedit: Unable to open the registry key '%1'.\n"
 msgstr "regedit: Unable to open the registry key '%1'.\n"
 
-#: regedit.rc:423
+#: regedit.rc:424
 msgid "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 msgstr "regedit: Unsupported registry data type [%1] encountered in '%2'.\n"
 
-#: regedit.rc:424
+#: regedit.rc:425
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr "regedit: The registry value '%1' will be exported as binary data.\n"
 
-#: regedit.rc:425
+#: regedit.rc:426
 msgid "regedit: Incorrect registry class specification in '%1'.\n"
 msgstr "regedit: Incorrect registry class specification in '%1'.\n"
 
-#: regedit.rc:426
+#: regedit.rc:427
 msgid ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 msgstr ""
 "regedit: Unable to export '%1'. The specified registry key was not found.\n"
 
-#: regedit.rc:427
+#: regedit.rc:428
 msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: Unable to delete the registry class '%1'.\n"
 
-#: regedit.rc:429
+#: regedit.rc:430
 msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: The line contains invalid syntax.\n"
 
-#: regedit.rc:188
+#: regedit.rc:189
 msgid "Quits the registry editor"
 msgstr "Quits the registry editor"
 
-#: regedit.rc:189
+#: regedit.rc:190
 msgid "Adds keys to the favorites list"
 msgstr "Adds keys to the favorites list"
 
-#: regedit.rc:190
+#: regedit.rc:191
 msgid "Removes keys from the favorites list"
 msgstr "Removes keys from the favorites list"
 
-#: regedit.rc:191
+#: regedit.rc:192
 msgid "Shows or hides the status bar"
 msgstr "Shows or hides the status bar"
 
-#: regedit.rc:192
+#: regedit.rc:193
 msgid "Change position of split between two panes"
 msgstr "Change position of split between two panes"
 
-#: regedit.rc:193
+#: regedit.rc:194
 msgid "Refreshes the window"
 msgstr "Refreshes the window"
 
-#: regedit.rc:194
+#: regedit.rc:195
 msgid "Deletes the selection"
 msgstr "Deletes the selection"
 
-#: regedit.rc:195
+#: regedit.rc:196
 msgid "Renames the selection"
 msgstr "Renames the selection"
 
-#: regedit.rc:196
+#: regedit.rc:197
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Copies the name of the selected key to the clipboard"
 
-#: regedit.rc:197
+#: regedit.rc:198
 msgid "Finds a text string in a key, value or data"
 msgstr "Finds a text string in a key, value or data"
 
-#: regedit.rc:198
+#: regedit.rc:199
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Finds next occurrence of text specified in previous search"
 
@@ -12158,97 +12158,101 @@ msgstr "Finds next occurrence of text specified in previous search"
 msgid "Modifies the value's data"
 msgstr "Modifies the value's data"
 
-#: regedit.rc:172
+#: regedit.rc:173
 msgid "Adds a new key"
 msgstr "Adds a new key"
 
-#: regedit.rc:173
+#: regedit.rc:174
 msgid "Adds a new string value"
 msgstr "Adds a new string value"
 
-#: regedit.rc:174
+#: regedit.rc:175
 msgid "Adds a new binary value"
 msgstr "Adds a new binary value"
 
-#: regedit.rc:175
+#: regedit.rc:176
 msgid "Adds a new double word value"
 msgstr "Adds a new double word value"
 
-#: regedit.rc:178
+#: regedit.rc:179
 msgid "Imports a text file into the registry"
 msgstr "Imports a text file into the registry"
 
-#: regedit.rc:180
+#: regedit.rc:181
 msgid "Exports all or part of the registry to a text file"
 msgstr "Exports all or part of the registry to a text file"
 
-#: regedit.rc:181
+#: regedit.rc:182
 msgid "Prints all or part of the registry"
 msgstr "Prints all or part of the registry"
 
-#: regedit.rc:183
+#: regedit.rc:184
 msgid "Displays program information, version number and copyright"
 msgstr "Displays program information, version number and copyright"
 
-#: regedit.rc:206
+#: regedit.rc:207
 msgid "Unable to query the registry value '%1'."
 msgstr "Unable to query the registry value '%1'."
 
-#: regedit.rc:207
+#: regedit.rc:208
 msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Unable to edit registry keys of this type (%1!u!)."
 
-#: regedit.rc:208
+#: regedit.rc:209
 msgid "The value is too big (%1!u!)."
 msgstr "The value is too big (%1!u!)."
 
-#: regedit.rc:209
+#: regedit.rc:210
 msgid "Confirm Value Delete"
 msgstr "Confirm Value Delete"
 
-#: regedit.rc:216
+#: regedit.rc:217
 msgid "Search complete. The string '%1' was not found."
 msgstr "Search complete. The string '%1' was not found."
 
-#: regedit.rc:211
+#: regedit.rc:212
 msgid "Are you sure you want to delete these values?"
 msgstr "Are you sure you want to delete these values?"
 
-#: regedit.rc:214
+#: regedit.rc:215
 msgid "New Key #%d"
 msgstr "New Key #%d"
 
-#: regedit.rc:215
+#: regedit.rc:216
 msgid "New Value #%d"
 msgstr "New Value #%d"
 
-#: regedit.rc:205
+#: regedit.rc:206
 msgid "Unable to query the registry key '%1'."
 msgstr "Unable to query the registry key '%1'."
 
-#: regedit.rc:176
+#: regedit.rc:172
+msgid "Modifies the value's data in binary form"
+msgstr "Modifies the value's data in binary form"
+
+#: regedit.rc:177
 msgid "Adds a new multi-string value"
 msgstr "Adds a new multi-string value"
 
-#: regedit.rc:199
+#: regedit.rc:200
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Exports selected branch of the registry to a text file"
 
-#: regedit.rc:177
+#: regedit.rc:178
 msgid "Adds a new expandable string value"
 msgstr "Adds a new expandable string value"
 
-#: regedit.rc:212
+#: regedit.rc:213
 msgid "Confirm Key Delete"
 msgstr "Confirm Key Delete"
 
-#: regedit.rc:213
+#: regedit.rc:214
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
 msgstr ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
 
-#: regedit.rc:231
+#: regedit.rc:232
 msgid "Collapse"
 msgstr "Collapse"
 
