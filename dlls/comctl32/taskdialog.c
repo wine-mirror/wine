@@ -22,6 +22,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -383,4 +385,27 @@ HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *taskconfig, int *butto
     if (verification_flag_checked) *verification_flag_checked = TRUE;
 
     return S_OK;
+}
+
+/***********************************************************************
+ * TaskDialog [COMCTL32.@]
+ */
+HRESULT WINAPI TaskDialog(HWND owner, HINSTANCE hinst, const WCHAR *title, const WCHAR *main_instruction,
+    const WCHAR *content, TASKDIALOG_COMMON_BUTTON_FLAGS common_buttons, const WCHAR *icon, int *button)
+{
+    TASKDIALOGCONFIG taskconfig;
+
+    TRACE("%p, %p, %s, %s, %s, %#x, %s, %p\n", owner, hinst, debugstr_w(title), debugstr_w(main_instruction),
+        debugstr_w(content), common_buttons, debugstr_w(icon), button);
+
+    memset(&taskconfig, 0, sizeof(taskconfig));
+    taskconfig.cbSize = sizeof(taskconfig);
+    taskconfig.hwndParent = owner;
+    taskconfig.hInstance = hinst;
+    taskconfig.dwCommonButtons = common_buttons;
+    taskconfig.pszWindowTitle = title;
+    taskconfig.u.pszMainIcon = icon;
+    taskconfig.pszMainInstruction = main_instruction;
+    taskconfig.pszContent = content;
+    return TaskDialogIndirect(&taskconfig, button, NULL, NULL);
 }
