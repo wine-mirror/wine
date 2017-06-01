@@ -48,9 +48,47 @@ static HANDLE stop_event;
 static HANDLE thread;
 static JNIEnv *jni_env;
 
-#ifdef __i386__
+#ifdef __i386__  /* the Java VM uses %fs for its own purposes, so we need to wrap the calls */
 static WORD orig_fs, java_fs;
+static inline void wrap_java_call(void)   { wine_set_fs( java_fs ); }
+static inline void unwrap_java_call(void) { wine_set_fs( orig_fs ); }
+#else
+static inline void wrap_java_call(void) { }
+static inline void unwrap_java_call(void) { }
 #endif  /* __i386__ */
+
+static jobject load_java_method( jmethodID *method, const char *name, const char *args )
+{
+    jobject object = wine_get_java_object();
+
+    if (!*method)
+    {
+        jclass class;
+
+        wrap_java_call();
+        class = (*jni_env)->GetObjectClass( jni_env, object );
+        *method = (*jni_env)->GetMethodID( jni_env, class, name, args );
+        unwrap_java_call();
+        if (!*method)
+        {
+            FIXME( "method %s not found\n", name );
+            return NULL;
+        }
+    }
+    return object;
+}
+
+static void create_desktop_window( HWND hwnd )
+{
+    static jmethodID method;
+    jobject object;
+
+    if (!(object = load_java_method( &method, "createDesktopWindow", "(I)V" ))) return;
+
+    wrap_java_call();
+    (*jni_env)->CallVoidMethod( jni_env, object, method, HandleToLong( hwnd ));
+    unwrap_java_call();
+}
 
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -104,6 +142,8 @@ static DWORD CALLBACK device_thread( void *arg )
 #else
     (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
 #endif
+
+    create_desktop_window( GetDesktopWindow() );
 
     RtlInitUnicodeString( &nameW, driver_nameW );
     if ((status = IoCreateDriver( &nameW, init_android_driver )))

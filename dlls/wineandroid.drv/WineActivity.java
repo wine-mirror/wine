@@ -22,11 +22,14 @@ package org.winehq.wine;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,6 +45,7 @@ import java.util.Map;
 public class WineActivity extends Activity
 {
     private native String wine_init( String[] cmdline, String[] env );
+    public native void wine_desktop_changed( int width, int height );
 
     private final String LOGTAG = "wine";
     private ProgressDialog progress_dialog;
@@ -262,5 +266,48 @@ public class WineActivity extends Activity
             runOnUiThread( new Runnable() { public void run() {
                 progress_dialog.incrementProgressBy( 1 ); }});
         }
+    }
+
+    // The top-level desktop view group
+
+    protected class TopView extends ViewGroup
+    {
+        private int desktop_hwnd;
+
+        public TopView( Context context, int hwnd )
+        {
+            super( context );
+            desktop_hwnd = hwnd;
+        }
+
+        @Override
+        protected void onSizeChanged( int width, int height, int old_width, int old_height )
+        {
+            Log.i( LOGTAG, String.format( "desktop size %dx%d", width, height ));
+            wine_desktop_changed( width, height );
+        }
+
+        @Override
+        protected void onLayout( boolean changed, int left, int top, int right, int bottom )
+        {
+            // nothing to do
+        }
+    }
+
+    protected TopView top_view;
+
+    // Entry points for the device driver
+
+    public void create_desktop_window( int hwnd )
+    {
+        Log.i( LOGTAG, String.format( "create desktop view %08x", hwnd ));
+        top_view = new TopView( this, hwnd );
+        setContentView( top_view );
+        progress_dialog.dismiss();
+    }
+
+    public void createDesktopWindow( final int hwnd )
+    {
+        runOnUiThread( new Runnable() { public void run() { create_desktop_window( hwnd ); }} );
     }
 }
