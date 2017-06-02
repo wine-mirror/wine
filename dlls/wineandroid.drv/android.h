@@ -32,6 +32,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/gdi_driver.h"
+#include "android_native.h"
 
 
 /**************************************************************************
