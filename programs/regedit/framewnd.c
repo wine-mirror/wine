@@ -132,7 +132,17 @@ update:
     SetMenuItemInfoW(hMenu, ID_TREE_EXPAND_COLLAPSE, FALSE, &info);
 }
 
-static void update_delete_and_rename_items(HMENU hMenu, WCHAR *keyName)
+static void update_modify_items(HMENU hMenu, int index)
+{
+    unsigned int state = MF_ENABLED;
+
+    if (!g_pChildWnd->nFocusPanel || index == -1)
+        state = MF_GRAYED;
+
+    EnableMenuItem(hMenu, ID_EDIT_MODIFY, state | MF_BYCOMMAND);
+}
+
+static void update_delete_and_rename_items(HMENU hMenu, WCHAR *keyName, int index)
 {
     unsigned int state_d = MF_ENABLED, state_r = MF_ENABLED;
 
@@ -141,13 +151,10 @@ static void update_delete_and_rename_items(HMENU hMenu, WCHAR *keyName)
         if (!keyName || !*keyName)
             state_d = state_r = MF_GRAYED;
     }
-    else
+    else if (index < 1)
     {
-        int index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
-                                 MAKELPARAM(LVIS_FOCUSED | LVIS_SELECTED, 0));
-
+        state_r = MF_GRAYED;
         if (index == -1) state_d = MF_GRAYED;
-        if (index < 1) state_r = MF_GRAYED;
     }
 
     EnableMenuItem(hMenu, ID_EDIT_DELETE, state_d | MF_BYCOMMAND);
@@ -170,20 +177,19 @@ static void update_new_items_and_copy_keyname(HMENU hMenu, WCHAR *keyName)
 
 static void UpdateMenuItems(HMENU hMenu) {
     HWND hwndTV = g_pChildWnd->hTreeWnd;
-    BOOL bAllowEdit = FALSE;
     HKEY hRootKey = NULL;
     LPWSTR keyName;
     HTREEITEM selection;
+    int index;
 
     selection = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
     keyName = GetItemPath(hwndTV, selection, &hRootKey);
-    if (GetFocus() != hwndTV || (keyName && *keyName)) { /* can't modify root keys, but allow for their values */
-        bAllowEdit = TRUE;
-    }
+    index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
+                         MAKELPARAM(LVIS_FOCUSED | LVIS_SELECTED, 0));
 
     update_expand_or_collapse_item(hwndTV, selection, hMenu);
-    EnableMenuItem(hMenu, ID_EDIT_MODIFY, (bAllowEdit ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
-    update_delete_and_rename_items(hMenu, keyName);
+    update_modify_items(hMenu, index);
+    update_delete_and_rename_items(hMenu, keyName, index);
     update_new_items_and_copy_keyname(hMenu, keyName);
     EnableMenuItem(hMenu, ID_FAVORITES_ADDTOFAVORITES, (hRootKey ? MF_ENABLED : MF_GRAYED) | MF_BYCOMMAND);
     EnableMenuItem(hMenu, ID_FAVORITES_REMOVEFAVORITE, 
