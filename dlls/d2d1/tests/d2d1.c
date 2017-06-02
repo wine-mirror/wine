@@ -1838,6 +1838,7 @@ static void test_path_geometry(void)
 
 static void test_rectangle_geometry(void)
 {
+    ID2D1TransformedGeometry *transformed_geometry;
     ID2D1RectangleGeometry *geometry;
     D2D1_MATRIX_3X2_F matrix;
     D2D1_RECT_F rect, rect2;
@@ -1964,8 +1965,46 @@ static void test_rectangle_geometry(void)
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
 
-    ID2D1RectangleGeometry_Release(geometry);
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 4.0f, 5.0f);
+    rotate_matrix(&matrix, M_PI / 3.0f);
+    translate_matrix(&matrix, 30.0f, 20.0f);
+    hr = ID2D1Factory_CreateTransformedGeometry(factory, (ID2D1Geometry *)geometry, &matrix, &transformed_geometry);
+    ok(SUCCEEDED(hr), "Failed to create transformed geometry, hr %#x.\n", hr);
 
+    ID2D1TransformedGeometry_GetBounds(transformed_geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, -7.85640717e+01f, 1.79903809e+02f, 1.07179594e+01f, 2.73205078e+02f, 1);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    rotate_matrix(&matrix, M_PI / -3.0f);
+    scale_matrix(&matrix, 0.25f, 0.2f);
+    ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, 30.0f, 20.0f, 40.0f, 40.0f, 2);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 2.0f, 0.0f);
+    ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, -1.57128143e+02f, 0.00000000e+00f, 2.14359188e+01f, 0.00000000e+00f, 1);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    scale_matrix(&matrix, 0.0f, 0.5f);
+    ID2D1TransformedGeometry_GetBounds(transformed_geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, 0.00000000e+00f, 8.99519043e+01f, 0.00000000e+00, 1.36602539e+02f, 1);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    ID2D1TransformedGeometry_Release(transformed_geometry);
+    ID2D1RectangleGeometry_Release(geometry);
     ID2D1Factory_Release(factory);
 }
 

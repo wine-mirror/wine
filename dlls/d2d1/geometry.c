@@ -3066,9 +3066,16 @@ static void STDMETHODCALLTYPE d2d_transformed_geometry_GetFactory(ID2D1Transform
 static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_GetBounds(ID2D1TransformedGeometry *iface,
         const D2D1_MATRIX_3X2_F *transform, D2D1_RECT_F *bounds)
 {
-    FIXME("iface %p, transform %p, bounds %p stub!\n", iface, transform, bounds);
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+    D2D1_MATRIX_3X2_F g;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p, bounds %p.\n", iface, transform, bounds);
+
+    g = geometry->transform;
+    if (transform)
+        d2d_matrix_multiply(&g, transform);
+
+    return ID2D1Geometry_GetBounds(geometry->u.transformed.src_geometry, &g, bounds);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_GetWidenedBounds(ID2D1TransformedGeometry *iface,
