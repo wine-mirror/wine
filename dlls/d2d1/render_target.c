@@ -458,9 +458,16 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateCompatibleRenderTar
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLayer(ID2D1RenderTarget *iface,
         const D2D1_SIZE_F *size, ID2D1Layer **layer)
 {
-    FIXME("iface %p, size %p, layer %p stub!\n", iface, size, layer);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_layer *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, size %p, layer %p.\n", iface, size, layer);
+
+    if (SUCCEEDED(hr = d2d_layer_create(render_target->factory, &object)))
+        *layer = &object->ID2D1Layer_iface;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateMesh(ID2D1RenderTarget *iface, ID2D1Mesh **mesh)

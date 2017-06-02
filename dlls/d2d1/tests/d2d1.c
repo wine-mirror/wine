@@ -4528,6 +4528,50 @@ todo_wine
     ID2D1Factory_Release(factory);
 }
 
+static void test_layer(void)
+{
+    ID2D1Factory *factory, *layer_factory;
+    IDXGISwapChain *swapchain;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    ID2D1Layer *layer;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = create_window();
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+    ID2D1RenderTarget_GetFactory(rt, &factory);
+
+    ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
+    ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
+
+    hr = ID2D1RenderTarget_CreateLayer(rt, NULL, &layer);
+    ok(SUCCEEDED(hr), "Failed to create layer, hr %#x.\n", hr);
+    ID2D1Layer_GetFactory(layer, &layer_factory);
+    ok(layer_factory == factory, "Got unexpected layer factory %p, expected %p.\n", layer_factory, factory);
+    ID2D1Factory_Release(layer_factory);
+    ID2D1Layer_Release(layer);
+
+    ID2D1RenderTarget_Release(rt);
+    refcount = ID2D1Factory_Release(factory);
+    ok(!refcount, "Factory has %u references left.\n", refcount);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -4552,4 +4596,5 @@ START_TEST(d2d1)
     test_gradient();
     test_draw_geometry();
     test_gdi_interop();
+    test_layer();
 }

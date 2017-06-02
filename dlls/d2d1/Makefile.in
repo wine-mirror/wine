@@ -11,6 +11,7 @@ C_SRCS = \
 	factory.c \
 	geometry.c \
 	hwnd_render_target.c \
+	layer.c \
 	mesh.c \
 	render_target.c \
 	state_block.c \
