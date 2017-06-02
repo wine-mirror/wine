@@ -4305,6 +4305,19 @@ got (%g, %g, %g, %g), parameter %s.\n",
     }
 }
 
+static void test_effect_preshader_clear_pbool_consts(IDirect3DDevice9 *device)
+{
+    BOOL bval = FALSE;
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < 16; ++i)
+    {
+        hr = IDirect3DDevice9_SetPixelShaderConstantB(device, i, &bval, 1);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    }
+}
+
 static void test_effect_preshader(IDirect3DDevice9 *device)
 {
     static const D3DXVECTOR4 test_effect_preshader_fvect_p[] =
@@ -4368,12 +4381,9 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_SetPixelShaderConstantF(device, i, &fvect_filler.x, 1);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
     }
-    bval = FALSE;
-    for (i = 0; i < 16; ++i)
-    {
-        hr = IDirect3DDevice9_SetPixelShaderConstantB(device, i, &bval, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    }
+
+    test_effect_preshader_clear_pbool_consts(device);
+
     for (i = 0; i < 16; ++i)
     {
         hr = IDirect3DDevice9_SetPixelShaderConstantI(device, i, ivect_empty, 1);
