@@ -4399,7 +4399,6 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
             ARRAY_SIZE(test_effect_preshader_bconsts));
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     for (i = 0; i < ARRAY_SIZE(test_effect_preshader_bconsts); ++i)
-        todo_wine_if(!bdata[i] != !test_effect_preshader_bconsts[i])
         ok(!bdata[i] == !test_effect_preshader_bconsts[i],
                 "Pixel shader boolean constants do not match.\n");
     for (; i < 16; ++i)
