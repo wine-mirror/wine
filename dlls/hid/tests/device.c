@@ -183,7 +183,7 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
                 {
                     for (j=count; j < count+15 && j < usage_length; j++)
                     {
-                        CHAR btn[5];
+                        CHAR btn[7];
                         sprintf(btn, "%i ", button_pages[j]);
                         strcat(report, btn);
                     }
