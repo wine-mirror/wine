@@ -55,6 +55,7 @@ enum android_ioctl
 {
     IOCTL_CREATE_WINDOW,
     IOCTL_DESTROY_WINDOW,
+    IOCTL_WINDOW_POS_CHANGED,
     NB_IOCTLS
 };
 
@@ -74,6 +75,17 @@ struct ioctl_android_destroy_window
     struct ioctl_header hdr;
 };
 
+struct ioctl_android_window_pos_changed
+{
+    struct ioctl_header hdr;
+    RECT                window_rect;
+    RECT                client_rect;
+    RECT                visible_rect;
+    int                 style;
+    int                 flags;
+    int                 after;
+    int                 owner;
+};
 
 static inline DWORD current_client_id(void)
 {
@@ -184,11 +196,36 @@ static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, 
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS windowPosChanged_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    static jmethodID method;
+    jobject object;
+    struct ioctl_android_window_pos_changed *res = data;
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    TRACE( "hwnd %08x win %s client %s visible %s style %08x flags %08x after %08x owner %08x\n",
+           res->hdr.hwnd, wine_dbgstr_rect(&res->window_rect), wine_dbgstr_rect(&res->client_rect),
+           wine_dbgstr_rect(&res->visible_rect), res->style, res->flags, res->after, res->owner );
+
+    if (!(object = load_java_method( &method, "windowPosChanged", "(IIIIIIIIIIIIIIIII)V" )))
+        return STATUS_NOT_SUPPORTED;
+
+    wrap_java_call();
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->flags, res->after, res->owner, res->style,
+                                res->window_rect.left, res->window_rect.top, res->window_rect.right, res->window_rect.bottom,
+                                res->client_rect.left, res->client_rect.top, res->client_rect.right, res->client_rect.bottom,
+                                res->visible_rect.left, res->visible_rect.top, res->visible_rect.right, res->visible_rect.bottom );
+    unwrap_java_call();
+    return STATUS_SUCCESS;
+}
+
 typedef NTSTATUS (*ioctl_func)( void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
 static const ioctl_func ioctl_funcs[] =
 {
     createWindow_ioctl,         /* IOCTL_CREATE_WINDOW */
     destroyWindow_ioctl,        /* IOCTL_DESTROY_WINDOW */
+    windowPosChanged_ioctl,     /* IOCTL_WINDOW_POS_CHANGED */
 };
 
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
@@ -336,4 +373,20 @@ void destroy_ioctl_window( HWND hwnd )
 
     req.hdr.hwnd = HandleToLong( hwnd );
     android_ioctl( IOCTL_DESTROY_WINDOW, &req, sizeof(req), NULL, NULL );
+}
+
+int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
+                              const RECT *visible_rect, UINT style, UINT flags, HWND after, HWND owner )
+{
+    struct ioctl_android_window_pos_changed req;
+
+    req.hdr.hwnd     = HandleToLong( hwnd );
+    req.window_rect  = *window_rect;
+    req.client_rect  = *client_rect;
+    req.visible_rect = *visible_rect;
+    req.style        = style;
+    req.flags        = flags;
+    req.after        = HandleToLong( after );
+    req.owner        = HandleToLong( owner );
+    return android_ioctl( IOCTL_WINDOW_POS_CHANGED, &req, sizeof(req), NULL, NULL );
 }

@@ -24,6 +24,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -277,19 +278,44 @@ public class WineActivity extends Activity
 
     protected class WineWindow extends Object
     {
+        static protected final int WS_VISIBLE = 0x10000000;
+
         protected int hwnd;
+        protected int owner;
+        protected int style;
+        protected boolean visible;
+        protected Rect visible_rect;
+        protected Rect client_rect;
 
         public WineWindow( int w, WineWindow parent )
         {
             Log.i( LOGTAG, String.format( "create hwnd %08x", w ));
             hwnd = w;
+            owner = 0;
+            style = 0;
+            visible = false;
+            visible_rect = client_rect = new Rect( 0, 0, 0, 0 );
             win_map.put( w, this );
         }
 
         public void destroy()
         {
             Log.i( LOGTAG, String.format( "destroy hwnd %08x", hwnd ));
+            visible = false;
             win_map.remove( this );
+        }
+
+        public void pos_changed( int flags, int insert_after, int owner, int style,
+                                 Rect window_rect, Rect client_rect, Rect visible_rect )
+        {
+            this.visible_rect = visible_rect;
+            this.client_rect = client_rect;
+            this.style = style;
+            this.owner = owner;
+            Log.i( LOGTAG, String.format( "pos changed hwnd %08x after %08x owner %08x style %08x win %s client %s visible %s flags %08x",
+                                          hwnd, insert_after, owner, style, window_rect, client_rect, visible_rect, flags ));
+
+            visible = (style & WS_VISIBLE) != 0;
         }
 
         public int get_hwnd()
@@ -353,6 +379,14 @@ public class WineActivity extends Activity
         if (win != null) win.destroy();
     }
 
+    public void window_pos_changed( int hwnd, int flags, int insert_after, int owner, int style,
+                                    Rect window_rect, Rect client_rect, Rect visible_rect )
+    {
+        WineWindow win = get_window( hwnd );
+        if (win != null)
+            win.pos_changed( flags, insert_after, owner, style, window_rect, client_rect, visible_rect );
+    }
+
     public void createDesktopWindow( final int hwnd )
     {
         runOnUiThread( new Runnable() { public void run() { create_desktop_window( hwnd ); }} );
@@ -366,5 +400,22 @@ public class WineActivity extends Activity
     public void destroyWindow( final int hwnd )
     {
         runOnUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
+    }
+
+    public void windowPosChanged( final int hwnd, final int flags, final int insert_after,
+                                  final int owner, final int style,
+                                  final int window_left, final int window_top,
+                                  final int window_right, final int window_bottom,
+                                  final int client_left, final int client_top,
+                                  final int client_right, final int client_bottom,
+                                  final int visible_left, final int visible_top,
+                                  final int visible_right, final int visible_bottom )
+    {
+        final Rect window_rect = new Rect( window_left, window_top, window_right, window_bottom );
+        final Rect client_rect = new Rect( client_left, client_top, client_right, client_bottom );
+        final Rect visible_rect = new Rect( visible_left, visible_top, visible_right, visible_bottom );
+        runOnUiThread( new Runnable() {
+            public void run() { window_pos_changed( hwnd, flags, insert_after, owner, style,
+                                                    window_rect, client_rect, visible_rect ); }} );
     }
 }

@@ -407,6 +407,9 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
         data->whole_rect = data->window_rect;
         GetClientRect( hwnd, &data->client_rect );
         MapWindowPoints( hwnd, parent, (POINT *)&data->client_rect, 2 );
+        ioctl_window_pos_changed( hwnd, &data->window_rect, &data->client_rect, &data->whole_rect,
+                                  GetWindowLongW( hwnd, GWL_STYLE ), SWP_NOACTIVATE,
+                                  GetWindow( hwnd, GW_HWNDPREV ), GetWindow( hwnd, GW_OWNER ));
     }
     return data;
 }
@@ -443,6 +446,7 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 {
     struct android_win_data *data;
     DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
+    HWND owner = 0;
 
     if (!(data = get_win_data( hwnd ))) return;
 
@@ -450,10 +454,14 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
     data->whole_rect  = *visible_rect;
     data->client_rect = *client_rect;
 
+    if (!data->parent) owner = GetWindow( hwnd, GW_OWNER );
     release_win_data( data );
 
-    TRACE( "win %p window %s client %s style %08x flags %08x\n",
-           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect), new_style, swp_flags );
+    TRACE( "win %p window %s client %s style %08x owner %p flags %08x\n", hwnd,
+           wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect), new_style, owner, swp_flags );
+
+    ioctl_window_pos_changed( hwnd, window_rect, client_rect, visible_rect,
+                              new_style, swp_flags, insert_after, owner );
 }
 
 
