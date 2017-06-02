@@ -390,6 +390,7 @@ const struct gdi_dc_funcs * CDECL ANDROID_get_gdi_driver( unsigned int version )
 static const JNINativeMethod methods[] =
 {
     { "wine_desktop_changed", "(II)V", desktop_changed },
+    { "wine_surface_changed", "(ILandroid/view/Surface;)V", surface_changed },
 };
 
 #define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
@@ -399,18 +400,27 @@ static const JNINativeMethod methods[] =
     } while(0)
 
 DECL_FUNCPTR( __android_log_print );
+DECL_FUNCPTR( ANativeWindow_fromSurface );
+DECL_FUNCPTR( ANativeWindow_release );
 
 static void load_android_libs(void)
 {
-    void *liblog;
+    void *libandroid, *liblog;
     char error[1024];
 
+    if (!(libandroid = wine_dlopen( "libandroid.so", RTLD_GLOBAL, error, sizeof(error) )))
+    {
+        ERR( "failed to load libandroid.so: %s\n", error );
+        return;
+    }
     if (!(liblog = wine_dlopen( "liblog.so", RTLD_GLOBAL, error, sizeof(error) )))
     {
         ERR( "failed to load liblog.so: %s\n", error );
         return;
     }
     LOAD_FUNCPTR( liblog, __android_log_print );
+    LOAD_FUNCPTR( libandroid, ANativeWindow_fromSurface );
+    LOAD_FUNCPTR( libandroid, ANativeWindow_release );
 }
 
 #undef DECL_FUNCPTR

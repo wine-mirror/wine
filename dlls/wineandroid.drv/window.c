@@ -184,6 +184,35 @@ void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height )
 
 
 /***********************************************************************
+ *           surface_changed
+ *
+ * JNI callback, runs in the context of the Java thread.
+ */
+void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface )
+{
+    union event_data data;
+
+    memset( &data, 0, sizeof(data) );
+    data.surface.hwnd = LongToHandle( win );
+    if (surface)
+    {
+        int width, height;
+        ANativeWindow *win = pANativeWindow_fromSurface( env, surface );
+
+        if (win->query( win, NATIVE_WINDOW_WIDTH, &width ) < 0) width = 0;
+        if (win->query( win, NATIVE_WINDOW_HEIGHT, &height ) < 0) height = 0;
+        data.surface.window = win;
+        data.surface.width = width;
+        data.surface.height = height;
+        p__android_log_print( ANDROID_LOG_INFO, "wine", "surface_changed: %p %ux%u",
+                              data.surface.hwnd, width, height );
+    }
+    data.type = SURFACE_CHANGED;
+    send_event( &data );
+}
+
+
+/***********************************************************************
  *           init_event_queue
  */
 static void init_event_queue(void)
@@ -255,7 +284,14 @@ static int process_events( DWORD mask )
 
     LIST_FOR_EACH_ENTRY_SAFE( event, next, &event_queue, struct java_event, entry )
     {
-        if (!(mask & QS_SENDMESSAGE)) continue;  /* skip it */
+        switch (event->data.type)
+        {
+        case SURFACE_CHANGED:
+            break;  /* always process it to unblock other threads */
+        default:
+            if (mask & QS_SENDMESSAGE) break;
+            continue;  /* skip it */
+        }
 
         /* remove it first, in case we process events recursively */
         list_remove( &event->entry );
@@ -270,6 +306,13 @@ static int process_events( DWORD mask )
             init_monitors( screen_width, screen_height );
             SetWindowPos( GetDesktopWindow(), 0, 0, 0, screen_width, screen_height,
                           SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
+            break;
+
+        case SURFACE_CHANGED:
+            TRACE("SURFACE_CHANGED %p %p size %ux%u\n", event->data.surface.hwnd,
+                  event->data.surface.window, event->data.surface.width, event->data.surface.height );
+
+            register_native_window( event->data.surface.hwnd, event->data.surface.window );
             break;
 
         default:

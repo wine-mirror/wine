@@ -59,6 +59,13 @@ enum android_ioctl
     NB_IOCTLS
 };
 
+/* data about the native window in the context of the Java process */
+struct native_win_data
+{
+    struct ANativeWindow       *parent;
+    HWND                        hwnd;
+};
+
 struct ioctl_header
 {
     int  hwnd;
@@ -101,6 +108,86 @@ static inline void wrap_java_call(void) { }
 static inline void unwrap_java_call(void) { }
 #endif  /* __i386__ */
 
+static struct native_win_data *data_map[65536];
+
+static unsigned int data_map_idx( HWND hwnd )
+{
+    return LOWORD(hwnd);
+}
+
+static struct native_win_data *get_native_win_data( HWND hwnd )
+{
+    struct native_win_data *data = data_map[data_map_idx( hwnd )];
+
+    if (data && data->hwnd == hwnd) return data;
+    WARN( "unknown win %p\n", hwnd );
+    return NULL;
+}
+
+static struct native_win_data *get_ioctl_native_win_data( const struct ioctl_header *hdr )
+{
+    return get_native_win_data( LongToHandle(hdr->hwnd) );
+}
+
+static void release_native_window( struct native_win_data *data )
+{
+    if (data->parent) pANativeWindow_release( data->parent );
+}
+
+static void free_native_win_data( struct native_win_data *data )
+{
+    unsigned int idx = data_map_idx( data->hwnd );
+
+    release_native_window( data );
+    HeapFree( GetProcessHeap(), 0, data );
+    data_map[idx] = NULL;
+}
+
+static struct native_win_data *create_native_win_data( HWND hwnd )
+{
+    unsigned int idx = data_map_idx( hwnd );
+    struct native_win_data *data = data_map[idx];
+
+    if (data)
+    {
+        WARN( "data for %p not freed correctly\n", data->hwnd );
+        free_native_win_data( data );
+    }
+    if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) ))) return NULL;
+    data->hwnd = hwnd;
+    data_map[idx] = data;
+    return data;
+}
+
+static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    HWND hwnd = (HWND)arg1;
+    struct ANativeWindow *win = (struct ANativeWindow *)arg2;
+    struct native_win_data *data = get_native_win_data( hwnd );
+
+    if (!data || data->parent == win)
+    {
+        if (win) pANativeWindow_release( win );
+        TRACE( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
+        return;
+    }
+
+    release_native_window( data );
+    data->parent = win;
+    if (win)
+    {
+        wrap_java_call();
+        win->perform( win, NATIVE_WINDOW_API_CONNECT, NATIVE_WINDOW_API_CPU );
+        unwrap_java_call();
+    }
+    TRACE( "%p -> %p win %p\n", hwnd, data, win );
+}
+
+/* register a native window received from the Java side for use in ioctls */
+void register_native_window( HWND hwnd, struct ANativeWindow *win )
+{
+    NtQueueApcThread( thread, register_native_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, 0 );
+}
 
 static int status_to_android_error( NTSTATUS status )
 {
@@ -164,9 +251,13 @@ static NTSTATUS createWindow_ioctl( void *data, DWORD in_size, DWORD out_size, U
     static jmethodID method;
     jobject object;
     struct ioctl_android_create_window *res = data;
+    struct native_win_data *win_data;
     DWORD pid = current_client_id();
 
     if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    if (!(win_data = create_native_win_data( LongToHandle(res->hdr.hwnd) )))
+        return STATUS_NO_MEMORY;
 
     TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
 
@@ -183,8 +274,11 @@ static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, 
     static jmethodID method;
     jobject object;
     struct ioctl_android_destroy_window *res = data;
+    struct native_win_data *win_data;
 
     if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
 
     TRACE( "hwnd %08x\n", res->hdr.hwnd );
 
@@ -193,6 +287,7 @@ static NTSTATUS destroyWindow_ioctl( void *data, DWORD in_size, DWORD out_size, 
     wrap_java_call();
     (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd );
     unwrap_java_call();
+    free_native_win_data( win_data );
     return STATUS_SUCCESS;
 }
 

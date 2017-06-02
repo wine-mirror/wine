@@ -50,6 +50,7 @@ public class WineActivity extends Activity
 {
     private native String wine_init( String[] cmdline, String[] env );
     public native void wine_desktop_changed( int width, int height );
+    public native void wine_surface_changed( int hwnd, Surface surface );
 
     private final String LOGTAG = "wine";
     private ProgressDialog progress_dialog;
@@ -346,6 +347,7 @@ public class WineActivity extends Activity
             if (surftex == null) window_surface = null;
             else if (window_surface == null) window_surface = new Surface( surftex );
             Log.i( LOGTAG, String.format( "set window surface hwnd %08x %s", hwnd, window_surface ));
+            wine_surface_changed( hwnd, window_surface );
         }
     }
 

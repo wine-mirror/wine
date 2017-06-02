@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <jni.h>
 #include <android/log.h>
+#include <android/native_window_jni.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -41,6 +42,8 @@
 
 #define DECL_FUNCPTR(f) extern typeof(f) * p##f DECLSPEC_HIDDEN
 DECL_FUNCPTR( __android_log_print );
+DECL_FUNCPTR( ANativeWindow_fromSurface );
+DECL_FUNCPTR( ANativeWindow_release );
 #undef DECL_FUNCPTR
 
 
@@ -49,6 +52,7 @@ DECL_FUNCPTR( __android_log_print );
  */
 
 extern void start_android_device(void) DECLSPEC_HIDDEN;
+extern void register_native_window( HWND hwnd, struct ANativeWindow *win ) DECLSPEC_HIDDEN;
 extern void create_ioctl_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void destroy_ioctl_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
@@ -69,10 +73,12 @@ extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
 
 /* JNI entry points */
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height ) DECLSPEC_HIDDEN;
+extern void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface ) DECLSPEC_HIDDEN;
 
 enum event_type
 {
     DESKTOP_CHANGED,
+    SURFACE_CHANGED,
 };
 
 union event_data
@@ -84,6 +90,14 @@ union event_data
         unsigned int    width;
         unsigned int    height;
     } desktop;
+    struct
+    {
+        enum event_type type;
+        HWND            hwnd;
+        ANativeWindow  *window;
+        unsigned int    width;
+        unsigned int    height;
+    } surface;
 };
 
 int send_event( const union event_data *data );
