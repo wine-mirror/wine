@@ -4312,12 +4312,13 @@ static const BOOL test_effect_preshader_bconsts[] =
 
 static void test_effect_preshader_clear_pbool_consts(IDirect3DDevice9 *device)
 {
-    BOOL bval = FALSE;
+    BOOL bval;
     unsigned int i;
     HRESULT hr;
 
     for (i = 0; i < 16; ++i)
     {
+        bval = i < ARRAY_SIZE(test_effect_preshader_bconsts) ? !test_effect_preshader_bconsts[i] : FALSE;
         hr = IDirect3DDevice9_SetPixelShaderConstantB(device, i, &bval, 1);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
     }
@@ -4357,7 +4358,7 @@ static void test_effect_preshader_compare_pbool_consts_(unsigned int line, IDire
             }
             else
             {
-                ok_(__FILE__, line)(!bdata[i],
+                ok_(__FILE__, line)(bdata[i] == !test_effect_preshader_bconsts[i],
                         "Pixel shader boolean constants updated unexpectedly, parameter %s.\n", updated_param);
             }
         }
