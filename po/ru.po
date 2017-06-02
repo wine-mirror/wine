@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-05-25 02:24+0300\n"
+"PO-Revision-Date: 2017-06-02 09:06+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -11868,10 +11868,6 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Содержит команды для доступа к часто используемым разделам"
 
 #: regedit.rc:165
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
@@ -12113,8 +12109,6 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: некорректный формат строки.\n"
 
 #: regedit.rc:189
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "Выход из редактора реестра"
 
@@ -12131,10 +12125,8 @@ msgid "Shows or hides the status bar"
 msgstr "Показывает/скрывает строку состояния"
 
 #: regedit.rc:193
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
-msgstr "Перемещает разделитель между двумя панелями"
+msgstr "Перемещение разделителя панелей"
 
 #: regedit.rc:194
 msgid "Refreshes the window"
@@ -12166,21 +12158,19 @@ msgstr "Изменяет значение параметра"
 
 #: regedit.rc:173
 msgid "Adds a new key"
-msgstr "Добавляет новый раздел"
+msgstr "Добавление нового раздела"
 
 #: regedit.rc:174
 msgid "Adds a new string value"
-msgstr "Добавляет новый строковый параметр"
+msgstr "Добавление строкового параметра"
 
 #: regedit.rc:175
 msgid "Adds a new binary value"
-msgstr "Добавляет новый двоичный параметр"
+msgstr "Добавление двоичного параметра"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Добавляет новый двоичный параметр"
+msgstr "Добавление 32-битного параметра"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12195,10 +12185,8 @@ msgid "Prints all or part of the registry"
 msgstr "Печатает весь реестр или его часть"
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Редактор реестра"
+msgstr "Отображение справки по редактору реестра"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12241,26 +12229,20 @@ msgid "Unable to query the registry key '%1'."
 msgstr "Не удалось прочитать ключ реестра «%1»."
 
 #: regedit.rc:172
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Изменяет значение параметра"
+msgstr "Изменение значения параметра в двоичном виде"
 
 #: regedit.rc:177
 msgid "Adds a new multi-string value"
-msgstr "Добавляет новое многостроковое значение"
+msgstr "Добавление многострочного параметра"
 
 #: regedit.rc:200
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
-msgstr "Экспортирует выделенную ветку реестра в текстовый файл"
+msgstr "Экспортирует выбранную ветку реестра в текстовый файл"
 
 #: regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Добавляет новый строковый параметр"
+msgstr "Добавление расширяемого строкового параметра"
 
 #: regedit.rc:213
 msgid "Confirm Key Delete"
