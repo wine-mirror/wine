@@ -4254,7 +4254,7 @@ static const D3DXVECTOR4 test_effect_preshader_fvect_v[] =
     {91.0f,  0.0f,  0.0f,  0.0f},
     {4.0f,   5.0f,  6.0f,  7.0f},
 };
-#define TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE (sizeof(unsigned int) * 8)
+#define TEST_EFFECT_BITMASK_BLOCK_SIZE (sizeof(unsigned int) * 8)
 
 #define test_effect_preshader_compare_vconsts(a, b, c) \
         test_effect_preshader_compare_vconsts_(__LINE__, a, b, c)
@@ -4278,8 +4278,8 @@ static void test_effect_preshader_compare_vconsts_(unsigned int line, IDirect3DD
     {
         for (i = 0; i < ARRAY_SIZE(test_effect_preshader_fvect_v); ++i)
         {
-            if (const_updated_mask[i / TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE]
-                    & (1u << (i % TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE)))
+            if (const_updated_mask[i / TEST_EFFECT_BITMASK_BLOCK_SIZE]
+                    & (1u << (i % TEST_EFFECT_BITMASK_BLOCK_SIZE)))
             {
                 ok_(__FILE__, line)(!memcmp(&fdata[i], &test_effect_preshader_fvect_v[i], sizeof(fdata[i])),
                         "Vertex shader float constants do not match, expected (%g, %g, %g, %g), \
@@ -4305,6 +4305,11 @@ got (%g, %g, %g, %g), parameter %s.\n",
     }
 }
 
+static const BOOL test_effect_preshader_bconsts[] =
+{
+    TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE
+};
+
 static void test_effect_preshader_clear_pbool_consts(IDirect3DDevice9 *device)
 {
     BOOL bval = FALSE;
@@ -4315,6 +4320,52 @@ static void test_effect_preshader_clear_pbool_consts(IDirect3DDevice9 *device)
     {
         hr = IDirect3DDevice9_SetPixelShaderConstantB(device, i, &bval, 1);
         ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    }
+}
+
+#define test_effect_preshader_compare_pbool_consts(a, b, c) \
+        test_effect_preshader_compare_pbool_consts_(__LINE__, a, b, c)
+static void test_effect_preshader_compare_pbool_consts_(unsigned int line, IDirect3DDevice9 *device,
+        const unsigned int *const_updated_mask, const char *updated_param)
+{
+    unsigned int i;
+    BOOL bdata[16];
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_GetPixelShaderConstantB(device, 0, bdata, ARRAY_SIZE(bdata));
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+
+    if (!const_updated_mask)
+    {
+        for (i = 0; i < ARRAY_SIZE(test_effect_preshader_bconsts); ++i)
+        {
+            ok_(__FILE__, line)(!bdata[i] == !test_effect_preshader_bconsts[i],
+                    "Pixel shader boolean constants do not match, expected %#x, got %#x, i %u.\n",
+                    test_effect_preshader_bconsts[i], bdata[i], i);
+        }
+    }
+    else
+    {
+        for (i = 0; i < ARRAY_SIZE(test_effect_preshader_bconsts); ++i)
+        {
+            if (const_updated_mask[i / TEST_EFFECT_BITMASK_BLOCK_SIZE]
+                    & (1u << (i % TEST_EFFECT_BITMASK_BLOCK_SIZE)))
+            {
+                ok_(__FILE__, line)(!bdata[i] == !test_effect_preshader_bconsts[i],
+                        "Pixel shader boolean constants do not match, expected %#x, got %#x, i %u, parameter %s.\n",
+                        test_effect_preshader_bconsts[i], bdata[i], i, updated_param);
+            }
+            else
+            {
+                ok_(__FILE__, line)(!bdata[i],
+                        "Pixel shader boolean constants updated unexpectedly, parameter %s.\n", updated_param);
+            }
+        }
+    }
+
+    for (; i < 16; ++i)
+    {
+        ok_(__FILE__, line)(!bdata[i], "Got result %#x, boolean register value %u.\n", hr, bdata[i]);
     }
 }
 
@@ -4337,10 +4388,6 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
         {11.0f, 21.0f, 31.0f, 0.0f},
         {12.0f, 22.0f, 32.0f, 0.0f}
     };
-    static const BOOL test_effect_preshader_bconsts[] =
-    {
-        TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE
-    };
     static const int test_effect_preshader_iconsts[][4] =
     {
         {4, 3, 2, 1}
@@ -4353,10 +4400,8 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     D3DXHANDLE par;
     unsigned int npasses;
     DWORD value;
-    BOOL bval;
     D3DXVECTOR4 fdata[ARRAY_SIZE(test_effect_preshader_fvect_p)];
     int idata[ARRAY_SIZE(test_effect_preshader_iconsts)][4];
-    BOOL bdata[ARRAY_SIZE(test_effect_preshader_bconsts)];
     IDirect3DVertexShader9 *vshader;
     unsigned int i;
     D3DCAPS9 caps;
@@ -4435,17 +4480,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
                 "Pixel shader integer constants do not match.\n");
     }
 
-    hr = IDirect3DDevice9_GetPixelShaderConstantB(device, 0, bdata,
-            ARRAY_SIZE(test_effect_preshader_bconsts));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    for (i = 0; i < ARRAY_SIZE(test_effect_preshader_bconsts); ++i)
-        ok(!bdata[i] == !test_effect_preshader_bconsts[i],
-                "Pixel shader boolean constants do not match.\n");
-    for (; i < 16; ++i)
-    {
-        hr = IDirect3DDevice9_GetPixelShaderConstantB(device, i, &bval, 1);
-        ok(hr == D3D_OK && !bval, "Got result %#x, boolean register value %u.\n", hr, bval);
-    }
+    test_effect_preshader_compare_pbool_consts(device, NULL, NULL);
 
     test_effect_preshader_op_results(device, NULL, NULL);
 
@@ -5075,7 +5110,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     {
         const char *param_name;
         const unsigned int const_updated_mask[(ARRAY_SIZE(test_effect_preshader_fvect_v)
-                + TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE - 1) / TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE];
+                + TEST_EFFECT_BITMASK_BLOCK_SIZE - 1) / TEST_EFFECT_BITMASK_BLOCK_SIZE];
     }
     check_vconsts_parameters[] =
     {
@@ -5093,7 +5128,7 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
         {"ts3",        {0x00000fc0, 0x00000000}},
     };
     static const unsigned int const_no_update_mask[(ARRAY_SIZE(test_effect_preshader_fvect_v)
-            + TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE - 1) / TEST_EFFECT_FVECT_BITMASK_BLOCK_SIZE];
+            + TEST_EFFECT_BITMASK_BLOCK_SIZE - 1) / TEST_EFFECT_BITMASK_BLOCK_SIZE];
     static const D3DLIGHT9 light_filler = {D3DLIGHT_POINT};
 
     ID3DXEffect *effect;
