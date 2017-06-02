@@ -449,4 +449,16 @@ static inline void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2
     dst->y = x * matrix->_12 + y * matrix->_22 + matrix->_32;
 }
 
+static inline void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
+{
+    if (point->x < dst->left)
+        dst->left = point->x;
+    if (point->x > dst->right)
+        dst->right = point->x;
+    if (point->y < dst->top)
+        dst->top = point->y;
+    if (point->y > dst->bottom)
+        dst->bottom = point->y;
+}
+
 #endif /* __WINE_D2D1_PRIVATE_H */

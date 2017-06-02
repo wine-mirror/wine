@@ -169,6 +169,14 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
+static BOOL compare_rect(const D2D1_RECT_F *rect, float left, float top, float right, float bottom, unsigned int ulps)
+{
+    return compare_float(rect->left, left, ulps)
+            && compare_float(rect->top, top, ulps)
+            && compare_float(rect->right, right, ulps)
+            && compare_float(rect->bottom, bottom, ulps);
+}
+
 static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
         unsigned int w, unsigned int h, const char *ref_sha1)
 {
@@ -1831,11 +1839,13 @@ static void test_path_geometry(void)
 static void test_rectangle_geometry(void)
 {
     ID2D1RectangleGeometry *geometry;
+    D2D1_MATRIX_3X2_F matrix;
     D2D1_RECT_F rect, rect2;
     ID2D1Factory *factory;
     D2D1_POINT_2F point;
     BOOL contains;
     HRESULT hr;
+    BOOL match;
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -1844,7 +1854,8 @@ static void test_rectangle_geometry(void)
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
     ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
-    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    match = compare_rect(&rect2, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect2.left, rect2.top, rect2.right, rect2.bottom);
     ID2D1RectangleGeometry_Release(geometry);
 
@@ -1852,7 +1863,8 @@ static void test_rectangle_geometry(void)
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
     ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
-    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    match = compare_rect(&rect2, 50.0f, 0.0f, 40.0f, 100.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect2.left, rect2.top, rect2.right, rect2.bottom);
     ID2D1RectangleGeometry_Release(geometry);
 
@@ -1860,7 +1872,8 @@ static void test_rectangle_geometry(void)
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
     ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
-    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    match = compare_rect(&rect2, 0.0f, 100.0f, 40.0f, 50.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect2.left, rect2.top, rect2.right, rect2.bottom);
     ID2D1RectangleGeometry_Release(geometry);
 
@@ -1868,7 +1881,8 @@ static void test_rectangle_geometry(void)
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, &geometry);
     ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
     ID2D1RectangleGeometry_GetRect(geometry, &rect2);
-    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+    match = compare_rect(&rect2, 50.0f, 100.0f, 40.0f, 50.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
             rect2.left, rect2.top, rect2.right, rect2.bottom);
     ID2D1RectangleGeometry_Release(geometry);
 
@@ -1914,6 +1928,41 @@ static void test_rectangle_geometry(void)
     hr = ID2D1RectangleGeometry_FillContainsPoint(geometry, point, NULL, 0.0f, &contains);
     ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
     ok(!!contains, "Got wrong hit test result %d.\n", contains);
+
+    /* Test GetBounds(). */
+    hr = ID2D1RectangleGeometry_GetBounds(geometry, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, 0.0f, 0.0f, 10.0f, 20.0f, 0);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 20.0f, 30.0f);
+    scale_matrix(&matrix, 3.0f, 2.0f);
+    rotate_matrix(&matrix, M_PI / -5.0f);
+    hr = ID2D1RectangleGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, 2.00000000e+01f, 1.82442951e+01f, 7.95376282e+01f, 6.23606796e+01f, 0);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 25.0f, 15.0f);
+    scale_matrix(&matrix, 0.0f, 2.0f);
+    hr = ID2D1RectangleGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, 25.0f, 15.0f, 25.0f, 55.0f, 0);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 30.0f, 45.0f);
+    scale_matrix(&matrix, 0.5f, 0.0f);
+    hr = ID2D1RectangleGeometry_GetBounds(geometry, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get bounds.\n");
+    match = compare_rect(&rect, 30.0f, 45.0f, 35.0f, 45.0f, 0);
+    ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
 
     ID2D1RectangleGeometry_Release(geometry);
 

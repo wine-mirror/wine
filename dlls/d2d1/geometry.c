@@ -510,18 +510,6 @@ static BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t element_
     return TRUE;
 }
 
-static void d2d_figure_update_bounds(struct d2d_figure *figure, D2D1_POINT_2F vertex)
-{
-    if (vertex.x < figure->bounds.left)
-        figure->bounds.left = vertex.x;
-    if (vertex.x > figure->bounds.right)
-        figure->bounds.right = vertex.x;
-    if (vertex.y < figure->bounds.top)
-        figure->bounds.top = vertex.y;
-    if (vertex.y > figure->bounds.bottom)
-        figure->bounds.bottom = vertex.y;
-}
-
 static BOOL d2d_figure_insert_vertex(struct d2d_figure *figure, size_t idx, D2D1_POINT_2F vertex)
 {
     if (!d2d_array_reserve((void **)&figure->vertices, &figure->vertices_size,
@@ -544,7 +532,7 @@ static BOOL d2d_figure_insert_vertex(struct d2d_figure *figure, size_t idx, D2D1
             (figure->vertex_count - idx) * sizeof(*figure->vertex_types));
     figure->vertices[idx] = vertex;
     figure->vertex_types[idx] = D2D_VERTEX_TYPE_NONE;
-    d2d_figure_update_bounds(figure, vertex);
+    d2d_rect_expand(&figure->bounds, &vertex);
     ++figure->vertex_count;
     return TRUE;
 }
@@ -573,7 +561,7 @@ static BOOL d2d_figure_add_vertex(struct d2d_figure *figure, D2D1_POINT_2F verte
 
     figure->vertices[figure->vertex_count] = vertex;
     figure->vertex_types[figure->vertex_count] = D2D_VERTEX_TYPE_NONE;
-    d2d_figure_update_bounds(figure, vertex);
+    d2d_rect_expand(&figure->bounds, &vertex);
     ++figure->vertex_count;
     return TRUE;
 }
@@ -2756,9 +2744,34 @@ static void STDMETHODCALLTYPE d2d_rectangle_geometry_GetFactory(ID2D1RectangleGe
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_GetBounds(ID2D1RectangleGeometry *iface,
         const D2D1_MATRIX_3X2_F *transform, D2D1_RECT_F *bounds)
 {
-    FIXME("iface %p, transform %p, bounds %p stub!\n", iface, transform, bounds);
+    struct d2d_geometry *geometry = impl_from_ID2D1RectangleGeometry(iface);
+    D2D1_RECT_F *rect;
+    D2D1_POINT_2F p;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, transform %p, bounds %p.\n", iface, transform, bounds);
+
+    rect = &geometry->u.rectangle.rect;
+    if (!transform)
+    {
+        *bounds = *rect;
+        return S_OK;
+    }
+
+    bounds->left = FLT_MAX;
+    bounds->top = FLT_MAX;
+    bounds->right = -FLT_MAX;
+    bounds->bottom = -FLT_MAX;
+
+    d2d_point_transform(&p, transform, rect->left, rect->top);
+    d2d_rect_expand(bounds, &p);
+    d2d_point_transform(&p, transform, rect->left, rect->bottom);
+    d2d_rect_expand(bounds, &p);
+    d2d_point_transform(&p, transform, rect->right, rect->bottom);
+    d2d_rect_expand(bounds, &p);
+    d2d_point_transform(&p, transform, rect->right, rect->top);
+    d2d_rect_expand(bounds, &p);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_GetWidenedBounds(ID2D1RectangleGeometry *iface,
