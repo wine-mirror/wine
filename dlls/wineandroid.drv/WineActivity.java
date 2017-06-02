@@ -25,10 +25,13 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import java.io.BufferedReader;
@@ -286,6 +289,9 @@ public class WineActivity extends Activity
         protected boolean visible;
         protected Rect visible_rect;
         protected Rect client_rect;
+        protected WineWindow parent;
+        protected WineView window_view;
+        protected Surface window_surface;
 
         public WineWindow( int w, WineWindow parent )
         {
@@ -295,7 +301,13 @@ public class WineActivity extends Activity
             style = 0;
             visible = false;
             visible_rect = client_rect = new Rect( 0, 0, 0, 0 );
+            this.parent = parent;
             win_map.put( w, this );
+            if (parent == null)
+            {
+                window_view = new WineView( WineActivity.this, this );
+                window_view.layout( 0, 0, 1, 1 ); // make sure the surface gets created
+            }
         }
 
         public void destroy()
@@ -315,12 +327,71 @@ public class WineActivity extends Activity
             Log.i( LOGTAG, String.format( "pos changed hwnd %08x after %08x owner %08x style %08x win %s client %s visible %s flags %08x",
                                           hwnd, insert_after, owner, style, window_rect, client_rect, visible_rect, flags ));
 
+            if (parent == null)
+            {
+                window_view.layout( visible_rect.left, visible_rect.top, visible_rect.right, visible_rect.bottom );
+                if (!visible && (style & WS_VISIBLE) != 0) top_view.addView( window_view );
+                else if (visible && (style & WS_VISIBLE) == 0) top_view.removeView( window_view );
+            }
             visible = (style & WS_VISIBLE) != 0;
         }
 
         public int get_hwnd()
         {
             return hwnd;
+        }
+
+        public void set_surface( SurfaceTexture surftex )
+        {
+            if (surftex == null) window_surface = null;
+            else if (window_surface == null) window_surface = new Surface( surftex );
+            Log.i( LOGTAG, String.format( "set window surface hwnd %08x %s", hwnd, window_surface ));
+        }
+    }
+
+    // View used for all Wine windows, backed by a TextureView
+
+    protected class WineView extends TextureView implements TextureView.SurfaceTextureListener
+    {
+        private WineWindow window;
+
+        public WineView( Context c, WineWindow win )
+        {
+            super( c );
+            window = win;
+            setSurfaceTextureListener( this );
+            setVisibility( VISIBLE );
+            setOpaque( false );
+        }
+
+        public WineWindow get_window()
+        {
+            return window;
+        }
+
+        public void onSurfaceTextureAvailable( SurfaceTexture surftex, int width, int height )
+        {
+            Log.i( LOGTAG, String.format( "onSurfaceTextureAvailable win %08x %dx%d",
+                                          window.hwnd, width, height ));
+            window.set_surface( surftex );
+        }
+
+        public void onSurfaceTextureSizeChanged( SurfaceTexture surftex, int width, int height )
+        {
+            Log.i( LOGTAG, String.format( "onSurfaceTextureSizeChanged win %08x %dx%d",
+                                          window.hwnd, width, height ));
+            window.set_surface( surftex );
+        }
+
+        public boolean onSurfaceTextureDestroyed( SurfaceTexture surftex )
+        {
+            Log.i( LOGTAG, String.format( "onSurfaceTextureDestroyed win %08x", window.hwnd ));
+            window.set_surface( null );
+            return true;
+        }
+
+        public void onSurfaceTextureUpdated(SurfaceTexture surftex)
+        {
         }
     }
 
