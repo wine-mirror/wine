@@ -1070,14 +1070,15 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
                     unsigned int *in;
                     unsigned int offset;
 
-                    offset = start_offset + i * info.major_stride + j;
-                    if (get_reg_offset(table, offset) >= rs->table_sizes[table])
+                    offset = i * info.major_stride + j;
+                    if (get_reg_offset(table, offset) >= const_set->register_count)
                     {
                         if (table != PRES_REGTAB_OBCONST)
-                            FIXME("Output offset exceeds table size, name %s, component %u.\n",
+                            FIXME("Output offset exceeds regiser count, name %s, component %u.\n",
                                     debugstr_a(param->name), i);
                         break;
                     }
+                    offset += start_offset;
                     if (info.transpose)
                         param_offset = i + j * info.major;
                     else
