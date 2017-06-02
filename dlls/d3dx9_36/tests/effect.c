@@ -5128,6 +5128,17 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
         {"arr2",       {0x60000000, 0x00000000}},
         {"ts3",        {0x00000fc0, 0x00000000}},
     };
+    static const struct
+    {
+        const char *param_name;
+        const unsigned int const_updated_mask[(ARRAY_SIZE(test_effect_preshader_bconsts)
+                + TEST_EFFECT_BITMASK_BLOCK_SIZE - 1) / TEST_EFFECT_BITMASK_BLOCK_SIZE];
+    }
+    check_bconsts_parameters[] =
+    {
+        {"mb2x3row", {0x0000001f}},
+        {"mb2x3column", {0x00000060}},
+    };
     static const unsigned int const_no_update_mask[(ARRAY_SIZE(test_effect_preshader_fvect_v)
             + TEST_EFFECT_BITMASK_BLOCK_SIZE - 1) / TEST_EFFECT_BITMASK_BLOCK_SIZE];
     static const D3DLIGHT9 light_filler = {D3DLIGHT_POINT};
@@ -5139,6 +5150,8 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     int ivect[4];
     D3DXVECTOR4 fvect;
     IDirect3DVertexShader9 *vshader;
+    unsigned char buffer[256];
+
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
@@ -5180,8 +5193,6 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
 
     for (i = 0; i < ARRAY_SIZE(check_vconsts_parameters); ++i)
     {
-        unsigned char buffer[256];
-
         test_effect_preshader_clear_vconsts(device);
         param = effect->lpVtbl->GetParameterByName(effect, NULL, check_vconsts_parameters[i].param_name);
         ok(!!param, "GetParameterByName failed.\n");
@@ -5194,6 +5205,22 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
 
         test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[i].const_updated_mask,
                 check_vconsts_parameters[i].param_name);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(check_bconsts_parameters); ++i)
+    {
+        test_effect_preshader_clear_pbool_consts(device);
+        param = effect->lpVtbl->GetParameterByName(effect, NULL, check_bconsts_parameters[i].param_name);
+        ok(!!param, "GetParameterByName failed.\n");
+        hr = effect->lpVtbl->GetValue(effect, param, buffer, sizeof(buffer));
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        hr = effect->lpVtbl->SetValue(effect, param, buffer, sizeof(buffer));
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        hr = effect->lpVtbl->CommitChanges(effect);
+        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+
+        test_effect_preshader_compare_pbool_consts(device, check_bconsts_parameters[i].const_updated_mask,
+                check_bconsts_parameters[i].param_name);
     }
 
     test_effect_preshader_clear_vconsts(device);
