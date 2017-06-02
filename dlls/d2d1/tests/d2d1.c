@@ -4536,6 +4536,7 @@ static void test_layer(void)
     ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Layer *layer;
+    D2D1_SIZE_F size;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -4561,6 +4562,17 @@ static void test_layer(void)
     ID2D1Layer_GetFactory(layer, &layer_factory);
     ok(layer_factory == factory, "Got unexpected layer factory %p, expected %p.\n", layer_factory, factory);
     ID2D1Factory_Release(layer_factory);
+    size = ID2D1Layer_GetSize(layer);
+    ok(size.width == 0.0f, "Got unexpected width %.8e.\n", size.width);
+    ok(size.height == 0.0f, "Got unexpected height %.8e.\n", size.height);
+    ID2D1Layer_Release(layer);
+
+    set_size_f(&size, 800.0f, 600.0f);
+    hr = ID2D1RenderTarget_CreateLayer(rt, &size, &layer);
+    ok(SUCCEEDED(hr), "Failed to create layer, hr %#x.\n", hr);
+    size = ID2D1Layer_GetSize(layer);
+    ok(size.width == 800.0f, "Got unexpected width %.8e.\n", size.width);
+    ok(size.height == 600.0f, "Got unexpected height %.8e.\n", size.height);
     ID2D1Layer_Release(layer);
 
     ID2D1RenderTarget_Release(rt);

@@ -464,7 +464,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLayer(ID2D1RenderTa
 
     TRACE("iface %p, size %p, layer %p.\n", iface, size, layer);
 
-    if (SUCCEEDED(hr = d2d_layer_create(render_target->factory, &object)))
+    if (SUCCEEDED(hr = d2d_layer_create(render_target->factory, size, &object)))
         *layer = &object->ID2D1Layer_iface;
 
     return hr;

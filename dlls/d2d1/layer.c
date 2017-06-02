@@ -84,10 +84,11 @@ static void STDMETHODCALLTYPE d2d_layer_GetFactory(ID2D1Layer *iface, ID2D1Facto
 
 static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_layer_GetSize(ID2D1Layer *iface, D2D1_SIZE_F *size)
 {
-    FIXME("iface %p, size %p stub!\n", iface, size);
+    struct d2d_layer *layer = impl_from_ID2D1Layer(iface);
 
-    size->width = 0;
-    size->height = 0;
+    TRACE("iface %p, size %p.\n", iface, size);
+
+    *size = layer->size;
     return size;
 }
 
@@ -100,7 +101,7 @@ static const struct ID2D1LayerVtbl d2d_layer_vtbl =
     d2d_layer_GetSize,
 };
 
-HRESULT d2d_layer_create(ID2D1Factory *factory, struct d2d_layer **layer)
+HRESULT d2d_layer_create(ID2D1Factory *factory, const D2D1_SIZE_F *size, struct d2d_layer **layer)
 {
     if (!(*layer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**layer))))
         return E_OUTOFMEMORY;
@@ -108,6 +109,8 @@ HRESULT d2d_layer_create(ID2D1Factory *factory, struct d2d_layer **layer)
     (*layer)->ID2D1Layer_iface.lpVtbl = &d2d_layer_vtbl;
     (*layer)->refcount = 1;
     ID2D1Factory_AddRef((*layer)->factory = factory);
+    if (size)
+        (*layer)->size = *size;
 
     TRACE("Created layer %p.\n", *layer);
 

@@ -242,9 +242,10 @@ struct d2d_layer
     LONG refcount;
 
     ID2D1Factory *factory;
+    D2D1_SIZE_F size;
 };
 
-HRESULT d2d_layer_create(ID2D1Factory *factory, struct d2d_layer **layer) DECLSPEC_HIDDEN;
+HRESULT d2d_layer_create(ID2D1Factory *factory, const D2D1_SIZE_F *size, struct d2d_layer **layer) DECLSPEC_HIDDEN;
 
 struct d2d_mesh
 {
