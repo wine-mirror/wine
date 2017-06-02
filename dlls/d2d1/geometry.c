@@ -2837,10 +2837,33 @@ static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_Simplify(ID2D1RectangleG
         D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
 {
-    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1RectangleGeometry(iface);
+    D2D1_RECT_F *rect = &geometry->u.rectangle.rect;
+    D2D1_POINT_2F p[4];
+    unsigned int i;
+
+    TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
             iface, option, transform, tolerance, sink);
 
-    return E_NOTIMPL;
+    d2d_point_set(&p[0], rect->left, rect->top);
+    d2d_point_set(&p[1], rect->right, rect->top);
+    d2d_point_set(&p[2], rect->right, rect->bottom);
+    d2d_point_set(&p[3], rect->left, rect->bottom);
+
+    if (transform)
+    {
+        for (i = 0; i < ARRAY_SIZE(p); ++i)
+        {
+            d2d_point_transform(&p[i], transform, p[i].x, p[i].y);
+        }
+    }
+
+    ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_ALTERNATE);
+    ID2D1SimplifiedGeometrySink_BeginFigure(sink, p[0], D2D1_FIGURE_BEGIN_FILLED);
+    ID2D1SimplifiedGeometrySink_AddLines(sink, &p[1], 3);
+    ID2D1SimplifiedGeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_Tessellate(ID2D1RectangleGeometry *iface,

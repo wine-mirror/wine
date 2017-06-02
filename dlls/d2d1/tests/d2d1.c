@@ -33,6 +33,47 @@ struct figure
     unsigned int span_count;
 };
 
+struct geometry_sink
+{
+    ID2D1SimplifiedGeometrySink ID2D1SimplifiedGeometrySink_iface;
+
+    struct geometry_figure
+    {
+        D2D1_FIGURE_BEGIN begin;
+        D2D1_FIGURE_END end;
+        D2D1_POINT_2F start_point;
+        struct geometry_segment
+        {
+            enum
+            {
+                SEGMENT_BEZIER,
+                SEGMENT_LINE,
+            } type;
+            union
+            {
+                D2D1_BEZIER_SEGMENT bezier;
+                D2D1_POINT_2F line;
+            } u;
+        } *segments;
+        unsigned int segments_size;
+        unsigned int segment_count;
+    } *figures;
+    unsigned int figures_size;
+    unsigned int figure_count;
+
+    D2D1_FILL_MODE fill_mode;
+    BOOL closed;
+};
+
+struct expected_geometry_figure
+{
+    D2D1_FIGURE_BEGIN begin;
+    D2D1_FIGURE_END end;
+    D2D1_POINT_2F start_point;
+    unsigned int segment_count;
+    const struct geometry_segment *segments;
+};
+
 static void set_point(D2D1_POINT_2F *point, float x, float y)
 {
     point->x = x;
@@ -169,12 +210,26 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
+static BOOL compare_point(const D2D1_POINT_2F *point, float x, float y, unsigned int ulps)
+{
+    return compare_float(point->x, x, ulps)
+            && compare_float(point->y, y, ulps);
+}
+
 static BOOL compare_rect(const D2D1_RECT_F *rect, float left, float top, float right, float bottom, unsigned int ulps)
 {
     return compare_float(rect->left, left, ulps)
             && compare_float(rect->top, top, ulps)
             && compare_float(rect->right, right, ulps)
             && compare_float(rect->bottom, bottom, ulps);
+}
+
+static BOOL compare_bezier_segment(const D2D1_BEZIER_SEGMENT *b, float x1, float y1,
+        float x2, float y2, float x3, float y3, unsigned int ulps)
+{
+    return compare_point(&b->point1, x1, y1, ulps)
+            && compare_point(&b->point2, x2, y2, ulps)
+            && compare_point(&b->point3, x3, y3, ulps);
 }
 
 static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
@@ -613,6 +668,164 @@ static ID2D1RenderTarget *create_render_target(IDXGISurface *surface)
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
     return create_render_target_desc(surface, &desc);
+}
+
+static inline struct geometry_sink *impl_from_ID2D1SimplifiedGeometrySink(ID2D1SimplifiedGeometrySink *iface)
+{
+    return CONTAINING_RECORD(iface, struct geometry_sink, ID2D1SimplifiedGeometrySink_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE geometry_sink_QueryInterface(ID2D1SimplifiedGeometrySink *iface,
+        REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_ID2D1SimplifiedGeometrySink)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE geometry_sink_AddRef(ID2D1SimplifiedGeometrySink *iface)
+{
+    return 0;
+}
+
+static ULONG STDMETHODCALLTYPE geometry_sink_Release(ID2D1SimplifiedGeometrySink *iface)
+{
+    return 0;
+}
+
+static void STDMETHODCALLTYPE geometry_sink_SetFillMode(ID2D1SimplifiedGeometrySink *iface, D2D1_FILL_MODE mode)
+{
+    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+
+    sink->fill_mode = mode;
+}
+
+static void STDMETHODCALLTYPE geometry_sink_SetSegmentFlags(ID2D1SimplifiedGeometrySink *iface,
+        D2D1_PATH_SEGMENT flags)
+{
+    ok(0, "Got unexpected segment flags %#x.\n", flags);
+}
+
+static void STDMETHODCALLTYPE geometry_sink_BeginFigure(ID2D1SimplifiedGeometrySink *iface,
+        D2D1_POINT_2F start_point, D2D1_FIGURE_BEGIN figure_begin)
+{
+    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_figure *figure;
+
+    if (sink->figure_count == sink->figures_size)
+    {
+        sink->figures_size *= 2;
+        sink->figures = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sink->figures,
+                sink->figures_size * sizeof(*sink->figures));
+    }
+    figure = &sink->figures[sink->figure_count++];
+
+    figure->begin = figure_begin;
+    figure->start_point = start_point;
+    figure->segments_size = 4;
+    figure->segments = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            figure->segments_size * sizeof(*figure->segments));
+}
+
+static struct geometry_segment *geometry_figure_add_segment(struct geometry_figure *figure)
+{
+    if (figure->segment_count == figure->segments_size)
+    {
+        figure->segments_size *= 2;
+        figure->segments = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, figure->segments,
+                figure->segments_size * sizeof(*figure->segments));
+    }
+    return &figure->segments[figure->segment_count++];
+}
+
+static void STDMETHODCALLTYPE geometry_sink_AddLines(ID2D1SimplifiedGeometrySink *iface,
+        const D2D1_POINT_2F *points, UINT32 count)
+{
+    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
+    struct geometry_segment *segment;
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
+    {
+        segment = geometry_figure_add_segment(figure);
+        segment->type = SEGMENT_LINE;
+        segment->u.line = points[i];
+    }
+}
+
+static void STDMETHODCALLTYPE geometry_sink_AddBeziers(ID2D1SimplifiedGeometrySink *iface,
+        const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
+{
+    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
+    struct geometry_segment *segment;
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
+    {
+        segment = geometry_figure_add_segment(figure);
+        segment->type = SEGMENT_BEZIER;
+        segment->u.bezier = beziers[i];
+    }
+}
+
+static void STDMETHODCALLTYPE geometry_sink_EndFigure(ID2D1SimplifiedGeometrySink *iface,
+        D2D1_FIGURE_END figure_end)
+{
+    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct geometry_figure *figure = &sink->figures[sink->figure_count - 1];
+
+    figure->end = figure_end;
+}
+
+static HRESULT STDMETHODCALLTYPE geometry_sink_Close(ID2D1SimplifiedGeometrySink *iface)
+{
+    struct geometry_sink *sink = impl_from_ID2D1SimplifiedGeometrySink(iface);
+
+    sink->closed = TRUE;
+
+    return S_OK;
+}
+
+static const struct ID2D1SimplifiedGeometrySinkVtbl geometry_sink_vtbl =
+{
+    geometry_sink_QueryInterface,
+    geometry_sink_AddRef,
+    geometry_sink_Release,
+    geometry_sink_SetFillMode,
+    geometry_sink_SetSegmentFlags,
+    geometry_sink_BeginFigure,
+    geometry_sink_AddLines,
+    geometry_sink_AddBeziers,
+    geometry_sink_EndFigure,
+    geometry_sink_Close,
+};
+
+static void geometry_sink_init(struct geometry_sink *sink)
+{
+    memset(sink, 0, sizeof(*sink));
+    sink->ID2D1SimplifiedGeometrySink_iface.lpVtbl = &geometry_sink_vtbl;
+    sink->figures_size = 4;
+    sink->figures = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sink->figures_size * sizeof(*sink->figures));
+}
+
+static void geometry_sink_cleanup(struct geometry_sink *sink)
+{
+    unsigned int i;
+
+    for (i = 0; i < sink->figure_count; ++i)
+    {
+        HeapFree(GetProcessHeap(), 0, sink->figures[i].segments);
+    }
+    HeapFree(GetProcessHeap(), 0, sink->figures);
 }
 
 static void test_clip(void)
@@ -1836,10 +2049,85 @@ static void test_path_geometry(void)
     DestroyWindow(window);
 }
 
+#define geometry_sink_check(a, b, c, d, e) geometry_sink_check_(__LINE__, a, b, c, d, e)
+static void geometry_sink_check_(unsigned int line, const struct geometry_sink *sink, D2D1_FILL_MODE fill_mode,
+        unsigned int figure_count, const struct expected_geometry_figure *expected_figures, unsigned int ulps)
+{
+    const struct geometry_segment *segment, *expected_segment;
+    const struct expected_geometry_figure *expected_figure;
+    const struct geometry_figure *figure;
+    unsigned int i, j;
+    BOOL match;
+
+    ok_(__FILE__, line)(sink->fill_mode == D2D1_FILL_MODE_ALTERNATE,
+            "Got unexpected fill mode %#x.\n", sink->fill_mode);
+    ok_(__FILE__, line)(sink->figure_count == 1, "Got unexpected figure count %u.\n", sink->figure_count);
+    ok_(__FILE__, line)(!sink->closed, "Sink is closed.\n");
+
+    for (i = 0; i < figure_count; ++i)
+    {
+        expected_figure = &expected_figures[i];
+        figure = &sink->figures[i];
+
+        ok_(__FILE__, line)(figure->begin == expected_figure->begin,
+                "Got unexpected figure %u begin %#x, expected %#x.\n",
+                i, figure->begin, expected_figure->begin);
+        ok_(__FILE__, line)(figure->end == expected_figure->end,
+                "Got unexpected figure %u end %#x, expected %#x.\n",
+                i, figure->end, expected_figure->end);
+        match = compare_point(&figure->start_point,
+                expected_figure->start_point.x, expected_figure->start_point.y, ulps);
+        ok_(__FILE__, line)(match, "Got unexpected figure %u start point {%.8e, %.8e}, expected {%.8e, %.8e}.\n",
+                i, figure->start_point.x, figure->start_point.y,
+                expected_figure->start_point.x, expected_figure->start_point.y);
+        ok_(__FILE__, line)(figure->segment_count == expected_figure->segment_count,
+                "Got unexpected figure %u segment count %u, expected %u.\n",
+                i, figure->segment_count, expected_figure->segment_count);
+
+        for (j = 0; j < figure->segment_count; ++j)
+        {
+            expected_segment = &expected_figure->segments[j];
+            segment = &figure->segments[j];
+            ok_(__FILE__, line)(segment->type == expected_segment->type,
+                    "Got unexpected figure %u, segment %u type %#x, expected %#x.\n",
+                    i, j, segment->type, expected_segment->type);
+            switch (segment->type)
+            {
+                case SEGMENT_LINE:
+                    match = compare_point(&segment->u.line,
+                            expected_segment->u.line.x, expected_segment->u.line.y, ulps);
+                    ok_(__FILE__, line)(match, "Got unexpected figure %u segment %u {%.8e, %.8e}, "
+                            "expected {%.8e, %.8e}.\n",
+                            i, j, segment->u.line.x, segment->u.line.y,
+                            expected_segment->u.line.x, expected_segment->u.line.y);
+                    break;
+
+                case SEGMENT_BEZIER:
+                    match = compare_bezier_segment(&segment->u.bezier,
+                            expected_segment->u.bezier.point1.x, expected_segment->u.bezier.point1.y,
+                            expected_segment->u.bezier.point2.x, expected_segment->u.bezier.point2.y,
+                            expected_segment->u.bezier.point3.x, expected_segment->u.bezier.point3.y,
+                            ulps);
+                    ok_(__FILE__, line)(match, "Got unexpected figure %u segment %u "
+                            "{%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}, "
+                            "expected {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+                            i, j, segment->u.bezier.point1.x, segment->u.bezier.point1.y,
+                            segment->u.bezier.point2.x, segment->u.bezier.point2.y,
+                            segment->u.bezier.point3.x, segment->u.bezier.point3.y,
+                            expected_segment->u.bezier.point1.x, expected_segment->u.bezier.point1.y,
+                            expected_segment->u.bezier.point2.x, expected_segment->u.bezier.point2.y,
+                            expected_segment->u.bezier.point3.x, expected_segment->u.bezier.point3.y);
+                    break;
+            }
+        }
+    }
+}
+
 static void test_rectangle_geometry(void)
 {
     ID2D1TransformedGeometry *transformed_geometry;
     ID2D1RectangleGeometry *geometry;
+    struct geometry_sink sink;
     D2D1_MATRIX_3X2_F matrix;
     D2D1_RECT_F rect, rect2;
     ID2D1Factory *factory;
@@ -1847,6 +2135,33 @@ static void test_rectangle_geometry(void)
     BOOL contains;
     HRESULT hr;
     BOOL match;
+
+    static const struct geometry_segment expected_segments[] =
+    {
+        /* Figure 0. */
+        {SEGMENT_LINE, {{{10.0f,  0.0f}}}},
+        {SEGMENT_LINE, {{{10.0f, 20.0f}}}},
+        {SEGMENT_LINE, {{{ 0.0f, 20.0f}}}},
+        /* Figure 1. */
+        {SEGMENT_LINE, {{{4.42705116e+01f, 1.82442951e+01f}}}},
+        {SEGMENT_LINE, {{{7.95376282e+01f, 5.06049728e+01f}}}},
+        {SEGMENT_LINE, {{{5.52671127e+01f, 6.23606796e+01f}}}},
+        /* Figure 2. */
+        {SEGMENT_LINE, {{{25.0f, 15.0f}}}},
+        {SEGMENT_LINE, {{{25.0f, 55.0f}}}},
+        {SEGMENT_LINE, {{{25.0f, 55.0f}}}},
+        /* Figure 3. */
+        {SEGMENT_LINE, {{{35.0f, 45.0f}}}},
+        {SEGMENT_LINE, {{{35.0f, 45.0f}}}},
+        {SEGMENT_LINE, {{{30.0f, 45.0f}}}},
+    };
+    static const struct expected_geometry_figure expected_figures[] =
+    {
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, { 0.0f,  0.0f}, 3, &expected_segments[0]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {20.0f, 30.0f}, 3, &expected_segments[3]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {25.0f, 15.0f}, 3, &expected_segments[6]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {30.0f, 45.0f}, 3, &expected_segments[9]},
+    };
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -1930,12 +2245,24 @@ static void test_rectangle_geometry(void)
     ok(SUCCEEDED(hr), "FillContainsPoint() failed, hr %#x.\n", hr);
     ok(!!contains, "Got wrong hit test result %d.\n", contains);
 
-    /* Test GetBounds(). */
+    /* Test GetBounds() and Simplify(). */
     hr = ID2D1RectangleGeometry_GetBounds(geometry, NULL, &rect);
     ok(SUCCEEDED(hr), "Failed to get bounds.\n");
     match = compare_rect(&rect, 0.0f, 0.0f, 10.0f, 20.0f, 0);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[0], 0);
+    geometry_sink_cleanup(&sink);
+    geometry_sink_init(&sink);
+    hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
+            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[0], 0);
+    geometry_sink_cleanup(&sink);
 
     set_matrix_identity(&matrix);
     translate_matrix(&matrix, 20.0f, 30.0f);
@@ -1946,6 +2273,12 @@ static void test_rectangle_geometry(void)
     match = compare_rect(&rect, 2.00000000e+01f, 1.82442951e+01f, 7.95376282e+01f, 6.23606796e+01f, 0);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[1], 1);
+    geometry_sink_cleanup(&sink);
 
     set_matrix_identity(&matrix);
     translate_matrix(&matrix, 25.0f, 15.0f);
@@ -1955,6 +2288,12 @@ static void test_rectangle_geometry(void)
     match = compare_rect(&rect, 25.0f, 15.0f, 25.0f, 55.0f, 0);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
+            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[2], 0);
+    geometry_sink_cleanup(&sink);
 
     set_matrix_identity(&matrix);
     translate_matrix(&matrix, 30.0f, 45.0f);
@@ -1964,6 +2303,12 @@ static void test_rectangle_geometry(void)
     match = compare_rect(&rect, 30.0f, 45.0f, 35.0f, 45.0f, 0);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1RectangleGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
+            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[3], 0);
+    geometry_sink_cleanup(&sink);
 
     set_matrix_identity(&matrix);
     scale_matrix(&matrix, 4.0f, 5.0f);
