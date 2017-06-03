@@ -2,6 +2,7 @@ TESTDLL   = wsdapi.dll
 IMPORTS   = wsdapi ole32 user32
 
 C_SRCS = \
+	address.c \
 	discovery.c \
 	memory.c \
 	xml.c
