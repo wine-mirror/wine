@@ -180,6 +180,47 @@ static void GetSetPort_udp_tests(void)
     ok(ret == 0, "IWSDUdpAddress_Release() has %d references, should have 0\n", ret);
 }
 
+static void GetSetMessageType_udp_tests(void)
+{
+    WSDUdpMessageType expectedMessageType1 = TWO_WAY;
+    WSDUdpMessageType expectedMessageType2 = ONE_WAY;
+    WSDUdpMessageType actualMessageType = 0;
+    IWSDUdpAddress *udpAddress = NULL;
+    HRESULT rc;
+    int ret;
+
+    rc = WSDCreateUdpAddress(&udpAddress);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
+
+    rc = IWSDUdpAddress_GetMessageType(udpAddress, NULL);
+    todo_wine ok(rc == E_POINTER, "GetMessageType returned unexpected result: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
+    todo_wine ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(actualMessageType == 0, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
+
+    /* Try setting a message type */
+    rc = IWSDUdpAddress_SetMessageType(udpAddress, expectedMessageType1);
+    todo_wine ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
+    todo_wine ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    todo_wine ok(actualMessageType == expectedMessageType1, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
+
+    /* Set another one */
+    rc = IWSDUdpAddress_SetMessageType(udpAddress, expectedMessageType2);
+    todo_wine ok(rc == S_OK, "SetMessageType returned unexpected result: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetMessageType(udpAddress, &actualMessageType);
+    todo_wine ok(rc == S_OK, "GetMessageType returned unexpected result: %08x\n", rc);
+    ok(actualMessageType == expectedMessageType2, "GetMessageType returned unexpected message type: %d\n", actualMessageType);
+
+    /* Release the object */
+    ret = IWSDUdpAddress_Release(udpAddress);
+    ok(ret == 0, "IWSDUdpAddress_Release() has %d references, should have 0\n", ret);
+}
+
 START_TEST(address)
 {
     CoInitialize(NULL);
@@ -187,6 +228,7 @@ START_TEST(address)
     CreateUdpAddress_tests();
     GetSetTransportAddress_udp_tests();
     GetSetPort_udp_tests();
+    GetSetMessageType_udp_tests();
 
     CoUninitialize();
 }
