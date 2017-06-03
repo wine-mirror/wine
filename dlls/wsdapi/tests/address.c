@@ -132,12 +132,61 @@ static void GetSetTransportAddress_udp_tests(void)
     ok(ret == 0, "WSACleanup failed: %d\n", ret);
 }
 
+static void GetSetPort_udp_tests(void)
+{
+    IWSDUdpAddress *udpAddress = NULL;
+    WORD expectedPort1 = 12345;
+    WORD expectedPort2 = 8080;
+    WORD actualPort = 0;
+    HRESULT rc;
+    int ret;
+
+    rc = WSDCreateUdpAddress(&udpAddress);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
+
+    /* No test for GetPort(NULL) as this causes an access violation exception on Windows */
+
+    rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
+    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(actualPort == 0, "GetPort returned unexpected port: %d\n", actualPort);
+
+    /* Try setting a zero port */
+    rc = IWSDUdpAddress_SetPort(udpAddress, 0);
+    todo_wine ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
+    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    ok(actualPort == 0, "GetPort returned unexpected port: %d\n", actualPort);
+
+    /* Set a real port */
+    rc = IWSDUdpAddress_SetPort(udpAddress, expectedPort1);
+    todo_wine ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
+    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    todo_wine ok(actualPort == expectedPort1, "GetPort returned unexpected port: %d\n", actualPort);
+
+    /* Now set a different port */
+    rc = IWSDUdpAddress_SetPort(udpAddress, expectedPort2);
+    todo_wine ok(rc == S_OK, "SetPort returned unexpected result: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetPort(udpAddress, &actualPort);
+    todo_wine ok(rc == S_OK, "GetPort returned unexpected result: %08x\n", rc);
+    todo_wine ok(actualPort == expectedPort2, "GetPort returned unexpected port: %d\n", actualPort);
+
+    /* Release the object */
+    ret = IWSDUdpAddress_Release(udpAddress);
+    ok(ret == 0, "IWSDUdpAddress_Release() has %d references, should have 0\n", ret);
+}
+
 START_TEST(address)
 {
     CoInitialize(NULL);
 
     CreateUdpAddress_tests();
     GetSetTransportAddress_udp_tests();
+    GetSetPort_udp_tests();
 
     CoUninitialize();
 }
