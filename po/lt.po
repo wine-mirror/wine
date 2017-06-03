@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-05-25 08:05+0300\n"
+"PO-Revision-Date: 2017-06-03 07:42+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11027,7 +11027,7 @@ msgstr "&Sistemos konfigūracija"
 
 #: oleview.rc:36
 msgid "&Run the Registry Editor"
-msgstr "Paleisti &registro tvarkytuvę"
+msgstr "Paleisti &Registro tvarkytuvę"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"
@@ -11199,7 +11199,7 @@ msgstr "Keisti paskirstytojo COM kompiuterio nustatymus"
 
 #: oleview.rc:108
 msgid "Run the Wine registry editor"
-msgstr "Paleisti „Wine“ registro tvarkytuvę"
+msgstr "Paleisti „Wine“ Registro tvarkytuvę"
 
 #: oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
@@ -11871,14 +11871,10 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Pateikiamos komandos dažnai naudojamų raktų prieigai"
 
 #: regedit.rc:165
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
-"Pateikiamos komandos žinyno ir informacijos apie registro tvarkytuvę rodymui"
+"Pateikiamos komandos žinyno ir informacijos apie Registro tvarkytuvę rodymui"
 
 #: regedit.rc:166
 msgid "Contains commands for creating new keys or values"
@@ -12119,10 +12115,8 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Eilutėje yra netinkama sintaksė.\n"
 
 #: regedit.rc:189
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
-msgstr "Išeina iš registro tvarkytuvės"
+msgstr "Išeina iš Registro tvarkytuvės"
 
 #: regedit.rc:190
 msgid "Adds keys to the favorites list"
@@ -12137,8 +12131,6 @@ msgid "Shows or hides the status bar"
 msgstr "Parodo arba paslepia būsenos juostą"
 
 #: regedit.rc:193
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "Pakeičia polangių skirtuko poziciją tarp polangių"
 
@@ -12183,10 +12175,8 @@ msgid "Adds a new binary value"
 msgstr "Prideda naują dvejetainę reikšmę"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Prideda naują dvejetainę reikšmę"
+msgstr "Prideda naują 32-bitų reikšmę"
 
 #: regedit.rc:179
 msgid "Imports a text file into the registry"
@@ -12201,10 +12191,8 @@ msgid "Prints all or part of the registry"
 msgstr "Atspausdina visą ar dalį registro"
 
 #: regedit.rc:183
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Registro tvarkytuvė"
+msgstr "Atveria Registro tvarkytuvės žinyną"
 
 #: regedit.rc:184
 msgid "Displays program information, version number and copyright"
@@ -12247,26 +12235,20 @@ msgid "Unable to query the registry key '%1'."
 msgstr "Nepavyko užklausti registro rakto „%1“."
 
 #: regedit.rc:172
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Modifikuoja reikšmės duomenis"
+msgstr "Modifikuoja reikšmės duomenis dvejetainiu formatu"
 
 #: regedit.rc:177
 msgid "Adds a new multi-string value"
 msgstr "Prideda naują kelių eilučių reikšmę"
 
 #: regedit.rc:200
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Eksportuoja pasirinktą registro šaką į tekstinį failą"
 
 #: regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Prideda naują eilutės reikšmę"
+msgstr "Prideda naują išplečiamos eilutės reikšmę"
 
 #: regedit.rc:213
 msgid "Confirm Key Delete"
