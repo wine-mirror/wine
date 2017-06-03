@@ -21,6 +21,7 @@
 
 #define COBJMACROS
 
+#include <winsock2.h>
 #include <windows.h>
 
 #include "wine/test.h"
@@ -72,11 +73,71 @@ static void CreateUdpAddress_tests(void)
     ok(ref == 0, "IWSDUdpAddress_Release() has %d references, should have 0\n", ref);
 }
 
+static void GetSetTransportAddress_udp_tests(void)
+{
+    IWSDUdpAddress *udpAddress = NULL;
+    const WCHAR ipv4Address[] = {'1','0','.','2','0','.','3','0','.','4','0',0};
+    const WCHAR ipv6Address[] = {'a','a','b','b',':','c','d',':',':','a','b','c',0};
+    const WCHAR invalidAddress[] = {'n','o','t','/','v','a','l','i','d',0};
+    LPCWSTR returnedAddress = NULL;
+    WSADATA wsaData;
+    HRESULT rc;
+    int ret;
+
+    ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    ok(ret == 0, "WSAStartup failed: %d\n", ret);
+
+    rc = WSDCreateUdpAddress(&udpAddress);
+    ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &udpAddress) failed: %08x\n", rc);
+    ok(udpAddress != NULL, "WSDCreateUdpAddress(NULL, &udpAddress) failed: udpAddress == NULL\n");
+
+    rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
+    todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    ok(returnedAddress == NULL, "GetTransportAddress returned unexpected address: %08x\n", rc);
+
+    /* Try setting a null address */
+    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, NULL);
+    todo_wine ok(rc == E_INVALIDARG, "SetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
+
+    /* Try setting an invalid address */
+    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, invalidAddress);
+    todo_wine ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(invalidAddress) returned unexpected result: %08x\n", rc);
+
+    /* Try setting an IPv4 address */
+    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv4Address);
+    todo_wine ok(rc == S_OK, "SetTransportAddress(ipv4Address) failed: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetTransportAddress(udpAddress, NULL);
+    todo_wine ok(rc == E_POINTER, "GetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
+    todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
+    todo_wine ok(lstrcmpW(returnedAddress, ipv4Address) == 0, "Returned address != ipv4Address (%s)\n", wine_dbgstr_w(returnedAddress));
+
+    /* Try setting an IPv6 address */
+    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv6Address);
+    todo_wine ok(rc == S_OK, "SetTransportAddress(ipv6Address) failed: %08x\n", rc);
+
+    rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
+    todo_wine ok(rc == S_OK, "GetTransportAddress returned unexpected result: %08x\n", rc);
+    todo_wine ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: '%s'\n", wine_dbgstr_w(returnedAddress));
+    todo_wine ok(lstrcmpW(returnedAddress, ipv6Address) == 0, "Returned address != ipv6Address (%s)\n", wine_dbgstr_w(returnedAddress));
+
+    /* Release the object */
+    ret = IWSDUdpAddress_Release(udpAddress);
+    ok(ret == 0, "IWSDUdpAddress_Release() has %d references, should have 0\n", ret);
+
+    ret = WSACleanup();
+    ok(ret == 0, "WSACleanup failed: %d\n", ret);
+}
+
 START_TEST(address)
 {
     CoInitialize(NULL);
 
     CreateUdpAddress_tests();
+    GetSetTransportAddress_udp_tests();
 
     CoUninitialize();
 }
