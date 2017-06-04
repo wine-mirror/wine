@@ -4927,8 +4927,25 @@ static void test_pipeline_statistics_query(void)
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
     ok(data.IAVertices == ~(UINT64)0, "Data was modified.\n");
 
-    draw_color_quad(&test_context, &red);
+    draw_quad(&test_context);
 
+    ID3D11DeviceContext_End(context, query);
+    get_query_data(context, query, &data, sizeof(data));
+    ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
+    ok(data.IAPrimitives == 2, "Got unexpected IAPrimitives count: %u.\n", (unsigned int)data.IAPrimitives);
+    ok(data.VSInvocations == 4, "Got unexpected VSInvocations count: %u.\n", (unsigned int)data.VSInvocations);
+    ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
+    ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
+    ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
+    ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
+    todo_wine
+    ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
+    ok(!data.HSInvocations, "Got unexpected HSInvocations count: %u.\n", (unsigned int)data.HSInvocations);
+    ok(!data.DSInvocations, "Got unexpected DSInvocations count: %u.\n", (unsigned int)data.DSInvocations);
+    ok(!data.CSInvocations, "Got unexpected CSInvocations count: %u.\n", (unsigned int)data.CSInvocations);
+
+    ID3D11DeviceContext_Begin(context, query);
+    draw_color_quad(&test_context, &red);
     ID3D11DeviceContext_End(context, query);
     get_query_data(context, query, &data, sizeof(data));
     ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
