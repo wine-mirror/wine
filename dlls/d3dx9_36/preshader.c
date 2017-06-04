@@ -868,7 +868,7 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
             }
             if (reg_idx >= pres->regs.table_sizes[table])
             {
-                FIXME("Out of bounds register index, i %u, j %u, table %u, reg_idx %u.",
+                FIXME("Out of bounds register index, i %u, j %u, table %u, reg_idx %u.\n",
                         i, j, table, reg_idx);
                 return D3DXERR_INVALIDDATA;
             }
