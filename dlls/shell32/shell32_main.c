@@ -846,17 +846,16 @@ HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
 /*************************************************************************
  * ExtractIconA                [SHELL32.@]
  */
-HICON WINAPI ExtractIconA(HINSTANCE hInstance, LPCSTR lpszFile, UINT nIconIndex)
-{   
+HICON WINAPI ExtractIconA(HINSTANCE hInstance, const char *file, UINT nIconIndex)
+{
+    WCHAR *fileW;
     HICON ret;
-    INT len = MultiByteToWideChar(CP_ACP, 0, lpszFile, -1, NULL, 0);
-    LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
-    TRACE("%p %s %d\n", hInstance, lpszFile, nIconIndex);
+    TRACE("%p %s %d\n", hInstance, debugstr_a(file), nIconIndex);
 
-    MultiByteToWideChar(CP_ACP, 0, lpszFile, -1, lpwstrFile, len);
-    ret = ExtractIconW(hInstance, lpwstrFile, nIconIndex);
-    HeapFree(GetProcessHeap(), 0, lpwstrFile);
+    fileW = strdupAtoW(file);
+    ret = ExtractIconW(hInstance, fileW, nIconIndex);
+    HeapFree(GetProcessHeap(), 0, fileW);
 
     return ret;
 }
