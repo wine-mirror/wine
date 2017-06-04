@@ -4902,6 +4902,81 @@ if (0)
     release_test_context(&test_context);
 }
 
+static void test_pipeline_statistics_query(void)
+{
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    D3D11_QUERY_DATA_PIPELINE_STATISTICS data;
+    struct d3d11_test_context test_context;
+    ID3D11DeviceContext *context;
+    D3D11_QUERY_DESC query_desc;
+    ID3D11Asynchronous *query;
+    unsigned int data_size, i;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
+
+    query_desc.Query = D3D11_QUERY_PIPELINE_STATISTICS;
+    query_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    data_size = ID3D11Asynchronous_GetDataSize(query);
+    ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
+
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_End(context, query);
+    ID3D11DeviceContext_Begin(context, query);
+    ID3D11DeviceContext_Begin(context, query);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(data.IAVertices == ~(UINT64)0, "Data was modified.\n");
+
+    draw_color_quad(&test_context, &red);
+
+    ID3D11DeviceContext_End(context, query);
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&data, 0xff, sizeof(data));
+    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
+    ok(data.IAPrimitives == 2, "Got unexpected IAPrimitives count: %u.\n", (unsigned int)data.IAPrimitives);
+    ok(data.VSInvocations == 4, "Got unexpected VSInvocations count: %u.\n", (unsigned int)data.VSInvocations);
+    ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
+    ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
+    ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
+    ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
+    ok(data.PSInvocations >= 640 * 480, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
+    ok(!data.HSInvocations, "Got unexpected HSInvocations count: %u.\n", (unsigned int)data.HSInvocations);
+    ok(!data.DSInvocations, "Got unexpected DSInvocations count: %u.\n", (unsigned int)data.DSInvocations);
+    ok(!data.CSInvocations, "Got unexpected CSInvocations count: %u.\n", (unsigned int)data.CSInvocations);
+
+    ID3D11Asynchronous_Release(query);
+    release_test_context(&test_context);
+}
+
 static void test_timestamp_query(void)
 {
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -20332,6 +20407,7 @@ START_TEST(d3d11)
     test_create_rasterizer_state();
     test_create_query();
     test_occlusion_query();
+    test_pipeline_statistics_query();
     test_timestamp_query();
     test_device_removed_reason();
     test_private_data();
