@@ -2342,8 +2342,10 @@ static void test_Texture(void)
     ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u , ref4 = %u.\n", ref1, ref4);
 
     /* Created from image, GetSurface() does not work. */
+    hr = IDirect3DRMTexture3_GetSurface(texture3, 0, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "GetSurface() expected to fail, %#x\n", hr);
+
     hr = IDirect3DRMTexture3_GetSurface(texture3, 0, &surface);
-todo_wine
     ok(hr == D3DRMERR_NOTCREATEDFROMDDS, "GetSurface() expected to fail, %#x\n", hr);
 
     /* Test all failures together */
@@ -6599,66 +6601,52 @@ static void test_create_texture_from_surface(void)
     /* Test NULL params */
     texture1 = (IDirect3DRMTexture *)0xdeadbeef;
     hr = IDirect3DRM_CreateTextureFromSurface(d3drm1, NULL, &texture1);
-todo_wine {
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
     ok(!texture1, "Expected texture returned == NULL, got %p.\n", texture1);
-}
+
     hr = IDirect3DRM_CreateTextureFromSurface(d3drm1, NULL, NULL);
-todo_wine
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
 
     texture2 = (IDirect3DRMTexture2 *)0xdeadbeef;
     hr = IDirect3DRM2_CreateTextureFromSurface(d3drm2, NULL, &texture2);
-todo_wine {
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
     ok(!texture2, "Expected texture returned == NULL, got %p.\n", texture2);
-}
+
     hr = IDirect3DRM2_CreateTextureFromSurface(d3drm2, NULL, NULL);
-todo_wine
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
 
     texture3 = (IDirect3DRMTexture3 *)0xdeadbeef;
     hr = IDirect3DRM3_CreateTextureFromSurface(d3drm3, NULL, &texture3);
-todo_wine {
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
     ok(!texture3, "Expected texture returned == NULL, got %p.\n", texture3);
-}
+
     hr = IDirect3DRM3_CreateTextureFromSurface(d3drm3, NULL, NULL);
-todo_wine
     ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
 
     ok(get_refcount((IUnknown *)surface) == 1, "Unexpected surface refcount.\n");
     hr = IDirect3DRM_CreateTextureFromSurface(d3drm1, surface, &texture1);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-if (SUCCEEDED(hr))
-{
+
     ok(get_refcount((IUnknown *)surface) == 2, "Unexpected surface refcount.\n");
     image = IDirect3DRMTexture_GetImage(texture1);
     ok(image == NULL, "Unexpected image, %p.\n", image);
     hr = IDirect3DRMTexture_InitFromSurface(texture1, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     IDirect3DRMTexture_Release(texture1);
-}
+
     ok(get_refcount((IUnknown *)surface) == 1, "Unexpected surface refcount.\n");
     hr = IDirect3DRM2_CreateTextureFromSurface(d3drm2, surface, &texture2);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-if (SUCCEEDED(hr))
-{
     ok(get_refcount((IUnknown *)surface) == 2, "Unexpected surface refcount.\n");
     image = IDirect3DRMTexture2_GetImage(texture2);
     ok(image == NULL, "Unexpected image, %p.\n", image);
     hr = IDirect3DRMTexture2_InitFromSurface(texture2, NULL);
     ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
     IDirect3DRMTexture_Release(texture2);
-}
+
     ok(get_refcount((IUnknown *)surface) == 1, "Unexpected surface refcount.\n");
     hr = IDirect3DRM3_CreateTextureFromSurface(d3drm3, surface, &texture3);
-todo_wine
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-if (SUCCEEDED(hr))
-{
     ok(get_refcount((IUnknown *)surface) == 2, "Unexpected surface refcount.\n");
     image = IDirect3DRMTexture3_GetImage(texture3);
     ok(image == NULL, "Unexpected image, %p.\n", image);
@@ -6711,9 +6699,8 @@ if (SUCCEEDED(hr))
     ok(ref3 == get_refcount((IUnknown *)d3drm3), "Expected d3drm3 reference unchanged.\n");
     /* Release leaked reference to d3drm1 */
     IDirect3DRM_Release(d3drm1);
-
     IDirect3DRMTexture3_Release(texture3);
-}
+
     IDirectDrawSurface_Release(surface2);
     IDirectDrawSurface_Release(surface);
     IDirect3DRM3_Release(d3drm3);

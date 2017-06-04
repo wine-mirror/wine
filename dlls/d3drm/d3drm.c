@@ -407,9 +407,25 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromClipper(IDirect3DRM *iface,
 static HRESULT WINAPI d3drm1_CreateTextureFromSurface(IDirect3DRM *iface,
         IDirectDrawSurface *surface, IDirect3DRMTexture **texture)
 {
-    FIXME("iface %p, surface %p, texture %p stub!\n", iface, surface, texture);
+    struct d3drm *d3drm = impl_from_IDirect3DRM(iface);
+    IDirect3DRMTexture3 *texture3;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, surface %p, texture %p.\n", iface, surface, texture);
+
+    if (!texture)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = IDirect3DRM3_CreateTextureFromSurface(&d3drm->IDirect3DRM3_iface, surface, &texture3)))
+    {
+        *texture = NULL;
+        return hr;
+    }
+
+    hr = IDirect3DRMTexture3_QueryInterface(texture3, &IID_IDirect3DRMTexture, (void **)texture);
+    IDirect3DRMTexture3_Release(texture3);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm1_CreateShadow(IDirect3DRM *iface, IDirect3DRMVisual *visual,
@@ -882,9 +898,25 @@ static HRESULT WINAPI d3drm2_CreateDeviceFromClipper(IDirect3DRM2 *iface,
 static HRESULT WINAPI d3drm2_CreateTextureFromSurface(IDirect3DRM2 *iface,
         IDirectDrawSurface *surface, IDirect3DRMTexture2 **texture)
 {
-    FIXME("iface %p, surface %p, texture %p stub!\n", iface, surface, texture);
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
+    IDirect3DRMTexture3 *texture3;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, surface %p, texture %p.\n", iface, surface, texture);
+
+    if (!texture)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = IDirect3DRM3_CreateTextureFromSurface(&d3drm->IDirect3DRM3_iface, surface, &texture3)))
+    {
+        *texture = NULL;
+        return hr;
+    }
+
+    hr = IDirect3DRMTexture3_QueryInterface(texture3, &IID_IDirect3DRMTexture, (void **)texture);
+    IDirect3DRMTexture3_Release(texture3);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm2_CreateShadow(IDirect3DRM2 *iface, IDirect3DRMVisual *visual,
@@ -1484,9 +1516,28 @@ static HRESULT WINAPI d3drm3_CreateShadow(IDirect3DRM3 *iface, IUnknown *object,
 static HRESULT WINAPI d3drm3_CreateTextureFromSurface(IDirect3DRM3 *iface,
         IDirectDrawSurface *surface, IDirect3DRMTexture3 **texture)
 {
-    FIXME("iface %p, surface %p, texture %p stub!\n", iface, surface, texture);
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    struct d3drm_texture *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, surface %p, texture %p.\n", iface, surface, texture);
+
+    if (!texture)
+        return D3DRMERR_BADVALUE;
+
+    if (FAILED(hr = d3drm_texture_create(&object, &d3drm->IDirect3DRM_iface)))
+        return hr;
+
+    *texture = &object->IDirect3DRMTexture3_iface;
+
+    if (FAILED(IDirect3DRMTexture3_InitFromSurface(*texture, surface)))
+    {
+        IDirect3DRMTexture3_Release(*texture);
+        *texture = NULL;
+        return D3DRMERR_BADVALUE;
+    }
+
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm3_CreateViewport(IDirect3DRM3 *iface, IDirect3DRMDevice3 *device,

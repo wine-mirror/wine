@@ -51,6 +51,7 @@ struct d3drm_texture
     IDirect3DRMTexture3 IDirect3DRMTexture3_iface;
     IDirect3DRM *d3drm;
     D3DRMIMAGE *image;
+    IDirectDrawSurface *surface;
 };
 
 struct d3drm_frame
