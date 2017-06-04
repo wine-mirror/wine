@@ -1066,6 +1066,12 @@ static HRESULT wined3d_so_statistics_query_create(struct wined3d_device *device,
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_so_statistics_query *object;
+    unsigned int stream_idx;
+
+    if (WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM0 <= type && type <= WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM3)
+        stream_idx = type - WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM0;
+    else
+        return WINED3DERR_NOTAVAILABLE;
 
     TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
             device, type, parent, parent_ops, query);
@@ -1084,27 +1090,9 @@ static HRESULT wined3d_so_statistics_query_create(struct wined3d_device *device,
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    switch (type)
-    {
-        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM0:
-            object->stream_idx = 0;
-            break;
-        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM1:
-            object->stream_idx = 1;
-            break;
-        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM2:
-            object->stream_idx = 2;
-            break;
-        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM3:
-            object->stream_idx = 3;
-            break;
-        default:
-            HeapFree(GetProcessHeap(), 0, object);
-            return WINED3DERR_NOTAVAILABLE;
-    }
-
     wined3d_query_init(&object->query, device, type, &object->statistics,
             sizeof(object->statistics), &so_statistics_query_ops, parent, parent_ops);
+    object->stream_idx = stream_idx;
 
     TRACE("Created query %p.\n", object);
     *query = &object->query;
