@@ -933,6 +933,43 @@ void context_free_so_statistics_query(struct wined3d_so_statistics_query *query)
     context->free_so_statistics_queries[context->free_so_statistics_query_count++] = query->u;
 }
 
+void context_alloc_pipeline_statistics_query(struct wined3d_context *context,
+        struct wined3d_pipeline_statistics_query *query)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (context->free_pipeline_statistics_query_count)
+    {
+        query->u = context->free_pipeline_statistics_queries[--context->free_pipeline_statistics_query_count];
+    }
+    else
+    {
+        GL_EXTCALL(glGenQueries(ARRAY_SIZE(query->u.id), query->u.id));
+        checkGLcall("glGenQueries");
+    }
+
+    query->context = context;
+    list_add_head(&context->pipeline_statistics_queries, &query->entry);
+}
+
+void context_free_pipeline_statistics_query(struct wined3d_pipeline_statistics_query *query)
+{
+    struct wined3d_context *context = query->context;
+
+    list_remove(&query->entry);
+    query->context = NULL;
+
+    if (!wined3d_array_reserve((void **)&context->free_pipeline_statistics_queries,
+            &context->free_pipeline_statistics_query_size, context->free_pipeline_statistics_query_count + 1,
+            sizeof(*context->free_pipeline_statistics_queries)))
+    {
+        ERR("Failed to grow free list, leaking GL queries in context %p.\n", context);
+        return;
+    }
+
+    context->free_pipeline_statistics_queries[context->free_pipeline_statistics_query_count++] = query->u;
+}
+
 typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
 
 static void context_enum_fbo_entries(const struct wined3d_device *device,
@@ -1223,6 +1260,7 @@ static void context_update_window(struct wined3d_context *context)
 
 static void context_destroy_gl_resources(struct wined3d_context *context)
 {
+    struct wined3d_pipeline_statistics_query *pipeline_statistics_query;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_so_statistics_query *so_statistics_query;
     struct wined3d_timestamp_query *timestamp_query;
@@ -1247,6 +1285,14 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         if (context->valid)
             GL_EXTCALL(glDeleteQueries(ARRAY_SIZE(so_statistics_query->u.id), so_statistics_query->u.id));
         so_statistics_query->context = NULL;
+    }
+
+    LIST_FOR_EACH_ENTRY(pipeline_statistics_query, &context->pipeline_statistics_queries,
+            struct wined3d_pipeline_statistics_query, entry)
+    {
+        if (context->valid)
+            GL_EXTCALL(glDeleteQueries(ARRAY_SIZE(pipeline_statistics_query->u.id), pipeline_statistics_query->u.id));
+        pipeline_statistics_query->context = NULL;
     }
 
     LIST_FOR_EACH_ENTRY(timestamp_query, &context->timestamp_queries, struct wined3d_timestamp_query, entry)
@@ -1305,6 +1351,15 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
             }
         }
 
+        if (gl_info->supported[ARB_PIPELINE_STATISTICS_QUERY])
+        {
+            for (i = 0; i < context->free_pipeline_statistics_query_count; ++i)
+            {
+                union wined3d_gl_pipeline_statistics_query *q = &context->free_pipeline_statistics_queries[i];
+                GL_EXTCALL(glDeleteQueries(ARRAY_SIZE(q->id), q->id));
+            }
+        }
+
         if (gl_info->supported[ARB_TIMER_QUERY])
             GL_EXTCALL(glDeleteQueries(context->free_timestamp_query_count, context->free_timestamp_queries));
 
@@ -1337,6 +1392,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     }
 
     HeapFree(GetProcessHeap(), 0, context->free_so_statistics_queries);
+    HeapFree(GetProcessHeap(), 0, context->free_pipeline_statistics_queries);
     HeapFree(GetProcessHeap(), 0, context->free_timestamp_queries);
     HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, context->free_event_queries);
@@ -1800,6 +1856,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     list_init(&ret->event_queries);
 
     list_init(&ret->so_statistics_queries);
+
+    list_init(&ret->pipeline_statistics_queries);
 
     list_init(&ret->fbo_list);
     list_init(&ret->fbo_destroy_list);

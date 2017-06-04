@@ -144,6 +144,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_multisample",                  ARB_MULTISAMPLE               },
     {"GL_ARB_multitexture",                 ARB_MULTITEXTURE              },
     {"GL_ARB_occlusion_query",              ARB_OCCLUSION_QUERY           },
+    {"GL_ARB_pipeline_statistics_query",    ARB_PIPELINE_STATISTICS_QUERY },
     {"GL_ARB_pixel_buffer_object",          ARB_PIXEL_BUFFER_OBJECT       },
     {"GL_ARB_point_parameters",             ARB_POINT_PARAMETERS          },
     {"GL_ARB_point_sprite",                 ARB_POINT_SPRITE              },

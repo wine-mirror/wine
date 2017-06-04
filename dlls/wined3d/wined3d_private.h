@@ -1721,6 +1721,40 @@ void context_alloc_so_statistics_query(struct wined3d_context *context,
         struct wined3d_so_statistics_query *query) DECLSPEC_HIDDEN;
 void context_free_so_statistics_query(struct wined3d_so_statistics_query *query) DECLSPEC_HIDDEN;
 
+union wined3d_gl_pipeline_statistics_query
+{
+    GLuint id[11];
+    struct
+    {
+        GLuint vertices;
+        GLuint primitives;
+        GLuint vertex_shader;
+        GLuint tess_control_shader;
+        GLuint tess_eval_shader;
+        GLuint geometry_shader;
+        GLuint geometry_primitives;
+        GLuint fragment_shader;
+        GLuint compute_shader;
+        GLuint clipping_input;
+        GLuint clipping_output;
+    } query;
+};
+
+struct wined3d_pipeline_statistics_query
+{
+    struct wined3d_query query;
+
+    struct list entry;
+    union wined3d_gl_pipeline_statistics_query u;
+    struct wined3d_context *context;
+    struct wined3d_query_data_pipeline_statistics statistics;
+    BOOL started;
+};
+
+void context_alloc_pipeline_statistics_query(struct wined3d_context *context,
+        struct wined3d_pipeline_statistics_query *query) DECLSPEC_HIDDEN;
+void context_free_pipeline_statistics_query(struct wined3d_pipeline_statistics_query *query) DECLSPEC_HIDDEN;
+
 struct wined3d_gl_view
 {
     GLenum target;
@@ -1856,6 +1890,11 @@ struct wined3d_context
     SIZE_T free_so_statistics_query_size;
     unsigned int free_so_statistics_query_count;
     struct list so_statistics_queries;
+
+    union wined3d_gl_pipeline_statistics_query *free_pipeline_statistics_queries;
+    SIZE_T free_pipeline_statistics_query_size;
+    unsigned int free_pipeline_statistics_query_count;
+    struct list pipeline_statistics_queries;
 
     struct wined3d_stream_info stream_info;
 
