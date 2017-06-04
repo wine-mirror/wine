@@ -601,7 +601,7 @@ HRESULT WINAPI WSDXMLCreateContext(IWSDXMLContext **ppContext)
 {
     IWSDXMLContextImpl *obj;
 
-    TRACE("(%p)", ppContext);
+    TRACE("(%p)\n", ppContext);
 
     if (ppContext == NULL)
     {
