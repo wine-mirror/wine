@@ -4690,6 +4690,25 @@ static void test_create_query(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+#define get_query_data(a, b, c, d) get_query_data_(__LINE__, a, b, c, d)
+static void get_query_data_(unsigned int line, ID3D11DeviceContext *context,
+        ID3D11Asynchronous *query, void *data, unsigned int data_size)
+{
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    memset(data, 0xff, data_size);
+    hr = ID3D11DeviceContext_GetData(context, query, data, data_size, 0);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
 static void test_occlusion_query(void)
 {
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -4750,17 +4769,7 @@ static void test_occlusion_query(void)
     draw_color_quad(&test_context, &red);
 
     ID3D11DeviceContext_End(context, query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    memset(&data, 0xff, sizeof(data));
-    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, query, &data, sizeof(data));
     ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     memset(&data, 0xff, sizeof(data));
@@ -4790,21 +4799,10 @@ static void test_occlusion_query(void)
     ID3D11DeviceContext_End(context, query);
     ID3D11DeviceContext_End(context, query);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    data.dword[0] = 0x12345678;
-    data.dword[1] = 0x12345678;
+    get_query_data(context, query, &data, sizeof(data));
+    ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     texture_desc.Width = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
     texture_desc.Height = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
@@ -4836,23 +4834,13 @@ static void test_occlusion_query(void)
         draw_color_quad(&test_context, &red);
     ID3D11DeviceContext_End(context, query);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    memset(&data, 0xff, sizeof(data));
-    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, query, &data, sizeof(data));
     ok((data.dword[0] == 0x90000000 && data.dword[1] == 0x1)
             || (data.dword[0] == 0xffffffff && !data.dword[1])
             || broken(!data.uint),
             "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     ID3D11Asynchronous_Release(query);
 
@@ -4882,15 +4870,7 @@ static void test_occlusion_query(void)
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, query, &data, sizeof(data));
     /* This test occasionally succeeds with CSMT enabled because of a race condition. */
 if (0)
     todo_wine ok(data.dword[0] == 0x1000 && !data.dword[1],
@@ -4912,7 +4892,7 @@ static void test_pipeline_statistics_query(void)
     ID3D11DeviceContext *context;
     D3D11_QUERY_DESC query_desc;
     ID3D11Asynchronous *query;
-    unsigned int data_size, i;
+    unsigned int data_size;
     ID3D11Device *device;
     HRESULT hr;
 
@@ -4950,17 +4930,7 @@ static void test_pipeline_statistics_query(void)
     draw_color_quad(&test_context, &red);
 
     ID3D11DeviceContext_End(context, query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    memset(&data, 0xff, sizeof(data));
-    hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, query, &data, sizeof(data));
     ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
     ok(data.IAPrimitives == 2, "Got unexpected IAPrimitives count: %u.\n", (unsigned int)data.IAPrimitives);
     ok(data.VSInvocations == 4, "Got unexpected VSInvocations count: %u.\n", (unsigned int)data.VSInvocations);
@@ -4986,7 +4956,7 @@ static void test_timestamp_query(void)
     struct d3d11_test_context test_context;
     ID3D11DeviceContext *context;
     D3D11_QUERY_DESC query_desc;
-    unsigned int data_size, i;
+    unsigned int data_size;
     ID3D11Device *device;
     UINT64 timestamp;
     HRESULT hr;
@@ -5033,19 +5003,8 @@ static void test_timestamp_query(void)
     ok(disjoint.Disjoint == 0xdeadbeef, "Disjoint data was modified.\n");
 
     ID3D11DeviceContext_End(context, timestamp_disjoint_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    disjoint.Frequency = 0xdeadbeef;
-    disjoint.Disjoint = 0xff;
-    hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
+    get_query_data(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint));
+    ok(disjoint.Frequency != 0xffffffff, "Frequency data was not modified.\n");
     ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
 
     prev_disjoint = disjoint;
@@ -5088,13 +5047,7 @@ static void test_timestamp_query(void)
     draw_color_quad(&test_context, &red);
 
     ID3D11DeviceContext_End(context, timestamp_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, timestamp_query, &timestamp, sizeof(timestamp));
 
     timestamp = 0xdeadbeef;
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
@@ -5117,19 +5070,12 @@ static void test_timestamp_query(void)
     ok(timestamp == 0xdeadbeef, "Timestamp was modified.\n");
 
     ID3D11DeviceContext_End(context, timestamp_disjoint_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
+    get_query_data(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint));
     disjoint.Frequency = 0xdeadbeef;
     disjoint.Disjoint = 0xff;
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
+    ok(disjoint.Frequency != 0xffffffff, "Frequency data was not modified.\n");
     ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
 
     /* It's not strictly necessary for the TIMESTAMP query to be inside a TIMESTAMP_DISJOINT query. */
@@ -5142,15 +5088,7 @@ static void test_timestamp_query(void)
     draw_color_quad(&test_context, &red);
 
     ID3D11DeviceContext_End(context, timestamp_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, timestamp_query, &timestamp, sizeof(timestamp));
 
     ID3D11Asynchronous_Release(timestamp_query);
     ID3D11Asynchronous_Release(timestamp_disjoint_query);
@@ -18758,15 +18696,7 @@ static void test_quad_tessellation(void)
     check_texture_color(test_context.backbuffer, 0xffffffff, 0);
 
     ID3D11DeviceContext_End(context, query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, query, &so_statistics, sizeof(so_statistics));
     ok(so_statistics.NumPrimitivesWritten == 8, "Got unexpected primitives written %u.\n",
             (unsigned int)so_statistics.NumPrimitivesWritten);
     ok(so_statistics.PrimitivesStorageNeeded == 8, "Got unexpected primitives storage needed %u.\n",
@@ -18779,15 +18709,7 @@ static void test_quad_tessellation(void)
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
     ID3D11DeviceContext_End(context, query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D11DeviceContext_GetData(context, query, &so_statistics, sizeof(so_statistics), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(context, query, &so_statistics, sizeof(so_statistics));
     ok(so_statistics.NumPrimitivesWritten == 11, "Got unexpected primitives written %u.\n",
             (unsigned int)so_statistics.NumPrimitivesWritten);
     ok(so_statistics.PrimitivesStorageNeeded == 11, "Got unexpected primitives storage needed %u.\n",
