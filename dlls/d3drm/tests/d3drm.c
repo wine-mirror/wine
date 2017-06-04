@@ -615,6 +615,7 @@ static void test_Mesh(void)
     IDirect3DRMMesh *mesh;
     DWORD size;
     CHAR cname[64] = {0};
+    IUnknown *unk;
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -634,6 +635,14 @@ static void test_Mesh(void)
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Mesh"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Mesh"), "Expected cname to be \"Mesh\", but got \"%s\"\n", cname);
+
+    hr = IDirect3DRMMesh_QueryInterface(mesh, &IID_IDirect3DRMObject, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IDirect3DRMMesh_QueryInterface(mesh, &IID_IDirect3DRMVisual, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMVisual, %#x.\n", hr);
+    IUnknown_Release(unk);
 
     IDirect3DRMMesh_Release(mesh);
 

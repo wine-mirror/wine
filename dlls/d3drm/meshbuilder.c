@@ -2322,6 +2322,8 @@ static HRESULT WINAPI d3drm_mesh_QueryInterface(IDirect3DRMMesh *iface, REFIID r
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMMesh)
+            || IsEqualGUID(riid, &IID_IDirect3DRMVisual)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         IDirect3DRMMesh_AddRef(iface);
