@@ -3,4 +3,5 @@ IMPORTLIB = mf
 
 C_SRCS = \
 	main.c \
+	session.c \
 	topology.c
