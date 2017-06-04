@@ -25,6 +25,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+static UINT64 get_query_result64(GLuint id, const struct wined3d_gl_info *gl_info)
+{
+    if (gl_info->supported[ARB_TIMER_QUERY])
+    {
+        GLuint64 result;
+        GL_EXTCALL(glGetQueryObjectui64v(id, GL_QUERY_RESULT, &result));
+        return result;
+    }
+    else
+    {
+        GLuint result;
+        GL_EXTCALL(glGetQueryObjectuiv(id, GL_QUERY_RESULT, &result));
+        return result;
+    }
+}
+
 static void wined3d_query_init(struct wined3d_query *query, struct wined3d_device *device,
         enum wined3d_query_type type, const void *data, DWORD data_size,
         const struct wined3d_query_ops *query_ops, void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -374,28 +390,15 @@ static BOOL wined3d_occlusion_query_ops_poll(struct wined3d_query *query, DWORD 
     gl_info = context->gl_info;
 
     GL_EXTCALL(glGetQueryObjectuiv(oq->id, GL_QUERY_RESULT_AVAILABLE, &available));
-    checkGLcall("glGetQueryObjectuiv(GL_QUERY_RESULT_AVAILABLE)");
-    TRACE("available %#x.\n", available);
+    TRACE("Available %#x.\n", available);
 
     if (available)
     {
-        if (gl_info->supported[ARB_TIMER_QUERY])
-        {
-            GLuint64 result;
-            GL_EXTCALL(glGetQueryObjectui64v(oq->id, GL_QUERY_RESULT, &result));
-            checkGLcall("glGetQueryObjectui64v(GL_QUERY_RESULT)");
-            oq->samples = result;
-        }
-        else
-        {
-            GLuint result;
-            GL_EXTCALL(glGetQueryObjectuiv(oq->id, GL_QUERY_RESULT, &result));
-            checkGLcall("glGetQueryObjectuiv(GL_QUERY_RESULT)");
-            oq->samples = result;
-        }
+        oq->samples = get_query_result64(oq->id, gl_info);
         TRACE("Returning 0x%s samples.\n", wine_dbgstr_longlong(oq->samples));
     }
 
+    checkGLcall("poll occlusion query");
     context_release(context);
 
     return available;
@@ -640,22 +643,8 @@ static BOOL wined3d_so_statistics_query_ops_poll(struct wined3d_query *query, DW
 
     if (written_available && generated_available)
     {
-        if (gl_info->supported[ARB_TIMER_QUERY])
-        {
-            GLuint64 result;
-            GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.written, GL_QUERY_RESULT, &result));
-            pq->statistics.primitives_written = result;
-            GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.generated, GL_QUERY_RESULT, &result));
-            pq->statistics.primitives_generated = result;
-        }
-        else
-        {
-            GLuint result;
-            GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.written, GL_QUERY_RESULT, &result));
-            pq->statistics.primitives_written = result;
-            GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.generated, GL_QUERY_RESULT, &result));
-            pq->statistics.primitives_generated = result;
-        }
+        pq->statistics.primitives_written = get_query_result64(pq->u.query.written, gl_info);
+        pq->statistics.primitives_generated = get_query_result64(pq->u.query.generated, gl_info);
         TRACE("Returning %s, %s primitives.\n",
                 wine_dbgstr_longlong(pq->statistics.primitives_written),
                 wine_dbgstr_longlong(pq->statistics.primitives_generated));
@@ -758,63 +747,24 @@ static BOOL wined3d_pipeline_query_ops_poll(struct wined3d_query *query, DWORD f
     {
         GL_EXTCALL(glGetQueryObjectuiv(pq->u.id[i], GL_QUERY_RESULT_AVAILABLE, &available));
         if (!available)
-            goto done;
+            break;
     }
 
-    if (gl_info->supported[ARB_TIMER_QUERY])
+    if (available)
     {
-        GLuint64 result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.vertices, GL_QUERY_RESULT, &result));
-        pq->statistics.vertices_submitted = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.primitives, GL_QUERY_RESULT, &result));
-        pq->statistics.primitives_submitted = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.vertex_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.vs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.tess_control_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.hs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.tess_eval_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.ds_invocations = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.geometry_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.gs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.geometry_primitives, GL_QUERY_RESULT, &result));
-        pq->statistics.gs_primitives = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.fragment_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.ps_invocations = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.compute_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.cs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.clipping_input, GL_QUERY_RESULT, &result));
-        pq->statistics.clipping_input_primitives = result;
-        GL_EXTCALL(glGetQueryObjectui64v(pq->u.query.clipping_output, GL_QUERY_RESULT, &result));
-        pq->statistics.clipping_output_primitives = result;
-    }
-    else
-    {
-        GLuint result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.vertices, GL_QUERY_RESULT, &result));
-        pq->statistics.vertices_submitted = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.primitives, GL_QUERY_RESULT, &result));
-        pq->statistics.primitives_submitted = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.vertex_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.vs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.tess_control_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.hs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.tess_eval_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.ds_invocations = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.geometry_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.gs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.geometry_primitives, GL_QUERY_RESULT, &result));
-        pq->statistics.gs_primitives = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.fragment_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.ps_invocations = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.compute_shader, GL_QUERY_RESULT, &result));
-        pq->statistics.cs_invocations = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.clipping_input, GL_QUERY_RESULT, &result));
-        pq->statistics.clipping_input_primitives = result;
-        GL_EXTCALL(glGetQueryObjectuiv(pq->u.query.clipping_output, GL_QUERY_RESULT, &result));
-        pq->statistics.clipping_output_primitives = result;
+        pq->statistics.vertices_submitted = get_query_result64(pq->u.query.vertices, gl_info);
+        pq->statistics.primitives_submitted = get_query_result64(pq->u.query.primitives, gl_info);
+        pq->statistics.vs_invocations = get_query_result64(pq->u.query.vertex_shader, gl_info);
+        pq->statistics.hs_invocations = get_query_result64(pq->u.query.tess_control_shader, gl_info);
+        pq->statistics.ds_invocations = get_query_result64(pq->u.query.tess_eval_shader, gl_info);
+        pq->statistics.gs_invocations = get_query_result64(pq->u.query.geometry_shader, gl_info);
+        pq->statistics.gs_primitives = get_query_result64(pq->u.query.geometry_primitives, gl_info);
+        pq->statistics.ps_invocations = get_query_result64(pq->u.query.fragment_shader, gl_info);
+        pq->statistics.cs_invocations = get_query_result64(pq->u.query.compute_shader, gl_info);
+        pq->statistics.clipping_input_primitives = get_query_result64(pq->u.query.clipping_input, gl_info);
+        pq->statistics.clipping_output_primitives = get_query_result64(pq->u.query.clipping_output, gl_info);
     }
 
-done:
     checkGLcall("poll pipeline statistics query");
     context_release(context);
     return available;
