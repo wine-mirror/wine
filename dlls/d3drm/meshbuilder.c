@@ -361,6 +361,8 @@ static HRESULT WINAPI d3drm_mesh_builder2_QueryInterface(IDirect3DRMMeshBuilder2
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMMeshBuilder2)
             || IsEqualGUID(riid, &IID_IDirect3DRMMeshBuilder)
+            || IsEqualGUID(riid, &IID_IDirect3DRMVisual)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         *out = &mesh_builder->IDirect3DRMMeshBuilder2_iface;

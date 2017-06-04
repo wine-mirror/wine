@@ -203,6 +203,7 @@ static void test_MeshBuilder(void)
     HRESULT hr;
     IDirect3DRM *d3drm;
     IDirect3DRMMeshBuilder *pMeshBuilder;
+    IDirect3DRMMeshBuilder3 *meshbuilder3;
     IDirect3DRMMesh *mesh;
     D3DRMLOADMEMORY info;
     int val;
@@ -215,12 +216,38 @@ static void test_MeshBuilder(void)
     DWORD size;
     D3DCOLOR color;
     CHAR cname[64] = {0};
+    IUnknown *unk;
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
     hr = IDirect3DRM_CreateMeshBuilder(d3drm, &pMeshBuilder);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMMeshBuilder_QueryInterface(pMeshBuilder, &IID_IDirect3DRMObject, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
+    ok(unk == (IUnknown *)pMeshBuilder, "Unexpected interface pointer.\n");
+    IUnknown_Release(unk);
+
+    hr = IDirect3DRMMeshBuilder_QueryInterface(pMeshBuilder, &IID_IDirect3DRMVisual, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMVisual, %#x.\n", hr);
+    ok(unk == (IUnknown *)pMeshBuilder, "Unexpected interface pointer.\n");
+    IUnknown_Release(unk);
+
+    hr = IDirect3DRMMeshBuilder_QueryInterface(pMeshBuilder, &IID_IDirect3DRMMeshBuilder3, (void **)&meshbuilder3);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMMeshBuilder3, %#x.\n", hr);
+
+    hr = IDirect3DRMMeshBuilder3_QueryInterface(meshbuilder3, &IID_IDirect3DRMObject, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
+    ok(unk == (IUnknown *)pMeshBuilder, "Unexpected interface pointer.\n");
+    IUnknown_Release(unk);
+
+    hr = IDirect3DRMMeshBuilder3_QueryInterface(meshbuilder3, &IID_IDirect3DRMVisual, (void **)&unk);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMVisual, %#x.\n", hr);
+    ok(unk == (IUnknown *)pMeshBuilder, "Unexpected interface pointer.\n");
+    IUnknown_Release(unk);
+
+    IDirect3DRMMeshBuilder3_Release(meshbuilder3);
 
     hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, NULL, cname);
     ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
