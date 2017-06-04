@@ -183,7 +183,7 @@ static void test_wmreader_interfaces(void)
     IWMReader_Release(reader);
 }
 
-void test_profile_manager_interfaces(void)
+static void test_profile_manager_interfaces(void)
 {
     HRESULT hr;
     IWMProfileManager  *profile;
