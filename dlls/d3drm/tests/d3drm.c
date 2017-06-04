@@ -2192,6 +2192,7 @@ static void test_Texture(void)
     IDirect3DRMTexture *texture1;
     IDirect3DRMTexture2 *texture2;
     IDirect3DRMTexture3 *texture3;
+    IDirectDrawSurface *surface;
 
     D3DRMIMAGE initimg =
     {
@@ -2339,6 +2340,11 @@ static void test_Texture(void)
     ok(ref3 == ref1, "expected ref3 == ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
     ref4 = get_refcount((IUnknown *)d3drm3);
     ok(ref4 == ref1, "expected ref4 == ref1, got ref1 = %u , ref4 = %u.\n", ref1, ref4);
+
+    /* Created from image, GetSurface() does not work. */
+    hr = IDirect3DRMTexture3_GetSurface(texture3, 0, &surface);
+todo_wine
+    ok(hr == D3DRMERR_NOTCREATEDFROMDDS, "GetSurface() expected to fail, %#x\n", hr);
 
     /* Test all failures together */
     hr = IDirect3DRMTexture_GetClassName(texture1, NULL, cname);
@@ -6535,6 +6541,187 @@ cleanup:
     DestroyWindow(window);
 }
 
+static void test_create_texture_from_surface(void)
+{
+    D3DRMIMAGE testimg =
+    {
+        0, 0, 0, 0, 0,
+        TRUE, 0, (void *)0xcafebabe, NULL,
+        0x000000ff, 0x0000ff00, 0x00ff0000, 0, 0, NULL
+    };
+    IDirectDrawSurface *surface = NULL, *surface2 = NULL, *ds = NULL;
+    IDirect3DRMTexture *texture1;
+    IDirect3DRMTexture2 *texture2;
+    IDirect3DRMTexture3 *texture3;
+    IDirectDraw *ddraw = NULL;
+    IDirect3DRM *d3drm1 = NULL;
+    IDirect3DRM2 *d3drm2 = NULL;
+    IDirect3DRM3 *d3drm3 = NULL;
+    ULONG ref1, ref2, ref3;
+    D3DRMIMAGE *image;
+    DDSURFACEDESC desc;
+    HWND window;
+    HRESULT hr;
+    RECT rc;
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
+    ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
+
+    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    GetClientRect(window, &rc);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    hr = Direct3DRMCreate(&d3drm1);
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x).\n", hr);
+
+    hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM2, (void **)&d3drm2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM2 interface (hr = %x).\n", hr);
+
+    hr = IDirect3DRM_QueryInterface(d3drm1, &IID_IDirect3DRM3, (void **)&d3drm3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRM3 interface (hr = %x).\n", hr);
+
+    /* Create a surface and use it to create a texture. */
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    desc.dwWidth = rc.right;
+    desc.dwHeight = rc.bottom;
+
+    hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    /* Test NULL params */
+    texture1 = (IDirect3DRMTexture *)0xdeadbeef;
+    hr = IDirect3DRM_CreateTextureFromSurface(d3drm1, NULL, &texture1);
+todo_wine {
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    ok(!texture1, "Expected texture returned == NULL, got %p.\n", texture1);
+}
+    hr = IDirect3DRM_CreateTextureFromSurface(d3drm1, NULL, NULL);
+todo_wine
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+
+    texture2 = (IDirect3DRMTexture2 *)0xdeadbeef;
+    hr = IDirect3DRM2_CreateTextureFromSurface(d3drm2, NULL, &texture2);
+todo_wine {
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    ok(!texture2, "Expected texture returned == NULL, got %p.\n", texture2);
+}
+    hr = IDirect3DRM2_CreateTextureFromSurface(d3drm2, NULL, NULL);
+todo_wine
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+
+    texture3 = (IDirect3DRMTexture3 *)0xdeadbeef;
+    hr = IDirect3DRM3_CreateTextureFromSurface(d3drm3, NULL, &texture3);
+todo_wine {
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    ok(!texture3, "Expected texture returned == NULL, got %p.\n", texture3);
+}
+    hr = IDirect3DRM3_CreateTextureFromSurface(d3drm3, NULL, NULL);
+todo_wine
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+
+    ok(get_refcount((IUnknown *)surface) == 1, "Unexpected surface refcount.\n");
+    hr = IDirect3DRM_CreateTextureFromSurface(d3drm1, surface, &texture1);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(get_refcount((IUnknown *)surface) == 2, "Unexpected surface refcount.\n");
+    image = IDirect3DRMTexture_GetImage(texture1);
+    ok(image == NULL, "Unexpected image, %p.\n", image);
+    hr = IDirect3DRMTexture_InitFromSurface(texture1, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    IDirect3DRMTexture_Release(texture1);
+}
+    ok(get_refcount((IUnknown *)surface) == 1, "Unexpected surface refcount.\n");
+    hr = IDirect3DRM2_CreateTextureFromSurface(d3drm2, surface, &texture2);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(get_refcount((IUnknown *)surface) == 2, "Unexpected surface refcount.\n");
+    image = IDirect3DRMTexture2_GetImage(texture2);
+    ok(image == NULL, "Unexpected image, %p.\n", image);
+    hr = IDirect3DRMTexture2_InitFromSurface(texture2, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    IDirect3DRMTexture_Release(texture2);
+}
+    ok(get_refcount((IUnknown *)surface) == 1, "Unexpected surface refcount.\n");
+    hr = IDirect3DRM3_CreateTextureFromSurface(d3drm3, surface, &texture3);
+todo_wine
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(get_refcount((IUnknown *)surface) == 2, "Unexpected surface refcount.\n");
+    image = IDirect3DRMTexture3_GetImage(texture3);
+    ok(image == NULL, "Unexpected image, %p.\n", image);
+    hr = IDirect3DRMTexture3_InitFromSurface(texture3, NULL);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected hr == D3DRMERR_BADOBJECT, got %#x.\n", hr);
+    hr = IDirect3DRMTexture3_GetSurface(texture3, 0, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %#x.\n", hr);
+    hr = IDirect3DRMTexture3_GetSurface(texture3, 0, &ds);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    ok(ds == surface, "Expected same surface back.\n");
+    IDirectDrawSurface_Release(ds);
+
+    /* Init already initialized texture with same surface. */
+    hr = IDirect3DRMTexture3_InitFromSurface(texture3, surface);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected a failure, hr %#x.\n", hr);
+
+    /* Init already initialized texture with different surface. */
+    hr = IDirect3DRMTexture3_InitFromSurface(texture3, surface2);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected a failure, hr %#x.\n", hr);
+
+    hr = IDirect3DRMTexture3_GetSurface(texture3, 0, &ds);
+    ok(SUCCEEDED(hr), "Failed to get surface, hr %#x.\n", hr);
+    ok(ds == surface, "Expected same surface back.\n");
+    IDirectDrawSurface_Release(ds);
+
+    ref1 = get_refcount((IUnknown *)d3drm1);
+    ref2 = get_refcount((IUnknown *)d3drm2);
+    ref3 = get_refcount((IUnknown *)d3drm3);
+    hr = IDirect3DRMTexture3_InitFromImage(texture3, &testimg);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected a failure, hr %#x.\n", hr);
+    ok(ref1 < get_refcount((IUnknown *)d3drm1), "Expected d3drm1 reference taken.\n");
+    ok(ref2 == get_refcount((IUnknown *)d3drm2), "Expected d3drm2 reference unchanged.\n");
+    ok(ref3 == get_refcount((IUnknown *)d3drm3), "Expected d3drm3 reference unchanged.\n");
+    /* Release leaked reference to d3drm1 */
+    IDirect3DRM_Release(d3drm1);
+
+    IDirect3DRMTexture_Release(texture3);
+
+    /* Create from image, initialize from surface. */
+    hr = IDirect3DRM3_CreateTexture(d3drm3, &testimg, &texture3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture3 interface (hr = %#x)\n", hr);
+
+    ref1 = get_refcount((IUnknown *)d3drm1);
+    ref2 = get_refcount((IUnknown *)d3drm2);
+    ref3 = get_refcount((IUnknown *)d3drm3);
+    hr = IDirect3DRMTexture3_InitFromSurface(texture3, surface);
+    ok(hr == D3DRMERR_BADOBJECT, "Expected a failure, hr %#x.\n", hr);
+    ok(ref1 < get_refcount((IUnknown *)d3drm1), "Expected d3drm1 reference taken.\n");
+    ok(ref2 == get_refcount((IUnknown *)d3drm2), "Expected d3drm2 reference unchanged.\n");
+    ok(ref3 == get_refcount((IUnknown *)d3drm3), "Expected d3drm3 reference unchanged.\n");
+    /* Release leaked reference to d3drm1 */
+    IDirect3DRM_Release(d3drm1);
+
+    IDirect3DRMTexture3_Release(texture3);
+}
+    IDirectDrawSurface_Release(surface2);
+    IDirectDrawSurface_Release(surface);
+    IDirect3DRM3_Release(d3drm3);
+    IDirect3DRM2_Release(d3drm2);
+    IDirect3DRM_Release(d3drm1);
+    IDirectDraw_Release(ddraw);
+}
+
 START_TEST(d3drm)
 {
     test_MeshBuilder();
@@ -6568,4 +6755,5 @@ START_TEST(d3drm)
     test_viewport_qi();
     test_viewport_clear1();
     test_viewport_clear2();
+    test_create_texture_from_surface();
 }
