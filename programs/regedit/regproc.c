@@ -50,19 +50,6 @@ static HKEY reg_class_keys[] = {
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
-/* return values */
-#define NOT_ENOUGH_MEMORY     1
-
-/* processing macros */
-
-/* common check of memory allocation results */
-#define CHECK_ENOUGH_MEMORY(p) \
-if (!(p)) \
-{ \
-    output_message(STRING_OUT_OF_MEMORY, __FILE__, __LINE__); \
-    exit(NOT_ENOUGH_MEMORY); \
-}
-
 /******************************************************************************
  * Allocates memory and converts input from multibyte to wide chars
  * Returned string must be freed by the caller

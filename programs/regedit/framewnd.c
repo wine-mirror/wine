@@ -198,38 +198,55 @@ static void UpdateMenuItems(HMENU hMenu) {
     HeapFree(GetProcessHeap(), 0, keyName);
 }
 
-static void OnInitMenuPopup(HWND hWnd, HMENU hMenu, short wItem)
+static void add_favourite_key_menu_items(HMENU hMenu)
 {
-    if (wItem == 3) {
-        HKEY hKey;
-        while(GetMenuItemCount(hMenu)>2)
-            DeleteMenu(hMenu, 2, MF_BYPOSITION);
-        if (RegOpenKeyExW(HKEY_CURRENT_USER, favoritesKey,
-            0, KEY_READ, &hKey) == ERROR_SUCCESS) {
-            WCHAR namebuf[KEY_MAX_LEN];
-            BYTE valuebuf[4096];
-            int i = 0;
-            BOOL sep = FALSE;
-            DWORD ksize, vsize, type;
-            LONG error;
-            do {
-                ksize = KEY_MAX_LEN;
-                vsize = sizeof(valuebuf);
-                error = RegEnumValueW(hKey, i, namebuf, &ksize, NULL, &type, valuebuf, &vsize);
-                if (error != ERROR_SUCCESS)
-                    break;
-                if (type == REG_SZ) {
-                    if (!sep) {
-                        AppendMenuW(hMenu, MF_SEPARATOR, -1, NULL);
-                        sep = TRUE;
-                    }
-                    AppendMenuW(hMenu, MF_STRING, ID_FAVORITE_FIRST+i, namebuf);
-                }
-                i++;
-            } while(error == ERROR_SUCCESS);
-            RegCloseKey(hKey);
-        }
+    HKEY hkey;
+    LONG rc;
+    DWORD num_values, max_value_len, value_len, type, i;
+    WCHAR *value_name;
+
+    rc = RegOpenKeyExW(HKEY_CURRENT_USER, favoritesKey, 0, KEY_READ, &hkey);
+    if (rc != ERROR_SUCCESS) return;
+
+    rc = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, &num_values,
+                          &max_value_len, NULL, NULL, NULL);
+    if (rc != ERROR_SUCCESS)
+    {
+        ERR("RegQueryInfoKey failed: %d\n", rc);
+        goto exit;
     }
+
+    if (!num_values) goto exit;
+
+    max_value_len++;
+    value_name = HeapAlloc(GetProcessHeap(), 0, max_value_len * sizeof(WCHAR));
+    CHECK_ENOUGH_MEMORY(value_name);
+
+    AppendMenuW(hMenu, MF_SEPARATOR, 0, 0);
+
+    for (i = 0; i < num_values; i++)
+    {
+        value_len = max_value_len;
+        rc = RegEnumValueW(hkey, i, value_name, &value_len, NULL, &type, NULL, NULL);
+        if (rc == ERROR_SUCCESS && type == REG_SZ)
+            AppendMenuW(hMenu, MF_ENABLED | MF_STRING, ID_FAVORITE_FIRST + i, value_name);
+    }
+
+    HeapFree(GetProcessHeap(), 0, value_name);
+exit:
+    RegCloseKey(hkey);
+}
+
+static void OnInitMenuPopup(HWND hWnd, HMENU hMenu)
+{
+    if (hMenu == GetSubMenu(hMenuFrame, ID_FAVORITES_MENU))
+    {
+        while (GetMenuItemCount(hMenu) > 2)
+            DeleteMenu(hMenu, 2, MF_BYPOSITION);
+
+        add_favourite_key_menu_items(hMenu);
+    }
+
     UpdateMenuItems(hMenu);
 }
 
@@ -1056,7 +1073,7 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case WM_INITMENUPOPUP:
         if (!HIWORD(lParam))
-            OnInitMenuPopup(hWnd, (HMENU)wParam, LOWORD(lParam));
+            OnInitMenuPopup(hWnd, (HMENU)wParam);
         break;
     case WM_MENUSELECT:
         OnMenuSelect(hWnd, LOWORD(wParam), HIWORD(wParam), (HMENU)lParam);

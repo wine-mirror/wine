@@ -24,6 +24,15 @@
 #define REG_FORMAT_5 1
 #define REG_FORMAT_4 2
 
+#define NOT_ENOUGH_MEMORY          1
+
+#define CHECK_ENOUGH_MEMORY(p) \
+if (!(p)) \
+{ \
+    output_message(STRING_OUT_OF_MEMORY, __FILE__, __LINE__); \
+    exit(NOT_ENOUGH_MEMORY); \
+}
+
 void __cdecl output_message(unsigned int id, ...);
 
 BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format);
