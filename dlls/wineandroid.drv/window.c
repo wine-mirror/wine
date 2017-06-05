@@ -57,6 +57,7 @@ struct android_win_data
     RECT           window_rect;    /* USER window rectangle relative to parent */
     RECT           whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT           client_rect;    /* client area relative to parent */
+    ANativeWindow *window;         /* native window wrapper that forwards calls to the desktop process */
 };
 
 #define SWP_AGG_NOPOSCHANGE (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
@@ -88,7 +89,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
     if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
     {
         data->hwnd = hwnd;
-        create_ioctl_window( hwnd );
+        data->window = create_ioctl_window( hwnd );
         EnterCriticalSection( &win_data_section );
         win_data_context[context_idx(hwnd)] = data;
     }
@@ -103,7 +104,7 @@ static void free_win_data( struct android_win_data *data )
 {
     win_data_context[context_idx( data->hwnd )] = NULL;
     LeaveCriticalSection( &win_data_section );
-    destroy_ioctl_window( data->hwnd );
+    if (data->window) release_ioctl_window( data->window );
     HeapFree( GetProcessHeap(), 0, data );
 }
 

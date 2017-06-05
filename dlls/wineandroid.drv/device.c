@@ -66,6 +66,14 @@ struct native_win_data
     HWND                        hwnd;
 };
 
+/* wrapper for a native window in the context of the client (non-Java) process */
+struct native_win_wrapper
+{
+    struct ANativeWindow          win;
+    HWND                          hwnd;
+    LONG                          ref;
+};
+
 struct ioctl_header
 {
     int  hwnd;
@@ -452,14 +460,118 @@ static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void
     return status_to_android_error( status );
 }
 
-void create_ioctl_window( HWND hwnd )
+static void win_incRef( struct android_native_base_t *base )
+{
+    struct native_win_wrapper *win = (struct native_win_wrapper *)base;
+    InterlockedIncrement( &win->ref );
+}
+
+static void win_decRef( struct android_native_base_t *base )
+{
+    struct native_win_wrapper *win = (struct native_win_wrapper *)base;
+    InterlockedDecrement( &win->ref );
+}
+
+static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer, int *fence )
+{
+    return 0;
+}
+
+static int cancelBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer, int fence )
+{
+    return 0;
+}
+
+static int queueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer, int fence )
+{
+    return 0;
+}
+
+static int dequeueBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer )
+{
+    return 0;
+}
+
+static int cancelBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer )
+{
+    return 0;
+}
+
+static int lockBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer )
+{
+    return 0;  /* nothing to do */
+}
+
+static int queueBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer )
+{
+    return 0;
+}
+
+static int setSwapInterval( struct ANativeWindow *window, int interval )
+{
+    return 0;
+}
+
+static int query( const ANativeWindow *window, int what, int *value )
+{
+    return 0;
+}
+
+static int perform( ANativeWindow *window, int operation, ... )
+{
+    return 0;
+}
+
+struct ANativeWindow *create_ioctl_window( HWND hwnd )
 {
     struct ioctl_android_create_window req;
+    struct native_win_wrapper *win = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*win) );
     HWND parent = GetAncestor( hwnd, GA_PARENT );
+
+    if (!win) return NULL;
+
+    win->win.common.magic             = ANDROID_NATIVE_WINDOW_MAGIC;
+    win->win.common.version           = sizeof(ANativeWindow);
+    win->win.common.incRef            = win_incRef;
+    win->win.common.decRef            = win_decRef;
+    win->win.setSwapInterval          = setSwapInterval;
+    win->win.dequeueBuffer_DEPRECATED = dequeueBuffer_DEPRECATED;
+    win->win.lockBuffer_DEPRECATED    = lockBuffer_DEPRECATED;
+    win->win.queueBuffer_DEPRECATED   = queueBuffer_DEPRECATED;
+    win->win.query                    = query;
+    win->win.perform                  = perform;
+    win->win.cancelBuffer_DEPRECATED  = cancelBuffer_DEPRECATED;
+    win->win.dequeueBuffer            = dequeueBuffer;
+    win->win.queueBuffer              = queueBuffer;
+    win->win.cancelBuffer             = cancelBuffer;
+    win->ref  = 1;
+    win->hwnd = hwnd;
+    TRACE( "-> %p %p\n", win, win->hwnd );
 
     req.hdr.hwnd = HandleToLong( hwnd );
     req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
     android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
+
+    return &win->win;
+}
+
+struct ANativeWindow *grab_ioctl_window( struct ANativeWindow *window )
+{
+    struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+    InterlockedIncrement( &win->ref );
+    return window;
+}
+
+void release_ioctl_window( struct ANativeWindow *window )
+{
+    struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+
+    if (InterlockedDecrement( &win->ref ) > 0) return;
+
+    TRACE( "%p %p\n", win, win->hwnd );
+
+    destroy_ioctl_window( win->hwnd );
+    HeapFree( GetProcessHeap(), 0, win );
 }
 
 void destroy_ioctl_window( HWND hwnd )
