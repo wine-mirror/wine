@@ -94,7 +94,6 @@ typedef struct {
     MENUITEM    *items;       /* Array of menu items */
     UINT        FocusedItem;  /* Currently focused item */
     HWND	hwndOwner;    /* window receiving the messages for ownerdraw */
-    BOOL        bTimeToHide;  /* Request hiding when receiving a second click in the top-level menu item */
     BOOL        bScrolling;   /* Scroll arrows are active */
     UINT        nScrollPos;   /* Current scroll position */
     UINT        nTotalHeight; /* Total height of menu items inside menu */
@@ -114,6 +113,7 @@ typedef struct {
 #define TF_ENDMENU              0x10000
 #define TF_SUSPENDPOPUP         0x20000
 #define TF_SKIPREMOVE           0x40000
+#define TF_RCVD_BTN_UP          0x80000
 
 typedef struct
 {
@@ -2643,11 +2643,11 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 	    /* If we are dealing with the menu bar                  */
 	    /* and this is a click on an already "popped" item:     */
 	    /* Stop the menu tracking and close the opened submenus */
-	    if((pmt->hTopMenu == hPtMenu) && ptmenu->bTimeToHide)
+            if(((pmt->hTopMenu == hPtMenu) || IS_SYSTEM_MENU(ptmenu)) && (pmt->trackFlags & TF_RCVD_BTN_UP))
 		return 0;
 	}
-	if( GetMenu(ptmenu->hWnd) == hPtMenu )
-	    ptmenu->bTimeToHide = TRUE;
+        if( GetMenu(ptmenu->hWnd) == hPtMenu || IS_SYSTEM_MENU(ptmenu) )
+            pmt->trackFlags |= TF_RCVD_BTN_UP;
     }
     return -1;
 }
@@ -3303,9 +3303,6 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	    MENU_SelectItem( mt.hOwnerWnd, mt.hTopMenu, NO_SELECTED_ITEM, FALSE, 0 );
 	    SendMessageW( mt.hOwnerWnd, WM_MENUSELECT, MAKEWPARAM(0,0xffff), 0 );
         }
-
-        /* Reset the variable for hiding menu */
-        if( menu ) menu->bTimeToHide = FALSE;
     }
 
     SetLastError( ERROR_SUCCESS );
@@ -4073,7 +4070,6 @@ HMENU WINAPI CreatePopupMenu(void)
     if (!(hmenu = CreateMenu())) return 0;
     menu = MENU_GetMenu( hmenu );
     menu->wFlags |= MF_POPUP;
-    menu->bTimeToHide = FALSE;
     return hmenu;
 }
 
@@ -4122,7 +4118,6 @@ HMENU WINAPI CreateMenu(void)
 
     if (!(menu = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*menu) ))) return 0;
     menu->FocusedItem = NO_SELECTED_ITEM;
-    menu->bTimeToHide = FALSE;
 
     if (!(hMenu = alloc_user_handle( &menu->obj, USER_MENU ))) HeapFree( GetProcessHeap(), 0, menu );
 
