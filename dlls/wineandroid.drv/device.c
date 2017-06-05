@@ -56,6 +56,7 @@ enum android_ioctl
     IOCTL_CREATE_WINDOW,
     IOCTL_DESTROY_WINDOW,
     IOCTL_WINDOW_POS_CHANGED,
+    IOCTL_QUERY,
     NB_IOCTLS
 };
 
@@ -100,6 +101,13 @@ struct ioctl_android_window_pos_changed
     int                 flags;
     int                 after;
     int                 owner;
+};
+
+struct ioctl_android_query
+{
+    struct ioctl_header hdr;
+    int                 what;
+    int                 value;
 };
 
 static inline DWORD current_client_id(void)
@@ -195,6 +203,29 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
 void register_native_window( HWND hwnd, struct ANativeWindow *win )
 {
     NtQueueApcThread( thread, register_native_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, 0 );
+}
+
+static NTSTATUS android_error_to_status( int err )
+{
+    switch (err)
+    {
+    case 0:            return STATUS_SUCCESS;
+    case -ENOMEM:      return STATUS_NO_MEMORY;
+    case -ENOSYS:      return STATUS_NOT_SUPPORTED;
+    case -EINVAL:      return STATUS_INVALID_PARAMETER;
+    case -ENOENT:      return STATUS_INVALID_HANDLE;
+    case -EPERM:       return STATUS_ACCESS_DENIED;
+    case -ENODEV:      return STATUS_NO_SUCH_DEVICE;
+    case -EEXIST:      return STATUS_DUPLICATE_NAME;
+    case -EPIPE:       return STATUS_PIPE_DISCONNECTED;
+    case -ENODATA:     return STATUS_NO_MORE_FILES;
+    case -ETIMEDOUT:   return STATUS_IO_TIMEOUT;
+    case -EBADMSG:     return STATUS_INVALID_DEVICE_REQUEST;
+    case -EWOULDBLOCK: return STATUS_DEVICE_NOT_READY;
+    default:
+        FIXME( "unmapped error %d\n", err );
+        return STATUS_UNSUCCESSFUL;
+    }
 }
 
 static int status_to_android_error( NTSTATUS status )
@@ -323,12 +354,33 @@ static NTSTATUS windowPosChanged_ioctl( void *data, DWORD in_size, DWORD out_siz
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS query_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    struct ioctl_android_query *res = data;
+    struct ANativeWindow *parent;
+    struct native_win_data *win_data;
+    int ret;
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+    if (out_size < sizeof(*res)) return STATUS_BUFFER_OVERFLOW;
+
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+
+    *ret_size = sizeof( *res );
+    wrap_java_call();
+    ret = parent->query( parent, res->what, &res->value );
+    unwrap_java_call();
+    return android_error_to_status( ret );
+}
+
 typedef NTSTATUS (*ioctl_func)( void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
 static const ioctl_func ioctl_funcs[] =
 {
     createWindow_ioctl,         /* IOCTL_CREATE_WINDOW */
     destroyWindow_ioctl,        /* IOCTL_DESTROY_WINDOW */
     windowPosChanged_ioctl,     /* IOCTL_WINDOW_POS_CHANGED */
+    query_ioctl,                /* IOCTL_QUERY */
 };
 
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
@@ -514,7 +566,17 @@ static int setSwapInterval( struct ANativeWindow *window, int interval )
 
 static int query( const ANativeWindow *window, int what, int *value )
 {
-    return 0;
+    struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+    struct ioctl_android_query query;
+    DWORD size = sizeof( query );
+    int ret;
+
+    query.hdr.hwnd = HandleToLong( win->hwnd );
+    query.what = what;
+    ret = android_ioctl( IOCTL_QUERY, &query, sizeof(query), &query, &size );
+    TRACE( "hwnd %p what %d got %d -> %p\n", win->hwnd, what, query.value, value );
+    if (!ret) *value = query.value;
+    return ret;
 }
 
 static int perform( ANativeWindow *window, int operation, ... )
