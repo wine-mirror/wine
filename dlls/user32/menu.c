@@ -2647,7 +2647,10 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 		return 0;
 	}
         if( GetMenu(ptmenu->hWnd) == hPtMenu || IS_SYSTEM_MENU(ptmenu) )
+        {
+            if (pos == NO_SELECTED_ITEM) return 0;
             pmt->trackFlags |= TF_RCVD_BTN_UP;
+        }
     }
     return -1;
 }
