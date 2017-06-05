@@ -3324,7 +3324,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device *i
     struct wined3d *wined3d;
     unsigned int i;
 
-    static const const struct
+    static const struct
     {
         enum wined3d_resource_type rtype;
         unsigned int usage;
