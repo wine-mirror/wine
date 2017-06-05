@@ -137,10 +137,11 @@ static void update_modify_items(HMENU hMenu, int index)
 {
     unsigned int state = MF_ENABLED;
 
-    if (!g_pChildWnd->nFocusPanel || index == -1)
+    if (index == -1)
         state = MF_GRAYED;
 
     EnableMenuItem(hMenu, ID_EDIT_MODIFY, state | MF_BYCOMMAND);
+    EnableMenuItem(hMenu, ID_EDIT_MODIFY_BIN, state | MF_BYCOMMAND);
 }
 
 static void update_delete_and_rename_items(HMENU hMenu, WCHAR *keyName, int index)
