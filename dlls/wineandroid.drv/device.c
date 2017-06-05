@@ -58,6 +58,7 @@ enum android_ioctl
     IOCTL_WINDOW_POS_CHANGED,
     IOCTL_QUERY,
     IOCTL_PERFORM,
+    IOCTL_SET_SWAP_INT,
     NB_IOCTLS
 };
 
@@ -68,6 +69,7 @@ struct native_win_data
     HWND                        hwnd;
     int                         api;
     int                         buffer_format;
+    int                         swap_interval;
 };
 
 /* wrapper for a native window in the context of the client (non-Java) process */
@@ -118,6 +120,12 @@ struct ioctl_android_perform
     struct ioctl_header hdr;
     int                 operation;
     int                 args[4];
+};
+
+struct ioctl_android_set_swap_interval
+{
+    struct ioctl_header hdr;
+    int                 interval;
 };
 
 static inline DWORD current_client_id(void)
@@ -207,6 +215,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
         wrap_java_call();
         if (data->api) win->perform( win, NATIVE_WINDOW_API_CONNECT, data->api );
         win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
+        win->setSwapInterval( win, data->swap_interval );
         unwrap_java_call();
     }
     TRACE( "%p -> %p win %p\n", hwnd, data, win );
@@ -474,6 +483,25 @@ static NTSTATUS perform_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_
     return android_error_to_status( ret );
 }
 
+static NTSTATUS setSwapInterval_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    struct ioctl_android_set_swap_interval *res = data;
+    struct ANativeWindow *parent;
+    struct native_win_data *win_data;
+    int ret;
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    win_data->swap_interval = res->interval;
+
+    if (!(parent = win_data->parent)) return STATUS_SUCCESS;
+    wrap_java_call();
+    ret = parent->setSwapInterval( parent, res->interval );
+    unwrap_java_call();
+    return android_error_to_status( ret );
+}
+
 typedef NTSTATUS (*ioctl_func)( void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
 static const ioctl_func ioctl_funcs[] =
 {
@@ -482,6 +510,7 @@ static const ioctl_func ioctl_funcs[] =
     windowPosChanged_ioctl,     /* IOCTL_WINDOW_POS_CHANGED */
     query_ioctl,                /* IOCTL_QUERY */
     perform_ioctl,              /* IOCTL_PERFORM */
+    setSwapInterval_ioctl,      /* IOCTL_SET_SWAP_INT */
 };
 
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
@@ -662,7 +691,13 @@ static int queueBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeW
 
 static int setSwapInterval( struct ANativeWindow *window, int interval )
 {
-    return 0;
+    struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+    struct ioctl_android_set_swap_interval swap;
+
+    TRACE( "hwnd %p interval %d\n", win->hwnd, interval );
+    swap.hdr.hwnd = HandleToLong( win->hwnd );
+    swap.interval = interval;
+    return android_ioctl( IOCTL_SET_SWAP_INT, &swap, sizeof(swap), NULL, NULL );
 }
 
 static int query( const ANativeWindow *window, int what, int *value )
