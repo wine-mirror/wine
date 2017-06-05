@@ -2583,7 +2583,7 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
     {
         UINT pos;
         POPUPMENU *ptmenu = MENU_GetMenu( hPtMenu );
-        enum hittest ht = ht_nowhere;
+        enum hittest ht = ht_item;
 
         if( IS_SYSTEM_MENU(ptmenu) )
             pos = 0;
