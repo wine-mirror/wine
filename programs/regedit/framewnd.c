@@ -646,15 +646,21 @@ static INT_PTR CALLBACK addtofavorites_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
     switch(uMsg) {
         case WM_INITDIALOG:
         {
-            HKEY hKeyRoot = NULL;
-            LPWSTR ItemPath = GetItemPath(g_pChildWnd->hTreeWnd, NULL, &hKeyRoot);
+            HTREEITEM selected;
+            TVITEMW item;
+            WCHAR buf[128];
 
-            if(!ItemPath || !*ItemPath)
-                ItemPath = GetItemFullPath(g_pChildWnd->hTreeWnd, NULL, FALSE);
+            selected = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_CARET, 0);
+
+            item.mask = TVIF_HANDLE | TVIF_TEXT;
+            item.hItem = selected;
+            item.pszText = buf;
+            item.cchTextMax = COUNT_OF(buf);
+            SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETITEMW, 0, (LPARAM)&item);
+
             EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
-            SetWindowTextW(hwndValue, ItemPath);
+            SetWindowTextW(hwndValue, buf);
             SendMessageW(hwndValue, EM_SETLIMITTEXT, 127, 0);
-            HeapFree(GetProcessHeap(), 0, ItemPath);
             return TRUE;
         }
         case WM_COMMAND:
