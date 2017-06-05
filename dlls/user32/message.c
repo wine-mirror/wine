@@ -2490,6 +2490,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     GUITHREADINFO info;
     MOUSEHOOKSTRUCTEX hook;
     BOOL eatMsg;
+    WPARAM wparam;
 
     /* find the window to dispatch this mouse message to */
 
@@ -2523,13 +2524,14 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
     pt = msg->pt;
     message = msg->message;
+    wparam = msg->wParam;
     /* Note: windows has no concept of a non-client wheel message */
     if (message != WM_MOUSEWHEEL)
     {
         if (hittest != HTCLIENT)
         {
             message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
-            msg->wParam = hittest;
+            wparam = hittest;
         }
         else
         {
@@ -2581,6 +2583,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     {
         if (message < first || message > last) return FALSE;
     }
+    msg->wParam = wparam;
 
     /* message is accepted now (but may still get dropped) */
 

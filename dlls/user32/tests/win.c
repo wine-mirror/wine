@@ -3759,7 +3759,7 @@ static void test_mouse_input(HWND hwnd)
     RECT rc;
     POINT pt;
     int x, y;
-    HWND popup;
+    HWND popup, child = NULL;
     MSG msg;
     BOOL ret;
     LRESULT res;
@@ -3948,10 +3948,72 @@ static void test_mouse_input(HWND hwnd)
     TEST_MOUSEACTIVATE(HTCLOSE,MA_ACTIVATE);
     TEST_MOUSEACTIVATE(HTHELP,MA_ACTIVATE);
 
-done:
-    /* Clear any messages left behind by WM_MOUSEACTIVATE tests */
+    ShowWindow(popup, SW_HIDE);
+
+    /* Test sending double click to the non-client area, while capturing the window after
+       the first click has been processed.  Use a child window to ensure that Wine's graphics
+       driver isn't managing the non-client area. */
+
+    GetWindowRect(hwnd, &rc);
+    child = CreateWindowExA(0, "MainWindowClass", NULL, WS_CHILD | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
+                            rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top,
+                            hwnd, 0, 0, NULL);
+    GetWindowRect(child, &rc);
+
+    UpdateWindow(child);
+    SetCursorPos( rc.left + 5, rc.top + 5 );
     flush_events( TRUE );
 
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
+todo_wine
+    ok(msg.hwnd == child && msg.message == WM_NCMOUSEMOVE, "hwnd %p/%p message %04x\n",
+       msg.hwnd, child, msg.message);
+
+    if (msg.message == WM_NCMOUSEMOVE)
+        ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
+    ok(msg.hwnd == child && msg.message == WM_NCLBUTTONDOWN, "hwnd %p/%p message %04x\n",
+       msg.hwnd, child, msg.message);
+    ok(msg.wParam == HTSYSMENU, "wparam %ld\n", msg.wParam);
+
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
+    ok(msg.hwnd == child && msg.message == WM_NCLBUTTONUP, "hwnd %p/%p message %04x\n",
+       msg.hwnd, child, msg.message);
+
+    SetCapture( child );
+
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
+    ok(msg.hwnd == child && msg.message == WM_LBUTTONDBLCLK, "hwnd %p/%p message %04x\n",
+       msg.hwnd, child, msg.message);
+    ok(msg.wParam == MK_LBUTTON, "wparam %ld\n", msg.wParam);
+
+    ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
+todo_wine
+    ok(msg.hwnd == child && (msg.message == WM_NCMOUSELEAVE || broken(msg.message == WM_LBUTTONUP)),
+       "hwnd %p/%p message %04x\n", msg.hwnd, child, msg.message);
+
+    if (msg.message == WM_NCMOUSELEAVE)
+        ret = wait_for_message( &msg );
+    ok(ret, "no message available\n");
+    ok(msg.hwnd == child && msg.message == WM_LBUTTONUP, "hwnd %p/%p message %04x\n",
+       msg.hwnd, child, msg.message);
+
+    ret = peek_message(&msg);
+    ok(!ret, "message %04x available\n", msg.message);
+
+done:
+    flush_events( TRUE );
+
+    if (child) DestroyWindow(child);
     DestroyWindow(popup);
 }
 
