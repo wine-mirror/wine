@@ -2575,7 +2575,7 @@ static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id, UINT wFl
  *
  * Return TRUE if we can go on with menu tracking.
  */
-static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
+static BOOL MENU_ButtonDown( MTRACKER* pmt, UINT message, HMENU hPtMenu, UINT wFlags )
 {
     TRACE("%p hPtMenu=%p\n", pmt, hPtMenu);
 
@@ -2586,7 +2586,10 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
         enum hittest ht = ht_item;
 
         if( IS_SYSTEM_MENU(ptmenu) )
+        {
+            if (message == WM_LBUTTONDBLCLK) return FALSE;
             pos = 0;
+        }
         else
             ht = MENU_FindItemByCoords( ptmenu, pmt->pt, &pos );
 
@@ -3045,7 +3048,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     if (wFlags & TPM_BUTTONDOWN)
     {
 	/* Get the result in order to start the tracking or not */
-	fRemove = MENU_ButtonDown( &mt, hmenu, wFlags );
+	fRemove = MENU_ButtonDown( &mt, WM_LBUTTONDOWN, hmenu, wFlags );
 	fEndMenu = !fRemove;
     }
 
@@ -3131,7 +3134,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		case WM_LBUTTONDOWN:
 		    /* If the message belongs to the menu, removes it from the queue */
 		    /* Else, end menu tracking */
-		    fRemove = MENU_ButtonDown( &mt, hmenu, wFlags );
+		    fRemove = MENU_ButtonDown( &mt, msg.message, hmenu, wFlags );
 		    fEndMenu = !fRemove;
 		    break;
 
