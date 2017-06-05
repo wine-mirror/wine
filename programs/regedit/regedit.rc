@@ -41,8 +41,6 @@ BEGIN
     END
     POPUP "&Edit"
     BEGIN
-        MENUITEM "&Modify...",                  ID_EDIT_MODIFY
-        MENUITEM SEPARATOR
         POPUP "&New"
         BEGIN
             MENUITEM "&Key",                        ID_EDIT_NEW_KEY
@@ -132,7 +130,7 @@ BEGIN
   POPUP ""
   BEGIN
 	MENUITEM "&Modify...",                  ID_EDIT_MODIFY
-	MENUITEM "Modify Binary Data...",       ID_EDIT_MODIFY_BIN
+	MENUITEM "Modify &Binary Data...",      ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
 	MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
 	MENUITEM "&Rename\tF2",                 ID_EDIT_RENAME
@@ -229,6 +227,8 @@ STRINGTABLE
 BEGIN
     IDS_EXPAND                    "Expand"
     IDS_COLLAPSE                  "Collapse"
+    IDS_EDIT_MODIFY               "&Modify..."
+    IDS_EDIT_MODIFY_BIN           "Modify &Binary Data..."
 END
 
 STRINGTABLE

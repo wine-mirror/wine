@@ -45,7 +45,7 @@ msgstr ""
 msgid "&Support Information"
 msgstr "&Priežiūros informacija"
 
-#: appwiz.rc:68 regedit.rc:45 regedit.rc:135
+#: appwiz.rc:68 regedit.rc:133 regedit.rc:231
 msgid "&Modify..."
 msgstr "&Modifikuoti..."
 
@@ -205,7 +205,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nenurodyta"
 
-#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:149 winefile.rc:107
+#: appwiz.rc:38 shell32.rc:144 shell32.rc:241 regedit.rc:147 winefile.rc:107
 msgid "Name"
 msgstr "Vardas"
 
@@ -226,7 +226,7 @@ msgid "Programs (*.exe)"
 msgstr "Programos (*.exe)"
 
 #: appwiz.rc:43 avifil32.rc:33 cryptui.rc:83 shell32.rc:199 notepad.rc:76
-#: oleview.rc:103 progman.rc:82 regedit.rc:226 winedbg.rc:42 winhlp32.rc:90
+#: oleview.rc:103 progman.rc:82 regedit.rc:224 winedbg.rc:42 winhlp32.rc:90
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -352,7 +352,7 @@ msgstr "A&tstatyti"
 #: comdlg32.rc:502 ieframe.rc:58 msacm32.rc:52 oledlg.rc:96 shell32.rc:128
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
-#: progman.rc:202 progman.rc:219 regedit.rc:79 taskmgr.rc:87 winefile.rc:82
+#: progman.rc:202 progman.rc:219 regedit.rc:77 taskmgr.rc:87 winefile.rc:82
 #: winemine.rc:51 winhlp32.rc:57 wordpad.rc:102
 msgid "&Help"
 msgstr "&Žinynas"
@@ -2282,7 +2282,7 @@ msgstr "&Numatytosios paskirtys:"
 msgid "&Import..."
 msgstr "&Importuoti..."
 
-#: cryptui.rc:345 regedit.rc:93 regedit.rc:114
+#: cryptui.rc:345 regedit.rc:91 regedit.rc:112
 msgid "&Export..."
 msgstr "&Eksportuoti..."
 
@@ -2295,7 +2295,7 @@ msgid "Certificate intended purposes"
 msgstr "Liudijimo numatytosios paskirtys"
 
 #: cryptui.rc:350 ieframe.rc:45 shell32.rc:43 shell32.rc:120 oleview.rc:59
-#: oleview.rc:61 oleview.rc:85 regedit.rc:66 taskmgr.rc:52 winefile.rc:48
+#: oleview.rc:61 oleview.rc:85 regedit.rc:64 taskmgr.rc:52 winefile.rc:48
 #: wordpad.rc:69
 msgid "&View"
 msgstr "&Rodymas"
@@ -3247,7 +3247,7 @@ msgstr "Cinepak vaizdo kodekas"
 msgid "&File"
 msgstr "&Failas"
 
-#: ieframe.rc:30 regedit.rc:47 regedit.rc:99 regedit.rc:121
+#: ieframe.rc:30 regedit.rc:45 regedit.rc:97 regedit.rc:119
 msgid "&New"
 msgstr "&Naujas"
 
@@ -3287,11 +3287,11 @@ msgstr "Į&prastinė juosta"
 msgid "&Address bar"
 msgstr "&Adreso juosta"
 
-#: ieframe.rc:53 regedit.rc:74
+#: ieframe.rc:53 regedit.rc:72
 msgid "&Favorites"
 msgstr "&Adresynas"
 
-#: ieframe.rc:55 regedit.rc:76
+#: ieframe.rc:55 regedit.rc:74
 msgid "&Add to Favorites..."
 msgstr "Į&rašyti į adresyną..."
 
@@ -8078,7 +8078,7 @@ msgstr "&Parinkti..."
 msgid "Size"
 msgstr "Dydis"
 
-#: shell32.rc:139 regedit.rc:150
+#: shell32.rc:139 regedit.rc:148
 msgid "Type"
 msgstr "Tipas"
 
@@ -8465,7 +8465,7 @@ msgstr "„Wine“ licencija"
 msgid "Trash"
 msgstr "Šiukšlinė"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:205 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:203 winecfg.rc:87 winefile.rc:97
 msgid "Error"
 msgstr "Klaida"
 
@@ -10821,7 +10821,7 @@ msgstr "&Kopijuoti\tVald+C"
 msgid "&Paste\tCtrl+V"
 msgstr "Į&dėti\tVald+V"
 
-#: notepad.rc:47 progman.rc:37 regedit.rc:58 regedit.rc:111 regedit.rc:138
+#: notepad.rc:47 progman.rc:37 regedit.rc:56 regedit.rc:109 regedit.rc:136
 #: winefile.rc:32
 msgid "&Delete\tDel"
 msgstr "&Šalinti\tDel"
@@ -10850,7 +10850,7 @@ msgstr "Ieškoti ki&to\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tVald+H"
 
-#: notepad.rc:61 progman.rc:56 regedit.rc:81 winefile.rc:83
+#: notepad.rc:61 progman.rc:56 regedit.rc:79 winefile.rc:83
 msgid "&Contents\tF1"
 msgstr "&Turinys\tF1"
 
@@ -11089,7 +11089,7 @@ msgstr "&Įrankių juosta"
 msgid "&Status Bar"
 msgstr "&Būsenos juosta"
 
-#: oleview.rc:70 regedit.rc:72 winefile.rc:79
+#: oleview.rc:70 regedit.rc:70 winefile.rc:79
 msgid "&Refresh\tF5"
 msgstr "At&naujinti\tF5"
 
@@ -11645,7 +11645,7 @@ msgstr "Registro operacija buvo nutraukta\n"
 msgid "(Default)"
 msgstr "(numatytoji)"
 
-#: reg.rc:54 regedit.rc:211
+#: reg.rc:54 regedit.rc:209
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Ar tikrai norite pašalinti registro reikšmę „%1“?"
 
@@ -11710,68 +11710,70 @@ msgstr "&Importuoti registro failą..."
 msgid "&Export Registry File..."
 msgstr "E&ksportuoti registro failą..."
 
-#: regedit.rc:49 regedit.rc:101 regedit.rc:123
+#: regedit.rc:47 regedit.rc:99 regedit.rc:121
 msgid "&Key"
 msgstr "&Raktas"
 
-#: regedit.rc:51 regedit.rc:103 regedit.rc:125
+#: regedit.rc:49 regedit.rc:101 regedit.rc:123
 msgid "&String Value"
 msgstr "&Eilutės reikšmė"
 
-#: regedit.rc:52 regedit.rc:104 regedit.rc:126
+#: regedit.rc:50 regedit.rc:102 regedit.rc:124
 msgid "&Binary Value"
 msgstr "D&vejetainė reikšmė"
 
-#: regedit.rc:53 regedit.rc:105 regedit.rc:127
+#: regedit.rc:51 regedit.rc:103 regedit.rc:125
 msgid "&DWORD Value"
 msgstr "&DWORD reikšmė"
 
-#: regedit.rc:54 regedit.rc:106 regedit.rc:128
+#: regedit.rc:52 regedit.rc:104 regedit.rc:126
 msgid "&Multi-String Value"
 msgstr "&Kelių eilučių reikšmė"
 
-#: regedit.rc:55 regedit.rc:107 regedit.rc:129
+#: regedit.rc:53 regedit.rc:105 regedit.rc:127
 msgid "&Expandable String Value"
 msgstr "&Išplečiama eilutės reikšmė"
 
-#: regedit.rc:59 regedit.rc:112 regedit.rc:139
+#: regedit.rc:57 regedit.rc:110 regedit.rc:137
 msgid "&Rename\tF2"
 msgstr "&Pervadinti\tF2"
 
-#: regedit.rc:61 regedit.rc:116
+#: regedit.rc:59 regedit.rc:114
 msgid "&Copy Key Name"
 msgstr "Kopijuoti rakto &vardą"
 
-#: regedit.rc:63 regedit.rc:109 wordpad.rc:53
+#: regedit.rc:61 regedit.rc:107 wordpad.rc:53
 msgid "&Find...\tCtrl+F"
 msgstr "I&eškoti...\tVald+F"
 
-#: regedit.rc:64
+#: regedit.rc:62
 msgid "Find Ne&xt\tF3"
 msgstr "Ieškoti &kito\tF3"
 
-#: regedit.rc:68
+#: regedit.rc:66
 msgid "Status &Bar"
 msgstr "&Būsenos juosta"
 
-#: regedit.rc:70 winefile.rc:49
+#: regedit.rc:68 winefile.rc:49
 msgid "Sp&lit"
 msgstr "Po&langių skirtukas"
 
-#: regedit.rc:77
+#: regedit.rc:75
 msgid "&Remove Favorite..."
 msgstr "&Pašalinti iš adresyno..."
 
-#: regedit.rc:82
+#: regedit.rc:80
 msgid "&About Registry Editor"
 msgstr "&Apie Registro tvarkytuvę"
 
-#: regedit.rc:91 regedit.rc:98 regedit.rc:231
+#: regedit.rc:89 regedit.rc:96 regedit.rc:229
 msgid "Expand"
 msgstr "Išskleisti"
 
-#: regedit.rc:136
-msgid "Modify Binary Data..."
+#: regedit.rc:134 regedit.rc:232
+#, fuzzy
+#| msgid "Modify Binary Data..."
+msgid "Modify &Binary Data..."
 msgstr "Modifikuoti dvejetainius duomenis..."
 
 #: regedit.rc:266
@@ -11854,53 +11856,53 @@ msgstr "Redaguoti dvejetainę reikšmę"
 msgid "Edit Multi-String"
 msgstr "Redaguoti kelių eilučių reikšmę"
 
-#: regedit.rc:161
+#: regedit.rc:159
 msgid "Contains commands for working with the whole registry"
 msgstr "Pateikiamos komandos darbui su visu registru"
 
-#: regedit.rc:162
+#: regedit.rc:160
 msgid "Contains commands for editing values or keys"
 msgstr "Pateikiamos komandos raktų ir reikšmių redagavimui"
 
-#: regedit.rc:163
+#: regedit.rc:161
 msgid "Contains commands for customizing the registry window"
 msgstr "Pateikiamos komandos registro lango adaptavimui"
 
-#: regedit.rc:164
+#: regedit.rc:162
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Pateikiamos komandos dažnai naudojamų raktų prieigai"
 
-#: regedit.rc:165
+#: regedit.rc:163
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
 "Pateikiamos komandos žinyno ir informacijos apie Registro tvarkytuvę rodymui"
 
-#: regedit.rc:166
+#: regedit.rc:164
 msgid "Contains commands for creating new keys or values"
 msgstr "Pateikiamos komandos naujų raktų ir reikšmių kūrimui"
 
-#: regedit.rc:151
+#: regedit.rc:149
 msgid "Data"
 msgstr "Duomenys"
 
-#: regedit.rc:156
+#: regedit.rc:154
 msgid "Registry Editor"
 msgstr "Registro tvarkytuvė"
 
-#: regedit.rc:222
+#: regedit.rc:220
 msgid "Import Registry File"
 msgstr "Importuoti registro failą"
 
-#: regedit.rc:223
+#: regedit.rc:221
 msgid "Export Registry File"
 msgstr "Eksportuoti registro failą"
 
-#: regedit.rc:224
+#: regedit.rc:222
 msgid "Registry files (*.reg)"
 msgstr "Registro failai (*.reg)"
 
-#: regedit.rc:225
+#: regedit.rc:223
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 registro failai (REGEDIT4)"
 
@@ -12114,152 +12116,152 @@ msgstr "regedit: Nepavyko pašalinti registro klasės „%1“.\n"
 msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Eilutėje yra netinkama sintaksė.\n"
 
-#: regedit.rc:189
+#: regedit.rc:187
 msgid "Quits the Registry Editor"
 msgstr "Išeina iš Registro tvarkytuvės"
 
-#: regedit.rc:190
+#: regedit.rc:188
 msgid "Adds keys to the favorites list"
 msgstr "Prideda pasirinktą raktą į adresyną"
 
-#: regedit.rc:191
+#: regedit.rc:189
 msgid "Removes keys from the favorites list"
 msgstr "Pašalina nurodytus raktus iš adresyno"
 
-#: regedit.rc:192
+#: regedit.rc:190
 msgid "Shows or hides the status bar"
 msgstr "Parodo arba paslepia būsenos juostą"
 
-#: regedit.rc:193
+#: regedit.rc:191
 msgid "Changes the position of the split between two panes"
 msgstr "Pakeičia polangių skirtuko poziciją tarp polangių"
 
-#: regedit.rc:194
+#: regedit.rc:192
 msgid "Refreshes the window"
 msgstr "Atnaujina langą"
 
-#: regedit.rc:195
+#: regedit.rc:193
 msgid "Deletes the selection"
 msgstr "Šalina atranką"
 
-#: regedit.rc:196
+#: regedit.rc:194
 msgid "Renames the selection"
 msgstr "Pervadina atranką"
 
-#: regedit.rc:197
+#: regedit.rc:195
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Kopijuoja pasirinkto rakto vardą į iškarpinę"
 
-#: regedit.rc:198
+#: regedit.rc:196
 msgid "Finds a text string in a key, value or data"
 msgstr "Ieško teksto eilutės raktuose, reikšmių varduose ar duomenyse"
 
-#: regedit.rc:199
+#: regedit.rc:197
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Ieško ankstesnėje paieškoje nurodyto teksto kitos buvimo vietos"
 
-#: regedit.rc:171
+#: regedit.rc:169
 msgid "Modifies the value's data"
 msgstr "Modifikuoja reikšmės duomenis"
 
-#: regedit.rc:173
+#: regedit.rc:171
 msgid "Adds a new key"
 msgstr "Prideda naują raktą"
 
-#: regedit.rc:174
+#: regedit.rc:172
 msgid "Adds a new string value"
 msgstr "Prideda naują eilutės reikšmę"
 
-#: regedit.rc:175
+#: regedit.rc:173
 msgid "Adds a new binary value"
 msgstr "Prideda naują dvejetainę reikšmę"
 
-#: regedit.rc:176
+#: regedit.rc:174
 msgid "Adds a new 32-bit value"
 msgstr "Prideda naują 32-bitų reikšmę"
 
-#: regedit.rc:179
+#: regedit.rc:177
 msgid "Imports a text file into the registry"
 msgstr "Importuoja tekstinį failą į registrą"
 
-#: regedit.rc:181
+#: regedit.rc:179
 msgid "Exports all or part of the registry to a text file"
 msgstr "Eksportuoja visą ar dalį registro į tekstinį failą"
 
-#: regedit.rc:182
+#: regedit.rc:180
 msgid "Prints all or part of the registry"
 msgstr "Atspausdina visą ar dalį registro"
 
-#: regedit.rc:183
+#: regedit.rc:181
 msgid "Opens Registry Editor Help"
 msgstr "Atveria Registro tvarkytuvės žinyną"
 
-#: regedit.rc:184
+#: regedit.rc:182
 msgid "Displays program information, version number and copyright"
 msgstr "Parodo informaciją apie programą, versijos numerį ir autoriaus teises"
 
-#: regedit.rc:207
+#: regedit.rc:205
 msgid "Unable to query the registry value '%1'."
 msgstr "Nepavyko užklausti registro reikšmės „%1“."
 
-#: regedit.rc:208
+#: regedit.rc:206
 msgid "Unable to edit registry keys of this type (%1!u!)."
 msgstr "Nepavyko redaguoti šio tipo registro raktų (%1!u!)."
 
-#: regedit.rc:209
+#: regedit.rc:207
 msgid "The value is too big (%1!u!)."
 msgstr "Reikšmė per didelė (%1!u!)."
 
-#: regedit.rc:210
+#: regedit.rc:208
 msgid "Confirm Value Delete"
 msgstr "Reikšmės šalinimo patvirtinimas"
 
-#: regedit.rc:217
+#: regedit.rc:215
 msgid "Search complete. The string '%1' was not found."
 msgstr "Paieška baigta. Eilutė „%1“ nerasta."
 
-#: regedit.rc:212
+#: regedit.rc:210
 msgid "Are you sure you want to delete these values?"
 msgstr "Ar tikrai norite pašalinti šias reikšmes?"
 
-#: regedit.rc:215
+#: regedit.rc:213
 msgid "New Key #%d"
 msgstr "Naujas raktas #%d"
 
-#: regedit.rc:216
+#: regedit.rc:214
 msgid "New Value #%d"
 msgstr "Nauja reikšmė #%d"
 
-#: regedit.rc:206
+#: regedit.rc:204
 msgid "Unable to query the registry key '%1'."
 msgstr "Nepavyko užklausti registro rakto „%1“."
 
-#: regedit.rc:172
+#: regedit.rc:170
 msgid "Modifies the value's data in binary form"
 msgstr "Modifikuoja reikšmės duomenis dvejetainiu formatu"
 
-#: regedit.rc:177
+#: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Prideda naują kelių eilučių reikšmę"
 
-#: regedit.rc:200
+#: regedit.rc:198
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Eksportuoja pasirinktą registro šaką į tekstinį failą"
 
-#: regedit.rc:178
+#: regedit.rc:176
 msgid "Adds a new expandable string value"
 msgstr "Prideda naują išplečiamos eilutės reikšmę"
 
-#: regedit.rc:213
+#: regedit.rc:211
 msgid "Confirm Key Delete"
 msgstr "Rakto šalinimo patvirtinimas"
 
-#: regedit.rc:214
+#: regedit.rc:212
 msgid ""
 "Are you sure you want to delete the registry key '%1' and all of its subkeys?"
 msgstr "Ar tikrai norite pašalinti registro raktą „%1“ ir visus jo porakčius?"
 
-#: regedit.rc:232
+#: regedit.rc:230
 msgid "Collapse"
 msgstr "Suskleisti"
 

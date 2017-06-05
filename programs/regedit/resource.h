@@ -144,6 +144,8 @@
 #define ID_TREE_EXPAND_COLLAPSE         33105
 #define IDS_EXPAND                      33106
 #define IDS_COLLAPSE                    33107
+#define IDS_EDIT_MODIFY                 33108
+#define IDS_EDIT_MODIFY_BIN             33109
 
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001

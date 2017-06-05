@@ -49,6 +49,7 @@ static WCHAR FileNameBuffer[_MAX_PATH];
 static WCHAR FileTitleBuffer[_MAX_PATH];
 static WCHAR FilterBuffer[_MAX_PATH];
 static WCHAR expandW[32], collapseW[32];
+static WCHAR modifyW[32], modify_binaryW[64];
 
 /*******************************************************************************
  * Local module support methods
@@ -198,6 +199,21 @@ static void UpdateMenuItems(HMENU hMenu) {
     HeapFree(GetProcessHeap(), 0, keyName);
 }
 
+static void add_remove_modify_menu_items(HMENU hMenu)
+{
+    if (!g_pChildWnd->nFocusPanel)
+    {
+        while (GetMenuItemCount(hMenu) > 9)
+            DeleteMenu(hMenu, 0, MF_BYPOSITION);
+    }
+    else if (GetMenuItemCount(hMenu) < 10)
+    {
+        InsertMenuW(hMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
+        InsertMenuW(hMenu, 0, MF_BYPOSITION | MF_STRING, ID_EDIT_MODIFY_BIN, modify_binaryW);
+        InsertMenuW(hMenu, 0, MF_BYPOSITION | MF_STRING, ID_EDIT_MODIFY, modifyW);
+    }
+}
+
 static void add_favourite_key_menu_items(HMENU hMenu)
 {
     HKEY hkey;
@@ -239,7 +255,9 @@ exit:
 
 static void OnInitMenuPopup(HWND hWnd, HMENU hMenu)
 {
-    if (hMenu == GetSubMenu(hMenuFrame, ID_FAVORITES_MENU))
+    if (hMenu == GetSubMenu(hMenuFrame, ID_EDIT_MENU))
+        add_remove_modify_menu_items(hMenu);
+    else if (hMenu == GetSubMenu(hMenuFrame, ID_FAVORITES_MENU))
     {
         while (GetMenuItemCount(hMenu) > 2)
             DeleteMenu(hMenu, 2, MF_BYPOSITION);
@@ -1057,6 +1075,8 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                         hWnd, NULL, hInst, 0);
         LoadStringW(hInst, IDS_EXPAND, expandW, COUNT_OF(expandW));
         LoadStringW(hInst, IDS_COLLAPSE, collapseW, COUNT_OF(collapseW));
+        LoadStringW(hInst, IDS_EDIT_MODIFY, modifyW, COUNT_OF(modifyW));
+        LoadStringW(hInst, IDS_EDIT_MODIFY_BIN, modify_binaryW, COUNT_OF(modify_binaryW));
         break;
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam))
