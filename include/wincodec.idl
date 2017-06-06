@@ -20,6 +20,8 @@ import "wtypes.idl";
 import "propidl.idl";
 import "ocidl.idl";
 
+cpp_quote ("#include \"dcommon.h\"")
+
 cpp_quote("#define WINCODEC_SDK_VERSION 0x0236")
 
 #define CODEC_FORCE_DWORD 0x7fffffff
@@ -215,6 +217,15 @@ cpp_quote("DEFINE_GUID(GUID_WICPixelFormat64bppPRGBA, 0x6fddc324,0x4e03,0x4bfe,0
 
 cpp_quote("DEFINE_GUID(GUID_WICPixelFormat32bppCMYK, 0x6fddc324,0x4e03,0x4bfe,0xb1,0x85,0x3d,0x77,0x76,0x8d,0xc9,0x1c);")
 
+cpp_quote("#if 0")
+typedef DWORD *ID2D1Device;
+typedef DWORD *ID2D1Image;
+typedef DWORD *D2D1_PIXEL_FORMAT;
+cpp_quote ("#endif")
+
+cpp_quote ("typedef interface ID2D1Device ID2D1Device;")
+cpp_quote ("typedef interface ID2D1Image ID2D1Image;")
+
 typedef struct WICRect {
     INT X;
     INT Y;
@@ -229,6 +240,17 @@ typedef struct WICBitmapPattern {
     BYTE *Mask;
     BOOL EndOfStream;
 } WICBitmapPattern;
+
+typedef struct WICImageParameters
+{
+    D2D1_PIXEL_FORMAT PixelFormat;
+    FLOAT DpiX;
+    FLOAT DpiY;
+    FLOAT Top;
+    FLOAT Left;
+    UINT32 PixelWidth;
+    UINT32 PixelHeight;
+} WICImageParameters;
 
 typedef UINT32 WICColor;
 
@@ -842,7 +864,32 @@ interface IWICFastMetadataEncoder : IUnknown
         [out] IWICMetadataQueryWriter **ppIMetadataQueryWriter);
 }
 
-cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory, 0xcacaf262,0x9370,0x4615,0xa1,0x3b,0x9f,0x55,0x39,0xda,0x4c,0x0a);")
+[
+    object,
+    uuid(04c75bf8-3ce1-473b-acc5-3cc4f5e94999),
+    local
+]
+interface IWICImageEncoder : IUnknown
+{
+    HRESULT WriteFrame(
+        [in] ID2D1Image *image,
+        [in] IWICBitmapFrameEncode *encode,
+        [in, unique] const WICImageParameters *parameters);
+
+    HRESULT WriteFrameThumbnail(
+        [in] ID2D1Image *image,
+        [in] IWICBitmapFrameEncode *encode,
+        [in, unique] const WICImageParameters *parameters);
+
+    HRESULT WriteThumbnail(
+        [in] ID2D1Image *image,
+        [in] IWICBitmapEncoder *encoder,
+        [in, unique] const WICImageParameters *parameters);
+};
+
+cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory,  0xcacaf262,0x9370,0x4615,0xa1,0x3b,0x9f,0x55,0x39,0xda,0x4c,0x0a);")
+cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory1, 0xcacaf262,0x9370,0x4615,0xa1,0x3b,0x9f,0x55,0x39,0xda,0x4c,0x0a);")
+cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory2, 0x317d06e8,0x5f24,0x433d,0xbd,0xf7,0x79,0xce,0x68,0xd8,0xab,0xc2);")
 
 [
     object,
@@ -969,6 +1016,18 @@ interface IWICImagingFactory : IUnknown
         [in, unique] const GUID *pguidVendor,
         [out] IWICMetadataQueryWriter **ppIQueryWriter);
 }
+
+[
+   object,
+   uuid(7b816b45-1996-4476-b132-de9e247c8af0),
+   local
+]
+interface IWICImagingFactory2 : IWICImagingFactory
+{
+    HRESULT CreateImageEncoder(
+        [in] ID2D1Device *device,
+        [out] IWICImageEncoder **encoder);
+};
 
 [
     local,
