@@ -1477,6 +1477,8 @@ static HRESULT read_dict_string( struct reader *reader, WS_XML_STRING **str )
 
 static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE *attr )
 {
+    static const unsigned char zero[] = {'0'}, one[] = {'1'};
+    static const unsigned char false[] = {'f','a','l','s','e'}, true[] = {'t','r','u','e'};
     WS_XML_UTF8_TEXT *utf8 = NULL;
     unsigned char type;
     HRESULT hr;
@@ -1487,6 +1489,22 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
 
     switch (type)
     {
+    case RECORD_ZERO_TEXT:
+        if (!(utf8 = alloc_utf8_text( zero, sizeof(zero) ))) return E_OUTOFMEMORY;
+        break;
+
+    case RECORD_ONE_TEXT:
+        if (!(utf8 = alloc_utf8_text( one, sizeof(one) ))) return E_OUTOFMEMORY;
+        break;
+
+    case RECORD_FALSE_TEXT:
+        if (!(utf8 = alloc_utf8_text( false, sizeof(false) ))) return E_OUTOFMEMORY;
+        break;
+
+    case RECORD_TRUE_TEXT:
+        if (!(utf8 = alloc_utf8_text( true, sizeof(true) ))) return E_OUTOFMEMORY;
+        break;
+
     case RECORD_CHARS8_TEXT:
     {
         unsigned char len8;
@@ -1494,17 +1512,34 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
         len = len8;
         break;
     }
+    case RECORD_EMPTY_TEXT:
+        len = 0;
+        break;
+
+    case RECORD_DICTIONARY_TEXT:
+    {
+        ULONG id;
+        if ((hr = read_int31( reader, &id )) != S_OK) return hr;
+        if (!reader->dict || (id >>= 1) >= reader->dict->stringCount) return WS_E_INVALID_FORMAT;
+        if (!(utf8 = alloc_utf8_text( reader->dict->strings[id].bytes, reader->dict->strings[id].length )))
+            return E_OUTOFMEMORY;
+        break;
+    }
+
     default:
         ERR( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
     }
 
-    if (!(utf8 = alloc_utf8_text( NULL, len ))) return E_OUTOFMEMORY;
-    if (!len) utf8->value.bytes = (BYTE *)(utf8 + 1); /* quirk */
-    if ((hr = read_bytes( reader, utf8->value.bytes, len )) != S_OK)
+    if (!utf8)
     {
-        heap_free( utf8 );
-        return hr;
+        if (!(utf8 = alloc_utf8_text( NULL, len ))) return E_OUTOFMEMORY;
+        if (!len) utf8->value.bytes = (BYTE *)(utf8 + 1); /* quirk */
+        if ((hr = read_bytes( reader, utf8->value.bytes, len )) != S_OK)
+        {
+            heap_free( utf8 );
+            return hr;
+        }
     }
 
     attr->value = &utf8->text;
@@ -1967,20 +2002,59 @@ static HRESULT read_text_text( struct reader *reader )
     return S_OK;
 }
 
+static struct node *alloc_text_node( const unsigned char *data, ULONG len, unsigned char **ptr )
+{
+    struct node *node;
+    WS_XML_UTF8_TEXT *utf8;
+    WS_XML_TEXT_NODE *text;
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return NULL;
+    text = (WS_XML_TEXT_NODE *)node;
+    if (!(utf8 = alloc_utf8_text( data, len )))
+    {
+        heap_free( node );
+        return NULL;
+    }
+    text->text = &utf8->text;
+    if (ptr) *ptr = utf8->value.bytes;
+    return node;
+}
+
 static HRESULT read_text_bin( struct reader *reader )
 {
-    unsigned char type;
-    struct node *node, *parent;
-    WS_XML_TEXT_NODE *text;
-    WS_XML_UTF8_TEXT *utf8;
+    static const unsigned char zero[] = {'0'}, one[] = {'1'};
+    static const unsigned char false[] = {'f','a','l','s','e'}, true[] = {'t','r','u','e'};
+    unsigned char type, *ptr;
+    struct node *node = NULL, *parent;
     ULONG len;
     HRESULT hr;
 
     if ((hr = read_byte( reader, &type )) != S_OK) return hr;
-    if (!is_text_type( type )) return WS_E_INVALID_FORMAT;
+    if (!is_text_type( type ) || !(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
 
     switch (type)
     {
+    case RECORD_ZERO_TEXT:
+    case RECORD_ZERO_TEXT_WITH_ENDELEMENT:
+        if (!(node = alloc_text_node( zero, sizeof(zero), NULL ))) return E_OUTOFMEMORY;
+        break;
+
+    case RECORD_ONE_TEXT:
+    case RECORD_ONE_TEXT_WITH_ENDELEMENT:
+        if (!(node = alloc_text_node( one, sizeof(one), NULL ))) return E_OUTOFMEMORY;
+        break;
+
+    case RECORD_FALSE_TEXT:
+    case RECORD_FALSE_TEXT_WITH_ENDELEMENT:
+        if (!(node = alloc_text_node( false, sizeof(false), NULL ))) return E_OUTOFMEMORY;
+        break;
+
+    case RECORD_TRUE_TEXT:
+    case RECORD_TRUE_TEXT_WITH_ENDELEMENT:
+        if (!(node = alloc_text_node( true, sizeof(true), NULL ))) return E_OUTOFMEMORY;
+        break;
+
+    case RECORD_CHARS8_TEXT:
     case RECORD_CHARS8_TEXT_WITH_ENDELEMENT:
     {
         unsigned char len8;
@@ -1988,27 +2062,36 @@ static HRESULT read_text_bin( struct reader *reader )
         len = len8;
         break;
     }
+
+    case RECORD_EMPTY_TEXT:
+    case RECORD_EMPTY_TEXT_WITH_ENDELEMENT:
+        len = 0;
+        break;
+
+    case RECORD_DICTIONARY_TEXT:
+    case RECORD_DICTIONARY_TEXT_WITH_ENDELEMENT:
+    {
+        ULONG id;
+        if ((hr = read_int31( reader, &id )) != S_OK) return hr;
+        if (!reader->dict || (id >>= 1) >= reader->dict->stringCount) return WS_E_INVALID_FORMAT;
+        if (!(node = alloc_text_node( reader->dict->strings[id].bytes, reader->dict->strings[id].length, NULL )))
+            return E_OUTOFMEMORY;
+        break;
+    }
     default:
         ERR( "unhandled record type %02x\n", type );
         return WS_E_NOT_SUPPORTED;
     }
 
-    if (!(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
-
-    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
-    text = (WS_XML_TEXT_NODE *)node;
-    if (!(utf8 = alloc_utf8_text( NULL, len )))
+    if (!node)
     {
-        heap_free( node );
-        return E_OUTOFMEMORY;
+        if (!(node = alloc_text_node( NULL, len, &ptr ))) return E_OUTOFMEMORY;
+        if ((hr = read_bytes( reader, ptr, len )) != S_OK)
+        {
+            free_node( node );
+            return hr;
+        }
     }
-    if ((hr = read_bytes( reader, utf8->value.bytes, len )) != S_OK)
-    {
-        heap_free( utf8 );
-        heap_free( node );
-        return hr;
-    }
-    text->text = &utf8->text;
 
     read_insert_node( reader, parent, node );
     reader->state = READER_STATE_TEXT;
