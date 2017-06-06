@@ -1268,6 +1268,73 @@ static void test_WsGetHeader(void)
     WsFreeMessage( msg );
 }
 
+static void test_WsGetCustomHeader(void)
+{
+    static char expected[] =
+        "<Envelope><Header><Custom xmlns=\"ns\">value</Custom></Header><Body/></Envelope>";
+    static WS_XML_STRING custom = {6, (BYTE *)"Custom"}, ns = {2, (BYTE *)"ns"};
+    static WCHAR valueW[] = {'v','a','l','u','e',0};
+    WS_ELEMENT_DESCRIPTION desc;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_MESSAGE *msg;
+    HRESULT hr;
+    struct header
+    {
+        const WCHAR *value;
+    } test;
+
+    hr = WsGetCustomHeader( NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetCustomHeader( msg, NULL, 0, 0, 0, NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping = WS_TEXT_FIELD_MAPPING;
+    f.type    = WS_WSZ_TYPE;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size       = sizeof(struct header);
+    s.alignment  = TYPE_ALIGNMENT(struct header);
+    s.fields     = fields;
+    s.fieldCount = 1;
+
+    desc.elementLocalName = &custom;
+    desc.elementNs        = &ns;
+    desc.type             = WS_STRUCT_TYPE;
+    desc.typeDescription  = &s;
+
+    test.value = valueW;
+    hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_header( msg, expected, -1, 0, 0, __LINE__ );
+
+    hr = WsGetCustomHeader( msg, &desc, 0, 0, 0, NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetCustomHeader( msg, &desc, WS_SINGLETON_HEADER, 1, 0, NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetCustomHeader( msg, &desc, WS_SINGLETON_HEADER, 0, WS_READ_REQUIRED_VALUE, NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    memset( &test, 0, sizeof(test) );
+    hr = WsGetCustomHeader( msg, &desc, WS_SINGLETON_HEADER, 0, WS_READ_REQUIRED_VALUE, NULL, &test, sizeof(test),
+                            NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test.value != NULL, "value not set\n" );
+    ok( !memcmp( test.value, valueW, sizeof(valueW) ), "wrong value\n" );
+    WsFreeMessage( msg );
+}
+
 START_TEST(msg)
 {
     test_WsCreateMessage();
@@ -1288,4 +1355,5 @@ START_TEST(msg)
     test_WsReadBody();
     test_WsResetMessage();
     test_WsGetHeader();
+    test_WsGetCustomHeader();
 }

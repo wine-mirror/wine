@@ -1081,23 +1081,16 @@ done:
     return hr;
 }
 
-static HRESULT get_standard_header( struct msg *msg, WS_HEADER_TYPE type, WS_TYPE value_type,
-                                    WS_READ_OPTION option, WS_HEAP *heap, void *value, ULONG size )
+static HRESULT find_header( WS_XML_READER *reader, const WS_XML_STRING *localname, const WS_XML_STRING *ns )
 {
-    const WS_XML_STRING *localname = get_header_name( type );
-    const WS_XML_STRING *ns = get_addr_namespace( msg->version_addr );
-    const WS_XML_ELEMENT_NODE *elem;
     const WS_XML_NODE *node;
+    const WS_XML_ELEMENT_NODE *elem;
     HRESULT hr;
-
-    if (!heap) heap = msg->heap;
-    if (!msg->reader && (hr = WsCreateReader( NULL, 0, &msg->reader, NULL )) != S_OK) return hr;
-    if ((hr = WsSetInputToBuffer( msg->reader, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
 
     for (;;)
     {
-        if ((hr = WsReadNode( msg->reader, NULL )) != S_OK) return hr;
-        if ((hr = WsGetReaderNode( msg->reader, &node, NULL )) != S_OK) return hr;
+        if ((hr = WsReadNode( reader, NULL )) != S_OK) return hr;
+        if ((hr = WsGetReaderNode( reader, &node, NULL )) != S_OK) return hr;
         if (node->nodeType == WS_XML_NODE_TYPE_EOF) return WS_E_INVALID_FORMAT;
         if (node->nodeType != WS_XML_NODE_TYPE_ELEMENT) continue;
 
@@ -1106,6 +1099,21 @@ static HRESULT get_standard_header( struct msg *msg, WS_HEADER_TYPE type, WS_TYP
             WsXmlStringEquals( elem->ns, ns, NULL ) == S_OK) break;
     }
 
+    return S_OK;
+}
+
+static HRESULT get_standard_header( struct msg *msg, WS_HEADER_TYPE type, WS_TYPE value_type,
+                                    WS_READ_OPTION option, WS_HEAP *heap, void *value, ULONG size )
+{
+    const WS_XML_STRING *localname = get_header_name( type );
+    const WS_XML_STRING *ns = get_addr_namespace( msg->version_addr );
+    HRESULT hr;
+
+    if (!heap) heap = msg->heap;
+    if (!msg->reader && (hr = WsCreateReader( NULL, 0, &msg->reader, NULL )) != S_OK) return hr;
+    if ((hr = WsSetInputToBuffer( msg->reader, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
+
+    if ((hr = find_header( msg->reader, localname, ns )) != S_OK) return hr;
     return read_header( msg->reader, localname, ns, value_type, NULL, option, heap, value, size );
 }
 
@@ -1459,6 +1467,67 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     hr = write_envelope( msg );
 
 done:
+    LeaveCriticalSection( &msg->cs );
+    return hr;
+}
+
+static HRESULT get_custom_header( struct msg *msg, const WS_ELEMENT_DESCRIPTION *desc, WS_READ_OPTION option,
+                                  WS_HEAP *heap, void *value, ULONG size )
+{
+    HRESULT hr;
+    if (!heap) heap = msg->heap;
+    if (!msg->reader && (hr = WsCreateReader( NULL, 0, &msg->reader, NULL )) != S_OK) return hr;
+    if ((hr = WsSetInputToBuffer( msg->reader, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
+
+    if ((hr = find_header( msg->reader, desc->elementLocalName, desc->elementNs )) != S_OK) return hr;
+    return read_header( msg->reader, desc->elementLocalName, desc->elementNs, desc->type, desc->typeDescription,
+                        option, heap, value, size );
+}
+
+/**************************************************************************
+ *          WsGetCustomHeader		[webservices.@]
+ */
+HRESULT WINAPI WsGetCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTION *desc,
+                                  WS_REPEATING_HEADER_OPTION repeat_option, ULONG index, WS_READ_OPTION option,
+                                  WS_HEAP *heap, void *value, ULONG size, ULONG *attrs, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %08x %u %08x %p %p %u %p %p\n", handle, desc, repeat_option, index, option, heap, value,
+           size, attrs, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!msg || !desc || repeat_option < WS_REPEATING_HEADER || repeat_option > WS_SINGLETON_HEADER ||
+        (repeat_option == WS_SINGLETON_HEADER && index)) return E_INVALIDARG;
+
+    if (repeat_option == WS_REPEATING_HEADER)
+    {
+        FIXME( "repeating header not supported\n" );
+        return E_NOTIMPL;
+    }
+    if (attrs)
+    {
+        FIXME( "attributes not supported\n" );
+        return E_NOTIMPL;
+    }
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    hr = get_custom_header( msg, desc, option, heap, value, size );
+
     LeaveCriticalSection( &msg->cs );
     return hr;
 }
