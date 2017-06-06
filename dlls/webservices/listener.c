@@ -268,7 +268,7 @@ HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr *addr,
     if (GetAddrInfoW( host, service, NULL, &res )) return HRESULT_FROM_WIN32( WSAGetLastError() );
 
     info = res;
-    while (info && info->ai_family != AF_INET && info->ai_family != AF_INET6) info = info->ai_next;
+    while (info && info->ai_family != AF_INET) info = info->ai_next;
     if (info)
     {
         memcpy( addr, info->ai_addr, info->ai_addrlen );
