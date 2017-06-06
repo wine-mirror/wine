@@ -445,14 +445,14 @@ static const IStreamVtbl StreamVtbl = {
     Stream_Clone
 };
 
-static TestStream *create_test_stream(void)
+static IStream *create_test_stream(void)
 {
     TestStream *stream;
     stream = HeapAlloc(GetProcessHeap(), 0, sizeof(*stream));
     stream->IStream_iface.lpVtbl = &StreamVtbl;
     stream->ref = 1;
     stream->pos = 0;
-    return stream;
+    return &stream->IStream_iface;
 }
 
 #define test_stream_read(a,b,c,d) _test_stream_read(__LINE__,a,b,c,d)
@@ -474,8 +474,7 @@ static void _test_stream_read(unsigned line, IStream *stream, HRESULT exhres, co
 
 static void test_SetData(void)
 {
-    IStream *stream, *stream2;
-    TestStream *test_stream;
+    IStream *stream, *stream2, *test_stream;
     IMimeBody *body;
     HRESULT hr;
 
@@ -492,7 +491,7 @@ static void test_SetData(void)
     IStream_Release(stream);
 
     test_stream = create_test_stream();
-    hr = IMimeBody_SetData(body, IET_BINARY, "text", "plain", &IID_IStream, &test_stream->IStream_iface);
+    hr = IMimeBody_SetData(body, IET_BINARY, "text", "plain", &IID_IStream, test_stream);
 
     ok(hr == S_OK, "ret %08x\n", hr);
     hr = IMimeBody_IsContentType(body, "text", "plain");
@@ -507,7 +506,7 @@ static void test_SetData(void)
     CHECK_CALLED(Stream_Stat);
     CHECK_CALLED(Stream_Seek_END);
     ok(hr == S_OK, "GetData failed %08x\n", hr);
-    ok(stream != &test_stream->IStream_iface, "unexpected stream\n");
+    ok(stream != test_stream, "unexpected stream\n");
 
     SET_EXPECT(Stream_Seek);
     SET_EXPECT(Stream_Read);
@@ -538,7 +537,7 @@ static void test_SetData(void)
 
     IStream_Release(stream);
     IStream_Release(stream2);
-    IStream_Release(&test_stream->IStream_iface);
+    IStream_Release(test_stream);
 
     stream = create_stream_from_string(" \t\r\n|}~YWJj ZGV|}~mZw== \t"); /* "abcdefg" in base64 obscured by invalid chars */
     hr = IMimeBody_SetData(body, IET_BASE64, "text", "plain", &IID_IStream, stream);
