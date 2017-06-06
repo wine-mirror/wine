@@ -492,6 +492,11 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
 
     This->pi = grfPI;
 
+    if(This->uri) {
+        if(This->display_uri)
+            SysFreeString(This->display_uri);
+        IUri_Release(This->uri);
+    }
     IUri_AddRef(pUri);
     This->uri = pUri;
 
