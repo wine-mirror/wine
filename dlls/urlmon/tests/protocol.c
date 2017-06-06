@@ -142,7 +142,7 @@ static LPCWSTR file_name, http_url, expect_wsz;
 static IInternetProtocol *async_protocol = NULL;
 static BOOL first_data_notif, http_is_first, test_redirect;
 static int prot_state, read_report_data, post_stream_read;
-static DWORD bindf, ex_priority , pi;
+static DWORD bindf, ex_priority , pi, bindinfo_options;
 static IInternetProtocol *binding_protocol, *filtered_protocol;
 static IInternetBindInfo *prot_bind_info;
 static IInternetProtocolSink *binding_sink, *filtered_sink;
@@ -595,7 +595,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             todo_wine CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         else if (tested_protocol != HTTPS_TEST)
             CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-        if(test_redirect)
+        if(test_redirect && !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS))
             CHECK_CALLED(ReportProgress_REDIRECTING);
         state = test_async_req ? STATE_SENDINGREQUEST : STATE_STARTDOWNLOADING;
     }
@@ -606,7 +606,8 @@ static void call_continue(PROTOCOLDATA *protocol_data)
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
         break;
     case STATE_STARTDOWNLOADING:
-        if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
+        if((tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
+           && (!test_redirect || !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS))) {
             SET_EXPECT(OnResponse);
             if(tested_protocol == HTTPS_TEST || test_redirect || test_abort || empty_file)
                 SET_EXPECT(ReportProgress_ACCEPTRANGES);
@@ -619,13 +620,13 @@ static void call_continue(PROTOCOLDATA *protocol_data)
         break;
     }
 
-    if(state != STATE_SENDINGREQUEST)
+    if(state != STATE_SENDINGREQUEST && (!test_redirect || !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS)))
         SET_EXPECT(ReportData);
     hres = IInternetProtocol_Continue(async_protocol, protocol_data);
     ok(hres == S_OK, "Continue failed: %08x\n", hres);
     if(tested_protocol == FTP_TEST || security_problem)
         CLEAR_CALLED(ReportData);
-    else if(state != STATE_SENDINGREQUEST)
+    else if(state != STATE_SENDINGREQUEST && (!test_redirect || !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS)))
         CHECK_CALLED(ReportData);
 
     switch(state) {
@@ -635,10 +636,10 @@ static void call_continue(PROTOCOLDATA *protocol_data)
         state = STATE_STARTDOWNLOADING;
         break;
     case STATE_STARTDOWNLOADING:
-        if (! security_problem)
-        {
+        if(!security_problem) {
             state = STATE_DOWNLOADING;
-            if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
+            if((tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
+               && (!test_redirect || !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS))) {
                 CHECK_CALLED(OnResponse);
                 if(tested_protocol == HTTPS_TEST || empty_file)
                     CHECK_CALLED(ReportProgress_ACCEPTRANGES);
@@ -1082,13 +1083,17 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
     else
         ok(hrResult == expect_hrResult, "hrResult = %08x, expected: %08x\n",
            hrResult, expect_hrResult);
-    if(SUCCEEDED(hrResult) || tested_protocol == FTP_TEST || test_abort)
+    if(SUCCEEDED(hrResult) || tested_protocol == FTP_TEST || test_abort || hrResult == INET_E_REDIRECT_FAILED)
         ok(dwError == ERROR_SUCCESS, "dwError = %d, expected ERROR_SUCCESS\n", dwError);
     else
         ok(dwError != ERROR_SUCCESS ||
            broken(tested_protocol == MK_TEST), /* WinME and NT4 */
            "dwError == ERROR_SUCCESS\n");
-    ok(!szResult, "szResult != NULL\n");
+
+    if(hrResult == INET_E_REDIRECT_FAILED)
+        ok(!strcmp_wa(szResult, "http://test.winehq.org/tests/hello.html"), "szResult = %s\n", wine_dbgstr_w(szResult));
+    else
+        ok(!szResult, "szResult = %s\n", wine_dbgstr_w(szResult));
 
     if(direct_read)
         SET_EXPECT(ReportData); /* checked after main loop */
@@ -1317,6 +1322,7 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
     cbSize = pbindinfo->cbSize;
     memset(pbindinfo, 0, cbSize);
     pbindinfo->cbSize = cbSize;
+    pbindinfo->dwOptions = bindinfo_options;
 
     if(http_post_test)
     {
@@ -2338,6 +2344,7 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_EMPTY       0x1000
 #define TEST_NOMIME      0x2000
 #define TEST_FROMCACHE   0x4000
+#define TEST_DISABLEAUTOREDIRECT  0x8000
 
 static void register_filter(BOOL do_register)
 {
@@ -2395,6 +2402,10 @@ static void init_test(int prot, DWORD flags)
     empty_file = (flags & TEST_EMPTY) != 0;
     bind_from_cache = (flags & TEST_FROMCACHE) != 0;
     file_with_hash = FALSE;
+
+    bindinfo_options = 0;
+    if(flags & TEST_DISABLEAUTOREDIRECT)
+        bindinfo_options |= BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS;
 
     register_filter(mimefilter_test);
 }
@@ -2996,7 +3007,6 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
     init_test(prot, flags);
     http_url = url;
     http_post_test = tymed;
-
     if(flags & TEST_FROMCACHE)
         create_cache_entry(url);
 
@@ -3034,7 +3044,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
             SET_EXPECT(ReportProgress_CONNECTING);
         }
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
-        if(test_redirect)
+        if(test_redirect && !(bindinfo_options & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS))
             SET_EXPECT(ReportProgress_REDIRECTING);
         SET_EXPECT(ReportProgress_PROXYDETECTING);
         if(prot == HTTP_TEST)
@@ -3057,7 +3067,13 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
 
         if(!direct_read && !test_abort && !bind_from_cache)
             SET_EXPECT(ReportResult);
-        expect_hrResult = test_abort ? E_ABORT : S_OK;
+
+        if(flags & TEST_DISABLEAUTOREDIRECT)
+            expect_hrResult = INET_E_REDIRECT_FAILED;
+        else if(test_abort)
+            expect_hrResult = E_ABORT;
+        else
+            expect_hrResult = S_OK;
 
         if(direct_read) {
             SET_EXPECT(Switch);
@@ -3207,6 +3223,10 @@ static void test_http_protocol(void)
     trace("Testing http protocol (redirected)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT, TYMED_NULL);
+
+    trace("Testing http protocol (redirected, disable auto redirect)...\n");
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
+    test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT | TEST_DISABLEAUTOREDIRECT, TYMED_NULL);
 
     trace("Testing http protocol empty file...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
