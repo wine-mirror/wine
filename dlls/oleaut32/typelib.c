@@ -472,6 +472,9 @@ HRESULT WINAPI LoadTypeLibEx(
 
     TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
 
+    if (!szFile || !pptLib)
+        return E_INVALIDARG;
+
     *pptLib = NULL;
 
     res = TLB_ReadTypeLib(szFile, szPath, MAX_PATH + 1, (ITypeLib2**)pptLib);
