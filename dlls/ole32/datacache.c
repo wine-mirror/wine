@@ -1464,7 +1464,7 @@ static HRESULT WINAPI DataCache_InitNew(
     TRACE("(%p, %p)\n", iface, pStg);
 
     if (This->presentationStorage != NULL)
-        IStorage_Release(This->presentationStorage);
+        return CO_E_ALREADYINITIALIZED;
 
     This->presentationStorage = pStg;
 
