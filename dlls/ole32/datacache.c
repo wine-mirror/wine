@@ -363,6 +363,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
                                      DataCacheEntry **cache_entry)
 {
     HRESULT hr;
+    DataCacheEntry *entry;
 
     hr = check_valid_clipformat_and_tymed(formatetc->cfFormat, formatetc->tymed);
     if (FAILED(hr))
@@ -370,20 +371,21 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     if (hr == CACHE_S_FORMATETC_NOTSUPPORTED)
         TRACE("creating unsupported format %d\n", formatetc->cfFormat);
 
-    *cache_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(**cache_entry));
-    if (!*cache_entry)
+    entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
+    if (!entry)
         return E_OUTOFMEMORY;
 
-    if (!init_cache_entry(*cache_entry, formatetc, advf, This->last_cache_id))
+    if (!init_cache_entry(entry, formatetc, advf, This->last_cache_id))
         goto fail;
 
-    list_add_tail(&This->cache_list, &(*cache_entry)->entry);
+    list_add_tail(&This->cache_list, &entry->entry);
     This->last_cache_id++;
 
+    if (cache_entry) *cache_entry = entry;
     return hr;
 
 fail:
-    HeapFree(GetProcessHeap(), 0, *cache_entry);
+    HeapFree(GetProcessHeap(), 0, entry);
     return E_OUTOFMEMORY;
 }
 
