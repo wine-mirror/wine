@@ -215,15 +215,15 @@ static void add_remove_modify_menu_items(HMENU hMenu)
     }
 }
 
-static void add_favourite_key_menu_items(HMENU hMenu)
+static int add_favourite_key_items(HMENU hMenu, HWND hList)
 {
     HKEY hkey;
     LONG rc;
-    DWORD num_values, max_value_len, value_len, type, i;
+    DWORD num_values, max_value_len, value_len, type, i = 0;
     WCHAR *value_name;
 
     rc = RegOpenKeyExW(HKEY_CURRENT_USER, favoritesKey, 0, KEY_READ, &hkey);
-    if (rc != ERROR_SUCCESS) return;
+    if (rc != ERROR_SUCCESS) return 0;
 
     rc = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, &num_values,
                           &max_value_len, NULL, NULL, NULL);
@@ -239,19 +239,25 @@ static void add_favourite_key_menu_items(HMENU hMenu)
     value_name = HeapAlloc(GetProcessHeap(), 0, max_value_len * sizeof(WCHAR));
     CHECK_ENOUGH_MEMORY(value_name);
 
-    AppendMenuW(hMenu, MF_SEPARATOR, 0, 0);
+    if (hMenu) AppendMenuW(hMenu, MF_SEPARATOR, 0, 0);
 
     for (i = 0; i < num_values; i++)
     {
         value_len = max_value_len;
         rc = RegEnumValueW(hkey, i, value_name, &value_len, NULL, &type, NULL, NULL);
         if (rc == ERROR_SUCCESS && type == REG_SZ)
-            AppendMenuW(hMenu, MF_ENABLED | MF_STRING, ID_FAVORITE_FIRST + i, value_name);
+        {
+            if (hMenu)
+                AppendMenuW(hMenu, MF_ENABLED | MF_STRING, ID_FAVORITE_FIRST + i, value_name);
+            else if (hList)
+                SendMessageW(hList, LB_ADDSTRING, 0, (LPARAM)value_name);
+        }
     }
 
     HeapFree(GetProcessHeap(), 0, value_name);
 exit:
     RegCloseKey(hkey);
+    return i;
 }
 
 static void OnInitMenuPopup(HWND hWnd, HMENU hMenu)
@@ -263,7 +269,7 @@ static void OnInitMenuPopup(HWND hWnd, HMENU hMenu)
         while (GetMenuItemCount(hMenu) > 2)
             DeleteMenu(hMenu, 2, MF_BYPOSITION);
 
-        add_favourite_key_menu_items(hMenu);
+        add_favourite_key_items(hMenu, NULL);
     }
 
     UpdateMenuItems(hMenu);
@@ -710,35 +716,11 @@ static INT_PTR CALLBACK removefavorite_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM w
     HWND hwndList = GetDlgItem(hwndDlg, IDC_NAME_LIST);
             
     switch(uMsg) {
-        case WM_INITDIALOG: {
-            HKEY hKey;
-            int i = 0;
-            EnableWindow(GetDlgItem(hwndDlg, IDOK), FALSE);
-            if (RegOpenKeyExW(HKEY_CURRENT_USER, favoritesKey,
-                0, KEY_READ, &hKey) == ERROR_SUCCESS) {
-                WCHAR namebuf[KEY_MAX_LEN];
-                BYTE valuebuf[4096];
-                DWORD ksize, vsize, type;
-                LONG error;
-                do {
-                    ksize = KEY_MAX_LEN;
-                    vsize = sizeof(valuebuf);
-                    error = RegEnumValueW(hKey, i, namebuf, &ksize, NULL, &type, valuebuf, &vsize);
-                    if (error != ERROR_SUCCESS)
-                        break;
-                    if (type == REG_SZ) {
-                        SendMessageW(hwndList, LB_ADDSTRING, 0, (LPARAM)namebuf);
-                    }
-                    i++;
-                } while(error == ERROR_SUCCESS);
-                RegCloseKey(hKey);
-            }
-            else
+        case WM_INITDIALOG:
+            if (!add_favourite_key_items(NULL, hwndList))
                 return FALSE;
-            EnableWindow(GetDlgItem(hwndDlg, IDOK), i != 0);
             SendMessageW(hwndList, LB_SETCURSEL, 0, 0);
             return TRUE;
-        }
         case WM_COMMAND:
             switch(LOWORD(wParam)) {
             case IDC_NAME_LIST:
