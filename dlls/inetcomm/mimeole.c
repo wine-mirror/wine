@@ -1755,7 +1755,7 @@ static HRESULT WINAPI MimeBody_SetData(
     }
 
     if(This->data)
-        FIXME("release old data\n");
+        release_data(&This->data_iid, This->data);
 
     This->data_iid = *riid;
     This->data = pvObject;
