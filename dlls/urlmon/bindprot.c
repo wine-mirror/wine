@@ -732,6 +732,11 @@ static HRESULT WINAPI ProtocolHandler_Terminate(IInternetProtocol *iface, DWORD 
         This->bind_info = NULL;
     }
 
+    if(This->redirect_callback) {
+        IBindCallbackRedirect_Release(This->redirect_callback);
+        This->redirect_callback = NULL;
+    }
+
     IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
     return S_OK;
 }
@@ -994,12 +999,42 @@ static HRESULT WINAPI ProtocolSinkHandler_ReportData(IInternetProtocolSink *ifac
     return IInternetProtocolSink_ReportData(This->protocol_sink, bscf, progress, progress_max);
 }
 
+static HRESULT handle_redirect(BindProtocol *This, const WCHAR *url)
+{
+    HRESULT hres;
+
+    if(This->redirect_callback) {
+        VARIANT_BOOL cancel = VARIANT_FALSE;
+        IBindCallbackRedirect_Redirect(This->redirect_callback, url, &cancel);
+        if(cancel)
+            return INET_E_REDIRECT_FAILED;
+    }
+
+    if(This->protocol_sink) {
+        hres = IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_REDIRECTING, url);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IInternetProtocol_Terminate(This->protocol, 0); /* should this be done in StartEx? */
+    release_protocol_handler(This);
+
+    return IInternetProtocolEx_Start(&This->IInternetProtocolEx_iface, url, This->protocol_sink, This->bind_info, This->pi, 0);
+}
+
 static HRESULT WINAPI ProtocolSinkHandler_ReportResult(IInternetProtocolSink *iface,
         HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
 {
     BindProtocol *This = impl_from_IInternetProtocolSinkHandler(iface);
 
     TRACE("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
+
+    if(hrResult == INET_E_REDIRECT_FAILED) {
+        hrResult = handle_redirect(This, szResult);
+        if(hrResult == S_OK)
+            return S_OK;
+        szResult = NULL;
+    }
 
     if(This->protocol_sink)
         return IInternetProtocolSink_ReportResult(This->protocol_sink, hrResult, dwError, szResult);
@@ -1052,6 +1087,17 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface,
     if(FAILED(hres)) {
         WARN("GetBindInfo failed: %08x\n", hres);
         return hres;
+    }
+
+    if((pbindinfo->dwOptions & BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS) && !This->redirect_callback) {
+        IServiceProvider *service_provider;
+
+        hres = IInternetProtocolSink_QueryInterface(This->protocol_sink, &IID_IServiceProvider, (void**)&service_provider);
+        if(SUCCEEDED(hres)) {
+            hres = IServiceProvider_QueryService(service_provider, &IID_IBindCallbackRedirect, &IID_IBindCallbackRedirect,
+                                                 (void**)&This->redirect_callback);
+            IServiceProvider_Release(service_provider);
+        }
     }
 
     *grfBINDF |= BINDF_FROMURLMON;
