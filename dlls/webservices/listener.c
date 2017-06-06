@@ -315,7 +315,7 @@ static HRESULT open_listener_tcp( struct listener *listener, const WS_STRING *ur
 {
     struct sockaddr_storage storage;
     struct sockaddr *addr = (struct sockaddr *)&storage;
-    int addr_len;
+    int addr_len, on = 1;
     WS_URL_SCHEME_TYPE scheme;
     WCHAR *host;
     USHORT port;
@@ -336,6 +336,13 @@ static HRESULT open_listener_tcp( struct listener *listener, const WS_STRING *ur
 
     if ((listener->u.tcp.socket = socket( addr->sa_family, SOCK_STREAM, 0 )) == -1)
         return HRESULT_FROM_WIN32( WSAGetLastError() );
+
+    if (setsockopt( listener->u.tcp.socket, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on) ) < 0)
+    {
+        closesocket( listener->u.tcp.socket );
+        listener->u.tcp.socket = -1;
+        return HRESULT_FROM_WIN32( WSAGetLastError() );
+    }
 
     if (bind( listener->u.tcp.socket, addr, addr_len ) < 0)
     {
