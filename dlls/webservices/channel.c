@@ -637,7 +637,7 @@ static HRESULT connect_channel_tcp( struct channel *channel )
 
     winsock_init();
 
-    hr = resolve_hostname( host, port, addr, &addr_len );
+    hr = resolve_hostname( host, port, addr, &addr_len, 0 );
     heap_free( host );
     if (hr != S_OK) return hr;
 
@@ -675,7 +675,7 @@ static HRESULT connect_channel_udp( struct channel *channel )
 
     winsock_init();
 
-    hr = resolve_hostname( host, port, addr, &addr_len );
+    hr = resolve_hostname( host, port, addr, &addr_len, 0 );
     heap_free( host );
     if (hr != S_OK) return hr;
 
