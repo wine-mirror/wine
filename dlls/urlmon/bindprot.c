@@ -328,6 +328,31 @@ static ULONG WINAPI BindProtocol_AddRef(IInternetProtocolEx *iface)
     return ref;
 }
 
+static void release_protocol_handler(BindProtocol *This)
+{
+    if(This->wininet_info) {
+        IWinInetInfo_Release(This->wininet_info);
+        This->wininet_info = NULL;
+    }
+    if(This->wininet_http_info) {
+        IWinInetHttpInfo_Release(This->wininet_http_info);
+        This->wininet_http_info = NULL;
+    }
+    if(This->protocol) {
+        IInternetProtocol_Release(This->protocol);
+        This->protocol = NULL;
+    }
+    if(This->protocol_handler && This->protocol_handler != &This->default_protocol_handler.IInternetProtocol_iface) {
+        IInternetProtocol_Release(This->protocol_handler);
+        This->protocol_handler = &This->default_protocol_handler.IInternetProtocol_iface;
+    }
+    if(This->protocol_sink_handler &&
+       This->protocol_sink_handler != &This->default_protocol_handler.IInternetProtocolSink_iface) {
+        IInternetProtocolSink_Release(This->protocol_sink_handler);
+        This->protocol_sink_handler = &This->default_protocol_handler.IInternetProtocolSink_iface;
+    }
+}
+
 static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
 {
     BindProtocol *This = impl_from_IInternetProtocolEx(iface);
@@ -336,19 +361,11 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->wininet_info)
-            IWinInetInfo_Release(This->wininet_info);
-        if(This->wininet_http_info)
-            IWinInetHttpInfo_Release(This->wininet_http_info);
-        if(This->protocol)
-            IInternetProtocol_Release(This->protocol);
+        release_protocol_handler(This);
+        if(This->redirect_callback)
+            IBindCallbackRedirect_Release(This->redirect_callback);
         if(This->bind_info)
             IInternetBindInfo_Release(This->bind_info);
-        if(This->protocol_handler && This->protocol_handler != &This->default_protocol_handler.IInternetProtocol_iface)
-            IInternetProtocol_Release(This->protocol_handler);
-        if(This->protocol_sink_handler &&
-                This->protocol_sink_handler != &This->default_protocol_handler.IInternetProtocolSink_iface)
-            IInternetProtocolSink_Release(This->protocol_sink_handler);
         if(This->uri)
             IUri_Release(This->uri);
         SysFreeString(This->display_uri);
