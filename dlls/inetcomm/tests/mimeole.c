@@ -197,9 +197,17 @@ static void test_CreateBody(void)
     MIMEPARAMINFO *param_info;
     IMimeAllocator *alloc;
     BODYOFFSETS offsets;
+    CLSID clsid;
 
     hr = CoCreateInstance(&CLSID_IMimeBody, NULL, CLSCTX_INPROC_SERVER, &IID_IMimeBody, (void**)&body);
     ok(hr == S_OK, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetClassID(body, NULL);
+    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    hr = IMimeBody_GetClassID(body, &clsid);
+    ok(hr == S_OK, "ret %08x\n", hr);
+    ok(IsEqualGUID(&clsid, &IID_IMimeBody), "got %s\n", wine_dbgstr_guid(&clsid));
 
     hr = IMimeBody_GetHandle(body, &handle);
     ok(hr == MIME_E_NO_DATA, "ret %08x\n", hr);
