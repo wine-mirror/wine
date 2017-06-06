@@ -99,3 +99,24 @@ interface IWSDMessageParameters : IUnknown
     HRESULT SetRemoteAddress([in] IWSDAddress* pAddress);
     HRESULT GetLowerParameters([out] IWSDMessageParameters** ppTxParams);
 }
+
+cpp_quote("HRESULT WINAPI WSDCreateUdpMessageParameters(IWSDUdpMessageParameters **ppTxParams);")
+
+typedef struct _WSDUdpRetransmitParams
+{
+    ULONG ulSendDelay;
+    ULONG ulRepeat;
+    ULONG ulRepeatMinDelay;
+    ULONG ulRepeatMaxDelay;
+    ULONG ulRepeatUpperDelay;
+} WSDUdpRetransmitParams;
+
+[
+uuid(9934149f-8f0c-447b-aa0b-73124b0ca7f0),
+object
+]
+interface IWSDUdpMessageParameters : IWSDMessageParameters
+{
+    HRESULT SetRetransmitParams([in] const WSDUdpRetransmitParams *pParams);
+    HRESULT GetRetransmitParams([out] WSDUdpRetransmitParams *pParams);
+}
