@@ -36,6 +36,7 @@
 
 DEFINE_GUID(CLSID_Picture_Metafile,0x315,0,0,0xc0,0,0,0,0,0,0,0x46);
 DEFINE_GUID(CLSID_Picture_Dib,0x316,0,0,0xc0,0,0,0,0,0,0,0x46);
+DEFINE_GUID(CLSID_Picture_EnhMetafile,0x319,0,0,0xc0,0,0,0,0,0,0,0x46);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
@@ -1520,7 +1521,7 @@ static const IUnknownVtbl UnknownVtbl =
 
 static IUnknown unknown = { &UnknownVtbl };
 
-static void check_enum_cache(IOleCache2 *cache, STATDATA *expect, int num)
+static void check_enum_cache(IOleCache2 *cache, const STATDATA *expect, int num)
 {
     IEnumSTATDATA *enum_stat;
     STATDATA stat;
@@ -2251,6 +2252,52 @@ static void test_data_cache_bitmap(void)
 
     IDataObject_Release( data );
     IOleCache2_Release( cache );
+}
+
+/* The CLSID_Picture_ classes automatically create appropriate cache entries */
+static void test_data_cache_init(void)
+{
+    HRESULT hr;
+    IOleCache2 *cache;
+    IPersistStorage *persist;
+    int i;
+    CLSID clsid;
+    static const STATDATA enum_expect[] =
+    {
+        {{ CF_DIB,          0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL }, 0, NULL, 1 },
+        {{ CF_BITMAP,       0, DVASPECT_CONTENT, -1, TYMED_GDI },     0, NULL, 1 },
+        {{ CF_METAFILEPICT, 0, DVASPECT_CONTENT, -1, TYMED_MFPICT },  0, NULL, 1 },
+        {{ CF_ENHMETAFILE,  0, DVASPECT_CONTENT, -1, TYMED_ENHMF },   0, NULL, 1 }
+    };
+    static const struct
+    {
+        const CLSID *clsid;
+        int enum_start, enum_num;
+    } data[] =
+    {
+        { &CLSID_NULL, 0, 0 },
+        { &CLSID_WineTestOld, 0, 0 },
+        { &CLSID_Picture_Dib, 0, 2 },
+        { &CLSID_Picture_Metafile, 2, 1 },
+        { &CLSID_Picture_EnhMetafile, 3, 1 }
+    };
+
+    for (i = 0; i < sizeof(data) / sizeof(data[0]); i++)
+    {
+        hr = CreateDataCache( NULL, data[i].clsid, &IID_IOleCache2, (void **)&cache );
+        ok( hr == S_OK, "got %08x\n", hr );
+
+        check_enum_cache( cache, enum_expect + data[i].enum_start , data[i].enum_num );
+
+        IOleCache2_QueryInterface( cache, &IID_IPersistStorage, (void **) &persist );
+        hr = IPersistStorage_GetClassID( persist, &clsid );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( IsEqualCLSID( &clsid, data[i].clsid ), "class id mismatch %s %s\n", wine_dbgstr_guid( &clsid ),
+            wine_dbgstr_guid( data[i].clsid ) );
+
+        IPersistStorage_Release( persist );
+        IOleCache2_Release( cache );
+    }
 }
 
 static void test_default_handler(void)
@@ -3006,6 +3053,7 @@ START_TEST(ole2)
     test_data_cache_dib_contents_stream( 0 );
     test_data_cache_dib_contents_stream( 1 );
     test_data_cache_bitmap();
+    test_data_cache_init();
     test_default_handler();
     test_runnable();
     test_OleRun();
