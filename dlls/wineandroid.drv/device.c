@@ -433,6 +433,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
     if (!data || data->parent == win)
     {
         if (win) pANativeWindow_release( win );
+        if (data && win) PostMessageW( hwnd, WM_ANDROID_REFRESH, 0, 0 );
         TRACE( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
         return;
     }
@@ -446,6 +447,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
         win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
         win->setSwapInterval( win, data->swap_interval );
         unwrap_java_call();
+        PostMessageW( hwnd, WM_ANDROID_REFRESH, 0, 0 );
     }
     TRACE( "%p -> %p win %p\n", hwnd, data, win );
 }

@@ -977,6 +977,36 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 }
 
 
+/**********************************************************************
+ *           ANDROID_WindowMessage
+ */
+LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    struct android_win_data *data;
+
+    switch (msg)
+    {
+    case WM_ANDROID_REFRESH:
+        if ((data = get_win_data( hwnd )))
+        {
+            struct window_surface *surface = data->surface;
+            if (surface)
+            {
+                surface->funcs->lock( surface );
+                *surface->funcs->get_bounds( surface ) = surface->rect;
+                surface->funcs->unlock( surface );
+                if (is_argb_surface( surface )) surface->funcs->flush( surface );
+            }
+            release_win_data( data );
+        }
+        return 0;
+    default:
+        FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
+        return 0;
+    }
+}
+
+
 /***********************************************************************
  *           ANDROID_create_desktop
  */

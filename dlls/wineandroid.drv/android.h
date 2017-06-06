@@ -71,6 +71,11 @@ extern unsigned int screen_height DECLSPEC_HIDDEN;
 extern RECT virtual_screen_rect DECLSPEC_HIDDEN;
 extern MONITORINFOEXW default_monitor DECLSPEC_HIDDEN;
 
+enum android_window_messages
+{
+    WM_ANDROID_REFRESH = 0x80001000,
+};
+
 extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
 
 /* JNI entry points */
