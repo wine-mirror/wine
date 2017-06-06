@@ -2140,6 +2140,7 @@ static void test_data_cache_bitmap(void)
 
     hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
     ok( hr == S_OK, "got %08x\n", hr );
+    ok( conn == 2, "got %d\n", conn );
     expect[0].dwConnection = conn;
     expect[1].dwConnection = conn;
 
@@ -2158,6 +2159,7 @@ static void test_data_cache_bitmap(void)
 
     hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
     ok( hr == S_OK, "got %08x\n", hr );
+    ok( conn == 3, "got %d\n", conn );
     expect[2].dwConnection = conn;
 
     check_enum_cache( cache, expect,  3);
@@ -2168,6 +2170,7 @@ static void test_data_cache_bitmap(void)
 
     hr = IOleCache2_Cache( cache, &fmt, 0, &conn );
     ok( hr == S_OK, "got %08x\n", hr );
+    ok( conn == 4, "got %d\n", conn );
     expect[3].dwConnection = conn;
 
     check_enum_cache( cache, expect, 4 );

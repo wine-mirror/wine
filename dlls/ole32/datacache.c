@@ -2622,7 +2622,7 @@ static DataCache* DataCache_Construct(
   newObject->sinkInterface = 0;
   newObject->presentationStorage = NULL;
   list_init(&newObject->cache_list);
-  newObject->last_cache_id = 1;
+  newObject->last_cache_id = 2;
   newObject->dirty = FALSE;
   newObject->running_object = NULL;
 
