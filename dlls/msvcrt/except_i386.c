@@ -96,6 +96,13 @@ typedef struct __cxx_function_descr
     UINT                 flags;          /* flags when magic >= VC8 */
 } cxx_function_descr;
 
+typedef struct
+{
+    cxx_exception_frame *frame;
+    const cxx_function_descr *descr;
+    EXCEPTION_REGISTRATION_RECORD *nested_frame;
+} se_translator_ctx;
+
 typedef struct _SCOPETABLE
 {
   int previousTryLevel;
@@ -532,6 +539,26 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+static LONG CALLBACK se_translation_filter( EXCEPTION_POINTERS *ep, void *c )
+{
+    se_translator_ctx *ctx = (se_translator_ctx *)c;
+    EXCEPTION_RECORD *rec = ep->ExceptionRecord;
+    cxx_exception_type *exc_type;
+
+    if (rec->ExceptionCode != CXX_EXCEPTION)
+    {
+        TRACE( "non-c++ exception thrown in SEH handler: %x\n", rec->ExceptionCode );
+        MSVCRT_terminate();
+    }
+
+    exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
+    call_catch_block( rec, ctx->frame, ctx->descr,
+            ctx->frame->trylevel, ctx->nested_frame, exc_type );
+
+    __DestructExceptionObject( rec );
+    return ExceptionContinueSearch;
+}
+
 /*********************************************************************
  *		cxx_frame_handler
  *
@@ -604,10 +631,21 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
 
         if (data->se_translator) {
             EXCEPTION_POINTERS except_ptrs;
+            se_translator_ctx ctx;
 
-            except_ptrs.ExceptionRecord = rec;
-            except_ptrs.ContextRecord = context;
-            data->se_translator(rec->ExceptionCode, &except_ptrs);
+            ctx.frame = frame;
+            ctx.descr = descr;
+            ctx.nested_frame = nested_frame;
+            __TRY
+            {
+                except_ptrs.ExceptionRecord = rec;
+                except_ptrs.ContextRecord = context;
+                data->se_translator( rec->ExceptionCode, &except_ptrs );
+            }
+            __EXCEPT_CTX(se_translation_filter, &ctx)
+            {
+            }
+            __ENDTRY
         }
     }
 
