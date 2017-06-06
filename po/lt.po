@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-06-03 07:42+0300\n"
+"PO-Revision-Date: 2017-06-06 08:51+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11771,10 +11771,8 @@ msgid "Expand"
 msgstr "Išskleisti"
 
 #: regedit.rc:134 regedit.rc:232
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Modifikuoti dvejetainius duomenis..."
+msgstr "Modifikuoti &dvejetainius duomenis..."
 
 #: regedit.rc:266
 msgid "Export registry"
