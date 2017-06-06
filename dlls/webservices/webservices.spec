@@ -66,7 +66,7 @@
 @ stdcall WsGetErrorString(ptr long ptr)
 @ stub WsGetFaultErrorDetail
 @ stub WsGetFaultErrorProperty
-@ stub WsGetHeader
+@ stdcall WsGetHeader(ptr long long long ptr ptr long ptr)
 @ stub WsGetHeaderAttributes
 @ stdcall WsGetHeapProperty(ptr long ptr long ptr)
 @ stdcall WsGetListenerProperty(ptr long ptr long ptr)

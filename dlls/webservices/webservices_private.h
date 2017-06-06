@@ -45,6 +45,8 @@ BOOL set_fpword( unsigned short, unsigned short * ) DECLSPEC_HIDDEN;
 void restore_fpword( unsigned short ) DECLSPEC_HIDDEN;
 HRESULT set_output( WS_XML_WRITER * ) DECLSPEC_HIDDEN;
 ULONG get_type_size( WS_TYPE, const WS_STRUCT_DESCRIPTION * ) DECLSPEC_HIDDEN;
+HRESULT read_header( WS_XML_READER *, const WS_XML_STRING *, const WS_XML_STRING *, WS_TYPE,
+                     const void *, WS_READ_OPTION, WS_HEAP *, void *, ULONG ) DECLSPEC_HIDDEN;
 
 #define INVALID_PARAMETER_INDEX 0xffff
 HRESULT get_param_desc( const WS_STRUCT_DESCRIPTION *, USHORT, const WS_FIELD_DESCRIPTION ** ) DECLSPEC_HIDDEN;

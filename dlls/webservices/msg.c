@@ -1081,6 +1081,69 @@ done:
     return hr;
 }
 
+static HRESULT get_standard_header( struct msg *msg, WS_HEADER_TYPE type, WS_TYPE value_type,
+                                    WS_READ_OPTION option, WS_HEAP *heap, void *value, ULONG size )
+{
+    const WS_XML_STRING *localname = get_header_name( type );
+    const WS_XML_STRING *ns = get_addr_namespace( msg->version_addr );
+    const WS_XML_ELEMENT_NODE *elem;
+    const WS_XML_NODE *node;
+    HRESULT hr;
+
+    if (!heap) heap = msg->heap;
+    if (!msg->reader && (hr = WsCreateReader( NULL, 0, &msg->reader, NULL )) != S_OK) return hr;
+    if ((hr = WsSetInputToBuffer( msg->reader, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
+
+    for (;;)
+    {
+        if ((hr = WsReadNode( msg->reader, NULL )) != S_OK) return hr;
+        if ((hr = WsGetReaderNode( msg->reader, &node, NULL )) != S_OK) return hr;
+        if (node->nodeType == WS_XML_NODE_TYPE_EOF) return WS_E_INVALID_FORMAT;
+        if (node->nodeType != WS_XML_NODE_TYPE_ELEMENT) continue;
+
+        elem = (const WS_XML_ELEMENT_NODE *)node;
+        if (WsXmlStringEquals( elem->localName, localname, NULL ) == S_OK &&
+            WsXmlStringEquals( elem->ns, ns, NULL ) == S_OK) break;
+    }
+
+    return read_header( msg->reader, localname, ns, value_type, NULL, option, heap, value, size );
+}
+
+/**************************************************************************
+ *          WsGetHeader		[webservices.@]
+ */
+HRESULT WINAPI WsGetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE value_type, WS_READ_OPTION option,
+                            WS_HEAP *heap, void *value, ULONG size, WS_ERROR *error )
+{
+    struct msg *msg = (struct msg *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %u %u %08x %p %p %u %p\n", handle, type, value_type, option, heap, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!msg || type < WS_ACTION_HEADER || type > WS_FAULT_TO_HEADER || option < WS_READ_REQUIRED_VALUE ||
+        option > WS_READ_OPTIONAL_POINTER) return E_INVALIDARG;
+
+    EnterCriticalSection( &msg->cs );
+
+    if (msg->magic != MSG_MAGIC)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return E_INVALIDARG;
+    }
+
+    if (msg->state < WS_MESSAGE_STATE_INITIALIZED)
+    {
+        LeaveCriticalSection( &msg->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    hr = get_standard_header( msg, type, value_type, option, heap, value, size );
+
+    LeaveCriticalSection( &msg->cs );
+    return hr;
+}
+
 static void remove_header( struct msg *msg, ULONG i )
 {
     free_header( msg->header[i] );

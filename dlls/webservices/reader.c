@@ -5242,6 +5242,28 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
     return hr;
 }
 
+HRESULT read_header( WS_XML_READER *handle, const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                     WS_TYPE type, const void *desc, WS_READ_OPTION option, WS_HEAP *heap, void *value,
+                     ULONG size )
+{
+    struct reader *reader = (struct reader *)handle;
+    HRESULT hr;
+
+    EnterCriticalSection( &reader->cs );
+
+    if (reader->magic != READER_MAGIC)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    hr = read_type( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, type, localname, ns, desc, option, heap,
+                    value, size );
+
+    LeaveCriticalSection( &reader->cs );
+    return hr;
+}
+
 /**************************************************************************
  *          WsReadElement		[webservices.@]
  */
