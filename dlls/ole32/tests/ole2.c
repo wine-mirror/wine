@@ -135,7 +135,7 @@ typedef struct PresentationDataHeader
     DWORD unknown3; /* 4, possibly TYMED_ISTREAM */
     DVASPECT dvAspect;
     DWORD lindex;
-    DWORD tymed;
+    DWORD advf;
     DWORD unknown7; /* 0 */
     DWORD dwObjectExtentX;
     DWORD dwObjectExtentY;
@@ -1173,7 +1173,7 @@ static void test_OleLoad(IStorage *pStorage)
         IStorage *stg;
         IStream *stream;
         IUnknown *obj;
-        DWORD data, i, tymed, data_size;
+        DWORD data, i, data_size;
         PresentationDataHeader header;
         HDC hdc;
         HGDIOBJ hobj;
@@ -1222,12 +1222,10 @@ static void test_OleLoad(IStorage *pStorage)
                 break;
             }
 
-            tymed = 1 << i;
-
             header.unknown3 = 4;
             header.dvAspect = DVASPECT_CONTENT;
             header.lindex = -1;
-            header.tymed = tymed;
+            header.advf = 1 << i;
             header.unknown7 = 0;
             header.dwObjectExtentX = 1;
             header.dwObjectExtentY = 1;
@@ -1247,19 +1245,19 @@ static void test_OleLoad(IStorage *pStorage)
                 IStorage_Release(stg);
                 continue;
             }
-            ok(hr == S_OK, "OleLoad error %#x: cfFormat = %u, tymed = %u\n", hr, fmt, tymed);
+            ok(hr == S_OK, "OleLoad error %#x: cfFormat = %u, advf = %#x\n", hr, fmt, header.advf);
 
             hdc = CreateCompatibleDC(0);
             SetRect(&rc, 0, 0, 100, 100);
             hr = OleDraw(obj, DVASPECT_CONTENT, hdc, &rc);
             DeleteDC(hdc);
             if (fmt == CF_METAFILEPICT)
-                ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, tymed = %u\n", hr, fmt, tymed);
+                ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, advf = %#x\n", hr, fmt, header.advf);
             else if (fmt == CF_ENHMETAFILE)
 todo_wine
-                ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, tymed = %u\n", hr, fmt, tymed);
+                ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, advf = %#x\n", hr, fmt, header.advf);
             else
-                ok(hr == OLE_E_BLANK || hr == OLE_E_NOTRUNNING || hr == E_FAIL, "OleDraw should fail: %#x, cfFormat = %u, tymed = %u\n", hr, fmt, header.tymed);
+                ok(hr == OLE_E_BLANK || hr == OLE_E_NOTRUNNING || hr == E_FAIL, "OleDraw should fail: %#x, cfFormat = %u, advf = %#x\n", hr, fmt, header.advf);
 
             IUnknown_Release(obj);
             IStorage_Release(stg);

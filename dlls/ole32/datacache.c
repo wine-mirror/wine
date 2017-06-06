@@ -82,7 +82,7 @@ typedef struct PresentationDataHeader
   DWORD unknown3;	/* 4, possibly TYMED_ISTREAM */
   DVASPECT dvAspect;
   DWORD lindex;
-  DWORD tymed;
+  DWORD advf;
   DWORD unknown7;	/* 0 */
   DWORD dwObjectExtentX;
   DWORD dwObjectExtentY;
@@ -320,10 +320,10 @@ static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FOR
 /* checks that the clipformat and tymed are valid and returns an error if they
 * aren't and CACHE_S_NOTSUPPORTED if they are valid, but can't be rendered by
 * DataCache_Draw */
-static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed, BOOL load)
+static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed)
 {
     if (!cfFormat || !tymed ||
-        (cfFormat == CF_METAFILEPICT && (tymed == TYMED_MFPICT || load)) ||
+        (cfFormat == CF_METAFILEPICT && tymed == TYMED_MFPICT) ||
         (cfFormat == CF_BITMAP && tymed == TYMED_GDI) ||
         (cfFormat == CF_DIB && tymed == TYMED_HGLOBAL) ||
         (cfFormat == CF_ENHMETAFILE && tymed == TYMED_ENHMF))
@@ -360,11 +360,11 @@ static BOOL init_cache_entry(DataCacheEntry *entry, const FORMATETC *fmt, DWORD 
 }
 
 static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DWORD advf,
-                                     DataCacheEntry **cache_entry, BOOL load)
+                                     DataCacheEntry **cache_entry)
 {
     HRESULT hr;
 
-    hr = check_valid_clipformat_and_tymed(formatetc->cfFormat, formatetc->tymed, load);
+    hr = check_valid_clipformat_and_tymed(formatetc->cfFormat, formatetc->tymed);
     if (FAILED(hr))
         return hr;
     if (hr == CACHE_S_FORMATETC_NOTSUPPORTED)
@@ -798,7 +798,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *cache_entry, IStorage *storag
     header.unknown3 = 4;
     header.dvAspect = cache_entry->fmtetc.dwAspect;
     header.lindex = cache_entry->fmtetc.lindex;
-    header.tymed = cache_entry->stgmedium.tymed;
+    header.advf = cache_entry->advise_flags;
     header.unknown7 = 0;
     header.dwObjectExtentX = 0;
     header.dwObjectExtentY = 0;
@@ -1025,6 +1025,18 @@ static inline void DataCacheEntry_HandsOffStorage(DataCacheEntry *cache_entry)
     {
         IStream_Release(cache_entry->stream);
         cache_entry->stream = NULL;
+    }
+}
+
+static inline DWORD tymed_from_cf( DWORD cf )
+{
+    switch( cf )
+    {
+    case CF_BITMAP:       return TYMED_GDI;
+    case CF_METAFILEPICT: return TYMED_MFPICT;
+    case CF_ENHMETAFILE:  return TYMED_ENHMF;
+    case CF_DIB:
+    default:              return TYMED_HGLOBAL;
     }
 }
 
@@ -1416,7 +1428,7 @@ static HRESULT WINAPI DataCache_InitNew(
 }
 
 
-static HRESULT add_cache_entry( DataCache *This, const FORMATETC *fmt, IStream *stm,
+static HRESULT add_cache_entry( DataCache *This, const FORMATETC *fmt, DWORD advf, IStream *stm,
                                 enum stream_type type )
 {
     DataCacheEntry *cache_entry;
@@ -1426,7 +1438,7 @@ static HRESULT add_cache_entry( DataCache *This, const FORMATETC *fmt, IStream *
 
     cache_entry = DataCache_GetEntryForFormatEtc( This, fmt );
     if (!cache_entry)
-        hr = DataCache_CreateEntry( This, fmt, 0, &cache_entry, TRUE );
+        hr = DataCache_CreateEntry( This, fmt, advf, &cache_entry );
     if (SUCCEEDED( hr ))
     {
         DataCacheEntry_DiscardData( cache_entry );
@@ -1472,9 +1484,9 @@ static HRESULT parse_pres_streams( DataCache *This, IStorage *stg )
                     fmtetc.ptd = NULL; /* FIXME */
                     fmtetc.dwAspect = header.dvAspect;
                     fmtetc.lindex = header.lindex;
-                    fmtetc.tymed = header.tymed;
+                    fmtetc.tymed = tymed_from_cf( clipformat );
 
-                    add_cache_entry( This, &fmtetc, stm, pres_stream );
+                    add_cache_entry( This, &fmtetc, header.advf, stm, pres_stream );
                 }
                 IStream_Release( stm );
             }
@@ -1505,7 +1517,7 @@ static HRESULT parse_contents_stream( DataCache *This, IStorage *stg, IStream *s
         return E_FAIL;
     }
 
-    return add_cache_entry( This, fmt, stm, contents_stream );
+    return add_cache_entry( This, fmt, 0, stm, contents_stream );
 }
 
 static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
@@ -2177,7 +2189,7 @@ static HRESULT WINAPI DataCache_Cache(
         return CACHE_S_SAMECACHE;
     }
 
-    hr = DataCache_CreateEntry(This, &fmt_cpy, advf, &cache_entry, FALSE);
+    hr = DataCache_CreateEntry(This, &fmt_cpy, advf, &cache_entry);
 
     if (SUCCEEDED(hr))
     {
