@@ -1210,7 +1210,58 @@ static int perform( ANativeWindow *window, int operation, ... )
         break;
     }
     case NATIVE_WINDOW_LOCK:
+    {
+        struct ANativeWindowBuffer *buffer;
+        struct ANativeWindow_Buffer *buffer_ret = va_arg( args, ANativeWindow_Buffer * );
+        ARect *bounds = va_arg( args, ARect * );
+        int ret = window->dequeueBuffer_DEPRECATED( window, &buffer );
+        if (!ret)
+        {
+            if (gralloc_module)
+            {
+                if ((ret = gralloc_module->lock( gralloc_module, buffer->handle,
+                                                 GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
+                                                 0, 0, buffer->width, buffer->height, &buffer_ret->bits )))
+                {
+                    WARN( "gralloc->lock %p failed %d %s\n", win->hwnd, ret, strerror(-ret) );
+                    window->cancelBuffer( window, buffer, -1 );
+                }
+            }
+            else
+                buffer_ret->bits = ((struct native_buffer_wrapper *)buffer)->bits;
+        }
+        if (!ret)
+        {
+            buffer_ret->width  = buffer->width;
+            buffer_ret->height = buffer->height;
+            buffer_ret->stride = buffer->stride;
+            buffer_ret->format = buffer->format;
+            win->locked_buffer = buffer;
+            if (bounds)
+            {
+                bounds->left   = 0;
+                bounds->top    = 0;
+                bounds->right  = buffer->width;
+                bounds->bottom = buffer->height;
+            }
+        }
+        va_end( args );
+        TRACE( "hwnd %p %s bits %p ret %d %s\n", win->hwnd, names[operation], buffer_ret->bits, ret, strerror(-ret) );
+        return ret;
+    }
     case NATIVE_WINDOW_UNLOCK_AND_POST:
+    {
+        int ret = -EINVAL;
+        if (win->locked_buffer)
+        {
+            if (gralloc_module) gralloc_module->unlock( gralloc_module, win->locked_buffer->handle );
+            ret = window->queueBuffer( window, win->locked_buffer, -1 );
+            win->locked_buffer = NULL;
+        }
+        va_end( args );
+        TRACE( "hwnd %p %s ret %d\n", win->hwnd, names[operation], ret );
+        return ret;
+    }
     case NATIVE_WINDOW_CONNECT:
     case NATIVE_WINDOW_DISCONNECT:
         TRACE( "hwnd %p %s\n", win->hwnd, names[operation] );
