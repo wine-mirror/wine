@@ -402,6 +402,31 @@ static const JNINativeMethod methods[] =
 DECL_FUNCPTR( __android_log_print );
 DECL_FUNCPTR( ANativeWindow_fromSurface );
 DECL_FUNCPTR( ANativeWindow_release );
+DECL_FUNCPTR( hw_get_module );
+
+struct gralloc_module_t *gralloc_module = NULL;
+
+static void load_hardware_libs(void)
+{
+    const struct hw_module_t *module;
+    void *libhardware;
+    char error[256];
+
+    if ((libhardware = wine_dlopen( "libhardware.so", RTLD_GLOBAL, error, sizeof(error) )))
+    {
+        LOAD_FUNCPTR( libhardware, hw_get_module );
+    }
+    else
+    {
+        ERR( "failed to load libhardware: %s\n", error );
+        return;
+    }
+
+    if (phw_get_module( GRALLOC_HARDWARE_MODULE_ID, &module ) == 0)
+        gralloc_module = (struct gralloc_module_t *)module;
+    else
+        ERR( "failed to load gralloc module\n" );
+}
 
 static void load_android_libs(void)
 {
@@ -432,6 +457,8 @@ static BOOL process_attach(void)
     jobject object = wine_get_java_object();
     JNIEnv *jni_env;
     JavaVM *java_vm;
+
+    load_hardware_libs();
 
     if ((java_vm = wine_get_java_vm()))  /* running under Java */
     {

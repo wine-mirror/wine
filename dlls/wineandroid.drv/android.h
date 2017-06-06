@@ -107,4 +107,6 @@ int send_event( const union event_data *data );
 extern JavaVM *wine_get_java_vm(void);
 extern jobject wine_get_java_object(void);
 
+extern struct gralloc_module_t *gralloc_module;
+
 #endif  /* __WINE_ANDROID_H */
