@@ -52,6 +52,16 @@ static D3DRMMATRIX4D identity = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
 #define test_class_name(a, b) test_class_name_(__LINE__, a, b)
 static void test_class_name_(unsigned int line, IDirect3DRMObject *object, const char *name)
 {
@@ -1513,7 +1523,7 @@ static void test_Viewport(void)
     DWORD data, ref1, ref2, ref3, ref4;
     DWORD initial_ref1, initial_ref2, initial_ref3, device_ref, frame_ref, frame_ref2, viewport_ref;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = Direct3DRMCreate(&d3drm1);
@@ -2506,7 +2516,7 @@ static void test_Device(void)
     HWND window;
     RECT rc;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = Direct3DRMCreate(&d3drm);
@@ -3069,7 +3079,7 @@ static void test_device_qi(void)
     GUID driver;
     RECT rc;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
     hr = DirectDrawCreateClipper(0, &clipper, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDrawClipper interface (hr = %x)\n", hr);
@@ -3148,7 +3158,7 @@ static void test_create_device_from_clipper1(void)
     ULONG ref1, ref2, cref1, cref2;
     RECT rc;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 500, 400, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
     hr = DirectDrawCreateClipper(0, &clipper, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDrawClipper interface (hr = %x).\n", hr);
@@ -3319,7 +3329,7 @@ static void test_create_device_from_clipper2(void)
     ULONG ref1, ref2, ref3, cref1, cref2;
     RECT rc;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 500, 400, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
     hr = DirectDrawCreateClipper(0, &clipper, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDrawClipper interface (hr = %x).\n", hr);
@@ -3497,7 +3507,7 @@ static void test_create_device_from_clipper3(void)
     ULONG ref1, ref2, ref3, cref1, cref2;
     RECT rc;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 500, 400, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
     hr = DirectDrawCreateClipper(0, &clipper, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDrawClipper interface (hr = %x).\n", hr);
@@ -3675,7 +3685,7 @@ static void test_create_device_from_surface1(void)
     hr = DirectDrawCreate(NULL, &ddraw, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -3847,7 +3857,7 @@ static void test_create_device_from_surface2(void)
     hr = DirectDrawCreate(NULL, &ddraw, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -4029,7 +4039,7 @@ static void test_create_device_from_surface3(void)
     hr = DirectDrawCreate(NULL, &ddraw, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
@@ -4326,7 +4336,7 @@ static void test_create_device_from_d3d1(void)
     hr = DirectDrawCreate(NULL, &ddraw1, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = IDirectDraw_QueryInterface(ddraw1, &IID_IDirect3D, (void **)&d3d1);
@@ -4663,7 +4673,7 @@ static void test_create_device_from_d3d2(void)
     hr = DirectDrawCreate(NULL, &ddraw1, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = IDirectDraw_QueryInterface(ddraw1, &IID_IDirect3D2, (void **)&d3d2);
@@ -4946,7 +4956,7 @@ static void test_create_device_from_d3d3(void)
     hr = DirectDrawCreate(NULL, &ddraw1, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = IDirectDraw_QueryInterface(ddraw1, &IID_IDirect3D2, (void **)&d3d2);
@@ -6026,7 +6036,7 @@ static void test_viewport_clear1(void)
     D3DCOLOR ret_color;
     RECT rc;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = DirectDrawCreate(NULL, &ddraw, NULL);
@@ -6228,7 +6238,7 @@ static void test_viewport_clear2(void)
     D3DCOLOR ret_color;
     RECT rc;
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = DirectDrawCreate(NULL, &ddraw1, NULL);
@@ -6446,7 +6456,7 @@ static void test_create_texture_from_surface(void)
     hr = DirectDrawCreate(NULL, &ddraw, NULL);
     ok(hr == DD_OK, "Cannot get IDirectDraw interface (hr = %x).\n", hr);
 
-    window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
+    window = create_window();
     GetClientRect(window, &rc);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
