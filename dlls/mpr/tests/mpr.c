@@ -127,13 +127,13 @@ static void test_WNetGetRemoteName(void)
         ret = WNetGetUniversalNameA(driveA, REMOTE_NAME_INFO_LEVEL,
                 NULL, &info_size);
 
-        todo_wine{
-        if(((GetVersion() & 0x8000ffff) == 0x00000004) || /* NT40 */
-           (drive_type == DRIVE_REMOTE))
+        todo_wine {
+        if(drive_type == DRIVE_REMOTE)
             ok(ret == WN_BAD_POINTER, "WNetGetUniversalNameA failed: %08x\n", ret);
         else
             ok(ret == WN_NOT_CONNECTED || ret == WN_BAD_VALUE,
-                "(%s) WNetGetUniversalNameA gave wrong error: %u\n", driveA, ret);        }
+                "(%s) WNetGetUniversalNameA gave wrong error: %u\n", driveA, ret);
+        }
 
         fail_size = sizeof(driveA) / sizeof(char) - 1;
         ret = WNetGetUniversalNameA(driveA, REMOTE_NAME_INFO_LEVEL,
