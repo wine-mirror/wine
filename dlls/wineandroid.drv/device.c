@@ -38,10 +38,15 @@
 #include "winioctl.h"
 #include "ddk/wdm.h"
 #include "android.h"
+#include "wine/server.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
+
+#ifndef SYNC_IOC_WAIT
+#define SYNC_IOC_WAIT _IOW('>', 0, __s32)
+#endif
 
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 static HANDLE stop_event;
@@ -56,28 +61,58 @@ enum android_ioctl
     IOCTL_CREATE_WINDOW,
     IOCTL_DESTROY_WINDOW,
     IOCTL_WINDOW_POS_CHANGED,
+    IOCTL_DEQUEUE_BUFFER,
+    IOCTL_QUEUE_BUFFER,
+    IOCTL_CANCEL_BUFFER,
     IOCTL_QUERY,
     IOCTL_PERFORM,
     IOCTL_SET_SWAP_INT,
     NB_IOCTLS
 };
 
+#define NB_CACHED_BUFFERS 4
+
+struct native_buffer_wrapper;
+
+/* buffer for storing a variable-size native handle inside an ioctl structure */
+union native_handle_buffer
+{
+    native_handle_t handle;
+    int space[256];
+};
+
 /* data about the native window in the context of the Java process */
 struct native_win_data
 {
     struct ANativeWindow       *parent;
+    struct ANativeWindowBuffer *buffers[NB_CACHED_BUFFERS];
+    void                       *mappings[NB_CACHED_BUFFERS];
     HWND                        hwnd;
     int                         api;
     int                         buffer_format;
     int                         swap_interval;
+    int                         buffer_lru[NB_CACHED_BUFFERS];
 };
 
 /* wrapper for a native window in the context of the client (non-Java) process */
 struct native_win_wrapper
 {
     struct ANativeWindow          win;
+    struct native_buffer_wrapper *buffers[NB_CACHED_BUFFERS];
+    struct ANativeWindowBuffer   *locked_buffer;
     HWND                          hwnd;
     LONG                          ref;
+};
+
+/* wrapper for a native buffer in the context of the client (non-Java) process */
+struct native_buffer_wrapper
+{
+    struct ANativeWindowBuffer buffer;
+    LONG                       ref;
+    HWND                       hwnd;
+    void                      *bits;
+    int                        buffer_id;
+    union native_handle_buffer native_handle;
 };
 
 struct ioctl_header
@@ -108,6 +143,31 @@ struct ioctl_android_window_pos_changed
     int                 owner;
 };
 
+struct ioctl_android_dequeueBuffer
+{
+    struct ioctl_header hdr;
+    int                 win32;
+    int                 width;
+    int                 height;
+    int                 stride;
+    int                 format;
+    int                 usage;
+    int                 buffer_id;
+    union native_handle_buffer native_handle;
+};
+
+struct ioctl_android_queueBuffer
+{
+    struct ioctl_header hdr;
+    int                 buffer_id;
+};
+
+struct ioctl_android_cancelBuffer
+{
+    struct ioctl_header hdr;
+    int                 buffer_id;
+};
+
 struct ioctl_android_query
 {
     struct ioctl_header hdr;
@@ -128,9 +188,19 @@ struct ioctl_android_set_swap_interval
     int                 interval;
 };
 
+static inline BOOL is_in_desktop_process(void)
+{
+    return thread != NULL;
+}
+
 static inline DWORD current_client_id(void)
 {
     return HandleToUlong( PsGetCurrentProcessId() );
+}
+
+static inline BOOL is_client_in_process(void)
+{
+    return current_client_id() == GetCurrentProcessId();
 }
 
 #ifdef __i386__  /* the Java VM uses %fs for its own purposes, so we need to wrap the calls */
@@ -163,9 +233,167 @@ static struct native_win_data *get_ioctl_native_win_data( const struct ioctl_hea
     return get_native_win_data( LongToHandle(hdr->hwnd) );
 }
 
+static void wait_fence_and_close( int fence )
+{
+    __s32 timeout = 1000;  /* FIXME: should be -1 for infinite timeout */
+
+    if (fence == -1) return;
+    ioctl( fence, SYNC_IOC_WAIT, &timeout );
+    close( fence );
+}
+
+static int duplicate_fd( HANDLE client, int fd )
+{
+    HANDLE handle, ret = 0;
+
+    if (!wine_server_fd_to_handle( dup(fd), GENERIC_READ | SYNCHRONIZE, 0, &handle ))
+        DuplicateHandle( GetCurrentProcess(), handle, client, &ret,
+                         DUPLICATE_SAME_ACCESS, FALSE, DUP_HANDLE_CLOSE_SOURCE );
+
+    if (!ret) return -1;
+    return HandleToLong( ret );
+}
+
+static int map_native_handle( union native_handle_buffer *dest, const native_handle_t *src,
+                              HANDLE mapping, HANDLE client )
+{
+    const size_t size = offsetof( native_handle_t, data[src->numFds + src->numInts] );
+    int i;
+
+    if (mapping)  /* only duplicate the mapping handle */
+    {
+        HANDLE ret = 0;
+        if (!DuplicateHandle( GetCurrentProcess(), mapping, client, &ret,
+                              DUPLICATE_SAME_ACCESS, FALSE, DUP_HANDLE_CLOSE_SOURCE ))
+            return -ENOSPC;
+        dest->handle.numFds = 0;
+        dest->handle.numInts = 1;
+        dest->handle.data[0] = HandleToLong( ret );
+        return 0;
+    }
+    if (is_client_in_process())  /* transfer the actual handle pointer */
+    {
+        dest->handle.numFds = 0;
+        dest->handle.numInts = sizeof(src) / sizeof(int);
+        memcpy( dest->handle.data, &src, sizeof(src) );
+        return 0;
+    }
+    if (size > sizeof(*dest)) return -ENOSPC;
+    memcpy( dest, src, size );
+    /* transfer file descriptors to the client process */
+    for (i = 0; i < dest->handle.numFds; i++)
+        dest->handle.data[i] = duplicate_fd( client, src->data[i] );
+    return 0;
+}
+
+static native_handle_t *unmap_native_handle( const native_handle_t *src )
+{
+    const size_t size = offsetof( native_handle_t, data[src->numFds + src->numInts] );
+    native_handle_t *dest;
+    int i;
+
+    if (!is_in_desktop_process())
+    {
+        dest = HeapAlloc( GetProcessHeap(), 0, size );
+        memcpy( dest, src, size );
+        /* fetch file descriptors passed from the server process */
+        for (i = 0; i < dest->numFds; i++)
+            wine_server_handle_to_fd( LongToHandle(src->data[i]), GENERIC_READ | SYNCHRONIZE,
+                                      &dest->data[i], NULL );
+    }
+    else memcpy( &dest, src->data, sizeof(dest) );
+    return dest;
+}
+
+static void close_native_handle( native_handle_t *handle )
+{
+    int i;
+
+    for (i = 0; i < handle->numFds; i++) close( handle->data[i] );
+    HeapFree( GetProcessHeap(), 0, handle );
+}
+
+/* insert a buffer index at the head of the LRU list */
+static void insert_buffer_lru( struct native_win_data *win, int index )
+{
+    unsigned int i;
+
+    for (i = 0; i < NB_CACHED_BUFFERS; i++)
+    {
+        if (win->buffer_lru[i] == index) break;
+        if (win->buffer_lru[i] == -1) break;
+    }
+
+    assert( i < NB_CACHED_BUFFERS );
+    memmove( win->buffer_lru + 1, win->buffer_lru, i * sizeof(win->buffer_lru[0]) );
+    win->buffer_lru[0] = index;
+}
+
+static int register_buffer( struct native_win_data *win, struct ANativeWindowBuffer *buffer,
+                            HANDLE *mapping, int *is_new )
+{
+    unsigned int i;
+
+    *is_new = 0;
+    for (i = 0; i < NB_CACHED_BUFFERS; i++)
+    {
+        if (win->buffers[i] == buffer) goto done;
+        if (!win->buffers[i]) break;
+    }
+
+    if (i == NB_CACHED_BUFFERS)
+    {
+        /* reuse the least recently used buffer */
+        i = win->buffer_lru[NB_CACHED_BUFFERS - 1];
+        assert( i < NB_CACHED_BUFFERS );
+
+        TRACE( "%p %p evicting buffer %p id %d from cache\n",
+               win->hwnd, win->parent, win->buffers[i], i );
+        win->buffers[i]->common.decRef( &win->buffers[i]->common );
+        if (win->mappings[i]) UnmapViewOfFile( win->mappings[i] );
+    }
+
+    win->buffers[i] = buffer;
+    win->mappings[i] = NULL;
+
+    if (mapping)
+    {
+        *mapping = CreateFileMappingW( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,
+                                       buffer->stride * buffer->height * 4, NULL );
+        win->mappings[i] = MapViewOfFile( *mapping, FILE_MAP_READ, 0, 0, 0 );
+    }
+    buffer->common.incRef( &buffer->common );
+    *is_new = 1;
+    TRACE( "%p %p %p -> %d\n", win->hwnd, win->parent, buffer, i );
+
+done:
+    insert_buffer_lru( win, i );
+    return i;
+}
+
+static struct ANativeWindowBuffer *get_registered_buffer( struct native_win_data *win, int id )
+{
+    if (id < 0 || id >= NB_CACHED_BUFFERS || !win->buffers[id])
+    {
+        ERR( "unknown buffer %d for %p %p\n", id, win->hwnd, win->parent );
+        return NULL;
+    }
+    return win->buffers[id];
+}
+
 static void release_native_window( struct native_win_data *data )
 {
+    unsigned int i;
+
     if (data->parent) pANativeWindow_release( data->parent );
+    for (i = 0; i < NB_CACHED_BUFFERS; i++)
+    {
+        if (data->buffers[i]) data->buffers[i]->common.decRef( &data->buffers[i]->common );
+        if (data->mappings[i]) UnmapViewOfFile( data->mappings[i] );
+        data->buffer_lru[i] = -1;
+    }
+    memset( data->buffers, 0, sizeof(data->buffers) );
+    memset( data->mappings, 0, sizeof(data->mappings) );
 }
 
 static void free_native_win_data( struct native_win_data *data )
@@ -179,7 +407,7 @@ static void free_native_win_data( struct native_win_data *data )
 
 static struct native_win_data *create_native_win_data( HWND hwnd )
 {
-    unsigned int idx = data_map_idx( hwnd );
+    unsigned int i, idx = data_map_idx( hwnd );
     struct native_win_data *data = data_map[idx];
 
     if (data)
@@ -192,6 +420,7 @@ static struct native_win_data *create_native_win_data( HWND hwnd )
     data->api = NATIVE_WINDOW_API_CPU;
     data->buffer_format = PF_BGRA_8888;
     data_map[idx] = data;
+    for (i = 0; i < NB_CACHED_BUFFERS; i++) data->buffer_lru[i] = -1;
     return data;
 }
 
@@ -376,6 +605,105 @@ static NTSTATUS windowPosChanged_ioctl( void *data, DWORD in_size, DWORD out_siz
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    struct ANativeWindow *parent;
+    struct ioctl_android_dequeueBuffer *res = data;
+    struct native_win_data *win_data;
+    struct ANativeWindowBuffer *buffer;
+    int fence, ret, is_new;
+
+    if (out_size < sizeof( *res )) return STATUS_BUFFER_OVERFLOW;
+
+    if (in_size < offsetof( struct ioctl_android_dequeueBuffer, native_handle ))
+        return STATUS_INVALID_PARAMETER;
+
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+
+    *ret_size = offsetof( struct ioctl_android_dequeueBuffer, native_handle );
+    wrap_java_call();
+    ret = parent->dequeueBuffer( parent, &buffer, &fence );
+    unwrap_java_call();
+    if (!ret)
+    {
+        HANDLE mapping = 0;
+
+        TRACE( "%08x got buffer %p fence %d\n", res->hdr.hwnd, buffer, fence );
+        res->width  = buffer->width;
+        res->height = buffer->height;
+        res->stride = buffer->stride;
+        res->format = buffer->format;
+        res->usage  = buffer->usage;
+        res->buffer_id = register_buffer( win_data, buffer, res->win32 ? &mapping : NULL, &is_new );
+        if (is_new)
+        {
+            HANDLE process = OpenProcess( PROCESS_DUP_HANDLE, FALSE, current_client_id() );
+            map_native_handle( &res->native_handle, buffer->handle, mapping, process );
+            CloseHandle( process );
+            *ret_size = sizeof( *res );
+        }
+        wait_fence_and_close( fence );
+        return STATUS_SUCCESS;
+    }
+    ERR( "%08x failed %d\n", res->hdr.hwnd, ret );
+    return android_error_to_status( ret );
+}
+
+static NTSTATUS cancelBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    struct ioctl_android_cancelBuffer *res = data;
+    struct ANativeWindow *parent;
+    struct ANativeWindowBuffer *buffer;
+    struct native_win_data *win_data;
+    int ret;
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+
+    if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
+
+    TRACE( "%08x buffer %p\n", res->hdr.hwnd, buffer );
+    wrap_java_call();
+    ret = parent->cancelBuffer( parent, buffer, -1 );
+    unwrap_java_call();
+    return android_error_to_status( ret );
+}
+
+static NTSTATUS queueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    struct ioctl_android_queueBuffer *res = data;
+    struct ANativeWindow *parent;
+    struct ANativeWindowBuffer *buffer;
+    struct native_win_data *win_data;
+    int ret;
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+    if (!(parent = win_data->parent)) return STATUS_DEVICE_NOT_READY;
+
+    if (!(buffer = get_registered_buffer( win_data, res->buffer_id ))) return STATUS_INVALID_HANDLE;
+
+    TRACE( "%08x buffer %p mapping %p\n", res->hdr.hwnd, buffer, win_data->mappings[res->buffer_id] );
+    if (win_data->mappings[res->buffer_id])
+    {
+        void *bits;
+        int ret = gralloc_module->lock( gralloc_module, buffer->handle,
+                                        GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
+                                        0, 0, buffer->width, buffer->height, &bits );
+        if (ret) return android_error_to_status( ret );
+        memcpy( bits, win_data->mappings[res->buffer_id], buffer->stride * buffer->height * 4 );
+        gralloc_module->unlock( gralloc_module, buffer->handle );
+    }
+    wrap_java_call();
+    ret = parent->queueBuffer( parent, buffer, -1 );
+    unwrap_java_call();
+    return android_error_to_status( ret );
+}
+
 static NTSTATUS query_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
 {
     struct ioctl_android_query *res = data;
@@ -508,6 +836,9 @@ static const ioctl_func ioctl_funcs[] =
     createWindow_ioctl,         /* IOCTL_CREATE_WINDOW */
     destroyWindow_ioctl,        /* IOCTL_DESTROY_WINDOW */
     windowPosChanged_ioctl,     /* IOCTL_WINDOW_POS_CHANGED */
+    dequeueBuffer_ioctl,        /* IOCTL_DEQUEUE_BUFFER */
+    queueBuffer_ioctl,          /* IOCTL_QUEUE_BUFFER */
+    cancelBuffer_ioctl,         /* IOCTL_CANCEL_BUFFER */
     query_ioctl,                /* IOCTL_QUERY */
     perform_ioctl,              /* IOCTL_PERFORM */
     setSwapInterval_ioctl,      /* IOCTL_SET_SWAP_INT */
@@ -654,29 +985,126 @@ static void win_decRef( struct android_native_base_t *base )
     InterlockedDecrement( &win->ref );
 }
 
+static void buffer_incRef( struct android_native_base_t *base )
+{
+    struct native_buffer_wrapper *buffer = (struct native_buffer_wrapper *)base;
+    InterlockedIncrement( &buffer->ref );
+}
+
+static void buffer_decRef( struct android_native_base_t *base )
+{
+    struct native_buffer_wrapper *buffer = (struct native_buffer_wrapper *)base;
+
+    if (!InterlockedDecrement( &buffer->ref ))
+    {
+        if (!is_in_desktop_process())
+        {
+            if (gralloc_module) gralloc_module->unregisterBuffer( gralloc_module, buffer->buffer.handle );
+            close_native_handle( (native_handle_t *)buffer->buffer.handle );
+        }
+        if (buffer->bits) UnmapViewOfFile( buffer->bits );
+        HeapFree( GetProcessHeap(), 0, buffer );
+    }
+}
+
 static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer, int *fence )
 {
+    struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+    struct ioctl_android_dequeueBuffer res;
+    DWORD size = sizeof(res);
+    int ret, use_win32 = !gralloc_module;
+
+    res.hdr.hwnd = HandleToLong( win->hwnd );
+    res.win32 = use_win32;
+    ret = android_ioctl( IOCTL_DEQUEUE_BUFFER,
+                         &res, offsetof( struct ioctl_android_dequeueBuffer, native_handle ),
+                         &res, &size );
+    if (ret) return ret;
+
+    /* if we received the native handle, this is a new buffer */
+    if (size > offsetof( struct ioctl_android_dequeueBuffer, native_handle ))
+    {
+        struct native_buffer_wrapper *buf = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*buf) );
+
+        buf->buffer.common.magic   = ANDROID_NATIVE_BUFFER_MAGIC;
+        buf->buffer.common.version = sizeof( buf->buffer );
+        buf->buffer.common.incRef  = buffer_incRef;
+        buf->buffer.common.decRef  = buffer_decRef;
+        buf->buffer.width          = res.width;
+        buf->buffer.height         = res.height;
+        buf->buffer.stride         = res.stride;
+        buf->buffer.format         = res.format;
+        buf->buffer.usage          = res.usage;
+        buf->buffer.handle         = unmap_native_handle( &res.native_handle.handle );
+        buf->ref                   = 1;
+        buf->hwnd                  = win->hwnd;
+        buf->buffer_id             = res.buffer_id;
+        if (win->buffers[res.buffer_id])
+            win->buffers[res.buffer_id]->buffer.common.decRef(&win->buffers[res.buffer_id]->buffer.common);
+        win->buffers[res.buffer_id] = buf;
+
+        if (use_win32)
+        {
+            HANDLE mapping = LongToHandle( res.native_handle.handle.data[0] );
+            buf->bits = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
+            CloseHandle( mapping );
+        }
+        else if (!is_in_desktop_process())
+        {
+            if ((ret = gralloc_module->registerBuffer( gralloc_module, buf->buffer.handle )) < 0)
+                WARN( "hwnd %p, buffer %p failed to register %d %s\n", win->hwnd, &buf->buffer, ret, strerror(-ret) );
+        }
+    }
+
+    *buffer = &win->buffers[res.buffer_id]->buffer;
+    *fence = -1;
+
+    TRACE( "hwnd %p, buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
+           win->hwnd, *buffer, res.width, res.height, res.stride, res.format, res.usage, *fence );
     return 0;
 }
 
 static int cancelBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer, int fence )
 {
-    return 0;
+    struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+    struct native_buffer_wrapper *buf = (struct native_buffer_wrapper *)buffer;
+    struct ioctl_android_cancelBuffer cancel;
+
+    TRACE( "hwnd %p buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
+           win->hwnd, buffer, buffer->width, buffer->height,
+           buffer->stride, buffer->format, buffer->usage, fence );
+    cancel.buffer_id = buf->buffer_id;
+    cancel.hdr.hwnd = HandleToLong( win->hwnd );
+    wait_fence_and_close( fence );
+    return android_ioctl( IOCTL_CANCEL_BUFFER, &cancel, sizeof(cancel), NULL, NULL );
 }
 
 static int queueBuffer( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer, int fence )
 {
-    return 0;
+    struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+    struct native_buffer_wrapper *buf = (struct native_buffer_wrapper *)buffer;
+    struct ioctl_android_queueBuffer queue;
+
+    TRACE( "hwnd %p buffer %p %dx%d stride %d fmt %d usage %d fence %d\n",
+           win->hwnd, buffer, buffer->width, buffer->height,
+           buffer->stride, buffer->format, buffer->usage, fence );
+    queue.buffer_id = buf->buffer_id;
+    queue.hdr.hwnd = HandleToLong( win->hwnd );
+    wait_fence_and_close( fence );
+    return android_ioctl( IOCTL_QUEUE_BUFFER, &queue, sizeof(queue), NULL, NULL );
 }
 
 static int dequeueBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer **buffer )
 {
-    return 0;
+    int fence, ret = dequeueBuffer( window, buffer, &fence );
+
+    if (!ret) wait_fence_and_close( fence );
+    return ret;
 }
 
 static int cancelBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer )
 {
-    return 0;
+    return cancelBuffer( window, buffer, -1 );
 }
 
 static int lockBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer )
@@ -686,7 +1114,7 @@ static int lockBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWi
 
 static int queueBuffer_DEPRECATED( struct ANativeWindow *window, struct ANativeWindowBuffer *buffer )
 {
-    return 0;
+    return queueBuffer( window, buffer, -1 );
 }
 
 static int setSwapInterval( struct ANativeWindow *window, int interval )
@@ -840,10 +1268,13 @@ struct ANativeWindow *grab_ioctl_window( struct ANativeWindow *window )
 void release_ioctl_window( struct ANativeWindow *window )
 {
     struct native_win_wrapper *win = (struct native_win_wrapper *)window;
+    unsigned int i;
 
     if (InterlockedDecrement( &win->ref ) > 0) return;
 
     TRACE( "%p %p\n", win, win->hwnd );
+    for (i = 0; i < sizeof(win->buffers)/sizeof(win->buffers[0]); i++)
+        if (win->buffers[i]) win->buffers[i]->buffer.common.decRef( &win->buffers[i]->buffer.common );
 
     destroy_ioctl_window( win->hwnd );
     HeapFree( GetProcessHeap(), 0, win );
