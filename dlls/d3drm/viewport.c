@@ -278,15 +278,11 @@ static HRESULT WINAPI d3drm_viewport1_GetName(IDirect3DRMViewport *iface, DWORD 
 
 static HRESULT WINAPI d3drm_viewport2_GetClassName(IDirect3DRMViewport2 *iface, DWORD *size, char *name)
 {
+    struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Viewport") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Viewport");
-    *size = sizeof("Viewport");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&viewport->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_viewport1_GetClassName(IDirect3DRMViewport *iface, DWORD *size, char *name)
@@ -1013,6 +1009,7 @@ static const struct IDirect3DRMViewportVtbl d3drm_viewport1_vtbl =
 
 HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3drm)
 {
+    static const char classname[] = "Viewport";
     struct d3drm_viewport *object;
 
     TRACE("viewport %p, d3drm %p.\n", viewport, d3drm);
@@ -1023,7 +1020,7 @@ HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3d
     object->IDirect3DRMViewport_iface.lpVtbl = &d3drm_viewport1_vtbl;
     object->IDirect3DRMViewport2_iface.lpVtbl = &d3drm_viewport2_vtbl;
     object->d3drm = d3drm;
-    d3drm_object_init(&object->obj);
+    d3drm_object_init(&object->obj, classname);
 
     *viewport = object;
 

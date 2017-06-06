@@ -52,6 +52,48 @@ static D3DRMMATRIX4D identity = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 
+#define test_class_name(a, b) test_class_name_(__LINE__, a, b)
+static void test_class_name_(unsigned int line, IDirect3DRMObject *object, const char *name)
+{
+    char cname[64] = {0};
+    HRESULT hr;
+    DWORD size;
+
+    hr = IDirect3DRMObject_GetClassName(object, NULL, cname);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DRMViewport_GetClassName(object, NULL, NULL);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    size = 0;
+    hr = IDirect3DRMObject_GetClassName(object, &size, NULL);
+    ok_(__FILE__, line)(hr == D3DRM_OK, "Failed to get classname size, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == strlen(name) + 1, "wrong size: %u\n", size);
+
+    size = 1;
+    hr = IDirect3DRMObject_GetClassName(object, &size, cname);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == 1, "Got size %u.\n", size);
+
+    size = sizeof(cname);
+    hr = IDirect3DRMObject_GetClassName(object, &size, cname);
+    ok_(__FILE__, line)(hr == D3DRM_OK, "Failed to get classname, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == strlen(name) + 1, "wrong size: %u\n", size);
+    ok_(__FILE__, line)(!strcmp(cname, name), "Expected cname to be \"%s\", but got \"%s\".\n", name, cname);
+
+    size = strlen(name) + 1;
+    hr = IDirect3DRMObject_GetClassName(object, &size, cname);
+    ok_(__FILE__, line)(hr == D3DRM_OK, "Failed to get classname, hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == strlen(name) + 1, "wrong size: %u\n", size);
+    ok_(__FILE__, line)(!strcmp(cname, name), "Expected cname to be \"%s\", but got \"%s\".\n", name, cname);
+
+    size = strlen(name);
+    strcpy(cname, "XXX");
+    hr = IDirect3DRMObject_GetClassName(object, &size, cname);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(size == strlen(name), "Wrong classname size: %u.\n", size);
+    ok_(__FILE__, line)(!strcmp(cname, "XXX"), "Expected unchanged buffer, but got \"%s\".\n", cname);
+}
+
 static char data_bad_version[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
@@ -215,7 +257,6 @@ static void test_MeshBuilder(void)
     char name[10];
     DWORD size;
     D3DCOLOR color;
-    CHAR cname[64] = {0};
     IUnknown *unk;
 
     hr = Direct3DRMCreate(&d3drm);
@@ -249,18 +290,7 @@ static void test_MeshBuilder(void)
 
     IDirect3DRMMeshBuilder3_Release(meshbuilder3);
 
-    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMMeshBuilder_GetClassName(pMeshBuilder, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Builder"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)pMeshBuilder, "Builder");
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
@@ -534,8 +564,6 @@ static void test_MeshBuilder3(void)
     int val;
     DWORD val1;
     D3DVALUE valu, valv;
-    DWORD size;
-    CHAR cname[64] = {0};
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -550,18 +578,7 @@ static void test_MeshBuilder3(void)
     hr = IDirect3DRM3_CreateMeshBuilder(d3drm3, &pMeshBuilder3);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMeshBuilder3 interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMMeshBuilder3_GetClassName(pMeshBuilder3, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Builder"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Builder"), "Expected cname to be \"Builder\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)pMeshBuilder3, "Builder");
 
     info.lpMemory = data_bad_version;
     info.dSize = strlen(data_bad_version);
@@ -640,8 +657,6 @@ static void test_Mesh(void)
     HRESULT hr;
     IDirect3DRM *d3drm;
     IDirect3DRMMesh *mesh;
-    DWORD size;
-    CHAR cname[64] = {0};
     IUnknown *unk;
 
     hr = Direct3DRMCreate(&d3drm);
@@ -650,18 +665,7 @@ static void test_Mesh(void)
     hr = IDirect3DRM_CreateMesh(d3drm, &mesh);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMesh interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMMesh_GetClassName(mesh, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMMesh_GetClassName(mesh, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMMesh_GetClassName(mesh, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMMesh_GetClassName(mesh, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Mesh"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Mesh"), "Expected cname to be \"Mesh\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)mesh, "Mesh");
 
     hr = IDirect3DRMMesh_QueryInterface(mesh, &IID_IDirect3DRMObject, (void **)&unk);
     ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
@@ -690,7 +694,6 @@ static void test_Face(void)
     D3DRMLOADMEMORY info;
     D3DVECTOR v1[4], n1[4], v2[4], n2[4];
     DWORD count;
-    CHAR cname[64] = {0};
     int icount;
 
     hr = Direct3DRMCreate(&d3drm);
@@ -705,18 +708,7 @@ static void test_Face(void)
         return;
     }
 
-    hr = IDirect3DRMFace_GetClassName(face1, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMFace_GetClassName(face1, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    count = 1;
-    hr = IDirect3DRMFace_GetClassName(face1, &count, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    count = sizeof(cname);
-    hr = IDirect3DRMFace_GetClassName(face1, &count, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(count == sizeof("Face"), "wrong size: %u\n", count);
-    ok(!strcmp(cname, "Face"), "Expected cname to be \"Face\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)face1, "Face");
 
     icount = IDirect3DRMFace_GetVertexCount(face1);
     ok(!icount, "wrong VertexCount: %i\n", icount);
@@ -787,18 +779,7 @@ static void test_Face(void)
     hr = IDirect3DRMMeshBuilder3_CreateFace(MeshBuilder3, &face2);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFace2 interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMFace2_GetClassName(face2, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMFace2_GetClassName(face2, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    count = 1;
-    hr = IDirect3DRMFace2_GetClassName(face2, &count, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    count = sizeof(cname);
-    hr = IDirect3DRMFace2_GetClassName(face2, &count, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(count == sizeof("Face"), "wrong size: %u\n", count);
-    ok(!strcmp(cname, "Face"), "Expected cname to be \"Face\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)face2, "Face");
 
     icount = IDirect3DRMMeshBuilder3_GetFaceCount(MeshBuilder3);
     todo_wine
@@ -932,7 +913,6 @@ static void test_Frame(void)
     IDirect3DRMLightArray *light_array;
     D3DCOLOR color;
     DWORD count;
-    CHAR cname[64] = {0};
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -941,18 +921,7 @@ static void test_Frame(void)
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 1);
 
-    hr = IDirect3DRMFrame_GetClassName(pFrameC, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMFrame_GetClassName(pFrameC, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    count = 1;
-    hr = IDirect3DRMFrame_GetClassName(pFrameC, &count, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    count = sizeof(cname);
-    hr = IDirect3DRMFrame_GetClassName(pFrameC, &count, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(count == sizeof("Frame"), "wrong size: %u\n", count);
-    ok(!strcmp(cname, "Frame"), "Expected cname to be \"Frame\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)pFrameC, "Frame");
 
     hr = IDirect3DRMFrame_GetParent(pFrameC, NULL);
     ok(hr == D3DRMERR_BADVALUE, "Should fail and return D3DRM_BADVALUE (hr = %x)\n", hr);
@@ -1541,9 +1510,8 @@ static void test_Viewport(void)
     GUID driver;
     HWND window;
     RECT rc;
-    DWORD size, data, ref1, ref2, ref3, ref4;
+    DWORD data, ref1, ref2, ref3, ref4;
     DWORD initial_ref1, initial_ref2, initial_ref3, device_ref, frame_ref, frame_ref2, viewport_ref;
-    CHAR cname[64] = {0};
 
     window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
     GetClientRect(window, &rc);
@@ -1828,18 +1796,7 @@ static void test_Viewport(void)
     IDirect3DRMObject_Release(obj);
     IDirect3DRMObject_Release(obj2);
 
-    hr = IDirect3DRMViewport_GetClassName(viewport, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMViewport_GetClassName(viewport, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMViewport_GetClassName(viewport, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMViewport_GetClassName(viewport, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Viewport"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Viewport"), "Expected cname to be \"Viewport\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)viewport, "Viewport");
 
     /* AppData */
     hr = IDirect3DRMViewport_SetAppData(viewport, 0);
@@ -2091,8 +2048,6 @@ static void test_Light(void)
     IDirect3DRMLight *light;
     D3DRMLIGHTTYPE type;
     D3DCOLOR color;
-    DWORD size;
-    CHAR cname[64] = {0};
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -2100,18 +2055,7 @@ static void test_Light(void)
     hr = IDirect3DRM_CreateLightRGB(d3drm, D3DRMLIGHT_SPOT, 0.5, 0.5, 0.5, &light);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMLight_GetClassName(light, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMLight_GetClassName(light, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMLight_GetClassName(light, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMLight_GetClassName(light, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Light"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Light"), "Expected cname to be \"Light\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)light, "Light");
 
     type = IDirect3DRMLight_GetType(light);
     ok(type == D3DRMLIGHT_SPOT, "wrong type (%u)\n", type);
@@ -2146,8 +2090,6 @@ static void test_Material2(void)
     IDirect3DRM3 *d3drm3;
     IDirect3DRMMaterial2 *material2;
     D3DVALUE r, g, b;
-    DWORD size;
-    CHAR cname[64] = {0};
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
@@ -2162,18 +2104,7 @@ static void test_Material2(void)
     hr = IDirect3DRM3_CreateMaterial(d3drm3, 18.5f, &material2);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMMaterial2 interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMMaterial2_GetClassName(material2, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMMaterial2_GetClassName(material2, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMMaterial2_GetClassName(material2, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMMaterial2_GetClassName(material2, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Material"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Material"), "Expected cname to be \"Material\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)material2, "Material");
 
     r = IDirect3DRMMaterial2_GetPower(material2);
     ok(r == 18.5f, "wrong power (%f)\n", r);
@@ -2245,8 +2176,6 @@ static void test_Texture(void)
     *d3drm_img = NULL;
 
     DWORD pixel[4] = { 20000, 30000, 10000, 0 };
-    DWORD size;
-    CHAR cname[64] = {0};
     ULONG ref1, ref2, ref3, ref4;
 
     hr = Direct3DRMCreate(&d3drm1);
@@ -2385,54 +2314,13 @@ static void test_Texture(void)
     ok(hr == D3DRMERR_NOTCREATEDFROMDDS, "GetSurface() expected to fail, %#x\n", hr);
 
     /* Test all failures together */
-    hr = IDirect3DRMTexture_GetClassName(texture1, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture_GetClassName(texture1, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture2_GetClassName(texture2, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture2_GetClassName(texture2, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture3_GetClassName(texture3, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture3_GetClassName(texture3, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof("Texture") - 1;
-    strcpy(cname, "test");
-    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    ok(size == sizeof("Texture") - 1, "wrong size: %u\n", size);
-    ok(!strcmp(cname, "test"), "Expected cname to be \"test\", but got \"%s\"\n", cname);
-    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    ok(size == sizeof("Texture") - 1, "wrong size: %u\n", size);
-    ok(!strcmp(cname, "test"), "Expected cname to be \"test\", but got \"%s\"\n", cname);
-    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    ok(size == sizeof("Texture") - 1, "wrong size: %u\n", size);
-    ok(!strcmp(cname, "test"), "Expected cname to be \"test\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)texture1, "Texture");
+    test_class_name((IDirect3DRMObject *)texture2, "Texture");
+    test_class_name((IDirect3DRMObject *)texture3, "Texture");
 
     d3drm_img = IDirect3DRMTexture_GetImage(texture1);
     ok(!!d3drm_img, "Failed to get image.\n");
     ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
-
-    size = sizeof(cname);
-    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
-    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
-    size = sizeof("Texture");
-    hr = IDirect3DRMTexture_GetClassName(texture1, &size, cname);
-    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
 
     IDirect3DRMTexture_Release(texture1);
     ref2 = get_refcount((IUnknown *)d3drm1);
@@ -2447,17 +2335,6 @@ static void test_Texture(void)
     ok(!!d3drm_img, "Failed to get image.\n");
     ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
 
-    size = sizeof(cname);
-    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
-    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
-    size = sizeof("Texture");
-    hr = IDirect3DRMTexture2_GetClassName(texture2, &size, cname);
-    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
-
     IDirect3DRMTexture2_Release(texture2);
     ref2 = get_refcount((IUnknown *)d3drm1);
     ok(ref2 - 1 == ref1, "expected (ref2 - 1) == ref1, got ref1 = %u, ref2 = %u.\n", ref1, ref2);
@@ -2470,17 +2347,6 @@ static void test_Texture(void)
     d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
     ok(!!d3drm_img, "Failed to get image.\n");
     ok(d3drm_img == &initimg, "Expected image returned == %p, got %p.\n", &initimg, d3drm_img);
-
-    size = sizeof(cname);
-    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
-    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
-    size = sizeof("Texture");
-    hr = IDirect3DRMTexture3_GetClassName(texture3, &size, cname);
-    ok(SUCCEEDED(hr), "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Texture"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Texture"), "Expected cname to be \"Texture\", but got \"%s\"\n", cname);
 
     IDirect3DRMTexture3_Release(texture3);
     ref2 = get_refcount((IUnknown *)d3drm1);
@@ -2639,8 +2505,6 @@ static void test_Device(void)
     GUID driver;
     HWND window;
     RECT rc;
-    DWORD size;
-    CHAR cname[64] = {0};
 
     window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
     GetClientRect(window, &rc);
@@ -2658,18 +2522,7 @@ static void test_Device(void)
     hr = IDirect3DRM3_CreateDeviceFromClipper(d3drm, pClipper, &driver, rc.right, rc.bottom, &device);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMDevice interface (hr = %x)\n", hr);
 
-    hr = IDirect3DRMDevice_GetClassName(device, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMDevice_GetClassName(device, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMDevice_GetClassName(device, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMDevice_GetClassName(device, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Device"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
+    test_class_name((IDirect3DRMObject *)device, "Device");
 
     /* WinDevice */
     if (FAILED(hr = IDirect3DRMDevice_QueryInterface(device, &IID_IDirect3DRMWinDevice, (void **)&win_device)))
@@ -2678,19 +2531,7 @@ static void test_Device(void)
         goto cleanup;
     }
 
-    hr = IDirect3DRMWinDevice_GetClassName(win_device, NULL, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    hr = IDirect3DRMWinDevice_GetClassName(win_device, NULL, NULL);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = 1;
-    hr = IDirect3DRMWinDevice_GetClassName(win_device, &size, cname);
-    ok(hr == E_INVALIDARG, "GetClassName failed with %x\n", hr);
-    size = sizeof(cname);
-    hr = IDirect3DRMWinDevice_GetClassName(win_device, &size, cname);
-    ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
-    ok(size == sizeof("Device"), "wrong size: %u\n", size);
-    ok(!strcmp(cname, "Device"), "Expected cname to be \"Device\", but got \"%s\"\n", cname);
-
+    test_class_name((IDirect3DRMObject *)win_device, "Device");
     IDirect3DRMWinDevice_Release(win_device);
 
 cleanup:

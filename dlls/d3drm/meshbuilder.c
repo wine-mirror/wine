@@ -41,6 +41,7 @@ struct mesh_group
 
 struct d3drm_mesh
 {
+    struct d3drm_object obj;
     IDirect3DRMMesh IDirect3DRMMesh_iface;
     LONG ref;
     DWORD groups_capacity;
@@ -63,6 +64,7 @@ struct mesh_material
 
 struct d3drm_mesh_builder
 {
+    struct d3drm_object obj;
     IDirect3DRMMeshBuilder2 IDirect3DRMMeshBuilder2_iface;
     IDirect3DRMMeshBuilder3 IDirect3DRMMeshBuilder3_iface;
     LONG ref;
@@ -1017,15 +1019,11 @@ static HRESULT WINAPI d3drm_mesh_builder3_GetName(IDirect3DRMMeshBuilder3 *iface
 static HRESULT WINAPI d3drm_mesh_builder3_GetClassName(IDirect3DRMMeshBuilder3 *iface,
         DWORD *size, char *name)
 {
+    struct d3drm_mesh_builder *meshbuilder = impl_from_IDirect3DRMMeshBuilder3(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Builder") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Builder");
-    *size = sizeof("Builder");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&meshbuilder->obj, size, name);
 }
 
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
@@ -2300,6 +2298,7 @@ static const struct IDirect3DRMMeshBuilder3Vtbl d3drm_mesh_builder3_vtbl =
 
 HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown **out)
 {
+    static const char classname[] = "Builder";
     struct d3drm_mesh_builder *object;
 
     TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
@@ -2310,6 +2309,8 @@ HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown **out)
     object->IDirect3DRMMeshBuilder2_iface.lpVtbl = &d3drm_mesh_builder2_vtbl;
     object->IDirect3DRMMeshBuilder3_iface.lpVtbl = &d3drm_mesh_builder3_vtbl;
     object->ref = 1;
+
+    d3drm_object_init(&object->obj, classname);
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMMeshBuilder3))
         *out = (IUnknown *)&object->IDirect3DRMMeshBuilder3_iface;
@@ -2430,15 +2431,11 @@ static HRESULT WINAPI d3drm_mesh_GetName(IDirect3DRMMesh *iface, DWORD *size, ch
 
 static HRESULT WINAPI d3drm_mesh_GetClassName(IDirect3DRMMesh *iface, DWORD *size, char *name)
 {
+    struct d3drm_mesh *mesh = impl_from_IDirect3DRMMesh(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Mesh") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Mesh");
-    *size = sizeof("Mesh");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&mesh->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_mesh_Scale(IDirect3DRMMesh *iface,
@@ -2808,6 +2805,7 @@ static const struct IDirect3DRMMeshVtbl d3drm_mesh_vtbl =
 
 HRESULT Direct3DRMMesh_create(IDirect3DRMMesh **mesh)
 {
+    static const char classname[] = "Mesh";
     struct d3drm_mesh *object;
 
     TRACE("mesh %p.\n", mesh);
@@ -2817,6 +2815,8 @@ HRESULT Direct3DRMMesh_create(IDirect3DRMMesh **mesh)
 
     object->IDirect3DRMMesh_iface.lpVtbl = &d3drm_mesh_vtbl;
     object->ref = 1;
+
+    d3drm_object_init(&object->obj, classname);
 
     *mesh = &object->IDirect3DRMMesh_iface;
 

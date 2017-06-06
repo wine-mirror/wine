@@ -554,15 +554,11 @@ static HRESULT WINAPI d3drm_device1_GetName(IDirect3DRMDevice *iface, DWORD *siz
 
 static HRESULT WINAPI d3drm_device3_GetClassName(IDirect3DRMDevice3 *iface, DWORD *size, char *name)
 {
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Device") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Device");
-    *size = sizeof("Device");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&device->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_device2_GetClassName(IDirect3DRMDevice2 *iface, DWORD *size, char *name)
@@ -1630,6 +1626,7 @@ struct d3drm_device *unsafe_impl_from_IDirect3DRMDevice3(IDirect3DRMDevice3 *ifa
 
 HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm)
 {
+    static const char classname[] = "Device";
     struct d3drm_device *object;
 
     TRACE("device %p, d3drm %p.\n", device, d3drm);
@@ -1642,7 +1639,7 @@ HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm)
     object->IDirect3DRMDevice3_iface.lpVtbl = &d3drm_device3_vtbl;
     object->IDirect3DRMWinDevice_iface.lpVtbl = &d3drm_device_win_vtbl;
     object->d3drm = d3drm;
-    d3drm_object_init(&object->obj);
+    d3drm_object_init(&object->obj, classname);
 
     *device = object;
 

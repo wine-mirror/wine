@@ -820,15 +820,11 @@ static HRESULT WINAPI d3drm_texture3_GetName(IDirect3DRMTexture3 *iface, DWORD *
 
 static HRESULT WINAPI d3drm_texture3_GetClassName(IDirect3DRMTexture3 *iface, DWORD *size, char *name)
 {
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < sizeof("Texture") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Texture");
-    *size = sizeof("Texture");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&texture->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_texture3_InitFromFile(IDirect3DRMTexture3 *iface, const char *filename)
@@ -1114,6 +1110,7 @@ static const struct IDirect3DRMTexture3Vtbl d3drm_texture3_vtbl =
 
 HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm)
 {
+    static const char classname[] = "Texture";
     struct d3drm_texture *object;
 
     TRACE("texture %p.\n", texture);
@@ -1126,7 +1123,7 @@ HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm)
     object->IDirect3DRMTexture3_iface.lpVtbl = &d3drm_texture3_vtbl;
     object->d3drm = d3drm;
 
-    d3drm_object_init(&object->obj);
+    d3drm_object_init(&object->obj, classname);
 
     *texture = object;
 

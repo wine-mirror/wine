@@ -730,15 +730,11 @@ static HRESULT WINAPI d3drm_frame1_GetName(IDirect3DRMFrame *iface, DWORD *size,
 
 static HRESULT WINAPI d3drm_frame3_GetClassName(IDirect3DRMFrame3 *iface, DWORD *size, char *name)
 {
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Frame") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Frame");
-    *size = sizeof("Frame");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&frame->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_frame2_GetClassName(IDirect3DRMFrame2 *iface, DWORD *size, char *name)
@@ -2930,6 +2926,7 @@ struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMFrame *iface)
 
 HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, IDirect3DRM *d3drm)
 {
+    static const char classname[] = "Frame";
     struct d3drm_frame *object;
     HRESULT hr = D3DRM_OK;
 
@@ -2944,6 +2941,8 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
     object->d3drm = d3drm;
     object->ref = 1;
     d3drm_set_color(&object->scenebackground, 0.0f, 0.0f, 0.0f, 1.0f);
+
+    d3drm_object_init(&object->obj, classname);
 
     memcpy(object->transform, identity, sizeof(D3DRMMATRIX4D));
 

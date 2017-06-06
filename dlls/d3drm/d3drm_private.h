@@ -41,6 +41,7 @@ struct d3drm_object
     LONG ref;
     DWORD appdata;
     struct list destroy_callbacks;
+    const char *classname;
 };
 
 struct d3drm_texture
@@ -56,6 +57,7 @@ struct d3drm_texture
 
 struct d3drm_frame
 {
+    struct d3drm_object obj;
     IDirect3DRMFrame IDirect3DRMFrame_iface;
     IDirect3DRMFrame2 IDirect3DRMFrame2_iface;
     IDirect3DRMFrame3 IDirect3DRMFrame3_iface;
@@ -117,9 +119,10 @@ void d3drm_device_destroy(struct d3drm_device *device) DECLSPEC_HIDDEN;
 HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw *ddraw,
         IDirectDrawSurface *surface, BOOL create_z_surface) DECLSPEC_HIDDEN;
 
-void d3drm_object_init(struct d3drm_object *object) DECLSPEC_HIDDEN;
+void d3drm_object_init(struct d3drm_object *object, const char *classname) DECLSPEC_HIDDEN;
 HRESULT d3drm_object_add_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
 HRESULT d3drm_object_delete_destroy_callback(struct d3drm_object *object, D3DRMOBJECTCALLBACK cb, void *ctx) DECLSPEC_HIDDEN;
+HRESULT d3drm_object_get_class_name(struct d3drm_object *object, DWORD *size, char *name) DECLSPEC_HIDDEN;
 void d3drm_object_cleanup(IDirect3DRMObject *iface, struct d3drm_object *object) DECLSPEC_HIDDEN;
 
 struct d3drm_frame *unsafe_impl_from_IDirect3DRMFrame(IDirect3DRMFrame *iface) DECLSPEC_HIDDEN;

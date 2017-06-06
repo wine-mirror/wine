@@ -34,6 +34,7 @@ struct color_rgb
 
 struct d3drm_material
 {
+    struct d3drm_object obj;
     IDirect3DRMMaterial2 IDirect3DRMMaterial2_iface;
     LONG ref;
     struct color_rgb emissive;
@@ -143,15 +144,11 @@ static HRESULT WINAPI d3drm_material_GetName(IDirect3DRMMaterial2 *iface, DWORD 
 
 static HRESULT WINAPI d3drm_material_GetClassName(IDirect3DRMMaterial2 *iface, DWORD *size, char *name)
 {
+    struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Material") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Material");
-    *size = sizeof("Material");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&material->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_material_SetPower(IDirect3DRMMaterial2 *iface, D3DVALUE power)
@@ -283,6 +280,7 @@ static const struct IDirect3DRMMaterial2Vtbl d3drm_material_vtbl =
 
 HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2 **out)
 {
+    static const char classname[] = "Material";
     struct d3drm_material *object;
 
     TRACE("out %p.\n", out);
@@ -296,6 +294,8 @@ HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2 **out)
     object->specular.r = 1.0f;
     object->specular.g = 1.0f;
     object->specular.b = 1.0f;
+
+    d3drm_object_init(&object->obj, classname);
 
     *out = &object->IDirect3DRMMaterial2_iface;
 

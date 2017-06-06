@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
 struct d3drm_light
 {
+    struct d3drm_object obj;
     IDirect3DRMLight IDirect3DRMLight_iface;
     LONG ref;
     D3DRMLIGHTTYPE type;
@@ -139,15 +140,11 @@ static HRESULT WINAPI d3drm_light_GetName(IDirect3DRMLight *iface, DWORD *size, 
 
 static HRESULT WINAPI d3drm_light_GetClassName(IDirect3DRMLight *iface, DWORD *size, char *name)
 {
+    struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Light") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Light");
-    *size = sizeof("Light");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&light->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_light_SetType(IDirect3DRMLight *iface, D3DRMLIGHTTYPE type)
@@ -372,6 +369,7 @@ static const struct IDirect3DRMLightVtbl d3drm_light_vtbl =
 
 HRESULT Direct3DRMLight_create(IUnknown **out)
 {
+    static const char classname[] = "Light";
     struct d3drm_light *object;
 
     TRACE("out %p.\n", out);
@@ -381,6 +379,8 @@ HRESULT Direct3DRMLight_create(IUnknown **out)
 
     object->IDirect3DRMLight_iface.lpVtbl = &d3drm_light_vtbl;
     object->ref = 1;
+
+    d3drm_object_init(&object->obj, classname);
 
     *out = (IUnknown *)&object->IDirect3DRMLight_iface;
 

@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
 struct d3drm_face
 {
+    struct d3drm_object obj;
     IDirect3DRMFace IDirect3DRMFace_iface;
     IDirect3DRMFace2 IDirect3DRMFace2_iface;
     LONG ref;
@@ -402,15 +403,11 @@ static HRESULT WINAPI d3drm_face2_GetName(IDirect3DRMFace2 *iface, DWORD *size, 
 
 static HRESULT WINAPI d3drm_face2_GetClassName(IDirect3DRMFace2 *iface, DWORD *size, char *name)
 {
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
+
     TRACE("iface %p, size %p, name %p.\n", iface, size, name);
 
-    if (!size || *size < strlen("Face") || !name)
-        return E_INVALIDARG;
-
-    strcpy(name, "Face");
-    *size = sizeof("Face");
-
-    return D3DRM_OK;
+    return d3drm_object_get_class_name(&face->obj, size, name);
 }
 
 static HRESULT WINAPI d3drm_face2_AddVertex(IDirect3DRMFace2 *iface, D3DVALUE x, D3DVALUE y, D3DVALUE z)
@@ -588,6 +585,7 @@ static const struct IDirect3DRMFace2Vtbl d3drm_face2_vtbl =
 
 HRESULT Direct3DRMFace_create(REFIID riid, IUnknown **out)
 {
+    static const char classname[] = "Face";
     struct d3drm_face *object;
 
     TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
@@ -598,6 +596,8 @@ HRESULT Direct3DRMFace_create(REFIID riid, IUnknown **out)
     object->IDirect3DRMFace_iface.lpVtbl = &d3drm_face1_vtbl;
     object->IDirect3DRMFace2_iface.lpVtbl = &d3drm_face2_vtbl;
     object->ref = 1;
+
+    d3drm_object_init(&object->obj, classname);
 
     if (IsEqualGUID(riid, &IID_IDirect3DRMFace2))
         *out = (IUnknown*)&object->IDirect3DRMFace2_iface;

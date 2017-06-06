@@ -39,11 +39,12 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
     return TRUE;
 }
 
-void d3drm_object_init(struct d3drm_object *object)
+void d3drm_object_init(struct d3drm_object *object, const char *classname)
 {
     object->ref = 1;
     object->appdata = 0;
     list_init(&object->destroy_callbacks);
+    object->classname = classname;
 }
 
 struct destroy_callback
@@ -87,6 +88,25 @@ HRESULT d3drm_object_delete_destroy_callback(struct d3drm_object *object, D3DRMO
             break;
         }
     }
+
+    return D3DRM_OK;
+}
+
+HRESULT d3drm_object_get_class_name(struct d3drm_object *object, DWORD *size, char *name)
+{
+    DWORD req_size;
+
+    if (!size)
+        return E_INVALIDARG;
+
+    req_size = strlen(object->classname) + 1;
+    if (name && *size < req_size)
+        return E_INVALIDARG;
+
+    *size = req_size;
+
+    if (name)
+        memcpy(name, object->classname, req_size);
 
     return D3DRM_OK;
 }
