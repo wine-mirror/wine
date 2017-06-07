@@ -151,6 +151,8 @@ case $host in
       host_cpu="i386"
       notice_platform="32-bit "
       AC_SUBST(TARGETFLAGS,"-m32")
+      PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib/pkgconfig}
+      export PKG_CONFIG_PATH
       enable_win16=${enable_win16:-yes}
     else
       if test "x${GCC}" = "xyes"
