@@ -733,6 +733,22 @@ MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
 		       ACM_FORMATSUGGESTF_WBITSPERSAMPLE|ACM_FORMATSUGGESTF_WFORMATTAG))
 	return MMSYSERR_INVALFLAG;
 
+    /* if we were given PCM, try to convert to PCM */
+    if (pwfxSrc->wFormatTag == WAVE_FORMAT_PCM && !had &&
+        !(fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG))
+    {
+        ACMFORMATDETAILSW afd = {0};
+        afd.cbStruct = sizeof(afd);
+        afd.dwFormatTag = WAVE_FORMAT_PCM;
+        afd.pwfx = pwfxSrc;
+        afd.cbwfx = sizeof(PCMWAVEFORMAT);
+        if (!acmFormatDetailsW(had, &afd, ACM_FORMATDETAILSF_FORMAT))
+        {
+            memcpy(pwfxDst, pwfxSrc, sizeof(PCMWAVEFORMAT));
+            return MMSYSERR_NOERROR;
+        }
+    }
+
     aftd.cbStruct = sizeof(aftd);
     if (fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG)
         aftd.dwFormatTag = pwfxDst->wFormatTag;

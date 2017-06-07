@@ -1062,7 +1062,6 @@ static void test_acmFormatSuggest(void)
     suggest = 0;
     memset(&dst, 0, sizeof(dst));
     rc = acmFormatSuggest(NULL, &src, &dst, sizeof(PCMWAVEFORMAT), suggest);
-    todo_wine {
     ok(rc == MMSYSERR_NOERROR, "failed with error 0x%x\n", rc);
     ok(src.wFormatTag == dst.wFormatTag, "expected %d, got %d\n", src.wFormatTag, dst.wFormatTag);
     ok(src.nChannels == dst.nChannels, "expected %d, got %d\n", src.nChannels, dst.nChannels);
@@ -1070,7 +1069,6 @@ static void test_acmFormatSuggest(void)
     ok(src.nAvgBytesPerSec == dst.nAvgBytesPerSec, "expected %d, got %d\n", src.nAvgBytesPerSec, dst.nAvgBytesPerSec);
     ok(src.nBlockAlign == dst.nBlockAlign, "expected %d, got %d\n", src.nBlockAlign, dst.nBlockAlign);
     ok(src.wBitsPerSample == dst.wBitsPerSample, "expected %d, got %d\n", src.wBitsPerSample, dst.wBitsPerSample);
-    }
 
     /* All parameters from destination are valid */
     suggest = ACM_FORMATSUGGESTF_NCHANNELS
