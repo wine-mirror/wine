@@ -719,6 +719,7 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
 				 PWAVEFORMATEX pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest)
 {
+    ACMFORMATTAGDETAILSW aftd = {0};
     ACMDRVFORMATSUGGEST	adfg;
     MMRESULT		mmr;
 
@@ -731,6 +732,16 @@ MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
     if (fdwSuggest & ~(ACM_FORMATSUGGESTF_NCHANNELS|ACM_FORMATSUGGESTF_NSAMPLESPERSEC|
 		       ACM_FORMATSUGGESTF_WBITSPERSAMPLE|ACM_FORMATSUGGESTF_WFORMATTAG))
 	return MMSYSERR_INVALFLAG;
+
+    aftd.cbStruct = sizeof(aftd);
+    if (fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG)
+        aftd.dwFormatTag = pwfxDst->wFormatTag;
+    mmr = acmFormatTagDetailsW(had, &aftd, ACM_FORMATTAGDETAILSF_LARGESTSIZE);
+    if ((fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG) && mmr == ACMERR_NOTPOSSIBLE)
+        return ACMERR_NOTPOSSIBLE;
+
+    if (cbwfxDst < aftd.cbFormatSize)
+        return MMSYSERR_INVALPARAM;
 
     adfg.cbStruct = sizeof(adfg);
     adfg.fdwSuggest = fdwSuggest;
