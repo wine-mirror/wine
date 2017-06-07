@@ -9,7 +9,9 @@
 @ cdecl CreateWindow(long) ANDROID_CreateWindow
 @ cdecl DestroyWindow(long) ANDROID_DestroyWindow
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) ANDROID_MsgWaitForMultipleObjectsEx
+@ cdecl SetLayeredWindowAttributes(long long long long) ANDROID_SetLayeredWindowAttributes
 @ cdecl SetWindowRgn(long long long) ANDROID_SetWindowRgn
+@ cdecl SetWindowStyle(ptr long ptr) ANDROID_SetWindowStyle
 @ cdecl WindowMessage(long long long long) ANDROID_WindowMessage
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) ANDROID_WindowPosChanging
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) ANDROID_WindowPosChanged

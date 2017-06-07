@@ -761,6 +761,27 @@ failed:
     return NULL;
 }
 
+/***********************************************************************
+ *           set_surface_layered
+ */
+static void set_surface_layered( struct window_surface *window_surface, BYTE alpha, COLORREF color_key )
+{
+    struct android_window_surface *surface = get_android_surface( window_surface );
+    COLORREF prev_key;
+    BYTE prev_alpha;
+
+    if (window_surface->funcs != &android_surface_funcs) return;  /* we may get the null surface */
+
+    window_surface->funcs->lock( window_surface );
+    prev_key = surface->color_key;
+    prev_alpha = surface->alpha;
+    surface->alpha = alpha;
+    set_color_key( surface, color_key );
+    if (alpha != prev_alpha || surface->color_key != prev_key)  /* refresh */
+        *window_surface->funcs->get_bounds( window_surface ) = surface->header.rect;
+    window_surface->funcs->unlock( window_surface );
+}
+
 
 static WNDPROC desktop_orig_wndproc;
 
@@ -978,6 +999,30 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 
 
 /***********************************************************************
+ *           ANDROID_SetWindowStyle
+ */
+void CDECL ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
+{
+    struct android_win_data *data;
+    DWORD changed = style->styleNew ^ style->styleOld;
+
+    if (hwnd == GetDesktopWindow()) return;
+    if (!(data = get_win_data( hwnd ))) return;
+
+    if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
+    {
+        if (is_argb_surface( data->surface ))
+        {
+            if (data->surface) window_surface_release( data->surface );
+            data->surface = NULL;
+        }
+        else if (data->surface) set_surface_layered( data->surface, 255, CLR_INVALID );
+    }
+    release_win_data( data );
+}
+
+
+/***********************************************************************
  *           ANDROID_SetWindowRgn
  */
 void CDECL ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
@@ -990,6 +1035,24 @@ void CDECL ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
         release_win_data( data );
     }
     else FIXME( "not supported on other process window %p\n", hwnd );
+}
+
+
+/***********************************************************************
+ *	     ANDROID_SetLayeredWindowAttributes
+ */
+void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+{
+    struct android_win_data *data;
+
+    if (!(flags & LWA_ALPHA)) alpha = 255;
+    if (!(flags & LWA_COLORKEY)) key = CLR_INVALID;
+
+    if ((data = get_win_data( hwnd )))
+    {
+        if (data->surface) set_surface_layered( data->surface, alpha, key );
+        release_win_data( data );
+    }
 }
 
 
