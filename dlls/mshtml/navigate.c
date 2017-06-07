@@ -390,7 +390,7 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
 
     pbindinfo->cbstgmedData = This->request_data.post_data_len;
     pbindinfo->dwCodePage = CP_UTF8;
-    pbindinfo->dwOptions = 0x80000;
+    pbindinfo->dwOptions = This->bindinfo_options;
 
     if(This->request_data.post_data_len) {
         pbindinfo->dwBindVerb = BINDVERB_POST;
@@ -674,6 +674,7 @@ void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMoniker *mon
     This->vtbl = vtbl;
     This->ref = 1;
     This->bindf = bindf;
+    This->bindinfo_options = BINDINFO_OPTIONS_USE_IE_ENCODING;
     This->bom = BOM_NONE;
 
     list_init(&This->entry);
@@ -1312,7 +1313,14 @@ static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
     nsChannel *nschannel = This->nschannel;
+    HTMLDocumentObj *doc_obj;
     HRESULT hres;
+
+    if(This->is_doc_channel && This->bsc.window && This->bsc.window->base.outer_window
+       && (doc_obj = This->bsc.window->base.outer_window->doc_obj)) {
+        if(doc_obj->hostinfo.dwFlags & DOCHOSTUIFLAG_ENABLE_REDIRECT_NOTIFICATION)
+            This->bsc.bindinfo_options |= BINDINFO_OPTIONS_DISABLEAUTOREDIRECTS;
+    }
 
     if(nschannel && nschannel->post_data_stream) {
         hres = read_post_data_stream(nschannel->post_data_stream, nschannel->post_data_contains_headers,
