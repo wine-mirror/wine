@@ -26,6 +26,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+#define D2D_FIGURE_FLAG_CLOSED          0x00000001u
+#define D2D_FIGURE_FLAG_HOLLOW          0x00000002u
+
 #define D2D_CDT_EDGE_FLAG_FREED         0x80000000u
 #define D2D_CDT_EDGE_FLAG_VISITED(r)    (1u << (r))
 
@@ -66,6 +69,7 @@ struct d2d_figure
     size_t bezier_control_count;
 
     D2D1_RECT_F bounds;
+    unsigned int flags;
 };
 
 struct d2d_cdt_edge_ref
@@ -2054,6 +2058,8 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_SetFillMode(ID2D1GeometrySink *i
 
     TRACE("iface %p, mode %#x.\n", iface, mode);
 
+    if (geometry->u.path.state == D2D_GEOMETRY_STATE_CLOSED)
+        return;
     geometry->u.path.fill_mode = mode;
 }
 
@@ -2066,6 +2072,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
         D2D1_POINT_2F start_point, D2D1_FIGURE_BEGIN figure_begin)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+    struct d2d_figure *figure;
 
     TRACE("iface %p, start_point {%.8e, %.8e}, figure_begin %#x.\n",
             iface, start_point.x, start_point.y, figure_begin);
@@ -2086,7 +2093,11 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
         return;
     }
 
-    if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], start_point))
+    figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
+    if (figure_begin == D2D1_FIGURE_BEGIN_HOLLOW)
+        figure->flags |= D2D_FIGURE_FLAG_HOLLOW;
+
+    if (!d2d_figure_add_vertex(figure, start_point))
     {
         ERR("Failed to add vertex.\n");
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
@@ -2183,9 +2194,12 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
 
     figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
     figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_LINE;
-    if (figure_end == D2D1_FIGURE_END_CLOSED && !memcmp(&figure->vertices[0],
-            &figure->vertices[figure->vertex_count - 1], sizeof(*figure->vertices)))
-        --figure->vertex_count;
+    if (figure_end == D2D1_FIGURE_END_CLOSED)
+    {
+        figure->flags |= D2D_FIGURE_FLAG_CLOSED;
+        if (!memcmp(&figure->vertices[0], &figure->vertices[figure->vertex_count - 1], sizeof(*figure->vertices)))
+            --figure->vertex_count;
+    }
 
     if (!d2d_geometry_add_figure_outline(geometry, figure, figure_end))
     {
@@ -2526,14 +2540,153 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CompareWithGeometry(ID2D1Path
     return E_NOTIMPL;
 }
 
+static void d2d_geometry_flatten_cubic(ID2D1SimplifiedGeometrySink *sink, const D2D1_POINT_2F *p0,
+        const D2D1_BEZIER_SEGMENT *b, float tolerance)
+{
+    D2D1_BEZIER_SEGMENT b0, b1;
+    D2D1_POINT_2F q;
+    float d;
+
+    /* It's certainly possible to calculate the maximum deviation of the
+     * approximation from the curve, but it's a little involved. Instead, note
+     * that if the control points were evenly spaced and collinear, p1 would
+     * be exactly between p0 and p2, and p2 would be exactly between p1 and
+     * p3. The deviation is a decent enough approximation, and much easier to
+     * calculate.
+     *
+     * p1' = (p0 + p2) / 2
+     * p2' = (p1 + p3) / 2
+     *   d = ‖p1 - p1'‖₁ + ‖p2 - p2'‖₁ */
+    d2d_point_lerp(&q, p0, &b->point2, 0.5f);
+    d2d_point_subtract(&q, &b->point1, &q);
+    d = fabsf(q.x) + fabsf(q.y);
+    d2d_point_lerp(&q, &b->point1, &b->point3, 0.5f);
+    d2d_point_subtract(&q, &b->point2, &q);
+    d += fabsf(q.x) + fabsf(q.y);
+    if (d < tolerance)
+    {
+        ID2D1SimplifiedGeometrySink_AddLines(sink, &b->point3, 1);
+        return;
+    }
+
+    d2d_point_lerp(&q, &b->point1, &b->point2, 0.5f);
+
+    b1.point3 = b->point3;
+    d2d_point_lerp(&b1.point2, &b1.point3, &b->point2, 0.5f);
+    d2d_point_lerp(&b1.point1, &b1.point2, &q, 0.5f);
+
+    d2d_point_lerp(&b0.point1, p0, &b->point1, 0.5f);
+    d2d_point_lerp(&b0.point2, &b0.point1, &q, 0.5f);
+    d2d_point_lerp(&b0.point3, &b0.point2, &b1.point1, 0.5f);
+
+    d2d_geometry_flatten_cubic(sink, p0, &b0, tolerance);
+    ID2D1SimplifiedGeometrySink_SetSegmentFlags(sink, D2D1_PATH_SEGMENT_FORCE_ROUND_LINE_JOIN);
+    d2d_geometry_flatten_cubic(sink, &b0.point3, &b1, tolerance);
+    ID2D1SimplifiedGeometrySink_SetSegmentFlags(sink, D2D1_PATH_SEGMENT_NONE);
+}
+
+static void d2d_geometry_simplify_quadratic(ID2D1SimplifiedGeometrySink *sink,
+        D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_POINT_2F *p0,
+        const D2D1_POINT_2F *p1, const D2D1_POINT_2F *p2, float tolerance)
+{
+    D2D1_BEZIER_SEGMENT b;
+
+    d2d_point_lerp(&b.point1, p0, p1, 2.0f / 3.0f);
+    d2d_point_lerp(&b.point2, p2, p1, 2.0f / 3.0f);
+    b.point3 = *p2;
+
+    if (option == D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES)
+        d2d_geometry_flatten_cubic(sink, p0, &b, tolerance);
+    else
+        ID2D1SimplifiedGeometrySink_AddBeziers(sink, &b, 1);
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *iface,
         D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
 {
-    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    enum d2d_vertex_type type = D2D_VERTEX_TYPE_NONE;
+    unsigned int i, j, bezier_idx;
+    D2D1_FIGURE_BEGIN begin;
+    D2D1_POINT_2F p, p1, p2;
+    D2D1_FIGURE_END end;
+
+    TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
             iface, option, transform, tolerance, sink);
 
-    return E_NOTIMPL;
+    ID2D1SimplifiedGeometrySink_SetFillMode(sink, geometry->u.path.fill_mode);
+    for (i = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        const struct d2d_figure *figure = &geometry->u.path.figures[i];
+
+        for (j = 0; j < figure->vertex_count; ++j)
+        {
+            if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE)
+                continue;
+
+            p = figure->vertices[j];
+            if (transform)
+                d2d_point_transform(&p, transform, p.x, p.y);
+            begin = figure->flags & D2D_FIGURE_FLAG_HOLLOW ? D2D1_FIGURE_BEGIN_HOLLOW : D2D1_FIGURE_BEGIN_FILLED;
+            ID2D1SimplifiedGeometrySink_BeginFigure(sink, p, begin);
+            type = figure->vertex_types[j];
+            break;
+        }
+
+        for (bezier_idx = 0, ++j; j < figure->vertex_count; ++j)
+        {
+            if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE)
+                continue;
+
+            switch (type)
+            {
+                case D2D_VERTEX_TYPE_LINE:
+                    p = figure->vertices[j];
+                    if (transform)
+                        d2d_point_transform(&p, transform, p.x, p.y);
+                    ID2D1SimplifiedGeometrySink_AddLines(sink, &p, 1);
+                    break;
+
+                case D2D_VERTEX_TYPE_BEZIER:
+                    p1 = figure->bezier_controls[bezier_idx++];
+                    if (transform)
+                        d2d_point_transform(&p1, transform, p1.x, p1.y);
+                    p2 = figure->vertices[j];
+                    if (transform)
+                        d2d_point_transform(&p2, transform, p2.x, p2.y);
+                    d2d_geometry_simplify_quadratic(sink, option, &p, &p1, &p2, tolerance);
+                    p = p2;
+                    break;
+
+                default:
+                    FIXME("Unhandled vertex type %#x.\n", type);
+                    p = figure->vertices[j];
+                    if (transform)
+                        d2d_point_transform(&p, transform, p.x, p.y);
+                    ID2D1SimplifiedGeometrySink_AddLines(sink, &p, 1);
+                    break;
+            }
+
+            type = figure->vertex_types[j];
+        }
+
+        if (type == D2D_VERTEX_TYPE_BEZIER)
+        {
+            p1 = figure->bezier_controls[bezier_idx++];
+            if (transform)
+                d2d_point_transform(&p1, transform, p1.x, p1.y);
+            p2 = figure->vertices[0];
+            if (transform)
+                d2d_point_transform(&p2, transform, p2.x, p2.y);
+            d2d_geometry_simplify_quadratic(sink, option, &p, &p1, &p2, tolerance);
+        }
+
+        end = figure->flags & D2D_FIGURE_FLAG_CLOSED ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN;
+        ID2D1SimplifiedGeometrySink_EndFigure(sink, end);
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Tessellate(ID2D1PathGeometry *iface,
