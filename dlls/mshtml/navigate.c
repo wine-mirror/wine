@@ -248,6 +248,9 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
     }else if(IsEqualGUID(&IID_IInternetBindInfo, riid)) {
         TRACE("(%p)->(IID_IInternetBindInfo %p)\n", This, ppv);
         *ppv = &This->IInternetBindInfo_iface;
+    }else if(IsEqualGUID(&IID_IBindCallbackRedirect, riid)) {
+        TRACE("(%p)->(IID_IBindCallbackRedirect %p)\n", This, ppv);
+        *ppv = &This->IBindCallbackRedirect_iface;
     }
 
     if(*ppv) {
@@ -561,6 +564,63 @@ static const IInternetBindInfoVtbl InternetBindInfoVtbl = {
     InternetBindInfo_GetBindString
 };
 
+static inline BSCallback *impl_from_IBindCallbackRedirect(IBindCallbackRedirect *iface)
+{
+    return CONTAINING_RECORD(iface, BSCallback, IBindCallbackRedirect_iface);
+}
+
+static HRESULT WINAPI BindCallbackRedirect_QueryInterface(IBindCallbackRedirect *iface, REFIID riid, void **ppv)
+{
+    BSCallback *This = impl_from_IBindCallbackRedirect(iface);
+    return IBindStatusCallback_QueryInterface(&This->IBindStatusCallback_iface, riid, ppv);
+}
+
+static ULONG WINAPI BindCallbackRedirect_AddRef(IBindCallbackRedirect *iface)
+{
+    BSCallback *This = impl_from_IBindCallbackRedirect(iface);
+    return IBindStatusCallback_AddRef(&This->IBindStatusCallback_iface);
+}
+
+static ULONG WINAPI BindCallbackRedirect_Release(IBindCallbackRedirect *iface)
+{
+    BSCallback *This = impl_from_IBindCallbackRedirect(iface);
+    return IBindStatusCallback_Release(&This->IBindStatusCallback_iface);
+}
+
+static HRESULT WINAPI BindCallbackRedirect_Redirect(IBindCallbackRedirect *iface, const WCHAR *url, VARIANT_BOOL *vbCancel)
+{
+    BSCallback *This = impl_from_IBindCallbackRedirect(iface);
+    HTMLDocumentObj *doc_obj;
+    BOOL cancel = FALSE;
+    BSTR frame_name = NULL;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(url), vbCancel);
+
+    if(This->window && This->window->base.outer_window && (doc_obj = This->window->base.outer_window->doc_obj)
+       && doc_obj->doc_object_service) {
+        if(This->window->base.outer_window != doc_obj->basedoc.window) {
+            hres = IHTMLWindow2_get_name(&This->window->base.IHTMLWindow2_iface, &frame_name);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        hres = IDocObjectService_FireBeforeNavigate2(doc_obj->doc_object_service, NULL, url, 0x40,
+                                                     frame_name, NULL, 0, NULL, TRUE, &cancel);
+        SysFreeString(frame_name);
+    }
+
+    *vbCancel = cancel ? VARIANT_TRUE : VARIANT_FALSE;
+    return hres;
+}
+
+static const IBindCallbackRedirectVtbl BindCallbackRedirectVtbl = {
+    BindCallbackRedirect_QueryInterface,
+    BindCallbackRedirect_AddRef,
+    BindCallbackRedirect_Release,
+    BindCallbackRedirect_Redirect
+};
+
 static inline BSCallback *impl_from_IServiceProvider(IServiceProvider *iface)
 {
     return CONTAINING_RECORD(iface, BSCallback, IServiceProvider_iface);
@@ -610,6 +670,7 @@ void init_bscallback(BSCallback *This, const BSCallbackVtbl *vtbl, IMoniker *mon
     This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     This->IHttpNegotiate2_iface.lpVtbl = &HttpNegotiate2Vtbl;
     This->IInternetBindInfo_iface.lpVtbl = &InternetBindInfoVtbl;
+    This->IBindCallbackRedirect_iface.lpVtbl = &BindCallbackRedirectVtbl;
     This->vtbl = vtbl;
     This->ref = 1;
     This->bindf = bindf;

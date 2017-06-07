@@ -1469,6 +1469,8 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
         REFIID riid, void **ppv)
 {
     IBindStatusCallback *callback = NULL;
+    IBindCallbackRedirect *redirect_callback;
+    IServiceProvider *service_provider;
     BINDINFO bindinfo;
     DWORD bindf;
     HRESULT hres;
@@ -1510,6 +1512,15 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
     ok(IsEqualGUID(&IID_NULL, &bindinfo.iid), "unexpected bindinfo.iid\n");
     ok(bindinfo.pUnk == NULL, "bindinfo.pUnk=%p\n", bindinfo.pUnk);
     ok(bindinfo.dwReserved == 0, "bindinfo.dwReserved=%d\n", bindinfo.dwReserved);
+
+    hres = IBindStatusCallback_QueryInterface(callback, &IID_IServiceProvider, (void**)&service_provider);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(service_provider, &IID_IBindCallbackRedirect, &IID_IBindCallbackRedirect, (void**)&redirect_callback);
+    ok(hres == S_OK, "QueryService(IID_IBindCallbackRedirect)  returned %08x\n", hres);
+
+    IBindCallbackRedirect_Release(redirect_callback);
+    IServiceProvider_Release(service_provider);
 
     hres = IBindStatusCallback_OnStartBinding(callback, 0, &Binding);
     ok(hres == S_OK, "OnStartBinding failed: %08x\n", hres);
