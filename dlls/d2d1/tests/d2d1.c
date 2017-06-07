@@ -2528,6 +2528,9 @@ static void test_path_geometry(void)
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetSegmentCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get segment count, hr %#x.\n", hr);
+    ok(count == 2, "Got unexpected segment count %u.\n", count);
 
     geometry_sink_init(&simplify_sink);
     hr = ID2D1PathGeometry_Simplify(geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,

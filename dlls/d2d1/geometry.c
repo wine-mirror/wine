@@ -2105,7 +2105,6 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
     }
 
     geometry->u.path.state = D2D_GEOMETRY_STATE_FIGURE;
-    ++geometry->u.path.segment_count;
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *iface,
@@ -2196,6 +2195,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
     figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_LINE;
     if (figure_end == D2D1_FIGURE_END_CLOSED)
     {
+        ++geometry->u.path.segment_count;
         figure->flags |= D2D_FIGURE_FLAG_CLOSED;
         if (!memcmp(&figure->vertices[0], &figure->vertices[figure->vertex_count - 1], sizeof(*figure->vertices)))
             --figure->vertex_count;
