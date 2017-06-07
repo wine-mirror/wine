@@ -977,6 +977,22 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 }
 
 
+/***********************************************************************
+ *           ANDROID_SetWindowRgn
+ */
+void CDECL ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+{
+    struct android_win_data *data;
+
+    if ((data = get_win_data( hwnd )))
+    {
+        if (data->surface) set_surface_region( data->surface, hrgn );
+        release_win_data( data );
+    }
+    else FIXME( "not supported on other process window %p\n", hwnd );
+}
+
+
 /**********************************************************************
  *           ANDROID_WindowMessage
  */
