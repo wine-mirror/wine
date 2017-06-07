@@ -999,6 +999,23 @@ void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flag
 
 
 /***********************************************************************
+ *           ANDROID_ShowWindow
+ */
+UINT CDECL ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+{
+    if (IsRectEmpty( rect )) return swp;
+    if (!IsIconic( hwnd )) return swp;
+    /* always hide icons off-screen */
+    if (rect->left != -32000 || rect->top != -32000)
+    {
+        OffsetRect( rect, -32000 - rect->left, -32000 - rect->top );
+        swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
+    }
+    return swp;
+}
+
+
+/***********************************************************************
  *           ANDROID_SetWindowStyle
  */
 void CDECL ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
