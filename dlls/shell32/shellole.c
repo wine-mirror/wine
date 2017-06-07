@@ -67,6 +67,7 @@ static const struct {
 } InterfaceTable[] = {
 
 	{&CLSID_ApplicationAssociationRegistration, ApplicationAssociationRegistration_Constructor},
+	{&CLSID_ApplicationDestinations, ApplicationDestinations_Constructor},
 	{&CLSID_AutoComplete,   IAutoComplete_Constructor},
 	{&CLSID_ControlPanel,	IControlPanel_Constructor},
 	{&CLSID_DragDropHelper, IDropTargetHelper_Constructor},

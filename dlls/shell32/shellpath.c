@@ -1021,6 +1021,125 @@ typedef enum _CSIDL_Type {
 
 typedef struct
 {
+    IApplicationDestinations IApplicationDestinations_iface;
+    LONG ref;
+} IApplicationDestinationsImpl;
+
+static inline IApplicationDestinationsImpl *impl_from_IApplicationDestinations( IApplicationDestinations *iface )
+{
+    return CONTAINING_RECORD(iface, IApplicationDestinationsImpl, IApplicationDestinations_iface);
+}
+
+static HRESULT WINAPI ApplicationDestinations_QueryInterface(IApplicationDestinations *iface, REFIID riid,
+                                                             LPVOID *ppv)
+{
+    IApplicationDestinationsImpl *This = impl_from_IApplicationDestinations(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (ppv == NULL)
+        return E_POINTER;
+
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IApplicationDestinations, riid))
+    {
+        *ppv = &This->IApplicationDestinations_iface;
+        IUnknown_AddRef((IUnknown*)*ppv);
+
+        TRACE("Returning IApplicationDestinations: %p\n", *ppv);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    FIXME("(%p)->(%s, %p) interface not supported.\n", This, debugstr_guid(riid), ppv);
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ApplicationDestinations_AddRef(IApplicationDestinations *iface)
+{
+    IApplicationDestinationsImpl *This = impl_from_IApplicationDestinations(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ApplicationDestinations_Release(IApplicationDestinations *iface)
+{
+    IApplicationDestinationsImpl *This = impl_from_IApplicationDestinations(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", This, ref);
+
+    if (ref == 0)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI ApplicationDestinations_SetAppID(IApplicationDestinations *iface, const WCHAR *appid)
+{
+    IApplicationDestinationsImpl *This = impl_from_IApplicationDestinations(iface);
+
+    FIXME("(%p, %s) stub!\n", This, debugstr_w(appid));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ApplicationDestinations_RemoveDestination(IApplicationDestinations *iface, IUnknown *punk)
+{
+    IApplicationDestinationsImpl *This = impl_from_IApplicationDestinations(iface);
+
+    FIXME("(%p, %p) stub!\n", This, punk);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ApplicationDestinations_RemoveAllDestinations(IApplicationDestinations *iface)
+{
+    IApplicationDestinationsImpl *This = impl_from_IApplicationDestinations(iface);
+
+    FIXME("(%p) stub!\n", This);
+
+    return E_NOTIMPL;
+}
+
+static const IApplicationDestinationsVtbl ApplicationDestinationsVtbl =
+{
+    ApplicationDestinations_QueryInterface,
+    ApplicationDestinations_AddRef,
+    ApplicationDestinations_Release,
+    ApplicationDestinations_SetAppID,
+    ApplicationDestinations_RemoveDestination,
+    ApplicationDestinations_RemoveAllDestinations
+};
+
+HRESULT WINAPI ApplicationDestinations_Constructor(IUnknown *outer, REFIID riid, LPVOID *ppv)
+{
+    IApplicationDestinationsImpl *This;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", outer, debugstr_guid(riid), ppv);
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if (!(This = SHAlloc(sizeof(*This))))
+        return E_OUTOFMEMORY;
+
+    This->IApplicationDestinations_iface.lpVtbl = &ApplicationDestinationsVtbl;
+    This->ref = 0;
+
+    hr = IUnknown_QueryInterface(&This->IApplicationDestinations_iface, riid, ppv);
+    if (FAILED(hr))
+        SHFree(This);
+
+    return hr;
+}
+
+typedef struct
+{
     const KNOWNFOLDERID *id;
     CSIDL_Type type;
     LPCWSTR    szValueName;
