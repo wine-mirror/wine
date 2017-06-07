@@ -360,6 +360,8 @@ static int process_events( DWORD mask )
         }
         HeapFree( GetProcessHeap(), 0, event );
         count++;
+        /* next may have been removed by a recursive call, so reset it to the beginning of the list */
+        next = LIST_ENTRY( event_queue.next, struct java_event, entry );
     }
     current_event = previous;
     return count;
