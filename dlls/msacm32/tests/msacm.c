@@ -38,9 +38,109 @@ static BOOL CALLBACK FormatTagEnumProc(HACMDRIVERID hadid,
                                        DWORD_PTR dwInstance,
                                        DWORD fdwSupport)
 {
+    MMRESULT rc;
+    HACMDRIVER had;
+
     if (winetest_interactive)
         trace("   Format 0x%04x: %s\n", paftd->dwFormatTag, paftd->szFormatTag);
 
+    rc = acmDriverOpen(&had, hadid, 0);
+    ok(rc == MMSYSERR_NOERROR || rc == MMSYSERR_NODRIVER,
+       "acmDriverOpen(): rc = %08x, should be %08x\n",
+       rc, MMSYSERR_NOERROR);
+
+    if (rc == MMSYSERR_NOERROR)
+    {
+        ACMFORMATDETAILSA fd = {0};
+        WAVEFORMATEX *pwfx;
+        DWORD i;
+
+        fd.cbStruct = sizeof(fd);
+        if (paftd->cbFormatSize < sizeof(WAVEFORMATEX))
+            pwfx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WAVEFORMATEX));
+        else
+            pwfx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, paftd->cbFormatSize);
+        fd.pwfx = pwfx;
+        fd.cbwfx = paftd->cbFormatSize;
+        fd.dwFormatTag = paftd->dwFormatTag;
+
+        /* try bad pwfx */
+        fd.pwfx = NULL;
+        rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_FORMAT);
+        ok(rc == MMSYSERR_INVALPARAM,
+           "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+           rc, MMSYSERR_INVALPARAM);
+        fd.pwfx = pwfx;
+
+        /* try bad wFormatTag */
+        fd.pwfx->wFormatTag = WAVE_FORMAT_UNKNOWN;
+        rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_FORMAT);
+        ok(rc == MMSYSERR_INVALPARAM,
+           "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+           rc, MMSYSERR_INVALPARAM);
+        fd.pwfx->wFormatTag = paftd->dwFormatTag;
+
+        /* try bad fdwSupport */
+        fd.fdwSupport = 0xdeadbeef;
+        rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_FORMAT);
+        ok(rc == MMSYSERR_INVALPARAM,
+           "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+           rc, MMSYSERR_INVALPARAM);
+        fd.fdwSupport = 0;
+
+        /* try bad pwfx structure size */
+        fd.cbwfx = sizeof(PCMWAVEFORMAT)-1;
+        rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_FORMAT);
+        ok(rc == MMSYSERR_INVALPARAM,
+           "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+           rc, MMSYSERR_INVALPARAM);
+        fd.cbwfx = paftd->cbFormatSize;
+
+        /* test bad parameters (all zero) */
+        rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_FORMAT);
+        ok(rc == ACMERR_NOTPOSSIBLE,
+           "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+           rc, ACMERR_NOTPOSSIBLE);
+
+        /* test index */
+        for (i = 0; i < paftd->cStandardFormats; i++)
+        {
+            fd.dwFormatIndex = i;
+
+            fd.fdwSupport = 0;
+            fd.cbwfx = paftd->cbFormatSize;
+            fd.pwfx->cbSize = 0xbeef;
+            rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_INDEX);
+            ok(rc == MMSYSERR_NOERROR,
+               "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_NOERROR);
+
+            /* Windows will write cbSize (and other data) even if the
+             * given cbwfx is not large enough */
+            fd.fdwSupport = 0;
+            fd.cbwfx = sizeof(PCMWAVEFORMAT);
+            fd.pwfx->cbSize = 0xbeef;
+            rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_INDEX);
+            todo_wine_if(rc != MMSYSERR_NOERROR) /* remove when fixed */
+            ok(rc == MMSYSERR_NOERROR,
+               "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_NOERROR);
+            if (paftd->dwFormatTag != WAVE_FORMAT_PCM)
+                todo_wine_if(fd.pwfx->cbSize != paftd->cbFormatSize - sizeof(WAVEFORMATEX)) /* remove when fixed */
+                ok(fd.pwfx->cbSize == paftd->cbFormatSize - sizeof(WAVEFORMATEX),
+                   "got %d\n", fd.pwfx->cbSize);
+        }
+
+        /* one more */
+        fd.dwFormatIndex = paftd->cStandardFormats;
+        fd.fdwSupport = 0;
+        rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_INDEX);
+        ok(rc == MMSYSERR_INVALPARAM,
+           "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+           rc, MMSYSERR_INVALPARAM);
+
+        HeapFree(GetProcessHeap(), 0, pwfx);
+    }
     return TRUE;
 }
 
@@ -410,6 +510,37 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
             ok(rc == MMSYSERR_NOERROR,
                "acmFormatTagEnumA(): rc = %08x, should be %08x\n",
                rc, MMSYSERR_NOERROR);
+
+            /* try bad pointer */
+            rc = acmFormatDetailsA(had, NULL, ACM_FORMATDETAILSF_INDEX);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+
+            /* try bad structure size */
+            ZeroMemory(&fd, sizeof(fd));
+            rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_INDEX);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+
+            fd.cbStruct = sizeof(fd) - 1;
+            rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_INDEX);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+
+            fd.cbStruct = sizeof(fd);
+            fd.pwfx = pwfx;
+            ZeroMemory(fd.pwfx, dwSize);
+            fd.cbwfx = dwSize;
+            fd.dwFormatTag = WAVE_FORMAT_UNKNOWN;
+
+            /* try WAVE_FORMAT_UNKNOWN */
+            rc = acmFormatDetailsA(had, &fd, ACM_FORMATDETAILSF_INDEX);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatDetailsA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
 
             HeapFree(GetProcessHeap(), 0, pwfx);
 
