@@ -2154,6 +2154,22 @@ static void test_rectangle_geometry(void)
         {SEGMENT_LINE, {{{35.0f, 45.0f}}}},
         {SEGMENT_LINE, {{{35.0f, 45.0f}}}},
         {SEGMENT_LINE, {{{30.0f, 45.0f}}}},
+        /* Figure 4. */
+        {SEGMENT_LINE, {{{ 1.07179585e+01f, 2.23205078e+02f}}}},
+        {SEGMENT_LINE, {{{-5.85640755e+01f, 2.73205078e+02f}}}},
+        {SEGMENT_LINE, {{{-7.85640717e+01f, 2.29903809e+02f}}}},
+        /* Figure 5. */
+        {SEGMENT_LINE, {{{40.0f, 20.0f}}}},
+        {SEGMENT_LINE, {{{40.0f, 40.0f}}}},
+        {SEGMENT_LINE, {{{30.0f, 40.0f}}}},
+        /* Figure 6. */
+        {SEGMENT_LINE, {{{ 2.14359169e+01f, 0.0f}}}},
+        {SEGMENT_LINE, {{{-1.17128151e+02f, 0.0f}}}},
+        {SEGMENT_LINE, {{{-1.57128143e+02f, 0.0f}}}},
+        /* Figure 7. */
+        {SEGMENT_LINE, {{{0.0f, 1.11602539e+02f}}}},
+        {SEGMENT_LINE, {{{0.0f, 1.36602539e+02f}}}},
+        {SEGMENT_LINE, {{{0.0f, 1.14951904e+02f}}}},
     };
     static const struct expected_geometry_figure expected_figures[] =
     {
@@ -2161,6 +2177,11 @@ static void test_rectangle_geometry(void)
         {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {20.0f, 30.0f}, 3, &expected_segments[3]},
         {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {25.0f, 15.0f}, 3, &expected_segments[6]},
         {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {30.0f, 45.0f}, 3, &expected_segments[9]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {-9.28203964e+00f, 1.79903809e+02f},
+                3, &expected_segments[12]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {30.0f, 20.0f}, 3, &expected_segments[15]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {-1.85640793e+01f, 0.0f}, 3, &expected_segments[18]},
+        {D2D1_FIGURE_BEGIN_FILLED, D2D1_FIGURE_END_CLOSED, {0.0f, 8.99519043e+01f}, 3, &expected_segments[21]},
     };
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
@@ -2322,6 +2343,18 @@ static void test_rectangle_geometry(void)
     match = compare_rect(&rect, -7.85640717e+01f, 1.79903809e+02f, 1.07179594e+01f, 2.73205078e+02f, 1);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[4], 1);
+    geometry_sink_cleanup(&sink);
+    geometry_sink_init(&sink);
+    hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
+            NULL, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[4], 1);
+    geometry_sink_cleanup(&sink);
 
     set_matrix_identity(&matrix);
     rotate_matrix(&matrix, M_PI / -3.0f);
@@ -2331,6 +2364,12 @@ static void test_rectangle_geometry(void)
     match = compare_rect(&rect, 30.0f, 20.0f, 40.0f, 40.0f, 2);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES,
+            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[5], 4);
+    geometry_sink_cleanup(&sink);
 
     set_matrix_identity(&matrix);
     scale_matrix(&matrix, 2.0f, 0.0f);
@@ -2339,6 +2378,12 @@ static void test_rectangle_geometry(void)
     match = compare_rect(&rect, -1.57128143e+02f, 0.00000000e+00f, 2.14359188e+01f, 0.00000000e+00f, 1);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[6], 1);
+    geometry_sink_cleanup(&sink);
 
     set_matrix_identity(&matrix);
     scale_matrix(&matrix, 0.0f, 0.5f);
@@ -2347,6 +2392,12 @@ static void test_rectangle_geometry(void)
     match = compare_rect(&rect, 0.00000000e+00f, 8.99519043e+01f, 0.00000000e+00, 1.36602539e+02f, 1);
     ok(match, "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}.\n",
             rect.left, rect.top, rect.right, rect.bottom);
+    geometry_sink_init(&sink);
+    hr = ID2D1TransformedGeometry_Simplify(transformed_geometry, D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+            &matrix, 0.0f, &sink.ID2D1SimplifiedGeometrySink_iface);
+    ok(SUCCEEDED(hr), "Failed to simplify geometry, hr %#x.\n", hr);
+    geometry_sink_check(&sink, D2D1_FILL_MODE_ALTERNATE, 1, &expected_figures[7], 1);
+    geometry_sink_cleanup(&sink);
 
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1RectangleGeometry_Release(geometry);

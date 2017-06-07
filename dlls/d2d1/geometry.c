@@ -3159,10 +3159,17 @@ static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Simplify(ID2D1Transfor
         D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
 {
-    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+    D2D1_MATRIX_3X2_F g;
+
+    TRACE("iface %p, option %#x, transform %p, tolerance %.8e, sink %p.\n",
             iface, option, transform, tolerance, sink);
 
-    return E_NOTIMPL;
+    g = geometry->transform;
+    if (transform)
+        d2d_matrix_multiply(&g, transform);
+
+    return ID2D1Geometry_Simplify(geometry->u.transformed.src_geometry, option, &g, tolerance, sink);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Tessellate(ID2D1TransformedGeometry *iface,
