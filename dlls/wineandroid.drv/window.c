@@ -1056,6 +1056,92 @@ void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alp
 }
 
 
+/*****************************************************************************
+ *           ANDROID_UpdateLayeredWindow
+ */
+BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                        const RECT *window_rect )
+{
+    struct window_surface *surface;
+    struct android_win_data *data;
+    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
+    COLORREF color_key = (info->dwFlags & ULW_COLORKEY) ? info->crKey : CLR_INVALID;
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *bmi = (BITMAPINFO *)buffer;
+    void *src_bits, *dst_bits;
+    RECT rect;
+    HDC hdc = 0;
+    HBITMAP dib;
+    BOOL ret = FALSE;
+
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+
+    rect = *window_rect;
+    OffsetRect( &rect, -window_rect->left, -window_rect->top );
+
+    surface = data->surface;
+    if (!is_argb_surface( surface ))
+    {
+        if (surface) window_surface_release( surface );
+        surface = NULL;
+    }
+
+    if (!surface || memcmp( &surface->rect, &rect, sizeof(RECT) ))
+    {
+        data->surface = create_surface( data->hwnd, &rect, 255, color_key, TRUE );
+        if (surface) window_surface_release( surface );
+        surface = data->surface;
+    }
+    else set_surface_layered( surface, 255, color_key );
+
+    if (surface) window_surface_add_ref( surface );
+    release_win_data( data );
+
+    if (!surface) return FALSE;
+    if (!info->hdcSrc)
+    {
+        window_surface_release( surface );
+        return TRUE;
+    }
+
+    dst_bits = surface->funcs->get_info( surface, bmi );
+
+    if (!(dib = CreateDIBSection( info->hdcDst, bmi, DIB_RGB_COLORS, &src_bits, NULL, 0 ))) goto done;
+    if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
+
+    SelectObject( hdc, dib );
+
+    surface->funcs->lock( surface );
+
+    if (info->prcDirty)
+    {
+        IntersectRect( &rect, &rect, info->prcDirty );
+        memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
+        PatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
+    }
+    ret = GdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                         info->hdcSrc,
+                         rect.left + (info->pptSrc ? info->pptSrc->x : 0),
+                         rect.top + (info->pptSrc ? info->pptSrc->y : 0),
+                         rect.right - rect.left, rect.bottom - rect.top,
+                         (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend );
+    if (ret)
+    {
+        memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
+        add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
+    }
+
+    surface->funcs->unlock( surface );
+    surface->funcs->flush( surface );
+
+done:
+    window_surface_release( surface );
+    if (hdc) DeleteDC( hdc );
+    if (dib) DeleteObject( dib );
+    return ret;
+}
+
+
 /**********************************************************************
  *           ANDROID_WindowMessage
  */

@@ -12,6 +12,7 @@
 @ cdecl SetLayeredWindowAttributes(long long long long) ANDROID_SetLayeredWindowAttributes
 @ cdecl SetWindowRgn(long long long) ANDROID_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long ptr) ANDROID_SetWindowStyle
+@ cdecl UpdateLayeredWindow(long ptr ptr) ANDROID_UpdateLayeredWindow
 @ cdecl WindowMessage(long long long long) ANDROID_WindowMessage
 @ cdecl WindowPosChanging(long long long ptr ptr ptr ptr) ANDROID_WindowPosChanging
 @ cdecl WindowPosChanged(long long long ptr ptr ptr ptr ptr) ANDROID_WindowPosChanged
