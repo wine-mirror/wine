@@ -61,6 +61,7 @@ enum android_ioctl
     IOCTL_CREATE_WINDOW,
     IOCTL_DESTROY_WINDOW,
     IOCTL_WINDOW_POS_CHANGED,
+    IOCTL_SET_WINDOW_PARENT,
     IOCTL_DEQUEUE_BUFFER,
     IOCTL_QUEUE_BUFFER,
     IOCTL_CANCEL_BUFFER,
@@ -186,6 +187,12 @@ struct ioctl_android_set_swap_interval
 {
     struct ioctl_header hdr;
     int                 interval;
+};
+
+struct ioctl_android_set_window_parent
+{
+    struct ioctl_header hdr;
+    int                 parent;
 };
 
 static inline BOOL is_in_desktop_process(void)
@@ -832,12 +839,35 @@ static NTSTATUS setSwapInterval_ioctl( void *data, DWORD in_size, DWORD out_size
     return android_error_to_status( ret );
 }
 
+static NTSTATUS setWindowParent_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    static jmethodID method;
+    jobject object;
+    struct ioctl_android_set_window_parent *res = data;
+    struct native_win_data *win_data;
+    DWORD pid = current_client_id();
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    if (!(win_data = get_ioctl_native_win_data( &res->hdr ))) return STATUS_INVALID_HANDLE;
+
+    TRACE( "hwnd %08x parent %08x\n", res->hdr.hwnd, res->parent );
+
+    if (!(object = load_java_method( &method, "setParent", "(III)V" ))) return STATUS_NOT_SUPPORTED;
+
+    wrap_java_call();
+    (*jni_env)->CallVoidMethod( jni_env, object, method, res->hdr.hwnd, res->parent, pid );
+    unwrap_java_call();
+    return STATUS_SUCCESS;
+}
+
 typedef NTSTATUS (*ioctl_func)( void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
 static const ioctl_func ioctl_funcs[] =
 {
     createWindow_ioctl,         /* IOCTL_CREATE_WINDOW */
     destroyWindow_ioctl,        /* IOCTL_DESTROY_WINDOW */
     windowPosChanged_ioctl,     /* IOCTL_WINDOW_POS_CHANGED */
+    setWindowParent_ioctl,      /* IOCTL_SET_WINDOW_PARENT */
     dequeueBuffer_ioctl,        /* IOCTL_DEQUEUE_BUFFER */
     queueBuffer_ioctl,          /* IOCTL_QUEUE_BUFFER */
     cancelBuffer_ioctl,         /* IOCTL_CANCEL_BUFFER */
@@ -1355,4 +1385,13 @@ int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *cl
     req.after        = HandleToLong( after );
     req.owner        = HandleToLong( owner );
     return android_ioctl( IOCTL_WINDOW_POS_CHANGED, &req, sizeof(req), NULL, NULL );
+}
+
+int ioctl_set_window_parent( HWND hwnd, HWND parent )
+{
+    struct ioctl_android_set_window_parent req;
+
+    req.hdr.hwnd = HandleToLong( hwnd );
+    req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
+    return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
 }

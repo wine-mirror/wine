@@ -1015,6 +1015,24 @@ UINT CDECL ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 }
 
 
+/*****************************************************************
+ *	     ANDROID_SetParent
+ */
+void CDECL ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
+{
+    struct android_win_data *data;
+
+    if (parent == old_parent) return;
+    if (!(data = get_win_data( hwnd ))) return;
+
+    TRACE( "win %p parent %p -> %p\n", hwnd, old_parent, parent );
+
+    data->parent = (parent == GetDesktopWindow()) ? 0 : parent;
+    ioctl_set_window_parent( hwnd, parent );
+    release_win_data( data );
+}
+
+
 /***********************************************************************
  *           ANDROID_SetWindowStyle
  */

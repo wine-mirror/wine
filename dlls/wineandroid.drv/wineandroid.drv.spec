@@ -10,6 +10,7 @@
 @ cdecl DestroyWindow(long) ANDROID_DestroyWindow
 @ cdecl MsgWaitForMultipleObjectsEx(long ptr long long long) ANDROID_MsgWaitForMultipleObjectsEx
 @ cdecl SetLayeredWindowAttributes(long long long long) ANDROID_SetLayeredWindowAttributes
+@ cdecl SetParent(long long long) ANDROID_SetParent
 @ cdecl SetWindowRgn(long long long) ANDROID_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long ptr) ANDROID_SetWindowStyle
 @ cdecl ShowWindow(long long ptr long) ANDROID_ShowWindow

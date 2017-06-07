@@ -60,6 +60,7 @@ extern void destroy_ioctl_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const RECT *client_rect,
                                      const RECT *visible_rect, UINT style, UINT flags,
                                      HWND after, HWND owner ) DECLSPEC_HIDDEN;
+extern int ioctl_set_window_parent( HWND hwnd, HWND parent ) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************

@@ -337,6 +337,20 @@ public class WineActivity extends Activity
             visible = (style & WS_VISIBLE) != 0;
         }
 
+        public void set_parent( WineWindow new_parent )
+        {
+            Log.i( LOGTAG, String.format( "set parent hwnd %08x parent %08x -> %08x",
+                                          hwnd, parent == null ? 0 : parent.hwnd,
+                                          new_parent == null ? 0 : new_parent.hwnd ));
+            parent = new_parent;
+            if (new_parent == null)
+            {
+                window_view = new WineView( WineActivity.this, this );
+                window_view.layout( 0, 0, 1, 1 ); // make sure the surface gets created
+            }
+            else window_view = null;
+        }
+
         public int get_hwnd()
         {
             return hwnd;
@@ -452,6 +466,13 @@ public class WineActivity extends Activity
         if (win != null) win.destroy();
     }
 
+    public void set_window_parent( int hwnd, int parent, int pid )
+    {
+        WineWindow win = get_window( hwnd );
+        if (win == null) return;
+        win.set_parent( get_window( parent ));
+    }
+
     public void window_pos_changed( int hwnd, int flags, int insert_after, int owner, int style,
                                     Rect window_rect, Rect client_rect, Rect visible_rect )
     {
@@ -473,6 +494,11 @@ public class WineActivity extends Activity
     public void destroyWindow( final int hwnd )
     {
         runOnUiThread( new Runnable() { public void run() { destroy_window( hwnd ); }} );
+    }
+
+    public void setParent( final int hwnd, final int parent, final int pid )
+    {
+        runOnUiThread( new Runnable() { public void run() { set_window_parent( hwnd, parent, pid ); }} );
     }
 
     public void windowPosChanged( final int hwnd, final int flags, final int insert_after,
