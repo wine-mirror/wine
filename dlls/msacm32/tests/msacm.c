@@ -330,18 +330,46 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
                "acmFormatEnumA(): rc = %08x, should be %08x\n",
                rc, MMSYSERR_INVALPARAM);
 
-            if (dwSize < sizeof(WAVEFORMATEX))
-                dwSize = sizeof(WAVEFORMATEX);
-
             pwfx = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize);
 
-            pwfx->cbSize = LOWORD(dwSize) - sizeof(WAVEFORMATEX);
+            if (dwSize >= sizeof(WAVEFORMATEX))
+                pwfx->cbSize = LOWORD(dwSize) - sizeof(WAVEFORMATEX);
             pwfx->wFormatTag = WAVE_FORMAT_UNKNOWN;
 
             fd.cbStruct = sizeof(fd);
             fd.pwfx = pwfx;
             fd.cbwfx = dwSize;
             fd.dwFormatTag = WAVE_FORMAT_UNKNOWN;
+
+            /* try bad callback */
+            rc = acmFormatEnumA(had, &fd, NULL, 0, 0);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatEnumA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+
+            /* try bad pwfx */
+            fd.pwfx = NULL;
+            rc = acmFormatEnumA(had, &fd, FormatEnumProc, 0, 0);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatEnumA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+            fd.pwfx = pwfx;
+
+            /* fdwSupport must be zero */
+            fd.fdwSupport = 0xdeadbeef;
+            rc = acmFormatEnumA(had, &fd, FormatEnumProc, 0, 0);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatEnumA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+            fd.fdwSupport = 0;
+
+            /* try bad pwfx structure size */
+            fd.cbwfx = dwSize-1;
+            rc = acmFormatEnumA(had, &fd, FormatEnumProc, 0, 0);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatEnumA(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+            fd.cbwfx = dwSize;
 
             /* try valid parameters */
             rc = acmFormatEnumA(had, &fd, FormatEnumProc, 0, 0);

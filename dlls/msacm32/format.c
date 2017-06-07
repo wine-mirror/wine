@@ -492,6 +492,9 @@ MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
     if (!pafda)
         return MMSYSERR_INVALPARAM;
 
+    if (!fnCallback)
+        return MMSYSERR_INVALPARAM;
+
     if (pafda->cbStruct < sizeof(*pafda))
         return MMSYSERR_INVALPARAM;
 
@@ -499,6 +502,7 @@ MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
     afdw.cbStruct = sizeof(afdw);
     afdw.dwFormatIndex = pafda->dwFormatIndex;
     afdw.dwFormatTag = pafda->dwFormatTag;
+    afdw.fdwSupport = pafda->fdwSupport;
     afdw.pwfx = pafda->pwfx;
     afdw.cbwfx = pafda->cbwfx;
 
@@ -613,6 +617,8 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
     PWINE_ACMDRIVERID		padid;
     WAVEFORMATEX		wfxRef;
     BOOL			ret;
+    DWORD			cbwfxMax;
+    MMRESULT			mmr;
 
     TRACE("(%p, %p, %p, %ld, %d)\n",
 	  had, pafd, fnCallback, dwInstance, fdwEnum);
@@ -620,7 +626,16 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
     if (!pafd)
         return MMSYSERR_INVALPARAM;
 
+    if (!fnCallback)
+        return MMSYSERR_INVALPARAM;
+
     if (pafd->cbStruct < sizeof(*pafd))
+        return MMSYSERR_INVALPARAM;
+
+    if (pafd->fdwSupport)
+        return MMSYSERR_INVALPARAM;
+
+    if (!pafd->pwfx)
         return MMSYSERR_INVALPARAM;
 
     if (fdwEnum & (ACM_FORMATENUMF_WFORMATTAG|ACM_FORMATENUMF_NCHANNELS|
@@ -638,6 +653,12 @@ MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 
     if (fdwEnum & (ACM_FORMATENUMF_CONVERT|ACM_FORMATENUMF_INPUT|ACM_FORMATENUMF_OUTPUT))
 	FIXME("Unsupported fdwEnum values %08x\n", fdwEnum);
+
+    mmr = acmMetrics((HACMOBJ)had, ACM_METRIC_MAX_SIZE_FORMAT, &cbwfxMax);
+    if (mmr != MMSYSERR_NOERROR)
+        return mmr;
+    if (pafd->cbwfx < cbwfxMax)
+        return MMSYSERR_INVALPARAM;
 
     if (had) {
 	HACMDRIVERID	hadid;
