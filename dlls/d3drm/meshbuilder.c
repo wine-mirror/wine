@@ -823,9 +823,17 @@ static int WINAPI d3drm_mesh_builder2_AddNormal(IDirect3DRMMeshBuilder2 *iface,
 
 static HRESULT WINAPI d3drm_mesh_builder2_CreateFace(IDirect3DRMMeshBuilder2 *iface, IDirect3DRMFace **face)
 {
+    struct d3drm_face *object;
+    HRESULT hr;
+
     TRACE("iface %p, face %p.\n", iface, face);
 
-    return Direct3DRMFace_create(&IID_IDirect3DRMFace, (IUnknown **)face);
+    if (FAILED(hr = d3drm_face_create(&object)))
+        return hr;
+
+    *face = &object->IDirect3DRMFace_iface;
+
+    return S_OK;
 }
 
 static D3DRMRENDERQUALITY WINAPI d3drm_mesh_builder2_GetQuality(IDirect3DRMMeshBuilder2 *iface)
@@ -1933,9 +1941,17 @@ static int WINAPI d3drm_mesh_builder3_AddNormal(IDirect3DRMMeshBuilder3 *iface,
 
 static HRESULT WINAPI d3drm_mesh_builder3_CreateFace(IDirect3DRMMeshBuilder3 *iface, IDirect3DRMFace2 **face)
 {
+    struct d3drm_face *object;
+    HRESULT hr;
+
     TRACE("iface %p, face %p.\n", iface, face);
 
-    return Direct3DRMFace_create(&IID_IDirect3DRMFace2, (IUnknown **)face);
+    if (FAILED(hr = d3drm_face_create(&object)))
+        return hr;
+
+    *face = &object->IDirect3DRMFace2_iface;
+
+    return S_OK;
 }
 
 static D3DRMRENDERQUALITY WINAPI d3drm_mesh_builder3_GetQuality(IDirect3DRMMeshBuilder3 *iface)

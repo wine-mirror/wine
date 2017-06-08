@@ -699,6 +699,7 @@ static void test_Face(void)
     IDirect3DRMMeshBuilder2 *MeshBuilder2;
     IDirect3DRMMeshBuilder3 *MeshBuilder3;
     IDirect3DRMFace *face1;
+    IDirect3DRMObject *obj;
     IDirect3DRMFace2 *face2;
     IDirect3DRMFaceArray *array1;
     D3DRMLOADMEMORY info;
@@ -717,6 +718,11 @@ static void test_Face(void)
         IDirect3DRM_Release(d3drm);
         return;
     }
+
+    hr = IDirect3DRMFace_QueryInterface(face1, &IID_IDirect3DRMObject, (void **)&obj);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
+    ok(obj == (IDirect3DRMObject *)face1, "Unexpected interface pointer.\n");
+    IDirect3DRMObject_Release(obj);
 
     test_class_name((IDirect3DRMObject *)face1, "Face");
 
@@ -788,6 +794,16 @@ static void test_Face(void)
 
     hr = IDirect3DRMMeshBuilder3_CreateFace(MeshBuilder3, &face2);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFace2 interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMFace2_QueryInterface(face2, &IID_IDirect3DRMObject, (void **)&obj);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
+
+    hr = IDirect3DRMFace2_QueryInterface(face2, &IID_IDirect3DRMFace, (void **)&face1);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, %#x.\n", hr);
+    ok(obj == (IDirect3DRMObject *)face1, "Unexpected interface pointer.\n");
+
+    IDirect3DRMFace_Release(face1);
+    IDirect3DRMObject_Release(obj);
 
     test_class_name((IDirect3DRMObject *)face2, "Face");
 
@@ -1405,6 +1421,8 @@ static void test_object(void)
         { &CLSID_CDirect3DRMTexture,       &IID_IDirect3DRMTexture3,     FALSE },
         { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport,     FALSE },
         { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport2,    FALSE },
+        { &CLSID_CDirect3DRMFace,          &IID_IDirect3DRMFace },
+        { &CLSID_CDirect3DRMFace,          &IID_IDirect3DRMFace2 },
     };
     IDirect3DRM *d3drm1;
     IDirect3DRM2 *d3drm2;

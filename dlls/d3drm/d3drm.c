@@ -84,6 +84,19 @@ static HRESULT d3drm_create_viewport_object(void **object, IDirect3DRM *d3drm)
     return hr;
 }
 
+static HRESULT d3drm_create_face_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_face *face;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_face_create(&face)))
+        return hr;
+
+    *object = &face->IDirect3DRMFace_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -214,9 +227,17 @@ static HRESULT WINAPI d3drm1_CreateMeshBuilder(IDirect3DRM *iface, IDirect3DRMMe
 
 static HRESULT WINAPI d3drm1_CreateFace(IDirect3DRM *iface, IDirect3DRMFace **face)
 {
+    struct d3drm_face *object;
+    HRESULT hr;
+
     TRACE("iface %p, face %p.\n", iface, face);
 
-    return Direct3DRMFace_create(&IID_IDirect3DRMFace, (IUnknown **)face);
+    if (FAILED(hr = d3drm_face_create(&object)))
+        return hr;
+
+    *face = &object->IDirect3DRMFace_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm1_CreateAnimation(IDirect3DRM *iface, IDirect3DRMAnimation **animation)
@@ -734,9 +755,11 @@ static HRESULT WINAPI d3drm2_CreateMeshBuilder(IDirect3DRM2 *iface, IDirect3DRMM
 
 static HRESULT WINAPI d3drm2_CreateFace(IDirect3DRM2 *iface, IDirect3DRMFace **face)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
+
     TRACE("iface %p, face %p.\n", iface, face);
 
-    return Direct3DRMFace_create(&IID_IDirect3DRMFace, (IUnknown **)face);
+    return IDirect3DRM_CreateFace(&d3drm->IDirect3DRM_iface, face);
 }
 
 static HRESULT WINAPI d3drm2_CreateAnimation(IDirect3DRM2 *iface, IDirect3DRMAnimation **animation)
@@ -1208,6 +1231,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         {&CLSID_CDirect3DRMTexture, d3drm_create_texture_object},
         {&CLSID_CDirect3DRMDevice, d3drm_create_device_object},
         {&CLSID_CDirect3DRMViewport, d3drm_create_viewport_object},
+        {&CLSID_CDirect3DRMFace, d3drm_create_face_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
@@ -1288,9 +1312,19 @@ static HRESULT WINAPI d3drm3_CreateMeshBuilder(IDirect3DRM3 *iface, IDirect3DRMM
 
 static HRESULT WINAPI d3drm3_CreateFace(IDirect3DRM3 *iface, IDirect3DRMFace2 **face)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    IDirect3DRMFace *face1;
+    HRESULT hr;
+
     TRACE("iface %p, face %p.\n", iface, face);
 
-    return Direct3DRMFace_create(&IID_IDirect3DRMFace2, (IUnknown **)face);
+    if (FAILED(hr = IDirect3DRM_CreateFace(&d3drm->IDirect3DRM_iface, &face1)))
+        return hr;
+
+    hr = IDirect3DRMFace_QueryInterface(face1, &IID_IDirect3DRMFace2, (void **)face);
+    IDirect3DRMFace_Release(face1);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm3_CreateAnimation(IDirect3DRM3 *iface, IDirect3DRMAnimation2 **animation)

@@ -112,6 +112,14 @@ struct d3drm_device
     DWORD width;
 };
 
+struct d3drm_face
+{
+    struct d3drm_object obj;
+    IDirect3DRMFace IDirect3DRMFace_iface;
+    IDirect3DRMFace2 IDirect3DRMFace2_iface;
+    LONG ref;
+};
+
 HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, IDirectDraw *ddraw,
         IDirectDrawClipper *clipper, int width, int height, IDirectDrawSurface **surface) DECLSPEC_HIDDEN;
@@ -130,8 +138,8 @@ struct d3drm_device *unsafe_impl_from_IDirect3DRMDevice3(IDirect3DRMDevice3 *ifa
 
 HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
+HRESULT d3drm_face_create(struct d3drm_face **face) DECLSPEC_HIDDEN;
 HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
-HRESULT Direct3DRMFace_create(REFIID riid, IUnknown** ret_iface) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMLight_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;

@@ -25,14 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
-struct d3drm_face
-{
-    struct d3drm_object obj;
-    IDirect3DRMFace IDirect3DRMFace_iface;
-    IDirect3DRMFace2 IDirect3DRMFace2_iface;
-    LONG ref;
-};
-
 static inline struct d3drm_face *impl_from_IDirect3DRMFace(IDirect3DRMFace *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_face, IDirect3DRMFace_iface);
@@ -49,8 +41,8 @@ static HRESULT WINAPI d3drm_face1_QueryInterface(IDirect3DRMFace *iface, REFIID 
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-
     if (IsEqualGUID(riid, &IID_IDirect3DRMFace)
+            || IsEqualGUID(riid, &IID_IDirect3DRMObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         *out = &face->IDirect3DRMFace_iface;
@@ -88,7 +80,10 @@ static ULONG WINAPI d3drm_face1_Release(IDirect3DRMFace *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        d3drm_object_cleanup((IDirect3DRMObject *)iface, &face->obj);
         HeapFree(GetProcessHeap(), 0, face);
+    }
 
     return refcount;
 }
@@ -104,17 +99,21 @@ static HRESULT WINAPI d3drm_face1_Clone(IDirect3DRMFace *iface,
 static HRESULT WINAPI d3drm_face1_AddDestroyCallback(IDirect3DRMFace *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMFace2_AddDestroyCallback(&face->IDirect3DRMFace2_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_face1_DeleteDestroyCallback(IDirect3DRMFace *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMFace2_DeleteDestroyCallback(&face->IDirect3DRMFace2_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_face1_SetAppData(IDirect3DRMFace *iface, DWORD data)
@@ -360,17 +359,21 @@ static HRESULT WINAPI d3drm_face2_Clone(IDirect3DRMFace2 *iface,
 static HRESULT WINAPI d3drm_face2_AddDestroyCallback(IDirect3DRMFace2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_add_destroy_callback(&face->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_face2_DeleteDestroyCallback(IDirect3DRMFace2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_face *face = impl_from_IDirect3DRMFace2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_delete_destroy_callback(&face->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_face2_SetAppData(IDirect3DRMFace2 *iface, DWORD data)
@@ -583,12 +586,12 @@ static const struct IDirect3DRMFace2Vtbl d3drm_face2_vtbl =
     d3drm_face2_GetColor,
 };
 
-HRESULT Direct3DRMFace_create(REFIID riid, IUnknown **out)
+HRESULT d3drm_face_create(struct d3drm_face **face)
 {
     static const char classname[] = "Face";
     struct d3drm_face *object;
 
-    TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
+    TRACE("face %p.\n", face);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -599,10 +602,7 @@ HRESULT Direct3DRMFace_create(REFIID riid, IUnknown **out)
 
     d3drm_object_init(&object->obj, classname);
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMFace2))
-        *out = (IUnknown*)&object->IDirect3DRMFace2_iface;
-    else
-        *out = (IUnknown*)&object->IDirect3DRMFace_iface;
+    *face = object;
 
     return S_OK;
 }
