@@ -69,8 +69,9 @@ struct d3drm_mesh_builder
     IDirect3DRMMeshBuilder3 IDirect3DRMMeshBuilder3_iface;
     LONG ref;
     char* name;
-    DWORD nb_vertices;
-    D3DVECTOR* pVertices;
+    SIZE_T nb_vertices;
+    SIZE_T vertices_size;
+    D3DVECTOR *vertices;
     DWORD nb_normals;
     D3DVECTOR* pNormals;
     DWORD nb_faces;
@@ -307,6 +308,38 @@ char templates[] = {
 "}"
 };
 
+static BOOL d3drm_array_reserve(void **elements, SIZE_T *capacity, SIZE_T element_count, SIZE_T element_size)
+{
+    SIZE_T new_capacity, max_capacity;
+    void *new_elements;
+
+    if (element_count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / element_size;
+    if (max_capacity < element_count)
+        return FALSE;
+
+    new_capacity = max(*capacity, 4);
+    while (new_capacity < element_count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+
+    if (new_capacity < element_count)
+        new_capacity = max_capacity;
+
+    if (*elements)
+        new_elements = HeapReAlloc(GetProcessHeap(), 0, *elements, new_capacity * element_size);
+    else
+        new_elements = HeapAlloc(GetProcessHeap(), 0, new_capacity * element_size);
+
+    if (!new_elements)
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
 static inline struct d3drm_mesh *impl_from_IDirect3DRMMesh(IDirect3DRMMesh *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_mesh, IDirect3DRMMesh_iface);
@@ -328,9 +361,10 @@ static void clean_mesh_builder_data(struct d3drm_mesh_builder *mesh_builder)
 
     HeapFree(GetProcessHeap(), 0, mesh_builder->name);
     mesh_builder->name = NULL;
-    HeapFree(GetProcessHeap(), 0, mesh_builder->pVertices);
-    mesh_builder->pVertices = NULL;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->vertices);
+    mesh_builder->vertices = NULL;
     mesh_builder->nb_vertices = 0;
+    mesh_builder->vertices_size = 0;
     HeapFree(GetProcessHeap(), 0, mesh_builder->pNormals);
     mesh_builder->pNormals = NULL;
     mesh_builder->nb_normals = 0;
@@ -735,7 +769,7 @@ static HRESULT WINAPI d3drm_mesh_builder2_GetVertices(IDirect3DRMMeshBuilder2 *i
     if (vertex_count)
         *vertex_count = mesh_builder->nb_vertices;
     if (vertices && mesh_builder->nb_vertices)
-        memcpy(vertices, mesh_builder->pVertices, mesh_builder->nb_vertices * sizeof(*vertices));
+        memcpy(vertices, mesh_builder->vertices, mesh_builder->nb_vertices * sizeof(*vertices));
 
     if (normals && (!normal_count || (*normal_count < mesh_builder->nb_normals)))
         return D3DRMERR_BADVALUE;
@@ -768,9 +802,11 @@ static HRESULT WINAPI d3drm_mesh_builder2_GetTextureCoordinates(IDirect3DRMMeshB
 static int WINAPI d3drm_mesh_builder2_AddVertex(IDirect3DRMMeshBuilder2 *iface,
         D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
-    FIXME("iface %p, x %.8e, y %.8e, z %.8e stub!\n", iface, x, y, z);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    return 0;
+    TRACE("iface %p, x %.8e, y %.8e, z %.8e.\n", iface, x, y, z);
+
+    return IDirect3DRMMeshBuilder3_AddVertex(&mesh_builder->IDirect3DRMMeshBuilder3_iface, x, y, z);
 }
 
 static int WINAPI d3drm_mesh_builder2_AddNormal(IDirect3DRMMeshBuilder2 *iface,
@@ -1073,11 +1109,16 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
     mesh_builder->nb_faces = *(DWORD*)(ptr + sizeof(DWORD) + mesh_builder->nb_vertices * sizeof(D3DVECTOR));
     faces_vertex_idx_size = size - sizeof(DWORD) - mesh_builder->nb_vertices * sizeof(D3DVECTOR) - sizeof(DWORD);
 
-    TRACE("Mesh: nb_vertices = %d, nb_faces = %d, faces_vertex_idx_size = %d\n", mesh_builder->nb_vertices,
+    TRACE("Mesh: nb_vertices = %lu, nb_faces = %d, faces_vertex_idx_size = %d\n", mesh_builder->nb_vertices,
             mesh_builder->nb_faces, faces_vertex_idx_size);
 
-    mesh_builder->pVertices = HeapAlloc(GetProcessHeap(), 0, mesh_builder->nb_vertices * sizeof(D3DVECTOR));
-    memcpy(mesh_builder->pVertices, ptr + sizeof(DWORD), mesh_builder->nb_vertices * sizeof(D3DVECTOR));
+    if (!d3drm_array_reserve((void **)&mesh_builder->vertices, &mesh_builder->vertices_size, mesh_builder->nb_vertices,
+           sizeof(*mesh_builder->vertices)))
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+    memcpy(mesh_builder->vertices, ptr + sizeof(DWORD), mesh_builder->nb_vertices * sizeof(D3DVECTOR));
 
     faces_vertex_idx_ptr = faces_vertex_idx_data = HeapAlloc(GetProcessHeap(), 0, faces_vertex_idx_size);
     memcpy(faces_vertex_idx_data, ptr + sizeof(DWORD) + mesh_builder->nb_vertices * sizeof(D3DVECTOR) + sizeof(DWORD),
@@ -1369,8 +1410,8 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
             {
                 D3DVECTOR a, b;
 
-                D3DRMVectorSubtract(&a, &mesh_builder->pVertices[faces_vertex_idx_ptr[2]], &mesh_builder->pVertices[faces_vertex_idx_ptr[1]]);
-                D3DRMVectorSubtract(&b, &mesh_builder->pVertices[faces_vertex_idx_ptr[0]], &mesh_builder->pVertices[faces_vertex_idx_ptr[1]]);
+                D3DRMVectorSubtract(&a, &mesh_builder->vertices[faces_vertex_idx_ptr[2]], &mesh_builder->vertices[faces_vertex_idx_ptr[1]]);
+                D3DRMVectorSubtract(&b, &mesh_builder->vertices[faces_vertex_idx_ptr[0]], &mesh_builder->vertices[faces_vertex_idx_ptr[1]]);
                 D3DRMVectorCrossProduct(&face_normal, &a, &b);
                 D3DRMVectorNormalize(&face_normal);
             }
@@ -1397,7 +1438,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
                 DWORD vertex_idx = *faces_vertex_idx_ptr;
                 if (vertex_idx >= mesh_builder->nb_vertices)
                 {
-                    WARN("Found vertex index %u but only %u vertices available => use index 0\n", vertex_idx,
+                    WARN("Found vertex index %u but only %lu vertices available => use index 0\n", vertex_idx,
                             mesh_builder->nb_vertices);
                     vertex_idx = 0;
                 }
@@ -1586,9 +1627,9 @@ static HRESULT WINAPI d3drm_mesh_builder3_Scale(IDirect3DRMMeshBuilder3 *iface,
 
     for (i = 0; i < mesh_builder->nb_vertices; ++i)
     {
-        mesh_builder->pVertices[i].u1.x *= sx;
-        mesh_builder->pVertices[i].u2.y *= sy;
-        mesh_builder->pVertices[i].u3.z *= sz;
+        mesh_builder->vertices[i].u1.x *= sx;
+        mesh_builder->vertices[i].u2.y *= sy;
+        mesh_builder->vertices[i].u3.z *= sz;
     }
 
     /* Normals are not affected by Scale */
@@ -1848,9 +1889,19 @@ static HRESULT WINAPI d3drm_mesh_builder3_GetTextureCoordinates(IDirect3DRMMeshB
 static int WINAPI d3drm_mesh_builder3_AddVertex(IDirect3DRMMeshBuilder3 *iface,
         D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
-    FIXME("iface %p, x %.8e, y %.8e, z %.8e stub!\n", iface, x, y, z);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    return 0;
+    TRACE("iface %p, x %.8e, y %.8e, z %.8e.\n", iface, x, y, z);
+
+    if (!d3drm_array_reserve((void **)&mesh_builder->vertices, &mesh_builder->vertices_size,
+            mesh_builder->nb_vertices + 1, sizeof(*mesh_builder->vertices)))
+        return 0;
+
+    mesh_builder->vertices[mesh_builder->nb_vertices].u1.x = x;
+    mesh_builder->vertices[mesh_builder->nb_vertices].u2.y = y;
+    mesh_builder->vertices[mesh_builder->nb_vertices].u3.z = z;
+
+    return mesh_builder->nb_vertices++;
 }
 
 static int WINAPI d3drm_mesh_builder3_AddNormal(IDirect3DRMMeshBuilder3 *iface,
@@ -1937,7 +1988,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateMesh(IDirect3DRMMeshBuilder3 *if
             return E_OUTOFMEMORY;
         }
         for (i = 0; i < mesh_builder->nb_vertices; i++)
-            vertices[i].position = mesh_builder->pVertices[i];
+            vertices[i].position = mesh_builder->vertices[i];
         hr = IDirect3DRMMesh_SetVertices(*mesh, 0, 0, mesh_builder->nb_vertices, vertices);
         HeapFree(GetProcessHeap(), 0, vertices);
 
@@ -2186,7 +2237,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_GetVertices(IDirect3DRMMeshBuilder3 *i
     if (vertex_count)
         *vertex_count = count;
     if (vertices && mesh_builder->nb_vertices)
-        memcpy(vertices, mesh_builder->pVertices + start_idx, count * sizeof(*vertices));
+        memcpy(vertices, mesh_builder->vertices + start_idx, count * sizeof(*vertices));
 
     return D3DRM_OK;
 }
