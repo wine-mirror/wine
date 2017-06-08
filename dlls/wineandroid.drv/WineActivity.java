@@ -30,6 +30,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -51,6 +53,7 @@ public class WineActivity extends Activity
     private native String wine_init( String[] cmdline, String[] env );
     public native void wine_desktop_changed( int width, int height );
     public native void wine_surface_changed( int hwnd, Surface surface );
+    public native boolean wine_motion_event( int hwnd, int action, int x, int y, int state, int vscroll );
 
     private final String LOGTAG = "wine";
     private ProgressDialog progress_dialog;
@@ -365,6 +368,12 @@ public class WineActivity extends Activity
             Log.i( LOGTAG, String.format( "set window surface hwnd %08x %s", hwnd, window_surface ));
             wine_surface_changed( hwnd, window_surface );
         }
+
+        public void get_event_pos( MotionEvent event, int[] pos )
+        {
+            pos[0] = Math.round( event.getX() + window_view.getLeft() );
+            pos[1] = Math.round( event.getY() + window_view.getTop() );
+        }
     }
 
     // View used for all Wine windows, backed by a TextureView
@@ -410,6 +419,36 @@ public class WineActivity extends Activity
 
         public void onSurfaceTextureUpdated(SurfaceTexture surftex)
         {
+        }
+
+        public boolean onGenericMotionEvent( MotionEvent event )
+        {
+            if (window.parent != null) return false;  // let the parent handle it
+
+            if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0)
+            {
+                int[] pos = new int[2];
+                window.get_event_pos( event, pos );
+                Log.i( LOGTAG, String.format( "view motion event win %08x action %d pos %d,%d buttons %04x view %d,%d",
+                                              window.hwnd, event.getAction(), pos[0], pos[1],
+                                              event.getButtonState(), getLeft(), getTop() ));
+                return wine_motion_event( window.hwnd, event.getAction(), pos[0], pos[1],
+                                          event.getButtonState(), (int)event.getAxisValue(MotionEvent.AXIS_VSCROLL)  );
+            }
+            return super.onGenericMotionEvent(event);
+        }
+
+        public boolean onTouchEvent( MotionEvent event )
+        {
+            if (window.parent != null) return false;  // let the parent handle it
+
+            int[] pos = new int[2];
+            window.get_event_pos( event, pos );
+            Log.i( LOGTAG, String.format( "view touch event win %08x action %d pos %d,%d buttons %04x view %d,%d",
+                                          window.hwnd, event.getAction(), pos[0], pos[1],
+                                          event.getButtonState(), getLeft(), getTop() ));
+            return wine_motion_event( window.hwnd, event.getAction(), pos[0], pos[1],
+                                      event.getButtonState(), 0 );
         }
     }
 

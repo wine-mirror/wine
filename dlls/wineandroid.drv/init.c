@@ -391,6 +391,7 @@ static const JNINativeMethod methods[] =
 {
     { "wine_desktop_changed", "(II)V", desktop_changed },
     { "wine_surface_changed", "(ILandroid/view/Surface;)V", surface_changed },
+    { "wine_motion_event", "(IIIIII)Z", motion_event },
 };
 
 #define DECL_FUNCPTR(f) typeof(f) * p##f = NULL

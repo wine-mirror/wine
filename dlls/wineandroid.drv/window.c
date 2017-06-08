@@ -253,6 +253,74 @@ void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface )
 
 
 /***********************************************************************
+ *           motion_event
+ *
+ * JNI callback, runs in the context of the Java thread.
+ */
+jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action, jint x, jint y, jint state, jint vscroll )
+{
+    static LONG button_state;
+    union event_data data;
+    int prev_state;
+
+    int mask = action & AMOTION_EVENT_ACTION_MASK;
+
+    if (!( mask == AMOTION_EVENT_ACTION_DOWN ||
+           mask == AMOTION_EVENT_ACTION_UP ||
+           mask == AMOTION_EVENT_ACTION_SCROLL ||
+           mask == AMOTION_EVENT_ACTION_MOVE ||
+           mask == AMOTION_EVENT_ACTION_HOVER_MOVE ))
+        return JNI_FALSE;
+
+    prev_state = InterlockedExchange( &button_state, state );
+
+    data.type = MOTION_EVENT;
+    data.motion.hwnd = LongToHandle( win );
+    data.motion.input.type             = INPUT_MOUSE;
+    data.motion.input.u.mi.dx          = x;
+    data.motion.input.u.mi.dy          = y;
+    data.motion.input.u.mi.mouseData   = 0;
+    data.motion.input.u.mi.time        = 0;
+    data.motion.input.u.mi.dwExtraInfo = 0;
+    data.motion.input.u.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+    switch (action & AMOTION_EVENT_ACTION_MASK)
+    {
+    case AMOTION_EVENT_ACTION_DOWN:
+        if ((state & ~prev_state) & AMOTION_EVENT_BUTTON_PRIMARY)
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
+        if ((state & ~prev_state) & AMOTION_EVENT_BUTTON_SECONDARY)
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_RIGHTDOWN;
+        if ((state & ~prev_state) & AMOTION_EVENT_BUTTON_TERTIARY)
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_MIDDLEDOWN;
+        if (!(state & ~prev_state)) /* touch event */
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_LEFTDOWN;
+        break;
+    case AMOTION_EVENT_ACTION_UP:
+        if ((prev_state & ~state) & AMOTION_EVENT_BUTTON_PRIMARY)
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
+        if ((prev_state & ~state) & AMOTION_EVENT_BUTTON_SECONDARY)
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_RIGHTUP;
+        if ((prev_state & ~state) & AMOTION_EVENT_BUTTON_TERTIARY)
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_MIDDLEUP;
+        if (!(prev_state & ~state)) /* touch event */
+            data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_LEFTUP;
+        break;
+    case AMOTION_EVENT_ACTION_SCROLL:
+        data.motion.input.u.mi.dwFlags |= MOUSEEVENTF_WHEEL;
+        data.motion.input.u.mi.mouseData = vscroll < 0 ? -WHEEL_DELTA : WHEEL_DELTA;
+        break;
+    case AMOTION_EVENT_ACTION_MOVE:
+    case AMOTION_EVENT_ACTION_HOVER_MOVE:
+        break;
+    default:
+        return JNI_FALSE;
+    }
+    send_event( &data );
+    return JNI_TRUE;
+}
+
+
+/***********************************************************************
  *           init_event_queue
  */
 static void init_event_queue(void)
@@ -328,6 +396,15 @@ static int process_events( DWORD mask )
         {
         case SURFACE_CHANGED:
             break;  /* always process it to unblock other threads */
+        case MOTION_EVENT:
+            if (event->data.motion.input.u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN|
+                                                         MOUSEEVENTF_MIDDLEDOWN|MOUSEEVENTF_LEFTUP|
+                                                         MOUSEEVENTF_RIGHTUP|MOUSEEVENTF_MIDDLEUP))
+            {
+                if (mask & QS_MOUSEBUTTON) break;
+            }
+            else if (mask & QS_MOUSEMOVE) break;
+            continue;  /* skip it */
         default:
             if (mask & QS_SENDMESSAGE) break;
             continue;  /* skip it */
@@ -353,6 +430,44 @@ static int process_events( DWORD mask )
                   event->data.surface.window, event->data.surface.width, event->data.surface.height );
 
             register_native_window( event->data.surface.hwnd, event->data.surface.window );
+            break;
+
+        case MOTION_EVENT:
+            {
+                HWND capture = get_capture_window();
+
+                if (event->data.motion.input.u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN|MOUSEEVENTF_MIDDLEDOWN))
+                    TRACE( "BUTTONDOWN pos %d,%d hwnd %p flags %x\n",
+                           event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
+                           event->data.motion.hwnd, event->data.motion.input.u.mi.dwFlags );
+                else if (event->data.motion.input.u.mi.dwFlags & (MOUSEEVENTF_LEFTUP|MOUSEEVENTF_RIGHTUP|MOUSEEVENTF_MIDDLEUP))
+                    TRACE( "BUTTONUP pos %d,%d hwnd %p flags %x\n",
+                           event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
+                           event->data.motion.hwnd, event->data.motion.input.u.mi.dwFlags );
+                else
+                    TRACE( "MOUSEMOVE pos %d,%d hwnd %p flags %x\n",
+                           event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
+                           event->data.motion.hwnd, event->data.motion.input.u.mi.dwFlags );
+                if (!capture && (event->data.motion.input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE))
+                {
+                    RECT rect;
+                    SetRect( &rect, event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
+                             event->data.motion.input.u.mi.dx + 1, event->data.motion.input.u.mi.dy + 1 );
+                    MapWindowPoints( 0, event->data.motion.hwnd, (POINT *)&rect, 2 );
+
+                    SERVER_START_REQ( update_window_zorder )
+                    {
+                        req->window      = wine_server_user_handle( event->data.motion.hwnd );
+                        req->rect.left   = rect.left;
+                        req->rect.top    = rect.top;
+                        req->rect.right  = rect.right;
+                        req->rect.bottom = rect.bottom;
+                        wine_server_call( req );
+                    }
+                    SERVER_END_REQ;
+                }
+                __wine_send_input( capture ? capture : event->data.motion.hwnd, &event->data.motion.input );
+            }
             break;
 
         default:

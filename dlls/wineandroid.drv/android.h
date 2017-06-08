@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <jni.h>
 #include <android/log.h>
+#include <android/input.h>
 #include <android/native_window_jni.h>
 
 #include "windef.h"
@@ -84,11 +85,14 @@ extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
 /* JNI entry points */
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height ) DECLSPEC_HIDDEN;
 extern void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface ) DECLSPEC_HIDDEN;
+extern jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action,
+                              jint x, jint y, jint state, jint vscroll ) DECLSPEC_HIDDEN;
 
 enum event_type
 {
     DESKTOP_CHANGED,
     SURFACE_CHANGED,
+    MOTION_EVENT,
 };
 
 union event_data
@@ -108,6 +112,12 @@ union event_data
         unsigned int    width;
         unsigned int    height;
     } surface;
+    struct
+    {
+        enum event_type type;
+        HWND            hwnd;
+        INPUT           input;
+    } motion;
 };
 
 int send_event( const union event_data *data );
