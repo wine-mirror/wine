@@ -350,7 +350,7 @@ msgstr "&Nollaa"
 #: progman.rc:202 progman.rc:219 regedit.rc:77 taskmgr.rc:87 winefile.rc:82
 #: winemine.rc:51 winhlp32.rc:57 wordpad.rc:102
 msgid "&Help"
-msgstr "&Apua"
+msgstr "&Ohje"
 
 #: comctl32.rc:97
 msgid "Move &Up"
@@ -10257,7 +10257,7 @@ msgstr "Syntaksivirhe\n"
 
 #: cmd.rc:365
 msgid "No help available for %1\n"
-msgstr "Apua ei saatavilla %1:lle\n"
+msgstr "Ei ohjetta %1:lle\n"
 
 #: cmd.rc:366
 msgid "Target to GOTO not found\n"
@@ -10995,7 +10995,7 @@ msgstr "&Järjestelmän asetukset"
 
 #: oleview.rc:36
 msgid "&Run the Registry Editor"
-msgstr "&Aja rekisterieditori"
+msgstr "Aja &Rekisterieditori"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"
@@ -11502,7 +11502,7 @@ msgstr ""
 
 #: progman.rc:77
 msgid "Help not available."
-msgstr "Apua ei saatavilla."
+msgstr "Ohjetta ei saatavilla."
 
 #: progman.rc:78
 msgid "Unknown feature in %s"
@@ -11548,7 +11548,7 @@ msgstr ""
 "Tuetut toiminnot:\n"
 "  ADD, DELETE, QUERY\n"
 "\n"
-"Tietystä toiminnosta saa apua komennolla\n"
+"Ohjeen kustakin toiminnosta saa komennolla\n"
 "  REG [toiminto] /?\n"
 "\n"
 
@@ -11663,11 +11663,11 @@ msgstr "reg: Valitsin [%1] ei kelpaa. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr "Komennolla \"REG /?\" saat apua.\n"
+msgstr "Komento \"REG /?\" näyttää ohjeen.\n"
 
 #: reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr "Komennolla \"REG %1 /?\" saat apua.\n"
+msgstr "Komento \"REG %1 /?\" näyttää ohjeen.\n"
 
 #: reg.rc:65 regedit.rc:239
 msgid "(value not set)"
@@ -11739,17 +11739,15 @@ msgstr "&Poista suosikki..."
 
 #: regedit.rc:80
 msgid "&About Registry Editor"
-msgstr "&Tietoja rekisterieditorista"
+msgstr "&Tietoja Rekisterieditorista"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:229
 msgid "Expand"
 msgstr "Laajenna"
 
 #: regedit.rc:134 regedit.rc:232
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Muuta binääridataa..."
+msgstr "Muuta &binääridataa..."
 
 #: regedit.rc:266
 msgid "Export registry"
@@ -11848,14 +11846,10 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Sisältää komentoja, joilla pääsee usein käytettyihin avaimiin"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
-"Sisältää komentoja, joilla saa apua ja tietoja koko rekisterieditorista"
+"Sisältää komennot, jotka näyttävät ohjeen ja tietoja Rekisterieditorista"
 
 #: regedit.rc:164
 msgid "Contains commands for creating new keys or values"
@@ -12004,7 +11998,7 @@ msgstr "regedit: Virheellinen tai tuntematon valitsin [%1]\n"
 
 #: regedit.rc:409
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "Komennolla \"regedit /?\" saat apua.\n"
+msgstr "Komento \"regedit /?\" näyttää ohjeen.\n"
 
 #: regedit.rc:410
 msgid "regedit: No filename was specified.\n"
@@ -12092,10 +12086,8 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Rivin syntaksi on virheellinen.\n"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
-msgstr "Sulkee rekisterieditorin"
+msgstr "Sulkee Rekisterieditorin"
 
 #: regedit.rc:188
 msgid "Adds keys to the favorites list"
@@ -12110,10 +12102,8 @@ msgid "Shows or hides the status bar"
 msgstr "Näyttää tai piilottaa tilapalkin"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
-msgstr "Muuta kahden kehyksen erottimen paikkaa"
+msgstr "Muuttaa kahden kehyksen erottimen paikkaa"
 
 #: regedit.rc:192
 msgid "Refreshes the window"
@@ -12156,10 +12146,8 @@ msgid "Adds a new binary value"
 msgstr "Lisää uuden binääriarvon"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Lisää uuden binääriarvon"
+msgstr "Lisää uuden 32-bittisen arvon"
 
 #: regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -12174,10 +12162,8 @@ msgid "Prints all or part of the registry"
 msgstr "Tulostaa koko rekisterin tai osan siitä"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Rekisterieditori"
+msgstr "Avaa Rekisterieditorin Ohjeen"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
@@ -12220,26 +12206,20 @@ msgid "Unable to query the registry key '%1'."
 msgstr "Rekisteriavaimen '%1' hakeminen ei onnistu."
 
 #: regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Muokkaa arvon dataa"
+msgstr "Muokkaa arvon dataa binäärimuodossa"
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Lisää uuden monen merkkijonon arvon"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Vie rekisterin valitun haaran tekstitiedostoon"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Lisää uuden merkkijonon arvon"
+msgstr "Lisää uuden laajennettavan merkkijonoarvon"
 
 #: regedit.rc:211
 msgid "Confirm Key Delete"
@@ -14509,7 +14489,7 @@ msgstr "Suuri"
 
 #: winhlp32.rc:58
 msgid "&Help on help\tF1"
-msgstr "Apua &Ohjeeseen\tF1"
+msgstr "&Ohjeen ohje\tF1"
 
 #: winhlp32.rc:59
 msgid "&About Wine Help"
@@ -14971,11 +14951,11 @@ msgstr "Wordpadin käynnistys epäonnistui"
 
 #: xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "Parametrien määrä ei kelpaa - Komennolla xcopy /? saat apua\n"
+msgstr "Parametrien määrä ei kelpaa - Komento xcopy /? näyttää ohjeen\n"
 
 #: xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Virheellinen parametri '%1' - Komennolla xcopy /? saat apua\n"
+msgstr "Virheellinen parametri '%1' - Komento xcopy /? näyttää ohjeen\n"
 
 #: xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
