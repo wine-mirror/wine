@@ -568,6 +568,7 @@ static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
         keyEnd = strrchrW(stdInput, ']');
         if (keyEnd)
             *keyEnd='\0';
+        else return;
 
         /* delete the key if we encounter '-' at the start of reg key */
         if (stdInput[0] == '-')

@@ -1155,7 +1155,7 @@ static void test_key_creation_and_deletion(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\No_Closing_Bracket\n");
-    todo_wine verify_key_nonexist(hkey, "No_Closing_Bracket");
+    verify_key_nonexist(hkey, "No_Closing_Bracket");
 
     exec_import_str("REGEDIT4\n\n"
                     "[ HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey1a]\n");
@@ -1210,7 +1210,7 @@ static void test_key_creation_and_deletion(void)
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
 }
 
 static void test_value_deletion(void)
@@ -1262,7 +1262,7 @@ static void test_value_deletion(void)
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
 }
 
 START_TEST(regedit)
