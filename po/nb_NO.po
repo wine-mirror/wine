@@ -11762,10 +11762,8 @@ msgid "Expand"
 msgstr "Utvid"
 
 #: regedit.rc:134 regedit.rc:232
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Endre binærdata..."
+msgstr "Endre &binærdata..."
 
 #: regedit.rc:266
 msgid "Export registry"
@@ -11864,10 +11862,6 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Inneholder kommandoer for å få tilgang til nøkler som brukes ofte"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
@@ -12115,8 +12109,6 @@ msgid "regedit: The line contains invalid syntax.\n"
 msgstr "regedit: Linjen inneholder ugyldig syntaks.\n"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "Avslutter Registerredigering"
 
@@ -12133,8 +12125,6 @@ msgid "Shows or hides the status bar"
 msgstr "Viser eller skjuler statuslinjen"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "Endrer posisjonen til delingslinjen mellom to ruter"
 
@@ -12179,10 +12169,8 @@ msgid "Adds a new binary value"
 msgstr "Legger til en ny binærverdis"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Legger til en ny binærverdis"
+msgstr "Legger til en ny 32-bit verdi"
 
 #: regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -12197,10 +12185,8 @@ msgid "Prints all or part of the registry"
 msgstr "Skriver ut hele eller deler av registeret"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Registerredigering"
+msgstr "Åpner register-redigeringshjelp"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
@@ -12243,26 +12229,20 @@ msgid "Unable to query the registry key '%1'."
 msgstr "Kan ikke forespørre registernøkkelen \"%1\"."
 
 #: regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Endrer verdiens data"
+msgstr "Endrer verdiens data i binær form"
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Legger til en ny flerstrengverdi"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Eksporterer den valgte greinen av registeret til en tekstfil"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Legger til en ny strengverdi"
+msgstr "Legger til en ny utvidbar strengverdi"
 
 #: regedit.rc:211
 msgid "Confirm Key Delete"
