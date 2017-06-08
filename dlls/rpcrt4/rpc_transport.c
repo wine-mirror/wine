@@ -3373,40 +3373,50 @@ void rpcrt4_conn_release_and_wait(RpcConnection *connection)
     }
 }
 
-RpcConnection *RPCRT4_GrabConnection( RpcConnection *conn )
+RpcConnection *RPCRT4_GrabConnection(RpcConnection *connection)
 {
-    InterlockedIncrement( &conn->ref );
-    return conn;
+    LONG ref = InterlockedIncrement(&connection->ref);
+    TRACE("%p ref=%u\n", connection, ref);
+    return connection;
 }
 
-RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection* Connection)
+RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection *connection)
 {
-  if (InterlockedDecrement( &Connection->ref ) > 0) return RPC_S_OK;
+    LONG ref = InterlockedDecrement(&connection->ref);
 
-  TRACE("destroying connection %p\n", Connection);
+    if (!ref && connection->protseq)
+    {
+        /* protseq stores a list of active connections, but does not own references to them.
+         * It may need to grab a connection from the list, which could lead to a race if
+         * connection is being released, but not yet removed from the list. We handle that
+         * by synchronizing on CS here. */
+        EnterCriticalSection(&connection->protseq->cs);
+        ref = connection->ref;
+        if (!ref)
+            list_remove(&connection->protseq_entry);
+        LeaveCriticalSection(&connection->protseq->cs);
+    }
 
-  RPCRT4_CloseConnection(Connection);
-  RPCRT4_strfree(Connection->Endpoint);
-  RPCRT4_strfree(Connection->NetworkAddr);
-  HeapFree(GetProcessHeap(), 0, Connection->NetworkOptions);
-  HeapFree(GetProcessHeap(), 0, Connection->CookieAuth);
-  if (Connection->AuthInfo) RpcAuthInfo_Release(Connection->AuthInfo);
-  if (Connection->QOS) RpcQualityOfService_Release(Connection->QOS);
+    TRACE("%p ref=%u\n", connection, ref);
 
-  /* server-only */
-  if (Connection->server_binding) RPCRT4_ReleaseBinding(Connection->server_binding);
+    if (!ref)
+    {
+        RPCRT4_CloseConnection(connection);
+        RPCRT4_strfree(connection->Endpoint);
+        RPCRT4_strfree(connection->NetworkAddr);
+        HeapFree(GetProcessHeap(), 0, connection->NetworkOptions);
+        HeapFree(GetProcessHeap(), 0, connection->CookieAuth);
+        if (connection->AuthInfo) RpcAuthInfo_Release(connection->AuthInfo);
+        if (connection->QOS) RpcQualityOfService_Release(connection->QOS);
 
-  if (Connection->protseq)
-  {
-    EnterCriticalSection(&Connection->protseq->cs);
-    list_remove(&Connection->protseq_entry);
-    LeaveCriticalSection(&Connection->protseq->cs);
-  }
+        /* server-only */
+        if (connection->server_binding) RPCRT4_ReleaseBinding(connection->server_binding);
 
-  if (Connection->wait_release) SetEvent(Connection->wait_release);
+        if (connection->wait_release) SetEvent(connection->wait_release);
 
-  HeapFree(GetProcessHeap(), 0, Connection);
-  return RPC_S_OK;
+        HeapFree(GetProcessHeap(), 0, connection);
+    }
+    return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_IsServerListening(const char *protseq, const char *endpoint)
