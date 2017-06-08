@@ -314,7 +314,9 @@ public class WineActivity extends Activity
         public void destroy()
         {
             Log.i( LOGTAG, String.format( "destroy hwnd %08x", hwnd ));
+            if (visible && window_view != null) top_view.removeView( window_view );
             visible = false;
+            window_view = null;
             win_map.remove( this );
         }
 

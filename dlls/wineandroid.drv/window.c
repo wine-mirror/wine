@@ -828,8 +828,6 @@ BOOL CDECL ANDROID_CreateWindow( HWND hwnd )
 
         init_event_queue();
         start_android_device();
-        desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( hwnd, GWLP_WNDPROC,
-                                                           (LONG_PTR)desktop_wndproc_wrapper );
         if (!(data = alloc_win_data( hwnd ))) return FALSE;
         release_win_data( data );
     }
@@ -1214,6 +1212,9 @@ LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
  */
 BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
 {
+    desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
+                                                       (LONG_PTR)desktop_wndproc_wrapper );
+
     /* wait until we receive the surface changed event */
     while (!screen_width)
     {
