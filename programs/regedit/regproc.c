@@ -239,7 +239,7 @@ static DWORD getDataType(LPWSTR *lpValue, DWORD* parse_type)
             /* "hex(xx):" is special */
             type = (int)strtoulW( *lpValue , &end, 16 );
             if (**lpValue=='\0' || *end!=')' || *(end+1)!=':') {
-                type=REG_NONE;
+                type = REG_UNKNOWN_TYPE;
             } else {
                 *lpValue = end + 2;
             }
