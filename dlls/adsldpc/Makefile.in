@@ -1,0 +1,4 @@
+MODULE    = adsldpc.dll
+
+C_SRCS = \
+	main.c

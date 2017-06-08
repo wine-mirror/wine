@@ -873,6 +873,7 @@ enable_acledit
 enable_aclui
 enable_activeds
 enable_actxprxy
+enable_adsldpc
 enable_advapi32
 enable_advpack
 enable_amstream
@@ -17757,6 +17758,7 @@ wine_fn_config_dll aclui enable_aclui implib
 wine_fn_config_dll activeds enable_activeds implib
 wine_fn_config_dll actxprxy enable_actxprxy clean
 wine_fn_config_lib adsiid
+wine_fn_config_dll adsldpc enable_adsldpc
 wine_fn_config_dll advapi32 enable_advapi32 clean,implib
 wine_fn_config_test dlls/advapi32/tests advapi32_test
 wine_fn_config_dll advpack enable_advpack implib
