@@ -1687,6 +1687,40 @@ static void test_import(void)
     todo_wine verify_key_nonexist(hkey, "Subkey2a");
     todo_wine verify_key_nonexist(hkey, "Subkey2b");
 
+    /* Test value deletion. We start by creating some registry values. */
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine46a\"=\"Test Value\"\n"
+                    "\"Wine46b\"=dword:00000008\n"
+                    "\"Wine46c\"=hex:11,22,33,44\n"
+                    "\"Wine46d\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine46e\"=hex(2):25,50,41,54,48,25,00\n"
+                    "\"Wine46f\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine46a", REG_SZ, "Test Value", 11, 0);
+    todo_wine verify_reg(hkey, "Wine46b", REG_DWORD, &dword, sizeof(dword), 0);
+    todo_wine verify_reg(hkey, "Wine46c", REG_BINARY, hex, 4, 0);
+    todo_wine verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    todo_wine verify_reg(hkey, "Wine46e", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine46a\"=-\n"
+                    "\"Wine46b\"=  -\n"
+                    "\"Wine46c\"=  \t-\t  \n"
+                    "\"Wine46d\"=-\"Test\"\n"
+                    "\"Wine46e\"=- ;comment\n"
+                    "\"Wine46f\"=- #comment\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine46a");
+    todo_wine verify_reg_nonexist(hkey, "Wine46b");
+    todo_wine verify_reg_nonexist(hkey, "Wine46c");
+    todo_wine verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -2540,6 +2574,41 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_key_nonexist(hkey, "Subkey2a");
     todo_wine verify_key_nonexist(hkey, "Subkey2b");
+
+    /* Test value deletion. We start by creating some registry values. */
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine46a\"=\"Test Value\"\n"
+                     "\"Wine46b\"=dword:00000008\n"
+                     "\"Wine46c\"=hex:11,22,33,44\n"
+                     "\"Wine46d\"=hex(7):4c,00,69,00,6e,00,65,00,20,00,\\\n"
+                     "  63,00,6f,00,6e,00,63,00,61,00,74,00,\\\n"
+                     "  65,00,6e,00,61,00,74,00,69,00,6f,00,6e,00,00,00,00,00\n"
+                     "\"Wine46e\"=hex(2):25,00,50,00,41,00,54,00,48,00,25,00,00,00\n"
+                     "\"Wine46f\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine46a", REG_SZ, "Test Value", 11, 0);
+    todo_wine verify_reg(hkey, "Wine46b", REG_DWORD, &dword, sizeof(dword), 0);
+    todo_wine verify_reg(hkey, "Wine46c", REG_BINARY, hex, 4, 0);
+    todo_wine verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    todo_wine verify_reg(hkey, "Wine46e", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine46a\"=-\n"
+                     "\"Wine46b\"=  -\n"
+                     "\"Wine46c\"=  \t-\t  \n"
+                     "\"Wine46d\"=-\"Test\"\n"
+                     "\"Wine46e\"=- ;comment\n"
+                     "\"Wine46f\"=- #comment\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg_nonexist(hkey, "Wine46a");
+    todo_wine verify_reg_nonexist(hkey, "Wine46b");
+    todo_wine verify_reg_nonexist(hkey, "Wine46c");
+    todo_wine verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
