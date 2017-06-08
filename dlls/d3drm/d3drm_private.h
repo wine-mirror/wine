@@ -120,6 +120,33 @@ struct d3drm_face
     LONG ref;
 };
 
+struct d3drm_mesh_builder
+{
+    struct d3drm_object obj;
+    IDirect3DRMMeshBuilder2 IDirect3DRMMeshBuilder2_iface;
+    IDirect3DRMMeshBuilder3 IDirect3DRMMeshBuilder3_iface;
+    LONG ref;
+    IDirect3DRM *d3drm;
+    char* name;
+    SIZE_T nb_vertices;
+    SIZE_T vertices_size;
+    D3DVECTOR *vertices;
+    SIZE_T nb_normals;
+    SIZE_T normals_size;
+    D3DVECTOR *normals;
+    DWORD nb_faces;
+    DWORD face_data_size;
+    void *pFaceData;
+    DWORD nb_coords2d;
+    struct coords_2d *pCoords2d;
+    D3DCOLOR color;
+    IDirect3DRMMaterial2 *material;
+    IDirect3DRMTexture3 *texture;
+    DWORD nb_materials;
+    struct mesh_material *materials;
+    DWORD *material_indices;
+};
+
 HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, IDirectDraw *ddraw,
         IDirectDrawClipper *clipper, int width, int height, IDirectDrawSurface **surface) DECLSPEC_HIDDEN;
@@ -140,9 +167,9 @@ HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm)
 HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_face_create(struct d3drm_face **face) DECLSPEC_HIDDEN;
 HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
+HRESULT d3drm_mesh_builder_create(struct d3drm_mesh_builder **mesh_builder, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMLight_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj) DECLSPEC_HIDDEN;
-HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2** ret_iface) DECLSPEC_HIDDEN;
 
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *data,

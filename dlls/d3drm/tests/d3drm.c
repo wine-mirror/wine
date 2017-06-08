@@ -1423,6 +1423,9 @@ static void test_object(void)
         { &CLSID_CDirect3DRMViewport,      &IID_IDirect3DRMViewport2,    FALSE },
         { &CLSID_CDirect3DRMFace,          &IID_IDirect3DRMFace },
         { &CLSID_CDirect3DRMFace,          &IID_IDirect3DRMFace2 },
+        { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder },
+        { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder2 },
+        { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder3 },
     };
     IDirect3DRM *d3drm1;
     IDirect3DRM2 *d3drm2;
@@ -1446,6 +1449,8 @@ static void test_object(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
+        BOOL takes_ref = IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMeshBuilder);
+
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);
         ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#x.\n", i, hr);
@@ -1463,7 +1468,11 @@ static void test_object(void)
         if (SUCCEEDED(hr))
         {
             ref2 = get_refcount((IUnknown *)d3drm1);
-            ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+            if (takes_ref)
+                ok(ref2 == ref1 + 1, "Test %u: expected ref2 == ref1 + 1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+            else
+                ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+
             ref3 = get_refcount((IUnknown *)d3drm2);
             ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %u, ref3 = %u.\n", i, ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
@@ -1482,7 +1491,10 @@ static void test_object(void)
             hr = IDirect3DRM2_CreateObject(d3drm2, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
             ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
-            ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+            if (takes_ref)
+                ok(ref2 == ref1 + 1, "Test %u: expected ref2 == ref1 + 1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+            else
+                ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
             ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %u, ref3 = %u.\n", i, ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
@@ -1498,7 +1510,10 @@ static void test_object(void)
             hr = IDirect3DRM3_CreateObject(d3drm3, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
             ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
-            ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+            if (takes_ref)
+                ok(ref2 == ref1 + 1, "Test %u: expected ref2 == ref1 + 1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+            else
+                ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
             ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %u, ref3 = %u.\n", i, ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
