@@ -445,7 +445,7 @@ static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi,
                                         &stepIndexL, &sampleL);
                 code2 = generate_nibble(R16(src + (4 * i + 2) * 2),
                                         &stepIndexL, &sampleL);
-                *dst++ = (code1 << 4) | code2;
+                *dst++ = (code2 << 4) | code1;
             }
             for (i = 0; i < 4; i++)
             {
@@ -453,7 +453,7 @@ static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi,
                                         &stepIndexR, &sampleR);
                 code2 = generate_nibble(R16(src + (4 * i + 3) * 2),
                                         &stepIndexR, &sampleR);
-                *dst++ = (code1 << 4) | code2;
+                *dst++ = (code2 << 4) | code1;
             }
             src += 32;
 	}
@@ -509,7 +509,7 @@ static	void cvtMM16imaK(PACMDRVSTREAMINSTANCE adsi,
             src += 2;
             code2 = generate_nibble(R16(src), &stepIndex, &sample);
             src += 2;
-            *dst++ = (code1 << 4) | code2;
+            *dst++ = (code2 << 4) | code1;
 	}
 	dst = in_dst + adsi->pwfxDst->nBlockAlign;
     }
