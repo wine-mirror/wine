@@ -72,8 +72,9 @@ struct d3drm_mesh_builder
     SIZE_T nb_vertices;
     SIZE_T vertices_size;
     D3DVECTOR *vertices;
-    DWORD nb_normals;
-    D3DVECTOR* pNormals;
+    SIZE_T nb_normals;
+    SIZE_T normals_size;
+    D3DVECTOR *normals;
     DWORD nb_faces;
     DWORD face_data_size;
     void *pFaceData;
@@ -365,9 +366,10 @@ static void clean_mesh_builder_data(struct d3drm_mesh_builder *mesh_builder)
     mesh_builder->vertices = NULL;
     mesh_builder->nb_vertices = 0;
     mesh_builder->vertices_size = 0;
-    HeapFree(GetProcessHeap(), 0, mesh_builder->pNormals);
-    mesh_builder->pNormals = NULL;
+    HeapFree(GetProcessHeap(), 0, mesh_builder->normals);
+    mesh_builder->normals = NULL;
     mesh_builder->nb_normals = 0;
+    mesh_builder->normals_size = 0;
     HeapFree(GetProcessHeap(), 0, mesh_builder->pFaceData);
     mesh_builder->pFaceData = NULL;
     mesh_builder->face_data_size = 0;
@@ -776,7 +778,7 @@ static HRESULT WINAPI d3drm_mesh_builder2_GetVertices(IDirect3DRMMeshBuilder2 *i
     if (normal_count)
         *normal_count = mesh_builder->nb_normals;
     if (normals && mesh_builder->nb_normals)
-        memcpy(normals, mesh_builder->pNormals, mesh_builder->nb_normals * sizeof(*normals));
+        memcpy(normals, mesh_builder->normals, mesh_builder->nb_normals * sizeof(*normals));
 
     if (face_data && (!face_data_size || (*face_data_size < mesh_builder->face_data_size)))
         return D3DRMERR_BADVALUE;
@@ -812,9 +814,11 @@ static int WINAPI d3drm_mesh_builder2_AddVertex(IDirect3DRMMeshBuilder2 *iface,
 static int WINAPI d3drm_mesh_builder2_AddNormal(IDirect3DRMMeshBuilder2 *iface,
         D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
-    FIXME("iface %p, x %.8e, y %.8e, z %.8e stub!\n", iface, x, y, z);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    return 0;
+    TRACE("iface %p, x %.8e, y %.8e, z %.8e.\n", iface, x, y, z);
+
+    return IDirect3DRMMeshBuilder3_AddNormal(&mesh_builder->IDirect3DRMMeshBuilder3_iface, x, y, z);
 }
 
 static HRESULT WINAPI d3drm_mesh_builder2_CreateFace(IDirect3DRMMeshBuilder2 *iface, IDirect3DRMFace **face)
@@ -1164,12 +1168,17 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
             mesh_builder->nb_normals = *(DWORD*)ptr;
             nb_faces_normals = *(DWORD*)(ptr + sizeof(DWORD) + mesh_builder->nb_normals * sizeof(D3DVECTOR));
 
-            TRACE("MeshNormals: nb_normals = %d, nb_faces_normals = %d\n", mesh_builder->nb_normals, nb_faces_normals);
+            TRACE("MeshNormals: nb_normals = %lu, nb_faces_normals = %d\n", mesh_builder->nb_normals, nb_faces_normals);
             if (nb_faces_normals != mesh_builder->nb_faces)
-                WARN("nb_face_normals (%d) != nb_faces (%d)\n", nb_faces_normals, mesh_builder->nb_normals);
+                WARN("nb_face_normals (%d) != nb_faces (%d)\n", nb_faces_normals, mesh_builder->nb_faces);
 
-            mesh_builder->pNormals = HeapAlloc(GetProcessHeap(), 0, mesh_builder->nb_normals * sizeof(D3DVECTOR));
-            memcpy(mesh_builder->pNormals, ptr + sizeof(DWORD), mesh_builder->nb_normals * sizeof(D3DVECTOR));
+            if (!d3drm_array_reserve((void **)&mesh_builder->normals, &mesh_builder->normals_size,
+                    mesh_builder->nb_normals, sizeof(*mesh_builder->normals)))
+            {
+                hr = E_OUTOFMEMORY;
+                goto end;
+            }
+            memcpy(mesh_builder->normals, ptr + sizeof(DWORD), mesh_builder->nb_normals * sizeof(D3DVECTOR));
 
             faces_normal_idx_size = size - (2 * sizeof(DWORD) + mesh_builder->nb_normals * sizeof(D3DVECTOR));
             faces_normal_idx_ptr = faces_normal_idx_data = HeapAlloc(GetProcessHeap(), 0, faces_normal_idx_size);
@@ -1187,7 +1196,6 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
 
             mesh_builder->pCoords2d = HeapAlloc(GetProcessHeap(), 0, mesh_builder->nb_coords2d * sizeof(*mesh_builder->pCoords2d));
             memcpy(mesh_builder->pCoords2d, ptr + sizeof(DWORD), mesh_builder->nb_coords2d * sizeof(*mesh_builder->pCoords2d));
-
         }
         else if (IsEqualGUID(guid, &TID_D3DRMMeshMaterialList))
         {
@@ -1378,9 +1386,10 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
     if (!mesh_builder->nb_normals)
     {
         /* Allocate normals, one per vertex */
-        mesh_builder->pNormals = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mesh_builder->nb_vertices * sizeof(D3DVECTOR));
-        if (!mesh_builder->pNormals)
+        if (!d3drm_array_reserve((void **)&mesh_builder->normals, &mesh_builder->normals_size,
+                mesh_builder->nb_vertices, sizeof(*mesh_builder->normals)))
             goto end;
+        memset(mesh_builder->normals, 0, mesh_builder->nb_vertices * sizeof(*mesh_builder->normals));
     }
 
     for (i = 0; i < mesh_builder->nb_faces; i++)
@@ -1444,7 +1453,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
                 }
                 *(faces_data_ptr + faces_data_size++) = vertex_idx;
                 /* Add face normal to vertex normal */
-                D3DRMVectorAdd(&mesh_builder->pNormals[vertex_idx], &mesh_builder->pNormals[vertex_idx], &face_normal);
+                D3DRMVectorAdd(&mesh_builder->normals[vertex_idx], &mesh_builder->normals[vertex_idx], &face_normal);
             }
             faces_vertex_idx_ptr++;
         }
@@ -1462,7 +1471,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
         /* Normalize all normals */
         for (i = 0; i < mesh_builder->nb_vertices; i++)
         {
-            D3DRMVectorNormalize(&mesh_builder->pNormals[i]);
+            D3DRMVectorNormalize(&mesh_builder->normals[i]);
         }
         mesh_builder->nb_normals = mesh_builder->nb_vertices;
     }
@@ -1907,9 +1916,19 @@ static int WINAPI d3drm_mesh_builder3_AddVertex(IDirect3DRMMeshBuilder3 *iface,
 static int WINAPI d3drm_mesh_builder3_AddNormal(IDirect3DRMMeshBuilder3 *iface,
         D3DVALUE x, D3DVALUE y, D3DVALUE z)
 {
-    FIXME("iface %p, x %.8e, y %.8e, z %.8e stub!\n", iface, x, y, z);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    return 0;
+    TRACE("iface %p, x %.8e, y %.8e, z %.8e.\n", iface, x, y, z);
+
+    if (!d3drm_array_reserve((void **)&mesh_builder->normals, &mesh_builder->normals_size,
+            mesh_builder->nb_normals + 1, sizeof(*mesh_builder->normals)))
+        return 0;
+
+    mesh_builder->normals[mesh_builder->nb_normals].u1.x = x;
+    mesh_builder->normals[mesh_builder->nb_normals].u2.y = y;
+    mesh_builder->normals[mesh_builder->nb_normals].u3.z = z;
+
+    return mesh_builder->nb_normals++;
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_CreateFace(IDirect3DRMMeshBuilder3 *iface, IDirect3DRMFace2 **face)
@@ -2263,7 +2282,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_GetNormals(IDirect3DRMMeshBuilder3 *if
     if (normal_count)
         *normal_count = count;
     if (normals && mesh_builder->nb_normals)
-        memcpy(normals, mesh_builder->pNormals + start_idx, count * sizeof(*normals));
+        memcpy(normals, &mesh_builder->normals[start_idx], count * sizeof(*normals));
 
     return D3DRM_OK;
 }
