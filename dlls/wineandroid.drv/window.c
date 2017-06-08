@@ -1034,6 +1034,16 @@ void CDECL ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 
 
 /***********************************************************************
+ *           ANDROID_SetCapture
+ */
+void CDECL ANDROID_SetCapture( HWND hwnd, UINT flags )
+{
+    if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
+    ioctl_set_capture( hwnd );
+}
+
+
+/***********************************************************************
  *           ANDROID_SetWindowStyle
  */
 void CDECL ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )

@@ -61,6 +61,7 @@ extern int ioctl_window_pos_changed( HWND hwnd, const RECT *window_rect, const R
                                      const RECT *visible_rect, UINT style, UINT flags,
                                      HWND after, HWND owner ) DECLSPEC_HIDDEN;
 extern int ioctl_set_window_parent( HWND hwnd, HWND parent ) DECLSPEC_HIDDEN;
+extern int ioctl_set_capture( HWND hwnd ) DECLSPEC_HIDDEN;
 
 
 /**************************************************************************
@@ -77,6 +78,7 @@ enum android_window_messages
     WM_ANDROID_REFRESH = 0x80001000,
 };
 
+extern HWND get_capture_window(void) DECLSPEC_HIDDEN;
 extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
 
 /* JNI entry points */

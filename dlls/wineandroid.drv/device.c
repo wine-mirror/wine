@@ -52,6 +52,7 @@ extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 static HANDLE stop_event;
 static HANDLE thread;
 static JNIEnv *jni_env;
+static HWND capture_window;
 
 #define ANDROIDCONTROLTYPE  ((ULONG)'A')
 #define ANDROID_IOCTL(n) CTL_CODE(ANDROIDCONTROLTYPE, n, METHOD_BUFFERED, FILE_READ_ACCESS)
@@ -68,6 +69,7 @@ enum android_ioctl
     IOCTL_QUERY,
     IOCTL_PERFORM,
     IOCTL_SET_SWAP_INT,
+    IOCTL_SET_CAPTURE,
     NB_IOCTLS
 };
 
@@ -193,6 +195,11 @@ struct ioctl_android_set_window_parent
 {
     struct ioctl_header hdr;
     int                 parent;
+};
+
+struct ioctl_android_set_capture
+{
+    struct ioctl_header hdr;
 };
 
 static inline BOOL is_in_desktop_process(void)
@@ -407,6 +414,7 @@ static void free_native_win_data( struct native_win_data *data )
 {
     unsigned int idx = data_map_idx( data->hwnd );
 
+    InterlockedCompareExchangePointer( (void **)&capture_window, 0, data->hwnd );
     release_native_window( data );
     HeapFree( GetProcessHeap(), 0, data );
     data_map[idx] = NULL;
@@ -463,6 +471,12 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
 void register_native_window( HWND hwnd, struct ANativeWindow *win )
 {
     NtQueueApcThread( thread, register_native_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, 0 );
+}
+
+/* get the capture window stored in the desktop process */
+HWND get_capture_window(void)
+{
+    return capture_window;
 }
 
 static NTSTATUS android_error_to_status( int err )
@@ -861,6 +875,20 @@ static NTSTATUS setWindowParent_ioctl( void *data, DWORD in_size, DWORD out_size
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS setCapture_ioctl( void *data, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size )
+{
+    struct ioctl_android_set_capture *res = data;
+
+    if (in_size < sizeof(*res)) return STATUS_INVALID_PARAMETER;
+
+    if (res->hdr.hwnd && !get_ioctl_native_win_data( &res->hdr )) return STATUS_INVALID_HANDLE;
+
+    TRACE( "hwnd %08x\n", res->hdr.hwnd );
+
+    InterlockedExchangePointer( (void **)&capture_window, LongToHandle( res->hdr.hwnd ));
+    return STATUS_SUCCESS;
+}
+
 typedef NTSTATUS (*ioctl_func)( void *in, DWORD in_size, DWORD out_size, ULONG_PTR *ret_size );
 static const ioctl_func ioctl_funcs[] =
 {
@@ -874,6 +902,7 @@ static const ioctl_func ioctl_funcs[] =
     query_ioctl,                /* IOCTL_QUERY */
     perform_ioctl,              /* IOCTL_PERFORM */
     setSwapInterval_ioctl,      /* IOCTL_SET_SWAP_INT */
+    setCapture_ioctl,           /* IOCTL_SET_CAPTURE */
 };
 
 static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
@@ -1394,4 +1423,12 @@ int ioctl_set_window_parent( HWND hwnd, HWND parent )
     req.hdr.hwnd = HandleToLong( hwnd );
     req.parent = parent == GetDesktopWindow() ? 0 : HandleToLong( parent );
     return android_ioctl( IOCTL_SET_WINDOW_PARENT, &req, sizeof(req), NULL, NULL );
+}
+
+int ioctl_set_capture( HWND hwnd )
+{
+    struct ioctl_android_set_capture req;
+
+    req.hdr.hwnd  = HandleToLong( hwnd );
+    return android_ioctl( IOCTL_SET_CAPTURE, &req, sizeof(req), NULL, NULL );
 }
