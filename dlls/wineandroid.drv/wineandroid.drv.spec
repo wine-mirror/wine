@@ -4,6 +4,7 @@
 
 # USER driver
 
+@ cdecl ToUnicodeEx(long long ptr ptr long long long) ANDROID_ToUnicodeEx
 @ cdecl EnumDisplayMonitors(long ptr ptr long) ANDROID_EnumDisplayMonitors
 @ cdecl GetMonitorInfo(long ptr) ANDROID_GetMonitorInfo
 @ cdecl CreateWindow(long) ANDROID_CreateWindow

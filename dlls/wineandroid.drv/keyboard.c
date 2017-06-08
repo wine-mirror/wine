@@ -32,6 +32,7 @@
 #include "config.h"
 
 #include "android.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
@@ -553,4 +554,98 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
                           win, keycode, data.kbd.input.u.ki.wVk, data.kbd.input.u.ki.wScan, state );
     send_event( &data );
     return JNI_TRUE;
+}
+
+
+/***********************************************************************
+ *           ANDROID_ToUnicodeEx
+ */
+INT CDECL ANDROID_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
+                               LPWSTR buf, int size, UINT flags, HKL hkl )
+{
+    WCHAR buffer[2];
+    BOOL shift = (state[VK_SHIFT] & 0x80) || (state[VK_CAPITAL] & 0x01);
+    BOOL ctrl = state[VK_CONTROL] & 0x80;
+    BOOL numlock = state[VK_NUMLOCK] & 0x01;
+
+    buffer[0] = buffer[1] = 0;
+
+    if (scan & 0x8000) return 0;  /* key up */
+
+    /* FIXME: hardcoded layout */
+
+    if (!ctrl)
+    {
+        switch (virt)
+        {
+        case VK_BACK:       buffer[0] = '\b'; break;
+        case VK_OEM_1:      buffer[0] = shift ? ':' : ';'; break;
+        case VK_OEM_2:      buffer[0] = shift ? '?' : '/'; break;
+        case VK_OEM_3:      buffer[0] = shift ? '~' : '`'; break;
+        case VK_OEM_4:      buffer[0] = shift ? '{' : '['; break;
+        case VK_OEM_5:      buffer[0] = shift ? '|' : '\\'; break;
+        case VK_OEM_6:      buffer[0] = shift ? '}' : ']'; break;
+        case VK_OEM_7:      buffer[0] = shift ? '"' : '\''; break;
+        case VK_OEM_COMMA:  buffer[0] = shift ? '<' : ','; break;
+        case VK_OEM_MINUS:  buffer[0] = shift ? '_' : '-'; break;
+        case VK_OEM_PERIOD: buffer[0] = shift ? '>' : '.'; break;
+        case VK_OEM_PLUS:   buffer[0] = shift ? '+' : '='; break;
+        case VK_RETURN:     buffer[0] = '\r'; break;
+        case VK_SPACE:      buffer[0] = ' '; break;
+        case VK_TAB:        buffer[0] = '\t'; break;
+        case VK_MULTIPLY:   buffer[0] = '*'; break;
+        case VK_ADD:        buffer[0] = '+'; break;
+        case VK_SUBTRACT:   buffer[0] = '-'; break;
+        case VK_DIVIDE:     buffer[0] = '/'; break;
+        default:
+            if (virt >= '0' && virt <= '9')
+            {
+                buffer[0] = shift ? ")!@#$%^&*("[virt - '0'] : virt;
+                break;
+            }
+            if (virt >= 'A' && virt <= 'Z')
+            {
+                buffer[0] = shift ? virt : virt + 'a' - 'A';
+                break;
+            }
+            if (virt >= VK_NUMPAD0 && virt <= VK_NUMPAD9 && numlock && !shift)
+            {
+                buffer[0] = '0' + virt - VK_NUMPAD0;
+                break;
+            }
+            if (virt == VK_DECIMAL && numlock && !shift)
+            {
+                buffer[0] = '.';
+                break;
+            }
+            break;
+        }
+    }
+    else /* Control codes */
+    {
+        if (virt >= 'A' && virt <= 'Z')
+            buffer[0] = virt - 'A' + 1;
+        else
+        {
+            switch (virt)
+            {
+            case VK_OEM_4:
+                buffer[0] = 0x1b;
+                break;
+            case VK_OEM_5:
+                buffer[0] = 0x1c;
+                break;
+            case VK_OEM_6:
+                buffer[0] = 0x1d;
+                break;
+            case VK_SUBTRACT:
+                buffer[0] = 0x1e;
+                break;
+            }
+        }
+    }
+
+    lstrcpynW( buf, buffer, size );
+    TRACE( "returning %d / %s\n", strlenW( buffer ), debugstr_wn(buf, strlenW( buffer )));
+    return strlenW( buffer );
 }
