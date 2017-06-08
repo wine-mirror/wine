@@ -3380,7 +3380,7 @@ RpcConnection *RPCRT4_GrabConnection(RpcConnection *connection)
     return connection;
 }
 
-RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection *connection)
+void RPCRT4_ReleaseConnection(RpcConnection *connection)
 {
     LONG ref = InterlockedDecrement(&connection->ref);
 
@@ -3416,7 +3416,6 @@ RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection *connection)
 
         HeapFree(GetProcessHeap(), 0, connection);
     }
-    return RPC_S_OK;
 }
 
 RPC_STATUS RPCRT4_IsServerListening(const char *protseq, const char *endpoint)

@@ -163,7 +163,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCS
     LPCSTR NetworkAddr, LPCSTR Endpoint, LPCWSTR NetworkOptions, RpcAuthInfo* AuthInfo,
     RpcQualityOfService *QOS, LPCWSTR CookieAuth) DECLSPEC_HIDDEN;
 RpcConnection *RPCRT4_GrabConnection( RpcConnection *conn ) DECLSPEC_HIDDEN;
-RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection* Connection) DECLSPEC_HIDDEN;
+void RPCRT4_ReleaseConnection(RpcConnection* Connection) DECLSPEC_HIDDEN;
 RPC_STATUS RPCRT4_OpenClientConnection(RpcConnection* Connection) DECLSPEC_HIDDEN;
 RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection) DECLSPEC_HIDDEN;
 RPC_STATUS RPCRT4_IsServerListening(const char *protseq, const char *endpoint) DECLSPEC_HIDDEN;
