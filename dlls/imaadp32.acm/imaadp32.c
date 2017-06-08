@@ -154,7 +154,7 @@ static void     init_wfx_ima_adpcm(IMAADPCMWAVEFORMAT* awfx/*, DWORD nba*/)
     }
     pwfx->cbSize = sizeof(WORD);
 
-    awfx->wSamplesPerBlock = (pwfx->nBlockAlign - (4 * pwfx->nChannels) * 2) / pwfx->nChannels + 1;
+    awfx->wSamplesPerBlock = (pwfx->nBlockAlign - (4 * pwfx->nChannels)) * (2 / pwfx->nChannels) + 1;
     pwfx->nAvgBytesPerSec = (pwfx->nSamplesPerSec * pwfx->nBlockAlign) / awfx->wSamplesPerBlock;
 }
 
@@ -631,14 +631,7 @@ static	LRESULT	ADPCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	    afd->pwfx->nChannels = ADPCM_Formats[afd->dwFormatIndex].nChannels;
 	    afd->pwfx->nSamplesPerSec = ADPCM_Formats[afd->dwFormatIndex].rate;
 	    afd->pwfx->wBitsPerSample = ADPCM_Formats[afd->dwFormatIndex].nBits;
-	    afd->pwfx->nBlockAlign = 1024;
-	    /* we got 4 bits per sample */
-	    afd->pwfx->nAvgBytesPerSec =
-		(afd->pwfx->nSamplesPerSec * 4) / 8;
-            if (afd->cbwfx >= sizeof(WAVEFORMATEX))
-                afd->pwfx->cbSize = sizeof(WORD);
-            if (afd->cbwfx >= sizeof(IMAADPCMWAVEFORMAT))
-                ((IMAADPCMWAVEFORMAT*)afd->pwfx)->wSamplesPerBlock = (1024 - 4 * afd->pwfx->nChannels) * (2 / afd->pwfx->nChannels) + 1;
+	    init_wfx_ima_adpcm((IMAADPCMWAVEFORMAT *)afd->pwfx);
 	    break;
 	default:
             WARN("Unsupported tag %08x\n", afd->dwFormatTag);
