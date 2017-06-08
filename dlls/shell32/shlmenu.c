@@ -1114,24 +1114,27 @@ static HRESULT WINAPI CompositeCMenu_GetCommandString(IContextMenu3* iface, UINT
 static HRESULT WINAPI CompositeCMenu_InvokeCommand(IContextMenu3* iface,LPCMINVOKECOMMANDINFO pici)
 {
     CompositeCMenu *This = impl_from_IContextMenu3(iface);
-    TRACE("(%p)->(%p)\n",iface,pici);
-    if(HIWORD(pici->lpVerb))
+
+    TRACE("(%p)->(%p)\n", iface, pici);
+
+    if (IS_INTRESOURCE(pici->lpVerb))
     {
-        /*call each handler until one of them succeeds*/
-        UINT i=0;
-        for(;i<This->menu_count;i++)
-        {
-            HRESULT hres;
-            if(SUCCEEDED(hres=IContextMenu_InvokeCommand(This->menus[i],pici)))
-                return hres;
-        }
-        return E_FAIL;
+        UINT id = (UINT_PTR)pici->lpVerb;
+        UINT index = CompositeCMenu_GetIndexForCommandId(This, id);
+        return IContextMenu_InvokeCommand(This->menus[index], pici);
     }
     else
     {
-        UINT id = (UINT_PTR)pici->lpVerb;
-        UINT index = CompositeCMenu_GetIndexForCommandId(This,id);
-        return IContextMenu_InvokeCommand(This->menus[index],pici);
+        /*call each handler until one of them succeeds*/
+        UINT i;
+
+        for (i = 0; i < This->menu_count; i++)
+        {
+            HRESULT hres;
+            if (SUCCEEDED(hres = IContextMenu_InvokeCommand(This->menus[i], pici)))
+                return hres;
+        }
+        return E_FAIL;
     }
 }
 

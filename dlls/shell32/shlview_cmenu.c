@@ -397,13 +397,13 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
 
     TRACE("(%p)->(invcom=%p verb=%p wnd=%p)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
 
-    if( HIWORD(lpcmi->lpVerb)==0 && LOWORD(lpcmi->lpVerb) > FCIDM_SHVIEWLAST)
+    if (IS_INTRESOURCE(lpcmi->lpVerb) && LOWORD(lpcmi->lpVerb) > FCIDM_SHVIEWLAST)
     {
-        TRACE("Invalid Verb %x\n",LOWORD(lpcmi->lpVerb));
+        TRACE("Invalid Verb %x\n", LOWORD(lpcmi->lpVerb));
         return E_INVALIDARG;
     }
 
-    if (HIWORD(lpcmi->lpVerb) == 0)
+    if (IS_INTRESOURCE(lpcmi->lpVerb))
     {
         switch(LOWORD(lpcmi->lpVerb))
         {
