@@ -1213,6 +1213,58 @@ static void test_key_creation_and_deletion(void)
     todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
 }
 
+static void test_value_deletion(void)
+{
+    HKEY hkey;
+    LONG lr;
+    DWORD dword = 0x8;
+    BYTE hex[4] = {0x11, 0x22, 0x33, 0x44};
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
+
+    lr = RegOpenKeyExA(HKEY_CURRENT_USER, KEY_BASE, 0, KEY_READ, &hkey);
+    ok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: got %d, expected 0\n", lr);
+
+    /* Test value deletion. We start by creating some registry values. */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine46a\"=\"Test Value\"\n"
+                    "\"Wine46b\"=dword:00000008\n"
+                    "\"Wine46c\"=hex:11,22,33,44\n"
+                    "\"Wine46d\"=hex(7):4c,69,6e,65,20,\\\n"
+                    "  63,6f,6e,63,61,74,65,6e,61,74,69,6f,6e,00,00\n"
+                    "\"Wine46e\"=hex(2):25,50,41,54,48,25,00\n"
+                    "\"Wine46f\"=hex(0):56,00,61,00,6c,00,75,00,65,00,00,00\n\n");
+    verify_reg(hkey, "Wine46a", REG_SZ, "Test Value", 11, 0);
+    verify_reg(hkey, "Wine46b", REG_DWORD, &dword, sizeof(dword), 0);
+    verify_reg(hkey, "Wine46c", REG_BINARY, hex, 4, 0);
+    verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    verify_reg(hkey, "Wine46e", REG_EXPAND_SZ, "%PATH%", 7, 0);
+    verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine46a\"=-\n"
+                    "\"Wine46b\"=  -\n"
+                    "\"Wine46c\"=  \t-\t  \n"
+                    "\"Wine46d\"=-\"Test\"\n"
+                    "\"Wine46e\"=- ;comment\n"
+                    "\"Wine46f\"=- #comment\n\n");
+    verify_reg_nonexist(hkey, "Wine46a");
+    verify_reg_nonexist(hkey, "Wine46b");
+    verify_reg_nonexist(hkey, "Wine46c");
+    verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+
+    lr = RegCloseKey(hkey);
+    ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
+    todo_wine ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: got %d, expected 0\n", lr);
+}
+
 START_TEST(regedit)
 {
     WCHAR wchar_test[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
@@ -1233,4 +1285,5 @@ START_TEST(regedit)
     test_comments();
     test_import_with_whitespace();
     test_key_creation_and_deletion();
+    test_value_deletion();
 }
