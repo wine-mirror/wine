@@ -978,8 +978,8 @@ void manage_desktop( WCHAR *arg )
         CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                          0, 0, 100, 100, 0, 0, 0, NULL );
 
-        using_root = !desktop || !create_desktop( graphics_driver, name, width, height );
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
+        using_root = !desktop || !create_desktop( graphics_driver, name, width, height );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
         SetWindowPos( hwnd, 0, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
