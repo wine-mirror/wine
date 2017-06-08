@@ -4,6 +4,7 @@ IMPORTS = user32 gdi32 ntoskrnl
 C_SRCS = \
 	device.c \
 	init.c \
+	keyboard.c \
 	window.c
 
 IN_SRCS = \

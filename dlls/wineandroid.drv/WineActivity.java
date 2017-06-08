@@ -31,6 +31,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
@@ -54,6 +55,7 @@ public class WineActivity extends Activity
     public native void wine_desktop_changed( int width, int height );
     public native void wine_surface_changed( int hwnd, Surface surface );
     public native boolean wine_motion_event( int hwnd, int action, int x, int y, int state, int vscroll );
+    public native boolean wine_keyboard_event( int hwnd, int action, int keycode, int state );
 
     private final String LOGTAG = "wine";
     private ProgressDialog progress_dialog;
@@ -389,6 +391,8 @@ public class WineActivity extends Activity
             setSurfaceTextureListener( this );
             setVisibility( VISIBLE );
             setOpaque( false );
+            setFocusable( true );
+            setFocusableInTouchMode( true );
         }
 
         public WineWindow get_window()
@@ -449,6 +453,17 @@ public class WineActivity extends Activity
                                           event.getButtonState(), getLeft(), getTop() ));
             return wine_motion_event( window.hwnd, event.getAction(), pos[0], pos[1],
                                       event.getButtonState(), 0 );
+        }
+
+        public boolean dispatchKeyEvent( KeyEvent event )
+        {
+            Log.i( LOGTAG, String.format( "view key event win %08x action %d keycode %d (%s)",
+                                          window.hwnd, event.getAction(), event.getKeyCode(),
+                                          event.keyCodeToString( event.getKeyCode() )));;
+            boolean ret = wine_keyboard_event( window.hwnd, event.getAction(), event.getKeyCode(),
+                                               event.getMetaState() );
+            if (!ret) ret = super.dispatchKeyEvent(event);
+            return ret;
         }
     }
 

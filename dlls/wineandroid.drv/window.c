@@ -405,6 +405,9 @@ static int process_events( DWORD mask )
             }
             else if (mask & QS_MOUSEMOVE) break;
             continue;  /* skip it */
+        case KEYBOARD_EVENT:
+            if (mask & QS_KEY) break;
+            continue;  /* skip it */
         default:
             if (mask & QS_SENDMESSAGE) break;
             continue;  /* skip it */
@@ -468,6 +471,18 @@ static int process_events( DWORD mask )
                 }
                 __wine_send_input( capture ? capture : event->data.motion.hwnd, &event->data.motion.input );
             }
+            break;
+
+        case KEYBOARD_EVENT:
+            if (event->data.kbd.input.u.ki.dwFlags & KEYEVENTF_KEYUP)
+                TRACE("KEYUP hwnd %p vkey %x '%c' scancode %x\n", event->data.kbd.hwnd,
+                      event->data.kbd.input.u.ki.wVk, event->data.kbd.input.u.ki.wVk,
+                      event->data.kbd.input.u.ki.wScan );
+            else
+                TRACE("KEYDOWN hwnd %p vkey %x '%c' scancode %x\n", event->data.kbd.hwnd,
+                      event->data.kbd.input.u.ki.wVk, event->data.kbd.input.u.ki.wVk,
+                      event->data.kbd.input.u.ki.wScan );
+            __wine_send_input( 0, &event->data.kbd.input );
             break;
 
         default:
