@@ -424,7 +424,7 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD
     if (pafd->fdwSupport)
         return MMSYSERR_INVALPARAM;
 
-    if (pafd->pwfx->wFormatTag == WAVE_FORMAT_UNKNOWN)
+    if (pafd->dwFormatTag == WAVE_FORMAT_UNKNOWN)
         return MMSYSERR_INVALPARAM;
 
     switch (fdwDetails) {
