@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2015-2017 Józef Kucia for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -364,7 +365,11 @@ static UINT STDMETHODCALLTYPE d3d10_query_GetDataSize(ID3D10Query *iface)
 
 static void STDMETHODCALLTYPE d3d10_query_GetDesc(ID3D10Query *iface, D3D10_QUERY_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_query *query = impl_from_ID3D10Query(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    memcpy(desc, &query->desc, sizeof(*desc));
 }
 
 static const struct ID3D10QueryVtbl d3d10_query_vtbl =
