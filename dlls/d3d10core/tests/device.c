@@ -3900,6 +3900,25 @@ static void test_create_query(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+#define get_query_data(a, b, c) get_query_data_(__LINE__, a, b, c)
+static void get_query_data_(unsigned int line, ID3D10Asynchronous *query,
+        void *data, unsigned int data_size)
+{
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < 500; ++i)
+    {
+        if ((hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0)) != S_FALSE)
+            break;
+        Sleep(10);
+    }
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    memset(data, 0xff, data_size);
+    hr = ID3D10Asynchronous_GetData(query, data, data_size, 0);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
 static void test_occlusion_query(void)
 {
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -3952,17 +3971,7 @@ static void test_occlusion_query(void)
     draw_color_quad(&test_context, &red);
 
     ID3D10Asynchronous_End(query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    memset(&data, 0xff, sizeof(data));
-    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(query, &data, sizeof(data));
     ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     memset(&data, 0xff, sizeof(data));
@@ -3992,21 +4001,10 @@ static void test_occlusion_query(void)
     ID3D10Asynchronous_End(query);
     ID3D10Asynchronous_End(query);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    data.dword[0] = 0x12345678;
-    data.dword[1] = 0x12345678;
+    get_query_data(query, &data, sizeof(data));
+    ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
     hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
 
     texture_desc.Width = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
     texture_desc.Height = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
@@ -4038,19 +4036,7 @@ static void test_occlusion_query(void)
         draw_color_quad(&test_context, &red);
     ID3D10Asynchronous_End(query);
 
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    memset(&data, 0xff, sizeof(data));
-    hr = ID3D10Asynchronous_GetData(query, NULL, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Asynchronous_GetData(query, &data, sizeof(data), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    get_query_data(query, &data, sizeof(data));
     ok((data.dword[0] == 0x90000000 && data.dword[1] == 0x1)
             || (data.dword[0] == 0xffffffff && !data.dword[1])
             || broken(!data.uint),
@@ -4066,11 +4052,11 @@ static void test_timestamp_query(void)
 {
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
 
+    ID3D10Asynchronous *timestamp_query, *timestamp_disjoint_query;
     D3D10_QUERY_DATA_TIMESTAMP_DISJOINT disjoint, prev_disjoint;
-    ID3D10Query *timestamp_query, *timestamp_disjoint_query;
     struct d3d10core_test_context test_context;
     D3D10_QUERY_DESC query_desc;
-    unsigned int data_size, i;
+    unsigned int data_size;
     ID3D10Device *device;
     UINT64 timestamp;
     HRESULT hr;
@@ -4082,148 +4068,115 @@ static void test_timestamp_query(void)
 
     query_desc.Query = D3D10_QUERY_TIMESTAMP;
     query_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreateQuery(device, &query_desc, &timestamp_query);
+    hr = ID3D10Device_CreateQuery(device, &query_desc, (ID3D10Query **)&timestamp_query);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    data_size = ID3D10Query_GetDataSize(timestamp_query);
+    data_size = ID3D10Asynchronous_GetDataSize(timestamp_query);
     ok(data_size == sizeof(UINT64), "Got unexpected data size %u.\n", data_size);
 
     query_desc.Query = D3D10_QUERY_TIMESTAMP_DISJOINT;
     query_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreateQuery(device, &query_desc, &timestamp_disjoint_query);
+    hr = ID3D10Device_CreateQuery(device, &query_desc, (ID3D10Query **)&timestamp_disjoint_query);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    data_size = ID3D10Query_GetDataSize(timestamp_disjoint_query);
+    data_size = ID3D10Asynchronous_GetDataSize(timestamp_disjoint_query);
     ok(data_size == sizeof(disjoint), "Got unexpected data size %u.\n", data_size);
 
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, NULL, 0, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, NULL, 0, 0);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     /* Test a TIMESTAMP_DISJOINT query. */
-    ID3D10Query_Begin(timestamp_disjoint_query);
+    ID3D10Asynchronous_Begin(timestamp_disjoint_query);
 
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, NULL, 0, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, NULL, 0, 0);
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
-    ID3D10Query_End(timestamp_disjoint_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D10Query_GetData(timestamp_disjoint_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    disjoint.Frequency = 0xdeadbeef;
-    disjoint.Disjoint = 0xff;
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
+    ID3D10Asynchronous_End(timestamp_disjoint_query);
+    get_query_data(timestamp_disjoint_query, &disjoint, sizeof(disjoint));
+    ok(disjoint.Frequency != ~(UINT64)0, "Frequency data was not modified.\n");
     ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
 
     prev_disjoint = disjoint;
 
     disjoint.Frequency = 0xdeadbeef;
     disjoint.Disjoint = 0xff;
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) - 1, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) - 1, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) + 1, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) + 1, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) / 2, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) / 2, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) * 2, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint) * 2, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     ok(disjoint.Frequency == 0xdeadbeef, "Frequency data was modified.\n");
     ok(disjoint.Disjoint == 0xff, "Disjoint data was modified.\n");
 
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, NULL, 0, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query, NULL, 0, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), D3D10_ASYNC_GETDATA_DONOTFLUSH);
+    memset(&disjoint, 0xff, sizeof(disjoint));
+    hr = ID3D10Asynchronous_GetData(timestamp_disjoint_query,
+            &disjoint, sizeof(disjoint), D3D10_ASYNC_GETDATA_DONOTFLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(!memcmp(&disjoint, &prev_disjoint, sizeof(disjoint)), "Disjoint data mismatch.\n");
+    ok(disjoint.Frequency == prev_disjoint.Frequency, "Frequency data mismatch.\n");
+    ok(disjoint.Disjoint == prev_disjoint.Disjoint, "Disjoint data mismatch.\n");
 
-    hr = ID3D10Query_GetData(timestamp_query, NULL, 0, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, NULL, 0, 0);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp), 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp), 0);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     /* Test a TIMESTAMP query inside a TIMESTAMP_DISJOINT query. */
-    ID3D10Query_Begin(timestamp_disjoint_query);
+    ID3D10Asynchronous_Begin(timestamp_disjoint_query);
 
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp), 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp), 0);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     draw_color_quad(&test_context, &red);
 
-    ID3D10Query_End(timestamp_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D10Query_GetData(timestamp_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID3D10Asynchronous_End(timestamp_query);
+    get_query_data(timestamp_query, &timestamp, sizeof(timestamp));
 
     timestamp = 0xdeadbeef;
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     ok(timestamp == 0xdeadbeef, "Timestamp was modified.\n");
 
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp), 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp), 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(timestamp != 0xdeadbeef, "Timestamp was not modified.\n");
 
     timestamp = 0xdeadbeef;
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp) - 1, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp) - 1, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp) + 1, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp) + 1, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp) * 2, 0);
+    hr = ID3D10Asynchronous_GetData(timestamp_query, &timestamp, sizeof(timestamp) * 2, 0);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
     ok(timestamp == 0xdeadbeef, "Timestamp was modified.\n");
 
-    ID3D10Query_End(timestamp_disjoint_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D10Query_GetData(timestamp_disjoint_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-
-    disjoint.Frequency = 0xdeadbeef;
-    disjoint.Disjoint = 0xff;
-    hr = ID3D10Query_GetData(timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
+    ID3D10Asynchronous_End(timestamp_disjoint_query);
+    get_query_data(timestamp_disjoint_query, &disjoint, sizeof(disjoint));
+    ok(disjoint.Frequency != ~(UINT64)0, "Frequency data was not modified.\n");
     ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
 
     /* It's not strictly necessary for the TIMESTAMP query to be inside a TIMESTAMP_DISJOINT query. */
-    ID3D10Query_Release(timestamp_query);
+    ID3D10Asynchronous_Release(timestamp_query);
     query_desc.Query = D3D10_QUERY_TIMESTAMP;
     query_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreateQuery(device, &query_desc, &timestamp_query);
+    hr = ID3D10Device_CreateQuery(device, &query_desc, (ID3D10Query **)&timestamp_query);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     draw_color_quad(&test_context, &red);
 
-    ID3D10Query_End(timestamp_query);
-    for (i = 0; i < 500; ++i)
-    {
-        if ((hr = ID3D10Query_GetData(timestamp_query, NULL, 0, 0)) != S_FALSE)
-            break;
-        Sleep(10);
-    }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = ID3D10Query_GetData(timestamp_query, &timestamp, sizeof(timestamp), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ID3D10Asynchronous_End(timestamp_query);
+    get_query_data(timestamp_query, &timestamp, sizeof(timestamp));
 
-    ID3D10Query_Release(timestamp_query);
-    ID3D10Query_Release(timestamp_disjoint_query);
+    ID3D10Asynchronous_Release(timestamp_query);
+    ID3D10Asynchronous_Release(timestamp_disjoint_query);
     release_test_context(&test_context);
 }
 
