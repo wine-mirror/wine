@@ -885,3 +885,22 @@ UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
     TRACE_(key)( "returning 0x%04x\n", ret );
     return ret;
 }
+
+
+/***********************************************************************
+ *           ANDROID_GetKeyboardLayout
+ */
+HKL CDECL ANDROID_GetKeyboardLayout( DWORD thread_id )
+{
+    ULONG_PTR layout = GetUserDefaultLCID();
+    LANGID langid;
+
+    langid = PRIMARYLANGID(LANGIDFROMLCID( layout ));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout = MAKELONG( layout, 0xe001 ); /* IME */
+    else
+        layout |= layout << 16;
+
+    FIXME( "returning %lx\n", layout );
+    return (HKL)layout;
+}

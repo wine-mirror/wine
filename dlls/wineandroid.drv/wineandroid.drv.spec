@@ -5,6 +5,7 @@
 # USER driver
 
 @ cdecl GetKeyNameText(long ptr long) ANDROID_GetKeyNameText
+@ cdecl GetKeyboardLayout(long) ANDROID_GetKeyboardLayout
 @ cdecl MapVirtualKeyEx(long long long) ANDROID_MapVirtualKeyEx
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) ANDROID_ToUnicodeEx
 @ cdecl EnumDisplayMonitors(long ptr ptr long) ANDROID_EnumDisplayMonitors
