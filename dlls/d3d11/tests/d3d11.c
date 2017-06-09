@@ -5021,7 +5021,7 @@ static void test_timestamp_query(void)
 
     ID3D11DeviceContext_End(context, timestamp_disjoint_query);
     get_query_data(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint));
-    ok(disjoint.Frequency != 0xffffffff, "Frequency data was not modified.\n");
+    ok(disjoint.Frequency != ~(UINT64)0, "Frequency data was not modified.\n");
     ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
 
     prev_disjoint = disjoint;
@@ -5044,7 +5044,8 @@ static void test_timestamp_query(void)
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint),
             D3D11_ASYNC_GETDATA_DONOTFLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(!memcmp(&disjoint, &prev_disjoint, sizeof(disjoint)), "Disjoint data mismatch.\n");
+    ok(disjoint.Frequency == prev_disjoint.Frequency, "Frequency data mismatch.\n");
+    ok(disjoint.Disjoint == prev_disjoint.Disjoint, "Disjoint data mismatch.\n");
 
     memset(&timestamp, 0xff, sizeof(timestamp));
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0);
@@ -5092,7 +5093,7 @@ static void test_timestamp_query(void)
     disjoint.Disjoint = 0xff;
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    ok(disjoint.Frequency != 0xffffffff, "Frequency data was not modified.\n");
+    ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
     ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
 
     /* It's not strictly necessary for the TIMESTAMP query to be inside a TIMESTAMP_DISJOINT query. */
