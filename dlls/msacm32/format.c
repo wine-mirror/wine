@@ -57,11 +57,14 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 
     switch (affd->mode) {
     case WINE_ACMFF_TAG:
-	if (SendDlgItemMessageW(affd->hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
-                                CB_FINDSTRINGEXACT, -1,
-                                (LPARAM)paftd->szFormatTag) == CB_ERR)
-	    SendDlgItemMessageW(affd->hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
-                                CB_ADDSTRING, 0, (LPARAM)paftd->szFormatTag);
+        if (paftd->cStandardFormats > 0)
+        {
+            if (SendDlgItemMessageW(affd->hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
+                                    CB_FINDSTRINGEXACT, -1,
+                                    (LPARAM)paftd->szFormatTag) == CB_ERR)
+                SendDlgItemMessageW(affd->hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG,
+                                    CB_ADDSTRING, 0, (LPARAM)paftd->szFormatTag);
+        }
 	break;
     case WINE_ACMFF_FORMAT:
 	if (strcmpW(affd->szFormatTag, paftd->szFormatTag) == 0) {
