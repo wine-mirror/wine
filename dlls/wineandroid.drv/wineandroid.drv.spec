@@ -8,6 +8,7 @@
 @ cdecl GetKeyboardLayout(long) ANDROID_GetKeyboardLayout
 @ cdecl MapVirtualKeyEx(long long long) ANDROID_MapVirtualKeyEx
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) ANDROID_ToUnicodeEx
+@ cdecl VkKeyScanEx(long long) ANDROID_VkKeyScanEx
 @ cdecl EnumDisplayMonitors(long ptr ptr long) ANDROID_EnumDisplayMonitors
 @ cdecl GetMonitorInfo(long ptr) ANDROID_GetMonitorInfo
 @ cdecl CreateWindow(long) ANDROID_CreateWindow
