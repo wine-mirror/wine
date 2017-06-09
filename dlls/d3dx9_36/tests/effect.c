@@ -4350,6 +4350,8 @@ static void test_effect_preshader_compare_pbool_consts_(unsigned int line, IDire
     {
         for (i = 0; i < ARRAY_SIZE(test_effect_preshader_bconsts); ++i)
         {
+            /* The negation on both sides is actually needed, sometimes you
+             * get 0xffffffff instead of 1 on native. */
             ok_(__FILE__, line)(!bdata[i] == !test_effect_preshader_bconsts[i],
                     "Pixel shader boolean constants do not match, expected %#x, got %#x, i %u.\n",
                     test_effect_preshader_bconsts[i], bdata[i], i);
@@ -4362,6 +4364,8 @@ static void test_effect_preshader_compare_pbool_consts_(unsigned int line, IDire
             if (const_updated_mask[i / TEST_EFFECT_BITMASK_BLOCK_SIZE]
                     & (1u << (i % TEST_EFFECT_BITMASK_BLOCK_SIZE)))
             {
+                /* The negation on both sides is actually needed, sometimes
+                 * you get 0xffffffff instead of 1 on native. */
                 ok_(__FILE__, line)(!bdata[i] == !test_effect_preshader_bconsts[i],
                         "Pixel shader boolean constants do not match, expected %#x, got %#x, i %u, parameter %s.\n",
                         test_effect_preshader_bconsts[i], bdata[i], i, updated_param);
