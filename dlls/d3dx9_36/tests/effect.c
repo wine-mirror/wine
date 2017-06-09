@@ -31,6 +31,16 @@ static inline float __port_infinity(void)
 #define INFINITY __port_infinity()
 #endif /* INFINITY */
 
+#ifndef NAN
+static float get_nan(void)
+{
+    DWORD nan = 0x7fc00000;
+
+    return *(float *)&nan;
+}
+#define NAN get_nan()
+#endif
+
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(*arr))
 
 /* helper functions */
@@ -4751,7 +4761,7 @@ static const DWORD test_effect_preshader_ops_blob[] =
 static void test_effect_preshader_ops(IDirect3DDevice9 *device)
 {
     static D3DLIGHT9 light;
-    static const struct
+    const struct
     {
         const char *mnem;
         unsigned int expected_result[4];
