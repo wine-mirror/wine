@@ -480,6 +480,7 @@ struct d3d_query
     struct wined3d_private_store private_store;
     struct wined3d_query *wined3d_query;
     BOOL predicate;
+    D3D11_QUERY_DESC desc;
     ID3D11Device *device;
 };
 

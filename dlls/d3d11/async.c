@@ -159,7 +159,11 @@ static UINT STDMETHODCALLTYPE d3d11_query_GetDataSize(ID3D11Query *iface)
 
 static void STDMETHODCALLTYPE d3d11_query_GetDesc(ID3D11Query *iface, D3D11_QUERY_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = query->desc;
 }
 
 static const struct ID3D11QueryVtbl d3d11_query_vtbl =
@@ -428,6 +432,9 @@ static HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device
     query->ID3D11Query_iface.lpVtbl = &d3d11_query_vtbl;
     query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
+
+    query->desc = *desc;
+
     wined3d_mutex_lock();
     wined3d_private_store_init(&query->private_store);
 
