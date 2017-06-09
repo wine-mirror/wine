@@ -177,17 +177,17 @@ static void expect_matrix_(unsigned int line, const D3DXMATRIX *expected, const 
 }
 
 #define expect_vec4_array(count, expected, vector, ulps) expect_vec4_array_(__LINE__, count, expected, vector, ulps)
-static void expect_vec4_array_(unsigned int line, SIZE_T count, const D3DXVECTOR4 *expected,
+static void expect_vec4_array_(unsigned int line, unsigned int count, const D3DXVECTOR4 *expected,
         const D3DXVECTOR4 *vector, unsigned int ulps)
 {
     BOOL equal;
-    SIZE_T i;
+    unsigned int i;
 
     for (i = 0; i < count; ++i)
     {
         equal = compare_vec4(&expected[i], &vector[i], ulps);
         ok_(__FILE__, line)(equal,
-                "Got unexpected vector {%.8e, %.8e, %.8e, %.8e} at index %lu, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                "Got unexpected vector {%.8e, %.8e, %.8e, %.8e} at index %u, expected {%.8e, %.8e, %.8e, %.8e}.\n",
                 vector[i].x, vector[i].y, vector[i].z, vector[i].w, i,
                 expected[i].x, expected[i].y, expected[i].z, expected[i].w);
         if (!equal)
