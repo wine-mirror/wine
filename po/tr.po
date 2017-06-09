@@ -508,7 +508,7 @@ msgstr "Yazıcı"
 
 #: comdlg32.rc:228
 msgid "&Default Printer"
-msgstr "&Öntanımlı Yazıcı"
+msgstr "&Varsayılan Yazıcı"
 
 #: comdlg32.rc:229
 msgid "[none]"
@@ -1003,7 +1003,7 @@ msgstr "Bir yazıcı hatası oluştu."
 
 #: comdlg32.rc:68
 msgid "No default printer defined."
-msgstr "Öntanımlı yazıcı tanımlanmamış."
+msgstr "Varsayılan yazıcı tanımlanmamış."
 
 #: comdlg32.rc:69
 msgid "Cannot find the printer."
@@ -1163,7 +1163,7 @@ msgstr "Güç tasarruf kipi; "
 
 #: comdlg32.rc:77
 msgid "Default Printer; "
-msgstr "Öntanımlı Yazıcı; "
+msgstr "Varsayılan Yazıcı; "
 
 #: comdlg32.rc:78
 msgid "There are %d documents in the queue"
@@ -9691,7 +9691,7 @@ msgstr ""
 "ECHO ON bir toplu işlem dosyasında tüm komutların çalıştırılmadan önce\n"
 "uçbirim aygıtında görüntülenmesini sağlar\n"
 "\n"
-"ECHO OFF bir önceki ECHO ON (ECHO öntanımlı olarak kapalıdır)komutunun\n"
+"ECHO OFF bir önceki ECHO ON (ECHO varsayılan olarak kapalıdır)komutunun\n"
 "tersini yapar. ECHO OFF çıktısının görüntülenmesini başına @ işareti\n"
 "getirerek engelleyebilirsiniz.\n"
 
@@ -9874,7 +9874,7 @@ msgstr ""
 "$q    Eşittir işareti     $t    Geçerli saat        $v    cmd sürümü\n"
 "\n"
 "Sadece PROMPT komutunu girerseniz komut istemi geçerli dizini (sürücü harfi\n"
-"dahil) ve onu izleyen büyüktür (>) işareti içeren öntanımlı değerlere\n"
+"dahil) ve onu izleyen büyüktür (>) işareti içeren varsayılan değerlere\n"
 "dönecektir.\n"
 "(PROMPT $p$g komutu gibi).\n"
 "\n"
@@ -10208,7 +10208,7 @@ msgstr ""
 "ASSOC\t\tDosya uzantı ilişkilerini göster veya düzenle\n"
 "ATTRIB\t\tDOS dosya özelliklerini göster veya değiştir\n"
 "CALL\t\tToplu işlem dosyası içerisinden bir diğerini çalıştır\n"
-"CD (CHDIR)\tGeçerli dizini değiştir\n"
+"CD (CHDIR)\tŞimdiki dizini değiştir\n"
 "CHOICE\t\tSeçilebilir listeden bir tuşa basılmasını bekle\n"
 "CLS\t\tKonsol ekranını temizle\n"
 "COPY\t\tDosya kopyala\n"
@@ -10233,7 +10233,7 @@ msgstr ""
 "REN (RENAME)\tDosyayı yeniden adlandır\n"
 "RD (RMDIR)\tAlt dizini sil\n"
 "SET\t\tÇevre değişkenlerini düzenle veya göster\n"
-"SETLOCAL\tOrtam değişiklikleri yerelleştirmesini bir toply dosyada başlat\n"
+"SETLOCAL\tOrtam değişiklikleri yerelleştirmesini bir toplu dosyada başlat\n"
 "START\t\tİlişkili programda bir program başlat veya bir belge aç\n"
 "TIME\t\tŞimdiki sistem saatini düzenle veya göster\n"
 "TITLE\t\tKomut istemi oturumu için pencere başlığını belirle\n"
@@ -10265,7 +10265,7 @@ msgstr "%1 uzantısı için dosya ilişkilendirmesi eksik\n"
 
 #: cmd.rc:357
 msgid "No open command associated with file type '%1'\n"
-msgstr "'%1' dosya türü için ilişkilendirilmiş bir aç komutu yok\n"
+msgstr "'%1' dosya türü için ilişkilendirilmiş bir açma komutu yok\n"
 
 #: cmd.rc:358
 msgid "Overwrite %1?"
@@ -10527,7 +10527,7 @@ msgstr "DHCP etkin"
 
 #: ipconfig.rc:49
 msgid "Default gateway"
-msgstr "Öntanımlı ağ geçidi"
+msgstr "Varsayılan ağ geçidi"
 
 #: ipconfig.rc:50
 msgid "IPv6 address"
@@ -11141,7 +11141,7 @@ msgstr ""
 
 #: oleview.rc:180
 msgid "Default Interface Viewer"
-msgstr "Öntanımlı Arayüz Gösterici"
+msgstr "Varsayılan Arayüz Gösterici"
 
 #: oleview.rc:183
 msgid "Interface"
@@ -11774,17 +11774,12 @@ msgid "&About Registry Editor"
 msgstr "Kayıt Defteri Düzenleyicisi &Hakkında"
 
 #: regedit.rc:89 regedit.rc:96 regedit.rc:229
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "expanded"
 msgid "Expand"
-msgstr "genişletilmiş"
+msgstr "Genişlet"
 
 #: regedit.rc:134 regedit.rc:232
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "İkili Değeri Değiştir..."
+msgstr "İkili &Değeri Değiştir..."
 
 #: regedit.rc:266
 msgid "Export registry"
@@ -11883,14 +11878,11 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Sık kullanılan anahtarlara erişmek için komutları içerir"
 
 #: regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
-"Kayıt düzenleyici hakkında yardım ve bilgi göstermek için komutları içerir"
+"Kayıt Defteri Düzenleyicisi hakkında yardım ve bilgi göstermek için "
+"komutları içerir"
 
 #: regedit.rc:164
 msgid "Contains commands for creating new keys or values"
@@ -11902,7 +11894,7 @@ msgstr "Veri"
 
 #: regedit.rc:154
 msgid "Registry Editor"
-msgstr "Kayıt Düzenleyici"
+msgstr "Kayıt Defteri Düzenleyicisi"
 
 #: regedit.rc:220
 msgid "Import Registry File"
@@ -12136,16 +12128,12 @@ msgid "regedit: Unable to delete the registry class '%1'.\n"
 msgstr "regedit: '%1' kayıt sınıfı silinemiyor.\n"
 
 #: regedit.rc:430
-#, fuzzy
-#| msgid "regedit: The line '%1' was not recognized.\n"
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "regedit: '%1' satırı bilinmiyor.\n"
+msgstr "regedit: Satır sözdizimi geçersiz.\n"
 
 #: regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
-msgstr "Kayıt düzenleyicisinden çıkar"
+msgstr "Kayıt Defteri Düzenleyicisinden çıkar"
 
 #: regedit.rc:188
 msgid "Adds keys to the favorites list"
@@ -12160,8 +12148,6 @@ msgid "Shows or hides the status bar"
 msgstr "Durum çubuğunu gösterir veya gizler"
 
 #: regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "İki panel arasındaki ayracın konumunu değiştirir"
 
@@ -12206,10 +12192,8 @@ msgid "Adds a new binary value"
 msgstr "Yeni bir ikili değer ekler"
 
 #: regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Yeni bir ikili değer ekler"
+msgstr "Yeni bir 32-bit değer ekler"
 
 #: regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -12224,10 +12208,8 @@ msgid "Prints all or part of the registry"
 msgstr "Sistem kaydının bir kısmını veya tümünü yazdırır"
 
 #: regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Kayıt Düzenleyici"
+msgstr "Kayıt Defteri Düzenleyicisi Yardımını açar"
 
 #: regedit.rc:182
 msgid "Displays program information, version number and copyright"
@@ -12270,26 +12252,20 @@ msgid "Unable to query the registry key '%1'."
 msgstr "'%1' kayıt anahtarı sorgulanamıyor."
 
 #: regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Değer verisini değiştirir"
+msgstr "Değer verisini ikili biçimde değiştirir"
 
 #: regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Yeni bir çoklu dize değeri ekler"
 
 #: regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Sistem kaydının seçilen kısmını metin dosyasına aktarır"
 
 #: regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Yeni bir dize değeri ekler"
+msgstr "Yeni bir genişletilebilir dize değeri ekler"
 
 #: regedit.rc:211
 msgid "Confirm Key Delete"
@@ -12303,11 +12279,8 @@ msgstr ""
 "istediğinizden emin misiniz?"
 
 #: regedit.rc:230
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "collapsed"
 msgid "Collapse"
-msgstr "daraltılmış"
+msgstr "Daralt"
 
 #: regsvr32.rc:32
 msgid ""
@@ -13744,7 +13717,7 @@ msgstr "devre dışı"
 
 #: winecfg.rc:61
 msgid "Default Settings"
-msgstr "Öntanımlı Ayarlar"
+msgstr "Varsayılan Ayarlar"
 
 #: winecfg.rc:62
 msgid "Wine Programs (*.exe; *.exe.so)"
@@ -13787,7 +13760,7 @@ msgstr ""
 "Daha fazla sürücü ekleyemezsiniz.\n"
 "\n"
 "Her sürücünün A-Z aralığında bir harfi olmalıdır. Dolayısıyla 26'dan fazla "
-"tanımlayamazsınız."
+"sürücü tanımlayamazsınız."
 
 #: winecfg.rc:75
 msgid "System drive"
@@ -14064,7 +14037,7 @@ msgstr "Sadece geçerli oturuma uygula"
 
 #: wineconsole.rc:29
 msgid "Set &Defaults"
-msgstr "&Öntanımlı Ayarlar"
+msgstr "&Varsayılan Ayarlar"
 
 #: wineconsole.rc:31
 msgid "&Mark"
@@ -14084,7 +14057,7 @@ msgstr "A&ra"
 
 #: wineconsole.rc:39
 msgid "Setup - Default settings"
-msgstr "Ayarla - Öntanımlı ayarlar"
+msgstr "Ayarla - Vatsayılan ayarlar"
 
 #: wineconsole.rc:40
 msgid "Setup - Current settings"
@@ -14200,11 +14173,11 @@ msgstr ""
 
 #: winedbg.rc:61
 msgid "Show &Details"
-msgstr "Detayları &Göster"
+msgstr "Ayrıntıları &Göster"
 
 #: winedbg.rc:66
 msgid "Program Error Details"
-msgstr "Program Hata Detayları"
+msgstr "Program Hata Ayrıntıları"
 
 #: winedbg.rc:73
 msgid ""
