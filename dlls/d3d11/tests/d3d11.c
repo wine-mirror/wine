@@ -19808,7 +19808,7 @@ static void test_gather(void)
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(SUCCEEDED(hr), "Fialed to create shader resource view, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
     constant.width = texture_desc.Width;
