@@ -320,6 +320,8 @@ static void STDMETHODCALLTYPE d3d10_query_End(ID3D10Query *iface)
 static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *data, UINT data_size, UINT flags)
 {
     struct d3d_query *query = impl_from_ID3D10Query(iface);
+    D3D11_QUERY_DATA_PIPELINE_STATISTICS d3d11_data;
+    void *d3d10_data_pointer = NULL;
     unsigned int wined3d_flags;
     HRESULT hr;
 
@@ -327,6 +329,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *d
 
     if (!data && data_size)
         return E_INVALIDARG;
+
+    if (query->desc.Query == D3D11_QUERY_PIPELINE_STATISTICS
+            && data_size == sizeof(D3D10_QUERY_DATA_PIPELINE_STATISTICS))
+    {
+        data_size = sizeof(D3D11_QUERY_DATA_PIPELINE_STATISTICS);
+        if (data)
+        {
+            d3d10_data_pointer = data;
+            data = &d3d11_data;
+        }
+    }
 
     wined3d_flags = wined3d_getdata_flags_from_d3d11_async_getdata_flags(flags);
 
@@ -344,6 +357,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *d
     }
     wined3d_mutex_unlock();
 
+    if (d3d10_data_pointer && hr == S_OK)
+        memcpy(d3d10_data_pointer, data, sizeof(D3D10_QUERY_DATA_PIPELINE_STATISTICS));
+
     return hr;
 }
 
@@ -357,6 +373,9 @@ static UINT STDMETHODCALLTYPE d3d10_query_GetDataSize(ID3D10Query *iface)
     wined3d_mutex_lock();
     data_size = wined3d_query_get_data_size(query->wined3d_query);
     wined3d_mutex_unlock();
+
+    if (query->desc.Query == D3D11_QUERY_PIPELINE_STATISTICS)
+        data_size = sizeof(D3D10_QUERY_DATA_PIPELINE_STATISTICS);
 
     return data_size;
 }
