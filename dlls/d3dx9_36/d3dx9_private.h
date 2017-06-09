@@ -123,8 +123,88 @@ const char *debug_d3dxparameter_type(D3DXPARAMETER_TYPE t) DECLSPEC_HIDDEN;
 const char *debug_d3dxparameter_registerset(D3DXREGISTER_SET r) DECLSPEC_HIDDEN;
 
 /* parameter type conversion helpers */
-void set_number(void *outdata, D3DXPARAMETER_TYPE outtype,
-        const void *indata, D3DXPARAMETER_TYPE intype) DECLSPEC_HIDDEN;
+static inline BOOL get_bool(D3DXPARAMETER_TYPE type, const void *data)
+{
+    switch (type)
+    {
+        case D3DXPT_FLOAT:
+        case D3DXPT_INT:
+        case D3DXPT_BOOL:
+            return !!*(DWORD *)data;
+
+        case D3DXPT_VOID:
+            return *(BOOL *)data;
+
+        default:
+            return FALSE;
+    }
+}
+
+static inline int get_int(D3DXPARAMETER_TYPE type, const void *data)
+{
+    switch (type)
+    {
+        case D3DXPT_FLOAT:
+            return (int)(*(float *)data);
+
+        case D3DXPT_INT:
+        case D3DXPT_VOID:
+            return *(int *)data;
+
+        case D3DXPT_BOOL:
+            return get_bool(type, data);
+
+        default:
+            return 0;
+    }
+}
+
+static inline float get_float(D3DXPARAMETER_TYPE type, const void *data)
+{
+    switch (type)
+    {
+        case D3DXPT_FLOAT:
+        case D3DXPT_VOID:
+            return *(float *)data;
+
+        case D3DXPT_INT:
+            return (float)(*(int *)data);
+
+        case D3DXPT_BOOL:
+            return (float)get_bool(type, data);
+
+        default:
+            return 0.0f;
+    }
+}
+
+static inline void set_number(void *outdata, D3DXPARAMETER_TYPE outtype, const void *indata, D3DXPARAMETER_TYPE intype)
+{
+    if (outtype == intype)
+    {
+        *(DWORD *)outdata = *(DWORD *)indata;
+        return;
+    }
+
+    switch (outtype)
+    {
+        case D3DXPT_FLOAT:
+            *(float *)outdata = get_float(intype, indata);
+            break;
+
+        case D3DXPT_BOOL:
+            *(BOOL *)outdata = get_bool(intype, indata);
+            break;
+
+        case D3DXPT_INT:
+            *(int *)outdata = get_int(intype, indata);
+            break;
+
+        default:
+            *(DWORD *)outdata = 0;
+            break;
+    }
+}
 
 static inline BOOL is_param_type_sampler(D3DXPARAMETER_TYPE type)
 {
