@@ -33,6 +33,7 @@
 
 #include "android.h"
 #include "wine/unicode.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
@@ -653,6 +654,67 @@ static const char* vkey_to_name( UINT vkey )
     return NULL;
 }
 
+static BOOL get_async_key_state( BYTE state[256] )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( get_key_state )
+    {
+        req->tid = 0;
+        req->key = -1;
+        wine_server_set_reply( req, state, 256 );
+        ret = !wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+static void send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, DWORD flags )
+{
+    INPUT input;
+
+    input.type             = INPUT_KEYBOARD;
+    input.u.ki.wVk         = vkey;
+    input.u.ki.wScan       = scan;
+    input.u.ki.dwFlags     = flags;
+    input.u.ki.time        = 0;
+    input.u.ki.dwExtraInfo = 0;
+
+    __wine_send_input( hwnd, &input );
+}
+
+/***********************************************************************
+ *           update_keyboard_lock_state
+ */
+void update_keyboard_lock_state( WORD vkey, UINT state )
+{
+    BYTE keystate[256];
+
+    if (!get_async_key_state( keystate )) return;
+
+    if (!(keystate[VK_CAPITAL] & 0x01) != !(state & AMETA_CAPS_LOCK_ON) && vkey != VK_CAPITAL)
+    {
+        TRACE( "adjusting CapsLock state (%02x)\n", keystate[VK_CAPITAL] );
+        send_keyboard_input( 0, VK_CAPITAL, 0x3a, 0 );
+        send_keyboard_input( 0, VK_CAPITAL, 0x3a, KEYEVENTF_KEYUP );
+    }
+
+    if (!(keystate[VK_NUMLOCK] & 0x01) != !(state & AMETA_NUM_LOCK_ON) && (vkey & 0xff) != VK_NUMLOCK)
+    {
+        TRACE( "adjusting NumLock state (%02x)\n", keystate[VK_NUMLOCK] );
+        send_keyboard_input( 0, VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY );
+        send_keyboard_input( 0, VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP );
+    }
+
+    if (!(keystate[VK_SCROLL] & 0x01) != !(state & AMETA_SCROLL_LOCK_ON) && vkey != VK_SCROLL)
+    {
+        TRACE( "adjusting ScrollLock state (%02x)\n", keystate[VK_SCROLL] );
+        send_keyboard_input( 0, VK_SCROLL, 0x46, 0 );
+        send_keyboard_input( 0, VK_SCROLL, 0x46, KEYEVENTF_KEYUP );
+    }
+}
+
+
 /***********************************************************************
  *           keyboard_event
  *
@@ -671,6 +733,7 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
     }
     data.type = KEYBOARD_EVENT;
     data.kbd.hwnd = LongToHandle( win );
+    data.kbd.lock_state             = state;
     data.kbd.input.type             = INPUT_KEYBOARD;
     data.kbd.input.u.ki.wVk         = keycode_to_vkey[keycode];
     data.kbd.input.u.ki.wScan       = vkey_to_scancode[data.kbd.input.u.ki.wVk];

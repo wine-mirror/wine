@@ -81,6 +81,7 @@ enum android_window_messages
 
 extern HWND get_capture_window(void) DECLSPEC_HIDDEN;
 extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
+extern void update_keyboard_lock_state( WORD vkey, UINT state ) DECLSPEC_HIDDEN;
 
 /* JNI entry points */
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height ) DECLSPEC_HIDDEN;
@@ -125,6 +126,7 @@ union event_data
     {
         enum event_type type;
         HWND            hwnd;
+        UINT            lock_state;
         INPUT           input;
     } kbd;
 };

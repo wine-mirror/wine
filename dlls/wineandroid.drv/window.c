@@ -482,6 +482,7 @@ static int process_events( DWORD mask )
                 TRACE("KEYDOWN hwnd %p vkey %x '%c' scancode %x\n", event->data.kbd.hwnd,
                       event->data.kbd.input.u.ki.wVk, event->data.kbd.input.u.ki.wVk,
                       event->data.kbd.input.u.ki.wScan );
+            update_keyboard_lock_state( event->data.kbd.input.u.ki.wVk, event->data.kbd.lock_state );
             __wine_send_input( 0, &event->data.kbd.input );
             break;
 
