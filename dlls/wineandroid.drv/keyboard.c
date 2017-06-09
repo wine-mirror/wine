@@ -36,6 +36,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
+WINE_DECLARE_DEBUG_CHANNEL(key);
 
 static const UINT keycode_to_vkey[] =
 {
@@ -820,4 +821,67 @@ INT CDECL ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 
     TRACE( "lparam 0x%08x -> %s\n", lparam, debugstr_w( buffer ));
     return len;
+}
+
+
+/***********************************************************************
+ *           ANDROID_MapVirtualKeyEx
+ */
+UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
+{
+    UINT ret = 0;
+    const char *s;
+
+    TRACE_(key)( "code=0x%x, maptype=%d, hkl %p\n", code, maptype, hkl );
+
+    switch (maptype)
+    {
+    case MAPVK_VK_TO_VSC_EX:
+    case MAPVK_VK_TO_VSC:
+        /* vkey to scancode */
+        switch (code)
+        {
+        case VK_SHIFT:
+            code = VK_LSHIFT;
+            break;
+        case VK_CONTROL:
+            code = VK_LCONTROL;
+            break;
+        case VK_MENU:
+            code = VK_LMENU;
+            break;
+        }
+        if (code < sizeof(vkey_to_scancode) / sizeof(vkey_to_scancode[0])) ret = vkey_to_scancode[code];
+        break;
+    case MAPVK_VSC_TO_VK:
+    case MAPVK_VSC_TO_VK_EX:
+        /* scancode to vkey */
+        ret = scancode_to_vkey( code );
+        if (maptype == MAPVK_VSC_TO_VK)
+            switch (ret)
+            {
+            case VK_LSHIFT:
+            case VK_RSHIFT:
+                ret = VK_SHIFT; break;
+            case VK_LCONTROL:
+            case VK_RCONTROL:
+                ret = VK_CONTROL; break;
+            case VK_LMENU:
+            case VK_RMENU:
+                ret = VK_MENU; break;
+            }
+        break;
+    case MAPVK_VK_TO_CHAR:
+        s = vkey_to_name( code );
+        if (s && (strlen( s ) == 1))
+            ret = s[0];
+        else
+            ret = 0;
+        break;
+    default:
+        FIXME( "Unknown maptype %d\n", maptype );
+        break;
+    }
+    TRACE_(key)( "returning 0x%04x\n", ret );
+    return ret;
 }
