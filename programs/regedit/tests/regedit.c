@@ -1197,7 +1197,7 @@ static void test_key_creation_and_deletion(void)
     verify_key_exist(hkey, "Subkey2a");
 
     exec_import_str("REGEDIT4\n\n"
-                    "[-\tHKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b\t]\n");
+                    "[-\tHKEY_CURRENT_USER\\" KEY_BASE "\\Subkey2b]\n");
     verify_key_exist(hkey, "Subkey2b");
 
     exec_import_str("REGEDIT4\n\n"
