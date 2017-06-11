@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <limits.h>
+
 #define COBJMACROS
 #include <d3d.h>
 #include <initguid.h>
@@ -40,9 +42,37 @@ static ULONG get_refcount(IUnknown *object)
     return IUnknown_Release( object );
 }
 
-static BOOL match_float(float a, float b)
+static BOOL compare_float(float f, float g, unsigned int ulps)
 {
-    return (a - b) < 0.000001f;
+    int x = *(int *)&f;
+    int y = *(int *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
+}
+
+#define check_vector(a, b, c, d, e) check_vector_(__LINE__, a, b, c, d, e)
+static void check_vector_(unsigned int line, const D3DVECTOR *v, float x, float y, float z, unsigned int ulps)
+{
+    BOOL ret = compare_float(U1(v)->x, x, ulps)
+            && compare_float(U2(v)->y, y, ulps)
+            && compare_float(U3(v)->z, z, ulps);
+
+    ok_(__FILE__, line)(ret, "Got unexpected vector {%.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e}.\n",
+            U1(v)->x, U2(v)->y, U3(v)->z, x, y, z);
+}
+
+#define vector_eq(a, b) vector_eq_(__LINE__, a, b)
+static void vector_eq_(unsigned int line, const D3DVECTOR *left, const D3DVECTOR *right)
+{
+    check_vector_(line, left, U1(right)->x, U2(right)->y, U3(right)->z, 0);
 }
 
 static D3DRMMATRIX4D identity = {
@@ -352,18 +382,10 @@ static void test_MeshBuilder(void)
     /* Check that Load method generated default normals */
     hr = IDirect3DRMMeshBuilder_GetVertices(pMeshBuilder, NULL, NULL, &val2, n, NULL, NULL);
     ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
-    ok(match_float(U1(n[0]).x, 0.577350f),  "Wrong component n[0].x = %f (expected %f)\n", U1(n[0]).x, 0.577350f);
-    ok(match_float(U2(n[0]).y, 0.577350f),  "Wrong component n[0].y = %f (expected %f)\n", U2(n[0]).y, 0.577350f);
-    ok(match_float(U3(n[0]).z, 0.577350f),  "Wrong component n[0].z = %f (expected %f)\n", U3(n[0]).z, 0.577350f);
-    ok(match_float(U1(n[1]).x, -0.229416f), "Wrong component n[1].x = %f (expected %f)\n", U1(n[1]).x, -0.229416f);
-    ok(match_float(U2(n[1]).y, 0.688247f),  "Wrong component n[1].y = %f (expected %f)\n", U2(n[1]).y, 0.688247f);
-    ok(match_float(U3(n[1]).z, 0.688247f),  "Wrong component n[1].z = %f (expected %f)\n", U3(n[1]).z, 0.688247f);
-    ok(match_float(U1(n[2]).x, -0.229416f), "Wrong component n[2].x = %f (expected %f)\n", U1(n[2]).x, -0.229416f);
-    ok(match_float(U2(n[2]).y, 0.688247f),  "Wrong component n[2].y = %f (expected %f)\n", U2(n[2]).y, 0.688247f);
-    ok(match_float(U3(n[2]).z, 0.688247f),  "Wrong component n[2].z = %f (expected %f)\n", U3(n[2]).z, 0.688247f);
-    ok(match_float(U1(n[3]).x, -0.577350f), "Wrong component n[3].x = %f (expected %f)\n", U1(n[3]).x, -0.577350f);
-    ok(match_float(U2(n[3]).y, 0.577350f),  "Wrong component n[3].y = %f (expected %f)\n", U2(n[3]).y, 0.577350f);
-    ok(match_float(U3(n[3]).z, 0.577350f),  "Wrong component n[3].z = %f (expected %f)\n", U3(n[3]).z, 0.577350f);
+    check_vector(&n[0],  0.577350f, 0.577350f, 0.577350f, 32);
+    check_vector(&n[1], -0.229416f, 0.688247f, 0.688247f, 32);
+    check_vector(&n[2], -0.229416f, 0.688247f, 0.688247f, 32);
+    check_vector(&n[3], -0.577350f, 0.577350f, 0.577350f, 32);
 
     /* Check that Load method generated default texture coordinates (0.0f, 0.0f) for each vertex */
     valu = 1.23f;
@@ -459,24 +481,12 @@ static void test_MeshBuilder(void)
     ok(val1 == 3, "Wrong number of vertices %d (must be 3)\n", val1);
     ok(val2 == 3, "Wrong number of normals %d (must be 3)\n", val2);
     ok(val3 == 8, "Wrong number of face data bytes %d (must be 8)\n", val3);
-    ok(U1(v[0]).x == 0.1f, "Wrong component v[0].x = %f (expected 0.1)\n", U1(v[0]).x);
-    ok(U2(v[0]).y == 0.2f, "Wrong component v[0].y = %f (expected 0.2)\n", U2(v[0]).y);
-    ok(U3(v[0]).z == 0.3f, "Wrong component v[0].z = %f (expected 0.3)\n", U3(v[0]).z);
-    ok(U1(v[1]).x == 0.4f, "Wrong component v[1].x = %f (expected 0.4)\n", U1(v[1]).x);
-    ok(U2(v[1]).y == 0.5f, "Wrong component v[1].y = %f (expected 0.5)\n", U2(v[1]).y);
-    ok(U3(v[1]).z == 0.6f, "Wrong component v[1].z = %f (expected 0.6)\n", U3(v[1]).z);
-    ok(U1(v[2]).x == 0.7f, "Wrong component v[2].x = %f (expected 0.7)\n", U1(v[2]).x);
-    ok(U2(v[2]).y == 0.8f, "Wrong component v[2].y = %f (expected 0.8)\n", U2(v[2]).y);
-    ok(U3(v[2]).z == 0.9f, "Wrong component v[2].z = %f (expected 0.9)\n", U3(v[2]).z);
-    ok(U1(n[0]).x == 1.1f, "Wrong component n[0].x = %f (expected 1.1)\n", U1(n[0]).x);
-    ok(U2(n[0]).y == 1.2f, "Wrong component n[0].y = %f (expected 1.2)\n", U2(n[0]).y);
-    ok(U3(n[0]).z == 1.3f, "Wrong component n[0].z = %f (expected 1.3)\n", U3(n[0]).z);
-    ok(U1(n[1]).x == 1.4f, "Wrong component n[1].x = %f (expected 1.4)\n", U1(n[1]).x);
-    ok(U2(n[1]).y == 1.5f, "Wrong component n[1].y = %f (expected 1.5)\n", U2(n[1]).y);
-    ok(U3(n[1]).z == 1.6f, "Wrong component n[1].z = %f (expected 1.6)\n", U3(n[1]).z);
-    ok(U1(n[2]).x == 1.7f, "Wrong component n[2].x = %f (expected 1.7)\n", U1(n[2]).x);
-    ok(U2(n[2]).y == 1.8f, "Wrong component n[2].y = %f (expected 1.8)\n", U2(n[2]).y);
-    ok(U3(n[2]).z == 1.9f, "Wrong component n[2].z = %f (expected 1.9)\n", U3(n[2]).z);
+    check_vector(&v[0], 0.1f, 0.2f, 0.3f, 32);
+    check_vector(&v[1], 0.4f, 0.5f, 0.6f, 32);
+    check_vector(&v[2], 0.7f, 0.8f, 0.9f, 32);
+    check_vector(&n[0], 1.1f, 1.2f, 1.3f, 32);
+    check_vector(&n[1], 1.4f, 1.5f, 1.6f, 32);
+    check_vector(&n[2], 1.7f, 1.8f, 1.9f, 32);
     ok(f[0] == 3 , "Wrong component f[0] = %d (expected 3)\n", f[0]);
     ok(f[1] == 0 , "Wrong component f[1] = %d (expected 0)\n", f[1]);
     ok(f[2] == 0 , "Wrong component f[2] = %d (expected 0)\n", f[2]);
@@ -539,25 +549,14 @@ static void test_MeshBuilder(void)
     ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
     ok(val2 == 3, "Wrong number of normals %d (must be 3)\n", val2);
     ok(val1 == 3, "Wrong number of vertices %d (must be 3)\n", val1);
-    ok(U1(v[0]).x == 0.1f*2, "Wrong component v[0].x = %f (expected %f)\n", U1(v[0]).x, 0.1f*2);
-    ok(U2(v[0]).y == 0.2f*3, "Wrong component v[0].y = %f (expected %f)\n", U2(v[0]).y, 0.2f*3);
-    ok(U3(v[0]).z == 0.3f*4, "Wrong component v[0].z = %f (expected %f)\n", U3(v[0]).z, 0.3f*4);
-    ok(U1(v[1]).x == 0.4f*2, "Wrong component v[1].x = %f (expected %f)\n", U1(v[1]).x, 0.4f*2);
-    ok(U2(v[1]).y == 0.5f*3, "Wrong component v[1].y = %f (expected %f)\n", U2(v[1]).y, 0.5f*3);
-    ok(U3(v[1]).z == 0.6f*4, "Wrong component v[1].z = %f (expected %f)\n", U3(v[1]).z, 0.6f*4);
-    ok(U1(v[2]).x == 0.7f*2, "Wrong component v[2].x = %f (expected %f)\n", U1(v[2]).x, 0.7f*2);
-    ok(U2(v[2]).y == 0.8f*3, "Wrong component v[2].y = %f (expected %f)\n", U2(v[2]).y, 0.8f*3);
-    ok(U3(v[2]).z == 0.9f*4, "Wrong component v[2].z = %f (expected %f)\n", U3(v[2]).z, 0.9f*4);
+
+    check_vector(&v[0], 0.1f * 2, 0.2f * 3, 0.3f * 4, 32);
+    check_vector(&v[1], 0.4f * 2, 0.5f * 3, 0.6f * 4, 32);
+    check_vector(&v[2], 0.7f * 2, 0.8f * 3, 0.9f * 4, 32);
     /* Normals are not affected by Scale */
-    ok(U1(n[0]).x == 1.1f, "Wrong component n[0].x = %f (expected %f)\n", U1(n[0]).x, 1.1f);
-    ok(U2(n[0]).y == 1.2f, "Wrong component n[0].y = %f (expected %f)\n", U2(n[0]).y, 1.2f);
-    ok(U3(n[0]).z == 1.3f, "Wrong component n[0].z = %f (expected %f)\n", U3(n[0]).z, 1.3f);
-    ok(U1(n[1]).x == 1.4f, "Wrong component n[1].x = %f (expected %f)\n", U1(n[1]).x, 1.4f);
-    ok(U2(n[1]).y == 1.5f, "Wrong component n[1].y = %f (expected %f)\n", U2(n[1]).y, 1.5f);
-    ok(U3(n[1]).z == 1.6f, "Wrong component n[1].z = %f (expected %f)\n", U3(n[1]).z, 1.6f);
-    ok(U1(n[2]).x == 1.7f, "Wrong component n[2].x = %f (expected %f)\n", U1(n[2]).x, 1.7f);
-    ok(U2(n[2]).y == 1.8f, "Wrong component n[2].y = %f (expected %f)\n", U2(n[2]).y, 1.8f);
-    ok(U3(n[2]).z == 1.9f, "Wrong component n[2].z = %f (expected %f)\n", U3(n[2]).z, 1.9f);
+    check_vector(&n[0], 1.1f, 1.2f, 1.3f, 32);
+    check_vector(&n[1], 1.4f, 1.5f, 1.6f, 32);
+    check_vector(&n[2], 1.7f, 1.8f, 1.9f, 32);
 
     IDirect3DRMMeshBuilder_Release(pMeshBuilder);
 
@@ -871,43 +870,14 @@ static void test_Face(void)
         hr = IDirect3DRMFace_GetVertices(face, &count, v2, n2);
         ok(hr == D3DRM_OK, "Cannot get vertices information (hr = %x)\n", hr);
         ok(count == 3, "Wrong number of vertices %d (must be 3)\n", count);
-        ok(U1(v2[0]).x == U1(v1[0]).x, "Wrong component v2[0].x = %f (expected %f)\n",
-           U1(v2[0]).x, U1(v1[0]).x);
-        ok(U2(v2[0]).y == U2(v1[0]).y, "Wrong component v2[0].y = %f (expected %f)\n",
-           U2(v2[0]).y, U2(v1[0]).y);
-        ok(U3(v2[0]).z == U3(v1[0]).z, "Wrong component v2[0].z = %f (expected %f)\n",
-           U3(v2[0]).z, U3(v1[0]).z);
-        ok(U1(v2[1]).x == U1(v1[1]).x, "Wrong component v2[1].x = %f (expected %f)\n",
-           U1(v2[1]).x, U1(v1[1]).x);
-        ok(U2(v2[1]).y == U2(v1[1]).y, "Wrong component v2[1].y = %f (expected %f)\n",
-           U2(v2[1]).y, U2(v1[1]).y);
-        ok(U3(v2[1]).z == U3(v1[1]).z, "Wrong component v2[1].z = %f (expected %f)\n",
-           U3(v2[1]).z, U3(v1[1]).z);
-        ok(U1(v2[2]).x == U1(v1[2]).x, "Wrong component v2[2].x = %f (expected %f)\n",
-           U1(v2[2]).x, U1(v1[2]).x);
-        ok(U2(v2[2]).y == U2(v1[2]).y, "Wrong component v2[2].y = %f (expected %f)\n",
-           U2(v2[2]).y, U2(v1[2]).y);
-        ok(U3(v2[2]).z == U3(v1[2]).z, "Wrong component v2[2].z = %f (expected %f)\n",
-           U3(v2[2]).z, U3(v1[2]).z);
 
-        ok(U1(n2[0]).x == U1(n1[0]).x, "Wrong component n2[0].x = %f (expected %f)\n",
-           U1(n2[0]).x, U1(n1[0]).x);
-        ok(U2(n2[0]).y == U2(n1[0]).y, "Wrong component n2[0].y = %f (expected %f)\n",
-           U2(n2[0]).y, U2(n1[0]).y);
-        ok(U3(n2[0]).z == U3(n1[0]).z, "Wrong component n2[0].z = %f (expected %f)\n",
-           U3(n2[0]).z, U3(n1[0]).z);
-        ok(U1(n2[1]).x == U1(n1[1]).x, "Wrong component n2[1].x = %f (expected %f)\n",
-           U1(n2[1]).x, U1(n1[1]).x);
-        ok(U2(n2[1]).y == U2(n1[1]).y, "Wrong component n2[1].y = %f (expected %f)\n",
-           U2(n2[1]).y, U2(n1[1]).y);
-        ok(U3(n2[1]).z == U3(n1[1]).z, "Wrong component n2[1].z = %f (expected %f)\n",
-           U3(n2[1]).z, U3(n1[1]).z);
-        ok(U1(n2[2]).x == U1(n1[2]).x, "Wrong component n2[2].x = %f (expected %f)\n",
-           U1(n2[2]).x, U1(n1[2]).x);
-        ok(U2(n2[2]).y == U2(n1[2]).y, "Wrong component n2[2].y = %f (expected %f)\n",
-           U2(n2[2]).y, U2(n1[2]).y);
-        ok(U3(n2[2]).z == U3(n1[2]).z, "Wrong component n2[2].z = %f (expected %f)\n",
-           U3(n2[2]).z, U3(n1[2]).z);
+        vector_eq(&v1[0], &v2[0]);
+        vector_eq(&v1[1], &v2[1]);
+        vector_eq(&v1[2], &v2[2]);
+
+        vector_eq(&n1[0], &n2[0]);
+        vector_eq(&n1[1], &n2[1]);
+        vector_eq(&n1[2], &n2[2]);
 
         IDirect3DRMFace_Release(face);
         IDirect3DRMFaceArray_Release(array1);
