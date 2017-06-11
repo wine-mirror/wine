@@ -123,6 +123,19 @@ static HRESULT d3drm_create_frame_object(void **object, IDirect3DRM *d3drm)
     return hr;
 }
 
+static HRESULT d3drm_create_light_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_light *light;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_light_create(&light, d3drm)))
+        return hr;
+
+    *object = &light->IDirect3DRMLight_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -1271,6 +1284,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         {&CLSID_CDirect3DRMFace, d3drm_create_face_object},
         {&CLSID_CDirect3DRMMeshBuilder, d3drm_create_mesh_builder_object},
         {&CLSID_CDirect3DRMFrame, d3drm_create_frame_object},
+        {&CLSID_CDirect3DRMLight, d3drm_create_light_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",
@@ -1419,15 +1433,19 @@ static HRESULT WINAPI d3drm3_CreateTexture(IDirect3DRM3 *iface,
 static HRESULT WINAPI d3drm3_CreateLight(IDirect3DRM3 *iface,
         D3DRMLIGHTTYPE type, D3DCOLOR color, IDirect3DRMLight **light)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    struct d3drm_light *object;
     HRESULT hr;
 
     FIXME("iface %p, type %#x, color 0x%08x, light %p partial stub!\n", iface, type, color, light);
 
-    if (SUCCEEDED(hr = Direct3DRMLight_create((IUnknown **)light)))
+    if (SUCCEEDED(hr = d3drm_light_create(&object, &d3drm->IDirect3DRM_iface)))
     {
-        IDirect3DRMLight_SetType(*light, type);
-        IDirect3DRMLight_SetColor(*light, color);
+        IDirect3DRMLight_SetType(&object->IDirect3DRMLight_iface, type);
+        IDirect3DRMLight_SetColor(&object->IDirect3DRMLight_iface, color);
     }
+
+    *light = &object->IDirect3DRMLight_iface;
 
     return hr;
 }
@@ -1435,16 +1453,20 @@ static HRESULT WINAPI d3drm3_CreateLight(IDirect3DRM3 *iface,
 static HRESULT WINAPI d3drm3_CreateLightRGB(IDirect3DRM3 *iface, D3DRMLIGHTTYPE type,
         D3DVALUE red, D3DVALUE green, D3DVALUE blue, IDirect3DRMLight **light)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    struct d3drm_light *object;
     HRESULT hr;
 
     FIXME("iface %p, type %#x, red %.8e, green %.8e, blue %.8e, light %p partial stub!\n",
             iface, type, red, green, blue, light);
 
-    if (SUCCEEDED(hr = Direct3DRMLight_create((IUnknown **)light)))
+    if (SUCCEEDED(hr = d3drm_light_create(&object, &d3drm->IDirect3DRM_iface)))
     {
-        IDirect3DRMLight_SetType(*light, type);
-        IDirect3DRMLight_SetColorRGB(*light, red, green, blue);
+        IDirect3DRMLight_SetType(&object->IDirect3DRMLight_iface, type);
+        IDirect3DRMLight_SetColorRGB(&object->IDirect3DRMLight_iface, red, green, blue);
     }
+
+    *light = &object->IDirect3DRMLight_iface;
 
     return hr;
 }

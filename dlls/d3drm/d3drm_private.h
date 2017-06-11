@@ -147,6 +147,22 @@ struct d3drm_mesh_builder
     DWORD *material_indices;
 };
 
+struct d3drm_light
+{
+    struct d3drm_object obj;
+    IDirect3DRMLight IDirect3DRMLight_iface;
+    LONG ref;
+    IDirect3DRM *d3drm;
+    D3DRMLIGHTTYPE type;
+    D3DCOLOR color;
+    D3DVALUE range;
+    D3DVALUE cattenuation;
+    D3DVALUE lattenuation;
+    D3DVALUE qattenuation;
+    D3DVALUE umbra;
+    D3DVALUE penumbra;
+};
+
 HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, IDirectDraw *ddraw,
         IDirectDrawClipper *clipper, int width, int height, IDirectDrawSurface **surface) DECLSPEC_HIDDEN;
@@ -168,7 +184,7 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
 HRESULT d3drm_face_create(struct d3drm_face **face) DECLSPEC_HIDDEN;
 HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT d3drm_mesh_builder_create(struct d3drm_mesh_builder **mesh_builder, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
-HRESULT Direct3DRMLight_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
+HRESULT d3drm_light_create(struct d3drm_light **light, IDirect3DRM *d3drm) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMesh_create(IDirect3DRMMesh** obj) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMMaterial_create(IDirect3DRMMaterial2** ret_iface) DECLSPEC_HIDDEN;
 

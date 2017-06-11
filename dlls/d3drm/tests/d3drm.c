@@ -1403,6 +1403,7 @@ static void test_object(void)
         { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame },
         { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame2 },
         { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame3 },
+        { &CLSID_CDirect3DRMLight,         &IID_IDirect3DRMLight },
     };
     IDirect3DRM *d3drm1;
     IDirect3DRM2 *d3drm2;
@@ -1427,7 +1428,8 @@ static void test_object(void)
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
         BOOL takes_ref = IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMeshBuilder) ||
-                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMFrame);
+                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMFrame) ||
+                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMLight);
 
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);
@@ -2062,6 +2064,7 @@ static void test_Viewport(void)
 
 static void test_Light(void)
 {
+    IDirect3DRMObject *object;
     HRESULT hr;
     IDirect3DRM *d3drm;
     IDirect3DRMLight *light;
@@ -2073,6 +2076,10 @@ static void test_Light(void)
 
     hr = IDirect3DRM_CreateLightRGB(d3drm, D3DRMLIGHT_SPOT, 0.5, 0.5, 0.5, &light);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMLight interface (hr = %x)\n", hr);
+
+    hr = IDirect3DRMLight_QueryInterface(light, &IID_IDirect3DRMObject, (void **)&object);
+    ok(SUCCEEDED(hr), "Failed to get IDirect3DRMObject, hr %#x.\n", hr);
+    IDirect3DRMObject_Release(object);
 
     test_class_name((IDirect3DRMObject *)light, "Light");
 
