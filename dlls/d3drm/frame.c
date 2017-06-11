@@ -533,6 +533,7 @@ static ULONG WINAPI d3drm_frame3_Release(IDirect3DRMFrame3 *iface)
 
     if (!refcount)
     {
+        d3drm_object_cleanup((IDirect3DRMObject *)&frame->IDirect3DRMFrame_iface, &frame->obj);
         for (i = 0; i < frame->nb_children; ++i)
         {
             IDirect3DRMFrame3_Release(frame->children[i]);
@@ -548,6 +549,7 @@ static ULONG WINAPI d3drm_frame3_Release(IDirect3DRMFrame3 *iface)
             IDirect3DRMLight_Release(frame->lights[i]);
         }
         HeapFree(GetProcessHeap(), 0, frame->lights);
+        IDirect3DRM_Release(frame->d3drm);
         HeapFree(GetProcessHeap(), 0, frame);
     }
 
@@ -599,49 +601,61 @@ static HRESULT WINAPI d3drm_frame1_Clone(IDirect3DRMFrame *iface,
 static HRESULT WINAPI d3drm_frame3_AddDestroyCallback(IDirect3DRMFrame3 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_add_destroy_callback(&frame->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_frame2_AddDestroyCallback(IDirect3DRMFrame2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMFrame3_AddDestroyCallback(&frame->IDirect3DRMFrame3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_frame1_AddDestroyCallback(IDirect3DRMFrame *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMFrame3_AddDestroyCallback(&frame->IDirect3DRMFrame3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_frame3_DeleteDestroyCallback(IDirect3DRMFrame3 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return d3drm_object_delete_destroy_callback(&frame->obj, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_frame2_DeleteDestroyCallback(IDirect3DRMFrame2 *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame2(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMFrame3_DeleteDestroyCallback(&frame->IDirect3DRMFrame3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_frame1_DeleteDestroyCallback(IDirect3DRMFrame *iface,
         D3DRMOBJECTCALLBACK cb, void *ctx)
 {
-    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+    struct d3drm_frame *frame = impl_from_IDirect3DRMFrame(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, cb %p, ctx %p.\n", iface, cb, ctx);
+
+    return IDirect3DRMFrame3_DeleteDestroyCallback(&frame->IDirect3DRMFrame3_iface, cb, ctx);
 }
 
 static HRESULT WINAPI d3drm_frame3_SetAppData(IDirect3DRMFrame3 *iface, DWORD data)
@@ -2958,6 +2972,8 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
         IDirect3DRMFrame_Release(parent_frame);
         IDirect3DRMFrame3_AddChild(p, &object->IDirect3DRMFrame3_iface);
     }
+
+    IDirect3DRM_AddRef(object->d3drm);
 
     *frame = object;
 

@@ -110,6 +110,19 @@ static HRESULT d3drm_create_mesh_builder_object(void **object, IDirect3DRM *d3dr
     return hr;
 }
 
+static HRESULT d3drm_create_frame_object(void **object, IDirect3DRM *d3drm)
+{
+    struct d3drm_frame *frame;
+    HRESULT hr;
+
+    if (FAILED(hr = d3drm_frame_create(&frame, NULL, d3drm)))
+        return hr;
+
+    *object = &frame->IDirect3DRMFrame_iface;
+
+    return hr;
+}
+
 struct d3drm
 {
     IDirect3DRM IDirect3DRM_iface;
@@ -1257,6 +1270,7 @@ static HRESULT WINAPI d3drm3_CreateObject(IDirect3DRM3 *iface,
         {&CLSID_CDirect3DRMViewport, d3drm_create_viewport_object},
         {&CLSID_CDirect3DRMFace, d3drm_create_face_object},
         {&CLSID_CDirect3DRMMeshBuilder, d3drm_create_mesh_builder_object},
+        {&CLSID_CDirect3DRMFrame, d3drm_create_frame_object},
     };
 
     TRACE("iface %p, clsid %s, outer %p, iid %s, out %p.\n",

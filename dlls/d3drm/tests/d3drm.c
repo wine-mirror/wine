@@ -907,15 +907,19 @@ static void test_Frame(void)
     IDirect3DRMLight *light1;
     IDirect3DRMLight *light_tmp;
     IDirect3DRMLightArray *light_array;
+    ULONG ref, ref2;
     D3DCOLOR color;
     DWORD count;
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface (hr = %x)\n", hr);
 
+    ref = get_refcount((IUnknown *)d3drm);
     hr = IDirect3DRM_CreateFrame(d3drm, NULL, &pFrameC);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRMFrame interface (hr = %x)\n", hr);
     CHECK_REFCOUNT(pFrameC, 1);
+    ref2 = get_refcount((IUnknown *)d3drm);
+    ok(ref2 > ref, "Expected d3drm object to be referenced.\n");
 
     test_class_name((IDirect3DRMObject *)pFrameC, "Frame");
 
@@ -1396,6 +1400,9 @@ static void test_object(void)
         { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder },
         { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder2 },
         { &CLSID_CDirect3DRMMeshBuilder,   &IID_IDirect3DRMMeshBuilder3 },
+        { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame },
+        { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame2 },
+        { &CLSID_CDirect3DRMFrame,         &IID_IDirect3DRMFrame3 },
     };
     IDirect3DRM *d3drm1;
     IDirect3DRM2 *d3drm2;
@@ -1419,7 +1426,8 @@ static void test_object(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
-        BOOL takes_ref = IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMeshBuilder);
+        BOOL takes_ref = IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMMeshBuilder) ||
+                IsEqualGUID(tests[i].clsid, &CLSID_CDirect3DRMFrame);
 
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);
@@ -1439,7 +1447,7 @@ static void test_object(void)
         {
             ref2 = get_refcount((IUnknown *)d3drm1);
             if (takes_ref)
-                ok(ref2 == ref1 + 1, "Test %u: expected ref2 == ref1 + 1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+                ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             else
                 ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
 
@@ -1462,7 +1470,7 @@ static void test_object(void)
             ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
             if (takes_ref)
-                ok(ref2 == ref1 + 1, "Test %u: expected ref2 == ref1 + 1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+                ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             else
                 ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
@@ -1481,7 +1489,7 @@ static void test_object(void)
             ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#x.\n", i, hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
             if (takes_ref)
-                ok(ref2 == ref1 + 1, "Test %u: expected ref2 == ref1 + 1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
+                ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             else
                 ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %u, ref2 = %u.\n", i, ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
@@ -2019,8 +2027,7 @@ static void test_Viewport(void)
     IDirect3DRMDevice3_Release(device3);
     IDirect3DRMDevice_Release(device1);
     ref4 = get_refcount((IUnknown *)d3drm1);
-    todo_wine ok(ref4 > initial_ref1, "Expected ref4 > initial_ref1, got initial_ref1 = %u, ref4 = %u.\n", initial_ref1,
-            ref4);
+    ok(ref4 > initial_ref1, "Expected ref4 > initial_ref1, got initial_ref1 = %u, ref4 = %u.\n", initial_ref1, ref4);
     ref4 = get_refcount((IUnknown *)d3drm2);
     ok(ref4 == initial_ref2, "Expected ref4 == initial_ref2, got initial_ref2 = %u, ref4 = %u.\n", initial_ref2, ref4);
     ref4 = get_refcount((IUnknown *)d3drm3);
@@ -2032,8 +2039,7 @@ static void test_Viewport(void)
 
     IDirect3DRMFrame3_Release(frame3);
     ref4 = get_refcount((IUnknown *)d3drm1);
-    todo_wine ok(ref4 > initial_ref1, "Expected ref4 > initial_ref1, got initial_ref1 = %u, ref4 = %u.\n", initial_ref1,
-            ref4);
+    ok(ref4 > initial_ref1, "Expected ref4 > initial_ref1, got initial_ref1 = %u, ref4 = %u.\n", initial_ref1, ref4);
     ref4 = get_refcount((IUnknown *)d3drm2);
     ok(ref4 == initial_ref2, "Expected ref4 == initial_ref2, got initial_ref2 = %u, ref4 = %u.\n", initial_ref2, ref4);
     ref4 = get_refcount((IUnknown *)d3drm3);
