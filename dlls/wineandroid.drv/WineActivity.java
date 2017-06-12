@@ -53,6 +53,7 @@ public class WineActivity extends Activity
 {
     private native String wine_init( String[] cmdline, String[] env );
     public native void wine_desktop_changed( int width, int height );
+    public native void wine_config_changed( int dpi );
     public native void wine_surface_changed( int hwnd, Surface surface );
     public native boolean wine_motion_event( int hwnd, int action, int x, int y, int state, int vscroll );
     public native boolean wine_keyboard_event( int hwnd, int action, int keycode, int state );
@@ -508,6 +509,7 @@ public class WineActivity extends Activity
         top_view = new TopView( this, hwnd );
         setContentView( top_view );
         progress_dialog.dismiss();
+        wine_config_changed( getResources().getConfiguration().densityDpi );
     }
 
     public void create_window( int hwnd, int parent, int pid )

@@ -224,6 +224,23 @@ void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height )
 
 
 /***********************************************************************
+ *           config_changed
+ *
+ * JNI callback, runs in the context of the Java thread.
+ */
+void config_changed( JNIEnv *env, jobject obj, jint dpi )
+{
+    union event_data data;
+
+    memset( &data, 0, sizeof(data) );
+    data.type = CONFIG_CHANGED;
+    data.cfg.dpi = dpi;
+    p__android_log_print( ANDROID_LOG_INFO, "wine", "config_changed: %u dpi", dpi );
+    send_event( &data );
+}
+
+
+/***********************************************************************
  *           surface_changed
  *
  * JNI callback, runs in the context of the Java thread.
@@ -426,6 +443,11 @@ static int process_events( DWORD mask )
             init_monitors( screen_width, screen_height );
             SetWindowPos( GetDesktopWindow(), 0, 0, 0, screen_width, screen_height,
                           SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
+            break;
+
+        case CONFIG_CHANGED:
+            TRACE( "CONFIG_CHANGED dpi %u\n", event->data.cfg.dpi );
+            set_screen_dpi( event->data.cfg.dpi );
             break;
 
         case SURFACE_CHANGED:

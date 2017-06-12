@@ -28,6 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "android.h"
 #include "wine/server.h"
 #include "wine/library.h"
@@ -81,6 +82,22 @@ void init_monitors( int width, int height )
            wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &default_monitor.rcWork ));
 }
 
+
+/******************************************************************************
+ *           set_screen_dpi
+ */
+void set_screen_dpi( DWORD dpi )
+{
+    static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
+    static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s',0};
+    HKEY hkey;
+
+    if (!RegCreateKeyW( HKEY_CURRENT_CONFIG, dpi_key_name, &hkey ))
+    {
+        RegSetValueExW( hkey, dpi_value_name, 0, REG_DWORD, (void *)&dpi, sizeof(DWORD) );
+        RegCloseKey( hkey );
+    }
+}
 
 /**********************************************************************
  *	     fetch_display_metrics
@@ -390,6 +407,7 @@ const struct gdi_dc_funcs * CDECL ANDROID_get_gdi_driver( unsigned int version )
 static const JNINativeMethod methods[] =
 {
     { "wine_desktop_changed", "(II)V", desktop_changed },
+    { "wine_config_changed", "(I)V", config_changed },
     { "wine_surface_changed", "(ILandroid/view/Surface;)V", surface_changed },
     { "wine_motion_event", "(IIIIII)Z", motion_event },
     { "wine_keyboard_event", "(IIII)Z", keyboard_event },

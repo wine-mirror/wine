@@ -81,10 +81,12 @@ enum android_window_messages
 
 extern HWND get_capture_window(void) DECLSPEC_HIDDEN;
 extern void init_monitors( int width, int height ) DECLSPEC_HIDDEN;
+extern void set_screen_dpi( DWORD dpi ) DECLSPEC_HIDDEN;
 extern void update_keyboard_lock_state( WORD vkey, UINT state ) DECLSPEC_HIDDEN;
 
 /* JNI entry points */
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height ) DECLSPEC_HIDDEN;
+extern void config_changed( JNIEnv *env, jobject obj, jint dpi ) DECLSPEC_HIDDEN;
 extern void surface_changed( JNIEnv *env, jobject obj, jint win, jobject surface ) DECLSPEC_HIDDEN;
 extern jboolean motion_event( JNIEnv *env, jobject obj, jint win, jint action,
                               jint x, jint y, jint state, jint vscroll ) DECLSPEC_HIDDEN;
@@ -94,6 +96,7 @@ extern jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action,
 enum event_type
 {
     DESKTOP_CHANGED,
+    CONFIG_CHANGED,
     SURFACE_CHANGED,
     MOTION_EVENT,
     KEYBOARD_EVENT,
@@ -108,6 +111,11 @@ union event_data
         unsigned int    width;
         unsigned int    height;
     } desktop;
+    struct
+    {
+        enum event_type type;
+        unsigned int    dpi;
+    } cfg;
     struct
     {
         enum event_type type;
