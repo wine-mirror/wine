@@ -5858,7 +5858,8 @@ static void test_process_access(void)
         case GENERIC_WRITE:
             ok(access == map[i].mapped ||
                access == (map[i].mapped | PROCESS_TERMINATE) /* before Vista */ ||
-               access == (map[i].mapped | PROCESS_SET_LIMITED_INFORMATION) /* win8 */,
+               access == (map[i].mapped | PROCESS_SET_LIMITED_INFORMATION) /* win8 */ ||
+               access == (map[i].mapped | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SET_LIMITED_INFORMATION) /* Win10 Anniversary Update */,
                "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             break;
         case GENERIC_EXECUTE:
