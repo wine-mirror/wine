@@ -6,7 +6,10 @@
         android:label="Wine" >
         <activity
             android:label="Wine"
-            android:name=".WineActivity" >
+            android:name=".WineActivity"
+            android:launchMode="singleInstance"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:screenOrientation="sensorLandscape" >
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
