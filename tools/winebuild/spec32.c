@@ -84,7 +84,9 @@ static int has_relays( DLLSPEC *spec )
 {
     int i;
 
-    if (target_cpu != CPU_x86 && target_cpu != CPU_x86_64 && target_cpu != CPU_ARM) return 0;
+    if (target_cpu != CPU_x86 && target_cpu != CPU_x86_64 &&
+        target_cpu != CPU_ARM && target_cpu != CPU_ARM64)
+        return 0;
 
     for (i = spec->base; i <= spec->limit; i++)
     {
@@ -241,6 +243,41 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "2:\t.long .L__wine_spec_relay_descr-1b\n" );
             break;
         }
+
+        case CPU_ARM64:
+            switch (args)
+            {
+            default:
+            case 8:
+            case 7:  output( "\tstp x6, x7, [SP,#-16]!\n" );
+            /* fall through */
+            case 6:
+            case 5:  output( "\tstp x4, x5, [SP,#-16]!\n" );
+            /* fall through */
+            case 4:
+            case 3:  output( "\tstp x2, x3, [SP,#-16]!\n" );
+            /* fall through */
+            case 2:
+            case 1:  output( "\tstp x0, x1, [SP,#-16]!\n" );
+            /* fall through */
+            case 0:  break;
+            }
+            output( "\tstp x29, x30, [SP,#-16]!\n" );
+            output( "\tstp x8, x9, [SP,#-16]!\n" );
+            output( "\tmov x2, SP\n");
+            if (odp->flags & FLAG_RET64) flags |= 1;
+            output( "\tmov w1, #%u\n", (flags << 24) );
+            if (args) output( "\tadd w1, w1, #%u\n", (args << 16) );
+            if (i - spec->base) output( "\tadd w1, w1, #%u\n", i - spec->base );
+            output( "\tldr x0, 1f\n");
+            output( "\tldr x3, [x0, #8]\n");
+            output( "\tblr x3\n");
+            output( "\tadd SP, SP, #16\n" );
+            output( "\tldp x29, x30, [SP], #16\n" );
+            if (args) output( "\tadd SP, SP, #%u\n", 8 * ((min(args, 8) + 1) & 0xe) );
+            output( "\tret\n");
+            output( "\t1: .quad .L__wine_spec_relay_descr\n");
+            break;
 
         case CPU_x86_64:
             output( "\tsubq $40,%%rsp\n" );
