@@ -355,86 +355,99 @@ static VOID WINAPI callback(
     switch (dwInternetStatus)
     {
         case INTERNET_STATUS_RESOLVING_NAME:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RESOLVING_NAME \"%s\" %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RESOLVING_NAME \"%s\" %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
             break;
         case INTERNET_STATUS_NAME_RESOLVED:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_NAME_RESOLVED \"%s\" %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_NAME_RESOLVED \"%s\" %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
             break;
         case INTERNET_STATUS_CONNECTING_TO_SERVER:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTING_TO_SERVER \"%s\" %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTING_TO_SERVER \"%s\" %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             ok(dwStatusInformationLength == strlen(lpvStatusInformation)+1, "unexpected size %u\n",
                dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
             break;
         case INTERNET_STATUS_CONNECTED_TO_SERVER:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTED_TO_SERVER \"%s\" %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTED_TO_SERVER \"%s\" %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      (LPCSTR)lpvStatusInformation,dwStatusInformationLength);
             ok(dwStatusInformationLength == strlen(lpvStatusInformation)+1, "unexpected size %u\n",
                dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
             break;
         case INTERNET_STATUS_SENDING_REQUEST:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_SENDING_REQUEST %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_SENDING_REQUEST %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_REQUEST_SENT:
             ok(dwStatusInformationLength == sizeof(DWORD),
                 "info length should be sizeof(DWORD) instead of %d\n",
                 dwStatusInformationLength);
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_REQUEST_SENT 0x%x %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_REQUEST_SENT 0x%x %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_RECEIVING_RESPONSE:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RECEIVING_RESPONSE %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RECEIVING_RESPONSE %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_RESPONSE_RECEIVED:
             ok(dwStatusInformationLength == sizeof(DWORD),
                 "info length should be sizeof(DWORD) instead of %d\n",
                 dwStatusInformationLength);
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RESPONSE_RECEIVED 0x%x %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_RESPONSE_RECEIVED 0x%x %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      *(DWORD *)lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CTL_RESPONSE_RECEIVED:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CTL_RESPONSE_RECEIVED %p %d\n",
-                GetCurrentThreadId(), hInternet,dwContext,
-                lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CTL_RESPONSE_RECEIVED %p %d\n",
+                      GetCurrentThreadId(), hInternet,dwContext,
+                      lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_PREFETCH:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_PREFETCH %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_PREFETCH %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CLOSING_CONNECTION:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CLOSING_CONNECTION %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CLOSING_CONNECTION %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_CONNECTION_CLOSED:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTION_CLOSED %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_CONNECTION_CLOSED %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      lpvStatusInformation,dwStatusInformationLength);
             break;
         case INTERNET_STATUS_HANDLE_CREATED:
             ok(dwStatusInformationLength == sizeof(HINTERNET),
                 "info length should be sizeof(HINTERNET) instead of %d\n",
                 dwStatusInformationLength);
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CREATED %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                *(HINTERNET *)lpvStatusInformation,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CREATED %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      *(HINTERNET *)lpvStatusInformation,dwStatusInformationLength);
             CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
             SET_EXPECT(INTERNET_STATUS_DETECTING_PROXY);
             break;
@@ -442,9 +455,10 @@ static VOID WINAPI callback(
             ok(dwStatusInformationLength == sizeof(HINTERNET),
                 "info length should be sizeof(HINTERNET) instead of %d\n",
                 dwStatusInformationLength);
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CLOSING %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                *(HINTERNET *)lpvStatusInformation, dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CLOSING %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      *(HINTERNET *)lpvStatusInformation, dwStatusInformationLength);
             if(!InterlockedDecrement(&close_handle_cnt))
                 SetEvent(complete_event);
             break;
@@ -455,31 +469,35 @@ static VOID WINAPI callback(
                 "info length should be sizeof(INTERNET_ASYNC_RESULT) instead of %d\n",
                 dwStatusInformationLength);
             ok(iar->dwResult == 1 || iar->dwResult == 0, "iar->dwResult = %ld\n", iar->dwResult);
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_REQUEST_COMPLETE {%ld,%d} %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                iar->dwResult,iar->dwError,dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_REQUEST_COMPLETE {%ld,%d} %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      iar->dwResult,iar->dwError,dwStatusInformationLength);
             req_error = iar->dwError;
             if(!close_handle_cnt)
                 SetEvent(complete_event);
             break;
         }
         case INTERNET_STATUS_REDIRECT:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_REDIRECT \"%s\" %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                (LPCSTR)lpvStatusInformation, dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_REDIRECT \"%s\" %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      (LPCSTR)lpvStatusInformation, dwStatusInformationLength);
             *(LPSTR)lpvStatusInformation = '\0';
             CLEAR_NOTIFIED(INTERNET_STATUS_DETECTING_PROXY);
             SET_EXPECT(INTERNET_STATUS_DETECTING_PROXY);
             break;
         case INTERNET_STATUS_INTERMEDIATE_RESPONSE:
-            trace("%04x:Callback %p 0x%lx INTERNET_STATUS_INTERMEDIATE_RESPONSE %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext,
-                lpvStatusInformation, dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx INTERNET_STATUS_INTERMEDIATE_RESPONSE %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext,
+                      lpvStatusInformation, dwStatusInformationLength);
             break;
         default:
-            trace("%04x:Callback %p 0x%lx %d %p %d\n",
-                GetCurrentThreadId(), hInternet, dwContext, dwInternetStatus,
-                lpvStatusInformation, dwStatusInformationLength);
+            if(winetest_debug > 1)
+                trace("%04x:Callback %p 0x%lx %d %p %d\n",
+                      GetCurrentThreadId(), hInternet, dwContext, dwInternetStatus,
+                      lpvStatusInformation, dwStatusInformationLength);
     }
 }
 
@@ -795,7 +813,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
         GetLastError());
 
     length = 100;
-    trace("Entering Query loop\n");
+    if(winetest_debug > 1)
+        trace("Entering Query loop\n");
 
     while (TRUE)
     {
@@ -823,7 +842,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
             }
             else if (GetLastError() == ERROR_IO_PENDING)
             {
-                trace("PENDING\n");
+                if(winetest_debug > 1)
+                    trace("pending\n");
                 /* on some tests, InternetQueryDataAvailable returns non-zero length and ERROR_IO_PENDING */
                 if(!(test->flags & TESTF_CHUNKED))
                     ok(!length, "InternetQueryDataAvailable returned ERROR_IO_PENDING and %u length\n", length);
@@ -842,7 +862,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
         }
         CLEAR_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
 
-        trace("LENGTH %d\n", length);
+        if(winetest_debug > 1)
+            trace("length %u\n", length);
         if(test->flags & TESTF_CHUNKED)
             ok(length <= 8192, "length = %d, expected <= 8192\n", length);
         if (length)
@@ -854,7 +875,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
 
             buffer[length]=0;
 
-            trace("ReadFile -> %s %i\n",res?"TRUE":"FALSE",length);
+            if(winetest_debug > 1)
+                trace("ReadFile -> %s %i\n", res ? "TRUE" : "FALSE", length);
 
             if(test->content)
                 ok(!strcmp(buffer, test->content), "buffer = '%s', expected '%s'\n", buffer, test->content);
@@ -870,7 +892,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
         CHECK_NOTIFIED2(INTERNET_STATUS_CONNECTION_CLOSED, 2);
     }
 abort:
-    trace("aborting\n");
+    if(winetest_debug > 1)
+        trace("aborting\n");
     close_async_handle(hi, 2);
     first_connection_to_test_url = FALSE;
 }
@@ -6037,7 +6060,8 @@ static void WINAPI cb(HINTERNET handle, DWORD_PTR context, DWORD status, LPVOID 
     INTERNET_ASYNC_RESULT *result = info;
     struct context *ctx = (struct context *)context;
 
-    trace("%p 0x%08lx %u %p 0x%08x\n", handle, context, status, info, size);
+    if(winetest_debug > 1)
+        trace("%p 0x%08lx %u %p 0x%08x\n", handle, context, status, info, size);
 
     switch(status) {
     case INTERNET_STATUS_REQUEST_COMPLETE:
@@ -6485,7 +6509,8 @@ static void WINAPI closetest_callback(HINTERNET hInternet, DWORD_PTR dwContext, 
     DWORD len, type;
     BOOL res;
 
-    trace("closetest_callback %p: %d\n", hInternet, dwInternetStatus);
+    if(winetest_debug > 1)
+        trace("closetest_callback %p: %d\n", hInternet, dwInternetStatus);
 
     ok(hInternet == closetest_session || hInternet == closetest_conn || hInternet == closetest_req,
        "Unexpected hInternet %p\n", hInternet);
