@@ -7250,7 +7250,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     {
         unsigned int in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
 
-        if (args->vp_mode == vertexshader)
+        if (args->vp_mode == vertexshader && reg_maps->input_registers)
             shader_glsl_declare_shader_inputs(gl_info, buffer, in_count);
         shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
     }
