@@ -296,6 +296,11 @@ static unsigned int get_offset_reg(unsigned int table, unsigned int reg_idx)
     return table == PRES_REGTAB_OBCONST ? reg_idx : reg_idx << 2;
 }
 
+static unsigned int get_reg_components(unsigned int table)
+{
+    return get_offset_reg(table, 1);
+}
+
 #define PRES_BITMASK_BLOCK_SIZE (sizeof(unsigned int) * 8)
 
 static HRESULT init_set_constants(struct d3dx_const_tab *const_tab, ID3DXConstantTable *ctab);
@@ -836,10 +841,10 @@ static HRESULT parse_preshader(struct d3dx_preshader *pres, unsigned int *ptr, u
     if (FAILED(hr))
         return hr;
 
-    if (const_count % get_offset_reg(PRES_REGTAB_IMMED, 1))
+    if (const_count % get_reg_components(PRES_REGTAB_IMMED))
     {
         FIXME("const_count %u is not a multiple of %u.\n", const_count,
-                get_offset_reg(PRES_REGTAB_IMMED, 1));
+                get_reg_components(PRES_REGTAB_IMMED));
         return D3DXERR_INVALIDDATA;
     }
     pres->regs.table_sizes[PRES_REGTAB_IMMED] = get_reg_offset(PRES_REGTAB_IMMED, const_count);
@@ -1026,7 +1031,7 @@ static void get_const_upload_info(struct d3dx_const_param_eval_output *const_set
         info->major = param->rows;
         info->minor = param->columns;
     }
-    info->major_stride = max(info->minor, get_offset_reg(table, 1));
+    info->major_stride = max(info->minor, get_reg_components(table));
     info->major_count = min(info->major * info->major_stride,
             get_offset_reg(table, const_set->register_count) + info->major_stride - 1) / info->major_stride;
     info->count = info->major_count * info->minor;
@@ -1411,7 +1416,7 @@ static double exec_get_arg(struct d3dx_regstore *rs, const struct d3dx_pres_oper
         if (reg_index >= rs->table_sizes[table])
             return 0.0;
 
-        offset = get_offset_reg(table, reg_index) + offset % get_offset_reg(table, 1);
+        offset = get_offset_reg(table, reg_index) + offset % get_reg_components(table);
     }
 
     return exec_get_reg_value(rs, table, offset);
