@@ -1139,6 +1139,18 @@ static void test_acmFormatSuggest(void)
     ok(rc == MMSYSERR_INVALPARAM, "failed with error 0x%x\n", rc);
 }
 
+static void test_acmFormatTagDetails(void)
+{
+    ACMFORMATTAGDETAILSW aftd = {0};
+    MMRESULT rc;
+
+    aftd.cbStruct = sizeof(aftd);
+    aftd.dwFormatTag = WAVE_FORMAT_MPEGLAYER3;
+    rc = acmFormatTagDetailsW(NULL, &aftd, ACM_FORMATTAGDETAILSF_FORMATTAG);
+    if (rc == MMSYSERR_NOERROR)
+        ok(aftd.cbFormatSize == sizeof(MPEGLAYER3WAVEFORMAT), "got %d\n", aftd.cbFormatSize);
+}
+
 static struct
 {
     struct
@@ -1306,6 +1318,7 @@ START_TEST(msacm)
     driver_tests();
     test_prepareheader();
     test_acmFormatSuggest();
+    test_acmFormatTagDetails();
     /* Test acmDriverAdd in the end as it may conflict
      * with other tests due to codec lookup order */
     test_acmDriverAdd();
