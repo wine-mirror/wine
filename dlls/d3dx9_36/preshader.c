@@ -368,7 +368,7 @@ static void regstore_set_modified(struct d3dx_regstore *rs, unsigned int table,
             get_reg_offset(table, start_offset + count - 1));
 }
 
-static void regstore_set_values(struct d3dx_regstore *rs, unsigned int table, void *data,
+static void regstore_set_values(struct d3dx_regstore *rs, unsigned int table, const void *data,
         unsigned int start_offset, unsigned int count)
 {
     if (!count)
