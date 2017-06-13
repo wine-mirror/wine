@@ -1206,6 +1206,19 @@ static void test_key_creation_and_deletion(void)
     verify_key_nonexist(hkey, "Subkey2a");
     verify_key_nonexist(hkey, "Subkey2b");
 
+    /* Test case sensitivity when creating and deleting registry keys. */
+    exec_import_str("REGEDIT4\n\n"
+                    "[hkey_CURRENT_user\\" KEY_BASE "\\Subkey3a]\n\n"
+                    "[HkEy_CuRrEnT_uSeR\\" KEY_BASE "\\SuBkEy3b]\n\n");
+    todo_wine verify_key_exist(hkey, "Subkey3a");
+    todo_wine verify_key_exist(hkey, "Subkey3b");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
+                    "[-hKeY_cUrReNt_UsEr\\" KEY_BASE "\\sUbKeY3B]\n\n");
+    verify_key_nonexist(hkey, "Subkey3a");
+    verify_key_nonexist(hkey, "Subkey3b");
+
     lr = RegCloseKey(hkey);
     ok(lr == ERROR_SUCCESS, "RegCloseKey failed: got %d, expected 0\n", lr);
 
