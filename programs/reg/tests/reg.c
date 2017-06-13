@@ -1687,6 +1687,21 @@ static void test_import(void)
     todo_wine verify_key_nonexist(hkey, "Subkey2a");
     todo_wine verify_key_nonexist(hkey, "Subkey2b");
 
+    /* Test case sensitivity when creating and deleting registry keys. */
+    test_import_str("REGEDIT4\n\n"
+                    "[hkey_CURRENT_user\\" KEY_BASE "\\Subkey3a]\n\n"
+                    "[HkEy_CuRrEnT_uSeR\\" KEY_BASE "\\SuBkEy3b]\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key_exist(hkey, "Subkey3a");
+    todo_wine verify_key_exist(hkey, "Subkey3b");
+
+    test_import_str("REGEDIT4\n\n"
+                    "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
+                    "[-hKeY_cUrReNt_UsEr\\" KEY_BASE "\\sUbKeY3B]\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key_nonexist(hkey, "Subkey3a");
+    todo_wine verify_key_nonexist(hkey, "Subkey3b");
+
     /* Test value deletion. We start by creating some registry values. */
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2574,6 +2589,21 @@ static void test_import(void)
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_key_nonexist(hkey, "Subkey2a");
     todo_wine verify_key_nonexist(hkey, "Subkey2b");
+
+    /* Test case sensitivity when creating and deleting registry keys. */
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[hkey_CURRENT_user\\" KEY_BASE "\\Subkey3a]\n\n"
+                     "[HkEy_CuRrEnT_uSeR\\" KEY_BASE "\\SuBkEy3b]\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key_exist(hkey, "Subkey3a");
+    todo_wine verify_key_exist(hkey, "Subkey3b");
+
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[-HKEY_current_USER\\" KEY_BASE "\\sUBKEY3A]\n\n"
+                     "[-hKeY_cUrReNt_UsEr\\" KEY_BASE "\\sUbKeY3B]\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_key_nonexist(hkey, "Subkey3a");
+    todo_wine verify_key_nonexist(hkey, "Subkey3b");
 
     /* Test value deletion. We start by creating some registry values. */
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
