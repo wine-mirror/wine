@@ -1736,6 +1736,29 @@ static void test_import(void)
     todo_wine verify_reg_nonexist(hkey, "Wine46e");
     todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
 
+    /* Test the accepted range of the hex-based data types */
+    test_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine47a\"=hex(0):56,61,6c,75,65,00\n"
+                    "\"Wine47b\"=hex(10):56,61,6c,75,65,00\n"
+                    "\"Wine47c\"=hex(100):56,61,6c,75,65,00\n"
+                    "\"Wine47d\"=hex(1000):56,61,6c,75,65,00\n"
+                    "\"Wine47e\"=hex(7fff):56,61,6c,75,65,00\n"
+                    "\"Wine47f\"=hex(ffff):56,61,6c,75,65,00\n"
+                    "\"Wine47g\"=hex(7fffffff):56,61,6c,75,65,00\n"
+                    "\"Wine47h\"=hex(ffffffff):56,61,6c,75,65,00\n"
+                    "\"Wine47i\"=hex(100000000):56,61,6c,75,65,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine47a", REG_NONE, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47b", 0x10, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47c", 0x100, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47d", 0x1000, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47e", 0x7fff, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47f", 0xffff, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47g", 0x7fffffff, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47h", 0xffffffff, "Value", 6, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine47i");
+
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
 
@@ -2639,6 +2662,29 @@ static void test_import(void)
     todo_wine verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
     todo_wine verify_reg_nonexist(hkey, "Wine46e");
     todo_wine verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
+
+    /* Test the accepted range of the hex-based data types */
+    test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine47a\"=hex(0):56,61,6c,75,65,00\n"
+                     "\"Wine47b\"=hex(10):56,61,6c,75,65,00\n"
+                     "\"Wine47c\"=hex(100):56,61,6c,75,65,00\n"
+                     "\"Wine47d\"=hex(1000):56,61,6c,75,65,00\n"
+                     "\"Wine47e\"=hex(7fff):56,61,6c,75,65,00\n"
+                     "\"Wine47f\"=hex(ffff):56,61,6c,75,65,00\n"
+                     "\"Wine47g\"=hex(7fffffff):56,61,6c,75,65,00\n"
+                     "\"Wine47h\"=hex(ffffffff):56,61,6c,75,65,00\n"
+                     "\"Wine47i\"=hex(100000000):56,61,6c,75,65,00\n\n", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    todo_wine verify_reg(hkey, "Wine47a", REG_NONE, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47b", 0x10, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47c", 0x100, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47d", 0x1000, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47e", 0x7fff, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47f", 0xffff, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47g", 0x7fffffff, "Value", 6, 0);
+    todo_wine verify_reg(hkey, "Wine47h", 0xffffffff, "Value", 6, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine47i");
 
     err = RegCloseKey(hkey);
     todo_wine ok(err == ERROR_SUCCESS, "got %d, expected 0\n", err);
