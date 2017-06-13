@@ -515,6 +515,22 @@ static inline HRESULT VARIANT_CoerceArray(VARIANTARG* pd, VARIANTARG* ps, VARTYP
   return DISP_E_TYPEMISMATCH;
 }
 
+static HRESULT VARIANT_FetchDispatchValue(LPVARIANT pvDispatch, LPVARIANT pValue)
+{
+    HRESULT hres;
+    static DISPPARAMS emptyParams = { NULL, NULL, 0, 0 };
+
+    if ((V_VT(pvDispatch) & VT_TYPEMASK) == VT_DISPATCH) {
+        if (NULL == V_DISPATCH(pvDispatch)) return DISP_E_TYPEMISMATCH;
+        hres = IDispatch_Invoke(V_DISPATCH(pvDispatch), DISPID_VALUE, &IID_NULL,
+            LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &emptyParams, pValue,
+            NULL, NULL);
+    } else {
+        hres = DISP_E_TYPEMISMATCH;
+    }
+    return hres;
+}
+
 /******************************************************************************
  * Check if a variants type is valid.
  */
@@ -2503,7 +2519,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 {
     VARTYPE leftvt,rightvt,resultvt;
     HRESULT hres;
-    static const WCHAR sz_empty[] = {'\0'};
+
     leftvt = V_VT(left);
     rightvt = V_VT(right);
 
@@ -2581,64 +2597,79 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
     else
     {
         VARIANT bstrvar_left, bstrvar_right;
+        VARIANT *tmp;
+        VARIANT fetched;
+
         V_VT(out) = VT_BSTR;
 
         VariantInit(&bstrvar_left);
         VariantInit(&bstrvar_right);
+        VariantInit(&fetched);
 
         /* Convert left side variant to string */
         if (leftvt != VT_BSTR)
         {
-            /* Fill with empty string for later concat with right side */
-            if (leftvt == VT_NULL)
+            tmp = left;
+
+            if(leftvt == VT_DISPATCH)
+            {
+                hres = VARIANT_FetchDispatchValue(left, &fetched);
+                if(FAILED(hres))
+                    goto failed;
+
+                tmp = &fetched;
+            }
+
+            hres = VariantChangeTypeEx(&bstrvar_left,tmp,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
+            VariantClear(&fetched);
+            if (hres == DISP_E_TYPEMISMATCH)
             {
                 V_VT(&bstrvar_left) = VT_BSTR;
-                V_BSTR(&bstrvar_left) = SysAllocString(sz_empty);
+                V_BSTR(&bstrvar_left) = SysAllocStringLen(NULL, 0);
             }
-            else
-            {
-                hres = VariantChangeTypeEx(&bstrvar_left,left,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
-                if (hres != S_OK) {
-                    VariantClear(&bstrvar_left);
-                    VariantClear(&bstrvar_right);
-                    return hres;
-                }
-            }
+            else if(hres != S_OK)
+                goto failed;
         }
 
         /* convert right side variant to string */
         if (rightvt != VT_BSTR)
         {
-            /* Fill with empty string for later concat with right side */
-            if (rightvt == VT_NULL)
+            tmp = right;
+
+            if(rightvt == VT_DISPATCH)
+            {
+                hres = VARIANT_FetchDispatchValue(right, &fetched);
+                if(FAILED(hres))
+                    goto failed;
+
+                tmp = &fetched;
+            }
+
+            hres = VariantChangeTypeEx(&bstrvar_right,tmp,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
+            VariantClear(&fetched);
+            if (hres == DISP_E_TYPEMISMATCH)
             {
                 V_VT(&bstrvar_right) = VT_BSTR;
-                V_BSTR(&bstrvar_right) = SysAllocString(sz_empty);
+                V_BSTR(&bstrvar_right) = SysAllocStringLen(NULL, 0);
             }
-            else
-            {
-                hres = VariantChangeTypeEx(&bstrvar_right,right,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
-                if (hres != S_OK) {
-                    VariantClear(&bstrvar_left);
-                    VariantClear(&bstrvar_right);
-                    return hres;
-                }
-            }
+            else if(hres != S_OK)
+                goto failed;
         }
 
         /* Concat the resulting strings together */
         if (leftvt == VT_BSTR && rightvt == VT_BSTR)
-            VarBstrCat (V_BSTR(left), V_BSTR(right), &V_BSTR(out));
+            hres = VarBstrCat (V_BSTR(left), V_BSTR(right), &V_BSTR(out));
         else if (leftvt != VT_BSTR && rightvt != VT_BSTR)
-            VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(&bstrvar_right), &V_BSTR(out));
+            hres = VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(&bstrvar_right), &V_BSTR(out));
         else if (leftvt != VT_BSTR && rightvt == VT_BSTR)
-            VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(right), &V_BSTR(out));
+            hres = VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(right), &V_BSTR(out));
         else if (leftvt == VT_BSTR && rightvt != VT_BSTR)
-            VarBstrCat (V_BSTR(left), V_BSTR(&bstrvar_right), &V_BSTR(out));
+            hres = VarBstrCat (V_BSTR(left), V_BSTR(&bstrvar_right), &V_BSTR(out));
 
+failed:
         VariantClear(&bstrvar_left);
         VariantClear(&bstrvar_right);
-        return S_OK;
+        return hres;
     }
 }
 
@@ -2863,22 +2894,6 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
             return E_FAIL;
     }
 #undef _VARCMP
-}
-
-static HRESULT VARIANT_FetchDispatchValue(LPVARIANT pvDispatch, LPVARIANT pValue)
-{
-    HRESULT hres;
-    static DISPPARAMS emptyParams = { NULL, NULL, 0, 0 };
-
-    if ((V_VT(pvDispatch) & VT_TYPEMASK) == VT_DISPATCH) {
-        if (NULL == V_DISPATCH(pvDispatch)) return DISP_E_TYPEMISMATCH;
-        hres = IDispatch_Invoke(V_DISPATCH(pvDispatch), DISPID_VALUE, &IID_NULL,
-            LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &emptyParams, pValue,
-            NULL, NULL);
-    } else {
-        hres = DISP_E_TYPEMISMATCH;
-    }
-    return hres;
 }
 
 /**********************************************************************
