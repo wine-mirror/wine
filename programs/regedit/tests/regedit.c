@@ -445,6 +445,28 @@ static void test_basic_import(void)
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
     ok(lr == ERROR_SUCCESS, "got %d, expected 0\n", lr);
 
+    /* Test the accepted range of the hex-based data types */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine13a\"=hex(0):56,61,6c,75,65,00\n"
+                    "\"Wine13b\"=hex(10):56,61,6c,75,65,00\n"
+                    "\"Wine13c\"=hex(100):56,61,6c,75,65,00\n"
+                    "\"Wine13d\"=hex(1000):56,61,6c,75,65,00\n"
+                    "\"Wine13e\"=hex(7fff):56,61,6c,75,65,00\n"
+                    "\"Wine13f\"=hex(ffff):56,61,6c,75,65,00\n"
+                    "\"Wine13g\"=hex(7fffffff):56,61,6c,75,65,00\n"
+                    "\"Wine13h\"=hex(ffffffff):56,61,6c,75,65,00\n"
+                    "\"Wine13i\"=hex(100000000):56,61,6c,75,65,00\n\n");
+    verify_reg(hkey, "Wine13a", REG_NONE, "Value", 6, 0);
+    verify_reg(hkey, "Wine13b", 0x10, "Value", 6, 0);
+    verify_reg(hkey, "Wine13c", 0x100, "Value", 6, 0);
+    verify_reg(hkey, "Wine13d", 0x1000, "Value", 6, 0);
+    verify_reg(hkey, "Wine13e", 0x7fff, "Value", 6, 0);
+    verify_reg(hkey, "Wine13f", 0xffff, "Value", 6, 0);
+    verify_reg(hkey, "Wine13g", 0x7fffffff, "Value", 6, 0);
+    verify_reg(hkey, "Wine13h", 0xffffffff, "Value", 6, 0);
+    todo_wine verify_reg_nonexist(hkey, "Wine13i");
+
     RegCloseKey(hkey);
 
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
