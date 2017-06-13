@@ -6557,7 +6557,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     struct addrinfo *unixaires = NULL;
     int   result;
     struct addrinfo unixhints, *punixhints = NULL;
-    char *hostname;
+    char *hostname, *nodeV6 = NULL;
     const char *node;
 
     *res = NULL;
@@ -6575,7 +6575,27 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     else if (!nodename[0])
         node = hostname;
     else
+    {
         node = nodename;
+
+        /* Check for [ipv6] or [ipv6]:portnumber, which are supported by Windows */
+        if (!hints || hints->ai_family == WS_AF_UNSPEC || hints->ai_family == WS_AF_INET6)
+        {
+            char *close_bracket;
+
+            if (node[0] == '[' && (close_bracket = strchr(node + 1, ']')))
+            {
+                nodeV6 = HeapAlloc(GetProcessHeap(), 0, close_bracket - node);
+                if (!nodeV6)
+                {
+                    HeapFree(GetProcessHeap(), 0, hostname);
+                    return WSA_NOT_ENOUGH_MEMORY;
+                }
+                lstrcpynA(nodeV6, node + 1, close_bracket - node);
+                node = nodeV6;
+            }
+        }
+    }
 
     /* servname tweak required by OSX and BSD kernels */
     if (servname && !servname[0]) servname = "0";
@@ -6598,6 +6618,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         {
             SetLastError(WSAESOCKTNOSUPPORT);
             HeapFree(GetProcessHeap(), 0, hostname);
+            HeapFree(GetProcessHeap(), 0, nodeV6);
             return SOCKET_ERROR;
         }
 
@@ -6630,6 +6651,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     }
     TRACE("%s, %s %p -> %p %d\n", debugstr_a(nodename), debugstr_a(servname), hints, res, result);
     HeapFree(GetProcessHeap(), 0, hostname);
+    HeapFree(GetProcessHeap(), 0, nodeV6);
 
     if (!result) {
         struct addrinfo *xuai = unixaires;
