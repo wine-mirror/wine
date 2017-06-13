@@ -195,6 +195,7 @@ BEGIN
     ID_EDIT_FIND            "Finds a text string in a key, value or data"
     ID_EDIT_FINDNEXT        "Finds next occurrence of text specified in previous search"
     ID_EDIT_EXPORT          "Exports the selected branch of the registry to a text file"
+    ID_TREE_EXPAND_COLLAPSE "Expands or collapses the selected node"
 END
 
 STRINGTABLE
