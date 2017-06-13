@@ -272,6 +272,20 @@ struct async *create_async( struct thread *thread, const async_data_t *data, str
     return async;
 }
 
+/* create an async associated with iosb for async-based requests */
+struct async *create_request_async( struct thread *thread, const async_data_t *data )
+{
+    struct async *async;
+    struct iosb *iosb;
+
+    if (!(iosb = create_iosb( get_req_data(), get_req_data_size(), get_reply_max_size() )))
+        return NULL;
+
+    async = create_async( current, data, iosb );
+    release_object( iosb );
+    return async;
+}
+
 /* set the timeout of an async operation */
 void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status )
 {

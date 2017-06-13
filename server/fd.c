@@ -2446,20 +2446,14 @@ DECL_HANDLER(read)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->async.handle, FILE_READ_DATA );
     struct async *async;
-    struct iosb *iosb;
 
     if (!fd) return;
 
-    if ((iosb = create_iosb( NULL, 0, get_reply_max_size() )))
+    if ((async = create_request_async( current, &req->async )))
     {
-        async = create_async( current, &req->async, iosb );
-        if (async)
-        {
-            reply->wait    = fd->fd_ops->read( fd, async, req->pos );
-            reply->options = fd->options;
-            release_object( async );
-        }
-        release_object( iosb );
+        reply->wait    = fd->fd_ops->read( fd, async, req->pos );
+        reply->options = fd->options;
+        release_object( async );
     }
     release_object( fd );
 }
