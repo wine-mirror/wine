@@ -5212,7 +5212,7 @@ static void test_redirect(int port)
                        "Content-Length: 0\r\n"
                        "\r\n");
 
-    size = server_read_data(buf, sizeof(buf));
+    size = server_read_data(buf, sizeof(buf) - 1);
     buf[size] = 0;
     p = strstr(buf, "\r\n");
     if(p) *p = 0;
