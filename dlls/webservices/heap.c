@@ -315,7 +315,7 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
 }
 
 #define XML_BUFFER_INITIAL_ALLOCATED_SIZE 256
-struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap )
+struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap, WS_XML_WRITER_ENCODING_TYPE encoding, WS_CHARSET charset )
 {
     struct xmlbuf *ret;
 
@@ -328,6 +328,8 @@ struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap )
     ret->heap         = heap;
     ret->size         = XML_BUFFER_INITIAL_ALLOCATED_SIZE;
     ret->bytes.length = 0;
+    ret->encoding     = encoding;
+    ret->charset      = charset;
     return ret;
 }
 
@@ -349,7 +351,10 @@ HRESULT WINAPI WsCreateXmlBuffer( WS_HEAP *heap, const WS_XML_BUFFER_PROPERTY *p
     if (!heap || !handle) return E_INVALIDARG;
     if (count) FIXME( "properties not implemented\n" );
 
-    if (!(xmlbuf = alloc_xmlbuf( heap ))) return WS_E_QUOTA_EXCEEDED;
+    if (!(xmlbuf = alloc_xmlbuf( heap, WS_XML_WRITER_ENCODING_TYPE_TEXT, WS_CHARSET_UTF8 )))
+    {
+        return WS_E_QUOTA_EXCEEDED;
+    }
 
     *handle = (WS_XML_BUFFER *)xmlbuf;
     return S_OK;

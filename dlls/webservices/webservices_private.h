@@ -20,9 +20,11 @@
 
 struct xmlbuf
 {
-    WS_HEAP *heap;
-    WS_BYTES bytes;
-    SIZE_T   size;
+    WS_HEAP                     *heap;
+    WS_BYTES                     bytes;
+    SIZE_T                       size;
+    WS_XML_WRITER_ENCODING_TYPE  encoding;
+    WS_CHARSET                   charset;
 };
 
 void *ws_alloc( WS_HEAP *, SIZE_T ) DECLSPEC_HIDDEN;
@@ -30,7 +32,7 @@ void *ws_alloc_zero( WS_HEAP *, SIZE_T ) DECLSPEC_HIDDEN;
 void *ws_realloc( WS_HEAP *, void *, SIZE_T, SIZE_T ) DECLSPEC_HIDDEN;
 void *ws_realloc_zero( WS_HEAP *, void *, SIZE_T, SIZE_T ) DECLSPEC_HIDDEN;
 void ws_free( WS_HEAP *, void *, SIZE_T ) DECLSPEC_HIDDEN;
-struct xmlbuf *alloc_xmlbuf( WS_HEAP * ) DECLSPEC_HIDDEN;
+struct xmlbuf *alloc_xmlbuf( WS_HEAP *, WS_XML_WRITER_ENCODING_TYPE, WS_CHARSET ) DECLSPEC_HIDDEN;
 void free_xmlbuf( struct xmlbuf * ) DECLSPEC_HIDDEN;
 
 WS_XML_DICTIONARY dict_builtin DECLSPEC_HIDDEN;
