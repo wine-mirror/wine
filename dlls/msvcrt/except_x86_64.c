@@ -110,6 +110,12 @@ typedef struct __cxx_function_descr
 
 typedef struct
 {
+    cxx_frame_info frame_info;
+    BOOL rethrow;
+} cxx_catch_ctx;
+
+typedef struct
+{
     ULONG64 dest_frame;
     ULONG64 orig_frame;
     DISPATCHER_CONTEXT *dispatch;
@@ -318,15 +324,25 @@ static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
     unwind_help[0] = last_level;
 }
 
-static LONG CALLBACK cxx_rethrow_filter(PEXCEPTION_POINTERS eptrs)
+static LONG CALLBACK cxx_rethrow_filter(PEXCEPTION_POINTERS eptrs, void *c)
 {
     EXCEPTION_RECORD *rec = eptrs->ExceptionRecord;
+    thread_data_t *data = msvcrt_get_thread_data();
+    cxx_catch_ctx *ctx = c;
 
     if (rec->ExceptionCode != CXX_EXCEPTION)
         return EXCEPTION_CONTINUE_SEARCH;
     if (!rec->ExceptionInformation[1] && !rec->ExceptionInformation[2])
         return EXCEPTION_EXECUTE_HANDLER;
+    if (rec->ExceptionInformation[1] == data->exc_record->ExceptionInformation[1])
+        ctx->rethrow = TRUE;
     return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void CALLBACK cxx_catch_cleanup(BOOL normal, void *c)
+{
+    cxx_catch_ctx *ctx = c;
+    __CxxUnregisterExceptionObject(&ctx->frame_info, ctx->rethrow);
 }
 
 static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
@@ -336,25 +352,31 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
     EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[4];
     void* (__cdecl *handler)(ULONG64 unk, ULONG64 rbp) = (void*)rec->ExceptionInformation[5];
     int *unwind_help = rva_to_ptr(descr->unwind_help, frame);
-    cxx_frame_info frame_info;
+    cxx_catch_ctx ctx;
     void *ret_addr = NULL;
 
     TRACE("calling handler %p\n", handler);
 
-    __CxxRegisterExceptionObject(&prev_rec, &frame_info);
+    ctx.rethrow = FALSE;
+    __CxxRegisterExceptionObject(&prev_rec, &ctx.frame_info);
     __TRY
     {
-        ret_addr = handler(0, frame);
-    }
-    __EXCEPT(cxx_rethrow_filter)
-    {
-        TRACE("detect rethrow: exception code: %x\n", prev_rec->ExceptionCode);
+        __TRY
+        {
+            ret_addr = handler(0, frame);
+        }
+        __EXCEPT_CTX(cxx_rethrow_filter, &ctx)
+        {
+            TRACE("detect rethrow: exception code: %x\n", prev_rec->ExceptionCode);
+            ctx.rethrow = TRUE;
 
-        RaiseException(prev_rec->ExceptionCode, prev_rec->ExceptionFlags,
-                prev_rec->NumberParameters, prev_rec->ExceptionInformation);
+            RaiseException(prev_rec->ExceptionCode, prev_rec->ExceptionFlags,
+                    prev_rec->NumberParameters, prev_rec->ExceptionInformation);
+        }
+        __ENDTRY
     }
-    __ENDTRY
-    __CxxUnregisterExceptionObject(&frame_info, FALSE);
+    __FINALLY_CTX(cxx_catch_cleanup, &ctx)
+
     unwind_help[0] = -2;
     unwind_help[1] = -1;
     return ret_addr;
@@ -534,10 +556,6 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
     {
         if (cxx_is_consolidate(rec))
         {
-            EXCEPTION_RECORD *new_rec = (void*)rec->ExceptionInformation[4];
-            thread_data_t *data = msvcrt_get_thread_data();
-            frame_info *cur;
-
             if (rec->ExceptionFlags & EH_TARGET_UNWIND)
             {
                 const cxx_function_descr *orig_descr = (void*)rec->ExceptionInformation[2];
@@ -548,18 +566,6 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
             }
             else if(frame == orig_frame)
                 cxx_local_unwind(frame, dispatch, descr, -1);
-
-            /* FIXME: we should only unregister frames registered by call_catch_block here */
-            for (cur = data->frame_info_head; cur; cur = cur->next)
-            {
-                if ((ULONG64)cur <= frame)
-                {
-                    __CxxUnregisterExceptionObject((cxx_frame_info*)cur,
-                            new_rec->ExceptionCode == CXX_EXCEPTION &&
-                            data->exc_record->ExceptionCode == CXX_EXCEPTION &&
-                            new_rec->ExceptionInformation[1] == data->exc_record->ExceptionInformation[1]);
-                }
-            }
             return ExceptionContinueSearch;
         }
 
