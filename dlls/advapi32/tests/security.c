@@ -229,6 +229,7 @@ static void init(void)
     pGetAce = (void *)GetProcAddress(hmod, "GetAce");
     pGetWindowsAccountDomainSid = (void *)GetProcAddress(hmod, "GetWindowsAccountDomainSid");
     pGetSidIdentifierAuthority = (void *)GetProcAddress(hmod, "GetSidIdentifierAuthority");
+    pDuplicateTokenEx = (void *)GetProcAddress(hmod, "DuplicateTokenEx");
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -3012,7 +3013,6 @@ static void test_impersonation_level(void)
     HKEY hkey;
     DWORD error;
 
-    pDuplicateTokenEx = (void *)GetProcAddress(hmod, "DuplicateTokenEx");
     if( !pDuplicateTokenEx ) {
         win_skip("DuplicateTokenEx is not available\n");
         return;
@@ -6715,6 +6715,85 @@ static void test_maximum_allowed(void)
     CloseHandle(handle);
 }
 
+static void test_token_security_descriptor(void)
+{
+    char buffer_sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
+    SECURITY_DESCRIPTOR *sd = (SECURITY_DESCRIPTOR *)&buffer_sd, *sd2;
+    char buffer_acl[256];
+    ACL *acl = (ACL *)&buffer_acl, *acl2;
+    BOOL defaulted, present, ret;
+    ACCESS_ALLOWED_ACE *ace;
+    SECURITY_ATTRIBUTES sa;
+    HANDLE token, token2;
+    DWORD size;
+    PSID psid;
+
+    if (!pDuplicateTokenEx || !pConvertStringSidToSidA || !pAddAccessAllowedAceEx || !pGetAce
+        || !pSetEntriesInAclW)
+    {
+        win_skip("Some functions not available\n");
+        return;
+    }
+
+    /* Test whether we can create tokens with security descriptors */
+    ret = OpenProcessToken(GetCurrentProcess(), MAXIMUM_ALLOWED, &token);
+    ok(ret, "OpenProcessToken failed with error %u\n", GetLastError());
+
+    ret = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(ret, "InitializeSecurityDescriptor failed with error %u\n", GetLastError());
+
+    ret = InitializeAcl(acl, 256, ACL_REVISION);
+    ok(ret, "InitializeAcl failed with error %u\n", GetLastError());
+
+    ret = pConvertStringSidToSidA("S-1-5-6", &psid);
+    ok(ret, "ConvertStringSidToSidA failed with error %u\n", GetLastError());
+
+    ret = pAddAccessAllowedAceEx(acl, ACL_REVISION, NO_PROPAGATE_INHERIT_ACE, GENERIC_ALL, psid);
+    ok(ret, "AddAccessAllowedAceEx failed with error %u\n", GetLastError());
+
+    ret = SetSecurityDescriptorDacl(sd, TRUE, acl, FALSE);
+    ok(ret, "SetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.lpSecurityDescriptor = sd;
+    sa.bInheritHandle = FALSE;
+
+    ret = pDuplicateTokenEx(token, MAXIMUM_ALLOWED, &sa, SecurityImpersonation, TokenImpersonation, &token2);
+    ok(ret, "DuplicateTokenEx failed with error %u\n", GetLastError());
+
+    ret = GetKernelObjectSecurity(token2, DACL_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Unexpected GetKernelObjectSecurity return value %d, error %u\n", ret, GetLastError());
+
+    sd2 = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetKernelObjectSecurity(token2, DACL_SECURITY_INFORMATION, sd2, size, &size);
+    ok(ret, "GetKernelObjectSecurity failed with error %u\n", GetLastError());
+
+    acl2 = (void *)0xdeadbeef;
+    present = FALSE;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorDacl(sd2, &present, &acl2, &defaulted);
+    ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+    ok(present, "acl2 not present\n");
+    ok(acl2 != (void *)0xdeadbeef, "acl2 not set\n");
+    ok(acl2->AceCount == 1, "Expected 1 ACE, got %d\n", acl2->AceCount);
+    ok(!defaulted, "acl2 defaulted\n");
+
+    ret = pGetAce(acl2, 0, (void **)&ace);
+    ok(ret, "GetAce failed with error %u\n", GetLastError());
+    ok(ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, "Unexpected ACE type %#x\n", ace->Header.AceType);
+    ok(EqualSid(&ace->SidStart, psid), "Expected access allowed ACE\n");
+    ok(ace->Header.AceFlags == NO_PROPAGATE_INHERIT_ACE,
+       "Expected NO_PROPAGATE_INHERIT_ACE as flags, got %x\n", ace->Header.AceFlags);
+
+    HeapFree(GetProcessHeap(), 0, sd2);
+
+    LocalFree(psid);
+
+    CloseHandle(token2);
+    CloseHandle(token);
+}
+
 START_TEST(security)
 {
     init();
@@ -6764,4 +6843,5 @@ START_TEST(security)
     test_GetSidIdentifierAuthority();
     test_pseudo_tokens();
     test_maximum_allowed();
+    test_token_security_descriptor();
 }
