@@ -136,7 +136,7 @@ static void test_WsCreateWriter(void)
 
     bytes.length = 0xdeadbeef;
     bytes.bytes = (BYTE *)0xdeadbeef;
-    size = sizeof(buffers);
+    size = sizeof(bytes);
     hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !bytes.length, "got %u\n", bytes.length );
@@ -1971,17 +1971,9 @@ static void test_WsWriteNode(void)
 
 static HRESULT set_input( WS_XML_READER *reader, const char *data, ULONG size )
 {
-    WS_XML_READER_TEXT_ENCODING enc;
-    WS_XML_READER_BUFFER_INPUT input;
-
-    enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
-    enc.charSet               = WS_CHARSET_AUTO;
-
-    input.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
-    input.encodedData     = (void *)data;
-    input.encodedDataSize = size;
-
-    return WsSetInput( reader, &enc.encoding, &input.input, NULL, 0, NULL );
+    WS_XML_READER_TEXT_ENCODING text = {{WS_XML_READER_ENCODING_TYPE_TEXT}, WS_CHARSET_AUTO};
+    WS_XML_READER_BUFFER_INPUT buf = {{WS_XML_READER_INPUT_TYPE_BUFFER}, (void *)data, size};
+    return WsSetInput( reader, &text.encoding, &buf.input, NULL, 0, NULL );
 }
 
 static void test_WsCopyNode(void)
@@ -2089,6 +2081,20 @@ static void test_WsCopyNode(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( bufs.bufferCount == 1, "got %u\n", bufs.bufferCount );
     ok( bufs.buffers != NULL, "buffers not set\n" );
+
+    /* reader positioned at BOF, single text node */
+    hr = set_input( reader, "text", sizeof("text") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCopyNode( writer, reader, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     WsFreeReader( reader );
     WsFreeWriter( writer );
