@@ -4732,9 +4732,10 @@ struct duplicate_token_request
     struct request_header __header;
     obj_handle_t  handle;
     unsigned int  access;
-    unsigned int  attributes;
     int           primary;
     int           impersonation_level;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_28[4];
 };
 struct duplicate_token_reply
 {
@@ -6418,6 +6419,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 532
+#define SERVER_PROTOCOL_VERSION 533
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

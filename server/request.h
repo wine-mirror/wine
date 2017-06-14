@@ -2113,9 +2113,8 @@ C_ASSERT( FIELD_OFFSET(struct check_token_privileges_reply, has_privileges) == 8
 C_ASSERT( sizeof(struct check_token_privileges_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, access) == 16 );
-C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, attributes) == 20 );
-C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, primary) == 24 );
-C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, impersonation_level) == 28 );
+C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, primary) == 20 );
+C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, impersonation_level) == 24 );
 C_ASSERT( sizeof(struct duplicate_token_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct duplicate_token_reply, new_handle) == 8 );
 C_ASSERT( sizeof(struct duplicate_token_reply) == 16 );

@@ -3316,9 +3316,9 @@ enum caret_state
 @REQ(duplicate_token)
     obj_handle_t  handle;        /* handle to the token to duplicate */
     unsigned int  access;        /* access rights to the new token */
-    unsigned int  attributes;    /* object attributes */
     int           primary;       /* is the new token to be a primary one? */
     int           impersonation_level; /* impersonation level of the new token */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t  new_handle; /* duplicated handle */
 @END

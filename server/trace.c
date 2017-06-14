@@ -3927,9 +3927,9 @@ static void dump_duplicate_token_request( const struct duplicate_token_request *
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", primary=%d", req->primary );
     fprintf( stderr, ", impersonation_level=%d", req->impersonation_level );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
 static void dump_duplicate_token_reply( const struct duplicate_token_reply *req )

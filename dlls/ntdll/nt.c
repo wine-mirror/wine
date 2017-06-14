@@ -83,10 +83,14 @@ NTSTATUS WINAPI NtDuplicateToken(
         OUT PHANDLE NewToken)
 {
     NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     TRACE("(%p,0x%08x,%s,0x%08x,0x%08x,%p)\n",
           ExistingToken, DesiredAccess, debugstr_ObjectAttributes(ObjectAttributes),
           ImpersonationLevel, TokenType, NewToken);
+
+    if ((status = alloc_object_attributes( ObjectAttributes, &objattr, &len ))) return status;
 
     if (ObjectAttributes && ObjectAttributes->SecurityQualityOfService)
     {
@@ -102,14 +106,15 @@ NTSTATUS WINAPI NtDuplicateToken(
     {
         req->handle              = wine_server_obj_handle( ExistingToken );
         req->access              = DesiredAccess;
-        req->attributes          = ObjectAttributes ? ObjectAttributes->Attributes : 0;
         req->primary             = (TokenType == TokenPrimary);
         req->impersonation_level = ImpersonationLevel;
+        wine_server_add_data( req, objattr, len );
         status = wine_server_call( req );
         if (!status) *NewToken = wine_server_ptr_handle( reply->new_handle );
     }
     SERVER_END_REQ;
 
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return status;
 }
 

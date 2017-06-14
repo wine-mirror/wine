@@ -622,7 +622,7 @@ static struct token *create_token( unsigned primary, const SID *user,
 }
 
 struct token *token_duplicate( struct token *src_token, unsigned primary,
-                               int impersonation_level )
+                               int impersonation_level, const struct security_descriptor *sd )
 {
     const luid_t *modified_id =
         primary || (impersonation_level == src_token->impersonation_level) ?
@@ -671,6 +671,9 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
             release_object( token );
             return NULL;
         }
+
+    if (sd) default_set_sd( &token->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                            DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
 
     return token;
 }
@@ -1240,15 +1243,20 @@ DECL_HANDLER(get_token_privileges)
 DECL_HANDLER(duplicate_token)
 {
     struct token *src_token;
+    struct unicode_str name;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
+
+    if (!objattr) return;
 
     if ((src_token = (struct token *)get_handle_obj( current->process, req->handle,
                                                      TOKEN_DUPLICATE,
                                                      &token_ops )))
     {
-        struct token *token = token_duplicate( src_token, req->primary, req->impersonation_level );
+        struct token *token = token_duplicate( src_token, req->primary, req->impersonation_level, sd );
         if (token)
         {
-            reply->new_handle = alloc_handle( current->process, token, req->access, req->attributes);
+            reply->new_handle = alloc_handle_no_access_check( current->process, token, req->access, objattr->attributes );
             release_object( token );
         }
         release_object( src_token );

@@ -565,7 +565,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
                                        : alloc_handle_table( process, 0 );
         /* Note: for security reasons, starting a new process does not attempt
          * to use the current impersonation token for the new process */
-        process->token = token_duplicate( parent->token, TRUE, 0 );
+        process->token = token_duplicate( parent->token, TRUE, 0, NULL );
         process->affinity = parent->affinity;
     }
     if (!process->handles || !process->token) goto error;
