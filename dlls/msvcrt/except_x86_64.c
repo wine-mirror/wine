@@ -118,6 +118,7 @@ typedef struct
 {
     ULONG64 dest_frame;
     ULONG64 orig_frame;
+    EXCEPTION_RECORD *seh_rec;
     DISPATCHER_CONTEXT *dispatch;
     const cxx_function_descr *descr;
 } se_translator_ctx;
@@ -350,6 +351,7 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
     ULONG64 frame = rec->ExceptionInformation[1];
     const cxx_function_descr *descr = (void*)rec->ExceptionInformation[2];
     EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[4];
+    EXCEPTION_RECORD *untrans_rec = (void*)rec->ExceptionInformation[6];
     void* (__cdecl *handler)(ULONG64 unk, ULONG64 rbp) = (void*)rec->ExceptionInformation[5];
     int *unwind_help = rva_to_ptr(descr->unwind_help, frame);
     cxx_catch_ctx ctx;
@@ -370,8 +372,17 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
             TRACE("detect rethrow: exception code: %x\n", prev_rec->ExceptionCode);
             ctx.rethrow = TRUE;
 
-            RaiseException(prev_rec->ExceptionCode, prev_rec->ExceptionFlags,
-                    prev_rec->NumberParameters, prev_rec->ExceptionInformation);
+            if (untrans_rec)
+            {
+                __DestructExceptionObject(prev_rec);
+                RaiseException(untrans_rec->ExceptionCode, untrans_rec->ExceptionFlags,
+                        untrans_rec->NumberParameters, untrans_rec->ExceptionInformation);
+            }
+            else
+            {
+                RaiseException(prev_rec->ExceptionCode, prev_rec->ExceptionFlags,
+                        prev_rec->NumberParameters, prev_rec->ExceptionInformation);
+            }
         }
         __ENDTRY
     }
@@ -384,12 +395,12 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
 
 static inline BOOL cxx_is_consolidate(const EXCEPTION_RECORD *rec)
 {
-    return rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==6 &&
+    return rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==7 &&
            rec->ExceptionInformation[0]==(ULONG_PTR)call_catch_block;
 }
 
-static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
-                                    DISPATCHER_CONTEXT *dispatch,
+static inline void find_catch_block(EXCEPTION_RECORD *rec, EXCEPTION_RECORD *untrans_rec,
+                                    ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
                                     const cxx_function_descr *descr,
                                     cxx_exception_type *info, ULONG64 orig_frame)
 {
@@ -465,7 +476,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
             memset(&catch_record, 0, sizeof(catch_record));
             catch_record.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
             catch_record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-            catch_record.NumberParameters = 6;
+            catch_record.NumberParameters = 7;
             catch_record.ExceptionInformation[0] = (ULONG_PTR)call_catch_block;
             catch_record.ExceptionInformation[1] = orig_frame;
             catch_record.ExceptionInformation[2] = (ULONG_PTR)descr;
@@ -473,6 +484,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, ULONG64 frame,
             catch_record.ExceptionInformation[4] = (ULONG_PTR)rec;
             catch_record.ExceptionInformation[5] =
                 (ULONG_PTR)rva_to_ptr(catchblock->handler, dispatch->ImageBase);
+            catch_record.ExceptionInformation[6] = (ULONG_PTR)untrans_rec;
             RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &context, NULL);
         }
     }
@@ -493,7 +505,7 @@ static LONG CALLBACK se_translation_filter(EXCEPTION_POINTERS *ep, void *c)
     }
 
     exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
-    find_catch_block(rec, ctx->dest_frame, ctx->dispatch,
+    find_catch_block(rec, ctx->seh_rec, ctx->dest_frame, ctx->dispatch,
                      ctx->descr, exc_type, ctx->orig_frame);
 
     __DestructExceptionObject(rec);
@@ -590,6 +602,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
             ctx.dest_frame = frame;
             ctx.orig_frame = orig_frame;
+            ctx.seh_rec    = rec;
             ctx.dispatch   = dispatch;
             ctx.descr      = descr;
             __TRY
@@ -605,7 +618,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         }
     }
 
-    find_catch_block(rec, frame, dispatch, descr, exc_type, orig_frame);
+    find_catch_block(rec, NULL, frame, dispatch, descr, exc_type, orig_frame);
     return ExceptionContinueSearch;
 }
 
