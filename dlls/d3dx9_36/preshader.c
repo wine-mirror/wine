@@ -22,6 +22,7 @@
 #include "d3dx9_private.h"
 
 #include <float.h>
+#include <assert.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -1037,6 +1038,73 @@ static void get_const_upload_info(struct d3dx_const_param_eval_output *const_set
     info->count = info->major_count * info->minor;
 }
 
+static void pres_int_from_float(void *out, const void *in, unsigned int count)
+{
+    unsigned int i;
+    const float *in_float = in;
+    int *out_int = out;
+
+    for (i = 0; i < count; ++i)
+        out_int[i] = in_float[i];
+}
+
+static void pres_bool_from_value(void *out, const void *in, unsigned int count)
+{
+    unsigned int i;
+    const DWORD *in_dword = in;
+    BOOL *out_bool = out;
+
+    for (i = 0; i < count; ++i)
+        out_bool[i] = !!in_dword[i];
+}
+
+static void pres_float_from_int(void *out, const void *in, unsigned int count)
+{
+    unsigned int i;
+    const int *in_int = in;
+    float *out_float = out;
+
+    for (i = 0; i < count; ++i)
+        out_float[i] = in_int[i];
+}
+
+static void pres_float_from_bool(void *out, const void *in, unsigned int count)
+{
+    unsigned int i;
+    const BOOL *in_bool = in;
+    float *out_float = out;
+
+    for (i = 0; i < count; ++i)
+        out_float[i] = !!in_bool[i];
+}
+
+static void pres_int_from_bool(void *out, const void *in, unsigned int count)
+{
+    unsigned int i;
+    const float *in_bool = in;
+    int *out_int = out;
+
+    for (i = 0; i < count; ++i)
+        out_int[i] = !!in_bool[i];
+}
+
+static void regstore_set_data(struct d3dx_regstore *rs, unsigned int table,
+        unsigned int offset, const unsigned int *in, unsigned int count, enum pres_value_type param_type)
+{
+    typedef void (*conv_func)(void *out, const void *in, unsigned int count);
+    static const conv_func set_const_funcs[PRES_VT_COUNT][PRES_VT_COUNT] =
+    {
+        {NULL,                 NULL, pres_int_from_float, pres_bool_from_value},
+        {NULL,                 NULL, NULL,                NULL},
+        {pres_float_from_int,  NULL, NULL,                pres_bool_from_value},
+        {pres_float_from_bool, NULL, pres_int_from_bool,  NULL}
+    };
+    enum pres_value_type table_type = table_info[table].type;
+
+    set_const_funcs[param_type][table_type]((unsigned int *)rs->tables[table] + offset, in, count);
+    regstore_set_modified(rs, table, offset, count);
+}
+
 static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const_tab,
         ULONG64 new_update_version)
 {
@@ -1047,11 +1115,11 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
         struct d3dx_const_param_eval_output *const_set = &const_tab->const_set[const_idx];
         unsigned int table = const_set->table;
         struct d3dx_parameter *param = const_set->param;
-        enum pres_value_type table_type = table_info[table].type;
         unsigned int element, i, j, start_offset;
         unsigned int param_offset;
         struct const_upload_info info;
         unsigned int *data = param->data;
+        enum pres_value_type param_type;
 
         if (!is_param_dirty(param, const_tab->update_version))
             continue;
@@ -1063,22 +1131,23 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
                     get_offset_reg(table, const_set->register_count));
             continue;
         }
+        param_type = table_type_from_param_type(param->type);
         get_const_upload_info(const_set, &info);
-
         for (element = 0; element < const_set->element_count; ++element)
         {
+            unsigned int *out = (unsigned int *)rs->tables[table] + start_offset;
+
+            /* Store reshaped but (possibly) not converted yet data temporarily in the same constants buffer.
+             * All the supported types of parameters and table values have the same size. */
             for (i = 0; i < info.major_count; ++i)
             {
                 for (j = 0; j < info.minor; ++j)
                 {
-                    unsigned int out;
-                    unsigned int *in;
                     unsigned int offset;
 
                     offset = i * info.major_stride + j;
                     if (get_reg_offset(table, offset) >= const_set->register_count)
                         break;
-                    offset += start_offset;
                     if (info.transpose)
                         param_offset = i + j * info.major;
                     else
@@ -1088,23 +1157,19 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
                         WARN("Parameter data is too short, name %s, component %u.\n", debugstr_a(param->name), i);
                         break;
                     }
-
-                    in = (unsigned int *)data + param_offset;
-                    switch (table_type)
-                    {
-                        case PRES_VT_FLOAT: set_number(&out, D3DXPT_FLOAT, in, param->type); break;
-                        case PRES_VT_INT: set_number(&out, D3DXPT_INT, in, param->type); break;
-                        case PRES_VT_BOOL: set_number(&out, D3DXPT_BOOL, in, param->type); break;
-                        default:
-                            FIXME("Unexpected type %#x.\n", table_info[table].type);
-                            break;
-                    }
-                    regstore_set_values(rs, table, &out, offset, 1);
+                    out[offset] = data[param_offset];
                 }
             }
             start_offset += get_offset_reg(table, const_set->register_count);
             data += param->rows * param->columns;
         }
+        start_offset = get_offset_reg(table, const_set->register_index);
+        if (table_info[table].type == param_type)
+            regstore_set_modified(rs, table, start_offset,
+                    get_offset_reg(table, const_set->register_count) * const_set->element_count);
+        else
+            regstore_set_data(rs, table, start_offset, (unsigned int *)rs->tables[table] + start_offset,
+                    get_offset_reg(table, const_set->register_count) * const_set->element_count, param_type);
     }
     const_tab->update_version = new_update_version;
 }
@@ -1310,6 +1375,8 @@ static HRESULT init_set_constants_param(struct d3dx_const_tab *const_tab, ID3DXC
         ERR("Unexpected register set %u.\n", desc.RegisterSet);
         return D3DERR_INVALIDCALL;
     }
+    assert(table_info[const_set.table].component_size == sizeof(unsigned int));
+    assert(param->bytes / (param->rows * param->columns) == sizeof(unsigned int));
     const_set.register_count = desc.RegisterCount;
     table_type = table_info[const_set.table].type;
     get_const_upload_info(&const_set, &info);
