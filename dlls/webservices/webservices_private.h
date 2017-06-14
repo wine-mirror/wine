@@ -36,6 +36,17 @@ void free_xmlbuf( struct xmlbuf * ) DECLSPEC_HIDDEN;
 WS_XML_DICTIONARY dict_builtin DECLSPEC_HIDDEN;
 const WS_XML_DICTIONARY dict_builtin_static DECLSPEC_HIDDEN;
 
+ULONG format_bool( const BOOL *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_int8( const INT8 *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_int16( const INT16 *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_int32( const INT32 *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_int64( const INT64 *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_uint64( const UINT64 *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_double( const double *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_datetime( const WS_DATETIME *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_guid( const GUID *, unsigned char * ) DECLSPEC_HIDDEN;
+ULONG format_urn( const GUID *, unsigned char * ) DECLSPEC_HIDDEN;
+
 const char *debugstr_xmlstr( const WS_XML_STRING * ) DECLSPEC_HIDDEN;
 WS_XML_STRING *alloc_xml_string( const unsigned char *, ULONG ) DECLSPEC_HIDDEN;
 WS_XML_STRING *dup_xml_string( const WS_XML_STRING * ) DECLSPEC_HIDDEN;

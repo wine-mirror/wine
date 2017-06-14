@@ -1577,7 +1577,7 @@ HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *
     return hr;
 }
 
-static ULONG format_bool( const BOOL *ptr, unsigned char *buf )
+ULONG format_bool( const BOOL *ptr, unsigned char *buf )
 {
     static const unsigned char bool_true[] = {'t','r','u','e'}, bool_false[] = {'f','a','l','s','e'};
     if (*ptr)
@@ -1589,22 +1589,22 @@ static ULONG format_bool( const BOOL *ptr, unsigned char *buf )
     return sizeof(bool_false);
 }
 
-static ULONG format_int8( const INT8 *ptr, unsigned char *buf )
+ULONG format_int8( const INT8 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%d", *ptr );
 }
 
-static ULONG format_int16( const INT16 *ptr, unsigned char *buf )
+ULONG format_int16( const INT16 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%d", *ptr );
 }
 
-static ULONG format_int32( const INT32 *ptr, unsigned char *buf )
+ULONG format_int32( const INT32 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%d", *ptr );
 }
 
-static ULONG format_int64( const INT64 *ptr, unsigned char *buf )
+ULONG format_int64( const INT64 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%I64d", *ptr );
 }
@@ -1624,12 +1624,12 @@ static ULONG format_uint32( const UINT32 *ptr, unsigned char *buf )
     return wsprintfA( (char *)buf, "%u", *ptr );
 }
 
-static ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
+ULONG format_uint64( const UINT64 *ptr, unsigned char *buf )
 {
     return wsprintfA( (char *)buf, "%I64u", *ptr );
 }
 
-static ULONG format_double( const double *ptr, unsigned char *buf )
+ULONG format_double( const double *ptr, unsigned char *buf )
 {
 #ifdef HAVE_POWL
     static const long double precision = 0.0000000000000001;
@@ -1726,7 +1726,7 @@ static inline int year_size( int year )
 }
 
 #define TZ_OFFSET 8
-static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
+ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
 {
     static const char fmt[] = "%04u-%02u-%02uT%02u:%02u:%02u";
     int day, hour, min, sec, sec_frac, month = 0, year = 1, tz_hour;
@@ -1782,7 +1782,7 @@ static ULONG format_datetime( const WS_DATETIME *ptr, unsigned char *buf )
     return len;
 }
 
-static ULONG format_guid( const GUID *ptr, unsigned char *buf )
+ULONG format_guid( const GUID *ptr, unsigned char *buf )
 {
     static const char fmt[] = "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
@@ -1790,7 +1790,7 @@ static ULONG format_guid( const GUID *ptr, unsigned char *buf )
                     ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
 }
 
-static ULONG format_urn( const GUID *ptr, unsigned char *buf )
+ULONG format_urn( const GUID *ptr, unsigned char *buf )
 {
     static const char fmt[] = "urn:uuid:%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     return sprintf( (char *)buf, fmt, ptr->Data1, ptr->Data2, ptr->Data3,
