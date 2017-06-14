@@ -318,7 +318,18 @@ static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
     unwind_help[0] = last_level;
 }
 
-static inline void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
+static LONG CALLBACK cxx_rethrow_filter(PEXCEPTION_POINTERS eptrs)
+{
+    EXCEPTION_RECORD *rec = eptrs->ExceptionRecord;
+
+    if (rec->ExceptionCode != CXX_EXCEPTION)
+        return EXCEPTION_CONTINUE_SEARCH;
+    if (!rec->ExceptionInformation[1] && !rec->ExceptionInformation[2])
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
 {
     ULONG64 frame = rec->ExceptionInformation[1];
     const cxx_function_descr *descr = (void*)rec->ExceptionInformation[2];
@@ -326,13 +337,23 @@ static inline void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
     void* (__cdecl *handler)(ULONG64 unk, ULONG64 rbp) = (void*)rec->ExceptionInformation[5];
     int *unwind_help = rva_to_ptr(descr->unwind_help, frame);
     cxx_frame_info frame_info;
-    void *ret_addr;
+    void *ret_addr = NULL;
 
     TRACE("calling handler %p\n", handler);
 
-    /* FIXME:  native does local_unwind here in case of exception rethrow */
     __CxxRegisterExceptionObject(&prev_rec, &frame_info);
-    ret_addr = handler(0, frame);
+    __TRY
+    {
+        ret_addr = handler(0, frame);
+    }
+    __EXCEPT(cxx_rethrow_filter)
+    {
+        TRACE("detect rethrow: exception code: %x\n", prev_rec->ExceptionCode);
+
+        RaiseException(prev_rec->ExceptionCode, prev_rec->ExceptionFlags,
+                prev_rec->NumberParameters, prev_rec->ExceptionInformation);
+    }
+    __ENDTRY
     __CxxUnregisterExceptionObject(&frame_info, FALSE);
     unwind_help[0] = -2;
     unwind_help[1] = -1;
@@ -547,19 +568,6 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         return ExceptionContinueSearch;
     }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
-
-    if (rec->ExceptionCode == CXX_EXCEPTION &&
-            rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
-    {
-        *rec = *msvcrt_get_thread_data()->exc_record;
-        rec->ExceptionFlags &= ~EH_UNWINDING;
-        if (TRACE_ON(seh)) {
-            TRACE("detect rethrow: exception code: %x\n", rec->ExceptionCode);
-            if (rec->ExceptionCode == CXX_EXCEPTION)
-                TRACE("re-propage: obj: %lx, type: %lx\n",
-                        rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
-        }
-    }
 
     if (rec->ExceptionCode == CXX_EXCEPTION)
     {
