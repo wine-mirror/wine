@@ -1571,6 +1571,51 @@ interface IWMReaderTypeNegotiation : IUnknown
         [in] IWMOutputMediaProps *props);
 };
 
+[
+    object,
+    uuid(df683f00-2d49-4d8e-92b7-fb19f6a0dc57),
+    pointer_default(unique),
+    local
+]
+interface IWMLanguageList : IUnknown
+{
+    HRESULT GetLanguageCount(
+        [out] WORD *count);
+
+    HRESULT GetLanguageDetails(
+        [in] WORD index,
+        [out, size_is( *length )] WCHAR *language,
+        [in, out] WORD *length);
+
+    HRESULT AddLanguageByRFC1766String(
+        [in] LPCWSTR_WMSDK_TYPE_SAFE language,
+        [out] WORD *index);
+};
+
+[
+    object,
+    uuid(f28c0300-9baa-4477-a846-1744d9cbf533),
+    pointer_default(unique),
+    local
+]
+interface IWMReaderPlaylistBurn : IUnknown
+{
+    HRESULT InitPlaylistBurn(
+        [in] DWORD count,
+        [in] LPCWSTR_WMSDK_TYPE_SAFE *filenames,
+        [in] IWMStatusCallback *callback,
+        [in] void *context);
+
+    HRESULT GetInitResults(
+        [in] DWORD count,
+        [out] HRESULT *stat);
+
+    HRESULT Cancel();
+
+    HRESULT EndPlaylistBurn([in] HRESULT result);
+};
+
+
 cpp_quote("HRESULT WINAPI WMCreateWriter(IUnknown*,IWMWriter**);")
 cpp_quote("HRESULT WINAPI WMCreateReader(IUnknown*,DWORD,IWMReader**);")
 
