@@ -1,5 +1,5 @@
 @ stub WMCheckURLExtension
-@ stub WMCheckURLScheme
+@ stdcall WMCheckURLScheme(wstr)
 @ stub WMCreateBackupRestorerPrivate
 @ stub WMCreateSyncReaderPriv
 @ stub WMIsAvailableOffline

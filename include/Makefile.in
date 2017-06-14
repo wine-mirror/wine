@@ -523,6 +523,7 @@ HEADER_SRCS = \
 	netioapi.h \
 	nldef.h \
 	npapi.h \
+	nserror.h \
 	nspapi.h \
 	ntddcdrm.h \
 	ntddndis.h \
@@ -688,6 +689,7 @@ HEADER_SRCS = \
 	wlanapi.h \
 	wmistr.h \
 	wmium.h \
+	wmsdk.h \
 	wnaspi32.h \
 	wownt32.h \
 	ws2def.h \

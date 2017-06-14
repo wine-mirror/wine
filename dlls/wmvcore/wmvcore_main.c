@@ -19,7 +19,7 @@
 #include "wmvcore.h"
 
 #include "initguid.h"
-#include "wmsdkidl.h"
+#include "wmsdk.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
@@ -45,6 +45,13 @@ HRESULT WINAPI DllRegisterServer(void)
     FIXME("(): stub\n");
 
     return S_OK;
+}
+
+HRESULT WINAPI WMCheckURLScheme(const WCHAR *scheme)
+{
+    FIXME("(%s): stub\n", wine_dbgstr_w(scheme));
+
+    return NS_E_INVALID_NAME;
 }
 
 HRESULT WINAPI WMCreateEditor(IWMMetadataEditor **editor)
