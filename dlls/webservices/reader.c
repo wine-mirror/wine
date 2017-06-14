@@ -29,12 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
-const char *debugstr_xmlstr( const WS_XML_STRING *str )
-{
-    if (!str) return "(null)";
-    return debugstr_an( (const char *)str->bytes, str->length );
-}
-
 ULONG prop_size( const struct prop_desc *desc, ULONG count )
 {
     ULONG i, ret = count * sizeof(struct prop);
@@ -68,220 +62,6 @@ HRESULT prop_get( const struct prop *prop, ULONG count, ULONG id, void *buf, ULO
     if (id >= count || size != prop[id].size || prop[id].writeonly) return E_INVALIDARG;
     memcpy( buf, prop[id].value, prop[id].size );
     return S_OK;
-}
-
-static CRITICAL_SECTION dict_cs;
-static CRITICAL_SECTION_DEBUG dict_cs_debug =
-{
-    0, 0, &dict_cs,
-    {&dict_cs_debug.ProcessLocksList,
-     &dict_cs_debug.ProcessLocksList},
-     0, 0, {(DWORD_PTR)(__FILE__ ": dict_cs")}
-};
-static CRITICAL_SECTION dict_cs = {&dict_cs_debug, -1, 0, 0, 0, 0};
-
-static ULONG dict_size, *dict_sorted;
-static WS_XML_DICTIONARY dict_builtin =
-{
-    {0x82704485,0x222a,0x4f7c,{0xb9,0x7b,0xe9,0xa4,0x62,0xa9,0x66,0x2b}}
-};
-
-/**************************************************************************
- *          WsGetDictionary		[webservices.@]
- */
-HRESULT WINAPI WsGetDictionary( WS_ENCODING encoding, WS_XML_DICTIONARY **dict, WS_ERROR *error )
-{
-    TRACE( "%u %p %p\n", encoding, dict, error );
-    if (error) FIXME( "ignoring error parameter\n" );
-
-    if (!dict) return E_INVALIDARG;
-
-    if (encoding == WS_ENCODING_XML_BINARY_1 || encoding == WS_ENCODING_XML_BINARY_SESSION_1)
-        *dict = &dict_builtin;
-    else
-        *dict = NULL;
-
-    return S_OK;
-}
-
-static inline int cmp_string( const unsigned char *str, ULONG len, const unsigned char *str2, ULONG len2 )
-{
-    if (len < len2) return -1;
-    else if (len > len2) return 1;
-    while (len--)
-    {
-        if (*str == *str2) { str++; str2++; }
-        else return *str - *str2;
-    }
-    return 0;
-}
-
-/* return -1 and string id if found, sort index if not found */
-static int find_string( const unsigned char *data, ULONG len, ULONG *id )
-{
-    int i, c, min = 0, max = dict_builtin.stringCount - 1;
-    while (min <= max)
-    {
-        i = (min + max) / 2;
-        c = cmp_string( data, len,
-                        dict_builtin.strings[dict_sorted[i]].bytes,
-                        dict_builtin.strings[dict_sorted[i]].length );
-        if (c < 0)
-            max = i - 1;
-        else if (c > 0)
-            min = i + 1;
-        else
-        {
-            *id = dict_builtin.strings[dict_sorted[i]].id;
-            return -1;
-        }
-    }
-    return max + 1;
-}
-
-#define MIN_DICTIONARY_SIZE 256
-#define MAX_DICTIONARY_SIZE 2048
-
-static BOOL grow_dict( ULONG size )
-{
-    WS_XML_STRING *tmp;
-    ULONG new_size, *tmp_sorted;
-
-    if (dict_size >= dict_builtin.stringCount + size) return TRUE;
-    if (dict_size + size > MAX_DICTIONARY_SIZE) return FALSE;
-
-    if (!dict_builtin.strings)
-    {
-        new_size = max( MIN_DICTIONARY_SIZE, size );
-        if (!(dict_builtin.strings = heap_alloc( new_size * sizeof(WS_XML_STRING) ))) return FALSE;
-        if (!(dict_sorted = heap_alloc( new_size * sizeof(ULONG) )))
-        {
-            heap_free( dict_builtin.strings );
-            dict_builtin.strings = NULL;
-            return FALSE;
-        }
-        dict_size = new_size;
-        return TRUE;
-    }
-
-    new_size = max( dict_size * 2, size );
-    if (!(tmp = heap_realloc( dict_builtin.strings, new_size * sizeof(*tmp) ))) return FALSE;
-    dict_builtin.strings = tmp;
-    if (!(tmp_sorted = heap_realloc( dict_sorted, new_size * sizeof(*tmp_sorted) ))) return FALSE;
-    dict_sorted = tmp_sorted;
-
-    dict_size = new_size;
-    return TRUE;
-}
-
-static BOOL insert_string( unsigned char *data, ULONG len, int i, ULONG *ret_id )
-{
-    ULONG id = dict_builtin.stringCount;
-    if (!grow_dict( 1 )) return FALSE;
-    memmove( &dict_sorted[i] + 1, &dict_sorted[i], (dict_builtin.stringCount - i) * sizeof(WS_XML_STRING *) );
-    dict_sorted[i] = id;
-
-    dict_builtin.strings[id].length     = len;
-    dict_builtin.strings[id].bytes      = data;
-    dict_builtin.strings[id].dictionary = &dict_builtin;
-    dict_builtin.strings[id].id         = id;
-    dict_builtin.stringCount++;
-    *ret_id = id;
-    return TRUE;
-}
-
-static HRESULT add_xml_string( WS_XML_STRING *str )
-{
-    int index;
-    ULONG id;
-
-    if (str->dictionary) return S_OK;
-
-    EnterCriticalSection( &dict_cs );
-    if ((index = find_string( str->bytes, str->length, &id )) == -1)
-    {
-        heap_free( str->bytes );
-        *str = dict_builtin.strings[id];
-        LeaveCriticalSection( &dict_cs );
-        return S_OK;
-    }
-    if (insert_string( str->bytes, str->length, index, &id ))
-    {
-        *str = dict_builtin.strings[id];
-        LeaveCriticalSection( &dict_cs );
-        return S_OK;
-    }
-    LeaveCriticalSection( &dict_cs );
-    return WS_E_QUOTA_EXCEEDED;
-}
-
-WS_XML_STRING *alloc_xml_string( const unsigned char *data, ULONG len )
-{
-    WS_XML_STRING *ret;
-
-    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
-    if ((ret->length = len) && !(ret->bytes = heap_alloc( len )))
-    {
-        heap_free( ret );
-        return NULL;
-    }
-    if (data)
-    {
-        memcpy( ret->bytes, data, len );
-        if (add_xml_string( ret ) != S_OK) WARN( "string not added to dictionary\n" );
-    }
-    return ret;
-}
-
-void free_xml_string( WS_XML_STRING *str )
-{
-    if (!str) return;
-    if (!str->dictionary) heap_free( str->bytes );
-    heap_free( str );
-}
-
-WS_XML_STRING *dup_xml_string( const WS_XML_STRING *src )
-{
-    WS_XML_STRING *ret;
-    unsigned char *data;
-    int index;
-    ULONG id;
-
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
-    if (src->dictionary)
-    {
-        *ret = *src;
-        return ret;
-    }
-
-    EnterCriticalSection( &dict_cs );
-    if ((index = find_string( src->bytes, src->length, &id )) == -1)
-    {
-        *ret = dict_builtin.strings[id];
-        LeaveCriticalSection( &dict_cs );
-        return ret;
-    }
-    if (!(data = heap_alloc( src->length )))
-    {
-        heap_free( ret );
-        LeaveCriticalSection( &dict_cs );
-        return NULL;
-    }
-    memcpy( data, src->bytes, src->length );
-    if (insert_string( data, src->length, index, &id ))
-    {
-        *ret = dict_builtin.strings[id];
-        LeaveCriticalSection( &dict_cs );
-        return ret;
-    }
-    LeaveCriticalSection( &dict_cs );
-
-    WARN( "string not added to dictionary\n" );
-    ret->length     = src->length;
-    ret->bytes      = data;
-    ret->dictionary = NULL;
-    ret->id         = 0;
-    return ret;
 }
 
 struct node *alloc_node( WS_XML_NODE_TYPE type )
@@ -590,6 +370,7 @@ struct reader
     const unsigned char         *input_data;
     ULONG                        input_size;
     ULONG                        text_conv_offset;
+    const WS_XML_DICTIONARY     *dict_static;
     WS_XML_DICTIONARY           *dict;
     ULONG                        prop_count;
     struct prop                  prop[sizeof(reader_props)/sizeof(reader_props[0])];
@@ -730,7 +511,8 @@ static HRESULT init_reader( struct reader *reader )
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
     read_insert_eof( reader, node );
     reader->input_enc    = WS_XML_READER_ENCODING_TYPE_TEXT;
-    reader->dict         = &dict_builtin;
+    reader->dict_static  = NULL;
+    reader->dict         = NULL;
     return S_OK;
 }
 
@@ -1466,12 +1248,15 @@ static HRESULT read_string( struct reader *reader, WS_XML_STRING **str )
 
 static HRESULT read_dict_string( struct reader *reader, WS_XML_STRING **str )
 {
-    ULONG id;
+    const WS_XML_DICTIONARY *dict;
     HRESULT hr;
+    ULONG id;
+
     if ((hr = read_int31( reader, &id )) != S_OK) return hr;
-    if (!reader->dict || (id >>= 1) >= reader->dict->stringCount) return WS_E_INVALID_FORMAT;
+    dict = (id & 1) ? reader->dict : reader->dict_static;
+    if (!dict || (id >>= 1) >= dict->stringCount) return WS_E_INVALID_FORMAT;
     if (!(*str = alloc_xml_string( NULL, 0 ))) return E_OUTOFMEMORY;
-    *(*str) = reader->dict->strings[id];
+    *(*str) = dict->strings[id];
     return S_OK;
 }
 
@@ -5555,8 +5340,9 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     case WS_XML_READER_ENCODING_TYPE_BINARY:
     {
         WS_XML_READER_BINARY_ENCODING *bin = (WS_XML_READER_BINARY_ENCODING *)encoding;
-        reader->input_enc = WS_XML_READER_ENCODING_TYPE_BINARY;
-        reader->dict      = bin->staticDictionary;
+        reader->input_enc   = WS_XML_READER_ENCODING_TYPE_BINARY;
+        reader->dict_static = bin->staticDictionary ? bin->staticDictionary : &dict_builtin_static;
+        reader->dict        = bin->dynamicDictionary ? bin->dynamicDictionary : &dict_builtin;
         break;
     }
     default:
@@ -5636,21 +5422,6 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
 done:
     LeaveCriticalSection( &reader->cs );
     return hr;
-}
-
-/**************************************************************************
- *          WsXmlStringEquals		[webservices.@]
- */
-HRESULT WINAPI WsXmlStringEquals( const WS_XML_STRING *str1, const WS_XML_STRING *str2, WS_ERROR *error )
-{
-    TRACE( "%s %s %p\n", debugstr_xmlstr(str1), debugstr_xmlstr(str2), error );
-    if (error) FIXME( "ignoring error parameter\n" );
-
-    if (!str1 || !str2) return E_INVALIDARG;
-
-    if (str1->length != str2->length) return S_FALSE;
-    if (!memcmp( str1->bytes, str2->bytes, str1->length )) return S_OK;
-    return S_FALSE;
 }
 
 /**************************************************************************

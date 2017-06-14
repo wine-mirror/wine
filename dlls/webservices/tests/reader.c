@@ -1340,12 +1340,12 @@ static void test_WsReadNode(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( dict == NULL, "got %p\n", dict );
 
-    dict = (WS_XML_DICTIONARY *)0xdeadbeef;
+    dict = NULL;
     hr = WsGetDictionary( WS_ENCODING_XML_BINARY_1, &dict, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( dict != NULL, "dict not set\n" );
 
-    dict = (WS_XML_DICTIONARY *)0xdeadbeef;
+    dict = NULL;
     hr = WsGetDictionary( WS_ENCODING_XML_BINARY_SESSION_1, &dict, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( dict != NULL, "dict not set\n" );
@@ -4897,6 +4897,8 @@ static void test_binary_encoding(void)
 
 static void test_dictionary(void)
 {
+    static const GUID dict_static =
+        {0xf93578f8,0x5852,0x4eb7,{0xa6,0xfc,0xe7,0x2b,0xb7,0x1d,0xb6,0x22}};
     static const char res[] =
         {0x42,0x04,0x01};
     static const char res2[] =
@@ -5190,17 +5192,22 @@ static void test_dictionary(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( dict2 == NULL, "got %p\n", dict2 );
 
-    dict2 = (WS_XML_DICTIONARY *)0xdeadbeef;
+    dict2 = NULL;
     hr = WsGetDictionary( WS_ENCODING_XML_BINARY_1, &dict2, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( dict2 != NULL, "dict2 not set\n" );
     ok( dict2 != &dict, "got %p\n", dict2 );
 
-    dict2 = (WS_XML_DICTIONARY *)0xdeadbeef;
+    dict2 = NULL;
     hr = WsGetDictionary( WS_ENCODING_XML_BINARY_SESSION_1, &dict2, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( dict2 != NULL, "dict2 not set\n" );
     ok( dict2 != &dict, "got %p\n", dict2 );
+    ok( !memcmp( &dict2->guid, &dict_static, sizeof(dict_static) ),
+        "got %s\n", wine_dbgstr_guid(&dict2->guid) );
+    ok( dict2->stringCount == 488 || dict2->stringCount == 487 /* < win10 */, "got %u\n", dict2->stringCount );
+    ok( dict2->strings[0].length == 14, "got %u\n", dict2->strings[0].length );
+    ok( !memcmp( dict2->strings[0].bytes, "mustUnderstand", 14 ), "wrong data\n" );
 
     WsFreeReader( reader );
 }

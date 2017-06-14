@@ -10,5 +10,6 @@ C_SRCS = \
 	msg.c \
 	proxy.c \
 	reader.c \
+	string.c \
 	url.c \
 	writer.c
