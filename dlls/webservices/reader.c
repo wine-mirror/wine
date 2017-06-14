@@ -5968,6 +5968,75 @@ HRESULT WINAPI WsReadCharsUtf8( WS_XML_READER *handle, BYTE *bytes, ULONG max_co
     return S_OK;
 }
 
+static HRESULT move_to_element( struct reader *reader )
+{
+    HRESULT hr;
+    if (node_type( reader->current ) == WS_XML_NODE_TYPE_BOF &&
+        (hr = read_move_to( reader, WS_MOVE_TO_CHILD_NODE, NULL )) != S_OK) return hr;
+    if (node_type( reader->current ) != WS_XML_NODE_TYPE_ELEMENT) return E_FAIL;
+    return S_OK;
+}
+
+static HRESULT copy_tree( struct reader *reader, WS_XML_WRITER *writer )
+{
+    const struct node *node, *parent;
+    BOOL done = FALSE;
+    HRESULT hr;
+
+    if ((hr = move_to_element( reader )) != S_OK) return hr;
+    parent = reader->current;
+    for (;;)
+    {
+        node = reader->current;
+        if ((hr = WsWriteNode( writer, (const WS_XML_NODE *)node, NULL )) != S_OK) break;
+        if (node_type( node ) == WS_XML_NODE_TYPE_END_ELEMENT && node->parent == parent) done = TRUE;
+        if ((hr = read_next_node( reader )) != S_OK || done) break;
+    }
+    return hr;
+}
+
+/**************************************************************************
+ *          WsReadXmlBuffer		[webservices.@]
+ */
+HRESULT WINAPI WsReadXmlBuffer( WS_XML_READER *handle, WS_HEAP *heap, WS_XML_BUFFER **ret, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    WS_XML_WRITER *writer = NULL;
+    WS_XML_BUFFER *buffer;
+    HRESULT hr;
+
+    TRACE( "%p %p %p %p\n", handle, heap, ret, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !heap) return E_INVALIDARG;
+    if (!ret) return E_FAIL;
+
+    EnterCriticalSection( &reader->cs );
+
+    if (reader->magic != READER_MAGIC)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return E_INVALIDARG;
+    }
+
+    if (!reader->input_type)
+    {
+        LeaveCriticalSection( &reader->cs );
+        return WS_E_INVALID_OPERATION;
+    }
+
+    if ((hr = WsCreateWriter( NULL, 0, &writer, NULL )) != S_OK) goto done;
+    if ((hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL )) != S_OK) goto done;
+    if ((hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL )) != S_OK) goto done;
+    if ((hr = copy_tree( reader, writer )) == S_OK) *ret = buffer;
+
+done:
+    if (hr != S_OK) free_xmlbuf( (struct xmlbuf *)buffer );
+    WsFreeWriter( writer );
+    LeaveCriticalSection( &reader->cs );
+    return hr;
+}
+
 HRESULT get_param_desc( const WS_STRUCT_DESCRIPTION *desc, USHORT index, const WS_FIELD_DESCRIPTION **ret )
 {
     if (index >= desc->fieldCount) return E_INVALIDARG;
