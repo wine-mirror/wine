@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 WINE_DECLARE_DEBUG_CHANNEL(pid);
@@ -594,6 +594,65 @@ static void WINAPI relay_call_regs( struct relay_descr *descr, INT_PTR idx, INT_
 {
     assert(0);  /* should never be called */
 }
+#elif defined(__aarch64__)
+
+extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args, int flags );
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "stp x29, x30, [SP,#-16]!\n\t"
+                   "stp x19, x20, [SP,#-16]!\n\t"
+                   "mov x29, SP\n\t"
+                   "mov x19, x2\n\t"
+                   "ldp x8, x9, [x19, #-32]\n\t"
+                   "mov x9, x0\n\t"
+                   "cbz w1, 2f\n\t"
+                   "mov w10, w1\n\t"
+                   "mov x11, x2\n\t"
+                   "mov x12, #0\n\t"
+                   "ldp x0, x1, [x11], #16\n\t"
+                   "add w12, w12, #2\n\t"
+                   "cmp w12, w10\n\t"
+                   "b.hs 2f\n\t"
+                   "ldp x2, x3, [x11], #16\n\t"
+                   "add w12, w12, #2\n\t"
+                   "cmp w12, w10\n\t"
+                   "b.hs 2f\n\t"
+                   "ldp x4, x5, [x11], #16\n\t"
+                   "add w12, w12, #2\n\t"
+                   "cmp w12, w10\n\t"
+                   "b.hs 2f\n\t"
+                   "ldp x6, x7, [x11], #16\n\t"
+                   "add w12, w12, #2\n\t"
+                   "cmp w12, w10\n\t"
+                   "b.hs 2f\n\t"
+                   "sub w12, w10, #8\n\t"
+                   "lsl w12, w12, #3\n\t"
+                   "sub SP, SP, w12, uxtw\n\t"
+                   "tbz w12, #3, 1f\n\t"
+                   "sub SP, SP, #8\n\t"
+                   "1: sub w12, w12, #8\n\t"
+                   "ldr x13, [x11, x12]\n\t"
+                   "str x13, [SP, x12]\n\t"
+                   "cbnz w12, 1b\n\t"
+                   "2: blr x9\n\t"
+                   "mov SP, x29\n\t"
+                   "ldp x19, x20, [SP], #16\n\t"
+                   "ldp x29, x30, [SP], #16\n\t"
+                   "ret\n" )
+
+static LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const INT_PTR *stack )
+{
+    BYTE nb_args = LOBYTE(HIWORD(idx));
+    BYTE flags   = HIBYTE(HIWORD(idx));
+    void *func = relay_trace_entry( descr, idx, stack + 3 );
+    LONGLONG ret = call_entry_point( func, nb_args, stack + 4, flags );
+    relay_trace_exit( descr, idx, stack + 3, ret );
+    return ret;
+}
+
+static void WINAPI relay_call_regs( struct relay_descr *descr, INT_PTR idx, INT_PTR *stack )
+{
+    assert(0);  /* should never be called */
+}
 
 #elif defined(__x86_64__)
 
@@ -751,7 +810,7 @@ void RELAY_SetupDLL( HMODULE module )
     }
 }
 
-#else  /* __i386__ || __x86_64__ || __arm__ */
+#else  /* __i386__ || __x86_64__ || __arm__ || __aarch64__ */
 
 FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                               DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user )
@@ -763,7 +822,7 @@ void RELAY_SetupDLL( HMODULE module )
 {
 }
 
-#endif  /* __i386__ || __x86_64__ || __arm__ */
+#endif  /* __i386__ || __x86_64__ || __arm__ || __aarch64__ */
 
 
 /***********************************************************************/
