@@ -372,11 +372,14 @@ static void regstore_set_modified(struct d3dx_regstore *rs, unsigned int table,
 static void regstore_set_values(struct d3dx_regstore *rs, unsigned int table, const void *data,
         unsigned int start_offset, unsigned int count)
 {
+    void *out;
+
     if (!count)
         return;
 
-    memcpy((BYTE *)rs->tables[table] + start_offset * table_info[table].component_size,
-            data, count * table_info[table].component_size);
+    out = (BYTE *)rs->tables[table] + start_offset * table_info[table].component_size;
+    assert(data != out);
+    memcpy(out, data, count * table_info[table].component_size);
     regstore_set_modified(rs, table, start_offset, count);
 }
 
@@ -1101,6 +1104,12 @@ static void regstore_set_data(struct d3dx_regstore *rs, unsigned int table,
     };
     enum pres_value_type table_type = table_info[table].type;
 
+    if (param_type == table_type)
+    {
+        regstore_set_values(rs, table, in, offset, count);
+        return;
+    }
+
     set_const_funcs[param_type][table_type]((unsigned int *)rs->tables[table] + offset, in, count);
     regstore_set_modified(rs, table, offset, count);
 }
@@ -1132,6 +1141,23 @@ static void set_constants(struct d3dx_regstore *rs, struct d3dx_const_tab *const
             continue;
         }
         param_type = table_type_from_param_type(param->type);
+        if (const_set->constant_class == D3DXPC_SCALAR || const_set->constant_class == D3DXPC_VECTOR)
+        {
+            unsigned int count = max(param->rows, param->columns);
+
+            if (count >= get_reg_components(table))
+            {
+                regstore_set_data(rs, table, start_offset, data,
+                        count * const_set->element_count, param_type);
+            }
+            else
+            {
+                for (element = 0; element < const_set->element_count; ++element)
+                    regstore_set_data(rs, table, start_offset + get_offset_reg(table, element),
+                            &data[element * count], count, param_type);
+            }
+            continue;
+        }
         get_const_upload_info(const_set, &info);
         for (element = 0; element < const_set->element_count; ++element)
         {
