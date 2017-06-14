@@ -306,7 +306,7 @@ static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
     }
 
     TRACE("current level: %d, last level: %d\n", trylevel, last_level);
-    while (trylevel != last_level)
+    while (trylevel > last_level)
     {
         if (trylevel<0 || trylevel>=descr->unwind_count)
         {
@@ -321,7 +321,7 @@ static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
         }
         trylevel = unwind_table[trylevel].prev;
     }
-    unwind_help[0] = last_level;
+    unwind_help[0] = trylevel;
 }
 
 static LONG CALLBACK cxx_rethrow_filter(PEXCEPTION_POINTERS eptrs, void *c)
@@ -512,6 +512,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
     DWORD throw_func_off;
     void *throw_func;
     UINT i, j;
+    int unwindlevel = -1;
 
     if (descr->magic<CXX_FRAME_MAGIC_VC6 || descr->magic>CXX_FRAME_MAGIC_VC8)
     {
@@ -545,6 +546,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
                 if (rva_to_ptr(catchblock->handler, dispatch->ImageBase) == throw_func)
                 {
                     TRACE("nested exception detected\n");
+                    unwindlevel = tryblock->end_level;
                     orig_frame = *(ULONG64*)rva_to_ptr(catchblock->frame, frame);
                     TRACE("setting orig_frame to %lx\n", orig_frame);
                 }
@@ -554,23 +556,11 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
     if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
     {
-        if (cxx_is_consolidate(rec))
-        {
-            if (rec->ExceptionFlags & EH_TARGET_UNWIND)
-            {
-                const cxx_function_descr *orig_descr = (void*)rec->ExceptionInformation[2];
-                int end_level = rec->ExceptionInformation[3];
-                orig_frame = rec->ExceptionInformation[1];
-
-                cxx_local_unwind(orig_frame, dispatch, orig_descr, end_level);
-            }
-            else if(frame == orig_frame)
-                cxx_local_unwind(frame, dispatch, descr, -1);
-            return ExceptionContinueSearch;
-        }
-
-        if (frame == orig_frame)
-            cxx_local_unwind(frame, dispatch, descr, rec->ExceptionFlags & EH_TARGET_UNWIND ? trylevel : -1);
+        if (rec->ExceptionFlags & EH_TARGET_UNWIND)
+            cxx_local_unwind(orig_frame, dispatch, descr,
+                cxx_is_consolidate(rec) ? rec->ExceptionInformation[3] : trylevel);
+        else
+            cxx_local_unwind(orig_frame, dispatch, descr, unwindlevel);
         return ExceptionContinueSearch;
     }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
