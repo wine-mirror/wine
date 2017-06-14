@@ -336,6 +336,47 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     return TRUE;
 }
 
+/* extract security labels from SACL */
+ACL *extract_security_labels( const ACL *sacl )
+{
+    size_t size = sizeof(ACL);
+    const ACE_HEADER *ace;
+    ACE_HEADER *label_ace;
+    unsigned int i, count = 0;
+    ACL *label_acl;
+
+    ace = (const ACE_HEADER *)(sacl + 1);
+    for (i = 0; i < sacl->AceCount; i++, ace = ace_next( ace ))
+    {
+        if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+        {
+            size += ace->AceSize;
+            count++;
+        }
+    }
+
+    label_acl = mem_alloc( size );
+    if (!label_acl) return NULL;
+
+    label_acl->AclRevision = sacl->AclRevision;
+    label_acl->Sbz1 = 0;
+    label_acl->AclSize = size;
+    label_acl->AceCount = count;
+    label_acl->Sbz2 = 0;
+    label_ace = (ACE_HEADER *)(label_acl + 1);
+
+    ace = (const ACE_HEADER *)(sacl + 1);
+    for (i = 0; i < sacl->AceCount; i++, ace = ace_next( ace ))
+    {
+        if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+        {
+            memcpy( label_ace, ace, ace->AceSize );
+            label_ace = (ACE_HEADER *)ace_next( label_ace );
+        }
+    }
+    return label_acl;
+}
+
 /* maps from generic rights to specific rights as given by a mapping */
 static inline void map_generic_mask(unsigned int *mask, const GENERIC_MAPPING *mapping)
 {

@@ -709,6 +709,7 @@ DECL_HANDLER(get_security_object)
     int present;
     const SID *owner, *group;
     const ACL *sacl, *dacl;
+    ACL *label_acl = NULL;
 
     if (req->security_info & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
@@ -736,6 +737,12 @@ DECL_HANDLER(get_security_object)
         sacl = sd_get_sacl( sd, &present );
         if (req->security_info & SACL_SECURITY_INFORMATION && present)
             req_sd.sacl_len = sd->sacl_len;
+        else if (req->security_info & LABEL_SECURITY_INFORMATION && present && sacl)
+        {
+            if (!(label_acl = extract_security_labels( sacl ))) goto done;
+            req_sd.sacl_len = label_acl->AclSize;
+            sacl = label_acl;
+        }
         else
             req_sd.sacl_len = 0;
 
@@ -766,7 +773,9 @@ DECL_HANDLER(get_security_object)
             set_error(STATUS_BUFFER_TOO_SMALL);
     }
 
+done:
     release_object( obj );
+    free( label_acl );
 }
 
 struct enum_handle_info
