@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-06-06 08:51+0300\n"
+"PO-Revision-Date: 2017-06-14 08:17+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12261,7 +12261,7 @@ msgstr "Ar tikrai norite pašalinti registro raktą „%1“ ir visus jo porakč
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Išskleidžia arba suskleidžia pasirinktą mazgą"
 
 #: regedit.rc:231
 msgid "Collapse"
