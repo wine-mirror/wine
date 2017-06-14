@@ -583,15 +583,18 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
     }
     else new_sd.group_len = 0;
 
-    new_sd.control |= SE_SACL_PRESENT;
     sacl = sd_get_sacl( sd, &present );
     if (set_info & SACL_SECURITY_INFORMATION && present)
+    {
+        new_sd.control |= SE_SACL_PRESENT;
         new_sd.sacl_len = sd->sacl_len;
+    }
     else if (set_info & LABEL_SECURITY_INFORMATION && present)
     {
         const ACL *old_sacl = NULL;
         if (obj->sd && obj->sd->control & SE_SACL_PRESENT) old_sacl = sd_get_sacl( obj->sd, &present );
         if (!(replaced_sacl = replace_security_labels( old_sacl, sacl ))) return 0;
+        new_sd.control |= SE_SACL_PRESENT;
         new_sd.sacl_len = replaced_sacl->AclSize;
         sacl = replaced_sacl;
     }
@@ -600,24 +603,33 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
         if (obj->sd) sacl = sd_get_sacl( obj->sd, &present );
 
         if (obj->sd && present)
+        {
+            new_sd.control |= SE_SACL_PRESENT;
             new_sd.sacl_len = obj->sd->sacl_len;
+        }
         else
             new_sd.sacl_len = 0;
     }
 
-    new_sd.control |= SE_DACL_PRESENT;
     dacl = sd_get_dacl( sd, &present );
     if (set_info & DACL_SECURITY_INFORMATION && present)
+    {
+        new_sd.control |= SE_DACL_PRESENT;
         new_sd.dacl_len = sd->dacl_len;
+    }
     else
     {
         if (obj->sd) dacl = sd_get_dacl( obj->sd, &present );
 
         if (obj->sd && present)
+        {
+            new_sd.control |= SE_DACL_PRESENT;
             new_sd.dacl_len = obj->sd->dacl_len;
+        }
         else if (token)
         {
             dacl = token_get_default_dacl( token );
+            new_sd.control |= SE_DACL_PRESENT;
             new_sd.dacl_len = dacl->AclSize;
         }
         else new_sd.dacl_len = 0;

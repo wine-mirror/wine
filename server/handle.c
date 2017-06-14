@@ -734,7 +734,6 @@ DECL_HANDLER(get_security_object)
         else
             req_sd.group_len = 0;
 
-        req_sd.control |= SE_SACL_PRESENT;
         sacl = sd_get_sacl( sd, &present );
         if (req->security_info & SACL_SECURITY_INFORMATION && present)
             req_sd.sacl_len = sd->sacl_len;
@@ -747,7 +746,6 @@ DECL_HANDLER(get_security_object)
         else
             req_sd.sacl_len = 0;
 
-        req_sd.control |= SE_DACL_PRESENT;
         dacl = sd_get_dacl( sd, &present );
         if (req->security_info & DACL_SECURITY_INFORMATION && present)
             req_sd.dacl_len = sd->dacl_len;
