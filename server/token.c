@@ -377,6 +377,75 @@ ACL *extract_security_labels( const ACL *sacl )
     return label_acl;
 }
 
+/* replace security labels in an existing SACL */
+ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
+{
+    const ACE_HEADER *ace;
+    ACE_HEADER *replaced_ace;
+    size_t size = sizeof(ACL);
+    unsigned int i, count = 0;
+    BYTE revision = ACL_REVISION;
+    ACL *replaced_acl;
+
+    if (old_sacl)
+    {
+        revision = max( revision, old_sacl->AclRevision );
+        ace = (const ACE_HEADER *)(old_sacl + 1);
+        for (i = 0; i < old_sacl->AceCount; i++, ace = ace_next( ace ))
+        {
+            if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            size += ace->AceSize;
+            count++;
+        }
+    }
+
+    if (new_sacl)
+    {
+        revision = max( revision, new_sacl->AclRevision );
+        ace = (const ACE_HEADER *)(new_sacl + 1);
+        for (i = 0; i < new_sacl->AceCount; i++, ace = ace_next( ace ))
+        {
+            if (ace->AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            size += ace->AceSize;
+            count++;
+        }
+    }
+
+    replaced_acl = mem_alloc( size );
+    if (!replaced_acl) return NULL;
+
+    replaced_acl->AclRevision = revision;
+    replaced_acl->Sbz1 = 0;
+    replaced_acl->AclSize = size;
+    replaced_acl->AceCount = count;
+    replaced_acl->Sbz2 = 0;
+    replaced_ace = (ACE_HEADER *)(replaced_acl + 1);
+
+    if (old_sacl)
+    {
+        ace = (const ACE_HEADER *)(old_sacl + 1);
+        for (i = 0; i < old_sacl->AceCount; i++, ace = ace_next( ace ))
+        {
+            if (ace->AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            memcpy( replaced_ace, ace, ace->AceSize );
+            replaced_ace = (ACE_HEADER *)ace_next( replaced_ace );
+        }
+    }
+
+    if (new_sacl)
+    {
+        ace = (const ACE_HEADER *)(new_sacl + 1);
+        for (i = 0; i < new_sacl->AceCount; i++, ace = ace_next( ace ))
+        {
+            if (ace->AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+            memcpy( replaced_ace, ace, ace->AceSize );
+            replaced_ace = (ACE_HEADER *)ace_next( replaced_ace );
+        }
+    }
+
+    return replaced_acl;
+}
+
 /* maps from generic rights to specific rights as given by a mapping */
 static inline void map_generic_mask(unsigned int *mask, const GENERIC_MAPPING *mapping)
 {

@@ -97,6 +97,7 @@ static inline int thread_single_check_privilege( struct thread *thread, const LU
 
 extern int sd_is_valid( const struct security_descriptor *sd, data_size_t size );
 extern ACL *extract_security_labels( const ACL *sacl );
+extern ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl );
 
 /* gets the discretionary access control list from a security descriptor */
 static inline const ACL *sd_get_dacl( const struct security_descriptor *sd, int *present )

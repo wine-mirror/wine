@@ -542,6 +542,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
     int present;
     const SID *owner = NULL, *group = NULL;
     const ACL *sacl, *dacl;
+    ACL *replaced_sacl = NULL;
     char *ptr;
 
     if (!set_info) return 1;
@@ -586,6 +587,14 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
     sacl = sd_get_sacl( sd, &present );
     if (set_info & SACL_SECURITY_INFORMATION && present)
         new_sd.sacl_len = sd->sacl_len;
+    else if (set_info & LABEL_SECURITY_INFORMATION && present)
+    {
+        const ACL *old_sacl = NULL;
+        if (obj->sd && obj->sd->control & SE_SACL_PRESENT) old_sacl = sd_get_sacl( obj->sd, &present );
+        if (!(replaced_sacl = replace_security_labels( old_sacl, sacl ))) return 0;
+        new_sd.sacl_len = replaced_sacl->AclSize;
+        sacl = replaced_sacl;
+    }
     else
     {
         if (obj->sd) sacl = sd_get_sacl( obj->sd, &present );
@@ -616,7 +625,11 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
 
     ptr = mem_alloc( sizeof(new_sd) + new_sd.owner_len + new_sd.group_len +
                      new_sd.sacl_len + new_sd.dacl_len );
-    if (!ptr) return 0;
+    if (!ptr)
+    {
+        free( replaced_sacl );
+        return 0;
+    }
     new_sd_ptr = (struct security_descriptor*)ptr;
 
     memcpy( ptr, &new_sd, sizeof(new_sd) );
@@ -629,6 +642,7 @@ int set_sd_defaults_from_token( struct object *obj, const struct security_descri
     ptr += new_sd.sacl_len;
     memcpy( ptr, dacl, new_sd.dacl_len );
 
+    free( replaced_sacl );
     free( obj->sd );
     obj->sd = new_sd_ptr;
     return 1;

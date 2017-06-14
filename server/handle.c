@@ -687,7 +687,8 @@ DECL_HANDLER(set_security_object)
     }
 
     if (req->security_info & OWNER_SECURITY_INFORMATION ||
-        req->security_info & GROUP_SECURITY_INFORMATION)
+        req->security_info & GROUP_SECURITY_INFORMATION ||
+        req->security_info & LABEL_SECURITY_INFORMATION)
         access |= WRITE_OWNER;
     if (req->security_info & SACL_SECURITY_INFORMATION)
         access |= ACCESS_SYSTEM_SECURITY;
