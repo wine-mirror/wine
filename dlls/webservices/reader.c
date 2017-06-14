@@ -2999,8 +2999,10 @@ static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found
 
     if (!read_end_of_data( reader ))
     {
+        struct node *saved_current = reader->current;
         while (reader->state != READER_STATE_EOF && (hr = read_node( reader )) == S_OK) { /* nothing */ };
         if (hr != S_OK) return hr;
+        reader->current = saved_current;
     }
     switch (move)
     {
