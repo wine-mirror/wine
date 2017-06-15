@@ -1329,8 +1329,21 @@ static HRESULT WINAPI HTMLInputTextElement2_get_selectionEnd(IHTMLInputTextEleme
 static HRESULT WINAPI HTMLInputTextElement2_setSelectionRange(IHTMLInputTextElement2 *iface, LONG start, LONG end)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement2(iface);
-    FIXME("(%p)->(%d %d)\n", This, start, end);
-    return E_NOTIMPL;
+    nsAString none_str;
+    nsresult nsres;
+
+    static const WCHAR noneW[] = {'n','o','n','e',0};
+
+    TRACE("(%p)->(%d %d)\n", This, start, end);
+
+    nsAString_InitDepend(&none_str, noneW);
+    nsres = nsIDOMHTMLInputElement_SetSelectionRange(This->nsinput, start, end, &none_str);
+    nsAString_Finish(&none_str);
+    if(NS_FAILED(nsres)) {
+        ERR("SetSelectionRange failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static const IHTMLInputTextElement2Vtbl HTMLInputTextElement2Vtbl = {
