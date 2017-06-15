@@ -88,7 +88,7 @@ static void verify_reg_nonexist_(unsigned line, HKEY hkey, const char *value)
 
     err = RegQueryValueExA(hkey, value, NULL, NULL, NULL, NULL);
     lok(err == ERROR_FILE_NOT_FOUND, "registry value '%s' shouldn't exist; got %d, expected 2\n",
-        value, err);
+        (value && *value) ? value : "(Default)", err);
 }
 
 #define verify_key_exist(k,s) verify_key_exist_(__LINE__,k,s)
