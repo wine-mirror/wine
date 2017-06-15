@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2017-06-03 20:40+0200\n"
+"PO-Revision-Date: 2017-06-15 22:41+0200\n"
 "Last-Translator: Marcin Mikołajczak <me@m4sk.in>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -6821,7 +6821,7 @@ msgstr "ścieżka %s nie została odnaleziona"
 
 #: msi.rc:32
 msgid "insert disk %s"
-msgstr "włóż dysk '%s'"
+msgstr "włóż dysk %s"
 
 #: msi.rc:33
 msgid ""
@@ -6887,7 +6887,7 @@ msgstr ""
 
 #: msi.rc:60
 msgid "enter which folder contains %s"
-msgstr "podaj, który katalog zawiera '%s'"
+msgstr "wprowadź folder zawierający %s"
 
 #: msi.rc:61
 msgid "install source for feature missing"
@@ -6903,7 +6903,7 @@ msgstr "funkcja z:"
 
 #: msi.rc:64
 msgid "choose which folder contains %s"
-msgstr "wybierz, który katalog zawiera '%s'"
+msgstr "wybierz folder zawierający '%s'"
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -8624,7 +8624,7 @@ msgstr "Pokaż wszystko"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr " Zakończ %@"
+msgstr "Zakończ %@"
 
 #: winemac.rc:38
 msgid "Quit"
@@ -11720,11 +11720,11 @@ msgstr "Wyszukiwanie zakończone. Liczba pasujących wyrażeń: %1!d!\n"
 
 #: reg.rc:61
 msgid "reg: Invalid syntax. "
-msgstr "reg: Nieprawidłowa składnia."
+msgstr "reg: Nieprawidłowa składnia. "
 
 #: reg.rc:62
 msgid "reg: Invalid option [%1]. "
-msgstr "reg: Nieprawidłowa opcja [%1]."
+msgstr "reg: Nieprawidłowa opcja [%1]. "
 
 #: reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
@@ -11811,10 +11811,8 @@ msgid "Expand"
 msgstr "Rozwiń"
 
 #: regedit.rc:134 regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Zmień dane binarne..."
+msgstr "Zmień dane &binarne..."
 
 #: regedit.rc:267
 msgid "Export registry"
@@ -12311,7 +12309,7 @@ msgstr ""
 
 #: regedit.rc:199
 msgid "Expands or collapses the selected node"
-msgstr ""
+msgstr "Rozwija lub zwija zaznaczony węzeł"
 
 #: regedit.rc:231
 msgid "Collapse"
@@ -13535,7 +13533,7 @@ msgstr ""
 
 #: winecfg.rc:236
 msgid "A&dd..."
-msgstr "&Dodaj"
+msgstr "&Dodaj…"
 
 #: winecfg.rc:238
 msgid "Aut&odetect"
