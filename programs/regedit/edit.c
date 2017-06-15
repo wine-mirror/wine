@@ -378,6 +378,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
     {
         int index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
                                  MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
+        HeapFree(GetProcessHeap(), 0, stringValueData);
         stringValueData = read_value(hwnd, hKey, valueName, &type, &len);
         format_value_data(g_pChildWnd->hListWnd, index, type, stringValueData, len);
     }
