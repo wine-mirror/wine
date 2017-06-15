@@ -1296,15 +1296,34 @@ static HRESULT WINAPI HTMLInputTextElement2_get_selectionStart(IHTMLInputTextEle
 static HRESULT WINAPI HTMLInputTextElement2_put_selectionEnd(IHTMLInputTextElement2 *iface, LONG v)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement2(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, v);
+
+    nsres = nsIDOMHTMLInputElement_SetSelectionEnd(This->nsinput, v);
+    if(NS_FAILED(nsres)) {
+        ERR("SetSelectionEnd failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputTextElement2_get_selectionEnd(IHTMLInputTextElement2 *iface, LONG *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputTextElement2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    INT32 selection_end;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLInputElement_GetSelectionEnd(This->nsinput, &selection_end);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSelectionEnd failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = selection_end;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputTextElement2_setSelectionRange(IHTMLInputTextElement2 *iface, LONG start, LONG end)
