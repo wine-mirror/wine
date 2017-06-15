@@ -154,13 +154,10 @@ static void r_verify_reg_wsz(unsigned line, HKEY key, const char *value_name, co
 static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *value_name)
 {
     LONG lr;
-    DWORD fnd_type, fnd_len;
-    char fnd_value[32];
 
-    fnd_len = sizeof(fnd_value);
-    lr = RegQueryValueExA(key, value_name, NULL, &fnd_type, (BYTE*)fnd_value, &fnd_len);
-    lok(lr == ERROR_FILE_NOT_FOUND, "Reg value shouldn't exist: %s\n",
-            value_name);
+    lr = RegQueryValueExA(key, value_name, NULL, NULL, NULL, NULL);
+    lok(lr == ERROR_FILE_NOT_FOUND, "registry value '%s' shouldn't exist; got %d, expected 2\n",
+       (value_name && *value_name) ? value_name : "(Default)", lr);
 }
 
 #define verify_key_exist(k,s) verify_key_exist_(__LINE__,k,s)
