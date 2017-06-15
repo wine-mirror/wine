@@ -1499,6 +1499,7 @@ static const NodeImplVtbl HTMLInputElementImplVtbl = {
 static const tid_t HTMLInputElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLInputElement_tid,
+    IHTMLInputTextElement2_tid,
     0
 };
 static dispex_static_data_t HTMLInputElement_dispex = {

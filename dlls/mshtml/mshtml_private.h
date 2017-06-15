@@ -175,6 +175,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLImageElementFactory) \
     XIID(IHTMLImgElement) \
     XIID(IHTMLInputElement) \
+    XIID(IHTMLInputTextElement2) \
     XIID(IHTMLLabelElement) \
     XIID(IHTMLLinkElement) \
     XIID(IHTMLLocation) \
