@@ -138,6 +138,10 @@ enum parser_state
     LINE_START,          /* at the beginning of a registry line */
     KEY_NAME,            /* parsing a key name */
     DELETE_KEY,          /* deleting a registry key */
+    DEFAULT_VALUE_NAME,  /* parsing a default value name */
+    QUOTED_VALUE_NAME,   /* parsing a double-quoted value name */
+    DATA_START,          /* preparing for data parsing operations */
+    DELETE_VALUE,        /* deleting a registry value */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -163,6 +167,10 @@ static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos);
 static WCHAR *line_start_state(struct parser *parser, WCHAR *pos);
 static WCHAR *key_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos);
+static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos);
+static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos);
+static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
+static WCHAR *delete_value_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
@@ -172,6 +180,10 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     line_start_state,          /* LINE_START */
     key_name_state,            /* KEY_NAME */
     delete_key_state,          /* DELETE_KEY */
+    default_value_name_state,  /* DEFAULT_VALUE_NAME */
+    quoted_value_name_state,   /* QUOTED_VALUE_NAME */
+    data_start_state,          /* DATA_START */
+    delete_value_state,        /* DELETE_VALUE */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -435,7 +447,7 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
     DWORD  dwData, dwLen;
     WCHAR del[] = {'-',0};
 
-    if ( (val_name == NULL) || (val_data == NULL) )
+    if (!val_data)
         return ERROR_INVALID_PARAMETER;
 
     if (lstrcmpW(val_data, del) == 0)
@@ -547,49 +559,6 @@ static LONG openKeyW(WCHAR* stdInput)
 
     return res;
 
-}
-
-/******************************************************************************
- * This function is a wrapper for the setValue function.  It prepares the
- * land and cleans the area once completed.
- * Note: this function modifies the line parameter.
- *
- * line - registry file unwrapped line. Should have the registry value name and
- *      complete registry value data.
- */
-static void processSetValue(WCHAR* line, BOOL is_unicode)
-{
-    WCHAR *val_name;
-    int len = 0;
-    LONG res;
-
-    /* get value name */
-    val_name = line;
-
-    if (*line == '@')
-        *line++ = 0;
-    else if (!REGPROC_unescape_string(++val_name, &line))
-        goto error;
-
-    while (*line == ' ' || *line == '\t') line++;
-    if (*line != '=')
-        goto error;
-    line++;
-    while (*line == ' ' || *line == '\t') line++;
-
-    /* trim trailing blanks */
-    len = strlenW(line);
-    while (len > 0 && (line[len - 1] == ' ' || line[len - 1] == '\t')) len--;
-    line[len] = 0;
-
-    res = setValue(val_name, line, is_unicode);
-    if ( res != ERROR_SUCCESS )
-        output_message(STRING_SETVALUE_FAILED, val_name, currentKeyName);
-    return;
-
-error:
-    output_message(STRING_SETVALUE_FAILED, val_name, currentKeyName);
-    output_message(STRING_INVALID_LINE_SYNTAX);
 }
 
 enum reg_versions {
@@ -728,9 +697,11 @@ static WCHAR *line_start_state(struct parser *parser, WCHAR *pos)
             set_state(parser, KEY_NAME);
             return p + 1;
         case '@':
-        case '"':
-            processSetValue(p, parser->is_unicode);
+            set_state(parser, DEFAULT_VALUE_NAME);
             return p;
+        case '"':
+            set_state(parser, QUOTED_VALUE_NAME);
+            return p + 1;
         case ' ':
         case '\t':
             break;
@@ -774,6 +745,86 @@ static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
     if (*p == 'H')
         delete_registry_key(p);
 
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser DEFAULT_VALUE_NAME state */
+static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos)
+{
+    parser->value_name = NULL;
+
+    set_state(parser, DATA_START);
+    return pos + 1;
+}
+
+/* handler for parser QUOTED_VALUE_NAME state */
+static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *val_name = pos, *p;
+
+    if (parser->value_name)
+    {
+        HeapFree(GetProcessHeap(), 0, parser->value_name);
+        parser->value_name = NULL;
+    }
+
+    if (!REGPROC_unescape_string(val_name, &p))
+        goto invalid;
+
+    /* copy the value name in case we need to parse multiple lines and the buffer is overwritten */
+    parser->value_name = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(val_name) + 1) * sizeof(WCHAR));
+    CHECK_ENOUGH_MEMORY(parser->value_name);
+    lstrcpyW(parser->value_name, val_name);
+
+    set_state(parser, DATA_START);
+    return p;
+
+invalid:
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser DATA_START state */
+static WCHAR *data_start_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos;
+    unsigned int len;
+
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p != '=') goto done;
+    p++;
+    while (*p == ' ' || *p == '\t') p++;
+
+    /* trim trailing whitespace */
+    len = strlenW(p);
+    while (len > 0 && (p[len - 1] == ' ' || p[len - 1] == '\t')) len--;
+    p[len] = 0;
+
+    if (*p == '-')
+    {
+        set_state(parser, DELETE_VALUE);
+        return p;
+    }
+    else if (setValue(parser->value_name, p, parser->is_unicode) != ERROR_SUCCESS)
+        output_message(STRING_SETVALUE_FAILED, parser->value_name, currentKeyName);
+
+done:
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser DELETE_VALUE state */
+static WCHAR *delete_value_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos + 1;
+
+    while (*p == ' ' || *p == '\t') p++;
+    if (*p && *p != ';') goto done;
+
+    RegDeleteValueW(currentKeyHandle, parser->value_name);
+
+done:
     set_state(parser, LINE_START);
     return p;
 }
@@ -1431,6 +1482,9 @@ BOOL import_registry_file(FILE *reg_file)
 
     if (parser.reg_version == REG_VERSION_FUZZY || parser.reg_version == REG_VERSION_INVALID)
         return parser.reg_version == REG_VERSION_FUZZY;
+
+    if (parser.value_name)
+        HeapFree(GetProcessHeap(), 0, parser.value_name);
 
     closeKey();
     return TRUE;

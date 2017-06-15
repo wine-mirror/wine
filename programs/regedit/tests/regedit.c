@@ -1289,7 +1289,7 @@ static void test_value_deletion(void)
     verify_reg_nonexist(hkey, "Wine46b");
     verify_reg_nonexist(hkey, "Wine46c");
     verify_reg(hkey, "Wine46d", REG_MULTI_SZ, "Line concatenation\0", 20, 0);
-    todo_wine verify_reg_nonexist(hkey, "Wine46e");
+    verify_reg_nonexist(hkey, "Wine46e");
     verify_reg(hkey, "Wine46f", REG_NONE, "V\0a\0l\0u\0e\0\0", 12, 0);
 
     lr = RegCloseKey(hkey);
