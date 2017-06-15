@@ -12062,7 +12062,9 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "regedit: Ukjent escape-sekvens [\\%1!c!]\n"
 
 #: regedit.rc:420
-msgid "regedit: Unsupported registry data type [%1]\n"
+#, fuzzy
+#| msgid "regedit: Unsupported registry data type [%1]\n"
+msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
 msgstr "regedit: Registerdatatypen [%1] støttes ikke\n"
 
 #: regedit.rc:421

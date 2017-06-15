@@ -12183,7 +12183,7 @@ msgstr ""
 #: regedit.rc:420
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
-msgid "regedit: Unsupported registry data type [%1]\n"
+msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
 msgstr ""
 "Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
 

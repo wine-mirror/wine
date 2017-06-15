@@ -142,6 +142,11 @@ enum parser_state
     QUOTED_VALUE_NAME,   /* parsing a double-quoted value name */
     DATA_START,          /* preparing for data parsing operations */
     DELETE_VALUE,        /* deleting a registry value */
+    DATA_TYPE,           /* parsing the registry data type */
+    STRING_DATA,         /* parsing REG_SZ data */
+    DWORD_DATA,          /* parsing DWORD data */
+    HEX_DATA,            /* parsing REG_BINARY, REG_NONE, REG_EXPAND_SZ or REG_MULTI_SZ data */
+    UNKNOWN_DATA,        /* parsing an unhandled or invalid data type */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -152,6 +157,8 @@ struct parser
     WCHAR              two_wchars[2];  /* first two characters from the encoding check */
     BOOL               is_unicode;     /* parsing Unicode or ASCII data */
     short int          reg_version;    /* registry file version */
+    HKEY               hkey;           /* current registry key */
+    WCHAR             *key_name;       /* current key name */
     WCHAR             *value_name;     /* value name */
     DWORD              data_type;      /* data type */
     void              *data;           /* value data */
@@ -171,6 +178,11 @@ static WCHAR *default_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *quoted_value_name_state(struct parser *parser, WCHAR *pos);
 static WCHAR *data_start_state(struct parser *parser, WCHAR *pos);
 static WCHAR *delete_value_state(struct parser *parser, WCHAR *pos);
+static WCHAR *data_type_state(struct parser *parser, WCHAR *pos);
+static WCHAR *string_data_state(struct parser *parser, WCHAR *pos);
+static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos);
+static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos);
+static WCHAR *unknown_data_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
@@ -184,6 +196,11 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     quoted_value_name_state,   /* QUOTED_VALUE_NAME */
     data_start_state,          /* DATA_START */
     delete_value_state,        /* DELETE_VALUE */
+    data_type_state,           /* DATA_TYPE */
+    string_data_state,         /* STRING_DATA */
+    dword_data_state,          /* DWORD_DATA */
+    hex_data_state,            /* HEX_DATA */
+    unknown_data_state,        /* UNKNOWN_DATA */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -198,7 +215,7 @@ static inline enum parser_state set_state(struct parser *parser, enum parser_sta
 /******************************************************************************
  * Converts a hex representation of a DWORD into a DWORD.
  */
-static BOOL convertHexToDWord(WCHAR* str, DWORD *dw)
+static BOOL convert_hex_to_dword(WCHAR *str, DWORD *dw)
 {
     WCHAR *p, *end;
     int count = 0;
@@ -223,14 +240,13 @@ static BOOL convertHexToDWord(WCHAR* str, DWORD *dw)
     return TRUE;
 
 error:
-    output_message(STRING_INVALID_HEX);
     return FALSE;
 }
 
 /******************************************************************************
- * Converts a hex comma separated values list into a binary string.
+ * Converts comma-separated hex data into a binary string.
  */
-static BYTE* convertHexCSVToHex(WCHAR *str, DWORD *size)
+static BYTE *convert_hex_csv_to_hex(WCHAR *str, DWORD *size)
 {
     WCHAR *s;
     BYTE *d, *data;
@@ -249,7 +265,6 @@ static BYTE* convertHexCSVToHex(WCHAR *str, DWORD *size)
 
         wc = strtoulW(s,&end,16);
         if (end == s || wc > 0xff || (*end && *end != ',')) {
-            output_message(STRING_CSV_HEX_ERROR, s);
             HeapFree(GetProcessHeap(), 0, data);
             return NULL;
         }
@@ -265,13 +280,12 @@ static BYTE* convertHexCSVToHex(WCHAR *str, DWORD *size)
 #define REG_UNKNOWN_TYPE 99
 
 /******************************************************************************
- * This function returns the HKEY associated with the data type encoded in the
- * value.  It modifies the input parameter (key value) in order to skip this
- * "now useless" data type information.
+ * Parses the data type of the registry value being imported and modifies
+ * the input parameter to skip the string representation of the data type.
  *
- * Note: Updated based on the algorithm used in 'server/registry.c'
+ * Returns TRUE or FALSE to indicate whether a data type was found.
  */
-static DWORD getDataType(LPWSTR *lpValue, DWORD* parse_type)
+static BOOL parse_data_type(struct parser *parser, WCHAR **line)
 {
     struct data_type { const WCHAR *tag; int len; int type; int parse_type; };
 
@@ -290,31 +304,31 @@ static DWORD getDataType(LPWSTR *lpValue, DWORD* parse_type)
     };
 
     const struct data_type *ptr;
-    int type;
 
-    for (ptr = data_types; ptr->tag; ptr++) {
-        if (strncmpW( ptr->tag, *lpValue, ptr->len ))
+    for (ptr = data_types; ptr->tag; ptr++)
+    {
+        if (strncmpW(ptr->tag, *line, ptr->len))
             continue;
 
-        /* Found! */
-        *parse_type = ptr->parse_type;
-        type=ptr->type;
-        *lpValue+=ptr->len;
-        if (type == -1) {
-            WCHAR* end;
+        parser->data_type = ptr->parse_type;
+        *line += ptr->len;
+
+        if (ptr->type == -1)
+        {
+            WCHAR *end;
+            DWORD val;
 
             /* "hex(xx):" is special */
-            type = (int)strtoulW( *lpValue , &end, 16 );
-            if (**lpValue=='\0' || *end!=')' || *(end+1)!=':') {
-                type = REG_UNKNOWN_TYPE;
-            } else {
-                *lpValue = end + 2;
-            }
+            val = strtoulW(*line, &end, 16);
+            if (!**line || *end != ')' || *(end + 1) != ':')
+                return FALSE;
+
+            parser->data_type = val;
+            *line = end + 2;
         }
-        return type;
+        return TRUE;
     }
-    *parse_type = REG_UNKNOWN_TYPE;
-    return REG_UNKNOWN_TYPE;
+    return FALSE;
 }
 
 /******************************************************************************
@@ -388,10 +402,6 @@ static HKEY parse_key_name(WCHAR *key_name, WCHAR **key_path)
     return 0;
 }
 
-/* Globals used by the setValue() & co */
-static WCHAR *currentKeyName;
-static HKEY  currentKeyHandle = NULL;
-
 /* Registry data types */
 static const WCHAR type_none[] = {'R','E','G','_','N','O','N','E',0};
 static const WCHAR type_sz[] = {'R','E','G','_','S','Z',0};
@@ -431,101 +441,16 @@ static const WCHAR *reg_type_to_wchar(DWORD type)
     return NULL;
 }
 
-/******************************************************************************
- * Sets the value with name val_name to the data in val_data for the currently
- * opened key.
- *
- * Parameters:
- * val_name - name of the registry value
- * val_data - registry value data
- */
-static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
+
+static void close_key(struct parser *parser)
 {
-    LONG res;
-    DWORD  dwDataType, dwParseType;
-    LPBYTE lpbData;
-    DWORD  dwData, dwLen;
-    WCHAR del[] = {'-',0};
-
-    if (!val_data)
-        return ERROR_INVALID_PARAMETER;
-
-    if (lstrcmpW(val_data, del) == 0)
+    if (parser->hkey)
     {
-        res=RegDeleteValueW(currentKeyHandle,val_name);
-        return (res == ERROR_FILE_NOT_FOUND ? ERROR_SUCCESS : res);
-    }
+        HeapFree(GetProcessHeap(), 0, parser->key_name);
+        parser->key_name = NULL;
 
-    /* Get the data type stored into the value field */
-    dwDataType = getDataType(&val_data, &dwParseType);
-
-    if (dwParseType == REG_SZ)          /* no conversion for string */
-    {
-        WCHAR *line;
-        if (!REGPROC_unescape_string(val_data, &line))
-            return ERROR_INVALID_DATA;
-        while (*line == ' ' || *line == '\t') line++;
-        if (*line && *line != ';')
-            return ERROR_INVALID_DATA;
-        lpbData = (BYTE*) val_data;
-        dwLen = (lstrlenW(val_data) + 1) * sizeof(WCHAR); /* size is in bytes */
-    }
-    else if (dwParseType == REG_DWORD)  /* Convert the dword types */
-    {
-        if (!convertHexToDWord(val_data, &dwData))
-            return ERROR_INVALID_DATA;
-        lpbData = (BYTE*)&dwData;
-        dwLen = sizeof(dwData);
-    }
-    else if (dwParseType == REG_BINARY) /* Convert the binary data */
-    {
-        lpbData = convertHexCSVToHex(val_data, &dwLen);
-        if (!lpbData)
-            return ERROR_INVALID_DATA;
-
-        if((dwDataType == REG_MULTI_SZ || dwDataType == REG_EXPAND_SZ) && !is_unicode)
-        {
-            LPBYTE tmp = lpbData;
-            lpbData = (LPBYTE)GetWideStringN((char*)lpbData, dwLen, &dwLen);
-            dwLen *= sizeof(WCHAR);
-            HeapFree(GetProcessHeap(), 0, tmp);
-        }
-    }
-    else                                /* unknown format */
-    {
-        if (dwDataType == REG_UNKNOWN_TYPE)
-        {
-            WCHAR buf[32];
-            LoadStringW(GetModuleHandleW(NULL), STRING_UNKNOWN_TYPE, buf, ARRAY_SIZE(buf));
-            output_message(STRING_UNKNOWN_DATA_FORMAT, buf);
-        }
-        else
-            output_message(STRING_UNKNOWN_DATA_FORMAT, reg_type_to_wchar(dwDataType));
-
-        return ERROR_INVALID_DATA;
-    }
-
-    res = RegSetValueExW(
-               currentKeyHandle,
-               val_name,
-               0,                  /* Reserved */
-               dwDataType,
-               lpbData,
-               dwLen);
-    if (dwParseType == REG_BINARY)
-        HeapFree(GetProcessHeap(), 0, lpbData);
-    return res;
-}
-
-static void closeKey(void)
-{
-    if (currentKeyHandle)
-    {
-        HeapFree(GetProcessHeap(), 0, currentKeyName);
-        currentKeyName = NULL;
-
-        RegCloseKey(currentKeyHandle);
-        currentKeyHandle = NULL;
+        RegCloseKey(parser->hkey);
+        parser->hkey = NULL;
     }
 }
 
@@ -533,32 +458,31 @@ static void closeKey(void)
  * Opens the registry key given by the input path.
  * This key must be closed by calling close_key().
  */
-static LONG openKeyW(WCHAR* stdInput)
+static LONG open_key(struct parser *parser, WCHAR *path)
 {
     HKEY key_class;
     WCHAR *key_path;
     LONG res;
 
-    closeKey();
+    close_key(parser);
 
     /* Get the registry class */
-    if (!stdInput || !(key_class = parse_key_name(stdInput, &key_path)))
+    if (!path || !(key_class = parse_key_name(path, &key_path)))
         return ERROR_INVALID_PARAMETER;
 
     res = RegCreateKeyExW(key_class, key_path, 0, NULL, REG_OPTION_NON_VOLATILE,
-                          KEY_ALL_ACCESS, NULL, &currentKeyHandle, NULL);
+                          KEY_ALL_ACCESS, NULL, &parser->hkey, NULL);
 
     if (res == ERROR_SUCCESS)
     {
-        currentKeyName = HeapAlloc(GetProcessHeap(), 0, (strlenW(stdInput) + 1) * sizeof(WCHAR));
-        CHECK_ENOUGH_MEMORY(currentKeyName);
-        strcpyW(currentKeyName, stdInput);
+        parser->key_name = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(path) + 1) * sizeof(WCHAR));
+        CHECK_ENOUGH_MEMORY(parser->key_name);
+        lstrcpyW(parser->key_name, path);
     }
     else
-        currentKeyHandle = NULL;
+        parser->hkey = NULL;
 
     return res;
-
 }
 
 enum reg_versions {
@@ -660,9 +584,7 @@ static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos)
 
     line[key_end] = 0;
 
-    closeKey();
-
-    if (openKeyW(line) != ERROR_SUCCESS)
+    if (open_key(parser, line) != ERROR_SUCCESS)
     {
         output_message(STRING_OPEN_KEY_FAILED, line);
         goto invalid;
@@ -729,7 +651,7 @@ static WCHAR *key_name_state(struct parser *parser, WCHAR *pos)
         set_state(parser, DELETE_KEY);
         return p + 1;
     }
-    else if (openKeyW(p) != ERROR_SUCCESS)
+    else if (open_key(parser, p) != ERROR_SUCCESS)
         output_message(STRING_OPEN_KEY_FAILED, p);
 
 done:
@@ -802,12 +724,10 @@ static WCHAR *data_start_state(struct parser *parser, WCHAR *pos)
     p[len] = 0;
 
     if (*p == '-')
-    {
         set_state(parser, DELETE_VALUE);
-        return p;
-    }
-    else if (setValue(parser->value_name, p, parser->is_unicode) != ERROR_SUCCESS)
-        output_message(STRING_SETVALUE_FAILED, parser->value_name, currentKeyName);
+    else
+        set_state(parser, DATA_TYPE);
+    return p;
 
 done:
     set_state(parser, LINE_START);
@@ -822,20 +742,136 @@ static WCHAR *delete_value_state(struct parser *parser, WCHAR *pos)
     while (*p == ' ' || *p == '\t') p++;
     if (*p && *p != ';') goto done;
 
-    RegDeleteValueW(currentKeyHandle, parser->value_name);
+    RegDeleteValueW(parser->hkey, parser->value_name);
 
 done:
     set_state(parser, LINE_START);
     return p;
 }
 
+/* handler for parser DATA_TYPE state */
+static WCHAR *data_type_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line = pos;
+
+    if (!parse_data_type(parser, &line))
+    {
+        set_state(parser, LINE_START);
+        return line;
+    }
+
+    switch (parser->data_type)
+    {
+    case REG_SZ:
+        set_state(parser, STRING_DATA);
+        break;
+    case REG_DWORD:
+        set_state(parser, DWORD_DATA);
+        break;
+    case REG_NONE:
+    case REG_EXPAND_SZ:
+    case REG_BINARY:
+    case REG_MULTI_SZ:
+        set_state(parser, HEX_DATA);
+        break;
+    default:
+        set_state(parser, UNKNOWN_DATA);
+    }
+
+    return line;
+}
+
+/* handler for parser STRING_DATA state */
+static WCHAR *string_data_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line;
+
+    parser->data = pos;
+
+    if (!REGPROC_unescape_string(parser->data, &line))
+        goto invalid;
+
+    while (*line == ' ' || *line == '\t') line++;
+    if (*line && *line != ';') goto invalid;
+
+    parser->data_size = (lstrlenW(parser->data) + 1) * sizeof(WCHAR);
+
+    set_state(parser, SET_VALUE);
+    return line;
+
+invalid:
+    set_state(parser, LINE_START);
+    return line;
+}
+
+/* handler for parser DWORD_DATA state */
+static WCHAR *dword_data_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line = pos;
+
+    parser->data = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
+    CHECK_ENOUGH_MEMORY(parser->data);
+
+    if (!convert_hex_to_dword(line, parser->data))
+        goto invalid;
+
+    parser->data_size = sizeof(DWORD);
+
+    set_state(parser, SET_VALUE);
+    return line;
+
+invalid:
+    HeapFree(GetProcessHeap(), 0, parser->data);
+    parser->data = NULL;
+
+    set_state(parser, LINE_START);
+    return line;
+}
+
+/* handler for parser HEX_DATA state */
+static WCHAR *hex_data_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *line = pos;
+
+    if (!(parser->data = convert_hex_csv_to_hex(line, &parser->data_size)))
+        goto invalid;
+
+    if (!parser->is_unicode && (parser->data_type == REG_EXPAND_SZ || parser->data_type == REG_MULTI_SZ))
+    {
+        void *tmp = parser->data;
+
+        parser->data = GetWideStringN(parser->data, parser->data_size, &parser->data_size);
+        parser->data_size *= sizeof(WCHAR);
+        HeapFree(GetProcessHeap(), 0, tmp);
+    }
+
+    set_state(parser, SET_VALUE);
+    return line;
+
+invalid:
+    set_state(parser, LINE_START);
+    return line;
+}
+
+/* handler for parser UNKNOWN_DATA state */
+static WCHAR *unknown_data_state(struct parser *parser, WCHAR *pos)
+{
+    output_message(STRING_UNKNOWN_DATA_FORMAT, parser->data_type);
+
+    set_state(parser, LINE_START);
+    return pos;
+}
+
 /* handler for parser SET_VALUE state */
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos)
 {
-    RegSetValueExW(currentKeyHandle, parser->value_name, 0, parser->data_type,
+    RegSetValueExW(parser->hkey, parser->value_name, 0, parser->data_type,
                    parser->data, parser->data_size);
 
-    set_state(parser, PARSE_WIN31_LINE);
+    if (parser->reg_version == REG_VERSION_31)
+        set_state(parser, PARSE_WIN31_LINE);
+    else
+        set_state(parser, LINE_START);
 
     return pos;
 }
@@ -1468,6 +1504,8 @@ BOOL import_registry_file(FILE *reg_file)
     parser.two_wchars[0] = s[0];
     parser.two_wchars[1] = s[1];
     parser.reg_version   = -1;
+    parser.hkey          = NULL;
+    parser.key_name      = NULL;
     parser.value_name    = NULL;
     parser.data_type     = 0;
     parser.data          = NULL;
@@ -1486,7 +1524,8 @@ BOOL import_registry_file(FILE *reg_file)
     if (parser.value_name)
         HeapFree(GetProcessHeap(), 0, parser.value_name);
 
-    closeKey();
+    close_key(&parser);
+
     return TRUE;
 }
 

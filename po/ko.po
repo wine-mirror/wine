@@ -12335,7 +12335,7 @@ msgstr ""
 #: regedit.rc:420
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "regedit: Unsupported registry data type [%1]\n"
+msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
 msgstr "지원하지 않는 형식.\n"
 
 #: regedit.rc:421

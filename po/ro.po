@@ -12074,7 +12074,7 @@ msgstr ""
 #: regedit.rc:420
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
-msgid "regedit: Unsupported registry data type [%1]\n"
+msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
 #: regedit.rc:421
