@@ -510,6 +510,7 @@
 @ stdcall Ke386SetIoAccessMap(long ptr)
 @ stub KeAcquireInterruptSpinLock
 @ stub KeAcquireSpinLockAtDpcLevel
+@ stdcall -arch=x86_64 KeAcquireSpinLockRaiseToDpc(ptr)
 @ stub KeAddSystemServiceTable
 @ stub KeAreApcsDisabled
 @ stub KeAttachProcess

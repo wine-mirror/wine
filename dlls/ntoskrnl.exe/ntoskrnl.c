@@ -3226,7 +3226,16 @@ void WINAPI __regs_KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *handle )
 void WINAPI KeReleaseInStackQueuedSpinLock( KLOCK_QUEUE_HANDLE *handle )
 #endif
 {
-    FIXME( "stub: %p\n", handle);
+    FIXME( "stub: %p\n", handle );
+}
+
+/***********************************************************************
+ *           KeAcquireSpinLockRaiseToDpc (NTOSKRNL.EXE.@)
+ */
+KIRQL WINAPI KeAcquireSpinLockRaiseToDpc(KSPIN_LOCK *spinlock)
+{
+    FIXME( "stub: %p\n", spinlock );
+    return 0;
 }
 
 /***********************************************************************
