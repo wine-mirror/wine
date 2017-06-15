@@ -1320,9 +1320,11 @@ static void test_import(void)
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                    "\"Empty string\"=\"\"\n\n", &r);
+                    "\"Empty string\"=\"\"\n"
+                    "\"\"=\"Default Value Name\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Empty string", REG_SZ, "", 1, 0);
+    todo_wine verify_reg(hkey, NULL, REG_SZ, "Default Value Name", 19, 0);
 
     test_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2160,9 +2162,11 @@ static void test_import(void)
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                     "\"Empty string\"=\"\"\n\n", &r);
+                     "\"Empty string\"=\"\"\n"
+                     "\"\"=\"Default registry value\"\n\n", &r);
     todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     todo_wine verify_reg(hkey, "Empty string", REG_SZ, "", 1, 0);
+    todo_wine verify_reg(hkey, NULL, REG_SZ, "Default registry value", 23, 0);
 
     test_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
