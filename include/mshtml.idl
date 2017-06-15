@@ -10955,6 +10955,33 @@ interface IHTMLInputTextElement : IDispatch
     HRESULT createTextRange([retval, out] IHTMLTxtRange **range);
 }
 
+/*****************************************************************************
+ *    IHTMLInputTextElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f2d2-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLInputTextElement2 : IDispatch
+{
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONSTART)]
+    HRESULT selectionStart([in] long v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONSTART)]
+    HRESULT selectionStart([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONEND)]
+    HRESULT selectionEnd([in] long v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONEND)]
+    HRESULT selectionEnd([out, retval] long *p);
+
+    [id(DISPID_IHTMLINPUTTEXTELEMENT2_SETSELECTIONRANGE)]
+    HRESULT setSelectionRange([in] long start, [in] long end);
+}
+
 [
     hidden,
     uuid(3050f57d-98b5-11cf-bb82-00aa00bdce0b)
@@ -11162,6 +11189,21 @@ methods:
 
     [propget, id(DISPID_IHTMLINPUTELEMENT2_USEMAP), displaybind, bindable]
     BSTR useMap();
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONSTART)]
+    void selectionStart(long v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONSTART)]
+    long selectionStart();
+
+    [propput, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONEND)]
+    void selectionEnd(long v);
+
+    [propget, id(DISPID_IHTMLINPUTTEXTELEMENT2_SELECTIONEND)]
+    long selectionEnd();
+
+    [id(DISPID_IHTMLINPUTTEXTELEMENT2_SETSELECTIONRANGE)]
+    void setSelectionRange([in] long start, [in] long end);
 }
 
 /*****************************************************************************
@@ -11183,7 +11225,7 @@ coclass HTMLInputElement
     interface IHTMLInputElement;
  /* interface IHTMLInputElement2; */
     interface IHTMLInputTextElement;
- /* interface IHTMLInputTextElement2; */
+    interface IHTMLInputTextElement2;
  /* interface IHTMLInputHiddenElement; */
  /* interface IHTMLInputButtonElement; */
  /* interface IHTMLInputFileElement; */
