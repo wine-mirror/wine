@@ -264,8 +264,10 @@ static void test_basic_import(void)
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
-                    "\"Empty string\"=\"\"\n\n");
+                    "\"Empty string\"=\"\"\n"
+                    "\"\"=\"Default registry value\"\n\n");
     verify_reg(hkey, "Empty string", REG_SZ, "", 1, 0);
+    verify_reg(hkey, NULL, REG_SZ, "Default registry value", 23, 0);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
