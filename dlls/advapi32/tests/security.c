@@ -6081,7 +6081,7 @@ static void test_default_dacl_owner_sid(void)
 
 static void test_AdjustTokenPrivileges(void)
 {
-    TOKEN_PRIVILEGES tp, prev;
+    TOKEN_PRIVILEGES tp;
     HANDLE token;
     DWORD len;
     LUID luid;
@@ -6109,7 +6109,8 @@ static void test_AdjustTokenPrivileges(void)
     tp.PrivilegeCount = 1;
     tp.Privileges[0].Luid = luid;
     tp.Privileges[0].Attributes = 0;
-    AdjustTokenPrivileges(token, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), &prev, NULL);
+    ret = AdjustTokenPrivileges(token, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL);
+    ok(ret, "got %d\n", ret);
 
     CloseHandle(token);
 }
