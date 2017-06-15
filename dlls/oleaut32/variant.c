@@ -2517,13 +2517,14 @@ VarNumFromParseNum_DecOverflow:
  */
 HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 {
-    VARTYPE leftvt,rightvt,resultvt;
+    BSTR left_str = NULL, right_str = NULL;
+    VARTYPE leftvt, rightvt;
     HRESULT hres;
+
+    TRACE("%s,%s,%p)\n", debugstr_variant(left), debugstr_variant(right), out);
 
     leftvt = V_VT(left);
     rightvt = V_VT(right);
-
-    TRACE("%s,%s,%p)\n", debugstr_variant(left), debugstr_variant(right), out);
 
     /* when both left and right are NULL the result is NULL */
     if (leftvt == VT_NULL && rightvt == VT_NULL)
@@ -2531,9 +2532,6 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         V_VT(out) = VT_NULL;
         return S_OK;
     }
-
-    hres = S_OK;
-    resultvt = VT_EMPTY;
 
     /* There are many special case for errors and return types */
     if (leftvt == VT_VARIANT && (rightvt == VT_ERROR ||
@@ -2560,7 +2558,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         rightvt == VT_UINT || rightvt == VT_EMPTY ||
         rightvt == VT_NULL || rightvt == VT_DATE ||
         rightvt == VT_DECIMAL || rightvt == VT_DISPATCH))
-        resultvt = VT_BSTR;
+        hres = S_OK;
     else if (rightvt == VT_ERROR && leftvt < VT_VOID)
         hres = DISP_E_TYPEMISMATCH;
     else if (leftvt == VT_ERROR && (rightvt == VT_DATE ||
@@ -2590,87 +2588,72 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
     /* if result type is not S_OK, then no need to go further */
     if (hres != S_OK)
     {
-        V_VT(out) = resultvt;
+        V_VT(out) = VT_EMPTY;
         return hres;
     }
-    /* Else proceed with formatting inputs to strings */
+
+    if (leftvt == VT_BSTR)
+        left_str = V_BSTR(left);
     else
     {
-        VARIANT bstrvar_left, bstrvar_right;
-        VARIANT *tmp;
-        VARIANT fetched;
+        VARIANT converted, *tmp = left;
 
-        V_VT(out) = VT_BSTR;
-
-        VariantInit(&bstrvar_left);
-        VariantInit(&bstrvar_right);
-        VariantInit(&fetched);
-
-        /* Convert left side variant to string */
-        if (leftvt != VT_BSTR)
+        VariantInit(&converted);
+        if(leftvt == VT_DISPATCH)
         {
-            tmp = left;
-
-            if(leftvt == VT_DISPATCH)
-            {
-                hres = VARIANT_FetchDispatchValue(left, &fetched);
-                if(FAILED(hres))
-                    goto failed;
-
-                tmp = &fetched;
-            }
-
-            hres = VariantChangeTypeEx(&bstrvar_left,tmp,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
-            VariantClear(&fetched);
-            if (hres == DISP_E_TYPEMISMATCH)
-            {
-                V_VT(&bstrvar_left) = VT_BSTR;
-                V_BSTR(&bstrvar_left) = SysAllocStringLen(NULL, 0);
-            }
-            else if(hres != S_OK)
+            hres = VARIANT_FetchDispatchValue(left, &converted);
+            if(FAILED(hres))
                 goto failed;
+
+            tmp = &converted;
         }
 
-        /* convert right side variant to string */
-        if (rightvt != VT_BSTR)
+        hres = VariantChangeTypeEx(&converted, tmp, 0, VARIANT_ALPHABOOL|VARIANT_LOCALBOOL, VT_BSTR);
+        if (SUCCEEDED(hres))
+            left_str = V_BSTR(&converted);
+        else if (hres != DISP_E_TYPEMISMATCH)
         {
-            tmp = right;
+            VariantClear(&converted);
+            goto failed;
+        }
+    }
 
-            if(rightvt == VT_DISPATCH)
-            {
-                hres = VARIANT_FetchDispatchValue(right, &fetched);
-                if(FAILED(hres))
-                    goto failed;
+    if (rightvt == VT_BSTR)
+        right_str = V_BSTR(right);
+    else
+    {
+        VARIANT converted, *tmp = right;
 
-                tmp = &fetched;
-            }
-
-            hres = VariantChangeTypeEx(&bstrvar_right,tmp,0,VARIANT_ALPHABOOL|VARIANT_LOCALBOOL,VT_BSTR);
-            VariantClear(&fetched);
-            if (hres == DISP_E_TYPEMISMATCH)
-            {
-                V_VT(&bstrvar_right) = VT_BSTR;
-                V_BSTR(&bstrvar_right) = SysAllocStringLen(NULL, 0);
-            }
-            else if(hres != S_OK)
+        VariantInit(&converted);
+        if(rightvt == VT_DISPATCH)
+        {
+            hres = VARIANT_FetchDispatchValue(right, &converted);
+            if(FAILED(hres))
                 goto failed;
+
+            tmp = &converted;
         }
 
-        /* Concat the resulting strings together */
-        if (leftvt == VT_BSTR && rightvt == VT_BSTR)
-            hres = VarBstrCat (V_BSTR(left), V_BSTR(right), &V_BSTR(out));
-        else if (leftvt != VT_BSTR && rightvt != VT_BSTR)
-            hres = VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(&bstrvar_right), &V_BSTR(out));
-        else if (leftvt != VT_BSTR && rightvt == VT_BSTR)
-            hres = VarBstrCat (V_BSTR(&bstrvar_left), V_BSTR(right), &V_BSTR(out));
-        else if (leftvt == VT_BSTR && rightvt != VT_BSTR)
-            hres = VarBstrCat (V_BSTR(left), V_BSTR(&bstrvar_right), &V_BSTR(out));
+        hres = VariantChangeTypeEx(&converted, tmp, 0, VARIANT_ALPHABOOL|VARIANT_LOCALBOOL, VT_BSTR);
+        if (SUCCEEDED(hres))
+            right_str = V_BSTR(&converted);
+        else if (hres != DISP_E_TYPEMISMATCH)
+        {
+            VariantClear(&converted);
+            goto failed;
+        }
+    }
+
+
+    V_VT(out) = VT_BSTR;
+    hres = VarBstrCat(left_str, right_str, &V_BSTR(out));
 
 failed:
-        VariantClear(&bstrvar_left);
-        VariantClear(&bstrvar_right);
-        return hres;
-    }
+    if(V_VT(left) != VT_BSTR)
+        SysFreeString(left_str);
+    if(V_VT(right) != VT_BSTR)
+        SysFreeString(right_str);
+    return hres;
 }
 
 
