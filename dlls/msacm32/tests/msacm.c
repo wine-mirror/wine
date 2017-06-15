@@ -724,6 +724,104 @@ todo_wine
     ok(mr == MMSYSERR_NOERROR, "close failed: 0x%x\n", mr);
 }
 
+static const BYTE input[64] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63};
+
+struct stream_output
+{
+    WAVEFORMATEX src;
+    WAVEFORMATEX dst;
+    BYTE output[256];
+    DWORD dst_used;
+    BOOL todo;
+};
+
+static const struct stream_output expected_output[] = {
+    /* #0: Identical conversion */
+    {{WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63}, 64, FALSE},
+
+    /* #1: 1 -> 2 channels */
+    {{WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {WAVE_FORMAT_PCM, 2, 8000, 16000, 2, 8}, {0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,30,30,31,31,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,40,40,41,41,42,42,43,43,44,44,45,45,46,46,47,47,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55,56,56,57,57,58,58,59,59,60,60,61,61,62,62,63,63}, 128, FALSE},
+
+    /* #2: 2 -> 1 channels: all of the audio underflows due to addition */
+    {{WAVE_FORMAT_PCM, 2, 8000, 16000, 2, 8}, {WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 32, FALSE},
+
+    /* #3: 2 -> 2 channels */
+    {{WAVE_FORMAT_PCM, 2, 8000, 16000, 2, 8}, {WAVE_FORMAT_PCM, 2, 8000, 16000, 2, 8}, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63}, 64, FALSE},
+
+    /* #4: 8 -> 16 bits per sample */
+    {{WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {WAVE_FORMAT_PCM, 1, 8000, 16000, 2, 16}, {0,128,0,129,0,130,0,131,0,132,0,133,0,134,0,135,0,136,0,137,0,138,0,139,0,140,0,141,0,142,0,143,0,144,0,145,0,146,0,147,0,148,0,149,0,150,0,151,0,152,0,153,0,154,0,155,0,156,0,157,0,158,0,159,0,160,0,161,0,162,0,163,0,164,0,165,0,166,0,167,0,168,0,169,0,170,0,171,0,172,0,173,0,174,0,175,0,176,0,177,0,178,0,179,0,180,0,181,0,182,0,183,0,184,0,185,0,186,0,187,0,188,0,189,0,190,0,191}, 128, FALSE},
+
+    /* #5: 16 -> 8 bits per sample */
+    {{WAVE_FORMAT_PCM, 1, 8000, 16000, 2, 16}, {WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {129,131,133,135,137,139,141,143,145,147,149,151,153,155,157,159,161,163,165,167,169,171,173,175,177,179,181,183,185,187,189,191}, 32, FALSE},
+
+    /* #6: 16 bits per sample, 2 -> 1 channels */
+    {{WAVE_FORMAT_PCM, 2, 8000, 32000, 4, 16}, {WAVE_FORMAT_PCM, 1, 8000, 16000, 2, 16}, {2,4,10,12,18,20,26,28,34,36,42,44,50,52,58,60,66,68,74,76,82,84,90,92,98,100,106,108,114,116,122,124}, 32, FALSE},
+
+    /* #7: 8000 -> 11025 sample rate */
+    /* FIXME: upsampling is slightly off on wine - the algorithm is wrong whenever error > (srcrate + dstrate) / 2 */
+    {{WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {WAVE_FORMAT_PCM, 1, 11025, 11025, 1, 8}, {0,1,1,2,3,4,4,5,6,7,7,8,9,9,10,11,12,12,13,14,15,15,16,17,17,18,19,20,20,21,22,22,23,24,25,25,26,27,28,28,29,30,30,31,32,33,33,34,35,36,36,37,38,38,39,40,41,41,42,43,44,44,45,46,46,47,48,49,49,50,51,52,52,53,54,54,55,56,57,57,58,59,60,60,61,62,62,63}, 88, TRUE},
+
+    /* #8: 8000 -> 22050 sample rate */
+    {{WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {WAVE_FORMAT_PCM, 1, 22050, 22050, 1, 8}, {0,0,1,1,1,2,2,3,3,3,4,4,4,5,5,5,6,6,7,7,7,8,8,8,9,9,9,10,10,11,11,11,12,12,12,13,13,13,14,14,15,15,15,16,16,16,17,17,17,18,18,19,19,19,20,20,20,21,21,21,22,22,22,23,23,24,24,24,25,25,25,26,26,26,27,27,28,28,28,29,29,29,30,30,30,31,31,32,32,32,33,33,33,34,34,34,35,35,36,36,36,37,37,37,38,38,38,39,39,40,40,40,41,41,41,42,42,42,43,43,44,44,44,45,45,45,46,46,46,47,47,48,48,48,49,49,49,50,50,50,51,51,52,52,52,53,53,53,54,54,54,55,55,56,56,56,57,57,57,58,58,58,59,59,60,60,60,61,61,61,62,62,62,63,63,63}, 176, TRUE},
+
+    /* #9: 11025 -> 22050 sample rate */
+    {{WAVE_FORMAT_PCM, 1, 11025, 11025, 1, 8}, {WAVE_FORMAT_PCM, 1, 22050, 22050, 1, 8}, {0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,30,30,31,31,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,40,40,41,41,42,42,43,43,44,44,45,45,46,46,47,47,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55,56,56,57,57,58,58,59,59,60,60,61,61,62,62,63,63}, 128, FALSE},
+
+    /* #10: 22050 -> 11025 sample rate */
+    {{WAVE_FORMAT_PCM, 1, 22050, 22050, 1, 8}, {WAVE_FORMAT_PCM, 1, 11025, 11025, 1, 8}, {1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63}, 32, FALSE},
+
+    /* #11: 11025 -> 8000 sample rate */
+    {{WAVE_FORMAT_PCM, 1, 11025, 11025, 1, 8}, {WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {0,2,3,4,6,7,8,10,11,13,14,15,17,18,19,21,22,24,25,26,28,29,31,32,33,35,36,37,39,40,42,43,44,46,47,48,50,51,53,54,55,57,58,59,61,62}, 46, FALSE},
+
+    /* #12: 22050 -> 8000 sample rate */
+    {{WAVE_FORMAT_PCM, 1, 22050, 22050, 1, 8}, {WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {1,4,6,9,12,15,17,20,23,26,28,31,34,37,39,42,45,48,50,53,56,59,62}, 23, FALSE},
+
+    /* #13: 44100 -> 8000 sample rate */
+    {{WAVE_FORMAT_PCM, 1, 44100, 44100, 1, 8}, {WAVE_FORMAT_PCM, 1, 8000, 8000, 1, 8}, {2,8,13,19,24,30,35,41,46,52,57,63}, 12, FALSE},
+};
+
+static void test_convert(void)
+{
+    HACMSTREAM has;
+    ACMSTREAMHEADER hdr = {0};
+    BYTE output[256];
+    MMRESULT mmr;
+    unsigned i;
+
+    for (i = 0; i < sizeof(expected_output)/sizeof(struct stream_output); i++)
+    {
+        mmr = acmStreamOpen(&has, NULL, (WAVEFORMATEX *)&expected_output[i].src, (WAVEFORMATEX *)&expected_output[i].dst, NULL, 0, 0, 0);
+        ok(mmr == MMSYSERR_NOERROR, "#%d: open failed: 0x%x\n", i, mmr);
+
+        memset(&hdr, 0, sizeof(hdr));
+        hdr.cbStruct = sizeof(hdr);
+        hdr.pbSrc = (BYTE *)input;
+        hdr.cbSrcLength = sizeof(input);
+        hdr.pbDst = output;
+        hdr.cbDstLength = sizeof(output);
+
+        mmr = acmStreamPrepareHeader(has, &hdr, 0);
+        ok(mmr == MMSYSERR_NOERROR, "#%d: prepare failed: 0x%x\n", i, mmr);
+        ok(hdr.fdwStatus == ACMSTREAMHEADER_STATUSF_PREPARED, "#%d: header wasn't prepared: 0x%x\n", i, hdr.fdwStatus);
+
+        memset(&output, 0, sizeof(output));
+        mmr = acmStreamConvert(has, &hdr, ACM_STREAMCONVERTF_BLOCKALIGN);
+        ok(mmr == MMSYSERR_NOERROR, "#%d: convert failed: 0x%x\n", i, mmr);
+        ok(hdr.fdwStatus & ACMSTREAMHEADER_STATUSF_DONE, "#%d: conversion was not done: 0x%x\n", i, hdr.fdwStatus);
+        ok(hdr.cbSrcLengthUsed == hdr.cbSrcLength, "#%d: expected %d, got %d\n", i, hdr.cbSrcLength, hdr.cbSrcLengthUsed);
+        ok(hdr.cbDstLengthUsed == expected_output[i].dst_used, "#%d: expected %d, got %d\n", i, expected_output[i].dst_used, hdr.cbDstLengthUsed);
+todo_wine_if(expected_output[i].todo)
+        ok(!memcmp(expected_output[i].output, output, hdr.cbDstLengthUsed), "#%d: output does not match\n", i);
+
+        mmr = acmStreamUnprepareHeader(has, &hdr, 0);
+        ok(mmr == MMSYSERR_NOERROR, "#%d: unprepare failed: 0x%x\n", i, mmr);
+        ok(hdr.fdwStatus == ACMSTREAMHEADER_STATUSF_DONE, "#%d: header wasn't unprepared: 0x%x\n", i, hdr.fdwStatus);
+
+        mmr = acmStreamClose(has, 0);
+        ok(mmr == MMSYSERR_NOERROR, "#%d: close failed: 0x%x\n", i, mmr);
+    }
+}
+
 static void test_acmFormatSuggest(void)
 {
     WAVEFORMATEX src, dst;
@@ -996,6 +1094,7 @@ START_TEST(msacm)
 {
     driver_tests();
     test_prepareheader();
+    test_convert();
     test_acmFormatSuggest();
     /* Test acmDriverAdd in the end as it may conflict
      * with other tests due to codec lookup order */
