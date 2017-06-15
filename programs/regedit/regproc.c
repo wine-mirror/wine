@@ -136,6 +136,8 @@ enum parser_state
     HEADER,              /* parsing the registry file version header */
     PARSE_WIN31_LINE,    /* parsing a Windows 3.1 registry line */
     LINE_START,          /* at the beginning of a registry line */
+    KEY_NAME,            /* parsing a key name */
+    DELETE_KEY,          /* deleting a registry key */
     SET_VALUE,           /* adding a value to the registry */
     NB_PARSER_STATES
 };
@@ -159,6 +161,8 @@ typedef WCHAR *(*parser_state_func)(struct parser *parser, WCHAR *pos);
 static WCHAR *header_state(struct parser *parser, WCHAR *pos);
 static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos);
 static WCHAR *line_start_state(struct parser *parser, WCHAR *pos);
+static WCHAR *key_name_state(struct parser *parser, WCHAR *pos);
+static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos);
 static WCHAR *set_value_state(struct parser *parser, WCHAR *pos);
 
 static const parser_state_func parser_funcs[NB_PARSER_STATES] =
@@ -166,6 +170,8 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
     header_state,              /* HEADER */
     parse_win31_line_state,    /* PARSE_WIN31_LINE */
     line_start_state,          /* LINE_START */
+    key_name_state,            /* KEY_NAME */
+    delete_key_state,          /* DELETE_KEY */
     set_value_state,           /* SET_VALUE */
 };
 
@@ -348,21 +354,20 @@ static BOOL REGPROC_unescape_string(WCHAR *str, WCHAR **unparsed)
     return ret;
 }
 
-static HKEY parseKeyName(LPWSTR lpKeyName, LPWSTR *lpKeyPath)
+static HKEY parse_key_name(WCHAR *key_name, WCHAR **key_path)
 {
     unsigned int i;
 
-    if (lpKeyName == NULL)
-        return 0;
+    if (!key_name) return 0;
 
-    *lpKeyPath = strchrW(lpKeyName, '\\');
-    if (*lpKeyPath) (*lpKeyPath)++;
+    *key_path = strchrW(key_name, '\\');
+    if (*key_path) (*key_path)++;
 
     for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++)
     {
         int len = lstrlenW(reg_class_namesW[i]);
-        if (!strncmpW(lpKeyName, reg_class_namesW[i], len) &&
-           (lpKeyName[len] == 0 || lpKeyName[len] == '\\'))
+        if (!strncmpW(key_name, reg_class_namesW[i], len) &&
+           (key_name[len] == 0 || key_name[len] == '\\'))
         {
             return reg_class_keys[i];
         }
@@ -500,36 +505,36 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
     return res;
 }
 
+static void closeKey(void)
+{
+    if (currentKeyHandle)
+    {
+        HeapFree(GetProcessHeap(), 0, currentKeyName);
+        currentKeyName = NULL;
+
+        RegCloseKey(currentKeyHandle);
+        currentKeyHandle = NULL;
+    }
+}
+
 /******************************************************************************
- * A helper function for processRegEntry() that opens the current key.
- * That key must be closed by calling closeKey().
+ * Opens the registry key given by the input path.
+ * This key must be closed by calling close_key().
  */
 static LONG openKeyW(WCHAR* stdInput)
 {
-    HKEY keyClass;
-    WCHAR* keyPath;
-    DWORD dwDisp;
+    HKEY key_class;
+    WCHAR *key_path;
     LONG res;
 
-    /* Sanity checks */
-    if (stdInput == NULL)
-        return ERROR_INVALID_PARAMETER;
+    closeKey();
 
     /* Get the registry class */
-    if (!(keyClass = parseKeyName(stdInput, &keyPath)))
+    if (!stdInput || !(key_class = parse_key_name(stdInput, &key_path)))
         return ERROR_INVALID_PARAMETER;
 
-    res = RegCreateKeyExW(
-               keyClass,                 /* Class     */
-               keyPath,                  /* Sub Key   */
-               0,                        /* MUST BE 0 */
-               NULL,                     /* object type */
-               REG_OPTION_NON_VOLATILE,  /* option, REG_OPTION_NON_VOLATILE ... */
-               KEY_ALL_ACCESS,           /* access mask, KEY_ALL_ACCESS */
-               NULL,                     /* security attribute */
-               &currentKeyHandle,        /* result */
-               &dwDisp);                 /* disposition, REG_CREATED_NEW_KEY or
-                                                        REG_OPENED_EXISTING_KEY */
+    res = RegCreateKeyExW(key_class, key_path, 0, NULL, REG_OPTION_NON_VOLATILE,
+                          KEY_ALL_ACCESS, NULL, &currentKeyHandle, NULL);
 
     if (res == ERROR_SUCCESS)
     {
@@ -542,19 +547,6 @@ static LONG openKeyW(WCHAR* stdInput)
 
     return res;
 
-}
-
-/******************************************************************************
- * Close the currently opened key.
- */
-static void closeKey(void)
-{
-    if (currentKeyHandle)
-    {
-        HeapFree(GetProcessHeap(), 0, currentKeyName);
-        RegCloseKey(currentKeyHandle);
-        currentKeyHandle = NULL;
-    }
 }
 
 /******************************************************************************
@@ -598,38 +590,6 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
 error:
     output_message(STRING_SETVALUE_FAILED, val_name, currentKeyName);
     output_message(STRING_INVALID_LINE_SYNTAX);
-}
-
-/******************************************************************************
- * This function receives the currently read entry and performs the
- * corresponding action.
- * isUnicode affects parsing of REG_MULTI_SZ values
- */
-static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
-{
-    if      ( stdInput[0] == '[')      /* We are reading a new key */
-    {
-        WCHAR* keyEnd;
-        closeKey();                    /* Close the previous key */
-
-        /* Get rid of the square brackets */
-        stdInput++;
-        keyEnd = strrchrW(stdInput, ']');
-        if (keyEnd)
-            *keyEnd='\0';
-        else return;
-
-        /* delete the key if we encounter '-' at the start of reg key */
-        if (stdInput[0] == '-')
-            delete_registry_key(stdInput + 1);
-        else if (openKeyW(stdInput) != ERROR_SUCCESS)
-            output_message(STRING_OPEN_KEY_FAILED, stdInput);
-    } else if( currentKeyHandle &&
-               (( stdInput[0] == '@') || /* reading a default @=data pair */
-                ( stdInput[0] == '\"'))) /* reading a new value=data pair */
-    {
-        processSetValue(stdInput, isUnicode);
-    }
 }
 
 enum reg_versions {
@@ -765,11 +725,12 @@ static WCHAR *line_start_state(struct parser *parser, WCHAR *pos)
         switch (*p)
         {
         case '[':
+            set_state(parser, KEY_NAME);
+            return p + 1;
         case '@':
         case '"':
-            processRegEntry(p, parser->is_unicode);
-            set_state(parser, LINE_START);
-            return line;
+            processSetValue(p, parser->is_unicode);
+            return p;
         case ' ':
         case '\t':
             break;
@@ -779,6 +740,41 @@ static WCHAR *line_start_state(struct parser *parser, WCHAR *pos)
         }
     }
 
+    return p;
+}
+
+/* handler for parser KEY_NAME state */
+static WCHAR *key_name_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos, *key_end;
+
+    if (*p == ' ' || *p == '\t' || !(key_end = strrchrW(p, ']')))
+        goto done;
+
+    *key_end = 0;
+
+    if (*p == '-')
+    {
+        set_state(parser, DELETE_KEY);
+        return p + 1;
+    }
+    else if (openKeyW(p) != ERROR_SUCCESS)
+        output_message(STRING_OPEN_KEY_FAILED, p);
+
+done:
+    set_state(parser, LINE_START);
+    return p;
+}
+
+/* handler for parser DELETE_KEY state */
+static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
+{
+    WCHAR *p = pos;
+
+    if (*p == 'H')
+        delete_registry_key(p);
+
+    set_state(parser, LINE_START);
     return p;
 }
 
@@ -1348,7 +1344,7 @@ BOOL export_registry_key(WCHAR *file_name, WCHAR *reg_key_name, DWORD format)
         lstrcpyW(reg_key_name_buf, reg_key_name);
 
         /* open the specified key */
-        if (!(reg_key_class = parseKeyName(reg_key_name, &branch_name))) {
+        if (!(reg_key_class = parse_key_name(reg_key_name, &branch_name))) {
             output_message(STRING_INCORRECT_REG_CLASS, reg_key_name);
             exit(1);
         }
@@ -1455,7 +1451,7 @@ void delete_registry_key(WCHAR *reg_key_name)
     if (!reg_key_name || !reg_key_name[0])
         return;
 
-    if (!(key_class = parseKeyName(reg_key_name, &key_name))) {
+    if (!(key_class = parse_key_name(reg_key_name, &key_name))) {
         output_message(STRING_INCORRECT_REG_CLASS, reg_key_name);
         exit(1);
     }
