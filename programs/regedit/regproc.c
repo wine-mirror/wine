@@ -277,8 +277,6 @@ static BYTE *convert_hex_csv_to_hex(WCHAR *str, DWORD *size)
     return data;
 }
 
-#define REG_UNKNOWN_TYPE 99
-
 /******************************************************************************
  * Parses the data type of the registry value being imported and modifies
  * the input parameter to skip the string representation of the data type.
