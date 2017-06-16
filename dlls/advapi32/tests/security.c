@@ -6722,11 +6722,11 @@ static void test_token_security_descriptor(void)
     SECURITY_DESCRIPTOR *sd = (SECURITY_DESCRIPTOR *)&buffer_sd, *sd2;
     char buffer_acl[256];
     ACL *acl = (ACL *)&buffer_acl, *acl2;
-    BOOL defaulted, present, ret;
+    BOOL defaulted, present, ret, found;
+    HANDLE token, token2, token3;
     ACCESS_ALLOWED_ACE *ace;
     SECURITY_ATTRIBUTES sa;
-    HANDLE token, token2;
-    DWORD size;
+    DWORD size, index;
     PSID psid;
 
     if (!pDuplicateTokenEx || !pConvertStringSidToSidA || !pAddAccessAllowedAceEx || !pGetAce
@@ -6789,8 +6789,47 @@ static void test_token_security_descriptor(void)
 
     HeapFree(GetProcessHeap(), 0, sd2);
 
+    /* Duplicate token without security attributes.
+     * Tokens do not inherit the security descriptor in DuplicateToken. */
+    ret = pDuplicateTokenEx(token2, MAXIMUM_ALLOWED, NULL, SecurityImpersonation, TokenImpersonation, &token3);
+    ok(ret, "DuplicateTokenEx failed with error %u\n", GetLastError());
+
+    ret = GetKernelObjectSecurity(token3, DACL_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Unexpected GetKernelObjectSecurity return value %d, error %u\n", ret, GetLastError());
+
+    sd2 = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetKernelObjectSecurity(token3, DACL_SECURITY_INFORMATION, sd2, size, &size);
+    ok(ret, "GetKernelObjectSecurity failed with error %u\n", GetLastError());
+
+    acl2 = (void *)0xdeadbeef;
+    present = FALSE;
+    defaulted = TRUE;
+    ret = GetSecurityDescriptorDacl(sd2, &present, &acl2, &defaulted);
+    ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
+    todo_wine
+    ok(present, "DACL not present\n");
+
+    if (present)
+    {
+        ok(acl2 != (void *)0xdeadbeef, "DACL not set\n");
+        ok(!defaulted, "DACL defaulted\n");
+
+        index = 0;
+        found = FALSE;
+        while (pGetAce(acl2, index++, (void **)&ace))
+        {
+            if (ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE && EqualSid(&ace->SidStart, psid))
+                found = TRUE;
+        }
+        ok(!found, "Access allowed ACE was inherited\n");
+    }
+
+    HeapFree(GetProcessHeap(), 0, sd2);
+
     LocalFree(psid);
 
+    CloseHandle(token3);
     CloseHandle(token2);
     CloseHandle(token);
 }
