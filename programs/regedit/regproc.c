@@ -400,46 +400,6 @@ static HKEY parse_key_name(WCHAR *key_name, WCHAR **key_path)
     return 0;
 }
 
-/* Registry data types */
-static const WCHAR type_none[] = {'R','E','G','_','N','O','N','E',0};
-static const WCHAR type_sz[] = {'R','E','G','_','S','Z',0};
-static const WCHAR type_expand_sz[] = {'R','E','G','_','E','X','P','A','N','D','_','S','Z',0};
-static const WCHAR type_binary[] = {'R','E','G','_','B','I','N','A','R','Y',0};
-static const WCHAR type_dword[] = {'R','E','G','_','D','W','O','R','D',0};
-static const WCHAR type_dword_le[] = {'R','E','G','_','D','W','O','R','D','_','L','I','T','T','L','E','_','E','N','D','I','A','N',0};
-static const WCHAR type_dword_be[] = {'R','E','G','_','D','W','O','R','D','_','B','I','G','_','E','N','D','I','A','N',0};
-static const WCHAR type_multi_sz[] = {'R','E','G','_','M','U','L','T','I','_','S','Z',0};
-
-static const struct
-{
-    DWORD type;
-    const WCHAR *name;
-}
-type_rels[] =
-{
-    {REG_NONE, type_none},
-    {REG_SZ, type_sz},
-    {REG_EXPAND_SZ, type_expand_sz},
-    {REG_BINARY, type_binary},
-    {REG_DWORD, type_dword},
-    {REG_DWORD_LITTLE_ENDIAN, type_dword_le},
-    {REG_DWORD_BIG_ENDIAN, type_dword_be},
-    {REG_MULTI_SZ, type_multi_sz},
-};
-
-static const WCHAR *reg_type_to_wchar(DWORD type)
-{
-    int i, array_size = ARRAY_SIZE(type_rels);
-
-    for (i = 0; i < array_size; i++)
-    {
-        if (type == type_rels[i].type)
-            return type_rels[i].name;
-    }
-    return NULL;
-}
-
-
 static void close_key(struct parser *parser)
 {
     if (parser->hkey)
@@ -1308,16 +1268,11 @@ static void export_hkey(FILE *file, HKEY key,
                 break;
             }
 
-            default:
-            {
-                output_message(STRING_UNSUPPORTED_TYPE, reg_type_to_wchar(value_type), *reg_key_name_buf);
-                output_message(STRING_EXPORT_AS_BINARY, *val_name_buf);
-            }
-                /* falls through */
+            case REG_NONE:
             case REG_EXPAND_SZ:
             case REG_MULTI_SZ:
-                /* falls through */
             case REG_BINARY:
+            default:
                 REGPROC_export_binary(line_buf, line_buf_size, &line_len, value_type, *val_buf, val_size1, unicode);
             }
             REGPROC_write_line(file, *line_buf, unicode);
