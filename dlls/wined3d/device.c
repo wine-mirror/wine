@@ -1164,6 +1164,15 @@ HRESULT CDECL wined3d_device_init_gdi(struct wined3d_device *device,
         goto err_out;
     }
     device->swapchains[0] = swapchain;
+
+    if (!(device->blitter = wined3d_cpu_blitter_create()))
+    {
+        ERR("Failed to create CPU blitter.\n");
+        HeapFree(GetProcessHeap(), 0, device->swapchains);
+        device->swapchain_count = 0;
+        goto err_out;
+    }
+
     return WINED3D_OK;
 
 err_out:
@@ -1251,6 +1260,8 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 HRESULT CDECL wined3d_device_uninit_gdi(struct wined3d_device *device)
 {
     unsigned int i;
+
+    device->blitter->ops->blitter_destroy(device->blitter, NULL);
 
     for (i = 0; i < device->swapchain_count; ++i)
     {
