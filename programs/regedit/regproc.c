@@ -392,7 +392,7 @@ static HKEY parse_key_name(WCHAR *key_name, WCHAR **key_path)
     for (i = 0; i < ARRAY_SIZE(reg_class_keys); i++)
     {
         int len = lstrlenW(reg_class_namesW[i]);
-        if (!strncmpW(key_name, reg_class_namesW[i], len) &&
+        if (!strncmpiW(key_name, reg_class_namesW[i], len) &&
            (key_name[len] == 0 || key_name[len] == '\\'))
         {
             return reg_class_keys[i];
