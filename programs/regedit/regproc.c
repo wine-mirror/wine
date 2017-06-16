@@ -163,6 +163,7 @@ struct parser
     DWORD              data_type;      /* data type */
     void              *data;           /* value data */
     DWORD              data_size;      /* size of the data (in bytes) */
+    BOOL               hex_type;       /* parsing a hex data type */
     enum parser_state  state;          /* current parser state */
 };
 
@@ -322,6 +323,7 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
                 return FALSE;
 
             parser->data_type = val;
+            parser->hex_type = TRUE;
             *line = end + 2;
         }
         return TRUE;
@@ -825,6 +827,13 @@ static WCHAR *set_value_state(struct parser *parser, WCHAR *pos)
 {
     RegSetValueExW(parser->hkey, parser->value_name, 0, parser->data_type,
                    parser->data, parser->data_size);
+
+    if (parser->data_type == REG_DWORD || parser->hex_type)
+    {
+        HeapFree(GetProcessHeap(), 0, parser->data);
+        parser->data = NULL;
+        parser->hex_type = FALSE;
+    }
 
     if (parser->reg_version == REG_VERSION_31)
         set_state(parser, PARSE_WIN31_LINE);
@@ -1463,6 +1472,7 @@ BOOL import_registry_file(FILE *reg_file)
     parser.data_type     = 0;
     parser.data          = NULL;
     parser.data_size     = 0;
+    parser.hex_type      = FALSE;
     parser.state         = HEADER;
 
     pos = parser.two_wchars;
