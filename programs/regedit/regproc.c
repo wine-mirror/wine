@@ -624,7 +624,7 @@ static WCHAR *delete_key_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *p = pos;
 
-    if (*p == 'H')
+    if (*p == 'H' || *p == 'h')
         delete_registry_key(p);
 
     set_state(parser, LINE_START);
