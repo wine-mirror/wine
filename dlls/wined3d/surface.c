@@ -2394,6 +2394,8 @@ static void fbo_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 
     if ((next = blitter->next))
         next->ops->blitter_destroy(next, context);
+
+    HeapFree(GetProcessHeap(), 0, blitter);
 }
 
 static void fbo_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
@@ -2476,6 +2478,8 @@ static void ffp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 
     if ((next = blitter->next))
         next->ops->blitter_destroy(next, context);
+
+    HeapFree(GetProcessHeap(), 0, blitter);
 }
 
 static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
@@ -2766,6 +2770,8 @@ static void cpu_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 
     if ((next = blitter->next))
         next->ops->blitter_destroy(next, context);
+
+    HeapFree(GetProcessHeap(), 0, blitter);
 }
 
 static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
