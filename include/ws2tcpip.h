@@ -54,7 +54,11 @@ typedef struct WS(addrinfoW)
     struct WS(addrinfoW)*   ai_next;
 } ADDRINFOW, *PADDRINFOW;
 
-typedef int WS(socklen_t);
+#ifdef USE_WS_PREFIX
+typedef int WS_socklen_t;
+#else
+#define socklen_t int  /* avoid conflicts with the system's socklen_t typedef */
+#endif
 
 typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 
