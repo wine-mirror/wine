@@ -218,13 +218,8 @@ cpp_quote("DEFINE_GUID(GUID_WICPixelFormat64bppPRGBA, 0x6fddc324,0x4e03,0x4bfe,0
 cpp_quote("DEFINE_GUID(GUID_WICPixelFormat32bppCMYK, 0x6fddc324,0x4e03,0x4bfe,0xb1,0x85,0x3d,0x77,0x76,0x8d,0xc9,0x1c);")
 
 cpp_quote("#if 0")
-typedef DWORD *ID2D1Device;
-typedef DWORD *ID2D1Image;
 typedef DWORD *D2D1_PIXEL_FORMAT;
 cpp_quote ("#endif")
-
-cpp_quote ("typedef interface ID2D1Device ID2D1Device;")
-cpp_quote ("typedef interface ID2D1Image ID2D1Image;")
 
 typedef struct WICRect {
     INT X;
@@ -254,6 +249,8 @@ typedef struct WICImageParameters
 
 typedef UINT32 WICColor;
 
+interface ID2D1Device;
+interface ID2D1Image;
 interface IWICPalette;
 
 [
